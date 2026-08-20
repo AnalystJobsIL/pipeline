@@ -45,3 +45,5 @@ jobs:
             git rebase --abort 2>/dev/null || true; sleep $((i*20))
           done
           echo "::error::push failed after 5 retries"; exit 1
+
+# (workflow re-index nudge)
