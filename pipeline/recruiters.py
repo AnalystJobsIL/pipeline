@@ -1,0 +1,37 @@
+"""Recruiting-agency / staffing-firm exclusion.
+
+These aren't direct employers — they re-post dozens of client roles across unrelated domains,
+which floods the digest (a single agency dumped 12-16 "analyst" roles in one run). The user's
+spec has always excluded them (same reason SiiRA / Megayeset were out).
+
+Two layers:
+  * `_CONFIRMED` — specific names verified as recruiters/staffing via web research (each has a
+    dated source in the commit that added it). Names that a keyword rule can't catch (e.g.
+    "Talent-HR", "comblack") live here.
+  * `_KEYWORD` — a conservative pattern that stops auto-expand from ever adding an obvious new
+    agency. Deliberately narrow to avoid false-positives on real employers.
+"""
+from __future__ import annotations
+
+import re
+
+# Verified recruiters/staffing firms (web-researched 2026-08-17). Lowercase, exact-ish match.
+_CONFIRMED = {
+    "comblack",                 # "high-tech talent management … places talents at major companies"
+    "sqlink group", "sqlink",   # IT recruitment/placement; owns Gotfriends + Dialog placement firms
+    "recruitx",                 # "recruitment & headhunting agency"
+    "talent-hr", "talent hr",   # staffing/recruitment (hires Recruitment/Talent-Acquisition Specialists)
+    "elad software systems",    # IT services + full-cycle IT recruitment/staffing
+}
+
+# Obvious agency markers — blocks future auto-expand additions. Narrow on purpose.
+_KEYWORD = re.compile(
+    r"\b(recruit(ing|ment|x)?|staffing|headhunt(ing|ers?)?|manpower|"
+    r"placement agenc|talent acquisition|gotfriends|hr solutions)\b", re.I)
+
+
+def is_recruiter(name):
+    n = " ".join(str(name or "").strip().lower().split())
+    if n in _CONFIRMED:
+        return True
+    return bool(_KEYWORD.search(n))

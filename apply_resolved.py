@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Merge resolved ATS configs (out/resolved_configs.json) into companies.csv, safely.
+
+LINE-BASED on purpose: only the changed rows are re-serialized; every other line is kept
+byte-for-byte. A whole-file DictWriter/csv.writer round-trip re-quotes all 1000+ rows (noisy
+diff) and — worse — earlier truncated the file when it hit a row with embedded commas. Here we
+match a line by its first CSV field (company_name), rewrite just fields 2-4 of that one line,
+and leave the rest untouched.
+"""
+from __future__ import annotations
+
+import csv
+import io
+import json
+import os
+import sys
+
+
+def _parse(line):
+    return next(csv.reader(io.StringIO(line)))
+
+
+def _fmt(fields):
+    buf = io.StringIO()
+    csv.writer(buf, lineterminator="").writerow(fields)
+    return buf.getvalue()
+
+
+def main():
+    src = os.environ.get("RESOLVED_OUT", "out/resolved_configs.json")
+    if not os.path.exists(src):
+        print(f"no {src}; nothing to apply")
+        return 0
+    resolved = json.load(open(src, encoding="utf-8"))
+    with open("companies.csv", encoding="utf-8", newline="") as f:
+        lines = f.readlines()
+    changed = 0
+    for i, line in enumerate(lines):
+        if i == 0 or not line.strip():
+            continue
+        try:
+            fields = _parse(line)
+        except Exception:  # noqa: BLE001
+            continue
+        name = fields[0] if fields else ""
+        if name in resolved and len(fields) >= 4:
+            plat, tok, api = resolved[name][0], resolved[name][1], resolved[name][2]
+            if [fields[1], fields[2], fields[3]] != [plat, tok, api]:
+                fields[1], fields[2], fields[3] = plat, tok, api
+                if len(fields) >= 6:
+                    fields[5] = (fields[5] + " " if fields[5] else "") + "[self-heal: re-resolved]"
+                eol = "\r\n" if line.endswith("\r\n") else "\n" if line.endswith("\n") else ""
+                lines[i] = _fmt(fields) + eol
+                changed += 1
+                print(f"  fixed {name[:28]:29} -> {plat} {api[:55]}")
+    if not changed:
+        print("no changes to apply")
+        return 0
+    if "--dry-run" in sys.argv:
+        print(f"(dry-run) would update {changed} rows")
+        return 0
+    with open("companies.csv", "w", encoding="utf-8", newline="") as f:
+        f.writelines(lines)
+    print(f"=== applied {changed} config fixes to companies.csv ===")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,55 @@
+name: Auto-expand coverage (cloud, self-draining)
+
+# Keeps cracking companies until none are left. Every run resolves the next batch of researched-
+# but-not-yet-added companies (iframe-ATS / scrape / follow-jobs-link) and commits them into
+# companies.csv + scraped_cache.json. Runs several times a day; because each run shrinks the
+# unresolved set, it converges to full coverage on its own — PC off, no babysitting.
+
+on:
+  schedule:
+    - cron: "0 8,20 * * *"       # twice daily (avoids the 05:00 digest slot)
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "companies to process this run"
+        default: "200"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repo-state
+  cancel-in-progress: false
+
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install Playwright + Chromium
+        run: |
+          python -m pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Resolve the next batch
+        env:
+          AUTO_EXPAND_LIMIT: ${{ github.event.inputs.limit || '250' }}
+        run: python auto_expand.py
+
+      - name: Commit newly-cracked companies
+        run: |
+          git config user.name  "expand-bot"
+          git config user.email "expand@users.noreply.github.com"
+          git add companies.csv scraped_cache.json
+          git commit -m "auto-expand: crack more companies $(date -u +%FT%H:%M) [skip ci]" \
+            || { echo "nothing new this run"; exit 0; }
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin ${GITHUB_REF_NAME} && git push origin HEAD:${GITHUB_REF_NAME} && exit 0
+            git rebase --abort 2>/dev/null || true; sleep $((i*20))
+          done
+          echo "::error::push failed after 5 retries"; exit 1

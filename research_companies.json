@@ -1,0 +1,6323 @@
+[
+ {
+  "name": "Taboola",
+  "careers_url": "https://job-boards.greenhouse.io/taboola",
+  "ats": "greenhouse",
+  "slug": "taboola"
+ },
+ {
+  "name": "AppsFlyer",
+  "careers_url": "https://job-boards.greenhouse.io/appsflyer",
+  "ats": "greenhouse",
+  "slug": "appsflyer"
+ },
+ {
+  "name": "Similarweb",
+  "careers_url": "https://job-boards.greenhouse.io/similarweb",
+  "ats": "greenhouse",
+  "slug": "similarweb"
+ },
+ {
+  "name": "Yotpo",
+  "careers_url": "https://job-boards.greenhouse.io/yotpo",
+  "ats": "greenhouse",
+  "slug": "yotpo"
+ },
+ {
+  "name": "Optimove",
+  "careers_url": "https://job-boards.greenhouse.io/optimove",
+  "ats": "greenhouse",
+  "slug": "optimove"
+ },
+ {
+  "name": "Riskified",
+  "careers_url": "https://job-boards.greenhouse.io/riskified",
+  "ats": "greenhouse",
+  "slug": "riskified"
+ },
+ {
+  "name": "Forter",
+  "careers_url": "https://job-boards.greenhouse.io/forter",
+  "ats": "greenhouse",
+  "slug": "forter"
+ },
+ {
+  "name": "Bringg",
+  "careers_url": "https://job-boards.greenhouse.io/bringg",
+  "ats": "greenhouse",
+  "slug": "bringg"
+ },
+ {
+  "name": "HiBob",
+  "careers_url": "https://job-boards.greenhouse.io/hibob",
+  "ats": "greenhouse",
+  "slug": "hibob"
+ },
+ {
+  "name": "Lightricks",
+  "careers_url": "https://job-boards.greenhouse.io/lightricks",
+  "ats": "greenhouse",
+  "slug": "lightricks"
+ },
+ {
+  "name": "Placer.ai",
+  "careers_url": "https://job-boards.greenhouse.io/placerlabs",
+  "ats": "greenhouse",
+  "slug": "placerlabs"
+ },
+ {
+  "name": "Melio",
+  "careers_url": "https://job-boards.greenhouse.io/melio",
+  "ats": "greenhouse",
+  "slug": "melio"
+ },
+ {
+  "name": "Moon Active",
+  "careers_url": "https://www.moonactive.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Papaya Gaming",
+  "careers_url": "https://www.papayagaming.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "365Scores",
+  "careers_url": "https://www.365scores.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Global-e",
+  "careers_url": "https://www.global-e.com/en/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Holisto",
+  "careers_url": "https://www.holisto.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "BUYME",
+  "careers_url": "https://www.buyme.co.il",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Fiverr",
+  "careers_url": "https://www.fiverr.com/lp/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Lusha",
+  "careers_url": "https://www.lusha.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Papaya Global",
+  "careers_url": "https://www.papayaglobal.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Outbrain",
+  "careers_url": "https://boards.greenhouse.io/outbraininc",
+  "ats": "greenhouse",
+  "slug": "outbraininc"
+ },
+ {
+  "name": "Perion",
+  "careers_url": "https://www.perion.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Skai",
+  "careers_url": "https://skai.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Innovid",
+  "careers_url": "https://boards.greenhouse.io/innovid",
+  "ats": "greenhouse",
+  "slug": "innovid"
+ },
+ {
+  "name": "EX.CO",
+  "careers_url": "https://ex.co/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "OpenWeb",
+  "careers_url": "https://www.openweb.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bright Data",
+  "careers_url": "https://brightdata.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CHEQ",
+  "careers_url": "https://cheq.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Namogoo",
+  "careers_url": "https://www.namogoo.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Syte",
+  "careers_url": "https://www.syte.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Dynamic Yield",
+  "careers_url": "https://www.dynamicyield.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zoomd",
+  "careers_url": "https://www.zoomd.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Aniview",
+  "careers_url": "https://www.aniview.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bigabid",
+  "careers_url": "https://www.bigabid.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Vidazoo",
+  "careers_url": "https://www.vidazoo.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Primis",
+  "careers_url": "https://www.primis.tech/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Adcore",
+  "careers_url": "https://www.adcore.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Digital Turbine",
+  "careers_url": "https://www.digitalturbine.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Voyantis",
+  "careers_url": "https://www.voyantis.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Rivery",
+  "careers_url": "https://rivery.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Madgicx",
+  "careers_url": "https://madgicx.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Leadspace",
+  "careers_url": "https://www.leadspace.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Anagog",
+  "careers_url": "https://www.anagog.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Intango",
+  "careers_url": "https://intango.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SimilarTech",
+  "careers_url": "https://www.similartech.com/about",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sisense",
+  "careers_url": "https://boards.greenhouse.io/sisense",
+  "ats": "greenhouse",
+  "slug": "sisense"
+ },
+ {
+  "name": "Gong",
+  "careers_url": "https://boards.greenhouse.io/gongio",
+  "ats": "greenhouse",
+  "slug": "gongio"
+ },
+ {
+  "name": "WalkMe",
+  "careers_url": "https://jobs.lever.co/walkme",
+  "ats": "lever",
+  "slug": "walkme"
+ },
+ {
+  "name": "Playtika",
+  "careers_url": "https://boards.greenhouse.io/playtikaltd",
+  "ats": "greenhouse",
+  "slug": "playtikaltd"
+ },
+ {
+  "name": "Plarium",
+  "careers_url": "https://plarium.com/en/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Playtech",
+  "careers_url": "https://www.playtech.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SciPlay",
+  "careers_url": "https://www.sciplay.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Product Madness",
+  "careers_url": "https://www.productmadness.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Jelly Button Games",
+  "careers_url": "https://www.jellybtn.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Crazy Labs",
+  "careers_url": "https://www.crazylabs.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Overwolf",
+  "careers_url": "https://www.overwolf.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Soft2Bet",
+  "careers_url": "https://soft2bet.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NeoGames",
+  "careers_url": "https://www.neogames.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "888 Holdings",
+  "careers_url": "https://careers.888holdingsplc.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Beach Bum",
+  "careers_url": "https://www.beachbumltd.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PLAYSTUDIOS",
+  "careers_url": "https://playstudios.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SuperPlay",
+  "careers_url": "https://www.superplaystudios.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Supersonic Studios",
+  "careers_url": "https://supersonic.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Rollic",
+  "careers_url": "https://www.rollicgames.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ludeo",
+  "careers_url": "https://www.ludeo.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Innplay Labs",
+  "careers_url": "https://www.innplaylabs.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Estoty",
+  "careers_url": "https://estoty.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Kaltura",
+  "careers_url": "https://corp.kaltura.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Minute Media",
+  "careers_url": "https://www.minutemedia.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "D-ID",
+  "careers_url": "https://apply.workable.com/d-id",
+  "ats": "workable",
+  "slug": "d-id"
+ },
+ {
+  "name": "Hour One",
+  "careers_url": "https://hourone.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Deepdub",
+  "careers_url": "https://deepdub.ai/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Pixellot",
+  "careers_url": "https://www.pixellot.tv/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "WSC Sports",
+  "careers_url": "https://wsc-sports.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Riverside",
+  "careers_url": "https://riverside.fm/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Vimeo",
+  "careers_url": "https://vimeo.com/jobs",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Beamr",
+  "careers_url": "https://beamr.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Blings.io",
+  "careers_url": "https://www.blings.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fabric",
+  "careers_url": "https://fabric.inc/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Trigo",
+  "careers_url": "https://jobs.smartrecruiters.com/trigo",
+  "ats": "smartrecruiters",
+  "slug": "trigo"
+ },
+ {
+  "name": "Nexite",
+  "careers_url": "https://www.nexite.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Wiliot",
+  "careers_url": "https://www.wiliot.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Shopic",
+  "careers_url": "https://www.shopic.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AppCharge",
+  "careers_url": "https://www.appcharge.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Feedvisor",
+  "careers_url": "https://feedvisor.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "8fig",
+  "careers_url": "https://www.8fig.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Intelligems",
+  "careers_url": "https://www.intelligems.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SuperSmart",
+  "careers_url": "https://www.supersmart.me/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Wix",
+  "careers_url": "https://jobs.smartrecruiters.com/Wix2",
+  "ats": "smartrecruiters",
+  "slug": "Wix2"
+ },
+ {
+  "name": "Simply (JoyTunes)",
+  "careers_url": "https://www.hellosimply.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Any.do",
+  "careers_url": "https://www.any.do/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Moovit",
+  "careers_url": "https://company.moovit.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Gett",
+  "careers_url": "https://gett.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "HoneyBook",
+  "careers_url": "https://jobs.ashbyhq.com/honeybook",
+  "ats": "ashby",
+  "slug": "honeybook"
+ },
+ {
+  "name": "Promo.com",
+  "careers_url": "https://promo.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Riseup",
+  "careers_url": "https://jobs.smartrecruiters.com/riseup",
+  "ats": "smartrecruiters",
+  "slug": "riseup"
+ },
+ {
+  "name": "Guesty",
+  "careers_url": "https://www.guesty.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bookaway",
+  "careers_url": "https://www.bookaway.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fetcherr",
+  "careers_url": "https://www.fetcherr.io/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Air Doctor",
+  "careers_url": "https://www.air-dr.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Duve",
+  "careers_url": "https://duve.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "FairFly",
+  "careers_url": "https://fairfly.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fornova",
+  "careers_url": "https://www.fornova.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Redefine Meat",
+  "careers_url": "https://www.redefinemeat.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Aleph Farms",
+  "careers_url": "https://aleph-farms.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Remilk",
+  "careers_url": "https://www.remilk.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Believer Meats",
+  "careers_url": "https://jobs.ashbyhq.com/believer",
+  "ats": "ashby",
+  "slug": "believer"
+ },
+ {
+  "name": "SavorEat",
+  "careers_url": "https://www.savoreat.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Steakholder Foods",
+  "careers_url": "https://steakholderfoods.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Wilk",
+  "careers_url": "https://www.wilk.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Imagindairy",
+  "careers_url": "https://www.imagindairy.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Incredo (DouxMatok)",
+  "careers_url": "https://incredo.co/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tastewise",
+  "careers_url": "https://tastewise.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Chunk Foods",
+  "careers_url": "https://www.chunkfoods.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "More Foods",
+  "careers_url": "https://www.morefoods.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Yo Egg",
+  "careers_url": "https://www.yoegg.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "InnovoPro",
+  "careers_url": "https://innovopro.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ChickP",
+  "careers_url": "https://chickp-protein.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Amai Proteins",
+  "careers_url": "https://www.amaiproteins.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Brevel",
+  "careers_url": "https://www.brevel.eu/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Forsea Foods",
+  "careers_url": "https://www.forsea-foods.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SuperMeat",
+  "careers_url": "https://supermeat.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Venn",
+  "careers_url": "https://venn.city/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Buildots",
+  "careers_url": "https://www.buildots.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Datumate",
+  "careers_url": "https://www.datumate.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Versatile",
+  "careers_url": "https://versatile.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Agora",
+  "careers_url": "https://www.agorareal.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Constru",
+  "careers_url": "https://www.constru.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Civ Robotics",
+  "careers_url": "https://www.civrobotics.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "WINT Water Intelligence",
+  "careers_url": "https://www.wint.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Gloat",
+  "careers_url": "https://jobs.smartrecruiters.com/gloat",
+  "ats": "smartrecruiters",
+  "slug": "gloat"
+ },
+ {
+  "name": "Workiz",
+  "careers_url": "https://www.workiz.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Comeet",
+  "careers_url": "https://www.comeet.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fetcher",
+  "careers_url": "https://fetcher.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Verbit",
+  "careers_url": "https://verbit.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "LawGeex",
+  "careers_url": "https://www.lawgeex.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Darrow",
+  "careers_url": "https://www.darrow.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "LexCheck",
+  "careers_url": "https://www.lexcheck.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Matific",
+  "careers_url": "https://www.matific.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CodeMonkey",
+  "careers_url": "https://www.codemonkey.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Loora",
+  "careers_url": "https://www.loora.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Time To Know",
+  "careers_url": "https://www.timetoknow.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "eSelf.ai",
+  "careers_url": "https://www.eself.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ThriveDX",
+  "careers_url": "https://thrivedx.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AI21 Labs",
+  "careers_url": "https://www.ai21.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Tavily",
+  "careers_url": "https://jobs.ashbyhq.com/tavily",
+  "ats": "ashby",
+  "slug": "tavily"
+ },
+ {
+  "name": "Wonderful",
+  "careers_url": "https://jobs.ashbyhq.com/wonderful",
+  "ats": "ashby",
+  "slug": "wonderful"
+ },
+ {
+  "name": "Aquant",
+  "careers_url": "https://jobs.ashbyhq.com/aquant",
+  "ats": "ashby",
+  "slug": "aquant"
+ },
+ {
+  "name": "Pinecone",
+  "careers_url": "https://jobs.ashbyhq.com/pinecone",
+  "ats": "ashby",
+  "slug": "pinecone"
+ },
+ {
+  "name": "Aidoc",
+  "careers_url": "https://boards.greenhouse.io/aidocmedical",
+  "ats": "greenhouse",
+  "slug": "aidocmedical"
+ },
+ {
+  "name": "Immunai",
+  "careers_url": "https://www.immunai.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Hyro",
+  "careers_url": "https://www.hyro.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Pecan AI",
+  "careers_url": "https://www.pecan.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Noogata",
+  "careers_url": "https://www.noogata.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Loris",
+  "careers_url": "https://loris.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Classiq",
+  "careers_url": "https://www.classiq.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CytoReason",
+  "careers_url": "https://www.cytoreason.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tabnine",
+  "careers_url": "https://www.tabnine.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Deepchecks",
+  "careers_url": "https://www.deepchecks.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Aporia",
+  "careers_url": "https://www.aporia.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Superwise",
+  "careers_url": "https://superwise.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "aiOla",
+  "careers_url": "https://aiola.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Datagen",
+  "careers_url": "https://datagen.tech/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Qwak",
+  "careers_url": "https://www.qwak.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ClearML",
+  "careers_url": "https://clear.ml/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Iguazio",
+  "careers_url": "https://www.iguazio.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Redis",
+  "careers_url": "https://jobs.ashbyhq.com/redis",
+  "ats": "ashby",
+  "slug": "redis"
+ },
+ {
+  "name": "VAST Data",
+  "careers_url": "https://www.vastdata.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Firebolt",
+  "careers_url": "https://www.firebolt.io/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Explorium",
+  "careers_url": "https://www.explorium.ai/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Databricks",
+  "careers_url": "https://boards.greenhouse.io/databricks",
+  "ats": "greenhouse",
+  "slug": "databricks"
+ },
+ {
+  "name": "MongoDB",
+  "careers_url": "https://boards.greenhouse.io/mongodb",
+  "ats": "greenhouse",
+  "slug": "mongodb"
+ },
+ {
+  "name": "Confluent",
+  "careers_url": "https://jobs.ashbyhq.com/confluent",
+  "ats": "ashby",
+  "slug": "confluent"
+ },
+ {
+  "name": "SQream",
+  "careers_url": "https://sqream.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Upsolver",
+  "careers_url": "https://www.upsolver.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Datorios",
+  "careers_url": "https://datorios.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "lakeFS",
+  "careers_url": "https://lakefs.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Speedb",
+  "careers_url": "https://www.speedb.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Datarails",
+  "careers_url": "https://boards.greenhouse.io/datarails",
+  "ats": "greenhouse",
+  "slug": "datarails"
+ },
+ {
+  "name": "Panoply",
+  "careers_url": "https://panoply.io/company/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sightfull",
+  "careers_url": "https://www.sightfull.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Anodot",
+  "careers_url": "https://www.anodot.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Weka",
+  "careers_url": "https://www.weka.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Infinidat",
+  "careers_url": "https://www.infinidat.com/en/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Pliops",
+  "careers_url": "https://pliops.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Lightbits Labs",
+  "careers_url": "https://www.lightbitslabs.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NextSilicon",
+  "careers_url": "https://www.nextsilicon.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "NeuroBlade",
+  "careers_url": "https://www.neuroblade.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Hailo",
+  "careers_url": "https://hailo.ai/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "DriveNets",
+  "careers_url": "https://drivenets.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zadara",
+  "careers_url": "https://jobs.lever.co/Zadara",
+  "ats": "lever",
+  "slug": "Zadara"
+ },
+ {
+  "name": "CloudShare",
+  "careers_url": "https://www.cloudshare.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "JFrog",
+  "careers_url": "https://boards.greenhouse.io/jfrog",
+  "ats": "greenhouse",
+  "slug": "jfrog"
+ },
+ {
+  "name": "Snyk",
+  "careers_url": "https://jobs.ashbyhq.com/snyk",
+  "ats": "ashby",
+  "slug": "snyk"
+ },
+ {
+  "name": "Lightrun",
+  "careers_url": "https://boards.greenhouse.io/lightrun",
+  "ats": "greenhouse",
+  "slug": "lightrun"
+ },
+ {
+  "name": "Port",
+  "careers_url": "https://www.getport.io/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Bit",
+  "careers_url": "https://jobs.ashbyhq.com/bit",
+  "ats": "ashby",
+  "slug": "bit"
+ },
+ {
+  "name": "Descope",
+  "careers_url": "https://boards.greenhouse.io/descope",
+  "ats": "greenhouse",
+  "slug": "descope"
+ },
+ {
+  "name": "Frontegg",
+  "careers_url": "https://frontegg.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Torii",
+  "careers_url": "https://boards.greenhouse.io/toriihq",
+  "ats": "greenhouse",
+  "slug": "toriihq"
+ },
+ {
+  "name": "Qodo",
+  "careers_url": "https://www.qodo.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Swimm",
+  "careers_url": "https://swimm.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Mend",
+  "careers_url": "https://www.mend.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Jit",
+  "careers_url": "https://www.jit.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "env0",
+  "careers_url": "https://www.env0.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cloudinary",
+  "careers_url": "https://jobs.lever.co/cloudinary",
+  "ats": "lever",
+  "slug": "cloudinary"
+ },
+ {
+  "name": "Rookout",
+  "careers_url": "https://www.rookout.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Finout",
+  "careers_url": "https://jobs.ashbyhq.com/finout",
+  "ats": "ashby",
+  "slug": "finout"
+ },
+ {
+  "name": "PointFive",
+  "careers_url": "https://jobs.ashbyhq.com/pointfive",
+  "ats": "ashby",
+  "slug": "pointfive"
+ },
+ {
+  "name": "Zesty",
+  "careers_url": "https://zesty.co/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Coralogix",
+  "careers_url": "https://coralogix.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Logz.io",
+  "careers_url": "https://jobs.lever.co/logz",
+  "ats": "lever",
+  "slug": "logz"
+ },
+ {
+  "name": "Komodor",
+  "careers_url": "https://komodor.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "groundcover",
+  "careers_url": "https://www.groundcover.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "BigPanda",
+  "careers_url": "https://www.bigpanda.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Torq",
+  "careers_url": "https://boards.greenhouse.io/torq",
+  "ats": "greenhouse",
+  "slug": "torq"
+ },
+ {
+  "name": "Helios",
+  "careers_url": "https://gethelios.dev/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "monday.com",
+  "careers_url": "https://jobs.ashbyhq.com/monday.com",
+  "ats": "ashby",
+  "slug": "monday.com"
+ },
+ {
+  "name": "Tonkean",
+  "careers_url": "https://jobs.lever.co/tonkean",
+  "ats": "lever",
+  "slug": "tonkean"
+ },
+ {
+  "name": "Nexar",
+  "careers_url": "https://jobs.smartrecruiters.com/nexarinc",
+  "ats": "smartrecruiters",
+  "slug": "nexarinc"
+ },
+ {
+  "name": "Armis",
+  "careers_url": "https://jobs.smartrecruiters.com/armis",
+  "ats": "smartrecruiters",
+  "slug": "armis"
+ },
+ {
+  "name": "Cato Networks",
+  "careers_url": "https://boards.greenhouse.io/catonetworks",
+  "ats": "greenhouse",
+  "slug": "catonetworks"
+ },
+ {
+  "name": "Sweet Security",
+  "careers_url": "https://boards.greenhouse.io/sweetsecurity",
+  "ats": "greenhouse",
+  "slug": "sweetsecurity"
+ },
+ {
+  "name": "Datadog",
+  "careers_url": "https://boards.greenhouse.io/datadog",
+  "ats": "greenhouse",
+  "slug": "datadog"
+ },
+ {
+  "name": "Elastic",
+  "careers_url": "https://boards.greenhouse.io/elastic",
+  "ats": "greenhouse",
+  "slug": "elastic"
+ },
+ {
+  "name": "Vim",
+  "careers_url": "https://boards.greenhouse.io/vim",
+  "ats": "greenhouse",
+  "slug": "vim"
+ },
+ {
+  "name": "K Health",
+  "careers_url": "https://khealth.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Deci",
+  "careers_url": "https://deci.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Run:ai",
+  "careers_url": "https://www.run.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Wiz",
+  "careers_url": "https://job-boards.greenhouse.io/wizinc",
+  "ats": "greenhouse",
+  "slug": "wizinc"
+ },
+ {
+  "name": "Orca Security",
+  "careers_url": "https://orca.security/about/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Firefly",
+  "careers_url": "https://www.firefly.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Stream Security",
+  "careers_url": "https://www.stream.security/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Checkmarx",
+  "careers_url": "https://www.checkmarx.com/about-us/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cycode",
+  "careers_url": "https://cycode.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Legit Security",
+  "careers_url": "https://www.legitsecurity.com/company/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Apiiro",
+  "careers_url": "https://boards.greenhouse.io/apiiro",
+  "ats": "greenhouse",
+  "slug": "apiiro"
+ },
+ {
+  "name": "Arnica",
+  "careers_url": "https://www.arnica.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ox Security",
+  "careers_url": "https://www.ox.security/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Mobb",
+  "careers_url": "https://www.mobb.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Backslash Security",
+  "careers_url": "https://www.backslash.security/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Kodem Security",
+  "careers_url": "https://www.kodemsecurity.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Myrror Security",
+  "careers_url": "https://www.myrror.security/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Aqua Security",
+  "careers_url": "https://boards.greenhouse.io/aquasecurity",
+  "ats": "greenhouse",
+  "slug": "aquasecurity"
+ },
+ {
+  "name": "Bright Security",
+  "careers_url": "https://www.brightsec.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Seemplicity",
+  "careers_url": "https://seemplicity.io/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Pynt",
+  "careers_url": "https://www.pynt.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Salt Security",
+  "careers_url": "https://boards.greenhouse.io/saltsecurity",
+  "ats": "greenhouse",
+  "slug": "saltsecurity"
+ },
+ {
+  "name": "Miggo Security",
+  "careers_url": "https://www.miggo.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "L7 Defense",
+  "careers_url": "https://www.l7defense.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Silverfort",
+  "careers_url": "https://www.silverfort.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Transmit Security",
+  "careers_url": "https://boards.greenhouse.io/transmitsecurity",
+  "ats": "greenhouse",
+  "slug": "transmitsecurity"
+ },
+ {
+  "name": "Cyolo",
+  "careers_url": "https://cyolo.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Grip Security",
+  "careers_url": "https://grip.recruitee.com",
+  "ats": "recruitee",
+  "slug": "grip"
+ },
+ {
+  "name": "Token Security",
+  "careers_url": "https://www.token.security/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Rezonate",
+  "careers_url": "https://www.rezonate.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Astrix Security",
+  "careers_url": "https://astrix.security/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Oasis Security",
+  "careers_url": "https://www.oasis.security/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Entro Security",
+  "careers_url": "https://entro.security/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Clutch Security",
+  "careers_url": "https://www.clutch.security/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Andromeda Security",
+  "careers_url": "https://www.andromedasecurity.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Anetac",
+  "careers_url": "https://www.anetac.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BigID",
+  "careers_url": "https://boards.greenhouse.io/bigid",
+  "ats": "greenhouse",
+  "slug": "bigid"
+ },
+ {
+  "name": "Sentra",
+  "careers_url": "https://jobs.ashbyhq.com/sentra",
+  "ats": "ashby",
+  "slug": "sentra"
+ },
+ {
+  "name": "Cyera",
+  "careers_url": "https://www.cyera.io/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Eureka Security",
+  "careers_url": "https://www.eureka.security/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Piiano",
+  "careers_url": "https://www.piiano.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "MineOS",
+  "careers_url": "https://www.mineos.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Privya",
+  "careers_url": "https://www.privya.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Velotix",
+  "careers_url": "https://www.velotix.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "1touch.io",
+  "careers_url": "https://1touch.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cybereason",
+  "careers_url": "https://boards.greenhouse.io/cybereason",
+  "ats": "greenhouse",
+  "slug": "cybereason"
+ },
+ {
+  "name": "Hunters",
+  "careers_url": "https://www.hunters.security/en/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cynet",
+  "careers_url": "https://www.cynet.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Intezer",
+  "careers_url": "https://intezer.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Veriti",
+  "careers_url": "https://veriti.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Gutsy",
+  "careers_url": "https://www.gutsy.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sygnia",
+  "careers_url": "https://www.sygnia.co/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "CyberProof",
+  "careers_url": "https://www.cyberproof.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CYREBRO",
+  "careers_url": "https://www.cyrebro.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cybersixgill",
+  "careers_url": "https://cybersixgill.com/company/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "KELA",
+  "careers_url": "https://www.kelacyber.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cyberint",
+  "careers_url": "https://cyberint.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "IONIX",
+  "careers_url": "https://www.ionix.io/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Hudson Rock",
+  "careers_url": "https://www.hudsonrock.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cyabra",
+  "careers_url": "https://cyabra.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ActiveFence",
+  "careers_url": "https://www.activefence.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Guardio",
+  "careers_url": "https://guard.io/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Perception Point",
+  "careers_url": "https://perception-point.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Memcyco",
+  "careers_url": "https://www.memcyco.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Claroty",
+  "careers_url": "https://claroty.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "OTORIO",
+  "careers_url": "https://www.otorio.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Radiflow",
+  "careers_url": "https://www.radiflow.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sternum",
+  "careers_url": "https://sternumiot.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Karamba Security",
+  "careers_url": "https://karambasecurity.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Argus Cyber Security",
+  "careers_url": "https://argus-sec.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "C2A Security",
+  "careers_url": "https://c2a-sec.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Upstream Security",
+  "careers_url": "https://upstream.auto/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cybellum",
+  "careers_url": "https://cybellum.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sepio",
+  "careers_url": "https://sepiocyber.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SecuriThings",
+  "careers_url": "https://www.securithings.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cynerio",
+  "careers_url": "https://www.cynerio.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Waterfall Security",
+  "careers_url": "https://jobs.lever.co/waterfall",
+  "ats": "lever",
+  "slug": "waterfall"
+ },
+ {
+  "name": "NanoLock Security",
+  "careers_url": "https://www.nanolocksecurity.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Salvador Technologies",
+  "careers_url": "https://salvador-tech.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SIGA OT Solutions",
+  "careers_url": "https://sigasec.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "IRONSCALES",
+  "careers_url": "https://ironscales.com/company/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Guardz",
+  "careers_url": "https://boards.greenhouse.io/guardz",
+  "ats": "greenhouse",
+  "slug": "guardz"
+ },
+ {
+  "name": "Coro",
+  "careers_url": "https://www.coro.net/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Votiro",
+  "careers_url": "https://votiro.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "odix",
+  "careers_url": "https://www.odi-x.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sasa Software",
+  "careers_url": "https://www.sasa-software.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "LayerX Security",
+  "careers_url": "https://layerxsecurity.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Seraphic Security",
+  "careers_url": "https://seraphicsecurity.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Red Access",
+  "careers_url": "https://www.redaccess.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BioCatch",
+  "careers_url": "https://jobs.lever.co/biocatch",
+  "ats": "lever",
+  "slug": "biocatch"
+ },
+ {
+  "name": "Identiq",
+  "careers_url": "https://www.identiq.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "nsKnox",
+  "careers_url": "https://www.nsknox.net/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ThetaRay",
+  "careers_url": "https://www.thetaray.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Refine Intelligence",
+  "careers_url": "https://www.refine-intelligence.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Trustmi",
+  "careers_url": "https://www.trustmi.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cypago",
+  "careers_url": "https://cypago.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Anecdotes",
+  "careers_url": "https://www.anecdotes.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Kovrr",
+  "careers_url": "https://www.kovrr.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Centraleyes",
+  "careers_url": "https://www.centraleyes.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CYE",
+  "careers_url": "https://cyesec.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Panorays",
+  "careers_url": "https://www.panorays.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Findings",
+  "careers_url": "https://www.findings.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cynomi",
+  "careers_url": "https://cynomi.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Prompt Security",
+  "careers_url": "https://jobs.ashbyhq.com/prompt",
+  "ats": "ashby",
+  "slug": "prompt"
+ },
+ {
+  "name": "Aim Security",
+  "careers_url": "https://jobs.ashbyhq.com/aim",
+  "ats": "ashby",
+  "slug": "aim"
+ },
+ {
+  "name": "Pillar Security",
+  "careers_url": "https://jobs.lever.co/pillar",
+  "ats": "lever",
+  "slug": "pillar"
+ },
+ {
+  "name": "Lasso Security",
+  "careers_url": "https://www.lasso.security/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Noma Security",
+  "careers_url": "https://noma.security/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Nokod Security",
+  "careers_url": "https://nokodsecurity.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Apex Security",
+  "careers_url": "https://www.apexhq.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "DeepKeep",
+  "careers_url": "https://www.deepkeep.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zenity",
+  "careers_url": "https://zenity.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Knostic",
+  "careers_url": "https://www.knostic.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cymulate",
+  "careers_url": "https://boards.greenhouse.io/cymulate",
+  "ats": "greenhouse",
+  "slug": "cymulate"
+ },
+ {
+  "name": "SafeBreach",
+  "careers_url": "https://boards.greenhouse.io/safebreach",
+  "ats": "greenhouse",
+  "slug": "safebreach"
+ },
+ {
+  "name": "Pentera",
+  "careers_url": "https://pentera.io/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "XM Cyber",
+  "careers_url": "https://xmcyber.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CyCognito",
+  "careers_url": "https://www.cycognito.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Reflectiz",
+  "careers_url": "https://www.reflectiz.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Source Defense",
+  "careers_url": "https://sourcedefense.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Otterize",
+  "careers_url": "https://otterize.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Check Point Software",
+  "careers_url": "https://jobs.smartrecruiters.com/CheckPointSoftwareTechnologies2",
+  "ats": "smartrecruiters",
+  "slug": "CheckPointSoftwareTechnologies2"
+ },
+ {
+  "name": "Radware",
+  "careers_url": "https://www.radware.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AlgoSec",
+  "careers_url": "https://www.algosec.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tufin",
+  "careers_url": "https://www.tufin.com/company/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Allot",
+  "careers_url": "https://www.allot.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Portnox",
+  "careers_url": "https://www.portnox.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cynamics",
+  "careers_url": "https://www.cynamics.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zimperium",
+  "careers_url": "https://www.zimperium.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Appdome",
+  "careers_url": "https://www.appdome.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CyberArk",
+  "careers_url": "https://www.cyberark.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Akeyless",
+  "careers_url": "https://www.akeyless.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Apono",
+  "careers_url": "https://www.apono.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Secret Double Octopus",
+  "careers_url": "https://doubleoctopus.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Deep Instinct",
+  "careers_url": "https://www.deepinstinct.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Morphisec",
+  "careers_url": "https://www.morphisec.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SentinelOne",
+  "careers_url": "https://boards.greenhouse.io/sentinellabs",
+  "ats": "greenhouse",
+  "slug": "sentinellabs"
+ },
+ {
+  "name": "Imperva",
+  "careers_url": "https://www.imperva.com/company/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Varonis",
+  "careers_url": "https://www.varonis.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fireblocks",
+  "careers_url": "https://job-boards.greenhouse.io/fireblocks",
+  "ats": "greenhouse",
+  "slug": "fireblocks"
+ },
+ {
+  "name": "Fordefi",
+  "careers_url": "https://fordefi.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "GK8",
+  "careers_url": "https://www.gk8.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Blockaid",
+  "careers_url": "https://www.blockaid.io/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Hypernative",
+  "careers_url": "https://www.hypernative.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cyvers",
+  "careers_url": "https://cyvers.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Anjuna Security",
+  "careers_url": "https://www.anjuna.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "HUB Security",
+  "careers_url": "https://hubsecurity.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "QuantLR",
+  "careers_url": "https://www.quantlr.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cyberbit",
+  "careers_url": "https://www.cyberbit.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Regulus Cyber",
+  "careers_url": "https://www.regulus.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "GuardKnox",
+  "careers_url": "https://www.guardknox.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Terafence",
+  "careers_url": "https://terafence.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Payoneer",
+  "careers_url": "https://boards.greenhouse.io/payoneer",
+  "ats": "greenhouse",
+  "slug": "payoneer"
+ },
+ {
+  "name": "Tipalti",
+  "careers_url": "https://boards.greenhouse.io/tipaltisolutions",
+  "ats": "greenhouse",
+  "slug": "tipaltisolutions"
+ },
+ {
+  "name": "Mesh Payments",
+  "careers_url": "https://boards.greenhouse.io/mesh",
+  "ats": "greenhouse",
+  "slug": "mesh"
+ },
+ {
+  "name": "Rewire",
+  "careers_url": "https://rewire.recruitee.com",
+  "ats": "recruitee",
+  "slug": "rewire"
+ },
+ {
+  "name": "Immunefi",
+  "careers_url": "https://boards.greenhouse.io/immunefi",
+  "ats": "greenhouse",
+  "slug": "immunefi"
+ },
+ {
+  "name": "Finaloop",
+  "careers_url": "https://finaloop.recruitee.com",
+  "ats": "recruitee",
+  "slug": "finaloop"
+ },
+ {
+  "name": "Capitolis",
+  "careers_url": "https://boards.greenhouse.io/capitolis",
+  "ats": "greenhouse",
+  "slug": "capitolis"
+ },
+ {
+  "name": "Liquidity Group",
+  "careers_url": "https://jobs.smartrecruiters.com/liquidity",
+  "ats": "smartrecruiters",
+  "slug": "liquidity"
+ },
+ {
+  "name": "Lendbuzz",
+  "careers_url": "https://jobs.lever.co/lendbuzz",
+  "ats": "lever",
+  "slug": "lendbuzz"
+ },
+ {
+  "name": "Pagaya",
+  "careers_url": "https://boards.greenhouse.io/pagaya",
+  "ats": "greenhouse",
+  "slug": "pagaya"
+ },
+ {
+  "name": "Pontera",
+  "careers_url": "https://boards.greenhouse.io/pontera",
+  "ats": "greenhouse",
+  "slug": "pontera"
+ },
+ {
+  "name": "Lemonade",
+  "careers_url": "https://jobs.ashbyhq.com/lemonade",
+  "ats": "ashby",
+  "slug": "lemonade"
+ },
+ {
+  "name": "Next Insurance",
+  "careers_url": "https://boards.greenhouse.io/nextinsurance66",
+  "ats": "greenhouse",
+  "slug": "nextinsurance66"
+ },
+ {
+  "name": "Hippo Insurance",
+  "careers_url": "https://boards.greenhouse.io/hippo70",
+  "ats": "greenhouse",
+  "slug": "hippo70"
+ },
+ {
+  "name": "At-Bay",
+  "careers_url": "https://boards.greenhouse.io/atbay",
+  "ats": "greenhouse",
+  "slug": "atbay"
+ },
+ {
+  "name": "Novidea",
+  "careers_url": "https://jobs.ashbyhq.com/novidea",
+  "ats": "ashby",
+  "slug": "novidea"
+ },
+ {
+  "name": "Unit",
+  "careers_url": "https://jobs.ashbyhq.com/unit",
+  "ats": "ashby",
+  "slug": "unit"
+ },
+ {
+  "name": "Chaos Labs",
+  "careers_url": "https://jobs.lever.co/chaoslabs",
+  "ats": "lever",
+  "slug": "chaoslabs"
+ },
+ {
+  "name": "Coinmama",
+  "careers_url": "https://jobs.smartrecruiters.com/coinmama",
+  "ats": "smartrecruiters",
+  "slug": "coinmama"
+ },
+ {
+  "name": "Fonoa",
+  "careers_url": "https://jobs.ashbyhq.com/fonoa",
+  "ats": "ashby",
+  "slug": "fonoa"
+ },
+ {
+  "name": "Tifin",
+  "careers_url": "https://boards.greenhouse.io/tifin",
+  "ats": "greenhouse",
+  "slug": "tifin"
+ },
+ {
+  "name": "Rise",
+  "careers_url": "https://jobs.lever.co/rise",
+  "ats": "lever",
+  "slug": "rise"
+ },
+ {
+  "name": "Rapyd",
+  "careers_url": "https://www.rapyd.net/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Cross River",
+  "careers_url": "https://www.crossriver.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Anchor",
+  "careers_url": "https://www.anchor.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Personetics",
+  "careers_url": "https://personetics.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Balance",
+  "careers_url": "https://www.getbalance.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "BlueVine",
+  "careers_url": "https://www.bluevine.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Justt",
+  "careers_url": "https://www.justt.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Trullion",
+  "careers_url": "https://trullion.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "FundGuard",
+  "careers_url": "https://www.fundguard.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Earnix",
+  "careers_url": "https://earnix.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Splitit",
+  "careers_url": "https://www.splitit.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "StarkWare",
+  "careers_url": "https://starkware.co/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fundbox",
+  "careers_url": "https://fundbox.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Lili",
+  "careers_url": "https://lili.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Okoora",
+  "careers_url": "https://www.okoora.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sorbet",
+  "careers_url": "https://www.getsorbet.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sedric",
+  "careers_url": "https://www.sedric.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nayax",
+  "careers_url": "https://www.nayax.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Finaro",
+  "careers_url": "https://www.finaro.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BlueSnap",
+  "careers_url": "https://home.bluesnap.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nuvei",
+  "careers_url": "https://www.nuvei.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PayEm",
+  "careers_url": "https://www.payem.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sunbit",
+  "careers_url": "https://www.sunbit.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Simplex",
+  "careers_url": "https://www.simplex.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "eToro",
+  "careers_url": "https://www.etoro.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Plus500",
+  "careers_url": "https://www.plus500.com/en/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Behalf",
+  "careers_url": "https://www.behalf.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Blender",
+  "careers_url": "https://blender.co.il/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tarya",
+  "careers_url": "https://www.tarya.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "one zero",
+  "careers_url": "https://www.onezerobank.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Planck",
+  "careers_url": "https://planckdata.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sproutt",
+  "careers_url": "https://www.sproutt.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Voom",
+  "careers_url": "https://www.voominsurance.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cyberwrite",
+  "careers_url": "https://www.cyberwrite.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Wobi",
+  "careers_url": "https://www.wobi.co.il/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fairmatic",
+  "careers_url": "https://www.fairmatic.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BondIT",
+  "careers_url": "https://www.bondit.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bridgewise",
+  "careers_url": "https://bridgewise.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Kirobo",
+  "careers_url": "https://kirobo.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Utila",
+  "careers_url": "https://utila.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Orbs",
+  "careers_url": "https://www.orbs.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "COTI",
+  "careers_url": "https://coti.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Spacemesh",
+  "careers_url": "https://spacemesh.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AU10TIX",
+  "careers_url": "https://www.au10tix.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fugu",
+  "careers_url": "https://www.fugu.co.il/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Effectiv",
+  "careers_url": "https://www.effectiv.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "TipRanks",
+  "careers_url": "https://www.tipranks.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Lightico",
+  "careers_url": "https://www.lightico.com/company/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nominal",
+  "careers_url": "https://www.nominal.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bancor",
+  "careers_url": "https://www.bancor.network/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Colu",
+  "careers_url": "https://www.colu.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Neema",
+  "careers_url": "https://www.neema.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PayPlus",
+  "careers_url": "https://www.payplus.co.il/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ballerine",
+  "careers_url": "https://www.ballerine.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bits of Gold",
+  "careers_url": "https://www.bitsofgold.co.il/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fibonatix",
+  "careers_url": "https://www.fibonatix.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sapiens",
+  "careers_url": "https://www.sapiens.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Healthee",
+  "careers_url": "https://www.healthee.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "iForex",
+  "careers_url": "https://www.iforex.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fintica",
+  "careers_url": "https://www.fintica.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tranzila",
+  "careers_url": "https://www.tranzila.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fuse",
+  "careers_url": "https://www.fuse.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ironblocks",
+  "careers_url": "https://www.ironblocks.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Kima",
+  "careers_url": "https://www.kima.network/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sivo",
+  "careers_url": "https://www.sivo.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Vesttoo",
+  "careers_url": "https://www.vesttoo.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PayZen",
+  "careers_url": "https://www.payzen.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tower Semiconductor",
+  "careers_url": "https://towersemi.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Valens Semiconductor",
+  "careers_url": "https://valens.recruitee.com",
+  "ats": "recruitee",
+  "slug": "valens"
+ },
+ {
+  "name": "proteanTecs",
+  "careers_url": "https://www.proteantecs.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Speedata",
+  "careers_url": "https://speedata.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "DustPhotonics",
+  "careers_url": "https://jobs.smartrecruiters.com/dustphotonics",
+  "ats": "smartrecruiters",
+  "slug": "dustphotonics"
+ },
+ {
+  "name": "Weebit Nano",
+  "careers_url": "https://www.weebit-nano.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "RAAAM Memory Technologies",
+  "careers_url": "https://www.raaam-tech.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Autotalks",
+  "careers_url": "https://www.auto-talks.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ceva",
+  "careers_url": "https://www.ceva-ip.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Silicom",
+  "careers_url": "https://www.silicom.co.il/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ColorChip",
+  "careers_url": "https://www.color-chip.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Blaize",
+  "careers_url": "https://www.blaize.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Camtek",
+  "careers_url": "https://www.camtek.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nova",
+  "careers_url": "https://www.novami.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SatixFy",
+  "careers_url": "https://www.satixfy.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ramon.Space",
+  "careers_url": "https://www.ramon.space/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NewPhotonics",
+  "careers_url": "https://www.newphotonics.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Habana Labs (Intel)",
+  "careers_url": "https://habana.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Innoviz Technologies",
+  "careers_url": "https://innoviz.tech/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Vayyar Imaging",
+  "careers_url": "https://vayyar.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nano Dimension",
+  "careers_url": "https://www.nano-di.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Stratasys",
+  "careers_url": "https://www.stratasys.com/en/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Kornit Digital",
+  "careers_url": "https://www.kornit.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ceragon Networks",
+  "careers_url": "https://www.ceragon.com/company/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Gilat Satellite Networks",
+  "careers_url": "https://www.gilat.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AudioCodes",
+  "careers_url": "https://www.audiocodes.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Mobileye",
+  "careers_url": "https://jobs.lever.co/mobileye",
+  "ats": "lever",
+  "slug": "mobileye"
+ },
+ {
+  "name": "REE Automotive",
+  "careers_url": "https://ree.auto/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Arbe Robotics",
+  "careers_url": "https://www.arberobotics.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Foretellix",
+  "careers_url": "https://www.foretellix.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cognata",
+  "careers_url": "https://www.cognata.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cipia",
+  "careers_url": "https://cipia.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ottopia",
+  "careers_url": "https://ottopia.tech/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Imagry",
+  "careers_url": "https://www.imagry.co/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ride Vision",
+  "careers_url": "https://www.ride.vision/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "UVeye",
+  "careers_url": "https://www.uveye.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Cartica AI",
+  "careers_url": "https://www.cartica.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Via Transportation",
+  "careers_url": "https://boards.greenhouse.io/via",
+  "ats": "greenhouse",
+  "slug": "via"
+ },
+ {
+  "name": "Otonomo",
+  "careers_url": "https://otonomo.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Electreon",
+  "careers_url": "https://boards.greenhouse.io/electreon",
+  "ats": "greenhouse",
+  "slug": "electreon"
+ },
+ {
+  "name": "IRP Systems",
+  "careers_url": "https://www.irp-systems.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Chakratec",
+  "careers_url": "https://chakratec.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "StoreDot",
+  "careers_url": "https://www.storedot.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Addionics",
+  "careers_url": "https://www.addionics.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "3DBattery",
+  "careers_url": "https://www.3d-battery.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Phinergy",
+  "careers_url": "https://www.phinergy.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "H2Pro",
+  "careers_url": "https://www.h2pro.co/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "GenCell Energy",
+  "careers_url": "https://www.gencellenergy.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Brenmiller Energy",
+  "careers_url": "https://bren-energy.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nostromo Energy",
+  "careers_url": "https://www.nostromo.energy/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Augwind Energy",
+  "careers_url": "https://www.augwind.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Enlight Renewable Energy",
+  "careers_url": "https://www.enlightenergy.co.il/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SolarEdge",
+  "careers_url": "https://www.solaredge.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Apollo Power",
+  "careers_url": "https://www.apollo-power.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "UBQ Materials",
+  "careers_url": "https://ubqmaterials.recruitee.com",
+  "ats": "recruitee",
+  "slug": "ubqmaterials"
+ },
+ {
+  "name": "Aquarius Engines",
+  "careers_url": "https://aquariusengines.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Watergen",
+  "careers_url": "https://www.watergen.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Homebiogas",
+  "careers_url": "https://www.homebiogas.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sol-Chip",
+  "careers_url": "https://www.sol-chip.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "IDE Technologies",
+  "careers_url": "https://www.ide-tech.com/en/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Doral Energy",
+  "careers_url": "https://www.doral-energy.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ECOncrete",
+  "careers_url": "https://econcretetech.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Kando",
+  "careers_url": "https://www.kando.eco/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ASTERRA",
+  "careers_url": "https://asterra.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Netafim",
+  "careers_url": "https://orbia-orbia-precision-agriculture-netafim.teamtailor.com",
+  "ats": "teamtailor",
+  "slug": "orbia-orbia-precision-agriculture-netafim"
+ },
+ {
+  "name": "Rivulis",
+  "careers_url": "https://rivulis.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "N-Drip",
+  "careers_url": "https://n-drip.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CropX",
+  "careers_url": "https://cropx.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Taranis",
+  "careers_url": "https://www.taranis.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Prospera Technologies",
+  "careers_url": "https://www.prospera.ag/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SeeTree",
+  "careers_url": "https://www.seetree.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Beewise",
+  "careers_url": "https://www.beewise.ag/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "BeeHero",
+  "careers_url": "https://www.beehero.io/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Fieldin",
+  "careers_url": "https://www.fieldin.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Greeneye Technology",
+  "careers_url": "https://www.greeneye.ag/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Blue White Robotics",
+  "careers_url": "https://www.bluewhiterobotics.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tevel Aerobotics",
+  "careers_url": "https://www.tevel-tech.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "MetoMotion",
+  "careers_url": "https://metomotion.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Evogene",
+  "careers_url": "https://www.evogene.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Lavie Bio",
+  "careers_url": "https://www.laviebio.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Salicrop",
+  "careers_url": "https://www.salicrop.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Groundwork BioAg",
+  "careers_url": "https://www.groundworkbioag.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SupPlant",
+  "careers_url": "https://supplant.me/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Better Juice",
+  "careers_url": "https://www.better-juice.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Intuition Robotics",
+  "careers_url": "https://www.intuitionrobotics.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Temi (Robotemi)",
+  "careers_url": "https://www.robotemi.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Unlimited Robotics",
+  "careers_url": "https://www.unlimited-robotics.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Caja Robotics",
+  "careers_url": "https://www.cajarobotics.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BionicHIVE",
+  "careers_url": "https://www.bionichive.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "1MRobotics",
+  "careers_url": "https://www.1mrobotics.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ForSight Robotics",
+  "careers_url": "https://www.forsightrobotics.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Momentis Surgical",
+  "careers_url": "https://boards.greenhouse.io/memic",
+  "ats": "greenhouse",
+  "slug": "memic"
+ },
+ {
+  "name": "XACT Robotics",
+  "careers_url": "https://www.xactrobotics.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Human Xtensions",
+  "careers_url": "https://www.human-xt.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Insightec",
+  "careers_url": "https://www.insightec.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Nanox",
+  "careers_url": "https://www.nanox.vision/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "OrCam",
+  "careers_url": "https://orcam.recruitee.com",
+  "ats": "recruitee",
+  "slug": "orcam"
+ },
+ {
+  "name": "Lumus",
+  "careers_url": "https://lumusvision.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Everysight",
+  "careers_url": "https://everysight.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SatixFy Space",
+  "careers_url": "https://www.satixfy.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NSLComm",
+  "careers_url": "https://www.nslcomm.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SpacePharma",
+  "careers_url": "https://www.space4p.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "WeSpace Technologies",
+  "careers_url": "https://www.wespace.co.il/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ImageSat International",
+  "careers_url": "https://www.imagesatintl.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Radcom",
+  "careers_url": "https://www.radcom.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Radwin",
+  "careers_url": "https://www.radwin.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Siklu",
+  "careers_url": "https://www.siklu.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Airspan Networks",
+  "careers_url": "https://www.airspan.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Amdocs",
+  "careers_url": "https://www.amdocs.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sckipio",
+  "careers_url": "https://www.sckipio.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Augury",
+  "careers_url": "https://www.augury.com/careers/",
+  "ats": "greenhouse",
+  "slug": "augury"
+ },
+ {
+  "name": "3D Signals",
+  "careers_url": "https://3dsig.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sensibo",
+  "careers_url": "https://sensibo.com/pages/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Windward",
+  "careers_url": "https://windward.ai/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Orca AI",
+  "careers_url": "https://www.orca-ai.io/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "DockTech",
+  "careers_url": "https://www.docktech.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Captain's Eye",
+  "careers_url": "https://www.captainseye.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tomorrow.io",
+  "careers_url": "https://www.tomorrow.io/careers/",
+  "ats": "greenhouse",
+  "slug": "tomorrowio"
+ },
+ {
+  "name": "Feelit",
+  "careers_url": "https://www.feelit-tech.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Elbit Systems",
+  "careers_url": "https://www.elbitsystems.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Israel Aerospace Industries (IAI)",
+  "careers_url": "https://www.iai.co.il/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Rafael Advanced Defense Systems",
+  "careers_url": "https://www.rafael.co.il/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Xtend",
+  "careers_url": "https://www.xtend.me/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Robotican",
+  "careers_url": "https://www.robotican.net/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "General Robotics",
+  "careers_url": "https://www.glrobotics.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Smart Shooter",
+  "careers_url": "https://www.smart-shooter.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "D-Fend Solutions",
+  "careers_url": "https://d-fendsolutions.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sightec",
+  "careers_url": "https://www.sightec.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Axon Vision",
+  "careers_url": "https://axonvision.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SpearUAV",
+  "careers_url": "https://spearuav.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Plasan",
+  "careers_url": "https://plasan.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Iscar",
+  "careers_url": "https://www.iscar.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "XJet",
+  "careers_url": "https://xjet3d.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Massivit 3D",
+  "careers_url": "https://www.massivit3d.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tritone Technologies",
+  "careers_url": "https://tritoneam.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Highcon",
+  "careers_url": "https://www.highcon.net/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Intel Israel",
+  "careers_url": "https://jobs.intel.com/en/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NVIDIA Israel",
+  "careers_url": "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite",
+  "ats": "workday",
+  "slug": "nvidia/NVIDIAExternalCareerSite"
+ },
+ {
+  "name": "Apple Israel",
+  "careers_url": "https://jobs.apple.com/en-us/search?location=israel-ISR",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Google Israel",
+  "careers_url": "https://www.google.com/about/careers/applications/jobs/results?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Microsoft Israel",
+  "careers_url": "https://jobs.careers.microsoft.com/global/en/search?lc=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Amazon Israel",
+  "careers_url": "https://www.amazon.jobs/en/locations/israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Meta Israel",
+  "careers_url": "https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Qualcomm Israel",
+  "careers_url": "https://qualcomm.wd5.myworkdayjobs.com/External",
+  "ats": "workday",
+  "slug": "qualcomm/External"
+ },
+ {
+  "name": "Broadcom Israel",
+  "careers_url": "https://broadcom.wd1.myworkdayjobs.com/External_Career",
+  "ats": "workday",
+  "slug": "broadcom/External_Career"
+ },
+ {
+  "name": "Marvell Israel",
+  "careers_url": "https://marvell.wd1.myworkdayjobs.com/MarvellCareers",
+  "ats": "workday",
+  "slug": "marvell/MarvellCareers"
+ },
+ {
+  "name": "AMD Israel",
+  "careers_url": "https://careers.amd.com/careers-home/jobs?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Western Digital Israel",
+  "careers_url": "https://jobs.westerndigital.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Micron Israel",
+  "careers_url": "https://careers.micron.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cisco Israel",
+  "careers_url": "https://jobs.cisco.com/jobs/SearchJobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "IBM Israel",
+  "careers_url": "https://www.ibm.com/careers/search?field_keyword_08[0]=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Dell Israel",
+  "careers_url": "https://dell.wd1.myworkdayjobs.com/External",
+  "ats": "workday",
+  "slug": "dell/External"
+ },
+ {
+  "name": "HP Israel",
+  "careers_url": "https://hp.wd5.myworkdayjobs.com/ExternalCareerSite",
+  "ats": "workday",
+  "slug": "hp/ExternalCareerSite"
+ },
+ {
+  "name": "HP Indigo",
+  "careers_url": "https://hp.wd5.myworkdayjobs.com/ExternalCareerSite",
+  "ats": "workday",
+  "slug": "hp/ExternalCareerSite"
+ },
+ {
+  "name": "SAP Israel",
+  "careers_url": "https://jobs.sap.com/search/?locationsearch=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Salesforce Israel",
+  "careers_url": "https://salesforce.wd12.myworkdayjobs.com/External_Career_Site",
+  "ats": "workday",
+  "slug": "salesforce/External_Career_Site"
+ },
+ {
+  "name": "eBay Israel",
+  "careers_url": "https://careers.ebayinc.com/us/en/israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PayPal Israel",
+  "careers_url": "https://paypal.eightfold.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Intuit Israel",
+  "careers_url": "https://www.intuit.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Synopsys Israel",
+  "careers_url": "https://synopsys.wd1.myworkdayjobs.com/careers",
+  "ats": "workday",
+  "slug": "synopsys/careers"
+ },
+ {
+  "name": "Cadence Israel",
+  "careers_url": "https://cadence.wd1.myworkdayjobs.com/External_Careers",
+  "ats": "workday",
+  "slug": "cadence/External_Careers"
+ },
+ {
+  "name": "Applied Materials Israel",
+  "careers_url": "https://amat.wd1.myworkdayjobs.com/ApA",
+  "ats": "workday",
+  "slug": "amat/ApA"
+ },
+ {
+  "name": "KLA Israel",
+  "careers_url": "https://kla.wd1.myworkdayjobs.com/Search",
+  "ats": "workday",
+  "slug": "kla/Search"
+ },
+ {
+  "name": "Lam Research Israel",
+  "careers_url": "https://lamresearch.wd1.myworkdayjobs.com/External",
+  "ats": "workday",
+  "slug": "lamresearch/External"
+ },
+ {
+  "name": "Medtronic Israel",
+  "careers_url": "https://medtronic.wd1.myworkdayjobs.com/MedtronicCareers",
+  "ats": "workday",
+  "slug": "medtronic/MedtronicCareers"
+ },
+ {
+  "name": "Philips Israel",
+  "careers_url": "https://philips.wd3.myworkdayjobs.com/jobs-and-careers",
+  "ats": "workday",
+  "slug": "philips/jobs-and-careers"
+ },
+ {
+  "name": "GE HealthCare Israel",
+  "careers_url": "https://jobs.gecareers.com/healthcare/global/en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bosch Israel",
+  "careers_url": "https://jobs.smartrecruiters.com/BoschGroup",
+  "ats": "smartrecruiters",
+  "slug": "BoschGroup"
+ },
+ {
+  "name": "Siemens Israel",
+  "careers_url": "https://jobs.siemens.com/careers?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "General Motors Israel",
+  "careers_url": "https://search-careers.gm.com/en/jobs/?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Continental Israel",
+  "careers_url": "https://www.continental.com/en/career/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nokia Israel",
+  "careers_url": "https://www.nokia.com/about-us/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Samsung Israel",
+  "careers_url": "https://www.samsung.com/il/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ibex Medical Analytics",
+  "careers_url": "https://ib1.recruitee.com",
+  "ats": "recruitee",
+  "slug": "ib1"
+ },
+ {
+  "name": "Nucleai",
+  "careers_url": "https://www.nucleai.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Imagene AI",
+  "careers_url": "https://www.imagene-ai.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "DiA Imaging Analytics",
+  "careers_url": "https://www.dia-analytics.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Scopio Labs",
+  "careers_url": "https://scopiolabs.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sight Diagnostics",
+  "careers_url": "https://www.sightdx.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "RADLogics",
+  "careers_url": "https://www.radlogics.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Kahun",
+  "careers_url": "https://kahun.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Predicta Med",
+  "careers_url": "https://www.predicta-med.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Healthy.io",
+  "careers_url": "https://www.healthy.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Theator",
+  "careers_url": "https://theator.io/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Eleos Health",
+  "careers_url": "https://boards.greenhouse.io/eleoshealth",
+  "ats": "greenhouse",
+  "slug": "eleoshealth"
+ },
+ {
+  "name": "Sweetch",
+  "careers_url": "https://www.sweetch.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Kai.ai",
+  "careers_url": "https://www.kai.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Twill",
+  "careers_url": "https://www.twill.health/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "MyndYou",
+  "careers_url": "https://www.myndyou.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cognifit",
+  "careers_url": "https://www.cognifit.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "TytoCare",
+  "careers_url": "https://www.tytocare.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Datos Health",
+  "careers_url": "https://www.datos-health.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cordio Medical",
+  "careers_url": "https://www.cordio-med.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Navina",
+  "careers_url": "https://www.navina.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Alike Health",
+  "careers_url": "https://www.alike.health/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Belong.Life",
+  "careers_url": "https://belong.life/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "InspireMD",
+  "careers_url": "https://www.inspiremd.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Lumenis",
+  "careers_url": "https://www.lumenis.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Itamar Medical",
+  "careers_url": "https://www.itamar-medical.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Vayyar",
+  "careers_url": "https://vayyar.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Magenta Medical",
+  "careers_url": "https://magentamed.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CorNeat Vision",
+  "careers_url": "https://www.corneat.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NovoCure",
+  "careers_url": "https://www.novocure.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nurami Medical",
+  "careers_url": "https://www.nuramimedical.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "MediWound",
+  "careers_url": "https://www.mediwound.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PulseNmore",
+  "careers_url": "https://www.pulsenmore.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CardiacSense",
+  "careers_url": "https://cardiacsense.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sanolla",
+  "careers_url": "https://sanolla.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Belkin Vision",
+  "careers_url": "https://belkin-vision.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Beyond Air",
+  "careers_url": "https://www.beyondair.net/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sonovia",
+  "careers_url": "https://sonovia-tech.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "FDNA",
+  "careers_url": "https://www.fdna.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tamar Robotics",
+  "careers_url": "https://www.tamar-robotics.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Quris AI",
+  "careers_url": "https://www.quris.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Genoox",
+  "careers_url": "https://www.genoox.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Biomica",
+  "careers_url": "https://biomica.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Emendo Biotherapeutics",
+  "careers_url": "https://www.emendobio.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NRGene",
+  "careers_url": "https://www.nrgene.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nucleix",
+  "careers_url": "https://nucleix.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Compugen",
+  "careers_url": "https://www.cgen.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Enzymit",
+  "careers_url": "https://www.enzymit.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Pluri",
+  "careers_url": "https://www.pluri-biotech.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Gamida Cell",
+  "careers_url": "https://www.gamida-cell.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Teva Pharmaceutical",
+  "careers_url": "https://www.tevapharm.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "OncoHost",
+  "careers_url": "https://www.oncohost.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Curesponse",
+  "careers_url": "https://curesponse.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ukko",
+  "careers_url": "https://www.ukko.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Protai",
+  "careers_url": "https://www.protai.bio/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "1E Therapeutics",
+  "careers_url": "https://www.1e-therapeutics.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nym Health",
+  "careers_url": "https://nym.health/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Diagnostic Robotics",
+  "careers_url": "https://www.diagnosticrobotics.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "MDClone",
+  "careers_url": "https://www.mdclone.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Medial EarlySign",
+  "careers_url": "https://earlysign.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "MeMed",
+  "careers_url": "https://www.me-med.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sensible Medical",
+  "careers_url": "https://sensible-medical.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fairtility",
+  "careers_url": "https://jobs.smartrecruiters.com/fairtility",
+  "ats": "smartrecruiters",
+  "slug": "fairtility"
+ },
+ {
+  "name": "AiVF",
+  "careers_url": "https://www.aivf.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nuvo",
+  "careers_url": "https://nuvo.recruitee.com",
+  "ats": "recruitee",
+  "slug": "nuvo"
+ },
+ {
+  "name": "Gina Life",
+  "careers_url": "https://www.gina.life/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Embie",
+  "careers_url": "https://www.embie.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Binah.ai",
+  "careers_url": "https://www.binah.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Biobeat",
+  "careers_url": "https://www.bio-beat.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Neteera",
+  "careers_url": "https://www.neteera.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Donisi Health",
+  "careers_url": "https://www.donisihealth.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Continuse Biometrics",
+  "careers_url": "https://www.continuse.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cnoga Medical",
+  "careers_url": "https://www.cnogacare.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Essence SmartCare",
+  "careers_url": "https://www.essence-grp.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BrainQ",
+  "careers_url": "https://www.brainqtech.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Neuralight",
+  "careers_url": "https://www.neuralight.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ElMindA",
+  "careers_url": "https://elminda.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "MedAware",
+  "careers_url": "https://www.medaware.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Vocalis Health",
+  "careers_url": "https://vocalishealth.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sight Sciences",
+  "careers_url": "https://sightsciences.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Salignostics",
+  "careers_url": "https://salignostics.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Somatix",
+  "careers_url": "https://www.somatixinc.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AnX Robotica",
+  "careers_url": "https://anxrobotica.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Google",
+  "careers_url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Meta",
+  "careers_url": "https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Apple",
+  "careers_url": "https://jobs.apple.com/en-us/search?location=israel-ISR",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Microsoft",
+  "careers_url": "https://jobs.careers.microsoft.com/global/en/search?lc=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Amazon",
+  "careers_url": "https://www.amazon.jobs/en/locations/israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AWS",
+  "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services?loc_query=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nvidia",
+  "careers_url": "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite",
+  "ats": "workday",
+  "slug": "nvidia/NVIDIAExternalCareerSite"
+ },
+ {
+  "name": "Intel",
+  "careers_url": "https://intel.wd1.myworkdayjobs.com/External",
+  "ats": "workday",
+  "slug": "intel/External"
+ },
+ {
+  "name": "Cisco",
+  "careers_url": "https://jobs.cisco.com/jobs/SearchJobs/israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Qualcomm",
+  "careers_url": "https://qualcomm.wd5.myworkdayjobs.com/External",
+  "ats": "workday",
+  "slug": "qualcomm/External"
+ },
+ {
+  "name": "Broadcom",
+  "careers_url": "https://broadcom.wd1.myworkdayjobs.com/External_Career",
+  "ats": "workday",
+  "slug": "broadcom/External_Career"
+ },
+ {
+  "name": "Marvell",
+  "careers_url": "https://marvell.wd1.myworkdayjobs.com/MarvellCareers",
+  "ats": "workday",
+  "slug": "marvell/MarvellCareers"
+ },
+ {
+  "name": "Applied Materials",
+  "careers_url": "https://amat.wd1.myworkdayjobs.com/External",
+  "ats": "workday",
+  "slug": "amat/External"
+ },
+ {
+  "name": "KLA",
+  "careers_url": "https://kla.wd1.myworkdayjobs.com/Search",
+  "ats": "workday",
+  "slug": "kla/Search"
+ },
+ {
+  "name": "Lam Research",
+  "careers_url": "https://careers.lamresearch.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Micron",
+  "careers_url": "https://micron.wd1.myworkdayjobs.com/External",
+  "ats": "workday",
+  "slug": "micron/External"
+ },
+ {
+  "name": "Western Digital",
+  "careers_url": "https://jobs.smartrecruiters.com/WesternDigital",
+  "ats": "smartrecruiters",
+  "slug": "WesternDigital"
+ },
+ {
+  "name": "Analog Devices",
+  "careers_url": "https://analogdevices.wd1.myworkdayjobs.com/External",
+  "ats": "workday",
+  "slug": "analogdevices/External"
+ },
+ {
+  "name": "Texas Instruments",
+  "careers_url": "https://careers.ti.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AMD",
+  "careers_url": "https://careers.amd.com/careers-home/jobs?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NXP Semiconductors",
+  "careers_url": "https://nxp.wd3.myworkdayjobs.com/careers",
+  "ats": "workday",
+  "slug": "nxp/careers"
+ },
+ {
+  "name": "Infineon Technologies",
+  "careers_url": "https://www.infineon.com/cms/en/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Renesas Electronics",
+  "careers_url": "https://careers.renesas.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "onsemi",
+  "careers_url": "https://www.onsemi.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cadence Design Systems",
+  "careers_url": "https://cadence.wd1.myworkdayjobs.com/External_Careers",
+  "ats": "workday",
+  "slug": "cadence/External_Careers"
+ },
+ {
+  "name": "Synopsys",
+  "careers_url": "https://sjobs.brassring.com/TGnewUI/Search/Home/Home?partnerid=25235&siteid=5359",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Siemens EDA",
+  "careers_url": "https://jobs.siemens.com/careers?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Arm",
+  "careers_url": "https://careers.arm.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nokia",
+  "careers_url": "https://www.nokia.com/about-us/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ericsson",
+  "careers_url": "https://jobs.ericsson.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Samsung",
+  "careers_url": "https://www.samsung.com/il/aboutsamsung/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sony (Sony Semiconductor Israel)",
+  "careers_url": "https://www.sony-semicon.com/en/company/israel.html",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Dell Technologies",
+  "careers_url": "https://dell.wd1.myworkdayjobs.com/External",
+  "ats": "workday",
+  "slug": "dell/External"
+ },
+ {
+  "name": "HP Inc.",
+  "careers_url": "https://hp.wd5.myworkdayjobs.com/ExternalCareerSite",
+  "ats": "workday",
+  "slug": "hp/ExternalCareerSite"
+ },
+ {
+  "name": "Hewlett Packard Enterprise",
+  "careers_url": "https://hpe.wd5.myworkdayjobs.com/Jobsathpe",
+  "ats": "workday",
+  "slug": "hpe/Jobsathpe"
+ },
+ {
+  "name": "IBM",
+  "careers_url": "https://www.ibm.com/careers/search?field_keyword_08[0]=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Red Hat",
+  "careers_url": "https://redhat.wd5.myworkdayjobs.com/jobs",
+  "ats": "workday",
+  "slug": "redhat/jobs"
+ },
+ {
+  "name": "Oracle",
+  "careers_url": "https://careers.oracle.com/jobs/#en/sites/jobsearch/jobs?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SAP",
+  "careers_url": "https://jobs.sap.com/search/?locationsearch=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Adobe",
+  "careers_url": "https://careers.adobe.com/us/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Salesforce",
+  "careers_url": "https://careers.salesforce.com/en/jobs/?search=&country=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ServiceNow",
+  "careers_url": "https://careers.servicenow.com/jobs/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "VMware (Broadcom)",
+  "careers_url": "https://broadcom.wd1.myworkdayjobs.com/External_Career",
+  "ats": "workday",
+  "slug": "broadcom/External_Career"
+ },
+ {
+  "name": "Citrix (Cloud Software Group)",
+  "careers_url": "https://www.cloud.com/company/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Autodesk",
+  "careers_url": "https://autodesk.wd1.myworkdayjobs.com/Ext",
+  "ats": "workday",
+  "slug": "autodesk/Ext"
+ },
+ {
+  "name": "PTC",
+  "careers_url": "https://ptc.wd5.myworkdayjobs.com/careers",
+  "ats": "workday",
+  "slug": "ptc/careers"
+ },
+ {
+  "name": "NetApp",
+  "careers_url": "https://netapp.wd5.myworkdayjobs.com/Careers",
+  "ats": "workday",
+  "slug": "netapp/Careers"
+ },
+ {
+  "name": "OpenText",
+  "careers_url": "https://careers.opentext.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Splunk (Cisco)",
+  "careers_url": "https://www.splunk.com/en_us/careers.html",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Snowflake",
+  "careers_url": "https://careers.snowflake.com/us/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Atlassian",
+  "careers_url": "https://www.atlassian.com/company/careers/all-jobs",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Twilio",
+  "careers_url": "https://www.twilio.com/en-us/company/jobs",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zendesk",
+  "careers_url": "https://jobs.zendesk.com/us/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cloudflare",
+  "careers_url": "https://boards.greenhouse.io/cloudflare",
+  "ats": "greenhouse",
+  "slug": "cloudflare"
+ },
+ {
+  "name": "Akamai",
+  "careers_url": "https://akamaicareers.inflightcloud.com/search",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "F5",
+  "careers_url": "https://ffive.wd5.myworkdayjobs.com/f5jobs",
+  "ats": "workday",
+  "slug": "ffive/f5jobs"
+ },
+ {
+  "name": "Palo Alto Networks",
+  "careers_url": "https://jobs.paloaltonetworks.com/en/jobs/?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Yahoo",
+  "careers_url": "https://www.yahooinc.com/careers/careers-index.html",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Snap",
+  "careers_url": "https://careers.snap.com/jobs?location=Tel%20Aviv%2C%20Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Pinterest",
+  "careers_url": "https://www.pinterestcareers.com/jobs/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "X (Twitter)",
+  "careers_url": "https://careers.x.com/en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zoom",
+  "careers_url": "https://careers.zoom.us/jobs/search?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Uber",
+  "careers_url": "https://www.uber.com/us/en/careers/list/?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Lyft",
+  "careers_url": "https://www.lyft.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Airbnb",
+  "careers_url": "https://careers.airbnb.com/positions/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "eBay",
+  "careers_url": "https://careers.ebayinc.com/us/en/israel-jobs",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PayPal",
+  "careers_url": "https://paypal.eightfold.ai/careers?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Booking.com",
+  "careers_url": "https://jobs.booking.com/careers?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Shopify",
+  "careers_url": "https://www.shopify.com/careers/search",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Roblox",
+  "careers_url": "https://careers.roblox.com/jobs",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Unity",
+  "careers_url": "https://job-boards.greenhouse.io/unity3d",
+  "ats": "greenhouse",
+  "slug": "unity3d"
+ },
+ {
+  "name": "Scopely",
+  "careers_url": "https://www.scopely.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Electronic Arts",
+  "careers_url": "https://jobs.ea.com/en_US/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Stripe",
+  "careers_url": "https://stripe.com/jobs/search?office_locations=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Coinbase",
+  "careers_url": "https://www.coinbase.com/careers/positions",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Intuit",
+  "careers_url": "https://www.intuit.com/careers/teams/technology/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Visa",
+  "careers_url": "https://corporate.visa.com/en/jobs/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Mastercard",
+  "careers_url": "https://careers.mastercard.com/us/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Capital One",
+  "careers_url": "https://www.capitalonecareers.com/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Citi",
+  "careers_url": "https://jobs.citi.com/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "JPMorgan Chase",
+  "careers_url": "https://careers.jpmorgan.com/global/en/students/programs?search=&location=israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Goldman Sachs",
+  "careers_url": "https://www.goldmansachs.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Morgan Stanley",
+  "careers_url": "https://www.morganstanley.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Barclays",
+  "careers_url": "https://search.jobs.barclays/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Deutsche Telekom",
+  "careers_url": "https://www.telekom.com/en/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NICE",
+  "careers_url": "https://boards.greenhouse.io/nice",
+  "ats": "greenhouse",
+  "slug": "nice"
+ },
+ {
+  "name": "Verint",
+  "careers_url": "https://jobs.ashbyhq.com/verint",
+  "ats": "ashby",
+  "slug": "verint"
+ },
+ {
+  "name": "OpenAI",
+  "careers_url": "https://openai.com/careers/search/",
+  "ats": "ashby",
+  "slug": "openai"
+ },
+ {
+  "name": "Medtronic",
+  "careers_url": "https://medtronic.wd1.myworkdayjobs.com/MedtronicCareers",
+  "ats": "workday",
+  "slug": "medtronic/MedtronicCareers"
+ },
+ {
+  "name": "Stryker",
+  "careers_url": "https://stryker.wd1.myworkdayjobs.com/StrykerCareers",
+  "ats": "workday",
+  "slug": "stryker/StrykerCareers"
+ },
+ {
+  "name": "Boston Scientific",
+  "careers_url": "https://bostonscientific.eightfold.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Johnson & Johnson",
+  "careers_url": "https://www.careers.jnj.com/en/jobs/?search=&country=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "GE HealthCare",
+  "careers_url": "https://jobs.gecareers.com/gehealthcare/global/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Philips",
+  "careers_url": "https://philips.wd3.myworkdayjobs.com/jobs-and-careers",
+  "ats": "workday",
+  "slug": "philips/jobs-and-careers"
+ },
+ {
+  "name": "Siemens Healthineers",
+  "careers_url": "https://jobs.siemens-healthineers.com/careers?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Abbott",
+  "careers_url": "https://www.jobs.abbott/us/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Edwards Lifesciences",
+  "careers_url": "https://careers.edwards.com/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "3M",
+  "careers_url": "https://www.3m.com/3M/en_US/careers-us/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Novartis",
+  "careers_url": "https://www.novartis.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Pfizer",
+  "careers_url": "https://www.pfizer.com/about/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Merck (MSD)",
+  "careers_url": "https://jobs.merck.com/us/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Roche",
+  "careers_url": "https://careers.roche.com/global/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AstraZeneca",
+  "careers_url": "https://careers.astrazeneca.com/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bayer",
+  "careers_url": "https://career.bayer.com/en/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sanofi",
+  "careers_url": "https://jobs.sanofi.com/en/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Novo Nordisk",
+  "careers_url": "https://www.novonordisk.com/careers.html",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "General Motors",
+  "careers_url": "https://search-careers.gm.com/en/jobs/?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ford",
+  "careers_url": "https://corporate.ford.com/careers.html",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Continental",
+  "careers_url": "https://www.continental.com/en/career/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Autoliv",
+  "careers_url": "https://www.autoliv.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Aptiv",
+  "careers_url": "https://www.aptiv.com/en/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bosch",
+  "careers_url": "https://jobs.smartrecruiters.com/BoschGroup",
+  "ats": "smartrecruiters",
+  "slug": "BoschGroup"
+ },
+ {
+  "name": "Harman",
+  "careers_url": "https://jobs.harman.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Honeywell",
+  "careers_url": "https://careers.honeywell.com/us/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Siemens",
+  "careers_url": "https://jobs.siemens.com/careers?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Schneider Electric",
+  "careers_url": "https://www.se.com/ww/en/about-us/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ABB",
+  "careers_url": "https://careers.abb/global/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Renault Group",
+  "careers_url": "https://www.renaultgroup.com/en/talents/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Hyundai (CRADLE)",
+  "careers_url": "https://www.hyundaicradle.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Mercedes-Benz (MBRDNA)",
+  "careers_url": "https://group.mercedes-benz.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Valeo",
+  "careers_url": "https://jobs.valeo.com/en/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Denso",
+  "careers_url": "https://www.denso.com/global/en/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ZF",
+  "careers_url": "https://www.zf.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ciena",
+  "careers_url": "https://ciena.wd5.myworkdayjobs.com/Careers",
+  "ats": "workday",
+  "slug": "ciena/Careers"
+ },
+ {
+  "name": "Nike",
+  "careers_url": "https://jobs.nike.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PepsiCo",
+  "careers_url": "https://www.pepsicojobs.com/main/jobs?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Procter & Gamble",
+  "careers_url": "https://www.pgcareers.com/global/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nestle",
+  "careers_url": "https://www.nestle.com/jobs",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Estee Lauder Companies",
+  "careers_url": "https://www.esteelaudercompanies.com/en/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "General Electric",
+  "careers_url": "https://jobs.gecareers.com/global/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "John Deere",
+  "careers_url": "https://jobs.deere.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Deutsche Bank",
+  "careers_url": "https://careers.db.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Wells Fargo",
+  "careers_url": "https://www.wellsfargojobs.com/en/jobs/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tesla",
+  "careers_url": "https://www.tesla.com/careers/search/?region=IL",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cognyte",
+  "careers_url": "https://www.cognyte.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AT&T",
+  "careers_url": "https://www.att.jobs/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Comcast",
+  "careers_url": "https://jobs.comcast.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Deutsche Post DHL",
+  "careers_url": "https://careers.dhl.com/global/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zebra Technologies",
+  "careers_url": "https://www.zebra.com/us/en/about-zebra/careers.html",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Trend Micro",
+  "careers_url": "https://careers.trendmicro.com/en-US/search?location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fortinet",
+  "careers_url": "https://www.fortinet.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zscaler",
+  "careers_url": "https://www.zscaler.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Rapid7",
+  "careers_url": "https://www.rapid7.com/careers/open-positions/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "CrowdStrike",
+  "careers_url": "https://crowdstrike.wd5.myworkdayjobs.com/crowdstrikecareers",
+  "ats": "workday",
+  "slug": "crowdstrike/crowdstrikecareers"
+ },
+ {
+  "name": "Tenable",
+  "careers_url": "https://www.tenable.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Proofpoint",
+  "careers_url": "https://www.proofpoint.com/us/company/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nutanix",
+  "careers_url": "https://nutanix.eightfold.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Pure Storage",
+  "careers_url": "https://www.purestorage.com/company/careers.html",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Informatica",
+  "careers_url": "https://careers.informatica.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Teradata",
+  "careers_url": "https://careers.teradata.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "GitLab",
+  "careers_url": "https://about.gitlab.com/jobs/all-jobs/",
+  "ats": "greenhouse",
+  "slug": "gitlab"
+ },
+ {
+  "name": "Sony (PlayStation)",
+  "careers_url": "https://www.playstation.com/en-us/corporate/about/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Aristocrat (Product Madness)",
+  "careers_url": "https://careers.aristocrat.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Take-Two Interactive",
+  "careers_url": "https://www.take2games.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Microsoft (Xbox/Gaming)",
+  "careers_url": "https://jobs.careers.microsoft.com/global/en/search?lc=Israel&p=Gaming",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bank of America",
+  "careers_url": "https://careers.bankofamerica.com/en-us/job-search?ref=search&location=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "UBS",
+  "careers_url": "https://www.ubs.com/global/en/careers.html",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Wix (Wixpress)",
+  "careers_url": "https://www.wix.com/jobs/locations/israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Flex (Flextronics)",
+  "careers_url": "https://flex.wd1.myworkdayjobs.com/careers",
+  "ats": "workday",
+  "slug": "flex/careers"
+ },
+ {
+  "name": "Jabil",
+  "careers_url": "https://jabil.wd5.myworkdayjobs.com/Jabil_Careers",
+  "ats": "workday",
+  "slug": "jabil/Jabil_Careers"
+ },
+ {
+  "name": "Siemens Digital Industries Software",
+  "careers_url": "https://jobs.sw.siemens.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Dolby Laboratories",
+  "careers_url": "https://dolby.wd5.myworkdayjobs.com/Careers",
+  "ats": "workday",
+  "slug": "dolby/Careers"
+ },
+ {
+  "name": "Verizon",
+  "careers_url": "https://mycareer.verizon.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "T-Mobile",
+  "careers_url": "https://www.t-mobile.careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Toyota Connected",
+  "careers_url": "https://www.toyotaconnected.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Volkswagen (CARIAD)",
+  "careers_url": "https://cariad.technology/de/en/career.html",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BMW Group",
+  "careers_url": "https://www.bmwgroup.jobs/en.html",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Skoda / Volkswagen Group",
+  "careers_url": "https://www.volkswagen-group.com/en/careers-15801",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bristol Myers Squibb",
+  "careers_url": "https://careers.bms.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Eli Lilly",
+  "careers_url": "https://careers.lilly.com/us/en/search-results?keywords=Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "GSK",
+  "careers_url": "https://jobs.gsk.com/en-gb/search-jobs/Israel",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Axonius",
+  "careers_url": "https://boards.greenhouse.io/axonius",
+  "ats": "greenhouse",
+  "slug": "axonius"
+ },
+ {
+  "name": "Semperis",
+  "careers_url": "https://jobs.ashbyhq.com/semperis",
+  "ats": "ashby",
+  "slug": "semperis"
+ },
+ {
+  "name": "Oligo Security",
+  "careers_url": "https://jobs.ashbyhq.com/oligo",
+  "ats": "ashby",
+  "slug": "oligo"
+ },
+ {
+  "name": "Zafran Security",
+  "careers_url": "https://jobs.ashbyhq.com/zafran-security",
+  "ats": "ashby",
+  "slug": "zafran-security"
+ },
+ {
+  "name": "Island",
+  "careers_url": "https://www.island.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Skyhawk Security",
+  "careers_url": "https://www.skyhawk.security/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Talon Cyber Security",
+  "careers_url": "https://talon-sec.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Eon",
+  "careers_url": "https://www.eon.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cellebrite",
+  "careers_url": "https://careers.cellebrite.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Deel",
+  "careers_url": "https://jobs.ashbyhq.com/deel",
+  "ats": "ashby",
+  "slug": "deel"
+ },
+ {
+  "name": "Base44",
+  "careers_url": "https://base44.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Decart",
+  "careers_url": "https://www.decart.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cresta",
+  "careers_url": "https://cresta.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Optibus",
+  "careers_url": "https://www.optibus.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Nexxen",
+  "careers_url": "https://jobs.ashbyhq.com/nexxen",
+  "ats": "ashby",
+  "slug": "nexxen"
+ },
+ {
+  "name": "MyHeritage",
+  "careers_url": "https://boards.greenhouse.io/myheritage",
+  "ats": "greenhouse",
+  "slug": "myheritage"
+ },
+ {
+  "name": "Connecteam",
+  "careers_url": "https://boards.greenhouse.io/connecteam",
+  "ats": "greenhouse",
+  "slug": "connecteam"
+ },
+ {
+  "name": "Duda",
+  "careers_url": "https://boards.greenhouse.io/duda",
+  "ats": "greenhouse",
+  "slug": "duda"
+ },
+ {
+  "name": "Singular",
+  "careers_url": "https://jobs.ashbyhq.com/singular",
+  "ats": "ashby",
+  "slug": "singular"
+ },
+ {
+  "name": "Sweep",
+  "careers_url": "https://jobs.ashbyhq.com/sweep",
+  "ats": "ashby",
+  "slug": "sweep"
+ },
+ {
+  "name": "Trax Retail",
+  "careers_url": "https://traxretail.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bright Machines",
+  "careers_url": "https://www.brightmachines.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Navan",
+  "careers_url": "https://navan.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Via",
+  "careers_url": "https://boards.greenhouse.io/via",
+  "ats": "greenhouse",
+  "slug": "via"
+ },
+ {
+  "name": "Innoviz",
+  "careers_url": "https://innoviz.tech/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Quantum Machines",
+  "careers_url": "https://www.quantum-machines.co/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Quantum Source",
+  "careers_url": "https://www.quantum-source.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Matrix IT",
+  "careers_url": "https://www.matrix.co.il/en/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Magic Software",
+  "careers_url": "https://www.magicsoftware.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bizzabo",
+  "careers_url": "https://www.bizzabo.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Rubrik",
+  "careers_url": "https://boards.greenhouse.io/rubrik",
+  "ats": "greenhouse",
+  "slug": "rubrik"
+ },
+ {
+  "name": "Upwind",
+  "careers_url": "https://www.upwind.io/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Dream Security",
+  "careers_url": "https://www.dream.security/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Firmus",
+  "careers_url": "https://www.firmus.security/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Snappy",
+  "careers_url": "https://jobs.ashbyhq.com/snappy",
+  "ats": "ashby",
+  "slug": "snappy"
+ },
+ {
+  "name": "Bria AI",
+  "careers_url": "https://bria.ai/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Lasso",
+  "careers_url": "https://www.lasso.security/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zencity",
+  "careers_url": "https://zencity.io/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Atera",
+  "careers_url": "https://www.atera.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "DealHub",
+  "careers_url": "https://dealhub.io/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Tango",
+  "careers_url": "https://www.tango.us/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Prophet Security",
+  "careers_url": "https://www.prophetsecurity.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "LightSolver",
+  "careers_url": "https://www.lightsolver.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Qedma",
+  "careers_url": "https://www.qedma.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "QuamCore",
+  "careers_url": "https://www.quamcore.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Quantum Art",
+  "careers_url": "https://www.quantum-art.tech/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Get SAT",
+  "careers_url": "https://www.getsat.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Orbit Communication Systems",
+  "careers_url": "https://orbit-cs.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "StemRad",
+  "careers_url": "https://www.stemrad.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Israel Aerospace Industries",
+  "careers_url": "https://www.iai.co.il/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sentrycs",
+  "careers_url": "https://www.sentrycs.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Percepto",
+  "careers_url": "https://percepto.co/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Airobotics",
+  "careers_url": "https://www.airoboticsdrones.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Flytrex",
+  "careers_url": "https://www.flytrex.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "High Lander",
+  "careers_url": "https://www.highlander.tech/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Spear UAV",
+  "careers_url": "https://www.spearuav.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ParaZero",
+  "careers_url": "https://parazero.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Steadicopter",
+  "careers_url": "https://steadicopter.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BlueBird Aero Systems",
+  "careers_url": "https://www.bluebird-uav.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Temi",
+  "careers_url": "https://www.robotemi.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Mentee Robotics",
+  "careers_url": "https://www.menteebots.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Cogniteam",
+  "careers_url": "https://www.cogniteam.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tevel Aerobotics Technologies",
+  "careers_url": "https://www.tevel-tech.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PlayerMaker",
+  "careers_url": "https://www.playermaker.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Track160",
+  "careers_url": "https://www.track160.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Delasport",
+  "careers_url": "https://www.delasport.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Buff",
+  "careers_url": "https://www.buff.game/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PICO Get Personal",
+  "careers_url": "https://www.pico.tech/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Freightos",
+  "careers_url": "https://www.freightos.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "40Seas",
+  "careers_url": "https://www.40seas.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sensos",
+  "careers_url": "https://www.sensos.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "EquityBee",
+  "careers_url": "https://www.equitybee.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Localize",
+  "careers_url": "https://www.localize.city/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Fast Simon",
+  "careers_url": "https://www.fastsimon.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Loox",
+  "careers_url": "https://loox.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Bringoz",
+  "careers_url": "https://bringoz.bamboohr.com",
+  "ats": "bamboohr",
+  "slug": "bringoz"
+ },
+ {
+  "name": "Talenya",
+  "careers_url": "https://www.talenya.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "myInterview",
+  "careers_url": "https://www.myinterview.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Litigate",
+  "careers_url": "https://www.litigate.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Powtoon",
+  "careers_url": "https://www.powtoon.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Compedia",
+  "careers_url": "https://www.compedia.net/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Hippo",
+  "careers_url": "https://boards.greenhouse.io/hippo70",
+  "ats": "greenhouse",
+  "slug": "hippo70"
+ },
+ {
+  "name": "Ecoppia",
+  "careers_url": "https://www.ecoppia.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SolarGik",
+  "careers_url": "https://www.solargik.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "TripleW",
+  "careers_url": "https://triplew.co/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "GenCell",
+  "careers_url": "https://www.gencellenergy.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BlueGreen Water Technologies",
+  "careers_url": "https://bgtechs.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "TaKaDu",
+  "careers_url": "https://takadu.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Aquarius Spectrum",
+  "careers_url": "https://aquarius-spectrum.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Phytech",
+  "careers_url": "https://www.phytech.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Wanda Fish",
+  "careers_url": "https://www.wandafish.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Vertical Field",
+  "careers_url": "https://www.verticalfield.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BlueTree Technologies",
+  "careers_url": "https://www.bluetreetech.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Mush Foods",
+  "careers_url": "https://www.mushfoods.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Resonai",
+  "careers_url": "https://www.resonai.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tetavi",
+  "careers_url": "https://tetavi.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "EyeClick",
+  "careers_url": "https://www.eyeclick.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Humanz",
+  "careers_url": "https://apply.workable.com/humanz",
+  "ats": "workable",
+  "slug": "humanz"
+ },
+ {
+  "name": "RapidAPI",
+  "careers_url": "https://rapidapi.com/careers/",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "Kubiya",
+  "careers_url": "https://www.kubiya.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Configu",
+  "careers_url": "https://configu.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Stigg",
+  "careers_url": "https://www.stigg.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Blink Ops",
+  "careers_url": "https://www.blinkops.com/careers",
+  "ats": "comeet",
+  "slug": ""
+ },
+ {
+  "name": "QEDIT",
+  "careers_url": "https://qed-it.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zengo",
+  "careers_url": "https://zengo.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Anonybit",
+  "careers_url": "https://www.anonybit.io/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "accessiBe",
+  "careers_url": "https://accessibe.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "UserWay",
+  "careers_url": "https://userway.org/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "EqualWeb",
+  "careers_url": "https://www.equalweb.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Voiceitt",
+  "careers_url": "https://www.voiceitt.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "RightHear",
+  "careers_url": "https://www.right-hear.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Driivz",
+  "careers_url": "https://driivz.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tactile Mobility",
+  "careers_url": "https://tactilemobility.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ravin AI",
+  "careers_url": "https://www.ravin.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Enigmatos",
+  "careers_url": "https://www.enigmatos.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Velox",
+  "careers_url": "https://www.veloxprint.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Castor",
+  "careers_url": "https://www.3dcastor.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Scodix",
+  "careers_url": "https://www.scodix.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Landa Digital Printing",
+  "careers_url": "https://www.landanano.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ICL Group",
+  "careers_url": "https://www.icl-group.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Criaterra",
+  "careers_url": "https://www.criaterra.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tortech Nano Fibers",
+  "careers_url": "https://tortech.co.il/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nanomedic",
+  "careers_url": "https://nanomedic.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Amimon",
+  "careers_url": "https://www.amimon.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ASOCS",
+  "careers_url": "https://www.asocscloud.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Telrad Networks",
+  "careers_url": "https://www.telrad.com/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NeuReality",
+  "careers_url": "https://www.neureality.ai/careers",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Xsight Labs",
+  "careers_url": "https://xsightlabs.com/careers/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Own",
+  "careers_url": "https://own.recruitee.com",
+  "ats": "recruitee",
+  "slug": "own"
+ },
+ {
+  "name": "SysAid",
+  "careers_url": "https://www.sysaid.com/about-us/careers",
+  "ats": "unknown"
+ },
+ {
+  "name": "Evinced",
+  "careers_url": "https://www.evinced.com/careers",
+  "ats": "unknown"
+ },
+ {
+  "name": "CrazyLabs",
+  "careers_url": "https://www.crazylabs.com/careers/",
+  "ats": "unknown"
+ },
+ {
+  "name": "Nebius",
+  "careers_url": "https://www.linkedin.com/jobs/view/business-intelligence-developer-at-nebius-4448744926?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ",
+  "careers_url": "https://www.linkedin.com/jobs/view/information-and-data-management-at-iec-israel-electric-corporation-%D7%97%D7%91%D7%A8%D7%AA-%D7%94%D7%97%D7%A9%D7%9E%D7%9C-%D7%9C%D7%99%D7%A9%D7%A8%D7%90%D7%9C-%D7%91%D7%A2-%D7%9E-4451530144?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "comblack",
+  "careers_url": "https://www.linkedin.com/jobs/view/senior-business-intelligence-developer-at-comblack-4454025435?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "LiveU",
+  "careers_url": "https://www.linkedin.com/jobs/view/bi-developer-at-liveu-4416244974?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "G-STAT",
+  "careers_url": "https://www.linkedin.com/jobs/view/system-analyst-at-g-stat-4447690502?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Port.io",
+  "careers_url": "https://www.linkedin.com/jobs/view/senior-bi-analyst-at-port-io-4448277590?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Elad Software Systems",
+  "careers_url": "https://www.linkedin.com/jobs/view/%D7%9E%D7%A4%D7%AA%D7%97-%D7%AA-bi-%D7%9C%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98-ai-at-elad-software-systems-4438556920?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Menora Mivtachim Group",
+  "careers_url": "https://www.linkedin.com/jobs/view/bi-systems-analyst-at-menora-mivtachim-group-4446767185?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Extreme",
+  "careers_url": "https://www.linkedin.com/jobs/view/bi-system-analyst-at-extreme-4448145302?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Talent-HR",
+  "careers_url": "https://www.linkedin.com/jobs/view/business-intelligence-analyst-at-talent-hr-4336450195?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SQLink Group",
+  "careers_url": "https://www.linkedin.com/jobs/view/data-systems-analyst-at-sqlink-group-4449572101?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nogamy",
+  "careers_url": "https://www.linkedin.com/jobs/view/bi-systems-analyst-at-nogamy-4453648616?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Tipuli Tech",
+  "careers_url": "https://www.linkedin.com/jobs/view/data-analyst-at-tipuli-tech-4447120834?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Alpha | Similarweb Partner",
+  "careers_url": "https://www.linkedin.com/jobs/view/big-data-analyst-at-alpha-similarweb-partner-4447342939?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Revolut",
+  "careers_url": "https://www.linkedin.com/jobs/view/data-analyst-finance-at-revolut-4437960601?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Modellama",
+  "careers_url": "https://www.linkedin.com/jobs/view/data-analyst-at-modellama-4428612794?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nift",
+  "careers_url": "https://www.linkedin.com/jobs/view/data-analyst-at-nift-4448328003?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Glow",
+  "careers_url": "https://www.linkedin.com/jobs/view/data-analyst-at-glow-4443708848?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Recruitx",
+  "careers_url": "https://www.linkedin.com/jobs/view/data-analyst-jb-4122-at-recruitx-4420927681?_l=en",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "aQurate",
+  "careers_url": "https://il.indeed.com/applystart?jk=277f04299c34018e&from=vj&pos=bottom&mvj=0&spon=0&asub=mob&astse=6695220c612949b4&assa=4762",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Checkout.com",
+  "careers_url": "https://il.indeed.com/viewjob?jk=1cb03b106c946c09",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Mize",
+  "careers_url": "https://il.indeed.com/viewjob?jk=8f4809e500ad58a7",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "TechBiz Global GmbH",
+  "careers_url": "https://il.indeed.com/viewjob?jk=3f1b4b5180ac7866",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "TELUS Digital",
+  "careers_url": "https://il.indeed.com/applystart?jk=5583e7584c4a8a05&from=vj&pos=bottom&mvj=0&spon=0&asub=mob&astse=0dd150cc73ad985e&assa=2389",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "אקספריס אקדמי",
+  "careers_url": "https://il.indeed.com/applystart?jk=3ea71071a712b834&from=vj&pos=bottom&mvj=0&spon=0&asub=mob&astse=1637179bf9f0f6d9&assa=5635",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Autofleet",
+  "careers_url": "https://il.indeed.com/viewjob?jk=34ea970c27811067",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "my team",
+  "careers_url": "https://il.indeed.com/viewjob?jk=f05840a30bc8b523",
+  "ats": "unknown",
+  "slug": ""
+ }
+]

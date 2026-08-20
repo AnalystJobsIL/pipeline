@@ -1,0 +1,61 @@
+name: Retry unreachable (cloud, until zero)
+
+# Re-attacks companies marked 'unreachable' by trying alternate careers URLs (/careers, /jobs,
+# careers.<domain>, ...) with a longer timeout. Promotes any that now resolve. Runs daily so the
+# unreachable count keeps grinding down toward zero on its own — PC off.
+
+on:
+  schedule:
+    - cron: "30 2 * * *"       # daily, ~04:30 Israel
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "max unreachable to retry this run (0 = all)"
+        default: "150"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repo-state
+  cancel-in-progress: false
+
+jobs:
+  retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install Playwright + Chromium
+        run: |
+          python -m pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+      - name: Bright Data unlock pass (if key configured)
+        env:
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          BD_LIMIT: "120"
+        run: |
+          [ -z "$BRIGHTDATA_API_KEY" ] && { echo "no Bright Data key; skipping unlock pass"; exit 0; }
+          python bd_rescue.py
+        continue-on-error: true
+
+      - name: Retry unreachable with URL rediscovery
+        env:
+          RETRY_LIMIT: ${{ github.event.inputs.limit || '150' }}
+          FAST_SCRAPE: "1"
+        run: python retry_unreachable.py
+      - name: Commit recoveries
+        run: |
+          git config user.name  "retry-bot"
+          git config user.email "retry@users.noreply.github.com"
+          git add companies.csv scraped_cache.json
+          git commit -m "retry-unreachable $(date -u +%FT%H:%M) [skip ci]" || { echo "no change"; exit 0; }
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin ${GITHUB_REF_NAME} && git push origin HEAD:${GITHUB_REF_NAME} && exit 0
+            git rebase --abort 2>/dev/null || true; sleep $((i*20))
+          done
+          echo "::error::push failed after 5 retries"; exit 1

@@ -1,0 +1,47 @@
+name: Audit coverage (wayback rescue + empty cross-validation)
+
+# Weekly audit that (1) tries to rescue 'unreachable' companies via the Wayback Machine — archived
+# HTML often exposes their real ATS board, which we then verify LIVE via the ATS API on its open
+# host — and (2) cross-validates 'validated-empty' companies against their raw HTML + embedded ATS
+# so a scraper parse-miss can't hide real Israel jobs. Commits any promotions.
+
+on:
+  schedule:
+    - cron: "0 4 * * 0"        # Sundays ~07:00 Israel
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repo-state
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Wayback-rescue unreachable
+        run: python wayback_rescue.py
+        continue-on-error: true
+      - name: Cross-validate the empties
+        run: python validate_empty.py
+        continue-on-error: true
+      - name: Coverage report
+        run: python coverage_report.py
+      - name: Commit audit results
+        run: |
+          git config user.name  "audit-bot"
+          git config user.email "audit@users.noreply.github.com"
+          git add companies.csv scraped_cache.json
+          git commit -m "coverage audit $(date -u +%F) [skip ci]" || { echo "no change"; exit 0; }
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin ${GITHUB_REF_NAME} && git push origin HEAD:${GITHUB_REF_NAME} && exit 0
+            git rebase --abort 2>/dev/null || true; sleep $((i*20))
+          done
+          echo "::error::push failed after 5 retries"; exit 1

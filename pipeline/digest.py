@@ -1,0 +1,769 @@
+"""Build the email digest (subject + HTML + plaintext) from accepted new jobs.
+
+The digest is intentionally auditable: besides the job listings it carries a run-summary
+(how many scanned / Israel-matched / accepted / new, the keyword-vs-LLM path breakdown,
+and any companies whose fetch failed) so the reader can trust what they're seeing.
+"""
+from __future__ import annotations
+
+import datetime as _dt
+import html
+import re as _re
+import re
+
+
+def _safe_url(u):
+    """Only http/https survive — blocks javascript:/data: from scraped/discovered links."""
+    u = str(u or "").strip()
+    return u if u[:7].lower() == "http://" or u[:8].lower() == "https://" else ""
+
+
+_MD_META = re.compile(r"[\`*_{}\[\]()#+\-!@~|>]")
+
+
+def _md_esc(s):
+    """Escape Markdown metacharacters so scraped company/title text can't inject links,
+    @mentions, or formatting into the emailed issue."""
+    return _MD_META.sub(lambda m: "\\" + m.group(0), str(s or ""))
+
+
+def _fmt_date(d):
+    return d or "—"
+
+
+def _short(text, n=240):
+    """Trim text to n chars at a word boundary."""
+    t = " ".join(str(text or "").split())
+    if len(t) <= n:
+        return t
+    cut = t[:n].rsplit(" ", 1)[0]
+    return cut + "…"
+
+
+# --------------------------------------------------------------------------- #
+# snippet / metadata helpers (address the digest UX review)
+# --------------------------------------------------------------------------- #
+_ZW = re.compile(r"[﻿​‎‏­]")           # BOM / zero-width / soft hyphen
+_LABEL_PREFIX = re.compile(r"^\s*(experience level\s*:[^.]*\.\s*)?(description\s*:\s*)?", re.I)
+_EXP_LEVEL = re.compile(r"experience level\s*:\s*([^.]+)", re.I)
+_YEARS = re.compile(r"(\d+)\s*\+?\s*(?:-\s*\d+\s*)?years?\b", re.I)
+# markers that indicate the role-specific part of a JD begins here
+_ROLE_MARKER = re.compile(
+    r"(responsibilities|requirements|what you.?ll (?:do|be doing|bring)|qualifications|"
+    r"about the role|about the position|in this role|role overview|your role|"
+    r"we.?re looking for|we are looking for|as an?\s|you will|what you bring)", re.I)
+# "<Company> is a/an/the <predicate>." -> company one-liner
+_COMPANY_IS = re.compile(r"\b(?:is|are)\s+(?:a|an|the)\s+(.{5,90}?)[\.\n;]", re.I)
+_HEBREW = re.compile(r"[֐-׿]")
+# a failed `claude -p` (or similar CLI error) must never render as an About blurb
+_ABOUT_JUNK = re.compile(r"not logged in|please run|/login|usage:|command not found|invalid api|"
+                         r"api key|traceback|rate limit|quota|unauthor|permission denied", re.I)
+# a title with a breadcrumb separator or a place/CTA fused onto it is a scraped card blob
+_MANGLED_TITLE = re.compile(r"[⋅•·|►▸]|,\s*israel\b|tel[\s-]?aviv,|"
+                            r"(?<=[a-z])(?:Tel Aviv|Israel|Apply|Remote|Full[\s-]?time)|"
+                            r"israel(?=[A-Za-z])", re.I)
+
+
+def _clean_desc(desc):
+    return " ".join(_ZW.sub("", str(desc or "")).split())
+
+
+def _company_blurb(desc, company=""):
+    """Extract a short 'what the company does' phrase from a JD, or ''.
+
+    Prefer a phrase anchored on the company NAME ("<Company> is/builds/provides …") — that
+    can't accidentally grab role text ("… is looking for a Data Analyst"), and it catches
+    the article-less forms the generic pattern misses ("Blockaid is redefining trust …")."""
+    d = _LABEL_PREFIX.sub("", _clean_desc(desc)).lstrip(" •")
+    if company:
+        anchored = _re.search(
+            _re.escape(company)
+            + r"[^.•]{0,40}?\b(?:is|are|builds?|provides?|offers?|powers?|helps?|enables?|"
+            r"delivers?|develops?|creates?|makes?)\s+"
+            r"(?!seeking|looking|hiring|searching|recruiting|excited|thrilled|proud|now\b)"
+            r"(?:(?:a|an|the)\s+)?(.{6,110}?)[.•\n;]",
+            d[:400], _re.I)
+        if anchored:
+            words = anchored.group(1).strip().rstrip(".").split()
+            stray = {"of", "to", "for", "and", "or", "with", "that", "which",
+                     "by", "from", "as", "but", "nor"}
+            if len(words) >= 3 and words[0].lower() not in stray:
+                return " ".join(words[:16])
+    m = _COMPANY_IS.search(d[:220])
+    if not m:
+        return ""
+    words = m.group(1).strip().rstrip(".").split()
+    return " ".join(words[:12])
+
+
+# hard requirement headers — the practical "what you need" section. Tried first, earliest
+# wins. NOTE: "we're looking for" is deliberately NOT here — it usually opens a company
+# intro ("We are looking for a <role> to join…"), not a qualifications list.
+_REQ_HARD = _re.compile(r"(requirements?|qualifications?|what (?:you.?ll|you will) (?:bring|need)|"
+                        r"what (?:will make|makes) you successful|who you are|about you|"
+                        r"what we.?re looking for in you|must[- ]have|your (?:profile|experience|"
+                        r"background)|minimum qualifications|desired (?:skills|qualifications)|"
+                        r"skills (?:&|and) (?:experience|qualifications)|you(?:'?ll)? (?:have|bring))"
+                        r"\s*:?", _re.I)
+_REQ_SOFT = _re.compile(r"(ideal candidate|what you.?ll do|what you.?ll own)\s*:?", _re.I)
+# a new JD section starting = stop the requirements segment there
+_SECTION_END = _re.compile(r"(?:•\s*)?\b(responsibilit|benefits?|perks|about (?:us|the company)|"
+                           r"why join|what we offer|nice[- ]to[- ]have|advantages?|bonus|"
+                           r"we offer|our (?:stack|tech)|equal opportunit)\b\s*:?", _re.I)
+# leaked section-header words to strip from the front of a bullet
+_LEAD_JUNK = _re.compile(r"^(responsibilities|requirements?|qualifications?|the role|"
+                         r"about the role|role description|what you.?ll (?:need|bring|do|own))"
+                         r"\s*:?\s*", _re.I)
+# a bullet that is ONLY a category header (e.g. "Experience & Technical Skills") — drop it
+_HEADER_ONLY = _re.compile(r"^(experience|technical skills?|education|skills?|qualifications?|"
+                           r"requirements?|nice to have|about you|background|responsibilities|"
+                           r"what we(?:'re| are)? ?(?:expect|need|want|require|value|look\w*)|"
+                           r"what you.?ll (?:need|do|bring|own|be doing)|technical|professional)"
+                           r"(?:\s*(?:&|and|/|,)\s*(?:experience|technical|skills?|education|"
+                           r"qualifications?|requirements?|background))*\s*:?$", _re.I)
+# fallback splitter (no • markers survived): sentences / dashed clauses
+_SENT_SPLIT = _re.compile(r"(?<=[a-z0-9%)א-ת])\.\s+(?=[A-Z0-9א-ת])|\s[–—]\s(?=[A-Z0-9])")
+
+
+def _clean_bullet(p, cap=145):
+    """Tidy one requirement fragment: strip markers/leaked headers, fix stray spacing from
+    justified source text ("Ph . D", "4 + years", "SQL ,"), cap length uniformly."""
+    p = " ".join(str(p or "").split()).strip(" \t•·–—-:;.")
+    p = _LEAD_JUNK.sub("", p).strip(" :–—-")
+    p = re.sub(r"\s+([,.;:%)])", r"\1", p)          # no space before punctuation
+    p = re.sub(r"(\d)\s+\+", r"\1+", p)             # "4 +" -> "4+"
+    p = re.sub(r"\(\s+", "(", p)                    # "( x" -> "(x"
+    if len(p) > cap:
+        p = p[:cap].rsplit(" ", 1)[0].rstrip(" ,;:–—-") + "…"
+    if p.count("(") > p.count(")"):                 # unbalanced truncated parenthetical
+        li = p.rfind("(")
+        if len(p[li + 1:].strip()) < 2:             # dangling empty "(" -> drop it
+            p = p[:li].rstrip(" -–—,")
+        else:                                       # real content -> just close it
+            p = p.rstrip(" -–—,") + ")"
+    # drop a dangling connector left by mid-sentence truncation ("... experience with", "is an")
+    p = re.sub(r"[\s,]+(?:is an?|are|with|and|or|to|of|the|for|in|on|a)$", "", p, flags=re.I)
+    return p
+
+
+_REQ_SIGNAL = _re.compile(
+    r"\b(experience|years?|degree|proficien|knowledge|ability|familiar|proven|strong|expert|"
+    r"hands[- ]on|sql|python|excel|tableau|looker|power ?bi|bachelor|master|fluent|"
+    r"understanding|background|skilled|passion|track record|mindset)\b", _re.I)
+
+
+def _looks_like_header(c):
+    """A short, all-capitalized fragment with no requirement signal is a decorative section
+    header a company used to title its list (e.g. 'Your Chain of Strengths') — not a bullet."""
+    words = c.split()
+    if len(words) > 5 or _re.search(r"\d", c) or _REQ_SIGNAL.search(c):
+        return False
+    caps = sum(1 for w in words if w[:1].isupper())
+    return len(words) >= 2 and caps >= len(words) - 1
+
+
+def _requirements_snippet(desc, n=1000):
+    """The practical part of a JD (Requirements / What you'll bring) as clean bullet fragments.
+    Deterministic — header regex + <li>-marker splitting, no LLM. Returns [] when absent."""
+    d2 = _LABEL_PREFIX.sub("", _clean_desc(desc))
+    m = _REQ_HARD.search(d2) or _REQ_SOFT.search(d2)
+    if not m:
+        return []
+    seg = d2[m.end():].strip(" :-–—•")
+    e = _SECTION_END.search(seg)
+    if e and e.start() > 20:
+        seg = seg[:e.start()]
+    seg = seg[:n]
+    raw = seg.split("•") if "•" in seg else _SENT_SPLIT.split(seg)
+    parts = []
+    for p in raw:
+        c = _clean_bullet(p)
+        if not (8 <= len(c) <= 160) or _HEADER_ONLY.match(c) or _looks_like_header(c):
+            continue
+        if c.lower() not in (x.lower() for x in parts):
+            parts.append(c)
+    return parts[:6]
+
+
+def _role_snippet(desc, n=230):
+    """Prefer the role-specific text: strip field labels + leading company boilerplate,
+    jump to a responsibilities/requirements marker when present."""
+    d = _LABEL_PREFIX.sub("", _clean_desc(desc))
+    if not d:
+        return ""
+    m = _ROLE_MARKER.search(d)
+    if m and m.start() < 700:
+        d = d[m.start():]
+    else:
+        # drop a leading "<Company> is a … ." sentence if that's all we have
+        cm = _COMPANY_IS.search(d[:220])
+        if cm and cm.end() < 220:
+            d = d[cm.end():].strip(" .,-")
+    return _short(d, n)
+
+
+def _seniority_chip(desc):
+    m = _EXP_LEVEL.search(desc or "")
+    if m:
+        return m.group(1).strip().rstrip(".")
+    y = _YEARS.search(desc or "")
+    return f"{y.group(1)}+ yrs" if y else ""
+
+
+_LOC_DROP = {"il", "israel", "isr", "tel aviv district", "central district", "center district",
+             "hamerkaz", "haifa district", "southern district", "northern district",
+             "jerusalem district", "hadarom", "hatzafon", "center"}
+# canonicalize the many spellings of the same city to one label
+_LOC_CANON = {"tel aviv-yafo": "Tel Aviv", "tel aviv-jaffa": "Tel Aviv", "tel aviv jaffa": "Tel Aviv",
+              "telaviv": "Tel Aviv", "tel-aviv": "Tel Aviv", "tlv": "Tel Aviv",
+              "ramat-gan": "Ramat Gan", "petah-tikva": "Petah Tikva", "petach tikva": "Petah Tikva",
+              "rishon lezion": "Rishon LeZion", "rishon le zion": "Rishon LeZion",
+              "kiryat bialik": "Kiryat Bialik", "beer sheva": "Be'er Sheva", "beersheba": "Be'er Sheva",
+              "יפו": "Tel Aviv", "תל אביב": "Tel Aviv", "תל אביב-יפו": "Tel Aviv",
+              "באר שבע": "Be'er Sheva", "רעננה": "Ra'anana", "הרצליה": "Herzliya",
+              "חיפה": "Haifa", "ירושלים": "Jerusalem", "פתח תקווה": "Petah Tikva",
+              "רמת גן": "Ramat Gan", "חולון": "Holon", "נתניה": "Netanya",
+              "יקנעם עילית": "Yokneam", "יקנעם": "Yokneam", "טירת כרמל": "Tirat Carmel",
+              "מחוז הצפון": "Northern Israel", "מחוז המרכז": "Central Israel",
+              "מחוז תל אביב": "Tel Aviv", "מחוז חיפה": "Haifa area", "ישראל": "Israel (unspecified)"}
+
+
+def _norm_location(loc):
+    # split on commas AND " - " / " / " separators (e.g. "Israel - Petah Tikva")
+    raw = re.split(r"\s[-/]\s|,", str(loc or ""))
+    parts = [p.strip() for p in raw if p.strip()]
+    kept = [p for p in parts if p.lower() not in _LOC_DROP]
+    out = []
+    for p in kept:                      # drop consecutive duplicates (e.g. "Tel Aviv, Tel Aviv")
+        if not out or out[-1].lower() != p.lower():
+            out.append(p)
+    city = out[0] if out else (parts[0] if parts else "")
+    if not city or city.lower() in ("israel", "isr", "il"):
+        return "Israel (unspecified)"
+    return _LOC_CANON.get(city.lower(), city)
+
+
+_SEN_INFER = re.compile(r"\b(senior|sr\.?|principal|staff|head of|lead|director|vp|chief|expert|manager)\b", re.I)
+
+
+_SEN_LEAD = re.compile(r"\b(team ?lead|tech ?lead|group lead|manager|head of|principal|staff|"
+                       r"director|vp|vice president|chief)\b", re.I)
+
+
+def _sen_canon(chip, title):
+    """Collapse any seniority hint to ONE tidy label so the column scans in a glance:
+    Junior / Mid / Senior / Lead+ (— when unknown). The raw parsed value (e.g.
+    'Advanced (5-8 Years)') is preserved by the caller as a hover tooltip."""
+    c = (chip or "").lower()
+    t = (title or "").lower()
+    if "junior" in c or "entry" in c or "intern" in c:
+        return "Junior"
+    if _SEN_LEAD.search(c) or _SEN_LEAD.search(t):
+        return "Lead+"
+    if any(w in c for w in ("senior", "advanced", "expert", "mid-senior")) or _SEN_INFER.search(t):
+        return "Senior"
+    m = re.search(r"(\d+)", c)
+    if m:
+        y = int(m.group(1))
+        return "Lead+" if y >= 8 else "Senior" if y >= 5 else "Mid"
+    if "mid" in c:
+        return "Mid"
+    return "—"
+
+
+def _sen_rank(chip):
+    """Numeric rank for correct seniority sorting (junior→lead; unknown last)."""
+    c = (chip or "").lower()
+    if c in ("", "—"):
+        return 99
+    if "junior" in c or "entry" in c:
+        return 1
+    if any(w in c for w in ("lead", "manager", "head", "principal", "staff", "director", "vp", "chief")):
+        return 6
+    if "mid-senior" in c:
+        return 4
+    if "senior" in c:
+        return 5
+    if "mid" in c:
+        return 3
+    m = re.search(r"(\d+)", c)
+    if m:
+        y = int(m.group(1))
+        return 6 if y >= 5 else 5 if y >= 3 else 3
+    return 6 if ("advanced" in c or "expert" in c) else 4
+
+
+_EMP = [("maternity", "Maternity cover"), ("temporary", "Temp"), ("contract", "Contract"),
+        ("internship", "Intern"), ("part-time", "Part-time")]
+
+
+def _employment_badge(title):
+    t = (title or "").lower()
+    for kw, label in _EMP:
+        if kw in t:
+            return label
+    return ""
+
+
+_REL_DAYS = re.compile(r"(\d+)\+?\s*day", re.I)
+_REL_MONTHS = re.compile(r"(\d+)\+?\s*month", re.I)
+
+
+def _rel_date(posted_date, run_date):
+    """'today' / '3d ago' style label. Recovers relative strings ('Posted 4 Days Ago')
+    that slipped through un-normalized, and NEVER leaks raw junk — unparseable → '—'."""
+    s = str(posted_date or "")
+    try:
+        p = _dt.date.fromisoformat(s[:10])
+        r = _dt.date.fromisoformat(str(run_date)[:10])
+        days = (r - p).days
+        return "today" if days <= 0 else "1d ago" if days == 1 else f"{days}d ago"
+    except (ValueError, TypeError):
+        pass
+    sl = s.lower()
+    if "today" in sl or "just posted" in sl or "just now" in sl:
+        return "today"
+    if "yesterday" in sl:
+        return "1d ago"
+    m = _REL_DAYS.search(sl)
+    if m:
+        return f"{int(m.group(1))}d ago"
+    m = _REL_MONTHS.search(sl)
+    if m:
+        return f"{int(m.group(1)) * 30}d ago"
+    m = re.match(r"posted\s+(\d+)", sl)          # 'Posted 4 [Days Ago]' truncations
+    if m:
+        return f"{int(m.group(1))}d ago"
+    return "—"
+
+
+def _age_note(posted_date, run_date):
+    """Return a staleness flag for ISO dates older than ~45 days, else ''."""
+    try:
+        d = _dt.date.fromisoformat(str(posted_date)[:10])
+        r = _dt.date.fromisoformat(str(run_date)[:10])
+    except ValueError:
+        return ""
+    days = (r - d).days
+    if days >= 60:
+        return f" · ⚠️ posted ~{days // 30}mo ago"
+    if days >= 45:
+        return f" · ⚠️ posted {days}d ago"
+    return ""
+
+
+def build_markdown(jobs, run_date, stats, company_info=None, board_url=""):
+    """Return (title, body_markdown) — a COMPACT, email-friendly digest.
+
+    Grouped by company (freshest first). Each company shows its one-line "what it does /
+    how it earns money", then its roles as a bullet list where the title is a direct apply
+    link plus location/date/seniority. No `<details>` collapsibles in the listing: email
+    clients (Gmail) render those expanded anyway, so a compact list reads better everywhere;
+    the full role description is one tap away on the apply link.
+
+    `company_info` maps company name -> a plain-text "what it does + how it earns money".
+    """
+    company_info = company_info or {}
+    n = len(jobs)
+    title = f"🎯 {n} new senior analytics role{'' if n == 1 else 's'} — {run_date}"
+
+    by_company = {}
+    for j in jobs:
+        by_company.setdefault(j["company"], []).append(j)
+    for c in by_company:
+        by_company[c].sort(key=lambda x: str(x.get("posted_date") or ""), reverse=True)
+    # companies ordered by their freshest posting
+    companies = sorted(by_company, key=lambda c: max(str(x.get("posted_date") or "")
+                                                     for x in by_company[c]), reverse=True)
+
+    lines = [f"# {title}", "",
+             "Israeli high-tech scan — experienced (≈3+ yrs) data-analysis / BI / analytics "
+             "roles from the **last 48h**, freshest first. Each role title links to apply.", ""]
+    if board_url:
+        lines += [f"🔎 **[Open the full board →]({board_url})** — everything from the last 2 "
+                  "weeks, searchable & sortable.", ""]
+    if n == 0:
+        lines.append("_No new matching openings today._")
+
+    for company in companies:
+        jobs_c = by_company[company]
+        about = company_info.get(company) or _company_blurb(jobs_c[0].get("description"))
+        lines.append(f"### {_md_esc(company)}")
+        if about:
+            lines.append(f"_{about}_")
+        lines.append("")
+        for j in jobs_c:
+            url = j.get("url") or ""
+            title_txt = j.get("title") or "(untitled)"
+            if _HEBREW.search(title_txt):
+                title_txt += " (Hebrew)"
+            su = _safe_url(url)
+            head = (f"**{_md_esc(title_txt)}** — {su}" if su
+                    else f"**{_md_esc(title_txt)}**")
+            chip = _seniority_chip(j.get("description"))
+            meta = [f"📍 {_norm_location(j.get('location'))}",
+                    f"🗓 {j.get('posted_date') or '—'}" + _age_note(j.get("posted_date"), run_date)]
+            if chip:
+                meta.append(f"🎓 {chip}")
+            lines.append(f"- {head} · {' · '.join(meta)}")
+        lines.append("")
+
+    # collapsed audit so the email stays clean but is still verifiable
+    s = stats
+    paths = ", ".join(f"{k}={v}" for k, v in sorted(s.get("paths", {}).items()))
+    lines += [
+        "---",
+        "<details><summary>Run audit</summary>", "",
+        f"- Companies scanned: **{s.get('companies_scanned',0)}** (failed: {s.get('companies_failed',0)})",
+        f"- Jobs fetched: {s.get('jobs_fetched',0)} · Israel-matched: {s.get('israel_matched',0)}",
+        f"- Accepted: {s.get('accepted',0)} · after merge: {s.get('after_merge',0)} · **new: {s.get('new',0)}**",
+        f"- Decision paths: {paths}",
+        f"- LLM calls this run: {s.get('llm_calls',0)}",
+    ]
+    if s.get("failed_companies"):
+        lines.append(f"- Failed companies: {', '.join(s['failed_companies'])}")
+    lines += ["", "</details>"]
+    return title, "\n".join(lines)
+
+
+def _newcut(run_date):
+    import datetime as _dt
+    try:
+        return (_dt.date.fromisoformat(run_date) - _dt.timedelta(days=1)).isoformat()
+    except Exception:
+        return "9999"
+
+
+def build_board_html(jobs, run_date, stats, company_info=None, analytics_html="", contact_url="",
+                     heading="senior analytics roles in Israel"):
+    """Interactive board (GitHub Pages): an accessible, expandable, sortable TABLE.
+
+    Columns: Company / Role / Location / Posted / Seniority. Rows expand (click or Enter/Space)
+    to the company profile + role details + apply link; headers sort (click or Enter/Space,
+    with real numeric seniority ranking); the search box filters live and shows a result count.
+    Sticky header via a bounded-height scroll region. `analytics_html` injects a tracker;
+    `contact_url` adds a Contact link.
+    """
+    company_info = company_info or {}
+    # defensive: never render a run-together scraped card blob as a title
+    jobs = [j for j in jobs if not _MANGLED_TITLE.search(j.get("title") or "")
+            and len(j.get("title") or "") <= 100]
+    ordered = sorted(jobs, key=lambda j: str(j.get("posted_date") or ""), reverse=True)
+    n = len(ordered)
+
+    def esc(s):
+        return html.escape(str(s or ""))
+
+    rows = []
+    for j in ordered:
+        company = j.get("company", "")
+        rtitle = j.get("title") or "(untitled)"
+        about = (company_info.get(company) or _company_blurb(j.get("description"), company) or "")
+        if _ABOUT_JUNK.search(about):           # a failed `claude -p` error must never show
+            about = _company_blurb(j.get("description"), company) or ""
+        if len(about) > 180:
+            about = about[:180][:about[:180].rfind(" ")] + "…"
+        req_parts = _requirements_snippet(j.get("description"))
+        raw_chip = _seniority_chip(j.get("description")) or ""
+        chip = _sen_canon(raw_chip, rtitle)
+        rank = _sen_rank(raw_chip or chip)
+        loc = _norm_location(j.get("location"))
+        pdate = j.get("posted_date") or ""
+        age = _age_note(pdate, run_date)
+        url = esc(_safe_url(j.get("url")))
+        emp = _employment_badge(rtitle)
+        blob = esc(f"{company} {rtitle} {loc} {chip}").lower()
+        sen_tip = f' title="{esc(raw_chip)}"' if raw_chip and raw_chip.lower() != chip.lower() else ''
+        sen_cls = f"sen sen-{chip.lower().replace('+', 'p').replace('—', 'x')}"
+        sen_html = (f'<span class="{sen_cls}"{sen_tip}>{esc(chip)}</span>' if chip != "—"
+                    else '<span class="sen empty">—</span>')
+        emp_html = f' <span class="emp">{esc(emp)}</span>' if emp else ''
+        fs = (j.get("posted_date") or "")[:10] or (j.get("first_seen") or "")[:10]
+        if fs and fs >= _newcut(run_date):
+            emp_html += ' <span class="newb">new</span>' 
+        apply = (f'<a class="apply" href="{url}" target="_blank" rel="noopener">'
+                 'Apply on the company site →</a>') if url else ''
+        # --- uniform two-column detail card: content (left) + at-a-glance facts (right) ---
+        main = ""
+        if about:
+            main += f'<p class="about" dir="auto"><b>About {esc(company)}</b> — {esc(about)}</p>'
+        if req_parts:
+            lis = "".join(f'<li dir="auto">{esc(p)}</li>' for p in req_parts)
+            main += (f'<p class="rlabel">What you&#8217;ll need</p>'
+                     f'<ul class="reqs">{lis}</ul>')
+        if not about and not req_parts:
+            main += ('<p class="about muted" dir="auto">'
+                     'Full role description on the company site.</p>')
+        main += apply
+        facts = [("Location", loc), ("Level", chip), ("Posted", _rel_date(pdate, run_date))]
+        if emp:
+            facts.append(("Type", emp))
+        facts_html = ('<dl class="facts">' + "".join(
+            f'<div class="fact"><dt>{esc(k)}</dt>'
+            f'<dd{" class=nd" if (not v or v == "—") else ""}>{esc(v or "—")}</dd></div>'
+            for k, v in facts) + '</dl>')
+        detail = (f'<div class="dcard"><div class="dmain">{main}</div>'
+                  f'<aside class="dside">{facts_html}</aside></div>')
+        rows.append(
+            f'<tr class="row" tabindex="0" role="button" aria-expanded="false" '
+            f'data-blob="{blob}" data-company="{esc(company).lower()}" '
+            f'data-role="{esc(rtitle).lower()}" data-loc="{esc(loc).lower()}" '
+            f'data-date="{esc(pdate)}" data-senrank="{rank}">'
+            f'<td class="cco">{esc(company)}</td>'
+            f'<td class="cro">{esc(rtitle)}{emp_html}</td>'
+            f'<td class="cloc">{esc(loc)}</td>'
+            f'<td class="cdate" title="{esc(pdate)}">{esc(_rel_date(pdate, run_date))}{esc(age)}</td>'
+            f'<td class="csen">{sen_html}</td></tr>'
+            f'<tr class="detail"><td colspan="5"><div class="db">{detail}</div></td></tr>')
+
+    fresh = sum(1 for j in ordered if not _age_note(j.get("posted_date"), run_date))
+    audit = (f"{n} open roles · {fresh} posted recently · "
+             f"{stats.get('companies_scanned',0)} companies scanned · refreshed {esc(run_date)}")
+    contact = (f' · <a href="{esc(contact_url)}" target="_blank" rel="noopener">Contact</a>'
+               if contact_url else '')
+    if "archived" not in heading:
+        contact += ' · <a href="archive.html">Job archive</a>'
+    else:
+        contact += ' · <a href="index.html">Back to live board</a>' 
+
+    css = """<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#141821;--muted:#5b6470;--body:#333a44;--card:#f6f8fa;
+--border:#e3e6ea;--line:#dfe3e8;--accent:#1a56db;--btn:#1f6feb;--head:#0a0d12;--rowh:#eef3fb;
+--chipbg:#eef1f5;--emp:#8a5a00;--empbg:#fff4d6}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e9eef5;--muted:#9aa4b0;--body:#c4ccd6;
+--card:#161b22;--border:#2a2f37;--line:#272d36;--accent:#6ea8ff;--btn:#2563eb;--head:#ffffff;
+--rowh:#1a2130;--chipbg:#1e2530;--emp:#f0c674;--empbg:#3a2f12}}
+*{box-sizing:border-box}
+body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;
+color:var(--fg);background:var(--bg);line-height:1.45}
+.wrap{max-width:1060px;margin:0 auto;padding:18px 16px 40px}
+h1{font-size:22px;margin:0 0 5px;color:var(--head);letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+#q{width:100%;padding:11px 13px;height:44px;font-size:15px;border:1px solid var(--border);
+border-radius:10px;background:var(--card);color:var(--fg);margin-bottom:12px}
+#q:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tw{overflow:auto;max-height:calc(100vh - 150px);border:1px solid var(--border);border-radius:12px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+thead th{position:sticky;top:0;z-index:5;background:var(--card);text-align:left;padding:11px 14px;
+color:var(--muted);font-weight:600;font-size:12px;letter-spacing:.03em;text-transform:uppercase;
+cursor:pointer;user-select:none;border-bottom:1px solid var(--border);white-space:nowrap;
+box-shadow:0 2px 6px -4px rgba(0,0,0,.35)}
+thead th:hover{color:var(--fg)} thead th:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+th[aria-sort=ascending]:after{content:" \\2191";color:var(--accent)}
+th[aria-sort=descending]:after{content:" \\2193";color:var(--accent)}
+tbody td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:top}
+tbody tr.row:first-child td{border-top:none}
+tr.row{cursor:pointer} tr.row:hover td{background:var(--rowh)}
+tr.row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+td.cco{color:var(--body);white-space:nowrap}
+td.cro{font-weight:700;color:var(--head);font-size:14.5px}
+td.cco::before{content:"\\25B8  ";color:var(--muted)}
+tr.row[aria-expanded=true] td.cco::before{content:"\\25BE  "}
+td.cdate{white-space:nowrap;color:var(--muted);font-size:13px}
+.sen{display:inline-block;white-space:nowrap;font-size:12px;font-weight:600;padding:2px 9px;
+border-radius:999px;background:var(--chipbg);color:var(--fg)}
+.sen.empty{background:transparent;border:1px dashed var(--border);color:var(--muted);font-weight:500}
+/* one tidy vocabulary — Lead+ carries the most weight, Junior the least */
+.sen-leadp{background:var(--empbg);color:var(--emp)}
+.sen-junior,.sen-mid{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.emp{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;
+background:var(--empbg);color:var(--emp);vertical-align:middle}
+.newb{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;
+background:#1a7f37;color:#fff;vertical-align:middle}
+tr.detail{display:none} tr.detail.open{display:table-row}
+tr.detail td{background:var(--card);border-top:none;padding:0}
+.db{padding:20px 18px 22px}
+.dcard{display:flex;gap:30px;align-items:flex-start}
+.dmain{flex:1 1 auto;min-width:0;max-width:62ch}
+.dside{flex:0 0 208px}
+.about{color:var(--body);margin:0 0 14px;font-size:13.5px;line-height:1.62}
+.about b{color:var(--fg);font-weight:700} .about.muted{color:var(--muted);font-style:italic}
+.rlabel{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+font-weight:700;margin:0 0 8px}
+ul.reqs{margin:0 0 16px;padding:0;list-style:none}
+ul.reqs li{position:relative;padding-left:18px;margin:7px 0;color:var(--body);font-size:13.5px;
+line-height:1.5}
+ul.reqs li:before{content:"";position:absolute;left:2px;top:8px;width:5px;height:5px;
+border-radius:50%;background:var(--accent)}
+.facts{margin:0;border:1px solid var(--border);border-radius:11px;overflow:hidden;background:var(--bg)}
+.fact{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:10px 13px;
+border-top:1px solid var(--line)} .fact:first-child{border-top:none}
+.fact dt{margin:0;color:var(--muted);font-size:10.5px;font-weight:700;text-transform:uppercase;
+letter-spacing:.05em}
+.fact dd{margin:0;color:var(--fg);font-size:13px;font-weight:600;text-align:right}
+.fact dd.nd{color:var(--muted);font-weight:500}
+.apply{display:inline-block;margin-top:2px;padding:11px 18px;background:var(--btn);color:#fff;
+text-decoration:none;border-radius:9px;font-weight:600;font-size:13.5px}
+.apply:hover{filter:brightness(1.08)} .apply:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nores{padding:26px;text-align:center;color:var(--muted)}
+.foot{color:var(--muted);font-size:12px;margin-top:16px} .foot a{color:var(--accent)}
+@media(max-width:600px){td.cloc,th.hloc,td.cdate,th.hdate,td.csen,th.hsen{display:none}
+.wrap{padding:14px 10px 30px} td.cro{font-size:14px} h1{font-size:22px}
+.db{padding:16px 13px 18px} .dcard{flex-direction:column;gap:16px}
+.dside{flex:none;width:100%;order:-1} .dmain{max-width:100%}}
+</style>"""
+
+    js = """<script>
+var tb=document.getElementById('tb'),q=document.getElementById('q'),
+    cnt=document.getElementById('cnt'),nores=document.getElementById('nores');
+function R(){return [].slice.call(tb.querySelectorAll('tr.row'));}
+function filt(){var v=q.value.toLowerCase().split(/\\s+/).filter(Boolean),shown=0;
+  R().forEach(function(r){var s=v.every(function(w){return r.dataset.blob.indexOf(w)>-1;});
+    r.style.display=s?'':'none'; if(!s){r.nextElementSibling.classList.remove('open');r.setAttribute('aria-expanded','false');}
+    if(s)shown++;});
+  if(cnt)cnt.textContent=shown; if(nores)nores.style.display=shown?'none':'';}
+q.addEventListener('input',filt);
+function toggle(r,e){if(e&&e.target&&e.target.closest('a'))return;
+  var open=r.nextElementSibling.classList.toggle('open'); r.setAttribute('aria-expanded',open);}
+R().forEach(function(r){
+  r.addEventListener('click',function(e){toggle(r,e);});
+  r.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(r,e);}});});
+var dir={};
+function sortBy(th){var k=th.dataset.k;dir[k]=!dir[k];var m=dir[k]?1:-1;
+  var ps=R().map(function(r){return [r,r.nextElementSibling];});
+  ps.sort(function(a,b){
+    if(k==='senrank'){return ((+a[0].dataset.senrank||99)-(+b[0].dataset.senrank||99))*m;}
+    var x=a[0].dataset[k]||'',y=b[0].dataset[k]||''; return x<y?-m:x>y?m:0;});
+  ps.forEach(function(p){tb.appendChild(p[0]);tb.appendChild(p[1]);});
+  [].slice.call(document.querySelectorAll('th[data-k]')).forEach(function(t){t.setAttribute('aria-sort','none');});
+  th.setAttribute('aria-sort',dir[k]?'ascending':'descending');}
+[].slice.call(document.querySelectorAll('th[data-k]')).forEach(function(th){
+  th.addEventListener('click',function(){sortBy(th);});
+  th.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();sortBy(th);}});});
+</script>"""
+
+    head = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">'
+            f'<title>Israeli analytics jobs — {esc(run_date)}</title>' + css
+            + '</head><body><div class="wrap">')
+    top = (f'<h1><span id="cnt">{n}</span> ' + esc(heading) + '</h1>'
+           '<div class="sub">Experienced (≈3+ yrs) data / BI / analytics · open roles, '
+           'refreshed daily · click a row to expand, a header to sort</div>'
+           '<input id="q" type="search" aria-label="Filter roles" '
+           'placeholder="Filter by company, role, or location…">')
+    empty_row = ('<tr id="nores" style="display:none"><td colspan="5" class="nores">'
+                 'No roles match your filter.</td></tr>')
+    table = ('<div class="tw"><table><thead><tr>'
+             '<th data-k="company" tabindex="0" role="columnheader" aria-sort="none">Company</th>'
+             '<th data-k="role" tabindex="0" role="columnheader" aria-sort="none">Role</th>'
+             '<th data-k="loc" tabindex="0" role="columnheader" aria-sort="none" class="hloc">Location</th>'
+             '<th data-k="date" tabindex="0" role="columnheader" aria-sort="none" class="hdate">Posted</th>'
+             '<th data-k="senrank" tabindex="0" role="columnheader" aria-sort="none" class="hsen">Seniority</th>'
+             '</tr></thead><tbody id="tb">'
+             + ("".join(rows) + empty_row if rows
+                else '<tr><td colspan="5" class="nores">No open roles right now.</td></tr>')
+             + '</tbody></table></div>')
+    foot = f'<div class="foot">{esc(audit)}{contact}</div>'
+    return head + top + table + foot + '</div>' + js + analytics_html + '</body></html>'
+
+
+def _path_label(path):
+    return {
+        "keyword": "keyword",
+        "keyword_nollm": "keyword(no-llm)",
+        "llm": "LLM",
+        "llm_cache": "LLM(cached)",
+        "llm_failed_fallback": "LLM-failed→fallback",
+    }.get(path, path or "?")
+
+
+def build_digest(jobs, run_date, stats):
+    """Return (subject, html, text).
+
+    `jobs` are merged+new accepted jobs, each with keys: company, title, location, url,
+    posted_date, sources (list), and `_class` (the classify() result dict).
+    `stats` is a dict of run counters.
+    """
+    n = len(jobs)
+    subject = f"[Israeli Jobs] {n} new senior analytics opening" + ("" if n == 1 else "s") + f" — {run_date}"
+
+    # group by company (alphabetical), jobs within a company by posted_date desc
+    by_company = {}
+    for j in jobs:
+        by_company.setdefault(j["company"], []).append(j)
+    for c in by_company:
+        by_company[c].sort(key=lambda j: str(j.get("posted_date") or ""), reverse=True)
+
+    # ---------- plaintext ----------
+    tl = [subject, "=" * len(subject), ""]
+    if n == 0:
+        tl.append("No new matching openings today.")
+    for company in sorted(by_company):
+        tl.append(f"\n{company}")
+        tl.append("-" * len(company))
+        for j in by_company[company]:
+            src = "+".join(j.get("sources", [])) or j.get("ats_platform", "")
+            path = _path_label(j.get("_class", {}).get("path"))
+            tl.append(f"  • {j['title']}")
+            tl.append(f"      {j.get('location') or '—'} | posted {_fmt_date(j.get('posted_date'))} | via {src} | match:{path}")
+            tl.append(f"      {j.get('url') or ''}")
+    tl.append("")
+    tl.append(_text_audit(stats))
+    text = "\n".join(tl)
+
+    # ---------- HTML ----------
+    def esc(s):
+        return html.escape(str(s or ""))
+
+    hb = [
+        '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
+        'max-width:720px;margin:0 auto;color:#1a1a1a;">',
+        f'<h2 style="margin:0 0 4px;">{esc(str(n))} new senior analytics opening{"" if n==1 else "s"}</h2>',
+        f'<div style="color:#666;font-size:13px;margin-bottom:16px;">Israeli high-tech ATS scan · {esc(run_date)}</div>',
+    ]
+    if n == 0:
+        hb.append('<p style="color:#666;">No new matching openings today.</p>')
+    for company in sorted(by_company):
+        hb.append(f'<h3 style="margin:22px 0 6px;border-bottom:1px solid #eee;padding-bottom:4px;">{esc(company)}</h3>')
+        for j in by_company[company]:
+            src = "+".join(j.get("sources", [])) or j.get("ats_platform", "")
+            path = _path_label(j.get("_class", {}).get("path"))
+            url = esc(_safe_url(j.get("url")))
+            title = esc(j.get("title"))
+            title_html = f'<a href="{url}" style="color:#1a56db;text-decoration:none;">{title}</a>' if url else title
+            hb.append(
+                '<div style="margin:8px 0 12px;">'
+                f'<div style="font-size:15px;font-weight:600;">{title_html}</div>'
+                f'<div style="color:#555;font-size:13px;margin-top:2px;">'
+                f'{esc(j.get("location") or "—")} &nbsp;·&nbsp; posted {esc(_fmt_date(j.get("posted_date")))} '
+                f'&nbsp;·&nbsp; via {esc(src)} '
+                f'&nbsp;·&nbsp; <span style="color:#888;">match: {esc(path)}</span>'
+                '</div></div>'
+            )
+    hb.append(_html_audit(stats, esc))
+    hb.append("</div>")
+    return subject, "\n".join(hb), text
+
+
+def _text_audit(s):
+    paths = s.get("paths", {})
+    lines = [
+        "-" * 40,
+        "RUN AUDIT",
+        f"  companies scanned: {s.get('companies_scanned', 0)}  (failed: {s.get('companies_failed', 0)})",
+        f"  jobs fetched: {s.get('jobs_fetched', 0)}  | Israel-matched: {s.get('israel_matched', 0)}",
+        f"  accepted: {s.get('accepted', 0)}  | after merge: {s.get('after_merge', 0)}  | NEW (this digest): {s.get('new', 0)}",
+        f"  decision paths: " + ", ".join(f"{k}={v}" for k, v in sorted(paths.items())),
+        f"  LLM calls this run: {s.get('llm_calls', 0)}",
+    ]
+    if s.get("failed_companies"):
+        lines.append("  failed companies: " + ", ".join(s["failed_companies"]))
+    return "\n".join(lines)
+
+
+def _html_audit(s, esc):
+    paths = s.get("paths", {})
+    fc = s.get("failed_companies", [])
+    return (
+        '<div style="margin-top:28px;padding:12px 14px;background:#f7f7f8;border-radius:8px;'
+        'font-size:12px;color:#666;">'
+        '<div style="font-weight:600;color:#444;margin-bottom:6px;">Run audit</div>'
+        f'Companies scanned: {esc(s.get("companies_scanned",0))} (failed: {esc(s.get("companies_failed",0))})<br>'
+        f'Jobs fetched: {esc(s.get("jobs_fetched",0))} · Israel-matched: {esc(s.get("israel_matched",0))}<br>'
+        f'Accepted: {esc(s.get("accepted",0))} · after merge: {esc(s.get("after_merge",0))} · '
+        f'<b>NEW: {esc(s.get("new",0))}</b><br>'
+        f'Decision paths: {esc(", ".join(f"{k}={v}" for k,v in sorted(paths.items())))}<br>'
+        f'LLM calls this run: {esc(s.get("llm_calls",0))}'
+        + (f'<br>Failed companies: {esc(", ".join(fc))}' if fc else "")
+        + '</div>'
+    )

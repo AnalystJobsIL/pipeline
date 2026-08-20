@@ -1,0 +1,122 @@
+name: Daily jobs digest (cloud)
+
+# Runs the WHOLE pipeline on GitHub's servers every morning, so it works with your PC OFF.
+# The seniority step needs Claude; instead of a paid API this uses YOUR Claude subscription
+# via an OAuth token (see one-time setup below). No per-token API bill.
+#
+# ── ONE-TIME SETUP (you must do this once; I can't handle your credentials) ──────────────
+#   1. On your PC run:   claude setup-token
+#      (log in with your Claude Pro/Max account — it prints a long-lived OAuth token)
+#   2. GitHub → this repo → Settings → Secrets and variables → Actions → New repository secret
+#      Name:  CLAUDE_CODE_OAUTH_TOKEN
+#      Value: <the token from step 1>
+#   3. That's it. This workflow then runs Claude in the cloud on your subscription.
+#
+# Until the secret exists, the run still works but falls back to deterministic-only
+# classification for any job title not already in the committed cache (no crash).
+#
+# State (which postings were already digested + the LLM/company caches) lives in
+# cloud_state/seen.db and is committed back after each run so tomorrow only shows NEW roles.
+
+on:
+  schedule:
+    - cron: "0 5 * * *"      # 05:00 UTC ≈ 08:00 Israel (IDT). Adjust as you like.
+  workflow_dispatch: {}
+
+permissions:
+  contents: write             # to commit updated cloud_state back to the repo
+
+concurrency:
+  group: daily-digest
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Discovery layer (LinkedIn+Indeed via Bright Data, if key set)
+        env:
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+        run: python discovery_daily.py || echo "discovery skipped"
+        continue-on-error: true
+
+      - name: Run the pipeline (Claude classification via subscription token)
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # NOTE: SerpApi & JSearch both verified to NOT cover Israel (google_jobs rejects
+          # gl=il, location=Israel returns 0). Aggregator left OFF (AGGREGATOR_ENABLED unset).
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          BOARD_URL: "https://analystjobsil.github.io/board/"
+          GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
+        run: |
+          mkdir -p cloud_state out digests
+          python -m pipeline.run --db cloud_state/seen.db
+          DATE=$(date -u +%F)
+          if [ -f "out/digest-${DATE}.md" ]; then
+            cp "out/digest-${DATE}.md" digests/latest.md
+            echo "DIGEST_JSON=out/digest-${DATE}.json" >> "$GITHUB_ENV"
+          fi
+
+      - name: Mark digested roles as sent
+        run: |
+          [ -n "$DIGEST_JSON" ] && [ -s "$DIGEST_JSON" ]             && python mark_sent.py "$DIGEST_JSON" --db cloud_state/seen.db             || echo "nothing to mark sent"
+
+      - name: Persist state back to the repo
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cloud_state digests/latest.md discovered_cache.json scraped_cache.json
+          git commit -m "cloud run: state + digest for $(date -u +%F) [skip ci]" || echo "nothing to commit"
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin master && git push && exit 0
+            git rebase --abort 2>/dev/null || true; sleep $((i*20))
+          done
+          echo "::error::state push failed"; exit 1
+
+      - name: Publish the 2-week board to the public org repo (needs BOARD_DEPLOY_KEY)
+        env:
+          DEPLOY_KEY: ${{ secrets.BOARD_DEPLOY_KEY }}
+          TOKEN: ${{ secrets.BOARD_DEPLOY_TOKEN }}
+        run: |
+          [ -z "$DEPLOY_KEY" ] && [ -z "$TOKEN" ] && { echo "no board credentials set; skipping board publish"; exit 0; }
+          [ -s docs/index.html ] || { echo "no board html"; exit 0; }
+          if [ -n "$DEPLOY_KEY" ]; then
+            # SSH deploy key scoped to AnalystJobsIL/board (write); survives PAT expiry/policy issues
+            mkdir -p ~/.ssh && chmod 700 ~/.ssh
+            printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/board_deploy_key
+            chmod 600 ~/.ssh/board_deploy_key
+            ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+            export GIT_SSH_COMMAND="ssh -i ~/.ssh/board_deploy_key -o IdentitiesOnly=yes"
+            BOARD_URL_GIT="git@github.com:AnalystJobsIL/board.git"
+          else
+            BOARD_URL_GIT="https://x-access-token:${TOKEN}@github.com/AnalystJobsIL/board.git"
+          fi
+          rm -rf /tmp/board && git clone -q "$BOARD_URL_GIT" /tmp/board
+          cp docs/index.html /tmp/board/index.html
+          cp docs/archive.html /tmp/board/archive.html 2>/dev/null || true
+          cd /tmp/board
+          BR=$(git symbolic-ref --short HEAD)     # board repo's default branch is main, not master
+          git config user.name  "board-bot"
+          git config user.email "board@users.noreply.github.com"
+          git add index.html archive.html
+          git commit -m "board $(date -u +%F)" || { echo "no change"; exit 0; }
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin "$BR" && git push origin "HEAD:$BR" && exit 0
+            git rebase --abort 2>/dev/null || true; sleep $((i*20))
+          done
+          echo "::error::board push failed"; exit 1

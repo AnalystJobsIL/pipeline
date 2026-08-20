@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Pipeline local state (machine-specific; not shared)
+state/
+out/
+*.log
+
+# Secrets — NEVER commit (the JSearch key etc. live here locally)
+secrets.env
+*.key
