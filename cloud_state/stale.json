@@ -58,5 +58,10 @@
   "careers_url": "https://finaloop.recruitee.com/api/offers/",
   "platform": "recruitee",
   "reason": "fetch-error"
+ },
+ "Bit": {
+  "careers_url": "https://api.ashbyhq.com/posting-api/job-board/bit",
+  "platform": "ashby",
+  "reason": "fetch-error"
  }
 }
