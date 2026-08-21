@@ -11,6 +11,8 @@ import html
 import re as _re
 import re
 
+from . import roleprofile
+
 
 def _safe_url(u):
     """Only http/https survive — blocks javascript:/data: from scraped/discovered links."""
@@ -71,7 +73,8 @@ _MANGLED_TITLE = re.compile(r"[⋅•·|►▸]|,\s*israel\b|tel[\s-]?aviv,|"
 
 
 def _clean_desc(desc):
-    return " ".join(_ZW.sub("", str(desc or "")).split())
+    d = " ".join(_ZW.sub("", str(desc or "")).split())
+    return re.sub(r"\s*\bShow (?:more|less)\b", "", d)   # LinkedIn scrape artifact
 
 
 def _company_blurb(desc, company=""):
@@ -106,6 +109,9 @@ def _company_blurb(desc, company=""):
 # wins. NOTE: "we're looking for" is deliberately NOT here — it usually opens a company
 # intro ("We are looking for a <role> to join…"), not a qualifications list.
 _REQ_HARD = _re.compile(r"(requirements?|qualifications?|what (?:you.?ll|you will) (?:bring|need)|"
+                        r"what are we looking for|what we.?re looking for|"
+                        r"(?:perfect|ideal) job for someone who (?:has|is)|"
+                        r"דרישות(?: התפקיד)?|מה אנחנו מחפשים|כישורים נדרשים|"
                         r"what (?:will make|makes) you successful|who you are|about you|"
                         r"what we.?re looking for in you|must[- ]have|your (?:profile|experience|"
                         r"background)|minimum qualifications|desired (?:skills|qualifications)|"
@@ -131,7 +137,7 @@ _HEADER_ONLY = _re.compile(r"^(experience|technical skills?|education|skills?|qu
 _SENT_SPLIT = _re.compile(r"(?<=[a-z0-9%)א-ת])\.\s+(?=[A-Z0-9א-ת])|\s[–—]\s(?=[A-Z0-9])")
 
 
-def _clean_bullet(p, cap=145):
+def _clean_bullet(p, cap=210):
     """Tidy one requirement fragment: strip markers/leaked headers, fix stray spacing from
     justified source text ("Ph . D", "4 + years", "SQL ,"), cap length uniformly."""
     p = " ".join(str(p or "").split()).strip(" \t•·–—-:;.")
@@ -168,14 +174,14 @@ def _looks_like_header(c):
     return len(words) >= 2 and caps >= len(words) - 1
 
 
-def _requirements_snippet(desc, n=1000):
+def _requirements_snippet(desc, n=2600):
     """The practical part of a JD (Requirements / What you'll bring) as clean bullet fragments.
     Deterministic — header regex + <li>-marker splitting, no LLM. Returns [] when absent."""
     d2 = _LABEL_PREFIX.sub("", _clean_desc(desc))
     m = _REQ_HARD.search(d2) or _REQ_SOFT.search(d2)
     if not m:
         return []
-    seg = d2[m.end():].strip(" :-–—•")
+    seg = d2[m.end():].strip(" ?:-–—•")
     e = _SECTION_END.search(seg)
     if e and e.start() > 20:
         seg = seg[:e.start()]
@@ -184,11 +190,11 @@ def _requirements_snippet(desc, n=1000):
     parts = []
     for p in raw:
         c = _clean_bullet(p)
-        if not (8 <= len(c) <= 160) or _HEADER_ONLY.match(c) or _looks_like_header(c):
+        if not (8 <= len(c) <= 220) or _HEADER_ONLY.match(c) or _looks_like_header(c):
             continue
         if c.lower() not in (x.lower() for x in parts):
             parts.append(c)
-    return parts[:6]
+    return parts[:12]
 
 
 def _role_snippet(desc, n=230):
@@ -463,9 +469,12 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
         return html.escape(str(s or ""))
 
     rows = []
+    profiles = []
     for j in ordered:
         company = j.get("company", "")
         rtitle = j.get("title") or "(untitled)"
+        prof = roleprofile.extract(rtitle, j.get("description"))
+        profiles.append(prof)
         about = (company_info.get(company) or _company_blurb(j.get("description"), company) or "")
         if _ABOUT_JUNK.search(about):           # a failed `claude -p` error must never show
             about = _company_blurb(j.get("description"), company) or ""
@@ -485,7 +494,10 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
         age = _age_note(pdate, run_date)
         url = esc(_safe_url(j.get("url")))
         emp = _employment_badge(rtitle)
-        blob = esc(f"{company} {rtitle} {loc} {chip}").lower()
+        skill_names = [s for s, _ in prof["skills"]]
+        # skills join the search blob so the filter box finds "sql", "tableau", "python" jobs
+        blob = esc(f"{company} {rtitle} {loc} {chip} "
+                   + " ".join(skill_names) + " " + prof["family"]).lower()
         sen_tip = f' title="{esc(raw_chip)}"' if raw_chip and raw_chip.lower() != chip.lower() else ''
         sen_cls = f"sen sen-{chip.lower().replace('+', 'p').replace('—', 'x')}"
         sen_html = (f'<span class="{sen_cls}"{sen_tip}>{esc(chip)}</span>' if chip != "—"
@@ -504,11 +516,21 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
             lis = "".join(f'<li dir="auto">{esc(p)}</li>' for p in req_parts)
             main += (f'<p class="rlabel">What you&#8217;ll need</p>'
                      f'<ul class="reqs">{lis}</ul>')
+        if skill_names:
+            tags = "".join(f'<button class="skilltag" data-skill="{esc(s.lower())}" '
+                           f'title="Filter roles mentioning {esc(s)}">{esc(s)}</button>'
+                           for s in skill_names[:12])
+            main += f'<p class="rlabel">Skills mentioned</p><div class="skills">{tags}</div>'
         if not about and not req_parts:
             main += ('<p class="about muted" dir="auto">'
                      'Full role description on the company site.</p>')
         main += apply
         facts = [("Location", loc), ("Level", chip), ("Posted", _rel_date(pdate, run_date))]
+        if prof["years"]:
+            facts.insert(2, ("Experience", f"{prof['years']}+ yrs"))
+        if prof["family"] != "Other":
+            facts.append(("Focus", prof["family"]
+                          + (" · Lead" if prof["track"] == "Lead" else "")))
         if emp:
             facts.append(("Type", emp))
         facts_html = ('<dl class="facts">' + "".join(
@@ -528,6 +550,33 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
             f'<td class="cdate" title="{esc(pdate)}">{esc(_rel_date(pdate, run_date))}{esc(age)}</td>'
             f'<td class="csen">{sen_html}</td></tr>'
             f'<tr class="detail"><td colspan="5"><div class="db">{detail}</div></td></tr>')
+
+    # ---- aggregated demand view: what the market is asking for, computed per posting ----
+    insights = ""
+    if profiles and "archived" not in heading:
+        agg = roleprofile.aggregate(profiles)
+        if agg["top"]:
+            mx = agg["top"][0][1] or 1
+            bars = "".join(
+                f'<button class="ibar" data-skill="{esc(s.lower())}" title="Filter roles mentioning {esc(s)}">'
+                f'<span class="ibar-fill" style="width:{max(4, round(c / mx * 100))}%"></span>'
+                f'<span class="ibar-name">{esc(s)}</span><span class="ibar-n">{c}</span></button>'
+                for s, c in agg["top"])
+            fams = [(f, d) for f, d in sorted(agg["by_family"].items(),
+                                              key=lambda kv: -kv[1]["jobs"])
+                    if f != "Other" and d["jobs"] >= 3 and d["top"]]
+            fam_cards = "".join(
+                f'<div class="fcard"><div class="fhead">{esc(f)}'
+                f'<span class="fn">{d["jobs"]} roles</span></div>'
+                f'<div class="fskills">' + "".join(
+                    f'<button class="skilltag" data-skill="{esc(s.lower())}">{esc(s)} · {c}</button>'
+                    for s, c in d["top"][:5]) + '</div></div>'
+                for f, d in fams[:6])
+            insights = (
+                '<details class="insights"><summary>📊 Skills in demand — most-requested '
+                f'skills across {agg["total"]} open roles (click any skill to filter)</summary>'
+                f'<div class="ins-grid"><div class="ins-bars">{bars}</div>'
+                f'<div class="ins-fams">{fam_cards}</div></div></details>')
 
     fresh = sum(1 for j in ordered if not _age_note(j.get("posted_date"), run_date))
     audit = (f"{n} open roles · {fresh} posted recently · "
@@ -608,6 +657,36 @@ letter-spacing:.05em}
 .apply{display:inline-block;margin-top:2px;padding:11px 18px;background:var(--btn);color:#fff;
 text-decoration:none;border-radius:9px;font-weight:600;font-size:13.5px}
 .apply:hover{filter:brightness(1.08)} .apply:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.skills{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+.skilltag{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;
+background:var(--chipbg);color:var(--fg);border:1px solid var(--border);cursor:pointer;
+font-family:inherit}
+.skilltag:hover{border-color:var(--accent);color:var(--accent)}
+.insights{margin:0 0 12px;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+.insights summary{padding:12px 16px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--fg);
+user-select:none}
+.insights summary:hover{color:var(--accent)}
+.insights[open] summary{border-bottom:1px solid var(--line)}
+.ins-grid{display:flex;gap:26px;padding:16px;align-items:flex-start}
+.ins-bars{flex:0 0 300px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.ibar{position:relative;display:flex;align-items:center;gap:8px;height:26px;border:none;
+background:transparent;cursor:pointer;padding:0 8px;border-radius:6px;font-family:inherit;
+overflow:hidden;text-align:left}
+.ibar:hover .ibar-name{color:var(--accent)}
+.ibar-fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent);opacity:.14;
+border-radius:6px}
+.ibar-name{position:relative;font-size:12.5px;font-weight:600;color:var(--fg);flex:1 1 auto;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ibar-n{position:relative;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ins-fams{flex:1 1 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+gap:12px;min-width:0}
+.fcard{border:1px solid var(--border);border-radius:10px;padding:11px 13px;background:var(--bg)}
+.fhead{font-size:12.5px;font-weight:700;color:var(--fg);margin-bottom:8px;display:flex;
+justify-content:space-between;align-items:baseline;gap:8px}
+.fn{font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap}
+.fskills{display:flex;flex-wrap:wrap;gap:5px}
+.fskills .skilltag{font-size:11px;padding:2px 8px}
+@media(max-width:760px){.ins-grid{flex-direction:column}.ins-bars{flex:none;width:100%}}
 .nores{padding:26px;text-align:center;color:var(--muted)}
 .foot{color:var(--muted);font-size:12px;margin-top:16px} .foot a{color:var(--accent)}
 @media(max-width:600px){td.cloc,th.hloc,td.cdate,th.hdate,td.csen,th.hsen{display:none}
@@ -643,6 +722,9 @@ function sortBy(th){var k=th.dataset.k;dir[k]=!dir[k];var m=dir[k]?1:-1;
 [].slice.call(document.querySelectorAll('th[data-k]')).forEach(function(th){
   th.addEventListener('click',function(){sortBy(th);});
   th.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();sortBy(th);}});});
+[].slice.call(document.querySelectorAll('[data-skill]')).forEach(function(b){
+  b.addEventListener('click',function(){q.value=b.dataset.skill;filt();
+    document.querySelector('.tw').scrollIntoView({behavior:'smooth',block:'start'});});});
 </script>"""
 
     head = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
@@ -667,7 +749,7 @@ function sortBy(th){var k=th.dataset.k;dir[k]=!dir[k];var m=dir[k]?1:-1;
                 else '<tr><td colspan="5" class="nores">No open roles right now.</td></tr>')
              + '</tbody></table></div>')
     foot = f'<div class="foot">{esc(audit)}{contact}</div>'
-    return head + top + table + foot + '</div>' + js + analytics_html + '</body></html>'
+    return head + top + insights + table + foot + '</div>' + js + analytics_html + '</body></html>'
 
 
 def _path_label(path):
