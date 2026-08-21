@@ -55,9 +55,15 @@ _ROLE_MARKER = re.compile(
 # "<Company> is a/an/the <predicate>." -> company one-liner
 _COMPANY_IS = re.compile(r"\b(?:is|are)\s+(?:a|an|the)\s+(.{5,90}?)[\.\n;]", re.I)
 _HEBREW = re.compile(r"[֐-׿]")
-# a failed `claude -p` (or similar CLI error) must never render as an About blurb
+# a failed `claude -p` (or similar CLI error) must never render as an About blurb —
+# and neither must a first-person "I'm not sure what this company does" meta answer:
+# a job seeker should read facts about the company, never the model talking about itself.
 _ABOUT_JUNK = re.compile(r"not logged in|please run|/login|usage:|command not found|invalid api|"
-                         r"api key|traceback|rate limit|quota|unauthor|permission denied", re.I)
+                         r"api key|traceback|rate limit|quota|unauthor|permission denied|"
+                         r"\bI['’]?m\b|\bI\s+(?:don['’]?t|do not|can['’]?t|cannot|"
+                         r"couldn['’]?t|am|have|would|need|recommend)\b|\bI['’]d\b|"
+                         r"unable to (?:confirm|verify)|no (?:job post )?context was provided|"
+                         r"web[- ]search access", re.I)
 # a title with a breadcrumb separator or a place/CTA fused onto it is a scraped card blob
 _MANGLED_TITLE = re.compile(r"[⋅•·|►▸]|,\s*israel\b|tel[\s-]?aviv,|"
                             r"(?<=[a-z])(?:Tel Aviv|Israel|Apply|Remote|Full[\s-]?time)|"
@@ -388,6 +394,8 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url=""):
     for company in companies:
         jobs_c = by_company[company]
         about = company_info.get(company) or _company_blurb(jobs_c[0].get("description"))
+        if about and _ABOUT_JUNK.search(about):   # never email a CLI error or meta answer
+            about = _company_blurb(jobs_c[0].get("description")) or ""
         lines.append(f"### {_md_esc(company)}")
         if about:
             lines.append(f"_{about}_")
@@ -461,8 +469,13 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
         about = (company_info.get(company) or _company_blurb(j.get("description"), company) or "")
         if _ABOUT_JUNK.search(about):           # a failed `claude -p` error must never show
             about = _company_blurb(j.get("description"), company) or ""
-        if len(about) > 180:
-            about = about[:180][:about[:180].rfind(" ")] + "…"
+        # The summaries are already constrained to 2-3 sentences at the source; show them
+        # whole. The cap is only a safety net for pathological output — cut at a sentence
+        # boundary so the "how it makes money" half is never chopped mid-thought.
+        if len(about) > 700:
+            cut = about[:700]
+            p = max(cut.rfind(". "), cut.rfind("! "))
+            about = cut[:p + 1] if p > 200 else cut[:cut.rfind(" ")] + "…"
         req_parts = _requirements_snippet(j.get("description"))
         raw_chip = _seniority_chip(j.get("description")) or ""
         chip = _sen_canon(raw_chip, rtitle)

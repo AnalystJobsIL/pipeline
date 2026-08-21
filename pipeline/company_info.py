@@ -18,9 +18,12 @@ def _is_windows():
 _PROMPT = (
     "In 2 short, plain-English sentences, describe (1) what the company \"{company}\" does, "
     "and (2) how it makes money (its revenue model — e.g. SaaS subscriptions, ads, "
-    "transaction fees, licensing). Be concrete and factual. If you are unsure what the "
-    "company does, say so briefly rather than inventing details. Output ONLY the two "
-    "sentences, no preamble, no bullet points.\n\n"
+    "transaction fees, licensing). Be concrete and factual. Write in the third person only, "
+    "for a job seeker reading a job board — never mention yourself, your knowledge, this "
+    "prompt, or the job post; no first-person ('I', 'I'm not sure'), no hedging filler like "
+    "'isn't stated in the available information'. If you genuinely cannot identify the "
+    "company even with the context, output exactly the single word UNKNOWN instead. "
+    "Output ONLY the two sentences (or UNKNOWN), no preamble, no bullet points.\n\n"
     "Context from one of its job posts (may help, may be empty): {context}\n"
 )
 
@@ -49,4 +52,9 @@ def summarize_company(company, context="", timeout=90):
 
 _JUNK_OUT = re.compile(
     r"not logged in|please run|/login|usage:|command not found|invalid api|api key|"
-    r"traceback|rate limit|quota|unauthor|permission denied|error:", re.I)
+    r"traceback|rate limit|quota|unauthor|permission denied|error:|"
+    # first-person / meta answers ("I'm not familiar with...") and the UNKNOWN escape
+    # hatch must never be cached as a blurb either — '' lets the renderer fall back.
+    r"^unknown\b|\bI['’]?m\b|\bI\s+(?:don['’]?t|do not|can['’]?t|cannot|couldn['’]?t|"
+    r"am|have|would|need|recommend)\b|\bI['’]d\b|no (?:job post )?context was provided|"
+    r"web[- ]search access", re.I)
