@@ -126,3 +126,5 @@ jobs:
           echo "::error::board push failed"; exit 1
 
 # (workflow re-index nudge)
+
+# (attribution re-stamp)
