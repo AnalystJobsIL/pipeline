@@ -1110,3 +1110,62 @@ PrettyDamnQuick,scrape,https://www.linkedin.com/jobs/view/data-analytics-lead-at
 Harel Insurance & Finance,scrape,https://www.linkedin.com/jobs/view/business-analyst-at-harel-insurance-finance-4453426199?_l=en,https://www.linkedin.com/jobs/view/business-analyst-at-harel-insurance-finance-4453426199?_l=en,false,aggregator URL; resolve real careers page before activating
 JTI,scrape,https://www.linkedin.com/jobs/view/commercial-planning-data-analysis-manager-at-jti-4424203458?_l=en,https://www.linkedin.com/jobs/view/commercial-planning-data-analysis-manager-at-jti-4424203458?_l=en,false,aggregator URL; resolve real careers page before activating
 Dell,scrape,https://jobs.dell.com/,https://jobs.dell.com/,false,scanned; no open Israel roles now
+Nebius,scrape,https://www.linkedin.com/jobs/view/business-intelligence-developer-at-nebius-4448744926?_l=en,https://www.linkedin.com/jobs/view/business-intelligence-developer-at-nebius-4448744926?_l=en,false,aggregator URL; resolve real careers page before activating
+"IEC - Israel Electric Corporation חברת החשמל לישראל בע""מ",scrape,https://www.linkedin.com/jobs/view/information-and-data-management-at-iec-israel-electric-corporation-%D7%97%D7%91%D7%A8%D7%AA-%D7%94%D7%97%D7%A9%D7%9E%D7%9C-%D7%9C%D7%99%D7%A9%D7%A8%D7%90%D7%9C-%D7%91%D7%A2-%D7%9E-4451530144?_l=en,https://www.linkedin.com/jobs/view/information-and-data-management-at-iec-israel-electric-corporation-%D7%97%D7%91%D7%A8%D7%AA-%D7%94%D7%97%D7%A9%D7%9E%D7%9C-%D7%9C%D7%99%D7%A9%D7%A8%D7%90%D7%9C-%D7%91%D7%A2-%D7%9E-4451530144?_l=en,false,aggregator URL; resolve real careers page before activating
+LiveU,scrape,https://www.linkedin.com/jobs/view/bi-developer-at-liveu-4416244974?_l=en,https://www.linkedin.com/jobs/view/bi-developer-at-liveu-4416244974?_l=en,false,aggregator URL; resolve real careers page before activating
+Port.io,scrape,https://www.linkedin.com/jobs/view/senior-bi-analyst-at-port-io-4448277590?_l=en,https://www.linkedin.com/jobs/view/senior-bi-analyst-at-port-io-4448277590?_l=en,false,aggregator URL; resolve real careers page before activating
+Menora Mivtachim Group,scrape,https://www.linkedin.com/jobs/view/bi-systems-analyst-at-menora-mivtachim-group-4446767185?_l=en,https://www.linkedin.com/jobs/view/bi-systems-analyst-at-menora-mivtachim-group-4446767185?_l=en,false,aggregator URL; resolve real careers page before activating
+Extreme,lever,extremenetworks,https://api.lever.co/v0/postings/extremenetworks?mode=json,true,auto-expand; 134/0 IL
+Tipuli Tech,scrape,https://www.linkedin.com/jobs/view/data-analyst-at-tipuli-tech-4447120834?_l=en,https://www.linkedin.com/jobs/view/data-analyst-at-tipuli-tech-4447120834?_l=en,false,aggregator URL; resolve real careers page before activating
+Revolut,scrape,https://www.linkedin.com/jobs/view/data-analyst-finance-at-revolut-4437960601?_l=en,https://www.linkedin.com/jobs/view/data-analyst-finance-at-revolut-4437960601?_l=en,false,aggregator URL; resolve real careers page before activating
+Modellama,scrape,https://www.linkedin.com/jobs/view/data-analyst-at-modellama-4428612794?_l=en,https://www.linkedin.com/jobs/view/data-analyst-at-modellama-4428612794?_l=en,false,aggregator URL; resolve real careers page before activating
+Nift,greenhouse,nift,https://boards-api.greenhouse.io/v1/boards/nift/jobs,true,auto-expand; 10/2 IL
+Glow,scrape,https://www.linkedin.com/jobs/view/data-analyst-at-glow-4443708848?_l=en,https://www.linkedin.com/jobs/view/data-analyst-at-glow-4443708848?_l=en,false,aggregator URL; resolve real careers page before activating
+JPMorganChase,scrape,https://secrethunter.io/jobz/b401105b3d,https://secrethunter.io/jobz/b401105b3d,false,scanned; no open Israel roles now
+Moveo Group,scrape,https://secrethunter.io/jobz/9259190970,https://secrethunter.io/jobz/9259190970,false,scanned; no open Israel roles now
+K Logic,scrape,https://secrethunter.io/jobz/5153067f91,https://secrethunter.io/jobz/5153067f91,false,scanned; no open Israel roles now
+Zim,scrape,https://secrethunter.io/jobz/02f03d0019,https://secrethunter.io/jobz/02f03d0019,false,scanned; no open Israel roles now
+Glassbox,scrape,https://secrethunter.io/jobz/228afb1720,https://secrethunter.io/jobz/228afb1720,false,scanned; no open Israel roles now
+AllCloud,comeet,71.008,https://www.comeet.com/careers-api/2.0/company/71.008/positions?token=1785E0758A482F01785E01782F05E0,true,auto-expand; 25/14 IL
+Guidde,greenhouse,guidde,https://boards-api.greenhouse.io/v1/boards/guidde/jobs,true,auto-expand; 9/6 IL
+expressvpn,scrape,https://secrethunter.io/jobz/a799cf3e1d,https://secrethunter.io/jobz/a799cf3e1d,false,scanned; no open Israel roles now
+Engineering team lead- data & AI platform - everc,scrape,https://secrethunter.io/jobz/ae3cd2b83e,https://secrethunter.io/jobz/ae3cd2b83e,false,scanned; no open Israel roles now
+doitintl,greenhouse,doitintl,https://boards-api.greenhouse.io/v1/boards/doitintl/jobs,true,auto-expand; 84/7 IL
+Phoenix Financial,scrape,https://secrethunter.io/jobz/25a919ad8b,https://secrethunter.io/jobz/25a919ad8b,false,scanned; no open Israel roles now
+Shufersal,scrape,https://secrethunter.io/jobz/7446ee070b,https://secrethunter.io/jobz/7446ee070b,false,scanned; no open Israel roles now
+helfy,comeet,3A.008,https://www.comeet.com/careers-api/2.0/company/3A.008/positions?token=A38478828E001EA8A381EA8033183D50,true,auto-expand; 21/16 IL
+Artlist,scrape,https://secrethunter.io/jobz/02312f1ff6,https://secrethunter.io/jobz/02312f1ff6,false,scanned; no open Israel roles now
+Sql developer - SkySoft Solutions By Commit,scrape,https://secrethunter.io/jobz/84bd4c2766,https://secrethunter.io/jobz/84bd4c2766,false,scanned; no open Israel roles now
+Alison,scrape,https://secrethunter.io/jobz/fe8c52aef9,https://secrethunter.io/jobz/fe8c52aef9,false,scanned; no open Israel roles now
+90min,scrape,https://secrethunter.io/jobz/a817bc41a4,https://secrethunter.io/jobz/a817bc41a4,false,scanned; no open Israel roles now
+PassportCard,scrape,https://secrethunter.io/jobz/52034b36bf,https://secrethunter.io/jobz/52034b36bf,false,scanned; no open Israel roles now
+Data researcher - Navina,scrape,https://secrethunter.io/jobz/26ce472111,https://secrethunter.io/jobz/26ce472111,false,scanned; no open Israel roles now
+everc,scrape,https://secrethunter.io/jobz/7332e9300d,https://secrethunter.io/jobz/7332e9300d,false,scanned; no open Israel roles now
+topgummiceuticals,scrape,https://secrethunter.io/jobz/ae3cd2b83e,https://secrethunter.io/jobz/ae3cd2b83e,false,scanned; no open Israel roles now
+Sela,scrape,https://secrethunter.io/jobz/90abe11934,https://secrethunter.io/jobz/90abe11934,false,scanned; no open Israel roles now
+SMARTECH - A Hexion Company,scrape,https://secrethunter.io/jobz/0ae3bc9875,https://secrethunter.io/jobz/0ae3bc9875,false,scanned; no open Israel roles now
+Ready Group,scrape,https://secrethunter.io/jobz/cd575c67be,https://secrethunter.io/jobz/cd575c67be,false,scanned; no open Israel roles now
+Medison Pharma,scrape,https://secrethunter.io/jobz/c2a5124ea5,https://secrethunter.io/jobz/c2a5124ea5,false,scanned; no open Israel roles now
+Genpact,workday,genpact/wd108/External_Careers,https://genpact.wd108.myworkdayjobs.com/wday/cxs/genpact/External_Careers/jobs,true,auto-expand; 40/40 IL
+TCM Technologies LTD,scrape,https://secrethunter.io/jobz/a8ddc87426,https://secrethunter.io/jobz/a8ddc87426,false,scanned; no open Israel roles now
+ICE,scrape,https://secrethunter.io/jobz/cf273806e9,https://secrethunter.io/jobz/cf273806e9,false,scanned; no open Israel roles now
+Amazon Web Services (AWS),scrape,https://secrethunter.io/jobz/8717f08353,https://secrethunter.io/jobz/8717f08353,false,scanned; no open Israel roles now
+vi,scrape,https://secrethunter.io/jobz/f38ec7872c,https://secrethunter.io/jobz/f38ec7872c,false,scanned; no open Israel roles now
+ONE ZERO Digital Bank,scrape,https://secrethunter.io/jobz/9bfb88bc3d,https://secrethunter.io/jobz/9bfb88bc3d,false,scanned; no open Israel roles now
+Zota,scrape,https://secrethunter.io/jobz/6b61da567d,https://secrethunter.io/jobz/6b61da567d,false,scanned; no open Israel roles now
+Orca-AI,scrape,https://secrethunter.io/jobz/7b051f83fe,https://secrethunter.io/jobz/7b051f83fe,false,scanned; no open Israel roles now
+Aman Group,scrape,https://secrethunter.io/jobz/3897aa974d,https://secrethunter.io/jobz/3897aa974d,false,scanned; no open Israel roles now
+Matrix,scrape,https://secrethunter.io/jobz/f8f4130e62,https://secrethunter.io/jobz/f8f4130e62,false,scanned; no open Israel roles now
+Priority Software,scrape,https://secrethunter.io/jobz/de4d8019c3,https://secrethunter.io/jobz/de4d8019c3,false,scanned; no open Israel roles now
+Moonsite - Moonsoft Development Ltd.,scrape,https://secrethunter.io/jobz/88e08da946,https://secrethunter.io/jobz/88e08da946,false,scanned; no open Israel roles now
+ICON Strategic Solutions,workday,icon/wd3/broadbean_external,https://icon.wd3.myworkdayjobs.com/wday/cxs/icon/broadbean_external/jobs,true,auto-expand; 4/3 IL
+appsforce,scrape,https://secrethunter.io/jobz/bb3b05e785,https://secrethunter.io/jobz/bb3b05e785,false,scanned; no open Israel roles now
+Intel Corporation,workday,intel/wd1/External,https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/External/jobs,true,auto-expand; 31/28 IL
+Data scientist engineer - Fetcherr,scrape,https://secrethunter.io/jobz/a660a90586,https://secrethunter.io/jobz/a660a90586,false,scanned; no open Israel roles now
+AppSec,scrape,https://secrethunter.io/jobz/64a2ad6daf,https://secrethunter.io/jobz/64a2ad6daf,false,scanned; no open Israel roles now
+Dream,lever,wearedream,https://api.lever.co/v0/postings/wearedream?mode=json,true,auto-expand; 46/0 IL
+Ruby Labs,scrape,https://secrethunter.io/jobz/acc5165014,https://secrethunter.io/jobz/acc5165014,false,scanned; no open Israel roles now
+Aqurate Data,scrape,https://secrethunter.io/jobz/14f8f8d024,https://secrethunter.io/jobz/14f8f8d024,false,scanned; no open Israel roles now
+Data analyst - Nogamy,scrape,https://secrethunter.io/jobz/3270ce1fca,https://secrethunter.io/jobz/3270ce1fca,false,scanned; no open Israel roles now
+Ryltech.co.il,scrape,https://secrethunter.io/jobz/41a02cc77d,https://secrethunter.io/jobz/41a02cc77d,false,scanned; no open Israel roles now
+TechBiz Global,recruitee,jobs.techbiz.global,https://jobs.techbiz.global/api/offers/,true,auto-expand; 208/2 IL
