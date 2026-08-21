@@ -41,7 +41,12 @@ def main():
     cache = _load_cache()
     # Every company gets a row so it leaves the unresolved set — the loop converges to zero:
     #   resolved -> active row with jobs; empty/unreachable -> inactive row (validated scan).
-    n_resolved = n_empty = n_unreach = 0
+    # Exception: when the LLM fallback tier exists but this run's cap is exhausted, the
+    # company is DEFERRED (no row) so a later run gives it its one LLM shot.
+    import shutil as _shutil
+    llm_available = bool(_shutil.which("claude"))
+    llm_budget = int(os.environ.get("LLM_RESOLVE_CAP", "10")) if llm_available else 0
+    n_resolved = n_empty = n_unreach = n_llm = n_defer = 0
     for e in batch:
         name, url = e["name"].strip(), e["careers_url"]
         try:
@@ -49,6 +54,27 @@ def main():
         except Exception:  # noqa: BLE001
             r = ("unreachable", None)
         kind = r[0] if r else "unreachable"
+
+        # LLM fallback: deterministic resolution failed outright, or "succeeded" only by
+        # scraping an aggregator page (which the guard below refuses to activate anyway).
+        _scrape_url = ""
+        if kind == "scrape":
+            _j2, _scrape_url = r[1] if isinstance(r[1], tuple) else (r[1], url)
+        needs_llm = (kind in ("empty", "unreachable")
+                     or (kind == "scrape"
+                         and any(a in urlparse(_scrape_url).netloc.lower()
+                                 for a in ("linkedin.", "indeed.", "glassdoor."))))
+        if needs_llm and llm_available:
+            if llm_budget <= 0:
+                n_defer += 1
+                print(f"  dfer {name} (LLM cap reached; retried next run)", flush=True)
+                continue
+            llm_budget -= 1
+            from resolve_llm import resolve_llm
+            lr = resolve_llm(name, url)
+            if lr:
+                r, kind = lr, "ats"
+                n_llm += 1
         if kind == "ats":
             nm, plat, tok, api, n_all, il = r[1]
             row = [nm, plat, tok, api, "true", f"auto-expand; {n_all}/{il} IL"]
@@ -80,8 +106,9 @@ def main():
 
     with open("scraped_cache.json", "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
-    remaining = len(todo) - len(batch)
-    print(f"=== resolved {n_resolved}, empty {n_empty}, unreachable {n_unreach}; "
+    remaining = len(todo) - len(batch) + n_defer
+    print(f"=== resolved {n_resolved} (LLM-cracked {n_llm}), empty {n_empty}, "
+          f"unreachable {n_unreach}, deferred {n_defer}; "
           f"~{remaining} still to scan ===", flush=True)
 
 

@@ -36,9 +36,22 @@ jobs:
           python -m pip install --quiet playwright
           python -m playwright install --with-deps chromium
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Claude Code CLI (LLM fallback resolver)
+        run: npm install -g @anthropic-ai/claude-code
+
       - name: Resolve the next batch
         env:
           AUTO_EXPAND_LIMIT: ${{ github.event.inputs.limit || '250' }}
+          # LLM fallback tier (resolve_llm.py): subscription token + web search for
+          # finding real careers pages behind aggregator links. Both optional — without
+          # them the deterministic tiers run exactly as before.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          LLM_RESOLVE_CAP: "10"
         run: python auto_expand.py
 
       - name: Commit newly-cracked companies
