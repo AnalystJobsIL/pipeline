@@ -532,7 +532,12 @@ def fetch_discovery(row):
     except Exception:  # noqa: BLE001
         return []
     cut = (_dt.date.today() - _dt.timedelta(days=21)).isoformat()
-    return [j for j in jobs if not j.get("posted_date") or str(j["posted_date"])[:10] >= cut]
+    # run.py filters recruiter ROWS; discovery jobs carry the real employer name and would
+    # bypass that check, so agencies re-posting client roles are dropped per-job here.
+    from .recruiters import is_recruiter as _is_rec
+    return [j for j in jobs
+            if (not j.get("posted_date") or str(j["posted_date"])[:10] >= cut)
+            and not _is_rec(j.get("company"))]
 
 
 def fetch_jazzhr(row):

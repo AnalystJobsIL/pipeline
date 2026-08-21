@@ -6171,32 +6171,14 @@
   "slug": ""
  },
  {
-  "name": "comblack",
-  "careers_url": "https://www.linkedin.com/jobs/view/senior-business-intelligence-developer-at-comblack-4454025435?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
   "name": "LiveU",
   "careers_url": "https://www.linkedin.com/jobs/view/bi-developer-at-liveu-4416244974?_l=en",
   "ats": "unknown",
   "slug": ""
  },
  {
-  "name": "G-STAT",
-  "careers_url": "https://www.linkedin.com/jobs/view/system-analyst-at-g-stat-4447690502?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
   "name": "Port.io",
   "careers_url": "https://www.linkedin.com/jobs/view/senior-bi-analyst-at-port-io-4448277590?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "Elad Software Systems",
-  "careers_url": "https://www.linkedin.com/jobs/view/%D7%9E%D7%A4%D7%AA%D7%97-%D7%AA-bi-%D7%9C%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98-ai-at-elad-software-systems-4438556920?_l=en",
   "ats": "unknown",
   "slug": ""
  },
@@ -6209,24 +6191,6 @@
  {
   "name": "Extreme",
   "careers_url": "https://www.linkedin.com/jobs/view/bi-system-analyst-at-extreme-4448145302?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "Talent-HR",
-  "careers_url": "https://www.linkedin.com/jobs/view/business-intelligence-analyst-at-talent-hr-4336450195?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "SQLink Group",
-  "careers_url": "https://www.linkedin.com/jobs/view/data-systems-analyst-at-sqlink-group-4449572101?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "Nogamy",
-  "careers_url": "https://www.linkedin.com/jobs/view/bi-systems-analyst-at-nogamy-4453648616?_l=en",
   "ats": "unknown",
   "slug": ""
  },
@@ -6263,12 +6227,6 @@
  {
   "name": "Glow",
   "careers_url": "https://www.linkedin.com/jobs/view/data-analyst-at-glow-4443708848?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "Recruitx",
-  "careers_url": "https://www.linkedin.com/jobs/view/data-analyst-jb-4122-at-recruitx-4420927681?_l=en",
   "ats": "unknown",
   "slug": ""
  },
@@ -6381,20 +6339,8 @@
   "slug": ""
  },
  {
-  "name": "Log-On Software",
-  "careers_url": "https://www.linkedin.com/jobs/view/senior-data-bi-systems-analyst-at-log-on-software-4453442275?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
   "name": "מרטנס | Mertens – מקבוצת מלם תים",
   "careers_url": "https://www.linkedin.com/jobs/view/bi-systems-analyst-36733-at-%D7%9E%D7%A8%D7%98%D7%A0%D7%A1-mertens-%E2%80%93-%D7%9E%D7%A7%D7%91%D7%95%D7%A6%D7%AA-%D7%9E%D7%9C%D7%9D-%D7%AA%D7%99%D7%9D-4456704889?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "Yael Korentec Technologies",
-  "careers_url": "https://www.linkedin.com/jobs/view/bi-developer-%E2%80%93-defense-company-northern-israel-at-yael-korentec-technologies-4453666237?_l=en",
   "ats": "unknown",
   "slug": ""
  },
@@ -6411,18 +6357,6 @@
   "slug": ""
  },
  {
-  "name": "Yael Group",
-  "careers_url": "https://www.linkedin.com/jobs/view/senior-tableau-developer-25156-at-yael-group-4449514053?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "Confidential Careers",
-  "careers_url": "https://www.linkedin.com/jobs/view/senior-bi-systems-analyst-at-confidential-careers-4453863219?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
   "name": "Bookmap",
   "careers_url": "https://www.linkedin.com/jobs/view/senior-business-operations-data-analyst-at-bookmap-4436334826?_l=en",
   "ats": "unknown",
@@ -6431,12 +6365,6 @@
  {
   "name": "Bounce",
   "careers_url": "https://www.linkedin.com/jobs/view/data-analyst-at-bounce-4443290013?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "Experis Academy Israel",
-  "careers_url": "https://www.linkedin.com/jobs/view/entry-level-bi-data-analyst-role-%E2%80%93-training-%2B-placement-at-experis-academy-israel-4445098276?_l=en",
   "ats": "unknown",
   "slug": ""
  },
@@ -6495,12 +6423,6 @@
   "slug": ""
  },
  {
-  "name": "Experis Israel",
-  "careers_url": "https://www.linkedin.com/jobs/view/business-data-analyst-241239-at-experis-israel-4450102302?_l=en",
-  "ats": "unknown",
-  "slug": ""
- },
- {
   "name": "Akamai Technologies",
   "careers_url": "https://www.linkedin.com/jobs/view/secops-engineer-at-akamai-technologies-4456785328?_l=en",
   "ats": "unknown",
@@ -6539,6 +6461,306 @@
  {
   "name": "Dell",
   "careers_url": "https://jobs.dell.com/",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "JPMorganChase",
+  "careers_url": "https://secrethunter.io/jobz/b401105b3d",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "BTB - Be The Bank,",
+  "careers_url": "https://secrethunter.io/jobz/eb925e97e7",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Moveo Group",
+  "careers_url": "https://secrethunter.io/jobz/9259190970",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "K Logic",
+  "careers_url": "https://secrethunter.io/jobz/5153067f91",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zim",
+  "careers_url": "https://secrethunter.io/jobz/02f03d0019",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Glassbox",
+  "careers_url": "https://secrethunter.io/jobz/228afb1720",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Director of data - Guardio",
+  "careers_url": "https://secrethunter.io/jobz/ba3da8eebd",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Investing",
+  "careers_url": "https://secrethunter.io/jobz/4c4298add4",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AllCloud",
+  "careers_url": "https://secrethunter.io/jobz/d80ab6c5fe",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Guidde",
+  "careers_url": "https://secrethunter.io/jobz/852aa7160b",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "expressvpn",
+  "careers_url": "https://secrethunter.io/jobz/a799cf3e1d",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Engineering team lead- data & AI platform - everc",
+  "careers_url": "https://secrethunter.io/jobz/ae3cd2b83e",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "doitintl",
+  "careers_url": "https://secrethunter.io/jobz/7ca30d0721",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Phoenix Financial",
+  "careers_url": "https://secrethunter.io/jobz/25a919ad8b",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Shufersal",
+  "careers_url": "https://secrethunter.io/jobz/7446ee070b",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "helfy",
+  "careers_url": "https://secrethunter.io/jobz/3476695ef3",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Artlist",
+  "careers_url": "https://secrethunter.io/jobz/02312f1ff6",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sql developer - SkySoft Solutions By Commit",
+  "careers_url": "https://secrethunter.io/jobz/84bd4c2766",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Alison",
+  "careers_url": "https://secrethunter.io/jobz/fe8c52aef9",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "90min",
+  "careers_url": "https://secrethunter.io/jobz/a817bc41a4",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "PassportCard",
+  "careers_url": "https://secrethunter.io/jobz/52034b36bf",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Data researcher - Navina",
+  "careers_url": "https://secrethunter.io/jobz/26ce472111",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "everc",
+  "careers_url": "https://secrethunter.io/jobz/7332e9300d",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "topgummiceuticals",
+  "careers_url": "https://secrethunter.io/jobz/ae3cd2b83e",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Sela",
+  "careers_url": "https://secrethunter.io/jobz/90abe11934",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "SMARTECH - A Hexion Company",
+  "careers_url": "https://secrethunter.io/jobz/0ae3bc9875",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ready Group",
+  "careers_url": "https://secrethunter.io/jobz/cd575c67be",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Medison Pharma",
+  "careers_url": "https://secrethunter.io/jobz/c2a5124ea5",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Genpact",
+  "careers_url": "https://secrethunter.io/jobz/5efc6aaf3e",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "TCM Technologies LTD",
+  "careers_url": "https://secrethunter.io/jobz/a8ddc87426",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ICE",
+  "careers_url": "https://secrethunter.io/jobz/cf273806e9",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Amazon Web Services (AWS)",
+  "careers_url": "https://secrethunter.io/jobz/8717f08353",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "vi",
+  "careers_url": "https://secrethunter.io/jobz/f38ec7872c",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ONE ZERO Digital Bank",
+  "careers_url": "https://secrethunter.io/jobz/9bfb88bc3d",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Zota",
+  "careers_url": "https://secrethunter.io/jobz/6b61da567d",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Orca-AI",
+  "careers_url": "https://secrethunter.io/jobz/7b051f83fe",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Aman Group",
+  "careers_url": "https://secrethunter.io/jobz/3897aa974d",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Matrix",
+  "careers_url": "https://secrethunter.io/jobz/f8f4130e62",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Priority Software",
+  "careers_url": "https://secrethunter.io/jobz/de4d8019c3",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Moonsite - Moonsoft Development Ltd.",
+  "careers_url": "https://secrethunter.io/jobz/88e08da946",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "ICON Strategic Solutions",
+  "careers_url": "https://secrethunter.io/jobz/13011db1d5",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "appsforce",
+  "careers_url": "https://secrethunter.io/jobz/bb3b05e785",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Intel Corporation",
+  "careers_url": "https://secrethunter.io/jobz/5b0489b7e0",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Data scientist engineer - Fetcherr",
+  "careers_url": "https://secrethunter.io/jobz/a660a90586",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "AppSec",
+  "careers_url": "https://secrethunter.io/jobz/64a2ad6daf",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Dream",
+  "careers_url": "https://secrethunter.io/jobz/29d9a55f34",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ruby Labs",
+  "careers_url": "https://secrethunter.io/jobz/acc5165014",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Aqurate Data",
+  "careers_url": "https://secrethunter.io/jobz/14f8f8d024",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Data analyst - Nogamy",
+  "careers_url": "https://secrethunter.io/jobz/3270ce1fca",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Ryltech.co.il",
+  "careers_url": "https://secrethunter.io/jobz/41a02cc77d",
   "ats": "unknown",
   "slug": ""
  }

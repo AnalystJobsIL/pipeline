@@ -22,6 +22,17 @@ _CONFIRMED = {
     "recruitx",                 # "recruitment & headhunting agency"
     "talent-hr", "talent hr",   # staffing/recruitment (hires Recruitment/Talent-Acquisition Specialists)
     "elad software systems",    # IT services + full-cycle IT recruitment/staffing
+    # added 2026-08-21 (surfaced by Telegram-channel discovery):
+    "experis", "experis israel", "experis academy israel",  # ManpowerGroup staffing brand
+    "abra", "abra rnd", "abra r&d",       # IT services/outsourcing; re-posts client roles
+    "malamteam", "malam team",            # Malam-Team IT services/outsourcing
+    "yael group", "yael korentec technologies",  # IT services group; client placements
+    "moveo source",                       # placement/sourcing arm of Moveo consultancy
+    "nogamy",                             # IT staffing (posts numbered client roles "JB-####")
+    "g-stat",                             # data-consultancy placements (numbered client roles)
+    "log-on software",                    # IT services/outsourcing
+    "matchit",                            # placement ("MatchIT" = match-to-IT-roles)
+    "confidential careers", "confidential",  # anonymous agency postings
 }
 
 # Obvious agency markers — blocks future auto-expand additions. Narrow on purpose.

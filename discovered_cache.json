@@ -55,17 +55,6 @@
   "description": "Qodo is building the future of AI-powered software development. Our tools help engineering teams write better code, ship with more confidence, and move faster — without sacrificing quality. From intelligent code review to AI-driven test generation, Qodo sits at the intersection of developer tooling and cutting-edge AI. We're a fast-growing, product-led company trusted by thousands of developers and engineering teams worldwide. We're looking for a Data Analyst to join our growing data team and help make analytics a core part of how we build. You'll work on the product-usage side of an AI product that thousands of developers rely on — understanding how teams adopt AI code review, which features drive value, and where we can make the experience better. It's a product-focused role at heart, reaching into business, operational, and cost metrics too, with room to shape how we work as the team grows. Be the go-to analyst for the product team — drive product analytics day to day: how developers use our AI features, plus retention and conversion funnels Turn raw product and usage data into clear, consistent metrics the team can trust Build and maintain the modeled data layer, so metrics live in one place and analysis is repeatable rather than rebuilt each time Build and maintain dashboards so teams can self-serve answers Run deep-dive analysis to surface opportunities and support product decisions and experimentation Extend into business and operational KPIs — conversion, churn, segmentation, customer value — and cost / unit-economics Take analyses from problem definition through to clear recommendations, not just reports Requirements: 3+ years of industry experience as a Data, Product, Business, or BI Analyst, ideally in a developer-focused or technical B2B product AI-native: A"
  },
  {
-  "company": "Elad Software Systems",
-  "title": "Data Analyst",
-  "location": "Rishon LeZion, Center District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/data-analyst-at-elad-software-systems-4389427569?_l=en",
-  "posted_date": "2026-03-24",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/data-analyst-at-elad-software-systems-4389427569?_l=en",
-  "description": "תיאור ודרישות משרה אלעד מערכות מגייסת Data Analyst | 📍ראשון לציון (קו רכבת) הזדמנות להצטרף לצוות Data מוביל ולהשפיע על קבלת החלטות עסקיות דרך עבודה עם דאטה מורכב ויצירת תובנות משמעותיות. מתאים לאנליסטים מנוסים שרוצים לקחת חלק בפרויקטים רוחביים ולהיות שותפים אמיתיים לעשייה. דרישות: ניסיון של 2+ שנים באנליזה או מחקר נתונים שליטה גבוהה ב-SQL וכתיבת שאילתות מורכבות ניסיון בעבודה עם בסיסי נתונים גדולים, DWH או Big Data ניסיון בניתוח נתונים והפקת תובנות עסקיות הבנה עסקית ויכולת עבודה מול ממשקים מגוונים תואר רלוונטי בתחומי המדעים או תעשייה וניהול ניסיון ב-Python – יתרון ניסיון עם כלי BI כמו Tableau, Power BI או BO – יתרון נשמע כמוך?שלח.י קורות חיים הפניה מיועדת לנשים וגברים כאחד רק פניות מתאימות יענו Show more Show less"
- },
- {
   "company": "Shortical",
   "title": "Data Analyst",
   "location": "Tel Aviv-Yafo, Tel Aviv District, Israel",
@@ -75,17 +64,6 @@
   "ats_platform": "discovery-linkedin",
   "job_id": "https://www.linkedin.com/jobs/view/data-analyst-at-shortical-4438986340?_l=en",
   "description": "We're looking for a Data Analyst to join our core team and own the data, reporting, and insight layer that our biggest decisions are built on — what to greenlight, what to spend, and where to double down. You'll report into the Head of Data and work closely with Marketing, Product, and Content, but the core of the job is data work: querying, modeling, dashboarding, and rigorous analysis. As we scale, so will your scope — this is a launchpad role, not a fixed lane. Responsibilities Reporting & Dashboards: Own end-to-end reporting — build, maintain, and improve dashboards (Looker, Tableau, Power BI, or similar) — and ensure the pipelines feeding them are accurate, timely, and well-documented. Analysis & Insight Generation: Turn raw data into clear, actionable recommendations by analyzing funnels and attribution, tracking core KPIs (CAC, LTV, ROAS, retention), and proactively surfacing opportunities rather than waiting to be asked. Data Integration & Engineering: Define and validate tables and data models, define BI events and tracking specs with product and engineering, and work closely with the data engineering team to keep data clean, unified, and query-ready across analytics, ad/campaign, CRM, and product data sources. Experimentation: Support or run A/B tests across campaigns, product features, or content, applying statistical rigor to test design and readouts. Stakeholder Communication: Translate complex data into clear narratives for non-technical stakeholders, and present findings with a structured, problem-first point of view rather than just executing requests as asked. Requirements B.Sc. in Industrial Engineering/Economics/Statistics, or equivalent degree 4+ years in analytics, business intelligence, or a similar analytical role. Strong SQL and hands-on experien"
- },
- {
-  "company": "Recruitx",
-  "title": "Data Analyst JB-4122",
-  "location": "Raanana, Center District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/data-analyst-jb-4122-at-recruitx-4420927681?_l=en",
-  "posted_date": "2026-08-14",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/data-analyst-jb-4122-at-recruitx-4420927681?_l=en",
-  "description": "We are a pioneer company that integrates statistics modules and algorithms with a passion to sports, mainly soccer. We are looking for a data analyst to join our research department. The data analyst function will support several stakeholders in our company. As a part of your job you'll be: Working with the research team and be the one to look and understand the bigger picture. Learning the data gathering mechanism. Face and solve business problems by analyzing data and provide insights to the business. Develop complex logic flows to identify predefined events and generate desired insights. Support the researchers on their projects. Responsible for conducting both recurring and ad hoc analysis for business stake holders. Research and integrate new tools and methods to enrich datasets. Qualifications A least 2 years of experience as a Data Analyst - a must High hands-on SQL skills (SQL server) - a must R or Python programming skills- a must Knowledge in statistics - a must Interest in FinTech, Algo Trading – an advantage Interest in sports (soccer in particular) - an advantage Show more Show less"
  },
  {
   "company": "Cognyte",
@@ -143,17 +121,6 @@
   "description": "Zipher is pioneering the Autonomous Execution Layer for Cloud Data & AI Workloads . Our platform dynamically orchestrates clusters, predicts workload bottlenecks, scales resources in real time , and auto-heals infrastructure anomalies for data-intensive and agentic workloads —with zero human intervention . Operating in live production across global enterprise customers, Zipher delivers mission-critical resilience , sub-second optimization, and true zero-touch infrastructure . Why Join Us Scale-Up Velocity, Core Team Ownership: Backed by top-tier VCs, scaling fast, and running live in Fortune 500 & enterprise production environments, we combine scale-up stability with the high impact, rapid iteration, and meaningful equity upside of an elite core team. Deep Tech & AI-Native Culture: We solve the hardest cloud infrastructure and telemetry challenges. You won’t just build dashboards—you will own production-grade data products and drive the core intelligence powering our autonomous engine. Key Responsibilities Dive deep into massive enterprise-scale telemetry and workload datasets to uncover patterns, optimize cloud execution, and steer core product decisions. Design, build, and maintain production-grade data pipelines, analytics models, and internal platforms supporting real-time autonomous systems. Partner directly with engineering and leadership to translate complex multi-cloud performance metrics into actionable platform intelligence. Develop robust data modeling frameworks, statistical analyses, and high-impact visual interfaces to measure system efficiency and model accuracy. What We Offer Top-of-Market Compensation: Highly competitive base salary benchmarking top-tier startup talent. Significant Equity: Meaningful early-stage equity grants positioned above market sta"
  },
  {
-  "company": "G-STAT",
-  "title": "Data Analyst",
-  "location": "Center District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/data-analyst-at-g-stat-4452928552?_l=en",
-  "posted_date": "2026-08-14",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/data-analyst-at-g-stat-4452928552?_l=en",
-  "description": "Directly employed by the client company from day one About the Role We're looking for an analytical, detail-oriented professional to join our Risk Management data team, responsible for complex business-process analysis and the development, monitoring, and governance of predictive and decision models used in risk-related processes. You will be employed directly by the client company from your very first day/ What You'll Do Perform complex analyses of business processes, draw conclusions, and formulate recommendations for improvement Own the monitoring and control of predictive and decision (risk) models, including building a dedicated reporting framework Develop and implement predictive and decision models, leveraging available data repositories and advanced research methods (20%) Design and execute test plans for decision-making logic, and manage issue resolution accordingly Maintain full model documentation (predictive and decision models) and manage change-control documentation What We're Looking For Academic degree in a relevant field (Statistics, Industrial Engineering & Management, Economics, Information Systems, or similar) At least 3 years of hands-on experience writing complex SQL queries against databases in large organizations At least 1 year of experience developing in Python for Data Analytics, Predictive Analytics, and ML — academic-project experience is also acceptable Experience analyzing complex business systems and processes, combined with thoroughness and attention to detail Experience with Visual Analytics tools such as Tableau – advantage Strong written and verbal communication skills in both Hebrew and English Preferred Background: Candidates from financial-sector organizations (banks, insurance companies, non-bank credit, or capital markets) with h"
- },
- {
   "company": "Similarweb",
   "title": "Big Data Analyst",
   "location": "Tel Aviv-Yafo, Tel Aviv District, Israel",
@@ -163,28 +130,6 @@
   "ats_platform": "discovery-linkedin",
   "job_id": "https://www.linkedin.com/jobs/view/big-data-analyst-at-similarweb-4408239691?_l=en",
   "description": "At Similarweb, we are revolutionizing the way businesses interact with the digital world by revealing to them everything that happens online. Our unique data and solutions empower over 4,300 customers globally, including industry giants like Google, Meta, OpenAI, to make game-changing decisions that drive their digital strategies. In 2021, we went public on the New York Stock Exchange, and we continue to reach new heights! Come work alongside Similarwebbers across the globe who are bright, curious, practical, and good people. We’re looking for a sharp and driven Data Analyst to join our fast - paced Data Labs team. As part of a high-performing group of analysts, you’ll handle complex, custom requests from some of the biggest names in the market, turning raw data into strategic, ad hoc insights. The work is intense and constantly evolving - it requires strong analytical skills and the ability to work independently under pressure. You’ll need to be curious, adaptable, and willing to dive deep to find answers where others might stop. If you thrive in a demanding environment and are excited by the opportunity to make a real impact, we want you on our team. What does the day to day of a Big Data Analyst Customer Facing (Data Labs) at Similarweb look like: Building custom-made reports end to end - from meeting with the client and understanding their needs, to writing the code and setting up the report for ongoing delivery. Apply your expertise in quantitative analysis and data mining to turn data into insights. Conduct research and develop tools which will help answer client's’ business. questions by using Similarweb’s raw data sets and algorithms. Partner with Engineering teams to establish an infrastructure to scale solutions. Partner with Advisory Services team of Consulta"
- },
- {
-  "company": "Yael Korentec Technologies",
-  "title": "BI Developer – Defense Company, Northern Israel",
-  "location": "North District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/bi-developer-%E2%80%93-defense-company-northern-israel-at-yael-korentec-technologies-4453666237?_l=en",
-  "posted_date": "2026-08-20",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/bi-developer-%E2%80%93-defense-company-northern-israel-at-yael-korentec-technologies-4453666237?_l=en",
-  "description": "A defense company in northern Israel is looking for an experienced BI Developer with strong analytical skills and a solid understanding of data architecture. The selected candidate will join the company’s BI group and will be responsible for developing enterprise-level analytics solutions across diverse business domains, using advanced data technologies. Responsibilities include: Developing and implementing advanced BI solutions and business insights based on complex data Defining and implementing key KPI metrics for development and operational processes across various business areas Designing concepts and planning analytical solutions Working with leading BI architecture and data analysis technologies Collaborating with internal stakeholders to understand business needs and translate them into data-driven solutions Requirements: Bachelor’s degree in Information Systems Engineering, Industrial Engineering & Management, Computer Science, or another relevant field – mandatory At least 3 years of experience developing reports and dashboards using data analysis tools – mandatory At least 3 years of hands-on experience with complex SQL queries, problem-solving, and query optimization – mandatory Excellent analytical skills and strong data orientation Understanding of BI architecture, including DWH, ETL, and data modeling Experience developing with OBIEE or other BI tools such as QlikView or Tableau – advantage Experience in ETL development – advantage Show more Show less"
- },
- {
-  "company": "comblack",
-  "title": "Business Intelligence Developer",
-  "location": "North District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/business-intelligence-developer-at-comblack-4455302074?_l=en",
-  "posted_date": "2026-08-20",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/business-intelligence-developer-at-comblack-4455302074?_l=en",
-  "description": "COMBLACK is looking for a BI Developer! This is a great opportunity to join an established BI team , working with complex enterprise data and developing advanced analytics and business intelligence solutions. What are we looking for? Bachelor’s degree in Information Systems Engineering, Industrial Engineering, Computer Science, or a related field 3+ years of experience developing BI reports and dashboards 3+ years of experience writing complex SQL queries and query optimization Strong understanding of BI architecture, DWH, ETL, and Data Modeling Experience with OBIEE, Tableau, or QlikView – an advantage Why Comblack? Comblack is dedicated to creating accurate and meaningful connections between people and the right opportunities. We believe in a personal approach, uncompromising professionalism, and true end-to-end support for both candidates and clients. At Comblack, you’ll find a dynamic, supportive, and innovative work environment that encourages initiative, growth, and continuous professional development. Show more Show less"
  },
  {
   "company": "entrypoint",
@@ -198,17 +143,6 @@
   "description": "We are looking for an experienced Data Analyst to join our Data & BI Department and lead data analysis processes, generate actionable business insights, and develop advanced analytical solutions. The role involves collaborating with various business units across the organization, gathering and defining requirements, building analytical models, developing reports and dashboards, and leveraging advanced data technologies to support data-driven decision-making. Key Responsibilities Analyze data and generate business insights to support decision-making. Gather and define business requirements in collaboration with internal stakeholders. Develop and maintain reports and dashboards using Power BI . Work with large databases and analyze significant volumes of data. Build analytical models and define KPIs . Collaborate with BI, Data Engineering, and business teams across the organization. Improve work processes and implement advanced data solutions. Requirements At least 2 years of experience as a Data Analyst / BI Analyst . Strong hands-on experience with SQL and complex data analysis. Experience developing reports and dashboards using Power BI or other Data Visualization tools – required . Experience working with Big Data environments and large-scale datasets – required . Experience gathering business requirements and translating them into analytical solutions. Experience working with Data Warehouses (DWH) and data modeling. Familiarity with Python, Spark, or advanced analytics tools – an advantage . Experience working in large, complex, multi-system organizations . Experience working in Cloud environments , particularly Microsoft Azure / Microsoft Fabric – a significant advantage . Experience in BI/ETL development – a significant advantage . Ability to work independently, wi"
  },
  {
-  "company": "Log-On Software",
-  "title": "Senior Data / BI Systems Analyst",
-  "location": "Center District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/senior-data-bi-systems-analyst-at-log-on-software-4453442275?_l=en",
-  "posted_date": "2026-08-20",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/senior-data-bi-systems-analyst-at-log-on-software-4453442275?_l=en",
-  "description": "Senior Data/BI Systems Analyst | Leading Insurance Company | Shfela Area A leading insurance company in the Shfela area is looking for an experienced Senior Data/BI Systems Analyst to take a key role in designing complex Data solutions and translating business requirements into scalable technology solutions. The role combines Systems Analysis, Data Modeling, DWH and ETL, technical specifications, and end to end ownership from initial requirements through implementation. What You'll Do • Analyze business requirements and translate them into Data driven technology solutions • Create detailed business and technical specification documents • Design complex data models and information structures • Define Data interfaces, integrations, and processes • Work with DWH, ETL, and tabular models • Write and analyze complex database queries • Collaborate with business users, Developers, Data professionals, and Analysts • Lead processes from requirements through implementation • Support planning, prioritization, task management, and project delivery What We're Looking For • 5+ years of Data/BI Systems Analysis experience, required • Continuous hands on Systems Analysis experience during the past 4 years, required • Strong Data Modeling experience, including Dimensional Modeling, Star Schema, Snowflake, Normalization, Denormalization, and Data Vault • Proven experience writing business and technical specifications, required • Deep understanding of DWH, ETL, and tabular models • Experience writing complex database queries • Experience working in Cloud environments • Familiarity with BI tools such as Power BI, Qlik, or Tableau • Bachelor's degree in Industrial Engineering and Management, Information Systems, Computer Science, or a related field Nice to have: Experience leading projects "
- },
- {
   "company": "Central Bottling Company Israel ltd",
   "title": "Business Intelligence Developer 17621",
   "location": "Givat Haim (Me'uchad), Center District, Israel",
@@ -220,39 +154,6 @@
   "description": "BI Implementer | Join Prigat at CBC ISRAEL Passionate about turning data into business value? Prigat, part of CBC ISRAEL, home to iconic brands such as Coca-Cola, Neviot, Tara and Carlsberg, is looking for a BI Implementer to join our team and play a key role in shaping data-driven decision-making across the organization. In this role, you will: Design, develop, and maintain ETL processes using SSIS and modern cloud technologies Work with Azure Data Factory and Databricks to build scalable data solutions Develop and maintain Power BI dashboards, reports, semantic models, and security structures Create digital and automation solutions using Microsoft Power Platform Write and optimize complex SQL queries Partner with business stakeholders to understand needs and translate them into impactful BI solutions Work with diverse data sources and support critical business processes What we're looking for: ✔ 2+ years of experience in ETL/DWH development and implementation ✔ Hands-on experience with SSIS, Azure Data Factory, and/or Databricks ✔ Strong Power BI experience, including DAX and data modeling ✔ Advanced SQL capabilities ✔ Experience with Power Automate and Power Apps - a strong advantage Why join us? ✅ Work with cutting-edge Microsoft data technologies ✅ Be part of a leading FMCG organization ✅ Annual bonus ✅ Company car ✅ Meals and excellent employee benefits 📍 Location: Sharon Region, Israel Show more Show less"
  },
  {
-  "company": "Yael Group",
-  "title": "Senior Tableau Developer (25156)",
-  "location": "Tel Aviv District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/senior-tableau-developer-25156-at-yael-group-4449514053?_l=en",
-  "posted_date": "2026-08-14",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/senior-tableau-developer-25156-at-yael-group-4449514053?_l=en",
-  "description": "Job Description Tableau Development: Design and develop complex, high-performance Tableau dashboards. Requirements Gathering & Specs: Write detailed business and technical specifications based on end-user and stakeholder requirements. Stakeholder Management: Work closely with internal clients, business units, and stakeholders across the organization. Admin & Support: Manage client access permissions, troubleshoot technical issues, and provide ongoing business/technical support. Job Requirements Experience: 4-5+ years of hands-on experience in modern Tableau development – Must . End-to-End Ownership: Proven experience leading characterization (specification) and development tasks directly with diverse business users – Must . Data & Infrastructure: Deep understanding of Tableau infrastructure and connectivity to Data Warehouses (DWH) or other data layers. Strong grasp of business and technical data models. Advanced Tableau Skills: Proven experience creating highly complex dashboards – Must . Tableau Administration: Solid experience with Tableau access management (permissions), task scheduling, and project configurations – Must . Database Skills: Proven experience working with SQL Server or similar relational databases – Must . Certification: Tableau Certification – Must . Show more Show less"
- },
- {
-  "company": "Elad Software Systems",
-  "title": "BI Developer (1007278)",
-  "location": "Petah Tikva, Center District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/bi-developer-1007278-at-elad-software-systems-4448100110?_l=en",
-  "posted_date": "2026-08-07",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/bi-developer-1007278-at-elad-software-systems-4448100110?_l=en",
-  "description": "Elad Software Systems specialize in managing and executing end-to-end projects and offer business solutions in order to help companies strengthen their relationship with end-client and improve the company’s customer experienceusing impeccable innovative and quality solutions. We work through three different channels: Data | CRM | Digital We are looking for a BI Developer (ETL) to join a leading organization and take responsibility for the development, maintenance, and enhancement of one of the organization's core Data Warehouses. In this role, you will work closely with System Analysts, business stakeholders, and multiple data sources, participating in end-to-end BI & Data development processes—from business requirements analysis through implementation in the production environment. The position requires strong self-management, initiative, independence, and a broad systems perspective. Requirements: Proven experience in developing and maintaining Data Warehouses (DWH) . Hands-on experience developing ETL processes using SSIS . Strong SQL skills, including writing complex queries, stored procedures, and performance optimization. Experience developing Power BI reports, dashboards, and data models. Experience gathering business requirements and working directly with business stakeholders. Experience leading BI & Data projects from requirements through production. Experience integrating with various systems and data sources using APIs . Experience developing in Python for data processing and automation. Experience with Microsoft Fabric and/or Databricks – a significant advantage. Experience or familiarity with AI & Generative AI solutions, including working with Large Language Models (LLMs) and developing AI Agents – a significant advantage. Show more Show less"
- },
- {
-  "company": "Nogamy",
-  "title": "Business Intelligence Developer",
-  "location": "Haifa District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/business-intelligence-developer-at-nogamy-4456309301?_l=en",
-  "posted_date": "2026-08-20",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/business-intelligence-developer-at-nogamy-4456309301?_l=en",
-  "description": "We’re hiring a BI Developer! About the Company We're a fast-growing technology company that combines business insight with innovation. At Nogamy , we help organizations unlock the power of Data, AI & Digital transformation. Qualifications B.Sc. in Computer Science, Industrial Engineering & Management, Information Systems, or a related field Required Skills 4+ years of hands-on experience in BI development, including ETL processes and dashboard development Strong Power BI experience – mandatory Strong SQL skills – mandatory Experience working with Data Warehouses (DWH) – mandatory Cloud experience – an advantage Experience with ETL tools – an advantage Knowledge and hands-on exposure to AI / Generative AI and its application in BI and analytics Python or Splunk experience – an advantage Agile experience – an advantage Strong understanding of Data Visualization, Best Practices, and Data Storytelling Excellent communication, presentation, and interpersonal skills Strong analytical mindset, ability to work independently and as part of a team, and a genuine passion for data Show more Show less"
- },
- {
   "company": "LiveU",
   "title": "BI Developer",
   "location": "Kfar Saba, Center District, Israel",
@@ -262,28 +163,6 @@
   "ats_platform": "discovery-linkedin",
   "job_id": "https://www.linkedin.com/jobs/view/bi-developer-at-liveu-4416244974?_l=en",
   "description": "Description About LiveU LiveU is the world leader in live streaming, providing high-quality, low-latency live broadcast from anywhere, anytime. We are looking for a BI Developer to join our MIS BI team and play a key role in building the data infrastructure that powers our business decisions. Role Overview As a BI Developer at LiveU, you will be a key member of the MIS BI team, responsible for designing, building, and maintaining scalable data solutions that enable data-driven decision-making across the organization. This is a hands-on, end-to-end role that goes beyond traditional frontend BI systems. You will take ownership of projects across the full data lifecycle — from source systems and backend integrations, through ETL/ELT pipelines and data transformations, all the way to dashboards, reporting layers, and user-facing BI applications. We are looking for someone who brings an AI-first mindset and leverages AI tools to improve development efficiency, automation, and data quality. We are looking for someone who combines strong technical capabilities with a business-oriented mindset. The role involves close collaboration with stakeholders across the company, including gathering requirements, leading discussions, planning projects, translating business needs into technical solutions, and driving initiatives from concept to delivery. Requirements 2+ years of experience in a BI Developer role Strong experience with SQL, ETL/ELT processes, data modeling, and Data Warehouse (DWH) methodologies Strong Python development skills for data workflows AI-first mindset - actively applies AI tools and thinking to engineering work Strong communication and stakeholder management skills, with the ability to drive end-to-end projects independently Hands-on experience with Snowflake, i"
- },
- {
-  "company": "Confidential Careers",
-  "title": "Senior BI Systems Analyst",
-  "location": "Center District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/senior-bi-systems-analyst-at-confidential-careers-4453863219?_l=en",
-  "posted_date": "2026-08-20",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/senior-bi-systems-analyst-at-confidential-careers-4453863219?_l=en",
-  "description": "Senior BI Systems Analyst | Leading Technology Organization | Central Israel Looking for your next challenge in the Data & BI world ? A leading technology organization in Central Israel is looking for an experienced Senior BI Systems Analyst to join a complex enterprise environment and take a key role in designing and delivering advanced BI and Data solutions. The role combines Systems Analysis, Data Modeling, DWH, advanced SQL, and Project Management , with end to end involvement from understanding business needs to designing and implementing the right technological solution. What You'll Do • Analyze and design complex BI solutions and systems • Translate business needs into detailed functional and technical specifications • Define and design reports and dashboards based on business requirements • Perform Data Modeling and design data structures • Create Source to Target mapping documents • Work hands on with advanced SQL • Take part in designing and implementing DWH solutions integrating multiple data sources • Combine Systems Analysis, BI implementation, and Project Management • Collaborate closely with business stakeholders, customers, and technology teams What We're Looking For • 7+ years of relevant professional experience • At least 6 years of BI experience within the last 8 years • Strong experience in BI Systems Analysis and solution design • Proven Data Modeling experience • Experience creating Source to Target documentation • Advanced SQL skills • Experience analyzing requirements and writing specifications for reports and dashboards • Experience designing and implementing DWH solutions integrating multiple data sources • Systems Analysis experience • Project Management experience Show more Show less"
- },
- {
-  "company": "Elad Software Systems",
-  "title": "BI Developer",
-  "location": "Tel Aviv-Yafo, Tel Aviv District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/bi-developer-at-elad-software-systems-4431612795?_l=en",
-  "posted_date": "2026-06-22",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/bi-developer-at-elad-software-systems-4431612795?_l=en",
-  "description": "תיאור ודרישות משרה We’re looking for a talented BI Developer to join our growing team. In this client-facing role, you will work on exciting, project-based BI solutions that span multiple industries and business functions. If you thrive on variety, enjoy collaborating with clients, and want to make a tangible impact, this is the perfect opportunity for you! Location: Tel Aviv What You’ll Do Client-Focused BI Development: Take full responsibility for developing, optimizing, and maintaining BI and DWH processes for a variety of clients across different industries. Your work will directly influence the success of their data-driven strategies. Customized Solutions: Collaborate with clients to understand their unique business needs and translate those into efficient, actionable BI solutions that deliver real business value. Data-Driven Insights: Analyze data to uncover insights that help clients improve their business processes, make informed decisions, and gain a competitive edge. Cross-Functional Collaboration: Work with internal teams (data engineers, analysts) and client stakeholders to ensure seamless project delivery, from requirement gathering through to execution. What We’re Looking For 2+ years of experience in BI development, with a strong background in ETL and Data Warehousing (DWH) processes. Technical Expertise: Proficiency in BI tools like Power BI or Quicksight, with a solid understanding of data modeling and report/dashboard design. Business Acumen: Strong ability to understand client requirements and translate them into technical solutions that drive business outcomes. Team-Oriented: Excellent collaboration and communication skills, as you’ll be working closely with both internal teams and clients. Cloud Knowledge: Familiarity with cloud platforms like Azure"
  },
  {
   "company": "Rhino Federated Computing",
@@ -317,17 +196,6 @@
   "ats_platform": "discovery-linkedin",
   "job_id": "https://www.linkedin.com/jobs/view/%D7%9E%D7%A4%D7%AA%D7%97-%D7%AA-bi-at-commit-4417345561?_l=en",
   "description": "חברת Commit מחפשת מפתח/ת BI מנוסה עם יכולות אנליטיות גבוהות והבנה טובה של ארכיטקטורת דאטה. השתלבות כחלק מצוות ה-BI, אחראיות על פיתוח פתרונות אנליטיקה ברמה הארגונית, בעולמות תוכן מגוונים ובטכנולוגיות מתקדמות. מדובר בתפקיד מאתגר ומרתק בחזית הטכנולוגיה בצפון הארץ. הצטרפו אלינו לעשייה בעלת משמעות אמיתית והשפעה רחבה. תחומי אחראיות: פיתוח ויישום פתרונות BI מתקדמים ותובנות עסקיות מנתונים מורכבים. הגדרת ויישום מטריקות KPI מרכזיים עבור תהליכי פיתוח בעולמות התוכן המגוונים. גיבוש קונספט ותכנון פתרונות אנליטיים. עבודה עם טכנולוגיות מובילות בארכיטקטורות BI וניתוח מידע. Requirements: מה אנחנו מחפשים: תואר ראשון בהנדסת מערכות מידע, תעשייה וניהול, מדעי המחשב או תחום רלוונטי אחר 3 שנות ניסיון בפיתוח דוחות ודשבורדים בכלי ניתוח נתונים 3 שנות ניסיון מעשי ב-SQL מורכבים, פתרון בעיות וכוונון שאילתות כישורים אנליטיים מעולים והתמצאות בנתונים הבנה של ארכיטקטורת BI: DWH, ETL ומידול נתונים ניסיון בפיתוח OBIEE או כלי פיתוח BI אחר (Qlik View, Tableau) יתרון ניסיון בפיתוח ETL - יתרון Show more Show less"
- },
- {
-  "company": "abra",
-  "title": "BI Engineer",
-  "location": "Center District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/bi-engineer-at-abra-4432190338?_l=en",
-  "posted_date": "2026-06-22",
-  "ats_platform": "discovery-linkedin",
-  "job_id": "https://www.linkedin.com/jobs/view/bi-engineer-at-abra-4432190338?_l=en",
-  "description": "abra’s Data & AI Division is Hiring a BI Developer We’re looking for a talented BI Developer to join our growing Data & AI division and help drive data-driven decision-making across the organization. In this role, you’ll be responsible for designing, building, and maintaining impactful dashboards and reports that support business needs and strategic goals. You’ll work closely with cross-functional teams to understand their requirements and translate them into scalable data solutions. This includes managing BI projects end-to-end, working with databases, ETL workflows, and visualization tools to deliver actionable insights. If you’re passionate about turning data into meaningful outcomes and thrive in a dynamic, collaborative environment—we’d love to hear from you! Requirements: 1-4 years of experience as a BI Developer Strong proficiency in SQL Hands-on experience with data warehouse implementation—preferably in Snowflake, Redshift, BigQuery, or Data Factory Proven track record in implementing and supporting BI systems, ideally in SaaS environments Expertise in BI visualization tools—Power BI is required Solid understanding of ETL processes and data modeling Experience with DBT—an advantage Show more Show less"
  },
  {
   "company": "Transmit Security",
@@ -372,17 +240,6 @@
   "ats_platform": "discovery-linkedin-targeted",
   "job_id": "https://www.linkedin.com/jobs/view/intelligence-analyst-threat-hunter-at-chainalysis-4443367548?_l=en",
   "description": "The engineering team at Chainalysis is inspired by solving the hardest technical challenges and creating products that build trust in cryptocurrencies. We’re a global organization with teams in Denmark, UK, Canada, the USA who thrive on the challenging work we do and doing it with other exceptionally talented teammates. Our industry changes every day and our job is to create user facing products supported by a flexible and scalable data platform allowing us to adapt to those rapid changes and bring value to our customers. We are building the data platform for blockchain, cryptocurrency, and web3. Our engineers deeply understand what is possible with cloud-native technologies and use those insights to enable our customers to push the boundaries of the cryptocurrency landscape. Our Alterya team is focused on AI-powered fintech and threat intelligence, empowering institutions to protect individuals from fraud transactions. As a Data Analyst & Prompt Engineer, you will be responsible for designing and optimizing prompts for LLM models to efficiently extract the data the team needs. We are looking for someone who thinks outside the box and enjoys solving complex problems with simple, elegant solutions. You are naturally curious, highly independent, and a self-learner who is always exploring new ideas and expanding your knowledge. The role will be based in Tel Aviv, and we are looking for eager, enthusiastic, curious, hard working and positive people to be part of our amazing journey. In This Job, You'll Research the web to find and define types of scams and scammers Build LMM prompts and data flows Analyze and monitor our data pipelines using SQL Research scam activity patterns Solve complex problems in ambiguous and evolving domains. Become the team's subject matter expert,"
- },
- {
-  "company": "Experis Academy Israel",
-  "title": "Entry-Level BI / Data Analyst Role – Training + Placement",
-  "location": "Tel Aviv-Yafo, Tel Aviv District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/entry-level-bi-data-analyst-role-%E2%80%93-training-%2B-placement-at-experis-academy-israel-4445098276?_l=en",
-  "posted_date": "2026-07-31",
-  "ats_platform": "discovery-linkedin-targeted",
-  "job_id": "https://www.linkedin.com/jobs/view/entry-level-bi-data-analyst-role-%E2%80%93-training-%2B-placement-at-experis-academy-israel-4445098276?_l=en",
-  "description": "Looking to start your career in Data & Business Intelligence but don’t have prior experience?? This opportunity is designed exactly for you. We are looking for outstanding graduates with strong analytical thinking to join as Data & BI Analysts and build a meaningful, high-impact career in the data world. What you’ll gain: Join a short, intensive, and fully sponsored training program where you’ll develop practical, in-demand skills: SQL, Power BI, and AI in the BI domain Data analysis, business insights, and dashboard creation Reporting, automation, and hands-on project experience What happens next? Upon successful completion, you will be placed in a full-time Data & BI Analyst role at leading companies. Requirements: Bachelor’s degree (80+ average) in Economics, Accounting, Business Administration, Engineering, Mathematics, Statistics, or other exact sciences Strong analytical and logical thinking skills Basic technical orientation (SQL knowledge – a strong advantage) No prior experience required — we’re looking for high-potential candidates, and we’ll provide you with all the tools you need to succeed. Ready to take your first step into the Data & BI world? Apply now. Show more Show less"
  },
  {
   "company": "Percepto",
@@ -517,17 +374,6 @@
   "description": "🔐 מחפש/ת את האתגר הבא בעולם הסייבר? אנחנו מגייסים SOC Analyst Tier 2 לארגון גדול ומוביל 🚀 התפקיד כולל עבודה בלב העשייה – חקירה מעמיקה של אירועי סייבר, טיפול בהתראות מורכבות, ביצוע Threat Hunting יזום ושיפור מתמיד של מערכות ההגנה. 💡 מה בתפקיד? • תחקור אירועי אבטחה מורכבים ומתן מענה לאסקלציות • Incident Response מקצה לקצה • ניתוח תעבורת רשת ופורנזיקה בסיסית • עבודה עם מערכות SIEM / XDR ושיפור חוקי ניטור • שיתוף פעולה עם צוותי תשתיות ופיתוח • חניכה מקצועית לאנליסטים/ות 🎯 מה אנחנו מחפשים? • ניסיון כ-SOC Analyst Tier 2 • ניסיון בתחקור ותגובה לאירועי סייבר • עבודה בסביבות Cloud (AWS / Azure) • היכרות עם מערכות אבטחה (SIEM, EDR/XDR, FW ועוד) • הבנה בפרוטוקולי תקשורת וניתוח תעבורה ➕ יתרון: Python / PowerShell, ניסיון עם Splunk / Sentinel / Cortex, כתיבת שאילתות (KQL / SPL) Show more Show less"
  },
  {
-  "company": "Experis Israel",
-  "title": "Business Data Analyst - 241239",
-  "location": "Petah Tikva, Center District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/business-data-analyst-241239-at-experis-israel-4450102302?_l=en",
-  "posted_date": "2026-08-14",
-  "ats_platform": "discovery-linkedin-targeted",
-  "job_id": "https://www.linkedin.com/jobs/view/business-data-analyst-241239-at-experis-israel-4450102302?_l=en",
-  "description": "WE ARE HIRING: Business Data Analyst (AI Workflow Optimization Specialist) 📍 Petah Tikva (Hybrid) About the Role You will own the quality and accuracy of AI-assisted fraud and risk review workflows . Working at the intersection of LLM prompt engineering and operations, you will analyze where the AI agent disagrees with human analysts, diagnose root causes, and iteratively improve the prompts and decision logic that power the agent. What You Will Do Evaluate AI output quality — read model decisions and reasoning, identify where the AI diverges from expected outcomes, and prioritize gaps to fix. Improve the AI instructions — edit structured prompt and rubric files to sharpen decision logic, close coverage gaps, and prevent regressions. Run controlled experiments — propose a change, validate it against a representative test set, and ship only when results meet the quality bar. Maintain ground-truth test coverage — keep the verified test suite current as the SOP evolves; add new cases when new edge cases surface. Interpret operational metrics — track agreement trends over time, spot patterns in failures, and use data to guide where to focus next. Close the feedback loop — gather input from human reviewers, translate observations into concrete improvements, and confirm fixes hold. What You Will Need Required Strong analytical and written communication skills — you will spend most of your time reading AI reasoning, writing precise instructions, and explaining trade-offs. Comfort working with LLM outputs — reading model reasoning chains, spotting hallucinations, identifying ambiguous instructions. Ability to effectively work with AI-based IDEs (such as Cursor or Claude Code) to read, edit, and validate configuration files. Systematic, hypothesis-driven mindset — you test one t"
- },
- {
   "company": "Bounce",
   "title": "Data Analyst",
   "location": "Tel Aviv-Yafo, Tel Aviv District, Israel",
@@ -581,17 +427,6 @@
   "ats_platform": "discovery-linkedin-targeted",
   "job_id": "https://www.linkedin.com/jobs/view/fraud-data-analyst-at-checkout-com-4411198404?_l=en",
   "description": "Company Description We’re Checkout.com . You might not know our name, but companies like eBay, Spotify, Klarna, Uber, and Sony do, because we’re behind many of the digital experiences you use every day. We are where the world checks out, enabling over 10 billion transactions yearly for more than one billion global shoppers. Whether you want to book a holiday, order food, renew a subscription, or check out online, there’s a good chance our tech powers the payments behind the scenes. Our platform helps the most ambitious businesses deliver effortless digital experiences, at scale. If you want to do career-defining work, you’ve come to the right place. We move fast, think globally, and believe great teams are built by hiring exceptional people with conviction, curiosity, and the desire to make an impact. With 20 offices across six continents and London as our HQ, we’re shaping the future of fintech – and we’re just getting started. About The Role As we scale and evolve our fully automated fraud prevention strategies, we are seeking a Data Analyst to join our growing Fraud Analytics team. We operate in a data-rich, fast-paced environment, processing billions of data points annually, and play a critical role in safeguarding large enterprises from fraud. In this role, you will work at the intersection of data analysis, fraud strategy, and automation, collaborating closely with engineering, data science, and commercial teams to develop scalable fraud detection solutions. This is a high-impact role with significant ownership and cross-functional collaboration in a team with tremendous room for growth. If you are highly motivated, data-driven, and thrive in a fast-moving environment - you belong with us. Key Responsibilities Develop and refine fraud detection strategies by analy"
- },
- {
-  "company": "Elad Software Systems",
-  "title": "מפתח/ת BI",
-  "location": "Haifa, Haifa District, Israel",
-  "country_code": "IL",
-  "url": "https://www.linkedin.com/jobs/view/%D7%9E%D7%A4%D7%AA%D7%97-%D7%AA-bi-at-elad-software-systems-4451386399?_l=en",
-  "posted_date": "2026-08-14",
-  "ats_platform": "discovery-linkedin-targeted",
-  "job_id": "https://www.linkedin.com/jobs/view/%D7%9E%D7%A4%D7%AA%D7%97-%D7%AA-bi-at-elad-software-systems-4451386399?_l=en",
-  "description": "תיאור ודרישות משרה Data Analyst / BI Analyst לחברה מובילה בתחום הטכנולוגי דרוש/ה Data Analyst / BI Analyst לתפקיד המשלב עבודה עסקית, טכנולוגית ולוגיסטית. מה תעשו בתפקיד? אפיון צרכים עסקיים והובלת פתרונות Data מקצה לקצה (E2E). פיתוח דשבורדים ב-Power BI וניתוח נתונים. עבודה עם SQL, Python ותהליכי ETL/ELT. שילוב פתרונות AI ותמיכה בתהליכי קבלת החלטות. עבודה מול ממשקים עסקיים וטכנולוגיים. דרישות: ניסיון של שנתיים לפחות כ-Data Analyst / BI Analyst. ניסיון בפיתוח דשבורדים ב-Power BI – חובה. שליטה ב-SQL וב-Python – חובה. ניסיון בתהליכי ETL/ELT – חובה. ניסיון באפיון צרכים עסקיים – חובה. ניסיון בהובלת פרויקטים מקצה לקצה (E2E) – יתרון. ניסיון בעבודה בסביבה לוגיסטית/תפעולית או עם כלי AI – יתרון. הפניה מיועדת לנשים וגברים כאחד רק פניות מתאימות יענו Show more Show less"
  },
  {
   "company": "Appcharge",
@@ -757,5 +592,896 @@
   "ats_platform": "discovery-linkedin-targeted",
   "job_id": "https://www.linkedin.com/jobs/view/commercial-planning-data-analysis-manager-at-jti-4424203458?_l=en",
   "description": "At JTI we celebrate differences, and everyone truly belongs. 46,000 people from all over the world are continuously building their unique success story with us. 83% of employees feel happy working at JTI. To make a difference with us, all you need to do is bring your human best. What will your story be? Apply now! Learn more jti.com Local Applicants only Reporting to Sales Lead Commercial Planning & Data Analysis Manager We are currently looking for a motivated talent to join JTI Israel as a Commercial Planning and Data Analyst, based in Israel . The Commercial Planning & Data Analysis Manager connects business strategy with field execution through data analysis, forecasting, market and field trend analysis and actionable business insights. The role is responsible for monitoring commercial performance, identifying risks and opportunities, conducting surveys and field analysis, including supporting data-driven decision-making across the commercial organization. This position works closely with Sales, Marketing, Finance and Supply Chain teams, while also leading the commercial systems and reporting domain, including CRM platforms, BI tools and digital interfaces. The role is a one-man-show, highly hands-on and with a strategic focus on business growth, process improvement, automation and commercial capabilities development. Position In this position, you will Lead forecasting, planning, and commercial performance monitoring processes. Analyze sales performance, KPIs, market trends, customer behavior, and field insights to support strategic business decisions. Conduct commercial, customer, user and field surveys to identify trends, opportunities, and improvement areas. Build and maintain dashboards, reporting tools and measurement frameworks to support business visibility "
+ },
+ {
+  "company": "JPMorganChase",
+  "title": "2027  - global corporate banking - large-cap- analyst program - off-cycle internship",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/b401105b3d",
+  "posted_date": "2026-08-13",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/b401105b3d",
+  "description": "Skills: Project management, MS Excel, MS Word, Analytical skills, Research, Teamwork, Communication. Seniority: Student."
+ },
+ {
+  "company": "8fig",
+  "title": "Data scientist",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/020864ac94",
+  "posted_date": "2026-08-14",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/020864ac94",
+  "description": "Skills: Python, Data Science, Machine Learning, Time-Series, NLP, Statistics, Communication. Seniority: Mid."
+ },
+ {
+  "company": "Navan",
+  "title": "Senior product analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/77e6793188",
+  "posted_date": "2026-08-16",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/77e6793188",
+  "description": "Skills: SQL, dbt, Data Analysis, Product Sense, Communication, Teamwork, Stakeholder Management. Seniority: Senior."
+ },
+ {
+  "company": "Sentra",
+  "title": "Backend engineer (data team)",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/58d3b0d8d1",
+  "posted_date": "2026-08-16",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/58d3b0d8d1",
+  "description": "Skills: Python, SQL, Microservices, AWS, PostgreSQL, Communication, Teamwork. Seniority: Mid."
+ },
+ {
+  "company": "BTB - Be The Bank,",
+  "title": "Credit analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/eb925e97e7",
+  "posted_date": "2026-08-16",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/eb925e97e7",
+  "description": "Skills: Credit analysis, Financial analysis, Interpersonal skills, Teamwork, Communication, Adaptability. Seniority: Mid."
+ },
+ {
+  "company": "Fetcherr",
+  "title": "Data scientist",
+  "location": "Netanya, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/d7878afe24",
+  "posted_date": "2026-08-17",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/d7878afe24",
+  "description": "Skills: Python, SQL, Machine Learning, Data Analysis, Git, Communication, Teamwork. Seniority: Senior."
+ },
+ {
+  "company": "INFINIDAT",
+  "title": "Senior product manager - data AI services",
+  "location": "Herzliya, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/936e399ef4",
+  "posted_date": "2026-08-17",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/936e399ef4",
+  "description": "Skills: Product Management, AI, RAG, LLMs, Roadmap, Communication, Leadership. Seniority: Senior."
+ },
+ {
+  "company": "Moveo Group",
+  "title": "System analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/9259190970",
+  "posted_date": "2026-08-18",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/9259190970",
+  "description": "Skills: Systems Analysis, Process Definition, Capital Markets, Stakeholder Mgmt, Business Analysis, Communication, Collaboration. Seniority: Mid."
+ },
+ {
+  "company": "K Logic",
+  "title": "Junior data analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/5153067f91",
+  "posted_date": "2026-08-18",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/5153067f91",
+  "description": "Skills: SQL, GA4, GCP, Python, Data analysis, Communication, Analytical mind. Seniority: Mid, Entry, Junior."
+ },
+ {
+  "company": "Zim",
+  "title": "Treasury analyst",
+  "location": "Haifa, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/02f03d0019",
+  "posted_date": "2026-08-18",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/02f03d0019",
+  "description": "Skills: Data analysis, Cash flow, Project management, Excel, Communication, Analytical thinking, Teamwork. Seniority: Junior."
+ },
+ {
+  "company": "Glassbox",
+  "title": "Product manager – data platform",
+  "location": "Petahtikva, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/228afb1720",
+  "posted_date": "2026-08-18",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/228afb1720",
+  "description": "Skills: Product Management, SaaS, AI, Customer Intelligence, Communication, Analytical skills, Stakeholder management. Seniority: Senior."
+ },
+ {
+  "company": "appdome",
+  "title": "Data assurance engineer",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/d24a26437e",
+  "posted_date": "2026-08-19",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/d24a26437e",
+  "description": "Skills: Data Validation, Automation, SQL, JavaScript, Node.js, Python, Analytical thinking. Seniority: Junior."
+ },
+ {
+  "company": "Investing",
+  "title": "Head of data engineering",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/4c4298add4",
+  "posted_date": "2026-08-19",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/4c4298add4",
+  "description": "Skills: Python, SQL, BigQuery, Airflow, Data Modeling, Stakeholder Management, AI Tools. Seniority: Senior, Director."
+ },
+ {
+  "company": "AllCloud",
+  "title": "Senior data engineer",
+  "location": "Raanana, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/d80ab6c5fe",
+  "posted_date": "2026-08-20",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/d80ab6c5fe",
+  "description": "Skills: AWS, Databricks, Snowflake, Python, PySpark, SQL, Data Modeling. Seniority: Senior."
+ },
+ {
+  "company": "Placer.ai",
+  "title": "Senior backend engineer- data platform",
+  "location": "Ramat Gan, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/e390f918f7",
+  "posted_date": "2026-08-20",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/e390f918f7",
+  "description": "Skills: Python, Backend, ETL, Microservices, Cloud, Collaboration, Mentorship. Seniority: Senior."
+ },
+ {
+  "company": "Guidde",
+  "title": "Data product engineer",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/852aa7160b",
+  "posted_date": "2026-08-20",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/852aa7160b",
+  "description": "Skills: React, Next.js, AI Agents, DevOps, SQL, Problem Solving, Communication. Seniority: Techlead."
+ },
+ {
+  "company": "expressvpn",
+  "title": "Social media marketing analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/a799cf3e1d",
+  "posted_date": "2026-08-08",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/a799cf3e1d",
+  "description": "Skills: Social Media Marketing, Paid Social, Facebook Ads, TikTok Ads, Data Analysis, Analytical thinking, Communication. Seniority: English."
+ },
+ {
+  "company": "Blockaid",
+  "title": "Product analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/9b1921f14e",
+  "posted_date": "2026-08-09",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/9b1921f14e",
+  "description": "Skills: SQL, Python, Product Analytics, SaaS, Communication, Problem Solving. Seniority: Mid."
+ },
+ {
+  "company": "doitintl",
+  "title": "Data engineer -  attribute™",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/7ca30d0721",
+  "posted_date": "2026-08-10",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/7ca30d0721",
+  "description": "Skills: Python, Spark, PySpark, ETL, Terraform, CI/CD, Communication. Seniority: Mid."
+ },
+ {
+  "company": "Phoenix Financial",
+  "title": "Data scientist",
+  "location": "Rishon Lezion, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/25a919ad8b",
+  "posted_date": "2026-08-10",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/25a919ad8b",
+  "description": "Skills: Data science, Machine learning, Python, R, SQL, Problem solving, Communication. Seniority: Mid."
+ },
+ {
+  "company": "Wix",
+  "title": "Business analyst - channels",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/c55953b66d",
+  "posted_date": "2026-08-10",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/c55953b66d",
+  "description": "Skills: SQL, BI platforms, Communication, Analytical, Commercial acumen, AI integration. Seniority: Senior."
+ },
+ {
+  "company": "Shufersal",
+  "title": "Data engineer",
+  "location": "Rishon Lezion, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/7446ee070b",
+  "posted_date": "2026-08-11",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/7446ee070b",
+  "description": "Skills: Data Engineering, ETL, ELT, SQL, Teradata, Snowflake, Cloud Migration. Seniority: Mid."
+ },
+ {
+  "company": "helfy",
+  "title": "Marketing analyst",
+  "location": "Herzliya, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/3476695ef3",
+  "posted_date": "2026-08-11",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/3476695ef3",
+  "description": "Skills: SQL, Data Analysis, Tableau, GA4, Mixpanel, Analytical thinking, Communication. Seniority: Junior."
+ },
+ {
+  "company": "Artlist",
+  "title": "Product analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/02312f1ff6",
+  "posted_date": "2026-08-11",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/02312f1ff6",
+  "description": "Skills: Product Analytics, AI Tools, Data Analysis, Strategic Thinking, Communication, Problem Solving, Teamwork. Seniority: Mid, Entry."
+ },
+ {
+  "company": "Alison",
+  "title": "Senior data engineer",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/fe8c52aef9",
+  "posted_date": "2026-08-12",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/fe8c52aef9",
+  "description": "Skills: Data Pipelines, SQL, Data Modeling, Python, Data Quality, Teamwork, Communication. Seniority: Senior."
+ },
+ {
+  "company": "codevalue",
+  "title": "Senior business / system analyst",
+  "location": "Rishon Lezion, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/0d3d8e55fb",
+  "posted_date": "2026-08-12",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/0d3d8e55fb",
+  "description": "Skills: System Analysis, Business Analysis, APIs, Integrations, Data Models, Communication, Problem-solving. Seniority: Senior."
+ },
+ {
+  "company": "90min",
+  "title": "Ad ops data manager",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/a817bc41a4",
+  "posted_date": "2026-08-12",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/a817bc41a4",
+  "description": "Skills: AdTech, Data Management, Programmatic, DMP/CDP, Identity Resolution, Vendor Management, Communication. Seniority: Mid."
+ },
+ {
+  "company": "PassportCard",
+  "title": "Data engineer-maternity leave",
+  "location": "Netanya, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/52034b36bf",
+  "posted_date": "2026-08-12",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/52034b36bf",
+  "description": "Skills: communication, teamwork, problem solving. Seniority: Entry."
+ },
+ {
+  "company": "Bringg",
+  "title": "Data scientist",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/43588dfc0c",
+  "posted_date": "2026-08-12",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/43588dfc0c",
+  "description": "Skills: Python, SQL, MLOps, GenAI, TensorFlow, PyTorch, independent. Seniority: Senior."
+ },
+ {
+  "company": "Tastewise",
+  "title": "Senior data engineer",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/2e3ce7c6ee",
+  "posted_date": "2026-08-12",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/2e3ce7c6ee",
+  "description": "Skills: Data Engineering, Web Scraping, Distributed Systems, Cloud Architecture, Airflow, Databricks, AI Literacy. Seniority: Senior."
+ },
+ {
+  "company": "everc",
+  "title": "Engineering team lead- data & AI platform",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/7332e9300d",
+  "posted_date": "2026-08-05",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/7332e9300d",
+  "description": "Skills: Python, Java, Distributed Systems, Cloud Native, Data Platforms, Team Leadership, Communication. Seniority: Teamleader, Senior."
+ },
+ {
+  "company": "topgummiceuticals",
+  "title": "Business applications & data student‎",
+  "location": "Sderot, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/ae3cd2b83e",
+  "posted_date": "2026-08-05",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/ae3cd2b83e",
+  "description": "Skills: Data analysis, Excel, SQL, Communication, Teamwork, Problem solving. Seniority: Student."
+ },
+ {
+  "company": "Backslash Security",
+  "title": "Applied data science",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/451948bcee",
+  "posted_date": "2026-08-05",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/451948bcee",
+  "description": "Skills: Python, PyTorch, HuggingFace, LLM, Applied Research, Problem Solving, Independence. Seniority: Mid, Senior."
+ },
+ {
+  "company": "Cloudinary",
+  "title": "Staff data engineer – data modeling",
+  "location": "Petahtikva, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/d9927c8823",
+  "posted_date": "2026-08-05",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/d9927c8823",
+  "description": "Skills: SQL, Python, Airflow, Snowflake, Data Modeling, Data Pipelines, Problem Solving. Seniority: Senior, Techlead."
+ },
+ {
+  "company": "Sela",
+  "title": "Data engineer",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/90abe11934",
+  "posted_date": "2026-08-05",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/90abe11934",
+  "description": "Skills: Data Engineering, Big Data, Spark, Hadoop, Elastic Search, Problem solving, Communication. Seniority: Mid."
+ },
+ {
+  "company": "Mobileye",
+  "title": "Algorithm analyst & tools developer",
+  "location": "Ramat Gan, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/1fdd9679a0",
+  "posted_date": "2026-08-05",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/1fdd9679a0",
+  "description": "Skills: Python, Data analysis, AI, Collaboration, Problem solving, Communication. Seniority: Mid."
+ },
+ {
+  "company": "SMARTECH - A Hexion Company",
+  "title": "Senior data scientist",
+  "location": "Herzliya, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/0ae3bc9875",
+  "posted_date": "2026-08-05",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/0ae3bc9875",
+  "description": "Skills: Python, Machine Learning, Data Science, Statistics, Data Exploration, Communication, Problem Solving. Seniority: Senior."
+ },
+ {
+  "company": "Ready Group",
+  "title": "Algorithm developer / data analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/cd575c67be",
+  "posted_date": "2026-08-06",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/cd575c67be",
+  "description": "Skills: MATLAB, Python, NumPy, Pandas, Algorithm development, Data analysis, Analytical thinking. Seniority: Junior."
+ },
+ {
+  "company": "Medison Pharma",
+  "title": "Data specialist",
+  "location": "Petahtikva, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/c2a5124ea5",
+  "posted_date": "2026-08-06",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/c2a5124ea5",
+  "description": "Skills: Data Engineering, SQL, ETL/ELT, AWS, Snowflake, Python, Communication. Seniority: Senior."
+ },
+ {
+  "company": "Genpact",
+  "title": "Business analyst 4a",
+  "location": "Shoham, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/5efc6aaf3e",
+  "posted_date": "2026-08-06",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/5efc6aaf3e",
+  "description": "Skills: Business Analysis, Agile Methodology, Technology Advisory, Business Reporting, Collaboration Tools, Executive Presence, Communication. Seniority: Mid."
+ },
+ {
+  "company": "Arpeely",
+  "title": "Data scientist team lead",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/a9a2cb3969",
+  "posted_date": "2026-08-06",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/a9a2cb3969",
+  "description": "Skills: Data Science, Machine Learning, Python, Analytics, Communication, Team Leadership. Seniority: Teamleader, Techlead."
+ },
+ {
+  "company": "Siemens",
+  "title": "Technical R&D lead – industrial data fabric (m/f/d)",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/071be075e0",
+  "posted_date": "2026-08-06",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/071be075e0",
+  "description": "Skills: Knowledge Graphs, Data Fabric, Cloud-native, Team leadership, Communication, System thinking. Seniority: Senior, Techlead."
+ },
+ {
+  "company": "SuperPlay",
+  "title": "Head of bi",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/cb4f87a549",
+  "posted_date": "2026-08-06",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/cb4f87a549",
+  "description": "Skills: SQL, Python, Data Engineering, BI, AI, Leadership, Communication. Seniority: Executive, Director."
+ },
+ {
+  "company": "Check Point Software",
+  "title": "Back end developer - big data platform",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/74a5873759",
+  "posted_date": "2026-08-06",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/74a5873759",
+  "description": "Skills: NodeJS, Golang, Python, Kubernetes, Kafka, Team player, Communication. Seniority: Mid."
+ },
+ {
+  "company": "TCM Technologies LTD",
+  "title": "Data engineer",
+  "location": "Eilat, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/a8ddc87426",
+  "posted_date": "2026-08-06",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/a8ddc87426",
+  "description": "Skills: Apache Spark, Apache NiFi, Apache Flink, Python, SQL, Elasticsearch, Data Engineering. Seniority: Mid."
+ },
+ {
+  "company": "ICE",
+  "title": "Data scientist",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/cf273806e9",
+  "posted_date": "2026-08-06",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/cf273806e9",
+  "description": "Skills: Python, SQL, Machine Learning, LLM, Agentic AI, Data Analysis, Communication. Seniority: Mid."
+ },
+ {
+  "company": "Amazon Web Services (AWS)",
+  "title": "ML software engineer, data plane",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/8717f08353",
+  "posted_date": "2026-08-07",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/8717f08353",
+  "description": "Skills: C/C++, Linux, Compute Kernels, ML Frameworks, LLM, Distributed Systems, Problem Solving. Seniority: Mid."
+ },
+ {
+  "company": "vi",
+  "title": "Senior data engineer",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/f38ec7872c",
+  "posted_date": "2026-08-07",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/f38ec7872c",
+  "description": "Skills: Python, SQL, AWS, Spark, ETL, Data modeling, Problem solving. Seniority: Senior."
+ },
+ {
+  "company": "ONE ZERO Digital Bank",
+  "title": "Data analyst team lead",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/9bfb88bc3d",
+  "posted_date": "2026-08-02",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/9bfb88bc3d",
+  "description": "Skills: SQL, Data Modeling, Team Leadership, Stakeholder Management, Business Acumen, Communication, Agile. Seniority: Techlead, Teamleader."
+ },
+ {
+  "company": "Zota",
+  "title": "Junior data scientist | tlv",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/6b61da567d",
+  "posted_date": "2026-08-02",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/6b61da567d",
+  "description": "Skills: Python, SQL, Data analysis, BI, Data engineering, Analytical thinking, Communication. Seniority: Junior, Entry."
+ },
+ {
+  "company": "Justt",
+  "title": "Chargeback analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/bd9ff012f2",
+  "posted_date": "2026-08-02",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/bd9ff012f2",
+  "description": "Skills: analytical thinking, communication, data analysis, documentation, ownership, attention to detail. Seniority: Mid."
+ },
+ {
+  "company": "ActiveFence",
+  "title": "Mobile threat analyst",
+  "location": "Ramat Gan, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/712b3f6f75",
+  "posted_date": "2026-08-03",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/712b3f6f75",
+  "description": "Skills: Data Mining, OSINT, Python, JavaScript, Java, AI, Teamwork. Seniority: Mid."
+ },
+ {
+  "company": "Chargeflow",
+  "title": "Data infrastructure team lead",
+  "location": "Modiin, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/7124f7dce8",
+  "posted_date": "2026-08-03",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/7124f7dce8",
+  "description": "Skills: Python, Data Architecture, Cloud Native, IaC, Team Leadership, FinOps, Communication. Seniority: Techlead, Teamleader, Senior."
+ },
+ {
+  "company": "Orca-AI",
+  "title": "Senior data platform engineer",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/7b051f83fe",
+  "posted_date": "2026-08-03",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/7b051f83fe",
+  "description": "Skills: Data Platform, Python, SQL, Kubernetes, Terraform, Data Lake, Communication. Seniority: Senior."
+ },
+ {
+  "company": "Port",
+  "title": "AI data engineer",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/ee5b16b81d",
+  "posted_date": "2026-08-03",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/ee5b16b81d",
+  "description": "Skills: Snowflake, dbt, Airflow, Python, SQL, LLM, analytical thinking. Seniority: Senior, Mid."
+ },
+ {
+  "company": "Palo Alto Networks",
+  "title": "Senior staff software engineer (data & AI platform)",
+  "location": "Petahtikva, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/ff3e52a613",
+  "posted_date": "2026-08-04",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/ff3e52a613",
+  "description": "Skills: Python, Java, Go, C#, Scala, Cloud Engineering, Technical Leadership. Seniority: Techlead, Senior."
+ },
+ {
+  "company": "Sapiens",
+  "title": "Sql developer",
+  "location": "Holon, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/1dfd958f38",
+  "posted_date": "2026-08-04",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/1dfd958f38",
+  "description": "Skills: SQL, Python, Pandas, Team player, Communication, Adaptability. Seniority: Junior."
+ },
+ {
+  "company": "Medtronic",
+  "title": "Supply chain analyst",
+  "location": "Herzliya, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/91efd3f838",
+  "posted_date": "2026-08-04",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/91efd3f838",
+  "description": "Skills: Excel, SAP, SQL, Power BI, analytical skills, problem-solving, communication. Seniority: Mid."
+ },
+ {
+  "company": "Google",
+  "title": "Staff data scientist, genai and agentic soc",
+  "location": "Ramat Gan, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/7ec8e4f5cc",
+  "posted_date": "2026-08-04",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/7ec8e4f5cc",
+  "description": "Skills: Machine Learning, Data Science, Generative AI, LLMs, Software Engineering, Teamwork, Communication. Seniority: English."
+ },
+ {
+  "company": "Aman Group",
+  "title": "Data scientist",
+  "location": "Jerusalem, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/3897aa974d",
+  "posted_date": "2026-08-04",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/3897aa974d",
+  "description": "Skills: MSSQL, SSIS, SSRS, Database Engine, Teamwork, Communication. Seniority: Senior."
+ },
+ {
+  "company": "Matrix",
+  "title": "Business analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/f8f4130e62",
+  "posted_date": "2026-08-04",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/f8f4130e62",
+  "description": "Skills: Business Analysis, SQL, Linux, Documentation, Teamwork, Communication, Flexibility. Seniority: Mid."
+ },
+ {
+  "company": "Applied Materials",
+  "title": "Operations finance analyst",
+  "location": "Rehovot, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/b3d47ad9fd",
+  "posted_date": "2026-08-04",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/b3d47ad9fd",
+  "description": "Skills: Financial modeling, Variance analysis, Data analysis, Reporting, Communication, Problem-solving, SAP. Seniority: Mid."
+ },
+ {
+  "company": "Priority Software",
+  "title": "Data architect",
+  "location": "Rosh Ha'ayin, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/de4d8019c3",
+  "posted_date": "2026-08-04",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/de4d8019c3",
+  "description": "Skills: Data Modelling, Cloud Data Platforms, SQL, ETL/ELT, Power BI, Data Governance, Team Leadership. Seniority: Senior."
+ },
+ {
+  "company": "Moonsite - Moonsoft Development Ltd.",
+  "title": "Data scientist",
+  "location": "Lod, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/88e08da946",
+  "posted_date": "2026-08-04",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/88e08da946",
+  "description": "Skills: Machine Learning, Python, Data Analysis, AWS, PySpark, analytical thinking, problem solving. Seniority: Senior."
+ },
+ {
+  "company": "ICON Strategic Solutions",
+  "title": "Contract analyst ii",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/13011db1d5",
+  "posted_date": "2026-08-05",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/13011db1d5",
+  "description": "Skills: Contract management, Negotiation, Analysis, Communication, Teamwork, Problem-solving, Attention to detail. Seniority: Mid."
+ },
+ {
+  "company": "Paragon",
+  "title": "Operational intelligence analyst team lead",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/78c606ec49",
+  "posted_date": "2026-07-26",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/78c606ec49",
+  "description": "Skills: OSINT, WebInt, Leadership, Communication, Analytical skills, Problem-solving, Teamwork. Seniority: Techlead, Teamleader."
+ },
+ {
+  "company": "hyro",
+  "title": "Senior data product manager",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/873bab0895",
+  "posted_date": "2026-07-27",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/873bab0895",
+  "description": "Skills: Product Management, Data Analytics, SaaS Platforms, Business Acumen, Leadership, Communication, Collaboration. Seniority: Senior."
+ },
+ {
+  "company": "Hewlett Packard Enterprise",
+  "title": "Principal data engineer",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/5c68bef5b1",
+  "posted_date": "2026-07-27",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/5c68bef5b1",
+  "description": "Skills: Snowflake, Python, SQL, Data Modeling, ETL/ELT, Data Governance, DataOps. Seniority: Techlead."
+ },
+ {
+  "company": "appsforce",
+  "title": "Dba- varonis",
+  "location": "Herzliya, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/bb3b05e785",
+  "posted_date": "2026-07-27",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/bb3b05e785",
+  "description": "Skills: Python, SQL Server, Big Data, Spark, Azure Databricks, Analytical thinking, Teamwork. Seniority: Senior."
+ },
+ {
+  "company": "Intel Corporation",
+  "title": "Data science student for AI solutions group",
+  "location": "Petahtikva, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/5b0489b7e0",
+  "posted_date": "2026-07-27",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/5b0489b7e0",
+  "description": "Skills: Python, PyTorch, Scikit-learn, LangGraph, Team player, Communication, Methodical. Seniority: Student."
+ },
+ {
+  "company": "Taboola",
+  "title": "Data analyst, algorithms",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/5edb178df5",
+  "posted_date": "2026-07-28",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/5edb178df5",
+  "description": "Skills: SQL, Python, Data Analysis, Statistics, Experimentation, Problem solving, Communication. Seniority: Senior."
+ },
+ {
+  "company": "NVIDIA",
+  "title": "Senior interconnect product data engineer",
+  "location": "Yokneam Illit, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/70804a78ed",
+  "posted_date": "2026-07-28",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/70804a78ed",
+  "description": "Skills: Data Analysis, Python, SQL, Scripting, Problem Solving, Communication, Teamwork. Seniority: Senior."
+ },
+ {
+  "company": "AppSec",
+  "title": "Data analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/64a2ad6daf",
+  "posted_date": "2026-07-29",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/64a2ad6daf",
+  "description": "Skills: SQL, Data Analysis, Python, Communication, Analytical Skills, Teamwork, Problem Solving. Seniority: Mid."
+ },
+ {
+  "company": "Dream",
+  "title": "Cti analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/29d9a55f34",
+  "posted_date": "2026-07-29",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/29d9a55f34",
+  "description": "Skills: Cyber Threat Intel, STIX, Python, Analytical skills, Collaboration, Communication. Seniority: Mid."
+ },
+ {
+  "company": "Ruby Labs",
+  "title": "Opensearch engineer / aws & data pipelines",
+  "location": "Israel, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/acc5165014",
+  "posted_date": "2026-07-29",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/acc5165014",
+  "description": "Skills: OpenSearch, AWS, PostgreSQL, Data pipelines, Production operations, Troubleshooting, Collaboration. Seniority: Senior."
+ },
+ {
+  "company": "Gloat",
+  "title": "Senior data engineer",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/128b27727a",
+  "posted_date": "2026-07-29",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/128b27727a",
+  "description": "Skills: Python, SQL, Data Engineering, Data Analysis, Airflow, dbt, Communication. Seniority: Senior, Mid."
+ },
+ {
+  "company": "Global-e",
+  "title": "Data analyst (chargeback)",
+  "location": "Israel, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/231887363b",
+  "posted_date": "2026-07-30",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/231887363b",
+  "description": "Skills: Chargeback analysis, SQL, Excel, Data analysis, Teamwork, Communication, Problem solving. Seniority: English."
+ },
+ {
+  "company": "Gett",
+  "title": "Experienced product analyst",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/d0035ac6e9",
+  "posted_date": "2026-07-30",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/d0035ac6e9",
+  "description": "Skills: SQL, Python, Statistics, Experimentation, Data Visualization, Communication, Problem Solving. Seniority: Mid, Senior."
+ },
+ {
+  "company": "Lusha",
+  "title": "Bi & data engineering team lead",
+  "location": "Tel Aviv, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/a29ff22548",
+  "posted_date": "2026-07-30",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/a29ff22548",
+  "description": "Skills: Data Engineering, BI, SQL, Python, GenAI, Leadership, Teamwork. Seniority: Senior, Techlead, Teamleader."
+ },
+ {
+  "company": "Aqurate Data",
+  "title": "Data engineer",
+  "location": "Shoham, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/14f8f8d024",
+  "posted_date": "2026-07-30",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/14f8f8d024",
+  "description": "Skills: Data Modeling, Schema Design, SQL, Python, LLM Integration, Analytical Thinking, Team Leadership. Seniority: Senior."
+ },
+ {
+  "company": "Ryltech.co.il",
+  "title": "Senior oracle dba",
+  "location": "Ashkelon, Israel",
+  "country_code": "IL",
+  "url": "https://secrethunter.io/jobz/41a02cc77d",
+  "posted_date": "2026-08-02",
+  "ats_platform": "discovery-telegram",
+  "job_id": "https://secrethunter.io/jobz/41a02cc77d",
+  "description": "Skills: Oracle DBA, Performance Tuning, Linux, PL/SQL, Backup & Recovery, High Availability, Teamwork. Seniority: Senior."
  }
 ]

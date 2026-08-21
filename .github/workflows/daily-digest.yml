@@ -55,6 +55,10 @@ jobs:
         run: python discovery_daily.py || echo "discovery skipped"
         continue-on-error: true
 
+      - name: Telegram-channel discovery (keyless t.me/s preview)
+        run: python discovery_telegram.py || echo "telegram discovery skipped"
+        continue-on-error: true
+
       - name: Run the pipeline (Claude classification via subscription token)
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
