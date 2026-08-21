@@ -375,18 +375,18 @@ Fetcherr,scrape,https://www.fetcherr.io/careers,https://www.fetcherr.io/careers,
 Aleph Farms,scrape,https://aleph-farms.com/careers/,https://aleph-farms.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
 Imagindairy,scrape,https://www.imagindairy.com/careers,https://www.imagindairy.com/careers,false,scanned; no open Israel roles now
 InnovoPro,scrape,https://innovopro.com/careers/,https://innovopro.com/careers/,false,scanned via brightdata; no open Israel roles now
-Venn,scrape,https://venn.city/careers/,https://venn.city/careers/,false,scanned; no open Israel roles now
+Venn,greenhouse,venncity,https://boards-api.greenhouse.io/v1/boards/venncity/jobs,true,re-audit 2026-08-21: verified 4/1 IL (was false-empty)
 WINT Water Intelligence,scrape,https://www.wint.ai/careers/,https://www.wint.ai/careers/,false,scanned; no open Israel roles now
 LawGeex,scrape,https://www.lawgeex.com/careers/,https://www.lawgeex.com/careers/,false,unreachable; could not scan
 Time To Know,scrape,https://www.timetoknow.com/careers,https://www.timetoknow.com/careers,false,scanned; no open Israel roles now
 Loris,scrape,https://loris.ai/careers/,https://loris.ai/careers/,false,scanned; no open Israel roles now
-Aporia,scrape,https://www.aporia.com/careers/,https://www.aporia.com/careers/,false,scanned; no open Israel roles now
+Aporia,workable,aporia,https://apply.workable.com/api/v1/widget/accounts/aporia?details=true,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 ClearML,scrape,https://clear.ml/careers/,https://clear.ml/careers/,false,scanned; no open Israel roles now (suspect cleared)
 Speedb,scrape,https://www.speedb.io/careers,https://www.speedb.io/careers,false,unreachable; could not scan
 Pliops,scrape,https://pliops.com/careers/,https://pliops.com/careers/,false,scanned; no open Israel roles now
-CloudShare,scrape,https://www.cloudshare.com/careers/,https://www.cloudshare.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
+CloudShare,workable,cloudshare,https://apply.workable.com/api/v1/widget/accounts/cloudshare?details=true,true,re-audit 2026-08-21: verified 6/1 IL (was false-empty)
 env0,scrape,https://www.env0.com/careers,https://www.env0.com/careers,false,scanned; no open Israel roles now
-K Health,scrape,https://khealth.com/careers/,https://khealth.com/careers/,false,scanned; no open Israel roles now
+K Health,greenhouse,khealthcareers,https://boards-api.greenhouse.io/v1/boards/khealthcareers/jobs,true,re-audit 2026-08-21: verified 24/2 IL (was false-empty)
 Legit Security,scrape,https://www.legitsecurity.com/company/careers,https://www.legitsecurity.com/company/careers,false,scanned; no open Israel roles now
 Myrror Security,scrape,https://www.myrror.security/careers,https://www.myrror.security/careers,false,unreachable; could not scan
 Entro Security,scrape,https://entro.security/careers/,https://entro.security/careers/,false,scanned; no open Israel roles now (suspect cleared)
@@ -400,13 +400,13 @@ odix,scrape,https://www.odi-x.com/careers/,https://www.odi-x.com/careers/,false,
 Identiq,scrape,https://www.identiq.com/careers,https://www.identiq.com/careers,false,scanned; no open Israel roles now
 Centraleyes,scrape,https://www.centraleyes.com/careers/,https://www.centraleyes.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
 Nokod Security,scrape,https://nokodsecurity.com/careers/,https://nokodsecurity.com/careers/,false,scanned; no open Israel roles now
-Reflectiz,scrape,https://www.reflectiz.com/careers/,https://www.reflectiz.com/careers/,false,scanned; no open Israel roles now
+Reflectiz,comeet,CA.008,https://www.comeet.com/careers-api/2.0/company/CA.008/positions?token=AC84B7840B035E82058AC8564035E856402058,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 AlgoSec,scrape,https://www.algosec.com/careers/,https://www.algosec.com/careers/,false,scanned; no open Israel roles now
-CyberArk,scrape,https://www.cyberark.com/careers/,https://www.cyberark.com/careers/,false,scanned; no open Israel roles now
-Imperva,scrape,https://www.imperva.com/company/careers/,https://www.imperva.com/company/careers/,false,scanned; no open Israel roles now
+CyberArk,workday,paloaltonetworks/panwexternalcareers,https://paloaltonetworks.wd5.myworkdayjobs.com/wday/cxs/paloaltonetworks/panwexternalcareers/jobs,false,audit false-match reverted (serp returned another company: PANW/Thales); needs manual resolution
+Imperva,workday,thales/Careers,https://thales.wd3.myworkdayjobs.com/wday/cxs/thales/Careers/jobs,false,audit false-match reverted (serp returned another company: PANW/Thales); needs manual resolution
 Anjuna Security,scrape,https://www.anjuna.io/careers,https://www.anjuna.io/careers,false,scanned; no open Israel roles now
 Terafence,scrape,https://terafence.com/careers/,https://terafence.com/careers/,false,scanned; no open Israel roles now
-Trullion,scrape,https://trullion.com/careers/,https://trullion.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
+Trullion,comeet,07.000,https://www.comeet.com/careers-api/2.0/company/07.000/positions?token=7002A00E003F002A007002A0002A002A00,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Lili,scrape,https://lili.co/careers,https://lili.co/careers,false,scanned; no open Israel roles now
 BlueSnap,scrape,https://home.bluesnap.com/careers/,https://home.bluesnap.com/careers/,false,scanned; no open Israel roles now
 Behalf,scrape,https://www.behalf.com/careers,https://www.behalf.com/careers,false,scanned via brightdata; no open Israel roles now
@@ -420,7 +420,7 @@ Kima,scrape,https://www.kima.network/careers,https://www.kima.network/careers,fa
 Speedata,scrape,https://speedata.io/careers/,https://speedata.io/careers/,false,scanned; no open Israel roles now
 Silicom,scrape,https://www.silicom.co.il/company/careers,https://www.silicom.co.il/company/careers,false,scanned via brightdata; no open Israel roles now
 SatixFy,scrape,https://www.satixfy.com/careers/,https://www.satixfy.com/careers/,false,scanned; no open Israel roles now
-Vayyar Imaging,scrape,https://vayyar.com/careers/,https://vayyar.com/careers/,false,scanned; no open Israel roles now
+Vayyar Imaging,workable,vayyar,https://apply.workable.com/api/v1/widget/accounts/vayyar?details=true,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Gilat Satellite Networks,scrape,https://www.gilat.com/careers/,https://www.gilat.com/careers/,false,scanned; no open Israel roles now
 Ottopia,scrape,https://ottopia.tech/careers/,https://ottopia.tech/careers/,false,scanned; no open Israel roles now
 Chakratec,scrape,https://chakratec.com/careers/,https://chakratec.com/careers/,false,unreachable; could not scan
@@ -436,7 +436,7 @@ Everysight,scrape,https://everysight.com/careers/,https://everysight.com/careers
 ImageSat International,scrape,https://www.imagesatintl.com/careers/,https://www.imagesatintl.com/careers/,false,scanned; no open Israel roles now
 3D Signals,scrape,https://3dsig.com/careers/,https://3dsig.com/careers/,false,scanned; no open Israel roles now
 Elbit Systems,scrape,https://www.elbitsystems.com/careers/,https://www.elbitsystems.com/careers/,false,scanned; no open Israel roles now
-General Robotics,scrape,https://www.glrobotics.com/careers,https://www.glrobotics.com/careers,false,scanned; no open Israel roles now
+General Robotics,ashby,generalrobotics,https://api.ashbyhq.com/posting-api/job-board/generalrobotics,true,re-audit 2026-08-21: verified 9/0 IL (was false-empty)
 XJet,scrape,https://xjet3d.com/careers/,https://xjet3d.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
 Google Israel,scrape,https://www.google.com/about/careers/applications/jobs/results?location=Israel,https://www.google.com/about/careers/applications/jobs/results?location=Israel,false,scanned; no open Israel roles now (suspect cleared)
 AMD Israel,scrape,https://careers.amd.com/careers-home/jobs?location=Israel,https://careers.amd.com/careers-home/jobs?location=Israel,false,scanned; no open Israel roles now (suspect cleared)
@@ -448,18 +448,18 @@ DiA Imaging Analytics,scrape,https://www.dia-analytics.com/careers/,https://www.
 Predicta Med,scrape,https://www.predicta-med.com/careers,https://www.predicta-med.com/careers,false,scanned; no open Israel roles now (suspect cleared)
 MyndYou,scrape,https://www.myndyou.com/careers,https://www.myndyou.com/careers,false,scanned; no open Israel roles now
 Navina,scrape,https://www.navina.ai/careers,https://www.navina.ai/careers,false,scanned; no open Israel roles now
-Vayyar,scrape,https://vayyar.com/careers/,https://vayyar.com/careers/,false,scanned; no open Israel roles now
+Vayyar,workable,vayyar,https://apply.workable.com/api/v1/widget/accounts/vayyar?details=true,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 MediWound,scrape,https://www.mediwound.com/careers/,https://www.mediwound.com/careers/,false,scanned; no open Israel roles now
 Sonovia,scrape,https://sonovia-tech.com/careers/,https://sonovia-tech.com/careers/,false,unreachable; could not scan
 Biomica,scrape,https://biomica.com/careers/,https://biomica.com/careers/,false,scanned; no open Israel roles now
 Pluri,scrape,https://www.pluri-biotech.com/careers/,https://www.pluri-biotech.com/careers/,false,scanned; no open Israel roles now
-Diagnostic Robotics,scrape,https://www.diagnosticrobotics.com/careers,https://www.diagnosticrobotics.com/careers,false,scanned; no open Israel roles now
+Diagnostic Robotics,workable,diagnostic-robotics,https://apply.workable.com/api/v1/widget/accounts/diagnostic-robotics?details=true,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 AiVF,scrape,https://www.aivf.co/careers,https://www.aivf.co/careers,false,scanned; no open Israel roles now
 Neteera,scrape,https://www.neteera.com/careers/,https://www.neteera.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
 BrainQ,scrape,https://www.brainqtech.com/careers,https://www.brainqtech.com/careers,false,scanned; no open Israel roles now
 Sight Sciences,scrape,https://sightsciences.com/careers/,https://sightsciences.com/careers/,false,scanned; no open Israel roles now
 AWS,scrape,https://www.amazon.jobs/en/business_categories/amazon-web-services?loc_query=Israel,https://www.amazon.jobs/en/business_categories/amazon-web-services?loc_query=Israel,false,scanned; no open Israel roles now
-Analog Devices,scrape,https://analogdevices.wd1.myworkdayjobs.com/External,https://analogdevices.wd1.myworkdayjobs.com/External,false,scanned; no open Israel roles now
+Analog Devices,workday,analogdevices/External,https://analogdevices.wd1.myworkdayjobs.com/wday/cxs/analogdevices/External/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 onsemi,scrape,https://www.onsemi.com/careers,https://www.onsemi.com/careers,false,scanned; no open Israel roles now
 Nokia,scrape,https://www.nokia.com/about-us/careers/,https://www.nokia.com/about-us/careers/,false,scanned; no open Israel roles now
 HP Inc.,workday,hp/ExternalCareerSite,https://hp.wd5.myworkdayjobs.com/wday/cxs/hp/ExternalCareerSite/jobs,true,deep-resolved; 13/13 IL
@@ -467,14 +467,14 @@ NetApp,scrape,https://netapp.wd5.myworkdayjobs.com/Careers,https://netapp.wd5.my
 Akamai,scrape,https://akamaicareers.inflightcloud.com/search,https://akamaicareers.inflightcloud.com/search,true,deep-scrape; 7 Israel jobs
 Uber,scrape,https://www.uber.com/us/en/careers/list/?location=Israel,https://www.uber.com/us/en/careers/list/?location=Israel,false,scanned; no open Israel roles now
 Shopify,scrape,https://www.shopify.com/careers/search,https://www.shopify.com/careers/search,false,scanned; no open Israel roles now
-Capital One,scrape,https://www.capitalonecareers.com/search-jobs/Israel,https://www.capitalonecareers.com/search-jobs/Israel,false,scanned; no open Israel roles now (suspect cleared)
+Capital One,workday,capitalone/Capital_One,https://capitalone.wd12.myworkdayjobs.com/wday/cxs/capitalone/Capital_One/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Deutsche Telekom,scrape,https://www.telekom.com/en/careers,https://www.telekom.com/en/careers,false,scanned; no open Israel roles now
 Siemens Healthineers,scrape,https://jobs.siemens-healthineers.com/careers?location=Israel,https://jobs.siemens-healthineers.com/careers?location=Israel,false,scanned via brightdata; no open Israel roles now
-Merck (MSD),scrape,https://jobs.merck.com/us/en/search-results?keywords=Israel,https://jobs.merck.com/us/en/search-results?keywords=Israel,false,scanned; no open Israel roles now
+Merck (MSD),workday,msd/SearchJobs,https://msd.wd5.myworkdayjobs.com/wday/cxs/msd/SearchJobs/jobs,true,re-audit 2026-08-21: verified 9/9 IL (was false-empty)
 Ford,scrape,https://corporate.ford.com/careers/jobs,https://corporate.ford.com/careers/jobs,false,scanned via brightdata; no open Israel roles now
 Harman,scrape,https://jobs.harman.com/,https://jobs.harman.com/,false,scanned; no open Israel roles now
 Hyundai (CRADLE),scrape,https://www.hyundaicradle.com/,https://www.hyundaicradle.com/,false,unreachable; could not scan
-Ciena,scrape,https://ciena.wd5.myworkdayjobs.com/Careers,https://ciena.wd5.myworkdayjobs.com/Careers,false,scanned; no open Israel roles now
+Ciena,workday,ciena/Careers,https://ciena.wd5.myworkdayjobs.com/wday/cxs/ciena/Careers/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 General Electric,scrape,https://jobs.gecareers.com/global/en/search-results?keywords=Israel,https://jobs.gecareers.com/global/en/search-results?keywords=Israel,false,unreachable; could not scan
 AT&T,scrape,https://www.att.jobs/search-jobs/Israel,https://www.att.jobs/search-jobs/Israel,false,scanned; no open Israel roles now (suspect cleared)
 Fortinet,scrape,https://www.fortinet.com/careers,https://www.fortinet.com/careers,false,scanned; no open Israel roles now
@@ -483,7 +483,7 @@ Microsoft (Xbox/Gaming),scrape,https://jobs.careers.microsoft.com/global/en/sear
 Siemens Digital Industries Software,scrape,https://jobs.sw.siemens.com/,https://jobs.sw.siemens.com/,false,scanned; no open Israel roles now
 Volkswagen (CARIAD),scrape,https://cariad.technology/de/en/career.html,https://cariad.technology/de/en/career.html,false,scanned; no open Israel roles now
 GSK,scrape,https://jobs.gsk.com/en-gb/search-jobs/Israel,https://jobs.gsk.com/en-gb/search-jobs/Israel,false,scanned; no open Israel roles now
-Deel,scrape,https://jobs.ashbyhq.com/deel,https://jobs.ashbyhq.com/deel,false,scanned; no open Israel roles now
+Deel,ashby,Deel,https://api.ashbyhq.com/posting-api/job-board/Deel,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Quantum Source,scrape,https://www.quantum-source.io/careers,https://www.quantum-source.io/careers,false,unreachable; could not scan
 Lasso,scrape,https://www.lasso.security/careers,https://www.lasso.security/careers,false,scanned; no open Israel roles now
 Get SAT,scrape,https://www.getsat.com/careers/,https://www.getsat.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
@@ -491,7 +491,7 @@ Spear UAV,scrape,https://www.spearuav.com/careers,https://www.spearuav.com/caree
 Cogniteam,scrape,https://www.cogniteam.com/careers,https://www.cogniteam.com/careers,false,scanned via brightdata; no open Israel roles now
 Buff,scrape,https://www.buff.game/careers,https://www.buff.game/careers,false,scanned; no open Israel roles now
 Fast Simon,scrape,https://www.fastsimon.com/careers/,https://www.fastsimon.com/careers/,false,scanned; no open Israel roles now
-Powtoon,scrape,https://www.powtoon.com/careers/,https://www.powtoon.com/careers/,false,scanned; no open Israel roles now
+Powtoon,workable,powtoon,https://apply.workable.com/api/v1/widget/accounts/powtoon?details=true,true,re-audit 2026-08-21: verified 8/0 IL (was false-empty)
 TripleW,scrape,https://triplew.co/careers,https://triplew.co/careers,false,scanned via brightdata; no open Israel roles now
 Phytech,scrape,https://www.phytech.com/careers,https://www.phytech.com/careers,false,scanned; no open Israel roles now
 Resonai,scrape,https://www.resonai.com/careers,https://www.resonai.com/careers,false,unreachable; could not scan
@@ -501,7 +501,7 @@ Ravin AI,scrape,https://www.ravin.ai/careers,https://www.ravin.ai/careers,false,
 Landa Digital Printing,scrape,https://www.landanano.com/careers/,https://www.landanano.com/careers/,false,scanned; no open Israel roles now
 Amimon,scrape,https://www.amimon.com/careers,https://www.amimon.com/careers,false,scanned; no open Israel roles now
 Evinced,scrape,https://www.evinced.com/careers,https://www.evinced.com/careers,false,scanned; no open Israel roles now
-Perion,scrape,https://www.perion.com/careers/,https://www.perion.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
+Perion,greenhouse,perionnetworkltd,https://boards-api.greenhouse.io/v1/boards/perionnetworkltd/jobs,true,re-audit 2026-08-21: verified 11/0 IL (was false-empty)
 Zoomd,scrape,https://www.zoomd.com/careers/,https://www.zoomd.com/careers/,false,scanned; no open Israel roles now
 Adcore,scrape,https://www.adcore.com/careers/,https://www.adcore.com/careers/,false,scanned; no open Israel roles now
 Anagog,scrape,https://www.anagog.com/careers/,https://www.anagog.com/careers/,false,scanned; no open Israel roles now
@@ -524,7 +524,7 @@ Superwise,scrape,https://superwise.ai/careers/,https://superwise.ai/careers/,fal
 Iguazio,scrape,https://www.iguazio.com/careers/,https://www.iguazio.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
 Panoply,scrape,https://panoply.io/company/careers/,https://panoply.io/company/careers/,false,scanned; no open Israel roles now
 NextSilicon,scrape,https://www.nextsilicon.com/careers,https://www.nextsilicon.com/careers,false,scanned; no open Israel roles now
-Frontegg,scrape,https://frontegg.com/careers,https://frontegg.com/careers,false,scanned; no open Israel roles now
+Frontegg,comeet,77.009,https://www.comeet.com/careers-api/2.0/company/77.009/positions?token=7792CD6166B3BC8344F4341166B3BC83BC83BC8,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Rookout,scrape,https://www.rookout.com/careers/,https://www.rookout.com/careers/,false,scanned; no open Israel roles now
 Deci,scrape,https://deci.ai/careers/,https://deci.ai/careers/,false,scanned; no open Israel roles now
 Arnica,scrape,https://www.arnica.io/careers,https://www.arnica.io/careers,false,scanned; no open Israel roles now
@@ -584,7 +584,7 @@ HP Indigo,workday,hp/ExternalCareerSite,https://hp.wd5.myworkdayjobs.com/wday/cx
 Synopsys Israel,scrape,https://synopsys.wd1.myworkdayjobs.com/careers,https://synopsys.wd1.myworkdayjobs.com/careers,false,scanned; no open Israel roles now
 Philips Israel,workday,philips/jobs-and-careers,https://philips.wd3.myworkdayjobs.com/wday/cxs/philips/jobs-and-careers/jobs,true,deep-resolved; 11/10 IL
 Nokia Israel,scrape,https://www.nokia.com/about-us/careers/,https://www.nokia.com/about-us/careers/,false,scanned; no open Israel roles now
-Scopio Labs,scrape,https://scopiolabs.com/careers/,https://scopiolabs.com/careers/,false,scanned; no open Israel roles now
+Scopio Labs,comeet,87.00C,https://www.comeet.com/careers-api/2.0/company/87.00C/positions?token=78C2D481E30025BC43EC025BC43EC78C,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Theator,scrape,https://theator.io/careers/,https://theator.io/careers/,false,scanned; no open Israel roles now
 Cognifit,scrape,https://www.cognifit.com/careers,https://www.cognifit.com/careers,false,scanned; no open Israel roles now
 Alike Health,scrape,https://www.alike.health/careers,https://www.alike.health/careers,false,scanned; no open Israel roles now
@@ -608,15 +608,15 @@ Yahoo,scrape,https://www.yahooinc.com/careers/careers-index.html,https://www.yah
 Lyft,scrape,https://www.lyft.com/careers,https://www.lyft.com/careers,false,scanned; no open Israel roles now
 Roblox,scrape,https://careers.roblox.com/jobs,https://careers.roblox.com/jobs,false,scanned; no open Israel roles now
 JPMorgan Chase,scrape,https://careers.jpmorgan.com/global/en/students/programs?search=&location=israel,https://careers.jpmorgan.com/global/en/students/programs?search=&location=israel,false,scanned; no open Israel roles now
-Verint,scrape,https://jobs.ashbyhq.com/verint,https://jobs.ashbyhq.com/verint,false,scanned; no open Israel roles now
+Verint,ashby,verint,https://api.ashbyhq.com/posting-api/job-board/verint,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Edwards Lifesciences,scrape,https://careers.edwards.com/search-jobs/Israel,https://careers.edwards.com/search-jobs/Israel,false,unreachable; could not scan
 Bayer,scrape,https://career.bayer.com/careers,https://career.bayer.com/careers,false,scanned via brightdata; no open Israel roles now
 Continental,scrape,https://www.continental.com/en/career/,https://www.continental.com/en/career/,false,scanned; no open Israel roles now
 Honeywell,scrape,https://careers.honeywell.com/us/en/search-results?keywords=Israel,https://careers.honeywell.com/us/en/search-results?keywords=Israel,false,scanned; no open Israel roles now
 Mercedes-Benz (MBRDNA),scrape,https://group.mercedes-benz.com/careers,https://group.mercedes-benz.com/careers,false,scanned via brightdata; no open Israel roles now
-Nike,scrape,https://jobs.nike.com/,https://jobs.nike.com/,false,scanned; no open Israel roles now
+Nike,workday,nike/nke,https://nike.wd1.myworkdayjobs.com/wday/cxs/nike/nke/jobs,true,re-audit 2026-08-21: verified 11/11 IL (was false-empty)
 John Deere,scrape,https://jobs.deere.com/,https://jobs.deere.com/,false,scanned; no open Israel roles now
-Comcast,scrape,https://jobs.comcast.com/,https://jobs.comcast.com/,false,scanned; no open Israel roles now
+Comcast,workday,comcast/Comcast_Careers,https://comcast.wd5.myworkdayjobs.com/wday/cxs/comcast/Comcast_Careers/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Rapid7,scrape,https://www.rapid7.com/careers/open-positions/,https://www.rapid7.com/careers/open-positions/,false,scanned; no open Israel roles now
 Teradata,scrape,https://careers.teradata.com/,https://careers.teradata.com/,false,scanned; no open Israel roles now
 Bank of America,scrape,https://careers.bankofamerica.com/en-us/job-search?ref=search&location=Israel,https://careers.bankofamerica.com/en-us/job-search?ref=search&location=Israel,false,scanned; no open Israel roles now
@@ -685,8 +685,8 @@ Allot,scrape,https://www.allot.com/careers/,https://www.allot.com/careers/,false
 Secret Double Octopus,scrape,https://doubleoctopus.com/careers/,https://doubleoctopus.com/careers/,false,scanned; no open Israel roles now
 Fordefi,scrape,https://fordefi.com/careers,https://fordefi.com/careers,false,scanned; no open Israel roles now
 QuantLR,scrape,https://www.quantlr.com/careers,https://www.quantlr.com/careers,false,scanned; no open Israel roles now
-Chaos Labs,scrape,https://jobs.lever.co/chaoslabs,https://jobs.lever.co/chaoslabs,false,scanned; no open Israel roles now
-Splitit,scrape,https://www.splitit.com/careers/,https://www.splitit.com/careers/,false,scanned; no open Israel roles now
+Chaos Labs,lever,chaoslabs,https://api.lever.co/v0/postings/chaoslabs?mode=json,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
+Splitit,bamboohr,splitit,https://splitit.bamboohr.com/careers/list,true,re-audit 2026-08-21: verified 3/1 IL (was false-empty)
 Sedric,scrape,https://www.sedric.ai/careers,https://www.sedric.ai/careers,false,scanned; no open Israel roles now
 Sunbit,scrape,https://www.sunbit.com/careers/,https://www.sunbit.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
 Tarya,scrape,https://www.tarya.com/careers,https://www.tarya.com/careers,false,scanned; no open Israel roles now
@@ -719,7 +719,7 @@ Rafael Advanced Defense Systems,scrape,https://www.rafael.co.il/careers/,https:/
 SpearUAV,scrape,https://spearuav.com/careers/,https://spearuav.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
 Tritone Technologies,scrape,https://tritoneam.com/careers/,https://tritoneam.com/careers/,false,scanned; no open Israel roles now
 Amazon Israel,scrape,https://www.amazon.jobs/en/locations/israel,https://www.amazon.jobs/en/locations/israel,false,scanned; no open Israel roles now
-Micron Israel,scrape,https://careers.micron.com/careers,https://careers.micron.com/careers,false,scanned; no open Israel roles now
+Micron Israel,workday,micron/External,https://micron.wd1.myworkdayjobs.com/wday/cxs/micron/External/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Salesforce Israel,workday,salesforce/External_Career_Site,https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site/jobs,true,deep-resolved; 15/14 IL
 Cadence Israel,workday,cadence/External_Careers,https://cadence.wd1.myworkdayjobs.com/wday/cxs/cadence/External_Careers/jobs,true,deep-resolved; 10/8 IL
 GE HealthCare Israel,scrape,https://jobs.gecareers.com/healthcare/global/en,https://jobs.gecareers.com/healthcare/global/en,false,unreachable; could not scan
@@ -742,13 +742,13 @@ KLA,workday,kla/Search,https://kla.wd1.myworkdayjobs.com/wday/cxs/kla/Search/job
 AMD,scrape,https://careers.amd.com/careers-home/jobs?location=Israel,https://careers.amd.com/careers-home/jobs?location=Israel,false,scanned; no open Israel roles now (suspect cleared)
 Synopsys,scrape,https://sjobs.brassring.com/TGnewUI/Search/Home/Home?partnerid=25235&siteid=5359,https://sjobs.brassring.com/TGnewUI/Search/Home/Home?partnerid=25235&siteid=5359,false,unreachable; could not scan
 Samsung,scrape,https://www.samsung.com/il/aboutsamsung/careers/,https://www.samsung.com/il/aboutsamsung/careers/,false,scanned; no open Israel roles now
-VMware (Broadcom),scrape,https://broadcom.wd1.myworkdayjobs.com/External_Career,https://broadcom.wd1.myworkdayjobs.com/External_Career,false,scanned; no open Israel roles now
+VMware (Broadcom),workday,broadcom/External_Career,https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Splunk (Cisco),scrape,https://www.splunk.com/en_us/careers.html,https://www.splunk.com/en_us/careers.html,false,scanned; no open Israel roles now
 Pinterest,scrape,https://www.pinterestcareers.com/jobs/,https://www.pinterestcareers.com/jobs/,false,scanned; no open Israel roles now
 Airbnb,scrape,https://careers.airbnb.com/positions/,https://careers.airbnb.com/positions/,false,scanned; no open Israel roles now
 Unity,scrape,https://job-boards.greenhouse.io/unity3d,https://job-boards.greenhouse.io/unity3d,false,scanned; no open Israel roles now
 Goldman Sachs,scrape,https://www.goldmansachs.com/careers/,https://www.goldmansachs.com/careers/,false,scanned; no open Israel roles now
-Stryker,scrape,https://stryker.wd1.myworkdayjobs.com/StrykerCareers,https://stryker.wd1.myworkdayjobs.com/StrykerCareers,false,scanned; no open Israel roles now
+Stryker,workday,stryker/StrykerCareers,https://stryker.wd1.myworkdayjobs.com/wday/cxs/stryker/StrykerCareers/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 3M,scrape,https://www.3m.com/jobs,https://www.3m.com/jobs,false,scanned via brightdata; no open Israel roles now
 Sanofi,scrape,https://jobs.sanofi.com/en/search-jobs/Israel,https://jobs.sanofi.com/en/search-jobs/Israel,false,scanned; no open Israel roles now (suspect cleared)
 Autoliv,scrape,https://www.autoliv.com/careers,https://www.autoliv.com/careers,false,scanned; no open Israel roles now
@@ -757,7 +757,7 @@ Valeo,scrape,https://jobs.valeo.com/en/search-jobs/Israel,https://jobs.valeo.com
 Procter & Gamble,scrape,https://www.pgcareers.com/global/en/search-results?keywords=Israel,https://www.pgcareers.com/global/en/search-results?keywords=Israel,false,scanned; no open Israel roles now
 Deutsche Bank,scrape,https://careers.db.com/,https://careers.db.com/,false,scanned; no open Israel roles now
 Deutsche Post DHL,scrape,https://careers.dhl.com/global/en/search-results?keywords=Israel,https://careers.dhl.com/global/en/search-results?keywords=Israel,false,scanned; no open Israel roles now (suspect cleared)
-Proofpoint,scrape,https://www.proofpoint.com/us/company/careers,https://www.proofpoint.com/us/company/careers,false,scanned; no open Israel roles now
+Proofpoint,workday,proofpoint/proofpointcareers,https://proofpoint.wd5.myworkdayjobs.com/wday/cxs/proofpoint/proofpointcareers/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Sony (PlayStation),scrape,https://www.playstation.com/en-us/corporate/about/careers/,https://www.playstation.com/en-us/corporate/about/careers/,false,scanned; no open Israel roles now
 UBS,scrape,https://www.ubs.com/global/en/careers.html,https://www.ubs.com/global/en/careers.html,false,scanned; no open Israel roles now
 Verizon,scrape,https://mycareer.verizon.com/,https://mycareer.verizon.com/,false,scanned; no open Israel roles now
@@ -796,14 +796,14 @@ More Foods,scrape,https://www.morefoods.co/careers,https://www.morefoods.co/care
 Brevel,scrape,https://www.brevel.eu/careers,https://www.brevel.eu/careers,false,unreachable; could not scan
 Constru,scrape,https://www.constru.ai/careers,https://www.constru.ai/careers,false,scanned; no open Israel roles now
 Fetcher,scrape,https://fetcher.ai/careers,https://fetcher.ai/careers,false,scanned; no open Israel roles now
-Matific,scrape,https://www.matific.com/careers/,https://www.matific.com/careers/,false,scanned; no open Israel roles now
+Matific,workable,matific,https://apply.workable.com/api/v1/widget/accounts/matific?details=true,true,re-audit 2026-08-21: verified 4/0 IL (was false-empty)
 Immunai,scrape,https://www.immunai.com/careers,https://www.immunai.com/careers,false,scanned; no open Israel roles now (suspect cleared)
 Tabnine,scrape,https://www.tabnine.com/careers,https://www.tabnine.com/careers,false,scanned; no open Israel roles now
 Datagen,scrape,https://datagen.tech/careers/,https://datagen.tech/careers/,false,unreachable; could not scan
 Upsolver,scrape,https://www.upsolver.com/careers,https://www.upsolver.com/careers,false,unreachable; could not scan
 Anodot,scrape,https://www.anodot.com/careers/,https://www.anodot.com/careers/,false,scanned; no open Israel roles now
 Hailo,scrape,https://hailo.ai/careers/,https://hailo.ai/careers/,false,scanned; no open Israel roles now (suspect cleared)
-Mend,scrape,https://www.mend.io/careers/,https://www.mend.io/careers/,false,scanned; no open Israel roles now
+Mend,ashby,mend-io,https://api.ashbyhq.com/posting-api/job-board/mend-io,true,re-audit 2026-08-21: verified 8/4 IL (was false-empty)
 BigPanda,scrape,https://www.bigpanda.io/careers/,https://www.bigpanda.io/careers/,true,deep-scrape; 1 Israel jobs
 Firefly,scrape,https://www.firefly.ai/careers,https://www.firefly.ai/careers,false,scanned; no open Israel roles now (suspect cleared)
 Backslash Security,scrape,https://www.backslash.security/careers,https://www.backslash.security/careers,false,scanned; no open Israel roles now
@@ -816,8 +816,8 @@ Karamba Security,scrape,https://karambasecurity.com/careers,https://karambasecur
 SecuriThings,scrape,https://www.securithings.com/careers/,https://www.securithings.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
 IRONSCALES,scrape,https://ironscales.com/company/careers,https://ironscales.com/company/careers,false,scanned; no open Israel roles now
 Seraphic Security,scrape,https://seraphicsecurity.com/careers/,https://seraphicsecurity.com/careers/,false,scanned; no open Israel roles now
-Trustmi,scrape,https://www.trustmi.ai/careers,https://www.trustmi.ai/careers,false,scanned; no open Israel roles now
-Pillar Security,scrape,https://jobs.lever.co/pillar,https://jobs.lever.co/pillar,false,scanned; no open Israel roles now
+Trustmi,workable,trustmi,https://apply.workable.com/api/v1/widget/accounts/trustmi?details=true,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
+Pillar Security,lever,pillar,https://api.lever.co/v0/postings/pillar?mode=json,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Knostic,scrape,https://www.knostic.ai/careers,https://www.knostic.ai/careers,false,scanned; no open Israel roles now
 Check Point Software,smartrecruiters,CheckPointSoftwareTechnologies2,https://api.smartrecruiters.com/v1/companies/CheckPointSoftwareTechnologies2/postings,true,deep-resolved; 383/83 IL
 Cynamics,scrape,https://www.cynamics.ai/careers,https://www.cynamics.ai/careers,false,scanned; no open Israel roles now
@@ -895,13 +895,13 @@ Schneider Electric,scrape,https://www.se.com/ww/en/about-us/careers/,https://www
 Denso,scrape,https://www.denso.com/careers/jobs,https://www.denso.com/careers/jobs,false,scanned via brightdata; no open Israel roles now
 Nestle,scrape,https://www.nestle.com/jobs,https://www.nestle.com/jobs,false,scanned; no open Israel roles now
 Wells Fargo,scrape,https://www.wellsfargojobs.com/en/jobs/,https://www.wellsfargojobs.com/en/jobs/,false,scanned; no open Israel roles now
-Zebra Technologies,scrape,https://www.zebra.com/us/en/about-zebra/careers.html,https://www.zebra.com/us/en/about-zebra/careers.html,false,scanned; no open Israel roles now
+Zebra Technologies,workday,zebra/Zebra_careers,https://zebra.wd501.myworkdayjobs.com/wday/cxs/zebra/Zebra_careers/jobs,true,re-audit 2026-08-21: verified 1/0 IL (was false-empty)
 Nutanix,scrape,https://nutanix.eightfold.ai/careers,https://nutanix.eightfold.ai/careers,false,scanned; no open Israel roles now
 Aristocrat (Product Madness),scrape,https://careers.aristocrat.com/,https://careers.aristocrat.com/,false,unreachable; could not scan
 Wix (Wixpress),scrape,https://www.wix.com/jobs/locations/israel,https://www.wix.com/jobs/locations/israel,false,scanned; no open Israel roles now
 T-Mobile,scrape,https://www.t-mobile.careers/,https://www.t-mobile.careers/,false,scanned; no open Israel roles now
-Bristol Myers Squibb,scrape,https://careers.bms.com/,https://careers.bms.com/,false,scanned; no open Israel roles now
-Eon,scrape,https://www.eon.io/careers,https://www.eon.io/careers,false,scanned; no open Israel roles now
+Bristol Myers Squibb,workday,bristolmyerssquibb/BMS,https://bristolmyerssquibb.wd5.myworkdayjobs.com/wday/cxs/bristolmyerssquibb/BMS/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
+Eon,greenhouse,eonio,https://boards-api.greenhouse.io/v1/boards/eonio/jobs,true,re-audit 2026-08-21: verified 25/1 IL (was false-empty)
 Navan,scrape,https://navan.com/careers,https://navan.com/careers,true,deep-scrape; 14 Israel jobs
 Firmus,scrape,https://www.firmus.security/careers,https://www.firmus.security/careers,false,unreachable; could not scan
 QuamCore,scrape,https://www.quamcore.com/careers,https://www.quamcore.com/careers,false,scanned; no open Israel roles now
@@ -924,7 +924,7 @@ Vidazoo,scrape,https://www.vidazoo.com/careers/,https://www.vidazoo.com/careers/
 Madgicx,scrape,https://madgicx.com/careers,https://madgicx.com/careers,false,scanned; no open Israel roles now (suspect cleared)
 Plarium,scrape,https://plarium.com/en/careers/,https://plarium.com/en/careers/,false,scanned; no open Israel roles now
 Overwolf,scrape,https://www.overwolf.com/careers/,https://www.overwolf.com/careers/,false,scanned; no open Israel roles now
-PLAYSTUDIOS,scrape,https://playstudios.com/careers/,https://playstudios.com/careers/,false,scanned; no open Israel roles now
+PLAYSTUDIOS,breezy,playstudios-asia,https://playstudios-asia.breezy.hr/json,true,re-audit 2026-08-21: verified 4/0 IL (was false-empty)
 Estoty,scrape,https://estoty.com/careers,https://estoty.com/careers,false,scanned; no open Israel roles now
 Blings.io,scrape,https://www.blings.io/careers,https://www.blings.io/careers,false,scanned; no open Israel roles now
 8fig,scrape,https://www.8fig.co/careers,https://www.8fig.co/careers,false,scanned; no open Israel roles now
@@ -945,13 +945,13 @@ DriveNets,scrape,https://drivenets.com/careers/,https://drivenets.com/careers/,f
 Jit,scrape,https://www.jit.io/careers,https://www.jit.io/careers,false,scanned; no open Israel roles now
 Helios,scrape,https://gethelios.dev/careers/,https://gethelios.dev/careers/,false,scanned; no open Israel roles now (suspect cleared)
 Checkmarx,scrape,https://www.checkmarx.com/about-us/careers/,https://www.checkmarx.com/about-us/careers/,false,scanned; no open Israel roles now
-Kodem Security,scrape,https://www.kodemsecurity.com/careers,https://www.kodemsecurity.com/careers,false,scanned; no open Israel roles now
+Kodem Security,bamboohr,kodem,https://kodem.bamboohr.com/careers/list,true,re-audit 2026-08-21: verified 6/3 IL (was false-empty)
 Astrix Security,scrape,https://astrix.security/careers/,https://astrix.security/careers/,false,scanned; no open Israel roles now
 Eureka Security,scrape,https://www.eureka.security/careers,https://www.eureka.security/careers,true,deep-scrape; 9 Israel jobs
 1touch.io,scrape,https://1touch.io/careers/,https://1touch.io/careers/,false,scanned; no open Israel roles now
 Cybersixgill,scrape,https://cybersixgill.com/company/careers,https://cybersixgill.com/company/careers,true,deep-scrape; 1 Israel jobs
 ActiveFence,scrape,https://www.activefence.com/careers,https://www.activefence.com/careers,false,scanned; no open Israel roles now
-Argus Cyber Security,scrape,https://argus-sec.com/careers/,https://argus-sec.com/careers/,false,scanned; no open Israel roles now
+Argus Cyber Security,comeet,A7.004,https://www.comeet.com/careers-api/2.0/company/A7.004/positions?token=7A42DD81E907A444C444C403D203D200,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Cynerio,scrape,https://www.cynerio.com/careers,https://www.cynerio.com/careers,false,scanned; no open Israel roles now
 Votiro,scrape,https://votiro.com/careers/,https://votiro.com/careers/,false,scanned; no open Israel roles now
 Red Access,scrape,https://www.redaccess.io/careers,https://www.redaccess.io/careers,false,scanned; no open Israel roles now
@@ -996,8 +996,8 @@ Feelit,scrape,https://www.feelit-tech.com/careers,https://www.feelit-tech.com/ca
 Robotican,scrape,https://www.robotican.net/careers,https://www.robotican.net/careers,false,scanned; no open Israel roles now (suspect cleared)
 Iscar,scrape,https://www.iscar.com/careers,https://www.iscar.com/careers,false,scanned; no open Israel roles now (suspect cleared)
 NVIDIA Israel,workday,nvidia/NVIDIAExternalCareerSite,https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs,true,deep-resolved; 40/39 IL
-Broadcom Israel,scrape,https://broadcom.wd1.myworkdayjobs.com/External_Career,https://broadcom.wd1.myworkdayjobs.com/External_Career,false,scanned; no open Israel roles now
-Dell Israel,scrape,https://dell.wd1.myworkdayjobs.com/External,https://dell.wd1.myworkdayjobs.com/External,false,scanned; no open Israel roles now
+Broadcom Israel,workday,broadcom/External_Career,https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
+Dell Israel,workday,dell/External,https://dell.wd1.myworkdayjobs.com/wday/cxs/dell/External/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 PayPal Israel,scrape,https://paypal.eightfold.ai/careers,https://paypal.eightfold.ai/careers,false,scanned; no open Israel roles now
 Lam Research Israel,scrape,https://lamresearch.wd1.myworkdayjobs.com/External,https://lamresearch.wd1.myworkdayjobs.com/External,false,scanned; no open Israel roles now
 General Motors Israel,scrape,https://search-careers.gm.com/en/jobs/?location=Israel,https://search-careers.gm.com/en/jobs/?location=Israel,false,scanned; no open Israel roles now (suspect cleared)
@@ -1016,16 +1016,16 @@ Binah.ai,scrape,https://www.binah.ai/careers/,https://www.binah.ai/careers/,fals
 Essence SmartCare,scrape,https://www.essence-grp.com/careers,https://www.essence-grp.com/careers,false,scanned via brightdata; no open Israel roles now
 Vocalis Health,scrape,https://vocalishealth.com/careers,https://vocalishealth.com/careers,false,scanned; no open Israel roles now
 Google,scrape,https://www.google.com/about/careers/applications/jobs/results/?location=Israel,https://www.google.com/about/careers/applications/jobs/results/?location=Israel,false,scanned; no open Israel roles now (suspect cleared)
-Micron,scrape,https://micron.wd1.myworkdayjobs.com/External,https://micron.wd1.myworkdayjobs.com/External,false,scanned; no open Israel roles now
+Micron,workday,micron/External,https://micron.wd1.myworkdayjobs.com/wday/cxs/micron/External/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Renesas Electronics,scrape,https://careers.renesas.com/,https://careers.renesas.com/,false,unreachable; could not scan
 Arm,scrape,https://careers.arm.com/,https://careers.arm.com/,false,scanned; no open Israel roles now
-Dell Technologies,scrape,https://dell.wd1.myworkdayjobs.com/External,https://dell.wd1.myworkdayjobs.com/External,false,scanned; no open Israel roles now
+Dell Technologies,workday,dell/External,https://dell.wd1.myworkdayjobs.com/wday/cxs/dell/External/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 PTC,scrape,https://ptc.wd5.myworkdayjobs.com/careers,https://ptc.wd5.myworkdayjobs.com/careers,false,scanned; no open Israel roles now
-Zendesk,scrape,https://jobs.zendesk.com/us/en/search-results?keywords=Israel,https://jobs.zendesk.com/us/en/search-results?keywords=Israel,false,scanned; no open Israel roles now
+Zendesk,workday,zendesk/zendesk,https://zendesk.wd1.myworkdayjobs.com/wday/cxs/zendesk/zendesk/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Zoom,scrape,https://careers.zoom.us/jobs/search?location=Israel,https://careers.zoom.us/jobs/search?location=Israel,false,scanned; no open Israel roles now
 Booking.com,scrape,https://jobs.booking.com/careers?location=Israel,https://jobs.booking.com/careers?location=Israel,false,scanned; no open Israel roles now
 Intuit,scrape,https://www.intuit.com/careers/teams/technology/,https://www.intuit.com/careers/teams/technology/,false,scanned; no open Israel roles now
-Barclays,scrape,https://search.jobs.barclays/search-jobs/Israel,https://search.jobs.barclays/search-jobs/Israel,false,scanned; no open Israel roles now (suspect cleared)
+Barclays,workday,barclays/External_Career_Site_Barclays,https://barclays.wd3.myworkdayjobs.com/wday/cxs/barclays/External_Career_Site_Barclays/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 GE HealthCare,scrape,https://jobs.gecareers.com/gehealthcare/global/en/search-results?keywords=Israel,https://jobs.gecareers.com/gehealthcare/global/en/search-results?keywords=Israel,false,unreachable; could not scan
 Pfizer,scrape,https://www.pfizer.com/about/careers,https://www.pfizer.com/about/careers,false,scanned; no open Israel roles now
 General Motors,scrape,https://search-careers.gm.com/en/jobs/?location=Israel,https://search-careers.gm.com/en/jobs/?location=Israel,false,scanned; no open Israel roles now (suspect cleared)
@@ -1039,7 +1039,7 @@ Pure Storage,scrape,https://www.purestorage.com/company/careers.html,https://www
 Take-Two Interactive,scrape,https://www.take2games.com/careers,https://www.take2games.com/careers,false,scanned; no open Israel roles now
 Flex (Flextronics),scrape,https://flex.wd1.myworkdayjobs.com/careers,https://flex.wd1.myworkdayjobs.com/careers,false,scanned; no open Israel roles now
 Toyota Connected,scrape,https://www.toyotaconnected.com/careers/,https://www.toyotaconnected.com/careers/,false,scanned; no open Israel roles now
-Eli Lilly,scrape,https://careers.lilly.com/us/en/search-results?keywords=Israel,https://careers.lilly.com/us/en/search-results?keywords=Israel,false,scanned; no open Israel roles now (suspect cleared)
+Eli Lilly,workday,lilly/LLY,https://lilly.wd115.myworkdayjobs.com/wday/cxs/lilly/LLY/jobs,true,re-audit 2026-08-21: verified 3/3 IL (was false-empty)
 Cellebrite,scrape,https://careers.cellebrite.com/,https://careers.cellebrite.com/,false,unreachable; could not scan
 Innoviz,scrape,https://innoviz.tech/careers,https://innoviz.tech/careers,false,scanned; no open Israel roles now
 Bria AI,scrape,https://bria.ai/careers/,https://bria.ai/careers/,false,scanned; no open Israel roles now (suspect cleared)
@@ -1047,7 +1047,7 @@ Quantum Art,scrape,https://www.quantum-art.tech/careers,https://www.quantum-art.
 High Lander,scrape,https://www.highlander.tech/careers,https://www.highlander.tech/careers,false,unreachable; could not scan
 Mentee Robotics,scrape,https://www.menteebots.com/careers,https://www.menteebots.com/careers,false,unreachable; could not scan
 Delasport,scrape,https://www.delasport.com/careers/,https://www.delasport.com/careers/,false,scanned; no open Israel roles now
-Localize,scrape,https://www.localize.city/careers,https://www.localize.city/careers,false,scanned; no open Israel roles now (suspect cleared)
+Localize,comeet,33.00F,https://www.comeet.com/careers-api/2.0/company/33.00F/positions?token=33F103B33F19F81D37CFC1D3716B916B9CFC,true,re-audit 2026-08-21: verified 1/1 IL (was false-empty)
 Litigate,scrape,https://www.litigate.ai/careers,https://www.litigate.ai/careers,false,unreachable; could not scan
 SolarGik,scrape,https://www.solargik.com/careers,https://www.solargik.com/careers,false,scanned; no open Israel roles now
 Aquarius Spectrum,scrape,https://aquarius-spectrum.com/careers,https://aquarius-spectrum.com/careers,false,scanned; no open Israel roles now
@@ -1055,7 +1055,7 @@ Mush Foods,scrape,https://www.mushfoods.com/careers,https://www.mushfoods.com/ca
 Kubiya,scrape,https://www.kubiya.ai/careers,https://www.kubiya.ai/careers,false,unreachable; could not scan
 Anonybit,scrape,https://www.anonybit.io/careers,https://www.anonybit.io/careers,false,scanned; no open Israel roles now
 Tactile Mobility,scrape,https://tactilemobility.com/careers/,https://tactilemobility.com/careers/,false,unreachable; could not scan
-Scodix,scrape,https://www.scodix.com/careers/,https://www.scodix.com/careers/,false,scanned; no open Israel roles now (suspect cleared)
+Scodix,comeet,77.00D,https://www.comeet.com/careers-api/2.0/company/77.00D/positions?token=77D2CEE16773BE8436525711677436503BE8,true,re-audit 2026-08-21: verified 1/1 IL (was false-empty)
 Nanomedic,scrape,https://nanomedic.com/careers,https://nanomedic.com/careers,false,scanned; no open Israel roles now
 SysAid,scrape,https://www.sysaid.com/about-us/careers,https://www.sysaid.com/about-us/careers,false,scanned; no open Israel roles now
 Discovery,discovery,discovery,discovered_cache.json,true,LinkedIn+Indeed discovery layer (Bright Data)
