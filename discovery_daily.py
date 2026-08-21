@@ -53,6 +53,7 @@ def run_query_raw(ds, disc, inputs, limit):
                           data=json.dumps(inputs).encode(), method="POST")).get("snapshot_id")
     if not sid:
         return []
+    st = None
     for _ in range(60):
         st = json.loads(_req(f"https://api.brightdata.com/datasets/v3/progress/{sid}")).get("status")
         if st == "ready":
@@ -60,11 +61,18 @@ def run_query_raw(ds, disc, inputs, limit):
         if st in ("failed", "error"):
             return []
         time.sleep(15)
+    if st != "ready":
+        return []                          # timed out still building — fetching now returns an
+                                           # error dict, not records (crashed the whole run once)
     body = _req(f"https://api.brightdata.com/datasets/v3/snapshot/{sid}?format=json", timeout=120)
     try:
-        return json.loads(body)
+        recs = json.loads(body)
     except Exception:  # noqa: BLE001
-        return [json.loads(l) for l in body.splitlines() if l.strip()]
+        recs = [json.loads(l) for l in body.splitlines() if l.strip()]
+    # a dict here is an API status/error payload, never records; non-dict rows are noise
+    if not isinstance(recs, list):
+        return []
+    return [r for r in recs if isinstance(r, dict)]
 
 
 _REL = re.compile(r"(\d+)\+?\s*(?:days?|ימים|ימי)", re.I)
@@ -126,6 +134,7 @@ def _targeted_inputs(cap=20):
 
 def main():
     _load_secrets()
+    os.makedirs("out", exist_ok=True)      # gitignored — absent on cloud runners
     if not os.environ.get("BRIGHTDATA_API_KEY"):
         print("no BRIGHTDATA_API_KEY; skipping discovery")
         return
