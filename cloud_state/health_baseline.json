@@ -117,7 +117,7 @@
  "PayPal": 0,
  "Amazon": 148,
  "Western Digital": 376,
- "SentinelOne": 209,
+ "SentinelOne": 211,
  "Zscaler": 351,
  "Okta": 347,
  "Twilio": 157,
@@ -125,7 +125,7 @@
  "Confluent": 30,
  "Databricks": 812,
  "Elastic": 264,
- "Datadog": 444,
+ "Datadog": 445,
  "MongoDB": 409,
  "Semperis": 26,
  "BigID": 8,
@@ -400,5 +400,10 @@
  "Recruitx": 21,
  "Oak - Identity Security OS": 12,
  "Clover Security": 7,
- "dentsu Israel": 1
+ "dentsu Israel": 1,
+ "Bounce": 10,
+ "Play Perfect": 10,
+ "Chainalysis": 43,
+ "Jamf": 32,
+ "Workday": 6
 }

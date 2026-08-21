@@ -8,11 +8,11 @@ _No new matching openings today._
 ---
 <details><summary>Run audit</summary>
 
-- Companies scanned: **397** (failed: 2)
-- Jobs fetched: 18751 · Israel-matched: 3571
-- Accepted: 91 · after merge: 71 · **new: 0**
-- Decision paths: keyword=3219, llm=296, llm_cache=56
-- LLM calls this run: 296
+- Companies scanned: **399** (failed: 2)
+- Jobs fetched: 18632 · Israel-matched: 3389
+- Accepted: 70 · after merge: 53 · **new: 0**
+- Decision paths: keyword=3079, llm=4, llm_cache=306
+- LLM calls this run: 4
 - Failed companies: Finaloop (HttpError), Bit (HttpError)
 
 </details>
