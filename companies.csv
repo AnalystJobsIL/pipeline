@@ -1125,7 +1125,7 @@ JPMorganChase,scrape,https://secrethunter.io/jobz/b401105b3d,https://secrethunte
 Moveo Group,scrape,https://secrethunter.io/jobz/9259190970,https://secrethunter.io/jobz/9259190970,false,scanned; no open Israel roles now
 K Logic,scrape,https://secrethunter.io/jobz/5153067f91,https://secrethunter.io/jobz/5153067f91,false,scanned; no open Israel roles now
 Zim,scrape,https://secrethunter.io/jobz/02f03d0019,https://secrethunter.io/jobz/02f03d0019,false,scanned; no open Israel roles now
-Glassbox,scrape,https://secrethunter.io/jobz/228afb1720,https://secrethunter.io/jobz/228afb1720,false,scanned; no open Israel roles now
+Glassbox,greenhouse,glassboxltd,https://boards-api.greenhouse.io/v1/boards/glassboxltd/jobs,true,re-audit 2026-08-21: manual fix (serp budget exhausted); greenhouse verified
 AllCloud,comeet,71.008,https://www.comeet.com/careers-api/2.0/company/71.008/positions?token=1785E0758A482F01785E01782F05E0,true,auto-expand; 25/14 IL
 Guidde,greenhouse,guidde,https://boards-api.greenhouse.io/v1/boards/guidde/jobs,true,auto-expand; 9/6 IL
 expressvpn,scrape,https://secrethunter.io/jobz/a799cf3e1d,https://secrethunter.io/jobz/a799cf3e1d,false,scanned; no open Israel roles now
