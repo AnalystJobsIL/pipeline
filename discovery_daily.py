@@ -175,6 +175,20 @@ def main():
             new_cos[c.lower()] = {"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""}
     with open("out/discovered_companies.json", "w", encoding="utf-8") as f:
         json.dump(list(new_cos.values()), f, ensure_ascii=False, indent=1)
+    # Bridge to auto-expand: out/ is gitignored (ephemeral on cloud runners), so the queue
+    # auto_expand.py actually drains is the committed research_companies.json — merge into it.
+    if new_cos:
+        try:
+            research = json.load(open("research_companies.json", encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            research = []
+        known = {(e.get("name") or "").strip().lower() for e in research}
+        added = [v for k, v in new_cos.items() if k not in known]
+        if added:
+            research.extend(added)
+            with open("research_companies.json", "w", encoding="utf-8") as f:
+                json.dump(research, f, ensure_ascii=False, indent=1)
+            print(f"queued {len(added)} new companies into research_companies.json")
     print(f"=== {len(jobs)} discovered jobs cached · {len(new_cos)} new companies for migration ===")
 
 
