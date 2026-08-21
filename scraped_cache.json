@@ -2975,6 +2975,228 @@
    "url": "https://business.gett.com/"
   }
  ],
+ "Google Israel": [
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Power Delivery Design Engineer, Google Cloud",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Power Delivery Design Engineer, Google Cloud",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Software Engineering Manager, Google Cloud TPU",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Software Engineering Manager, Google Cloud TPU",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Silicon Validation Engineer, Google Cloud",
+   "location": "Haifa, Israel",
+   "posted_date": "",
+   "title": "Silicon Validation Engineer, Google Cloud",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Data Center Operations Manager, Global Server Operations",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Data Center Operations Manager, Global Server Operations",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Senior SoC Power Engineer, Google Cloud",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Senior SoC Power Engineer, Google Cloud",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Senior Verification Engineer, Digital Signal Processing, Google Cloud",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Senior Verification Engineer, Digital Signal Processing, Google Cloud",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "RTL Design Technical Lead, Servers, Google Cloud",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "RTL Design Technical Lead, Servers, Google Cloud",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Software Engineer II, Google SecOps",
+   "location": "Ramat Gan, Israel",
+   "posted_date": "",
+   "title": "Software Engineer II, Google SecOps",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Technical Lead, Google Cloud TPU",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Technical Lead, Google Cloud TPU",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Signal/Power Integrity Engineer, PhD Graduate",
+   "location": "Haifa, Israel",
+   "posted_date": "",
+   "title": "Signal/Power Integrity Engineer, PhD Graduate",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Senior Silicon Physical Design Engineer",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Senior Silicon Physical Design Engineer",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Group Product Manager, Filestore, Google Cloud",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Group Product Manager, Filestore, Google Cloud",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Staff Design Engineer, Edge AI, Google Cloud",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Staff Design Engineer, Edge AI, Google Cloud",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "SOC Quality and Reliability Engineer, Google Cloud",
+   "location": "Haifa, Israel",
+   "posted_date": "",
+   "title": "SOC Quality and Reliability Engineer, Google Cloud",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "CPU Design for Test Engineer, Google Cloud",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "CPU Design for Test Engineer, Google Cloud",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Power and Signal Integrity Engineer",
+   "location": "Haifa, Israel",
+   "posted_date": "",
+   "title": "Power and Signal Integrity Engineer",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Software Engineer II, Waze iOS",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Software Engineer II, Waze iOS",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "CPU Design Verification Engineer, Google Cloud",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "CPU Design Verification Engineer, Google Cloud",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Senior ASIC Design Engineer, Digital Signal Processing",
+   "location": "Haifa, Israel",
+   "posted_date": "",
+   "title": "Senior ASIC Design Engineer, Digital Signal Processing",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Google Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Software Engineer II, Google Cloud Network",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Software Engineer II, Google Cloud Network",
+   "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel"
+  }
+ ],
  "Greeneye Technology": [
   {
    "ats_platform": "scrape",
@@ -3687,6 +3909,52 @@
    "posted_date": "",
    "title": "Senior Software Engineer",
    "url": "https://intezer.com/careers/senior-software-engineer"
+  }
+ ],
+ "Intuit Israel": [
+  {
+   "ats_platform": "scrape",
+   "company": "Intuit Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://jobs.intuit.com/job/petah-tikva/senior-machine-learning-engineer-foundational-models-and-agentic-systems/27595/99338970560",
+   "location": "Petach Tikva, Israel",
+   "posted_date": "",
+   "title": "Senior Machine Learning Engineer, Foundational Models and Agentic systems",
+   "url": "https://jobs.intuit.com/job/petah-tikva/senior-machine-learning-engineer-foundational-models-and-agentic-systems/27595/99338970560"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Intuit Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://jobs.intuit.com/job/petah-tikva/staff-ai-scientist/27595/98179602192",
+   "location": "Petach Tikva, Israel",
+   "posted_date": "",
+   "title": "Staff AI Scientist",
+   "url": "https://jobs.intuit.com/job/petah-tikva/staff-ai-scientist/27595/98179602192"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Intuit Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://jobs.intuit.com/job/petah-tikva/sr-staff-product-manager-quickbooks-bill-pay/27595/95028763024",
+   "location": "Petach Tikva, Israel",
+   "posted_date": "",
+   "title": "Sr Staff Product Manager, QuickBooks Bill Pay",
+   "url": "https://jobs.intuit.com/job/petah-tikva/sr-staff-product-manager-quickbooks-bill-pay/27595/95028763024"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Intuit Israel",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "Filter Results",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Filter Results",
+   "url": "https://jobs.intuit.com/search-jobs/Petah%20Tikva%2C%20Israel/27595/4/294640-294904-293918/32x08707/34x88747/0/2"
   }
  ],
  "Island": [
@@ -7090,6 +7358,96 @@
    "url": "https://www.comeet.com/jobs/qedma/7A.006/sr_-quantum-researcher/D8.C68"
   }
  ],
+ "Qualcomm": [
+  {
+   "ats_platform": "scrape",
+   "company": "Qualcomm",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "3089793",
+   "location": "Haifa, Haifa District, Israel, Ramat Gan, Israel",
+   "posted_date": "",
+   "title": "Staff Software Engineer, Core AI Software - Haifa or Ramat Gan",
+   "url": "https://careers.qualcomm.com/careers/job/446718149928"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Qualcomm",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "3089796",
+   "location": "Haifa, Haifa District, Israel, Ramat Gan, Israel",
+   "posted_date": "",
+   "title": "Senior Software Engineer, Core AI Software - Haifa or Ramat Gan",
+   "url": "https://careers.qualcomm.com/careers/job/446718149954"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Qualcomm",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "3094692",
+   "location": "Ramat Gan, Israel",
+   "posted_date": "",
+   "title": "Engineer, Senior Staff cloud data platforms - Ramat Gan",
+   "url": "https://careers.qualcomm.com/careers/job/446720462722"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Qualcomm",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "3084356",
+   "location": "Kfar-Netter, Israel",
+   "posted_date": "",
+   "title": "PHY/Radio Validation Engineer - Kfar-Netter - Israel",
+   "url": "https://careers.qualcomm.com/careers/job/446716153299"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Qualcomm",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "3095441",
+   "location": "Kfar-Netter, Israel",
+   "posted_date": "",
+   "title": "V2X Customer Engineer -  Netanya",
+   "url": "https://careers.qualcomm.com/careers/job/446720516229"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Qualcomm",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "3094764",
+   "location": "Hod Hasharon, Haifa District, Israel",
+   "posted_date": "",
+   "title": "Senior Firmware Engineer – 5G Modem - Hod HaSharon",
+   "url": "https://careers.qualcomm.com/careers/job/446720239811"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Qualcomm",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "3092490",
+   "location": "Hod Hasharon, Haifa District, Israel",
+   "posted_date": "",
+   "title": "Architecture Engineer, Senior Staff - Hod HaSharon",
+   "url": "https://careers.qualcomm.com/careers/job/446719863448"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Qualcomm",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "3092472",
+   "location": "Hod Hasharon, Haifa District, Israel",
+   "posted_date": "",
+   "title": "Test Engineer, Senior Staff - Hod Hasharon",
+   "url": "https://careers.qualcomm.com/careers/job/446720243269"
+  }
+ ],
  "Quantum Machines": [
   {
    "ats_platform": "scrape",
@@ -8554,6 +8912,195 @@
    "posted_date": "",
    "title": "Senior Researcher",
    "url": "https://supermeat.com/career/senior-researcher/"
+  }
+ ],
+ "SuperPlay": [
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/85.767",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "2D Animator",
+   "url": "https://www.superplay.co/careers-position/85.767"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/88.E47",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "2D Artist",
+   "url": "https://www.superplay.co/careers-position/88.E47"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/3F.B56",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "2D Team Lead",
+   "url": "https://www.superplay.co/careers-position/3F.B56"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/26.A69",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "3D Animator",
+   "url": "https://www.superplay.co/careers-position/26.A69"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/7D.A6B",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "3D Animator",
+   "url": "https://www.superplay.co/careers-position/7D.A6B"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/28.E6C",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Backend Engineer",
+   "url": "https://www.superplay.co/careers-position/28.E6C"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/D9.967",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Customer Support Manager",
+   "url": "https://www.superplay.co/careers-position/D9.967"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/FB.F66",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Head of BI",
+   "url": "https://www.superplay.co/careers-position/FB.F66"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/45.06B",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Monetization Manager",
+   "url": "https://www.superplay.co/careers-position/45.06B"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/5D.866",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Motion Graphic Artist",
+   "url": "https://www.superplay.co/careers-position/5D.866"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/9E.667",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Operations and QA Manager",
+   "url": "https://www.superplay.co/careers-position/9E.667"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/D1.C67",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Product Manager",
+   "url": "https://www.superplay.co/careers-position/D1.C67"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/76.F6E",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Talent Acquisition Specialist (Temporary for 9 months)",
+   "url": "https://www.superplay.co/careers-position/76.F6E"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/FB.F62",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Technical Artist",
+   "url": "https://www.superplay.co/careers-position/FB.F62"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/15.A65",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "UI UX Designer",
+   "url": "https://www.superplay.co/careers-position/15.A65"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/9F.A6A",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Unity Developer",
+   "url": "https://www.superplay.co/careers-position/9F.A6A"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "SuperPlay",
+   "country_code": "IL",
+   "description": "",
+   "job_id": "https://www.superplay.co/careers-position/85.079",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "VIP Account Manager – (Temporary for 9 months)",
+   "url": "https://www.superplay.co/careers-position/85.079"
   }
  ],
  "Talent-HR": [

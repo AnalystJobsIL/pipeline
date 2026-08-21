@@ -547,8 +547,50 @@ def fetch_jazzhr(row):
     return []
 
 
+def fetch_oraclehcm(row):
+    """Oracle Cloud HCM CandidateExperience public REST (no auth needed).
+
+    api_url: https://<host>/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=<SITE>
+    The finder gains limit/offset/sortBy here; requisitions live in items[0].requisitionList.
+    Job page: https://<host>/hcmUI/CandidateExperience/en/sites/<SITE>/job/<Id>
+    """
+    import re as _re
+    base = row["api_url"]
+    host = _re.search(r"https://([^/]+)/", base).group(1)
+    ms = _re.search(r"siteNumber=([A-Za-z0-9_]+)", base)
+    site = ms.group(1) if ms else "CX"
+    if "expand=" not in base:
+        base = base.replace("?onlyData=true", "?onlyData=true&expand=requisitionList.secondaryLocations")
+    jobs, offset, total = [], 0, None
+    while offset < 500:
+        u = f"{base},limit=100,offset={offset},sortBy=POSTING_DATES_DESC"
+        data = http.get_json(u)
+        it = (data.get("items") or [{}])[0]
+        total = it.get("TotalJobsCount") if total is None else total
+        reqs = it.get("requisitionList", []) or []
+        for p in reqs:
+            locs = [str(p.get("PrimaryLocation") or "")]
+            locs += [str(x.get("Name") or "") for x in (p.get("secondaryLocations") or [])]
+            jobs.append({
+                "company": row["company_name"],
+                "title": _clean(p.get("Title")),
+                "location": _clean("; ".join(x for x in locs if x)),
+                "country_code": "",
+                "url": f"https://{host}/hcmUI/CandidateExperience/en/sites/{site}/job/{p.get('Id')}",
+                "posted_date": _iso_date(p.get("PostedDate")),
+                "ats_platform": "oraclehcm",
+                "job_id": str(p.get("Id") or ""),
+                "description": _snippet(p.get("ExternalDescriptionStr") or p.get("ShortDescriptionStr")),
+            })
+        offset += 100
+        if not reqs or (total is not None and offset >= int(total)):
+            break
+    return jobs
+
+
 FETCHERS = {
     "comeet": fetch_comeet,
+    "oraclehcm": fetch_oraclehcm,
     "greenhouse": fetch_greenhouse,
     "lever": fetch_lever,
     "smartrecruiters": fetch_smartrecruiters,

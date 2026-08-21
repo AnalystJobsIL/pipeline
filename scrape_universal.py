@@ -205,8 +205,9 @@ def scrape(company, url, timeout_ms=45000):
                 pg.wait_for_timeout(1000 if fast else 1800)
             blobs = pg.evaluate(_STATE_JS)
             dom = pg.evaluate(_DOM_JS)
+            page_html = pg.content()
         except Exception:
-            blobs, dom = [], []
+            blobs, dom, page_html = [], [], ""
         finally:
             b.close()
 
@@ -256,6 +257,74 @@ def scrape(company, url, timeout_ms=45000):
         if (ROLE.search(t) and not BAD_TITLE.match(t) and _POSTING_HREF.search(u2)
                 and (near or ISRAEL_LOC.search(t))):
             add(t, _loc_from_ctx(ctx), u2)
+
+    # 3) repeated heading-group fallback (Radancy/Google-style server-rendered listings):
+    # job cards as N same-class <h2>/<h3> siblings. Only when the earlier passes found
+    # nothing, and only trust a missing per-card location if the LISTING URL itself is
+    # already Israel-filtered (…?location=Israel, /search-jobs/…Israel…).
+    if not jobs and page_html:
+        url_is_il = bool(ISRAEL_LOC.search(url))
+        # listing_hunt sets SCRAPE_ASSUME_IL=1 for pre-vetted Israeli companies whose own
+        # careers pages omit per-card locations (implicitly local): accept the page-level
+        # Israel signal (footer address, office name, Hebrew) instead of per-card text.
+        import os as _os
+        if _os.environ.get("SCRAPE_ASSUME_IL") and ISRAEL_LOC.search(page_html):
+            url_is_il = True
+        groups = {}
+        for m in re.finditer(r"<(h[1-4])([^>]*)>([^<]{5,90})</\1>", page_html, re.I):
+            tag, attrs, text = m.group(1).lower(), m.group(2), m.group(3).strip()
+            cls = (re.search(r'class=["\']([^"\']+)', attrs) or [None, ""])[1] if "class=" in attrs else ""
+            groups.setdefault((tag, cls), []).append((m.start(), text))
+        for (tag, cls), items in groups.items():
+            if len(items) < 3:
+                continue
+            titles = [t for _, t in items]
+            junk = sum(1 for t in titles if BAD_TITLE.match(t) or not re.search(r"[a-zא-ת]", t, re.I))
+            rolish = sum(1 for t in titles if ROLE.search(t))
+            if junk > len(titles) // 3 or rolish < max(2, len(titles) // 3):
+                continue
+            for pos, t in items:
+                ctx = page_html[pos:pos + 700]
+                mloc = ISRAEL_LOC.search(ctx)
+                loc = _loc_from_ctx(ctx[mloc.start() - 40:mloc.end() + 40]) if mloc else ""
+                if not loc and not url_is_il:
+                    continue
+                mhref = re.search(r'href=["\']([^"\']+)["\']',
+                                  page_html[max(0, pos - 600):pos + 700])
+                add(t, loc or "Israel", mhref.group(1) if mhref else "")
+
+    # 4) position-links fallback (SuperPlay-style custom skins over an ATS): the listing
+    # page is just N links sharing a /careers-position/-like path prefix; each target page
+    # is server-rendered with title + location. Fetch them plainly and read the pages.
+    if not jobs and page_html:
+        from urllib.parse import urljoin as _uj
+        import urllib.request as _ur
+        prefixes = {}
+        for m in re.finditer(r'href=["\']([^"\']+)["\']', page_html):
+            u2 = _uj(url, m.group(1))
+            pref = re.sub(r"[^/]+/?$", "", u2)
+            if re.search(r"(job|position|opening|vacanc|career|role)[^/]*/$", pref, re.I):
+                prefixes.setdefault(pref, set()).add(u2)
+        for pref, links in sorted(prefixes.items(), key=lambda kv: -len(kv[1])):
+            if len(links) < 3:
+                continue
+            for u2 in sorted(links)[:25]:
+                try:
+                    req = _ur.Request(u2, headers={"User-Agent": "Mozilla/5.0"})
+                    ph = _ur.urlopen(req, timeout=12).read(400_000).decode("utf-8", "replace")
+                except Exception:  # noqa: BLE001
+                    continue
+                mt = (re.search(r"<h1[^>]*>\s*([^<]{3,90})\s*</h1>", ph, re.S)
+                      or re.search(r'property=["\']og:title["\'][^>]*content=["\']([^"\']{3,90})', ph))
+                if not mt:
+                    continue
+                txt = re.sub(r"<[^>]+>", " ", ph)
+                mloc = ISRAEL_LOC.search(txt)
+                loc = _loc_from_ctx(txt[max(0, mloc.start() - 40):mloc.end() + 40]) if mloc else ""
+                add(mt.group(1).strip(), loc, u2,
+                    desc=re.sub(r"\s+", " ", txt)[:4000])
+            if jobs:
+                break
     return jobs
 
 

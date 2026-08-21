@@ -367,7 +367,7 @@ Primis,scrape,https://www.primis.tech/careers/,https://www.primis.tech/careers/,
 Leadspace,lever,leadspace,https://api.lever.co/v0/postings/leadspace?mode=json,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 Playtech,smartrecruiters,Playtech,https://api.smartrecruiters.com/v1/companies/Playtech/postings,true,re-audit 2026-08-21: deep-verified 120/0 IL (was dark)
 Soft2Bet,greenhouse,soft2bet,https://boards-api.greenhouse.io/v1/boards/soft2bet/jobs,true,re-audit 2026-08-21: deep-verified 7/0 IL (was dark)
-SuperPlay,scrape,https://www.superplaystudios.com/careers,https://www.superplaystudios.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
+SuperPlay,scrape,,https://www.superplay.co/careers/,true,re-audit 2026-08-22: position-links scrape verified 14 IL
 Minute Media,comeet,45.00A,https://www.comeet.com/careers-api/2.0/company/45.00A/positions?token=54A1A7225062A50FDE2F9A1FBC01FBC1528,true,re-audit 2026-08-21: deep-verified 15/5 IL (was dark)
 Fabric,scrape,https://fabric.inc/careers,https://fabric.inc/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Intelligems,workable,intelligems,https://apply.workable.com/api/v1/widget/accounts/intelligems?details=true,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
@@ -438,10 +438,10 @@ ImageSat International,scrape,https://www.imagesatintl.com/careers/,https://www.
 Elbit Systems,scrape,https://www.elbitsystems.com/careers/,https://www.elbitsystems.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 General Robotics,ashby,generalrobotics,https://api.ashbyhq.com/posting-api/job-board/generalrobotics,true,re-audit 2026-08-21: verified 9/0 IL (was false-empty)
 XJet,scrape,https://xjet3d.com/careers/,https://xjet3d.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Google Israel,scrape,https://www.google.com/about/careers/applications/jobs/results?location=Israel,https://www.google.com/about/careers/applications/jobs/results?location=Israel,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Google Israel,scrape,,https://www.google.com/about/careers/applications/jobs/results/?location=Israel,true,re-audit 2026-08-22: user-found listing URL; heading-group scrape verified 20 IL (page 1)
 AMD Israel,scrape,https://careers.amd.com/careers-home/jobs?location=Israel,https://careers.amd.com/careers-home/jobs?location=Israel,false,deep-validated 2026-08-21: unsupported ATS icims.com
 HP Israel,workday,hp/ExternalCareerSite,https://hp.wd5.myworkdayjobs.com/wday/cxs/hp/ExternalCareerSite/jobs,true,deep-resolved; 13/13 IL
-Intuit Israel,scrape,https://www.intuit.com/careers/,https://www.intuit.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Intuit Israel,scrape,,https://jobs.intuit.com/search-jobs/Petah%20Tikva%2C%20Israel/27595/4/294640-294904-293918/32x08707/34x88747/0/2,true,re-audit 2026-08-22: user-found Radancy listing URL; heading-group scrape verified 4 IL
 Medtronic Israel,workday,medtronic/MedtronicCareers,https://medtronic.wd1.myworkdayjobs.com/wday/cxs/medtronic/MedtronicCareers/jobs,true,deep-resolved; 9/9 IL
 Continental Israel,scrape,https://www.continental.com/en/career/,https://www.continental.com/en/career/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 DiA Imaging Analytics,scrape,https://www.dia-analytics.com/careers/,https://www.dia-analytics.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
@@ -598,7 +598,7 @@ Nuvo,scrape,https://nuvo.recruitee.com,https://nuvo.recruitee.com,false,deep-val
 Donisi Health,greenhouse,oshihealth,https://boards-api.greenhouse.io/v1/boards/oshihealth/jobs,true,re-audit 2026-08-21: deep-verified 7/0 IL (was dark)
 Neuralight,scrape,https://www.neuralight.ai/careers,https://www.neuralight.ai/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Salignostics,scrape,https://salignostics.com/careers/,https://salignostics.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Qualcomm,scrape,https://qualcomm.wd5.myworkdayjobs.com/External,https://qualcomm.wd5.myworkdayjobs.com/External,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Qualcomm,scrape,,https://careers.qualcomm.com/careers?location=Israel,true,re-audit 2026-08-22: eightfold via XHR-capture scrape; verified 8 IL
 Texas Instruments,scrape,https://careers.ti.com/,https://careers.ti.com/,false,deep-validated 2026-08-21: unsupported ATS oraclecloud.com
 Cadence Design Systems,workday,cadence/External_Careers,https://cadence.wd1.myworkdayjobs.com/wday/cxs/cadence/External_Careers/jobs,true,deep-resolved; 10/8 IL
 Ericsson,scrape,https://jobs.ericsson.com/careers,https://jobs.ericsson.com/careers,false,deep-validated 2026-08-21: unsupported ATS eightfold.ai
@@ -608,7 +608,7 @@ Yahoo,workday,ouryahoo/careers,https://ouryahoo.wd5.myworkdayjobs.com/wday/cxs/o
 Lyft,scrape,https://www.lyft.com/careers,https://www.lyft.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Roblox,scrape,https://careers.roblox.com/jobs,https://careers.roblox.com/jobs,false,deep-validated 2026-08-21: no ATS detected (rendered)
 JPMorgan Chase,scrape,https://careers.jpmorgan.com/global/en/students/programs?search=&location=israel,https://careers.jpmorgan.com/global/en/students/programs?search=&location=israel,false,deep-validated 2026-08-21: unsupported ATS oraclecloud.com
-Verint,ashby,verint,https://api.ashbyhq.com/posting-api/job-board/verint,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
+Verint,oraclehcm,CX,https://fa-epcb-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=CX,true,re-audit 2026-08-22: oraclehcm verified 59/4 IL
 Edwards Lifesciences,scrape,https://careers.edwards.com/search-jobs/Israel,https://careers.edwards.com/search-jobs/Israel,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Bayer,scrape,https://career.bayer.com/careers,https://career.bayer.com/careers,false,scanned via brightdata; no open Israel roles now
 Continental,scrape,https://www.continental.com/en/career/,https://www.continental.com/en/career/,false,deep-validated 2026-08-21: no ATS detected (rendered)
@@ -1015,7 +1015,7 @@ Sensible Medical,greenhouse,sensiblecare,https://boards-api.greenhouse.io/v1/boa
 Binah.ai,scrape,https://www.binah.ai/careers/,https://www.binah.ai/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Essence SmartCare,scrape,https://www.essence-grp.com/careers,https://www.essence-grp.com/careers,false,scanned via brightdata; no open Israel roles now
 Vocalis Health,scrape,https://vocalishealth.com/careers,https://vocalishealth.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Google,scrape,https://www.google.com/about/careers/applications/jobs/results/?location=Israel,https://www.google.com/about/careers/applications/jobs/results/?location=Israel,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Google,scrape,https://www.google.com/about/careers/applications/jobs/results/?location=Israel,https://www.google.com/about/careers/applications/jobs/results/?location=Israel,false,duplicate of Google Israel (active) - keep inactive
 Micron,workday,micron/External,https://micron.wd1.myworkdayjobs.com/wday/cxs/micron/External/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Renesas Electronics,scrape,https://careers.renesas.com/,https://careers.renesas.com/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Arm,scrape,https://careers.arm.com/,https://careers.arm.com/,false,deep-validated 2026-08-21: unsupported ATS icims.com

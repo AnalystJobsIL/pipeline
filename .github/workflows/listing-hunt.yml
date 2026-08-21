@@ -1,0 +1,58 @@
+name: Listing-hunt dark companies (find + verify real listings pages)
+
+# For every company marked 'no ATS detected' or 'unsupported ATS': find its real job-LISTINGS
+# URL (harvested links + Claude's pick), then verify by running the 4-strategy scraper on it
+# (XHR capture / DOM cards / heading-groups / position-links). Activates only rows that yield
+# >=1 verified Israel job; persists a listing-hunt verdict either way. Time-budgeted; re-run
+# to continue with the remainder.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "companies to process (0 = all remaining)"
+        default: "0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repo-state
+  cancel-in-progress: false
+
+jobs:
+  hunt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Claude Code CLI + Playwright
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          python -m pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+      - name: Hunt listings
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          HUNT_LIMIT: ${{ github.event.inputs.limit || '0' }}
+          HUNT_TIME_BUDGET_MIN: "280"
+          FAST_SCRAPE: "1"
+        run: python listing_hunt.py --apply
+        continue-on-error: true
+      - name: Commit verdicts
+        run: |
+          git config user.name  "audit-bot"
+          git config user.email "audit@users.noreply.github.com"
+          git add companies.csv scraped_cache.json
+          git commit -m "listing-hunt $(date -u +%F) [skip ci]" || { echo "no change"; exit 0; }
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin ${GITHUB_REF_NAME} && git push origin HEAD:${GITHUB_REF_NAME} && exit 0
+            git rebase --abort 2>/dev/null || true; sleep $((i*20))
+          done
+          echo "::error::push failed after 5 retries"; exit 1
