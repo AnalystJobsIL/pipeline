@@ -20,7 +20,13 @@ import json
 import re
 import urllib.request
 
-CHANNELS = ["secretdatajobs"]
+CHANNELS = [
+    "secretdatajobs",        # data/analytics roles — the core feed
+    "secretmarketingjobs",   # marketing/growth analyst roles surface here
+    "secretproductjobs",     # mostly PM (classifier drops free) — kept for company discovery
+]
+# Evaluated and rejected 2026-08-21: israjobs (RU vacancies+resumes, unstructured),
+# hightechforolims (free-text olim/entry-level), jobs_SQL (India-based).
 STATE_PATH = "cloud_state/telegram_seen.json"
 MAX_PAGES = 5           # first-run backfill depth (~20 msgs/page)
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
