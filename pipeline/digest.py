@@ -641,6 +641,14 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
         rtitle = j.get("title") or "(untitled)"
         prof = roleprofile.extract(rtitle, j.get("description"))
         resp_parts = _responsibilities_snippet(j.get("description"))
+        req_parts = _requirements_snippet(j.get("description"))
+        # WHERE an AI mention sits is signal: requirements = prior experience you must
+        # bring; responsibilities = something the role will do (learnable on the job)
+        prof["ai_req"] = (roleprofile.classify_ai(" • ".join(t for t, _ in req_parts))
+                          if req_parts else [])
+        prof["ai_day"] = roleprofile.classify_ai(" • ".join(resp_parts)) if resp_parts else []
+        if not prof["ai_day"] and not prof["ai_req"]:
+            prof["ai_day"] = prof["ai"]     # mentioned only in intro prose
         if resp_parts:
             prof["tasks"] = roleprofile.classify_tasks(resp_parts)
         else:
@@ -661,7 +669,6 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
             cut = about[:700]
             p = max(cut.rfind(". "), cut.rfind("! "))
             about = cut[:p + 1] if p > 200 else cut[:cut.rfind(" ")] + "…"
-        req_parts = _requirements_snippet(j.get("description"))
         raw_chip = _seniority_chip(j.get("description")) or ""
         chip = _sen_canon(raw_chip, rtitle)
         rank = _sen_rank(raw_chip or chip)
@@ -676,7 +683,8 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
         blob = esc(f"{company} {rtitle} {loc} {chip} "
                    + " ".join(skill_names) + " " + prof["family"] + " "
                    + " ".join(tok for _, tok in prof["tasks"]) + " "
-                   + " ".join(tok for _, tok in prof["ai"])).lower()
+                   + " ".join(tok for _, tok in prof["ai_day"]) + " "
+                   + " ".join(tok + "-req" for _, tok in prof["ai_req"])).lower()
         emp_html = f' <span class="emp">{esc(emp)}</span>' if emp else ''
         # a posting whose posted_date jumped well past when WE first saw it was re-posted
         # (bumped) by the company — mark it honestly instead of letting it look brand-new
@@ -709,11 +717,7 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
         if repost:
             left += (f'<p class="repline">↻ Re-posted {esc(pd0)} — this listing first '
                      f'appeared here {esc(fs0)}</p>')
-        ai_day = roleprofile.classify_ai(" • ".join(resp_parts)) if resp_parts else []
-        ai_req = (roleprofile.classify_ai(" • ".join(t for t, _ in req_parts))
-                  if req_parts else [])
-        if not ai_day and not ai_req:
-            ai_day = prof["ai"]         # mentioned outside both sections (intro prose)
+        ai_day, ai_req = prof["ai_day"], prof["ai_req"]
         if resp_parts or prof["tasks"] or ai_day:
             left += '<p class="rlabel">Day to day</p>'
             chips = "".join(
@@ -741,8 +745,9 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
                       f'<ul class="reqs">{"".join(lis)}</ul>')
             if ai_req:
                 achips = "".join(
-                    f'<button class="skilltag aitag" data-skill="{esc(tok)}" '
-                    f'title="{esc(roleprofile.AI_DESC.get(lbl, lbl))} · click to filter the board">'
+                    f'<button class="skilltag aitag" data-skill="{esc(tok)}-req" '
+                    f'title="{esc(roleprofile.AI_DESC.get(lbl, lbl))} — asked as prior '
+                    f'experience · click to filter the board">'
                     f'🤖 {esc(lbl)}</button>' for lbl, tok in ai_req)
                 right += f'<div class="skills">{achips}</div>'
         else:
@@ -835,13 +840,24 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
             ccards += (f'<div class="ccard ctasks"><div class="fhead">Day-to-day focus'
                        f'<span class="fn">what these roles actually do</span></div>'
                        f'<div class="cbars">{bars}</div></div>')
-        if agg["ai"]:
-            mx = agg["ai"][0][2] or 1
-            bars = "".join(_bar(tok, lbl, c, mx, roleprofile.AI_DESC.get(lbl, ""))
-                           for lbl, tok, c in agg["ai"])
+        if agg["ai_req"] or agg["ai_day"]:
+            mx = max([c for _, _, c in agg["ai_req"]] + [c for _, _, c in agg["ai_day"]]) or 1
+            inner = ""
+            if agg["ai_req"]:
+                inner += ('<div class="aisub" title="The posting asks for prior AI '
+                          'experience in its requirements">Required coming in</div>'
+                          + "".join(_bar(tok + "-req", lbl, c, mx,
+                                         roleprofile.AI_DESC.get(lbl, "") + " — asked as prior experience")
+                                    for lbl, tok, c in agg["ai_req"]))
+            if agg["ai_day"]:
+                inner += ('<div class="aisub" title="AI appears in the responsibilities — '
+                          'something the role does, learnable on the job">In the day-to-day</div>'
+                          + "".join(_bar(tok, lbl, c, mx,
+                                         roleprofile.AI_DESC.get(lbl, "") + " — part of the role\'s duties")
+                                    for lbl, tok, c in agg["ai_day"]))
             ccards += (f'<div class="ccard cai"><div class="fhead">🤖 AI usage'
-                       f'<span class="fn">what the analyst does with AI</span></div>'
-                       f'<div class="cbars">{bars}</div></div>')
+                       f'<span class="fn">required skill vs. part of the job</span></div>'
+                       f'<div class="cbars">{inner}</div></div>')
         if ccards:
             insights = (
                 '<details class="insights"><summary>📊 Skills &amp; day-to-day demand — '
@@ -977,6 +993,9 @@ padding:16px}
 .cbars{display:flex;flex-direction:column;gap:4px}
 .ctasks .ibar-fill{background:var(--emp)}
 .cai .ibar-fill{background:#1a7f37;opacity:.22}
+.aisub{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+color:var(--muted);margin:7px 0 2px;cursor:help}
+.aisub:first-child{margin-top:0}
 .aitag{border-style:solid;border-color:#1a7f37;color:inherit}
 .aitag:hover{border-color:#2ea043;color:#2ea043}
 .legend{margin:16px 0 0;border:1px solid var(--border);border-radius:12px;background:var(--card)}
@@ -1132,7 +1151,10 @@ var justRz=false;
             '&#8220;plus&#8221; means the posting itself calls the degree an advantage.</p>'
             f'<p><b>Day-to-day groups</b> classify the responsibilities section: {tg}.</p>'
             f'<p><b>🤖 AI usage</b> classifies what the analyst is expected to do with AI, judged '
-            f'from the words around each AI mention: {au}. Mentions of the company&#8217;s own AI '
+            f'from the words around each AI mention: {au}. WHERE the mention sits matters: in the '
+            'requirements section it is <b>prior experience you must bring</b>; in the '
+            'responsibilities it is <b>part of the job</b> — learnable, not a bar to entry. The '
+            'dashboard and chips keep the two apart. Mentions of the company&#8217;s own AI '
             'product (&#8220;analyze our AI agents&#8221;) are deliberately NOT counted — that is '
             'product analysis, not AI usage.</p>'
             '<p><b>reposted</b> marks a posting whose date was bumped 3+ days after this board first '

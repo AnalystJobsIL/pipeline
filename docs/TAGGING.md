@@ -70,10 +70,23 @@ the posting mentions AI:
    - **Building with AI** — building LLM/AI-powered features or data products
    - **AI (unspecified)** — a real mention with no stated purpose
 
-Chips render in the requirements column (when the mention is in requirements) and the
-Day-to-day section (when in responsibilities, or only in intro prose); the dashboard has a
-dedicated "AI usage" chart. As more jobs accumulate, revisit whether "unspecified" shrinks
-and whether new buckets (e.g. AI governance/QA) deserve their own regex.
+**Requirement vs. day-to-day** — the same bucket means different things depending on WHERE
+the mention sits, and the system keeps them apart end to end:
+
+- Mention inside the **requirements** section ⇒ *prior experience the candidate must bring*
+  ("Hands-on experience with GenAI tools"). Chips render in the requirements column, filter
+  tokens are suffixed `-req` (e.g. `ai-building-req`), and the dashboard groups them under
+  "Required coming in".
+- Mention inside the **responsibilities** section (or only in intro prose) ⇒ *part of the
+  job* — a duty, learnable on the job ("build AI-powered features"). Chips render under
+  Day to day, plain tokens (`ai-building`), dashboard group "In the day-to-day".
+
+So "Building with AI" under day-to-day is NOT a hiring bar — it says the role will produce
+AI-powered work; the same label under requirements says you must already have done so.
+
+As more jobs accumulate, revisit whether "unspecified" shrinks, whether the req/day split
+shifts (day-heavy = teams hiring analysts to grow into AI; req-heavy = AI experience
+becoming a real gate), and whether new buckets (e.g. AI governance/QA) deserve a regex.
 
 ## Other markers
 

@@ -401,16 +401,21 @@ def aggregate(profiles):
                 cl_counts[ck][n] += 1
         for lbl, tok in p.get("tasks", []):
             task_counts[(lbl, tok)] += 1
-        for lbl, tok in p.get("ai", []):
-            ai_counts[(lbl, tok)] += 1
+        for lbl, tok in p.get("ai_req", []):
+            ai_counts[("req", lbl, tok)] += 1
+        for lbl, tok in p.get("ai_day", []):
+            ai_counts[("day", lbl, tok)] += 1
         fam = p["family"]
         fam_jobs[fam] += 1
         fam_skills[fam].update(n for n, _ in p["skills"] if n not in fam_exclude)
     clusters = [(label, cl_counts[k].most_common(8))
                 for k, label in CLUSTERS if cl_counts[k]]
     tasks = [(lbl, tok, c) for (lbl, tok), c in task_counts.most_common()]
-    ai = [(lbl, tok, c) for (lbl, tok), c in ai_counts.most_common()]
+    ai_req = [(lbl, tok, c) for (side, lbl, tok), c in ai_counts.most_common()
+              if side == "req"]
+    ai_day = [(lbl, tok, c) for (side, lbl, tok), c in ai_counts.most_common()
+              if side == "day"]
     by_family = {f: {"jobs": fam_jobs[f], "top": fam_skills[f].most_common(6)}
                  for f in fam_jobs}
-    return {"total": total, "with_skills": with_skills,
-            "clusters": clusters, "tasks": tasks, "ai": ai, "by_family": by_family}
+    return {"total": total, "with_skills": with_skills, "clusters": clusters,
+            "tasks": tasks, "ai_req": ai_req, "ai_day": ai_day, "by_family": by_family}
