@@ -29,6 +29,13 @@ _S = [
     ("Elasticsearch",  "query",  r"\belastic ?search\b"),
     ("Databricks",     "query",  r"\bdatabricks\b"),
     ("Spark",          "query",  r"\b(?:py)?spark\b"),
+    ("ClickHouse",     "query",  r"\bclickhouse\b"),
+    ("Vertica",        "query",  r"\bvertica\b"),
+    ("Presto/Trino/Athena", "query", r"\bpresto\b|\btrino\b|\bathena\b"),
+    ("Hive",           "query",  r"\bhive\b"),
+    ("Teradata",       "query",  r"\bteradata\b"),
+    ("DuckDB",         "query",  r"\bduckdb\b"),
+    ("Firebolt",       "query",  r"\bfirebolt\b"),
     # programming & analysis
     ("Python",         "prog",   r"\bpython\b|פייתון"),
     ("R",              "prog",   r"(?<![\w&.+/-])R(?![\w&.+#-])(?=[\s,/;.)]|$)"),
@@ -37,6 +44,7 @@ _S = [
     ("Scala",          "prog",   r"\bscala\b"),
     ("Java",           "prog",   r"\bjava\b(?!script)"),
     ("MATLAB",         "prog",   r"\bmatlab\b"),
+    ("SPSS/Stata",     "prog",   r"\bspss\b|\bstata\b"),
     # BI / visualization
     ("Excel",          "bi",     r"(?<![a-z])excel\b(?!\s+(?:in|at|as)\b)|\bpivot tables?\b|אקסל"),
     ("Tableau",        "bi",     r"(?<![a-z])tableau\b|טאבלו"),
@@ -50,16 +58,32 @@ _S = [
     ("SAP BO",         "bi",     r"\bsap (?:bo|business ?objects)\b"),
     ("Superset",       "bi",     r"\bsuperset\b"),
     ("Grafana",        "bi",     r"\bgrafana\b"),
-    # product / marketing analytics stacks
-    ("Google Analytics", "pa",   r"\bgoogle analytics\b|\bga4\b|\buniversal analytics\b"),
-    ("Amplitude",      "pa",     r"\bamplitude\b"),
-    ("Mixpanel",       "pa",     r"\bmixpanel\b"),
+    ("Metabase",       "bi",     r"\bmetabase\b"),
+    ("Redash",         "bi",     r"\bredash\b"),
+    ("Domo",           "bi",     r"\bdomo\b"),
+    ("ThoughtSpot",    "bi",     r"\bthoughtspot\b"),
+    ("Google Sheets",  "bi",     r"\bgoogle sheets\b|\bgsheets?\b"),
+    ("Streamlit",      "bi",     r"\bstreamlit\b"),
+    # product event analytics — the market files these with BI tools (see docs/TAGGING.md)
+    ("Google Analytics", "bi",   r"\bgoogle analytics\b|\bga4\b|\buniversal analytics\b|\bfirebase\b"),
+    ("Amplitude",      "bi",     r"\bamplitude\b"),
+    ("Mixpanel",       "bi",     r"\bmixpanel\b"),
+    ("Pendo",          "bi",     r"\bpendo\b"),
+    ("Heap",           "bi",     r"\bheap\b"),
+    ("Hotjar/FullStory", "bi",   r"\bhotjar\b|\bfullstory\b|session replay"),
+    # marketing / domain stacks → the "Other" cluster
     ("Google Tag Manager", "pa", r"\bgoogle tag manager\b|\bgtm\b"),
-    ("AppsFlyer/MMP",  "pa",     r"\bappsflyer\b|\badjust\b|\bmmp\b|\bmobile measurement\b"),
+    ("AppsFlyer/MMP",  "pa",     r"\bappsflyer\b|\badjust\b|\bsingular\b|\bmmp\b|\bmobile measurement\b"),
     ("Google Ads",     "pa",     r"\bgoogle ads\b|\badwords\b|\bppc\b|\bsem\b"),
     ("Meta Ads",       "pa",     r"\bfacebook ads\b|\bmeta ads\b"),
+    ("TikTok/LinkedIn Ads", "pa", r"\btiktok ads\b|\blinkedin ads\b|\bpaid social\b"),
     ("SEO",            "pa",     r"\bseo\b"),
     ("CRM/Salesforce", "pa",     r"\bsalesforce\b|\bhubspot\b|\bcrm\b"),
+    ("Braze/Iterable", "pa",     r"\bbraze\b|\biterable\b|\bmarketing automation\b"),
+    ("SAP ERP",        "pa",     r"\bsap\b(?!\s*(?:bo\b|business\s?objects))"),
+    ("Priority ERP",   "pa",     r"\bpriority erp\b|פריוריטי"),
+    ("Jira",           "pa",     r"\bjira\b"),
+    ("monday.com",     "pa",     r"\bmonday\.com\b"),
     # data engineering
     ("ETL",            "de",     r"\betl\b|\belt\b"),
     ("dbt",            "de",     r"\bdbt\b"),
@@ -68,6 +92,12 @@ _S = [
     ("Data modeling",  "de",     r"\bdata model(?:ing|ling|s)?\b|\bdimensional model|\bstar schema\b"),
     ("Data warehouse", "de",     r"\bdata ?warehouse\b|\bdwh\b"),
     ("Kafka",          "de",     r"\bkafka\b"),
+    ("Fivetran",       "de",     r"\bfivetran\b|\bstitch\b"),
+    ("Snowplow",       "de",     r"\bsnowplow\b"),
+    ("Talend/Informatica", "de", r"\btalend\b|\binformatica\b|\bpentaho\b|\bdatastage\b"),
+    ("AWS Glue",       "de",     r"\baws glue\b|\bglue jobs?\b"),
+    ("Segment/CDP",    "de",     r"\bsegment\.(?:io|com)\b|twilio segment|\bcdp\b|customer data platform"),
+    ("Git",            "de",     r"\bgit(?:hub|lab)?\b"),
     # cloud
     ("AWS",            "cloud",  r"\baws\b|\bamazon web services\b"),
     ("GCP",            "cloud",  r"\bgcp\b|\bgoogle cloud\b"),
@@ -77,6 +107,8 @@ _S = [
     ("Statistics",     "method", r"\bstatistic(?:s|al)\b|\bhypothesis test|\bregression\b"),
     ("Machine learning", "method", r"\bmachine[- ]learning\b|\bml models?\b|\bpredictive model"),
     ("Forecasting",    "method", r"\bforecast(?:ing|s)?\b"),
+    ("Cohorts & LTV",  "method", r"\bcohorts?\b|\bltv\b|lifetime value|\bchurn\b|\bretention analysis\b"),
+    ("Experimentation platforms", "method", r"\boptimizely\b|\bvwo\b|\blaunchdarkly\b|\bsplit\.io\b"),
     ("Dashboards", "method", r"\bdata visuali[sz]|\bdashboards?\b"),
     # languages (the Israeli market cares)
     ("English",        "lang",   r"\benglish\b|\bאנגלית\b"),
@@ -90,12 +122,13 @@ CATEGORY_LABELS = {"query": "Querying & databases", "prog": "Programming", "bi":
 # ---- non-overlapping skill clusters for the demand dashboard ----
 CLUSTERS = [("sqldb", "SQL & Databases"), ("etl", "ETL & Infrastructure"),
             ("code", "Coding, ML & Statistics"), ("viz", "Visualization & BI"),
-            ("domain", "Product & Marketing Analytics")]
+            ("other", "Other")]
 _CAT2CLUSTER = {"query": "sqldb", "de": "etl", "cloud": "etl", "prog": "code",
-                "bi": "viz", "method": "viz", "pa": "domain"}
+                "bi": "viz", "method": "viz", "pa": "other"}
 # statistical-analysis methods live with coding & ML; only Dashboards stays visualization
 _NAME_CLUSTER = {"Machine learning": "code", "Statistics": "code",
-                 "A/B testing": "code", "Forecasting": "code"}
+                 "A/B testing": "code", "Forecasting": "code",
+                 "Cohorts & LTV": "code", "Experimentation platforms": "code"}
 
 
 def cluster_of(name, cat):
@@ -169,6 +202,28 @@ SKILL_DESC = {
     "Forecasting": "Projecting metrics & trends forward",
     "Dashboards": "Building dashboards & data visualizations",
     "English": "Working proficiency in English",
+    "Pendo": "Product analytics & in-app guides",
+    "Heap": "Auto-capture product analytics",
+    "Hotjar/FullStory": "Session replay & behavior analytics",
+    "Metabase": "Open-source BI & dashboards", "Redash": "Open-source SQL dashboards",
+    "Domo": "Cloud BI platform", "ThoughtSpot": "Search-driven BI",
+    "Google Sheets": "Collaborative spreadsheets", "Streamlit": "Python data apps",
+    "ClickHouse": "Columnar OLAP database", "Vertica": "Columnar analytics database",
+    "Presto/Trino/Athena": "Distributed SQL query engines", "Hive": "SQL on Hadoop",
+    "Teradata": "Enterprise data warehouse", "DuckDB": "In-process analytics database",
+    "Firebolt": "Cloud data warehouse (Israeli)",
+    "Fivetran": "Managed data-ingestion connectors", "Snowplow": "Behavioral event pipeline",
+    "Talend/Informatica": "Enterprise ETL suites", "AWS Glue": "AWS managed ETL",
+    "Segment/CDP": "Customer-data platform / event routing",
+    "Git": "Version control (Git/GitHub/GitLab)",
+    "SPSS/Stata": "Statistical analysis packages",
+    "Cohorts & LTV": "Cohort, retention, churn & lifetime-value analysis",
+    "Experimentation platforms": "A/B-testing platforms (Optimizely, VWO…)",
+    "TikTok/LinkedIn Ads": "Paid social advertising",
+    "Braze/Iterable": "Marketing-automation / CRM messaging platforms",
+    "SAP ERP": "SAP enterprise systems (as a data source)",
+    "Priority ERP": "Priority ERP (common in Israeli companies)",
+    "Jira": "Ticketing & project tracking", "monday.com": "Work management platform",
 }
 
 TASK_DESC = {

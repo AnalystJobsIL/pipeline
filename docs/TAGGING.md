@@ -24,12 +24,17 @@ Skills roll up into **non-overlapping clusters** for the dashboard (`CLUSTERS` +
 `_CAT2CLUSTER`, with per-name overrides in `_NAME_CLUSTER`):
 
 - **SQL & Databases** — query engines and stores
-- **ETL & Infrastructure** — pipelines, modeling, warehouse, cloud platforms
-- **Coding, ML & Statistics** — languages plus statistical methods (Statistics, A/B testing,
-  Forecasting deliberately live here, not under visualization)
-- **Visualization & BI** — dashboarding tools + the generic "Dashboards" activity
-- **Product & Marketing Analytics** — measurement platforms (Amplitude/Mixpanel/GA are event
-  *measurement* tools, not visualization tools — their charts are a feature, not the skill)
+- **ETL & Infrastructure** — pipelines, modeling, warehouse, cloud platforms, version control
+- **Coding, ML & Statistics** — languages plus statistical/analysis methods (Statistics,
+  A/B testing, Forecasting, Cohorts & LTV, experimentation platforms)
+- **Visualization & BI** — dashboarding tools, the "Dashboards" activity, AND product
+  event-analytics platforms (GA4, Amplitude, Mixpanel, Pendo, Heap). Decision 2026-08-21,
+  based on listing evidence: the market's own phrasing files them together ("Experience
+  working with BI tools (Looker, Tableau, Metabase, Amplitude, or similar)" — Bounce AI),
+  and cross-tab showed roles ask for ONE tool from the family, almost never both a BI tool
+  and an event platform (32 BI-only / 2 event-only / 1 both across 80 described jobs).
+- **Other** — everything domain-specific: ad platforms, MMPs, SEO, CRM/martech, ERPs
+  (SAP, Priority), work tools. The catch-all for future additions that fit nowhere else.
 
 Languages (English) are tagged on cards but excluded from cluster charts.
 
