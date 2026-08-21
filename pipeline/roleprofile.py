@@ -36,6 +36,8 @@ _S = [
     ("Teradata",       "query",  r"\bteradata\b"),
     ("DuckDB",         "query",  r"\bduckdb\b"),
     ("Firebolt",       "query",  r"\bfirebolt\b"),
+    ("Splunk",         "query",  r"\bsplunk\b"),
+    ("Synapse",        "query",  r"\bazure synapse\b|\bsynapse analytics\b"),
     # programming & analysis
     ("Python",         "prog",   r"\bpython\b|פייתון"),
     ("R",              "prog",   r"(?<![\w&.+/-])R(?![\w&.+#-])(?=[\s,/;.)]|$)"),
@@ -45,6 +47,7 @@ _S = [
     ("Java",           "prog",   r"\bjava\b(?!script)"),
     ("MATLAB",         "prog",   r"\bmatlab\b"),
     ("SPSS/Stata",     "prog",   r"\bspss\b|\bstata\b"),
+    ("SageMaker/Vertex AI", "prog", r"\bsagemaker\b|\bvertex ai\b|\bmlflow\b"),
     # BI / visualization
     ("Excel",          "bi",     r"(?<![a-z])excel\b(?!\s+(?:in|at|as)\b)|\bpivot tables?\b|אקסל"),
     ("Tableau",        "bi",     r"(?<![a-z])tableau\b|טאבלו"),
@@ -58,6 +61,9 @@ _S = [
     ("SAP BO",         "bi",     r"\bsap (?:bo|business ?objects)\b"),
     ("Superset",       "bi",     r"\bsuperset\b"),
     ("Grafana",        "bi",     r"\bgrafana\b"),
+    ("Datadog",        "bi",     r"\bdatadog\b"),
+    ("Hex/Mode",       "bi",     r"\bhex\b(?![a-z])|\bmode analytics\b|\blightdash\b"),
+    ("Cognos",         "bi",     r"\bcognos\b"),
     ("Metabase",       "bi",     r"\bmetabase\b"),
     ("Redash",         "bi",     r"\bredash\b"),
     ("Domo",           "bi",     r"\bdomo\b"),
@@ -98,6 +104,11 @@ _S = [
     ("AWS Glue",       "de",     r"\baws glue\b|\bglue jobs?\b"),
     ("Segment/CDP",    "de",     r"\bsegment\.(?:io|com)\b|twilio segment|\bcdp\b|customer data platform"),
     ("Git",            "de",     r"\bgit(?:hub|lab)?\b"),
+    ("Microsoft Fabric", "de",   r"\bmicrosoft fabric\b|\bms fabric\b|\bonelake\b"),
+    ("Power Platform", "de",     r"\bpower (?:platform|apps|automate)\b"),
+    ("Workato/Zapier/Make", "de", r"\bworkato\b|\bzapier\b|\bn8n\b|\bmake\.com\b"),
+    ("Alteryx/KNIME",  "de",     r"\balteryx\b|\bknime\b"),
+    ("Delta Lake/Iceberg", "de", r"\bdelta lake\b|\biceberg\b|\blakehouse\b"),
     # cloud
     ("AWS",            "cloud",  r"\baws\b|\bamazon web services\b"),
     ("GCP",            "cloud",  r"\bgcp\b|\bgoogle cloud\b"),
@@ -240,6 +251,17 @@ SKILL_DESC = {
     "SAP ERP": "SAP enterprise systems (as a data source)",
     "Priority ERP": "Priority ERP (common in Israeli companies)",
     "Jira": "Ticketing & project tracking", "monday.com": "Work management platform",
+    "Splunk": "Search & analytics over logs and machine data",
+    "Synapse": "Azure's analytics warehouse",
+    "Microsoft Fabric": "Microsoft's unified data & analytics platform",
+    "Power Platform": "Microsoft low-code apps & automation (Power Apps/Automate)",
+    "Workato/Zapier/Make": "No-code workflow automation tools",
+    "Alteryx/KNIME": "Visual data-prep & analytics workflows",
+    "Delta Lake/Iceberg": "Lakehouse table formats",
+    "Datadog": "Monitoring & observability dashboards",
+    "Hex/Mode": "Notebook-style analytics & BI tools",
+    "Cognos": "IBM's enterprise BI suite",
+    "SageMaker/Vertex AI": "Managed ML platforms (AWS/GCP)",
 }
 
 TASK_DESC = {
