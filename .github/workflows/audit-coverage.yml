@@ -32,6 +32,19 @@ jobs:
       - name: Cross-validate the empties
         run: python validate_empty.py
         continue-on-error: true
+
+      - name: Install Playwright + Chromium (comeet token reads for the re-audit)
+        run: |
+          python -m pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+        continue-on-error: true
+
+      - name: Re-audit parked rows (ATS-signature verify; recovers false-empties)
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          SERP_RESERVE: "50"
+        run: python audit_empty_rows.py --apply
+        continue-on-error: true
       - name: Coverage report
         run: python coverage_report.py
       - name: Commit audit results

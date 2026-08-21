@@ -77,10 +77,30 @@ def fetch(url, timeout=20):
         return ""
 
 
+_SERP = {"left": None}
+
+
+def _serp_budget_ok():
+    """Never drain the whole SerpApi month on an audit: keep SERP_RESERVE (default 50)
+    searches for the daily discovery/LLM-resolver paths."""
+    reserve = int(os.environ.get("SERP_RESERVE", "50"))
+    if _SERP["left"] is None:
+        key = os.environ.get("SERPAPI_KEY", "")
+        try:
+            with urllib.request.urlopen(f"https://serpapi.com/account?api_key={key}",
+                                        timeout=20) as r:
+                _SERP["left"] = int(json.load(r).get("total_searches_left") or 0)
+        except Exception:  # noqa: BLE001
+            _SERP["left"] = 0
+        print(f"(serpapi budget: {_SERP['left']} left, reserving {reserve})", flush=True)
+    return _SERP["left"] > reserve
+
+
 def serp(name, limit=5):
     key = os.environ.get("SERPAPI_KEY")
-    if not key:
+    if not key or not _serp_budget_ok():
         return []
+    _SERP["left"] -= 1
     q = urllib.parse.urlencode({"engine": "google", "q": f'"{name}" careers', "num": "10",
                                 "api_key": key})
     try:
