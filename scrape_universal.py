@@ -241,7 +241,7 @@ def scrape(company, url, timeout_ms=45000):
         seen.add(key)
         jobs.append({"company": company, "title": title[:90], "location": loc, "country_code": "IL",
                      "url": url_ or url, "posted_date": _norm_date(date), "ats_platform": "scrape",
-                     "job_id": jid or url_ or title, "description": (desc or "")[:1500]})
+                     "job_id": jid or url_ or title, "description": (desc or "")[:6000]})
 
     for o in raw:                                  # 1) structured JSON (state / XHR / JSON-LD)
         add(_title_of(o), _get(o, LOC_KEYS), _get(o, URL_KEYS), _get(o, DATE_KEYS),

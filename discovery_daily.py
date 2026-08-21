@@ -102,7 +102,7 @@ def normalize(name, r):
     date = _fix_date(r.get("job_posted_date") or r.get("date_posted") or r.get("posted_date") or "")
     if date is None:
         return None                        # 30+ days old — not board-worthy
-    desc = (r.get("job_summary") or r.get("job_description") or r.get("description") or "")[:1800]
+    desc = (r.get("job_summary") or r.get("job_description") or r.get("description") or "")[:6000]
     if not title or not comp:
         return None
     tl = (str(title) + " " + str(r.get("job_summary") or ""))[:400].lower()

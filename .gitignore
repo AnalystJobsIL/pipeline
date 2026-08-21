@@ -12,3 +12,6 @@ out/
 # Secrets — NEVER commit (the JSearch key etc. live here locally)
 secrets.env
 *.key
+
+# Claude Code local (per-machine) instructions
+CLAUDE.local.md
