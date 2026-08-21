@@ -137,26 +137,38 @@ def cluster_of(name, cat):
 
 
 # ---- day-to-day task groups, classified from the responsibilities bullets ----
-# (label shown on the board, one-word token used for filtering/search)
+# Action-titled and hard-segmented: every bullet is assigned to exactly ONE group —
+# the group whose vocabulary it matches most; ties go to the more specific group
+# (earlier in this list). Modeled bottom-up from the board's real responsibility
+# bullets (2026-08-22 workshop, see docs/TAGGING.md).
 TASK_GROUPS = [
-    ("Dashboards & Reporting", "reporting",
-     re.compile(r"dashboard|report|kpi|visuali[sz]|looker|tableau|power ?bi|scorecard|דוחות|דשבורד", re.I)),
-    ("Analysis & Insights", "insights",
-     re.compile(r"analy[sz]|insight|deep[- ]dive|trend|investigat|explor|research|segment|"
-                r"root[- ]cause|opportunit|understand|ניתוח|תובנות", re.I)),
-    ("Experiments & Models", "experiments",
-     re.compile(r"a/?b[- ]test|experiment|model(?:ing|s)?\b|forecast|predict|machine[- ]learning|"
-                r"statistical|hypothes|simulat|מודל", re.I)),
-    ("Data & Pipelines", "pipelines",
-     re.compile(r"pipeline|\betl\b|\belt\b|data model|warehouse|\bdbt\b|airflow|infrastructur|"
-                r"automat|integrat|ingest|תשתית", re.I)),
-    ("Stakeholders & Communication", "stakeholders",
+    ("Instrument & manage tracking", "tracking",
+     re.compile(r"instrument|event[- ]track|tracking plan|taxonom|tagging|google tag manager|"
+                r"\bgtm\b|attribution setup", re.I)),
+    ("Assure data quality", "quality",
+     re.compile(r"data quality|data integrit|cleans|validat|\bqa\b|audit|anomal|alert|"
+                r"data issues|accuracy|consistency|observabilit|govern|בקרת נתונים", re.I)),
+    ("Run experiments & build models", "experiments",
+     re.compile(r"a/?b[- ]test|experiment|\bmodel(?:ing|s)?\b|forecast|predict|"
+                r"machine[- ]learning|statistical model|hypothes|simulat|מודל", re.I)),
+    ("Define metrics & KPIs", "metrics",
+     re.compile(r"(?:defin|standardi[sz]|own|document)\w*[^.•]{0,30}(?:kpis?|metrics?)|"
+                r"metric specs?|single source of truth|north[- ]star|הגדרת מדדים", re.I)),
+    ("Build pipelines & data models", "pipelines",
+     re.compile(r"pipeline|\betl\b|\belt\b|data model|warehouse|\bdbt\b|airflow|\bssis\b|"
+                r"semantic layer|modeled data|infrastructur|automat|integrat|ingest|תשתית", re.I)),
+    ("Build dashboards & track performance", "reporting",
+     re.compile(r"dashboard|report(?:s|ing)?\b|visuali[sz]|scorecard|self[- ]serve|"
+                r"(?:track|monitor)\w*[^.•]{0,40}(?:performance|metrics?|kpis?|flows?)|"
+                r"monitor(?:ing)?\b|דוחות|דשבורד", re.I)),
+    ("Analyze & recommend", "analysis",
+     re.compile(r"analy[sz]|insight|deep[- ]dive|dive deep|investigat|explor|research|uncover|"
+                r"identify[^.•]{0,40}(?:trend|opportunit|pattern|friction)|root[- ]cause|"
+                r"recommend|segment|cohort|funnel|ניתוח|תובנות|המלצ", re.I)),
+    ("Partner & present", "partnering",
      re.compile(r"stakeholder|present|communicat|partner|collaborat|cross[- ]functional|"
-                r"business (?:teams|units|leaders)|advis|recommend|translate|work (?:closely|with)|"
-                r"gather.{0,20}requirement|ממשק|הצגה", re.I)),
-    ("Monitoring & Data Quality", "monitoring",
-     re.compile(r"monitor|alert|anomal|data quality|\bqa\b|govern|validat|audit|accuracy|"
-                r"consistency|בקרה", re.I)),
+                r"business (?:teams|units|leaders)|advis|translate|work (?:closely|with)|"
+                r"gather[^.•]{0,20}requirement|support (?:teams|the business)|ממשק|הצגה", re.I)),
 ]
 
 
@@ -227,33 +239,50 @@ SKILL_DESC = {
 }
 
 TASK_DESC = {
-    "Dashboards & Reporting": "Building and maintaining dashboards, recurring reports and KPIs",
-    "Analysis & Insights": "Ad-hoc analysis and deep dives that turn data into business insights",
-    "Experiments & Models": "A/B tests, statistical models and forecasts",
-    "Data & Pipelines": "Building or maintaining data pipelines, models and infrastructure",
-    "Stakeholders & Communication": "Working with business teams: gathering needs, presenting findings",
-    "Monitoring & Data Quality": "Watching metrics and anomalies, keeping the data trustworthy",
+    "Instrument & manage tracking": "Setting up event tracking, taxonomies and instrumentation",
+    "Assure data quality": "Validation, anomaly detection, alerting — keeping the data trustworthy",
+    "Run experiments & build models": "A/B tests, statistical models and forecasts",
+    "Define metrics & KPIs": "Owning metric definitions — the single source of truth for KPIs",
+    "Build pipelines & data models": "ETL, warehouse models and analytical infrastructure",
+    "Build dashboards & track performance": "Dashboards, recurring reports and performance tracking",
+    "Analyze & recommend": "Deep dives and analysis that end in insights and recommendations",
+    "Partner & present": "Working with business teams — gathering needs, presenting findings",
 }
+
+
+def classify_bullet(bullet):
+    """Assign ONE task group to a bullet — the group with the most vocabulary hits;
+    ties break toward the more specific group (earlier in TASK_GROUPS). Returns
+    (label, token) or None. Single assignment is what keeps the groups segmented:
+    a bullet can never feed two clusters."""
+    best, best_score = None, 0
+    for label, token, rx in TASK_GROUPS:
+        score = len(rx.findall(bullet))
+        if score > best_score:
+            best, best_score = (label, token), score
+    return best
 
 
 def classify_tasks(bullets):
     """Map responsibility bullets to the day-to-day TASK_GROUPS the role EMPHASIZES.
 
-    A group earns its chip only when it matches at least 2 bullets (or a third of a
-    very short list) — one passing mention ("…and present findings") is not a day-to-day
-    focus, and without the threshold nearly every analyst card carried 4-6 chips.
-    Returns [(label, token)] ordered by how many bullets matched (dominant first)."""
+    Each bullet is single-assigned via classify_bullet; a group earns its chip only
+    when it wins at least 2 bullets (or 1 for very short lists) — one passing mention
+    is not a day-to-day focus. Returns [(label, token)] dominant-first."""
     bullets = [b for b in (bullets or []) if b]
     if not bullets:
         return []
-    counts = []
-    for label, token, rx in TASK_GROUPS:
-        c = sum(1 for b in bullets if rx.search(b))
-        counts.append((label, token, c))
-    need = 1 if len(bullets) <= 2 else 2
-    kept = [(label, token, c) for label, token, c in counts if c >= need]
-    kept.sort(key=lambda x: -x[2])
-    return [(label, token) for label, token, _ in kept]
+    from collections import Counter
+    wins = Counter()
+    for b in bullets:
+        g = classify_bullet(b)
+        if g:
+            wins[g] += 1
+    total = sum(wins.values()) or 1
+    # a chip = the group won 2+ bullets, or a quarter of a short list
+    kept = [(g, c) for g, c in wins.items() if c >= 2 or c / total >= 0.25]
+    kept.sort(key=lambda x: -x[1])
+    return [g for g, _ in kept]
 
 
 # --------------------------------------------------------------------------- #

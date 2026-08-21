@@ -61,14 +61,27 @@ Quality. `TASK_DESC` holds tooltips. When a JD has no responsibilities section (
 the pre-requirements text is split into sentences and classified instead — chips without
 bullets.
 
-**Emphasis threshold** (added 2026-08-22 after an overlap audit): a group earns its chip
-only when it matches **≥2 bullets** (≥1 for lists of ≤2), and chips are ordered by match
-count — dominant theme first. Rationale: bullet-level separation was fine (58% of bullets
-hit exactly one group), but the old any-single-match rule saturated cards (94% of jobs
-carried "Analysis & Insights"; 35/57 jobs had 4+ chips). With the threshold the median is
-2 chips and the low-frequency groups (Experiments 12%, Pipelines 14%) genuinely
-discriminate. If groups still feel blurry with a bigger sample, next lever: raise the
-threshold to a share of bullets, or split "Analysis & Insights" (it remains the broadest).
+**Hard segmentation** (2026-08-22 workshop, modeled bottom-up from the board's 332 real
+responsibility bullets): the taxonomy was rebuilt with **action titles** and a
+**single-assignment rule** — `classify_bullet` gives every bullet exactly ONE group (most
+vocabulary hits wins; ties go to the more specific group, i.e. earlier in TASK_GROUPS).
+A bullet can never feed two clusters, so cross-cluster double-tagging is structurally
+impossible. Measured tie rate on the corpus: 17% of bullets, and tie resolution follows
+the intended semantics ("partner to define KPIs" → metrics; "partner to analyze" →
+analysis; "semantic layer" → pipelines, not dashboards).
+
+The eight groups, in tie-priority order (most specific first): Instrument & manage
+tracking · Assure data quality (absorbs alerting/anomalies — NOT "monitoring", which
+reads as dashboard-watching and now lives with reporting) · Run experiments & build
+models · Define metrics & KPIs (metric ownership is neither dashboarding nor analysis) ·
+Build pipelines & data models · Build dashboards & track performance · Analyze & recommend
+(recommendations belong with insights, not with communication) · Partner & present.
+
+**Chip rule**: a group earns its chip when it wins ≥2 bullets, or ≥25% of a short list;
+chips order dominant-first. Current distribution: median 2 chips/job; Analyze 68%,
+Partner 35%, Dashboards 28%, Pipelines 17%, Quality 10%, Experiments 10%, Tracking 3%,
+Metrics 3%. Known residual seam: bare "models" in "analytics models" can land in
+Experiments instead of Pipelines; revisit with a bigger sample.
 
 ## AI usage 🤖
 
