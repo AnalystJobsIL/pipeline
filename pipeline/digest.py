@@ -657,7 +657,9 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
             d2 = _LABEL_PREFIX.sub("", _clean_desc(j.get("description")))
             mreq = _req_header_match(d2)
             intro = (d2[:mreq.start()] if mreq else d2)[:2200]
-            prof["tasks"] = roleprofile.classify_tasks([intro]) if intro else []
+            # split prose into sentence chunks so the emphasis threshold means something
+            chunks = [c for c in _SENT_SPLIT.split(intro) if len(c) > 15] or ([intro] if intro else [])
+            prof["tasks"] = roleprofile.classify_tasks(chunks)
         profiles.append(prof)
         about = (company_info.get(company) or _company_blurb(j.get("description"), company) or "")
         if _ABOUT_JUNK.search(about):           # a failed `claude -p` error must never show
@@ -1149,7 +1151,10 @@ var justRz=false;
             'mark that line. <b>Years</b> is the experience figure stated nearest to '
             '&#8220;experience&#8221;. <b>Degree</b> shows the level and fields asked for; '
             '&#8220;plus&#8221; means the posting itself calls the degree an advantage.</p>'
-            f'<p><b>Day-to-day groups</b> classify the responsibilities section: {tg}.</p>'
+            f'<p><b>Day-to-day groups</b> classify the responsibilities section: {tg}. '
+            'A chip appears only when a group matches <b>multiple</b> responsibility bullets — '
+            'it marks an emphasis of the role, not a passing mention — and chips are ordered '
+            'by how dominant each theme is.</p>'
             f'<p><b>🤖 AI usage</b> classifies what the analyst is expected to do with AI, judged '
             f'from the words around each AI mention: {au}. WHERE the mention sits matters: in the '
             'requirements section it is <b>prior experience you must bring</b>; in the '

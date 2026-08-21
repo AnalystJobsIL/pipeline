@@ -58,7 +58,17 @@ responsibilities section. `roleprofile.TASK_GROUPS` then classifies the bullets 
 groups (label / filter-token / regex): Dashboards & Reporting, Analysis & Insights,
 Experiments & Models, Data & Pipelines, Stakeholders & Communication, Monitoring & Data
 Quality. `TASK_DESC` holds tooltips. When a JD has no responsibilities section (prose-style),
-the pre-requirements text is classified instead — chips without bullets.
+the pre-requirements text is split into sentences and classified instead — chips without
+bullets.
+
+**Emphasis threshold** (added 2026-08-22 after an overlap audit): a group earns its chip
+only when it matches **≥2 bullets** (≥1 for lists of ≤2), and chips are ordered by match
+count — dominant theme first. Rationale: bullet-level separation was fine (58% of bullets
+hit exactly one group), but the old any-single-match rule saturated cards (94% of jobs
+carried "Analysis & Insights"; 35/57 jobs had 4+ chips). With the threshold the median is
+2 chips and the low-frequency groups (Experiments 12%, Pipelines 14%) genuinely
+discriminate. If groups still feel blurry with a bigger sample, next lever: raise the
+threshold to a share of bullets, or split "Analysis & Insights" (it remains the broadest).
 
 ## AI usage 🤖
 

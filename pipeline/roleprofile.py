@@ -237,10 +237,23 @@ TASK_DESC = {
 
 
 def classify_tasks(bullets):
-    """Map responsibility bullets to the day-to-day TASK_GROUPS they cover.
-    Returns [(label, token)] in TASK_GROUPS order — one entry per group matched."""
-    text = " • ".join(bullets or [])
-    return [(label, token) for label, token, rx in TASK_GROUPS if rx.search(text)]
+    """Map responsibility bullets to the day-to-day TASK_GROUPS the role EMPHASIZES.
+
+    A group earns its chip only when it matches at least 2 bullets (or a third of a
+    very short list) — one passing mention ("…and present findings") is not a day-to-day
+    focus, and without the threshold nearly every analyst card carried 4-6 chips.
+    Returns [(label, token)] ordered by how many bullets matched (dominant first)."""
+    bullets = [b for b in (bullets or []) if b]
+    if not bullets:
+        return []
+    counts = []
+    for label, token, rx in TASK_GROUPS:
+        c = sum(1 for b in bullets if rx.search(b))
+        counts.append((label, token, c))
+    need = 1 if len(bullets) <= 2 else 2
+    kept = [(label, token, c) for label, token, c in counts if c >= need]
+    kept.sort(key=lambda x: -x[2])
+    return [(label, token) for label, token, _ in kept]
 
 
 # --------------------------------------------------------------------------- #
