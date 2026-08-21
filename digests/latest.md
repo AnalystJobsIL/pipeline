@@ -4,17 +4,17 @@ Israeli high-tech scan — experienced (≈3+ yrs) data-analysis / BI / analytic
 
 🔎 **[Open the full board →](https://analystjobsil.github.io/board/)** — everything from the last 2 weeks, searchable & sortable.
 
-### Harel Insurance & Finance
+### Oak \- Identity Security OS
 
-- **Business Analyst** — https://www.linkedin.com/jobs/view/business-analyst-at-harel-insurance-finance-4453426199?_l=en · 📍 Ramat Gan · 🗓 2026-08-20
+- **Product Analyst** — https://jobs.ashbyhq.com/oak/9688f1f5-4c6d-46bf-b694-c4c94414fc13 · 📍 Tel Aviv · 🗓 2026-08-20 · 🎓 4+ yrs
 
 ---
 <details><summary>Run audit</summary>
 
-- Companies scanned: **394** (failed: 2)
-- Jobs fetched: 18737 · Israel-matched: 3561
-- Accepted: 259 · after merge: 216 · **new: 1**
-- Decision paths: keyword=3207, llm_failed_fallback=354
+- Companies scanned: **397** (failed: 2)
+- Jobs fetched: 18719 · Israel-matched: 3533
+- Accepted: 237 · after merge: 197 · **new: 1**
+- Decision paths: keyword=3208, llm_failed_fallback=325
 - LLM calls this run: 0
 - Failed companies: Finaloop (HttpError), Bit (HttpError)
 
