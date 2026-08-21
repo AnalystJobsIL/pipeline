@@ -12,6 +12,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+from urllib.parse import urlparse
 
 from pipeline.companies import CSV_PATH, load_companies
 from resolve_deep import resolve
@@ -54,10 +55,18 @@ def main():
             n_resolved += 1
         elif kind == "scrape":
             jobs2, good_url = r[1] if isinstance(r[1], tuple) else (r[1], url)
-            cache[name] = jobs2
-            row = [name, "scrape", good_url, good_url, "true",
-                   f"auto-expand scrape; {len(jobs2)} IL"]
-            n_resolved += 1
+            host = urlparse(good_url).netloc.lower()
+            if any(a in host for a in ("linkedin.", "indeed.", "glassdoor.")):
+                # Scraping an aggregator page ingests its "similar jobs" sidebar — postings
+                # from OTHER companies attributed to this one. Park inactive instead.
+                row = [name, "scrape", good_url, good_url, "false",
+                       "aggregator URL; resolve real careers page before activating"]
+                n_unreach += 1
+            else:
+                cache[name] = jobs2
+                row = [name, "scrape", good_url, good_url, "true",
+                       f"auto-expand scrape; {len(jobs2)} IL"]
+                n_resolved += 1
         elif kind == "empty":
             row = [name, "scrape", url, url, "false", "scanned; no open Israel roles now"]
             n_empty += 1
