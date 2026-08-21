@@ -109,7 +109,7 @@ def _company_blurb(desc, company=""):
 # wins. NOTE: "we're looking for" is deliberately NOT here — it usually opens a company
 # intro ("We are looking for a <role> to join…"), not a qualifications list.
 _REQ_HARD = _re.compile(r"(requirements?|qualifications?|what (?:you.?ll|you will) (?:bring|need)|"
-                        r"what are we looking for|what we.?re looking for|"
+                        r"what are we looking for|what we.?re looking for|what we expect|"
                         r"(?:perfect|ideal) job for someone who (?:has|is)|"
                         r"to thrive in this role,? you.?ll need|what you need to succeed|"
                         r"דרישות(?: התפקיד)?|מה אנחנו מחפשים|כישורים נדרשים|"

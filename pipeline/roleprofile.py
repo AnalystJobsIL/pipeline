@@ -149,10 +149,14 @@ TASK_GROUPS = [
      re.compile(r"data quality|data integrit|cleans|validat|\bqa\b|audit|anomal|alert|"
                 r"data issues|accuracy|consistency|observabilit|govern|בקרת נתונים", re.I)),
     ("Run experiments & build models", "experiments",
-     re.compile(r"a/?b[- ]test|experiment|\bmodel(?:ing|s)?\b|forecast|predict|"
-                r"machine[- ]learning|statistical model|hypothes|simulat|מודל", re.I)),
+     # bare "models" deliberately excluded — "analytics models" next to "pipelines"
+     # belongs to data modeling, not statistical modeling
+     re.compile(r"a/?b[- ]test|experiment|forecast|predict|machine[- ]learning|hypothes|"
+                r"simulat|build(?:ing)?\s+models?\b|"
+                r"(?:statistical|predictive|risk|churn|propensity|regression|scoring)\s+model\w*|"
+                r"מודל", re.I)),
     ("Define metrics & KPIs", "metrics",
-     re.compile(r"(?:defin|standardi[sz]|own|document)\w*[^.•]{0,30}(?:kpis?|metrics?)|"
+     re.compile(r"(?:defin|standardi[sz]|own|document)\w*[^.•]{0,45}(?:kpis?|metrics?)|"
                 r"metric specs?|single source of truth|north[- ]star|הגדרת מדדים", re.I)),
     ("Build pipelines & data models", "pipelines",
      re.compile(r"pipeline|\betl\b|\belt\b|data model|warehouse|\bdbt\b|airflow|\bssis\b|"

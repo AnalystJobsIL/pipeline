@@ -78,10 +78,19 @@ Build pipelines & data models · Build dashboards & track performance · Analyze
 (recommendations belong with insights, not with communication) · Partner & present.
 
 **Chip rule**: a group earns its chip when it wins ≥2 bullets, or ≥25% of a short list;
-chips order dominant-first. Current distribution: median 2 chips/job; Analyze 68%,
-Partner 35%, Dashboards 28%, Pipelines 17%, Quality 10%, Experiments 10%, Tracking 3%,
-Metrics 3%. Known residual seam: bare "models" in "analytics models" can land in
-Experiments instead of Pipelines; revisit with a bigger sample.
+chips order dominant-first. Current distribution: median 2 chips/job; Analyze 70%,
+Partner 33%, Dashboards 26%, Pipelines 19%, Quality 12%, Experiments 7%, Metrics 5%,
+Tracking 3%.
+
+A full per-group review of all 332 bullets (not just samples) was done 2026-08-22; fixes
+from it: bare "models" removed from the Experiments vocabulary ("analytics models" beside
+"pipelines" was landing there — now only statistical/predictive/risk/"build models"
+phrasing counts), the Define-metrics verb-to-KPI window widened to 45 chars ("Own and
+define key product, business, and customer KPIs" was slipping through), and "What we
+expect" added as a requirements header (Playtika's requirements were leaking into
+responsibilities). Known residual seams, both single-bullet ties left as-is: Airflow
+orchestration with "alerting/SLAs" can land in Assure-data-quality instead of Pipelines;
+Hebrew ממשק can pull a tool-building bullet into Partner & present.
 
 ## AI usage 🤖
 
