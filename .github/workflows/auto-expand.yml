@@ -13,6 +13,9 @@ on:
       limit:
         description: "companies to process this run"
         default: "200"
+      llm_cap:
+        description: "max LLM resolution attempts this run"
+        default: "10"
 
 permissions:
   contents: write
@@ -51,7 +54,7 @@ jobs:
           # them the deterministic tiers run exactly as before.
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-          LLM_RESOLVE_CAP: "10"
+          LLM_RESOLVE_CAP: ${{ github.event.inputs.llm_cap || '10' }}
         run: python auto_expand.py
 
       - name: Commit newly-cracked companies
