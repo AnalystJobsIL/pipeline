@@ -1,0 +1,64 @@
+name: Deep-validate parked companies (render + sniff + LLM)
+
+# One-off / on-demand loop over every parked '0 openings' company: render the careers page
+# in Chromium, sniff network requests for the real ATS API, let Claude judge the evidence
+# when regexes fail, verify every proposal live, and persist a per-company verdict into the
+# row note (recovered / unsupported ATS / no ATS detected / unreachable). Time-budgeted so
+# the commit step always runs; re-dispatch to continue where it stopped.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "companies to process (0 = all remaining)"
+        default: "0"
+      llm_cap:
+        description: "max Claude proposals"
+        default: "150"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repo-state
+  cancel-in-progress: false
+
+jobs:
+  deep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Claude Code CLI + Playwright
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          python -m pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+      - name: Deep-validate
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          DEEP_LIMIT: ${{ github.event.inputs.limit || '0' }}
+          DEEP_LLM_CAP: ${{ github.event.inputs.llm_cap || '150' }}
+          DEEP_BD_SEARCH_CAP: "150"
+          DEEP_TIME_BUDGET_MIN: "280"
+        run: python deep_validate.py --apply
+        continue-on-error: true
+      - name: Commit verdicts
+        run: |
+          git config user.name  "audit-bot"
+          git config user.email "audit@users.noreply.github.com"
+          git add companies.csv
+          git commit -m "deep-validate parked companies $(date -u +%F) [skip ci]" || { echo "no change"; exit 0; }
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin ${GITHUB_REF_NAME} && git push origin HEAD:${GITHUB_REF_NAME} && exit 0
+            git rebase --abort 2>/dev/null || true; sleep $((i*20))
+          done
+          echo "::error::push failed after 5 retries"; exit 1

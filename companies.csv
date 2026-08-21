@@ -361,7 +361,7 @@ Citi,scrape,https://jobs.citi.com/search-jobs/Israel,https://jobs.citi.com/searc
 Johnson & Johnson,scrape,https://www.careers.jnj.com/en/jobs/?search=&country=Israel,https://www.careers.jnj.com/en/jobs/?search=&country=Israel,true,universal-scrape; 11 Israel jobs
 AstraZeneca,scrape,https://careers.astrazeneca.com/search-jobs/Israel,https://careers.astrazeneca.com/search-jobs/Israel,true,universal-scrape; 2 Israel jobs
 Percepto,scrape,https://percepto.co/careers/,https://percepto.co/careers/,true,universal-scrape; 3 Israel jobs
-HiBob,scrape,https://job-boards.greenhouse.io/hibob,https://job-boards.greenhouse.io/hibob,false,scanned; no open Israel roles now
+HiBob,smartrecruiters,HiBob,https://api.smartrecruiters.com/v1/companies/HiBob/postings,true,re-audit 2026-08-21: deep-verified manually (smartrecruiters)
 Dynamic Yield,scrape,https://www.dynamicyield.com/careers/,https://www.dynamicyield.com/careers/,true,deep-scrape; 5 Israel jobs
 Primis,scrape,https://www.primis.tech/careers/,https://www.primis.tech/careers/,false,scanned; no open Israel roles now
 Leadspace,scrape,https://www.leadspace.com/careers/,https://www.leadspace.com/careers/,false,scanned; no open Israel roles now
