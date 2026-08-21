@@ -236,11 +236,19 @@ def _is_windows():
 
 def llm_is_relevant(job, timeout=90):
     """Call `claude -p` for one posting. Returns True/False, or None on failure."""
+    # Strip HTML and skip the company-boilerplate intro (same _ROLE_START logic as the
+    # deterministic path) BEFORE truncating — otherwise long intros eat the whole 1400-char
+    # budget and Claude never sees the requirements, biasing verdicts to NO.
+    desc = re.sub(r"<[^>]+>", " ", job.get("description") or "")
+    desc = re.sub(r"\s+", " ", desc).strip()
+    rs = _ROLE_START.search(desc)
+    if rs:
+        desc = desc[rs.start():]
     prompt = _LLM_PROMPT.format(
         title=job.get("title", ""),
         company=job.get("company", ""),
         location=job.get("location", ""),
-        description=(job.get("description") or "")[:1400],
+        description=desc[:1400],
     )
     try:
         proc = subprocess.run(
