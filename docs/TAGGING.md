@@ -125,6 +125,17 @@ As more jobs accumulate, revisit whether "unspecified" shrinks, whether the req/
 shifts (day-heavy = teams hiring analysts to grow into AI; req-heavy = AI experience
 becoming a real gate), and whether new buckets (e.g. AI governance/QA) deserve a regex.
 
+## Soft skills
+
+`roleprofile.SOFT_SKILLS` — nine person-traits (not tools), tagged from the
+**requirements section only**: Communication & storytelling, Team player, Ownership &
+independence, Business acumen, Problem solving, Attention to detail, Curiosity &
+learning, Thrives in fast pace, Leadership & mentoring. Presence-based (a soft skill is
+usually a single bullet), English + Hebrew patterns, `SOFT_DESC` for tooltips. Rendered
+as dotted chips under the requirements column, filterable by single-word tokens
+(`ownership`, `curiosity`, `fastpaced`…), with a purple "Soft skills" chart on the
+dashboard. Deliberately separate from the hard-skill lexicon and clusters.
+
 ## Other markers
 
 - **Years** — first number adjacent to "experience"/ניסיון (`_YEARS_EXP`; שנתיים → 2).

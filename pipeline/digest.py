@@ -646,6 +646,8 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
         # bring; responsibilities = something the role will do (learnable on the job)
         prof["ai_req"] = (roleprofile.classify_ai(" • ".join(t for t, _ in req_parts))
                           if req_parts else [])
+        prof["soft"] = (roleprofile.classify_soft(" • ".join(t for t, _ in req_parts))
+                        if req_parts else [])
         prof["ai_day"] = roleprofile.classify_ai(" • ".join(resp_parts)) if resp_parts else []
         if not prof["ai_day"] and not prof["ai_req"]:
             prof["ai_day"] = prof["ai"]     # mentioned only in intro prose
@@ -686,7 +688,8 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
                    + " ".join(skill_names) + " " + prof["family"] + " "
                    + " ".join(tok for _, tok in prof["tasks"]) + " "
                    + " ".join(tok for _, tok in prof["ai_day"]) + " "
-                   + " ".join(tok + "-req" for _, tok in prof["ai_req"])).lower()
+                   + " ".join(tok + "-req" for _, tok in prof["ai_req"]) + " "
+                   + " ".join(tok for _, tok in prof["soft"])).lower()
         emp_html = f' <span class="emp">{esc(emp)}</span>' if emp else ''
         # a posting whose posted_date jumped well past when WE first saw it was re-posted
         # (bumped) by the company — mark it honestly instead of letting it look brand-new
@@ -762,6 +765,12 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
                 f'title="{esc(roleprofile.SKILL_DESC.get(s, s))} · click to filter the board">'
                 f'{esc(s)}</button>' for s in skill_names[:12])
             right += f'<p class="rlabel">Skills mentioned</p><div class="skills">{tags}</div>'
+        if prof["soft"]:
+            stags = "".join(
+                f'<button class="skilltag stag" data-skill="{esc(tok)}" '
+                f'title="{esc(roleprofile.SOFT_DESC.get(lbl, lbl))} · click to filter the board">'
+                f'{esc(lbl)}</button>' for lbl, tok in prof["soft"])
+            right += f'<p class="rlabel">Soft skills asked for</p><div class="skills">{stags}</div>'
         # degree marker: level + fields + required-vs-plus, e.g. "BSc · CS/Industrial Eng."
         deg = prof["degree"]
         deg_txt = ""
@@ -860,6 +869,13 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
             ccards += (f'<div class="ccard cai"><div class="fhead">🤖 AI usage'
                        f'<span class="fn">required skill vs. part of the job</span></div>'
                        f'<div class="cbars">{inner}</div></div>')
+        if agg["soft"]:
+            mx = agg["soft"][0][2] or 1
+            bars = "".join(_bar(tok, lbl, c, mx, roleprofile.SOFT_DESC.get(lbl, ""))
+                           for lbl, tok, c in agg["soft"])
+            ccards += (f'<div class="ccard csoft"><div class="fhead">Soft skills'
+                       f'<span class="fn">asked for in requirements</span></div>'
+                       f'<div class="cbars">{bars}</div></div>')
         if ccards:
             insights = (
                 '<details class="insights"><summary>📊 Skills &amp; day-to-day demand — '
@@ -995,6 +1011,8 @@ padding:16px}
 .cbars{display:flex;flex-direction:column;gap:4px}
 .ctasks .ibar-fill{background:var(--emp)}
 .cai .ibar-fill{background:#1a7f37;opacity:.22}
+.csoft .ibar-fill{background:#8250df;opacity:.2}
+.stag{border-style:dotted}
 .aisub{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
 color:var(--muted);margin:7px 0 2px;cursor:help}
 .aisub:first-child{margin-top:0}
@@ -1162,6 +1180,9 @@ var justRz=false;
             'dashboard and chips keep the two apart. Mentions of the company&#8217;s own AI '
             'product (&#8220;analyze our AI agents&#8221;) are deliberately NOT counted — that is '
             'product analysis, not AI usage.</p>'
+            '<p><b>Soft skills</b> (dotted chips) are tagged from the requirements section only — '
+            'the person the posting describes, separate from the toolbox: communication, ownership, '
+            'business acumen, curiosity, and so on. Hover any chip for its meaning.</p>'
             '<p><b>reposted</b> marks a posting whose date was bumped 3+ days after this board first '
             'saw it, with the original date in the card.</p>'
             '</div></details>')

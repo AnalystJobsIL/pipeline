@@ -147,6 +147,58 @@ def cluster_of(name, cat):
     return _NAME_CLUSTER.get(name) or _CAT2CLUSTER.get(cat)
 
 
+# ---- soft skills, tagged from the REQUIREMENTS section only ----
+# (label, filter token, pattern) — deliberately separate from the hard-skill lexicon:
+# these describe the person, not the toolbox
+SOFT_SKILLS = [
+    ("Communication & storytelling", "communication",
+     re.compile(r"communicat|storytell|presentation skills|verbal and written|articulate|"
+                r"explain (?:complex|technical)|תקשורת", re.I)),
+    ("Team player", "teamwork",
+     re.compile(r"team[- ]player|interpersonal|collaborative\b|works? well with|עבודת צוות", re.I)),
+    ("Ownership & independence", "ownership",
+     re.compile(r"ownership|self[- ]motivat|independent(?:ly)?\b|autonomous|self[- ]starter|"
+                r"proactiv|initiative|end[- ]to[- ]end ownership|עצמא|יוזמה", re.I)),
+    ("Business acumen", "acumen",
+     re.compile(r"business (?:acumen|sense|orient|understanding|mindset)|commercial (?:mindset|"
+                r"awareness)|הבנה עסקית", re.I)),
+    ("Problem solving", "problemsolving",
+     re.compile(r"problem[- ]solv|critical think|analytical (?:mindset|thinking|skills)|"
+                r"creative think|פתרון בעיות|חשיבה אנליטית", re.I)),
+    ("Attention to detail", "detail",
+     re.compile(r"attention to detail|detail[- ]oriented|meticulous|ירידה לפרטים|דייקנות", re.I)),
+    ("Curiosity & learning", "curiosity",
+     re.compile(r"curiou?s|curiosity|(?:fast|quick) learner|self[- ](?:learn|taught)|"
+                r"eager to learn|growth mindset|סקרנ|לומד מהר", re.I)),
+    ("Thrives in fast pace", "fastpaced",
+     re.compile(r"fast[- ]paced|dynamic environment|ambiguity|multi[- ]?task|prioriti[sz]|"
+                r"under pressure|tight deadlines|סביבה דינמית", re.I)),
+    ("Leadership & mentoring", "leadership",
+     re.compile(r"leadership skills|mentor(?:ing|ship)?\b|coach(?:ing)?\b|lead (?:projects|"
+                r"initiatives|teams)|הובלה", re.I)),
+]
+SOFT_DESC = {
+    "Communication & storytelling": "Explaining findings clearly — writing, presenting, storytelling",
+    "Team player": "Collaborative, strong interpersonal skills",
+    "Ownership & independence": "Self-driven; owns work end to end without hand-holding",
+    "Business acumen": "Understands the business behind the numbers",
+    "Problem solving": "Analytical and critical thinking; untangling open-ended problems",
+    "Attention to detail": "Precision; catching the small things",
+    "Curiosity & learning": "Curious, learns new domains and tools quickly",
+    "Thrives in fast pace": "Comfortable with ambiguity, priorities shifting, tight timelines",
+    "Leadership & mentoring": "Leading projects or people; mentoring juniors",
+}
+
+
+def classify_soft(text):
+    """Soft-skill tags for a requirements section. Presence-based (a soft skill is
+    usually a single bullet), ordered by SOFT_SKILLS order."""
+    text = _clean(text)
+    if not text:
+        return []
+    return [(label, token) for label, token, rx in SOFT_SKILLS if rx.search(text)]
+
+
 # ---- day-to-day task groups, classified from the responsibilities bullets ----
 # Action-titled and hard-segmented: every bullet is assigned to exactly ONE group —
 # the group whose vocabulary it matches most; ties go to the more specific group
@@ -512,6 +564,7 @@ def aggregate(profiles):
     cl_counts = {k: Counter() for k, _ in CLUSTERS}
     task_counts = Counter()
     ai_counts = Counter()
+    soft_counts = Counter()
     with_skills = 0
     # activities every JD mentions — fine inside their own cluster, noise in family cards
     fam_exclude = {"Dashboards", "Statistics"}
@@ -528,6 +581,8 @@ def aggregate(profiles):
             ai_counts[("req", lbl, tok)] += 1
         for lbl, tok in p.get("ai_day", []):
             ai_counts[("day", lbl, tok)] += 1
+        for lbl, tok in p.get("soft", []):
+            soft_counts[(lbl, tok)] += 1
         fam = p["family"]
         fam_jobs[fam] += 1
         fam_skills[fam].update(n for n, _ in p["skills"] if n not in fam_exclude)
@@ -538,7 +593,9 @@ def aggregate(profiles):
               if side == "req"]
     ai_day = [(lbl, tok, c) for (side, lbl, tok), c in ai_counts.most_common()
               if side == "day"]
+    soft = [(lbl, tok, c) for (lbl, tok), c in soft_counts.most_common()]
     by_family = {f: {"jobs": fam_jobs[f], "top": fam_skills[f].most_common(6)}
                  for f in fam_jobs}
     return {"total": total, "with_skills": with_skills, "clusters": clusters,
-            "tasks": tasks, "ai_req": ai_req, "ai_day": ai_day, "by_family": by_family}
+            "tasks": tasks, "ai_req": ai_req, "ai_day": ai_day, "soft": soft,
+            "by_family": by_family}
