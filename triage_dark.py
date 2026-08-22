@@ -225,7 +225,12 @@ def main():
             for fr in fresh:
                 if fr and fr[0] == r[0] and len(fr) >= 6:
                     base = re.sub(r"\s\|\s?dark-triage [^|]*", "", fr[5] or "").strip(" |")
-                    fr[5] = f"{base} | dark-triage {TODAY}: {mode} ({detail})"[:220]
+                    # trim the BASE, never the new verdict: `f"{base} | {verdict}"[:220]`
+                    # cut the verdict off the end, leaving "dark-triage <date>:" with no
+                    # mode — the row then can't be routed at all.
+                    verdict = f"dark-triage {TODAY}: {mode} ({detail})"
+                    room = 220 - len(verdict) - 3
+                    fr[5] = (f"{base[:room]} | {verdict}" if room > 20 else verdict)
             write_csv_rows("companies.csv", fresh)
         time.sleep(0.2)
 

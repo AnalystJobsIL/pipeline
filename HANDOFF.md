@@ -126,6 +126,48 @@ long Sunday run can cause a queued run to be superseded. Every job is idempotent
 self-draining, so this costs a cycle, not correctness — but it's why a run can vanish with
 no error.
 
+## 4c. Ten-agent audit, 2026-08-22 — what it found and what was fixed
+
+Ten parallel read-only audits (extensibility, discovery, fetch layer, classifier, store,
+scraper, secrets, observability, testability, duplicated knowledge). Highlights:
+
+**Fixed — these were actively corrupting data:**
+- `discovery_daily.py` **truncated** the shared discovery cache instead of merging, deleting
+  every Telegram-sourced job each morning (79 verified roles lost 2026-08-21, unrecoverable).
+- 147 board rows were attributed to the **wrong employer** (LinkedIn-scrape incident);
+  purged along with the poisoned `sent` rows that would suppress them under the real one.
+- The scraper stamped `country_code="IL"` on everything, which makes `israel.is_israel_job`
+  skip its real check — Wiliot shipped roles in Kyiv/Dallas/Portugal as Israeli. Now `""`.
+- `job_id` fell back to the listing URL, so **21 companies shared one dedup key** and could
+  never report a new role again after the first digest. Now hashed per role.
+- `_DESC_ANALYTICS`/`_DATA_ANCHOR` had a trailing `` after PREFIX alternatives, so
+  `analytics`, `dashboards`, `stakeholders`, `experiments`, `analyze` **never matched**.
+  This is the likely cause of the 91% LLM rejection rate; 367 stale NO verdicts invalidated.
+- Re-check pools had drifted (15 tokens vs 7) leaving **64 companies invisible to two
+  pools**. Consolidated into `pipeline/verdicts.py`.
+- Hebrew seniority `ראש צות` was a typo (one vav) matching nothing.
+- `jazzhr` returns `[]` by design but wasn't exempt from `empty-board`, so it has been in
+  `stale.json` forever with self-heal retrying weekly.
+
+**New guard rails:** `tests/test_units.py` (41 assertions, ~0.5s, every one a shipped bug),
+`check_invariants.py` (blocking pre-commit gate in the digest), `pipeline/platform_check.py`
+(exposes silently half-wired ATS platforms), `.github/workflows/tests.yml` (runs on push,
+no continue-on-error).
+
+**Known and NOT fixed — the ranked backlog:**
+1. `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
+   `platform_check` reports the gaps but the consolidation itself is the real fix.
+2. Relative-date parsing exists in 5 places with different capabilities (none handle
+   "week"/"hour"; SerpApi dates never normalize at all).
+3. `_REQ_HEADER` in `seniority.py` is dead code — `_desc_is_ml`'s docstring claims it reads
+   the requirements section but it uses `_ROLE_START`, which lands on boilerplate 22% of the
+   time and cuts the requirements past the 1400-char LLM window.
+4. `metrics.jsonl` (one JSON line per run) would answer "is coverage growing / did a source
+   die / did the classifier stop working" — none of which is answerable today.
+5. Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
+   active rows scraping the same board.
+6. `mark_sent` records intent, not delivery — a relay failure burns roles as sent.
+
 ## 5. Debugging entry points
 
 - "Why isn't company X in my email?" → ARCHITECTURE §5b (ordered runbook).
