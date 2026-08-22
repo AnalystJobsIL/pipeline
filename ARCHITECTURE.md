@@ -1,5 +1,70 @@
 # Architecture — how jobs get pulled, verified, and delivered
 
+## 0. Start here: what the user actually receives
+
+Two deliverables, both produced by the **digest run** (the 05:00 UTC GitHub Actions
+workflow `daily-digest.yml` — everything in this system runs as GitHub Actions cron jobs,
+no server):
+
+1. **A daily email** — only roles **new in the last 48h**, grouped by company. Delivery is
+   keyless: the digest is posted as a GitHub issue in the *private* repo
+   `AnalystJobsIL/inbox` with a `cc @owner` mention, and GitHub emails the mention
+   (workflow `digest-email.yml` there; deduped by content hash).
+2. **The job board** — a rolling **2-week** searchable page, `docs/index.html`, published
+   to the public repo `AnalystJobsIL/board` → https://analystjobsil.github.io/board/.
+
+**What qualifies as a role** (the actual product decision, implemented in
+`pipeline/seniority.py`): experienced (**~3+ years**) data-analysis work — data/BI/product/
+marketing analytics, analytics leadership. **The title does not matter**: a "Data Scientist"
+posting counts if the work is really product/business analytics. **Out**: core ML/model
+building, data engineering, software engineering, finance/FP&A, security/SOC, and
+junior/intern/entry-level. Deterministic keyword rules decide the clear cases; ambiguous
+titles go to `claude -p`, whose YES/NO **role judgment** is cached per `company|title` in
+`cloud_state/seen.db` (distinct from a row's coverage **verdict**, §2).
+
+**Vocabulary** (used consistently below):
+- **the digest** = the 05:00 run that produces both the email and the board.
+- **the job board** = our published 2-week page. **a careers board** = a company's own ATS
+  listing. Never abbreviate either to "the board" alone.
+- **role judgment** = classifier YES/NO on one posting. **row verdict** = the dated
+  coverage note on a `companies.csv` row.
+- **parked** = `active=false` with a verdict explaining why; parked rows are still
+  re-checked (§2), never forgotten.
+- **JD** = job description text. **discovery net** = the LinkedIn/Indeed/Telegram sweeps.
+
+**Repo layout note:** `pipeline/` holds the digest-run library (`run.py`, `fetchers.py`,
+`seniority.py`, `israel.py`, `store.py`, `digest.py`, `health.py`, `recruiters.py`).
+**Every other script named in this document lives at the repo root.**
+
+### Run it locally without side effects
+
+```bash
+python -m pipeline.run --only "Fiverr,Wix" --no-llm    # produce-only: NEVER emails/publishes
+python -m pipeline.run --db /tmp/scratch.db            # don't touch the real seen-store
+python scrape_universal.py "Company" "https://…/careers"   # test extraction on one page
+python audit_empty_rows.py                             # dry-run (add --apply to write)
+```
+`pipeline.run` only writes `out/digest-<date>.{html,txt,json}` — emailing and board
+publishing are separate workflow steps, so a local run cannot notify anyone. Most tools
+follow the same convention: **dry-run by default, `--apply` to write**. Useful env vars:
+`SCRAPE_LLM=1` (LLM extraction fallback), `SCRAPE_ASSUME_IL=1` (accept page-level Israel
+signal), `LLM_RESOLVE_CAP`, `JD_ENRICH_CAP`/`JD_ENRICH_BD_CAP`, `SERPAPI_KEY`,
+`BRIGHTDATA_API_KEY`/`BRIGHTDATA_ZONE`, `CLAUDE_CODE_OAUTH_TOKEN` (subscription OAuth, not
+an API key). Local secrets live in the gitignored `secrets.env`.
+
+### The common job shape
+
+Every fetcher and scraper must return a list of dicts in exactly this shape — this is the
+contract that makes sources interchangeable:
+
+```python
+{"company": "Fiverr", "title": "Senior Business Data Analyst",
+ "location": "Tel Aviv, Israel", "country_code": "IL",       # "" if unknown; israel.py falls back to text
+ "url": "https://…/apply/12345", "posted_date": "2026-08-21",  # ISO; "" if unknown
+ "ats_platform": "comeet", "job_id": "23.F66",                 # job_id must be stable per posting
+ "description": "About the role… Requirements…"}               # plain text, ≤6000 chars, "" allowed
+```
+
 One-screen mental model:
 
 ```
@@ -45,8 +110,19 @@ XHR-capture or 3/4 without native fetchers).
 
 ## 2. Row lifecycle — every company carries a dated, evidence-based verdict
 
-`companies.csv` columns: `company_name, ats_platform, token, api_url, active, notes`.
-The `notes` field is the verdict log. Taxonomy:
+`companies.csv` is **the source of truth for coverage** — the registry of who gets read and
+the log of what we know. Columns: `company_name, ats_platform, token, api_url, active,
+notes`. Three real rows, one of each kind:
+
+```csv
+Fiverr,comeet,60.002,https://www.comeet.com/careers-api/2.0/company/60.002/positions?token=62188018812631018862C4188,true,
+Google Israel,scrape,,https://www.google.com/about/careers/applications/jobs/results/?location=Israel,true,re-audit 2026-08-22: user-found listing URL; heading-group scrape verified 20 IL (page 1)
+Imagindairy,scrape,https://www.imagindairy.com/careers,https://imagindairy.com/careers/,false,"chrome-verified 2026-08-22: careers live, CURRENT OPENINGS empty (true 0) - monitored candidate"
+```
+
+For API rows `api_url` is the endpoint; for scrape rows it is the **listings page URL**.
+`notes` is the row-verdict log: each tool appends ` | <tool> <date>: <finding>` and strips
+its own previous suffix, so a row accumulates one current verdict per tool. Taxonomy:
 
 | state | active | meaning | who re-checks it |
 |---|---|---|---|
@@ -62,6 +138,56 @@ The `notes` field is the verdict log. Taxonomy:
 
 Recruiting/staffing agencies are excluded everywhere via `pipeline/recruiters.py`
 (`is_recruiter`) — rows, discovery jobs, and resolution queues all check it.
+
+### State transitions (who moves a row, and when)
+
+```
+   new name (discovery / manual)
+            │  research_companies.json queue
+            ▼
+   ┌──── auto_expand (08:00/20:00) ────┐   resolve_deep → resolve_llm (capped, else deferred)
+   │ resolved+verified │  failed        │
+   ▼                   ▼                ▼
+ ACTIVE ROW        parked: "scanned; no open" / "unreachable" / "aggregator URL"
+   │  ▲                   │
+   │  │                   │ listing_hunt 14:00 (finds listings URL, verifies ≥1 IL job)
+   │  │                   │ crack_walled / deep_validate (on demand)
+   │  │                   │ audit_empty_rows (Sun) — re-verifies ALL parked rows
+   │  └───────────────────┘
+   │
+   │ scrape yields 0 for ROT_PARK_DAYS(3) → parked "scrape rotted" → back to listing_hunt
+   │ API fetch fails → stale.json → self-heal 06:00 re-resolves (weekly retry, 5 strikes)
+   ▼
+ parked: "monitored candidate" (URL known, extraction unproven)
+   │  probe_candidates (05:00 daily) sees job/Israel signals rise vs baseline
+   ▼  → note becomes "probe-woken: re-hunt pending"
+ listing_hunt 14:00 takes the FAST-PATH: scrape the stored URL directly; verified → ACTIVE
+```
+
+Terminal-ish states: `defunct:` (company gone — permanently excluded) and `domain-dead`
+(DNS/conn dead, GET-verified — candidate for defunct research). Everything else is
+re-checked on some cadence; **a failing API row keeps `active=true`** (its roles stay on
+the job board via the failed-company exemption, §5a) while a rotting *scrape* row is
+parked, because only parked rows are visible to the hunt/audit machinery.
+
+### The single-writer rule (most dangerous rule here — read before any write)
+
+`companies.csv` writers must **re-read the file immediately before every write**
+(read-modify-write per verdict, matching on **company name, never row index**) and never
+hold a start-of-run snapshot; two concurrent snapshot-writers silently destroy each other's
+verdicts (lost-update incident 2026-08-22). Compliant writers: `crack_walled.py`,
+`probe_candidates.py`, `listing_hunt.py`, `audit_empty_rows.py`, `refresh_scrape_cache.py`
+(parking pass), `apply_resolved.py` (line-based), `auto_expand.py` (append-only).
+
+**Every workflow that edits `companies.csv` must `git add` it.** The digest workflow does —
+the candidate probe writes verdicts there while `candidate_probe.json` advances baselines;
+committing one without the other loses the wake *and* consumes its signal.
+
+Cloud workflows that commit the csv serialize via the `repo-state` concurrency group —
+**except `daily-digest.yml`**, which uses its own group, so a digest CAN overlap an
+audit/hunt run; both re-read, so verdicts survive. A local `--apply` run adds a third
+writer: avoid the cron windows in §4 (and never run two browser-driving tools at once —
+Playwright sync instances conflict).
 
 ## 3. Resolution ladder — how a dark company becomes covered
 
@@ -138,11 +264,9 @@ digest); deep re-hunt every 14 days and weekly audit are backstops only.
 | `cloud_state/scrape_rot.json` | consecutive empty/error days per scrape row | refresh_scrape_cache.py |
 | `state/` (gitignored) | local resume markers (audit done-list) | local runs only |
 
-**Every workflow that edits `companies.csv` must `git add` it** — the digest workflow does
-(the candidate probe writes verdicts there while `candidate_probe.json` advances baselines;
-committing one without the other loses the wake *and* consumes its signal).
+(The single-writer and commit-together rules live with the csv schema in §2.)
 
-## 5a. Fetch-failure semantics (what a broken board does to the board)
+## 5a. Fetch-failure semantics (what a broken careers board does to our job board)
 
 A company whose fetch raises does **not** crash the run (`pipeline/run.py` per-company
 try/except): it lands in `companies_failed` and gets `status: fetch-error` in `stale.json`.
@@ -158,24 +282,54 @@ an **empty** result carries nothing. Either state persisting `ROT_PARK_DAYS` (3)
 the row (`scrape rotted …`) so the listing-hunt pool re-finds and re-verifies it, because
 **active rows are otherwise invisible to listing-hunt and the weekly audits**.
 
-**Single-writer rule:** `companies.csv` writers must re-read the file immediately before
-every write (read-modify-write per verdict, matching on company name — never by row index)
-and never hold a start-of-run snapshot; two concurrent snapshot-writers silently destroy
-each other's verdicts (lost-update incident 2026-08-22). Compliant writers:
-`crack_walled.py`, `probe_candidates.py`, `listing_hunt.py`, `audit_empty_rows.py`,
-`refresh_scrape_cache.py` (parking pass), `apply_resolved.py` (line-based),
-`auto_expand.py` (append-only). Cloud workflows that commit the csv serialize via the
-`repo-state` concurrency group — **except `daily-digest.yml`**, which uses its own
-`daily-digest` group, so a digest run CAN overlap an audit/hunt run; both re-read, so
-verdicts survive, but a local run must still avoid overlapping either.
+**The four unrelated "14"s** — don't conflate them: the job board's 14-day `first_seen`
+window; `CARRY_MAX_DAYS`=14 (stale scrape jobs); the 14-day deep re-hunt cadence; and
+`_stale_hunt`'s 14-day suppression of a row carrying a hunt verdict.
+
+## 5b. Diagnosing "why isn't company X in my email?"
+
+In order — each step names the file to open:
+
+1. **`companies.csv`** — is there a row? Is `active=true`? Read the `notes` verdict: it
+   names the tool, date, and finding (e.g. `monitored candidate`, `domain-dead`, `defunct`).
+2. **`pipeline/recruiters.py`** — `is_recruiter(name)` true? Agencies are excluded by design.
+3. **Aggregator SKIP** — the digest run prints `SKIP <company>: scrape row points at an
+   aggregator`; such rows are dropped at runtime.
+4. **API row failing?** `cloud_state/stale.json` (`fetch-error` / `regressed-to-zero`) and
+   `cloud_state/health_baseline.json` (last-known-good counts) → repaired by 06:00 self-heal.
+5. **Scrape row?** Look for the company key in `scraped_cache.json` (jobs extracted last
+   refresh) and `cloud_state/scrape_rot.json` (consecutive dead days). Remember scrape data
+   is up to a day old by design.
+6. **Job present but not emailed?** Two filters remain: `pipeline/israel.py`
+   (`is_israel_job`) and `pipeline/seniority.py` (`classify`). Reproduce a single decision:
+   ```bash
+   python -c "from pipeline.seniority import classify; print(classify({'title':'Senior Data Analyst','company':'X','description':'…'}, use_llm=False))"
+   ```
+   It returns the decision, path (`keyword` / `llm` / `llm_cache` / `keyword_nollm`) and
+   reason. A cached role judgment lives in `cloud_state/seen.db` → `llm_cache`
+   (key `company|title`); delete that row to force re-judgment.
+7. **Emailed before?** `seen.db` → `sent` table is the across-day dedup: a role is emailed
+   once. The 2-week job board still shows it; the email only carries the last 48h.
+8. **Not in `companies.csv` at all?** Check `research_companies.json` (resolution queue) and
+   `discovered_cache.json` (discovery-net jobs, 21-day TTL) — it may be mid-onboarding.
+
+Inspect the store directly with sqlite: tables are `sent`, `matched` (job board rows),
+`llm_cache` (role judgments), `company_info` (blurbs).
 
 ## 6. Recipes
 
-- **Add a company you found manually**: verify its board URL returns jobs, add the row
-  (platform+token+api_url, `active=true`, dated note). For scrape rows also run
-  `scrape_universal.py "<name>" "<url>"` once to confirm extraction.
-- **Add an ATS platform**: `fetch_x(row)` in `pipeline/fetchers.py` + `FETCHERS` entry +
-  a signature regex in `audit_empty_rows.SIGS` so resolvers can detect it.
+- **Add a company you found manually**: never hand-write an unverified row. Verify first —
+  `python -c "from audit_empty_rows import verify; print(verify('Name','greenhouse','slug','https://boards-api.greenhouse.io/v1/boards/slug/jobs'))"`
+  (returns `(total, israel)`; raises if the endpoint is bad) or, for a listings page,
+  `python scrape_universal.py "Name" "https://…"` — it must extract ≥1 Israel job. Then add
+  the row with `active=true` and a dated note, e.g.
+  `Deci AI,scrape,,https://deci.ai/careers/,true,manual 2026-08-22: listing verified 4 IL`.
+  Never point a scrape row at LinkedIn/Indeed/Glassdoor/secrethunter (§3 invariant).
+- **Add an ATS platform**: write `fetch_x(row)` in `pipeline/fetchers.py` returning the
+  common job shape (§0) — copy `fetch_ashby` as the simplest template — add the `FETCHERS`
+  entry, and add a signature regex to `SIGS` in `audit_empty_rows.py` so resolvers can
+  detect it in the wild (optionally a `listing_urls()` case in `crack_walled.py`). Verify
+  with the `verify(...)` one-liner above before adding rows.
 - **Add a Telegram channel**: append to `CHANNELS` in `discovery_telegram.py` (must have a
   public t.me/s preview; secrethunter-format parses deterministically).
 - **A company's verdict looks wrong**: check its `notes` for the evidence date and method,
