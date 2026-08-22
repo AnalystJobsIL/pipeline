@@ -227,11 +227,16 @@ def main():
         fixed.append((name, plat, n_all, n_il))
         print(f"  [OK] {name}: {plat} {tok} -> {n_all} jobs / {n_il} IL", flush=True)
         if apply:
-            rows[i][1], rows[i][2], rows[i][3] = plat, tok, api
-            rows[i][4] = "true"
-            rows[i][5] = f"re-audit {__import__('datetime').date.today()}: verified {n_all}/{n_il} IL (was false-empty)"
-            # write incrementally so a killed run never loses verified fixes
-            csv.writer(open("companies.csv", "w", encoding="utf-8", newline="")).writerows(rows)
+            # re-read before every write (single-writer discipline) AND write incrementally
+            # so a killed run never loses verified fixes
+            fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+            for fr in fresh:
+                if fr and fr[0] == name and len(fr) >= 6:
+                    fr[1], fr[2], fr[3] = plat, tok, api
+                    fr[4] = "true"
+                    fr[5] = (f"re-audit {__import__('datetime').date.today()}: "
+                             f"verified {n_all}/{n_il} IL (was false-empty)")
+            csv.writer(open("companies.csv", "w", encoding="utf-8", newline="")).writerows(fresh)
     print(f"\n=== recovered {len(fixed)} boards · unsupported-ATS {len(unsupported)} · "
           f"still dark {len(still)} ===")
 

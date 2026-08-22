@@ -82,7 +82,10 @@ def main():
         elif kind == "scrape":
             jobs2, good_url = r[1] if isinstance(r[1], tuple) else (r[1], url)
             host = urlparse(good_url).netloc.lower()
-            if any(a in host for a in ("linkedin.", "indeed.", "glassdoor.")):
+            # secrethunter/t.me included: the Telegram bridge seeds job-post links as
+            # careers_url, and scraping those ingests other companies' postings too
+            if any(a in host for a in ("linkedin.", "indeed.", "glassdoor.",
+                                       "secrethunter.", "t.me")):
                 # Scraping an aggregator page ingests its "similar jobs" sidebar — postings
                 # from OTHER companies attributed to this one. Park inactive instead.
                 row = [name, "scrape", good_url, good_url, "false",

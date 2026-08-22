@@ -11,8 +11,9 @@ so existing board rows light up on the next pipeline run with no DB surgery.
 Notes:
 - Runs daily in the digest workflow, before pipeline.run. Idempotent: only touches jobs with
   an empty description; failed URLs are stamped (`_jd_attempted`) and retried after 7 days.
-- The Mon/Thu scrape-refresh rebuilds the cache and wipes descriptions; the next daily run
-  refills them (mostly free plain-HTTP fetches; the Unlocker fallback stays capped).
+- The daily 00:00 scrape-refresh rebuilds the cache but CARRIES FORWARD descriptions by
+  url/job_id (refresh_scrape_cache.py), so enrichment is not wiped and the Unlocker budget
+  is not re-burned. Only genuinely new cards arrive empty and get enriched here.
 
 Env: JD_ENRICH_CAP (default 200 jobs/run) · JD_ENRICH_BD_CAP (default 40 Unlocker calls/run)
 """

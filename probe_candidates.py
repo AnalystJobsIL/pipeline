@@ -68,9 +68,11 @@ def main():
                 fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
                 for fr in fresh:
                     if fr and fr[0] == name:
-                        fr[5] = re.sub(r" \| (listing-hunt|crack-walled) [^|]*$", "", fr[5])
-                        fr[5] = re.sub(r"listing-hunt \d{4}-\d{2}-\d{2}: no IL listing; "
-                                       r"monitored candidate", "probe-woken: re-hunt pending", fr[5])
+                        # order matters: stamp the woken state, THEN drop the old verdict
+                        # suffix (doing it the other way deleted what the stamp matched,
+                        # leaving the woken state unreachable)
+                        base = re.sub(r" \| (listing-hunt|crack-walled) [^|]*$", "", fr[5])
+                        fr[5] = (base + " | probe-woken: re-hunt pending")[:220]
                 csv.writer(open("companies.csv", "w", encoding="utf-8",
                                 newline="")).writerows(fresh)
     if apply:

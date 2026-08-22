@@ -162,6 +162,12 @@ def _verify(name, platform, token, api_url):
         raise ValueError(f"unsupported platform {platform!r}")
     if not api_url.startswith("http") or _is_aggregator(api_url):
         raise ValueError("bad api_url")
+    # slug/tenant must resemble the company: search fallbacks WILL offer another company's
+    # board that verifies with real jobs (CyberArk->PANW, Imperva->Thales, Lili->Eli Lilly).
+    # This tier previously relied on prompt-grounding alone — the one unguarded path.
+    from audit_empty_rows import _slug_matches
+    if token and not _slug_matches(name, token):
+        raise ValueError(f"foreign slug {token!r} for {name!r}")
     jobs = fetch_company({"company_name": name, "ats_platform": platform,
                           "token": token, "api_url": api_url})
     if not jobs:

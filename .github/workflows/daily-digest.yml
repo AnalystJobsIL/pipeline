@@ -95,7 +95,10 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add cloud_state digests/latest.md discovered_cache.json scraped_cache.json research_companies.json
+          # companies.csv MUST be here: probe_candidates.py clears verdicts on woken rows,
+          # and cloud_state/candidate_probe.json (committed below) advances the baseline —
+          # without committing the csv the wake is lost AND its signal is consumed forever.
+          git add cloud_state digests/latest.md discovered_cache.json scraped_cache.json research_companies.json companies.csv
           git commit -m "cloud run: state + digest for $(date -u +%F) [skip ci]" || echo "nothing to commit"
           for i in 1 2 3 4 5; do
             git pull --rebase --autostash origin master && git push && exit 0

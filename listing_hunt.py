@@ -166,7 +166,13 @@ def main():
 
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
-               and re.search(r"no ATS detected|unsupported ATS", r[5] or "")
+               # every parked shape that could still hide a real listing — NOT just the
+               # hunt-produced notes (chrome-verified "monitored candidate" rows and
+               # auto_expand's "scanned; no open"/"unreachable" were invisible before)
+               and re.search(r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|"
+                             r"host documented|probe-woken|scanned; no open|unreachable; could not|"
+                             r"aggregator URL", r[5] or "")
+               and not re.search(r"defunct|domain-dead", r[5] or "")
                and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5]))]
     if limit:
         targets = targets[:limit]
@@ -188,21 +194,27 @@ def main():
             print(f"  [{'OK' if verdict == 'found' else '--'}] {n}/{len(targets)} {name}: "
                   f"{url or detail}{f' ({n_il} IL)' if n_il else ''}", flush=True)
             if apply:
-                if verdict == "found":
-                    rows[i][1], rows[i][2], rows[i][3] = "scrape", "", url
-                    rows[i][4] = "true"
-                    rows[i][5] = f"listing-hunt {TODAY}: verified {n_il} IL via {url[:60]}"
-                elif verdict == "nolisting" and url:
-                    rows[i][3] = url                      # persist the candidate page
-                    base = re.sub(r" \| listing-hunt.*$", "", r[5])
-                    rows[i][5] = (base + f" | listing-hunt {TODAY}: no IL listing; "
-                                  f"monitored candidate")[:220]
-                else:
-                    rows[i][5] = (re.sub(r" \| listing-hunt.*$", "", r[5])
-                                  + f" | listing-hunt {TODAY}: "
-                                  + ("no listing found" if verdict == "nolisting" else detail))[:220]
+                # single-writer discipline: re-read before every write; a start-of-run
+                # snapshot silently reverts other writers' verdicts (§5 ARCHITECTURE.md)
+                fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+                for fr in fresh:
+                    if not fr or fr[0] != name or len(fr) < 6:
+                        continue
+                    if verdict == "found":
+                        fr[1], fr[2], fr[3] = "scrape", "", url
+                        fr[4] = "true"
+                        fr[5] = f"listing-hunt {TODAY}: verified {n_il} IL via {url[:60]}"
+                    elif verdict == "nolisting" and url:
+                        fr[3] = url                       # persist the candidate page
+                        base = re.sub(r" \| listing-hunt.*$", "", fr[5])
+                        fr[5] = (base + f" | listing-hunt {TODAY}: no IL listing; "
+                                 f"monitored candidate")[:220]
+                    else:
+                        fr[5] = (re.sub(r" \| listing-hunt.*$", "", fr[5])
+                                 + f" | listing-hunt {TODAY}: "
+                                 + ("no listing found" if verdict == "nolisting" else detail))[:220]
                 csv.writer(open("companies.csv", "w", encoding="utf-8",
-                                newline="")).writerows(rows)
+                                newline="")).writerows(fresh)
     print(f"\n=== listing hunt: {stats} ===", flush=True)
 
 

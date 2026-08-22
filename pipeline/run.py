@@ -27,6 +27,9 @@ from collections import Counter
 
 from . import aggregators
 from . import company_info as company_info_mod
+from . import firmographics as firmographics_mod
+
+FIRMO_MAX_PER_RUN = 5  # research calls can web-search (~1-3 min each); bulk = backfill script
 from . import digest as digest_mod
 from . import fetchers, israel, seniority, store
 from .companies import load_companies
@@ -64,6 +67,16 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # the digest; they are not direct employers (same exclusion as SiiRA/Megayeset).
     from .recruiters import is_recruiter
     rows = [r for r in rows if not is_recruiter(r["company_name"])]
+    # runtime last line of defense: a scrape row pointing at an aggregator ingests that
+    # page's "similar jobs" sidebar — OTHER companies' roles attributed to this one.
+    # Resolvers refuse to create such rows, but a hand-added row would otherwise sail through.
+    import re as _re
+    _AGG_HOST = _re.compile(r"//[^/]*(linkedin\.|indeed\.|glassdoor\.|secrethunter\.)", _re.I)
+    _agg = [r for r in rows if r["ats_platform"] == "scrape" and _AGG_HOST.search(r["api_url"] or "")]
+    for r in _agg:
+        print(f"  SKIP {r['company_name']}: scrape row points at an aggregator "
+              f"({r['api_url'][:60]}) — would ingest other companies' jobs", flush=True)
+    rows = [r for r in rows if r not in _agg]
     if only:
         want = {o.strip().lower() for o in only}
         rows = [r for r in rows if r["company_name"].strip().lower() in want]
@@ -212,6 +225,20 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                 company_info[company] = summ
                 st.save_company_info({company: summ}, run_date)
                 stats["company_summaries"] += 1
+
+    # Structured firmographics for companies the store hasn't researched yet. Same lazy
+    # cached pattern as the blurbs above, but each call may web-search (~1-3 min), so cap
+    # per run and let research_firmographics.py do bulk backfill.
+    if use_llm:
+        firmo = st.load_firmographics()
+        missing = sorted(c for c in {j["company"] for j in board_jobs} if c not in firmo)
+        for company in missing[:FIRMO_MAX_PER_RUN]:
+            ctx = next((j.get("description") for j in board_jobs
+                        if j["company"] == company and j.get("description")), "")
+            rec = firmographics_mod.research_company(company, ctx)
+            if rec:
+                st.save_firmographics({company: rec}, run_date)
+                stats["firmographics_researched"] += 1
 
     summary = {
         "companies_scanned": stats["companies_scanned"],
