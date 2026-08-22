@@ -311,6 +311,34 @@ def test_no_script_references_an_undefined_name():
     assert not offenders, f"undefined names (runtime NameError waiting to happen): {offenders}"
 
 
+def test_merge_never_reverts_a_repaired_url_to_a_dead_one(tmp_path):
+    """A multi-hour run commits the address the row had at CHECKOUT. If another writer has
+    since replaced an NXDOMAIN hostname with a verified one, applying the run's row hands
+    the company back a URL that does not resolve — and every later tool then honestly
+    reports it as unreachable again."""
+    import csv as _csv
+    from merge_csv_rows import merge
+
+    def w(name, rows):
+        p = tmp_path / name
+        with open(p, "w", newline="", encoding="utf-8") as f:
+            _csv.writer(f).writerows(rows)
+        return str(p)
+
+    dead = "https://careers.pliops.com/careers?location=Israel"
+    good = "https://pliops.com/careers"
+    cols = ["Pliops", "scrape", ""]
+    base = w("base.csv", [cols + [dead, "false", "no ATS detected"]])
+    ours = w("ours.csv", [cols + [dead, "false",
+                                  "no ATS detected | listing-hunt 2026-08-23: no IL listing"]])
+    tgt = w("t.csv", [cols + [good, "false",
+                              "no ATS detected | url-repaired 2026-08-23: dead host replaced"]])
+    merge(base, ours, tgt)
+    row = next(_csv.reader(open(tgt, encoding="utf-8")))
+    assert row[3] == good, "merge reverted a verified URL to an NXDOMAIN one"
+    assert "listing-hunt" in row[5] and "url-repaired" in row[5]
+
+
 def test_registry_is_structurally_sound():
     """Cheap end-to-end guard: the real companies.csv must pass every invariant."""
     import subprocess

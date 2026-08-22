@@ -69,7 +69,7 @@ def merge(base_path, ours_path, target_path):
     tgt_idx = {r[0]: i for i, r in enumerate(target) if r}
 
     changed = [r for r in ours if r and (r[0] not in base or base[r[0]] != r)]
-    applied = added = merged_notes = 0
+    applied = added = merged_notes = kept_urls = 0
     for r in changed:
         if r[0] in tgt_idx:
             cur = target[tgt_idx[r[0]]]
@@ -79,9 +79,19 @@ def merge(base_path, ours_path, target_path):
                 # (A 7-hour hunt did exactly that to 351 freshly-written triage modes.)
                 # Union the segments instead, keeping ours where a tool wrote both.
                 if len(r) > 5 and len(cur) > 5:
+                    ours_note = r[5]                       # BEFORE the union below
                     r = list(r)
                     r[5] = _merge_notes(cur[5], r[5])
                     merged_notes += 1
+                    # A long run carries the address the row had at CHECKOUT. If another
+                    # writer has since replaced a dead hostname with a verified one, that
+                    # is strictly newer knowledge — never hand the row back its NXDOMAIN.
+                    # Test ours_note, not r[5]: the union above already copied the stamp in.
+                    if (len(r) > 3 and cur[3] != r[3]
+                            and "url-repaired" in (cur[5] or "")
+                            and "url-repaired" not in (ours_note or "")):
+                        r[3] = cur[3]
+                        kept_urls += 1
                 target[tgt_idx[r[0]]] = r
                 applied += 1
         else:
@@ -92,7 +102,8 @@ def merge(base_path, ours_path, target_path):
         csv.writer(f).writerows(target)
     print(f"merge_csv_rows: {len(changed)} rows changed by this run "
           f"→ {applied} applied, {added} appended, "
-          f"{len(changed) - applied - added} already identical")
+          f"{len(changed) - applied - added} already identical"
+          + (f", {kept_urls} repaired URLs preserved" if kept_urls else ""))
     return applied + added
 
 
