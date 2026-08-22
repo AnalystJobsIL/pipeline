@@ -237,14 +237,14 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         week_ago = (_dt.date.today() - _dt.timedelta(days=7)).isoformat()
         # identity is normalized (§7): "SolarEdge Technologies" on the board must find the
         # stored "SolarEdge" profile, and a failure strike on one variant gates the other
-        firmo_norms = {store._norm_company(c) for c in firmo}
-        failed_norms = {store._norm_company(c) for c, (att, last) in failures.items()
-                        if last > week_ago}
+        _idk = firmographics_mod.identity_key
+        firmo_norms = {_idk(c) for c in firmo}
+        failed_norms = {_idk(c) for c, (att, last) in failures.items() if last > week_ago}
         missing = sorted(c for c in {j["company"] for j in board_jobs}
                          if c not in firmo
-                         and store._norm_company(c) not in firmo_norms
+                         and _idk(c) not in firmo_norms
                          and not firmographics_mod.looks_like_junk(c)
-                         and store._norm_company(c) not in failed_norms)
+                         and _idk(c) not in failed_norms)
         for company in missing[:FIRMO_MAX_PER_RUN]:
             ctx = next((j.get("description") for j in board_jobs
                         if j["company"] == company and j.get("description")), "")

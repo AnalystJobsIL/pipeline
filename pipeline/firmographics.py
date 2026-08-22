@@ -62,6 +62,34 @@ def looks_like_junk(name):
     return bool(_JUNK_NAME.search(name or ""))
 
 
+# ---- firmographics identity -------------------------------------------------------- #
+# store._norm_company strips ONE trailing suffix, which is too weak here: "Check Point
+# Software Technologies" and "Check Point Software" normalize to two DIFFERENT keys and
+# get researched (and employee-filled) twice. This key strips suffixes repeatedly, folds
+# "X Israel" site-forms into X, and applies a small alias map. Used ONLY by firmographics
+# targeting/gating/joins — digest dedup semantics are untouched.
+_ID_SUFFIX = re.compile(
+    r"\s+(ltd|inc|llc|corp|corporation|co|gmbh|group|technologies|technology|software|"
+    r"labs|solutions|systems|israel|global)$")
+
+ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
+    "aws": "amazon", "amazon web services": "amazon",
+    "jpmorganchase": "jpmorgan chase",
+    "aqurate data": "aqurate",
+    "cadence design": "cadence",  # "Cadence Design Systems" after suffix stripping
+}
+
+
+def identity_key(name):
+    s = re.sub(r"\([^)]*\)", " ", str(name or "")).lower()
+    s = " ".join(re.sub(r"[^0-9a-z֐-׿]+", " ", s).split())
+    prev = None
+    while s != prev:
+        prev = s
+        s = _ID_SUFFIX.sub("", s).strip()
+    return ALIASES.get(s, s)
+
+
 def _is_windows():
     import os
     return os.name == "nt"

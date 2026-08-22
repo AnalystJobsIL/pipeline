@@ -77,11 +77,24 @@ def slug_candidates(name):
 
 
 def parse_page(html, name):
-    """Return (employee_count|None, range_str|None) if the page matches `name`, else None."""
-    # match guard: the company's first significant name word must appear in the page title
+    """Return (count|None, range_str|None, strong_match) if the page matches, else None.
+
+    strong_match: the FULL normalized name appears in the page title. A single generic
+    name word ("Bounce", "AWS") matching some other company's title produced wrong fills
+    that were internally consistent (count inside the wrong page's own bucket) — so weak
+    matches are still returned but the caller marks them for LLM re-verification.
+    """
     title = re.search(r"<title>(.*?)</title>", html, re.I | re.S)
-    first_word = re.sub(r"[^0-9a-z]+", " ", name.lower()).split()[0]
-    if not title or first_word not in title.group(1).lower():
+    if not title:
+        return None
+    norm = lambda s: " ".join(re.sub(r"[^0-9a-z]+", " ", s.lower()).split())
+    t, full = norm(title.group(1)), norm(re.sub(r"\([^)]*\)", "", name))
+    words = full.split()
+    if full and full in t:
+        strong = True
+    elif words and words[0] in t.split():
+        strong = False  # only a name fragment matched — could be a namesake company
+    else:
         return None
     count = None
     m = re.search(r'"numberOfEmployees"\s*:\s*\{[^}]*"value"\s*:\s*(\d+)', html)
@@ -97,7 +110,7 @@ def parse_page(html, name):
         rng = m.group(0).replace(" employees", "").replace(",", "").strip()
     if count is not None and not (1 <= count <= 5_000_000):
         count = None
-    return (count, rng) if (count or rng) else None
+    return (count, rng, strong) if (count or rng) else None
 
 
 def main():
@@ -111,7 +124,8 @@ def main():
     retry_cutoff = (dt.date.today() - dt.timedelta(days=RETRY_MISS_DAYS)).isoformat()
     targets = sorted(c for c, r in recs.items()
                      if not r.get("employees_global")
-                     and not (r.get("employees_lookup_miss") or "") > retry_cutoff)[:limit]
+                     and not (r.get("employees_lookup_miss") or "") > retry_cutoff
+                     and not (r.get("employees_linkedin_miss") or "") > retry_cutoff)[:limit]
     today = dt.date.today().isoformat()
     print(f"linkedin employee lookup for {len(targets)} companies ...")
     got = rng_only = miss = 0
@@ -127,11 +141,16 @@ def main():
         time.sleep(1)
         if not found:
             miss += 1
-            print(f"  miss {name}", flush=True)
+            rec = recs[name]
+            rec["employees_linkedin_miss"] = today  # don't re-spend unlocker credits every 6h
+            st.save_firmographics({name: rec}, today)
+            print(f"  miss {name} (monthly retry)", flush=True)
             continue
-        count, rng = found
+        count, rng, strong = found
         rec = recs[name]
-        rec["employees_source"] = "linkedin"
+        # weak (name-fragment) title matches are exactly how generic names land on a
+        # namesake's page — mark them so the LLM verify pass ALWAYS re-checks them
+        rec["employees_source"] = "linkedin" if strong else "linkedin-weakmatch"
         rec["employees_as_of"] = today
         if rng:
             rec["employees_range"] = rng

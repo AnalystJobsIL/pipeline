@@ -28,12 +28,38 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from pipeline.companies import load_companies
-from pipeline.firmographics import ResearchUnavailable, looks_like_junk, research_company
-from pipeline.store import SeenStore, _norm_company
+from pipeline.firmographics import (ResearchUnavailable, identity_key, looks_like_junk,
+                                    research_company)
+from pipeline.store import SeenStore
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 POC = os.path.join(HERE, "poc_firmographics.json")
 EXPORT = os.path.join(HERE, "state", "firmographics.json")
+
+
+def fetch_cloud_db():
+    """Fetch origin and extract CI's committed cloud_state/seen.db to a state/ file.
+
+    NEVER pulls the worktree: a dirty companies.csv (routine — other sessions annotate
+    it) blocks --ff-only forever with no error anyone reads, silently freezing the
+    board-company target feed. Blob extraction has no such failure mode.
+    Returns the extracted path, or None (offline / git trouble) — caller falls back to
+    the possibly-stale worktree copy.
+    """
+    import subprocess
+    out = os.path.join(HERE, "state", "cloud_seen_fetch.db")
+    try:
+        subprocess.run(["git", "fetch", "origin"], cwd=HERE, capture_output=True, timeout=120)
+        blob = subprocess.run(["git", "show", "origin/master:cloud_state/seen.db"],
+                              cwd=HERE, capture_output=True, timeout=60)
+        if blob.returncode != 0 or len(blob.stdout) < 1024:
+            return None
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        with open(out, "wb") as f:
+            f.write(blob.stdout)
+        return out
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def seed_poc(st, today):
@@ -87,7 +113,7 @@ def main():
     # also cover companies that appear on the actual board (CI's matched table) but are
     # not in companies.csv — CI's discovery layer surfaces jobs from employers we never
     # explicitly listed, and those jobs deserve a profile too
-    cloud_db = os.path.join(HERE, "cloud_state", "seen.db")
+    cloud_db = fetch_cloud_db() or os.path.join(HERE, "cloud_state", "seen.db")
     if os.path.exists(cloud_db):
         import sqlite3
         con = sqlite3.connect(cloud_db)
@@ -101,12 +127,12 @@ def main():
         print(f"skipping {len(junk)} junk (job-title) names: {', '.join(junk[:5])}"
               + (" ..." if len(junk) > 5 else ""))
         names = [n for n in names if n not in set(junk)]
-    # identity is normalized (suffix/case-insensitive): "SolarEdge" and "SolarEdge
-    # Technologies" are one company — don't research (and pay for) both
-    have_norms = {_norm_company(n) for n in have}
+    # identity is normalized (repeated-suffix/site/alias-insensitive): "SolarEdge" and
+    # "SolarEdge Technologies" are one company — don't research (and pay for) both
+    have_norms = {identity_key(n) for n in have}
     todo, seen_norms = [], set()
     for n in names:
-        nn = _norm_company(n)
+        nn = identity_key(n)
         if n in have:
             if is_stale(have[n], a.refresh_days):
                 todo.append(n)

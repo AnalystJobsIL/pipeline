@@ -26,7 +26,7 @@ from collections import Counter, defaultdict
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from pipeline import roleprofile
-from pipeline.store import _norm_company
+from pipeline.firmographics import identity_key
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIRMO = os.path.join(HERE, "state", "firmographics.json")
@@ -96,9 +96,12 @@ def fold(jobs_with_profiles):
 
 
 def main():
+    fetched = os.path.join(HERE, "state", "cloud_seen_fetch.db")  # chain-extracted, CI-fresh
     ap = argparse.ArgumentParser()
-    ap.add_argument("--db", default=os.path.join(HERE, "cloud_state", "seen.db"),
-                    help="seen.db holding the matched jobs (default: cloud_state — CI-fresh)")
+    ap.add_argument("--db", default=fetched if os.path.exists(fetched)
+                    else os.path.join(HERE, "cloud_state", "seen.db"),
+                    help="seen.db holding the matched jobs (default: the chain's fetched "
+                         "copy of CI's db when present, else the worktree cloud_state)")
     a = ap.parse_args()
 
     with open(FIRMO, encoding="utf-8") as f:
@@ -106,11 +109,13 @@ def main():
     jobs = load_jobs(a.db)
 
     # join falls back to normalized identity — "SolarEdge" (board) must find
-    # "SolarEdge Technologies" (profile); exact-string-only silently splits companies
-    norm_index = {_norm_company(k): v for k, v in firmo.items()}
+    # "SolarEdge Technologies" (profile); exact-string-only silently splits companies.
+    # Exact match wins first so a deliberate subsidiary record ("Bosch Israel") is
+    # preferred over the identity-collapsed parent when both exist.
+    norm_index = {identity_key(k): v for k, v in firmo.items()}
     joined, unmatched = [], Counter()
     for company, title, desc in jobs:
-        rec = firmo.get(company) or norm_index.get(_norm_company(company))
+        rec = firmo.get(company) or norm_index.get(identity_key(company))
         if not rec:
             unmatched[company] += 1
             continue

@@ -56,16 +56,23 @@ def _bucket_bounds(rng):
 
 
 def suspect(rec):
-    """A linkedin count that contradicts its own bucket, or is implausibly tiny."""
-    if rec.get("employees_source") != "linkedin":
+    """A linkedin count worth re-verifying: weak title match, bucket contradiction,
+    or implausibly tiny. NOTE the blind spot this closes: a wrong-page fill is often
+    internally consistent (count inside the wrong page's own bucket), so weak matches
+    are ALWAYS re-checked regardless of numbers, and the bucket slack is tight (2x, not
+    5x — member counts run above self-reported size, but not that far)."""
+    src = rec.get("employees_source") or ""
+    if not src.startswith("linkedin"):
         return False
+    if src == "linkedin-weakmatch":
+        return True
     n = rec.get("employees_global")
     if not n:
         return False
     if n < 10:
         return True
     b = _bucket_bounds(rec.get("employees_range"))
-    return bool(b and (n < b[0] or n > 5 * b[1]))
+    return bool(b and (n < b[0] or n > 2 * b[1]))
 
 
 def lookup(company, rec, timeout=240):
