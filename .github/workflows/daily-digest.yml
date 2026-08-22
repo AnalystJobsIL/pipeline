@@ -59,6 +59,10 @@ jobs:
         run: python discovery_telegram.py || echo "telegram discovery skipped"
         continue-on-error: true
 
+      - name: Probe monitored candidates (wake rows whose pages grew job signals)
+        run: python probe_candidates.py --apply || echo "probe skipped"
+        continue-on-error: true
+
       - name: Enrich scrape-source jobs with JD text (plain fetch, Unlocker fallback)
         env:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
