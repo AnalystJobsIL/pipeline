@@ -146,7 +146,7 @@ verdict: overwriting destroys the `monitored candidate` / `host documented` toke
 | `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | today's 14:00 hunt (fast-path) |
 | `no listing found` / `no ATS detected` | false | full render found nothing parseable | weekly audit + hunt cron |
 | `unsupported ATS <x>` | false | ATS known, no extraction path yet | crack_walled / listing-hunt |
-| `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS) | re-tested after 30d (`_rescannable`); Sunday audit still sees the base note |
+| `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS — strict TLS on the scanning machine produced 6 false positives) | re-tested after 30d by the Sunday audit; **a revived domain clears the flag automatically** |
 | `defunct: …` | false | company confirmed shut down/acquired | permanently excluded |
 | `chrome-verified …` | either | a human-equivalent browser check confirmed the state | as per its class |
 
@@ -187,8 +187,10 @@ parked, because only parked rows are visible to the hunt/audit machinery.
 ### The verdict-string rule (read before changing ANY resolver)
 
 Re-check pools are **allowlists of note substrings**. If you invent or reword a verdict
-string, add it to all three target regexes — `listing_hunt.py`, `deep_validate.py`,
-`audit_empty_rows.py` — or every row carrying it silently leaves every re-check pool and
+string, add it to all **six** pools — `listing_hunt.py`, `deep_validate.py`,
+`audit_empty_rows.py`, `crack_walled.py`, `scan_dead_domains.py`, `probe_candidates.py`
+(the last is the wake path for every monitored candidate) — or every row carrying it
+silently leaves every re-check pool and
 its coverage is lost with no error anywhere. This is exactly how 52 rows became stranded
 (`bd_rescue.py` wrote `scanned via brightdata; …`, which matched none of them).
 Corollary: a diagnostic verdict must **append** (`base | tool date: finding`), never
@@ -276,7 +278,7 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
 | 06:00 | self-heal | re-resolve stale/rotted boards |
 | 08:00 / 20:00 | auto-expand | drain resolution queue (deterministic + LLM tiers) |
 | 14:00 | listing-hunt | re-hunt woken/eligible dark rows (no-ops in minutes when clean) |
-| Sun 04:00 | audit-coverage | wayback rescue, empty cross-validation, full parked-row re-audit, coverage report |
+| Sun 04:00 | audit-coverage | wayback rescue, empty cross-validation, full parked-row re-audit, **liveness re-scan (revives domains), walled-ATS re-crack**, coverage report |
 
 Latency: active API rows — **same-day**; active scrape rows — **~1 day** (00:00 refresh →
 05:00 digest); monitored candidates — **~1–2 days** (probe wake → 14:00 verify → next

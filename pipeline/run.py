@@ -70,9 +70,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # runtime last line of defense: a scrape row pointing at an aggregator ingests that
     # page's "similar jobs" sidebar — OTHER companies' roles attributed to this one.
     # Resolvers refuse to create such rows, but a hand-added row would otherwise sail through.
-    import re as _re
-    _AGG_HOST = _re.compile(r"//[^/]*(linkedin\.|indeed\.|glassdoor\.|secrethunter\.|t\.me)", _re.I)
-    _agg = [r for r in rows if r["ats_platform"] == "scrape" and _AGG_HOST.search(r["api_url"] or "")]
+    from .aggregators import is_aggregator
+    _agg = [r for r in rows if r["ats_platform"] == "scrape" and is_aggregator(r["api_url"] or "")]
     for r in _agg:
         print(f"  SKIP {r['company_name']}: scrape row points at an aggregator "
               f"({r['api_url'][:60]}) — would ingest other companies' jobs", flush=True)

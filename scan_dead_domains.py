@@ -58,11 +58,25 @@ def main():
                and re.search(r"no ATS detected|no IL listing|monitored candidate|unsupported ATS",
                              r[5] or "")
                and _rescannable(r[5] or "") and "defunct" not in (r[5] or "")
+               # (already-dead rows are re-tested after 30d so a revived domain is cleared)
                and (r[3] or "").startswith("http")]
     print(f"liveness-checking {len(targets)} parked companies", flush=True)
-    dead = 0
+    dead = revived = 0
     for n, (i, r) in enumerate(targets, 1):
         ok, why = alive(r[3])
+        if ok and "domain-dead" in (r[5] or ""):
+            # revived: clear the flag, otherwise it is a one-way exclusion from
+            # listing_hunt / deep_validate / probe_candidates forever
+            if apply:
+                fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+                for fr in fresh:
+                    if fr and fr[0] == r[0] and len(fr) > 5:
+                        fr[5] = re.sub(r"\s\|\s?domain-dead [^|]*", "", fr[5]).strip(" |")
+                csv.writer(open("companies.csv", "w", encoding="utf-8",
+                                newline="")).writerows(fresh)
+            revived += 1
+            print(f"  [ALIVE] {r[0][:32]} — domain-dead cleared ({why})", flush=True)
+            continue
         if not ok:
             dead += 1
             print(f"  [DEAD] {r[0][:32]} ({why}) {r[3][:60]}", flush=True)
@@ -70,7 +84,7 @@ def main():
                 rows[i][5] = (r[5] + f" | domain-dead {TODAY} ({why})")[:220]
                 csv.writer(open("companies.csv", "w", encoding="utf-8",
                                 newline="")).writerows(rows)
-    print(f"=== {dead} dead of {len(targets)} checked ===", flush=True)
+    print(f"=== {dead} dead, {revived} revived of {len(targets)} checked ===", flush=True)
 
 
 if __name__ == "__main__":

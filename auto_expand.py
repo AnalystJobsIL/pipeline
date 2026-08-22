@@ -84,8 +84,8 @@ def main():
             host = urlparse(good_url).netloc.lower()
             # secrethunter/t.me included: the Telegram bridge seeds job-post links as
             # careers_url, and scraping those ingests other companies' postings too
-            if any(a in host for a in ("linkedin.", "indeed.", "glassdoor.",
-                                       "secrethunter.", "t.me")):
+            from pipeline.aggregators import is_aggregator
+            if is_aggregator(good_url):
                 # Scraping an aggregator page ingests its "similar jobs" sidebar — postings
                 # from OTHER companies attributed to this one. Park inactive instead.
                 row = [name, "scrape", good_url, good_url, "false",

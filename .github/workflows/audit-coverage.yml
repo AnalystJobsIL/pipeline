@@ -33,10 +33,15 @@ jobs:
         run: python validate_empty.py
         continue-on-error: true
 
-      - name: Install Playwright + Chromium (comeet token reads for the re-audit)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright + Chromium + Claude CLI (token reads, LLM extraction)
         run: |
           python -m pip install --quiet playwright
           python -m playwright install --with-deps chromium
+          npm install -g @anthropic-ai/claude-code
         continue-on-error: true
 
       - name: Re-audit parked rows (ATS-signature verify; recovers false-empties)
@@ -44,6 +49,21 @@ jobs:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           SERP_RESERVE: "50"
         run: python audit_empty_rows.py --apply
+        continue-on-error: true
+
+      # These two carry 30-day staleness escapes that only fire if something runs them —
+      # unscheduled, their escapes are dead code and their rows never recover.
+      - name: Liveness re-scan (clears revived domains, flags newly dead)
+        run: python scan_dead_domains.py --apply
+        continue-on-error: true
+
+      - name: Re-crack walled-ATS rows (30d cadence)
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          SCRAPE_LLM: "1"
+        run: python crack_walled.py --apply
         continue-on-error: true
       - name: Coverage report
         run: python coverage_report.py

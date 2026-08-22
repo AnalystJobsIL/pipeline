@@ -29,6 +29,7 @@ import urllib.parse
 
 from deep_validate import Renderer, ddg
 from audit_empty_rows import AGG
+from pipeline.aggregators import is_aggregator
 from resolve_llm import _ask_claude
 
 TODAY = dt.date.today().isoformat()
@@ -152,7 +153,7 @@ def hunt_one(name, seed, documented=False):
         except Exception:  # noqa: BLE001
             jobs = []
         il = [j for j in jobs if is_israel_job(j)]
-        if il:
+        if il and not is_aggregator(u):
             return ("found", u, len(il), "")
     # DOCUMENT where we looked: the best candidate page survives in the row so future
     # re-hunts and humans check the right place (a real board with 0 IL roles today —
