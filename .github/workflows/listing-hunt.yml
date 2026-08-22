@@ -7,6 +7,8 @@ name: Listing-hunt dark companies (find + verify real listings pages)
 # to continue with the remainder.
 
 on:
+  schedule:
+    - cron: "0 14 * * *"       # daily; no-ops in minutes once every company has a verdict
   workflow_dispatch:
     inputs:
       limit:

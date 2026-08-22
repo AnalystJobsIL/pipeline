@@ -67,15 +67,22 @@ def harvest_links(rend, url):
     return uniq[:40], bool(html)
 
 
-def hunt_one(rend, name, seed):
+def hunt_one(name, seed):
+    from deep_validate import google_via_unlocker
     cands = [] if not seed or any(a in seed.lower() for a in AGG) else [seed]
     cands += [u for u in ddg(f"{name} jobs") if u not in cands]
+    if len(cands) < 2:                     # DDG blocked/empty (datacenter IPs) — paid fallback
+        cands += [u for u in google_via_unlocker(f"{name} careers") if u not in cands]
     links, reachable = [], False
-    for u in cands[:2]:
-        ls, ok = harvest_links(rend, u)
-        reachable = reachable or ok
-        links += [(t, l) for t, l in ls if (t, l) not in links]
-        links.append(("(the page itself)", u))
+    # IMPORTANT: harvest with a SHORT-LIVED Renderer and close it BEFORE calling scrape() —
+    # scrape_universal starts its own sync Playwright; two sync instances in one thread throw,
+    # which silently zeroed an entire hunt cycle.
+    with Renderer() as rend:
+        for u in cands[:2]:
+            ls, ok = harvest_links(rend, u)
+            reachable = reachable or ok
+            links += [(t, l) for t, l in ls if (t, l) not in links]
+            links.append(("(the page itself)", u))
     if not links:
         return ("dead", None, 0, "no pages reachable" if not reachable else "no links")
     picked = ""
@@ -121,14 +128,14 @@ def main():
     print(f"listing-hunting {len(targets)} companies\n", flush=True)
     stats = {"found": 0, "nolisting": 0, "dead": 0}
     t0 = time.time()
-    with Renderer() as rend:
+    if True:
         for n, (i, r) in enumerate(targets, 1):
             if budget_min and (time.time() - t0) / 60 > budget_min:
                 print("time budget reached — stopping cleanly", flush=True)
                 break
             name = r[0]
             try:
-                verdict, url, n_il, detail = hunt_one(rend, name, r[3])
+                verdict, url, n_il, detail = hunt_one(name, r[3])
             except Exception as e:  # noqa: BLE001
                 verdict, url, n_il, detail = "dead", None, 0, f"error {str(e)[:50]}"
             stats[verdict] += 1
