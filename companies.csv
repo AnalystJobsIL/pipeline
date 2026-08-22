@@ -1114,58 +1114,58 @@ Nebius,scrape,,https://careers.nebius.com/,true,listing-hunt 2026-08-22: verifie
 "IEC - Israel Electric Corporation חברת החשמל לישראל בע""מ",scrape,,https://careers.iec.co.il/,true,listing-hunt 2026-08-22: verified 2 IL via https://careers.iec.co.il/
 LiveU,comeet,90.00C,https://www.comeet.com/careers-api/2.0/company/90.00C/positions?token=9C2709C1D43A827030C3A82709C,true,re-audit 2026-08-21: deep-verified 6/3 IL (was dark)
 Port.io,scrape,,https://builtin.com/jobs?companyId=237062&amp;allLocations=true,true,listing-hunt 2026-08-22: verified 2 IL via https://builtin.com/jobs?companyId=237062&amp;allLocations=t
-Menora Mivtachim Group,scrape,https://www.linkedin.com/jobs/view/bi-systems-analyst-at-menora-mivtachim-group-4446767185?_l=en,https://www.linkedin.com/jobs/view/bi-systems-analyst-at-menora-mivtachim-group-4446767185?_l=en,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Menora Mivtachim Group,scrape,https://www.linkedin.com/jobs/view/bi-systems-analyst-at-menora-mivtachim-group-4446767185?_l=en,https://www.linkedin.com/jobs/view/bi-systems-analyst-at-menora-mivtachim-group-4446767185?_l=en,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
 Extreme,lever,extremenetworks,https://api.lever.co/v0/postings/extremenetworks?mode=json,true,auto-expand; 134/0 IL
-Tipuli Tech,scrape,https://www.linkedin.com/jobs/view/data-analyst-at-tipuli-tech-4447120834?_l=en,https://www.linkedin.com/jobs/view/data-analyst-at-tipuli-tech-4447120834?_l=en,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Revolut,scrape,https://www.linkedin.com/jobs/view/data-analyst-finance-at-revolut-4437960601?_l=en,https://www.linkedin.com/jobs/view/data-analyst-finance-at-revolut-4437960601?_l=en,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Modellama,scrape,https://www.linkedin.com/jobs/view/data-analyst-at-modellama-4428612794?_l=en,https://www.linkedin.com/jobs/view/data-analyst-at-modellama-4428612794?_l=en,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Tipuli Tech,scrape,,https://jobify360.co.il/jobs/4277363254-in,true,listing-hunt 2026-08-22: verified 2 IL via https://jobify360.co.il/jobs/4277363254-in
+Revolut,scrape,,https://www.revolut.com/en-US/careers/,true,listing-hunt 2026-08-22: verified 7 IL via https://www.revolut.com/en-US/careers/
+Modellama,scrape,https://www.linkedin.com/jobs/view/data-analyst-at-modellama-4428612794?_l=en,https://www.linkedin.com/jobs/view/data-analyst-at-modellama-4428612794?_l=en,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
 Nift,greenhouse,nift,https://boards-api.greenhouse.io/v1/boards/nift/jobs,true,auto-expand; 10/2 IL
 Glow,ashby,glow,https://api.ashbyhq.com/posting-api/job-board/glow,true,re-audit 2026-08-21: deep-verified 14/9 IL (was dark)
-JPMorganChase,scrape,https://secrethunter.io/jobz/b401105b3d,https://secrethunter.io/jobz/b401105b3d,false,deep-validated 2026-08-21: unsupported ATS oraclecloud.com
-Moveo Group,scrape,https://secrethunter.io/jobz/9259190970,https://secrethunter.io/jobz/9259190970,false,deep-validated 2026-08-21: unsupported ATS Phenom
-K Logic,scrape,https://secrethunter.io/jobz/5153067f91,https://secrethunter.io/jobz/5153067f91,false,deep-validated 2026-08-21: unsupported ATS taleo.net
-Zim,scrape,https://secrethunter.io/jobz/02f03d0019,https://secrethunter.io/jobz/02f03d0019,false,deep-validated 2026-08-21: no ATS detected (rendered)
+JPMorganChase,scrape,,https://www.jpmorgan.com/insights/global-research,true,listing-hunt 2026-08-22: verified 4 IL via https://www.jpmorgan.com/insights/global-research
+Moveo Group,scrape,,https://www.moveo.group/careers,true,listing-hunt 2026-08-22: verified 9 IL via https://www.moveo.group/careers
+K Logic,scrape,https://secrethunter.io/jobz/5153067f91,https://secrethunter.io/jobz/5153067f91,false,deep-validated 2026-08-21: unsupported ATS taleo.net | listing-hunt 2026-08-22: no listing found
+Zim,scrape,https://secrethunter.io/jobz/02f03d0019,https://secrethunter.io/jobz/02f03d0019,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
 Glassbox,greenhouse,glassboxltd,https://boards-api.greenhouse.io/v1/boards/glassboxltd/jobs,true,re-audit 2026-08-21: manual fix (serp budget exhausted); greenhouse verified
 AllCloud,comeet,71.008,https://www.comeet.com/careers-api/2.0/company/71.008/positions?token=1785E0758A482F01785E01782F05E0,true,auto-expand; 25/14 IL
 Guidde,greenhouse,guidde,https://boards-api.greenhouse.io/v1/boards/guidde/jobs,true,auto-expand; 9/6 IL
-expressvpn,scrape,https://secrethunter.io/jobz/a799cf3e1d,https://secrethunter.io/jobz/a799cf3e1d,false,deep-validated 2026-08-21: no ATS detected (rendered)
+expressvpn,scrape,https://secrethunter.io/jobz/a799cf3e1d,https://secrethunter.io/jobz/a799cf3e1d,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
 Engineering team lead- data & AI platform - everc,greenhouse,ever,https://boards-api.greenhouse.io/v1/boards/ever/jobs,true,re-audit 2026-08-21: deep-verified 29/0 IL (was dark)
 doitintl,greenhouse,doitintl,https://boards-api.greenhouse.io/v1/boards/doitintl/jobs,true,auto-expand; 84/7 IL
-Phoenix Financial,scrape,https://secrethunter.io/jobz/25a919ad8b,https://secrethunter.io/jobz/25a919ad8b,false,deep-validated 2026-08-21: unsupported ATS phenom
-Shufersal,scrape,https://secrethunter.io/jobz/7446ee070b,https://secrethunter.io/jobz/7446ee070b,false,deep-validated 2026-08-21: unsupported ATS phenom
+Phoenix Financial,scrape,https://secrethunter.io/jobz/25a919ad8b,https://secrethunter.io/jobz/25a919ad8b,false,deep-validated 2026-08-21: unsupported ATS phenom | listing-hunt 2026-08-22: no listing found
+Shufersal,scrape,https://secrethunter.io/jobz/7446ee070b,https://secrethunter.io/jobz/7446ee070b,false,deep-validated 2026-08-21: unsupported ATS phenom | listing-hunt 2026-08-22: no listing found
 helfy,comeet,3A.008,https://www.comeet.com/careers-api/2.0/company/3A.008/positions?token=A38478828E001EA8A381EA8033183D50,true,auto-expand; 21/16 IL
 Artlist,comeet,85.003,https://www.comeet.com/careers-api/2.0/company/85.003/positions?token=5831B8F2C185832C182C181B8F319BB061089&details=true,true,re-audit 2026-08-21: deep-verified 10/8 IL (was dark)
 Sql developer - SkySoft Solutions By Commit,comeet,76.008,https://www.comeet.com/careers-api/2.0/company/76.008/positions?token=67826D067833C0CF002D48020581368,true,re-audit 2026-08-21: deep-verified 142/55 IL (was dark)
-Alison,scrape,https://secrethunter.io/jobz/fe8c52aef9,https://secrethunter.io/jobz/fe8c52aef9,false,deep-validated 2026-08-21: no ATS detected (rendered)
-90min,scrape,https://secrethunter.io/jobz/a817bc41a4,https://secrethunter.io/jobz/a817bc41a4,false,deep-validated 2026-08-21: no ATS detected (rendered)
-PassportCard,scrape,https://secrethunter.io/jobz/52034b36bf,https://secrethunter.io/jobz/52034b36bf,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Data researcher - Navina,scrape,https://secrethunter.io/jobz/26ce472111,https://secrethunter.io/jobz/26ce472111,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Alison,scrape,https://secrethunter.io/jobz/fe8c52aef9,https://secrethunter.io/jobz/fe8c52aef9,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
+90min,scrape,https://secrethunter.io/jobz/a817bc41a4,https://secrethunter.io/jobz/a817bc41a4,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
+PassportCard,scrape,,https://www.comeet.com/jobs/passportcard/92.00A,true,listing-hunt 2026-08-22: verified 5 IL via https://www.comeet.com/jobs/passportcard/92.00A
+Data researcher - Navina,scrape,,https://www.navina.ai/careers,true,listing-hunt 2026-08-22: verified 1 IL via https://www.navina.ai/careers
 everc,workday,evercommerce/EverCommerce_Careers,https://evercommerce.wd1.myworkdayjobs.com/wday/cxs/evercommerce/EverCommerce_Careers/jobs,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
-topgummiceuticals,scrape,https://secrethunter.io/jobz/ae3cd2b83e,https://secrethunter.io/jobz/ae3cd2b83e,false,deep-validated 2026-08-21: no ATS detected (rendered)
+topgummiceuticals,scrape,https://secrethunter.io/jobz/ae3cd2b83e,https://secrethunter.io/jobz/ae3cd2b83e,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
 Sela,ashby,Sela,https://api.ashbyhq.com/posting-api/job-board/Sela,true,re-audit 2026-08-21: deep-verified 6/0 IL (was dark)
-SMARTECH - A Hexion Company,scrape,https://secrethunter.io/jobz/0ae3bc9875,https://secrethunter.io/jobz/0ae3bc9875,false,deep-validated 2026-08-21: unsupported ATS successfactors
+SMARTECH - A Hexion Company,scrape,https://secrethunter.io/jobz/0ae3bc9875,https://secrethunter.io/jobz/0ae3bc9875,false,deep-validated 2026-08-21: unsupported ATS successfactors | listing-hunt 2026-08-22: no listing found
 Ready Group,ashby,ready,https://api.ashbyhq.com/posting-api/job-board/ready,true,re-audit 2026-08-21: deep-verified 7/0 IL (was dark)
-Medison Pharma,scrape,https://secrethunter.io/jobz/c2a5124ea5,https://secrethunter.io/jobz/c2a5124ea5,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Medison Pharma,scrape,https://secrethunter.io/jobz/c2a5124ea5,https://secrethunter.io/jobz/c2a5124ea5,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
 Genpact,workday,genpact/wd108/External_Careers,https://genpact.wd108.myworkdayjobs.com/wday/cxs/genpact/External_Careers/jobs,true,auto-expand; 40/40 IL
-TCM Technologies LTD,scrape,https://secrethunter.io/jobz/a8ddc87426,https://secrethunter.io/jobz/a8ddc87426,false,deep-validated 2026-08-21: no ATS detected (rendered)
-ICE,scrape,https://secrethunter.io/jobz/cf273806e9,https://secrethunter.io/jobz/cf273806e9,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Amazon Web Services (AWS),scrape,https://secrethunter.io/jobz/8717f08353,https://secrethunter.io/jobz/8717f08353,false,deep-validated 2026-08-21: no ATS detected (rendered)
-vi,scrape,https://secrethunter.io/jobz/f38ec7872c,https://secrethunter.io/jobz/f38ec7872c,false,deep-validated 2026-08-21: unsupported ATS icims.com
+TCM Technologies LTD,scrape,https://secrethunter.io/jobz/a8ddc87426,https://secrethunter.io/jobz/a8ddc87426,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
+ICE,scrape,https://secrethunter.io/jobz/cf273806e9,https://secrethunter.io/jobz/cf273806e9,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
+Amazon Web Services (AWS),scrape,,https://www.amazon.jobs/en/business_categories/amazon-web-services?cmpid=OA_OTAW403019B,true,listing-hunt 2026-08-22: verified 12 IL via https://www.amazon.jobs/en/business_categories/amazon-web-se
+vi,scrape,,https://jobs.viliving.com/jobs?location=Israel,true,listing-hunt 2026-08-22: verified 2 IL via https://jobs.viliving.com/jobs?location=Israel
 ONE ZERO Digital Bank,bamboohr,onezero,https://onezero.bamboohr.com/careers/list,true,re-audit 2026-08-21: deep-verified 9/0 IL (was dark)
-Zota,scrape,https://secrethunter.io/jobz/6b61da567d,https://secrethunter.io/jobz/6b61da567d,false,deep-validated 2026-08-21: unsupported ATS icims.com
-Orca-AI,scrape,https://secrethunter.io/jobz/7b051f83fe,https://secrethunter.io/jobz/7b051f83fe,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Zota,scrape,https://secrethunter.io/jobz/6b61da567d,https://secrethunter.io/jobz/6b61da567d,false,deep-validated 2026-08-21: unsupported ATS icims.com | listing-hunt 2026-08-22: no listing found
+Orca-AI,scrape,,https://builtin.com/jobs?companyId=253268&amp;allLocations=true,true,listing-hunt 2026-08-22: verified 2 IL via https://builtin.com/jobs?companyId=253268&amp;allLocations=t
 Aman Group,workday,aman/AmanGroupExternal,https://aman.wd103.myworkdayjobs.com/wday/cxs/aman/AmanGroupExternal/jobs,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 Matrix,comeet,19.00F,https://www.comeet.com/careers-api/2.0/company/19.00F/positions?token=91F36BA52172D9B0247C247C5217247C2D9B,true,re-audit 2026-08-21: deep-verified 25/0 IL (was dark)
-Priority Software,scrape,https://secrethunter.io/jobz/de4d8019c3,https://secrethunter.io/jobz/de4d8019c3,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Moonsite - Moonsoft Development Ltd.,scrape,https://secrethunter.io/jobz/88e08da946,https://secrethunter.io/jobz/88e08da946,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Priority Software,scrape,,https://www.priority-software.com/il/careers/,true,listing-hunt 2026-08-22: verified 5 IL via https://www.priority-software.com/il/careers/
+Moonsite - Moonsoft Development Ltd.,scrape,,https://jobs.ashbyhq.com/moonactive,true,listing-hunt 2026-08-22: verified 23 IL via https://jobs.ashbyhq.com/moonactive
 ICON Strategic Solutions,workday,icon/wd3/broadbean_external,https://icon.wd3.myworkdayjobs.com/wday/cxs/icon/broadbean_external/jobs,true,auto-expand; 4/3 IL
-appsforce,scrape,https://secrethunter.io/jobz/bb3b05e785,https://secrethunter.io/jobz/bb3b05e785,false,deep-validated 2026-08-21: no ATS detected (rendered)
+appsforce,scrape,https://secrethunter.io/jobz/bb3b05e785,https://secrethunter.io/jobz/bb3b05e785,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
 Intel Corporation,workday,intel/wd1/External,https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/External/jobs,true,auto-expand; 31/28 IL
 Data scientist engineer - Fetcherr,comeet,68.006,https://www.comeet.com/careers-api/2.0/company/68.006/positions?token=866326432643ACA866219829FE10CC193229FE,true,re-audit 2026-08-21: deep-verified 45/18 IL (was dark)
-AppSec,scrape,https://secrethunter.io/jobz/64a2ad6daf,https://secrethunter.io/jobz/64a2ad6daf,false,deep-validated 2026-08-21: unsupported ATS jobvite.com
+AppSec,scrape,,https://www.infosecjobboard.com/appsec-jobs,true,listing-hunt 2026-08-22: verified 3 IL via https://www.infosecjobboard.com/appsec-jobs
 Dream,lever,wearedream,https://api.lever.co/v0/postings/wearedream?mode=json,true,auto-expand; 46/0 IL
 Ruby Labs,ashby,ruby-labs,https://api.ashbyhq.com/posting-api/job-board/ruby-labs,true,re-audit 2026-08-21: deep-verified 38/0 IL (was dark)
-Aqurate Data,scrape,https://secrethunter.io/jobz/14f8f8d024,https://secrethunter.io/jobz/14f8f8d024,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Data analyst - Nogamy,scrape,https://secrethunter.io/jobz/3270ce1fca,https://secrethunter.io/jobz/3270ce1fca,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Ryltech.co.il,scrape,https://secrethunter.io/jobz/41a02cc77d,https://secrethunter.io/jobz/41a02cc77d,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Aqurate Data,scrape,,https://aqurate-data.com/Career/,true,listing-hunt 2026-08-22: verified 6 IL via https://aqurate-data.com/Career/
+Data analyst - Nogamy,scrape,https://secrethunter.io/jobz/3270ce1fca,https://secrethunter.io/jobz/3270ce1fca,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
+Ryltech.co.il,scrape,https://secrethunter.io/jobz/41a02cc77d,https://secrethunter.io/jobz/41a02cc77d,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no listing found
 TechBiz Global,recruitee,jobs.techbiz.global,https://jobs.techbiz.global/api/offers/,true,auto-expand; 208/2 IL
