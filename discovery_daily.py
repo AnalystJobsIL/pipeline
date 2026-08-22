@@ -162,8 +162,29 @@ def main():
             seen.add(k)
             jobs.append(j)
     if jobs:
+        # MERGE, never truncate. This file is shared with discovery_telegram.py, which runs
+        # AFTER this step; a truncating write here deleted every Telegram-sourced job on
+        # 2026-08-21 (79 verified roles lost, unrecoverable because the telegram watermark
+        # had already advanced past them). Merge by (company,title), prune past the TTL.
+        import datetime as _dtm
+        cut = (_dtm.date.today() - _dtm.timedelta(days=21)).isoformat()
+        try:
+            prev = json.load(open("discovered_cache.json", encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            prev = []
+        merged, keys = [], set()
+        for j in jobs + [p for p in prev if isinstance(p, dict)]:
+            k = ((j.get("company") or "").lower(), (j.get("title") or "").lower())
+            if k in keys:
+                continue                       # this run's version wins (it is fresher)
+            d = str(j.get("posted_date") or "")[:10]
+            if d and d < cut:
+                continue                       # prune: the read side drops these anyway
+            keys.add(k)
+            merged.append(j)
         with open("discovered_cache.json", "w", encoding="utf-8") as f:
-            json.dump(jobs, f, ensure_ascii=False, indent=1)
+            json.dump(merged, f, ensure_ascii=False, indent=1)
+        print(f"cache: {len(jobs)} this run + {len(merged) - len(jobs)} carried = {len(merged)}")
     else:
         print("no records fetched — keeping yesterday's discovered_cache.json")
     # companies we don't scan directly yet -> hand to the auto-expand resolver

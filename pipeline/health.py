@@ -19,7 +19,12 @@ import os
 import re
 
 ATS_HOST = re.compile(r"greenhouse\.io|lever\.co|ashbyhq\.com|smartrecruiters\.com|"
-                      r"comeet\.co|workable\.com|recruitee\.com|myworkdayjobs", re.I)
+                      r"comeet\.co|workable\.com|recruitee\.com|myworkdayjobs|"
+                      # added 2026-08-22 after pipeline/platform_check.py showed 6 native
+                      # platforms missing here — a row misconfigured as `scrape` on one of
+                      # these hosts was never flagged misconfig-scrape-on-ats
+                      r"breezy\.hr|bamboohr\.com|oraclecloud\.com|applytojob\.com|"
+                      r"jazz\.co|amazon\.jobs|careers\.microsoft\.com", re.I)
 BASELINE = "cloud_state/health_baseline.json"   # committed, so it persists across cloud runs
 STALE = "cloud_state/stale.json"                # committed, so the self-heal job can read it
 
@@ -41,7 +46,10 @@ def stale_reason(platform, api_url, n, status, baseline_best):
         return "fetch-error"
     if status == "empty" and baseline_best > 0:
         return "regressed-to-zero"
-    if n == 0 and plat not in ("scrape", "discovery", "custom_json"):
+    # jazzhr has no public JSON API — fetch_jazzhr returns [] BY DESIGN, so without
+    # this exemption every jazzhr row is flagged empty-board forever and the 06:00
+    # self-heal re-attempts it every week (it was doing exactly that).
+    if n == 0 and plat not in ("scrape", "discovery", "custom_json", "jazzhr"):
         return "empty-board"
     return None
 
