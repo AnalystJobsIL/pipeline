@@ -1,1 +1,62 @@
-{}
+{
+ "Moon Active": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/A2.00C/positions?token=2ACD5C02AC10081008AB01560180C804",
+  "platform": "comeet",
+  "reason": "empty-board"
+ },
+ "Explorium": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/B4.00E/positions?token=4BE17B61C744BE1C7497C4BE12F817B612F8",
+  "platform": "comeet",
+  "reason": "empty-board"
+ },
+ "AI21 Labs": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/E6.001/positions?token=6E12946DC230276E13DE93708294637083708",
+  "platform": "comeet",
+  "reason": "empty-board"
+ },
+ "Questar Auto Technologies": {
+  "careers_url": "https://questar.applytojob.com/apply",
+  "platform": "jazzhr",
+  "reason": "empty-board"
+ },
+ "XM Cyber": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/15.005/positions?token=51519692393A2A1454A2A145423930F3F",
+  "platform": "comeet",
+  "reason": "empty-board"
+ },
+ "Outbrain": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/outbraininc/jobs",
+  "platform": "greenhouse",
+  "reason": "empty-board"
+ },
+ "At-Bay": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/atbay/jobs",
+  "platform": "greenhouse",
+  "reason": "empty-board"
+ },
+ "Adobe": {
+  "careers_url": "https://adobe.wd5.myworkdayjobs.com/wday/cxs/adobe/external_experienced/jobs",
+  "platform": "workday",
+  "reason": "empty-board"
+ },
+ "Broadcom": {
+  "careers_url": "https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career/jobs",
+  "platform": "workday",
+  "reason": "empty-board"
+ },
+ "PayPal": {
+  "careers_url": "https://paypal.wd1.myworkdayjobs.com/wday/cxs/paypal/jobs/jobs",
+  "platform": "workday",
+  "reason": "empty-board"
+ },
+ "Snyk": {
+  "careers_url": "https://api.ashbyhq.com/posting-api/job-board/snyk",
+  "platform": "ashby",
+  "reason": "empty-board"
+ },
+ "Finaloop": {
+  "careers_url": "https://finaloop.recruitee.com/api/offers/",
+  "platform": "recruitee",
+  "reason": "fetch-error"
+ }
+}

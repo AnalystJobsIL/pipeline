@@ -1085,14 +1085,14 @@ Keshet Media Group,scrape,https://www.linkedin.com/jobs/view/senior-data-analyst
 Elbit Systems Israel,scrape,,https://elbitsystemscareer.com/jobs/,true,listing-hunt 2026-08-22: verified 24 IL via https://elbitsystemscareer.com/jobs/
 Log-On Software,scrape,https://www.linkedin.com/jobs/view/senior-data-bi-systems-analyst-at-log-on-software-4453442275?_l=en,https://www.log-now.com/open-positions,false,aggregator URL; resolve real careers page before activating | listing-hunt 2026-08-22: no IL listing; monitored candidate
 מרטנס | Mertens – מקבוצת מלם תים,scrape,https://www.linkedin.com/jobs/view/bi-systems-analyst-36733-at-%D7%9E%D7%A8%D7%98%D7%A0%D7%A1-mertens-%E2%80%93-%D7%9E%D7%A7%D7%91%D7%95%D7%A6%D7%AA-%D7%9E%D7%9C%D7%9D-%D7%AA%D7%99%D7%9D-4456704889?_l=en,https://mertens.malam.com/career/,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate
-Yael Korentec Technologies,scrape,,https://yaelgroup.com/jobs/,true,listing-hunt 2026-08-22: verified 1 IL via https://yaelgroup.com/jobs/
+Yael Korentec Technologies,scrape,,https://yaelgroup.com/jobs/,false,recruiter/staffing agency - never activated (auto-deactivated 2026-08-22)
 Rhino Federated Computing,greenhouse,RhinoFederatedComputing,https://boards-api.greenhouse.io/v1/boards/RhinoFederatedComputing/jobs,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 Central Bottling Company Israel ltd,scrape,,https://www.cbccom.com/on/demandware.store/Sites-CBC-Site/default/Job,true,listing-hunt 2026-08-22: verified 3 IL via https://www.cbccom.com/on/demandware.store/Sites-CBC-Site/de
-Yael Group,scrape,,https://yaelgroup.com/jobs/,true,listing-hunt 2026-08-22: verified 1 IL via https://yaelgroup.com/jobs/
+Yael Group,scrape,,https://yaelgroup.com/jobs/,false,recruiter/staffing agency - never activated (auto-deactivated 2026-08-22)
 Confidential Careers,scrape,https://www.linkedin.com/jobs/view/senior-bi-systems-analyst-at-confidential-careers-4453863219?_l=en,https://confidential.careers/browse-jobs?location=Israel,false,aggregator URL; resolve real careers page before activating | listing-hunt 2026-08-22: no IL listing; monitored candidate
 Bookmap,scrape,https://www.linkedin.com/jobs/view/senior-business-operations-data-analyst-at-bookmap-4436334826?_l=en,https://bookmap.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate
 Bounce,ashby,Bounce,https://api.ashbyhq.com/posting-api/job-board/Bounce,true,auto-expand; 10/0 IL
-Experis Academy Israel,scrape,,https://experis.co.il/search?JOBAREA=1275,true,listing-hunt 2026-08-22: verified 4 IL via https://experis.co.il/search?JOBAREA=1275
+Experis Academy Israel,scrape,,https://experis.co.il/search?JOBAREA=1275,false,recruiter/staffing agency - never activated (auto-deactivated 2026-08-22)
 Zipher,scrape,,https://jobs.tlv.partners/companies/zipher-2,true,listing-hunt 2026-08-22: verified 5 IL via https://jobs.tlv.partners/companies/zipher-2
 Rounds,comeet,rounds/59.005,https://www.comeet.com/careers-api/2.0/company/59.005/positions?token=95541530255453FD2EA953FD95537FE4AA8,true,re-audit 2026-08-21: deep-verified 10/6 IL (was dark)
 Play Perfect,comeet,69.001,https://www.comeet.com/careers-api/2.0/company/69.001/positions?token=96141A70384609611C23258496112C2,true,auto-expand; 10/10 IL
@@ -1102,7 +1102,7 @@ Jamf,greenhouse,jamf,https://boards-api.greenhouse.io/v1/boards/jamf/jobs,true,a
 Chargeflow,workable,chargeflow-1,https://apply.workable.com/api/v1/widget/accounts/chargeflow-1?details=true,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 Prisma Photonics,scrape,,https://www.prismaphotonics.com/careers/?location=129,true,listing-hunt 2026-08-22: verified 14 IL via https://www.prismaphotonics.com/careers/?location=129
 Alice (Formerly ActiveFence),comeet,D5.005,https://www.comeet.com/careers-api/2.0/company/D5.005/positions?token=5D51D29347D2EA828D3347DBAA2EA85D522FE,true,re-audit 2026-08-21: deep-verified 42/15 IL (was dark)
-Experis Israel,scrape,,https://experis.co.il/careers,true,listing-hunt 2026-08-22: verified 7 IL via https://experis.co.il/careers
+Experis Israel,scrape,,https://experis.co.il/careers,false,recruiter/staffing agency - never activated (auto-deactivated 2026-08-22)
 Akamai Technologies,scrape,https://www.linkedin.com/jobs/view/secops-engineer-at-akamai-technologies-4456785328?_l=en,https://www.akamai.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate
 Workday,workday,workday/wd5/Workday,https://workday.wd5.myworkdayjobs.com/wday/cxs/workday/Workday/jobs,true,auto-expand; 6/6 IL
 Shortical,scrape,https://www.linkedin.com/jobs/view/data-analyst-at-shortical-4438986340?_l=en,https://careers.shortical.com/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS phenom | crack-walled 2026-08-22: host documented, 0 IL now | listing-hunt 2026-08-22: no IL listing; monitored candidate"
@@ -1153,7 +1153,7 @@ Amazon Web Services (AWS),scrape,,https://www.amazon.jobs/en/business_categories
 vi,scrape,,https://jobs.viliving.com/jobs?location=Israel,true,listing-hunt 2026-08-22: verified 2 IL via https://jobs.viliving.com/jobs?location=Israel
 ONE ZERO Digital Bank,bamboohr,onezero,https://onezero.bamboohr.com/careers/list,true,re-audit 2026-08-21: deep-verified 9/0 IL (was dark)
 Zota,scrape,,https://careers.zota.com/#jobs-fac7f4ab,true,listing-hunt 2026-08-22: verified 1 IL via https://careers.zota.com/#jobs-fac7f4ab
-Orca-AI,scrape,,https://www.getclera.com/co/orca-ai,true,listing-hunt 2026-08-22: verified 3 IL via https://www.getclera.com/co/orca-ai
+Orca-AI,scrape,,https://www.getclera.com/co/orca-ai,false,"third-party hiring host, not own board (auto-parked 2026-08-22): https://www.getclera.com/co/orca-ai"
 Aman Group,workday,aman/AmanGroupExternal,https://aman.wd103.myworkdayjobs.com/wday/cxs/aman/AmanGroupExternal/jobs,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 Matrix,comeet,19.00F,https://www.comeet.com/careers-api/2.0/company/19.00F/positions?token=91F36BA52172D9B0247C247C5217247C2D9B,true,re-audit 2026-08-21: deep-verified 25/0 IL (was dark)
 Priority Software,scrape,,https://www.priority-software.com/il/careers/,true,listing-hunt 2026-08-22: verified 5 IL via https://www.priority-software.com/il/careers/

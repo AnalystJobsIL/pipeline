@@ -90,7 +90,7 @@ HOSTS = (
     "builtin.com", "ziprecruiter.", "monster.", "dice.com", "simplyhired.",
     "careerbuilder.", "wellfound.com", "angel.co", "startup.jobs", "themuse.com",
     "jobvite.com/search", "talent.com", "jooble.", "neuvoo.", "adzuna.",
-    "drushim.co.il", "alljobs.co.il", "jobmaster.co.il", "ethosia.", "gotfriends.",
+    "getclera.com", "welcometothejungle.com", "techaviv.com", "secretjobs.ai", "jobs.techaviv", "drushim.co.il", "alljobs.co.il", "jobmaster.co.il", "ethosia.", "gotfriends.",
 )
 
 # host-anchored: "t.me/" must not match supplant.me / supersmart.me

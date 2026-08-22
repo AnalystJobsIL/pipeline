@@ -30,6 +30,7 @@ import urllib.parse
 from deep_validate import Renderer, ddg
 from audit_empty_rows import AGG
 from pipeline.aggregators import is_aggregator
+from pipeline.recruiters import is_recruiter
 from resolve_llm import _ask_claude
 from pipeline.atomic import write_csv_rows
 
@@ -193,6 +194,7 @@ def main():
                              r"host documented|probe-woken|scanned; no open|unreachable|"
                              r"aggregator URL|no listing found|redirects to|scanned via brightdata|empty-but-suspect|needs re-resolution|needs manual resolution", r[5] or "")
                and not re.search(r"defunct|domain-dead", r[5] or "")
+               and not is_recruiter(r[0])   # agencies are never activated
                and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5]))]
     if limit:
         targets = targets[:limit]
