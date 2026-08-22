@@ -55,6 +55,14 @@ WalkMe, Cloudinary, Port.io, Miggo, Thales. Roughly **1,400+ Israel jobs** enter
 3. **Two concurrency layers.** In-process (re-read before every write) *and* git-layer
    (`merge_csv_rows.py`). A 3.5-hour cycle was discarded because only the first existed.
    Heavy local pushes during a long cloud run used to destroy it; now they don't.
+3b. **The notes column is an append-log, so row-level merging is not enough.** On 2026-08-22
+   the 14:00 hunt committed a `row-merged state` whose row versions predated the evening
+   triage: `merge_csv_rows` applied its rows wholesale and the `dark-triage` segment
+   vanished from **351 of 352 rows** (the hunt pool then computed to literally 0). The merge
+   is now segment-aware (`_merge_notes`, keyed by owning tool). **If you add a new verdict
+   token, add it to `_TOOL` in `merge_csv_rows.py` too** — an unrecognised segment is keyed
+   by its first 28 chars, so two different runs of it collide and one is dropped.
+   Guarded by `test_merge_unions_note_segments_from_both_writers`.
 4. **Search results will hand you another company's board** — and it verifies, with real
    jobs. `_slug_matches` guards it. But note the inverse: CyberArk→PANW and Imperva→Thales
    looked like false matches and were actually **real acquisitions**. Check before "fixing".
@@ -78,14 +86,25 @@ WalkMe, Cloudinary, Port.io, Miggo, Thales. Roughly **1,400+ Israel jobs** enter
 | 05:45 / 08:30 | inbox relay | the email |
 | 06:00 | self-heal | re-resolve rotted boards |
 | 08:00 / 20:00 | auto-expand | drain resolution queue |
-| 14:00 | listing-hunt | + walled-ATS re-crack (daily) |
+| 19:00 | listing-hunt | repair-extract-gap (35 min) → hunt (200 min) → walled-ATS re-crack (60 min) |
 | Sun 04:00 | audit-coverage | wayback, empty cross-validation, full re-audit, liveness, re-crack |
 
 ## 4. Open items — highest value first
 
-1. **~286 rows marked `no ATS detected`.** The daily hunt cycle works through these. Expect
-   a slow trickle of recoveries; each one that fails 14 days running is genuinely dark and
-   is covered only by the discovery nets.
+1. **352 dark rows now carry a triage mode; ~212 are in tonight's hunt pool.** `triage_dark.py`
+   classified every inactive row by failure mode (see `dark-triage <date>: <mode>` in notes):
+
+   | mode | count | who repairs it | needs search? |
+   |---|---|---|---|
+   | `url-dead` 97 / `wrong-page` 76 | 173 | `listing_hunt.py` (19:00) | yes — slowest, may not resolve |
+   | `page-empty` | 134 | *nobody hunts these* — page is live with genuinely no roles | no |
+   | `extract-gap` | 33 | `repair_extract_gap.py` (19:00, before the hunt) | **no** — highest yield/minute |
+   | `js-shell` 5 / `blocked` 5 | 10 | hunt, then `crack_walled` / Bright Data | partly |
+   | `acquired` | 1 | manual — should be marked terminal | no |
+
+   **The hunt is time-budgeted (200 min), so it will NOT clear 212 rows in one night.**
+   Expect a trickle over several nights; `extract-gap` should land first since it needs no
+   search. A row failing 14 nights running is genuinely dark and covered only by discovery.
 2. **Phenom / Eightfold / iCIMS / SuccessFactors** — no native fetchers; they're read via
    the browser scraper when a listing URL is known. If any platform starts appearing 3+
    times in new discoveries, write a native fetcher (ARCHITECTURE §6 recipe).

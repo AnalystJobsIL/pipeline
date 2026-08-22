@@ -207,6 +207,30 @@ def classify(url, render=False, company=""):
     return "page-empty", "no jobs language and no roles (regex only, unconfirmed)"
 
 
+TRIAGE_TTL_DAYS = 10
+
+
+def _triage_age(row):
+    """Days since this row was last triaged; 9999 if never."""
+    m = re.search(r"dark-triage (\d{4}-\d{2}-\d{2})", row[5] or "")
+    if not m:
+        return 9999
+    return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days
+
+
+def _needs_triage(note: str) -> bool:
+    """Re-triage only STALE rows, not everything not done today.
+
+    A nightly re-stamp is not merely wasteful: `listing_hunt._actionable_mode` treats a
+    triage date >= the hunt stamp as "hunt this now", so re-dating all 352 rows every night
+    cancelled the hunt's 14-day cooldown and pinned it to the same prefix of the pool.
+    """
+    m = re.search(r"dark-triage (\d{4}-\d{2}-\d{2})", note or "")
+    if not m:
+        return True
+    return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days >= TRIAGE_TTL_DAYS
+
+
 def main():
     apply = "--apply" in sys.argv
     force = "--force" in sys.argv
@@ -220,7 +244,11 @@ def main():
     targets = [r for r in rows
                if r and len(r) >= 6 and r[4] == "false"
                and TARGET_NOTES.search(r[5] or "") and not SKIP_NOTES.search(r[5] or "")
-               and (force or f"dark-triage {TODAY}" not in (r[5] or ""))]
+               and (force or _needs_triage(r[5] or ""))]
+    # Oldest verdict first. With a time budget and file-order targets, the same prefix gets
+    # re-processed every night and the tail is NEVER reached; sorting by staleness makes the
+    # budget walk the whole pool over successive nights.
+    targets.sort(key=_triage_age, reverse=True)
     if limit:
         targets = targets[:limit]
     print(f"triaging {len(targets)} dark rows (render={render})\n", flush=True)

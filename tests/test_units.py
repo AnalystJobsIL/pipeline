@@ -181,6 +181,18 @@ def test_merge_notes_never_truncates_the_newest_segment():
     assert len(out) <= 220 and fresh in out
 
 
+def test_triage_does_not_restamp_every_night():
+    """`f"dark-triage {TODAY}" not in note` re-triaged all 352 dark rows nightly, and since
+    listing_hunt treats a triage date >= its own stamp as "hunt now", that silently cancelled
+    the hunt's 14-day cooldown and pinned its time budget to the same prefix of the pool."""
+    import triage_dark
+    today = dt.date.today().isoformat()
+    old = (dt.date.today() - dt.timedelta(days=triage_dark.TRIAGE_TTL_DAYS + 1)).isoformat()
+    assert triage_dark._needs_triage("") is True
+    assert triage_dark._needs_triage(f"dark-triage {today}: url-dead") is False
+    assert triage_dark._needs_triage(f"dark-triage {old}: url-dead") is True
+
+
 def test_registry_is_structurally_sound():
     """Cheap end-to-end guard: the real companies.csv must pass every invariant."""
     import subprocess

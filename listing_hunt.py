@@ -227,6 +227,16 @@ def main():
                and not _triaged_page_empty(r[5] or "")
                and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5])
                     or _actionable_mode(r[5] or ""))]
+    # Least-recently-hunted first. The pool (212 rows) is larger than one night's time
+    # budget, and in file order the budget re-walks the same prefix every night while the
+    # tail is never touched. Staleness ordering guarantees progress across the whole pool.
+    def _hunt_age(r):
+        m = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", r[1][5] or "")
+        if not m:
+            return 9999
+        return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days
+
+    targets.sort(key=_hunt_age, reverse=True)
     if limit:
         targets = targets[:limit]
     print(f"listing-hunting {len(targets)} companies\n", flush=True)
