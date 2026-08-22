@@ -188,9 +188,13 @@ def scrape(company, url, timeout_ms=45000):
                 pass
 
     with sync_playwright() as p:
-        b = p.chromium.launch(headless=True)
+        # stealth: several real careers pages (Entro, Legit) serve a stripped page to
+        # detectable headless automation — mask the fingerprint
+        b = p.chromium.launch(headless=True,
+                              args=["--disable-blink-features=AutomationControlled"])
         pg = b.new_page(user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                                     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"))
+        pg.add_init_script("Object.defineProperty(navigator,'webdriver',{get:()=>undefined})")
         pg.on("response", on_resp)
         import os
         fast = os.environ.get("FAST_SCRAPE")
@@ -352,6 +356,43 @@ def scrape(company, url, timeout_ms=45000):
                     desc=re.sub(r"\s+", " ", txt)[:4000])
             if jobs:
                 break
+
+    # 5) LLM extraction fallback (env SCRAPE_LLM=1): Elementor/Wix/arbitrary layouts where
+    # nothing above matches but the page clearly lists positions — Claude reads the rendered
+    # text and returns JSON. Gated on jobs-signals so it never fires on marketing pages.
+    if not jobs and page_html and os.environ.get("SCRAPE_LLM"):
+        stripped = re.sub(r"<(script|style|noscript|svg)[^>]*>.*?</\1>", " ",
+                          page_html, flags=re.S | re.I)
+        txt = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "\n", stripped))
+        sig = re.search(r"open positions|current openings|apply now|we'?re hiring|משרות", txt, re.I)
+        if sig:
+            # center the excerpt on the jobs section, not the page top
+            txt = txt[max(0, sig.start() - 1500):sig.start() + 8000]
+            import shutil as _sh
+            import subprocess as _sp
+            import json as _json
+            if _sh.which("claude"):
+                prompt = (
+                    "Below is the visible text of a company careers page. Extract the OPEN "
+                    "POSITIONS as a JSON array [{\"title\": ..., \"location\": ...}] — titles "
+                    "exactly as written, location as written or \"\" if absent. Exclude "
+                    "benefits/values/testimonials. Respond ONLY the JSON array (or []).\n\n"
+                    + txt[:7000])
+                try:
+                    proc = _sp.run(["claude", "-p"], input=prompt, capture_output=True,
+                                   text=True, encoding="utf-8", errors="replace",
+                                   timeout=120, shell=(os.name == "nt"))
+                    m = re.search(r"\[.*\]", proc.stdout or "", re.S)
+                    for o in (_json.loads(m.group(0)) if m else []):
+                        t, loc = str(o.get("title", "")).strip(), str(o.get("location", "")).strip()
+                        if not loc and (url_is_il if 'url_is_il' in dir() else False):
+                            loc = "Israel"
+                        if not loc and os.environ.get("SCRAPE_ASSUME_IL") \
+                                and ISRAEL_LOC.search(page_html):
+                            loc = "Israel"
+                        add(t, loc, url)
+                except Exception:  # noqa: BLE001
+                    pass
     return jobs
 
 

@@ -45,6 +45,7 @@ jobs:
           HUNT_LIMIT: ${{ github.event.inputs.limit || '0' }}
           HUNT_TIME_BUDGET_MIN: "280"
           FAST_SCRAPE: "1"
+          SCRAPE_LLM: "1"
         run: python listing_hunt.py --apply
         continue-on-error: true
       - name: Commit verdicts
