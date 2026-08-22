@@ -97,7 +97,8 @@ HOSTS = (
     "climatetechlist.", "foodimpactcareers.", "infosecjobboard.", "web3.career",
     "embedded.jobs", "myjobmag.", "devjobs.co.il", "jobify360.", "tlv.partners",
     "insightpartners.com", "seedcamp.com", "getro.", "consider.vc", "jobs.ashbyhq.com/vc",
-    "duckduckgo.", "google.com/search", "bing.com/search",
+    "duckduckgo.", "google.com/search", "bing.com/search", "levels.fyi",
+    "simplify.jobs", "peopleopsjobs.", "igamingcareers.", "43north.org",
     # seen being tried by the 2026-08-23 hunt: aggregators, a PE portfolio board, and a
     # company-data site that is not a careers page at all
     "bebee.com", "djinni.co", "craft.co", "franciscopartners.com", "himalayas.app",

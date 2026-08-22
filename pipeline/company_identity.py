@@ -28,7 +28,8 @@ ATS_HOST = re.compile(
     r"(greenhouse|lever\.co|ashbyhq|comeet|myworkdayjobs|workday|smartrecruiters|recruitee|"
     r"workable|bamboohr|breezy\.hr|jazzhr|applytojob|icims|oraclecloud|successfactors|"
     r"phenom|eightfold|avature|careers-page\.com|rippling|hibob|teamtailor|willhire|"
-    r"comeet\.com|jobs\.ashbyhq)", re.I)
+    r"comeet\.com|jobs\.ashbyhq|jobs\.gem\.com|ultipro|trinethire|inflightcloud|"
+    r"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats)", re.I)
 
 # Brand/parent pairs a string comparison can never derive. Keep SMALL and evidence-based —
 # every entry is a claim that one company's board legitimately carries the other's roles.
@@ -42,6 +43,15 @@ KNOWN_PARENT = {
     "siemens digital industries software": ("sw.siemens.com", "siemens.com"),
     "siemens eda": ("sw.siemens.com", "siemens.com"),
     "applied materials israel": ("appliedmaterials.com",),
+    # branded careers domains and post-acquisition boards, each verified by hand
+    "ge healthcare israel": ("gehealthcare.com",),
+    "procter & gamble": ("pgcareers.com",),
+    "deutsche post dhl": ("dhl.com",),
+    "johnson & johnson": ("jnj.com",),
+    "general motors israel": ("gm.com",),
+    "userway": ("levelaccess.com",),          # acquired by Level Access
+    "abbott": ("jobs.abbott",),
+    "abb": ("careers.abb", "abb.com"),
 }
 
 # Industry words are NOT identity. Matching on one sent Tamar Robotics to arberobotics.com
@@ -85,6 +95,73 @@ def _acronym(name: str) -> str:
     return "".join(w[0].lower() for w in (kept or words))
 
 
+# path/host segments that are structural, never a tenant name
+_NOT_A_SLUG = {"jobs", "job", "careers", "career", "embed", "job_board", "boards", "v1",
+               "v0", "api", "en", "en-us", "en-il", "search", "postings", "list", "widget",
+               "external", "apply", "company", "positions", "opportunities", "www", "com",
+               "co", "io", "ai", "net", "org", "hq", "app", "my", "public", "posting-api",
+               "job-board", "wday", "cxs", "index", "home", "openings", "all",
+               "careers-api", "careers-home", "job-boards", "jobboard", "search-results",
+               "job_board", "widgets", "accounts", "boards-api", "recruiting2", "hcmrestapi",
+               "resources", "latest", "recruitingcemobile", "requisitions", "results"}
+
+
+def _slug_candidates(parsed) -> list:
+    """Tenant tokens an ATS URL can carry: host labels and path segments.
+
+    greenhouse -> /<slug>;  comeet -> /jobs/<slug>/<uid>;  lever -> /<slug>;
+    workday -> <tenant>.wdN.myworkdayjobs.com;  applytojob -> <slug>.applytojob.com
+    """
+    host_bits = [b for b in parsed.netloc.lower().split(".")
+                 if b and b not in _NOT_A_SLUG and not re.fullmatch(r"wd\d+", b)
+                 and not ATS_HOST.fullmatch(b or "")]
+    path_bits = [seg.lower() for seg in parsed.path.split("/")
+                 if seg and seg.lower() not in _NOT_A_SLUG]
+    # drop opaque ids (Comeet uids like A6.009, numeric ids)
+    # Opaque tenant ids carry NO identity: Comeet uses hex uids (60.002), Workable numeric
+    # account ids. Dropping them is what makes an EMPTY candidate list mean "cannot tell".
+    path_bits = [b for b in path_bits
+                 if not re.fullmatch(r"[0-9a-f.\-]{2,8}", b, re.I) and not b.isdigit()
+                 and not re.fullmatch(r"[\d.]+", b)]
+    return host_bits + path_bits
+
+
+def _slug_matches_company(company: str, parsed) -> bool:
+    """Does any tenant token in the URL plausibly name this company?
+
+    Permissive on purpose — an ATS slug is often abbreviated — but it must share real
+    substance with the name, not merely be present.
+    """
+    cn = _norm(company)
+    if not cn:
+        return False
+    words = [w for w in re.findall(r"[a-z0-9]{4,}", (company or "").lower())
+             if w not in _STOP]
+    ac = _acronym(company)
+    for raw in _slug_candidates(parsed):
+        t = _norm(raw)
+        if not t:
+            continue
+        if t == cn or t in cn or cn in t:
+            return True
+        if any(w in t or t in w for w in words if len(t) >= 4):
+            return True
+        if len(ac) >= 3 and t == ac:
+            return True
+        # Abbreviated tenants that no acronym rule derives: "amat" for Applied Materials.
+        # Subsequence, so the letters must still appear IN ORDER in the company name —
+        # "asecurity" is not a subsequence of "myrrorsecurity" (no 'a'), nor "amat" of
+        # "3dbattery" (no 'm'), so the real impostors stay caught.
+        if len(t) >= 4 and _is_subsequence(t, cn):
+            return True
+    return False
+
+
+def _is_subsequence(needle: str, haystack: str) -> bool:
+    it = iter(haystack)
+    return all(ch in it for ch in needle)
+
+
 def verdict(company: str, url: str) -> str:
     """'ats' | 'match' | 'mismatch' | 'unknown'.
 
@@ -92,11 +169,21 @@ def verdict(company: str, url: str) -> str:
     we could not tell. Callers must treat BOTH as "do not activate" — the difference only
     affects whether it is worth a human's or an LLM's time.
     """
-    host = urllib.parse.urlparse(url or "").netloc.lower()
+    parsed = urllib.parse.urlparse(url or "")
+    host = parsed.netloc.lower()
     if not host:
         return "unknown"
     if ATS_HOST.search(host):
-        return "ats"
+        # On an ATS the identity is the SLUG, not the domain — every company shares the
+        # host. Returning a blanket "ats" skipped identity entirely and accepted
+        # comeet.com/jobs/a_security/... for Myrror Security and amat.wd1.myworkdayjobs.com
+        # (Applied Materials) for 3DBattery. Check the tenant token instead.
+        # No checkable tenant token (Comeet's careers-api carries only an opaque uid like
+        # 60.002) means we CANNOT TELL — and "cannot tell" must never read as "wrong
+        # company". Asserting mismatch here flagged ~150 legitimate Comeet boards.
+        if not _slug_candidates(parsed):
+            return "ats"
+        return "ats" if _slug_matches_company(company, parsed) else "mismatch"
 
     dom = registrable(host)
     cname, cn = (company or "").lower().strip(), _norm(company)
@@ -116,6 +203,15 @@ def verdict(company: str, url: str) -> str:
     nd = _norm(dom)
     if nd and (nd in cn or cn in nd) and abs(len(nd) - len(cn)) <= 1:
         return "match"                    # sproutt/sprout yes; nooga/noogata no
+    # The registry is full of "<Name> Israel" / "<Name> Technologies" rows whose board is
+    # just <name>.com. Compare against the name with the generic words stripped, or
+    # jobs.sap.com reads as foreign to "SAP Israel".
+    core = _norm("".join(w for w in re.findall(r"[A-Za-z0-9]+", company or "")
+                         if w.lower() not in _STOP))
+    # EXACT only. `core.startswith(nd)` would re-admit rad.com for RADLogics and
+    # nooga.net for Noogata — the same loose-prefix bug, one layer along.
+    if core and nd and nd == core:
+        return "match"
     # per-word: a DISTINCTIVE (non-industry) word of the name appearing in the domain.
     # 4 chars, so "Teva Pharmaceutical" -> tevapharm.com resolves on "teva".
     words = [w for w in re.findall(r"[a-z0-9]{4,}", cname) if w not in _STOP]
@@ -133,12 +229,17 @@ def verdict(company: str, url: str) -> str:
 
 
 def is_foreign(company: str, url: str) -> bool:
-    """True when the page provably belongs to a different company (or is a job board).
+    """True only when a NON-ATS domain provably belongs to someone else.
 
-    `weak` is NOT foreign — it is unproven. Callers that ACTIVATE a row must demand a
-    strong verdict (see page_mentions_company); callers that merely rank candidates can
-    treat weak as a maybe.
+    ATS slug mismatches are dominated by legitimate rebrands and acquisitions — Momentis
+    Surgical still posts under `memic`, OTORIO under `armissecurity`, Itamar Medical under
+    `zoll` — so blocking on those costs real coverage. The FairFly/fireflyspace and
+    COTI/citi.com shape lives on ordinary domains, which is what this blocks. For ATS
+    slugs, confirm with page_mentions_company() instead of refusing outright.
     """
+    host = urllib.parse.urlparse(url or "").netloc
+    if ATS_HOST.search(host or ""):
+        return False
     return verdict(company, url) == "mismatch"
 
 
