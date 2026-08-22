@@ -394,7 +394,7 @@ Perception Point,scrape,,https://perception-point.io/careers/,true,listing-hunt 
 C2A Security,scrape,,https://c2a-sec.com/careers/,true,listing-hunt 2026-08-22: verified 3 IL via https://c2a-sec.com/careers/
 NanoLock Security,scrape,,https://craft.co/nano-lock-security/human-capital,false,"aggregator URL (builtin.com-class global listing) auto-parked 2026-08-22 — would attribute third | dark-triage 2026-08-22: wrong-page (LLM: not NanoLock Security's careers page (Mindr careers page, not NanoLock Securit))"
 odix,scrape,https://www.odi-x.com/careers/,https://www.odi-x.com/careers/,false,chrome-verified 2026-08-22: entire site unavailable - candidate defunct
-Identiq,scrape,https://www.identiq.com/careers,https://identiq.in/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: acquired (homepage says: is now part of Incode Request a demo Identiq i)
+Identiq,scrape,https://www.identiq.com/careers,https://identiq.com/,false,"defunct: acquired by Incode (identiq.com banner, verified 2026-08-23); see Incode row"
 Centraleyes,scrape,,https://www.centraleyes.com/careers/,true,listing-hunt 2026-08-22: verified 1 IL via https://www.centraleyes.com/careers/
 Nokod Security,scrape,,https://careers.meron.co/companies/nokod-security#content,true,listing-hunt 2026-08-22: verified 4 IL via https://careers.meron.co/companies/nokod-security#content
 Reflectiz,comeet,CA.008,https://www.comeet.com/careers-api/2.0/company/CA.008/positions?token=AC84B7840B035E82058AC8564035E856402058,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
@@ -1177,3 +1177,4 @@ sett,scrape,,https://www.sett.ai/careers/,true,listing-hunt 2026-08-22: verified
 autods,scrape,,https://job-boards.greenhouse.io/autods,true,listing-hunt 2026-08-22: verified 3 IL via https://job-boards.greenhouse.io/autods
 Primis Tech,scrape,https://secrethunter.io/jobz/b5c8c9b04f,https://www.primis.tech/careers/,false,scanned; no open Israel roles now | listing-hunt 2026-08-22: no IL listing; monitored candidate
 Thales,workday,thales/Careers,https://thales.wd3.myworkdayjobs.com/wday/cxs/thales/Careers/jobs,true,added 2026-08-22: Imperva acquirer; verified 15/14 IL
+Incode,greenhouse,incode,https://boards-api.greenhouse.io/v1/boards/incode/jobs,false,acquirer of Identiq; scanned; no open Israel roles now (2026-08-23)
