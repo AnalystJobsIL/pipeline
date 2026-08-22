@@ -235,6 +235,72 @@ infrastructure itself. Complements §4c's backlog; ordered by leverage.
     A small review queue proposing `defunct:` parking from firmographics evidence closes
     the loop.
 
+## 4d. Honest state of the infrastructure — READ BEFORE ADDING ANYTHING
+
+**It is sprawling, and that is the top thing to fix next.** Numbers, not adjectives:
+62 root scripts, 10 workflows, 19 scheduled entry points, and **23 separate tools whose job
+is "work out where a company's jobs live"**:
+
+    auto_expand  resolve_llm  resolve_deep  resolve_broken  resolve_any  resolve_parallel
+    resolve_unknowns  listing_hunt  deep_validate  crack_walled  audit_empty_rows
+    validate_empty  validate_bd  recheck_suspects  wayback_rescue  bd_rescue
+    retry_unreachable  scan_dead_domains  triage_dark  repair_extract_gap  probe_ats
+    detect_ats  comeet_resolve
+
+Each was a rational response to one concrete failure (a bot-walled ATS, a dead domain, a
+JS-only page, a stale URL). Together they overlap heavily, share four near-duplicate
+detection tables, and are individually cheap but collectively hard to reason about. Nobody
+designed this shape; it accreted in a day.
+
+**What is genuinely load-bearing** (touch these first, ignore the rest until you must):
+`pipeline/` (run, fetchers, seniority, israel, store, digest, health, verdicts,
+aggregators, atomic), `scrape_universal.py`, `auto_expand.py`, `listing_hunt.py`,
+`triage_dark.py`, `discovery_daily.py`, `discovery_telegram.py`, `refresh_scrape_cache.py`,
+`enrich_scrape_jd.py`, `probe_candidates.py`, `check_invariants.py`, `merge_csv_rows.py`.
+
+**Legacy / one-shot / superseded** (safe to delete after checking imports — several are
+imported for their regex tables, which is itself the problem): `resolve_any`,
+`resolve_parallel`, `resolve_unknowns`, `probe_ats`, `detect_ats`, `scrape_jobs`,
+`bigtech_capture*`, `ms_capture`, `capture_bodies`, `gen_test_board`, `shot_*`,
+`ingest_research`, `merge_research`, `probe_expand`, `verify_jsearch`, `validate_bd`,
+`recheck_suspects` (the only clearer of `empty-but-suspect`, and on no schedule).
+
+### The consolidation plan for the next session, in order
+
+1. **`pipeline/ats.py` platform registry.** One frozen dataclass per platform (host regex,
+   detection patterns, endpoint builder, fetcher, flags). Derive `FETCHERS`, `ATS_HOST`,
+   `SIGS`, `ATS_PATTERNS`, `_HTML_ATS`, the `resolve_llm` prompt table + enum, and the
+   `empty-board` exemption from it. Adding a platform becomes one literal instead of ~22
+   edit sites in 14 files. `pipeline/platform_check.py` already reports the gaps — use it as
+   the regression harness, and rewrite it to assert against the registry rather than grep.
+2. **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
+   form a de-facto ladder (deterministic → LLM → render+sniff → listing-hunt → unlocker);
+   make that explicit, with each strategy a function and the triage mode selecting which to
+   run. `triage_dark.py` is the right seam — it already classifies; the resolvers should be
+   its handlers.
+3. **`pipeline/dates.py`** — five relative-date parsers today, none handling "week"/"hour",
+   and SerpApi dates never normalize at all.
+4. **`pipeline/jdtext.py`** — `_ROLE_START` / `_ROLE_MARKER` / `_REQ_HEADER` / `_REQ_HARD`
+   are four vocabularies for "where does the role text start". `_REQ_HEADER` is dead code,
+   and `_desc_is_ml`'s docstring describes behaviour it does not have. Measured: the digest
+   copy finds a requirements header in 21% of JDs where the classifier copy does not, which
+   is why the LLM often never sees the requirements section.
+5. **`metrics.jsonl`** — one line per run (rows, active, scanned, failed, empty, paths,
+   by_source). Nine counters are already computed and thrown away in `run.py`. Without it
+   nobody can answer "is coverage growing" or "did a source die" — Indeed silently returned
+   zero for five days and nothing noticed.
+6. **Company aliases** — `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are
+   separate active rows scraping the same board.
+7. **Concurrency** — five workflows share `repo-state`; long jobs queue for hours and
+   superseded runs are recorded as `cancelled` with zero output (happened twice today).
+   Either shard the group or shorten the long jobs.
+
+### Guard rails that now exist — keep them working
+`tests/test_units.py` (41 assertions, every one a shipped bug), `check_invariants.py`
+(blocking gate before the digest commits), `pipeline/platform_check.py`,
+`.github/workflows/tests.yml` (on push, no `continue-on-error`). If a change makes these
+red, the change is wrong — they were all written from real incidents.
+
 ## 5. Debugging entry points
 
 - "Why isn't company X in my email?" → ARCHITECTURE §5b (ordered runbook).
