@@ -58,10 +58,12 @@ def _build_israel_loc():
     from pipeline.israel import _IL_PLACES
     alts = sorted((re.escape(p).replace(r"\ ", r"[\s-]?") for p in _IL_PLACES),
                   key=len, reverse=True)
-    hebrew = ["ישראל", "תל[\s-]?אביב",
-              "חיפה", "באר[\s-]?שבע",
+    # raw strings: `\s` in a plain string is an unrecognized escape — it happens to survive
+    # as backslash-s today, but it is a DeprecationWarning now and a SyntaxError later.
+    hebrew = ["ישראל", r"תל[\s-]?אביב",
+              "חיפה", r"באר[\s-]?שבע",
               "רעננה", "הרצליה",
-              "ירושלים", "פתח[\s-]?תקווה"]
+              "ירושלים", r"פתח[\s-]?תקווה"]
     return re.compile("|".join(alts + hebrew), re.I)
 
 

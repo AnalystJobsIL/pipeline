@@ -161,6 +161,11 @@ def main():
     _load_secrets()
     apply = "--apply" in sys.argv
     limit = int(os.environ.get("CRACK_LIMIT", "0"))
+    # These were REFERENCED in the loop below but never defined — every run raised
+    # NameError on the first target, behind `continue-on-error` in the workflow, so the
+    # walled-ATS crack (Eightfold/Phenom/Avature/iCIMS/Oracle) has never actually run.
+    _budget = int(os.environ.get("CRACK_TIME_BUDGET_MIN", "0"))
+    _t0 = time.time()
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false" and "unsupported ATS" in (r[5] or "")

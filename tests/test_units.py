@@ -269,27 +269,46 @@ def test_empty_scrape_rows_are_never_parked():
         assert lo <= ln <= hi, f"parked.append at line {ln} is outside the ERROR branch"
 
 
-def test_rot_parking_path_has_no_undefined_name():
-    """`_write_csv_rows` (undefined) sat on the parking path, so every run that had a rotted
-    row raised NameError *after* writing the cache — looking successful while never parking
-    anything. Compile-level guard: the module must reference only names it defines/imports."""
+def test_no_script_references_an_undefined_name():
+    """Two shipped bugs of this exact shape, both invisible behind `continue-on-error`:
+
+      refresh_scrape_cache._write_csv_rows  -> rot parking raised NameError AFTER writing
+                                               the cache, so it never parked anything
+      crack_walled._budget / _t0            -> NameError on the first target, so the
+                                               walled-ATS crack never ran at all
+
+    compileall does not catch these (they are runtime lookups) and the daily workflows
+    swallow the traceback, so the tool looks like it ran and quietly did nothing.
+    """
     import ast
     import builtins
-    src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                            "refresh_scrape_cache.py"), encoding="utf-8").read()
-    tree = ast.parse(src)
-    defined = set(dir(builtins))
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.Import, ast.ImportFrom)):
-            defined.update((a.asname or a.name).split(".")[0] for a in node.names)
-        elif isinstance(node, (ast.FunctionDef, ast.ClassDef)):
-            defined.add(node.name)
-        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
-            defined.add(node.id)
-        elif isinstance(node, ast.arg):
-            defined.add(node.arg)
-    used = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
-    assert not (used - defined), f"undefined names: {sorted(used - defined)}"
+    import glob
+
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    offenders = {}
+    for path in sorted(glob.glob(os.path.join(repo, "*.py"))
+                       + glob.glob(os.path.join(repo, "pipeline", "*.py"))):
+        tree = ast.parse(open(path, encoding="utf-8").read())
+        defined = set(dir(builtins)) | {"__file__", "__name__", "__doc__", "self", "cls"}
+        for n in ast.walk(tree):
+            if isinstance(n, (ast.Import, ast.ImportFrom)):
+                defined.update((a.asname or a.name).split(".")[0] for a in n.names)
+            elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                defined.add(n.name)
+            elif isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store):
+                defined.add(n.id)
+            elif isinstance(n, ast.arg):
+                defined.add(n.arg)
+            elif isinstance(n, ast.ExceptHandler) and n.name:
+                defined.add(n.name)
+            elif isinstance(n, ast.Global):
+                defined.update(n.names)
+        used = {n.id for n in ast.walk(tree)
+                if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
+        missing = sorted(used - defined)
+        if missing:
+            offenders[os.path.basename(path)] = missing
+    assert not offenders, f"undefined names (runtime NameError waiting to happen): {offenders}"
 
 
 def test_registry_is_structurally_sound():
