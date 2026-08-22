@@ -91,6 +91,13 @@ HOSTS = (
     "careerbuilder.", "wellfound.com", "angel.co", "startup.jobs", "themuse.com",
     "jobvite.com/search", "talent.com", "jooble.", "neuvoo.", "adzuna.",
     "getclera.com", "welcometothejungle.com", "techaviv.com", "secretjobs.ai", "jobs.techaviv", "drushim.co.il", "alljobs.co.il", "jobmaster.co.il", "ethosia.", "gotfriends.",
+    # Niche/vertical boards and VC portfolio pages. Each of these verified with real Israel
+    # jobs and so ACTIVATED a company against another employer's listings: WINT got 20 roles
+    # from climatetechlist, Zipher 5 from a VC page, factify 1 from a DuckDuckGo results page.
+    "climatetechlist.", "foodimpactcareers.", "infosecjobboard.", "web3.career",
+    "embedded.jobs", "myjobmag.", "devjobs.co.il", "jobify360.", "tlv.partners",
+    "insightpartners.com", "seedcamp.com", "getro.", "consider.vc", "jobs.ashbyhq.com/vc",
+    "duckduckgo.", "google.com/search", "bing.com/search",
 )
 
 # host-anchored: "t.me/" must not match supplant.me / supersmart.me

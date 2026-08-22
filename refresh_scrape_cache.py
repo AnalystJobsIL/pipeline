@@ -30,7 +30,15 @@ def main():
     # silently dropped forever and errors carry stale jobs forever (both fail-silent).
     ROT_PATH = "cloud_state/scrape_rot.json"
     CARRY_MAX_DAYS = 14
-    ROT_PARK_DAYS = 3
+    # An ERROR means the page itself broke — real rot, but give transient blocks room.
+    ROT_PARK_DAYS = 7
+    # An EMPTY page is NOT rot. Companies in this market routinely have no openings for a
+    # month or more; parking them on a 3-day empty streak retired healthy sources and meant
+    # the next role posted there was invisible until something re-found the company. Empty
+    # rows are NEVER parked. A very long streak only earns a re-VALIDATION by triage (which
+    # can tell "no roles" from "roles we can't extract"), and the row stays active and
+    # scanned daily the whole time.
+    EMPTY_REVALIDATE_DAYS = 45
     try:
         rot = json.load(open(ROT_PATH, encoding="utf-8"))
     except Exception:  # noqa: BLE001
@@ -44,6 +52,7 @@ def main():
 
     cache = {}
     parked = []
+    revalidate = []
     for r in rows:
         try:
             jobs = scrape(r["company_name"], r["api_url"])
@@ -81,8 +90,12 @@ def main():
             rot.pop(r["company_name"], None)               # healthy again
         else:
             days = _rot_bump(r["company_name"], "empty")
-            if days >= ROT_PARK_DAYS:
-                parked.append((r["company_name"], f"empty {days}d"))
+            # NEVER park on empty — see EMPTY_REVALIDATE_DAYS above. After a long streak,
+            # ask triage to look at the page with an LLM (it distinguishes "genuinely no
+            # openings" from "roles are there and our extractor misses them"); the row
+            # stays ACTIVE and scanned daily either way.
+            if days >= EMPTY_REVALIDATE_DAYS:
+                revalidate.append((r["company_name"], days))
         print(f"  {r['company_name']}: {len(il)}", flush=True)
 
     if old and len(cache) < 0.8 * len(old):
@@ -103,9 +116,22 @@ def main():
                 fr[4] = "false"
                 fr[5] = (f"scrape rotted ({names[fr[0]]}) {today}: extraction yields 0 — "
                          f"no ATS detected; parked for re-hunt")[:220]
-        _write_csv_rows("companies.csv", fresh)
+        write_csv_rows("companies.csv", fresh)
         print(f"parked {len(parked)} rotted scrape rows for re-hunt: "
               f"{[n for n, _ in parked][:8]}")
+
+    # long-empty rows STAY ACTIVE; they are only flagged so triage re-reads the page with an
+    # LLM and can tell "no openings" from "openings we fail to extract".
+    if revalidate:
+        import csv as _csv2
+        fresh2 = list(_csv2.reader(open("companies.csv", encoding="utf-8")))
+        ages = dict(revalidate)
+        for fr in fresh2:
+            if fr and len(fr) > 5 and fr[0] in ages and "empty-but-suspect" not in (fr[5] or ""):
+                fr[5] = (f"{(fr[5] or '')[:150]} | empty-but-suspect {today}: "
+                         f"{ages[fr[0]]}d with no roles — re-validate page")[:220]
+        write_csv_rows("companies.csv", fresh2)
+        print(f"flagged {len(revalidate)} long-empty rows for re-validation (still active)")
     print(f"=== refreshed {len(cache)} scrape companies -> {out_path} ===")
 
 

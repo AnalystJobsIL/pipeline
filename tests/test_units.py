@@ -220,6 +220,78 @@ def test_triage_pool_survives_note_erosion():
     assert not triage_dark.SKIP_NOTES.search(eroded)
 
 
+@pytest.mark.parametrize("company,url,ok", [
+    # legitimate: acronym domains, ATS hosts, brand/parent pairs
+    ("Texas Instruments", "https://careers.ti.com/", True),
+    ("General Motors", "https://search-careers.gm.com/", True),
+    ("Central Bottling Company Israel", "https://www.cbccom.com/", True),
+    ("Quantum Source", "https://www.qs-labs.com/", True),
+    ("AWS", "https://www.amazon.jobs/", True),
+    ("Nebius", "https://careers.nebius.com/", True),
+    ("Wix", "https://boards.greenhouse.io/wix", True),
+    # impostors: each of these ACTIVATED a company off another employer's board
+    ("FairFly", "https://fireflyspace.com/careers", False),
+    ("Ironblocks", "https://www.fireblocks.com/careers", False),
+    ("COTI", "https://jobs.citi.com/", False),
+    ("1MRobotics", "https://careers.micron.com/", False),
+    ("L7 Defense", "https://search-careers.gm.com/", False),
+    ("factify", "https://duckduckgo.com/?q=x", False),
+])
+def test_company_identity_guard(company, url, ok):
+    """Verifying "there are real Israel jobs here" never asked "are they THIS company's?",
+    so any page with Israel roles activated the row. 135 roles landed under the wrong
+    employer before this guard existed."""
+    from pipeline.company_identity import is_foreign
+    assert is_foreign(company, url) is not ok
+
+
+def test_empty_scrape_rows_are_never_parked():
+    """A company in this market can have zero openings for a month and still be a healthy
+    source. Parking an active scrape row after a 3-day EMPTY streak retired good companies
+    and made the next role posted there invisible. Only ERRORS park a row now; a long empty
+    streak just asks triage to re-read the page, and the row stays active and scanned."""
+    import ast
+    import refresh_scrape_cache as R
+    src = open(R.__file__, encoding="utf-8").read()
+    assert "EMPTY_REVALIDATE_DAYS" in src, "the empty-streak path was removed entirely"
+    tree = ast.parse(src)
+    # locate the `if jobs is None:` (error) branch; parked.append must occur only inside it
+    park_lines = [n.lineno for n in ast.walk(tree)
+                  if isinstance(n, ast.Attribute) and n.attr == "append"
+                  and isinstance(n.value, ast.Name) and n.value.id == "parked"]
+    err = [n for n in ast.walk(tree) if isinstance(n, ast.If)
+           and isinstance(n.test, ast.Compare) and getattr(n.test.left, "id", "") == "jobs"]
+    assert err, "error branch not found"
+    lo = err[0].lineno
+    hi = max(getattr(x, "lineno", 0) for x in ast.walk(err[0]))   # operators carry no lineno
+    assert park_lines, "nothing parks at all — error rot detection lost"
+    for ln in park_lines:
+        assert lo <= ln <= hi, f"parked.append at line {ln} is outside the ERROR branch"
+
+
+def test_rot_parking_path_has_no_undefined_name():
+    """`_write_csv_rows` (undefined) sat on the parking path, so every run that had a rotted
+    row raised NameError *after* writing the cache — looking successful while never parking
+    anything. Compile-level guard: the module must reference only names it defines/imports."""
+    import ast
+    import builtins
+    src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "refresh_scrape_cache.py"), encoding="utf-8").read()
+    tree = ast.parse(src)
+    defined = set(dir(builtins))
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            defined.update((a.asname or a.name).split(".")[0] for a in node.names)
+        elif isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+            defined.add(node.name)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            defined.add(node.id)
+        elif isinstance(node, ast.arg):
+            defined.add(node.arg)
+    used = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
+    assert not (used - defined), f"undefined names: {sorted(used - defined)}"
+
+
 def test_registry_is_structurally_sound():
     """Cheap end-to-end guard: the real companies.csv must pass every invariant."""
     import subprocess

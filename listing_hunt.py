@@ -31,6 +31,7 @@ from deep_validate import Renderer, ddg
 from audit_empty_rows import AGG
 from pipeline.aggregators import is_aggregator
 from pipeline.recruiters import is_recruiter
+from pipeline.company_identity import is_foreign
 from resolve_llm import _ask_claude
 from pipeline.atomic import write_csv_rows
 
@@ -110,7 +111,7 @@ def hunt_one(name, seed, documented=False, mode=""):
             il = [j for j in (scrape(name, seed) or []) if is_israel_job(j)]
         except Exception:  # noqa: BLE001
             il = []
-        if il:
+        if il and not is_foreign(name, seed):
             return ("found", seed, len(il), "fast-path")
     rebrand = ""
     if seed and not is_aggregator(seed):
@@ -170,6 +171,13 @@ def hunt_one(name, seed, documented=False, mode=""):
             jobs = []
         il = [j for j in jobs if is_israel_job(j)]
         if il and not is_aggregator(u):
+            # "Real Israel jobs are here" is NOT "these are THIS company's jobs". Without
+            # this check the search happily activated FairFly off fireflyspace.com (25
+            # roles), COTI off jobs.citi.com, and factify off a DuckDuckGo results page.
+            if is_foreign(name, u):
+                print(f"       (page belongs to another company -> {u[:60]}: not activated)",
+                      flush=True)
+                return ("nolisting", u, 0, f"page belongs to another company ({u[:48]})")
             return ("found", u, len(il), "")
     # DOCUMENT where we looked: the best candidate page survives in the row so future
     # re-hunts and humans check the right place (a real board with 0 IL roles today —
@@ -241,6 +249,16 @@ def main():
         return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days
 
     targets.sort(key=_hunt_age, reverse=True)
+    # HUNT_SHARD="i/n" splits the pool across n concurrent processes (1-based i). Striding
+    # rather than slicing keeps each shard's staleness mix even, so a shard that dies early
+    # doesn't leave one age band untouched. Each shard MUST run in its own working copy —
+    # two processes doing read-modify-write on companies.csv lose each other's rows — and the
+    # copies are merged back with merge_csv_rows.py against a common base.
+    shard = os.environ.get("HUNT_SHARD", "")
+    if shard:
+        i, n = (int(x) for x in shard.split("/"))
+        targets = targets[i - 1::n]
+        print(f"shard {i}/{n}: {len(targets)} of the pool", flush=True)
     if limit:
         targets = targets[:limit]
     print(f"listing-hunting {len(targets)} companies\n", flush=True)

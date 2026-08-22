@@ -24,6 +24,9 @@ _CONFIRMED = {
     "elad software systems",    # IT services + full-cycle IT recruitment/staffing
     # added 2026-08-21 (surfaced by Telegram-channel discovery):
     "experis", "experis israel", "experis academy israel",  # ManpowerGroup staffing brand
+    # Hebrew spellings: the registry carries agencies under their Hebrew names too, and a
+    # Latin-only list let one back in as an ACTIVE row after the English ones were purged.
+    "אקספריס", "אקספריס אקדמי", "מנפאואר", "אלעד מערכות", "ניסן דיגיטל", "אתגר",
     "abra", "abra rnd", "abra r&d",       # IT services/outsourcing; re-posts client roles
     "malamteam", "malam team",            # Malam-Team IT services/outsourcing
     "yael group", "yael korentec technologies",  # IT services group; client placements

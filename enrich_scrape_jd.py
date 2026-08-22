@@ -15,13 +15,15 @@ Notes:
   url/job_id (refresh_scrape_cache.py), so enrichment is not wiped and the Unlocker budget
   is not re-burned. Only genuinely new cards arrive empty and get enriched here.
 
-Env: JD_ENRICH_CAP (default 200 jobs/run) · JD_ENRICH_BD_CAP (default 40 Unlocker calls/run)
+Env: JD_ENRICH_TIME_BUDGET_MIN (default 25) is the real limit — the count caps
+     JD_ENRICH_CAP (2000) / JD_ENRICH_BD_CAP (400) are only runaway backstops.
 """
 from __future__ import annotations
 
 import datetime as dt
 import json
 import os
+import time
 import re
 import urllib.request
 
@@ -76,8 +78,14 @@ def extract_jd(html):
 
 def main():
     _load_secrets()
-    cap = int(os.environ.get("JD_ENRICH_CAP", "200"))
-    bd_cap = int(os.environ.get("JD_ENRICH_BD_CAP", "40"))
+    # Count caps were the binding constraint and left old roles permanently un-enriched: the
+    # backlog is walked in cache order, so the same head got re-attempted while the tail was
+    # never reached. Budget by TIME instead — do as much as fits, bounded by the digest's
+    # own timeout — and keep the count caps only as a runaway backstop.
+    cap = int(os.environ.get("JD_ENRICH_CAP", "2000"))
+    bd_cap = int(os.environ.get("JD_ENRICH_BD_CAP", "400"))
+    budget_min = int(os.environ.get("JD_ENRICH_TIME_BUDGET_MIN", "25"))
+    t0 = time.time()
     bd_ok = bool(os.environ.get("BRIGHTDATA_API_KEY") and os.environ.get("BRIGHTDATA_ZONE"))
     today = dt.date.today().isoformat()
     retry_before = (dt.date.today() - dt.timedelta(days=_RETRY_DAYS)).isoformat()
@@ -89,9 +97,13 @@ def main():
         return
 
     n_done = n_bd = n_fail = n_skip = 0
+    def _spent():
+        return n_done + n_fail >= cap or (budget_min and (time.time()-t0)/60 > budget_min)
     for comp, jobs in cache.items():
+        if _spent():
+            break
         for j in jobs or []:
-            if n_done + n_fail >= cap:
+            if n_done + n_fail >= cap or (budget_min and (time.time()-t0)/60 > budget_min):
                 break
             if not isinstance(j, dict) or (j.get("description") or "").strip():
                 continue
