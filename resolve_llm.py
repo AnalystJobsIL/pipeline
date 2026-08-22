@@ -26,7 +26,7 @@ import urllib.request
 from pipeline.fetchers import FETCHERS, fetch_company
 from pipeline.israel import is_israel_job
 
-AGGREGATORS = ("linkedin.", "indeed.", "glassdoor.")
+from pipeline.aggregators import HOSTS as AGGREGATORS, is_aggregator as _is_agg
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 # high-signal strings worth surfacing verbatim to the model
@@ -80,8 +80,7 @@ def _fetch_html(url, timeout=25, cap=300_000):
 
 
 def _is_aggregator(url):
-    host = urllib.parse.urlparse(url or "").netloc.lower()
-    return any(a in host for a in AGGREGATORS)
+    return _is_agg(url)   # shared blocklist (pipeline/aggregators.py)
 
 
 def _serp_candidates(name, limit=5):

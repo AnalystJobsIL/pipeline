@@ -510,7 +510,7 @@ NeoGames,scrape,https://www.neogames.com/careers/,https://www.neogames.com/caree
 Supersonic Studios,scrape,,https://supersonic.com/careers/,true,listing-hunt 2026-08-22: verified 1 IL via https://supersonic.com/careers/
 Hour One,scrape,https://hourone.ai/careers/,https://hourone.ai/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-22 (conn-dead)
 Shopic,scrape,,https://www.shopic.co/career/,true,listing-hunt 2026-08-22: verified 3 IL via https://www.shopic.co/career/
-SuperSmart,scrape,https://www.supersmart.me/careers,https://www.supersmart.me/careers,false,deep-validated 2026-08-21: unsupported ATS icims.com | crack-walled 2026-08-22: nocapture
+SuperSmart,scrape,https://www.supersmart.me/careers,https://www.supersmart.me/careers,false,deep-validated 2026-08-21: unsupported ATS icims.com
 Air Doctor,scrape,https://www.air-dr.com/careers/,https://www.air-dr.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Remilk,scrape,https://www.remilk.com/careers,https://www.remilk.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Incredo (DouxMatok),scrape,https://incredo.co/careers/,https://incredo.co/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
@@ -987,7 +987,7 @@ Watergen,scrape,https://www.watergen.com/careers/,https://www.watergen.com/caree
 Kando,bamboohr,kandou,https://kandou.bamboohr.com/careers/list,true,re-audit 2026-08-21: deep-verified 27/0 IL (was dark)
 Prospera Technologies,scrape,https://www.prospera.ag/careers,https://www.prospera.ag/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-22 (conn-dead)
 Tevel Aerobotics,scrape,https://www.tevel-tech.com/careers/,https://www.tevel-tech.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
-SupPlant,scrape,https://supplant.me/careers/,https://careers.workable.com/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS phenom | crack-walled 2026-08-22: host documented, 0 IL now"
+SupPlant,scrape,https://supplant.me/careers/,https://careers.workable.com/careers?location=Israel,false,deep-validated 2026-08-21: unsupported ATS phenom
 Caja Robotics,scrape,https://www.cajarobotics.com/careers/,https://www.cajarobotics.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Lumus,scrape,https://lumusvision.com/careers/,https://lumusvision.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 WeSpace Technologies,scrape,https://www.wespace.co.il/careers,https://www.wespace.co.il/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-22 (dns-dead)

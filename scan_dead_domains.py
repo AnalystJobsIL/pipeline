@@ -81,9 +81,16 @@ def main():
             dead += 1
             print(f"  [DEAD] {r[0][:32]} ({why}) {r[3][:60]}", flush=True)
             if apply:
-                rows[i][5] = (r[5] + f" | domain-dead {TODAY} ({why})")[:220]
+                # single-writer discipline: re-read + match by name. Writing the
+                # start-of-run snapshot here silently REVERTED revivals cleared earlier
+                # in the same run, while still logging them as successful.
+                fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+                for fr in fresh:
+                    if fr and fr[0] == r[0] and len(fr) > 5:
+                        base = re.sub(r"\s\|\s?domain-dead [^|]*", "", fr[5] or "").strip(" |")
+                        fr[5] = (base + f" | domain-dead {TODAY} ({why})")[:220]
                 csv.writer(open("companies.csv", "w", encoding="utf-8",
-                                newline="")).writerows(rows)
+                                newline="")).writerows(fresh)
     print(f"=== {dead} dead, {revived} revived of {len(targets)} checked ===", flush=True)
 
 

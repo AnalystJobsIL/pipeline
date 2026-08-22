@@ -14,6 +14,7 @@ import json
 import os
 from urllib.parse import urlparse
 
+from pipeline.aggregators import is_aggregator as _is_agg_url
 from pipeline.companies import CSV_PATH, load_companies
 from resolve_deep import resolve
 
@@ -61,9 +62,7 @@ def main():
         if kind == "scrape":
             _j2, _scrape_url = r[1] if isinstance(r[1], tuple) else (r[1], url)
         needs_llm = (kind in ("empty", "unreachable")
-                     or (kind == "scrape"
-                         and any(a in urlparse(_scrape_url).netloc.lower()
-                                 for a in ("linkedin.", "indeed.", "glassdoor."))))
+                     or (kind == "scrape" and _is_agg_url(_scrape_url)))
         if needs_llm and llm_available:
             if llm_budget <= 0:
                 n_defer += 1
