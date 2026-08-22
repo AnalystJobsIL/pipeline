@@ -56,7 +56,8 @@ jobs:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          TRIAGE_LLM_CAP: "200"
+          SCRAPE_VIA_UNLOCKER: "1"   # a 403 must not be read as "page has no roles"
+          TRIAGE_LLM_CAP: "400"      # 200 capped below the 352-row dark pool
           TRIAGE_TIME_BUDGET_MIN: "150"
         run: |
           ARGS="--apply --render --limit ${{ github.event.inputs.limit || '0' }}"

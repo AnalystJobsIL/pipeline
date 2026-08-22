@@ -44,21 +44,41 @@ jobs:
       # extract-gap = triage confirmed roles ARE on the stored URL and our extractor missed
       # them. No search needed, so this is the cheapest dark-row mode to repair — and running
       # it FIRST removes those rows from the hunt's pool below.
+      # A hostname with no DNS record cannot be rendered, unlocked or cracked — there is
+      # nothing there. It can only be fixed by SEARCHING for the real careers page, so this
+      # must run BEFORE the hunt or the hunt spends its budget on addresses that don't exist.
+      - name: Repair rows whose stored hostname does not resolve
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          REPAIR_URL_TIME_BUDGET_MIN: "30"
+        run: python repair_dead_urls.py --apply
+        continue-on-error: true
+
       - name: Repair extract-gap rows (re-scrape known URLs with the LLM tier forced)
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           REPAIR_TIME_BUDGET_MIN: "35"
           SCRAPE_LLM: "1"
+          SCRAPE_VIA_UNLOCKER: "1"   # these pages 429/403 a datacenter IP; residential wins
         run: python repair_extract_gap.py --apply
         continue-on-error: true
 
       - name: Hunt listings
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # the hunt had NO Bright Data credentials, so google_via_unlocker — its only
+          # fallback when DuckDuckGo returns nothing — could never run in the cloud
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           HUNT_LIMIT: ${{ github.event.inputs.limit || '0' }}
           HUNT_TIME_BUDGET_MIN: "200"   # leaves ~90 min for the re-crack step + commit
           FAST_SCRAPE: "1"
           SCRAPE_LLM: "1"
+          SCRAPE_VIA_UNLOCKER: "1"
         run: python listing_hunt.py --apply
         continue-on-error: true
       - name: Re-crack walled-ATS rows (daily; hosts already documented)
@@ -67,7 +87,8 @@ jobs:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           SCRAPE_LLM: "1"
-          CRACK_LIMIT: "25"
+          SCRAPE_VIA_UNLOCKER: "1"
+          CRACK_LIMIT: "400"            # 61 companies sit on walled ATSes; 25 never cleared it
           CRACK_TIME_BUDGET_MIN: "60"
         run: python crack_walled.py --apply || echo "re-crack skipped"
         continue-on-error: true

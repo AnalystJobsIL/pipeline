@@ -116,11 +116,21 @@ def crack_one(name, seed, platform):
                         and not is_aggregator(lu) and lu not in visited):
                     queue.append(lu)
     if not captures and platform in ("phenom", "eightfold") and cands:
-        # canonical guess from the company's own domain; verification gates correctness
+        # Canonical guess from the company's own domain. "Verification gates correctness"
+        # was only half true: the guess failed verification but was still PERSISTED as the
+        # row's api_url, so 34 companies ended up pointing at a hostname that does not
+        # exist (careers.pliops.com, careers.tevapharm.com, careers.lili.co — all NXDOMAIN)
+        # and every later tool faithfully re-tested the fabrication. Resolve DNS first.
+        import socket
         d = urllib.parse.urlparse(cands[0]).netloc.replace("www.", "")
         base = ".".join(d.split(".")[-2:])
-        captures = [("scrape", f"https://careers.{base}/careers?location=Israel"),
-                    ("scrape", f"https://careers.{base}/careers")]
+        for h in (f"careers.{base}", f"jobs.{base}"):
+            try:
+                socket.gethostbyname(h)
+            except OSError:
+                continue
+            captures += [("scrape", f"https://{h}/careers?location=Israel"),
+                         ("scrape", f"https://{h}/careers")]
     if not captures:
         return ("nocapture", None, 0, "ATS host not seen in render")
     os.environ["SCRAPE_ASSUME_IL"] = "1"

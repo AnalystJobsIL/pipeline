@@ -131,10 +131,17 @@ def hunt_one(name, seed, documented=False, mode=""):
                         f"(rebrand vs acquisition) before activating")
             seed = final
             print(f"       (rebrand detected -> {rebrand})", flush=True)
-    cands = [] if not seed or is_aggregator(seed) else [seed]
+    # `mode` was passed in but never read — the docstring above promised strategy routing
+    # that did not exist. It matters most here: only cands[:2] are harvested, so for a
+    # `url-dead` row the dead seed consumed half the budget and left ONE search result.
+    seed_is_bad = mode in ("url-dead", "wrong-page", "no-url")
+    cands = [] if (not seed or is_aggregator(seed) or seed_is_bad) else [seed]
     if rebrand:
         cands += [f"https://{rebrand}/careers", f"https://{rebrand}/careers/"]
     cands += [u for u in ddg(f"{name} jobs") if u not in cands]
+    if seed_is_bad and seed:
+        # keep the dead seed as a LAST resort: triage may have been wrong about it
+        cands.append(seed)
     if len(cands) < 2:                     # DDG blocked/empty (datacenter IPs) — paid fallback
         cands += [u for u in google_via_unlocker(f"{name} careers") if u not in cands]
     links, reachable = [], False

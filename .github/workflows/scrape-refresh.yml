@@ -45,6 +45,13 @@ jobs:
           # can parse silently yield 0 here and the row rots despite having roles
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           SCRAPE_LLM: "1"
+          # A page that 403s a datacenter IP looked identical to "no roles" here, so
+          # bot-walled companies scored an empty scrape every night. scrape_universal has
+          # had a residential-unlocker fallback all along, gated behind this flag, which
+          # was set in NO workflow — so it had never once fired in production.
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          SCRAPE_VIA_UNLOCKER: "1"
         run: python refresh_scrape_cache.py
 
       - name: Commit updated cache
