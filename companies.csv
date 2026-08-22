@@ -402,8 +402,8 @@ Centraleyes,scrape,,https://www.centraleyes.com/careers/,true,listing-hunt 2026-
 Nokod Security,scrape,,https://careers.meron.co/companies/nokod-security#content,true,listing-hunt 2026-08-22: verified 4 IL via https://careers.meron.co/companies/nokod-security#content
 Reflectiz,comeet,CA.008,https://www.comeet.com/careers-api/2.0/company/CA.008/positions?token=AC84B7840B035E82058AC8564035E856402058,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 AlgoSec,scrape,,https://www.algosec.com/company/careers/find-a-job,true,listing-hunt 2026-08-22: verified 21 IL via https://www.algosec.com/company/careers/find-a-job
-CyberArk,workday,paloaltonetworks/panwexternalcareers,https://paloaltonetworks.wd5.myworkdayjobs.com/wday/cxs/paloaltonetworks/panwexternalcareers/jobs,false,audit false-match reverted (serp returned another company: PANW/Thales); needs manual resolution
-Imperva,workday,thales/Careers,https://thales.wd3.myworkdayjobs.com/wday/cxs/thales/Careers/jobs,false,audit false-match reverted (serp returned another company: PANW/Thales); needs manual resolution
+CyberArk,workday,paloaltonetworks/panwexternalcareers,https://paloaltonetworks.wd5.myworkdayjobs.com/wday/cxs/paloaltonetworks/panwexternalcareers/jobs,false,acquired by Palo Alto Networks — its careers page now links jobs.paloaltonetworks.com; roles covered by the active PANW row (149 IL). Not a false match after all.
+Imperva,workday,thales/Careers,https://thales.wd3.myworkdayjobs.com/wday/cxs/thales/Careers/jobs,false,acquired by Thales — roles covered by the active Thales row (14 IL). Not a false match after all.
 Anjuna Security,scrape,https://www.anjuna.io/careers,https://www.anjuna.io/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Terafence,scrape,https://terafence.com/careers/,https://terafence.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Trullion,comeet,07.000,https://www.comeet.com/careers-api/2.0/company/07.000/positions?token=7002A00E003F002A007002A0002A002A00,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
@@ -1179,3 +1179,4 @@ Reco,scrape,https://secrethunter.io/jobz/905e09a0e1,https://secrethunter.io/jobz
 sett,scrape,https://secrethunter.io/jobz/de0d102f51,https://secrethunter.io/jobz/de0d102f51,false,scanned; no open Israel roles now
 autods,scrape,https://secrethunter.io/jobz/58064ac499,https://secrethunter.io/jobz/58064ac499,false,scanned; no open Israel roles now
 Primis Tech,scrape,https://secrethunter.io/jobz/b5c8c9b04f,https://secrethunter.io/jobz/b5c8c9b04f,false,scanned; no open Israel roles now
+Thales,workday,thales/Careers,https://thales.wd3.myworkdayjobs.com/wday/cxs/thales/Careers/jobs,true,added 2026-08-22: Imperva acquirer; verified 15/14 IL
