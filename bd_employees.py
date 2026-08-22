@@ -183,6 +183,10 @@ def main():
         if is_division_name(name):
             strong = False
         rec = recs[name]
+        if not strong and "size_band_pre_linkedin" not in rec:
+            # snapshot the researcher's band so a later quarantine restores it instead of
+            # wiping evidence the suspect page never touched
+            rec["size_band_pre_linkedin"] = rec.get("size_band") or ""
         # weak (name-fragment) title matches are exactly how generic names land on a
         # namesake's page — mark them so the LLM verify pass ALWAYS re-checks them
         rec["employees_source"] = "linkedin" if strong else "linkedin-weakmatch"

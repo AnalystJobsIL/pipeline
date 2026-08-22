@@ -165,6 +165,7 @@ def main():
             rec["employees_source"] = f"web: {out['source']}" + (" (estimate)" if out["is_estimate"] else "")
             rec["employees_as_of"] = today
             rec.pop("employees_lookup_miss", None)
+            rec.pop("size_band_pre_linkedin", None)  # verified: snapshot no longer needed
             st.save_firmographics({c: rec}, today)
             fixed += 1
             print(f"  ok   {c}: {out['employees']}{' ~' if out['is_estimate'] else ''} ({out['source']})", flush=True)
@@ -179,7 +180,9 @@ def main():
                 # confirm — an honest null beats a namesake's number served forever
                 rec["employees_global"] = None
                 rec.pop("employees_range", None)
-                rec["size_band"] = ""
+                # restore the band the record had BEFORE the LinkedIn fill — quarantine
+                # removes wrong-page data, not the researcher's own evidence
+                rec["size_band"] = rec.pop("size_band_pre_linkedin", "") or ""
                 rec["employees_source"] = "linkedin-weakmatch-quarantined"
                 print(f"  quarantined weak-match count for {c}", flush=True)
             rec["employees_lookup_miss"] = today

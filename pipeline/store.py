@@ -255,14 +255,20 @@ class SeenStore:
     def revoke_firmo_failures(self, companies, run_date):
         """Undo TODAY's strikes for these names — used by the mass-failure guard when a
         whole run produced nothing (soft outage: exit-0 prose, broken tool grant), which
-        is evidence about the infrastructure, not about 50 company names."""
+        is evidence about the infrastructure, not about 50 company names.
+
+        For repeat-strike names, `last` must be pushed back out of the weekly gate window
+        too — gating keys on `last` alone, so merely decrementing `attempts` would keep
+        the whole retry cohort gated another 7 days on a run that proved nothing."""
+        import datetime as _dt
+        ungated = (_dt.date.fromisoformat(run_date) - _dt.timedelta(days=8)).isoformat()
         for c in companies:
             self.conn.execute(
                 "DELETE FROM firmo_failed WHERE company=? AND last=? AND attempts<=1",
                 (c, run_date))
             self.conn.execute(
-                "UPDATE firmo_failed SET attempts=attempts-1 WHERE company=? AND last=?",
-                (c, run_date))
+                "UPDATE firmo_failed SET attempts=attempts-1, last=? WHERE company=? AND last=?",
+                (ungated, c, run_date))
         self.conn.commit()
 
     # ---- matched roles (rolling windows for email 48h / board 2 weeks) ------

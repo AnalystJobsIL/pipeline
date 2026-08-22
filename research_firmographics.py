@@ -35,6 +35,7 @@ from pipeline.store import SeenStore
 HERE = os.path.dirname(os.path.abspath(__file__))
 POC = os.path.join(HERE, "poc_firmographics.json")
 EXPORT = os.path.join(HERE, "state", "firmographics.json")
+REFRESH_CAP = 20  # stale-record refreshes per run; 4 chain runs/day -> full store ~10 days
 
 
 def fetch_cloud_db():
@@ -131,20 +132,27 @@ def main():
     # "SolarEdge Technologies" are one company — don't research (and pay for) both
     have_norms = {identity_key(n) for n in have}
     todo, seen_norms = [], set()
+    stale_pick = {}  # identity group -> its STALEST variant (rotates variants over passes)
     for n in names:
         nn = identity_key(n)
         if n in have:
-            # refresh at most ONE variant per identity group — the store holds duplicate
-            # name-forms (Intel/Intel Israel/Intel Corporation); a --refresh-days pass
-            # must not pay for each of them separately
-            if is_stale(have[n], a.refresh_days) and nn not in seen_norms:
-                seen_norms.add(nn)
-                todo.append(n)
+            if is_stale(have[n], a.refresh_days):
+                cur = stale_pick.get(nn)
+                if cur is None or have[n].get("as_of", "") < have[cur].get("as_of", ""):
+                    stale_pick[nn] = n
             continue
         if nn in have_norms or nn in seen_norms:
             continue  # a variant of an already-profiled (or already-queued) company
         seen_norms.add(nn)
         todo.append(n)
+    # rolling refresh: stalest first, capped per run — the whole store shares a birth
+    # date, so an uncapped refresh would try ~770 researches in one chain run. One
+    # stalest variant per group per pass also rotates through variant records over time.
+    refresh = sorted(stale_pick.values(), key=lambda n: have[n].get("as_of", ""))[:REFRESH_CAP]
+    if refresh:
+        print(f"refreshing {len(refresh)} stale records (cap {REFRESH_CAP}/run)")
+    seen_norms.update(identity_key(n) for n in refresh)
+    todo.extend(refresh)
     # names that keep failing (junk from discovery, ambiguous) retry at most WEEKLY so
     # they don't re-spend a web-search claude call every 6-hour chain run forever
     failures = st.load_firmo_failures()
