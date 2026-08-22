@@ -127,6 +127,14 @@ class SeenStore:
                 record      TEXT,
                 updated     TEXT
             )""")
+        # failure memory for firmographics research: permanently failing names (junk from
+        # discovery, ambiguous names) must not capture the per-run research budget forever
+        self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS firmo_failed (
+                company     TEXT PRIMARY KEY,
+                attempts    INTEGER,
+                last        TEXT
+            )""")
         # Full display record of every matched role, keyed by company|title, with the date
         # we FIRST saw it. Powers the rolling windows: email = first_seen within 48h,
         # board = first_seen within 14 days.
@@ -229,6 +237,19 @@ class SeenStore:
                    updated=excluded.updated""",
                 (company, _json.dumps(rec, ensure_ascii=False), run_date),
             )
+        self.conn.commit()
+
+    def load_firmo_failures(self):
+        """Return {company: (attempts, last_iso_date)} of failed research attempts."""
+        cur = self.conn.execute("SELECT company, attempts, last FROM firmo_failed")
+        return {c: (a, l) for c, a, l in cur.fetchall()}
+
+    def record_firmo_failure(self, company, run_date):
+        self.conn.execute(
+            """INSERT INTO firmo_failed (company, attempts, last) VALUES (?,1,?)
+               ON CONFLICT(company) DO UPDATE SET attempts=attempts+1, last=excluded.last""",
+            (company, run_date),
+        )
         self.conn.commit()
 
     # ---- matched roles (rolling windows for email 48h / board 2 weeks) ------

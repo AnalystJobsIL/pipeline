@@ -20,12 +20,18 @@ import datetime as dt
 import json
 import os
 import re
+import sys
 import time
 import urllib.request
 
+from pipeline.firmographics import band_for
 from pipeline.store import SeenStore
 
+# chain redirects stdout to a file -> cp1252 on Windows -> Hebrew names crash prints
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
+RETRY_MISS_DAYS = 30  # a name both passes failed on is retried monthly, not every 6h
 
 
 def _load_secrets():
@@ -67,12 +73,7 @@ def slug_candidates(name):
     return cands[:3]
 
 
-# LinkedIn's self-reported size buckets -> our size_band
-_BUCKETS = [(200, "S"), (1000, "M"), (5000, "L"), (10 ** 9, "XL")]
-
-
-def band_for(n):
-    return next(b for cap, b in _BUCKETS if n < cap)
+# size_band derivation lives in pipeline.firmographics.band_for (canonical)
 
 
 def parse_page(html, name):
@@ -107,7 +108,10 @@ def main():
     limit = int(os.environ.get("BD_LIMIT", "60"))
     st = SeenStore()
     recs = st.load_firmographics()
-    targets = sorted(c for c, r in recs.items() if not r.get("employees_global"))[:limit]
+    retry_cutoff = (dt.date.today() - dt.timedelta(days=RETRY_MISS_DAYS)).isoformat()
+    targets = sorted(c for c, r in recs.items()
+                     if not r.get("employees_global")
+                     and not (r.get("employees_lookup_miss") or "") > retry_cutoff)[:limit]
     today = dt.date.today().isoformat()
     print(f"linkedin employee lookup for {len(targets)} companies ...")
     got = rng_only = miss = 0
@@ -133,8 +137,7 @@ def main():
             rec["employees_range"] = rng
         if count:
             rec["employees_global"] = count
-            if not rec.get("size_band"):
-                rec["size_band"] = band_for(count)
+            rec["size_band"] = band_for(count)  # ALWAYS re-derive — a stale band contradicts the count
             got += 1
             print(f"  ok   {name}: {count} employees" + (f" (bucket {rng})" if rng else ""), flush=True)
         else:

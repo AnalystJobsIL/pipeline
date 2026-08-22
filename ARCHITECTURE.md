@@ -453,6 +453,37 @@ out-of-enum stage, or an implausible number is dropped entirely (`_coerce` retur
 a failure is retried on a later pass, junk is never cached. The researcher is instructed
 to answer null over guessing; the fill passes below close the nulls.
 
+**Retry throttles (quota protection, added after adversarial review 2026-08-22):**
+research failures land in the `firmo_failed` table (both the bulk script and the run.py
+hook consult it) and retry at most **weekly** — so ambiguous names can't re-spend a
+web-search call every chain run or capture the hook's 5-per-run budget. Companies whose
+employee count neither fill pass could establish get `employees_lookup_miss` stamped on
+the record and retry **monthly**. Anything that writes `employees_global` must re-derive
+`size_band` via `pipeline.firmographics.band_for` — the researcher's `_coerce` and both
+fill passes all do; a band/count contradiction means someone bypassed it. All three
+chain scripts force UTF-8 stdout (`sys.stdout.reconfigure`): under the scheduled task
+stdout is a redirected file, Windows picks cp1252, and a Hebrew company name in a print
+used to kill the whole stage.
+
+**Failure-classification semantics (wave-2 review):** `research_company` distinguishes
+the NAME failing (model answers unknown / junk / validation reject → returns None →
+caller records a `firmo_failed` strike) from the INFRASTRUCTURE failing (CLI logged out,
+timeout, network → raises `ResearchUnavailable` → caller records **nothing**; the bulk
+script and web fill abort after 3 consecutive, the run.py hook stops its loop). Without
+this, one expired-login chain run at 03:00 stamped week/month gates onto the entire
+pending backlog.
+
+**Identity rules (wave-2 review):** leaked job-title "companies" ("Sql developer - X",
+"my team") are pre-filtered by `firmographics.looks_like_junk` — never researched; the
+earlier claim that research "correctly fails" them was false (the model profiles the
+company mentioned *inside* the string, creating a duplicate under the junk key).
+Company identity is **normalized** (`store._norm_company`) when targeting research and
+when `company_type_analysis` joins jobs to profiles — "SolarEdge" and "SolarEdge
+Technologies" are one company; 9 such duplicate pairs were merged on 2026-08-22.
+Re-research of an existing record **merge-preserves** the `employees_*` fields the fill
+passes paid for whenever the fresh record has no count of its own — `--refresh-days`
+must never regress established counts to null.
+
 ### Collection & re-collection (three layers, all idempotent)
 
 1. **Bulk / catch-up** — `research_firmographics.py` researches every company that is
@@ -494,8 +525,9 @@ that table when a new sector variant fragments the grouping; don't edit stored r
 ### Known limitations
 
 - Discovery sometimes leaks **job titles or categories as company names** ("AppSec",
-  "my team", "Sql developer - …"); the researcher correctly fails them, but they sit as
-  permanent retry noise until the discovery-side parser is fixed.
+  "my team", "Sql developer - …"); `looks_like_junk` pre-filters the title-shaped ones
+  for free, but bare category words ("AppSec") pass the filter and burn weekly-gated
+  research attempts until the discovery-side parser is fixed.
 - "Discovery"-class **ambiguous names** can't be researched safely without JD context;
   the run.py hook passes context, the bulk script does not.
 - Employee counts for acquired subsidiaries are the **unit's** approximate headcount

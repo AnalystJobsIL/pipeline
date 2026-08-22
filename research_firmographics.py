@@ -20,11 +20,16 @@ import argparse
 import datetime as dt
 import json
 import os
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# the 6-hourly chain redirects stdout to a log file, which makes Python pick cp1252 on
+# Windows — a Hebrew company name in a print then kills the whole run (UnicodeEncodeError)
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 from pipeline.companies import load_companies
-from pipeline.firmographics import research_company
-from pipeline.store import SeenStore
+from pipeline.firmographics import ResearchUnavailable, looks_like_junk, research_company
+from pipeline.store import SeenStore, _norm_company
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 POC = os.path.join(HERE, "poc_firmographics.json")
@@ -89,8 +94,35 @@ def main():
         board = [r[0] for r in con.execute("SELECT DISTINCT company FROM matched")]
         con.close()
         names += [n for n in board if n not in names]
-    todo = [n for n in names if n not in have or is_stale(have.get(n, {}), a.refresh_days)]
-    print(f"{len(names)} active companies, {len(have)} researched, {len(todo)} to do")
+    # leaked job titles ("Sql developer - X", "my team") are never companies: skip for
+    # free, forever — researching them profiles the embedded company under a junk key
+    junk = [n for n in names if looks_like_junk(n)]
+    if junk:
+        print(f"skipping {len(junk)} junk (job-title) names: {', '.join(junk[:5])}"
+              + (" ..." if len(junk) > 5 else ""))
+        names = [n for n in names if n not in set(junk)]
+    # identity is normalized (suffix/case-insensitive): "SolarEdge" and "SolarEdge
+    # Technologies" are one company — don't research (and pay for) both
+    have_norms = {_norm_company(n) for n in have}
+    todo, seen_norms = [], set()
+    for n in names:
+        nn = _norm_company(n)
+        if n in have:
+            if is_stale(have[n], a.refresh_days):
+                todo.append(n)
+            continue
+        if nn in have_norms or nn in seen_norms:
+            continue  # a variant of an already-profiled (or already-queued) company
+        seen_norms.add(nn)
+        todo.append(n)
+    # names that keep failing (junk from discovery, ambiguous) retry at most WEEKLY so
+    # they don't re-spend a web-search claude call every 6-hour chain run forever
+    failures = st.load_firmo_failures()
+    week_ago = (dt.date.today() - dt.timedelta(days=7)).isoformat()
+    gated = [n for n in todo if n in failures and failures[n][1] > week_ago]
+    todo = [n for n in todo if n not in gated]
+    print(f"{len(names)} active companies, {len(have)} researched, {len(todo)} to do"
+          + (f" ({len(gated)} recent-failure names gated to weekly retry)" if gated else ""))
     if a.dry_run or not todo:
         for n in todo:
             print("  -", n)
@@ -99,18 +131,45 @@ def main():
         todo = todo[: a.limit]
 
     done = failed = 0
+    infra_streak = 0
     with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
         futs = {ex.submit(research_company, name): name for name in todo}
         for fut in as_completed(futs):
             name = futs[fut]
-            rec = fut.result()
+            try:
+                rec = fut.result()
+            except ResearchUnavailable as e:
+                # infrastructure outage (CLI logged out, network): NOT the name's fault —
+                # no firmo_failed stamp, and 3 in a row means everything else will fail
+                # too, so stop burning the queue and let the next chain run retry cleanly
+                infra_streak += 1
+                print(f"UNAVAILABLE {name}: {e} (no failure recorded)")
+                if infra_streak >= 3:
+                    print("3 consecutive infrastructure errors — aborting run; nothing was gated")
+                    ex.shutdown(cancel_futures=True)
+                    break
+                continue
+            infra_streak = 0
             if rec:
+                if name in have:
+                    # merge-preserve: re-research must not destroy what the fill passes
+                    # paid for — keep an established count when the fresh record has none
+                    old = have[name]
+                    if not rec.get("employees_global") and old.get("employees_global"):
+                        for k in ("employees_global", "size_band", "employees_source",
+                                  "employees_as_of", "employees_range"):
+                            if old.get(k):
+                                rec[k] = old[k]
+                    if old.get("employees_lookup_miss") and not rec.get("employees_global"):
+                        rec["employees_lookup_miss"] = old["employees_lookup_miss"]
                 st.save_firmographics({name: rec}, today)  # main thread owns sqlite
                 done += 1
                 print(f"ok   {name}: {rec['sector']} / {rec.get('stage') or '?'} / {rec.get('size_band') or '?'}")
             else:
                 failed += 1
-                print(f"FAIL {name} (will retry next run)")
+                st.record_firmo_failure(name, today)
+                strikes = st.load_firmo_failures().get(name, (1, ""))[0]
+                print(f"FAIL {name} (strike {strikes}; weekly retry)")
     print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store")
 
 

@@ -27,8 +27,39 @@ import json
 import re
 import subprocess
 
-STAGES = {"public", "acquired-by-bigtech", "growth-private", "early-private"}
+# "growth-private" means venture/growth-STAGE — Bosch and EY are private but not that;
+# without "private-enterprise" the by_stage axis folds century-old giants into startup stats
+STAGES = {"public", "acquired-by-bigtech", "growth-private", "early-private", "private-enterprise"}
 SIZE_BANDS = {"S", "M", "L", "XL"}
+
+_BAND_CAPS = [(200, "S"), (1000, "M"), (5000, "L"), (10 ** 9, "XL")]
+
+
+def band_for(n):
+    """Canonical employee-count -> size_band mapping. Any code that writes
+    employees_global MUST re-derive size_band with this, or the two contradict."""
+    return next(b for cap, b in _BAND_CAPS if n < cap)
+
+
+class ResearchUnavailable(Exception):
+    """The research INFRASTRUCTURE failed (claude CLI missing/logged out, timeout,
+    network) — says nothing about the company name. Callers must NOT record a
+    per-name failure for this; a whole cohort would be gated by one outage."""
+
+
+# Discovery sometimes leaks job TITLES as company names ("Sql developer - X", "my team").
+# Researching those profiles the embedded company under the junk key (duplicate identity)
+# or hallucinates a match — so callers pre-filter with this and never spend a call.
+_JUNK_NAME = re.compile(
+    r"(?i)\b(developer|engineer(ing)?|scientist|researcher|analyst|architect|designer|"
+    r"manager|lead|specialist|consultant|intern|student|qa|devops|full[- ]?stack|"
+    r"back[- ]?end|front[- ]?end)\b.*([-–—@]|\bat\b)"   # role word + separator = title leak
+    r"|^(my team|our team|the team)$")
+
+
+def looks_like_junk(name):
+    """True when a 'company name' is really a leaked job title / team phrase."""
+    return bool(_JUNK_NAME.search(name or ""))
 
 
 def _is_windows():
@@ -43,7 +74,10 @@ _PROMPT = (
     '  "sector": short primary field, e.g. "cybersecurity", "fintech", "healthtech", '
     '"SaaS / productivity", "automotive / semiconductors"\n'
     '  "sub_sector": one-line niche description\n'
-    '  "stage": exactly one of "public", "acquired-by-bigtech", "growth-private", "early-private"\n'
+    '  "stage": exactly one of "public", "acquired-by-bigtech", "growth-private", '
+    '"early-private", "private-enterprise" — growth/early-private mean VENTURE-BACKED '
+    "startup stages; a long-established, family-, partner- or PE-owned private company "
+    '(Bosch, EY, a bank) is "private-enterprise"\n'
     '  "stage_note": one line of evidence (ticker / acquirer+year / last round+valuation)\n'
     '  "size_band": "S" (<200 employees), "M" (200-1000), "L" (1000-5000), "XL" (>5000) — global\n'
     '  "employees_global": integer or null if unknown\n'
@@ -55,7 +89,10 @@ _PROMPT = (
     '  "il_center": main Israel site(s), e.g. "Tel Aviv (HQ)" or "Haifa (R&D); HQ in US"\n'
     "Use web search if available to get CURRENT facts (headcount, acquisitions, funding); "
     "prefer recent numbers and never invent them — use null over a guess. "
-    "If you cannot identify the company at all, output exactly {{\"unknown\": true}}.\n\n"
+    "If you cannot identify the company at all, output exactly {{\"unknown\": true}}. "
+    "IMPORTANT: if the given string is not itself a company name (a job title, a team, a "
+    "category, a phrase), also output {{\"unknown\": true}} — never profile a company that "
+    "is merely mentioned INSIDE the string.\n\n"
     "Context from one of its job posts (may help, may be empty): {context}\n"
 )
 
@@ -76,6 +113,10 @@ def _coerce(rec, company):
     out["size_band"] = band if band in SIZE_BANDS else ""
     emp = rec.get("employees_global")
     out["employees_global"] = int(emp) if isinstance(emp, (int, float)) and 1 <= emp <= 5_000_000 else None
+    if out["employees_global"]:
+        # the invariant: a written count always re-derives the band — the model may pair a
+        # training-data-stale band with a freshly searched count
+        out["size_band"] = band_for(out["employees_global"])
     yr = rec.get("founded")
     # lower bound 1600, not 1900 — the list holds multinationals like Barclays (1690),
     # Merck (1668), Pfizer (1849); a too-tight clamp silently nulled all of them
@@ -85,11 +126,12 @@ def _coerce(rec, company):
 
 
 def research_company(company, context="", timeout=240):
-    """Return a validated firmographics dict for `company`, or None on any failure.
+    """Return a validated firmographics dict for `company`, or None if the NAME fails.
 
-    None (never a partial/junk record) on: claude CLI missing/not logged in, timeout,
-    non-JSON output, or the model answering unknown — so failures are retried on a
-    later run instead of poisoning the cache.
+    None (never a partial/junk record) when the model answers unknown, the output is
+    non-JSON prose, or validation rejects the record — callers may record a per-name
+    failure for these. Raises ResearchUnavailable for CLI/timeout/network problems —
+    callers must NOT blame the name for those (see the exception's docstring).
     """
     prompt = _PROMPT.format(company=company, context=(context or "")[:600])
     try:
@@ -98,10 +140,11 @@ def research_company(company, context="", timeout=240):
             input=prompt, capture_output=True, text=True,
             encoding="utf-8", errors="replace", timeout=timeout, shell=_is_windows(),
         )
-    except Exception:  # noqa: BLE001
-        return None
+    except Exception as e:  # noqa: BLE001 — CLI missing, timeout: infrastructure, not the name
+        raise ResearchUnavailable(str(e))
     if proc.returncode != 0:
-        return None
+        # logged-out / rate-limited CLI exits non-zero — also infrastructure
+        raise ResearchUnavailable((proc.stderr or proc.stdout or "")[:200])
     raw = (proc.stdout or "").strip()
     # tolerate a stray markdown fence or preamble: take the outermost {...}
     m = re.search(r"\{.*\}", raw, re.S)

@@ -229,15 +229,34 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # cached pattern as the blurbs above, but each call may web-search (~1-3 min), so cap
     # per run and let research_firmographics.py do bulk backfill.
     if use_llm:
+        import datetime as _dt
         firmo = st.load_firmographics()
-        missing = sorted(c for c in {j["company"] for j in board_jobs} if c not in firmo)
+        # failure memory: permanently failing names (junk/ambiguous) retry at most weekly,
+        # so they can't capture the fixed per-run budget and starve real new companies
+        failures = st.load_firmo_failures()
+        week_ago = (_dt.date.today() - _dt.timedelta(days=7)).isoformat()
+        # identity is normalized (§7): "SolarEdge Technologies" on the board must find the
+        # stored "SolarEdge" profile, and a failure strike on one variant gates the other
+        firmo_norms = {store._norm_company(c) for c in firmo}
+        failed_norms = {store._norm_company(c) for c, (att, last) in failures.items()
+                        if last > week_ago}
+        missing = sorted(c for c in {j["company"] for j in board_jobs}
+                         if c not in firmo
+                         and store._norm_company(c) not in firmo_norms
+                         and not firmographics_mod.looks_like_junk(c)
+                         and store._norm_company(c) not in failed_norms)
         for company in missing[:FIRMO_MAX_PER_RUN]:
             ctx = next((j.get("description") for j in board_jobs
                         if j["company"] == company and j.get("description")), "")
-            rec = firmographics_mod.research_company(company, ctx)
+            try:
+                rec = firmographics_mod.research_company(company, ctx)
+            except firmographics_mod.ResearchUnavailable:
+                break  # infrastructure outage: don't blame names, don't burn the budget
             if rec:
                 st.save_firmographics({company: rec}, run_date)
                 stats["firmographics_researched"] += 1
+            else:
+                st.record_firmo_failure(company, run_date)
 
     summary = {
         "companies_scanned": stats["companies_scanned"],

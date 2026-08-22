@@ -20,9 +20,16 @@ import datetime as dt
 import json
 import re
 import subprocess
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from pipeline.firmographics import ResearchUnavailable, band_for
 from pipeline.store import SeenStore
+
+# chain redirects stdout to a file -> cp1252 on Windows -> Hebrew names crash prints
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+RETRY_MISS_DAYS = 30  # a company neither pass could measure retries monthly, not every 6h
 
 _PROMPT = (
     "What is the current global employee count of the company \"{company}\"?\n"
@@ -68,10 +75,12 @@ def lookup(company, rec, timeout=240):
         proc = subprocess.run(["claude", "-p", "--allowedTools", "WebSearch"],
                               input=prompt, capture_output=True, text=True, encoding="utf-8",
                               errors="replace", timeout=timeout, shell=True)
-    except Exception:  # noqa: BLE001
-        return None
+    except Exception as e:  # noqa: BLE001 — infrastructure, not the company
+        raise ResearchUnavailable(str(e))
+    if proc.returncode != 0:
+        raise ResearchUnavailable((proc.stderr or proc.stdout or "")[:200])
     m = re.search(r"\{.*\}", (proc.stdout or ""), re.S)
-    if proc.returncode != 0 or not m:
+    if not m:
         return None
     try:
         out = json.loads(m.group(0))
@@ -92,7 +101,10 @@ def main():
 
     st = SeenStore()
     recs = st.load_firmographics()
-    targets = {c: r for c, r in recs.items() if not r.get("employees_global") or suspect(r)}
+    retry_cutoff = (dt.date.today() - dt.timedelta(days=RETRY_MISS_DAYS)).isoformat()
+    targets = {c: r for c, r in recs.items()
+               if (not r.get("employees_global") or suspect(r))
+               and not (r.get("employees_lookup_miss") or "") > retry_cutoff}
     print(f"{len(targets)} targets "
           f"({sum(1 for r in targets.values() if not r.get('employees_global'))} null, "
           f"{sum(1 for r in targets.values() if suspect(r))} suspect linkedin matches)")
@@ -104,20 +116,39 @@ def main():
         return
 
     today = dt.date.today().isoformat()
-    fixed = missed = 0
+    fixed = missed = infra_streak = 0
     with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
         futs = {ex.submit(lookup, c, r): c for c, r in targets.items()}
         for fut in as_completed(futs):
             c = futs[fut]
-            out = fut.result()
+            try:
+                out = fut.result()
+            except ResearchUnavailable as e:
+                # outage: no miss stamp — a 30-day gate for a whole cohort because the
+                # CLI was logged out at 03:00 would be a timeliness disaster
+                infra_streak += 1
+                print(f"  UNAVAILABLE {c}: {e} (no miss recorded)", flush=True)
+                if infra_streak >= 3:
+                    print("3 consecutive infrastructure errors — aborting; nothing was gated")
+                    ex.shutdown(cancel_futures=True)
+                    break
+                continue
+            infra_streak = 0
             if not out:
                 missed += 1
-                print(f"  miss {c}", flush=True)
+                # give-up marker: without it this company re-spends a web-search claude
+                # call (and up to 3 Bright Data credits upstream) every 6-hour chain run
+                rec = recs[c]
+                rec["employees_lookup_miss"] = today
+                st.save_firmographics({c: rec}, today)
+                print(f"  miss {c} (monthly retry)", flush=True)
                 continue
             rec = recs[c]
             rec["employees_global"] = out["employees"]
+            rec["size_band"] = band_for(out["employees"])  # keep band and count consistent
             rec["employees_source"] = f"web: {out['source']}" + (" (estimate)" if out["is_estimate"] else "")
             rec["employees_as_of"] = today
+            rec.pop("employees_lookup_miss", None)
             st.save_firmographics({c: rec}, today)
             fixed += 1
             print(f"  ok   {c}: {out['employees']}{' ~' if out['is_estimate'] else ''} ({out['source']})", flush=True)
