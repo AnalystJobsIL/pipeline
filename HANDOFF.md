@@ -101,6 +101,16 @@ WalkMe, Cloudinary, Port.io, Miggo, Thales. Roughly **1,400+ Israel jobs** enter
    `scrape_rot.json` are created on first write (both workflows `git add` them), and
    `merge_csv_rows.py` only fires on a push conflict. Verify they appear after the first
    full day; their absence after 2026-08-23 means the wiring failed.
+7. **CI conflict-recovery clobbers `cloud_state/seen.db` (found by adversarial audit
+   2026-08-22, cross-workflow — needs the workflow owner).** Every workflow's conflict
+   branch does `git reset --hard origin` then copies back its **checkout-era**
+   `cloud_state/` wholesale, row-merging only `companies.csv` — so a run that conflicts
+   hours after checkout silently reverts every `seen.db` row (sent/matched/llm_cache/
+   firmographics/firmo_failed) committed by other workflows in between; last-writer-wins.
+   Observed: a "row-merged state" commit fired within an hour of the mechanism shipping.
+   Damage today is bounded (firmographics self-heals at 5 calls/run; sent-table reverts
+   can re-email roles). Proper fix: merge seen.db at the table level (or copy ONLY the
+   artifacts this workflow owns), not a wholesale directory copy.
 
 ## 4b. Overnight-readiness fixes applied 2026-08-22 (pre-flight audit)
 
