@@ -52,6 +52,10 @@ jobs:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           SCRAPE_VIA_UNLOCKER: "1"
+          # ~850 active scrape rows now (130 validated-empty companies were activated on
+          # 2026-08-23). Stop with headroom under timeout-minutes: 330 so the cache is
+          # actually written and committed — a timeout discards the whole run.
+          SCRAPE_REFRESH_TIME_BUDGET_MIN: "260"
         run: python refresh_scrape_cache.py
 
       - name: Commit updated cache

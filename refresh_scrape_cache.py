@@ -6,6 +6,7 @@ without doing slow Playwright work itself. Shardable via --shard I N for paralle
 """
 import datetime as _dt
 import json
+import time
 import os
 import sys
 
@@ -53,7 +54,23 @@ def main():
     cache = {}
     parked = []
     revalidate = []
+    # ~850 active scrape rows against a 330-minute job timeout. The cache is built from
+    # scratch and only written AFTER the loop, so a timeout used to discard the entire run
+    # — hours of scraping, nothing saved. Stop cleanly with time to spare, then carry the
+    # UNPROCESSED companies over from the previous cache so a partial run still progresses
+    # (processed-and-empty companies are correctly dropped; only untouched ones carry).
+    budget = int(os.environ.get("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0"))
+    t0 = time.time()
+    done_names = set()
     for r in rows:
+        if budget and (time.time() - t0) / 60 > budget:
+            print(f"time budget {budget}min reached — carrying over "
+                  f"{len(rows) - len(done_names)} unprocessed companies", flush=True)
+            for rest in rows:
+                if rest["company_name"] not in done_names and rest["company_name"] in old:
+                    cache[rest["company_name"]] = old[rest["company_name"]]
+            break
+        done_names.add(r["company_name"])
         try:
             jobs = scrape(r["company_name"], r["api_url"])
         except Exception:  # noqa: BLE001
