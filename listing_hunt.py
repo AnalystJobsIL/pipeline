@@ -245,8 +245,11 @@ def main():
                     elif verdict == "nolisting" and url:
                         fr[3] = url                       # persist the candidate page
                         base = re.sub(r"\s\|\s?listing-hunt [^|]*", "", fr[5])
-                        fr[5] = (base + f" | listing-hunt {TODAY}: no IL listing; "
-                                 f"monitored candidate")[:220]
+                        # trim the BASE, never the verdict (slicing the whole string cut the
+                        # verdict off and left an unroutable row)
+                        v = f"listing-hunt {TODAY}: no IL listing; monitored candidate"
+                        room = 220 - len(v) - 3
+                        fr[5] = (f"{base[:room]} | {v}" if room > 20 else v)
                     else:
                         fr[5] = (re.sub(r"\s\|\s?listing-hunt [^|]*", "", fr[5])
                                  + f" | listing-hunt {TODAY}: "

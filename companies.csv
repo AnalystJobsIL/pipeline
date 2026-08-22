@@ -903,7 +903,7 @@ Navan,scrape,https://navan.com/careers,https://navan.com/careers,true,deep-scrap
 Firmus,greenhouse,firmus,https://boards-api.greenhouse.io/v1/boards/firmus/jobs,true,re-audit 2026-08-21: deep-verified 40/0 IL (was dark)
 QuamCore,scrape,,https://www.quamcore.com/careers,true,listing-hunt 2026-08-22: verified 1 IL via https://www.quamcore.com/careers
 Flytrex,scrape,,https://www.flytrex.com/careers,true,listing-hunt 2026-08-22: verified 11 IL via https://www.flytrex.com/careers
-Temi,scrape,,https://teaminc.rec.pro.ukg.net/TEA1500TEMI/JobBoard/a9bd01f6-f049-4ffa-851b-ec1d06dc206a,false,aggregator URL (builtin.com-class global listing) auto-parked 2026-08-22 — would attribute third-party jobs; needs real careers page | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22:
+Temi,scrape,,https://teaminc.rec.pro.ukg.net/TEA1500TEMI/JobBoard/a9bd01f6-f049-4ffa-851b-ec1d06dc206a,false,aggregator URL (builtin.com-class global listing) auto-parked 2026-08-22 — would attribute third-party jobs; needs real careers page | listing-hunt 2026-08-22: no IL listing; monitored candidate
 Track160,scrape,https://www.track160.com/careers,https://careers.track160.com/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS phenom | domain-dead 2026-08-22 (conn-dead) | crack-walled 2026-08-22: host documented, 0 IL now"
 EquityBee,workable,equitybee,https://apply.workable.com/api/v1/widget/accounts/equitybee?details=true,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 myInterview,scrape,https://www.myinterview.com/careers,https://myinterview.pinpointhq.com/,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (Pinpoint careers page (staging); O))
@@ -995,7 +995,7 @@ Iscar,scrape,https://www.iscar.com/careers,https://www.iscar.com/careers,false,d
 NVIDIA Israel,workday,nvidia/NVIDIAExternalCareerSite,https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs,true,deep-resolved; 40/39 IL
 Broadcom Israel,workday,broadcom/External_Career,https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Dell Israel,workday,dell/External,https://dell.wd1.myworkdayjobs.com/wday/cxs/dell/External/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
-PayPal Israel,scrape,https://paypal.eightfold.ai/careers,https://paypal.eightfold.ai/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS eightfold.ai | crack-walled 2026-08-22: host documented, 0 IL now | listing-hunt 2026-08-22"
+PayPal Israel,scrape,https://paypal.eightfold.ai/careers,https://paypal.eightfold.ai/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS eightfold.ai | crack-walled 2026-08-22: host documented, 0 IL now"
 Lam Research Israel,scrape,,https://careers.lamresearch.com/careers?location=Israel,true,crack-walled 2026-08-22: eightfold via scrape; verified 1 IL
 General Motors Israel,scrape,,https://search-careers.gm.com/en/locations/israel/,true,listing-hunt 2026-08-22: verified 2 IL via https://search-careers.gm.com/en/locations/israel/
 Imagene AI,comeet,D7.000,https://www.comeet.com/careers-api/2.0/company/D7.000/positions?token=7D02EE01F402710271004650177001770,true,re-audit 2026-08-21: deep-verified 3/2 IL (was dark)
