@@ -178,6 +178,63 @@ no continue-on-error).
    active rows scraping the same board.
 6. `mark_sent` records intent, not delivery — a relay failure burns roles as sent.
 
+## 4d. Infra inputs from the firmographics workstream — for the robustness/expandability phase
+
+What building §7 (and three adversarial-review waves over it) revealed about the
+infrastructure itself. Complements §4c's backlog; ordered by leverage.
+
+1. **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
+   every firmographics consumer to care *which* seen.db it reads, and open item 7 exists
+   because sqlite binaries can't git-merge. Direction: keep sqlite as a per-machine cache
+   and make the *committed* artifact a text export per table (JSON/JSONL — diffable,
+   row-mergeable with the `merge_csv_rows.py` pattern), or move shared state off git
+   entirely. Whatever the choice, "who owns which table" should be declared in one place.
+2. **Retire `companies.csv` as a database.** 20 writers, a state machine encoded in prose
+   verdict strings, six allowlist pools that must be updated in sync (the documented #1 bug
+   class), plus literal duplicate rows (Datadog/MongoDB/Elastic twice) and alias rows
+   (Meta/Meta Israel — §4c item 5). A registry table with an explicit state enum +
+   transition log would delete the entire "verdict-string rule" hazard category.
+3. **One identity layer.** `_norm_company` existed but nothing used it for keys — that gap
+   alone produced 9 double-researched companies and 3 wasted run.py budget slots per digest.
+   Normalized identity (plus an explicit alias map for the Meta/Meta-Israel class) should be
+   THE key in every store, join, and dedupe — not a per-consumer patch, which is what the
+   firmographics fixes are today.
+4. **A single automation inventory.** Jobs now live in three schedulers: GitHub Actions
+   crons, the Windows scheduled task (`IsraeliJobs-Firmographics`, 6-hourly), and whatever a
+   session runs by hand. Nothing lists all three; SCHEDULING.md covers only CI. One table
+   (owner, trigger, machine, quota it spends, state it writes) is a prerequisite for making
+   anything "less messy" — you can't simplify what you can't enumerate.
+5. **Design away the Windows-automation traps instead of re-fixing them per script:** cp1252
+   stdout under redirection (three scripts crashed on Hebrew names before
+   `sys.stdout.reconfigure`; mandate `PYTHONIOENCODING=utf-8` at every entrypoint), cmd/
+   PowerShell quoting for detached launches (an inline `Start-Process` argument string
+   failed silently; committed `.cmd` wrappers work), unbuffered `-u` for anything logging to
+   a file, and **git + sqlite inside OneDrive** — sync races with live db writes are an
+   incident waiting; consider excluding `state/` from sync or moving the repo out.
+6. **Consolidate root-script sprawl.** 40+ root scripts, several executing on import (no
+   `__main__` guard), each hand-rolling its own arg parsing, secrets loading, store opening,
+   and now UTF-8/retry boilerplate. A `python -m pipeline <command>` CLI with shared
+   bootstrap would shrink the surface the next audit has to re-verify.
+7. **Unified quota ledger.** LLM calls are spent from four sites (role judgments, blurbs,
+   firmographics research, employee fills) plus Bright Data credits and SerpApi — each with
+   its own caps and none metered centrally. Extending §4c's `metrics.jsonl` idea with
+   per-source spend counters per run would make "what does a day of this system cost" and
+   "what just burned the quota" answerable.
+8. **One backoff/retry store.** The same gating machinery now exists twice
+   (`cloud_state/resolve_attempts.json` for self-heal; `firmo_failed` + retry-day constants
+   for firmographics) with different semantics (weekly/5-strikes vs weekly/monthly). A
+   generic attempts table (key, kind, strikes, last, next-eligible) would serve both and
+   whatever comes next.
+9. **Validate discovery output at the source.** Job titles leak into company names ("Sql
+   developer - X", "my team", "AppSec") and then every downstream layer needs its own guard
+   (`looks_like_junk` is a patch, not a fix). The discovery bridge should validate/reject
+   company fields before anything enters `research_companies.json` or `matched`.
+10. **Let company-death knowledge flow back.** Firmographics research keeps discovering
+    defunct/absorbed companies (Alike Health, Syte, Sckipio, SimilarTech, NanoLock, Rewire
+    R&D) but that knowledge dies in a JSON field — rows stay active and keep being fetched.
+    A small review queue proposing `defunct:` parking from firmographics evidence closes
+    the loop.
+
 ## 5. Debugging entry points
 
 - "Why isn't company X in my email?" → ARCHITECTURE §5b (ordered runbook).
