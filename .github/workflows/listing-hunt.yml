@@ -41,6 +41,17 @@ jobs:
           npm install -g @anthropic-ai/claude-code
           python -m pip install --quiet playwright
           python -m playwright install --with-deps chromium
+      # extract-gap = triage confirmed roles ARE on the stored URL and our extractor missed
+      # them. No search needed, so this is the cheapest dark-row mode to repair — and running
+      # it FIRST removes those rows from the hunt's pool below.
+      - name: Repair extract-gap rows (re-scrape known URLs with the LLM tier forced)
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          REPAIR_TIME_BUDGET_MIN: "35"
+          SCRAPE_LLM: "1"
+        run: python repair_extract_gap.py --apply
+        continue-on-error: true
+
       - name: Hunt listings
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

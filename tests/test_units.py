@@ -151,6 +151,36 @@ def test_merge_applies_only_this_runs_changes(tmp_path):
     assert out == [["A", "MINE"], ["B", "THEIRS"]]           # B must survive
 
 
+def test_merge_unions_note_segments_from_both_writers(tmp_path):
+    """The notes column is an append-log of per-tool segments. Row-granular replacement made
+    a 7-hour hunt overwrite 351 freshly-written triage modes with its own stale row version —
+    a lost update the row-level merge was supposed to prevent, one layer down."""
+    from merge_csv_rows import merge
+
+    def w(name, rows):
+        p = tmp_path / name
+        p.write_text("\n".join(",".join(r) for r in rows) + "\n", encoding="utf-8")
+        return str(p)
+
+    cols = ["A", "scrape", "", "http://x", "false"]
+    base = w("base.csv", [cols + ["no ATS detected"]])
+    ours = w("ours.csv", [cols + ["no ATS detected | listing-hunt 2026-08-22: no IL listing"]])
+    target = w("target.csv", [cols + ["no ATS detected | dark-triage 2026-08-22: url-dead"]])
+    merge(base, ours, target)
+    note = (tmp_path / "target.csv").read_text(encoding="utf-8").strip().split(",")[-1]
+    assert "listing-hunt" in note, "the run's own verdict was dropped"
+    assert "dark-triage" in note, "the other writer's segment was clobbered"
+
+
+def test_merge_notes_never_truncates_the_newest_segment():
+    """Capping with note[:220] cut the verdict off the END, so the row kept its old prose and
+    silently lost the decision that was just made."""
+    from merge_csv_rows import _merge_notes
+    fresh = "dark-triage 2026-08-22: url-dead (http 404 on careers page)"
+    out = _merge_notes("x " * 130, fresh)
+    assert len(out) <= 220 and fresh in out
+
+
 def test_registry_is_structurally_sound():
     """Cheap end-to-end guard: the real companies.csv must pass every invariant."""
     import subprocess

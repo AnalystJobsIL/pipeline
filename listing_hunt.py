@@ -182,6 +182,22 @@ def main():
     def _triaged_page_empty(note):
         return bool(re.search(r"dark-triage [^|]*:\s*page-empty", note))
 
+    def _actionable_mode(note):
+        """A fresh triage mode OVERRIDES the 14-day hunt cooldown.
+
+        The cooldown means "the generic hunt already failed here". But a mode means we now
+        know WHY it failed and will run a different strategy (search instead of the dead
+        seed, LLM extraction instead of regex, unlocker instead of a plain fetch). Without
+        this, every row triaged today stays suppressed for 14 days and the modes are dead
+        weight — the hunt pool was literally 0 rows before this was added."""
+        m = re.search(r"dark-triage (\d{4}-\d{2}-\d{2}): ([a-z-]+)", note or "")
+        if not m:
+            return False
+        if m.group(2) in ("page-empty", "acquired"):
+            return False                      # nothing to hunt; the daily probe owns these
+        h = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
+        return (not h) or m.group(1) >= h.group(1)   # mode is at least as new as the stamp
+
     def _stale_hunt(note):
         """Re-hunt ANY hunted row after 14 days — a board empty today isn't empty forever.
         NOTE: this used to require the literal 'monitored candidate', which made the
@@ -209,7 +225,8 @@ def main():
                # probe owns them; hunting them again just burns budget. (Explicit helper:
                # inlining this as and/or mixes precedence and silently empties the pool.)
                and not _triaged_page_empty(r[5] or "")
-               and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5]))]
+               and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5])
+                    or _actionable_mode(r[5] or ""))]
     if limit:
         targets = targets[:limit]
     print(f"listing-hunting {len(targets)} companies\n", flush=True)

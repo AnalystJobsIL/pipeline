@@ -22,7 +22,39 @@ ADDED (absent from base) are appended if still missing.
 from __future__ import annotations
 
 import csv
+import re
 import sys
+
+
+_TOOL = re.compile(r"^\s*(dark-triage|listing-hunt|deep-validated|crack-walled|domain-dead|"
+                   r"re-audit|repair|probe-woken|bd-tried|scanned via brightdata)\b")
+
+
+def _merge_notes(theirs: str, ours: str, cap: int = 220) -> str:
+    """Union the ` | `-separated verdict segments of two notes, ours winning per tool.
+
+    Each tool owns a segment (`dark-triage <date>: …`, `listing-hunt <date>: …`). Two
+    writers touching the same row must not delete each other's segments — that is how 351
+    triage modes were lost. Segments are keyed by tool name; untagged prose is kept once.
+    """
+    def split(n):
+        return [s.strip() for s in (n or "").split("|") if s.strip()]
+
+    seen, out = {}, []
+    for seg in split(ours) + split(theirs):       # ours first: it wins its own tool key
+        m = _TOOL.match(seg)
+        key = m.group(1) if m else seg[:28]
+        if key in seen:
+            continue
+        seen[key] = True
+        out.append(seg)
+    joined = " | ".join(out)
+    if len(joined) <= cap:
+        return joined
+    # trim oldest-last segments, never the newest
+    while out and len(" | ".join(out)) > cap:
+        out.pop()
+    return " | ".join(out)[:cap]
 
 
 def _read(path):
@@ -37,10 +69,19 @@ def merge(base_path, ours_path, target_path):
     tgt_idx = {r[0]: i for i, r in enumerate(target) if r}
 
     changed = [r for r in ours if r and (r[0] not in base or base[r[0]] != r)]
-    applied = added = 0
+    applied = added = merged_notes = 0
     for r in changed:
         if r[0] in tgt_idx:
-            if target[tgt_idx[r[0]]] != r:
+            cur = target[tgt_idx[r[0]]]
+            if cur != r:
+                # The notes column is an APPEND-LOG of per-tool segments, so replacing the
+                # whole row drops segments another tool wrote while this run was going.
+                # (A 7-hour hunt did exactly that to 351 freshly-written triage modes.)
+                # Union the segments instead, keeping ours where a tool wrote both.
+                if len(r) > 5 and len(cur) > 5:
+                    r = list(r)
+                    r[5] = _merge_notes(cur[5], r[5])
+                    merged_notes += 1
                 target[tgt_idx[r[0]]] = r
                 applied += 1
         else:
