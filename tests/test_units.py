@@ -339,6 +339,25 @@ def test_merge_never_reverts_a_repaired_url_to_a_dead_one(tmp_path):
     assert "listing-hunt" in row[5] and "url-repaired" in row[5]
 
 
+def test_every_registry_platform_has_a_fetcher():
+    """`fetch_company` RAISES on an unknown ats_platform, so a platform written into
+    companies.csv without a matching entry in FETCHERS kills that company's fetch every
+    run. Checks the real registry against the real dispatch table."""
+    import csv as _csv
+    from pipeline.fetchers import FETCHERS
+
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    used = set()
+    with open(os.path.join(repo, "companies.csv"), encoding="utf-8") as f:
+        for r in _csv.reader(f):
+            if r and len(r) >= 6 and r[4] == "true":
+                used.add((r[1] or "").strip().lower())
+    used.discard("")
+    used.discard("ats_platform")           # header row
+    missing = sorted(used - set(FETCHERS))
+    assert not missing, f"active rows use platforms with no fetcher: {missing}"
+
+
 def test_registry_is_structurally_sound():
     """Cheap end-to-end guard: the real companies.csv must pass every invariant."""
     import subprocess

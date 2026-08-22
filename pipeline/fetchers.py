@@ -588,6 +588,59 @@ def fetch_oraclehcm(row):
     return jobs
 
 
+
+def fetch_eightfold(row):
+    """Eightfold AI (also fronts many boards labelled 'phenom' in our registry).
+
+        https://<host>/api/apply/v2/jobs?domain=<domain>&start=<n>&num=<k>&location=Israel
+
+    STATUS (2026-08-23): the response SHAPE is confirmed — app.eightfold.ai returns 200 with
+    the documented envelope for domain=tevapharm.com — but this has NOT been validated
+    against a tenant that actually returns positions. The shared host 403s every other
+    domain tried, because real boards live on per-tenant hosts. So set `api_url` per row to
+    the tenant endpoint that crack_walled's XHR sniff discovers; do not assume the shared
+    host works. A wrong endpoint raises (http.get_json raises on non-200) rather than
+    returning [] — deliberately, so a misconfigured row surfaces instead of looking empty.
+
+    `token` carries the domain (e.g. "tevapharm.com"); api_url carries the full first-page
+    URL so an odd tenant host can be pinned per row. Eightfold pages at 10-ish per call and
+    reports a total in `count`, so walk until we have them all or the page comes back empty.
+    """
+    base = row["api_url"]
+    domain = (row.get("token") or "").strip()
+    if domain and "domain=" not in base:
+        sep = "&" if "?" in base else "?"
+        base = f"{base}{sep}domain={domain}"
+    jobs, start, seen_ids = [], 0, set()
+    for _ in range(20):                      # hard stop: 20 pages
+        sep = "&" if "?" in base else "?"
+        data = http.get_json(f"{base}{sep}start={start}&num=50")
+        positions = (data or {}).get("positions") or []
+        if not positions:
+            break
+        for p in positions:
+            pid = str(p.get("id") or p.get("ats_job_id") or "")
+            if pid and pid in seen_ids:
+                continue
+            seen_ids.add(pid)
+            loc = p.get("location") or ", ".join(p.get("locations") or [])
+            jobs.append({
+                "company": row["company_name"],
+                "title": _clean(p.get("name")),
+                "location": _clean(loc),
+                "country_code": "",
+                "url": p.get("canonicalPositionUrl") or p.get("positionUrl") or "",
+                "posted_date": _iso_date(p.get("t_create") or p.get("create_date")),
+                "ats_platform": "eightfold",
+                "job_id": pid,
+                "description": _snippet(p.get("job_description") or p.get("description")),
+            })
+        start += len(positions)
+        if start >= int((data or {}).get("count") or 0):
+            break
+    return jobs
+
+
 FETCHERS = {
     "comeet": fetch_comeet,
     "oraclehcm": fetch_oraclehcm,
@@ -605,6 +658,8 @@ FETCHERS = {
     "bamboohr": fetch_bamboohr,
     "scrape": fetch_scrape,
     "discovery": fetch_discovery,
+    "eightfold": fetch_eightfold,
+    "phenom": fetch_eightfold,   # most rows tagged phenom are Eightfold-fronted
 }
 
 
