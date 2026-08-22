@@ -213,9 +213,22 @@ forever — that pattern has been introduced and removed three times.
 `companies.csv` writers must **re-read the file immediately before every write**
 (read-modify-write per verdict, matching on **company name, never row index**) and never
 hold a start-of-run snapshot; two concurrent snapshot-writers silently destroy each other's
-verdicts (lost-update incident 2026-08-22). Compliant writers: `crack_walled.py`,
-`probe_candidates.py`, `listing_hunt.py`, `audit_empty_rows.py`, `refresh_scrape_cache.py`
-(parking pass), `apply_resolved.py` (line-based), `auto_expand.py` (append-only).
+verdicts (lost-update incident 2026-08-22).
+
+**All 18 `companies.csv` writers, by safety class** (verified 2026-08-22):
+
+- **Compliant** (re-read + match by name before every write): `crack_walled.py`,
+  `probe_candidates.py`, `listing_hunt.py`, `audit_empty_rows.py`, `deep_validate.py`,
+  `scan_dead_domains.py`, `refresh_scrape_cache.py` (parking pass).
+- **Modified-rows merge** (equally safe — merges only the names it changed into a fresh
+  read): `bd_rescue.py`, `retry_unreachable.py`, `wayback_rescue.py`, `validate_empty.py`,
+  `validate_bd.py`, `recheck_suspects.py`.
+- **Append-only** (safe): `auto_expand.py`, `comeet_resolve.py`, `ingest_research.py`,
+  `resolve_any.py`, `resolve_parallel.py`, `resolve_unknowns.py`.
+- **Line-based snapshot, sub-second window** (tolerated): `apply_resolved.py`.
+
+No whole-snapshot index-keyed writer remains. If you add one it will silently revert
+concurrent verdicts — use one of the first three patterns.
 
 **Every workflow that edits `companies.csv` must `git add` it.** The digest workflow does —
 the candidate probe writes verdicts there while `candidate_probe.json` advances baselines;

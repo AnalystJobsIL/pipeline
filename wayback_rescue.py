@@ -105,6 +105,9 @@ def rescue(name, url):
     return None
 
 
+_MODIFIED = set()   # names this run rewrote (single-writer merge)
+
+
 def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows)
@@ -119,13 +122,21 @@ def main():
         if r:
             plat, tok, api, n_all, il = r
             rows[rowi] = [name, plat, tok, api, "true", f"wayback-rescued; {n_all}/{il} IL"]
+            _MODIFIED.add(name)
             fixed += 1
             print(f"  [OK] {name}: {plat} jobs={n_all} il={il}", flush=True)
         else:
             print(f"  [--] {name}", flush=True)
         time.sleep(4)                              # polite pacing — archive.org rate-limits hard
+    # single-writer discipline: merge back only rows this run modified (a whole-snapshot
+    # write after a multi-minute network loop reverts concurrent writers' verdicts)
+    changed = {r[0]: r for r in rows if r and len(r) > 5 and r[0] in _MODIFIED}
+    fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+    for _i, fr in enumerate(fresh):
+        if fr and len(fr) > 5 and fr[0] in changed:
+            fresh[_i] = changed[fr[0]]
     with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-        csv.writer(f).writerows(rows)
+        csv.writer(f).writerows(fresh)
     print(f"=== wayback-rescued {fixed} of {len(idx)} ===")
 
 

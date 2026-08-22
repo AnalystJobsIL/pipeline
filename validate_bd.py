@@ -69,6 +69,9 @@ def extract_jobs(company, url, html):
     return [j for j in jobs if israel.is_israel_job(j)]
 
 
+_MODIFIED = set()   # names this run rewrote (single-writer merge)
+
+
 def main():
     _load_secrets()
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
@@ -86,13 +89,20 @@ def main():
         if il:
             cache[name] = il
             rows[rowi] = [name, "scrape", url, url, "true", f"bd-validated; {len(il)} IL jobs"]
+            _MODIFIED.add(name)
             promoted += 1
             print(f"  [PROMOTE] {name}: {len(il)} Israel roles found!", flush=True)
         else:
             confirmed += 1
             print(f"  [empty ok] {name}", flush=True)
+    # single-writer discipline: merge back only rows this run modified
+    changed = {r[0]: r for r in rows if r and len(r) > 5 and r[0] in _MODIFIED}
+    fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+    for _i, fr in enumerate(fresh):
+        if fr and len(fr) > 5 and fr[0] in changed:
+            fresh[_i] = changed[fr[0]]
     with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-        csv.writer(f).writerows(rows)
+        csv.writer(f).writerows(fresh)
     with open("scraped_cache.json", "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False)
     print(f"=== promoted {promoted} · confirmed-empty {confirmed} ===")

@@ -58,6 +58,9 @@ def check(name, url):
     return ("confirmed", None)
 
 
+_MODIFIED = set()   # names this run rewrote (single-writer merge)
+
+
 def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows)
@@ -71,16 +74,26 @@ def main():
             kind, payload = "confirmed", None
         if kind == "promote":
             rows[rowi] = payload
+            _MODIFIED.add(name)
             promoted += 1
             print(f"  [PROMOTE] {name}: {payload[5]}", flush=True)
         elif kind == "suspect":
             suspects.append((name, payload))
-            rows[rowi][5] = "empty-but-suspect; " + payload
+            # append, don't replace: the base note carries the row's re-check pool token
+            _base = re.sub(r"\s\|\s?empty-but-suspect;[^|]*", "", rows[rowi][5] or "").strip(" |")
+            rows[rowi][5] = ((_base + " | ") if _base else "") + "empty-but-suspect; " + payload
+            _MODIFIED.add(name)
         else:
             confirmed += 1
         time.sleep(0.1)
+    # single-writer discipline: merge back only rows this run modified
+    changed = {r[0]: r for r in rows if r and len(r) > 5 and r[0] in _MODIFIED}
+    fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+    for _i, fr in enumerate(fresh):
+        if fr and len(fr) > 5 and fr[0] in changed:
+            fresh[_i] = changed[fr[0]]
     with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-        csv.writer(f).writerows(rows)
+        csv.writer(f).writerows(fresh)
     print(f"\n=== promoted {promoted} · suspects {len(suspects)} · confirmed-empty {confirmed} ===")
     for n, why in suspects[:25]:
         print(f"   suspect: {n} ({why})")

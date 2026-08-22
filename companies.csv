@@ -13,7 +13,7 @@ Personetics,comeet,83.00A,https://www.comeet.com/careers-api/2.0/company/83.00A/
 Papaya Global,comeet,16.005,https://www.comeet.com/careers-api/2.0/company/16.005/positions?token=615247E02A931E6930A81E691E691E6936BD,true,
 Papaya Gaming,comeet,46.00B,https://www.comeet.com/careers-api/2.0/company/46.00B/positions?token=64B25C264B12E112E102C0D2C0D64B25C2,true,
 Holisto,comeet,76.001,https://www.comeet.com/careers-api/2.0/company/76.001/positions?token=67126A66712D17203567139F926A601353,true,
-Abra,comeet,15.007,https://www.comeet.com/careers-api/2.0/company/15.007/positions?token=517197323A1A2E1973A2E145CA2E0A2E,true,
+Abra,comeet,15.007,https://www.comeet.com/careers-api/2.0/company/15.007/positions?token=517197323A1A2E1973A2E145CA2E0A2E,false,recruiter - excluded at runtime; row deactivated for clarity
 Cyera,comeet,17.008,https://www.comeet.com/careers-api/2.0/company/17.008/positions?token=7182A90154871823783FD838C031A802378,true,
 Lusha,comeet,73.00B,https://www.comeet.com/careers-api/2.0/company/73.00B/positions?token=37B11676F61F53DEC6F606F61BD8185D,true,
 Arpeely,comeet,57.001,https://www.comeet.com/careers-api/2.0/company/57.001/positions?token=7512BE615F3249541D91D4415F31D4441D9EA2,true,
