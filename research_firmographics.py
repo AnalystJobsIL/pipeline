@@ -134,7 +134,11 @@ def main():
     for n in names:
         nn = identity_key(n)
         if n in have:
-            if is_stale(have[n], a.refresh_days):
+            # refresh at most ONE variant per identity group — the store holds duplicate
+            # name-forms (Intel/Intel Israel/Intel Corporation); a --refresh-days pass
+            # must not pay for each of them separately
+            if is_stale(have[n], a.refresh_days) and nn not in seen_norms:
+                seen_norms.add(nn)
                 todo.append(n)
             continue
         if nn in have_norms or nn in seen_norms:
@@ -145,7 +149,9 @@ def main():
     # they don't re-spend a web-search claude call every 6-hour chain run forever
     failures = st.load_firmo_failures()
     week_ago = (dt.date.today() - dt.timedelta(days=7)).isoformat()
-    gated = [n for n in todo if n in failures and failures[n][1] > week_ago]
+    # gate by identity, not raw string — a failed name's variant must not cost a call
+    failed_norms = {identity_key(c) for c, (att, last) in failures.items() if last > week_ago}
+    gated = [n for n in todo if identity_key(n) in failed_norms]
     todo = [n for n in todo if n not in gated]
     print(f"{len(names)} active companies, {len(have)} researched, {len(todo)} to do"
           + (f" ({len(gated)} recent-failure names gated to weekly retry)" if gated else ""))

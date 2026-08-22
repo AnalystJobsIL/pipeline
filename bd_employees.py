@@ -44,7 +44,11 @@ def _load_secrets():
 
 
 def unlock(url, timeout=90):
-    """Fetch url through Web Unlocker; returns HTML ('' on failure)."""
+    """Fetch url through Web Unlocker.
+
+    Returns the HTML body, or None on INFRASTRUCTURE failure (expired key -> HTTPError,
+    network down, quota exhausted). None must never be treated as "page not found":
+    stamping per-name misses during an outage gates the whole cohort for a month."""
     body = json.dumps({"zone": os.environ["BRIGHTDATA_ZONE"], "url": url,
                        "format": "raw"}).encode()
     req = urllib.request.Request("https://api.brightdata.com/request", data=body, method="POST",
@@ -54,7 +58,7 @@ def unlock(url, timeout=90):
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.read(2_000_000).decode("utf-8", "replace")
     except Exception:  # noqa: BLE001
-        return ""
+        return None
 
 
 _SUFFIX = re.compile(r"\s+(ltd|inc|llc|corp|co|gmbh|group|technologies|solutions)\.?$", re.I)
@@ -128,11 +132,14 @@ def main():
                      and not (r.get("employees_linkedin_miss") or "") > retry_cutoff)[:limit]
     today = dt.date.today().isoformat()
     print(f"linkedin employee lookup for {len(targets)} companies ...")
-    got = rng_only = miss = 0
+    got = rng_only = miss = infra_streak = 0
     for name in targets:
-        found = None
+        found, got_body = None, False
         for slug in slug_candidates(name):
             html = unlock(f"https://www.linkedin.com/company/{slug}")
+            if html is None:
+                continue  # infra failure — proves nothing about this company
+            got_body = True
             if len(html) < 1000:
                 continue
             found = parse_page(html, name)
@@ -140,12 +147,23 @@ def main():
                 break
         time.sleep(1)
         if not found:
+            if not got_body:
+                # every fetch failed at the transport layer: outage, not a page miss —
+                # no stamp, and 3 in a row means the rest of the run would be the same
+                infra_streak += 1
+                print(f"  UNAVAILABLE {name}: unlocker unreachable (no miss recorded)", flush=True)
+                if infra_streak >= 3:
+                    print("3 consecutive unlocker failures — aborting; nothing was gated")
+                    break
+                continue
+            infra_streak = 0
             miss += 1
             rec = recs[name]
             rec["employees_linkedin_miss"] = today  # don't re-spend unlocker credits every 6h
             st.save_firmographics({name: rec}, today)
             print(f"  miss {name} (monthly retry)", flush=True)
             continue
+        infra_streak = 0
         count, rng, strong = found
         rec = recs[name]
         # weak (name-fragment) title matches are exactly how generic names land on a

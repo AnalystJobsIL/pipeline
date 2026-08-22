@@ -146,6 +146,15 @@ def main():
                 # give-up marker: without it this company re-spends a web-search claude
                 # call (and up to 3 Bright Data credits upstream) every 6-hour chain run
                 rec = recs[c]
+                if (rec.get("employees_source") or "") == "linkedin-weakmatch":
+                    # QUARANTINE: this count came from a name-fragment page match and
+                    # verification found nothing credible — serving a namesake's number
+                    # indefinitely is worse than an honest null
+                    rec["employees_global"] = None
+                    rec.pop("employees_range", None)
+                    rec["size_band"] = ""
+                    rec["employees_source"] = "linkedin-weakmatch-quarantined"
+                    print(f"  quarantined weak-match count for {c}", flush=True)
                 rec["employees_lookup_miss"] = today
                 st.save_firmographics({c: rec}, today)
                 print(f"  miss {c} (monthly retry)", flush=True)

@@ -77,11 +77,26 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     "jpmorganchase": "jpmorgan chase",
     "aqurate data": "aqurate",
     "cadence design": "cadence",  # "Cadence Design Systems" after suffix stripping
+    # acquirer/brand annotations in parens keep their token (so divisions stay distinct);
+    # these known annotation forms still fold to the base identity
+    "habana labs intel": "habana",  # alias VALUES must be post-suffix-strip forms
+    "vmware broadcom": "vmware",
+    "simply joytunes": "simply",
+    "merck msd": "merck",
 }
 
 
+# parenthetical content is DISTINGUISHING ("Sony (PlayStation)" vs "Sony (Semiconductor)")
+# unless it's an annotation — dropping all parens made two Sony divisions one identity,
+# and targeting would then have researched only whichever surfaced first, forever
+_PAREN_NOISE = re.compile(r"(?i)^\s*(formerly|now|part of|acquired|previously|by |a |an )")
+
+
 def identity_key(name):
-    s = re.sub(r"\([^)]*\)", " ", str(name or "")).lower()
+    def _paren(m):
+        inner = m.group(1)
+        return " " if _PAREN_NOISE.match(inner) else f" {inner} "
+    s = re.sub(r"\(([^)]*)\)", _paren, str(name or "")).lower()
     s = " ".join(re.sub(r"[^0-9a-z֐-׿]+", " ", s).split())
     prev = None
     while s != prev:
