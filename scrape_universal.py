@@ -262,6 +262,18 @@ def scrape(company, url, timeout_ms=45000):
     # job cards as N same-class <h2>/<h3> siblings. Only when the earlier passes found
     # nothing, and only trust a missing per-card location if the LISTING URL itself is
     # already Israel-filtered (…?location=Israel, /search-jobs/…Israel…).
+    if not jobs:
+        # headless Chromium sometimes gets a bot-stripped page while plain HTTP gets the
+        # real server-rendered cards (Legit Security) — try both HTML sources
+        try:
+            import urllib.request as _ur2
+            _req2 = _ur2.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0"})
+            plain_html = _ur2.urlopen(_req2, timeout=15).read(1_500_000).decode("utf-8", "replace")
+        except Exception:  # noqa: BLE001
+            plain_html = ""
+        if len(plain_html) > len(page_html or ""):
+            page_html = plain_html if not page_html else page_html + "\n" + plain_html
+
     if not jobs and page_html:
         url_is_il = bool(ISRAEL_LOC.search(url))
         # listing_hunt sets SCRAPE_ASSUME_IL=1 for pre-vetted Israeli companies whose own
@@ -271,26 +283,41 @@ def scrape(company, url, timeout_ms=45000):
         if _os.environ.get("SCRAPE_ASSUME_IL") and ISRAEL_LOC.search(page_html):
             url_is_il = True
         groups = {}
-        for m in re.finditer(r"<(h[1-4])([^>]*)>([^<]{5,90})</\1>", page_html, re.I):
-            tag, attrs, text = m.group(1).lower(), m.group(2), m.group(3).strip()
-            cls = (re.search(r'class=["\']([^"\']+)', attrs) or [None, ""])[1] if "class=" in attrs else ""
-            groups.setdefault((tag, cls), []).append((m.start(), text))
+        _CARD_PATTERNS = (
+            r"<(h[1-4])([^>]*)>([^<]{5,90})</\1>",
+            # non-heading job cards: any tag whose class names it a job/position title
+            # (e.g. Legit Security's <p class="job-post-title">)
+            r'<(p|div|span|a)([^>]*class=["\'][^"\']*(?:job|position|role|opening)[^"\']*'
+            r'(?:title|name|copy)[^"\']*["\'][^>]*)>([^<]{5,90})</\1>',
+        )
+        for pat in _CARD_PATTERNS:
+            for m in re.finditer(pat, page_html, re.I):
+                tag, attrs, text = m.group(1).lower(), m.group(2), m.group(3).strip()
+                cls = (re.search(r'class=["\']([^"\']+)', attrs) or [None, ""])[1] if "class=" in attrs else ""
+                groups.setdefault((tag, cls), []).append((m.start(), text))
         for (tag, cls), items in groups.items():
             if len(items) < 3:
                 continue
             titles = [t for _, t in items]
             junk = sum(1 for t in titles if BAD_TITLE.match(t) or not re.search(r"[a-zא-ת]", t, re.I))
             rolish = sum(1 for t in titles if ROLE.search(t))
-            if junk > len(titles) // 3 or rolish < max(2, len(titles) // 3):
+            senty = sum(1 for t in titles
+                        if re.match(r"(we|our|join|about|why|what|how|let)\b", t, re.I))
+            oneword = sum(1 for t in titles if len(t.split()) < 2)   # department labels
+            if junk > len(titles) // 3 or rolish < max(2, len(titles) // 3) \
+                    or senty > len(titles) // 3 or oneword > len(titles) // 3:
                 continue
-            for pos, t in items:
-                ctx = page_html[pos:pos + 700]
+            positions = [p for p, _ in items]
+            for idx, (pos, t) in enumerate(items):
+                nxt = positions[idx + 1] if idx + 1 < len(positions) else pos + 1600
+                end = min(pos + 1600, nxt)          # never read the NEXT card's location
+                ctx = re.sub(r"<[^>]+>", " ", page_html[pos:end])
                 mloc = ISRAEL_LOC.search(ctx)
-                loc = _loc_from_ctx(ctx[mloc.start() - 40:mloc.end() + 40]) if mloc else ""
+                loc = _loc_from_ctx(ctx[max(0, mloc.start() - 40):mloc.end() + 40]) if mloc else ""
                 if not loc and not url_is_il:
                     continue
                 mhref = re.search(r'href=["\']([^"\']+)["\']',
-                                  page_html[max(0, pos - 600):pos + 700])
+                                  page_html[max(0, pos - 600):pos + 1600])
                 add(t, loc or "Israel", mhref.group(1) if mhref else "")
 
     # 4) position-links fallback (SuperPlay-style custom skins over an ATS): the listing
