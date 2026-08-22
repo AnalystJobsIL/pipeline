@@ -44,9 +44,18 @@ KNOWN_PARENT = {
     "applied materials israel": ("appliedmaterials.com",),
 }
 
+# Industry words are NOT identity. Matching on one sent Tamar Robotics to arberobotics.com
+# (Arbe Robotics) and Phoenix Financial to phoenixtma.com — both real companies, neither
+# the right one. Only a DISTINCTIVE token may stand in for the company name.
 _STOP = {"the", "group", "israel", "technologies", "technology", "systems", "software",
          "solutions", "labs", "inc", "ltd", "corp", "company", "holdings", "international",
-         "digital", "global", "security", "tech", "ai", "co"}
+         "digital", "global", "security", "tech", "ai", "co", "robotics", "financial",
+         "finance", "medical", "analytics", "energy", "foods", "food", "pharma",
+         "pharmaceutical", "pharmaceuticals", "health", "healthcare", "bio", "nano",
+         "cyber", "data", "cloud", "capital", "ventures", "industries", "networks",
+         "semiconductor", "semiconductors", "electronics", "intelligence", "imaging",
+         "sciences", "science", "media", "mobile", "motors", "automotive", "insurance",
+         "bank", "telecom", "communications", "materials", "storage", "vision", "power"}
 
 
 def registrable(host: str) -> str:
@@ -68,8 +77,12 @@ def _acronym(name: str) -> str:
     """Texas Instruments -> ti, Central Bottling Company -> cbc. Stopwords are dropped only
     when something remains, so 'Israel Electric Corporation' still yields 'iec'."""
     words = [w for w in re.findall(r"[A-Za-z]+", name or "")]
-    kept = [w for w in words if w.lower() not in _STOP] or words
-    return "".join(w[0].lower() for w in kept)
+    kept = [w for w in words if w.lower() not in _STOP]
+    # "General Motors" -> dropping the industry word leaves "g", which matches nothing.
+    # An acronym needs every word; only fall back to filtering when that is ambiguous.
+    if len(kept) < 2 <= len(words):
+        kept = words
+    return "".join(w[0].lower() for w in (kept or words))
 
 
 def verdict(company: str, url: str) -> str:
@@ -94,15 +107,24 @@ def verdict(company: str, url: str) -> str:
         if host.endswith(parent) or dom == registrable(parent):
             return "match"
 
-    if dom == cn or dom in cn or cn in dom:
+    if dom == cn:
         return "match"
-    # hyphen/space variants: "qs-labs" vs "Quantum Source" -> compare stripped forms
-    if _norm(dom) and (_norm(dom) in cn or cn in _norm(dom)):
-        return "match"
-    # per-word: a >=4-char word of the name appearing in the domain is strong evidence
+    # Containment must be TIGHT. "rad" is a substring of "radlogics" and "nooga" of
+    # "noogata", but rad.com is RAD Data Communications and nooga.net is not Noogata —
+    # a much shorter domain that merely prefixes the name is not evidence. Allow only a
+    # near-equal length difference (sproutt/sprout yes, radlogics/rad no).
+    nd = _norm(dom)
+    if nd and (nd in cn or cn in nd) and abs(len(nd) - len(cn)) <= 1:
+        return "match"                    # sproutt/sprout yes; nooga/noogata no
+    # per-word: a DISTINCTIVE (non-industry) word of the name appearing in the domain.
+    # 4 chars, so "Teva Pharmaceutical" -> tevapharm.com resolves on "teva".
     words = [w for w in re.findall(r"[a-z0-9]{4,}", cname) if w not in _STOP]
-    if any(w in dom for w in words):
-        return "match"
+    hit = next((w for w in words if w in dom), "")
+    if hit:
+        # If the domain carries a lot of EXTRA content beyond the matched token, this is
+        # only suggestive: "phoenix" matches phoenixtma.com, which is a different company.
+        # Say so rather than assert it, and let the caller confirm against page content.
+        return "match" if len(dom) - len(hit) <= 2 else "weak"
     ac = _acronym(company)
     if len(ac) >= 2 and (dom == ac or dom.startswith(ac + "-") or dom.startswith(ac + "_")
                          or _norm(dom).startswith(ac) and len(_norm(dom)) <= len(ac) + 4):
@@ -111,5 +133,29 @@ def verdict(company: str, url: str) -> str:
 
 
 def is_foreign(company: str, url: str) -> bool:
-    """True when the page provably belongs to a different company (or is a job board)."""
+    """True when the page provably belongs to a different company (or is a job board).
+
+    `weak` is NOT foreign — it is unproven. Callers that ACTIVATE a row must demand a
+    strong verdict (see page_mentions_company); callers that merely rank candidates can
+    treat weak as a maybe.
+    """
     return verdict(company, url) == "mismatch"
+
+
+def page_mentions_company(company: str, html: str) -> bool:
+    """Does the fetched page actually name this company?
+
+    Far stronger than any domain heuristic: arberobotics.com does not say "Tamar Robotics"
+    and rad.com does not say "RADLogics". Used to confirm `weak` domain verdicts before a
+    row is repaired or activated.
+    """
+    text = re.sub(r"<[^>]+>", " ", html or "")
+    text = _norm(text)
+    if not text:
+        return False
+    if _norm(company) in text:
+        return True
+    words = [w for w in re.findall(r"[a-z0-9]{4,}", (company or "").lower())
+             if w not in _STOP]
+    # every distinctive token must appear; one generic hit is not identity
+    return bool(words) and all(w in text for w in words)

@@ -358,6 +358,31 @@ def test_every_registry_platform_has_a_fetcher():
     assert not missing, f"active rows use platforms with no fetcher: {missing}"
 
 
+@pytest.mark.parametrize("company,url,ok", [
+    ("General Motors", "https://search-careers.gm.com/", True),   # acronym w/ industry word
+    ("Teva Pharmaceutical", "https://www.tevapharm.com/x", True),
+    ("Sproutt", "https://sprout.careers/", True),
+    ("Pliops", "https://pliops.com/careers", True),
+    # each of these was ACCEPTED by the first version of the guard and is a real,
+    # different company found while repairing dead URLs on 2026-08-23
+    ("Tamar Robotics", "https://arberobotics.com/career/", False),   # Arbe Robotics
+    ("RADLogics", "https://www.rad.com/career/", False),             # RAD Data Comms
+    ("Noogata", "https://www.nooga.net/career", False),
+])
+def test_identity_rejects_industry_word_and_loose_substring_matches(company, url, ok):
+    """Matching on a generic industry word ("robotics", "financial") or on a much shorter
+    domain that merely prefixes the name ("rad" in "radlogics") is not identity."""
+    from pipeline.company_identity import verdict
+    assert (verdict(company, url) != "mismatch") is ok
+
+
+def test_page_mentions_company_beats_domain_heuristics():
+    from pipeline.company_identity import page_mentions_company
+    assert page_mentions_company("Tamar Robotics", "<p>Tamar Robotics is hiring</p>")
+    assert not page_mentions_company("Tamar Robotics", "<p>Arbe Robotics careers</p>")
+    assert not page_mentions_company("RADLogics", "<h1>RAD Data Communications</h1>")
+
+
 def test_registry_is_structurally_sound():
     """Cheap end-to-end guard: the real companies.csv must pass every invariant."""
     import subprocess

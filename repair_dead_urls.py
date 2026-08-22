@@ -32,7 +32,8 @@ import urllib.parse
 import urllib.request
 
 from pipeline.aggregators import is_aggregator
-from pipeline.company_identity import verdict as identity_verdict
+from pipeline.company_identity import (verdict as identity_verdict,
+                                       page_mentions_company)
 from pipeline.atomic import write_csv_rows
 
 TODAY = dt.date.today().isoformat()
@@ -50,6 +51,19 @@ def resolves(host: str) -> bool:
 
 def host_of(url: str) -> str:
     return urllib.parse.urlparse(url or "").netloc
+
+
+def fetch(url: str):
+    """(status, html). A 403/503 still means the HOST is real — a bot wall the unlocker can
+    crack later, categorically different from NXDOMAIN."""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": _UA})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return r.status, r.read(400000).decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        return e.code, ""
+    except Exception:  # noqa: BLE001
+        return 0, ""
 
 
 def reachable(url: str) -> int:
@@ -127,10 +141,21 @@ def main():
         name, old = r[0], r[3]
         good = ""
         for u in candidates(name, old):
-            st = reachable(u)
-            if st and st < 400 or st in (403, 503):   # bot wall == real host
+            st, html = fetch(u)
+            if not st:
+                continue
+            if st in (403, 503):
+                good = u        # bot wall: host is real, unlocker cracks it downstream
+                break
+            if st >= 400:
+                continue
+            # A reachable page is not enough — it must be THIS company's. A `weak` domain
+            # verdict (phoenix -> phoenixtma.com) is confirmed only by page content.
+            v = identity_verdict(name, u)
+            if v in ("match", "ats") or page_mentions_company(name, html):
                 good = u
                 break
+            print(f"       (rejected {u[:52]}: page does not name the company)", flush=True)
         if good:
             fixed += 1
             print(f"  [OK] {n}/{len(dead)} {name[:26]:26} {host_of(old)} -> {good[:56]}",
