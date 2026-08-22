@@ -193,6 +193,33 @@ def test_triage_does_not_restamp_every_night():
     assert triage_dark._needs_triage(f"dark-triage {old}: url-dead") is True
 
 
+def test_probe_wake_actually_reaches_the_hunt():
+    """probe_candidates stripped only listing-hunt/crack-walled, so a woken row kept its
+    `dark-triage … page-empty` stamp and listing_hunt._triaged_page_empty still excluded it:
+    105/105 wakes were swallowed. The probe's whole purpose is to re-open the hunt."""
+    import listing_hunt
+    from probe_candidates import WAKE_STAMP, _wake_note
+    note = ("no ATS detected | listing-hunt 2026-08-22: no IL listing "
+            "| dark-triage 2026-08-22: page-empty (live page, 0 roles)")
+    woken = _wake_note(note)
+    assert not listing_hunt._triaged_page_empty(woken), "wake left the row hunt-excluded"
+    # every stale segment must go, not just the first: after removing one, the separator
+    # loses its leading space and a `\s\|` pattern silently stops matching
+    assert "listing-hunt" not in woken and "dark-triage" not in woken
+    assert "no ATS detected" in woken, "the base verdict was destroyed"
+    assert woken.endswith(WAKE_STAMP), "the wake stamp was truncated off the end"
+
+
+def test_triage_pool_survives_note_erosion():
+    """Triage rewrites the note it matched on and the 220-char cap trims the base a little
+    more each time, so rows whose original verdict eroded matched nothing and left EVERY
+    recurring pool (17 companies were owned by no scheduled tool)."""
+    import triage_dark
+    eroded = "scanned via brightdata; no  | dark-triage 2026-08-22: page-empty (0 roles)"
+    assert triage_dark.TARGET_NOTES.search(eroded)
+    assert not triage_dark.SKIP_NOTES.search(eroded)
+
+
 def test_registry_is_structurally_sound():
     """Cheap end-to-end guard: the real companies.csv must pass every invariant."""
     import subprocess

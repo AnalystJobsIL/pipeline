@@ -59,7 +59,12 @@ _ACQUIRED = re.compile(
 _JOB_XHR = re.compile(r"(api|graphql)[^\"']*(job|position|opening|career|search)|"
                       r"(job|position|opening)[^\"']*(api|json)", re.I)
 
-TARGET_NOTES = re.compile(r"no listing found|no IL listing|no ATS detected", re.I)
+# `dark-triage` is in this pool ON PURPOSE: triage rewrites the note it matched on, and the
+# 220-char cap trims the base a little more on each re-stamp. Rows whose original verdict got
+# eroded (Ford's "no IL listing; monitored candidate" was chopped to "no ") then matched
+# nothing and left every recurring pool — 8 companies were owned by no scheduled tool at all.
+# Matching our own stamp makes triage self-sustaining regardless of base-note erosion.
+TARGET_NOTES = re.compile(r"no listing found|no IL listing|no ATS detected|dark-triage", re.I)
 SKIP_NOTES = re.compile(r"defunct|domain-dead|recruiter|duplicate|redundant", re.I)
 
 

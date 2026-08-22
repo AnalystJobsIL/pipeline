@@ -85,6 +85,13 @@ def _resolve_rebrand(url):
     return final, (d1 if d0 != d1 else "")
 
 
+def _triaged_page_empty(note):
+    """Triage proved this row has a LIVE page with genuinely no roles, so the hunt
+    skips it and triage owns the re-check. Module-level on purpose: probe_candidates
+    must strip this exact stamp to wake a row, and a private copy would drift."""
+    return bool(re.search(r"dark-triage [^|]*:\s*page-empty", note or ""))
+
+
 def hunt_one(name, seed, documented=False, mode=""):
     """`mode` comes from triage_dark.py and selects the strategy:
        url-dead / no-url  -> ignore the stored seed (it 404s), search first
@@ -179,9 +186,6 @@ def main():
     limit = int(os.environ.get("HUNT_LIMIT", "0"))
     budget_min = int(os.environ.get("HUNT_TIME_BUDGET_MIN", "0"))
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
-    def _triaged_page_empty(note):
-        return bool(re.search(r"dark-triage [^|]*:\s*page-empty", note))
-
     def _actionable_mode(note):
         """A fresh triage mode OVERRIDES the 14-day hunt cooldown.
 

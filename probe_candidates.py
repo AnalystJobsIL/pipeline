@@ -26,6 +26,29 @@ _JOB_SIG = re.compile(r"apply now|open position|current opening|we'?re hiring|jo
 _IL_SIG = re.compile(r"israel|tel[\s-]?aviv|herzliya|haifa|petah|ramat[\s-]?gan|beer[\s-]?sheva", re.I)
 
 
+WAKE_STAMP = "probe-woken: re-hunt pending"
+# Verdicts that mean "already decided, don't hunt". A wake must clear ALL of them or the
+# row stays excluded from the very hunt the probe exists to trigger.
+_STALE_SEGMENT = re.compile(r"^(listing-hunt|crack-walled|dark-triage)\b")
+
+
+def _wake_note(note: str, cap: int = 220) -> str:
+    """Drop every stale verdict segment and stamp the woken state.
+
+    Was a single `re.sub(r"\\s\\|\\s?(listing-hunt|crack-walled) [^|]*", ...)`, which had two
+    defects: it never mentioned `dark-triage`, so `listing_hunt._triaged_page_empty` kept
+    excluding woken page-empty rows (105/105 wakes swallowed); and after removing one segment
+    the separator became "|" with no leading space, so the pattern could not match the next
+    one — only the first stale segment was ever stripped. Splitting on "|" avoids both.
+    """
+    kept = [s.strip() for s in (note or "").split("|")
+            if s.strip() and not _STALE_SEGMENT.match(s.strip())]
+    base = " | ".join(kept)
+    # trim the BASE, never the stamp: capping the joined string cut the new verdict off the
+    # end and left the row looking untouched.
+    return f"{base[:cap - len(WAKE_STAMP) - 3]} | {WAKE_STAMP}" if base else WAKE_STAMP
+
+
 def probe(url):
     try:
         req = urllib.request.Request(url, headers={"User-Agent": _UA})
@@ -72,8 +95,7 @@ def main():
                         # order matters: stamp the woken state, THEN drop the old verdict
                         # suffix (doing it the other way deleted what the stamp matched,
                         # leaving the woken state unreachable)
-                        base = re.sub(r"\s\|\s(listing-hunt|crack-walled) [^|]*", "", fr[5])  # any position, not just trailing
-                        fr[5] = (base + " | probe-woken: re-hunt pending")[:220]
+                        fr[5] = _wake_note(fr[5])
                 write_csv_rows("companies.csv", fresh)
     if apply:
         json.dump(state, open(STATE, "w", encoding="utf-8"), indent=1)
