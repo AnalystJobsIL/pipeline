@@ -36,6 +36,18 @@ def main():
             continue
         il = [j for j in jobs if israel.is_israel_job(j)]
         if il:
+            # carry forward enriched JDs: a rebuilt card with an empty description inherits
+            # the previous run's text (keyed by url/job_id) so daily refreshes stop wiping
+            # what enrich_scrape_jd fetched (and re-burning its Unlocker budget)
+            prev = {(j.get("url") or j.get("job_id") or ""): j
+                    for j in old.get(r["company_name"], []) if isinstance(j, dict)}
+            for j in il:
+                if not (j.get("description") or "").strip():
+                    pj = prev.get(j.get("url") or j.get("job_id") or "")
+                    if pj and (pj.get("description") or "").strip():
+                        j["description"] = pj["description"]
+                        if pj.get("_jd_attempted"):
+                            j["_jd_attempted"] = pj["_jd_attempted"]
             cache[r["company_name"]] = il
         print(f"  {r['company_name']}: {len(il)}", flush=True)
     if old and len(cache) < 0.8 * len(old):
