@@ -97,11 +97,18 @@ def parse_page(html, name):
         return None
     norm = lambda s: " ".join(re.sub(r"[^0-9a-z]+", " ", s.lower()).split())
     t, full = norm(title.group(1)), norm(re.sub(r"\([^)]*\)", "", name))
-    words = full.split()
-    if full and full in t:
+    t_words, words = t.split(), full.split()
+    # strong = the full MULTI-word name appears as a token sequence in the title.
+    # Token-sequence, not substring ("aws" must not match inside "seesaws"); and a
+    # single-word name can NEVER be strong — for "Snappy"/"Bounce"-class names the
+    # whole-name test degenerates to the fragment match, which is exactly how namesake
+    # pages produce internally-consistent wrong counts that nothing re-verifies.
+    seq_hit = len(words) >= 2 and any(t_words[i:i + len(words)] == words
+                                      for i in range(len(t_words) - len(words) + 1))
+    if seq_hit:
         strong = True
-    elif words and words[0] in t.split():
-        strong = False  # only a name fragment matched — could be a namesake company
+    elif words and words[0] in t_words:
+        strong = False  # fragment (or single-word) match — could be a namesake company
     else:
         return None
     count = None
@@ -146,8 +153,19 @@ def main():
     print(f"linkedin employee lookup for {len(targets)} companies ...")
     got = rng_only = miss = infra_streak = 0
     for name in targets:
+        cands = slug_candidates(name)
+        if not cands:
+            # pure-Hebrew/no-latin name: no LinkedIn slug is derivable — that is a fact
+            # about the NAME (monthly stamp; the LLM pass can still research it), not an
+            # "unlocker unreachable" infra event polluting the outage counter every run
+            miss += 1
+            rec = recs[name]
+            rec["employees_linkedin_miss"] = today
+            st.save_firmographics({name: rec}, today)
+            print(f"  miss {name}: no slug derivable (monthly retry)", flush=True)
+            continue
         found, got_body = None, False
-        for slug in slug_candidates(name):
+        for slug in cands:
             html = unlock(f"https://www.linkedin.com/company/{slug}")
             if html is None:
                 continue  # transport failure — proves nothing about this company

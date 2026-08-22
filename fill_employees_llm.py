@@ -133,7 +133,7 @@ def main():
 
     today = dt.date.today().isoformat()
     fixed = missed = infra_streak = 0
-    pending_miss = []
+    pending_miss, aborted = [], False
     with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
         futs = {ex.submit(lookup, c, r): c for c, r in targets.items()}
         for fut in as_completed(futs):
@@ -146,6 +146,7 @@ def main():
                 infra_streak += 1
                 print(f"  UNAVAILABLE {c}: {e} (no miss recorded)", flush=True)
                 if infra_streak >= 3:
+                    aborted = True
                     print("3 consecutive infrastructure errors — aborting; nothing was gated")
                     ex.shutdown(cancel_futures=True)
                     break
@@ -169,9 +170,11 @@ def main():
             st.save_firmographics({c: rec}, today)
             fixed += 1
             print(f"  ok   {c}: {out['employees']}{' ~' if out['is_estimate'] else ''} ({out['source']})", flush=True)
-    if pending_miss and fixed == 0 and len(pending_miss) >= 5:
-        print(f"mass-failure guard: 0 fills, {len(pending_miss)} misses — suspected soft "
-              "outage; no stamps or quarantines applied, names retry next run")
+    if pending_miss and (aborted or (fixed == 0 and len(pending_miss) >= 5)):
+        # an infra-aborted run proved the outage directly; an all-miss run implies one —
+        # either way, its misses are not evidence about names
+        print(f"outage guard: {len(pending_miss)} pending misses discarded — "
+              "no stamps or quarantines applied, names retry next run")
     else:
         for c in pending_miss:
             rec = recs[c]

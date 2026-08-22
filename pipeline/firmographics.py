@@ -136,9 +136,11 @@ _PROMPT = (
     '"SaaS / productivity", "automotive / semiconductors"\n'
     '  "sub_sector": one-line niche description\n'
     '  "stage": exactly one of "public", "acquired-by-bigtech", "growth-private", '
-    '"early-private", "private-enterprise" — growth/early-private mean VENTURE-BACKED '
-    "startup stages; a long-established, family-, partner- or PE-owned private company "
-    '(Bosch, EY, a bank) is "private-enterprise"\n'
+    '"early-private", "private-enterprise". The growth-vs-enterprise test is the FUNDING '
+    "MODEL, never size or age: any venture/growth-equity-backed private company is "
+    '"growth-private" even at $100B (OpenAI, Stripe are growth-private); '
+    '"private-enterprise" is ONLY for non-venture private ownership — family, partner, '
+    "PE-buyout, cooperative, state (Bosch, EY, a bank)\n"
     '  "stage_note": one line of evidence (ticker / acquirer+year / last round+valuation)\n'
     '  "size_band": "S" (<200 employees), "M" (200-1000), "L" (1000-5000), "XL" (>5000) — global\n'
     '  "employees_global": integer or null if unknown\n'
