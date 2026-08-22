@@ -131,6 +131,25 @@ def verify(name, plat, tok, api):
     return len(jobs), sum(1 for j in jobs if is_israel_job(j))
 
 
+def comeet_static_try(name, html):
+    """COMEET.init widgets don't expose window.comeetvar — but the page HTML carries the
+    long hex token plus a handful of hex uid candidates. Probe uid×token combinations
+    against the careers-api (QA-discovered on KELA: 'dark' verdict, live 8-job board)."""
+    mtok = re.search(r'"token"[: ]+"([A-F0-9]{20,})"', html or "")
+    if not mtok:
+        return None
+    token = mtok.group(1)
+    uids = list(dict.fromkeys(re.findall(r"\b[0-9A-F]{2}\.[0-9A-F]{3}\b", html)))[:6]
+    for uid in uids:
+        api = f"https://www.comeet.com/careers-api/2.0/company/{uid}/positions?token={token}"
+        try:
+            n_all, n_il = verify(name, "comeet", uid, api)
+            return ("comeet", uid, api)
+        except Exception:  # noqa: BLE001
+            continue
+    return None
+
+
 def comeet_try(name, page_url):
     try:
         from comeet_resolve import resolve as cr

@@ -392,7 +392,7 @@ Myrror Security,scrape,https://www.myrror.security/careers,https://www.myrror.se
 Entro Security,scrape,https://entro.security/careers/,https://entro.security/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Piiano,scrape,https://www.piiano.com/careers,https://www.piiano.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Hunters,scrape,https://www.hunters.security/en/careers,https://www.hunters.security/en/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
-KELA,scrape,https://www.kelacyber.com/careers/,https://www.kelacyber.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
+KELA,comeet,2A.004,https://www.comeet.com/careers-api/2.0/company/2A.004/positions?token=A2446FC1E6C512028905B44512032B45B441E6C,true,QA catch 2026-08-22: COMEET.init static extraction; verified 8/6 IL
 Perception Point,scrape,,https://perception-point.io/careers/,true,listing-hunt 2026-08-22: verified 4 IL via https://perception-point.io/careers/
 C2A Security,scrape,,https://c2a-sec.com/careers/,true,listing-hunt 2026-08-22: verified 3 IL via https://c2a-sec.com/careers/
 NanoLock Security,scrape,,https://builtin.com/jobs?allLocations=true,true,listing-hunt 2026-08-22: verified 2 IL via https://builtin.com/jobs?allLocations=true

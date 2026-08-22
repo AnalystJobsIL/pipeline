@@ -181,10 +181,10 @@ def validate_one(rend, name, seed_url):
         else:
             got = propose_from_text(blob)
         if not got and re.search(r"comeet", blob, re.I):
-            # comeet widget present but comeetvar not caught by the quick sniff — use the
-            # dedicated slow reader (longer waits, load-event timing)
-            from audit_empty_rows import comeet_try
-            got = comeet_try(name, u)
+            # comeet widget present but comeetvar not caught by the quick sniff — static
+            # COMEET.init extraction first (token+uid probe), then the slow reader
+            from audit_empty_rows import comeet_static_try, comeet_try
+            got = comeet_static_try(name, html) or comeet_try(name, u)
         if got and not _slug_matches(name, got[1]):
             got = None
         if not got:
