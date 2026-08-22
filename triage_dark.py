@@ -164,7 +164,20 @@ def classify(url, render=False, company=""):
     has_lang = bool(_JOBS_LANG.search(text))
 
     if n_roles >= 2:
-        return "extract-gap", f"{n_roles} role phrases in plain HTML, extractor got 0"
+        # Role-shaped phrases are NOT proof of open positions: staff bios ("Anne Hopkins
+        # DevOps Engineer") and testimonial walls match the same pattern. page-empty was
+        # already LLM-confirmed; extract-gap must be too, or we send the repair loop after
+        # team pages. The LLM decides open-roles vs bios, and returns js-shell when the
+        # plain fetch shows nothing a render would.
+        v = llm_page_verdict(company, url, text) if company else None
+        if v:
+            kind, detail = v
+            if kind == "has-roles":
+                return "extract-gap", detail
+            if kind == "wrong-page":
+                return "wrong-page", detail
+            return "page-empty", f"{detail} (role phrases were bios/testimonials)"
+        return "extract-gap", f"{n_roles} role phrases in plain HTML, extractor got 0 (unconfirmed)"
     if len(html) < 60_000 and _JOB_XHR.search(html):
         return "js-shell", "thin html + job-ish XHR — needs render+capture"
     if render:

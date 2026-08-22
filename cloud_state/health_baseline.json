@@ -1,19 +1,31 @@
 {
  "Fiverr": 21,
+<<<<<<< Updated upstream
  "Global-e": 54,
+=======
+ "Global-e": 52,
+>>>>>>> Stashed changes
  "Team8": 54,
  "BUYME": 4,
  "Sunflower": 27,
  "Moon Active": 0,
+<<<<<<< Updated upstream
  "Guardio": 26,
  "Claroty": 25,
  "Dream Security": 33,
  "Blockaid": 9,
  "Personetics": 14,
+=======
+ "Guardio": 25,
+ "Claroty": 21,
+ "Dream Security": 29,
+ "Blockaid": 8,
+ "Personetics": 15,
+>>>>>>> Stashed changes
  "Papaya Global": 59,
  "Papaya Gaming": 7,
  "Holisto": 5,
- "Abra": 119,
+ "Abra": 120,
  "Cyera": 173,
  "Lusha": 8,
  "Arpeely": 14,
@@ -37,10 +49,17 @@
  "Cybereason": 8,
  "Bringg": 5,
  "Lemonade": 34,
+<<<<<<< Updated upstream
  "Riskified": 27,
  "Similarweb": 67,
  "Wiz": 125,
  "Gong": 100,
+=======
+ "Riskified": 23,
+ "Similarweb": 68,
+ "Wiz": 116,
+ "Gong": 98,
+>>>>>>> Stashed changes
  "AppsFlyer": 53,
  "Taboola": 98,
  "Forter": 38,
@@ -48,16 +67,27 @@
  "Sisense": 5,
  "Redis": 22,
  "Innovid": 18,
+<<<<<<< Updated upstream
  "Mobileye": 154,
  "Aleph": 97,
+=======
+ "Mobileye": 142,
+ "Aleph": 94,
+>>>>>>> Stashed changes
  "Lendbuzz": 64,
  "Zadara": 8,
  "Tonkean": 7,
  "CYE": 12,
  "Oktopost": 9,
+<<<<<<< Updated upstream
  "Prilenia Therapeutics": 3,
  "Wix": 50,
  "Check Point Software Technologies": 396,
+=======
+ "Prilenia Therapeutics": 2,
+ "Wix": 43,
+ "Check Point Software Technologies": 385,
+>>>>>>> Stashed changes
  "Ibex Medical Analytics": 4,
  "Tavily": 18,
  "Finout": 14,
@@ -67,8 +97,13 @@
  "Aquant": 3,
  "Questar Auto Technologies": 0,
  "ThetaRay": 13,
+<<<<<<< Updated upstream
  "Rapyd": 32,
  "Zenity": 40,
+=======
+ "Rapyd": 31,
+ "Zenity": 37,
+>>>>>>> Stashed changes
  "Port": 37,
  "Sentra": 11,
  "DealHub": 24,
@@ -82,9 +117,15 @@
  "Fig Security": 3,
  "XM Cyber": 0,
  "Upstream Security": 2,
+<<<<<<< Updated upstream
  "Cato Networks": 121,
  "Axonius": 32,
  "Melio": 22,
+=======
+ "Cato Networks": 120,
+ "Axonius": 30,
+ "Melio": 23,
+>>>>>>> Stashed changes
  "Tipalti": 36,
  "Yotpo": 14,
  "Outbrain": 0,
@@ -115,6 +156,7 @@
  "Broadcom": 0,
  "Workday Inc": 6,
  "PayPal": 0,
+<<<<<<< Updated upstream
  "Amazon": 149,
  "Western Digital": 376,
  "SentinelOne": 213,
@@ -126,12 +168,31 @@
  "Databricks": 818,
  "Elastic": 264,
  "Datadog": 448,
+=======
+ "Amazon": 147,
+ "Western Digital": 361,
+ "SentinelOne": 210,
+ "Zscaler": 338,
+ "Okta": 334,
+ "Twilio": 157,
+ "Stripe": 578,
+ "Confluent": 30,
+ "Databricks": 811,
+ "Elastic": 256,
+ "Datadog": 425,
+>>>>>>> Stashed changes
  "MongoDB": 409,
  "Semperis": 26,
  "BigID": 8,
+<<<<<<< Updated upstream
  "Rubrik": 115,
  "Optimove": 8,
  "monday.com": 38,
+=======
+ "Rubrik": 116,
+ "Optimove": 6,
+ "monday.com": 29,
+>>>>>>> Stashed changes
  "Armis": 2,
  "Sweet Security": 5,
  "Descope": 9,
@@ -170,7 +231,11 @@
  "Duda": 6,
  "Gloat": 7,
  "Sweep": 7,
+<<<<<<< Updated upstream
  "Connecteam": 69,
+=======
+ "Connecteam": 70,
+>>>>>>> Stashed changes
  "Trigo": 154,
  "Eleos Health": 19,
  "MyHeritage": 6,
@@ -368,7 +433,11 @@
  "KLA": 40,
  "Hippo": 25,
  "BigPanda": 1,
+<<<<<<< Updated upstream
  "Check Point Software": 396,
+=======
+ "Check Point Software": 385,
+>>>>>>> Stashed changes
  "PayZen": 8,
  "Human Xtensions": 11,
  "Intel Israel": 38,
@@ -377,8 +446,13 @@
  "Cybersixgill": 1,
  "Nova": 81,
  "NVIDIA Israel": 40,
+<<<<<<< Updated upstream
  "Bosch": 4802,
  "Discovery": 155,
+=======
+ "Bosch": 4806,
+ "Discovery": 27,
+>>>>>>> Stashed changes
  "Nebius": 34,
  "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ": 31,
  "comblack": 32,

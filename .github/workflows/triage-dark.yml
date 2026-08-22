@@ -9,7 +9,9 @@ name: Triage dark rows (classify failure mode, then route)
 
 on:
   schedule:
-    - cron: "0 12 * * *"       # 2h before listing-hunt, so the hunt sees fresh modes
+    - cron: "0 18 * * *"       # evening: triage -> hunt -> 00:00 refresh -> 05:00 digest,
+                               # so a company recovered tonight is in TOMORROW MORNING's
+                               # email rather than the one after it
   workflow_dispatch:
     inputs:
       limit:
