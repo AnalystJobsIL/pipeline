@@ -79,6 +79,16 @@ def main():
 
     have = st.load_firmographics()
     names = [r["company_name"] for r in load_companies()]
+    # also cover companies that appear on the actual board (CI's matched table) but are
+    # not in companies.csv — CI's discovery layer surfaces jobs from employers we never
+    # explicitly listed, and those jobs deserve a profile too
+    cloud_db = os.path.join(HERE, "cloud_state", "seen.db")
+    if os.path.exists(cloud_db):
+        import sqlite3
+        con = sqlite3.connect(cloud_db)
+        board = [r[0] for r in con.execute("SELECT DISTINCT company FROM matched")]
+        con.close()
+        names += [n for n in board if n not in names]
     todo = [n for n in names if n not in have or is_stale(have.get(n, {}), a.refresh_days)]
     print(f"{len(names)} active companies, {len(have)} researched, {len(todo)} to do")
     if a.dry_run or not todo:

@@ -85,7 +85,7 @@ _SIGNAL = re.compile(
 # Hebrew analytics signal + seniority markers (Israeli careers sites post in Hebrew too)
 _HEBREW_SIGNAL = re.compile("אנליסט|אנליטיקה|"
                            "נתונים|בינה עסקית|דאטה")
-_HEBREW_SENIOR = re.compile("בכיר|ראש צות|מוביל")
+_HEBREW_SENIOR = re.compile("בכיר|בכירה|ראש צוות|ראש תחום|מוביל|מובילה|מנהל|מנהלת|סניור")
 
 # When a *title* is only a SIGNAL (not STRONG) — e.g. a bare "Senior Data Scientist" —
 # the description decides. A description dominated by ML/model-building with no analytics
@@ -104,7 +104,12 @@ _DESC_ANALYTICS = re.compile(
     r"\b(dashboard|a/b test|a-b test|experiment|business metrics|\bkpis?\b|"
     r"stakeholder|reporting|report\b|tableau|looker|power ?bi|\bbi\b|product analytics|"
     r"business intelligence|data visuali|ad[\s-]?hoc|\bsql\b|\binsights?\b|"
-    r"business questions?|self[- ]serve|decision[- ]making|analytic|analyz|querying)\b", re.I)
+    r"business questions?|self[- ]serve|decision[- ]making|analytic|analyz|querying)", re.I)
+# NOTE: no trailing \b — several alternatives above are PREFIXES (dashboard/experiment/
+# stakeholder/analytic/analyz), and the boundary made them fail on the derived forms that
+# actually occur in job descriptions: "dashboards", "analytics", "analyze", "stakeholders",
+# "experiments" all silently missed. This regex is both the ML counter-signal and the sole
+# positive evidence in _sig_accept_nollm, so the bug hurt precision and recall at once.
 # where the ROLE-specific text begins — skips the company-boilerplate intro (at AI companies
 # it's full of "AI-powered" noise that isn't about the job).
 _ROLE_START = re.compile(
@@ -137,7 +142,7 @@ def _desc_is_ml(desc):
 # "Applied Scientist, Personalization" (a wet-lab / ML role) sneaks in on the word "scientist".
 _DATA_ANCHOR = re.compile(
     r"\b(data|analyt|business intelligence|\bbi\b|insight|reporting|metrics?|"
-    r"statistic|econometr|\bquant\b)\b", re.I)
+    r"statistic|econometr|\bquant\b)", re.I)   # prefixes: no trailing \b (see _DESC_ANALYTICS)
 
 
 # a "Data Scientist / Data Science X" title with NO analytics qualifier ("… Product Analytics",

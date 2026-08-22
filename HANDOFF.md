@@ -8,8 +8,9 @@ Read `ARCHITECTURE.md` first (system model, invariants, runbooks). This file is 
 **Infrastructure**
 - Migrated from the private personal repo to **public `AnalystJobsIL/pipeline`** (unlimited
   free Actions minutes). Anonymity rules are in the gitignored `CLAUDE.local.md` — read it
-  before committing or dispatching anything. Old repo `shailiv/israeli-jobs-pipeline` is a
-  private archive with all workflows disabled (local remote `backup`).
+  before committing or dispatching anything. The pre-migration repo is kept as a private
+  archive with all workflows disabled; it is wired locally as the `backup` remote (see
+  `CLAUDE.local.md` for its address — deliberately not named in a public file).
 - Email now relays through the **private `AnalystJobsIL/inbox`** repo (issue + mention),
   content-hash deduped.
 
@@ -29,6 +30,18 @@ WalkMe, Cloudinary, Port.io, Miggo, Thales. Roughly **1,400+ Israel jobs** enter
   (`scan_dead_domains.py`), and the git-layer merge (`merge_csv_rows.py`).
 - Claude classification is **live** (`CLAUDE_CODE_OAUTH_TOKEN` set); verdicts cached per
   `company|title`.
+- **Firmographics layer** (2026-08-22, see ARCHITECTURE §7): structured company profiles
+  (sector/stage/size/employees/founded/business model) for all ~718 profileable companies,
+  researched via `claude -p` + web search, cached in the **local** `state/seen.db`
+  (export: `state/firmographics.json` — note the split-store trap, §7). Self-maintaining:
+  Windows scheduled task `IsraeliJobs-Firmographics` runs `run_firmo_chain.cmd` every 6h
+  (research → LinkedIn employee fill via Bright Data → web verify → export), and
+  `pipeline/run.py` researches ≤5 new board companies per digest run.
+  `company_type_analysis.py` joins profiles with matched jobs → "what does each TYPE of
+  company ask for" (`out/company_type_analysis.{json,md}`). Side-finding: several listed
+  companies are dead/absorbed (Alike Health, Syte, Sckipio, SimilarTech, NanoLock) — their
+  rows are NOT auto-parked; and discovery leaks job-title junk as company names
+  ("AppSec", "my team") which firmographics research correctly refuses.
 
 ## 2. Things that will bite you (learned the hard way this session)
 

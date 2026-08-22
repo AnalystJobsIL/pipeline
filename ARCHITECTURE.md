@@ -422,3 +422,82 @@ active rows had no baseline entry). To settle it, run the row yourself:
 - **A company's verdict looks wrong**: check its `notes` for the evidence date and method,
   reproduce with the named tool, and if the verdict flips — fix the row AND encode the
   miss as a detection pattern so the class is covered, not the instance.
+
+## 7. Company firmographics — the company-type layer
+
+Structured per-company facts (sector, stage, size, business model) that join with the
+matched jobs to answer **"what does this TYPE of company ask for?"**. Built 2026-08-22;
+distinct from the prose blurbs in `company_info` (§0's "About" text) — same lazy-cached
+pattern, structured JSON instead of two sentences.
+
+### The record
+
+One JSON object per company, produced by `pipeline/firmographics.py::research_company`
+(a `claude -p --allowedTools WebSearch` call, ~15-60s) and validated before caching:
+
+```json
+{"sector": "cybersecurity", "sub_sector": "cloud security (CNAPP)",
+ "stage": "acquired-by-bigtech",              // enum: public | acquired-by-bigtech | growth-private | early-private
+ "stage_note": "acquired by Google $32B, closed 2026-03",
+ "size_band": "L",                            // enum: S <200 | M 200-1000 | L 1000-5000 | XL >5000
+ "employees_global": 3148, "founded": 2020,   // founded accepts 1600..today (Barclays=1690!)
+ "business_model": "SaaS per cloud workload", "customer_type": "enterprises",
+ "il_center": "Tel Aviv", "as_of": "2026-08-22",
+ "employees_source": "linkedin", "employees_as_of": "2026-08-22"}   // present when a fill pass touched it
+```
+
+**Validation philosophy: reject, never repair.** A record with no identifiable sector, an
+out-of-enum stage, or an implausible number is dropped entirely (`_coerce` returns None) —
+a failure is retried on a later pass, junk is never cached. The researcher is instructed
+to answer null over guessing; the fill passes below close the nulls.
+
+### Collection & re-collection (three layers, all idempotent)
+
+1. **Bulk / catch-up** — `research_firmographics.py` researches every company that is
+   missing or stale (`--refresh-days N`; `as_of` is the staleness clock). Targets =
+   active `companies.csv` rows **∪ companies appearing in `cloud_state/seen.db` matched**
+   (CI's discovery surfaces employers we never listed). `--dry-run` reports, `--export`
+   writes `state/firmographics.json`. Thread-pooled, saves per-company — Ctrl-C-safe.
+2. **Employee fills** — `bd_employees.py` fetches LinkedIn company pages via Bright Data
+   Web Unlocker (1 credit/page) for null `employees_global`; then `fill_employees_llm.py`
+   re-researches (a) remaining nulls and (b) **suspect LinkedIn matches** — a count
+   contradicting the page's own size bucket or under 10, which is how generic names
+   (Bit, Aleph, Sunflower) match the wrong page. Every filled count carries
+   `employees_source` + `employees_as_of`.
+3. **Steady state** — two automatic paths keep it current with zero operator effort:
+   - the Windows scheduled task **`IsraeliJobs-Firmographics`** (every 6h:
+     09:00/15:00/21:00/03:00 local, catch-up on wake) runs `run_firmo_chain.cmd` =
+     research → LinkedIn fill → web verify/fill → export, logging to `state/firmo_chain.log`;
+   - `pipeline/run.py` researches up to `FIRMO_MAX_PER_RUN` (5) unprofiled board companies
+     per digest run (stat `firmographics_researched`) — this is the only writer on the
+     **cloud** side.
+
+### The split-store trap (read this before "why is the data missing?")
+
+The full dataset lives in the **local** `state/seen.db` (`firmographics` table) and its
+export `state/firmographics.json` — both gitignored. The **cloud** `cloud_state/seen.db`
+has only what its own 5-per-run hook accumulated. A cloud/CI consumer sees a mostly-empty
+table until the local set is deliberately seeded into `cloud_state` and committed (not
+done by default — CI commits that db daily and a stale local copy conflicts).
+
+### Consumption
+
+`company_type_analysis.py` joins matched jobs (default `--db cloud_state/seen.db`) with
+the export, runs `pipeline/roleprofile.py::extract` per job, and aggregates requirement
+stats (top skills, median years, degree-required rate, lead share, AI-mention rate) along
+three axes: sector / stage / size_band → `out/company_type_analysis.{json,md}`.
+Free-text sectors are collapsed through `primary_sector()`'s alias table there — extend
+that table when a new sector variant fragments the grouping; don't edit stored records.
+
+### Known limitations
+
+- Discovery sometimes leaks **job titles or categories as company names** ("AppSec",
+  "my team", "Sql developer - …"); the researcher correctly fails them, but they sit as
+  permanent retry noise until the discovery-side parser is fixed.
+- "Discovery"-class **ambiguous names** can't be researched safely without JD context;
+  the run.py hook passes context, the bulk script does not.
+- Employee counts for acquired subsidiaries are the **unit's** approximate headcount
+  (see `employees_source` for the story) — don't sum them with parent-company records.
+- The researcher found several listed companies **dead or absorbed** (Alike Health,
+  Syte, Sckipio, SimilarTech, NanoLock, Rewire R&D) — firmographics is currently the only
+  place that knowledge lands; the `companies.csv` rows are not auto-parked from it.

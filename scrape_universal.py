@@ -12,6 +12,7 @@ the custom Israeli SPAs) that expose no simple public API.
 """
 from __future__ import annotations
 
+import hashlib as _hashlib
 import json
 import re
 import sys
@@ -253,9 +254,16 @@ def scrape(company, url, timeout_ms=45000):
         if key in seen:
             return
         seen.add(key)
-        jobs.append({"company": company, "title": title[:90], "location": loc, "country_code": "IL",
+        jobs.append({"company": company, "title": title[:90], "location": loc,
+                     # NOT "IL": israel.is_israel_job treats a country_code as
+                     # authoritative and skips its text check, so hardcoding it made
+                     # the scraper rubber-stamp its own guess (Wiliot shipped 8 jobs
+                     # in Kyiv/Dallas/Portugal as Israeli). "" forces the real check.
+                     "country_code": "",
                      "url": url_ or url, "posted_date": _norm_date(date), "ats_platform": "scrape",
-                     "job_id": jid or url_ or title, "description": (desc or "")[:6000]})
+                     "job_id": (jid or (url_ if url_ and url_ != url else "")
+                                or _hashlib.sha1(f"{company}|{title}|{loc}".encode("utf-8")
+                                                 ).hexdigest()[:16]), "description": (desc or "")[:6000]})
 
     for o in raw:                                  # 1) structured JSON (state / XHR / JSON-LD)
         add(_title_of(o), _get(o, LOC_KEYS), _get(o, URL_KEYS), _get(o, DATE_KEYS),

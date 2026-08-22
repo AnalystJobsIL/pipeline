@@ -97,6 +97,9 @@ jobs:
         run: |
           [ -n "$DIGEST_JSON" ] && [ -s "$DIGEST_JSON" ]             && python mark_sent.py "$DIGEST_JSON" --db cloud_state/seen.db             || echo "nothing to mark sent"
 
+      - name: Invariant guard (blocks a corrupted registry from being committed)
+        run: python check_invariants.py
+
       - name: Persist state back to the repo
         run: |
           git config user.name  "github-actions[bot]"
