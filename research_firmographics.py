@@ -63,6 +63,12 @@ def fetch_cloud_db():
         return None
 
 
+def _stamp_ok():
+    """Write the health heartbeat firmo_health_check.py watches."""
+    with open(os.path.join(HERE, "state", "firmo_last_ok.txt"), "w", encoding="utf-8") as f:
+        f.write(dt.datetime.now().isoformat(timespec="seconds"))
+
+
 def seed_poc(st, today):
     """Load the hand-researched POC records into the store (idempotent)."""
     if not os.path.exists(POC):
@@ -128,21 +134,35 @@ def main():
         print(f"skipping {len(junk)} junk (job-title) names: {', '.join(junk[:5])}"
               + (" ..." if len(junk) > 5 else ""))
         names = [n for n in names if n not in set(junk)]
+    # failure gates FIRST — gated names must not win refresh-cap slots they then vacate
+    # (that starved real refreshes), and permanently failing refreshes (4+ strikes ~ a
+    # month of weekly retries) are evicted from the refresh layer entirely so squatters
+    # can never consume the whole cap once the store ages
+    failures = st.load_firmo_failures()
+    week_ago = (dt.date.today() - dt.timedelta(days=7)).isoformat()
+    failed_norms = {identity_key(c) for c, (att, last) in failures.items() if last > week_ago}
+    refresh_abandoned = {c for c, (att, last) in failures.items() if att >= 4}
     # identity is normalized (repeated-suffix/site/alias-insensitive): "SolarEdge" and
     # "SolarEdge Technologies" are one company — don't research (and pay for) both
     have_norms = {identity_key(n) for n in have}
-    todo, seen_norms = [], set()
+    todo, gated, seen_norms = [], [], set()
     stale_pick = {}  # identity group -> its STALEST variant (rotates variants over passes)
     for n in names:
         nn = identity_key(n)
         if n in have:
-            if is_stale(have[n], a.refresh_days):
+            if is_stale(have[n], a.refresh_days) and n not in refresh_abandoned:
+                if nn in failed_norms:
+                    gated.append(n)
+                    continue
                 cur = stale_pick.get(nn)
                 if cur is None or have[n].get("as_of", "") < have[cur].get("as_of", ""):
                     stale_pick[nn] = n
             continue
         if nn in have_norms or nn in seen_norms:
             continue  # a variant of an already-profiled (or already-queued) company
+        if nn in failed_norms:
+            gated.append(n)
+            continue
         seen_norms.add(nn)
         todo.append(n)
     # rolling refresh: stalest first, capped per run — the whole store shares a birth
@@ -153,25 +173,21 @@ def main():
         print(f"refreshing {len(refresh)} stale records (cap {REFRESH_CAP}/run)")
     seen_norms.update(identity_key(n) for n in refresh)
     todo.extend(refresh)
-    # names that keep failing (junk from discovery, ambiguous) retry at most WEEKLY so
-    # they don't re-spend a web-search claude call every 6-hour chain run forever
-    failures = st.load_firmo_failures()
-    week_ago = (dt.date.today() - dt.timedelta(days=7)).isoformat()
-    # gate by identity, not raw string — a failed name's variant must not cost a call
-    failed_norms = {identity_key(c) for c, (att, last) in failures.items() if last > week_ago}
-    gated = [n for n in todo if identity_key(n) in failed_norms]
-    todo = [n for n in todo if n not in gated]
     print(f"{len(names)} active companies, {len(have)} researched, {len(todo)} to do"
           + (f" ({len(gated)} recent-failure names gated to weekly retry)" if gated else ""))
     if a.dry_run or not todo:
         for n in todo:
             print("  -", n)
+        if not a.dry_run:
+            _stamp_ok()  # a clean zero-todo run IS healthy: the chain ran and nothing is
+            # stuck — without this, a quiet weekend fires false Desktop alerts that
+            # train the user to ignore the one channel real outages depend on
         return
     if a.limit:
         todo = todo[: a.limit]
 
     done = failed = 0
-    infra_streak = 0
+    infra_streak = infra_errors = 0
     failed_names = []
     with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
         futs = {ex.submit(research_company, name): name for name in todo}
@@ -184,6 +200,7 @@ def main():
                 # no firmo_failed stamp, and 3 in a row means everything else will fail
                 # too, so stop burning the queue and let the next chain run retry cleanly
                 infra_streak += 1
+                infra_errors += 1
                 print(f"UNAVAILABLE {name}: {e} (no failure recorded)")
                 if infra_streak >= 3:
                     print("3 consecutive infrastructure errors — aborting run; nothing was gated")
@@ -232,13 +249,13 @@ def main():
         for n in failed_names:
             st.record_firmo_failure(n, today)
     print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store")
-    # health heartbeat: stamped ONLY when the run ended in a trustworthy state (a clean
-    # zero-todo run counts; an infra abort or all-fail soft outage does not). The chain's
-    # health check alerts when this stops moving — otherwise a dead claude login hides
-    # behind exit-0 forever.
-    if infra_streak < 3 and not (failed >= 5 and done == 0):
-        with open(os.path.join(HERE, "state", "firmo_last_ok.txt"), "w", encoding="utf-8") as f:
-            f.write(dt.datetime.now().isoformat(timespec="seconds"))
+    # health heartbeat: stamped ONLY when the run PROVED the infrastructure works —
+    # something was researched, or every attempt at least reached the model (zero infra
+    # errors) and it wasn't an all-fail soft outage. A 1-2 name run where EVERY attempt
+    # was an infra failure never trips the 3-streak abort, so gating the stamp on the
+    # abort alone let a dead login stamp "trustworthy" forever.
+    if done > 0 or (infra_errors == 0 and not (failed >= 5 and done == 0)):
+        _stamp_ok()
 
 
 if __name__ == "__main__":

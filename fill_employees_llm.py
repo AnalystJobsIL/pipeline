@@ -180,16 +180,19 @@ def main():
     else:
         for c in pending_miss:
             rec = recs[c]
-            if (rec.get("employees_source") or "") == "linkedin-weakmatch":
-                # QUARANTINE: a name-fragment page match that verification couldn't
-                # confirm — an honest null beats a namesake's number served forever
+            src = rec.get("employees_source") or ""
+            if src == "linkedin-weakmatch" or (src == "linkedin" and suspect(rec)):
+                # QUARANTINE: a fill that verification couldn't confirm AND the system
+                # itself distrusts (fragment match, or a strong match whose count
+                # contradicts the page's own bucket — usually a regex grabbing another
+                # element) — an honest null beats a wrong number served forever
                 rec["employees_global"] = None
                 rec.pop("employees_range", None)
                 # restore the band the record had BEFORE the LinkedIn fill — quarantine
                 # removes wrong-page data, not the researcher's own evidence
                 rec["size_band"] = rec.pop("size_band_pre_linkedin", "") or ""
-                rec["employees_source"] = "linkedin-weakmatch-quarantined"
-                print(f"  quarantined weak-match count for {c}", flush=True)
+                rec["employees_source"] = f"{src}-quarantined"
+                print(f"  quarantined unconfirmed suspect count for {c}", flush=True)
             rec["employees_lookup_miss"] = today
             st.save_firmographics({c: rec}, today)
     print(f"=== fixed {fixed} · miss {missed} ===")
