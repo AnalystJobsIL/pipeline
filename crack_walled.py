@@ -113,6 +113,12 @@ def crack_one(name, seed, platform):
                 if (re.search(r"career|job|position|opening|apply", lu, re.I)
                         and not any(a in lu.lower() for a in AGG) and lu not in visited):
                     queue.append(lu)
+    if not captures and platform in ("phenom", "eightfold") and cands:
+        # canonical guess from the company's own domain; verification gates correctness
+        d = urllib.parse.urlparse(cands[0]).netloc.replace("www.", "")
+        base = ".".join(d.split(".")[-2:])
+        captures = [("scrape", f"https://careers.{base}/careers?location=Israel"),
+                    ("scrape", f"https://careers.{base}/careers")]
     if not captures:
         return ("nocapture", None, 0, "ATS host not seen in render")
     os.environ["SCRAPE_ASSUME_IL"] = "1"

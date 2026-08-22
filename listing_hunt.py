@@ -67,9 +67,31 @@ def harvest_links(rend, url):
     return uniq[:40], bool(html)
 
 
+def _resolve_rebrand(url):
+    """Follow redirects; a cross-domain landing means the company rebranded (Piiano->a16y.ai).
+    Returns (final_url, rebrand_domain_or_empty)."""
+    import urllib.request as _ur
+    try:
+        req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0"}, method="HEAD")
+        with _ur.urlopen(req, timeout=15) as r:
+            final = r.geturl()
+    except Exception:  # noqa: BLE001
+        return url, ""
+    d0 = ".".join(urllib.parse.urlparse(url).netloc.split(".")[-2:])
+    d1 = ".".join(urllib.parse.urlparse(final).netloc.split(".")[-2:])
+    return final, (d1 if d0 != d1 else "")
+
+
 def hunt_one(name, seed):
     from deep_validate import google_via_unlocker
+    rebrand = ""
+    if seed and not any(a in seed.lower() for a in AGG):
+        seed, rebrand = _resolve_rebrand(seed)
+        if rebrand:
+            print(f"       (rebrand detected -> {rebrand})", flush=True)
     cands = [] if not seed or any(a in seed.lower() for a in AGG) else [seed]
+    if rebrand:
+        cands += [f"https://{rebrand}/careers", f"https://{rebrand}/careers/"]
     cands += [u for u in ddg(f"{name} jobs") if u not in cands]
     if len(cands) < 2:                     # DDG blocked/empty (datacenter IPs) — paid fallback
         cands += [u for u in google_via_unlocker(f"{name} careers") if u not in cands]
