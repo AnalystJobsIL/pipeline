@@ -32,6 +32,7 @@ import urllib.parse
 import urllib.request
 
 from audit_empty_rows import SIGS, _WD, _slug_matches, fetch, verify, AGG
+from pipeline.aggregators import is_aggregator
 from bd_rescue import _load_secrets, unlock
 from pipeline.recruiters import is_recruiter
 from resolve_llm import _ATS_HINT, _PROMPT, _ask_claude
@@ -60,11 +61,11 @@ def ddg(name, limit=4):
     urls = []
     for m in re.finditer(r"uddg=([^&\"']+)", html):
         u = urllib.parse.unquote(m.group(1))
-        if u.startswith("http") and not any(a in u.lower() for a in AGG):
+        if u.startswith("http") and not is_aggregator(u):
             urls.append(u)
     for m in re.finditer(r'href=["\'](https?://[^"\']+)["\']', html):
         u = m.group(1)
-        if "duckduckgo" not in u and not any(a in u.lower() for a in AGG):
+        if "duckduckgo" not in u and not is_aggregator(u):
             urls.append(u)
     seen, out = set(), []
     for u in urls:
@@ -88,7 +89,7 @@ def google_via_unlocker(name, limit=4):
     for m in re.finditer(r'href="(?:/url\?q=)?(https?://[^"&]+)', html or ""):
         u = urllib.parse.unquote(m.group(1))
         if ("google." not in u and "gstatic" not in u
-                and not any(a in u.lower() for a in AGG) and u not in out):
+                and not is_aggregator(u) and u not in out):
             out.append(u)
     return out[:limit]
 
@@ -151,7 +152,7 @@ class Renderer:
 
 def validate_one(rend, name, seed_url):
     """Returns (verdict, platform, token, api_url, n_all, n_il, detail)."""
-    cands = [] if not seed_url or any(a in seed_url.lower() for a in AGG) else [seed_url]
+    cands = [] if not seed_url or is_aggregator(seed_url) else [seed_url]
     for u in ddg(name) + (google_via_unlocker(name) if len(cands) < 2 else []):
         if u not in cands:
             cands.append(u)

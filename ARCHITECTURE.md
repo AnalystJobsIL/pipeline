@@ -41,8 +41,15 @@ titles go to `claude -p`, whose YES/NO **role judgment** is cached per `company|
 
 ### Run it locally without side effects
 
+**Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
+them executes them (`merge_research.py` rewrites `research_companies.json` on import).
+And 13 of 39 workflow steps carry `continue-on-error: true`, so a hard failure in an
+audit/hunt step still shows a green run — check the step log, not the badge.
+
 ```bash
 python -m pipeline.run --only "Fiverr,Wix" --no-llm    # produce-only: NEVER emails/publishes
+                                                      # scoped runs write out/docs-preview/,
+                                                      # never the published docs/
 python -m pipeline.run --db /tmp/scratch.db            # don't touch the real seen-store
 python scrape_universal.py "Company" "https://…/careers"   # test extraction on one page
 python audit_empty_rows.py                             # dry-run (add --apply to write)

@@ -28,7 +28,7 @@ from pipeline.israel import is_israel_job
 
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
-from pipeline.aggregators import HOSTS as AGG   # single source of truth
+from pipeline.aggregators import HOSTS as AGG, is_aggregator   # single source of truth
 
 # signature -> (platform, api_url template)
 SIGS = [
@@ -109,7 +109,7 @@ def serp(name, limit=5):
     except Exception:  # noqa: BLE001
         return []
     urls = [o.get("link", "") for o in data.get("organic_results", [])]
-    return [u for u in urls if u and not any(a in u.lower() for a in AGG)][:limit]
+    return [u for u in urls if u and not is_aggregator(u)][:limit]
 
 
 def propose_from_html(html):
@@ -186,7 +186,7 @@ def main():
         name, url = r[0], r[3]
         _mark(name)
         # direct careers URL first; SerpApi only as fallback (723-row backlog vs 250/mo budget)
-        direct = [] if any(a in (url or "").lower() for a in AGG) else [url]
+        direct = [] if is_aggregator(url or "") else [url]
         got, unsup, used_serp = None, "", False
         for phase in (direct, None):
             cands = phase if phase is not None else [u for u in serp(name) if u not in direct]

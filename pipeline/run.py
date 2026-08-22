@@ -275,7 +275,12 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     with open(base + ".md", "w", encoding="utf-8") as f:
         f.write(md_body)
     # interactive board for GitHub Pages (served from /docs)
-    docs_dir = os.path.join(REPO_ROOT, "docs")
+    # a scoped run (--only / --limit) must NOT overwrite the published board with a
+    # partial one; local experiments were clobbering docs/index.html
+    if only or limit:
+        docs_dir = os.path.join(out_dir, "docs-preview")
+    else:
+        docs_dir = os.path.join(REPO_ROOT, "docs")
     os.makedirs(docs_dir, exist_ok=True)
     with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(board_html)

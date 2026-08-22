@@ -25,6 +25,7 @@ import urllib.parse
 
 from deep_validate import Renderer, ddg
 from audit_empty_rows import AGG, verify
+from pipeline.aggregators import is_aggregator
 
 TODAY = dt.date.today().isoformat()
 
@@ -79,7 +80,7 @@ def listing_urls(platform, m, page_url):
 
 
 def crack_one(name, seed, platform):
-    cands = [] if not seed or any(a in seed.lower() for a in AGG) else [seed]
+    cands = [] if not seed or is_aggregator(seed) else [seed]
     cands += [u for u in ddg(f"{name} careers") if u not in cands]
     captures = []
     rx = _HOST_PATTERNS.get(platform)
@@ -111,7 +112,7 @@ def crack_one(name, seed, platform):
             for lm in re.finditer(r'<a[^>]+href=["\']([^"\']+)["\']', html or ""):
                 lu = urllib.parse.urljoin(u, lm.group(1))
                 if (re.search(r"career|job|position|opening|apply", lu, re.I)
-                        and not any(a in lu.lower() for a in AGG) and lu not in visited):
+                        and not is_aggregator(lu) and lu not in visited):
                     queue.append(lu)
     if not captures and platform in ("phenom", "eightfold") and cands:
         # canonical guess from the company's own domain; verification gates correctness

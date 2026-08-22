@@ -56,7 +56,7 @@ def harvest_links(rend, url):
         if href.startswith(("javascript:", "mailto:", "#")):
             continue
         absu = urllib.parse.urljoin(url, href)
-        if any(a in absu.lower() for a in AGG):
+        if is_aggregator(absu):
             continue
         if _LINKISH.search(href) or _LINKISH.search(text) or _IL.search(text):
             out.append((text[:60], absu))
@@ -97,7 +97,7 @@ def hunt_one(name, seed, documented=False):
         if il:
             return ("found", seed, len(il), "fast-path")
     rebrand = ""
-    if seed and not any(a in seed.lower() for a in AGG):
+    if seed and not is_aggregator(seed):
         final, rebrand = _resolve_rebrand(seed)
         if rebrand:
             # An ACQUISITION also redirects cross-domain (deci.ai -> nvidia.com). Following
@@ -114,7 +114,7 @@ def hunt_one(name, seed, documented=False):
                         f"(rebrand vs acquisition) before activating")
             seed = final
             print(f"       (rebrand detected -> {rebrand})", flush=True)
-    cands = [] if not seed or any(a in seed.lower() for a in AGG) else [seed]
+    cands = [] if not seed or is_aggregator(seed) else [seed]
     if rebrand:
         cands += [f"https://{rebrand}/careers", f"https://{rebrand}/careers/"]
     cands += [u for u in ddg(f"{name} jobs") if u not in cands]

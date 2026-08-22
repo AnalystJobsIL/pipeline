@@ -26,7 +26,7 @@ import urllib.request
 from pipeline.fetchers import FETCHERS, fetch_company
 from pipeline.israel import is_israel_job
 
-from pipeline.aggregators import HOSTS as AGGREGATORS, is_aggregator as _is_agg
+from pipeline.aggregators import is_aggregator as _is_agg
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 # high-signal strings worth surfacing verbatim to the model
