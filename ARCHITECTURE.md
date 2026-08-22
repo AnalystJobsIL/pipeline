@@ -198,11 +198,13 @@ parked, because only parked rows are visible to the hunt/audit machinery.
 
 ### The verdict-string rule (read before changing ANY resolver)
 
-Re-check pools are **allowlists of note substrings**. If you invent or reword a verdict
-string, add it to all **six** pools — `listing_hunt.py`, `deep_validate.py`,
-`audit_empty_rows.py`, `crack_walled.py`, `scan_dead_domains.py`, `probe_candidates.py`
-(the last is the wake path for every monitored candidate) — or every row carrying it
-silently leaves every re-check pool and
+Re-check pools are **allowlists of note substrings**, and the allowlist now lives in ONE
+place: `pipeline/verdicts.py` (`TOKENS` / `in_pool` / `stale`). Add any new verdict string
+to `TOKENS` there. `audit_empty_rows` and `deep_validate` import `in_pool`; the tools that
+legitimately want a subset (`crack_walled` → walled ATSes, `probe_candidates` → documented
+candidates) narrow it explicitly rather than re-implementing it. Hand-maintained copies
+drifted once already — `listing_hunt` knew 15 tokens while the other two knew 7, leaving
+**64 companies invisible to two pools**. If a string is missing from `TOKENS`,
 its coverage is lost with no error anywhere. This is exactly how 52 rows became stranded
 (`bd_rescue.py` wrote `scanned via brightdata; …`, which matched none of them).
 Corollary: a diagnostic verdict must **append** (`base | tool date: finding`), never

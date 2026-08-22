@@ -23,13 +23,7 @@ import sys
 from pipeline import fetchers, israel
 from resolve_deep import _capture, _detect_ats
 
-ATS_HOST = re.compile(r"greenhouse\.io|lever\.co|ashbyhq\.com|smartrecruiters\.com|"
-                      r"comeet\.co|workable\.com|recruitee\.com|myworkdayjobs|"
-                      # added 2026-08-22 after pipeline/platform_check.py showed 6 native
-                      # platforms missing here — a row misconfigured as `scrape` on one of
-                      # these hosts was never flagged misconfig-scrape-on-ats
-                      r"breezy\.hr|bamboohr\.com|oraclecloud\.com|applytojob\.com|"
-                      r"jazz\.co|amazon\.jobs|careers\.microsoft\.com", re.I)
+from pipeline.health import ATS_HOST   # one definition (was a char-for-char copy)
 
 # ATS endpoints discoverable straight from a page's HTML/JS (used on the Bright Data path,
 # for anti-bot sites like Workday where a headless browser gets a maintenance page).

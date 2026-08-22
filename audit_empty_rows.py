@@ -30,6 +30,7 @@ _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 from pipeline.aggregators import HOSTS as AGG, is_aggregator   # single source of truth
 from pipeline.atomic import write_csv_rows
+from pipeline.verdicts import in_pool
 
 # signature -> (platform, api_url template)
 SIGS = [
@@ -175,7 +176,7 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     parked = [(i, r) for i, r in enumerate(rows)
               if r and len(r) >= 6 and r[4] == "false" and r[0] not in done
-              and re.search(r"scanned; no open|unreachable; could not|aggregator URL|no listing found|no ATS detected|scanned via brightdata|empty-but-suspect", r[5] or "")]
+              and in_pool(r[5] or "")]
     print(f"{len(parked)} parked rows to audit ({len(done)} already done); "
           f"SerpApi spent only when needed\n", flush=True)
     def _mark(name):
