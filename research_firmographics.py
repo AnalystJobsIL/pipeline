@@ -232,6 +232,13 @@ def main():
         for n in failed_names:
             st.record_firmo_failure(n, today)
     print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store")
+    # health heartbeat: stamped ONLY when the run ended in a trustworthy state (a clean
+    # zero-todo run counts; an infra abort or all-fail soft outage does not). The chain's
+    # health check alerts when this stops moving — otherwise a dead claude login hides
+    # behind exit-0 forever.
+    if infra_streak < 3 and not (failed >= 5 and done == 0):
+        with open(os.path.join(HERE, "state", "firmo_last_ok.txt"), "w", encoding="utf-8") as f:
+            f.write(dt.datetime.now().isoformat(timespec="seconds"))
 
 
 if __name__ == "__main__":

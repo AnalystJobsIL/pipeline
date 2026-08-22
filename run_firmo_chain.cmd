@@ -14,3 +14,8 @@ rem attempted: a dirty companies.csv (routine here) blocks --ff-only forever, si
 "%PY%" -u fill_employees_llm.py --workers 3 >> %LOG% 2>&1
 "%PY%" -u research_firmographics.py --export >> %LOG% 2>&1
 echo ==== chain done %date% %time% ==== >> %LOG%
+rem health tripwire LAST: exits 1 (visible in Task Scheduler) and drops a Desktop alert
+rem file when no trustworthy research run happened for 48h - a dead claude login must
+rem not hide behind exit-0 forever. Its exit code is the task's result.
+"%PY%" -u firmo_health_check.py >> %LOG% 2>&1
+exit /b %errorlevel%

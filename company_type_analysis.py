@@ -119,6 +119,11 @@ def main():
         if not rec:
             unmatched[company] += 1
             continue
+        if (rec.get("employees_source") or "") == "linkedin-weakmatch":
+            # pending verification: the count/band may belong to a NAMESAKE company.
+            # Sector/stage are researcher data and stay usable; size must not be served
+            # until the verify pass confirms (verified windows can lag under outages).
+            rec = {**rec, "size_band": "", "employees_global": None}
         joined.append((roleprofile.extract(title, desc or ""), rec, company))
     print(f"{len(jobs)} matched jobs, {len(joined)} joined to firmographics, "
           f"{sum(unmatched.values())} jobs at {len(unmatched)} unprofiled companies")
