@@ -167,20 +167,25 @@ def main():
               f"{name} ({platform}): {detail or (got[1][:60] if got else '')}"
               f"{f' -> {n_il} IL' if n_il else ''}", flush=True)
         if apply:
-            if verdict.startswith("cracked"):
-                plat, lu = got
-                rows[i][1], rows[i][2], rows[i][3] = plat, "", lu
-                rows[i][4] = "true"
-                rows[i][5] = f"crack-walled {TODAY}: {platform} via {plat}; verified {n_il} IL"
-            elif verdict == "novrfy" and got:
-                rows[i][3] = got[1]
-                rows[i][5] = (re.sub(r" \| crack-walled.*$", "", r[5])
-                              + f" | crack-walled {TODAY}: host documented, 0 IL now")[:220]
-            else:
-                rows[i][5] = (re.sub(r" \| crack-walled.*$", "", r[5])
-                              + f" | crack-walled {TODAY}: {verdict}")[:220]
+            # single-writer discipline: RE-READ the csv before every write — a held snapshot
+            # clobbers concurrent edits (lost-update incident 2026-08-22)
+            fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+            for fr in fresh:
+                if fr and fr[0] == name:
+                    if verdict.startswith("cracked"):
+                        plat, lu = got
+                        fr[1], fr[2], fr[3] = plat, "", lu
+                        fr[4] = "true"
+                        fr[5] = f"crack-walled {TODAY}: {platform} via {plat}; verified {n_il} IL"
+                    elif verdict == "novrfy" and got:
+                        fr[3] = got[1]
+                        fr[5] = (re.sub(r" \| crack-walled.*$", "", fr[5])
+                                 + f" | crack-walled {TODAY}: host documented, 0 IL now")[:220]
+                    else:
+                        fr[5] = (re.sub(r" \| crack-walled.*$", "", fr[5])
+                                 + f" | crack-walled {TODAY}: {verdict}")[:220]
             csv.writer(open("companies.csv", "w", encoding="utf-8",
-                            newline="")).writerows(rows)
+                            newline="")).writerows(fresh)
         time.sleep(0.3)
     print(f"\n=== crack-walled: {stats} ===", flush=True)
 

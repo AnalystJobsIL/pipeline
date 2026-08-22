@@ -244,7 +244,7 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
-               and re.search(r"scanned; no open|unreachable; could not|aggregator URL", r[5] or "")
+               and re.search(r"scanned; no open|unreachable; could not|aggregator URL|no listing found|no ATS detected", r[5] or "")
                and "deep-validated" not in (r[5] or "")
                and not is_recruiter(r[0])]
     if limit:
@@ -273,17 +273,23 @@ def main():
                   f"{(plat + ':' + str(tok) + f' -> {n_all}/{n_il} IL') if plat else detail}",
                   flush=True)
             if apply:
-                if verdict == "recovered":
-                    rows[i][1], rows[i][2], rows[i][3] = plat, tok, api
-                    rows[i][4] = "true"
-                    rows[i][5] = f"re-audit {TODAY}: deep-verified {n_all}/{n_il} IL (was dark)"
-                else:
-                    note = {"unsupported": f"unsupported ATS {detail}",
-                            "dark": "no ATS detected (rendered)",
-                            "unreachable": "unreachable"}[verdict]
-                    rows[i][5] = f"deep-validated {TODAY}: {note}"
+                # single-writer discipline: re-read + match by NAME before every write
+                # (a held snapshot + row-index writes silently revert other writers)
+                fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+                for fr in fresh:
+                    if not fr or fr[0] != name or len(fr) < 6:
+                        continue
+                    if verdict == "recovered":
+                        fr[1], fr[2], fr[3] = plat, tok, api
+                        fr[4] = "true"
+                        fr[5] = f"re-audit {TODAY}: deep-verified {n_all}/{n_il} IL (was dark)"
+                    else:
+                        note = {"unsupported": f"unsupported ATS {detail}",
+                                "dark": "no ATS detected (rendered)",
+                                "unreachable": "unreachable"}[verdict]
+                        fr[5] = f"deep-validated {TODAY}: {note}"
                 csv.writer(open("companies.csv", "w", encoding="utf-8",
-                                newline="")).writerows(rows)
+                                newline="")).writerows(fresh)
             time.sleep(0.3)
     print(f"\n=== deep validation: {stats} · BD searches used: {_BD['used']} ===", flush=True)
 

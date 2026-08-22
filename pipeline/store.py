@@ -120,6 +120,13 @@ class SeenStore:
                 summary     TEXT,
                 updated     TEXT
             )""")
+        # structured firmographics (pipeline/firmographics.py), one JSON record per company
+        self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS firmographics (
+                company     TEXT PRIMARY KEY,
+                record      TEXT,
+                updated     TEXT
+            )""")
         # Full display record of every matched role, keyed by company|title, with the date
         # we FIRST saw it. Powers the rolling windows: email = first_seen within 48h,
         # board = first_seen within 14 days.
@@ -197,6 +204,30 @@ class SeenStore:
                    ON CONFLICT(company) DO UPDATE SET summary=excluded.summary,
                    updated=excluded.updated""",
                 (company, summary, run_date),
+            )
+        self.conn.commit()
+
+    # ---- structured firmographics (sector/stage/size/business model) --------
+    def load_firmographics(self):
+        """Return {company: record_dict}; silently skips rows that fail to parse."""
+        import json as _json
+        cur = self.conn.execute("SELECT company, record FROM firmographics")
+        out = {}
+        for c, r in cur.fetchall():
+            try:
+                out[c] = _json.loads(r)
+            except (ValueError, TypeError):
+                continue
+        return out
+
+    def save_firmographics(self, records, run_date):
+        import json as _json
+        for company, rec in records.items():
+            self.conn.execute(
+                """INSERT INTO firmographics (company, record, updated) VALUES (?,?,?)
+                   ON CONFLICT(company) DO UPDATE SET record=excluded.record,
+                   updated=excluded.updated""",
+                (company, _json.dumps(rec, ensure_ascii=False), run_date),
             )
         self.conn.commit()
 

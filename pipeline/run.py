@@ -71,7 +71,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # page's "similar jobs" sidebar — OTHER companies' roles attributed to this one.
     # Resolvers refuse to create such rows, but a hand-added row would otherwise sail through.
     import re as _re
-    _AGG_HOST = _re.compile(r"//[^/]*(linkedin\.|indeed\.|glassdoor\.|secrethunter\.)", _re.I)
+    _AGG_HOST = _re.compile(r"//[^/]*(linkedin\.|indeed\.|glassdoor\.|secrethunter\.|t\.me)", _re.I)
     _agg = [r for r in rows if r["ats_platform"] == "scrape" and _AGG_HOST.search(r["api_url"] or "")]
     for r in _agg:
         print(f"  SKIP {r['company_name']}: scrape row points at an aggregator "

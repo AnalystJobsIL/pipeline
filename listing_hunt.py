@@ -97,8 +97,21 @@ def hunt_one(name, seed, documented=False):
             return ("found", seed, len(il), "fast-path")
     rebrand = ""
     if seed and not any(a in seed.lower() for a in AGG):
-        seed, rebrand = _resolve_rebrand(seed)
+        final, rebrand = _resolve_rebrand(seed)
         if rebrand:
+            # An ACQUISITION also redirects cross-domain (deci.ai -> nvidia.com). Following
+            # it would verify the ACQUIRER's Israel jobs and attribute them to this company
+            # — the CyberArk->PANW class, arriving through the one unguarded path.
+            from audit_empty_rows import _slug_matches
+            if not _slug_matches(name, rebrand.split(".")[0]):
+                # Can't distinguish a rebrand (piiano->a16y.ai, legitimate) from an
+                # ACQUISITION (deci.ai->nvidia.com, whose global board would verify with
+                # the acquirer's Israel jobs) automatically. Document, never auto-follow.
+                print(f"       (cross-domain redirect -> {rebrand}: unverifiable as rebrand; "
+                      f"documented for review, not followed)", flush=True)
+                return ("redirected", None, 0, f"redirects to {rebrand} — verify manually "
+                        f"(rebrand vs acquisition) before activating")
+            seed = final
             print(f"       (rebrand detected -> {rebrand})", flush=True)
     cands = [] if not seed or any(a in seed.lower() for a in AGG) else [seed]
     if rebrand:
@@ -157,12 +170,15 @@ def main():
     budget_min = int(os.environ.get("HUNT_TIME_BUDGET_MIN", "0"))
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     def _stale_hunt(note):
-        """Re-hunt monitored candidates every 14 days — a board empty today isn't empty forever."""
+        """Re-hunt ANY hunted row after 14 days — a board empty today isn't empty forever.
+        NOTE: this used to require the literal 'monitored candidate', which made the
+        'no listing found' verdict TERMINAL (rows silently retired from the pool forever,
+        so one broken cycle could permanently delete hundreds of companies' coverage)."""
         m = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
         if not m:
             return False
         age = (dt.date.today() - dt.date.fromisoformat(m.group(1))).days
-        return "monitored candidate" in note and age >= 14
+        return age >= 14
 
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
@@ -177,7 +193,7 @@ def main():
     if limit:
         targets = targets[:limit]
     print(f"listing-hunting {len(targets)} companies\n", flush=True)
-    stats = {"found": 0, "nolisting": 0, "dead": 0}
+    stats = {"found": 0, "nolisting": 0, "dead": 0, "redirected": 0}
     t0 = time.time()
     if True:
         for n, (i, r) in enumerate(targets, 1):

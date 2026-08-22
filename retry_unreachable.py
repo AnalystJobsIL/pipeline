@@ -151,8 +151,15 @@ def main():
         with open(os.environ.get("SCRAPE_CACHE_OUT", "out/retry_cache.json"), "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
     else:
+        # single-writer discipline: re-read at write time and merge our changed rows in
+        # by NAME, so verdicts another tool wrote during this run are not reverted
+        changed = {r[0]: r for r in rows if r and len(r) > 5}
+        fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+        for idx, fr in enumerate(fresh):
+            if fr and len(fr) > 5 and fr[0] in changed and changed[fr[0]] != fr:
+                fresh[idx] = changed[fr[0]]
         with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-            csv.writer(f).writerows(rows)
+            csv.writer(f).writerows(fresh)
         with open("scraped_cache.json", "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
     print(f"=== recovered {fixed}, still unreachable {still} ===", flush=True)

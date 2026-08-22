@@ -526,7 +526,7 @@ Panoply,scrape,https://panoply.io/company/careers/,https://panoply.io/company/ca
 NextSilicon,scrape,https://www.nextsilicon.com/careers,https://www.nextsilicon.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Frontegg,comeet,77.009,https://www.comeet.com/careers-api/2.0/company/77.009/positions?token=7792CD6166B3BC8344F4341166B3BC83BC83BC8,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Rookout,scrape,https://www.rookout.com/careers/,https://www.rookout.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
-Deci,scrape,https://deci.ai/careers/,https://deci.ai/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
+Deci,scrape,https://deci.ai/careers/,https://deci.ai/careers/,false,defunct: acquired by NVIDIA; deci.ai/careers/ 301s to nvidia.com global board (GET-verified 2026-08-22) - do not hunt
 Arnica,scrape,https://www.arnica.io/careers,https://www.arnica.io/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Miggo Security,scrape,,https://startup.jobs/company/miggo-security,true,listing-hunt 2026-08-22: verified 5 IL via https://startup.jobs/company/miggo-security
 Clutch Security,scrape,https://www.clutch.security/careers,https://www.clutch.security/careers,true,deep-scrape; 6 Israel jobs

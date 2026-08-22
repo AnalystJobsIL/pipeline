@@ -104,6 +104,10 @@ including the claim "none".
    companies with no readable board — and the intake that feeds NEW companies into
    resolution (below).
 
+Full `FETCHERS` map (16): comeet, greenhouse, lever, smartrecruiters, recruitee, ashby,
+workday, oraclehcm, custom_json, jazzhr, microsoft, workable, breezy, bamboohr, plus the
+pseudo-platforms `scrape` and `discovery`.
+
 Support policy: a platform seen 3+ times gets native support; otherwise the scraper's
 strategies carry it (Phenom/Eightfold/iCIMS/Radancy/Rippling are all read via strategy 1
 XHR-capture or 3/4 without native fetchers).
@@ -127,7 +131,9 @@ its own previous suffix, so a row accumulates one current verdict per tool. Taxo
 | state | active | meaning | who re-checks it |
 |---|---|---|---|
 | (verified board) | true | endpoint/listing verified to return real jobs | every digest / daily refresh |
-| `… 0/0 IL` or `0 IL now` | true | board verified, zero Israel roles today | same — lights up automatically |
+| `… N/0 IL` (N>0) | true | board healthy, N global roles, none in Israel | every digest — lights up automatically |
+| `… 0/0 IL` | true | zero of zero: **may be a dead token/moved board**, `pipeline/health.py` calls this `empty-board`. Discriminator: comeet returns HTTP **400** for dead creds, **200 + `[]`** for a live empty board | digest → `stale.json` → 06:00 self-heal (5 strikes) |
+| `host documented, 0 IL now` | false | walled-ATS host found, extraction unproven | daily probe + hunt |
 | `monitored candidate` / `host documented` | false | real page documented, extraction unproven | daily probe + 14-day re-hunt |
 | `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | today's 14:00 hunt (fast-path) |
 | `no listing found` / `no ATS detected` | false | full render found nothing parseable | weekly audit + hunt cron |
@@ -213,6 +219,11 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
   fetch path** at resolution time (for scrape rows: ≥1 *Israel* job).
 - Slug/tenant must resemble the company name — `_slug_matches` (`audit_empty_rows.py`),
   enforced in `audit_empty_rows`, `deep_validate`, `crack_walled`, and `resolve_llm._verify`.
+  **Known coverage holes in this guard:** comeet uids (`XX.XXX`) are exempt by design (the
+  uid comes from the company's own page), and `_resolve_rebrand` in `listing_hunt.py` can
+  only *document* a non-matching cross-domain redirect — it cannot tell a rebrand
+  (piiano→a16y.ai, legitimate) from an acquisition (deci.ai→nvidia.com), so those need a
+  human/LLM call before activation.
   Search fallbacks WILL offer another company's board that verifies with real jobs:
   **CyberArk→PANW** and **Imperva→Thales** were applied and had to be reverted (see their
   `companies.csv` notes); **Lili→Eli Lilly** was caught only by the 0-Israel-jobs gate.
@@ -225,8 +236,9 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
 - A mass-zero result (e.g. 0 finds across a whole run) is a **broken run, not a
   measurement** — strip its verdicts and re-run after diagnosis (nested-Playwright
   incident: two sync Playwright instances in one thread fail silently). To strip: verdicts
-  are ` | listing-hunt <date>: …` suffixes in the `notes` column; remove that suffix or the
-  row is suppressed from re-hunts for 14 days (`_stale_hunt` in `listing_hunt.py`).
+  are ` | listing-hunt <date>: …` suffixes in the `notes` column; remove that suffix, or the row waits
+  14 days for `_stale_hunt` to re-admit it. (Before 2026-08-22 the `no listing found`
+  verdict was **terminal** — a bad batch retired hundreds of companies permanently.)
   Only `refresh_scrape_cache.py` self-protects automatically (aborts if the rebuilt cache
   shrinks >20%); every other runner needs the operator to apply this rule.
 
@@ -236,7 +248,7 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
 |---|---|---|
 | 00:00 | scrape-refresh | re-render all scrape rows (JD carry-forward keeps enrichment) |
 | 02:30 | retry-unreachable | Bright Data re-fetch of flaky endpoints |
-| 05:00 | daily-digest | probe candidates → discovery → telegram → JD-enrich → fetch ALL active rows → classify → persist state → publish board |
+| 05:00 | daily-digest | discovery → telegram → probe candidates → JD-enrich → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** |
 | 05:45 / 08:30 | inbox relay (private repo) | digest → email via issue+mention, content-hash dedup |
 | 06:00 | self-heal | re-resolve stale/rotted boards |
 | 08:00 / 20:00 | auto-expand | drain resolution queue (deterministic + LLM tiers) |
@@ -252,17 +264,17 @@ digest); deep re-hunt every 14 days and weekly audit are backstops only.
 | file | contents | written by |
 |---|---|---|
 | `companies.csv` | the coverage registry + verdicts | resolvers/audits (see rule below) |
-| `cloud_state/seen.db` | sent-dedup, matched roles (board), LLM verdict cache, company blurbs | pipeline runs |
+| `cloud_state/seen.db` | tables: `sent` (email dedup), `matched` (job-board rows), `llm_cache` (role judgments), `company_info` (blurbs), `firmographics` | pipeline runs |
 | `scraped_cache.json` | rendered scrape-row jobs (+enriched JDs) | scrape-refresh, enrich, auto-expand |
 | `discovered_cache.json` | discovery-net jobs (21-day TTL at read) | discovery_daily, discovery_telegram |
 | `research_companies.json` | resolution queue (names + seed URLs) | discovery bridges; drained by auto-expand |
 | `cloud_state/telegram_seen.json` | last message id per channel | discovery_telegram |
 | `cloud_state/candidate_probe.json` | probe signal baselines | probe_candidates |
-| `cloud_state/stale.json` | per-company health verdicts (fetch-error / regressed-to-zero) | pipeline/health.py during digest |
-| `cloud_state/health_baseline.json` | last-known-good job counts per company | pipeline/health.py |
+| `cloud_state/stale.json` | per-company health verdicts: `fetch-error`, `regressed-to-zero`, `empty-board`, `misconfig-scrape-on-ats` | pipeline/health.py during digest |
+| `cloud_state/health_baseline.json` | **all-time high-water** job count per company (monotonic — never decreases, which is why `regressed-to-zero` latches) | pipeline/health.py |
 | `cloud_state/resolve_attempts.json` | self-heal retry throttle (weekly; 5 strikes → abandoned) | resolve_broken.py |
 | `cloud_state/scrape_rot.json` | consecutive empty/error days per scrape row | refresh_scrape_cache.py |
-| `state/` (gitignored) | local resume markers (audit done-list) | local runs only |
+| `state/` (gitignored) | resume markers (audit done-list). Written in the cloud too but **never committed**, so the Sunday audit re-audits every parked row from scratch (a SerpApi budget fact) | audit/local runs |
 
 (The single-writer and commit-together rules live with the csv schema in §2.)
 
@@ -314,10 +326,23 @@ In order — each step names the file to open:
    `discovered_cache.json` (discovery-net jobs, 21-day TTL) — it may be mid-onboarding.
 
 Inspect the store directly with sqlite: tables are `sent`, `matched` (job board rows),
-`llm_cache` (role judgments), `company_info` (blurbs).
+`llm_cache` (role judgments), `company_info` (blurbs), `firmographics`.
+
+**Trap:** the `cloud_state/*.json` files are snapshots of the **last committed cloud run**,
+not live views of `companies.csv` — a company's absence from `health_baseline.json` or
+`stale.json` proves nothing about whether it is being fetched (as of 2026-08-22, 158 of 722
+active rows had no baseline entry). To settle it, run the row yourself:
+`python -m pipeline.run --only "<name>" --no-llm`.
 
 ## 6. Recipes
 
+- **BEFORE adding any company (every time):** (1) grep the name **stem**, not the marketing
+  name — `grep -in deci companies.csv` finds a row that `Deci AI` misses; many rows omit the
+  `AI`/`Labs`/`Technologies` suffix. (2) Check the careers URL's **final** host:
+  `curl -sIL <url> | grep -i ^location` — an acquired Israeli startup keeps a live URL that
+  301s to the acquirer's global board (`deci.ai/careers/` → `nvidia.com`), which *will*
+  verify with the acquirer's Israel jobs and attribute them to the wrong company. Acquired
+  companies get `active=false` + a `defunct:` note, never an active row.
 - **Add a company you found manually**: never hand-write an unverified row. Verify first —
   `python -c "from audit_empty_rows import verify; print(verify('Name','greenhouse','slug','https://boards-api.greenhouse.io/v1/boards/slug/jobs'))"`
   (returns `(total, israel)`; raises if the endpoint is bad) or, for a listings page,
@@ -327,9 +352,11 @@ Inspect the store directly with sqlite: tables are `sent`, `matched` (job board 
   Never point a scrape row at LinkedIn/Indeed/Glassdoor/secrethunter (§3 invariant).
 - **Add an ATS platform**: write `fetch_x(row)` in `pipeline/fetchers.py` returning the
   common job shape (§0) — copy `fetch_ashby` as the simplest template — add the `FETCHERS`
-  entry, and add a signature regex to `SIGS` in `audit_empty_rows.py` so resolvers can
-  detect it in the wild (optionally a `listing_urls()` case in `crack_walled.py`). Verify
-  with the `verify(...)` one-liner above before adding rows.
+  entry, then wire **all four detection tables** or no resolver will ever discover the
+  platform on its own: `SIGS` (`audit_empty_rows.py`), `_HTML_ATS` (`resolve_broken.py`,
+  self-heal), the pattern list **and platform enum** in `resolve_llm.py`'s prompt, and
+  `ATS_HOST` (`pipeline/health.py`). `deep_validate.py` re-imports `SIGS`, so it needs
+  nothing. Verify with the `verify(...)` one-liner above before adding rows.
 - **Add a Telegram channel**: append to `CHANNELS` in `discovery_telegram.py` (must have a
   public t.me/s preview; secrethunter-format parses deterministically).
 - **A company's verdict looks wrong**: check its `notes` for the evidence date and method,
