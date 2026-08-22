@@ -82,8 +82,19 @@ def _resolve_rebrand(url):
     return final, (d1 if d0 != d1 else "")
 
 
-def hunt_one(name, seed):
+def hunt_one(name, seed, documented=False):
     from deep_validate import google_via_unlocker
+    # fast-path for probe-woken / documented candidates: the listings URL is already known —
+    # just pull it (scrape + verify); the full search dance only runs if that fails
+    if documented and seed and seed.startswith("http"):
+        from scrape_universal import scrape
+        from pipeline.israel import is_israel_job
+        try:
+            il = [j for j in (scrape(name, seed) or []) if is_israel_job(j)]
+        except Exception:  # noqa: BLE001
+            il = []
+        if il:
+            return ("found", seed, len(il), "fast-path")
     rebrand = ""
     if seed and not any(a in seed.lower() for a in AGG):
         seed, rebrand = _resolve_rebrand(seed)
@@ -169,7 +180,8 @@ def main():
                 break
             name = r[0]
             try:
-                verdict, url, n_il, detail = hunt_one(name, r[3])
+                doc = bool(re.search(r"probe-woken|monitored candidate|host documented", r[5] or ""))
+                verdict, url, n_il, detail = hunt_one(name, r[3], documented=doc)
             except Exception as e:  # noqa: BLE001
                 verdict, url, n_il, detail = "dead", None, 0, f"error {str(e)[:50]}"
             stats[verdict] += 1
