@@ -189,10 +189,10 @@ def main():
                         fr[5] = f"crack-walled {TODAY}: {platform} via {plat}; verified {n_il} IL"
                     elif verdict == "novrfy" and got:
                         fr[3] = got[1]
-                        fr[5] = (re.sub(r" \| crack-walled.*$", "", fr[5])
+                        fr[5] = (re.sub(r"\s\|\s?crack-walled [^|]*", "", fr[5])
                                  + f" | crack-walled {TODAY}: host documented, 0 IL now")[:220]
                     else:
-                        fr[5] = (re.sub(r" \| crack-walled.*$", "", fr[5])
+                        fr[5] = (re.sub(r"\s\|\s?crack-walled [^|]*", "", fr[5])
                                  + f" | crack-walled {TODAY}: {verdict}")[:220]
             csv.writer(open("companies.csv", "w", encoding="utf-8",
                             newline="")).writerows(fresh)

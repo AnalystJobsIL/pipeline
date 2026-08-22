@@ -137,8 +137,9 @@ Imagindairy,scrape,https://www.imagindairy.com/careers,https://imagindairy.com/c
 For API rows `api_url` is the endpoint; for scrape rows it is the **listings page URL**.
 `notes` is the row-verdict log: each tool appends ` | <tool> <date>: <finding>` and strips
 its own previous suffix, so a row accumulates one current verdict per tool.
-**Caveat:** `listing_hunt`'s `found` branch, `refresh_scrape_cache`'s parking pass and
-`retry_unreachable._row_for` still REPLACE the whole cell (they set a row's final state,
+**Caveat:** `listing_hunt`'s `found` branch, `refresh_scrape_cache`'s parking pass,
+`retry_unreachable._row_for` and `recheck_suspects.py`'s suspect-cleared branch still
+REPLACE the whole cell (they set a row's final state,
 so history loss is acceptable there) — but never copy that pattern for a diagnostic
 verdict: overwriting destroys the `monitored candidate` / `host documented` tokens that
 `listing_hunt`'s fast-path keys on. Taxonomy:
@@ -215,7 +216,7 @@ forever — that pattern has been introduced and removed three times.
 hold a start-of-run snapshot; two concurrent snapshot-writers silently destroy each other's
 verdicts (lost-update incident 2026-08-22).
 
-**All 18 `companies.csv` writers, by safety class** (verified 2026-08-22):
+**All 20 `companies.csv` writers, by safety class** (verified 2026-08-22):
 
 - **Compliant** (re-read + match by name before every write): `crack_walled.py`,
   `probe_candidates.py`, `listing_hunt.py`, `audit_empty_rows.py`, `deep_validate.py`,
@@ -225,6 +226,7 @@ verdicts (lost-update incident 2026-08-22).
   `validate_bd.py`, `recheck_suspects.py`.
 - **Append-only** (safe): `auto_expand.py`, `comeet_resolve.py`, `ingest_research.py`,
   `resolve_any.py`, `resolve_parallel.py`, `resolve_unknowns.py`.
+  (`resolve_deep.py` and `scrape_batch.py` write only `out/*.csv`, never the registry.)
 - **Line-based snapshot, sub-second window** (tolerated): `apply_resolved.py`.
 
 No whole-snapshot index-keyed writer remains. If you add one it will silently revert

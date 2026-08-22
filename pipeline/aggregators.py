@@ -95,7 +95,7 @@ HOSTS = (
 
 # host-anchored: "t.me/" must not match supplant.me / supersmart.me
 _AGG_RX = _re.compile(
-    r"//([^/]*\.)?(" + "|".join(h.rstrip("/").replace(".", r"\.") for h in HOSTS) + r")",
+    r"(?://|^)([^/]*\.)?(" + "|".join(h.rstrip("/").replace(".", r"\.") for h in HOSTS) + r")",
     _re.I)
 
 

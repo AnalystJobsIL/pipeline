@@ -5,6 +5,7 @@ jobs; otherwise clears the suspicion back to confirmed-empty. Updates companies.
 from __future__ import annotations
 
 import csv
+import re
 import json
 
 from resolve_deep import resolve
@@ -42,7 +43,8 @@ def main():
             promoted += 1
             print(f"  [PROMOTE] {name}: scrape {len(payload)} IL", flush=True)
         else:
-            rows[rowi][5] = "scanned; no open Israel roles now (suspect cleared)"
+            _b = re.sub(r"\s\|\s?empty-but-suspect;[^|]*", "", rows[rowi][5] or "").strip(" |")
+            rows[rowi][5] = ((_b + " | ") if _b else "") + "scanned; no open Israel roles now (suspect cleared)"
             _MODIFIED.add(name)
             cleared += 1
     # single-writer discipline: merge back only rows this run modified

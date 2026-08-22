@@ -225,11 +225,11 @@ def main():
                         fr[5] = f"listing-hunt {TODAY}: verified {n_il} IL via {url[:60]}"
                     elif verdict == "nolisting" and url:
                         fr[3] = url                       # persist the candidate page
-                        base = re.sub(r" \| listing-hunt.*$", "", fr[5])
+                        base = re.sub(r"\s\|\s?listing-hunt [^|]*", "", fr[5])
                         fr[5] = (base + f" | listing-hunt {TODAY}: no IL listing; "
                                  f"monitored candidate")[:220]
                     else:
-                        fr[5] = (re.sub(r" \| listing-hunt.*$", "", fr[5])
+                        fr[5] = (re.sub(r"\s\|\s?listing-hunt [^|]*", "", fr[5])
                                  + f" | listing-hunt {TODAY}: "
                                  + ("no listing found" if verdict == "nolisting" else detail))[:220]
                 csv.writer(open("companies.csv", "w", encoding="utf-8",
