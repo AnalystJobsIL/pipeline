@@ -23,6 +23,7 @@ from wayback_rescue import extract_ats
 from scrape_universal import ISRAEL_LOC, ROLE
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
+_MOD = set()   # names this run rewrote (single-writer merge)
 
 
 def _load_secrets():
@@ -82,6 +83,7 @@ def main():
                 v = _verify(name, plat, tok, api)
                 if v and v[0]:
                     n_all, il = v
+                    _MOD.add(name)
                     rows[rowi] = [name, plat, tok, api, "true",
                                   f"brightdata-rescued; {n_all}/{il} IL"]
                     fixed += 1
@@ -98,6 +100,7 @@ def main():
             mm = re.search(r"x(\d+)$", note)
             n_try = (int(mm.group(1)) if mm else 0) + 1
             rows[rowi][5] = f"unreachable; bd-tried {_dtm.date.today().isoformat()} x{n_try}"
+            _MOD.add(name)
             print(f"  unre {name}", flush=True)
             time.sleep(1)
             continue
@@ -106,12 +109,24 @@ def main():
                          for m in ISRAEL_LOC.finditer(best_html))
         note = ("scanned via brightdata; roles-text present but no resolvable board"
                 if has_signal else "scanned via brightdata; no open Israel roles now")
-        rows[rowi] = [name, "scrape", best_url, best_url, "false", note]
+        # keep the row hunt-eligible: append our verdict to the existing note instead of
+        # replacing it (replacing destroyed monitored-candidate/host-documented tokens and
+        # landed on a string no re-check matched — 31 rows were stranded this way)
+        prev = re.sub(r"(^|\s\|\s)scanned via brightdata;[^|]*", "", rows[rowi][5] or "").strip(" |")
+        note = ((prev + " | ") if prev else "") + note + " - monitored candidate"
+        rows[rowi] = [name, "scrape", best_url, best_url, "false", note[:220]]
+        _MOD.add(name)
         empt += 1
         print(f"  empt {name}", flush=True)
         time.sleep(1)
+    # single-writer discipline: merge back only rows this run modified
+    changed = {r[0]: r for r in rows if r and len(r) > 5 and r[0] in _MOD}
+    fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+    for _i, fr in enumerate(fresh):
+        if fr and len(fr) > 5 and fr[0] in changed:
+            fresh[_i] = changed[fr[0]]
     with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-        csv.writer(f).writerows(rows)
+        csv.writer(f).writerows(fresh)
     print(f"=== rescued {fixed} · validated {empt} · still unreachable {still} ===")
 
 

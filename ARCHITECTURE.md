@@ -184,6 +184,21 @@ re-checked on some cadence; **a failing API row keeps `active=true`** (its roles
 the job board via the failed-company exemption, §5a) while a rotting *scrape* row is
 parked, because only parked rows are visible to the hunt/audit machinery.
 
+### The verdict-string rule (read before changing ANY resolver)
+
+Re-check pools are **allowlists of note substrings**. If you invent or reword a verdict
+string, add it to all three target regexes — `listing_hunt.py`, `deep_validate.py`,
+`audit_empty_rows.py` — or every row carrying it silently leaves every re-check pool and
+its coverage is lost with no error anywhere. This is exactly how 52 rows became stranded
+(`bd_rescue.py` wrote `scanned via brightdata; …`, which matched none of them).
+Corollary: a diagnostic verdict must **append** (`base | tool date: finding`), never
+replace the cell — overwriting also destroys the `monitored candidate` / `host documented`
+tokens that `listing_hunt`'s fast-path keys on.
+
+Every re-check filter must have a **staleness escape** (`_stale_hunt` 14d, `_revalidatable`
+30d, `_recrackable` 30d). A filter of the form `"tool-name" not in note` freezes coverage
+forever — that pattern has been introduced and removed three times.
+
 ### The single-writer rule (most dangerous rule here — read before any write)
 
 `companies.csv` writers must **re-read the file immediately before every write**

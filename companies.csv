@@ -219,13 +219,13 @@ Momentis Surgical,greenhouse,memic,https://boards-api.greenhouse.io/v1/boards/me
 OrCam,recruitee,orcam,https://orcam.recruitee.com/api/offers/,true,research-resolved; 2 jobs / 2 Israel
 D-Fend Solutions,lever,d-fendsolutions,https://api.lever.co/v0/postings/d-fendsolutions?mode=json,true,research-resolved; 31 jobs / 25 Israel
 Axon Vision,greenhouse,axon,https://boards-api.greenhouse.io/v1/boards/axon/jobs,true,research-resolved; 483 jobs / 2 Israel
-Bosch Israel,smartrecruiters,BoschGroup,https://api.smartrecruiters.com/v1/companies/BoschGroup/postings,false,research-resolved; 4799 jobs / 0 Israel
+Bosch Israel,smartrecruiters,BoschGroup,https://api.smartrecruiters.com/v1/companies/BoschGroup/postings,true,re-activated 2026-08-22: working smartrecruiters endpoint was parked; verified 4772/0 IL
 Fairtility,smartrecruiters,fairtility,https://api.smartrecruiters.com/v1/companies/fairtility/postings,true,research-resolved; 6 jobs / 5 Israel
 Snowflake,ashby,snowflake,https://api.ashbyhq.com/posting-api/job-board/snowflake,true,research-resolved; 389 jobs / 2 Israel
-Cloudflare,greenhouse,cloudflare,https://boards-api.greenhouse.io/v1/boards/cloudflare/jobs,false,research-resolved; 305 jobs / 0 Israel
+Cloudflare,greenhouse,cloudflare,https://boards-api.greenhouse.io/v1/boards/cloudflare/jobs,true,re-activated 2026-08-22: working greenhouse endpoint was parked; verified 308/0 IL
 Scopely,greenhouse,scopely,https://boards-api.greenhouse.io/v1/boards/scopely/jobs,true,research-resolved; 156 jobs / 3 Israel
 Coinbase,greenhouse,coinbase,https://boards-api.greenhouse.io/v1/boards/coinbase/jobs,true,research-resolved; 167 jobs / 1 Israel
-OpenAI,ashby,openai,https://api.ashbyhq.com/posting-api/job-board/openai,false,research-resolved; 746 jobs / 0 Israel
+OpenAI,ashby,openai,https://api.ashbyhq.com/posting-api/job-board/openai,true,re-activated 2026-08-22: working ashby endpoint was parked; verified 754/0 IL
 GitLab,greenhouse,gitlab,https://boards-api.greenhouse.io/v1/boards/gitlab/jobs,true,research-resolved; 196 jobs / 4 Israel
 Jabil,workday,jabil/Jabil_Careers,https://jabil.wd5.myworkdayjobs.com/wday/cxs/jabil/Jabil_Careers/jobs,true,research-resolved; 1 jobs / 0 Israel
 Bringoz,bamboohr,bringoz,https://bringoz.bamboohr.com/careers/list,true,research-resolved; 14 jobs / 13 Israel

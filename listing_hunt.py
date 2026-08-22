@@ -189,7 +189,7 @@ def main():
                # the row from the hunt pool forever.
                and re.search(r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|"
                              r"host documented|probe-woken|scanned; no open|unreachable|"
-                             r"aggregator URL|no listing found|redirects to", r[5] or "")
+                             r"aggregator URL|no listing found|redirects to|scanned via brightdata|empty-but-suspect|needs re-resolution|needs manual resolution", r[5] or "")
                and not re.search(r"defunct|domain-dead", r[5] or "")
                and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5]))]
     if limit:

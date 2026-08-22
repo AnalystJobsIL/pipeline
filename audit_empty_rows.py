@@ -174,7 +174,7 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     parked = [(i, r) for i, r in enumerate(rows)
               if r and len(r) >= 6 and r[4] == "false" and r[0] not in done
-              and re.search(r"scanned; no open|unreachable; could not|aggregator URL|no listing found|no ATS detected", r[5] or "")]
+              and re.search(r"scanned; no open|unreachable; could not|aggregator URL|no listing found|no ATS detected|scanned via brightdata|empty-but-suspect", r[5] or "")]
     print(f"{len(parked)} parked rows to audit ({len(done)} already done); "
           f"SerpApi spent only when needed\n", flush=True)
     def _mark(name):

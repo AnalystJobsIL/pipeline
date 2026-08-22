@@ -143,6 +143,15 @@ def crack_one(name, seed, platform):
     return ("novrfy", captures[0], 0, f"host found ({captures[0][1][:60]}) but 0 IL extracted")
 
 
+def _recrackable(note, days=30):
+    """Re-crack after `days` instead of never (once-ever filters silently freeze
+    coverage — same bug class fixed in listing_hunt/_stale_hunt and deep_validate)."""
+    m = re.search(r"crack-walled (\d{4}-\d{2}-\d{2})", note or "")
+    if not m:
+        return True
+    return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days >= days
+
+
 def main():
     from bd_rescue import _load_secrets
     _load_secrets()
@@ -151,7 +160,7 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false" and "unsupported ATS" in (r[5] or "")
-               and "crack-walled" not in (r[5] or "")]
+               and _recrackable(r[5] or "")]
     if limit:
         targets = targets[:limit]
     print(f"cracking {len(targets)} walled-ATS companies\n", flush=True)

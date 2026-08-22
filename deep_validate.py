@@ -253,7 +253,7 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
-               and re.search(r"scanned; no open|unreachable; could not|aggregator URL|no listing found|no ATS detected", r[5] or "")
+               and re.search(r"scanned; no open|unreachable; could not|aggregator URL|no listing found|no ATS detected|scanned via brightdata|empty-but-suspect", r[5] or "")
                # re-validate after DEEP_REVALIDATE_DAYS instead of never: excluding every
                # already-stamped row made deep validation a once-ever terminal state
                and _revalidatable(r[5] or "")
