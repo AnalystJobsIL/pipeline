@@ -284,6 +284,14 @@ def scrape(company, url, timeout_ms=45000):
             plain_html = _ur2.urlopen(_req2, timeout=15).read(1_500_000).decode("utf-8", "replace")
         except Exception:  # noqa: BLE001
             plain_html = ""
+        if not plain_html and os.environ.get("SCRAPE_VIA_UNLOCKER"):
+            # 403/anti-bot: residential unlocker gets the HTML the LLM tier then parses
+            try:
+                from bd_rescue import unlock, _load_secrets
+                _load_secrets()
+                plain_html = unlock(url) or ""
+            except Exception:  # noqa: BLE001
+                plain_html = ""
         if len(plain_html) > len(page_html or ""):
             page_html = plain_html if not page_html else page_html + "\n" + plain_html
 

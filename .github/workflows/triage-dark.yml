@@ -38,16 +38,23 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Playwright (only needed for --render confirmation)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright + Claude CLI (render + page-empty confirmation)
         run: |
           python -m pip install --quiet playwright
           python -m playwright install --with-deps chromium
+          npm install -g @anthropic-ai/claude-code
         continue-on-error: true
 
       - name: Triage
         env:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          TRIAGE_LLM_CAP: "200"
           TRIAGE_TIME_BUDGET_MIN: "150"
         run: |
           ARGS="--apply --render --limit ${{ github.event.inputs.limit || '0' }}"

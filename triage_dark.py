@@ -15,6 +15,7 @@ routed to the tool that can actually fix it:
   extract-gap       role text present, we got 0 -> extractor/LLM problem; retry with LLM on
   js-shell          tiny HTML + job XHRs      -> needs render+XHR capture, not plain fetch
   blocked           403/429/anti-bot          -> needs Bright Data Unlocker
+  wrong-page        LLM says it is not this company's careers page -> re-find
   no-url            nothing to check          -> re-discovery
 
 Design notes (long-term soundness):
@@ -75,7 +76,53 @@ def fetch(url, timeout=15):
         return None, ""
 
 
-def classify(url, render=False):
+_LLM_USED = {"n": 0}
+
+
+def llm_page_verdict(company, url, text):
+    """Ask Claude two things a regex cannot judge: is this actually THIS company's careers
+    page, and does it list open roles? Used to confirm `page-empty` (a regex saying "no
+    roles" is an unverified assumption — it may be the wrong page, or roles in Hebrew /
+    an unusual format). Returns (verdict, detail) or None if unavailable.
+      verdict: 'confirmed-empty' | 'has-roles' | 'wrong-page'
+    """
+    import shutil
+    import subprocess
+    cap = int(os.environ.get("TRIAGE_LLM_CAP", "120"))
+    if _LLM_USED["n"] >= cap or not shutil.which("claude"):
+        return None
+    _LLM_USED["n"] += 1
+    nl = chr(10)
+    prompt = (
+        'Company: "' + company + '"' + nl
+        + "Page URL: " + url + nl + nl
+        + "Below is the visible text of a web page. Answer STRICTLY as JSON:" + nl
+        + '{"is_careers_page_for_this_company": true/false, '
+        + '"open_roles": ["exact role titles listed; [] if none"], '
+        + '"note": "one short phrase"}' + nl
+        + "Count a role only if the page actually lists it as an open position (ignore "
+        + "'no openings' / 'send us your CV' text, team blurbs and testimonials). "
+        + "Roles may be in Hebrew." + nl + nl + "PAGE TEXT:" + nl + text[:7000])
+    try:
+        p = subprocess.run(["claude", "-p"], input=prompt, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=120,
+                           shell=(os.name == "nt"))
+        import json as _json
+        m = re.search(r"\{.*\}", p.stdout or "", re.S)
+        if not m:
+            return None
+        d = _json.loads(m.group(0))
+    except Exception:  # noqa: BLE001
+        return None
+    if not d.get("is_careers_page_for_this_company", True):
+        return ("wrong-page", f"LLM: not {company}'s careers page ({str(d.get('note',''))[:40]})")
+    roles = [r for r in (d.get("open_roles") or []) if isinstance(r, str) and r.strip()]
+    if roles:
+        return ("has-roles", f"LLM found {len(roles)}: {', '.join(roles[:2])[:60]}")
+    return ("confirmed-empty", f"LLM confirms no open roles ({str(d.get('note',''))[:34]})")
+
+
+def classify(url, render=False, company=""):
     """-> (mode, detail). Cheap GET first; optional render for js-shell confirmation."""
     if not url or not url.startswith("http"):
         return "no-url", "no url on the row"
@@ -133,9 +180,18 @@ def classify(url, render=False):
                 return "js-shell", "job XHRs seen during render"
         except Exception:  # noqa: BLE001
             pass
+    # A regex "no roles" is an assumption. Confirm with the LLM: right page? really empty?
+    v = llm_page_verdict(company, url, text) if company else None
+    if v:
+        kind, detail = v
+        if kind == "has-roles":
+            return "extract-gap", detail          # roles exist -> our extractor is the gap
+        if kind == "wrong-page":
+            return "wrong-page", detail           # need to find the real careers page
+        return "page-empty", detail               # LLM-confirmed empty
     if has_lang:
-        return "page-empty", "careers page live, no roles listed right now"
-    return "page-empty", "no jobs language and no roles"
+        return "page-empty", "careers page live, no roles listed (regex only, unconfirmed)"
+    return "page-empty", "no jobs language and no roles (regex only, unconfirmed)"
 
 
 def main():
@@ -161,7 +217,7 @@ def main():
         if budget and (time.time() - t0) / 60 > budget:
             print(f"time budget {budget}min reached — stopping cleanly", flush=True)
             break
-        mode, detail = classify(r[3], render=render)
+        mode, detail = classify(r[3], render=render, company=r[0])
         counts[mode] = counts.get(mode, 0) + 1
         print(f"  [{mode:11}] {n}/{len(targets)} {r[0][:30]:30} {detail[:44]}", flush=True)
         if apply:
