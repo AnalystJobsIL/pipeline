@@ -31,6 +31,7 @@ from deep_validate import Renderer, ddg
 from audit_empty_rows import AGG
 from pipeline.aggregators import is_aggregator
 from resolve_llm import _ask_claude
+from pipeline.atomic import write_csv_rows
 
 TODAY = dt.date.today().isoformat()
 _LINKISH = re.compile(r"job|position|opening|vacanc|search|career|role|משרות|דרושים|join", re.I)
@@ -232,8 +233,7 @@ def main():
                         fr[5] = (re.sub(r"\s\|\s?listing-hunt [^|]*", "", fr[5])
                                  + f" | listing-hunt {TODAY}: "
                                  + ("no listing found" if verdict == "nolisting" else detail))[:220]
-                csv.writer(open("companies.csv", "w", encoding="utf-8",
-                                newline="")).writerows(fresh)
+                write_csv_rows("companies.csv", fresh)
     print(f"\n=== listing hunt: {stats} ===", flush=True)
 
 

@@ -9,6 +9,7 @@ import re
 import json
 
 from resolve_deep import resolve
+from pipeline.atomic import write_csv_rows
 
 
 _MODIFIED = set()   # names this run rewrote (single-writer merge)
@@ -53,8 +54,7 @@ def main():
     for _i, fr in enumerate(fresh):
         if fr and len(fr) > 5 and fr[0] in changed:
             fresh[_i] = changed[fr[0]]
-    with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-        csv.writer(f).writerows(fresh)
+    write_csv_rows("companies.csv", fresh)
     with open("scraped_cache.json", "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False)
     print(f"=== promoted {promoted} · cleared {cleared} ===")

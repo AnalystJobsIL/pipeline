@@ -12,6 +12,7 @@ import sys
 from pipeline import israel
 from pipeline.companies import load_companies
 from scrape_universal import scrape
+from pipeline.atomic import write_csv_rows
 
 
 def main():
@@ -71,8 +72,11 @@ def main():
                     pj = prev.get(j.get("url") or j.get("job_id") or "")
                     if pj and (pj.get("description") or "").strip():
                         j["description"] = pj["description"]
-                        if pj.get("_jd_attempted"):
-                            j["_jd_attempted"] = pj["_jd_attempted"]
+                    # carry the attempt stamp REGARDLESS of whether text was found —
+                    # otherwise failed enrichments lose their 7-day cooldown every night
+                    # and re-burn Bright Data calls on the same unfetchable URLs
+                    if pj and pj.get("_jd_attempted"):
+                        j["_jd_attempted"] = pj["_jd_attempted"]
             cache[r["company_name"]] = il
             rot.pop(r["company_name"], None)               # healthy again
         else:
@@ -99,7 +103,7 @@ def main():
                 fr[4] = "false"
                 fr[5] = (f"scrape rotted ({names[fr[0]]}) {today}: extraction yields 0 — "
                          f"no ATS detected; parked for re-hunt")[:220]
-        _csv.writer(open("companies.csv", "w", encoding="utf-8", newline="")).writerows(fresh)
+        _write_csv_rows("companies.csv", fresh)
         print(f"parked {len(parked)} rotted scrape rows for re-hunt: "
               f"{[n for n, _ in parked][:8]}")
     print(f"=== refreshed {len(cache)} scrape companies -> {out_path} ===")

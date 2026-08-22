@@ -26,6 +26,7 @@ import urllib.parse
 from deep_validate import Renderer, ddg
 from audit_empty_rows import AGG, verify
 from pipeline.aggregators import is_aggregator
+from pipeline.atomic import write_csv_rows
 
 TODAY = dt.date.today().isoformat()
 
@@ -169,6 +170,9 @@ def main():
     print(f"cracking {len(targets)} walled-ATS companies\n", flush=True)
     stats = {}
     for n, (i, r) in enumerate(targets, 1):
+        if _budget and (time.time() - _t0) / 60 > _budget:
+            print(f"time budget {_budget}min reached — stopping cleanly", flush=True)
+            break
         name, platform = r[0], _platform_of(r[5])
         try:
             verdict, got, n_il, detail = crack_one(name, r[3], platform)
@@ -196,8 +200,7 @@ def main():
                     else:
                         fr[5] = (re.sub(r"\s\|\s?crack-walled [^|]*", "", fr[5])
                                  + f" | crack-walled {TODAY}: {verdict}")[:220]
-            csv.writer(open("companies.csv", "w", encoding="utf-8",
-                            newline="")).writerows(fresh)
+            write_csv_rows("companies.csv", fresh)
         time.sleep(0.3)
     print(f"\n=== crack-walled: {stats} ===", flush=True)
 

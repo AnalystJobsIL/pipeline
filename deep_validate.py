@@ -36,6 +36,7 @@ from pipeline.aggregators import is_aggregator
 from bd_rescue import _load_secrets, unlock
 from pipeline.recruiters import is_recruiter
 from resolve_llm import _ATS_HINT, _PROMPT, _ask_claude
+from pipeline.atomic import write_csv_rows
 
 _LLM = {"used": 0}
 
@@ -307,8 +308,7 @@ def main():
                                       fr[5] or "").strip(" |")
                         fr[5] = ((base + " | " if base else "")
                                  + f"deep-validated {TODAY}: {note}")[:220]
-                csv.writer(open("companies.csv", "w", encoding="utf-8",
-                                newline="")).writerows(fresh)
+                write_csv_rows("companies.csv", fresh)
             time.sleep(0.3)
     print(f"\n=== deep validation: {stats} · BD searches used: {_BD['used']} ===", flush=True)
 

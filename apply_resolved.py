@@ -59,8 +59,17 @@ def main():
     if "--dry-run" in sys.argv:
         print(f"(dry-run) would update {changed} rows")
         return 0
-    with open("companies.csv", "w", encoding="utf-8", newline="") as f:
+    # atomic: a kill mid-write must not leave a truncated registry
+    import os as _os
+    import tempfile as _tf
+    _fd, _tmp = _tf.mkstemp(dir=_os.path.dirname(_os.path.abspath("companies.csv")) or ".",
+                            prefix=".tmp_")
+    _os.close(_fd)
+    with open(_tmp, "w", encoding="utf-8", newline="") as f:
         f.writelines(lines)
+        f.flush()
+        _os.fsync(f.fileno())
+    _os.replace(_tmp, "companies.csv")
     print(f"=== applied {changed} config fixes to companies.csv ===")
     return 0
 

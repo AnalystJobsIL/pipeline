@@ -29,6 +29,7 @@ from pipeline.israel import is_israel_job
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 from pipeline.aggregators import HOSTS as AGG, is_aggregator   # single source of truth
+from pipeline.atomic import write_csv_rows
 
 # signature -> (platform, api_url template)
 SIGS = [
@@ -236,7 +237,7 @@ def main():
                     fr[4] = "true"
                     fr[5] = (f"re-audit {__import__('datetime').date.today()}: "
                              f"verified {n_all}/{n_il} IL (was false-empty)")
-            csv.writer(open("companies.csv", "w", encoding="utf-8", newline="")).writerows(fresh)
+            write_csv_rows("companies.csv", fresh)
     print(f"\n=== recovered {len(fixed)} boards · unsupported-ATS {len(unsupported)} · "
           f"still dark {len(still)} ===")
 

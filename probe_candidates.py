@@ -17,6 +17,7 @@ import json
 import re
 import sys
 import urllib.request
+from pipeline.atomic import write_csv_rows
 
 STATE = "cloud_state/candidate_probe.json"
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0"
@@ -73,8 +74,7 @@ def main():
                         # leaving the woken state unreachable)
                         base = re.sub(r"\s\|\s(listing-hunt|crack-walled) [^|]*", "", fr[5])  # any position, not just trailing
                         fr[5] = (base + " | probe-woken: re-hunt pending")[:220]
-                csv.writer(open("companies.csv", "w", encoding="utf-8",
-                                newline="")).writerows(fresh)
+                write_csv_rows("companies.csv", fresh)
     if apply:
         json.dump(state, open(STATE, "w", encoding="utf-8"), indent=1)
     print(f"=== probe: {woke} candidates woke (of {len(targets)}) ===", flush=True)

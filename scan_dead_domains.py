@@ -16,6 +16,7 @@ import sys
 import urllib.parse
 import ssl
 import urllib.request
+from pipeline.atomic import write_csv_rows
 
 _CTX = ssl.create_default_context()
 _CTX.check_hostname = False
@@ -73,8 +74,7 @@ def main():
                 for fr in fresh:
                     if fr and fr[0] == r[0] and len(fr) > 5:
                         fr[5] = re.sub(r"\s\|\s?domain-dead [^|]*", "", fr[5]).strip(" |")
-                csv.writer(open("companies.csv", "w", encoding="utf-8",
-                                newline="")).writerows(fresh)
+                write_csv_rows("companies.csv", fresh)
             revived += 1
             print(f"  [ALIVE] {r[0][:32]} — domain-dead cleared ({why})", flush=True)
             continue
@@ -90,8 +90,7 @@ def main():
                     if fr and fr[0] == r[0] and len(fr) > 5:
                         base = re.sub(r"\s\|\s?domain-dead [^|]*", "", fr[5] or "").strip(" |")
                         fr[5] = (base + f" | domain-dead {TODAY} ({why})")[:220]
-                csv.writer(open("companies.csv", "w", encoding="utf-8",
-                                newline="")).writerows(fresh)
+                write_csv_rows("companies.csv", fresh)
     print(f"=== {dead} dead, {revived} revived of {len(targets)} checked ===", flush=True)
 
 

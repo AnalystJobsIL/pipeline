@@ -24,6 +24,7 @@ from pipeline import israel
 from ingest_research import PROBE_FAST, _cand_slugs, _try
 from resolve_deep import ATS_PATTERNS, _verify
 from scrape_universal import ISRAEL_LOC, scrape
+from pipeline.atomic import write_csv_rows
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
@@ -163,8 +164,7 @@ def main():
         for idx, fr in enumerate(fresh):
             if fr and len(fr) > 5 and fr[0] in changed and changed[fr[0]] != fr:
                 fresh[idx] = changed[fr[0]]
-        with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-            csv.writer(f).writerows(fresh)
+        write_csv_rows("companies.csv", fresh)
         with open("scraped_cache.json", "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
     print(f"=== recovered {fixed}, still unreachable {still} ===", flush=True)

@@ -33,7 +33,7 @@ concurrency:
 jobs:
   digest:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 150   # discovery polling + 718 fetches + firmographics
     steps:
       - uses: actions/checkout@v5
       - name: Snapshot companies.csv baseline (git-layer merge)
@@ -61,7 +61,7 @@ jobs:
         run: python discovery_telegram.py || echo "telegram discovery skipped"
         continue-on-error: true
 
-      - name: Re-test dead domains (plain GETs — seconds; keeps the 60-min budget)
+      - name: Re-test dead domains (plain GETs; ~7-15 min over ~390 rows)
         run: python scan_dead_domains.py --apply || echo "liveness scan skipped"
         continue-on-error: true
 
@@ -104,7 +104,7 @@ jobs:
           # companies.csv MUST be here: probe_candidates.py clears verdicts on woken rows,
           # and cloud_state/candidate_probe.json (committed below) advances the baseline —
           # without committing the csv the wake is lost AND its signal is consumed forever.
-          git add cloud_state digests/latest.md discovered_cache.json scraped_cache.json research_companies.json companies.csv
+          git add cloud_state digests/latest.md discovered_cache.json scraped_cache.json research_companies.json companies.csv docs/index.html docs/archive.html
           git commit -m "cloud run: state + digest for $(date -u +%F) [skip ci]" || echo "nothing to commit"
           for i in 1 2 3 4 5; do
             if git pull --rebase --autostash origin master; then
@@ -114,14 +114,22 @@ jobs:
               # discards the whole run (3.5h listing-hunt lost 2026-08-22). Re-apply just
               # THIS run's row changes onto origin's current file and retry.
               git rebase --abort 2>/dev/null || true
-              cp companies.csv /tmp/ours.csv 2>/dev/null || true
-              git fetch origin master
-              git reset --hard origin/master
-              if [ -f /tmp/base.csv ] && [ -f /tmp/ours.csv ]; then
-                python merge_csv_rows.py /tmp/base.csv /tmp/ours.csv companies.csv || true
-                git add companies.csv
-                git commit -m "row-merged state $(date -u +%F) [skip ci]" || true
+              # preserve EVERY artifact this run produced — `git reset --hard` below would
+              # otherwise destroy seen.db (re-emailing every role), caches and digests.
+              rm -rf /tmp/ours && mkdir -p /tmp/ours
+              for p in companies.csv scraped_cache.json discovered_cache.json                        research_companies.json cloud_state digests docs; do
+                [ -e "$p" ] && cp -r "$p" /tmp/ours/ 2>/dev/null || true
+              done
+              git fetch origin master || true
+              git reset --hard origin/master || true
+              for p in scraped_cache.json discovered_cache.json research_companies.json                        cloud_state digests docs; do
+                [ -e "/tmp/ours/$(basename $p)" ] && cp -r "/tmp/ours/$(basename $p)" . 2>/dev/null || true
+              done
+              if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
+                python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
               fi
+              git add -A . || true
+              git commit -m "row-merged state $(date -u +%F) [skip ci]" || true
             fi
             sleep $((i*15))
           done

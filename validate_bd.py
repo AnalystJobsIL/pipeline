@@ -18,6 +18,7 @@ import re
 from bd_rescue import _load_secrets, unlock
 from pipeline import israel
 from scrape_universal import (BAD_TITLE, ISRAEL_LOC, ROLE, _find, _loc_from_ctx)
+from pipeline.atomic import write_csv_rows
 
 _LD = re.compile(r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',
                  re.S | re.I)
@@ -101,8 +102,7 @@ def main():
     for _i, fr in enumerate(fresh):
         if fr and len(fr) > 5 and fr[0] in changed:
             fresh[_i] = changed[fr[0]]
-    with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-        csv.writer(f).writerows(fresh)
+    write_csv_rows("companies.csv", fresh)
     with open("scraped_cache.json", "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False)
     print(f"=== promoted {promoted} · confirmed-empty {confirmed} ===")

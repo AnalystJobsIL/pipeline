@@ -19,6 +19,7 @@ import urllib.request
 from wayback_rescue import extract_ats
 from resolve_deep import _verify
 from scrape_universal import ROLE, ISRAEL_LOC
+from pipeline.atomic import write_csv_rows
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
 
@@ -92,8 +93,7 @@ def main():
     for _i, fr in enumerate(fresh):
         if fr and len(fr) > 5 and fr[0] in changed:
             fresh[_i] = changed[fr[0]]
-    with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-        csv.writer(f).writerows(fresh)
+    write_csv_rows("companies.csv", fresh)
     print(f"\n=== promoted {promoted} · suspects {len(suspects)} · confirmed-empty {confirmed} ===")
     for n, why in suspects[:25]:
         print(f"   suspect: {n} ({why})")

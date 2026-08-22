@@ -21,6 +21,7 @@ from resolve_deep import _verify
 from retry_unreachable import alt_urls
 from wayback_rescue import extract_ats
 from scrape_universal import ISRAEL_LOC, ROLE
+from pipeline.atomic import write_csv_rows
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 _MOD = set()   # names this run rewrote (single-writer merge)
@@ -128,8 +129,7 @@ def main():
     for _i, fr in enumerate(fresh):
         if fr and len(fr) > 5 and fr[0] in changed:
             fresh[_i] = changed[fr[0]]
-    with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-        csv.writer(f).writerows(fresh)
+    write_csv_rows("companies.csv", fresh)
     print(f"=== rescued {fixed} · validated {empt} · still unreachable {still} ===")
 
 

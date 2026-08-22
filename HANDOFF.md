@@ -89,6 +89,30 @@ WalkMe, Cloudinary, Port.io, Miggo, Thales. Roughly **1,400+ Israel jobs** enter
    `merge_csv_rows.py` only fires on a push conflict. Verify they appear after the first
    full day; their absence after 2026-08-23 means the wiring failed.
 
+## 4b. Overnight-readiness fixes applied 2026-08-22 (pre-flight audit)
+
+- `daily-digest` timeout **60 → 150 min** (discovery polling alone can take 45 min; a
+  timeout cancels the job so persist+publish never run and the whole run is discarded).
+- The git-conflict merge branch now **preserves every artifact**, not just `companies.csv`:
+  `git reset --hard` was destroying `cloud_state/seen.db` (which would re-email every role),
+  caches and digests. It also no longer exits 0 having pushed nothing.
+- `listing-hunt` budgets rebalanced (hunt 280→200 min) so the new daily re-crack step has
+  headroom; `crack_walled` gained `CRACK_TIME_BUDGET_MIN`.
+- `scrape-refresh` sets `SCRAPE_LLM=1` and now actually installs the Claude CLI (strategy 5
+  was silently unreachable there).
+- `enrich_scrape_jd`'s 7-day cooldown stamp now survives the nightly cache rebuild even when
+  enrichment failed (it was re-spending Bright Data calls on the same dead URLs every night).
+- **All 14 `companies.csv` writes are now atomic** (`pipeline/atomic.py`, temp+`os.replace`).
+  Previously a process killed mid-write inside a `continue-on-error` step could commit a
+  truncated registry.
+- `docs/index.html` / `archive.html` are now staged by the digest (the committed copies had
+  gone stale).
+
+**Known, accepted:** five scheduled workflows share the `repo-state` concurrency group, so a
+long Sunday run can cause a queued run to be superseded. Every job is idempotent and
+self-draining, so this costs a cycle, not correctness — but it's why a run can vanish with
+no error.
+
 ## 5. Debugging entry points
 
 - "Why isn't company X in my email?" → ARCHITECTURE §5b (ordered runbook).

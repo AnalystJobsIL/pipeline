@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 
 from pipeline import israel
 from resolve_deep import ATS_PATTERNS, _verify
+from pipeline.atomic import write_csv_rows
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
 _UID = re.compile(r"comeet_uid[\"'\s:=]+[\"']?([0-9A-Za-z]{2}\.[0-9A-Za-z]{3})")
@@ -135,8 +136,7 @@ def main():
     for _i, fr in enumerate(fresh):
         if fr and len(fr) > 5 and fr[0] in changed:
             fresh[_i] = changed[fr[0]]
-    with open("companies.csv", "w", newline="", encoding="utf-8") as f:
-        csv.writer(f).writerows(fresh)
+    write_csv_rows("companies.csv", fresh)
     print(f"=== wayback-rescued {fixed} of {len(idx)} ===")
 
 
