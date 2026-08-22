@@ -1178,3 +1178,13 @@ autods,scrape,,https://job-boards.greenhouse.io/autods,true,listing-hunt 2026-08
 Primis Tech,scrape,https://secrethunter.io/jobz/b5c8c9b04f,https://www.primis.tech/careers/,false,scanned; no open Israel roles now | listing-hunt 2026-08-22: no IL listing; monitored candidate
 Thales,workday,thales/Careers,https://thales.wd3.myworkdayjobs.com/wday/cxs/thales/Careers/jobs,true,added 2026-08-22: Imperva acquirer; verified 15/14 IL
 Incode,greenhouse,incode,https://boards-api.greenhouse.io/v1/boards/incode/jobs,false,acquirer of Identiq; scanned; no open Israel roles now (2026-08-23)
+MediaForce,scrape,https://secrethunter.io/jobz/45675cee0f,https://secrethunter.io/jobz/45675cee0f,false,scanned; no open Israel roles now
+SeatPick,scrape,https://secrethunter.io/jobz/edba89411e,https://secrethunter.io/jobz/edba89411e,false,scanned; no open Israel roles now
+moonshot,scrape,https://secrethunter.io/jobz/e955e63726,https://secrethunter.io/jobz/e955e63726,false,scanned; no open Israel roles now
+Simply,scrape,https://secrethunter.io/jobz/339a2f0050,https://secrethunter.io/jobz/339a2f0050,false,scanned; no open Israel roles now
+zap group,scrape,https://secrethunter.io/jobz/bf25d43720,https://secrethunter.io/jobz/bf25d43720,false,scanned; no open Israel roles now
+Nova Ltd.,scrape,https://secrethunter.io/jobz/6aec39acae,https://secrethunter.io/jobz/6aec39acae,false,scanned; no open Israel roles now
+Foresight Automotive,scrape,https://secrethunter.io/jobz/6e68d4087e,https://secrethunter.io/jobz/6e68d4087e,false,scanned; no open Israel roles now
+Tenengroup,scrape,https://secrethunter.io/jobz/4f47605b65,https://secrethunter.io/jobz/4f47605b65,false,scanned; no open Israel roles now
+kornit,scrape,https://secrethunter.io/jobz/49172deb41,https://secrethunter.io/jobz/49172deb41,false,scanned; no open Israel roles now
+One Step,scrape,https://secrethunter.io/jobz/154f91eb58,https://secrethunter.io/jobz/154f91eb58,false,scanned; no open Israel roles now
