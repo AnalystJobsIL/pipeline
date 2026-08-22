@@ -28,8 +28,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from pipeline.companies import load_companies
-from pipeline.firmographics import (ResearchUnavailable, identity_key, looks_like_junk,
-                                    research_company)
+from pipeline.firmographics import (ResearchUnavailable, band_for, identity_key,
+                                    looks_like_junk, research_company)
 from pipeline.store import SeenStore
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -202,10 +202,17 @@ def main():
                     for k, ov in old.items():
                         if ov in ("", None) or k == "as_of":
                             continue
-                        if k in ("employees_lookup_miss", "employees_linkedin_miss") and fresh_count:
-                            continue  # a real count clears the miss gates
+                        if fresh_count and k in ("employees_lookup_miss", "employees_linkedin_miss",
+                                                 "employees_source", "employees_as_of",
+                                                 "employees_range", "size_band_pre_linkedin"):
+                            continue  # companions describe the OLD count; a fresh count
+                            # clears the gates and supersedes the old provenance
                         if rec.get(k) in ("", None):
                             rec[k] = ov
+                    if rec.get("employees_global"):
+                        # the one bypass left: an INHERITED count next to the fresh record's
+                        # own band — re-derive so the band/count invariant holds everywhere
+                        rec["size_band"] = band_for(rec["employees_global"])
                 st.save_firmographics({name: rec}, today)  # main thread owns sqlite
                 done += 1
                 print(f"ok   {name}: {rec['sector']} / {rec.get('stage') or '?'} / {rec.get('size_band') or '?'}")
