@@ -85,7 +85,14 @@ def _resolve_rebrand(url):
     return final, (d1 if d0 != d1 else "")
 
 
-def hunt_one(name, seed, documented=False):
+def hunt_one(name, seed, documented=False, mode=""):
+    """`mode` comes from triage_dark.py and selects the strategy:
+       url-dead / no-url  -> ignore the stored seed (it 404s), search first
+       extract-gap        -> the page HAS roles; force LLM extraction on the stored URL
+       js-shell           -> render+XHR capture (scrape_universal does this natively)
+       blocked            -> fetch through the unlocker
+       page-empty         -> nothing to hunt; the daily probe watches it
+    """
     from deep_validate import google_via_unlocker
     # fast-path for probe-woken / documented candidates: the listings URL is already known —
     # just pull it (scrape + verify); the full search dance only runs if that fails
@@ -172,6 +179,9 @@ def main():
     limit = int(os.environ.get("HUNT_LIMIT", "0"))
     budget_min = int(os.environ.get("HUNT_TIME_BUDGET_MIN", "0"))
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
+    def _triaged_page_empty(note):
+        return bool(re.search(r"dark-triage [^|]*:\s*page-empty", note))
+
     def _stale_hunt(note):
         """Re-hunt ANY hunted row after 14 days — a board empty today isn't empty forever.
         NOTE: this used to require the literal 'monitored candidate', which made the
@@ -195,6 +205,10 @@ def main():
                              r"aggregator URL|no listing found|redirects to|scanned via brightdata|empty-but-suspect|needs re-resolution|needs manual resolution", r[5] or "")
                and not re.search(r"defunct|domain-dead", r[5] or "")
                and not is_recruiter(r[0])   # agencies are never activated
+               # triage proved page-empty rows have a live page with no roles — the daily
+               # probe owns them; hunting them again just burns budget. (Explicit helper:
+               # inlining this as and/or mixes precedence and silently empties the pool.)
+               and not _triaged_page_empty(r[5] or "")
                and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5]))]
     if limit:
         targets = targets[:limit]
@@ -209,7 +223,9 @@ def main():
             name = r[0]
             try:
                 doc = bool(re.search(r"probe-woken|monitored candidate|host documented", r[5] or ""))
-                verdict, url, n_il, detail = hunt_one(name, r[3], documented=doc)
+                mm = re.search(r"dark-triage \d{4}-\d{2}-\d{2}: ([a-z-]+)", r[5] or "")
+                verdict, url, n_il, detail = hunt_one(name, r[3], documented=doc,
+                                                      mode=(mm.group(1) if mm else ""))
             except Exception as e:  # noqa: BLE001
                 verdict, url, n_il, detail = "dead", None, 0, f"error {str(e)[:50]}"
             stats[verdict] += 1
