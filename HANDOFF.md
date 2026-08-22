@@ -50,6 +50,18 @@ Verified 2026-08-23 by tracing each scheduled entrypoint's row filter (17 rows w
 nothing; now 0). **If you add or narrow a row filter, re-run this check** — the snippet is in
 §5. Ownership is by note content, not by mode:
 
+**Update 2026-08-23 — `page-empty` rows are ACTIVE now.** They were inactive, which meant a
+role posted at one of them waited for the next triage cycle to be seen. But a `page-empty`
+row has a *validated, working* careers page that simply has no openings today: that is a
+healthy daily source, not a dark row. 130 were activated and are scraped every day like any
+other company. Two rules follow, both now enforced:
+- **Empty is not broken.** `refresh_scrape_cache` used to park any active scrape row that
+  came back empty 3 days running — in this market a company can have no openings for a
+  month. Empty rows are now NEVER parked; a 45-day streak only asks triage to re-read the
+  page (it can tell "no openings" from "openings we fail to extract") and the row stays
+  active throughout. Only ERRORS park a row, at 7 days.
+- Consequently the table below applies to rows that are still `active=false`.
+
 | tool | cadence | claims rows whose note matches | re-opens the hunt? |
 |---|---|---|---|
 | `triage_dark` | daily 18:00 | `no listing found` / `no IL listing` / `no ATS detected` / **`dark-triage`** | yes — its rewrite drops the old `page-empty` stamp |
@@ -70,6 +82,51 @@ Two traps this matrix exists to prevent, both of which were live:
   fit 220 chars; once the original verdict eroded (`no IL listing; monitored candidate` →
   `no `), the row matched no pool at all. `triage_dark.TARGET_NOTES` therefore matches its
   **own** `dark-triage` stamp, which makes it self-sustaining.
+
+## 1c. The 2026-08-23 night: dead capabilities and fabricated data
+
+Two bug classes dominated, and both are **invisible from the outside** — the workflow is
+green, the step prints a plausible summary, and the coverage simply never happens.
+
+**(a) Capabilities that were wired but had never executed once.** Check for these first when
+a tool "runs" nightly and nothing ever improves:
+
+| what | why it never ran | how to notice |
+|---|---|---|
+| `crack_walled` | `_budget` / `_t0` used in the loop, never defined → `NameError` on the FIRST target | step is `continue-on-error`, so the run is green and prints only its header line |
+| `refresh_scrape_cache` rot-parking | `_write_csv_rows` (undefined) on the parking path — raised AFTER the cache was written | cache updates fine; no row is ever parked |
+| `SCRAPE_VIA_UNLOCKER` | set in **no workflow**, so `scrape_universal`'s residential fallback never fired | every bot-walled page silently scored "no roles" |
+| hunt's Bright Data creds | absent from the hunt step, so `google_via_unlocker` could not run | invisible whenever DuckDuckGo returns empty |
+| `hunt_one(mode=...)` | passed by the caller, **never read** in the body | docstring described strategy routing that did not exist |
+
+`python -m compileall` cannot catch the undefined-name ones — they are runtime lookups —
+so `test_no_script_references_an_undefined_name` now walks the AST of all 82 modules.
+**If you add a tool, also add its env to the workflow, and confirm it did work by reading
+its output — not by the step's exit code.**
+
+**(b) Fabricated URLs outliving their verification.** `crack_walled` guessed
+`https://careers.<domain>/careers?location=Israel` and persisted the guess as the row's
+`api_url` even when verification failed. 43 rows ended up pointing at hostnames with **no
+DNS record** (`careers.pliops.com`, `careers.tevapharm.com`, `careers.lili.co`), and every
+later tool honestly re-tested the fabrication and logged another "unreachable" verdict.
+Four confident-looking verdicts, all describing a page that never existed.
+
+- **NXDOMAIN cannot be rendered, unlocked or cracked** — there is nothing there. It is the
+  one failure that *only* search can fix, which is why `repair_dead_urls.py` runs BEFORE
+  the hunt. Repairing the address is also what reveals the real ATS: Lili and Shortical
+  both turned out to be on **Comeet**, natively supported, while labelled "unsupported ATS
+  phenom" purely from a page signature.
+- **Never persist an unverified address.** A wrong URL is worse than no URL: it looks like
+  data and it launders itself through every downstream verdict.
+
+**(c) "There are Israel jobs here" is not "these are THIS company's jobs."** The hunt
+activated a row from any page yielding ≥1 Israel job. `pipeline/company_identity.py` now
+gates activation. Beware over-correcting: `careers.ti.com` IS Texas Instruments and
+`amazon.jobs` IS AWS, while `arberobotics.com` is NOT Tamar Robotics. Generic industry
+words ("robotics", "financial") are not identity, and a much shorter domain that merely
+prefixes the name ("rad" in "radlogics") is not either. When the domain is only suggestive
+the verdict is `weak`, and `page_mentions_company()` — does the fetched page actually name
+the company — settles it. That check beats every domain heuristic; prefer it.
 
 ## 2. Things that will bite you (learned the hard way this session)
 
