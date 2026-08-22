@@ -167,6 +167,8 @@ def main():
             rec["employees_as_of"] = today
             rec.pop("employees_lookup_miss", None)
             rec.pop("size_band_pre_linkedin", None)  # verified: snapshot no longer needed
+            rec.pop("employees_range", None)  # the LinkedIn page's bucket is superseded —
+            # keeping it ships a possibly-namesake bucket beside a verified count
             st.save_firmographics({c: rec}, today)
             fixed += 1
             print(f"  ok   {c}: {out['employees']}{' ~' if out['is_estimate'] else ''} ({out['source']})", flush=True)

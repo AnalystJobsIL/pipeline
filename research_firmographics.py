@@ -193,16 +193,19 @@ def main():
             infra_streak = 0
             if rec:
                 if name in have:
-                    # merge-preserve: re-research must not destroy what the fill passes
-                    # paid for — keep an established count when the fresh record has none
+                    # FIELD-GENERIC merge-preserve: a degraded re-research (out-of-enum
+                    # stage coerced to "", founded not re-found) must never regress a
+                    # validated value to empty — for ANY field, not just employee counts.
+                    # A fresh non-empty value always wins; only empties inherit.
                     old = have[name]
-                    if not rec.get("employees_global") and old.get("employees_global"):
-                        for k in ("employees_global", "size_band", "employees_source",
-                                  "employees_as_of", "employees_range"):
-                            if old.get(k):
-                                rec[k] = old[k]
-                    if old.get("employees_lookup_miss") and not rec.get("employees_global"):
-                        rec["employees_lookup_miss"] = old["employees_lookup_miss"]
+                    fresh_count = bool(rec.get("employees_global"))
+                    for k, ov in old.items():
+                        if ov in ("", None) or k == "as_of":
+                            continue
+                        if k in ("employees_lookup_miss", "employees_linkedin_miss") and fresh_count:
+                            continue  # a real count clears the miss gates
+                        if rec.get(k) in ("", None):
+                            rec[k] = ov
                 st.save_firmographics({name: rec}, today)  # main thread owns sqlite
                 done += 1
                 print(f"ok   {name}: {rec['sector']} / {rec.get('stage') or '?'} / {rec.get('size_band') or '?'}")
