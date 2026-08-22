@@ -237,6 +237,15 @@ def validate_one(rend, name, seed_url):
     return ("dark", None, None, None, 0, 0, unsup or "no ATS detected in rendered DOM/network")
 
 
+def _revalidatable(note, days=None):
+    """True if never deep-validated, or validated longer ago than DEEP_REVALIDATE_DAYS (30)."""
+    days = days if days is not None else int(os.environ.get("DEEP_REVALIDATE_DAYS", "30"))
+    m = re.search(r"deep-validated (\d{4}-\d{2}-\d{2})", note or "")
+    if not m:
+        return True
+    return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days >= days
+
+
 def main():
     _load_secrets()
     apply = "--apply" in sys.argv
@@ -245,7 +254,10 @@ def main():
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
                and re.search(r"scanned; no open|unreachable; could not|aggregator URL|no listing found|no ATS detected", r[5] or "")
-               and "deep-validated" not in (r[5] or "")
+               # re-validate after DEEP_REVALIDATE_DAYS instead of never: excluding every
+               # already-stamped row made deep validation a once-ever terminal state
+               and _revalidatable(r[5] or "")
+               and not re.search(r"defunct|domain-dead", r[5] or "")
                and not is_recruiter(r[0])]
     if limit:
         targets = targets[:limit]
@@ -287,7 +299,13 @@ def main():
                         note = {"unsupported": f"unsupported ATS {detail}",
                                 "dark": "no ATS detected (rendered)",
                                 "unreachable": "unreachable"}[verdict]
-                        fr[5] = f"deep-validated {TODAY}: {note}"
+                        # preserve other tools' verdicts (and the monitored-candidate /
+                        # host-documented tokens listing_hunt's fast-path keys on) — only
+                        # replace our own previous stamp
+                        base = re.sub(r"(^|\s\|\s)deep-validated \d{4}-\d{2}-\d{2}:[^|]*", "",
+                                      fr[5] or "").strip(" |")
+                        fr[5] = ((base + " | " if base else "")
+                                 + f"deep-validated {TODAY}: {note}")[:220]
                 csv.writer(open("companies.csv", "w", encoding="utf-8",
                                 newline="")).writerows(fresh)
             time.sleep(0.3)

@@ -18,6 +18,8 @@ import sys
 import urllib.request
 from urllib.parse import urlsplit
 
+_MODIFIED = set()      # company names this run actually rewrote (single-writer merge)
+
 from pipeline import israel
 from ingest_research import PROBE_FAST, _cand_slugs, _try
 from resolve_deep import ATS_PATTERNS, _verify
@@ -145,15 +147,18 @@ def main():
                 csv.writer(f).writerow(newrow)
         else:
             rows[rowi] = newrow
+            _MODIFIED.add(name)
         print(f"  {kind[:4]:4} {name}", flush=True)
 
     if sharded:
         with open(os.environ.get("SCRAPE_CACHE_OUT", "out/retry_cache.json"), "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
     else:
-        # single-writer discipline: re-read at write time and merge our changed rows in
-        # by NAME, so verdicts another tool wrote during this run are not reverted
-        changed = {r[0]: r for r in rows if r and len(r) > 5}
+        # single-writer discipline: merge back ONLY the rows this run actually modified.
+        # (Merging the whole snapshot reverts every row another writer touched during the
+        # run — the exact lost-update this rule exists to prevent.)
+        changed = {r[0]: r for r in rows
+                   if r and len(r) > 5 and r[0] in _MODIFIED}
         fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
         for idx, fr in enumerate(fresh):
             if fr and len(fr) > 5 and fr[0] in changed and changed[fr[0]] != fr:

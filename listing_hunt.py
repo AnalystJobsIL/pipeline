@@ -185,9 +185,11 @@ def main():
                # every parked shape that could still hide a real listing — NOT just the
                # hunt-produced notes (chrome-verified "monitored candidate" rows and
                # auto_expand's "scanned; no open"/"unreachable" were invisible before)
+               # NOTE: any NEW verdict string must be added here or it silently retires
+               # the row from the hunt pool forever.
                and re.search(r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|"
-                             r"host documented|probe-woken|scanned; no open|unreachable; could not|"
-                             r"aggregator URL", r[5] or "")
+                             r"host documented|probe-woken|scanned; no open|unreachable|"
+                             r"aggregator URL|no listing found|redirects to", r[5] or "")
                and not re.search(r"defunct|domain-dead", r[5] or "")
                and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5]))]
     if limit:

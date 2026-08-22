@@ -13,6 +13,9 @@ no server):
 2. **The job board** — a rolling **2-week** searchable page, `docs/index.html`, published
    to the public repo `AnalystJobsIL/board` → https://analystjobsil.github.io/board/.
 
+**Per-company caps** (`pipeline/run.py`): the email shows at most **3** roles per company,
+the board **8** — so "only one Wix role arrived" can be the cap, not a coverage gap.
+
 **What qualifies as a role** (the actual product decision, implemented in
 `pipeline/seniority.py`): experienced (**~3+ years**) data-analysis work — data/BI/product/
 marketing analytics, analytics leadership. **The title does not matter**: a "Data Scientist"
@@ -126,7 +129,12 @@ Imagindairy,scrape,https://www.imagindairy.com/careers,https://imagindairy.com/c
 
 For API rows `api_url` is the endpoint; for scrape rows it is the **listings page URL**.
 `notes` is the row-verdict log: each tool appends ` | <tool> <date>: <finding>` and strips
-its own previous suffix, so a row accumulates one current verdict per tool. Taxonomy:
+its own previous suffix, so a row accumulates one current verdict per tool.
+**Caveat:** `listing_hunt`'s `found` branch, `refresh_scrape_cache`'s parking pass and
+`retry_unreachable._row_for` still REPLACE the whole cell (they set a row's final state,
+so history loss is acceptable there) — but never copy that pattern for a diagnostic
+verdict: overwriting destroys the `monitored candidate` / `host documented` tokens that
+`listing_hunt`'s fast-path keys on. Taxonomy:
 
 | state | active | meaning | who re-checks it |
 |---|---|---|---|
@@ -317,8 +325,8 @@ In order — each step names the file to open:
    ```bash
    python -c "from pipeline.seniority import classify; print(classify({'title':'Senior Data Analyst','company':'X','description':'…'}, use_llm=False))"
    ```
-   It returns the decision, path (`keyword` / `llm` / `llm_cache` / `keyword_nollm`) and
-   reason. A cached role judgment lives in `cloud_state/seen.db` → `llm_cache`
+   It returns the decision, path (`keyword` / `llm` / `llm_cache` / `keyword_nollm` /
+   `llm_failed_fallback`) and reason. The cache key column in `llm_cache` is `title_key`. A cached role judgment lives in `cloud_state/seen.db` → `llm_cache`
    (key `company|title`); delete that row to force re-judgment.
 7. **Emailed before?** `seen.db` → `sent` table is the across-day dedup: a role is emailed
    once. The 2-week job board still shows it; the email only carries the last 48h.
