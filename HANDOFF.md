@@ -43,6 +43,34 @@ WalkMe, Cloudinary, Port.io, Miggo, Thales. Roughly **1,400+ Israel jobs** enter
   rows are NOT auto-parked; and discovery leaks job-title junk as company names
   ("AppSec", "my team") which firmographics research correctly refuses.
 
+## 1b. Who re-checks a parked row — the ownership matrix
+
+Every inactive row must be owned by at least one *recurring* job, or it is permanently dark.
+Verified 2026-08-23 by tracing each scheduled entrypoint's row filter (17 rows were owned by
+nothing; now 0). **If you add or narrow a row filter, re-run this check** — the snippet is in
+§5. Ownership is by note content, not by mode:
+
+| tool | cadence | claims rows whose note matches | re-opens the hunt? |
+|---|---|---|---|
+| `triage_dark` | daily 18:00 | `no listing found` / `no IL listing` / `no ATS detected` / **`dark-triage`** | yes — its rewrite drops the old `page-empty` stamp |
+| `listing_hunt` | daily 19:00 | the wide parked-shape regex, **minus** `page-empty` | — |
+| `repair_extract_gap` | daily 19:00 | `dark-triage …: extract-gap` | activates directly |
+| `probe_candidates` | daily 05:00 | `monitored candidate` / `host documented` / `no IL listing` | yes — `_wake_note` strips every stale segment |
+| `crack_walled` | daily 19:00 + weekly | `unsupported ATS` | — |
+| `scan_dead_domains` | daily 05:00 | liveness only — **never looks at roles** | no |
+| `audit_empty_rows` | weekly | `verdicts.in_pool` + not audited in `AUDIT_TTL_DAYS` (30) | activates directly |
+| `deep_validate` | **weekly Sat 04:00** | `in_pool` + `_revalidatable` | activates directly |
+
+Two traps this matrix exists to prevent, both of which were live:
+- **An inert wake.** `probe_candidates` cleared `listing-hunt|crack-walled` but not
+  `dark-triage`, so `listing_hunt._triaged_page_empty` still excluded every woken
+  page-empty row: 105/105 wakes went nowhere. A wake must clear *every* stamp that any
+  downstream filter excludes on.
+- **Note erosion retiring a row from its own pool.** Each re-stamp trims the base note to
+  fit 220 chars; once the original verdict eroded (`no IL listing; monitored candidate` →
+  `no `), the row matched no pool at all. `triage_dark.TARGET_NOTES` therefore matches its
+  **own** `dark-triage` stamp, which makes it self-sustaining.
+
 ## 2. Things that will bite you (learned the hard way this session)
 
 1. **Silent exclusion is the dominant bug class here.** Every serious defect found was a
@@ -331,6 +359,31 @@ red, the change is wrong — they were all written from real incidents.
   ```bash
   python -c "import csv;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>5];print(len(r),'rows',sum(1 for x in r if x[4]=='true'),'active')"
   ```
+- **Orphan check — run after touching ANY row filter** (§1b). Must print 0; a non-zero count
+  is companies no recurring job will ever look at again:
+  ```bash
+  python -c "
+  import csv,re
+  T=re.compile(r'no listing found|no IL listing|no ATS detected|dark-triage',re.I)
+  S=re.compile(r'defunct|domain-dead|recruiter|duplicate|redundant',re.I)
+  P=re.compile(r'monitored candidate|host documented|no IL listing',re.I)
+  rows=[r for r in csv.reader(open('companies.csv',encoding='utf-8')) if r and len(r)>=6]
+  dark=[r for r in rows if r[4]=='false' and 'dark-triage' in (r[5] or '')]
+  orph=[r for r in dark if not ((T.search(r[5]) and not S.search(r[5])) or
+        (P.search(r[5]) and 'domain-dead' not in r[5] and (r[3] or '').startswith('http')))]
+  print(len(orph),'orphaned of',len(dark),'dark'); [print('  ',r[0]) for r in orph[:10]]"
+  ```
+- "Did tonight's dark-row work reach the pool?" — the hunt pool should be non-zero and
+  shrink over successive nights:
+  ```bash
+  python -c "
+  import csv,re,collections
+  rows=[r for r in csv.reader(open('companies.csv',encoding='utf-8')) if r and len(r)>5]
+  c=collections.Counter(m.group(1) for r in rows if (m:=re.search(r'dark-triage [0-9-]+: ([a-z-]+)',r[5])))
+  print(sum(c.values()),'triaged:',dict(c))"
+  ```
+  **A count of ~0 here means a concurrent writer clobbered the notes column** — check the
+  most recent `row-merged state` commit and see §2.3b before re-running triage.
 
 ## 6. Session hygiene reminders
 

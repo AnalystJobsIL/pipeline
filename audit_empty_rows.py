@@ -14,6 +14,7 @@ Usage: python audit_empty_rows.py [--apply]   (default is dry-run report)
 from __future__ import annotations
 
 import csv
+import datetime as dt
 import json
 import os
 import re
@@ -25,6 +26,10 @@ import urllib.request
 from bd_rescue import _load_secrets
 from pipeline.fetchers import fetch_company
 from pipeline.israel import is_israel_job
+
+TODAY = dt.date.today().isoformat()
+# a "0 openings" verdict is a snapshot, not a property of the company
+AUDIT_TTL_DAYS = 30
 
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
@@ -169,19 +174,39 @@ def main():
     apply = "--apply" in sys.argv
     os.makedirs("state", exist_ok=True)
     done_path = "state/audit_done.json"
+    # {name: last-audited ISO date}. This was a bare append-only LIST, i.e. a once-EVER gate:
+    # 721 names had accumulated and 130 currently-parked rows could never be re-audited, no
+    # matter how stale their verdict. A company with no roles in March may have ten in August.
     try:
-        done = set(json.load(open(done_path, encoding="utf-8")))
+        raw = json.load(open(done_path, encoding="utf-8"))
     except Exception:  # noqa: BLE001
-        done = set()
+        raw = {}
+    if isinstance(raw, list):        # migrate: age the backlog out over AUDIT_TTL_DAYS
+        raw = {n: TODAY for n in raw}   # rather than re-opening all 721 in one run
+    done = raw
+
+    def _fresh(name):
+        d = done.get(name)
+        if not d:
+            return False
+        try:
+            return (dt.date.today() - dt.date.fromisoformat(d)).days < AUDIT_TTL_DAYS
+        except Exception:  # noqa: BLE001
+            return False
+
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     parked = [(i, r) for i, r in enumerate(rows)
-              if r and len(r) >= 6 and r[4] == "false" and r[0] not in done
+              if r and len(r) >= 6 and r[4] == "false" and not _fresh(r[0])
               and in_pool(r[5] or "")]
-    print(f"{len(parked)} parked rows to audit ({len(done)} already done); "
+    # oldest first, so a quota- or time-capped run still walks the whole backlog over weeks
+    parked.sort(key=lambda ir: done.get(ir[1][0], ""))
+    print(f"{len(parked)} parked rows to audit ({len(done)} audited before, "
+          f"{sum(1 for n in done if _fresh(n))} still fresh); "
           f"SerpApi spent only when needed\n", flush=True)
+
     def _mark(name):
-        done.add(name)
-        json.dump(sorted(done), open(done_path, "w", encoding="utf-8"))
+        done[name] = TODAY
+        json.dump(done, open(done_path, "w", encoding="utf-8"), indent=0, sort_keys=True)
 
     fixed, unsupported, still = [], [], []
     for i, r in parked:

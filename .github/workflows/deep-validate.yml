@@ -7,6 +7,11 @@ name: Deep-validate parked companies (render + sniff + LLM)
 # the commit step always runs; re-dispatch to continue where it stopped.
 
 on:
+  schedule:
+    # Was dispatch-only, so `_revalidatable`'s staleness escape never fired and this whole
+    # resolver only ever ran when someone remembered to press the button. Saturday keeps it
+    # clear of Sunday's audit-coverage run (both hold the `repo-state` group for ~5h).
+    - cron: "0 4 * * 6"
   workflow_dispatch:
     inputs:
       limit:
