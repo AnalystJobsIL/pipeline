@@ -50,12 +50,21 @@ ROLE = re.compile(r"engineer|developer|manager|analyst|scientist|designer|\blead
                   r"\bsre\b|\bux\b|\bui\b|scrum|agile|automation|solution|business|operation|"
                   r"team\s+lead|full[\s-]?stack|back[\s-]?end|front[\s-]?end|principal|staff|"
                   r"vp\b|chief|president|counsel|paralegal|accountant|bookkeeper|generalist", re.I)
-ISRAEL_LOC = re.compile(r"israel|tel[\s-]?aviv|herzliya|haifa|yokneam|ra.?anana|petah|"
-                        r"bnei[\s-]?brak|lod\b|ashdod|ashkelon|ness[\s-]?ziona|rishon|kfar[\s-]?saba|"
-                        r"\u05d9\u05e9\u05e8\u05d0\u05dc|\u05ea\u05dc[\s-]?\u05d0\u05d1\u05d9\u05d1|\u05d7\u05d9\u05e4\u05d4|\u05d1\u05d0\u05e8[\s-]?\u05e9\u05d1\u05e2|\u05e8\u05e2\u05e0\u05e0\u05d4|\u05d4\u05e8\u05e6\u05dc\u05d9\u05d4|"
-                        r"beer[\s-]?sheva|netanya|rehovot|caesarea|yakum|kiryat|nazareth|"
-                        r"jerusalem|modiin|hod\s+hasharon|airport\s+city|or\s+yehuda|"
-                        r"givatayim|ramat\s+gan|holon|rosh\s+ha|karmiel|migdal", re.I)
+# Israel location matcher — derived from pipeline/israel.py so there is ONE city list.
+# (A separate hand-maintained copy here silently dropped Sderot, Yoqneam, Nes Ziona,
+# Ramat-Gan and 23 other spellings — real roles were extracted then filtered away.)
+def _build_israel_loc():
+    from pipeline.israel import _IL_PLACES
+    alts = sorted((re.escape(p).replace(r"\ ", r"[\s-]?") for p in _IL_PLACES),
+                  key=len, reverse=True)
+    hebrew = ["ישראל", "תל[\s-]?אביב",
+              "חיפה", "באר[\s-]?שבע",
+              "רעננה", "הרצליה",
+              "ירושלים", "פתח[\s-]?תקווה"]
+    return re.compile("|".join(alts + hebrew), re.I)
+
+
+ISRAEL_LOC = _build_israel_loc()
 
 
 def _s(v):
