@@ -108,7 +108,11 @@ def hunt_one(name, seed):
         il = [j for j in jobs if is_israel_job(j)]
         if il:
             return ("found", u, len(il), "")
-    return ("nolisting", None, 0, f"tried {len(tried)} candidates")
+    # DOCUMENT where we looked: the best candidate page survives in the row so future
+    # re-hunts and humans check the right place (a real board with 0 IL roles today —
+    # e.g. Fabric on Rippling — must not be indistinguishable from "no board exists").
+    best = next(iter(dict.fromkeys(ordered)), (cands[0] if cands else ""))
+    return ("nolisting", best, 0, f"tried {len(tried)} candidates")
 
 
 def main():
@@ -119,10 +123,18 @@ def main():
     limit = int(os.environ.get("HUNT_LIMIT", "0"))
     budget_min = int(os.environ.get("HUNT_TIME_BUDGET_MIN", "0"))
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
+    def _stale_hunt(note):
+        """Re-hunt monitored candidates every 14 days — a board empty today isn't empty forever."""
+        m = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
+        if not m:
+            return False
+        age = (dt.date.today() - dt.date.fromisoformat(m.group(1))).days
+        return "monitored candidate" in note and age >= 14
+
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
                and re.search(r"no ATS detected|unsupported ATS", r[5] or "")
-               and "listing-hunt" not in (r[5] or "")]
+               and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5]))]
     if limit:
         targets = targets[:limit]
     print(f"listing-hunting {len(targets)} companies\n", flush=True)
@@ -146,8 +158,14 @@ def main():
                     rows[i][1], rows[i][2], rows[i][3] = "scrape", "", url
                     rows[i][4] = "true"
                     rows[i][5] = f"listing-hunt {TODAY}: verified {n_il} IL via {url[:60]}"
+                elif verdict == "nolisting" and url:
+                    rows[i][3] = url                      # persist the candidate page
+                    base = re.sub(r" \| listing-hunt.*$", "", r[5])
+                    rows[i][5] = (base + f" | listing-hunt {TODAY}: no IL listing; "
+                                  f"monitored candidate")[:220]
                 else:
-                    rows[i][5] = (r[5] + f" | listing-hunt {TODAY}: "
+                    rows[i][5] = (re.sub(r" \| listing-hunt.*$", "", r[5])
+                                  + f" | listing-hunt {TODAY}: "
                                   + ("no listing found" if verdict == "nolisting" else detail))[:220]
                 csv.writer(open("companies.csv", "w", encoding="utf-8",
                                 newline="")).writerows(rows)
