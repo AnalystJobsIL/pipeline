@@ -146,7 +146,7 @@ verdict: overwriting destroys the `monitored candidate` / `host documented` toke
 | `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | today's 14:00 hunt (fast-path) |
 | `no listing found` / `no ATS detected` | false | full render found nothing parseable | weekly audit + hunt cron |
 | `unsupported ATS <x>` | false | ATS known, no extraction path yet | crack_walled / listing-hunt |
-| `domain-dead …` | false | DNS/conn dead (GET-verified) | liveness scan; candidate defunct |
+| `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS) | re-tested after 30d (`_rescannable`); Sunday audit still sees the base note |
 | `defunct: …` | false | company confirmed shut down/acquired | permanently excluded |
 | `chrome-verified …` | either | a human-equivalent browser check confirmed the state | as per its class |
 

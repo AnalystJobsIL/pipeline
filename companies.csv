@@ -39,17 +39,17 @@ Bringg,greenhouse,bringg,https://boards-api.greenhouse.io/v1/boards/bringg/jobs,
 Lemonade,ashby,lemonade,https://api.ashbyhq.com/posting-api/job-board/lemonade,true,2026-08-14 RE-RESOLVED: migrated greenhouse->ashby; verified live 32 jobs / 20 Israel
 Riskified,greenhouse,riskified,https://boards-api.greenhouse.io/v1/boards/riskified/jobs,true,
 Similarweb,greenhouse,similarweb,https://boards-api.greenhouse.io/v1/boards/similarweb/jobs,true,
-WalkMe,greenhouse,walkme,https://boards-api.greenhouse.io/v1/boards/walkme/jobs,false,2026-08-14 greenhouse token 404 (migrated) - still covered by the WalkMe Lever row below
+WalkMe,lever,walkme,https://api.lever.co/v0/postings/walkme?mode=json,true,re-activated 2026-08-22: promised lever twin never existed; verified 39/9 IL
 Wiz,greenhouse,wizinc,https://boards-api.greenhouse.io/v1/boards/wizinc/jobs,true,
 Gong,greenhouse,gongio,https://boards-api.greenhouse.io/v1/boards/gongio/jobs,true,
-Cloudinary,greenhouse,cloudinary,https://boards-api.greenhouse.io/v1/boards/cloudinary/jobs,false,2026-08-14 greenhouse token 404 (migrated) - still covered by the Cloudinary Lever row below
+Cloudinary,lever,cloudinary,https://api.lever.co/v0/postings/cloudinary?mode=json,true,re-activated 2026-08-22: promised lever twin never existed; verified 29/10 IL
 Aqua Security,greenhouse,aquasecurity,https://boards-api.greenhouse.io/v1/boards/aquasecurity/jobs,false,2026-08-14 greenhouse token 404 (migrated ATS) - needs re-resolution; was greenhouse-only so coverage currently LOST
 AppsFlyer,greenhouse,appsflyer,https://boards-api.greenhouse.io/v1/boards/appsflyer/jobs,true,
 Taboola,greenhouse,taboola,https://boards-api.greenhouse.io/v1/boards/taboola/jobs,true,
 Forter,greenhouse,forter,https://boards-api.greenhouse.io/v1/boards/forter/jobs,true,
 Torq,greenhouse,torq,https://boards-api.greenhouse.io/v1/boards/torq/jobs,true,
 Sisense,greenhouse,sisense,https://boards-api.greenhouse.io/v1/boards/sisense/jobs,true,
-VAST Data,greenhouse,vastdata,https://boards-api.greenhouse.io/v1/boards/vastdata/jobs,false,2026-08-14 greenhouse token 404 (migrated) - still covered by the VAST Data Comeet row
+VAST Data,scrape,,https://vastdata.com/careers,true,re-activated 2026-08-22: promised comeet twin never existed; listing scrape verified 38 IL
 Redis,ashby,redis,https://api.ashbyhq.com/posting-api/job-board/redis,true,"Global board - 2026-08-14 RE-RESOLVED: migrated greenhouse->ashby; verified live 20 jobs / 0 Israel at check, keep polling"
 Innovid,greenhouse,innovid,https://boards-api.greenhouse.io/v1/boards/innovid/jobs,true,
 Mobileye,lever,mobileye,https://api.eu.lever.co/v0/postings/mobileye?mode=json,true,uses api.eu.lever.co host
@@ -108,7 +108,7 @@ Wonderful,ashby,wonderful,https://api.ashbyhq.com/posting-api/job-board/wonderfu
 Nexxen,ashby,nexxen,https://api.ashbyhq.com/posting-api/job-board/nexxen,true,
 NVIDIA,workday,nvidia/NVIDIAExternalCareerSite,https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs,true,"Global board (multinational) - POST API, body e.g. {""searchText"":""Israel"",""limit"":20,""offset"":0}; Israel matches confirmed live"
 Salesforce,workday,salesforce/External_Career_Site,https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site/jobs,true,Global board - Workday POST API; Tel Aviv postings confirmed live
-Palo Alto Networks,workday,paloaltonetworks/panwexternalcareers,https://paloaltonetworks.wd1.myworkdayjobs.com/wday/cxs/paloaltonetworks/panwexternalcareers/jobs,false,2026-08-14 Workday tenant now 422/500 (migrated fully off Workday to TalentBrew/Radancy as the note predicted) - needs new endpoint; coverage currently LOST
+Palo Alto Networks,workday,paloaltonetworks/panwexternalcareers,https://paloaltonetworks.wd5.myworkdayjobs.com/wday/cxs/paloaltonetworks/panwexternalcareers/jobs,true,re-activated 2026-08-22: correct workday site resolved; verified 152/149 IL
 Applied Materials,workday,amat/External,https://amat.wd1.myworkdayjobs.com/wday/cxs/amat/External/jobs,true,Global board - Workday POST API; Israel matches confirmed live
 Cisco,workday,cisco/Cisco_Careers,https://cisco.wd5.myworkdayjobs.com/wday/cxs/cisco/Cisco_Careers/jobs,true,Global board - Workday POST API; Tel Aviv/Caesarea/Netanya postings confirmed live
 Adobe,workday,adobe/external_experienced,https://adobe.wd5.myworkdayjobs.com/wday/cxs/adobe/external_experienced/jobs,true,"Global board - Workday POST API works but no Israel match found in this check - keep polling, may be a snapshot-in-time or indexing quirk"
@@ -377,7 +377,7 @@ Imagindairy,scrape,https://www.imagindairy.com/careers,https://imagindairy.com/c
 InnovoPro,scrape,https://innovopro.com/careers/,https://innovopro.com/careers/,false,scanned via brightdata; no open Israel roles now
 Venn,greenhouse,venncity,https://boards-api.greenhouse.io/v1/boards/venncity/jobs,true,re-audit 2026-08-21: verified 4/1 IL (was false-empty)
 WINT Water Intelligence,scrape,https://www.wint.ai/careers/,https://wint.ai/company/career/,false,"chrome-verified 2026-08-22: listing LIVE, 3 roles all UK/US, 0 IL (true negative) - monitored candidate"
-LawGeex,scrape,https://www.lawgeex.com/careers/,https://www.lawgeex.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-22 (conn-dead)
+LawGeex,scrape,https://www.lawgeex.com/careers/,https://www.lawgeex.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Time To Know,scrape,https://www.timetoknow.com/careers,https://careers.timetoknow.com/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS eightfold.ai | crack-walled 2026-08-22: host documented, 0 IL now | domain-dead 2026-08-22 (dns-dead)"
 Loris,scrape,https://loris.ai/careers/,https://loris.ai/careers/,false,deep-validated 2026-08-21: unsupported ATS oraclecloud.com | crack-walled 2026-08-22: nocapture
 Aporia,workable,aporia,https://apply.workable.com/api/v1/widget/accounts/aporia?details=true,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
@@ -645,7 +645,7 @@ OpenWeb,scrape,https://www.openweb.com/careers,https://www.openweb.com/careers,f
 Aniview,scrape,https://www.aniview.com/careers/,https://www.aniview.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Digital Turbine,scrape,https://www.digitalturbine.com/careers/,https://www.digitalturbine.com/careers/,true,deep-scrape; 6 Israel jobs
 Intango,comeet,68.000,https://www.comeet.com/careers-api/2.0/company/68.000/positions?token=860324032403240860324010C043003AA010C0,true,re-audit 2026-08-21: deep-verified 2/1 IL (was dark)
-Jelly Button Games,scrape,https://www.jellybtn.com/careers,https://www.jellybtn.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-22 (conn-dead)
+Jelly Button Games,scrape,https://www.jellybtn.com/careers,https://www.jellybtn.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 888 Holdings,scrape,,https://jobs.888.com/#career-positions,true,listing-hunt 2026-08-22: verified 5 IL via https://jobs.888.com/#career-positions
 Rollic,scrape,https://www.rollicgames.com/careers/,https://www.rollicgames.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Vimeo,scrape,,https://vimeo.com/jobs?location=Israel,true,listing-hunt 2026-08-22: verified 4 IL via https://vimeo.com/jobs?location=Israel
@@ -722,7 +722,7 @@ Amazon Israel,scrape,,https://www.amazon.jobs/en/search?loc_query=Israel&country
 Micron Israel,workday,micron/External,https://micron.wd1.myworkdayjobs.com/wday/cxs/micron/External/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Salesforce Israel,workday,salesforce/External_Career_Site,https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site/jobs,true,deep-resolved; 15/14 IL
 Cadence Israel,workday,cadence/External_Careers,https://cadence.wd1.myworkdayjobs.com/wday/cxs/cadence/External_Careers/jobs,true,deep-resolved; 10/8 IL
-GE HealthCare Israel,scrape,https://jobs.gecareers.com/healthcare/global/en,https://careers.gehealthcare.com/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS phenom | domain-dead 2026-08-22 (dns-dead) | crack-walled 2026-08-22: host documented, 0 IL now"
+GE HealthCare Israel,scrape,https://jobs.gecareers.com/healthcare/global/en,https://careers.gehealthcare.com/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS phenom| crack-walled 2026-08-22: host documented, 0 IL now"
 Samsung Israel,scrape,https://www.samsung.com/il/careers/,https://www.samsung.com/il/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Sight Diagnostics,scrape,https://www.sightdx.com/careers,https://www.sightdx.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Sweetch,scrape,https://www.sweetch.com/careers,https://www.sweetch.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
@@ -736,7 +736,7 @@ Curesponse,scrape,https://curesponse.com/careers,https://curesponse.com/careers,
 Medial EarlySign,scrape,https://earlysign.com/careers/,https://earlysign.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-22 (dns-dead)
 Gina Life,scrape,https://www.gina.life/jobs,https://www.gina.life/jobs,false,scanned via brightdata; no open Israel roles now
 Continuse Biometrics,scrape,https://www.continuse.com/careers,https://www.continuse.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
-ElMindA,scrape,https://elminda.com/careers,https://elminda.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-22 (conn-dead)
+ElMindA,scrape,https://elminda.com/careers,https://elminda.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Somatix,scrape,,https://builtin.com/jobs?allLocations=true,true,listing-hunt 2026-08-22: verified 2 IL via https://builtin.com/jobs?allLocations=true
 KLA,workday,kla/Search,https://kla.wd1.myworkdayjobs.com/wday/cxs/kla/Search/jobs,true,deep-resolved; 40/40 IL
 AMD,scrape,,https://careers.amd.com/careers-home/jobs?location=Israel,true,listing-hunt 2026-08-22: verified 3 IL via https://careers.amd.com/careers-home/jobs?location=Israel
@@ -761,7 +761,7 @@ Proofpoint,workday,proofpoint/proofpointcareers,https://proofpoint.wd5.myworkday
 Sony (PlayStation),scrape,https://www.playstation.com/en-us/corporate/about/careers/,https://www.playstation.com/en-us/corporate/about/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 UBS,scrape,https://www.ubs.com/global/en/careers.html,https://www.ubs.com/global/en/careers.html,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Verizon,scrape,,https://mycareer.verizon.com/career-paths/,true,listing-hunt 2026-08-22: verified 8 IL via https://mycareer.verizon.com/career-paths/
-Skoda / Volkswagen Group,scrape,https://www.volkswagen-group.com/en/careers-15801,https://www.volkswagen-group.com/en/careers-15801,false,deep-validated 2026-08-21: unsupported ATS successfactors | domain-dead 2026-08-22 (conn-dead) | crack-walled 2026-08-22: nocapture
+Skoda / Volkswagen Group,scrape,https://www.volkswagen-group.com/en/careers-15801,https://www.volkswagen-group.com/en/careers-15801,false,deep-validated 2026-08-21: unsupported ATS successfactors| crack-walled 2026-08-22: nocapture
 Talon Cyber Security,scrape,https://talon-sec.com/careers/,https://talon-sec.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered)
 Decart,ashby,decart-ai,https://api.ashbyhq.com/posting-api/job-board/decart-ai,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 Magic Software,scrape,,https://www.magicsoftware.com/about-us/careers/job-openings-in-israel/,true,listing-hunt 2026-08-22: verified 2 IL via https://www.magicsoftware.com/about-us/careers/job-openings-
@@ -1026,7 +1026,7 @@ Zoom,scrape,https://careers.zoom.us/jobs/search?location=Israel,https://careers.
 Booking.com,scrape,,https://employees-holdings-workingatbooking.icims.com/jobs/search?ss=1&searchLocation=Israel,true,crack-walled 2026-08-22: icims via scrape; verified 1 IL
 Intuit,scrape,,https://jobs.intuit.com/,true,listing-hunt 2026-08-22: verified 4 IL via https://jobs.intuit.com/
 Barclays,workday,barclays/External_Career_Site_Barclays,https://barclays.wd3.myworkdayjobs.com/wday/cxs/barclays/External_Career_Site_Barclays/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
-GE HealthCare,scrape,https://jobs.gecareers.com/gehealthcare/global/en/search-results?keywords=Israel,https://careers.gehealthcare.com/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS phenom | domain-dead 2026-08-22 (dns-dead) | crack-walled 2026-08-22: host documented, 0 IL now"
+GE HealthCare,scrape,https://jobs.gecareers.com/gehealthcare/global/en/search-results?keywords=Israel,https://careers.gehealthcare.com/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS phenom| crack-walled 2026-08-22: host documented, 0 IL now"
 Pfizer,workday,pfizer/pfizercareers,https://pfizer.wd1.myworkdayjobs.com/wday/cxs/pfizer/pfizercareers/jobs,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 General Motors,scrape,,https://search-careers.gm.com/en/locations/israel/,true,listing-hunt 2026-08-22: verified 2 IL via https://search-careers.gm.com/en/locations/israel/
 Bosch,smartrecruiters,BoschGroup,https://api.smartrecruiters.com/v1/companies/BoschGroup/postings,true,deep-resolved; 4799/0 IL

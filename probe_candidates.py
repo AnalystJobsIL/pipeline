@@ -71,7 +71,7 @@ def main():
                         # order matters: stamp the woken state, THEN drop the old verdict
                         # suffix (doing it the other way deleted what the stamp matched,
                         # leaving the woken state unreachable)
-                        base = re.sub(r" \| (listing-hunt|crack-walled) [^|]*$", "", fr[5])
+                        base = re.sub(r"\s\|\s(listing-hunt|crack-walled) [^|]*", "", fr[5])  # any position, not just trailing
                         fr[5] = (base + " | probe-woken: re-hunt pending")[:220]
                 csv.writer(open("companies.csv", "w", encoding="utf-8",
                                 newline="")).writerows(fresh)

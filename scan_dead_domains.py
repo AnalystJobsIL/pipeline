@@ -14,7 +14,12 @@ import re
 import socket
 import sys
 import urllib.parse
+import ssl
 import urllib.request
+
+_CTX = ssl.create_default_context()
+_CTX.check_hostname = False
+_CTX.verify_mode = ssl.CERT_NONE
 
 TODAY = dt.date.today().isoformat()
 
@@ -26,13 +31,23 @@ def alive(url):
     except Exception:  # noqa: BLE001
         return False, "dns-dead"
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}, method="HEAD")
-        with urllib.request.urlopen(req, timeout=10) as r:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})  # GET: HEAD 405s
+        # lenient TLS: cert-verify failures are usually the scanning machine, not a dead site
+        with urllib.request.urlopen(req, timeout=12, context=_CTX) as r:
             return True, f"http {r.status}"
     except urllib.error.HTTPError as e:
         return True, f"http {e.code}"          # server answered — site alive
     except Exception as e:  # noqa: BLE001
         return False, f"conn-dead ({type(e).__name__})"
+
+
+def _rescannable(note, days=30):
+    """Re-test a dead domain after `days` — domains come back, and TLS/network
+    artifacts on the scanning machine produce false positives."""
+    m = re.search(r"domain-dead (\d{4}-\d{2}-\d{2})", note or "")
+    if not m:
+        return True
+    return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days >= days
 
 
 def main():
@@ -42,7 +57,7 @@ def main():
                if r and len(r) >= 6 and r[4] == "false"
                and re.search(r"no ATS detected|no IL listing|monitored candidate|unsupported ATS",
                              r[5] or "")
-               and "domain-dead" not in (r[5] or "") and "defunct" not in (r[5] or "")
+               and _rescannable(r[5] or "") and "defunct" not in (r[5] or "")
                and (r[3] or "").startswith("http")]
     print(f"liveness-checking {len(targets)} parked companies", flush=True)
     dead = 0

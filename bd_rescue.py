@@ -99,7 +99,10 @@ def main():
             note = rows[rowi][5] if len(rows[rowi]) > 5 else ""
             mm = re.search(r"x(\d+)$", note)
             n_try = (int(mm.group(1)) if mm else 0) + 1
-            rows[rowi][5] = f"unreachable; bd-tried {_dtm.date.today().isoformat()} x{n_try}"
+            _base = re.sub(r"(^|\s\|\s)bd-tried [^|]*", "", rows[rowi][5] or "").strip(" |")
+            _stamp = f"bd-tried {_dtm.date.today().isoformat()} x{n_try}"
+            rows[rowi][5] = (((_base + " | ") if _base
+                              else "unreachable; could not scan | ") + _stamp)[:220]
             _MOD.add(name)
             print(f"  unre {name}", flush=True)
             time.sleep(1)
