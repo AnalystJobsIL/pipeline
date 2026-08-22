@@ -1,5 +1,9 @@
 # Architecture — how jobs get pulled, verified, and delivered
 
+> Working on this after a break? Read **`HANDOFF.md`** first — recent changes,
+> known traps, what's running, and the open-items list. This file is the
+> durable system model.
+
 ## 0. Start here: what the user actually receives
 
 Two deliverables, both produced by the **digest run** (the 05:00 UTC GitHub Actions
