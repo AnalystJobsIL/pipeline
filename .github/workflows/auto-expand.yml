@@ -30,6 +30,8 @@ jobs:
     timeout-minutes: 330
     steps:
       - uses: actions/checkout@v5
+      - name: Snapshot companies.csv baseline (git-layer merge)
+        run: cp companies.csv /tmp/base.csv || true
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
@@ -65,8 +67,23 @@ jobs:
           git commit -m "auto-expand: crack more companies $(date -u +%FT%H:%M) [skip ci]" \
             || { echo "nothing new this run"; exit 0; }
           for i in 1 2 3 4 5; do
-            git pull --rebase --autostash origin ${GITHUB_REF_NAME} && git push origin HEAD:${GITHUB_REF_NAME} && exit 0
-            git rebase --abort 2>/dev/null || true; sleep $((i*20))
+            if git pull --rebase --autostash origin ${GITHUB_REF_NAME}; then
+              git push origin HEAD:${GITHUB_REF_NAME} && exit 0
+            else
+              # CONFLICT on companies.csv: rebase can't merge it, and giving up here
+              # discards the whole run (3.5h listing-hunt lost 2026-08-22). Re-apply just
+              # THIS run's row changes onto origin's current file and retry.
+              git rebase --abort 2>/dev/null || true
+              cp companies.csv /tmp/ours.csv 2>/dev/null || true
+              git fetch origin ${GITHUB_REF_NAME}
+              git reset --hard origin/${GITHUB_REF_NAME}
+              if [ -f /tmp/base.csv ] && [ -f /tmp/ours.csv ]; then
+                python merge_csv_rows.py /tmp/base.csv /tmp/ours.csv companies.csv || true
+                git add companies.csv
+                git commit -m "row-merged state $(date -u +%F) [skip ci]" || true
+              fi
+            fi
+            sleep $((i*15))
           done
           echo "::error::push failed after 5 retries"; exit 1
 

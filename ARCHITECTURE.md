@@ -232,6 +232,15 @@ verdicts (lost-update incident 2026-08-22).
 No whole-snapshot index-keyed writer remains. If you add one it will silently revert
 concurrent verdicts — use one of the first three patterns.
 
+**Concurrency has TWO layers — both must be handled.** In-process discipline (above)
+protects writers on one machine. The **git layer** needs `merge_csv_rows.py`: a cloud run
+commits a file whose baseline may be hours old, so `git pull --rebase` hits a content
+conflict and the retry loop would discard the entire run (a 3.5-hour listing-hunt cycle was
+lost this way, 2026-08-22). Every csv-committing workflow therefore snapshots
+`/tmp/base.csv` right after checkout, and on conflict resets to origin and replays only the
+rows this run changed (`merge_csv_rows.py base ours target`). Copy that pattern into any
+new workflow that writes the registry.
+
 **Every workflow that edits `companies.csv` must `git add` it.** The digest workflow does —
 the candidate probe writes verdicts there while `candidate_probe.json` advances baselines;
 committing one without the other loses the wake *and* consumes its signal.
