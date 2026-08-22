@@ -252,6 +252,19 @@ class SeenStore:
         )
         self.conn.commit()
 
+    def revoke_firmo_failures(self, companies, run_date):
+        """Undo TODAY's strikes for these names — used by the mass-failure guard when a
+        whole run produced nothing (soft outage: exit-0 prose, broken tool grant), which
+        is evidence about the infrastructure, not about 50 company names."""
+        for c in companies:
+            self.conn.execute(
+                "DELETE FROM firmo_failed WHERE company=? AND last=? AND attempts<=1",
+                (c, run_date))
+            self.conn.execute(
+                "UPDATE firmo_failed SET attempts=attempts-1 WHERE company=? AND last=?",
+                (c, run_date))
+        self.conn.commit()
+
     # ---- matched roles (rolling windows for email 48h / board 2 weeks) ------
     def upsert_matched(self, job, run_date):
         """Insert a matched role (keyed by company|title).

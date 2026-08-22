@@ -24,8 +24,12 @@ import sys
 import time
 import urllib.request
 
-from pipeline.firmographics import band_for
+from pipeline.firmographics import band_for, identity_key, is_division_name
 from pipeline.store import SeenStore
+
+# LinkedIn soft blocks come back as HTTP 200 with an authwall/challenge body — that is
+# infrastructure pushing back, not evidence about the company name
+_BLOCKED = re.compile(r"authwall|checkpoint/challenge|captcha|please verify|unusual activity", re.I)
 
 # chain redirects stdout to a file -> cp1252 on Windows -> Hebrew names crash prints
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -129,7 +133,15 @@ def main():
     targets = sorted(c for c, r in recs.items()
                      if not r.get("employees_global")
                      and not (r.get("employees_lookup_miss") or "") > retry_cutoff
-                     and not (r.get("employees_linkedin_miss") or "") > retry_cutoff)[:limit]
+                     and not (r.get("employees_linkedin_miss") or "") > retry_cutoff)
+    # one lookup per identity per run — two name-forms of one company must not both pay
+    seen_ids, deduped = set(), []
+    for c in targets:
+        ik = identity_key(c)
+        if ik not in seen_ids:
+            seen_ids.add(ik)
+            deduped.append(c)
+    targets = deduped[:limit]
     today = dt.date.today().isoformat()
     print(f"linkedin employee lookup for {len(targets)} companies ...")
     got = rng_only = miss = infra_streak = 0
@@ -138,10 +150,10 @@ def main():
         for slug in slug_candidates(name):
             html = unlock(f"https://www.linkedin.com/company/{slug}")
             if html is None:
-                continue  # infra failure — proves nothing about this company
+                continue  # transport failure — proves nothing about this company
+            if len(html) < 1000 or _BLOCKED.search(html[:4000]):
+                continue  # error stub / authwall: soft block, still not name evidence
             got_body = True
-            if len(html) < 1000:
-                continue
             found = parse_page(html, name)
             if found:
                 break
@@ -165,6 +177,11 @@ def main():
             continue
         infra_streak = 0
         count, rng, strong = found
+        # a division record ("Sony (PlayStation)") strong-matches the PARENT's page by
+        # construction (slug and title both drop the parenthetical) — force weak so the
+        # LLM pass re-verifies instead of inheriting the parent's global headcount
+        if is_division_name(name):
+            strong = False
         rec = recs[name]
         # weak (name-fragment) title matches are exactly how generic names land on a
         # namesake's page — mark them so the LLM verify pass ALWAYS re-checks them

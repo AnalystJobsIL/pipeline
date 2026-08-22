@@ -23,7 +23,7 @@ import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from pipeline.firmographics import ResearchUnavailable, band_for
+from pipeline.firmographics import ResearchUnavailable, band_for, identity_key
 from pipeline.store import SeenStore
 
 # chain redirects stdout to a file -> cp1252 on Windows -> Hebrew names crash prints
@@ -112,6 +112,15 @@ def main():
     targets = {c: r for c, r in recs.items()
                if (not r.get("employees_global") or suspect(r))
                and not (r.get("employees_lookup_miss") or "") > retry_cutoff}
+    # one lookup per identity per run — two name-forms of one company must not both pay
+    seen_ids, deduped = set(), {}
+    for c, r in targets.items():
+        ik = identity_key(c)
+        if ik in seen_ids:
+            continue
+        seen_ids.add(ik)
+        deduped[c] = r
+    targets = deduped
     print(f"{len(targets)} targets "
           f"({sum(1 for r in targets.values() if not r.get('employees_global'))} null, "
           f"{sum(1 for r in targets.values() if suspect(r))} suspect linkedin matches)")
@@ -124,6 +133,7 @@ def main():
 
     today = dt.date.today().isoformat()
     fixed = missed = infra_streak = 0
+    pending_miss = []
     with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
         futs = {ex.submit(lookup, c, r): c for c, r in targets.items()}
         for fut in as_completed(futs):
@@ -143,21 +153,11 @@ def main():
             infra_streak = 0
             if not out:
                 missed += 1
-                # give-up marker: without it this company re-spends a web-search claude
-                # call (and up to 3 Bright Data credits upstream) every 6-hour chain run
-                rec = recs[c]
-                if (rec.get("employees_source") or "") == "linkedin-weakmatch":
-                    # QUARANTINE: this count came from a name-fragment page match and
-                    # verification found nothing credible — serving a namesake's number
-                    # indefinitely is worse than an honest null
-                    rec["employees_global"] = None
-                    rec.pop("employees_range", None)
-                    rec["size_band"] = ""
-                    rec["employees_source"] = "linkedin-weakmatch-quarantined"
-                    print(f"  quarantined weak-match count for {c}", flush=True)
-                rec["employees_lookup_miss"] = today
-                st.save_firmographics({c: rec}, today)
-                print(f"  miss {c} (monthly retry)", flush=True)
+                # DEFERRED: stamps and quarantines apply only after the run proves it
+                # wasn't a soft outage (exit-0 prose, broken tool grant) — a broken run
+                # must not month-gate the cohort or destroy weak-match counts
+                pending_miss.append(c)
+                print(f"  miss {c} (pending)", flush=True)
                 continue
             rec = recs[c]
             rec["employees_global"] = out["employees"]
@@ -168,6 +168,22 @@ def main():
             st.save_firmographics({c: rec}, today)
             fixed += 1
             print(f"  ok   {c}: {out['employees']}{' ~' if out['is_estimate'] else ''} ({out['source']})", flush=True)
+    if pending_miss and fixed == 0 and len(pending_miss) >= 5:
+        print(f"mass-failure guard: 0 fills, {len(pending_miss)} misses — suspected soft "
+              "outage; no stamps or quarantines applied, names retry next run")
+    else:
+        for c in pending_miss:
+            rec = recs[c]
+            if (rec.get("employees_source") or "") == "linkedin-weakmatch":
+                # QUARANTINE: a name-fragment page match that verification couldn't
+                # confirm — an honest null beats a namesake's number served forever
+                rec["employees_global"] = None
+                rec.pop("employees_range", None)
+                rec["size_band"] = ""
+                rec["employees_source"] = "linkedin-weakmatch-quarantined"
+                print(f"  quarantined weak-match count for {c}", flush=True)
+            rec["employees_lookup_miss"] = today
+            st.save_firmographics({c: rec}, today)
     print(f"=== fixed {fixed} · miss {missed} ===")
 
 

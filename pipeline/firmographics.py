@@ -57,9 +57,18 @@ _JUNK_NAME = re.compile(
     r"|^(my team|our team|the team)$")
 
 
+# bare category/tech names leaked as "companies". These are the WORST junk class: they
+# collide with real companies ("AppSec" confidently profiled as AppSec Labs, a random
+# 15-person consultancy) and cache as successes nothing ever revisits. Exact-match only.
+CATEGORY_NAMES = {"appsec", "devops", "devsecops", "data", "security", "cyber", "qa",
+                  "fintech", "hr", "it", "ai", "ml", "cloud", "digital", "r&d", "backend",
+                  "frontend", "fullstack", "mobile", "web"}
+
+
 def looks_like_junk(name):
-    """True when a 'company name' is really a leaked job title / team phrase."""
-    return bool(_JUNK_NAME.search(name or ""))
+    """True when a 'company name' is really a leaked job title / category / team phrase."""
+    n = " ".join(str(name or "").lower().split())
+    return n in CATEGORY_NAMES or bool(_JUNK_NAME.search(name or ""))
 
 
 # ---- firmographics identity -------------------------------------------------------- #
@@ -90,6 +99,15 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
 # unless it's an annotation — dropping all parens made two Sony divisions one identity,
 # and targeting would then have researched only whichever surfaced first, forever
 _PAREN_NOISE = re.compile(r"(?i)^\s*(formerly|now|part of|acquired|previously|by |a |an )")
+
+
+def is_division_name(name):
+    """True when the name carries a DISTINGUISHING parenthetical ("Sony (PlayStation)").
+
+    Division records must never strong-match the parent company's LinkedIn page — the
+    parent's global headcount would fill in as a confident, never-re-verified count."""
+    return any(not _PAREN_NOISE.match(m.group(1))
+               for m in re.finditer(r"\(([^)]*)\)", str(name or "")))
 
 
 def identity_key(name):

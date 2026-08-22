@@ -164,6 +164,7 @@ def main():
 
     done = failed = 0
     infra_streak = 0
+    failed_names = []
     with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
         futs = {ex.submit(research_company, name): name for name in todo}
         for fut in as_completed(futs):
@@ -199,9 +200,17 @@ def main():
                 print(f"ok   {name}: {rec['sector']} / {rec.get('stage') or '?'} / {rec.get('size_band') or '?'}")
             else:
                 failed += 1
+                failed_names.append(name)
                 st.record_firmo_failure(name, today)
                 strikes = st.load_firmo_failures().get(name, (1, ""))[0]
                 print(f"FAIL {name} (strike {strikes}; weekly retry)")
+    if failed >= 5 and done == 0:
+        # an all-fail run is a SOFT OUTAGE (exit-0 prose output, broken WebSearch grant,
+        # systematic refusals), not 50 bad names — revoke the strikes so the whole
+        # new-company cohort isn't week-gated by one broken run
+        st.revoke_firmo_failures(failed_names, today)
+        print(f"mass-failure guard: {failed} failures, 0 successes — strikes revoked "
+              "(suspected soft outage; names will retry next run)")
     print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store")
 
 
