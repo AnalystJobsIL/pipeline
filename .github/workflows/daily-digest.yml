@@ -61,6 +61,17 @@ jobs:
         run: python discovery_telegram.py || echo "telegram discovery skipped"
         continue-on-error: true
 
+      - name: Re-test dead domains + re-crack walled ATS (cheap, daily)
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          CRACK_LIMIT: "25"
+        run: |
+          python scan_dead_domains.py --apply || echo "liveness scan skipped"
+          python crack_walled.py --apply || echo "re-crack skipped"
+        continue-on-error: true
+
       - name: Probe monitored candidates (wake rows whose pages grew job signals)
         run: python probe_candidates.py --apply || echo "probe skipped"
         continue-on-error: true

@@ -41,8 +41,9 @@ def alive(url):
         return False, f"conn-dead ({type(e).__name__})"
 
 
-def _rescannable(note, days=30):
-    """Re-test a dead domain after `days` — domains come back, and TLS/network
+def _rescannable(note, days=1):
+    """Re-test a dead domain after `days` (default DAILY — a GET costs milliseconds,
+    and a revived domain shouldn't wait a month). Domains come back, and TLS/network
     artifacts on the scanning machine produce false positives."""
     m = re.search(r"domain-dead (\d{4}-\d{2}-\d{2})", note or "")
     if not m:

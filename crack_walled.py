@@ -144,8 +144,10 @@ def crack_one(name, seed, platform):
     return ("novrfy", captures[0], 0, f"host found ({captures[0][1][:60]}) but 0 IL extracted")
 
 
-def _recrackable(note, days=30):
-    """Re-crack after `days` instead of never (once-ever filters silently freeze
+def _recrackable(note, days=1):
+    """Re-crack after `days` — DAILY by default: the ATS host is already documented,
+    so a re-check is one fetch of a known endpoint, not a rediscovery.
+    (Once-ever filters silently freeze
     coverage — same bug class fixed in listing_hunt/_stale_hunt and deep_validate)."""
     m = re.search(r"crack-walled (\d{4}-\d{2}-\d{2})", note or "")
     if not m:
