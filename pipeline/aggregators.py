@@ -98,6 +98,10 @@ HOSTS = (
     "embedded.jobs", "myjobmag.", "devjobs.co.il", "jobify360.", "tlv.partners",
     "insightpartners.com", "seedcamp.com", "getro.", "consider.vc", "jobs.ashbyhq.com/vc",
     "duckduckgo.", "google.com/search", "bing.com/search",
+    # seen being tried by the 2026-08-23 hunt: aggregators, a PE portfolio board, and a
+    # company-data site that is not a careers page at all
+    "bebee.com", "djinni.co", "craft.co", "franciscopartners.com", "himalayas.app",
+    "remoteok.", "weworkremotely.", "jobgether.", "startupnationcentral.org",
 )
 
 # host-anchored: "t.me/" must not match supplant.me / supersmart.me
