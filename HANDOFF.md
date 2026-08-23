@@ -217,6 +217,15 @@ regex is now DERIVED from both lists instead of keeping its own eight-name copy.
    and it fails on anti-bot Workday tenants. The ones it cannot crack want `crack_walled`
    with the residential unlocker, or a hand-check like the ones in §N.
 
+   **This should now recover on its own — verify it did.** All 75 carry one strike dated
+   2026-08-17, so the weekly throttle lets them through again on **2026-08-24**, and by then
+   the two things that made the retry pointless are fixed: the search rung works (it was
+   SerpApi-only, and that quota has been out since mid-August), and today's digest rewrites
+   `stale.json` across all ~846 active companies instead of the 558 the 08-22 run happened to
+   scan. So the 06:00 self-heal on the 24th is the first one in a week that can actually find
+   a moved board. Check `cloud_state/resolve_attempts.json` afterwards: names that disappear
+   were fixed, names at `fails: 2` were not.
+
    **Greenhouse has an EU region and our fetcher does not know it.** Outbrain's real board is
    `job-boards.eu.greenhouse.io/outbraininc`; the US `boards-api.greenhouse.io/v1/boards/
    outbraininc/jobs` answers `{"jobs":[],"meta":{"total":0}}`, which is why it reads as an
