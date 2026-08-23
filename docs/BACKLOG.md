@@ -368,10 +368,21 @@ write list**, which is why it is a proposal and not a commit. Ordered by what it
 
 1. **One re-check pool definition** — lane: `docs` (or whoever next touches shared
    plumbing). `pipeline/verdicts.TOKENS` is supposed to be the single source, and there are
-   still three copies: `TOKENS` (18 tokens), `listing_hunt.main()`'s inline regex (17), and
-   `check_invariants.POOL` (18). `url-cleared` and `url-flagged` are in both inline copies
-   and **missing from `TOKENS`**, so the 57 rows carrying one are invisible to
-   `audit_empty_rows` and `deep_validate`. The fix is two lines in `pipeline/verdicts.py`:
+   **four** copies: `TOKENS` (18 tokens), `listing_hunt.main()`'s inline regex (17),
+   `check_invariants.POOL` (18), and `registry_health._HUNT_SHAPE` (17) — **this lane added
+   the fourth**, and an earlier version of this item did not know it existed. `url-cleared`
+   and `url-flagged` are in the inline copies and **missing from `TOKENS`**, so of the 39
+   rows carrying one, the **9** that carry nothing else are invisible to `audit_empty_rows`
+   and `deep_validate`.
+
+   *(An earlier version of this item said "three copies" and "57 rows". Both were wrong, and
+   ARCHITECTURE.md section 2 already said so — it names the 57 a conflation of "rows that
+   carry the token" with "rows the token hides". A stale number on the hand-off surface is
+   worse than no number: the next agent sizes the job off it. Reproduce:*
+   `python -c "import csv;from pipeline.verdicts import in_pool;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:];n=[x for x in r if 'url-cleared' in x[5].lower() or 'url-flagged' in x[5].lower()];print(len(n),len([x for x in n if not in_pool(x[5])]))"`
+   *-> `39 9`, measured 2026-08-24.)*
+
+   The fix is two lines in `pipeline/verdicts.py`:
 
    ```python
    "url-cleared":  "listing_hunt / manual",   # the stored address was an aggregator
@@ -661,16 +672,53 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
 25. **`HANDOFF.md` contradicts itself 13 lines apart** — lane: `docs`. L46 says
     `1,189 rows · 343 parked`; L59 says `1,199 rows · 353 parked`. Both presented as current
     state; L59 is right. Same table also still says "122 unit assertions" and
-    `AGENT_BRIEF` rule 4 says "123 cases"; `pytest` collects **206** across two files now,
+    `AGENT_BRIEF` rule 4 says "123 cases"; `pytest` collects **222** across two files now
+    (2026-08-24; it was 206 when this item was written, which is the point — a hard-coded
+    count in a doc is a defect with a timer on it),
     and `tests/test_registry.py` is named in no `.md` at all while both documents still tell
     the reader every guard lives in `tests/test_units.py`.
+
+25b. **Ten terminal-state definitions, six disagreeing memberships** — lane: shared
+    plumbing. This is item 1's problem in a second concept, and it is worse than either
+    document said: section 2 spoke of "the two inline copies", an earlier draft of this list
+    said five. Measured 2026-08-24 (`grep -rn "defunct" --include=*.py . | grep -v tests/`):
+
+    | membership | files |
+    |---|---|
+    | `defunct, domain-dead, alias-of` | `audit_empty_rows`, `check_invariants`, `crack_walled`, `deep_validate`, `listing_hunt` |
+    | `defunct, domain-dead, duplicate of, redundant, recruiter` | `pipeline/verdicts.TERMINAL` |
+    | `defunct, domain-dead, alias-of, duplicate of, redundant, recruiter` | `registry_health._REASON` |
+    | `defunct, domain-dead, alias-of, duplicate, redundant, recruiter` | `triage_dark.SKIP_NOTES` |
+    | `defunct, domain-dead` | `probe_candidates` |
+    | `defunct` | `scan_dead_domains` |
+
+    Note `triage_dark` matches the bare substring `duplicate` where `verdicts` requires
+    `duplicate of` — the kind of difference that is invisible until a note reads
+    `duplicate listing`. **Adding `alias-of` to `verdicts.TERMINAL` does not let the others
+    be deleted**, which an earlier version of this list claimed: `probe_candidates` and
+    `scan_dead_domains` are strict subsets that would start excluding rows they currently
+    scan, and `triage_dark`'s is a superset. The real fix is one predicate with one
+    membership, and it is a behaviour change for at least three tools, not a tidy-up. Before
+    this lane there were 8 definitions; it added 2 (`registry_health._REASON` and the census
+    helper) while documenting the duplication as the repo's worst bug class.
 
 26. **Three orphan detectors, three answers** — lane: `registry` + `infra`, unclaimed.
     `registry_health.orphans()` says 1 (`SeeTree`), `ARCHITECTURE.md` §5c's hand-typed
     one-liner says 4 with zero name overlap, and `check_invariants.py` says 0 because it
-    whitelists five names in `ALLOWED_ORPHANS`. §5c now points at the tool and admits the
-    disagreement, but the right end state is one definition. Note `check_invariants.py:219`
-    prints the literal string `0 orphans` unconditionally — it can never report otherwise.
+    whitelists **seven** names in `ALLOWED_ORPHANS` — not five, as this item and §5c both
+    said until 2026-08-24. Reproduce:
+    `python -c "import check_invariants as ci; print(len(ci.ALLOWED_ORPHANS), sorted(ci.ALLOWED_ORPHANS))"`
+    -> `7 ['Alpha | Similarweb Partner', 'Google', 'Marvell Israel', 'NICE', 'Orca-AI', 'SeeTree', 'Via Transportation']`.
+    §5c now points at the tool and admits the disagreement, but the right end state is one
+    definition. Note `check_invariants.py:219` prints the literal string `0 orphans`
+    unconditionally — it can never report otherwise.
+
+    **Before wiring alarms into the mail (items 3/13), note what ships with them.**
+    `registry_health`'s only standing alarm today is `SeeTree`, whose row reads
+    `no careers page (redirects home); discovery-net only` and which `check_invariants`
+    deliberately whitelists. That is a permanent, un-actionable daily line unless the
+    expected count is recorded and subtracted. **Expected orphan count on 2026-08-24: 1
+    (`SeeTree`).** An alarm nobody can act on is how a digest teaches its reader to skim.
 
 27. **`crack_walled` retires 13 of its own 25 pool rows per all-refusing night** — lane:
     `registry`, unclaimed, and it is the residual the note-shortening could not remove. The
@@ -694,3 +742,40 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     tenant to check and the predicate correctly answers "cannot tell". `SupPlant` is caught by
     `_page_names_company` instead, which is the gate that matters, but the commit message
     overstated the predicate.
+
+## From the registry lane's wave-7 review, 2026-08-24
+
+Three independent agents drove the tools instead of reading them. Five of the write-path
+defects they found had been *introduced* by wave 6's hardening, two of them in the branch
+whose commit message announced the hole was closed — which is why item 30 is the one that
+stops this recurring.
+
+30. **`_ok_to_write` and `_page_names_company` are plumbing living in `crack_walled.py`** —
+    lane: shared plumbing. Three tools now import them (`audit_empty_rows`, `deep_validate`,
+    `repair_dead_urls`), and `deep_validate` has to import **lazily, inside the write block**,
+    because `crack_walled` imports `Renderer`/`ddg` from it — a cycle. That lazy import is a
+    smell with a real cost: it is invisible to any static check of "does this tool gate its
+    writes". These two functions are the single identity gate for every column-3/4 write in
+    the repo and belong in `pipeline/` next to `company_identity`. Doing so also makes the
+    guard in `tests/test_registry.py` enumerable ("every tool that writes `fr[3]` imports the
+    gate") instead of four hand-written fixtures. **Do not do this at the same time as item
+    9** — fix `verdict()` first, then move what is left.
+
+31. **`docs/AGENT_BRIEF.md` sends a registry agent to the wrong files** — lane: `docs`.
+    L111 says "every one of the **67** root modules"; `ls *.py | wc -l` is **68** (this lane
+    added `registry_health.py` and updated `docs/gen_modules.py` + `BACKLOG.md`, but the
+    brief's count is hand-typed and `check_docs.py` verifies classification, not the number).
+    The registry lane's row lists 12 primary files and **omits `registry_health.py`** — the
+    one read-only tool that answers section 2's five orientation questions. Together with
+    item 23 (it is named in none of `CLAUDE.md`, `AGENT_BRIEF`, `README.md`) this is why a
+    reviewer timed at the 2-minute orientation could not answer any of the three questions:
+    the tool that answers all three is unreachable from every entry point.
+
+32. **`HANDOFF.md`'s ATS watch-list gives the wrong answer to "what should we build"** —
+    lane: `docs`. L153 lists `jazzhr`, `eightfold`, `iCIMS`, `SuccessFactors` as "unchanged
+    from the last handoff", implying no fetcher. `fetch_jazzhr` (`pipeline/fetchers.py:594`)
+    and `fetch_eightfold` (`:655`) both exist and are wired into `FETCHERS`. Cost if
+    believed: an `ats-fetch` session rebuilding two live fetchers. `python registry_health.py
+    --ats` is derived and correct — on 2026-08-24 it reported 8 of 8 names `WIRE`, 0 `BUILD`,
+    which is itself a moving target (it was 3/5 six hours earlier). The durable fix is to
+    delete the hand-maintained list and point at the command.

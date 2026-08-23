@@ -492,7 +492,7 @@ Taxonomy:
 | `monitored candidate` / `host documented` | false | real page documented, extraction unproven | daily probe + 14-day re-hunt |
 | `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | that evening's 19:00 hunt (fast-path) |
 | `no listing found` / `no ATS detected` | false | full render found nothing parseable | weekly audit + hunt cron |
-| `unsupported ATS <x>` | false | ATS known, no extraction path yet — but check `--ats` first: 3 of the 8 names here ALREADY have a fetcher and need wiring, not building | **six** jobs claim it (crack_walled, listing_hunt, triage_dark, probe_candidates, audit_empty_rows, deep_validate) — run `registry_health.py` rather than trusting this cell |
+| `unsupported ATS <x>` | false | ATS known, no extraction path yet — **the label lies more often than it tells the truth.** Run `python registry_health.py --ats`: on 2026-08-24 it reported **8 of 8** names `WIRE` (a fetcher exists; the row needs its tenant cracked) and **0** `BUILD`, covering all 32 rows. It was 3/5 six hours earlier — the `ats-fetch` lane ships fetchers without restamping these notes, so this cell is stale by construction and only the command is current | **six** jobs claim it (crack_walled, listing_hunt, triage_dark, probe_candidates, audit_empty_rows, deep_validate) — run `registry_health.py` rather than trusting this cell |
 | `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS — strict TLS on the scanning machine produced 6 false positives) | re-tested **daily** by `scan_dead_domains` (`_rescannable` defaults to 1d) inside the 05:00 digest, and again by the Sunday audit; **a revived domain clears the flag automatically** |
 | `defunct: …` | false | company confirmed shut down/acquired | permanently excluded |
 | `alias-of <name>` | false | a SECOND row for a company already scanned at the same board (eBay / eBay Israel) | nobody — **terminal**, and re-opening it republishes every role twice |
@@ -1048,7 +1048,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
   ownership from each tool's own predicate. The hand-typed one-liner below is kept because it
   needs no imports, but it is a DIFFERENT definition and gives a different answer (4 vs 1 on
   2026-08-23, with zero name overlap), and `check_invariants.py` gives a third (0, because it
-  whitelists five names in `ALLOWED_ORPHANS`). Three detectors, three answers; reconciling
+  whitelists **seven** names in `ALLOWED_ORPHANS`). Three detectors, three answers; reconciling
   them is in `docs/BACKLOG.md`. The one-liner's "must print 0" was never true:
   ```bash
   python -c "

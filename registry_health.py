@@ -276,10 +276,14 @@ def orphans(rows):
 # ---------------------------------------------------------------- what can still crack
 
 # `unsupported ATS <x>` means "deep_validate recognised the platform and stamped it", NOT
-# "no fetcher exists". Three of the eight names in the registry today already HAVE one, so a
-# BUILD queue that does not check turns 34 of 57 rows into work the ats-fetch lane has
-# already done. What those rows actually need is WIRING: crack_walled sniffing the tenant
+# "no fetcher exists" - so a BUILD queue that does not check hands the ats-fetch lane work it
+# has already done. What those rows actually need is WIRING: crack_walled sniffing the tenant
 # endpoint and the row moving to that platform.
+#
+# Deliberately no count in this comment. It said "34 of 57" and both halves were wrong within
+# a day: on 2026-08-24 the label covered 32 rows across 8 names, and `_fetcher_for` resolved
+# ALL EIGHT - the ats-fetch lane had shipped five fetchers in the preceding hours without
+# restamping the notes. That is the normal case, not an anomaly. `--ats` recomputes it.
 _FETCHER_ALIAS = {"eightfold.ai": "eightfold", "oraclecloud.com": "oraclehcm",
                   "icims.com": "icims", "jobvite.com": "jobvite", "taleo.net": "taleo",
                   "avature.net": "avature"}
