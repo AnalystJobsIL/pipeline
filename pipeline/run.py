@@ -259,8 +259,13 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # news to the reader, who has never seen this employer before. They go in the email
     # under their own heading, honestly labelled, rather than being silently withheld for a
     # day. Tightly capped: 336 companies were activated overnight.
+    # ...minus anything the 48h list already carries. A first-scan company's role CAN have
+    # a real posted_date inside the window — `_posted_in` returns on the ISO branch before
+    # it ever reaches the first-scan gate — and it would then be listed in both sections.
+    already = {(j.get("company"), j.get("title")) for j in email_jobs}
     first_scan = [j for j in st.get_matched_since(run_date)
-                  if j.get("company") not in seen_before and _alive(j)]
+                  if j.get("company") not in seen_before and _alive(j)
+                  and (j.get("company"), j.get("title")) not in already]
     first_scan = st.filter_new(first_scan)
     first_scan = _cap_per_company(first_scan, 2)[:FIRST_SCAN_MAX_ROLES]
     for j in first_scan:

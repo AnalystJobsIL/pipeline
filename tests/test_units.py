@@ -857,3 +857,30 @@ def test_company_facts_are_not_backslash_escaped_inside_a_code_span():
                  "founded": 2005, "il_center": "Tel Aviv (R&D)"}})
     assert "`~16,068 employees`" in body
     assert "\~" not in body and "\(" not in body
+
+
+def test_a_role_is_never_listed_in_both_email_sections(tmp_path):
+    """`_posted_in` returns on the ISO branch before it reaches the first-scan gate, so a
+    role at a brand-new company that DOES state a date inside the 48h window qualifies for
+    the main list — and for the "newly covered" list, which selects on the company. It would
+    have appeared twice in the same email."""
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    run = "2026-08-23"
+    base = {"location": "TLV", "seniority": "mid", "sources": ["greenhouse"],
+            "description": "D" * 500}
+    st.upsert_matched({**base, "company": "NewCo", "title": "Data Analyst",
+                       "url": "u1", "posted_date": "2026-08-23"}, run)
+    st.upsert_matched({**base, "company": "NewCo", "title": "BI Developer",
+                       "url": "u2", "posted_date": ""}, run)
+    seen_before = {c for (c,) in st.conn.execute(
+        "SELECT DISTINCT company FROM matched WHERE first_seen < ?", (run,))}
+    assert seen_before == set(), "NewCo must look brand new"
+    rows = st.get_matched_since(run)
+    dated = [j for j in rows if (j.get("posted_date") or "") >= "2026-08-22"]
+    already = {(j["company"], j["title"]) for j in dated}
+    first_scan = [j for j in rows if j["company"] not in seen_before
+                  and (j["company"], j["title"]) not in already]
+    assert [j["title"] for j in dated] == ["Data Analyst"]
+    assert [j["title"] for j in first_scan] == ["BI Developer"]
+    st.close()
