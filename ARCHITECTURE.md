@@ -425,65 +425,61 @@ Worked numbers for 2026-08-23 (4,106 spent, 9 days left → 99 credits/day):
 `breadth limit 24 × 4 keywords + targeted cap 4`. On a fresh month at 5,000 it is
 `limit 41`; at 15,000 it is the full `limit 100`.
 
-### Is it sustainable? Yes, for about $15 a month — the free tier is the thing that isn't
+### Is it sustainable? Yes, and free — once you stop paying per row
 
-Overage is **cheap**: $1.50 per 1,000 Web Scraper records, $1.00 per 1,000 Unlocker or SERP
-requests (`brightdata.com/pricing/web-scraper`, read 2026-08-23), after the 5,000 free
-credits. So the question is not "does it fit" but "what is a month of discovery worth". At
-the measured rates (breadth ~98 records per keyword per day, targeted 67/day, unlocker
-~54/day, SERP at the low weekend-only estimate):
+**The two Bright Data products bill differently and the gap is ~39×:**
 
-| configuration | credits/month | cost/month |
+| product | billed | what that means here |
 |---|---|---|
-| as it ran before this session | 4,800 | **$0** |
-| breadth limit 41 | 11,370 | **$8.49** |
-| breadth limit 100 — full depth, 58 new companies/day | 15,870 | **$15.24** |
-| full depth, with SERP at the 08-21…08-23 rate | 21,240 | **$20.61** |
+| Web Scraper API (the dataset) | **1 credit per RECORD** | one trigger returning 391 jobs costs 391 credits — depth is charged by the row |
+| Web Unlocker | **1 credit per REQUEST** | one rendered page of LinkedIn's public job search carries **60 cards**, so 60 jobs cost 1 credit |
 
-**The free tier cannot fund real discovery, and that is the honest headline.** Even a
-breadth limit of 15 — the depth that yielded *one* new company — comes to 5,940 credits a
-month once the targeted backfill is included, i.e. already over. Discovery at a rate worth
-having is a ~$15/month line item, and `report_bd_spend()` prints the month-end projection
-and its dollar cost on every run so the decision stays visible instead of being rediscovered.
+($1.50/1K records vs $1.00/1K requests, `brightdata.com/pricing/web-scraper`, 2026-08-23.)
 
-**The long-term risk is not discovery, it is `DEEP_BD_SEARCH_CAP`.** `deep_validate._BD` is
-a **module-level** counter, so the "150 searches" cap is per PROCESS, and six scripts import
-`google_via_unlocker` in processes of their own — `resolve_broken` (daily 06:00),
-`listing_hunt` (daily 19:00), `crack_walled` (daily 19:00 + weekly), `repair_dead_urls`,
-`deep_validate` (Sat) and `audit_empty_rows` (Sun). The effective ceiling is therefore
-**~450 SERP credits on a weekday and ~750 at the weekend, not 150** — up to ~$18/month of
-SERP alone, and it is uncapped in the only sense that matters, since no script knows what
-the others have spent. Observed peak so far is 272 in a day, i.e. two processes' worth. This
-is `docs/BACKLOG.md` item 6 and it is the number to fix before adding any more depth here. Re-derive actual billing from the account
-itself — this is the only reliable ledger, and the `/customer/balance` endpoint is
-permission-blocked for this key:
+"LinkedIn is one big request a day" is true about *requests* — the breadth sweep is a single
+trigger — but the meter runs on rows. So the breadth sweep, which is the part that has to go
+**deep**, now reads `linkedin.com/jobs/search` through the Unlocker instead
+(`linkedin_search`). Measured 2026-08-23: **10 Unlocker credits for the full 4-keyword
+past-week sweep, against 391 dataset records for the same thing.** `f_TPR=r604800` is the
+past-week filter and it verifiably filters (past-week and past-month overlapped by 20 of 60).
+The run prints its own bill: `[linkedin] 272 raw cards … for 10 Unlocker credits
+(27 cards/credit)`.
 
-```bash
-python -c "
-import os,json,urllib.request,collections
-from bd_rescue import _load_secrets; _load_secrets()
-r=urllib.request.Request('https://api.brightdata.com/datasets/v3/snapshots?status=ready',
-    headers={'Authorization':'Bearer '+os.environ['BRIGHTDATA_API_KEY']})
-d=json.load(urllib.request.urlopen(r,timeout=60)); c=collections.Counter()
-for x in d: c[x['created'][:10]]+=int(x.get('dataset_size') or 0)
-print(dict(sorted(c.items())), 'total', sum(c.values()))"
-```
+What is given up is `job_summary` — the public search carries no description. That is
+acceptable *for the breadth sweep specifically*, because its product is EMPLOYER NAMES and
+the classifier decides the clear cases on title alone; a role that survives gets its text
+from `pipeline/jdfill.py` later.
 
-It reported **2,249 records billed in total** between 2026-08-15 and 2026-08-23. The
-docstring in `discovery_daily.py` claimed "~40 records/day = ~1,200/mo" until 2026-08-23; it
-predated the targeted sweep entirely.
+**The steady-state bill, measured:**
 
-**Google for Jobs is not available to this pipeline.** `pipeline/aggregators.py` still holds
-`fetch_serpapi_google_jobs`, and it has **never run in the cloud** — `pipeline/run.py` gates
-it on `AGGREGATOR_ENABLED`, which is set in no workflow, no test and no script. The obvious
-substitute does not work either: `google.com/search?q=…&ibp=htl;jobs` through the Web
-Unlocker returns **HTTP 200 with a zero-byte body** (tested 2026-08-23, 3 credits) because
-the jobs widget is client-rendered; the same URL without `ibp=htl;jobs` returns 440,906
-bytes, which is why `deep_validate.google_via_unlocker` works on organic links and a
-jobs-widget version of it cannot. **UNVERIFIED 2026-08-23:** whether SerpApi's `google_jobs`
-covers Israel at all — `daily-digest.yml` says it does not, `CLAUDE.md` says the quota is
-exhausted, and the key answers HTTP 429, so neither claim is testable before 2026-09-01.
-The decision is filed in `docs/BACKLOG.md`.
+| | credits/day |
+|---|---|
+| LinkedIn breadth — Unlocker, 4 keywords, full depth | **10** |
+| LinkedIn targeted — dataset, per record | **67** |
+| Indeed — Unlocker, 5 keywords + retries | 6 |
+| everything else (JD enrichment, rescue, crack, repair) | ~44 |
+| **total before SERP** | **127** → 3,810/month, **inside the free 5,000** |
+
+So it is sustainable at **$0**, with roughly 1,200 credits/month of headroom — which SERP
+can still eat: at the weekend-only rate the month lands at 4,320 and fits; at the rate
+observed 08-21…08-23 it lands at 9,690 and does not.
+
+**Two things follow, and both are the opposite of where this started.** The `linkedin-targeted`
+backfill is now **87% of discovery's entire credit cost** — 67 credits/day against the whole
+breadth sweep's 10 — for 1 new company, because it is the only sweep still billed per record.
+Moving it to the Unlocker needs LinkedIn's numeric `f_C` company id, which we do not have; it
+is the obvious next optimisation and the first thing to cut regardless.
+
+**And `DEEP_BD_SEARCH_CAP` is now the largest uncontrolled spender in the pipeline** — the
+one that decides whether the month fits. It reads like a daily ceiling of 150 and is not
+one: `deep_validate._BD` is a **module-level** counter, so the count resets in every
+process, and six scripts import `google_via_unlocker` in processes of their own —
+`resolve_broken` (06:00), `listing_hunt` (19:00), `crack_walled` (19:00 + weekly),
+`repair_dead_urls`, `deep_validate` (Sat), `audit_empty_rows` (Sun). The effective ceiling
+is **~450 SERP credits on a weekday and ~750 at the weekend**, against a discovery layer
+that now spends 83 a day in total. Observed peak 272, i.e. two processes' worth. Guarded by
+`test_the_shared_bd_search_cap_is_per_process_not_per_day`, and it is `docs/BACKLOG.md`
+item 6.
 
 ### Telegram channels
 
@@ -740,8 +736,11 @@ tokens that `listing_hunt`'s fast-path keys on.
 `pipeline/verdicts.TOKENS` is the module that claims to be the single source, but
 `listing_hunt.main()` still carries its own 17-token regex and `check_invariants.POOL` a
 third copy. Diff: `url-cleared` and `url-flagged` are in both inline copies and **missing
-from `TOKENS`**, so the 57 rows carrying one of them are invisible to `audit_empty_rows`
-and `deep_validate`, which import `in_pool`. And `verdicts.TERMINAL` omits `alias-of`,
+from `TOKENS`**. 39 rows carry one today and **9 of them are invisible** to
+`audit_empty_rows` and `deep_validate`, which import `in_pool` — the other 30 happen to carry
+a second pool token as well. (An earlier draft of this paragraph said "57 rows are
+invisible", conflating the two counts; re-measure with
+`python -c "import csv;from pipeline.verdicts import in_pool;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:];n=[x for x in r if 'url-cleared' in x[5].lower() or 'url-flagged' in x[5].lower()];print(len(n),len([x for x in n if not in_pool(x[5])]))"`.) And `verdicts.TERMINAL` omits `alias-of`,
 which the two inline copies exclude — that omission is what put 2 alias rows into an
 *activating* pool (below). Neither is fixable from this lane (`pipeline/verdicts.py` is
 shared plumbing); both are in `docs/BACKLOG.md` under "One re-check pool definition" and
@@ -883,9 +882,10 @@ python registry_health.py | sed -n '/re-check ownership/,/OWNED BY NOTHING/p'
 Counts below are that command's output on **2026-08-24**, after this session's two pool
 fixes. Ownership is by note content, not by mode. **The figures exclude each tool's
 staleness cooldown** — a cooldown delays a re-check, it does not remove ownership — so the
-rows a given night actually processes are fewer: `crack_walled` owns 28 and `_recrackable`
-(daily) left **7** for tonight; `audit_empty_rows` owns 255 and `AUDIT_TTL_DAYS` (30) left
-31 locally, but `state/` is gitignored so the cloud run re-audits all 255 (§5).
+rows a given night actually processes are fewer: `crack_walled` owns the 25 in the table and
+`_recrackable` (daily) leaves a handful of those for any given night; `audit_empty_rows` owns
+255 and `AUDIT_TTL_DAYS` (30) leaves far fewer locally — but `state/` is gitignored, so the
+cloud run re-audits all 255 (§5), which is why it needed `AUDIT_TIME_BUDGET_MIN`.
 
 **Update 2026-08-23 — `page-empty` rows are ACTIVE now.** They were inactive, which meant a
 role posted at one of them waited for the next triage cycle to be seen. But a `page-empty`
@@ -981,7 +981,7 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
 3. `listing_hunt.py` (cron 14:00): for rows still dark — find the LISTINGS URL (harvested
    links; Claude picks; rebrand redirects resolved), verify via `scrape_universal`.
    Woken/documented rows take the **fast-path**: scrape the stored URL first.
-4. `deep_validate.py` / `crack_walled.py` (on demand): Chromium render + network-request
+4. `deep_validate.py` (Sat 04:00) / `crack_walled.py` (daily 19:00 + Sun): Chromium render + network-request
    sniffing (`/wday/cxs/`, `careers-api`, `COMEET.init` static token extraction, …),
    platform host guessing, Claude evidence judgment.
 5. Manual Chrome sweep: a human/agent reads the page in a real browser; every miss becomes
@@ -1379,9 +1379,12 @@ is the most reusable page in the repo: **a green workflow means nothing here.**
 4. **Search results will hand you another company's board** — and it verifies, with real
    jobs. `_slug_matches` guards it. But note the inverse: CyberArk→PANW and Imperva→Thales
    looked like false matches and were actually **real acquisitions**. Check before "fixing".
-5. **DuckDuckGo is blocked from this developer machine** (returns nothing) but works on
-   GitHub runners. Local resolution work needs the Bright Data path
-   (`deep_validate.google_via_unlocker`). SerpApi quota resets **2026-09-01**.
+5. **DuckDuckGo is RATE-LIMITED from this developer machine, not blocked** (corrected
+   2026-08-24; §3 has the measurement — 4 good URLs for `Wix`, then 0 for the same query
+   minutes later). Treat it as a rung that sometimes answers, which is why it may never be
+   the only one. It is reliable on the runners. Local resolution work should still carry the
+   Bright Data path (`deep_validate.google_via_unlocker`). SerpApi quota resets
+   **2026-09-01**.
 6. **Never overwrite a file you didn't read.** `pipeline/aggregators.py` already existed and
    held `fetch_serpapi_google_jobs`; creating a same-named module destroyed it silently
    (restored). The tooling warned; the warning was missed.

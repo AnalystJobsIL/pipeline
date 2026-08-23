@@ -70,18 +70,18 @@ LINKEDIN_LIMIT_MIN = int(os.environ.get("LINKEDIN_LIMIT_MIN", "15"))
 LINKEDIN_WINDOW = os.environ.get("LINKEDIN_WINDOW", "Past week")
 _LI_KEYWORDS = ["data analyst", "business intelligence", "product analyst", "BI developer"]
 
-QUERIES = {
-    "linkedin": ("gd_lpfll7v5hcqtkxl6l", "keyword", [
-        {"location": "Israel", "keyword": k, "country": "IL", "time_range": LINKEDIN_WINDOW}
-        for k in _LI_KEYWORDS
-    ], LINKEDIN_LIMIT_MAX),
-    # NOTE: the Bright Data Indeed dataset (gd_l4dx9j9sscpvs7no2) has returned ZERO records
-    # every single run since it was wired up — every snapshot comes back
-    # `dataset_size: 0, error_codes: {"rate_limit": 15}`, i.e. Indeed rate-limits that
-    # collector for all 15 inputs. It printed "[indeed] 0 records" and nobody noticed for
-    # five days. Indeed is fetched through the Web Unlocker instead — see indeed_search().
-}
+# Only the DATASET ID is still used, by the targeted backfill below. The breadth sweep moved
+# to the Web Unlocker (see linkedin_search) on 2026-08-23, so the keyword/limit config that
+# used to live here is gone rather than left looking live — an unused constant that reads
+# like a setting is how the Indeed dataset sat "configured" for five days returning zero.
+LINKEDIN_DATASET = "gd_lpfll7v5hcqtkxl6l"
 
+# NOTE: the Bright Data Indeed DATASET (gd_l4dx9j9sscpvs7no2) returned ZERO records on
+# every run for five days — every snapshot came back `dataset_size: 0,
+# error_codes: {"rate_limit": 15}`, i.e. Indeed rate-limits that collector for all 15
+# inputs. It printed "[indeed] 0 records" and nobody noticed. Do not re-enable it; Indeed is
+# read through the Web Unlocker instead, below.
+#
 # Indeed, read directly. il.indeed.com serves its results as one embedded JSON blob, and
 # the Web Unlocker renders the page past the bot wall — so this needs no dataset, no
 # polling, and one request per query instead of a 90-second snapshot job.
@@ -109,6 +109,7 @@ def indeed_search(query, days=INDEED_DAYS, limit=25, tries=2):
            + "&l=" + urllib.parse.quote_plus("Israel") + f"&fromage={days}")
     for attempt in range(tries):
         html = unlock(url, timeout=100)
+        UNLOCKER_CALLS["indeed"] += 1
         if not html:
             why = "unlocker returned nothing"
         elif not _MOSAIC.search(html):
@@ -161,17 +162,128 @@ def indeed_normalize(r):
             "job_id": f"indeed:{jk}", "description": desc}
 
 
+# --------------------------------------------------------------------------------------- #
+# LinkedIn, read the cheap way
+# --------------------------------------------------------------------------------------- #
+# THE TWO BRIGHT DATA PRODUCTS BILL DIFFERENTLY, and the difference is ~55x:
+#   * Web Scraper API (the dataset) — 1 credit per RECORD. 391 jobs cost 391 credits, even
+#     though it is only ONE trigger. Depth is charged by the row.
+#   * Web Unlocker — 1 credit per REQUEST. One rendered page of LinkedIn's PUBLIC job search
+#     carries 60 job cards, so 60 jobs cost 1 credit.
+# ($1.50/1K records vs $1.00/1K requests, brightdata.com/pricing/web-scraper, 2026-08-23.)
+#
+# So the breadth sweep — the part that has to go DEEP, because unknown companies live in the
+# tail — reads `linkedin.com/jobs/search` through the unlocker instead. Measured 2026-08-23:
+# the full 4-keyword past-week sweep costs ~8-12 credits where the dataset cost 391.
+#
+# What is given up: the dataset carries `job_summary`, this does not. That is acceptable HERE
+# because the breadth sweep's product is EMPLOYER NAMES, and the classifier decides the clear
+# cases on title alone; a role that survives gets its text from `pipeline/jdfill.py` later.
+# The targeted sweep keeps the dataset: it needs the `company` filter, which the public search
+# only exposes as a numeric `f_C` id we do not have, and at 67 credits it is cheap anyway.
+#
+# `f_TPR=r604800` is the past-week window (seconds) and it verifiably filters: past-week and
+# past-month results overlapped by only 20 of 60.
+LINKEDIN_PAGES = int(os.environ.get("LINKEDIN_PAGES", "4"))   # stops early when a page is stale
+# Credits are the unit that matters and nothing counted them per source. One Unlocker call =
+# one credit, so this IS the bill for the sweeps that use it.
+import collections as _collections
+UNLOCKER_CALLS = _collections.Counter()
+_LI_CARD = re.compile(
+    r'data-entity-urn="urn:li:jobPosting:(?P<id>\d+)"(?P<body>.*?)'
+    r'(?=data-entity-urn="urn:li:jobPosting:|\Z)', re.S)
+_LI_URL = re.compile(r'base-card__full-link[^>]*href="([^"?]+)')
+_LI_TITLE = re.compile(r'<span class="sr-only">\s*(.*?)\s*</span>', re.S)
+_LI_COMPANY = re.compile(
+    r'base-search-card__subtitle[^>]*>\s*(?:<a[^>]*>)?\s*([^<]{2,80})', re.S)
+_LI_LOC = re.compile(r'job-search-card__location[^>]*>\s*([^<]{2,80})', re.S)
+_LI_DATE = re.compile(r'<time[^>]*datetime="(\d{4}-\d{2}-\d{2})"')
+
+
+def _li_cards(html):
+    """Parse one LinkedIn public-search page into per-card dicts.
+
+    Splits into CARD BLOCKS first and reads each field inside its own block. Do not be
+    tempted to run one regex per field over the whole page and zip the lists: a card missing
+    a location silently shifts every later pairing by one, and a job attributed to the wrong
+    employer is the failure this repo guards hardest against (147 board rows were published
+    under the wrong company once already)."""
+    out = []
+    for m in _LI_CARD.finditer(html or ""):
+        b = m.group("body")
+        title = _LI_TITLE.search(b)
+        comp = _LI_COMPANY.search(b)
+        url = _LI_URL.search(b)
+        if not (title and comp and url):
+            continue                      # a card we cannot attribute is skipped, never guessed
+        loc = _LI_LOC.search(b)
+        date = _LI_DATE.search(b)
+        out.append({"job_id": m.group("id"),
+                    "title": _html_unescape(title.group(1)),
+                    "company": _html_unescape(comp.group(1)),
+                    "location": _html_unescape(loc.group(1)) if loc else "Israel",
+                    "posted_date": date.group(1) if date else "",
+                    "url": url.group(1)})
+    return out
+
+
+def _html_unescape(t):
+    import html as _h
+    return " ".join(_h.unescape(str(t or "")).split())
+
+
+def linkedin_search(keyword, pages=None, days=7, location="Israel"):
+    """LinkedIn public job search through the Web Unlocker: ~60 cards per credit.
+
+    Walks pages until one yields no card we have not already seen — the result pool for a
+    single Israel keyword in a week is only ~80 jobs, so this normally costs 2 requests and
+    stops on its own rather than paying for `pages` it does not need."""
+    from bd_rescue import unlock
+    pages = LINKEDIN_PAGES if pages is None else pages
+    seen, out = set(), []
+    reqs = 0
+    for i in range(pages):
+        q = urllib.parse.urlencode({"keywords": keyword, "location": location,
+                                    "f_TPR": f"r{days * 86400}", "start": i * 25})
+        html = unlock(f"https://www.linkedin.com/jobs/search?{q}", timeout=120)
+        reqs += 1                        # one Unlocker credit per page, whatever it returns
+        UNLOCKER_CALLS["linkedin"] += 1
+        cards = _li_cards(html)
+        if not cards:
+            print(f"  [linkedin:{keyword}] page {i}: no cards in {len(html or '')} bytes"
+                  f" — markup change or bot wall")
+            break
+        fresh = [c for c in cards if c["job_id"] not in seen]
+        seen.update(c["job_id"] for c in cards)
+        out += fresh
+        if not fresh:
+            break
+    return out
+
+
+def linkedin_normalize(c):
+    """One public-search card -> the shared discovered-job shape (or None to drop it)."""
+    import datetime as _dt
+    title, comp = c["title"], c["company"]
+    if not title or not comp:
+        return None
+    d = c["posted_date"]
+    if d and d < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
+        return None
+    if any(k in title[:200].lower() for k in _JUNIOR_HE):
+        return None
+    return {"company": comp[:80], "title": title[:140], "location": c["location"][:80],
+            "country_code": "IL", "url": c["url"], "posted_date": d,
+            "ats_platform": "discovery-linkedin", "job_id": f"linkedin:{c['job_id']}",
+            "description": ""}          # public search carries none; jdfill fills it later
+
+
 def _req(url, data=None, method="GET", timeout=60):
     req = urllib.request.Request(url, data=data, method=method,
                                  headers={"Authorization": f"Bearer {os.environ['BRIGHTDATA_API_KEY']}",
                                           "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read().decode("utf-8", "replace")
-
-
-def run_query(name):
-    ds, disc, inputs, limit = QUERIES[name]
-    return run_query_raw(ds, disc, inputs, limit)
 
 
 def run_query_raw(ds, disc, inputs, limit):
@@ -498,13 +610,41 @@ def main():
     print(f"[indeed] {n_indeed_raw} raw cards -> {len(jobs)} unique jobs kept "
           f"across {len(INDEED_QUERIES)} queries")
 
-    breadth_limit, targeted_cap, how = plan_spend()
+    # BREADTH — the discovery source. Read through the Web Unlocker (1 credit per PAGE of
+    # ~60 cards) rather than the dataset (1 credit per RECORD): same depth, ~55x cheaper.
+    n_li_raw = 0
+    for kw in _LI_KEYWORDS:
+        try:
+            cards = linkedin_search(kw)
+        except Exception as e:  # noqa: BLE001
+            print(f"[linkedin:{kw}] ERR {type(e).__name__}: {str(e)[:120]}")
+            cards = []
+        n_li_raw += len(cards)
+        kept = 0
+        for c in cards:
+            j = linkedin_normalize(c)
+            if not j:
+                continue
+            k = (j["company"].lower(), j["title"].lower())
+            if k in seen:
+                continue
+            seen.add(k)
+            jobs.append(j)
+            kept += 1
+        print(f"[linkedin:{kw}] {len(cards)} cards -> {kept} new")
+    per_source["linkedin"] = n_li_raw
+    print(f"[linkedin] {n_li_raw} raw cards across {len(_LI_KEYWORDS)} keywords "
+          f"for {UNLOCKER_CALLS['linkedin']} Unlocker credits "
+          f"({n_li_raw / max(1, UNLOCKER_CALLS['linkedin']):.0f} cards/credit)")
+
+    # TARGETED backfill — keeps the dataset, because it needs the `company` filter the
+    # public search only exposes as a numeric f_C id we do not have. ~67 credits.
+    _breadth_limit, targeted_cap, how = plan_spend()
     print(f"[budget] {how}")
-    runs = [(n, ds, disc, inputs, breadth_limit if n == "linkedin" else lim)
-            for n, (ds, disc, inputs, lim) in ((k, QUERIES[k]) for k in QUERIES)]
+    runs = []
     targeted = _targeted_inputs(cap=targeted_cap) if targeted_cap else []
     if targeted:
-        li_ds = QUERIES["linkedin"][0]
+        li_ds = LINKEDIN_DATASET
         runs.append(("linkedin-targeted", li_ds, "keyword", targeted, 8))
         print(f"targeting {len(targeted)} unresolved-broken companies via discovery")
     elif not targeted_cap:

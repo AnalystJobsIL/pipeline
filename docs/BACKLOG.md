@@ -90,7 +90,7 @@ infrastructure itself. Complements the ten-agent audit backlog above; ordered by
 *(was `HANDOFF.md` §4d, second of the two sections that carried that number)*
 
 **It is sprawling, and that is the top thing to fix next.** Numbers, not adjectives:
-67 root scripts, 10 workflows, 27 root scripts invoked by a workflow (re-counted
+68 root scripts (registry_health.py added 2026-08-24), 10 workflows, 27 root scripts invoked by a workflow (re-counted
 2026-08-23 — it said 62/19), and **23 separate tools whose job
 is "work out where a company's jobs live"**:
 
@@ -247,9 +247,21 @@ fixed, and every one of them is outside the `discovery` lane's write list.
    weekday, ~750 at the weekend**; observed peak 272, i.e. two processes' worth. Then a
    shared pre-flight budget check those six also call, since `discovery_daily` throttling
    alone just makes it absorb everyone else's overrun.
-   **Context for the decision:** overage is $1.50/1K records and $1.00/1K requests, so full
-   depth is ~$15/month and this is a budgeting choice, not a wall — see `ARCHITECTURE.md`
-   §1a, "Is it sustainable?".
+   **Context, and it has changed:** discovery moved its breadth sweep from the per-RECORD
+   dataset to the per-REQUEST Unlocker on 2026-08-23 (391 credits/day → 10), so the whole
+   pipeline now sits at ~127 credits/day = 3,810/month and **fits the free tier**. SERP is
+   therefore no longer one cost among several — it is the only thing that can still push the
+   month over. See `ARCHITECTURE.md` §1a, "Is it sustainable?".
+
+8. **`linkedin-targeted` is 87% of discovery's credit cost for ~1 new company/day.**
+   *(lane: `discovery`.)* It is the last sweep billed per RECORD (67 credits/day) while the
+   breadth sweep that finds 35 new companies costs 10. It cannot move to the Unlocker as-is:
+   LinkedIn's public search filters by company only through a numeric `f_C` id, which the
+   registry does not store. Options, in order of appeal: harvest `f_C` ids once from each
+   company's LinkedIn URL and cache them; drop the sweep and rely on the broad sweep
+   incidentally covering those employers (it already found 2 of the 15); or keep it and
+   accept the cost, since it is the only thing covering 15 active rows whose own board
+   reports zero.
 
 7. **Reading it is CLOSED; the six scripts that spend it are item 6.**
    *(lane: `infra`.)* `discovery_daily.bd_spend_this_month()` now reads the whole pool —
@@ -450,3 +462,59 @@ structural problem that keeps producing them.
     tests. Either split it (`tests/test_<lane>.py`, which `pytest` collects automatically) or
     have `docs/check_docs.py` assert the collected test count never falls. Same class as the
     `Time To Know` resurrection in ARCHITECTURE §2: two writers, one file, last writer wins.
+
+## From three independent verdict agents, 2026-08-24 (wave 3)
+
+All three returned NO-GO on the wave-2 state and all three named the same defect first (the
+`registry_health` NameError, now fixed). What remains is outside this lane.
+
+15. **The conflict-recovery merge silently defeats 47 of 153 probe wakes** — lane: `infra`.
+    `probe_candidates._wake_note` strips the `listing-hunt` / `dark-triage` segments to wake a
+    row. `merge_csv_rows._merge_notes` unions the segments and re-adds them *from theirs*,
+    precisely because ours no longer owns those keys — so the resurrected
+    `listing-hunt <date>` re-arms the 14-day cooldown and the row leaves the hunt pool. The
+    same recovery block restores `cloud_state/candidate_probe.json` wholesale, so the
+    baseline has already advanced: **the wake is spent, not deferred**. Measured on the live
+    file: 152 of 153 woken rows reach the 19:00 hunt on the normal push path, 47 do not on
+    the conflict path (Pliops, Lili, MediWound, AiVF, Siemens Healthineers, …). The
+    mechanism predates this lane; wave 2 is what makes wakes reach the tail and survive the
+    18:00 triage, so it moves from dormant to routinely exercised. Fix: teach `_merge_notes`
+    that a `probe-woken` segment in *ours* means "this run deliberately deleted the other
+    tool's segments — do not restore them."
+
+16. **`listing-hunt.yml` overrun got worse, not better** — lane: `infra`, extends item 11.
+    Budgets already summed to 325 of a 330-minute timeout. Wave 2 added a residential-unlocker
+    call *inside* the per-row loop of two of those steps, and both budget checks are per row:
+    `repair_dead_urls` can now overrun its 30 by ~9 min (6 candidates × 20s fetch + 90s
+    unlock) and `crack_walled` its 60 by ~6 min (3 captures × 25s + 90s). Worst case ≈ 340
+    against a 330 timeout, and `Commit verdicts` has no `if: always()`. Lower
+    `HUNT_TIME_BUDGET_MIN` to 150 **and** add `if: always()` to the commit step.
+
+17. **`audit-coverage.yml` writes `cloud_state/scan_seen.json` and never commits it** — lane:
+    `infra`. Its `git add` names only `companies.csv scraped_cache.json`, so the tree is dirty
+    every Sunday. If the 05:00 digest lands a `scan_seen.json` while the Sunday run is still
+    inside its 330-minute window, `git pull --rebase --autostash` leaves conflict markers in
+    the file, **exits 0**, and the push succeeds — Sunday's rotation work is thrown away with
+    the runner. No corruption reaches master; add the file to that step's `git add`.
+    Its `crack_walled` step also sets neither `CRACK_TIME_BUDGET_MIN` nor `CRACK_LIMIT`, so
+    `_budget = 0` and it is unbounded.
+
+18. **Both rotations are no-ops on the FIRST cloud run** — accepted, recorded so nobody reads
+    it as a failure. `cloud_state/scan_seen.json` ships as `{}` and 0 of 117
+    `candidate_probe.json` entries carry a `last` key, so every sort key is `""` and Python's
+    stable sort reproduces file order exactly. Night 1 is byte-identical to the old
+    behaviour; the rotation starts on night 2. Measured over three truncated nights
+    afterwards: 120 of 153 distinct companies covered, against 40 before.
+
+19. **`crack_one` still writes `fr[3]` when the identity page is UNREADABLE** — lane:
+    `registry`, unclaimed. `_page_names_company` returns `None` for a page no fetch and no
+    unlocker could read, and the `novrfy` branch then persists the address anyway with
+    `host documented`. That is the pre-existing behaviour and it is defensible (the host came
+    off the company's own render), but it does not distinguish "we could not look" from "we
+    looked and found nothing", and `listing_hunt`'s fast-path activates on either. Decide
+    deliberately rather than by omission.
+
+20. **`audit_empty_rows`'s docstring advertises `AUDIT_BD_SEARCH_CAP`; the code reads
+    `DEEP_BD_SEARCH_CAP`** — lane: `registry`, one line. And per item 10, `deep_validate._BD`
+    is per-process module state, so the Sunday audit does NOT share a counter with Saturday's
+    deep-validate however it is named.

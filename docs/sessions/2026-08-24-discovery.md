@@ -264,6 +264,51 @@ Steady-state daily spend goes ~190 → ~455 records. That is a deliberate trade 
 companies a day, taken on the operator's explicit "we can always exclude companies", and it
 is the first number to revisit if the quota bites.
 
+## Round 4: "isn't LinkedIn one big request a day?" — yes, and that was the bug
+
+It is one trigger. But **the two Bright Data products bill differently**: the Web Scraper
+API (the dataset) charges **1 credit per RECORD**, the Web Unlocker charges **1 credit per
+REQUEST**. So a single dataset trigger returning 391 jobs cost 391 credits, while one
+rendered page of LinkedIn's *public* job search carries **60 cards for 1 credit**. Depth was
+being charged by the row.
+
+Moved the breadth sweep to `linkedin.com/jobs/search` through the Unlocker
+(`linkedin_search`). Measured the same day:
+
+| | credits/day | new companies |
+|---|---|---|
+| dataset, limit 100 | **391** | 58 |
+| Unlocker, 4 keywords, full depth | **10** | 35 |
+
+`f_TPR=r604800` is the past-week filter and verifiably filters (past-week vs past-month
+overlapped 20 of 60); pagination stops when a page yields nothing fresh, so it self-limits
+at ~2–3 requests per keyword. The run now prints its own bill —
+`[linkedin] 272 raw cards … for 10 Unlocker credits (27 cards/credit)`.
+
+The parser splits into **card blocks first** and reads each field inside its own block.
+Running one regex per field over the page and zipping the lists would silently shift every
+pairing after a card missing a location — and a job attributed to the wrong employer is the
+failure this repo guards hardest against.
+
+What is given up is `job_summary`: the public search carries no description. Acceptable for
+the breadth sweep specifically, whose product is employer NAMES; the classifier decides
+clear cases on title alone and `jdfill` fills survivors later.
+
+**Steady state, measured:** breadth 10 + targeted 67 + Indeed 6 + everything else ~44 =
+**127 credits/day = 3,810/month, inside the free 5,000.** So the answer to "is it
+sustainable" changed from "~$15/month" to "**free, with ~1,200 credits/month of headroom**".
+
+Two inversions came out of it. The `linkedin-targeted` backfill is now **87% of discovery's
+credit cost** — 67/day against the breadth sweep's 10 — for 1 new company, because it is the
+only sweep still billed per record; moving it to the Unlocker needs LinkedIn's numeric `f_C`
+company id, which we do not have. And `DEEP_BD_SEARCH_CAP` is now the largest uncontrolled
+spender in the pipeline at ~450–750 SERP credits/day of effective ceiling, against a whole
+discovery layer that spends 83.
+
+Also removed the dataset breadth config rather than leaving it in place looking live — an
+unused constant that reads like a setting is exactly how the Indeed dataset sat "configured"
+for five days returning zero.
+
 ## Claims I could NOT verify
 
 - **Whether SerpApi's `google_jobs` covers Israel at all.** `daily-digest.yml` says it was
