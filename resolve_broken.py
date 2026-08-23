@@ -185,6 +185,15 @@ def main():
     if "--only" in sys.argv:                       # --only "Dell,Qualcomm" for a focused run
         names = {n.strip().lower() for n in sys.argv[sys.argv.index("--only") + 1].split(",")}
         todo = [(n, u) for n, u in todo if n.lower() in names]
+        # `candidates()` reads stale.json, which holds only what the LAST digest happened to
+        # scan. A named company that is not in it silently resolved to nothing — so `--only`
+        # could not reach the very rows you reach for it with. Take the rest from the
+        # registry: an explicit name is the operator saying "this one, now".
+        found = {n.lower() for n, _ in todo}
+        for r in csv.reader(open("companies.csv", encoding="utf-8")):
+            if len(r) >= 4 and r[0].lower() in names and r[0].lower() not in found:
+                todo.append((r[0], _public_url(r[1], r[2], r[3])))
+                found.add(r[0].lower())
     if "--shard" in sys.argv:
         i, n = int(sys.argv[sys.argv.index("--shard") + 1]), int(sys.argv[sys.argv.index("--shard") + 2])
         todo = todo[i::n]
