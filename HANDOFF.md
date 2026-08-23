@@ -136,7 +136,22 @@ had 18 (8 Israel, including a Senior Data Analyst).
 `check_invariants` C3 warns on the shape and can only ever warn: a rebrand or acquisition is
 indistinguishable from a mis-resolution. Momentis Surgical really does post under `memic`,
 Itamar Medical under `zoll`, SentinelOne under `sentinellabs`. Thirteen rows still match and
-were each checked by hand today; the warning is where the next one shows up.
+were each checked by hand today — **all thirteen are correct**, so do not re-audit them:
+
+| row | endpoint | why it is right |
+|---|---|---|
+| Ibex Medical Analytics | `ib1.recruitee.com` | its own abbreviated tenant; 3 IL |
+| 7AI | ashby `sevenai` | its own spelled-out tenant (Boston HQ, 0 IL today) |
+| SentinelOne | greenhouse `sentinellabs` | SentinelLabs is its research arm; 12 IL |
+| Momentis Surgical | greenhouse `memic` | rebrand (Memic → Momentis) |
+| Itamar Medical | workday `zoll` | acquired by ZOLL; 4 IL, all Caesarea/Herzliya |
+| ClearML | `clear.ml` | the TLD carries the "ml"; page names the company |
+| Sight Sciences | `recruiting2.ultipro.com/SIG1008SIGH` | UltiPro tenant code |
+| Secret Double Octopus | `jobs.jvpvc.com/jobs/secret-double-octopus` | JVP portfolio board, scoped by slug |
+| HUB Security | `comeet.com/jobs/hub-technologies` | hubsecurity.io 301s to hub-technologies.com |
+| onsemi / Verint / Dell / Fortinet | opaque Oracle HCM tenants | tenant ids are not names |
+
+The warning is where the NEXT one shows up.
 
 ### O. Five "companies" were leaked job titles, and Imperva failed 100% of its fetches
 Discovery writes the employer field straight through, and sometimes that field is the whole
