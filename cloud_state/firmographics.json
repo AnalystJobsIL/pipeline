@@ -1438,6 +1438,19 @@
     "stage_note": "$50M Series B closed Dec 2025 led by Ally Bridge Group, OrbiMed and Elevage Medical; ~$72M raised total",
     "sub_sector": "wearable medical-grade remote patient monitoring — FDA-cleared cuffless 24h blood pressure and vital-signs patch/watch"
   },
+  "BionicHIVE": {
+    "as_of": "2026-08-23",
+    "business_model": "Sells/leases robotic picking systems (robots plus fleet-management software) to warehouse and distribution-center operators, typically as hardware plus recurring RaaS/service fees",
+    "customer_type": "enterprises — retailers, 3PLs and distribution-center operators",
+    "employees_global": 30,
+    "founded": 2014,
+    "il_center": "Sderot / Gan HaDarom, Israel (HQ)",
+    "sector": "robotics / logistics automation",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Venture-backed (OurCrowd seed, Amazon Industrial Innovation Fund 2022); ~$15M raised plus $3M Israel Innovation Authority; reported insolvent/shut down with ~$18M debt (Calcalist, Dec 2024)",
+    "sub_sector": "SqUID autonomous warehouse robots that climb existing racks to pick and put away boxes floor-to-ceiling"
+  },
   "Bit": {
     "as_of": "2026-08-21",
     "business_model": "Free P2P transfers; earns via merchant payment fees and financial services cross-sell for parent Bank Hapoalim",
@@ -9224,6 +9237,19 @@
     "stage_note": "Series C $50M (Feb 2022) led by OurCrowd/Aurum; ~$125M raised total, now Series D per Tracxn",
     "sub_sector": "AI-powered full-field digital cell morphology microscopy for hematology labs"
   },
+  "Secret Double Octopus": {
+    "as_of": "2026-08-23",
+    "business_model": "annual per-user SaaS/software subscription licenses for its Octopus passwordless authentication platform, sold direct and through channel partners/MSSPs",
+    "customer_type": "enterprises (Fortune 500 and mid-to-large IT/security organizations)",
+    "employees_global": 50,
+    "founded": 2015,
+    "il_center": "Tel Aviv (HQ + R&D); US office in Boston/McLean",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "VC-backed private; ~$40M+ raised, last round a $15M Series C led by Benhamou Global Ventures announced Jan 2024 (earlier investors JVP, Sony Financial Ventures, KDDI, Global Brain, Iris Capital); valuation undisclosed",
+    "sub_sector": "phishing-resistant passwordless authentication and MFA for enterprise workforce identity (desktop, VPN, legacy apps)"
+  },
   "SecuriThings": {
     "as_of": "2026-08-22",
     "business_model": "SaaS subscriptions for its Enterprise IoTOps platform sold to enterprises and via integrators/MSPs",
@@ -9439,6 +9465,19 @@
     "stage": "growth-private",
     "stage_note": "Series B $35M led by Qualcomm Ventures (Aug 2022); ~$56M raised total",
     "sub_sector": "AI computer-vision smart shopping carts (clip-on self-checkout devices) for grocery stores"
+  },
+  "Shopify": {
+    "as_of": "2026-08-23",
+    "business_model": "Subscription plans for merchants plus merchant solutions revenue — payments processing take rate, Shopify Payments/Capital, shipping and POS hardware",
+    "customer_type": "merchants — SMBs and enterprise/DTC brands",
+    "employees_global": 7600,
+    "founded": 2006,
+    "il_center": "Tel Aviv (R&D center, opened 2021 after the Donde Search acquisition); HQ in Ottawa, Canada",
+    "sector": "SaaS / e-commerce",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "Listed as SHOP (Nasdaq, moved from NYSE in 2025; also TSX)",
+    "sub_sector": "cloud commerce platform for online and retail stores (storefronts, payments, fulfillment, POS)"
   },
   "Shufersal": {
     "as_of": "2026-08-23",
