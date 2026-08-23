@@ -671,7 +671,8 @@ def test_every_note_writer_uses_the_append_log_helper():
         if name in ("notes.py", "check_invariants.py", "merge_csv_rows.py"):
             continue
         src = open(path, encoding="utf-8").read()
-        if re.search(r"\)\[:220\]|220 - len\(", src):
+        # every shape of "slice the base to make room": [:220], 220 - len(x), cap - len(x)
+        if re.search(r"\)\[:220\]|(220|cap|NOTE_CAP) *- *len\(", src):
             offenders.append(name)
     assert not offenders, (f"these still slice a note by hand instead of using "
                            f"pipeline.notes.append: {offenders}")
