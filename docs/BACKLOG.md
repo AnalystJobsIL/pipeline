@@ -945,3 +945,55 @@ fixes; one was a claim I made that a doc of this repo already contradicted on th
     their tools. Drift measured 0 on 2026-08-24, and `_EXTRACT_GAP` is strictly looser than
     `repair_extract_gap.MODE` (it does not require a date) — the direction that hides
     orphans. Extending that test to compare all four is the cheap half of item 1.
+
+## From the registry lane's wave-9 review, 2026-08-24 — and the close-out
+
+Wave 9 was the last review wave. Its severe findings are fixed; everything below is filed
+rather than fixed, under a stated bar: **does it write wrong data into `companies.csv` or the
+email, or silently lose coverage?** If no, it is filed. That bar is the close-out criterion —
+see `docs/sessions/2026-08-24-registry.md` for why nine waves did not converge without one.
+
+42. **`company_identity.ATS_HOST` omits `jobvite.com` and `taleo.net`** — lane: shared
+    plumbing. Every registry tool supports them (`crack_walled._HOST_PATTERNS`,
+    `audit_empty_rows._SUBDOMAIN_TENANT_HOST`, `deep_validate._UNSUP`,
+    `registry_health --ats`), but `ATS_HOST` does not — so on those hosts `verdict()`
+    compares the company against the ATS *vendor's* domain, returns `mismatch`, and
+    `is_foreign` is True. A correct board is then refused outright even with perfect page
+    evidence: `Varonis -> jobs.jobvite.com/varonis` and `Radware -> radware.taleo.net/...`,
+    both URLs that `crack_walled.listing_urls()` itself constructs. Worked around locally in
+    `listing_hunt._ATS_NOT_IN_ATS_HOST`; the workaround should be deleted when the two hosts
+    join `ATS_HOST`. Note also that `ATS_HOST` is an unanchored substring search, so
+    `clever.com`, `hibobble.com` and `workablefoods.com` would classify as ATS hosts — no
+    such row exists today (checked all 1,199), so that half is latent.
+
+43. **`verdict() == "weak"` has no consumer anywhere in the repo** — lane: shared plumbing.
+    Produced at `pipeline/company_identity.py:235`, read nowhere:
+    `grep -rn '"weak"' --include=*.py .` returns that one line. `is_foreign` is
+    `verdict() == "mismatch"` only, so a `weak` row passes every gate except
+    `crack_walled._ok_to_write`'s page test — including `Phoenix Financial ->
+    phoenixtma.com`, the example `company_identity`'s own docstring gives for "a real
+    company, not the right one". ARCHITECTURE.md section 2 and section 3 both described a
+    consumer that does not exist; both corrected 2026-08-24.
+
+44. **Three `registry_health.py` reporting defects** — lane: `registry`, none of which can
+    write a row. `--resources` correctly reports a missing key, but the default report prints
+    `SerpApi: key present; quota NOT checked` unconditionally when `live` is false, even with
+    no `SERPAPI_KEY` at all. The ladder alarm is emitted twice once `registry_alarms.json`
+    exists. An unknown flag (`--pools`, `--not-a-flag`) silently prints the default report and
+    exits 0 rather than saying it did not understand.
+
+45. **`repair_extract_gap` double-counts its summary** — lane: `registry`. `still` is
+    incremented once per failed gate rather than once per row, so a run over 4 rows printed
+    "1 activated, 6 still dark". Cosmetic, but it is the log a human reads to decide whether
+    the gate is too tight.
+
+46. **Do not re-measure an activating tool's gate against ACTIVE rows.** Wave 9 reported the
+    `deep_validate` gate refusing 25 of 31 tenant-mismatched rows and named the BACKLOG 21
+    acquisition roll-call (Itamar Medical, Habana Labs, VMware, Splunk, HP Indigo, Samsung).
+    `deep_validate` reads `r[4] == "false"` only, so it never sees any of them. The reachable
+    set is **5 parked rows** — `NanoLock Security -> gen.wd1` (Gen Digital),
+    `Sight Diagnostics -> SIG1008SIGH` (Sight Sciences' board), `Datorios -> sartorius.wd3`,
+    `Kubiya -> apply.workable.com/kubapay`, `Harel Insurance -> geico.wd1` — and all five are
+    boards the gate SHOULD refuse. Recorded because the finding was well-evidenced,
+    confidently argued, and measured on a population the tool cannot reach; the next reviewer
+    should check reachability before quoting a refusal count.

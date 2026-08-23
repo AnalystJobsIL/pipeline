@@ -634,9 +634,18 @@ forever — that pattern has been introduced and removed three times.
    fireflyspace.com (25 Firefly Aerospace roles), SimilarTech off greenhouse `similarweb`
    (25 of Similarweb's), "Moonsite - Moonsoft Development" off Moon Active's Ashby board.
    For an ATS host the identity is the TENANT SLUG, and a rebrand or acquisition looks
-   identical to a mis-resolution — Momentis really does post under `memic` — so a `weak`
-   verdict is settled by `page_mentions_company(..., strict=True)`, never by the domain
-   alone.
+   identical to a mis-resolution — Momentis really does post under `memic` — so identity
+   is settled by `page_mentions_company(..., strict=True)`, never by the domain alone.
+
+   **`weak` is not part of this, despite what this paragraph and section 3 said until
+   2026-08-24.** `company_identity.verdict()` produces `"weak"` at `:235` and **nothing in
+   the repo reads it** (`grep -rn '"weak"' --include=*.py .` returns exactly that one
+   line). `is_foreign` is `verdict() == "mismatch"` only, so a `weak` row passes every gate
+   except `crack_walled._ok_to_write`'s page test — including
+   `Phoenix Financial -> phoenixtma.com`, which `company_identity`'s own docstring gives as
+   its example of "a real company, not the right one". Two documents described a
+   consumer that does not exist. Giving `weak` one is `pipeline` plumbing:
+   `docs/BACKLOG.md` 43.
 3. `pipeline.company_identity.looks_like_a_job_listing_page(url)` is true — `SCRAPE_ASSUME_IL`
    makes every card on the page an Israel role, so a nav menu scores like a board:
    `iai.co.il/solution/research-academy-space` "verified 6 IL" whose titles were "Domain
@@ -932,8 +941,9 @@ the short version of the three gates and the code that enforces them.
   that write `active` or `api_url`, not the four this line claimed until 2026-08-24
   (`docs/AGENT_BRIEF.md` L104 still says four; that is `docs`-lane). Section 3 is this
   lane's and neither commit that took the count from four to five to six touched it,
-  which is the same failure as leaving a closed hole documented. A `weak` domain
-  verdict is settled by whether the fetched page NAMES the company as a phrase.
+  which is the same failure as leaving a closed hole documented. (This line also said a
+  `weak` domain verdict "is settled by whether the fetched page NAMES the company as a
+  phrase". Nothing reads `weak` — see section 2 and `docs/BACKLOG.md` 43.)
 - **Every rung that searches needs all three fallbacks.** The ladder is SerpApi (cheapest,
   currently useless) → `deep_validate.ddg` (free) → `deep_validate.google_via_unlocker`
   (Bright Data, capped by `DEEP_BD_SEARCH_CAP`). Verified against the live account on

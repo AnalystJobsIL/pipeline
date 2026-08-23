@@ -271,7 +271,12 @@ def main():
                         fr[3] = good
                         fr[5] = _note_replace(
                             fr[5], "url-repaired",
-                            f"url-repaired {TODAY}: dead host {host_of(old)} replaced")
+                            # Fixed-length and host-free, like every sibling refusal/repair note. This was the
+                        # last one in the lane still interpolating a hostname: measured against the real
+                        # registry it evicted a pool token from 72 hunt rows, 30 probe rows and 21 crack
+                        # rows. The old host is still recoverable from git; the note's job is to say what
+                        # happened, and a 220-char cell shared by nine tools cannot afford the detail.
+                        f"url-repaired {TODAY}: dead host replaced")
                 write_csv_rows("companies.csv", fresh)
         else:
             stuck += 1

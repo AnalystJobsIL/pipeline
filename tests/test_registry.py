@@ -1224,3 +1224,117 @@ def test_the_hunts_refusal_notes_are_short_and_carry_no_url():
         assert rendered <= 80, (
             "note segment %r renders to %d chars; the pool cannot afford it"
             % (body, rendered))
+
+
+def test_repair_extract_gap_main_cannot_activate_a_foreign_board(tmp_path, monkeypatch):
+    """The sixth activating tool had NO test of any kind, and its gate can be switched off.
+
+    `test_every_activation_path_checks_company_identity` only asserts the string
+    `company_identity` appears in the file — it does, via two imports, one of which
+    (`is_foreign`) this tool no longer uses for identity. A wave-9 reviewer changed
+
+        if il and not _identity_ok(r[0], r[3]):
+     -> if il and _identity_ok(r[0], r[3]) is None:
+
+    and `pytest` reported 227 passed while `NanoLock Security` activated onto
+    `gen.wd1.myworkdayjobs.com` — Gen Digital's Workday.
+
+    This tool runs at 19:00, THIRTY MINUTES BEFORE `listing_hunt`, and forces
+    `SCRAPE_ASSUME_IL=1`, which makes every location-less card on an Israel-token page an
+    Israel role. Its `il` count is the weakest evidence any activating path acts on.
+    """
+    import sys
+    import repair_extract_gap as G
+    import crack_walled as C
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["NanoLock Security", "", "", "https://gen.wd1.myworkdayjobs.com/en-US/careers/",
+         "false", "dark-triage 2026-01-01: extract-gap (356 role phrases after render)"],
+        ["GoodCo", "", "", "https://www.goodco.com/careers/openings", "false",
+         "dark-triage 2026-01-01: extract-gap (12 role phrases after render)"],
+    ])
+    monkeypatch.setattr("scrape_universal.scrape",
+                        lambda name, url: [{"title": "Engineer", "location": "Tel Aviv"}])
+    monkeypatch.setattr(C, "_page_names_company", lambda name, url, html="": False)
+    monkeypatch.setattr(sys, "argv", ["repair_extract_gap.py", "--apply"])
+    G.main()
+
+    out = _read(tmp_path)
+    assert out["NanoLock Security"][4] == "false", (
+        "activated Gen Digital's Workday: %r" % (out["NanoLock Security"],))
+    # ordinary domain is deliberately not page-gated — positive control
+    assert out["GoodCo"][4] == "true", (
+        "the ordinary-domain path must still activate: %r" % (out["GoodCo"],))
+
+
+def test_deep_validate_never_falls_back_to_the_rows_own_page(tmp_path, monkeypatch):
+    """`_cand` must be the CANDIDATE, never `api or r[3]`.
+
+    Every other fixture supplies a non-empty `api`, so the wave-7 bug — falling back to the
+    row's own careers page when the LLM tier proposes `scrape` with no `api_url` — could be
+    re-introduced textually (`_cand = api or ""` -> `_cand = api or r[3] or ""`) with the
+    suite green. `fetch_scrape` keys on `company_name`, not the URL, so `verify()` succeeds
+    and the row activates on an identity confirmed from the wrong page.
+    """
+    import sys
+    import deep_validate as D
+    import crack_walled as C
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Riskified", "", "", "https://www.riskified.com/careers/", "false",
+         "dark-triage 2026-01-01: page-empty"],
+    ])
+
+    class _Rend:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    monkeypatch.setattr(D, "Renderer", _Rend)
+    # the LLM tier's shape: scrape, real jobs, and NO api_url
+    monkeypatch.setattr(D, "validate_one",
+                        lambda rend, name, url: ("recovered", "scrape", "riskified", "",
+                                                 12, 5, ""))
+    # the row's OWN page names it — the trap the fallback walked into
+    monkeypatch.setattr(C, "_page_names_company", lambda name, url, html="": True)
+    monkeypatch.setattr(sys, "argv", ["deep_validate.py", "--apply"])
+    D.main()
+
+    out = _read(tmp_path)
+    assert out["Riskified"][4] == "false", (
+        "activated on an empty candidate by reading the row's own page: %r"
+        % (out["Riskified"],))
+
+
+def test_the_walled_pool_survives_another_tools_note_rewrite():
+    """`crack_walled`'s pool must not be a string a different tool owns and rewrites.
+
+    It was the literal `unsupported ATS`, which `deep_validate` writes inside ITS OWN
+    segment — so `notes.replace_own` deleted it on every verdict that is not `unsupported`.
+    Measured on the real registry 2026-08-24: the token lived only in `deep_validate`'s
+    segment on 24 of 25 pool rows, and one simulated all-dark Saturday took the pool 25 -> 0
+    with every guard green. Membership now also derives from the row's HOST, which only this
+    lane's tools write.
+    """
+    import csv as _csv
+    import os as _os
+    from pipeline.notes import replace_own
+    import crack_walled as cw
+    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    with open(_os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
+        rows = [r for r in _csv.reader(fh) if r and len(r) >= 6][1:]
+    pool = [r for r in rows if r[4] == "false" and cw._is_walled(r)]
+    assert pool, "fixture drift: the walled pool is empty"
+
+    survived = 0
+    for r in pool:
+        r2 = list(r)
+        r2[5] = replace_own(r[5], "deep-validated",
+                            "deep-validated 2026-08-24: no listing found; dark")
+        if cw._is_walled(r2):
+            survived += 1
+    assert survived >= len(pool) // 3, (
+        "one deep_validate night took the walled pool from %d to %d — the pool predicate is "
+        "again a string another tool can delete" % (len(pool), survived))

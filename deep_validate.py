@@ -343,8 +343,19 @@ def main():
                     _ident = bool(_cand) and (
                         tenant_is_this_company(name, _cand)
                         or _page_names_company(name, _cand) is True)
+                    # Clause 3 of the activation rule (ARCHITECTURE.md section 2) is
+                    # `looks_like_a_job_listing_page`, and the wave-8 rewrite dropped it —
+                    # the import stayed, nothing called it. Restored SCOPED TO `scrape`,
+                    # which is where the original had it: an API endpoint like
+                    # `/wday/cxs/<tenant>/<site>/jobs` or `boards-api.greenhouse.io/...` is
+                    # not shaped like a listings page and never will be, so applying it to
+                    # every platform would refuse every native-ATS recovery. Without it a
+                    # `scrape` proposal from the LLM tier could activate a row pointing at
+                    # `.../about-us/leadership`.
                     if verdict == "recovered" and not (
-                            n_all and not is_foreign(name, _cand) and _ident):
+                            n_all and not is_foreign(name, _cand) and _ident
+                            and (plat != "scrape"
+                                 or looks_like_a_job_listing_page(_cand))):
                         # Identity gate: rendering the STORED url and finding roles proves
                         # roles exist there, not that they are this company's. The stored
                         # url of a dark row is often the hunt's best GUESS.

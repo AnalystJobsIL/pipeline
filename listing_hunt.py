@@ -34,7 +34,10 @@ from pipeline.recruiters import is_recruiter
 from urllib.parse import urlparse
 
 from pipeline.company_identity import is_foreign, ATS_HOST
-from crack_walled import _ok_to_write
+from crack_walled import _ok_to_write, _page_names_company
+
+# Hosts that ARE a multi-tenant ATS but are missing from `company_identity.ATS_HOST`.
+_ATS_NOT_IN_ATS_HOST = re.compile(r"(jobvite\.com|taleo\.net)", re.I)
 from pipeline.firmographics import looks_like_junk
 from pipeline.company_identity import looks_like_a_job_listing_page
 from resolve_llm import _ask_claude
@@ -126,9 +129,25 @@ def _identity_ok(name, url):
     for silent exclusion, which is section 8's first bug class and exactly the mistake wave
     7 caught in `crack_walled._ok_to_write`.
     """
+    host = (urlparse(url or "").netloc or "").lower()
+    if host and _ATS_NOT_IN_ATS_HOST.search(host):
+        # `company_identity.ATS_HOST` omits jobvite and taleo, while `crack_walled`,
+        # `audit_empty_rows`, `deep_validate` and `registry_health --ats` all support them.
+        # Without this branch the URL falls to the ordinary-domain path, where `verdict()`
+        # compares the company against the ATS VENDOR's domain, returns `mismatch`, and
+        # `is_foreign` is True — so a correct board is refused outright even with perfect
+        # page evidence:
+        #     Varonis https://jobs.jobvite.com/varonis/search?l=Israel   -> refused
+        #     Radware https://radware.taleo.net/careersection/2/...      -> refused
+        # `crack_walled.listing_urls()` constructs exactly those URLs, so the tool could
+        # never write the address it had just built. `is_foreign` is skipped here for the
+        # same reason it is skipped on every other ATS host — it is not meaningful on one —
+        # and the page test below is the real gate. Adding these two to `ATS_HOST` is the
+        # proper fix and is `pipeline` plumbing: docs/BACKLOG.md 42.
+        return (looks_like_a_job_listing_page(url)
+                and _page_names_company(name, url) is True)
     if is_foreign(name, url):
         return False
-    host = (urlparse(url or "").netloc or "").lower()
     if host and ATS_HOST.search(host):
         return _ok_to_write(name, url)
     return True

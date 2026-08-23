@@ -75,14 +75,59 @@ _HOST_PATTERNS = {
 }
 
 
-def _platform_of(note):
-    m = re.search(r"unsupported ATS ([A-Za-z.]+)", note or "")
+# The walled/multi-tenant ATS hosts this tool knows how to crack. Kept as HOSTS on purpose:
+# see `_is_walled` for why a note token could not be the only membership test.
+_WALLED_HOST = re.compile(
+    r"(icims\.com|myworkdayjobs\.com|eightfold\.ai|avature\.net|oraclecloud\.com|"
+    r"ultipro\.com|phenompeople\.com|phenom|jobvite\.com|taleo\.net|successfactors|"
+    r"hibob\.com|applytojob\.com)", re.I)
+
+_PLATFORM_ALIAS = {"eightfold.ai": "eightfold", "phenom": "phenom", "icims.com": "icims",
+                   "successfactors": "successfactors", "oraclecloud.com": "oraclecloud",
+                   "avature.net": "avature", "jobvite.com": "jobvite", "taleo.net": "taleo",
+                   "phenompeople.com": "phenom", "ultipro.com": "ultipro",
+                   "myworkdayjobs.com": "workday", "hibob.com": "hibob",
+                   "applytojob.com": "applytojob"}
+
+
+def _host_platform(url):
+    """Platform from the row's stored URL — durable data, unlike a note segment."""
+    host = (urllib.parse.urlparse(url or "").netloc or "").lower()
+    m = _WALLED_HOST.search(host)
     if not m:
         return None
+    return _PLATFORM_ALIAS.get(m.group(1).lower(), m.group(1).lower())
+
+
+def _is_walled(row):
+    """Is this row in the walled-ATS pool? DURABLE data first, note token second.
+
+    This pool used to be the literal string `unsupported ATS` in the note, and nothing else.
+    That string is written by `deep_validate` as part of ITS OWN segment
+    (`deep-validated <date>: unsupported ATS icims.com`), and `pipeline.notes.replace_own`
+    deletes a tool's previous segment when it writes a new one — by design. So every
+    `deep_validate` verdict that is not `unsupported` (i.e. `dark`, `unreachable`, and the
+    `not this company's board` refusal) silently removes the row from THIS tool's pool,
+    permanently.
+
+    Measured on the real registry 2026-08-24: the token lived only inside `deep_validate`'s
+    own segment on **24 of the 25** pool rows, and one simulated all-dark Saturday took the
+    pool from 25 to **0** — with `pytest`, `check_invariants` and `registry_health` all
+    green, because no guard has a per-tool floor (docs/BACKLOG.md 34).
+
+    A pool predicate must not be a string another tool owns and rewrites. The host in
+    `api_url` is the same fact, recorded where only this lane's tools write.
+    """
+    return ("unsupported ATS" in (row[5] or "")
+            or _host_platform(row[3] if len(row) > 3 else "") is not None)
+
+
+def _platform_of(note, url=""):
+    m = re.search(r"unsupported ATS ([A-Za-z.]+)", note or "")
+    if not m:
+        return _host_platform(url)          # note token gone (or never written): use the host
     p = m.group(1).lower()
-    return {"eightfold.ai": "eightfold", "phenom": "phenom", "icims.com": "icims",
-            "successfactors": "successfactors", "oraclecloud.com": "oraclecloud",
-            "avature.net": "avature", "jobvite.com": "jobvite", "taleo.net": "taleo"}.get(p, p)
+    return _PLATFORM_ALIAS.get(p, p)
 
 
 def listing_urls(platform, m, page_url):
@@ -373,7 +418,7 @@ def main():
     _t0 = time.time()
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
-               if r and len(r) >= 6 and r[4] == "false" and "unsupported ATS" in (r[5] or "")
+               if r and len(r) >= 6 and r[4] == "false" and _is_walled(r)
                and _recrackable(r[5] or "")
                # This pool had NO terminal exclusion at all, while the cracked branch below
                # sets active=true. An `alias-of` row is the second row for a company we
@@ -384,6 +429,16 @@ def main():
                # 60-minute nightly budget spent on rows that must never activate.
                and not TERMINAL.search(r[5] or "")
                and not is_recruiter(r[0])]
+    # ROTATE: least-recently-cracked first. `_budget` below simply breaks out of the loop,
+    # and this tool had no ordering at all, so on any night the budget bit the tail of the
+    # list was never reached - "a time budget without rotation is permanent tail blindness",
+    # which this lane fixed in `scan_dead_domains` and `probe_candidates` and left standing
+    # here. It matters more now that `_is_walled` derives membership from the row's HOST as
+    # well as its note, because that is a larger pool.
+    def _last_crack(ir):
+        m = re.search(r"crack-walled (\d{4}-\d{2}-\d{2})", ir[1][5] or "")
+        return m.group(1) if m else ""        # never cracked sorts first
+    targets.sort(key=_last_crack)
     if limit:
         targets = targets[:limit]
     print(f"cracking {len(targets)} walled-ATS companies\n", flush=True)
@@ -392,7 +447,7 @@ def main():
         if _budget and (time.time() - _t0) / 60 > _budget:
             print(f"time budget {_budget}min reached — stopping cleanly", flush=True)
             break
-        name, platform = r[0], _platform_of(r[5])
+        name, platform = r[0], _platform_of(r[5], r[3])
         try:
             verdict, got, n_il, detail = crack_one(name, r[3], platform)
         except Exception as e:  # noqa: BLE001
