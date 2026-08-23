@@ -736,3 +736,29 @@ def test_every_active_scrape_row_points_at_something_that_claims_to_list_jobs():
         if r["active"] == "true" and r["ats_platform"] == "scrape"
         and not ok(r["api_url"] or "")]
     assert not bad, f"active scrape rows on a page that is not a listings page: {bad}"
+
+
+def test_a_first_scan_company_is_shown_honestly_rather_than_withheld():
+    """`_posted_in` refuses to call a first-scan company's back catalogue "posted in the
+    last 48h" — 336 companies were activated in one night and their whole history would
+    otherwise have buried the actual news. But withholding them entirely produced a
+    zero-role email on a day the pipeline had just gained 336 employers. They go in the
+    email under their own heading, with "date not published" rather than a bare dash next
+    to a line that claims 48h freshness."""
+    from pipeline import digest as D
+    jobs = [{"company": "Acme", "title": "Senior Data Analyst", "location": "Tel Aviv",
+             "url": "https://a/1", "posted_date": "2026-08-23", "description": "x"},
+            {"company": "Newco", "title": "BI Developer", "location": "Haifa",
+             "url": "https://b/2", "posted_date": "", "description": "y",
+             "_new_company": True}]
+    title, body = D.build_markdown(jobs, "2026-08-23", {"first_scan": 1, "new": 1})
+    assert title.startswith("🎯 1 new senior analytics role")   # counts only the 48h ones
+    assert "Newly covered companies (1)" in body
+    assert "date not published" in body
+    assert body.index("Senior Data Analyst") < body.index("Newly covered companies")
+
+    # ...and when there is nothing 48h-fresh, the subject says what the email IS
+    only_new = [j for j in jobs if j.get("_new_company")]
+    title2, body2 = D.build_markdown(only_new, "2026-08-23", {"first_scan": 1, "new": 0})
+    assert "newly covered companies" in title2
+    assert "_No new matching openings today._" in body2

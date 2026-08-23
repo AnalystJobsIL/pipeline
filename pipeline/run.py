@@ -32,6 +32,7 @@ from . import firmographics as firmographics_mod
 FIRMO_MAX_PER_RUN = 5  # research calls can web-search (~1-3 min each); bulk = backfill script
 BLURB_MAX_PER_RUN = 30  # one claude call each, inside the digest timeout
 EMAIL_MAX_ROLES = 40   # a daily email nobody scrolls is a daily email nobody reads
+FIRST_SCAN_MAX_ROLES = 15  # roles at employers this digest is seeing for the first time
 BOARD_MAX_ROLES = 1500  # page-weight backstop; each role renders a full detail card
 from . import digest as digest_mod
 from . import fetchers, israel, seniority, store
@@ -252,6 +253,20 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         print(f"  email capped at {EMAIL_MAX_ROLES} roles; {stats['email_overflow']} more "
               f"stay unsent and lead tomorrow's digest", flush=True)
         email_jobs = email_jobs[:EMAIL_MAX_ROLES]
+
+    # A company's FIRST scan: `_posted_in` rightly refuses to call its back catalogue
+    # "posted in the last 48h" — we have no idea when those roles were posted. But they ARE
+    # news to the reader, who has never seen this employer before. They go in the email
+    # under their own heading, honestly labelled, rather than being silently withheld for a
+    # day. Tightly capped: 336 companies were activated overnight.
+    first_scan = [j for j in st.get_matched_since(run_date)
+                  if j.get("company") not in seen_before and _alive(j)]
+    first_scan = st.filter_new(first_scan)
+    first_scan = _cap_per_company(first_scan, 2)[:FIRST_SCAN_MAX_ROLES]
+    for j in first_scan:
+        j["_new_company"] = True
+    stats["first_scan"] = len(first_scan)
+    email_jobs = email_jobs + first_scan
     # The board holds ACTIVE roles — every role still present on its employer's careers
     # page — not "roles first seen in the last two weeks". A role open for three weeks is
     # still open, and dropping it off the board (into a page headed "expired or filled")
@@ -379,6 +394,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         "llm_calls": stats["llm_calls"],
         "jd_filled_inline": stats["jd_filled_inline"],
         "email_overflow": stats["email_overflow"],
+        "first_scan": stats["first_scan"],
         "stages": stages.summary(),
         "dead_sources": _dead_sources,
         "paths": dict(paths),

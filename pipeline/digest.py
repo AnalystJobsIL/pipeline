@@ -533,8 +533,19 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     """
     company_info = company_info or {}
     firmographics = firmographics or {}
+    # Roles at an employer this digest has never scanned before. `_posted_in` refuses to
+    # call their back catalogue 48h-fresh — correctly, we have no idea when they were
+    # posted — but they are news to the reader, so they get their own honest heading
+    # instead of being silently withheld for a day.
+    fresh_jobs = [j for j in jobs if not j.get("_new_company")]
+    new_co_jobs = [j for j in jobs if j.get("_new_company")]
+    jobs = fresh_jobs
     n = len(jobs)
     title = f"🎯 {n} new senior analytics role{'' if n == 1 else 's'} — {run_date}"
+    if new_co_jobs and not n:
+        title = (f"🎯 {len(new_co_jobs)} analytics role"
+                 f"{'' if len(new_co_jobs) == 1 else 's'} at newly covered companies "
+                 f"— {run_date}")
 
     by_company = {}
     for j in jobs:
@@ -559,8 +570,7 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
                   f"They are on the board now, and they lead tomorrow's digest — nothing "
                   f"is dropped.", ""]
 
-    for company in companies:
-        jobs_c = by_company[company]
+    def _render(company, jobs_c, dated=True):
         about = company_info.get(company) or _company_blurb(jobs_c[0].get("description"))
         if about and _ABOUT_JUNK.search(about):   # never email a CLI error or meta answer
             about = _company_blurb(jobs_c[0].get("description")) or ""
@@ -580,12 +590,32 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
             head = (f"**{_md_esc(title_txt)}** — {su}" if su
                     else f"**{_md_esc(title_txt)}**")
             chip = _seniority_chip(j.get("description"))
-            meta = [f"📍 {_norm_location(j.get('location'))}",
-                    f"🗓 {j.get('posted_date') or '—'}" + _age_note(j.get("posted_date"), run_date)]
+            posted = j.get("posted_date") or ""
+            meta = [f"📍 {_norm_location(j.get('location'))}"]
+            # an undated role at a first-scan company: say "date unknown", never "—" next
+            # to a heading that claims 48h freshness
+            meta.append((f"🗓 {posted}" + _age_note(posted, run_date)) if posted
+                        else ("🗓 date not published" if not dated else "🗓 —"))
             if chip:
                 meta.append(f"🎓 {chip}")
             lines.append(f"- {head} · {' · '.join(meta)}")
         lines.append("")
+
+    for company in companies:
+        _render(company, by_company[company])
+
+    if new_co_jobs:
+        by_new = {}
+        for j in new_co_jobs:
+            by_new.setdefault(j["company"], []).append(j)
+        lines += ["---", "",
+                  f"## Newly covered companies ({len(by_new)})", "",
+                  "Employers this scan reached for the **first time**. Their postings carry "
+                  "no publication date we can trust, so they are not counted as 48h-fresh — "
+                  "but they are new to you. From tomorrow these companies report like any "
+                  "other.", ""]
+        for company in sorted(by_new):
+            _render(company, by_new[company], dated=False)
 
     # collapsed audit so the email stays clean but is still verifiable
     s = stats
@@ -599,6 +629,14 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
         f"- Decision paths: {paths}",
         f"- LLM calls this run: {s.get('llm_calls',0)}",
     ]
+    if s.get("first_scan"):
+        lines.append(f"- At newly covered companies: {s['first_scan']}")
+    if s.get("email_overflow"):
+        lines.append(f"- Held over (email cap): {s['email_overflow']}")
+    if s.get("dead_sources"):
+        lines.append("- **Sources not producing:** " + "; ".join(s["dead_sources"]))
+    if s.get("stages"):
+        lines.append(f"- Stage order: {s['stages']}")
     if s.get("failed_companies"):
         lines.append(f"- Failed companies: {', '.join(s['failed_companies'])}")
     lines += ["", "</details>"]
