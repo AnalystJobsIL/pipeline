@@ -17,6 +17,11 @@ lane's guards disappear — including this one's.
 import ast
 import os
 import re
+
+# The shared identity gate. Fixtures patch `IG.page_names_company`, NOT the alias
+# re-exported by `crack_walled` - the gate calls its own module global, so patching
+# the alias silently does nothing and the fixture hits the real network instead.
+from pipeline import identity_gate as IG
 import pytest    # noqa: F401  (parametrize is used below)
 
 
@@ -194,9 +199,9 @@ def test_a_walled_ats_crack_must_confirm_the_page_names_the_company():
     assert _slug_matches("Bancor", "bancorpbank") is True, "still passes on containment"
 
     src = inspect.getsource(crack_walled.crack_one)
-    calls = {n.func.id for n in ast.walk(ast.parse(src))
-             if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
-    assert "_page_names_company" in calls, (
+    calls = {getattr(n.func, "attr", getattr(n.func, "id", "")) for n in ast.walk(ast.parse(src))
+             if isinstance(n, ast.Call)}
+    assert "page_names_company" in calls, (
         "the cracked-scrape branch must confirm the page names the company before it "
         "returns a verdict the write branch activates on")
 
@@ -246,16 +251,16 @@ def test_the_identity_refetch_is_not_weaker_than_the_evidence_that_produced_it()
     are named "... Israel"."""
     import inspect
     import crack_walled
-    src = inspect.getsource(crack_walled._page_names_company)
+    src = inspect.getsource(IG.page_names_company)
     assert "_LENIENT" in src, "strict TLS re-introduces 6 known false positives"
     assert "unlock" in src, "a bot-walled page needs the residential fetch, not a refusal"
     assert "_NAME_STOP" in src, "`Microsoft Israel` on a page saying `Microsoft` is Microsoft"
     assert "return None" in src, "unreadable must be NO EVIDENCE, not disconfirmation"
     assert crack_walled._LENIENT.verify_mode.name == "CERT_NONE"
     page = "<h1>Careers at Microsoft</h1><p>Search jobs at Microsoft.</p>" * 40
-    assert crack_walled._page_names_company("Microsoft Israel", "", html=page) is True
+    assert IG.page_names_company("Microsoft Israel", "", html=page) is True
     bancorp = ("<h1>Careers at The Bancorp Bank</h1>" + "<p>Bancorp Bank benefits</p>" * 90)
-    assert crack_walled._page_names_company("Bancor", "", html=bancorp) is False
+    assert IG.page_names_company("Bancor", "", html=bancorp) is False
 
 def test_repair_dead_urls_applies_one_identity_rule_to_both_branches():
     """Hardening only the 403 branch left the headline case open: `DiA Imaging Analytics`
@@ -273,11 +278,11 @@ def test_repair_dead_urls_applies_one_identity_rule_to_both_branches():
     assert src.count("whole_name") >= 2, "the whole-name rule must gate the accept"
     # 2026-08-24: this asserted `strict=True` appeared inline, pinning a LOCAL
     # `page_mentions_company(name, html, strict=True)`. That local form was a two-valued
-    # copy of `crack_walled._page_names_company` - it folded "unreadable" into "not us" and
+    # copy of `IG.page_names_company` - it folded "unreadable" into "not us" and
     # skipped both the unlocker fallback and the name-stripping retry. The shared predicate
     # calls `page_mentions_company(..., strict=True)` itself, so the phrase test is still
     # the phrase test; the assertion now names the predicate instead of its internals.
-    assert "_page_names_company(name, u, html=html) is True" in src, (
+    assert "_gate.page_names_company(name, u, html=html) is True" in src, (
         "page evidence must come from the shared three-valued predicate, and `is True` "
         "must keep an unreadable page out")
     tree = ast.parse(src.lstrip())
@@ -313,7 +318,7 @@ def test_the_daily_mail_alarm_path_touches_no_credential_and_no_network():
     import registry_health
     src = inspect.getsource(registry_health.alarms_state)
     tree = ast.parse(src.lstrip())
-    called = {n.func.id for n in ast.walk(tree)
+    called = {getattr(n.func, 'attr', getattr(n.func, 'id', '')) for n in ast.walk(tree)
               if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
     assert "resources" not in called, (
         "alarms_state must never probe the ladder - that is what put "
@@ -469,7 +474,7 @@ def test_crack_walled_never_persists_an_untested_url_as_the_rows_address():
     tree = ast.parse(src.lstrip())
     # every `return ("novrfy", ...)` must be preceded in the function by a call to the gate
     gate_calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call)
-                  and isinstance(n.func, ast.Name) and n.func.id == "_page_names_company"]
+                  and getattr(n.func, "attr", getattr(n.func, "id", "")) == "page_names_company"]
     assert len(gate_calls) >= 2, (
         "the identity gate is called %d time(s); the 0-IL path that persists fr[3] via "
         "`novrfy` needs one of its own" % len(gate_calls))
@@ -567,7 +572,7 @@ def test_no_crack_walled_branch_can_write_an_unconfirmed_url():
     import ast
     import inspect
     import crack_walled
-    assert hasattr(crack_walled, "_ok_to_write")
+    assert hasattr(IG, "ok_to_write"), "the shared gate moved to pipeline/identity_gate.py"
     src = inspect.getsource(crack_walled.main)
     tree = ast.parse(src.lstrip())
     # every statement that assigns fr[3] or fr[4] must sit under a test of _ok_to_write
@@ -575,7 +580,7 @@ def test_no_crack_walled_branch_can_write_an_unconfirmed_url():
     for node in ast.walk(tree):
         if not isinstance(node, ast.If):
             continue
-        if "_ok_to_write" not in ast.unparse(node.test):
+        if "ok_to_write" not in ast.unparse(node.test):
             continue
         for st in ast.walk(node):
             if isinstance(st, ast.Assign):
@@ -593,7 +598,7 @@ def test_no_crack_walled_branch_can_write_an_unconfirmed_url():
     del unguarded
     assert guarded >= 1, "no fr[3]/fr[4] write sits under an _ok_to_write test"
     # the gate itself must demand a POSITIVE confirmation, not merely "not False"
-    g = inspect.getsource(crack_walled._ok_to_write)
+    g = inspect.getsource(IG.ok_to_write)
     assert "is True" in g, (
         "an UNREADABLE page (None) must not pass: novrfy writes an address that "
         "listing_hunt's fast-path later activates on")
@@ -621,7 +626,7 @@ def test_a_tenant_mismatch_alone_must_not_block_an_ats_row():
     carry a second signal.
 
     **Where the predicate actually lives now (2026-08-24).** An earlier version of this
-    docstring said it "is used ONLY in `crack_walled._ok_to_write` ... therefore no new false
+    docstring said it "is used ONLY in `IG.ok_to_write` ... therefore no new false
     negative is possible". That was wrong in both directions within three commits, which is
     the whole reason this note is dated:
 
@@ -718,7 +723,7 @@ def test_the_weekly_audit_uses_the_tenant_gate_it_defines():
     import inspect
     import audit_empty_rows
     src = inspect.getsource(audit_empty_rows.main)
-    calls = {n.func.id for n in ast.walk(ast.parse(src.lstrip()))
+    calls = {getattr(n.func, 'attr', getattr(n.func, 'id', '')) for n in ast.walk(ast.parse(src.lstrip()))
              if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
     assert "tenant_is_this_company" in calls, (
         "main() still activates on is_foreign alone, which is False for every ATS host")
@@ -773,7 +778,7 @@ def test_repair_dead_urls_uses_the_shared_tenant_predicate():
     names = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
     assert "_slug_candidates" not in names, "the hand-rolled flat any() is still there"
     assert "tenant_is_this_company" in {
-        n.func.id for n in ast.walk(tree)
+        getattr(n.func, 'attr', getattr(n.func, 'id', '')) for n in ast.walk(tree)
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
 
 
@@ -855,7 +860,7 @@ def test_the_weekly_audit_confirms_identity_from_the_candidate_not_the_rows_own_
     # does its own fetching (and can reach the unlocker). Stub it, or this test makes real
     # network calls: hermetic tests are why the fixture exists.
     import crack_walled as C
-    monkeypatch.setattr(C, "_page_names_company",
+    monkeypatch.setattr(IG, "page_names_company",
                         lambda name, url, html="": {"Riskified": False}.get(name))
     monkeypatch.setattr(sys, "argv", ["audit_empty_rows.py", "--apply"])
     A.main()
@@ -918,7 +923,7 @@ def test_deep_validate_refuses_the_three_shapes_its_twin_already_refuses(
     names = {"Fiverr": True, "ZeroBoard": True, "Riskified": False, "Bancor": False}
     monkeypatch.setattr(D, "Renderer", _Rend)
     monkeypatch.setattr(D, "validate_one", lambda rend, name, url: res[name])
-    monkeypatch.setattr(C, "_page_names_company",
+    monkeypatch.setattr(IG, "page_names_company",
                         lambda name, url, html="": names.get(name))
     monkeypatch.setattr(sys, "argv", ["deep_validate.py", "--apply"])
     D.main()
@@ -1028,9 +1033,9 @@ def test_the_write_gate_does_not_refuse_the_platforms_it_exists_to_crack():
     import re
     import crack_walled as cw
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    orig = cw._page_names_company
+    orig = IG.page_names_company
     try:
-        cw._page_names_company = lambda n, u, html="": True      # perfect page evidence
+        IG.page_names_company = lambda n, u, html="": True      # perfect page evidence
         with open(os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
             rows = [r for r in _csv.reader(fh) if r and len(r) >= 6][1:]
         plat = re.compile(r"oraclecloud|eightfold|icims|jobvite|taleo|avature|phenom", re.I)
@@ -1038,21 +1043,21 @@ def test_the_write_gate_does_not_refuse_the_platforms_it_exists_to_crack():
                if r[4].strip().lower() == "true" and r[3].startswith("http")
                and plat.search(r[3])]
         assert tgt, "fixture drift: no active rows on the target platforms"
-        refused = [r[0] for r in tgt if not cw._ok_to_write(r[0], r[3])]
+        refused = [r[0] for r in tgt if not IG.ok_to_write(r[0], r[3])]
         assert not refused, (
             "%d of %d already-verified rows on this tool's own platforms are refused even "
             "with perfect page evidence: %s" % (len(refused), len(tgt), refused))
 
-        cw._page_names_company = lambda n, u, html="": False
-        assert not cw._ok_to_write(
+        IG.page_names_company = lambda n, u, html="": False
+        assert not IG.ok_to_write(
             "Riskified", "https://novartis.wd3.myworkdayjobs.com/riskified")
-        assert not cw._ok_to_write(
+        assert not IG.ok_to_write(
             "Bancor", "https://careers-bancorpbank.icims.com/jobs/search?ss=1")
-        cw._page_names_company = lambda n, u, html="": None       # unreadable
-        assert not cw._ok_to_write("Anyone", "https://x.icims.com/jobs/search?ss=1"), (
+        IG.page_names_company = lambda n, u, html="": None       # unreadable
+        assert not IG.ok_to_write("Anyone", "https://x.icims.com/jobs/search?ss=1"), (
             "an unreadable page is no evidence and must never be written")
     finally:
-        cw._page_names_company = orig
+        IG.page_names_company = orig
 
 
 def test_the_hunt_needs_the_page_to_name_us_on_a_walled_ats(tmp_path, monkeypatch):
@@ -1076,21 +1081,21 @@ def test_the_hunt_needs_the_page_to_name_us_on_a_walled_ats(tmp_path, monkeypatc
     """
     import listing_hunt as L
     import crack_walled as C
-    orig = C._page_names_company
+    orig = IG.page_names_company
     try:
-        C._page_names_company = lambda n, u, html="": False     # the board never names us
-        assert not L._identity_ok(
+        IG.page_names_company = lambda n, u, html="": False     # the board never names us
+        assert not IG.identity_ok(
             "NanoLock Security", "https://gen.wd1.myworkdayjobs.com/careers/")
-        assert not L._identity_ok(
+        assert not IG.identity_ok(
             "Sight Diagnostics", "https://recruiting2.ultipro.com/SIG1008SIGH/JobBoard/x/")
         # ordinary careers domain: unchanged, still admitted without a page read
-        assert L._identity_ok("Acme", "https://www.acme.com/careers")
-        C._page_names_company = lambda n, u, html="": True
-        assert L._identity_ok("Nutanix", "https://nutanix.eightfold.ai/careers?location=IL")
-        C._page_names_company = lambda n, u, html="": None       # unreadable == no evidence
-        assert not L._identity_ok("Nutanix", "https://nutanix.eightfold.ai/careers?x=1")
+        assert IG.identity_ok("Acme", "https://www.acme.com/careers")
+        IG.page_names_company = lambda n, u, html="": True
+        assert IG.identity_ok("Nutanix", "https://nutanix.eightfold.ai/careers?location=IL")
+        IG.page_names_company = lambda n, u, html="": None       # unreadable == no evidence
+        assert not IG.identity_ok("Nutanix", "https://nutanix.eightfold.ai/careers?x=1")
     finally:
-        C._page_names_company = orig
+        IG.page_names_company = orig
 
 
 def test_both_hunt_write_branches_route_through_the_identity_gate():
@@ -1104,11 +1109,11 @@ def test_both_hunt_write_branches_route_through_the_identity_gate():
     import inspect
     import listing_hunt
     src = inspect.getsource(listing_hunt.main)
-    assert src.count("_identity_ok(name, url)") >= 2, (
+    assert src.count("_gate.identity_ok(name, url)") >= 2, (
         "both the `found` (activates) and `nolisting` (persists fr[3]) branches must gate "
-        "on _identity_ok; found %d call(s)" % src.count("_identity_ok(name, url)"))
+        "on _identity_ok; found %d call(s)" % src.count("_gate.identity_ok(name, url)"))
     body = src[src.index('elif verdict == "nolisting"'):]
-    assert body.index("_identity_ok(name, url)") < body.index("fr[3] = url")
+    assert body.index("_gate.identity_ok(name, url)") < body.index("fr[3] = url")
 
 
 def test_crack_walled_main_cannot_activate_a_board_that_does_not_name_us(
@@ -1143,7 +1148,7 @@ def test_crack_walled_main_cannot_activate_a_board_that_does_not_name_us(
     monkeypatch.setattr(C, "crack_one", lambda name, seed, plat: res[name])
     # OraCo's board does not name it; GoodCo's does. Positive control is mandatory: a gate
     # that refuses everything must not be able to pass this test.
-    monkeypatch.setattr(C, "_page_names_company",
+    monkeypatch.setattr(IG, "page_names_company",
                         lambda name, url, html="": {"GoodCo": True}.get(name, False))
     monkeypatch.setattr(sys, "argv", ["crack_walled.py", "--apply"])
     C.main()
@@ -1162,7 +1167,7 @@ def test_listing_hunt_main_cannot_activate_a_board_that_does_not_name_us(
     """Drives `listing_hunt.main()`. Nothing did.
 
     `test_both_hunt_write_branches_route_through_the_identity_gate` asserts
-    `src.count("_identity_ok(name, url)") >= 2` — a source-string count. A wave-8 reviewer
+    `src.count("_gate.identity_ok(name, url)") >= 2` — a source-string count. A wave-8 reviewer
     changed `not _identity_ok(name, url)` to `_identity_ok(name, url) is None`, preserving
     the text, and reopened the hole with `pytest` at 224 passed. The sibling guard calls
     `_identity_ok` directly, which tests the predicate, not the branch that uses it.
@@ -1185,7 +1190,7 @@ def test_listing_hunt_main_cannot_activate_a_board_that_does_not_name_us(
            "GoodCo": ("found", ownpage, 5, "")}
     monkeypatch.setattr(L, "hunt_one",
                         lambda name, seed, documented=False, mode="": res[name])
-    monkeypatch.setattr(C, "_page_names_company", lambda name, url, html="": False)
+    monkeypatch.setattr(IG, "page_names_company", lambda name, url, html="": False)
     monkeypatch.setattr(sys, "argv", ["listing_hunt.py", "--apply"])
     L.main()
 
@@ -1258,7 +1263,7 @@ def test_repair_extract_gap_main_cannot_activate_a_foreign_board(tmp_path, monke
     ])
     monkeypatch.setattr("scrape_universal.scrape",
                         lambda name, url: [{"title": "Engineer", "location": "Tel Aviv"}])
-    monkeypatch.setattr(C, "_page_names_company", lambda name, url, html="": False)
+    monkeypatch.setattr(IG, "page_names_company", lambda name, url, html="": False)
     monkeypatch.setattr(sys, "argv", ["repair_extract_gap.py", "--apply"])
     G.main()
 
@@ -1301,7 +1306,7 @@ def test_deep_validate_never_falls_back_to_the_rows_own_page(tmp_path, monkeypat
                         lambda rend, name, url: ("recovered", "scrape", "riskified", "",
                                                  12, 5, ""))
     # the row's OWN page names it — the trap the fallback walked into
-    monkeypatch.setattr(C, "_page_names_company", lambda name, url, html="": True)
+    monkeypatch.setattr(IG, "page_names_company", lambda name, url, html="": True)
     monkeypatch.setattr(sys, "argv", ["deep_validate.py", "--apply"])
     D.main()
 
@@ -1328,7 +1333,7 @@ def test_the_walled_pool_survives_another_tools_note_rewrite():
     root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
     with open(_os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
         rows = [r for r in _csv.reader(fh) if r and len(r) >= 6][1:]
-    pool = [r for r in rows if r[4] == "false" and cw._is_walled(r)]
+    pool = [r for r in rows if r[4] == "false" and IG.is_walled(r)]
     assert pool, "fixture drift: the walled pool is empty"
 
     survived = 0
@@ -1336,7 +1341,7 @@ def test_the_walled_pool_survives_another_tools_note_rewrite():
         r2 = list(r)
         r2[5] = replace_own(r[5], "deep-validated",
                             "deep-validated 2026-08-24: no listing found; dark")
-        if cw._is_walled(r2):
+        if IG.is_walled(r2):
             survived += 1
     assert survived >= len(pool) // 3, (
         "one deep_validate night took the walled pool from %d to %d — the pool predicate is "

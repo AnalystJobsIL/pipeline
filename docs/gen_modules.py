@@ -107,6 +107,7 @@ PIPELINE = {
  "atomic": "**shared** - atomic writes for every state file",
  "companies": "**shared** - load companies.csv into row dicts",
  "company_identity": "**shared** - does this URL belong to this company? Gates all four activation paths",
+ "identity_gate": "**shared** - the one gate every registry writer consults before it writes api_url/active; page content is the discriminator, the tenant string is not",
  "notes": "**shared** - the companies.csv notes append-log. Never hand-roll a trim",
  "verdicts": "**shared** - the single source of truth for verdict tokens and re-check pools",
  "stages": "**shared** - which nightly stage last finished, and how much it did",

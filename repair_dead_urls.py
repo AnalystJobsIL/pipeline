@@ -35,6 +35,11 @@ from pipeline.aggregators import is_aggregator
 from pipeline.company_identity import (verdict as identity_verdict,
                                        page_mentions_company, registrable, _norm)
 from audit_empty_rows import tenant_is_this_company
+# One seam, called through the MODULE, never bound with `from ... import x as y`. A
+# `from` binding is a separate module global, so patching the gate would not reach it -
+# which is how two fixtures silently started hitting the live network instead of their
+# stub. Attribute access resolves at call time, so there is exactly one place to patch.
+from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 
@@ -249,8 +254,7 @@ def main():
             # not strip generic/geographic words, so `<company> Israel` rows failed it on
             # boards that are titled without the suffix. `html` is already fetched here, so
             # passing it costs no extra request. `is True` keeps "unreadable" (None) out.
-            from crack_walled import _page_names_company
-            names_us = _page_names_company(name, u, html=html) is True
+            names_us = _gate.page_names_company(name, u, html=html) is True
             if v == "ats" and not tenant_is_this_company(name, u):
                 names_us = False
             if (v == "match" and whole_name) or names_us:

@@ -34,13 +34,14 @@ from pipeline.recruiters import is_recruiter
 from urllib.parse import urlparse
 
 from pipeline.company_identity import is_foreign, ATS_HOST
-from crack_walled import _ok_to_write, _page_names_company
-
-# Hosts that ARE a multi-tenant ATS but are missing from `company_identity.ATS_HOST`.
-_ATS_NOT_IN_ATS_HOST = re.compile(r"(jobvite\.com|taleo\.net)", re.I)
 from pipeline.firmographics import looks_like_junk
 from pipeline.company_identity import looks_like_a_job_listing_page
 from resolve_llm import _ask_claude
+# One seam, called through the MODULE, never bound with `from ... import x as y`. A
+# `from` binding is a separate module global, so patching the gate would not reach it -
+# which is how two fixtures silently started hitting the live network instead of their
+# stub. Attribute access resolves at call time, so there is exactly one place to patch.
+from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 
@@ -104,53 +105,6 @@ def _resolve_rebrand(url):
     d0 = ".".join(urllib.parse.urlparse(url).netloc.split(".")[-2:])
     d1 = ".".join(urllib.parse.urlparse(final).netloc.split(".")[-2:])
     return final, (d1 if d0 != d1 else "")
-
-
-def _identity_ok(name, url):
-    """May this url be activated, or persisted as the row's address?
-
-    `is_foreign` is the right gate on an ordinary domain and it works there. On a
-    multi-tenant ATS it returns **False for every host by design** (ARCHITECTURE.md section
-    2, docs/BACKLOG.md 21: an acquirer's tenant is legitimate, `Momentis Surgical` really
-    does post under `memic`), which left this tool - the one with the documented fast path -
-    as the last activating path in that class with no identity test at all:
-
-        NanoLock Security  gen.wd1.myworkdayjobs.com/careers/          is_foreign -> False
-        Sight Diagnostics  recruiting2.ultipro.com/SIG1008SIGH/...     is_foreign -> False
-
-    `Sight Sciences` is ALREADY ACTIVE on that same `SIG1008SIGH` board, so activating
-    `Sight Diagnostics` on it publishes one company's roles under two company names - the
-    duplicate-attribution failure section 2 spends a subsection on.
-
-    Scoped deliberately: the page test runs **only** on ATS hosts, where `is_foreign` is
-    inert. On an ordinary careers domain nothing changes, because `_page_names_company`
-    returns `None` (no evidence) for any page under 2000 chars and a lot of legitimate
-    company career pages are JS-rendered - routing those through it would trade this hole
-    for silent exclusion, which is section 8's first bug class and exactly the mistake wave
-    7 caught in `crack_walled._ok_to_write`.
-    """
-    host = (urlparse(url or "").netloc or "").lower()
-    if host and _ATS_NOT_IN_ATS_HOST.search(host):
-        # `company_identity.ATS_HOST` omits jobvite and taleo, while `crack_walled`,
-        # `audit_empty_rows`, `deep_validate` and `registry_health --ats` all support them.
-        # Without this branch the URL falls to the ordinary-domain path, where `verdict()`
-        # compares the company against the ATS VENDOR's domain, returns `mismatch`, and
-        # `is_foreign` is True — so a correct board is refused outright even with perfect
-        # page evidence:
-        #     Varonis https://jobs.jobvite.com/varonis/search?l=Israel   -> refused
-        #     Radware https://radware.taleo.net/careersection/2/...      -> refused
-        # `crack_walled.listing_urls()` constructs exactly those URLs, so the tool could
-        # never write the address it had just built. `is_foreign` is skipped here for the
-        # same reason it is skipped on every other ATS host — it is not meaningful on one —
-        # and the page test below is the real gate. Adding these two to `ATS_HOST` is the
-        # proper fix and is `pipeline` plumbing: docs/BACKLOG.md 42.
-        return (looks_like_a_job_listing_page(url)
-                and _page_names_company(name, url) is True)
-    if is_foreign(name, url):
-        return False
-    if host and ATS_HOST.search(host):
-        return _ok_to_write(name, url)
-    return True
 
 
 def _triaged_page_empty(note):
@@ -373,7 +327,7 @@ def main():
             refused = ""
             if verdict == "found" and not looks_like_a_job_listing_page(url):
                 refused = "not a listings page"
-            elif verdict == "found" and not _identity_ok(name, url):
+            elif verdict == "found" and not _gate.identity_ok(name, url):
                 # This branch sets fr[4] = "true". Until 2026-08-24 the ONLY thing between a
                 # hunted URL and an active row was "does the path look like a listings
                 # page" - no identity test whatsoever, on the tool whose documented
@@ -431,7 +385,7 @@ def main():
                         # fireflyspace.com; persisted, that reads as data, and every later
                         # tool honestly re-tests the wrong company's careers page. Note it
                         # in the note instead, which is text, not an endpoint.
-                        if not _identity_ok(name, url):
+                        if not _gate.identity_ok(name, url):
                             # `is_foreign` alone was the gate here. It is False for every ATS
                             # host, so a walled candidate was persisted into fr[3] with a
                             # `monitored candidate` note - and this tool's own fast path

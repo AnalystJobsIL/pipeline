@@ -18,6 +18,11 @@ import re
 import sys
 import time
 
+# One seam, called through the MODULE, never bound with `from ... import x as y`. A
+# `from` binding is a separate module global, so patching the gate would not reach it -
+# which is how two fixtures silently started hitting the live network instead of their
+# stub. Attribute access resolves at call time, so there is exactly one place to patch.
+from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 
@@ -46,7 +51,6 @@ def main():
     from scrape_universal import scrape
     from pipeline.israel import is_israel_job
     from pipeline.company_identity import is_foreign, looks_like_a_job_listing_page
-    from listing_hunt import _identity_ok        # noqa: F401  (shared identity gate)
     from pipeline.aggregators import is_aggregator
 
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
@@ -87,7 +91,7 @@ def main():
             print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but {r[3][:40]} "
                   f"is not a listings page — not activated", flush=True)
             il = []
-        if il and not _identity_ok(r[0], r[3]):
+        if il and not _gate.identity_ok(r[0], r[3]):
             # `is_foreign` alone was the gate here, and it returns False for every ATS host
             # by design - so on an ATS this branch had no identity test at all, while it
             # sets fr[4] = "true" and runs at 19:00 THIRTY MINUTES BEFORE `listing_hunt` in

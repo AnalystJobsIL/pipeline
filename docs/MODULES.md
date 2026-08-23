@@ -131,6 +131,7 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/firmographics.py` | per-company sector / stage / size / business model |
 | `pipeline/health.py` | per-company ATS health -> cloud_state/stale.json + health_baseline.json |
 | `pipeline/http.py` | **shared** - the zero-dependency HTTP helper |
+| `pipeline/identity_gate.py` | **shared** - the one gate every registry writer consults before it writes api_url/active; page content is the discriminator, the tenant string is not |
 | `pipeline/israel.py` | deterministic Israel-location filter |
 | `pipeline/jdfill.py` | fetches a job description for a role that arrived without one |
 | `pipeline/notes.py` | **shared** - the companies.csv notes append-log. Never hand-roll a trim |

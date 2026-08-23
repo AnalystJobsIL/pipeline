@@ -614,13 +614,13 @@ def test_the_hunt_never_stores_another_company_s_page_as_the_row_address():
     2026-08-24: the gate here was `is_foreign(name, url)`, which returns False for every ATS
     host by design — so on a walled ATS this branch had no gate at all and persisted the
     candidate anyway. It is now `_identity_ok`, which falls through to
-    `crack_walled._ok_to_write` (page must name the company) on ATS hosts and keeps
+    `IG.ok_to_write` (page must name the company) on ATS hosts and keeps
     `is_foreign` everywhere else. Strictly stronger; the assertion follows it."""
     import inspect
     import listing_hunt
     src = inspect.getsource(listing_hunt.main)
     body = src[src.index('elif verdict == "nolisting"'):]
-    guard = body.index("_identity_ok(name, url)")
+    guard = body.index("_gate.identity_ok(name, url)")
     persist = body.index("fr[3] = url")
     assert guard < persist, "the identity check must gate the address write, not follow it"
 

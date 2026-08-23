@@ -28,9 +28,18 @@ import urllib.request
 from deep_validate import Renderer, ddg
 from audit_empty_rows import AGG, verify
 from pipeline.aggregators import is_aggregator
+# One seam, called through the MODULE, never bound with `from ... import x as y`. A
+# `from` binding is a separate module global, so patching the gate would not reach it -
+# which is how two fixtures silently started hitting the live network instead of their
+# stub. Attribute access resolves at call time, so there is exactly one place to patch.
+from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 from pipeline.company_identity import is_foreign
+# The identity gate is `pipeline/` because five root tools consult it and it used to live
+# here, in a leaf, reachable from two of them only through a lazy in-function import that
+# existed to dodge an import cycle. docs/BACKLOG.md 30. These names are re-exported under
+# their old private spellings so nothing outside has to care where they moved.
 from pipeline.company_identity import looks_like_a_job_listing_page, page_mentions_company
 from pipeline.recruiters import is_recruiter
 
@@ -75,59 +84,12 @@ _HOST_PATTERNS = {
 }
 
 
-# The walled/multi-tenant ATS hosts this tool knows how to crack. Kept as HOSTS on purpose:
-# see `_is_walled` for why a note token could not be the only membership test.
-_WALLED_HOST = re.compile(
-    r"(icims\.com|myworkdayjobs\.com|eightfold\.ai|avature\.net|oraclecloud\.com|"
-    r"ultipro\.com|phenompeople\.com|phenom|jobvite\.com|taleo\.net|successfactors|"
-    r"hibob\.com|applytojob\.com)", re.I)
-
-_PLATFORM_ALIAS = {"eightfold.ai": "eightfold", "phenom": "phenom", "icims.com": "icims",
-                   "successfactors": "successfactors", "oraclecloud.com": "oraclecloud",
-                   "avature.net": "avature", "jobvite.com": "jobvite", "taleo.net": "taleo",
-                   "phenompeople.com": "phenom", "ultipro.com": "ultipro",
-                   "myworkdayjobs.com": "workday", "hibob.com": "hibob",
-                   "applytojob.com": "applytojob"}
-
-
-def _host_platform(url):
-    """Platform from the row's stored URL — durable data, unlike a note segment."""
-    host = (urllib.parse.urlparse(url or "").netloc or "").lower()
-    m = _WALLED_HOST.search(host)
-    if not m:
-        return None
-    return _PLATFORM_ALIAS.get(m.group(1).lower(), m.group(1).lower())
-
-
-def _is_walled(row):
-    """Is this row in the walled-ATS pool? DURABLE data first, note token second.
-
-    This pool used to be the literal string `unsupported ATS` in the note, and nothing else.
-    That string is written by `deep_validate` as part of ITS OWN segment
-    (`deep-validated <date>: unsupported ATS icims.com`), and `pipeline.notes.replace_own`
-    deletes a tool's previous segment when it writes a new one — by design. So every
-    `deep_validate` verdict that is not `unsupported` (i.e. `dark`, `unreachable`, and the
-    `not this company's board` refusal) silently removes the row from THIS tool's pool,
-    permanently.
-
-    Measured on the real registry 2026-08-24: the token lived only inside `deep_validate`'s
-    own segment on **24 of the 25** pool rows, and one simulated all-dark Saturday took the
-    pool from 25 to **0** — with `pytest`, `check_invariants` and `registry_health` all
-    green, because no guard has a per-tool floor (docs/BACKLOG.md 34).
-
-    A pool predicate must not be a string another tool owns and rewrites. The host in
-    `api_url` is the same fact, recorded where only this lane's tools write.
-    """
-    return ("unsupported ATS" in (row[5] or "")
-            or _host_platform(row[3] if len(row) > 3 else "") is not None)
-
-
 def _platform_of(note, url=""):
     m = re.search(r"unsupported ATS ([A-Za-z.]+)", note or "")
     if not m:
-        return _host_platform(url)          # note token gone (or never written): use the host
+        return _gate.host_platform(url)          # note token gone (or never written): use the host
     p = m.group(1).lower()
-    return _PLATFORM_ALIAS.get(p, p)
+    return _gate._PLATFORM_ALIAS.get(p, p)
 
 
 def listing_urls(platform, m, page_url):
@@ -250,7 +212,7 @@ def crack_one(name, seed, platform):
                 jobs = []
             il = [j for j in jobs if is_israel_job(j)]
             if il:
-                names_us = _page_names_company(name, lu)
+                names_us = _gate.page_names_company(name, lu)
                 if names_us is False:
                     # Real Israel roles on a real listings page belonging to SOMEONE ELSE.
                     # This must NOT return `novrfy`: that branch does `fr[3] = got[1]`, i.e.
@@ -291,7 +253,7 @@ def crack_one(name, seed, platform):
     # careers.workable.com, i.e. Workable's OWN corporate careers site. Test identity before
     # persisting an address, not only before activating one.
     kind0, lu0 = captures[0]
-    if _page_names_company(name, lu0) is False:
+    if _gate.page_names_company(name, lu0) is False:
         return ("notours", captures[0], 0,
                 # SHORT on purpose: this segment shares a 220-char cell with every other
                 # tool's verdict, and `notes.append` evicts whole OLD segments to make room.
@@ -301,98 +263,6 @@ def crack_one(name, seed, platform):
                 # 199/220 here, so every character is a row's coverage.
                 "not this company's board")
     return ("novrfy", captures[0], 0, f"host found ({captures[0][1][:60]}) but 0 IL extracted")
-
-
-def _page_names_company(name, url, html=""):
-    """Three-valued: True = the page names this company, False = it names someone else,
-    None = we could not read it, which is NO EVIDENCE and must not read as either.
-
-    On a walled ATS the tenant lives in the SUBDOMAIN (`careers-bancorpbank.icims.com`), and
-    `company_identity.verdict` only checks a tenant in the PATH - so it returns the blanket
-    `"ats"`, which its own docstring defines as "we cannot tell", and `is_foreign` reads that
-    as False. `_slug_matches("Bancor", "bancorpbank")` passes too, on plain containment. Both
-    were true on 2026-08-23 and this tool was one `--apply` from moving Bancor (Israeli
-    crypto, ex-Bprotocol) onto The Bancorp Bank's iCIMS board: that page says "Bancorp" 18
-    times and Bancor-as-a-word zero times.
-
-    The first version of this gate was a plain strict-TLS urllib fetch returning a bare bool,
-    and an adversarial review measured it False on **12 of 60 rows the pipeline had already
-    verified as that company's own board** (Meta, Akamai, Ford, Microsoft Israel, ...).
-    Three causes, each already in this repo's catalogue of paid-for lessons:
-
-    1. **403 to a plain fetch** - `Bit`'s own careers page. The crack loop reached these with
-       Playwright, so re-fetching with urllib is strictly weaker evidence than the evidence
-       that produced the candidate; prefer HTML the caller already has.
-    2. **Strict TLS.** `scan_dead_domains.alive()` uses a lenient context on purpose -
-       ARCHITECTURE section 2: "strict TLS on the scanning machine produced 6 false
-       positives". This re-introduced exactly that.
-    3. **strict=True wants the name's words consecutively**, so any row whose registry name
-       carries a suffix the page omits fails structurally: 46 rows are named "... Israel".
-       Retry against the name with the generic/geographic words stripped.
-    """
-    if not html:
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": _UA})
-            html = urllib.request.urlopen(req, timeout=25, context=_LENIENT).read(
-                400000).decode("utf-8", "replace")
-        except Exception:  # noqa: BLE001
-            html = ""
-    if len(html) < 2000 and os.environ.get("BRIGHTDATA_API_KEY"):
-        # A bot wall renders nearly empty; the residential unlocker sees what a browser sees.
-        # Gate on the KEY, not on SCRAPE_VIA_UNLOCKER: audit-coverage.yml runs this tool
-        # without that flag, and a missing flag must not silently downgrade the gate.
-        try:
-            from bd_rescue import unlock
-            html = (html or "") + chr(10) + (unlock(url) or "")
-        except Exception:  # noqa: BLE001
-            pass
-    if len(html) < 2000:
-        return None                        # unreadable: no evidence either way
-    if page_mentions_company(name, html, strict=True):
-        return True
-    core = " ".join(w for w in re.findall(r"[A-Za-z0-9]+", name or "")
-                    if w.lower() not in _NAME_STOP)
-    if core and core.lower() != (name or "").lower() and page_mentions_company(
-            core, html, strict=True):
-        return True
-    return False
-
-
-def _ok_to_write(name, url):
-    """May this url be written into the row's `api_url`? Positive confirmation only.
-
-    `crack_one` has several exits and gating them individually is how two 0-Israel-jobs
-    paths were missed: `cracked-api` never called the gate at all, and `novrfy` persisted
-    on an UNREADABLE page. This is the one check the write block runs regardless of which
-    branch produced the candidate, so a future `return` that forgets the gate cannot
-    re-open the hole. Unreadable (`None`) is refused here: `novrfy` writes an ADDRESS that
-    `listing_hunt`'s fast-path later activates on, and "we could not look" is not evidence.
-
-    **The tenant string is deliberately NOT a veto here.** It reads like the obvious extra
-    safety net and it is not: measured on the live registry 2026-08-24, it is wrong in both
-    directions at once.
-
-        # it refuses 7 of the 9 active rows on this tool's OWN target platforms
-        onsemi        hctz.fa.us2.oraclecloud.com          tenant_is_this_company -> False
-        Dell          iawmqy.fa.ocs.oraclecloud.com        tenant_is_this_company -> False
-        Booking.com   employees-holdings-workingatbooking.icims.com             -> False
-        # while `verdict()` calls the two boards we most need to refuse a plain `ats`
-        Riskified     novartis.wd3.myworkdayjobs.com/riskified  verdict -> "ats"
-        Bancor        careers-bancorpbank.icims.com             verdict -> "ats"
-
-    Oracle CX pod ids (`hctz`, `edel`, `iawmqy`) are opaque by construction and can never
-    near-match a company name, so the `cracked-api`/oraclehcm branch - this tool's headline
-    lever - could never write at all. Stacking a veto that produces false refusals on top of
-    a page test that is already mandatory buys nothing and costs silent exclusion, which
-    ARCHITECTURE.md section 8 lists as this codebase's first bug class. Each false refusal
-    also stamped a *wrong* `not this company's board` verdict into the row's note.
-
-    `_page_names_company` is the only discriminator that works in both directions, and it is
-    required to return exactly `True`. Novartis's board does not name Riskified.
-    """
-    if is_foreign(name, url) or not looks_like_a_job_listing_page(url):
-        return False
-    return _page_names_company(name, url) is True
 
 
 def _recrackable(note, days=1):
@@ -418,7 +288,7 @@ def main():
     _t0 = time.time()
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
-               if r and len(r) >= 6 and r[4] == "false" and _is_walled(r)
+               if r and len(r) >= 6 and r[4] == "false" and _gate.is_walled(r)
                and _recrackable(r[5] or "")
                # This pool had NO terminal exclusion at all, while the cracked branch below
                # sets active=true. An `alias-of` row is the second row for a company we
@@ -462,7 +332,7 @@ def main():
             fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
             for fr in fresh:
                 if fr and fr[0] == name:
-                    if verdict.startswith("cracked") and not _ok_to_write(name, got[1]):
+                    if verdict.startswith("cracked") and not _gate.ok_to_write(name, got[1]):
                         # Identity gate: a cracked page with real Israel roles is still the
                         # WRONG page if it belongs to someone else (FairFly/fireflyspace,
                         # COTI/jobs.citi.com). Document where we looked; do not activate.
@@ -502,7 +372,7 @@ def main():
                         # note reading "verified 0 IL"; and `novrfy` persisted the address
                         # whenever the page was merely UNREADABLE. Both are re-checked below
                         # by `_ok_to_write`, which no future `return` can bypass.
-                        if _ok_to_write(name, got[1]):
+                        if _gate.ok_to_write(name, got[1]):
                             fr[3] = got[1]
                             fr[5] = _note_replace(
                                 fr[5], "crack-walled",

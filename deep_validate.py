@@ -36,9 +36,15 @@ from pipeline.aggregators import is_aggregator
 from bd_rescue import _load_secrets, unlock
 from pipeline.recruiters import is_recruiter
 from resolve_llm import _ATS_HINT, _PROMPT, _ask_claude
+# One seam, called through the MODULE, never bound with `from ... import x as y`. A
+# `from` binding is a separate module global, so patching the gate would not reach it -
+# which is how two fixtures silently started hitting the live network instead of their
+# stub. Attribute access resolves at call time, so there is exactly one place to patch.
+from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 from pipeline.company_identity import is_foreign
+from audit_empty_rows import tenant_is_this_company
 from pipeline.company_identity import looks_like_a_job_listing_page
 from pipeline.verdicts import in_pool
 
@@ -310,18 +316,11 @@ def main():
                 for fr in fresh:
                     if not fr or fr[0] != name or len(fr) < 6:
                         continue
-                    # lazy: crack_walled imports Renderer/ddg from THIS module, so a
-                    # module-level import is a cycle. The gate is defined there because
-                    # that is where `_page_names_company` (three-valued, unlocker-backed)
-                    # lives; docs/BACKLOG.md 30 proposes lifting both into `pipeline/`,
-                    # which is plumbing and not this lane's to write.
-                    from crack_walled import _page_names_company
-                    from audit_empty_rows import tenant_is_this_company
 
                     # Tenant test FIRST, page test only as a second chance - the shape
                     # `audit_empty_rows` already uses, and for the reason wave 8 measured.
                     #
-                    # Gating directly on `_ok_to_write(api)` looked stricter and was simply
+                    # Gating directly on `_gate.ok_to_write(api)` looked stricter and was simply
                     # broken: `api` here is a MACHINE endpoint. All 66 active Workday rows
                     # are `/wday/cxs/<tenant>/<site>/jobs`, which answers a GET with 400, so
                     # `_page_names_company` returns None ("could not read") and the row was
@@ -342,7 +341,7 @@ def main():
                     _cand = api or ""
                     _ident = bool(_cand) and (
                         tenant_is_this_company(name, _cand)
-                        or _page_names_company(name, _cand) is True)
+                        or _gate.page_names_company(name, _cand) is True)
                     # Clause 3 of the activation rule (ARCHITECTURE.md section 2) is
                     # `looks_like_a_job_listing_page`, and the wave-8 rewrite dropped it —
                     # the import stayed, nothing called it. Restored SCOPED TO `scrape`,

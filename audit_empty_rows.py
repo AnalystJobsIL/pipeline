@@ -38,6 +38,11 @@ AUDIT_TTL_DAYS = 30
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 from pipeline.aggregators import HOSTS as AGG, is_aggregator   # single source of truth
+# One seam, called through the MODULE, never bound with `from ... import x as y`. A
+# `from` binding is a separate module global, so patching the gate would not reach it -
+# which is how two fixtures silently started hitting the live network instead of their
+# stub. Attribute access resolves at call time, so there is exactly one place to patch.
+from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows, write_json
 from pipeline.company_identity import is_foreign, page_mentions_company
 from pipeline.notes import replace_own as _note_replace
@@ -546,10 +551,7 @@ def main():
             # doc-level claim of shared behaviour over two silently diverging copies is the
             # bug class this lane exists to remove, so the copies go rather than the claim.
             #
-            # Lazy import: `crack_walled` imports this module, so a module-level import is a
-            # cycle. docs/BACKLOG.md 30 proposes lifting the gate into `pipeline/`.
-            from crack_walled import _page_names_company
-            _tenant_ok = _page_names_company(name, api or "") is True
+            _tenant_ok = _gate.page_names_company(name, api or "") is True
         if is_foreign(name, api or "") or not _tenant_ok:
             # Identity gate: this tool SEARCHES for a board, which is exactly how you end up
             # holding another company's — and it verifies, with real jobs. Refuse it.
