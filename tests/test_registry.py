@@ -1809,3 +1809,42 @@ def test_crack_walled_novrfy_does_not_persist_an_address_it_could_not_confirm(
     assert board not in out["OraCo"][3], (
         "persisted an address it could not confirm: %r" % (out["OraCo"],))
     assert out["OraCo"][4] == "false"
+
+
+def test_every_ownership_mirror_agrees_with_the_tool_it_mirrors():
+    """`registry_health.pools()` must not RETYPE a tool's row filter.
+
+    The matrix is the answer to "who re-checks a parked row", and section 2 tells a reader to
+    trust it over any hand-written cell. It was only literally derived for `triage_dark`;
+    four filters were retyped, and one of those was wrong: the crack mirror was
+    `"unsupported ATS" in note`, which is half of `identity_gate.is_walled` -- it missed the
+    host-derived half, under-counted that pool by 7 rows, and because `orphans()` subtracts
+    pool membership it under-reported orphans by the same rows.
+
+    `_EXTRACT_GAP` was LOOSER than `repair_extract_gap.MODE` (no date anchor), which is the
+    direction that hides an orphan: a row the mirror matched but the tool did not was counted
+    as owned when nothing owns it. Drift is 0 today; this test is what keeps it there.
+    """
+    import registry_health as R
+    from pipeline import identity_gate as G
+    from pipeline.recruiters import is_recruiter
+    from repair_extract_gap import MODE
+
+    rows = R.read_rows()
+    labelled = R.pools(rows)
+
+    crack_real = {r[0] for r in rows
+                  if r[4] == "false" and G.is_walled(r)
+                  and not R.is_terminal_note(r[5] or "") and not is_recruiter(r[0])}
+    crack_matrix = {r[0] for r in labelled["crack_walled (19:00 daily + Sun)"]}
+    assert crack_matrix == crack_real, (
+        "the crack mirror disagrees with identity_gate.is_walled by %d row(s): %s"
+        % (len(crack_matrix ^ crack_real), sorted(crack_matrix ^ crack_real)[:8]))
+
+    gap_real = {r[0] for r in rows
+                if r[4] == "false" and MODE.search(r[5] or "")
+                and (r[3] or "").startswith("http")}
+    gap_matrix = {r[0] for r in labelled["repair_extract_gap (19:00 daily)"]}
+    assert gap_matrix == gap_real, (
+        "the extract-gap mirror disagrees with repair_extract_gap.MODE by %d row(s): %s"
+        % (len(gap_matrix ^ gap_real), sorted(gap_matrix ^ gap_real)[:8]))

@@ -997,3 +997,52 @@ see `docs/sessions/2026-08-24-registry.md` for why nine waves did not converge w
     boards the gate SHOULD refuse. Recorded because the finding was well-evidenced,
     confidently argued, and measured on a population the tool cannot reach; the next reviewer
     should check reachability before quoting a refusal count.
+
+## From the registry rebuild, 2026-08-24 (the refactor pass)
+
+47. **Unifying the terminal-state definitions costs 10 rows of coverage, and they are the
+    right 10** — lane: shared plumbing. Measured, not estimated. There are **6 distinct
+    memberships** across the tree:
+
+    | membership | where |
+    |---|---|
+    | `defunct, domain-dead, alias-of` | `audit_empty_rows:55`, `check_invariants:64`, `crack_walled:48`, `deep_validate:285`, `listing_hunt:274` |
+    | `defunct, domain-dead, duplicate of, redundant, recruiter` | `pipeline/verdicts.TERMINAL:40` — the nominal source, and the only one **missing `alias-of`** |
+    | `defunct, domain-dead, alias-of, duplicate, redundant, recruiter` | `registry_health:214`, `triage_dark:80` (note bare `duplicate`, not `duplicate of`) |
+    | `defunct, domain-dead, alias-of, duplicate of, redundant` | `registry_health._REASON:77` |
+    | `defunct, domain-dead` | `probe_candidates:96` |
+    | `defunct` | `scan_dead_domains:96`, `repair_dead_urls:69` |
+
+    Adding `alias-of` to `verdicts.TERMINAL` and pointing the five inline copies at
+    `is_terminal` makes **10 parked rows newly terminal**, because those five gain
+    `duplicate of` / `redundant` / `recruiter`:
+
+        Abra · NICE · Via Transportation · Marvell Israel · Google  (+5 more)
+
+    Every one is a deliberate permanent deactivation, and five of them are exactly
+    `check_invariants.ALLOWED_ORPHANS`. So the unification is arguably CORRECT — those rows
+    should stop being re-checked, and they would stop being orphans — but it is a coverage
+    change of 10 rows in shared plumbing, not a tidy-up, and `probe_candidates` and
+    `scan_dead_domains` hold strict SUBSETS that would start excluding rows they currently
+    scan. Reproduce before touching it:
+
+    `python -c "import csv,re;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:];p=[x for x in r if x[4]=='false'];n=re.compile(r'defunct|domain-dead|alias-of',re.I);w=re.compile(r'defunct|domain-dead|alias-of|duplicate of|redundant|recruiter',re.I);print(len([x for x in p if n.search(x[5] or '')]),len([x for x in p if w.search(x[5] or '')]))"`
+    -> `76 86` on 2026-08-24.
+
+    **Deliberately not done in the rebuild pass**, which was a safety refactor: it is a
+    behaviour change to a file every lane imports, and the brief's rule for shared plumbing
+    is to declare it and let the affected lanes weigh in, not to smuggle it into a commit
+    about identity gates. Do it with `ALLOWED_ORPHANS` in the same change, since these 10
+    rows are why that list exists.
+
+48. **The re-check pool is still defined in four places** — lane: shared plumbing, unchanged
+    by the rebuild for the same reason as 47. `pipeline/verdicts.TOKENS` (18),
+    `listing_hunt.main()`'s inline regex (16), `check_invariants.POOL` (17),
+    `registry_health._HUNT_SHAPE` (16). `url-cleared` and `url-flagged` are in the inline
+    copies and missing from `TOKENS`, so of the 39 rows carrying one, the 9 that carry
+    nothing else are invisible to `in_pool`. The rebuild DID remove the two mirrors it could
+    remove without a behaviour change — `registry_health.pools()` now imports
+    `identity_gate.is_walled` and `repair_extract_gap.MODE` rather than retyping them, and
+    `test_every_ownership_mirror_agrees_with_the_tool_it_mirrors` keeps them honest. The
+    remaining two need `listing_hunt` to grow an extractable `targets(rows)`; that is the
+    real fix and it is a `registry`-lane job.

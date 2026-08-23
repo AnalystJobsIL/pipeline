@@ -46,6 +46,7 @@ import sys
 from pipeline.aggregators import is_aggregator
 from pipeline.atomic import write_json
 from pipeline.recruiters import is_recruiter
+from pipeline import identity_gate as _gate
 from pipeline.verdicts import in_pool, is_terminal as _verdicts_terminal
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). Company names here
@@ -202,6 +203,15 @@ def save_census(rows, path=CENSUS):
 
 # ---------------------------------------------------------------- the ownership matrix
 
+def _extract_gap_mode():
+    """The tool's OWN regex, imported. `_EXTRACT_GAP` was a retyped mirror and it was LOOSER
+    than `repair_extract_gap.MODE` (no date anchor), which is the direction that hides
+    orphans: a row this matched but the tool did not was counted as owned when nothing owns
+    it. Lazy because `repair_extract_gap` pulls in the scraper stack at import."""
+    from repair_extract_gap import MODE
+    return MODE
+
+
 def pools(rows):
     """Recompute ARCHITECTURE.md section 2's ownership matrix from the tools' own predicates.
 
@@ -249,9 +259,14 @@ def pools(rows):
                 and not _triage.SKIP_NOTES.search(n)),
         "listing_hunt (19:00 daily)": sel(_hunt_pool),
         "repair_extract_gap (19:00 daily)":
-            sel(lambda n, r: bool(_EXTRACT_GAP.search(n)) and (r[3] or "").startswith("http")),
+            sel(lambda n, r: bool(_extract_gap_mode().search(n))
+                and (r[3] or "").startswith("http")),
+        # IMPORT the tool's own predicate, do not retype it. The retyped version was
+        # `"unsupported ATS" in n`, which is only half of `is_walled` -- it missed the
+        # host-derived half and under-counted this pool by 7 rows, and `orphans()` subtracts
+        # this membership, so it under-reported orphans by the same rows.
         "crack_walled (19:00 daily + Sun)":
-            sel(lambda n, r: "unsupported ATS" in n and not is_terminal_note(n)
+            sel(lambda n, r: _gate.is_walled(r) and not is_terminal_note(n)
                 and not is_recruiter(r[0])),
         "probe_candidates (05:00 daily)":
             sel(lambda n, r: bool(_PROBE_SHAPE.search(n)) and not is_terminal_note(n)
