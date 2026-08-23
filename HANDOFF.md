@@ -10,7 +10,7 @@ pull from LinkedIn/Indeed/Telegram/company sites, triage newly discovered compan
 every relevant role its full description and tags whatever its age, email the last 48h, and
 keep the board to live roles with everything else archived.
 
-**Sixteen defects, A–P below. Every one of them had a green workflow and a plausible log
+**Seventeen defects, A–Q below. Every one of them had a green workflow and a plausible log
 line** — that is the whole character of this codebase's failure mode, and it is why the
 morning was spent reading outputs rather than exit codes. Two were costing coverage every
 day (Indeed had returned zero records since it was wired up; four fetchers never carried a
