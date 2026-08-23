@@ -1,7 +1,153 @@
-# Session handoff — 2026-08-22
+# Session handoff — 2026-08-23 (morning)
 
 Read `ARCHITECTURE.md` first (system model, invariants, runbooks). This file is the
 "what just happened / what to watch / what's next" layer on top of it.
+
+## 0. 2026-08-23 morning session — what was wrong and what was done
+
+The brief was to make the six-step flow actually work end to end: fix invalid companies,
+pull from LinkedIn/Indeed/Telegram/company sites, triage newly discovered companies, give
+every relevant role its full description and tags whatever its age, email the last 48h, and
+keep the board to live roles with everything else archived. Seven defects were found; all
+seven had a green workflow and a plausible-looking log line.
+
+### A. Nothing ever gave a Workday/SmartRecruiters/BambooHR role a description
+Their LIST responses simply have no description field — 120 active companies. So those
+roles reached the *classifier* as a bare title (the LLM tier exists to read the description
+and judge, and had nothing to read) and reached the *board* with no requirements, no skills
+and no tags. `enrich_scrape_jd.py` only ever covered scrape-source companies.
+- `pipeline/jdfill.py` fetches the JD from the posting's own URL before classification,
+  title-gated and wall-clock budgeted (`JDFILL_TIME_BUDGET_MIN`).
+- `enrich_matched_jd.py` does the age-blind version over the `matched` table itself —
+  every role we ever accepted, any source, any age — with the Bright Data fallback.
+
+### B. The store erased those descriptions every morning
+`upsert_matched` wrote `job.get("description") or ""` on each re-sighting, so the day after
+a JD was backfilled the same description-less Workday response overwrote it with "". A
+description is now only ever replaced by a longer one.
+
+### C. The board dropped live roles into a page headed "expired or filled"
+It selected `first_seen >= today-14d`. A role open for three weeks left the board while
+still open. The board is now the set of roles still present on their employer's careers page
+(`_alive`), with no per-company cap; the archive is exactly the roles that are gone.
+
+### D. Four of the five "repairs" from the overnight run pointed at other companies
+`repair_extract_gap` re-scrapes a dark row's STORED url — which is usually the hunt's
+documented best *guess*. Hours after the hunt refused fireflyspace.com for FairFly on
+identity, the repair pass activated it: 25 Firefly Aerospace roles about to publish under
+FairFly's name. Also MyndYou→MyndSolution (a BPO), SeatPick→djinni.co (an aggregator), and
+both IAI alias rows→a product page whose "6 jobs" were nav links.
+- Every path that flips `active` to true now consults `pipeline/company_identity`
+  (`repair_extract_gap`, `crack_walled`, `deep_validate`, `audit_empty_rows`), guarded by
+  `test_every_activation_path_checks_company_identity`, which walks the AST for
+  `row[4] = "true"`.
+- Two holes in the identity check itself: `verdict()` scored `time.com` a clean **match**
+  for "Time To Know" (the token IS the whole domain), and `page_mentions_company()` then
+  confirmed it because TIME's careers page contains both "time" and "know". A `weak`
+  verdict now needs the name as a phrase, and matching is per token.
+
+### E. Indeed has returned zero records since the day it was wired up
+Every Bright Data snapshot: `dataset_size: 0, error_codes: {"rate_limit": 15}`. The step
+printed "[indeed] 0 records" and exited 0. Indeed is now read through the Web Unlocker
+directly (`discovery_daily.indeed_search`, one request per query, five queries), and
+`pipeline/sources.py` records what each source returned so a source that goes quiet — or
+has never produced — is a workflow warning AND a line in the digest's own run audit.
+
+### F. The push-conflict recovery reverted other workflows' state
+Every workflow copied its own checkout-era `cloud_state/` back over origin after a
+`git reset --hard`, silently reverting every `seen.db` row committed in between (HANDOFF
+open item 7). Each job now restores only what it owns; `scraped_cache.json`, the one
+genuinely shared artifact, gets a three-way merge (`merge_json_cache.py`).
+
+### G. The firmographics were researched and rendered nowhere
+919 profiles sat in the gitignored `state/seen.db` while the cloud digest — the only thing
+that renders them — had an empty table. They now render as company-fact chips on every
+board and archive card and under each company in the email, and the two stores converge
+through `cloud_state/firmographics.json`, a sorted export git can merge.
+
+### H. 32 active rows were a second row for a company we already scan
+50 identity groups had more than one row; 32 of those pairs pointed at the **identical**
+URL. "Intel", "Intel Israel" and "Intel Corporation" all fetched the same Workday tenant.
+`merge_key` normalizes only a trailing corporate suffix, so "intelisrael" never collapses
+into "intel": the board listed every Intel opening three times and three fetches paid for
+it. Parked with an `alias-of <canonical>` note, which `check_invariants` treats as TERMINAL.
+The ~15 groups whose rows point at DIFFERENT urls (Amazon/AWS/Amazon Israel, Applied
+Materials, Microsoft, PayPal, Samsung, Siemens) genuinely cover different pages and stay.
+
+### I. Oracle HCM returned a confident zero for any large employer
+`fetch_oraclehcm` walked the newest 500 requisitions and stopped. JPMorganChase posts
+7,354, so its Israel roles were never in that window. The CE API takes `keyword=` the way
+Workday takes `searchText`; the fetcher runs both passes and dedupes. Dell 2 → 8 Israel.
+
+### J. The consent banner was being shipped as job openings
+Ten companies had cached "Strictly necessary cookies", "Manage Consent Preferences",
+"Cookie List", "Heading 4". "Analytics Cookies" carries an analytics signal, so it reached
+the LLM tier as a candidate role. `fetchers.clean_scraped` filters page chrome on READ.
+
+### K. One false positive withheld the entire day's digest, board and email
+The 05:00 run scanned 894 companies, made 187 LLM calls, fetched 20 JDs inline and built a
+board — then `check_invariants` check H failed on **one** row and the whole run was
+discarded. The row was fine: check H normalized only the COMPANY side of the comparison, so
+"G-STAT" became `gstat` while the slug stayed `g-stat`. Same for Port.io, Checkout.com and
+"EY" (two letters cannot carry identity). Its slug regex was also non-greedy, so a
+requisition number inside the title ended the match before the employer:
+`business-data-analyst-**241239**-at-experis-israel`.
+
+Three changes: `company_identity.url_names_other_company()` normalizes both sides;
+`fetch_discovery` drops mis-attributed cards **at ingest**, where the 147-row incident came
+from, so one bad card can no longer reach the commit gate; and check H is a **warning**.
+A guard that withholds the day's product to report one bad row is worse than the row.
+
+`check_invariants` also crashed on its own message — it prints violations through a cp1252
+stdout, and a Hebrew company name in the text describing the problem killed the gate.
+
+### L. A navigation menu is not a job board
+`SCRAPE_ASSUME_IL=1` makes the scraper treat every card on a page as an Israel role. So
+`iai.co.il/solution/research-academy-space/` "verified 6 IL" — "Domain Operations", "Press
+Releases" — and was activated twice in one morning. Adcore's row was a BLOG POST whose three
+"jobs" were article titles. `looks_like_a_job_listing_page()` asks whether the URL even
+claims to list openings; of 417 active scrape rows exactly ten failed, six of them wrongly
+active. It gates all four activation paths.
+
+### M. Sixteen entrypoints could die on their own success message
+`merge_csv_rows` prints `"N rows changed → M applied"` plus a company name through a cp1252
+stdout. The UnicodeEncodeError lands AFTER the merged file is written, and in the cloud
+conflict path the call is `|| true` — so the process dies on its summary and the run's
+changes are discarded with no error anyone reads. All 16 root entrypoints now reconfigure
+stdout/stderr to UTF-8 with `errors="replace"` (HANDOFF §4d item 5).
+
+### Also
+- 87 rows carried a truncated triage mode (`page-emp`, `page-e`, `pa`) that no pool matches;
+  all restored, and `check_invariants` check F2 warns on the next one.
+- `pipeline/stages.py` (written last session, never wired) is stamped by the repair, collect
+  and expand workflows and read by the digest, which now says in its audit when a
+  prerequisite stage did not run today.
+- A scoped `--only`/`--limit` run no longer overwrites `cloud_state/stale.json`.
+- The email is capped at 40 roles, and an undated role at a company we are scanning for the
+  FIRST time is board-only — 336 companies were activated overnight and their whole back
+  catalogue would otherwise have read as "posted in the last 48h".
+
+## Watch list for the next session
+
+1. **`merge_key` should move onto `firmographics.identity_key`** — the ~15 remaining alias
+   groups (Amazon/AWS, Microsoft/Microsoft Israel, PayPal/PayPal Israel) can only collapse
+   there. It is the `matched` PRIMARY KEY, so this needs a migration: re-key existing rows
+   in place, or the old rows freeze, fall out of `_alive` and appear in the archive for a
+   day. HANDOFF §4d item 3 wants this anyway ("one identity layer").
+2. **`mark_sent` still records intent, not delivery.** It runs before the digest is pushed
+   and long before the relay posts. The relay's second cron (08:30) covers a single
+   failure, so the exposure is bounded, but a role can still be burned unsent.
+3. **`cloud_state/seen.db` is committed daily at ~1.2MB.** Now that firmographics also
+   travel as JSON, the sqlite copy of that table is redundant — dropping it (and
+   VACUUMing) would take the daily binary back to ~790KB.
+4. **HiBob is an ATS with no native fetcher** (2 rows today: WINT, one other). Its careers
+   site is an Angular SPA, so the universal scraper gets nothing. If it reaches 3+ rows,
+   write the fetcher (ARCHITECTURE §6 recipe).
+5. **`jazzhr`, `eightfold`, `iCIMS`, `SuccessFactors`** — unchanged from the last handoff.
+
+---
+
+# Previous handoff — 2026-08-22
 
 ## 1. What changed in the last two sessions (2026-08-21 → 22)
 
