@@ -238,10 +238,18 @@ fixed, and every one of them is outside the `discovery` lane's write list.
    08-23 with eight days left. **When it empties, every BD step fails silently and every
    workflow stays green** — discovery, `enrich_scrape_jd`, `enrich_matched_jd`, `bd_rescue`,
    `crack_walled`, `retry_unreachable` and the resolution ladder's search rung all return
-   nothing on the same day. First moves: `DEEP_BD_SEARCH_CAP` defaults to 150 searches per
-   run and is the largest single lever; then a shared pre-flight budget check the six
-   non-discovery spenders also call, since `discovery_daily` throttling alone just makes it
-   absorb everyone else's overrun.
+   nothing on the same day. First move, and it is a one-line class of bug:
+   **`DEEP_BD_SEARCH_CAP` is not the cap it looks like.** `deep_validate._BD = {"used": 0}`
+   is a module-level counter, so 150 is per PROCESS, and six scripts import
+   `google_via_unlocker` in processes of their own — `resolve_broken` (06:00),
+   `listing_hunt` (19:00), `crack_walled` (19:00 + weekly), `repair_dead_urls`,
+   `deep_validate` (Sat), `audit_empty_rows` (Sun). Effective ceiling **~450 credits on a
+   weekday, ~750 at the weekend**; observed peak 272, i.e. two processes' worth. Then a
+   shared pre-flight budget check those six also call, since `discovery_daily` throttling
+   alone just makes it absorb everyone else's overrun.
+   **Context for the decision:** overage is $1.50/1K records and $1.00/1K requests, so full
+   depth is ~$15/month and this is a budgeting choice, not a wall — see `ARCHITECTURE.md`
+   §1a, "Is it sustainable?".
 
 7. **Reading it is CLOSED; the six scripts that spend it are item 6.**
    *(lane: `infra`.)* `discovery_daily.bd_spend_this_month()` now reads the whole pool —

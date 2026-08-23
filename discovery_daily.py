@@ -329,6 +329,22 @@ def report_bd_spend():
     print(f"[bd-spend] {mtd} credits used this month ({pct:.0f}% of {BD_MONTHLY_BUDGET}) "
           f"— {detail}. All products share one pool; this is the WHOLE pipeline, not just "
           f"discovery.")
+    # Month-end projection, so "is this sustainable" is a number printed daily rather than a
+    # question asked once. Overage is cheap and that is the point: $1.50/1K Web Scraper
+    # records, $1.00/1K Unlocker or SERP requests (brightdata.com/pricing/web-scraper, read
+    # 2026-08-23), so the honest framing is a few dollars a month, not a hard wall.
+    import calendar
+    import datetime as _d
+    t = _d.date.today()
+    days_in = calendar.monthrange(t.year, t.month)[1]
+    proj = mtd / max(1, t.day) * days_in
+    over = max(0, proj - BD_MONTHLY_BUDGET)
+    recs = parts.get("dataset_records") or 0
+    rec_share = recs / mtd if mtd else 0            # records cost 1.5x what requests do
+    cost = over * (rec_share * 1.50 + (1 - rec_share) * 1.00) / 1000
+    print(f"[bd-spend] projected month end {proj:.0f} credits"
+          + (f" — {over:.0f} over the free pool, about ${cost:.2f} at PAYG rates"
+             if over else " — inside the free pool"))
     if pct >= 80:
         print(f"::warning::Bright Data at {pct:.0f}% of the monthly free pool "
               f"({mtd}/{BD_MONTHLY_BUDGET} credits, shared by every workflow that touches "

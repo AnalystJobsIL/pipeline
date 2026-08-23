@@ -425,11 +425,36 @@ Worked numbers for 2026-08-23 (4,106 spent, 9 days left → 99 credits/day):
 `breadth limit 24 × 4 keywords + targeted cap 4`. On a fresh month at 5,000 it is
 `limit 41`; at 15,000 it is the full `limit 100`.
 
-**Unthrottled, these changes cost ~455 records/day** (391 breadth + 62 targeted) against
-~190 before — a deliberate trade for 0 → 58 new companies a day. The throttle is what makes
-that trade survivable on a 5,000-credit pool, and **the biggest single lever if it binds is
-not this layer at all**: the 646 unlocker + 471 SERP credits come from six other scripts,
-none of which meters itself. Re-derive actual billing from the account
+### Is it sustainable? Yes, for about $15 a month — the free tier is the thing that isn't
+
+Overage is **cheap**: $1.50 per 1,000 Web Scraper records, $1.00 per 1,000 Unlocker or SERP
+requests (`brightdata.com/pricing/web-scraper`, read 2026-08-23), after the 5,000 free
+credits. So the question is not "does it fit" but "what is a month of discovery worth". At
+the measured rates (breadth ~98 records per keyword per day, targeted 67/day, unlocker
+~54/day, SERP at the low weekend-only estimate):
+
+| configuration | credits/month | cost/month |
+|---|---|---|
+| as it ran before this session | 4,800 | **$0** |
+| breadth limit 41 | 11,370 | **$8.49** |
+| breadth limit 100 — full depth, 58 new companies/day | 15,870 | **$15.24** |
+| full depth, with SERP at the 08-21…08-23 rate | 21,240 | **$20.61** |
+
+**The free tier cannot fund real discovery, and that is the honest headline.** Even a
+breadth limit of 15 — the depth that yielded *one* new company — comes to 5,940 credits a
+month once the targeted backfill is included, i.e. already over. Discovery at a rate worth
+having is a ~$15/month line item, and `report_bd_spend()` prints the month-end projection
+and its dollar cost on every run so the decision stays visible instead of being rediscovered.
+
+**The long-term risk is not discovery, it is `DEEP_BD_SEARCH_CAP`.** `deep_validate._BD` is
+a **module-level** counter, so the "150 searches" cap is per PROCESS, and six scripts import
+`google_via_unlocker` in processes of their own — `resolve_broken` (daily 06:00),
+`listing_hunt` (daily 19:00), `crack_walled` (daily 19:00 + weekly), `repair_dead_urls`,
+`deep_validate` (Sat) and `audit_empty_rows` (Sun). The effective ceiling is therefore
+**~450 SERP credits on a weekday and ~750 at the weekend, not 150** — up to ~$18/month of
+SERP alone, and it is uncapped in the only sense that matters, since no script knows what
+the others have spent. Observed peak so far is 272 in a day, i.e. two processes' worth. This
+is `docs/BACKLOG.md` item 6 and it is the number to fix before adding any more depth here. Re-derive actual billing from the account
 itself — this is the only reliable ledger, and the `/customer/balance` endpoint is
 permission-blocked for this key:
 
