@@ -1188,3 +1188,13 @@ Foresight Automotive,scrape,,https://www.foresightauto.com/careers/,true,listing
 Tenengroup,comeet,93.00C,https://www.comeet.com/careers-api/2.0/company/93.00C/positions?token=39C120CAD4AD4120C120C120C00207C,true,cross-validated; 16/11 IL (was empty) | listing-hunt 2026-08-23: verified 13 IL via https://www.tenengroup.com/careers/ | scanned; no open Israel roles now
 kornit,scrape,,https://careers.kornit.com/all-positions/,true,listing-hunt 2026-08-23: verified 13 IL via https://careers.kornit.com/all-positions/ | scanned; no open Israel roles now | empty-but-suspect; 2+ role-near-Israel mentions in HTML
 One Step,scrape,https://secrethunter.io/jobz/154f91eb58,https://www.careeronestop.org/JobSearch/job-search.aspx,false,scanned; no open Israel roles now | listing-hunt 2026-08-23: best candidate www.careeronestop.org is another company; no listing found
+MSD,scrape,https://secrethunter.io/jobz/508f6b860d,https://secrethunter.io/jobz/508f6b860d,false,scanned; no open Israel roles now
+Tripleten,scrape,https://secrethunter.io/jobz/3446a5e987,https://secrethunter.io/jobz/3446a5e987,false,scanned; no open Israel roles now
+Nagomi Security,scrape,https://secrethunter.io/jobz/0c614226f8,https://secrethunter.io/jobz/0c614226f8,false,scanned; no open Israel roles now
+CloudHiro,scrape,https://secrethunter.io/jobz/d946277d1f,https://secrethunter.io/jobz/d946277d1f,false,scanned; no open Israel roles now
+Weizmann Institute of Science,scrape,https://secrethunter.io/jobz/a0980ecf75,https://secrethunter.io/jobz/a0980ecf75,false,scanned; no open Israel roles now
+AGILINA,scrape,https://secrethunter.io/jobz/52bfc0f294,https://secrethunter.io/jobz/52bfc0f294,false,scanned; no open Israel roles now
+Z2A Digital,scrape,https://secrethunter.io/jobz/1947158626,https://secrethunter.io/jobz/1947158626,false,scanned; no open Israel roles now
+Dun & Bradstreet (Israel) Ltd.,scrape,https://secrethunter.io/jobz/5fc7b31ec3,https://secrethunter.io/jobz/5fc7b31ec3,false,scanned; no open Israel roles now
+MAX Security,scrape,https://secrethunter.io/jobz/9a47f8dc98,https://secrethunter.io/jobz/9a47f8dc98,false,scanned; no open Israel roles now
+SWAPP.AI,scrape,https://secrethunter.io/jobz/ced438bd3c,https://secrethunter.io/jobz/ced438bd3c,false,scanned; no open Israel roles now
