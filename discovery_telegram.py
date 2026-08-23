@@ -158,6 +158,7 @@ def main():
         json.dump(cache, f, ensure_ascii=False, indent=1)
     # bridge new companies into the auto-expand queue (same as discovery_daily)
     from pipeline.companies import load_companies
+    from pipeline.firmographics import looks_like_junk
     from pipeline.recruiters import is_recruiter
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
     research = _load_json("research_companies.json", [])
@@ -165,7 +166,10 @@ def main():
     queued = 0
     for j in added:
         c = j["company"].strip()
-        if c.lower() not in have and c.lower() not in known and not is_recruiter(c):
+        # a Telegram post's "company" is whatever the poster typed, so it is the most
+        # likely of all the sources to be a job title or a team name
+        if (c.lower() not in have and c.lower() not in known
+                and not is_recruiter(c) and not looks_like_junk(c)):
             research.append({"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""})
             known.add(c.lower())
             queued += 1

@@ -281,13 +281,32 @@ def main():
         print(f"cache: {len(jobs)} this run + {len(merged) - len(jobs)} carried = {len(merged)}")
     else:
         print("no records fetched — keeping yesterday's discovered_cache.json")
-    # companies we don't scan directly yet -> hand to the auto-expand resolver
+    # companies we don't scan directly yet -> hand to the auto-expand resolver.
+    # VALIDATE AT THE SOURCE (HANDOFF §4d item 9): the employer field arrives verbatim from
+    # the aggregator, and sometimes it is the whole posting headline ("Data researcher -
+    # Navina") or a staffing agency. Five such rows were ACTIVE and fetched daily before
+    # this filter existed, and every downstream layer had to grow its own guard against
+    # them. A non-company also costs the nightly hunt a search: it went looking for
+    # "AppSec"'s careers page and came back with remoterocketship.com/company/guildmortgage.
+    from pipeline.firmographics import looks_like_junk
+    from pipeline.recruiters import is_recruiter as _is_rec
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
     new_cos = {}
+    n_junk = n_rec = 0
     for j in jobs:
         c = j["company"].strip()
-        if c.lower() not in have and c.lower() not in new_cos:
-            new_cos[c.lower()] = {"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""}
+        if c.lower() in have or c.lower() in new_cos:
+            continue
+        if looks_like_junk(c):
+            n_junk += 1
+            continue
+        if _is_rec(c):
+            n_rec += 1
+            continue
+        new_cos[c.lower()] = {"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""}
+    if n_junk or n_rec:
+        print(f"discovery: rejected {n_junk} job-title-shaped names and {n_rec} agencies "
+              f"before they could become rows")
     with open("out/discovered_companies.json", "w", encoding="utf-8") as f:
         json.dump(list(new_cos.values()), f, ensure_ascii=False, indent=1)
     # Bridge to auto-expand: out/ is gitignored (ephemeral on cloud runners), so the queue

@@ -826,3 +826,19 @@ def test_the_scrapers_location_regex_is_derived_from_both_place_lists():
     missing = [p for p in _IL_PLACES + _IL_PLACES_HE if not ISRAEL_LOC.search(p)]
     assert not missing, missing
     assert len(_IL_PLACES_HE) > 20, "the Hebrew list should not shrink back to a stub"
+
+
+def test_discovery_validates_the_company_name_before_queueing_it():
+    """The employer field arrives verbatim from the aggregator, and sometimes it is the
+    whole posting headline ("Data researcher - Navina") or a staffing agency. Five such rows
+    were ACTIVE and fetched daily, every downstream layer grew its own guard against them,
+    and the nightly hunt spent a search looking for "AppSec"'s careers page (it came back
+    with remoterocketship.com/company/guildmortgage). HANDOFF §4d item 9: validate at the
+    source. Structural, because the bridge is a loop with no seam to call."""
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for name in ("discovery_daily.py", "discovery_telegram.py"):
+        src = open(os.path.join(root, name), encoding="utf-8").read()
+        bridge = src[src.index("auto-expand"):]
+        assert "looks_like_junk" in bridge, f"{name} queues job-title-shaped names"
+        assert "is_recruiter" in bridge, f"{name} queues agencies"
