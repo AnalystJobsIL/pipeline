@@ -501,3 +501,26 @@ def test_confirming_a_weak_domain_needs_the_NAME_not_its_words_scattered():
     assert page_mentions_company("Time To Know", "<h1>Time to Know Ltd</h1>", strict=True)
     assert page_mentions_company("Time To Know", "<h1>TimeToKnow</h1>", strict=True)
     assert not page_mentions_company("Wiz", "<p>the time. To know more</p>", strict=True)
+
+
+# --- a source that quietly stops producing must be LOUD --------------------------------
+def test_a_source_that_stops_returning_records_is_reported(tmp_path, monkeypatch):
+    """The Bright Data Indeed dataset returned zero records on every run for five days —
+    every snapshot came back `dataset_size: 0, error_codes: {"rate_limit": 15}`. The step
+    printed "[indeed] 0 records", exited 0, and the workflow was green. Nothing anywhere
+    said a source had died, which is why nobody noticed."""
+    from pipeline import sources
+    monkeypatch.setattr(sources, "PATH", str(tmp_path / "sources.json"))
+    today = dt.date.today()
+    sources.record({"indeed": 0, "linkedin": 12, "telegram": 40})
+    s = sources.stale()
+    assert any(x.startswith("indeed: has NEVER returned") for x in s), s
+    assert not any(x.startswith("linkedin") for x in s), s
+
+    # a source that produced, then went quiet for three days
+    import json
+    data = json.load(open(sources.PATH, encoding="utf-8"))
+    data["linkedin"]["last_nonzero"] = (today - dt.timedelta(days=3)).isoformat()
+    json.dump(data, open(sources.PATH, "w", encoding="utf-8"))
+    sources.record({"linkedin": 0})
+    assert any(x.startswith("linkedin: nothing for 3d") for x in sources.stale()), sources.stale()

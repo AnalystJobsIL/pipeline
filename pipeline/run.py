@@ -71,6 +71,11 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     stages.require("repair", 1)
     stages.require("collect", 1)
     stages.require("enrich", 1)
+    # a discovery source that has quietly stopped returning records is invisible otherwise
+    from . import sources as _sources_mod
+    _dead_sources = _sources_mod.stale()
+    for _line in _dead_sources:
+        print(f"::warning::discovery source {_line}", flush=True)
 
     rows = load_companies()
     # never scan recruiting/staffing agencies — they re-post dozens of client roles and flood
@@ -354,6 +359,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         "jd_filled_inline": stats["jd_filled_inline"],
         "email_overflow": stats["email_overflow"],
         "stages": stages.summary(),
+        "dead_sources": _dead_sources,
         "paths": dict(paths),
         "failed_companies": failed_companies,
     }

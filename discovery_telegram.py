@@ -161,6 +161,11 @@ def main():
             json.dump(research, f, ensure_ascii=False, indent=1)
     with open(STATE_PATH, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=1)
+    try:
+        from pipeline import sources
+        sources.record({"telegram": len(added)})
+    except Exception as e:  # noqa: BLE001
+        print(f"[source-health] skipped: {e}")
     print(f"=== telegram: {len(added)} jobs merged · {queued} new companies queued ===")
 
 

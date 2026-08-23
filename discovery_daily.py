@@ -26,11 +26,69 @@ QUERIES = {
         {"location": "Israel", "keyword": "data analyst", "country": "IL"},
         {"location": "Israel", "keyword": "business intelligence", "country": "IL"},
     ], 15),
-    "indeed": ("gd_l4dx9j9sscpvs7no2", "keyword", [
-        {"country": "IL", "domain": "il.indeed.com", "keyword_search": "data analyst",
-         "location": "Israel"},
-    ], 15),
+    # NOTE: the Bright Data Indeed dataset (gd_l4dx9j9sscpvs7no2) has returned ZERO records
+    # every single run since it was wired up — every snapshot comes back
+    # `dataset_size: 0, error_codes: {"rate_limit": 15}`, i.e. Indeed rate-limits that
+    # collector for all 15 inputs. It printed "[indeed] 0 records" and nobody noticed for
+    # five days. Indeed is fetched through the Web Unlocker instead — see indeed_search().
 }
+
+# Indeed, read directly. il.indeed.com serves its results as one embedded JSON blob, and
+# the Web Unlocker renders the page past the bot wall — so this needs no dataset, no
+# polling, and one request per query instead of a 90-second snapshot job.
+INDEED_QUERIES = ["data analyst", "business intelligence", "BI developer",
+                  "product analyst", "אנליסט"]
+INDEED_DAYS = 7          # fromage: only postings from the last week are worth discovering
+
+_MOSAIC = re.compile(
+    r'window\.mosaic\.providerData\["mosaic-provider-jobcards"\]\s*=\s*(\{.*?\});', re.S)
+
+
+def indeed_search(query, days=INDEED_DAYS, limit=25):
+    """Return raw Indeed job cards for one Israel query (empty list on any failure)."""
+    from bd_rescue import unlock
+    url = ("https://il.indeed.com/jobs?q=" + urllib.parse.quote_plus(query)
+           + "&l=" + urllib.parse.quote_plus("Israel") + f"&fromage={days}")
+    html = unlock(url, timeout=100)
+    m = _MOSAIC.search(html or "")
+    if not m:
+        return []
+    try:
+        data = json.loads(m.group(1))
+    except ValueError:
+        return []
+    res = (data.get("metaData", {}).get("mosaicProviderJobCardsModel", {})
+               .get("results", []) or [])
+    return [r for r in res if isinstance(r, dict)][:limit]
+
+
+def indeed_normalize(r):
+    """One Indeed card -> the shared discovered-job shape (or None to drop it)."""
+    import datetime as _dt
+    title = (r.get("displayTitle") or r.get("title") or "").strip()
+    comp = (r.get("company") or "").strip()
+    jk = r.get("jobkey") or ""
+    if not title or not comp or not jk:
+        return None
+    date = ""
+    ts = r.get("pubDate") or r.get("createDate")
+    if isinstance(ts, (int, float)) and ts > 0:
+        # epoch MILLIseconds. Indeed also serves a relative "formattedRelativeTime";
+        # the epoch is the only one that survives a locale switch.
+        date = _dt.datetime.fromtimestamp(ts / 1000, _dt.timezone.utc).date().isoformat()
+    if date and date < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
+        return None
+    desc = ""
+    sn = r.get("snippet") or ""
+    if sn:
+        desc = re.sub(r"<[^>]+>", " ", str(sn))
+    if any(k in f"{title} {desc}"[:400].lower() for k in _JUNIOR_HE):
+        return None                        # same junior/student cut as the dataset path
+    return {"company": comp[:80], "title": title[:140],
+            "location": (r.get("formattedLocation") or "Israel")[:80],
+            "country_code": "IL", "url": f"https://il.indeed.com/viewjob?jk={jk}",
+            "posted_date": date, "ats_platform": "discovery-indeed",
+            "job_id": f"indeed:{jk}", "description": desc}
 
 
 def _req(url, data=None, method="GET", timeout=60):
@@ -139,6 +197,28 @@ def main():
         print("no BRIGHTDATA_API_KEY; skipping discovery")
         return
     jobs, seen = [], set()
+    per_source = {}
+    # Indeed first: it is a single unlocked request per query, so it costs seconds and
+    # cannot be starved by the dataset polling below timing out.
+    for q in INDEED_QUERIES:
+        try:
+            cards = indeed_search(q)
+        except Exception as e:  # noqa: BLE001
+            print(f"[indeed:{q}] ERR {type(e).__name__}: {str(e)[:120]}")
+            cards = []
+        print(f"[indeed:{q}] {len(cards)} cards")
+        for r in cards:
+            j = indeed_normalize(r)
+            if not j:
+                continue
+            k = (j["company"].lower(), j["title"].lower())
+            if k in seen:
+                continue
+            seen.add(k)
+            jobs.append(j)
+    per_source["indeed"] = len(jobs)
+    print(f"[indeed] {len(jobs)} unique jobs across {len(INDEED_QUERIES)} queries")
+
     runs = [(n, *QUERIES[n]) for n in QUERIES]
     targeted = _targeted_inputs()
     if targeted:
@@ -152,6 +232,7 @@ def main():
             print(f"[{n}] ERR {type(e).__name__}: {str(e)[:120]}")
             recs = []
         print(f"[{n}] {len(recs)} records")
+        per_source[n] = len(recs)
         for r in recs:
             j = normalize(n, r)
             if not j:
@@ -210,6 +291,15 @@ def main():
             with open("research_companies.json", "w", encoding="utf-8") as f:
                 json.dump(research, f, ensure_ascii=False, indent=1)
             print(f"queued {len(added)} new companies into research_companies.json")
+    # A source returning zero is the signal, not the absence of one: the Indeed dataset
+    # printed "0 records" every day for five days and nothing ever said a source had died.
+    try:
+        from pipeline import sources
+        sources.record(per_source)
+        for line in sources.stale():
+            print(f"::warning::discovery source {line}", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"[source-health] skipped: {e}")
     print(f"=== {len(jobs)} discovered jobs cached · {len(new_cos)} new companies for migration ===")
 
 

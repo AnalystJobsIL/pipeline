@@ -1331,6 +1331,8 @@ def _text_audit(s):
     ]
     if s.get("email_overflow"):
         lines.append(f"  held over (email cap): {s['email_overflow']}")
+    if s.get("dead_sources"):
+        lines.append("  SOURCES NOT PRODUCING: " + "; ".join(s["dead_sources"]))
     if s.get("stages"):
         lines.append(f"  stage order: {s['stages']}")
     if s.get("failed_companies"):
@@ -1355,6 +1357,8 @@ def _html_audit(s, esc):
            if s.get("jd_filled_inline") else "")
         + (f' · held over (email cap): {esc(s.get("email_overflow",0))}'
            if s.get("email_overflow") else "")
+        + (f'<br><b>Sources not producing:</b> {esc("; ".join(s.get("dead_sources") or []))}'
+           if s.get("dead_sources") else "")
         + (f'<br>Stage order: {esc(s.get("stages",""))}' if s.get("stages") else "")
         + (f'<br>Failed companies: {esc(", ".join(fc))}' if fc else "")
         + '</div>'
