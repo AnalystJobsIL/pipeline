@@ -167,8 +167,8 @@ def main():
     # G. derived list drift
     try:
         from scrape_universal import ISRAEL_LOC
-        from pipeline.israel import _IL_PLACES
-        gone = [p for p in _IL_PLACES if not ISRAEL_LOC.search(p)]
+        from pipeline.israel import _IL_PLACES, _IL_PLACES_HE
+        gone = [p for p in _IL_PLACES + _IL_PLACES_HE if not ISRAEL_LOC.search(p)]
         if gone:
             bad(f"scraper city regex no longer covers: {gone[:8]}")
     except Exception as e:  # noqa: BLE001

@@ -64,10 +64,57 @@ _IL_PLACES = [
     "azor",
 ]
 
-# Precompiled word-boundary regexes for place matching.
+# The same places in Hebrew. An Israeli careers page writes its own locations in Hebrew —
+# "תל אביב", "מחוז המרכז" — and the scraper already recognised them when deciding a card was
+# Israeli, but this module did not, so it then dropped the role it had just found. The two
+# lists must stay together for that reason: `scrape_universal.ISRAEL_LOC` is derived from
+# BOTH (guarded by check_invariants check G).
+_IL_PLACES_HE = [
+    "ישראל",
+    "תל אביב", "תל-אביב", "תל אביב-יפו",
+    "ירושלים",
+    "חיפה",
+    "הרצליה", "הרצליה פיתוח",
+    "רעננה",
+    "נתניה",
+    "רמת גן", "רמת-גן",
+    "פתח תקווה", "פתח-תקווה", "פתח תקוה",
+    "באר שבע", "באר-שבע",
+    "יקנעם", "יקנעם עילית",
+    "קיסריה",
+    "קרית גת", "קריית גת", "קרית אונו", "קריית אונו", "קרית שמונה", "קרית מוצקין",
+    "רחובות",
+    "הוד השרון",
+    "אור יהודה",
+    "עיר הימים", "קרית שדה התעופה",
+    "מודיעין", "מודיעין-מכבים-רעות",
+    "נס ציונה", "ראשון לציון", "כפר סבא", "טירת כרמל",
+    "גבעתיים",
+    "חולון",
+    "ראש העין",
+    "כרמיאל",
+    "מגדל העמק",
+    "בני ברק",
+    "לוד",
+    "אשדוד",
+    "אשקלון",
+    "רמת החייל",
+    "שדרות",
+    "נצרת", "נוף הגליל",
+    "אבן יהודה",
+    "אזור",
+    "יבנה", "עפולה", "טבריה", "אילת", "דימונה", "צפת", "עכו", "נהריה",
+    # regions, which is how Indeed writes an Israeli location
+    "מחוז המרכז", "מחוז תל אביב", "מחוז הצפון", "מחוז הדרום", "מחוז ירושלים",
+    "מחוז חיפה", "השרון", "שפלת יהודה",
+]
+
+# Precompiled word-boundary regexes for place matching. The lookarounds are ASCII-only on
+# purpose: a Hebrew name is already delimited by the surrounding punctuation/whitespace, and
+# `(?<![a-z])` never blocks it.
 _PLACE_PATTERNS = [
     re.compile(r"(?<![a-z])" + re.escape(p) + r"(?![a-z])", re.IGNORECASE)
-    for p in _IL_PLACES
+    for p in _IL_PLACES + _IL_PLACES_HE
 ]
 
 

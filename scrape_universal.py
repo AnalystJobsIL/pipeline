@@ -55,16 +55,17 @@ ROLE = re.compile(r"engineer|developer|manager|analyst|scientist|designer|\blead
 # (A separate hand-maintained copy here silently dropped Sderot, Yoqneam, Nes Ziona,
 # Ramat-Gan and 23 other spellings — real roles were extracted then filtered away.)
 def _build_israel_loc():
-    from pipeline.israel import _IL_PLACES
-    alts = sorted((re.escape(p).replace(r"\ ", r"[\s-]?") for p in _IL_PLACES),
-                  key=len, reverse=True)
-    # raw strings: `\s` in a plain string is an unrecognized escape — it happens to survive
-    # as backslash-s today, but it is a DeprecationWarning now and a SyntaxError later.
-    hebrew = ["ישראל", r"תל[\s-]?אביב",
-              "חיפה", r"באר[\s-]?שבע",
-              "רעננה", "הרצליה",
-              "ירושלים", r"פתח[\s-]?תקווה"]
-    return re.compile("|".join(alts + hebrew), re.I)
+    """Derived from pipeline.israel, BOTH lists — never hand-maintained here.
+
+    The Hebrew names used to be a short hard-coded list in this file while
+    `pipeline.israel` had none, so the scraper would recognise "תל אביב" on a page, stamp it
+    as the role's location, and the Israel filter would then drop the role it had just
+    found. check_invariants check G fails if these drift apart again.
+    """
+    from pipeline.israel import _IL_PLACES, _IL_PLACES_HE
+    alts = sorted((re.escape(p).replace(r"\ ", r"[\s-]?")
+                   for p in _IL_PLACES + _IL_PLACES_HE), key=len, reverse=True)
+    return re.compile("|".join(alts), re.I)
 
 
 ISRAEL_LOC = _build_israel_loc()

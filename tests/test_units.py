@@ -799,3 +799,30 @@ def test_a_native_ats_row_points_at_that_ats():
            if r["active"] == "true" and C.PLATFORM_HOST.get(r["ats_platform"])
            and not re.search(C.PLATFORM_HOST[r["ats_platform"]], r["api_url"] or "", re.I)]
     assert not bad, f"rows whose every fetch will fail: {bad}"
+
+
+@pytest.mark.parametrize("loc,expected", [
+    ("תל אביב", True), ("ירושלים", True), ("מחוז המרכז", True),
+    ("באר יעקב, מחוז המרכז", True), ("שפלת יהודה, מחוז הדרום", True), ("ישראל", True),
+    ("Tel Aviv, Israel", True), ("Ra'anana, Center District, Israel", True),
+    ("New York, NY", False), ("Kyiv, Ukraine", False), ("Berlin, Germany", False),
+    ("EMEA", False),
+])
+def test_a_hebrew_location_is_an_israeli_location(loc, expected):
+    """`scrape_universal` recognised "תל אביב" when deciding a card was Israeli and stamped
+    it as the role's location — and `pipeline.israel` had no Hebrew names at all, so it then
+    dropped the role the scraper had just found. An Israeli careers page writes its own
+    locations in Hebrew, and Indeed writes them as districts ("מחוז המרכז")."""
+    from pipeline.israel import is_israel_job
+    assert is_israel_job({"location": loc}) is expected
+
+
+def test_the_scrapers_location_regex_is_derived_from_both_place_lists():
+    """The Hebrew names were a short hard-coded list inside scrape_universal while
+    pipeline.israel had none — which is exactly how the two drifted into contradicting
+    each other. Check G in check_invariants guards this; so does this."""
+    from scrape_universal import ISRAEL_LOC
+    from pipeline.israel import _IL_PLACES, _IL_PLACES_HE
+    missing = [p for p in _IL_PLACES + _IL_PLACES_HE if not ISRAEL_LOC.search(p)]
+    assert not missing, missing
+    assert len(_IL_PLACES_HE) > 20, "the Hebrew list should not shrink back to a stub"
