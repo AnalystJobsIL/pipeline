@@ -148,8 +148,12 @@ jobs:
               done
               git fetch origin master || true
               git reset --hard origin/master || true
-              for p in scraped_cache.json discovered_cache.json research_companies.json                        cloud_state digests docs; do
-                [ -e "/tmp/ours/$(basename $p)" ] && cp -r "/tmp/ours/$(basename $p)" . 2>/dev/null || true
+              # NOT scraped_cache.json: restoring it wholesale here would overwrite
+              # origin's copy before the three-way merge below ever sees it, so the merge
+              # would compare ours against ours and every company another workflow cached
+              # since checkout would still be lost. The merge restores it instead.
+              for p in discovered_cache.json research_companies.json cloud_state digests docs; do
+                [ -e "/tmp/ours/$p" ] && { mkdir -p "$(dirname "$p")"; cp -r "/tmp/ours/$p" "$p"; } 2>/dev/null || true
               done
               if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
                 python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
