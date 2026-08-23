@@ -14,6 +14,9 @@ per-lane file costs nothing and cannot be deleted by a stale copy of somebody el
 `test_the_guard_count_never_falls` counts across ALL test files, so it still fires if any
 lane's guards disappear — including this one's.
 """
+import ast
+import os
+import re
 import pytest    # noqa: F401  (parametrize is used below)
 
 
@@ -1338,3 +1341,172 @@ def test_the_walled_pool_survives_another_tools_note_rewrite():
     assert survived >= len(pool) // 3, (
         "one deep_validate night took the walled pool from %d to %d — the pool predicate is "
         "again a string another tool can delete" % (len(pool), survived))
+
+
+# ---------------------------------------------------------------------------------------
+# The derived registry-writer enumeration.
+#
+# Every hand-written list of "which tools activate a row" in this repo has been wrong. The
+# guard in tests/test_units.py finds writers by looking for `ast.Assign` to a Subscript with
+# constant slice 4 -- which sees 8 of the 22 modules that actually write the registry, because
+# fourteen of them build a whole row literal [name, plat, tok, api, "true", note] in one
+# statement and never subscript-assign anything. Five of those fourteen run on cron.
+#
+# So the list is derived here, from source, and a new writer is a red test rather than a
+# discovery nine review waves later.
+# ---------------------------------------------------------------------------------------
+
+_GATE_NAMES = {"_ok_to_write", "_identity_ok", "_page_names_company",
+               "tenant_is_this_company", "is_foreign", "page_mentions_company",
+               "looks_like_a_job_listing_page", "is_aggregator", "verdict",
+               "identity_verdict"}
+
+# Writers whose column-3/4 writes are NOT a proposal and so need no identity evidence.
+# Each entry must say why, and each is checked below against what the workflows actually run.
+_RESTORE_ONLY = {
+    "merge_csv_rows.py": "git-layer conflict resolution: restores the TARGET's already-"
+                         "repaired api_url onto our row. It proposes no new address.",
+}
+_LEGACY_UNSCHEDULED = {
+    "comeet_resolve.py": "one-shot Comeet backfill probe, no workflow runs it",
+    "ingest_research.py": "one-shot import of research_companies.json",
+    "recheck_suspects.py": "one-shot re-check of a hand-listed set",
+    "resolve_any.py": "superseded by auto_expand's resolution ladder",
+    "resolve_deep.py": "superseded by auto_expand's resolution ladder",
+    "resolve_parallel.py": "superseded by auto_expand's resolution ladder",
+    "resolve_unknowns.py": "superseded by auto_expand's resolution ladder",
+    "scrape_batch.py": "one-shot batch scrape, no workflow runs it",
+    "validate_bd.py": "one-shot Bright Data validation probe",
+}
+
+
+def _registry_writes(tree):
+    """Every node that writes companies.csv column 3 (api_url) or activates column 4.
+
+    Two shapes, because the repo uses both and the pre-existing guard only knew one:
+      A  fr[3] = ...  /  fr[4] = "true"          -- subscript assignment
+      B  [name, plat, tok, api, "true", note]    -- whole-row literal, in one statement
+
+    `fr[4] = "false"` is deliberately NOT a write here: parking a row needs no identity
+    evidence, only activating one does. refresh_scrape_cache parks rotted scrapes that way.
+    """
+    out = []
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Assign):
+            for tg in n.targets:
+                if not (isinstance(tg, ast.Subscript)
+                        and isinstance(tg.slice, ast.Constant)):
+                    continue
+                if tg.slice.value == 3:
+                    out.append(n)
+                elif tg.slice.value == 4:
+                    v = n.value
+                    if isinstance(v, ast.Constant) and v.value == "true":
+                        out.append(n)
+        elif isinstance(n, ast.List) and len(n.elts) >= 6:
+            e = n.elts[4]
+            if isinstance(e, ast.Constant) and e.value == "true":
+                out.append(n)
+    return out
+
+
+def _enclosing_function(tree, node):
+    best = None
+    for f in ast.walk(tree):
+        if isinstance(f, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if f.lineno <= node.lineno <= (f.end_lineno or f.lineno):
+                if best is None or f.lineno > best.lineno:
+                    best = f
+    return best
+
+
+def _call_names(node):
+    names = set()
+    for n in ast.walk(node):
+        if isinstance(n, ast.Call):
+            f = n.func
+            if isinstance(f, ast.Name):
+                names.add(f.id)
+            elif isinstance(f, ast.Attribute):
+                names.add(f.attr)
+    return names
+
+
+def _modules_a_workflow_runs(root):
+    """Derived the way docs/gen_modules.py derives it, so the two cannot disagree."""
+    import glob as _glob
+    runs = set()
+    for wf in _glob.glob(os.path.join(root, ".github", "workflows", "*.yml")):
+        text = open(wf, encoding="utf-8").read()
+        for m in re.finditer(r"python3?\s+(?:-u\s+)?([A-Za-z0-9_]+)\.py\b", text):
+            runs.add(m.group(1) + ".py")
+    return runs
+
+
+def _ungated_registry_writers():
+    """{module: [line, ...]} for every col-3/4 write with no identity call above it."""
+    import glob as _glob
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    bad = {}
+    for path in sorted(_glob.glob(os.path.join(root, "*.py"))):
+        base = os.path.basename(path)
+        try:
+            tree = ast.parse(open(path, encoding="utf-8").read())
+        except SyntaxError:
+            continue
+        lines = []
+        for w in _registry_writes(tree):
+            scope = _enclosing_function(tree, w) or tree
+            gated = any(n.lineno <= w.lineno for n in ast.walk(scope)
+                        if isinstance(n, ast.Call) and (_call_names(n) & _GATE_NAMES))
+            if not gated:
+                lines.append(w.lineno)
+        if lines:
+            bad[base] = lines
+    return bad
+
+
+def test_the_writer_allow_list_only_covers_tools_no_workflow_runs():
+    """An allow-listed writer that becomes scheduled must turn this red.
+
+    The allow-list is the one hand-maintained thing left in the enumeration, so it is the one
+    thing that can rot. `_LEGACY_UNSCHEDULED` is only defensible while nothing runs those
+    modules; `_RESTORE_ONLY` is defensible regardless, because those writes restore a value
+    rather than propose one -- but it has to say so.
+    """
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    scheduled = _modules_a_workflow_runs(root)
+    leaked = sorted(set(_LEGACY_UNSCHEDULED) & scheduled)
+    assert not leaked, (
+        "these modules are allow-listed as one-shot/legacy but a workflow now runs them, so "
+        "they write the registry on a schedule with no identity gate: %s" % leaked)
+    for mod, why in list(_RESTORE_ONLY.items()) + list(_LEGACY_UNSCHEDULED.items()):
+        assert why and len(why) > 20, "allow-listed %s without a real reason" % mod
+        assert os.path.exists(os.path.join(root, mod)), (
+            "the allow-list names %s, which no longer exists" % mod)
+
+
+@pytest.mark.xfail(strict=True, reason="five scheduled writers are ungated: bd_rescue, "
+                                       "retry_unreachable, wayback_rescue, validate_empty, "
+                                       "auto_expand. Remove this marker when they are gated.")
+def test_every_registry_writer_consults_an_identity_predicate():
+    """DERIVED, not hand-listed. This is the test the last nine review waves needed.
+
+    A module that writes `api_url` or flips `active` to true must consult an identity
+    predicate in the same function, at or above the write. That is deliberately weaker than
+    proving the gate DOMINATES the write -- the behavioural fixtures and the mutation
+    catalogue do that, per writer. What this test uniquely provides is COMPLETENESS: it finds
+    the writers instead of trusting a list somebody typed.
+
+    Measured when this was written: 22 modules write the registry, 14 of them via a whole-row
+    literal that the guard in tests/test_units.py cannot see. Five of those fourteen are
+    invoked by scheduled workflows -- bd_rescue and retry_unreachable (02:30 daily),
+    wayback_rescue and validate_empty (Sun 04:00), auto_expand (08:00 and 20:00) -- and none
+    of them mentioned an identity predicate at all.
+    """
+    bad = _ungated_registry_writers()
+    for allowed in list(_RESTORE_ONLY) + list(_LEGACY_UNSCHEDULED):
+        bad.pop(allowed, None)
+    assert not bad, (
+        "these modules write companies.csv column 3/4 with no identity predicate above the "
+        "write: %s" % {k: v for k, v in sorted(bad.items())})
