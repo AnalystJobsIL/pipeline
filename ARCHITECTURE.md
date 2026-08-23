@@ -308,9 +308,14 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
 5. Manual Chrome sweep: a human/agent reads the page in a real browser; every miss becomes
    a new detection pattern in the code.
 
-**Verification invariants (never bypass):**
+**Verification invariants (never bypass):** see also "The activation rule" in §2, which is
+the short version of the three gates and the code that enforces them.
+
 - No row activates unless its endpoint/listing **returned real jobs through the production
-  fetch path** at resolution time (for scrape rows: ≥1 *Israel* job).
+  fetch path** at resolution time (for scrape rows: ≥1 *Israel* job) — AND the page claims
+  to list jobs at all (`looks_like_a_job_listing_page`). Real Israel jobs are not enough:
+  `SCRAPE_ASSUME_IL` turns every card on a page into an Israel role, so a nav menu and a
+  blog index both "verify".
 - Slug/tenant must resemble the company name — `_slug_matches` (`audit_empty_rows.py`),
   enforced in `audit_empty_rows`, `deep_validate`, `crack_walled`, and `resolve_llm._verify`.
   **Known coverage holes in this guard:** comeet uids (`XX.XXX`) are exempt by design (the
@@ -322,6 +327,15 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
   **CyberArk→PANW** and **Imperva→Thales** were applied and had to be reverted (see their
   `companies.csv` notes); **Lili→Eli Lilly** was caught only by the 0-Israel-jobs gate.
   Historical note: `resolve_llm` relied on prompt-grounding alone until 2026-08-22.
+  Since 2026-08-23 all four activation paths call `company_identity`, and a `weak` domain
+  verdict is settled by whether the fetched page NAMES the company as a phrase.
+- **The search rung is Bright Data's Google, not SerpApi.** `resolve_broken._careers_url_via_serp`
+  tries SerpApi first and falls back to `deep_validate.google_via_unlocker`. It was
+  SerpApi-only until 2026-08-23, and that quota has been exhausted since mid-August — so the
+  last rung of the self-heal was returning None before it made a request, and every board
+  that had MOVED rather than broken came back "no working ATS". DuckDuckGo is blocked from
+  some networks (including the dev machine) and works on the runners; the unlocker works
+  from both.
 - Never activate a scrape of an aggregator page (LinkedIn/Indeed/Glassdoor/secrethunter) —
   their "similar jobs" sidebars attribute other companies' roles to the target. Enforced at
   resolution (all resolvers) **and at runtime** in `pipeline/run.py`, which drops such rows
