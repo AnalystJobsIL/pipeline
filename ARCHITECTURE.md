@@ -193,359 +193,115 @@ XHR-capture or 3/4 without native fetchers).
 ## 1a. Intake — the discovery net
 *lane: `discovery`*
 
-Tier 3 of §1, written out. Intake is the only step that can add something the registry has
-never heard of, and it feeds **two** funnels from one pass — the second matters more:
+Tier 3 of §1, written out. Intake is the only step that can add a company the registry has
+never heard of, and one pass feeds **two** funnels:
 
 ```
-  discovery_daily.py      Indeed (Web Unlocker)  ─┐         ┌─▶ discovered_cache.json
-                          LinkedIn (BD dataset)  ─┤ jobs    │   read by fetchers.fetch_discovery
-                          LinkedIn targeted      ─┤         │   (21-day TTL applied at READ)
-  discovery_telegram.py   6 public t.me/s feeds  ─┘         │
-                                                            │
-                          employer names not in ────────────┴─▶ research_companies.json
-                          companies.csv                         drained by auto_expand (§3)
+  discovery_daily.py     LinkedIn  keyless guest endpoint, Unlocker fallback ─┐
+                         Workable  one ATS, every tenant, keyless            ─┤ jobs
+                         Indeed    Web Unlocker                              ─┼──▶ discovered_cache.json
+                         LinkedIn-targeted  BD dataset, per broken-board co  ─┤    (21-day TTL at READ)
+  discovery_telegram.py  6 public t.me/s feeds, keyless                      ─┘
+                                                                              │
+                         every employer name not already in ─────────────────┴──▶ research_companies.json
+                         companies.csv                                             drained by auto_expand (§3)
 ```
 
-The jobs funnel is a safety net: it publishes roles at companies whose own board we cannot
-read. **The names funnel is the point of this stage** — it is how `companies.csv` gets
-bigger — and it is why a channel with almost no analyst roles in it can still be worth
-reading.
+The jobs funnel is a safety net — it publishes roles at companies whose own board we cannot
+read. **The names funnel is the point of this stage**: it is how `companies.csv` grows, and
+it is why a feed with almost no analyst roles in it can still be worth reading.
 
-**Judge every source here by NEW COMPANIES PER RUN, not by records or by jobs.** A source
-can be alive, inside budget and completely useless at the same time, and one was: the
-LinkedIn breadth sweep returned **0 new companies** while its record count looked perfectly
-healthy. Nothing printed that number — only the aggregate — so nobody could see it. Each
-source now prints its own:
+**Judge every source by NEW COMPANIES PER RUN, not by records or jobs.** A source can be
+alive, inside budget and completely useless at once — the LinkedIn sweep returned **0 new
+companies** while its record count looked healthy, and nothing printed the number that would
+have shown it. Each source now prints its own, and a LinkedIn sweep yielding zero says so:
 
 ```
-[yield] indeed: 29 employers -> 15 NEW companies
-[yield] linkedin: 147 employers -> 58 NEW companies
-[yield] linkedin-targeted: 14 employers -> 1 NEW companies
+[yield] linkedin: 364 employers -> 182 NEW companies
+[yield] workable: 11 employers -> 7 NEW companies
 ```
 
-**One of the four sources is not a discovery source at all.** `linkedin-targeted` asks about
-companies **already in `companies.csv`** whose board returns zero, so by construction it can
-almost never return an unknown employer — the 1 above is incidental. It is *backfill for
-known-broken rows*, and it lives in this script for historical reasons. Keep it for what it
-is (it published roles at 15 active companies whose own board reports 0), but never count it
-towards discovery, and if the Bright Data budget ever binds, it is the first thing to cut.
+**`linkedin-targeted` is not a discovery source.** It asks only about companies already in
+`companies.csv` whose board returns zero, so it can almost never return an unknown employer.
+It is *backfill for known-broken rows* and lives here for historical reasons — worth keeping
+(it found roles at 15 active companies whose own board reports 0), never counted towards
+discovery, and the first thing to cut if the Bright Data budget binds.
 
-### The five live sources, and what each one costs
+### The five live sources
 
-`cloud` is the 05:00 run of 2026-08-23 read out of `cloud_state/source_health.json`;
-`dry-run` is a full local execution of both scripts against sandbox copies of the state
-files the same evening (17:30 UTC), which is the check to repeat before trusting a change
-here — it exercises the real Bright Data account and the real Telegram fetches.
-
-| source | mechanism | cost per digest | measured 2026-08-23 |
-|---|---|---|---|
-| `linkedin` | **the discovery source.** `linkedin.com/jobs/search`, 9 keywords, unscoped, `f_TPR` past week. KEYLESS guest endpoint first, Web Unlocker only where blocked | **0 credits** when the guest endpoint answers; ≤`LINKEDIN_PAGES × 9` = 18 when it does not | 47–62 jobs/keyword-sweep, 100% parsed, **0 paid** |
-| `workable` | `jobs.workable.com/api/v1/jobs?location=Israel` — one ATS, EVERY tenant, keyless. The only source that returns the employer's own website | **0 credits** | 20 rows → 11 kept, 11/11 with a real careers lead |
-| `indeed` | `il.indeed.com/jobs` through the **Web Unlocker**, one request per `INDEED_QUERIES` entry; parsed from the `mosaic-provider-jobcards` blob | 5–10 unlocker requests (one retry) | 58 raw → 46 kept |
-| `linkedin-targeted` | BD dataset `gd_lpfll7v5hcqtkxl6l`, one input per broken-board company, **scoped with the `company` field**. Backfill, NOT discovery | ~67 dataset records | 88 companies → 67 records, 57 on-target |
-| `telegram` | public `t.me/s/<channel>` HTML previews — **no bot, no account, no API key, no quota** | free | 6 channels, 16–18 of 20 parsed each |
-
-Re-derive with
+Costs and counts are the 2026-08-23 measurements; re-derive with
 `python -c "import json;print(json.load(open('cloud_state/source_health.json')))"`.
 
-**Three of the five need no key at all.** `main()` therefore does NOT return early when
-`BRIGHTDATA_API_KEY` is missing — that gate used to sit above Workable, the LinkedIn guest
-endpoint *and* `sources.record()`, so a rotated secret took the whole intake layer dark,
-including the free half, and silenced the mechanism built to notice.
-
-**The Indeed *dataset* is dead and the Indeed *unlocker* is not.** BD dataset
-`gd_l4dx9j9sscpvs7no2` returned `dataset_size: 0, error_codes: {"rate_limit": 15}` on every
-run for five days; it is commented out in `QUERIES` and must not be re-enabled. The
-replacement path is `indeed_search()` — verified live 2026-08-23: `"data analyst"` returned
-**15 cards** in one request, no snapshot job, no polling.
-
-**The company name belongs in the `company` field, never inside `keyword`.** The dataset
-takes a dedicated `company` input; `_targeted_inputs` built `keyword: "<name> data analyst"`
-until 2026-08-23, so LinkedIn ranked on "data analyst" and read the employer name as spare
-tokens. A/B tested live over the same 20 stale companies:
-
-| form | records billed | on-target |
-|---|---|---|
-| `keyword: "<name> data analyst"` | **160** | **0** |
-| `company: "<name>"`, `keyword: "data analyst"` | **25** | **22 (88%)** |
-
-Scoping is **cheaper as well as accurate**, and the reason is worth internalising before
-tuning any cap here: an unscoped keyword query always returns `limit_per_input` records —
-LinkedIn can always fill 8 slots with *something* — while a scoped one returns only what
-that employer actually has, which for a company with no open Israel analyst role is
-nothing at all. That is why `cap` went 20 → 100. The whole 88-company list was then run for
-real on 2026-08-23:
-
-| | companies asked | records billed | on-target |
+| source | how it is read | key? | measured |
 |---|---|---|---|
-| before | 20 | 160 | 0 |
-| after | **88** | **67** | **57 (85%)** |
+| `linkedin` | **the discovery source.** `linkedin.com/jobs/search`, 9 keywords, `f_TPR` past week. KEYLESS guest endpoint first, Web Unlocker only where blocked | no* | 364 employers → 182 new companies, 7 credits, 113s |
+| `workable` | `jobs.workable.com/api/v1/jobs?location=Israel` — one ATS, EVERY tenant. The only source returning the employer's own website | no | 20 rows → 11 kept, 11/11 with a real careers lead |
+| `indeed` | `il.indeed.com/jobs` through the Web Unlocker; parsed from the `mosaic-provider-jobcards` blob | yes | 58 raw → 46 kept |
+| `telegram` | public `t.me/s/<channel>` previews — no bot, no account, no quota | no | 6 channels, 16–18 of 20 parsed each |
+| `linkedin-targeted` | BD dataset, one input per broken-board company, scoped by the **`company` field**. Backfill, **NOT discovery** | yes | 88 companies → 67 records, 57 on-target |
 
-**2.4× cheaper for 4.4× the companies.** It recovered live Israel analyst roles at 15 active
-rows whose own board reports zero — Apple 8, Wiliot 8, Revolut 8, IEC 8, Infinidat 7,
-Deel 4, Rakuten Viber 3 — which is `HANDOFF.md`'s largest open coverage item. `cap` and the
-day-of-year rotation survive only as a bound if `stale.json` grows past 100.
+\* the paid path is a fallback; `SOURCE_PATH` records which one served, and the run warns if
+everything is suddenly billed.
 
-**Both sweeps search for JOBS — the employer names are a by-product.** There is one
-dataset here (`gd_lpfll7v5hcqtkxl6l`, LinkedIn *job listings*, `discover_by=keyword`) and
-`company` is a FILTER on that job search, not a company lookup. The two sweeps differ only
-in whether the filter is set:
+**Four things about this table cost real coverage to learn**, and the workings are in
+`docs/sessions/2026-08-24-discovery.md`:
 
-```
-breadth   {location: Israel, country: IL, keyword: "data analyst"}          x4 keywords
-targeted  {location: Israel, country: IL, keyword: "data analyst",
-           company: "Explorium"}                                            x88 companies
-```
+1. **The two LinkedIn endpoints have different ceilings.** The paid page caps at ~80 jobs per
+   query; the keyless guest endpoint goes **200+ deep**. Bounding the free walk with the paid
+   measurement shipped 10 jobs out of a 201-job pool.
+2. **`company` is a FIELD, not text in the keyword.** Concatenated into `keyword`, the
+   targeted sweep returned 160 records and **0** on-target; in its own field, 25 records and 22.
+3. **Width beats one clever query.** The pool is per QUERY, so a boolean
+   `("data analyst" OR …)` buys one window instead of nine — 10 new companies against 76.
+   If yield falls, add a keyword; never a boolean, never more paid pages.
+4. **The Indeed dataset is dead** (`gd_l4dx9j9sscpvs7no2`, `rate_limit` on every input for
+   five days). Do not re-enable it; Indeed goes through the Unlocker.
+### What it costs, and what stops it costing more
 
-Both return job records; `normalize()` turns each into the common job shape for
-`discovered_cache.json`, and `main()` separately harvests employer names that are not yet in
-`companies.csv` into `research_companies.json`. That is why the two funnels in the diagram
-above come out of one pass.
-
-**One keyword is enough on the targeted sweep, and this was tested rather than assumed.**
-The obvious worry is that scoping to `company` + `keyword: "data analyst"` misses a
-"BI Developer" at the same employer. Measured 2026-08-23 over Apple / Outbrain / Snyk ×
-`business intelligence` + `product analyst`, 15 records: Outbrain and Snyk returned **0** for
-both, and all 15 Apple records were noise — Performance Modeling Architect, VLSI Product
-Engineer, Full Stack Developer, Biomechanical Research Engineer — of which **8 were roles
-the `data analyst` keyword had not returned, and not one was an analyst role**. Two of them
-came back twice, once per keyword, i.e. billed twice for one posting. With `company` set,
-LinkedIn's keyword match goes loose and extra keywords buy noise at full price. **Do not add
-keywords to the targeted sweep**; add them to the breadth sweep, where an unscoped query is
-ranked properly.
-
-**`limit_per_input` is now the binding constraint, not the company cap.** Four of the 88
-returned exactly 8, i.e. they were truncated. Raising 8 → 15 would cost at most
-`7 × 4 = 28` more records on that distribution — still under 100 for the whole sweep — and
-would recover roles at precisely the companies we cannot read directly. **Not done and not
-measured (2026-08-23):** the 67 above is the number for `limit_per_input=8`, and changing
-two dials when only one was measured is how a budget claim becomes fiction.
-
-### Depth and recency are what make the breadth sweep discover anything
-
-It ran at `limit_per_input=15` and returned **0 new companies** — 29 jobs, 27 employers, 25
-of them already registry rows and 11 of them staffing agencies. LinkedIn ranks by relevance
-and the head of that ranking is saturated with large employers and agencies; **unknown
-companies live in the tail**, and the yield *accelerates* with depth rather than flattening:
-
-| depth | employers | new companies |
-|---|---|---|
-| 15 (as shipped) | 15 | **1** |
-| 30 | 29 | 3 |
-| 50 | 46 | 3 |
-| 100 | 84 | **15** |
-
-`time_range` is honoured by the dataset and is the other half: `"Past week"` overlapped the
-unfiltered run by only **14 of 61 records**, and it makes depth **self-limiting** — it bills
-what was actually posted in the window (61 against a limit of 100), so a deep limit costs
-nothing on a quiet keyword. It also wins on yield per record: 10 new companies from 61
-records against 15 from an unfiltered 100. Together, measured on a full run:
-
-| | records | employers | **new companies** |
-|---|---|---|---|
-| before (15, no window) | 30 | 27 | **0** |
-| after (100, Past week) | 391 | 147 | **58** |
-
-Both dials are env-tunable without a code change — `LINKEDIN_LIMIT`, `LINKEDIN_WINDOW` —
-because the Bright Data quota cannot be read (below). **If new-company yield ever prints 0
-again, this sweep has re-saturated and depth is the first dial.**
-
-**Indeed fails silently about two queries in five.** `indeed_search` collapsed an unlocker
-exception, a bot wall with no mosaic blob, and a genuinely empty result set into the same
-bare `[]`, and the caller printed "0 cards" for all three — `§8` item 2, a mass zero read as
-a measurement. `"business intelligence"` returned 0 on two consecutive runs and **15 on the
-retry**, so it had never been empty. It now retries once and prints which of the three
-happened.
-
-### The Bright Data budget, and why this layer throttles itself
-
-**One pool, 5,000 credits a month, shared by every workflow that touches Bright Data.**
-Verified against Bright Data's own docs 2026-08-23
-(`docs.brightdata.com/general/account/billing-and-pricing/free-tier`): "5,000 free credits
-per month", renewing on the 1st, **no rollover**, with Web Unlocker API, SERP API and Web
-Scraper API each costing **one credit per request or record**. It is per MONTH — the "5k"
-in this repo's older docstrings is that figure, and it is not per day.
-
-Counting only dataset records understates the bill badly. On 2026-08-23 the snapshot ledger
-said **2,989 records = 60% of the month**, which looked comfortable; adding the same
-account's `reqs_unblocker` and `reqs_serp` made it **4,106 = 82%**:
-
-| product | credits, month to date | who spends them |
-|---|---|---|
-| Web Scraper API records | 2,989 | `discovery_daily` LinkedIn sweeps |
-| Web Unlocker requests | 646 | `discovery_daily` Indeed, `enrich_scrape_jd`, `enrich_matched_jd`, `bd_rescue`, `crack_walled`, `retry_unreachable` |
-| SERP requests | 471 | `deep_validate.google_via_unlocker` (the resolution ladder's search rung) |
-| **total** | **4,106 / 5,000** | |
-
-**Most of that 4,106 is experiments, so it is the wrong number to plan with.** Split the
-snapshot ledger by hour — the digest runs 05:00 UTC, anything outside ~05–08 is a manual or
-test trigger — and take only days with a single clean digest (08-18/19/20/22; 08-21 and
-08-23 had repeated re-dispatches, 08-15 was account setup):
-
-| | production, per day |
-|---|---|
-| Web Scraper records per digest | **~94** (range 30–124) |
-| Web Unlocker requests | **~49** (range 46–59) |
-| SERP requests | **0 until 2026-08-21**, then 199 / 272 / 116 |
-
-**Which means the pipeline had no headroom before this lane touched it.** 94 + 49 credits a
-day is 4,292 a month — **86% of the pool with zero tests and zero SERP**. Add SERP at even a
-weekend-only rate and it is 93%; at the rate observed over 08-21…08-23 it is **203%**. The
-account was created 2026-08-15, so this is its first month and the pool has never actually
-run out — it stood at 4,106 of 5,000 on 08-23 with eight days left. When it does run out,
-every Bright-Data step fails silently and `continue-on-error` keeps the workflows green:
-discovery, JD enrichment, `bd_rescue`, `crack_walled`, and the search rung of the resolution
-ladder all return nothing at once.
-
-SERP is the line to watch, and it is **new**: `resolve_broken._careers_url_via_serp` gained
-its `deep_validate.google_via_unlocker` fallback on 2026-08-23 (§3), which is exactly when
-`reqs_serp` went from 0 to hundreds a day. `DEEP_BD_SEARCH_CAP` defaults to **150 per run**.
-
-`discovery_daily.report_bd_spend()` prints the pool total at the end of every run and emits
-a `::warning::` past 80%. Two endpoints are needed because `/customer/balance` answers **403**
-for this token — widening its billing scope at `brightdata.com/cp/setting/users` would let
-the code read the account's real figure instead of the documented default:
-
-```bash
-python -c "
-import discovery_daily as dd
-from bd_rescue import _load_secrets; _load_secrets(); dd.report_bd_spend()"
-```
-
-**`plan_spend()` pro-rates what is left over the days left in the month.** Depth is what
-makes the breadth sweep discover anything, but a sweep that spends the pool by the 24th
-returns **zero** for the last week of every month — and a silent zero from a source that
-used to produce is the worst failure mode in this repo. So:
-
-- The **breadth sweep is served first** (it is the discovery source); `linkedin-targeted`
-  takes only what is left, and is skipped entirely when nothing is.
-- Depth is never throttled below `LINKEDIN_LIMIT_MIN` (15, the value that yielded 1 new
-  company) nor above `LINKEDIN_LIMIT_MAX` (100).
-- **An unreadable ledger does NOT throttle** — running at the maximum is correct when the
-  number could not be fetched; throttling on a value we failed to read would be its own
-  silent failure.
-- **Breadth is never throttled** — it is billed per REQUEST (at most `LINKEDIN_PAGES` ×
-  keywords ≈ 18, usually 0 because the guest endpoint is free), so throttling it saves
-  nothing and starves the discovery source. The per-RECORD targeted backfill is what absorbs
-  a tight month. This was wrong until 2026-08-23: `left = per_day - breadth_limit × n_kw`
-  reserved 15 × 9 = **135 credits/day for something that costs 18**, and because `breadth`
-  was itself derived from `per_day`, the remainder came out as `per_day mod n_kw` — 0 to 8
-  **whatever the budget**. The backfill was starved at every budget below ~31,000/month
-  while printing "budget reserved for the breadth sweep", which reserved nothing. The test
-  that should have caught it asserted `targeted < breadth`, and `0 < 15` is true.
-
-Worked numbers for 2026-08-23 (4,106 spent, 9 days left → 99 credits/day):
-`breadth 9 keywords × 2 pages (~18 paid worst case) + targeted cap 100`. Breadth is not
-throttled at any budget — it is per-request and usually free — and the targeted backfill
-stays non-zero down to ~22 credits/day.
-
-### Is it sustainable? Yes, and free — once you stop paying per row
-
-**The two Bright Data products bill differently and the gap is ~39×:**
-
-| product | billed | what that means here |
-|---|---|---|
-| Web Scraper API (the dataset) | **1 credit per RECORD** | one trigger returning 391 jobs costs 391 credits — depth is charged by the row |
-| Web Unlocker | **1 credit per REQUEST** | one rendered page of LinkedIn's public job search carries **60 cards**, so 60 jobs cost 1 credit |
-
-($1.50/1K records vs $1.00/1K requests, `brightdata.com/pricing/web-scraper`, 2026-08-23.)
-
-"LinkedIn is one big request a day" is true about *requests* — the dataset breadth sweep was
-a single trigger — but the meter runs on rows. So the breadth sweep reads
-`linkedin.com/jobs/search` through the Unlocker instead (`linkedin_search`), and the run
-prints its own bill: `[linkedin] … for 18 Unlocker credits`. `f_TPR=r604800` is the
-past-week filter and it verifiably filters (past-week and past-month overlapped by 20 of 60).
-
-**Width AND depth — but only on the free endpoint.** The two endpoints have different
-ceilings and conflating them cost 60-95% of the sweep for half a day:
-
-| endpoint | page size | pool per query |
-|---|---|---|
-| paid `/jobs/search` via the Unlocker | 60 cards | **~80 jobs** — `start=50/75/100` all return zero new |
-| **keyless `/jobs-guest/...`** | 10 cards | **200+ jobs** — measured `analytics` 236, `אנליסט` 264, still not exhausted at 30 pages |
-
-The "80-job hard cap" was measured on the PAID page and then used to bound the FREE walk at
-`pages * 6` = 12 pages. `linkedin_search` was shipping **10 jobs out of a 201-job pool**. The
-free walk now has its own bound (`LINKEDIN_GUEST_PAGES`, 30) and **says so when it stops on
-the cap rather than on exhaustion** — a walk that ran out of iterations must never look like
-one that ran out of jobs. Measured over the full 9-keyword sweep, before and after:
-
-| | employers | new companies | paid credits | wall clock |
-|---|---|---|---|---|
-| bounded by the paid dial | 184 | 76 | 18 | — |
-| own bound, 30 pages | **364** | **182** | **7** | 113s |
-
-A page of entirely-REPEATED cards is also not the end: the guest endpoint's paging is
-unstable and re-serves a window, and breaking on the first repeat made the yield
-nondeterministic across runs minutes apart (16 jobs vs 100) — which reads as keyword
-saturation and sends the next reader to the wrong dial. Repeats are tolerated like blanks.
-
-**Depth is free here; a combined boolean query is still a trap.** The ~80/200 pool is per
-QUERY, not per keyword:
-
-| | credits | employers | new companies |
-|---|---|---|---|
-| one `("data analyst" OR "data scientist" OR …)` query | 2 | 50 | **10** |
-| nine separate keyword queries | 18 | 184 | **76** |
-| the per-record dataset, for comparison | **391** | 147 | 58 |
-
-Each distinct query gets its own window; nine queries buy nine windows. So the keyword list
-is long and flat on purpose, `LINKEDIN_PAGES` is 2, and **the whole sweep costs 18 credits
-and beats the 391-credit dataset by 18 companies.** If yield falls, add keywords — never
-pages, and never `OR`.
-
-**Two things the parser must keep doing, both learned by being broken.** The card block is
-bounded by `</li>` as well as the next urn: without it the LAST card on a page runs to the
-end of the document and absorbs the right-rail "people also viewed" block, which is built
-from the same `base-search-card` component and carries no urn — a last card missing its own
-subtitle emitted a **London** "Senior Manager" as a Tel Aviv job. And `country_code` is left
-**blank**, never `"IL"`: `israel.is_israel_job` short-circuits on country_code before it
-reads any text, so stamping IL because the QUERY said Israel made the pipeline's only geo
-gate a no-op for the whole discovery layer.
-
-What is given up is `job_summary` — the public search carries no description. That is
-acceptable *for the breadth sweep specifically*, because its product is EMPLOYER NAMES and
-the classifier decides the clear cases on title alone; a role that survives gets its text
-from `pipeline/jdfill.py` later.
-
-**The steady-state bill, measured:**
+**One Bright Data pool: 5,000 credits/month**, shared by Web Unlocker + SERP + Web Scraper
+API at one credit per request or record, resetting on the 1st with no rollover
+(`docs.brightdata.com/general/account/billing-and-pricing/free-tier`, verified 2026-08-23).
+Per MONTH, not per day.
 
 | | credits/day |
 |---|---|
-| LinkedIn breadth — **keyless guest endpoint**, 9 keywords × 30 pages | **~7** (≤18 if LinkedIn blocks it entirely) |
+| LinkedIn breadth — keyless guest endpoint, 9 keywords × 30 pages | **~7** (≤18 if LinkedIn blocks it outright) |
 | Workable — keyless, all tenants | **0** |
-| LinkedIn targeted — dataset, per record | **67** |
-| Indeed — Unlocker, 5 keywords + retries | 6 |
+| Indeed — Unlocker, 5 queries + retries | 6 |
+| LinkedIn targeted backfill — dataset, per RECORD | 67 |
 | everything else (JD enrichment, rescue, crack, repair) | ~44 |
-| **total before SERP** | **80** → 2,400/month, **comfortably inside the free 5,000** |
+| **total before SERP** | **~124** → ~3,700/month, inside the free pool |
 
-So it is sustainable at **$0**, with roughly 1,200 credits/month of headroom — which SERP
-can still eat: at the weekend-only rate the month lands at 4,320 and fits; at the rate
-observed 08-21…08-23 it lands at 9,690 and does not.
+Three of the five sources need no key at all, which is why `main()` does **not** return early
+when `BRIGHTDATA_API_KEY` is missing — that gate used to sit above the keyless sources *and*
+above `sources.record()`, so a rotated secret took the free half dark and silenced the
+detector built to notice.
 
-**Two things follow, and both are the opposite of where this started.** The `linkedin-targeted`
-backfill is now **87% of discovery's entire credit cost** — 67 credits/day against the whole
-breadth sweep's 10 — for 1 new company, because it is the only sweep still billed per record.
-Moving it to the Unlocker needs LinkedIn's numeric `f_C` company id, which we do not have; it
-is the obvious next optimisation and the first thing to cut regardless.
+Two mechanisms keep this honest, and both exist because the number was wrong before:
 
-**And `DEEP_BD_SEARCH_CAP` is now the largest uncontrolled spender in the pipeline** — the
-one that decides whether the month fits. It reads like a daily ceiling of 150 and is not
-one: `deep_validate._BD` is a **module-level** counter, so the count resets in every
-process, and six scripts import `google_via_unlocker` in processes of their own —
-`resolve_broken` (06:00), `listing_hunt` (19:00), `crack_walled` (19:00 + weekly),
-`repair_dead_urls`, `deep_validate` (Sat), `audit_empty_rows` (Sun). The effective ceiling
-is **~450 SERP credits on a weekday and ~750 at the weekend**, against a discovery layer
-that now spends 83 a day in total. Observed peak 272, i.e. two processes' worth. Guarded by
-`test_the_shared_bd_search_cap_is_per_process_not_per_day`, and it is `docs/BACKLOG.md`
-item 6.
+- **`report_bd_spend()`** prints the whole pool every run and projects month-end with a
+  dollar figure, warning past 80%. Counting only dataset records under-reported 4,106 as
+  2,989. `/customer/balance` is 403 for this token, so the figure is reconstructed from
+  `datasets/v3/snapshots` + `zone/cost`; an unreadable or unrecognised reply reads as
+  **unknown**, never as zero.
+- **`plan_spend()`** pro-rates what is left over the days left in the month. Breadth is never
+  throttled (per-request, usually free); the per-record backfill absorbs a tight month and is
+  skipped entirely when nothing is left.
+
+**The largest uncontrolled spender is not this layer.** `DEEP_BD_SEARCH_CAP` reads like a
+daily ceiling of 150 and is per-PROCESS — six scripts import `google_via_unlocker` in
+processes of their own — so the real ceiling is ~450 credits on a weekday and ~750 at the
+weekend. `docs/BACKLOG.md` item 6.
+
+*Full workings — the per-endpoint billing model, the depth/recency measurements, the
+month-end cost table and every rejected alternative — are in
+`docs/sessions/2026-08-24-discovery.md`.*
 
 ### Telegram channels
 
-`CHANNELS` in `discovery_telegram.py`. All are secrethunter-format (title / company / city /
-date / skills / seniority / link), so `parse_post` is deterministic and an unparseable post
-is **skipped and counted, never guessed**. Probe a candidate before adding it — the number
-that matters is how many of the ~20 messages on the front page parse:
+`CHANNELS` in `discovery_telegram.py`, all secrethunter-format so `parse_post` is
+deterministic and an unparseable post is **skipped and counted, never guessed**. Probe before
+adding — the number that decides is how many of the ~20 front-page messages parse:
 
 ```bash
 python -c "
@@ -554,35 +310,16 @@ p=d._fetch('https://t.me/s/CHANNEL'); m=list(d._MSG.finditer(p))
 print(len(m),'msgs',sum(1 for x in m if d.parse_post(d._clean_text(x.group('body')),x.group('dt'))),'parsed')"
 ```
 
-| channel | parsed/20 (2026-08-23) | why |
-|---|---|---|
-| `secretdatajobs` | 18 | the core feed |
-| `secretmarketingjobs` | 18 | marketing/growth analytics |
-| `secretproductjobs` | 18 | mostly PM — kept for the NAMES funnel |
-| `secretcyberjobs` | 16 | added 2026-08-23; deepest Israeli employer pool |
-| `secretfinancejobs` | 18 | added 2026-08-23; business/fintech analysts |
-| `secretsalesjobs` | 18 | added 2026-08-23; revenue/sales-ops analytics |
+Live: `secretdatajobs` · `secretmarketingjobs` · `secretproductjobs` · `secretcyberjobs` ·
+`secretfinancejobs` · `secretsalesjobs` (16–18 of 20 each). Rejected on **relevance**:
+`secrethrjobs`, `secretqajobs`. Rejected for having no public `t.me/s` preview at all:
+`secretbizdevjobs`, `secretanalystjobs`, `secretdesignjobs`, `secretstudentjobs`,
+`secretjobs`. Rejected as unstructured (2026-08-21): `israjobs`, `hightechforolims`,
+`jobs_SQL`.
 
-Rejected on **relevance, not capability**: `secrethrjobs` (17/20) and `secretqajobs` (15/20)
-parse fine and have essentially no analyst yield. Rejected because they have no public
-`t.me/s` preview at all (0 messages — the parser can never see them): `secretbizdevjobs`,
-`secretanalystjobs`, `secretdesignjobs`, `secretstudentjobs`, `secretjobs`. Rejected
-2026-08-21 as unstructured: `israjobs`, `hightechforolims`, `jobs_SQL`.
-
-Widening intake is cheap **because the resolver queue is not the bottleneck**: measured
-2026-08-23, `auto_expand`'s drainable backlog was **77 entries against an
-`AUTO_EXPAND_LIMIT` of 200 per run, twice a day**. Check before assuming otherwise:
-
-```bash
-python -c "
-import json
-from pipeline.companies import load_companies
-from pipeline.recruiters import is_recruiter
-e=json.load(open('research_companies.json',encoding='utf-8'))
-h={r['company_name'].strip().lower() for r in load_companies(active_only=False)}
-print(sum(1 for x in e if x.get('careers_url') and (x.get('name') or '').strip().lower() not in h and not is_recruiter(x.get('name'))))"
-```
-
+Widening intake is cheap **because the resolver queue is not the bottleneck** — measured
+2026-08-23, `auto_expand`'s drainable backlog was 77 against a limit of 200 per run, twice a
+day. Check that before assuming otherwise (command in `docs/sessions/2026-08-24-discovery.md`).
 ### What intake refuses, and where each gate lives
 
 A name that gets past here becomes a `companies.csv` row two `auto_expand` runs later, so
@@ -661,33 +398,6 @@ here would cost coverage and buy nothing.
   (J&J MedTech, Vishay, IAI, Ben-Gurion University …). That accidental breadth is gone;
   it was replaced deliberately with two more keywords on the breadth sweep, and whether
   that trade is net-positive has NOT been measured over more than one run.
-
-### Dry-running tomorrow's intake, end to end
-
-Both scripts resolve `companies.csv` and `cloud_state/source_health.json` **relative to the
-package, not to `cwd`** (`pipeline/companies.py` builds `CSV_PATH` from `REPO_ROOT`;
-`pipeline/sources.py` builds `PATH` from `os.path.dirname(__file__)`), so a `cd` into a
-scratch directory is NOT enough to keep a test run off the live state — redirect
-`sources.PATH` explicitly. Everything else the two scripts touch is `cwd`-relative:
-
-```python
-import os, sys
-sys.path.insert(0, "/path/to/repo"); os.chdir("/path/to/sandbox")   # holds copies of
-from pipeline import sources                                        # companies.csv,
-sources.PATH = os.path.join(os.getcwd(), "cloud_state", "source_health.json")
-import discovery_daily, discovery_telegram                          # discovered_cache.json,
-discovery_daily.main(); discovery_telegram.main()                   # research_companies.json,
-                                                                    # cloud_state/{stale,telegram_seen}.json
-```
-
-That run costs one real day of quota (5 unlocker requests + ~190 dataset records) and takes
-about 5 minutes, most of it Bright Data snapshot polling. The 2026-08-23 pass produced:
-137 discovery jobs + 262 Telegram jobs merged, `discovered_cache.json` 205 → 517,
-`research_companies.json` 1,233 → 1,332, **16 agencies rejected at the source** (9 on the
-08-23 cloud run, before the Hebrew markers), `sources.stale()` empty, and a `telegram` key
-in `source_health.json` for the first time. Do NOT commit the sandbox's state files: the
-Telegram watermark advancing locally without the jobs being committed is how 79 roles were
-lost on 2026-08-21.
 
 ## 2. Row lifecycle — every company carries a dated, evidence-based verdict
 *lane: `registry` — one session at a time. The rules in this section are `shared`: every

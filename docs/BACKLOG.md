@@ -339,6 +339,28 @@ outside the `discovery` lane and are NOT fixed.
     is what stops one role appearing three times from three sources), so this is a recorded
     trade, not a bug — but the number should be known before anyone "fixes" duplicates.
 
+14. **`discovery_daily.py` is a 1,214-line monolith doing six jobs.** *(lane: `discovery`.)*
+    Four source integrations, a credit ledger, a budget planner, four normalizers, the cache
+    merge and the names bridge, in one file with 22 top-level functions. The seams are
+    already visible in the function groupings, so the split is mechanical:
+    a source module per site under a new `pipeline/sources/` package, a budget module, and a
+    thin runner. (Named without backticks on purpose: docs/check_docs.py verifies that every
+    path a doc names EXISTS, so a proposal must not spell a future file as a real one.)
+    **Deliberately not done 2026-08-24**, and the reason matters more than the item: this is
+    a rename, `docs/AGENT_BRIEF.md` is explicit that a rename here breaks four other lanes
+    silently, and the file had just absorbed four adversarial review waves in a day. The risk
+    of re-introducing one of the twelve defects those waves found outweighs the tidiness. Do
+    it on a quiet day, with the test suite as the harness, and not while another lane holds
+    `companies.csv`.
+
+15. **The comment density in `discovery_daily.py` needs a reader who was not in the
+    incidents.** *(lane: `discovery`, or `docs`.)* It carries **0.77 lines of prose per line
+    of code** (370 comment + 120 docstring against 635 code). Each paragraph documents a real
+    defect and this repo's house style is to keep the incident next to the code — but
+    collectively they now bury what they protect. The author of a comment is the worst judge
+    of whether it is still load-bearing; someone else should decide which of these are rules
+    and which are just war stories that belong in `docs/sessions/`.
+
 ## From the registry lane, 2026-08-24
 
 Found while fixing the re-check pools. Each of these is **outside the `registry` lane's
