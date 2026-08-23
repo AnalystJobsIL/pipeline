@@ -304,9 +304,16 @@ def main():
                                                       mode=(mm.group(1) if mm else ""))
             except Exception as e:  # noqa: BLE001
                 verdict, url, n_il, detail = "dead", None, 0, f"error {str(e)[:50]}"
+            # decide BEFORE printing: a line that says [OK] for a row the write branch
+            # then refuses is exactly the kind of log that hid a day of bugs here
+            refused = ""
+            if verdict == "found" and not looks_like_a_job_listing_page(url):
+                refused = "not a listings page"
             stats[verdict] += 1
-            print(f"  [{'OK' if verdict == 'found' else '--'}] {n}/{len(targets)} {name}: "
-                  f"{url or detail}{f' ({n_il} IL)' if n_il else ''}", flush=True)
+            tag = "OK" if verdict == "found" and not refused else "XX" if refused else "--"
+            print(f"  [{tag}] {n}/{len(targets)} {name}: "
+                  f"{url or detail}{f' ({n_il} IL)' if n_il else ''}"
+                  f"{f' — {refused}, not activated' if refused else ''}", flush=True)
             if apply:
                 # single-writer discipline: re-read before every write; a start-of-run
                 # snapshot silently reverts other writers' verdicts (§5 ARCHITECTURE.md)
@@ -314,7 +321,7 @@ def main():
                 for fr in fresh:
                     if not fr or fr[0] != name or len(fr) < 6:
                         continue
-                    if verdict == "found" and not looks_like_a_job_listing_page(url):
+                    if refused:
                         # SCRAPE_ASSUME_IL makes every card on the page an "Israel role", so
                         # a nav menu scores like a board: iai.co.il/solution/
                         # research-academy-space "verified 6 IL" — "Domain Operations",
