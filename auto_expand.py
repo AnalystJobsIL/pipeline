@@ -9,6 +9,8 @@ Prints the remaining-unresolved count so the workflow / log shows progress.
 """
 from __future__ import annotations
 
+import sys
+
 import csv
 import json
 import os
@@ -17,6 +19,17 @@ from urllib.parse import urlparse
 from pipeline.aggregators import is_aggregator as _is_agg_url
 from pipeline.companies import CSV_PATH, load_companies
 from resolve_deep import resolve
+
+# stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
+# company names and arrows in their summaries, and an UnicodeEncodeError there kills the
+# process AFTER the useful work — in the cloud conflict path that is a `|| true`, so the
+# whole merge is discarded silently. Report, never raise, on the report itself.
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
 
 
 def _load_cache():

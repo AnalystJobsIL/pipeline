@@ -21,6 +21,17 @@ import time
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 
+# stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
+# company names and arrows in their summaries, and an UnicodeEncodeError there kills the
+# process AFTER the useful work — in the cloud conflict path that is a `|| true`, so the
+# whole merge is discarded silently. Report, never raise, on the report itself.
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
+
 TODAY = dt.date.today().isoformat()
 MODE = re.compile(r"dark-triage \d{4}-\d{2}-\d{2}: extract-gap")
 
