@@ -762,7 +762,9 @@ def test_a_first_scan_company_is_shown_honestly_rather_than_withheld():
     only_new = [j for j in jobs if j.get("_new_company")]
     title2, body2 = D.build_markdown(only_new, "2026-08-23", {"first_scan": 1, "new": 0})
     assert "newly covered companies" in title2
-    assert "_No new matching openings today._" in body2
+    # ...and it must not say "no new openings" directly above a section listing some
+    assert "_No new matching openings today._" not in body2
+    assert "Nothing posted in the last 48h at a company we already track" in body2
 
 
 def test_the_blocking_gate_blocks_on_corruption_not_on_one_bad_row():
