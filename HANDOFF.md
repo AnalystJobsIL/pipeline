@@ -196,6 +196,28 @@ regex is now DERIVED from both lists instead of keeping its own eight-name copy.
 
 ## Watch list for the next session
 
+0. **75 active companies have an all-time-high job count of ZERO** — including Adobe,
+   Broadcom, PayPal, Outbrain, At-Bay, Snyk, Deel, Capital One, Analog Devices, XM Cyber,
+   Explorium, AI21 Labs, Frontegg, Aporia, Vayyar. Their endpoints answer correctly and
+   return an empty board, so nothing errors and nothing is flagged: greenhouse `outbraininc`
+   replies `{"jobs":[],"meta":{"total":0}}`. These companies are obviously hiring, so the
+   tenant is stale — they have moved boards, exactly as Moon Active had (its Comeet endpoint
+   returned 0 for weeks while 33 jobs, 24 in Israel, sat on Ashby).
+
+   This is the largest remaining coverage item, and the self-heal cannot reach it today:
+   `resolve_broken.candidates()` reads `stale.json`, which holds only what the LAST digest
+   happened to scan, and every one of the 75 is throttled to a weekly retry with one strike
+   already spent. `--only` now reaches any registry row (fixed this session), so the
+   recovery run is:
+
+       python resolve_broken.py --only "$(python -c "import json,csv;b=json.load(open('cloud_state/health_baseline.json'));r={x['company_name'] for x in csv.DictReader(open('companies.csv')) if x['active']=='true'};print(','.join(n for n,v in b.items() if int(v)==0 and n in r))")"
+       python apply_resolved.py            # skips anything repaired by hand the same day
+
+   Started once this session; it renders each public careers page and sniffs, so it is slow
+   and it fails on anti-bot Workday tenants. The ones it cannot crack want `crack_walled`
+   with the residential unlocker, or a hand-check like the ones in §N.
+
+
 1. **`merge_key` should move onto `firmographics.identity_key`** — the ~15 remaining alias
    groups (Amazon/AWS, Microsoft/Microsoft Israel, PayPal/PayPal Israel) can only collapse
    there. It is the `matched` PRIMARY KEY, so this needs a migration: re-key existing rows
