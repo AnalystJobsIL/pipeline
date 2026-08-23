@@ -442,8 +442,17 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     onboard = {(j["company"], j["title"]) for j in board_jobs}   # = still open
     arch = [j for j in st.get_matched_since("0000-01-01")
             if (j["company"], j["title"]) not in onboard]
+    # The store keeps every role forever — which is the point, it IS the archive — but the
+    # PAGE renders a full detail card per role, so it would grow without bound. Newest
+    # first; the database keeps the tail whether or not the page shows it.
+    arch.sort(key=lambda x: str(x.get("last_seen") or x.get("first_seen") or ""), reverse=True)
+    if len(arch) > BOARD_MAX_ROLES:
+        print(f"  archive: {len(arch)} closed roles in the store, rendering the newest "
+              f"{BOARD_MAX_ROLES}", flush=True)
+        arch = arch[:BOARD_MAX_ROLES]
     arch_html = digest_mod.build_board_html(arch, run_date, summary, company_info=company_info,
-                                        heading="archived roles (expired or filled)",
+                                        heading="archived roles (no longer on the "
+                                                "employer's careers page)",
                                         firmographics=firmo_display)
     with open(os.path.join(docs_dir, "archive.html"), "w", encoding="utf-8") as f:
         f.write(arch_html)
