@@ -77,7 +77,8 @@ _JOB_XHR = re.compile(r"(api|graphql)[^\"']*(job|position|opening|career|search)
 # nothing and left every recurring pool — 8 companies were owned by no scheduled tool at all.
 # Matching our own stamp makes triage self-sustaining regardless of base-note erosion.
 TARGET_NOTES = re.compile(r"no listing found|no IL listing|no ATS detected|dark-triage", re.I)
-SKIP_NOTES = re.compile(r"defunct|domain-dead|recruiter|duplicate|redundant", re.I)
+SKIP_NOTES = re.compile(r"defunct|domain-dead|recruiter|duplicate|redundant|alias-of",
+                        re.I)
 
 
 def fetch(url, timeout=15):

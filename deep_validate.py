@@ -274,7 +274,9 @@ def main():
                # re-validate after DEEP_REVALIDATE_DAYS instead of never: excluding every
                # already-stamped row made deep validation a once-ever terminal state
                and _revalidatable(r[5] or "")
-               and not re.search(r"defunct|domain-dead", r[5] or "")
+               # alias-of: a second row for a company we already scan at the same url.
+               # Re-hunting it re-creates the duplicate this parking exists to remove.
+               and not re.search(r"defunct|domain-dead|alias-of", r[5] or "")
                and not is_recruiter(r[0])]
     if limit:
         targets = targets[:limit]
