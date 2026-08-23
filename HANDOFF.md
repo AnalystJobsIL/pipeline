@@ -217,6 +217,17 @@ regex is now DERIVED from both lists instead of keeping its own eight-name copy.
    and it fails on anti-bot Workday tenants. The ones it cannot crack want `crack_walled`
    with the residential unlocker, or a hand-check like the ones in §N.
 
+   **Greenhouse has an EU region and our fetcher does not know it.** Outbrain's real board is
+   `job-boards.eu.greenhouse.io/outbraininc`; the US `boards-api.greenhouse.io/v1/boards/
+   outbraininc/jobs` answers `{"jobs":[],"meta":{"total":0}}`, which is why it reads as an
+   empty board rather than a wrong one. There is no `boards-api.eu.greenhouse.io` (NXDOMAIN)
+   and `api.eu.greenhouse.io` returns 401, so the EU board has no public JSON API — the page
+   is a JS shell and needs the renderer. The right shape is probably a
+   `job-boards.eu.greenhouse.io/<slug>` scrape row, or a greenhouse fetcher that falls back
+   to rendering the EU board when the US API returns zero. Lever has the same split
+   (`api.eu.lever.co`), which the README already mentions and no code handles. Worth checking
+   how many of the 75 are this, before writing anything bespoke.
+
 
 1. **`merge_key` should move onto `firmographics.identity_key`** — the ~15 remaining alias
    groups (Amazon/AWS, Microsoft/Microsoft Israel, PayPal/PayPal Israel) can only collapse
