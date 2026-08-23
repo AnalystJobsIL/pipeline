@@ -120,6 +120,22 @@ def main():
             warn(f"{r[0]}: ats_platform={r[1]} but the endpoint is not on that host "
                  f"({(r[3] or '')[:50]}) — every fetch will fail")
 
+    # C3. an ATS row whose TENANT SLUG names someone else. Rebrands and acquisitions look
+    # exactly like this (Momentis still posts under `memic`, OTORIO under `armissecurity`,
+    # Itamar Medical under `zoll`), so it can only ever be a warning — but the same shape
+    # also hid `similarweb` under "SimilarTech" and `asteralabs` under "ASTERRA", 55 Israel
+    # roles between them, about to publish under Israeli companies that never posted them.
+    try:
+        from pipeline.company_identity import verdict as _identity
+        slugged = [f"{r[0]} -> {(r[3] or '')[:44]}" for r in body
+                   if len(r) > 4 and r[4] == "true"
+                   and _identity(r[0], r[3] or "") == "mismatch"]
+        if slugged:
+            warn(f"{len(slugged)} active rows whose endpoint names a different company "
+                 f"(check each: an acquisition looks the same): {slugged[:6]}")
+    except Exception:  # noqa: BLE001
+        pass
+
     # D. every inactive row must be in SOME re-check pool.
     # The thing worth blocking on is a POOL COLLAPSE — a predicate inverted, a note format
     # changed, hundreds of companies retired at once (check E is its other half). A handful
