@@ -1,0 +1,470 @@
+{
+ "InnovoPro": {
+  "sig": 0,
+  "il": 2
+ },
+ "WINT Water Intelligence": {
+  "sig": 0,
+  "il": 0
+ },
+ "LawGeex": {
+  "sig": 0,
+  "il": 0
+ },
+ "NanoLock Security": {
+  "sig": 0,
+  "il": 0
+ },
+ "Nokod Security": {
+  "sig": 2,
+  "il": 4
+ },
+ "Lili": {
+  "sig": 3,
+  "il": 0
+ },
+ "Behalf": {
+  "sig": 29,
+  "il": 0
+ },
+ "Speedata": {
+  "sig": 0,
+  "il": 7
+ },
+ "Homebiogas": {
+  "sig": 0,
+  "il": 0
+ },
+ "ImageSat International": {
+  "sig": 0,
+  "il": 0
+ },
+ "XJet": {
+  "sig": 1,
+  "il": 2
+ },
+ "Continental Israel": {
+  "sig": 2,
+  "il": 0
+ },
+ "MediWound": {
+  "sig": 5,
+  "il": 0
+ },
+ "AiVF": {
+  "sig": 0,
+  "il": 0
+ },
+ "BrainQ": {
+  "sig": 0,
+  "il": 8
+ },
+ "Buff": {
+  "sig": 5,
+  "il": 0
+ },
+ "Amimon": {
+  "sig": 3,
+  "il": 0
+ },
+ "NeoGames": {
+  "sig": 0,
+  "il": 0
+ },
+ "Panoply": {
+  "sig": 0,
+  "il": 0
+ },
+ "Arnica": {
+  "sig": 3,
+  "il": 0
+ },
+ "Source Defense": {
+  "sig": 0,
+  "il": 1
+ },
+ "Kirobo": {
+  "sig": 0,
+  "il": 0
+ },
+ "Bancor": {
+  "sig": 0,
+  "il": 0
+ },
+ "Ride Vision": {
+  "sig": 2,
+  "il": 4
+ },
+ "GenCell Energy": {
+  "sig": 0,
+  "il": 0
+ },
+ "1MRobotics": {
+  "sig": 26,
+  "il": 0
+ },
+ "Siklu": {
+  "sig": 2,
+  "il": 43
+ },
+ "Israel Aerospace Industries (IAI)": {
+  "sig": 0,
+  "il": 0
+ },
+ "Nokia Israel": {
+  "sig": 0,
+  "il": 0
+ },
+ "Emendo Biotherapeutics": {
+  "sig": 2,
+  "il": 0
+ },
+ "Nuvo": {
+  "sig": 7,
+  "il": 0
+ },
+ "Honeywell": {
+  "sig": 0,
+  "il": 0
+ },
+ "Skyhawk Security": {
+  "sig": 2,
+  "il": 2
+ },
+ "Steadicopter": {
+  "sig": 0,
+  "il": 1
+ },
+ "Compedia": {
+  "sig": 51,
+  "il": 0
+ },
+ "GenCell": {
+  "sig": 0,
+  "il": 0
+ },
+ "EqualWeb": {
+  "sig": 0,
+  "il": 0
+ },
+ "Duve": {
+  "sig": 3,
+  "il": 0
+ },
+ "Versatile": {
+  "sig": 0,
+  "il": 6
+ },
+ "SQream": {
+  "sig": 0,
+  "il": 0
+ },
+ "L7 Defense": {
+  "sig": 0,
+  "il": 53
+ },
+ "Andromeda Security": {
+  "sig": 5,
+  "il": 0
+ },
+ "LayerX Security": {
+  "sig": 3,
+  "il": 0
+ },
+ "Sedric": {
+  "sig": 0,
+  "il": 0
+ },
+ "Tarya": {
+  "sig": 1,
+  "il": 0
+ },
+ "Wobi": {
+  "sig": 0,
+  "il": 0
+ },
+ "RAAAM Memory Technologies": {
+  "sig": 0,
+  "il": 2
+ },
+ "Addionics": {
+  "sig": 5,
+  "il": 2
+ },
+ "Fieldin": {
+  "sig": 3,
+  "il": 0
+ },
+ "NSLComm": {
+  "sig": 21,
+  "il": 5
+ },
+ "Sight Diagnostics": {
+  "sig": 0,
+  "il": 0
+ },
+ "Sweetch": {
+  "sig": 0,
+  "il": 0
+ },
+ "Sanolla": {
+  "sig": 3,
+  "il": 0
+ },
+ "NRGene": {
+  "sig": 1,
+  "il": 1
+ },
+ "Synopsys": {
+  "sig": 1,
+  "il": 0
+ },
+ "Goldman Sachs": {
+  "sig": 0,
+  "il": 0
+ },
+ "Talenya": {
+  "sig": 0,
+  "il": 0
+ },
+ "QEDIT": {
+  "sig": 2,
+  "il": 2
+ },
+ "Criaterra": {
+  "sig": 0,
+  "il": 0
+ },
+ "Bigabid": {
+  "sig": 1,
+  "il": 0
+ },
+ "Beamr": {
+  "sig": 3,
+  "il": 0
+ },
+ "Fetcher": {
+  "sig": 0,
+  "il": 0
+ },
+ "Rezonate": {
+  "sig": 3,
+  "il": 0
+ },
+ "Karamba Security": {
+  "sig": 0,
+  "il": 6
+ },
+ "GK8": {
+  "sig": 2,
+  "il": 0
+ },
+ "Simplex": {
+  "sig": 0,
+  "il": 0
+ },
+ "COTI": {
+  "sig": 206,
+  "il": 0
+ },
+ "TipRanks": {
+  "sig": 2,
+  "il": 4
+ },
+ "Fuse": {
+  "sig": 3,
+  "il": 0
+ },
+ "Nostromo Energy": {
+  "sig": 0,
+  "il": 0
+ },
+ "Blue White Robotics": {
+  "sig": 0,
+  "il": 0
+ },
+ "Salicrop": {
+  "sig": 3,
+  "il": 0
+ },
+ "Nucleai": {
+  "sig": 3,
+  "il": 3
+ },
+ "RADLogics": {
+  "sig": 0,
+  "il": 0
+ },
+ "InspireMD": {
+  "sig": 0,
+  "il": 7
+ },
+ "Quris AI": {
+  "sig": 3,
+  "il": 0
+ },
+ "Cnoga Medical": {
+  "sig": 2,
+  "il": 2
+ },
+ "X (Twitter)": {
+  "sig": 0,
+  "il": 0
+ },
+ "Morgan Stanley": {
+  "sig": 1,
+  "il": 0
+ },
+ "Aptiv": {
+  "sig": 10,
+  "il": 0
+ },
+ "Nestle": {
+  "sig": 3,
+  "il": 2
+ },
+ "RapidAPI": {
+  "sig": 0,
+  "il": 0
+ },
+ "Fornova": {
+  "sig": 1,
+  "il": 4
+ },
+ "Wilk": {
+  "sig": 0,
+  "il": 0
+ },
+ "Yo Egg": {
+  "sig": 0,
+  "il": 0
+ },
+ "Noogata": {
+  "sig": 5,
+  "il": 0
+ },
+ "1touch.io": {
+  "sig": 10,
+  "il": 0
+ },
+ "Cynerio": {
+  "sig": 0,
+  "il": 0
+ },
+ "Lasso Security": {
+  "sig": 7,
+  "il": 0
+ },
+ "CyCognito": {
+  "sig": 3,
+  "il": 0
+ },
+ "Radware": {
+  "sig": 0,
+  "il": 0
+ },
+ "Cyvers": {
+  "sig": 0,
+  "il": 0
+ },
+ "Planck": {
+  "sig": 0,
+  "il": 0
+ },
+ "Ironblocks": {
+  "sig": 2,
+  "il": 22
+ },
+ "Kahun": {
+  "sig": 0,
+  "il": 0
+ },
+ "Twill": {
+  "sig": 2,
+  "il": 0
+ },
+ "Beyond Air": {
+  "sig": 1,
+  "il": 0
+ },
+ "Enzymit": {
+  "sig": 0,
+  "il": 14
+ },
+ "1E Therapeutics": {
+  "sig": 0,
+  "il": 0
+ },
+ "Essence SmartCare": {
+  "sig": 0,
+  "il": 0
+ },
+ "ZF": {
+  "sig": 1,
+  "il": 0
+ },
+ "SolarEdge Technologies": {
+  "sig": 6,
+  "il": 3
+ },
+ "entrypoint": {
+  "sig": 2,
+  "il": 0
+ },
+ "Yael Korentec Technologies": {
+  "sig": 10,
+  "il": 2
+ },
+ "Bookmap": {
+  "sig": 4,
+  "il": 0
+ },
+ "Shortical": {
+  "sig": 3,
+  "il": 0
+ },
+ "Harel Insurance & Finance": {
+  "sig": 4,
+  "il": 0
+ },
+ "Tipuli Tech": {
+  "sig": 0,
+  "il": 0
+ },
+ "K Logic": {
+  "sig": 6,
+  "il": 0
+ },
+ "90min": {
+  "sig": 3,
+  "il": 0
+ },
+ "SMARTECH - A Hexion Company": {
+  "sig": 1,
+  "il": 0
+ },
+ "TCM Technologies LTD": {
+  "sig": 4,
+  "il": 0
+ },
+ "Ryltech.co.il": {
+  "sig": 5,
+  "il": 0
+ },
+ "Boolzai": {
+  "sig": 0,
+  "il": 0
+ },
+ "factify": {
+  "sig": 0,
+  "il": 1
+ },
+ "Ocean": {
+  "sig": 2,
+  "il": 0
+ },
+ "Simply": {
+  "sig": 0,
+  "il": 0
+ }
+}
