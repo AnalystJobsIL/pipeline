@@ -4,7 +4,7 @@ Global-e,comeet,62.002,https://www.comeet.com/careers-api/2.0/company/62.002/pos
 Team8,comeet,61.003,https://www.comeet.com/careers-api/2.0/company/61.003/positions?token=16358C6EF2C61631639B558C0429,true,
 BUYME,comeet,B2.008,https://www.comeet.com/careers-api/2.0/company/B2.008/positions?token=2B8D980AE01050570D98187815C0570,true,
 Sunflower,comeet,AA.009,https://www.comeet.com/careers-api/2.0/company/AA.009/positions?token=AA94A9F3FF601FFB3FF63FF61FFB0354D,true,
-Moon Active,comeet,A2.00C,https://www.comeet.com/careers-api/2.0/company/A2.00C/positions?token=2ACD5C02AC10081008AB01560180C804,true,currently 0 openings but endpoint valid
+Moon Active,ashby,moonactive,https://api.ashbyhq.com/posting-api/job-board/moonactive,true,"platform-fix 2026-08-23: moved from Comeet (0 openings for weeks) to Ashby 'moonactive' — 33 jobs / 24 Israel, incl. a Marketing Data Analyst we were never seeing"
 Guardio,comeet,57.000,https://www.comeet.com/careers-api/2.0/company/57.000/positions?token=7502BE015F0249041D01D40EA03A801D40EA0,true,
 Claroty,comeet,F2.004,https://www.comeet.com/careers-api/2.0/company/F2.004/positions?token=2F4EC42F42F45E814AC1A945E814AC5E8,true,
 Dream Security,comeet,99.002,https://www.comeet.com/careers-api/2.0/company/99.002/positions?token=99242FE9921CB6042FE396C42FE132442FE,true,
@@ -137,7 +137,7 @@ BigID,greenhouse,bigid,https://boards-api.greenhouse.io/v1/boards/bigid/jobs,tru
 Rubrik,greenhouse,rubrik,https://boards-api.greenhouse.io/v1/boards/rubrik/jobs,true,Global board - 2026-08-14 Dun's 100 2025 top-tech; verified live 115 jobs / 4 Israel
 Optimove,greenhouse,optimove,https://boards-api.greenhouse.io/v1/boards/optimove/jobs,true,2026-08-14 Dun's 100 2025 top-tech; verified live 6 jobs / 2 Israel
 monday.com,ashby,monday.com,https://api.ashbyhq.com/posting-api/job-board/monday.com,true,2026-08-14 Dun's 100 2025 top-tech (#3); ashby slug is literally 'monday.com' with the dot; verified live 27 jobs / 9 Israel
-Armis,smartrecruiters,armis,https://api.smartrecruiters.com/v1/companies/armis/postings,true,2026-08-14 probe-verified; 2 Israel
+Armis,greenhouse,armissecurity,https://boards-api.greenhouse.io/v1/boards/armissecurity/jobs,true,"platform-fix 2026-08-23: greenhouse 'armissecurity' is the live board (18 jobs / 8 IL, incl. a Senior Data Analyst); the SmartRecruiters row showed 2"
 Sweet Security,greenhouse,sweetsecurity,https://boards-api.greenhouse.io/v1/boards/sweetsecurity/jobs,true,2026-08-14 probe-verified; 4 Israel
 Descope,greenhouse,descope,https://boards-api.greenhouse.io/v1/boards/descope/jobs,true,2026-08-14 probe-verified; 4 Israel
 Salt Security,greenhouse,saltsecurity,https://boards-api.greenhouse.io/v1/boards/saltsecurity/jobs,true,2026-08-14 probe-verified; 3 Israel
@@ -231,7 +231,7 @@ Jabil,workday,jabil/Jabil_Careers,https://jabil.wd5.myworkdayjobs.com/wday/cxs/j
 Bringoz,bamboohr,bringoz,https://bringoz.bamboohr.com/careers/list,true,research-resolved; 14 jobs / 13 Israel
 accessiBe,greenhouse,accessibe,https://boards-api.greenhouse.io/v1/boards/accessibe/jobs,true,research-resolved; 6 jobs / 5 Israel
 Pixellot,comeet,BA.00B,https://www.comeet.com/careers-api/2.0/company/BA.00B/positions?token=ABB4B1D4062203155D855D8203155D815762031,true,resolved via network capture; 2 jobs / 2 Israel
-OTORIO,greenhouse,armissecurity,https://boards-api.greenhouse.io/v1/boards/armissecurity/jobs,true,resolved via network capture; 22 jobs / 11 Israel
+OTORIO,greenhouse,armissecurity,,false,"alias-of Armis 2026-08-23: acquired by Armis, and its stored board IS Armis's greenhouse tenant — its roles were publishing under OTORIO's name"
 Cynomi,comeet,F9.00F,https://www.comeet.com/careers-api/2.0/company/F9.00F/positions?token=9FF45F91DFD1DFD4FF845F9013FE59F79FF,true,resolved via network capture; 3 jobs / 0 Israel
 Akeyless,comeet,27.006,https://www.comeet.com/careers-api/2.0/company/27.006/positions?token=7262AE41572157215721C984056E4C405623BE,true,resolved via network capture; 11 jobs / 7 Israel
 Smart Shooter,comeet,0B.00A,https://www.comeet.com/careers-api/2.0/company/0B.00A/positions?token=B0A4D464D46211EB0A4D46635A635AB0A211E,true,resolved via network capture; 5 jobs / 5 Israel
@@ -412,7 +412,7 @@ Bridgewise,scrape,https://bridgewise.com/careers,https://www.comeet.com/jobs/bri
 AU10TIX,scrape,,https://www.au10tix.com/company/careers/,true,listing-hunt 2026-08-22: verified 1 IL via https://www.au10tix.com/company/careers/
 Nominal,scrape,https://www.nominal.ai/careers,https://jobs.gem.com/nominal,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
 Ballerine,scrape,,https://www.ballerine.com/company/careers,true,listing-hunt 2026-08-22: verified 5 IL via https://www.ballerine.com/company/careers
-iForex,scrape,https://www.iforex.com/careers,https://www.iforex.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-23: no IL listing; monitored candidate | dark-triage 2026-08-23: url-dead (http 404)
+iForex,scrape,https://www.iforex.com/careers,https://www.iforex.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: url-dead (http 404) | listing-hunt 2026-08-23: no IL listing; monitored candidate
 Kima,scrape,https://www.kima.network/careers,https://www.kima.network/careers,false,scanned via brightdata; no open Israel roles now | listing-hunt 2026-08-23: no IL listing; monitored candidate | dark-triage 2026-08-23: url-dead (http 404)
 Speedata,scrape,https://speedata.io/careers/,https://www.speedata.io/careers-1,false,"deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: extract-gap (LLM found 7: Senior Technical Project Manager, Architectural Mode | listing-hunt 2026-08-23: no IL listing; monitored candidate"
 Silicom,scrape,https://www.silicom.co.il/company/careers,https://www.silicom.co.il/company/careers,false,scanned via brightdata; no open Israel roles now | listing-hunt 2026-08-23: no IL listing; monitored candidate | dark-triage 2026-08-23: url-dead (http 404)
@@ -1154,7 +1154,7 @@ Orca-AI,scrape,,https://www.orca-ai.io/careers,false,aggregator URL purged 2026-
 Aman Group,workday,aman/AmanGroupExternal,https://aman.wd103.myworkdayjobs.com/wday/cxs/aman/AmanGroupExternal/jobs,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 Matrix,comeet,19.00F,https://www.comeet.com/careers-api/2.0/company/19.00F/positions?token=91F36BA52172D9B0247C247C5217247C2D9B,true,re-audit 2026-08-21: deep-verified 25/0 IL (was dark)
 Priority Software,scrape,,https://www.priority-software.com/il/careers/,true,listing-hunt 2026-08-22: verified 5 IL via https://www.priority-software.com/il/careers/
-Moonsite - Moonsoft Development Ltd.,scrape,,https://jobs.ashbyhq.com/moonactive,true,listing-hunt 2026-08-22: verified 23 IL via https://jobs.ashbyhq.com/moonactive
+Moonsite - Moonsoft Development Ltd.,scrape,,,false,"alias-of Moon Active 2026-08-23: its stored board was jobs.ashbyhq.com/moonactive — Moon Active's, whose 23 Israel roles were about to publish under this name"
 ICON Strategic Solutions,workday,icon/wd3/broadbean_external,https://icon.wd3.myworkdayjobs.com/wday/cxs/icon/broadbean_external/jobs,true,auto-expand; 4/3 IL
 appsforce,scrape,https://secrethunter.io/jobz/bb3b05e785,https://appsforce.io/en/careers,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
 Intel Corporation,workday,intel/wd1/External,https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/External/jobs,false,alias-of Intel 2026-08-23: identical board URL; one row per company so the board does not list every role twice | auto-expand; 31/28 IL
