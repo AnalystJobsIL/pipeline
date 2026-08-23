@@ -17,6 +17,8 @@ import re
 import time
 import urllib.request
 
+from pipeline.notes import replace_own as _note_replace
+
 from resolve_deep import _verify
 from retry_unreachable import alt_urls
 from wayback_rescue import extract_ats
@@ -100,10 +102,10 @@ def main():
             note = rows[rowi][5] if len(rows[rowi]) > 5 else ""
             mm = re.search(r"x(\d+)$", note)
             n_try = (int(mm.group(1)) if mm else 0) + 1
-            _base = re.sub(r"(^|\s\|\s)bd-tried [^|]*", "", rows[rowi][5] or "").strip(" |")
-            _stamp = f"bd-tried {_dtm.date.today().isoformat()} x{n_try}"
-            rows[rowi][5] = (((_base + " | ") if _base
-                              else "unreachable; could not scan | ") + _stamp)[:220]
+            _base = rows[rowi][5] or "unreachable; could not scan"
+            rows[rowi][5] = _note_replace(
+                _base, "bd-tried",
+                f"bd-tried {_dtm.date.today().isoformat()} x{n_try}")
             _MOD.add(name)
             print(f"  unre {name}", flush=True)
             time.sleep(1)
@@ -116,9 +118,9 @@ def main():
         # keep the row hunt-eligible: append our verdict to the existing note instead of
         # replacing it (replacing destroyed monitored-candidate/host-documented tokens and
         # landed on a string no re-check matched — 31 rows were stranded this way)
-        prev = re.sub(r"(^|\s\|\s)scanned via brightdata;[^|]*", "", rows[rowi][5] or "").strip(" |")
-        note = ((prev + " | ") if prev else "") + note + " - monitored candidate"
-        rows[rowi] = [name, "scrape", best_url, best_url, "false", note[:220]]
+        note = _note_replace(rows[rowi][5], "scanned via brightdata",
+                             note + " - monitored candidate")
+        rows[rowi] = [name, "scrape", best_url, best_url, "false", note]
         _MOD.add(name)
         empt += 1
         print(f"  empt {name}", flush=True)

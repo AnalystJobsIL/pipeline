@@ -37,6 +37,7 @@ from bd_rescue import _load_secrets, unlock
 from pipeline.recruiters import is_recruiter
 from resolve_llm import _ATS_HINT, _PROMPT, _ask_claude
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import append as _note_append, replace_own as _note_replace
 from pipeline.company_identity import is_foreign
 from pipeline.verdicts import in_pool
 
@@ -300,11 +301,10 @@ def main():
                         # Identity gate: rendering the STORED url and finding roles proves
                         # roles exist there, not that they are this company's. The stored
                         # url of a dark row is often the hunt's best GUESS.
-                        base = re.sub(r"(^|\s\|\s)deep-validated \d{4}-\d{2}-\d{2}:[^|]*",
-                                      "", fr[5] or "").strip(" |")
-                        fr[5] = ((base + " | " if base else "")
-                                 + f"deep-validated {TODAY}: page belongs to another "
-                                   f"company ({(api or r[3])[:40]})")[:220]
+                        fr[5] = _note_replace(
+                            fr[5], "deep-validated",
+                            f"deep-validated {TODAY}: page belongs to another company "
+                            f"({(api or r[3])[:40]})")
                     elif verdict == "recovered":
                         fr[1], fr[2], fr[3] = plat, tok, api
                         fr[4] = "true"
@@ -316,10 +316,8 @@ def main():
                         # preserve other tools' verdicts (and the monitored-candidate /
                         # host-documented tokens listing_hunt's fast-path keys on) — only
                         # replace our own previous stamp
-                        base = re.sub(r"(^|\s\|\s)deep-validated \d{4}-\d{2}-\d{2}:[^|]*", "",
-                                      fr[5] or "").strip(" |")
-                        fr[5] = ((base + " | " if base else "")
-                                 + f"deep-validated {TODAY}: {note}")[:220]
+                        fr[5] = _note_replace(fr[5], "deep-validated",
+                                              f"deep-validated {TODAY}: {note}")
                 write_csv_rows("companies.csv", fresh)
             time.sleep(0.3)
     print(f"\n=== deep validation: {stats} · BD searches used: {_BD['used']} ===", flush=True)

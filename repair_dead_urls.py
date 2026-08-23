@@ -35,6 +35,7 @@ from pipeline.aggregators import is_aggregator
 from pipeline.company_identity import (verdict as identity_verdict,
                                        page_mentions_company)
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import append as _note_append, replace_own as _note_replace
 
 TODAY = dt.date.today().isoformat()
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -193,9 +194,9 @@ def main():
                 for fr in fresh:
                     if fr and fr[0] == name and len(fr) >= 6:
                         fr[3] = good
-                        seg = f"url-repaired {TODAY}: dead host {host_of(old)} replaced"
-                        room = 220 - len(seg) - 3
-                        fr[5] = (f"{(fr[5] or '')[:room]} | {seg}" if room > 20 else seg)
+                        fr[5] = _note_replace(
+                            fr[5], "url-repaired",
+                            f"url-repaired {TODAY}: dead host {host_of(old)} replaced")
                 write_csv_rows("companies.csv", fresh)
         else:
             stuck += 1

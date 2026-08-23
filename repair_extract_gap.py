@@ -19,6 +19,7 @@ import sys
 import time
 
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import append as _note_append, replace_own as _note_replace
 
 TODAY = dt.date.today().isoformat()
 MODE = re.compile(r"dark-triage \d{4}-\d{2}-\d{2}: extract-gap")
@@ -85,12 +86,10 @@ def main():
                         fr[4] = "true"
                         # append, never overwrite: the note is a shared append-log and a
                         # wholesale rewrite drops every other tool's verdict segment (the
-                        # documented #1 bug class here). Keep the tail that still fits.
-                        seg = (f"repair {TODAY}: extract-gap fixed via LLM tier; "
-                               f"{len(il)} IL")
-                        base = (fr[5] or "").strip()
-                        room = 220 - len(seg) - 3
-                        fr[5] = (f"{base[:room]} | {seg}" if base and room > 20 else seg)
+                        # documented #1 bug class here).
+                        fr[5] = _note_replace(
+                            fr[5], "repair ",
+                            f"repair {TODAY}: extract-gap fixed via LLM tier; {len(il)} IL")
                 write_csv_rows("companies.csv", fresh)
                 # cache immediately so the next digest sees it without waiting for a refresh
                 import json

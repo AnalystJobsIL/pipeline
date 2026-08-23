@@ -34,6 +34,7 @@ from pipeline.recruiters import is_recruiter
 from pipeline.company_identity import is_foreign
 from resolve_llm import _ask_claude
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import append as _note_append, replace_own as _note_replace
 
 TODAY = dt.date.today().isoformat()
 _LINKISH = re.compile(r"job|position|opening|vacanc|search|career|role|משרות|דרושים|join", re.I)
@@ -307,23 +308,22 @@ def main():
                         # tool honestly re-tests the wrong company's careers page. Note it
                         # in the note instead, which is text, not an endpoint.
                         if is_foreign(name, url):
-                            base = re.sub(r"\s\|\s?listing-hunt [^|]*", "", fr[5])
-                            v = (f"listing-hunt {TODAY}: best candidate {url[:44]} belongs "
-                                 f"to another company; no listing found")
-                            room = 220 - len(v) - 3
-                            fr[5] = (f"{base[:room]} | {v}" if room > 20 else v)
+                            fr[5] = _note_replace(
+                                fr[5], "listing-hunt",
+                                f"listing-hunt {TODAY}: best candidate {url[:44]} belongs "
+                                f"to another company; no listing found")
                             continue
                         fr[3] = url                       # persist the candidate page
-                        base = re.sub(r"\s\|\s?listing-hunt [^|]*", "", fr[5])
-                        # trim the BASE, never the verdict (slicing the whole string cut the
-                        # verdict off and left an unroutable row)
-                        v = f"listing-hunt {TODAY}: no IL listing; monitored candidate"
-                        room = 220 - len(v) - 3
-                        fr[5] = (f"{base[:room]} | {v}" if room > 20 else v)
+                        # drop OLD WHOLE segments to make room — slicing the base cut
+                        # the newest one in half ("dark-triage 2026-08-22: page-emp")
+                        fr[5] = _note_replace(
+                            fr[5], "listing-hunt",
+                            f"listing-hunt {TODAY}: no IL listing; monitored candidate")
                     else:
-                        fr[5] = (re.sub(r"\s\|\s?listing-hunt [^|]*", "", fr[5])
-                                 + f" | listing-hunt {TODAY}: "
-                                 + ("no listing found" if verdict == "nolisting" else detail))[:220]
+                        fr[5] = _note_replace(
+                            fr[5], "listing-hunt",
+                            f"listing-hunt {TODAY}: "
+                            + ("no listing found" if verdict == "nolisting" else detail))
                 write_csv_rows("companies.csv", fresh)
     print(f"\n=== listing hunt: {stats} ===", flush=True)
 

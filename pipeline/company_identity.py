@@ -83,6 +83,11 @@ def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]", "", (s or "").lower())
 
 
+def _norm_split(host_label: str) -> list:
+    """The registrable label split into its written parts: 'ide-tech' -> ['ide', 'tech']."""
+    return [p for p in re.split(r"[^a-z0-9]+", (host_label or "").lower()) if p]
+
+
 def _acronym(name: str) -> str:
     """Texas Instruments -> ti, Central Bottling Company -> cbc. Stopwords are dropped only
     when something remains, so 'Israel Electric Corporation' still yields 'iec'."""
@@ -228,6 +233,18 @@ def verdict(company: str, url: str) -> str:
         # is suggestive at best.
         missing = [w for w in words if w not in dom]
         return "match" if (len(dom) - len(hit) <= 2 and not missing) else "weak"
+    # A HYPHENATED domain whose parts line up, token for token, with the company's words is
+    # strong evidence — ide-tech.com IS IDE Technologies, c2a-sec.com IS C2A Security,
+    # bren-energy.com IS Brenmiller Energy, and all three were scoring `mismatch`, which
+    # blocks a legitimate recovery. Two independent tokens agreeing is what makes it safe:
+    # the single-token version of this rule is exactly the rad.com/RADLogics and
+    # nooga.net/Noogata false match, so a one-part domain is not eligible.
+    dparts = [p for p in _norm_split(dom) if p]
+    cwords = [w for w in re.findall(r"[a-z0-9]+", cname) if w not in ("the",)]
+    if (len(dparts) >= 2 and len(dparts) == len(cwords)
+            and all(len(d) >= 3 and w.startswith(d) for d, w in zip(dparts, cwords))):
+        return "match"
+
     ac = _acronym(company)
     if len(ac) >= 2 and (dom == ac or dom.startswith(ac + "-") or dom.startswith(ac + "_")
                          or _norm(dom).startswith(ac) and len(_norm(dom)) <= len(ac) + 4):

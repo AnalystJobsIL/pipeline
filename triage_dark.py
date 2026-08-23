@@ -41,6 +41,7 @@ import time
 import urllib.request
 
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import append as _note_append, replace_own as _note_replace
 
 TODAY = dt.date.today().isoformat()
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -270,13 +271,11 @@ def main():
             fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
             for fr in fresh:
                 if fr and fr[0] == r[0] and len(fr) >= 6:
-                    base = re.sub(r"\s\|\s?dark-triage [^|]*", "", fr[5] or "").strip(" |")
-                    # trim the BASE, never the new verdict: `f"{base} | {verdict}"[:220]`
-                    # cut the verdict off the end, leaving "dark-triage <date>:" with no
-                    # mode — the row then can't be routed at all.
-                    verdict = f"dark-triage {TODAY}: {mode} ({detail})"
-                    room = 220 - len(verdict) - 3
-                    fr[5] = (f"{base[:room]} | {verdict}" if room > 20 else verdict)
+                    # Drop OLD WHOLE segments to make room. Slicing the base cut the
+                    # newest segment in half instead — 87 rows read `page-emp`, and one
+                    # `pa` — and a mode no filter matches drops the row from its pool.
+                    fr[5] = _note_replace(fr[5], "dark-triage",
+                                          f"dark-triage {TODAY}: {mode} ({detail})")
             write_csv_rows("companies.csv", fresh)
         time.sleep(0.2)
 

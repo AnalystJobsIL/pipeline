@@ -17,6 +17,7 @@ import urllib.parse
 import ssl
 import urllib.request
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import append as _note_append, replace_own as _note_replace
 
 _CTX = ssl.create_default_context()
 _CTX.check_hostname = False
@@ -88,8 +89,8 @@ def main():
                 fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
                 for fr in fresh:
                     if fr and fr[0] == r[0] and len(fr) > 5:
-                        base = re.sub(r"\s\|\s?domain-dead [^|]*", "", fr[5] or "").strip(" |")
-                        fr[5] = (base + f" | domain-dead {TODAY} ({why})")[:220]
+                        fr[5] = _note_replace(fr[5], "domain-dead",
+                                              f"domain-dead {TODAY} ({why})")
                 write_csv_rows("companies.csv", fresh)
     print(f"=== {dead} dead, {revived} revived of {len(targets)} checked ===", flush=True)
 

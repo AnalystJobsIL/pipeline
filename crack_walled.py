@@ -27,6 +27,7 @@ from deep_validate import Renderer, ddg
 from audit_empty_rows import AGG, verify
 from pipeline.aggregators import is_aggregator
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import append as _note_append, replace_own as _note_replace
 from pipeline.company_identity import is_foreign
 
 TODAY = dt.date.today().isoformat()
@@ -228,9 +229,10 @@ def main():
                         # Identity gate: a cracked page with real Israel roles is still the
                         # WRONG page if it belongs to someone else (FairFly/fireflyspace,
                         # COTI/jobs.citi.com). Document where we looked; do not activate.
-                        fr[5] = (re.sub(r"\s\|\s?crack-walled [^|]*", "", fr[5])
-                                 + f" | crack-walled {TODAY}: page belongs to another "
-                                   f"company ({got[1][:40]})")[:220]
+                        fr[5] = _note_replace(
+                            fr[5], "crack-walled",
+                            f"crack-walled {TODAY}: page belongs to another company "
+                            f"({got[1][:40]})")
                     elif verdict.startswith("cracked"):
                         plat, lu = got
                         fr[1], fr[2], fr[3] = plat, "", lu
@@ -238,11 +240,12 @@ def main():
                         fr[5] = f"crack-walled {TODAY}: {platform} via {plat}; verified {n_il} IL"
                     elif verdict == "novrfy" and got:
                         fr[3] = got[1]
-                        fr[5] = (re.sub(r"\s\|\s?crack-walled [^|]*", "", fr[5])
-                                 + f" | crack-walled {TODAY}: host documented, 0 IL now")[:220]
+                        fr[5] = _note_replace(
+                            fr[5], "crack-walled",
+                            f"crack-walled {TODAY}: host documented, 0 IL now")
                     else:
-                        fr[5] = (re.sub(r"\s\|\s?crack-walled [^|]*", "", fr[5])
-                                 + f" | crack-walled {TODAY}: {verdict}")[:220]
+                        fr[5] = _note_replace(fr[5], "crack-walled",
+                                              f"crack-walled {TODAY}: {verdict}")
             write_csv_rows("companies.csv", fresh)
         time.sleep(0.3)
     print(f"\n=== crack-walled: {stats} ===", flush=True)

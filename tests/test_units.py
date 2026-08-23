@@ -617,3 +617,61 @@ def test_the_hunt_never_stores_another_company_s_page_as_the_row_address():
     guard = body.index("is_foreign(name, url)")
     persist = body.index("fr[3] = url")
     assert guard < persist, "the identity check must gate the address write, not follow it"
+
+
+def test_a_hyphenated_domain_that_lines_up_token_for_token_is_the_company():
+    """ide-tech.com IS IDE Technologies, c2a-sec.com IS C2A Security, bren-energy.com IS
+    Brenmiller Energy — all three scored `mismatch`, which blocks a legitimate recovery and
+    made the identity report mostly false positives. Two independent tokens agreeing is what
+    makes this safe: the ONE-token version of the same rule is precisely the
+    rad.com/RADLogics and nooga.net/Noogata false match, so a single-part domain stays out."""
+    from pipeline.company_identity import verdict
+    assert verdict("IDE Technologies", "https://www.ide-tech.com/en/careers/") == "match"
+    assert verdict("C2A Security", "https://c2a-sec.com/careers/") == "match"
+    assert verdict("Brenmiller Energy", "https://bren-energy.com/careers/") == "match"
+    assert verdict("RADLogics", "https://rad.com/careers") == "mismatch"
+    assert verdict("Noogata", "https://nooga.net/careers") == "mismatch"
+    assert verdict("Tamar Robotics", "https://arbe-robotics.com/careers") == "mismatch"
+
+
+def test_making_room_in_the_note_drops_old_segments_whole():
+    """Every writer made room the same way — slice the base — and the newest segment lives
+    at the END of the base. That is how 87 rows came to say `dark-triage 2026-08-22:
+    page-emp` (also `page-e`, and on one row `pa`), and how Somatix ended up with
+    `dark-triage 2026-08-22:` and no mode at all. A mode no filter matches drops the row
+    out of whichever pool keys on it — the documented #1 bug class here."""
+    from pipeline.notes import append, replace_own
+    base = ("aggregator URL (builtin.com-class global listing) auto-parked 2026-08-22 — "
+            "would attribute third-party jobs; needs real careers page | "
+            "dark-triage 2026-08-22: page-empty")
+    seg = "listing-hunt 2026-08-23: no IL listing; monitored candidate"
+    out = append(base, seg)
+    assert len(out) <= 220
+    assert "dark-triage 2026-08-22: page-empty" in out, "the newest prior verdict was cut"
+    assert out.endswith(seg)
+    # a re-stamp replaces only this tool's own segment, never another tool's
+    again = replace_own(out, "listing-hunt", "listing-hunt 2026-08-24: no listing found")
+    assert "dark-triage 2026-08-22: page-empty" in again
+    assert "2026-08-23" not in again and again.endswith("no listing found")
+    # a single oversized segment keeps its head rather than emitting a different verdict
+    assert len(append("", "x" * 300)) == 220
+
+
+def test_every_note_writer_uses_the_append_log_helper():
+    """Structural: a new tool that hand-rolls `(base + seg)[:220]` re-introduces the bug
+    above, silently, on rows nobody is looking at."""
+    import glob
+    import os
+    import re
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    offenders = []
+    for path in glob.glob(os.path.join(root, "*.py")) + glob.glob(
+            os.path.join(root, "pipeline", "*.py")):
+        name = os.path.basename(path)
+        if name in ("notes.py", "check_invariants.py", "merge_csv_rows.py"):
+            continue
+        src = open(path, encoding="utf-8").read()
+        if re.search(r"\)\[:220\]|220 - len\(", src):
+            offenders.append(name)
+    assert not offenders, (f"these still slice a note by hand instead of using "
+                           f"pipeline.notes.append: {offenders}")

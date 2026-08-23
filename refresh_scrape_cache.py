@@ -14,6 +14,7 @@ from pipeline import israel
 from pipeline.companies import load_companies
 from scrape_universal import scrape
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import append as _note_append, replace_own as _note_replace
 
 
 def main():
@@ -131,8 +132,10 @@ def main():
         for fr in fresh:
             if fr and len(fr) > 5 and fr[0] in names and fr[4] == "true":
                 fr[4] = "false"
-                fr[5] = (f"scrape rotted ({names[fr[0]]}) {today}: extraction yields 0 — "
-                         f"no ATS detected; parked for re-hunt")[:220]
+                fr[5] = _note_replace(
+                    fr[5], "scrape rotted",
+                    f"scrape rotted ({names[fr[0]]}) {today}: extraction yields 0 — "
+                    f"no ATS detected; parked for re-hunt")
         write_csv_rows("companies.csv", fresh)
         print(f"parked {len(parked)} rotted scrape rows for re-hunt: "
               f"{[n for n, _ in parked][:8]}")
@@ -145,8 +148,9 @@ def main():
         ages = dict(revalidate)
         for fr in fresh2:
             if fr and len(fr) > 5 and fr[0] in ages and "empty-but-suspect" not in (fr[5] or ""):
-                fr[5] = (f"{(fr[5] or '')[:150]} | empty-but-suspect {today}: "
-                         f"{ages[fr[0]]}d with no roles — re-validate page")[:220]
+                fr[5] = _note_append(
+                    fr[5], f"empty-but-suspect {today}: {ages[fr[0]]}d with no roles "
+                           f"— re-validate page")
         write_csv_rows("companies.csv", fresh2)
         print(f"flagged {len(revalidate)} long-empty rows for re-validation (still active)")
     print(f"=== refreshed {len(cache)} scrape companies -> {out_path} ===")
