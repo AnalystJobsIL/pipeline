@@ -436,14 +436,27 @@ Worked numbers for 2026-08-23 (4,106 spent, 9 days left → 99 credits/day):
 
 ($1.50/1K records vs $1.00/1K requests, `brightdata.com/pricing/web-scraper`, 2026-08-23.)
 
-"LinkedIn is one big request a day" is true about *requests* — the breadth sweep is a single
-trigger — but the meter runs on rows. So the breadth sweep, which is the part that has to go
-**deep**, now reads `linkedin.com/jobs/search` through the Unlocker instead
-(`linkedin_search`). Measured 2026-08-23: **10 Unlocker credits for the full 4-keyword
-past-week sweep, against 391 dataset records for the same thing.** `f_TPR=r604800` is the
+"LinkedIn is one big request a day" is true about *requests* — the dataset breadth sweep was
+a single trigger — but the meter runs on rows. So the breadth sweep reads
+`linkedin.com/jobs/search` through the Unlocker instead (`linkedin_search`), and the run
+prints its own bill: `[linkedin] … for 18 Unlocker credits`. `f_TPR=r604800` is the
 past-week filter and it verifiably filters (past-week and past-month overlapped by 20 of 60).
-The run prints its own bill: `[linkedin] 272 raw cards … for 10 Unlocker credits
-(27 cards/credit)`.
+
+**Width beats depth, and one clever query loses to nine plain ones.** The public search
+hard-caps at **80 distinct jobs per query** — `start=50`, `75` and `100` all return zero new
+— so there is no depth to buy at any price, and two requests reach all 80. The cap is per
+QUERY, not per keyword, which makes a combined boolean search a trap:
+
+| | credits | employers | new companies |
+|---|---|---|---|
+| one `("data analyst" OR "data scientist" OR …)` query | 2 | 50 | **10** |
+| nine separate keyword queries | 18 | 184 | **76** |
+| the per-record dataset, for comparison | **391** | 147 | 58 |
+
+Each distinct query gets its own window; nine queries buy nine windows. So the keyword list
+is long and flat on purpose, `LINKEDIN_PAGES` is 2, and **the whole sweep costs 18 credits
+and beats the 391-credit dataset by 18 companies.** If yield falls, add keywords — never
+pages, and never `OR`.
 
 What is given up is `job_summary` — the public search carries no description. That is
 acceptable *for the breadth sweep specifically*, because its product is EMPLOYER NAMES and

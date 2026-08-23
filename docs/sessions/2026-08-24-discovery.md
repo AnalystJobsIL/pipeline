@@ -309,6 +309,47 @@ Also removed the dataset breadth config rather than leaving it in place looking 
 unused constant that reads like a setting is exactly how the Indeed dataset sat "configured"
 for five days returning zero.
 
+## Round 5: the cheap path looked worse until it was made wider
+
+The operator caught the hole in round 4's framing: the expensive dataset found **58** new
+companies and the cheap Unlocker path found **35**. The cost saving was real but I had led
+with it and glossed over the gap.
+
+The gap was reach, and the cause is a hard cap. LinkedIn's public search returns **80
+distinct jobs per query and no more** — `start=50`, `75`, `100` all return zero new — so the
+first four keywords hit a ceiling the per-record dataset does not. There is no depth to buy
+at any price. But a keyword costs ~2 credits, so the fix is width:
+
+| | credits | employers | new companies |
+|---|---|---|---|
+| dataset, per record | **391** | 147 | 58 |
+| Unlocker, 4 keywords | 10 | 95 | 35 |
+| Unlocker, **9 keywords** | **18** | **184** | **76** |
+
+Keywords added on measured marginal yield, each counted on top of the ones before it:
+`data scientist` +11 new, `growth analyst` +16, `marketing analyst` +7, `אנליסט` +5,
+`analytics` +2. Dropped as saturated: `BI analyst` (+1 employer) and `insights analyst`
+(+0). Marginal yield is order-dependent, so the list must be re-measured whole, not row by
+row.
+
+`LINKEDIN_PAGES` also went 4 → 2: two requests reach all 80, so the third was pure waste
+(~9 credits/day across the list).
+
+**And a combined boolean query is a trap** — asked directly, tested directly. The cap is per
+QUERY, not per keyword:
+
+| | credits | employers | new companies |
+|---|---|---|---|
+| one `("data analyst" OR "data scientist" OR …)` query | 2 | 50 | **10** |
+| nine separate queries | 18 | 184 | **76** |
+
+Each distinct query gets its own window; nine queries buy nine windows. Sixteen extra
+credits for sixty-six extra companies. That is why the keyword list is long and flat rather
+than clever, and it is recorded next to the Google-for-Jobs negative so nobody re-runs it.
+
+**Final: 18 credits/day, 184 employers, 76 new companies — cheaper than the 4-keyword
+version AND better than the 391-credit dataset.**
+
 ## Claims I could NOT verify
 
 - **Whether SerpApi's `google_jobs` covers Israel at all.** `daily-digest.yml` says it was

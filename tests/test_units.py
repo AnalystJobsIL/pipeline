@@ -1254,3 +1254,22 @@ def test_the_breadth_sweep_is_billed_per_request_not_per_record():
     assert "run_query_raw" not in breadth,         "the breadth sweep must not use the per-record dataset path"
     # and the per-source credit count must stay visible — it IS the bill
     assert "UNLOCKER_CALLS" in main
+
+
+
+
+def test_breadth_uses_many_plain_keywords_not_one_clever_boolean_query():
+    """LinkedIn's public search caps at ~80 distinct jobs PER QUERY, not per keyword, so a
+    combined `("data analyst" OR "data scientist" OR ...)` search buys ONE window instead of
+    nine. Measured 2026-08-23, same baseline: the OR query returned 50 employers and 10 new
+    companies for 2 credits; nine separate queries returned 184 employers and 76 new for 18.
+    Sixteen credits for sixty-six companies. The keyword list is long and flat on purpose."""
+    import discovery_daily as dd
+    assert len(dd._LI_KEYWORDS) >= 6, "width is the only dial that works against the cap"
+    for kw in dd._LI_KEYWORDS:
+        assert " OR " not in kw.upper(), (
+            f"{kw!r}: combining terms into one query collapses nine result windows into one")
+    # two requests reach all 80; a third is pure waste
+    assert dd.LINKEDIN_PAGES == 2, (
+        "the cap is 80 distinct jobs and two pages reach it — more pages bill for nothing, "
+        "fewer leave ~25% of the window unread")

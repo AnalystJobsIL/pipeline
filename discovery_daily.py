@@ -68,7 +68,38 @@ for _s in (sys.stdout, sys.stderr):
 LINKEDIN_LIMIT_MAX = int(os.environ.get("LINKEDIN_LIMIT_MAX", "100"))
 LINKEDIN_LIMIT_MIN = int(os.environ.get("LINKEDIN_LIMIT_MIN", "15"))
 LINKEDIN_WINDOW = os.environ.get("LINKEDIN_WINDOW", "Past week")
-_LI_KEYWORDS = ["data analyst", "business intelligence", "product analyst", "BI developer"]
+# WIDTH, not depth, is what the Unlocker path buys. LinkedIn's public search runs out at
+# ~60-85 jobs per keyword however many pages you ask for, so a deep sweep on four keywords
+# hits a ceiling the per-record dataset does not — that is why the dataset found 58 new
+# companies to the Unlocker's 35 at first. But a keyword costs only ~2 credits here, so the
+# answer is more keywords, and it beats the dataset outright. Measured 2026-08-23, one run,
+# each keyword's contribution ON TOP of the ones before it:
+#
+#   data analyst          64 employers  17 new     analytics          +2   +2
+#   business intelligence +6            +4         data scientist     +24  +11
+#   product analyst       +14           +5         אנליסט              +19  +5
+#   BI developer          +7            +5         growth analyst     +26  +16
+#                                                  marketing analyst  +12  +7
+#   dropped: "BI analyst" (+1 employer) and "insights analyst" (+0) — saturated
+#
+#   11 keywords = 25 credits = 175 employers = 73 NEW companies
+#   vs the dataset's 391 credits = 147 employers = 58 new
+#
+# Marginal yield is ORDER-DEPENDENT (a later keyword sees fewer unknowns), so re-measure the
+# whole list rather than trusting any single row above. If total new companies falls toward
+# zero, add keywords before adding pages — depth is the dial that does not work here.
+#
+# AND DO NOT COMBINE THEM INTO ONE BOOLEAN QUERY. LinkedIn supports
+# `("data analyst" OR "data scientist" OR ...)` in `keywords`, and it is a trap: the ~60-80
+# result cap is PER QUERY, not per keyword, so one combined query buys one window instead of
+# nine. Measured 2026-08-23, same day, same baseline:
+#     one OR query over 7 terms   2 credits   60 jobs   50 employers   10 new companies
+#     nine separate queries      18 credits             184 employers  76 new companies
+# Sixteen extra credits for 66 extra companies. Each distinct query gets its own window;
+# that IS the mechanism, and it is why the keyword list is long and flat rather than clever.
+_LI_KEYWORDS = ["data analyst", "business intelligence", "product analyst", "BI developer",
+                "analytics", "data scientist", "אנליסט", "growth analyst",
+                "marketing analyst"]
 
 # Only the DATASET ID is still used, by the targeted backfill below. The breadth sweep moved
 # to the Web Unlocker (see linkedin_search) on 2026-08-23, so the keyword/limit config that
@@ -184,7 +215,14 @@ def indeed_normalize(r):
 #
 # `f_TPR=r604800` is the past-week window (seconds) and it verifiably filters: past-week and
 # past-month results overlapped by only 20 of 60.
-LINKEDIN_PAGES = int(os.environ.get("LINKEDIN_PAGES", "4"))   # stops early when a page is stale
+# TWO pages, because LinkedIn's public search HARD-CAPS at 80 distinct jobs per keyword and
+# two requests reach all 80. Measured 2026-08-23 on "data analyst", Israel, past week:
+#   start=0 -> 60 cards, 60 new    start=50  -> 60 cards, 0 new
+#   start=25 -> 60 cards, 20 new   start=75/100 -> 60 cards, 0 new
+# So a third request is pure waste (~9 credits/day across the keyword list) and there is no
+# depth beyond 80 to buy at any price. That cap is the whole reason WIDTH beats DEPTH here:
+# the only way to see more of LinkedIn through this door is more keywords.
+LINKEDIN_PAGES = int(os.environ.get("LINKEDIN_PAGES", "2"))   # stops early when a page is stale
 # Credits are the unit that matters and nothing counted them per source. One Unlocker call =
 # one credit, so this IS the bill for the sweeps that use it.
 import collections as _collections
