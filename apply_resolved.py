@@ -14,6 +14,7 @@ import datetime as _dt
 import io
 import json
 import os
+import re
 import sys
 
 
@@ -44,6 +45,16 @@ def main():
         except Exception:  # noqa: BLE001
             continue
         name = fields[0] if fields else ""
+        # A verdict a human (or this morning's identity audit) wrote TODAY is newer
+        # knowledge than a re-render of the public careers page. Moon Active's page does not
+        # expose its Ashby widget, so the resolver reports "no working ATS" for a board we
+        # just verified has 33 jobs — and on a lucky sniff it would overwrite it. Same rule
+        # merge_csv_rows uses for repaired URLs: never revert to older knowledge.
+        note = fields[5] if len(fields) >= 6 else ""
+        if name in resolved and re.search(r"(platform-fix|identity|url-repaired|rebrand) "
+                                          + _dt.date.today().isoformat(), note):
+            print(f"  keep  {name[:28]:29} -> repaired by hand today; resolver output ignored")
+            continue
         if name in resolved and len(fields) >= 4:
             plat, tok, api = resolved[name][0], resolved[name][1], resolved[name][2]
             if [fields[1], fields[2], fields[3]] != [plat, tok, api]:
