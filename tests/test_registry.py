@@ -1683,3 +1683,129 @@ def test_auto_expand_row_builder_refuses_a_foreign_board(monkeypatch):
     ours = E._row_for_ats(("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12))
     assert ours[4] == "true" and ours[3] == _FIVERR, (
         "positive control regressed: %r" % (ours,))
+
+
+# ---------------------------------------------------------------------------------------
+# Guards written to kill a SURVIVING mutation.
+#
+# Each of these exists because `python tools/mutate.py --all` reported a mutation the suite
+# did not notice. That is the harness working: a gate nobody tests is a gate that is not
+# there, and until the mutation goes red the gate's presence in the source proves nothing.
+# ---------------------------------------------------------------------------------------
+
+
+def test_a_board_that_verifies_with_zero_jobs_is_not_a_recovery():
+    """Kills `activation-njobs-drop`.
+
+    A live-but-empty board and a dead token are indistinguishable from the caller's side, so
+    a zero count is the `empty-board` shape, not a recovery -- activating on it re-creates
+    the 0/0 rows the self-heal exists to clean up. Every one of the five schedule-driven
+    writers passes its own count here, and nothing tested that the clause did anything.
+    """
+    from pipeline import identity_gate as G
+    orig = G.page_names_company
+    try:
+        G.page_names_company = lambda n, u, html="": True     # perfect page evidence
+        url = "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs"
+        assert G.activation_ok("Fiverr", "greenhouse", url, 0) is False, (
+            "a board verifying with zero jobs was accepted as a recovery")
+        assert G.activation_ok("Fiverr", "greenhouse", url, 12) is True, (
+            "positive control: a board with jobs and page evidence must still activate")
+    finally:
+        G.page_names_company = orig
+
+
+def test_activation_still_requires_the_url_to_claim_to_list_jobs():
+    """Kills `activation-listing-drop`.
+
+    Clause 3 of the activation rule (ARCHITECTURE.md section 2). `SCRAPE_ASSUME_IL` makes
+    every card on a page an Israel role, so a nav menu scores like a board:
+    `iai.co.il/solution/research-academy-space` once "verified 6 IL" whose titles were
+    "Domain Operations" and "Press Releases".
+    """
+    from pipeline import identity_gate as G
+    from pipeline.company_identity import looks_like_a_job_listing_page
+    orig = G.page_names_company
+    try:
+        G.page_names_company = lambda n, u, html="": True
+        nav = "https://www.acme-example.com/solution/research-academy-space"
+        assert not looks_like_a_job_listing_page(nav), "fixture drift: pick a non-listing url"
+        assert G.activation_ok("Acme", "scrape", nav, 6) is False, (
+            "activated on a page that does not claim to list jobs")
+        board = "https://www.acme-example.com/careers/openings"
+        assert looks_like_a_job_listing_page(board)
+        assert G.activation_ok("Acme", "scrape", board, 6) is True, (
+            "positive control regressed")
+    finally:
+        G.page_names_company = orig
+
+
+def test_the_search_ladder_actually_falls_through_when_serpapi_is_empty():
+    """Kills `audit-ladder-serpapi-only`.
+
+    `test_the_weekly_audit_search_has_a_fallback_below_serpapi` walks the AST of `serp` for
+    the NAMES `_serpapi`, `ddg` and `google_via_unlocker`. The mutation
+    `urls = _serpapi(...)` -> `return _serpapi(...)` leaves all three names in the function,
+    now as dead code, and that guard stayed green -- a textbook source-shape defeat.
+
+    SerpApi returns nothing until 2026-09-01, so a ladder that stops at rung one is a silent
+    no-op that reports success: the Sunday audit would find zero boards and say so in a way
+    indistinguishable from "there were none".
+    """
+    import audit_empty_rows as A
+    calls = []
+
+    def _serp(name, limit=5):
+        calls.append("serpapi")
+        return []
+
+    def _ddg(q, limit=5):
+        calls.append("ddg")
+        return ["https://boards.greenhouse.io/fiverr"]
+
+    # `serp` imports its fallback rungs lazily FROM `deep_validate`, inside the function, so
+    # that is where they have to be patched -- patching `audit_empty_rows` would miss them.
+    import deep_validate as D
+    orig = (A._serpapi, D.ddg, D.google_via_unlocker)
+    try:
+        A._serpapi, D.ddg = _serp, _ddg
+        D.google_via_unlocker = lambda q, limit=5: ["https://never.example"]
+        urls = A.serp("Fiverr")
+        assert "serpapi" in calls, "the first rung must still be tried"
+        assert "ddg" in calls, (
+            "SerpApi returned nothing and the ladder stopped there: %r" % (calls,))
+        assert urls == ["https://boards.greenhouse.io/fiverr"], (
+            "the fallback rung's result must be returned, got %r" % (urls,))
+    finally:
+        A._serpapi, D.ddg, D.google_via_unlocker = orig
+
+
+def test_crack_walled_novrfy_does_not_persist_an_address_it_could_not_confirm(
+        tmp_path, monkeypatch):
+    """Kills `crack-oktowrite-callsite-invert`.
+
+    `ok_to_write` returns a bool, so `if ok_to_write(...) is not None:` is ALWAYS true --
+    a one-token edit that leaves the call in place and removes the gate entirely. The
+    `novrfy` branch writes `fr[3]` without activating, which reads as harmless and is not:
+    `listing_hunt`'s documented fast path reads that address the next night and activates
+    on it, so persisting an unconfirmed URL only delays the wrong activation by 24 hours.
+    """
+    import sys
+    import crack_walled as C
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["OraCo", "", "", "https://oraco.example/careers", "false",
+         "unsupported ATS icims.com"],
+    ])
+    board = "https://someoneelse.icims.com/jobs/search?ss=1"
+    monkeypatch.setattr(C, "crack_one",
+                        lambda name, seed, plat: ("novrfy", ("scrape", board), 0, "0 IL"))
+    monkeypatch.setattr(G, "page_names_company", lambda n, u, html="": None)   # unreadable
+    monkeypatch.setattr(sys, "argv", ["crack_walled.py", "--apply"])
+    C.main()
+
+    out = _read(tmp_path)
+    assert board not in out["OraCo"][3], (
+        "persisted an address it could not confirm: %r" % (out["OraCo"],))
+    assert out["OraCo"][4] == "false"

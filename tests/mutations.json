@@ -1,0 +1,412 @@
+[
+  {
+    "id": "crack-activate-narrow",
+    "file": "crack_walled.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "if verdict.startswith(\"cracked\") and not _gate.ok_to_write(name, got[1]):",
+    "replace": "if verdict == \"cracked-scrape\" and not _gate.ok_to_write(name, got[1]) and n_il < 0:",
+    "why": "shipped defeat: the cracked-api/oraclehcm branch activates ungated while the source text still says ok_to_write. Found by a wave-8 reviewer with the suite at 224 passed.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "crack-activate-remove",
+    "file": "crack_walled.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "if verdict.startswith(\"cracked\") and not _gate.ok_to_write(name, got[1]):",
+    "replace": "if False:",
+    "why": "the activating branch with no gate at all",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "crack-oktowrite-invert",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "ok_to_write",
+    "class": "M2-gate-inversion",
+    "find": "    return page_names_company(name, api_url, html=html) is True\n    if tenant_is_this_company(name, api_url):",
+    "replace": "    return page_names_company(name, api_url, html=html) is not None\n    if tenant_is_this_company(name, api_url):",
+    "why": "`is True` -> `is not None` lets an UNREADABLE page (None) pass as evidence; that is the novrfy hole",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "hunt-identity-invert",
+    "file": "listing_hunt.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "elif verdict == \"found\" and not _gate.identity_ok(name, url):",
+    "replace": "elif verdict == \"found\" and _gate.identity_ok(name, url) is None:",
+    "why": "shipped defeat: truthiness inverted, source token intact. A wave-8 reviewer reopened this with the suite green.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "hunt-activate-remove",
+    "file": "listing_hunt.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "elif verdict == \"found\" and not _gate.identity_ok(name, url):",
+    "replace": "elif False:",
+    "why": "the hunt's activating branch with no identity test",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "hunt-persist-remove",
+    "file": "listing_hunt.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "                        if not _gate.identity_ok(name, url):",
+    "replace": "                        if False:",
+    "why": "the nolisting branch persists fr[3]; refusing to ACTIVATE while still writing the ADDRESS only delays the same mistake 24h, because the fast path reads it",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "hunt-scope-narrow",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "identity_ok",
+    "class": "M3-branch-narrowing",
+    "find": "    if host and ATS_HOST.search(host):",
+    "replace": "    if host and ATS_HOST.match(host):",
+    "why": "`.search` -> `.match` anchors the scope test at the string start, so every subdomain ATS host stops being treated as one",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "gap-activate-invert",
+    "file": "repair_extract_gap.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "if il and not _gate.identity_ok(r[0], r[3]):",
+    "replace": "if il and _gate.identity_ok(r[0], r[3]) is None:",
+    "why": "shipped defeat: the sixth activating path, reopened with the suite at 227 passed",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "gap-activate-remove",
+    "file": "repair_extract_gap.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "if il and not _gate.identity_ok(r[0], r[3]):",
+    "replace": "if False:",
+    "why": "runs 30 minutes before listing_hunt in the same job and forces SCRAPE_ASSUME_IL=1",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "gap-activate-narrow",
+    "file": "repair_extract_gap.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "if il and not _gate.identity_ok(r[0], r[3]):",
+    "replace": "if il and len(il) < 0 and not _gate.identity_ok(r[0], r[3]):",
+    "why": "dead conjunct narrows the guard to nothing",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "deep-cand-fallback",
+    "file": "deep_validate.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "                    _cand = api or \"\"",
+    "replace": "                    _cand = api or r[3] or \"\"",
+    "why": "the wave-7 bug, textually intact: falls back to the ROW'S OWN careers page, so identity is confirmed from the wrong page",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "deep-njobs-drop",
+    "file": "deep_validate.py",
+    "symbol": "main",
+    "class": "M4-dead-conjunct",
+    "find": "                            n_all and not is_foreign(name, _cand) and _ident",
+    "replace": "                            not is_foreign(name, _cand) and _ident",
+    "why": "drops the emptiness clause, so a board that verifies with zero jobs counts as a recovery",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "deep-activate-remove",
+    "file": "deep_validate.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "                    if verdict == \"recovered\" and not (",
+    "replace": "                    if False and not (",
+    "why": "deep_validate with no gate at all -- its state before wave 8",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "deep-scope-narrow",
+    "file": "deep_validate.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "                    if verdict == \"recovered\" and not (",
+    "replace": "                    if verdict == \"recovered-never\" and not (",
+    "why": "narrows the guarded branch so the real verdict is unguarded",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "audit-tenant-invert",
+    "file": "audit_empty_rows.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "            _tenant_ok = _gate.page_names_company(name, api or \"\") is True",
+    "replace": "            _tenant_ok = _gate.page_names_company(name, api or \"\") is not None",
+    "why": "an unreadable page becomes evidence; the Sunday audit SEARCHES for boards, so this is the highest-risk tool for it",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "audit-secondchance-remove",
+    "file": "audit_empty_rows.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "        if is_foreign(name, api or \"\") or not _tenant_ok:",
+    "replace": "        if False:",
+    "why": "the audit's refusal branch removed entirely",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "audit-narrow",
+    "file": "audit_empty_rows.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "        if is_foreign(name, api or \"\") or not _tenant_ok:",
+    "replace": "        if is_foreign(name, api or \"\") and not _tenant_ok:",
+    "why": "`or` -> `and` makes the refusal need BOTH, so a tenant mismatch alone stops refusing",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "repair-page-invert",
+    "file": "repair_dead_urls.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "            names_us = _gate.page_names_company(name, u, html=html) is True",
+    "replace": "            names_us = _gate.page_names_company(name, u, html=html) is not False",
+    "why": "`is not False` admits None, so a page nobody could read is treated as ours -- SupPlant onto Workable's own front door",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "repair-accept-widen",
+    "file": "repair_dead_urls.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "            if (v == \"match\" and whole_name) or names_us:",
+    "replace": "            if True:",
+    "why": "accepts any candidate the resolver produced",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "repair-narrow",
+    "file": "repair_dead_urls.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "            if (v == \"match\" and whole_name) or names_us:",
+    "replace": "            if (v == \"match\") or names_us:",
+    "why": "drops the whole-name requirement: DiA Imaging Analytics strips to `dia` and matches dia.mil",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-activate-remove",
+    "file": "bd_rescue.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "                if v and v[0] and not _gate.activation_ok(name, plat, api, v[0], html=html):",
+    "replace": "                if False:",
+    "why": "bd_rescue's state before this refactor: it activated Bancor onto The Bancorp Bank's board",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-activate-invert",
+    "file": "bd_rescue.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "                if v and v[0] and not _gate.activation_ok(name, plat, api, v[0], html=html):",
+    "replace": "                if v and v[0] and _gate.activation_ok(name, plat, api, v[0], html=html) is None:",
+    "why": "truthiness inverted with the token intact",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-activate-narrow",
+    "file": "bd_rescue.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "                if v and v[0] and not _gate.activation_ok(name, plat, api, v[0], html=html):",
+    "replace": "                if v and v[0] < 0 and not _gate.activation_ok(name, plat, api, v[0], html=html):",
+    "why": "narrows the guard to an impossible job count",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "wayback-activate-remove",
+    "file": "wayback_rescue.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "        if r and not _gate.activation_ok(name, r[0], r[2], r[3]):",
+    "replace": "        if False:",
+    "why": "resurrects an archived board with no identity check -- its state before this refactor",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "wayback-activate-invert",
+    "file": "wayback_rescue.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "        if r and not _gate.activation_ok(name, r[0], r[2], r[3]):",
+    "replace": "        if r and _gate.activation_ok(name, r[0], r[2], r[3]) is None:",
+    "why": "truthiness inverted with the token intact",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "wayback-activate-narrow",
+    "file": "wayback_rescue.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "        if r and not _gate.activation_ok(name, r[0], r[2], r[3]):",
+    "replace": "        if r and r[3] < 0 and not _gate.activation_ok(name, r[0], r[2], r[3]):",
+    "why": "narrows the guard to an impossible job count",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "validate-empty-remove",
+    "file": "validate_empty.py",
+    "symbol": "check",
+    "class": "M1-gate-removal",
+    "find": "            if il > 0 and not _gate.activation_ok(name, plat, api, il, html=html):",
+    "replace": "            if False:",
+    "why": "promotes whatever board the page embeds -- its state before this refactor",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "validate-empty-invert",
+    "file": "validate_empty.py",
+    "symbol": "check",
+    "class": "M2-gate-inversion",
+    "find": "            if il > 0 and not _gate.activation_ok(name, plat, api, il, html=html):",
+    "replace": "            if il > 0 and _gate.activation_ok(name, plat, api, il, html=html) is None:",
+    "why": "truthiness inverted with the token intact",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "validate-empty-narrow",
+    "file": "validate_empty.py",
+    "symbol": "check",
+    "class": "M3-branch-narrowing",
+    "find": "            if il > 0 and not _gate.activation_ok(name, plat, api, il, html=html):",
+    "replace": "            if il < 0 and not _gate.activation_ok(name, plat, api, il, html=html):",
+    "why": "narrows the guard to an impossible Israel-job count",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-ats-remove",
+    "file": "retry_unreachable.py",
+    "symbol": "_row_for",
+    "class": "M1-gate-removal",
+    "find": "        if not _gate.activation_ok(nm, plat, api, n_all):",
+    "replace": "        if False:",
+    "why": "returns an active row straight from resolve()'s payload -- its state before this refactor",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-ats-invert",
+    "file": "retry_unreachable.py",
+    "symbol": "_row_for",
+    "class": "M2-gate-inversion",
+    "find": "        if not _gate.activation_ok(nm, plat, api, n_all):",
+    "replace": "        if _gate.activation_ok(nm, plat, api, n_all) is None:",
+    "why": "truthiness inverted with the token intact",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-ats-narrow",
+    "file": "retry_unreachable.py",
+    "symbol": "_row_for",
+    "class": "M3-branch-narrowing",
+    "find": "        if not _gate.activation_ok(nm, plat, api, n_all):",
+    "replace": "        if n_all < 0 and not _gate.activation_ok(nm, plat, api, n_all):",
+    "why": "narrows the guard to an impossible job count",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-ats-remove",
+    "file": "auto_expand.py",
+    "symbol": "_row_for_ats",
+    "class": "M1-gate-removal",
+    "find": "    if not _gate.activation_ok(nm, plat, api, n_all):",
+    "replace": "    if False:",
+    "why": "auto_expand runs TWICE daily and APPENDS new rows; this was its state before the refactor",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-ats-invert",
+    "file": "auto_expand.py",
+    "symbol": "_row_for_ats",
+    "class": "M2-gate-inversion",
+    "find": "    if not _gate.activation_ok(nm, plat, api, n_all):",
+    "replace": "    if _gate.activation_ok(nm, plat, api, n_all) is None:",
+    "why": "truthiness inverted with the token intact",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-ats-narrow",
+    "file": "auto_expand.py",
+    "symbol": "_row_for_ats",
+    "class": "M3-branch-narrowing",
+    "find": "    if not _gate.activation_ok(nm, plat, api, n_all):",
+    "replace": "    if n_all < 0 and not _gate.activation_ok(nm, plat, api, n_all):",
+    "why": "narrows the guard to an impossible job count",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "activation-njobs-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "activation_ok",
+    "class": "M4-dead-conjunct",
+    "find": "    if not n_jobs:\n        return False",
+    "replace": "    if False:\n        return False",
+    "why": "a board that verifies with zero jobs is the empty-board shape, not a recovery",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "activation-listing-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "activation_ok",
+    "class": "M4-dead-conjunct",
+    "find": "    if is_foreign(name, api_url) or not looks_like_a_job_listing_page(api_url):\n        return False\n    if html:",
+    "replace": "    if is_foreign(name, api_url):\n        return False\n    if html:",
+    "why": "drops clause 3 of the activation rule; a nav menu scores like a board under SCRAPE_ASSUME_IL",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "walled-pool-note-only",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "is_walled",
+    "class": "M7-constant-drift",
+    "find": "    return (\"unsupported ATS\" in (note or \"\")\n            or host_platform(row[3] if len(row) > 3 else \"\") is not None)",
+    "replace": "    return \"unsupported ATS\" in (note or \"\")",
+    "why": "the pool predicate becomes a string deep_validate owns and rewrites; one all-dark Saturday took it 25 -> 0 with every guard green",
+    "must_be_killed_by_behavioural": false
+  },
+  {
+    "id": "audit-ladder-serpapi-only",
+    "file": "audit_empty_rows.py",
+    "symbol": "serp",
+    "class": "M6-fallback-removal",
+    "find": "    urls = _serpapi(name, limit)",
+    "replace": "    return _serpapi(name, limit)",
+    "why": "SerpApi is exhausted until 2026-09-01, so a ladder with only that rung is a silent no-op that reports success",
+    "must_be_killed_by_behavioural": false
+  },
+  {
+    "id": "crack-oktowrite-callsite-invert",
+    "file": "crack_walled.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "                        if _gate.ok_to_write(name, got[1]):",
+    "replace": "                        if _gate.ok_to_write(name, got[1]) is not None:",
+    "why": "the novrfy branch persists fr[3]; `is not None` makes an unreadable page pass",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "hunt-found-narrow",
+    "file": "listing_hunt.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "            elif verdict == \"found\" and not _gate.identity_ok(name, url):",
+    "replace": "            elif verdict == \"found-never\" and not _gate.identity_ok(name, url):",
+    "why": "narrows the guarded branch so the real `found` verdict activates unguarded",
+    "must_be_killed_by_behavioural": true
+  }
+]
