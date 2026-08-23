@@ -59,11 +59,21 @@ jobs:
           LLM_RESOLVE_CAP: ${{ github.event.inputs.llm_cap || '10' }}
         run: python auto_expand.py
 
+
+      # Record that this stage finished, and how much it did. pipeline/stages.py turns the
+      # implicit cron ordering into something the next stage can actually READ: the digest
+      # warns in its audit block when its prerequisites did not run today, instead of
+      # silently building on yesterday's URLs.
+      - name: Stamp the 'expand' stage
+        if: always()
+        run: python -m pipeline.stages stamp expand
+        continue-on-error: true
+
       - name: Commit newly-cracked companies
         run: |
           git config user.name  "expand-bot"
           git config user.email "expand@users.noreply.github.com"
-          git add companies.csv scraped_cache.json
+          git add companies.csv scraped_cache.json cloud_state/pipeline_stages.json
           git commit -m "auto-expand: crack more companies $(date -u +%FT%H:%M) [skip ci]" \
             || { echo "nothing new this run"; exit 0; }
           for i in 1 2 3 4 5; do

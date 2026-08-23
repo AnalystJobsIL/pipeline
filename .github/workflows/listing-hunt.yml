@@ -93,11 +93,21 @@ jobs:
         run: python crack_walled.py --apply || echo "re-crack skipped"
         continue-on-error: true
 
+
+      # Record that this stage finished, and how much it did. pipeline/stages.py turns the
+      # implicit cron ordering into something the next stage can actually READ: the digest
+      # warns in its audit block when its prerequisites did not run today, instead of
+      # silently building on yesterday's URLs.
+      - name: Stamp the 'repair' stage
+        if: always()
+        run: python -m pipeline.stages stamp repair
+        continue-on-error: true
+
       - name: Commit verdicts
         run: |
           git config user.name  "audit-bot"
           git config user.email "audit@users.noreply.github.com"
-          git add companies.csv scraped_cache.json
+          git add companies.csv scraped_cache.json cloud_state/pipeline_stages.json
           git commit -m "listing-hunt $(date -u +%F) [skip ci]" || { echo "no change"; exit 0; }
           for i in 1 2 3 4 5; do
             if git pull --rebase --autostash origin ${GITHUB_REF_NAME}; then

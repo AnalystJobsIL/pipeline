@@ -1278,8 +1278,12 @@ def _text_audit(s):
         f"  jobs fetched: {s.get('jobs_fetched', 0)}  | Israel-matched: {s.get('israel_matched', 0)}",
         f"  accepted: {s.get('accepted', 0)}  | after merge: {s.get('after_merge', 0)}  | NEW (this digest): {s.get('new', 0)}",
         f"  decision paths: " + ", ".join(f"{k}={v}" for k, v in sorted(paths.items())),
-        f"  LLM calls this run: {s.get('llm_calls', 0)}",
+        f"  LLM calls this run: {s.get('llm_calls', 0)}"
+        + (f"  | JDs fetched inline: {s.get('jd_filled_inline', 0)}"
+           if s.get("jd_filled_inline") else ""),
     ]
+    if s.get("stages"):
+        lines.append(f"  stage order: {s['stages']}")
     if s.get("failed_companies"):
         lines.append("  failed companies: " + ", ".join(s["failed_companies"]))
     return "\n".join(lines)
@@ -1298,6 +1302,9 @@ def _html_audit(s, esc):
         f'<b>NEW: {esc(s.get("new",0))}</b><br>'
         f'Decision paths: {esc(", ".join(f"{k}={v}" for k,v in sorted(paths.items())))}<br>'
         f'LLM calls this run: {esc(s.get("llm_calls",0))}'
+        + (f' · JDs fetched inline: {esc(s.get("jd_filled_inline",0))}'
+           if s.get("jd_filled_inline") else "")
+        + (f'<br>Stage order: {esc(s.get("stages",""))}' if s.get("stages") else "")
         + (f'<br>Failed companies: {esc(", ".join(fc))}' if fc else "")
         + '</div>'
     )

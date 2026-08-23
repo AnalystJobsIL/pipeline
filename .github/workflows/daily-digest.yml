@@ -76,6 +76,23 @@ jobs:
         run: python enrich_scrape_jd.py || echo "jd enrichment skipped"
         continue-on-error: true
 
+      # scrape-source JDs live in scraped_cache.json (step above); API-source roles have
+      # no cache at all, and four fetchers (workday/smartrecruiters/bamboohr/microsoft)
+      # never carry a description. This walks the matched STORE — every role we ever
+      # accepted, at any age — and fills the ones still missing their text.
+      - name: Backfill JD text for already-matched roles (any age, any source)
+        env:
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          MATCHED_JD_TIME_BUDGET_MIN: "20"
+        run: python enrich_matched_jd.py --db cloud_state/seen.db || echo "matched JD backfill skipped"
+        continue-on-error: true
+
+      - name: Stamp the 'enrich' stage
+        if: always()
+        run: python -m pipeline.stages stamp enrich
+        continue-on-error: true
+
       - name: Run the pipeline (Claude classification via subscription token)
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -83,6 +100,10 @@ jobs:
           # gl=il, location=Israel returns 0). Aggregator left OFF (AGGREGATOR_ENABLED unset).
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           BOARD_URL: "https://analystjobsil.github.io/board/"
+          # inline JD fetch for roles whose ATS list response carries no description —
+          # the LLM tier reads the description, so this happens BEFORE classification
+          JDFILL: "1"
+          JDFILL_TIME_BUDGET_MIN: "25"
           GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
         run: |
           mkdir -p cloud_state out digests

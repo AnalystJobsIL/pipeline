@@ -303,13 +303,21 @@ class SeenStore:
             except (ValueError, TypeError):
                 gap = 0
             keep_first = gap <= 3                     # reappeared quickly -> same opening
+        # A description is knowledge we may have paid Bright Data for, and most list
+        # endpoints (workday, smartrecruiters, bamboohr, microsoft) return NONE — so a
+        # daily re-sighting used to overwrite a backfilled JD with "". Never downgrade:
+        # only a longer, non-empty text replaces what is stored.
+        new_desc = (job.get("description") or "").strip()[:6000]
         if prev and keep_first:
             self.conn.execute(
                 """UPDATE matched SET location=?, url=?, posted_date=?, seniority=?,
-                   sources=?, seen_ids=?, description=?, last_seen=? WHERE mkey=?""",
+                   sources=?, seen_ids=?,
+                   description=CASE WHEN length(?) > length(COALESCE(description,''))
+                                    THEN ? ELSE description END,
+                   last_seen=? WHERE mkey=?""",
                 (job.get("location"), job.get("url"), new_pd, job.get("seniority", ""),
                  "+".join(sorted(new_sources)), "+".join(sorted(new_sids)),
-                 (job.get("description") or "")[:6000], run_date, mkey))
+                 new_desc, new_desc, run_date, mkey))
         else:
             self.conn.execute(
                 """INSERT INTO matched
@@ -319,12 +327,16 @@ class SeenStore:
                    ON CONFLICT(mkey) DO UPDATE SET location=excluded.location,
                      url=excluded.url, posted_date=excluded.posted_date,
                      seniority=excluded.seniority, sources=excluded.sources,
-                     seen_ids=excluded.seen_ids, description=excluded.description,
+                     seen_ids=excluded.seen_ids,
+                     description=CASE WHEN length(excluded.description)
+                                           > length(COALESCE(matched.description,''))
+                                      THEN excluded.description
+                                      ELSE matched.description END,
                      first_seen=excluded.first_seen, last_seen=excluded.last_seen""",
                 (mkey, job.get("company"), job.get("title"), job.get("location"),
                  job.get("url"), new_pd, job.get("seniority", ""),
                  "+".join(sorted(new_sources)), "+".join(sorted(new_sids)),
-                 (job.get("description") or "")[:6000], run_date, run_date))
+                 new_desc, run_date, run_date))
         self.conn.commit()
 
     def get_matched_since(self, cutoff_iso):

@@ -390,3 +390,54 @@ def test_registry_is_structurally_sound():
     r = subprocess.run([sys.executable, "check_invariants.py"], cwd=repo,
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
+
+
+# --- a daily re-sighting used to overwrite a backfilled JD with "" -------------------
+def test_a_re_sighting_without_a_description_never_erases_the_stored_one(tmp_path):
+    """workday/smartrecruiters/bamboohr/microsoft list responses carry NO description, so
+    every day's fetch of an already-matched role handed the store an empty string — and the
+    store wrote it over the JD that `enrich_matched_jd` had paid Bright Data to fetch. The
+    board then rendered no requirements, no skills and no tags for those roles."""
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    job = {"company": "ACME", "title": "Data Analyst", "location": "TLV", "url": "u",
+           "posted_date": "2026-08-20", "seniority": "mid", "sources": ["workday"],
+           "description": "R" * 900}
+    st.upsert_matched(job, "2026-08-20")
+    st.upsert_matched({**job, "description": ""}, "2026-08-21")     # next day, same role
+    assert len(st.conn.execute("select description from matched").fetchone()[0]) == 900
+    st.upsert_matched({**job, "description": "L" * 1500}, "2026-08-22")   # better text wins
+    assert len(st.conn.execute("select description from matched").fetchone()[0]) == 1500
+    # ...and the >3-day-gap path (re-opened role) must not erase it either
+    st.upsert_matched({**job, "description": ""}, "2026-09-10")
+    assert len(st.conn.execute("select description from matched").fetchone()[0]) == 1500
+    st.close()
+
+
+# --- the board is "still open", not "first seen in the last 14 days" -----------------
+def test_the_jd_filler_only_spends_a_fetch_on_a_role_that_could_be_accepted():
+    """The inline filler runs over hundreds of roles inside the digest's own timeout. A
+    role the title gate already rejects must never cost an HTTP request — and a role that
+    already has its JD must not be re-fetched every single morning."""
+    from pipeline.jdfill import JDFiller
+    f = JDFiller(budget_min=5)
+    assert f.maybe_fill({"title": "Senior Backend Engineer", "url": "https://x/1",
+                         "description": ""}) is False
+    assert f.maybe_fill({"title": "Data Analyst", "url": "https://x/2",
+                         "description": "D" * 400}) is False
+    assert f.maybe_fill({"title": "Data Analyst", "url": "", "description": ""}) is False
+    assert f.tried == 0
+
+
+def test_stage_stamps_are_readable_by_the_next_stage(tmp_path, monkeypatch):
+    """The cron order (repair 19:00 -> collect 00:00 -> publish 05:00) is real but implicit:
+    when the repair job dies, the digest still runs on stale URLs and reports success. The
+    stamp is what makes that visible instead of silent."""
+    from pipeline import stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    assert stages.age_days("repair") is None
+    assert stages.require("repair") is False          # never run -> warn, never raise
+    stages.stamp("repair", rows=7)
+    assert stages.age_days("repair") == 0
+    assert stages.require("repair") is True
+    assert "repair: " in stages.summary() and "rows=7" in stages.summary()

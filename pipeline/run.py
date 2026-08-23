@@ -30,6 +30,7 @@ from . import company_info as company_info_mod
 from . import firmographics as firmographics_mod
 
 FIRMO_MAX_PER_RUN = 5  # research calls can web-search (~1-3 min each); bulk = backfill script
+BLURB_MAX_PER_RUN = 30  # one claude call each, inside the digest timeout
 from . import digest as digest_mod
 from . import fetchers, israel, seniority, store
 from .companies import load_companies
@@ -62,6 +63,14 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     llm_cache = st.load_llm_cache()
     llm_cache_before = len(llm_cache)
 
+    # Ordering contract (pipeline/stages.py): this run's input quality depends on stages
+    # that ran EARLIER, in other workflows. If one of them did not run, the digest is
+    # built on stale URLs / a stale cache — that must be visible in the audit, not silent.
+    from . import stages
+    stages.require("repair", 1)
+    stages.require("collect", 1)
+    stages.require("enrich", 1)
+
     rows = load_companies()
     # never scan recruiting/staffing agencies — they re-post dozens of client roles and flood
     # the digest; they are not direct employers (same exclusion as SiiRA/Megayeset).
@@ -84,6 +93,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     stats = Counter()
     paths = Counter()
+    from .jdfill import JDFiller
+    jdfill = JDFiller()
     failed_companies = []
     accepted = []
     health_results = {}                       # free detection: outcome per company this run
@@ -107,6 +118,10 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             if not israel.is_israel_job(j):
                 continue
             stats["israel_matched"] += 1
+            # the JD is what the LLM tier reads; workday/smartrecruiters/bamboohr/microsoft
+            # list responses carry none, so fetch it before judging (budgeted, title-gated)
+            if jdfill.maybe_fill(j):
+                stats["jd_filled_inline"] += 1
             c = seniority.classify(j, use_llm=use_llm, llm_cache=llm_cache)
             paths[c["path"]] += 1
             if c["path"] == "llm":
@@ -114,6 +129,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             if c["decision"] == "accept":
                 j["_class"] = c
                 accepted.append(j)
+
+    print("  " + jdfill.summary(), flush=True)
 
     # Aggregator breadth layer: Google-for-Jobs via SerpApi (covers Israel). Gated behind
     # AGGREGATOR_ENABLED=1 (set only in the scheduled cloud job) so local/test runs never
@@ -144,8 +161,15 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # re-resolve them (and discovery can backfill). Never let health tracking break the digest.
     try:
         from . import health
-        stale = health.record(health_results)
-        stats["stale_boards"] = len(stale)
+        if only or limit:
+            # A scoped run saw 5 companies, not 894. Recording it REPLACES stale.json with
+            # those five outcomes and the self-heal job then has nothing to re-resolve —
+            # same footgun as a scoped run overwriting the published board, which is
+            # already guarded below.
+            print(f"  [health] scoped run ({len(rows)} companies): not touching stale.json")
+        else:
+            stale = health.record(health_results)
+            stats["stale_boards"] = len(stale)
     except Exception as e:  # noqa: BLE001
         print(f"  [health] skipped: {e}", file=sys.stderr)
 
@@ -159,7 +183,6 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         st.upsert_matched(j, run_date)
     today = dt.date.fromisoformat(run_date)
     cutoff_email = (today - dt.timedelta(days=1)).isoformat()    # ~48h (date granularity)
-    cutoff_board = (today - dt.timedelta(days=14)).isoformat()   # 2 weeks
     def _posted_in(j, cutoff):
         p = (j.get("posted_date") or "")[:10]
         if len(p) == 10 and p[4] == "-":
@@ -173,9 +196,16 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # companies whose fetch failed THIS run keep yesterday's last_seen — don't mass-drop them
     failed_names = {f.split(" (")[0] for f in failed_companies}
     yesterday = (today - dt.timedelta(days=1)).isoformat()
+    # ...but only while the failure is FRESH. Without this, a board that breaks permanently
+    # freezes its roles on the job board forever, and they are the ones a reader applies to.
+    fail_grace = (today - dt.timedelta(days=7)).isoformat()
 
     def _alive(j):
-        return (j.get("last_seen", "") >= yesterday) or (j.get("company") in failed_names)
+        """Is this role still open? = we saw it in the latest scan of its company."""
+        last = j.get("last_seen", "")
+        if last >= yesterday:
+            return True
+        return j.get("company") in failed_names and last >= fail_grace
 
     def _cap_per_company(jobs, n):
         """Keep at most n roles per company (most-recent first) so one employer — or a batch
@@ -194,8 +224,15 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                   if _posted_in(j, cutoff_email) and _alive(j)]
     email_jobs = st.filter_new(email_jobs)      # never email the same posting twice
     email_jobs = _cap_per_company(email_jobs, 3)   # tight daily digest: <=3 per company
-    board_jobs = [j for j in st.get_matched_since(cutoff_board) if _alive(j)]
-    board_jobs = _cap_per_company(board_jobs, 8)   # searchable 2-week board: generous cap
+    # The board holds ACTIVE roles — every role still present on its employer's careers
+    # page — not "roles first seen in the last two weeks". A role open for three weeks is
+    # still open, and dropping it off the board (into a page headed "expired or filled")
+    # while it is live was both a coverage hole and a lie about its status. Liveness comes
+    # from `_alive`, i.e. from actually re-fetching it, so nothing lingers once it is gone.
+    # No per-company cap here: the board IS the set of active roles, and hiding a live
+    # opening because its employer has nine of them would make the board wrong. Flooding is
+    # an EMAIL problem (capped at 3/company above); the board is sortable and searchable.
+    board_jobs = [j for j in st.get_matched_since("0000-01-01") if _alive(j)]
     stats["new"] = len(email_jobs)
     stats["board_count"] = len(board_jobs)
 
@@ -216,14 +253,20 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             profiles = {}
     company_info = {**st.load_company_info(), **{k: v for k, v in profiles.items() if v}}
     if use_llm:
-        for company in {j["company"] for j in board_jobs}:
-            if not company_info.get(company):
-                ctx = next((j.get("description") for j in board_jobs
-                            if j["company"] == company and j.get("description")), "")
-                summ = company_info_mod.summarize_company(company, ctx)
-                company_info[company] = summ
-                st.save_company_info({company: summ}, run_date)
-                stats["company_summaries"] += 1
+        # Budgeted like the firmographics below: the board is no longer a 14-day window, so
+        # the "companies with no blurb yet" set can be large on the first run after a
+        # coverage jump — and each blurb is a claude call inside the digest's own timeout.
+        todo = sorted(c for c in {j["company"] for j in board_jobs} if not company_info.get(c))
+        if len(todo) > BLURB_MAX_PER_RUN:
+            print(f"  company blurbs: {len(todo)} missing, doing {BLURB_MAX_PER_RUN} this "
+                  f"run (cached; the rest follow on later runs)", flush=True)
+        for company in todo[:BLURB_MAX_PER_RUN]:
+            ctx = next((j.get("description") for j in board_jobs
+                        if j["company"] == company and j.get("description")), "")
+            summ = company_info_mod.summarize_company(company, ctx)
+            company_info[company] = summ
+            st.save_company_info({company: summ}, run_date)
+            stats["company_summaries"] += 1
 
     # Structured firmographics for companies the store hasn't researched yet. Same lazy
     # cached pattern as the blurbs above, but each call may web-search (~1-3 min), so cap
@@ -275,6 +318,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         "new": stats["new"],
         "board_count": stats["board_count"],
         "llm_calls": stats["llm_calls"],
+        "jd_filled_inline": stats["jd_filled_inline"],
+        "stages": stages.summary(),
         "paths": dict(paths),
         "failed_companies": failed_companies,
     }
@@ -311,7 +356,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(board_html)
     # archive: everything ever matched that is NOT on the current board
-    onboard = {(j["company"], j["title"]) for j in board_jobs}
+    onboard = {(j["company"], j["title"]) for j in board_jobs}   # = still open
     arch = [j for j in st.get_matched_since("0000-01-01")
             if (j["company"], j["title"]) not in onboard]
     arch_html = digest_mod.build_board_html(arch, run_date, summary, company_info=company_info,
@@ -333,9 +378,12 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         json.dump(payload, f, ensure_ascii=False, indent=2)
 
     st.close()
+    if not (only or limit):
+        stages.stamp("publish", email=len(email_jobs), board=len(board_jobs),
+                     scanned=stats["companies_scanned"])
 
     print(f"\n=== digest {run_date} ===")
-    print(f"email (last 48h): {summary['new']} roles · board (last 2wk): {summary['board_count']} roles"
+    print(f"email (last 48h): {summary['new']} roles · board (active): {summary['board_count']} roles"
           f"  (scanned {summary['companies_scanned']} cos, {summary['companies_failed']} failed, "
           f"{summary['llm_calls']} LLM calls)")
     print(f"wrote: {base}.html / .txt / .json + docs/index.html")
