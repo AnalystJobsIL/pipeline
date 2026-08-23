@@ -34,6 +34,7 @@ from pipeline.recruiters import is_recruiter
 from urllib.parse import urlparse
 
 from pipeline.company_identity import is_foreign
+from pipeline.firmographics import looks_like_junk
 from pipeline.company_identity import looks_like_a_job_listing_page
 from resolve_llm import _ask_claude
 from pipeline.atomic import write_csv_rows
@@ -260,6 +261,11 @@ def main():
                # Re-hunting it re-creates the duplicate this parking exists to remove.
                and not re.search(r"defunct|domain-dead|alias-of", r[5] or "")
                and not is_recruiter(r[0])   # agencies are never activated
+               # discovery leaks job titles and category words in as company names
+               # ("AppSec", "my team", "Sql developer - X"). Searching for a careers page
+               # for a non-company burns the time budget and returns nonsense —
+               # remoterocketship.com/company/guildmortgage for "AppSec".
+               and not looks_like_junk(r[0])
                # triage proved page-empty rows have a live page with no roles — the daily
                # probe owns them; hunting them again just burns budget. (Explicit helper:
                # inlining this as and/or mixes precedence and silently empties the pool.)
