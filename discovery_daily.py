@@ -138,6 +138,7 @@ def indeed_search(query, days=INDEED_DAYS, limit=25, tries=2):
     from bd_rescue import unlock
     url = ("https://il.indeed.com/jobs?q=" + urllib.parse.quote_plus(query)
            + "&l=" + urllib.parse.quote_plus("Israel") + f"&fromage={days}")
+    why = "no attempt made"          # tries=0 made the final print raise UnboundLocalError
     for attempt in range(tries):
         html = unlock(url, timeout=100)
         UNLOCKER_CALLS["indeed"] += 1
@@ -188,7 +189,7 @@ def indeed_normalize(r):
         return None                        # same junior/student cut as the dataset path
     return {"company": comp[:80], "title": title[:140],
             "location": (r.get("formattedLocation") or "Israel")[:80],
-            "country_code": "IL", "url": f"https://il.indeed.com/viewjob?jk={jk}",
+            "country_code": "", "url": f"https://il.indeed.com/viewjob?jk={jk}",
             "posted_date": date, "ats_platform": "discovery-indeed",
             "job_id": f"indeed:{jk}", "description": desc}
 
@@ -227,15 +228,45 @@ LINKEDIN_PAGES = int(os.environ.get("LINKEDIN_PAGES", "2"))   # stops early when
 # one credit, so this IS the bill for the sweeps that use it.
 import collections as _collections
 UNLOCKER_CALLS = _collections.Counter()
+# Which PATH served each source — free or paid. A free path that silently starts
+# returning nothing looks identical to a dead source unless this is recorded.
+SOURCE_PATH = _collections.Counter()
+_UA_BROWSER = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+               "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
+# The `</li>` in the lookahead is load-bearing. Without it the LAST card on a page runs to
+# the end of the document, and any later element carrying these class names is absorbed into
+# it — the right-rail "people also viewed" block is built from the same `base-search-card`
+# component and has no jobPosting urn, so it is not a boundary. A last card lacking its own
+# subtitle then emitted a LONDON "Senior Manager" at "Acme Corp" as a Tel Aviv job dated
+# today, carrying the previous card's id. `url_names_other_company` waves it through because
+# company and url are wrong together. Every page has a last card.
 _LI_CARD = re.compile(
     r'data-entity-urn="urn:li:jobPosting:(?P<id>\d+)"(?P<body>.*?)'
-    r'(?=data-entity-urn="urn:li:jobPosting:|\Z)', re.S)
+    r'(?=data-entity-urn="urn:li:jobPosting:|</li>|\Z)', re.S)
 _LI_URL = re.compile(r'base-card__full-link[^>]*href="([^"?]+)')
 _LI_TITLE = re.compile(r'<span class="sr-only">\s*(.*?)\s*</span>', re.S)
 _LI_COMPANY = re.compile(
     r'base-search-card__subtitle[^>]*>\s*(?:<a[^>]*>)?\s*([^<]{2,80})', re.S)
+# The employer's LinkedIn SLUG sits in the same subtitle block and was stepped over.
+# It is worth more than the display name: a stable identifier, the only NON-aggregator
+# seed this layer can hand the resolver (a discovered job's own url is the POSTING —
+# docs/BACKLOG.md item 2, 206 of 1,233 queue entries), and slugs such as
+# `barak-recruitment-and-consultancy` are a free is_recruiter signal. Same bytes,
+# already paid for. Verified 2026-08-23: present on 10 of 10 cards.
+_LI_SLUG = re.compile(
+    r'base-search-card__subtitle.*?linkedin\.com/company/([a-z0-9\-_.%]+)', re.S | re.I)
 _LI_LOC = re.compile(r'job-search-card__location[^>]*>\s*([^<]{2,80})', re.S)
 _LI_DATE = re.compile(r'<time[^>]*datetime="(\d{4}-\d{2}-\d{2})"')
+
+
+def _li_urn_ids(html):
+    """The DISTINCT job-card ids a page contains, whatever we managed to parse out of them.
+
+    Ids, not a count: pages overlap heavily (start=0 and start=10 share 50 cards), so summing
+    per-page counts against a deduped parse total produced a meaningless 43% and would have
+    fired the drift warning on every healthy run.
+    """
+    return set(re.findall(r'data-entity-urn="urn:li:jobPosting:(\d+)"', html or ""))
 
 
 def _li_cards(html):
@@ -256,12 +287,14 @@ def _li_cards(html):
             continue                      # a card we cannot attribute is skipped, never guessed
         loc = _LI_LOC.search(b)
         date = _LI_DATE.search(b)
+        slug = _LI_SLUG.search(b)
         out.append({"job_id": m.group("id"),
                     "title": _html_unescape(title.group(1)),
                     "company": _html_unescape(comp.group(1)),
                     "location": _html_unescape(loc.group(1)) if loc else "Israel",
                     "posted_date": date.group(1) if date else "",
-                    "url": url.group(1)})
+                    "url": url.group(1),
+                    "company_slug": slug.group(1) if slug else ""})
     return out
 
 
@@ -270,26 +303,94 @@ def _html_unescape(t):
     return " ".join(_h.unescape(str(t or "")).split())
 
 
-def linkedin_search(keyword, pages=None, days=7, location="Israel"):
-    """LinkedIn public job search through the Web Unlocker: ~60 cards per credit.
+def _li_guest(keyword, location, days, start):
+    """LinkedIn's KEYLESS guest endpoint. Returns (cards, ok); ok=False means blocked.
 
-    Walks pages until one yields no card we have not already seen — the result pool for a
-    single Israel keyword in a week is only ~80 jobs, so this normally costs 2 requests and
-    stops on its own rather than paying for `pages` it does not need."""
+    Same `base-card` / `urn:li:jobPosting` markup the paid path returns, so `_li_cards`
+    parses it unchanged — 10 cards per request instead of 60, and it costs NOTHING.
+    Verified 2026-08-23 from this machine: HTTP 200, 28,427 bytes, 10 cards, slug on 10 of
+    10. The browser UA + `Accept-Encoding` header set is load-bearing; bare urllib gets 403.
+    """
+    q = urllib.parse.urlencode({"keywords": keyword, "location": location,
+                                "f_TPR": f"r{days * 86400}", "start": start})
+    req = urllib.request.Request(
+        f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?{q}",
+        headers={"User-Agent": _UA_BROWSER, "Accept-Encoding": "gzip, deflate",
+                 "Accept-Language": "en-US,en;q=0.9"})
+    try:
+        with urllib.request.urlopen(req, timeout=40) as r:
+            body = r.read()
+            if r.headers.get("Content-Encoding") == "gzip":
+                import gzip as _gz
+                body = _gz.decompress(body)
+        text = body.decode("utf-8", "replace")
+        _li_last_present[0] = _li_urn_ids(text)
+        return _li_cards(text), True
+    except Exception:  # noqa: BLE001 — 403/429/authwall/timeout all mean "use the fallback"
+        _li_last_present[0] = set()
+        return [], False
+
+
+# How many cards each keyword's pages CONTAINED, against how many parsed — the denominator
+# that makes a silent parser regression visible. Keyed by keyword, drained by main().
+LI_CARDS_PRESENT = _collections.defaultdict(set)
+_li_last_present = [set()]
+
+
+def linkedin_search(keyword, pages=None, days=7, location="Israel"):
+    """LinkedIn job search: KEYLESS first, Web Unlocker only where that is blocked.
+
+    The guest endpoint returns the same markup for nothing, so the whole sweep is $0 on a
+    machine LinkedIn will talk to. It will NOT talk to every machine — GitHub's Azure ranges
+    are among the most-blocked — so the paid path stays, and `SOURCE_PATH` records which one
+    actually served. Without that record, a silent degradation to a free path returning
+    nothing would look exactly like a dead source, which is the failure `pipeline/sources.py`
+    exists to catch.
+
+    Walks pages until one yields no card we have not already seen. The pool for one Israel
+    keyword in a week is ~80 jobs — a hard per-QUERY cap — so it stops on its own.
+    """
     from bd_rescue import unlock
     pages = LINKEDIN_PAGES if pages is None else pages
     seen, out = set(), []
-    reqs = 0
-    for i in range(pages):
-        q = urllib.parse.urlencode({"keywords": keyword, "location": location,
-                                    "f_TPR": f"r{days * 86400}", "start": i * 25})
-        html = unlock(f"https://www.linkedin.com/jobs/search?{q}", timeout=120)
-        reqs += 1                        # one Unlocker credit per page, whatever it returns
-        UNLOCKER_CALLS["linkedin"] += 1
-        cards = _li_cards(html)
+    # guest pages hold 10, unlocked pages hold 60 — same 80-job pool, different step size
+    paid_pages = 0
+    for i in range(pages * 6):
+        cards, ok = _li_guest(keyword, location, days, i * 10)
+        # An HTTP 200 with an empty body IS LinkedIn's soft rate-limit, and treating it as a
+        # successful empty result skipped the fallback and killed the keyword with no message
+        # — a mass zero read as a measurement (ARCHITECTURE section 8 item 2), re-created in
+        # brand-new code. A free page that yields nothing gets the paid path, not a break.
+        if ok and cards:
+            SOURCE_PATH["linkedin_free"] += 1
+            LI_CARDS_PRESENT[keyword] |= _li_last_present[0]
+        elif out:
+            # We already have cards for this keyword, so an empty page here means the ~80-job
+            # pool is EXHAUSTED, not that we are blocked. Paying the Unlocker to re-read a
+            # pool we have already drained cost 2 credits per keyword for nothing.
+            break
+        elif paid_pages >= pages:
+            break                     # paid budget for this keyword is spent
+        else:
+            # The paid page index is its OWN counter. Reusing the guest index meant that once
+            # the guest endpoint was blocked — the documented GitHub-runner case — only
+            # `start=0` was ever fetched: at i=1 `if i and out` broke before the fallback,
+            # so 60 of the 80 available cards arrived and the rest were silently dropped
+            # (~20 x 9 keywords a day) while the credits-per-card line reported a flattering
+            # 60 cards/credit.
+            q = urllib.parse.urlencode({"keywords": keyword, "location": location,
+                                        "f_TPR": f"r{days * 86400}", "start": paid_pages * 25})
+            html = unlock(f"https://www.linkedin.com/jobs/search?{q}", timeout=120)
+            UNLOCKER_CALLS["linkedin"] += 1
+            SOURCE_PATH["linkedin_paid"] += 1
+            paid_pages += 1
+            LI_CARDS_PRESENT[keyword] |= _li_urn_ids(html)
+            cards = _li_cards(html)
+            if not cards:
+                print(f"  [linkedin:{keyword}] page {i}: no cards from EITHER path "
+                      f"({len(html or '')} bytes unlocked) — markup change or hard block")
+                break
         if not cards:
-            print(f"  [linkedin:{keyword}] page {i}: no cards in {len(html or '')} bytes"
-                  f" — markup change or bot wall")
             break
         fresh = [c for c in cards if c["job_id"] not in seen]
         seen.update(c["job_id"] for c in cards)
@@ -305,15 +406,108 @@ def linkedin_normalize(c):
     title, comp = c["title"], c["company"]
     if not title or not comp:
         return None
-    d = c["posted_date"]
+    # Stamp today when the card carries no <time datetime> (promoted and reposted cards
+    # routinely do not). An undated job is skipped by BOTH the write-side prune
+    # (`if d and d < cut`) and the read-side TTL (`not posted_date or ...`), so it never
+    # ages out and `_alive()` keeps it on the board forever — and because this run's copy
+    # wins the (company,title) merge, one undated card converts a normal job into a
+    # permanent one.
+    d = c["posted_date"] or _dt.date.today().isoformat()
+    if d < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
+        return None
+    # A junior posting is not published, but its EMPLOYER still counts: the breadth sweep's
+    # product is employer names, and an unknown Israeli company whose only past-week analyst
+    # ad happens to say "Junior" was invisible to discovery forever. Flagged, not dropped —
+    # the cache write filters it, the names harvest does not.
+    junior = any(k in title[:200].lower() for k in _JUNIOR_HE)
+    return {"_junior": junior,
+            "company": comp[:80], "title": title[:140], "location": c["location"][:80],
+            # NOT "IL": every normalizer here used to stamp it because the QUERY asked
+            # for Israel, which made `israel.is_israel_job` a no-op for the whole discovery
+            # layer — it short-circuits on country_code and never reads the text. Leave it
+            # blank and let the location decide; verified that the text scan accepts
+            # "Tel Aviv", "Haifa", "Yokneam Illit" and rejects "London, United Kingdom".
+            "country_code": "", "url": c["url"], "posted_date": d,
+            "ats_platform": "discovery-linkedin", "job_id": f"linkedin:{c['job_id']}",
+            "description": "",          # public search carries none; jdfill fills it later
+            "company_slug": c.get("company_slug", "")}
+
+
+# --------------------------------------------------------------------------------------- #
+# Workable, read across ALL tenants at once
+# --------------------------------------------------------------------------------------- #
+# Every other source here is job-search-shaped: ask a keyword, get postings. This one asks an
+# ATS for every Israeli job on its whole platform, and it is the only source that hands back
+# the employer's OWN WEBSITE.
+#
+# That last part matters more than the jobs. A discovered job's `url` is always the posting —
+# on LinkedIn, Indeed or secrethunter — so the `careers_url` this layer seeds into
+# research_companies.json is an aggregator for 206 of 1,233 entries (docs/BACKLOG.md item 2),
+# and the resolver cannot do anything with it. A Workable record carries
+# `company.website`, which is a real lead.
+#
+# Verified 2026-08-23, keyless, no Bright Data: HTTP 200, `totalSize: 140` Israeli jobs,
+# 20 per page, each with company.title + company.website.
+# NOT usable the same way: SmartRecruiters' cross-tenant search ignores every geo filter
+# tried (country/countryCode/location all returned the same unfiltered 9,649), and
+# Recruitee's `jobs.recruitee.com/api/offers/` ignores `location=` and returns NL/PL/DE only.
+# ONE page, because pagination does not work and chasing it was stopped deliberately.
+# `totalSize` says 140 Israeli jobs; the response carries a `nextPageToken`, and NONE of
+# `page` / `offset` / `start` / `from` / the token itself as a query param advances the
+# result set — every variant returns the identical first 20 ids (tested 2026-08-23), and
+# POSTing the token 404s. So this reaches 20 of 140 and a second request bills nothing but
+# wastes time. Worth keeping anyway: those 20 yielded 7 new companies, all 7 with a real
+# careers URL, for zero credits. If someone works out the pagination, raise this.
+WORKABLE_PAGES = int(os.environ.get("WORKABLE_PAGES", "1"))
+
+
+def workable_search(location="Israel", pages=None):
+    """Every Israeli job on Workable's public cross-tenant board. Keyless, no credits."""
+    pages = WORKABLE_PAGES if pages is None else pages
+    out, seen = [], set()
+    for i in range(pages):
+        q = urllib.parse.urlencode({"query": "", "location": location, "page": i})
+        req = urllib.request.Request(f"https://jobs.workable.com/api/v1/jobs?{q}",
+                                     headers={"User-Agent": _UA_BROWSER,
+                                              "Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=40) as r:
+                data = json.loads(r.read().decode("utf-8", "replace"))
+        except Exception as e:  # noqa: BLE001
+            print(f"  [workable] page {i}: {type(e).__name__} {str(e)[:80]}")
+            break
+        rows = data.get("jobs") or data.get("results") or []
+        fresh = [x for x in rows if isinstance(x, dict) and x.get("id") not in seen]
+        seen.update(x.get("id") for x in rows if isinstance(x, dict))
+        if not fresh:
+            break
+        out += fresh
+    return out
+
+
+def workable_normalize(r):
+    """One Workable cross-tenant record -> the shared discovered-job shape, or None."""
+    import datetime as _dt
+    c = r.get("company") or {}
+    comp = str(c.get("title") or "").strip()
+    title = str(r.get("title") or "").strip()
+    if not comp or not title:
+        return None
+    d = str(r.get("published") or r.get("created_at") or "")[:10]
     if d and d < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
         return None
     if any(k in title[:200].lower() for k in _JUNIOR_HE):
         return None
-    return {"company": comp[:80], "title": title[:140], "location": c["location"][:80],
-            "country_code": "IL", "url": c["url"], "posted_date": d,
-            "ats_platform": "discovery-linkedin", "job_id": f"linkedin:{c['job_id']}",
-            "description": ""}          # public search carries none; jdfill fills it later
+    loc = r.get("location") or {}
+    city = str(loc.get("city") or loc.get("region") or "").strip()
+    url = r.get("url") or r.get("shortlink") or ""
+    return {"company": comp[:80], "title": title[:140],
+            "location": (f"{city}, Israel" if city else "Israel")[:80],
+            "country_code": "", "url": url,
+            "posted_date": d, "ats_platform": "discovery-workable",
+            "job_id": f"workable:{r.get('id') or url}", "description": "",
+            # the whole reason this source exists: a REAL careers lead, not a posting
+            "careers_hint": str(c.get("website") or "").strip()}
 
 
 def _req(url, data=None, method="GET", timeout=60):
@@ -387,7 +581,7 @@ def normalize(name, r):
     if any(k in tl for k in _JUNIOR_HE):
         return None                        # junior/student postings out
     return {"company": str(comp)[:80], "title": str(title)[:140], "location": str(loc)[:80],
-            "country_code": "IL", "url": url, "posted_date": date,
+            "country_code": "", "url": url, "posted_date": date,
             "ats_platform": f"discovery-{name}", "job_id": url or f"{comp}|{title}",
             "description": re.sub(r"<[^>]+>", " ", str(desc))}
 
@@ -464,7 +658,13 @@ def bd_spend_this_month(today=None):
         out["unlocker_reqs"] = out["serp_reqs"] = None
     known = [v for v in out.values() if isinstance(v, int)]
     if len(known) < 3:
-        print("  [bd-spend] zone/cost unavailable — unlocker+SERP credits NOT counted")
+        # Returning the partial sum was worse than returning nothing: on 2026-08-23 that is
+        # 2,989 (dataset only) instead of 4,106 — 60% instead of 82% — which then drives
+        # budget_per_day into over-spending AND keeps the 80% warning from ever firing.
+        # `budget_per_day` already treats None correctly: an unreadable ledger does not
+        # throttle. Unknown must look unknown.
+        print("  [bd-spend] zone/cost unavailable — spend UNKNOWN, not throttling")
+        return None, out
     return sum(known), out
 
 
@@ -536,13 +736,22 @@ def plan_spend(today=None):
     if per_day is None:
         return LINKEDIN_LIMIT_MAX, 100, "ledger unreadable — running at configured maximum"
     n_kw = len(_LI_KEYWORDS)
-    breadth = int(min(LINKEDIN_LIMIT_MAX, max(LINKEDIN_LIMIT_MIN, per_day // n_kw)))
-    left = per_day - breadth * n_kw
+    # CHARGE BREADTH WHAT IT COSTS, NOT WHAT IT USED TO COST. The breadth sweep is billed
+    # per REQUEST now (at most LINKEDIN_PAGES per keyword, and usually 0 because the guest
+    # endpoint is free) — not per record. Subtracting `breadth_limit * n_kw` reserved
+    # 15 x 9 = 135 credits/day for something that costs 18, and since breadth was itself
+    # derived from per_day, `left` came out as `per_day mod n_kw` — a number between 0 and 8
+    # NO MATTER HOW LARGE THE BUDGET WAS. The targeted backfill was therefore starved at
+    # every budget below ~31,000/month, including the "set BD_MONTHLY_BUDGET and both run
+    # flat out" case this function's docstring promised. It printed "budget reserved for the
+    # breadth sweep", which reserved nothing.
+    breadth = LINKEDIN_LIMIT_MAX
+    left = per_day - LINKEDIN_PAGES * n_kw
     # the targeted sweep bills ~0.75 records/company (67 for 88, measured), and only what
     # each employer actually has — so a cap of N costs well under N.
     targeted = int(max(0, min(100, left / 0.75)))
-    how = (f"budget {per_day:.0f} rec/day -> breadth limit {breadth} x{n_kw} keywords"
-           f" + targeted cap {targeted}")
+    how = (f"budget {per_day:.0f} credits/day -> breadth {n_kw} keywords x{LINKEDIN_PAGES} "
+           f"pages (~{LINKEDIN_PAGES * n_kw} paid worst case) + targeted cap {targeted}")
     return breadth, targeted, how
 
 
@@ -648,12 +857,34 @@ def main():
     print(f"[indeed] {n_indeed_raw} raw cards -> {len(jobs)} unique jobs kept "
           f"across {len(INDEED_QUERIES)} queries")
 
-    # BREADTH — the discovery source. Read through the Web Unlocker (1 credit per PAGE of
-    # ~60 cards) rather than the dataset (1 credit per RECORD): same depth, ~55x cheaper.
-    n_li_raw = 0
+    # WORKABLE — one ATS, every tenant, keyless. Cheap in credits (zero) and the only source
+    # that yields the employer's own website rather than a posting link.
+    try:
+        wk = workable_search()
+    except Exception as e:  # noqa: BLE001
+        print(f"[workable] ERR {type(e).__name__}: {str(e)[:120]}")
+        wk = []
+    per_source["workable"] = len(wk)
+    kept_wk = 0
+    for r in wk:
+        j = workable_normalize(r)
+        if not j:
+            continue
+        k = (j["company"].lower(), j["title"].lower())
+        if k in seen:
+            continue
+        seen.add(k)
+        jobs.append(j)
+        kept_wk += 1
+    print(f"[workable] {len(wk)} Israel jobs across all tenants -> {kept_wk} new (0 credits)")
+
+    # BREADTH — the discovery source. Keyless guest endpoint first, Web Unlocker only where
+    # LinkedIn blocks it (1 credit per PAGE of ~60 cards, never per record).
+    n_li_raw = n_li_present = 0
     for kw in _LI_KEYWORDS:
         try:
             cards = linkedin_search(kw)
+            n_li_present += len(LI_CARDS_PRESENT.pop(kw, set()))
         except Exception as e:  # noqa: BLE001
             print(f"[linkedin:{kw}] ERR {type(e).__name__}: {str(e)[:120]}")
             cards = []
@@ -670,14 +901,28 @@ def main():
             jobs.append(j)
             kept += 1
         print(f"[linkedin:{kw}] {len(cards)} cards -> {kept} new")
-    per_source["linkedin"] = n_li_raw
-    print(f"[linkedin] {n_li_raw} raw cards across {len(_LI_KEYWORDS)} keywords "
-          f"for {UNLOCKER_CALLS['linkedin']} Unlocker credits "
-          f"({n_li_raw / max(1, UNLOCKER_CALLS['linkedin']):.0f} cards/credit)")
+    # PRESENT, not parsed. `n_li_raw` counts what _li_cards managed to build; if LinkedIn
+    # flips an attribute order or wraps the subtitle, half the cards vanish and the source
+    # still reports itself healthy. That is this repo's signature failure applied to its own
+    # discovery source, so the liveness number is what the page CONTAINED.
+    if n_li_present and n_li_raw < n_li_present * 0.8:
+        print(f"::warning::LinkedIn parser recovered only {n_li_raw} of {n_li_present} cards "
+              f"present — markup drift, check _li_cards. See ARCHITECTURE.md 1a.", flush=True)
+    per_source["linkedin"] = n_li_present or n_li_raw
+    # SOURCE_PATH existed with three writes and ZERO reads — a guard that was documented and
+    # did not exist. Which path served is the difference between "LinkedIn went quiet" and
+    # "the free endpoint started refusing us and we are now paying for everything".
+    print(f"[linkedin] {n_li_raw} cards across {len(_LI_KEYWORDS)} keywords · "
+          f"path free={SOURCE_PATH['linkedin_free']} paid={SOURCE_PATH['linkedin_paid']} "
+          f"({UNLOCKER_CALLS['linkedin']} Unlocker credits)")
+    if SOURCE_PATH["linkedin_paid"] and not SOURCE_PATH["linkedin_free"]:
+        print("::warning::LinkedIn free guest endpoint is refusing every request; the whole "
+              "breadth sweep is now billed to Bright Data. See ARCHITECTURE.md 1a.",
+              flush=True)
 
     # TARGETED backfill — keeps the dataset, because it needs the `company` filter the
     # public search only exposes as a numeric f_C id we do not have. ~67 credits.
-    _breadth_limit, targeted_cap, how = plan_spend()
+    _unused_breadth, targeted_cap, how = plan_spend()   # breadth is per-request now
     print(f"[budget] {how}")
     runs = []
     targeted = _targeted_inputs(cap=targeted_cap) if targeted_cap else []
@@ -704,7 +949,14 @@ def main():
                 continue
             seen.add(k)
             jobs.append(j)
-    if jobs:
+    # Junior postings were flagged rather than dropped (see linkedin_normalize) so their
+    # EMPLOYER still reaches the names funnel. They must not reach the job cache.
+    n_junior = sum(1 for j in jobs if j.get("_junior"))
+    cacheable = [j for j in jobs if not j.get("_junior")]
+    if n_junior:
+        print(f"[names] {n_junior} junior/student postings kept for their employer name "
+              f"only — not cached, not published")
+    if cacheable:
         # MERGE, never truncate. This file is shared with discovery_telegram.py, which runs
         # AFTER this step; a truncating write here deleted every Telegram-sourced job on
         # 2026-08-21 (79 verified roles lost, unrecoverable because the telegram watermark
@@ -716,7 +968,7 @@ def main():
         except Exception:  # noqa: BLE001
             prev = []
         merged, keys = [], set()
-        for j in jobs + [p for p in prev if isinstance(p, dict)]:
+        for j in cacheable + [p for p in prev if isinstance(p, dict)]:
             k = ((j.get("company") or "").lower(), (j.get("title") or "").lower())
             if k in keys:
                 continue                       # this run's version wins (it is fresher)
@@ -727,7 +979,13 @@ def main():
             merged.append(j)
         with open("discovered_cache.json", "w", encoding="utf-8") as f:
             json.dump(merged, f, ensure_ascii=False, indent=1)
-        print(f"cache: {len(jobs)} this run + {len(merged) - len(jobs)} carried = {len(merged)}")
+        # `len(cacheable)` is pre-dedup, so "carried" could print NEGATIVE — and that was the
+        # only tell that the previous cache had been lost. Report both honestly.
+        carried = len(merged) - sum(1 for j in cacheable
+                                    if ((j.get("company") or "").lower(),
+                                        (j.get("title") or "").lower()) in keys)
+        print(f"cache: {len(cacheable)} this run -> {len(merged)} total "
+              f"({max(0, carried)} carried from previous runs)")
     else:
         print("no records fetched — keeping yesterday's discovered_cache.json")
     # companies we don't scan directly yet -> hand to the auto-expand resolver.
@@ -762,7 +1020,11 @@ def main():
         if _is_rec(c):
             n_rec += 1
             continue
-        new_cos[c.lower()] = {"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""}
+        # Seed the resolver with a REAL careers lead where the source gave us one
+        # (Workable hands back company.website). Otherwise all we have is the posting,
+        # which is an aggregator URL — docs/BACKLOG.md item 2.
+        new_cos[c.lower()] = {"name": c, "careers_url": j.get("careers_hint") or j["url"],
+                              "ats": "unknown", "slug": j.get("company_slug", "")}
         yield_by_src[src] += 1
     if n_junk or n_rec:
         print(f"discovery: rejected {n_junk} job-title-shaped names and {n_rec} agencies "

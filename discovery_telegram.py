@@ -19,6 +19,7 @@ import sys
 
 import html as _html
 import json
+import os
 import re
 import urllib.request
 
@@ -83,14 +84,26 @@ def _clean_text(body_html):
     return lines
 
 
+_TITLEISH = re.compile(r"[A-Za-z\u0590-\u05FF]")
+
+
 def parse_post(lines, msg_date):
     """secrethunter format -> normalized job dict, or None if it doesn't fit."""
     # cut the footer ("--" + promo links)
     if "--" in lines:
         lines = lines[:lines.index("--")]
+    # Drop leading decoration. The format is positional — lines[0..2] are title / company /
+    # city — so a single "🔥🔥🔥" header line shifts everything by one and the JOB TITLE is
+    # emitted as the company name, which passes both is_recruiter and looks_like_junk and is
+    # queued as a new Israeli employer. Latent today (no channel currently decorates), and it
+    # fires the first time one does.
+    while lines and not _TITLEISH.search(lines[0]):
+        lines = lines[1:]
     if len(lines) < 4:
         return None
     title, company, city = lines[0], lines[1], lines[2]
+    if not _TITLEISH.search(company):
+        return None                                        # company must contain a letter
     company = company.replace("(.)", ".").strip()          # "Placer(.)ai" -> "Placer.ai"
     rest = lines[4:] if re.match(r"\d{1,2}/\d{1,2}/\d{2}", lines[3]) else lines[3:]
     url = ""
@@ -145,8 +158,37 @@ def scan_channel(chan, last_id):
 def _load_json(path, default):
     try:
         return json.load(open(path, encoding="utf-8"))
+    except FileNotFoundError:
+        return default
     except Exception:  # noqa: BLE001
         return default
+
+
+class CacheUnreadable(Exception):
+    """discovered_cache.json exists but will not parse — never treat that as 'empty'."""
+
+
+def _load_cache(path="discovered_cache.json"):
+    """Load the shared job cache, distinguishing ABSENT from CORRUPT.
+
+    `_load_json(path, [])` collapsed both into an empty list, and this function merges into
+    that list and then writes it back — so one half-written file (the preceding
+    discovery_daily step writes it with a plain open(), both steps are continue-on-error,
+    and operators do cancel digest runs) silently deletes every job in the cache. The
+    watermark in cloud_state/telegram_seen.json is advanced in the SAME run, which is what
+    makes the loss unrecoverable: exactly the mechanism that cost 79 verified roles on
+    2026-08-21.
+    """
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except ValueError as e:
+        raise CacheUnreadable(f"{path} exists but is not valid JSON: {e}") from e
+    if not isinstance(data, list):
+        raise CacheUnreadable(f"{path} is {type(data).__name__}, expected a list")
+    return data
 
 
 def _health(n_parsed):
@@ -188,7 +230,14 @@ def main():
         print("no new telegram posts")
         return
     # merge into discovered_cache.json (discovery_daily may have just rewritten it)
-    cache = _load_json("discovered_cache.json", [])
+    try:
+        cache = _load_cache()
+    except CacheUnreadable as e:
+        # Abort BEFORE the watermark advances. Losing today's Telegram posts is recoverable
+        # on the next run; advancing the watermark past them is not.
+        print(f"::error::{e} — aborting the telegram merge WITHOUT advancing the watermark, "
+              f"so nothing is lost. Fix or delete the file and re-run.", flush=True)
+        return
     seen = {(j.get("company", "").lower(), j.get("title", "").lower()) for j in cache}
     added = [j for j in new_jobs
              if (j["company"].lower(), j["title"].lower()) not in seen]

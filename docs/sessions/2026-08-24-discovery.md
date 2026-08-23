@@ -350,6 +350,67 @@ than clever, and it is recorded next to the Google-for-Jobs negative so nobody r
 **Final: 18 credits/day, 184 employers, 76 new companies — cheaper than the 4-keyword
 version AND better than the 391-credit dataset.**
 
+## Round 6: two adversarial waves, and most of what they found was mine
+
+An independent proposal wave and an independent attack wave, both read-only.
+
+**The proposal wave** returned ten ideas, six live-probed. I re-verified the three that would
+change the architecture and **one did not reproduce**: it reported Indeed readable keylessly
+with browser headers; from this machine that is a flat **HTTP 403**. Not implemented.
+Verified and implemented instead:
+
+- **LinkedIn's guest endpoint is keyless and `_li_cards` parses it unchanged** — 62 jobs,
+  8 free requests, **0 credits**. The Unlocker stays as a fallback because GitHub's Azure
+  ranges are among LinkedIn's most-blocked.
+- **The employer's LinkedIn slug was being stepped over** by the subtitle regex — present on
+  61 of 62 cards, already paid for, and a stable identifier. `barak-recruitment-and-consultancy`
+  behind a company displaying as "Recruitx" is a free agency signal.
+- **Workable's cross-tenant board** — one ATS, every tenant, keyless: 20 Israeli jobs → 7 new
+  companies, **all 7 carrying the employer's own website**. The first source that yields a
+  real careers lead rather than a posting link, which is the root of BACKLOG item 2. The
+  queue seed now prefers it. Pagination does NOT work (`page`/`offset`/`start`/`from`/the
+  `nextPageToken` all return the identical first 20; POSTing the token 404s), so it reaches
+  20 of 140 and is capped at one page rather than chased.
+- **City queries open partly-separate windows**, measured free: Be'er Sheva 14 of 20 jobs
+  unseen nationally, Haifa 11 of 20, Jerusalem 3 of 31, Herzliya **0 of 20** (Tel Aviv metro
+  is already inside the national window). Not yet wired — the peripheral cities are worth it,
+  the metro ones are not.
+
+**The attack wave found twelve defects and I had written eleven of them today.** The four
+worst:
+
+| | what it did | silent? |
+|---|---|---|
+| unbounded last card | the last card on a page absorbed the right-rail block — a **London** "Senior Manager" emitted as a Tel Aviv job dated today, carrying the previous card's id | yes |
+| `country_code: "IL"` | stamped because the QUERY said Israel; `is_israel_job` short-circuits on it, so the only geo gate was a **no-op for the entire discovery layer** | yes |
+| `plan_spend` | `left = per_day - breadth_limit × n_kw` reserved 135 credits/day for a sweep costing 18, and the remainder was `per_day mod n_kw` — 0-8 **whatever the budget**. The backfill was starved below ~31,000/month while printing "budget reserved for the breadth sweep" | yes |
+| telegram cache | `_load_json(path, [])` collapsed ABSENT and CORRUPT into `[]`, then wrote that back — one half-written file deletes every cached job, and the watermark advances in the same run. The exact mechanism that cost 79 roles on 2026-08-21 | yes |
+
+Also fixed: only ONE paid page was ever fetched when the guest endpoint was blocked (~180
+jobs/day dropped in exactly the documented GitHub-runner case); an HTTP-200-empty guest reply
+killed a keyword with no message and no fallback; `SOURCE_PATH` had three writes and **zero
+reads** — a guard that was documented and did not exist; a partial ledger returned its
+dataset-only sum as if it were the truth (2,989 instead of 4,106, so the 80% warning could
+never fire); undated cards never aged off the board; the junior cut discarded the EMPLOYER as
+well as the job; a decorated Telegram post shifted every field by one; `indeed_search(tries=0)`
+raised `UnboundLocalError`.
+
+**Two of my own fixes were themselves wrong and caught by re-measuring**: the drift warning
+compared a per-page urn count against a deduped parse total and read 43% on a healthy page
+(now distinct-urn sets, reads 100%), and treating an exhausted guest pool as a block paid the
+Unlocker 2 credits per keyword to re-read a pool already drained (now 0).
+
+**The test that should have caught the budget bug asserted `targeted < breadth`** — and
+`0 < 15` is true. It passed for hours while the backfill was starved. Rewritten to assert
+what must be true, not what happened to hold. That is the lesson worth keeping from this
+round.
+
+Five findings are outside this lane and are filed unfixed as BACKLOG items 9-13 — the
+`fetch_discovery` slug guard dropping real acquisitions uncounted (NVIDIA/`at-mellanox`,
+Meta/`at-facebook`), the workflow conflict path restoring `discovered_cache.json` wholesale,
+`looks_like_junk` being unable to catch a bare job title, `run.py` lacking the cp1252 stdout
+guard, and the measured 1.1% cost of the `(company,title)` dedup key.
+
 ## Claims I could NOT verify
 
 - **Whether SerpApi's `google_jobs` covers Israel at all.** `daily-digest.yml` says it was

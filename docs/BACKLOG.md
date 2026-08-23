@@ -287,6 +287,58 @@ fixed, and every one of them is outside the `discovery` lane's write list.
    which `BD_MONTHLY_BUDGET` can be replaced by the account's own number and the throttle
    stops guessing.
 
+## From the adversarial review of the discovery layer, 2026-08-23
+
+An independent hostile review of the rewritten intake layer. Twelve defects were found and
+fixed in-lane the same day (see `docs/sessions/2026-08-24-discovery.md`). These five are
+outside the `discovery` lane and are NOT fixed.
+
+9. **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
+   *(lane: `ats-fetch` / shared — `pipeline/fetchers.py:588-591`.)* Three filters, one list
+   comprehension, no logging: 22 of 205 cached jobs are dropped as recruiters every run and
+   nothing says so. Worse, `url_names_other_company` drops a job whenever the registry name
+   and the LinkedIn slug differ — which is exactly what an acquisition looks like:
+   `NVIDIA`/`at-mellanox-technologies`, `Palo Alto Networks`/`at-cyberark`,
+   `Meta`/`at-facebook`, `Bank Hapoalim`/`at-poalim` all test as DROPPED. `ARCHITECTURE.md`
+   §8 item 4 warns about this exact class ("CyberArk→PANW and Imperva→Thales looked like
+   false matches and were actually real acquisitions") and the guard drops them anyway,
+   invisibly. It measures 0/205 today only because the old dataset path made name and slug
+   agree; the new `linkedin_search` takes the DISPLAY name, so divergence becomes routine.
+   Fix: count and print each drop class, and never slug-drop a name already in
+   `companies.csv`.
+
+10. **`discovered_cache.json` and `research_companies.json` are restored wholesale on the
+    git conflict path.** *(lane: `infra` — `.github/workflows/daily-digest.yml:155` and the
+    same block in 7 other workflows.)* The adjacent comment explains why `scraped_cache.json`
+    is EXCLUDED from the wholesale `cp /tmp/ours/$p $p` and merged per key instead. These two
+    have two writers each and get no such treatment, and `merge_json_cache.py` only handles
+    company-keyed dicts — `discovered_cache.json` is a LIST. A concurrent digest re-dispatch
+    (the 08-21 and 08-23 histories show these happen) silently discards origin's discovery
+    jobs and queue entries. Fix: a list mode in `merge_json_cache.py` keyed on
+    `(company,title)`, or move both files out of the wholesale-restore loop.
+
+11. **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` —
+    `pipeline/firmographics.py:53-72`.)* `_JUNK_NAME` requires a role word FOLLOWED BY a
+    separator, so `"Senior Data Analyst"` and `"BI Developer"` are not junk, and
+    `CATEGORY_NAMES` is exact-match only. Any source whose employer field is a headline feeds
+    those straight into the auto-expand queue and they become `companies.csv` rows two runs
+    later. The queue is clean today (0 of 1,233), so this is a live hole rather than live
+    damage. Fix: a separator-free arm — a name that is ENTIRELY role words plus seniority
+    modifiers is junk.
+
+12. **`pipeline/run.py` has no `sys.stdout.reconfigure`** while 23 other root scripts do.
+    *(lane: `infra`.)* It dies with `UnicodeEncodeError` printing a Hebrew company name on a
+    cp1252 console — hit for real during the review. Local-only; runners are UTF-8.
+
+13. **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
+    `pipeline/store.merge_key`, and the same key in `discovered_cache.json`.)* Measured
+    against `scraped_cache.json`: 1,110 jobs, 1,079 distinct keys, 12 postings dropped —
+    e.g. `amazon israel | senior delivery consultant – ai/ml` in two locations. The
+    qualitative cost is larger than the count: a Telegram post carrying a usable seed URL
+    loses to a LinkedIn card with the same key, and only one `url` survives. Deliberate (it
+    is what stops one role appearing three times from three sources), so this is a recorded
+    trade, not a bug — but the number should be known before anyone "fixes" duplicates.
+
 ## From the registry lane, 2026-08-24
 
 Found while fixing the re-check pools. Each of these is **outside the `registry` lane's

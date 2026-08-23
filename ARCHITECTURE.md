@@ -418,8 +418,15 @@ used to produce is the worst failure mode in this repo. So:
 - **An unreadable ledger does NOT throttle** — running at the maximum is correct when the
   number could not be fetched; throttling on a value we failed to read would be its own
   silent failure.
-- A generous plan changes nothing: set `BD_MONTHLY_BUDGET` and both sweeps run flat out.
-  At 15,000+/month the throttle never engages.
+- **Breadth is never throttled** — it is billed per REQUEST (at most `LINKEDIN_PAGES` ×
+  keywords ≈ 18, usually 0 because the guest endpoint is free), so throttling it saves
+  nothing and starves the discovery source. The per-RECORD targeted backfill is what absorbs
+  a tight month. This was wrong until 2026-08-23: `left = per_day - breadth_limit × n_kw`
+  reserved 15 × 9 = **135 credits/day for something that costs 18**, and because `breadth`
+  was itself derived from `per_day`, the remainder came out as `per_day mod n_kw` — 0 to 8
+  **whatever the budget**. The backfill was starved at every budget below ~31,000/month
+  while printing "budget reserved for the breadth sweep", which reserved nothing. The test
+  that should have caught it asserted `targeted < breadth`, and `0 < 15` is true.
 
 Worked numbers for 2026-08-23 (4,106 spent, 9 days left → 99 credits/day):
 `breadth limit 24 × 4 keywords + targeted cap 4`. On a fresh month at 5,000 it is
@@ -457,6 +464,15 @@ Each distinct query gets its own window; nine queries buy nine windows. So the k
 is long and flat on purpose, `LINKEDIN_PAGES` is 2, and **the whole sweep costs 18 credits
 and beats the 391-credit dataset by 18 companies.** If yield falls, add keywords — never
 pages, and never `OR`.
+
+**Two things the parser must keep doing, both learned by being broken.** The card block is
+bounded by `</li>` as well as the next urn: without it the LAST card on a page runs to the
+end of the document and absorbs the right-rail "people also viewed" block, which is built
+from the same `base-search-card` component and carries no urn — a last card missing its own
+subtitle emitted a **London** "Senior Manager" as a Tel Aviv job. And `country_code` is left
+**blank**, never `"IL"`: `israel.is_israel_job` short-circuits on country_code before it
+reads any text, so stamping IL because the QUERY said Israel made the pipeline's only geo
+gate a no-op for the whole discovery layer.
 
 What is given up is `job_summary` — the public search carries no description. That is
 acceptable *for the breadth sweep specifically*, because its product is EMPLOYER NAMES and
