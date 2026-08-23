@@ -31,6 +31,8 @@ from deep_validate import Renderer, ddg
 from audit_empty_rows import AGG
 from pipeline.aggregators import is_aggregator
 from pipeline.recruiters import is_recruiter
+from urllib.parse import urlparse
+
 from pipeline.company_identity import is_foreign
 from pipeline.company_identity import looks_like_a_job_listing_page
 from resolve_llm import _ask_claude
@@ -319,8 +321,9 @@ def main():
                         # "Press Releases". A listings page says so in its URL.
                         fr[5] = _note_replace(
                             fr[5], "listing-hunt",
-                            f"listing-hunt {TODAY}: {url[:44]} is not a listings page "
-                            f"({n_il} card-shaped items); no listing found")
+                            f"listing-hunt {TODAY}: {urlparse(url).path[:36] or url[:36]} "
+                            f"is not a listings page ({n_il} card-shaped items); "
+                            f"no listing found")
                     elif verdict == "found":
                         fr[1], fr[2], fr[3] = "scrape", "", url
                         fr[4] = "true"
@@ -328,7 +331,8 @@ def main():
                         # the cell and threw away the triage mode that routed the row here
                         fr[5] = _note_replace(
                             fr[5], "listing-hunt",
-                            f"listing-hunt {TODAY}: verified {n_il} IL via {url[:60]}")
+                            f"listing-hunt {TODAY}: verified {n_il} IL via "
+                            f"{urlparse(url).netloc or url[:40]}")
                     elif verdict == "nolisting" and url:
                         # Document the candidate page so a human (and the next hunt) can see
                         # where we looked — but NEVER as the row's address when it provably
@@ -338,10 +342,14 @@ def main():
                         # tool honestly re-tests the wrong company's careers page. Note it
                         # in the note instead, which is text, not an endpoint.
                         if is_foreign(name, url):
+                            # host only: the note has a 220-char budget shared with every
+                            # other tool's verdict, and a full URL in one segment evicts
+                            # them all. The address itself is not being stored anyway.
+                            _host = urlparse(url).netloc or url[:32]
                             fr[5] = _note_replace(
                                 fr[5], "listing-hunt",
-                                f"listing-hunt {TODAY}: best candidate {url[:44]} belongs "
-                                f"to another company; no listing found")
+                                f"listing-hunt {TODAY}: best candidate {_host} is another "
+                                f"company; no listing found")
                             continue
                         fr[3] = url                       # persist the candidate page
                         # drop OLD WHOLE segments to make room — slicing the base cut
