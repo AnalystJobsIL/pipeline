@@ -580,12 +580,14 @@ def test_no_crack_walled_branch_can_write_an_unconfirmed_url():
                     u = ast.unparse(t)
                     if u.endswith("[3]") or u.endswith("[4]"):
                         guarded += 1
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for t in node.targets:
-                u = ast.unparse(t)
-                if u.endswith("[3]") or u.endswith("[4]") or "fr[3]" in u:
-                    unguarded.append(ast.unparse(node)[:60])
+    # `unguarded` used to be collected here and never asserted on — a dead list that made
+    # this test look like a completeness check when its only real assertion was
+    # `guarded >= 1`, satisfied by the `novrfy` branch alone. Wave 8 reopened the ACTIVATING
+    # branch with a one-token edit and this test stayed green. The AST walk cannot tell a
+    # guarded write from an unguarded one without re-implementing scoping, so the
+    # completeness claim now lives in a fixture that runs the code:
+    # `test_crack_walled_main_cannot_activate_a_board_that_does_not_name_us`.
+    del unguarded
     assert guarded >= 1, "no fr[3]/fr[4] write sits under an _ok_to_write test"
     # the gate itself must demand a POSITIVE confirmation, not merely "not False"
     g = inspect.getsource(crack_walled._ok_to_write)
@@ -1104,3 +1106,121 @@ def test_both_hunt_write_branches_route_through_the_identity_gate():
         "on _identity_ok; found %d call(s)" % src.count("_identity_ok(name, url)"))
     body = src[src.index('elif verdict == "nolisting"'):]
     assert body.index("_identity_ok(name, url)") < body.index("fr[3] = url")
+
+
+def test_crack_walled_main_cannot_activate_a_board_that_does_not_name_us(
+        tmp_path, monkeypatch):
+    """Drives `crack_walled.main()`. The ACTIVATING branch had no behavioural cover at all.
+
+    `test_no_crack_walled_branch_can_write_an_unconfirmed_url` walks the AST, collects every
+    unguarded `fr[3]`/`fr[4]` write into a list called `unguarded` — and never asserts on it.
+    Its only assertions are `guarded >= 1`, satisfied by the `novrfy` branch alone, and
+    `"is True" in <source of _ok_to_write>`. So a wave-8 reviewer changed
+
+        if verdict.startswith("cracked") and not _ok_to_write(name, got[1]):
+     -> if verdict == "cracked-scrape" and not _ok_to_write(name, got[1]) and n_il < 0:
+
+    and `pytest` reported 224 passed while `cracked-api`/oraclehcm activated a row with
+    `verified 0 IL` — verbatim the failure that test's own docstring describes.
+    """
+    import sys
+    import crack_walled as C
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["OraCo", "", "", "https://oraco.com/careers", "false",
+         "unsupported ATS oraclecloud.com"],
+        ["GoodCo", "", "", "https://goodco.com/careers", "false",
+         "unsupported ATS icims.com"],
+    ])
+    ora = ("https://hctz.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/"
+           "recruitingCEJobRequisitions?onlyData=true")
+    good = "https://goodco.icims.com/jobs/search?ss=1"
+    res = {"OraCo": ("cracked-api", ("oraclehcm", ora), 0, "12 total"),
+           "GoodCo": ("cracked-scrape", ("scrape", good), 4, "4 IL")}
+    monkeypatch.setattr(C, "crack_one", lambda name, seed, plat: res[name])
+    # OraCo's board does not name it; GoodCo's does. Positive control is mandatory: a gate
+    # that refuses everything must not be able to pass this test.
+    monkeypatch.setattr(C, "_page_names_company",
+                        lambda name, url, html="": {"GoodCo": True}.get(name, False))
+    monkeypatch.setattr(sys, "argv", ["crack_walled.py", "--apply"])
+    C.main()
+
+    out = _read(tmp_path)
+    assert out["OraCo"][4] == "false", (
+        "activated a row whose board never names it: %r" % (out["OraCo"],))
+    assert "oraclecloud" not in out["OraCo"][3], (
+        "persisted an unconfirmed endpoint into api_url: %r" % (out["OraCo"][3],))
+    assert out["GoodCo"][4] == "true", "positive control regressed"
+    assert out["GoodCo"][3] == good
+
+
+def test_listing_hunt_main_cannot_activate_a_board_that_does_not_name_us(
+        tmp_path, monkeypatch):
+    """Drives `listing_hunt.main()`. Nothing did.
+
+    `test_both_hunt_write_branches_route_through_the_identity_gate` asserts
+    `src.count("_identity_ok(name, url)") >= 2` — a source-string count. A wave-8 reviewer
+    changed `not _identity_ok(name, url)` to `_identity_ok(name, url) is None`, preserving
+    the text, and reopened the hole with `pytest` at 224 passed. The sibling guard calls
+    `_identity_ok` directly, which tests the predicate, not the branch that uses it.
+    """
+    import sys
+    import listing_hunt as L
+    import crack_walled as C
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        # `no ATS detected` is a hunt-pool token; `page-empty` is deliberately NOT one
+        # (the daily probe owns those rows), so it selects nothing.
+        ["NanoLock Security", "", "", "https://nanolock.com/careers", "false",
+         "dark-triage 2026-01-01: no ATS detected"],
+        ["GoodCo", "", "", "https://goodco.com/careers", "false",
+         "dark-triage 2026-01-01: no ATS detected"],
+    ])
+    foreign = "https://gen.wd1.myworkdayjobs.com/careers/"
+    ownpage = "https://www.goodco.com/careers/openings"
+    res = {"NanoLock Security": ("found", foreign, 7, ""),
+           "GoodCo": ("found", ownpage, 5, "")}
+    monkeypatch.setattr(L, "hunt_one",
+                        lambda name, seed, documented=False, mode="": res[name])
+    monkeypatch.setattr(C, "_page_names_company", lambda name, url, html="": False)
+    monkeypatch.setattr(sys, "argv", ["listing_hunt.py", "--apply"])
+    L.main()
+
+    out = _read(tmp_path)
+    assert out["NanoLock Security"][4] == "false", (
+        "activated Gen Digital's Workday for NanoLock: %r" % (out["NanoLock Security"],))
+    assert "myworkdayjobs" not in out["NanoLock Security"][3], (
+        "persisted a foreign ATS board into api_url: %r" % (out["NanoLock Security"][3],))
+    # ordinary domain: the page test is deliberately NOT applied there, so this still
+    # activates even though `_page_names_company` is stubbed False. That scoping is the
+    # reason JS-rendered careers pages are not silently excluded.
+    assert out["GoodCo"][4] == "true", (
+        "the ordinary-domain path must not be gated on a page read: %r" % (out["GoodCo"],))
+
+
+def test_the_hunts_refusal_notes_are_short_and_carry_no_url():
+    """A refusal note is written into a 220-char cell shared with every other tool.
+
+    The two notes added with `_identity_ok` were 97 and 102 chars. Re-stamped over the hunt
+    pool they evicted the OLDEST segment from ~190 of 274 rows — and on this pool the oldest
+    segment is `deep-validated ...: unsupported ATS <x>`, which is `crack_walled`'s ENTIRE
+    pool predicate. `listing_hunt` runs BEFORE `crack_walled` in listing-hunt.yml, so the
+    collapse lands inside the same job: measured on the real registry, crack-pool survivors
+    after one sweep were 4 of 30. At 62/66 chars they are 20 and 18 of 30.
+
+    Neither `check_invariants` nor `registry_health` can see a pool falling to zero — both
+    have only an aggregate floor — so this has to be a test.
+    """
+    import re
+    import inspect
+    import listing_hunt as L
+    src = inspect.getsource(L.main)
+    segs = re.findall(r'f"listing-hunt \{TODAY\}: ([^"]*)"', src)
+    assert segs, "could not find the listing-hunt note segments"
+    for body in segs:
+        rendered = len("listing-hunt 2026-08-24: ") + len(body)
+        assert "urlparse" not in body and "netloc" not in body, (
+            "a URL in a refusal note is what took this segment to 97 chars: %r" % (body,))
+        assert rendered <= 80, (
+            "note segment %r renders to %d chars; the pool cannot afford it"
+            % (body, rendered))

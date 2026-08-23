@@ -435,13 +435,22 @@ host by design, because the tenant may legitimately be an acquirer's
 (`Momentis Surgical` really does post under `memic`). So on those hosts:
 
 * what stops a wrong activation is `crack_walled._page_names_company` — three-valued, and
-  `None` (page unreadable) counts as **no evidence**, not as approval. **All five write
+  `None` (page unreadable) counts as **no evidence**, not as approval. **All SIX write
   paths route through it on an ATS host** (`crack_walled`, `audit_empty_rows`,
-  `deep_validate`, `repair_dead_urls`, `listing_hunt`); on ordinary domains `is_foreign`
+  `deep_validate`, `repair_dead_urls`, `listing_hunt`, `repair_extract_gap`); on ordinary
+  domains `is_foreign`
   still does the work, because a page test there would refuse every JS-rendered careers
-  page. `listing_hunt` was the last one wired in, on 2026-08-24, with two rows queued
-  against it — one of them `Sight Diagnostics` onto a board `Sight Sciences` is already
-  active on, i.e. one company's roles published under two names;
+  page.
+
+  **Count these from the schedule table in section 4, not from this list.** A commit message
+  and a docstring on 2026-08-24 both called `listing_hunt` "the last activating path in that
+  class". It was not: `repair_extract_gap` runs 30 minutes earlier in the same 19:00 job,
+  sets `active=true`, and had only `is_foreign` — while section 4's own table had listed it
+  as `activates? yes` the entire time. Six of its 40 rows were on an ATS host, including
+  `Sight Diagnostics` onto the board `Sight Sciences` is already active on (one company's
+  roles published under two names) and `NanoLock Security` onto Gen Digital's Workday. It
+  also forces `SCRAPE_ASSUME_IL=1`, which makes every location-less card on an
+  Israel-token-bearing page an Israel role — the weakest evidence any activating path uses;
 * and `crack_walled._ok_to_write`, which gates the **write**, not the return: refusing to
   activate is not enough, because persisting a foreign address into `api_url` with a
   `host documented` note hands it to `listing_hunt`'s fast-path, which activates it the next

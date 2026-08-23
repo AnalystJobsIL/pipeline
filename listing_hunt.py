@@ -377,11 +377,24 @@ def main():
                         # a nav menu scores like a board: iai.co.il/solution/
                         # research-academy-space "verified 6 IL" — "Domain Operations",
                         # "Press Releases". A listings page says so in its URL.
+                        # Fixed-length and url-free, for the reason crack_walled's note
+                        # was cut from 101 to 49 two commits earlier - and this one was
+                        # worse. At 97 chars, re-stamping it over the hunt pool evicted the
+                        # OLDEST segment from 189 of 274 rows, and on this pool the oldest
+                        # segment is `deep-validated ...: unsupported ATS <x>` - which is
+                        # `crack_walled`'s ENTIRE pool predicate. Measured on a simulated
+                        # night: crack_walled's pool 25 -> 2, and to 0 within 14 nights,
+                        # with `check_invariants` and `registry_health` green throughout
+                        # because neither has a per-tool floor. `listing_hunt` runs BEFORE
+                        # `crack_walled` in listing-hunt.yml, so the collapse lands inside
+                        # the same job.
+                        #
+                        # `refused` carries the real reason: an identity refusal and a
+                        # page-shape refusal are different findings and used to be recorded
+                        # with the same words, which is the diagnosis the next tool reads.
                         fr[5] = _note_replace(
                             fr[5], "listing-hunt",
-                            f"listing-hunt {TODAY}: {urlparse(url).path[:36] or url[:36]} "
-                            f"is not a listings page ({n_il} card-shaped items); "
-                            f"no listing found")
+                            f"listing-hunt {TODAY}: {refused}; no listing found")
                     elif verdict == "found":
                         fr[1], fr[2], fr[3] = "scrape", "", url
                         fr[4] = "true"
@@ -411,11 +424,10 @@ def main():
                             # host only: the note has a 220-char budget shared with every
                             # other tool's verdict, and a full URL in one segment evicts
                             # them all. The address itself is not being stored anyway.
-                            _host = urlparse(url).netloc or url[:32]
                             fr[5] = _note_replace(
                                 fr[5], "listing-hunt",
-                                f"listing-hunt {TODAY}: best candidate {_host} is another "
-                                f"company; no listing found")
+                                f"listing-hunt {TODAY}: another company's board; "
+                                f"no listing found")
                             continue
                         fr[3] = url                       # persist the candidate page
                         # drop OLD WHOLE segments to make room — slicing the base cut

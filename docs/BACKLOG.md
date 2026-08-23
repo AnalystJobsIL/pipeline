@@ -651,10 +651,32 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
         declared — which is close to what the digest already does, one layer later.
 
     Until one of those exists: `audit_empty_rows.tenant_is_this_company` implements the
-    near-equality/subdomain-tenant rule and is used in exactly one place,
-    `crack_walled._ok_to_write`, where `_page_names_company(...) is True` is already required
-    so it can add no new false negative. `test_a_tenant_mismatch_alone_must_not_block_an_ats_row`
-    pins the 36-row measurement so the next reviewer finds it before rebuilding this.
+    near-equality/subdomain-tenant rule. **It is no longer in `crack_walled._ok_to_write`**
+    (wave 7 measured that veto refusing 7 of the 9 active rows on crack_walled's own target
+    platforms) and it is now used in `audit_empty_rows.main` and, as a veto only, in
+    `repair_dead_urls.main`. An earlier version of this paragraph said it "is used in exactly
+    one place ... so it can add no new false negative"; the identical sentence was corrected
+    in `tests/test_registry.py` two commits before this one and left standing here, in the
+    item the brief tells the next agent to read *first*.
+
+    **And the substitute predicate fails the same test.** Wave 8 measured
+    `_page_names_company` live against the three companies this item names as the reason the
+    permissiveness exists:
+
+        Momentis Surgical   html 23198 chars  names subsidiary=False  names Memic=True  -> refused
+        Habana Labs (Intel) html  6750 chars  names subsidiary=False  names Intel=True  -> refused
+        Itamar Medical      html  7286 chars  names subsidiary=False  names ZOLL =True  -> refused
+
+    All three pages read in FULL (so `False`, not `None`), and all three are stamped
+    `not this company's board`. This item's own text predicted it — "`page_mentions_company`
+    cannot separate the two either: the acquirer's board does not say the subsidiary's name"
+    — so this is confirmation, not a new finding, and **it is not an argument for restoring
+    the tenant veto**, which was measured costing 36 rows. It is the argument for the
+    `acquired-by` column: no string predicate can separate inheritance from theft, and every
+    gate built so far refuses acquisitions in the safe direction. The cost is bounded — those
+    rows are already active and this gate runs on parked rows — but it is real and it is now
+    measured. `test_a_tenant_mismatch_alone_must_not_block_an_ats_row` pins the 36-row
+    measurement so the next reviewer finds it before rebuilding this.
 
 22. **17 rows carrying a `listing_hunt` fast-path token have a walled-ATS `api_url` today**
     — lane: `registry`, unclaimed, and it needs item 21 decided first. The fast path gates on
@@ -799,3 +821,92 @@ stops this recurring.
     --ats` is derived and correct — on 2026-08-24 it reported 8 of 8 names `WIRE`, 0 `BUILD`,
     which is itself a moving target (it was 3/5 six hours earlier). The durable fix is to
     delete the hand-maintained list and point at the command.
+
+## From the registry lane's wave-8 review, 2026-08-24
+
+Three independent agents, all NO-GO. Two of the defects were mine, introduced by wave 7's
+fixes; one was a claim I made that a doc of this repo already contradicted on the line above.
+
+33. **`tenant_is_this_company`'s "cannot tell" satisfies the audit's gate on 382 of 460
+    active ATS rows** — lane: `registry`, **and the obvious fix is measured wrong**. The
+    predicate returns True both for "the tenant is near-equal" and for "there is nothing here
+    to check": 358 rows on path-tenant platforms it does not scope (comeet 131, greenhouse
+    104, ashby 51, lever 23, workable 23, smartrecruiters 16, bamboohr 11, recruitee 7,
+    breezy 5) plus 24 with no checkable subdomain label. What decides those rows is
+    `_slug_matches`, plain containment, which passes `Bancor`/`bancorpbank`,
+    `Bit`/`bitdefender`, `Lili`/`elililly`.
+
+    The fix that suggests itself — require a positive near-equality match, else fall through
+    to the page read on the next line — was **built and reverted on 2026-08-24**, because on
+    exactly the platforms it would newly gate there is no page to read:
+
+    ```
+    fetch("https://boards-api.greenhouse.io/v1/boards/fiverr/jobs")         -> 0 bytes
+    fetch("https://www.comeet.co/careers-api/2.0/company/60.002/positions") -> 0 bytes
+    fetch("https://api.ashbyhq.com/posting-api/job-board/deel")             -> 28 bytes
+    ```
+
+    `_page_names_company` needs 2000 chars to answer anything but `None`, so "fall through"
+    refuses all 358 and stamps a false verdict on each — the same over-block wave 8 caught in
+    `deep_validate`, one tool over. It was caught only because the fixture carries a positive
+    control. Two fixes that would work: tighten `_slug_matches` to near-equality for PATH
+    tenants (the rule already used for subdomain tenants), or read the platform's *human*
+    board URL rather than the API endpoint. Both are real work; neither is a one-liner.
+
+34. **No pool has a per-tool floor, so a pool can fall to zero with every guard green** —
+    lane: `infra` + `registry`. `check_invariants` check E has one aggregate floor
+    (`pool_n < 50`, actual 266) and `registry_health`'s only alarm is `OWNED BY NOTHING`.
+    Wave 8 simulated 14 nights and watched `crack_walled` go 25 -> 2 -> 0 and
+    `probe_candidates` 153 -> 19 -> 16 while `check_invariants` printed
+    `OK pool=266, exit 0` every night. That is precisely the "coverage that silently never
+    happens" ARCHITECTURE.md section 8 calls the most common way this codebase breaks, and
+    the health tool this lane built cannot report it. A per-tool floor in
+    `registry_health.alarms()` is the cheap half and is `registry`-lane work.
+
+35. **`merge_csv_rows._TOOL` does not key `url-repaired`, and its overflow trim deletes the
+    other writer's segments** — lane: shared plumbing. The marker is keyed by `seg[:28]`,
+    which includes the date, so two runs on different days both survive and double the
+    220-char budget. The module special-cases the literal `"url-repaired"` twenty lines
+    below, so it knows the marker; the regex does not list it. Worse, on overflow
+    `while out and len(" | ".join(out)) > cap: out.pop()` pops from the tail of
+    `split(ours) + split(theirs)` — i.e. it deletes 100% of the concurrently-committed
+    writer's segments. That is the "351 lost triage modes" bug class re-entering through the
+    trim, on exactly the rows where notes are longest.
+
+36. **`_page_names_company`'s unlocker call is uncapped Bright Data spend** — lane:
+    `registry`. `DEEP_BD_SEARCH_CAP` guards `google_via_unlocker` only; `_page_names_company`
+    calls `bd_rescue.unlock` gated on the key alone with no counter — correct for accuracy,
+    wrong for the budget. Now that four tools route through it, the 19:00 job can spend
+    several hundred credits a night on top of ARCHITECTURE.md section 3's "~450 on a
+    weekday", against a pool measured at 4,292/5,000. It does not make the email late (every
+    BD step is `continue-on-error`) but it accelerates the date on which item 37 starts
+    writing false verdicts.
+
+37. **When Bright Data runs out, every walled row degrades to `None` and every tool writes
+    `not this company's board`** — lane: `registry`. `_page_names_company` is carefully
+    three-valued and `_ok_to_write` collapses `None` and `False` into one refusal that stamps
+    the same positive claim. With `BRIGHTDATA_API_KEY` unset, wave 8 drove Bancor and
+    Riskified and got `page_names=None -> REFUSE + stamp "not this company's board"` for
+    both. Silent, durable, and self-sealing. The refusal note should distinguish "we could
+    not read the page" from "the page names someone else", and an unreadable page should not
+    consume the row's re-check token.
+
+38. **`audit_empty_rows`' rotation key is in gitignored `state/`, so the Sunday budget
+    re-walks the same prefix forever** — lane: `registry` + `infra`. `state/` is gitignored
+    and `audit-coverage.yml` never stages it, so in Actions `done` is always `{}` and
+    `parked.sort(key=lambda ir: done.get(ir[1][0], ""))` is a stable sort on a constant —
+    file order, every Sunday. The code comment already knows the first half and the next
+    line's claim ("the next run starts where this one stopped") is false in the cloud. This
+    is the identical starvation bug this lane FIXED in `scan_dead_domains` by moving its key
+    to `cloud_state/scan_seen.json`. One line here plus one `git add` in the workflow.
+
+39. **`listing-hunt.yml`'s budgets already exceed its own timeout, and no commit step in the
+    repo has `if: always()`** — lane: `infra`. Budgets sum to 325 of 330 minutes before
+    checkout, `npm install -g`, `playwright install --with-deps` (3-6 min) and a commit retry
+    loop that sleeps 225s. Every budget is checked BETWEEN rows, so each step overruns by one
+    full row — and this lane added a `_page_names_company` call (up to 25s fetch + 90s
+    unlock) to that per-row cost. Worst case measured at ~395 min against a 330-minute
+    timeout; on timeout the job is cancelled, `Stamp the repair stage` runs (`if: always()`)
+    and `Commit verdicts` does not, so the entire night's registry writes are discarded. Fix
+    is two lines: `HUNT_TIME_BUDGET_MIN: 200 -> 150` and `if: always()` on the commit. Filed
+    as items 11 and 16 in earlier waves and shipped unfixed three times.

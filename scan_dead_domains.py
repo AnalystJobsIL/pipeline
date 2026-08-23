@@ -91,7 +91,7 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
-               and re.search(r"no ATS detected|no IL listing|monitored candidate|unsupported ATS",
+               and re.search(r"no ATS detected|no IL listing|no listing found|monitored candidate|unsupported ATS",
                              r[5] or "")
                and _rescannable(r[5] or "") and "defunct" not in (r[5] or "")
                # (already-dead rows are re-tested after 30d so a revived domain is cleared)

@@ -496,6 +496,24 @@ def main():
         # active rows are in that shape - so a tenant mismatch gets a SECOND chance from page
         # content, the same discriminator crack_walled uses. Only a row that fails both is
         # refused. (docs/BACKLOG.md 21 is why a bare tenant block is not acceptable here.)
+        # NOTE: `tenant_is_this_company` returns True in two different situations -
+        # "the tenant is near-equal to the name" and "there is nothing here to check" - and
+        # accepting the second as confirmation skips the page read below on 382 of the 460
+        # active ATS rows (358 path-tenant platforms it does not scope, 24 with no checkable
+        # subdomain label), leaving plain containment (`_slug_matches`) deciding them.
+        #
+        # The obvious fix - require a POSITIVE near-equality match, else fall through to the
+        # page read - was built, measured and REVERTED on 2026-08-24. On exactly the
+        # platforms it would newly gate, there is no page to read:
+        #
+        #   fetch("https://boards-api.greenhouse.io/v1/boards/fiverr/jobs")        -> 0 bytes
+        #   fetch("https://www.comeet.co/careers-api/2.0/company/60.002/positions")-> 0 bytes
+        #   fetch("https://api.ashbyhq.com/posting-api/job-board/deel")            -> 28 bytes
+        #
+        # `_page_names_company` needs 2000 chars to answer anything but `None`, so the
+        # "fall through" refuses all 358 rows and stamps a false verdict on each - the same
+        # over-block wave 8 caught in `deep_validate`, one tool over. docs/BACKLOG.md 33
+        # carries the measurement and the two fixes that would actually work.
         _tenant_ok = tenant_is_this_company(name, api or "")
         if not _tenant_ok:
             # SECOND CHANCE - from the CANDIDATE page, and only from it.

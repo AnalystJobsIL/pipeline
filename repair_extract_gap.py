@@ -46,6 +46,7 @@ def main():
     from scrape_universal import scrape
     from pipeline.israel import is_israel_job
     from pipeline.company_identity import is_foreign, looks_like_a_job_listing_page
+    from listing_hunt import _identity_ok        # noqa: F401  (shared identity gate)
     from pipeline.aggregators import is_aggregator
 
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
@@ -86,7 +87,26 @@ def main():
             print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but {r[3][:40]} "
                   f"is not a listings page — not activated", flush=True)
             il = []
-        if il and is_foreign(r[0], r[3]):
+        if il and not _identity_ok(r[0], r[3]):
+            # `is_foreign` alone was the gate here, and it returns False for every ATS host
+            # by design - so on an ATS this branch had no identity test at all, while it
+            # sets fr[4] = "true" and runs at 19:00 THIRTY MINUTES BEFORE `listing_hunt` in
+            # the same job. Six of the 40 rows in tonight's pool are on such a host:
+            #
+            #   Sight Diagnostics  recruiting2.ultipro.com/SIG1008SIGH/...
+            #       -> the IDENTICAL board `Sight Sciences` is already ACTIVE on. Two
+            #          company names, one board: every role published twice.
+            #   NanoLock Security  gen.wd1.myworkdayjobs.com   (Gen Digital's Workday)
+            #   Amimon / Duve / Fieldin  www.comeet.com    Fetcher  jobs.gem.com
+            #
+            # This tool also forces SCRAPE_LLM=1 + SCRAPE_ASSUME_IL=1, which turns every
+            # location-less card on an Israel-token page into an Israel role - so the
+            # `il` count that reaches this line is the weakest evidence in the repo.
+            #
+            # `crack_walled`'s commit message and `listing_hunt._identity_ok`'s docstring
+            # both called the hunt "the last activating path in that class". They were
+            # wrong: ARCHITECTURE.md's own schedule table lists this tool as
+            # `activates? yes` on the line above, and nobody read it.
             still += 1
             print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but the page "
                   f"belongs to another company ({r[3][:44]}) — not activated", flush=True)

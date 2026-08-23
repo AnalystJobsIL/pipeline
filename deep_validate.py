@@ -315,9 +315,36 @@ def main():
                     # that is where `_page_names_company` (three-valued, unlocker-backed)
                     # lives; docs/BACKLOG.md 30 proposes lifting both into `pipeline/`,
                     # which is plumbing and not this lane's to write.
-                    from crack_walled import _ok_to_write
+                    from crack_walled import _page_names_company
+                    from audit_empty_rows import tenant_is_this_company
+
+                    # Tenant test FIRST, page test only as a second chance - the shape
+                    # `audit_empty_rows` already uses, and for the reason wave 8 measured.
+                    #
+                    # Gating directly on `_ok_to_write(api)` looked stricter and was simply
+                    # broken: `api` here is a MACHINE endpoint. All 66 active Workday rows
+                    # are `/wday/cxs/<tenant>/<site>/jobs`, which answers a GET with 400, so
+                    # `_page_names_company` returns None ("could not read") and the row was
+                    # refused - with a false `not this company's board` stamped on it. Live
+                    # sample of 72 currently-active rows: True 47 / None 19 / False 6, i.e.
+                    # 35% would have been refused on re-examination, including six false
+                    # negatives on companies' OWN boards (one zero, Matrix IT, Valens
+                    # Semiconductor, Grip Security, Verint). That made Saturday stricter than
+                    # Sunday in the commit whose whole point was to stop them disagreeing.
+                    #
+                    # The earlier `api or r[3] or ""` was worse in the other direction: when
+                    # the LLM tier proposes `platform: "scrape"` with no api_url (and
+                    # `fetch_scrape` keys on company_name, so `verify()` succeeds), the gate
+                    # fell through to the ROW'S OWN careers page - re-creating in this file
+                    # the precise bug the same commit deleted from `audit_empty_rows`.
+                    # `_cand` is the candidate and only the candidate; an empty one is no
+                    # evidence and is refused by `not _cand`.
+                    _cand = api or ""
+                    _ident = bool(_cand) and (
+                        tenant_is_this_company(name, _cand)
+                        or _page_names_company(name, _cand) is True)
                     if verdict == "recovered" and not (
-                            n_all and _ok_to_write(name, api or r[3] or "")):
+                            n_all and not is_foreign(name, _cand) and _ident):
                         # Identity gate: rendering the STORED url and finding roles proves
                         # roles exist there, not that they are this company's. The stored
                         # url of a dark row is often the hunt's best GUESS.
