@@ -1,8 +1,10 @@
 # AnalystJobsIL pipeline
 
 The aggregation pipeline behind the **[AnalystJobsIL board](https://analystjobsil.github.io/board/)** —
-a free, rolling 2-week board of experienced (≈3+ yrs) data-analyst / BI / analytics openings at
-Israeli high-tech companies.
+a free board of experienced (≈3+ yrs) data-analyst / BI / analytics openings at Israeli high-tech
+companies. The board holds every role we can still see on its employer's own careers page; once a
+role comes off that page it moves to the [archive](https://analystjobsil.github.io/board/archive.html),
+and it stays in the store either way. A daily email carries the roles posted in the last 48h.
 
 Instead of scraping aggregators, it polls 1,000+ companies' **own public ATS endpoints**
 (Comeet, Greenhouse, Lever, SmartRecruiters, Recruitee, Ashby, Workday, and per-company custom
@@ -15,7 +17,9 @@ The editable company list. Columns:
 
 - `company_name` — display name
 - `ats_platform` — one of `comeet`, `greenhouse`, `lever`, `smartrecruiters`, `recruitee`, `ashby`,
-  `jazzhr`, `workday`, `custom_json`
+  `workable`, `bamboohr`, `breezy`, `oraclehcm`, `jazzhr`, `workday`, `microsoft`, `custom_json`,
+  `scrape` (no public API — read from the rendered careers page) or `discovery` (the synthetic row
+  that reads the LinkedIn/Indeed/Telegram discovery cache)
 - `token` — the platform-specific board token/slug/id used to build the API URL
 - `api_url` — the exact endpoint the scraper hits (pre-built so no guessing at runtime)
 - `active` — `true`/`false`. Set to `false` to pause polling a company without deleting the row.
