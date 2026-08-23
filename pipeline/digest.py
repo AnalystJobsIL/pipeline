@@ -579,7 +579,10 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
             lines.append(f"_{about}_")
         facts = _firmo_facts(firmographics.get(company))
         if facts:
-            lines.append("`" + "` · `".join(_md_esc(f) for f in facts) + "`")
+            # inside a code span markdown takes the text literally, so escaping it only
+            # prints the backslashes: `\~16,068 employees`. Strip backticks instead, which
+            # are the one character that could break out of the span.
+            lines.append("`" + "` · `".join(f.replace("`", "'") for f in facts) + "`")
         lines.append("")
         for j in jobs_c:
             url = j.get("url") or ""
@@ -610,10 +613,11 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
             by_new.setdefault(j["company"], []).append(j)
         lines += ["---", "",
                   f"## Newly covered companies ({len(by_new)})", "",
-                  "Employers this scan reached for the **first time**. Their postings carry "
-                  "no publication date we can trust, so they are not counted as 48h-fresh — "
-                  "but they are new to you. From tomorrow these companies report like any "
-                  "other.", ""]
+                  "Employers this scan reached for the **first time**, with whatever they "
+                  "have open now — so these are not 48h-new, they are new *to you*. Where a "
+                  "posting states its date it is shown; scraped cards often do not, and "
+                  "\"we first saw it today\" is not a publication date. From tomorrow these "
+                  "companies report like every other.", ""]
         for company in sorted(by_new):
             _render(company, by_new[company], dated=False)
 

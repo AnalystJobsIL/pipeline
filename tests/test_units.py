@@ -842,3 +842,18 @@ def test_discovery_validates_the_company_name_before_queueing_it():
         bridge = src[src.index("auto-expand"):]
         assert "looks_like_junk" in bridge, f"{name} queues job-title-shaped names"
         assert "is_recruiter" in bridge, f"{name} queues agencies"
+
+
+def test_company_facts_are_not_backslash_escaped_inside_a_code_span():
+    """`_md_esc` exists so a scraped company name cannot inject a link or an @mention. But
+    inside a code span markdown already takes the text literally, so escaping there only
+    PRINTS the backslashes — the first email carrying company facts read
+    `\~16,068 employees` · `founded 2005`."""
+    from pipeline import digest as D
+    jobs = [{"company": "PANW", "title": "Product Analyst", "location": "Tel Aviv",
+             "url": "https://x/1", "posted_date": "2026-08-04", "description": "d"}]
+    _, body = D.build_markdown(jobs, "2026-08-23", {}, {}, firmographics={
+        "PANW": {"sector": "cybersecurity", "stage": "public", "employees_global": 16068,
+                 "founded": 2005, "il_center": "Tel Aviv (R&D)"}})
+    assert "`~16,068 employees`" in body
+    assert "\~" not in body and "\(" not in body
