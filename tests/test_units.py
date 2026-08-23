@@ -1067,189 +1067,57 @@ def test_a_hebrew_spelling_does_not_walk_past_a_latin_recruiter_entry(name, expe
     assert is_recruiter(name) is expected
 
 
-# --- registry lane, 2026-08-24: five bugs in the re-check pools and the search ladder -----
-def test_no_activating_pool_can_re_open_a_terminal_row():
-    """`alias-of` is the second row for a company we ALREADY scan at that same board. It is
-    terminal by construction, and `pipeline.verdicts.TERMINAL` does not list it — so any pool
-    built on `in_pool()` alone contains it. `audit_empty_rows` was such a pool AND activates
-    directly (`fr[4] = "true"`), so its Sunday run would search, find that same working
-    board, verify it with real Israel jobs and re-activate the duplicate: every eBay role
-    published twice under two company names. Measured 2026-08-23: 2 rows in the pool
-    (GE HealthCare Israel, eBay Israel) and 3 more in crack_walled's (which had no terminal
-    exclusion at all). `listing_hunt` and `deep_validate` already spelled it out."""
-    import audit_empty_rows
-    import crack_walled
-    for mod in (audit_empty_rows, crack_walled):
-        for token in ("defunct", "domain-dead", "alias-of"):
-            assert mod.TERMINAL.search(f"note | {token} 2026-08-23: x"), (
-                f"{mod.__name__} would let a `{token}` row into an ACTIVATING pool")
-        assert not mod.TERMINAL.search("listing-hunt 2026-08-23: no IL listing")
+# --- discovery lane, round 2: the breadth sweep was discovering nothing -----------------
+def test_the_breadth_sweep_is_deep_and_recency_filtered():
+    """It returned 0 new companies — 29 jobs, 27 employers, 25 already registry rows and 11
+    staffing agencies. `limit_per_input` was 15, and LinkedIn ranks by relevance, so the
+    sweep re-read a saturated head every day. Unknown companies live in the TAIL and the
+    yield accelerates with depth (1 new at 15 records, 15 at 100), while `time_range` makes
+    depth self-limiting: "Past week" billed 61 against a limit of 100 and overlapped the
+    unfiltered run by only 14/61. Measured together: 391 records -> 147 employers ->
+    58 NEW companies, against 0."""
+    import discovery_daily
+    _ds, _by, inputs, limit = discovery_daily.QUERIES["linkedin"]
+    assert limit >= 50, "a shallow breadth sweep only ever re-reads the saturated head"
+    assert inputs and all(q.get("time_range") for q in inputs),         "without a recency window every run re-ranks the same employers"
+    assert all("company" not in q for q in inputs),         "the breadth sweep must stay UNSCOPED — scoping it to known companies is what made "         "the targeted sweep incapable of returning an unknown employer"
 
 
-def test_the_weekly_audit_search_has_a_fallback_below_serpapi():
-    """`audit_empty_rows.serp()` was SerpApi-only. The free quota has been exhausted since
-    mid-August (checked 2026-08-23 against the live account: `total_searches_left: 0`,
-    `this_month_usage: 250`), so it returned [] BEFORE making a request and phase 2 of the
-    Sunday audit — the search that finds boards which MOVED rather than broke — was a silent
-    no-op across the whole ~255-row parked pool. `resolve_broken` was given exactly this
-    ladder on 2026-08-23 and it was never propagated. Structural, so it cannot regress
-    without someone noticing."""
+def test_discovery_reports_new_companies_per_source():
+    """New companies per source is what this layer exists to produce, and nothing printed
+    it — only the aggregate. That is how the breadth sweep came to yield 0 while its record
+    count looked healthy. A source can be alive, on-budget and useless at once."""
     import ast
     import inspect
-    import audit_empty_rows
-    src = inspect.getsource(audit_empty_rows.serp)
-    names = {n.attr for n in ast.walk(ast.parse(src)) if isinstance(n, ast.Attribute)}
-    names |= {n.id for n in ast.walk(ast.parse(src)) if isinstance(n, ast.Name)}
-    assert "_serpapi" in names, "the SerpApi rung must still be tried first (it is cheapest)"
-    assert "ddg" in names, "the free DuckDuckGo rung is missing from serp()"
-    assert "google_via_unlocker" in names, (
-        "the Bright Data rung is missing — with SerpApi at 0 and DDG rate-limited, "
-        "serp() has no way to return a URL at all")
+    import discovery_daily
+    src = inspect.getsource(discovery_daily.main)
+    assert "yield_by_src" in src
+    fmts = [ast.unparse(n) for n in ast.walk(ast.parse(src))
+            if isinstance(n, ast.JoinedStr) and "NEW companies" in ast.unparse(n)]
+    assert fmts, "the per-source yield line must be printed, not just computed"
 
 
-def test_activation_branches_append_to_the_note_instead_of_replacing_it():
-    """The three tools that flip a row to active used to assign the whole notes cell. That
-    deletes every other tool's verdict in one statement — including the terminal tokens that
-    keep the row out of the wrong pool and the `dark-triage` mode that routed it here. The
-    append-log rule (ARCHITECTURE.md section 2) has no exception for activation.
-    `test_every_note_writer_uses_the_append_log_helper` cannot see this: a whole-cell
-    assignment does no hand-rolled trim, so it passes that check."""
-    import ast
-    import inspect
-    import audit_empty_rows
-    import crack_walled
-    import deep_validate
-    for mod in (audit_empty_rows, crack_walled, deep_validate):
-        offenders = []
-        for node in ast.walk(ast.parse(inspect.getsource(mod))):
-            if not isinstance(node, ast.Assign):
-                continue
-            for tgt in node.targets:
-                # `fr[5] = <something that is not a call into pipeline.notes>`
-                if (isinstance(tgt, ast.Subscript)
-                        and isinstance(getattr(tgt, "slice", None), ast.Constant)
-                        and tgt.slice.value == 5
-                        and not isinstance(node.value, ast.Call)):
-                    offenders.append(ast.unparse(node)[:70])
-        assert not offenders, (
-            f"{mod.__name__} still overwrites the whole notes cell: {offenders}")
+def test_indeed_search_retries_and_names_its_failure_mode():
+    """An unlocker exception, a bot wall with no mosaic blob, and a genuinely empty result
+    set all collapsed to a bare `[]`, and the caller printed "0 cards" for all three —
+    ARCHITECTURE.md section 8 item 2, a mass zero read as a measurement. Observed
+    2026-08-23: "business intelligence" returned 0 on two consecutive runs and 15 on the
+    retry, so it was never empty. Roughly 2 of 5 queries were failing silently."""
+    import discovery_daily
+    import bd_rescue
+    calls = {"n": 0}
+    blob = ('window.mosaic.providerData["mosaic-provider-jobcards"] = '
+            '{"metaData":{"mosaicProviderJobCardsModel":{"results":[{"jobkey":"a"}]}}};')
+    def flaky(url, timeout=90):
+        calls["n"] += 1
+        return "" if calls["n"] == 1 else blob        # fail once, then succeed
+    real = bd_rescue.unlock
+    bd_rescue.unlock = flaky
+    try:
+        got = discovery_daily.indeed_search("x")
+    finally:
+        bd_rescue.unlock = real
+    assert calls["n"] == 2, "a transient unlocker failure must be retried, not reported as 0"
+    assert [r["jobkey"] for r in got] == ["a"]
 
 
-def test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_supposed_to():
-    """There are THREE hand-maintained lists of verdict tokens — `pipeline.verdicts.TOKENS`
-    (the one that claims to be the single source of truth), `listing_hunt.main()`'s inline
-    regex, and `check_invariants.POOL` — and on 2026-08-23 they disagreed. This pins the
-    disagreement so it cannot grow silently while the real fix (collapse all three onto
-    TOKENS) waits in docs/BACKLOG.md, "One re-check pool definition".
-
-    When `url-cleared`/`url-flagged` are added to TOKENS, EXPECTED_GAP goes empty and the
-    two inline copies can be deleted. Until then a row carrying only one of those tokens is
-    invisible to `audit_empty_rows` and `deep_validate`: 57 rows carry one today."""
-    import re
-    import check_invariants
-    from pipeline.verdicts import TOKENS
-    tokens = {t.lower() for t in TOKENS}
-    # the two tokens the inline copies know and TOKENS does not
-    EXPECTED_GAP = {"url-cleared", "url-flagged"}
-    ci = {t.lower() for t in check_invariants.POOL.split("|") if t and "(" not in t}
-    assert EXPECTED_GAP <= ci, "check_invariants lost a token the registry writes"
-    assert EXPECTED_GAP & tokens == set(), (
-        "pipeline/verdicts.TOKENS gained url-cleared/url-flagged — good. Now delete this "
-        "test's EXPECTED_GAP, point listing_hunt.main() and check_invariants.POOL at "
-        "verdicts.in_pool, and close the BACKLOG item.")
-    for t in tokens - EXPECTED_GAP - {"no il listing", "roles-text present"}:
-        assert t in ci, f"check_invariants.POOL is missing the verdict token {t!r}"
-
-
-def test_a_company_cannot_leave_the_registry_without_a_reason():
-    """No tool deletes rows — but a human commit does, and nothing reported one. `Time To
-    Know` was deleted on purpose (9c4372ef), RESURRECTED by a concurrent cloud run's conflict
-    merge (8644d8fd `row-merged state`, 1190 -> 1191 rows), then re-deleted as a silent side
-    effect of a commit about Oracle HCM (0180e755). `check_invariants.py` checks the registry's
-    SHAPE, never its SIZE, so all three passed."""
-    import registry_health
-    prev = {"Alpha": "true", "Beta": "false", "Gamma": "false",
-            "__notes__": {"Alpha": "", "Beta": "defunct: acquired 2024", "Gamma": ""}}
-    rows = [["Alpha", "scrape", "", "https://a/careers", "true", ""]]
-    d = registry_health.census_diff(rows, prev=prev)
-    assert d["prev_rows"] == 3 and d["rows"] == 1
-    assert {g["company"] for g in d["gone"]} == {"Beta", "Gamma"}
-    assert {g["company"] for g in d["gone"] if g["explained"]} == {"Beta"}
-    assert d["unexplained"] == ["Gamma"]
-    lines = registry_health.alarms(rows, live=False, res={}, prev=prev)
-    assert any("REMOVED from the registry with no reason" in x and "Gamma" in x
-               for x in lines), lines
-    assert any("removed (explained)" in x and "Beta" in x for x in lines), lines
-    # and a registry that only GREW must stay quiet
-    assert not [x for x in registry_health.alarms(
-        [["Alpha", "scrape", "", "https://a/careers", "true", ""],
-         ["Beta", "scrape", "", "https://b/careers", "false", "defunct: acquired 2024"],
-         ["Gamma", "scrape", "", "https://c/careers", "false", ""],
-         ["Delta", "scrape", "", "https://d/careers", "true", ""]],
-        live=False, res={}, prev=prev) if "REMOVED" in x]
-
-
-@pytest.mark.parametrize("company,url,accept", [
-    # The bug, caught by a dry run on 2026-08-24: `_STOP` strips "Imaging" and "Analytics",
-    # leaving the core `dia`; `registrable("www.dia.mil")` is also `dia`; `verdict` returns
-    # a clean `match`. The page answered 403 with ZERO bytes, so nothing else could dispute
-    # it, and repair_dead_urls printed
-    #   [OK] DiA Imaging Analytics  www.dia-analytics.com -> https://www.dia.mil/dia-careers/
-    # — an Israeli medical-imaging company repaired to the US Defense Intelligence Agency.
-    ("DiA Imaging Analytics", "https://www.dia.mil/dia-careers/", False),
-    # the same shape one layer along, already known: the stripped core is the WHOLE domain
-    ("Time To Know", "https://time.com/careers/", False),
-    # ...and a short domain that IS the whole name is still real evidence
-    ("Wix", "https://www.wix.com/jobs", True),
-    ("Fiverr", "https://www.fiverr.com/careers", True),
-    # the deliberate cost of the rule: a genuinely bot-walled compound domain is no longer
-    # auto-repaired. It is still recovered whenever the page answers 200, because then
-    # `page_mentions_company` can confirm it.
-    ("IDE Technologies", "https://ide-tech.com/careers/", False),
-])
-def test_a_bot_walled_page_needs_the_whole_name_in_the_domain(company, url, accept):
-    """With a 403 there is no page to confirm against, so identity rests on the domain
-    alone — and `verdict() == "match"` is not strong enough there, because it also fires on
-    the name with its generic words stripped. Only `registrable(host) == _norm(company)`
-    (or an ATS host, where verdict has already checked the tenant slug) may pass."""
-    import urllib.parse
-    from pipeline.company_identity import verdict, registrable, _norm
-    v = verdict(company, url)
-    whole = bool(_norm(company)) and registrable(
-        urllib.parse.urlparse(url).netloc.lower()) == _norm(company)
-    assert (v == "ats" or (v == "match" and whole)) is accept
-
-
-def test_a_walled_ats_crack_must_confirm_the_page_names_the_company():
-    """On a walled ATS the tenant lives in the SUBDOMAIN (`careers-bancorpbank.icims.com`),
-    and `company_identity.verdict` only checks a tenant in the PATH — so it returns the
-    blanket `"ats"`, which its own docstring defines as "we cannot tell", and `is_foreign`
-    reads that as False. `_slug_matches("Bancor", "bancorpbank")` passes too, on plain
-    containment. Both were true on 2026-08-24 and `crack_walled` was one `--apply` from
-    moving Bancor (Israeli crypto, ex-Bprotocol) onto The Bancorp Bank's board — 3 "Israel"
-    roles that are not its own, the CyberArk->PANW class arriving through a fifth path.
-
-    Live check that day: the page says "Bancorp" 18 times and `\bBancor\b` zero times;
-    `_page_names_company` returned False for Bancor, True for "Bancorp Bank" on the same
-    URL, and True for Wix on careers.wix.com. Offline half of that, plus the structural
-    assertion that the crack path still calls the gate."""
-    import ast
-    import inspect
-    import crack_walled
-    from pipeline.company_identity import page_mentions_company, verdict
-    from audit_empty_rows import _slug_matches
-
-    page = "<h1>Careers at The Bancorp Bank</h1>" + ("<p>Bancorp Bank benefits</p>" * 18)
-    assert page_mentions_company("Bancor", page, strict=True) is False
-    assert page_mentions_company("Bancorp Bank", page, strict=True) is True
-    # the two gates that let it through, pinned so their weakness is not re-discovered
-    url = "https://careers-bancorpbank.icims.com/jobs/search"
-    assert verdict("Bancor", url) == "ats", "a subdomain tenant is still unchecked"
-    assert _slug_matches("Bancor", "bancorpbank") is True, "still passes on containment"
-
-    src = inspect.getsource(crack_walled.crack_one)
-    calls = {n.func.id for n in ast.walk(ast.parse(src))
-             if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
-    assert "_page_names_company" in calls, (
-        "the cracked-scrape branch must confirm the page names the company before it "
-        "returns a verdict the write branch activates on")

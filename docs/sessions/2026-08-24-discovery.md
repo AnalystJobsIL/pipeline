@@ -6,9 +6,9 @@
 
 Scope: the intake layer — `discovery_daily.py`, `discovery_telegram.py`,
 `pipeline/aggregators.py`, `pipeline/recruiters.py`, and the new `ARCHITECTURE.md` §1a.
-Nothing else was written. Bright Data spend: **316 dataset records + 10 Web Unlocker
-requests** — 190 on the full dry run, 126 on the A/B, full-scale and multi-keyword tests of
-the targeting fix. Claude tokens: **0** — nothing here calls `claude -p`. SerpApi: 0 (429, exhausted).
+Nothing else was written. Bright Data spend: **945 dataset records + 14 Web Unlocker
+requests** — 190 on the first dry run, 126 on the targeting A/B and full-scale tests, 176 on
+the depth/recency experiments, 453 on the final full run. Claude tokens: **0** — nothing here calls `claude -p`. SerpApi: 0 (429, exhausted).
 For scale: the account has billed 2,249 records in total since 2026-08-15.
 
 ## What was wrong
@@ -213,6 +213,56 @@ and should have. Researched, and the answers were not what I assumed:
 the key lacks the permission, so the "5k free tier" in every docstring here is inherited
 belief. The one real ledger is `datasets/v3/snapshots` — **2,249 records billed 2026-08-15
 → 08-23**. Command in §1a; visibility filed as backlog item 6.
+
+## Round 3: the breadth sweep was discovering nothing, and my own fix made it worse
+
+The operator's point: **LinkedIn exists to find NEW UNKNOWN companies — this is the
+discovery stage.** Measured against that goal, the layer was failing and my `company`-scoping
+fix had made one half of it structurally incapable of succeeding:
+
+| sweep | employers | **new companies** |
+|---|---|---|
+| `discovery-linkedin` (breadth) | 27 | **0** |
+| `discovery-linkedin-targeted` (before my fix) | 58 | 7 |
+| `discovery-linkedin-targeted` (after my fix) | 14 | 1 |
+
+Every new company LinkedIn had ever contributed came from the *misconfigured* query. Scoping
+it to `company` means it only ever asks about names already in `companies.csv`, so it can
+almost never return an unknown employer. **The targeted sweep is backfill for known-broken
+rows, not discovery** — it is worth keeping for what it does (roles at 15 active companies
+whose own board reports 0, all confirmed as existing `active=true` rows) but it must never
+be counted towards this stage, and it is the first thing to cut if budget binds.
+
+The breadth sweep's zero had two causes, both fixed:
+
+**Depth.** `limit_per_input` was 15. LinkedIn ranks by relevance, the head is saturated with
+large employers and staffing agencies (11 of its 27 employers were agencies we discard), and
+**unknown companies live in the tail** — the yield *accelerates* with depth:
+1 new at 15 records, 3 at 30, 3 at 50, **15 at 100**.
+
+**Recency.** No window, so every run re-ranked the same head. `time_range` is honoured:
+`"Past week"` overlapped the unfiltered run by only 14/61 records. It also makes depth
+**self-limiting** — it bills what was posted in the window (61 against a limit of 100) — and
+wins on yield per record: 10 new from 61, against 15 from an unfiltered 100.
+
+Full run with both: **391 records → 147 employers → 58 NEW companies**, against 0. Across
+all sources: 74 new companies for migration, 61 queued, cache 305 jobs this run.
+
+Both dials are env-tunable (`LINKEDIN_LIMIT`, `LINKEDIN_WINDOW`) because the quota is
+unreadable. And the metric that would have caught this in the first place now prints per
+source — `[yield] linkedin: 147 employers -> 58 NEW companies` — because the whole failure
+was that a source could be alive, on-budget and useless with nothing saying so.
+
+**Indeed was failing silently about two queries in five.** Found while measuring the above:
+`indeed_search` collapsed an unlocker exception, a bot wall, and a genuinely empty result
+into the same `[]`. `"business intelligence"` returned 0 on two consecutive runs and **15 on
+the retry** — never empty, just a transient fetch failure reported as a measurement. One
+retry, and it now names which of the three happened.
+
+**Cost of this round: 391 + 62 + 176 (the depth and recency experiments) dataset records.**
+Steady-state daily spend goes ~190 → ~455 records. That is a deliberate trade for 0 → 58 new
+companies a day, taken on the operator's explicit "we can always exclude companies", and it
+is the first number to revisit if the quota bites.
 
 ## Claims I could NOT verify
 

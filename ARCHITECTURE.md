@@ -207,8 +207,28 @@ never heard of, and it feeds **two** funnels from one pass — the second matter
 ```
 
 The jobs funnel is a safety net: it publishes roles at companies whose own board we cannot
-read. **The names funnel is the growth path** — it is how `companies.csv` gets bigger — and
-it is why a channel with almost no analyst roles in it can still be worth reading.
+read. **The names funnel is the point of this stage** — it is how `companies.csv` gets
+bigger — and it is why a channel with almost no analyst roles in it can still be worth
+reading.
+
+**Judge every source here by NEW COMPANIES PER RUN, not by records or by jobs.** A source
+can be alive, inside budget and completely useless at the same time, and one was: the
+LinkedIn breadth sweep returned **0 new companies** while its record count looked perfectly
+healthy. Nothing printed that number — only the aggregate — so nobody could see it. Each
+source now prints its own:
+
+```
+[yield] indeed: 29 employers -> 15 NEW companies
+[yield] linkedin: 147 employers -> 58 NEW companies
+[yield] linkedin-targeted: 14 employers -> 1 NEW companies
+```
+
+**One of the four sources is not a discovery source at all.** `linkedin-targeted` asks about
+companies **already in `companies.csv`** whose board returns zero, so by construction it can
+almost never return an unknown employer — the 1 above is incidental. It is *backfill for
+known-broken rows*, and it lives in this script for historical reasons. Keep it for what it
+is (it published roles at 15 active companies whose own board reports 0), but never count it
+towards discovery, and if the Bright Data budget ever binds, it is the first thing to cut.
 
 ### The four live sources, and what each one costs
 
@@ -220,8 +240,8 @@ here — it exercises the real Bright Data account and the real Telegram fetches
 | source | mechanism | cost per digest | cloud | dry-run |
 |---|---|---|---|---|
 | `indeed` | `il.indeed.com/jobs` through the Bright Data **Web Unlocker**, one request per `INDEED_QUERIES` entry; parsed out of the `mosaic-provider-jobcards` JSON blob | 5 unlocker requests | 33 | 55 raw → 47 kept |
-| `linkedin` | BD dataset `gd_lpfll7v5hcqtkxl6l`, `discover_new` by keyword — the breadth sweep, 4 keywords × `limit_per_input` 15 | ≤60 dataset records | 30 (2 keywords then) | 30 |
-| `linkedin-targeted` | same dataset, one input per broken-board company, **scoped with the `company` field** | **67 records for all 88** (measured) | 78 | 160 (pre-fix) |
+| `linkedin` | BD dataset `gd_lpfll7v5hcqtkxl6l`, `discover_new` by keyword — **the discovery source**: 4 keywords, unscoped, `time_range` "Past week", `limit_per_input` 100 | ~390 dataset records | 30 (2 kw × 15 then) | **391 → 58 new companies** |
+| `linkedin-targeted` | same dataset, one input per broken-board company, **scoped with the `company` field**. Backfill, not discovery | ~65 dataset records | 78 | 62 → 1 new |
 | `telegram` | public `t.me/s/<channel>` HTML previews — **no bot, no account, no API key, no quota** | free | **no key in the file at all** | 268 posts parsed |
 
 Re-derive the cloud column with
@@ -295,8 +315,46 @@ would recover roles at precisely the companies we cannot read directly. **Not do
 measured (2026-08-23):** the 67 above is the number for `limit_per_input=8`, and changing
 two dials when only one was measured is how a budget claim becomes fiction.
 
-**Total spend after the fix: ~127 dataset records + 5 unlocker requests per day** (≤60
-breadth + 67 targeted), against ~190 before. Re-derive actual billing from the account
+### Depth and recency are what make the breadth sweep discover anything
+
+It ran at `limit_per_input=15` and returned **0 new companies** — 29 jobs, 27 employers, 25
+of them already registry rows and 11 of them staffing agencies. LinkedIn ranks by relevance
+and the head of that ranking is saturated with large employers and agencies; **unknown
+companies live in the tail**, and the yield *accelerates* with depth rather than flattening:
+
+| depth | employers | new companies |
+|---|---|---|
+| 15 (as shipped) | 15 | **1** |
+| 30 | 29 | 3 |
+| 50 | 46 | 3 |
+| 100 | 84 | **15** |
+
+`time_range` is honoured by the dataset and is the other half: `"Past week"` overlapped the
+unfiltered run by only **14 of 61 records**, and it makes depth **self-limiting** — it bills
+what was actually posted in the window (61 against a limit of 100), so a deep limit costs
+nothing on a quiet keyword. It also wins on yield per record: 10 new companies from 61
+records against 15 from an unfiltered 100. Together, measured on a full run:
+
+| | records | employers | **new companies** |
+|---|---|---|---|
+| before (15, no window) | 30 | 27 | **0** |
+| after (100, Past week) | 391 | 147 | **58** |
+
+Both dials are env-tunable without a code change — `LINKEDIN_LIMIT`, `LINKEDIN_WINDOW` —
+because the Bright Data quota cannot be read (below). **If new-company yield ever prints 0
+again, this sweep has re-saturated and depth is the first dial.**
+
+**Indeed fails silently about two queries in five.** `indeed_search` collapsed an unlocker
+exception, a bot wall with no mosaic blob, and a genuinely empty result set into the same
+bare `[]`, and the caller printed "0 cards" for all three — `§8` item 2, a mass zero read as
+a measurement. `"business intelligence"` returned 0 on two consecutive runs and **15 on the
+retry**, so it had never been empty. It now retries once and prints which of the three
+happened.
+
+**Total spend after these changes: ~455 dataset records + 5–10 unlocker requests per day**
+(391 breadth + 62 targeted), against ~190 before. That is a deliberate trade — the breadth
+sweep went from 0 to 58 new companies a day — and it is the number to revisit first if the
+quota bites. Re-derive actual billing from the account
 itself — this is the only reliable ledger, and the `/customer/balance` endpoint is
 permission-blocked for this key:
 

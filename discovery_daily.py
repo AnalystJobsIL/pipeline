@@ -41,17 +41,39 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 
+# THE BREADTH SWEEP IS THE DISCOVERY SOURCE. Its job is to return employers the registry
+# has never heard of; the jobs are the secondary output. Judge any change to it by
+# new-companies-per-run, not by records or by jobs.
+#
+# It was returning ZERO new companies. Measured 2026-08-23 on the day's own run: 29 jobs,
+# 27 employers, 25 of them already registry rows and 11 of them staffing agencies we discard
+# — 0 new. Two reasons, both fixed here:
+#
+#   1. `limit_per_input` was 15. LinkedIn ranks by relevance and the head of that ranking is
+#      saturated with big employers and agencies; UNKNOWN COMPANIES LIVE IN THE TAIL, and
+#      the yield accelerates with depth rather than flattening:
+#          first  15 records -> 15 employers,  1 new
+#          first  30 records -> 29 employers,  3 new
+#          first  50 records -> 46 employers,  3 new
+#          first 100 records -> 84 employers, 15 new
+#   2. No recency filter, so every run re-ranked the same saturated head. The dataset
+#      honours `time_range` — "Past week" overlapped the unfiltered run by only 14/61 —
+#      and it is also SELF-LIMITING: it bills what was actually posted in the window
+#      (61 records against a limit of 100), so depth costs nothing on a quiet keyword.
+#      Recency wins on yield per record too: 10 new companies from 61 records, against
+#      15 from an unfiltered 100.
+#
+# Re-measure with docs/… no: with the snippet in ARCHITECTURE.md section 1a. If new-company
+# yield ever reads 0 again, this sweep has re-saturated and depth is the first dial.
+LINKEDIN_LIMIT = int(os.environ.get("LINKEDIN_LIMIT", "100"))
+LINKEDIN_WINDOW = os.environ.get("LINKEDIN_WINDOW", "Past week")
+_LI_KEYWORDS = ["data analyst", "business intelligence", "product analyst", "BI developer"]
+
 QUERIES = {
-    # Breadth sweep — no company scoping, this one is meant to find employers we have never
-    # heard of. Two keywords until 2026-08-23, which was thin next to Indeed's five; the
-    # targeted sweep below dropped from 160 records/day to ~110 when it started scoping by
-    # company, and that headroom is spent here. 4 x 15 = <=60 records.
     "linkedin": ("gd_lpfll7v5hcqtkxl6l", "keyword", [
-        {"location": "Israel", "keyword": "data analyst", "country": "IL"},
-        {"location": "Israel", "keyword": "business intelligence", "country": "IL"},
-        {"location": "Israel", "keyword": "product analyst", "country": "IL"},
-        {"location": "Israel", "keyword": "BI developer", "country": "IL"},
-    ], 15),
+        {"location": "Israel", "keyword": k, "country": "IL", "time_range": LINKEDIN_WINDOW}
+        for k in _LI_KEYWORDS
+    ], LINKEDIN_LIMIT),
     # NOTE: the Bright Data Indeed dataset (gd_l4dx9j9sscpvs7no2) has returned ZERO records
     # every single run since it was wired up — every snapshot comes back
     # `dataset_size: 0, error_codes: {"rate_limit": 15}`, i.e. Indeed rate-limits that
@@ -70,22 +92,43 @@ _MOSAIC = re.compile(
     r'window\.mosaic\.providerData\["mosaic-provider-jobcards"\]\s*=\s*(\{.*?\});', re.S)
 
 
-def indeed_search(query, days=INDEED_DAYS, limit=25):
-    """Return raw Indeed job cards for one Israel query (empty list on any failure)."""
+def indeed_search(query, days=INDEED_DAYS, limit=25, tries=2):
+    """Return raw Indeed job cards for one Israel query.
+
+    RETRIES, and says WHY it got nothing. Every failure mode here used to collapse to a bare
+    `[]` — an unlocker exception, a bot-wall page with no mosaic blob, and a genuinely empty
+    result set were indistinguishable, and the caller printed "0 cards" for all three. That
+    is `ARCHITECTURE.md` section 8 item 2: a mass zero is a broken run, not a measurement.
+    Observed 2026-08-23: "data analyst" returned 15 cards in one run and 0 in the next an
+    hour later, and "business intelligence" returned 0 in both — the first is a transient
+    fetch failure, the second may be real, and nothing in the log let you tell them apart.
+    One retry, because the failure is transient; the reason is printed either way."""
     from bd_rescue import unlock
     url = ("https://il.indeed.com/jobs?q=" + urllib.parse.quote_plus(query)
            + "&l=" + urllib.parse.quote_plus("Israel") + f"&fromage={days}")
-    html = unlock(url, timeout=100)
-    m = _MOSAIC.search(html or "")
-    if not m:
-        return []
-    try:
-        data = json.loads(m.group(1))
-    except ValueError:
-        return []
-    res = (data.get("metaData", {}).get("mosaicProviderJobCardsModel", {})
-               .get("results", []) or [])
-    return [r for r in res if isinstance(r, dict)][:limit]
+    for attempt in range(tries):
+        html = unlock(url, timeout=100)
+        if not html:
+            why = "unlocker returned nothing"
+        elif not _MOSAIC.search(html):
+            # a bot wall or an interstitial is a full HTML page with no job blob in it
+            why = f"no mosaic blob in {len(html)} bytes (bot wall?)"
+        else:
+            try:
+                data = json.loads(_MOSAIC.search(html).group(1))
+            except ValueError:
+                why = "mosaic blob is not JSON"
+            else:
+                res = (data.get("metaData", {}).get("mosaicProviderJobCardsModel", {})
+                           .get("results", []) or [])
+                cards = [r for r in res if isinstance(r, dict)][:limit]
+                if not cards:
+                    print(f"  [indeed:{query}] parsed OK, genuinely 0 results in {days}d")
+                return cards
+        if attempt + 1 < tries:
+            print(f"  [indeed:{query}] {why} — retrying")
+    print(f"  [indeed:{query}] FAILED after {tries}: {why}")
+    return []
 
 
 def indeed_normalize(r):
@@ -361,8 +404,18 @@ def main():
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
     new_cos = {}
     n_junk = n_rec = 0
+    # NEW COMPANIES PER SOURCE is the number this layer exists to produce, and until
+    # 2026-08-23 nothing printed it — only the aggregate. That is how the breadth sweep came
+    # to return 0 new companies for an unknown length of time while its record count looked
+    # perfectly healthy (29 jobs, 27 employers, 25 of them already rows). A source can be
+    # alive, on-budget and completely useless at the same time; this is the line that says so.
+    import collections as _c
+    yield_by_src = _c.Counter()
+    seen_by_src = _c.defaultdict(set)
     for j in jobs:
         c = j["company"].strip()
+        src = (j.get("ats_platform") or "discovery-?").replace("discovery-", "")
+        seen_by_src[src].add(c.lower())
         if c.lower() in have or c.lower() in new_cos:
             continue
         if looks_like_junk(c):
@@ -372,9 +425,14 @@ def main():
             n_rec += 1
             continue
         new_cos[c.lower()] = {"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""}
+        yield_by_src[src] += 1
     if n_junk or n_rec:
         print(f"discovery: rejected {n_junk} job-title-shaped names and {n_rec} agencies "
               f"before they could become rows")
+    for src in sorted(seen_by_src):
+        n = yield_by_src[src]
+        print(f"[yield] {src}: {len(seen_by_src[src])} employers -> {n} NEW companies"
+              + ("   <-- discovering nothing" if n == 0 and src.startswith("linkedin") else ""))
     with open("out/discovered_companies.json", "w", encoding="utf-8") as f:
         json.dump(list(new_cos.values()), f, ensure_ascii=False, indent=1)
     # Bridge to auto-expand: out/ is gitignored (ephemeral on cloud runners), so the queue
