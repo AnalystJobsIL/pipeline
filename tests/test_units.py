@@ -781,3 +781,20 @@ def test_the_blocking_gate_blocks_on_corruption_not_on_one_bad_row():
     assert "ORPHAN_BLOCK_AT" in section("D", "E"), "check D must have a flood threshold"
     assert "bad(" in section("E", "F"), "a collapsed re-check pool must still block"
     assert C.ORPHAN_BLOCK_AT >= 1
+
+
+def test_a_native_ats_row_points_at_that_ats():
+    """Imperva's row said `ats_platform=workday` with its own careers HTML as the endpoint,
+    so every run POSTed to it, got HTML, and logged "Expecting value: line 1 column 1" —
+    one of the four permanent `companies_failed` in every digest, for as long as anyone had
+    looked. A 100%-failing row is invisible precisely because it fails every time."""
+    import csv
+    import os
+    import re
+    import check_invariants as C
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    bad = [f"{r['company_name']} ({r['ats_platform']}): {r['api_url'][:50]}"
+           for r in csv.DictReader(open(os.path.join(repo, "companies.csv"), encoding="utf-8"))
+           if r["active"] == "true" and C.PLATFORM_HOST.get(r["ats_platform"])
+           and not re.search(C.PLATFORM_HOST[r["ats_platform"]], r["api_url"] or "", re.I)]
+    assert not bad, f"rows whose every fetch will fail: {bad}"

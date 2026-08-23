@@ -36,6 +36,16 @@ from pipeline.recruiters import is_recruiter
 
 NOTE_CAP = 220
 ORPHAN_BLOCK_AT = 10   # a handful is one tool's note bug; a flood is a pool collapse
+# a native-ATS row whose endpoint is not on that ATS fails 100% of its fetches
+PLATFORM_HOST = {
+    "comeet": r"comeet\.(com|co)", "greenhouse": r"greenhouse\.io",
+    "lever": r"lever\.co", "ashby": r"ashbyhq\.com",
+    "smartrecruiters": r"smartrecruiters\.com", "workable": r"workable\.com",
+    "bamboohr": r"bamboohr\.com", "breezy": r"breezy\.hr",
+    "workday": r"myworkdayjobs", "oraclehcm": r"oraclecloud\.com",
+    "microsoft": r"careers\.microsoft\.com",
+    # recruitee supports custom domains, so its host is not checkable
+}
 # deliberate, permanent deactivations — keep this list short and dated in the notes
 ALLOWED_ORPHANS = {
     "NICE", "Via Transportation", "Marvell Israel", "SeeTree", "Google",
@@ -99,6 +109,16 @@ def main():
             unscannable.append(f"{r[0]}: recruiting agency")
     if unscannable:
         warn(f"{len(unscannable)} active rows are not scannable: {unscannable[:6]}")
+
+    # C2. a native-ATS row must point at that ATS. Imperva sat at
+    # `ats_platform=workday` with its own careers HTML as the endpoint, so every single run
+    # POSTed to it, got HTML back and logged "Expecting value: line 1 column 1" — one of the
+    # four permanent `companies_failed` in every digest for as long as anyone had looked.
+    for r in (r for r in body if len(r) > 4 and r[4] == "true"):
+        pat = PLATFORM_HOST.get((r[1] or "").strip())
+        if pat and not re.search(pat, r[3] or "", re.I):
+            warn(f"{r[0]}: ats_platform={r[1]} but the endpoint is not on that host "
+                 f"({(r[3] or '')[:50]}) — every fetch will fail")
 
     # D. every inactive row must be in SOME re-check pool.
     # The thing worth blocking on is a POOL COLLAPSE — a predicate inverted, a note format
