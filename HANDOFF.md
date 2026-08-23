@@ -226,10 +226,12 @@ regex is now DERIVED from both lists instead of keeping its own eight-name copy.
    Check `resolve_attempts.json` after those dates — names that disappear were fixed, names
    at `fails: 2` were not. To not wait, run the two commands above by hand.
 
-   A forced run over all 75 was made this session with the fixed ladder and recovered none
-   of them, which is itself the finding: these are not broken URLs, they are boards that
-   moved somewhere a render-and-sniff of the old address cannot see. Its attempt bumps were
-   deliberately NOT committed, so the scheduled retry keeps its own clock.
+   A forced run with the fixed ladder was started this session and stopped after ~15
+   companies, having recovered none — which is itself the finding: these are not broken URLs
+   but boards that MOVED somewhere a render-and-sniff of the old address cannot see (Outbrain
+   is the worked example: its board is on greenhouse's EU region, below). It costs about 90
+   seconds per company, so a full pass is a ~2-hour job; run it detached. Its attempt bumps
+   were deliberately not committed, so the scheduled retry keeps its own clock.
 
    **Greenhouse has an EU region and our fetcher does not know it.** Outbrain's real board is
    `job-boards.eu.greenhouse.io/outbraininc`; the US `boards-api.greenhouse.io/v1/boards/
