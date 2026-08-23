@@ -554,3 +554,50 @@ def test_oraclehcm_asks_for_israel_instead_of_hoping_it_is_in_the_first_500():
     src = inspect.getsource(fetchers.fetch_oraclehcm)
     assert "keyword=Israel" in src, "the Israel keyword pass is gone"
     assert "seen_ids" in src, "the two passes overlap; they must dedupe by requisition id"
+
+
+def test_page_chrome_is_not_a_job_opening():
+    """The universal scraper reads whatever card-shaped text a careers page offers, and on
+    ten companies that included the consent banner: "Strictly necessary cookies",
+    "Manage Consent Preferences", "Heading 4". One of them — "Analytics Cookies" — carries
+    an analytics signal and reached the LLM tier as a candidate ROLE. Filtered on read, so
+    it applies to everything already cached. A real title that merely starts with one of
+    those words must survive."""
+    from pipeline.fetchers import clean_scraped
+    def one(t):
+        out = clean_scraped([{"title": t}])
+        return out[0]["title"] if out else None
+    for junk in ("Strictly necessary cookies", "Analytics Cookies", "Performance cookies",
+                 "Cookie List", "Cookie Settings", "Consent and Data Privacy",
+                 "Manage Consent Preferences", "Heading 4", "Press Releases"):
+        assert one(junk) is None, junk
+    for real in ("Data Analyst", "Cookie Monster Engineer",
+                 "Consent Management Product Manager",
+                 "Cookies & Analytics Product Manager",
+                 "Senior Analyst, Privacy Notice Automation"):
+        assert one(real) == real, real
+    # a card whose text ran together with its own call-to-action keeps the role
+    assert one("Mumbai, IN Customer Success Specialist - APAC Read more") == \
+        "Mumbai, IN Customer Success Specialist - APAC"
+
+
+def test_no_two_active_rows_scan_the_same_board():
+    """50 identity groups had more than one row, and 32 of those pairs pointed at the SAME
+    url — "Intel"/"Intel Israel"/"Intel Corporation" all scanning one Workday tenant. Since
+    `merge_key` normalizes only a trailing corporate suffix, the roles did not collapse:
+    the board listed every Intel opening three times, and three fetches paid for it."""
+    import csv
+    import collections
+    import os
+    import urllib.parse
+    from pipeline.firmographics import identity_key
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    rows = [r for r in csv.DictReader(open(os.path.join(repo, "companies.csv"),
+                                           encoding="utf-8")) if r["active"] == "true"]
+    seen = collections.defaultdict(list)
+    for r in rows:
+        u = urllib.parse.urlsplit((r["api_url"] or "").strip().lower().rstrip("/"))
+        seen[(identity_key(r["company_name"]), u.netloc, u.path, u.query)].append(
+            r["company_name"])
+    dupes = {k: v for k, v in seen.items() if len(v) > 1}
+    assert not dupes, f"same company, same board, more than one active row: {list(dupes.values())[:6]}"

@@ -34,7 +34,11 @@ POOL = (r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|host
         r"probe-woken|scanned; no open|unreachable|aggregator URL|no listing found|"
         r"redirects to|scanned via brightdata|empty-but-suspect|needs re-resolution|"
         r"needs manual resolution|dark-triage")
-TERMINAL = r"defunct|domain-dead"
+# Terminal states: no re-check pool should ever look at these again.
+#   alias-of — a second row for a company we already scan at the SAME url. Not a
+#   dark company; the opposite, a company covered twice (roles listed under both
+#   "Intel" and "Intel Israel").
+TERMINAL = r"defunct|domain-dead|alias-of"
 # the modes triage_dark.py may write. A truncated one ("page-emp") matches no pool.
 TRIAGE_MODES = {"page-empty", "extract-gap", "wrong-page", "url-dead", "js-shell",
                 "blocked", "acquired"}

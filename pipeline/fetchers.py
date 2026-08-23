@@ -501,6 +501,50 @@ def fetch_bamboohr(row):
 
 _SCRAPE_CACHE = None
 
+# A page's consent banner and its nav are not openings. The universal scraper reads whatever
+# card-shaped text a careers page offers, and on ten companies that included "Strictly
+# necessary cookies", "Manage Consent Preferences" and "Heading 4" — one of which
+# ("Analytics Cookies") carries an analytics signal and reached the LLM tier as a candidate
+# role. Filtered on READ, so it applies to everything already cached.
+_JUNK_TITLE = _re.compile(
+    "|".join((
+        # a consent banner's own row labels, which is the whole of the card's text
+        r"^\W*(strictly necessary|performance|analytics|marketing|functional|"
+        r"targeting)?\s*cookies?\W*$",
+        r"^\W*(manage\s+)?consent(\s+preferences)?\W*$",
+        r"^\W*cookie\s+(list|policy|notice|consent|preferences|settings)\W*$",
+        r"^\W*consent and data privacy\W*$",
+        r"^\W*privacy (policy|notice)\W*$",
+        # page chrome that a card-shaped selector picks up
+        r"^\W*heading \d+\W*$",
+        r"^\W*(read|learn) more\W*$",
+        r"^\W*(about|contact) us\W*$",
+        r"^\W*press releases?\W*$",
+        r"^\W*(sign|log) ?in\W*$",
+        r"^\W*newsletter\W*$",
+    )),
+    _re.I)
+# ...and a card whose text ran together with its own call-to-action keeps the role, loses
+# the tail ("Mumbai, IN Customer Success Specialist - APAC Read more").
+_TITLE_TAIL = _re.compile(r"\s*[-–—|·]?\s*(read more|learn more|apply now|view (job|role)|"
+                          r"see (job|details))\W*$", _re.I)
+
+
+def clean_scraped(jobs):
+    """Drop chrome-only cards and trim a trailing call-to-action from the rest."""
+    out = []
+    for j in jobs or []:
+        if not isinstance(j, dict):
+            continue
+        t = (j.get("title") or "").strip()
+        if not t or _JUNK_TITLE.search(t):
+            continue
+        cleaned = _TITLE_TAIL.sub("", t).strip()
+        if cleaned and cleaned != t:
+            j = {**j, "title": cleaned}
+        out.append(j)
+    return out
+
 
 def fetch_scrape(row):
     """Custom / server-rendered career sites with no public API. The heavy Playwright scrape is run
@@ -516,7 +560,8 @@ def fetch_scrape(row):
                 _SCRAPE_CACHE = json.load(f)
         except Exception:  # noqa: BLE001
             _SCRAPE_CACHE = {}
-    return _SCRAPE_CACHE.get(row["company_name"], []) or _SCRAPE_CACHE.get(row.get("token", ""), [])
+    return clean_scraped(_SCRAPE_CACHE.get(row["company_name"], [])
+                         or _SCRAPE_CACHE.get(row.get("token", ""), []))
 
 
 def fetch_discovery(row):
