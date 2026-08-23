@@ -351,10 +351,61 @@ a measurement. `"business intelligence"` returned 0 on two consecutive runs and 
 retry**, so it had never been empty. It now retries once and prints which of the three
 happened.
 
-**Total spend after these changes: ~455 dataset records + 5–10 unlocker requests per day**
-(391 breadth + 62 targeted), against ~190 before. That is a deliberate trade — the breadth
-sweep went from 0 to 58 new companies a day — and it is the number to revisit first if the
-quota bites. Re-derive actual billing from the account
+### The Bright Data budget, and why this layer throttles itself
+
+**One pool, 5,000 credits a month, shared by every workflow that touches Bright Data.**
+Verified against Bright Data's own docs 2026-08-23
+(`docs.brightdata.com/general/account/billing-and-pricing/free-tier`): "5,000 free credits
+per month", renewing on the 1st, **no rollover**, with Web Unlocker API, SERP API and Web
+Scraper API each costing **one credit per request or record**. It is per MONTH — the "5k"
+in this repo's older docstrings is that figure, and it is not per day.
+
+Counting only dataset records understates the bill badly. On 2026-08-23 the snapshot ledger
+said **2,989 records = 60% of the month**, which looked comfortable; adding the same
+account's `reqs_unblocker` and `reqs_serp` made it **4,106 = 82%**:
+
+| product | credits, month to date | who spends them |
+|---|---|---|
+| Web Scraper API records | 2,989 | `discovery_daily` LinkedIn sweeps |
+| Web Unlocker requests | 646 | `discovery_daily` Indeed, `enrich_scrape_jd`, `enrich_matched_jd`, `bd_rescue`, `crack_walled`, `retry_unreachable` |
+| SERP requests | 471 | `deep_validate.google_via_unlocker` (the resolution ladder's search rung) |
+| **total** | **4,106 / 5,000** | |
+
+`discovery_daily.report_bd_spend()` prints this at the end of every run and emits a
+`::warning::` past 80%. Two endpoints are needed because `/customer/balance` answers **403**
+for this token — widening its billing scope at `brightdata.com/cp/setting/users` would let
+the code read the account's real figure instead of the documented default:
+
+```bash
+python -c "
+import discovery_daily as dd
+from bd_rescue import _load_secrets; _load_secrets(); dd.report_bd_spend()"
+```
+
+**`plan_spend()` pro-rates what is left over the days left in the month.** Depth is what
+makes the breadth sweep discover anything, but a sweep that spends the pool by the 24th
+returns **zero** for the last week of every month — and a silent zero from a source that
+used to produce is the worst failure mode in this repo. So:
+
+- The **breadth sweep is served first** (it is the discovery source); `linkedin-targeted`
+  takes only what is left, and is skipped entirely when nothing is.
+- Depth is never throttled below `LINKEDIN_LIMIT_MIN` (15, the value that yielded 1 new
+  company) nor above `LINKEDIN_LIMIT_MAX` (100).
+- **An unreadable ledger does NOT throttle** — running at the maximum is correct when the
+  number could not be fetched; throttling on a value we failed to read would be its own
+  silent failure.
+- A generous plan changes nothing: set `BD_MONTHLY_BUDGET` and both sweeps run flat out.
+  At 15,000+/month the throttle never engages.
+
+Worked numbers for 2026-08-23 (4,106 spent, 9 days left → 99 credits/day):
+`breadth limit 24 × 4 keywords + targeted cap 4`. On a fresh month at 5,000 it is
+`limit 41`; at 15,000 it is the full `limit 100`.
+
+**Unthrottled, these changes cost ~455 records/day** (391 breadth + 62 targeted) against
+~190 before — a deliberate trade for 0 → 58 new companies a day. The throttle is what makes
+that trade survivable on a 5,000-credit pool, and **the biggest single lever if it binds is
+not this layer at all**: the 646 unlocker + 471 SERP credits come from six other scripts,
+none of which meters itself. Re-derive actual billing from the account
 itself — this is the only reliable ledger, and the `/customer/balance` endpoint is
 permission-blocked for this key:
 

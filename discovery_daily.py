@@ -65,7 +65,8 @@ for _s in (sys.stdout, sys.stderr):
 #
 # Re-measure with docs/… no: with the snippet in ARCHITECTURE.md section 1a. If new-company
 # yield ever reads 0 again, this sweep has re-saturated and depth is the first dial.
-LINKEDIN_LIMIT = int(os.environ.get("LINKEDIN_LIMIT", "100"))
+LINKEDIN_LIMIT_MAX = int(os.environ.get("LINKEDIN_LIMIT_MAX", "100"))
+LINKEDIN_LIMIT_MIN = int(os.environ.get("LINKEDIN_LIMIT_MIN", "15"))
 LINKEDIN_WINDOW = os.environ.get("LINKEDIN_WINDOW", "Past week")
 _LI_KEYWORDS = ["data analyst", "business intelligence", "product analyst", "BI developer"]
 
@@ -73,7 +74,7 @@ QUERIES = {
     "linkedin": ("gd_lpfll7v5hcqtkxl6l", "keyword", [
         {"location": "Israel", "keyword": k, "country": "IL", "time_range": LINKEDIN_WINDOW}
         for k in _LI_KEYWORDS
-    ], LINKEDIN_LIMIT),
+    ], LINKEDIN_LIMIT_MAX),
     # NOTE: the Bright Data Indeed dataset (gd_l4dx9j9sscpvs7no2) has returned ZERO records
     # every single run since it was wired up — every snapshot comes back
     # `dataset_size: 0, error_codes: {"rate_limit": 15}`, i.e. Indeed rate-limits that
@@ -241,6 +242,144 @@ def normalize(name, r):
             "description": re.sub(r"<[^>]+>", " ", str(desc))}
 
 
+# --------------------------------------------------------------------------------------- #
+# Bright Data spend, month to date
+# --------------------------------------------------------------------------------------- #
+# NOBODY COULD READ THIS ACCOUNT'S QUOTA. `/customer/balance` answers 403 ("your API key
+# lacks the required permissions"), so the "5k free tier" repeated in every docstring here
+# was inherited belief, never a checked number — and this lane raised steady-state spend from
+# ~190 to ~455 records/day without being able to see the ceiling.
+#
+# `datasets/v3/snapshots` needs no extra permission and IS the ledger: one row per trigger
+# with the `dataset_size` that was billed. Summing the current month gives the only spend
+# number this repo can actually produce. It costs one API call and bills no records.
+#
+# The ceiling is 5,000 credits/month, VERIFIED against Bright Data's own docs on 2026-08-23
+# (docs.brightdata.com/general/account/billing-and-pricing/free-tier): "5,000 free credits
+# per month", renewing on the 1st, no rollover, shared by Web Unlocker API + SERP API +
+# Web Scraper API at one credit per request or record. It is per MONTH, not per day.
+# `/customer/balance` would confirm the account's own figure but answers 403 for this token;
+# widening its billing scope at https://brightdata.com/cp/setting/users would let this read
+# the real number instead of the documented default.
+BD_MONTHLY_BUDGET = int(os.environ.get("BD_MONTHLY_BUDGET", "5000"))
+
+
+def _bd_get(url):
+    req = urllib.request.Request(
+        url, headers={"Authorization": f"Bearer {os.environ['BRIGHTDATA_API_KEY']}"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.loads(r.read().decode("utf-8", "replace"))
+
+
+def bd_spend_this_month(today=None):
+    """(credits_used_this_month, breakdown_dict); (None, None) on any failure.
+
+    **All four products share ONE pool of 5,000 credits per month** — Web Unlocker API,
+    SERP API and Web Scraper API at one credit per request or record, resetting on the 1st
+    with no rollover (docs.brightdata.com/general/account/billing-and-pricing/free-tier,
+    read 2026-08-23). So counting dataset records alone understates the bill, and it
+    understated it badly: 2,989 records looked like 60% of the month, while adding the 646
+    unlocker and 471 SERP requests the same account had already spent made it **4,106, or
+    82%**. Discovery is not even the only spender — enrich_scrape_jd, enrich_matched_jd,
+    bd_rescue, crack_walled, retry_unreachable and deep_validate.google_via_unlocker all
+    draw on the same pool from other workflows.
+
+    Two endpoints, because neither has the whole number and `/customer/balance` is 403 for
+    this token:
+      * `datasets/v3/snapshots`  -> Web Scraper API records (per trigger, `dataset_size`)
+      * `zone/cost`              -> `reqs_unblocker` + `reqs_serp` for the zone
+    """
+    import datetime as _d
+    today = today or _d.date.today()
+    out = {}
+    try:
+        month = today.isoformat()[:7]
+        rows = _bd_get("https://api.brightdata.com/datasets/v3/snapshots?status=ready")
+        if not isinstance(rows, list):
+            return None, None
+        out["dataset_records"] = sum(int(x.get("dataset_size") or 0) for x in rows
+                                     if str(x.get("created") or "")[:7] == month)
+    except Exception:  # noqa: BLE001
+        return None, None
+    try:
+        zone = os.environ.get("BRIGHTDATA_ZONE", "")
+        first = today.replace(day=1).isoformat()
+        d = _bd_get(f"https://api.brightdata.com/zone/cost?zone={zone}"
+                    f"&from={first}&to={today.isoformat()}")
+        cost = next(iter(d.values()), {}).get("custom", {}) if isinstance(d, dict) else {}
+        out["unlocker_reqs"] = int(cost.get("reqs_unblocker") or 0)
+        out["serp_reqs"] = int(cost.get("reqs_serp") or 0)
+    except Exception:  # noqa: BLE001
+        # partial is better than nothing, but say so rather than under-report silently
+        out["unlocker_reqs"] = out["serp_reqs"] = None
+    known = [v for v in out.values() if isinstance(v, int)]
+    if len(known) < 3:
+        print("  [bd-spend] zone/cost unavailable — unlocker+SERP credits NOT counted")
+    return sum(known), out
+
+
+def report_bd_spend():
+    """Print month-to-date Bright Data credit spend, and warn before the ceiling."""
+    mtd, parts = bd_spend_this_month()
+    if mtd is None:
+        print("[bd-spend] ledger unavailable — spend is UNKNOWN")
+        return
+    pct = 100.0 * mtd / BD_MONTHLY_BUDGET if BD_MONTHLY_BUDGET else 0.0
+    detail = ", ".join(f"{k}={v}" for k, v in parts.items())
+    print(f"[bd-spend] {mtd} credits used this month ({pct:.0f}% of {BD_MONTHLY_BUDGET}) "
+          f"— {detail}. All products share one pool; this is the WHOLE pipeline, not just "
+          f"discovery.")
+    if pct >= 80:
+        print(f"::warning::Bright Data at {pct:.0f}% of the monthly free pool "
+              f"({mtd}/{BD_MONTHLY_BUDGET} credits, shared by every workflow that touches "
+              f"BD). plan_spend() has already throttled discovery; if this keeps firing the "
+              f"other spenders are the problem — see ARCHITECTURE.md 1a.", flush=True)
+
+
+def budget_per_day(today=None):
+    """Records this run may bill, so the month's remaining budget lasts to month end.
+
+    Deep is better — new-company yield accelerates with depth — but a source that exhausts
+    the quota on the 24th returns ZERO for the last week of every month, and a silent zero
+    from a source that used to produce is the single worst failure mode in this repo
+    (`pipeline/sources.py` exists because of one). Pro-rating gets the most records that can
+    be sustained every day rather than the most records today.
+
+    Returns None when the ledger is unreadable — callers then use the configured maximum,
+    because throttling on a number we could not fetch would be its own silent failure.
+    """
+    import calendar
+    import datetime as _d
+    today = today or _d.date.today()
+    mtd, _ever = bd_spend_this_month(today)
+    if mtd is None:
+        return None
+    days_left = calendar.monthrange(today.year, today.month)[1] - today.day + 1
+    return max(0, BD_MONTHLY_BUDGET - mtd) / max(1, days_left)
+
+
+def plan_spend(today=None):
+    """(breadth_limit, targeted_cap, explanation) for this run.
+
+    The BREADTH sweep is served first and the targeted backfill takes what is left: breadth
+    is the discovery source (0 -> 58 new companies/day when it was given depth), while
+    `linkedin-targeted` only ever asks about companies already in `companies.csv`. When the
+    budget is generous both run flat out and this function changes nothing.
+    """
+    per_day = budget_per_day(today)
+    if per_day is None:
+        return LINKEDIN_LIMIT_MAX, 100, "ledger unreadable — running at configured maximum"
+    n_kw = len(_LI_KEYWORDS)
+    breadth = int(min(LINKEDIN_LIMIT_MAX, max(LINKEDIN_LIMIT_MIN, per_day // n_kw)))
+    left = per_day - breadth * n_kw
+    # the targeted sweep bills ~0.75 records/company (67 for 88, measured), and only what
+    # each employer actually has — so a cap of N costs well under N.
+    targeted = int(max(0, min(100, left / 0.75)))
+    how = (f"budget {per_day:.0f} rec/day -> breadth limit {breadth} x{n_kw} keywords"
+           f" + targeted cap {targeted}")
+    return breadth, targeted, how
+
+
 def _load_json(path):
     try:
         return json.load(open(path, encoding="utf-8"))
@@ -343,12 +482,17 @@ def main():
     print(f"[indeed] {n_indeed_raw} raw cards -> {len(jobs)} unique jobs kept "
           f"across {len(INDEED_QUERIES)} queries")
 
-    runs = [(n, *QUERIES[n]) for n in QUERIES]
-    targeted = _targeted_inputs()
+    breadth_limit, targeted_cap, how = plan_spend()
+    print(f"[budget] {how}")
+    runs = [(n, ds, disc, inputs, breadth_limit if n == "linkedin" else lim)
+            for n, (ds, disc, inputs, lim) in ((k, QUERIES[k]) for k in QUERIES)]
+    targeted = _targeted_inputs(cap=targeted_cap) if targeted_cap else []
     if targeted:
         li_ds = QUERIES["linkedin"][0]
         runs.append(("linkedin-targeted", li_ds, "keyword", targeted, 8))
         print(f"targeting {len(targeted)} unresolved-broken companies via discovery")
+    elif not targeted_cap:
+        print("targeted backfill SKIPPED this run — budget reserved for the breadth sweep")
     for n, ds, disc, inputs, limit in runs:
         try:
             recs = run_query_raw(ds, disc, inputs, limit)
@@ -458,6 +602,7 @@ def main():
             print(f"::warning::discovery source {line}", flush=True)
     except Exception as e:  # noqa: BLE001
         print(f"[source-health] skipped: {e}")
+    report_bd_spend()
     print(f"=== {len(jobs)} discovered jobs cached · {len(new_cos)} new companies for migration ===")
 
 

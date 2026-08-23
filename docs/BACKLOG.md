@@ -227,12 +227,29 @@ fixed, and every one of them is outside the `discovery` lane's write list.
    breadth sweep to compensate; **whether that trade is net-positive has not been measured
    over more than one run.**
 
-6. **Nobody can read this account's Bright Data quota.** *(lane: `infra`.)*
-   `/customer/balance` returns 403 ("your API key lacks the required permissions"), so the
-   "5k free tier" in every docstring here is inherited belief, not a checked number. The one
-   real ledger is `datasets/v3/snapshots` (`ARCHITECTURE.md` §1a has the command) — **2,249
-   records billed 2026-08-15 → 08-23**. Either widen the token's permissions or put the
-   snapshot sum in the digest audit, or the next person to add a query is guessing too.
+6. **CLOSED 2026-08-23 for reading it; OPEN for the six scripts that spend it.**
+   *(lane: `infra`.)* `discovery_daily.bd_spend_this_month()` now reads the whole pool —
+   `datasets/v3/snapshots` for Web Scraper records plus `zone/cost` for `reqs_unblocker` and
+   `reqs_serp` — and prints it every run. The pool is **5,000 credits/month shared by all
+   three products**, verified against Bright Data's docs; on 2026-08-23 it stood at
+   **4,106 = 82%**, of which **1,117 credits (27%) were unlocker + SERP requests made by
+   `enrich_scrape_jd`, `enrich_matched_jd`, `bd_rescue`, `crack_walled`, `retry_unreachable`
+   and `deep_validate.google_via_unlocker`** — none of which meters itself or knows what the
+   others have spent. `discovery_daily` now throttles ITS OWN spend to what remains, which
+   means it absorbs the whole cost of everyone else's overrun. The right fix is a shared
+   pre-flight check those six also call. Note `DEEP_BD_SEARCH_CAP` alone defaults to 150
+   searches per run. Still worth widening the token's billing scope at
+   `brightdata.com/cp/setting/users` so `/customer/balance` (403 today) gives the account's
+   own figure rather than the documented default.
+
+7. **`/customer/balance` is 403 for this API token — a two-minute console fix.**
+   *(lane: `infra`; needs Bright Data console access, so it is an operator action, not a
+   code change.)* The code now reconstructs the spend from two other endpoints and compares
+   it against the 5,000/month the public docs state. That is one assumption away from the
+   truth: it does not know this account's actual plan. Ticking the billing scope for the
+   token at `brightdata.com/cp/setting/users` makes `/customer/balance` readable, after
+   which `BD_MONTHLY_BUDGET` can be replaced by the account's own number and the throttle
+   stops guessing.
 
 ## From the registry lane, 2026-08-24
 

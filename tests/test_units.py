@@ -1121,3 +1121,49 @@ def test_indeed_search_retries_and_names_its_failure_mode():
     assert [r["jobkey"] for r in got] == ["a"]
 
 
+def test_discovery_spend_is_pro_rated_so_a_source_never_goes_dark_mid_month():
+    """Depth is what makes the breadth sweep discover anything (0 -> 58 new companies/day),
+    but a sweep that spends the month's quota by the 24th returns ZERO for the last week of
+    every month — and a silent zero from a source that used to produce is the worst failure
+    mode in this repo. Measured 2026-08-23: the ledger said 2,989 records spent of an assumed
+    5,000 with 9 days left, i.e. 223/day sustainable against the ~455/day just shipped."""
+    import datetime as dt
+    import discovery_daily as dd
+    real_ledger, real_budget = dd.bd_spend_this_month, dd.BD_MONTHLY_BUDGET
+    try:
+        # a generous plan changes nothing: both sweeps run flat out
+        dd.bd_spend_this_month = lambda today=None: (0, 0)
+        dd.BD_MONTHLY_BUDGET = 50_000
+        assert dd.plan_spend(today=dt.date(2026, 9, 1))[:2] == (dd.LINKEDIN_LIMIT_MAX, 100)
+        # a tight one throttles depth but never to zero, and never below the old shipped 15
+        dd.BD_MONTHLY_BUDGET = 5_000
+        breadth, targeted, _ = dd.plan_spend(today=dt.date(2026, 9, 1))
+        assert dd.LINKEDIN_LIMIT_MIN <= breadth < dd.LINKEDIN_LIMIT_MAX
+        assert breadth >= 15, "must never throttle below the depth that yielded 1 new company"
+        # ...and BREADTH is served before the targeted backfill, because breadth is the
+        # discovery source and the backfill only ever asks about companies we already have
+        assert targeted < breadth
+        # an unreadable ledger must NOT throttle — that would be a silent failure of its own
+        dd.bd_spend_this_month = lambda today=None: (None, None)
+        assert dd.plan_spend()[:2] == (dd.LINKEDIN_LIMIT_MAX, 100)
+    finally:
+        dd.bd_spend_this_month, dd.BD_MONTHLY_BUDGET = real_ledger, real_budget
+
+
+def test_bd_spend_ledger_never_raises():
+    """Spend reporting runs inside the daily discovery step; if it can throw, it can kill a
+    run that has already done its useful work. `/customer/balance` is 403 for this token, so
+    the snapshot ledger is the only spend number this repo can produce — but it is still a
+    network call in the middle of a cron job."""
+    import discovery_daily as dd
+    real = dd.urllib.request.urlopen
+    def boom(*a, **k):
+        raise OSError("network down")
+    dd.urllib.request.urlopen = boom
+    try:
+        assert dd.bd_spend_this_month() == (None, None)
+        dd.report_bd_spend()          # must print, not raise
+    finally:
+        dd.urllib.request.urlopen = real
+
+
