@@ -31,6 +31,7 @@ from . import firmographics as firmographics_mod
 
 FIRMO_MAX_PER_RUN = 5  # research calls can web-search (~1-3 min each); bulk = backfill script
 BLURB_MAX_PER_RUN = 30  # one claude call each, inside the digest timeout
+EMAIL_MAX_ROLES = 40   # a daily email nobody scrolls is a daily email nobody reads
 from . import digest as digest_mod
 from . import fetchers, israel, seniority, store
 from .companies import load_companies
@@ -177,8 +178,14 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     merged = store.merge_duplicates(accepted)
     stats["after_merge"] = len(merged)
 
+    # WHICH COMPANIES DID WE ALREADY KNOW, before this run wrote anything? An undated role
+    # at a company we are scanning for the FIRST time is a backfill, not news — see
+    # `_posted_in`. This must be read before the upserts below, or every company looks old.
+    seen_before = {c for (c,) in st.conn.execute(
+        "SELECT DISTINCT company FROM matched WHERE first_seen < ?", (run_date,))}
+
     # persist every matched role into the rolling store (first_seen kept on conflict), then
-    # derive the two windows: email = last ~48h, board = last 2 weeks.
+    # derive the two windows: email = roles posted in the last ~48h, board = still open.
     for j in merged:
         st.upsert_matched(j, run_date)
     today = dt.date.fromisoformat(run_date)
@@ -190,6 +197,13 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         # No real posted-date (common for scraped roles). Previously this returned True, so
         # undated roles bypassed the 48h window entirely and flooded the email. Fall back to
         # when WE first saw it — an undated role is only "recent" if we discovered it recently.
+        # EXCEPT on a company's first scan: 336 companies were activated overnight, and
+        # "we discovered it today" says nothing about when the role was POSTED. Their whole
+        # back catalogue would read as 48h-fresh and bury the actual news. They are on the
+        # board from today; they become email-eligible once we have a day of history for
+        # that employer and can tell a new posting from its back catalogue.
+        if j.get("company") not in seen_before:
+            return False
         fs = (j.get("first_seen") or "")[:10]
         return fs >= cutoff if (len(fs) == 10 and fs[4] == "-") else False
 
@@ -224,6 +238,14 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                   if _posted_in(j, cutoff_email) and _alive(j)]
     email_jobs = st.filter_new(email_jobs)      # never email the same posting twice
     email_jobs = _cap_per_company(email_jobs, 3)   # tight daily digest: <=3 per company
+    # Hard ceiling on the email. Uncapped, one good day of coverage growth produces a
+    # thousand-role wall of text that nobody reads — and mark_sent would then burn every
+    # one of them as "delivered". Overflow is not lost: it stays unsent and leads tomorrow.
+    stats["email_overflow"] = max(0, len(email_jobs) - EMAIL_MAX_ROLES)
+    if stats["email_overflow"]:
+        print(f"  email capped at {EMAIL_MAX_ROLES} roles; {stats['email_overflow']} more "
+              f"stay unsent and lead tomorrow's digest", flush=True)
+        email_jobs = email_jobs[:EMAIL_MAX_ROLES]
     # The board holds ACTIVE roles — every role still present on its employer's careers
     # page — not "roles first seen in the last two weeks". A role open for three weeks is
     # still open, and dropping it off the board (into a page headed "expired or filled")
@@ -330,6 +352,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         "board_count": stats["board_count"],
         "llm_calls": stats["llm_calls"],
         "jd_filled_inline": stats["jd_filled_inline"],
+        "email_overflow": stats["email_overflow"],
         "stages": stages.summary(),
         "paths": dict(paths),
         "failed_companies": failed_companies,

@@ -220,7 +220,14 @@ def verdict(company: str, url: str) -> str:
         # If the domain carries a lot of EXTRA content beyond the matched token, this is
         # only suggestive: "phoenix" matches phoenixtma.com, which is a different company.
         # Say so rather than assert it, and let the caller confirm against page content.
-        return "match" if len(dom) - len(hit) <= 2 else "weak"
+        #
+        # The mirror case is just as wrong and was reading as a clean "match": the token is
+        # the WHOLE domain but only part of the name. "Time To Know" -> time.com scored
+        # match on `time` alone, and the repair pass moved the row to TIME magazine's own
+        # careers page. If a distinctive word of the name is missing from the domain, this
+        # is suggestive at best.
+        missing = [w for w in words if w not in dom]
+        return "match" if (len(dom) - len(hit) <= 2 and not missing) else "weak"
     ac = _acronym(company)
     if len(ac) >= 2 and (dom == ac or dom.startswith(ac + "-") or dom.startswith(ac + "_")
                          or _norm(dom).startswith(ac) and len(_norm(dom)) <= len(ac) + 4):
@@ -243,20 +250,44 @@ def is_foreign(company: str, url: str) -> bool:
     return verdict(company, url) == "mismatch"
 
 
-def page_mentions_company(company: str, html: str) -> bool:
+_LEGAL_TOKEN = {"ltd", "ltd.", "inc", "inc.", "llc", "plc", "gmbh", "bv", "sa", "ag",
+                "co", "corp", "corporation", "limited"}
+
+
+def _page_tokens(html: str) -> list:
+    return re.findall(r"[a-z0-9]+", re.sub(r"<[^>]+>", " ", html or "").lower())
+
+
+def page_mentions_company(company: str, html: str, strict: bool = False) -> bool:
     """Does the fetched page actually name this company?
 
     Far stronger than any domain heuristic: arberobotics.com does not say "Tamar Robotics"
     and rad.com does not say "RADLogics". Used to confirm `weak` domain verdicts before a
     row is repaired or activated.
+
+    `strict` requires the name's words to appear CONSECUTIVELY, and is what a `weak`
+    verdict needs. The loose test — every distinctive word appears SOMEWHERE on the page —
+    accepted time.com/join-time for "Time To Know", because TIME's own careers page
+    naturally contains both "time" and "know". Two ordinary English words scattered over a
+    long page are not a company name.
+
+    Matching is per-token, not substring: the old version normalized the whole page to one
+    letter-run, where "…the time. To know more…" contains "timetoknow".
     """
-    text = re.sub(r"<[^>]+>", " ", html or "")
-    text = _norm(text)
-    if not text:
+    toks = _page_tokens(html)
+    if not toks:
         return False
-    if _norm(company) in text:
+    name = [w for w in re.findall(r"[a-z0-9]+", (company or "").lower())
+            if w not in _LEGAL_TOKEN]
+    if not name:
+        return False
+    n = len(name)
+    if any(toks[i:i + n] == name for i in range(len(toks) - n + 1)):
         return True
-    words = [w for w in re.findall(r"[a-z0-9]{4,}", (company or "").lower())
-             if w not in _STOP]
+    if "".join(name) in toks:              # run-together spelling: "TimeToKnow"
+        return True
+    if strict:
+        return False
+    words = [w for w in name if len(w) >= 4 and w not in _STOP]
     # every distinctive token must appear; one generic hit is not identity
-    return bool(words) and all(w in text for w in words)
+    return bool(words) and all(w in toks for w in words)

@@ -163,14 +163,24 @@ def main():
             if not st:
                 continue
             if st in (403, 503):
-                good = u        # bot wall: host is real, unlocker cracks it downstream
-                break
+                # bot wall: the host is real and the unlocker cracks it downstream — but a
+                # wall means we never saw the page, so identity rests on the domain alone.
+                # Accept only a domain that IS the company; a `weak` one is unconfirmable.
+                if identity_verdict(name, u) in ("match", "ats"):
+                    good = u
+                    break
+                print(f"       (bot-walled {u[:46]}: cannot confirm it is this company)",
+                      flush=True)
+                continue
             if st >= 400:
                 continue
             # A reachable page is not enough — it must be THIS company's. A `weak` domain
             # verdict (phoenix -> phoenixtma.com) is confirmed only by page content.
             v = identity_verdict(name, u)
-            if v in ("match", "ats") or page_mentions_company(name, html):
+            # A `weak` domain verdict needs the page to name the company as a PHRASE, not
+            # to merely contain its words: "Time To Know" was repaired to time.com's own
+            # careers page, which of course says both "time" and "know".
+            if v in ("match", "ats") or page_mentions_company(name, html, strict=(v == "weak")):
                 good = u
                 break
             print(f"       (rejected {u[:52]}: page does not name the company)", flush=True)

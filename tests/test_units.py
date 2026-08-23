@@ -472,3 +472,32 @@ def test_every_activation_path_checks_company_identity():
             ungated.append(os.path.basename(path))
     assert not ungated, (f"these tools activate a company row without an identity check: "
                          f"{ungated}")
+
+
+# --- "time.com is Time To Know" — two ways the identity check said yes to a stranger ----
+def test_a_common_word_that_is_the_whole_domain_is_not_the_company():
+    """`verdict` scored time.com a clean MATCH for "Time To Know": the distinctive token
+    "time" IS the entire registrable domain, so the "domain carries no extra content" test
+    passed — and `repair_dead_urls` moved the row to TIME magazine's careers page. A name
+    word missing from the domain makes the evidence suggestive, not conclusive."""
+    from pipeline.company_identity import verdict
+    assert verdict("Time To Know", "https://time.com/join-time/") == "weak"
+    # the shapes this must NOT break
+    assert verdict("SAP Israel", "https://jobs.sap.com/") == "match"
+    assert verdict("Texas Instruments", "https://careers.ti.com/") == "match"
+    assert verdict("Palo Alto Networks", "https://jobs.paloaltonetworks.com/") == "match"
+    assert verdict("RADLogics", "https://rad.com/careers") == "mismatch"
+
+
+def test_confirming_a_weak_domain_needs_the_NAME_not_its_words_scattered():
+    """The loose page test — every distinctive word appears somewhere — is what let the
+    weak verdict through: TIME's own careers page naturally contains "time" and "know".
+    Matching is also per-token now; the old version normalized the page to one letter-run,
+    where "…the time. To know more…" literally contains "timetoknow"."""
+    from pipeline.company_identity import page_mentions_company
+    scattered = "<p>It is time to apply. Get to know the team. We know time matters.</p>"
+    assert page_mentions_company("Time To Know", scattered) is True      # loose: unchanged
+    assert page_mentions_company("Time To Know", scattered, strict=True) is False
+    assert page_mentions_company("Time To Know", "<h1>Time to Know Ltd</h1>", strict=True)
+    assert page_mentions_company("Time To Know", "<h1>TimeToKnow</h1>", strict=True)
+    assert not page_mentions_company("Wiz", "<p>the time. To know more</p>", strict=True)

@@ -553,6 +553,11 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
                   "searchable & sortable.", ""]
     if n == 0:
         lines.append("_No new matching openings today._")
+    over = stats.get("email_overflow") or 0
+    if over:
+        lines += [f"> {over} further new roles matched today and did not fit this email. "
+                  f"They are on the board now, and they lead tomorrow's digest — nothing "
+                  f"is dropped.", ""]
 
     for company in companies:
         jobs_c = by_company[company]
@@ -1324,6 +1329,8 @@ def _text_audit(s):
         + (f"  | JDs fetched inline: {s.get('jd_filled_inline', 0)}"
            if s.get("jd_filled_inline") else ""),
     ]
+    if s.get("email_overflow"):
+        lines.append(f"  held over (email cap): {s['email_overflow']}")
     if s.get("stages"):
         lines.append(f"  stage order: {s['stages']}")
     if s.get("failed_companies"):
@@ -1346,6 +1353,8 @@ def _html_audit(s, esc):
         f'LLM calls this run: {esc(s.get("llm_calls",0))}'
         + (f' · JDs fetched inline: {esc(s.get("jd_filled_inline",0))}'
            if s.get("jd_filled_inline") else "")
+        + (f' · held over (email cap): {esc(s.get("email_overflow",0))}'
+           if s.get("email_overflow") else "")
         + (f'<br>Stage order: {esc(s.get("stages",""))}' if s.get("stages") else "")
         + (f'<br>Failed companies: {esc(", ".join(fc))}' if fc else "")
         + '</div>'
