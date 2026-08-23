@@ -6,9 +6,9 @@
 
 Scope: the intake layer — `discovery_daily.py`, `discovery_telegram.py`,
 `pipeline/aggregators.py`, `pipeline/recruiters.py`, and the new `ARCHITECTURE.md` §1a.
-Nothing else was written. Bright Data spend: **301 dataset records + 10 Web Unlocker
-requests** — 190 on the full dry run, 111 on the A/B and full-scale tests of the targeting
-fix. Claude tokens: **0** — nothing here calls `claude -p`. SerpApi: 0 (429, exhausted).
+Nothing else was written. Bright Data spend: **316 dataset records + 10 Web Unlocker
+requests** — 190 on the full dry run, 126 on the A/B, full-scale and multi-keyword tests of
+the targeting fix. Claude tokens: **0** — nothing here calls `claude -p`. SerpApi: 0 (429, exhausted).
 For scale: the account has billed 2,249 records in total since 2026-08-15.
 
 ## What was wrong
@@ -166,6 +166,29 @@ two dials when only one was measured is how a budget number becomes fiction. And
 bug in my own change before it shipped — `cap=100` over an 88-long list made the
 wrap-around emit 12 duplicate inputs, each a second bill; guarded by
 `test_the_targeted_window_never_asks_about_the_same_company_twice`.
+
+**"What are you searching on LinkedIn — aren't you searching for jobs?"** Yes, jobs, always.
+One dataset (`gd_lpfll7v5hcqtkxl6l`, LinkedIn *job listings*, `discover_by=keyword`), and
+`company` is a filter on that job search, not a company lookup. The two funnels come out of
+one pass: `normalize()` writes the job records to `discovered_cache.json`, and `main()`
+separately harvests employer names not already in `companies.csv` into
+`research_companies.json`.
+
+The question is worth more than the clarification, because it points at a gap I had left
+open: the targeted sweep asks each of the 88 companies about **one** keyword, `data analyst`,
+while the product also covers BI / product / marketing analytics. So I tested it —
+Apple / Outbrain / Snyk × `business intelligence` + `product analyst`, 15 records:
+
+- Outbrain and Snyk returned **0** for both keywords.
+- All 15 Apple records were noise: Performance Modeling Architect, VLSI Product Engineer,
+  Full Stack Developer, Biomechanical Research Engineer. **8 were roles the `data analyst`
+  keyword had not returned, and not one was an analyst role.**
+- Two came back twice, once per keyword — billed twice for one posting.
+
+So with `company` set, LinkedIn's keyword match goes loose and extra keywords buy noise at
+full price. **One keyword on the targeted sweep is correct**; breadth belongs on the
+unscoped sweep, where ranking still works. Recorded in §1a so nobody re-runs it — this is a
+change I would have made on intuition and it would have cost records for nothing.
 
 **"Why can't you verify Hebrew-named companies — can't you search the web?"** Fair; I could
 and should have. Researched, and the answers were not what I assumed:

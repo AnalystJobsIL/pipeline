@@ -260,6 +260,34 @@ rows whose own board reports zero — Apple 8, Wiliot 8, Revolut 8, IEC 8, Infin
 Deel 4, Rakuten Viber 3 — which is `HANDOFF.md`'s largest open coverage item. `cap` and the
 day-of-year rotation survive only as a bound if `stale.json` grows past 100.
 
+**Both sweeps search for JOBS — the employer names are a by-product.** There is one
+dataset here (`gd_lpfll7v5hcqtkxl6l`, LinkedIn *job listings*, `discover_by=keyword`) and
+`company` is a FILTER on that job search, not a company lookup. The two sweeps differ only
+in whether the filter is set:
+
+```
+breadth   {location: Israel, country: IL, keyword: "data analyst"}          x4 keywords
+targeted  {location: Israel, country: IL, keyword: "data analyst",
+           company: "Explorium"}                                            x88 companies
+```
+
+Both return job records; `normalize()` turns each into the common job shape for
+`discovered_cache.json`, and `main()` separately harvests employer names that are not yet in
+`companies.csv` into `research_companies.json`. That is why the two funnels in the diagram
+above come out of one pass.
+
+**One keyword is enough on the targeted sweep, and this was tested rather than assumed.**
+The obvious worry is that scoping to `company` + `keyword: "data analyst"` misses a
+"BI Developer" at the same employer. Measured 2026-08-23 over Apple / Outbrain / Snyk ×
+`business intelligence` + `product analyst`, 15 records: Outbrain and Snyk returned **0** for
+both, and all 15 Apple records were noise — Performance Modeling Architect, VLSI Product
+Engineer, Full Stack Developer, Biomechanical Research Engineer — of which **8 were roles
+the `data analyst` keyword had not returned, and not one was an analyst role**. Two of them
+came back twice, once per keyword, i.e. billed twice for one posting. With `company` set,
+LinkedIn's keyword match goes loose and extra keywords buy noise at full price. **Do not add
+keywords to the targeted sweep**; add them to the breadth sweep, where an unscoped query is
+ranked properly.
+
 **`limit_per_input` is now the binding constraint, not the company cap.** Four of the 88
 returned exactly 8, i.e. they were truncated. Raising 8 → 15 would cost at most
 `7 × 4 = 28` more records on that distribution — still under 100 for the whole sweep — and
