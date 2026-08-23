@@ -336,6 +336,9 @@ digest); deep re-hunt every 14 days and weekly audit are backstops only.
 | `cloud_state/health_baseline.json` | **all-time high-water** job count per company (monotonic — never decreases, which is why `regressed-to-zero` latches) | pipeline/health.py |
 | `cloud_state/resolve_attempts.json` | self-heal retry throttle (weekly; 5 strikes → abandoned) | resolve_broken.py |
 | `cloud_state/scrape_rot.json` | consecutive empty/error days per scrape row | refresh_scrape_cache.py |
+| `cloud_state/firmographics.json` | **the shared, git-mergeable export of the `firmographics` table.** sqlite cannot be merged, so this text file is what the local and cloud stores converge through; the digest reads sqlite ∪ this file (fresher `as_of` wins) and writes the union back | `research_firmographics.py --export`, `pipeline/run.py` |
+| `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest warns in its audit when a prerequisite stage did not run today | each stage's workflow, via `python -m pipeline.stages stamp <stage>` |
+| `cloud_state/source_health.json` | per discovery source: records returned this run, and the last day it returned any (`pipeline/sources.py`). A source that goes quiet is a workflow warning AND a line in the digest audit — Indeed returned zero for five days unnoticed | discovery_daily, discovery_telegram |
 | `state/` (gitignored) | resume markers (audit done-list). Written in the cloud too but **never committed**, so the Sunday audit re-audits every parked row from scratch (a SerpApi budget fact) | audit/local runs |
 
 (The single-writer and commit-together rules live with the csv schema in §2.)
@@ -505,13 +508,23 @@ must never regress established counts to null.
      per digest run (stat `firmographics_researched`) — this is the only writer on the
      **cloud** side.
 
-### The split-store trap (read this before "why is the data missing?")
+### The split-store trap — CLOSED 2026-08-23 (read this before "why is the data missing?")
 
-The full dataset lives in the **local** `state/seen.db` (`firmographics` table) and its
-export `state/firmographics.json` — both gitignored. The **cloud** `cloud_state/seen.db`
-has only what its own 5-per-run hook accumulated. A cloud/CI consumer sees a mostly-empty
-table until the local set is deliberately seeded into `cloud_state` and committed (not
-done by default — CI commits that db daily and a stale local copy conflicts).
+It used to be: the full dataset lived in the **local** `state/seen.db` (`firmographics`
+table) and its gitignored export, while the **cloud** `cloud_state/seen.db` held only what
+its own 5-per-run hook had accumulated. 919 researched profiles sat on one laptop while the
+cloud digest — the only thing that RENDERS them — had an empty table and re-researched from
+zero. sqlite is the reason: git cannot merge a binary, so neither store could publish to
+the other.
+
+The stores now converge through **`cloud_state/firmographics.json`**, a sorted JSON export
+that git diffs line by line. `research_firmographics.py --export` writes it (so the 6-hourly
+Windows chain publishes automatically), and `pipeline/run.py` reads **sqlite ∪ export**,
+fresher `as_of` winning per company, then writes the union back. Whichever machine did the
+research, every consumer sees it.
+
+If you add another table with two writers, do the same thing — do not seed one sqlite from
+the other, which lasts exactly until the next conflict-recovery commit reverts it.
 
 ### Consumption
 
