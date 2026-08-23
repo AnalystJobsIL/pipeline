@@ -675,3 +675,76 @@ def test_the_alarm_file_does_not_amplify_itself():
     src = inspect.getsource(registry_health.alarms_state)
     assert 'startswith("(ladder, as of' in src, (
         "alarms_state re-emits its own re-emissions; the alarm file grows without bound")
+
+
+def test_the_weekly_audit_uses_the_tenant_gate_it_defines():
+    """`audit_empty_rows` DEFINES `tenant_is_this_company` and `main()` never called it - its
+    activation gate was `is_foreign` alone, which returns False for every ATS host, i.e. 460
+    of the 846 active rows. A search proposing `novartis.wd3.myworkdayjobs.com/riskified` for
+    Riskified therefore passed both `_slug_matches` (containment) and `is_foreign` (constant
+    False) and activated. This tool SEARCHES for a board, which is exactly the Lili -> Eli
+    Lilly / CyberArk -> PANW class, so it is the last place that gate should be missing.
+
+    It also activated on `verify()` returning (0, 0): no jobs at all was treated as a
+    recovery, re-creating the `empty-board` rows the self-heal exists to clean up."""
+    import ast
+    import inspect
+    import audit_empty_rows
+    src = inspect.getsource(audit_empty_rows.main)
+    calls = {n.func.id for n in ast.walk(ast.parse(src.lstrip()))
+             if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+    assert "tenant_is_this_company" in calls, (
+        "main() still activates on is_foreign alone, which is False for every ATS host")
+    assert "if not n_all:" in src, "verify() returning 0 jobs must not count as a recovery"
+
+
+def test_the_tenant_gate_is_scoped_before_it_tests_mismatch():
+    """Order matters, and getting it wrong costs real coverage. The `mismatch` early-return
+    must sit INSIDE the subdomain-tenant scope: on a path-tenant platform like greenhouse,
+    `Momentis Surgical` -> `memic` scores `mismatch` and is a legitimate acquirer board that
+    ARCHITECTURE section 2 cites by name. Testing mismatch before scoping blocked it."""
+    from audit_empty_rows import tenant_is_this_company as T
+    # legitimate acquirer boards on PATH-tenant platforms must pass
+    assert T("Momentis Surgical", "https://boards-api.greenhouse.io/v1/boards/memic/jobs")
+    assert T("SentinelOne", "https://boards-api.greenhouse.io/v1/boards/sentinellabs/jobs")
+    # the impostors on SUBDOMAIN-tenant platforms must not
+    assert not T("Riskified", "https://novartis.wd3.myworkdayjobs.com/en-US/riskified")
+    assert not T("Bancor", "https://careers-bancorpbank.icims.com/jobs")
+    # ...and a company's own subdomain tenant still passes
+    assert T("Riskified", "https://riskified.wd3.myworkdayjobs.com/careers")
+
+
+def test_registry_state_writes_are_atomic():
+    """`open(path, "w")` truncates immediately. Both of these files are git-tracked and both
+    are written inside the 05:00 digest: a kill mid-write leaves a short file that parses as
+    "no baselines", which silently costs a full wake cycle for every monitored candidate.
+    Every sibling tool in this lane already goes through `pipeline.atomic`."""
+    import inspect
+    import probe_candidates
+    import audit_empty_rows
+    for mod in (probe_candidates, audit_empty_rows):
+        src = inspect.getsource(mod)
+        assert 'json.dump(state, open(' not in src and 'json.dump(done, open(' not in src, (
+            "%s still writes state through a truncating open()" % mod.__name__)
+        assert "write_json" in src
+
+
+def test_repair_dead_urls_uses_the_shared_tenant_predicate():
+    """Its inline `ats_checked` was a FLAT any() over `_slug_candidates`, which returns host
+    labels and path segments in one list - the exact shape the shared predicate's docstring
+    names as the bug. `novartis.wd3.myworkdayjobs.com/en-US/riskified` passed for Riskified
+    because the PATH matched while the tenant is Novartis. This tool runs at 19:00
+    immediately before listing_hunt in the same job, so a wrong address here reaches the
+    fast path about thirty minutes later rather than a day later."""
+    import inspect
+    import repair_dead_urls
+    src = inspect.getsource(repair_dead_urls.main)
+    import ast
+    assert "tenant_is_this_company" in src
+    # check CODE, not prose - the explanatory comment legitimately names the old function
+    tree = ast.parse(src.lstrip())
+    names = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
+    assert "_slug_candidates" not in names, "the hand-rolled flat any() is still there"
+    assert "tenant_is_this_company" in {
+        n.func.id for n in ast.walk(tree)
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}

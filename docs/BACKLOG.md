@@ -649,3 +649,26 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     whitelists five names in `ALLOWED_ORPHANS`. §5c now points at the tool and admits the
     disagreement, but the right end state is one definition. Note `check_invariants.py:219`
     prints the literal string `0 orphans` unconditionally — it can never report otherwise.
+
+27. **`crack_walled` retires 13 of its own 25 pool rows per all-refusing night** — lane:
+    `registry`, unclaimed, and it is the residual the note-shortening could not remove. The
+    refusal segment is 49 chars against a pool whose mean note is 203/220, so `notes.append`
+    still evicts another tool's `unsupported ATS` token from 13 rows — better than the 16 the
+    `novrfy` note it replaced cost and the 25 the 107-char form cost, but not zero. The floor
+    is 4/25 at an EMPTY payload, so no further string diet fixes it: **the cell is
+    structurally full.** `deep_validate` re-stamps `unsupported ATS` on its Saturday pass, so
+    coverage is delayed up to a week rather than lost, and no row is ever orphaned. The real
+    fix is a wider cell or a second column, which is `pipeline/notes.py` and `companies.csv`
+    schema — i.e. shared plumbing plus every reader.
+
+28. **`no-url` is a triage mode `triage_dark` writes and `listing_hunt` routes on, and it is
+    missing from `check_invariants.TRIAGE_MODES`** — lane: `infra`. Result: 13 permanent
+    `::warning::` lines every run, in the blocking gate in front of the email, for rows that
+    are behaving correctly. A warning that is always there is a warning nobody reads.
+
+29. **`tenant_is_this_company('SupPlant', 'careers.workable.com')` returns True** — noted so
+    the record is straight: commit `0a3cf30`'s message claimed it separates that case. It does
+    not. Every label of that host is plumbing (`careers`, `workable`, `com`), so there is no
+    tenant to check and the predicate correctly answers "cannot tell". `SupPlant` is caught by
+    `_page_names_company` instead, which is the gate that matters, but the commit message
+    overstated the predicate.

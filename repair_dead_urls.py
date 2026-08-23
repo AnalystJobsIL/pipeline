@@ -33,8 +33,8 @@ import urllib.request
 
 from pipeline.aggregators import is_aggregator
 from pipeline.company_identity import (verdict as identity_verdict,
-                                       page_mentions_company, registrable, _norm,
-                                       _slug_candidates)
+                                       page_mentions_company, registrable, _norm)
+from audit_empty_rows import tenant_is_this_company
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 
@@ -215,11 +215,14 @@ def main():
             # to be near-equal to the name, not merely to contain it - the same "containment
             # must be TIGHT" lesson `company_identity` already learned for domains
             # (rad.com/RADLogics, nooga.net/Noogata).
-            _cn = _norm(name)
-            ats_checked = v == "ats" and any(
-                abs(len(_norm(c)) - len(_cn)) <= 1
-                and (_norm(c) in _cn or _cn in _norm(c))
-                for c in _slug_candidates(urllib.parse.urlparse(u)))
+            # Use the shared predicate, not a hand-rolled any(). The inline version here
+            # was a FLAT any() over `_slug_candidates`, which returns host labels and path
+            # segments in one list - the exact shape `tenant_is_this_company`'s docstring
+            # names as the bug: `novartis.wd3.myworkdayjobs.com/en-US/riskified` passed for
+            # Riskified because the PATH matched while the tenant (the host label) is
+            # Novartis. This tool runs at 19:00 immediately before listing_hunt in the same
+            # job, so a wrong address here is picked up by the fast path ~30 minutes later.
+            ats_checked = v == "ats" and tenant_is_this_company(name, u)
             if ats_checked or (v == "match" and whole_name) or (
                     html and page_mentions_company(name, html, strict=True)):
                 good = u

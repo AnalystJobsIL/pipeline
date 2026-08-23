@@ -35,8 +35,8 @@ AUDIT_TTL_DAYS = 30
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 from pipeline.aggregators import HOSTS as AGG, is_aggregator   # single source of truth
-from pipeline.atomic import write_csv_rows
-from pipeline.company_identity import is_foreign
+from pipeline.atomic import write_csv_rows, write_json
+from pipeline.company_identity import is_foreign, page_mentions_company
 from pipeline.notes import replace_own as _note_replace
 from pipeline.recruiters import is_recruiter
 from pipeline.verdicts import in_pool
@@ -146,6 +146,13 @@ def tenant_is_this_company(name, url):
     host = (_up.urlparse(url or "").netloc or "").lower()
     if not host or not ATS_HOST.search(host):
         return True
+    # SCOPE FIRST. The `mismatch` test below must not run on a path-tenant platform: on
+    # greenhouse, `Momentis Surgical` -> `memic` scores `mismatch` and is a LEGITIMATE
+    # acquirer board (ARCHITECTURE section 2 cites it by name). Scoping after the mismatch
+    # test blocked it, which is the 36-row regression docs/BACKLOG.md 21 measured and
+    # rejected. Only the subdomain-tenant platforms below are in scope.
+    if not _SUBDOMAIN_TENANT_HOST.search(host):
+        return True
     if _verdict(name, url) == "mismatch":
         return False
 
@@ -195,8 +202,6 @@ def tenant_is_this_company(name, url):
     # SentinelOne/sentinellabs), and a gate with that false-negative rate costs more coverage
     # than the mis-attribution it prevents. Widening it is BACKLOG 21, in company_identity,
     # where the per-platform table already lives.
-    if not _SUBDOMAIN_TENANT_HOST.search(host):
-        return True
     labels = [l for l in host.split(".")[:-2] if not _plumbing(l)]
     if not labels:
         return True                                    # no checkable tenant: cannot tell
@@ -408,8 +413,11 @@ def main():
           f"SerpApi spent only when needed\n", flush=True)
 
     def _mark(name):
+        # atomic, like every other state write in this lane: `open(...,"w")` truncates
+        # immediately, so a kill mid-write leaves a short file that parses as "audited
+        # nothing" and silently re-audits the whole backlog
         done[name] = TODAY
-        json.dump(done, open(done_path, "w", encoding="utf-8"), indent=0, sort_keys=True)
+        write_json(done_path, done, indent=0, sort_keys=True)
 
     fixed, unsupported, still = [], [], []
     for _n, (i, r) in enumerate(parked, 1):
@@ -466,9 +474,35 @@ def main():
             still.append((name, ""))
             print(f"  [xx] {name}: {plat}:{tok} found but verify failed: {str(e)[:60]}", flush=True)
             continue
-        if is_foreign(name, api or ""):
+        if not n_all:
+            # `verify()` returning (0, 0) is not a recovery. This branch ACTIVATES, and
+            # `n_all == 0` is exactly the `empty-board` shape section 2 warns about: a dead
+            # token and a live-but-empty board are indistinguishable from here. Activating on
+            # it re-creates the 0/0 rows the self-heal exists to clean up.
+            still.append((name, ""))
+            print(f"  [--] {name}: {plat}:{tok} verified but returned 0 jobs - not a recovery",
+                  flush=True)
+            continue
+        # An acquirer's tenant is indistinguishable from theft by string alone - on the
+        # subdomain platforms `Habana Labs (Intel)` really does post under `intel`, and 31
+        # active rows are in that shape - so a tenant mismatch gets a SECOND chance from page
+        # content, the same discriminator crack_walled uses. Only a row that fails both is
+        # refused. (docs/BACKLOG.md 21 is why a bare tenant block is not acceptable here.)
+        _tenant_ok = tenant_is_this_company(name, api or "")
+        if not _tenant_ok:
+            _pg = fetch(api or "", timeout=15) or fetch(r[3] or "", timeout=15)
+            _tenant_ok = bool(_pg) and page_mentions_company(name, _pg, strict=True)
+        if is_foreign(name, api or "") or not _tenant_ok:
             # Identity gate: this tool SEARCHES for a board, which is exactly how you end up
             # holding another company's — and it verifies, with real jobs. Refuse it.
+            #
+            # `is_foreign` alone is not that gate: it returns False for EVERY ATS host, which
+            # is 460 of the 846 active rows. This file DEFINES `tenant_is_this_company` for
+            # precisely this case and `main()` never called it - so a search that proposed
+            # `novartis.wd3.myworkdayjobs.com/riskified` for Riskified passed both
+            # `_slug_matches` (containment) and `is_foreign` (constant False) and activated.
+            # Scoped to subdomain-tenant platforms, so the 36 legitimate acquirer boards
+            # (Momentis/memic, Habana/intel) are untouched - see docs/BACKLOG.md 21.
             still.append((name, ""))
             print(f"  [XX] {name}: {plat} {tok} verified {n_il} IL but the board belongs to "
                   f"another company ({(api or '')[:44]})", flush=True)

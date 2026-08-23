@@ -20,7 +20,7 @@ import re
 import sys
 import time
 import urllib.request
-from pipeline.atomic import write_csv_rows
+from pipeline.atomic import write_csv_rows, write_json
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the
@@ -147,7 +147,9 @@ def main():
                         fr[5] = _wake_note(fr[5])
                 write_csv_rows("companies.csv", fresh)
     if apply:
-        json.dump(state, open(STATE, "w", encoding="utf-8"), indent=1)
+        # atomic: this file is git-tracked and a truncated write loses every baseline,
+        # which silently costs a full wake cycle for every monitored candidate
+        write_json(STATE, state, indent=1)
     print(f"=== probe: {woke} candidates woke (of {len(targets)}) ===", flush=True)
 
 
