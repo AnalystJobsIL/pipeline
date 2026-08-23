@@ -3491,6 +3491,19 @@
    "url": "https://earnix.com/careers/"
   }
  ],
+ "Edwards Lifesciences": [
+  {
+   "ats_platform": "scrape",
+   "company": "Edwards Lifesciences",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.edwards.com/job/49437/r-d-clinical-imaging-engineer-contractor",
+   "location": "Imaging Engineer - Contractor Israel",
+   "posted_date": "",
+   "title": "R&D Clinical Imaging Engineer - Contractor Israel-Caesarea GranitContingentReq-49437",
+   "url": "https://www.edwards.com/job/49437/r-d-clinical-imaging-engineer-contractor"
+  }
+ ],
  "Electronic Arts": [
   {
    "ats_platform": "scrape",
@@ -4426,6 +4439,52 @@
    "posted_date": "",
    "title": "Senior Developer BackEnd",
    "url": "https://www.healthy.io/careers"
+  }
+ ],
+ "High Lander": [
+  {
+   "ats_platform": "scrape",
+   "company": "High Lander",
+   "country_code": "",
+   "description": "",
+   "job_id": "f02e27f93936b4e5",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Software Engineer",
+   "url": "https://www.highlander.io/careers"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "High Lander",
+   "country_code": "",
+   "description": "",
+   "job_id": "b36f090f6bf4cd57",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Project Manager",
+   "url": "https://www.highlander.io/careers"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "High Lander",
+   "country_code": "",
+   "description": "",
+   "job_id": "6abd74f1feec25ca",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "AI Creative Designer",
+   "url": "https://www.highlander.io/careers"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "High Lander",
+   "country_code": "",
+   "description": "",
+   "job_id": "1f16d81ad8dda31a",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Field Validation & UAV Operator",
+   "url": "https://www.highlander.io/careers"
   }
  ],
  "Highcon": [
@@ -9310,6 +9369,19 @@
    "url": "https://careers.roche.com/global/en/job/202606-115086/Field-Service-Engineer"
   }
  ],
+ "Ryltech.co.il": [
+  {
+   "ats_platform": "scrape",
+   "company": "Ryltech.co.il",
+   "country_code": "",
+   "description": "﻿ רילטק די בי איי | משרות פתוחות #experts {width:520px; margin:-295px auto 0 !important; position:relative!important; left:280px !important;} #experts8 {position:relative!important;top:38px; left:-377px;} {\"@context\":\"https://schema.org\",\"@graph\":[{\"@type\":\"WebPage\",\"@id\":\"https://www.ryltech.co.il/he/jobs/\",\"url\":\"https://www.ryltech.co.il/he/jobs/\",\"name\":\"רילטק די בי איי | משרות פתוחות\",\"isPartOf\":{\"@id\":\"https://www.ryltech.co.il/he/#website\"},\"datePublished\":\"2014-06-25T12:17:28+00:00\",\"dateModified\":\"2026-08-16T13:24:55+00:00\",\"breadcrumb\":{\"@id\":\"https://www.ryltech.co.il/he/jobs/#breadcrumb\"},\"inLanguage\":\"en-US\",\"potentialAction\":[{\"@type\":\"ReadAction\",\"target\":[\"https://www.ryltech.co.il/he/jobs/\"]}]},{\"@type\":\"BreadcrumbList\",\"@id\":\"https://www.ryltech.co.il/he/jobs/#breadcrumb\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Home\",\"item\":\"https://www.ryltech.co.il/he/\"},{\"@type\":\"ListItem\",\"position\":2,\"name\":\"משרות פתוחות ברילטק\"}]},{\"@type\":\"WebSite\",\"@id\":\"https://www.ryltech.co.il/he/#website\",\"url\":\"https://www.ryltech.co.il/he/\",\"name\":\"Ryltech\",\"description\":\"מומחי DBA ל-SQL Server ו-Oracle | פרויקטים, ביצועים ותחזוקה 24/7\",\"potentialAction\":[{\"@type\":\"SearchAction\",\"target\":{\"@type\":\"EntryPoint\",\"urlTemplate\":\"https://www.ryltech.co.il/he/?s={search_term_string}\"},\"query-input\":\"required name=search_term_string\"}],\"inLanguage\":\"en-US\"}]} console.log('PixelYourSite Free version 9.4.7.1'); img:is([sizes=auto i],[sizes^=\"auto,\" i]){contain-intrinsic-size:3000px 1500px} /*# sourceURL=wp-img-auto-sizes-contain-inline-css */ img.wp-smiley, img.emoji { display: inline !important; border: none !important; box-shadow: none !important; height: 1em !important; width: 1em !important; margin: 0 0.07em !important; vertical-align: -0.1em !important; background: none !important; padding: 0 !important; } /*# sourceURL=wp-emoji-styles-inline-css */ :root{--wp-block-synced-color:#7a00df;--wp-block-synced-color--rgb:122,0,223;--wp-bound-block-color:var(--wp-block-synced-color);--wp-editor-canvas-background:#ddd;--wp-admin-theme-color:#007cba;--wp-admin-theme-color--rgb:0,124,186;--wp-admin-theme-color-darker-10:#006ba1;--wp-admin-theme-color-darker-10--rgb:0,107,160.5;--wp-admin-theme-color-darker-20:#005a87;--wp-admin-theme-color-darker-20--rgb:0,90,135;--wp-admin-border-width-focus:2px}@media (min-resolution:192dpi){:root{--wp-admin-border-width-focus:1.5px}}.wp-element-button{cursor:pointer}:root .has-very-light-gray-background-color{background-color:#eee}:root .has-very-dark-gray-background-color{background-color:#313131}:root .has-very-light-gray-color{color:#eee}:root .has-very-dark-gray-color{color:#313131}:root .has-vivid-green-cyan-to-vivid-cyan-blue-gradient-background{background:linear-gradient(135deg,#00d084,#0693e3)}:root .has-purple-crush-gradient-background{background:linear-gradient(135deg,#34e2e4,#4721fb 50%,#ab1dfe)}:root .has-hazy-dawn-gradient-background{background:linear-gradient(135deg,#faaca8,#dad0ec)}:root .has-subdued-olive-gradient-background{background:linear-gradient(135deg,#fafae1,#67a671)}:root .has-atomic-cream-gradient-background{background:linear-gradient(135deg,#fdd79a,#004a59)}:root .has-nightshade-gradient-background{background:linear-gradient(135deg,#330968,#31cdcf)}:root .has-midnight-gradient-background{background:linear-gradient(135deg,#020381,#2874fc)}:root{--wp--preset--font-size--normal:16px;--wp--preset--font-size--huge:42px}.has-regular-font-size{font-size:1em}.has-larger-font-size{font-size:2.625em}.has-normal-font-size{font-size:var(--wp--preset--font-size--normal)}.has-huge-font-size{font-size:var(--wp--preset--font-size--huge)}:root .has-text-align-center{text-align:center}:root .has-text-align-left{text-align:left}:root .has-text-align-right{text-align:right}.has-fit-text{white-space:nowrap!important}#end-resizable-editor-section{display:none}.aligncenter{clear:both}.items-justified-left{justify-content:flex-start}.items-justified-center{justify-content:center}.item",
+   "job_id": "https://www.ryltech.co.il/he/jobs/#111",
+   "location": "אשקלון | המשרה",
+   "posted_date": "",
+   "title": "משרות פתוחות ברילטק",
+   "url": "https://www.ryltech.co.il/he/jobs/#111"
+  }
+ ],
  "SAP": [
   {
    "ats_platform": "scrape",
@@ -10277,6 +10349,52 @@
    "posted_date": "",
    "title": "(Senior) AI Architect - PMT Solutions (f/m/d)",
    "url": "https://jobs.volkswagen-group.com/cariad/job/Berlin-%28Senior%29-AI-Architect-PMT-Solutions-%28fmd%29-10587/1258809401/"
+  }
+ ],
+ "Skyhawk Security": [
+  {
+   "ats_platform": "scrape",
+   "company": "Skyhawk Security",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://skyhawk.security/jobs/junior-backend-developer-golangjava/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Junior Backend Developer (GoLang\\Java)",
+   "url": "https://skyhawk.security/jobs/junior-backend-developer-golangjava/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Skyhawk Security",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://skyhawk.security/jobs/senior-golang-backend-engineer/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Senior GoLang Backend Engineer",
+   "url": "https://skyhawk.security/jobs/senior-golang-backend-engineer/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Skyhawk Security",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://skyhawk.security/jobs/data-engineer/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Data Engineer",
+   "url": "https://skyhawk.security/jobs/data-engineer/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Skyhawk Security",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://skyhawk.security/jobs/data-engineer/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Senior DevOps",
+   "url": "https://skyhawk.security/jobs/data-engineer/"
   }
  ],
  "SolarEdge": [
