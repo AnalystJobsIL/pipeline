@@ -700,3 +700,39 @@ def test_linkedin_slug_attribution(company, url, flagged):
     digest, board and email."""
     from pipeline.company_identity import url_names_other_company
     assert url_names_other_company(company, url) is flagged
+
+
+def test_a_page_that_does_not_claim_to_list_jobs_cannot_activate_a_row():
+    """`SCRAPE_ASSUME_IL=1` makes the hunt treat every card on a page as an Israel role, so
+    a navigation menu scores exactly like a board: `iai.co.il/solution/research-academy-space`
+    "verified 6 IL" whose titles were "Design and Integration", "Domain Operations" and
+    "Press Releases", and it was activated twice — once by the hunt, once by the extract-gap
+    repair. Adcore's row was a BLOG post whose three "jobs" were article titles."""
+    from pipeline.company_identity import looks_like_a_job_listing_page as ok
+    for bad in ("https://www.iai.co.il/solution/research-academy-space/",
+                "https://www.adcore.com/blog/chatgpt-search-engine-optimization/",
+                "https://www.cognifit.com/research",
+                "https://www.ginasoftware.com/solutions/search-and-rescue-software/",
+                "https://www.ey.com/en_us/israel"):
+        assert not ok(bad), bad
+    for good in ("https://www.tevapharm.com/your-career/",
+                 "https://www.comeet.com/jobs/hub-technologies/07.00F",
+                 "https://careers.amd.com/careers-home/jobs?location=Israel",
+                 "https://jobs.apple.com/en-us/search?location=israel-ISR",
+                 "https://www.xtend.me/working-at-xtend",
+                 "https://orbia-orbia-precision-agriculture-netafim.teamtailor.com",
+                 "https://edel.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX",
+                 "https://servicenow.willhire.co/"):
+        assert ok(good), good
+
+
+def test_every_active_scrape_row_points_at_something_that_claims_to_list_jobs():
+    import csv
+    import os
+    from pipeline.company_identity import looks_like_a_job_listing_page as ok
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    bad = [r["company_name"] for r in csv.DictReader(
+        open(os.path.join(repo, "companies.csv"), encoding="utf-8"))
+        if r["active"] == "true" and r["ats_platform"] == "scrape"
+        and not ok(r["api_url"] or "")]
+    assert not bad, f"active scrape rows on a page that is not a listings page: {bad}"

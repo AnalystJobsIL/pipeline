@@ -87,7 +87,11 @@ import re as _re
 
 HOSTS = (
     "linkedin.", "indeed.", "glassdoor.", "secrethunter.", "t.me/",
-    "builtin.com", "ziprecruiter.", "monster.", "dice.com", "simplyhired.",
+    # builtin runs a domain PER CITY — builtinnyc.com, builtinchicago.org, builtinla.com,
+    # builtinaustin.com, builtinboston.com, builtinseattle.com, builtinsf.com, builtincolorado.com
+    "builtin.com", "builtinnyc.", "builtinchicago.", "builtinla.", "builtinaustin.",
+    "builtinboston.", "builtinseattle.", "builtinsf.", "builtincolorado.",
+    "ziprecruiter.", "monster.", "dice.com", "simplyhired.",
     "careerbuilder.", "wellfound.com", "angel.co", "startup.jobs", "themuse.com",
     "jobvite.com/search", "talent.com", "jooble.", "neuvoo.", "adzuna.",
     "getclera.com", "welcometothejungle.com", "techaviv.com", "secretjobs.ai", "jobs.techaviv", "drushim.co.il", "alljobs.co.il", "jobmaster.co.il", "ethosia.", "gotfriends.",

@@ -29,6 +29,7 @@ from pipeline.aggregators import is_aggregator
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 from pipeline.company_identity import is_foreign
+from pipeline.company_identity import looks_like_a_job_listing_page
 
 TODAY = dt.date.today().isoformat()
 
@@ -225,14 +226,16 @@ def main():
             fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
             for fr in fresh:
                 if fr and fr[0] == name:
-                    if verdict.startswith("cracked") and is_foreign(name, got[1]):
+                    if verdict.startswith("cracked") and (
+                            is_foreign(name, got[1])
+                            or not looks_like_a_job_listing_page(got[1])):
                         # Identity gate: a cracked page with real Israel roles is still the
                         # WRONG page if it belongs to someone else (FairFly/fireflyspace,
                         # COTI/jobs.citi.com). Document where we looked; do not activate.
                         fr[5] = _note_replace(
                             fr[5], "crack-walled",
-                            f"crack-walled {TODAY}: page belongs to another company "
-                            f"({got[1][:40]})")
+                            f"crack-walled {TODAY}: {got[1][:40]} is not this "
+                            f"company's listings page")
                     elif verdict.startswith("cracked"):
                         plat, lu = got
                         fr[1], fr[2], fr[3] = plat, "", lu

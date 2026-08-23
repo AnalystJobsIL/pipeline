@@ -344,3 +344,33 @@ def url_names_other_company(company: str, url: str) -> bool:
     words = [w for w in re.findall(r"[a-z0-9]{4,}", (company or "").lower())
              if w not in _STOP]
     return not any(w in slug for w in words)
+
+
+# Says-so-in-the-path: a page that lists openings almost always announces it in the URL.
+_LISTING_PATH = re.compile(
+    r"career|job|position|opening|vacanc|hiring|recruit|employment|talent|"
+    r"opportunit|join-?us|work(ing)?-?(at|with|for)|drushim|apply|"
+    r"%d7%9e%d7%a9%d7%a8|משרות", re.I)
+# ...or it is hosted by something whose entire business is listing openings.
+_LISTING_HOST = re.compile(
+    r"teamtailor\.com|candidateexperience|willhire\.|myworkdayjobs|greenhouse\.io|"
+    r"lever\.co|ashbyhq\.com|comeet\.co|smartrecruiters\.com|workable\.com|"
+    r"recruitee\.com|breezy\.hr|bamboohr\.com|applytojob\.com|jazz\.co|"
+    r"eightfold\.ai|icims\.com|successfactors|taleo\.net|oraclecloud\.com", re.I)
+
+
+def looks_like_a_job_listing_page(url: str) -> bool:
+    """Does this URL even claim to be a listings page?
+
+    An activation gate, not a verdict about a company. `SCRAPE_ASSUME_IL=1` makes the hunt
+    treat every card on a page as an Israel role, so a page of navigation links scores as
+    well as a real board: `iai.co.il/solution/research-academy-space/` "verified 6 IL" whose
+    titles were "Design and Integration", "Domain Operations" and "Press Releases". Of 417
+    active scrape rows only ten fail this test, and six of those ten are a blog post, a
+    product page, a research page and a country landing page.
+    """
+    p = urllib.parse.urlparse(url or "")
+    if not p.netloc:
+        return False
+    return bool(_LISTING_HOST.search(p.netloc) or _LISTING_PATH.search(p.netloc)
+                or _LISTING_PATH.search(p.path + "?" + (p.query or "")))

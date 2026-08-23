@@ -34,7 +34,7 @@ def main():
 
     from scrape_universal import scrape
     from pipeline.israel import is_israel_job
-    from pipeline.company_identity import is_foreign
+    from pipeline.company_identity import is_foreign, looks_like_a_job_listing_page
     from pipeline.aggregators import is_aggregator
 
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
@@ -69,6 +69,11 @@ def main():
             still += 1
             print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but the URL is an "
                   f"aggregator ({r[3][:44]}) — not activated", flush=True)
+            il = []
+        if il and not looks_like_a_job_listing_page(r[3]):
+            still += 1
+            print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but {r[3][:40]} "
+                  f"is not a listings page — not activated", flush=True)
             il = []
         if il and is_foreign(r[0], r[3]):
             still += 1

@@ -43,7 +43,9 @@ ALLOWED_ORPHANS = {
 POOL = (r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|host documented|"
         r"probe-woken|scanned; no open|unreachable|aggregator URL|no listing found|"
         r"redirects to|scanned via brightdata|empty-but-suspect|needs re-resolution|"
-        r"needs manual resolution|dark-triage")
+        # url-cleared / url-flagged: the stored address was an aggregator or another
+        # company's page. The row needs the hunt MORE than most, not less.
+        r"needs manual resolution|dark-triage|url-cleared|url-flagged")
 # Terminal states: no re-check pool should ever look at these again.
 #   alias-of — a second row for a company we already scan at the SAME url. Not a
 #   dark company; the opposite, a company covered twice (roles listed under both

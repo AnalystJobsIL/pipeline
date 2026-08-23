@@ -39,6 +39,7 @@ from resolve_llm import _ATS_HINT, _PROMPT, _ask_claude
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 from pipeline.company_identity import is_foreign
+from pipeline.company_identity import looks_like_a_job_listing_page
 from pipeline.verdicts import in_pool
 
 _LLM = {"used": 0}
@@ -296,15 +297,17 @@ def main():
                 for fr in fresh:
                     if not fr or fr[0] != name or len(fr) < 6:
                         continue
-                    if verdict == "recovered" and (is_foreign(name, api or "")
-                                                   or is_foreign(name, r[3] or "")):
+                    if verdict == "recovered" and (
+                            is_foreign(name, api or "") or is_foreign(name, r[3] or "")
+                            or (plat == "scrape"
+                                and not looks_like_a_job_listing_page(api or r[3] or ""))):
                         # Identity gate: rendering the STORED url and finding roles proves
                         # roles exist there, not that they are this company's. The stored
                         # url of a dark row is often the hunt's best GUESS.
                         fr[5] = _note_replace(
                             fr[5], "deep-validated",
-                            f"deep-validated {TODAY}: page belongs to another company "
-                            f"({(api or r[3])[:40]})")
+                            f"deep-validated {TODAY}: {(api or r[3] or '')[:40]} is not "
+                            f"this company's listings page")
                     elif verdict == "recovered":
                         fr[1], fr[2], fr[3] = plat, tok, api
                         fr[4] = "true"

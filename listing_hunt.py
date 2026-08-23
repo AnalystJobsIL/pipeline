@@ -32,6 +32,7 @@ from audit_empty_rows import AGG
 from pipeline.aggregators import is_aggregator
 from pipeline.recruiters import is_recruiter
 from pipeline.company_identity import is_foreign
+from pipeline.company_identity import looks_like_a_job_listing_page
 from resolve_llm import _ask_claude
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
@@ -238,7 +239,10 @@ def main():
                # the row from the hunt pool forever.
                and re.search(r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|"
                              r"host documented|probe-woken|scanned; no open|unreachable|"
-                             r"aggregator URL|no listing found|redirects to|scanned via brightdata|empty-but-suspect|needs re-resolution|needs manual resolution", r[5] or "")
+                             r"aggregator URL|no listing found|redirects to|scanned via brightdata|empty-but-suspect|needs re-resolution|needs manual resolution|"
+                             # the stored address was an aggregator or another company's
+                             # page: these rows need the hunt more than most
+                             r"url-cleared|url-flagged", r[5] or "")
                and not re.search(r"defunct|domain-dead", r[5] or "")
                and not is_recruiter(r[0])   # agencies are never activated
                # triage proved page-empty rows have a live page with no roles — the daily
@@ -295,10 +299,23 @@ def main():
                 for fr in fresh:
                     if not fr or fr[0] != name or len(fr) < 6:
                         continue
-                    if verdict == "found":
+                    if verdict == "found" and not looks_like_a_job_listing_page(url):
+                        # SCRAPE_ASSUME_IL makes every card on the page an "Israel role", so
+                        # a nav menu scores like a board: iai.co.il/solution/
+                        # research-academy-space "verified 6 IL" — "Domain Operations",
+                        # "Press Releases". A listings page says so in its URL.
+                        fr[5] = _note_replace(
+                            fr[5], "listing-hunt",
+                            f"listing-hunt {TODAY}: {url[:44]} is not a listings page "
+                            f"({n_il} card-shaped items); no listing found")
+                    elif verdict == "found":
                         fr[1], fr[2], fr[3] = "scrape", "", url
                         fr[4] = "true"
-                        fr[5] = f"listing-hunt {TODAY}: verified {n_il} IL via {url[:60]}"
+                        # replace only our own segment: the found-branch used to overwrite
+                        # the cell and threw away the triage mode that routed the row here
+                        fr[5] = _note_replace(
+                            fr[5], "listing-hunt",
+                            f"listing-hunt {TODAY}: verified {n_il} IL via {url[:60]}")
                     elif verdict == "nolisting" and url:
                         # Document the candidate page so a human (and the next hunt) can see
                         # where we looked — but NEVER as the row's address when it provably
