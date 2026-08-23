@@ -299,6 +299,20 @@ def main():
                         fr[4] = "true"
                         fr[5] = f"listing-hunt {TODAY}: verified {n_il} IL via {url[:60]}"
                     elif verdict == "nolisting" and url:
+                        # Document the candidate page so a human (and the next hunt) can see
+                        # where we looked — but NEVER as the row's address when it provably
+                        # belongs to someone else. QuantLR's best candidate was
+                        # quantlab.com (a US trading firm) and FairFly's was
+                        # fireflyspace.com; persisted, that reads as data, and every later
+                        # tool honestly re-tests the wrong company's careers page. Note it
+                        # in the note instead, which is text, not an endpoint.
+                        if is_foreign(name, url):
+                            base = re.sub(r"\s\|\s?listing-hunt [^|]*", "", fr[5])
+                            v = (f"listing-hunt {TODAY}: best candidate {url[:44]} belongs "
+                                 f"to another company; no listing found")
+                            room = 220 - len(v) - 3
+                            fr[5] = (f"{base[:room]} | {v}" if room > 20 else v)
+                            continue
                         fr[3] = url                       # persist the candidate page
                         base = re.sub(r"\s\|\s?listing-hunt [^|]*", "", fr[5])
                         # trim the BASE, never the verdict (slicing the whole string cut the

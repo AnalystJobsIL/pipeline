@@ -601,3 +601,19 @@ def test_no_two_active_rows_scan_the_same_board():
             r["company_name"])
     dupes = {k: v for k, v in seen.items() if len(v) > 1}
     assert not dupes, f"same company, same board, more than one active row: {list(dupes.values())[:6]}"
+
+
+def test_the_hunt_never_stores_another_company_s_page_as_the_row_address():
+    """The hunt persists its best candidate so a human can see where it looked. But when
+    that candidate provably belongs to someone else — QuantLR's was quantlab.com, a US
+    trading firm; FairFly's was fireflyspace.com — storing it in `api_url` turns a guess
+    into data, and every later tool honestly re-tests the wrong company's careers page and
+    records another confident verdict about it. HANDOFF §1c(b): never persist an unverified
+    address. The note is text; the note is where it belongs."""
+    import inspect
+    import listing_hunt
+    src = inspect.getsource(listing_hunt.main)
+    body = src[src.index('elif verdict == "nolisting"'):]
+    guard = body.index("is_foreign(name, url)")
+    persist = body.index("fr[3] = url")
+    assert guard < persist, "the identity check must gate the address write, not follow it"
