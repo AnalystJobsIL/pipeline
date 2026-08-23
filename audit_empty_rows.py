@@ -35,6 +35,7 @@ _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 from pipeline.aggregators import HOSTS as AGG, is_aggregator   # single source of truth
 from pipeline.atomic import write_csv_rows
+from pipeline.company_identity import is_foreign
 from pipeline.verdicts import in_pool
 
 # signature -> (platform, api_url template)
@@ -250,6 +251,13 @@ def main():
         except Exception as e:  # noqa: BLE001
             still.append((name, ""))
             print(f"  [xx] {name}: {plat}:{tok} found but verify failed: {str(e)[:60]}", flush=True)
+            continue
+        if is_foreign(name, api or ""):
+            # Identity gate: this tool SEARCHES for a board, which is exactly how you end up
+            # holding another company's — and it verifies, with real jobs. Refuse it.
+            still.append((name, ""))
+            print(f"  [XX] {name}: {plat} {tok} verified {n_il} IL but the board belongs to "
+                  f"another company ({(api or '')[:44]})", flush=True)
             continue
         fixed.append((name, plat, n_all, n_il))
         print(f"  [OK] {name}: {plat} {tok} -> {n_all} jobs / {n_il} IL", flush=True)

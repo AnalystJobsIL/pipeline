@@ -33,6 +33,7 @@ def main():
 
     from scrape_universal import scrape
     from pipeline.israel import is_israel_job
+    from pipeline.company_identity import is_foreign
 
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [r for r in rows if r and len(r) >= 6 and r[4] == "false"
@@ -53,6 +54,16 @@ def main():
             jobs = []
             print(f"  [ERR] {r[0][:26]}: {str(e)[:50]}", flush=True)
         il = [j for j in jobs if is_israel_job(j)]
+        # "There are Israel jobs on this page" is not "these are THIS company's jobs".
+        # The stored URL of a dark row is often the hunt's BEST GUESS, deliberately kept so
+        # a human can check where we looked — FairFly's was fireflyspace.com, and this
+        # repair activated it off 25 Firefly Aerospace roles. The hunt has gated on identity
+        # since 2026-08-23; this path had not.
+        if il and is_foreign(r[0], r[3]):
+            still += 1
+            print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but the page "
+                  f"belongs to another company ({r[3][:44]}) — not activated", flush=True)
+            il = []
         if il:
             fixed += 1
             print(f"  [OK]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL", flush=True)
@@ -62,7 +73,14 @@ def main():
                     if fr and fr[0] == r[0] and len(fr) >= 6:
                         fr[1], fr[2], fr[3] = "scrape", "", r[3]
                         fr[4] = "true"
-                        fr[5] = f"repair {TODAY}: extract-gap fixed via LLM tier; {len(il)} IL"
+                        # append, never overwrite: the note is a shared append-log and a
+                        # wholesale rewrite drops every other tool's verdict segment (the
+                        # documented #1 bug class here). Keep the tail that still fits.
+                        seg = (f"repair {TODAY}: extract-gap fixed via LLM tier; "
+                               f"{len(il)} IL")
+                        base = (fr[5] or "").strip()
+                        room = 220 - len(seg) - 3
+                        fr[5] = (f"{base[:room]} | {seg}" if base and room > 20 else seg)
                 write_csv_rows("companies.csv", fresh)
                 # cache immediately so the next digest sees it without waiting for a refresh
                 import json

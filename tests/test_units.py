@@ -441,3 +441,34 @@ def test_stage_stamps_are_readable_by_the_next_stage(tmp_path, monkeypatch):
     assert stages.age_days("repair") == 0
     assert stages.require("repair") is True
     assert "repair: " in stages.summary() and "rows=7" in stages.summary()
+
+
+# --- every path that flips a row to active must first check WHOSE page it verified ------
+def test_every_activation_path_checks_company_identity():
+    """`listing_hunt` learned on 2026-08-23 that "there are Israel jobs here" is not "these
+    are THIS company's jobs" — FairFly activated off fireflyspace.com, COTI off
+    jobs.citi.com. Four other tools flip `active` to true and only one had the gate:
+    `repair_extract_gap` re-activated FairFly off the very same stored URL hours later.
+    A wrong activation is worse than a dark row: the roles reach the board under a name
+    that never posted them, and every later verdict honestly confirms the wrong page."""
+    import ast
+    import glob
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ungated = []
+    for path in glob.glob(os.path.join(root, "*.py")):
+        src = open(path, encoding="utf-8").read()
+        try:
+            tree = ast.parse(src)
+        except SyntaxError:
+            continue
+        activates = any(
+            isinstance(n, ast.Assign)
+            and any(isinstance(t, ast.Subscript) and isinstance(t.slice, ast.Constant)
+                    and t.slice.value == 4 for t in n.targets)
+            and isinstance(n.value, ast.Constant) and n.value.value == "true"
+            for n in ast.walk(tree))
+        if activates and "company_identity" not in src:
+            ungated.append(os.path.basename(path))
+    assert not ungated, (f"these tools activate a company row without an identity check: "
+                         f"{ungated}")

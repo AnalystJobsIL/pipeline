@@ -37,6 +37,7 @@ from bd_rescue import _load_secrets, unlock
 from pipeline.recruiters import is_recruiter
 from resolve_llm import _ATS_HINT, _PROMPT, _ask_claude
 from pipeline.atomic import write_csv_rows
+from pipeline.company_identity import is_foreign
 from pipeline.verdicts import in_pool
 
 _LLM = {"used": 0}
@@ -294,7 +295,17 @@ def main():
                 for fr in fresh:
                     if not fr or fr[0] != name or len(fr) < 6:
                         continue
-                    if verdict == "recovered":
+                    if verdict == "recovered" and (is_foreign(name, api or "")
+                                                   or is_foreign(name, r[3] or "")):
+                        # Identity gate: rendering the STORED url and finding roles proves
+                        # roles exist there, not that they are this company's. The stored
+                        # url of a dark row is often the hunt's best GUESS.
+                        base = re.sub(r"(^|\s\|\s)deep-validated \d{4}-\d{2}-\d{2}:[^|]*",
+                                      "", fr[5] or "").strip(" |")
+                        fr[5] = ((base + " | " if base else "")
+                                 + f"deep-validated {TODAY}: page belongs to another "
+                                   f"company ({(api or r[3])[:40]})")[:220]
+                    elif verdict == "recovered":
                         fr[1], fr[2], fr[3] = plat, tok, api
                         fr[4] = "true"
                         fr[5] = f"re-audit {TODAY}: deep-verified {n_all}/{n_il} IL (was dark)"
