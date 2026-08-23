@@ -541,3 +541,16 @@ def test_cache_merge_keeps_what_the_other_workflow_cached(tmp_path):
     assert out["D"] == [4], "this run's new company must survive"
     assert out["C"] == [3], "a company we never touched must not be deleted"
     assert out["E"] == [5], "another workflow's new company must not be deleted"
+
+
+def test_oraclehcm_asks_for_israel_instead_of_hoping_it_is_in_the_first_500():
+    """`fetch_oraclehcm` walked the newest 500 requisitions and stopped. JPMorganChase
+    posts 7,354, so its Israel roles were nowhere near that window and the fetcher reported
+    a confident zero — the same shape as a dead source. The CE API takes `keyword=`, the way
+    Workday takes `searchText`, so the fetcher runs that pass too (Dell went 2 -> 8 Israel
+    roles). Structural check: the query must be built, not just intended."""
+    import inspect
+    from pipeline import fetchers
+    src = inspect.getsource(fetchers.fetch_oraclehcm)
+    assert "keyword=Israel" in src, "the Israel keyword pass is gone"
+    assert "seen_ids" in src, "the two passes overlap; they must dedupe by requisition id"

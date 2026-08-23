@@ -561,14 +561,29 @@ def fetch_oraclehcm(row):
     site = ms.group(1) if ms else "CX"
     if "expand=" not in base:
         base = base.replace("?onlyData=true", "?onlyData=true&expand=requisitionList.secondaryLocations")
-    jobs, offset, total = [], 0, None
-    while offset < 500:
-        u = f"{base},limit=100,offset={offset},sortBy=POSTING_DATES_DESC"
+    # Two passes, deduped by requisition id:
+    #   1. the newest 500 postings (what this fetcher has always done), and
+    #   2. `keyword=Israel`, which the CE API supports the same way Workday supports
+    #      searchText. Without it a large board is simply out of reach: JPMorganChase
+    #      posts 7,354 requisitions, so its Israel roles are nowhere near the first 500,
+    #      and the fetcher reported a confident zero. Dell: 427 total, 2 in Israel.
+    # Keyword hits from other countries are dropped downstream by the Israel filter.
+    jobs, seen_ids, offset, total = [], set(), 0, None
+    pages = [(f"{base},limit=100,offset={o},sortBy=POSTING_DATES_DESC", False)
+             for o in range(0, 500, 100)]
+    pages += [(f"{base},keyword=Israel,limit=100,offset={o},sortBy=POSTING_DATES_DESC", True)
+              for o in range(0, 300, 100)]
+    for u, _is_kw in pages:
         data = http.get_json(u)
         it = (data.get("items") or [{}])[0]
         total = it.get("TotalJobsCount") if total is None else total
         reqs = it.get("requisitionList", []) or []
+        if not reqs:
+            continue
         for p in reqs:
+            if str(p.get("Id") or "") in seen_ids:
+                continue
+            seen_ids.add(str(p.get("Id") or ""))
             locs = [str(p.get("PrimaryLocation") or "")]
             locs += [str(x.get("Name") or "") for x in (p.get("secondaryLocations") or [])]
             jobs.append({
@@ -582,9 +597,6 @@ def fetch_oraclehcm(row):
                 "job_id": str(p.get("Id") or ""),
                 "description": _snippet(p.get("ExternalDescriptionStr") or p.get("ShortDescriptionStr")),
             })
-        offset += 100
-        if not reqs or (total is not None and offset >= int(total)):
-            break
     return jobs
 
 
