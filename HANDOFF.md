@@ -202,6 +202,22 @@ scrape-refresh — so the board shows the old strings until tomorrow morning.
   FIRST time is board-only — 336 companies were activated overnight and their whole back
   catalogue would otherwise have read as "posted in the last 48h".
 
+## State at handoff (2026-08-23 07:35 UTC, verified against the published product)
+
+| | |
+|---|---|
+| registry | 1,189 rows · **846 active** · 343 parked (32 of them `alias-of` duplicates parked today) |
+| today's digest | scanned **846** companies, **1** failed (was 3-4 every run), **163** LLM calls (was 34) |
+| classifier | 71 accepted → 54 after merge → **11 emailed** (1 posted in the last 48h + 10 at 9 newly covered companies) |
+| board | **56 live roles**, every one with researched company facts; archive **49** |
+| store | 105 matched roles, **98 with a real JD (93%)**, 29 sent, 919 firmographics |
+| descriptions | 15 fetched inline before classification, 14 into the scrape cache, 3 backfilled into the store at any age |
+| discovery | Indeed **33 jobs** (0/day for the previous five), LinkedIn 30 + 78 targeted, Telegram quiet; 9 agencies rejected at the source |
+| guards | 122 unit assertions (was 71), all green; `check_invariants` clean with 2 informational warnings |
+
+The two remaining identity warnings are ClearML (`clear.ml` — the TLD carries the name) and
+Secret Double Octopus (a JVP portfolio board scoped by slug). Both verified by hand.
+
 ## What happened to today's digest runs
 
 The 05:00 scheduled run **failed** — it is still in the Actions history, and it is the one
