@@ -391,10 +391,18 @@ def main():
                         # Identity gate: a cracked page with real Israel roles is still the
                         # WRONG page if it belongs to someone else (FairFly/fireflyspace,
                         # COTI/jobs.citi.com). Document where we looked; do not activate.
+                        #
+                        # FIXED LENGTH, like its two siblings below. This is the PRIMARY
+                        # refusal path - every `cracked-api`/oraclehcm case and every
+                        # loose-tenant iCIMS case lands here - and it was left at 101 chars
+                        # while the others were cut to 49. Measured over the real 25-row
+                        # crack pool (mean note 203/220): the long form evicts another
+                        # tool's `unsupported ATS` token from 22 of 25 rows against 13 for
+                        # the short one, and one all-refusing night collapses this tool's
+                        # own pool from 25 to 3. The URL is already in column 3.
                         fr[5] = _note_replace(
                             fr[5], "crack-walled",
-                            f"crack-walled {TODAY}: {got[1][:40]} is not this "
-                            f"company's listings page")
+                            f"crack-walled {TODAY}: not this company's board")
                     elif verdict.startswith("cracked"):
                         plat, lu = got
                         fr[1], fr[2], fr[3] = plat, "", lu

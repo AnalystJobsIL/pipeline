@@ -628,3 +628,50 @@ def test_a_tenant_mismatch_alone_must_not_block_an_ats_row():
     # and is_foreign, the thing it would have replaced, passes all of them by design
     assert not [r for r in active_ats if is_foreign(r[0], r[3])], (
         "is_foreign is permissive on ATS hosts on purpose; see this test's docstring")
+
+
+def test_every_crack_walled_refusal_note_is_short_and_fixed_length():
+    """The three refusal branches share one 220-char cell with every other tool's verdict,
+    and `notes.append` evicts whole OLD segments to make room. Two of them were carefully cut
+    to 49 chars; the third - the PRIMARY refusal path, taking every `cracked-api`/oraclehcm
+    case and every loose-tenant iCIMS case - was left at 101 and nobody noticed.
+
+    Measured over the real 25-row crack pool (mean note 202/220): the long form evicts
+    another tool's `unsupported ATS` token from 22 of 25 rows against 13 for the short form,
+    and one all-refusing night collapsed this tool's own pool from 25 to 3. The URL is
+    already in column 3; repeating it in the note buys nothing and costs a row's coverage."""
+    import ast
+    import inspect
+    import crack_walled
+    src = inspect.getsource(crack_walled.main)
+    tree = ast.parse(src.lstrip())
+    long_ones = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        if not (isinstance(node.func, ast.Name) and node.func.id == "_note_replace"):
+            continue
+        seg = node.args[2] if len(node.args) > 2 else None
+        if seg is None:
+            continue
+        txt = ast.unparse(seg)
+        # a segment that interpolates a URL or a netloc is variable-length and long
+        if "got[1]" in txt or "netloc" in txt or "urlparse" in txt:
+            long_ones.append(txt[:70])
+    assert not long_ones, (
+        "these crack-walled note segments interpolate a URL and so are long and "
+        "variable-length: %s" % long_ones)
+
+
+def test_the_alarm_file_does_not_amplify_itself():
+    """`alarms_state` re-emits the ladder lines it reads back from
+    `cloud_state/registry_alarms.json`, and `--census` writes `alarms()` back to that same
+    file. Without a prefix test each run re-reads its own output and prepends another
+    "(ladder, as of ...)": 2 alarms, then 3, then 4, unbounded - into a git-tracked state
+    file, and into the daily email once the mail hook lands. Measured before the fix:
+    2 -> 3 -> 4 -> 5. After: 2 -> 3 -> 3 -> 3."""
+    import inspect
+    import registry_health
+    src = inspect.getsource(registry_health.alarms_state)
+    assert 'startswith("(ladder, as of' in src, (
+        "alarms_state re-emits its own re-emissions; the alarm file grows without bound")

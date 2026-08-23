@@ -444,8 +444,13 @@ def alarms_state(rows=None, prev=None):
         if age > 2:
             out.append(f"registry ladder status is {age}d old ({ALARMS}) — the workflow that "
                        f"refreshes it has not run")
+        # Re-emit the ladder lines this file recorded - but NEVER a line that is itself a
+        # re-emission. `--census` writes `alarms()` back to this same file, so without the
+        # prefix test each run re-reads its own output and prepends another
+        # "(ladder, as of ...)": 2 alarms, then 3, then 4, unbounded, into a git-tracked
+        # state file and (once the mail hook lands) into the daily email.
         out += [f"(ladder, as of {stamp['date']}) {x}" for x in (stamp.get("alarms") or [])
-                if "rung DOWN" in x]
+                if "rung DOWN" in x and not x.startswith("(ladder, as of")]
     except Exception:  # noqa: BLE001
         pass
     return out
