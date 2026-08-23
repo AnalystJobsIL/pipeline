@@ -1791,7 +1791,7 @@ def test_the_guard_count_never_falls():
         if fn.startswith("test_") and fn.endswith(".py"):
             src = open(os.path.join(here, fn), encoding="utf-8").read()
             n += len(re.findall(r"^def (test_\w+)", src, re.M))
-    FLOOR = 93
+    FLOOR = 96
     assert n >= FLOOR, (
         "%d test functions collected, floor is %d. If you did not delete tests on purpose, "
         "someone committed a stale copy of tests/test_units.py over another lane's guards — "
@@ -1856,3 +1856,48 @@ def test_no_crack_walled_branch_can_write_an_unconfirmed_url():
     assert "is True" in g, (
         "an UNREADABLE page (None) must not pass: novrfy writes an address that "
         "listing_hunt's fast-path later activates on")
+
+
+def test_a_tenant_mismatch_alone_must_not_block_an_ats_row():
+    """THE reason `is_foreign` returns False for every ATS host, measured.
+
+    Three independent reviewers recommended the same root-cause fix: stop
+    `company_identity.is_foreign` early-returning False on ATS hosts, and move a near-equality
+    tenant rule into shared plumbing. It was built, wired into `listing_hunt`'s fast path and
+    `deep_validate`'s recovered branch, measured against the live registry - and REVERTED,
+    because it rejects **36 ACTIVE rows**, and they are overwhelmingly legitimate acquisitions
+    and parent-company boards that this repo names by name:
+
+        Momentis Surgical -> greenhouse/memic          (ARCHITECTURE section 2 cites this one)
+        Itamar Medical    -> zoll.wd5.myworkdayjobs
+        Habana Labs (Intel) -> intel.wd1.myworkdayjobs
+        VMware (Broadcom) -> broadcom.wd1.myworkdayjobs
+        Splunk (Cisco)    -> cisco.wd5.myworkdayjobs
+        HP Indigo         -> hp.wd5.myworkdayjobs
+
+    A tenant that names the acquirer is INHERITANCE, not theft, and `page_mentions_company`
+    cannot separate the two either - the acquirer's board does not say the subsidiary's name.
+    So the permissiveness is deliberate, and any future attempt to "fix" `is_foreign` has to
+    carry a second signal. The predicate survives as `audit_empty_rows.tenant_is_this_company`
+    and is used ONLY in `crack_walled._ok_to_write`, where `_page_names_company(...) is True`
+    is already required and therefore no new false negative is possible.
+
+    This test exists so the next reviewer who proposes that fix finds the measurement first."""
+    import csv
+    import urllib.parse
+    from audit_empty_rows import tenant_is_this_company
+    from pipeline.company_identity import ATS_HOST, is_foreign
+
+    rows = [r for r in csv.reader(open("companies.csv", encoding="utf-8"))
+            if r and len(r) >= 6][1:]
+    active_ats = [r for r in rows if r[4] == "true" and (r[3] or "").startswith("http")
+                  and ATS_HOST.search(urllib.parse.urlparse(r[3]).netloc or "")]
+    would_block = [r[0] for r in active_ats if not tenant_is_this_company(r[0], r[3])]
+    assert len(active_ats) > 300, "sanity: most active rows are on an ATS host"
+    assert len(would_block) > 20, (
+        "the tenant rule no longer rejects a large set of ACTIVE rows. If that is because "
+        "the rule got smarter, good - re-measure and update this test. If it is because it "
+        "was quietly widened into an activation gate, do not: it blocks real acquisitions.")
+    # and is_foreign, the thing it would have replaced, passes all of them by design
+    assert not [r for r in active_ats if is_foreign(r[0], r[3])], (
+        "is_foreign is permissive on ATS hosts on purpose; see this test's docstring")

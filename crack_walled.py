@@ -26,7 +26,7 @@ import urllib.parse
 import urllib.request
 
 from deep_validate import Renderer, ddg
-from audit_empty_rows import AGG, verify
+from audit_empty_rows import AGG, verify, tenant_is_this_company
 from pipeline.aggregators import is_aggregator
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
@@ -325,6 +325,8 @@ def _ok_to_write(name, url):
     """
     if is_foreign(name, url) or not looks_like_a_job_listing_page(url):
         return False
+    if not tenant_is_this_company(name, url):
+        return False                      # ATS tenant belongs to someone else
     return _page_names_company(name, url) is True
 
 

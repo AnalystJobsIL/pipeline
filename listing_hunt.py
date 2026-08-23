@@ -127,6 +127,13 @@ def hunt_one(name, seed, documented=False, mode=""):
             il = [j for j in (scrape(name, seed) or []) if is_israel_job(j)]
         except Exception:  # noqa: BLE001
             il = []
+        # NOTE: `is_foreign` is a constant False on every ATS host, so this is a weak gate
+        # here - 17 rows carrying a fast-path token today have a walled-ATS address. A tenant
+        # near-equality check WAS tried and reverted: it rejects 36 ACTIVE rows that are
+        # legitimate acquisitions this repo names by name (Momentis Surgical really does post
+        # under `memic`, Habana Labs under `intel`, Itamar Medical under `zoll`). An acquirer
+        # tenant reached from a URL already documented FOR THIS COMPANY is inheritance, not
+        # theft, and `page_mentions_company` cannot separate them either. docs/BACKLOG.md 21.
         if il and not is_foreign(name, seed):
             return ("found", seed, len(il), "fast-path")
     rebrand = ""

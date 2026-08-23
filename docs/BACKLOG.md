@@ -518,3 +518,52 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     `DEEP_BD_SEARCH_CAP`** — lane: `registry`, one line. And per item 10, `deep_validate._BD`
     is per-process module state, so the Sunday audit does NOT share a counter with Saturday's
     deep-validate however it is named.
+
+## The root cause, and why the obvious fix is wrong — registry lane, 2026-08-24 (wave 4)
+
+21. **`company_identity.is_foreign` returns False for EVERY ATS host, and that is
+    deliberate** — lane: shared plumbing, but **do not "fix" it the obvious way**.
+
+    Three independent reviewers converged on the same recommendation: make `is_foreign` see
+    the subdomain tenant, so that clauses 2 and 3 of the activation rule stop being inert on
+    432 of the 1,199 rows. The evidence for the problem is real —
+    `NanoLock Security -> gen.wd1.myworkdayjobs.com` is Gen Digital's tenant, and `verdict()`
+    itself returns `mismatch` while `is_foreign` overrides it to False.
+
+    **It was built, wired in, and reverted, because it rejects 36 ACTIVE rows and they are
+    legitimate:**
+
+        Momentis Surgical -> greenhouse/memic          (ARCHITECTURE section 2 cites this one)
+        Itamar Medical    -> zoll.wd5.myworkdayjobs
+        Habana Labs (Intel) -> intel.wd1.myworkdayjobs
+        VMware (Broadcom) -> broadcom.wd1.myworkdayjobs
+        Splunk (Cisco)    -> cisco.wd5.myworkdayjobs
+        HP Indigo, Samsung/sec, Yahoo/ouryahoo, Rakuten Viber, Flex/flextronics, ... (36)
+
+    A tenant naming the acquirer is **inheritance, not theft**, and `page_mentions_company`
+    cannot separate the two either: the acquirer's board does not say the subsidiary's name.
+    That is the whole reason the permissiveness exists, and it is why every downstream gate
+    in this lane is a heuristic rather than a rule.
+
+    **So the fix needs a second signal, not a tighter string match.** The two candidates,
+    both real work:
+    (a) an explicit `acquired-by` / `posts-under` column or note token, so an inherited
+        tenant is *declared* rather than inferred — the registry already carries `alias-of`
+        for the analogous duplicate case, and firmographics research already discovers these
+        acquisitions and throws the knowledge away (BACKLOG item 10);
+    (b) require the ROLE to be Israel-located AND the tenant to be either near-equal or
+        declared — which is close to what the digest already does, one layer later.
+
+    Until one of those exists: `audit_empty_rows.tenant_is_this_company` implements the
+    near-equality/subdomain-tenant rule and is used in exactly one place,
+    `crack_walled._ok_to_write`, where `_page_names_company(...) is True` is already required
+    so it can add no new false negative. `test_a_tenant_mismatch_alone_must_not_block_an_ats_row`
+    pins the 36-row measurement so the next reviewer finds it before rebuilding this.
+
+22. **17 rows carrying a `listing_hunt` fast-path token have a walled-ATS `api_url` today**
+    — lane: `registry`, unclaimed, and it needs item 21 decided first. The fast path gates on
+    `is_foreign` alone, so for those rows it does not gate. Six of the 17 look wrong on
+    inspection (`NanoLock Security`, `Sight Diagnostics`, `Fetcher`, `Quris AI`, and two
+    Comeet rows); the rest look like ordinary tenants. They should be hand-checked and either
+    corrected or given the declared-inheritance token from 21(a) — a code gate cannot tell
+    them apart, which is the finding.
