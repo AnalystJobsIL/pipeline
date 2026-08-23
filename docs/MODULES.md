@@ -6,10 +6,6 @@ That is the point of the file: before it existed a reader could not tell live co
 one-shot probe, and `HANDOFF.md` listed two load-bearing modules as safe to delete.
 
 The `runs in` and `imported by` columns are **computed from the code**, not typed by hand.
-Regenerate with `python docs/gen_modules.py` after adding or retiring a module — the prose
-lives in that script's `CLASS` dict, and it refuses to run if a root module is missing.
-(That sentence is hand-added: `gen_modules.py` does not emit it, so every regeneration
-drops it again — see `docs/BACKLOG.md`, "gen_modules.py does not round-trip its own file".)
 
 | class | meaning | count |
 |---|---|---|

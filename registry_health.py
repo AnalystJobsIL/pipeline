@@ -306,7 +306,12 @@ def unsupported_ats(rows):
     This is the hand-off to the `ats-fetch` lane: ARCHITECTURE.md section 1's support policy
     is "a platform seen 3+ times gets a native fetcher", and until now nothing counted.
     """
-    rx = re.compile(r"unsupported ATS ([A-Za-z0-9_.\- ]+)")
+    # `( +)` not `( *)` on purpose, but the platform name is OPTIONAL in the wild: the
+    # row `Bit` carries a bare `unsupported ATS` with nothing after it, so this regex
+    # matched 54 of the 55 rows and the 55th vanished from the build queue with no
+    # message. A row that says "unsupported ATS" and never appears in the queue built to
+    # find it is section 8's first bug class, inside the tool written to detect it.
+    rx = re.compile(r"unsupported ATS ?([A-Za-z0-9_.\- ]*)")
     out = {}
     for r in rows:
         m = rx.search(r[5] or "")
@@ -314,7 +319,11 @@ def unsupported_ats(rows):
             continue
         plat = m.group(1).strip().lower().split(";")[0].strip()
         if not plat:
-            continue
+            # A bare `unsupported ATS` with no platform after it. `continue` here dropped
+            # the row from the queue silently - 54 reported against 55 carrying the token.
+            # It is still a row somebody has to look at, so it gets a bucket that says so
+            # rather than disappearing.
+            plat = "(unnamed platform)"
         e = out.setdefault(plat, {"rows": 0, "active": 0, "companies": [],
                                   "fetcher": _fetcher_for(plat)})
         e["rows"] += 1
@@ -551,7 +560,12 @@ def main():
         return 0
     if "--ats" in argv and len(argv) == 1:
         for plat_name, e in unsupported_ats(rows).items():
-            print(f"{'WIRE ' if e['fetcher'] else 'BUILD'} {plat_name:18} {e['rows']:3} rows "
+            # SAME ladder as the report path above, which labels BUILD only at 3+ rows
+            # (ARCHITECTURE.md section 1's support policy). These two paths of one tool
+            # printed different verdicts for the same platform: `jobvite` (1 row) was
+            # `BUILD` here and blank there.
+            flag = ("WIRE " if e["fetcher"] else "BUILD" if e["rows"] >= 3 else "below")
+            print(f"{flag} {plat_name:18} {e['rows']:3} rows "
                   f"({e['active']} active): {', '.join(e['companies'])}")
         return 0
     a = _report(rows, live=live, want_ats=("--ats" in argv or "--census" in argv))

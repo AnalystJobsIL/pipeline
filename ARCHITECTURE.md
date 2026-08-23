@@ -435,18 +435,32 @@ host by design, because the tenant may legitimately be an acquirer's
 (`Momentis Surgical` really does post under `memic`). So on those hosts:
 
 * what stops a wrong activation is `crack_walled._page_names_company` — three-valued, and
-  `None` (page unreadable) counts as **no evidence**, not as approval. **All SIX write
-  paths route through it on an ATS host** (`crack_walled`, `audit_empty_rows`,
-  `deep_validate`, `repair_dead_urls`, `listing_hunt`, `repair_extract_gap`); on ordinary
-  domains `is_foreign`
+  `None` (page unreadable) counts as **no evidence**, not as approval. **All six write
+  paths reach it on an ATS host — but `deep_validate` reaches it only when the tenant test
+  fails first.** Its gate is `tenant_is_this_company(...) or _page_names_company(...) is
+  True`, and the tenant test answers True on 430 of the 461 active ATS rows (it does not
+  scope path-tenant platforms at all), so on a greenhouse/comeet/lever/ashby host the
+  disjunction short-circuits and the page is never read. That is deliberate — `docs/BACKLOG.md`
+  33 records that those endpoints return 0 bytes, so demanding a page read there refuses 358
+  rows — but it means "routes through the gate" is a weaker statement for that tool than for
+  the other five, and an earlier version of this sentence stated it unconditionally. Paths (`crack_walled`, `audit_empty_rows`,
+  `deep_validate`, `repair_dead_urls`, `listing_hunt`, `repair_extract_gap`). **A seventh
+  tool writes `api_url` without any identity check of its own**: `apply_resolved.py`, whose
+  gate is upstream in `resolve_llm._verify`. It cannot activate a row, but it can re-point an
+  already-active one at another company's board, and it is on this lane's write list. On
+  ordinary domains `is_foreign`
   still does the work, because a page test there would refuse every JS-rendered careers
   page.
 
-  **Count these from the schedule table in section 4, not from this list.** A commit message
+  **Count these from the `activates?` column of the ownership matrix below, not from this
+  list.** A commit message
   and a docstring on 2026-08-24 both called `listing_hunt` "the last activating path in that
   class". It was not: `repair_extract_gap` runs 30 minutes earlier in the same 19:00 job,
-  sets `active=true`, and had only `is_foreign` — while section 4's own table had listed it
-  as `activates? yes` the entire time. Six of its 40 rows were on an ATS host, including
+  sets `active=true`, and had only `is_foreign` — while the ownership matrix below had
+  listed it as `activates? yes` the entire time. (The first version of this paragraph sent
+  the reader to "the schedule table in section 4", which has columns
+  `cron | workflow | effect` and no `activates?` column at all — an instruction written to
+  prevent a miscount, pointing at a table without the data. Wave 9 caught it.) Six of its 40 rows were on an ATS host, including
   `Sight Diagnostics` onto the board `Sight Sciences` is already active on (one company's
   roles published under two names) and `NanoLock Security` onto Gen Digital's Workday. It
   also forces `SCRAPE_ASSUME_IL=1`, which makes every location-less card on an
@@ -798,7 +812,7 @@ direction, and it is why the matrix has an ordering column at all.
 **A time budget without rotation is not a budget.** `scan_dead_domains` and
 `probe_candidates` run inside the 05:00 digest and were given 10-minute budgets — over loops
 that iterate in **CSV file order** with no state term in the predicate. A row found ALIVE
-writes nothing, so all 211 of the liveness targets kept their position forever: a truncated
+writes nothing, so all of the liveness targets (**230** on 2026-08-24 — the count is not printed by `registry_health.py`, so it is the one row of the matrix below that nothing can catch rotting; it read "211" until wave 9, and this lane's own change adding `no listing found` to that pool moved it) kept their position forever: a truncated
 run re-walked the same prefix every night and never reached the tail, and a `probe_candidates`
 row past the cut could never wake at all, because a wake needs two observations. Both now
 sort least-recently-checked first (`cloud_state/scan_seen.json`, and a `last` key in
@@ -822,7 +836,7 @@ else's. So the generic answer in "The activation rule" below is exactly the answ
    zero times. It uses a LENIENT TLS context (strict TLS cost 6 false positives once, above),
    falls back to the residential unlocker whenever a Bright Data key exists — not only behind
    `SCRAPE_VIA_UNLOCKER`, which `audit-coverage.yml` does not set — and retries with the
-   company's generic/geographic words stripped, because 46 registry rows are named `… Israel`
+   company's generic/geographic words stripped, because 46 registry rows CONTAIN `Israel` in the name (only **40** end with it — `… Israel` denotes a suffix, so the two readings differ and this sentence used the looser one while quoting the suffix notation)
    and `strict=True` wants the name's words consecutively.
 2. **The `notours` verdict writes the note and never `fr[3]`.** This is the part that is easy
    to get wrong: refusing to ACTIVATE is not enough. `crack_walled`'s `novrfy` branch persists
@@ -849,7 +863,11 @@ alias row points at a board that *works* — so the audit would have searched, f
 board, verified it with real Israel jobs and re-activated the duplicate: every eBay role
 published twice under two company names. `check_invariants` check B would not catch it
 (the names differ). Pools after the fix, on the SAME basis as the matrix above (no cooldown applied):
-audit 260 → **255**, crack 30 → **25**. (With `_recrackable`'s daily cooldown a given night
+audit 260 → **258**, crack 30 → **25**. (An earlier version said "audit 260 → 255". The
+alias fix removes exactly the two rows named above, so a delta of five could never have been
+right — reproduce with
+`python -c "import csv,re;from pipeline.verdicts import in_pool;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:];b=[x for x in r if x[4]=='false' and in_pool(x[5] or '')];t=re.compile(r'defunct|domain-dead|alias-of',re.I);print(len(b),len([x for x in b if not t.search(x[5] or '')]))"`
+-> `260 258` on 2026-08-24.) (With `_recrackable`'s daily cooldown a given night
 sees far fewer — 6 to 10 — which is what an earlier draft of this line quoted, silently
 switching denominators mid-sentence.)
 Guarded by `test_no_activating_pool_can_re_open_a_terminal_row`.
@@ -898,7 +916,8 @@ the short version of the three gates and the code that enforces them.
   to list jobs at all (`looks_like_a_job_listing_page`). Real Israel jobs are not enough:
   `SCRAPE_ASSUME_IL` turns every card on a page into an Israel role, so a nav menu and a
   blog index both "verify".
-- Slug/tenant must resemble the company name — `_slug_matches` (`audit_empty_rows.py`),
+- Slug/tenant must resemble the company name — `_slug_matches` (`audit_empty_rows.py`,
+  and also `listing_hunt.py:178`, a fifth call site this list omitted),
   enforced in `audit_empty_rows`, `deep_validate`, `crack_walled`, and `resolve_llm._verify`.
   **Known coverage holes in this guard:** comeet uids (`XX.XXX`) are exempt by design (the
   uid comes from the company's own page), and `_resolve_rebrand` in `listing_hunt.py` can
@@ -909,7 +928,11 @@ the short version of the three gates and the code that enforces them.
   **CyberArk→PANW** and **Imperva→Thales** were applied and had to be reverted (see their
   `companies.csv` notes); **Lili→Eli Lilly** was caught only by the 0-Israel-jobs gate.
   Historical note: `resolve_llm` relied on prompt-grounding alone until 2026-08-22.
-  Since 2026-08-23 all four activation paths call `company_identity`, and a `weak` domain
+  Since 2026-08-23 every activation path calls `company_identity` — there are **six**
+  that write `active` or `api_url`, not the four this line claimed until 2026-08-24
+  (`docs/AGENT_BRIEF.md` L104 still says four; that is `docs`-lane). Section 3 is this
+  lane's and neither commit that took the count from four to five to six touched it,
+  which is the same failure as leaving a closed hole documented. A `weak` domain
   verdict is settled by whether the fetched page NAMES the company as a phrase.
 - **Every rung that searches needs all three fallbacks.** The ladder is SerpApi (cheapest,
   currently useless) → `deep_validate.ddg` (free) → `deep_validate.google_via_unlocker`

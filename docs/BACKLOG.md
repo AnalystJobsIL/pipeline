@@ -734,8 +734,11 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     `scan_dead_domains` are strict subsets that would start excluding rows they currently
     scan, and `triage_dark`'s is a superset. The real fix is one predicate with one
     membership, and it is a behaviour change for at least three tools, not a tidy-up. Before
-    this lane there were 8 definitions; it added 2 (`registry_health._REASON` and the census
-    helper) while documenting the duplication as the repo's worst bug class.
+    this lane there were 8 definitions; it added **4** — `registry_health._REASON`, the
+    census helper, **and `audit_empty_rows.TERMINAL` and `crack_walled.TERMINAL`**, both of
+    which are new this lane (`git show e525dab:audit_empty_rows.py | grep TERMINAL` returns
+    nothing). An earlier version of this item said 2, in the item complaining about
+    duplication.
 
 26. **Three orphan detectors, three answers** — lane: `registry` + `infra`, unclaimed.
     `registry_health.orphans()` says 1 (`SeeTree`), `ARCHITECTURE.md` §5c's hand-typed
@@ -817,9 +820,13 @@ stops this recurring.
     lane: `docs`. L153 lists `jazzhr`, `eightfold`, `iCIMS`, `SuccessFactors` as "unchanged
     from the last handoff", implying no fetcher. `fetch_jazzhr` (`pipeline/fetchers.py:594`)
     and `fetch_eightfold` (`:655`) both exist and are wired into `FETCHERS`. Cost if
-    believed: an `ats-fetch` session rebuilding two live fetchers. `python registry_health.py
-    --ats` is derived and correct — on 2026-08-24 it reported 8 of 8 names `WIRE`, 0 `BUILD`,
-    which is itself a moving target (it was 3/5 six hours earlier). The durable fix is to
+    believed: an `ats-fetch` session rebuilding two live fetchers. `python registry_health.py --ats`
+    is derived and correct — on 2026-08-24 it reports **3 WIRE / 5 BUILD over 55 rows**.
+    *(This item said "8 of 8 WIRE, 0 BUILD ... a moving target, it was 3/5 six hours
+    earlier". Both halves were false: `git diff --stat 8812ed3 HEAD -- companies.csv` is
+    empty, so the input never moved, and the tool has never produced 8/0. Commit `09427f4`
+    corrected that sentence in ARCHITECTURE.md and HANDOFF.md and edited THIS FILE in the
+    same commit without fixing it here.)* The durable fix is to
     delete the hand-maintained list and point at the command.
 
 ## From the registry lane's wave-8 review, 2026-08-24
@@ -830,9 +837,15 @@ fixes; one was a claim I made that a doc of this repo already contradicted on th
 33. **`tenant_is_this_company`'s "cannot tell" satisfies the audit's gate on 382 of 460
     active ATS rows** — lane: `registry`, **and the obvious fix is measured wrong**. The
     predicate returns True both for "the tenant is near-equal" and for "there is nothing here
-    to check": 358 rows on path-tenant platforms it does not scope (comeet 131, greenhouse
-    104, ashby 51, lever 23, workable 23, smartrecruiters 16, bamboohr 11, recruitee 7,
-    breezy 5) plus 24 with no checkable subdomain label. What decides those rows is
+    to check". Measured 2026-08-24: **430 of the 461** active ATS-host rows get a True, and
+    only ~72 of those had a tenant actually compared. Reproduce:
+    `python -c "import csv;from audit_empty_rows import tenant_is_this_company as T;from listing_hunt import ATS_HOST;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:];a=[x for x in r if x[4]=='true' and ATS_HOST.search(x[3] or '')];print(len(a),len([x for x in a if T(x[0],x[3])]))"`
+    -> `461 430`.
+
+    *(An earlier version of this item said "382 of 460", broke it down as "358 path-tenant
+    plus 24", and listed per-platform counts summing to 371 — three numbers that cannot all
+    be right, and the 382 had been copied into `audit_empty_rows.py`'s source comment. Wave 9
+    caught it. The shape of the finding is unchanged; only the size was wrong.) What decides those rows is
     `_slug_matches`, plain containment, which passes `Bancor`/`bancorpbank`,
     `Bit`/`bitdefender`, `Lili`/`elililly`.
 
@@ -910,3 +923,25 @@ fixes; one was a claim I made that a doc of this repo already contradicted on th
     and `Commit verdicts` does not, so the entire night's registry writes are discarded. Fix
     is two lines: `HUNT_TIME_BUDGET_MIN: 200 -> 150` and `if: always()` on the commit. Filed
     as items 11 and 16 in earlier waves and shipped unfixed three times.
+
+40. **`ARCHITECTURE.md` §2 is now 36% of the document for one of seven pipeline steps** —
+    lane: `registry`, and it is this lane's own bloat. It went from **300 lines (25%)** at
+    `e525dab` to **471 lines (36%)** at HEAD. Commit `ae7ba62`, on the same day, is titled
+    *"Section 1a was 32% of the architecture document for one of seven steps"* and cut §1a by
+    384 lines — §2 is now past the threshold that commit set.
+
+    The "registry in two minutes" block earns its place and must stay. What should move to
+    `docs/sessions/` are the four dated post-mortem narratives now embedded in the reference
+    text — the "an earlier version of this said X" paragraphs. They were written to stop a
+    number being re-trusted, which was right at the time, but a reference document should
+    state what is true and let the session log carry how it was got wrong. Proposal, not an
+    action: this is a documentation pass and the brief forbids deleting in one.
+
+41. **`registry_health.py` has four retyped pool mirrors and a guard that checks one** —
+    lane: `registry`. `_HUNT_SHAPE`, `_PROBE_SHAPE`, `_EXTRACT_GAP` and the crack literal
+    mirror four tools' filters; only `triage_dark`'s predicates are imported.
+    `test_the_ownership_matrix_is_built_from_the_tools_own_predicates` pins the triage count
+    and two negative properties of the hunt, and nothing compares the other three against
+    their tools. Drift measured 0 on 2026-08-24, and `_EXTRACT_GAP` is strictly looser than
+    `repair_extract_gap.MODE` (it does not require a date) — the direction that hides
+    orphans. Extending that test to compare all four is the cheap half of item 1.

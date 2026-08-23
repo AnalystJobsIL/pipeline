@@ -498,9 +498,11 @@ def main():
         # refused. (docs/BACKLOG.md 21 is why a bare tenant block is not acceptable here.)
         # NOTE: `tenant_is_this_company` returns True in two different situations -
         # "the tenant is near-equal to the name" and "there is nothing here to check" - and
-        # accepting the second as confirmation skips the page read below on 382 of the 460
-        # active ATS rows (358 path-tenant platforms it does not scope, 24 with no checkable
-        # subdomain label), leaving plain containment (`_slug_matches`) deciding them.
+        # accepting the second as confirmation skips the page read below on 430 of the 461
+        # active ATS rows (measured 2026-08-24; only ~72 of those had a tenant actually
+        # compared), leaving plain containment (`_slug_matches`) deciding the rest. This
+        # comment said "382 of 460" for a day, copied from a backlog item whose own
+        # breakdown summed to a third number - see docs/BACKLOG.md 33.
         #
         # The obvious fix - require a POSITIVE near-equality match, else fall through to the
         # page read - was built, measured and REVERTED on 2026-08-24. On exactly the
