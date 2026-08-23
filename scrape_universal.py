@@ -179,13 +179,38 @@ def _norm_date(raw):
     return ""
 
 
+# Words that sit next to a location on a careers card but are not part of it. The
+# window-based fallback below grabs 12 characters either side of the match, so a card
+# reading "Data Analyst  Apply  Tel Aviv" came out with the location "Apply       Tel Av".
+# Words that sit next to a location on a careers card without being part of it. The
+# window fallback below takes 12 characters either side of the match, so a card reading
+# "Data Analyst  Apply  Tel Aviv" produced the location "Apply       Tel Av".
+_LOC_CHROME = re.compile(
+    "(?<![a-z])(apply now|apply|view|read more|learn more|full[- ]time|part[- ]time|"
+    "hybrid|on-?site|posted|share)(?![a-z])", re.I)
+
+
+def _clean_loc(t):
+    t = _LOC_CHROME.sub(" ", t or "").replace(" ", " ")
+    return " ".join(t.split()).strip(" ,;|-()[]·–—") or "Israel"
+
+
 def _loc_from_ctx(ctx):
     m = re.search(r"([A-Za-z][\w.\-' ]{1,28},?\s*Israel)", ctx)
     if m:
-        return m.group(1).strip()
+        return _clean_loc(m.group(1))
     m = ISRAEL_LOC.search(ctx)
-    return ctx[max(0, m.start() - 12):m.end() + 8].strip() if m else "Israel"
-
+    if not m:
+        return "Israel"
+    # Start AT the place name, not 12 characters before it. What precedes a location on
+    # a card is the title or a button, and the old fixed window dragged it in mid-word:
+    # "Applied Scientist Haifa" became the location "d Scientist Haifa". Every
+    # multi-word Israeli place we know is in _IL_PLACES, so the match already spans it.
+    hi = m.end() + 8
+    if hi < len(ctx) and ctx[hi - 1].isalnum() and ctx[hi].isalnum():
+        sp = ctx.rfind(" ", m.end(), hi)          # ...and never end mid-word either
+        hi = sp if sp > m.end() else m.end()
+    return _clean_loc(ctx[m.start():hi])
 
 def scrape(company, url, timeout_ms=45000):
     from playwright.sync_api import sync_playwright

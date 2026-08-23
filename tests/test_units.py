@@ -886,3 +886,21 @@ def test_a_role_is_never_listed_in_both_email_sections(tmp_path):
     assert [j["title"] for j in dated] == ["Data Analyst"]
     assert [j["title"] for j in first_scan] == ["BI Developer"]
     st.close()
+
+
+@pytest.mark.parametrize("card,loc", [
+    ("Data Analyst  Apply       Tel Aviv", "Tel Aviv"),
+    ("Applied Scientist Haifa", "Haifa"),
+    ("Analyst Kiryat Gat full-time", "Kiryat Gat"),
+    ("IL, Netanya (On-site)", "Netanya"),
+    ("Senior BI Developer, Ra'anana", "Ra'anana"),
+    ("Tel Aviv, Israel", "Tel Aviv, Israel"),
+    ("nothing here", "Israel"),
+])
+def test_a_scraped_location_is_a_place_not_the_card_around_it(card, loc):
+    """The scraper took a fixed 12-character window either side of the place name, which
+    starts and ends MID-WORD and drags in whatever the card put next to the location: real
+    board rows read "Apply       Tel Av" and "d Scientist Haifa". The location is what the
+    reader uses to decide whether to apply, so it has to be a place."""
+    from scrape_universal import _loc_from_ctx
+    assert _loc_from_ctx(card) == loc
