@@ -387,6 +387,13 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     except Exception as e:  # noqa: BLE001
         print(f"  [firmographics] shared export skipped: {e}", file=sys.stderr)
 
+    # Stamp BEFORE the summary is built, or the audit block this run prints says
+    # "publish: never run" about the very run printing it — the stamp was written after
+    # `stages.summary()` had already been captured.
+    if not (only or limit):
+        stages.stamp("publish", email=stats["new"], board=stats["board_count"],
+                     scanned=stats["companies_scanned"])
+
     summary = {
         "companies_scanned": stats["companies_scanned"],
         "companies_failed": stats["companies_failed"],
@@ -476,9 +483,6 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         json.dump(payload, f, ensure_ascii=False, indent=2)
 
     st.close()
-    if not (only or limit):
-        stages.stamp("publish", email=len(email_jobs), board=len(board_jobs),
-                     scanned=stats["companies_scanned"])
 
     print(f"\n=== digest {run_date} ===")
     print(f"email (last 48h): {summary['new']} roles · board (active): {summary['board_count']} roles"
