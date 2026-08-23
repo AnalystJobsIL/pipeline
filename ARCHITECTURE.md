@@ -211,9 +211,41 @@ Corollary: a diagnostic verdict must **append** (`base | tool date: finding`), n
 replace the cell — overwriting also destroys the `monitored candidate` / `host documented`
 tokens that `listing_hunt`'s fast-path keys on.
 
+**Append through `pipeline/notes.py`, never by hand** (2026-08-23). The cell is capped at
+220 chars, and every writer used to make room by SLICING the base — `(base + " | " + seg)[:220]`
+or `base[:220 - len(seg) - 3]`. The newest segment lives at the END of the base, so the trim
+ate exactly the thing worth keeping: 87 rows came to read `dark-triage 2026-08-22: page-emp`
+(also `page-e`, and on one row `pa`), naming a mode no downstream filter matches.
+`notes.append()` drops OLD WHOLE segments until the new one fits; `notes.replace_own(marker)`
+re-stamps this tool's own segment and leaves every other tool's alone. Keep segments SHORT —
+one full URL in a segment is 117 characters and will evict everything else.
+`test_every_note_writer_uses_the_append_log_helper` fails on the next hand-rolled trim.
+
 Every re-check filter must have a **staleness escape** (`_stale_hunt` 14d, `_revalidatable`
 30d, `_recrackable` 30d). A filter of the form `"tool-name" not in note` freezes coverage
 forever — that pattern has been introduced and removed three times.
+
+### The activation rule (2026-08-23 — read before flipping any row to active)
+
+"There are Israel jobs on this page" is not "these are THIS company's jobs", and it is not
+"this is a page that lists jobs". A row may only be activated when all three hold:
+
+1. `pipeline.aggregators.is_aggregator(url)` is false — an aggregator's "similar jobs"
+   sidebar is other employers' roles.
+2. `pipeline.company_identity.is_foreign(company, url)` is false — FairFly was activated off
+   fireflyspace.com (25 Firefly Aerospace roles), SimilarTech off greenhouse `similarweb`
+   (25 of Similarweb's), "Moonsite - Moonsoft Development" off Moon Active's Ashby board.
+   For an ATS host the identity is the TENANT SLUG, and a rebrand or acquisition looks
+   identical to a mis-resolution — Momentis really does post under `memic` — so a `weak`
+   verdict is settled by `page_mentions_company(..., strict=True)`, never by the domain
+   alone.
+3. `pipeline.company_identity.looks_like_a_job_listing_page(url)` is true — `SCRAPE_ASSUME_IL`
+   makes every card on the page an Israel role, so a nav menu scores like a board:
+   `iai.co.il/solution/research-academy-space` "verified 6 IL" whose titles were "Domain
+   Operations" and "Press Releases".
+
+`test_every_activation_path_checks_company_identity` walks the AST of every root script for
+`row[4] = "true"` and fails if that module never consults `company_identity`.
 
 ### The single-writer rule (most dangerous rule here — read before any write)
 
