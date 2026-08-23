@@ -227,7 +227,23 @@ fixed, and every one of them is outside the `discovery` lane's write list.
    breadth sweep to compensate; **whether that trade is net-positive has not been measured
    over more than one run.**
 
-6. **CLOSED 2026-08-23 for reading it; OPEN for the six scripts that spend it.**
+6. **URGENT — the pipeline's Bright Data spend does not fit in its free pool, and the
+   failure will be silent.** *(lane: `infra`; discovery has throttled its own half.)*
+   Production-only figures, tests excluded by taking the digest-window hours on clean
+   single-run days: **~94 Web Scraper records + ~49 Web Unlocker requests per day = 4,292
+   credits/month, 86% of the 5,000 pool before a single SERP request or test run.** Add
+   `reqs_serp`, which went from 0 to 199/272/116 a day when `resolve_broken` gained its
+   `google_via_unlocker` fallback on 2026-08-23, and the projection is 93%–203%. The account
+   was created 2026-08-15, so the pool has never yet run out; it stood at 4,106/5,000 on
+   08-23 with eight days left. **When it empties, every BD step fails silently and every
+   workflow stays green** — discovery, `enrich_scrape_jd`, `enrich_matched_jd`, `bd_rescue`,
+   `crack_walled`, `retry_unreachable` and the resolution ladder's search rung all return
+   nothing on the same day. First moves: `DEEP_BD_SEARCH_CAP` defaults to 150 searches per
+   run and is the largest single lever; then a shared pre-flight budget check the six
+   non-discovery spenders also call, since `discovery_daily` throttling alone just makes it
+   absorb everyone else's overrun.
+
+7. **Reading it is CLOSED; the six scripts that spend it are item 6.**
    *(lane: `infra`.)* `discovery_daily.bd_spend_this_month()` now reads the whole pool —
    `datasets/v3/snapshots` for Web Scraper records plus `zone/cost` for `reqs_unblocker` and
    `reqs_serp` — and prints it every run. The pool is **5,000 credits/month shared by all

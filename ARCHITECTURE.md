@@ -371,8 +371,32 @@ account's `reqs_unblocker` and `reqs_serp` made it **4,106 = 82%**:
 | SERP requests | 471 | `deep_validate.google_via_unlocker` (the resolution ladder's search rung) |
 | **total** | **4,106 / 5,000** | |
 
-`discovery_daily.report_bd_spend()` prints this at the end of every run and emits a
-`::warning::` past 80%. Two endpoints are needed because `/customer/balance` answers **403**
+**Most of that 4,106 is experiments, so it is the wrong number to plan with.** Split the
+snapshot ledger by hour — the digest runs 05:00 UTC, anything outside ~05–08 is a manual or
+test trigger — and take only days with a single clean digest (08-18/19/20/22; 08-21 and
+08-23 had repeated re-dispatches, 08-15 was account setup):
+
+| | production, per day |
+|---|---|
+| Web Scraper records per digest | **~94** (range 30–124) |
+| Web Unlocker requests | **~49** (range 46–59) |
+| SERP requests | **0 until 2026-08-21**, then 199 / 272 / 116 |
+
+**Which means the pipeline had no headroom before this lane touched it.** 94 + 49 credits a
+day is 4,292 a month — **86% of the pool with zero tests and zero SERP**. Add SERP at even a
+weekend-only rate and it is 93%; at the rate observed over 08-21…08-23 it is **203%**. The
+account was created 2026-08-15, so this is its first month and the pool has never actually
+run out — it stood at 4,106 of 5,000 on 08-23 with eight days left. When it does run out,
+every Bright-Data step fails silently and `continue-on-error` keeps the workflows green:
+discovery, JD enrichment, `bd_rescue`, `crack_walled`, and the search rung of the resolution
+ladder all return nothing at once.
+
+SERP is the line to watch, and it is **new**: `resolve_broken._careers_url_via_serp` gained
+its `deep_validate.google_via_unlocker` fallback on 2026-08-23 (§3), which is exactly when
+`reqs_serp` went from 0 to hundreds a day. `DEEP_BD_SEARCH_CAP` defaults to **150 per run**.
+
+`discovery_daily.report_bd_spend()` prints the pool total at the end of every run and emits
+a `::warning::` past 80%. Two endpoints are needed because `/customer/balance` answers **403**
 for this token — widening its billing scope at `brightdata.com/cp/setting/users` would let
 the code read the account's real figure instead of the documented default:
 
