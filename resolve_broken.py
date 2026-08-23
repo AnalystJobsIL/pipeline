@@ -23,6 +23,7 @@ import sys
 from pipeline import fetchers, israel
 from resolve_deep import _capture, _detect_ats
 
+from pipeline.aggregators import is_aggregator
 from pipeline.health import ATS_HOST   # one definition (was a char-for-char copy)
 
 # ATS endpoints discoverable straight from a page's HTML/JS (used on the Bright Data path,
@@ -86,25 +87,40 @@ def _works(name, plat, tok, api):
     return (len(jobs), il) if jobs else None
 
 
+_ATS_LINK = re.compile(r"greenhouse|lever\.co|ashbyhq|comeet|myworkdayjobs|recruitee|workable|"
+                       r"smartrecruiters|career|/jobs", re.I)
+
+
 def _careers_url_via_serp(name):
-    """Find a company's real careers page via a SerpApi Google search — needed when what we
-    stored is a dead ATS *API* URL (comeet/ashby endpoint), not a renderable careers page."""
-    key = os.environ.get("SERPAPI_KEY") or os.environ.get("SERPAPI_API_KEY")
-    if not key:
-        return None
+    """Find a company's real careers page by SEARCHING — needed when what we stored is a
+    dead ATS *API* URL (a comeet/ashby endpoint), not a renderable careers page.
+
+    SerpApi first, then Bright Data's Google. The SerpApi free quota has been exhausted
+    since mid-August and resets 2026-09-01, and this was the ONLY search in the ladder — so
+    the last rung of the self-heal has been a no-op for a week, and every board that had
+    MOVED (rather than broken) came back "no working ATS". That is 75 companies, Adobe and
+    PayPal and Outbrain among them. The unlocker path is the one that works from here.
+    """
     from urllib.parse import quote
-    from pipeline import http
+    key = os.environ.get("SERPAPI_KEY") or os.environ.get("SERPAPI_API_KEY")
+    if key:
+        from pipeline import http
+        try:
+            d = http.get_json(f"https://serpapi.com/search?engine=google&num=6&gl=il&"
+                              f"q={quote(name + ' careers israel')}&api_key={key}")
+            for r in (d.get("organic_results") or []):
+                link = r.get("link", "")
+                if link and _ATS_LINK.search(link):
+                    return link
+        except Exception:  # noqa: BLE001
+            pass                                   # quota/network — fall through to the unlocker
     try:
-        d = http.get_json(f"https://serpapi.com/search?engine=google&num=6&gl=il&"
-                          f"q={quote(name + ' careers israel')}&api_key={key}")
+        from deep_validate import google_via_unlocker
+        for link in (google_via_unlocker(f"{name} careers israel") or []):
+            if _ATS_LINK.search(link) and not is_aggregator(link):
+                return link
     except Exception:  # noqa: BLE001
-        return None
-    ats = re.compile(r"greenhouse|lever\.co|ashbyhq|comeet|myworkdayjobs|recruitee|workable|"
-                     r"smartrecruiters|career|/jobs", re.I)
-    for r in (d.get("organic_results") or []):
-        link = r.get("link", "")
-        if link and ats.search(link):
-            return link
+        pass
     return None
 
 
