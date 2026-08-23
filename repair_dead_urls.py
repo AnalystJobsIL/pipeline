@@ -41,12 +41,30 @@ _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
 
-def resolves(host: str) -> bool:
-    try:
-        socket.gethostbyname(host)
-        return True
-    except OSError:
-        return False
+_DNS_CACHE: dict[str, bool] = {}
+
+
+def resolves(host: str, tries: int = 3) -> bool:
+    """DNS with retries, because a TRANSIENT failure must not retire a live company.
+
+    Windows reports errno 11002 (TRY_AGAIN) as well as 11001 (HOST_NOT_FOUND), and a single
+    lookup conflates them — declaring a company defunct on a momentary resolver hiccup is
+    exactly the kind of silent coverage loss this repo keeps producing. Only a repeated
+    failure counts as dead. Results are cached per run; hosts are checked many times.
+    """
+    if host in _DNS_CACHE:
+        return _DNS_CACHE[host]
+    ok = False
+    for attempt in range(tries):
+        try:
+            socket.gethostbyname(host)
+            ok = True
+            break
+        except OSError:
+            if attempt < tries - 1:
+                time.sleep(1.0)
+    _DNS_CACHE[host] = ok
+    return ok
 
 
 def host_of(url: str) -> str:
