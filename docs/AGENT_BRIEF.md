@@ -175,6 +175,7 @@ push if:
 |---|---|
 | paths exist | a doc naming a file that was renamed or deleted |
 | links resolve | a dead cross-reference between docs |
+| section references | an `ARCHITECTURE.md` §N pointer left behind by a renumber |
 | the module registry | a new root script nobody classified; a `legacy` module live code imports; a `scheduled` module no workflow runs |
 | the cron table | `ARCHITECTURE.md` §4 and the workflow files disagreeing, in either direction |
 | the continue-on-error ratio | the "a green run proves nothing" number drifting from the workflows |

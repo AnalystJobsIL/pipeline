@@ -31,7 +31,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 *(was `HANDOFF.md` §4d, first of the two sections that carried that number)*
 
 What building §7 (and three adversarial-review waves over it) revealed about the
-infrastructure itself. Complements §4c's backlog; ordered by leverage.
+infrastructure itself. Complements the ten-agent audit backlog above; ordered by leverage.
 
 1. **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
    every firmographics consumer to care *which* seen.db it reads, and open item 7 exists
@@ -42,7 +42,7 @@ infrastructure itself. Complements §4c's backlog; ordered by leverage.
 2. **Retire `companies.csv` as a database.** 20 writers, a state machine encoded in prose
    verdict strings, six allowlist pools that must be updated in sync (the documented #1 bug
    class), plus literal duplicate rows (Datadog/MongoDB/Elastic twice) and alias rows
-   (Meta/Meta Israel — §4c item 5). A registry table with an explicit state enum +
+   (Meta/Meta Israel — audit item 5 above). A registry table with an explicit state enum +
    transition log would delete the entire "verdict-string rule" hazard category.
 3. **One identity layer.** `_norm_company` existed but nothing used it for keys — that gap
    alone produced 9 double-researched companies and 3 wasted run.py budget slots per digest.
@@ -67,7 +67,7 @@ infrastructure itself. Complements §4c's backlog; ordered by leverage.
    bootstrap would shrink the surface the next audit has to re-verify.
 7. **Unified quota ledger.** LLM calls are spent from four sites (role judgments, blurbs,
    firmographics research, employee fills) plus Bright Data credits and SerpApi — each with
-   its own caps and none metered centrally. Extending §4c's `metrics.jsonl` idea with
+   its own caps and none metered centrally. Extending the `metrics.jsonl` idea above with
    per-source spend counters per run would make "what does a day of this system cost" and
    "what just burned the quota" answerable.
 8. **One backoff/retry store.** The same gating machinery now exists twice

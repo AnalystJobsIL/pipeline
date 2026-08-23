@@ -10,13 +10,16 @@ This is that test. It cannot prove a sentence is TRUE - only that the things a s
 points at still exist and still agree with the code:
 
   1. every file path a doc names exists (or is on the deliberately-absent list below)
-  2. every relative markdown link and same-file anchor resolves
+  2. every relative markdown link, same-file anchor and `ARCHITECTURE.md` section
+     reference resolves
   3. every root `*.py` is classified exactly once in `docs/MODULES.md`, and the class
      agrees with the import graph (scheduled => a workflow runs it; library => something
      imports it; legacy => nothing live imports it)
   4. the schedule table in `ARCHITECTURE.md` section 4 matches the real crons, both ways
   5. the `continue-on-error` count the docs quote matches the workflows
   6. `HANDOFF.md` is still current-state-sized and still has its required sections
+
+Each check was verified by breaking the thing it guards and watching it fail.
 
 Run it: `python docs/check_docs.py`  (exit 1 on any error, 0 with warnings)
 It also runs in `tests/test_units.py::test_docs_are_consistent_with_the_code`, so
@@ -155,6 +158,31 @@ def check_links() -> None:
             resolved = os.path.normpath(os.path.join(os.path.dirname(doc), base))
             if not os.path.exists(resolved) and base not in ABSENT_OK:
                 err("links", "%s links to %s, which does not exist" % (rel(doc), target))
+
+
+# ---------------------------------------------------------------- 2b. section references
+SECTION_REF = re.compile(r"§\s?(\d+[a-z]?)")
+# "was HANDOFF.md section 4d", "HANDOFF section 4d item 5", "HANDOFF.md section 4c/section 4d":
+# a section number attributed to another document is provenance, not navigation.
+OTHER_DOC = re.compile(
+    r"(HANDOFF|README|CLAUDE|BACKLOG|MODULES|TAGGING|AGENT_BRIEF|BRIGHTDATA)"
+    r"(\.md)?`?\s*(§\s?\d+[a-z]?\s*[/,and ]*)*$")
+
+
+def check_section_refs() -> None:
+    """ARCHITECTURE.md is the only document that numbers its sections, and every other doc
+    cites those numbers. Sections get renumbered - this session moved three of them - and a
+    dangling pointer sends a reader to the wrong rule, which is worse than sending them
+    nowhere. Numbers attributed to another document are left alone."""
+    have = set(re.findall(r"^#{2,3} (\d+[a-z]?)\.", read(os.path.join(ROOT, "ARCHITECTURE.md")), re.M))
+    for doc in docs():
+        text = read(doc)
+        for m in SECTION_REF.finditer(text):
+            if OTHER_DOC.search(text[max(0, m.start() - 40):m.start()]):
+                continue
+            if m.group(1) not in have:
+                err("sections", "%s cites ARCHITECTURE.md section %s, which does not exist "
+                                "(it has %s)" % (rel(doc), m.group(1), ", ".join(sorted(have))))
 
 
 # ---------------------------------------------------------------- 3. module registry
@@ -328,7 +356,8 @@ def check_entry_docs() -> None:
             err("entry", "%s is missing - it is one of the seven docs every reader is sent to" % name)
 
 
-CHECKS = [check_entry_docs, check_paths_exist, check_links, check_module_registry,
+CHECKS = [check_entry_docs, check_paths_exist, check_links, check_section_refs,
+          check_module_registry,
           check_schedule_table, check_continue_on_error, check_handoff]
 
 

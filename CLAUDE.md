@@ -69,8 +69,9 @@ anything relying on it silently returns nothing; the working search is
 1. `python -m pytest -q` and `python check_invariants.py` green. Every bug you fix gets an
    assertion in `tests/test_units.py`.
 2. `python docs/check_docs.py` green. It fails if a doc names a file that no longer exists,
-   if a link is broken, if a root module is missing from `docs/MODULES.md`, if the cron
-   table disagrees with the workflows, or if `HANDOFF.md` grows past 250 lines.
+   if a link or an `ARCHITECTURE.md` §N pointer is broken, if a root module is missing from
+   `docs/MODULES.md`, if the cron table disagrees with the workflows, or if `HANDOFF.md`
+   grows past 250 lines.
 3. **Update the doc your lane owns, in the same commit as the change.** Behaviour →
    `ARCHITECTURE.md` (the section is tagged with your lane). A new gap you did not fix →
    `docs/BACKLOG.md`. A new module → `docs/MODULES.md`. Always → three lines in

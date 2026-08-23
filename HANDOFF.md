@@ -138,7 +138,7 @@ roles are burned as delivered and the next run will not email them.
    groups (Amazon/AWS, Microsoft/Microsoft Israel, PayPal/PayPal Israel) can only collapse
    there. It is the `matched` PRIMARY KEY, so this needs a migration: re-key existing rows
    in place, or the old rows freeze, fall out of `_alive` and appear in the archive for a
-   day. HANDOFF §4d item 3 wants this anyway ("one identity layer").
+   day. `docs/BACKLOG.md` ("One identity layer") wants this anyway.
 2. **`mark_sent` still records intent, not delivery.** It runs before the digest is pushed
    and long before the relay posts. The relay's second cron (08:30) covers a single
    failure, so the exposure is bounded, but a role can still be burned unsent.
