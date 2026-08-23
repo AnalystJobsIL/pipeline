@@ -411,6 +411,55 @@ Meta/`at-facebook`), the workflow conflict path restoring `discovered_cache.json
 `looks_like_junk` being unable to catch a bare job title, `run.py` lacking the cp1252 stdout
 guard, and the measured 1.1% cost of the `(company,title)` dedup key.
 
+## Round 7: the fourth wave said YES-WITH-CAVEATS, and found the biggest miss of the day
+
+Two more independent reviews. The third returned **NO** and named three blockers — and three
+of ITS blockers were in my first round of fixes: a hard-blocked guest endpoint still fetched
+only one paid page (the cause moved from `if i and out` to `elif out:`, neither of which
+tests `ok`, so the effect was byte-identical), `bd_spend_this_month` treated only an
+EXCEPTION as unreadable, and the guest endpoint emits intermittent 200-empty pages INSIDE
+the pool. Genuinely new from that wave: **Workable read `published`/`created_at` when the API
+sends `created`**, so all 20 Israeli jobs entered undated — and undated means permanent on a
+public board; `discovery_daily`'s own cache merge still treated corrupt as empty in the very
+process that WRITES that file; and the `BRIGHTDATA_API_KEY` gate was an early return above
+the KEYLESS sources and above `sources.record()`.
+
+The fourth wave returned **YES-WITH-CAVEATS** — safe to leave on the cron, but not doing its
+job — and found what I had got most wrong all day:
+
+**The "~80 jobs per query hard cap" was measured on the PAID endpoint and then used to bound
+the FREE one.** They are different: the paid `/jobs/search` page serves 60 cards and is
+exhausted by 80; the keyless guest endpoint serves 10 per page and goes **200+ deep**. Bound
+at `pages * 6` = 12 pages, `linkedin_search` was shipping **10 jobs out of a 201-job pool**.
+Worse, the bound was tied to `LINKEDIN_PAGES` — the PAID dial every docstring invites tuning
+— so `LINKEDIN_PAGES=0` would have returned `[]` for every keyword in silence.
+
+| | employers | new companies | paid credits |
+|---|---|---|---|
+| bounded by the paid dial | 184 | 76 | 18 |
+| own bound, 30 pages | **364** | **182** | **7** |
+
+**2.4× the companies for under half the credits**, 113 seconds. Two keywords still stop on
+the 30-page cap — and now say so, because a walk that ran out of iterations must never look
+like one that ran out of jobs.
+
+Also fixed from that wave: a page of entirely-REPEATED cards ended the keyword, and the guest
+endpoint's paging is unstable enough that the same keyword returned 16 jobs on one run and
+100 minutes later — a swing that reads as saturation and sends the next reader to the wrong
+dial. A blank page incremented `linkedin_free`, which made the "everything is billed now"
+alarm unreachable in exactly the soft-block case it was written for. `per_source` for the
+targeted sweep was recorded only in the no-budget branch, not the HEALTHY one its own comment
+named. `bd_spend` validated key-presence rather than value, so a JSON `null` still produced a
+confident zero. The corrupt-cache abort was a `return` sitting above `sources.record()` — the
+same rule, in the same file, that I had moved code to fix in the other script. And a company
+found by both Indeed and Workable kept Indeed's posting URL over Workable's real careers URL.
+
+**One of my tests was vacuous and would have passed with the bug reinstated.** It looked only
+at TOP-LEVEL `ast.Return` nodes in `main()`; the only return is nested inside `if cacheable:`,
+so it found none and passed through its own `or` escape asserting nothing. Rewritten to walk
+every Return at any depth. That is the second time today a test passed over the bug it was
+written for — the first asserted `targeted < breadth`, and `0 < 15` is true.
+
 ## Claims I could NOT verify
 
 - **Whether SerpApi's `google_jobs` covers Israel at all.** `daily-digest.yml` says it was

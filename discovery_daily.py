@@ -232,6 +232,16 @@ LINKEDIN_PAGES = int(os.environ.get("LINKEDIN_PAGES", "2"))   # PAID pages per k
 # so tolerance is nearly free; one blank is NOT exhaustion (measured: a walk that stopped at
 # the first blank saw 55 of 71 reachable jobs).
 LINKEDIN_BLANK_TOLERANCE = int(os.environ.get("LINKEDIN_BLANK_TOLERANCE", "3"))
+# The FREE walk's own bound, deliberately NOT derived from LINKEDIN_PAGES (the paid dial).
+# Tying them capped the guest walk at `pages * 6` = 12 pages and made `LINKEDIN_PAGES=0`
+# return [] for every keyword in silence, while every docstring here invites tuning it.
+#
+# And the "~80 distinct jobs per query" cap this file used to assert is WRONG for this
+# endpoint: it was measured on the PAID /jobs/search page (60 cards/page, exhausted by 80).
+# The guest endpoint goes far deeper. Measured 2026-08-23, walking until three consecutive
+# blanks: `analytics` 201 jobs / 148 employers, `data scientist` 162 / 106. Against that,
+# `linkedin_search` was shipping TEN. Width still beats a boolean OR, but depth is real here.
+LINKEDIN_GUEST_PAGES = int(os.environ.get("LINKEDIN_GUEST_PAGES", "30"))
 # Credits are the unit that matters and nothing counted them per source. One Unlocker call =
 # one credit, so this IS the bill for the sweeps that use it.
 import collections as _collections
@@ -362,8 +372,9 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     pages = LINKEDIN_PAGES if pages is None else pages
     seen, out = set(), []
     # guest pages hold 10, unlocked pages hold 60 — same 80-job pool, different step size
-    paid_pages, blanks = 0, 0
-    for i in range(pages * 6):
+    paid_pages, blanks, repeats = 0, 0, 0
+    ended_on_cap = True
+    for i in range(LINKEDIN_GUEST_PAGES):
         cards, ok = _li_guest(keyword, location, days, i * 10)
         # An HTTP 200 with an empty body IS LinkedIn's soft rate-limit, and treating it as a
         # successful empty result skipped the fallback and killed the keyword with no message
@@ -383,7 +394,11 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
             LI_CARDS_PRESENT[keyword] |= _li_last_present[0]
             blanks = 0
         elif ok:
-            SOURCE_PATH["linkedin_free"] += 1
+            # Counted as `linkedin_blank`, NOT `linkedin_free`. Incrementing the free counter
+            # here made the "we are now paying for everything" alarm at the end of the sweep
+            # unreachable under a soft block — `paid and not free` was never true because the
+            # blanks had bumped `free`. That alarm exists for exactly the soft-block case.
+            SOURCE_PATH["linkedin_blank"] += 1
             # record the denominator even on a blank, or a page whose urns we FAIL to parse
             # contributes nothing to the drift metric and the regression stays invisible
             LI_CARDS_PRESENT[keyword] |= _li_last_present[0]
@@ -391,6 +406,7 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
             if blanks < LINKEDIN_BLANK_TOLERANCE:
                 continue              # a hole inside the pool — free to step over
             if out:
+                ended_on_cap = False
                 break                 # cards already collected and the tail is quiet: done
             # Nothing at all after LINKEDIN_BLANK_TOLERANCE blank pages. A working endpoint
             # returning consistently nothing is indistinguishable from a soft rate-limit, so
@@ -427,8 +443,25 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
         fresh = [c for c in cards if c["job_id"] not in seen]
         seen.update(c["job_id"] for c in cards)
         out += fresh
-        if not fresh:
+        if fresh:
+            repeats = 0
+            continue
+        # A page of entirely-repeated cards is NOT proof the pool is finished — the guest
+        # endpoint's paging is unstable and re-serves a window it has already given. Breaking
+        # on the first one made the yield nondeterministic across runs of the same keyword
+        # minutes apart (16 jobs vs 100), and the low run reads as keyword saturation, which
+        # sends the next reader to the wrong dial entirely.
+        repeats += 1
+        if repeats >= LINKEDIN_BLANK_TOLERANCE:
+            ended_on_cap = False
             break
+    else:
+        ended_on_cap = True
+    if ended_on_cap and out:
+        # Ending on the iteration cap means there was more to read. Never silent: a walk that
+        # stopped because it ran out of iterations must not look like one that ran out of jobs.
+        print(f"  [linkedin:{keyword}] stopped at the {LINKEDIN_GUEST_PAGES}-page cap with "
+              f"{len(out)} jobs — raise LINKEDIN_GUEST_PAGES, the pool was not exhausted")
     return out
 
 
@@ -698,7 +731,13 @@ def bd_spend_this_month(today=None):
         # wrong/empty BRIGHTDATA_ZONE — used to yield a confident 0 + 0, and the caller then
         # reported 2,989 instead of 4,106 (60% instead of 82%): exactly the under-count this
         # function exists to prevent, with no message. Absent keys mean UNREADABLE, not zero.
-        if not isinstance(cost, dict) or "reqs_unblocker" not in cost:
+        # Key-presence was not enough: a JSON `null` passes `"reqs_unblocker" in cost` and
+        # `int(None or 0)` then yields a confident, silent 0. Validate the VALUE. And a
+        # multi-zone account would have read an arbitrary zone via next(iter(...)), so pin it.
+        if isinstance(d, dict) and zone and zone in d:
+            cost = d[zone].get("custom", {}) if isinstance(d.get(zone), dict) else {}
+        if not isinstance(cost, dict) or not isinstance(cost.get("reqs_unblocker"),
+                                                        (int, float)):
             raise ValueError(f"zone/cost returned an unrecognised shape: {str(d)[:120]}")
         out["unlocker_reqs"] = int(cost.get("reqs_unblocker") or 0)
         out["serp_reqs"] = int(cost.get("reqs_serp") or 0)
@@ -985,13 +1024,22 @@ def main():
     targeted = _targeted_inputs(cap=targeted_cap) if targeted_cap else []
     if targeted:
         li_ds = LINKEDIN_DATASET
-        runs.append(("linkedin-targeted", li_ds, "keyword", targeted, 8))
+        # Cap by RECORDS. `plan_spend` sizes this sweep on an empirical 0.75 records per
+        # company, but the API's own worst case is `limit_per_input * len(inputs)` = 8 x 100 =
+        # 800 records in one morning — 16% of the monthly pool from a run budgeted at 75. The
+        # low unit cost comes from the `company` scoping; if LinkedIn ever changes how that
+        # filter behaves, an unscoped query returns limit_per_input every time. Enforce the
+        # budget against the trigger's own limit rather than against an assumption.
+        per_input = max(1, min(8, int(targeted_cap / max(1, len(targeted)))))
+        runs.append(("linkedin-targeted", li_ds, "keyword", targeted, per_input))
         print(f"targeting {len(targeted)} unresolved-broken companies via discovery")
-    elif not targeted_cap:
-        # Record the zero. When stale.json holds no targetable rows — the HEALTHY state — or
-        # the budget skips this sweep, the key simply stopped being written and
-        # sources.stale() then reported `linkedin-targeted: nothing for Nd` every morning
-        # forever: a death report for a source that was switched off on purpose.
+    else:
+        # Record the zero whenever the sweep does not run — for EITHER reason. This was
+        # `elif not targeted_cap:`, so it covered the no-budget case and missed the one its
+        # own comment named: a HEALTHY stale.json with nothing to target. The key then simply
+        # stopped being written, `sources.stale()` kept reading the frozen `last_run`, and the
+        # digest printed `linkedin-targeted: nothing for Nd` every morning forever — a death
+        # report for a source that was working perfectly and had nothing to do.
         per_source["linkedin-targeted"] = 0
         print("targeted backfill SKIPPED this run — no budget or nothing to target")
     for n, ds, disc, inputs, limit in runs:
@@ -1037,13 +1085,24 @@ def main():
                     prev = json.load(_f)
                 if not isinstance(prev, list):
                     raise ValueError(f"expected a list, got {type(prev).__name__}")
+                if prev and not any(isinstance(x, dict) for x in prev):
+                    # a valid list of non-dicts passes the type check and is then silently
+                    # emptied by the `isinstance(p, dict)` filter below — the one corrupt
+                    # shape that still destroyed the cache
+                    raise ValueError(f"list of {type(prev[0]).__name__}, not job dicts")
             except ValueError as e:
+                # Skip the CACHE WRITE only. This used to `return`, which sat above
+                # sources.record(), report_bd_spend(), the research_companies.json bridge and
+                # out/discovered_companies.json — so a corrupt-cache morning was also a
+                # morning with no source-health record and no budget warning. That is the
+                # same defect discovery_telegram._health() was moved to fix, in the other
+                # script. Fail safe on the file; keep reporting.
                 print(f"::error::discovered_cache.json exists but will not parse ({e}) — "
                       f"NOT overwriting it with this run's jobs alone. Fix or delete the "
                       f"file and re-run; nothing has been lost yet.", flush=True)
-                return
+                cacheable = []
         merged, keys = [], set()
-        for j in cacheable + [p for p in prev if isinstance(p, dict)]:
+        for j in (cacheable + [p for p in prev if isinstance(p, dict)]) if cacheable else []:
             k = ((j.get("company") or "").lower(), (j.get("title") or "").lower())
             if k in keys:
                 continue                       # this run's version wins (it is fresher)
@@ -1052,8 +1111,9 @@ def main():
                 continue                       # prune: the read side drops these anyway
             keys.add(k)
             merged.append(j)
-        with open("discovered_cache.json", "w", encoding="utf-8") as f:
-            json.dump(merged, f, ensure_ascii=False, indent=1)
+        if cacheable:
+            with open("discovered_cache.json", "w", encoding="utf-8") as f:
+                json.dump(merged, f, ensure_ascii=False, indent=1)
         # `len(cacheable)` is pre-dedup, so "carried" could print NEGATIVE — and that was the
         # only tell that the previous cache had been lost. Report both honestly.
         carried = len(merged) - sum(1 for j in cacheable
@@ -1087,7 +1147,16 @@ def main():
         c = j["company"].strip()
         src = (j.get("ats_platform") or "discovery-?").replace("discovery-", "")
         seen_by_src[src].add(c.lower())
-        if c.lower() in have or c.lower() in new_cos:
+        if c.lower() in have:
+            continue
+        if c.lower() in new_cos:
+            # Already queued from an earlier source — but UPGRADE the seed if this one is
+            # better. Sources run Indeed-first, so a company appearing in both Indeed and
+            # Workable kept Indeed's POSTING url and threw away Workable's company.website,
+            # degrading the single thing that source exists to provide.
+            if j.get("careers_hint") and not new_cos[c.lower()].get("_real_lead"):
+                new_cos[c.lower()]["careers_url"] = j["careers_hint"]
+                new_cos[c.lower()]["_real_lead"] = True
             continue
         if looks_like_junk(c):
             n_junk += 1
@@ -1099,7 +1168,8 @@ def main():
         # (Workable hands back company.website). Otherwise all we have is the posting,
         # which is an aggregator URL — docs/BACKLOG.md item 2.
         new_cos[c.lower()] = {"name": c, "careers_url": j.get("careers_hint") or j["url"],
-                              "ats": "unknown", "slug": j.get("company_slug", "")}
+                              "ats": "unknown", "slug": j.get("company_slug", ""),
+                              "_real_lead": bool(j.get("careers_hint"))}
         yield_by_src[src] += 1
     if n_junk or n_rec:
         print(f"discovery: rejected {n_junk} job-title-shaped names and {n_rec} agencies "
@@ -1108,6 +1178,8 @@ def main():
         n = yield_by_src[src]
         print(f"[yield] {src}: {len(seen_by_src[src])} employers -> {n} NEW companies"
               + ("   <-- discovering nothing" if n == 0 and src.startswith("linkedin") else ""))
+    for _v in new_cos.values():
+        _v.pop("_real_lead", None)          # internal, never written to the shared queue
     with open("out/discovered_companies.json", "w", encoding="utf-8") as f:
         json.dump(list(new_cos.values()), f, ensure_ascii=False, indent=1)
     # Bridge to auto-expand: out/ is gitignored (ephemeral on cloud runners), so the queue

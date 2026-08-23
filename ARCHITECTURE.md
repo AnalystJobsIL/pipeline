@@ -456,10 +456,32 @@ a single trigger — but the meter runs on rows. So the breadth sweep reads
 prints its own bill: `[linkedin] … for 18 Unlocker credits`. `f_TPR=r604800` is the
 past-week filter and it verifiably filters (past-week and past-month overlapped by 20 of 60).
 
-**Width beats depth, and one clever query loses to nine plain ones.** The public search
-hard-caps at **80 distinct jobs per query** — `start=50`, `75` and `100` all return zero new
-— so there is no depth to buy at any price, and two requests reach all 80. The cap is per
-QUERY, not per keyword, which makes a combined boolean search a trap:
+**Width AND depth — but only on the free endpoint.** The two endpoints have different
+ceilings and conflating them cost 60-95% of the sweep for half a day:
+
+| endpoint | page size | pool per query |
+|---|---|---|
+| paid `/jobs/search` via the Unlocker | 60 cards | **~80 jobs** — `start=50/75/100` all return zero new |
+| **keyless `/jobs-guest/...`** | 10 cards | **200+ jobs** — measured `analytics` 236, `אנליסט` 264, still not exhausted at 30 pages |
+
+The "80-job hard cap" was measured on the PAID page and then used to bound the FREE walk at
+`pages * 6` = 12 pages. `linkedin_search` was shipping **10 jobs out of a 201-job pool**. The
+free walk now has its own bound (`LINKEDIN_GUEST_PAGES`, 30) and **says so when it stops on
+the cap rather than on exhaustion** — a walk that ran out of iterations must never look like
+one that ran out of jobs. Measured over the full 9-keyword sweep, before and after:
+
+| | employers | new companies | paid credits | wall clock |
+|---|---|---|---|---|
+| bounded by the paid dial | 184 | 76 | 18 | — |
+| own bound, 30 pages | **364** | **182** | **7** | 113s |
+
+A page of entirely-REPEATED cards is also not the end: the guest endpoint's paging is
+unstable and re-serves a window, and breaking on the first repeat made the yield
+nondeterministic across runs minutes apart (16 jobs vs 100) — which reads as keyword
+saturation and sends the next reader to the wrong dial. Repeats are tolerated like blanks.
+
+**Depth is free here; a combined boolean query is still a trap.** The ~80/200 pool is per
+QUERY, not per keyword:
 
 | | credits | employers | new companies |
 |---|---|---|---|
@@ -490,12 +512,12 @@ from `pipeline/jdfill.py` later.
 
 | | credits/day |
 |---|---|
-| LinkedIn breadth — **keyless guest endpoint**, 9 keywords | **0** (≤18 if LinkedIn blocks it) |
+| LinkedIn breadth — **keyless guest endpoint**, 9 keywords × 30 pages | **~7** (≤18 if LinkedIn blocks it entirely) |
 | Workable — keyless, all tenants | **0** |
 | LinkedIn targeted — dataset, per record | **67** |
 | Indeed — Unlocker, 5 keywords + retries | 6 |
 | everything else (JD enrichment, rescue, crack, repair) | ~44 |
-| **total before SERP** | **73** → 2,190/month, **comfortably inside the free 5,000** |
+| **total before SERP** | **80** → 2,400/month, **comfortably inside the free 5,000** |
 
 So it is sustainable at **$0**, with roughly 1,200 credits/month of headroom — which SERP
 can still eat: at the weekend-only rate the month lands at 4,320 and fits; at the rate

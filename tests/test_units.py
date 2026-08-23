@@ -1606,12 +1606,21 @@ def test_the_keyless_sources_survive_a_missing_bright_data_key():
     import inspect
 
     import discovery_daily
-    body = ast.parse(inspect.getsource(discovery_daily.main)).body[0].body
-    first_return = next((i for i, n in enumerate(body) if isinstance(n, ast.Return)), len(body))
-    early = "\n".join(ast.unparse(n) for n in body[:first_return])
-    for keyless in ("workable_search", "linkedin_search", "sources"):
-        assert keyless in early or first_return == len(body), \
-            f"{keyless} must run before any early return"
+    # Walk EVERY Return in main(), at any nesting depth. The first version of this test
+    # looked only at TOP-LEVEL returns, found none (main's only `return` is nested inside
+    # `if cacheable:`), and passed through its own `or first_return == len(body)` escape
+    # without asserting anything — it would have passed with the bug reinstated.
+    tree = ast.parse(inspect.getsource(discovery_daily.main)).body[0]
+    returns = [n for n in ast.walk(tree) if isinstance(n, ast.Return)]
+    assert not returns, (
+        "main() must have NO return: every early exit sat above the keyless sources "
+        "(Workable, the LinkedIn guest endpoint) and above sources.record(), so a missing "
+        "key or a corrupt cache took the free half of the layer dark AND silenced the "
+        f"detector built to notice. Found {len(returns)} at lines "
+        f"{[n.lineno for n in returns]}")
+    src = inspect.getsource(discovery_daily.main)
+    for required in ("workable_search", "linkedin_search", "sources.record"):
+        assert required in src, f"{required} must run"
 
 
 def test_telegram_does_not_assert_israel_either():
@@ -1624,3 +1633,120 @@ def test_telegram_does_not_assert_israel_either():
                     "https://x/1"], "2026-08-23")
     assert j["country_code"] == ""
     assert is_israel_job(j) is True
+
+
+
+
+# --- fourth-wave re-verdict, 2026-08-23 -------------------------------------------------
+def test_the_free_walk_is_not_bounded_by_the_paid_dial():
+    """`for i in range(pages * 6)` tied the FREE guest walk to `LINKEDIN_PAGES`, the PAID
+    budget dial that every docstring here invites tuning. It capped the walk at 12 pages and
+    `LINKEDIN_PAGES=0` returned [] for every keyword in silence. Worse, the "~80 jobs per
+    query" cap that justified it was measured on the PAID /jobs/search page and is wrong for
+    the guest endpoint: measured 2026-08-23, `analytics` has 201 jobs / 148 employers and
+    `data scientist` 162 / 106, against which linkedin_search was shipping TEN."""
+    import inspect
+
+    import discovery_daily as dd
+    src = inspect.getsource(dd.linkedin_search)
+    assert "range(LINKEDIN_GUEST_PAGES)" in src, "the free walk needs its own bound"
+    assert "range(pages * 6)" not in src
+    assert dd.LINKEDIN_GUEST_PAGES >= 20
+
+
+def test_one_repeated_page_does_not_end_a_keyword():
+    """The guest endpoint's paging is unstable and re-serves a window it has already given.
+    `if not fresh: break` killed the keyword on the first repeat, making the yield
+    nondeterministic across runs minutes apart (16 jobs vs 100) — and the low run reads as
+    keyword saturation, which sends the next reader to the wrong dial entirely."""
+    import discovery_daily as dd
+    card = ('<li><div class="base-card" data-entity-urn="urn:li:jobPosting:%d">'
+            '<a class="base-card__full-link" href="https://il.linkedin.com/jobs/view/a-%d">'
+            '<span class="sr-only"> Data Analyst </span></a>'
+            '<h4 class="base-search-card__subtitle">A Co</h4></div></li>')
+    p1, p2 = dd._li_cards(card % (1, 1)), dd._li_cards(card % (2, 2))
+    pages = [p1, p1, p2, p1, p1, p1]          # a repeat, then MORE jobs, then a dead tail
+    real = dd._li_guest
+    try:
+        dd._li_guest = lambda kw, loc, d, st: ((pages.pop(0), True) if pages else ([], True))
+        got = dd.linkedin_search("x", pages=1)
+        assert {c["job_id"] for c in got} == {"1", "2"}, \
+            "a repeated page must be stepped over, not treated as the end of the pool"
+    finally:
+        dd._li_guest = real
+
+
+def test_a_blank_page_does_not_disarm_the_everything_is_billed_alarm():
+    """The blank branch incremented `linkedin_free`, so under a soft block the end-of-sweep
+    warning `paid and not free` could never fire — the precise case the blank tolerance was
+    written for. A blank is a request MADE, not a request that PRODUCED."""
+    import inspect
+
+    import discovery_daily as dd
+    src = inspect.getsource(dd.linkedin_search)
+    blank_branch = src.split("elif ok:", 1)[1].split("if not ok or", 1)[0]
+    assert 'SOURCE_PATH["linkedin_blank"]' in blank_branch
+    assert 'SOURCE_PATH["linkedin_free"]' not in blank_branch
+
+
+def test_the_targeted_sweep_records_a_zero_when_it_does_not_run():
+    """`elif not targeted_cap:` covered the no-budget case and missed the one its own comment
+    named — a HEALTHY stale.json with nothing to target. The key then stopped being written,
+    `sources.stale()` kept reading the frozen last_run, and the digest printed
+    `linkedin-targeted: nothing for Nd` every morning forever: a death report for a source
+    that was working perfectly and had nothing to do."""
+    import ast
+    import inspect
+
+    import discovery_daily as dd
+    # Structural, not textual: the first version of this test grepped the source and matched
+    # the phrase inside the COMMENT that explains the fix, so it failed on correct code.
+    tree = ast.parse(inspect.getsource(dd.main)).body[0]
+    node = next(n for n in ast.walk(tree)
+                if isinstance(n, ast.If) and ast.unparse(n.test) == "targeted")
+    assert node.orelse, "`if targeted:` needs an else branch"
+    assert not (len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If)), (
+        "an `elif` here covers only the no-budget case and misses the HEALTHY one — "
+        "a stale.json with nothing to target")
+    assert any(ast.unparse(n) == "per_source['linkedin-targeted'] = 0"
+               for n in node.orelse), ast.unparse(node.orelse)
+
+
+def test_a_null_valued_zone_cost_is_unknown_not_zero():
+    """The guard was key-PRESENCE. A JSON `null` passes `"reqs_unblocker" in cost` and
+    `int(None or 0)` then yields a confident, silent 0 — the same under-count, narrower."""
+    import datetime as dt
+
+    import discovery_daily as dd
+    real = dd._bd_get
+    shape = {"myzone": {"custom": {"reqs_unblocker": None, "reqs_serp": None}}}
+    dd._bd_get = lambda u: ([{"created": "2026-08-10T05:00:00Z", "dataset_size": 150}]
+                            if "snapshots" in u else shape)
+    try:
+        mtd, _ = dd.bd_spend_this_month(today=dt.date(2026, 8, 23))
+        assert mtd is None, f"null-valued counters must read as unknown, got {mtd}"
+    finally:
+        dd._bd_get = real
+
+
+def test_a_valid_list_of_non_dicts_does_not_destroy_the_cache():
+    """`[1, 2, 3]` passes the isinstance-list check and is then silently emptied by the
+    `isinstance(p, dict)` filter in the merge — the one corrupt shape that still overwrote
+    the cache with this run's jobs alone."""
+    import inspect
+
+    import discovery_daily as dd
+    src = inspect.getsource(dd.main)
+    assert "not any(isinstance(x, dict) for x in prev)" in src
+
+
+def test_the_better_careers_lead_wins_when_two_sources_find_one_company():
+    """Sources run Indeed-first, so a company found by BOTH Indeed and Workable kept Indeed's
+    POSTING url and discarded Workable's `company.website` — degrading the single thing that
+    source exists to provide (docs/BACKLOG.md item 2)."""
+    import inspect
+
+    import discovery_daily as dd
+    src = inspect.getsource(dd.main)
+    assert "_real_lead" in src and 'j.get("careers_hint")' in src
+    assert '_v.pop("_real_lead", None)' in src, "the internal flag must not reach the queue"
