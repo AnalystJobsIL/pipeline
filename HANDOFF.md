@@ -116,6 +116,51 @@ conflict path the call is `|| true` — so the process dies on its summary and t
 changes are discarded with no error anyone reads. All 16 root entrypoints now reconfigure
 stdout/stderr to UTF-8 with `errors="replace"` (HANDOFF §4d item 5).
 
+### N. Eight rows were fetching another company's ATS tenant
+An ATS row's identity is its TENANT SLUG. Verified by fetching each and reading the roles
+back: **SimilarTech** pointed at greenhouse `similarweb` (65 jobs, **25 in Israel** — and
+Similarweb has its own row, so they were queued to publish twice, once under a company whose
+domain no longer resolves). **ASTERRA** pointed at `asteralabs` — Astera Labs, a San Jose
+semiconductor company — **30 Israel roles**. **"Moonsite - Moonsoft Development Ltd."** had
+`jobs.ashbyhq.com/moonactive`, i.e. Moon Active's board, **23 Israel roles**. Donisi
+Health→`oshihealth`, Anonybit→`anonyome`, Tritone→`tranetechnologies`, More
+Foods→`usfoods`, Alike Health→`exactcare`: all real, all currently empty of Israel roles.
+None had reached the board yet.
+
+The same audit found coverage we were missing: **Moon Active** had been on a Comeet endpoint
+returning 0 for weeks while its board moved to Ashby (33 jobs, 24 Israel, including a
+Marketing Data Analyst), and **Armis** was on a SmartRecruiters tenant showing 2 roles while
+greenhouse `armissecurity` — reached through OTORIO's row, because Armis acquired OTORIO —
+had 18 (8 Israel, including a Senior Data Analyst).
+
+`check_invariants` C3 warns on the shape and can only ever warn: a rebrand or acquisition is
+indistinguishable from a mis-resolution. Momentis Surgical really does post under `memic`,
+Itamar Medical under `zoll`, SentinelOne under `sentinellabs`. Thirteen rows still match and
+were each checked by hand today; the warning is where the next one shows up.
+
+### O. Five "companies" were leaked job titles, and Imperva failed 100% of its fetches
+Discovery writes the employer field straight through, and sometimes that field is the whole
+posting headline: "Data researcher - Navina", "Data scientist engineer - Fetcherr",
+"Sql developer - SkySoft Solutions By Commit", "Engineering team lead- data & AI platform -
+everc", "my team" — all ACTIVE, all fetched daily, and in each case the real employer already
+had its own row. `listing_hunt` now skips names `looks_like_junk` recognises rather than
+searching for a careers page for a non-company (it had just returned
+`remoterocketship.com/company/guildmortgage` for "AppSec" and `usajobs.gov` for "ICE").
+
+Separately, four rows have been failing every fetch for as long as the audit block has
+existed, with the same names each time — which is exactly why nobody looked. **Imperva** was
+`ats_platform=workday` pointing at its own careers HTML, so every run POSTed a Workday body
+to an HTML page. Finaloop's Recruitee tenant 404s, Bit's Ashby slug 404s, Comcast's Workday
+tenant returns 410 Gone. A row that fails 100% of the time never changes, so it never reads
+as a regression; check C2 now warns when a native-ATS row's endpoint is not on that ATS.
+
+### P. An Israeli careers page writes "תל אביב"
+`scrape_universal` has always recognised Hebrew place names and stamps the matched text as
+the role's location; `pipeline.israel`, which makes the keep/drop decision, had none. Zero
+roles are lost today (scraped cards fall back to the literal "Israel" and Indeed sets
+`country_code=IL`), but it is a latent hole on a path that just became busy. The scraper's
+regex is now DERIVED from both lists instead of keeping its own eight-name copy.
+
 ### Also
 - 87 rows carried a truncated triage mode (`page-emp`, `page-e`, `pa`) that no pool matches;
   all restored, and `check_invariants` check F2 warns on the next one.
