@@ -33,7 +33,8 @@ from pipeline.aggregators import is_aggregator
 from pipeline.recruiters import is_recruiter
 from urllib.parse import urlparse
 
-from pipeline.company_identity import is_foreign
+from pipeline.company_identity import is_foreign, ATS_HOST
+from crack_walled import _ok_to_write
 from pipeline.firmographics import looks_like_junk
 from pipeline.company_identity import looks_like_a_job_listing_page
 from resolve_llm import _ask_claude
@@ -100,6 +101,37 @@ def _resolve_rebrand(url):
     d0 = ".".join(urllib.parse.urlparse(url).netloc.split(".")[-2:])
     d1 = ".".join(urllib.parse.urlparse(final).netloc.split(".")[-2:])
     return final, (d1 if d0 != d1 else "")
+
+
+def _identity_ok(name, url):
+    """May this url be activated, or persisted as the row's address?
+
+    `is_foreign` is the right gate on an ordinary domain and it works there. On a
+    multi-tenant ATS it returns **False for every host by design** (ARCHITECTURE.md section
+    2, docs/BACKLOG.md 21: an acquirer's tenant is legitimate, `Momentis Surgical` really
+    does post under `memic`), which left this tool - the one with the documented fast path -
+    as the last activating path in that class with no identity test at all:
+
+        NanoLock Security  gen.wd1.myworkdayjobs.com/careers/          is_foreign -> False
+        Sight Diagnostics  recruiting2.ultipro.com/SIG1008SIGH/...     is_foreign -> False
+
+    `Sight Sciences` is ALREADY ACTIVE on that same `SIG1008SIGH` board, so activating
+    `Sight Diagnostics` on it publishes one company's roles under two company names - the
+    duplicate-attribution failure section 2 spends a subsection on.
+
+    Scoped deliberately: the page test runs **only** on ATS hosts, where `is_foreign` is
+    inert. On an ordinary careers domain nothing changes, because `_page_names_company`
+    returns `None` (no evidence) for any page under 2000 chars and a lot of legitimate
+    company career pages are JS-rendered - routing those through it would trade this hole
+    for silent exclusion, which is section 8's first bug class and exactly the mistake wave
+    7 caught in `crack_walled._ok_to_write`.
+    """
+    if is_foreign(name, url):
+        return False
+    host = (urlparse(url or "").netloc or "").lower()
+    if host and ATS_HOST.search(host):
+        return _ok_to_write(name, url)
+    return True
 
 
 def _triaged_page_empty(note):
@@ -322,6 +354,12 @@ def main():
             refused = ""
             if verdict == "found" and not looks_like_a_job_listing_page(url):
                 refused = "not a listings page"
+            elif verdict == "found" and not _identity_ok(name, url):
+                # This branch sets fr[4] = "true". Until 2026-08-24 the ONLY thing between a
+                # hunted URL and an active row was "does the path look like a listings
+                # page" - no identity test whatsoever, on the tool whose documented
+                # fast-path re-checks rows every night.
+                refused = "another company's board"
             stats[verdict] += 1
             tag = "OK" if verdict == "found" and not refused else "XX" if refused else "--"
             print(f"  [{tag}] {n}/{len(targets)} {name}: "
@@ -361,7 +399,15 @@ def main():
                         # fireflyspace.com; persisted, that reads as data, and every later
                         # tool honestly re-tests the wrong company's careers page. Note it
                         # in the note instead, which is text, not an endpoint.
-                        if is_foreign(name, url):
+                        if not _identity_ok(name, url):
+                            # `is_foreign` alone was the gate here. It is False for every ATS
+                            # host, so a walled candidate was persisted into fr[3] with a
+                            # `monitored candidate` note - and this tool's own fast path
+                            # re-reads that address the next night, so refusing to ACTIVATE
+                            # while still writing the ADDRESS only delays the same mistake by
+                            # 24 hours. That is the identical shape wave 6 fixed in
+                            # `crack_walled` (`novrfy` persisting a `host documented` url).
+                            #
                             # host only: the note has a 220-char budget shared with every
                             # other tool's verdict, and a full URL in one segment evicts
                             # them all. The address itself is not being stored anyway.

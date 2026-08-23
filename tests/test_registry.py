@@ -605,9 +605,23 @@ def test_a_tenant_mismatch_alone_must_not_block_an_ats_row():
     A tenant that names the acquirer is INHERITANCE, not theft, and `page_mentions_company`
     cannot separate the two either - the acquirer's board does not say the subsidiary's name.
     So the permissiveness is deliberate, and any future attempt to "fix" `is_foreign` has to
-    carry a second signal. The predicate survives as `audit_empty_rows.tenant_is_this_company`
-    and is used ONLY in `crack_walled._ok_to_write`, where `_page_names_company(...) is True`
-    is already required and therefore no new false negative is possible.
+    carry a second signal.
+
+    **Where the predicate actually lives now (2026-08-24).** An earlier version of this
+    docstring said it "is used ONLY in `crack_walled._ok_to_write` ... therefore no new false
+    negative is possible". That was wrong in both directions within three commits, which is
+    the whole reason this note is dated:
+
+      * it is **not** in `_ok_to_write` any more. Wave 7 measured it refusing 7 of the 9
+        active rows on crack_walled's own target platforms - Oracle CX pod ids are opaque and
+        can never near-match a name - so the veto was removed and the mandatory
+        `_page_names_company(...) is True` left as the only gate;
+      * it **is** used in `audit_empty_rows.main` (as a first pass, with a second chance from
+        the CANDIDATE page) and in `repair_dead_urls.main` (as a veto on an explicit ATS
+        tenant mismatch, never as evidence FOR a write).
+
+    So a false negative here IS possible and the claim that it was not was doing no work.
+    What keeps it safe is that no path treats a `True` from this predicate as sufficient.
 
     This test exists so the next reviewer who proposes that fix finds the measurement first."""
     import csv
@@ -1020,3 +1034,59 @@ def test_the_write_gate_does_not_refuse_the_platforms_it_exists_to_crack():
             "an unreadable page is no evidence and must never be written")
     finally:
         cw._page_names_company = orig
+
+
+def test_the_hunt_needs_the_page_to_name_us_on_a_walled_ats(tmp_path, monkeypatch):
+    """`listing_hunt` was the last activating path in the walled class with no page test.
+
+    Its `found` branch sets `fr[4] = "true"`, and until 2026-08-24 the ONLY thing between a
+    hunted URL and an active row was `looks_like_a_job_listing_page` — no identity test at
+    all. Its `nolisting` branch persisted the candidate into `fr[3]` gated on `is_foreign`,
+    which returns False for every ATS host by design, and this tool's own documented
+    fast-path re-reads that address the next night.
+
+    Two rows were queued against it on 2026-08-24: `NanoLock Security` ->
+    `gen.wd1.myworkdayjobs.com` (Gen Digital's tenant) and `Sight Diagnostics` ->
+    `recruiting2.ultipro.com/SIG1008SIGH`, a board on which `Sight Sciences` is ALREADY
+    active — activating it publishes one company's roles under two company names.
+
+    The ordinary-domain control is the other half: the page test is scoped to ATS hosts on
+    purpose, because `_page_names_company` answers `None` for any page under 2000 chars and
+    routing every JS-rendered careers page through it would trade this hole for silent
+    exclusion.
+    """
+    import listing_hunt as L
+    import crack_walled as C
+    orig = C._page_names_company
+    try:
+        C._page_names_company = lambda n, u, html="": False     # the board never names us
+        assert not L._identity_ok(
+            "NanoLock Security", "https://gen.wd1.myworkdayjobs.com/careers/")
+        assert not L._identity_ok(
+            "Sight Diagnostics", "https://recruiting2.ultipro.com/SIG1008SIGH/JobBoard/x/")
+        # ordinary careers domain: unchanged, still admitted without a page read
+        assert L._identity_ok("Acme", "https://www.acme.com/careers")
+        C._page_names_company = lambda n, u, html="": True
+        assert L._identity_ok("Nutanix", "https://nutanix.eightfold.ai/careers?location=IL")
+        C._page_names_company = lambda n, u, html="": None       # unreadable == no evidence
+        assert not L._identity_ok("Nutanix", "https://nutanix.eightfold.ai/careers?x=1")
+    finally:
+        C._page_names_company = orig
+
+
+def test_both_hunt_write_branches_route_through_the_identity_gate():
+    """Refusing to ACTIVATE while still writing the ADDRESS only delays the mistake 24h.
+
+    That is the shape wave 6 fixed in `crack_walled` (`novrfy` persisting a `host
+    documented` url that `listing_hunt`'s fast path then activated), so both of this tool's
+    write branches have to carry the same gate — the activating one and the one that merely
+    persists a candidate.
+    """
+    import inspect
+    import listing_hunt
+    src = inspect.getsource(listing_hunt.main)
+    assert src.count("_identity_ok(name, url)") >= 2, (
+        "both the `found` (activates) and `nolisting` (persists fr[3]) branches must gate "
+        "on _identity_ok; found %d call(s)" % src.count("_identity_ok(name, url)"))
+    body = src[src.index('elif verdict == "nolisting"'):]
+    assert body.index("_identity_ok(name, url)") < body.index("fr[3] = url")

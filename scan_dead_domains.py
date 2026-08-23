@@ -20,7 +20,7 @@ import urllib.parse
 import ssl
 import urllib.request
 from pipeline.atomic import write_csv_rows, write_json
-from pipeline.notes import append as _note_append, replace_own as _note_replace
+from pipeline.notes import replace_own as _note_replace
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the

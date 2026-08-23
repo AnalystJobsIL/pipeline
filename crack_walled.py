@@ -26,7 +26,7 @@ import urllib.parse
 import urllib.request
 
 from deep_validate import Renderer, ddg
-from audit_empty_rows import AGG, verify, tenant_is_this_company
+from audit_empty_rows import AGG, verify
 from pipeline.aggregators import is_aggregator
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace

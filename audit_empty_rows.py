@@ -10,7 +10,10 @@ the platform endpoint, and verify it through pipeline.fetchers before touching t
 Only endpoint-verified boards get reactivated; everything else keeps its parked note.
 
 Usage: python audit_empty_rows.py [--apply]   (default is dry-run report)
-Env:   AUDIT_TIME_BUDGET_MIN (default 90) · SERP_RESERVE · AUDIT_BD_SEARCH_CAP
+Env:   AUDIT_TIME_BUDGET_MIN (default 90) · SERP_RESERVE · DEEP_BD_SEARCH_CAP
+       (named DEEP_ because the unlocker cap is read from the same variable
+       `deep_validate` uses; there is no AUDIT_BD_SEARCH_CAP and setting one does
+       nothing - the docstring advertised it for a day)
 """
 from __future__ import annotations
 
@@ -269,8 +272,13 @@ def serp(name, limit=5):
     DuckDuckGo is free and works from the runners; it is rate-limited from the dev machine
     and returns 0 intermittently (measured 2026-08-23: 4 results, then 0, for the same
     query), which is why it can never be the only rung either. The unlocker is capped by
-    DEEP_BD_SEARCH_CAP and shares its counter with deep_validate, so a run cannot silently
-    drain the credits.
+    DEEP_BD_SEARCH_CAP.
+
+    That cap is **per process, not shared with `deep_validate`** - the counter is a module
+    global, and the two tools run in separate processes (and on different days). Two places
+    said "shares its counter with deep_validate"; nothing enforces that, and believing it
+    means believing a Sunday audit and a Saturday deep-validate cannot together exceed the
+    cap. They can, by exactly 2x. docs/BACKLOG.md 10 and 20 both record this.
     """
     _SEARCH["tried"] += 1
     urls = _serpapi(name, limit)

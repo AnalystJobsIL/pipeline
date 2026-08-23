@@ -435,7 +435,13 @@ host by design, because the tenant may legitimately be an acquirer's
 (`Momentis Surgical` really does post under `memic`). So on those hosts:
 
 * what stops a wrong activation is `crack_walled._page_names_company` — three-valued, and
-  `None` (page unreadable) counts as **no evidence**, not as approval;
+  `None` (page unreadable) counts as **no evidence**, not as approval. **All five write
+  paths route through it on an ATS host** (`crack_walled`, `audit_empty_rows`,
+  `deep_validate`, `repair_dead_urls`, `listing_hunt`); on ordinary domains `is_foreign`
+  still does the work, because a page test there would refuse every JS-rendered careers
+  page. `listing_hunt` was the last one wired in, on 2026-08-24, with two rows queued
+  against it — one of them `Sight Diagnostics` onto a board `Sight Sciences` is already
+  active on, i.e. one company's roles published under two names;
 * and `crack_walled._ok_to_write`, which gates the **write**, not the return: refusing to
   activate is not enough, because persisting a foreign address into `api_url` with a
   `host documented` note hands it to `listing_hunt`'s fast-path, which activates it the next
