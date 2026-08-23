@@ -524,3 +524,20 @@ def test_a_source_that_stops_returning_records_is_reported(tmp_path, monkeypatch
     json.dump(data, open(sources.PATH, "w", encoding="utf-8"))
     sources.record({"linkedin": 0})
     assert any(x.startswith("linkedin: nothing for 3d") for x in sources.stale()), sources.stale()
+
+
+# --- the conflict path was deleting other workflows' cache entries ---------------------
+def test_cache_merge_keeps_what_the_other_workflow_cached(tmp_path):
+    """`scraped_cache.json` is rewritten wholesale by eight tools across six workflows. The
+    push-conflict recovery restored OUR copy — our copy as of CHECKOUT — so every company
+    another workflow had cached in between was silently deleted. Same shape as the
+    companies.csv incident `merge_csv_rows` exists to prevent, one file along."""
+    import merge_json_cache as M
+    base = {"A": [1], "B": [2], "C": [3]}
+    ours = {"A": [1], "B": [99], "D": [4]}          # we changed B, added D, never had C
+    theirs = {"A": [1], "B": [2], "C": [3], "E": [5]}   # another run added E, kept C
+    out, _, _ = M.merge(base, ours, theirs)
+    assert out["B"] == [99], "this run's own change must win"
+    assert out["D"] == [4], "this run's new company must survive"
+    assert out["C"] == [3], "a company we never touched must not be deleted"
+    assert out["E"] == [5], "another workflow's new company must not be deleted"

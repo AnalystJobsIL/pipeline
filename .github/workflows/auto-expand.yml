@@ -31,7 +31,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Snapshot companies.csv baseline (git-layer merge)
-        run: cp companies.csv /tmp/base.csv || true
+        run: |
+          cp companies.csv /tmp/base.csv || true
+          cp scraped_cache.json /tmp/base_cache.json || true
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
@@ -92,11 +94,22 @@ jobs:
               done
               git fetch origin ${GITHUB_REF_NAME} || true
               git reset --hard origin/${GITHUB_REF_NAME} || true
-              for p in scraped_cache.json discovered_cache.json research_companies.json                        cloud_state digests docs; do
-                [ -e "/tmp/ours/$(basename $p)" ] && cp -r "/tmp/ours/$(basename $p)" . 2>/dev/null || true
+              # Copy back ONLY what THIS job owns. `cp -r cloud_state .` restored the whole
+              # directory as it was at CHECKOUT TIME, so a run that conflicts hours later
+              # silently reverted every cloud_state/seen.db row other workflows had committed
+              # in between — sent/matched/llm_cache/firmographics, last-writer-wins on a
+              # binary git cannot merge (HANDOFF open item 7). Only the digest owns seen.db.
+              for p in cloud_state/pipeline_stages.json; do
+                [ -e "/tmp/ours/$p" ] && { mkdir -p "$(dirname "$p")"; cp -r "/tmp/ours/$p" "$p"; } 2>/dev/null || true
               done
               if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
                 python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
+              fi
+              # scraped_cache.json has eight writers across six workflows, each rewriting the
+              # whole dict — restoring ours wholesale deleted every company another workflow
+              # had cached since checkout. Merge it per company key, like the csv.
+              if [ -f /tmp/base_cache.json ] && [ -f /tmp/ours/scraped_cache.json ]; then
+                python merge_json_cache.py /tmp/base_cache.json /tmp/ours/scraped_cache.json                        scraped_cache.json scraped_cache.json || true
               fi
               git add -A . || true
               git commit -m "row-merged state $(date -u +%F) [skip ci]" || true

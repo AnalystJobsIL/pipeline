@@ -37,7 +37,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Snapshot companies.csv baseline (git-layer merge)
-        run: cp companies.csv /tmp/base.csv || true
+        run: |
+          cp companies.csv /tmp/base.csv || true
+          cp scraped_cache.json /tmp/base_cache.json || true
 
       - uses: actions/setup-python@v6
         with:
@@ -151,6 +153,12 @@ jobs:
               done
               if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
                 python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
+              fi
+              # scraped_cache.json has eight writers across six workflows, each rewriting the
+              # whole dict — restoring ours wholesale deleted every company another workflow
+              # had cached since checkout. Merge it per company key, like the csv.
+              if [ -f /tmp/base_cache.json ] && [ -f /tmp/ours/scraped_cache.json ]; then
+                python merge_json_cache.py /tmp/base_cache.json /tmp/ours/scraped_cache.json                        scraped_cache.json scraped_cache.json || true
               fi
               git add -A . || true
               git commit -m "row-merged state $(date -u +%F) [skip ci]" || true
