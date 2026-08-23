@@ -33,34 +33,36 @@ needed; not required to start.
 
 ```
    ┌── 1 INTAKE ────────┐   LinkedIn · Indeed · Telegram  ──▶ discovered_cache.json
-   │   lane D1          │   new employer names            ──▶ research_companies.json
+   │   lane: discovery  │   new employer names            ──▶ research_companies.json
    └────────┬───────────┘
             ▼
    ┌── 2 REGISTRY ──────┐   resolve a name to a board, repair a dead one,
-   │   lane R  (excl.)  │   park what is genuinely dark   ──▶ companies.csv  (846 active)
+   │  lane: registry ✱  │   park what is genuinely dark   ──▶ companies.csv  (846 active)
    └────────┬───────────┘
             ▼
-   ┌── 3 FETCH ─────────┐   F1 native ATS APIs (16 platforms, 435 rows)
-   │   lanes F1 · F2    │   F2 the browser scraper        (411 rows) ──▶ scraped_cache.json
+   ┌── 3 FETCH ─────────┐   ats-fetch · native ATS APIs   (16 platforms, 435 rows)
+   │ lanes: ats-fetch   │   scraper   · the browser scraper (411 rows)
+   │       + scraper    │                                 ──▶ scraped_cache.json
    └────────┬───────────┘
             ▼
-   ┌── 4 ENRICH ────────┐   E1 job description text for every relevant role, any age
-   │   lanes E1 · E2    │   E2 company facts: sector/stage/size/founded  (919 profiles)
+   ┌── 4 ENRICH ────────┐   jd-text      · a description for every relevant role, any age
+   │ lanes: jd-text     │   company-intel · sector / stage / size / founded
+   │     + company-intel│                                 ──▶ 919 company profiles
    └────────┬───────────┘
             ▼
    ┌── 5 CLASSIFY ──────┐   Israel filter → relevance/seniority → LLM for the ambiguous
-   │   lane K           │                                  ──▶ matched (the store)
+   │  lane: classifier  │                                  ──▶ matched (the store)
    └────────┬───────────┘
             ▼
    ┌── 6 RENDER ────────┐   the board, the archive, the email, every tag on a role card
-   │   lane V           │
+   │   lane: render     │
    └────────┬───────────┘
             ▼
    ┌── 7 DELIVER ───────┐   commit state · publish the board · relay the email · archive
-   │   lane S  (excl.)  │   semantics · the merge machinery · the workflows
+   │   lane: infra ✱    │   semantics · the merge machinery · the workflows
    └────────────────────┘
 
-   lane W · docs and readability — cuts across all seven
+   lane: docs — cuts across all seven      ✱ = only one session at a time
 ```
 
 ## Lanes, and what each may write
@@ -69,19 +71,20 @@ Pick ONE. The split exists so that two lanes never write the same file.
 
 | lane | step | owns | primary files |
 |---|---|---|---|
-| **D1 · discovery & intake** | 1 | where new roles and new employers come from | `discovery_daily.py`, `discovery_telegram.py`, `pipeline/aggregators.py`, `pipeline/recruiters.py` |
-| **R · registry & resolvers** *(exclusive)* | 2 | dark rows, the 23-tool resolution ladder | `companies.csv`, `listing_hunt.py`, `triage_dark.py`, `crack_walled.py`, `deep_validate.py`, `repair_*.py`, `resolve_*.py`, `audit_empty_rows.py`, `probe_candidates.py`, `scan_dead_domains.py`, `auto_expand.py`, `apply_resolved.py` |
-| **F1 · ATS fetch layer** | 3 | how a board's API is read; adding a platform | `pipeline/fetchers.py`, `pipeline/platform_check.py`, `pipeline/health.py` |
-| **F2 · the scraper** | 3 | the 5-strategy browser extraction for the 411 no-API companies | `scrape_universal.py`, `refresh_scrape_cache.py`, `cache_new_rows.py` |
-| **E1 · JD enrichment** | 4 | every relevant role gets its description, whatever its age | `pipeline/jdfill.py`, `enrich_scrape_jd.py`, `enrich_matched_jd.py` |
-| **E2 · company intelligence** | 4 | sector / stage / employees / founded / Israel centre | `pipeline/firmographics.py`, `pipeline/company_info.py`, `research_firmographics.py`, `bd_employees.py`, `fill_employees_llm.py`, `company_type_analysis.py` |
-| **K · classifier** | 5 | which roles qualify, and the LLM tier that decides the ambiguous ones | `pipeline/seniority.py`, `pipeline/israel.py`, `llm_cache` invalidation |
-| **V · board & email rendering** | 6 | how a role reads; every tag on a card | `pipeline/digest.py`, `pipeline/roleprofile.py`, `docs/TAGGING.md` |
-| **S · state, delivery & infra** *(exclusive)* | 7 | stores, merges, workflows, archive semantics, the relay | `pipeline/store.py`, `pipeline/run.py`, `merge_*.py`, `check_invariants.py`, `.github/workflows/*`, `mark_sent.py` |
-| **W · docs & readability** | — | making all of the above legible to the next agent and to a visitor | `README.md`, `ARCHITECTURE.md`, `HANDOFF.md`, `CLAUDE.md`, `docs/*` |
+| **`discovery`** | 1 | where new roles and new employers come from | `discovery_daily.py`, `discovery_telegram.py`, `pipeline/aggregators.py`, `pipeline/recruiters.py` |
+| **`registry`** *(one at a time)* | 2 | dark rows, the 23-tool resolution ladder | `companies.csv`, `listing_hunt.py`, `triage_dark.py`, `crack_walled.py`, `deep_validate.py`, `repair_*.py`, `resolve_*.py`, `audit_empty_rows.py`, `probe_candidates.py`, `scan_dead_domains.py`, `auto_expand.py`, `apply_resolved.py` |
+| **`ats-fetch`** | 3 | how a board's API is read; adding a platform | `pipeline/fetchers.py`, `pipeline/platform_check.py`, `pipeline/health.py` |
+| **`scraper`** | 3 | the 5-strategy browser extraction for the 411 no-API companies | `scrape_universal.py`, `refresh_scrape_cache.py`, `cache_new_rows.py` |
+| **`jd-text`** | 4 | every relevant role gets its description, whatever its age | `pipeline/jdfill.py`, `enrich_scrape_jd.py`, `enrich_matched_jd.py` |
+| **`company-intel`** | 4 | sector / stage / employees / founded / Israel centre | `pipeline/firmographics.py`, `pipeline/company_info.py`, `research_firmographics.py`, `bd_employees.py`, `fill_employees_llm.py`, `company_type_analysis.py` |
+| **`classifier`** | 5 | which roles qualify, and the LLM tier that decides the ambiguous ones | `pipeline/seniority.py`, `pipeline/israel.py`, `llm_cache` invalidation |
+| **`render`** | 6 | how a role reads; every tag on a card | `pipeline/digest.py`, `pipeline/roleprofile.py`, `docs/TAGGING.md` |
+| **`infra`** *(one at a time)* | 7 | stores, merges, workflows, archive semantics, the relay | `pipeline/store.py`, `pipeline/run.py`, `merge_*.py`, `check_invariants.py`, `.github/workflows/*`, `mark_sent.py` |
+| **`docs`** | — | making all of the above legible to the next agent and to a visitor | `README.md`, `ARCHITECTURE.md`, `HANDOFF.md`, `CLAUDE.md`, `docs/*` |
 
-**Exactly one agent may hold R at a time, and one S.** R writes the registry every other
-lane reads; S writes the workflows that run them all. Everything else is concurrent.
+**Exactly one agent may hold `registry` at a time, and one `infra`.** `registry` writes the
+file every other lane reads; `infra` writes the workflows that run them all. The other eight
+are concurrent with each other and with one of each.
 
 ### Shared plumbing — read freely, change loudly
 
@@ -91,7 +94,7 @@ your change needs one modified, **say so in your report and name the lanes it co
 `company_identity` alone gates four activation paths, and `notes` gates every write to
 `companies.csv`.
 
-`pipeline/run.py` is the orchestrator: lane S owns it, but any lane may need a hook in it.
+`pipeline/run.py` is the orchestrator: `infra` owns it, but any lane may need a hook in it.
 Propose the hook, do not smuggle it.
 
 ### Not in any lane (deliberately)
@@ -100,7 +103,7 @@ About 19 root scripts are one-shot captures, probes and superseded resolvers —
 `bigtech_capture*.py`, `comeet_probe*.py`, `shot_*.py`, `ms_capture.py`, `probe_expand.py`,
 `verify_jsearch.py`, `gen_test_board.py`, and friends. `HANDOFF.md` §4d lists them as safe to
 delete after an import check; several are imported only for their regex tables, which is
-itself the problem. **Lane W's job is to mark them; nobody else should spend time there.**
+itself the problem. **Marking them is the `docs` lane's job; nobody else should spend time there.**
 
 ## Shared, finite, and easy to exhaust
 
@@ -137,7 +140,7 @@ Declare these in your plan before spending them:
 7. Local runs are safe by default: `python -m pipeline.run --only "Wix,Fiverr" --no-llm
    --db /tmp/scratch.db` never emails, never publishes, and writes `out/docs-preview/`.
 
-## Lane W · docs & readability — the standing brief
+## The `docs` lane — standing brief
 
 This lane has a fixed goal: **someone who has never seen this repo should understand what it
 does and how the flow hangs together in ten minutes, and an agent should know where to start
