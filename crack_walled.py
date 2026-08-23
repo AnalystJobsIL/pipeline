@@ -83,6 +83,17 @@ def listing_urls(platform, m, page_url):
 def crack_one(name, seed, platform):
     cands = [] if not seed or is_aggregator(seed) else [seed]
     cands += [u for u in ddg(f"{name} careers") if u not in cands]
+    if len(cands) < 2:
+        # DuckDuckGo returns nothing from datacenter/blocked networks, and with no fallback
+        # this only ever tried the stored seed — which for these rows is the MARKETING
+        # careers page, not the ATS. listing_hunt has had this fallback all along; crack did
+        # not, which is much of why 29 of 39 came back "nocapture" on its first real run.
+        from deep_validate import google_via_unlocker
+        try:
+            cands += [u for u in google_via_unlocker(f"{name} careers")
+                      if u not in cands and not is_aggregator(u)]
+        except Exception:  # noqa: BLE001
+            pass
     captures = []
     rx = _HOST_PATTERNS.get(platform)
     if not rx:
@@ -96,6 +107,15 @@ def crack_one(name, seed, platform):
                 continue
             visited.add(u)
             html, reqs, _ = rend.sniff(u)
+            # A bot-walled page renders nearly empty, so the ATS embed signature is never
+            # seen and the company is written off as "ATS host not seen in render".
+            # Residential-unlocker HTML carries the same embed — scan it too.
+            if len(html or "") < 2000 and os.environ.get("SCRAPE_VIA_UNLOCKER"):
+                try:
+                    from bd_rescue import unlock
+                    html = (html or "") + "\n" + (unlock(u) or "")
+                except Exception:  # noqa: BLE001
+                    pass
             blob = (html or "") + "\n" + "\n".join(reqs)
             from audit_empty_rows import _slug_matches
             for m in rx.finditer(blob):
