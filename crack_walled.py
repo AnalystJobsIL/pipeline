@@ -322,11 +322,31 @@ def _ok_to_write(name, url):
     branch produced the candidate, so a future `return` that forgets the gate cannot
     re-open the hole. Unreadable (`None`) is refused here: `novrfy` writes an ADDRESS that
     `listing_hunt`'s fast-path later activates on, and "we could not look" is not evidence.
+
+    **The tenant string is deliberately NOT a veto here.** It reads like the obvious extra
+    safety net and it is not: measured on the live registry 2026-08-24, it is wrong in both
+    directions at once.
+
+        # it refuses 7 of the 9 active rows on this tool's OWN target platforms
+        onsemi        hctz.fa.us2.oraclecloud.com          tenant_is_this_company -> False
+        Dell          iawmqy.fa.ocs.oraclecloud.com        tenant_is_this_company -> False
+        Booking.com   employees-holdings-workingatbooking.icims.com             -> False
+        # while `verdict()` calls the two boards we most need to refuse a plain `ats`
+        Riskified     novartis.wd3.myworkdayjobs.com/riskified  verdict -> "ats"
+        Bancor        careers-bancorpbank.icims.com             verdict -> "ats"
+
+    Oracle CX pod ids (`hctz`, `edel`, `iawmqy`) are opaque by construction and can never
+    near-match a company name, so the `cracked-api`/oraclehcm branch - this tool's headline
+    lever - could never write at all. Stacking a veto that produces false refusals on top of
+    a page test that is already mandatory buys nothing and costs silent exclusion, which
+    ARCHITECTURE.md section 8 lists as this codebase's first bug class. Each false refusal
+    also stamped a *wrong* `not this company's board` verdict into the row's note.
+
+    `_page_names_company` is the only discriminator that works in both directions, and it is
+    required to return exactly `True`. Novartis's board does not name Riskified.
     """
     if is_foreign(name, url) or not looks_like_a_job_listing_page(url):
         return False
-    if not tenant_is_this_company(name, url):
-        return False                      # ATS tenant belongs to someone else
     return _page_names_company(name, url) is True
 
 

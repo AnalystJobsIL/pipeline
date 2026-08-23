@@ -748,3 +748,275 @@ def test_repair_dead_urls_uses_the_shared_tenant_predicate():
     assert "tenant_is_this_company" in {
         n.func.id for n in ast.walk(tree)
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+
+
+# ---------------------------------------------------------------------------------------
+# Wave-7 behavioural guards.
+#
+# The three guards written in wave 6 (`..._uses_the_tenant_gate_it_defines`,
+# `..._uses_the_shared_tenant_predicate`, `..._refusal_note_is_short`) are `inspect`/AST
+# checks that a NAME appears in a function. Wave 7 found four write-path bugs and **all
+# four passed those guards**: calling the gate and letting its `False` be overridden by a
+# fallback looks identical to an AST check. These drive `main()` end-to-end against a
+# scratch registry and assert on the bytes that land in `companies.csv`.
+#
+# Every one of them fails on the commit before the fix.
+# ---------------------------------------------------------------------------------------
+
+def _registry(tmp_path, rows):
+    """Write a scratch companies.csv and chdir into it. Header + `rows`."""
+    p = tmp_path / "companies.csv"
+    body = "".join(",".join(r) + "\n" for r in rows)
+    p.write_text("company_name,ats_platform,token,api_url,active,notes\n" + body,
+                 encoding="utf-8")
+    return p
+
+
+def _read(tmp_path):
+    import csv as _csv
+    with open(tmp_path / "companies.csv", encoding="utf-8") as fh:
+        return {r[0]: r for r in _csv.reader(fh) if r}
+
+
+def test_the_weekly_audit_confirms_identity_from_the_candidate_not_the_rows_own_page(
+        tmp_path, monkeypatch):
+    """The audit's second chance must read the CANDIDATE board, never the row's own url.
+
+    Between commits c9c18ac and this one the fallback was
+    `fetch(api) or fetch(r[3])`. `r[3]` is the company's OWN careers page, so the check
+    found "Riskified" on riskified.com and accepted that as proof that
+    `novartis.wd3.myworkdayjobs.com/riskified` belongs to Riskified — it rubber-stamped
+    every mismatch the gate exists to catch. It was not a corner case: a plain GET of the
+    endpoints this tool proposes returns "" (Workday `/wday/cxs` is POST-only, Greenhouse
+    blocks the UA), so the fallback fired on essentially every row.
+
+    Fiverr is the positive control: remove it and a gate that refuses everything passes.
+    """
+    import os
+    import sys
+    import audit_empty_rows as A
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        # r[3] carries the company's OWN careers page — the realistic shape: 236 of the
+        # 255 rows in the Sunday pool have one, and it is what the old fallback read.
+        ["Riskified", "", "", "https://www.riskified.com/careers/", "false",
+         "no listing found 2026-01-01: dark"],
+        ["Fiverr", "", "", "https://www.fiverr.com/jobs", "false",
+         "no listing found 2026-01-01: dark"],
+    ])
+    os.makedirs(tmp_path / "state", exist_ok=True)
+    (tmp_path / "state" / "audit_done.json").write_text("{}", encoding="utf-8")
+
+    FOREIGN = "https://novartis.wd3.myworkdayjobs.com/riskified"
+    OWN = "https://www.riskified.com/careers/"
+    FIVERR = "https://boards.greenhouse.io/fiverr"
+    pages = {
+        # The candidate is readable and carries a Workday signature, so the platform is
+        # detected — it simply names NOVARTIS, not Riskified. That is the whole point: the
+        # only page that names Riskified is Riskified's own, and reading it proves nothing
+        # about who owns the Novartis board.
+        FOREIGN: "<html>Novartis careers " + FOREIGN + " " + "y" * 3000 + "</html>",
+        OWN: "<html>Riskified careers. Riskified is hiring. " + "x" * 3000 + "</html>",
+        FIVERR: "<html>Fiverr careers " + FIVERR + " " + "w" * 3000 + "</html>",
+    }
+    monkeypatch.setattr(A, "fetch", lambda url, timeout=20: pages.get(url, ""))
+    monkeypatch.setattr(A, "serp",
+                        lambda name, limit=5: {"Riskified": [FOREIGN],
+                                               "Fiverr": [FIVERR]}.get(name, []))
+    monkeypatch.setattr(A, "verify", lambda name, plat, tok, api: (12, 5))
+    monkeypatch.setattr(sys, "argv", ["audit_empty_rows.py", "--apply"])
+    A.main()
+
+    out = _read(tmp_path)
+    assert out["Riskified"][4] == "false", (
+        "the audit activated Riskified on Novartis's board: %r" % (out["Riskified"],))
+    assert "novartis" not in out["Riskified"][3].lower(), (
+        "the audit persisted a foreign address into api_url: %r" % (out["Riskified"][3],))
+    assert out["Fiverr"][4] == "true", (
+        "positive control regressed — the gate now refuses everything: %r" % (out["Fiverr"],))
+
+
+def test_deep_validate_refuses_the_three_shapes_its_twin_already_refuses(
+        tmp_path, monkeypatch):
+    """`deep_validate` had NO identity gate, 24h before its twin refuses the same rows.
+
+    Its whole gate was `is_foreign(...) or not looks_like_a_job_listing_page(...)`, and
+    `is_foreign` returns False for every ATS host by design (ARCHITECTURE.md section 2,
+    docs/BACKLOG.md 21) — so on an ATS host there was no gate at all. It also had no
+    `n_all` check, so a board that verifies with zero jobs counted as a recovery.
+
+    `deep_validate` and `audit_empty_rows` select the IDENTICAL 255 rows
+    (docs/BACKLOG.md 6) and run 24 hours apart, so Saturday silently re-opened what
+    Sunday had closed.
+    """
+    import sys
+    import deep_validate as D
+    import crack_walled as C
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Riskified", "", "", "https://www.riskified.com/careers/", "false",
+         "dark-triage 2026-01-01: page-empty"],
+        ["Bancor", "", "", "https://www.bancor.network/careers", "false",
+         "dark-triage 2026-01-01: page-empty"],
+        ["ZeroBoard", "", "", "https://zeroboard.com/careers", "false",
+         "dark-triage 2026-01-01: page-empty"],
+        ["Fiverr", "", "", "https://www.fiverr.com/jobs", "false",
+         "dark-triage 2026-01-01: page-empty"],
+    ])
+
+    class _Rend:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    res = {
+        "Riskified": ("recovered", "workday", "novartis/riskified",
+                      "https://novartis.wd3.myworkdayjobs.com/wday/cxs/novartis/riskified/jobs",
+                      12, 5, ""),
+        "Bancor": ("recovered", "scrape", "bancorpbank",
+                   "https://careers-bancorpbank.icims.com/jobs/search?ss=1", 30, 9, ""),
+        "ZeroBoard": ("recovered", "greenhouse", "zeroboard",
+                      "https://boards-api.greenhouse.io/v1/boards/zeroboard/jobs", 0, 0, ""),
+        "Fiverr": ("recovered", "greenhouse", "fiverr",
+                   "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs", 40, 12, ""),
+    }
+    names = {"Fiverr": True, "ZeroBoard": True, "Riskified": False, "Bancor": False}
+    monkeypatch.setattr(D, "Renderer", _Rend)
+    monkeypatch.setattr(D, "validate_one", lambda rend, name, url: res[name])
+    monkeypatch.setattr(C, "_page_names_company",
+                        lambda name, url, html="": names.get(name))
+    monkeypatch.setattr(sys, "argv", ["deep_validate.py", "--apply"])
+    D.main()
+
+    out = _read(tmp_path)
+    assert out["Riskified"][4] == "false", "activated Novartis's board for Riskified"
+    assert out["Bancor"][4] == "false", "activated The Bancorp Bank's board for Bancor"
+    assert out["ZeroBoard"][4] == "false", (
+        "a board that verifies with 0 jobs is the empty-board shape, not a recovery")
+    assert out["Fiverr"][4] == "true", "positive control regressed"
+    assert "boards-api.greenhouse.io" in out["Fiverr"][3]
+
+
+def test_the_deep_validate_refusal_note_is_short_and_carries_no_url(tmp_path, monkeypatch):
+    """A refusal note is written into a 220-char append-log; length is a coverage decision.
+
+    The old form interpolated a 40-char URL and ran to 105 chars. Measured against the
+    real `companies.csv` over `deep_validate`'s own 260-row pool, re-stamping that segment
+    evicted an older segment from 142 rows and pushed 36 out of `in_pool` entirely. Since
+    this tool's own filter IS `in_pool`, a row its refusal ejected could never be
+    re-examined by it again — the refusal was self-sealing. The 51-char form: 12 and 9.
+    """
+    import re
+    import inspect
+    import deep_validate as D
+    src = inspect.getsource(D.main)
+    seg = re.search(r'f"deep-validated \{TODAY\}: ([^"]*)"', src)
+    assert seg, "could not find the deep-validated refusal segment in main()"
+    body = seg.group(1)
+    assert "{" not in body, (
+        "the refusal note interpolates %r — a variable-length note (usually a URL) is how "
+        "this segment reached 105 chars and ejected 36 rows from the pool" % (body,))
+    assert len("deep-validated 2026-08-24: ") + len(body) <= 60, (
+        "refusal note is %d chars; its siblings in crack_walled are 49"
+        % (len("deep-validated 2026-08-24: ") + len(body)))
+
+
+def test_repair_needs_the_page_to_name_us_not_a_tenant_it_cannot_check(
+        tmp_path, monkeypatch):
+    """"Cannot tell" is not positive confirmation.
+
+    `tenant_is_this_company` returns True when there is nothing checkable to match against
+    (`if not labels: return True`). As the FIRST disjunct of the accept condition it
+    short-circuited the page test, so a dead host was replaced by a bare ATS front door:
+    `SupPlant -> https://careers.workable.com/`, whose every host label is Workable's own
+    plumbing and whose page never says "SupPlant". The row keeps its `host documented`
+    token, and `listing_hunt`'s fast path runs ~30 minutes later in the same 19:00 job.
+
+    Two positive controls: 403-then-unlocker, and a plain 200 whose page names us.
+    """
+    import sys
+    import repair_dead_urls as R
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["SupPlant", "scrape", "", "https://careers.supplant-dead.com", "false",
+         "monitored candidate 2026-01-01: host documented"],
+        ["WallCo", "scrape", "", "https://careers.wallco-dead.com", "false",
+         "monitored candidate 2026-01-01: host documented"],
+        ["GoodCo", "scrape", "", "https://www.goodco-dead.com", "false",
+         "monitored candidate 2026-01-01: host documented"],
+    ])
+    cand = {"SupPlant": ["https://careers.workable.com/"],
+            "WallCo": ["https://careers.wallco.example/jobs"],
+            "GoodCo": ["https://www.goodco.example/careers"]}
+    pages = {
+        # Workable's own front door: names WORKABLE, never SupPlant
+        "https://careers.workable.com/":
+            (200, "<html>Workable is hiring. Join Workable. " + "a" * 2000 + "</html>"),
+        "https://careers.wallco.example/jobs": (403, ""),
+        "https://www.goodco.example/careers":
+            (200, "<html>GoodCo careers - GoodCo is hiring " + "b" * 2000 + "</html>"),
+    }
+    monkeypatch.setattr(R, "resolves", lambda h, tries=3: not h.endswith("-dead.com"))
+    monkeypatch.setattr(R, "candidates", lambda name, dead: cand.get(name, []))
+    monkeypatch.setattr(R, "fetch", lambda u: pages.get(u, (0, "")))
+    monkeypatch.setattr(R, "_unlock",
+                        lambda u: ("<html>WallCo careers - WallCo is hiring "
+                                   + "c" * 2000 + "</html>") if "wallco" in u else "")
+    monkeypatch.setattr(sys, "argv", ["repair_dead_urls.py", "--apply"])
+    R.main()
+
+    out = _read(tmp_path)
+    assert "workable.com" not in out["SupPlant"][3], (
+        "repaired SupPlant to Workable's own front door: %r" % (out["SupPlant"][3],))
+    assert out["SupPlant"][3] == "https://careers.supplant-dead.com"
+    assert out["WallCo"][3] == "https://careers.wallco.example/jobs", "403 control regressed"
+    assert out["GoodCo"][3] == "https://www.goodco.example/careers", "200 control regressed"
+
+
+def test_the_write_gate_does_not_refuse_the_platforms_it_exists_to_crack():
+    """A gate that refuses everything is not safe, it is silent exclusion (section 8, #1).
+
+    `_ok_to_write` used `tenant_is_this_company` as a veto stacked on top of a page test
+    that is already mandatory. Measured on the live registry 2026-08-24, that veto refused
+    7 of the 9 active rows on `crack_walled`'s own target platforms — Oracle CX pod ids
+    (`hctz`, `edel`, `iawmqy`) are opaque by construction and can never near-match a
+    company name, so the `cracked-api`/oraclehcm branch could never write at all — and 31
+    of the 433 active ATS rows. Each refusal also stamped a *wrong* "not this company's
+    board" verdict into the row.
+
+    Meanwhile `verdict()` calls the two boards we most need to refuse a plain `ats`. The
+    tenant string is wrong in both directions; page content is the only discriminator that
+    works, so it is the only one used.
+    """
+    import csv as _csv
+    import os
+    import re
+    import crack_walled as cw
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    orig = cw._page_names_company
+    try:
+        cw._page_names_company = lambda n, u, html="": True      # perfect page evidence
+        with open(os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
+            rows = [r for r in _csv.reader(fh) if r and len(r) >= 6][1:]
+        plat = re.compile(r"oraclecloud|eightfold|icims|jobvite|taleo|avature|phenom", re.I)
+        tgt = [r for r in rows
+               if r[4].strip().lower() == "true" and r[3].startswith("http")
+               and plat.search(r[3])]
+        assert tgt, "fixture drift: no active rows on the target platforms"
+        refused = [r[0] for r in tgt if not cw._ok_to_write(r[0], r[3])]
+        assert not refused, (
+            "%d of %d already-verified rows on this tool's own platforms are refused even "
+            "with perfect page evidence: %s" % (len(refused), len(tgt), refused))
+
+        cw._page_names_company = lambda n, u, html="": False
+        assert not cw._ok_to_write(
+            "Riskified", "https://novartis.wd3.myworkdayjobs.com/riskified")
+        assert not cw._ok_to_write(
+            "Bancor", "https://careers-bancorpbank.icims.com/jobs/search?ss=1")
+        cw._page_names_company = lambda n, u, html="": None       # unreadable
+        assert not cw._ok_to_write("Anyone", "https://x.icims.com/jobs/search?ss=1"), (
+            "an unreadable page is no evidence and must never be written")
+    finally:
+        cw._page_names_company = orig

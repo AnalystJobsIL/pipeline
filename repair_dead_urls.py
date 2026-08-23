@@ -222,9 +222,32 @@ def main():
             # Riskified because the PATH matched while the tenant (the host label) is
             # Novartis. This tool runs at 19:00 immediately before listing_hunt in the same
             # job, so a wrong address here is picked up by the fast path ~30 minutes later.
-            ats_checked = v == "ats" and tenant_is_this_company(name, u)
-            if ats_checked or (v == "match" and whole_name) or (
-                    html and page_mentions_company(name, html, strict=True)):
+            # `tenant_is_this_company` returns True when there is NOTHING checkable to
+            # match against (`if not labels: return True  # cannot tell`). As the first
+            # disjunct that short-circuited the page test below, so "cannot tell" was
+            # accepted as positive confirmation and this branch replaced a dead host with
+            # a bare ATS front door:
+            #
+            #   SupPlant  careers.supplant-dead.com -> https://careers.workable.com/
+            #     verdict=ats, tenant_ok=True (every label is Workable's own plumbing),
+            #     page never says "SupPlant" -> written anyway, keeping `host documented`,
+            #     which listing_hunt's fast path picks up ~30 minutes later in the same job.
+            #
+            # An ATS verdict now needs the page to name us as well - which makes a separate
+            # `ats_checked` disjunct redundant, so it is gone rather than left as dead
+            # logic: "the page names us" already covers every ATS row it used to admit, and
+            # covers it on the evidence that actually discriminates. That is docs/BACKLOG.md
+            # 29, which recorded that `_page_names_company` "is the gate that matters" -
+            # while this tool never called it.
+            #
+            # What remains is exactly two ways in: the whole name IS the registrable domain,
+            # or the fetched page names the company. `tenant_is_this_company` stays only as
+            # a VETO on an explicit ATS tenant mismatch; it is never evidence FOR a write,
+            # because it returns True whenever there is nothing checkable to match against.
+            names_us = bool(html) and page_mentions_company(name, html, strict=True)
+            if v == "ats" and not tenant_is_this_company(name, u):
+                names_us = False
+            if (v == "match" and whole_name) or names_us:
                 good = u
                 break
             print(f"       (rejected {u[:52]}: verdict={v}"

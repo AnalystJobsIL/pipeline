@@ -310,17 +310,41 @@ def main():
                 for fr in fresh:
                     if not fr or fr[0] != name or len(fr) < 6:
                         continue
-                    if verdict == "recovered" and (
-                            is_foreign(name, api or "") or is_foreign(name, r[3] or "")
-                            or (plat == "scrape"
-                                and not looks_like_a_job_listing_page(api or r[3] or ""))):
+                    # lazy: crack_walled imports Renderer/ddg from THIS module, so a
+                    # module-level import is a cycle. The gate is defined there because
+                    # that is where `_page_names_company` (three-valued, unlocker-backed)
+                    # lives; docs/BACKLOG.md 30 proposes lifting both into `pipeline/`,
+                    # which is plumbing and not this lane's to write.
+                    from crack_walled import _ok_to_write
+                    if verdict == "recovered" and not (
+                            n_all and _ok_to_write(name, api or r[3] or "")):
                         # Identity gate: rendering the STORED url and finding roles proves
                         # roles exist there, not that they are this company's. The stored
                         # url of a dark row is often the hunt's best GUESS.
+                        #
+                        # Until 2026-08-24 this was `is_foreign(...) or not
+                        # looks_like_a_job_listing_page(...)` and nothing else - i.e. no gate
+                        # at all on an ATS host, because `is_foreign` returns False for every
+                        # one of them by design (section 2, docs/BACKLOG.md 21). Driven with
+                        # a stubbed `validate_one`, this branch activated
+                        # `novartis...myworkdayjobs.com/riskified` for Riskified,
+                        # `careers-bancorpbank.icims.com` for Bancor, and a 0-jobs board -
+                        # the same three shapes `audit_empty_rows` refuses. The two tools
+                        # select the IDENTICAL 255 rows (docs/BACKLOG.md 6) and run 24h
+                        # apart, so Saturday silently re-opened what Sunday had closed.
+                        #
+                        # `n_all` first: a board that verifies with zero jobs is the
+                        # `empty-board` shape, not a recovery.
+                        #
+                        # The note is fixed-length and carries NO url. At 103 chars the old
+                        # form evicted a pool token from 216 of the 255 rows in this tool's
+                        # own pool and pushed 31 of them out of `in_pool` entirely - and
+                        # since this tool's own filter IS `in_pool`, a row it refused could
+                        # never be re-examined by it again. Measured against the segment it
+                        # replaces: 103 chars -> 216/31, this form -> 198/7.
                         fr[5] = _note_replace(
                             fr[5], "deep-validated",
-                            f"deep-validated {TODAY}: {(api or r[3] or '')[:40]} is not "
-                            f"this company's listings page")
+                            f"deep-validated {TODAY}: not this company's board")
                     elif verdict == "recovered":
                         fr[1], fr[2], fr[3] = plat, tok, api
                         fr[4] = "true"

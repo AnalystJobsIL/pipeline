@@ -490,7 +490,22 @@ def main():
         # refused. (docs/BACKLOG.md 21 is why a bare tenant block is not acceptable here.)
         _tenant_ok = tenant_is_this_company(name, api or "")
         if not _tenant_ok:
-            _pg = fetch(api or "", timeout=15) or fetch(r[3] or "", timeout=15)
+            # SECOND CHANCE - from the CANDIDATE page, and only from it.
+            #
+            # This read `fetch(r[3])` as a fallback until 2026-08-24. `r[3]` is the row's
+            # OWN stored careers url, so the check found the company's name on the company's
+            # own website and accepted that as proof that a THIRD PARTY's board belongs to
+            # it. It rubber-stamped every mismatch this gate exists to catch:
+            #
+            #   Riskified -> novartis.wd3.myworkdayjobs.com/wday/cxs/novartis/riskified/jobs
+            #     tenant_is_this_company -> False   (the gate worked)
+            #     page_mentions_company("Riskified", <riskified.com>) -> True  (override)
+            #
+            # and it was not a corner case but the default path: a plain GET of the
+            # endpoints this tool proposes returns "" (Workday `/wday/cxs/...` is POST-only,
+            # Greenhouse blocks the UA), and 236 of the 255 rows in the Sunday pool carry an
+            # http url for it to fall back to. Unreadable candidate == no evidence == refuse.
+            _pg = fetch(api or "", timeout=15)
             _tenant_ok = bool(_pg) and page_mentions_company(name, _pg, strict=True)
         if is_foreign(name, api or "") or not _tenant_ok:
             # Identity gate: this tool SEARCHES for a board, which is exactly how you end up
