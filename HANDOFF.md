@@ -8,8 +8,15 @@ Read `ARCHITECTURE.md` first (system model, invariants, runbooks). This file is 
 The brief was to make the six-step flow actually work end to end: fix invalid companies,
 pull from LinkedIn/Indeed/Telegram/company sites, triage newly discovered companies, give
 every relevant role its full description and tags whatever its age, email the last 48h, and
-keep the board to live roles with everything else archived. Seven defects were found; all
-seven had a green workflow and a plausible-looking log line.
+keep the board to live roles with everything else archived.
+
+**Sixteen defects, A–P below. Every one of them had a green workflow and a plausible log
+line** — that is the whole character of this codebase's failure mode, and it is why the
+morning was spent reading outputs rather than exit codes. Two were costing coverage every
+day (Indeed had returned zero records since it was wired up; four fetchers never carried a
+description). Three were about to publish other companies' roles under Israeli names (86
+Israel roles between them). One had discarded an entire completed run — 894 companies, 187
+LLM calls, a built board — over a single false positive in the gate that guards the commit.
 
 ### A. Nothing ever gave a Workday/SmartRecruiters/BambooHR role a description
 Their LIST responses simply have no description field — 120 active companies. So those
