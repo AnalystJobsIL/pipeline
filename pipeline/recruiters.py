@@ -36,6 +36,11 @@ _CONFIRMED = {
     "log-on software",                    # IT services/outsourcing
     "matchit",                            # placement ("MatchIT" = match-to-IT-roles)
     "confidential careers", "confidential",  # anonymous agency postings
+    # added 2026-08-23: its companies.csv row was deactivated for exactly this reason
+    # ("outsourcing partner re-posting Similarweb roles - covered directly"), but the
+    # discovery layer carries the employer NAME, not the row, so its re-posts kept coming
+    # in under a company we already scan.
+    "alpha | similarweb partner", "alpha similarweb partner",
 }
 
 # Obvious agency markers — blocks future auto-expand additions. Narrow on purpose.
