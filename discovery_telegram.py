@@ -37,9 +37,22 @@ CHANNELS = [
     "secretdatajobs",        # data/analytics roles — the core feed
     "secretmarketingjobs",   # marketing/growth analyst roles surface here
     "secretproductjobs",     # mostly PM (classifier drops free) — kept for company discovery
+    # Added 2026-08-23. All three carry analyst-shaped roles AND — the larger reason —
+    # Israeli employers the registry has never seen; the auto-expand queue was measured at
+    # only 77 entries against a 200/run limit, so widening intake costs nothing downstream.
+    # Each was probed the same day for the secrethunter layout the parser needs
+    # (parsed/20 messages on the front page):
+    "secretcyberjobs",       # 16/20 — cyber is the deepest Israeli employer pool
+    "secretfinancejobs",     # 18/20 — business/fintech analysts (FP&A is dropped by the classifier)
+    "secretsalesjobs",       # 18/20 — revenue/sales-ops analytics
 ]
 # Evaluated and rejected 2026-08-21: israjobs (RU vacancies+resumes, unstructured),
 # hightechforolims (free-text olim/entry-level), jobs_SQL (India-based).
+# Evaluated and rejected 2026-08-23, same probe: secrethrjobs (17/20) and secretqajobs
+# (15/20) parse fine but are the two feeds with essentially no analyst yield — they were
+# left out on relevance, not on capability. secretbizdevjobs / secretanalystjobs /
+# secretdesignjobs / secretstudentjobs / secretjobs resolve to a Telegram contact page with
+# no public t.me/s preview (0 messages), so the parser can never see them.
 STATE_PATH = "cloud_state/telegram_seen.json"
 MAX_PAGES = 5           # first-run backfill depth (~20 msgs/page)
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
@@ -136,6 +149,23 @@ def _load_json(path, default):
         return default
 
 
+def _health(n_parsed):
+    """Report this run's Telegram yield to the shared source-liveness store.
+
+    Counts POSTS PARSED, not posts merged: `added` is post-dedup against
+    discovered_cache.json, so a channel that is producing normally but repeating a role we
+    already hold would have recorded a 0 and looked dead. One aggregate `telegram` key, not
+    one per channel — `sources.stale()` has a single 2-day threshold for every key, which a
+    niche channel trips on a normal quiet weekend. Per-channel liveness needs a per-key
+    threshold in pipeline/sources.py (shared plumbing); it is filed in docs/BACKLOG.md.
+    Per-channel counts are printed above for the operator reading the step log."""
+    try:
+        from pipeline import sources
+        sources.record({"telegram": int(n_parsed)})
+    except Exception as e:  # noqa: BLE001
+        print(f"[source-health] skipped: {e}")
+
+
 def main():
     state = _load_json(STATE_PATH, {})
     new_jobs = []
@@ -145,6 +175,15 @@ def main():
             state[chan] = max(mid for mid, _ in got)
         new_jobs += [j for _, j in got]
         print(f"[{chan}] {len(got)} job posts parsed, {skipped} non-job/unparsed skipped")
+    # Record liveness BEFORE the early return. This used to sit at the end of main(), after
+    # a `return` taken whenever a scan produced nothing — so the one mechanism built to
+    # notice a dead source (pipeline/sources.py, written because the Indeed dataset returned
+    # zero for five days unseen) could never see Telegram at all. Proof it never ran: on
+    # 2026-08-23 `cloud_state/source_health.json` had keys for indeed / linkedin /
+    # linkedin-targeted and NO `telegram` key, while `discovered_cache.json` held 104
+    # telegram-sourced jobs. A zero here is now recorded as a zero, which is what makes
+    # `sources.stale()` able to say the feed died.
+    _health(len(new_jobs))
     if not new_jobs:
         print("no new telegram posts")
         return
@@ -178,11 +217,6 @@ def main():
             json.dump(research, f, ensure_ascii=False, indent=1)
     with open(STATE_PATH, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=1)
-    try:
-        from pipeline import sources
-        sources.record({"telegram": len(added)})
-    except Exception as e:  # noqa: BLE001
-        print(f"[source-health] skipped: {e}")
     print(f"=== telegram: {len(added)} jobs merged · {queued} new companies queued ===")
 
 

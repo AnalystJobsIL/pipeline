@@ -37,6 +37,8 @@ the owning lane in every section, this file was split, and `docs/check_docs.py` 
 docs a build artifact that can go red. See the last section of this file for what it did
 not finish.
 
+**2026-08-23 (evening), `discovery` lane:** Telegram was invisible to the dead-source detector (no `telegram` key in `source_health.json` beside 104 telegram jobs in the cache) and the targeted LinkedIn sweep searched the same 20 of 110 stale companies every day; both fixed, 3 channels added, 4 Hebrew agency spellings that walk past their own Latin entries blocked, new `ARCHITECTURE.md` §1a — `docs/sessions/2026-08-24-discovery.md`, 5 items left in `docs/BACKLOG.md`.
+
 ## State at handoff (2026-08-23 07:35 UTC, verified against the published product)
 
 | | |

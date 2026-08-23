@@ -923,3 +923,104 @@ def test_docs_are_consistent_with_the_code():
                           capture_output=True, text=True, encoding="utf-8", errors="replace",
                           cwd=root)
     assert proc.returncode == 0, "docs/check_docs.py failed:\n" + (proc.stdout or "") + (proc.stderr or "")
+
+
+# --- discovery lane, 2026-08-23: four silent-exclusion bugs in the intake layer ---------
+def test_telegram_records_source_health_before_its_early_return():
+    """`discovery_telegram.main()` returned as soon as a scan produced nothing — and the
+    `sources.record` call sat AFTER that return. So the one mechanism built to notice a dead
+    source (written because the Bright Data Indeed dataset returned zero for five days
+    unseen) could never see Telegram: on 2026-08-23 `cloud_state/source_health.json` had
+    keys for indeed/linkedin/linkedin-targeted and no `telegram` key at all, while
+    `discovered_cache.json` held 104 telegram-sourced jobs. A source that cannot report a
+    zero cannot be reported dead."""
+    import ast
+    import inspect
+    import discovery_telegram
+    tree = ast.parse(inspect.getsource(discovery_telegram.main))
+    body = tree.body[0].body
+    first_return = next((i for i, n in enumerate(body) if isinstance(n, ast.Return)), len(body))
+    called_before = {
+        n.func.id for i, stmt in enumerate(body) if i < first_return
+        for n in ast.walk(stmt) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+    }
+    assert "_health" in called_before, (
+        "source-liveness must be recorded before main()'s first return, or a zero-yield "
+        "run leaves Telegram invisible to pipeline/sources.stale()")
+
+
+def test_telegram_health_counts_posts_parsed_not_posts_merged():
+    """It recorded `len(added)` — jobs left after deduping against discovered_cache.json.
+    A channel producing normally but repeating roles we already hold would have recorded 0
+    and been reported as a dead source."""
+    import ast
+    import inspect
+    import discovery_telegram
+    call = [n for n in ast.walk(ast.parse(inspect.getsource(discovery_telegram.main)))
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "_health"]
+    assert len(call) == 1 and ast.unparse(call[0].args[0]) == "len(new_jobs)"
+
+
+def test_targeted_discovery_window_rotates_over_every_stale_company():
+    """`stale.json` is rebuilt every digest in companies.csv row order, so `unresolved[:20]`
+    was a stable prefix: the same 20 companies went to Bright Data every day and the other
+    90 (of 110, measured 2026-08-23) were never searched once. Same records per run, whole
+    list covered."""
+    import discovery_daily
+    stale = {f"Co{i}": {"reason": "empty-board"} for i in range(100)}
+    real = discovery_daily._load_json
+    discovery_daily._load_json = lambda path: stale if "stale" in path else {}
+    try:
+        seen, sizes = set(), set()
+        for day in range(1, 61):
+            window = discovery_daily._targeted_inputs(cap=20, day=day)
+            sizes.add(len(window))
+            seen.update(q["keyword"].rsplit(" data analyst", 1)[0] for q in window)
+        assert sizes == {20}, f"per-run Bright Data spend must not change: {sizes}"
+        assert seen == set(stale), f"{len(set(stale) - seen)} companies never targeted"
+    finally:
+        discovery_daily._load_json = real
+
+
+def test_targeted_discovery_skips_rows_whose_board_is_not_actually_broken():
+    """`misconfig-scrape-on-ats` is a warning about the ROW SHAPE, not a broken board — the
+    digest reads those companies fine every morning. 22 of the 110 stale entries on
+    2026-08-23 were that reason, i.e. a fifth of the sweep's inputs bought nothing."""
+    import discovery_daily
+    assert "misconfig-scrape-on-ats" not in discovery_daily._TARGETABLE
+    assert set(discovery_daily._TARGETABLE) == {"empty-board", "regressed-to-zero", "fetch-error"}
+
+
+def test_indeed_source_health_counts_raw_records_like_every_other_source():
+    """`per_source["indeed"]` held post-filter, post-dedup jobs while the dataset sources
+    held raw records, so one number meant two things — and an Indeed page whose cards were
+    all rejected (junior/stale) would have scored as a DEAD SOURCE. pipeline/sources.py
+    answers 'did this source return anything', which is a property of the source."""
+    import ast
+    import inspect
+    import discovery_daily
+    src = inspect.getsource(discovery_daily.main)
+    assigns = [ast.unparse(n) for n in ast.walk(ast.parse(src))
+               if isinstance(n, ast.Assign) and ast.unparse(n).startswith("per_source['indeed']")]
+    assert assigns == ["per_source['indeed'] = n_indeed_raw"], assigns
+
+
+@pytest.mark.parametrize("name,expected", [
+    # Both were live employer names in ONE Indeed query on 2026-08-23 and both passed
+    # is_recruiter() AND looks_like_junk() — one auto-expand run from a registry row.
+    ('קומבלק איי.טי. בע"מ', True),      # Comblack IT — `comblack` was already in _CONFIRMED
+    ("חברה דיסקרטית", True),            # "discreet company" = the Hebrew `confidential`
+    # ...and two more of the same shape, from the 99 companies one live intake pass queued
+    ("קבוצת יעל", True),                # Yael Group — `yael group` was already in _CONFIRMED
+    ("לוג-און תוכנה", True),            # Log-On Software — `log-on software` likewise
+    # ...and the real Hebrew-named employers next to them in the same registry must not move
+    ("IBI בית השקעות", False),
+    ("בנק דיסקונט", False),
+    ("מנורה מבטחים החזקות", False),
+    ("IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ", False),
+])
+def test_a_hebrew_spelling_does_not_walk_past_a_latin_recruiter_entry(name, expected):
+    from pipeline.recruiters import is_recruiter
+    assert is_recruiter(name) is expected
+
+

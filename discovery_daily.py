@@ -7,7 +7,14 @@
 - Companies NOT already in companies.csv are written to out/discovered_companies.json — the
   auto-expand loop then resolves their own ATS so they migrate to free direct scanning.
 
-Budget: ~40 records/day * 30 = ~1200/mo of the 5k free tier, split LinkedIn/Indeed.
+Budget, MEASURED not estimated (2026-08-23, from cloud_state/source_health.json after the
+08-23 cloud run): 30 LinkedIn records + 78 linkedin-targeted records = 108 Bright Data
+dataset records/day, plus 5 Web Unlocker requests (one per INDEED_QUERIES entry). That is
+~3,240 dataset records/month, not the "~40/day = ~1,200/mo" this docstring claimed until
+2026-08-23 — the targeted sweep, which did not exist when the line was written, is by
+itself two thirds of the spend. Re-derive before adding a query:
+
+    python -c "import json;print(json.load(open('cloud_state/source_health.json')))"
 """
 from __future__ import annotations
 
@@ -192,15 +199,40 @@ def _load_json(path):
         return {}
 
 
-def _targeted_inputs(cap=20):
+# Not every stale.json entry is a broken board. `misconfig-scrape-on-ats` is a shape
+# warning about the ROW (a scrape row whose URL is really an ATS endpoint) — the board
+# itself answers fine and the digest already reads it, so spending a LinkedIn input on it
+# buys nothing. The two reasons worth a targeted search are the "board has moved" set:
+# `empty-board` (endpoint answers 200 with []) and `regressed-to-zero` (was producing,
+# now zero). `fetch-error` is included too — that one is genuinely unreadable today.
+_TARGETABLE = ("empty-board", "regressed-to-zero", "fetch-error")
+
+
+def _targeted_inputs(cap=20, day=None):
     """LinkedIn queries aimed at the companies whose direct ATS is broken AND that the free
     re-capture couldn't fix — the 'unresolvable remainder' (anti-bot Workday, custom-board
-    movers). Discovery is the free safety net for exactly these, so we search each by name."""
+    movers). Discovery is the free safety net for exactly these, so we search each by name.
+
+    ROTATES. `stale.json` is rebuilt every digest in companies.csv row order
+    (pipeline/health.record iterates `results.items()`), so `unresolved[:cap]` was a stable
+    prefix: the same 20 names went to Bright Data every single day and the rest were never
+    searched at all. Measured 2026-08-23 — 110 stale entries, cap 20, so 90 companies had
+    never once been targeted. The window now advances by day-of-year, which covers the whole
+    list every ceil(len/cap) days for exactly the same number of records per run.
+    """
+    import datetime as _d
     stale = _load_json("cloud_state/stale.json")
     resolved = _load_json("out/resolved_configs.json")
-    unresolved = [n for n in stale if n not in resolved]
+    unresolved = [n for n, e in stale.items()
+                  if n not in resolved
+                  and (not isinstance(e, dict) or e.get("reason") in _TARGETABLE)]
+    if not unresolved:
+        return []
+    day = _d.date.today().timetuple().tm_yday if day is None else day
+    start = (day * cap) % len(unresolved)
+    window = (unresolved + unresolved)[start:start + cap]
     return [{"location": "Israel", "keyword": f"{name} data analyst", "country": "IL"}
-            for name in unresolved[:cap]]
+            for name in window]
 
 
 def main():
@@ -211,14 +243,22 @@ def main():
         return
     jobs, seen = [], set()
     per_source = {}
+    # `per_source` feeds pipeline/sources.py, which answers ONE question: is this source
+    # still returning anything? That is a property of the source, so every entry here counts
+    # RAW RECORDS RECEIVED, before normalize()/dedup. Until 2026-08-23 indeed recorded
+    # post-filter unique jobs while the dataset sources recorded raw records, so the same
+    # number meant two different things and a fully-rejected Indeed page would have been
+    # scored as a dead source. The kept count is printed on the line below each source.
     # Indeed first: it is a single unlocked request per query, so it costs seconds and
     # cannot be starved by the dataset polling below timing out.
+    n_indeed_raw = 0
     for q in INDEED_QUERIES:
         try:
             cards = indeed_search(q)
         except Exception as e:  # noqa: BLE001
             print(f"[indeed:{q}] ERR {type(e).__name__}: {str(e)[:120]}")
             cards = []
+        n_indeed_raw += len(cards)
         print(f"[indeed:{q}] {len(cards)} cards")
         for r in cards:
             j = indeed_normalize(r)
@@ -229,8 +269,9 @@ def main():
                 continue
             seen.add(k)
             jobs.append(j)
-    per_source["indeed"] = len(jobs)
-    print(f"[indeed] {len(jobs)} unique jobs across {len(INDEED_QUERIES)} queries")
+    per_source["indeed"] = n_indeed_raw
+    print(f"[indeed] {n_indeed_raw} raw cards -> {len(jobs)} unique jobs kept "
+          f"across {len(INDEED_QUERIES)} queries")
 
     runs = [(n, *QUERIES[n]) for n in QUERIES]
     targeted = _targeted_inputs()

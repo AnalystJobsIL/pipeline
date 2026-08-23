@@ -54,6 +54,32 @@ _HEBREW_MARKERS = (
     "השמה",           # "placement"
     "גיוס והשמה",     # "recruitment and placement"
     "כוח אדם",        # "manpower"
+    # Added 2026-08-23. Both appeared as employer names in ONE live Indeed query
+    # ("data analyst", il.indeed.com via the Web Unlocker) and both passed is_recruiter()
+    # AND looks_like_junk(), i.e. each was one auto-expand run away from a companies.csv
+    # row. This is the exact failure the block above was written for: the Latin entry
+    # exists and the Hebrew spelling walks past it.
+    "קומבלק",         # Comblack IT Ltd — `comblack` is already in _CONFIRMED in Latin
+    "חברה דיסקרטית",  # "discreet company": Israeli-board equivalent of the `confidential`
+                      # entry in _CONFIRMED — an anonymous agency posting, not an employer
+    # Two more of the same shape, found the same day by re-running the scan below over the
+    # 99 companies one live intake pass queued. Both names are ALREADY on the Latin list
+    # above and both walked straight past it:
+    "קבוצת יעל",      # Yael Group — `yael group` / `yael korentec technologies`
+    "לוג-און תוכנה",  # Log-On Software — `log-on software`
+    # Re-run after touching _CONFIRMED. Anything Hebrew that prints here and is a staffing
+    # or IT-outsourcing firm belongs above:
+    #   python -c "
+    #   import re,csv
+    #   from pipeline.recruiters import is_recruiter
+    #   from pipeline.firmographics import looks_like_junk
+    #   h=re.compile(r'[֐-׿]')
+    #   for r in csv.reader(open('companies.csv',encoding='utf-8')):
+    #       if r and h.search(r[0]) and not is_recruiter(r[0]) and not looks_like_junk(r[0]):
+    #           print(r[0])"
+    # Known and deliberately NOT listed (no Latin entry either, and both hire directly, so
+    # blocking them needs evidence this lane does not have): מטריקס (Matrix, IT services)
+    # and עידור מחשבים (Idor Computers).
 )
 
 # Obvious agency markers — blocks future auto-expand additions. Narrow on purpose.

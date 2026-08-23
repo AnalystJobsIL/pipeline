@@ -149,3 +149,80 @@ records the importer for every legacy module rather than the adjective.
    superseded runs are recorded as `cancelled` with zero output (happened twice today).
    Either shard the group or shorten the long jobs.
 
+
+## From the `discovery` lane, 2026-08-23
+
+Found while auditing the intake layer. Each was verified with the command shown; none is
+fixed, and every one of them is outside the `discovery` lane's write list.
+
+1. **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
+   with a line for `render`.)* `check_invariants.py` checks shape, duplicate names,
+   scannability and tenant identity — it never compares the row set against the previous
+   commit, so a delete passes the blocking gate. `merge_csv_rows.merge()` iterates `ours`
+   only: a name in `base` and missing from `ours` is not in `changed`, so the merge neither
+   restores it nor mentions it. The digest email's run audit reports `companies_scanned` but
+   no registry delta. Three commits have shrunk the file (`git log` over `companies.csv`,
+   row counts per revision): `88d2b50` −13 (LinkedIn-poisoned rows, reason in the subject),
+   `c0f7635` −3, `0180e75` −2 (Cordio Medical, JPMorganChase). All three were deliberate and
+   explained in the commit message; none was visible to the pipeline or to the reader of the
+   mail. **In flight:** an untracked `registry_health.py` appeared in the working tree at
+   20:35 on 2026-08-23 while this was being written — another session (`registry`) is
+   answering exactly the first half of this and reports **15 name-deletions across the whole
+   history of the file**, one of them deleted on purpose, resurrected by a concurrent run's
+   conflict merge, then re-deleted as a silent side effect of a commit about Oracle HCM. Do
+   not build a second one; check whether it landed. What it does not cover is the second
+   half — getting the delta in front of the reader.
+   Proposed: `check_invariants.py` diffs the company-name set against
+   `git show HEAD:companies.csv` and (a) fails on a delete carrying no `defunct:` /
+   `duplicate` / `alias-of` reason, (b) exports the delta so `pipeline/digest.py` can print
+   `registry: +N −M` with the reason in the run-audit block. Re-derive the shrink list with:
+
+       for c in $(git log --format=%h -- companies.csv); do echo "$c $(git show $c:companies.csv | python -c "import sys,csv;print(sum(1 for r in csv.reader(sys.stdin) if r))")"; done
+
+2. **The discovery bridges can only seed an aggregator URL, and the registry keeps it.**
+   *(lane: `registry`.)* A discovered job's `url` IS the posting on LinkedIn / Indeed /
+   secrethunter, so `careers_url` in `research_companies.json` is an aggregator for **206 of
+   1,233 entries** (132 secrethunter.io, 45 linkedin.com, 26 il.indeed.com; measured
+   2026-08-23). `auto_expand` guards the `scrape` branch — an aggregator result is parked
+   with "aggregator URL; resolve real careers page before activating" — but its `empty` and
+   `unreachable` branches write that same seed URL into the row unguarded, which is why
+   **45 registry rows carry an aggregator URL today** (39 inactive, 6 active where it sits
+   harmlessly in the unused `token` column). `secrethunter.io/jobz/<id>` cannot be followed
+   to the real posting either: tested 2026-08-23, it 200s to a 33,495-byte JS shell that is
+   byte-identical for every job id and holds no external link but facebook/linkedin pixels.
+   Discovery cannot drop the field — `auto_expand`'s `todo` filter requires `careers_url`
+   truthy, so a company with none would never drain. Proposed: `auto_expand` skips the
+   deterministic rung when `is_aggregator(careers_url)` and goes straight to `resolve_llm`
+   (which searches by NAME and does not need the seed), and its `empty`/`unreachable`
+   branches write `""` rather than the aggregator. Verify with:
+
+       python -c "import json;from pipeline.aggregators import is_aggregator as a;r=json.load(open('research_companies.json',encoding='utf-8'));print(sum(1 for e in r if a(e.get('careers_url') or '')),'of',len(r))"
+
+3. **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
+   `pipeline/sources.py` — shared plumbing, no lane owns it.)* `sources.stale()` applies one
+   `max_quiet_days=2` to every key, and that line goes into the mail. Six Telegram channels
+   as six keys would put a niche feed's normal quiet weekend in front of the reader every
+   few days, so `discovery_telegram._health` records ONE aggregate `telegram` key and prints
+   the per-channel counts to the step log instead. A channel that dies alone is therefore
+   still invisible. Proposed: `record()` takes an optional per-key threshold.
+
+4. **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
+   `discovery` to propose, `infra` to remove the `run.py` hook.)* It has never run in the
+   cloud — `AGGREGATOR_ENABLED` is set in no workflow, test or script — and two
+   incompatible reasons are on record (`daily-digest.yml`: "verified to NOT cover Israel";
+   `CLAUDE.md`: quota exhausted). The key answers HTTP 429 today, so neither can be tested.
+   If the "no Israel coverage" claim holds after the quota resets, deleting it also retires
+   `verify_jsearch.py` and one assertion in `tests/test_units.py`.
+
+5. **The `linkedin-targeted` sweep is the lane's biggest Bright Data line item and 4/43 of
+   what it returns is on-target.** *(lane: `discovery`, deliberately not acted on.)* Of the
+   43 `discovery-linkedin-targeted` jobs in `discovered_cache.json` on 2026-08-23, 4 belong
+   to a company in `stale.json` (the broken-board set it exists to backfill), **38 belong to
+   companies whose rows are `active=true` and fetched directly every morning**, and 5 are
+   new. LinkedIn's keyword engine ranks on "data analyst" and treats the company name as
+   spare tokens. The targeting itself was fixed this session (it now rotates and skips
+   `misconfig-scrape-on-ats`); cutting `limit_per_input` from 8 to 4 would halve the spend
+   and was left alone because one lane should not shrink a safety net on one day of data.
+   Re-measure before deciding:
+
+       python -c "import json;t=[j for j in json.load(open('discovered_cache.json',encoding='utf-8')) if j.get('ats_platform')=='discovery-linkedin-targeted'];s={n.lower() for n in json.load(open('cloud_state/stale.json',encoding='utf-8'))};print(len(t),'jobs,',sum(1 for j in t if j['company'].lower() in s),'on-target')"

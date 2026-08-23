@@ -190,6 +190,212 @@ Support policy: a platform seen 3+ times gets native support; otherwise the scra
 strategies carry it (Phenom/Eightfold/iCIMS/Radancy/Rippling are all read via strategy 1
 XHR-capture or 3/4 without native fetchers).
 
+## 1a. Intake — the discovery net
+*lane: `discovery`*
+
+Tier 3 of §1, written out. Intake is the only step that can add something the registry has
+never heard of, and it feeds **two** funnels from one pass — the second matters more:
+
+```
+  discovery_daily.py      Indeed (Web Unlocker)  ─┐         ┌─▶ discovered_cache.json
+                          LinkedIn (BD dataset)  ─┤ jobs    │   read by fetchers.fetch_discovery
+                          LinkedIn targeted      ─┤         │   (21-day TTL applied at READ)
+  discovery_telegram.py   6 public t.me/s feeds  ─┘         │
+                                                            │
+                          employer names not in ────────────┴─▶ research_companies.json
+                          companies.csv                         drained by auto_expand (§3)
+```
+
+The jobs funnel is a safety net: it publishes roles at companies whose own board we cannot
+read. **The names funnel is the growth path** — it is how `companies.csv` gets bigger — and
+it is why a channel with almost no analyst roles in it can still be worth reading.
+
+### The four live sources, and what each one costs
+
+`cloud` is the 05:00 run of 2026-08-23 read out of `cloud_state/source_health.json`;
+`dry-run` is a full local execution of both scripts against sandbox copies of the state
+files the same evening (17:30 UTC), which is the check to repeat before trusting a change
+here — it exercises the real Bright Data account and the real Telegram fetches.
+
+| source | mechanism | cost per digest | cloud | dry-run |
+|---|---|---|---|---|
+| `indeed` | `il.indeed.com/jobs` through the Bright Data **Web Unlocker**, one request per `INDEED_QUERIES` entry; parsed out of the `mosaic-provider-jobcards` JSON blob | 5 unlocker requests | 33 | 55 raw → 47 kept |
+| `linkedin` | BD dataset `gd_lpfll7v5hcqtkxl6l`, `discover_new` by keyword, 2 keywords × `limit_per_input` 15 | ≤30 dataset records | 30 | 30 |
+| `linkedin-targeted` | same dataset, one query per broken-board company (`"<name> data analyst"`), 20 × 8 | ≤160 dataset records | 78 | 160 |
+| `telegram` | public `t.me/s/<channel>` HTML previews — **no bot, no account, no API key, no quota** | free | **no key in the file at all** | 268 posts parsed |
+
+Re-derive the cloud column with
+`python -c "import json;print(json.load(open('cloud_state/source_health.json')))"`.
+
+**The Indeed *dataset* is dead and the Indeed *unlocker* is not.** BD dataset
+`gd_l4dx9j9sscpvs7no2` returned `dataset_size: 0, error_codes: {"rate_limit": 15}` on every
+run for five days; it is commented out in `QUERIES` and must not be re-enabled. The
+replacement path is `indeed_search()` — verified live 2026-08-23: `"data analyst"` returned
+**15 cards** in one request, no snapshot job, no polling.
+
+**Total measured spend: 108 dataset records + 5 unlocker requests per day** (~3,240
+records/month against the 5k free tier). The docstring in `discovery_daily.py` claimed
+"~40 records/day = ~1,200/mo" until 2026-08-23; it predated the targeted sweep, which is by
+itself two thirds of the spend.
+
+**Google for Jobs is not available to this pipeline.** `pipeline/aggregators.py` still holds
+`fetch_serpapi_google_jobs`, and it has **never run in the cloud** — `pipeline/run.py` gates
+it on `AGGREGATOR_ENABLED`, which is set in no workflow, no test and no script. The obvious
+substitute does not work either: `google.com/search?q=…&ibp=htl;jobs` through the Web
+Unlocker returns **HTTP 200 with a zero-byte body** (tested 2026-08-23, 3 credits) because
+the jobs widget is client-rendered; the same URL without `ibp=htl;jobs` returns 440,906
+bytes, which is why `deep_validate.google_via_unlocker` works on organic links and a
+jobs-widget version of it cannot. **UNVERIFIED 2026-08-23:** whether SerpApi's `google_jobs`
+covers Israel at all — `daily-digest.yml` says it does not, `CLAUDE.md` says the quota is
+exhausted, and the key answers HTTP 429, so neither claim is testable before 2026-09-01.
+The decision is filed in `docs/BACKLOG.md`.
+
+### Telegram channels
+
+`CHANNELS` in `discovery_telegram.py`. All are secrethunter-format (title / company / city /
+date / skills / seniority / link), so `parse_post` is deterministic and an unparseable post
+is **skipped and counted, never guessed**. Probe a candidate before adding it — the number
+that matters is how many of the ~20 messages on the front page parse:
+
+```bash
+python -c "
+import discovery_telegram as d
+p=d._fetch('https://t.me/s/CHANNEL'); m=list(d._MSG.finditer(p))
+print(len(m),'msgs',sum(1 for x in m if d.parse_post(d._clean_text(x.group('body')),x.group('dt'))),'parsed')"
+```
+
+| channel | parsed/20 (2026-08-23) | why |
+|---|---|---|
+| `secretdatajobs` | 18 | the core feed |
+| `secretmarketingjobs` | 18 | marketing/growth analytics |
+| `secretproductjobs` | 18 | mostly PM — kept for the NAMES funnel |
+| `secretcyberjobs` | 16 | added 2026-08-23; deepest Israeli employer pool |
+| `secretfinancejobs` | 18 | added 2026-08-23; business/fintech analysts |
+| `secretsalesjobs` | 18 | added 2026-08-23; revenue/sales-ops analytics |
+
+Rejected on **relevance, not capability**: `secrethrjobs` (17/20) and `secretqajobs` (15/20)
+parse fine and have essentially no analyst yield. Rejected because they have no public
+`t.me/s` preview at all (0 messages — the parser can never see them): `secretbizdevjobs`,
+`secretanalystjobs`, `secretdesignjobs`, `secretstudentjobs`, `secretjobs`. Rejected
+2026-08-21 as unstructured: `israjobs`, `hightechforolims`, `jobs_SQL`.
+
+Widening intake is cheap **because the resolver queue is not the bottleneck**: measured
+2026-08-23, `auto_expand`'s drainable backlog was **77 entries against an
+`AUTO_EXPAND_LIMIT` of 200 per run, twice a day**. Check before assuming otherwise:
+
+```bash
+python -c "
+import json
+from pipeline.companies import load_companies
+from pipeline.recruiters import is_recruiter
+e=json.load(open('research_companies.json',encoding='utf-8'))
+h={r['company_name'].strip().lower() for r in load_companies(active_only=False)}
+print(sum(1 for x in e if x.get('careers_url') and (x.get('name') or '').strip().lower() not in h and not is_recruiter(x.get('name'))))"
+```
+
+### What intake refuses, and where each gate lives
+
+A name that gets past here becomes a `companies.csv` row two `auto_expand` runs later, so
+this is the cheapest place in the system to say no. Both bridges apply the same three:
+
+| gate | module | rejects |
+|---|---|---|
+| already known | `pipeline/companies.py` (`load_companies`) | any name already in the registry, active or parked |
+| `looks_like_junk` | `pipeline/firmographics.py` | a leaked job title / category / team phrase ("Data researcher - Navina", "AppSec") |
+| `is_recruiter` | `pipeline/recruiters.py` | staffing and placement firms, which re-post dozens of clients' roles |
+
+Job-level exclusion happens later and separately, in `fetchers.fetch_discovery`: the 21-day
+TTL, `is_recruiter` again (a discovery job carries the real employer name, so it bypasses
+the row-level check in `pipeline/run.py`), and `company_identity.url_names_other_company`
+for a card whose URL slug names a different employer — 147 board rows were once published
+under the wrong company that way.
+
+**A Latin entry in `_CONFIRMED` does not cover the Hebrew spelling.** One live Indeed query
+on 2026-08-23 returned `קומבלק איי.טי. בע"מ` (Comblack IT — `comblack` had been on the list
+since 2026-08-17) and `חברה דיסקרטית` ("discreet company", the Hebrew of the `confidential`
+entry). Both passed `is_recruiter` AND `looks_like_junk` and were one `auto_expand` run from
+an active row. Both are in `_HEBREW_MARKERS` now, guarded by
+`test_a_hebrew_spelling_does_not_walk_past_a_latin_recruiter_entry`. **When you add a name
+to `_CONFIRMED`, add its Hebrew form in the same commit** — the registry carries agencies
+under both.
+
+There is deliberately **no junior/student filter on the Telegram path**, though
+`discovery_daily.py` has one (`_JUNIOR_HE`). `secretdatajobs` really does carry them ("Data
+analyst (student position)", Upstream Security, 2026-08-23) but `seniority.classify` rejects
+every one on the free keyword path — `reject / keyword / junior-intern-entry-level`, no LLM
+call — while the post still contributes its employer to the names funnel. A second filter
+here would cost coverage and buy nothing.
+
+### Three rules this layer costs data to re-learn
+
+1. **Merge `discovered_cache.json`, never truncate it.** `discovery_daily.py` runs first and
+   `discovery_telegram.py` second, into the same file. A truncating write on 2026-08-21
+   deleted every Telegram-sourced job — **79 verified roles, unrecoverable**, because the
+   Telegram watermark in `cloud_state/telegram_seen.json` had already advanced past them.
+   Both writers merge by `(company, title)` with this run's copy winning, and prune past the
+   21-day TTL.
+2. **Record source liveness BEFORE any early return.** `pipeline/sources.py` exists to
+   answer one question — did this source return anything today — and its whole value is that
+   a **zero gets recorded as a zero**. `discovery_telegram.main()` used to `return` on an
+   empty scan with the `sources.record` call below that return, so Telegram was invisible to
+   it: on 2026-08-23 `cloud_state/source_health.json` held `indeed` / `linkedin` /
+   `linkedin-targeted` and **no `telegram` key at all**, while `discovered_cache.json` held
+   104 telegram-sourced jobs. Guarded by
+   `test_telegram_records_source_health_before_its_early_return`. Corollary: count what the
+   source PRODUCED (posts parsed), not what survived dedup — a healthy channel repeating a
+   role we already hold would report 0 and read as dead. Every `per_source` entry is raw
+   records for the same reason; the kept count is printed beside it.
+3. **A fixed prefix over a re-sorted list is not a sample, it is a blind spot.**
+   `_targeted_inputs` took `unresolved[:20]`, and `cloud_state/stale.json` is rebuilt every
+   digest in `companies.csv` row order (`pipeline/health.py`'s `record` iterates
+   `results.items()`), so the **same 20 names went to Bright Data every day and the other 90
+   of 110 were never searched once**. The window now advances by day-of-year — same records
+   per run, all 88 targetable companies covered in 5 days. It also skips
+   `misconfig-scrape-on-ats` (22 of the 110): that reason is a warning about the ROW's shape,
+   not a broken board, and the digest reads those companies fine every morning. Guarded by
+   `test_targeted_discovery_window_rotates_over_every_stale_company`.
+
+### Known limitations of this layer
+
+- **The seed URL a bridge can offer is always an aggregator**, because a discovered job's
+  `url` IS its posting on LinkedIn / Indeed / secrethunter — 206 of 1,233 queue entries and
+  45 registry rows carry one. `secrethunter.io/jobz/<id>` cannot be followed to the real
+  posting: it is a 33,495-byte JS shell, byte-identical for every job id. The fix belongs to
+  `registry` (`auto_expand.py`) and is item 2 in `docs/BACKLOG.md`.
+- **A single Telegram channel dying is not visible in the mail** — one aggregate `telegram`
+  key, because `sources.stale()` has one 2-day threshold for every key. Per-channel counts
+  are in the step log. `docs/BACKLOG.md` item 3.
+- `linkedin-targeted` is the lane's largest Bright Data line item and **4 of its 43 cached
+  jobs are on-target**; 38 are at companies we already fetch directly. `docs/BACKLOG.md`
+  item 5 has the re-measurement command.
+
+### Dry-running tomorrow's intake, end to end
+
+Both scripts resolve `companies.csv` and `cloud_state/source_health.json` **relative to the
+package, not to `cwd`** (`pipeline/companies.py` builds `CSV_PATH` from `REPO_ROOT`;
+`pipeline/sources.py` builds `PATH` from `os.path.dirname(__file__)`), so a `cd` into a
+scratch directory is NOT enough to keep a test run off the live state — redirect
+`sources.PATH` explicitly. Everything else the two scripts touch is `cwd`-relative:
+
+```python
+import os, sys
+sys.path.insert(0, "/path/to/repo"); os.chdir("/path/to/sandbox")   # holds copies of
+from pipeline import sources                                        # companies.csv,
+sources.PATH = os.path.join(os.getcwd(), "cloud_state", "source_health.json")
+import discovery_daily, discovery_telegram                          # discovered_cache.json,
+discovery_daily.main(); discovery_telegram.main()                   # research_companies.json,
+                                                                    # cloud_state/{stale,telegram_seen}.json
+```
+
+That run costs one real day of quota (5 unlocker requests + ~190 dataset records) and takes
+about 5 minutes, most of it Bright Data snapshot polling. The 2026-08-23 pass produced:
+137 discovery jobs + 262 Telegram jobs merged, `discovered_cache.json` 205 → 517,
+`research_companies.json` 1,233 → 1,332, **16 agencies rejected at the source** (9 on the
+08-23 cloud run, before the Hebrew markers), `sources.stale()` empty, and a `telegram` key
+in `source_health.json` for the first time. Do NOT commit the sandbox's state files: the
+Telegram watermark advancing locally without the jobs being committed is how 79 roles were
+lost on 2026-08-21.
+
 ## 2. Row lifecycle — every company carries a dated, evidence-based verdict
 *lane: `registry` — one session at a time. The rules in this section are `shared`: every
 lane that writes `companies.csv` obeys them.*

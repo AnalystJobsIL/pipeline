@@ -1,9 +1,28 @@
-"""Aggregator breadth source.
+"""Aggregator breadth source, plus the aggregator-HOST blocklist.
 
-SerpApi's `google_jobs` engine — real Google for Jobs with `gl=il`, which aggregates
-LinkedIn / company career pages / job boards in Israel, so it reaches postings the
-direct-ATS fetchers can't (including the anti-bot giants Google indexes). Free tier is
-100 searches/month, no credit card — enough for a once-daily run with a few queries.
+**`fetch_serpapi_google_jobs` HAS NEVER RUN IN THE CLOUD.** `pipeline/run.py` gates it on
+`AGGREGATOR_ENABLED == "1"`, and that variable is set in no workflow, no test and no script
+(`grep -rn AGGREGATOR_ENABLED .github/ *.py pipeline/` → one gate in run.py and one comment
+in daily-digest.yml saying it is deliberately left off). Only the blocklist below is live;
+every other module in the repo imports this file for `is_aggregator`, not for the fetcher.
+
+Two conflicting reasons are on record for it being off, and they cannot both be tested
+today:
+  * `daily-digest.yml` says "SerpApi & JSearch both verified to NOT cover Israel
+    (google_jobs rejects gl=il, location=Israel returns 0)".
+  * `CLAUDE.md`/`AGENT_BRIEF` say the SerpApi quota is exhausted until 2026-09-01.
+**UNVERIFIED 2026-08-23:** the key in `secrets.env` answers HTTP 429 to
+`engine=google_jobs&gl=il`, so the "does not cover Israel" claim cannot be re-tested before
+the quota resets. Do not delete the function on the strength of either sentence — settle it
+with one search after 2026-09-01. The removal proposal is in `docs/BACKLOG.md`.
+
+**Google for Jobs is NOT reachable through the Bright Data unlocker** (tested 2026-08-23,
+3 credits): `google.com/search?q=…&ibp=htl;jobs` returns HTTP 200 with a ZERO-BYTE body —
+the jobs widget is client-rendered and raw mode gets none of it. The same request without
+`ibp=htl;jobs` returns 440,906 bytes of ordinary SERP, which is why
+`deep_validate.google_via_unlocker` (organic links, per company) works and a jobs-widget
+version of it cannot. Anyone tempted to "just swap SerpApi for the unlocker": that is the
+experiment, and it fails.
 
 Set SERPAPI_KEY (env or the gitignored secrets.env). Without it, this source is skipped.
 
