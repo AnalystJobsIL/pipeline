@@ -244,7 +244,13 @@ def main():
             # or the fetched page names the company. `tenant_is_this_company` stays only as
             # a VETO on an explicit ATS tenant mismatch; it is never evidence FOR a write,
             # because it returns True whenever there is nothing checkable to match against.
-            names_us = bool(html) and page_mentions_company(name, html, strict=True)
+            # Shared three-valued predicate, not a local `bool(html) and
+            # page_mentions_company(...)`: the local copy could not use the unlocker and did
+            # not strip generic/geographic words, so `<company> Israel` rows failed it on
+            # boards that are titled without the suffix. `html` is already fetched here, so
+            # passing it costs no extra request. `is True` keeps "unreadable" (None) out.
+            from crack_walled import _page_names_company
+            names_us = _page_names_company(name, u, html=html) is True
             if v == "ats" and not tenant_is_this_company(name, u):
                 names_us = False
             if (v == "match" and whole_name) or names_us:

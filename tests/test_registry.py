@@ -268,7 +268,15 @@ def test_repair_dead_urls_applies_one_identity_rule_to_both_branches():
     assert 'v in ("match", "ats")' not in src, (
         "the 200 branch still accepts a bare `match` with no page evidence")
     assert src.count("whole_name") >= 2, "the whole-name rule must gate the accept"
-    assert "strict=True" in src, "page evidence must be the phrase test, not word-soup"
+    # 2026-08-24: this asserted `strict=True` appeared inline, pinning a LOCAL
+    # `page_mentions_company(name, html, strict=True)`. That local form was a two-valued
+    # copy of `crack_walled._page_names_company` - it folded "unreadable" into "not us" and
+    # skipped both the unlocker fallback and the name-stripping retry. The shared predicate
+    # calls `page_mentions_company(..., strict=True)` itself, so the phrase test is still
+    # the phrase test; the assertion now names the predicate instead of its internals.
+    assert "_page_names_company(name, u, html=html) is True" in src, (
+        "page evidence must come from the shared three-valued predicate, and `is True` "
+        "must keep an unreadable page out")
     tree = ast.parse(src.lstrip())
     for node in ast.walk(tree):
         if isinstance(node, (ast.If, ast.For, ast.While)):
@@ -838,6 +846,12 @@ def test_the_weekly_audit_confirms_identity_from_the_candidate_not_the_rows_own_
                         lambda name, limit=5: {"Riskified": [FOREIGN],
                                                "Fiverr": [FIVERR]}.get(name, []))
     monkeypatch.setattr(A, "verify", lambda name, plat, tok, api: (12, 5))
+    # The audit's second chance now goes through the SHARED three-valued predicate, which
+    # does its own fetching (and can reach the unlocker). Stub it, or this test makes real
+    # network calls: hermetic tests are why the fixture exists.
+    import crack_walled as C
+    monkeypatch.setattr(C, "_page_names_company",
+                        lambda name, url, html="": {"Riskified": False}.get(name))
     monkeypatch.setattr(sys, "argv", ["audit_empty_rows.py", "--apply"])
     A.main()
 

@@ -382,6 +382,17 @@ write list**, which is why it is a proposal and not a commit. Ordered by what it
    `python -c "import csv;from pipeline.verdicts import in_pool;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:];n=[x for x in r if 'url-cleared' in x[5].lower() or 'url-flagged' in x[5].lower()];print(len(n),len([x for x in n if not in_pool(x[5])]))"`
    *-> `39 9`, measured 2026-08-24.)*
 
+   **Three more mirrors this lane added and did not disclose**, found by wave 8:
+   `registry_health._PROBE_SHAPE` (mirrors `probe_candidates`' filter),
+   `registry_health._EXTRACT_GAP` (mirrors `repair_extract_gap.MODE`), and the crack-pool
+   literal. Measured 2026-08-24 the drift is **0** on all three (`_EXTRACT_GAP` 40 vs `MODE`
+   40; `_PROBE_SHAPE` + `is_terminal_note` 153 vs the tool's 153) — so they are accurate,
+   unguarded, and free to drift. `_EXTRACT_GAP` is strictly *looser* than `MODE` (it does not
+   require a date), which is the over-counting direction that hides orphans.
+   `test_the_ownership_matrix_is_built_from_the_tools_own_predicates` pins only the triage
+   count and two negative properties of the hunt; extending it to compare all four mirrors
+   against their tools is a `registry`-lane job and is the cheap half of this item.
+
    The fix is two lines in `pipeline/verdicts.py`:
 
    ```python
@@ -672,9 +683,11 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
 25. **`HANDOFF.md` contradicts itself 13 lines apart** — lane: `docs`. L46 says
     `1,189 rows · 343 parked`; L59 says `1,199 rows · 353 parked`. Both presented as current
     state; L59 is right. Same table also still says "122 unit assertions" and
-    `AGENT_BRIEF` rule 4 says "123 cases"; `pytest` collects **222** across two files now
-    (2026-08-24; it was 206 when this item was written, which is the point — a hard-coded
-    count in a doc is a defect with a timer on it),
+    `AGENT_BRIEF` rule 4 says "123 cases"; `pytest --collect-only -q | tail -1` is the
+    only number worth quoting here (206 when this item was written, 222 six hours later, 224
+    six hours after that — three values in a day, which is the point: a hard-coded count in
+    a doc is a defect with a timer on it, and this item has now been wrong twice about the
+    very thing it is complaining about),
     and `tests/test_registry.py` is named in no `.md` at all while both documents still tell
     the reader every guard lives in `tests/test_units.py`.
 
@@ -751,11 +764,18 @@ whose commit message announced the hole was closed — which is why item 30 is t
 stops this recurring.
 
 30. **`_ok_to_write` and `_page_names_company` are plumbing living in `crack_walled.py`** —
-    lane: shared plumbing. Three tools now import them (`audit_empty_rows`, `deep_validate`,
-    `repair_dead_urls`), and `deep_validate` has to import **lazily, inside the write block**,
-    because `crack_walled` imports `Renderer`/`ddg` from it — a cycle. That lazy import is a
-    smell with a real cost: it is invisible to any static check of "does this tool gate its
-    writes". These two functions are the single identity gate for every column-3/4 write in
+    lane: shared plumbing. **Four** tools now import them — `deep_validate` and
+    `listing_hunt` take `_ok_to_write`, `audit_empty_rows` and `repair_dead_urls` take
+    `_page_names_company` — and three of the four import **lazily, inside the function**,
+    because `crack_walled` imports from `deep_validate` and `audit_empty_rows`: a cycle in
+    both directions. Those lazy imports are a smell with a real cost: they are invisible to
+    any static check of "does this tool gate its writes".
+
+    *(An earlier version of this item listed `audit_empty_rows`, `deep_validate`,
+    `repair_dead_urls` and omitted `listing_hunt` — at the time, two of the three named
+    imported nothing from `crack_walled` and instead carried their own two-valued copy of
+    the predicate. Wave 8 found that; the copies are gone and the list is now accurate.
+    Reproduce: `grep -n "from crack_walled import" *.py`.) These two functions are the single identity gate for every column-3/4 write in
     the repo and belong in `pipeline/` next to `company_identity`. Doing so also makes the
     guard in `tests/test_registry.py` enumerable ("every tool that writes `fr[3]` imports the
     gate") instead of four hand-written fixtures. **Do not do this at the same time as item

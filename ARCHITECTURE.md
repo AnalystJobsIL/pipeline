@@ -498,7 +498,7 @@ Taxonomy:
 | `monitored candidate` / `host documented` | false | real page documented, extraction unproven | daily probe + 14-day re-hunt |
 | `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | that evening's 19:00 hunt (fast-path) |
 | `no listing found` / `no ATS detected` | false | full render found nothing parseable | weekly audit + hunt cron |
-| `unsupported ATS <x>` | false | ATS known, no extraction path yet — **the label lies more often than it tells the truth.** Run `python registry_health.py --ats`: on 2026-08-24 it reported **8 of 8** names `WIRE` (a fetcher exists; the row needs its tenant cracked) and **0** `BUILD`, covering all 32 rows. It was 3/5 six hours earlier — the `ats-fetch` lane ships fetchers without restamping these notes, so this cell is stale by construction and only the command is current | **six** jobs claim it (crack_walled, listing_hunt, triage_dark, probe_candidates, audit_empty_rows, deep_validate) — run `registry_health.py` rather than trusting this cell |
+| `unsupported ATS <x>` | false | ATS known, no extraction path yet. **Run `python registry_health.py --ats`** — it splits `WIRE` (a fetcher exists, the row just needs its tenant cracked) from `BUILD` (no fetcher). On 2026-08-24: **3 WIRE** (phenom 19, eightfold.ai 10, oraclecloud.com 4) / **5 BUILD** (icims.com 8, successfactors 7, avature.net 3, taleo.net 2, jobvite.com 1) over 54 rows. Three of those `BUILD` names clear §1's own "seen 3+ times" threshold. *(An earlier version of this cell said "8 of 8 WIRE, 0 BUILD, 32 rows" and blamed a same-day fetcher ship. The tool has never produced that: replaying it at the commit that wrote the claim gives 3/5 over 54, and `git log -- pipeline/fetchers.py` shows no change this session. It was typed from a bad ad-hoc snippet instead of from the command it cites — in the cell whose whole point is "run the command".)* | **six** jobs claim it (crack_walled, listing_hunt, triage_dark, probe_candidates, audit_empty_rows, deep_validate) — run `registry_health.py` rather than trusting this cell |
 | `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS — strict TLS on the scanning machine produced 6 false positives) | re-tested **daily** by `scan_dead_domains` (`_rescannable` defaults to 1d) inside the 05:00 digest, and again by the Sunday audit; **a revived domain clears the flag automatically** |
 | `defunct: …` | false | company confirmed shut down/acquired | permanently excluded |
 | `alias-of <name>` | false | a SECOND row for a company already scanned at the same board (eBay / eBay Israel) | nobody — **terminal**, and re-opening it republishes every role twice |
@@ -662,14 +662,22 @@ writer above is read-modify-write or append-only — but a human commit does, an
 is the one registry edit that does not survive the git layer. Worked example, reproducible
 with `git log`:
 
-| commit | rows | what happened |
+(Row counts below are **body rows**, header excluded — `wc -l` on the file gives one more,
+and mixing the two is the standing confusion `HANDOFF.md` flags. This table printed the
+header-inclusive numbers until 2026-08-24, in the section that elsewhere criticises
+switching denominators mid-sentence.)
+
+| commit | body rows | what happened |
 |---|---|---|
-| `9c4372ef` | 1190 | `Time To Know` deleted on purpose ("time.com is Time To Know") |
-| `8644d8fd` | **1191** | a concurrent cloud run's conflict path ran `merge_csv_rows`, whose `changed` set still held that row, and `target.append(r)` **resurrected it** |
-| `0180e755` | 1190 | re-deleted, silently, inside a commit whose subject is about Oracle HCM |
+| `9c4372ef` | 1189 | `Time To Know` deleted on purpose ("time.com is Time To Know") |
+| `8644d8fd` | **1190** | a concurrent cloud run's conflict path ran `merge_csv_rows`, whose `changed` set still held that row, and `target.append(r)` **resurrected it** |
+| `0180e755` | 1189 | re-deleted, silently, inside a commit whose subject is about Oracle HCM |
 
 `check_invariants.py` checks the registry's SHAPE, never its SIZE, so all three passed.
-Fifteen name-deletions exist in the whole 68-commit history of the file
+Fifteen name-deletions exist in the whole history of the file
+(`git log --oneline -- companies.csv | wc -l` -> 69 on 2026-08-24; this sentence said
+"68-commit" the day before, which is a hard-coded count inside the paragraph arguing
+that nothing reports a size change)
 (13 of them one deliberate purge of LinkedIn-sidebar-poisoned rows on 2026-08-21), and
 nothing anywhere reported one. Two rules follow:
 
@@ -712,8 +720,17 @@ Playwright sync instances conflict).
 ### Who re-checks a parked row — the ownership matrix
 
 Every inactive row must be owned by at least one *recurring* job, or it is permanently dark.
-**The matrix below is no longer typed by hand** — `registry_health.pools()` mirrors each
-scheduled tool's own row filter, so one command re-derives it and the counts cannot rot:
+**The matrix below is re-derived by a command, not typed by hand** — `registry_health.pools()`
+reproduces each scheduled tool's own row filter, so the counts cannot silently rot:
+
+**But "mirrors" is doing real work in that sentence, and it is only literally true for one
+tool.** `pools()` *imports* `triage_dark.TARGET_NOTES`/`SKIP_NOTES`,
+`listing_hunt._triaged_page_empty` and `looks_like_junk` from the tools themselves; the
+filters for `listing_hunt`, `probe_candidates`, `repair_extract_gap` and `crack_walled` are
+**retyped** as `_HUNT_SHAPE`, `_PROBE_SHAPE`, `_EXTRACT_GAP` and a crack literal. Measured
+2026-08-24 the drift is **0** on all four — but they are unguarded, and `_EXTRACT_GAP` is
+strictly looser than `repair_extract_gap.MODE` (no date required), which is the direction
+that *hides* orphans. `docs/BACKLOG.md` item 1 carries the census and the guard extension.
 
 ```bash
 python registry_health.py | sed -n '/re-check ownership/,/OWNED BY NOTHING/p'

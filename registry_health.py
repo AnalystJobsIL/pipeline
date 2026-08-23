@@ -280,10 +280,11 @@ def orphans(rows):
 # has already done. What those rows actually need is WIRING: crack_walled sniffing the tenant
 # endpoint and the row moving to that platform.
 #
-# Deliberately no count in this comment. It said "34 of 57" and both halves were wrong within
-# a day: on 2026-08-24 the label covered 32 rows across 8 names, and `_fetcher_for` resolved
-# ALL EIGHT - the ats-fetch lane had shipped five fetchers in the preceding hours without
-# restamping the notes. That is the normal case, not an anomaly. `--ats` recomputes it.
+# Deliberately no count in this comment. It said "34 of 57", then "32 rows, all 8 wired" -
+# and every one of those numbers was wrong. `--ats` on 2026-08-24 reports 3 WIRE / 5 BUILD
+# over 54 rows, and it reported the same at the commit that wrote the second claim. The point
+# of this function is that the count is derived; typing one into a comment beside it has now
+# produced two false statements in two days. Run `--ats`.
 _FETCHER_ALIAS = {"eightfold.ai": "eightfold", "oraclecloud.com": "oraclehcm",
                   "icims.com": "icims", "jobvite.com": "jobvite", "taleo.net": "taleo",
                   "avature.net": "avature"}

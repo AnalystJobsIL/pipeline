@@ -513,8 +513,23 @@ def main():
             # endpoints this tool proposes returns "" (Workday `/wday/cxs/...` is POST-only,
             # Greenhouse blocks the UA), and 236 of the 255 rows in the Sunday pool carry an
             # http url for it to fall back to. Unreadable candidate == no evidence == refuse.
-            _pg = fetch(api or "", timeout=15)
-            _tenant_ok = bool(_pg) and page_mentions_company(name, _pg, strict=True)
+            # Use `crack_walled._page_names_company`, not a local
+            # `bool(fetch(...)) and page_mentions_company(...)`. The local form was a
+            # two-valued copy of a three-valued predicate: it folds "could not read the
+            # page" into "the page names someone else", and - more to the point - it skips
+            # the residential-unlocker fallback and the retry that strips generic and
+            # geographic words from the company name. That retry is not decoration: 46 rows
+            # are named `<something> Israel`, and their boards are titled without it.
+            #
+            # ARCHITECTURE.md section 2 claimed all five write paths ran through the shared
+            # predicate while this tool and `repair_dead_urls` each carried their own. A
+            # doc-level claim of shared behaviour over two silently diverging copies is the
+            # bug class this lane exists to remove, so the copies go rather than the claim.
+            #
+            # Lazy import: `crack_walled` imports this module, so a module-level import is a
+            # cycle. docs/BACKLOG.md 30 proposes lifting the gate into `pipeline/`.
+            from crack_walled import _page_names_company
+            _tenant_ok = _page_names_company(name, api or "") is True
         if is_foreign(name, api or "") or not _tenant_ok:
             # Identity gate: this tool SEARCHES for a board, which is exactly how you end up
             # holding another company's — and it verifies, with real jobs. Refuse it.
