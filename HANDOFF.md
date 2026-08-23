@@ -183,6 +183,14 @@ roles are lost today (scraped cards fall back to the literal "Israel" and Indeed
 `country_code=IL`), but it is a latent hole on a path that just became busy. The scraper's
 regex is now DERIVED from both lists instead of keeping its own eight-name copy.
 
+### Q. A scraped location was the card around the place, not the place
+`_loc_from_ctx` took a fixed 12-character window either side of the matched place name.
+Both ends land mid-word, so the location became whatever the card had next to it: rows on
+the board today read `Apply       Tel Av` and `d Scientist Haifa`. The window starts at the
+place name now and stops at a word boundary, and button words next to it are stripped.
+**The stored locations only change when the cache is rebuilt** — the 00:00 UTC
+scrape-refresh — so the board shows the old strings until tomorrow morning.
+
 ### Also
 - 87 rows carried a truncated triage mode (`page-emp`, `page-e`, `pa`) that no pool matches;
   all restored, and `check_invariants` check F2 warns on the next one.
