@@ -28,6 +28,7 @@ import re
 import urllib.request
 
 from bd_rescue import _load_secrets, unlock
+from pipeline.fetchers import clean_scraped as _clean_scraped
 from pipeline.seniority import _ROLE_START, _relevance
 
 # A real JD names its sections; a JS-shell / cookie-wall / "no jobs found" page doesn't.
@@ -112,6 +113,9 @@ def main():
                 continue
             # spend the fetch budget only on titles the classifier could ever accept
             if _relevance((j.get("title") or "").lower()) in ("excluded", "none"):
+                continue
+            # ...and never on page chrome. "Analytics Cookies" passes the relevance gate.
+            if not _clean_scraped([j]):
                 continue
             if (j.get("_jd_attempted") or "") > retry_before:
                 n_skip += 1
