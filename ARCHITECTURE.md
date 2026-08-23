@@ -230,22 +230,28 @@ known-broken rows*, and it lives in this script for historical reasons. Keep it 
 is (it published roles at 15 active companies whose own board reports 0), but never count it
 towards discovery, and if the Bright Data budget ever binds, it is the first thing to cut.
 
-### The four live sources, and what each one costs
+### The five live sources, and what each one costs
 
 `cloud` is the 05:00 run of 2026-08-23 read out of `cloud_state/source_health.json`;
 `dry-run` is a full local execution of both scripts against sandbox copies of the state
 files the same evening (17:30 UTC), which is the check to repeat before trusting a change
 here — it exercises the real Bright Data account and the real Telegram fetches.
 
-| source | mechanism | cost per digest | cloud | dry-run |
-|---|---|---|---|---|
-| `indeed` | `il.indeed.com/jobs` through the Bright Data **Web Unlocker**, one request per `INDEED_QUERIES` entry; parsed out of the `mosaic-provider-jobcards` JSON blob | 5 unlocker requests | 33 | 55 raw → 47 kept |
-| `linkedin` | BD dataset `gd_lpfll7v5hcqtkxl6l`, `discover_new` by keyword — **the discovery source**: 4 keywords, unscoped, `time_range` "Past week", `limit_per_input` 100 | ~390 dataset records | 30 (2 kw × 15 then) | **391 → 58 new companies** |
-| `linkedin-targeted` | same dataset, one input per broken-board company, **scoped with the `company` field**. Backfill, not discovery | ~65 dataset records | 78 | 62 → 1 new |
-| `telegram` | public `t.me/s/<channel>` HTML previews — **no bot, no account, no API key, no quota** | free | **no key in the file at all** | 268 posts parsed |
+| source | mechanism | cost per digest | measured 2026-08-23 |
+|---|---|---|---|
+| `linkedin` | **the discovery source.** `linkedin.com/jobs/search`, 9 keywords, unscoped, `f_TPR` past week. KEYLESS guest endpoint first, Web Unlocker only where blocked | **0 credits** when the guest endpoint answers; ≤`LINKEDIN_PAGES × 9` = 18 when it does not | 47–62 jobs/keyword-sweep, 100% parsed, **0 paid** |
+| `workable` | `jobs.workable.com/api/v1/jobs?location=Israel` — one ATS, EVERY tenant, keyless. The only source that returns the employer's own website | **0 credits** | 20 rows → 11 kept, 11/11 with a real careers lead |
+| `indeed` | `il.indeed.com/jobs` through the **Web Unlocker**, one request per `INDEED_QUERIES` entry; parsed from the `mosaic-provider-jobcards` blob | 5–10 unlocker requests (one retry) | 58 raw → 46 kept |
+| `linkedin-targeted` | BD dataset `gd_lpfll7v5hcqtkxl6l`, one input per broken-board company, **scoped with the `company` field**. Backfill, NOT discovery | ~67 dataset records | 88 companies → 67 records, 57 on-target |
+| `telegram` | public `t.me/s/<channel>` HTML previews — **no bot, no account, no API key, no quota** | free | 6 channels, 16–18 of 20 parsed each |
 
-Re-derive the cloud column with
+Re-derive with
 `python -c "import json;print(json.load(open('cloud_state/source_health.json')))"`.
+
+**Three of the five need no key at all.** `main()` therefore does NOT return early when
+`BRIGHTDATA_API_KEY` is missing — that gate used to sit above Workable, the LinkedIn guest
+endpoint *and* `sources.record()`, so a rotated secret took the whole intake layer dark,
+including the free half, and silenced the mechanism built to notice.
 
 **The Indeed *dataset* is dead and the Indeed *unlocker* is not.** BD dataset
 `gd_l4dx9j9sscpvs7no2` returned `dataset_size: 0, error_codes: {"rate_limit": 15}` on every
@@ -429,8 +435,9 @@ used to produce is the worst failure mode in this repo. So:
   that should have caught it asserted `targeted < breadth`, and `0 < 15` is true.
 
 Worked numbers for 2026-08-23 (4,106 spent, 9 days left → 99 credits/day):
-`breadth limit 24 × 4 keywords + targeted cap 4`. On a fresh month at 5,000 it is
-`limit 41`; at 15,000 it is the full `limit 100`.
+`breadth 9 keywords × 2 pages (~18 paid worst case) + targeted cap 100`. Breadth is not
+throttled at any budget — it is per-request and usually free — and the targeted backfill
+stays non-zero down to ~22 credits/day.
 
 ### Is it sustainable? Yes, and free — once you stop paying per row
 
@@ -483,11 +490,12 @@ from `pipeline/jdfill.py` later.
 
 | | credits/day |
 |---|---|
-| LinkedIn breadth — Unlocker, 4 keywords, full depth | **10** |
+| LinkedIn breadth — **keyless guest endpoint**, 9 keywords | **0** (≤18 if LinkedIn blocks it) |
+| Workable — keyless, all tenants | **0** |
 | LinkedIn targeted — dataset, per record | **67** |
 | Indeed — Unlocker, 5 keywords + retries | 6 |
 | everything else (JD enrichment, rescue, crack, repair) | ~44 |
-| **total before SERP** | **127** → 3,810/month, **inside the free 5,000** |
+| **total before SERP** | **73** → 2,190/month, **comfortably inside the free 5,000** |
 
 So it is sustainable at **$0**, with roughly 1,200 credits/month of headroom — which SERP
 can still eat: at the weekend-only rate the month lands at 4,320 and fits; at the rate

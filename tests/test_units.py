@@ -1177,8 +1177,6 @@ def test_bd_spend_ledger_never_raises():
         dd.urllib.request.urlopen = real
 
 
-
-
 def test_the_shared_bd_search_cap_is_per_process_not_per_day():
     """`DEEP_BD_SEARCH_CAP` reads like a daily ceiling of 150 and is not one: `_BD` is a
     module-level dict, so the count resets in every process, and SIX scripts import
@@ -1206,8 +1204,6 @@ def test_the_shared_bd_search_cap_is_per_process_not_per_day():
     assert len(importers) >= 4, (
         "if this shrank, the per-process cap may finally be safe — re-check "
         "docs/BACKLOG.md item 6 before relaxing it: " + str(sorted(importers)))
-
-
 
 
 def test_linkedin_cards_are_parsed_per_card_not_by_zipping_field_lists():
@@ -1259,8 +1255,6 @@ def test_the_breadth_sweep_is_billed_per_request_not_per_record():
     assert "UNLOCKER_CALLS" in main
 
 
-
-
 def test_breadth_uses_many_plain_keywords_not_one_clever_boolean_query():
     """LinkedIn's public search caps at ~80 distinct jobs PER QUERY, not per keyword, so a
     combined `("data analyst" OR "data scientist" OR ...)` search buys ONE window instead of
@@ -1276,8 +1270,6 @@ def test_breadth_uses_many_plain_keywords_not_one_clever_boolean_query():
     assert dd.LINKEDIN_PAGES == 2, (
         "the cap is 80 distinct jobs and two pages reach it — more pages bill for nothing, "
         "fewer leave ~25% of the window unread")
-
-
 
 
 # --- adversarial review, 2026-08-23: defects the rewrite introduced the same day --------
@@ -1375,9 +1367,17 @@ def test_an_exhausted_guest_pool_is_not_a_block_and_costs_nothing():
         assert len(got) == 1 and calls["paid"] == 0, (len(got), calls)
         # nothing at all on page 0 -> that IS a block, the paid path must run
         calls["paid"] = 0
-        dd._li_guest = lambda kw, loc, d, st: ([], True)
-        dd.linkedin_search("x", pages=1)
-        assert calls["paid"] == 1, "a first-page zero must fall through to the Unlocker"
+        had = os.environ.get("BRIGHTDATA_API_KEY")
+        os.environ["BRIGHTDATA_API_KEY"] = "test"
+        try:
+            dd._li_guest = lambda kw, loc, d, st: ([], True)
+            dd.linkedin_search("x", pages=1)
+            assert calls["paid"] == 1, "a first-page zero must fall through to the Unlocker"
+        finally:
+            if had is None:
+                os.environ.pop("BRIGHTDATA_API_KEY", None)
+            else:
+                os.environ["BRIGHTDATA_API_KEY"] = had
     finally:
         dd._li_guest, bd_rescue.unlock = real_guest, real_unlock
 
@@ -1468,3 +1468,159 @@ def test_indeed_search_with_zero_tries_does_not_raise():
     print instead of returning an empty list."""
     from discovery_daily import indeed_search
     assert indeed_search("x", tries=0) == []
+
+
+# --- third-wave verdict, 2026-08-23: what the first round of fixes still got wrong -----
+def test_a_hard_blocked_guest_endpoint_still_gets_every_paid_page():
+    """The first fix moved the bug rather than removing it: `if i and out` became
+    `elif out:`, which still does not test `ok` — so once any cards existed, a HARD BLOCK
+    broke the loop before reaching the paid fallback and only `start=0` was ever fetched.
+    That is the documented GitHub-runner case, ~20 of 80 cards lost per keyword, while the
+    credits-per-card line reported a flattering 60/credit."""
+    import discovery_daily as dd
+    import bd_rescue
+    paid = []
+    card = ('<li><div class="base-card" data-entity-urn="urn:li:jobPosting:%d">'
+            '<a class="base-card__full-link" href="https://il.linkedin.com/jobs/view/a-%d">'
+            '<span class="sr-only"> Data Analyst </span></a>'
+            '<h4 class="base-search-card__subtitle">A Co</h4></div></li>')
+    def fake_unlock(url, timeout=120):
+        paid.append(url)
+        return card % (100 + len(paid), 100 + len(paid))
+    real_guest, real_unlock = dd._li_guest, bd_rescue.unlock
+    had = os.environ.get("BRIGHTDATA_API_KEY")
+    os.environ["BRIGHTDATA_API_KEY"] = "test"      # the paid path is gated on a key existing
+    try:
+        bd_rescue.unlock = fake_unlock
+        dd._li_guest = lambda kw, loc, d, st: ([], False)      # blocked from the first page
+        got = dd.linkedin_search("x", pages=2)
+        assert len(paid) == 2, f"a blocked guest must use the whole paid budget, got {paid}"
+        assert "start=0" in paid[0] and "start=25" in paid[1], paid
+        assert len(got) == 2
+    finally:
+        dd._li_guest, bd_rescue.unlock = real_guest, real_unlock
+        if had is None:
+            os.environ.pop("BRIGHTDATA_API_KEY", None)
+        else:
+            os.environ["BRIGHTDATA_API_KEY"] = had
+
+
+def test_one_blank_guest_page_is_not_proof_the_pool_is_finished():
+    """The guest endpoint emits intermittent 200-empty pages INSIDE the result pool. Stopping
+    at the first one saw 55 of 71 reachable jobs on a measured live walk — a 23% silent loss
+    per keyword, every run, with no message and no fallback. Free requests, so probing past a
+    blank is nearly free."""
+    import discovery_daily as dd
+    card = ('<li><div class="base-card" data-entity-urn="urn:li:jobPosting:%d">'
+            '<a class="base-card__full-link" href="https://il.linkedin.com/jobs/view/a-%d">'
+            '<span class="sr-only"> Data Analyst </span></a>'
+            '<h4 class="base-search-card__subtitle">A Co</h4></div></li>')
+    pages = [dd._li_cards(card % (1, 1)), [], dd._li_cards(card % (2, 2)), [], [], []]
+    real = dd._li_guest
+    try:
+        dd._li_guest = lambda kw, loc, d, st: ((pages.pop(0), True) if pages else ([], True))
+        got = dd.linkedin_search("x", pages=1)
+        assert {c["job_id"] for c in got} == {"1", "2"}, \
+            "a card AFTER a blank page must still be collected"
+    finally:
+        dd._li_guest = real
+
+
+@pytest.mark.parametrize("shape", [{}, [], {"c": {"custom": {"renamed": 1}}}])
+def test_an_unrecognised_zone_cost_shape_reads_as_unknown_not_as_zero(shape):
+    """Only an EXCEPTION was treated as unreadable. An HTTP 200 in an unrecognised shape —
+    empty dict, a list, renamed keys, or a wrong/empty BRIGHTDATA_ZONE — produced a confident
+    0 + 0, so the ledger reported 2,989 instead of 4,106 (60% instead of 82%): the exact
+    under-count this function exists to prevent, silently, with the 80% warning unable to
+    fire and budget_per_day over-permitting."""
+    import datetime as dt
+
+    import discovery_daily as dd
+    real = dd._bd_get
+    dd._bd_get = lambda u: ([{"created": "2026-08-10T05:00:00Z", "dataset_size": 2989}]
+                            if "snapshots" in u else shape)
+    try:
+        mtd, _parts = dd.bd_spend_this_month(today=dt.date(2026, 8, 23))
+        assert mtd is None, f"unrecognised zone/cost must be unknown, got {mtd}"
+    finally:
+        dd._bd_get = real
+
+
+@pytest.mark.parametrize("fn,rec", [
+    ("workable_normalize", {"id": "1", "title": "Data Analyst",
+                            "company": {"title": "A Co"}, "location": {"city": "Haifa"},
+                            "url": "u"}),
+    ("indeed_normalize", {"displayTitle": "Data Analyst", "company": "A Co", "jobkey": "k"}),
+    ("normalize", None),
+])
+def test_no_normalizer_emits_an_undated_job(fn, rec):
+    """An undated job is skipped by BOTH the write-side prune (`if d and d < cut`) and the
+    read-side TTL (`not posted_date or ...`) while `_alive()` refreshes last_seen every day —
+    so it never leaves the board. The fix had been applied to linkedin_normalize only, and
+    then the brand-new Workable source re-introduced it on EVERY record by reading
+    `published`/`created_at`, neither of which that API sends (the field is `created`)."""
+    import datetime as dt
+
+    import discovery_daily as dd
+    j = (dd.normalize("linkedin", {"job_title": "Data Analyst", "company_name": "A Co"})
+         if rec is None else getattr(dd, fn)(rec))
+    assert j["posted_date"] == dt.date.today().isoformat()
+
+
+def test_workable_reads_the_field_names_the_api_actually_sends():
+    """`published` and `created_at` are not keys in the payload — the date is `created`, and
+    the location sub-key is `subregion`, not `region`. Live keys 2026-08-23: benefitsSection
+    company created department description employmentType id isFeatured language location
+    locations requirementsSection socialSharingDescription state title updated url workplace;
+    location: city countryName subregion."""
+    from discovery_daily import workable_normalize
+    j = workable_normalize({"id": "7", "title": "BI Developer", "created": "2026-08-19T09:00:00Z",
+                            "company": {"title": "A Co", "website": "https://a.co"},
+                            "location": {"subregion": "Northern District"}, "url": "https://u"})
+    assert j["posted_date"] == "2026-08-19"
+    assert j["location"] == "Northern District, Israel"
+    assert j["careers_hint"] == "https://a.co", "the employer's own site is why this source exists"
+
+
+@pytest.mark.parametrize("fn,rec", [
+    ("indeed_normalize", {"displayTitle": "Junior Data Analyst", "company": "NewCo",
+                          "jobkey": "k"}),
+    ("workable_normalize", {"id": "1", "title": "Junior Data Analyst",
+                            "company": {"title": "NewCo"}, "location": {"city": "Haifa"},
+                            "url": "u"}),
+])
+def test_every_source_keeps_a_junior_postings_employer(fn, rec):
+    """The flag-do-not-drop reasoning was applied to one of four normalizers, so an unknown
+    Israeli employer whose only past-week analyst ad says "Junior" stayed invisible to three
+    of the four sources."""
+    import discovery_daily as dd
+    j = getattr(dd, fn)(rec)
+    assert j is not None and j["_junior"] is True and j["company"] == "NewCo"
+
+
+def test_the_keyless_sources_survive_a_missing_bright_data_key():
+    """The key gate was an early `return` sitting above Workable, the LinkedIn guest endpoint
+    AND `sources.record()` — so a rotated secret took the whole intake layer dark, including
+    the half that needs no key, and silenced the mechanism built to notice that."""
+    import ast
+    import inspect
+
+    import discovery_daily
+    body = ast.parse(inspect.getsource(discovery_daily.main)).body[0].body
+    first_return = next((i for i, n in enumerate(body) if isinstance(n, ast.Return)), len(body))
+    early = "\n".join(ast.unparse(n) for n in body[:first_return])
+    for keyless in ("workable_search", "linkedin_search", "sources"):
+        assert keyless in early or first_return == len(body), \
+            f"{keyless} must run before any early return"
+
+
+def test_telegram_does_not_assert_israel_either():
+    """`is_israel_job` short-circuits on country_code, so stamping "IL" here made the geo gate
+    a no-op for 104 of the 205 cached jobs. The location always ends ", Israel", so the text
+    scan reaches the same answer honestly."""
+    from discovery_telegram import parse_post
+    from pipeline.israel import is_israel_job
+    j = parse_post(["Data Analyst", "Explorium", "Tel Aviv", "01/01/26", "SQL", "Senior",
+                    "https://x/1"], "2026-08-23")
+    assert j["country_code"] == ""
+    assert is_israel_job(j) is True

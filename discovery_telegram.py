@@ -121,7 +121,12 @@ def parse_post(lines, msg_date):
     if title.rstrip().endswith(":") or re.search(r"jobs posted|weekly digest", title, re.I):
         return None                                        # channel's own summary posts
     return {"company": company[:80], "title": title[:140],
-            "location": f"{city}, Israel"[:80], "country_code": "IL",
+            # blank, not "IL": israel.is_israel_job short-circuits on country_code before
+            # it reads any text, so asserting it here makes the geo gate a no-op for every
+            # Telegram job — 104 of the 205 cached jobs on 2026-08-23. The location this
+            # builds always ends ", Israel", so the text scan reaches the same answer
+            # honestly.
+            "location": f"{city}, Israel"[:80], "country_code": "",
             "url": url.split("?")[0], "posted_date": msg_date[:10],
             "ats_platform": "discovery-telegram", "job_id": url.split("?")[0],
             "description": f"Skills: {skills}. Seniority: {seniority}."}

@@ -65,9 +65,12 @@ for _s in (sys.stdout, sys.stderr):
 #
 # Re-measure with docs/… no: with the snippet in ARCHITECTURE.md section 1a. If new-company
 # yield ever reads 0 again, this sweep has re-saturated and depth is the first dial.
+# Kept because plan_spend still reports a breadth "limit"; LINKEDIN_LIMIT_MIN and
+# LINKEDIN_WINDOW were removed on 2026-08-23 — they were read nowhere after the sweep moved
+# off the per-record dataset, and an unused constant that reads like a setting is the trap
+# this file's own Indeed note is about. The real dials are LINKEDIN_PAGES, INDEED_DAYS and
+# the `days=` argument of linkedin_search.
 LINKEDIN_LIMIT_MAX = int(os.environ.get("LINKEDIN_LIMIT_MAX", "100"))
-LINKEDIN_LIMIT_MIN = int(os.environ.get("LINKEDIN_LIMIT_MIN", "15"))
-LINKEDIN_WINDOW = os.environ.get("LINKEDIN_WINDOW", "Past week")
 # WIDTH, not depth, is what the Unlocker path buys. LinkedIn's public search runs out at
 # ~60-85 jobs per keyword however many pages you ask for, so a deep sweep on four keywords
 # hits a ceiling the per-record dataset does not — that is why the dataset found 58 new
@@ -179,15 +182,16 @@ def indeed_normalize(r):
         # epoch MILLIseconds. Indeed also serves a relative "formattedRelativeTime";
         # the epoch is the only one that survives a locale switch.
         date = _dt.datetime.fromtimestamp(ts / 1000, _dt.timezone.utc).date().isoformat()
-    if date and date < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
+    date = date or _dt.date.today().isoformat()    # never undated — see linkedin_normalize
+    if date < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
         return None
     desc = ""
     sn = r.get("snippet") or ""
     if sn:
         desc = re.sub(r"<[^>]+>", " ", str(sn))
-    if any(k in f"{title} {desc}"[:400].lower() for k in _JUNIOR_HE):
-        return None                        # same junior/student cut as the dataset path
-    return {"company": comp[:80], "title": title[:140],
+    junior = any(k in f"{title} {desc}"[:400].lower() for k in _JUNIOR_HE)
+    return {"_junior": junior,             # flagged, not dropped — the EMPLOYER still counts
+            "company": comp[:80], "title": title[:140],
             "location": (r.get("formattedLocation") or "Israel")[:80],
             "country_code": "", "url": f"https://il.indeed.com/viewjob?jk={jk}",
             "posted_date": date, "ats_platform": "discovery-indeed",
@@ -223,7 +227,11 @@ def indeed_normalize(r):
 # So a third request is pure waste (~9 credits/day across the keyword list) and there is no
 # depth beyond 80 to buy at any price. That cap is the whole reason WIDTH beats DEPTH here:
 # the only way to see more of LinkedIn through this door is more keywords.
-LINKEDIN_PAGES = int(os.environ.get("LINKEDIN_PAGES", "2"))   # stops early when a page is stale
+LINKEDIN_PAGES = int(os.environ.get("LINKEDIN_PAGES", "2"))   # PAID pages per keyword
+# How many consecutive empty guest pages before the pool is called finished. Free requests,
+# so tolerance is nearly free; one blank is NOT exhaustion (measured: a walk that stopped at
+# the first blank saw 55 of 71 reachable jobs).
+LINKEDIN_BLANK_TOLERANCE = int(os.environ.get("LINKEDIN_BLANK_TOLERANCE", "3"))
 # Credits are the unit that matters and nothing counted them per source. One Unlocker call =
 # one credit, so this IS the bill for the sweeps that use it.
 import collections as _collections
@@ -354,36 +362,55 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     pages = LINKEDIN_PAGES if pages is None else pages
     seen, out = set(), []
     # guest pages hold 10, unlocked pages hold 60 — same 80-job pool, different step size
-    paid_pages = 0
+    paid_pages, blanks = 0, 0
     for i in range(pages * 6):
         cards, ok = _li_guest(keyword, location, days, i * 10)
         # An HTTP 200 with an empty body IS LinkedIn's soft rate-limit, and treating it as a
         # successful empty result skipped the fallback and killed the keyword with no message
         # — a mass zero read as a measurement (ARCHITECTURE section 8 item 2), re-created in
         # brand-new code. A free page that yields nothing gets the paid path, not a break.
+        # THREE states, and conflating any two of them loses jobs. Earlier versions of this
+        # loop conflated all three in turn:
+        #   ok + cards  -> the good case
+        #   ok + blank  -> AMBIGUOUS. The guest endpoint emits intermittent 200-empty pages
+        #                  INSIDE the pool, so one blank is not exhaustion — a walk that
+        #                  stopped at the first blank saw 55 of 71 reachable jobs, a 23%
+        #                  silent loss per keyword. Probing costs nothing, so probe.
+        #   not ok      -> blocked. Use the paid path, for EVERY page of the budget, not
+        #                  just page 0.
         if ok and cards:
             SOURCE_PATH["linkedin_free"] += 1
             LI_CARDS_PRESENT[keyword] |= _li_last_present[0]
-        elif out:
-            # We already have cards for this keyword, so an empty page here means the ~80-job
-            # pool is EXHAUSTED, not that we are blocked. Paying the Unlocker to re-read a
-            # pool we have already drained cost 2 credits per keyword for nothing.
-            break
-        elif paid_pages >= pages:
-            break                     # paid budget for this keyword is spent
-        else:
-            # The paid page index is its OWN counter. Reusing the guest index meant that once
-            # the guest endpoint was blocked — the documented GitHub-runner case — only
-            # `start=0` was ever fetched: at i=1 `if i and out` broke before the fallback,
-            # so 60 of the 80 available cards arrived and the rest were silently dropped
-            # (~20 x 9 keywords a day) while the credits-per-card line reported a flattering
-            # 60 cards/credit.
+            blanks = 0
+        elif ok:
+            SOURCE_PATH["linkedin_free"] += 1
+            # record the denominator even on a blank, or a page whose urns we FAIL to parse
+            # contributes nothing to the drift metric and the regression stays invisible
+            LI_CARDS_PRESENT[keyword] |= _li_last_present[0]
+            blanks += 1
+            if blanks < LINKEDIN_BLANK_TOLERANCE:
+                continue              # a hole inside the pool — free to step over
+            if out:
+                break                 # cards already collected and the tail is quiet: done
+            # Nothing at all after LINKEDIN_BLANK_TOLERANCE blank pages. A working endpoint
+            # returning consistently nothing is indistinguishable from a soft rate-limit, so
+            # buy ONE paid page to tell "this keyword has no results" from "we are throttled".
+            # Without this a soft block silently costs the whole keyword.
+        if not ok or (blanks >= LINKEDIN_BLANK_TOLERANCE and not out):
+            if paid_pages >= pages or not os.environ.get("BRIGHTDATA_API_KEY"):
+                break                 # paid budget spent, or there is no paid path at all
+            # The paid page index is its OWN counter. Reusing the guest index meant that
+            # once the guest endpoint was blocked — the documented GitHub-runner case — only
+            # `start=0` was ever fetched, so 60 of the ~80 available cards arrived and the
+            # rest were silently dropped (~20 x 9 keywords a day) while the credits-per-card
+            # line reported a flattering 60 cards/credit.
             q = urllib.parse.urlencode({"keywords": keyword, "location": location,
                                         "f_TPR": f"r{days * 86400}", "start": paid_pages * 25})
             html = unlock(f"https://www.linkedin.com/jobs/search?{q}", timeout=120)
             UNLOCKER_CALLS["linkedin"] += 1
             SOURCE_PATH["linkedin_paid"] += 1
             paid_pages += 1
+            blanks = 0
             LI_CARDS_PRESENT[keyword] |= _li_urn_ids(html)
             cards = _li_cards(html)
             if not cards:
@@ -392,6 +419,11 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
                 break
         if not cards:
             break
+        # NOTE: no `elif out: break` here. That is what limited a hard-blocked guest endpoint
+        # — the documented GitHub-runner case — to ONE paid page: the second iteration broke
+        # before reaching the fallback, so 60 of the ~80 available cards arrived and the rest
+        # vanished with the credits-per-card line reporting a flattering 60/credit. The loop
+        # is bounded by `paid_pages >= pages` and by the fresh-card check below.
         fresh = [c for c in cards if c["job_id"] not in seen]
         seen.update(c["job_id"] for c in cards)
         out += fresh
@@ -493,15 +525,24 @@ def workable_normalize(r):
     title = str(r.get("title") or "").strip()
     if not comp or not title:
         return None
-    d = str(r.get("published") or r.get("created_at") or "")[:10]
-    if d and d < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
+    # `created`, not `published`/`created_at` — those two are not in the payload at all, so
+    # every Workable job entered the cache with posted_date "" and became immortal (skipped
+    # by BOTH the write-side prune and the read-side TTL while _alive refreshes last_seen).
+    # Live keys 2026-08-23: benefitsSection company created department description
+    # employmentType id isFeatured language location locations requirementsSection
+    # socialSharingDescription state title updated url workplace.
+    d = str(r.get("created") or r.get("published") or r.get("created_at") or "")[:10]
+    d = d or _dt.date.today().isoformat()          # never undated — see linkedin_normalize
+    if d < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
         return None
-    if any(k in title[:200].lower() for k in _JUNIOR_HE):
-        return None
+    junior = any(k in title[:200].lower() for k in _JUNIOR_HE)
     loc = r.get("location") or {}
-    city = str(loc.get("city") or loc.get("region") or "").strip()
+    # `subregion`, not `region` — `region` is not a key the API sends, so a city-less row
+    # silently fell back to a bare "Israel". Live location keys: city countryName subregion.
+    city = str(loc.get("city") or loc.get("subregion") or "").strip()
     url = r.get("url") or r.get("shortlink") or ""
-    return {"company": comp[:80], "title": title[:140],
+    return {"_junior": junior,             # flagged, not dropped — the EMPLOYER still counts
+            "company": comp[:80], "title": title[:140],
             "location": (f"{city}, Israel" if city else "Israel")[:80],
             "country_code": "", "url": url,
             "posted_date": d, "ats_platform": "discovery-workable",
@@ -577,10 +618,12 @@ def normalize(name, r):
     desc = (r.get("job_summary") or r.get("job_description") or r.get("description") or "")[:6000]
     if not title or not comp:
         return None
+    import datetime as _dt2
+    date = date or _dt2.date.today().isoformat()   # never undated — see linkedin_normalize
     tl = (str(title) + " " + str(r.get("job_summary") or ""))[:400].lower()
-    if any(k in tl for k in _JUNIOR_HE):
-        return None                        # junior/student postings out
-    return {"company": str(comp)[:80], "title": str(title)[:140], "location": str(loc)[:80],
+    junior = any(k in tl for k in _JUNIOR_HE)
+    return {"_junior": junior,             # flagged, not dropped — the EMPLOYER still counts
+            "company": str(comp)[:80], "title": str(title)[:140], "location": str(loc)[:80],
             "country_code": "", "url": url, "posted_date": date,
             "ats_platform": f"discovery-{name}", "job_id": url or f"{comp}|{title}",
             "description": re.sub(r"<[^>]+>", " ", str(desc))}
@@ -651,6 +694,12 @@ def bd_spend_this_month(today=None):
         d = _bd_get(f"https://api.brightdata.com/zone/cost?zone={zone}"
                     f"&from={first}&to={today.isoformat()}")
         cost = next(iter(d.values()), {}).get("custom", {}) if isinstance(d, dict) else {}
+        # An HTTP 200 in an UNRECOGNISED shape — empty dict, a list, renamed keys, or a
+        # wrong/empty BRIGHTDATA_ZONE — used to yield a confident 0 + 0, and the caller then
+        # reported 2,989 instead of 4,106 (60% instead of 82%): exactly the under-count this
+        # function exists to prevent, with no message. Absent keys mean UNREADABLE, not zero.
+        if not isinstance(cost, dict) or "reqs_unblocker" not in cost:
+            raise ValueError(f"zone/cost returned an unrecognised shape: {str(d)[:120]}")
         out["unlocker_reqs"] = int(cost.get("reqs_unblocker") or 0)
         out["serp_reqs"] = int(cost.get("reqs_serp") or 0)
     except Exception:  # noqa: BLE001
@@ -822,9 +871,15 @@ def _targeted_inputs(cap=100, day=None):
 def main():
     _load_secrets()
     os.makedirs("out", exist_ok=True)      # gitignored — absent on cloud runners
-    if not os.environ.get("BRIGHTDATA_API_KEY"):
-        print("no BRIGHTDATA_API_KEY; skipping discovery")
-        return
+    # NOT an early return. Workable and the LinkedIn guest endpoint need no key, and this
+    # gate sat above both of them AND above sources.record() — so a rotated secret took the
+    # whole intake layer dark, including the free half, and silenced the mechanism built to
+    # notice that. Only the paid paths are skipped.
+    have_bd = bool(os.environ.get("BRIGHTDATA_API_KEY"))
+    if not have_bd:
+        print("::warning::no BRIGHTDATA_API_KEY — running the KEYLESS sources only "
+              "(Workable, LinkedIn guest, Telegram); Indeed and the targeted backfill are "
+              "skipped.", flush=True)
     jobs, seen = [], set()
     per_source = {}
     # `per_source` feeds pipeline/sources.py, which answers ONE question: is this source
@@ -836,7 +891,7 @@ def main():
     # Indeed first: it is a single unlocked request per query, so it costs seconds and
     # cannot be starved by the dataset polling below timing out.
     n_indeed_raw = 0
-    for q in INDEED_QUERIES:
+    for q in (INDEED_QUERIES if have_bd else []):
         try:
             cards = indeed_search(q)
         except Exception as e:  # noqa: BLE001
@@ -908,7 +963,9 @@ def main():
     if n_li_present and n_li_raw < n_li_present * 0.8:
         print(f"::warning::LinkedIn parser recovered only {n_li_raw} of {n_li_present} cards "
               f"present — markup drift, check _li_cards. See ARCHITECTURE.md 1a.", flush=True)
-    per_source["linkedin"] = n_li_present or n_li_raw
+    # cards PRESENT is the source's liveness; a broken PARSER is the ::warning:: above,
+    # a different failure with a different owner.
+    per_source["linkedin"] = n_li_present
     # SOURCE_PATH existed with three writes and ZERO reads — a guard that was documented and
     # did not exist. Which path served is the difference between "LinkedIn went quiet" and
     # "the free endpoint started refusing us and we are now paying for everything".
@@ -922,7 +979,7 @@ def main():
 
     # TARGETED backfill — keeps the dataset, because it needs the `company` filter the
     # public search only exposes as a numeric f_C id we do not have. ~67 credits.
-    _unused_breadth, targeted_cap, how = plan_spend()   # breadth is per-request now
+    _unused_breadth, targeted_cap, how = plan_spend() if have_bd else (0, 0, "no BD key")
     print(f"[budget] {how}")
     runs = []
     targeted = _targeted_inputs(cap=targeted_cap) if targeted_cap else []
@@ -931,7 +988,12 @@ def main():
         runs.append(("linkedin-targeted", li_ds, "keyword", targeted, 8))
         print(f"targeting {len(targeted)} unresolved-broken companies via discovery")
     elif not targeted_cap:
-        print("targeted backfill SKIPPED this run — budget reserved for the breadth sweep")
+        # Record the zero. When stale.json holds no targetable rows — the HEALTHY state — or
+        # the budget skips this sweep, the key simply stopped being written and
+        # sources.stale() then reported `linkedin-targeted: nothing for Nd` every morning
+        # forever: a death report for a source that was switched off on purpose.
+        per_source["linkedin-targeted"] = 0
+        print("targeted backfill SKIPPED this run — no budget or nothing to target")
     for n, ds, disc, inputs, limit in runs:
         try:
             recs = run_query_raw(ds, disc, inputs, limit)
@@ -963,10 +1025,23 @@ def main():
         # had already advanced past them). Merge by (company,title), prune past the TTL.
         import datetime as _dtm
         cut = (_dtm.date.today() - _dtm.timedelta(days=21)).isoformat()
-        try:
-            prev = json.load(open("discovered_cache.json", encoding="utf-8"))
-        except Exception:  # noqa: BLE001
-            prev = []
+        # ABSENT is legitimately empty; CORRUPT is not. This function then writes the merged
+        # list back, so collapsing the two deleted every cached job from one half-written
+        # file — and this is the process that WRITES that file, first, non-atomically, under
+        # `|| echo` + continue-on-error. discovery_telegram then advances its watermark over
+        # the wreckage. That is the 2026-08-21 incident, 79 verified roles, exactly.
+        prev = []
+        if os.path.exists("discovered_cache.json"):
+            try:
+                with open("discovered_cache.json", encoding="utf-8") as _f:
+                    prev = json.load(_f)
+                if not isinstance(prev, list):
+                    raise ValueError(f"expected a list, got {type(prev).__name__}")
+            except ValueError as e:
+                print(f"::error::discovered_cache.json exists but will not parse ({e}) — "
+                      f"NOT overwriting it with this run's jobs alone. Fix or delete the "
+                      f"file and re-run; nothing has been lost yet.", flush=True)
+                return
         merged, keys = [], set()
         for j in cacheable + [p for p in prev if isinstance(p, dict)]:
             k = ((j.get("company") or "").lower(), (j.get("title") or "").lower())
