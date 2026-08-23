@@ -32,6 +32,7 @@ from . import firmographics as firmographics_mod
 FIRMO_MAX_PER_RUN = 5  # research calls can web-search (~1-3 min each); bulk = backfill script
 BLURB_MAX_PER_RUN = 30  # one claude call each, inside the digest timeout
 EMAIL_MAX_ROLES = 40   # a daily email nobody scrolls is a daily email nobody reads
+BOARD_MAX_ROLES = 1500  # page-weight backstop; each role renders a full detail card
 from . import digest as digest_mod
 from . import fetchers, israel, seniority, store
 from .companies import load_companies
@@ -260,6 +261,14 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # opening because its employer has nine of them would make the board wrong. Flooding is
     # an EMAIL problem (capped at 3/company above); the board is sortable and searchable.
     board_jobs = [j for j in st.get_matched_since("0000-01-01") if _alive(j)]
+    if len(board_jobs) > BOARD_MAX_ROLES:
+        # Pure page-weight backstop, not a policy: every role renders a full detail card,
+        # so an unbounded board is a multi-megabyte page nobody can load on a phone.
+        board_jobs.sort(key=lambda x: str(x.get("posted_date") or x.get("first_seen") or ""),
+                        reverse=True)
+        print(f"  board: {len(board_jobs)} active roles, rendering the newest "
+              f"{BOARD_MAX_ROLES}", flush=True)
+        board_jobs = board_jobs[:BOARD_MAX_ROLES]
     stats["new"] = len(email_jobs)
     stats["board_count"] = len(board_jobs)
 
