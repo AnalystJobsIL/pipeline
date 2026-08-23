@@ -41,7 +41,7 @@ TODAY = dt.date.today().isoformat()
 # Rotation state for the time budget. A row found ALIVE writes nothing to companies.csv (only
 # the dead/revived branches do), and the target filter carries no date term - so with a budget
 # and file-order targets the run re-walks the same prefix every night and the tail is NEVER
-# reached. Measured 2026-08-24: 211 of 211 current targets are in exactly that state, which
+# reached. Measured 2026-08-23: 211 of 211 current targets are in exactly that state, which
 # made the "re-tested tomorrow" comment on the budget false. One date per company, oldest
 # first; `cloud_state/` is committed wholesale by daily-digest.yml so this travels.
 SEEN = os.path.join("cloud_state", "scan_seen.json")
@@ -78,7 +78,7 @@ def main():
     apply = "--apply" in sys.argv
     # This runs INSIDE the digest, in front of the email. Every other tool in this lane is
     # time-budgeted; these two were not. 12s timeout x 211 targets is a 42-minute worst case
-    # for a step whose normal cost is ~3.3 min (measured 2026-08-24: 8 rows in 7.5s), and a
+    # for a step whose normal cost is ~3.3 min (measured 2026-08-23: 8 rows in 7.5s), and a
     # handful of hosts that black-hole packets is all it takes. Stop cleanly instead: the
     # rows not reached keep their notes and are re-tested tomorrow (_rescannable is daily).
     budget = float(os.environ.get("SCAN_TIME_BUDGET_MIN", "10") or 0)

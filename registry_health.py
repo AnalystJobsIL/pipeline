@@ -67,7 +67,7 @@ TODAY = dt.date.today().isoformat()
 
 # A row may leave the registry only for one of these reasons, and the reason must LEAD one
 # of the note's ` | `-separated segments. A bare substring search over the whole note was
-# wrong in both directions and was measured on 2026-08-24: 45 rows (7 of them ACTIVE) would
+# wrong in both directions and was measured on 2026-08-23: 45 rows (7 of them ACTIVE) would
 # have had their deletion filed under "removed (explained)" — the line a reader skips —
 # because `SmartRecruiters` contains "recruiter" (Armis, HiBob, kueez and the other 12
 # smartrecruiters rows) and the TO-DO note `aggregator URL; resolve real careers page before
@@ -208,7 +208,7 @@ def pools(rows):
     **Import the predicate, never retype it.** The first version of this function retyped
     each tool's filter, which made it the SIXTH hand-maintained copy of the pool definitions
     in a repo whose worst documented bug was three copies drifting — and it had already
-    drifted on the day it shipped (measured 2026-08-24):
+    drifted on the day it shipped (measured 2026-08-23):
 
       * `triage_dark` mirror 270 vs real 242 — the copy omitted `SKIP_NOTES`
         (`defunct|domain-dead|recruiter|duplicate|redundant|alias-of`), over-counting 28 rows
@@ -406,7 +406,7 @@ def alarms_state(rows=None, prev=None):
         resolution rung DOWN: Bright Data unlocker ... missing key or zone
         resolution rung DOWN: Playwright/Chromium ... No module named 'playwright'
 
-    (Reproduced 2026-08-24 by running `alarms()` with those three names unset and playwright
+    (Reproduced 2026-08-23 by running `alarms()` with those three names unset and playwright
     unimportable.) A daily audit block nobody reads is the thing this module exists to avoid,
     so the mail hook calls THIS function. Ladder status reaches the mail the honest way: each
     registry workflow's `--census` writes `cloud_state/registry_alarms.json`, and the line

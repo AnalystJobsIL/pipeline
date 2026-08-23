@@ -79,7 +79,7 @@ def probe(url):
 def main():
     apply = "--apply" in sys.argv
     # Runs INSIDE the digest, in front of the email — same reasoning as scan_dead_domains:
-    # a 12s timeout x 181 targets is a 36-minute worst case for a step nothing bounds, and
+    # a 12s timeout x ~180 targets is a ~36-minute worst case for a step nothing bounds, and
     # the 05:45 relay does not wait. A row not probed today keeps its baseline and is probed
     # tomorrow: the wake is delayed, never lost, because candidate_probe.json only advances
     # for rows this run actually read.
@@ -98,7 +98,7 @@ def main():
     # Least-recently-probed first. The target filter has no date term, so with a budget and
     # file-order targets the same prefix is probed every day and the tail never is - and a row
     # past the cut can NEVER wake, because a wake needs two observations and the first one it
-    # never gets. Measured 2026-08-24: 64 of 181 targets had no baseline at all.
+    # never gets. Measured 2026-08-23: 64 of 181 targets had no baseline at all.
     targets.sort(key=lambda ir: (state.get(ir[1][0]) or {}).get("last", ""))
     print(f"probing {len(targets)} monitored candidates "
           f"({sum(1 for _, r in targets if r[0] not in state)} without a baseline)", flush=True)
@@ -123,7 +123,7 @@ def main():
         # sig/il. Treating it as a baseline raises KeyError on `prev["il"]` at the very
         # next SUCCESSFUL probe - before `json.dump`, so the state never advances again
         # and, behind the workflow's `|| echo "probe skipped"`, no candidate ever wakes
-        # again. Measured 2026-08-24: 61 of the 153 targets have no baseline and 39 of a
+        # again. Measured 2026-08-23: 61 of the 153 targets have no baseline and 39 of a
         # 40-row sample error, so the first --apply run would poison ~59 rows and the
         # second would kill the step. An incomplete entry is NOT a baseline.
         if not (isinstance(prev, dict) and "il" in prev and "sig" in prev):

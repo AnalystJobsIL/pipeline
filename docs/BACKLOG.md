@@ -558,13 +558,13 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     behaviour; the rotation starts on night 2. Measured over three truncated nights
     afterwards: 120 of 153 distinct companies covered, against 40 before.
 
-19. **`crack_one` still writes `fr[3]` when the identity page is UNREADABLE** — lane:
-    `registry`, unclaimed. `_page_names_company` returns `None` for a page no fetch and no
-    unlocker could read, and the `novrfy` branch then persists the address anyway with
-    `host documented`. That is the pre-existing behaviour and it is defensible (the host came
-    off the company's own render), but it does not distinguish "we could not look" from "we
-    looked and found nothing", and `listing_hunt`'s fast-path activates on either. Decide
-    deliberately rather than by omission.
+19. ~~**`crack_one` still writes `fr[3]` when the identity page is UNREADABLE**~~ —
+    **CLOSED by commit 674cb9c, one commit after this item was written.** `_ok_to_write`
+    requires `_page_names_company(...) is True`, so `None` is refused, and it gates the WRITE
+    rather than any single `return` — both `fr[3]` assignments in `crack_walled.main()` sit
+    under it. Left here struck through rather than deleted, because the item and the
+    ARCHITECTURE paragraph that matched it both survived the fix and a reviewer lost time on
+    a solved problem: **when you close something, grep for the places that describe it.**
 
 20. **`audit_empty_rows`'s docstring advertises `AUDIT_BD_SEARCH_CAP`; the code reads
     `DEEP_BD_SEARCH_CAP`** — lane: `registry`, one line. And per item 10, `deep_validate._BD`
@@ -619,3 +619,33 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     Comeet rows); the rest look like ordinary tenants. They should be hand-checked and either
     corrected or given the declared-inheritance token from 21(a) — a code gate cannot tell
     them apart, which is the finding.
+
+23. **`python registry_health.py` is named in no document a new agent actually reads** —
+    lane: `docs`. It is the single command that answers all three questions the registry lane
+    gets asked ("what re-checks this row", "why did a company disappear", "which ATS is worth
+    building"), and `grep -c registry_health CLAUDE.md docs/AGENT_BRIEF.md README.md` returns
+    `0 0 0`. A reviewer timing the orientation goal reached it at step 7, ~680 lines into
+    `ARCHITECTURE.md`, via a third document — and could answer none of the three at the
+    2-minute mark. One line in `CLAUDE.md`'s "Run anything locally without side effects"
+    block and one in `docs/AGENT_BRIEF.md`'s registry row would close the goal:
+
+        python registry_health.py     # registry: census, who re-checks what, which rungs work
+
+24. **`docs/AGENT_BRIEF.md` still says DuckDuckGo is blocked from this machine** — lane:
+    `docs`. Corrected in `ARCHITECTURE.md` §3 and §8 on 2026-08-23 (it is rate-limited, not
+    blocked — measured 4 URLs, then 0 for the same query minutes later). `AGENT_BRIEF` is the
+    document a spawned agent reads FIRST, and it is the one place the old claim survives.
+
+25. **`HANDOFF.md` contradicts itself 13 lines apart** — lane: `docs`. L46 says
+    `1,189 rows · 343 parked`; L59 says `1,199 rows · 353 parked`. Both presented as current
+    state; L59 is right. Same table also still says "122 unit assertions" and
+    `AGENT_BRIEF` rule 4 says "123 cases"; `pytest` collects **206** across two files now,
+    and `tests/test_registry.py` is named in no `.md` at all while both documents still tell
+    the reader every guard lives in `tests/test_units.py`.
+
+26. **Three orphan detectors, three answers** — lane: `registry` + `infra`, unclaimed.
+    `registry_health.orphans()` says 1 (`SeeTree`), `ARCHITECTURE.md` §5c's hand-typed
+    one-liner says 4 with zero name overlap, and `check_invariants.py` says 0 because it
+    whitelists five names in `ALLOWED_ORPHANS`. §5c now points at the tool and admits the
+    disagreement, but the right end state is one definition. Note `check_invariants.py:219`
+    prints the literal string `0 orphans` unconditionally — it can never report otherwise.

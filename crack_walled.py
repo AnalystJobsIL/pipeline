@@ -229,7 +229,7 @@ def crack_one(name, seed, platform):
         return ("notours", foreign, 0,
                 # FIXED LENGTH and SHORT on purpose: this segment shares a 220-char cell
                 # with every other tool's verdict, and `notes.append` evicts whole OLD
-                # segments to make room. Measured 2026-08-24 over the 30 `unsupported ATS`
+                # segments to make room. Measured 2026-08-23 over the 30 `unsupported ATS`
                 # parked rows (mean note 199/220): the 74-char first draft pushed
                 # `unsupported ATS` out of 24 of them - retiring those rows from
                 # crack_walled's OWN pool - a netloc-bearing version cost 17-20 depending on
@@ -252,7 +252,7 @@ def crack_one(name, seed, platform):
                 # tool's verdict, and `notes.append` evicts whole OLD segments to make room.
                 # The first draft was 74 chars and pushed `unsupported ATS` out of 24 of the
                 # 30 crack-pool rows (the old 35-char note loses 17) - i.e. it retired those
-                # rows from crack_walled's OWN pool. Measured 2026-08-24; mean note is
+                # rows from crack_walled's OWN pool. Measured 2026-08-23; mean note is
                 # 199/220 here, so every character is a row's coverage.
                 "not this company's board")
     return ("novrfy", captures[0], 0, f"host found ({captures[0][1][:60]}) but 0 IL extracted")
@@ -266,7 +266,7 @@ def _page_names_company(name, url, html=""):
     `company_identity.verdict` only checks a tenant in the PATH - so it returns the blanket
     `"ats"`, which its own docstring defines as "we cannot tell", and `is_foreign` reads that
     as False. `_slug_matches("Bancor", "bancorpbank")` passes too, on plain containment. Both
-    were true on 2026-08-24 and this tool was one `--apply` from moving Bancor (Israeli
+    were true on 2026-08-23 and this tool was one `--apply` from moving Bancor (Israeli
     crypto, ex-Bprotocol) onto The Bancorp Bank's iCIMS board: that page says "Bancorp" 18
     times and Bancor-as-a-word zero times.
 

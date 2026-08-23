@@ -730,14 +730,14 @@ Imagindairy,scrape,https://www.imagindairy.com/careers,https://imagindairy.com/c
 For API rows `api_url` is the endpoint; for scrape rows it is the **listings page URL**.
 `notes` is the row-verdict log: each tool appends ` | <tool> <date>: <finding>` and strips
 its own previous suffix, so a row accumulates one current verdict per tool.
-**Who still replaces instead of appending** (re-derived 2026-08-24; the four tools this
+**Who still replaces instead of appending** (re-derived 2026-08-23; the four tools this
 paragraph used to name had all been fixed and it was never updated —
 `grep -n '\[5\] *=' *.py` is the check, and it takes ten seconds):
 
 - **Whole ROW, deliberately** — `retry_unreachable._row_for`, `recheck_suspects.py`'s
   *promote* branch (not its cleared branch, which appends), `validate_empty.py`'s promote
   branch. These build a row from scratch; there is no prior verdict worth keeping.
-- **Whole CELL — all three fixed 2026-08-24.** `audit_empty_rows`, `crack_walled` and
+- **Whole CELL — all three fixed 2026-08-23.** `audit_empty_rows`, `crack_walled` and
   `deep_validate` each overwrote `notes` on their *activation* branch. An activation is
   exactly when you can least afford it: the assignment deleted the `alias-of` /
   `domain-dead` token that keeps the row out of the wrong pool, and the `dark-triage` mode
@@ -816,10 +816,15 @@ Corollary: a diagnostic verdict must **append** (`base | tool date: finding`), n
 replace the cell — overwriting also destroys the `monitored candidate` / `host documented`
 tokens that `listing_hunt`'s fast-path keys on.
 
-**The pool is defined in three places, and they do not agree** (measured 2026-08-24).
-`pipeline/verdicts.TOKENS` is the module that claims to be the single source, but
-`listing_hunt.main()` still carries its own 17-token regex and `check_invariants.POOL` a
-third copy. Diff: `url-cleared` and `url-flagged` are in both inline copies and **missing
+**The pool is defined in FOUR places, and they do not agree** (measured 2026-08-23).
+`pipeline/verdicts.TOKENS` (18) is the module that claims to be the single source;
+`listing_hunt.main()` carries its own 17-token regex, `check_invariants.POOL` a third copy
+(18), and `registry_health._HUNT_SHAPE` a fourth (17) — **this lane added that fourth**,
+inside a function whose own docstring says a retyped mirror would be the sixth copy "in a
+repo whose worst documented bug was three copies drifting". It is retyped because
+`listing_hunt` has no extractable `targets(rows)` to import; that extraction is the fix
+(`docs/BACKLOG.md`, "One pool predicate per tool") and until it lands this sentence is the
+honest statement of the cost. Diff: `url-cleared` and `url-flagged` are in both inline copies and **missing
 from `TOKENS`**. 39 rows carry one today and **9 of them are invisible** to
 `audit_empty_rows` and `deep_validate`, which import `in_pool` — the other 30 happen to carry
 a second pool token as well. (An earlier draft of this paragraph said "57 rows are
@@ -886,10 +891,12 @@ forever — that pattern has been introduced and removed three times.
 hold a start-of-run snapshot; two concurrent snapshot-writers silently destroy each other's
 verdicts (lost-update incident 2026-08-22).
 
-**All 22 `companies.csv` writers, by safety class** (verified 2026-08-22; re-counted
-2026-08-24 — the list said "20" and omitted three DAILY writers, which matters because this
-census is what a new writer gets checked against. Reproduce:
-`for f in *.py; do grep -q companies.csv "$f" && grep -q "write_csv_rows\|csv.writer" "$f" && echo "$f"; done | wc -l`):
+**All 24 `companies.csv` writers, by safety class** (verified 2026-08-22; re-counted twice
+on 2026-08-23 — it said "20", then "22", and both were wrong. This census is what a new
+writer gets checked against, so its being short is the whole risk. Reproduce, and note the
+grep must accept `CSV_PATH` as well as the literal, or it misses `resolve_any` and
+`resolve_unknowns`, which open a filename held in a variable:
+`for f in *.py; do grep -qE 'companies.csv|CSV_PATH' "$f" && grep -qE 'write_csv_rows|csv\.writer' "$f" && echo "$f"; done | wc -l`):
 
 - **Compliant** (re-read + match by name before every write): `crack_walled.py`,
   `probe_candidates.py`, `listing_hunt.py`, `audit_empty_rows.py`, `deep_validate.py`,
@@ -904,11 +911,15 @@ census is what a new writer gets checked against. Reproduce:
   `resolve_any.py`, `resolve_parallel.py`, `resolve_unknowns.py`.
   (`resolve_deep.py` and `scrape_batch.py` write only `out/*.csv`, never the registry.)
 - **Line-based snapshot, sub-second window** (tolerated): `apply_resolved.py`.
+- **The git layer, not the in-process one**: `merge_csv_rows.py`. It was missing from every
+  earlier version of this census, which is worth noticing — it is the one writer with no
+  in-process safety class, and it is the tool "Never DELETE a row" below blames for
+  resurrecting `Time To Know`.
 
 No whole-snapshot index-keyed writer remains. If you add one it will silently revert
 concurrent verdicts — use one of the first three patterns.
 
-**Never DELETE a row. Park it with a reason** (2026-08-24). No tool deletes rows — every
+**Never DELETE a row. Park it with a reason** (2026-08-23). No tool deletes rows — every
 writer above is read-modify-write or append-only — but a human commit does, and a deletion
 is the one registry edit that does not survive the git layer. Worked example, reproducible
 with `git log`:
@@ -970,7 +981,7 @@ scheduled tool's own row filter, so one command re-derives it and the counts can
 python registry_health.py | sed -n '/re-check ownership/,/OWNED BY NOTHING/p'
 ```
 
-Counts below are that command's output on **2026-08-24**, after this session's two pool
+Counts below are that command's output on **2026-08-23**, after this session's two pool
 fixes. Ownership is by note content, not by mode. **The figures exclude each tool's
 staleness cooldown** — a cooldown delays a re-check, it does not remove ownership — so the
 rows a given night actually processes are fewer: `crack_walled` owns the 25 in the table and
@@ -1031,7 +1042,7 @@ sort least-recently-checked first (`cloud_state/scan_seen.json`, and a `last` ke
 companies; before, 40 of 40. Any new budget in this lane needs a rotation key in the same
 commit.
 
-**On a walled ATS, none of the three activation gates can see the tenant** (2026-08-24).
+**On a walled ATS, none of the three activation gates can see the tenant** (2026-08-23).
 The tenant lives in the SUBDOMAIN — `careers-bancorpbank.icims.com` — and
 `company_identity.verdict` only checks a tenant in the PATH, so it returns the blanket
 `"ats"`, which its own docstring defines as *"we cannot tell"*, and `is_foreign` reads that
@@ -1057,20 +1068,26 @@ else's. So the generic answer in "The activation rule" below is exactly the answ
    night, under another tool's name. `listing_hunt` has always refused to persist a foreign
    URL for this reason; the crack path does now too.
 
-The residue, deliberately: a page that is UNREADABLE (`None`) still falls through to `novrfy`
-and persists the address, because the host came off the company's own render and "we could not
-look" is not "we looked and found nothing". That is `docs/BACKLOG.md` item 19, and the real
-fix is one level down — `verdict()` should extract the subdomain tenant (item 9).
+There is no residue: `_ok_to_write` requires `_page_names_company(...) **is True**`, so an
+UNREADABLE page (`None`) is refused too, and it gates the WRITE rather than any one `return`
+— both `fr[3]` assignments in `main()` sit under it. That last part was not true for one
+commit: the gate was first written per-return, which left the `cracked-api`/oraclehcm path
+and the 0-Israel-jobs `novrfy` path ungated. The real fix is still one level down —
+`verdict()` should extract the subdomain tenant (`docs/BACKLOG.md` item 9) — but nothing
+here persists an address it could not confirm.
 
 **Every activating pool must exclude the terminal states itself.** `verdicts.in_pool()`
 does not: `TERMINAL` there is `defunct / domain-dead / duplicate of / redundant / recruiter`
-and **omits `alias-of`**. On 2026-08-24 that put `GE HealthCare Israel` and `eBay Israel`
+and **omits `alias-of`**. On 2026-08-23 that put `GE HealthCare Israel` and `eBay Israel`
 into `audit_empty_rows`' pool, and three more (`Chakratec`, plus those two) into
 `crack_walled`'s, which had no terminal filter at all. Both tools activate directly, and an
 alias row points at a board that *works* — so the audit would have searched, found that same
 board, verified it with real Israel jobs and re-activated the duplicate: every eBay role
 published twice under two company names. `check_invariants` check B would not catch it
-(the names differ). Pools after the fix: audit 260 → **255**, crack 10 → **7**.
+(the names differ). Pools after the fix, on the SAME basis as the matrix above (no cooldown applied):
+audit 260 → **255**, crack 30 → **25**. (With `_recrackable`'s daily cooldown a given night
+sees far fewer — 6 to 10 — which is what an earlier draft of this line quoted, silently
+switching denominators mid-sentence.)
 Guarded by `test_no_activating_pool_can_re_open_a_terminal_row`.
 
 **`audit_empty_rows` and `deep_validate` now select the identical 255 rows** — same
@@ -1133,13 +1150,13 @@ the short version of the three gates and the code that enforces them.
 - **Every rung that searches needs all three fallbacks.** The ladder is SerpApi (cheapest,
   currently useless) → `deep_validate.ddg` (free) → `deep_validate.google_via_unlocker`
   (Bright Data, capped by `DEEP_BD_SEARCH_CAP`). Verified against the live account on
-  2026-08-24: `total_searches_left: 0`, `this_month_usage: 250`, Free Plan, resets
+  2026-08-23: `total_searches_left: 0`, `this_month_usage: 250`, Free Plan, resets
   2026-09-01 —
   `python -c "import os,json,urllib.request;from bd_rescue import _load_secrets;_load_secrets();print(json.load(urllib.request.urlopen('https://serpapi.com/account?api_key='+os.environ['SERPAPI_KEY'])).get('total_searches_left'))"`.
   So a SerpApi-only rung returns `[]` **before it makes a request**, and a whole run of
   "found nothing" is indistinguishable from "cannot search".
   `resolve_broken._careers_url_via_serp` was given the fallback on 2026-08-23.
-  **`audit_empty_rows.serp()` was not, and it got it on 2026-08-24** — it is the search
+  **`audit_empty_rows.serp()` was not, and it got it on 2026-08-23** — it is the search
   behind the Sunday audit's phase 2 over the ~255-row parked pool, i.e. the rung that finds
   boards which MOVED rather than broke, and it had been a silent no-op for a week. Measured
   after the fix (3 pool companies, SerpApi still at 0): `Upsolver` 4 URLs, `Cognata` 4 URLs
@@ -1147,7 +1164,7 @@ the short version of the three gates and the code that enforces them.
   When every rung comes back empty the tool now prints a `::warning::` naming which
   credential was missing, because that is a broken run, not a measurement.
 - **DuckDuckGo is rate-limited from the dev machine, not blocked.** Repeatedly documented
-  here as "returns nothing"; measured on 2026-08-24 it returned 4 good URLs for `Wix`
+  here as "returns nothing"; measured on 2026-08-23 it returned 4 good URLs for `Wix`
   (`careers.wix.com/positions`) and 4 for `Fortinet` (including its real oraclecloud CX
   site), then `0` for the same query minutes later. Treat it as a rung that *sometimes*
   answers — which is why it can never be the only one. It is reliable on the runners; the
@@ -1294,8 +1311,13 @@ active rows had no baseline entry). To settle it, run the row yourself:
   ```bash
   python -c "import csv;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>5];print(len(r),'rows',sum(1 for x in r if x[4]=='true'),'active')"
   ```
-- **Orphan check — run after touching ANY row filter** (see the ownership matrix in §2). Must print 0; a non-zero count
-  is companies no recurring job will ever look at again:
+- **Orphan check — run after touching ANY row filter** (see the ownership matrix in §2).
+  **Use `python registry_health.py` and read its `OWNED BY NOTHING` line** — it derives
+  ownership from each tool's own predicate. The hand-typed one-liner below is kept because it
+  needs no imports, but it is a DIFFERENT definition and gives a different answer (4 vs 1 on
+  2026-08-23, with zero name overlap), and `check_invariants.py` gives a third (0, because it
+  whitelists five names in `ALLOWED_ORPHANS`). Three detectors, three answers; reconciling
+  them is in `docs/BACKLOG.md`. The one-liner's "must print 0" was never true:
   ```bash
   python -c "
   import csv,re
@@ -1502,7 +1524,7 @@ is the most reusable page in the repo: **a green workflow means nothing here.**
    jobs. `_slug_matches` guards it. But note the inverse: CyberArk→PANW and Imperva→Thales
    looked like false matches and were actually **real acquisitions**. Check before "fixing".
 5. **DuckDuckGo is RATE-LIMITED from this developer machine, not blocked** (corrected
-   2026-08-24; §3 has the measurement — 4 good URLs for `Wix`, then 0 for the same query
+   2026-08-23; §3 has the measurement — 4 good URLs for `Wix`, then 0 for the same query
    minutes later). Treat it as a rung that sometimes answers, which is why it may never be
    the only one. It is reliable on the runners. Local resolution work should still carry the
    Bright Data path (`deep_validate.google_via_unlocker`). SerpApi quota resets

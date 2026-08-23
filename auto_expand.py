@@ -11,7 +11,7 @@ Prints the remaining-unresolved count so the workflow / log shows progress.
 `--apply`. The auto-expand workflow invokes it with no flags, so the default cannot be
 flipped from here without silently disabling the 08:00/20:00 cron (that is a workflow
 change: docs/BACKLOG.md, "auto_expand writes by default"). Until then it says so on
-startup, and `--dry-run` gives an agent a safe way to inspect the batch — added 2026-08-24
+startup, and `--dry-run` gives an agent a safe way to inspect the batch — added 2026-08-23
 after a routine dry-run of the nightly chain appended two junk rows ("Qualitest acq",
 "Keter", both on secrethunter.io aggregator URLs) to the live registry.
 
