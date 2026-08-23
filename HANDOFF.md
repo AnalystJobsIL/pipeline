@@ -194,6 +194,23 @@ regex is now DERIVED from both lists instead of keeping its own eight-name copy.
   FIRST time is board-only — 336 companies were activated overnight and their whole back
   catalogue would otherwise have read as "posted in the last 48h".
 
+## What happened to today's digest runs
+
+The 05:00 scheduled run **failed** — it is still in the Actions history, and it is the one
+described in §K: 894 companies scanned, 187 LLM calls, a board built, and then the invariant
+gate rejected one false-positive row and the whole run was discarded before it could commit
+or publish.
+
+Everything after that was manual (`workflow_dispatch`). Each was cancelled and re-dispatched
+as another defect turned up — an email that would have printed its own escape characters, a
+role that would have been listed in two sections, eight rows fetching another company's ATS
+tenant. Cancelling before the `Mark digested roles as sent` step is what makes that safe:
+nothing is committed and no role is burned. The cancelled records were deleted per
+`CLAUDE.local.md` §3, which is why the history shows the failure and then a single success.
+
+If you need to do this again: cancel only BEFORE mark_sent, or the roles in that run's email
+are marked delivered and the next run will not include them.
+
 ## Watch list for the next session
 
 0. **75 active companies have an all-time-high job count of ZERO** — including Adobe,
