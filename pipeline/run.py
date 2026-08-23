@@ -344,8 +344,6 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             else:
                 st.record_firmo_failure(company, run_date)
 
-    # board-name -> researched record, resolved through the normalized identity key so
-    # "SolarEdge Technologies" finds the stored "SolarEdge" profile (§7 identity rule)
     # sqlite ∪ the committed JSON export. The two stores (local `state/seen.db`, cloud
     # `cloud_state/seen.db`) cannot be git-merged, which is how 919 researched profiles
     # ended up on one laptop while the cloud digest that RENDERS them had an empty table.
@@ -354,9 +352,10 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     _firmo_store = dict(_shared)
     for _c, _rec in st.load_firmographics().items():
         _firmo_store[_c] = firmographics_mod.newer(_shared.get(_c), _rec)
+    # Look the record up under the NORMALIZED identity, so "SolarEdge Technologies" on the
+    # board finds the stored "SolarEdge" (ARCHITECTURE §7), and cover every company we have
+    # ever matched — the archive renders the same card and showed facts for 5 of 50.
     _by_key = {firmographics_mod.identity_key(k): v for k, v in _firmo_store.items()}
-    # every company we have ever matched, not just today's board — the archive page renders
-    # the same company card and was showing facts for 5 of its 50 employers
     _all_companies = {j["company"] for j in st.get_matched_since("0000-01-01")}
     firmo_display = {c: (_firmo_store.get(c) or _by_key.get(firmographics_mod.identity_key(c)))
                      for c in _all_companies}
