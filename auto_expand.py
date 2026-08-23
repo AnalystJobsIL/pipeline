@@ -27,6 +27,7 @@ import os
 from urllib.parse import urlparse
 
 from pipeline.aggregators import is_aggregator as _is_agg_url
+from pipeline import identity_gate as _gate
 from pipeline.companies import CSV_PATH, load_companies
 from resolve_deep import resolve
 
@@ -51,6 +52,21 @@ def _load_cache():
             return json.load(f)
     except Exception:  # noqa: BLE001
         return {}
+
+
+def _row_for_ats(payload):
+    """The `ats` row builder, extracted so the gate has a seam a test can reach.
+
+    `main()` writes through `pipeline.companies.CSV_PATH`, which is an ABSOLUTE path fixed
+    at import time from the repo root — a `chdir` fixture does not redirect it, so driving
+    `main()` in a test would append to the real registry. The row builder is the honest unit
+    to test, and `retry_unreachable._row_for` is the same shape for the same reason.
+    """
+    nm, plat, tok, api, n_all, il = payload
+    if not _gate.activation_ok(nm, plat, api, n_all):
+        return [nm, "scrape", api, api, "false",
+                "auto-expand: resolved board is not this company's"]
+    return [nm, plat, tok, api, "true", f"auto-expand; {n_all}/{il} IL"]
 
 
 def main():
@@ -105,12 +121,11 @@ def main():
                 r, kind = lr, "ats"
                 n_llm += 1
         if kind == "ats":
-            nm, plat, tok, api, n_all, il = r[1]
-            row = [nm, plat, tok, api, "true", f"auto-expand; {n_all}/{il} IL"]
-            n_resolved += 1
+            row = _row_for_ats(r[1])
+            n_resolved += 1 if row[4] == "true" else 0
+            n_unreach += 0 if row[4] == "true" else 1
         elif kind == "scrape":
             jobs2, good_url = r[1] if isinstance(r[1], tuple) else (r[1], url)
-            host = urlparse(good_url).netloc.lower()
             # secrethunter/t.me included: the Telegram bridge seeds job-post links as
             # careers_url, and scraping those ingests other companies' postings too
             from pipeline.aggregators import is_aggregator
@@ -119,6 +134,13 @@ def main():
                 # from OTHER companies attributed to this one. Park inactive instead.
                 row = [name, "scrape", good_url, good_url, "false",
                        "aggregator URL; resolve real careers page before activating"]
+                n_unreach += 1
+            elif not _gate.activation_ok(name, "scrape", good_url, len(jobs2)):
+                # `is_aggregator` asks "is this page a job board for many employers"; it does
+                # NOT ask "is this THIS company's page". FairFly was activated off
+                # fireflyspace.com by a path with exactly this shape.
+                row = [name, "scrape", good_url, good_url, "false",
+                       "scraped page is not this company's; not activated"]
                 n_unreach += 1
             else:
                 cache[name] = jobs2

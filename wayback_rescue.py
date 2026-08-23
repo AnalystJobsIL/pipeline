@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 
 from pipeline import israel
 from resolve_deep import ATS_PATTERNS, _verify
+from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
@@ -119,6 +120,14 @@ def main():
         try:
             r = rescue(name, url)
         except Exception:  # noqa: BLE001
+            r = None
+        if r and not _gate.activation_ok(name, r[0], r[2], r[3]):
+            # An archived snapshot is the oldest evidence in the pipeline, and this branch
+            # had no identity check at all. Refuse rather than resurrect a board that is not
+            # this company's - a wrong resurrection is indistinguishable from a real one in
+            # every later verdict.
+            print(f"  [XX] {name}: archived {r[2][:44]} is not this company's board",
+                  flush=True)
             r = None
         if r:
             plat, tok, api, n_all, il = r

@@ -24,6 +24,7 @@ from pipeline import israel
 from ingest_research import PROBE_FAST, _cand_slugs, _try
 from resolve_deep import ATS_PATTERNS, _verify
 from scrape_universal import ISRAEL_LOC, scrape
+from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -103,11 +104,24 @@ def attempt(name, url):
 
 
 def _row_for(name, url, kind, payload, cache):
+    """The one seam every branch of this tool passes through, so the gate lives here.
+
+    Until 2026-08-24 the `ats` and `scrape` branches returned an ACTIVE row straight from
+    `resolve()`'s payload with no identity evidence. This tool runs 02:30 daily and rewrites
+    rows already marked `unreachable`, which is exactly the population whose stored address
+    is least trustworthy.
+    """
     if kind == "ats":
         nm, plat, tok, api, n_all, il = payload
+        if not _gate.activation_ok(nm, plat, api, n_all):
+            return [nm, "scrape", url, url, "false",
+                    "retry: resolved board is not this company's"]
         return [nm, plat, tok, api, "true", f"retry-resolved; {n_all}/{il} IL"]
     if kind == "scrape":
         jobs2, good_url = payload if isinstance(payload, tuple) else (payload, url)
+        if not _gate.activation_ok(name, "scrape", good_url, len(jobs2)):
+            return [name, "scrape", url, url, "false",
+                    "retry: scraped page is not this company's"]
         cache[name] = jobs2
         return [name, "scrape", good_url, good_url, "true", f"retry-scrape; {len(jobs2)} IL"]
     if kind == "empty":

@@ -117,6 +117,118 @@ def is_walled(row):
             or host_platform(row[3] if len(row) > 3 else "") is not None)
 
 
+_GENERIC_HOST_LABEL = {"www", "jobs", "job", "boards", "board", "careers", "career", "api",
+                       "apply", "hire", "hiring", "recruiting", "recruiting2", "app", "my",
+                       "en", "secure", "talent", "people", "work", "join", "embed", "static"}
+# Platforms whose TENANT lives in the subdomain - the blind spot `is_foreign` cannot see.
+_SUBDOMAIN_TENANT_HOST = re.compile(
+    r"(icims\.com|myworkdayjobs\.com|eightfold\.ai|avature\.net|oraclecloud\.com|"
+    r"hibob\.com|ultipro\.com|phenompeople\.com|jobvite\.com|taleo\.net|workable\.com|"
+    r"applytojob\.com|successfactors)", re.I)
+# words that are in a registry name but never in a tenant slug
+_NAME_FILLER = {"israel", "israeli", "ltd", "inc", "the", "group", "technologies", "technology",
+                "labs", "systems", "solutions", "company", "companies", "corp", "corporation",
+                "holdings", "international", "global", "studios", "water", "intelligence",
+                "security", "medical", "digital", "software", "sciences", "health"}
+
+
+def tenant_is_this_company(name, url):
+    """Does an ATS URL's TENANT really belong to `name`? Use INSTEAD of `is_foreign` here.
+
+    `pipeline.company_identity.is_foreign` early-returns **False for every ATS host** — by
+    design, because a rebrand or acquisition looks identical to a mis-resolution and blocking
+    outright costs real coverage (Momentis really does post under `memic`). The cost is that
+    clauses 2 and 3 of the activation rule are inert on 432 of the 1,199 rows, and it even
+    overrides an explicit `mismatch`:
+
+        NanoLock Security -> gen.wd1.myworkdayjobs.com   verdict=mismatch  is_foreign=False
+                                                          (that is Gen Digital's tenant)
+
+    So, for the paths that ACTIVATE or PERSIST an address:
+
+    * an explicit `mismatch` is honoured even on an ATS host — `verdict` only says that when
+      it found a tenant belonging to someone else;
+    * **where the tenant lives differs by platform**, and `_slug_candidates` returns host
+      labels and path segments in ONE flat list, so an `any()` over it accepts a foreign
+      tenant whenever the PATH happens to match. `novartis.wd3.myworkdayjobs.com/riskified`
+      is Novartis's Workday with a site named `riskified`. If the host carries a
+      non-generic label, THAT is the tenant and the path is only a site name;
+    * the tenant must be NEAR-EQUAL to the name, not merely contain it. `_slug_matches`
+      passes `Bancor`/`careers-bancorpbank` and `Bit`/`careers-bitdefender` on plain
+      containment — the same "containment must be TIGHT" lesson `company_identity` already
+      learned for domains (rad.com/RADLogics);
+    * a Comeet uid (`60.002`) is opaque and comes from the company's own page — exempt.
+
+    Non-ATS URLs return True: `is_foreign` is the right gate there and works correctly.
+    """
+    import urllib.parse as _up
+    from pipeline.company_identity import (ATS_HOST, verdict as _verdict,
+                                           _slug_candidates, _norm)
+    host = (_up.urlparse(url or "").netloc or "").lower()
+    if not host or not ATS_HOST.search(host):
+        return True
+    # SCOPE FIRST. The `mismatch` test below must not run on a path-tenant platform: on
+    # greenhouse, `Momentis Surgical` -> `memic` scores `mismatch` and is a LEGITIMATE
+    # acquirer board (ARCHITECTURE section 2 cites it by name). Scoping after the mismatch
+    # test blocked it, which is the 36-row regression docs/BACKLOG.md 21 measured and
+    # rejected. Only the subdomain-tenant platforms below are in scope.
+    if not _SUBDOMAIN_TENANT_HOST.search(host):
+        return True
+    if _verdict(name, url) == "mismatch":
+        return False
+
+    cn = _norm(name)
+    core = _norm("".join(w for w in re.findall(r"[A-Za-z0-9]+", name or "")
+                         if w.lower() not in _NAME_FILLER))
+    targets = {t for t in (cn, core) if t}
+    if not targets:
+        return True
+
+    # A tenant slug routinely carries a legal or numeric suffix the registry name omits:
+    # wizinc/Wiz, gongio/Gong, outbraininc/Outbrain, playtikaltd/Playtika, hippo70/Hippo
+    # Insurance, tipaltisolutions/Tipalti. Requiring near-equality without stripping these
+    # rejected 99 of the 460 active ATS rows. Stripping is safe in the direction that
+    # matters: `bancorpbank` and `bitdefender` carry no such suffix, so they still fail.
+    _TENANT_SUFFIX = re.compile(
+        r"(inc|ltd|llc|plc|corp|co|io|ai|hq|com|group|holdings|solutions|technologies|"
+        r"labs|global|international|\d+)+$")
+
+    def near(c):
+        nc = _norm(c)
+        if not nc:
+            return False
+        forms = {nc, _TENANT_SUFFIX.sub("", nc)}
+        return any(f and abs(len(f) - len(t)) <= 1 and (f in t or t in f)
+                   for f in forms for t in targets)
+
+    def _plumbing(label):
+        """A host label is the ATS's own plumbing when EVERY hyphen-part of it is generic.
+
+        `boards-api.greenhouse.io` and `job-boards.greenhouse.io` are Greenhouse's own
+        hostnames, not a tenant - matching them against the company name rejected 173 of the
+        460 active ATS rows on the first attempt. `careers-bancorpbank` splits to
+        {careers, bancorpbank}, and `bancorpbank` is not generic, so it stays a tenant.
+        """
+        parts = [x for x in re.split(r"[-_]", label) if x]
+        return bool(parts) and all(
+            x in _GENERIC_HOST_LABEL or re.fullmatch(r"wd\d+|v\d+|\d+", x) for x in parts)
+
+    # SCOPE: only the platforms that put the tenant in the SUBDOMAIN. That is the class
+    # `company_identity` cannot see and the class that produced every demonstrated failure -
+    # Bancor/careers-bancorpbank.icims.com, NanoLock Security/gen.wd1.myworkdayjobs.com
+    # (Gen Digital's), Riskified/novartis.wd3.myworkdayjobs.com, SupPlant/careers.workable.com.
+    # Path-tenant platforms (greenhouse, lever, ashby, comeet, recruitee) are left to
+    # `_slug_matches` and the existing gates: applying near-equality there rejected 81 of the
+    # 460 active ATS rows, nearly all of them legitimate (Mobileye, Applied Materials/amat,
+    # SentinelOne/sentinellabs), and a gate with that false-negative rate costs more coverage
+    # than the mis-attribution it prevents. Widening it is BACKLOG 21, in company_identity,
+    # where the per-platform table already lives.
+    labels = [l for l in host.split(".")[:-2] if not _plumbing(l)]
+    if not labels:
+        return True                                    # no checkable tenant: cannot tell
+    return any(near(l) for l in labels)
+
+
 def page_names_company(name, url, html=""):
     """Three-valued: True = the page names this company, False = it names someone else,
     None = we could not read it, which is NO EVIDENCE and must not read as either.
@@ -196,6 +308,53 @@ def ok_to_write(name, url, html=""):
     if is_foreign(name, url) or not looks_like_a_job_listing_page(url):
         return False
     return page_names_company(name, url, html=html) is True
+
+
+def activation_ok(name, platform, api_url, n_jobs=0, html=""):
+    """May this row be ACTIVATED onto `api_url`? For tools that verified jobs first.
+
+    The five schedule-driven tools that build a whole row literal
+    `[name, plat, tok, api, "true", note]` -- `bd_rescue` and `retry_unreachable` (02:30
+    daily), `wayback_rescue` and `validate_empty` (Sun 04:00), `auto_expand` (08:00/20:00) --
+    had NO identity check of any kind until 2026-08-24. They were invisible to the guard in
+    `tests/test_units.py`, which finds writers by looking for a subscript assignment to
+    index 4 and therefore cannot see a list literal. Fourteen of the repo's 22 registry
+    writers are that shape.
+
+    The clauses, and why each is the one it is:
+
+    * **`n_jobs`** -- a board that verifies with zero jobs is the `empty-board` shape, not a
+      recovery. Callers pass whatever they actually counted (Israel jobs for a scrape row,
+      total for an API row); zero from either is refused.
+    * **`is_foreign`** -- the right gate on an ordinary domain, and inert on an ATS host,
+      where it returns False by design for all ~461 active ATS rows.
+    * **`looks_like_a_job_listing_page`** -- clause 3 of the activation rule
+      (ARCHITECTURE.md section 2). Measured 2026-08-24: all 861 active rows pass it,
+      including every machine API endpoint, so it costs nothing and catches a nav menu.
+    * **the identity evidence** -- `html` if the caller already fetched the page (strictly
+      stronger than a re-fetch, and free), else tenant-or-page.
+
+    **Why tenant-OR-page and not tenant-AND-page.** `tenant_is_this_company` answers True
+    when there is nothing checkable -- a path-tenant platform, an opaque Comeet uid. If a
+    failure there fell through to a mandatory page read, the gate would refuse the 358
+    path-tenant rows whose endpoints return 0-28 bytes (`boards-api.greenhouse.io` 0,
+    `comeet.co/careers-api` 0, `api.ashbyhq.com/posting-api` 28) because
+    `page_names_company` needs 2000 chars to answer anything but `None`. That was built,
+    measured and reverted: `docs/BACKLOG.md` 33. And a tenant MISMATCH cannot be a veto on
+    its own either -- it costs 36 legitimate acquisitions (item 21). So the tenant string
+    admits, and only page content can refuse.
+    """
+    if not n_jobs:
+        return False
+    if is_foreign(name, api_url) or not looks_like_a_job_listing_page(api_url):
+        return False
+    if html:
+        # The caller holds the page it resolved from. That is the evidence that produced the
+        # candidate; re-fetching would be strictly weaker (see `page_names_company`).
+        return page_names_company(name, api_url, html=html) is True
+    if tenant_is_this_company(name, api_url):
+        return True
+    return page_names_company(name, api_url) is True
 
 
 def identity_ok(name, url, html=""):

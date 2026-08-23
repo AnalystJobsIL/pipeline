@@ -19,6 +19,7 @@ import urllib.request
 from wayback_rescue import extract_ats
 from resolve_deep import _verify
 from scrape_universal import ROLE, ISRAEL_LOC
+from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
@@ -44,6 +45,11 @@ def check(name, url):
         v = _verify(name, plat, tok, api)
         if v:
             n_all, il = v
+            if il > 0 and not _gate.activation_ok(name, plat, api, il, html=html):
+                # `extract_ats` returns whatever board the page embeds. This branch promoted
+                # it to ACTIVE on a job count alone, so a careers page embedding a different
+                # company's board promoted that board. The page is in hand; use it.
+                return ("confirmed", None)
             if il > 0:                              # scraper missed a live board with Israel jobs!
                 return ("promote", [name, plat, tok, api, "true",
                                     f"cross-validated; {n_all}/{il} IL (was empty)"])

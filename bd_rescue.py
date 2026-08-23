@@ -17,6 +17,7 @@ import re
 import time
 import urllib.request
 
+from pipeline import identity_gate as _gate
 from pipeline.notes import replace_own as _note_replace
 
 from resolve_deep import _verify
@@ -84,6 +85,16 @@ def main():
             if det:
                 plat, tok, api = det
                 v = _verify(name, plat, tok, api)
+                # The unlocker HTML is IN HAND, so gate on the page this candidate was
+                # extracted FROM - strictly stronger evidence than a re-fetch, and free.
+                # Until 2026-08-24 this branch had no identity check at all: `extract_ats`
+                # finds whatever board a page embeds, and a company page that embeds another
+                # company's board (or a bot-wall interstitial that embeds the vendor's own)
+                # activated that board under this company's name.
+                if v and v[0] and not _gate.activation_ok(name, plat, api, v[0], html=html):
+                    print(f"  [XX] {name}: {plat} verified {v[0]} but {api[:44]} is not "
+                          f"this company's board", flush=True)
+                    v = None
                 if v and v[0]:
                     n_all, il = v
                     _MOD.add(name)

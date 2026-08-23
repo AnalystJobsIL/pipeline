@@ -1361,7 +1361,12 @@ def test_the_walled_pool_survives_another_tools_note_rewrite():
 # discovery nine review waves later.
 # ---------------------------------------------------------------------------------------
 
-_GATE_NAMES = {"_ok_to_write", "_identity_ok", "_page_names_company",
+# The public names on `pipeline/identity_gate.py`, plus the `company_identity` primitives a
+# tool may legitimately gate on directly. Tools call these through the module
+# (`_gate.activation_ok(...)`), so the collector below reads `Call.func.attr` as well as
+# `.id` -- a `from ... import x as _x` binding is what made two fixtures silently hit the
+# live network, and it is not a spelling this repo uses for the gate any more.
+_GATE_NAMES = {"activation_ok", "ok_to_write", "identity_ok", "page_names_company",
                "tenant_is_this_company", "is_foreign", "page_mentions_company",
                "looks_like_a_job_listing_page", "is_aggregator", "verdict",
                "identity_verdict"}
@@ -1491,9 +1496,6 @@ def test_the_writer_allow_list_only_covers_tools_no_workflow_runs():
             "the allow-list names %s, which no longer exists" % mod)
 
 
-@pytest.mark.xfail(strict=True, reason="five scheduled writers are ungated: bd_rescue, "
-                                       "retry_unreachable, wayback_rescue, validate_empty, "
-                                       "auto_expand. Remove this marker when they are gated.")
 def test_every_registry_writer_consults_an_identity_predicate():
     """DERIVED, not hand-listed. This is the test the last nine review waves needed.
 
@@ -1515,3 +1517,169 @@ def test_every_registry_writer_consults_an_identity_predicate():
     assert not bad, (
         "these modules write companies.csv column 3/4 with no identity predicate above the "
         "write: %s" % {k: v for k, v in sorted(bad.items())})
+
+
+# ---------------------------------------------------------------------------------------
+# The five schedule-driven writers that build a whole-row literal.
+#
+# Until 2026-08-24 none of these consulted any identity predicate, and none had a test of any
+# kind. They were invisible to `tests/test_units.py::test_every_activation_path_checks_
+# company_identity`, which looks for a subscript assignment to index 4 -- a list literal has
+# none. Fourteen of this repo's 22 registry writers are that shape.
+#
+# Each fixture carries a POSITIVE CONTROL. A gate that refuses everything must not be able to
+# pass: an over-block that would have silently refused 358 rows was caught by a positive
+# control in this file and by nothing else.
+#
+# `page_names_company` is stubbed to a PER-COMPANY table, never a constant. A constant stub
+# measures the constant -- that is how "7 -> 0" reached three documents and meant nothing.
+# ---------------------------------------------------------------------------------------
+
+_BANCORP = "https://careers-bancorpbank.icims.com/jobs/search?ss=1"
+_FIVERR = "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs"
+
+
+def _names_only_fiverr(name, url, html=""):
+    """True for Fiverr, False for Bancor, None for anything else (unreadable)."""
+    return {"Fiverr": True, "Bancor": False}.get(name)
+
+
+def test_bd_rescue_cannot_activate_a_board_whose_page_never_names_the_company(
+        tmp_path, monkeypatch):
+    """`bd_rescue` holds the unlocker HTML, so it gates on the page it already fetched.
+
+    Runs 02:30 daily. It built `[name, plat, tok, api, "true", "brightdata-rescued; n/il IL"]`
+    off whatever `extract_ats()` found in that HTML, with no check that the board belongs to
+    this company -- and `extract_ats` returns whatever board a page EMBEDS.
+    """
+    import sys
+    import bd_rescue as B
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Bancor", "", "", "https://www.bancor.network/careers", "false",
+         "unreachable; could not scan"],
+        ["Fiverr", "", "", "https://www.fiverr.com/jobs", "false",
+         "unreachable; could not scan"],
+    ])
+    boards = {"bancor.network": ("icims", "bancorpbank", _BANCORP),
+              "fiverr.com": ("greenhouse", "fiverr", _FIVERR)}
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "x")
+    monkeypatch.setattr(B, "_load_secrets", lambda *a, **k: None)
+    monkeypatch.setattr(B, "alt_urls", lambda url: [url])
+    monkeypatch.setattr(B, "unlock", lambda u, timeout=90: "<html>" + "x" * 3000 + "</html>")
+    monkeypatch.setattr(B, "extract_ats", lambda html, name: boards.get(
+        "bancor.network" if name == "Bancor" else "fiverr.com"))
+    monkeypatch.setattr(B, "_verify", lambda name, plat, tok, api: (12, 5))
+    monkeypatch.setattr(B.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    monkeypatch.setattr(sys, "argv", ["bd_rescue.py"])
+    B.main()
+
+    out = _read(tmp_path)
+    assert out["Bancor"][4] == "false", (
+        "activated Bancor onto The Bancorp Bank's board: %r" % (out["Bancor"],))
+    assert _BANCORP not in out["Bancor"][3]
+    assert out["Fiverr"][4] == "true", "positive control regressed: %r" % (out["Fiverr"],)
+
+
+def test_validate_empty_needs_the_board_to_be_this_companys(monkeypatch):
+    """`validate_empty.check` promotes off `extract_ats` plus a job count. Sun 04:00.
+
+    Its `promote` branch returned an active row with no identity evidence, so a careers page
+    that embeds a DIFFERENT company's board promoted that board under this company's name.
+    """
+    import validate_empty as V
+    from pipeline import identity_gate as G
+    monkeypatch.setattr(V, "_get", lambda u, timeout=10: "<html>" + "x" * 3000 + "</html>")
+    monkeypatch.setattr(V, "_verify", lambda name, plat, tok, api: (30, 9))
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+
+    monkeypatch.setattr(V, "extract_ats",
+                        lambda html, name: ("icims", "bancorpbank", _BANCORP))
+    kind, row = V.check("Bancor", "https://www.bancor.network/careers")
+    assert not (row and row[4] == "true"), (
+        "promoted Bancor onto The Bancorp Bank's board: %r" % (row,))
+
+    monkeypatch.setattr(V, "extract_ats",
+                        lambda html, name: ("greenhouse", "fiverr", _FIVERR))
+    kind, row = V.check("Fiverr", "https://www.fiverr.com/jobs")
+    assert kind == "promote" and row and row[4] == "true", (
+        "positive control regressed: %r %r" % (kind, row))
+
+
+def test_wayback_rescue_cannot_activate_another_companys_archived_board(
+        tmp_path, monkeypatch):
+    """`wayback_rescue` resurrects a board from archive.org. Sun 04:00.
+
+    An archived snapshot is the oldest evidence in the pipeline, and this branch had no
+    identity check at all -- a wrong resurrection is indistinguishable from a real one in
+    every verdict that follows it.
+    """
+    import sys
+    import wayback_rescue as W
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Bancor", "", "", "https://www.bancor.network/careers", "false",
+         "unreachable; could not scan"],
+        ["Fiverr", "", "", "https://www.fiverr.com/jobs", "false",
+         "unreachable; could not scan"],
+    ])
+    res = {"Bancor": ("icims", "bancorpbank", _BANCORP, 30, 9),
+           "Fiverr": ("greenhouse", "fiverr", _FIVERR, 40, 12)}
+    monkeypatch.setattr(W, "rescue", lambda name, url: res[name])
+    monkeypatch.setattr(W.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    monkeypatch.setattr(sys, "argv", ["wayback_rescue.py"])
+    W.main()
+
+    out = _read(tmp_path)
+    assert out["Bancor"][4] == "false", (
+        "activated Bancor onto The Bancorp Bank's archived board: %r" % (out["Bancor"],))
+    assert out["Fiverr"][4] == "true", "positive control regressed: %r" % (out["Fiverr"],)
+
+
+def test_retry_unreachable_row_builder_refuses_a_foreign_board(monkeypatch):
+    """`retry_unreachable._row_for` is the seam every branch passes through. 02:30 daily.
+
+    It returned an ACTIVE row straight from `resolve()`'s payload. This tool rewrites rows
+    already marked `unreachable` -- exactly the population whose stored address is least
+    trustworthy.
+    """
+    import retry_unreachable as R
+    from pipeline import identity_gate as G
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+
+    foreign = R._row_for("Bancor", "https://www.bancor.network/careers", "ats",
+                         ("Bancor", "icims", "bancorpbank", _BANCORP, 30, 9), {})
+    assert foreign[4] != "true", (
+        "built an active row on The Bancorp Bank's board: %r" % (foreign,))
+    assert _BANCORP not in foreign[3]
+
+    ours = R._row_for("Fiverr", "https://www.fiverr.com/jobs", "ats",
+                      ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12), {})
+    assert ours[4] == "true" and ours[3] == _FIVERR, (
+        "positive control regressed: %r" % (ours,))
+
+
+def test_auto_expand_row_builder_refuses_a_foreign_board(monkeypatch):
+    """`auto_expand` runs TWICE daily (08:00 and 20:00) and APPENDS new rows.
+
+    Tested at the row builder, not through `main()`, on purpose: `main()` writes through
+    `pipeline.companies.CSV_PATH`, an ABSOLUTE path fixed at import time from the repo root.
+    A `chdir` fixture does not redirect it, so driving `main()` here would append to the real
+    registry. `retry_unreachable._row_for` is the same shape for the same reason.
+    """
+    import auto_expand as E
+    from pipeline import identity_gate as G
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+
+    foreign = E._row_for_ats(("Bancor", "icims", "bancorpbank", _BANCORP, 30, 9))
+    assert foreign[4] != "true", (
+        "built an active row on The Bancorp Bank's board: %r" % (foreign,))
+
+    ours = E._row_for_ats(("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12))
+    assert ours[4] == "true" and ours[3] == _FIVERR, (
+        "positive control regressed: %r" % (ours,))
