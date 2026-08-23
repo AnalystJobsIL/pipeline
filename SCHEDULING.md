@@ -1,4 +1,15 @@
-# Scheduling the daily run (NOT YET ENABLED — needs your decision)
+# Scheduling the daily run — **SUPERSEDED, kept for the decision record**
+
+> **This document is out of date (written 2026-08-14) and describes a decision that has
+> since been made and shipped.** The daily email has been going out since 2026-08-20:
+> `pipeline.run` runs in GitHub Actions (`daily-digest.yml`, 05:00 UTC), commits
+> `digests/latest.md`, and the private `AnalystJobsIL/inbox` repo's `digest-email.yml`
+> relays it as an issue whose @mention sends the mail (05:45 and 08:30 UTC). The board
+> publishes to `AnalystJobsIL/board` in the same run.
+>
+> **For the real schedule read `ARCHITECTURE.md` §4.** Everything below is the original
+> options write-up, kept because it records why the relay was chosen over SMTP and over a
+> scheduled Claude agent.
 
 Per the project guardrails, no recurring live send is wired up until you (a) approve the
 digest format and (b) pick a send mechanism. This doc lays out the options so you can choose.
