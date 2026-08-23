@@ -43,6 +43,19 @@ _CONFIRMED = {
     "alpha | similarweb partner", "alpha similarweb partner",
 }
 
+# Some agencies are only ever written in Hebrew, and some carry the parent group in the
+# name ("Mertens – part of the Malam-Team group"), which no exact-match entry catches.
+# These are substring markers, checked against the whole name.
+_HEBREW_MARKERS = (
+    "מלם תים",        # Malam-Team: IT services / outsourcing, re-posts client roles
+    "מרטנס",          # Mertens, its placement arm
+    "מנפאואר",        # ManpowerGroup
+    "אקספריס",        # Experis
+    "השמה",           # "placement"
+    "גיוס והשמה",     # "recruitment and placement"
+    "כוח אדם",        # "manpower"
+)
+
 # Obvious agency markers — blocks future auto-expand additions. Narrow on purpose.
 _KEYWORD = re.compile(
     r"\b(recruit(ing|ment|x)?|staffing|headhunt(ing|ers?)?|manpower|"
@@ -51,6 +64,11 @@ _KEYWORD = re.compile(
 
 def is_recruiter(name):
     n = " ".join(str(name or "").strip().lower().split())
-    if n in _CONFIRMED:
+    # hyphen == space for the exact-match list, or "Malam-Team" misses the "malam team"
+    # entry that was added for it. Both spellings appear in the registry.
+    variants = {n, n.replace("-", " "), n.replace("-", "")}
+    if variants & _CONFIRMED:
+        return True
+    if any(m in n for m in _HEBREW_MARKERS):
         return True
     return bool(_KEYWORD.search(n))
