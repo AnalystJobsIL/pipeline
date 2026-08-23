@@ -33,7 +33,8 @@ import urllib.request
 
 from pipeline.aggregators import is_aggregator
 from pipeline.company_identity import (verdict as identity_verdict,
-                                       page_mentions_company, registrable, _norm)
+                                       page_mentions_company, registrable, _norm,
+                                       _slug_candidates)
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 
@@ -207,7 +208,19 @@ def main():
             v = identity_verdict(name, u)
             whole_name = bool(_norm(name)) and registrable(
                 urllib.parse.urlparse(u).netloc.lower()) == _norm(name)
-            if v == "ats" or (v == "match" and whole_name) or (
+            # `verdict` returns "ats" when the tenant slug "matches" the company - but that
+            # match is plain CONTAINMENT (`_slug_matches_company`), so tenant
+            # `careers-bancorpbank` passes for `Bancor` and the blanket verdict was accepted
+            # as evidence with no page read. On an ATS the tenant IS the identity, so it has
+            # to be near-equal to the name, not merely to contain it - the same "containment
+            # must be TIGHT" lesson `company_identity` already learned for domains
+            # (rad.com/RADLogics, nooga.net/Noogata).
+            _cn = _norm(name)
+            ats_checked = v == "ats" and any(
+                abs(len(_norm(c)) - len(_cn)) <= 1
+                and (_norm(c) in _cn or _cn in _norm(c))
+                for c in _slug_candidates(urllib.parse.urlparse(u)))
+            if ats_checked or (v == "match" and whole_name) or (
                     html and page_mentions_company(name, html, strict=True)):
                 good = u
                 break

@@ -111,6 +111,12 @@ def main():
         name = r[0]
         cur = probe(r[3])
         if cur is None:
+            # a fetch error must still advance the rotation key, or the erroring rows
+            # re-consume the head of the budget every night - the same starvation the
+            # rotation fixed, for the error subset
+            e = state.get(name) or {}
+            e["last"] = TODAY
+            state[name] = e
             continue
         prev = state.get(name)
         cur["last"] = TODAY                # rotation key; see the sort above

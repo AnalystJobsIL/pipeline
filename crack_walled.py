@@ -227,8 +227,31 @@ def crack_one(name, seed, platform):
         # in the note (which is text) and never written into api_url (which is an address
         # every later tool honestly re-tests, and which listing_hunt's fast-path activates on).
         return ("notours", foreign, 0,
-                f"{urllib.parse.urlparse(foreign[1]).netloc[:40]} never names "
-                f"{name[:24]} - another company's board")
+                # SHORT on purpose: this segment shares a 220-char cell with every other
+                # tool's verdict, and `notes.append` evicts whole OLD segments to make room.
+                # The first draft was 74 chars and pushed `unsupported ATS` out of 24 of the
+                # 30 crack-pool rows (the old 35-char note loses 17) - i.e. it retired those
+                # rows from crack_walled's OWN pool. Measured 2026-08-24; mean note is
+                # 199/220 here, so every character is a row's coverage.
+                f"not ours ({urllib.parse.urlparse(foreign[1]).netloc[:22]})")
+    # `novrfy` writes `fr[3] = got[1]` and stamps `host documented`, which is a
+    # probe_candidates pool token AND listing_hunt's documented fast-path token. Closing that
+    # door only for boards that HAPPEN to return Israel jobs left it open on the branch that
+    # fires most often - a walled board returning 0 IL is exactly what `host documented,
+    # 0 IL now` means, and identity was never tested at all on that path. A live row was
+    # already in that state in master: SupPlant (Israeli agri-tech) pointed at
+    # careers.workable.com, i.e. Workable's OWN corporate careers site. Test identity before
+    # persisting an address, not only before activating one.
+    kind0, lu0 = captures[0]
+    if _page_names_company(name, lu0) is False:
+        return ("notours", captures[0], 0,
+                # SHORT on purpose: this segment shares a 220-char cell with every other
+                # tool's verdict, and `notes.append` evicts whole OLD segments to make room.
+                # The first draft was 74 chars and pushed `unsupported ATS` out of 24 of the
+                # 30 crack-pool rows (the old 35-char note loses 17) - i.e. it retired those
+                # rows from crack_walled's OWN pool. Measured 2026-08-24; mean note is
+                # 199/220 here, so every character is a row's coverage.
+                f"not ours ({urllib.parse.urlparse(lu0).netloc[:22]})")
     return ("novrfy", captures[0], 0, f"host found ({captures[0][1][:60]}) but 0 IL extracted")
 
 

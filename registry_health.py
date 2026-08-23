@@ -503,7 +503,8 @@ def _report(rows, live=False, want_ats=False):
     print(f"  {len(orph):4}  OWNED BY NOTHING" + (f": {orph[:6]}" if orph else ""))
 
     print("\nresolution ladder:")
-    for key, st in resources(live=live).items():
+    res = resources(live=live)          # bind it: `alarms(..., res=res)` below needs it,
+    for key, st in res.items():         # and probing twice costs a Bright Data credit
         print(f"  [{'OK' if st['ok'] else '--'}] {key}: {st['detail']}")
 
     if want_ats:
