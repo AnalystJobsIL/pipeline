@@ -220,8 +220,8 @@ here — it exercises the real Bright Data account and the real Telegram fetches
 | source | mechanism | cost per digest | cloud | dry-run |
 |---|---|---|---|---|
 | `indeed` | `il.indeed.com/jobs` through the Bright Data **Web Unlocker**, one request per `INDEED_QUERIES` entry; parsed out of the `mosaic-provider-jobcards` JSON blob | 5 unlocker requests | 33 | 55 raw → 47 kept |
-| `linkedin` | BD dataset `gd_lpfll7v5hcqtkxl6l`, `discover_new` by keyword, 2 keywords × `limit_per_input` 15 | ≤30 dataset records | 30 | 30 |
-| `linkedin-targeted` | same dataset, one query per broken-board company (`"<name> data analyst"`), 20 × 8 | ≤160 dataset records | 78 | 160 |
+| `linkedin` | BD dataset `gd_lpfll7v5hcqtkxl6l`, `discover_new` by keyword — the breadth sweep, 4 keywords × `limit_per_input` 15 | ≤60 dataset records | 30 (2 keywords then) | 30 |
+| `linkedin-targeted` | same dataset, one input per broken-board company, **scoped with the `company` field** | **67 records for all 88** (measured) | 78 | 160 (pre-fix) |
 | `telegram` | public `t.me/s/<channel>` HTML previews — **no bot, no account, no API key, no quota** | free | **no key in the file at all** | 268 posts parsed |
 
 Re-derive the cloud column with
@@ -233,10 +233,59 @@ run for five days; it is commented out in `QUERIES` and must not be re-enabled. 
 replacement path is `indeed_search()` — verified live 2026-08-23: `"data analyst"` returned
 **15 cards** in one request, no snapshot job, no polling.
 
-**Total measured spend: 108 dataset records + 5 unlocker requests per day** (~3,240
-records/month against the 5k free tier). The docstring in `discovery_daily.py` claimed
-"~40 records/day = ~1,200/mo" until 2026-08-23; it predated the targeted sweep, which is by
-itself two thirds of the spend.
+**The company name belongs in the `company` field, never inside `keyword`.** The dataset
+takes a dedicated `company` input; `_targeted_inputs` built `keyword: "<name> data analyst"`
+until 2026-08-23, so LinkedIn ranked on "data analyst" and read the employer name as spare
+tokens. A/B tested live over the same 20 stale companies:
+
+| form | records billed | on-target |
+|---|---|---|
+| `keyword: "<name> data analyst"` | **160** | **0** |
+| `company: "<name>"`, `keyword: "data analyst"` | **25** | **22 (88%)** |
+
+Scoping is **cheaper as well as accurate**, and the reason is worth internalising before
+tuning any cap here: an unscoped keyword query always returns `limit_per_input` records —
+LinkedIn can always fill 8 slots with *something* — while a scoped one returns only what
+that employer actually has, which for a company with no open Israel analyst role is
+nothing at all. That is why `cap` went 20 → 100. The whole 88-company list was then run for
+real on 2026-08-23:
+
+| | companies asked | records billed | on-target |
+|---|---|---|---|
+| before | 20 | 160 | 0 |
+| after | **88** | **67** | **57 (85%)** |
+
+**2.4× cheaper for 4.4× the companies.** It recovered live Israel analyst roles at 15 active
+rows whose own board reports zero — Apple 8, Wiliot 8, Revolut 8, IEC 8, Infinidat 7,
+Deel 4, Rakuten Viber 3 — which is `HANDOFF.md`'s largest open coverage item. `cap` and the
+day-of-year rotation survive only as a bound if `stale.json` grows past 100.
+
+**`limit_per_input` is now the binding constraint, not the company cap.** Four of the 88
+returned exactly 8, i.e. they were truncated. Raising 8 → 15 would cost at most
+`7 × 4 = 28` more records on that distribution — still under 100 for the whole sweep — and
+would recover roles at precisely the companies we cannot read directly. **Not done and not
+measured (2026-08-23):** the 67 above is the number for `limit_per_input=8`, and changing
+two dials when only one was measured is how a budget claim becomes fiction.
+
+**Total spend after the fix: ~127 dataset records + 5 unlocker requests per day** (≤60
+breadth + 67 targeted), against ~190 before. Re-derive actual billing from the account
+itself — this is the only reliable ledger, and the `/customer/balance` endpoint is
+permission-blocked for this key:
+
+```bash
+python -c "
+import os,json,urllib.request,collections
+from bd_rescue import _load_secrets; _load_secrets()
+r=urllib.request.Request('https://api.brightdata.com/datasets/v3/snapshots?status=ready',
+    headers={'Authorization':'Bearer '+os.environ['BRIGHTDATA_API_KEY']})
+d=json.load(urllib.request.urlopen(r,timeout=60)); c=collections.Counter()
+for x in d: c[x['created'][:10]]+=int(x.get('dataset_size') or 0)
+print(dict(sorted(c.items())), 'total', sum(c.values()))"
+```
+
+It reported **2,249 records billed in total** between 2026-08-15 and 2026-08-23. The
+docstring in `discovery_daily.py` claimed "~40 records/day = ~1,200/mo" until 2026-08-23; it
+predated the targeted sweep entirely.
 
 **Google for Jobs is not available to this pipeline.** `pipeline/aggregators.py` still holds
 `fetch_serpapi_google_jobs`, and it has **never run in the cloud** — `pipeline/run.py` gates
@@ -365,9 +414,12 @@ here would cost coverage and buy nothing.
 - **A single Telegram channel dying is not visible in the mail** — one aggregate `telegram`
   key, because `sources.stale()` has one 2-day threshold for every key. Per-channel counts
   are in the step log. `docs/BACKLOG.md` item 3.
-- `linkedin-targeted` is the lane's largest Bright Data line item and **4 of its 43 cached
-  jobs are on-target**; 38 are at companies we already fetch directly. `docs/BACKLOG.md`
-  item 5 has the re-measurement command.
+- The **breadth** sweep is now the only unscoped LinkedIn query, and unscoped means
+  LinkedIn decides what "relevant" is. Before the `company` fix the targeted sweep was
+  effectively a second breadth sweep, and it did find 17 employers we had never seen
+  (J&J MedTech, Vishay, IAI, Ben-Gurion University …). That accidental breadth is gone;
+  it was replaced deliberately with two more keywords on the breadth sweep, and whether
+  that trade is net-positive has NOT been measured over more than one run.
 
 ### Dry-running tomorrow's intake, end to end
 
@@ -413,12 +465,26 @@ Imagindairy,scrape,https://www.imagindairy.com/careers,https://imagindairy.com/c
 For API rows `api_url` is the endpoint; for scrape rows it is the **listings page URL**.
 `notes` is the row-verdict log: each tool appends ` | <tool> <date>: <finding>` and strips
 its own previous suffix, so a row accumulates one current verdict per tool.
-**Caveat:** `listing_hunt`'s `found` branch, `refresh_scrape_cache`'s parking pass,
-`retry_unreachable._row_for` and `recheck_suspects.py`'s suspect-cleared branch still
-REPLACE the whole cell (they set a row's final state,
-so history loss is acceptable there) — but never copy that pattern for a diagnostic
-verdict: overwriting destroys the `monitored candidate` / `host documented` tokens that
-`listing_hunt`'s fast-path keys on. Taxonomy:
+**Who still replaces instead of appending** (re-derived 2026-08-24; the four tools this
+paragraph used to name had all been fixed and it was never updated —
+`grep -n '\[5\] *=' *.py` is the check, and it takes ten seconds):
+
+- **Whole ROW, deliberately** — `retry_unreachable._row_for`, `recheck_suspects.py`'s
+  *promote* branch (not its cleared branch, which appends), `validate_empty.py`'s promote
+  branch. These build a row from scratch; there is no prior verdict worth keeping.
+- **Whole CELL — all three fixed 2026-08-24.** `audit_empty_rows`, `crack_walled` and
+  `deep_validate` each overwrote `notes` on their *activation* branch. An activation is
+  exactly when you can least afford it: the assignment deleted the `alias-of` /
+  `domain-dead` token that keeps the row out of the wrong pool, and the `dark-triage` mode
+  that routed it there. All three now call `notes.replace_own`.
+  `test_activation_branches_append_to_the_note_instead_of_replacing_it` walks the AST for
+  `fr[5] = <not a call>` and fails on the next one. Note the older guard
+  `test_every_note_writer_uses_the_append_log_helper` could not see these: a whole-cell
+  assignment does no hand-rolled trim, so it passed that check for months.
+
+Never copy the replace pattern for a diagnostic verdict: overwriting destroys the
+`monitored candidate` / `host documented` tokens that `listing_hunt`'s fast-path keys on.
+Taxonomy:
 
 | state | active | meaning | who re-checks it |
 |---|---|---|---|
@@ -432,6 +498,7 @@ verdict: overwriting destroys the `monitored candidate` / `host documented` toke
 | `unsupported ATS <x>` | false | ATS known, no extraction path yet | crack_walled / listing-hunt |
 | `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS — strict TLS on the scanning machine produced 6 false positives) | re-tested after 30d by the Sunday audit; **a revived domain clears the flag automatically** |
 | `defunct: …` | false | company confirmed shut down/acquired | permanently excluded |
+| `alias-of <name>` | false | a SECOND row for a company already scanned at the same board (eBay / eBay Israel) | nobody — **terminal**, and re-opening it republishes every role twice |
 | `chrome-verified …` | either | a human-equivalent browser check confirmed the state | as per its class |
 
 Recruiting/staffing agencies are excluded everywhere via `pipeline/recruiters.py`
@@ -482,6 +549,29 @@ its coverage is lost with no error anywhere. This is exactly how 52 rows became 
 Corollary: a diagnostic verdict must **append** (`base | tool date: finding`), never
 replace the cell — overwriting also destroys the `monitored candidate` / `host documented`
 tokens that `listing_hunt`'s fast-path keys on.
+
+**The pool is defined in three places, and they do not agree** (measured 2026-08-24).
+`pipeline/verdicts.TOKENS` is the module that claims to be the single source, but
+`listing_hunt.main()` still carries its own 17-token regex and `check_invariants.POOL` a
+third copy. Diff: `url-cleared` and `url-flagged` are in both inline copies and **missing
+from `TOKENS`**, so the 57 rows carrying one of them are invisible to `audit_empty_rows`
+and `deep_validate`, which import `in_pool`. And `verdicts.TERMINAL` omits `alias-of`,
+which the two inline copies exclude — that omission is what put 2 alias rows into an
+*activating* pool (below). Neither is fixable from this lane (`pipeline/verdicts.py` is
+shared plumbing); both are in `docs/BACKLOG.md` under "One re-check pool definition" and
+"One terminal-state list", and
+`test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_supposed_to` pins
+the current gap so it cannot grow while the fix waits. Reproduce:
+
+```bash
+python -c "
+from pipeline.verdicts import TOKENS
+import check_invariants as ci
+t={x.lower() for x in TOKENS}
+c={x.lower() for x in ci.POOL.split('|') if x and '(' not in x}
+print('in the inline copies, NOT in TOKENS:', sorted(c-t))
+print('in TOKENS, not in check_invariants :', sorted(t-c))"
+```
 
 **Append through `pipeline/notes.py`, never by hand** (2026-08-23). The cell is capped at
 220 chars, and every writer used to make room by SLICING the base — `(base + " | " + seg)[:220]`
@@ -542,6 +632,38 @@ verdicts (lost-update incident 2026-08-22).
 No whole-snapshot index-keyed writer remains. If you add one it will silently revert
 concurrent verdicts — use one of the first three patterns.
 
+**Never DELETE a row. Park it with a reason** (2026-08-24). No tool deletes rows — every
+writer above is read-modify-write or append-only — but a human commit does, and a deletion
+is the one registry edit that does not survive the git layer. Worked example, reproducible
+with `git log`:
+
+| commit | rows | what happened |
+|---|---|---|
+| `9c4372ef` | 1190 | `Time To Know` deleted on purpose ("time.com is Time To Know") |
+| `8644d8fd` | **1191** | a concurrent cloud run's conflict path ran `merge_csv_rows`, whose `changed` set still held that row, and `target.append(r)` **resurrected it** |
+| `0180e755` | 1190 | re-deleted, silently, inside a commit whose subject is about Oracle HCM |
+
+`check_invariants.py` checks the registry's SHAPE, never its SIZE, so all three passed.
+Fifteen name-deletions exist in the whole 68-commit history of the file
+(13 of them one deliberate purge of LinkedIn-sidebar-poisoned rows on 2026-08-21), and
+nothing anywhere reported one. Two rules follow:
+
+1. **A row leaves the registry by being parked, not by being removed.** A parked row keeps
+   its evidence, stays in a re-check pool if it should, and cannot be resurrected into a
+   different meaning by a merge. Use `defunct:`, `alias-of`, `domain-dead`, or an explicit
+   `removed <date>: <reason>` segment.
+2. **If you do delete, the reason must be in the row's own note before it goes** — that is
+   the only place `registry_health.py` can find it afterwards.
+
+`registry_health.py` is the detector: it keeps a census in
+`cloud_state/registry_census.json` and reports every vanished name with its last known
+note, split into explained and unexplained. It never writes `companies.csv`.
+
+```bash
+python registry_health.py            # census diff, pools, ladder, alarms — no writes
+python registry_health.py --census   # re-baseline after an intentional removal
+```
+
 **Concurrency has TWO layers — both must be handled.** In-process discipline (above)
 protects writers on one machine. The **git layer** needs `merge_csv_rows.py`: a cloud run
 commits a file whose baseline may be hours old, so `git pull --rebase` hits a content
@@ -565,9 +687,16 @@ Playwright sync instances conflict).
 ### Who re-checks a parked row — the ownership matrix
 
 Every inactive row must be owned by at least one *recurring* job, or it is permanently dark.
-Verified 2026-08-23 by tracing each scheduled entrypoint's row filter (17 rows were owned by
-nothing; now 0). **If you add or narrow a row filter, re-run this check** — the snippet is in
-§5c. Ownership is by note content, not by mode:
+**The matrix below is no longer typed by hand** — `registry_health.pools()` mirrors each
+scheduled tool's own row filter, so one command re-derives it and the counts cannot rot:
+
+```bash
+python registry_health.py | sed -n '/re-check ownership/,/OWNED BY NOTHING/p'
+```
+
+Counts below are that command's output on **2026-08-24**, after this session's two pool
+fixes. Ownership is by note content, not by mode. The pool figures exclude each tool's
+staleness cooldown (a cooldown delays a re-check; it does not remove ownership):
 
 **Update 2026-08-23 — `page-empty` rows are ACTIVE now.** They were inactive, which meant a
 role posted at one of them waited for the next triage cycle to be seen. But a `page-empty`
@@ -581,16 +710,31 @@ other company. Two rules follow, both now enforced:
   active throughout. Only ERRORS park a row, at 7 days.
 - Consequently the table below applies to rows that are still `active=false`.
 
-| tool | cadence | claims rows whose note matches | re-opens the hunt? |
-|---|---|---|---|
-| `triage_dark` | daily 18:00 | `no listing found` / `no IL listing` / `no ATS detected` / **`dark-triage`** | yes — its rewrite drops the old `page-empty` stamp |
-| `listing_hunt` | daily 19:00 | the wide parked-shape regex, **minus** `page-empty` | — |
-| `repair_extract_gap` | daily 19:00 | `dark-triage …: extract-gap` | activates directly |
-| `probe_candidates` | daily 05:00 | `monitored candidate` / `host documented` / `no IL listing` | yes — `_wake_note` strips every stale segment |
-| `crack_walled` | daily 19:00 + weekly | `unsupported ATS` | — |
-| `scan_dead_domains` | daily 05:00 | liveness only — **never looks at roles** | no |
-| `audit_empty_rows` | weekly | `verdicts.in_pool` + not audited in `AUDIT_TTL_DAYS` (30) | activates directly |
-| `deep_validate` | **weekly Sat 04:00** | `in_pool` + `_revalidatable` | activates directly |
+| tool | cadence | rows | claims rows whose note matches | activates? |
+|---|---|---|---|---|
+| `triage_dark` | daily 18:00 | 270 | `no listing found` / `no IL listing` / `no ATS detected` / **`dark-triage`** | no — but its rewrite drops the old `page-empty` stamp, re-opening the hunt |
+| `listing_hunt` | daily 19:00 | 244 | the wide parked-shape regex, **minus** `page-empty`, terminal and recruiters | **yes** |
+| `repair_extract_gap` | daily 19:00 | 25 | `dark-triage …: extract-gap` | **yes** |
+| `probe_candidates` | daily 05:00 | 181 | `monitored candidate` / `host documented` / `no IL listing` | no — `_wake_note` strips every stale segment |
+| `crack_walled` | daily 19:00 + weekly | 7 | `unsupported ATS` + `_recrackable` (30d) + not terminal + not recruiter | **yes** |
+| `scan_dead_domains` | daily 05:00 | — | liveness only — **never looks at roles** | no |
+| `audit_empty_rows` | weekly Sun 04:00 | 255 | `verdicts.in_pool` + not terminal + not recruiter + not audited in `AUDIT_TTL_DAYS` (30) | **yes** |
+| `deep_validate` | weekly Sat 04:00 | 255 | `in_pool` + `_revalidatable` (30d) + not terminal + not recruiter | **yes** |
+
+**Every activating pool must exclude the terminal states itself.** `verdicts.in_pool()`
+does not: `TERMINAL` there is `defunct / domain-dead / duplicate of / redundant / recruiter`
+and **omits `alias-of`**. On 2026-08-24 that put `GE HealthCare Israel` and `eBay Israel`
+into `audit_empty_rows`' pool, and three more (`Chakratec`, plus those two) into
+`crack_walled`'s, which had no terminal filter at all. Both tools activate directly, and an
+alias row points at a board that *works* — so the audit would have searched, found that same
+board, verified it with real Israel jobs and re-activated the duplicate: every eBay role
+published twice under two company names. `check_invariants` check B would not catch it
+(the names differ). Pools after the fix: audit 260 → **255**, crack 10 → **7**.
+Guarded by `test_no_activating_pool_can_re_open_a_terminal_row`.
+
+**`audit_empty_rows` and `deep_validate` now select the identical 255 rows** — same
+predicate, different depth (raw HTML vs Chromium render + network sniff), 24 hours apart.
+That is the clearest consolidation target in this lane; it is in `docs/BACKLOG.md`.
 
 Two traps this matrix exists to prevent, both of which were live:
 - **An inert wake.** `probe_candidates` cleared `listing-hunt|crack-walled` but not
@@ -645,13 +789,28 @@ the short version of the three gates and the code that enforces them.
   Historical note: `resolve_llm` relied on prompt-grounding alone until 2026-08-22.
   Since 2026-08-23 all four activation paths call `company_identity`, and a `weak` domain
   verdict is settled by whether the fetched page NAMES the company as a phrase.
-- **The search rung is Bright Data's Google, not SerpApi.** `resolve_broken._careers_url_via_serp`
-  tries SerpApi first and falls back to `deep_validate.google_via_unlocker`. It was
-  SerpApi-only until 2026-08-23, and that quota has been exhausted since mid-August — so the
-  last rung of the self-heal was returning None before it made a request, and every board
-  that had MOVED rather than broken came back "no working ATS". DuckDuckGo is blocked from
-  some networks (including the dev machine) and works on the runners; the unlocker works
-  from both.
+- **Every rung that searches needs all three fallbacks.** The ladder is SerpApi (cheapest,
+  currently useless) → `deep_validate.ddg` (free) → `deep_validate.google_via_unlocker`
+  (Bright Data, capped by `DEEP_BD_SEARCH_CAP`). Verified against the live account on
+  2026-08-24: `total_searches_left: 0`, `this_month_usage: 250`, Free Plan, resets
+  2026-09-01 —
+  `python -c "import os,json,urllib.request;from bd_rescue import _load_secrets;_load_secrets();print(json.load(urllib.request.urlopen('https://serpapi.com/account?api_key='+os.environ['SERPAPI_KEY'])).get('total_searches_left'))"`.
+  So a SerpApi-only rung returns `[]` **before it makes a request**, and a whole run of
+  "found nothing" is indistinguishable from "cannot search".
+  `resolve_broken._careers_url_via_serp` was given the fallback on 2026-08-23.
+  **`audit_empty_rows.serp()` was not, and it got it on 2026-08-24** — it is the search
+  behind the Sunday audit's phase 2 over the ~255-row parked pool, i.e. the rung that finds
+  boards which MOVED rather than broke, and it had been a silent no-op for a week. Measured
+  after the fix (3 pool companies, SerpApi still at 0): `Upsolver` 4 URLs, `Cognata` 4 URLs
+  (`cognata.com/hiring/` — an iCIMS row), `Sproutt` 0; before the fix all three were `[]`.
+  When every rung comes back empty the tool now prints a `::warning::` naming which
+  credential was missing, because that is a broken run, not a measurement.
+- **DuckDuckGo is rate-limited from the dev machine, not blocked.** Repeatedly documented
+  here as "returns nothing"; measured on 2026-08-24 it returned 4 good URLs for `Wix`
+  (`careers.wix.com/positions`) and 4 for `Fortinet` (including its real oraclecloud CX
+  site), then `0` for the same query minutes later. Treat it as a rung that *sometimes*
+  answers — which is why it can never be the only one. It is reliable on the runners; the
+  unlocker works from both.
 - Never activate a scrape of an aggregator page (LinkedIn/Indeed/Glassdoor/secrethunter) —
   their "similar jobs" sidebars attribute other companies' roles to the target. Enforced at
   resolution (all resolvers) **and at runtime** in `pipeline/run.py`, which drops such rows

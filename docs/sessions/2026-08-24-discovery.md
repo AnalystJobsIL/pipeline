@@ -6,9 +6,10 @@
 
 Scope: the intake layer — `discovery_daily.py`, `discovery_telegram.py`,
 `pipeline/aggregators.py`, `pipeline/recruiters.py`, and the new `ARCHITECTURE.md` §1a.
-Nothing else was written. Bright Data spend: **~200 dataset records + 8 Web Unlocker
-requests**, one day's normal budget. Claude tokens: **0** — nothing here calls `claude -p`.
-SerpApi: 0 (429, exhausted).
+Nothing else was written. Bright Data spend: **301 dataset records + 10 Web Unlocker
+requests** — 190 on the full dry run, 111 on the A/B and full-scale tests of the targeting
+fix. Claude tokens: **0** — nothing here calls `claude -p`. SerpApi: 0 (429, exhausted).
+For scale: the account has billed 2,249 records in total since 2026-08-15.
 
 ## What was wrong
 
@@ -37,8 +38,9 @@ the 110 — which is a warning about the *row's shape*, not a broken board; the 
 those companies fine every morning.
 
 Fixed: the window advances by day-of-year over the three reasons that mean "the board has
-moved" (`empty-board`, `regressed-to-zero`, `fetch-error`). **Identical records per run, all
-88 targetable companies covered in 5 days** instead of 20 in perpetuity.
+moved" (`empty-board`, `regressed-to-zero`, `fetch-error`). *(Superseded later the same
+session — see the follow-up below. Once the query was scoped by `company` the whole list fit
+in one run for 67 records, so the rotation now only bounds a `stale.json` past 100.)*
 
 **3. `per_source["indeed"]` meant something different from every other key** — post-filter
 unique jobs where the dataset sources record raw records. Same field, two meanings, and an
@@ -81,6 +83,9 @@ workflow's order. `pipeline/companies.py` and `pipeline/sources.py` resolve path
 the **package, not `cwd`**, so `sources.PATH` had to be redirected explicitly or the run
 would have written live state — the recipe is in §1a.
 
+*(This run is the PRE-fix configuration — 2 breadth keywords, unscoped targeting at 160
+records. The follow-up section below replaces both numbers.)*
+
 ```
 [indeed:data analyst] 15 cards        [linkedin] 30 records
 [indeed:business intelligence] 0      [linkedin-targeted] 160 records
@@ -116,6 +121,75 @@ The **backfill was deliberately not committed.** Three new channels walk back 5 
 their first run; letting that happen in the cloud keeps the jobs and the Telegram watermark
 in the same commit. Advancing the watermark locally and committing only part of it is how
 79 verified roles were lost on 2026-08-21.
+
+## Follow-up, same session: two challenges from the operator
+
+**"20 on LinkedIn seems a low limit."** It was our own default argument, not a platform
+limit — but raising it was the wrong dial, and finding that out replaced the fix above.
+Re-measuring the day's own targeted run: of **160 records spent on 20 named companies, 0
+came back for any of the 20**, and 0 for any of the 110 stale companies. The 26 jobs it
+produced were J&J MedTech, Vishay, IAI, Ben-Gurion University — a generic sweep wearing a
+targeted label.
+
+The cause: **the dataset takes a dedicated `company` input field** and the code was
+concatenating the name into `keyword` ("Explorium data analyst"), so LinkedIn ranked on
+"data analyst" and read the name as spare tokens. A/B tested live, same 20 companies:
+
+| form | records billed | on-target |
+|---|---|---|
+| `keyword: "<name> data analyst"` | 160 | **0** |
+| `company: "<name>"` | 25 | **22** |
+
+Scoping is cheaper *because* it is accurate: an unscoped query always fills
+`limit_per_input` (LinkedIn can find 8 of something), a scoped one returns only what that
+employer has. So `cap` went **20 → 100** and the full list was run for real:
+
+| | companies | records | on-target |
+|---|---|---|---|
+| before | 20 | 160 | 0 |
+| after | **88** | **67** | **57 (85%)** |
+
+**2.4× cheaper for 4.4× the companies**, recovering live Israel analyst roles at 15 active
+rows whose own board reports zero: Apple 8, Wiliot 8, Revolut 8, IEC 8, Infinidat 7, Deel 4,
+Rakuten Viber 3, At-Bay 2, Aman Group 2, Menora 2, Dell 1, ASTERRA 1, Chargeflow 1, Utila 1,
+Rhino 1. That is `HANDOFF.md` watch-item 0, the largest open coverage item in the repo.
+
+The freed budget bought two more keywords on the *breadth* sweep (2 → 4: `product analyst`,
+`BI developer`), because the broken targeted sweep had been supplying accidental breadth —
+17 new employers — and that disappears with the fix. **Net daily spend 190 → ~127 records.**
+Whether swapping accidental breadth for two deliberate keywords is net-positive is NOT
+measured beyond one run.
+
+Two things deliberately left alone: `limit_per_input` is now the binding constraint (4 of
+the 88 returned exactly 8, i.e. truncated; 8 → 15 would cost ≤28 more records) but changing
+two dials when only one was measured is how a budget number becomes fiction. And I found a
+bug in my own change before it shipped — `cap=100` over an 88-long list made the
+wrap-around emit 12 duplicate inputs, each a second bill; guarded by
+`test_the_targeted_window_never_asks_about_the_same_company_twice`.
+
+**"Why can't you verify Hebrew-named companies — can't you search the web?"** Fair; I could
+and should have. Researched, and the answers were not what I assumed:
+
+- **עידור מחשבים (Idor Computers) → excluded.** ~100 staff, "professional IT outsourcing
+  services" for banks and insurers. Settled not by the web but by its own posting, which
+  names a CLIENT and not itself: `אנליסט/ית אקטואר לחברת ביטוח מובילה בפתח תקווה` —
+  actuarial analyst *for a leading insurance company*. Same class as `log-on software` /
+  `abra` / `malam team`.
+- **מטריקס (Matrix) → NOT excluded, and I had this backwards.** 16,000 staff, TASE-listed
+  (MTRX). It sells outsourcing but is also a large direct employer, **and we already scan
+  it**: `Matrix` (comeet) and `Matrix IT` (breezy) are both active rows, deep-verified 25/0
+  and 34/0 IL on 2026-08-21. Blocking the Hebrew form would have contradicted two verified
+  rows. The actual defect is that `מטריקס` is a *third identity* for one employer — an alias
+  problem, not a recruiter one.
+- **Software AG-SPL → NOT excluded.** It surfaced from the same scan
+  (`Network security analyst לארגון בטחוני במרכז`) but it is Software AG's Israeli R&D
+  centre, formerly SPL. The client-naming pattern is a **finding aid for names to research,
+  never a filter** — 2 hits in 517 postings, and one of them was a false positive.
+
+**Bright Data quota, since it decides all of the above:** `/customer/balance` returns 403,
+the key lacks the permission, so the "5k free tier" in every docstring here is inherited
+belief. The one real ledger is `datasets/v3/snapshots` — **2,249 records billed 2026-08-15
+→ 08-23**. Command in §1a; visibility filed as backlog item 6.
 
 ## Claims I could NOT verify
 
@@ -177,11 +251,10 @@ in the same commit. Advancing the watermark locally and committing only part of 
    team-phrase rule is anchored `^(my team|our team|the team)$`. The function lives in
    `pipeline/firmographics.py` (`company-intel`). Same family as backlog item 9 from the
    ten-agent audit.
-5. **`linkedin-targeted` is the lane's biggest Bright Data line item and 4 of its 43 cached
-   jobs are on-target**; **38 are at companies whose rows are `active=true` and fetched
-   directly every morning**. LinkedIn's keyword engine ranks on "data analyst" and treats
-   the company name as spare tokens. The *targeting* was fixed this session; halving
-   `limit_per_input` from 8 to 4 was **not** done — one lane should not shrink a safety net
-   on one day's data. Command to re-measure is in the backlog item.
+5. ~~`linkedin-targeted` yields 4/43 on-target~~ — **superseded and fixed**, see the
+   follow-up section above. It was worse than filed (0/20, not 4/43) and the fix was to
+   scope by `company`, not to cut the budget. What remains open is whether the two extra
+   breadth keywords replace the 17 employers/day the broken version found by accident, and
+   whether `limit_per_input` should go 8 → 15.
 6. **`מנורה מבטחים החזקות` and `Menora Mivtachim Group` are the same employer under two
    scripts** — the alias problem in "One identity layer", now with a Hebrew case.

@@ -77,9 +77,23 @@ _HEBREW_MARKERS = (
     #   for r in csv.reader(open('companies.csv',encoding='utf-8')):
     #       if r and h.search(r[0]) and not is_recruiter(r[0]) and not looks_like_junk(r[0]):
     #           print(r[0])"
-    # Known and deliberately NOT listed (no Latin entry either, and both hire directly, so
-    # blocking them needs evidence this lane does not have): מטריקס (Matrix, IT services)
-    # and עידור מחשבים (Idor Computers).
+    # Researched 2026-08-23 (web + the wording of their own postings), not guessed:
+    "עידור מחשבים",   # Idor Computers, ~100 staff, "professional IT outsourcing services"
+                      # for banks/insurers. Decided by its OWN posting, which names a CLIENT
+                      # and not itself: "אנליסט/ית אקטואר לחברת ביטוח מובילה בפתח תקווה"
+                      # (actuarial analyst FOR A LEADING INSURANCE COMPANY). Same class as
+                      # log-on software / abra / malam team above.
+    # Deliberately NOT listed, and both were checked rather than left unknown:
+    #   מטריקס (Matrix IT) — 16,000 staff, TASE-listed (MTRX). It does sell outsourcing, but
+    #     it is also a large direct employer AND we already scan it: `Matrix` (comeet) and
+    #     `Matrix IT` (breezy) are both active rows, deep-verified 25/0 and 34/0 IL on
+    #     2026-08-21. Blocking the Hebrew form would contradict two verified rows. The real
+    #     defect there is that it is a THIRD identity for one employer — an alias problem,
+    #     not a recruiter problem (docs/BACKLOG.md, "One identity layer").
+    #   Software AG-SPL — surfaced by the same client-naming scan
+    #     ("Network security analyst לארגון בטחוני במרכז") but it is Software AG's Israeli
+    #     R&D centre, formerly SPL, a real product employer. The scan is a FINDING AID for
+    #     names to research, never a filter.
 )
 
 # Obvious agency markers — blocks future auto-expand additions. Narrow on purpose.

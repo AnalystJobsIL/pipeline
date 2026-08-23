@@ -214,15 +214,120 @@ fixed, and every one of them is outside the `discovery` lane's write list.
    If the "no Israel coverage" claim holds after the quota resets, deleting it also retires
    `verify_jsearch.py` and one assertion in `tests/test_units.py`.
 
-5. **The `linkedin-targeted` sweep is the lane's biggest Bright Data line item and 4/43 of
-   what it returns is on-target.** *(lane: `discovery`, deliberately not acted on.)* Of the
-   43 `discovery-linkedin-targeted` jobs in `discovered_cache.json` on 2026-08-23, 4 belong
-   to a company in `stale.json` (the broken-board set it exists to backfill), **38 belong to
-   companies whose rows are `active=true` and fetched directly every morning**, and 5 are
-   new. LinkedIn's keyword engine ranks on "data analyst" and treats the company name as
-   spare tokens. The targeting itself was fixed this session (it now rotates and skips
-   `misconfig-scrape-on-ats`); cutting `limit_per_input` from 8 to 4 would halve the spend
-   and was left alone because one lane should not shrink a safety net on one day of data.
-   Re-measure before deciding:
+5. **CLOSED 2026-08-23 — the targeted sweep did not work at all, and fixing it was cheaper
+   than tuning it.** *(lane: `discovery`.)* It was filed here as "4 of 43 cached jobs are
+   on-target, consider halving the budget". Re-measuring the day's own run made it worse: of
+   160 records spent on 20 named companies, **0 came back for any of the 20, and 0 for any of
+   the 110 stale companies**. The cause was not the budget — the dataset takes a dedicated
+   `company` input and the code was concatenating the name into `keyword`, so LinkedIn ranked
+   on "data analyst" alone. Scoped: **25 records, 22 on-target**. Fixed, `cap` raised 20 → 100.
+   What is left, and it is a real question nobody has answered: the broken version was
+   accidentally a second BREADTH sweep and found 17 employers we had never seen
+   (J&J MedTech, Vishay, IAI, Ben-Gurion University). Two extra keywords were added to the
+   breadth sweep to compensate; **whether that trade is net-positive has not been measured
+   over more than one run.**
 
-       python -c "import json;t=[j for j in json.load(open('discovered_cache.json',encoding='utf-8')) if j.get('ats_platform')=='discovery-linkedin-targeted'];s={n.lower() for n in json.load(open('cloud_state/stale.json',encoding='utf-8'))};print(len(t),'jobs,',sum(1 for j in t if j['company'].lower() in s),'on-target')"
+6. **Nobody can read this account's Bright Data quota.** *(lane: `infra`.)*
+   `/customer/balance` returns 403 ("your API key lacks the required permissions"), so the
+   "5k free tier" in every docstring here is inherited belief, not a checked number. The one
+   real ledger is `datasets/v3/snapshots` (`ARCHITECTURE.md` §1a has the command) — **2,249
+   records billed 2026-08-15 → 08-23**. Either widen the token's permissions or put the
+   snapshot sum in the digest audit, or the next person to add a query is guessing too.
+
+## From the registry lane, 2026-08-24
+
+Found while fixing the re-check pools. Each of these is **outside the `registry` lane's
+write list**, which is why it is a proposal and not a commit. Ordered by what it costs today.
+
+1. **One re-check pool definition** — lane: `docs` (or whoever next touches shared
+   plumbing). `pipeline/verdicts.TOKENS` is supposed to be the single source, and there are
+   still three copies: `TOKENS` (18 tokens), `listing_hunt.main()`'s inline regex (17), and
+   `check_invariants.POOL` (18). `url-cleared` and `url-flagged` are in both inline copies
+   and **missing from `TOKENS`**, so the 57 rows carrying one are invisible to
+   `audit_empty_rows` and `deep_validate`. The fix is two lines in `pipeline/verdicts.py`:
+
+   ```python
+   "url-cleared":  "listing_hunt / manual",   # the stored address was an aggregator
+   "url-flagged":  "listing_hunt / manual",   # ...or another company's page
+   ```
+
+   Then `listing_hunt.main()`'s regex and `check_invariants.POOL` both become
+   `verdicts.in_pool`, and `test_the_three_copies_of_the_re_check_pool_still_agree_where_
+   they_are_supposed_to` tells you to delete its `EXPECTED_GAP` — it is written to fail
+   loudly at that moment rather than to be forgotten. Reproduce the gap with the snippet in
+   `ARCHITECTURE.md` §2.
+
+2. **One terminal-state list** — lane: shared plumbing. `verdicts.TERMINAL` is
+   `defunct / domain-dead / duplicate of / redundant / recruiter` and **omits `alias-of`**,
+   which is why `audit_empty_rows` and `crack_walled` had alias rows in *activating* pools
+   (fixed 2026-08-24 by spelling the exclusion out in each tool, which is now the FOURTH
+   copy — `listing_hunt` and `deep_validate` already had their own). Adding `"alias-of"` to
+   that tuple lets all four be deleted. `registry_health.TERMINAL` is the fifth and would
+   go too.
+
+3. **Registry alarms in the daily mail** — lanes: `infra` (`pipeline/run.py`) + `render`
+   (`pipeline/digest.py`). `registry_health.alarms()` returns the short lines that answer
+   "did a company disappear, and can the ladder still crack anything" — and today they reach
+   nobody, because no registry tool has a path into the digest. The channel already exists:
+   `dead_sources` is a `list[str]` that `run.py` puts in `summary` and all three renderers
+   print. Four lines:
+
+   ```python
+   # pipeline/run.py, next to the _dead_sources block
+   try:
+       from registry_health import alarms as _registry_alarms
+       _registry = _registry_alarms()
+   except Exception:                      # never let the audit block the product
+       _registry = []
+   for _line in _registry:
+       print(f"::warning::registry {_line}", flush=True)
+   # ...and in `summary`:  "registry_alarms": _registry,
+   ```
+
+   plus one line in each of `digest.build_markdown`, `_text_audit` and `_html_audit`,
+   copying the `dead_sources` line verbatim with the label **"Registry"**. Without this,
+   tasks that say "tell me in the mail" have no mail to be told in.
+
+   The census also needs a refresher step, which is a workflow change (`infra`): one
+   `python registry_health.py --census` after the digest's commit, with
+   `cloud_state/registry_census.json` added to that step's `git add`. Note the *absence* of
+   the refresher is fail-safe, not fail-silent: a stale census keeps reporting the same
+   deletion every day until a human re-baselines it.
+
+4. **`merge_csv_rows` can resurrect a deliberately deleted row** — lane: `infra`. Its
+   `changed` set is "rows where ours differs from base", and the else-branch is
+   `target.append(r)` with no check that the row was deleted from master on purpose. That is
+   exactly what happened to `Time To Know` (`8644d8fd`, 1190 → 1191 rows; see
+   `ARCHITECTURE.md` §2, "Never DELETE a row"). A tombstone would fix it properly; the cheap
+   version is to refuse to re-append a row whose base note carries a terminal token, and to
+   print the names it appended so the resurrection is at least visible in the step log.
+
+5. **`check_invariants.py` has no size check** — lane: `infra`. Checks A–H all validate the
+   registry's SHAPE. A truncated write, a bad merge or an accidental deletion changes its
+   SIZE, and nothing looks. One warning is enough (a violation would withhold the digest,
+   which is the trade that failed on 2026-08-23):
+
+   ```python
+   # I. size — a registry that shrank was not edited, it was lost
+   prev = registry_health.load_census()
+   n_prev = len([k for k in prev if k != "__notes__"])
+   if n_prev and len(body) < n_prev * 0.98:
+       warn(f"registry shrank {n_prev} -> {len(body)} rows — truncated write or bad merge?")
+   ```
+
+6. **`audit_empty_rows` and `deep_validate` select the identical 255 rows** — lane:
+   `registry`, unclaimed. Same predicate, different depth (raw HTML vs Chromium render +
+   network sniff), 24 hours apart, on consecutive weekend mornings. Sunday's audit re-walks
+   everything Saturday's deep validation just failed on. The lean shape is one Saturday pass
+   that escalates per row, with `deep_validate`'s renderer as the second rung of
+   `audit_empty_rows` rather than a separate job — it would also halve the `repo-state`
+   concurrency pressure on the weekend. Not attempted here: it is a real refactor of two
+   scheduled entrypoints plus their two workflows, not a documentation pass.
+
+7. **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
+   supported fetcher with 4 active rows** — lane: `ats-fetch`. `Fortinet` is the worked
+   example: it is an *active scrape* row pointed at
+   `edel.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/...` (11 IL verified by the hunt),
+   being browser-rendered every night for something the native REST fetcher could read.
+   `deep_validate._UNSUP` lists `oraclecloud.com` as unsupported, which is what wrote those
+   verdicts. Full inventory: `python registry_health.py --ats`.

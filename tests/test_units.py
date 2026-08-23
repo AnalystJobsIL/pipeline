@@ -975,9 +975,46 @@ def test_targeted_discovery_window_rotates_over_every_stale_company():
         for day in range(1, 61):
             window = discovery_daily._targeted_inputs(cap=20, day=day)
             sizes.add(len(window))
-            seen.update(q["keyword"].rsplit(" data analyst", 1)[0] for q in window)
+            seen.update(q["company"] for q in window)
         assert sizes == {20}, f"per-run Bright Data spend must not change: {sizes}"
         assert seen == set(stale), f"{len(set(stale) - seen)} companies never targeted"
+    finally:
+        discovery_daily._load_json = real
+
+
+def test_the_targeted_sweep_scopes_by_company_not_by_keyword_text():
+    """The dataset takes a dedicated `company` input. This built
+    `keyword: "<name> data analyst"` instead, so LinkedIn ranked on "data analyst" and
+    treated the employer name as spare tokens. A/B tested live 2026-08-23 over the same 20
+    stale companies: keyword-text form billed 160 records and returned 0 for any of them;
+    the `company` form billed 25 and returned 22 on-target. Scoping is also ~6x cheaper,
+    because an unscoped query always fills `limit_per_input` while a scoped one returns only
+    what that employer has."""
+    import discovery_daily
+    stale = {"Outbrain": {"reason": "empty-board"}, "Deel": {"reason": "regressed-to-zero"}}
+    real = discovery_daily._load_json
+    discovery_daily._load_json = lambda path: stale if "stale" in path else {}
+    try:
+        got = discovery_daily._targeted_inputs(day=1)
+    finally:
+        discovery_daily._load_json = real
+    assert {q["company"] for q in got} == set(stale), "the employer must be its own field"
+    for q in got:
+        assert q["keyword"] == "data analyst",             "the company name must NOT be concatenated into the keyword — that is the bug"
+
+
+def test_the_targeted_window_never_asks_about_the_same_company_twice():
+    """`cap` is 100 and the targetable list is 88 long, so the wrap-around
+    `(unresolved + unresolved)[start:start + cap]` handed back 12 duplicate names — and a
+    duplicate input is a second bill for rows we already have. Found by running it."""
+    import discovery_daily
+    stale = {f"Co{i}": {"reason": "empty-board"} for i in range(88)}
+    real = discovery_daily._load_json
+    discovery_daily._load_json = lambda path: stale if "stale" in path else {}
+    try:
+        for day in (1, 7, 200, 366):
+            names = [q["company"] for q in discovery_daily._targeted_inputs(cap=100, day=day)]
+            assert len(names) == len(set(names)) == 88, (day, len(names), len(set(names)))
     finally:
         discovery_daily._load_json = real
 
@@ -1013,6 +1050,12 @@ def test_indeed_source_health_counts_raw_records_like_every_other_source():
     # ...and two more of the same shape, from the 99 companies one live intake pass queued
     ("קבוצת יעל", True),                # Yael Group — `yael group` was already in _CONFIRMED
     ("לוג-און תוכנה", True),            # Log-On Software — `log-on software` likewise
+    # researched, not guessed: its own posting advertises a role at an unnamed client
+    ('עידור מחשבים בע"מ', True),
+    # ...and researched-and-KEPT: Matrix is 16k staff and we already scan two of its boards
+    ("מטריקס", False),
+    ("Matrix IT", False),
+    ("Software AG-SPL", False),
     # ...and the real Hebrew-named employers next to them in the same registry must not move
     ("IBI בית השקעות", False),
     ("בנק דיסקונט", False),
@@ -1022,5 +1065,3 @@ def test_indeed_source_health_counts_raw_records_like_every_other_source():
 def test_a_hebrew_spelling_does_not_walk_past_a_latin_recruiter_entry(name, expected):
     from pipeline.recruiters import is_recruiter
     assert is_recruiter(name) is expected
-
-

@@ -42,9 +42,15 @@ for _s in (sys.stdout, sys.stderr):
 
 
 QUERIES = {
+    # Breadth sweep — no company scoping, this one is meant to find employers we have never
+    # heard of. Two keywords until 2026-08-23, which was thin next to Indeed's five; the
+    # targeted sweep below dropped from 160 records/day to ~110 when it started scoping by
+    # company, and that headroom is spent here. 4 x 15 = <=60 records.
     "linkedin": ("gd_lpfll7v5hcqtkxl6l", "keyword", [
         {"location": "Israel", "keyword": "data analyst", "country": "IL"},
         {"location": "Israel", "keyword": "business intelligence", "country": "IL"},
+        {"location": "Israel", "keyword": "product analyst", "country": "IL"},
+        {"location": "Israel", "keyword": "BI developer", "country": "IL"},
     ], 15),
     # NOTE: the Bright Data Indeed dataset (gd_l4dx9j9sscpvs7no2) has returned ZERO records
     # every single run since it was wired up — every snapshot comes back
@@ -208,17 +214,34 @@ def _load_json(path):
 _TARGETABLE = ("empty-board", "regressed-to-zero", "fetch-error")
 
 
-def _targeted_inputs(cap=20, day=None):
+def _targeted_inputs(cap=100, day=None):
     """LinkedIn queries aimed at the companies whose direct ATS is broken AND that the free
     re-capture couldn't fix — the 'unresolvable remainder' (anti-bot Workday, custom-board
-    movers). Discovery is the free safety net for exactly these, so we search each by name.
+    movers). Discovery is the free safety net for exactly these, so we ask about each BY
+    COMPANY. This is the recovery path for the largest open coverage item in the repo: the
+    active rows whose all-time-high job count is zero because their board MOVED.
 
-    ROTATES. `stale.json` is rebuilt every digest in companies.csv row order
+    **The company goes in the `company` field, never in `keyword`.** The dataset takes a
+    dedicated `company` input, and until 2026-08-23 this function built
+    `keyword: "<name> data analyst"` instead — LinkedIn then ranked on "data analyst" and
+    treated the name as spare tokens. A/B tested live that day, 20 stale companies each:
+
+        keyword: "<name> data analyst"    160 records billed,  0 on-target
+        company: "<name>", keyword: "..."  25 records billed, 22 on-target (88%)
+
+    Two things follow, and the second is why `cap` could go from 20 to 100. Scoping is not
+    just more accurate, it is **6x cheaper**: an unscoped keyword query always returns
+    `limit_per_input` records (LinkedIn can always fill 8 slots with SOMETHING), while a
+    scoped one returns only what that employer actually has — 13 of the 20 returned nothing
+    and billed nothing. Measured cost is ~1.25 records/company, so the whole targetable list
+    now fits in one run for less than the old 20 cost. `cap` and the rotation below are kept
+    only as a bound in case `stale.json` grows past 100; today it holds 88 targetable rows,
+    so nothing rotates.
+
+    ROTATES when it has to. `stale.json` is rebuilt every digest in companies.csv row order
     (pipeline/health.record iterates `results.items()`), so `unresolved[:cap]` was a stable
-    prefix: the same 20 names went to Bright Data every single day and the rest were never
-    searched at all. Measured 2026-08-23 — 110 stale entries, cap 20, so 90 companies had
-    never once been targeted. The window now advances by day-of-year, which covers the whole
-    list every ceil(len/cap) days for exactly the same number of records per run.
+    prefix, not a sample: the same 20 names went to Bright Data every single day and the
+    other 90 of 110 were never searched once. The window advances by day-of-year.
     """
     import datetime as _d
     stale = _load_json("cloud_state/stale.json")
@@ -229,9 +252,13 @@ def _targeted_inputs(cap=20, day=None):
     if not unresolved:
         return []
     day = _d.date.today().timetuple().tm_yday if day is None else day
-    start = (day * cap) % len(unresolved)
-    window = (unresolved + unresolved)[start:start + cap]
-    return [{"location": "Israel", "keyword": f"{name} data analyst", "country": "IL"}
+    # Clamp BEFORE slicing the doubled list: with cap(100) > len(88) the wrap-around would
+    # hand back 12 duplicate names, and a duplicate input is billed twice for the same rows.
+    n = min(cap, len(unresolved))
+    start = (day * n) % len(unresolved)
+    window = (unresolved + unresolved)[start:start + n]
+    return [{"location": "Israel", "keyword": "data analyst", "country": "IL",
+             "company": name}
             for name in window]
 
 
