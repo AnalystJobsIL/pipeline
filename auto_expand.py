@@ -6,6 +6,16 @@ shrinking the unresolved set every run until it reaches zero — no PC, no babys
 
 Env:  AUTO_EXPAND_LIMIT (default 200) companies per run.
 Prints the remaining-unresolved count so the workflow / log shows progress.
+
+**This tool WRITES BY DEFAULT**, unlike every other registry tool, which is dry-run until
+`--apply`. The auto-expand workflow invokes it with no flags, so the default cannot be
+flipped from here without silently disabling the 08:00/20:00 cron (that is a workflow
+change: docs/BACKLOG.md, "auto_expand writes by default"). Until then it says so on
+startup, and `--dry-run` gives an agent a safe way to inspect the batch — added 2026-08-24
+after a routine dry-run of the nightly chain appended two junk rows ("Qualitest acq",
+"Keter", both on secrethunter.io aggregator URLs) to the live registry.
+
+Usage: python auto_expand.py [--dry-run]
 """
 from __future__ import annotations
 
@@ -32,6 +42,9 @@ for _s in (sys.stdout, sys.stderr):
 
 
 
+DRY_RUN = "--dry-run" in sys.argv
+
+
 def _load_cache():
     try:
         with open("scraped_cache.json", encoding="utf-8") as f:
@@ -41,6 +54,10 @@ def _load_cache():
 
 
 def main():
+    print("auto_expand: " + ("DRY RUN — nothing will be written"
+                             if DRY_RUN else
+                             "WRITING to companies.csv + scraped_cache.json "
+                             "(pass --dry-run to inspect without writing)"), flush=True)
     limit = int(os.environ.get("AUTO_EXPAND_LIMIT", "200"))
     with open("research_companies.json", encoding="utf-8") as f:
         entries = json.load(f)
@@ -114,13 +131,15 @@ def main():
         else:
             row = [name, "scrape", url, url, "false", "unreachable; could not scan"]
             n_unreach += 1
-        with open(CSV_PATH, "a", newline="", encoding="utf-8") as f:
-            csv.writer(f).writerow(row)
+        if not DRY_RUN:
+            with open(CSV_PATH, "a", newline="", encoding="utf-8") as f:
+                csv.writer(f).writerow(row)
         have.add(name.lower())
-        print(f"  {kind[:4]:4} {name}", flush=True)
+        print(f"  {'[dry] ' if DRY_RUN else ''}{kind[:4]:4} {name}", flush=True)
 
-    with open("scraped_cache.json", "w", encoding="utf-8") as f:
-        json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
+    if not DRY_RUN:
+        with open("scraped_cache.json", "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
     remaining = len(todo) - len(batch) + n_defer
     print(f"=== resolved {n_resolved} (LLM-cracked {n_llm}), empty {n_empty}, "
           f"unreachable {n_unreach}, deferred {n_defer}; "

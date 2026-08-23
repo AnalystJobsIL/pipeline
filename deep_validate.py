@@ -324,7 +324,13 @@ def main():
                     elif verdict == "recovered":
                         fr[1], fr[2], fr[3] = plat, tok, api
                         fr[4] = "true"
-                        fr[5] = f"re-audit {TODAY}: deep-verified {n_all}/{n_il} IL (was dark)"
+                        # Append-log, not a rewrite (ARCHITECTURE.md section 2). The two
+                        # branches around this one already use replace_own; this one
+                        # overwrote the cell, discarding the `dark-triage` mode that had
+                        # routed the row here and every other tool's verdict with it.
+                        fr[5] = _note_replace(
+                            fr[5], "re-audit",
+                            f"re-audit {TODAY}: deep-verified {n_all}/{n_il} IL (was dark)")
                     else:
                         note = {"unsupported": f"unsupported ATS {detail}",
                                 "dark": "no ATS detected (rendered)",

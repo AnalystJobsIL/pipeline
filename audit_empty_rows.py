@@ -36,7 +36,14 @@ _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 from pipeline.aggregators import HOSTS as AGG, is_aggregator   # single source of truth
 from pipeline.atomic import write_csv_rows
 from pipeline.company_identity import is_foreign
+from pipeline.notes import replace_own as _note_replace
+from pipeline.recruiters import is_recruiter
 from pipeline.verdicts import in_pool
+
+# States no re-check pool may re-open. This is `pipeline.verdicts.TERMINAL` PLUS `alias-of`,
+# which belongs there and is not (docs/BACKLOG.md, "One terminal-state list"). Until that
+# lands, every registry tool spells it out — listing_hunt.py and deep_validate.py already do.
+TERMINAL = re.compile(r"defunct|domain-dead|alias-of", re.I)
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the
@@ -115,7 +122,7 @@ def _serp_budget_ok():
     return _SERP["left"] > reserve
 
 
-def serp(name, limit=5):
+def _serpapi(name, limit=5):
     key = os.environ.get("SERPAPI_KEY")
     if not key or not _serp_budget_ok():
         return []
@@ -129,6 +136,61 @@ def serp(name, limit=5):
         return []
     urls = [o.get("link", "") for o in data.get("organic_results", [])]
     return [u for u in urls if u and not is_aggregator(u)][:limit]
+
+
+_SEARCH = {"tried": 0, "produced": 0, "warned": False}
+_SEARCH_MIN = 10   # below this, "found nothing" is about the companies, not the ladder
+
+
+def serp(name, limit=5):
+    """Find a company's careers page by SEARCHING. Three rungs, in cost order.
+
+    This was SerpApi-ONLY, with no fallback, and the free quota has been exhausted since
+    mid-August (checked 2026-08-23: `total_searches_left: 0`, `this_month_usage: 250`,
+    resets 2026-09-01). `_serpapi` therefore returns [] *before it makes a request*, which
+    means phase 2 of the Sunday audit — the search that finds boards which MOVED rather than
+    broke — has been a silent no-op over the whole ~255-row parked pool. `resolve_broken`
+    got exactly this fallback on 2026-08-23 and it was never propagated here.
+
+    DuckDuckGo is free and works from the runners; it is rate-limited from the dev machine
+    and returns 0 intermittently (measured 2026-08-23: 4 results, then 0, for the same
+    query), which is why it can never be the only rung either. The unlocker is capped by
+    DEEP_BD_SEARCH_CAP and shares its counter with deep_validate, so a run cannot silently
+    drain the credits.
+    """
+    _SEARCH["tried"] += 1
+    urls = _serpapi(name, limit)
+    if urls:
+        _SEARCH["produced"] += 1
+        return urls
+    try:
+        from deep_validate import ddg
+        urls = [u for u in (ddg(name) or []) if not is_aggregator(u)][:limit]
+    except Exception:  # noqa: BLE001
+        urls = []
+    if urls:
+        _SEARCH["produced"] += 1
+        return urls
+    try:
+        from deep_validate import google_via_unlocker
+        urls = [u for u in (google_via_unlocker(name) or []) if not is_aggregator(u)][:limit]
+    except Exception:  # noqa: BLE001
+        urls = []
+    if urls:
+        _SEARCH["produced"] += 1
+    elif (not _SEARCH["warned"] and _SEARCH["produced"] == 0
+            and _SEARCH["tried"] >= _SEARCH_MIN):
+        # Every rung fails by returning [], so "no company matched" and "we cannot search at
+        # all" look identical in the log. But ONE empty result is about that company, not
+        # about the ladder — warn on the RATE, once, after enough attempts to mean it.
+        # A whole audit that found nothing is a broken run, not a measurement (§8).
+        _SEARCH["warned"] = True
+        print(f"::warning::audit_empty_rows: {_SEARCH['tried']} searches, 0 produced a URL "
+              f"(serpapi left={_SERP['left']}, brightdata="
+              f"{'set' if os.environ.get('BRIGHTDATA_API_KEY') else 'MISSING'}) — the search "
+              "ladder is down; recovered-board counts from this run are not a measurement",
+              flush=True)
+    return urls
 
 
 def propose_from_html(html):
@@ -209,7 +271,18 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     parked = [(i, r) for i, r in enumerate(rows)
               if r and len(r) >= 6 and r[4] == "false" and not _fresh(r[0])
-              and in_pool(r[5] or "")]
+              and in_pool(r[5] or "")
+              # `in_pool` treats only defunct/domain-dead/duplicate/redundant/recruiter as
+              # terminal — `alias-of` is NOT in pipeline/verdicts.TERMINAL (see
+              # docs/BACKLOG.md). An alias row is the SECOND row for a company we already
+              # scan at the same board, so this tool would search, find that same working
+              # board, verify it with real Israel jobs and re-activate the duplicate —
+              # publishing every eBay role twice. `listing_hunt` and `deep_validate` both
+              # spell the exclusion out; this one relied on `in_pool` and did not.
+              # Measured 2026-08-23: 2 rows in the pool (GE HealthCare Israel, eBay Israel).
+              and not TERMINAL.search(r[5] or "")
+              # and an agency is never activated by any other path either (3 rows)
+              and not is_recruiter(r[0])]
     # oldest first, so a quota- or time-capped run still walks the whole backlog over weeks
     parked.sort(key=lambda ir: done.get(ir[1][0], ""))
     print(f"{len(parked)} parked rows to audit ({len(done)} audited before, "
@@ -280,8 +353,14 @@ def main():
                 if fr and fr[0] == name and len(fr) >= 6:
                     fr[1], fr[2], fr[3] = plat, tok, api
                     fr[4] = "true"
-                    fr[5] = (f"re-audit {__import__('datetime').date.today()}: "
-                             f"verified {n_all}/{n_il} IL (was false-empty)")
+                    # Append-log, not a rewrite (ARCHITECTURE.md section 2). This branch
+                    # overwrote the WHOLE cell, which is how an activation silently deleted
+                    # `alias-of` / `domain-dead` / the `dark-triage` mode and every other
+                    # tool's verdict — the row then matched no pool if it was ever parked
+                    # again. `replace_own` re-stamps only this tool's own segment.
+                    fr[5] = _note_replace(
+                        fr[5], "re-audit",
+                        f"re-audit {TODAY}: verified {n_all}/{n_il} IL (was false-empty)")
             write_csv_rows("companies.csv", fresh)
     print(f"\n=== recovered {len(fixed)} boards · unsupported-ATS {len(unsupported)} · "
           f"still dark {len(still)} ===")

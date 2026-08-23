@@ -8,14 +8,16 @@ one-shot probe, and `HANDOFF.md` listed two load-bearing modules as safe to dele
 The `runs in` and `imported by` columns are **computed from the code**, not typed by hand.
 Regenerate with `python docs/gen_modules.py` after adding or retiring a module — the prose
 lives in that script's `CLASS` dict, and it refuses to run if a root module is missing.
+(That sentence is hand-added: `gen_modules.py` does not emit it, so every regeneration
+drops it again — see `docs/BACKLOG.md`, "gen_modules.py does not round-trip its own file".)
 
 | class | meaning | count |
 |---|---|---|
 | `scheduled` | a workflow invokes it | 27 |
 | `library` | no workflow runs it; live code imports it | 6 |
-| `operator` | a human or agent runs it; nothing in CI does | 9 |
+| `operator` | a human or agent runs it; nothing in CI does | 10 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
-| | **total root modules** | **67** |
+| | **total root modules** | **68** |
 
 `pipeline/` is listed at the end. Lane ownership for all of these is in `docs/AGENT_BRIEF.md`.
 
@@ -78,6 +80,7 @@ Live and documented, but nothing in CI calls them. The firmographics three are d
 | `company_type_analysis.py` | joins firmographics with matched jobs -> out/company_type_analysis.{json,md} (ARCHITECTURE.md section 7) |
 | `fill_employees_llm.py` | re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Same Windows chain |
 | `firmo_health_check.py` | tripwire: is the firmographics chain actually classifying anything? |
+| `registry_health.py` | read-only registry census + row-deletion guard, recomputed re-check ownership matrix, live probe of every resolution rung, and the unsupported-ATS build queue. `--census` is the only thing it writes |
 | `research_firmographics.py` | bulk firmographics research + `--export`. Run every 6h by the Windows task `IsraeliJobs-Firmographics` via run_firmo_chain.cmd |
 | `setup_brightdata.py` | one-time: store the Bright Data token + zone in secrets.env |
 | `setup_serpapi_key.py` | one-time: store the SerpApi key (quota exhausted until 2026-09-01) |

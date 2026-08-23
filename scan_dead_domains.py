@@ -4,15 +4,17 @@ companies (Myrror-class) stop consuming hunt cycles and Chrome-sweep attention.
 
 Verdicts appended to notes: 'domain-dead <date>' (candidate for defunct research) — never
 auto-deletes; a dead domain can also mean a rebrand, so these get one search-side look.
-Usage: python scan_dead_domains.py [--apply]
+Usage: python scan_dead_domains.py [--apply] ; env SCAN_TIME_BUDGET_MIN (default 10)
 """
 from __future__ import annotations
 
 import csv
 import datetime as dt
+import os
 import re
 import socket
 import sys
+import time
 import urllib.parse
 import ssl
 import urllib.request
@@ -66,6 +68,13 @@ def _rescannable(note, days=1):
 
 def main():
     apply = "--apply" in sys.argv
+    # This runs INSIDE the digest, in front of the email. Every other tool in this lane is
+    # time-budgeted; these two were not. 12s timeout x 211 targets is a 42-minute worst case
+    # for a step whose normal cost is ~3.3 min (measured 2026-08-24: 8 rows in 7.5s), and a
+    # handful of hosts that black-hole packets is all it takes. Stop cleanly instead: the
+    # rows not reached keep their notes and are re-tested tomorrow (_rescannable is daily).
+    budget = float(os.environ.get("SCAN_TIME_BUDGET_MIN", "10") or 0)
+    t0 = time.time()
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
@@ -77,6 +86,10 @@ def main():
     print(f"liveness-checking {len(targets)} parked companies", flush=True)
     dead = revived = 0
     for n, (i, r) in enumerate(targets, 1):
+        if budget and (time.time() - t0) / 60 > budget:
+            print(f"time budget {budget}min reached at {n}/{len(targets)} — stopping "
+                  f"cleanly; the rest are re-tested tomorrow", flush=True)
+            break
         ok, why = alive(r[3])
         if ok and "domain-dead" in (r[5] or ""):
             # revived: clear the flag, otherwise it is a one-way exclusion from

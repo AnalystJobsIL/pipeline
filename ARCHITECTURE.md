@@ -695,8 +695,11 @@ python registry_health.py | sed -n '/re-check ownership/,/OWNED BY NOTHING/p'
 ```
 
 Counts below are that command's output on **2026-08-24**, after this session's two pool
-fixes. Ownership is by note content, not by mode. The pool figures exclude each tool's
-staleness cooldown (a cooldown delays a re-check; it does not remove ownership):
+fixes. Ownership is by note content, not by mode. **The figures exclude each tool's
+staleness cooldown** — a cooldown delays a re-check, it does not remove ownership — so the
+rows a given night actually processes are fewer: `crack_walled` owns 28 and `_recrackable`
+(daily) left **7** for tonight; `audit_empty_rows` owns 255 and `AUDIT_TTL_DAYS` (30) left
+31 locally, but `state/` is gitignored so the cloud run re-audits all 255 (§5).
 
 **Update 2026-08-23 — `page-empty` rows are ACTIVE now.** They were inactive, which meant a
 role posted at one of them waited for the next triage cycle to be seen. But a `page-empty`
@@ -716,7 +719,7 @@ other company. Two rules follow, both now enforced:
 | `listing_hunt` | daily 19:00 | 244 | the wide parked-shape regex, **minus** `page-empty`, terminal and recruiters | **yes** |
 | `repair_extract_gap` | daily 19:00 | 25 | `dark-triage …: extract-gap` | **yes** |
 | `probe_candidates` | daily 05:00 | 181 | `monitored candidate` / `host documented` / `no IL listing` | no — `_wake_note` strips every stale segment |
-| `crack_walled` | daily 19:00 + weekly | 7 | `unsupported ATS` + `_recrackable` (30d) + not terminal + not recruiter | **yes** |
+| `crack_walled` | daily 19:00 + weekly | 28 | `unsupported ATS` + not terminal + not recruiter | **yes** |
 | `scan_dead_domains` | daily 05:00 | — | liveness only — **never looks at roles** | no |
 | `audit_empty_rows` | weekly Sun 04:00 | 255 | `verdicts.in_pool` + not terminal + not recruiter + not audited in `AUDIT_TTL_DAYS` (30) | **yes** |
 | `deep_validate` | weekly Sat 04:00 | 255 | `in_pool` + `_revalidatable` (30d) + not terminal + not recruiter | **yes** |

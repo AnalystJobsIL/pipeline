@@ -33,7 +33,7 @@ import urllib.request
 
 from pipeline.aggregators import is_aggregator
 from pipeline.company_identity import (verdict as identity_verdict,
-                                       page_mentions_company)
+                                       page_mentions_company, registrable, _norm)
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 
@@ -177,10 +177,27 @@ def main():
             if st in (403, 503):
                 # bot wall: the host is real and the unlocker cracks it downstream — but a
                 # wall means we never saw the page, so identity rests on the domain alone.
-                # Accept only a domain that IS the company; a `weak` one is unconfirmable.
-                if identity_verdict(name, u) in ("match", "ats"):
+                # `match` is NOT strong enough on its own. `company_identity.verdict` also
+                # returns `match` when the domain equals the name with its generic words
+                # stripped, and that core can be an acronym: "DiA Imaging Analytics" strips
+                # to `dia`, `registrable("www.dia.mil")` is `dia`, and this branch was one
+                # dry-run away from repairing an Israeli medical-imaging company to the US
+                # Defense Intelligence Agency's careers page — on a 403 with zero bytes of
+                # HTML read. (Same shape as "Time To Know" -> time.com, one layer along.)
+                # With no page to confirm against, the only domain evidence worth having is
+                # the WHOLE name: registrable(host) == _norm(company). An ATS host is fine
+                # too — there identity is the tenant slug and `verdict` has already checked
+                # it. See docs/BACKLOG.md, "A stripped core is not identity".
+                v_wall = identity_verdict(name, u)
+                whole_name = _norm(name) and registrable(
+                    urllib.parse.urlparse(u).netloc.lower()) == _norm(name)
+                if v_wall == "ats" or (v_wall == "match" and whole_name):
                     good = u
                     break
+                print(f"       (bot-walled {u[:46]}: verdict={v_wall} rests on a stripped "
+                      f"core, not the full name — cannot confirm without the page)",
+                      flush=True)
+                continue
                 print(f"       (bot-walled {u[:46]}: cannot confirm it is this company)",
                       flush=True)
                 continue

@@ -22,6 +22,7 @@ import re
 import sys
 import time
 import urllib.parse
+import urllib.request
 
 from deep_validate import Renderer, ddg
 from audit_empty_rows import AGG, verify
@@ -29,7 +30,12 @@ from pipeline.aggregators import is_aggregator
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 from pipeline.company_identity import is_foreign
-from pipeline.company_identity import looks_like_a_job_listing_page
+from pipeline.company_identity import looks_like_a_job_listing_page, page_mentions_company
+from pipeline.recruiters import is_recruiter
+
+# States no re-check pool may re-open. `pipeline.verdicts.TERMINAL` PLUS `alias-of`, which
+# belongs there and is not (docs/BACKLOG.md, "One terminal-state list").
+TERMINAL = re.compile(r"defunct|domain-dead|alias-of", re.I)
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the
@@ -43,6 +49,8 @@ for _s in (sys.stdout, sys.stderr):
 
 
 TODAY = dt.date.today().isoformat()
+_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
 _HOST_PATTERNS = {
     "eightfold": re.compile(r"https://([a-z0-9.-]+?)(?:\.eightfold\.ai|/api/pcsx|/api/apply/v2)", re.I),
@@ -184,9 +192,48 @@ def crack_one(name, seed, platform):
             except Exception:  # noqa: BLE001
                 jobs = []
             il = [j for j in jobs if is_israel_job(j)]
+            if il and not _page_names_company(name, lu):
+                # real Israel roles on a real listings page — belonging to someone else
+                return ("novrfy", (kind, lu), 0,
+                        f"{len(il)} IL on {urllib.parse.urlparse(lu).netloc} but the page "
+                        f"never names {name[:24]} — not this company's board")
             if il:
                 return ("cracked-scrape", ("scrape", lu), len(il), "")
     return ("novrfy", captures[0], 0, f"host found ({captures[0][1][:60]}) but 0 IL extracted")
+
+
+def _page_names_company(name, url):
+    """Does the cracked listings page NAME this company, as a phrase?
+
+    On a walled ATS the tenant lives in the SUBDOMAIN (`careers-bancorpbank.icims.com`), and
+    `company_identity.verdict` only knows how to check a tenant in the PATH — so it returns
+    the blanket `"ats"`, which its own docstring defines as "we cannot tell". `is_foreign`
+    reads that as False and the activation gate opens. Meanwhile `_slug_matches` passes
+    `Bancor` against tenant `bancorpbank` on plain containment.
+
+    Both were true on 2026-08-24 and this tool was one `--apply` from moving Bancor (Israeli
+    crypto, ex-Bprotocol) onto The Bancorp Bank's iCIMS board — 3 "Israel" roles that are
+    not its own. The page settles it: it says "Bancorp" 18 times and `Bancor` zero
+    times, so `page_mentions_company(..., strict=True)` is False. That is the same
+    discriminator ARCHITECTURE.md section 3 prescribes for a `weak` verdict, applied to the
+    case where the verdict is "cannot tell" and we are about to ACTIVATE.
+
+    Cannot-fetch returns False: with no page there is no confirmation, and the caller then
+    documents the host instead of activating it — which is the state this row was already in.
+    """
+    html = ""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": _UA})
+        html = urllib.request.urlopen(req, timeout=25).read(400000).decode("utf-8", "replace")
+    except Exception:  # noqa: BLE001
+        pass
+    if len(html) < 2000 and os.environ.get("SCRAPE_VIA_UNLOCKER"):
+        try:
+            from bd_rescue import unlock
+            html = (html or "") + chr(10) + (unlock(url) or "")
+        except Exception:  # noqa: BLE001
+            pass
+    return bool(html) and page_mentions_company(name, html, strict=True)
 
 
 def _recrackable(note, days=1):
@@ -213,7 +260,16 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false" and "unsupported ATS" in (r[5] or "")
-               and _recrackable(r[5] or "")]
+               and _recrackable(r[5] or "")
+               # This pool had NO terminal exclusion at all, while the cracked branch below
+               # sets active=true. An `alias-of` row is the second row for a company we
+               # already scan at that same board, so cracking it re-creates the duplicate
+               # the parking exists to remove; a `domain-dead` host cannot be cracked by
+               # anything. Measured 2026-08-23: 5 of the 33 eligible rows (Chakratec,
+               # Sonovia, GE HealthCare Israel, Tamar Robotics, eBay Israel) — 15% of a
+               # 60-minute nightly budget spent on rows that must never activate.
+               and not TERMINAL.search(r[5] or "")
+               and not is_recruiter(r[0])]
     if limit:
         targets = targets[:limit]
     print(f"cracking {len(targets)} walled-ATS companies\n", flush=True)
@@ -251,7 +307,13 @@ def main():
                         plat, lu = got
                         fr[1], fr[2], fr[3] = plat, "", lu
                         fr[4] = "true"
-                        fr[5] = f"crack-walled {TODAY}: {platform} via {plat}; verified {n_il} IL"
+                        # Append-log, not a rewrite (ARCHITECTURE.md section 2). Overwriting
+                        # the cell on activation deletes every other tool's verdict — and
+                        # the terminal tokens that keep a row out of the wrong pool.
+                        fr[5] = _note_replace(
+                            fr[5], "crack-walled",
+                            f"crack-walled {TODAY}: {platform} via {plat}; "
+                            f"verified {n_il} IL")
                     elif verdict == "novrfy" and got:
                         fr[3] = got[1]
                         fr[5] = _note_replace(

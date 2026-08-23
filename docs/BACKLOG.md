@@ -331,3 +331,11 @@ write list**, which is why it is a proposal and not a commit. Ordered by what it
    being browser-rendered every night for something the native REST fetcher could read.
    `deep_validate._UNSUP` lists `oraclecloud.com` as unsupported, which is what wrote those
    verdicts. Full inventory: `python registry_health.py --ats`.
+
+8. **`gen_modules.py` does not round-trip its own file** — lane: `docs`. `docs/MODULES.md`
+   carries two hand-added lines telling the reader to regenerate it with
+   `python docs/gen_modules.py`; the generator does not emit them, so **every regeneration
+   silently deletes the instruction for how to regenerate**. Found 2026-08-24 by the
+   `registry` lane adding one `CLASS` entry and diffing the result. Either move the sentence
+   into the generator's header template or have `check_docs.py` assert the file matches a
+   fresh generation — right now nothing notices prose disappearing from a generated doc.

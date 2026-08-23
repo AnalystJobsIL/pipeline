@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import re
 import sys
+import time
 import urllib.request
 from pipeline.atomic import write_csv_rows
 
@@ -74,6 +76,13 @@ def probe(url):
 
 def main():
     apply = "--apply" in sys.argv
+    # Runs INSIDE the digest, in front of the email — same reasoning as scan_dead_domains:
+    # a 12s timeout x 181 targets is a 36-minute worst case for a step nothing bounds, and
+    # the 05:45 relay does not wait. A row not probed today keeps its baseline and is probed
+    # tomorrow: the wake is delayed, never lost, because candidate_probe.json only advances
+    # for rows this run actually read.
+    budget = float(os.environ.get("PROBE_TIME_BUDGET_MIN", "10") or 0)
+    t0 = time.time()
     try:
         state = json.load(open(STATE, encoding="utf-8"))
     except Exception:  # noqa: BLE001
@@ -86,7 +95,11 @@ def main():
                and (r[3] or "").startswith("http")]
     print(f"probing {len(targets)} monitored candidates", flush=True)
     woke = 0
-    for i, r in targets:
+    for n, (i, r) in enumerate(targets, 1):
+        if budget and (time.time() - t0) / 60 > budget:
+            print(f"time budget {budget}min reached at {n}/{len(targets)} — stopping "
+                  f"cleanly; unprobed rows keep their baseline for tomorrow", flush=True)
+            break
         name = r[0]
         cur = probe(r[3])
         if cur is None:
