@@ -35,6 +35,12 @@ from pipeline.store import SeenStore
 HERE = os.path.dirname(os.path.abspath(__file__))
 POC = os.path.join(HERE, "poc_firmographics.json")
 EXPORT = os.path.join(HERE, "state", "firmographics.json")
+# The SHARED copy. `state/` is gitignored, so 919 researched profiles lived on one
+# laptop and the cloud digest — which renders them — had an empty table and was
+# re-researching from zero at 5/run. sqlite cannot be git-merged; a sorted JSON export
+# can, so this is the artifact the two stores converge through (ARCHITECTURE §7 /
+# HANDOFF §4d item 1, scoped to the one table that has a consumer).
+SHARED_EXPORT = os.path.join(HERE, "cloud_state", "firmographics.json")
 REFRESH_CAP = 20  # stale-record refreshes per run; 4 chain runs/day -> full store ~10 days
 
 
@@ -106,9 +112,11 @@ def main():
 
     if a.export:
         recs = st.load_firmographics()
-        with open(EXPORT, "w", encoding="utf-8") as f:
-            json.dump(recs, f, ensure_ascii=False, indent=2, sort_keys=True)
-        print(f"exported {len(recs)} records -> {EXPORT}")
+        for path in (EXPORT, SHARED_EXPORT):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(recs, f, ensure_ascii=False, indent=2, sort_keys=True)
+        print(f"exported {len(recs)} records -> {EXPORT} + {SHARED_EXPORT}")
         return
 
     seeded = seed_poc(st, today)

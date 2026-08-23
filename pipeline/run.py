@@ -337,7 +337,14 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     # board-name -> researched record, resolved through the normalized identity key so
     # "SolarEdge Technologies" finds the stored "SolarEdge" profile (§7 identity rule)
-    _firmo_store = st.load_firmographics()
+    # sqlite ∪ the committed JSON export. The two stores (local `state/seen.db`, cloud
+    # `cloud_state/seen.db`) cannot be git-merged, which is how 919 researched profiles
+    # ended up on one laptop while the cloud digest that RENDERS them had an empty table.
+    # The export is the artifact both sides read; the fresher `as_of` wins per company.
+    _shared = firmographics_mod.load_shared()
+    _firmo_store = dict(_shared)
+    for _c, _rec in st.load_firmographics().items():
+        _firmo_store[_c] = firmographics_mod.newer(_shared.get(_c), _rec)
     _by_key = {firmographics_mod.identity_key(k): v for k, v in _firmo_store.items()}
     # every company we have ever matched, not just today's board — the archive page renders
     # the same company card and was showing facts for 5 of its 50 employers
@@ -345,6 +352,12 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     firmo_display = {c: (_firmo_store.get(c) or _by_key.get(firmographics_mod.identity_key(c)))
                      for c in _all_companies}
     firmo_display = {k: v for k, v in firmo_display.items() if v}
+
+    # write the union back out so this run's own research reaches the other store too
+    try:
+        firmographics_mod.save_shared(_firmo_store)
+    except Exception as e:  # noqa: BLE001
+        print(f"  [firmographics] shared export skipped: {e}", file=sys.stderr)
 
     summary = {
         "companies_scanned": stats["companies_scanned"],

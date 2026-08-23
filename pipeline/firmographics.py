@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import json
+import os
 import re
 import subprocess
 
@@ -218,3 +219,44 @@ def research_company(company, context="", timeout=240):
     except ValueError:
         return None
     return _coerce(rec, company)
+
+
+SHARED_EXPORT = os.path.join(os.path.dirname(__file__), "..", "cloud_state",
+                             "firmographics.json")
+
+
+def load_shared():
+    """The committed JSON export of the firmographics table (see research_firmographics).
+
+    The local store and the cloud store are separate sqlite files that cannot be merged,
+    which is why the cloud digest rendered nothing while 919 profiles sat on a laptop.
+    Both sides read this file, so whichever machine researched a company, every consumer
+    sees it. Empty dict if absent — never a reason to fail a run.
+    """
+    try:
+        with open(SHARED_EXPORT, encoding="utf-8") as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def newer(a, b):
+    """Of two records for the same company, the one researched later (by `as_of`)."""
+    if not isinstance(a, dict):
+        return b
+    if not isinstance(b, dict):
+        return a
+    return b if str(b.get("as_of") or "") > str(a.get("as_of") or "") else a
+
+
+def save_shared(records):
+    """Write the union back to the committed export (sorted, so the diff is readable)."""
+    if not records:
+        return
+    path = os.path.abspath(SHARED_EXPORT)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(records, f, ensure_ascii=False, indent=2, sort_keys=True)
+    os.replace(tmp, path)
