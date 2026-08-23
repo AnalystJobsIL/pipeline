@@ -119,6 +119,15 @@ def main():
             state[name] = e
             continue
         prev = state.get(name)
+        # A rotation-only entry (written by the error path below) has `last` but no
+        # sig/il. Treating it as a baseline raises KeyError on `prev["il"]` at the very
+        # next SUCCESSFUL probe - before `json.dump`, so the state never advances again
+        # and, behind the workflow's `|| echo "probe skipped"`, no candidate ever wakes
+        # again. Measured 2026-08-24: 61 of the 153 targets have no baseline and 39 of a
+        # 40-row sample error, so the first --apply run would poison ~59 rows and the
+        # second would kill the step. An incomplete entry is NOT a baseline.
+        if not (isinstance(prev, dict) and "il" in prev and "sig" in prev):
+            prev = None
         cur["last"] = TODAY                # rotation key; see the sort above
         state[name] = cur
         if prev is None:

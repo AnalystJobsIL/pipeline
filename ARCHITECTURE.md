@@ -688,10 +688,10 @@ Taxonomy:
 | `… 0/0 IL` | true | zero of zero: **may be a dead token/moved board**, `pipeline/health.py` calls this `empty-board`. Discriminator: comeet returns HTTP **400** for dead creds, **200 + `[]`** for a live empty board | digest → `stale.json` → 06:00 self-heal (5 strikes) |
 | `host documented, 0 IL now` | false | walled-ATS host found, extraction unproven | daily probe + hunt |
 | `monitored candidate` / `host documented` | false | real page documented, extraction unproven | daily probe + 14-day re-hunt |
-| `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | today's 14:00 hunt (fast-path) |
+| `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | that evening's 19:00 hunt (fast-path) |
 | `no listing found` / `no ATS detected` | false | full render found nothing parseable | weekly audit + hunt cron |
 | `unsupported ATS <x>` | false | ATS known, no extraction path yet | crack_walled / listing-hunt |
-| `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS — strict TLS on the scanning machine produced 6 false positives) | re-tested after 30d by the Sunday audit; **a revived domain clears the flag automatically** |
+| `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS — strict TLS on the scanning machine produced 6 false positives) | re-tested **daily** by `scan_dead_domains` (`_rescannable` defaults to 1d) inside the 05:00 digest, and again by the Sunday audit; **a revived domain clears the flag automatically** |
 | `defunct: …` | false | company confirmed shut down/acquired | permanently excluded |
 | `alias-of <name>` | false | a SECOND row for a company already scanned at the same board (eBay / eBay Israel) | nobody — **terminal**, and re-opening it republishes every role twice |
 | `chrome-verified …` | either | a human-equivalent browser check confirmed the state | as per its class |
@@ -710,18 +710,19 @@ Recruiting/staffing agencies are excluded everywhere via `pipeline/recruiters.py
    ▼                   ▼                ▼
  ACTIVE ROW        parked: "scanned; no open" / "unreachable" / "aggregator URL"
    │  ▲                   │
-   │  │                   │ listing_hunt 14:00 (finds listings URL, verifies ≥1 IL job)
+   │  │                   │ listing_hunt 19:00 (finds listings URL, verifies >=1 IL job)
    │  │                   │ crack_walled / deep_validate (on demand)
    │  │                   │ audit_empty_rows (Sun) — re-verifies ALL parked rows
    │  └───────────────────┘
    │
-   │ scrape yields 0 for ROT_PARK_DAYS(3) → parked "scrape rotted" → back to listing_hunt
+   │ scrape ERRORS for ROT_PARK_DAYS(7) → parked "scrape rotted" → back to listing_hunt
+   │ (an EMPTY scrape never parks; a 45-day empty streak only asks triage to re-read)
    │ API fetch fails → stale.json → self-heal 06:00 re-resolves (weekly retry, 5 strikes)
    ▼
  parked: "monitored candidate" (URL known, extraction unproven)
    │  probe_candidates (05:00 daily) sees job/Israel signals rise vs baseline
    ▼  → note becomes "probe-woken: re-hunt pending"
- listing_hunt 14:00 takes the FAST-PATH: scrape the stored URL directly; verified → ACTIVE
+ listing_hunt 19:00 takes the FAST-PATH: scrape the stored URL directly; verified -> ACTIVE
 ```
 
 Terminal-ish states: `defunct:` (company gone — permanently excluded) and `domain-dead`
@@ -782,7 +783,8 @@ one full URL in a segment is 117 characters and will evict everything else.
 `test_every_note_writer_uses_the_append_log_helper` fails on the next hand-rolled trim.
 
 Every re-check filter must have a **staleness escape** (`_stale_hunt` 14d, `_revalidatable`
-30d, `_recrackable` 30d). A filter of the form `"tool-name" not in note` freezes coverage
+30d, `_recrackable` **1d** — daily, because the ATS host is already documented, so a re-check
+is one fetch of a known endpoint rather than a rediscovery). A filter of the form `"tool-name" not in note` freezes coverage
 forever — that pattern has been introduced and removed three times.
 
 ### The activation rule (2026-08-23 — read before flipping any row to active)
@@ -814,11 +816,17 @@ forever — that pattern has been introduced and removed three times.
 hold a start-of-run snapshot; two concurrent snapshot-writers silently destroy each other's
 verdicts (lost-update incident 2026-08-22).
 
-**All 20 `companies.csv` writers, by safety class** (verified 2026-08-22):
+**All 22 `companies.csv` writers, by safety class** (verified 2026-08-22; re-counted
+2026-08-24 — the list said "20" and omitted three DAILY writers, which matters because this
+census is what a new writer gets checked against. Reproduce:
+`for f in *.py; do grep -q companies.csv "$f" && grep -q "write_csv_rows\|csv.writer" "$f" && echo "$f"; done | wc -l`):
 
 - **Compliant** (re-read + match by name before every write): `crack_walled.py`,
   `probe_candidates.py`, `listing_hunt.py`, `audit_empty_rows.py`, `deep_validate.py`,
-  `scan_dead_domains.py`, `refresh_scrape_cache.py` (parking pass).
+  `scan_dead_domains.py`, `refresh_scrape_cache.py` (parking pass), and the three the census
+  had missed — `triage_dark.py` (18:00), `repair_dead_urls.py` and `repair_extract_gap.py`
+  (both 19:00). All three re-read before every write; they were absent from the list, not
+  from the discipline.
 - **Modified-rows merge** (equally safe — merges only the names it changed into a fresh
   read): `bd_rescue.py`, `retry_unreachable.py`, `wayback_rescue.py`, `validate_empty.py`,
   `validate_bd.py`, `recheck_suspects.py`.
@@ -953,6 +961,37 @@ sort least-recently-checked first (`cloud_state/scan_seen.json`, and a `last` ke
 companies; before, 40 of 40. Any new budget in this lane needs a rotation key in the same
 commit.
 
+**On a walled ATS, none of the three activation gates can see the tenant** (2026-08-24).
+The tenant lives in the SUBDOMAIN — `careers-bancorpbank.icims.com` — and
+`company_identity.verdict` only checks a tenant in the PATH, so it returns the blanket
+`"ats"`, which its own docstring defines as *"we cannot tell"*, and `is_foreign` reads that
+as False. `_slug_matches` passes too, on plain containment. `is_aggregator` and
+`looks_like_a_job_listing_page` both say yes: it IS a real listings page, just somebody
+else's. So the generic answer in "The activation rule" below is exactly the answer that let
+`Bancor` (Israeli crypto) onto The Bancorp Bank's board. Two things stop it, and both are in
+`crack_walled.py`:
+
+1. **`_page_names_company(name, url)` — three-valued.** True = the page names this company,
+   False = it names someone else, **None = we could not read it, which is NO EVIDENCE and
+   must not read as either**. Bancorp's page says "Bancorp" 18 times and `Bancor` as a word
+   zero times. It uses a LENIENT TLS context (strict TLS cost 6 false positives once, above),
+   falls back to the residential unlocker whenever a Bright Data key exists — not only behind
+   `SCRAPE_VIA_UNLOCKER`, which `audit-coverage.yml` does not set — and retries with the
+   company's generic/geographic words stripped, because 46 registry rows are named `… Israel`
+   and `strict=True` wants the name's words consecutively.
+2. **The `notours` verdict writes the note and never `fr[3]`.** This is the part that is easy
+   to get wrong: refusing to ACTIVATE is not enough. `crack_walled`'s `novrfy` branch persists
+   its candidate as the row's `api_url` and stamps `host documented` — which is a
+   `probe_candidates` pool token AND `listing_hunt`'s documented fast-path token. A gate that
+   blocks activation but still writes the address just moves the wrong activation to the next
+   night, under another tool's name. `listing_hunt` has always refused to persist a foreign
+   URL for this reason; the crack path does now too.
+
+The residue, deliberately: a page that is UNREADABLE (`None`) still falls through to `novrfy`
+and persists the address, because the host came off the company's own render and "we could not
+look" is not "we looked and found nothing". That is `docs/BACKLOG.md` item 19, and the real
+fix is one level down — `verdict()` should extract the subdomain tenant (item 9).
+
 **Every activating pool must exclude the terminal states itself.** `verdicts.in_pool()`
 does not: `TERMINAL` there is `defunct / domain-dead / duplicate of / redundant / recruiter`
 and **omits `alias-of`**. On 2026-08-24 that put `GE HealthCare Israel` and `eBay Israel`
@@ -991,7 +1030,7 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
 2. `resolve_llm.py`: evidence bundle (page fetch + SerpApi search + ATS-hint extraction) →
    single `claude -p` proposal `{platform, token, api_url}` → **verified** via the real
    fetcher. One retry carrying the verification error.
-3. `listing_hunt.py` (cron 14:00): for rows still dark — find the LISTINGS URL (harvested
+3. `listing_hunt.py` (cron 19:00): for rows still dark — find the LISTINGS URL (harvested
    links; Claude picks; rebrand redirects resolved), verify via `scrape_universal`.
    Woken/documented rows take the **fast-path**: scrape the stored URL first.
 4. `deep_validate.py` (Sat 04:00) / `crack_walled.py` (daily 19:00 + Sun): Chromium render + network-request

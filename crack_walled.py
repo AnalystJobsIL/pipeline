@@ -227,13 +227,16 @@ def crack_one(name, seed, platform):
         # in the note (which is text) and never written into api_url (which is an address
         # every later tool honestly re-tests, and which listing_hunt's fast-path activates on).
         return ("notours", foreign, 0,
-                # SHORT on purpose: this segment shares a 220-char cell with every other
-                # tool's verdict, and `notes.append` evicts whole OLD segments to make room.
-                # The first draft was 74 chars and pushed `unsupported ATS` out of 24 of the
-                # 30 crack-pool rows (the old 35-char note loses 17) - i.e. it retired those
-                # rows from crack_walled's OWN pool. Measured 2026-08-24; mean note is
-                # 199/220 here, so every character is a row's coverage.
-                f"not ours ({urllib.parse.urlparse(foreign[1]).netloc[:22]})")
+                # FIXED LENGTH and SHORT on purpose: this segment shares a 220-char cell
+                # with every other tool's verdict, and `notes.append` evicts whole OLD
+                # segments to make room. Measured 2026-08-24 over the 30 `unsupported ATS`
+                # parked rows (mean note 199/220): the 74-char first draft pushed
+                # `unsupported ATS` out of 24 of them - retiring those rows from
+                # crack_walled's OWN pool - a netloc-bearing version cost 17-20 depending on
+                # the host's length, and this fixed 49-char form costs 14, which is BETTER
+                # than the `novrfy` note it replaces (17). The address is already in column
+                # 3; repeating it in the note buys nothing and evicts a pool token.
+                "not this company's board")
     # `novrfy` writes `fr[3] = got[1]` and stamps `host documented`, which is a
     # probe_candidates pool token AND listing_hunt's documented fast-path token. Closing that
     # door only for boards that HAPPEN to return Israel jobs left it open on the branch that
@@ -251,7 +254,7 @@ def crack_one(name, seed, platform):
                 # 30 crack-pool rows (the old 35-char note loses 17) - i.e. it retired those
                 # rows from crack_walled's OWN pool. Measured 2026-08-24; mean note is
                 # 199/220 here, so every character is a row's coverage.
-                f"not ours ({urllib.parse.urlparse(lu0).netloc[:22]})")
+                "not this company's board")
     return ("novrfy", captures[0], 0, f"host found ({captures[0][1][:60]}) but 0 IL extracted")
 
 
@@ -308,6 +311,21 @@ def _page_names_company(name, url, html=""):
             core, html, strict=True):
         return True
     return False
+
+
+def _ok_to_write(name, url):
+    """May this url be written into the row's `api_url`? Positive confirmation only.
+
+    `crack_one` has several exits and gating them individually is how two 0-Israel-jobs
+    paths were missed: `cracked-api` never called the gate at all, and `novrfy` persisted
+    on an UNREADABLE page. This is the one check the write block runs regardless of which
+    branch produced the candidate, so a future `return` that forgets the gate cannot
+    re-open the hole. Unreadable (`None`) is refused here: `novrfy` writes an ADDRESS that
+    `listing_hunt`'s fast-path later activates on, and "we could not look" is not evidence.
+    """
+    if is_foreign(name, url) or not looks_like_a_job_listing_page(url):
+        return False
+    return _page_names_company(name, url) is True
 
 
 def _recrackable(note, days=1):
@@ -367,9 +385,7 @@ def main():
             fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
             for fr in fresh:
                 if fr and fr[0] == name:
-                    if verdict.startswith("cracked") and (
-                            is_foreign(name, got[1])
-                            or not looks_like_a_job_listing_page(got[1])):
+                    if verdict.startswith("cracked") and not _ok_to_write(name, got[1]):
                         # Identity gate: a cracked page with real Israel roles is still the
                         # WRONG page if it belongs to someone else (FairFly/fireflyspace,
                         # COTI/jobs.citi.com). Document where we looked; do not activate.
@@ -393,10 +409,23 @@ def main():
                         fr[5] = _note_replace(fr[5], "crack-walled",
                                               f"crack-walled {TODAY}: {detail}")
                     elif verdict == "novrfy" and got:
-                        fr[3] = got[1]
-                        fr[5] = _note_replace(
-                            fr[5], "crack-walled",
-                            f"crack-walled {TODAY}: host documented, 0 IL now")
+                        # Gate the WRITE, not the return. `crack_one` has four `cracked`/
+                        # `novrfy` exits and gating them one by one is how the 0-IL paths
+                        # were missed twice: `cracked-api` (oraclehcm) returns on
+                        # `if n_il or n_all` and never consulted the identity gate at all,
+                        # so a row could be ACTIVATED with zero verified Israel jobs and a
+                        # note reading "verified 0 IL"; and `novrfy` persisted the address
+                        # whenever the page was merely UNREADABLE. Both are re-checked below
+                        # by `_ok_to_write`, which no future `return` can bypass.
+                        if _ok_to_write(name, got[1]):
+                            fr[3] = got[1]
+                            fr[5] = _note_replace(
+                                fr[5], "crack-walled",
+                                f"crack-walled {TODAY}: host documented, 0 IL now")
+                        else:
+                            fr[5] = _note_replace(
+                                fr[5], "crack-walled",
+                                f"crack-walled {TODAY}: not this company's board")
                     else:
                         fr[5] = _note_replace(fr[5], "crack-walled",
                                               f"crack-walled {TODAY}: {verdict}")

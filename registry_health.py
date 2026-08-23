@@ -108,7 +108,7 @@ TERMINAL = _TerminalShim
 
 # The two note-shapes still inlined inside their tool's main() (see the BACKLOG item above).
 # Kept verbatim and asserted against the tools by
-# `test_the_ownership_matrix_matches_each_tool_s_real_filter`.
+# `test_the_ownership_matrix_is_built_from_the_tools_own_predicates`.
 _HUNT_SHAPE = re.compile(
     r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|host documented|"
     r"probe-woken|scanned; no open|unreachable|aggregator URL|no listing found|redirects to|"

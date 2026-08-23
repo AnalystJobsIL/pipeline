@@ -1791,8 +1791,68 @@ def test_the_guard_count_never_falls():
         if fn.startswith("test_") and fn.endswith(".py"):
             src = open(os.path.join(here, fn), encoding="utf-8").read()
             n += len(re.findall(r"^def (test_\w+)", src, re.M))
-    FLOOR = 84
+    FLOOR = 93
     assert n >= FLOOR, (
         "%d test functions collected, floor is %d. If you did not delete tests on purpose, "
         "someone committed a stale copy of tests/test_units.py over another lane's guards — "
         "check `git log -p -- tests/test_units.py` for a commit with a large deletion." % (n, FLOOR))
+
+
+def test_a_rotation_only_probe_entry_is_not_mistaken_for_a_baseline():
+    """The rotation fix wrote `{"last": <date>}` on the fetch-error path - an entry with no
+    `sig`/`il`. The very next SUCCESSFUL probe of that row then did `prev["il"]` and raised
+    KeyError *before* `json.dump`, so the state never advanced again and, behind the
+    workflow's `|| echo "probe skipped"`, no candidate would ever wake again. Measured
+    2026-08-24: 61 of 153 targets have no baseline and 39 of a 40-row sample error, so the
+    first --apply run would poison ~59 rows and the second would kill the step. An
+    incomplete entry is not a baseline."""
+    import inspect
+    import probe_candidates
+    src = inspect.getsource(probe_candidates.main)
+    assert '"il" in prev' in src and '"sig" in prev' in src, (
+        "a rotation-only entry is still treated as a baseline; the next success KeyErrors")
+    # and the comparison itself must be unreachable with an incomplete prev
+    prev = {"last": "2026-08-24"}
+    ok = isinstance(prev, dict) and "il" in prev and "sig" in prev
+    assert ok is False
+
+
+def test_no_crack_walled_branch_can_write_an_unconfirmed_url():
+    """`crack_one` has several `cracked`/`novrfy` exits and gating them one at a time is how
+    two 0-Israel-jobs paths were missed: `cracked-api` (oraclehcm) returns on
+    `if n_il or n_all` and never consulted the identity gate at all - a row could be
+    ACTIVATED with zero verified Israel jobs and a note reading "verified 0 IL" - and
+    `novrfy` persisted the address whenever the page was merely UNREADABLE, which for a
+    walled ATS is the normal outcome. The gate now sits on the WRITE, so a future `return`
+    that forgets it cannot re-open the hole."""
+    import ast
+    import inspect
+    import crack_walled
+    assert hasattr(crack_walled, "_ok_to_write")
+    src = inspect.getsource(crack_walled.main)
+    tree = ast.parse(src.lstrip())
+    # every statement that assigns fr[3] or fr[4] must sit under a test of _ok_to_write
+    guarded, unguarded = 0, []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.If):
+            continue
+        if "_ok_to_write" not in ast.unparse(node.test):
+            continue
+        for st in ast.walk(node):
+            if isinstance(st, ast.Assign):
+                for t in st.targets:
+                    u = ast.unparse(t)
+                    if u.endswith("[3]") or u.endswith("[4]"):
+                        guarded += 1
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for t in node.targets:
+                u = ast.unparse(t)
+                if u.endswith("[3]") or u.endswith("[4]") or "fr[3]" in u:
+                    unguarded.append(ast.unparse(node)[:60])
+    assert guarded >= 1, "no fr[3]/fr[4] write sits under an _ok_to_write test"
+    # the gate itself must demand a POSITIVE confirmation, not merely "not False"
+    g = inspect.getsource(crack_walled._ok_to_write)
+    assert "is True" in g, (
+        "an UNREADABLE page (None) must not pass: novrfy writes an address that "
+        "listing_hunt's fast-path later activates on")
