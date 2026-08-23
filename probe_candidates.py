@@ -54,10 +54,11 @@ def _wake_note(note: str, cap: int = 220) -> str:
     """
     kept = [s.strip() for s in (note or "").split("|")
             if s.strip() and not _STALE_SEGMENT.match(s.strip())]
-    base = " | ".join(kept)
-    # trim the BASE, never the stamp: capping the joined string cut the new verdict off the
-    # end and left the row looking untouched.
-    return f"{base[:cap - len(WAKE_STAMP) - 3]} | {WAKE_STAMP}" if base else WAKE_STAMP
+    # `pipeline.notes.append` drops OLD WHOLE segments to make room. Slicing the base
+    # instead cut the newest surviving verdict in half — that is where 87 rows saying
+    # `dark-triage 2026-08-22: page-emp` came from, a mode no downstream filter matches.
+    from pipeline.notes import append as _append
+    return _append(" | ".join(kept), WAKE_STAMP, cap)
 
 
 def probe(url):
