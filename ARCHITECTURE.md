@@ -1,10 +1,72 @@
 # Architecture — how jobs get pulled, verified, and delivered
 
-> Working on this after a break? Read **`HANDOFF.md`** first — recent changes,
-> known traps, what's running, and the open-items list. This file is the
-> durable system model.
+This is the **durable system model**: how the thing works and the rules that cost real data
+to learn. It does not describe what happened last night — that is `HANDOFF.md`.
+
+| doc | holds | changes |
+|---|---|---|
+| `CLAUDE.md` | the 2-minute orientation, loaded automatically | rarely |
+| **this file** | the model, the rules, the runbooks | when behaviour changes |
+| `HANDOFF.md` | current state, watch list, unclaimed work | every session |
+| `docs/BACKLOG.md` | known gaps that outlive a session | when one is found or closed |
+| `docs/AGENT_BRIEF.md` | the lane table: who may write which file | when the lanes change |
+| `docs/MODULES.md` | every module, and whether it is live | when a module is added |
+| `docs/sessions/` | what past sessions found, in their own words | append-only |
+
+**Every section below is tagged with the lane that owns it** (`docs/AGENT_BRIEF.md` has the
+full table). A tag means: that lane may change the behaviour this section describes, and
+must update the section in the same commit. `shared` means the section describes plumbing
+every lane imports and no lane owns — changing it is a report-it-loudly event.
+
+## The whole system on one screen
+
+```
+  ┌ 1 INTAKE ────────────────────────────────────────────────── lane: discovery ┐
+  │  discovery_daily.py    LinkedIn + Indeed via Bright Data ─┐                  │
+  │  discovery_telegram.py public t.me/s channel previews    ─┼─▶ discovered_cache.json
+  │                        new employer names                ─┴─▶ research_companies.json
+  └───────────────────────────────────────────────────────────── 05:00, in-digest ┘
+                   │
+  ┌ 2 REGISTRY ───────────────────────────────────────────────── lane: registry ┐
+  │  auto_expand → resolve_deep → resolve_llm   08:00 / 20:00                    │
+  │  listing_hunt · repair_* · crack_walled · deep_validate · triage_dark        │
+  │  every row carries a dated verdict in `notes` (§2)      ──▶ companies.csv    │
+  └────────────────────────────────────── 1,199 rows · 846 active · 353 parked ──┘
+                   │
+  ┌ 3 FETCH ──────────────────────────── lanes: ats-fetch (API) · scraper (page) ┐
+  │  pipeline/fetchers.py  16 platforms, 433 API rows      live, every digest    │
+  │  scrape_universal.py   5 escalating strategies, 412 rows (+1 discovery row)  │
+  │  refresh_scrape_cache.py 00:00                          ──▶ scraped_cache.json
+  └──────────────────────────────────────────────────────────────────────────────┘
+                   │
+  ┌ 4 ENRICH ─────────────────────────── lanes: jd-text · company-intel ────────┐
+  │  pipeline/jdfill.py + enrich_*_jd.py   a description for every relevant role │
+  │  pipeline/firmographics.py             sector / stage / size / founded       │
+  │                                        ──▶ cloud_state/firmographics.json    │
+  └──────────────────────────────────────────────────────────────────────────────┘
+                   │
+  ┌ 5 CLASSIFY ───────────────────────────────────────────────── lane: classifier┐
+  │  pipeline/israel.py    is this role in Israel?                               │
+  │  pipeline/seniority.py keyword rules, then `claude -p` for the ambiguous      │
+  │                        judgments cached per company|title ──▶ seen.db matched │
+  └──────────────────────────────────────────────────────────────────────────────┘
+                   │
+  ┌ 6 RENDER ─────────────────────────────────────────────────── lane: render ───┐
+  │  pipeline/digest.py + roleprofile.py   the board, the archive, the email,     │
+  │                                        every tag on a role card              │
+  └──────────────────────────────────────────────────────────────────────────────┘
+                   │
+  ┌ 7 DELIVER ────────────────────────────────────────────────── lane: infra ────┐
+  │  commit state (merge_csv_rows / merge_json_cache) → publish board →           │
+  │  AnalystJobsIL/board · digest issue → AnalystJobsIL/inbox → email 05:45/08:30 │
+  └──────────────────────────────────────────────────────────────────────────────┘
+```
+
+Counts are from the working tree on 2026-08-23; re-derive them with the snippets in §5c
+rather than trusting this line.
 
 ## 0. Start here: what the user actually receives
+*lane: `docs` — every lane must keep it true*
 
 Two deliverables, both produced by the **digest run** (the 05:00 UTC GitHub Actions
 workflow `daily-digest.yml` — everything in this system runs as GitHub Actions cron jobs,
@@ -47,8 +109,9 @@ titles go to `claude -p`, whose YES/NO **role judgment** is cached per `company|
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And 13 of 39 workflow steps carry `continue-on-error: true`, so a hard failure in an
-audit/hunt step still shows a green run — check the step log, not the badge.
+And **24 of the 66 workflow steps carry `continue-on-error: true`** (counted 2026-08-23 by
+`docs/check_docs.py`, which fails if this sentence and the workflows disagree), so a hard
+failure in an audit/hunt step still shows a green run — check the step log, not the badge.
 
 ```bash
 python -m pipeline.run --only "Fiverr,Wix" --no-llm    # produce-only: NEVER emails/publishes
@@ -101,6 +164,7 @@ companies have open roles right now?"** — with a verifiable trail for every cl
 including the claim "none".
 
 ## 1. Coverage tiers (how a company's jobs are read)
+*lanes: `ats-fetch` (tier 1) · `scraper` (tier 2) · `discovery` (tier 3)*
 
 1. **Native ATS fetchers** — `pipeline/fetchers.py` `FETCHERS` map. A `companies.csv` row
    whose `ats_platform` names a platform is fetched live every digest run via its public
@@ -127,6 +191,8 @@ strategies carry it (Phenom/Eightfold/iCIMS/Radancy/Rippling are all read via st
 XHR-capture or 3/4 without native fetchers).
 
 ## 2. Row lifecycle — every company carries a dated, evidence-based verdict
+*lane: `registry` — one session at a time. The rules in this section are `shared`: every
+lane that writes `companies.csv` obeys them.*
 
 `companies.csv` is **the source of truth for coverage** — the registry of who gets read and
 the log of what we know. Columns: `company_name, ats_platform, token, api_url, active,
@@ -284,12 +350,56 @@ the candidate probe writes verdicts there while `candidate_probe.json` advances 
 committing one without the other loses the wake *and* consumes its signal.
 
 Cloud workflows that commit the csv serialize via the `repo-state` concurrency group —
-**except `daily-digest.yml`**, which uses its own group, so a digest CAN overlap an
-audit/hunt run; both re-read, so verdicts survive. A local `--apply` run adds a third
+eight of them (audit-coverage, auto-expand, deep-validate, listing-hunt, retry-unreachable,
+scrape-refresh, self-heal, triage-dark) — **except `daily-digest.yml`**, which uses its own
+group, so a digest CAN overlap an audit/hunt run; both re-read, so verdicts survive. A local `--apply` run adds a third
 writer: avoid the cron windows in §4 (and never run two browser-driving tools at once —
 Playwright sync instances conflict).
 
+### Who re-checks a parked row — the ownership matrix
+
+Every inactive row must be owned by at least one *recurring* job, or it is permanently dark.
+Verified 2026-08-23 by tracing each scheduled entrypoint's row filter (17 rows were owned by
+nothing; now 0). **If you add or narrow a row filter, re-run this check** — the snippet is in
+§5c. Ownership is by note content, not by mode:
+
+**Update 2026-08-23 — `page-empty` rows are ACTIVE now.** They were inactive, which meant a
+role posted at one of them waited for the next triage cycle to be seen. But a `page-empty`
+row has a *validated, working* careers page that simply has no openings today: that is a
+healthy daily source, not a dark row. 130 were activated and are scraped every day like any
+other company. Two rules follow, both now enforced:
+- **Empty is not broken.** `refresh_scrape_cache` used to park any active scrape row that
+  came back empty 3 days running — in this market a company can have no openings for a
+  month. Empty rows are now NEVER parked; a 45-day streak only asks triage to re-read the
+  page (it can tell "no openings" from "openings we fail to extract") and the row stays
+  active throughout. Only ERRORS park a row, at 7 days.
+- Consequently the table below applies to rows that are still `active=false`.
+
+| tool | cadence | claims rows whose note matches | re-opens the hunt? |
+|---|---|---|---|
+| `triage_dark` | daily 18:00 | `no listing found` / `no IL listing` / `no ATS detected` / **`dark-triage`** | yes — its rewrite drops the old `page-empty` stamp |
+| `listing_hunt` | daily 19:00 | the wide parked-shape regex, **minus** `page-empty` | — |
+| `repair_extract_gap` | daily 19:00 | `dark-triage …: extract-gap` | activates directly |
+| `probe_candidates` | daily 05:00 | `monitored candidate` / `host documented` / `no IL listing` | yes — `_wake_note` strips every stale segment |
+| `crack_walled` | daily 19:00 + weekly | `unsupported ATS` | — |
+| `scan_dead_domains` | daily 05:00 | liveness only — **never looks at roles** | no |
+| `audit_empty_rows` | weekly | `verdicts.in_pool` + not audited in `AUDIT_TTL_DAYS` (30) | activates directly |
+| `deep_validate` | **weekly Sat 04:00** | `in_pool` + `_revalidatable` | activates directly |
+
+Two traps this matrix exists to prevent, both of which were live:
+- **An inert wake.** `probe_candidates` cleared `listing-hunt|crack-walled` but not
+  `dark-triage`, so `listing_hunt._triaged_page_empty` still excluded every woken
+  page-empty row: 105/105 wakes went nowhere. A wake must clear *every* stamp that any
+  downstream filter excludes on.
+- **Note erosion retiring a row from its own pool.** Each re-stamp trims the base note to
+  fit 220 chars; once the original verdict eroded (`no IL listing; monitored candidate` →
+  `no `), the row matched no pool at all. `triage_dark.TARGET_NOTES` therefore matches its
+  **own** `dark-triage` stamp, which makes it self-sustaining.
+
+(Moved here from `HANDOFF.md` §1b on 2026-08-23: it is a durable rule, not session news.)
+
 ## 3. Resolution ladder — how a dark company becomes covered
+*lane: `registry`*
 
 New names enter via discovery (`research_companies.json` queue) or manual seeding. Then:
 
@@ -351,23 +461,42 @@ the short version of the three gates and the code that enforces them.
   shrinks >20%); every other runner needs the operator to apply this rule.
 
 ## 4. Schedules and latency guarantees (UTC)
+*lane: `infra` — one session at a time. Checked against the real crons by `docs/check_docs.py`.*
 
-| time | workflow | effect |
+This table is the **only** schedule in the repo, and `docs/check_docs.py` fails if any
+`.github/workflows/*.yml` cron is missing from it or disagrees with it. It was wrong for
+two workflows and one hour until 2026-08-23 — `triage-dark` and `deep-validate` were not
+listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
+
+| cron (UTC) | workflow | effect |
 |---|---|---|
-| 00:00 | scrape-refresh | re-render all scrape rows (JD carry-forward keeps enrichment) |
-| 02:30 | retry-unreachable | Bright Data re-fetch of flaky endpoints |
-| 05:00 | daily-digest | discovery → telegram → probe candidates → JD-enrich → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** |
-| 05:45 / 08:30 | inbox relay (private repo) | digest → email via issue+mention, content-hash dedup |
-| 06:00 | self-heal | re-resolve stale/rotted boards |
-| 08:00 / 20:00 | auto-expand | drain resolution queue (deterministic + LLM tiers) |
-| 14:00 | listing-hunt | re-hunt woken/eligible dark rows (no-ops in minutes when clean) |
-| Sun 04:00 | audit-coverage | wayback rescue, empty cross-validation, full parked-row re-audit, **liveness re-scan (revives domains), walled-ATS re-crack**, coverage report |
+| `0 0 * * *` | scrape-refresh | re-render all scrape rows (JD carry-forward keeps enrichment) |
+| `30 2 * * *` | retry-unreachable | Bright Data re-fetch of flaky endpoints |
+| `0 5 * * *` | daily-digest | discovery → telegram → liveness scan → probe candidates → JD-enrich → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** |
+| — 05:45 / 08:30 | inbox relay (private repo `AnalystJobsIL/inbox`, not this repo's crons) | digest → email via issue+mention, content-hash dedup |
+| `0 6 * * *` | self-heal | re-resolve stale/rotted boards |
+| `0 8,20 * * *` | auto-expand | drain resolution queue (deterministic + LLM tiers) |
+| `0 18 * * *` | triage-dark | classify every parked row by failure mode (`dark-triage <date>: <mode>`) |
+| `0 19 * * *` | listing-hunt | repair-extract-gap (35 min) → re-hunt woken/eligible dark rows (200 min) → walled-ATS re-crack (60 min) |
+| `0 4 * * 6` | deep-validate | Saturday: Chromium render + network sniff over `_revalidatable` rows |
+| `0 4 * * 0` | audit-coverage | Sunday: wayback rescue, empty cross-validation, full parked-row re-audit, **liveness re-scan (revives domains), walled-ATS re-crack**, coverage report |
+| on push | tests | `pytest`, `check_invariants.py`, `pipeline.platform_check`, `docs/check_docs.py` — the only workflow with no `continue-on-error` step |
+
+**Concurrency:** eight of the nine scheduled workflows share the `repo-state` group, so a
+long run makes the next one queue or be superseded with no error. `daily-digest.yml` has its
+own group on purpose, so a digest CAN overlap an audit/hunt run; both re-read before writing,
+so verdicts survive (§2, the single-writer rule).
+
+**A third scheduler exists and is not in this table:** the Windows scheduled task
+`IsraeliJobs-Firmographics` runs `run_firmo_chain.cmd` every 6h on the owner's machine (§7).
+It is not a GitHub Action and nothing here can see whether it ran.
 
 Latency: active API rows — **same-day**; active scrape rows — **~1 day** (00:00 refresh →
-05:00 digest); monitored candidates — **~1–2 days** (probe wake → 14:00 verify → next
-digest); deep re-hunt every 14 days and weekly audit are backstops only.
+05:00 digest); monitored candidates — **~1–2 days** (probe wake → 19:00 hunt verify → next
+digest); deep re-hunt every 14 days and the weekend audits are backstops only.
 
 ## 5. State files
+*lane: `infra` (who writes what) — `shared` for everyone who reads them*
 
 | file | contents | written by |
 |---|---|---|
@@ -390,6 +519,7 @@ digest); deep re-hunt every 14 days and weekly audit are backstops only.
 (The single-writer and commit-together rules live with the csv schema in §2.)
 
 ## 5a. Fetch-failure semantics (what a broken careers board does to our job board)
+*lanes: `ats-fetch` · `scraper` · `infra`*
 
 A company whose fetch raises does **not** crash the run (`pipeline/run.py` per-company
 try/except): it lands in `companies_failed` and gets `status: fetch-error` in `stale.json`.
@@ -410,6 +540,7 @@ window; `CARRY_MAX_DAYS`=14 (stale scrape jobs); the 14-day deep re-hunt cadence
 `_stale_hunt`'s 14-day suppression of a row carrying a hunt verdict.
 
 ## 5b. Diagnosing "why isn't company X in my email?"
+*lane: any — this is the runbook every lane starts from*
 
 In order — each step names the file to open:
 
@@ -445,7 +576,48 @@ not live views of `companies.csv` — a company's absence from `health_baseline.
 active rows had no baseline entry). To settle it, run the row yourself:
 `python -m pipeline.run --only "<name>" --no-llm`.
 
+## 5c. Debugging entry points
+*lane: any*
+
+- "Why isn't company X in my email?" → §5b above (ordered runbook).
+- "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
+- "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
+  **24 of the 66 workflow steps are `continue-on-error`, so a green run can still hide a
+  failed step** — read the step, not the badge.
+- Coverage snapshot:
+  ```bash
+  python -c "import csv;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>5];print(len(r),'rows',sum(1 for x in r if x[4]=='true'),'active')"
+  ```
+- **Orphan check — run after touching ANY row filter** (see the ownership matrix in §2). Must print 0; a non-zero count
+  is companies no recurring job will ever look at again:
+  ```bash
+  python -c "
+  import csv,re
+  T=re.compile(r'no listing found|no IL listing|no ATS detected|dark-triage',re.I)
+  S=re.compile(r'defunct|domain-dead|recruiter|duplicate|redundant',re.I)
+  P=re.compile(r'monitored candidate|host documented|no IL listing',re.I)
+  rows=[r for r in csv.reader(open('companies.csv',encoding='utf-8')) if r and len(r)>=6]
+  dark=[r for r in rows if r[4]=='false' and 'dark-triage' in (r[5] or '')]
+  orph=[r for r in dark if not ((T.search(r[5]) and not S.search(r[5])) or
+        (P.search(r[5]) and 'domain-dead' not in r[5] and (r[3] or '').startswith('http')))]
+  print(len(orph),'orphaned of',len(dark),'dark'); [print('  ',r[0]) for r in orph[:10]]"
+  ```
+- "Did tonight's dark-row work reach the pool?" — the hunt pool should be non-zero and
+  shrink over successive nights:
+  ```bash
+  python -c "
+  import csv,re,collections
+  rows=[r for r in csv.reader(open('companies.csv',encoding='utf-8')) if r and len(r)>5]
+  c=collections.Counter(m.group(1) for r in rows if (m:=re.search(r'dark-triage [0-9-]+: ([a-z-]+)',r[5])))
+  print(sum(c.values()),'triaged:',dict(c))"
+  ```
+  **A count of ~0 here means a concurrent writer clobbered the notes column** — check the
+  most recent `row-merged state` commit and see §8 item 3b before re-running triage.
+
+(Moved here from `HANDOFF.md` §5 on 2026-08-23.)
+
 ## 6. Recipes
+*lanes: `registry` (add a company) · `ats-fetch` (add a platform) · `discovery` (add a channel)*
 
 - **BEFORE adding any company (every time):** (1) grep the name **stem**, not the marketing
   name — `grep -in deci companies.csv` finds a row that `Deci AI` misses; many rows omit the
@@ -475,6 +647,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
   miss as a detection pattern so the class is covered, not the instance.
 
 ## 7. Company firmographics — the company-type layer
+*lane: `company-intel`*
 
 Structured per-company facts (sector, stage, size, business model) that join with the
 matched jobs to answer **"what does this TYPE of company ask for?"**. Built 2026-08-22;
@@ -594,3 +767,52 @@ that table when a new sector variant fragments the grouping; don't edit stored r
 - The researcher found several listed companies **dead or absorbed** (Alike Health,
   Syte, Sckipio, SimilarTech, NanoLock, Rewire R&D) — firmographics is currently the only
   place that knowledge lands; the `companies.csv` rows are not auto-parked from it.
+
+## 8. Failure classes — what this codebase does instead of erroring
+*lane: any — every lane has been bitten by these*
+
+Moved verbatim from `HANDOFF.md` §2 on 2026-08-23, where it was filed as session news. It
+is the most reusable page in the repo: **a green workflow means nothing here.**
+
+1. **Silent exclusion is the dominant bug class here.** Every serious defect found was a
+   row quietly leaving a re-check pool: a verdict string missing from an allowlist, a
+   `"marker" not in note` filter with no staleness escape, or a note overwrite that erased
+   another tool's token. None of them error. See §2, "the verdict-string rule".
+2. **A mass-zero result is a broken run, not a measurement.** A hunt cycle once reported
+   0/501 because two sync Playwright instances collided silently. Strip those verdicts and
+   re-run; never let them commit.
+3. **Two concurrency layers.** In-process (re-read before every write) *and* git-layer
+   (`merge_csv_rows.py`). A 3.5-hour cycle was discarded because only the first existed.
+   Heavy local pushes during a long cloud run used to destroy it; now they don't.
+3b. **The notes column is an append-log, so row-level merging is not enough.** On 2026-08-22
+   the 14:00 hunt committed a `row-merged state` whose row versions predated the evening
+   triage: `merge_csv_rows` applied its rows wholesale and the `dark-triage` segment
+   vanished from **351 of 352 rows** (the hunt pool then computed to literally 0). The merge
+   is now segment-aware (`_merge_notes`, keyed by owning tool). **If you add a new verdict
+   token, add it to `_TOOL` in `merge_csv_rows.py` too** — an unrecognised segment is keyed
+   by its first 28 chars, so two different runs of it collide and one is dropped.
+   Guarded by `test_merge_unions_note_segments_from_both_writers`.
+4. **Search results will hand you another company's board** — and it verifies, with real
+   jobs. `_slug_matches` guards it. But note the inverse: CyberArk→PANW and Imperva→Thales
+   looked like false matches and were actually **real acquisitions**. Check before "fixing".
+5. **DuckDuckGo is blocked from this developer machine** (returns nothing) but works on
+   GitHub runners. Local resolution work needs the Bright Data path
+   (`deep_validate.google_via_unlocker`). SerpApi quota resets **2026-09-01**.
+6. **Never overwrite a file you didn't read.** `pipeline/aggregators.py` already existed and
+   held `fetch_serpapi_google_jobs`; creating a same-named module destroyed it silently
+   (restored). The tooling warned; the warning was missed.
+7. `python -m pipeline.run` with `--only`/`--limit` now writes `out/docs-preview/`, not the
+   published board. Several root scripts have **no `__main__` guard** — importing them runs
+   them (`merge_research.py` rewrites state on import).
+
+### The guard rails, and what each one is for
+
+| guard | runs | catches |
+|---|---|---|
+| `tests/test_units.py` | `pytest`, on every push and before every commit | 123 cases from 54 functions, **every one a bug that shipped**. Add one for every bug you fix. |
+| `check_invariants.py` | blocking gate inside the digest, and in `tests.yml` | registry-shape violations: alias rows, an ATS row whose endpoint is not on that ATS, eroded verdicts. Some checks are warnings on purpose — see §K in `docs/sessions/2026-08-23.md` for why a blocking check once discarded a whole run. |
+| `pipeline/platform_check.py` | `tests.yml` | an ATS platform wired into some of its ~22 sites and not the others |
+| `docs/check_docs.py` | `tests.yml`, via `test_docs_are_consistent_with_the_code` | a document that names a file that no longer exists, a cron table that disagrees with the crons, a root module nobody classified, a `HANDOFF.md` growing back past 250 lines |
+
+If a change makes these red, the change is wrong — they were all written from real
+incidents.

@@ -904,3 +904,22 @@ def test_a_scraped_location_is_a_place_not_the_card_around_it(card, loc):
     reader uses to decide whether to apply, so it has to be a place."""
     from scrape_universal import _loc_from_ctx
     assert _loc_from_ctx(card) == loc
+
+
+# --- docs: a confident document that is no longer true (SCHEDULING.md said the email was
+# --- unbuilt for three days after it shipped; HANDOFF listed two load-bearing modules as
+# --- "safe to delete" while retry_unreachable imports one of them nightly) -------------
+def test_docs_are_consistent_with_the_code():
+    """The docs are a build artifact and this is their test.
+
+    `docs/check_docs.py` fails when a doc names a file that no longer exists, when the
+    schedule table disagrees with the workflow crons, when a root module is unclassified in
+    `docs/MODULES.md`, when a module called legacy is imported by live code, or when
+    HANDOFF.md grows back into a 753-line archive. Run it directly for the report:
+    `python docs/check_docs.py`."""
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    proc = subprocess.run([sys.executable, os.path.join(root, "docs", "check_docs.py")],
+                          capture_output=True, text=True, encoding="utf-8", errors="replace",
+                          cwd=root)
+    assert proc.returncode == 0, "docs/check_docs.py failed:\n" + (proc.stdout or "") + (proc.stderr or "")

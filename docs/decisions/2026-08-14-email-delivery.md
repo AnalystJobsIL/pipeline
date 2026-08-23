@@ -1,4 +1,8 @@
-# Scheduling the daily run — **SUPERSEDED, kept for the decision record**
+# 2026-08-14 — how does the daily email get sent? **SUPERSEDED, kept for the record**
+
+*Was `SCHEDULING.md` at the repo root until 2026-08-23; moved here by the `docs` lane
+because its whole content is a decision that has since been made. Option A+B hybrid won:
+GitHub Actions produces the digest, a private repo relays it as an issue mention.*
 
 > **This document is out of date (written 2026-08-14) and describes a decision that has
 > since been made and shipped.** The daily email has been going out since 2026-08-20:

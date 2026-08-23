@@ -1,88 +1,111 @@
 # AnalystJobsIL pipeline
 
-The aggregation pipeline behind the **[AnalystJobsIL board](https://analystjobsil.github.io/board/)** —
-a free board of experienced (≈3+ yrs) data-analyst / BI / analytics openings at Israeli high-tech
-companies. The board holds every role we can still see on its employer's own careers page; once a
-role comes off that page it moves to the [archive](https://analystjobsil.github.io/board/archive.html),
-and it stays in the store either way. A daily email carries the roles posted in the last 48h.
+A free job board of experienced (**≈3+ years**) data-analyst / BI / analytics openings at
+Israeli high-tech companies, and a daily email of what is new.
 
-Instead of scraping aggregators, it polls 1,000+ companies' **own public ATS endpoints**
-(Comeet, Greenhouse, Lever, SmartRecruiters, Recruitee, Ashby, Workday, and per-company custom
-JSON APIs) on a daily schedule via GitHub Actions, filters to Israel-located analytics roles,
-dedupes across days and platforms, and publishes the board.
+- **The board** → https://analystjobsil.github.io/board/ — every role we can still see on
+  its employer's own careers page, searchable, with company facts on each card.
+- **The archive** → https://analystjobsil.github.io/board/archive.html — roles that have
+  come off their employer's page. Nothing is deleted.
+- **The email** — once a day, only roles posted in the last 48h, grouped by company.
 
-## companies.csv
+The point of the design: **we do not scrape aggregators.** The pipeline reads 846 companies'
+*own* careers boards every morning — 433 through a native ATS API (Comeet, Greenhouse, Lever,
+SmartRecruiters, Recruitee, Ashby, Workday, Oracle HCM and 8 more) and 412 by rendering the
+page, out of a 1,199-row registry — filters to Israel-located analytics roles, and publishes
+what it can still verify. Every company row carries a dated verdict explaining what we know
+about it — including the claim "this company has no open roles", which is the claim most
+job boards get wrong.
 
-The editable company list. Columns:
+It runs entirely on GitHub Actions cron jobs. There is no server.
 
-- `company_name` — display name
-- `ats_platform` — one of `comeet`, `greenhouse`, `lever`, `smartrecruiters`, `recruitee`, `ashby`,
-  `workable`, `bamboohr`, `breezy`, `oraclehcm`, `jazzhr`, `workday`, `microsoft`, `custom_json`,
-  `scrape` (no public API — read from the rendered careers page) or `discovery` (the synthetic row
-  that reads the LinkedIn/Indeed/Telegram discovery cache)
-- `token` — the platform-specific board token/slug/id used to build the API URL
-- `api_url` — the exact endpoint the scraper hits (pre-built so no guessing at runtime)
-- `active` — `true`/`false`. Set to `false` to pause polling a company without deleting the row.
-- `notes` — free text (e.g. "also on Lever - dedupe by job id")
+## How a job gets from a company's careers page to your inbox
 
-The daily pipeline pulls the latest version of this file from the repo before each run, so edits
-made in the GitHub UI are picked up on the next scheduled run (no redeploy needed).
+```
+ 1 INTAKE      LinkedIn · Indeed · Telegram sweeps find roles and new employer names
+    │          discovery_daily.py · discovery_telegram.py
+    ▼
+ 2 REGISTRY    resolve each employer to a readable careers board, or park it with a
+    │          reason. companies.csv — 1,199 rows, 846 active, 353 parked
+    ▼
+ 3 FETCH       433 rows via a native ATS API · 412 rendered from the page ·
+    │          1 synthetic row that reads the discovery cache
+    ▼
+ 4 ENRICH      fetch the full job description · research the company
+    │          (sector, stage, size, founded, Israel centre)
+    ▼
+ 5 CLASSIFY    is it in Israel? is it ≈3+ years of analytics work?
+    │          deterministic keyword rules, then an LLM for the ambiguous ones
+    ▼
+ 6 RENDER      the board, the archive, the email, every tag on a role card
+    │
+    ▼
+ 7 DELIVER     publish the board · relay the email · commit the day's state
+```
 
-To add a company:
-1. Find its careers page and identify the ATS platform (check the URL — e.g. `jobs.lever.co/x`,
-   `boards.greenhouse.io/x`, `comeet.com/jobs/x/...`).
-2. Build the `api_url` per the pattern for that platform (see below) and confirm it loads valid
-   JSON in a browser or `curl`.
-3. Add a row.
+Counts are from 2026-08-23 and drift daily; `ARCHITECTURE.md` §5c has the snippets that
+re-derive them.
 
-### API URL patterns by platform
+**What counts as a role:** experienced data/BI/product/marketing analytics and analytics
+leadership. The title does not matter — a "Data Scientist" posting counts if the work is
+really product analytics. Out: core ML, data engineering, software engineering, FP&A,
+security/SOC, and anything junior/intern/entry-level. The full product decision, and the
+code that implements it, are in `ARCHITECTURE.md` §0.
 
-- Comeet: `https://www.comeet.com/careers-api/2.0/company/{token}/positions?token={token}`
-  (token is embedded in the public careers page HTML/JS — not guessable from the URL alone)
-- Greenhouse: `https://boards-api.greenhouse.io/v1/boards/{token}/jobs`
-- Lever: `https://api.lever.co/v0/postings/{token}?mode=json` (some companies use
-  `api.eu.lever.co` instead — try both)
-- SmartRecruiters: `https://api.smartrecruiters.com/v1/companies/{token}/postings`
-- Recruitee: `https://{token}.recruitee.com/api/offers/`
-- Ashby: `https://api.ashbyhq.com/posting-api/job-board/{token}`
-- JazzHR: no consistent public JSON API — needs per-company verification
-- Workday: `https://{tenant}.wd{N}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs` — **POST**
-  only (a plain GET 400s), body like `{"searchText":"Israel","limit":20,"offset":0}`. `{tenant}`,
-  `{N}` (wd1/wd3/wd5/wd12...), and `{site}` all vary per company and must be discovered from the
-  live careers page's network requests.
-- Custom JSON (e.g. Amazon): one-off per company, discovered via the careers page's own network
-  requests. No shared pattern — verify and document each individually in `notes`.
+## Reading this repo
 
-### Multinationals — global boards need a location filter
+| you are | start at |
+|---|---|
+| a visitor | this file, then `ARCHITECTURE.md` §0 |
+| an agent or a returning maintainer | `CLAUDE.md` (2 minutes), then `docs/AGENT_BRIEF.md` |
+| debugging "why isn't company X in my email?" | `ARCHITECTURE.md` §5b |
+| adding a company or an ATS platform | `docs/ATS_PLATFORMS.md`, then `ARCHITECTURE.md` §6 |
+| wondering what a root script is for | `docs/MODULES.md` |
 
-Rows marked "Global board" in `notes` (Workday and other multinational-scale companies) return
-job postings from **every country**, not just Israel. The scraper filters these to Israel (by
-request body `searchText`/location facet for Workday, or a location field in the response)
-before they reach the classification step, or the board would drown in postings from every
-other office worldwide.
+| file | what it is |
+|---|---|
+| `CLAUDE.md` | the 2-minute orientation; loaded automatically by Claude Code |
+| `ARCHITECTURE.md` | the durable system model, the rules, the runbooks |
+| `HANDOFF.md` | current state: what changed last session, what is known-broken |
+| `docs/AGENT_BRIEF.md` | the ten lanes and which files each may write |
+| `docs/MODULES.md` | every module, what it does, and whether it is still live |
+| `docs/BACKLOG.md` | known gaps that outlive a session |
+| `docs/TAGGING.md` | every tag on a role card and where it is computed |
+| `docs/BRIGHTDATA.md` | the Web Unlocker setup and budget |
+| `docs/ATS_PLATFORMS.md` | `companies.csv` columns and the per-platform API URL patterns |
+| `docs/sessions/` | what past sessions found, in their own words |
+| `docs/decisions/` | superseded design decisions, kept for the record |
 
-### Known duplicates across platforms
+## The code
 
-A few companies run boards on two ATS platforms simultaneously (e.g. WalkMe and Cloudinary
-appear on both Greenhouse and Lever; Papaya Global appears on both Comeet and Greenhouse).
-Both rows are kept intentionally — the pipeline dedupes by job title + company at digest time,
-not by dropping rows here.
+`pipeline/` is a zero-dependency (stdlib-only) Python package — the digest run itself:
 
-## The pipeline (code)
-
-`pipeline/` is a zero-dependency (stdlib-only) Python package:
 - `http.py` — GET/POST JSON with retry/backoff.
-- `fetchers.py` — one normalizer per ATS platform → common job shape.
+- `fetchers.py` — one normalizer per ATS platform → the common job shape.
 - `israel.py` — deterministic Israel-location filter (country code, then place-name scan).
 - `seniority.py` — keyword pre-filter + `claude -p` fallback for ambiguous titles only.
 - `store.py` — SQLite seen-store (across-day dedup + cross-platform merge) + LLM cache.
-- `digest.py` — HTML/plaintext digest with an auditable run summary.
-- `run.py` — orchestrator. `python -m pipeline.run` produces `out/digest-<date>.{html,txt,json}`
-  (produce-only: never publishes). `verify_company.py` and `probe_ats.py` are the
-  live-verification research tools.
+- `digest.py` — the board, the archive and the email, with an auditable run summary.
+- `run.py` — the orchestrator. `python -m pipeline.run` produces
+  `out/digest-<date>.{html,txt,json}` and **never** emails or publishes.
 
-Scheduling and the supporting cloud workflows (coverage auto-expansion, stale-board self-heal,
-unreachable-endpoint retry, scrape-cache refresh) are documented in `SCHEDULING.md`.
+The ~67 scripts at the repo root are the coverage machinery: resolvers, hunts, audits and
+one-shot probes. `docs/MODULES.md` says which are scheduled, which are libraries, which are
+operator tools and which are dead weight — 30 of them are reachable from no workflow, no
+test and no live import.
+
+### Run it locally without touching anything shared
+
+```bash
+python -m pipeline.run --only "Fiverr,Wix" --no-llm   # produce-only; writes out/docs-preview/
+python -m pipeline.run --db /tmp/scratch.db           # don't touch the real seen-store
+python scrape_universal.py "Company" "https://…/careers"
+python audit_empty_rows.py                            # dry-run; --apply to write
+python -m pytest -q && python check_invariants.py && python docs/check_docs.py
+```
+
+Most tools are dry-run by default and take `--apply` to write. A local run cannot email
+anyone: publishing and relaying are separate workflow steps.
 
 Deliberately excluded as scrape sources: Glassdoor and LinkedIn Jobs. Both aggressively block
 automated access and enforce their ToS against scrapers, so they'd be fragile and legally risky
