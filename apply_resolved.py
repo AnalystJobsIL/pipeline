@@ -10,6 +10,7 @@ and leave the rest untouched.
 from __future__ import annotations
 
 import csv
+import datetime as _dt
 import io
 import json
 import os
@@ -48,7 +49,12 @@ def main():
             if [fields[1], fields[2], fields[3]] != [plat, tok, api]:
                 fields[1], fields[2], fields[3] = plat, tok, api
                 if len(fields) >= 6:
-                    fields[5] = (fields[5] + " " if fields[5] else "") + "[self-heal: re-resolved]"
+                    # through the append-log: a bare concatenation has no cap, and the next
+                    # writer's trim then cuts whatever segment happens to be at the boundary
+                    from pipeline.notes import replace_own
+                    fields[5] = replace_own(fields[5], "self-heal",
+                                            f"self-heal {_dt.date.today().isoformat()}: "
+                                            f"re-resolved to {plat}")
                 eol = "\r\n" if line.endswith("\r\n") else "\n" if line.endswith("\n") else ""
                 lines[i] = _fmt(fields) + eol
                 changed += 1
