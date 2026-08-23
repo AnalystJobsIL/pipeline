@@ -1848,3 +1848,126 @@ def test_every_ownership_mirror_agrees_with_the_tool_it_mirrors():
     assert gap_matrix == gap_real, (
         "the extract-gap mirror disagrees with repair_extract_gap.MODE by %d row(s): %s"
         % (len(gap_matrix ^ gap_real), sorted(gap_matrix ^ gap_real)[:8]))
+
+
+# ---------------------------------------------------------------------------------------
+# Three more mutation-killers. Each of these was reported by `tools/mutate.py` as
+# "killed ONLY by a source-text guard" -- i.e. the hole was real and the only thing noticing
+# it was a guard that reads the source, which is the kind this repo has watched break six
+# times. A gate whose only witness is a string match is not guarded.
+# ---------------------------------------------------------------------------------------
+
+
+def test_the_hunt_does_not_persist_a_foreign_address_it_refused_to_activate(
+        tmp_path, monkeypatch):
+    """Kills `hunt-persist-remove`.
+
+    The `nolisting` branch writes `fr[3]` WITHOUT activating, which reads as harmless and is
+    not: the row keeps its fast-path token, and `listing_hunt`'s own documented fast path
+    scrapes the stored address first the next night. Refusing to activate while still
+    recording the address only moves the wrong activation 24 hours downstream, under a
+    different tool's name.
+    """
+    import sys
+    import listing_hunt as L
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["NanoLock Security", "", "", "https://nanolock.example/careers", "false",
+         "dark-triage 2026-01-01: no ATS detected"],
+        ["GoodCo", "", "", "https://www.goodco.example/careers", "false",
+         "dark-triage 2026-01-01: no ATS detected"],
+    ])
+    foreign = "https://gen.wd1.myworkdayjobs.com/careers/"
+    ours = "https://www.goodco.example/careers/openings"
+    res = {"NanoLock Security": ("nolisting", foreign, 0, ""),
+           "GoodCo": ("nolisting", ours, 0, "")}
+    monkeypatch.setattr(L, "hunt_one",
+                        lambda name, seed, documented=False, mode="": res[name])
+    monkeypatch.setattr(G, "page_names_company", lambda n, u, html="": None)  # unreadable
+    monkeypatch.setattr(sys, "argv", ["listing_hunt.py", "--apply"])
+    L.main()
+
+    out = _read(tmp_path)
+    assert "myworkdayjobs" not in out["NanoLock Security"][3], (
+        "persisted Gen Digital's Workday as the row's address: %r"
+        % (out["NanoLock Security"],))
+    # ordinary domain: the candidate is still recorded, which is the branch's whole purpose
+    assert out["GoodCo"][3] == ours, (
+        "positive control regressed — an ordinary-domain candidate must still be "
+        "recorded: %r" % (out["GoodCo"],))
+
+
+def test_repair_refuses_a_candidate_whose_page_it_could_not_read(tmp_path, monkeypatch):
+    """Kills `repair-page-invert` (`is True` -> `is not False`).
+
+    `page_names_company` is three-valued on purpose. `is not False` admits `None`, so a page
+    nobody could read counts as ours -- which is how `SupPlant` reached
+    `https://careers.workable.com/`, Workable's own front door. "We could not look" is not
+    evidence, and this tool runs at 19:00 immediately before the hunt in the same job.
+    """
+    import sys
+    import repair_dead_urls as R
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["SupPlant", "scrape", "", "https://careers.supplant-dead.com", "false",
+         "monitored candidate 2026-01-01: host documented"],
+        ["GoodCo", "scrape", "", "https://www.goodco-dead.com", "false",
+         "monitored candidate 2026-01-01: host documented"],
+    ])
+    cand = {"SupPlant": ["https://careers.workable.com/"],
+            "GoodCo": ["https://www.goodco.example/careers"]}
+    # BOTH pages are unreadable to the page predicate; only GoodCo's whole name IS its domain
+    monkeypatch.setattr(R, "resolves", lambda h, tries=3: not h.endswith("-dead.com"))
+    monkeypatch.setattr(R, "candidates", lambda name, dead: cand.get(name, []))
+    monkeypatch.setattr(R, "fetch", lambda u: (200, "<html>" + "z" * 40 + "</html>"))
+    monkeypatch.setattr(R, "_unlock", lambda u: "")
+    monkeypatch.setattr(G, "page_names_company", lambda n, u, html="": None)
+    monkeypatch.setattr(sys, "argv", ["repair_dead_urls.py", "--apply"])
+    R.main()
+
+    out = _read(tmp_path)
+    assert "workable.com" not in out["SupPlant"][3], (
+        "repaired onto Workable's own front door off an unreadable page: %r"
+        % (out["SupPlant"],))
+
+
+def test_repair_still_needs_the_whole_name_to_be_the_domain(tmp_path, monkeypatch):
+    """Kills `repair-narrow` (dropping the `whole_name` conjunct).
+
+    `verdict() == "match"` also fires when the domain equals the company name with its
+    generic words stripped, and that core can be an acronym: "DiA Imaging Analytics" strips
+    to `dia`, and `registrable("www.dia.mil")` is `dia`. This tool once printed
+
+        [OK] DiA Imaging Analytics  www.dia-analytics.com -> https://www.dia.mil/...
+
+    for the US Defense Intelligence Agency. 125 of the 516 rows whose own URL scores `match`
+    rest on a stripped core, so `match` alone is not evidence.
+    """
+    import sys
+    import repair_dead_urls as R
+    from pipeline import identity_gate as G
+    from pipeline.company_identity import verdict, registrable, _norm
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["DiA Imaging Analytics", "scrape", "", "https://www.dia-analytics-dead.com", "false",
+         "monitored candidate 2026-01-01: host documented"],
+    ])
+    impostor = "https://www.dia.mil/careers/"
+    assert verdict("DiA Imaging Analytics", impostor) == "match", "fixture drift"
+    assert registrable("www.dia.mil") != _norm("DiA Imaging Analytics"), (
+        "fixture drift: the whole name must NOT be the domain here")
+
+    monkeypatch.setattr(R, "resolves", lambda h, tries=3: not h.endswith("-dead.com"))
+    monkeypatch.setattr(R, "candidates", lambda name, dead: [impostor])
+    monkeypatch.setattr(R, "fetch", lambda u: (200, "<html>" + "z" * 40 + "</html>"))
+    monkeypatch.setattr(R, "_unlock", lambda u: "")
+    monkeypatch.setattr(G, "page_names_company", lambda n, u, html="": None)
+    monkeypatch.setattr(sys, "argv", ["repair_dead_urls.py", "--apply"])
+    R.main()
+
+    out = _read(tmp_path)
+    assert "dia.mil" not in out["DiA Imaging Analytics"][3], (
+        "repaired DiA Imaging Analytics onto the Defense Intelligence Agency: %r"
+        % (out["DiA Imaging Analytics"],))

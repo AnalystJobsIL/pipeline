@@ -102,22 +102,31 @@ def run_one(mut, work_root):
         return ("FAIL", "stale mutation: %d matches for `find`, re-aim it" % n, "")
     open(target, "w", encoding="utf-8").write(src.replace(mut["find"], mut["replace"], 1))
 
-    proc = subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider"],
+    # NO `-x`. "A static guard may never be the SOLE killer" is a claim about the whole set
+    # of failing tests, and `-x` reports only the first one -- which is file/definition
+    # order, not significance. Five mutations were reported as static-only kills purely
+    # because a source-text guard happened to be defined above the behavioural fixture that
+    # also caught them. The harness must not manufacture its own finding.
+    proc = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
                           cwd=work, capture_output=True, text=True,
-                          encoding="utf-8", errors="replace", timeout=900)
+                          encoding="utf-8", errors="replace", timeout=1800)
     if proc.returncode == 0:
         return ("FAIL", "SURVIVED — the suite is green with this mutation applied", "")
     # pytest -q prints `FAILED tests/x.py::test_y - AssertionError` in the short summary and
     # `tests\x.py:NNN: AssertionError` in the traceback. Match the summary first. Without a
     # killer we cannot enforce `must_be_killed_by_behavioural`, which is half the point here.
     out = proc.stdout or ""
-    m = (re.search(r"^FAILED ([\w./\\]+::\w+)", out, re.M)
-         or re.search(r"^([\w./\\]+\.py::\w+)", out, re.M))
-    killer = m.group(1) if m else "?"
-    kind = _classify_killer(work, killer) if killer != "?" else "unknown"
-    if mut.get("must_be_killed_by_behavioural", True) and kind == "static":
-        return ("FAIL", "killed ONLY by a source-text guard (%s)" % killer, killer)
-    return ("KILLED", kind, killer)
+    killers = re.findall(r"^FAILED ([\w./\\]+::\w+)", out, re.M) or \
+        re.findall(r"^([\w./\\]+\.py::\w+)", out, re.M)
+    if not killers:
+        return ("KILLED", "unknown", "?")
+    kinds = {k: _classify_killer(work, k) for k in killers}
+    real = [k for k, v in kinds.items() if v in ("behavioural", "direct")]
+    if mut.get("must_be_killed_by_behavioural", True) and not real:
+        return ("FAIL", "killed ONLY by source-text guard(s): %s"
+                % ", ".join(k.split("::")[-1] for k in killers[:3]), killers[0])
+    best = real[0] if real else killers[0]
+    return ("KILLED", kinds[best], best)
 
 
 def _registry_writers():

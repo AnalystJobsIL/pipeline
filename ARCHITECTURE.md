@@ -434,45 +434,50 @@ on this page" is not "these are THIS company's jobs". The three gates
 host by design, because the tenant may legitimately be an acquirer's
 (`Momentis Surgical` really does post under `memic`). So on those hosts:
 
-* what stops a wrong activation is `crack_walled._page_names_company` — three-valued, and
-  `None` (page unreadable) counts as **no evidence**, not as approval. **All six write
-  paths reach it on an ATS host — but `deep_validate` reaches it only when the tenant test
-  fails first.** Its gate is `tenant_is_this_company(...) or _page_names_company(...) is
-  True`, and the tenant test answers True on 430 of the 461 active ATS rows (it does not
-  scope path-tenant platforms at all), so on a greenhouse/comeet/lever/ashby host the
-  disjunction short-circuits and the page is never read. That is deliberate — `docs/BACKLOG.md`
-  33 records that those endpoints return 0 bytes, so demanding a page read there refuses 358
-  rows — but it means "routes through the gate" is a weaker statement for that tool than for
-  the other five, and an earlier version of this sentence stated it unconditionally. Paths (`crack_walled`, `audit_empty_rows`,
-  `deep_validate`, `repair_dead_urls`, `listing_hunt`, `repair_extract_gap`). **A seventh
-  tool writes `api_url` without any identity check of its own**: `apply_resolved.py`, whose
-  gate is upstream in `resolve_llm._verify`. It cannot activate a row, but it can re-point an
-  already-active one at another company's board, and it is on this lane's write list. On
-  ordinary domains `is_foreign`
-  still does the work, because a page test there would refuse every JS-rendered careers
-  page.
+* **The gate is `pipeline/identity_gate.py`.** One module, imported at module level by every
+  tool that writes the registry. `page_names_company` is three-valued and `None` (page
+  unreadable) counts as **no evidence**, not as approval. `ok_to_write` gates the *write*
+  rather than any one `return`, because persisting a foreign address into `api_url` with a
+  `host documented` note hands it to `listing_hunt`'s fast path, which activates it the next
+  night under a different tool's name. `activation_ok` is the composite for tools that
+  verified jobs first, and its asymmetry is deliberate: the tenant string may ADMIT, only
+  page content may REFUSE. Both directions were measured — a tenant veto costs 36 legitimate
+  acquisitions, and a mandatory page read costs 358 path-tenant rows whose endpoints return
+  0–28 bytes (`docs/BACKLOG.md` 21 and 33).
 
-  **Count these from the `activates?` column of the ownership matrix below, not from this
-  list.** A commit message
-  and a docstring on 2026-08-24 both called `listing_hunt` "the last activating path in that
-  class". It was not: `repair_extract_gap` runs 30 minutes earlier in the same 19:00 job,
-  sets `active=true`, and had only `is_foreign` — while the ownership matrix below had
-  listed it as `activates? yes` the entire time. (The first version of this paragraph sent
-  the reader to "the schedule table in section 4", which has columns
-  `cron | workflow | effect` and no `activates?` column at all — an instruction written to
-  prevent a miscount, pointing at a table without the data. Wave 9 caught it.) Six of its 40 rows were on an ATS host, including
-  `Sight Diagnostics` onto the board `Sight Sciences` is already active on (one company's
-  roles published under two names) and `NanoLock Security` onto Gen Digital's Workday. It
-  also forces `SCRAPE_ASSUME_IL=1`, which makes every location-less card on an
-  Israel-token-bearing page an Israel role — the weakest evidence any activating path uses;
-* and `crack_walled._ok_to_write`, which gates the **write**, not the return: refusing to
-  activate is not enough, because persisting a foreign address into `api_url` with a
-  `host documented` note hands it to `listing_hunt`'s fast-path, which activates it the next
-  night under a different tool's name;
-* a tenant that merely *contains* the company name is not evidence
-  (`Bancor` vs `careers-bancorpbank`), and a tenant that mismatches is **not** proof of theft
-  either — that is `docs/BACKLOG.md` 21, with the 36-row measurement showing why the obvious
-  fix is wrong.
+* **Never count the write paths by hand.** Every hand-written list of them in this repo has
+  been wrong, including one written specifically to prevent a miscount. Derive it:
+
+  ```bash
+  python -m pytest tests/test_registry.py -k every_registry_writer   # asserts all of them are gated
+  python tools/mutate.py --all                                       # asserts the gates are real
+  ```
+
+  `test_every_registry_writer_consults_an_identity_predicate` finds writers from source in
+  **both** shapes — `fr[3] = …` / `fr[4] = "true"`, and the whole-row literal
+  `[name, plat, tok, api, "true", note]`. On 2026-08-24 that is **22 modules, 14 of them the
+  literal shape**, which is why the older AST guard in `tests/test_units.py` saw 8: a list
+  literal has no subscript assignment. Five of the fourteen run on cron and had no identity
+  check of any kind until that date — `bd_rescue` and `retry_unreachable` (02:30),
+  `wayback_rescue` and `validate_empty` (Sun 04:00), `auto_expand` (08:00 and 20:00). Driven
+  against the commit before the fix, four of them activate `Bancor` onto The Bancorp Bank's
+  iCIMS board.
+
+* **One writer is gated upstream, not locally**: `apply_resolved.py` rewrites columns 1–3
+  with its gate in `resolve_llm._verify`. It cannot activate a row, but it can re-point an
+  already-active one.
+
+* **`deep_validate` reaches the page test only when the tenant test fails first** — its gate
+  is `tenant_is_this_company(...) or page_names_company(...) is True`, and the tenant test
+  answers True on 430 of the 461 active ATS rows because it does not scope path-tenant
+  platforms. That is the 358-row measurement above, not an oversight.
+
+* On ordinary domains `is_foreign` still does the work, because a page test there would
+  refuse every JS-rendered careers page — the same silent-exclusion trap in the other
+  direction.
+
+The archaeology of how each of those was got wrong is in
+`docs/sessions/2026-08-24-registry.md`. This section states what is true.
 
 **Before you change any row filter:** re-run the command above and check the `OWNED BY
 NOTHING` line. A row owned by no recurring job is coverage that silently never happens, and
@@ -521,7 +526,7 @@ Taxonomy:
 | `monitored candidate` / `host documented` | false | real page documented, extraction unproven | daily probe + 14-day re-hunt |
 | `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | that evening's 19:00 hunt (fast-path) |
 | `no listing found` / `no ATS detected` | false | full render found nothing parseable | weekly audit + hunt cron |
-| `unsupported ATS <x>` | false | ATS known, no extraction path yet. **Run `python registry_health.py --ats`** — it splits `WIRE` (a fetcher exists, the row just needs its tenant cracked) from `BUILD` (no fetcher). On 2026-08-24: **3 WIRE** (phenom 19, eightfold.ai 10, oraclecloud.com 4) / **5 BUILD** (icims.com 8, successfactors 7, avature.net 3, taleo.net 2, jobvite.com 1) over 54 rows. Three of those `BUILD` names clear §1's own "seen 3+ times" threshold. *(An earlier version of this cell said "8 of 8 WIRE, 0 BUILD, 32 rows" and blamed a same-day fetcher ship. The tool has never produced that: replaying it at the commit that wrote the claim gives 3/5 over 54, and `git log -- pipeline/fetchers.py` shows no change this session. It was typed from a bad ad-hoc snippet instead of from the command it cites — in the cell whose whole point is "run the command".)* | **six** jobs claim it (crack_walled, listing_hunt, triage_dark, probe_candidates, audit_empty_rows, deep_validate) — run `registry_health.py` rather than trusting this cell |
+| `unsupported ATS <x>` | false | ATS known, no extraction path yet. **Run `python registry_health.py --ats`** — it splits `WIRE` (a fetcher exists, the row just needs its tenant cracked) from `BUILD` (no fetcher). On 2026-08-24: **3 WIRE** (phenom 19, eightfold.ai 10, oraclecloud.com 4) / **5 BUILD** (icims.com 8, successfactors 7, avature.net 3, taleo.net 2, jobvite.com 1) over 54 rows. Three of those `BUILD` names clear §1's own "seen 3+ times" threshold. *(This cell has been wrong twice by being typed rather than run; see the session log.)* | **six** jobs claim it (crack_walled, listing_hunt, triage_dark, probe_candidates, audit_empty_rows, deep_validate) — run `registry_health.py` rather than trusting this cell |
 | `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS — strict TLS on the scanning machine produced 6 false positives) | re-tested **daily** by `scan_dead_domains` (`_rescannable` defaults to 1d) inside the 05:00 digest, and again by the Sunday audit; **a revived domain clears the flag automatically** |
 | `defunct: …` | false | company confirmed shut down/acquired | permanently excluded |
 | `alias-of <name>` | false | a SECOND row for a company already scanned at the same board (eBay / eBay Israel) | nobody — **terminal**, and re-opening it republishes every role twice |
@@ -662,8 +667,8 @@ hold a start-of-run snapshot; two concurrent snapshot-writers silently destroy e
 verdicts (lost-update incident 2026-08-22).
 
 **All 24 `companies.csv` writers, by safety class** (verified 2026-08-22; re-counted twice
-on 2026-08-23 — it said "20", then "22", and both were wrong. This census is what a new
-writer gets checked against, so its being short is the whole risk. Reproduce, and note the
+on 2026-08-23. This census is what a new writer gets checked against, so its being short
+is the whole risk. Reproduce, and note the
 grep must accept `CSV_PATH` as well as the literal, or it misses `resolve_any` and
 `resolve_unknowns`, which open a filename held in a variable:
 `for f in *.py; do grep -qE 'companies.csv|CSV_PATH' "$f" && grep -qE 'write_csv_rows|csv\.writer' "$f" && echo "$f"; done | wc -l`):
@@ -821,7 +826,9 @@ direction, and it is why the matrix has an ordering column at all.
 **A time budget without rotation is not a budget.** `scan_dead_domains` and
 `probe_candidates` run inside the 05:00 digest and were given 10-minute budgets — over loops
 that iterate in **CSV file order** with no state term in the predicate. A row found ALIVE
-writes nothing, so all of the liveness targets (**230** on 2026-08-24 — the count is not printed by `registry_health.py`, so it is the one row of the matrix below that nothing can catch rotting; it read "211" until wave 9, and this lane's own change adding `no listing found` to that pool moved it) kept their position forever: a truncated
+writes nothing, so all of the liveness targets (**230** on 2026-08-24; `registry_health.py` does not print
+this one, so it is the row of the matrix below that nothing catches rotting) kept their
+position forever: a truncated
 run re-walked the same prefix every night and never reached the tail, and a `probe_candidates`
 row past the cut could never wake at all, because a wake needs two observations. Both now
 sort least-recently-checked first (`cloud_state/scan_seen.json`, and a `last` key in
@@ -872,9 +879,7 @@ alias row points at a board that *works* — so the audit would have searched, f
 board, verified it with real Israel jobs and re-activated the duplicate: every eBay role
 published twice under two company names. `check_invariants` check B would not catch it
 (the names differ). Pools after the fix, on the SAME basis as the matrix above (no cooldown applied):
-audit 260 → **258**, crack 30 → **25**. (An earlier version said "audit 260 → 255". The
-alias fix removes exactly the two rows named above, so a delta of five could never have been
-right — reproduce with
+audit 260 → **258**, crack 30 → **25**. Reproduce with
 `python -c "import csv,re;from pipeline.verdicts import in_pool;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:];b=[x for x in r if x[4]=='false' and in_pool(x[5] or '')];t=re.compile(r'defunct|domain-dead|alias-of',re.I);print(len(b),len([x for x in b if not t.search(x[5] or '')]))"`
 -> `260 258` on 2026-08-24.) (With `_recrackable`'s daily cooldown a given night
 sees far fewer — 6 to 10 — which is what an earlier draft of this line quoted, silently
