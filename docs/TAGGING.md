@@ -6,6 +6,13 @@ No LLM calls at render time, so tags are reproducible and free. The flip side: a
 missing simply because the posting never said it, and coverage is capped by how much
 description text the fetch layer stored.
 
+**On description coverage (2026-08-23):** four list endpoints carry no JD at all — `workday`,
+`smartrecruiters`, `bamboohr`, `microsoft` — so their roles used to reach the board with a
+title and nothing to tag. `pipeline/jdfill.py` fetches the JD from the posting's own URL
+before classification, and `enrich_matched_jd.py` backfills the `matched` table itself at any
+age. If a role still renders "Requirements aren't captured", the posting's page is the reason
+(a JS shell or a bot wall), not the fetch layer.
+
 All extraction lives in two files:
 
 | File | Owns |
