@@ -35,12 +35,21 @@ POOL = (r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|host
         r"redirects to|scanned via brightdata|empty-but-suspect|needs re-resolution|"
         r"needs manual resolution|dark-triage")
 TERMINAL = r"defunct|domain-dead"
+# the modes triage_dark.py may write. A truncated one ("page-emp") matches no pool.
+TRIAGE_MODES = {"page-empty", "extract-gap", "wrong-page", "url-dead", "js-shell",
+                "blocked", "acquired"}
 
 err = []
+warnings = []
 
 
 def bad(msg):
     err.append(msg)
+
+
+def warn(msg):
+    """Wrong, but not worth withholding the day's email over."""
+    warnings.append(msg)
 
 
 def main():
@@ -94,6 +103,19 @@ def main():
     if dangling:
         bad(f"{len(dangling)} notes truncated mid-verdict (mode lost): {dangling[:8]}")
 
+    # F2. truncation eating the MODE ITSELF, which check F cannot see because a verdict
+    # string is still there. 87 rows carried `dark-triage <date>: page-emp` (also
+    # `page-empt`, `page-e`, `pa`) — a mode no downstream filter matches, so the row silently
+    # leaves whichever pool keys on it. Only a mode from the known set may be written.
+    partial = [(r[0], m.group(1)) for r in body if len(r) > 5
+               for m in re.finditer(r"dark-triage \d{4}-\d{2}-\d{2}: ([a-z-]*)", r[5] or "")
+               if m.group(1) not in TRIAGE_MODES]
+    if partial:
+        # a warning, not a violation: it costs coverage on those rows, but withholding the
+        # whole digest (this runs as a blocking gate) would cost more.
+        warn(f"{len(partial)} rows carry a truncated/unknown triage mode "
+             f"(no pool matches it): {partial[:8]}")
+
     # G. derived list drift
     try:
         from scrape_universal import ISRAEL_LOC
@@ -123,6 +145,8 @@ def main():
         pass
 
     active = sum(1 for r in body if len(r) > 4 and r[4] == "true")
+    for w in warnings:
+        print(f"::warning::companies.csv: {w}")
     if err:
         print("INVARIANT VIOLATIONS:", file=sys.stderr)
         for e in err:
