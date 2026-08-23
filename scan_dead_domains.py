@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import csv
 import datetime as dt
+import json
 import os
 import re
 import socket
@@ -18,7 +19,7 @@ import time
 import urllib.parse
 import ssl
 import urllib.request
-from pipeline.atomic import write_csv_rows
+from pipeline.atomic import write_csv_rows, write_json
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
@@ -37,6 +38,13 @@ _CTX.check_hostname = False
 _CTX.verify_mode = ssl.CERT_NONE
 
 TODAY = dt.date.today().isoformat()
+# Rotation state for the time budget. A row found ALIVE writes nothing to companies.csv (only
+# the dead/revived branches do), and the target filter carries no date term - so with a budget
+# and file-order targets the run re-walks the same prefix every night and the tail is NEVER
+# reached. Measured 2026-08-24: 211 of 211 current targets are in exactly that state, which
+# made the "re-tested tomorrow" comment on the budget false. One date per company, oldest
+# first; `cloud_state/` is committed wholesale by daily-digest.yml so this travels.
+SEEN = os.path.join("cloud_state", "scan_seen.json")
 
 
 def alive(url):
@@ -75,6 +83,11 @@ def main():
     # rows not reached keep their notes and are re-tested tomorrow (_rescannable is daily).
     budget = float(os.environ.get("SCAN_TIME_BUDGET_MIN", "10") or 0)
     t0 = time.time()
+    try:
+        seen = json.load(open(SEEN, encoding="utf-8"))
+        seen = seen if isinstance(seen, dict) else {}
+    except Exception:  # noqa: BLE001
+        seen = {}
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
@@ -83,13 +96,17 @@ def main():
                and _rescannable(r[5] or "") and "defunct" not in (r[5] or "")
                # (already-dead rows are re-tested after 30d so a revived domain is cleared)
                and (r[3] or "").startswith("http")]
-    print(f"liveness-checking {len(targets)} parked companies", flush=True)
+    # least-recently-scanned first, so a budget-truncated run resumes where it stopped
+    targets.sort(key=lambda ir: seen.get(ir[1][0], ""))
+    print(f"liveness-checking {len(targets)} parked companies "
+          f"({sum(1 for _, r in targets if r[0] not in seen)} never scanned)", flush=True)
     dead = revived = 0
     for n, (i, r) in enumerate(targets, 1):
         if budget and (time.time() - t0) / 60 > budget:
-            print(f"time budget {budget}min reached at {n}/{len(targets)} — stopping "
-                  f"cleanly; the rest are re-tested tomorrow", flush=True)
+            print(f"time budget {budget}min reached at {n}/{len(targets)} - stopping "
+                  f"cleanly; the unscanned tail sorts FIRST tomorrow ({SEEN})", flush=True)
             break
+        seen[r[0]] = TODAY                 # scanned, whatever the outcome
         ok, why = alive(r[3])
         if ok and "domain-dead" in (r[5] or ""):
             # revived: clear the flag, otherwise it is a one-way exclusion from
@@ -116,6 +133,9 @@ def main():
                         fr[5] = _note_replace(fr[5], "domain-dead",
                                               f"domain-dead {TODAY} ({why})")
                 write_csv_rows("companies.csv", fresh)
+    if apply:
+        os.makedirs(os.path.dirname(SEEN) or ".", exist_ok=True)
+        write_json(SEEN, seen, indent=0, sort_keys=True)
     print(f"=== {dead} dead, {revived} revived of {len(targets)} checked ===", flush=True)
 
 

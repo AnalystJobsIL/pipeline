@@ -876,14 +876,44 @@ other company. Two rules follow, both now enforced:
 
 | tool | cadence | rows | claims rows whose note matches | activates? |
 |---|---|---|---|---|
-| `triage_dark` | daily 18:00 | 270 | `no listing found` / `no IL listing` / `no ATS detected` / **`dark-triage`** | no — but its rewrite drops the old `page-empty` stamp, re-opening the hunt |
-| `listing_hunt` | daily 19:00 | 244 | the wide parked-shape regex, **minus** `page-empty`, terminal and recruiters | **yes** |
-| `repair_extract_gap` | daily 19:00 | 25 | `dark-triage …: extract-gap` | **yes** |
-| `probe_candidates` | daily 05:00 | 181 | `monitored candidate` / `host documented` / `no IL listing` | no — `_wake_note` strips every stale segment |
-| `crack_walled` | daily 19:00 + weekly | 28 | `unsupported ATS` + not terminal + not recruiter | **yes** |
+| `triage_dark` | daily 18:00 | 242 | `no listing found` / `no IL listing` / `no ATS detected` / **`dark-triage`**, minus `SKIP_NOTES` and minus `probe-woken` | no — but its rewrite drops the old `page-empty` stamp, re-opening the hunt |
+| `listing_hunt` | daily 19:00 | 211 | the wide parked-shape regex, **minus** `page-empty`, terminal, recruiters and `looks_like_junk` | **yes** |
+| `repair_extract_gap` | daily 19:00 | 40 | `dark-triage …: extract-gap` | **yes** |
+| `probe_candidates` | daily 05:00 | 153 | `monitored candidate` / `host documented` / `no IL listing` | no — `_wake_note` strips every stale segment |
+| `crack_walled` | daily 19:00 + weekly | 25 | `unsupported ATS` + not terminal + not recruiter | **yes** |
 | `scan_dead_domains` | daily 05:00 | — | liveness only — **never looks at roles** | no |
 | `audit_empty_rows` | weekly Sun 04:00 | 255 | `verdicts.in_pool` + not terminal + not recruiter + not audited in `AUDIT_TTL_DAYS` (30) | **yes** |
 | `deep_validate` | weekly Sat 04:00 | 255 | `in_pool` + `_revalidatable` (30d) + not terminal + not recruiter | **yes** |
+
+These counts move every night (the 18:00 triage re-stamps rows), which is the point of
+deriving them rather than typing them. **The first version of `pools()` retyped each tool's
+filter and was wrong on the day it shipped** — `triage_dark` read 270 against the tool's real
+242 because the copy omitted `SKIP_NOTES`, and `listing_hunt` 244 against 243 because it
+omitted `looks_like_junk`. `orphans()` subtracts this membership, so an over-counting mirror
+can only ever UNDER-report orphans: the one direction that loses coverage silently. It now
+imports `triage_dark.TARGET_NOTES` / `SKIP_NOTES`, `listing_hunt._triaged_page_empty` and
+`looks_like_junk` from the tools themselves, and
+`test_the_ownership_matrix_is_built_from_the_tools_own_predicates` fails if they disagree.
+
+**Ordering: the 05:00 wake must survive to the 19:00 hunt.** `probe_candidates._wake_note`
+strips the `dark-triage` segment, which also resets `triage_dark._needs_triage` to true — so
+the 18:00 triage re-claimed the woken row an hour before the hunt could use it, and a
+re-stamped `page-empty` then removed it from the hunt entirely (`_actionable_mode` returns
+False for `page-empty` and `acquired`). The wake is not recoverable: `probe_candidates`
+persists the new baseline **before** the wake test, so the signal is spent. `triage_dark` now
+skips any row carrying `probe-woken`. This is the 105/105 inert-wake bug in the opposite
+direction, and it is why the matrix has an ordering column at all.
+
+**A time budget without rotation is not a budget.** `scan_dead_domains` and
+`probe_candidates` run inside the 05:00 digest and were given 10-minute budgets — over loops
+that iterate in **CSV file order** with no state term in the predicate. A row found ALIVE
+writes nothing, so all 211 of the liveness targets kept their position forever: a truncated
+run re-walked the same prefix every night and never reached the tail, and a `probe_candidates`
+row past the cut could never wake at all, because a wake needs two observations. Both now
+sort least-recently-checked first (`cloud_state/scan_seen.json`, and a `last` key in
+`candidate_probe.json`). Two consecutive 40-row truncated nights now overlap on **0**
+companies; before, 40 of 40. Any new budget in this lane needs a rotation key in the same
+commit.
 
 **Every activating pool must exclude the terminal states itself.** `verdicts.in_pool()`
 does not: `TERMINAL` there is `defunct / domain-dead / duplicate of / redundant / recruiter`

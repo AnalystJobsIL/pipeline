@@ -372,3 +372,73 @@ write list**, which is why it is a proposal and not a commit. Ordered by what it
    `registry` lane adding one `CLASS` entry and diffing the result. Either move the sentence
    into the generator's header template or have `check_docs.py` assert the file matches a
    fresh generation — right now nothing notices prose disappearing from a generated doc.
+
+## From the registry lane's adversarial review, 2026-08-24 (wave 2)
+
+Two independent read-only agents attacked the wave-1 commit (`5505d3d`). Nine of their
+findings were real and are fixed; these are the ones outside this lane, plus the one
+structural problem that keeps producing them.
+
+9. **`company_identity.verdict()` is the single unguarded door** — lane: shared plumbing.
+   It returns the blanket `"ats"` — which its own docstring defines as *"we cannot tell"* —
+   for every URL on a known ATS host whose tenant lives in the **subdomain**, and
+   `is_foreign()` reads "cannot tell" as "not foreign". Every activating path treats that as
+   a pass: `listing_hunt`'s documented fast-path and its found branch, `deep_validate`,
+   `crack_walled`, `repair_dead_urls`. Wave 1 patched two of those call sites with two
+   *different* ad-hoc gates, which is precisely why the Bancor leak escaped the patched tool
+   into the unpatched one (fixed, but as a fourth private gate). `verdict()` should extract
+   the tenant from the subdomain (`careers-bancorpbank.icims.com` -> `bancorpbank`) and
+   check it the way it already checks a path tenant. Until it does, every downstream fix is
+   a fix to one hallway. Reproduce:
+   `python -c "from pipeline.company_identity import verdict, is_foreign; u='https://careers-bancorpbank.icims.com/jobs/search'; print(verdict('Bancor',u), is_foreign('Bancor',u))"`
+   -> `ats False`.
+
+10. **`audit-coverage.yml` runs the new search ladder with 1 of its 3 rungs** — lane: `infra`.
+    The `audit_empty_rows` step gets only `SERPAPI_KEY`/`SERP_RESERVE`; SerpApi is exhausted
+    until 2026-09-01 and `google_via_unlocker` returns `[]` without `BRIGHTDATA_API_KEY`, so
+    the Sunday audit searches with DuckDuckGo alone — the one thing ARCHITECTURE §3 says it
+    may never do. The tool's own warning prints `brightdata=MISSING`. Add
+    `BRIGHTDATA_API_KEY`/`BRIGHTDATA_ZONE` to that step (and to the Sunday `crack_walled`
+    step, which also lacks `SCRAPE_VIA_UNLOCKER`, so its identity gate has no residential
+    fallback). Give the audit its own small cap when you do: `deep_validate._BD` is
+    per-process module state, so the two jobs do NOT share a counter despite the docstring.
+
+11. **`listing-hunt.yml`'s budgets sum to 325 of its 330-minute timeout** — lane: `infra`.
+    30 + 35 + 200 + 60, leaving 5 minutes for checkout, `npm install`,
+    `playwright install --with-deps chromium` and a commit step whose retry loop sleeps up to
+    225s. Each tool stops cleanly at its budget so the verdicts are on disk; what a timeout
+    kills is the **commit** — the 3.5-hour loss of 2026-08-22 all over again, and
+    `Commit verdicts` has no `if: always()`. `HUNT_TIME_BUDGET_MIN: "200"` -> `"150"` (sum
+    275) and fix the stale comment, which still says "leaves ~90 min" from before the two
+    repair steps existed.
+
+12. **Nothing runs `registry_health.py`** — lane: `infra`. `grep -rn registry_health
+    .github/` is empty, so the census never refreshes and the alarms reach nobody. One step
+    in `daily-digest.yml` after `check_invariants` and before the commit:
+    `python registry_health.py --census` (the existing `git add cloud_state` already covers
+    both files it writes). The absence is fail-safe, not fail-silent — a stale census keeps
+    reporting the same deletion until a human re-baselines — but `census_diff` judges a
+    removal against the note **as of the last census**, so the explained/unexplained split
+    degrades toward "everything is unexplained" the longer the refresher is missing.
+
+13. **The mail hook is now `alarms_state`, not `alarms`** — supersedes item 3 above. Item 3's
+    patch called `alarms()`, which probes the resolution ladder; `daily-digest.yml` installs
+    no Playwright and sets `BRIGHTDATA_*` only on unrelated steps, so it would have printed
+    two PERMANENTLY FALSE `rung DOWN` lines in the email every single day. Use:
+
+    ```python
+    from registry_health import alarms_state as _registry_alarms   # no env, no network
+    ```
+
+    Ladder status still reaches the mail, the honest way: each registry workflow's
+    `--census` writes `cloud_state/registry_alarms.json`, and `alarms_state` reports it when
+    it goes stale — which is also how a workflow that stopped running becomes visible.
+
+14. **`tests/test_units.py` has no per-lane split, and a stale copy silently reverts another
+    lane's guards** — lane: `docs`. Commit `9e4ce72` committed a checkout-era copy of the
+    file and deleted seven registry-lane tests that had been committed and pushed in
+    `5505d3d`; they were restored by hand. Nine sessions append to one file in one working
+    tree, and nothing detects a test *disappearing* — `pytest` is just as green with fewer
+    tests. Either split it (`tests/test_<lane>.py`, which `pytest` collects automatically) or
+    have `docs/check_docs.py` assert the collected test count never falls. Same class as the
+    `Time To Know` resurrection in ARCHITECTURE §2: two writers, one file, last writer wins.

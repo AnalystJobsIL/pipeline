@@ -262,6 +262,17 @@ def main():
     targets = [r for r in rows
                if r and len(r) >= 6 and r[4] == "false"
                and TARGET_NOTES.search(r[5] or "") and not SKIP_NOTES.search(r[5] or "")
+               # A row woken by the 05:00 probe belongs to TONIGHT'S 19:00 hunt. Triage runs
+               # at 18:00, one hour earlier, and `probe_candidates._wake_note` strips the
+               # `dark-triage` segment — which resets `_needs_triage` to True, so the woken
+               # row is re-triaged first. If triage then re-stamps `page-empty` or `acquired`,
+               # `listing_hunt._triaged_page_empty` drops it and `_actionable_mode` returns
+               # False for both modes: the wake is consumed an hour before it can be used,
+               # and it is not recoverable (probe_candidates persists the new baseline before
+               # the wake test, so the signal is spent). 6 of the 181 probe targets carry a
+               # page-empty stamp today. Let the hunt have it; if the hunt fails it re-stamps
+               # and triage sees the row again tomorrow.
+               and "probe-woken" not in (r[5] or "")
                and (force or _needs_triage(r[5] or ""))]
     # Oldest verdict first. With a time budget and file-order targets, the same prefix gets
     # re-processed every night and the tail is NEVER reached; sorting by staleness makes the

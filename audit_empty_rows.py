@@ -10,6 +10,7 @@ the platform endpoint, and verify it through pipeline.fetchers before touching t
 Only endpoint-verified boards get reactivated; everything else keeps its parked note.
 
 Usage: python audit_empty_rows.py [--apply]   (default is dry-run report)
+Env:   AUDIT_TIME_BUDGET_MIN (default 90) · SERP_RESERVE · AUDIT_BD_SEARCH_CAP
 """
 from __future__ import annotations
 
@@ -138,7 +139,7 @@ def _serpapi(name, limit=5):
     return [u for u in urls if u and not is_aggregator(u)][:limit]
 
 
-_SEARCH = {"tried": 0, "produced": 0, "warned": False}
+_SEARCH = {"tried": 0, "produced": 0, "warned": False, "recent": []}
 _SEARCH_MIN = 10   # below this, "found nothing" is about the companies, not the ladder
 
 
@@ -178,15 +179,22 @@ def serp(name, limit=5):
         urls = []
     if urls:
         _SEARCH["produced"] += 1
-    elif (not _SEARCH["warned"] and _SEARCH["produced"] == 0
-            and _SEARCH["tried"] >= _SEARCH_MIN):
+    _SEARCH["recent"].append(bool(urls))
+    del _SEARCH["recent"][:-_SEARCH_MIN]
+    if (not _SEARCH["warned"] and len(_SEARCH["recent"]) >= _SEARCH_MIN
+            and not any(_SEARCH["recent"])):
         # Every rung fails by returning [], so "no company matched" and "we cannot search at
         # all" look identical in the log. But ONE empty result is about that company, not
-        # about the ladder — warn on the RATE, once, after enough attempts to mean it.
-        # A whole audit that found nothing is a broken run, not a measurement (§8).
+        # about the ladder — warn on the RATE. On a TRAILING window, not the whole run: the
+        # first version gated on `produced == 0` for the run, so a single productive search
+        # anywhere permanently disarmed it and a ladder that died at row 40 of 255 was never
+        # reported. A whole audit that found nothing is a broken run, not a measurement (§8).
         _SEARCH["warned"] = True
-        print(f"::warning::audit_empty_rows: {_SEARCH['tried']} searches, 0 produced a URL "
-              f"(serpapi left={_SERP['left']}, brightdata="
+        _left = "exhausted" if _SERP["left"] == 0 else (
+            "no key" if _SERP["left"] is None else _SERP["left"])
+        print(f"::warning::audit_empty_rows: {_SEARCH_MIN} consecutive searches produced no "
+              f"URL ({_SEARCH['produced']}/{_SEARCH['tried']} productive so far; "
+              f"serpapi={_left}, brightdata="
               f"{'set' if os.environ.get('BRIGHTDATA_API_KEY') else 'MISSING'}) — the search "
               "ladder is down; recovered-board counts from this run are not a measurement",
               flush=True)
@@ -268,6 +276,8 @@ def main():
         except Exception:  # noqa: BLE001
             return False
 
+    budget = float(os.environ.get("AUDIT_TIME_BUDGET_MIN", "90") or 0)
+    t_start = time.time()
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     parked = [(i, r) for i, r in enumerate(rows)
               if r and len(r) >= 6 and r[4] == "false" and not _fresh(r[0])
@@ -294,7 +304,19 @@ def main():
         json.dump(done, open(done_path, "w", encoding="utf-8"), indent=0, sort_keys=True)
 
     fixed, unsupported, still = [], [], []
-    for i, r in parked:
+    for _n, (i, r) in enumerate(parked, 1):
+        if budget and (time.time() - t_start) / 60 > budget:
+            # This tool had no budget at all. Locally that looked fine because
+            # `state/audit_done.json` holds hundreds of TTL-fresh entries — but `state/` is
+            # gitignored, so in Actions `done` is EMPTY and the run walks all ~255 rows, each
+            # now costing up to two 15s DuckDuckGo timeouts on top of the fetches. It shares
+            # audit-coverage.yml's 330-minute job with five other steps, and the commit runs
+            # last: overrun discards the whole Sunday, wayback_rescue and validate_empty
+            # included. Rows not reached keep their notes; `parked` is sorted oldest-first,
+            # so the next run starts where this one stopped.
+            print(f"time budget {budget}min reached at {_n}/{len(parked)} — stopping cleanly",
+                  flush=True)
+            break
         name, url = r[0], r[3]
         _mark(name)
         # direct careers URL first; SerpApi only as fallback (723-row backlog vs 250/mo budget)

@@ -13,6 +13,7 @@ Usage: python probe_candidates.py [--apply]
 from __future__ import annotations
 
 import csv
+import datetime as dt
 import json
 import os
 import re
@@ -32,6 +33,7 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 
+TODAY = dt.date.today().isoformat()
 STATE = "cloud_state/candidate_probe.json"
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0"
 _JOB_SIG = re.compile(r"apply now|open position|current opening|we'?re hiring|job opening|"
@@ -93,7 +95,13 @@ def main():
                and re.search(r"monitored candidate|host documented|no IL listing", r[5] or "")
                and "domain-dead" not in r[5] and "defunct" not in r[5]
                and (r[3] or "").startswith("http")]
-    print(f"probing {len(targets)} monitored candidates", flush=True)
+    # Least-recently-probed first. The target filter has no date term, so with a budget and
+    # file-order targets the same prefix is probed every day and the tail never is - and a row
+    # past the cut can NEVER wake, because a wake needs two observations and the first one it
+    # never gets. Measured 2026-08-24: 64 of 181 targets had no baseline at all.
+    targets.sort(key=lambda ir: (state.get(ir[1][0]) or {}).get("last", ""))
+    print(f"probing {len(targets)} monitored candidates "
+          f"({sum(1 for _, r in targets if r[0] not in state)} without a baseline)", flush=True)
     woke = 0
     for n, (i, r) in enumerate(targets, 1):
         if budget and (time.time() - t0) / 60 > budget:
@@ -105,6 +113,7 @@ def main():
         if cur is None:
             continue
         prev = state.get(name)
+        cur["last"] = TODAY                # rotation key; see the sort above
         state[name] = cur
         if prev is None:
             continue                      # first observation = baseline, no wake
@@ -113,7 +122,7 @@ def main():
             print(f"  [WAKE] {name}: signals rose il {prev['il']}->{cur['il']} "
                   f"sig {prev['sig']}->{cur['sig']}", flush=True)
             if apply:
-                # clear the hunt verdict -> today's 14:00 hunt cycle re-processes it
+                # clear the hunt verdict -> tonight's 19:00 hunt re-processes it
                 fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
                 for fr in fresh:
                     if fr and fr[0] == name:

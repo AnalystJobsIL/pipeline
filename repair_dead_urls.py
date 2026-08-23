@@ -109,6 +109,17 @@ def reachable(url: str) -> int:
         return 0
 
 
+def _unlock(url: str) -> str:
+    """Residential fetch of a bot-walled page. Empty string when unavailable."""
+    if not os.environ.get("BRIGHTDATA_API_KEY"):
+        return ""
+    try:
+        from bd_rescue import unlock
+        return unlock(url) or ""
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def candidates(name: str, dead_url: str):
     """Search first; then the obvious patterns on the company's registrable domain."""
     from deep_validate import ddg, google_via_unlocker
@@ -172,47 +183,38 @@ def main():
         good = ""
         for u in candidates(name, old):
             st, html = fetch(u)
-            if not st:
+            if not st and not html:
                 continue
             if st in (403, 503):
-                # bot wall: the host is real and the unlocker cracks it downstream — but a
-                # wall means we never saw the page, so identity rests on the domain alone.
-                # `match` is NOT strong enough on its own. `company_identity.verdict` also
-                # returns `match` when the domain equals the name with its generic words
-                # stripped, and that core can be an acronym: "DiA Imaging Analytics" strips
-                # to `dia`, `registrable("www.dia.mil")` is `dia`, and this branch was one
-                # dry-run away from repairing an Israeli medical-imaging company to the US
-                # Defense Intelligence Agency's careers page — on a 403 with zero bytes of
-                # HTML read. (Same shape as "Time To Know" -> time.com, one layer along.)
-                # With no page to confirm against, the only domain evidence worth having is
-                # the WHOLE name: registrable(host) == _norm(company). An ATS host is fine
-                # too — there identity is the tenant slug and `verdict` has already checked
-                # it. See docs/BACKLOG.md, "A stripped core is not identity".
-                v_wall = identity_verdict(name, u)
-                whole_name = _norm(name) and registrable(
-                    urllib.parse.urlparse(u).netloc.lower()) == _norm(name)
-                if v_wall == "ats" or (v_wall == "match" and whole_name):
-                    good = u
-                    break
-                print(f"       (bot-walled {u[:46]}: verdict={v_wall} rests on a stripped "
-                      f"core, not the full name — cannot confirm without the page)",
-                      flush=True)
+                # A bot wall means we never saw the page, so try the residential unlocker
+                # before giving up on evidence: refusing blind costs real recoveries (24% of
+                # legitimate `match` domains in this registry are compound, e.g. ide-tech.com
+                # for IDE Technologies, and would be refused on the domain rule alone).
+                html = _unlock(u)
+                st = 200 if html else st
+            if st >= 400 and not html:
                 continue
-                print(f"       (bot-walled {u[:46]}: cannot confirm it is this company)",
-                      flush=True)
-                continue
-            if st >= 400:
-                continue
-            # A reachable page is not enough — it must be THIS company's. A `weak` domain
-            # verdict (phoenix -> phoenixtma.com) is confirmed only by page content.
+            # ONE rule for both branches. `verdict() == "match"` is NOT sufficient evidence on
+            # its own, because it also fires when the domain equals the name with its generic
+            # words stripped, and that core can be an acronym: "DiA Imaging Analytics" strips
+            # to `dia`, `registrable("www.dia.mil")` is `dia`, and this tool printed
+            #   [OK] DiA Imaging Analytics  www.dia-analytics.com -> https://www.dia.mil/...
+            # for the US Defense Intelligence Agency. Hardening only the 403 branch left the
+            # headline case open on the 200 path: 125 of the 516 rows whose own URL scores
+            # `match` (24%) rest on a stripped core, and dia.mil was refused only because it
+            # happens to answer 403. Evidence is: the whole name IS the domain, or an ATS host
+            # whose tenant slug `verdict` already checked, or the PAGE names the company.
             v = identity_verdict(name, u)
-            # A `weak` domain verdict needs the page to name the company as a PHRASE, not
-            # to merely contain its words: "Time To Know" was repaired to time.com's own
-            # careers page, which of course says both "time" and "know".
-            if v in ("match", "ats") or page_mentions_company(name, html, strict=(v == "weak")):
+            whole_name = bool(_norm(name)) and registrable(
+                urllib.parse.urlparse(u).netloc.lower()) == _norm(name)
+            if v == "ats" or (v == "match" and whole_name) or (
+                    html and page_mentions_company(name, html, strict=True)):
                 good = u
                 break
-            print(f"       (rejected {u[:52]}: page does not name the company)", flush=True)
+            print(f"       (rejected {u[:52]}: verdict={v}"
+                  f"{' on a stripped core' if v == 'match' else ''}"
+                  f"{' and the page does not name the company' if html else ' and no page to read'})",
+                  flush=True)
         if good:
             fixed += 1
             print(f"  [OK] {n}/{len(dead)} {name[:26]:26} {host_of(old)} -> {good[:56]}",

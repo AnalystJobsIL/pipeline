@@ -46,7 +46,7 @@ import sys
 from pipeline.aggregators import is_aggregator
 from pipeline.atomic import write_json
 from pipeline.recruiters import is_recruiter
-from pipeline.verdicts import in_pool
+from pipeline.verdicts import in_pool, is_terminal as _verdicts_terminal
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). Company names here
 # are Hebrew as often as not, and an UnicodeEncodeError in the REPORT would kill the process
@@ -59,17 +59,63 @@ for _s in (sys.stdout, sys.stderr):
 
 CSV_PATH = "companies.csv"
 CENSUS = os.path.join("cloud_state", "registry_census.json")
+# sentinel side-car key. `__notes__` would be silently absorbed by a company literally so
+# named; a slash cannot appear in a company_name that also has to be a csv field we match on.
+_NOTES_KEY = "//notes//"
 ALARMS = os.path.join("cloud_state", "registry_alarms.json")
 TODAY = dt.date.today().isoformat()
 
-# A row may leave the registry only for one of these reasons, and the reason must be IN the
-# row's own note at the moment it goes. Anything else is an accident until proven otherwise.
-GOOD_REMOVAL = re.compile(r"defunct|domain-dead|alias-of|duplicate of|redundant|recruiter|"
-                          r"aggregator|sidebar-poisoned|removed \d{4}-\d{2}-\d{2}", re.I)
-# States no re-check pool may ever re-open. `alias-of` belongs here and is missing from
-# pipeline/verdicts.TERMINAL - see docs/BACKLOG.md; until that lands, every registry tool
-# spells it out itself.
-TERMINAL = re.compile(r"defunct|domain-dead|alias-of", re.I)
+# A row may leave the registry only for one of these reasons, and the reason must LEAD one
+# of the note's ` | `-separated segments. A bare substring search over the whole note was
+# wrong in both directions and was measured on 2026-08-24: 45 rows (7 of them ACTIVE) would
+# have had their deletion filed under "removed (explained)" — the line a reader skips —
+# because `SmartRecruiters` contains "recruiter" (Armis, HiBob, kueez and the other 12
+# smartrecruiters rows) and the TO-DO note `aggregator URL; resolve real careers page before
+# activating` contains "aggregator" (Chunk Foods, StarkWare, Zipher, vi). An aggregator URL
+# is a to-do, never a tombstone, so it is gone from this list entirely; agency-hood is
+# decided by the company NAME via is_recruiter, never by text found in the note.
+_REASON = re.compile(r"^(defunct|domain-dead|alias-of|duplicate of|redundant|"
+                     r"sidebar-poisoned|removed \d{4}-\d{2}-\d{2})(?=\W|$)", re.I)
+
+
+def explained(company: str, note: str) -> bool:
+    """Is this row's disappearance accounted for by its own last note?"""
+    if is_recruiter(company or ""):
+        return True                       # agencies are excluded by policy, not by verdict
+    return any(_REASON.match(seg.strip()) for seg in str(note or "").split("|"))
+
+
+# States no re-check pool may ever re-open. `pipeline.verdicts.TERMINAL` PLUS `alias-of`,
+# which belongs there and is not (docs/BACKLOG.md, "One terminal-state list"). Using the
+# shared list rather than a private copy matters: a private `defunct|domain-dead|alias-of`
+# omitted `duplicate of` and `redundant`, which made 4 of the 5 rows this tool reported as
+# "OWNED BY NOTHING" false positives (NICE, Via Transportation, Marvell Israel, Google —
+# all deliberately parked duplicates).
+def is_terminal_note(note: str) -> bool:
+    return _verdicts_terminal(note or "") or "alias-of" in (note or "").lower()
+
+
+class _TerminalShim:
+    """`TERMINAL.search(note)` kept working for callers; the logic is is_terminal_note."""
+
+    @staticmethod
+    def search(note):
+        return is_terminal_note(note) or None
+
+
+TERMINAL = _TerminalShim
+
+
+# The two note-shapes still inlined inside their tool's main() (see the BACKLOG item above).
+# Kept verbatim and asserted against the tools by
+# `test_the_ownership_matrix_matches_each_tool_s_real_filter`.
+_HUNT_SHAPE = re.compile(
+    r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|host documented|"
+    r"probe-woken|scanned; no open|unreachable|aggregator URL|no listing found|redirects to|"
+    r"scanned via brightdata|empty-but-suspect|needs re-resolution|needs manual resolution|"
+    r"url-cleared|url-flagged", re.I)
+_PROBE_SHAPE = re.compile(r"monitored candidate|host documented|no IL listing", re.I)
+_EXTRACT_GAP = re.compile(r"dark-triage[^|]*extract-gap", re.I)
 
 
 def read_rows(path=CSV_PATH):
@@ -81,8 +127,13 @@ def read_rows(path=CSV_PATH):
 # ---------------------------------------------------------------- census / deletion guard
 
 def census(rows):
-    """{company_name: "true"/"false"} — the smallest thing that detects a vanished row."""
-    return {r[0]: r[4] for r in rows}
+    """{company_name: "true"/"false"} — the smallest thing that detects a vanished row.
+
+    Tolerates a malformed (short) row: `census_diff` is public and BACKLOG item 3 invites
+    external callers, so it must not raise IndexError on rows that did not come through
+    `read_rows()`.
+    """
+    return {r[0]: (r[4] if len(r) > 4 else "") for r in rows if r}
 
 
 def load_census(path=CENSUS):
@@ -102,17 +153,18 @@ def census_diff(rows, prev=None):
     """
     prev = load_census() if prev is None else prev
     now = census(rows)
-    notes = {r[0]: (r[5] or "") for r in rows}
-    prev_notes = (prev.get("__notes__") or {}) if isinstance(prev.get("__notes__"), dict) else {}
-    prev_active = {k: v for k, v in prev.items() if k != "__notes__"}
+    notes = {r[0]: (r[5] if len(r) > 5 else "") or "" for r in rows if r}
+    _nk = _NOTES_KEY if _NOTES_KEY in prev else "__notes__"      # read the older format too
+    prev_notes = (prev.get(_nk) or {}) if isinstance(prev.get(_nk), dict) else {}
+    prev_active = {k: v for k, v in prev.items() if k not in (_NOTES_KEY, "__notes__")}
     gone, unexplained = [], []
     for name in prev_active:
         if name in now:
             continue
         why = prev_notes.get(name, "")
-        gone.append({"company": name, "last_note": why[:160],
-                     "explained": bool(GOOD_REMOVAL.search(why))})
-        if not GOOD_REMOVAL.search(why):
+        ok = explained(name, why)
+        gone.append({"company": name, "last_note": why[:160], "explained": ok})
+        if not ok:
             unexplained.append(name)
     added = [n for n in now if n not in prev_active]
     flipped_off = [n for n in now if prev_active.get(n) == "true" and now[n] == "false"]
@@ -123,9 +175,26 @@ def census_diff(rows, prev=None):
             "first_census": not prev_active, "_now": now, "_notes": notes}
 
 
+def _reason_tail(note, cap=200):
+    """The note's NEWEST whole segments, up to `cap`.
+
+    `note[:cap]` keeps the OLDEST text — and the newest segment lives at the END, which is
+    the exact trim bug ARCHITECTURE section 2 documents for the notes cell and which this
+    function shipped anyway. A removal reason is written just before the row goes, so
+    truncating the tail throws away the only thing the census needs.
+    """
+    parts = [p.strip() for p in str(note or "").split("|") if p.strip()]
+    out = []
+    for p in reversed(parts):
+        if out and len(" | ".join([p] + out)) > cap:
+            break
+        out.insert(0, p)
+    return " | ".join(out) if out else str(note or "")[-cap:]
+
+
 def save_census(rows, path=CENSUS):
     d = census(rows)
-    d["__notes__"] = {r[0]: (r[5] or "")[:200] for r in rows}
+    d[_NOTES_KEY] = {r[0]: _reason_tail(r[5]) for r in rows}
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     write_json(path, d, indent=0, sort_keys=True)
     return len(d) - 1
@@ -136,43 +205,61 @@ def save_census(rows, path=CENSUS):
 def pools(rows):
     """Recompute ARCHITECTURE.md section 2's ownership matrix from the tools' own predicates.
 
-    Each entry mirrors ONE scheduled tool's row filter. When a filter changes, change it
-    here in the same commit — this is the only place the matrix is checkable, and a matrix
-    that drifts is how 17 rows came to be owned by nothing.
+    **Import the predicate, never retype it.** The first version of this function retyped
+    each tool's filter, which made it the SIXTH hand-maintained copy of the pool definitions
+    in a repo whose worst documented bug was three copies drifting — and it had already
+    drifted on the day it shipped (measured 2026-08-24):
+
+      * `triage_dark` mirror 270 vs real 242 — the copy omitted `SKIP_NOTES`
+        (`defunct|domain-dead|recruiter|duplicate|redundant|alias-of`), over-counting 28 rows
+        and publishing 270 into ARCHITECTURE section 2.
+      * `listing_hunt` mirror 244 vs real 243 — the copy omitted `looks_like_junk`, so the
+        discovery-leaked "company" `AppSec` was reported as owned by the hunt.
+
+    Because `orphans()` subtracts this membership, every such row is falsely marked owned:
+    a mirror that over-counts can only ever UNDER-report orphans, which is the one direction
+    that loses coverage silently. So each entry below is built from the tool's own imported
+    constants. Where a tool still inlines its filter in `main()`, that is noted — extracting
+    a `targets(rows)` from each is docs/BACKLOG.md, "One pool predicate per tool".
+
+    Staleness cooldowns are deliberately NOT applied: a cooldown delays a re-check, it does
+    not remove ownership.
     """
+    import triage_dark as _triage
+    import listing_hunt as _hunt
+    from pipeline.firmographics import looks_like_junk
+
     parked = [r for r in rows if r[4] == "false"]
 
     def sel(pred):
         return [r for r in parked if pred(r[5] or "", r)]
 
-    def _hunt(note, r):
-        # listing_hunt.py main(): the wide parked-shape regex, minus page-empty/terminal
-        return (bool(re.search(
-            r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|"
-            r"host documented|probe-woken|scanned; no open|unreachable|aggregator URL|"
-            r"no listing found|redirects to|scanned via brightdata|empty-but-suspect|"
-            r"needs re-resolution|needs manual resolution|url-cleared|url-flagged", note))
-            and not TERMINAL.search(note) and not is_recruiter(r[0])
-            and not re.search(r"dark-triage [^|]*:\s*page-empty", note))
+    def _hunt_pool(note, r):
+        # listing_hunt.main(): the wide parked-shape regex, minus page-empty, terminal,
+        # recruiters and discovery junk. `_triaged_page_empty` is imported (probe_candidates
+        # must strip that exact stamp, so it is module-level on purpose).
+        return (bool(_HUNT_SHAPE.search(note))
+                and not is_terminal_note(note) and not is_recruiter(r[0])
+                and not looks_like_junk(r[0])
+                and not _hunt._triaged_page_empty(note))
 
     return {
         "triage_dark (18:00 daily)":
-            sel(lambda n, r: bool(re.search(
-                r"no listing found|no IL listing|no ATS detected|dark-triage", n))),
-        "listing_hunt (19:00 daily)": sel(_hunt),
+            sel(lambda n, r: bool(_triage.TARGET_NOTES.search(n))
+                and not _triage.SKIP_NOTES.search(n)),
+        "listing_hunt (19:00 daily)": sel(_hunt_pool),
         "repair_extract_gap (19:00 daily)":
-            sel(lambda n, r: bool(re.search(r"dark-triage[^|]*extract-gap", n))
-                and (r[3] or "").startswith("http")),
+            sel(lambda n, r: bool(_EXTRACT_GAP.search(n)) and (r[3] or "").startswith("http")),
         "crack_walled (19:00 daily + Sun)":
-            sel(lambda n, r: "unsupported ATS" in n and not TERMINAL.search(n)
+            sel(lambda n, r: "unsupported ATS" in n and not is_terminal_note(n)
                 and not is_recruiter(r[0])),
         "probe_candidates (05:00 daily)":
-            sel(lambda n, r: bool(re.search(r"monitored candidate|host documented|no IL listing", n))
-                and not TERMINAL.search(n) and (r[3] or "").startswith("http")),
+            sel(lambda n, r: bool(_PROBE_SHAPE.search(n)) and not is_terminal_note(n)
+                and (r[3] or "").startswith("http")),
         "audit_empty_rows (Sun 04:00)":
-            sel(lambda n, r: in_pool(n) and not TERMINAL.search(n) and not is_recruiter(r[0])),
+            sel(lambda n, r: in_pool(n) and not is_terminal_note(n) and not is_recruiter(r[0])),
         "deep_validate (Sat 04:00)":
-            sel(lambda n, r: in_pool(n) and not TERMINAL.search(n) and not is_recruiter(r[0])),
+            sel(lambda n, r: in_pool(n) and not is_terminal_note(n) and not is_recruiter(r[0])),
     }
 
 
@@ -187,6 +274,26 @@ def orphans(rows):
 
 
 # ---------------------------------------------------------------- what can still crack
+
+# `unsupported ATS <x>` means "deep_validate recognised the platform and stamped it", NOT
+# "no fetcher exists". Three of the eight names in the registry today already HAVE one, so a
+# BUILD queue that does not check turns 34 of 57 rows into work the ats-fetch lane has
+# already done. What those rows actually need is WIRING: crack_walled sniffing the tenant
+# endpoint and the row moving to that platform.
+_FETCHER_ALIAS = {"eightfold.ai": "eightfold", "oraclecloud.com": "oraclehcm",
+                  "icims.com": "icims", "jobvite.com": "jobvite", "taleo.net": "taleo",
+                  "avature.net": "avature"}
+
+
+def _fetcher_for(plat):
+    """The native fetcher that already reads this platform, or "" if there is none."""
+    try:
+        from pipeline.fetchers import FETCHERS
+    except Exception:  # noqa: BLE001
+        return ""
+    key = _FETCHER_ALIAS.get(plat, plat)
+    return key if key in FETCHERS else ""
+
 
 def unsupported_ats(rows):
     """Every ATS the resolvers recognised but cannot READ, with the rows waiting on it.
@@ -203,7 +310,8 @@ def unsupported_ats(rows):
         plat = m.group(1).strip().lower().split(";")[0].strip()
         if not plat:
             continue
-        e = out.setdefault(plat, {"rows": 0, "active": 0, "companies": []})
+        e = out.setdefault(plat, {"rows": 0, "active": 0, "companies": [],
+                                  "fetcher": _fetcher_for(plat)})
         e["rows"] += 1
         e["active"] += (r[4] == "true")
         if len(e["companies"]) < 12:
@@ -286,6 +394,63 @@ def resources(live=False):
 
 # ---------------------------------------------------------------- the mail lines
 
+def alarms_state(rows=None, prev=None):
+    """The alarms that belong in the DAILY MAIL: registry facts only, no env, no network.
+
+    `alarms()` also reports the resolution ladder, and the ladder is a property of the JOB
+    that runs it, not of the digest. `daily-digest.yml` installs no Playwright and sets
+    BRIGHTDATA_* only on three unrelated steps, so calling the full `alarms()` from
+    `pipeline/run.py` — which is what docs/BACKLOG.md item 3 used to prescribe — puts two
+    PERMANENTLY FALSE lines in the email every single day:
+
+        resolution rung DOWN: Bright Data unlocker ... missing key or zone
+        resolution rung DOWN: Playwright/Chromium ... No module named 'playwright'
+
+    (Reproduced 2026-08-24 by running `alarms()` with those three names unset and playwright
+    unimportable.) A daily audit block nobody reads is the thing this module exists to avoid,
+    so the mail hook calls THIS function. Ladder status reaches the mail the honest way: each
+    registry workflow's `--census` writes `cloud_state/registry_alarms.json`, and the line
+    below reports it when it goes stale — which is also how a workflow that stopped running
+    at all becomes visible.
+    """
+    rows = read_rows() if rows is None else rows
+    out = []
+    d = census_diff(rows, prev=prev)
+    if not d["first_census"]:
+        if d["unexplained"]:
+            out.append(f"{len(d['unexplained'])} companies REMOVED from the registry with no "
+                       f"reason in their note: {', '.join(d['unexplained'][:5])}")
+        explained_names = [g["company"] for g in d["gone"] if g["explained"]]
+        if explained_names:
+            out.append(f"{len(explained_names)} companies removed (explained): "
+                       f"{', '.join(explained_names[:5])}")
+        if d["prev_rows"] and d["rows"] < d["prev_rows"] * 0.98:
+            out.append(f"registry shrank {d['prev_rows']} -> {d['rows']} rows (>2%) — "
+                       f"suspect a truncated write or a bad merge")
+    orph = orphans(rows)
+    if orph:
+        # every orphan is permanently dark coverage, so report from the first one. The old
+        # threshold of >10 hid the single real orphan behind four false positives that came
+        # from a private TERMINAL list narrower than pipeline.verdicts'.
+        out.append(f"{len(orph)} parked rows owned by NO recurring job (retired coverage): "
+                   f"{', '.join(orph[:5])}")
+    for label, members in pools(rows).items():
+        if not members and label.startswith(("triage_dark", "listing_hunt", "probe_candidates")):
+            out.append(f"re-check pool EMPTY: {label} — a predicate inverted, or the notes "
+                       f"column was clobbered")
+    try:
+        stamp = json.load(open(ALARMS, encoding="utf-8"))
+        age = (dt.date.today() - dt.date.fromisoformat(stamp.get("date") or "1970-01-01")).days
+        if age > 2:
+            out.append(f"registry ladder status is {age}d old ({ALARMS}) — the workflow that "
+                       f"refreshes it has not run")
+        out += [f"(ladder, as of {stamp['date']}) {x}" for x in (stamp.get("alarms") or [])
+                if "rung DOWN" in x]
+    except Exception:  # noqa: BLE001
+        pass
+    return out
+
+
 def alarms(rows=None, live=False, res=None, prev=None):
     """Short lines for the digest run-audit. Empty list = the registry is healthy.
 
@@ -299,28 +464,7 @@ def alarms(rows=None, live=False, res=None, prev=None):
     and for asking "what would this say against last week's baseline".
     """
     rows = read_rows() if rows is None else rows
-    out = []
-    d = census_diff(rows, prev=prev)
-    if not d["first_census"]:
-        if d["unexplained"]:
-            out.append(f"{len(d['unexplained'])} companies REMOVED from the registry with no "
-                       f"reason in their note: {', '.join(d['unexplained'][:5])}")
-        explained = [g["company"] for g in d["gone"] if g["explained"]]
-        if explained:
-            out.append(f"{len(explained)} companies removed (explained): "
-                       f"{', '.join(explained[:5])}")
-        # A registry that shrinks by more than a rounding error was not edited, it was lost.
-        if d["prev_rows"] and d["rows"] < d["prev_rows"] * 0.98:
-            out.append(f"registry shrank {d['prev_rows']} -> {d['rows']} rows "
-                       f"(>2%) — suspect a truncated write or a bad merge")
-    orph = orphans(rows)
-    if len(orph) > 10:
-        out.append(f"{len(orph)} parked rows are owned by NO recurring job "
-                   f"(retired coverage): {', '.join(orph[:5])}")
-    for label, members in pools(rows).items():
-        if not members and label.startswith(("triage_dark", "listing_hunt", "probe_candidates")):
-            out.append(f"re-check pool EMPTY: {label} — a predicate inverted, or the notes "
-                       f"column was clobbered")
+    out = alarms_state(rows, prev=prev)
     for key, st in (res if res is not None else resources(live=live)).items():
         if not st["ok"] and not key.startswith(("SerpApi", "CLAUDE_CODE_OAUTH_TOKEN",
                                                 "DuckDuckGo")):
@@ -366,11 +510,13 @@ def _report(rows, live=False, want_ats=False):
         print("\nunsupported ATS platforms — rows waiting on a native fetcher")
         print("  (ARCHITECTURE.md section 1: 3+ rows earns one; recipe in section 6)")
         for plat_name, e in unsupported_ats(rows).items():
-            flag = "BUILD" if e["rows"] >= 3 else "     "
+            flag = ("WIRE " if e["fetcher"] else "BUILD" if e["rows"] >= 3 else "     ")
+            note = f" [fetcher `{e['fetcher']}` EXISTS — crack the tenant, don't build]" \
+                if e["fetcher"] else ""
             print(f"  {flag} {plat_name:18} {e['rows']:3} rows ({e['active']} active): "
-                  f"{', '.join(e['companies'][:6])}")
+                  f"{', '.join(e['companies'][:6])}{note}")
 
-    a = alarms(rows, live=live)
+    a = alarms(rows, live=live, res=res)
     print(f"\nalarms for the daily mail: {len(a)}")
     for line in a:
         print(f"  ! {line}")
@@ -394,8 +540,8 @@ def main():
         return 0
     if "--ats" in argv and len(argv) == 1:
         for plat_name, e in unsupported_ats(rows).items():
-            print(f"{plat_name:18} {e['rows']:3} rows ({e['active']} active): "
-                  f"{', '.join(e['companies'])}")
+            print(f"{'WIRE ' if e['fetcher'] else 'BUILD'} {plat_name:18} {e['rows']:3} rows "
+                  f"({e['active']} active): {', '.join(e['companies'])}")
         return 0
     a = _report(rows, live=live, want_ats=("--ats" in argv or "--census" in argv))
     if "--census" in argv:

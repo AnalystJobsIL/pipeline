@@ -19,6 +19,7 @@ import csv
 import datetime as dt
 import os
 import re
+import ssl
 import sys
 import time
 import urllib.parse
@@ -49,6 +50,16 @@ for _s in (sys.stdout, sys.stderr):
 
 
 TODAY = dt.date.today().isoformat()
+# lenient TLS for the identity re-fetch: a cert-verify failure is the scanning machine,
+# not evidence about who owns the page (ARCHITECTURE section 2 - it cost 6 false positives)
+_LENIENT = ssl.create_default_context()
+_LENIENT.check_hostname = False
+_LENIENT.verify_mode = ssl.CERT_NONE
+# "Microsoft Israel" on a page that only ever says "Microsoft" is still Microsoft's page
+_NAME_STOP = {"israel", "israeli", "ltd", "ltd.", "inc", "inc.", "the", "group",
+              "technologies", "technology", "labs", "systems", "solutions", "company",
+              "companies", "corp", "corporation", "holdings", "international", "global",
+              "studios"}
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
@@ -178,6 +189,7 @@ def crack_one(name, seed, platform):
     os.environ["SCRAPE_ASSUME_IL"] = "1"
     from scrape_universal import scrape
     from pipeline.israel import is_israel_job
+    foreign = None
     for kind, lu in captures[:3]:
         if kind == "oraclehcm":
             try:
@@ -192,48 +204,87 @@ def crack_one(name, seed, platform):
             except Exception:  # noqa: BLE001
                 jobs = []
             il = [j for j in jobs if is_israel_job(j)]
-            if il and not _page_names_company(name, lu):
-                # real Israel roles on a real listings page — belonging to someone else
-                return ("novrfy", (kind, lu), 0,
-                        f"{len(il)} IL on {urllib.parse.urlparse(lu).netloc} but the page "
-                        f"never names {name[:24]} — not this company's board")
             if il:
+                names_us = _page_names_company(name, lu)
+                if names_us is False:
+                    # Real Israel roles on a real listings page belonging to SOMEONE ELSE.
+                    # This must NOT return `novrfy`: that branch does `fr[3] = got[1]`, i.e.
+                    # it writes the proven-foreign URL in as this row's address and stamps
+                    # `host documented` - which is a probe_candidates pool token AND
+                    # listing_hunt's documented fast-path token. An adversarial review traced
+                    # the whole chain: 19:00 crack documents Bancor -> The Bancorp Bank,
+                    # 05:00 probe polls it, 19:00 hunt fast-paths it and ACTIVATES, because
+                    # `is_foreign` is blind to an ATS subdomain tenant. Same wrong outcome,
+                    # 24h later, under another tool's name. `listing_hunt` refuses to persist
+                    # a foreign URL for exactly this reason; so do we.
+                    foreign = (kind, lu)
+                    continue                # try the next capture; don't abandon the company
+                if names_us is None:
+                    continue                # unreadable: no evidence, try the next capture
                 return ("cracked-scrape", ("scrape", lu), len(il), "")
+    if foreign:
+        # Note-only verdict: the URL is PROVEN to belong to another company, so it is named
+        # in the note (which is text) and never written into api_url (which is an address
+        # every later tool honestly re-tests, and which listing_hunt's fast-path activates on).
+        return ("notours", foreign, 0,
+                f"{urllib.parse.urlparse(foreign[1]).netloc[:40]} never names "
+                f"{name[:24]} - another company's board")
     return ("novrfy", captures[0], 0, f"host found ({captures[0][1][:60]}) but 0 IL extracted")
 
 
-def _page_names_company(name, url):
-    """Does the cracked listings page NAME this company, as a phrase?
+def _page_names_company(name, url, html=""):
+    """Three-valued: True = the page names this company, False = it names someone else,
+    None = we could not read it, which is NO EVIDENCE and must not read as either.
 
     On a walled ATS the tenant lives in the SUBDOMAIN (`careers-bancorpbank.icims.com`), and
-    `company_identity.verdict` only knows how to check a tenant in the PATH — so it returns
-    the blanket `"ats"`, which its own docstring defines as "we cannot tell". `is_foreign`
-    reads that as False and the activation gate opens. Meanwhile `_slug_matches` passes
-    `Bancor` against tenant `bancorpbank` on plain containment.
+    `company_identity.verdict` only checks a tenant in the PATH - so it returns the blanket
+    `"ats"`, which its own docstring defines as "we cannot tell", and `is_foreign` reads that
+    as False. `_slug_matches("Bancor", "bancorpbank")` passes too, on plain containment. Both
+    were true on 2026-08-24 and this tool was one `--apply` from moving Bancor (Israeli
+    crypto, ex-Bprotocol) onto The Bancorp Bank's iCIMS board: that page says "Bancorp" 18
+    times and Bancor-as-a-word zero times.
 
-    Both were true on 2026-08-24 and this tool was one `--apply` from moving Bancor (Israeli
-    crypto, ex-Bprotocol) onto The Bancorp Bank's iCIMS board — 3 "Israel" roles that are
-    not its own. The page settles it: it says "Bancorp" 18 times and `Bancor` zero
-    times, so `page_mentions_company(..., strict=True)` is False. That is the same
-    discriminator ARCHITECTURE.md section 3 prescribes for a `weak` verdict, applied to the
-    case where the verdict is "cannot tell" and we are about to ACTIVATE.
+    The first version of this gate was a plain strict-TLS urllib fetch returning a bare bool,
+    and an adversarial review measured it False on **12 of 60 rows the pipeline had already
+    verified as that company's own board** (Meta, Akamai, Ford, Microsoft Israel, ...).
+    Three causes, each already in this repo's catalogue of paid-for lessons:
 
-    Cannot-fetch returns False: with no page there is no confirmation, and the caller then
-    documents the host instead of activating it — which is the state this row was already in.
+    1. **403 to a plain fetch** - `Bit`'s own careers page. The crack loop reached these with
+       Playwright, so re-fetching with urllib is strictly weaker evidence than the evidence
+       that produced the candidate; prefer HTML the caller already has.
+    2. **Strict TLS.** `scan_dead_domains.alive()` uses a lenient context on purpose -
+       ARCHITECTURE section 2: "strict TLS on the scanning machine produced 6 false
+       positives". This re-introduced exactly that.
+    3. **strict=True wants the name's words consecutively**, so any row whose registry name
+       carries a suffix the page omits fails structurally: 46 rows are named "... Israel".
+       Retry against the name with the generic/geographic words stripped.
     """
-    html = ""
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": _UA})
-        html = urllib.request.urlopen(req, timeout=25).read(400000).decode("utf-8", "replace")
-    except Exception:  # noqa: BLE001
-        pass
-    if len(html) < 2000 and os.environ.get("SCRAPE_VIA_UNLOCKER"):
+    if not html:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": _UA})
+            html = urllib.request.urlopen(req, timeout=25, context=_LENIENT).read(
+                400000).decode("utf-8", "replace")
+        except Exception:  # noqa: BLE001
+            html = ""
+    if len(html) < 2000 and os.environ.get("BRIGHTDATA_API_KEY"):
+        # A bot wall renders nearly empty; the residential unlocker sees what a browser sees.
+        # Gate on the KEY, not on SCRAPE_VIA_UNLOCKER: audit-coverage.yml runs this tool
+        # without that flag, and a missing flag must not silently downgrade the gate.
         try:
             from bd_rescue import unlock
             html = (html or "") + chr(10) + (unlock(url) or "")
         except Exception:  # noqa: BLE001
             pass
-    return bool(html) and page_mentions_company(name, html, strict=True)
+    if len(html) < 2000:
+        return None                        # unreadable: no evidence either way
+    if page_mentions_company(name, html, strict=True):
+        return True
+    core = " ".join(w for w in re.findall(r"[A-Za-z0-9]+", name or "")
+                    if w.lower() not in _NAME_STOP)
+    if core and core.lower() != (name or "").lower() and page_mentions_company(
+            core, html, strict=True):
+        return True
+    return False
 
 
 def _recrackable(note, days=1):
@@ -314,6 +365,10 @@ def main():
                             fr[5], "crack-walled",
                             f"crack-walled {TODAY}: {platform} via {plat}; "
                             f"verified {n_il} IL")
+                    elif verdict == "notours":
+                        # note only - never fr[3]. See crack_one's comment.
+                        fr[5] = _note_replace(fr[5], "crack-walled",
+                                              f"crack-walled {TODAY}: {detail}")
                     elif verdict == "novrfy" and got:
                         fr[3] = got[1]
                         fr[5] = _note_replace(
