@@ -563,7 +563,8 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
         lines += [f"🔎 **[Open the full board →]({board_url})** — every role still open, "
                   "searchable & sortable.", ""]
     if n == 0:
-        lines.append("_No new matching openings today._")
+        lines.append("_Nothing posted in the last 48h at a company we already track._"
+                     if new_co_jobs else "_No new matching openings today._")
     over = stats.get("email_overflow") or 0
     if over:
         lines += [f"> {over} further new roles matched today and did not fit this email. "
