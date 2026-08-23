@@ -663,6 +663,52 @@ lost on 2026-08-21.
 *lane: `registry` — one session at a time. The rules in this section are `shared`: every
 lane that writes `companies.csv` obeys them.*
 
+### The registry in two minutes
+
+Read this block, run the one command, and stop. Everything below is the long version.
+
+```bash
+python registry_health.py        # read-only: census, who re-checks what, which rungs work
+```
+
+**What the registry is.** One row per company in `companies.csv`
+(`company_name, ats_platform, token, api_url, active, notes`). `active=true` means the digest
+fetches it every morning. `notes` is an append-log: each tool stamps
+`<tool> <date>: <finding>` and strips only its own previous stamp. **Never write that cell by
+hand — use `pipeline/notes.py`.**
+
+**Five questions, five answers:**
+
+| you want to know | answer | where |
+|---|---|---|
+| why isn't company X in my email? | read its row's `notes` — it names the tool, the date and the finding | §5b has the ordered runbook |
+| what re-checks a parked row? | run the command above; it prints the pool of every scheduled tool, derived from that tool's own filter. **A row is usually claimed by several** — a row carrying `unsupported ATS` is claimed by six | the matrix below |
+| can I just flip a row to `active=true`? | **No.** Three gates, all in `pipeline/company_identity`, and on a walled ATS none of them work — see "the identity problem" below | "The activation rule" |
+| a company vanished from the file — why? | `python registry_health.py` diffs against `cloud_state/registry_census.json` and prints every vanished name with its last note. **Deleting a row is not durable**; park it | "Never DELETE a row" |
+| which ATS should we build a fetcher for? | `python registry_health.py --ats` — it separates `BUILD` (no fetcher) from `WIRE` (fetcher exists, the row just needs its tenant cracked) | §1's support policy |
+
+**The identity problem, which is the whole difficulty of this lane.** "There are Israel jobs
+on this page" is not "these are THIS company's jobs". The three gates
+(`is_aggregator`, `is_foreign`, `looks_like_a_job_listing_page`) work on ordinary domains and
+**are all inert on a walled/multi-tenant ATS**: `is_foreign` returns `False` for every ATS
+host by design, because the tenant may legitimately be an acquirer's
+(`Momentis Surgical` really does post under `memic`). So on those hosts:
+
+* what stops a wrong activation is `crack_walled._page_names_company` — three-valued, and
+  `None` (page unreadable) counts as **no evidence**, not as approval;
+* and `crack_walled._ok_to_write`, which gates the **write**, not the return: refusing to
+  activate is not enough, because persisting a foreign address into `api_url` with a
+  `host documented` note hands it to `listing_hunt`'s fast-path, which activates it the next
+  night under a different tool's name;
+* a tenant that merely *contains* the company name is not evidence
+  (`Bancor` vs `careers-bancorpbank`), and a tenant that mismatches is **not** proof of theft
+  either — that is `docs/BACKLOG.md` 21, with the 36-row measurement showing why the obvious
+  fix is wrong.
+
+**Before you change any row filter:** re-run the command above and check the `OWNED BY
+NOTHING` line. A row owned by no recurring job is coverage that silently never happens, and
+that is the single most common way this codebase breaks (§8).
+
 `companies.csv` is **the source of truth for coverage** — the registry of who gets read and
 the log of what we know. Columns: `company_name, ats_platform, token, api_url, active,
 notes`. Three real rows, one of each kind:
@@ -706,7 +752,7 @@ Taxonomy:
 | `monitored candidate` / `host documented` | false | real page documented, extraction unproven | daily probe + 14-day re-hunt |
 | `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | that evening's 19:00 hunt (fast-path) |
 | `no listing found` / `no ATS detected` | false | full render found nothing parseable | weekly audit + hunt cron |
-| `unsupported ATS <x>` | false | ATS known, no extraction path yet | crack_walled / listing-hunt |
+| `unsupported ATS <x>` | false | ATS known, no extraction path yet — but check `--ats` first: 3 of the 8 names here ALREADY have a fetcher and need wiring, not building | **six** jobs claim it (crack_walled, listing_hunt, triage_dark, probe_candidates, audit_empty_rows, deep_validate) — run `registry_health.py` rather than trusting this cell |
 | `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS — strict TLS on the scanning machine produced 6 false positives) | re-tested **daily** by `scan_dead_domains` (`_rescannable` defaults to 1d) inside the 05:00 digest, and again by the Sunday audit; **a revived domain clears the flag automatically** |
 | `defunct: …` | false | company confirmed shut down/acquired | permanently excluded |
 | `alias-of <name>` | false | a SECOND row for a company already scanned at the same board (eBay / eBay Israel) | nobody — **terminal**, and re-opening it republishes every role twice |
