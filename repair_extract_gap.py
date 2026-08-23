@@ -34,6 +34,7 @@ def main():
     from scrape_universal import scrape
     from pipeline.israel import is_israel_job
     from pipeline.company_identity import is_foreign
+    from pipeline.aggregators import is_aggregator
 
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [r for r in rows if r and len(r) >= 6 and r[4] == "false"
@@ -59,6 +60,15 @@ def main():
         # a human can check where we looked — FairFly's was fireflyspace.com, and this
         # repair activated it off 25 Firefly Aerospace roles. The hunt has gated on identity
         # since 2026-08-23; this path had not.
+        if il and is_aggregator(r[3]):
+            # An aggregator page's "similar jobs" sidebar is OTHER companies' roles. The
+            # resolvers refuse to CREATE such a row; re-activating one is the same mistake
+            # one step later (SeatPick, off djinni.co — caught only by check_invariants,
+            # which fails the whole digest commit rather than this one row).
+            still += 1
+            print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but the URL is an "
+                  f"aggregator ({r[3][:44]}) — not activated", flush=True)
+            il = []
         if il and is_foreign(r[0], r[3]):
             still += 1
             print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but the page "

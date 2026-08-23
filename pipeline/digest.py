@@ -519,7 +519,8 @@ def _age_note(posted_date, run_date):
     return ""
 
 
-def build_markdown(jobs, run_date, stats, company_info=None, board_url=""):
+def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
+                   firmographics=None):
     """Return (title, body_markdown) — a COMPACT, email-friendly digest.
 
     Grouped by company (freshest first). Each company shows its one-line "what it does /
@@ -531,6 +532,7 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url=""):
     `company_info` maps company name -> a plain-text "what it does + how it earns money".
     """
     company_info = company_info or {}
+    firmographics = firmographics or {}
     n = len(jobs)
     title = f"🎯 {n} new senior analytics role{'' if n == 1 else 's'} — {run_date}"
 
@@ -547,8 +549,8 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url=""):
              "Israeli high-tech scan — experienced (≈3+ yrs) data-analysis / BI / analytics "
              "roles from the **last 48h**, freshest first. Each role title links to apply.", ""]
     if board_url:
-        lines += [f"🔎 **[Open the full board →]({board_url})** — everything from the last 2 "
-                  "weeks, searchable & sortable.", ""]
+        lines += [f"🔎 **[Open the full board →]({board_url})** — every role still open, "
+                  "searchable & sortable.", ""]
     if n == 0:
         lines.append("_No new matching openings today._")
 
@@ -560,6 +562,9 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url=""):
         lines.append(f"### {_md_esc(company)}")
         if about:
             lines.append(f"_{about}_")
+        facts = _firmo_facts(firmographics.get(company))
+        if facts:
+            lines.append("`" + "` · `".join(_md_esc(f) for f in facts) + "`")
         lines.append("")
         for j in jobs_c:
             url = j.get("url") or ""
@@ -603,8 +608,38 @@ def _newcut(run_date):
         return "9999"
 
 
+_STAGE_LABEL = {"early-private": "early-stage private", "growth-private": "growth-stage private",
+                "public": "public", "acquired-by-bigtech": "acquired", "subsidiary": "subsidiary",
+                "government": "government", "nonprofit": "non-profit"}
+
+
+def _firmo_facts(rec):
+    """"What is this company, actually" — the researched facts, as short display chips.
+
+    The firmographics layer researches sector/stage/employees/founded/IL-centre for every
+    company on the board and then nothing rendered it: the answer to "should I want to work
+    here" lived only in a sqlite table. Order is the order a reader asks it in.
+    """
+    if not isinstance(rec, dict):
+        return []
+    out = []
+    if rec.get("sector"):
+        out.append(str(rec["sector"]))
+    stage = _STAGE_LABEL.get(str(rec.get("stage") or ""), str(rec.get("stage") or ""))
+    if stage:
+        out.append(stage)
+    n = rec.get("employees_global")
+    if isinstance(n, int) and n > 0:
+        out.append(f"~{n:,} employees".replace(",", ","))
+    if rec.get("founded"):
+        out.append(f"founded {rec['founded']}")
+    if rec.get("il_center"):
+        out.append(str(rec["il_center"]))
+    return [c for c in (x.strip() for x in out) if c][:5]
+
+
 def build_board_html(jobs, run_date, stats, company_info=None, analytics_html="", contact_url="",
-                     heading="senior analytics roles in Israel"):
+                     heading="senior analytics roles in Israel", firmographics=None):
     """Interactive board (GitHub Pages): an accessible, expandable, sortable TABLE.
 
     Columns: Company / Role / Location / Posted / Seniority. Rows expand (click or Enter/Space)
@@ -614,6 +649,7 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
     `contact_url` adds a Contact link.
     """
     company_info = company_info or {}
+    firmographics = firmographics or {}
 
     def _display_company(name):
         """Short display name for the table cell: keep the brand, drop taglines and
@@ -719,6 +755,10 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
         left = ""
         if about:
             left += f'<p class="about" dir="auto"><b>About {esc(company)}</b> — {esc(about)}</p>'
+        facts = _firmo_facts(firmographics.get(company))
+        if facts:
+            left += ('<p class="cofacts">'
+                     + "".join(f'<span>{esc(f)}</span>' for f in facts) + '</p>')
         if repost:
             left += (f'<p class="repline">↻ Re-posted {esc(pd0)} — this listing first '
                      f'appeared here {esc(fs0)}</p>')
@@ -969,7 +1009,9 @@ align-items:start;max-width:1280px}
 .dcol{min-width:0}
 .repline{color:var(--emp);font-size:12.5px;margin:-6px 0 16px;font-weight:500}
 .dside{display:none}
-.about{color:var(--body);margin:0 0 16px;font-size:14px;line-height:1.68}
+.about{color:var(--body);margin:0 0 10px;font-size:14px;line-height:1.68}
+.cofacts{margin:0 0 16px;display:flex;flex-wrap:wrap;gap:6px}
+.cofacts span{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap}
 .about b{color:var(--fg);font-weight:700} .about.muted{color:var(--muted);font-style:italic}
 .rlabel{display:flex;align-items:center;gap:12px;font-size:11px;text-transform:uppercase;
 letter-spacing:.07em;color:var(--muted);font-weight:700;margin:2px 0 10px}

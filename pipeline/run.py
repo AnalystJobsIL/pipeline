@@ -308,6 +308,17 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             else:
                 st.record_firmo_failure(company, run_date)
 
+    # board-name -> researched record, resolved through the normalized identity key so
+    # "SolarEdge Technologies" finds the stored "SolarEdge" profile (§7 identity rule)
+    _firmo_store = st.load_firmographics()
+    _by_key = {firmographics_mod.identity_key(k): v for k, v in _firmo_store.items()}
+    # every company we have ever matched, not just today's board — the archive page renders
+    # the same company card and was showing facts for 5 of its 50 employers
+    _all_companies = {j["company"] for j in st.get_matched_since("0000-01-01")}
+    firmo_display = {c: (_firmo_store.get(c) or _by_key.get(firmographics_mod.identity_key(c)))
+                     for c in _all_companies}
+    firmo_display = {k: v for k, v in firmo_display.items() if v}
+
     summary = {
         "companies_scanned": stats["companies_scanned"],
         "companies_failed": stats["companies_failed"],
@@ -327,7 +338,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # email = last ~48h (concise daily); board = last 2 weeks (searchable/sortable)
     subject, html, text = digest_mod.build_digest(email_jobs, run_date, summary)
     md_title, md_body = digest_mod.build_markdown(email_jobs, run_date, summary, company_info,
-                                                  board_url=os.environ.get("BOARD_URL", ""))
+                                                  board_url=os.environ.get("BOARD_URL", ""),
+                                                  firmographics=firmo_display)
     # optional aggregate analytics: set GOATCOUNTER_CODE to your goatcounter subdomain
     gc = os.environ.get("GOATCOUNTER_CODE", "").strip()
     analytics_html = (f'<script data-goatcounter="https://{gc}.goatcounter.com/count" '
@@ -335,8 +347,13 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         os.environ.get("ANALYTICS_SNIPPET", "")
     contact_url = os.environ.get("CONTACT_URL",
                                  "https://github.com/AnalystJobsIL/board/issues/new")
+    # researched company facts (sector / stage / employees / founded / IL centre). They were
+    # being collected for every board company and rendered nowhere. Look them up under the
+    # normalized identity so "SolarEdge Technologies" on the board finds stored "SolarEdge".
     board_html = digest_mod.build_board_html(board_jobs, run_date, summary, company_info,
-                                             analytics_html=analytics_html, contact_url=contact_url)
+                                             analytics_html=analytics_html,
+                                             contact_url=contact_url,
+                                             firmographics=firmo_display)
 
     base = os.path.join(out_dir, f"digest-{run_date}")
     with open(base + ".html", "w", encoding="utf-8") as f:
@@ -360,7 +377,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     arch = [j for j in st.get_matched_since("0000-01-01")
             if (j["company"], j["title"]) not in onboard]
     arch_html = digest_mod.build_board_html(arch, run_date, summary, company_info=company_info,
-                                        heading="archived roles (expired or filled)")
+                                        heading="archived roles (expired or filled)",
+                                        firmographics=firmo_display)
     with open(os.path.join(docs_dir, "archive.html"), "w", encoding="utf-8") as f:
         f.write(arch_html)
     # machine-readable payload for the send + mark-sent steps
