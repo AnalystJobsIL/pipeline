@@ -762,3 +762,22 @@ def test_a_first_scan_company_is_shown_honestly_rather_than_withheld():
     title2, body2 = D.build_markdown(only_new, "2026-08-23", {"first_scan": 1, "new": 0})
     assert "newly covered companies" in title2
     assert "_No new matching openings today._" in body2
+
+
+def test_the_blocking_gate_blocks_on_corruption_not_on_one_bad_row():
+    """The gate runs without continue-on-error immediately before the digest commits, so
+    anything it calls a violation costs the whole day: no digest, no board, no email. On
+    2026-08-23 ONE false-positive attribution row did exactly that. Shape and identity
+    corruption still block (they make the registry unreadable or make the merge drop edits
+    silently); a handful of unowned or unscannable rows warn. A FLOOD of orphans is a pool
+    collapse and still blocks — that is check D's actual purpose."""
+    import check_invariants as C
+    src = open(C.__file__, encoding="utf-8").read()
+    def section(letter, nxt):
+        return src[src.index(f"# {letter}. "):src.index(f"# {nxt}. ")]
+    assert "bad(" in section("A", "B"), "a malformed row must still block"
+    assert "bad(" in section("B", "C"), "a duplicate company_name must still block"
+    assert "bad(" not in section("C", "D"), "one unscannable row must not withhold the digest"
+    assert "ORPHAN_BLOCK_AT" in section("D", "E"), "check D must have a flood threshold"
+    assert "bad(" in section("E", "F"), "a collapsed re-check pool must still block"
+    assert C.ORPHAN_BLOCK_AT >= 1

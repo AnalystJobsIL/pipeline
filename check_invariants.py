@@ -35,6 +35,7 @@ from pipeline.aggregators import is_aggregator
 from pipeline.recruiters import is_recruiter
 
 NOTE_CAP = 220
+ORPHAN_BLOCK_AT = 10   # a handful is one tool's note bug; a flood is a pool collapse
 # deliberate, permanent deactivations — keep this list short and dated in the notes
 ALLOWED_ORPHANS = {
     "NICE", "Via Transportation", "Marvell Israel", "SeeTree", "Google",
@@ -83,27 +84,38 @@ def main():
     if dupes:
         bad(f"duplicate company_name — merge_csv_rows silently drops edits: {dupes[:8]}")
 
-    # C. active rows must be scannable
+    # C. active rows must be scannable. A WARNING, not a violation: `pipeline/run.py` drops
+    # aggregator and recruiter rows at runtime anyway, so one bad row costs one company's
+    # coverage — while failing here costs the whole day's digest, board and email.
+    unscannable = []
     for r in (r for r in body if len(r) > 4 and r[4] == "true"):
         if not (r[1] or "").strip():
-            bad(f"active row with no platform: {r[0]}")
+            unscannable.append(f"{r[0]}: no platform")
         if not (r[3] or "").strip() and r[1] != "discovery":
-            bad(f"active row with no api_url: {r[0]}")
+            unscannable.append(f"{r[0]}: no api_url")
         if is_aggregator(r[3]):
-            bad(f"active row on an aggregator: {r[0]} -> {r[3][:50]}")
+            unscannable.append(f"{r[0]}: aggregator {r[3][:40]}")
         if is_recruiter(r[0]):
-            bad(f"active recruiting agency: {r[0]}")
+            unscannable.append(f"{r[0]}: recruiting agency")
+    if unscannable:
+        warn(f"{len(unscannable)} active rows are not scannable: {unscannable[:6]}")
 
-    # D. every inactive row must be in SOME re-check pool
+    # D. every inactive row must be in SOME re-check pool.
+    # The thing worth blocking on is a POOL COLLAPSE — a predicate inverted, a note format
+    # changed, hundreds of companies retired at once (check E is its other half). A handful
+    # of orphans is a bug in one tool's note, and withholding the day's product to report it
+    # is the trade that failed on 2026-08-23. Threshold, then.
     orphans = [r[0] for r in body
                if len(r) >= 6 and r[4] == "false"
                and not re.search(TERMINAL, r[5] or "", re.I)
                and not is_recruiter(r[0])
                and not re.search(POOL, r[5] or "", re.I)]
     unexpected = sorted(set(orphans) - ALLOWED_ORPHANS)
-    if unexpected:
+    if len(unexpected) > ORPHAN_BLOCK_AT:
         bad(f"{len(unexpected)} inactive rows match NO re-check pool (retired coverage): "
             f"{unexpected[:10]}")
+    elif unexpected:
+        warn(f"{len(unexpected)} inactive rows match NO re-check pool: {unexpected[:10]}")
 
     # E. pools must not collapse
     pool_n = sum(1 for r in body if len(r) >= 6 and r[4] == "false"
