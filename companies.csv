@@ -167,7 +167,7 @@ Prompt Security,ashby,prompt,https://api.ashbyhq.com/posting-api/job-board/promp
 Cymulate,greenhouse,cymulate,https://boards-api.greenhouse.io/v1/boards/cymulate/jobs,true,research-verified; 12 jobs / 4 Israel
 Aim Security,ashby,aim,https://api.ashbyhq.com/posting-api/job-board/aim,true,research-verified; 20 jobs / 0 Israel
 Capitolis,greenhouse,capitolis,https://boards-api.greenhouse.io/v1/boards/capitolis/jobs,true,research-verified; 2 jobs / 2 Israel
-Finaloop,recruitee,finaloop,https://finaloop.recruitee.com/api/offers/,true,research-verified; 3 jobs / 0 Israel
+Finaloop,scrape,,https://careers.finaloop.com/,true,research-verified; 3 jobs / 0 Israel | platform-fix 2026-08-23: recruitee tenant finaloop.recruitee.com 404s; careers site is Tellent-hosted — read by the scraper
 Pontera,greenhouse,pontera,https://boards-api.greenhouse.io/v1/boards/pontera/jobs,true,research-verified; 5 jobs / 1 Israel
 HoneyBook,ashby,honeybook,https://api.ashbyhq.com/posting-api/job-board/honeybook,true,research-verified; 10 jobs / 8 Israel
 Singular,ashby,singular,https://api.ashbyhq.com/posting-api/job-board/singular,true,research-verified; 19 jobs / 2 Israel
@@ -204,7 +204,7 @@ Believer Meats,ashby,believer,https://api.ashbyhq.com/posting-api/job-board/beli
 Loora,ashby,loora,https://api.ashbyhq.com/posting-api/job-board/loora,true,research-resolved; 2 jobs / 2 Israel
 Aidoc,greenhouse,aidocmedical,https://boards-api.greenhouse.io/v1/boards/aidocmedical/jobs,true,research-resolved; 32 jobs / 24 Israel
 Datarails,greenhouse,datarails,https://boards-api.greenhouse.io/v1/boards/datarails/jobs,true,research-resolved; 13 jobs / 5 Israel
-Bit,ashby,bit,https://api.ashbyhq.com/posting-api/job-board/bit,true,research-resolved; 7 jobs / 0 Israel
+Bit,scrape,,https://bit.cloud/careers,false,research-resolved; 7 jobs / 0 Israel | dark-triage 2026-08-23: blocked — ashby slug 'bit' 404s and bit.cloud/careers 403s a plain fetch; unsupported ATS
 Logz.io,lever,logz,https://api.lever.co/v0/postings/logz?mode=json,true,research-resolved; 3 jobs / 2 Israel
 Token Security,greenhouse,tokensecurity,https://boards-api.greenhouse.io/v1/boards/tokensecurity/jobs,true,research-resolved; 8 jobs / 4 Israel
 Oasis Security,greenhouse,oasissecurity,https://boards-api.greenhouse.io/v1/boards/oasissecurity/jobs,true,research-resolved; 63 jobs / 3 Israel
@@ -613,7 +613,7 @@ Honeywell,scrape,https://careers.honeywell.com/us/en/search-results?keywords=Isr
 Mercedes-Benz (MBRDNA),scrape,https://group.mercedes-benz.com/careers,https://group.mercedes-benz.com/careers,true,"scanned via brightdata; no open Israel roles now | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty (L | activated 2026-08-23: validated page, scanned daily"
 Nike,workday,nike/nke,https://nike.wd1.myworkdayjobs.com/wday/cxs/nike/nke/jobs,true,re-audit 2026-08-21: verified 11/11 IL (was false-empty)
 John Deere,scrape,https://jobs.deere.com/,https://jobs.deere.com/successfactors/search/?q=&locationsearch=Israel,true,"deep-validated 2026-08-21: unsupported ATS successfactors | crack-walled 2026-08-22: host documented, 0 IL now | listing-hunt 2026-08-22: no IL listin | activated 2026-08-23: validated page, scanned daily"
-Comcast,workday,comcast/Comcast_Careers,https://comcast.wd5.myworkdayjobs.com/wday/cxs/comcast/Comcast_Careers/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty)
+Comcast,scrape,,,false,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | dark-triage 2026-08-23: url-dead — the Workday tenant returns 410 Gone; no listing found
 Rapid7,scrape,,https://careers.rapid7.com/jobs/search?location=Israel,true,listing-hunt 2026-08-22: verified 3 IL via https://careers.rapid7.com/jobs/search?location=Israel
 Teradata,scrape,,https://careers.teradata.com/jobs?location=Israel,true,listing-hunt 2026-08-22: verified 1 IL via https://careers.teradata.com/jobs?location=Israel
 Bank of America,scrape,https://careers.bankofamerica.com/en-us/job-search?ref=search&location=Israel,https://careers.bankofamerica.com/en-us/job-search?ref=search&location=Israel,true,"deep-validated 2026-08-21: unsupported ATS avature.net | crack-walled 2026-08-22: nocapture | listing-hunt 2026-08-22: no IL listing; monitored candid | activated 2026-08-23: validated page, scanned daily"
@@ -903,7 +903,7 @@ Navan,scrape,https://navan.com/careers,https://navan.com/careers,true,deep-scrap
 Firmus,greenhouse,firmus,https://boards-api.greenhouse.io/v1/boards/firmus/jobs,true,re-audit 2026-08-21: deep-verified 40/0 IL (was dark)
 QuamCore,scrape,,https://www.quamcore.com/careers,true,listing-hunt 2026-08-22: verified 1 IL via https://www.quamcore.com/careers
 Flytrex,scrape,,https://www.flytrex.com/careers,true,listing-hunt 2026-08-22: verified 11 IL via https://www.flytrex.com/careers
-Temi,scrape,,https://www.robotemi.com/,false,"identity 2026-08-23: hireteem.com is 'Teem', a different company; temi is robotemi.com but it publishes no /careers path — no listing found"
+Temi,scrape,,https://www.robotemi.com/,false,listing-hunt 2026-08-23: best candidate careers.te.com is another company; no listing found
 Track160,scrape,https://www.track160.com/careers,http://www.track160.com/,false,deep-validated 2026-08-21: unsupported ATS phenom | url-repaired 2026-08-23: dead host careers.track160.com replaced | crack-walled 2026-08-23: nocapture | domain-dead 2026-08-22 (conn-dead)
 EquityBee,workable,equitybee,https://apply.workable.com/api/v1/widget/accounts/equitybee?details=true,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 myInterview,scrape,,https://myinterview.applytojob.com/apply/,true,listing-hunt 2026-08-22: verified 2 IL via https://myinterview.applytojob.com/apply/ | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (Pinpoint careers page (staging); O))
