@@ -675,3 +675,28 @@ def test_every_note_writer_uses_the_append_log_helper():
             offenders.append(name)
     assert not offenders, (f"these still slice a note by hand instead of using "
                            f"pipeline.notes.append: {offenders}")
+
+
+@pytest.mark.parametrize("company,url,flagged", [
+    # the five false positives that failed the gate and withheld a day's digest: only the
+    # COMPANY side was normalized, so "G-STAT" -> "gstat" never matched the slug "g-stat"
+    ("G-STAT", "https://www.linkedin.com/jobs/view/data-analyst-at-g-stat-4452928552", False),
+    ("Port.io", "https://www.linkedin.com/jobs/view/senior-bi-analyst-at-port-io-4448277590", False),
+    ("Checkout.com", "https://www.linkedin.com/jobs/view/fraud-data-analyst-at-checkout-com-4411198404", False),
+    # a requisition number inside the TITLE ended a non-greedy match before the employer
+    ("Experis Israel", "https://www.linkedin.com/jobs/view/business-data-analyst-241239-at-experis-israel-4411198404", False),
+    # two letters cannot carry identity, and a percent-encoded Hebrew slug is not evidence
+    ("EY", "https://www.linkedin.com/jobs/view/%D7%9E%D7%A0%D7%AA%D7%97-4411198404", False),
+    # ...and the real thing it exists to catch
+    ("Menora Mivtachim Group", "https://il.linkedin.com/jobs/view/data-analyst-25455-at-yael-group-4449299472", True),
+    ("IEC", "https://il.linkedin.com/jobs/view/bi-developer-at-central-bottling-company-israel-ltd-4451515278", True),
+    ("Riskified", "https://www.riskified.com/careers/1", False),
+])
+def test_linkedin_slug_attribution(company, url, flagged):
+    """LinkedIn's URL is the only place a scraped card states who is actually hiring — 147
+    board rows were once published under the wrong employer. But the check compared a
+    normalized company against an un-normalized slug, so on 2026-08-23 it flagged five good
+    rows, and ONE of them failed the blocking invariant gate and withheld the whole day's
+    digest, board and email."""
+    from pipeline.company_identity import url_names_other_company
+    assert url_names_other_company(company, url) is flagged

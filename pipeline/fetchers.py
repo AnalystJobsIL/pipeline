@@ -579,10 +579,16 @@ def fetch_discovery(row):
     cut = (_dt.date.today() - _dt.timedelta(days=21)).isoformat()
     # run.py filters recruiter ROWS; discovery jobs carry the real employer name and would
     # bypass that check, so agencies re-posting client roles are dropped per-job here.
+    from .company_identity import url_names_other_company
     from .recruiters import is_recruiter as _is_rec
+    # ...and a LinkedIn card whose URL slug names a DIFFERENT employer is mis-attributed at
+    # the source: 147 board rows were once published under the wrong company this way.
+    # Dropped HERE rather than caught by check_invariants, so one bad card cannot withhold
+    # a whole day's digest at the commit gate.
     return [j for j in jobs
             if (not j.get("posted_date") or str(j["posted_date"])[:10] >= cut)
-            and not _is_rec(j.get("company"))]
+            and not _is_rec(j.get("company"))
+            and not url_names_other_company(j.get("company"), j.get("url"))]
 
 
 def fetch_jazzhr(row):

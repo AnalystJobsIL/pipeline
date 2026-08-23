@@ -21,6 +21,16 @@ import re
 import sys
 from collections import Counter
 
+# This is a BLOCKING gate in the digest: if it raises, no digest, no board, no email. On
+# Windows (and under any cp1252 redirect) printing a Hebrew company name or an em-dash in a
+# violation message is enough to do exactly that — the message describing the problem kills
+# the run instead of reporting it.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):  # not a reconfigurable stream
+        pass
+
 from pipeline.aggregators import is_aggregator
 from pipeline.recruiters import is_recruiter
 
@@ -130,21 +140,21 @@ def main():
     except Exception as e:  # noqa: BLE001
         bad(f"could not verify city-list drift: {e}")
 
-    # H. board attribution
+    # H. board attribution. This used to be a `bad()`, and on 2026-08-23 ONE row — a false
+    # positive, "G-STAT" vs the slug "g-stat", because only the company side was normalized
+    # — failed the gate and withheld the whole day's digest, board and email. The check is
+    # now shared with the ingest path (`fetch_discovery` drops these before they can be
+    # stored), so a row reaching here means the filter was bypassed: worth shouting about,
+    # not worth withholding the product for.
     try:
         import sqlite3
+        from pipeline.company_identity import url_names_other_company
         db = sqlite3.connect("file:cloud_state/seen.db?mode=ro", uri=True)
-        wrong = 0
-        for comp, url in db.execute("select company, url from matched"):
-            m = re.search(r"/jobs/view/(.+?)-\d{6,}", url or "")
-            if not m:
-                continue
-            slug = m.group(1).replace("-", " ").lower()
-            c = re.sub(r"[^a-z0-9 ]", "", (comp or "").lower())
-            if c and not any(w in slug for w in c.split() if len(w) > 3):
-                wrong += 1
+        wrong = [f"{c}: {u[:60]}" for c, u in db.execute("select company, url from matched")
+                 if url_names_other_company(c, u)]
         if wrong:
-            bad(f"{wrong} board rows whose URL names a DIFFERENT company (mis-attribution)")
+            warn(f"{len(wrong)} board rows whose URL names a DIFFERENT company "
+                 f"(mis-attribution): {wrong[:5]}")
     except Exception:  # noqa: BLE001
         pass
 

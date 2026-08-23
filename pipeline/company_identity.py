@@ -308,3 +308,39 @@ def page_mentions_company(company: str, html: str, strict: bool = False) -> bool
     words = [w for w in name if len(w) >= 4 and w not in _STOP]
     # every distinctive token must appear; one generic hit is not identity
     return bool(words) and all(w in toks for w in words)
+
+
+# GREEDY, and anchored at the id: LinkedIn puts the employer LAST, and a title with
+# a requisition number in it ("Business Data Analyst - 241239 - at Experis Israel")
+# stops a non-greedy match before the employer ever appears.
+_JOB_SLUG = re.compile(r"/jobs/view/(.+)-\d{6,}(?:[/?#]|$)")
+
+
+def url_names_other_company(company: str, url: str) -> bool:
+    """For a LinkedIn posting URL, does the slug name a DIFFERENT employer?
+
+    LinkedIn's job URL carries "<title>-at-<employer>-<id>", which is the only place a
+    scraped LinkedIn card states who is actually hiring. A run once attributed 147 board
+    rows to the wrong employer this way.
+
+    Both sides are normalized to bare alphanumerics before comparing, which the first
+    version did only to the company: "G-STAT" became "gstat" while the slug stayed
+    "g stat", so five perfectly good rows read as mis-attributed — and one of them failed
+    the invariant gate and withheld an entire day's digest, board and email.
+
+    Returns False (i.e. "no evidence of a problem") whenever we cannot tell: a non-LinkedIn
+    url, or a company name too short to carry identity ("EY").
+    """
+    m = _JOB_SLUG.search(url or "")
+    if not m:
+        return False
+    slug = _norm(urllib.parse.unquote(m.group(1)))
+    cn = _norm(company)
+    # 2 characters cannot carry identity ("EY"); 3 can ("Wiz", "SAP").
+    if not slug or len(cn) < 3:
+        return False
+    if cn in slug:
+        return False
+    words = [w for w in re.findall(r"[a-z0-9]{4,}", (company or "").lower())
+             if w not in _STOP]
+    return not any(w in slug for w in words)
