@@ -700,6 +700,13 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     measured. `test_a_tenant_mismatch_alone_must_not_block_an_ats_row` pins the 36-row
     measurement so the next reviewer finds it before rebuilding this.
 
+    **The declaration landed 2026-08-24:** `pipeline/identity_facts.py` is the `acquired-by`
+    table 21(a) asked for. A declared row's tenant is authoritative both ways; Habana,
+    VMware, Splunk, Itamar, Citrix, Momentis and SentinelOne are declared with evidence.
+    The blocked-active set went 24 -> 22 (re-measure: Census B in the plan); the rest of
+    the 24 are candidates, each to be declared with evidence or parked -- never a reason
+    to loosen the string rule.
+
 22. **17 rows carrying a `listing_hunt` fast-path token have a walled-ATS `api_url` today**
     — lane: `registry`, unclaimed, and it needs item 21 decided first. The fast path gates on
     `is_foreign` alone, so for those rows it does not gate. Six of the 17 look wrong on
@@ -1122,6 +1129,9 @@ Three reviewers, all findings reproduced before action. Seven were fixed; these 
     company's name. Item 21 measured the cost of vetoing rows that were already ACTIVE.
     The real fix is the `acquired-by` column, not a cleverer string test.
 
+    **CLOSED 2026-08-24:** `Habana Labs (Intel)` is declared (`pipeline/identity_facts.py`);
+    the data column this item named exists, as a table.
+
 50. **On PATH-tenant platforms the gate admits without ever reading the page it holds** —
     lane: `registry`. `tenant_is_this_company` answers True when there is nothing checkable,
     and greenhouse/lever/comeet/ashby put the tenant in the PATH, so:
@@ -1143,6 +1153,12 @@ Three reviewers, all findings reproduced before action. Seven were fixed; these 
     What remains open is exactly the no-page half: an activation with no html in hand
     on a path-tenant platform is still admitted by vacuity, and the slug-tightening
     above is still the fix that would work.
+
+    **Declared rows closed 2026-08-24:** on a path platform `embedded_board_ok` checks the
+    row's own token against its declaration, both ways. What stays open, said plainly: an
+    UNDECLARED row on a path platform is still admitted by vacuity in
+    `tenant_is_this_company` -- a declaration can only be matched against subdomain
+    labels or the row's token, never a URL path (the Riskified/Novartis incident).
 
 51. **A `_WALLED_HOST` entry can be deleted with the suite green whenever that platform has
     no pool members** — lane: `registry`. `test_the_walled_pool_survives_another_tools_note_
@@ -1310,6 +1326,10 @@ FairFly shape). These are the residuals.
     The remaining refusal classes stand as filed above (Comeet uids; rebrand slugs like
     SentinelOne->sentinellabs; names whose extra word is not generic).
 
+    **The acquirer-slug class is DECLARABLE (2026-08-24):** Momentis->memic and
+    SentinelOne->sentinellabs are declared and admitted; the Comeet-uid class stays a
+    visible suspect by design; the vocabulary class is item 71's.
+
 62. **`restore_only` is exempt from the scheduled-leak check `legacy_unscheduled` gets** —
     lane: `registry`. `test_the_writer_allow_list_only_covers_tools_no_workflow_runs`
     intersects only `_LEGACY_UNSCHEDULED` with the scheduled set; both buckets feed
@@ -1452,3 +1472,6 @@ commits. Five filed test gaps, four closed the same day with cells and records
     caller's pool. Deliberately NOT closed by widening `_NAME_FILLER` — that set feeds
     `tenant_is_this_company` registry-wide and needs its own measured change; the durable
     answer is the same data column as items 50/61.
+
+    **CLOSED 2026-08-24, two ways:** the parenthetical split no longer exists (identity B5),
+    and `Citrix (Cloud Software Group)` is declared -> tibco, so it builds no string targets.

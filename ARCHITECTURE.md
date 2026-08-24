@@ -575,6 +575,14 @@ removed three times.
 "There are Israel jobs on this page" is not "these are THIS company's jobs", and it is not
 "this is a page that lists jobs". A row may only be activated when all three hold:
 
+**Acquisitions are DECLARED, not parsed.** A company that legitimately posts under another
+tenant (Habana Labs under `intel`, Momentis under `memic`) is a row in
+`pipeline/identity_facts.py`'s `DECLARED` table -- tenant tokens plus the evidence -- and the
+gates consult that table before any string heuristic. Do not rename the row, invent a note
+token (`alias-of` means the OPPOSITE: a duplicate to park), or teach a matcher a new trick;
+`python registry_health.py --explain "<name>"` shows whether a row is declared and what the
+gates conclude.
+
 1. `pipeline.aggregators.is_aggregator(url)` is false — an aggregator's "similar jobs"
    sidebar is other employers' roles.
 2. `pipeline.company_identity.is_foreign(company, url)` is false — FairFly was activated off
