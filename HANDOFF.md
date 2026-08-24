@@ -39,6 +39,8 @@ not finish.
 
 **2026-08-23 (evening), `discovery` lane:** Telegram was invisible to the dead-source detector (no `telegram` key in `source_health.json` beside 104 telegram jobs in the cache) and the targeted LinkedIn sweep searched the same 20 of 110 stale companies every day; both fixed, 3 channels added, 4 Hebrew agency spellings that walk past their own Latin entries blocked, new `ARCHITECTURE.md` §1a — `docs/sessions/2026-08-24-discovery.md`, 5 items left in `docs/BACKLOG.md`.
 
+**2026-08-24, `discovery` lane (follow-ups):** the 05:00 run answered the open question — the free guest path works on GitHub runners (`free=166 paid=14`, 188 new companies) — but four keywords ended on the 30-page cap with pools unread, the national window was Tel Aviv-weighted, and a starved targeted cap (4, BD pool at 97%) still burned a doomed dataset trigger. Shipped: guest walk 30→50, Be'er Sheva + Haifa city windows (free-only by construction, paid worst case unchanged), targeted skip below `TARGETED_MIN_CAP`, comment density cut. NOT finished: the module split (BACKLOG 14, needs a quiet day), rejected-names ledger + Geektime feed filed as BACKLOG 70/71. Watch tomorrow: `[linkedin] … across 27 queries` and a `linkedin_blank` spike (would mean the +18 free queries triggered soft-limiting — back the city product off first).
+
 ## State at handoff (2026-08-23 07:35 UTC, verified against the published product)
 
 | | |

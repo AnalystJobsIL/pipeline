@@ -962,3 +962,48 @@ e=json.load(open('research_companies.json',encoding='utf-8'))
 h={r['company_name'].strip().lower() for r in load_companies(active_only=False)}
 print(sum(1 for x in e if x.get('careers_url') and (x.get('name') or '').strip().lower() not in h and not is_recruiter(x.get('name'))))"
 ```
+
+---
+
+## Follow-up session, 2026-08-24 (the real date this time)
+
+The 05:00 UTC cloud run (32694484572) answered the question the whole session hung on:
+**LinkedIn's guest endpoint talks to GitHub's runners.**
+
+```
+[linkedin] 1602 cards across 9 keywords · path free=166 paid=14 (14 Unlocker credits)
+[yield] linkedin: 352 employers -> 188 NEW companies
+[budget] budget 21 credits/day -> breadth 9 keywords x2 pages (~18 paid worst case) + targeted cap 4
+[linkedin-targeted] 0 records
+[bd-spend] 4831 credits used this month (97% of 5000)
+```
+
+What that run changed, all shipped this session:
+
+- **FOUR keywords ended on the 30-page cap** (data analyst 208, business intelligence 206,
+  analytics 226, אנליסט 269) — the tripwire worked as designed. `LINKEDIN_GUEST_PAGES`
+  default 30 → 50; the test floor moved 20 → 40 so 30 is now a failing value.
+- **The city windows are wired** — the "not yet wired" line above is superseded. Be'er Sheva
+  and Haifa run as the full 9-keyword product; both location strings re-verified today to
+  return a city-centred radius, not a global fallback. City queries pass `pages=0`, which
+  the paid-fallback gate reads as "no paid budget": free-only by construction, so the paid
+  worst case stays the national ~18 even if LinkedIn hard-blocks the runner. Jerusalem and
+  Herzliya stay out, and a test pins the list to peripheral cities.
+- **The targeted zero was starvation, not a regression**: 97% pool → `plan_spend` cap 4 →
+  a doomed dataset trigger (snapshot + polling + a burned rotation slot for 0 records).
+  `_targeted_cap_or_zero` now skips the trigger below `TARGETED_MIN_CAP` (default 10) with
+  an explicit line, wired after the `[budget]` print so that line stays truthful. The
+  operator is topping up Bright Data, at which point the gate goes inert.
+- **Comment density**: cut in a separate, comment-only commit — the surviving rule is in
+  that commit's message; the narrative this file already holds was the bulk of what left.
+
+Not done, deliberately: the module split (BACKLOG 14 — another lane was mid-edit in this
+tree all afternoon, which is exactly the condition the split must wait out); the
+rejected-names ledger and the Geektime funding feed (operator declined for now — filed as
+BACKLOG 70 and 71 so they stay visible).
+
+Verification for tomorrow's run: `[linkedin] … across 27 queries (9 national + 18 city,
+free-only)`, per-city `[linkedin:<kw> @ Be'er Sheva, Israel]` lines, no cap-tripwire lines
+(or tripping at 50 — that is data, raise again), and either a healthy targeted cap or the
+explicit `dataset trigger skipped` line. A `linkedin_blank` spike would mean the +18 free
+queries drew soft-limiting: back the city product off before touching anything else.

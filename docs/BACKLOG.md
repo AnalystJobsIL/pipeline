@@ -262,6 +262,10 @@ fixed, and every one of them is outside the `discovery` lane's write list.
    incidentally covering those employers (it already found 2 of the 15); or keep it and
    accept the cost, since it is the only thing covering 15 active rows whose own board
    reports zero.
+   **2026-08-24 update:** the failure shape landed — Bright Data at 97% of pool throttled
+   the cap to 4 and the trigger still ran, returning 0 records. `discovery_daily` now skips
+   the trigger below `TARGETED_MIN_CAP` (default 10) with an explicit log line; the `f_C`
+   harvest above remains the real fix.
 
 7. **Reading it is CLOSED; the six scripts that spend it are item 6.**
    *(lane: `infra`.)* `discovery_daily.bd_spend_this_month()` now reads the whole pool —
@@ -1348,3 +1352,20 @@ FairFly shape). These are the residuals.
     coincidence, `Z2A Digital` <- KELA's Comeet uid `2A.004`, predates the window pin).
     If one ever fires, the fix is a minimum-length floor on the target, not a wider
     window — the window is pinned at ±1 by `embed-near-window-drift`.
+
+## From the `discovery` lane follow-up, 2026-08-24
+
+70. **The intake filters throw away company names every day and nothing records WHICH.**
+    — lane: `discovery`. `looks_like_junk` and `is_recruiter` rejected 32 names on
+    2026-08-24 alone; both bridges keep only a COUNT, so a wrongly-rejected employer is
+    invisible forever and un-appealable. The fix is a small merge-only ledger (name,
+    reason, first/last seen, bounded by TTL) written from both `discovery_daily.py` and
+    `discovery_telegram.py`. Deliberately NOT built 2026-08-24 (operator's call); this
+    entry exists so the gap stays visible.
+
+71. **A funding-news feed is the only source shape that finds a company BEFORE its first
+    job posting.** — lane: `discovery`. Geektime publishes funding announcements over a
+    keyless RSS feed; a funded Israeli company hires analysts before any job board indexes
+    it, so this would feed the research queue names no sweep can see yet. Probe before
+    wiring, per the Telegram-channel rule: the number that matters is how many items parse
+    to a company name. New work, not a resumption — nothing in the repo has tried it.

@@ -32,7 +32,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `coverage_report.py` | audit-coverage | Sunday summary: of everything researched, how much is scanned |
 | `crack_walled.py` | audit-coverage, listing-hunt | Chromium + network sniffing against walled ATSes (Phenom/Eightfold/iCIMS/SuccessFactors) |
 | `deep_validate.py` | deep-validate | Saturday deep re-validation; owns `google_via_unlocker`, the only search rung that works today |
-| `discovery_daily.py` | daily-digest | LinkedIn + Indeed sweeps via Bright Data -> discovered_cache.json + new employer names |
+| `discovery_daily.py` | daily-digest | LinkedIn (keyless guest + Unlocker fallback, national + city windows), Indeed (Unlocker), Workable (keyless), targeted backfill -> discovered_cache.json + new employer names |
 | `discovery_telegram.py` | daily-digest | public t.me/s channel previews; keyless |
 | `enrich_matched_jd.py` | daily-digest | age-blind JD backfill over the matched table itself |
 | `enrich_scrape_jd.py` | daily-digest | JD backfill for scrape-source jobs, with the 7-day cooldown stamp |
