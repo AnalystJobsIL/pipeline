@@ -265,7 +265,7 @@ Per MONTH, not per day.
 
 | | credits/day |
 |---|---|
-| LinkedIn breadth — keyless guest endpoint, 9 keywords × 30 pages | **~7** (≤18 if LinkedIn blocks it outright) |
+| LinkedIn breadth — keyless guest endpoint, 9 keywords × 50 pages | **~7** (≤18 if LinkedIn blocks it outright) |
 | Workable — keyless, all tenants | **0** |
 | Indeed — Unlocker, 5 queries + retries | 6 |
 | LinkedIn targeted backfill — dataset, per RECORD | 67 |

@@ -1657,7 +1657,9 @@ def test_the_free_walk_is_not_bounded_by_the_paid_dial():
     src = inspect.getsource(dd.linkedin_search)
     assert "range(LINKEDIN_GUEST_PAGES)" in src, "the free walk needs its own bound"
     assert "range(pages * 6)" not in src
-    assert dd.LINKEDIN_GUEST_PAGES >= 20
+    # 40 is a floor, not the dial: the 2026-08-24 run ended four keywords on the 30-page cap
+    # with 206-269 jobs collected and the pool not exhausted, so 30 is measured-insufficient.
+    assert dd.LINKEDIN_GUEST_PAGES >= 40
 
 
 def test_one_repeated_page_does_not_end_a_keyword():

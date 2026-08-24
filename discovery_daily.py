@@ -241,7 +241,10 @@ LINKEDIN_BLANK_TOLERANCE = int(os.environ.get("LINKEDIN_BLANK_TOLERANCE", "3"))
 # The guest endpoint goes far deeper. Measured 2026-08-23, walking until three consecutive
 # blanks: `analytics` 201 jobs / 148 employers, `data scientist` 162 / 106. Against that,
 # `linkedin_search` was shipping TEN. Width still beats a boolean OR, but depth is real here.
-LINKEDIN_GUEST_PAGES = int(os.environ.get("LINKEDIN_GUEST_PAGES", "30"))
+# 50, not 30: the 2026-08-24 cloud run ended FOUR keywords on the 30-page cap with the pool
+# not exhausted (data analyst 208, business intelligence 206, analytics 226, אנליסט 269 jobs)
+# — 500 card slots is ~1.9x the deepest pool seen. Free requests; the cost is seconds.
+LINKEDIN_GUEST_PAGES = int(os.environ.get("LINKEDIN_GUEST_PAGES", "50"))
 # Credits are the unit that matters and nothing counted them per source. One Unlocker call =
 # one credit, so this IS the bill for the sweeps that use it.
 import collections as _collections
