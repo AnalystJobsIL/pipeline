@@ -172,7 +172,21 @@ including the claim "none".
 
 1. **Native ATS fetchers** — `pipeline/fetchers.py` `FETCHERS` map. A `companies.csv` row
    whose `ats_platform` names a platform is fetched live every digest run via its public
-   JSON API. Adding a platform = one `fetch_x(row)` normalizer + a map entry.
+   JSON API, sequentially, ~1 s a row (median 0.5 s; `oraclehcm` 4–15 s, the slowest
+   single row a 22 s greenhouse): **436 API rows on
+   2026-08-24** — comeet 123, greenhouse 104, workday 66, ashby 50, lever 24, workable 22,
+   smartrecruiters 16, bamboohr 11, recruitee 8, breezy 5, oraclehcm 4, jazzhr 1,
+   custom_json 1, microsoft 1 — beside 425 scrape rows and the 1 discovery row (862 active).
+   Re-derive, never trust:
+   `python -c "import csv,collections;r=[x for x in csv.DictReader(open('companies.csv',encoding='utf-8')) if x['active']=='true'];print(len(r),collections.Counter(x['ats_platform'] for x in r).most_common())"`.
+   Adding a platform = one `fetch_x(row)` normalizer + a map entry (§6). **The loop is
+   sequential and it is most of the pipeline step's time:** the per-row fetch times sum to
+   7.0–7.2 min (421 s / 434 s over 436 rows, two censuses on 2026-08-24, the census
+   script's own 3 s Workday pacing excluded), i.e. ~69 % of the "Run the pipeline" step
+   (10 m 14 s) and ~26 % of the 27-minute digest job (05:42→06:09; the 05:00 cron queued
+   42 min). Parallelising it lives in `pipeline/run.py` (`infra`, `docs/BACKLOG.md` 83);
+   Workday's tolerance for parallel POSTs is unmeasured (one burst of 25 at 10 threads
+   answered 200; one earlier burst answered 500 on 14 tenants and never reproduced).
 2. **Scrape rows** (`ats_platform=scrape`; **425 active on 2026-08-24**, re-derive with the
    one-liner above) — `api_url` holds a LISTINGS page URL. `refresh_scrape_cache.py`
    (00:00 UTC, `scrape-refresh.yml`, step `Refresh the scrape cache`, with `SCRAPE_LLM=1`
@@ -206,13 +220,24 @@ including the claim "none".
    companies with no readable board — and the intake that feeds NEW companies into
    resolution (below).
 
-Full `FETCHERS` map (16): comeet, greenhouse, lever, smartrecruiters, recruitee, ashby,
-workday, oraclehcm, custom_json, jazzhr, microsoft, workable, breezy, bamboohr, plus the
-pseudo-platforms `scrape` and `discovery`.
+Full `FETCHERS` map — **18 keys, 16 platforms** (this line said 16 keys until 2026-08-24;
+`python -c "from pipeline.fetchers import FETCHERS;print(len(FETCHERS),sorted(FETCHERS))"`):
+comeet, greenhouse, lever, smartrecruiters, recruitee, ashby, workday, oraclehcm,
+custom_json (Amazon), jazzhr (returns `[]` by design — no public API), workable, breezy,
+bamboohr, **eightfold** (the `/api/pcsx/search` endpoint; `microsoft` is the same fetcher
+under the name its rows have always carried, because the store keys roles on
+`{ats_platform}:{job_id}`), **phenom** (`POST /widgets`), plus the pseudo-platforms `scrape`
+and `discovery`. Five fetchers ask the board for Israel itself and carry
+`israel_scoped = True` — workday, eightfold/microsoft, phenom, custom_json — which §5a
+explains.
 
 Support policy: a platform seen 3+ times gets native support; otherwise the scraper's
-strategies carry it (Phenom/Eightfold/iCIMS/Radancy/Rippling are all read via strategy 1
-XHR-capture or 3/4 without native fetchers).
+strategies carry it. **Eightfold and Phenom now have validated native fetchers** (2026-08-24:
+`careers.qualcomm.com` → `count=36`, 31–36 roles by requisition per call (its pager is
+unstable), where its scrape row is verified at 8; `careers.gehealthcare.com` → 20, where its active scrape row reports 0) **but no active
+row uses them yet** — the conversion is a `companies.csv` write and sits in `docs/BACKLOG.md`
+for `registry`. iCIMS (7 rows), SuccessFactors (7) and Avature (2) have none; `python
+registry_health.py --ats` is the queue.
 
 ## 1a. Intake — the discovery net
 *lane: `discovery`*
@@ -945,12 +970,62 @@ digest); deep re-hunt every 14 days and the weekend audits are backstops only.
 *lanes: `ats-fetch` · `scraper` · `infra`*
 
 A company whose fetch raises does **not** crash the run (`pipeline/run.py` per-company
-try/except): it lands in `companies_failed` and gets `status: fetch-error` in `stale.json`.
-Its already-matched roles **stay on the board** — `_alive` in `run.py` exempts failed
-companies so a transient outage doesn't blank a company — bounded by the 14-day
-`first_seen` window. Repair path: `stale.json` → 06:00 self-heal (`resolve_broken.py`,
-re-resolves via careers-page capture, needs `SERPAPI_KEY` for the search step; retries at
-most weekly, abandons after 5 strikes → "discovery covers it").
+try/except): it lands in `companies_failed` and gets `reason: fetch-error` in `stale.json`,
+with the exception text. Its already-matched roles **stay on the board** — `_alive` in
+`run.py` exempts failed companies for 7 days (`fail_grace`) so a transient outage doesn't
+blank a company. Repair path: `stale.json` → 06:00 self-heal (`resolve_broken.py`,
+re-resolves via careers-page capture; the search rung uses `SERPAPI_KEY` when set and
+falls back to `deep_validate.google_via_unlocker` — this sentence said "needs
+`SERPAPI_KEY`" until 2026-08-24, which was false since the unlocker fallback landed;
+retries at most weekly, abandons after 5 strikes → "discovery covers it").
+
+**What `pipeline/health.py` writes to `stale.json`, in the order it decides** (every
+digest, from each row's outcome; `health_check.py` is the weekly backstop with the same
+code): `misconfig-scrape-on-ats` (a `scrape` row whose URL is a native-ATS host) →
+`fetch-error` (raised) → `regressed-to-zero` (baseline > 0, now 0; the baseline is the
+all-time high, so this latches) → `empty-board` (0 postings, no baseline). **Zero is a
+measurement, not a fault, for a fetcher marked `israel_scoped`** — workday, eightfold /
+microsoft, phenom, custom_json ask the board for Israel, so their empty list means "no
+Israel roles today": on 2026-08-24 `stale.json` held 26 Workday `empty-board` rows (25
+distinct URLs — Broadcom and VMware share one) and **25 were live tenants with 2 to ~2,726
+postings and none in Israel** (Helios 2, Adobe 741, Capital One ~1,867, Micron ~2,726 —
+these drift daily), re-resolved by the self-heal every week for nothing. `health.py`
+reads the attribute off the fetcher; `platform_check` flags a fetcher whose source narrows
+to Israel without declaring it (`oraclehcm` declares `False`: its newest-500 pass is
+unscoped, so its zero is evidence). The 26th, Dell Technologies, had 0 postings worldwide:
+when Workday's, Eightfold's or Phenom's Israel request comes back empty the fetcher asks
+the board for its total once (`fetchers._whole_board_or_raise` — Workday `searchText=""`,
+Eightfold `location=`, Phenom no facet; `custom_json`'s one handler has no probe) and raises `fetchers.BoardEmpty` on 0 — a fetch failure with a reason,
+named in the mail. The probe **fails closed on a 4xx** (the endpoint itself is dead, which
+is the finding — except 401 / 403 / 408 / 429, which mean "not now") and **open on 5xx / network
+/ malformed** ("could not tell" stays `[]`); the first version swallowed every probe error
+and so failed open on exactly the condition it was there to detect. A board that reports N
+Israel hits and serves an empty first page is a third thing — unreadable, not empty — and
+raises with that reason. Comeet needs no probe: a dead uid/token is HTTP 400, a live empty
+board is 200 `[]` (verified 2026-08-24).
+
+**`regressed-to-zero` is not raised for scoped fetchers either.** Their baseline is a
+search-hit count, not an Israel-role count — Workday's `searchText=Israel` returns text
+matches from anywhere (NVIDIA: 40 postings, 0 tagged IL) — so "had 1, now 0" is noise (53
+of 83 Workday rows carry a baseline > 0 on 2026-08-24, 11 of them 1–3), and the probe above
+already answers the question a regression flag was asking. It still fires for every other
+platform (today's 25 entries are all `scrape` rows). Two blind spots no health rule can
+see: a `site` that moved to another business unit's postings (`n > 0`, all foreign), and an
+Eightfold `?domain=` that serves a different tenant with real postings — both are
+registry-validation problems.
+
+**It reaches the reader.** The digest's audit block carries `- **Boards:** new today: …;
+cleared: … · N fetch errors (name: reason; …) · N regressed to zero (…) · N empty (…) · N
+scrape rows on an ATS host` (`health.mail_lines(stale, previous)`, delta against
+yesterday's `stale.json` first because the standing counts read the same every morning;
+six names per class then `+k more`; absent when everything was healthy) and `Failed
+companies: Decart (HttpError: HTTP 404 for …)` — until 2026-08-24 that line said
+`(HttpError)` and the empty/regressed counts reached nobody. The same line is a
+`::warning::` in the run log. A scoped run (`--only`/`--limit`) prints the line but does
+not write `stale.json`. **Both are public**: `digests/latest.md` is committed to the public
+pipeline repo and the Actions log is world-readable; the text is an exception's first 70
+characters (every Comeet URL truncates before `?token=`; `docs/index.html` renders none of
+it), and there is no redaction step.
 
 Scrape rows rot differently, in `refresh_scrape_cache.py`, and the two words matter
 (constants re-read from the code 2026-08-24 — this paragraph said `ROT_PARK_DAYS` was 3 and
@@ -1125,12 +1200,24 @@ active rows had no baseline entry). To settle it, run the row yourself:
   `Deci AI,scrape,,https://deci.ai/careers/,true,manual 2026-08-22: listing verified 4 IL`.
   Never point a scrape row at LinkedIn/Indeed/Glassdoor/secrethunter (§3 invariant).
 - **Add an ATS platform**: write `fetch_x(row)` in `pipeline/fetchers.py` returning the
-  common job shape (§0) — copy `fetch_ashby` as the simplest template — add the `FETCHERS`
-  entry, then wire **all four detection tables** or no resolver will ever discover the
-  platform on its own: `SIGS` (`audit_empty_rows.py`), `_HTML_ATS` (`resolve_broken.py`,
-  self-heal), the pattern list **and platform enum** in `resolve_llm.py`'s prompt, and
-  `ATS_HOST` (`pipeline/health.py`). `deep_validate.py` re-imports `SIGS`, so it needs
-  nothing. Verify with the `verify(...)` one-liner above before adding rows.
+  common job shape (§0) — copy `fetch_ashby` as the simplest template, `fetch_phenom` if
+  the API is a POST search — stamp `ats_platform` from the row and pick the **stable**
+  id (the store keys on `{ats_platform}:{job_id}`; changing either re-emails every role),
+  and set `fetch_x.israel_scoped = True` if the request already narrows to Israel (§5a).
+  Add the `FETCHERS` entry, then wire **the five detection tables** or no resolver will
+  ever discover the platform on its own: `SIGS` (`audit_empty_rows.py`), `_HTML_ATS`
+  (`resolve_broken.py`, self-heal), `ATS_PATTERNS` (`resolve_deep.py`), the pattern list
+  **and platform enum** in `resolve_llm.py`'s prompt, and `ATS_HOST` (`pipeline/health.py`).
+  `deep_validate.py` re-imports `SIGS`, so it needs nothing. `python -m
+  pipeline.platform_check` prints the grid: 24 MISSING cells on 2026-08-24 — 22 in
+  `registry`'s resolver files (resolve_broken 8, resolve_deep 8, resolve_llm 3, SIGS 3)
+  and 2 in `health.ATS_HOST` for `eightfold`/`phenom`, left out on purpose
+  (`docs/BACKLOG.md` 78); the last two columns check that a fetcher narrowing to Israel
+  declares `israel_scoped` and that health's empty-board verdict matches the declaration —
+  behaviour, not source text. Validate against a live
+  tenant with canned payloads in `tests/test_units.py` — the previous Eightfold fetcher
+  shipped "shape confirmed" against an endpoint that 403s every real tenant. Verify with
+  the `verify(...)` one-liner above before adding rows.
 - **Add a Telegram channel**: append to `CHANNELS` in `discovery_telegram.py` (must have a
   public t.me/s preview; secrethunter-format parses deterministically).
 - **A company's verdict looks wrong**: check its `notes` for the evidence date and method,

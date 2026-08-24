@@ -8,13 +8,26 @@ Normalized job dict:
       "country_code":  str,   # ISO alpha-2/alpha-3 upper when the feed gives one, else ""
       "url":           str,   # public posting URL
       "posted_date":   str,   # ISO date "YYYY-MM-DD" when parseable, else raw/""
-      "ats_platform":  str,
+      "ats_platform":  str,   # the row's platform, verbatim: the store keys on "{ats_platform}:{job_id}"
       "job_id":        str,   # stable per-platform id (for dedupe)
+      "description":   str,   # plain text, <= _DESC_MAX chars, "" when the list response has none
     }
 
 Each fetcher takes a company row (dict from companies.csv) and returns a list of
 normalized job dicts. Fetchers do NOT filter by location or seniority — that happens
 downstream. They only fetch + normalize.
+
+Two exceptions to "they only fetch":
+
+* A fetcher marked `israel_scoped = True` asks the BOARD for Israel (Workday's searchText,
+  Eightfold's location=, Phenom's country facet, amazon.jobs' country=ISR), so an empty
+  list from it is a measurement — "no Israel roles today" — not evidence of a broken
+  board. `pipeline/health.py` reads that attribute and does not raise `empty-board` for
+  them; 25 healthy Workday tenants were in the self-heal queue on 2026-08-24 because it
+  did not.
+* `BoardEmpty` is raised (never returned) when a scoped fetcher can tell the whole board
+  is empty, so the row reaches the failed list in the mail and the self-heal queue with a
+  reason instead of a silent zero.
 """
 from __future__ import annotations
 
@@ -27,6 +40,66 @@ from . import http
 
 _DESC_MAX = 6000  # chars of plain-text description kept — enough to reach the Requirements
                   # section (often past a long company-jargon intro) for the board's extractor
+
+
+class BoardEmpty(Exception):
+    """The board answered, and reports zero postings WORLDWIDE. Distinct from `http.HttpError`
+    (the endpoint is dead) and from an empty Israel-scoped result (a measurement): a live
+    tenant with nothing on it has almost always moved (Moon Active's Comeet sat at 0 for
+    weeks while 33 jobs were on Ashby). Raised so the row is treated as a fetch failure —
+    named in the mail, queued for the 06:00 self-heal — rather than counted as healthy."""
+
+
+# 4xx = the endpoint itself is dead — except the four that mean "not now": 401 / 403
+# (anti-bot: Dolby answers 401 "Please try again later" mid-sequence), 408 (timeout), 429
+# (rate limit — the probe is an extra request aimed at the rows that returned nothing, so it
+# is the request most likely to trip one). A real auth wall 401s the FIRST request, which
+# propagates as a fetch-error regardless of this regex.
+_CLIENT_ERROR = _re.compile(r"\bHTTP 4(?!01\b|03\b|08\b|29\b)\d\d\b")
+
+
+def _served_none_or_raise(where, scoped_total):
+    """The scoped request reported hits and served an empty first page. That is not a
+    measurement and not an empty board — it is a board we cannot read (a moved `site`
+    keeping its facet counts, id-less positions, an aggregations-only answer)."""
+    if scoped_total:
+        raise ValueError(f"{where}: reports {scoped_total} Israel hits but served none")
+
+
+def _whole_board_or_raise(where, probe):
+    """The Israel-scoped request came back empty; ask the board how many postings it has AT
+    ALL. `probe()` returns that count (or None when the answer has no count). Three outcomes:
+
+      0            -> raise BoardEmpty      (a live tenant with nothing on it has moved)
+      > 0 / None   -> return                (a measurement: no Israel roles today)
+      4xx          -> re-raise              (the endpoint itself is dead: that IS the finding,
+                                             and swallowing it would hide a moved tenant;
+                                             401 / 403 / 408 / 429 are "not now", not "dead")
+      5xx/network  -> return                ("could not tell" must stay an empty list,
+                                             never a failure)
+
+    One extra request, only for rows that returned nothing. The first version swallowed
+    every probe error, which failed open on exactly the condition it was there to detect.
+    """
+    try:
+        total = probe()
+    except http.HttpError as e:
+        if _CLIENT_ERROR.search(str(e)):
+            raise
+        return
+    except Exception:  # noqa: BLE001 — a malformed answer is "could not tell"
+        return
+    if total == 0:
+        raise BoardEmpty(f"{where}: 0 postings worldwide — moved tenant?")
+
+
+def _count(d, key):
+    """A count field that may be missing, None or a string; None when absent."""
+    v = (d or {}).get(key) if isinstance(d, dict) else None
+    try:
+        return None if v is None else int(v)
+    except (TypeError, ValueError):
+        return None
 
 
 def _strip_html(s):
@@ -305,6 +378,12 @@ def fetch_workday(row):
     Global board — even with searchText=Israel a few text-matches from other countries
     can slip in; the downstream Israel filter (via the externalPath in `url`) drops them.
     Paginates by offset up to a safety cap.
+
+    Zero Israel hits is the common case (25 of the 26 Workday rows flagged `empty-board`
+    on 2026-08-24 were live tenants with 2 to ~2,726 postings and none in Israel), so it is a
+    measurement, not a fault. The one case that IS a fault — a tenant with no postings at
+    all (Dell Technologies that day) — is told apart by one unscoped probe
+    (`_whole_board_or_raise`) and raised as `BoardEmpty`.
     """
     api = row["api_url"]
     host = urlsplit(api).netloc
@@ -319,6 +398,13 @@ def fetch_workday(row):
         data = http.post_json(api, {"searchText": "Israel", "limit": limit, "offset": offset})
         postings = data.get("jobPostings", [])
         total = data.get("total", 0)
+        if offset == 0 and not postings:
+            # an empty first page: one unscoped probe decides whether the board is empty
+            # worldwide; if it is not, a `total` that claimed hits is a contradiction
+            _whole_board_or_raise(f"{host}/{site}", lambda: _count(
+                http.post_json(api, {"searchText": "", "limit": 1, "offset": 0}, retries=1), "total"))
+            _served_none_or_raise(f"{host}/{site}", _count(data, "total"))
+            break
         for p in postings:
             ext = p.get("externalPath") or ""
             bullet = p.get("bulletFields") or []
@@ -343,8 +429,12 @@ def fetch_workday(row):
     return jobs
 
 
+fetch_workday.israel_scoped = True
+
+
 def fetch_amazon(row):
-    """Amazon custom_json: GET amazon.jobs search.json, paginate by offset."""
+    """Amazon custom_json: GET amazon.jobs search.json (the row's URL carries country=ISR),
+    paginate by offset."""
     base = row["api_url"]
     jobs = []
     offset, limit, cap = 0, 100, 500
@@ -373,33 +463,78 @@ def fetch_amazon(row):
 
 
 def fetch_custom_json(row):
-    """Dispatch custom_json rows by host. Currently only Amazon."""
+    """Dispatch custom_json rows by host. Currently only Amazon, whose URL is a search
+    scoped to country=ISR (which is why this dispatcher is `israel_scoped`; a second
+    handler that is not scoped to Israel must not live under this platform name)."""
     host = urlsplit(row["api_url"]).netloc
     if "amazon.jobs" in host:
         return fetch_amazon(row)
     raise ValueError(f"no custom_json handler for host {host!r} (company {row['company_name']})")
 
 
-def fetch_microsoft(row):
-    """Microsoft careers (apply.careers.microsoft.com pcsx API), searched to location=Israel.
+fetch_custom_json.israel_scoped = True   # its one handler searches country=ISR
 
-    Covers Microsoft's Israel R&D — Herzliya, Haifa, Tel Aviv, Nazareth and Beer-Sheva. GET with
-    start/num pagination. Title is in `name`; `locations` is a list of "Israel, District, City".
+
+def fetch_eightfold(row):
+    """Eightfold AI careers sites (Microsoft, Qualcomm, PayPal, Dolby, Lam Research, ...):
+    the unauthenticated search behind the site's own results page,
+
+        GET https://<host>/api/pcsx/search?domain=<domain>&query=&location=Israel&start=<n>&num=20
+
+    `api_url` pins host and `?domain=` per row (the shared app.eightfold.ai host serves
+    only a few tenants; most boards live on a tenant host such as careers.qualcomm.com).
+    The `/api/apply/v2/jobs` path documented on eightfold.ai answers 403 "Not authorized
+    for PCSX" on every real tenant from a plain client (2026-08-24) — do not use it.
+
+    Validated 2026-08-24: careers.qualcomm.com → count=36 Israel positions, paged 10+10+10+6;
+    apply.careers.microsoft.com → count=14, of which the old `fetch_microsoft` returned 10
+    (see the paging note below). A tenant with no Israel roles answers count=0 with a
+    non-zero worldwide count (paypal.eightfold.ai: 0 of 75) — a measurement, hence
+    `israel_scoped`. Positions carry `standardizedLocations` ("Haifa, Haifa District, IL"),
+    which is the explicit country signal the Israel filter prefers over text.
+
+    The `microsoft` platform is this fetcher under its original name: rows keep that
+    platform string because the store keys every role on "{ats_platform}:{job_id}", and
+    Microsoft's public job page lives on jobs.careers.microsoft.com, not on the API host.
     """
-    base = row["api_url"].split("&query")[0].split("&location")[0]  # keep up to ?domain=...
-    if "?" not in base:
-        base += "?domain=microsoft.com"
-    jobs = []
-    start, num, cap = 0, 20, 200
-    while start < cap:
-        url = f"{base}&query=&location=Israel&start={start}&num={num}"
-        data = http.get_json(url)
-        d = data.get("data", {}) or {}
-        positions = d.get("positions", []) or []
-        count = d.get("count", 0)
+    api = row["api_url"]
+    host = urlsplit(api).netloc
+    base = api.split("&query")[0].split("&location")[0]  # keep host/path + ?domain=...
+    if "domain=" not in base:
+        domain = (row.get("token") or "").strip()
+        if not domain:
+            raise ValueError(f"eightfold row needs ?domain= in api_url or the token column "
+                             f"({row['company_name']})")
+        base += ("&" if "?" in base else "?") + f"domain={domain}"
+    jobs, seen_ids, start, num = [], set(), 0, 20
+    for _ in range(40):                      # hard stop: 40 calls (the server pages at 10)
+        data = http.get_json(f"{base}&query=&location=Israel&start={start}&num={num}")
+        d = data.get("data") if isinstance(data, dict) else None
+        if not isinstance(d, dict) or "positions" not in d:
+            if start:
+                break                          # an exhausted page with no envelope: done
+            # Phenom hosts and mis-pointed rows answer 200 with an error envelope; a
+            # confident zero here would look like an empty board forever.
+            raise ValueError(f"not an Eightfold pcsx response for {host}: "
+                             f"{str(data.get('errorMsg') if isinstance(data, dict) else data)[:80]}")
+        positions = d.get("positions") or []
+        count = _count(d, "count")
+        if start == 0 and not positions:
+            # 0 Israel positions: a measurement (paypal.eightfold.ai: 0 of 75) unless the
+            # tenant has 0 positions at all — a wrong ?domain= or a moved board
+            _whole_board_or_raise(host, lambda: _count(
+                (http.get_json(f"{base}&query=&location=&start=0&num=1", retries=1) or {}).get("data"),
+                "count"))
+            _served_none_or_raise(host, count)
+            break
         for p in positions:
-            locs = p.get("locations") or []
-            loc = locs[0] if locs else "Israel"
+            jid = str(p.get("displayJobId") or p.get("id") or "")
+            if not jid or jid in seen_ids:
+                continue
+            seen_ids.add(jid)
+            locs = [str(x) for x in (p.get("locations") or []) if x]
+            std = [str(x) for x in (p.get("standardizedLocations") or []) if x]
+            code = "IL" if any(x == "IL" or x.endswith(", IL") for x in std) else ""
             ts = p.get("postedTs") or p.get("creationTs")
             pdate = ""
             if ts:
@@ -408,25 +543,115 @@ def fetch_microsoft(row):
                     if ts > 1e11:      # milliseconds vs seconds
                         ts //= 1000
                     pdate = _dt.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
-                except Exception:  # noqa: BLE001
+                except (TypeError, ValueError, OverflowError, OSError):
                     pdate = ""
-            jid = str(p.get("displayJobId") or p.get("id") or "")
-            purl = f"https://jobs.careers.microsoft.com/global/en/job/{jid}"
+            if host.endswith("careers.microsoft.com"):
+                purl = f"https://jobs.careers.microsoft.com/global/en/job/{jid}"
+            else:
+                purl = p.get("positionUrl") or ""
+                if purl.startswith("/"):
+                    purl = f"https://{host}{purl}"
             jobs.append({
                 "company": row["company_name"],
                 "title": _clean(p.get("name")),
-                "location": _clean(loc),
-                "country_code": "IL",
+                # the search was location=Israel, so a position with no location field at
+                # all is still an Israel hit (the old Microsoft fetcher defaulted the same)
+                "location": _clean("; ".join(locs)) or "Israel",
+                "country_code": code,
                 "url": purl,
                 "posted_date": pdate,
-                "ats_platform": "microsoft",
+                "ats_platform": row["ats_platform"].strip().lower(),
                 "job_id": jid,
+                "description": "",       # the search response carries no JD (jdfill fetches it)
+            })
+        # The server pages at 10 whatever `num` says (Qualcomm: count=36 came back as
+        # 10+10+10+6). Advancing by `num` skipped positions 10-19 of every page: Microsoft
+        # had count=14 on 2026-08-24 and the old fetcher returned 10 of them, every day.
+        start += len(positions)
+        if not positions or (count is not None and start >= count):
+            break                              # no `count`: page until the server runs dry
+    return jobs
+
+
+fetch_eightfold.israel_scoped = True
+
+
+_PHENOM_BODY = {
+    "lang": "en_us", "deviceType": "desktop", "country": "us", "pageName": "search-results",
+    "ddoKey": "refineSearch", "sortBy": "", "subsearch": "", "jobs": True, "counts": True,
+    "all_fields": ["category", "country", "state", "city"], "clearAll": False,
+    "jdsource": "facets", "isSliderEnable": False, "pageId": "page12", "siteType": "external",
+    "keywords": "", "global": True, "selected_fields": {"country": ["Israel"]},
+}
+
+
+def fetch_phenom(row):
+    """Phenom People careers sites (GE HealthCare, P&G, eBay, OpenText, ...): the widget
+    search their results page calls,
+
+        POST https://<host>/widgets   body: _PHENOM_BODY + {"from": n, "size": 100}
+
+    `api_url` is the /widgets URL on the tenant host. The response is
+    {"refineSearch": {"totalHits", "data": {"jobs": [...]}}}; anything else (Dolby answers
+    401 "Please try again later"; a non-Phenom host answers something without
+    `refineSearch`) raises so the row is a visible failure, not a zero.
+
+    Validated 2026-08-24: careers.gehealthcare.com → totalHits=20, and an unfiltered walk
+    (963 of 985 reachable) found no Israel-located job outside the facet — the country
+    facet is exact, hence `israel_scoped`. pgcareers.com / jobs.ebayinc.com /
+    careers.opentext.com answered 0 of 172 / 472 / 317, also exact. Known limit: the
+    server's sort is unstable, so on a tenant with more than one page (100) of Israel hits
+    ~9 postings per page boundary can be missed (measured on GE's unfiltered walk); no
+    tenant today comes close.
+    """
+    api = row["api_url"]
+    jobs, seen_ids, start, size = [], set(), 0, 100
+    for _ in range(30):                       # hard stop: 3,000 postings
+        data = http.post_json(api, {**_PHENOM_BODY, "from": start, "size": size})
+        rs = data.get("refineSearch") if isinstance(data, dict) else None
+        if not isinstance(rs, dict):
+            raise ValueError(f"not a Phenom widgets response for {urlsplit(api).netloc}: "
+                             f"{str(data.get('errorMsg') if isinstance(data, dict) else data)[:80]}")
+        page = ((rs.get("data") or {}).get("jobs")) or []
+        total = _count(rs, "totalHits")
+        if start == 0 and not page:
+            # 0 Israel hits is a measurement (eBay: 0 of 472) unless the site has 0 hits at all
+            def _whole():
+                w = http.post_json(api, {**_PHENOM_BODY, "selected_fields": {}, "from": 0, "size": 1},
+                                   retries=1)
+                return _count((w or {}).get("refineSearch"), "totalHits")
+            _whole_board_or_raise(urlsplit(api).netloc, _whole)
+            _served_none_or_raise(urlsplit(api).netloc, total or 0)
+            break
+        for p in page:
+            jid = str(p.get("jobSeqNo") or p.get("reqId") or p.get("jobId") or "")
+            if not jid or jid in seen_ids:
+                continue
+            seen_ids.add(jid)
+            loc = p.get("cityStateCountry") or ", ".join(
+                x for x in (p.get("city"), p.get("state"), p.get("country")) if x)
+            jobs.append({
+                "company": row["company_name"],
+                "title": _clean(p.get("title")),
+                "location": _clean(loc),
+                "country_code": "IL" if str(p.get("country") or "").strip().lower() == "israel" else "",
+                "url": p.get("applyUrl") or "",
+                "posted_date": _iso_date(p.get("postedDate") or p.get("dateCreated")),
+                "ats_platform": "phenom",
+                "job_id": jid,
+                # `descriptionTeaser` is a ~350-char search-page blurb that never states
+                # years of experience; storing it would clear jdfill's "missing JD" bar
+                # (300 chars) and the classifier would judge on a teaser. Leave it empty
+                # so the real posting is fetched, like workday/bamboohr.
                 "description": "",
             })
-        start += num
-        if start >= count or not positions:
-            break
+        start += len(page)                    # by what came back, never by `size`
+        if not page or (total is not None and start >= total):
+            break                              # no `totalHits`: page until the server runs dry
     return jobs
+
+
+fetch_phenom.israel_scoped = True
 
 
 def fetch_workable(row):
@@ -445,9 +670,9 @@ def fetch_workable(row):
         out.append({
             "company": row["company_name"], "title": _clean(p.get("title")),
             "location": _clean(loc), "country_code": (p.get("country_code") or "").upper(),
-            "url": url or "", "posted_date": _clean((p.get("created_at") or "")[:10]),
+            "url": url or "", "posted_date": _iso_date(p.get("created_at")),
             "ats_platform": "workable", "job_id": str(p.get("id") or p.get("shortcode") or ""),
-            "description": _strip_html(p.get("description") or ""),
+            "description": _snippet(p.get("description")),
         })
     return out
 
@@ -470,9 +695,9 @@ def fetch_breezy(row):
             "company": row["company_name"], "title": _clean(p.get("name")),
             "location": _clean(", ".join(x for x in (city, country) if x)),
             "country_code": "", "url": p.get("url") or f"{base}/p/{friendly}",
-            "posted_date": _clean((p.get("published_date") or p.get("creation_date") or "")[:10]),
+            "posted_date": _iso_date(p.get("published_date") or p.get("creation_date")),
             "ats_platform": "breezy", "job_id": str(friendly),
-            "description": _strip_html(p.get("description") or ""),
+            "description": _snippet(p.get("description")),
         })
     return out
 
@@ -492,7 +717,7 @@ def fetch_bamboohr(row):
             "company": row["company_name"], "title": _clean(p.get("jobOpeningName")),
             "location": _clean(", ".join(x for x in parts if x)),
             "country_code": "", "url": f"https://{host}/careers/{p.get('id')}",
-            "posted_date": _clean((p.get("datePosted") or "")[:10]),
+            "posted_date": _iso_date(p.get("datePosted")),
             "ats_platform": "bamboohr", "job_id": str(p.get("id") or ""),
             "description": "",
         })
@@ -585,10 +810,49 @@ def fetch_discovery(row):
     # the source: 147 board rows were once published under the wrong company this way.
     # Dropped HERE rather than caught by check_invariants, so one bad card cannot withhold
     # a whole day's digest at the commit gate.
-    return [j for j in jobs
-            if (not j.get("posted_date") or str(j["posted_date"])[:10] >= cut)
-            and not _is_rec(j.get("company"))
-            and not url_names_other_company(j.get("company"), j.get("url"))]
+    #
+    # Every drop is COUNTED and printed: the three filters used to be one silent list
+    # comprehension, and the slug guard also drops an acquired employer whose LinkedIn slug
+    # still carries the old name (NVIDIA / at-mellanox) — the same shape as a mis-attributed
+    # card (docs/BACKLOG.md 9). `check_invariants` runs the same predicate over the board
+    # as a WARNING, so a card kept here can only ever be a warning line there.
+    # The one exemption: a DECLARED identity (`pipeline/identity_facts.py`). "Merck (MSD)"
+    # is declared with tenant `msd`, so a card whose slug says `at-msd` is that company's
+    # own posting, not a mis-attribution. A blanket
+    # "never drop a registry name" is deliberately NOT done: the 147 mis-attributed rows
+    # also carried registry names.
+    from .identity_facts import domains as _declared_domains, normalize as _norm_id
+    from .identity_facts import tenants as _declared_tenants
+
+    _GENERIC = {"jobs", "careers", "apply", "boards", "www"}
+
+    def _declared_in_slug(company, url):
+        # only the employer half of "<title>-at-<employer>-<id>", and only a whole leading
+        # run of its words, matched EXACTLY: `sentinel-labs` is `sentinellabs`, `zollinger`
+        # is not `zoll`, and `msd` (3 chars, "Merck (MSD)") is `at-msd-…` and nothing else
+        m = _re.search(r"/jobs/view/.*?-at-([a-z0-9-]+?)-\d{6,}(?:[/?#]|$)", (url or "").lower())
+        words = m.group(1).split("-") if m else []
+        prefixes = {"".join(words[:i]) for i in range(1, len(words) + 1)}
+        toks = set(_declared_tenants(company))
+        for d in _declared_domains(company):
+            toks |= {_norm_id(lbl) for lbl in d.lower().split(".") if lbl not in _GENERIC}
+        return any(len(t) >= 3 and t in prefixes for t in toks)   # "sw" cannot carry identity
+
+    kept, dropped = [], {"expired": 0, "recruiter": 0, "slug-mismatch": 0}
+    for j in jobs:
+        if j.get("posted_date") and str(j["posted_date"])[:10] < cut:
+            dropped["expired"] += 1
+        elif _is_rec(j.get("company")):
+            dropped["recruiter"] += 1
+        elif (url_names_other_company(j.get("company"), j.get("url"))
+              and not _declared_in_slug(j.get("company"), j.get("url"))):
+            dropped["slug-mismatch"] += 1
+        else:
+            kept.append(j)
+    if any(dropped.values()):
+        print(f"  [discovery] kept {len(kept)} of {len(jobs)} cached jobs (dropped: "
+              + ", ".join(f"{k} {v}" for k, v in dropped.items() if v) + ")", flush=True)
+    return kept
 
 
 def fetch_jazzhr(row):
@@ -651,57 +915,9 @@ def fetch_oraclehcm(row):
     return jobs
 
 
-
-def fetch_eightfold(row):
-    """Eightfold AI (also fronts many boards labelled 'phenom' in our registry).
-
-        https://<host>/api/apply/v2/jobs?domain=<domain>&start=<n>&num=<k>&location=Israel
-
-    STATUS (2026-08-23): the response SHAPE is confirmed — app.eightfold.ai returns 200 with
-    the documented envelope for domain=tevapharm.com — but this has NOT been validated
-    against a tenant that actually returns positions. The shared host 403s every other
-    domain tried, because real boards live on per-tenant hosts. So set `api_url` per row to
-    the tenant endpoint that crack_walled's XHR sniff discovers; do not assume the shared
-    host works. A wrong endpoint raises (http.get_json raises on non-200) rather than
-    returning [] — deliberately, so a misconfigured row surfaces instead of looking empty.
-
-    `token` carries the domain (e.g. "tevapharm.com"); api_url carries the full first-page
-    URL so an odd tenant host can be pinned per row. Eightfold pages at 10-ish per call and
-    reports a total in `count`, so walk until we have them all or the page comes back empty.
-    """
-    base = row["api_url"]
-    domain = (row.get("token") or "").strip()
-    if domain and "domain=" not in base:
-        sep = "&" if "?" in base else "?"
-        base = f"{base}{sep}domain={domain}"
-    jobs, start, seen_ids = [], 0, set()
-    for _ in range(20):                      # hard stop: 20 pages
-        sep = "&" if "?" in base else "?"
-        data = http.get_json(f"{base}{sep}start={start}&num=50")
-        positions = (data or {}).get("positions") or []
-        if not positions:
-            break
-        for p in positions:
-            pid = str(p.get("id") or p.get("ats_job_id") or "")
-            if pid and pid in seen_ids:
-                continue
-            seen_ids.add(pid)
-            loc = p.get("location") or ", ".join(p.get("locations") or [])
-            jobs.append({
-                "company": row["company_name"],
-                "title": _clean(p.get("name")),
-                "location": _clean(loc),
-                "country_code": "",
-                "url": p.get("canonicalPositionUrl") or p.get("positionUrl") or "",
-                "posted_date": _iso_date(p.get("t_create") or p.get("create_date")),
-                "ats_platform": "eightfold",
-                "job_id": pid,
-                "description": _snippet(p.get("job_description") or p.get("description")),
-            })
-        start += len(positions)
-        if start >= int((data or {}).get("count") or 0):
-            break
-    return jobs
+# Declared, not scoped: the newest-500 pass is unscoped, so an empty list means the board
+# has no postings at all — a zero IS evidence here, and the keyword pass only adds to it.
+fetch_oraclehcm.israel_scoped = False
 
 
 FETCHERS = {
@@ -715,14 +931,14 @@ FETCHERS = {
     "workday": fetch_workday,
     "custom_json": fetch_custom_json,
     "jazzhr": fetch_jazzhr,
-    "microsoft": fetch_microsoft,
     "workable": fetch_workable,
     "breezy": fetch_breezy,
     "bamboohr": fetch_bamboohr,
-    "scrape": fetch_scrape,
-    "discovery": fetch_discovery,
     "eightfold": fetch_eightfold,
-    "phenom": fetch_eightfold,   # most rows tagged phenom are Eightfold-fronted
+    "microsoft": fetch_eightfold,   # Microsoft's site IS Eightfold; the name is the store key
+    "phenom": fetch_phenom,
+    "scrape": fetch_scrape,         # pseudo-platform: reads scraped_cache.json
+    "discovery": fetch_discovery,   # pseudo-platform: reads discovered_cache.json
 }
 
 

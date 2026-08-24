@@ -2752,3 +2752,421 @@ def test_refresh_rotates_the_processing_order_by_day(tmp_path, monkeypatch):
         seen.append(order)
         assert set(_json.loads(P.cache.read_text(encoding="utf-8"))) == set(names)
     assert seen[0] != seen[1] and sorted(seen[0]) == sorted(seen[1]) == names
+
+
+# --------------------------------------------------------------------------- #
+# ats-fetch lane, 2026-08-24 — see docs/sessions/2026-08-24-ats-fetch.md
+# --------------------------------------------------------------------------- #
+
+
+def _pcsx_position(i, jid, display, locs, std):
+    return {"id": jid, "displayJobId": display, "name": f"Role {i}", "locations": locs,
+            "standardizedLocations": std, "postedTs": 1786106796, "creationTs": 1786011493,
+            "positionUrl": f"/careers/job/{jid}"}
+
+
+def test_eightfold_pcsx_pages_by_what_the_server_returned_and_keeps_microsoft_keys(monkeypatch):
+    """Eightfold's pcsx search serves at most 10 positions per call whatever `num` asks
+    (Qualcomm 2026-08-24: count=36 came back 10+10+10+6). The Microsoft fetcher advanced
+    `start` by its requested 20, so positions 10-19 of every page were skipped — Microsoft
+    had count=14 on 2026-08-24 and the fetcher returned 10. Paging must advance by the page length.
+    And the Microsoft row must keep producing the same store keys ("microsoft:<displayJobId>")
+    and public URLs, or every Microsoft role is emailed again as new."""
+    from pipeline import fetchers
+    count = 4
+    pages = {0: [_pcsx_position(1, 111, "A1", ["Israel, Haifa"], ["IL"]),
+                 _pcsx_position(2, 222, "A2", ["Herzliya, Israel"], ["Herzliya, Tel Aviv District, IL"])],
+             2: [_pcsx_position(3, 333, "A3", ["Dublin, Ireland"], ["Dublin, IE"]),
+                 _pcsx_position(4, 444, "A4", ["Tel Aviv, Israel"], ["Tel Aviv, IL"])]}
+    calls = []
+
+    def fake_get(url, **kw):
+        calls.append(url)
+        start = int(url.split("start=")[1].split("&")[0])
+        assert "num=20" in url and "location=Israel" in url and "query=" in url
+        return {"data": {"count": count, "positions": pages.get(start, [])}}
+    monkeypatch.setattr(fetchers.http, "get_json", fake_get)
+
+    ms = fetchers.fetch_company({"company_name": "Microsoft", "ats_platform": "microsoft", "token": "",
+                                 "api_url": "https://apply.careers.microsoft.com/api/pcsx/search?domain=microsoft.com"})
+    assert [j["job_id"] for j in ms] == ["A1", "A2", "A3", "A4"], "advance by page length, not by num"
+    assert all(j["ats_platform"] == "microsoft" for j in ms), "the row's platform is the store key"
+    assert ms[0]["url"] == "https://jobs.careers.microsoft.com/global/en/job/A1"
+    assert calls[0].startswith("https://apply.careers.microsoft.com/api/pcsx/search?domain=microsoft.com&query=&location=Israel&start=0&num=20")
+    assert len(calls) == 2, "count=4 reached after two pages of 2 — no third request"
+    # explicit country from standardizedLocations; a foreign one stays "" (text fallback)
+    assert [j["country_code"] for j in ms] == ["IL", "IL", "", "IL"]
+    assert ms[0]["posted_date"] == "2026-08-07"
+
+    q = fetchers.fetch_company({"company_name": "Qualcomm", "ats_platform": "eightfold", "token": "qualcomm.com",
+                                "api_url": "https://careers.qualcomm.com/api/pcsx/search"})
+    assert q[0]["url"] == "https://careers.qualcomm.com/careers/job/111", "relative positionUrl → tenant host"
+    assert q[0]["ats_platform"] == "eightfold"
+    assert "domain=qualcomm.com" in calls[-1], "the token supplies ?domain= when the URL lacks it"
+
+
+def test_a_phenom_host_answering_the_eightfold_path_is_a_failure_not_a_zero(monkeypatch):
+    """FETCHERS["phenom"] used to alias fetch_eightfold. Phenom hosts answer that path with
+    HTTP 200 and {"status":"failure","errorMsg":"Tenant not identified","data":null} — a
+    confident, permanent zero for every phenom row. It must raise instead."""
+    from pipeline import fetchers
+    monkeypatch.setattr(fetchers.http, "get_json", lambda url, **kw: {
+        "status": "failure", "errorCode": None, "errorMsg": "Tenant not identified", "data": None})
+    with pytest.raises(ValueError, match="Tenant not identified"):
+        fetchers.fetch_eightfold({"company_name": "GE", "ats_platform": "eightfold", "token": "ge.com",
+                                  "api_url": "https://careers.gehealthcare.com/api/pcsx/search"})
+    assert fetchers.FETCHERS["phenom"] is fetchers.fetch_phenom
+    assert fetchers.FETCHERS["microsoft"] is fetchers.fetch_eightfold
+
+
+def test_phenom_widgets_normalises_pages_and_refuses_other_shapes(monkeypatch):
+    """Phenom's /widgets search (GE HealthCare: totalHits=20 of 985, exactly the 20 with an
+    Israel location). Pages by what the server RETURNED until totalHits (a tenant capping
+    pages below `size` must not lose the rest — the Eightfold bug, pre-empted); the
+    country facet is the Israel filter, so `country: Israel` becomes an explicit IL code;
+    the ~350-char `descriptionTeaser` is NOT stored as the description (it would clear
+    jdfill's 300-char bar and the classifier would judge on a blurb). Anything without
+    `refineSearch` (Dolby's 401 body, a non-Phenom host) raises."""
+    from pipeline import fetchers
+    seen_bodies = []
+
+    def job(i):
+        return {"title": f"Analyst {i}", "jobSeqNo": f"SEQ{i}", "reqId": f"R{i}",
+                "applyUrl": f"https://x.example/apply/{i}", "postedDate": "2026-07-28T00:00:00.000+0000",
+                "cityStateCountry": "Haifa, Haifa District, Israel", "country": "Israel",
+                "descriptionTeaser": "Lead the <b>verification</b> team."}
+
+    def fake_post(url, body, **kw):
+        seen_bodies.append(body)
+        assert body["ddoKey"] == "refineSearch" and body["selected_fields"] == {"country": ["Israel"]}
+        frm = body["from"]
+        jobs = [job(i) for i in range(frm, min(frm + body["size"], 130))]
+        return {"refineSearch": {"totalHits": 130, "data": {"jobs": jobs}}}
+    monkeypatch.setattr(fetchers.http, "post_json", fake_post)
+    out = fetchers.fetch_company({"company_name": "GE HealthCare", "ats_platform": "phenom", "token": "",
+                                  "api_url": "https://careers.gehealthcare.com/widgets"})
+    assert len(out) == 130 and len(seen_bodies) == 2, "100 + 30, then stop at totalHits"
+    assert out[0] == {"company": "GE HealthCare", "title": "Analyst 0",
+                      "location": "Haifa, Haifa District, Israel", "country_code": "IL",
+                      "url": "https://x.example/apply/0", "posted_date": "2026-07-28",
+                      "ats_platform": "phenom", "job_id": "SEQ0", "description": ""}
+    assert fetchers.fetch_phenom.israel_scoped is True
+
+    def capped_post(url, body, **kw):        # server serves 20 a page whatever `size` says
+        frm = body["from"]
+        return {"refineSearch": {"totalHits": 130, "data": {"jobs": [job(i) for i in range(frm, min(frm + 20, 130))]}}}
+    monkeypatch.setattr(fetchers.http, "post_json", capped_post)
+    assert len(fetchers.fetch_phenom({"company_name": "X", "ats_platform": "phenom", "token": "",
+                                      "api_url": "https://x/widgets"})) == 130
+
+    def no_total_post(url, body, **kw):      # a tenant that omits totalHits: page until dry
+        frm = body["from"]
+        return {"refineSearch": {"data": {"jobs": [job(i) for i in range(frm, min(frm + 100, 250))]}}}
+    monkeypatch.setattr(fetchers.http, "post_json", no_total_post)
+    assert len(fetchers.fetch_phenom({"company_name": "X", "ats_platform": "phenom", "token": "",
+                                      "api_url": "https://x/widgets"})) == 250
+
+    monkeypatch.setattr(fetchers.http, "post_json", lambda url, body, **kw: {"message": "Please try again later"})
+    with pytest.raises(ValueError, match="not a Phenom widgets response"):
+        fetchers.fetch_phenom({"company_name": "Dolby", "ats_platform": "phenom", "token": "",
+                               "api_url": "https://jobs.dolby.com/widgets"})
+
+
+def test_workday_zero_israel_is_a_measurement_and_zero_worldwide_is_a_failure(monkeypatch):
+    """25 of the 26 Workday rows in the self-heal queue on 2026-08-24 were live tenants with
+    2 to ~2,726 postings and none in Israel; one (Dell) had none at all. The first must return
+    [] quietly; the second must raise BoardEmpty (→ fetch-error, named in the mail); and a
+    probe that itself fails (Workday answers 500 to bursts) must leave the answer unknown —
+    an empty list, never an error."""
+    from pipeline import fetchers
+    row = {"company_name": "Adobe", "ats_platform": "workday", "token": "",
+           "api_url": "https://adobe.wd5.myworkdayjobs.com/wday/cxs/adobe/external_experienced/jobs"}
+
+    def make(whole_total, probe_raises=False):
+        calls = []
+
+        def fake_post(url, body, **kw):
+            calls.append((body, kw))
+            if body["searchText"] == "Israel":
+                return {"total": 0, "jobPostings": []}
+            if probe_raises:
+                raise fetchers.http.HttpError("HTTP 500")
+            return {"total": whole_total, "jobPostings": [{"title": "x"}]}
+        monkeypatch.setattr(fetchers.http, "post_json", fake_post)
+        return calls
+
+    calls = make(741)
+    assert fetchers.fetch_workday(row) == []
+    assert len(calls) == 2 and calls[1][0] == {"searchText": "", "limit": 1, "offset": 0}
+    assert calls[1][1].get("retries") == 1, "the probe is single-shot"
+
+    make(0)
+    with pytest.raises(fetchers.BoardEmpty, match="0 postings worldwide"):
+        fetchers.fetch_workday(row)
+
+    make(0, probe_raises=True)
+    assert fetchers.fetch_workday(row) == [], "could not tell is not broken"
+    assert fetchers.fetch_workday.israel_scoped is True
+
+
+def test_health_does_not_flag_israel_scoped_fetchers_as_empty_boards(tmp_path):
+    """`empty-board` was raised for any platform outside a hand-typed tuple in health.py,
+    which named custom_json and jazzhr but not workday or microsoft — so 26 healthy Workday
+    tenants sat in stale.json and the 06:00 self-heal re-resolved them weekly. The rule is
+    now derived from the fetcher (`israel_scoped`), and platform_check tests the behaviour
+    rather than grepping the source."""
+    from pipeline import fetchers, health
+    scoped = sorted(k for k, f in fetchers.FETCHERS.items() if getattr(f, "israel_scoped", False))
+    assert scoped == ["custom_json", "eightfold", "microsoft", "phenom", "workday"]
+    for plat in scoped + ["scrape", "discovery", "jazzhr"]:
+        assert health.stale_reason(plat, "", 0, "empty", 0) is None, plat
+    for plat in ("greenhouse", "comeet", "lever", "ashby", "workable"):
+        assert health.stale_reason(plat, "", 0, "empty", 0) == "empty-board", plat
+    # a scoped fetcher's baseline is a search-hit count: "had 40, now 0" is not a verdict
+    # either (the fetcher raises BoardEmpty when the board is really empty)...
+    assert health.stale_reason("workday", "", 0, "empty", 40) is None
+    assert health.stale_reason("greenhouse", "", 0, "empty", 40) == "regressed-to-zero"
+    # ...but a SCRAPE row that had postings and now has none is still a regression: the
+    # self-heal pool and the targeted discovery sweep read that flag (25 rows on
+    # 2026-08-24), and the first cut of this rule silently dropped all of them (wave 3)
+    assert health.stale_reason("scrape", "https://x.example/careers", 0, "empty", 12) == "regressed-to-zero"
+    assert health.stale_reason("scrape", "https://x.example/careers", 0, "empty", 0) is None
+    # ...and an error is an error, whatever the platform
+    assert health.stale_reason("workday", "", 0, "error", 0) == "fetch-error"
+    # write=False judges without touching the files (scoped runs)
+    b, s = tmp_path / "b.json", tmp_path / "s.json"
+    stale = health.record({"Decart": {"platform": "ashby", "n": 0, "status": "error", "api": "u",
+                                      "error": "HttpError: HTTP 404"},
+                           "Adobe": {"platform": "workday", "n": 0, "status": "empty", "api": "u"}},
+                          baseline_path=str(b), stale_path=str(s), write=False)
+    assert list(stale) == ["Decart"] and stale["Decart"]["error"] == "HttpError: HTTP 404"
+    assert not b.exists() and not s.exists()
+
+
+def test_board_health_reaches_the_mail_with_the_reason():
+    """Until 2026-08-24 the audit said `Failed companies: Decart (HttpError)` — the class
+    name — and the empty/regressed counts that stale.json carries reached nobody:
+    `stats["stale_boards"]` was computed and never put into the summary. One line, grouped
+    by reason, names capped, silent when everything is healthy."""
+    import inspect
+    from pipeline import digest, health, run as run_mod
+    line = health.mail_lines({
+        "Decart": {"reason": "fetch-error", "error": "HttpError: HTTP 404 for https://api.ashbyhq.com/..."},
+        "Dell Technologies": {"reason": "fetch-error", "error": "BoardEmpty: dell.wd1: 0 postings worldwide"},
+        "Leadspace": {"reason": "empty-board"}, "Any.do": {"reason": "empty-board"},
+        "Salesforce": {"reason": "regressed-to-zero"},
+        **{f"S{i}": {"reason": "misconfig-scrape-on-ats"} for i in range(25)}})
+    assert line == ["2 fetch errors (Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/...; "
+                    "Dell Technologies: BoardEmpty: dell.wd1: 0 postings worldwide) · "
+                    "1 regressed to zero (Salesforce) · 2 empty (Any.do; Leadspace) · "
+                    "25 scrape rows on an ATS host"]
+    assert health.mail_lines({}) == [], "nothing to say when every board is healthy"
+    many = health.mail_lines({f"C{i:02d}": {"reason": "empty-board"} for i in range(9)})
+    assert many == ["9 empty (C00; C01; C02; C03; C04; C05; +3 more)"]
+    # the run puts it in the summary, and every renderer prints it
+    src = inspect.getsource(run_mod.run)
+    assert '"fetch_health": _fetch_health_lines' in src and "health.mail_lines(stale, _previous, scanned=health_results)" in src
+    assert "str(e))[:70]" in src, "the failed-companies line must carry the exception text"
+    assert r"\?\S*" in src, "query strings (Comeet ?token=) are stripped BEFORE the 70-char cut"
+    assert "scanned=health_results" in src, "cleared must be judged only over rows this run scanned"
+    many_failed = {"companies_scanned": 1, "failed_companies": [f"C{i} (HttpError: x)" for i in range(30)]}
+    _, md2 = digest.build_markdown([], "2026-08-24", many_failed, {})
+    assert "C7 (HttpError: x), +22 more" in md2 and "C8 (" not in md2, "an outage morning is eight names and a count"
+    _, html2, text2 = digest.build_digest([], "2026-08-24", many_failed)
+    assert "+22 more" in html2 and "C8 (" not in html2 and "+22 more" in text2, "the HTML mail is capped too"
+    summary = {"companies_scanned": 1, "fetch_health": line}
+    _, md = digest.build_markdown([], "2026-08-24", summary, {})
+    assert "- **Boards:** 2 fetch errors (Decart: HttpError: HTTP 404" in md
+    _, html, text = digest.build_digest([], "2026-08-24", summary)
+    assert "BOARDS: 2 fetch errors" in text and "<b>Boards:</b> 2 fetch errors" in html
+
+
+def test_discovery_drops_are_counted_and_printed(monkeypatch, capsys):
+    """docs/BACKLOG.md 9: three filters in one silent comprehension — 109 of 1,097 cached
+    jobs were dropped as recruiters on 2026-08-24 and nothing said so. Every drop class is
+    printed once. The second half of item 9, narrowly: a card whose slug names a DECLARED
+    identity of the company (identity_facts: "AWS" -> domain `amazon`; exact whole-word, 3+ chars) is
+    the company's own posting and is kept; an undeclared foreign slug is still dropped."""
+    import json as _json
+    from pipeline import fetchers
+    today = dt.date.today().isoformat()
+    cache = [{"company": "Wix", "title": "a", "url": "https://il.linkedin.com/jobs/view/a-at-wix-4454120001", "posted_date": today},
+             {"company": "Wix", "title": "b", "url": "https://il.linkedin.com/jobs/view/b-at-wix-4454120002", "posted_date": "2020-01-01"},
+             {"company": "Manpower", "title": "c", "url": "https://il.linkedin.com/jobs/view/c-at-manpower-4454120003", "posted_date": today},
+             {"company": "Wix", "title": "d", "url": "https://il.linkedin.com/jobs/view/d-at-monday-com-4454120004", "posted_date": today},
+             {"company": "AWS", "title": "e", "url": "https://il.linkedin.com/jobs/view/e-at-amazon-web-services-4454120005", "posted_date": today},
+             {"company": "Siemens EDA", "title": "f", "url": "https://il.linkedin.com/jobs/view/f-at-swissquote-4454120006", "posted_date": today},
+             {"company": "Itamar Medical", "title": "g", "url": "https://il.linkedin.com/jobs/view/g-at-zollinger-corp-4454120007", "posted_date": today},
+             {"company": "AWS", "title": "h", "url": "https://il.linkedin.com/jobs/view/amazon-consultant-at-acme-consulting-4454120008", "posted_date": today},
+             {"company": "SentinelOne", "title": "i", "url": "https://il.linkedin.com/jobs/view/i-at-sentinel-labs-4454120009", "posted_date": today},
+             {"company": "Merck (MSD)", "title": "j", "url": "https://il.linkedin.com/jobs/view/j-at-msd-4454120010", "posted_date": today},
+             {"company": "Merck (MSD)", "title": "k", "url": "https://il.linkedin.com/jobs/view/k-at-msdelivery-4454120011", "posted_date": today}]
+    monkeypatch.setattr(_json, "load", lambda f: cache)
+    from pipeline.company_identity import url_names_other_company as _u
+    assert _u("AWS", cache[4]["url"]), "the raw guard would drop the declared identity"
+    kept = fetchers.fetch_discovery({"company_name": "Discovery"})
+    assert [j["title"] for j in kept] == ["a", "e", "i", "j"], ("declared `amazon`/`sentinellabs`/`msd` kept as a whole "
+        "leading run of the employer's words (exact, so 3-char `msd` is safe); `sw` (2 chars), `zoll` inside `zollinger`, "
+        "`msd` inside `msdelivery`, and `amazon` in the TITLE half do not vouch")
+    out = capsys.readouterr().out
+    assert "[discovery] kept 4 of 11 cached jobs (dropped: expired 1, recruiter 1, slug-mismatch 5)" in out
+
+
+def test_every_list_description_and_date_goes_through_the_same_normaliser(monkeypatch):
+    """workable/breezy stored the raw stripped HTML (no junk filter, no cap) while every
+    other fetcher used `_snippet`; workable/breezy/bamboohr sliced dates `[:10]` while the
+    others parsed them. One path each: a CSS-soup description is blanked, an unparseable
+    date is "" rather than ten raw characters."""
+    from pipeline import fetchers
+    junk = '<div class="x">var(--token) pointer-events</div>' + "x" * 7000
+    monkeypatch.setattr(fetchers.http, "get_json", lambda url, **kw: {
+        "jobs": [{"title": "Analyst", "city": "Tel Aviv", "country": "Israel", "url": "https://w/1",
+                  "shortcode": "S1", "created_at": "2026-08-01T10:00:00Z", "description": junk}]})
+    w = fetchers.fetch_workable({"company_name": "W", "ats_platform": "workable", "token": "w", "api_url": "https://apply.workable.com/api/v1/widget/accounts/w"})
+    assert w[0]["description"] == "" and w[0]["posted_date"] == "2026-08-01"
+    monkeypatch.setattr(fetchers.http, "get_json", lambda url, **kw: [
+        {"name": "Analyst", "friendly_id": "f1", "published_date": "August 1, 2026", "description": "<p>Real</p>" + "y" * 7000}])
+    b = fetchers.fetch_breezy({"company_name": "B", "ats_platform": "breezy", "token": "b", "api_url": "https://b.breezy.hr/json"})
+    assert b[0]["posted_date"] == "2026-08-01" and len(b[0]["description"]) == fetchers._DESC_MAX
+    monkeypatch.setattr(fetchers.http, "get_json", lambda url, **kw: {
+        "result": [{"id": 7, "jobOpeningName": "Analyst", "datePosted": "not a date"}]})
+    bh = fetchers.fetch_bamboohr({"company_name": "H", "ats_platform": "bamboohr", "token": "h", "api_url": "https://h.bamboohr.com/careers/list"})
+    assert bh[0]["posted_date"] == ""
+
+
+# --- scraper lane, 2026-08-24: render/parse split, error vs empty, the pooled refresh ---
+# Every test here is offline: the parse is a pure function of a `Rendered` bundle, the refresh
+# is driven by a fake `scrape_result`, and the process pool by a module-level fake worker.
+
+import csv as _csv
+import datetime as _dtm
+import html as _html
+import json as _json
+import re as _re
+import time as _time
+from types import SimpleNamespace as _NS
+
+
+def test_the_empty_board_probe_fails_closed_on_a_dead_endpoint_and_open_on_a_burst(monkeypatch):
+    """Wave-1 finding: the first probe swallowed EVERY error, so it failed open on exactly
+    the condition it existed to detect — a moved tenant whose probe 4xxs went 'healthy'.
+    And `and not total` skipped the probe when a moved `site` kept its facet count with no
+    postings. Now: an empty first page always earns the probe; a 4xx from the probe is
+    re-raised (the endpoint is dead — that is the finding); 5xx/network/malformed is
+    'could not tell' → []; a count of 0 → BoardEmpty; a missing count with no postings → 0.
+    The same helper serves Workday, Eightfold and Phenom."""
+    from pipeline import fetchers
+    H = fetchers.http.HttpError
+    wd = {"company_name": "X", "ats_platform": "workday", "token": "",
+          "api_url": "https://x.wd5.myworkdayjobs.com/wday/cxs/x/ext/jobs"}
+
+    def workday(first, probe):
+        def fake_post(url, body, **kw):
+            if body["searchText"] == "Israel":
+                return first
+            if isinstance(probe, Exception):
+                raise probe
+            return probe
+        monkeypatch.setattr(fetchers.http, "post_json", fake_post)
+    workday({"total": 7, "jobPostings": []}, {"total": 0, "jobPostings": []})
+    with pytest.raises(fetchers.BoardEmpty):          # facet total survives, postings gone
+        fetchers.fetch_workday(wd)
+    workday({"total": 0, "jobPostings": []}, H("HTTP 404 for u: Not Found"))
+    with pytest.raises(H):                             # probe 4xx → the endpoint is dead
+        fetchers.fetch_workday(wd)
+    for code in (401, 403, 408, 429):                  # ...but "not now" is not "dead"
+        workday({"total": 0, "jobPostings": []}, H(f"HTTP {code} for u: x"))
+        assert fetchers.fetch_workday(wd) == [], code
+    workday({"total": 0, "jobPostings": []}, H("HTTP 500 for u: Server Error"))
+    assert fetchers.fetch_workday(wd) == []           # burst → unknown → []
+    workday({"total": 0, "jobPostings": []}, H("network error for u: timed out"))
+    assert fetchers.fetch_workday(wd) == []
+    workday({"total": 0, "jobPostings": []}, {"jobPostings": []})
+    assert fetchers.fetch_workday(wd) == []           # no `total` at all → could not tell
+    workday({"total": 0, "jobPostings": []}, {"total": "741"})
+    assert fetchers.fetch_workday(wd) == []           # a string count still counts
+    workday({"total": 7, "jobPostings": []}, {"total": 741})
+    with pytest.raises(ValueError, match="reports 7 Israel hits but served none"):
+        fetchers.fetch_workday(wd)                    # a healthy board that serves nothing
+
+    # Eightfold: 0 Israel positions → one unscoped GET; 0 worldwide → BoardEmpty
+    def pcsx(worldwide):
+        def fake_get(url, **kw):
+            if "location=Israel" in url:
+                return {"data": {"count": 0, "positions": []}}
+            assert "location=&" in url and kw.get("retries") == 1
+            return {"data": {"count": worldwide, "positions": []}}
+        monkeypatch.setattr(fetchers.http, "get_json", fake_get)
+    ef = {"company_name": "PayPal", "ats_platform": "eightfold", "token": "paypal.com",
+          "api_url": "https://paypal.eightfold.ai/api/pcsx/search"}
+    pcsx(75)
+    assert fetchers.fetch_eightfold(ef) == []
+    pcsx(0)
+    with pytest.raises(fetchers.BoardEmpty):
+        fetchers.fetch_eightfold(ef)
+
+    # Phenom: 0 Israel hits → one unfiltered POST; 0 hits at all → BoardEmpty
+    def phenom(worldwide):
+        def fake_post(url, body, **kw):
+            hits = 0 if body["selected_fields"] else worldwide
+            return {"refineSearch": {"totalHits": hits, "data": {"jobs": []}}}
+        monkeypatch.setattr(fetchers.http, "post_json", fake_post)
+    ph = {"company_name": "eBay", "ats_platform": "phenom", "token": "",
+          "api_url": "https://jobs.ebayinc.com/widgets"}
+    phenom(472)
+    assert fetchers.fetch_phenom(ph) == []
+    phenom(0)
+    with pytest.raises(fetchers.BoardEmpty):
+        fetchers.fetch_phenom(ph)
+
+
+def test_the_boards_line_leads_with_what_changed_since_yesterday():
+    """88 of the 91 entries in a simulated stale.json are standing state (empty boards,
+    scrape rows on an ATS host) that reads the same every morning; a new fetch error inside
+    that line is invisible by day three. The line now opens with the delta. `run.py` reads
+    yesterday's file BEFORE `record()` rewrites it."""
+    import inspect
+    from pipeline import health, run as run_mod
+    prev = {"Guardz": {"reason": "fetch-error"}, "Any.do": {"reason": "empty-board"},
+            "Adobe": {"reason": "empty-board"}}
+    now = {"Decart": {"reason": "fetch-error", "error": "HttpError: HTTP 404"},
+           "Any.do": {"reason": "empty-board"},
+           "Adobe": {"reason": "fetch-error", "error": "BoardEmpty: 0 postings worldwide"}}
+    assert health.mail_lines(now, prev) == [
+        "new today: Adobe: fetch-error; Decart: fetch-error · cleared: Guardz · "
+        "2 fetch errors (Adobe: BoardEmpty: 0 postings worldwide; Decart: HttpError: HTTP 404) · "
+        "1 empty (Any.do)"]
+    assert health.mail_lines(now, now)[0].startswith("2 fetch errors"), "no delta, no prefix"
+    # "cleared" means recovered: not a row nobody scanned (deactivated overnight), and not an
+    # empty-board on a platform whose zero is a measurement (never broken; 26 Workday rows
+    # would have read as "cleared" the first morning the rule landed)
+    prev2 = {"Adobe": {"reason": "empty-board", "platform": "workday"},
+             "Leadspace": {"reason": "empty-board", "platform": "lever"},
+             "Gone Co": {"reason": "fetch-error", "platform": "ashby"}}
+    assert health.mail_lines({}, prev2, scanned={"Adobe", "Leadspace"}) == ["cleared: Leadspace"]
+    assert health.mail_lines({}, prev2) == ["cleared: Gone Co; Leadspace"]
+    src = inspect.getsource(run_mod.run)
+    assert src.index("health.previous()") < src.index("health.record(")
+    assert "stale_boards" not in src, "a summary key nothing renders is a lie waiting to happen"
+
+
+def test_platform_check_catches_a_scoped_fetcher_that_forgot_to_declare_it(monkeypatch):
+    """Wave-1 finding: the first `empty->flag(health)` column read the same attribute health
+    reads — a tautology. The check is now: a fetcher whose source narrows to Israel must
+    DECLARE `israel_scoped` (True, or False for oraclehcm's hybrid pass), and health's
+    verdict must match the declaration. Deleting `fetch_workday.israel_scoped` must show."""
+    from pipeline import fetchers, platform_check
+    import contextlib, io
+    def grid():
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            platform_check.check()
+        return {l.split()[0]: l.split() for l in buf.getvalue().splitlines() if l and l.split()[0] in fetchers.FETCHERS}
+    base = grid()
+    assert base["workday"][-2:] == ["ok", "ok"] and base["oraclehcm"][-2:] == ["ok", "ok"]
+    monkeypatch.delattr(fetchers.fetch_workday, "israel_scoped")
+    broken = grid()
+    assert broken["workday"][-2:] == ["MISSING", "ok"], "narrows to Israel, undeclared"
+    monkeypatch.setattr(fetchers.fetch_greenhouse, "israel_scoped", True, raising=False)
+    assert grid()["greenhouse"][-2:] == ["MISSING", "ok"], \
+        "claims to narrow to Israel but does not — would switch off empty-board for 104 rows"

@@ -642,12 +642,21 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
         lines.append("- **Sources not producing:** " + "; ".join(s["dead_sources"]))
     if s.get("registry_alarms"):
         lines.append("- **Registry:** " + "; ".join(s["registry_alarms"]))
+    if s.get("fetch_health"):
+        lines.append("- **Boards:** " + "; ".join(s["fetch_health"]))
     if s.get("stages"):
         lines.append(f"- Stage order: {s['stages']}")
     if s.get("failed_companies"):
-        lines.append(f"- Failed companies: {', '.join(s['failed_companies'])}")
+        lines.append("- Failed companies: " + _capped(s["failed_companies"]))
     lines += ["", "</details>"]
     return title, "\n".join(lines)
+
+
+def _capped(names, n=8):
+    """Each failed company now carries its exception text (~100 chars); an outage morning
+    with 30 failures must not be a 3,000-char line. Eight, then a count."""
+    names = list(names or [])
+    return ", ".join(names[:n]) + (f", +{len(names) - n} more" if len(names) > n else "")
 
 
 def _newcut(run_date):
@@ -1380,16 +1389,18 @@ def _text_audit(s):
         lines.append("  SOURCES NOT PRODUCING: " + "; ".join(s["dead_sources"]))
     if s.get("registry_alarms"):
         lines.append("  REGISTRY: " + "; ".join(s["registry_alarms"]))
+    if s.get("fetch_health"):
+        lines.append("  BOARDS: " + "; ".join(s["fetch_health"]))
     if s.get("stages"):
         lines.append(f"  stage order: {s['stages']}")
     if s.get("failed_companies"):
-        lines.append("  failed companies: " + ", ".join(s["failed_companies"]))
+        lines.append("  failed companies: " + _capped(s["failed_companies"]))
     return "\n".join(lines)
 
 
 def _html_audit(s, esc):
     paths = s.get("paths", {})
-    fc = s.get("failed_companies", [])
+    fc = _capped(s.get("failed_companies", []))
     return (
         '<div style="margin-top:28px;padding:12px 14px;background:#f7f7f8;border-radius:8px;'
         'font-size:12px;color:#666;">'
@@ -1408,7 +1419,9 @@ def _html_audit(s, esc):
            if s.get("dead_sources") else "")
         + (f'<br><b>Registry:</b> {esc("; ".join(s.get("registry_alarms") or []))}'
            if s.get("registry_alarms") else "")
+        + (f'<br><b>Boards:</b> {esc("; ".join(s.get("fetch_health") or []))}'
+           if s.get("fetch_health") else "")
         + (f'<br>Stage order: {esc(s.get("stages",""))}' if s.get("stages") else "")
-        + (f'<br>Failed companies: {esc(", ".join(fc))}' if fc else "")
+        + (f'<br>Failed companies: {esc(fc)}' if fc else "")
         + '</div>'
     )

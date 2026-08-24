@@ -13,6 +13,7 @@ This converts that silent half-wiring into a visible report. Read-only.
 """
 from __future__ import annotations
 
+import inspect
 import os
 import re
 import sys
@@ -21,8 +22,6 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # platforms that are not real ATS integrations
 PSEUDO = {"scrape", "discovery"}
-# fetchers that legitimately return [] and must be exempt from the empty-board flag
-BY_DESIGN_EMPTY = {"jazzhr"}
 
 
 def _read(rel):
@@ -34,6 +33,7 @@ def _read(rel):
 
 
 def check():
+    from . import health
     from .fetchers import FETCHERS
 
     platforms = sorted(p for p in FETCHERS if p not in PSEUDO)
@@ -43,7 +43,6 @@ def check():
         "SIGS(audit)": _read("audit_empty_rows.py"),
         "ATS_PATTERNS(resolve_deep)": _read("resolve_deep.py"),
         "llm-prompt(resolve_llm)": _read("resolve_llm.py"),
-        "empty-exempt(health)": _read("pipeline/health.py"),
     }
     # a platform is "known" to a source if its name or its canonical host appears there
     hosts = {
@@ -52,25 +51,37 @@ def check():
         "workday": "myworkdayjobs", "oraclehcm": "oraclecloud", "workable": "workable",
         "breezy": "breezy", "bamboohr": "bamboohr", "jazzhr": "jazzhr|applytojob",
         "microsoft": "microsoft", "custom_json": "amazon",
+        "eightfold": "eightfold|pcsx", "phenom": "phenom|/widgets",
     }
     rows, missing_total = [], 0
     for p in platforms:
-        h = hosts.get(p, p)
-        rx = re.compile(h, re.I)
+        rx = re.compile(hosts.get(p, p), re.I)
         row = {"platform": p}
         for label, text in sources.items():
-            if label == "empty-exempt(health)":
-                m = re.search(r'plat not in \(([^)]*)\)', text)
-                exempt = (m.group(1) if m else "")
-                need = p in BY_DESIGN_EMPTY
-                ok = (p in exempt) if need else True
-                row[label] = "ok" if ok else "MISSING"
-            else:
-                row[label] = "ok" if rx.search(text) else "MISSING"
+            row[label] = "ok" if rx.search(text) else "MISSING"
             missing_total += row[label] == "MISSING"
+        # BEHAVIOUR, not source text. Two things can drift and both are checked:
+        #  (1) a fetcher whose request narrows to Israel ("Israel" / "ISR" in its source)
+        #      must DECLARE `israel_scoped` (True; or False for a hybrid like oraclehcm whose
+        #      unscoped pass makes a zero real evidence), or health flags its healthy zeros;
+        #  (2) health's verdict for an empty fetch must be None exactly for scoped or
+        #      by-design-empty platforms. A regex over health.py's source stood here before
+        #      and went stale the day that line changed.
+        fn = FETCHERS[p]
+        scoped = bool(getattr(fn, "israel_scoped", False))
+        declared = hasattr(fn, "israel_scoped")      # True, or an explicit False (oraclehcm:
+        narrows = bool(re.search(r"Israel|ISR", inspect.getsource(fn)))   # a hybrid pass)
+        verdict_ok = (health.stale_reason(p, "", 0, "empty", 0) is None) == (scoped or p == "jazzhr")
+        # both directions: narrows ⇒ declared (a forgotten attribute flags healthy zeros);
+        # scoped ⇒ narrows (a fetcher that does NOT ask for Israel yet claims to would
+        # switch empty-board detection off for its whole platform)
+        row["israel-scoped(fetcher)"] = "ok" if ((declared or not narrows) and (narrows or not scoped)) else "MISSING"
+        row["empty->flag(health)"] = "ok" if verdict_ok else "MISSING"
+        missing_total += row["israel-scoped(fetcher)"] == "MISSING"
+        missing_total += row["empty->flag(health)"] == "MISSING"
         rows.append(row)
 
-    labels = list(sources)
+    labels = list(sources) + ["israel-scoped(fetcher)", "empty->flag(health)"]
     w = max(len(p) for p in platforms) + 1
     print(f"{'platform':<{w}} " + " ".join(f"{l[:14]:<15}" for l in labels))
     for r in rows:

@@ -21,6 +21,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import re as _re
 import sys
 import traceback
 from collections import Counter
@@ -125,9 +126,16 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             jobs = fetchers.fetch_company(r)
         except Exception as e:  # noqa: BLE001
             stats["companies_failed"] += 1
-            failed_companies.append(f"{r['company_name']} ({e.__class__.__name__})")
+            # the mail used to say "(HttpError)" — the class alone, so nobody could tell a
+            # 404 (dead board) from a 500 (their outage) without opening the run log
+            # ...and the URL's query string goes first: it lands in the public digest, and
+            # a Comeet `?token=` sat 5 characters past the cut on the two comeet.co rows
+            _msg = _re.sub(r'\?\S*', '', str(e))[:70]
+            why = f"{e.__class__.__name__}: {_msg}"
+            failed_companies.append(f"{r['company_name']} ({why})")
             health_results[r["company_name"]] = {"platform": r["ats_platform"], "n": 0,
-                                                  "status": "error", "api": r.get("api_url", "")}
+                                                  "status": "error", "api": r.get("api_url", ""),
+                                                  "error": why}
             print(f"  [fetch-fail] {r['company_name']}: {e}", file=sys.stderr)
             continue
         health_results[r["company_name"]] = {
@@ -179,17 +187,21 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     # free, daily detection: record which boards returned 0/error so the self-heal step can
     # re-resolve them (and discovery can backfill). Never let health tracking break the digest.
+    _fetch_health_lines = []
     try:
         from . import health
         if only or limit:
             # A scoped run saw 5 companies, not 894. Recording it REPLACES stale.json with
             # those five outcomes and the self-heal job then has nothing to re-resolve —
             # same footgun as a scoped run overwriting the published board, which is
-            # already guarded below.
+            # already guarded below. Judge without writing, so the audit line still works.
             print(f"  [health] scoped run ({len(rows)} companies): not touching stale.json")
-        else:
-            stale = health.record(health_results)
-            stats["stale_boards"] = len(stale)
+        _previous = health.previous()               # before record() rewrites the file
+        stale = health.record(health_results, write=not (only or limit))
+        # ...and reach the reader: stale.json is read by the self-heal job, not by a person
+        _fetch_health_lines = health.mail_lines(stale, _previous, scanned=health_results)
+        for _line in _fetch_health_lines:
+            print(f"::warning::boards {_line}", flush=True)
     except Exception as e:  # noqa: BLE001
         print(f"  [health] skipped: {e}", file=sys.stderr)
 
@@ -422,6 +434,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         "stages": stages.summary(),
         "dead_sources": _dead_sources,
         "registry_alarms": _registry_alarms_lines,
+        "fetch_health": _fetch_health_lines,
         "paths": dict(paths),
         "failed_companies": failed_companies,
     }

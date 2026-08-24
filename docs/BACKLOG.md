@@ -313,6 +313,18 @@ outside the `discovery` lane and are NOT fixed.
    agree; the new `linkedin_search` takes the DISPLAY name, so divergence becomes routine.
    Fix: count and print each drop class, and never slug-drop a name already in
    `companies.csv`.
+   > **`ats-fetch` 2026-08-24: counted, and exempted narrowly.** `fetch_discovery` prints
+   > `[discovery] kept 881 of 1097 cached jobs (dropped: expired 107, recruiter 109)`
+   > (that run: slug-mismatch 0), and keeps a card whose slug names a DECLARED identity
+   > of the company (`pipeline/identity_facts.py` tenants/domains, matched as an exact
+   > whole leading run of the employer's slug words, 3+ chars: "Merck (MSD)"/`at-msd`,
+   > "AWS"/`at-amazon-web-services`). The blanket "never drop a registry name" is
+   > deliberately not done — the 147 mis-attributed rows carried registry names too — so
+   > NVIDIA/`at-mellanox` still needs a declaration in `identity_facts` (lane: `registry`),
+   > which is the right place for it. (`check_invariants.py:211` runs the same predicate
+   > over the board as a `warn()`, not a gate — an earlier version of this note said it
+   > blocked; it does not.)
+
 
 10. **`discovered_cache.json` and `research_companies.json` are restored wholesale on the
     git conflict path.** *(lane: `infra` — `.github/workflows/daily-digest.yml:155` and the
@@ -1608,3 +1620,85 @@ Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-d
     (HANDOFF open item 7 already names `seen.db`). It can also revert a `collect` stamp that
     scrape-refresh pushed after the 05:00 checkout; the next 00:00 run re-stamps, so no mail
     number changes, but the same wholesale copy is what the other workflows were cured of.
+
+## From the `ats-fetch` lane, 2026-08-24
+
+Record: `docs/sessions/2026-08-24-ats-fetch.md`. Everything below is outside that lane's
+write list; each item names the lane that owns it and the command that proves it.
+
+76. **Three active scrape rows have a validated native fetcher waiting** — lane: `registry`
+    (a `companies.csv` write; the fetchers shipped and are covered in `tests/test_units.py`).
+    Measured 2026-08-24 with `python -c "from pipeline.fetchers import fetch_company; ..."`:
+    | row today | convert to | `api_url` | result |
+    |---|---|---|---|
+    | Qualcomm (scrape, "verified 8 IL") | `eightfold`, token `qualcomm.com` | `https://careers.qualcomm.com/api/pcsx/search?domain=qualcomm.com` | **31–36 Israel roles** (`count=36`; the pager is unstable between calls — distinct requisitions 31, 32 and 36 on three fetches) |
+    | GE HealthCare (scrape, active, reports 0) | `phenom` | `https://careers.gehealthcare.com/widgets` | **20 Israel roles** (20 of 985 worldwide, exact) |
+    | Fortinet (scrape on Oracle CE, "11 IL") | `oraclehcm` | `https://edel.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=CX_2001` | board 910; `keyword=Israel` 7; `fetch_oraclehcm` on that row returns 503 jobs of which 14 carry "Israel" in `location` (re-measured by the wave-1 audit; an earlier cell here said "total 7, keyword 0" and was wrong) |
+    Both new platforms would then need `check_invariants.py`'s `PLATFORM_HOST` map
+    (`infra`) to know `eightfold` (`/api/pcsx/`) and `phenom` (`/widgets`) — tenant hosts
+    vary, the path does not — or check C2 ("endpoint is not on that host") can never fire
+    for them and the one mis-wiring the fetchers warn about (a Phenom host on the pcsx
+    path) goes unflagged. Measured but NOT worth converting: PayPal (paypal.eightfold.ai: 0 of
+    75), Dolby (jobs.dolby.com: pcsx 0 of 96; `/widgets` 401), Lam Research (0 of ~1,325),
+    P&G / eBay / OpenText (Phenom: 0 of 172 / 472 / 317 — exact, unfiltered walks).
+    `nutanix.eightfold.ai` and `telekom-growthhub.eightfold.ai` answer 404 on both API
+    paths; on the pcsx path `app.eightfold.ai` answers `domain=ericsson.com` with count 0
+    and `domain=tevapharm.com` with 403 (the reverse of the old `/api/apply/v2/jobs` path).
+
+77. **`crack_walled` recognises `/api/pcsx` and `/widgets` hosts and still emits `scrape`
+    rows for them** — lane: `registry` (`crack_walled.py:79-80,121-125`). Now that
+    `fetch_eightfold` / `fetch_phenom` exist, a cracked Eightfold/Phenom tenant should
+    become an API row with the endpoint above, not a nightly browser render. Same for
+    `deep_validate._UNSUP`, which still lists `eightfold.ai` as unsupported.
+
+78. **`health.ATS_HOST` does not name `eightfold.ai`** — lane: `registry` + `ats-fetch`,
+    deliberately left. Adding it would flag the 3 active scrape rows whose `api_url` host
+    is `*.eightfold.ai` (Deutsche Telekom, Ericsson, PayPal Israel) as `misconfig-scrape-on-ats` and hand them to `resolve_broken`, whose `_HTML_ATS`
+    cannot resolve an Eightfold tenant — a weekly strike for nothing. Add both halves
+    together (77 first).
+
+79. **The single `jazzhr` row (Questar Auto Technologies) is scanned daily and can never
+    produce** — lane: `registry`. `fetch_jazzhr` returns `[]` by design; the row's
+    `api_url` is an `/apply` page. Convert it to a `scrape` row on that page or park it,
+    then retire the `jazzhr` platform (`FETCHERS`, `health._PSEUDO_OR_BY_DESIGN`,
+    `platform_check`, `check_invariants` host map) — `ats-fetch` will do the code half once
+    the row is gone.
+
+80. **Greenhouse EU boards are unreadable without a renderer** — lane: `scraper` /
+    `registry`. Outbrain's board is `job-boards.eu.greenhouse.io/outbraininc`; the US
+    `boards-api.greenhouse.io` answers `{"jobs":[],"meta":{"total":0}}` (so it reads as
+    empty, HANDOFF watch-list item 0), `boards-api.eu.greenhouse.io` is NXDOMAIN, and the
+    EU page and its `/embed/job_board?for=` variant are a JS shell with **0 job links in
+    the HTML** (2026-08-24). There is no JSON to fetch: the fix is a scrape row on the EU
+    URL, and a resolver rule that tries the EU host when the US API returns total 0.
+    Lever has the same split (`api.eu.lever.co`); the three empty Lever rows today
+    (Leadspace, Chaos Labs, Pillar Security) are 404 there too — genuinely empty.
+
+81. **Numbers other lanes' files still carry from before this session** — lane: `docs`
+    (`ARCHITECTURE.md`'s one-screen map: "16 platforms, 433 API rows … 412 rows" — today
+    18 keys / 436 / 425; `docs/ATS_PLATFORMS.md`'s platform list lacks `eightfold` and
+    `phenom` and their URL patterns; `docs/gen_modules.py` line 94 and its output
+    `docs/MODULES.md` "16 platforms"); `jd-text` (`pipeline/jdfill.py` docstring:
+    "workday (88 active companies), smartrecruiters (19), bamboohr (12)" — today
+    66 / 16 / 11, and `eightfold` and `phenom` roles arrive with an empty description on
+    purpose — Phenom's ~350-char teaser would clear the 300-char bar and never states
+    years — so both belong on that list).
+
+82. **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
+    run's `stale.json` without the `error` reasons, prints no `mail_lines`, and re-fetches
+    all 66 active Workday rows in a burst** — lane: whoever owns `self-heal.yml`'s step
+    (`infra`) + `ats-fetch` for the module. Found by the wave-1 health review. It should
+    pass `error=` into its results dict and either print `health.mail_lines()` to the
+    workflow log or be retired: the daily run has done the same sweep inline since
+    2026-08-22, so the "weekly backstop" is now a second writer of the same file.
+
+83. **The fetch loop is ~7 minutes of the digest's 27, sequentially, and `pipeline/run.py`
+    owns it** — lane: `infra`. Two censuses on 2026-08-24 summed to 421 s and 434 s of
+    per-row fetch time over 436 API rows (median 0.5 s/row; oraclehcm 4–15 s; one
+    greenhouse 22 s) — ~69 % of the "Run the pipeline" step (10 m 14 s) and ~26 % of the
+    job. A pool of 4–8 threads over `fetchers.fetch_company` would cut it to ~2 min. Not done by `ats-fetch`: the
+    loop, `health_results` and `jdfill` live in `run.py`. Evidence on Workday's tolerance
+    is mixed — 25 POSTs at 10 threads answered 200 in 3.2 s, and one earlier burst that day
+    answered 500 on 14 tenants and never reproduced — so keep Workday rows on one worker
+    and measure before trusting it. Note `http.py`'s 30 s timeout × 3 retries makes a
+    hung host cost ~100 s on any worker.
