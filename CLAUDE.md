@@ -2,7 +2,7 @@
 
 **What this repo is.** A daily pipeline that publishes a board of experienced (≈3+ yrs)
 data-analyst / BI / analytics roles at Israeli companies, plus a daily email of the last
-48h. It reads 846 companies' *own* careers boards every morning (out of a 1,199-row
+48h. It reads 846 companies' *own* careers boards every morning (out of a ~1,200-row
 registry) — never aggregators — and runs entirely on GitHub Actions cron jobs. No server.
 `README.md` has the visitor version; `ARCHITECTURE.md` is the system model.
 

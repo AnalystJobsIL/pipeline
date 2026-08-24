@@ -103,6 +103,11 @@ jobs:
       - name: Record the resolution-ladder state (this is the one job with Playwright + Bright Data)
         # rung lines only, to cloud_state/registry_ladder.json; alarms_state re-emits them in
         # the daily mail and reports this file's date when it goes stale. live=False: no spend.
+        # The keys MUST be on this step: a step without them records "Bright Data DOWN" as a
+        # fact and the mail repeats it daily forever (confirmation-wave R3, B1).
+        env:
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
         run: python registry_health.py --ladder || echo "ladder probe skipped"
         continue-on-error: true
       - name: Stamp the 'repair' stage
@@ -118,7 +123,11 @@ jobs:
         run: |
           git config user.name  "audit-bot"
           git config user.email "audit@users.noreply.github.com"
-          git add companies.csv scraped_cache.json cloud_state/pipeline_stages.json cloud_state/registry_ladder.json
+          git add companies.csv scraped_cache.json cloud_state/pipeline_stages.json
+          # the ladder file is OPTIONAL output of a continue-on-error step: a missing pathspec
+          # would abort this whole `git add` under bash -e and discard the night's registry
+          # writes (confirmation-wave R1, B4) -- add it separately, tolerantly
+          git add cloud_state/registry_ladder.json 2>/dev/null || echo "no ladder file this run"
           git commit -m "listing-hunt $(date -u +%F) [skip ci]" || { echo "no change"; exit 0; }
           for i in 1 2 3 4 5; do
             if git pull --rebase --autostash origin ${GITHUB_REF_NAME}; then

@@ -28,7 +28,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `audit_empty_rows.py` | audit-coverage | weekly re-verification of every parked row; also the `verify()` helper every resolver imports |
 | `auto_expand.py` | auto-expand | drains research_companies.json: deterministic tier, then the capped LLM tier |
 | `bd_rescue.py` | retry-unreachable | re-fetches unreachable rows through the Bright Data Web Unlocker |
-| `check_invariants.py` | daily-digest, tests | structural gate on companies.csv + the store; blocks the digest commit |
+| `check_invariants.py` | audit-coverage, auto-expand, daily-digest, deep-validate, listing-hunt, retry-unreachable, scrape-refresh, self-heal, tests, triage-dark | structural gate on companies.csv + the store; blocks the digest commit |
 | `coverage_report.py` | audit-coverage | Sunday summary: of everything researched, how much is scanned |
 | `crack_walled.py` | audit-coverage, listing-hunt | Chromium + network sniffing against walled ATSes (Phenom/Eightfold/iCIMS/SuccessFactors) |
 | `deep_validate.py` | deep-validate | Saturday deep re-validation; owns `google_via_unlocker`, the only search rung that works today |

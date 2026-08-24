@@ -132,8 +132,11 @@ def main():
     # roles between them, about to publish under Israeli companies that never posted them.
     try:
         from pipeline.company_identity import verdict as _identity
+        from pipeline.identity_facts import tenants as _declared
+        # a row whose acquirer tenant is DECLARED (pipeline/identity_facts.py, with
+        # evidence) is not a suspect -- that is what the declaration table is for
         slugged = [f"{r[0]} -> {(r[3] or '')[:44]}" for r in body
-                   if len(r) > 4 and r[4] == "true"
+                   if len(r) > 4 and r[4] == "true" and not _declared(r[0])
                    and _identity(r[0], r[3] or "") == "mismatch"]
         if slugged:
             warn(f"{len(slugged)} active rows whose endpoint names a different company "

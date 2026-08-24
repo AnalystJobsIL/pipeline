@@ -51,7 +51,7 @@ CLASS = {
  "ingest_research": ("library", "resolve+verify helpers for the research queue. **Not deletable**: `retry_unreachable` (02:30 daily) imports `PROBE_FAST`, `_cand_slugs` and `_try` from it"),
  "probe_ats": ("library", "guessable-slug probing. **Not deletable**: `ingest_research` imports `slug_variants`"),
  # operator - a human or agent runs it on demand; still live
- "registry_health": ("operator", "read-only registry census + row-deletion guard, recomputed re-check ownership matrix, live probe of every resolution rung, and the unsupported-ATS build queue. `--census` is the only thing it writes"),
+ "registry_health": ("scheduled", "read-only registry census + row-deletion guard, recomputed re-check ownership matrix, per-tool pool floors, and the unsupported-ATS build queue. `--census` and `--ladder` are the only things it writes; `alarms_state()` is what the daily mail prints; `--explain \"<name>\"` answers \"why was this row activated/refused\" offline"),
  "research_firmographics": ("operator", "bulk firmographics research + `--export`. Run every 6h by the Windows task `IsraeliJobs-Firmographics` via run_firmo_chain.cmd"),
  "bd_employees": ("operator", "LinkedIn employee-count fill via the Web Unlocker, 1 credit/page. Same Windows chain"),
  "fill_employees_llm": ("operator", "re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Same Windows chain"),

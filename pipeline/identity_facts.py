@@ -181,7 +181,7 @@ def validate(rows, ats_host_rx, plumbing):
     by_name = {_key(r[0]): r for r in rows if r and len(r) >= 6}
     problems = []
     for name, d in DECLARED.items():
-        if not d.get("why"):
+        if not (d.get("why") or "").strip():
             problems.append(f"{name}: no `why` -- a declaration without evidence is a guess")
         if not d.get("tenants") and not d.get("domains"):
             problems.append(f"{name}: declares nothing")
@@ -202,4 +202,9 @@ def validate(rows, ats_host_rx, plumbing):
                         and (row[3] or "") not in d["why"]:
                     problems.append(f"{name}: declared tenants {sorted(declared)} do not match "
                                     f"the row's token {tok!r} and `why` does not name the board")
+            elif "http" not in d["why"]:
+                # not on an ATS host (a scrape row, or an empty api_url): the declaration is
+                # about a board this row does not carry, so `why` must name that board
+                problems.append(f"{name}: declares tenants but its row is not on an ATS host and "
+                                f"`why` names no board URL")
     return problems

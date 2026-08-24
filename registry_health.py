@@ -23,7 +23,8 @@ It exists because three questions had no answer anywhere in this repo:
    the system - the 200-minute nightly hunt.
 
 `alarms()` turns all three into short lines meant for the digest's run-audit block, and
-`--census` persists them to `cloud_state/registry_alarms.json` for the digest to pick up.
+`--census` records them in `cloud_state/registry_alarms.json` as an audit trail; the digest
+calls `alarms_state()` directly and never reads that file.
 See docs/BACKLOG.md ("Registry alarms in the daily mail") for the four-line hook that is
 NOT in this lane to make.
 

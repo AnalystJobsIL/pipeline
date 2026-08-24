@@ -31,7 +31,7 @@ every lane imports and no lane owns — changing it is a report-it-loudly event.
   │  auto_expand → resolve_deep → resolve_llm   08:00 / 20:00                    │
   │  listing_hunt · repair_* · crack_walled · deep_validate · triage_dark        │
   │  every row carries a dated verdict in `notes` (§2)      ──▶ companies.csv    │
-  └────────────────────────────────────── 1,199 rows · 846 active · 353 parked ──┘
+  └────────────────────────────────────── ~1,200 rows · run check_invariants.py for today's split ──┘
                    │
   ┌ 3 FETCH ──────────────────────────── lanes: ats-fetch (API) · scraper (page) ┐
   │  pipeline/fetchers.py  16 platforms, 433 API rows      live, every digest    │

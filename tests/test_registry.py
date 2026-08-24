@@ -811,8 +811,42 @@ def test_the_census_refreshes_only_after_the_invariant_gate():
     lh = open(os.path.join(root, ".github", "workflows", "listing-hunt.yml"),
               encoding="utf-8").read()
     assert "registry_health.py --ladder" in lh
-    assert "cloud_state/registry_ladder.json" in lh[lh.index("git add companies.csv"):], (
+    # the ladder step must carry the Bright Data keys its sibling steps carry: the probe is
+    # `resources(live=False)`, which reads the env, and a step without the keys records
+    # "Bright Data DOWN" as a fact the mail repeats daily (confirmation-wave R3, B1)
+    i_l = lh.index("registry_health.py --ladder")
+    step = lh[lh.rfind("- name:", 0, i_l):i_l]
+    assert "BRIGHTDATA_API_KEY" in step and "BRIGHTDATA_ZONE" in step, step
+    commit = lh[lh.index("git add companies.csv"):]
+    assert "cloud_state/registry_ladder.json" in commit, (
         "listing-hunt lists explicit paths in its git add; the ladder file must be one")
+    # ...and it must be added on its OWN, tolerantly: the step that writes it is
+    # continue-on-error, and `git add a b missing` under bash -e aborts before `git commit`
+    # -- the whole night's registry writes discarded (confirmation-wave R1, B4). The
+    # mandatory paths and the optional file may never share one `git add`.
+    ladder_add = next(l for l in commit.splitlines() if "registry_ladder.json" in l and "git add" in l)
+    assert "companies.csv" not in ladder_add and "||" in ladder_add, ladder_add
+
+
+def test_the_digest_summary_is_wired_to_alarms_state():
+    """The one seam between registry health and the mail: `summary["registry_alarms"]`
+    must be bound to the `alarms_state()` result. Blanking it to `[]` left the suite green
+    (confirmation-wave R1) -- the renderer was tested, the producer was not."""
+    import ast
+    import inspect
+    import pipeline.run as R
+    src = inspect.getsource(R)
+    tree = ast.parse(src)
+    keys = [n for n in ast.walk(tree) if isinstance(n, ast.Dict)
+            and any(isinstance(k, ast.Constant) and k.value == "registry_alarms" for k in n.keys)]
+    assert keys, "summary no longer carries registry_alarms"
+    d = keys[0]
+    val = d.values[[isinstance(k, ast.Constant) and k.value == "registry_alarms" for k in d.keys].index(True)]
+    assert getattr(val, "id", "") == "_registry_alarms_lines", ast.dump(val)
+    assigns = [n for n in ast.walk(tree) if isinstance(n, ast.Assign)
+               and any(getattr(t, "id", "") == "_registry_alarms_lines" for t in n.targets)]
+    callers = {getattr(getattr(a.value, "func", None), "id", "") for a in assigns}
+    assert "_registry_alarms" in callers, "the alarms list is no longer produced by alarms_state"
 
 
 def test_the_mail_hook_does_not_record_the_ladder():
@@ -1794,6 +1828,23 @@ def test_explain_answers_why_a_row_was_activated_or_refused_without_touching_the
     text = "\n".join(lines)
     assert "none declared" in text and "terminal (no pool may re-open)" in text
     assert R.explain("no such row", rows, out=lines.append) == 1
+
+
+def test_the_mutation_coverage_demand_is_pinned():
+    """`tools/mutate.py --coverage` runs in CI but only through the sweep; its demand set
+    lives in `_gate_call_sites`' default. Narrowing that default (dropping `identity_ok`)
+    silently stopped demanding records at two writers with everything green
+    (confirmation-wave R2). Pin the default and run the coverage check in the suite."""
+    import importlib.util
+    import inspect
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    spec = importlib.util.spec_from_file_location("mutate", os.path.join(root, "tools", "mutate.py"))
+    M = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(M)
+    default = inspect.signature(M._gate_call_sites).parameters["gate_names"].default
+    assert set(default) == {"activation_ok", "ok_to_write", "identity_ok"}, default
+    assert M.coverage(M._load()) == [], "the derived coverage check reports a gap"
 
 
 def test_the_gate_caller_map_is_derived_not_typed():

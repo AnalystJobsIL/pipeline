@@ -12,7 +12,7 @@ Israeli high-tech companies, and a daily email of what is new.
 The point of the design: **we do not scrape aggregators.** The pipeline reads 846 companies'
 *own* careers boards every morning — 433 through a native ATS API (Comeet, Greenhouse, Lever,
 SmartRecruiters, Recruitee, Ashby, Workday, Oracle HCM and 8 more) and 412 by rendering the
-page, out of a 1,199-row registry — filters to Israel-located analytics roles, and publishes
+page, out of a ~1,200-row registry — filters to Israel-located analytics roles, and publishes
 what it can still verify. Every company row carries a dated verdict explaining what we know
 about it — including the claim "this company has no open roles", which is the claim most
 job boards get wrong.
@@ -26,7 +26,7 @@ It runs entirely on GitHub Actions cron jobs. There is no server.
     │          discovery_daily.py · discovery_telegram.py
     ▼
  2 REGISTRY    resolve each employer to a readable careers board, or park it with a
-    │          reason. companies.csv — 1,199 rows, 846 active, 353 parked
+    │          reason. companies.csv — ~1,200 rows (check_invariants.py prints today's split)
     ▼
  3 FETCH       433 rows via a native ATS API · 412 rendered from the page ·
     │          1 synthetic row that reads the discovery cache
