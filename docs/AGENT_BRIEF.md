@@ -60,18 +60,22 @@ mode this whole documentation set is arranged against.
    └────────┬───────────┘
             ▼
    ┌── 5 CLASSIFY ──────┐   Israel filter → relevance/seniority → LLM for the ambiguous
-   │  lane: classifier  │                                  ──▶ matched (the store)
+   │  lane: classifier  │                                  ──▶ accepted roles
    └────────┬───────────┘
             ▼
-   ┌── 6 RENDER ────────┐   the board, the archive, the email, every tag on a role card
+   ┌── 6 ROLE RECORD ───┐   is this the same role we saw yesterday? still open? a repost?
+   │   lane: roles      │   what drops off the board, and what the archive keeps
+   └────────┬───────────┘                                 ──▶ matched · sent (the store)
+            ▼
+   ┌── 7 RENDER ────────┐   the board, the archive, the email, every tag on a role card
    │   lane: render     │
    └────────┬───────────┘
             ▼
-   ┌── 7 DELIVER ───────┐   commit state · publish the board · relay the email · archive
-   │   lane: infra ✱    │   semantics · the merge machinery · the workflows
+   ┌── 8 DELIVER ───────┐   commit state · publish the board · relay the email ·
+   │   lane: infra ✱    │   the merge machinery · the workflows
    └────────────────────┘
 
-   lane: docs — cuts across all seven      ✱ = only one session at a time
+   lane: docs — cuts across all eight      ✱ = only one session at a time
 ```
 
 ## Lanes, and what each may write
@@ -87,13 +91,37 @@ Pick ONE. The split exists so that two lanes never write the same file.
 | **`jd-text`** | 4 | every relevant role gets its description, whatever its age | `pipeline/jdfill.py`, `enrich_scrape_jd.py`, `enrich_matched_jd.py` |
 | **`company-intel`** | 4 | sector / stage / employees / founded / Israel centre | `pipeline/firmographics.py`, `pipeline/company_info.py`, `research_firmographics.py`, `bd_employees.py`, `fill_employees_llm.py`, `company_type_analysis.py` |
 | **`classifier`** | 5 | which roles qualify, and the LLM tier that decides the ambiguous ones | `pipeline/seniority.py`, `pipeline/israel.py`, `llm_cache` invalidation |
-| **`render`** | 6 | how a role reads; every tag on a card | `pipeline/digest.py`, `pipeline/roleprofile.py`, `docs/TAGGING.md` |
-| **`infra`** *(one at a time)* | 7 | stores, merges, workflows, archive semantics, the relay | `pipeline/store.py`, `pipeline/run.py`, `merge_*.py`, `check_invariants.py`, `.github/workflows/*`, `mark_sent.py` |
+| **`roles`** | 6 | the role as an ENTITY: is it the same one, is it still open, was it re-posted, when does it leave the board | `pipeline/store.py` (`matched`/`sent`, `merge_key`, `seen_id`, `merge_duplicates`, `filter_new`, `upsert_matched`), the role-selection block in `pipeline/run.py`, repost detection |
+| **`render`** | 7 | how a role reads; every tag on a card | `pipeline/digest.py`, `pipeline/roleprofile.py`, `docs/TAGGING.md` |
+| **`infra`** *(one at a time)* | 8 | delivery and the machinery under all of it: merges, workflows, the relay | `merge_*.py`, `check_invariants.py`, `.github/workflows/*`, `mark_sent.py`, `pipeline/run.py` (orchestration only) |
 | **`docs`** | — | making all of the above legible to the next agent and to a visitor, and keeping it honest | `README.md`, `ARCHITECTURE.md`, `HANDOFF.md`, `CLAUDE.md`, `docs/*` incl. `docs/check_docs.py` |
 
 **Exactly one agent may hold `registry` at a time, and one `infra`.** `registry` writes the
-file every other lane reads; `infra` writes the workflows that run them all. The other eight
+file every other lane reads; `infra` writes the workflows that run them all. The other nine
 are concurrent with each other and with one of each.
+
+### The `roles` lane exists because the role record was nobody's
+
+The role — not the company — is what the product is about, and until 2026-08-24 no lane
+owned it: the record lived in `store.py` (given to `infra`), repost detection in `digest.py`
+(given to `render`), the description in `jd-text`, and the tags nowhere at all. Three lanes,
+no owner, for the central entity.
+
+**What exists today.** `matched` is the durable list of every role ever accepted — 105 rows —
+keyed by `company|title`, carrying location, url, posted_date, seniority, sources, the JD
+text, `first_seen`, `last_seen`, and every contributing posting's `seen_id`. `sent` records
+what has been emailed so nothing is sent twice. A role is "still open" if we saw it in the
+latest scan of its employer; when we stop seeing it, it stops being on the board and appears
+in the archive. Reposts are detected at render time by comparing `posted_date` against
+`first_seen`.
+
+**What does NOT exist.** The tags are not stored. Skills, role family, years, degree,
+day-to-day tasks and AI-usage are recomputed from the description on every render, so there
+is no way to ask "how many roles asked for SQL in July" — `company_type_analysis.py` answers
+that by re-deriving them each time, over whatever descriptions happen to be present now. And
+a role's tags are only ever as good as the description that was captured while it was open;
+once it closes, that text is frozen. If persisted tags are wanted, this lane owns the column
+and `render` owns what goes in it.
 
 ### Shared plumbing — read freely, change loudly
 
