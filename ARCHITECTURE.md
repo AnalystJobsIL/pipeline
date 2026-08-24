@@ -1240,10 +1240,11 @@ active rows had no baseline entry). To settle it, run the row yourself:
 *lane: `company-intel`*
 
 Two things about the employer render on every board, archive and email card: the **facts**
-chips (sector · stage · ~employees · founded · Israel centre) from `pipeline/firmographics.py`,
-and the two-sentence **About** blurb from `pipeline/company_info.py`. One call in the digest
-produces both — `firmographics.enrich_for_run` — and one line in the mail's run audit says
-what it did. Everything below was re-verified on 2026-08-24 (`docs/sessions/2026-08-24-company-intel.md`
+chips (sector · stage · ~employees · founded · Israel centre) and the two-sentence **About**
+blurb. Three files: `pipeline/firmographics.py` (the record, its identity, the `claude` seam,
+the shared export), `pipeline/company_info.py` (the blurb prompt and `derive_blurb`), and
+`pipeline/company_intel.py` (the digest hook `enrich_for_run` — one call produces both — and
+`audit_lines`, the one line in the mail's run audit that says what it did). Everything below was re-verified on 2026-08-24 (`docs/sessions/2026-08-24-company-intel.md`
 has the commands); a number without a command next to it is a number to distrust.
 
 ### The record
@@ -1306,7 +1307,7 @@ records against 940 on disk, with the last export commit made by hand (`git log 
 
 ### The digest hook (the cloud side — the writer of record)
 
-`pipeline/run.py` makes one call, `firmographics.enrich_for_run(st, board_jobs=…, email_jobs=…,
+`pipeline/run.py` makes one call, `company_intel.enrich_for_run(st, board_jobs=…, email_jobs=…,
 all_companies=…, run_date=…, use_llm=…, scoped=…, profiles_path=…)`, which returns
 `(company_info, firmo_display, report)` and **never raises** — a locked sqlite used to take the
 whole morning's email and board down with it. In order:
@@ -1397,12 +1398,13 @@ through `primary_sector()`'s alias table there; extend the table, don't edit sto
 ### Guards and how to rehearse
 
 `tests/test_company_intel.py` (55 cases, one per shipped bug or claim above; no test spawns
-`claude` or touches `cloud_state/`; 17 of 18 mutations in the session record's catalogue are
-killed by them, the 18th is an equivalent mutant). To rehearse tomorrow's digest without spending anything:
-copy `cloud_state/seen.db` and the export to a scratch dir, put a fake `claude` shim first on
-PATH, point `firmographics.SHARED_EXPORT` at the copy and call `pipeline.run.run(use_llm=True,
-only=[…], db_path=copy)` — the driver in the session record does exactly this and asserts `git
-status` is unchanged afterwards.
+`claude` or touches `cloud_state/`; 17 of 18 mutations in `tests/fixtures/company_intel/mutations.json`
+are killed by them, the 18th is an equivalent mutant). To rehearse tomorrow's digest without
+spending anything: `python tests/rehearse_company_intel.py --case json --hole "X" --only "X,Wix"`
+— it copies the stores to a scratch dir, puts the fake `claude` shim
+(`tests/fixtures/company_intel/claude.cmd`, cases `a|json|unknown|prose|fail|sleep`) first on
+PATH, points `firmographics.SHARED_EXPORT` at the copy, runs `pipeline.run.run(...)` and
+asserts `git status` is unchanged afterwards.
 
 ### Known limitations
 

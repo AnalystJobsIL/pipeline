@@ -1,5 +1,6 @@
 """Guards for the `company-intel` lane (ARCHITECTURE.md §7): the digest's blurbs + facts
-hook, the shared export both stores converge through, and the local chain.
+hook (`pipeline/company_intel.py`), the record / identity / export (`pipeline/firmographics.py`)
+and the local chain.
 
 Every assertion is a bug that shipped or a claim §7 makes. No test spawns `claude`, touches
 `cloud_state/`, or reads `state/`: the store is a tmp sqlite, the export a tmp file, and
@@ -17,7 +18,7 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pipeline import company_info, digest, firmographics as F, store  # noqa: E402
+from pipeline import company_info, company_intel as CI, digest, firmographics as F, store  # noqa: E402
 
 TODAY = "2026-08-24"
 REC = {"sector": "fintech", "sub_sector": "B2B payments", "stage": "growth-private",
@@ -53,7 +54,7 @@ def env(tmp_path, monkeypatch):
 
 def _run(st, jobs, **kw):
     kw.setdefault("run_date", TODAY)
-    return F.enrich_for_run(st, board_jobs=jobs, **kw)
+    return CI.enrich_for_run(st, board_jobs=jobs, **kw)
 
 
 # --- 1. the duplicate-spend bug: the chain read sqlite alone, never the export -----------
@@ -113,7 +114,7 @@ def test_research_stops_on_outage_records_no_strike_and_the_mail_says_so(env):
     _, _, rep = _run(st, [_job("A"), _job("B"), _job("C")])
     assert rep["researched"] == 1 and rep["unavailable_after"] == 1
     assert st.load_firmo_failures() == {}, "an outage is not evidence about a name"
-    lines, warn = F.audit_lines(rep)
+    lines, warn = CI.audit_lines(rep)
     assert "claude unavailable after 1 research call" in lines[0]
     assert len(warn) == 1 and "529" in warn[0]
     assert n["i"] == 2, "the loop stopped at the first infrastructure failure"
@@ -130,25 +131,25 @@ def test_a_blurb_outage_does_not_cache_an_empty_blurb(env):
 # --- 5. the time budget ----------------------------------------------------------------
 def test_research_respects_the_time_budget(env, monkeypatch):
     st, _, calls, _ = env
-    rep = F._report()
+    rep = CI._report()
     rep["budget_min"] = 0
-    F._research(st, ["A", "B"], [_job("A"), _job("B")], TODAY, rep)
+    CI._research(st, ["A", "B"], [_job("A"), _job("B")], TODAY, rep)
     assert rep["skipped_budget"] == 2 and not [c for c in calls if c["tools"]]
-    assert "skipped (budget 0m spent)" in F.audit_lines({**F._report(), **rep, "candidates": 2, "board_companies": 2, "published": True})[0][0]
+    assert "skipped (budget 0m spent)" in CI.audit_lines({**CI._report(), **rep, "candidates": 2, "board_companies": 2, "published": True})[0][0]
 
 
 def test_each_research_call_is_clamped_to_the_remaining_budget(env):
     st, _, calls, _ = env
-    rep = F._report()
+    rep = CI._report()
     rep["budget_min"] = 2  # 120 s left: the first call may not ask for 240 s
-    F._research(st, ["A"], [_job("A")], TODAY, rep)
+    CI._research(st, ["A"], [_job("A")], TODAY, rep)
     assert calls[-1]["timeout"] <= 120
 
 
 # --- 6. the email's companies are researched first -------------------------------------
 def test_email_companies_are_researched_before_board_only_companies():
     board = [_job("Zed"), _job("Zed"), _job("Alpha"), _job("Mailed")]
-    assert F._research_order(board, [_job("Mailed")]) == ["Mailed", "Zed", "Alpha"]
+    assert CI._research_order(board, [_job("Mailed")]) == ["Mailed", "Zed", "Alpha"]
 
 
 # --- 7. every report shape renders a reconcilable line ---------------------------------
@@ -167,9 +168,9 @@ def test_email_companies_are_researched_before_board_only_companies():
     ({"publish_error": "PermissionError: denied"}, "export NOT written (PermissionError: denied)", 1),
 ])
 def test_audit_lines_cover_every_report_shape(patch, needle, warnings):
-    rep = {**F._report(), "board_companies": 10, "cap": 5, "budget_min": 10.0, "published": True,
+    rep = {**CI._report(), "board_companies": 10, "cap": 5, "budget_min": 10.0, "published": True,
            "export_records": 940, "export_newest": TODAY, "store_records": 921, **patch}
-    lines, warn = F.audit_lines(rep)
+    lines, warn = CI.audit_lines(rep)
     assert len(lines) == 1 and needle in lines[0], lines
     assert len(warn) == warnings, warn
 
@@ -181,7 +182,7 @@ def test_missing_export_is_reported_and_recreated(env):
     st.save_firmographics({"Wix": REC}, TODAY)
     ci, disp, rep = _run(st, [_job("Wix")], use_llm=False)
     assert rep["export_status"] == "missing" and disp["Wix"] == REC
-    assert export.exists() and F.audit_lines(rep)[1]
+    assert export.exists() and CI.audit_lines(rep)[1]
 
 
 def test_corrupt_export_is_never_overwritten_by_the_union(env):
@@ -299,7 +300,7 @@ def test_a_soft_outage_in_the_digest_records_no_strikes(env):
     fake.script = lambda p, t: "I'm not sure which company you mean, but {X} might match." if t else "Co does X. It earns Y."
     _, _, rep = _run(st, [_job("A"), _job("B"), _job("C")])
     assert rep["failed"] == 3 and rep["soft_outage"] and st.load_firmo_failures() == {}
-    assert "soft outage suspected" in F.audit_lines(rep)[1][0]
+    assert "soft outage suspected" in CI.audit_lines(rep)[1][0]
     fake.script = lambda p, t: '{"unknown": true}' if t else "Co does X. It earns Y."
     _, _, rep = _run(st, [_job("A"), _job("B")])
     assert rep["failed"] == 2 and not rep["soft_outage"] and set(st.load_firmo_failures()) == {"A", "B"}
@@ -321,8 +322,8 @@ def test_display_records_are_chip_safe_but_stored_records_are_not_touched(env):
     _, disp, _ = _run(st, [_job("Zipher")], use_llm=False)
     assert disp["Zipher"]["il_center"] == "Tel Aviv"
     assert st.load_firmographics()["Zipher"]["il_center"] == long["il_center"]
-    assert F.chip_safe({"il_center": "Caesarea (ABB Technologies Ltd — sales/engineering); HQ in Zurich"})["il_center"] == "Caesarea"
-    assert all(len(F.chip_safe({"il_center": s})["il_center"]) <= F.CHIP_MAX for s in ("x " * 60, "(" * 60, "a" * 60))
+    assert CI.chip_safe({"il_center": "Caesarea (ABB Technologies Ltd — sales/engineering); HQ in Zurich"})["il_center"] == "Caesarea"
+    assert all(len(CI.chip_safe({"il_center": s})["il_center"]) <= CI.CHIP_MAX for s in ("x " * 60, "(" * 60, "a" * 60))
 
 
 def test_the_chain_export_writes_the_union_through_save_shared(env, monkeypatch, tmp_path):
@@ -345,7 +346,7 @@ def test_hand_written_profiles_pass_the_same_junk_rule(tmp_path):
     p.write_text(json.dumps({"Good": "Acme builds widgets for retailers. It earns subscription fees.",
                              "Bad": "UNKNOWN", "Err": "Error: could not reach the API.", "Short": "x"}),
                  encoding="utf-8")
-    assert set(F._load_profiles(str(p))) == {"Good"}
+    assert set(CI._load_profiles(str(p))) == {"Good"}
 
 
 def test_the_front_door_never_raises_and_the_line_says_what_broke(env, monkeypatch):
@@ -354,15 +355,15 @@ def test_the_front_door_never_raises_and_the_line_says_what_broke(env, monkeypat
     monkeypatch.setattr(st, "load_company_info", lambda: (_ for _ in ()).throw(RuntimeError("database is locked")))
     ci, disp, rep = _run(st, [_job("Wix")], use_llm=False)
     assert rep["error"].startswith("RuntimeError") and disp == {} or disp.get("Wix")
-    lines, warn = F.audit_lines(rep)
+    lines, warn = CI.audit_lines(rep)
     assert "company intel FAILED (RuntimeError: database is locked)" in lines[0] and warn
 
 
 def test_audit_lines_survive_a_cp1252_console_and_a_hebrew_error(env):
-    rep = {**F._report(), "board_companies": 3, "candidates": 2, "unavailable_after": 0,
+    rep = {**CI._report(), "board_companies": 3, "candidates": 2, "unavailable_after": 0,
            "unavailable_reason": "\u256d\u2500 Invalid API key \u2717", "error": "KeyError: '\u05e4\u05e0\u05d9\u05e7\u05e1'",
            "export_records": 1, "export_newest": TODAY}
-    for line in F.audit_lines(rep)[0] + F.audit_lines(rep)[1]:
+    for line in CI.audit_lines(rep)[0] + CI.audit_lines(rep)[1]:
         line.encode("cp1252", "strict")
 
 
@@ -372,7 +373,7 @@ def test_an_unwritten_export_is_said_and_leaves_no_tmp(env, monkeypatch):
     monkeypatch.setattr(os, "replace", lambda a, b: (_ for _ in ()).throw(PermissionError("Access is denied")))
     _, _, rep = _run(st, [_job("Wix")], use_llm=False)
     assert rep["published"] is False and "PermissionError" in rep["publish_error"]
-    lines, warn = F.audit_lines(rep)
+    lines, warn = CI.audit_lines(rep)
     assert "export NOT written (PermissionError: Access is denied)" in lines[0] and warn
     assert not [f for f in os.listdir(export.parent) if f.endswith(".tmp")]
 
@@ -411,18 +412,18 @@ def test_blurb_calls_are_counted_and_three_empties_in_a_row_stop_the_loop(env):
     _, _, rep = _run(st, jobs)
     assert rep["blurbs_asked"] == 4 and rep["blurbs_written"] == 1 and rep["blurbs_empty"] == 3
     assert rep["blurbs_stopped"] and not rep["soft_outage"]
-    assert "blurbs: 4 asked, 1 written, 3 empty" in F.audit_lines(rep)[0][0]
+    assert "blurbs: 4 asked, 1 written, 3 empty" in CI.audit_lines(rep)[0][0]
 
 
 def test_one_wall_clock_bounds_blurbs_and_research_together(env, monkeypatch):
     """The research budget used to start AFTER the blurb loop (wave 2, A2)."""
     st, _, calls, fake = env
     monkeypatch.setattr(F, "_Clock", lambda budget_min, now=None: _FakeClock.__new__(_FakeClock)) if False else None
-    clock = F._Clock(10, now=_FakeClock(200))   # every look at the clock costs 200 s
-    rep = F._report(); rep["budget_min"] = 10
-    ci, missing = F._blurbs(st, [_job("A"), _job("B"), _job("C"), _job("D")], TODAY, True, rep, None, clock)
+    clock = CI._Clock(10, now=_FakeClock(200))   # every look at the clock costs 200 s
+    rep = CI._report(); rep["budget_min"] = 10
+    ci, missing = CI._blurbs(st, [_job("A"), _job("B"), _job("C"), _job("D")], TODAY, True, rep, None, clock)
     assert rep["blurbs_asked"] + rep["blurbs_skipped_budget"] == 4 and rep["blurbs_skipped_budget"] >= 1
-    F._research(st, ["X", "Y"], [_job("X"), _job("Y")], TODAY, rep, clock)
+    CI._research(st, ["X", "Y"], [_job("X"), _job("Y")], TODAY, rep, clock)
     assert rep["researched"] == 0 and rep["skipped_budget"] == 2, "no research after the shared budget is gone"
 
 
@@ -436,14 +437,14 @@ def test_a_blurb_soft_outage_skips_research_entirely(env):
     assert not [c for c in calls if c["tools"]], "the research loop uses the same CLI"
     assert st.load_firmo_failures() == {}
     assert st.load_company_info() == {}, "an outage must not month-gate the three names it hit"
-    assert "blurb soft outage" in F.audit_lines(rep)[1][0] and "research soft outage" not in F.audit_lines(rep)[0][0]
+    assert "blurb soft outage" in CI.audit_lines(rep)[1][0] and "research soft outage" not in CI.audit_lines(rep)[0][0]
 
 
 def test_a_blurb_outage_names_its_loop(env):
     st, _, _, fake = env
     fake.script = lambda p, t: F.ResearchUnavailable("timed out")
     _, _, rep = _run(st, [_job("A"), _job("B")])
-    line = F.audit_lines(rep)[0][0]
+    line = CI.audit_lines(rep)[0][0]
     assert "claude unavailable after 0 blurbs calls (timed out)" in line and "0 research calls" not in line
 
 
@@ -451,7 +452,7 @@ def test_an_all_fail_research_run_warns_even_below_the_outage_threshold(env):
     st, _, _, fake = env
     fake.script = lambda p, t: '{"unknown": true}' if t else "Co does X. It earns Y."
     _, _, rep = _run(st, [_job("A"), _job("B")])
-    assert rep["failed"] == 2 and F.audit_lines(rep)[1]
+    assert rep["failed"] == 2 and CI.audit_lines(rep)[1]
 
 
 def test_one_blurb_call_per_identity_not_per_name_variant(env):
@@ -507,9 +508,9 @@ def test_merge_keeps_the_losers_facts_but_not_a_superseded_counts_companions():
 def test_soft_outage_threshold_is_three_not_one_or_ninety_nine(env):
     st, _, _, fake = env
     fake.script = lambda p, t: '{"unknown": true}' if t else "Co does X. It earns Y."
-    rep = F._report()
-    F._research(st, ["A"], [_job("A")], TODAY, rep)
+    rep = CI._report()
+    CI._research(st, ["A"], [_job("A")], TODAY, rep)
     assert not rep["soft_outage"] and set(st.load_firmo_failures()) == {"A"}
-    rep = F._report()
-    F._research(st, ["B", "C", "D"], [_job("B"), _job("C"), _job("D")], TODAY, rep)
+    rep = CI._report()
+    CI._research(st, ["B", "C", "D"], [_job("B"), _job("C"), _job("D")], TODAY, rep)
     assert rep["soft_outage"] and not ({"B", "C", "D"} & set(st.load_firmo_failures()))

@@ -1,0 +1,128 @@
+[
+ {
+  "id": "ci-outage-continues",
+  "file": "pipeline/company_intel.py",
+  "cls": "M2",
+  "find": "            rep[\"unavailable_in\"] = \"research\"\n            rep[\"unavailable_reason\"] = str(e)\n            break",
+  "replace": "            rep[\"unavailable_in\"] = \"research\"\n            rep[\"unavailable_reason\"] = str(e)\n            continue"
+ },
+ {
+  "id": "ci-soft-outage-strikes",
+  "file": "pipeline/company_intel.py",
+  "cls": "M7",
+  "find": "SOFT_OUTAGE_MIN_FAILS = 3",
+  "replace": "SOFT_OUTAGE_MIN_FAILS = 300"
+ },
+ {
+  "id": "ci-budget-ignored",
+  "file": "pipeline/company_intel.py",
+  "cls": "M2",
+  "find": "        if remaining < 60:",
+  "replace": "        if remaining < -1e9:"
+ },
+ {
+  "id": "ci-scoped-publishes",
+  "file": "pipeline/company_intel.py",
+  "cls": "M1",
+  "find": "    if not scoped and rep[\"export_status\"] != \"corrupt\":",
+  "replace": "    if rep[\"export_status\"] != \"corrupt\":"
+ },
+ {
+  "id": "ci-corrupt-overwritten",
+  "file": "pipeline/company_intel.py",
+  "cls": "M1",
+  "find": "    if not scoped and rep[\"export_status\"] != \"corrupt\":",
+  "replace": "    if not scoped:"
+ },
+ {
+  "id": "ci-corrupt-reads-empty-ok",
+  "file": "pipeline/firmographics.py",
+  "cls": "M3",
+  "find": "    except Exception:  # noqa: BLE001 \u2014 bad JSON, a half-written file, permissions\n        return {}, \"corrupt\"",
+  "replace": "    except Exception:  # noqa: BLE001 \u2014 bad JSON, a half-written file, permissions\n        return {}, \"ok\""
+ },
+ {
+  "id": "ci-blurb-empty-respend",
+  "file": "pipeline/company_intel.py",
+  "cls": "M3",
+  "find": "        if c in recent:\n            continue",
+  "replace": "        if False:\n            continue"
+ },
+ {
+  "id": "ci-newer-tie-shared",
+  "file": "pipeline/firmographics.py",
+  "cls": "M2",
+  "find": "    return b if _evidence(b) > _evidence(a) else a",
+  "replace": "    return a"
+ },
+ {
+  "id": "ci-json-greedy",
+  "file": "pipeline/firmographics.py",
+  "cls": "M2",
+  "find": "    for i, ch in enumerate(raw or \"\"):\n        if ch != \"{\":\n            continue",
+  "replace": "    for i, ch in enumerate(raw or \"\"):\n        if ch != \"{\" or i != (raw or \"\").find(\"{\"):\n            continue"
+ },
+ {
+  "id": "ci-shell-always",
+  "file": "pipeline/firmographics.py",
+  "cls": "M2",
+  "find": "                              shell=_is_windows())",
+  "replace": "                              shell=True)"
+ },
+ {
+  "id": "ci-derive-blurb-cached",
+  "file": "pipeline/company_intel.py",
+  "cls": "M1",
+  "find": "        if text:\n            company_info[c] = text\n            rep[\"blurbs_derived\"] += 1",
+  "replace": "        if text:\n            company_info[c] = text\n            st.save_company_info({c: text}, run_date)\n            rep[\"blurbs_derived\"] += 1"
+ },
+ {
+  "id": "ci-chip-untrimmed",
+  "file": "pipeline/company_intel.py",
+  "cls": "M1",
+  "find": "    firmo_display = {k: chip_safe(v) for k, v in firmo_display.items() if v}",
+  "replace": "    firmo_display = {k: v for k, v in firmo_display.items() if v}"
+ },
+ {
+  "id": "ci-sync-not-idempotent",
+  "file": "pipeline/firmographics.py",
+  "cls": "M2",
+  "find": "             if newer(have.get(c), rec) is rec and rec != have.get(c)}",
+  "replace": "             if newer(have.get(c), rec) is rec}"
+ },
+ {
+  "id": "ci-export-local-only",
+  "file": "research_firmographics.py",
+  "cls": "M1",
+  "find": "        recs = union_store(st)\n        save_shared(recs)",
+  "replace": "        recs = st.load_firmographics()\n        save_shared(recs)"
+ },
+ {
+  "id": "ci-intel-line-md",
+  "file": "pipeline/digest.py",
+  "cls": "M1",
+  "find": "    if s.get(\"company_intel\"):\n        lines.append(\"- **Company intel:** \" + \"; \".join(s[\"company_intel\"]))",
+  "replace": "    if False:\n        lines.append(\"- **Company intel:** \" + \"; \".join(s[\"company_intel\"]))"
+ },
+ {
+  "id": "ci-intel-line-txt",
+  "file": "pipeline/digest.py",
+  "cls": "M1",
+  "find": "    if s.get(\"company_intel\"):\n        lines.append(\"  COMPANY INTEL: \" + \"; \".join(s[\"company_intel\"]))",
+  "replace": "    if False:\n        lines.append(\"  COMPANY INTEL: \" + \"; \".join(s[\"company_intel\"]))"
+ },
+ {
+  "id": "ci-profiles-unfiltered",
+  "file": "pipeline/company_intel.py",
+  "cls": "M1",
+  "find": "            if isinstance(v, str) and len(v.strip()) >= 15 and not _JUNK_OUT.search(v)}",
+  "replace": "            if isinstance(v, str) and v.strip()}"
+ },
+ {
+  "id": "ci-front-door-raises",
+  "file": "pipeline/company_intel.py",
+  "cls": "M1",
+  "find": "    except Exception as e:  # noqa: BLE001\n        rep[\"error\"] = f\"{type(e).__name__}: {e}\"[:160]",
+  "replace": "    except ZeroDivisionError as e:  # noqa: BLE001\n        rep[\"error\"] = f\"{type(e).__name__}: {e}\"[:160]"
+ }
+]

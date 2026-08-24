@@ -159,6 +159,16 @@ record's own cold read. Tests: 443 collected (278 units + 110 registry + 55 comp
 green; `check_invariants.py` clean; `docs/check_docs.py` 0 errors over 21 documents. Bright
 Data 0, SerpApi 0, pipeline Claude calls 0 from this session (≤1 from an attacker probe).
 
+## Follow-up the same evening — the split
+
+The first commit left `pipeline/firmographics.py` at 802 lines carrying five concerns under
+banners. Second commit: the digest hook and the mail line moved to `pipeline/company_intel.py`
+(the shape §7 already described); `firmographics.py` keeps the record, identity, the `claude`
+seam and the export. `run.py` imports `company_intel` at the approved hook site; no other
+importer touched a hook name. The rehearsal driver and the fake `claude` shim are committed
+as `tests/rehearse_company_intel.py` + `tests/fixtures/company_intel/` (with the mutation
+catalogue), so the next agent runs them instead of rewriting them.
+
 ## Morning-after checklist — 2026-08-25 (read-only; nothing dispatched 05:00–08:30 UTC)
 
 1. `gh run view <id> --log | grep -E "company-intel"` → one `[company-intel]` line whose counts

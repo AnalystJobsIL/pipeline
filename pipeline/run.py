@@ -27,7 +27,7 @@ import traceback
 from collections import Counter
 
 from . import aggregators
-from . import firmographics as firmographics_mod
+from . import company_intel
 
 EMAIL_MAX_ROLES = 40   # a daily email nobody scrolls is a daily email nobody reads
 FIRST_SCAN_MAX_ROLES = 15  # roles at employers this digest is seeing for the first time
@@ -325,16 +325,16 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     if len(llm_cache) != llm_cache_before:
         st.save_llm_cache(llm_cache, run_date)
 
-    # Company intel — blurbs + researched facts for every card (lane: company-intel,
-    # ARCHITECTURE §7). One call: bounded in calls and minutes (FIRMO_MAX_PER_RUN /
+    # Company intel — blurbs + researched facts for every card (pipeline/company_intel.py,
+    # lane: company-intel, ARCHITECTURE §7). One call: bounded in calls and minutes (FIRMO_MAX_PER_RUN /
     # FIRMO_TIME_BUDGET_MIN / BLURB_MAX_PER_RUN), never raises, never writes the shared
     # export on a scoped run, and reports itself into the audit block below.
-    company_info, firmo_display, _intel = firmographics_mod.enrich_for_run(
+    company_info, firmo_display, _intel = company_intel.enrich_for_run(
         st, board_jobs=board_jobs, email_jobs=email_jobs,
         all_companies={j["company"] for j in st.get_matched_since("0000-01-01")},
         run_date=run_date, use_llm=use_llm, scoped=bool(only or limit),
         profiles_path=os.path.join(REPO_ROOT, "company_profiles.json"))
-    _intel_lines, _intel_warn = firmographics_mod.audit_lines(_intel)
+    _intel_lines, _intel_warn = company_intel.audit_lines(_intel)
     for _line in _intel_warn:
         print(f"::warning::company-intel {_line}", flush=True)
     print(f"  [company-intel] {'; '.join(_intel_lines)}", flush=True)

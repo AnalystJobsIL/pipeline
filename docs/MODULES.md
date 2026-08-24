@@ -9,9 +9,9 @@ The `runs in` and `imported by` columns are **computed from the code**, not type
 
 | class | meaning | count |
 |---|---|---|
-| `scheduled` | a workflow invokes it | 27 |
+| `scheduled` | a workflow invokes it | 28 |
 | `library` | no workflow runs it; live code imports it | 6 |
-| `operator` | a human or agent runs it; nothing in CI does | 10 |
+| `operator` | a human or agent runs it; nothing in CI does | 9 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
 | | **total root modules** | **68** |
 
@@ -32,7 +32,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `coverage_report.py` | audit-coverage | Sunday summary: of everything researched, how much is scanned |
 | `crack_walled.py` | audit-coverage, listing-hunt | Chromium + network sniffing against walled ATSes (Phenom/Eightfold/iCIMS/SuccessFactors) |
 | `deep_validate.py` | deep-validate | Saturday deep re-validation; owns `google_via_unlocker`, the only search rung that works today |
-| `discovery_daily.py` | daily-digest | LinkedIn (keyless guest + Unlocker fallback, national + city windows), Indeed (Unlocker), Workable (keyless), targeted backfill -> discovered_cache.json + new employer names |
+| `discovery_daily.py` | daily-digest | LinkedIn + Indeed sweeps via Bright Data -> discovered_cache.json + new employer names |
 | `discovery_telegram.py` | daily-digest | public t.me/s channel previews; keyless |
 | `enrich_matched_jd.py` | daily-digest | age-blind JD backfill over the matched table itself |
 | `enrich_scrape_jd.py` | daily-digest | JD backfill for scrape-source jobs, with the 7-day cooldown stamp |
@@ -43,6 +43,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `merge_json_cache.py` | audit-coverage, auto-expand, daily-digest, deep-validate, listing-hunt, retry-unreachable, scrape-refresh, self-heal | three-way merge for the company-keyed JSON caches |
 | `probe_candidates.py` | daily-digest | cheap daily signal probe of monitored-candidate pages; wakes rows for the hunt |
 | `refresh_scrape_cache.py` | scrape-refresh | 00:00 pooled re-render of every scrape row: error/empty rot, JD carry-forward, park after 7 error nights, the `collect` stamp the mail prints (ARCHITECTURE §5a) |
+| `registry_health.py` | daily-digest, listing-hunt | read-only registry census + row-deletion guard, recomputed re-check ownership matrix, per-tool pool floors, and the unsupported-ATS build queue. `--census` and `--ladder` are the only things it writes; `alarms_state()` is what the daily mail prints; `--explain "<name>"` answers "why was this row activated/refused" offline |
 | `repair_dead_urls.py` | listing-hunt | replaces stored URLs whose hostname does not resolve - runs BEFORE the hunt on purpose |
 | `repair_extract_gap.py` | listing-hunt | re-scrapes rows triage marked `extract-gap`; the cheapest recovery class |
 | `resolve_broken.py` | self-heal | 06:00 self-heal: re-resolves boards that went stale, throttled weekly, 5 strikes |
@@ -51,7 +52,6 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `triage_dark.py` | triage-dark | 18:00 classification of every parked row by failure mode (`dark-triage <date>: <mode>`) |
 | `validate_empty.py` | audit-coverage | Sunday cross-validation that 'validated-empty' rows really are empty |
 | `wayback_rescue.py` | audit-coverage | Sunday rescue of unreachable rows via the Wayback Machine |
-| `registry_health.py` | daily-digest (`--census`, after the invariant gate), listing-hunt (`--ladder`) | read-only registry census + row-deletion guard, recomputed re-check ownership matrix, per-tool pool floors, and the unsupported-ATS build queue. `--census` and `--ladder` are the only things it writes; `alarms_state()` is what the daily mail prints |
 
 ## Libraries - no workflow runs them, live code imports them
 
@@ -64,11 +64,11 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `probe_ats.py` | `ingest_research.py`, `probe_expand.py` | guessable-slug probing. **Not deletable**: `ingest_research` imports `slug_variants` |
 | `resolve_deep.py` | `auto_expand.py`, `bd_rescue.py`, `recheck_suspects.py` +4 more | deterministic resolver tier (recognizable ATS URLs, iframes) |
 | `resolve_llm.py` | `auto_expand.py`, `deep_validate.py`, `listing_hunt.py` | the LLM resolution tier: evidence bundle -> one `claude -p` proposal -> verified through the real fetcher |
-| `scrape_universal.py` | `bd_rescue.py`, `cache_new_rows.py`, `check_invariants.py` +10 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
+| `scrape_universal.py` | `bd_rescue.py`, `check_invariants.py`, `crack_walled.py` +9 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
 
 ## Operator tools - a human or an agent runs these on demand
 
-Live and documented; nothing in CI calls them on their own (registry_health moved to Scheduled when the digest started running its census). The firmographics three are driven by the Windows scheduled task `IsraeliJobs-Firmographics`, which no GitHub Action can see.
+Live and documented, but nothing in CI calls them. The firmographics three are driven by the Windows scheduled task `IsraeliJobs-Firmographics`, which no GitHub Action can see.
 
 | module | what it does |
 |---|---|
@@ -124,14 +124,15 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/aggregators.py` | is this URL an aggregator? Gates activation and runtime |
 | `pipeline/atomic.py` | **shared** - atomic writes for every state file |
 | `pipeline/companies.py` | **shared** - load companies.csv into row dicts |
-| `pipeline/identity_facts.py` | **shared** - DECLARED company identity: the one table of acquired-by tenants and brand/parent domains the gates consult before any string heuristic. To make an acquired company's board legitimate, add a row here |
-| `pipeline/company_identity.py` | **shared** - the identity PRIMITIVES (`is_foreign`, `verdict`, `page_mentions_company`, `looks_like_a_job_listing_page`); the gate that composes them is `identity_gate.py` |
-| `pipeline/company_info.py` | the two-sentence company blurb |
+| `pipeline/company_identity.py` | **shared** - the identity PRIMITIVES (is_foreign, verdict, page_mentions_company, looks_like_a_job_listing_page); the gate that composes them is identity_gate |
+| `pipeline/company_info.py` | the two-sentence company blurb, and `derive_blurb` (the facts read as prose when the blurb is missing) |
+| `pipeline/company_intel.py` | the digest hook: blurbs + facts for one run, bounded and never raising, and the `Company intel:` line in the mail's run audit (ARCHITECTURE.md section 7) |
 | `pipeline/digest.py` | the board, the archive and the email |
 | `pipeline/fetchers.py` | one normalizer per ATS platform -> the common job shape. 16 platforms |
-| `pipeline/firmographics.py` | per-company sector / stage / size / business model |
+| `pipeline/firmographics.py` | the company record (sector / stage / size / founded), its identity key, the `claude` seam and the shared export both stores converge through (ARCHITECTURE.md section 7) |
 | `pipeline/health.py` | per-company ATS health -> cloud_state/stale.json + health_baseline.json |
 | `pipeline/http.py` | **shared** - the zero-dependency HTTP helper |
+| `pipeline/identity_facts.py` | **shared** - DECLARED company identity: the one table of acquired-by tenants and brand/parent domains the gates consult before any string heuristic. To make an acquired company's board legitimate, add a row here |
 | `pipeline/identity_gate.py` | **shared** - the one gate every registry writer consults before it writes api_url/active; page content is the discriminator, the tenant string is not |
 | `pipeline/israel.py` | deterministic Israel-location filter |
 | `pipeline/jdfill.py` | fetches a job description for a role that arrived without one |
