@@ -1684,6 +1684,21 @@ def test_a_held_page_cannot_vouch_for_a_board_it_merely_embeds(tmp_path, monkeyp
         "`lili` in `elililly` -- containment without tightness promotes Lili onto Eli "
         "Lilly's board: %r %r" % (kind, payload))
 
+    # the OTHER clause independently: a page naming someone ELSE refuses even when the
+    # embedded slug matches the name (a parked/hijacked domain serving copied markup).
+    # This is the cell that keeps `activation_ok` load-bearing next to `embedded_board_ok`.
+    boards["Voiceitt"] = ("greenhouse", "voiceitt",
+                          "https://boards-api.greenhouse.io/v1/boards/voiceitt/jobs")
+    pages["Voiceitt"] = page("Riskified", "voiceitt")
+    monkeypatch.setattr(V, "_get", lambda u, timeout=10:
+                        pages["Cogniteam" if "cogniteam" in u else
+                              "Lili" if "lili" in u else
+                              "Voiceitt" if "voiceitt" in u else "Kima"])
+    kind, payload = V.check("Voiceitt", "https://www.voiceitt.com/careers")
+    assert kind == "suspect", (
+        "a page naming another company must refuse even a name-matching embed: %r %r"
+        % (kind, payload))
+
     # the same shape at the 02:30 sibling: bd_rescue holds the unlocker page
     monkeypatch.chdir(tmp_path)
     _registry(tmp_path, [
@@ -1691,13 +1706,16 @@ def test_a_held_page_cannot_vouch_for_a_board_it_merely_embeds(tmp_path, monkeyp
          "unreachable; could not scan"],
         ["Kima", "", "", "https://www.kima.network/careers", "false",
          "unreachable; could not scan"],
+        ["Voiceitt", "", "", "https://www.voiceitt.com/careers", "false",
+         "unreachable; could not scan"],
     ])
     monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
     monkeypatch.setenv("BRIGHTDATA_ZONE", "x")
     monkeypatch.setattr(B, "_load_secrets", lambda *a, **k: None)
     monkeypatch.setattr(B, "alt_urls", lambda url: [url])
     monkeypatch.setattr(B, "unlock", lambda u, timeout=90:
-                        pages["Cogniteam" if "cogniteam" in u else "Kima"])
+                        pages["Cogniteam" if "cogniteam" in u else
+                              "Voiceitt" if "voiceitt" in u else "Kima"])
     monkeypatch.setattr(B, "extract_ats", lambda html, name: boards[name])
     monkeypatch.setattr(B, "_verify", lambda name, plat, tok, api: (30, 9))
     monkeypatch.setattr(B.time, "sleep", lambda *a: None)
@@ -1709,6 +1727,9 @@ def test_a_held_page_cannot_vouch_for_a_board_it_merely_embeds(tmp_path, monkeyp
         "%r" % (out["Cogniteam"],))
     assert "riskified" not in out["Cogniteam"][3]
     assert out["Kima"][4] == "true", "positive control regressed: %r" % (out["Kima"],)
+    assert out["Voiceitt"][4] == "false", (
+        "a foreign page with a name-matching embed activated at bd_rescue: %r"
+        % (out["Voiceitt"],))
 
 
 def test_wayback_rescue_cannot_activate_another_companys_archived_board(
