@@ -45,7 +45,10 @@ _TOOL = re.compile(r"^\s*(dark-triage|listing-hunt|deep-validated|crack-walled|d
                    # inside the seg[:28] fallback key, so a conflict Sunday carried TWO
                    # suspect segments per row (bounded, but 23 wasted segments measured;
                    # docs/BACKLOG.md 67)
-                   r"empty-but-suspect)\b")
+                   # `scrape rotted (error 7d) <date>` (refresh_scrape_cache): the day count and
+                   # date sat inside the seg[:28] key, so two nights' segments both survived a
+                   # conflict merge (scraper lane, 2026-08-24)
+                   r"empty-but-suspect|scrape rotted)\b")
 
 
 def _merge_notes(theirs: str, ours: str, cap: int = 220) -> str:

@@ -42,7 +42,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `merge_csv_rows.py` | audit-coverage, auto-expand, daily-digest, deep-validate, listing-hunt, retry-unreachable, scrape-refresh, self-heal, triage-dark | git-layer segment-aware merge for companies.csv; every csv-committing workflow calls it |
 | `merge_json_cache.py` | audit-coverage, auto-expand, daily-digest, deep-validate, listing-hunt, retry-unreachable, scrape-refresh, self-heal | three-way merge for the company-keyed JSON caches |
 | `probe_candidates.py` | daily-digest | cheap daily signal probe of monitored-candidate pages; wakes rows for the hunt |
-| `refresh_scrape_cache.py` | scrape-refresh | 00:00 re-render of every scrape row; JD carry-forward and rot-parking |
+| `refresh_scrape_cache.py` | scrape-refresh | 00:00 pooled re-render of every scrape row: error/empty rot, JD carry-forward, park after 7 error nights, the `collect` stamp the mail prints (ARCHITECTURE §5a) |
 | `repair_dead_urls.py` | listing-hunt | replaces stored URLs whose hostname does not resolve - runs BEFORE the hunt on purpose |
 | `repair_extract_gap.py` | listing-hunt | re-scrapes rows triage marked `extract-gap`; the cheapest recovery class |
 | `resolve_broken.py` | self-heal | 06:00 self-heal: re-resolves boards that went stale, throttled weekly, 5 strikes |
@@ -73,7 +73,7 @@ Live and documented; nothing in CI calls them on their own (registry_health move
 | module | what it does |
 |---|---|
 | `bd_employees.py` | LinkedIn employee-count fill via the Web Unlocker, 1 credit/page. Same Windows chain |
-| `cache_new_rows.py` | scrapes rows activated since the last refresh and merges them into the cache |
+| `cache_new_rows.py` | superseded shim: delegates to `refresh_scrape_cache.py --only-missing` (docs/BACKLOG.md 87 retires it) |
 | `company_type_analysis.py` | joins firmographics with matched jobs -> out/company_type_analysis.{json,md} (ARCHITECTURE.md section 7) |
 | `fill_employees_llm.py` | re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Same Windows chain |
 | `firmo_health_check.py` | tripwire: is the firmographics chain actually classifying anything? |

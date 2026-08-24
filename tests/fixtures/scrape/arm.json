@@ -1,0 +1,441 @@
+{
+ "company": "Arm",
+ "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4",
+ "captured": "2026-08-24 by the pre-refactor extractor (docs/sessions/2026-08-24-scraper.md)",
+ "dom": [
+  {
+   "title": "Cookie Policy",
+   "url": "https://www.arm.com/company/policies/cookies",
+   "ctx": " Cookie Policy This Website Uses Cookies This site uses cookies to store information on your computer. By continuing to use our site, you consent to our cookies. If you are not happy with the use of these cookies, please review our Cookie Policy to learn how they can be disabled. By disabling cookies, some features of the site will not work This Website Uses Cookies This site uses cookies to store information on your computer. By continuing to use our site, you consent to our cookies. If you are"
+  },
+  {
+   "title": "Skip to main content",
+   "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4#content",
+   "ctx": " Skip to main content Skip to main content Skip to Search Results Skip to Search Filters Emerging Talent Programs Apprentices (UK) Interns Graduates Explore Emerging Talent Information Get into Tech Hiring Process Parents and Teachers FAQ FAQ: Your Questions Answered Want to know more about our programs, process or more? Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Life at Arm Learn about Life at Arm and how you can make "
+  },
+  {
+   "title": "Skip to Search Results",
+   "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4#search-results-list",
+   "ctx": " Skip to Search Results Skip to main content Skip to Search Results Skip to Search Filters Emerging Talent Programs Apprentices (UK) Interns Graduates Explore Emerging Talent Information Get into Tech Hiring Process Parents and Teachers FAQ FAQ: Your Questions Answered Want to know more about our programs, process or more? Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Life at Arm Learn about Life at Arm and how you can mak"
+  },
+  {
+   "title": "Skip to Search Filters",
+   "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4#search-filters",
+   "ctx": " Skip to Search Filters Skip to main content Skip to Search Results Skip to Search Filters Emerging Talent Programs Apprentices (UK) Interns Graduates Explore Emerging Talent Information Get into Tech Hiring Process Parents and Teachers FAQ FAQ: Your Questions Answered Want to know more about our programs, process or more? Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Life at Arm Learn about Life at Arm and how you can mak"
+  },
+  {
+   "title": "Apprentices (UK)",
+   "url": "https://careers.arm.com/apprenticeships",
+   "ctx": " Apprentices (UK) Apprentices (UK) Apprentices (UK) Interns Graduates Programs Apprentices (UK) Interns Graduates Explore Emerging Talent "
+  },
+  {
+   "title": "Interns",
+   "url": "https://careers.arm.com/internships",
+   "ctx": " Interns Interns Apprentices (UK) Interns Graduates Programs Apprentices (UK) Interns Graduates Explore Emerging Talent "
+  },
+  {
+   "title": "Graduates",
+   "url": "https://careers.arm.com/graduates",
+   "ctx": " Graduates Graduates Apprentices (UK) Interns Graduates Programs Apprentices (UK) Interns Graduates Explore Emerging Talent "
+  },
+  {
+   "title": "Explore Emerging Talent",
+   "url": "https://careers.arm.com/emerging-talent",
+   "ctx": " Explore Emerging Talent Explore Emerging Talent Programs Apprentices (UK) Interns Graduates Explore Emerging Talent Programs Apprentices (UK) Interns Graduates Explore Emerging Talent Information Get into Tech Hiring Process Parents and Teachers FAQ FAQ: Your Questions Answered Want to know more about our programs, process or more? "
+  },
+  {
+   "title": "Get into Tech",
+   "url": "https://careers.arm.com/get-into-tech",
+   "ctx": " Get into Tech Get into Tech Get into Tech Hiring Process Parents and Teachers FAQ Information Get into Tech Hiring Process Parents and Teachers FAQ "
+  },
+  {
+   "title": "Hiring Process",
+   "url": "https://careers.arm.com/hiring-process",
+   "ctx": " Hiring Process Hiring Process Get into Tech Hiring Process Parents and Teachers FAQ Information Get into Tech Hiring Process Parents and Teachers FAQ "
+  },
+  {
+   "title": "Parents and Teachers",
+   "url": "https://careers.arm.com/Parents-and-Teachers",
+   "ctx": " Parents and Teachers Parents and Teachers Get into Tech Hiring Process Parents and Teachers FAQ Information Get into Tech Hiring Process Parents and Teachers FAQ "
+  },
+  {
+   "title": "FAQ: Your Questions Answered",
+   "url": "https://careers.arm.com/emerging-talent-faq",
+   "ctx": " FAQ: Your Questions Answered FAQ: Your Questions Answered Want to know more about our programs, process or more? FAQ: Your Questions Answered Want to know more about our programs, process or more? Programs Apprentices (UK) Interns Graduates Explore Emerging Talent Information Get into Tech Hiring Process Parents and Teachers FAQ FAQ: Your Questions Answered Want to know more about our programs, process or more? "
+  },
+  {
+   "title": "Benefits",
+   "url": "https://careers.arm.com/benefits",
+   "ctx": " Benefits Benefits Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm "
+  },
+  {
+   "title": "Diversity, Equity, and Inclusion",
+   "url": "https://careers.arm.com/dei",
+   "ctx": " Diversity, Equity, and Inclusion Diversity, Equity, and Inclusion Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm "
+  },
+  {
+   "title": "Learning and Development",
+   "url": "https://careers.arm.com/learning-and-development",
+   "ctx": " Learning and Development Learning and Development Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm "
+  },
+  {
+   "title": "Volunteering",
+   "url": "https://careers.arm.com/volunteering",
+   "ctx": " Volunteering Volunteering Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm "
+  },
+  {
+   "title": "Explore Life at Arm",
+   "url": "https://careers.arm.com/life-at-arm",
+   "ctx": " Explore Life at Arm Explore Life at Arm Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm "
+  },
+  {
+   "title": "Life at Arm",
+   "url": "https://careers.arm.com/life-at-arm",
+   "ctx": " Life at Arm Life at Arm Learn about Life at Arm and how you can make an impact in our collaborative environment Life at Arm Learn about Life at Arm and how you can make an impact in our collaborative environment Life at Arm Learn about Life at Arm and how you can make an impact in our collaborative environment Hiring Process Explore our hiring process designed to discover and unleash your true potential. "
+  },
+  {
+   "title": "Teams",
+   "url": "https://careers.arm.com/teams",
+   "ctx": " Teams Teams Emerging Talent Programs Apprentices (UK) Interns Graduates Explore Emerging Talent Information Get into Tech Hiring Process Parents and Teachers FAQ FAQ: Your Questions Answered Want to know more about our programs, process or more? Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Life at Arm Learn about Life at Arm and how you can make an impact in our collaborative environment Hiring Process Explore our hiring"
+  },
+  {
+   "title": "Stories",
+   "url": "https://careers.arm.com/stories",
+   "ctx": " Stories Stories Emerging Talent Programs Apprentices (UK) Interns Graduates Explore Emerging Talent Information Get into Tech Hiring Process Parents and Teachers FAQ FAQ: Your Questions Answered Want to know more about our programs, process or more? Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Life at Arm Learn about Life at Arm and how you can make an impact in our collaborative environment Hiring Process Explore our hi"
+  },
+  {
+   "title": "Locations",
+   "url": "https://careers.arm.com/locations",
+   "ctx": " Locations Locations Emerging Talent Programs Apprentices (UK) Interns Graduates Explore Emerging Talent Information Get into Tech Hiring Process Parents and Teachers FAQ FAQ: Your Questions Answered Want to know more about our programs, process or more? Life at Arm Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Life at Arm Learn about Life at Arm and how you can make an impact in our collaborative environment Hiring Process Explore ou"
+  },
+  {
+   "title": "Emerging Talent Login",
+   "url": "https://earlycareers-arm.icims.com/jobs/login?loginOnly=1&redirect=dashboard",
+   "ctx": " Emerging Talent Login Emerging Talent For Apprentice, Intern or Graduate roles log in here: Emerging Talent Login Experienced Professionals For all other roles log in here: Experienced Professionals Login MY JOB APPLICATIONS Already applied?Log in to view your existing applications. Emerging Talent For Apprentice, Intern or Graduate roles log in here: Emerging Talent Login Experienced Professionals For all other roles log in here: Experienced Professionals Login MY JOB APPLICATIONS Already appl"
+  },
+  {
+   "title": "Experienced Professionals Login",
+   "url": "https://experienced-arm.icims.com/jobs/login?loginOnly=1&redirect=dashboard",
+   "ctx": " Experienced Professionals Login Emerging Talent For Apprentice, Intern or Graduate roles log in here: Emerging Talent Login Experienced Professionals For all other roles log in here: Experienced Professionals Login MY JOB APPLICATIONS Already applied?Log in to view your existing applications. Emerging Talent For Apprentice, Intern or Graduate roles log in here: Emerging Talent Login Experienced Professionals For all other roles log in here: Experienced Professionals Login MY JOB APPLICATIONS Al"
+  },
+  {
+   "title": "Emerging Talent",
+   "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4#earlycareers",
+   "ctx": " Emerging Talent Emerging Talent Emerging Talent Programs Programs Apprentices (UK) Interns Graduates Information Information Get into Tech Hiring Process Parents and Teachers FAQ Explore Emerging Talent FAQ: Your Questions Answered Emerging Talent Emerging Talent Programs Programs Apprentices (UK) Interns Graduates Information Information Get into Tech Hiring Process Parents and Teachers FAQ Explore Emerging Talent FAQ: Your Questions Answered Life at Arm Life at Arm Culture Culture Benefits Di"
+  },
+  {
+   "title": "Life at Arm",
+   "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4#lifeatarm",
+   "ctx": " Life at Arm Life at Arm Life at Arm Culture Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Life at Arm Hiring Process Emerging Talent Emerging Talent Programs Programs Apprentices (UK) Interns Graduates Information Information Get into Tech Hiring Process Parents and Teachers FAQ Explore Emerging Talent FAQ: Your Questions Answered Life at Arm Life at Arm Culture Culture Benefits Diversity, Equity, and Inclusion Learning and Developme"
+  },
+  {
+   "title": "Life at Arm",
+   "url": "https://careers.arm.com/",
+   "ctx": " Life at Arm Life at Arm Life at Arm Culture Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Life at Arm Hiring Process Life at Arm Life at Arm Culture Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Explore Life at Arm Life at Arm Hiring Process "
+  },
+  {
+   "title": "Culture",
+   "url": "https://careers.arm.com/",
+   "ctx": " Culture Culture Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering Culture Culture Benefits Diversity, Equity, and Inclusion Learning and Development Volunteering "
+  },
+  {
+   "title": "Manager, Tax",
+   "url": "https://careers.arm.com/job/san-jose/manager-tax/33099/69872372960",
+   "ctx": " Manager, Tax Manager, Tax San Jose, California Finance & Accounting Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Senior Strategic Regional Sales Manager– Cloud AI & Datacenter S"
+  },
+  {
+   "title": "Principal High-Speed I/O Architect (PCIe, CXL, UA Link)",
+   "url": "https://careers.arm.com/job/san-jose/principal-high-speed-i-o-architect-pcie-cxl-ua-link/33099/79892773616",
+   "ctx": " Principal High-Speed I/O Architect (PCIe, CXL, UA Link) Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware"
+  },
+  {
+   "title": "Senior Principal System Architect",
+   "url": "https://careers.arm.com/job/san-jose/senior-principal-system-architect/33099/81809923920",
+   "ctx": " Senior Principal System Architect Senior Principal System Architect San Jose, California Hardware Engineering Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Senior Strategic Regio"
+  },
+  {
+   "title": "Senior Director, SoC Power and Clocking Technology",
+   "url": "https://careers.arm.com/job/san-jose/senior-director-soc-power-and-clocking-technology/33099/93501890720",
+   "ctx": " Senior Director, SoC Power and Clocking Technology Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineeri"
+  },
+  {
+   "title": "Senior Strategic Regional Sales Manager– Cloud AI & Datacenter",
+   "url": "https://careers.arm.com/job/san-jose/senior-strategic-regional-sales-manager-cloud-ai-and-datacenter/33099/92735368528",
+   "ctx": " Senior Strategic Regional Sales Manager– Cloud AI & Datacenter Senior Strategic Regional Sales Manager– Cloud AI & Datacenter San Jose, California Sales Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware "
+  },
+  {
+   "title": "Director, Segment Marketing - Cloud AI",
+   "url": "https://careers.arm.com/job/san-jose/director-segment-marketing-cloud-ai/33099/93740204608",
+   "ctx": " Director, Segment Marketing - Cloud AI Director, Segment Marketing - Cloud AI San Jose, California Segment Marketing Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Senior Strategi"
+  },
+  {
+   "title": "Principal FAE",
+   "url": "https://careers.arm.com/job/san-jose/principal-fae/33099/96010939696",
+   "ctx": " Principal FAE Principal FAE San Jose, California Sales Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Senior Strategic Regional Sales Manager– Cloud AI & Datacenter San Jose, Cali"
+  },
+  {
+   "title": "Principal Field Application Engineer - Edge AI",
+   "url": "https://careers.arm.com/job/san-jose/principal-field-application-engineer-edge-ai/33099/96922835664",
+   "ctx": " Principal Field Application Engineer - Edge AI Principal Field Application Engineer - Edge AI San Jose, California Sales Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Senior Stra"
+  },
+  {
+   "title": "Principal SoC Performance Architect – Next-Generation Server Platforms",
+   "url": "https://careers.arm.com/job/san-jose/principal-soc-performance-architect-next-generation-server-platforms/33099/96232032112",
+   "ctx": " Principal SoC Performance Architect – Next-Generation Server Platforms Principal SoC Performance Architect – Next-Generation Server Platforms San Jose, California Hardware Engineering Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology"
+  },
+  {
+   "title": "Strategic Account IP Sales Manager",
+   "url": "https://careers.arm.com/job/san-jose/strategic-account-ip-sales-manager/33099/97781526352",
+   "ctx": " Strategic Account IP Sales Manager Strategic Account IP Sales Manager San Jose, California Sales Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Senior Strategic Regional Sales Man"
+  },
+  {
+   "title": "Senior Manager, Segment Marketing - Storage",
+   "url": "https://careers.arm.com/job/san-jose/senior-manager-segment-marketing-storage/33099/96954017856",
+   "ctx": " Senior Manager, Segment Marketing - Storage Senior Manager, Segment Marketing - Storage San Jose, California Marketing & Communication Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save j"
+  },
+  {
+   "title": "Director Product Management, Android/Linux Platform",
+   "url": "https://careers.arm.com/job/san-jose/director-product-management-android-linux-platform/33099/96551861152",
+   "ctx": " Director Product Management, Android/Linux Platform Director Product Management, Android/Linux Platform San Jose, California Product Management Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineeri"
+  },
+  {
+   "title": "Senior Manager, Indirect Tax",
+   "url": "https://careers.arm.com/job/san-jose/senior-manager-indirect-tax/33099/97448307728",
+   "ctx": " Senior Manager, Indirect Tax Senior Manager, Indirect Tax San Jose, California Finance & Accounting Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Senior Strategic Regional Sales "
+  },
+  {
+   "title": "Principal Engineering Lead",
+   "url": "https://careers.arm.com/job/san-jose/principal-engineering-lead/33099/96788867728",
+   "ctx": " Principal Engineering Lead Principal Engineering Lead San Jose, California Hardware Engineering Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Senior Strategic Regional Sales Mana"
+  },
+  {
+   "title": "Director, Tax",
+   "url": "https://careers.arm.com/job/san-jose/director-tax/33099/97448307712",
+   "ctx": " Director, Tax Director, Tax San Jose, California Finance & Accounting Save job Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Senior Strategic Regional Sales Manager– Cloud AI & Datacenter"
+  },
+  {
+   "title": "Show All",
+   "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4#",
+   "ctx": " Show All Show All Enter number to jump to a different page. You are currently on page 1 of 2.Pageof 2Go Prev Next Show All Filtered by Manager, Tax San Jose, California Finance & Accounting Save job Principal High-Speed I/O Architect (PCIe, CXL, UA Link) San Jose, California Hardware Engineering Save job Senior Principal System Architect San Jose, California Hardware Engineering Save job Senior Director, SoC Power and Clocking Technology San Jose, California Hardware Engineering Save job Senior"
+  },
+  {
+   "title": "Read more",
+   "url": "https://careers.arm.com/life-at-arm",
+   "ctx": " Read more At Arm, collaboration drives progress. Our culture blends individual ownership with strong team alignment, where skilled people thrive in a fast-paced, supportive environment. Across our ecosystem, we value bold thinking and pushing boundaries because when teams are empowered and passionate, they deliver at scale. Read more Culture at Arm Make an Impact At Arm, collaboration drives progress. Our culture blends individual ownership with strong team alignment, where skilled people thriv"
+  },
+  {
+   "title": "Read more",
+   "url": "https://careers.arm.com/DEI",
+   "ctx": " Read more Arm drives progress by enabling bold ideas to emerge from a diverse, skilled, and inclusive workforce. We challenge convention and move fast, supported by active participation in ERGs, employee communities, DEI working groups, and the DEI Council, each built to fuel momentum and remove barriers. Read more Diversity, Equity & Inclusion This is Collective Progress Arm drives progress by enabling bold ideas to emerge from a diverse, skilled, and inclusive workforce. We challenge conventi"
+  },
+  {
+   "title": "Read more",
+   "url": "https://careers.arm.com/benefits",
+   "ctx": " Read more Arm moves fast because our people do. That’s why we offer high-impact benefits tailored to support those driving the future of computing, benefits that reflect and reward the ambition, skill, and energy of extraordinary teams solving complex challenges. Read more Benefits at Arm Benefits Designed for You Arm moves fast because our people do. That’s why we offer high-impact benefits tailored to support those driving the future of computing, benefits that reflect and reward the ambition"
+  },
+  {
+   "title": "Suggested jobs",
+   "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4#default-setup-1",
+   "ctx": " Suggested jobs Suggested jobs Suggested jobs Previously viewed jobs Saved jobs Suggested jobs Previously viewed jobs Saved jobs Staff AI Research Scientist Raanana, Israel Research Save Job Principal Verification Engineer (ISP, Display, Video) Lead Media IP verification by architecting SV-UVM testbenches, applying ML-driven analysis, and mentoring engineers globally teams Manchester, United Kingdom, Cambridge, United Kingdom, Bristol, United Kingdom Verification Save Job Procurement Associate B"
+  },
+  {
+   "title": "Previously viewed jobs",
+   "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4#default-setup-2",
+   "ctx": " Previously viewed jobs Previously viewed jobs Suggested jobs Previously viewed jobs Saved jobs Suggested jobs Previously viewed jobs Saved jobs Staff AI Research Scientist Raanana, Israel Research Save Job Principal Verification Engineer (ISP, Display, Video) Lead Media IP verification by architecting SV-UVM testbenches, applying ML-driven analysis, and mentoring engineers globally teams Manchester, United Kingdom, Cambridge, United Kingdom, Bristol, United Kingdom Verification Save Job Procure"
+  },
+  {
+   "title": "Saved jobs",
+   "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4#default-setup-3",
+   "ctx": " Saved jobs Saved jobs Suggested jobs Previously viewed jobs Saved jobs Suggested jobs Previously viewed jobs Saved jobs Staff AI Research Scientist Raanana, Israel Research Save Job Principal Verification Engineer (ISP, Display, Video) Lead Media IP verification by architecting SV-UVM testbenches, applying ML-driven analysis, and mentoring engineers globally teams Manchester, United Kingdom, Cambridge, United Kingdom, Bristol, United Kingdom Verification Save Job Procurement Associate Bengaluru"
+  },
+  {
+   "title": "Staff AI Research Scientist",
+   "url": "https://careers.arm.com/job/raanana/staff-ai-research-scientist/33099/99346417872",
+   "ctx": " Staff AI Research Scientist Staff AI Research Scientist Raanana, Israel Research Save Job Staff AI Research Scientist Raanana, Israel Research Save Job Principal Verification Engineer (ISP, Display, Video) Lead Media IP verification by architecting SV-UVM testbenches, applying ML-driven analysis, and mentoring engineers globally teams Manchester, United Kingdom, Cambridge, United Kingdom, Bristol, United Kingdom Verification Save Job Procurement Associate Bengaluru, India Procurement Save Job S"
+  },
+  {
+   "title": "Principal Verification Engineer (ISP, Display, Video)",
+   "url": "https://careers.arm.com/job/manchester/principal-verification-engineer-isp-display-video/33099/76263040224",
+   "ctx": " Principal Verification Engineer (ISP, Display, Video) Principal Verification Engineer (ISP, Display, Video) Lead Media IP verification by architecting SV-UVM testbenches, applying ML-driven analysis, and mentoring engineers globally teams Manchester, United Kingdom, Cambridge, United Kingdom, Bristol, United Kingdom Verification Save Job Staff AI Research Scientist Raanana, Israel Research Save Job Principal Verification Engineer (ISP, Display, Video) Lead Media IP verification by architecting "
+  },
+  {
+   "title": "Procurement Associate",
+   "url": "https://careers.arm.com/job/bengaluru/procurement-associate/33099/99664471728",
+   "ctx": " Procurement Associate Procurement Associate Bengaluru, India Procurement Save Job Staff AI Research Scientist Raanana, Israel Research Save Job Principal Verification Engineer (ISP, Display, Video) Lead Media IP verification by architecting SV-UVM testbenches, applying ML-driven analysis, and mentoring engineers globally teams Manchester, United Kingdom, Cambridge, United Kingdom, Bristol, United Kingdom Verification Save Job Procurement Associate Bengaluru, India Procurement Save Job Staff AI "
+  },
+  {
+   "title": "Remove",
+   "url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4#",
+   "ctx": " Remove San JoseRemove San JoseRemove Interested InSelect a job category from the list of options. Search for a location and select one from the list of suggestions. Finally, click “Add” to create your job alert.Job CategorySelect a Job CategoryAdministrationApplications EngineeringArchitectureArchitecture - Architect, Surveyor and CartographerArchitecture - EngineersData AnalyticsDesign EngineeringEngineering ManagementEngineering OperationsFinance & AccountingGraduateHardware EngineeringHRITMa"
+  },
+  {
+   "title": "privacy policy",
+   "url": "https://www.arm.com/company/policies/privacy",
+   "ctx": " privacy policy By submitting your information, you acknowledge that you have read our privacy policy, and consent to receive email communication from Arm. Get Job Alerts Can’t find the job you’re seeking? Register to be notified as soon as new jobs become available. Enter your email, select your preferred job category and/or location, then click Add to set your preferences and Subscribe to create your job alert. EmailInterested InSelect a job category from the list of options. Search for a loca"
+  },
+  {
+   "title": "Join Now",
+   "url": "https://experienced-arm.icims.com/connect",
+   "ctx": " Join Now Join Now Join our Talent Community, Unlock Opportunities Subscribe to receive Arm communications directly to your inbox. Stay connected to be the first to hear about updates from our community and exciting roles that align with your skills. Join Now Join our Talent Community, Unlock Opportunities Subscribe to receive Arm communications directly to your inbox. Stay connected to be the first to hear about updates from our community and exciting roles that align with your skills. Join Now"
+  },
+  {
+   "title": "Careers",
+   "url": "https://careers.arm.com/",
+   "ctx": " Careers Careers Careers Emerging Talent Life At Arm DEI Arm Stories Teams Events Content Careers Emerging Talent Life At Arm DEI Arm Stories Teams Events "
+  },
+  {
+   "title": "Emerging Talent",
+   "url": "https://careers.arm.com/emerging-talent",
+   "ctx": " Emerging Talent Emerging Talent Careers Emerging Talent Life At Arm DEI Arm Stories Teams Events Content Careers Emerging Talent Life At Arm DEI Arm Stories Teams Events "
+  },
+  {
+   "title": "Life At Arm",
+   "url": "https://careers.arm.com/life-at-arm",
+   "ctx": " Life At Arm Life At Arm Careers Emerging Talent Life At Arm DEI Arm Stories Teams Events Content Careers Emerging Talent Life At Arm DEI Arm Stories Teams Events "
+  },
+  {
+   "title": "Arm Stories",
+   "url": "https://careers.arm.com/stories",
+   "ctx": " Arm Stories Arm Stories Careers Emerging Talent Life At Arm DEI Arm Stories Teams Events Content Careers Emerging Talent Life At Arm DEI Arm Stories Teams Events "
+  },
+  {
+   "title": "Events",
+   "url": "https://careers.arm.com/events",
+   "ctx": " Events Events Careers Emerging Talent Life At Arm DEI Arm Stories Teams Events Content Careers Emerging Talent Life At Arm DEI Arm Stories Teams Events "
+  },
+  {
+   "title": "About Arm",
+   "url": "https://www.arm.com/company",
+   "ctx": " About Arm About Arm About Arm Products Markets Newsroom Leadership Sustainability Arm Education Company About Arm Products Markets Newsroom Leadership Sustainability Arm Education "
+  },
+  {
+   "title": "Products",
+   "url": "https://www.arm.com/products",
+   "ctx": " Products Products About Arm Products Markets Newsroom Leadership Sustainability Arm Education Company About Arm Products Markets Newsroom Leadership Sustainability Arm Education "
+  },
+  {
+   "title": "Markets",
+   "url": "https://www.arm.com/markets",
+   "ctx": " Markets Markets About Arm Products Markets Newsroom Leadership Sustainability Arm Education Company About Arm Products Markets Newsroom Leadership Sustainability Arm Education "
+  },
+  {
+   "title": "Newsroom",
+   "url": "https://newsroom.arm.com/",
+   "ctx": " Newsroom Newsroom About Arm Products Markets Newsroom Leadership Sustainability Arm Education Company About Arm Products Markets Newsroom Leadership Sustainability Arm Education "
+  },
+  {
+   "title": "Leadership",
+   "url": "https://www.arm.com/company/leadership",
+   "ctx": " Leadership Leadership About Arm Products Markets Newsroom Leadership Sustainability Arm Education Company About Arm Products Markets Newsroom Leadership Sustainability Arm Education "
+  },
+  {
+   "title": "Sustainability",
+   "url": "https://www.arm.com/company/sustainability",
+   "ctx": " Sustainability Sustainability About Arm Products Markets Newsroom Leadership Sustainability Arm Education Company About Arm Products Markets Newsroom Leadership Sustainability Arm Education "
+  },
+  {
+   "title": "Arm Education",
+   "url": "https://www.arm.com/resources/education",
+   "ctx": " Arm Education Arm Education About Arm Products Markets Newsroom Leadership Sustainability Arm Education Company About Arm Products Markets Newsroom Leadership Sustainability Arm Education "
+  },
+  {
+   "title": "Contact Arm Careers",
+   "url": "mailto:recruitmentenquiries@arm.com",
+   "ctx": " Contact Arm Careers Contact Arm Careers Contact Arm Careers Sitemap Already an Arm Employee? More information Contact Arm Careers Sitemap Already an Arm Employee? "
+  },
+  {
+   "title": "Sitemap",
+   "url": "https://careers.arm.com/sitemap",
+   "ctx": " Sitemap Sitemap Contact Arm Careers Sitemap Already an Arm Employee? More information Contact Arm Careers Sitemap Already an Arm Employee? "
+  },
+  {
+   "title": "Already an Arm Employee?",
+   "url": "https://internalcareers.arm.com/",
+   "ctx": " Already an Arm Employee? Already an Arm Employee? Contact Arm Careers Sitemap Already an Arm Employee? More information Contact Arm Careers Sitemap Already an Arm Employee? "
+  },
+  {
+   "title": "Candidate Privacy Policy",
+   "url": "https://www.arm.com/company/policies/privacy/candidate-privacy",
+   "ctx": " Candidate Privacy Policy Candidate Privacy Policy Candidate Privacy Policy Arm Careers Cookie Policy Policies Candidate Privacy Policy Arm Careers Cookie Policy "
+  },
+  {
+   "title": "Arm Careers Cookie Policy",
+   "url": "https://www.arm.com/company/policies/cookies",
+   "ctx": " Arm Careers Cookie Policy Arm Careers Cookie Policy Candidate Privacy Policy Arm Careers Cookie Policy Policies Candidate Privacy Policy Arm Careers Cookie Policy "
+  },
+  {
+   "title": "Suppliers",
+   "url": "https://www.arm.com/company/suppliers",
+   "ctx": " Suppliers Suppliers Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary "
+  },
+  {
+   "title": "Terms and Policies",
+   "url": "https://www.arm.com/company/policies",
+   "ctx": " Terms and Policies Terms and Policies Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary "
+  },
+  {
+   "title": "Terms of Use",
+   "url": "https://www.arm.com/company/policies/terms-and-conditions",
+   "ctx": " Terms of Use Terms of Use Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary "
+  },
+  {
+   "title": "Privacy Policy",
+   "url": "https://www.arm.com/company/policies/privacy",
+   "ctx": " Privacy Policy Privacy Policy Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary "
+  },
+  {
+   "title": "Accessibility",
+   "url": "https://www.arm.com/company/policies/accessibility",
+   "ctx": " Accessibility Accessibility Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary "
+  },
+  {
+   "title": "Cookie Management",
+   "url": "https://careers.arm.com/cookie-management",
+   "ctx": " Cookie Management Cookie Management Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary "
+  },
+  {
+   "title": "Subscription Center",
+   "url": "https://engaged.arm.com/Preferences-center.html",
+   "ctx": " Subscription Center Subscription Center Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary "
+  },
+  {
+   "title": "Trademarks",
+   "url": "https://www.arm.com/company/policies/trademarks",
+   "ctx": " Trademarks Trademarks Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary "
+  },
+  {
+   "title": "Modern Slavery Statement",
+   "url": "https://www.arm.com/company/sustainability/modern-slavery-act-transparency-statement",
+   "ctx": " Modern Slavery Statement Modern Slavery Statement Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary "
+  },
+  {
+   "title": "Glossary",
+   "url": "https://www.arm.com/glossary",
+   "ctx": " Glossary Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary Suppliers Terms and Policies Terms of Use Privacy Policy Accessibility Cookie Management Subscription Center Trademarks Modern Slavery Statement Glossary "
+  }
+ ],
+ "expected": [
+  {
+   "company": "Arm",
+   "title": "Staff AI Research Scientist",
+   "location": "AI Research Scientist Raanana, Israel",
+   "country_code": "",
+   "url": "https://careers.arm.com/job/raanana/staff-ai-research-scientist/33099/99346417872",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://careers.arm.com/job/raanana/staff-ai-research-scientist/33099/99346417872",
+   "description": ""
+  },
+  {
+   "company": "Arm",
+   "title": "Procurement Associate",
+   "location": "AI Research Scientist Raanana, Israel",
+   "country_code": "",
+   "url": "https://careers.arm.com/job/bengaluru/procurement-associate/33099/99664471728",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://careers.arm.com/job/bengaluru/procurement-associate/33099/99664471728",
+   "description": ""
+  }
+ ]
+}

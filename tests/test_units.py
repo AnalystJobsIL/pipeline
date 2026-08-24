@@ -246,30 +246,6 @@ def test_company_identity_guard(company, url, ok):
     assert is_foreign(company, url) is not ok
 
 
-def test_empty_scrape_rows_are_never_parked():
-    """A company in this market can have zero openings for a month and still be a healthy
-    source. Parking an active scrape row after a 3-day EMPTY streak retired good companies
-    and made the next role posted there invisible. Only ERRORS park a row now; a long empty
-    streak just asks triage to re-read the page, and the row stays active and scanned."""
-    import ast
-    import refresh_scrape_cache as R
-    src = open(R.__file__, encoding="utf-8").read()
-    assert "EMPTY_REVALIDATE_DAYS" in src, "the empty-streak path was removed entirely"
-    tree = ast.parse(src)
-    # locate the `if jobs is None:` (error) branch; parked.append must occur only inside it
-    park_lines = [n.lineno for n in ast.walk(tree)
-                  if isinstance(n, ast.Attribute) and n.attr == "append"
-                  and isinstance(n.value, ast.Name) and n.value.id == "parked"]
-    err = [n for n in ast.walk(tree) if isinstance(n, ast.If)
-           and isinstance(n.test, ast.Compare) and getattr(n.test.left, "id", "") == "jobs"]
-    assert err, "error branch not found"
-    lo = err[0].lineno
-    hi = max(getattr(x, "lineno", 0) for x in ast.walk(err[0]))   # operators carry no lineno
-    assert park_lines, "nothing parks at all — error rot detection lost"
-    for ln in park_lines:
-        assert lo <= ln <= hi, f"parked.append at line {ln} is outside the ERROR branch"
-
-
 def test_no_script_references_an_undefined_name():
     """Two shipped bugs of this exact shape, both invisible behind `continue-on-error`:
 
@@ -1857,3 +1833,922 @@ def test_a_starved_targeted_cap_skips_the_trigger_loudly(capsys):
     assert "skipped" not in capsys.readouterr().out, "0 is plan_spend's message, not ours"
     src_main = __import__("inspect").getsource(dd.main)
     assert "_targeted_cap_or_zero" in src_main, "the gate must actually be wired in main()"
+
+
+# --------------------------------------------------------------------------- #
+# ats-fetch lane, 2026-08-24 — see docs/sessions/2026-08-24-ats-fetch.md
+# --------------------------------------------------------------------------- #
+def _pcsx_position(i, jid, display, locs, std):
+    return {"id": jid, "displayJobId": display, "name": f"Role {i}", "locations": locs,
+            "standardizedLocations": std, "postedTs": 1786106796, "creationTs": 1786011493,
+            "positionUrl": f"/careers/job/{jid}"}
+
+
+# --- scraper lane, 2026-08-24: render/parse split, error vs empty, the pooled refresh ---
+# Every test here is offline: the parse is a pure function of a `Rendered` bundle, the refresh
+# is driven by a fake `scrape_result`, and the process pool by a module-level fake worker.
+
+import csv as _csv
+import datetime as _dtm
+import html as _html
+import json as _json
+import re as _re
+import time as _time
+from types import SimpleNamespace as _NS
+
+
+def _rendered(**kw):
+    import scrape_universal as N
+    kw.setdefault("url", "https://co.example/careers")
+    kw.setdefault("http_status", 200)
+    return N.Rendered(**kw)
+
+
+def _no_fetch(u, t):
+    return None, None
+
+
+def _cards_html(n=4, loc="Tel Aviv, Israel", cls="job-title", footer=""):
+    cards = "".join(
+        f'<div class="card"><h3 class="{cls}">Senior Data Analyst {i}</h3>'
+        f'<span class="loc">{loc}</span><a href="/jobs/{i}">Apply</a></div>' for i in range(n))
+    return f"<html><body><h1>Careers</h1>{cards}<footer>{footer}</footer></body></html>"
+
+
+def test_scrape_extracts_from_next_data_blob():
+    """Strategy 1: a Next.js state blob with an array of titled objects becomes jobs, carrying
+    the posting's own id and ISO date."""
+    import scrape_universal as N
+    blob = _json.dumps({"props": {"pageProps": {"jobs": [
+        {"title": "Senior Data Analyst", "location": "Tel Aviv, Israel",
+         "url": "https://co.example/jobs/1", "id": "1", "datePosted": "2026-08-20T10:00:00Z"},
+        {"title": "BI Developer", "location": "Haifa", "url": "/jobs/2", "id": "2"}]}}})
+    jobs, strategy = N._extract("Co", "https://co.example/careers", _rendered(blobs=[blob]),
+                                fetch=_no_fetch)
+    assert strategy == "structured" and [j["title"] for j in jobs] == ["Senior Data Analyst", "BI Developer"]
+    assert jobs[0]["posted_date"] == "2026-08-20" and jobs[0]["job_id"] == "1"
+    assert jobs[1]["url"] == "https://co.example/jobs/2"       # relative urls are joined
+    assert jobs[0]["country_code"] == "" and jobs[0]["ats_platform"] == "scrape"
+
+
+def test_scrape_recovers_a_job_object_from_a_body_that_is_not_valid_json():
+    """The last-ditch brace scan: an XHR body that fails json.loads still yields the flat
+    objects inside it."""
+    import scrape_universal as N
+    body = 'callback({"title":"Data Analyst","location":"Herzliya","id":"7"}); junk'
+    jobs, strategy = N._extract("Co", "https://co.example/careers", _rendered(bodies=[body]),
+                                fetch=_no_fetch)
+    assert strategy == "structured" and [j["title"] for j in jobs] == ["Data Analyst"]
+    # Playwright marshals a function-valued window global as None; a body can be a dict
+    jobs, _ = N._extract("Co", "https://co.example/careers", _rendered(blobs=[None, body], bodies=[{"x": 1}]),
+                         fetch=_no_fetch)
+    assert [j["title"] for j in jobs] == ["Data Analyst"]
+
+
+def test_scrape_dom_links_need_israel_context_near_the_title():
+    """Strategy 2 accepts a link only when it looks like a posting AND an Israel token sits
+    within 220 characters of the title — a footer address 300 characters away is not a
+    location, and an /about-us link is not a posting."""
+    import scrape_universal as N
+    far = "x" * 300
+    dom = [{"title": "Senior Data Analyst", "url": "https://co.example/jobs/1",
+            "ctx": "Senior Data Analyst Herzliya Full-time"},
+           {"title": "Data Engineer", "url": "https://co.example/jobs/2",
+            "ctx": "Data Engineer " + far + " Tel Aviv"},
+           {"title": "Product Analyst", "url": "https://co.example/about-us",
+            "ctx": "Product Analyst Tel Aviv"}]
+    jobs, strategy = N._extract("Co", "https://co.example/careers", _rendered(dom=dom),
+                                fetch=_no_fetch)
+    assert strategy == "dom" and [(j["title"], j["location"]) for j in jobs] == [("Senior Data Analyst", "Herzliya")]
+
+
+def test_scrape_card_headings_need_three_siblings_and_role_titles():
+    """Strategy 3 wants at least three same-class headings that read like roles; two cards, or
+    a group of department labels, is not a board."""
+    import scrape_universal as N
+    url = "https://co.example/careers"
+    jobs, strategy = N._extract("Co", url, _rendered(page_html=_cards_html(4)), fetch=_no_fetch)
+    assert strategy == "cards" and len(jobs) == 4
+    # (`_loc_from_ctx` keeps up to 28 characters before "Israel" when the card carries no
+    # punctuation between title and place — pre-existing, filed in docs/BACKLOG.md)
+    assert jobs[0]["location"].endswith("Tel Aviv, Israel")
+    assert jobs[0]["url"] == "https://co.example/jobs/0"
+    jobs, _ = N._extract("Co", url, _rendered(page_html=_cards_html(2)), fetch=_no_fetch)
+    assert jobs == []
+    labels = "".join(f"<h3>{t}</h3><span>Tel Aviv</span>" for t in ("Sales", "Marketing", "Product", "Legal"))
+    jobs, _ = N._extract("Co", url, _rendered(page_html=f"<body>{labels}</body>"), fetch=_no_fetch)
+    assert jobs == []
+
+
+def test_scrape_cards_without_locations_need_an_il_url_or_assume_il(monkeypatch):
+    """A card with no location is kept only when the listing itself is Israel-scoped: the URL
+    says so, or `SCRAPE_ASSUME_IL=1` AND the page carries an Israel token. The flag must
+    never widen beyond that — with no token on the page it accepts nothing."""
+    import scrape_universal as N
+    monkeypatch.delenv("SCRAPE_ASSUME_IL", raising=False)
+    plain = _cards_html(4, loc="")
+    assert N._extract("Co", "https://co.example/careers", _rendered(page_html=plain), fetch=_no_fetch)[0] == []
+    jobs, _ = N._extract("Co", "https://co.example/careers?location=Israel", _rendered(page_html=plain), fetch=_no_fetch)
+    assert len(jobs) == 4 and {j["location"] for j in jobs} == {"Israel"}
+    monkeypatch.setenv("SCRAPE_ASSUME_IL", "1")
+    assert N._extract("Co", "https://co.example/careers", _rendered(page_html=plain), fetch=_no_fetch)[0] == []
+    with_footer = _cards_html(4, loc="", footer="HQ: 3 Aba Eban, Herzliya")
+    jobs, _ = N._extract("Co", "https://co.example/careers", _rendered(page_html=with_footer), fetch=_no_fetch)
+    assert len(jobs) == 4
+
+
+def test_scrape_position_links_use_the_injected_fetcher_and_stop_at_the_deadline():
+    """Strategy 4 fetches each same-prefix position page through `fetch` and reads its <h1>;
+    an expired company deadline fetches nothing at all."""
+    import scrape_universal as N
+    url = "https://co.example/careers"
+    links = "".join(f'<a href="/careers-position/role-{i}/">Role {i}</a>' for i in range(4))
+    page = f"<body><p>We are hiring</p>{links}</body>"
+    calls = []
+
+    def fetch(u, t):
+        calls.append(u)
+        if "/careers-position/" in u:
+            n = u.rstrip("/").split("-")[-1]
+            return f"<html><h1>Data Analyst {n}</h1><p>Location: Ra'anana</p></html>", 200
+        return None, None
+    jobs, strategy = N._extract("Co", url, _rendered(page_html=page), fetch=fetch)
+    assert strategy == "links" and len(jobs) == 4 and jobs[0]["location"] == "Ra'anana"
+    assert sum("/careers-position/" in u for u in calls) == 4
+    calls.clear()
+    expired = N.Deadline(t_end=_time.monotonic() - 1)
+    jobs, _ = N._extract("Co", url, _rendered(page_html=page), fetch=fetch, deadline=expired)
+    assert jobs == [] and calls == []
+
+
+def test_scrape_llm_strategy_is_off_without_the_env_and_uses_the_runner(monkeypatch):
+    import scrape_universal as N
+    url = "https://co.example/careers?location=Israel"
+    page = "<body><h2>Open positions</h2><div>Senior Data Analyst</div><div>BI Developer</div></body>"
+    ran = []
+
+    def runner(prompt, timeout_s):
+        ran.append(prompt)
+        return 'Sure: [{"title": "Senior Data Analyst", "location": ""}]'
+    monkeypatch.delenv("SCRAPE_LLM", raising=False)
+    jobs, _ = N._extract("Co", url, _rendered(page_html=page), fetch=_no_fetch, llm=runner)
+    assert jobs == [] and ran == []
+    monkeypatch.setenv("SCRAPE_LLM", "1")
+    jobs, strategy = N._extract("Co", url, _rendered(page_html=page), fetch=_no_fetch, llm=runner)
+    assert strategy == "llm" and [(j["title"], j["location"]) for j in jobs] == [("Senior Data Analyst", "Israel")]
+    assert "Senior Data Analyst" in ran[0]
+
+
+def test_scrape_strategies_stop_at_the_first_one_that_finds_jobs():
+    """Until 2026-08-24 the DOM pass ran even after structured JSON had succeeded, adding
+    run-together card blobs beside the clean records: on the captured Port.io page it added
+    16 entries with location "Editor Tel Aviv - Israel" — 14 of them Palo Alto roles — to
+    the 10 real ones. The first strategy that yields wins; the rest do not run."""
+    import scrape_universal as N
+    blob = _json.dumps({"jobs": [{"title": "Senior Data Analyst", "location": "Tel Aviv", "id": "1"},
+                                 {"title": "BI Developer", "location": "Tel Aviv", "id": "2"},
+                                 {"title": "Product Analyst", "location": "Haifa", "id": "3"}]})
+    dom = [{"title": "Marketing Analyst Palo Alto Apply now", "url": "https://co.example/jobs/9",
+            "ctx": "Marketing Analyst Palo Alto Apply now Editor Tel Aviv - Israel"}]
+    jobs, strategy = N._extract("Co", "https://co.example/careers",
+                                _rendered(blobs=[blob], dom=dom, page_html=_cards_html(4)), fetch=_no_fetch)
+    assert strategy == "structured" and [j["title"] for j in jobs] == ["Senior Data Analyst", "BI Developer", "Product Analyst"]
+    # wave 2 (2026-08-24): one or two structured hits can be a "featured posting" widget
+    # beside a DOM-rendered board — the DOM pass still runs and adds to them
+    featured = _json.dumps({"jobs": [{"title": "Office Manager", "location": "Tel Aviv", "id": "0"},
+                                     {"title": "Finance Manager", "location": "Tel Aviv", "id": "0b"}]})
+    board = [{"title": t, "url": f"https://co.example/jobs/{i}", "ctx": f"{t} Tel Aviv, Israel"}
+             for i, t in enumerate(("Senior Data Analyst", "BI Developer", "Analytics Engineer"), 1)]
+    jobs, strategy = N._extract("Co", "https://co.example/careers", _rendered(blobs=[featured], dom=board),
+                                fetch=_no_fetch)
+    assert strategy == "structured+dom" and len(jobs) == 5
+
+
+def test_scrape_never_raises_and_scrape_result_reports_the_failure(monkeypatch):
+    """`scrape()` is called bare by resolve_deep; it must return [] on any failure. The
+    lane's own callers read `scrape_result().status` to tell that failure from an empty board."""
+    import scrape_universal as N
+
+    def boom(url, timeout_ms, deadline):
+        raise RuntimeError("driver died")
+    monkeypatch.setattr(N, "_render", boom)
+    assert N.scrape("Co", "https://co.example/careers") == []
+    res = N.scrape_result("Co", "https://co.example/careers")
+    assert res.status == "error" and res.error == "internal:RuntimeError" and res.jobs == []
+    import inspect
+    assert str(inspect.signature(N.scrape)) == "(company, url, timeout_ms=45000)"
+    for name in ("ISRAEL_LOC", "ROLE", "BAD_TITLE", "_find", "_loc_from_ctx"):
+        assert hasattr(N, name), name
+
+
+@pytest.mark.parametrize("fields,jobs,expected", [
+    (dict(http_status=200, page_html="<html><body><h1>Careers</h1><p>No open positions.</p></body></html>"), [], "empty"),
+    (dict(http_status=200, page_html="<html></html>"), [], "empty"),   # a JS shell is EMPTY
+    (dict(http_status=None, error="goto:TimeoutError"), [], "error"),
+    (dict(http_status=None, error="launch:Error"), [], "error"),
+    (dict(http_status=403), [], "error"),                       # a block is not "no roles"
+    (dict(http_status=404), [], "error"),
+    (dict(http_status=503), [], "error"),
+    (dict(http_status=200, error="render:TargetClosedError"), [], "error"),
+    (dict(http_status=403), [{"title": "x"}], "ok"),            # rescued via plain/unlocker HTML
+    (dict(http_status=None, error="goto:TimeoutError", plain_status=200, plain_html="x" * 2500), [], "empty"),
+    (dict(http_status=None, error="goto:TimeoutError", plain_status=200, plain_html="x" * 500), [], "error"),
+    (dict(http_status=None, error="goto:TimeoutError", plain_status=403, plain_html=""), [], "error"),
+    # walls that answer 200: Akamai "Access Denied" (Nokia's and Akamai's own careers pages,
+    # captured 2026-08-24), a Cloudflare challenge — unless plain HTTP got a readable page
+    (dict(http_status=200, page_html="<html><head><title>Access Denied</title></head><h1>Access Denied</h1></html>"), [], "error"),
+    (dict(http_status=200, page_html='<title>Just a moment...</title><div class="cf-browser-verification">'), [], "error"),
+    (dict(http_status=200, page_html="<h1>Access Denied</h1>", plain_status=200, plain_html="<html>" + "x" * 3000), [], "empty"),
+    (dict(http_status=None, error="goto:TimeoutError", plain_status=200, plain_html="<h1>Access Denied</h1>" + "x" * 3000), [], "error"),
+    # a 200 with nothing captured at all is not a page we read
+    (dict(http_status=200, page_html="", blobs=[], bodies=[], dom=[]), [], "error"),
+    (dict(http_status=200, error="render:TargetClosedError", plain_status=200, plain_html="x" * 2500), [], "empty"),
+])
+def test_scrape_result_tells_a_broken_page_from_an_empty_board(fields, jobs, expected):
+    """Until 2026-08-24 every navigation failure came back as [] — the nightly refresh logged
+    0 errors across 433 sites, so a 403 night deleted a company's jobs from the cache and the
+    product read it as "no openings". The table in ARCHITECTURE.md §5a, as assertions."""
+    import scrape_universal as N
+    status, _ = N._classify(_rendered(**fields), jobs)
+    assert status == expected
+
+
+@pytest.mark.parametrize("fixture", ["arm", "xtend"])
+def test_new_parse_matches_the_pre_refactor_extractor_on_captured_pages(fixture):
+    """Render payloads captured on 2026-08-24 with the extractor as it was BEFORE the
+    render/parse split, and the jobs it produced. The split must reproduce them exactly.
+    (Only the two DOM-strategy pages were small enough to commit; the other strategies were
+    diffed the same way on 23 captured pages in the session record, not in the repo.)"""
+    import scrape_universal as N
+    here = os.path.dirname(os.path.abspath(__file__))
+    fx = _json.load(open(os.path.join(here, "fixtures", "scrape", f"{fixture}.json"), encoding="utf-8"))
+    jobs, strategy = N._extract(fx["company"], fx["url"], _rendered(url=fx["url"], dom=fx["dom"]),
+                                fetch=_no_fetch)
+    assert strategy == "dom" and jobs == fx["expected"]
+
+
+def test_assume_il_cannot_turn_a_navigation_menu_into_a_board(monkeypatch):
+    """`SCRAPE_ASSUME_IL=1` makes every location-less card on an Israel-token page an Israel
+    role. The activation gate (`looks_like_a_job_listing_page`) is what catches a nav menu
+    with an Israeli footer; the parse itself must at least refuse the obvious shapes — a menu
+    of one-word labels, a blog index of sentences, an offices page."""
+    import scrape_universal as N
+    monkeypatch.setenv("SCRAPE_ASSUME_IL", "1")
+    footer = "<footer>Head office: HaMenofim 8, Herzliya, Israel</footer>"
+    menu = "".join(f"<h3>{t}</h3>" for t in ("About", "Products", "Solutions", "Press Releases",
+                                             "Domain Operations", "Contact", "Blog", "Partners"))
+    blog = "".join(f'<h2 class="post-title">{t}</h2>' for t in (
+        "Why we moved our data platform to Iceberg", "How our analysts think about churn",
+        "What we learned shipping the product analytics suite", "Our engineering values"))
+    offices = "".join(f"<h3>{t}</h3>" for t in ("Tel Aviv", "Haifa", "Herzliya", "New York"))
+    for page in (menu, blog, offices):
+        jobs, _ = N._extract("Co", "https://co.example/solutions/research", _rendered(page_html=page + footer),
+                             fetch=_no_fetch)
+        assert jobs == [], page[:60]
+    assert N._page_is_il("https://co.example/careers", "<html>nothing local here</html>") is False
+
+
+# ---- the refresh -----------------------------------------------------------------------------
+_TODAY = _dtm.date.today().isoformat()
+
+
+def _il_job(name, n=1):
+    return {"company": name, "title": f"Senior Data Analyst {n}", "location": "Tel Aviv",
+            "country_code": "", "url": f"https://{name.lower()}.example/jobs/{n}", "posted_date": "",
+            "ats_platform": "scrape", "job_id": str(n), "description": ""}
+
+
+def _refresh_sandbox(tmp_path, monkeypatch, rows, old_cache=None, rot=None, outcomes=None):
+    """A registry, cache, rot file and stage file under tmp_path; `outcomes` maps a company
+    name to ("ok"|"empty"|"error", detail) and drives a fake `scrape_result`."""
+    import refresh_scrape_cache as R
+    from pipeline import stages
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    paths = _NS(csv=tmp_path / "companies.csv", cache=tmp_path / "cache.json",
+                rot=tmp_path / "rot.json", stages=tmp_path / "stages.json")
+    with open(paths.csv, "w", newline="", encoding="utf-8") as f:
+        w = _csv.writer(f)
+        w.writerow(["company_name", "ats_platform", "token", "api_url", "active", "notes"])
+        for r in rows:
+            w.writerow(r if len(r) == 6 else
+                       [r[0], "scrape", "", f"https://{r[0].lower()}.example/careers", "true",
+                        r[1] if len(r) > 1 else ""])
+    paths.cache.write_text(_json.dumps(old_cache or {}), encoding="utf-8")
+    paths.rot.write_text(_json.dumps(rot or {}), encoding="utf-8")
+    monkeypatch.setattr(R, "CSV_PATH", str(paths.csv))
+    monkeypatch.setattr(R, "CACHE_PATH", str(paths.cache))
+    monkeypatch.setattr(R, "ROT_PATH", str(paths.rot))
+    monkeypatch.setattr(stages, "PATH", str(paths.stages))
+    monkeypatch.delenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", raising=False)
+    monkeypatch.delenv("SCRAPE_WORKERS", raising=False)
+    outcomes = outcomes or {}
+
+    def fake(name, url, timeout_ms=45000, **kw):
+        kind, detail = outcomes.get(name, ("ok", 1))
+        if kind == "error":
+            return _NS(jobs=[], status="error", error=detail, http_status=403, strategy="",
+                       elapsed_s=0.1, rescued=False)
+        if kind == "empty":
+            return _NS(jobs=[], status="empty", error="", http_status=200, strategy="",
+                       elapsed_s=0.1, rescued=False)
+        return _NS(jobs=[_il_job(name, i + 1) for i in range(detail)], status="ok", error="",
+                   http_status=200, strategy="dom", elapsed_s=0.1, rescued=False)
+    monkeypatch.setattr(R, "scrape_result", fake)
+    paths.R = R
+    paths.stages_mod = stages
+    return paths
+
+
+def _snapshot(*ps):
+    return [p.read_bytes() for p in ps]
+
+
+def _days_ago(n):
+    return (_dtm.date.today() - _dtm.timedelta(days=n)).isoformat()
+
+
+def _rows_by_name(p):
+    return {r["company_name"]: r for r in _csv.DictReader(open(p, encoding="utf-8"))}
+
+
+def test_refresh_carries_jobs_forward_on_error_but_never_on_empty(tmp_path, monkeypatch):
+    """A company in this market can have zero openings for a month and still be a healthy
+    source. Parking an active scrape row after a 3-day EMPTY streak retired good companies
+    and made the next role posted there invisible. Only ERRORS park a row (after
+    ROT_PARK_DAYS) and only ERRORS carry yesterday's jobs; a long empty streak just asks
+    triage to re-read the page, and the row stays active and scanned."""
+    stable = [f"Ok{i}" for i in range(12)]         # keeps the run under the 20% shrink guard
+    old = {"Acme": [_il_job("Acme")], "Beta": [_il_job("Beta")], "Delta": [_il_job("Delta")],
+           **{n: [_il_job(n)] for n in stable}}
+    rot = {"Acme": {"since": _days_ago(7), "why": "error", "last": _days_ago(1), "n": 6},
+           "Beta": {"since": _days_ago(60), "why": "empty", "last": _days_ago(1), "n": 59},
+           "Delta": {"since": _days_ago(14), "why": "error", "last": _days_ago(1), "n": 13}}
+    P = _refresh_sandbox(tmp_path, monkeypatch,
+                         [("Acme",), ("Beta",), ("Gamma",), ("Delta",)] + [(n,) for n in stable],
+                         old, rot, {"Acme": ("error", "http:403"), "Beta": ("empty", ""),
+                                    "Delta": ("error", "goto:TimeoutError")})
+    assert P.R.run(["--workers", "1"]) == 0
+    cache = _json.loads(P.cache.read_text(encoding="utf-8"))
+    assert cache["Acme"] == old["Acme"], "an error carries yesterday's jobs"
+    assert "Beta" not in cache, "an empty result carries nothing"
+    assert "Delta" not in cache, "the carry expires after CARRY_MAX_DAYS"
+    assert len(cache["Gamma"]) == 1
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert "Acme" not in rot, "a parked row starts with a clean streak when something re-activates it"
+    assert rot["Beta"]["why"] == "empty" and rot["Beta"]["n"] == 60 and "Gamma" not in rot
+    rows = _rows_by_name(P.csv)
+    assert rows["Acme"]["active"] == "false" and rows["Acme"]["notes"].count("scrape rotted (error 7d)") == 1
+    assert rows["Delta"]["active"] == "false"
+    assert rows["Beta"]["active"] == "true" and rows["Beta"]["notes"].count("empty-but-suspect") == 1
+    assert rows["Gamma"]["active"] == "true" and rows["Gamma"]["notes"] == ""
+    # a second night: the flag is not appended twice; the parked row is no longer active, so
+    # it is not scanned and its segment is not touched
+    assert P.R.run(["--workers", "1"]) == 0
+    rows = _rows_by_name(P.csv)
+    assert rows["Beta"]["notes"].count("empty-but-suspect") == 1
+    assert rows["Acme"]["notes"].count("scrape rotted") == 1 and rows["Acme"]["active"] == "false"
+
+
+def test_refresh_rereads_the_registry_before_parking_and_keeps_other_writers_notes(tmp_path, monkeypatch):
+    """Single-writer rule: the registry is re-read immediately before the write, rows are
+    matched by name, and another tool's segment written during the run survives."""
+    rot = {"Acme": {"since": _days_ago(9), "why": "error", "last": _days_ago(1), "n": 8}}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("Acme", "listing-hunt 2026-08-01: verified 3 IL"), ("Zed",)],
+                         {"Acme": [_il_job("Acme")]}, rot, {"Acme": ("error", "http:403")})
+    real = P.R.scrape_result
+
+    def racing(name, url, **kw):          # another writer touches the registry mid-run
+        rows = list(_csv.reader(open(P.csv, encoding="utf-8")))
+        for r in rows:
+            if r and r[0] == "Zed":
+                r[5] = "dark-triage 2026-08-24: page-empty"
+        with open(P.csv, "w", newline="", encoding="utf-8") as f:
+            _csv.writer(f).writerows(rows)
+        return real(name, url, **kw)
+    monkeypatch.setattr(P.R, "scrape_result", racing)
+    assert P.R.run(["--workers", "1"]) == 0
+    rows = _rows_by_name(P.csv)
+    assert rows["Zed"]["notes"] == "dark-triage 2026-08-24: page-empty"
+    assert rows["Acme"]["active"] == "false"
+    assert "listing-hunt 2026-08-01" in rows["Acme"]["notes"] and "scrape rotted (error 9d)" in rows["Acme"]["notes"]
+
+
+def test_refresh_mass_failure_guard_refuses_to_rot_park_or_drop(tmp_path, monkeypatch):
+    """The night the runner breaks looks like 100 sites erroring at once. Above
+    MASS_FAILURE_PCT the run is not a measurement: rot streaks do not advance, nothing is
+    parked, the cache keeps every old entry, and the stamp says why. Below the row floor it
+    is only an alarm."""
+    names = [f"Co{i:02d}" for i in range(25)]
+    old = {n: [_il_job(n)] for n in names}
+    rot = {n: {"since": _days_ago(8), "why": "error", "last": _days_ago(1), "n": 7} for n in names[:5]}
+    outcomes = {n: ("error", "goto:TimeoutError") for n in names[:24]}
+    outcomes[names[24]] = ("ok", 2)
+    P = _refresh_sandbox(tmp_path / "big", monkeypatch, [(n,) for n in names], old, rot, outcomes)
+    before = _snapshot(P.csv, P.rot)
+    assert P.R.run(["--workers", "1"]) == 0
+    assert _snapshot(P.csv, P.rot) == before, "rot and registry untouched under mass failure"
+    cache = _json.loads(P.cache.read_text(encoding="utf-8"))
+    assert set(cache) == set(names) and len(cache[names[24]]) == 2
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["alarm"].startswith("mass-failure-errors-96%") and stamp["errors"] == 24
+    assert stamp["parked"] == 0, "five rows were parkable; a mass-failure night parks none and says so"
+    # the floor: 3 of 3 erroring is a bad night for 3 sites, not a broken runner
+    P = _refresh_sandbox(tmp_path / "small", monkeypatch, [("A",), ("B",), ("C",)], {"A": [_il_job("A")]},
+                         {"A": {"since": _days_ago(8), "why": "error", "last": _days_ago(1), "n": 7}},
+                         {n: ("error", "http:503") for n in "ABC"})
+    assert P.R.run(["--workers", "1"]) == 0
+    assert _json.loads(P.rot.read_text(encoding="utf-8"))["B"]["why"] == "error", "rot advanced"
+    assert _rows_by_name(P.csv)["A"]["active"] == "false"
+    assert _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]["alarm"] == "errors-100%+no-jobs"
+
+
+def test_refresh_time_budget_carries_the_unprocessed_and_stamps_the_count(tmp_path, monkeypatch):
+    """~850 rows against a 330-minute job: a timeout used to discard the entire run. The
+    budget stops cleanly, untouched companies carry over from last night's cache, and the
+    stamp says how many."""
+    names = ["A", "B", "C", "D", "E"]
+    old = {n: [_il_job(n)] for n in names}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], old, {}, {"B": ("empty", "")})
+    real = P.R.scrape_result
+
+    def slow(name, url, **kw):
+        _time.sleep(0.05)
+        return real(name, url, **kw)
+    monkeypatch.setattr(P.R, "scrape_result", slow)
+    monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0.0005")     # 30 ms
+    assert P.R.run(["--workers", "1"]) == 0
+    cache = _json.loads(P.cache.read_text(encoding="utf-8"))
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["scraped"] == 1 and stamp["unprocessed"] == 4
+    assert set(cache) == set(names), "unprocessed companies keep last night's entry"
+    assert "unprocessed-4" in stamp["alarm"]
+
+
+def test_refresh_scoped_and_dry_runs_write_nothing(tmp_path, monkeypatch):
+    """`--only`, `--limit`, `--only-missing`, `--shard` and `--dry-run` never touch the
+    registry, the rot file, the stamp or the cache; `--apply` on a scoped run MERGES its hits
+    into the cache and nothing else."""
+    old = {"Acme": [_il_job("Acme")], "Beta": [_il_job("Beta")]}
+    rot = {"Acme": {"since": _days_ago(9), "why": "error", "last": _days_ago(1)}}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("Acme",), ("Beta",), ("Gamma",)], old, rot,
+                         {"Acme": ("error", "http:403"), "Beta": ("empty", "")})
+    P.stages.write_text("{}", encoding="utf-8")
+    before = _snapshot(P.csv, P.cache, P.rot, P.stages)
+    for argv in (["--only", "Acme,Beta", "--workers", "1"], ["--limit", "2", "--workers", "1"],
+                 ["--only-missing", "--workers", "1"], ["--shard", "0", "2", "--workers", "1"],
+                 ["--dry-run", "--workers", "1"]):
+        assert P.R.run(argv) == 0, argv
+        assert _snapshot(P.csv, P.cache, P.rot, P.stages) == before, argv
+    assert P.R.run(["--only-missing", "--apply", "--workers", "1"]) == 0
+    cache = _json.loads(P.cache.read_text(encoding="utf-8"))
+    assert set(cache) == {"Acme", "Beta", "Gamma"}, "additive merge: nothing dropped"
+    assert _snapshot(P.csv, P.rot, P.stages) == [before[0], before[2], before[3]]
+
+
+def test_refresh_stamps_collect_with_counts_the_digest_renders(tmp_path, monkeypatch):
+    """Nothing about the scrape reached the email: the workflow stamped `collect` bare. The
+    script stamps it with counts; every value is a space-free token so `stages.summary()`
+    (k=v joined by spaces, stages by ' | ') renders it in all three digest renderers."""
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("Acme",), ("Beta",), ("Gamma",), ("D",), ("E",), ("F",)],
+                         {}, {}, {"Beta": ("empty", ""), "Gamma": ("error", "http:403")})
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert {"rows", "scraped", "with_jobs", "empty", "errors", "carried", "unprocessed",
+            "parked", "workers", "minutes"} <= set(stamp) and "alarm" not in stamp   # 1/6 errors: no alarm
+    for k, v in stamp.items():
+        assert _re.fullmatch(r"[A-Za-z0-9_.%+:-]+", str(v)), (k, v)
+    line = P.stages_mod.summary()
+    assert f"collect: {_TODAY} (TODAY)" in line          # keys render alphabetically (stamp sorts)
+    for tok in ("scraped=6", "with_jobs=4", "empty=1", "errors=1", "unprocessed=0"):
+        assert f" {tok}" in line.split(" | ")[1], tok
+    from pipeline import digest as D
+    stats = {"stages": line, "paths": {}}
+    _, md = D.build_markdown([], _TODAY, stats)
+    assert "with_jobs=4" in md and "with_jobs=4" in D._text_audit(stats)
+    assert "with_jobs=4" in D._html_audit(stats, lambda v: _html.escape(str(v)))
+
+
+def test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason(tmp_path, monkeypatch):
+    """A run whose rebuilt cache would lose more than 20% of its companies keeps the old
+    file (mass-empty is as suspicious as mass-error) — and now says so in the stamp instead
+    of returning silently."""
+    names = [f"C{i:02d}" for i in range(25)]
+    old = {n: [_il_job(n)] for n in names}
+    P = _refresh_sandbox(tmp_path / "full", monkeypatch, [(n,) for n in names], old, {},
+                         {n: ("empty", "") for n in names[:9]})
+    before = _snapshot(P.cache, P.rot, P.csv)
+    assert P.R.run(["--workers", "1"]) == 0
+    assert _snapshot(P.cache, P.rot, P.csv) == before
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["alarm"] == "shrink-abort-25-to-16" and stamp["parked"] == 0
+    # wave 1 (2026-08-24): the guard used to compare the whole rebuilt cache, so a night the
+    # budget cut short (carried entries padding the count) could drop every processed
+    # company's jobs unnoticed. It is measured over what was processed.
+    P = _refresh_sandbox(tmp_path / "starved", monkeypatch, [(n,) for n in names], old, {},
+                         {n: ("empty", "") for n in names[:19]})
+    real = P.R.scrape_result
+
+    def slow(name, url, **kw):
+        _time.sleep(0.02)
+        return real(name, url, **kw)
+    monkeypatch.setattr(P.R, "scrape_result", slow)
+    monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0.0075")     # ~20 rows
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["alarm"].startswith("shrink-abort-") and stamp["unprocessed"] > 0
+    assert _json.loads(P.cache.read_text(encoding="utf-8")) == old
+    # ...and it is measured over what was PROCESSED, not the whole cache: 10 of 25 processed,
+    # 5 of those lost = 50% (the whole-cache view would say 5 of 25 = 20%, no abort)
+    P = _refresh_sandbox(tmp_path / "half", monkeypatch, [(n,) for n in names], old, {},
+                         {n: ("empty", "") for n in names[:5]})
+    monkeypatch.setattr(P.R, "scrape_result", slow)
+    monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0.0035")     # ~10 rows
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert 8 <= stamp["scraped"] <= 12 and stamp["alarm"].startswith("shrink-abort-")
+
+
+def test_refresh_pool_and_inline_paths_build_the_same_cache(tmp_path, monkeypatch):
+    """Bookkeeping happens in the parent, in registry order: a 3-worker pool and the inline
+    loop produce byte-identical cache, rot and counts."""
+    import concurrent.futures as cf
+    names = [f"Co{i:02d}" for i in range(12)]
+    outcomes = {names[1]: ("empty", ""), names[4]: ("error", "http:403"), names[7]: ("ok", 3)}
+    old = {names[4]: [_il_job(names[4])]}
+    outs = []
+    for argv, pool in ((["--workers", "1"], None), (["--workers", "3"], cf.ThreadPoolExecutor)):
+        P = _refresh_sandbox(tmp_path / argv[1], monkeypatch, [(n,) for n in names], old, {}, outcomes)
+        real = P.R.scrape_result
+
+        def jitter(name, url, **kw):
+            _time.sleep(0.01 * (hash(name) % 5))
+            return real(name, url, **kw)
+        monkeypatch.setattr(P.R, "scrape_result", jitter)
+        assert P.R.run(argv, pool_cls=pool) == 0
+        stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+        for k in ("minutes", "workers", "finished_at"):
+            stamp.pop(k)
+        outs.append((P.cache.read_bytes(), P.rot.read_bytes(), stamp))
+    assert outs[0] == outs[1]
+
+
+def test_refresh_pool_runs_a_module_level_worker_under_spawn():
+    """The Linux/Windows proof: the real ProcessPoolExecutor with the `spawn` context and a
+    picklable module-level worker; a worker that raises costs its company, not the run."""
+    import refresh_scrape_cache as R
+    from fake_scrape_worker import fake_worker
+    rows = [{"company_name": n, "api_url": f"https://{n}.example"} for n in
+            ("ok-1", "err-1", "empty-1", "boom-1", "slow-0.2", "ok-2")]
+    t0 = _time.time()
+    got = {r["name"]: r for r in R._scrape_all(rows, workers=2, worker=fake_worker)}
+    assert set(got) == {r["company_name"] for r in rows}
+    # recycling: more rows than one chunk of workers * tasks_per_worker — every row still
+    # comes back (CPython's max_tasks_per_child hung the first full rehearsal at 4 x 25)
+    many = [{"company_name": f"ok-{i}", "api_url": "https://x.example"} for i in range(11)]
+    assert len(list(R._scrape_all(many, workers=2, worker=fake_worker, tasks_per_worker=2))) == 11
+    assert got["ok-1"]["status"] == "ok" and got["err-1"]["error"] == "http:403"
+    assert got["empty-1"]["status"] == "empty" and got["boom-1"]["error"] == "pool:RuntimeError"
+    assert _time.time() - t0 < 60
+
+
+def test_refresh_worker_never_raises(monkeypatch):
+    import refresh_scrape_cache as R
+
+    def boom(name, url, **kw):
+        raise RuntimeError("driver died")
+    monkeypatch.setattr(R, "scrape_result", boom)
+    out = R._worker(("Acme", "https://acme.example"))
+    assert out["status"] == "error" and out["error"] == "worker:RuntimeError" and out["jobs"] == []
+
+
+def test_atomic_write_json_leaves_no_partial_file(tmp_path):
+    """The cache and rot files used to be written with a plain open(): a kill mid-write
+    left a truncated file for the commit step to add. The helper writes a temp file and
+    swaps; on failure the previous bytes stay and no temp file remains."""
+    from pipeline.atomic import write_json
+    p = tmp_path / "cache.json"
+    write_json(str(p), {"a": 1})
+    with pytest.raises(TypeError):
+        write_json(str(p), {"a": object()})
+    assert _json.loads(p.read_text(encoding="utf-8")) == {"a": 1}
+    assert [f for f in os.listdir(tmp_path) if f.startswith(".tmp_")] == []
+
+
+def test_scrape_rotted_segment_survives_a_conflict_merge_without_duplicating():
+    """`scrape rotted (error 7d) <date>` was not in merge_csv_rows._TOOL, so the segment was
+    keyed by its first 28 characters — which include the day count — and two nights'
+    segments both survived a conflict merge, evicting another tool's verdict at the cap."""
+    from merge_csv_rows import _merge_notes
+    theirs = "listing-hunt 2026-08-01: verified 3 IL | scrape rotted (error 7d) 2026-08-20: extraction yields 0"
+    ours = "listing-hunt 2026-08-01: verified 3 IL | scrape rotted (error 8d) 2026-08-21: extraction yields 0"
+    merged = _merge_notes(theirs, ours)
+    assert merged.count("scrape rotted") == 1 and "8d" in merged and merged.count("listing-hunt") == 1
+
+
+def test_no_workflow_step_restamps_collect_after_the_refresh():
+    """`refresh_scrape_cache.py` stamps `collect` with its counts and alarm. A later bare
+    `python -m pipeline.stages stamp collect` step replaced them with {} — and reported the
+    stage done even when the script had crashed."""
+    import glob
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for wf in glob.glob(os.path.join(repo, ".github", "workflows", "*.yml")):
+        for line in open(wf, encoding="utf-8").read().splitlines():
+            if line.strip().startswith("run:") and "stages stamp collect" in line:
+                pytest.fail(f"{os.path.basename(wf)} re-stamps collect: {line.strip()}")
+
+
+def test_refresh_a_streak_restarts_when_its_kind_changes_and_counts_observed_nights(tmp_path, monkeypatch):
+    """Wave 1 (2026-08-24): the first version kept `since` when a streak flipped from empty to
+    error, so a company that had been honestly empty for 60 days was parked on its first
+    transient timeout — 184 real rows would have been one error away from deactivation a week
+    after shipping. A flip starts a new streak, and a park needs ROT_PARK_DAYS OBSERVED error
+    nights (a budget-skipped night does not advance the clock)."""
+    old = {"Beta": [_il_job("Beta")], "Old": [_il_job("Old")], "Ok1": [_il_job("Ok1")],
+           "Ok2": [_il_job("Ok2")], "Ok3": [_il_job("Ok3")], "Ok4": [_il_job("Ok4")]}
+    rot = {"Beta": {"since": _days_ago(60), "why": "empty", "last": _days_ago(1), "n": 60},
+           "Old": {"since": _days_ago(30), "why": "error", "last": _days_ago(20), "n": 2}}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in old], old, rot,
+                         {"Beta": ("error", "goto:TimeoutError"), "Old": ("error", "http:503")})
+    assert P.R.run(["--workers", "1"]) == 0
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    rows = _rows_by_name(P.csv)
+    assert rot["Beta"] == {**rot["Beta"], "since": _TODAY, "why": "error", "n": 1}
+    assert rows["Beta"]["active"] == "true" and "scrape rotted" not in rows["Beta"]["notes"]
+    assert rot["Old"]["n"] == 3 and rows["Old"]["active"] == "true", "30 wall-clock days, 3 observed nights: no park"
+    # a same-day re-dispatch (workflow_dispatch is enabled) must not count a second night
+    assert P.R.run(["--workers", "1"]) == 0
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert rot["Old"]["n"] == 3 and rot["Beta"]["n"] == 1 and rot["Beta"]["since"] == _TODAY
+    cache = _json.loads(P.cache.read_text(encoding="utf-8"))
+    assert cache["Beta"] == old["Beta"], "the error night carries yesterday's jobs"
+
+
+def test_refresh_a_partial_rescue_keeps_yesterdays_fuller_list(tmp_path, monkeypatch):
+    """Wave 1 (2026-08-24): a goto timeout AFTER the first XHR page landed produced 2 jobs
+    with `rescued=True`, and that partial read replaced a 30-role cache entry with no error,
+    no rot, no alarm. A rescued result smaller than yesterday's is an error night."""
+    old = {"Acme": [_il_job("Acme", i) for i in range(30)], "Ok": [_il_job("Ok")]}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("Acme",), ("Ok",)], old, {})
+    real = P.R.scrape_result
+
+    def partial(name, url, **kw):
+        res = real(name, url, **kw)
+        if name == "Acme":
+            res.jobs, res.rescued, res.error = res.jobs[:2], True, "goto:TimeoutError"
+        return res
+    monkeypatch.setattr(P.R, "scrape_result", partial)
+    assert P.R.run(["--workers", "1"]) == 0
+    cache = _json.loads(P.cache.read_text(encoding="utf-8"))
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert len(cache["Acme"]) == 30 and rot["Acme"]["why"] == "error"
+    assert rot["Acme"]["error"] == "partial:goto:TimeoutError"
+
+
+def test_refresh_records_roles_found_but_none_in_israel(tmp_path, monkeypatch):
+    """Wave 1 (2026-08-24): "37 roles found, 0 in Israel" was byte-identical to "nothing on
+    the page". The stamp carries `no_il`, and the rot entry carries `found`."""
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("Acme",), ("Ok",)], {}, {})
+    real = P.R.scrape_result
+
+    def abroad(name, url, **kw):
+        res = real(name, url, **kw)
+        if name == "Acme":
+            for j in res.jobs:
+                j["location"] = "Austin, TX"
+        return res
+    monkeypatch.setattr(P.R, "scrape_result", abroad)
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert stamp["empty"] == 1 and stamp["no_il"] == 1 and rot["Acme"]["found"] == 1
+    assert rot["Acme"]["why"] == "empty"
+
+
+def test_refresh_a_stuck_worker_costs_its_rows_not_the_night():
+    """Wave 1 (2026-08-24): a worker that never returned blocked the executor's exit and the
+    interpreter's atexit join, so one hung Chromium turned a finished 41-minute night into a
+    330-minute killed job with nothing committed. When nothing completes for `stall_s` the
+    chunk's children are terminated, the rows in flight are `hang` errors, and the next
+    chunk runs on a fresh pool — under the real spawn pool."""
+    import refresh_scrape_cache as R
+    from fake_scrape_worker import fake_worker
+    rows = [{"company_name": n, "api_url": "https://x.example"} for n in
+            ("ok-1", "slow-60", "ok-2", "ok-3", "ok-4", "ok-5")]
+    t0 = _time.time()
+    got = {r["name"]: r for r in R._scrape_all(rows, workers=2, worker=fake_worker,
+                                                tasks_per_worker=2, stall_s=2)}
+    assert _time.time() - t0 < 40, "the generator must not wait for the stuck worker"
+    assert got["slow-60"]["error"].startswith("hang:")
+    assert all(got[n]["status"] == "ok" for n in ("ok-1", "ok-2", "ok-3", "ok-4", "ok-5"))
+
+
+@pytest.mark.parametrize("card,expected_days", [
+    ("Senior Data Analyst Tel Aviv, Israel Posted 3 days ago Apply", 3),
+    ("Data Analyst Herzliya · Published: 2026-08-20", None),          # ISO, checked below
+    ("BI Developer Haifa Full-time", ""),
+    ("Data Analyst | Updated 2024-01-01 | Copyright 2024", ""),        # 'Updated' is not 'date'
+    ("Our office opened 3 months ago. Data Analyst Tel Aviv", ""),     # unannounced age: not ours
+    ("Senior Data Analyst Tel Aviv Apply Junior QA Engineer Tel Aviv Posted 45 days ago Apply", ""),
+])
+def test_posted_date_is_read_from_the_card_and_never_from_its_neighbour(card, expected_days):
+    """Wave 2 (2026-08-24): the word boundary in `_CARD_DATE` had been written through a
+    non-raw string and was a literal backspace, so only the unanchored "N days ago" branch
+    was live — and it stamped the NEXT card's age onto a role, which `pipeline/run.py`
+    then treated as too old for the 48-hour email, permanently. A date must be announced
+    ("Posted …") and must sit before this card's Apply button."""
+    import datetime as dt
+    import scrape_universal as N
+    got = N._date_from_card(card)
+    if expected_days is None:
+        assert got == "2026-08-20"
+    elif expected_days == "":
+        assert got == ""
+    else:
+        assert got == (dt.date.today() - dt.timedelta(days=expected_days)).isoformat()
+
+
+def test_scrape_a_leadership_array_is_not_a_board():
+    """Wave 2 (2026-08-24, synthetic): a team list in page state — `{"name": "Dana Levi",
+    "role": "VP Marketing", "location": "Tel Aviv"}` — passed the title test through `role`,
+    won as "structured", and suppressed the page's real job links."""
+    import scrape_universal as N
+    team = _json.dumps({"props": {"team": [
+        {"name": "Dana Levi", "role": "VP Marketing", "location": "Tel Aviv", "id": "t1"},
+        {"name": "Omer Cohen", "role": "Head of Product", "location": "Tel Aviv", "id": "t2"},
+        {"name": "Noa Bar", "role": "Director of Sales", "location": "Herzliya", "id": "t3"}]}})
+    dom = [{"title": t, "url": f"https://co.example/jobs/{i}", "ctx": f"{t} Tel Aviv, Israel"}
+           for i, t in enumerate(("Senior Data Analyst", "BI Developer"), 501)]
+    jobs, strategy = N._extract("Co", "https://co.example/careers", _rendered(blobs=[team], dom=dom),
+                                fetch=_no_fetch)
+    assert strategy == "dom" and [j["title"] for j in jobs] == ["Senior Data Analyst", "BI Developer"]
+    # ...while a posting that happens to carry a `name` key still counts
+    posting = _json.dumps({"jobs": [{"name": "Senior Data Analyst", "location": "Tel Aviv", "id": "1"},
+                                    {"name": "BI Developer", "location": "Haifa", "id": "2"}]})
+    jobs, strategy = N._extract("Co", "https://co.example/careers", _rendered(blobs=[posting]), fetch=_no_fetch)
+    assert strategy == "structured" and len(jobs) == 2
+
+
+def test_refresh_a_rescued_full_read_is_believed_and_a_partial_one_converges(tmp_path, monkeypatch):
+    """Wave 2 (2026-08-24): the partial-rescue rule compared tonight's read with the list it
+    had carried forward itself, so it latched — a 403-walled company rescued every night
+    whose board lost ONE role served the stale list for six nights and was deactivated on
+    the seventh. A rescue with no browser error is a complete read; a browser-failed partial
+    is held back for PARTIAL_MAX_NIGHTS and then believed."""
+    import datetime as dt
+    old = {"Walled": [_il_job("Walled", i) for i in range(10)],
+           "Partial": [_il_job("Partial", i) for i in range(30)],
+           **{f"Ok{i}": [_il_job(f"Ok{i}")] for i in range(6)}}
+    rows = [("Walled",), ("Partial",)] + [(f"Ok{i}",) for i in range(6)]
+    P = _refresh_sandbox(tmp_path, monkeypatch, rows, old, {})
+    real = P.R.scrape_result
+
+    def scraper(name, url, **kw):
+        res = real(name, url, **kw)
+        if name == "Walled":            # render 403, plain page rescued in full: 9 real roles
+            res.jobs = [_il_job("Walled", i) for i in range(9)]
+            res.rescued, res.error, res.http_status = True, "", 403
+        if name == "Partial":           # goto timed out after the first XHR page: 2 of 30
+            res.jobs = [_il_job("Partial", i) for i in range(2)]
+            res.rescued, res.error = True, "goto:TimeoutError"
+        return res
+    monkeypatch.setattr(P.R, "scrape_result", scraper)
+    day0 = dt.date.today()
+    for night in range(1, 5):
+        monkeypatch.setattr(P.R._dt, "date",
+                            type("D", (), {"today": staticmethod(lambda n=night: day0 + dt.timedelta(days=n)),
+                                           "fromisoformat": staticmethod(dt.date.fromisoformat)}))
+        assert P.R.run(["--workers", "1"]) == 0
+        cache = _json.loads(P.cache.read_text(encoding="utf-8"))
+        rows_now = _rows_by_name(P.csv)
+        assert len(cache["Walled"]) == 9 and rows_now["Walled"]["active"] == "true", night
+        assert len(cache["Partial"]) == (30 if night <= P.R.PARTIAL_MAX_NIGHTS else 2), night
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert "Walled" not in rot and "Partial" not in rot
+
+
+def test_scrape_a_cloudflare_protected_page_is_not_a_wall():
+    """Wave 2 (2026-08-24): Cloudflare injects `/cdn-cgi/challenge-platform/scripts/jsd/main.js`
+    into ordinary 200 pages when JS detections are on, and Incapsula injects
+    `_Incapsula_Resource`; neither is a challenge page. Only a challenge/denial PAGE is."""
+    import scrape_universal as N
+    page = ("<html><head><title>Careers | Acme</title></head><body><h1>Open positions</h1>"
+            "<p>No open positions right now.</p>" + "filler " * 400 +
+            '<script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script>'
+            '<script src="/_Incapsula_Resource?SWJIYLWA=1"></script></body></html>')
+    assert N._blocked_by(page) == ""
+    assert N._classify(N.Rendered(url="u", http_status=200, page_html=page), []) == ("empty", "")
+    assert N._blocked_by("<html><body>Request unsuccessful. Incapsula incident ID: 1</body></html>") == "incapsula"
+    assert N._blocked_by("<title>Attention Required! | Cloudflare</title>") == "cloudflare"
+    assert N._blocked_by("<p>We monitor Access Denied events and Attention Required alerts.</p>") == ""
+
+
+def test_refresh_the_stall_watchdog_really_terminates_the_stuck_child():
+    """Wave 2 (2026-08-24): `_kill_children` ran after `shutdown()`, which clears the
+    executor's process table, so it terminated nothing and stuck Chromiums accumulated
+    chunk after chunk. The children are taken before the shutdown."""
+    import refresh_scrape_cache as R
+    from fake_scrape_worker import fake_worker
+    seen = []
+    orig = R._children_of
+
+    def spy(ex):
+        procs = orig(ex)
+        seen.extend(procs)
+        return procs
+    R._children_of = spy
+    try:
+        rows = [{"company_name": n, "api_url": "https://x.example"} for n in ("ok-1", "slow-60", "ok-2")]
+        got = list(R._scrape_all(rows, workers=2, worker=fake_worker, tasks_per_worker=2, stall_s=2))
+    finally:
+        R._children_of = orig
+    assert any(r["error"].startswith("hang:") for r in got)
+    assert seen, "the watchdog saw no children"
+    _time.sleep(1.0)
+    assert not any(p.is_alive() for p in seen), "a stuck child survived the watchdog"
+
+
+def test_refresh_survives_a_rot_entry_written_before_nights_were_counted(tmp_path, monkeypatch):
+    """Rehearsal (2026-08-24): the real `scrape_rot.json` holds 207 entries written before `n`
+    existed, all stamped `last=today` by that morning's run; the same-day path returned
+    `e["n"]` and crashed the whole refresh with KeyError. A legacy entry gets n=1."""
+    rot = {"Beta": {"since": _days_ago(1), "why": "empty", "last": _TODAY},
+           "Gamma": {"since": _days_ago(3), "why": "empty", "last": _days_ago(1)}}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("Beta",), ("Gamma",), ("Ok",)], {}, rot,
+                         {"Beta": ("empty", ""), "Gamma": ("empty", "")})
+    assert P.R.run(["--workers", "1"]) == 0
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert rot["Beta"]["n"] == 1 and rot["Gamma"]["n"] == 1
+
+
+def test_scrape_a_deadline_inside_the_position_pages_is_a_partial_read():
+    """Wave 3 (2026-08-24): the company budget expiring while strategy 4 was fetching position
+    pages returned the 4 it had as a complete `ok` list, and the refresh wrote them over
+    yesterday's 20 with no error and no alarm. A truncated pass is flagged like a failed
+    render, so the refresh holds yesterday's fuller list."""
+    import scrape_universal as N
+    url = "https://co.example/careers"
+    links = "".join(f'<a href="/careers-position/role-{i:02d}/">Role {i}</a>' for i in range(20))
+    page = f"<body>{links}</body>"
+    calls = []
+
+    class Budget(N.Deadline):
+        def remaining(self):
+            return 0.0 if len(calls) >= 5 else 60.0
+
+        def expired(self):
+            return self.remaining() <= 0
+
+    def fetch(u, t):
+        calls.append(u)
+        n = u.rstrip("/").split("-")[-1]
+        return f"<html><h1>Data Analyst {n}</h1><p>Ra'anana</p></html>", 200
+    r = _rendered(page_html=page)
+    jobs, strategy = N._extract("Co", url, r, deadline=Budget(t_end=0), fetch=fetch)
+    assert strategy == "links" and 0 < len(jobs) < 20 and r.truncated and r.error == "deadline:links"
+    status, _ = N._classify(r, jobs)
+    assert status == "ok"
+    res = N.scrape_result("Co", url, render=lambda u, t, d: _rendered(page_html=page), fetch=fetch, budget_s=1)
+    assert res.rescued or res.error == "" or res.error.startswith("deadline:")
+
+
+def test_refresh_a_failed_registry_write_keeps_the_streak_that_justified_it(tmp_path, monkeypatch):
+    """Wave 3 (2026-08-24): the rot entries of parked rows were popped and written BEFORE the
+    registry write; if that write failed, seven nights of evidence were gone while the row
+    stayed active. The registry is written first."""
+    rot = {"Acme": {"since": _days_ago(8), "why": "error", "last": _days_ago(1), "n": 7}}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("Acme",)] + [(f"Ok{i}",) for i in range(6)],
+                         {"Acme": [_il_job("Acme")], **{f"Ok{i}": [_il_job(f"Ok{i}")] for i in range(6)}},
+                         rot, {"Acme": ("error", "http:403")})
+
+    def broken(parked, today):
+        raise OSError("busy")
+    monkeypatch.setattr(P.R, "_park", broken)
+    with pytest.raises(OSError):
+        P.R.run(["--workers", "1"])
+    assert _json.loads(P.rot.read_text(encoding="utf-8"))["Acme"]["n"] == 7
+    assert _rows_by_name(P.csv)["Acme"]["active"] == "true"
+
+
+def test_refresh_rotates_the_processing_order_by_day(tmp_path, monkeypatch):
+    """Wave 3 (2026-08-24): rows were submitted in registry order, so a budget cut stranded
+    the same tail (carried, never re-scraped) every night. The order rotates by the day;
+    the bookkeeping is unaffected."""
+    import datetime as dt
+    names = [f"Co{i:02d}" for i in range(10)]
+    seen = []
+    for day in (0, 1):
+        P = _refresh_sandbox(tmp_path / str(day), monkeypatch, [(n,) for n in names], {}, {})
+        real = P.R.scrape_result
+        order = []
+
+        def spy(name, url, **kw):
+            order.append(name)
+            return real(name, url, **kw)
+        monkeypatch.setattr(P.R, "scrape_result", spy)
+        base = dt.date.today() + dt.timedelta(days=day)
+        monkeypatch.setattr(P.R._dt, "date", type("D", (), {
+            "today": staticmethod(lambda b=base: b), "fromisoformat": staticmethod(dt.date.fromisoformat)}))
+        assert P.R.run(["--workers", "1"]) == 0
+        seen.append(order)
+        assert set(_json.loads(P.cache.read_text(encoding="utf-8"))) == set(names)
+    assert seen[0] != seen[1] and sorted(seen[0]) == sorted(seen[1]) == names

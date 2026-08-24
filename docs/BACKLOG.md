@@ -1514,3 +1514,97 @@ commits. Five filed test gaps, four closed the same day with cells and records
     file alongside mandatory paths; for every step invoking a module that reads a secret,
     the step names it. Filed rather than built here: a linter right 95% of the time is
     the wrong tool, and the two named shapes are exactly what a first version should pin.
+
+## From the `scraper` lane, 2026-08-24
+
+Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-derive before acting.
+
+84. **A rot-parked row that carries `dark-triage …: page-empty` never reaches the hunt** —
+    lane: `registry`. `refresh_scrape_cache._park` writes `scrape rotted (error Nd) …; parked
+    for re-hunt`, but `listing_hunt.in_hunt_pool` excludes any note matching the page-empty
+    triage stamp, and 108 of the 207 rot-tracked rows carry one. Simulated across those 108:
+    `registry_health.pools()` → `listing_hunt 0, triage_dark 108` — owned, but only by the tool
+    that already stamped page-empty. A `scrape rotted` segment written AFTER the triage stamp
+    should probably win (the row was active and erroring, so page-empty is stale). Found by
+    wave-1 attacker C.
+
+85. **Nothing reads the `collect` stamp's `alarm`, and `stages.require("collect", 1)` is
+    silent at exactly one day** — lane: `infra` (`pipeline/run.py`, the three audit renderers
+    in `pipeline/digest.py`). A mass-failure night stamps `date=TODAY`, so `require` says
+    fresh; the only trace in the mail is `alarm=…` inside the collapsed `Stage order:` line. A
+    crash night leaves yesterday's stamp, `age == 1`, and `1 > 1` is False, so no
+    `::warning::` either. Proposed hook, ≤6 lines after the `stages.require` calls:
+    `alarm = (stages._load().get("collect") or {}).get("alarm")`; if `alarm` or
+    `stages.age_days("collect") != 0`, print `::warning::stage collect …` and put the line in
+    `summary["stage_alarms"]`, rendered as `- **Stages:** …` beside `- **Registry:** …`.
+    Found by wave-1 attacker D.
+
+86. **`pipeline/fetchers.fetch_scrape` hard-codes `scraped_cache.json` next to the package**
+    — lane: `ats-fetch`. A rehearsal that wants the digest to read a scratch cache has to
+    pre-seed `fetchers._SCRAPE_CACHE` from a Python driver (the scraper session did exactly
+    that). An env override (`SCRAPE_CACHE_IN`) or a `path=` parameter would make
+    `python -m pipeline.run --only … ` rehearsable from the shell.
+
+87. **Retire `cache_new_rows.py`** — lane: `docs` (it names the file in `docs/MODULES.md:76`,
+    `docs/gen_modules.py:61`, `docs/AGENT_BRIEF.md:90`). It is a 15-line shim now: no
+    workflow ever ran it, the refresh always follows the 19:00 hunt (both in the `repo-state`
+    group), and its one useful behaviour is `python refresh_scrape_cache.py --only-missing
+    --apply`. Delete the shim and the three rows together; `docs/check_docs.py` enforces it.
+
+88. **Strategy 2 (rendered-DOM links) produces run-together cards, and `_loc_from_ctx` keeps
+    up to 28 characters of title in the location when the card has no punctuation** — lane:
+    `scraper`. On the captured Port.io page the DOM pass added 16 entries with location
+    `"Editor Tel Aviv - Israel"` — 6 US-titled roles and 10 mangled twins of real Tel Aviv
+    postings; the extractor now stops at the first strategy that yields (so those no longer
+    ship, at the cost of DOM-only roles the structured pass misses — one on Port.io), but a
+    page where the DOM pass is the FIRST hit still gets them. A synthetic card `<h3>Senior Data Analyst</h3><span>Tel Aviv,
+    Israel</span>` yields location `"nior Data Analyst 0 Tel Aviv, Israel"`
+    (`test_scrape_card_headings_need_three_siblings_and_role_titles` documents it). Fix the
+    `([A-Za-z][\w.\-' ]{1,28},?\s*Israel)` capture to stop at a title boundary.
+
+89. **Two scraper costs nobody has measured, and one silent cap** — lane: `scraper`.
+    `_LINK_PAGES_PER_PREFIX = 25` truncates strategy 4 without a flag (Bright Data sits at
+    exactly 25 in the cache; a deadline truncation IS flagged since wave 3). (a) The plain-HTTP re-fetch
+    after strategies 1–2 miss runs for every empty company (~200 × ≤15 s a night) and its HTML
+    is concatenated onto the rendered page, so strategies 3–5 parse a doubled document. (b) The
+    last-ditch `re.finditer(r"\{[^{}]{0,4000}\}")` scan runs over every non-JSON body,
+    including multi-megabyte HTML documents that mention `JobPosting`. Count how many cached
+    jobs each produces (the A/B harness in the session record can) before changing either.
+
+90. **Per-job strategy provenance in the cache** — lane: `scraper`. `ScrapeResult.strategy`
+    exists and the refresh prints per-run strategy counts; a `_strategy` key per job (the
+    `_jd_attempted` precedent) would answer "which strategy carries the fleet" from the cache,
+    at the cost of diff noise on 1,200 entries. Deferred on purpose.
+
+91. **A warning-first invariant on the `collect` stamp** — lane: `infra`
+    (`check_invariants.py`). If `cloud_state/pipeline_stages.json["collect"]` is dated today
+    and `errors / scraped > 0.5`, or `with_jobs` is under half of the previous night's, print
+    `::warning::` — never block (§K in `docs/sessions/2026-08-23.md`: a blocking check once
+    discarded a full run).
+
+92. **Mutation records for the scraper guards** — lane: `registry` (owns `tools/mutate.py`
+    and `tests/mutations.json`). Proposed ids: `scrape-error-inverted` (swap the `status ==
+    "error"` test in `_apply_result`), `scrape-carry-on-empty`, `scrape-massfail-threshold`
+    (20 → 80), `scrape-park-outside-error`, `scrape-since-not-reset` (drop the `why` change
+    test in `_rot_bump`). Each is killed by a behavioural test in `tests/test_units.py` today.
+
+93. **Stale numbers in docs the scraper lane may not write** — lane: `docs`. The one-screen
+    diagram in `ARCHITECTURE.md` (`433 API rows`, `16 platforms`, `412 rows`), `docs/
+    AGENT_BRIEF.md:53,90` (`412`), `HANDOFF.md:175-176` (Eightfold/Phenom "no native fetchers"
+    — `grep -n "def fetch_eightfold\|def fetch_phenom" pipeline/fetchers.py` finds both), and `docs/BACKLOG.md` item 13's dedup
+    measurement (today, with `pipeline.store.merge_key`: 1,225 jobs / 1,194 keys / 31 dropped,
+    not 1,110 / 1,079 / 12).
+
+95. **`merge_json_cache.merge` cannot express a deletion** — lane: `infra`. It starts from
+    `theirs` and iterates `ours`, so a company key the refresh deliberately dropped tonight
+    (empty, carry expired after `CARRY_MAX_DAYS`, parked) comes back with yesterday's jobs
+    on every push-conflict night, and the `pipeline_stages.json` restored beside it still
+    describes the cache that was not committed. Rule to add: drop `k` when `k in base and
+    k not in ours and base[k] == theirs[k]` (origin did not touch it; we deleted it on
+    purpose). Found by wave-3 attacker A; conflicts on the 00:00 push are rare (the hunt
+    ends by 00:30) but the loss is silent and repeats nightly.
+
+94. **`daily-digest.yml`'s conflict path restores `cloud_state/` wholesale** — lane: `infra`
+    (HANDOFF open item 7 already names `seen.db`). It can also revert a `collect` stamp that
+    scrape-refresh pushed after the 05:00 checkout; the next 00:00 run re-stamps, so no mail
+    number changes, but the same wholesale copy is what the other workflows were cured of.

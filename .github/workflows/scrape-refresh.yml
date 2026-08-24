@@ -54,21 +54,17 @@ jobs:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           SCRAPE_VIA_UNLOCKER: "1"
-          # ~850 active scrape rows now (130 validated-empty companies were activated on
-          # 2026-08-23). Stop with headroom under timeout-minutes: 330 so the cache is
+          # 425 active scrape rows on 2026-08-24 (862 active rows in total), ~40 min with
+          # the 4-process pool. Stop with headroom under timeout-minutes: 330 so the cache is
           # actually written and committed — a timeout discards the whole run.
           SCRAPE_REFRESH_TIME_BUDGET_MIN: "260"
         run: python refresh_scrape_cache.py
 
 
-      # Record that this stage finished, and how much it did. pipeline/stages.py turns the
-      # implicit cron ordering into something the next stage can actually READ: the digest
-      # warns in its audit block when its prerequisites did not run today, instead of
-      # silently building on yesterday's URLs.
-      - name: Stamp the 'collect' stage
-        if: always()
-        run: python -m pipeline.stages stamp collect
-        continue-on-error: true
+      # The 'collect' stage is stamped by refresh_scrape_cache.py itself, WITH its counts
+      # (scraped/with_jobs/empty/errors/alarm), and the digest prints that line in its audit.
+      # A separate `stages stamp collect` step used to run here `if: always()` — it replaced
+      # the counts with `{}` and reported "collect: TODAY" even when the script had crashed.
 
       - name: Registry invariants gate the commit
         # deliberately NOT continue-on-error: a run that broke an invariant

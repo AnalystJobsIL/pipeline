@@ -1,0 +1,475 @@
+{
+ "company": "Xtend",
+ "url": "https://www.xtend.me/working-at-xtend",
+ "captured": "2026-08-24 by the pre-refactor extractor (docs/sessions/2026-08-24-scraper.md)",
+ "dom": [
+  {
+   "title": "Submit",
+   "url": "https://www.xtend.me/working-at-xtend#",
+   "ctx": " Submit Submit CountryAfghanistanAlbaniaAlgeriaAndorraAngolaAntigua and BarbudaArgentinaArmeniaAustraliaAustriaAzerbaijanBahamasBahrainBangladeshBarbadosBelarusBelgiumBelizeBeninBhutanBoliviaBosnia and HerzegovinaBotswanaBrazilBruneiBulgariaBurkina FasoBurundiCabo VerdeCambodiaCameroonCanadaCentral African RepublicChadChileChinaColombiaComorosCongo, Democratic Republic of theCongo, Republic of theCosta RicaCroatiaCubaCyprusCzech RepublicDenmarkDjiboutiDominicaDominican RepublicEast TimorEcuadorE"
+  },
+  {
+   "title": "Our Mission",
+   "url": "https://www.xtend.me/mission",
+   "ctx": " Our Mission Our Mission XOS Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNESTPlatforms XTEND PRODUCTS XTENDER HONEY BADGER SCORPIO 1000 SCORPIO 500 WOLVERINE ATLAS PRODUCTS PRO MICRO A1 ROVER NEST Careers News Our Mission XOS Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNESTPlatforms XTEND PRODUCTS XTENDER HONEY BADGER SCORPIO 1000 SCORPIO 500 WOLVERINE ATLAS PRODUCTS PRO MICRO A1 ROV"
+  },
+  {
+   "title": "XTENDER",
+   "url": "https://www.xtend.me/xtender",
+   "ctx": " XTENDER XTENDERPRO XTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST"
+  },
+  {
+   "title": "SCORPIO 500",
+   "url": "https://www.xtend.me/scorpio-500",
+   "ctx": " SCORPIO 500 SCORPIO 500MICRO XTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST"
+  },
+  {
+   "title": "MICRO",
+   "url": "https://www.xtend.me/micro",
+   "ctx": " MICRO SCORPIO 500MICRO XTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST"
+  },
+  {
+   "title": "SCORPIO 1000",
+   "url": "https://www.xtend.me/scorpio-1000",
+   "ctx": " SCORPIO 1000 SCORPIO 1000A1 XTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST"
+  },
+  {
+   "title": "WOLVERINE",
+   "url": "https://www.xtend.me/wolverine",
+   "ctx": " WOLVERINE WOLVERINEROVER XTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST"
+  },
+  {
+   "title": "ROVER",
+   "url": "https://www.xtend.me/rover",
+   "ctx": " ROVER WOLVERINEROVER XTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST"
+  },
+  {
+   "title": "HONEY BADGER",
+   "url": "https://www.xtend.me/honey-badger",
+   "ctx": " HONEY BADGER HONEY BADGERNEST XTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNEST"
+  },
+  {
+   "title": "Careers",
+   "url": "https://www.xtend.me/working-at-xtend",
+   "ctx": " Careers Our Mission XOS Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNESTPlatforms XTEND PRODUCTS XTENDER HONEY BADGER SCORPIO 1000 SCORPIO 500 WOLVERINE ATLAS PRODUCTS PRO MICRO A1 ROVER NEST Careers News Our Mission XOS Platforms XTENDPRODUCTSATLASPROUCTSXTENDERPROSCORPIO 500MICROSCORPIO 1000A1WOLVERINEROVERHONEY BADGERNESTPlatforms XTEND PRODUCTS XTENDER HONEY BADGER SCORPIO 1000 SCORPIO 500 WOLVERINE ATLAS PRODUCTS PRO MICRO A1 ROVER N"
+  },
+  {
+   "title": "Contact Sales",
+   "url": "https://www.xtend.me/working-at-xtend#",
+   "ctx": " Contact Sales Request a Demo Contact Sales User Portal XOC App Store Press Kits What are you looking for Request a Demo Contact Sales User Portal XOC App Store Press Kits What are you looking for Request a Demo Contact Sales User Portal XOC App Store Press Kits "
+  },
+  {
+   "title": "User Portal",
+   "url": "https://support.xtend.me/wp-login.php?reauth=1&redirect_to=https%3A%2F%2Fsupport.xtend.me%2F",
+   "ctx": " User Portal Request a Demo Contact Sales User Portal XOC App Store Press Kits What are you looking for Request a Demo Contact Sales User Portal XOC App Store Press Kits What are you looking for Request a Demo Contact Sales User Portal XOC App Store Press Kits "
+  },
+  {
+   "title": "XOC App Store",
+   "url": "https://www.xtend.me/working-at-xtend#",
+   "ctx": " XOC App Store Request a Demo Contact Sales User Portal XOC App Store Press Kits What are you looking for Request a Demo Contact Sales User Portal XOC App Store Press Kits What are you looking for Request a Demo Contact Sales User Portal XOC App Store Press Kits "
+  },
+  {
+   "title": "Press Kits",
+   "url": "https://www.xtend.me/press-kit",
+   "ctx": " Press Kits Request a Demo Contact Sales User Portal XOC App Store Press Kits What are you looking for Request a Demo Contact Sales User Portal XOC App Store Press Kits What are you looking for Request a Demo Contact Sales User Portal XOC App Store Press Kits "
+  },
+  {
+   "title": "Backend Team Lead (C++) Tel-Aviv R&DAll",
+   "url": "https://www.xtend.me/positions/position-df_665",
+   "ctx": " Backend Team Lead (C++) Tel-Aviv R&DAll Backend Team Lead (C++) Tel-Aviv R&DAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL OperationsAllFacili"
+  },
+  {
+   "title": "Bookkeeper Tel-Aviv Full-time FinanceAll",
+   "url": "https://www.xtend.me/positions/position-0a_b61",
+   "ctx": " Bookkeeper Tel-Aviv Full-time FinanceAll Bookkeeper Tel-Aviv Full-time FinanceAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL OperationsAllFaci"
+  },
+  {
+   "title": "Business Development Director Tampa, FL OperationsAll",
+   "url": "https://www.xtend.me/positions/position-15_d6d",
+   "ctx": " Business Development Director Tampa, FL OperationsAll Business Development Director Tampa, FL OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer T"
+  },
+  {
+   "title": "Business Development Manager Tel-Aviv All",
+   "url": "https://www.xtend.me/positions/position-07_e65",
+   "ctx": " Business Development Manager Tel-Aviv All Business Development Manager Tel-Aviv All Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL OperationsAllFa"
+  },
+  {
+   "title": "Buyer Tampa, FL OperationsAll",
+   "url": "https://www.xtend.me/positions/position-34_b6b",
+   "ctx": " Buyer Tampa, FL OperationsAll Buyer Tampa, FL OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL OperationsAllFacilities Manager Herzliy"
+  },
+  {
+   "title": "Compliance & Equipment Specialist Swindon, UK OperationsAll",
+   "url": "https://www.xtend.me/positions/position-5a_b61",
+   "ctx": " Compliance & Equipment Specialist Swindon, UK OperationsAll Compliance & Equipment Specialist Swindon, UK OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Softwar"
+  },
+  {
+   "title": "Contracts / Bid Manager Swindon, UK OperationsAll",
+   "url": "https://www.xtend.me/positions/position-5a_b64",
+   "ctx": " Contracts / Bid Manager Swindon, UK OperationsAll Contracts / Bid Manager Swindon, UK OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL"
+  },
+  {
+   "title": "Drone Lab Technician Tel-Aviv Full-time OperationsAll",
+   "url": "https://www.xtend.me/positions/position-1a_264",
+   "ctx": " Drone Lab Technician Tel-Aviv Full-time OperationsAll Drone Lab Technician Tel-Aviv Full-time OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer T"
+  },
+  {
+   "title": "Embedded Software Engineer Tampa, FL OperationsAll",
+   "url": "https://www.xtend.me/positions/position-f2_c6a",
+   "ctx": " Embedded Software Engineer Tampa, FL OperationsAll Embedded Software Engineer Tampa, FL OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, "
+  },
+  {
+   "title": "Facilities Manager Herzliya operationAll",
+   "url": "https://www.xtend.me/positions/position-be_07c",
+   "ctx": " Facilities Manager Herzliya operationAll Facilities Manager Herzliya operationAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL OperationsAllFaci"
+  },
+  {
+   "title": "Flight Operations Drone Pilot Tampa, FL OperationsAll",
+   "url": "https://www.xtend.me/positions/position-15_d6e",
+   "ctx": " Flight Operations Drone Pilot Tampa, FL OperationsAll Flight Operations Drone Pilot Tampa, FL OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer T"
+  },
+  {
+   "title": "Flight Test & Evaluation Tel-Aviv R&DAll",
+   "url": "https://www.xtend.me/positions/position-e6_e6a",
+   "ctx": " Flight Test & Evaluation Tel-Aviv R&DAll Flight Test & Evaluation Tel-Aviv R&DAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL OperationsAllFaci"
+  },
+  {
+   "title": "Head of C-UAS Product Line Tel-Aviv Full-time R&DAll",
+   "url": "https://www.xtend.me/positions/position-be_a64",
+   "ctx": " Head of C-UAS Product Line Tel-Aviv Full-time R&DAll Head of C-UAS Product Line Tel-Aviv Full-time R&DAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tam"
+  },
+  {
+   "title": "NPI Engineer Tampa, FL OperationsAll",
+   "url": "https://www.xtend.me/positions/position-34_b67",
+   "ctx": " NPI Engineer Tampa, FL OperationsAll NPI Engineer Tampa, FL OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL OperationsAllFacilities M"
+  },
+  {
+   "title": "Sales Manager Tampa, FL OperationsAll",
+   "url": "https://www.xtend.me/positions/position-15_d6f",
+   "ctx": " Sales Manager Tampa, FL OperationsAll Sales Manager Tampa, FL OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL OperationsAllFacilities"
+  },
+  {
+   "title": "Senior Drone Lab Technician Tampa, FL OperationsAll",
+   "url": "https://www.xtend.me/positions/position-03_46e",
+   "ctx": " Senior Drone Lab Technician Tampa, FL OperationsAll Senior Drone Lab Technician Tampa, FL OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa"
+  },
+  {
+   "title": "Senior Guidance Engineer Tel-Aviv Full-time R&DAll",
+   "url": "https://www.xtend.me/positions/position-2c_f6b",
+   "ctx": " Senior Guidance Engineer Tel-Aviv Full-time R&DAll Senior Guidance Engineer Tel-Aviv Full-time R&DAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, "
+  },
+  {
+   "title": "Senior Program Manager Tel-Aviv OperationsAll",
+   "url": "https://www.xtend.me/positions/position-b6_d67",
+   "ctx": " Senior Program Manager Tel-Aviv OperationsAll Senior Program Manager Tel-Aviv OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL Operati"
+  },
+  {
+   "title": "SOX Manager Tel-Aviv Full-time FinanceAll",
+   "url": "https://www.xtend.me/positions/position-42_f6d",
+   "ctx": " SOX Manager Tel-Aviv Full-time FinanceAll SOX Manager Tel-Aviv Full-time FinanceAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL OperationsAllFa"
+  },
+  {
+   "title": "UAS Operator and Instructor Tel-Aviv Full-time OperationsAll",
+   "url": "https://www.xtend.me/positions/position-be_a67",
+   "ctx": " UAS Operator and Instructor Tel-Aviv Full-time OperationsAll UAS Operator and Instructor Tel-Aviv Full-time OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Softw"
+  },
+  {
+   "title": "VP Operations Tampa, FL OperationsAll",
+   "url": "https://www.xtend.me/positions/position-45_c64",
+   "ctx": " VP Operations Tampa, FL OperationsAll VP Operations Tampa, FL OperationsAll Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL OperationsAllFacilities"
+  },
+  {
+   "title": "Xtend Germany Xfab General Manager Germany All",
+   "url": "https://www.xtend.me/positions/position-da_56a",
+   "ctx": " Xtend Germany Xfab General Manager Germany All Xtend Germany Xfab General Manager Germany All Backend Team Lead (C++) Tel-Aviv R&DAllBookkeeper Tel-Aviv Full-time FinanceAllBusiness Development Director Tampa, FL OperationsAllBusiness Development Manager Tel-Aviv AllBuyer Tampa, FL OperationsAllCompliance & Equipment Specialist Swindon, UK OperationsAllContracts / Bid Manager Swindon, UK OperationsAllDrone Lab Technician Tel-Aviv Full-time OperationsAllEmbedded Software Engineer Tampa, FL Opera"
+  },
+  {
+   "title": "Our mission",
+   "url": "https://www.xtend.me/mission#win",
+   "ctx": " Our mission CompanyOur missionOur teamCareersInvestor Relations CompanyOur missionOur teamCareersInvestor RelationsXTEND PlatformsSCORPIO 500SCORPIO 1000XTENDERHONEY BADGERWOLVERINEATLAS PlatformsPROMICROA1ROVERNESTSupportContact UsUser portalNewsCompany UpdatesSign upThank you for signing up!Please enter a valid email address© 2026 XTEND . All rights reserved.BD◆Cookie policy◆Terms and Conditions◆Privacy PolicyXTEND Reality Inc, Tampa, Florida CompanyOur missionOur teamCareersInvestor Relation"
+  },
+  {
+   "title": "Our team",
+   "url": "https://www.xtend.me/mission#team",
+   "ctx": " Our team CompanyOur missionOur teamCareersInvestor Relations CompanyOur missionOur teamCareersInvestor RelationsXTEND PlatformsSCORPIO 500SCORPIO 1000XTENDERHONEY BADGERWOLVERINEATLAS PlatformsPROMICROA1ROVERNESTSupportContact UsUser portalNewsCompany UpdatesSign upThank you for signing up!Please enter a valid email address© 2026 XTEND . All rights reserved.BD◆Cookie policy◆Terms and Conditions◆Privacy PolicyXTEND Reality Inc, Tampa, Florida CompanyOur missionOur teamCareersInvestor RelationsXT"
+  },
+  {
+   "title": "Investor Relations",
+   "url": "http://ir.xtend.me/",
+   "ctx": " Investor Relations CompanyOur missionOur teamCareersInvestor Relations CompanyOur missionOur teamCareersInvestor RelationsXTEND PlatformsSCORPIO 500SCORPIO 1000XTENDERHONEY BADGERWOLVERINEATLAS PlatformsPROMICROA1ROVERNESTSupportContact UsUser portalNewsCompany UpdatesSign upThank you for signing up!Please enter a valid email address© 2026 XTEND . All rights reserved.BD◆Cookie policy◆Terms and Conditions◆Privacy PolicyXTEND Reality Inc, Tampa, Florida CompanyOur missionOur teamCareersInvestor R"
+  },
+  {
+   "title": "User portal",
+   "url": "https://support.xtend.me/wp-login.php?reauth=1&redirect_to=https%3A%2F%2Fsupport.xtend.me%2F",
+   "ctx": " User portal SupportContact UsUser portalNews CompanyOur missionOur teamCareersInvestor RelationsXTEND PlatformsSCORPIO 500SCORPIO 1000XTENDERHONEY BADGERWOLVERINEATLAS PlatformsPROMICROA1ROVERNESTSupportContact UsUser portalNewsCompany UpdatesSign upThank you for signing up!Please enter a valid email address© 2026 XTEND . All rights reserved.BD◆Cookie policy◆Terms and Conditions◆Privacy PolicyXTEND Reality Inc, Tampa, Florida CompanyOur missionOur teamCareersInvestor RelationsXTEND PlatformsSCO"
+  },
+  {
+   "title": "Sign up",
+   "url": "https://www.xtend.me/working-at-xtend#",
+   "ctx": " Sign up Sign up Sign up Sign upThank you for signing up!Please enter a valid email address"
+  },
+  {
+   "title": "Cookie policy",
+   "url": "https://www.xtend.me/cookie-policy",
+   "ctx": " Cookie policy Cookie policy BD◆Cookie policy◆Terms and Conditions◆Privacy Policy © 2026 XTEND . All rights reserved.BD◆Cookie policy◆Terms and Conditions◆Privacy PolicyXTEND Reality Inc, Tampa, Florida"
+  },
+  {
+   "title": "Terms and Conditions",
+   "url": "https://www.xtend.me/terms-and-conditions",
+   "ctx": " Terms and Conditions Terms and Conditions BD◆Cookie policy◆Terms and Conditions◆Privacy Policy © 2026 XTEND . All rights reserved.BD◆Cookie policy◆Terms and Conditions◆Privacy PolicyXTEND Reality Inc, Tampa, Florida"
+  },
+  {
+   "title": "Privacy Policy",
+   "url": "https://www.xtend.me/privacy-policy",
+   "ctx": " Privacy Policy Privacy Policy BD◆Cookie policy◆Terms and Conditions◆Privacy Policy © 2026 XTEND . All rights reserved.BD◆Cookie policy◆Terms and Conditions◆Privacy PolicyXTEND Reality Inc, Tampa, Florida"
+  },
+  {
+   "title": "Cookie Policy",
+   "url": "https://www.xtend.me/cookie-policy",
+   "ctx": " Cookie Policy We use cookies and similar technologies, including those of third parties, for the site's operation, improving browsing experience and personalizing content. See our Cookie Policy for more details Cookie PolicyWe use cookies and similar technologies, including those of third parties, for the site's operation, improving browsing experience and personalizing content. See our Cookie Policy for more details Cookie PolicyWe use cookies and similar technologies, including those of third"
+  },
+  {
+   "title": "Accept",
+   "url": "https://www.xtend.me/working-at-xtend#",
+   "ctx": " Accept AcceptDecline Cookie PolicyWe use cookies and similar technologies, including those of third parties, for the site's operation, improving browsing experience and personalizing content. See our Cookie Policy for more detailsAcceptDecline body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -o-font-smoothing: antialiased; } /* Set color style to inherit */ .inherit-color * { color: inherit; } /* Focus state style for keyboard navigation for the focusable elements"
+  },
+  {
+   "title": "Decline",
+   "url": "https://www.xtend.me/working-at-xtend#",
+   "ctx": " Decline AcceptDecline Cookie PolicyWe use cookies and similar technologies, including those of third parties, for the site's operation, improving browsing experience and personalizing content. See our Cookie Policy for more detailsAcceptDecline body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -o-font-smoothing: antialiased; } /* Set color style to inherit */ .inherit-color * { color: inherit; } /* Focus state style for keyboard navigation for the focusable element"
+  }
+ ],
+ "expected": [
+  {
+   "company": "Xtend",
+   "title": "Backend Team Lead (C++) Tel-Aviv R&DAll",
+   "location": "Tel-Aviv R&DAll",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-df_665",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-df_665",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Bookkeeper Tel-Aviv Full-time FinanceAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-0a_b61",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-0a_b61",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Business Development Director Tampa, FL OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-15_d6d",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-15_d6d",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Business Development Manager Tel-Aviv All",
+   "location": "Tel-Aviv All",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-07_e65",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-07_e65",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Buyer Tampa, FL OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-34_b6b",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-34_b6b",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Compliance & Equipment Specialist Swindon, UK OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-5a_b61",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-5a_b61",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Contracts / Bid Manager Swindon, UK OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-5a_b64",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-5a_b64",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Drone Lab Technician Tel-Aviv Full-time OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-1a_264",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-1a_264",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Embedded Software Engineer Tampa, FL OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-f2_c6a",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-f2_c6a",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Facilities Manager Herzliya operationAll",
+   "location": "Herzliya",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-be_07c",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-be_07c",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Flight Operations Drone Pilot Tampa, FL OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-15_d6e",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-15_d6e",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Head of C-UAS Product Line Tel-Aviv Full-time R&DAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-be_a64",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-be_a64",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "NPI Engineer Tampa, FL OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-34_b67",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-34_b67",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Sales Manager Tampa, FL OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-15_d6f",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-15_d6f",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Senior Drone Lab Technician Tampa, FL OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-03_46e",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-03_46e",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Senior Guidance Engineer Tel-Aviv Full-time R&DAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-2c_f6b",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-2c_f6b",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Senior Program Manager Tel-Aviv OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-b6_d67",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-b6_d67",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "SOX Manager Tel-Aviv Full-time FinanceAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-42_f6d",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-42_f6d",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "UAS Operator and Instructor Tel-Aviv Full-time OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-be_a67",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-be_a67",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "VP Operations Tampa, FL OperationsAll",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-45_c64",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-45_c64",
+   "description": ""
+  },
+  {
+   "company": "Xtend",
+   "title": "Xtend Germany Xfab General Manager Germany All",
+   "location": "Tel-Aviv",
+   "country_code": "",
+   "url": "https://www.xtend.me/positions/position-da_56a",
+   "posted_date": "",
+   "ats_platform": "scrape",
+   "job_id": "https://www.xtend.me/positions/position-da_56a",
+   "description": ""
+  }
+ ]
+}

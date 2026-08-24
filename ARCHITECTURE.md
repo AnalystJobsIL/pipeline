@@ -109,7 +109,7 @@ titles go to `claude -p`, whose YES/NO **role judgment** is cached per `company|
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And **26 of the 78 workflow steps carry `continue-on-error: true`** (counted 2026-08-24 by
+And **25 of the 77 workflow steps carry `continue-on-error: true`** (counted 2026-08-24 by
 `docs/check_docs.py`, which fails if this sentence and the workflows disagree), so a hard
 failure in an audit/hunt step still shows a green run — check the step log, not the badge.
 
@@ -125,7 +125,11 @@ python audit_empty_rows.py                             # dry-run (add --apply to
 publishing are separate workflow steps, so a local run cannot notify anyone. Most tools
 follow the same convention: **dry-run by default, `--apply` to write**. Useful env vars:
 `SCRAPE_LLM=1` (LLM extraction fallback), `SCRAPE_ASSUME_IL=1` (accept page-level Israel
-signal), `LLM_RESOLVE_CAP`, `JD_ENRICH_CAP`/`JD_ENRICH_BD_CAP`, `SERPAPI_KEY`,
+signal), `SCRAPE_VIA_UNLOCKER=1` (**spends Bright Data**: residential fetch of a page the
+plain fetch could not read), `SCRAPE_WORKERS` / `SCRAPE_COMPANY_BUDGET_S` /
+`SCRAPE_REFRESH_TIME_BUDGET_MIN` (refresh pool size / per-company seconds / minutes before
+the tail is carried over), `SCRAPE_CACHE_OUT` / `SCRAPE_ROT_OUT` / `SCRAPE_STAGES_OUT`
+(redirect the refresh's three outputs), `LLM_RESOLVE_CAP`, `JD_ENRICH_CAP`/`JD_ENRICH_BD_CAP`, `SERPAPI_KEY`,
 `BRIGHTDATA_API_KEY`/`BRIGHTDATA_ZONE`, `CLAUDE_CODE_OAUTH_TOKEN` (subscription OAuth, not
 an API key). Local secrets live in the gitignored `secrets.env`.
 
@@ -169,13 +173,33 @@ including the claim "none".
 1. **Native ATS fetchers** — `pipeline/fetchers.py` `FETCHERS` map. A `companies.csv` row
    whose `ats_platform` names a platform is fetched live every digest run via its public
    JSON API. Adding a platform = one `fetch_x(row)` normalizer + a map entry.
-2. **Scrape rows** (`ats_platform=scrape`) — `api_url` holds a LISTINGS page URL.
-   `refresh_scrape_cache.py` (daily 00:00 UTC) renders it with `scrape_universal.py` and
-   writes `scraped_cache.json`; the digest reads the cache via `fetch_scrape`.
-   `scrape_universal.scrape()` escalates through **5 strategies**:
-   captured XHR/JSON bodies → rendered-DOM job links → repeated heading/class-hinted card
-   groups → position-links (N same-prefix links, fetch each page) → **LLM extraction**
-   (`SCRAPE_LLM=1`: Claude reads the rendered text, returns JSON; gated on jobs-signals).
+2. **Scrape rows** (`ats_platform=scrape`; **425 active on 2026-08-24**, re-derive with the
+   one-liner above) — `api_url` holds a LISTINGS page URL. `refresh_scrape_cache.py`
+   (00:00 UTC, `scrape-refresh.yml`, step `Refresh the scrape cache`, with `SCRAPE_LLM=1`
+   and `SCRAPE_VIA_UNLOCKER=1`) renders every row with `scrape_universal.py` in a process
+   pool (`SCRAPE_WORKERS`, default `min(4, cpus)`; one Playwright per process, `spawn` on
+   every platform) and rewrites `scraped_cache.json`; the digest reads the cache via
+   `fetch_scrape`. `scrape_universal` is two halves: `_render(url)`, the only Playwright
+   touchpoint (page state, XHR bodies, rendered links, HTML, the main document's HTTP
+   status — or an error code when navigation failed), and `_extract(...)`, a pure function
+   of that bundle — testable offline — that escalates through **5 strategies, the first that
+   yields wins** (one exception: fewer than 3 structured hits may be a "featured posting"
+   widget, so the DOM pass still runs and is unioned in as `structured+dom`): structured JSON (JSON-LD / `__NEXT_DATA__` / captured XHR bodies) →
+   rendered-DOM job links with an Israel token near the title → repeated heading /
+   class-hinted card groups → position-links (N same-prefix links, each page fetched) →
+   **LLM extraction** (`SCRAPE_LLM=1`: Claude reads the visible text, returns JSON; gated
+   on jobs-signals). `scrape_result()` returns the jobs plus `status` ∈ `ok` / `empty` /
+   `error` and the winning strategy; `scrape()` — what every other lane calls — is its
+   list-only wrapper and never raises. One company gets `SCRAPE_COMPANY_BUDGET_S` (150 s)
+   of wall clock; every network wait is clamped to what is left. Measured 2026-08-24: the
+   last sequential cloud run (`gh run list -R AnalystJobsIL/pipeline --workflow
+   scrape-refresh.yml`, then `gh run view 32677334301 --log`) did 428 rows in 111.6 min,
+   median 11.4 s, max 368 s (Ford); the first pooled run, local, LLM and unlocker off, did
+   425 rows in 37 min, median 17 s, p95 37 s, max 103 s. Local scoped runs write nothing to
+   the repo — `python refresh_scrape_cache.py --only "Wix,Fiverr"` (add `--apply` to merge
+   the hits into `scraped_cache.json`, or `SCRAPE_CACHE_OUT=<file>` to merge elsewhere;
+   `--dry-run` for every row) — but they still render live pages, so with `SCRAPE_LLM` or
+   `SCRAPE_VIA_UNLOCKER` set (`secrets.env`!) they still spend.
 3. **Discovery nets** — `discovery_daily.py` (Bright Data LinkedIn/Indeed keyword sweeps)
    and `discovery_telegram.py` (public t.me/s channel previews) write
    `discovered_cache.json`, read by `fetch_discovery`. This is the safety net for
@@ -909,9 +933,9 @@ digest); deep re-hunt every 14 days and the weekend audits are backstops only.
 | `cloud_state/stale.json` | per-company health verdicts: `fetch-error`, `regressed-to-zero`, `empty-board`, `misconfig-scrape-on-ats` | pipeline/health.py during digest |
 | `cloud_state/health_baseline.json` | **all-time high-water** job count per company (monotonic — never decreases, which is why `regressed-to-zero` latches) | pipeline/health.py |
 | `cloud_state/resolve_attempts.json` | self-heal retry throttle (weekly; 5 strikes → abandoned) | resolve_broken.py |
-| `cloud_state/scrape_rot.json` | consecutive empty/error days per scrape row | refresh_scrape_cache.py |
+| `cloud_state/scrape_rot.json` | consecutive empty/error days per scrape row, with the last error code / HTTP status (§5a) | refresh_scrape_cache.py |
 | `cloud_state/firmographics.json` | **the shared, git-mergeable export of the `firmographics` table.** sqlite cannot be merged, so this text file is what the local and cloud stores converge through; the digest reads sqlite ∪ this file (fresher `as_of` wins) and writes the union back | `research_firmographics.py --export`, `pipeline/run.py` |
-| `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest warns in its audit when a prerequisite stage did not run today | each stage's workflow, via `python -m pipeline.stages stamp <stage>` |
+| `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest warns in its audit when a prerequisite stage did not run today | each stage's workflow, via `python -m pipeline.stages stamp <stage>` — except `collect`, which `refresh_scrape_cache.py` stamps itself with its counts (§5a) |
 | `cloud_state/source_health.json` | per discovery source: records returned this run, and the last day it returned any (`pipeline/sources.py`). A source that goes quiet is a workflow warning AND a line in the digest audit — Indeed returned zero for five days unnoticed | discovery_daily, discovery_telegram |
 | `state/` (gitignored) | resume markers (audit done-list). Written in the cloud too but **never committed**, so the Sunday audit re-audits every parked row from scratch (a SerpApi budget fact) | audit/local runs |
 
@@ -928,11 +952,74 @@ companies so a transient outage doesn't blank a company — bounded by the 14-da
 re-resolves via careers-page capture, needs `SERPAPI_KEY` for the search step; retries at
 most weekly, abandons after 5 strikes → "discovery covers it").
 
-Scrape rows rot differently and are handled in `refresh_scrape_cache.py`: an **error**
-carries the previous jobs forward for at most `CARRY_MAX_DAYS` (14) — never forever — while
-an **empty** result carries nothing. Either state persisting `ROT_PARK_DAYS` (3) days parks
-the row (`scrape rotted …`) so the listing-hunt pool re-finds and re-verifies it, because
-**active rows are otherwise invisible to listing-hunt and the weekly audits**.
+Scrape rows rot differently, in `refresh_scrape_cache.py`, and the two words matter
+(constants re-read from the code 2026-08-24 — this paragraph said `ROT_PARK_DAYS` was 3 and
+that empties parked; the code had said 7 / never since 2026-08-23):
+
+- **empty** — the page answered and had no Israel roles. Dropped from the cache, an `empty`
+  streak in `cloud_state/scrape_rot.json`, **never parked** (a company here can post nothing
+  for a month); at `EMPTY_REVALIDATE_DAYS` (45) the row is flagged `empty-but-suspect` for
+  triage and stays active and scanned.
+- **error** — the page could not be read (`scrape_result().status == "error"`: Playwright
+  launch or navigation failure; HTTP ≥ 400 on the main document with no jobs; an HTTP-200
+  wall — Akamai `Access Denied`, a Cloudflare/PerimeterX/Incapsula/DataDome/Distil challenge
+  page, stamped `block:access-denied` / `block:cloudflare` / … in the rot file — unless plain
+  HTTP got a readable page; a 200 with nothing captured at all; a
+  browser that failed mid-way and captured fewer roles than yesterday, for at most
+  `PARTIAL_MAX_NIGHTS` (2)). Yesterday's jobs are carried forward for at most
+  `CARRY_MAX_DAYS` (14) — never forever — and after `ROT_PARK_DAYS` (7) **observed** error
+  nights (a flip from `empty` starts a new streak; a night the budget skipped does not
+  count) the row is parked (`scrape rotted (error Nd) …`) so the registry's re-check pools own it again (the hunt
+  pool lists that token; a row that also carries a `page-empty` triage stamp is owned by
+  triage only — `docs/BACKLOG.md` 84), because **active rows are otherwise invisible to
+  listing-hunt and the weekly audits**. The first night that can produce an `error` at all
+  is 2026-08-25, so `parked=0` is the only possible value until about 2026-08-31. Until 2026-08-24 `scrape()` swallowed every navigation failure into `[]`, so
+  this branch had never run: the rot file held 207 `empty` entries and 0 `error`, and a 403
+  night silently deleted a company's jobs. The first pooled dry-run (425 rows, 2026-08-24,
+  residential IP, LLM and unlocker off) found 48 errors: 24 Cloudflare walls, 4 Incapsula,
+  9 HTTP 404, 8 HTTP 403, 1 HTTP 503, 2 navigation failures. The cloud run has the LLM tier
+  and the unlocker on, so its `with_jobs` should be a little higher and its walls fewer.
+  `no_il` in the stamp counts companies where roles were found but none in Israel — the
+  case that used to be byte-identical to "nothing on the page".
+- **a broken night is not a measurement.** Errors above `MASS_FAILURE_PCT` (20% of ≥ 20
+  rows) mean the runner broke, not a hundred sites at once: no streak advances, nothing is
+  parked, and the cache that IS written and committed is last night's plus tonight's
+  successes — nothing is removed, and **nothing ages**: while the condition persists the
+  cache is frozen and only the alarm says so (`CARRY_MAX_DAYS` does not apply to it). It
+  recovers by itself at the next healthy 00:00; do not re-dispatch (the 05:00–08:30 rule, the no-manual-dispatch rule in `CLAUDE.local.md`, and
+  the `repo-state` group all say so). If more than 20% of the companies that had jobs
+  yesterday **and were scraped tonight** (≥ 5 of them) came back with none, nothing is
+  written either — measured over what was processed, so a night the budget cut short cannot
+  hide it. Companies left unprocessed by the time budget carry last night's entry. A worker
+  that produces nothing for `STALL_S` (3 × the company budget) is stuck, not slow: its
+  children are terminated, its rows are `hang` errors, and the next chunk starts on a fresh
+  pool — one hung Chromium used to turn a finished night into a 330-minute killed job. The
+  processing order rotates by the day, so a budget cut never strands the same rows twice.
+  Known and not mine: on a push CONFLICT the workflow's `merge_json_cache.py` keeps every
+  company key that only origin has, so a night's deletions (empties, expired carries, parks)
+  are undone for that night — `docs/BACKLOG.md` 95, `infra`.
+
+Every exit stamps the `collect` stage with its counts, and the digest prints that line in
+its audit, keys alphabetical — the local rehearsal of 2026-08-24 rendered exactly:
+
+    - Stage order: repair: … | collect: 2026-08-24 (TODAY) carried=6 empty=160 errors=48
+      minutes=37 no_il=0 parked=0 rows=425 scraped=425 unprocessed=0 with_jobs=217 workers=4 | …
+
+Read it with this arithmetic, which holds on every exit: `with_jobs + empty + errors =
+scraped`, `scraped + unprocessed = rows`, `no_il ≤ empty` (roles found, none in Israel),
+`carried ≤ errors` (error rows whose cached jobs, up to 14 nights old, were kept). A line
+that does not reconcile, or that lacks a key, is not from this code. `alarm=` appears only
+when something is wrong — `mass-failure-errors-NN%`,
+`errors-NN%`, `shrink-abort-A-to-B`, `unprocessed-N` (above 5% of rows), `no-jobs` — and a
+line reading `collect: <yesterday> (1d ago)` means the refresh crashed before stamping (the
+workflow no longer re-stamps it blindly): on such a night nothing was committed at all —
+the refresh step is not `continue-on-error` and the commit step has no `if: always()` — so
+the digest served the previous cache; `gh run list -R AnalystJobsIL/pipeline --workflow
+scrape-refresh.yml` finds the run, the failing step is `Refresh the scrape cache`. **Nothing
+yet turns `alarm` into a `::warning::` or a bold audit line, and `stages.require("collect",
+1)` is silent at exactly one day** — that hook is `infra`'s, `docs/BACKLOG.md` 85. Offline,
+`scrape_rot.json` carries each empty/error row's last error code, HTTP status, roles found
+before the Israel filter, and the number of nights observed.
 
 **The four unrelated "14"s** — don't conflate them: the job board's 14-day `first_seen`
 window; `CARRY_MAX_DAYS`=14 (stale scrape jobs); the 14-day deep re-hunt cadence; and
@@ -981,7 +1068,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
 - "Why isn't company X in my email?" → §5b above (ordered runbook).
 - "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
 - "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
-  **26 of the 78 workflow steps are `continue-on-error`, so a green run can still hide a
+  **25 of the 77 workflow steps are `continue-on-error`, so a green run can still hide a
   failed step** — read the step, not the badge.
 - Coverage snapshot:
   ```bash

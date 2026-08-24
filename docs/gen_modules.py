@@ -34,7 +34,7 @@ CLASS = {
  "merge_csv_rows": ("scheduled", "git-layer segment-aware merge for companies.csv; every csv-committing workflow calls it"),
  "merge_json_cache": ("scheduled", "three-way merge for the company-keyed JSON caches"),
  "probe_candidates": ("scheduled", "cheap daily signal probe of monitored-candidate pages; wakes rows for the hunt"),
- "refresh_scrape_cache": ("scheduled", "00:00 re-render of every scrape row; JD carry-forward and rot-parking"),
+ "refresh_scrape_cache": ("scheduled", "00:00 pooled re-render of every scrape row: error/empty rot, JD carry-forward, park after 7 error nights, the `collect` stamp the mail prints (ARCHITECTURE §5a)"),
  "repair_dead_urls": ("scheduled", "replaces stored URLs whose hostname does not resolve - runs BEFORE the hunt on purpose"),
  "repair_extract_gap": ("scheduled", "re-scrapes rows triage marked `extract-gap`; the cheapest recovery class"),
  "resolve_broken": ("scheduled", "06:00 self-heal: re-resolves boards that went stale, throttled weekly, 5 strikes"),
@@ -58,7 +58,7 @@ CLASS = {
  "company_type_analysis": ("operator", "joins firmographics with matched jobs -> out/company_type_analysis.{json,md} (ARCHITECTURE.md section 7)"),
  "firmo_health_check": ("operator", "tripwire: is the firmographics chain actually classifying anything?"),
  "verify_company": ("operator", "live-fetch verification of one company's endpoint - the research discipline as a script"),
- "cache_new_rows": ("operator", "scrapes rows activated since the last refresh and merges them into the cache"),
+ "cache_new_rows": ("operator", "superseded shim: delegates to `refresh_scrape_cache.py --only-missing` (docs/BACKLOG.md 87 retires it)"),
  "setup_brightdata": ("operator", "one-time: store the Bright Data token + zone in secrets.env"),
  "setup_serpapi_key": ("operator", "one-time: store the SerpApi key (quota exhausted until 2026-09-01)"),
  # legacy - one-shot capture, probe, or superseded resolver
