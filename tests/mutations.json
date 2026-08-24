@@ -623,9 +623,9 @@
     "file": "pipeline/identity_gate.py",
     "symbol": "page_names_company",
     "class": "M6-fallback-removal",
-    "find": "    if len(html) < 2000 and os.environ.get(\"BRIGHTDATA_API_KEY\"):",
-    "replace": "    if False and os.environ.get(\"BRIGHTDATA_API_KEY\"):",
-    "why": "removes the residential-unlocker rung, so a bot-walled page returns None and every caller reads that as refusal. The docstring argues at length for gating on the KEY rather than SCRAPE_VIA_UNLOCKER; one token reverses it.",
+    "find": "    if (len(html) < 2000 and os.environ.get(\"BRIGHTDATA_API_KEY\")\n            and _UNLOCK_SPENT < _UNLOCK_BUDGET):",
+    "replace": "    if (False and len(html) < 2000 and os.environ.get(\"BRIGHTDATA_API_KEY\")\n            and _UNLOCK_SPENT < _UNLOCK_BUDGET):",
+    "why": "deletes the unlocker rung: a bot-walled page reads as no-evidence instead of being retried through the residential fetch. Re-aimed when the rung gained its paid-call budget (wave 6).",
     "must_be_killed_by_behavioural": true
   },
   {
@@ -683,8 +683,8 @@
     "file": "pipeline/identity_gate.py",
     "symbol": "page_names_company",
     "class": "M7-constant-drift",
-    "find": "    if len(html) < 2000 and os.environ.get(\"BRIGHTDATA_API_KEY\"):",
-    "replace": "    if len(html) < 200 and os.environ.get(\"BRIGHTDATA_API_KEY\"):",
+    "find": "    if (len(html) < 2000 and os.environ.get(\"BRIGHTDATA_API_KEY\")\n            and _UNLOCK_SPENT < _UNLOCK_BUDGET):",
+    "replace": "    if (len(html) < 200 and os.environ.get(\"BRIGHTDATA_API_KEY\")\n            and _UNLOCK_SPENT < _UNLOCK_BUDGET):",
     "why": "same constant, other consumer: drifted to 200 the unlocker retry fires only for near-empty pages, and every bot wall rendering a 200-2000 char challenge shell (the Bit class the rung exists for) silently reads as None -- a refusal at every caller. Killed by the unlocker-rung test now that its walled page is ~520 chars.",
     "must_be_killed_by_behavioural": true
   },
@@ -713,9 +713,9 @@
     "file": "pipeline/identity_gate.py",
     "symbol": "_tenant_near",
     "class": "M3-branch-narrowing",
-    "find": "    return any(f and abs(len(f) - len(t)) <= 1 and (f in t or t in f)\n               for f in forms for t in targets)",
-    "replace": "    return any(f and abs(len(f) - len(t)) <= 99 and (f in t or t in f)\n               for f in forms for t in targets)",
-    "why": "widens near-equality to plain containment: `lili` is a substring of `elililly`, so Lili promotes onto Eli Lilly's board -- the recorded incident the tightness rule exists for.",
+    "find": "    return any(f and (f == t if min(len(f), len(t)) < 3\n                      else abs(len(f) - len(t)) <= 1 and (f in t or t in f))\n               for f in forms for t in targets)",
+    "replace": "    return any(f and (f == t if min(len(f), len(t)) < 3\n                      else abs(len(f) - len(t)) <= 99 and (f in t or t in f))\n               for f in forms for t in targets)",
+    "why": "widens near-equality to plain containment: `lili` is a substring of `elililly` and that promotion is a recorded incident. Re-aimed onto the short-form-equality expression (wave 6).",
     "must_be_killed_by_behavioural": true
   },
   {
@@ -866,16 +866,6 @@
     "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
     "replace": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=\"\")\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
     "why": "wave-5 R1: drops the snapshot page from the gate -- the tenant clause (vacuous on path platforms) then decides, and a hijacked-domain snapshot with a name-matching embed resurrects.",
-    "must_be_killed_by_behavioural": true
-  },
-  {
-    "id": "embed-near-window-drift",
-    "file": "pipeline/identity_gate.py",
-    "symbol": "_tenant_near",
-    "class": "M7-constant-drift",
-    "find": "    return any(f and abs(len(f) - len(t)) <= 1 and (f in t or t in f)\n               for f in forms for t in targets)",
-    "replace": "    return any(f and abs(len(f) - len(t)) <= 2 and (f in t or t in f)\n               for f in forms for t in targets)",
-    "why": "wave-5 R2: at +-2 the digit-stripped Comeet uid `A5.000` -> `a` is CONTAINED in `zap` and 8 cross-company accepts appear on the two embed write paths, all suite-green. The window is the whole tightness; only the extreme value (99) was recorded.",
     "must_be_killed_by_behavioural": true
   },
   {
