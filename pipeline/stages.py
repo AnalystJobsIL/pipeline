@@ -74,6 +74,23 @@ def require(stage: str, max_age_days: int = 1) -> bool:
     return True
 
 
+def alarms(stage: str = "collect", max_age_days: int = 0) -> list:
+    """What the digest must SAY about a stage: it did not run within `max_age_days`, or it
+    stamped an `alarm`. `require()` only warns when a stage is older than a day, so a refresh
+    that crashed last night (stamp dated yesterday) and a mass-failure night (stamp dated
+    today, `alarm=mass-failure-…`) were both invisible in the mail (docs/BACKLOG.md 85)."""
+    e = _load().get(stage) or {}
+    out = []
+    age = age_days(stage)
+    if age is None:
+        out.append(f"{stage} never ran")
+    elif age > max_age_days:
+        out.append(f"{stage} last ran {age}d ago — the digest read stale input")
+    if e.get("alarm"):
+        out.append(f"{stage} {e['alarm']}")
+    return out
+
+
 def summary() -> str:
     """One line per stage for the digest audit block."""
     data = _load()

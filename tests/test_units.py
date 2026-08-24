@@ -3203,3 +3203,30 @@ def test_platform_check_catches_a_scoped_fetcher_that_forgot_to_declare_it(monke
     monkeypatch.setattr(fetchers.fetch_greenhouse, "israel_scoped", True, raising=False)
     assert grid()["greenhouse"][-2:] == ["MISSING", "ok"], \
         "claims to narrow to Israel but does not — would switch off empty-board for 104 rows"
+
+
+def test_a_stale_or_alarmed_collect_stamp_reaches_the_mail(tmp_path, monkeypatch):
+    """BACKLOG 85 (2026-08-24): a refresh that crashed last night left a stamp dated
+    yesterday, and `stages.require("collect", 1)` is silent at exactly one day; a mass-failure
+    night stamps TODAY with `alarm=…`, which nothing read. Both are now a bold line in all
+    three renderers and a workflow warning."""
+    import datetime as dt
+    import html as _h
+    from pipeline import stages
+    from pipeline import digest as D
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    assert stages.alarms("collect") == ["collect never ran"]
+    stages.stamp("collect", scraped=425, with_jobs=217)
+    assert stages.alarms("collect") == []
+    stages.stamp("collect", scraped=425, with_jobs=3, alarm="mass-failure-errors-96%")
+    assert stages.alarms("collect") == ["collect mass-failure-errors-96%"]
+    yesterday = (dt.date.today() - dt.timedelta(days=1)).isoformat()
+    import json as _j
+    data = stages._load(); data["collect"]["date"] = yesterday; data["collect"].pop("alarm")
+    _j.dump(data, open(stages.PATH, "w", encoding="utf-8"))
+    assert stages.alarms("collect") == ["collect last ran 1d ago — the digest read stale input"]
+    stats = {"stage_alarms": stages.alarms("collect"), "paths": {}, "stages": stages.summary()}
+    _, md = D.build_markdown([], dt.date.today().isoformat(), stats)
+    assert "- **Stages:** collect last ran 1d ago" in md
+    assert "STAGES: collect last ran 1d ago" in D._text_audit(stats)
+    assert "<b>Stages:</b> collect last ran 1d ago" in D._html_audit(stats, lambda v: _h.escape(str(v)))

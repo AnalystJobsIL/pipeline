@@ -1540,8 +1540,10 @@ Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-d
     should probably win (the row was active and erroring, so page-empty is stale). Found by
     wave-1 attacker C.
 
-85. **Nothing reads the `collect` stamp's `alarm`, and `stages.require("collect", 1)` is
-    silent at exactly one day** — lane: `infra` (`pipeline/run.py`, the three audit renderers
+85. **CLOSED 2026-08-24 (scraper lane, with the operator's approval — `stages.alarms()`,
+    read by `pipeline/run.py`, rendered as `- **Stages:**` by all three renderers).** Was:
+    nothing reads the `collect` stamp's `alarm`, and `stages.require("collect", 1)` is
+    silent at exactly one day — lane: `infra` (`pipeline/run.py`, the three audit renderers
     in `pipeline/digest.py`). A mass-failure night stamps `date=TODAY`, so `require` says
     fresh; the only trace in the mail is `alarm=…` inside the collapsed `Stage order:` line. A
     crash night leaves yesterday's stamp, `age == 1`, and `1 > 1` is False, so no

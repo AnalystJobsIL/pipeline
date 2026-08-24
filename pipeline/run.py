@@ -74,6 +74,11 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     stages.require("repair", 1)
     stages.require("collect", 1)
     stages.require("enrich", 1)
+    # the scrape's own verdict on itself (a crashed refresh, a mass-failure night) — a bold
+    # line in the audit and a workflow warning, not a token inside a collapsed block
+    _stage_alarms = stages.alarms("collect")
+    for _line in _stage_alarms:
+        print(f"::warning::stage {_line}", flush=True)
     # a discovery source that has quietly stopped returning records is invisible otherwise
     from . import sources as _sources_mod
     _dead_sources = _sources_mod.stale()
@@ -434,6 +439,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         "stages": stages.summary(),
         "dead_sources": _dead_sources,
         "registry_alarms": _registry_alarms_lines,
+        "stage_alarms": _stage_alarms,
         "fetch_health": _fetch_health_lines,
         "paths": dict(paths),
         "failed_companies": failed_companies,

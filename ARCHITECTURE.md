@@ -1090,9 +1090,10 @@ line reading `collect: <yesterday> (1d ago)` means the refresh crashed before st
 workflow no longer re-stamps it blindly): on such a night nothing was committed at all —
 the refresh step is not `continue-on-error` and the commit step has no `if: always()` — so
 the digest served the previous cache; `gh run list -R AnalystJobsIL/pipeline --workflow
-scrape-refresh.yml` finds the run, the failing step is `Refresh the scrape cache`. **Nothing
-yet turns `alarm` into a `::warning::` or a bold audit line, and `stages.require("collect",
-1)` is silent at exactly one day** — that hook is `infra`'s, `docs/BACKLOG.md` 85. Offline,
+scrape-refresh.yml` finds the run, the failing step is `Refresh the scrape cache`. Both
+cases are also a **bold `- **Stages:**` line in the audit and a `::warning::` in the digest
+log** (`stages.alarms("collect")`, read by `pipeline/run.py`): a stamp older than today, or
+one carrying `alarm=`. Offline,
 `scrape_rot.json` carries each empty/error row's last error code, HTTP status, roles found
 before the Israel filter, and the number of nights observed.
 
