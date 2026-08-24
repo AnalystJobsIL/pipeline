@@ -2849,6 +2849,19 @@
    "url": "https://cloudhiro.com/careers/product-manager/"
   }
  ],
+ "Cnoga Medical": [
+  {
+   "ats_platform": "scrape",
+   "company": "Cnoga Medical",
+   "country_code": "",
+   "description": "",
+   "job_id": "921016deb5de40ba",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Product marketing",
+   "url": "https://www.cnogacare.co/careers/"
+  }
+ ],
  "CodeMonkey": [
   {
    "ats_platform": "scrape",
@@ -9681,6 +9694,19 @@
    "posted_date": "",
    "title": "Talent Sourcing Specialist",
    "url": "https://www.regulus.com/careers"
+  }
+ ],
+ "Ride Vision": [
+  {
+   "ats_platform": "scrape",
+   "company": "Ride Vision",
+   "country_code": "",
+   "description": "",
+   "job_id": "9614b38128c17aeb",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Sales Manager EU",
+   "url": "https://ride.vision/careers-new/"
   }
  ],
  "Riverside": [
