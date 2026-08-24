@@ -2253,3 +2253,87 @@ def test_the_scrape_branch_of_each_row_builder_is_gated_too(monkeypatch):
                       (["a", "b", "c", "d", "e"], "https://pliops.com/careers"), {})
     assert real[4] == "true" and real[3] == "https://pliops.com/careers", (
         "positive control: a real careers page must still activate: %r" % (real,))
+
+
+def test_a_tenant_that_matches_only_the_FILLER_STRIPPED_core_is_still_admitted():
+    """Kills `tenant-filler-neutered`.
+
+    `tenant_is_this_company` builds two targets: the whole normalised name, and a `core` with
+    generic and geographic words removed via `_NAME_FILLER`. For any company whose registry
+    name carries such a word, the core is the ONLY target its own tenant matches --
+    `Qualcomm Israel` on `qualcomm.wd5.myworkdayjobs.com`, `WINT Water Intelligence` on
+    `wint.careers.hibob.com`. Neutering `_NAME_FILLER` flips 22 registry rows from admit to
+    refuse, and because those endpoints are machine APIs that `page_names_company` answers
+    `None` for, the refusal is FINAL: `activation_ok` and the Sunday audit both stamp
+    "the board belongs to another company" onto a company's own board.
+
+    It survived every existing fixture because every positive control in this file is either
+    a path-tenant greenhouse board or an exact-name subdomain tenant (`Riskified` on
+    `riskified.wd3`). Not one needed the filler-stripped core. That is the same shape as
+    "a constant stub measures the constant".
+    """
+    from pipeline import identity_gate as G
+    assert G.tenant_is_this_company(
+        "Qualcomm Israel",
+        "https://qualcomm.wd5.myworkdayjobs.com/External?locations=Israel") is True, (
+        "Qualcomm's own Workday tenant, refused because the name carries 'Israel'")
+    assert G.tenant_is_this_company(
+        "WINT Water Intelligence", "https://wint.careers.hibob.com/jobs") is True, (
+        "WINT's own hibob tenant, refused because the name carries 'Water Intelligence'")
+    # the canonical refusal must be unmoved
+    assert G.tenant_is_this_company(
+        "Bancor", "https://careers-bancorpbank.icims.com/jobs/search?ss=1") is False
+
+
+def test_host_platform_returns_a_name_the_cracker_actually_has_a_pattern_for():
+    """Kills `hostplatform-alias-drop`.
+
+    `crack_walled._platform_of` falls back to `host_platform` precisely when another tool has
+    erased the `unsupported ATS <x>` note token -- measured at 24 of 25 pool rows. If
+    `host_platform` returns the raw host fragment instead of the platform alias, the fallback
+    resolves to a name `_HOST_PATTERNS` has no entry for, `crack_one` returns
+    `("skip", "no pattern for ...")`, and the row quietly stops being cracked. No exception,
+    no red build -- exactly the shape the durable-data fix existed to prevent.
+
+    The pool guard covers membership; nothing covered the VALUE handed to `crack_one`.
+    """
+    from pipeline import identity_gate as G
+    import crack_walled as C
+    for url, expect in (("https://synopsys.avature.net/talentcommunity", "avature"),
+                        ("https://x.icims.com/jobs", "icims"),
+                        ("https://y.wd1.myworkdayjobs.com/careers", "workday")):
+        plat = G.host_platform(url)
+        assert plat == expect, "%s -> %r, expected %r" % (url, plat, expect)
+    # and the fallback must name something the cracker can act on
+    assert G.host_platform("https://synopsys.avature.net/x") in C._HOST_PATTERNS, (
+        "the platform name host_platform returns has no _HOST_PATTERNS entry, so crack_one "
+        "skips the row")
+
+
+def test_the_unlocker_rung_inside_the_page_test_still_exists(monkeypatch):
+    """Kills `page-unlocker-drop`.
+
+    `page_names_company`'s own docstring records why this rung is gated on the KEY rather
+    than on `SCRAPE_VIA_UNLOCKER`: `audit-coverage.yml` runs the cracker without that flag,
+    and a missing flag must not silently downgrade the gate. Cause 1 in that docstring is a
+    403 to a plain fetch -- `Bit`'s own careers page -- which renders under 2000 chars and
+    would otherwise return `None`, which every caller reads as a refusal.
+
+    Deleting the rung was green across the whole suite: nothing referenced
+    `BRIGHTDATA_API_KEY` or `unlock` in either test file.
+    """
+    import bd_rescue
+    from pipeline import identity_gate as G
+    walled = "<html><body>Access denied</body></html>"          # < 2000 chars
+    full = "<html><h1>Bit Careers</h1>" + "<p>Bit is hiring.</p>" * 200 + "</html>"
+
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    monkeypatch.setattr(bd_rescue, "unlock", lambda url, timeout=90: full)
+    assert G.page_names_company("Bit", "https://careers.bit.example/", html=walled) is True, (
+        "a bot-walled page must be retried through the unlocker, not read as no-evidence")
+
+    # without the key the rung is inert and the answer is honestly `None`, not False
+    monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
+    assert G.page_names_company("Bit", "https://careers.bit.example/", html=walled) is None, (
+        "with no key we could not look, and that is not the same as looking and finding "
+        "someone else")

@@ -597,5 +597,35 @@
     "find": "                        if not _gate.identity_ok(name, url):",
     "replace": "                        if n_il < 0 and not _gate.identity_ok(name, url):",
     "why": "narrows the persist guard to an impossible Israel-job count"
+  },
+  {
+    "id": "tenant-filler-neutered",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "tenant_is_this_company",
+    "class": "M1-gate-removal",
+    "find": "                         if w.lower() not in _NAME_FILLER))",
+    "replace": "                         if w.lower() not in set()))",
+    "why": "the filler-stripped core is the ONLY target a subdomain tenant matches for a name carrying a geographic or industry word. Neutering it flips 22 rows from admit to refuse (Qualcomm Israel, WINT Water Intelligence, Zebra Technologies), and on machine endpoints that refusal is final.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "hostplatform-alias-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "host_platform",
+    "class": "M7-constant-drift",
+    "find": "    return _PLATFORM_ALIAS.get(m.group(1).lower(), m.group(1).lower())",
+    "replace": "    return m.group(1).lower()",
+    "why": "crack_walled._platform_of uses host_platform as the durable fallback when the note token has been erased (24 of 25 pool rows). Returning the raw host makes _HOST_PATTERNS miss, so crack_one skips the row silently.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "page-unlocker-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "page_names_company",
+    "class": "M6-fallback-removal",
+    "find": "    if len(html) < 2000 and os.environ.get(\"BRIGHTDATA_API_KEY\"):",
+    "replace": "    if False and os.environ.get(\"BRIGHTDATA_API_KEY\"):",
+    "why": "removes the residential-unlocker rung, so a bot-walled page returns None and every caller reads that as refusal. The docstring argues at length for gating on the KEY rather than SCRAPE_VIA_UNLOCKER; one token reverses it.",
+    "must_be_killed_by_behavioural": true
   }
 ]
