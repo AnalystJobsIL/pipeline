@@ -2710,8 +2710,21 @@ def test_every_refusal_note_keeps_the_row_in_a_re_check_pool(monkeypatch):
         E._row_for_ats(("Bancor", "icims", "bancorpbank", _BANCORP, 30, 9), seed),
         E._row_for_scrape("Bancor", ["a", "b"], _BANCORP, {}),
     ]
+    import listing_hunt as LH
+    import registry_health as RH
     for row in rows:
         assert row[4] == "false", "fixture drift: these must all be refusals: %r" % (row,)
         assert re.search(ci.POOL, row[5], re.I), (
             "a refusal note that matches no re-check pool orphans the row and, at 11 "
             "orphans, blocks the digest commit: %r" % (row,))
+        # ...and the RECEIVER's own selector, not just check_invariants' copy. Wave-4 R3:
+        # dropping `no listing found` from listing_hunt's pool regex emptied the hunt of
+        # 27 named rows while this test, check_invariants and registry_health all stayed
+        # green -- because all three asserted a MIRROR, and the mirrors were retyped.
+        assert LH.HUNT_POOL.search(row[5]), (
+            "the hand-off token no longer lands in listing_hunt's own pool: %r" % (row,))
+    # a retyped mirror is how the loss stayed silent; the mirror must BE the tool's
+    assert RH._HUNT_SHAPE is LH.HUNT_POOL, (
+        "registry_health's hunt mirror is no longer listing_hunt's own constant")
+    # validate_empty's hand-off shape stays in the receiver's pool too
+    assert LH.HUNT_POOL.search("empty-but-suspect; 3 IL but the board is not this company's")

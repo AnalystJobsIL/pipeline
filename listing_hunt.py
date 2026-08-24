@@ -107,6 +107,28 @@ def _resolve_rebrand(url):
     return final, (d1 if d0 != d1 else "")
 
 
+# The hunt pool's NOTE SHAPES -- every parked shape that could still hide a real listing,
+# NOT just the hunt-produced notes (chrome-verified "monitored candidate" rows and
+# auto_expand's "scanned; no open"/"unreachable" were invisible before). Any NEW verdict
+# string must be added here or it silently retires the row from the hunt pool forever.
+#
+# This constant is the RECEIVER of every refusal hand-off: since wave 3, four refusal
+# classes end with `no listing found` ON THE THEORY that this selector picks the row up.
+# It was an inline expression in `main()`, mirrored by RETYPED copies in
+# `registry_health._HUNT_SHAPE` and `check_invariants.POOL` -- so dropping one alternative
+# here emptied the hunt of 27 rows while pytest, check_invariants and registry_health all
+# stayed green (wave-4 R3). registry_health now IMPORTS this constant; the guard test
+# asserts every refusal note matches it, not just check_invariants' copy.
+HUNT_POOL = re.compile(
+    r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|"
+    r"host documented|probe-woken|scanned; no open|unreachable|"
+    r"aggregator URL|no listing found|redirects to|scanned via brightdata|"
+    r"empty-but-suspect|needs re-resolution|needs manual resolution|"
+    # the stored address was an aggregator or another company's page: these rows
+    # need the hunt more than most
+    r"url-cleared|url-flagged")
+
+
 def _triaged_page_empty(note):
     """Triage proved this row has a LIVE page with genuinely no roles, so the hunt
     skips it and triage owns the re-check. Module-level on purpose: probe_candidates
@@ -258,17 +280,7 @@ def main():
 
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
-               # every parked shape that could still hide a real listing — NOT just the
-               # hunt-produced notes (chrome-verified "monitored candidate" rows and
-               # auto_expand's "scanned; no open"/"unreachable" were invisible before)
-               # NOTE: any NEW verdict string must be added here or it silently retires
-               # the row from the hunt pool forever.
-               and re.search(r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|"
-                             r"host documented|probe-woken|scanned; no open|unreachable|"
-                             r"aggregator URL|no listing found|redirects to|scanned via brightdata|empty-but-suspect|needs re-resolution|needs manual resolution|"
-                             # the stored address was an aggregator or another company's
-                             # page: these rows need the hunt more than most
-                             r"url-cleared|url-flagged", r[5] or "")
+               and HUNT_POOL.search(r[5] or "")
                # alias-of: a second row for a company we already scan at the same url.
                # Re-hunting it re-creates the duplicate this parking exists to remove.
                and not re.search(r"defunct|domain-dead|alias-of", r[5] or "")

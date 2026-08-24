@@ -817,5 +817,15 @@
     "replace": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=best_html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
     "why": "wave-4 R2: the gate handed the LONGEST page seen across alts instead of the page the candidate was extracted from -- accept or refuse at random relative to the evidence. Survived while the fixture's single-alt constant-page population made the html argument informationless.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "hunt-pool-receiver-token-drop",
+    "file": "listing_hunt.py",
+    "symbol": "HUNT_POOL",
+    "class": "M7-constant-drift",
+    "find": "    r\"aggregator URL|no listing found|redirects to|scanned via brightdata|\"",
+    "replace": "    r\"aggregator URL|redirects to|scanned via brightdata|\"",
+    "why": "wave-4 R3: the receiver side of the wave-3 hand-off. Dropping this alternative emptied the hunt pool of 27 named rows (InnovoPro, LawGeex, FairFly, ...) with pytest, check_invariants and registry_health all green -- the senders were guarded, the receiver was not, and both mirrors were retyped copies.",
+    "must_be_killed_by_behavioural": true
   }
 ]

@@ -107,14 +107,12 @@ class _TerminalShim:
 TERMINAL = _TerminalShim
 
 
-# The two note-shapes still inlined inside their tool's main() (see the BACKLOG item above).
-# Kept verbatim and asserted against the tools by
-# `test_the_ownership_matrix_is_built_from_the_tools_own_predicates`.
-_HUNT_SHAPE = re.compile(
-    r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|host documented|"
-    r"probe-woken|scanned; no open|unreachable|aggregator URL|no listing found|redirects to|"
-    r"scanned via brightdata|empty-but-suspect|needs re-resolution|needs manual resolution|"
-    r"url-cleared|url-flagged", re.I)
+# The hunt shape is the TOOL'S OWN constant, imported -- a retyped mirror here reported
+# rows as hunt-owned after a selector edit removed them from the actual hunt (wave-4 R3:
+# one dropped alternative, 27 rows gone, this matrix still green). The old copy was also
+# re.I where the tool is case-sensitive: a mirror looser than its tool is exactly the
+# direction that hides orphans.
+from listing_hunt import HUNT_POOL as _HUNT_SHAPE
 _PROBE_SHAPE = re.compile(r"monitored candidate|host documented|no IL listing", re.I)
 _EXTRACT_GAP = re.compile(r"dark-triage[^|]*extract-gap", re.I)
 
