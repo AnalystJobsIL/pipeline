@@ -997,5 +997,15 @@
     "replace": "    open(target_path, \"w\", encoding=\"utf-8\", newline=\"\").write(\"\r\n\".join(\",\".join(r) for r in target) + \"\r\n\")",
     "why": "wave-7 confirmation: reverting the atomic write to an in-place truncation was suite-green; a runner kill mid-merge then commits a stump behind || true on nine recovery paths.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "hunt-pool-terminal-drop",
+    "file": "listing_hunt.py",
+    "symbol": "in_hunt_pool",
+    "class": "M1-gate-removal",
+    "find": "            and not TERMINAL.search(r[5] or \"\")\n            and not is_recruiter(r[0])   # agencies are never activated",
+    "replace": "            and not is_recruiter(r[0])   # agencies are never activated",
+    "why": "the hunt ACTIVATES; without the terminal exclusion a deactivated redundant twin and every alias-of row re-enter it and get re-hunted onto a board already scanned. listing_hunt was the last tool spelling its own 3-token terminal list.",
+    "must_be_killed_by_behavioural": true
   }
 ]

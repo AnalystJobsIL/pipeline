@@ -35,6 +35,7 @@ from urllib.parse import urlparse
 
 from pipeline.company_identity import is_foreign, ATS_HOST
 from pipeline.firmographics import looks_like_junk
+from pipeline.verdicts import TERM_RX as TERMINAL
 from pipeline.company_identity import looks_like_a_job_listing_page
 from resolve_llm import _ask_claude
 # One seam, called through the MODULE, never bound with `from ... import x as y`. A
@@ -127,6 +128,31 @@ HUNT_POOL = re.compile(
     # the stored address was an aggregator or another company's page: these rows
     # need the hunt more than most
     r"url-cleared|url-flagged")
+
+
+def in_hunt_pool(r):
+    """The hunt pool's OWN membership rule -- dateless. `main()` composes it with the
+    14-day cooldown (`_stale_hunt`/`_actionable_mode`), which is a schedule, not
+    ownership. `registry_health` imports THIS instead of re-spelling the filter as a
+    closure (the one mirror the wave-6 extraction left behind), and the four sibling
+    tools export theirs the same way.
+
+    Terminal states come from the shared `pipeline.verdicts.TERM_RX`: an `alias-of` twin
+    already scans at the same url, so re-hunting it re-creates the duplicate the parking
+    exists to remove; the wider list adds `duplicate of`/`redundant`/`recruiter`
+    (measured: 0 rows moved). Known hazard inherited with it: `recruiter` matches
+    `SmartRecruiters` in a note (registry_health.explained documents the class)."""
+    return (len(r) >= 6 and r[4] == "false"
+            and bool(HUNT_POOL.search(r[5] or ""))
+            and not TERMINAL.search(r[5] or "")
+            and not is_recruiter(r[0])   # agencies are never activated
+            # discovery leaks job titles and category words in as company names
+            # ("AppSec", "my team", "Sql developer - X"). Searching for a careers page
+            # for a non-company burns the time budget and returns nonsense.
+            and not looks_like_junk(r[0])
+            # triage proved page-empty rows have a live page with no roles -- the daily
+            # probe owns them; hunting them again just burns budget.
+            and not _triaged_page_empty(r[5] or ""))
 
 
 def _triaged_page_empty(note):
@@ -279,21 +305,8 @@ def main():
         return age >= 14
 
     targets = [(i, r) for i, r in enumerate(rows)
-               if r and len(r) >= 6 and r[4] == "false"
-               and HUNT_POOL.search(r[5] or "")
-               # alias-of: a second row for a company we already scan at the same url.
-               # Re-hunting it re-creates the duplicate this parking exists to remove.
-               and not re.search(r"defunct|domain-dead|alias-of", r[5] or "")
-               and not is_recruiter(r[0])   # agencies are never activated
-               # discovery leaks job titles and category words in as company names
-               # ("AppSec", "my team", "Sql developer - X"). Searching for a careers page
-               # for a non-company burns the time budget and returns nonsense —
-               # remoterocketship.com/company/guildmortgage for "AppSec".
-               and not looks_like_junk(r[0])
-               # triage proved page-empty rows have a live page with no roles — the daily
-               # probe owns them; hunting them again just burns budget. (Explicit helper:
-               # inlining this as and/or mixes precedence and silently empties the pool.)
-               and not _triaged_page_empty(r[5] or "")
+               if r and in_hunt_pool(r)
+               # the 14-day cooldown is a schedule, not ownership: it stays here
                and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5])
                     or _actionable_mode(r[5] or ""))]
     # Least-recently-hunted first. The pool (212 rows) is larger than one night's time

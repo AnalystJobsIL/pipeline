@@ -2303,6 +2303,21 @@ def test_every_ownership_mirror_agrees_with_the_tool_it_mirrors():
         "the extract-gap mirror disagrees with repair_extract_gap.MODE by %d row(s): %s"
         % (len(gap_matrix ^ gap_real), sorted(gap_matrix ^ gap_real)[:8]))
 
+    # ...and the three pools whose tools export an `in_*_pool` callable: the matrix must
+    # be THAT callable over the rows, member for member. The hunt was the one left as a
+    # closure after wave 6; a closure is a retype with extra steps.
+    import listing_hunt as LH
+    import probe_candidates as PC
+    import triage_dark as TD
+    for label, pred in (("listing_hunt (19:00 daily)", LH.in_hunt_pool),
+                        ("probe_candidates (05:00 daily)", PC.in_probe_pool),
+                        ("triage_dark (18:00 daily)", TD.in_triage_pool)):
+        real = {r[0] for r in rows if pred(r)}
+        matrix = {r[0] for r in labelled[label]}
+        assert matrix == real, (
+            "%s mirror disagrees with the tool's own predicate by %d row(s): %s"
+            % (label, len(matrix ^ real), sorted(matrix ^ real)[:8]))
+
 
 # ---------------------------------------------------------------------------------------
 # Three more mutation-killers. Each of these was reported by `tools/mutate.py` as
@@ -3044,6 +3059,17 @@ def test_each_pool_predicate_selects_and_excludes_on_real_note_shapes():
     assert not TD.in_triage_pool(["X", "scrape", "u", "https://x.example", "false",
                                   t + " | defunct (site gone)"])
 
+    # hunt: a mid-note pool token selects; the shared terminal list excludes -- dropping
+    # its terminal term re-admits a deactivated `redundant` twin to the hunt (and the
+    # hunt activates). listing_hunt was the last tool spelling a private 3-token list.
+    import listing_hunt as LH
+    hunted = ["Marvell Israel", "scrape", "https://x.example/c", "https://x.example/c",
+              "false", "deep-validated 2026-08-21: no ATS detected | unreachable; could not scan"]
+    assert LH.in_hunt_pool(hunted)
+    dup = list(hunted)
+    dup[5] = "universal-scrape; 2 IL [deactivated: redundant scrape dup of working ATS twin] | unreachable"
+    assert not LH.in_hunt_pool(dup), "a redundant twin re-entered the hunt pool"
+
     # crack: a walled host selects; the REDUNDANT twin must never re-enter (the row shape
     # is Marvell Israel's, verbatim class); a recruiter never enters
     wd = "https://marvell.wd1.myworkdayjobs.com/MarvellCareers"
@@ -3110,8 +3136,8 @@ def test_every_refusal_note_keeps_the_row_in_a_re_check_pool(monkeypatch):
         assert re.search(ci.TERMINAL, _tok, re.I), (
             "check_invariants.TERMINAL no longer covers %r" % _tok)
     # a retyped mirror is how the loss stayed silent; the mirror must BE the tool's
-    assert RH._HUNT_SHAPE is LH.HUNT_POOL, (
-        "registry_health's hunt mirror is no longer listing_hunt's own constant")
+    # the hunt mirror is the tool's own predicate now -- see
+    # test_every_ownership_mirror_agrees_with_the_tool_it_mirrors, which pins all five
     import probe_candidates as PC
     assert RH._PROBE_SHAPE is PC.PROBE_POOL, (
         "registry_health's probe mirror is no longer probe_candidates' own constant")

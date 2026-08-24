@@ -91,33 +91,16 @@ def explained(company: str, note: str) -> bool:
     return any(_REASON.match(seg.strip()) for seg in str(note or "").split("|"))
 
 
-# States no re-check pool may ever re-open. `pipeline.verdicts.TERMINAL` PLUS `alias-of`,
-# which belongs there and is not (docs/BACKLOG.md, "One terminal-state list"). Using the
-# shared list rather than a private copy matters: a private `defunct|domain-dead|alias-of`
-# omitted `duplicate of` and `redundant`, which made 4 of the 5 rows this tool reported as
-# "OWNED BY NOTHING" false positives (NICE, Via Transportation, Marvell Israel, Google —
-# all deliberately parked duplicates).
 def is_terminal_note(note: str) -> bool:
-    return _verdicts_terminal(note or "") or "alias-of" in (note or "").lower()
+    """THE shared terminal list (`pipeline.verdicts.TERM_RX`). A private copy here once
+    omitted `duplicate of`/`redundant` and made 4 of the 5 rows this tool reported as
+    "OWNED BY NOTHING" false positives (NICE, Via Transportation, Marvell Israel, Google)."""
+    return _verdicts_terminal(note or "")
 
 
-class _TerminalShim:
-    """`TERMINAL.search(note)` kept working for callers; the logic is is_terminal_note."""
-
-    @staticmethod
-    def search(note):
-        return is_terminal_note(note) or None
-
-
-TERMINAL = _TerminalShim
-
-
-# The hunt shape is the TOOL'S OWN constant, imported -- a retyped mirror here reported
-# rows as hunt-owned after a selector edit removed them from the actual hunt (wave-4 R3:
-# one dropped alternative, 27 rows gone, this matrix still green). The old copy was also
-# re.I where the tool is case-sensitive: a mirror looser than its tool is exactly the
-# direction that hides orphans.
-from listing_hunt import HUNT_POOL as _HUNT_SHAPE
+# Every pool mirror below IMPORTS the tool's own `in_*_pool` predicate. A retyped mirror
+# reported rows as hunt-owned after a selector edit removed them from the actual hunt
+# (wave-4 R3: one dropped alternative, 27 rows gone, this matrix still green).
 # the tool's own constant (probe_candidates imports only stdlib + pipeline.atomic, so
 # unlike repair_extract_gap it is safe at module level). The old copy here was re.I where
 # the tool is case-sensitive -- measured 136 -> 136 on the real registry, zero rows moved.
@@ -257,19 +240,10 @@ def pools(rows):
     def sel(pred):
         return [r for r in parked if pred(r[5] or "", r)]
 
-    def _hunt_pool(note, r):
-        # listing_hunt.main(): the wide parked-shape regex, minus page-empty, terminal,
-        # recruiters and discovery junk. `_triaged_page_empty` is imported (probe_candidates
-        # must strip that exact stamp, so it is module-level on purpose).
-        return (bool(_HUNT_SHAPE.search(note))
-                and not is_terminal_note(note) and not is_recruiter(r[0])
-                and not looks_like_junk(r[0])
-                and not _hunt._triaged_page_empty(note))
-
     return {
         "triage_dark (18:00 daily)":
             sel(lambda n, r: _triage.in_triage_pool(r)),
-        "listing_hunt (19:00 daily)": sel(_hunt_pool),
+        "listing_hunt (19:00 daily)": sel(lambda n, r: _hunt.in_hunt_pool(r)),
         "repair_extract_gap (19:00 daily)":
             sel(lambda n, r: bool(_extract_gap_mode().search(n))
                 and (r[3] or "").startswith("http")),
@@ -294,7 +268,7 @@ def orphans(rows):
     for members in pools(rows).values():
         owned.update(r[0] for r in members)
     return [r[0] for r in rows
-            if r[4] == "false" and not TERMINAL.search(r[5] or "")
+            if r[4] == "false" and not is_terminal_note(r[5] or "")
             and not is_recruiter(r[0]) and r[0] not in owned]
 
 

@@ -276,13 +276,13 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
+               # in_pool already excludes EVERY terminal state (pipeline.verdicts.TERM_RX,
+               # alias-of included) -- a private 3-token copy here was redundant by
+               # construction and one more spelling for an agent to reconcile
                and in_pool(r[5] or "")
                # re-validate after DEEP_REVALIDATE_DAYS instead of never: excluding every
                # already-stamped row made deep validation a once-ever terminal state
                and _revalidatable(r[5] or "")
-               # alias-of: a second row for a company we already scan at the same url.
-               # Re-hunting it re-creates the duplicate this parking exists to remove.
-               and not re.search(r"defunct|domain-dead|alias-of", r[5] or "")
                and not is_recruiter(r[0])]
     if limit:
         targets = targets[:limit]
