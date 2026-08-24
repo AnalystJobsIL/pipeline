@@ -787,5 +787,35 @@
     "replace": "                if v and v[0] and not (_gate.activation_ok(api, name, v[0], html=html)",
     "why": "wave-4 R2: name<->api_url transposed at a call site whose n_jobs slot is pre-guarded (a truthy-constant mutation is an equivalent mutant here); a URL in the name slot fails every predicate and the positive control goes red.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "gate-page-transpose-html",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "activation_ok",
+    "class": "M8-argument-transposition",
+    "find": "        v = page_names_company(name, api_url, html=html)",
+    "replace": "        v = page_names_company(api_url, name, html=html)",
+    "why": "wave-4 R2: (name, api_url) transposed at the held-page call inside the gate itself. Every fixture's stub table keys on the first argument, so the stub missed, answered None, and the tenant clause supplied the expected verdict -- green, while every readable-page acceptance silently died.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "gate-page-transpose-tail",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "activation_ok",
+    "class": "M8-argument-transposition",
+    "find": "    return page_names_company(name, api_url) is True",
+    "replace": "    return page_names_company(api_url, name) is True",
+    "why": "wave-4 R2: same transposition at the fetch tail -- a Request built from a company name raises, html is empty, the answer is None, and the subdomain-mismatch population is refused wholesale.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-html-wrong-binding",
+    "file": "bd_rescue.py",
+    "symbol": "main",
+    "class": "M8-argument-mis-passing",
+    "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+    "replace": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=best_html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+    "why": "wave-4 R2: the gate handed the LONGEST page seen across alts instead of the page the candidate was extracted from -- accept or refuse at random relative to the evidence. Survived while the fixture's single-alt constant-page population made the html argument informationless.",
+    "must_be_killed_by_behavioural": true
   }
 ]

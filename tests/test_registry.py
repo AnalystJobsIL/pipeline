@@ -2453,6 +2453,86 @@ def test_the_scrape_branch_of_each_row_builder_is_gated_too(monkeypatch):
         "an aggregator page must park before the identity gate is even asked: %r" % (agg,))
 
 
+def test_bd_rescue_gates_on_the_page_the_candidate_was_extracted_from(
+        tmp_path, monkeypatch):
+    """Wave-4 R2 (B3): `html=html` -> `html=best_html` survived the suite because the only
+    bd fixture stubbed `alt_urls` to ONE url and `unlock` to a CONSTANT page -- in that
+    population the html argument carries no information, so no binding of it can be wrong.
+    Here: two alts, per-URL pages, and the LONGEST page is a parked-domain interstitial
+    that is NOT the page the candidate was extracted from. `bd_rescue.py`'s own comment is
+    the invariant: "gate on the page this candidate was extracted FROM". `extract_ats` is
+    the real one.
+    """
+    import sys
+    import bd_rescue as B
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Kima", "", "", "https://www.kima.network/careers", "false",
+         "unreachable; could not scan"],
+    ])
+    kima_page = ("<html><h1>Kima Careers</h1>"
+                 + "<p>Kima is hiring in Tel Aviv.</p>" * 60
+                 + '<a href="https://boards.greenhouse.io/embed/job_board?for=kima&amp;t=1">'
+                 + "Open positions</a></html>")
+    junk = ("<html><h1>Parked Domain Services</h1>"
+            + "<p>This domain is parked by Parked Domain Services.</p>" * 90 + "</html>")
+    assert len(junk) > len(kima_page), "the junk page must be the LONGEST seen"
+    pages = {"https://www.kima.network/careers?v=1": junk,
+             "https://www.kima.network/careers": kima_page}
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "x")
+    monkeypatch.setattr(B, "_load_secrets", lambda *a, **k: None)
+    monkeypatch.setattr(B, "alt_urls", lambda url: [url + "?v=1", url])
+    monkeypatch.setattr(B, "unlock", lambda u, timeout=90: pages[u])
+    monkeypatch.setattr(B, "_verify", lambda name, plat, tok, api: (12, 4))
+    monkeypatch.setattr(B.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(sys, "argv", ["bd_rescue.py"])
+    B.main()
+    out = _read(tmp_path)
+    assert out["Kima"][4] == "true" and "kima" in out["Kima"][3], (
+        "the gate judged the board against a DIFFERENT alt's page: %r" % (out["Kima"],))
+
+
+def test_the_gate_reads_page_evidence_with_the_arguments_the_right_way_round(monkeypatch):
+    """Wave-4 R2 (B3): every `activation_ok` fixture stubs `page_names_company` with a
+    table keyed on its FIRST positional argument. Transpose `(name, api_url)` at either of
+    the gate's internal page calls and the stub misses its key, returns None, and the
+    tenant clause supplies the verdict the fixture expected -- suite green, while every
+    readable-page acceptance from `bd_rescue` (9 rows) and `validate_empty` (59) silently
+    dies; on the bd path a `x3` strike then parks the row for good. The per-company stub
+    table measures the stub's KEY, not the gate's argument order, so these cells run the
+    REAL predicate: html in hand for the held-page branch, `urlopen` stubbed at the
+    network boundary for the fetch tail.
+    """
+    from pipeline import identity_gate as G
+    monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
+
+    # held-page branch, accept direction: a real acquisition -- the machine endpoint's
+    # tenant (memic) can never match, ONLY the page in hand admits. Transposed, the page
+    # "names" a URL, answers False, and the acquisition is refused.
+    page = "<h1>Momentis Surgical Careers</h1>" + "<p>Momentis Surgical is hiring.</p>" * 100
+    api = "https://memic.wd1.myworkdayjobs.com/wday/cxs/memic/External/jobs"
+    assert G.activation_ok("Momentis Surgical", api, 12, html=page) is True, (
+        "a held page naming the company must admit the acquisition board")
+    # refuse direction, same branch, real predicate: Bancorp's page never says `Bancor`
+    ban = "<h1>The Bancorp Bank</h1>" + "<p>Bancorp Bank benefits.</p>" * 100
+    assert G.activation_ok(
+        "Bancor", "https://careers-bancorpbank.icims.com/jobs/search", 9, html=ban) is False
+
+    # fetch tail (no html, tenant mismatch): the LAST page call in the gate.
+    served = {"https://gen.wd1.myworkdayjobs.com/wday/cxs/gen/x/jobs":
+              ("<h1>NanoLock Security Careers</h1>"
+               + "<p>NanoLock Security is hiring in Israel.</p>" * 80).encode()}
+    class _Resp:
+        def __init__(self, data): self._d = data
+        def read(self, n=-1): return self._d
+    monkeypatch.setattr(G.urllib.request, "urlopen",
+                        lambda req, timeout=25, context=None: _Resp(served[req.full_url]))
+    assert G.activation_ok(
+        "NanoLock Security", "https://gen.wd1.myworkdayjobs.com/wday/cxs/gen/x/jobs", 5
+    ) is True, ("the fetch tail must admit when the fetched page names the company")
+
+
 def test_a_zero_job_count_refuses_at_every_call_site_not_just_inside_the_gate(
         tmp_path, monkeypatch):
     """Wave-4 R2 (B3): `activation_ok`'s `if not n_jobs: return False` was pinned only by a
