@@ -109,7 +109,7 @@ titles go to `claude -p`, whose YES/NO **role judgment** is cached per `company|
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And **24 of the 66 workflow steps carry `continue-on-error: true`** (counted 2026-08-23 by
+And **24 of the 71 workflow steps carry `continue-on-error: true`** (counted 2026-08-24 by
 `docs/check_docs.py`, which fails if this sentence and the workflows disagree), so a hard
 failure in an audit/hunt step still shows a green run — check the step log, not the badge.
 
@@ -1107,7 +1107,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
 - "Why isn't company X in my email?" → §5b above (ordered runbook).
 - "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
 - "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
-  **24 of the 66 workflow steps are `continue-on-error`, so a green run can still hide a
+  **24 of the 71 workflow steps are `continue-on-error`, so a green run can still hide a
   failed step** — read the step, not the badge.
 - Coverage snapshot:
   ```bash
