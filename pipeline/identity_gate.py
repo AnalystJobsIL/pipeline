@@ -290,6 +290,14 @@ def embedded_board_ok(name, token, api_url):
         # plumbing (apply.workable.com) still needs the token to vouch.
         if [l for l in host.split(".")[:-2] if not _plumbing(l)]:
             return True
+    # DECLARED identity decides first, both directions: the row's own token (registry
+    # column 2 -- authoritative data, never a URL path) must be a declared tenant. This is
+    # the path-tenant half of the declaration (subdomain hosts already returned above).
+    # `.split("/")[0]` is defensive against Workday's composite `tenant/site` tokens, which
+    # never reach here; no test may claim it is what makes Workday work.
+    declared = identity_facts.tenants(name)
+    if declared:
+        return identity_facts.normalize((token or "").split("/")[0]) in declared
     return any(_tenant_near(c, targets) for c in _embed_token_forms(token))
 
 
@@ -345,7 +353,7 @@ def tenant_is_this_company(name, url):
         labels = [l for l in host.split(".")[:-2] if not _plumbing(l)]
         if not labels:
             return True                        # nothing checkable: unchanged
-        return any(_norm(l) in declared for l in labels)
+        return any(identity_facts.normalize(l) in declared for l in labels)
     if _verdict(name, url) == "mismatch":
         return False
 

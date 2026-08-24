@@ -96,6 +96,18 @@ DECLARED = {
                "https://zoll.wd5.myworkdayjobs.com/wday/cxs/zoll/ZOLLMedicalCorp/jobs. "
                "verdict() scores this `mismatch`; only a declaration can admit it. 2026-08-24"},
 
+    # --- path-tenant acquirer/rebrand slugs: admitted only by vacuity before, and refused
+    #     by the embed vouch (item 61's accepted class) -- declared instead
+    "Momentis Surgical": {
+        "tenants": ("memic",),
+        "why": "Memic Innovative Surgery rebranded as Momentis; board is "
+               "https://boards-api.greenhouse.io/v1/boards/memic/jobs (ARCHITECTURE section 2 "
+               "cites this as THE legitimate acquirer board). 2026-08-24"},
+    "SentinelOne": {
+        "tenants": ("sentinellabs",),
+        "why": "SentinelOne's Greenhouse tenant is its legal name: "
+               "https://boards-api.greenhouse.io/v1/boards/sentinellabs/jobs. 2026-08-24"},
+
     # --- brand/parent domains, migrated verbatim from company_identity.KNOWN_PARENT
     #     (admit-only, ordinary hosts; each was verified by hand when it was added there)
     "AWS": {"domains": ("amazon.jobs", "amazon.com"), "why": "KNOWN_PARENT migration"},
@@ -138,6 +150,9 @@ assert len(_INDEX) == len(DECLARED), "two DECLARED keys differ only by case/whit
 
 def _norm(s):
     return re.sub(r"[^a-z0-9]", "", (s or "").lower())
+
+
+normalize = _norm      # the gates compare through THIS so both sides normalize alike
 
 
 def facts(name):

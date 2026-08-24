@@ -1744,6 +1744,21 @@ def test_a_declared_tenant_decides_the_subdomain_check_in_both_directions(monkey
         "Riskified", "https://riskified.wd3.myworkdayjobs.com/wday/cxs/riskified/x/jobs")
 
 
+def test_a_declared_row_refuses_an_undeclared_token_on_a_path_platform(monkeypatch):
+    """Hook 3, both directions: on a path-tenant platform a declared row's own token must
+    be a declared tenant; any other token is refused even when the heuristics would have
+    admitted it. Killing `facts-embed-token-drop` needs a case the heuristics ACCEPT but
+    the declaration refuses -- so the fixture declares a row under a tenant that is NOT
+    its own slug."""
+    from pipeline import identity_facts as F
+    from pipeline import identity_gate as G
+    gh = "https://boards-api.greenhouse.io/v1/boards/%s/jobs"
+    monkeypatch.setitem(F._INDEX, "armis", {"tenants": ("armisgroup",), "why": "test"})
+    assert not G.embedded_board_ok("Armis", "armissecurity", gh % "armissecurity"), (
+        "the heuristics admit armissecurity; the declaration says armisgroup -- declared wins")
+    assert G.embedded_board_ok("Armis", "armisgroup", gh % "armisgroup")
+
+
 def test_the_gate_caller_map_is_derived_not_typed():
     """`identity_gate.GATE_CALLERS` is the one map from a tool to the gate it calls -- the
     artifact a fresh agent needs and nothing carried before. It is a literal so it can be
@@ -2008,6 +2023,12 @@ def test_the_embed_vouch_recognises_the_slug_shapes_production_actually_emits():
     assert not G.embedded_board_ok("Cogniteam", "riskified", gh % "riskified")
     assert not G.embedded_board_ok(
         "Bancor", "bancorpbank", "https://careers-bancorpbank.icims.com/jobs/search?ss=1")
+    # DECLARED path-tenant rows: the embed vouch reads the declaration first (hook 3).
+    # Momentis->memic was item 61's headline accepted refusal; it is admitted now because
+    # the fact is declared with evidence, not because a matcher got looser.
+    assert G.embedded_board_ok("Momentis Surgical", "memic", gh % "memic")
+    assert G.embedded_board_ok("SentinelOne", "sentinellabs", gh % "sentinellabs")
+
     # the +-1 window pin (kills embed-near-window-drift)
     assert not G.embedded_board_ok(
         "zap group", "A5.000",
