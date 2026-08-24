@@ -622,8 +622,19 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
         for company in sorted(by_new):
             _render(company, by_new[company], dated=False)
 
-    # collapsed audit so the email stays clean but is still verifiable
+    # anything WRONG stands above the fold, bold, where a reader who never expands the audit
+    # still sees it (docs/BACKLOG.md 127); the counts stay collapsed below
     s = stats
+    alarms = []
+    if s.get("dead_sources"):
+        alarms.append("- **Sources not producing:** " + "; ".join(s["dead_sources"]))
+    if s.get("registry_alarms"):
+        alarms.append("- **Registry:** " + "; ".join(s["registry_alarms"]))
+    if s.get("stage_alarms"):
+        alarms.append("- **Stages:** " + "; ".join(s["stage_alarms"]))
+    if alarms:
+        lines += ["---", "**Needs a look**", ""] + alarms + [""]
+    # collapsed audit so the email stays clean but is still verifiable
     paths = ", ".join(f"{k}={v}" for k, v in sorted(s.get("paths", {}).items()))
     lines += [
         "---",
@@ -638,12 +649,6 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
         lines.append(f"- At newly covered companies: {s['first_scan']}")
     if s.get("email_overflow"):
         lines.append(f"- Held over (email cap): {s['email_overflow']}")
-    if s.get("dead_sources"):
-        lines.append("- **Sources not producing:** " + "; ".join(s["dead_sources"]))
-    if s.get("registry_alarms"):
-        lines.append("- **Registry:** " + "; ".join(s["registry_alarms"]))
-    if s.get("stage_alarms"):
-        lines.append("- **Stages:** " + "; ".join(s["stage_alarms"]))
     for _line in s.get("fetch_health") or []:
         lines.append("- **Boards** " + _line)
     if s.get("company_intel"):

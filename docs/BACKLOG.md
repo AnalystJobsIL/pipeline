@@ -1840,7 +1840,7 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     path restores `cloud_state/` wholesale (105), so a hand-committed binary that races a
     workflow is silently reverted. Count them: `python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(c.execute(\"select sum(title_key not like 'v2|%') from llm_cache\").fetchone())"`.
     `updated` is only meaningful from the first v2 run (before it every row was upserted daily).
-117. **One `claude -p` seam for the repo** — lane: `infra` (a shared `llm` module under `pipeline/`, not yet created). Two seams now
+117. ~~**One `claude -p` seam for the repo**~~ — **half closed 2026-08-25**: `pipeline/llm.py` exists (`call()`, envelope-first, tool-less) and `seniority` uses it; `firmographics._claude`, `resolve_llm.py`, `triage_dark.py`, `scrape_universal.py` still spawn their own — lane: `company-intel` / `registry` / `scraper` to migrate (a shared `llm` module under `pipeline/`, was not yet created). Two seams now
     exist with the same shape and different guarantees: `seniority._claude` (tools off, schema,
     system prompt, `is_error` read, cwd = scratch, no shell) and `firmographics._claude`
     (`--allowedTools WebSearch`, return code only, cwd = repo — so every blurb and research call
@@ -1888,15 +1888,16 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     the run's verdicts, `matched` upserts and `sent` marks are lost, yesterday's board is
     published and yesterday's digest re-relayed. Fired 4x in production (`8644d8f` shows
     `seen.db` shrinking 1,241,088 → 794,624 bytes). `daily-digest.yml` now uses `cp -rT`
-    (classifier lane, 2026-08-24, out of lane); the seven other `repo-state` workflows with the
-    same block are untouched. Repro: `mkdir -p /tmp/t/cloud_state /tmp/t/ours/cloud_state; touch /tmp/t/ours/cloud_state/seen.db; cd /tmp/t; cp -r ours/cloud_state cloud_state; find . -name seen.db`.
+    (classifier lane, 2026-08-24, out of lane); **the other four** with the same block (`auto-expand`,
+    `listing-hunt`, `scrape-refresh`, `self-heal`) got the same one-token fix on 2026-08-25 — closed;
+    what remains is verifying the next conflict-day commit keeps the run's `seen.db`. Repro: `mkdir -p /tmp/t/cloud_state /tmp/t/ours/cloud_state; touch /tmp/t/ours/cloud_state/seen.db; cd /tmp/t; cp -r ours/cloud_state cloud_state; find . -name seen.db`.
 126. **`scrape_universal.ISRAEL_LOC` has no word boundaries** — lane: `scraper`. It is pure
     substring matching: `Akkodis`, `melody`, `explode`, `The Azores`, `unsafed`, `Lodz` all match
     (`Akko`, `lod`, `Azor`, `safed`, `Lod`). Benign in today's pages (10 of 165 matches were inside
     a word, all `Israeli`/Hebrew prefixes) but it feeds `_from_dom`'s 220-char proximity test and
     `_page_is_il` under `SCRAPE_ASSUME_IL`, and the 40 names added 2026-08-24 (`tlv`, `yehud`, `gedera`, `nesher`, `eilat`, `akko`, `safed` …) widened it.
     Build it with `israel.py`'s lookarounds (`(?<![a-z0-9])…(?![a-z0-9])`); it stays a superset.
-127. **The bold `Stages:` / `Registry:` alarms sit INSIDE the collapsed `<details>` audit block**
+127. ~~**The bold `Stages:` / `Registry:` alarms sit INSIDE the collapsed `<details>` audit block**~~ — **closed 2026-08-25** (`build_markdown` puts them above the fold under **Needs a look**; pinned). Original text:
     of the markdown that becomes the email — lane: `render` (`digest.py:628-655`), contradicting
     `stages.py:13` ("a bold line in the audit, not a token inside a collapsed block"). Emit the
     alarm lines above the `<details>` and keep the counts inside.
@@ -1919,13 +1920,13 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     `unprocessed-14`, not `shrink-abort-…`. Verified in a throwaway worktree of HEAD (`ef96190`+)
     with no classifier change applied, so it is date- or fixture-dependent, not a regression of
     2026-08-24's work. The suite is otherwise green (508 of 509).
-131. **Two documents the `docs` lane owns still describe the old classifier** — lane: `docs`.
+131. ~~**Two documents the `docs` lane owns still describe the old classifier**~~ — **closed 2026-08-25** (README:86 and the brief's lane row corrected). Original text:
     `README.md:86` says "`claude -p` fallback for ambiguous titles only" (the LLM tier is
     title-agnostic and bounded, §7b); `docs/AGENT_BRIEF.md:93` gives the lane "`llm_cache`
     invalidation" where §7b says "the `llm_cache` table's key scheme", and the brief has no note
     that the lane touched `run.py`/`store.py`/`digest.py`/`daily-digest.yml` under an approved
     out-of-lane exception (recorded in `HANDOFF.md` and the session note).
-132. **`run.py`'s classifier wiring is pinned by a source-string test, not a behavioural one** —
+132. ~~**`run.py`'s classifier wiring is pinned by a source-string test, not a behavioural one**~~ — **closed 2026-08-25** (`test_the_pipeline_runs_one_classifier_and_saves_its_verdict_before_rendering`). Original text:
     lane: `classifier` + `infra`. `stats["llm_calls"] = 0` or dropping `clf.commit()` is caught only
     by `test_run_py_holds_one_classifier_and_the_mail_gets_its_alarms` (`inspect.getsource`) — the
     class of guard `tools/mutate.py` marks `must_be_killed_by_behavioural`. The end-to-end

@@ -83,7 +83,7 @@ code that implements it, are in `ARCHITECTURE.md` §0.
 - `http.py` — GET/POST JSON with retry/backoff.
 - `fetchers.py` — one normalizer per ATS platform → the common job shape.
 - `israel.py` — deterministic Israel-location filter (country code, then place-name scan).
-- `seniority.py` — keyword pre-filter + `claude -p` fallback for ambiguous titles only.
+- `seniority.py` — keyword tier, then one bounded, tool-less `claude -p` for the residue the keywords cannot decide (title-agnostic; `ARCHITECTURE.md` §7b).
 - `store.py` — SQLite seen-store (across-day dedup + cross-platform merge) + LLM cache.
 - `digest.py` — the board, the archive and the email, with an auditable run summary.
 - `run.py` — the orchestrator. `python -m pipeline.run` produces

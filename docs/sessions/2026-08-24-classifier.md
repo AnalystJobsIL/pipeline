@@ -86,3 +86,15 @@ BACKLOG 116 (legacy rows), 117 (one seam for the repo), 118 (Cloudflare offices)
 unverified number), 122 (the cap bites the same tail), 123 (quarantine re-spend), 124 (a role
 on two boards), 125 (the seven other conflict paths — `infra`, high), 126–129. Tomorrow's proof is §7b's last
 paragraph. One scraper-lane test fails at HEAD on 2026-08-25 independently of this work (BACKLOG 130).
+
+## Follow-up, 2026-08-25 — "fix everything that is mine or mechanical"
+
+- `pipeline/llm.py` — the seam moved out of `seniority.py` (`call()`; seniority's `_claude` binds
+  the rules to it; 117 half-closed, three other spawners still to migrate).
+- `digest.build_markdown` — `Sources not producing` / `Registry` / `Stages` now render above the
+  collapsed audit under **Needs a look** (127 closed, pinned).
+- `cp -rT` in `auto-expand`, `listing-hunt`, `scrape-refresh`, `self-heal` (125 closed; it was
+  four other workflows, not seven).
+- A behavioural `run.py` guard: one fake company through `pipeline.run.run` (132 closed).
+- README:86 and the brief's lane row (131 closed); the driver's dead line and the `_first_json`
+  alias removed.

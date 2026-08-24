@@ -74,8 +74,6 @@ expect_alarm = {"fail": "llm-unavailable(auth", "is_error": "llm-unavailable(aut
                 "no_structured": "LLM calls failed (answer: no structured verdict"}.get(a.case)
 if a.fresh and not expect_alarm and paths.get("llm", 0) >= 10:
     # every LLM-tier role is fresh: the quarantine judges this run's yes-rate, whatever the case
-    yes = sum(1 for l in md.splitlines() if False)   # the md does not carry the count; read the log
-    log = [l for l in open(os.environ["FAKE_CLAUDE_LOG"], encoding="utf-8")]
     expect_alarm = {"no": "mass-no", "all_no": "mass-no", "all_yes": "mass-yes"}.get(a.case)
 if expect_alarm:
     checks.append((f"Stages line says {expect_alarm}: {stage_line[:160]}", expect_alarm in stage_line))

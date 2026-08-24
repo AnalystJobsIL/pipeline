@@ -136,6 +136,7 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/identity_gate.py` | **shared** - the one gate every registry writer consults before it writes api_url/active; page content is the discriminator, the tenant string is not |
 | `pipeline/israel.py` | deterministic Israel-location filter |
 | `pipeline/jdfill.py` | fetches a job description for a role that arrived without one |
+| `pipeline/llm.py` | **shared** - the one `claude -p` seam: tool-less, schema-constrained, envelope-first, never from the repo (ARCHITECTURE.md section 7b); seniority calls it, firmographics migrates (BACKLOG 117) |
 | `pipeline/notes.py` | **shared** - the companies.csv notes append-log. Never hand-roll a trim |
 | `pipeline/platform_check.py` | self-check that an ATS platform is wired into all of its sites |
 | `pipeline/recruiters.py` | recruiting-agency exclusion |

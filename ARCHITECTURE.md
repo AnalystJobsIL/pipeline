@@ -1619,8 +1619,8 @@ description) rows) moved **0** decisions under that change.
 
 `Classifier` (one per run, held by `pipeline/run.py`, which calls `clf.classify(j)` at its two
 classify sites, then `clf.commit()` and `save_llm_cache` right after the loop — before rendering
-and company intel, so a crash there cannot lose paid verdicts; `Classifier._judge → _claude` is
-the only path to the CLI; the decision dict and the one-posting reproduce command are in §5b
+and company intel, so a crash there cannot lose paid verdicts; `Classifier._judge → seniority._claude → llm.call` is
+the only path to the CLI (`pipeline/llm.py` is the shared seam); the decision dict and the one-posting reproduce command are in §5b
 item 6) calls:
 
 ```
@@ -1709,7 +1709,7 @@ attempt on the `llm_cache` path, so attempts ≥ llm + failed). The step log add
 X; attempts T in M min, rejudged R (flipped +a/-b); model …; breaker closed|…` — `keyword K`
 merges the `keyword` and `keyword_nollm` paths, `failed F` is the path count and `failed calls
 X` the attempt failures (the alarm below uses X). The classifier's alarms ride the bold
-**`Stages:`** line (`::warning::stage classify …`):
+**`Stages:`** line — rendered **above** the collapsed audit under **Needs a look**, so nobody has to expand anything to see them (`::warning::stage classify …`):
 
 | morning | `Stages:` says | rehearsed by |
 |---|---|---|

@@ -4400,3 +4400,43 @@ def test_a_long_envelope_is_still_found_inside_the_scan_window():
 def test_a_non_string_description_does_not_crash_the_digest():
     for d in ({"a": 1}, ["x"], 7):
         assert seniority.classify({"title": "Senior Data Scientist", "description": d}, use_llm=False)["decision"] in ("accept", "reject")
+
+
+def test_the_pipeline_runs_one_classifier_and_saves_its_verdict_before_rendering(monkeypatch, tmp_path):
+    """Behavioural twin of the source-string guard (BACKLOG 132): a real `pipeline.run.run`
+    over one fake company must attempt exactly one LLM call, report it as `llm_calls`, and
+    have the verdict in the store before company intel runs."""
+    from pipeline import run as run_mod, company_intel, store
+    row = {"company_name": "Acme", "ats_platform": "greenhouse", "token": "acme",
+           "api_url": "https://boards-api.greenhouse.io/v1/boards/acme/jobs", "active": "true", "notes": ""}
+    jobs = [{"company": "Acme", "title": "Senior Data Analyst", "location": "Tel Aviv, Israel",
+             "country_code": "", "url": "", "posted_date": "", "job_id": "1", "description": ""},
+            {"company": "Acme", "title": "Data Analyst II", "location": "Tel Aviv, Israel",
+             "country_code": "", "url": "", "posted_date": "", "job_id": "2", "description": _TEXT}]
+    monkeypatch.setattr(run_mod, "load_companies", lambda: [dict(row)])
+    monkeypatch.setattr(run_mod.fetchers, "fetch_company", lambda r: [dict(j) for j in jobs])
+    seen = {}
+
+    def fake_intel(st, **kw):
+        seen["rows"] = st.conn.execute("select title_key from llm_cache").fetchall()
+        return {}, {}, {"researched": 0, "blurbs_written": 0}
+    monkeypatch.setattr(company_intel, "enrich_for_run", fake_intel)
+    monkeypatch.setattr(company_intel, "audit_lines", lambda rep: ([], []))
+    calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    payload, _ = run_mod.run(only=["Acme"], out_dir=str(tmp_path / "out"), db_path=str(tmp_path / "t.db"))
+    s = payload["summary"]
+    assert len(calls) == 1 and s["llm_calls"] == 1 and s["paths"] == {"keyword": 1, "llm": 1}
+    assert s["israel_matched"] == 2 == sum(s["paths"].values()) and s["accepted"] == 2
+    assert seen["rows"] == [("v2|acme|data analyst ii|jd",)]      # saved BEFORE company intel
+    assert store.SeenStore(str(tmp_path / "t.db")).load_llm_cache() == {"v2|acme|data analyst ii|jd": True}
+
+
+def test_alarms_stand_above_the_collapsed_audit_in_the_mail():
+    """The bold `Stages:` line used to sit inside `<details>` — invisible unless expanded."""
+    from pipeline import digest
+    s = {"stage_alarms": ["classify llm-unavailable(auth: x)"], "registry_alarms": ["r"], "paths": {}}
+    _, md = digest.build_markdown([], "2026-08-25", s, {})
+    assert md.index("**Needs a look**") < md.index("- **Stages:** classify") < md.index("<details>")
+    assert md.count("- **Stages:**") == 1 and "- **Registry:** r" in md
+    _, quiet = digest.build_markdown([], "2026-08-25", {"paths": {}}, {})
+    assert "Needs a look" not in quiet

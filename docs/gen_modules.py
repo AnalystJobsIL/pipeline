@@ -101,6 +101,7 @@ PIPELINE = {
  "firmographics": "the company record (sector / stage / size / founded), its identity key, the `claude` seam and the shared export both stores converge through (ARCHITECTURE.md section 7)",
  "company_intel": "the digest hook: blurbs + facts for one run, bounded and never raising, and the `Company intel:` line in the mail's run audit (ARCHITECTURE.md section 7)",
  "company_info": "the two-sentence company blurb, and `derive_blurb` (the facts read as prose when the blurb is missing)",
+ "llm": "**shared** - the one `claude -p` seam: tool-less, schema-constrained, envelope-first, never from the repo (ARCHITECTURE.md section 7b); seniority calls it, firmographics migrates (BACKLOG 117)",
  "jdfill": "fetches a job description for a role that arrived without one",
  "platform_check": "self-check that an ATS platform is wired into all of its sites",
  "aggregators": "is this URL an aggregator? Gates activation and runtime",

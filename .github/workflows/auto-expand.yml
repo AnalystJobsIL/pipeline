@@ -104,7 +104,7 @@ jobs:
               # in between — sent/matched/llm_cache/firmographics, last-writer-wins on a
               # binary git cannot merge (HANDOFF open item 7). Only the digest owns seen.db.
               for p in cloud_state/pipeline_stages.json; do
-                [ -e "/tmp/ours/$p" ] && { mkdir -p "$(dirname "$p")"; cp -r "/tmp/ours/$p" "$p"; } 2>/dev/null || true
+                [ -e "/tmp/ours/$p" ] && { mkdir -p "$(dirname "$p")"; cp -rT "/tmp/ours/$p" "$p"; } 2>/dev/null || true
               done
               if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
                 python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
