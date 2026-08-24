@@ -912,6 +912,11 @@ fixes; one was a claim I made that a doc of this repo already contradicted on th
     alarms. Deliberately NOT in `check_invariants` — that is the hard gate, and a pool
     collapse must be mailed, not used to withhold the digest.
 
+    **Known shape (confirmation-wave R3):** the floor compares against LAST NIGHT's census,
+    and `--census` re-baselines every night -- a collapse alarms for exactly one digest,
+    then the new size is the baseline. The alarm fires once and visibly; a rolling or
+    high-water baseline would repeat it. Deliberate for now; revisit if one is missed.
+
 35. **`merge_csv_rows._TOOL` does not key `url-repaired`, and its overflow trim deletes the
     other writer's segments** — lane: shared plumbing. The marker is keyed by `seg[:28]`,
     which includes the date, so two runs on different days both survive and double the
@@ -1475,3 +1480,37 @@ commits. Five filed test gaps, four closed the same day with cells and records
 
     **CLOSED 2026-08-24, two ways:** the parenthetical split no longer exists (identity B5),
     and `Citrix (Cloud Software Group)` is declared -> tibco, so it builds no string targets.
+
+## From the health / declared-identity / legibility program's confirmation wave, 2026-08-24
+
+72. **`verdicts.TERMINAL`'s `recruiter` token matches the substring in `SmartRecruiters`** —
+    lane: `registry`, PRE-EXISTING (the unification widened its reach to `listing_hunt` and
+    `deep_validate`). Three ACTIVE rows carry the substring in a note with no pool token
+    today — `Armis`, `HiBob`, `kueez` — so nothing changes tonight; the day any of them is
+    parked with a live verdict token it is permanently terminal and no pool re-opens it.
+    `registry_health._REASON` already documents this class ("agency-hood is decided by the
+    company NAME via `is_recruiter`, never by text found in the note"); `TERM_RX` did not
+    get it. Fix: `is_recruiter(name)` in place of the token, or a word boundary — measured
+    against Census A and the pools before it lands.
+
+73. **A declared row is refused by a subdomain bearing its OWN name** — lane: `registry`,
+    by design: the declaration replaces the heuristic rather than adding to it
+    (`identity_facts.py`: "declared rows skip them entirely"), so `Merck (MSD)` on a
+    hypothetical `merck.wd5` host refuses until `merck` is declared. Reachable set 0 today;
+    filed so a future tenant migration is diagnosed as a declaration edit, not a gate bug.
+
+74. **`cloud_state/registry_alarms.json` is written nightly and read by nothing** — lane:
+    `registry`. The digest calls `alarms_state()` directly; the file is an audit trail that
+    churns its `date` daily in a committed state file. Keep (it is the record of what was
+    mailed) or drop the `date` — either is one line.
+
+75. **The workflow-edit failure class, three times this session** — lane: `infra` +
+    `registry`. Every blocker the confirmation wave found (and wave 6's B4 before it) was a
+    workflow edit whose sibling sweep was incomplete: a producer declared failure-tolerant
+    while its consumer treated the output as mandatory; a step missing the env its
+    siblings carry; four of nine commit steps gated. Each is now pinned by a text-parse
+    test, but the class deserves one generic check in `docs/check_docs.py` or the suite:
+    for every `continue-on-error` step that writes a file, no later `git add` may list that
+    file alongside mandatory paths; for every step invoking a module that reads a secret,
+    the step names it. Filed rather than built here: a linter right 95% of the time is
+    the wrong tool, and the two named shapes are exactly what a first version should pin.

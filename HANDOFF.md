@@ -242,3 +242,4 @@ roles are burned as delivered and the next run will not email them.
   alarms_state`; the census re-baselines after the invariant gate). Open, with reasons:
   `docs/BACKLOG.md` 50 (path-platform vacuity for undeclared rows), 69, 71. Full record:
   `docs/sessions/2026-08-24-registry.md`.
+- **2026-08-24 `registry` (health / declared identity / legibility, confirmation wave closed):** the daily mail now carries `- **Registry:** …` from `registry_health.alarms_state()` (census re-baselines AFTER the invariant gate; the ladder is probed only where Playwright and the keys are); acquisitions are DECLARED in `pipeline/identity_facts.py` and the gates consult it before any heuristic (the parenthetical trick is gone); `python registry_health.py --explain "<name>"` answers why a row was activated or refused, offline. Record: `docs/sessions/2026-08-24-registry.md`; open with reasons: `docs/BACKLOG.md` 50, 69, 72-75.
