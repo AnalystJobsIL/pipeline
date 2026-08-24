@@ -1216,3 +1216,24 @@ FairFly shape). These are the residuals.
     baseline has already advanced — the wake is SPENT, not deferred. Only fires on a push
     conflict (same trigger as item 35, same file). A merge that honours deletions needs the
     deleting tool to own its keys in the union, not just in its own cell.
+
+## From the rebuild's wave-4 review, 2026-08-24
+
+61. **`embedded_board_ok`'s accepted cost: a held page cannot vouch for a board it merely
+    embeds, so an embed whose tenant token does not near-match the name is a visible
+    suspect, never a promote** — lane: `registry`. The wave-4 B1: `validate_empty` and
+    `bd_rescue` fetch the row's CAREERS page and gate the BOARD `extract_ats` finds inside
+    it; a page genuinely naming this company (Cogniteam's own, naming it 120x) carrying a
+    stale shared-template embed promoted Riskified's board, active=true, on the Sunday
+    cron. Reproduced end-to-end; the SimilarTech-off-Similarweb incident is the same shape.
+    The fix requires the board to vouch for itself (`identity_gate.embedded_board_ok`:
+    subdomain mismatch refuses; otherwise the extracted tenant token must near-equal the
+    name). The classes that now land as VISIBLE suspects instead of silent promotes:
+    acquirer slugs (Momentis->memic), names not containing the acquirer token
+    (Habana-class — consistent with item 49's deliberate refusal), and opaque Comeet uids.
+    The 81/460 near-equality measurement (item 21) does not transfer: this predicate runs
+    only where the sole page->board binding is the embed itself, on parked audit-pool rows
+    that keep their re-check tokens and print in the Sunday suspect summary. If the
+    suspect volume in practice says otherwise, the durable answer is the same data column
+    item 50 names (`acquired-by`), not a looser matcher — `lili` is a substring of
+    `elililly` and that promotion is a recorded incident.

@@ -46,10 +46,15 @@ def check(name, url):
         v = _verify(name, plat, tok, api)
         if v:
             n_all, il = v
-            if il > 0 and not _gate.activation_ok(name, api, il, html=html):
+            if il > 0 and (not _gate.activation_ok(name, api, il, html=html)
+                           or not _gate.embedded_board_ok(name, tok, api)):
                 # `extract_ats` returns whatever board the page embeds. This branch promoted
                 # it to ACTIVE on a job count alone, so a careers page embedding a different
-                # company's board promoted that board. The page is in hand; use it.
+                # company's board promoted that board. The page is in hand; use it -- and
+                # only to REFUSE: a page naming THIS company cannot vouch for a board it
+                # merely embeds (Cogniteam's own page + a stale riskified embed promoted
+                # Riskified's board -- wave-4 R1), so the promote also needs
+                # `embedded_board_ok`: the board's own tenant token near-matches the name.
                 #
                 # Return `suspect`, NOT `confirmed`. `confirmed` is the tool's word for
                 # "board exists, genuinely 0 Israel now" and for "could not re-check", and

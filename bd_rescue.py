@@ -87,11 +87,16 @@ def main():
                 v = _verify(name, plat, tok, api)
                 # The unlocker HTML is IN HAND, so gate on the page this candidate was
                 # extracted FROM - strictly stronger evidence than a re-fetch, and free.
+                # The page can only REFUSE: `extract_ats` returns whatever board the page
+                # embeds, and a page naming THIS company cannot vouch for someone else's
+                # board (wave-4 R1) -- so activation also needs `embedded_board_ok`, the
+                # board's own tenant token near-matching the name.
                 # Until 2026-08-24 this branch had no identity check at all: `extract_ats`
                 # finds whatever board a page embeds, and a company page that embeds another
                 # company's board (or a bot-wall interstitial that embeds the vendor's own)
                 # activated that board under this company's name.
-                if v and v[0] and not _gate.activation_ok(name, api, v[0], html=html):
+                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)
+                                       and _gate.embedded_board_ok(name, tok, api)):
                     print(f"  [XX] {name}: {plat} verified {v[0]} but {api[:44]} is not "
                           f"this company's board", flush=True)
                     v = None

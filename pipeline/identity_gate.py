@@ -132,6 +132,66 @@ _NAME_FILLER = {"israel", "israeli", "ltd", "inc", "the", "group", "technologies
                 "security", "medical", "digital", "software", "sciences", "health"}
 
 
+# A tenant slug routinely carries a legal or numeric suffix the registry name omits:
+# wizinc/Wiz, gongio/Gong, outbraininc/Outbrain, playtikaltd/Playtika, hippo70/Hippo
+# Insurance, tipaltisolutions/Tipalti. Requiring near-equality without stripping these
+# rejected 99 of the 460 active ATS rows. Stripping is safe in the direction that
+# matters: `bancorpbank` and `bitdefender` carry no such suffix, so they still fail.
+_TENANT_SUFFIX = re.compile(
+    r"(inc|ltd|llc|plc|corp|co|io|ai|hq|com|group|holdings|solutions|technologies|"
+    r"labs|global|international|\d+)+$")
+
+
+def _name_targets(name):
+    """The normalized forms of a registry name a tenant token may near-equal."""
+    from pipeline.company_identity import _norm
+    cn = _norm(name)
+    core = _norm("".join(w for w in re.findall(r"[A-Za-z0-9]+", name or "")
+                         if w.lower() not in _NAME_FILLER))
+    return {t for t in (cn, core) if t}
+
+
+def _tenant_near(candidate, targets):
+    """Tight near-equality between one tenant token and the name forms. NOT containment:
+    `Bancor`/`bancorpbank` and `Bit`/`bitdefender` must fail -- the same lesson
+    `company_identity` learned for domains (rad.com/RADLogics)."""
+    from pipeline.company_identity import _norm
+    nc = _norm(candidate)
+    if not nc:
+        return False
+    forms = {nc, _TENANT_SUFFIX.sub("", nc)}
+    return any(f and abs(len(f) - len(t)) <= 1 and (f in t or t in f)
+               for f in forms for t in targets)
+
+
+def embedded_board_ok(name, token, api_url):
+    """May a board found INSIDE a held page be written onto this row?
+
+    The callers that hold a page (`validate_empty`, `bd_rescue`) fetch the row's CAREERS
+    page and run `extract_ats` on it -- so their `api_url` is whatever board that page
+    EMBEDS, while their `html` is the page itself. `page_names_company`'s affirmative
+    answer is about the page, and `activation_ok` treating it as evidence about the board
+    promoted Riskified's Greenhouse onto Cogniteam's row off Cogniteam's OWN page carrying
+    a stale shared-template embed (wave-4 R1, reproduced on the scheduled Sunday path;
+    the SimilarTech-off-Similarweb incident is the same shape). A held page can REFUSE a
+    board -- it names someone else -- but it can never ADMIT one.
+
+    So the board must vouch for itself: an explicit subdomain-tenant mismatch refuses
+    (Bancor / careers-bancorpbank.icims.com), and otherwise the extracted tenant token
+    must near-equal the company name, by the same `_tenant_near` rule the subdomain check
+    uses. "Cannot tell" (opaque Comeet uid, an acquirer's slug like Momentis->memic)
+    REFUSES here, unlike in `tenant_is_this_company` -- because both callers surface the
+    refusal visibly (a `suspect` line, a bd refusal print) on rows that stay parked with
+    their re-check tokens, while a wrong acceptance ships another company's jobs. That is
+    the census resolution's direction, applied to the same bar. Cost filed with the
+    derivation: docs/BACKLOG.md 61.
+    """
+    if not tenant_is_this_company(name, api_url):
+        return False
+    targets = _name_targets(name)
+    return bool(targets) and _tenant_near(token, targets)
+
+
 def tenant_is_this_company(name, url):
     """Does an ATS URL's TENANT really belong to `name`? Use INSTEAD of `is_foreign` here.
 
@@ -177,29 +237,12 @@ def tenant_is_this_company(name, url):
     if _verdict(name, url) == "mismatch":
         return False
 
-    cn = _norm(name)
-    core = _norm("".join(w for w in re.findall(r"[A-Za-z0-9]+", name or "")
-                         if w.lower() not in _NAME_FILLER))
-    targets = {t for t in (cn, core) if t}
+    targets = _name_targets(name)
     if not targets:
         return True
 
-    # A tenant slug routinely carries a legal or numeric suffix the registry name omits:
-    # wizinc/Wiz, gongio/Gong, outbraininc/Outbrain, playtikaltd/Playtika, hippo70/Hippo
-    # Insurance, tipaltisolutions/Tipalti. Requiring near-equality without stripping these
-    # rejected 99 of the 460 active ATS rows. Stripping is safe in the direction that
-    # matters: `bancorpbank` and `bitdefender` carry no such suffix, so they still fail.
-    _TENANT_SUFFIX = re.compile(
-        r"(inc|ltd|llc|plc|corp|co|io|ai|hq|com|group|holdings|solutions|technologies|"
-        r"labs|global|international|\d+)+$")
-
     def near(c):
-        nc = _norm(c)
-        if not nc:
-            return False
-        forms = {nc, _TENANT_SUFFIX.sub("", nc)}
-        return any(f and abs(len(f) - len(t)) <= 1 and (f in t or t in f)
-                   for f in forms for t in targets)
+        return _tenant_near(c, targets)
 
     def _plumbing(label):
         """A host label is the ATS's own plumbing when EVERY hyphen-part of it is generic.

@@ -687,5 +687,35 @@
     "replace": "    if len(html) < 200 and os.environ.get(\"BRIGHTDATA_API_KEY\"):",
     "why": "same constant, other consumer: drifted to 200 the unlocker retry fires only for near-empty pages, and every bot wall rendering a 200-2000 char challenge shell (the Bit class the rung exists for) silently reads as None -- a refusal at every caller. Killed by the unlocker-rung test now that its walled page is ~520 chars.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "validate-empty-embed-vouch-drop",
+    "file": "validate_empty.py",
+    "symbol": "check",
+    "class": "M1-gate-removal",
+    "find": "            if il > 0 and (not _gate.activation_ok(name, api, il, html=html)\n                           or not _gate.embedded_board_ok(name, tok, api)):",
+    "replace": "            if il > 0 and not _gate.activation_ok(name, api, il, html=html):",
+    "why": "drops the board-vouches-for-itself clause: a page naming THIS company then admits whatever board it embeds -- the wave-4 B1 (Cogniteam promoted onto Riskified's greenhouse off Cogniteam's own page).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-embed-vouch-drop",
+    "file": "bd_rescue.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+    "replace": "                if v and v[0] and not _gate.activation_ok(name, api, v[0], html=html):",
+    "why": "same drop at the 02:30 sibling: the unlocker page vouches for a board it merely embeds.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "embed-near-widen",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "_tenant_near",
+    "class": "M3-branch-narrowing",
+    "find": "    return any(f and abs(len(f) - len(t)) <= 1 and (f in t or t in f)\n               for f in forms for t in targets)",
+    "replace": "    return any(f and abs(len(f) - len(t)) <= 99 and (f in t or t in f)\n               for f in forms for t in targets)",
+    "why": "widens near-equality to plain containment: `lili` is a substring of `elililly`, so Lili promotes onto Eli Lilly's board -- the recorded incident the tightness rule exists for.",
+    "must_be_killed_by_behavioural": true
   }
 ]

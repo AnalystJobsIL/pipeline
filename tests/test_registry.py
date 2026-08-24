@@ -1623,6 +1623,94 @@ def test_validate_empty_needs_the_board_to_be_this_companys(monkeypatch):
         "positive control regressed: %r %r" % (kind, row))
 
 
+def test_a_held_page_cannot_vouch_for_a_board_it_merely_embeds(tmp_path, monkeypatch):
+    """Wave-4 R1 (B1, reproduced end-to-end): `validate_empty.check` fetches the row's
+    CAREERS page, `extract_ats` returns whatever board that page embeds, and the gate was
+    then asked about the BOARD with the page as evidence. A page that genuinely names this
+    company -- Cogniteam's own page, naming Cogniteam 120 times -- carrying a Greenhouse
+    embed left from a shared template promoted RISKIFIED's board, active=true, on the
+    Sunday cron, behind continue-on-error. The page can refuse a board (it names someone
+    else); it can never ADMIT one: its affirmative answer is about itself.
+
+    The rule pinned here: a board discovered INSIDE a held page is promoted only when the
+    board vouches for itself -- its tenant token near-matches the company name (the same
+    near-equality `tenant_is_this_company` uses for subdomain tenants). Anything else is a
+    VISIBLE refusal: a suspect line, never a silent promote, never a silent confirm. The
+    cost (acquisition embeds like Momentis->memic, opaque Comeet uids) is accepted and
+    filed with the derivation in docs/BACKLOG.md 61.
+    """
+    import sys
+    import validate_empty as V
+    import bd_rescue as B
+
+    def page(company, slug):
+        return ("<html><h1>" + company + " Careers</h1>"
+                + ("<p>" + company + " is hiring in Tel Aviv.</p>") * 60
+                + '<a href="https://boards.greenhouse.io/embed/job_board?for=' + slug
+                + '">Open positions</a></html>')
+
+    monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
+    boards = {"Cogniteam": ("greenhouse", "riskified",
+                            "https://boards-api.greenhouse.io/v1/boards/riskified/jobs"),
+              "Kima": ("greenhouse", "kima",
+                       "https://boards-api.greenhouse.io/v1/boards/kima/jobs")}
+    pages = {"Cogniteam": page("Cogniteam", "riskified"), "Kima": page("Kima", "kima")}
+    monkeypatch.setattr(V, "_get", lambda u, timeout=10:
+                        pages["Cogniteam" if "cogniteam" in u else "Kima"])
+    monkeypatch.setattr(V, "_verify", lambda name, plat, tok, api: (30, 9))
+    monkeypatch.setattr(V, "extract_ats", lambda html, name: boards[name])
+
+    # the attack: the page names Cogniteam AND ONLY Cogniteam, real predicates throughout
+    kind, payload = V.check("Cogniteam", "https://www.cogniteam.com/careers")
+    assert kind == "suspect", (
+        "a page can never vouch for a board it merely embeds; Riskified's board was "
+        "promoted under Cogniteam's name off Cogniteam's own page: %r %r" % (kind, payload))
+    # positive control: the embedded board's own tenant token matches
+    kind, payload = V.check("Kima", "https://www.kima.network/careers")
+    assert kind == "promote" and payload[4] == "true", (
+        "positive control regressed: %r %r" % (kind, payload))
+
+    # the near-match must stay TIGHT: `lili` is a SUBSTRING of `elililly`, and Lili (the
+    # Israeli fintech) onto Eli Lilly's board is a recorded incident. Plain containment
+    # re-opens it.
+    boards["Lili"] = ("greenhouse", "elililly",
+                      "https://boards-api.greenhouse.io/v1/boards/elililly/jobs")
+    pages["Lili"] = page("Lili", "elililly")
+    monkeypatch.setattr(V, "_get", lambda u, timeout=10:
+                        pages["Cogniteam" if "cogniteam" in u else
+                              "Lili" if "lili" in u else "Kima"])
+    kind, payload = V.check("Lili", "https://www.lili.co/careers")
+    assert kind == "suspect", (
+        "`lili` in `elililly` -- containment without tightness promotes Lili onto Eli "
+        "Lilly's board: %r %r" % (kind, payload))
+
+    # the same shape at the 02:30 sibling: bd_rescue holds the unlocker page
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Cogniteam", "", "", "https://www.cogniteam.com/careers", "false",
+         "unreachable; could not scan"],
+        ["Kima", "", "", "https://www.kima.network/careers", "false",
+         "unreachable; could not scan"],
+    ])
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "x")
+    monkeypatch.setattr(B, "_load_secrets", lambda *a, **k: None)
+    monkeypatch.setattr(B, "alt_urls", lambda url: [url])
+    monkeypatch.setattr(B, "unlock", lambda u, timeout=90:
+                        pages["Cogniteam" if "cogniteam" in u else "Kima"])
+    monkeypatch.setattr(B, "extract_ats", lambda html, name: boards[name])
+    monkeypatch.setattr(B, "_verify", lambda name, plat, tok, api: (30, 9))
+    monkeypatch.setattr(B.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(sys, "argv", ["bd_rescue.py"])
+    B.main()
+    out = _read(tmp_path)
+    assert out["Cogniteam"][4] == "false", (
+        "bd_rescue activated an embedded foreign board off a page naming this company: "
+        "%r" % (out["Cogniteam"],))
+    assert "riskified" not in out["Cogniteam"][3]
+    assert out["Kima"][4] == "true", "positive control regressed: %r" % (out["Kima"],)
+
+
 def test_wayback_rescue_cannot_activate_another_companys_archived_board(
         tmp_path, monkeypatch):
     """`wayback_rescue` resurrects a board from archive.org. Sun 04:00.
