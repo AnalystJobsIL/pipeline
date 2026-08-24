@@ -1762,6 +1762,13 @@ def test_the_embed_vouch_recognises_the_slug_shapes_production_actually_emits():
     # 'tech' PREFIX to 'stars' and another company's board matches the name `Stars`.
     assert not G.embedded_board_ok("Stars", "techstars", gh % "techstars")
 
+    # the short-form boundary in the TIGHTENING direction (wave-7 confirmation): at
+    # `<= 3` the equality branch swallows Orbs' own 3-char ashby tenant `orb` against its
+    # 4-char name -- the one real row on that boundary refuses its own board.
+    assert G.embedded_board_ok(
+        "Orbs", "orb", "https://api.ashbyhq.com/posting-api/job-board/orb"), (
+        "the 3-vs-4-char own-board pair fell into the equality branch")
+
 
 def test_a_held_page_cannot_vouch_for_a_board_it_merely_embeds(tmp_path, monkeypatch):
     """Wave-4 R1 (B1, reproduced end-to-end): `validate_empty.check` fetches the row's
@@ -2841,6 +2848,40 @@ def test_the_unlocker_rung_inside_the_page_test_still_exists(monkeypatch):
     assert G.page_names_company("Bit", "https://careers.bit.example/", html=walled) is None, (
         "an exhausted unlocker budget must read as no-evidence, not spend anyway")
 
+    # ...and the counter actually COUNTS (wave-7 confirmation: deleting the increment
+    # left the suite green and the cap inert). Budget 1: the first call spends it, the
+    # second is suppressed.
+    monkeypatch.setattr(G, "_UNLOCK_BUDGET", 1)
+    monkeypatch.setattr(G, "_UNLOCK_SPENT", 0)
+    assert G.page_names_company("Bit", "https://careers.bit.example/", html=walled) is True
+    assert G.page_names_company("Bit", "https://careers.bit.example/", html=walled) is None, (
+        "the budget was spent by the first call; a second paid call went out anyway")
+
+
+def test_the_merge_writes_the_registry_atomically(tmp_path, monkeypatch):
+    """Wave-7 confirmation: reverting `merge_csv_rows` to its old truncating in-place
+    write was suite-green -- the crash-window property has no direct observer, but the
+    ROUTE does: the merge must go through `pipeline.atomic`'s replace, which is what
+    makes a runner kill mid-merge leave the OLD file (a valid registry) instead of a
+    400-line stump behind `|| true` on nine recovery paths.
+    """
+    import os as _os
+    import merge_csv_rows as M
+    import pipeline.atomic as A
+    rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"],
+            ["X", "scrape", "u", "https://x.example", "false", "unreachable; could not scan"]]
+    base = tmp_path / "base.csv"; ours = tmp_path / "ours.csv"; target = tmp_path / "t.csv"
+    import csv as _csv
+    for f in (base, ours, target):
+        with open(f, "w", newline="", encoding="utf-8") as fh:
+            _csv.writer(fh).writerows(rows)
+    hits = []
+    real = _os.replace
+    monkeypatch.setattr(A.os, "replace", lambda a, b: (hits.append(b), real(a, b))[1])
+    M.merge(str(base), str(ours), str(target))
+    assert any(str(target) in h for h in hits), (
+        "the merged registry was not written through the atomic replace")
+
 
 def test_each_pool_predicate_selects_and_excludes_on_real_note_shapes():
     """Wave-6 R2 (B3 x2): the pool constants were shared and identity-asserted, but no
@@ -2929,6 +2970,12 @@ def test_every_refusal_note_keeps_the_row_in_a_re_check_pool(monkeypatch):
         # green -- because all three asserted a MIRROR, and the mirrors were retyped.
         assert LH.HUNT_POOL.search(row[5]), (
             "the hand-off token no longer lands in listing_hunt's own pool: %r" % (row,))
+    # the blocking gate's terminal set covers the WHOLE shared list -- reverting its
+    # derivation to the old narrow literal was suite-green (wave-7 confirmation)
+    from pipeline.verdicts import TERMINAL as _T
+    for _tok in _T:
+        assert re.search(ci.TERMINAL, _tok, re.I), (
+            "check_invariants.TERMINAL no longer covers %r" % _tok)
     # a retyped mirror is how the loss stayed silent; the mirror must BE the tool's
     assert RH._HUNT_SHAPE is LH.HUNT_POOL, (
         "registry_health's hunt mirror is no longer listing_hunt's own constant")

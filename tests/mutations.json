@@ -957,5 +957,45 @@
     "replace": "            and not is_recruiter(r[0]))",
     "why": "wave-6 R2: the crack pool ACTIVATES; without the terminal exclusion the redundant twin and the alias rows re-enter it.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "tenant-short-exact-tighten",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "_tenant_near",
+    "class": "M3-branch-narrowing",
+    "find": "    return any(f and (f == t if min(len(f), len(t)) < 3",
+    "replace": "    return any(f and (f == t if min(len(f), len(t)) <= 3",
+    "why": "wave-7 confirmation: the tightening direction of the short-form boundary -- at <= 3 Orbs' own 3-char ashby tenant refuses against its 4-char name, the one real row on the boundary.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "unlock-spent-increment-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "page_names_company",
+    "class": "M7-constant-drift",
+    "find": "            _UNLOCK_SPENT += 1",
+    "replace": "            _UNLOCK_SPENT += 0",
+    "why": "wave-7 confirmation: the counter IS the cap; with the increment gone the budget is inert and the Sunday spend is uncapped again.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "invariants-terminal-narrow",
+    "file": "check_invariants.py",
+    "symbol": "TERMINAL",
+    "class": "M7-constant-drift",
+    "find": "TERMINAL = \"|\".join(re.escape(t) for t in _VERDICTS_TERMINAL)",
+    "replace": "TERMINAL = r\"defunct|domain-dead|alias-of\"",
+    "why": "wave-7 confirmation: reverting the blocking gate's terminal set to the old private narrow copy was suite-green; it gates nine workflow commits.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "merge-inplace-revert",
+    "file": "merge_csv_rows.py",
+    "symbol": "merge",
+    "class": "M7-constant-drift",
+    "find": "    write_csv_rows(target_path, target)",
+    "replace": "    open(target_path, \"w\", encoding=\"utf-8\", newline=\"\").write(\"\r\n\".join(\",\".join(r) for r in target) + \"\r\n\")",
+    "why": "wave-7 confirmation: reverting the atomic write to an in-place truncation was suite-green; a runner kill mid-merge then commits a stump behind || true on nine recovery paths.",
+    "must_be_killed_by_behavioural": true
   }
 ]
