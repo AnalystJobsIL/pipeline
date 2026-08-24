@@ -1840,3 +1840,19 @@ def test_the_city_list_is_peripheral_only():
     for city in dd._LI_CITIES:
         for metro in ("herzliya", "jerusalem", "tel aviv", "ramat gan", "givatayim"):
             assert metro not in city.lower(), f"{city} is inside the national window already"
+
+
+def test_a_starved_targeted_cap_skips_the_trigger_loudly(capsys):
+    """A cap of 4 (Bright Data pool at 97%, 2026-08-24) still triggered a dataset snapshot,
+    polled it for up to 15 minutes, burned a slot in the 22-day targeting rotation and
+    returned ZERO records. Below TARGETED_MIN_CAP the trigger is skipped and SAYS so; a cap
+    of 0 stays silent because plan_spend's own line already covers it."""
+    import discovery_daily as dd
+    assert dd._targeted_cap_or_zero(4) == 0
+    out = capsys.readouterr().out
+    assert "dataset trigger skipped" in out and "cap 4" in out
+    assert dd._targeted_cap_or_zero(dd.TARGETED_MIN_CAP) == dd.TARGETED_MIN_CAP
+    assert dd._targeted_cap_or_zero(0) == 0
+    assert "skipped" not in capsys.readouterr().out, "0 is plan_spend's message, not ours"
+    src_main = __import__("inspect").getsource(dd.main)
+    assert "_targeted_cap_or_zero" in src_main, "the gate must actually be wired in main()"

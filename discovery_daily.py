@@ -869,6 +869,23 @@ def plan_spend(today=None):
     return breadth, targeted, how
 
 
+# Below this, a targeted run is waste: the 2026-08-24 run's cap of 4 (Bright Data pool at
+# 97%) still triggered a dataset snapshot and up to 15 min of polling, burned a slot in the
+# 22-day rotation over the ~88 targetable rows, and returned ZERO records. Ten covers the
+# rotation in ~9 days for well under 10 credits; anything smaller degenerates.
+TARGETED_MIN_CAP = int(os.environ.get("TARGETED_MIN_CAP", "10"))
+
+
+def _targeted_cap_or_zero(cap):
+    """A starved targeted cap becomes an explicit skip, never a doomed trigger. BACKLOG
+    item 8: the targeted sweep is the first thing cut when the budget binds."""
+    if 0 < cap < TARGETED_MIN_CAP:
+        print(f"[linkedin-targeted] cap {cap} below useful minimum {TARGETED_MIN_CAP} — "
+              f"dataset trigger skipped, the budget recovers it automatically")
+        return 0
+    return cap
+
+
 def _load_json(path):
     try:
         return json.load(open(path, encoding="utf-8"))
@@ -1050,6 +1067,8 @@ def main():
     # public search only exposes as a numeric f_C id we do not have. ~67 credits.
     _unused_breadth, targeted_cap, how = plan_spend() if have_bd else (0, 0, "no BD key")
     print(f"[budget] {how}")
+    # AFTER the [budget] line, so the budget stays a truthful record of what plan_spend said.
+    targeted_cap = _targeted_cap_or_zero(targeted_cap)
     runs = []
     targeted = _targeted_inputs(cap=targeted_cap) if targeted_cap else []
     if targeted:
