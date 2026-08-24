@@ -183,10 +183,11 @@ def _scrape_all(rows, *, workers, budget_min=0, pool_cls=None, grace_s=600, work
                     children = _children_of(ex)
                     _abandon(ex, wait_s=0)
                     _kill_children(children)
+                    late, pending = cf.wait(pending, timeout=0)     # landed during the stall
+                    for f in late:
+                        yield _result_of(f, futs[f])
                     for f in pending:
-                        if f.done() and not f.cancelled():
-                            yield _result_of(f, futs[f])
-                        elif not f.cancelled():
+                        if not f.cancelled():
                             yield {"name": futs[f], "jobs": [], "status": "error",
                                    "error": f"hang:>{int(stall_s)}s", "http_status": None,
                                    "strategy": "", "rescued": False, "seconds": float(stall_s)}

@@ -2047,6 +2047,8 @@ def test_scrape_never_raises_and_scrape_result_reports_the_failure(monkeypatch):
     (dict(http_status=None, error="goto:TimeoutError"), [], "error"),
     (dict(http_status=None, error="launch:Error"), [], "error"),
     (dict(http_status=403), [], "error"),                       # a block is not "no roles"
+    (dict(http_status=403, page_html="<html><body>Forbidden</body></html>" + "x" * 3000), [], "error"),
+    (dict(http_status=404, page_html="<html><body>page moved</body></html>" + "x" * 3000), [], "error"),
     (dict(http_status=404), [], "error"),
     (dict(http_status=503), [], "error"),
     (dict(http_status=200, error="render:TargetClosedError"), [], "error"),
@@ -2252,6 +2254,13 @@ def test_refresh_mass_failure_guard_refuses_to_rot_park_or_drop(tmp_path, monkey
     stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
     assert stamp["alarm"].startswith("mass-failure-errors-96%") and stamp["errors"] == 24
     assert stamp["parked"] == 0, "five rows were parkable; a mass-failure night parks none and says so"
+    # the threshold: 10 of 25 (40%) is a broken runner too
+    P = _refresh_sandbox(tmp_path / "forty", monkeypatch, [(n,) for n in names], old, rot,
+                         {n: ("error", "goto:TimeoutError") for n in names[:10]})
+    before = _snapshot(P.csv, P.rot)
+    assert P.R.run(["--workers", "1"]) == 0
+    assert _snapshot(P.csv, P.rot) == before
+    assert _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]["alarm"].startswith("mass-failure-errors-40%")
     # the floor: 3 of 3 erroring is a bad night for 3 sites, not a broken runner
     P = _refresh_sandbox(tmp_path / "small", monkeypatch, [("A",), ("B",), ("C",)], {"A": [_il_job("A")]},
                          {"A": {"since": _days_ago(8), "why": "error", "last": _days_ago(1), "n": 7}},
@@ -2282,6 +2291,22 @@ def test_refresh_time_budget_carries_the_unprocessed_and_stamps_the_count(tmp_pa
     assert stamp["scraped"] == 1 and stamp["unprocessed"] == 4
     assert set(cache) == set(names), "unprocessed companies keep last night's entry"
     assert "unprocessed-4" in stamp["alarm"]
+    # ...but one row of 25 (4%) is not an alarm — the budget trimming a tail is normal
+    many = [f"N{i:02d}" for i in range(25)]
+    P = _refresh_sandbox(tmp_path / "tail", monkeypatch, [(n,) for n in many], {n: [_il_job(n)] for n in many}, {})
+    real2 = P.R.scrape_result
+    calls = []
+
+    def slow2(name, url, **kw):
+        calls.append(name)
+        if len(calls) == 24:
+            _time.sleep(0.2)                 # the 24th row overruns; the 25th is never started
+        return real2(name, url, **kw)
+    monkeypatch.setattr(P.R, "scrape_result", slow2)
+    monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0.002")      # 120 ms
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["unprocessed"] >= 1 and "unprocessed" not in stamp.get("alarm", ""), stamp
 
 
 def test_refresh_scoped_and_dry_runs_write_nothing(tmp_path, monkeypatch):
@@ -2361,11 +2386,18 @@ def test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason(tmp_path, mo
     # 5 of those lost = 50% (the whole-cache view would say 5 of 25 = 20%, no abort)
     P = _refresh_sandbox(tmp_path / "half", monkeypatch, [(n,) for n in names], old, {},
                          {n: ("empty", "") for n in names[:5]})
-    monkeypatch.setattr(P.R, "scrape_result", slow)
+    real2 = P.R.scrape_result
+
+    def slow2(name, url, **kw):
+        _time.sleep(0.02)
+        return real2(name, url, **kw)
+    monkeypatch.setattr(P.R, "scrape_result", slow2)
     monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0.0035")     # ~10 rows
     assert P.R.run(["--workers", "1"]) == 0
     stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
     assert 8 <= stamp["scraped"] <= 12 and stamp["alarm"].startswith("shrink-abort-")
+    # the token names what was PROCESSED (had = scraped), not the 25-company cache
+    assert int(stamp["alarm"].split("-")[2]) == stamp["scraped"], stamp["alarm"]
 
 
 def test_refresh_pool_and_inline_paths_build_the_same_cache(tmp_path, monkeypatch):
@@ -2657,11 +2689,12 @@ def test_refresh_the_stall_watchdog_really_terminates_the_stuck_child():
         return procs
     R._children_of = spy
     try:
-        rows = [{"company_name": n, "api_url": "https://x.example"} for n in ("ok-1", "slow-60", "ok-2")]
+        rows = [{"company_name": n, "api_url": "https://x.example"} for n in ("ok-1", "slow-60", "slow-1", "ok-2")]
         got = list(R._scrape_all(rows, workers=2, worker=fake_worker, tasks_per_worker=2, stall_s=2))
     finally:
         R._children_of = orig
-    assert any(r["error"].startswith("hang:") for r in got)
+    assert [r["name"] for r in got if r["error"].startswith("hang:")] == ["slow-60"]
+    assert {r["name"] for r in got if not r["error"]} == {"ok-1", "ok-2", "slow-1"}, "a company that answered is never a hang"
     assert seen, "the watchdog saw no children"
     _time.sleep(1.0)
     assert not any(p.is_alive() for p in seen), "a stuck child survived the watchdog"
