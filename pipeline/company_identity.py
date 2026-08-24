@@ -29,7 +29,7 @@ ATS_HOST = re.compile(
     r"workable|bamboohr|breezy\.hr|jazzhr|applytojob|icims|oraclecloud|successfactors|"
     r"phenom|eightfold|avature|careers-page\.com|rippling|hibob|teamtailor|willhire|"
     r"comeet\.com|jobs\.ashbyhq|jobs\.gem\.com|ultipro|trinethire|inflightcloud|"
-    r"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats)", re.I)
+    r"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats|jobvite|taleo\.net)", re.I)
 
 # Brand/parent pairs a string comparison can never derive. Keep SMALL and evidence-based —
 # every entry is a claim that one company's board legitimately carries the other's roles.

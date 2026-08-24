@@ -2341,6 +2341,13 @@ def test_the_jobvite_taleo_branch_is_a_gate_and_not_a_pass_through():
                          html=verint) is False, "Varonis onto Verint's Jobvite board"
     assert G.identity_ok("Varonis", "https://jobs.jobvite.com/varonis/jobs",
                          html=varonis) is True, "positive control: Varonis' own board"
+    # the taleo half, previously untested with an empty registry set (docs/BACKLOG.md 55):
+    # same rule, same both-directions pair, on the URL shape crack_walled builds
+    radware = "<html><h1>Radware Careers</h1>" + "<p>Radware is hiring.</p>" * 90 + "</html>"
+    assert G.identity_ok("Varonis", "https://radware.taleo.net/careersection/jobsearch.ftl",
+                         html=radware) is False, "Varonis onto Radware's Taleo board"
+    assert G.identity_ok("Radware", "https://radware.taleo.net/careersection/jobsearch.ftl",
+                         html=radware) is True, "positive control: Radware's own board"
 
 
 def test_a_scoped_tenant_mismatch_still_refuses():

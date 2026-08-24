@@ -78,14 +78,6 @@ _PLATFORM_ALIAS = {"eightfold.ai": "eightfold", "phenom": "phenom", "icims.com":
                    "myworkdayjobs.com": "workday", "hibob.com": "hibob",
                    "applytojob.com": "applytojob"}
 
-# Hosts that ARE a multi-tenant ATS but are missing from `company_identity.ATS_HOST`, so
-# `verdict()` compares the company against the ATS VENDOR's domain, returns `mismatch`, and
-# `is_foreign` refuses a correct board outright — `Varonis -> jobs.jobvite.com/varonis` and
-# `Radware -> radware.taleo.net/...`, URLs `crack_walled.listing_urls()` builds itself.
-# Adding them to `ATS_HOST` is the proper fix: `docs/BACKLOG.md` 42. Delete this when it lands.
-_ATS_NOT_IN_ATS_HOST = re.compile(r"(jobvite\.com|taleo\.net)", re.I)
-
-
 def host_platform(url):
     """Platform name from the row's stored URL — durable data, unlike a note segment."""
     host = (urllib.parse.urlparse(url or "").netloc or "").lower()
@@ -514,11 +506,10 @@ def identity_ok(name, url, html=""):
     once and measured at 358 rows.
     """
     host = (urllib.parse.urlparse(url or "").netloc or "").lower()
-    if host and _ATS_NOT_IN_ATS_HOST.search(host):
-        # `is_foreign` is meaningless here (see `_ATS_NOT_IN_ATS_HOST`), so skip it for the
-        # same reason it is skipped on every other ATS host, and let the page test decide.
-        return (looks_like_a_job_listing_page(url)
-                and page_names_company(name, url, html=html) is True)
+    # jobvite/taleo used to need their own branch here because `ATS_HOST` omitted them and
+    # `is_foreign` refused their correct boards outright. `ATS_HOST` now names them
+    # (docs/BACKLOG.md 42, closed), so they flow through the ordinary ATS path below --
+    # `ok_to_write` is the identical expression the special branch carried.
     if is_foreign(name, url):
         return False
     if host and ATS_HOST.search(host):

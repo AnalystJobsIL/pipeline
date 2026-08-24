@@ -471,12 +471,12 @@
   },
   {
     "id": "identity-jobvite-open",
-    "file": "pipeline/identity_gate.py",
-    "symbol": "identity_ok",
-    "class": "M1-gate-removal",
-    "find": "        return (looks_like_a_job_listing_page(url)\n                and page_names_company(name, url, html=html) is True)",
-    "replace": "        return True",
-    "why": "the jobvite/taleo branch is the one place identity_ok skips is_foreign and relies solely on the page test; no test exercised either platform.",
+    "file": "pipeline/company_identity.py",
+    "symbol": "ATS_HOST",
+    "class": "M7-constant-drift",
+    "find": "    r\"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats|jobvite|taleo\\.net)\", re.I)",
+    "replace": "    r\"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats)\", re.I)",
+    "why": "dropping jobvite/taleo from ATS_HOST re-opens docs/BACKLOG.md 42: is_foreign compares the company against the ATS VENDOR's domain again and refuses Varonis' and Radware's own boards -- the URLs crack_walled.listing_urls() builds itself. Re-aimed from the deleted identity_ok special branch when the closure landed.",
     "must_be_killed_by_behavioural": true
   },
   {

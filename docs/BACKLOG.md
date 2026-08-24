@@ -966,6 +966,11 @@ see `docs/sessions/2026-08-24-registry.md` for why nine waves did not converge w
     `clever.com`, `hibobble.com` and `workablefoods.com` would classify as ATS hosts — no
     such row exists today (checked all 1,199), so that half is latent.
 
+    **CLOSED 2026-08-24 (consolidation):** `ATS_HOST` names both; `identity_gate`'s
+    `_ATS_NOT_IN_ATS_HOST` shim and its special branch are deleted (the ordinary ATS path
+    is the identical expression). Registry blast radius measured: 0 rows changed. Pinned
+    by the re-aimed `identity-jobvite-open` mutation and the Varonis/Radware cells.
+
 43. **`verdict() == "weak"` has no consumer anywhere in the repo** — lane: shared plumbing.
     Produced at `pipeline/company_identity.py:235`, read nowhere:
     `grep -rn '"weak"' --include=*.py .` returns that one line. `is_foreign` is
@@ -1159,6 +1164,9 @@ Six blocking findings, all reproduced and fixed. These are the residuals.
     of 1210 rows, `jobvite.com` also 0), so it is filed rather than blocking — one line to
     close by duplicating the jobvite assertions for `radware.taleo.net`.
 
+    **CLOSED 2026-08-24:** the Radware/Taleo both-directions pair now sits next to the
+    jobvite cells in the same test.
+
 56. **`apply_resolved`'s veto is scoped to ACTIVE rows, so a PARKED row is re-pointed with
     no identity check** — lane: `registry`. Deliberate scope ("this tool cannot activate a
     row"), and worth revisiting: a parked row holding a foreign address is exactly what
@@ -1205,6 +1213,9 @@ FairFly shape). These are the residuals.
     unreadable page falls to the tenant clause, and a subdomain mismatch that the unlocker
     HTML would have overturned lands as a visible `empty-but-suspect`, never a wrong write.
     One `env:` line on the step closes it.
+
+    **CLOSED 2026-08-24:** both audit steps (`wayback_rescue`, `validate_empty`) carry the
+    key in `audit-coverage.yml`, same as the crack step.
 
 60. **The push-conflict merge resurrects note segments a fresher run deliberately deleted,
     and 47 of 152 woken rows lose their wake to it** — lane: `infra`, PRE-EXISTING.
@@ -1276,6 +1287,11 @@ FairFly shape). These are the residuals.
     `audit-coverage` commit `[skip ci]` with no `check_invariants` step
     (`grep -rn check_invariants .github/workflows` -> daily-digest.yml, tests.yml only).
     Wave 3/4 changed neither the schedules nor the rows-per-run.
+
+    **The invariants half is CLOSED 2026-08-24:** all three writer workflows run
+    `check_invariants.py` (not continue-on-error) before their commit step, and again on
+    the merged registry inside the conflict-recovery path. The freeze-window observation
+    stands as written.
 
 65. **`empty-but-suspect` waits out `listing_hunt`'s 14-day cooldown, and no scheduled tool
     clears the verdict** — lane: `registry`. A suspect row usually already carries a
