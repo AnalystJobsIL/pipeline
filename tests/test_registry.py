@@ -1369,7 +1369,8 @@ def test_the_walled_pool_survives_another_tools_note_rewrite():
 # live network, and it is not a spelling this repo uses for the gate any more.
 _GATE_NAMES = {"activation_ok", "ok_to_write", "identity_ok", "page_names_company",
                "tenant_is_this_company", "is_foreign", "page_mentions_company",
-               "looks_like_a_job_listing_page", "verdict", "identity_verdict"}
+               "looks_like_a_job_listing_page", "embedded_board_ok", "verdict",
+               "identity_verdict"}
 # `is_aggregator` is deliberately NOT in the set. It answers "is this a job board for many
 # employers", not "is this THIS company's page" -- FairFly was activated off fireflyspace.com
 # by a path that checked exactly and only is_aggregator. With it listed, a writer whose sole
