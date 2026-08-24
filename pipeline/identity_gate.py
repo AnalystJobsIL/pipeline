@@ -71,6 +71,12 @@ _WALLED_HOST = re.compile(
     r"ultipro\.com|phenompeople\.com|phenom|jobvite\.com|taleo\.net|successfactors|"
     r"hibob\.com|applytojob\.com)", re.I)
 
+# WALL names, not fetcher names. `host_platform` answers "which walled ATS is this row
+# stuck behind" and its names key `crack_walled._HOST_PATTERNS`. The registry's col-1
+# holds FETCHER names -- what fetches the board once cracked -- and for Oracle the two
+# legitimately differ: the wall is `oraclecloud`, the fetcher is `oraclehcm`
+# (`registry_health._FETCHER_ALIAS` owns that mapping). Two questions, two tables;
+# "unifying" them re-introduces the mis-join it looks like it fixes.
 _PLATFORM_ALIAS = {"eightfold.ai": "eightfold", "phenom": "phenom", "icims.com": "icims",
                    "successfactors": "successfactors", "oraclecloud.com": "oraclecloud",
                    "avature.net": "avature", "jobvite.com": "jobvite", "taleo.net": "taleo",

@@ -76,6 +76,14 @@ def probe(url):
     return {"sig": len(_JOB_SIG.findall(body)), "il": len(_IL_SIG.findall(body))}
 
 
+# The probe pool's NOTE SHAPES. This constant is the ONE definition -- `registry_health`
+# imports it for the ownership matrix (a retyped mirror is how the crack pool's count and
+# the hunt pool's orphans were both mis-reported; see those tools' notes). It is also the
+# pool item 53 measures eroding when `listing_hunt` rewrites its own segment: the durable
+# fix filed there is a signal this tool owns, not a wider regex here.
+PROBE_POOL = re.compile(r"monitored candidate|host documented|no IL listing")
+
+
 def main():
     apply = "--apply" in sys.argv
     # Runs INSIDE the digest, in front of the email — same reasoning as scan_dead_domains:
@@ -92,7 +100,7 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
-               and re.search(r"monitored candidate|host documented|no IL listing", r[5] or "")
+               and PROBE_POOL.search(r[5] or "")
                and "domain-dead" not in r[5] and "defunct" not in r[5]
                and (r[3] or "").startswith("http")]
     # Least-recently-probed first. The target filter has no date term, so with a budget and

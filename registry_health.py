@@ -113,8 +113,12 @@ TERMINAL = _TerminalShim
 # re.I where the tool is case-sensitive: a mirror looser than its tool is exactly the
 # direction that hides orphans.
 from listing_hunt import HUNT_POOL as _HUNT_SHAPE
-_PROBE_SHAPE = re.compile(r"monitored candidate|host documented|no IL listing", re.I)
-_EXTRACT_GAP = re.compile(r"dark-triage[^|]*extract-gap", re.I)
+# the tool's own constant (probe_candidates imports only stdlib + pipeline.atomic, so
+# unlike repair_extract_gap it is safe at module level). The old copy here was re.I where
+# the tool is case-sensitive -- measured 136 -> 136 on the real registry, zero rows moved.
+# _EXTRACT_GAP, the looser retyped extract-gap mirror, is deleted: `_extract_gap_mode()`
+# below has imported the tool's own MODE since the rebuild and nothing else read the copy.
+from probe_candidates import PROBE_POOL as _PROBE_SHAPE
 
 
 def read_rows(path=CSV_PATH):
@@ -298,6 +302,9 @@ def orphans(rows):
 # over 54 rows, and it reported the same at the commit that wrote the second claim. The point
 # of this function is that the count is derived; typing one into a comment beside it has now
 # produced two false statements in two days. Run `--ats`.
+# FETCHER names (the registry's col-1 vocabulary), NOT wall names -- the deliberate
+# counterpart of `identity_gate._PLATFORM_ALIAS`; see the note there. oraclecloud (wall)
+# is fetched by oraclehcm once cracked.
 _FETCHER_ALIAS = {"eightfold.ai": "eightfold", "oraclecloud.com": "oraclehcm",
                   "icims.com": "icims", "jobvite.com": "jobvite", "taleo.net": "taleo",
                   "avature.net": "avature"}

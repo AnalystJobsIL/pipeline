@@ -2853,6 +2853,9 @@ def test_every_refusal_note_keeps_the_row_in_a_re_check_pool(monkeypatch):
     # a retyped mirror is how the loss stayed silent; the mirror must BE the tool's
     assert RH._HUNT_SHAPE is LH.HUNT_POOL, (
         "registry_health's hunt mirror is no longer listing_hunt's own constant")
+    import probe_candidates as PC
+    assert RH._PROBE_SHAPE is PC.PROBE_POOL, (
+        "registry_health's probe mirror is no longer probe_candidates' own constant")
     # ...and check_invariants.POOL, the THIRD copy, is pinned set-equal to the receiver's
     # alternatives plus its one deliberate extra (`dark-triage` has its own pool). The old
     # guard checked only the narrowing direction; a token added to POOL alone WIDENS the
