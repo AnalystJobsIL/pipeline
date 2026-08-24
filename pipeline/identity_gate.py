@@ -142,13 +142,40 @@ _TENANT_SUFFIX = re.compile(
     r"labs|global|international|\d+)+$")
 
 
+def _plumbing(label):
+    """A host label is the ATS's own plumbing when EVERY hyphen-part of it is generic.
+
+    `boards-api.greenhouse.io` and `job-boards.greenhouse.io` are Greenhouse's own
+    hostnames, not a tenant - matching them against the company name rejected 173 of the
+    460 active ATS rows on the first attempt. `careers-bancorpbank` splits to
+    {careers, bancorpbank}, and `bancorpbank` is not generic, so it stays a tenant.
+    """
+    parts = [x for x in re.split(r"[-_]", label) if x]
+    return bool(parts) and all(
+        x in _GENERIC_HOST_LABEL or re.fullmatch(r"wd\d+|v\d+|\d+", x) for x in parts)
+
+
 def _name_targets(name):
-    """The normalized forms of a registry name a tenant token may near-equal."""
+    """The normalized forms of a registry name a tenant token may near-equal.
+
+    A parenthetical is an ALIAS, not a suffix: 21 registry rows are named `A (B)` --
+    `Merck (MSD)`, `VMware (Broadcom)`, `Habana Labs (Intel)` -- and concatenating both
+    halves (`merckmsd`) produces a form no real tenant can near-equal, so every one of
+    those rows refused its OWN board (wave-5 R2). Each half is its own target; the name
+    itself declares the entity, so a tenant matching either half is that row's evidence.
+    """
     from pipeline.company_identity import _norm
-    cn = _norm(name)
-    core = _norm("".join(w for w in re.findall(r"[A-Za-z0-9]+", name or "")
-                         if w.lower() not in _NAME_FILLER))
-    return {t for t in (cn, core) if t}
+    variants = [name or ""]
+    m = re.match(r"^(.*?)\((.*?)\)\s*(.*)$", name or "")
+    if m:
+        variants += [(m.group(1) + " " + m.group(3)).strip(), m.group(2).strip()]
+    out = set()
+    for v in variants:
+        cn = _norm(v)
+        core = _norm("".join(w for w in re.findall(r"[A-Za-z0-9]+", v)
+                             if w.lower() not in _NAME_FILLER))
+        out |= {t for t in (cn, core) if t and len(t) >= 2}
+    return out
 
 
 def _tenant_near(candidate, targets):
@@ -162,6 +189,27 @@ def _tenant_near(candidate, targets):
     forms = {nc, _TENANT_SUFFIX.sub("", nc)}
     return any(f and abs(len(f) - len(t)) <= 1 and (f in t or t in f)
                for f in forms for t in targets)
+
+
+# Words a PATH-tenant slug appends that a registry name omits. `_TENANT_SUFFIX` (legal/
+# geographic ABBREVIATIONS, calibrated on subdomain labels) misses whole words: real
+# own-board slugs `armissecurity`, `khealthcareers`, `bluevineisrael`, `venncity` were all
+# refused -- 44 rows on the wave-5 sweep. Words only, stripped from the END, so
+# `bancorpbank` (bank deliberately absent) and `elililly` are untouched and the recorded
+# incidents stay refused.
+_EMBED_TOKEN_WORDS = re.compile(
+    r"(careers|career|jobs|job|security|israel|tech|technologies|technology|labs|"
+    r"networks|network|city|medical|global|digital)$")
+
+
+def _embed_token_forms(token):
+    """The candidate forms of an extracted tenant token: as-is, then generic tail words
+    stripped one at a time. Each form still goes through `_tenant_near`'s tight rule."""
+    forms, t = [], (token or "")
+    while t and t not in forms:
+        forms.append(t)
+        t = _EMBED_TOKEN_WORDS.sub("", t)
+    return forms
 
 
 def embedded_board_ok(name, token, api_url):
@@ -189,7 +237,19 @@ def embedded_board_ok(name, token, api_url):
     if not tenant_is_this_company(name, api_url):
         return False
     targets = _name_targets(name)
-    return bool(targets) and _tenant_near(token, targets)
+    if not targets:
+        return False
+    host = (urllib.parse.urlparse(api_url or "").netloc or "").lower()
+    if _SUBDOMAIN_TENANT_HOST.search(host):
+        # A checkable subdomain label already decided in the conjunct above -- the token
+        # here would be DOUBLE jeopardy, and for Workday it is the composite
+        # `tenant/site` string `extract_ats` returns, which `_norm` concatenates into
+        # something no name can near-equal: 83 of 83 Workday rows refused their own
+        # board, Intel included (wave-5 R1/R2). Only a host whose labels are all
+        # plumbing (apply.workable.com) still needs the token to vouch.
+        if [l for l in host.split(".")[:-2] if not _plumbing(l)]:
+            return True
+    return any(_tenant_near(c, targets) for c in _embed_token_forms(token))
 
 
 def tenant_is_this_company(name, url):
@@ -243,18 +303,6 @@ def tenant_is_this_company(name, url):
 
     def near(c):
         return _tenant_near(c, targets)
-
-    def _plumbing(label):
-        """A host label is the ATS's own plumbing when EVERY hyphen-part of it is generic.
-
-        `boards-api.greenhouse.io` and `job-boards.greenhouse.io` are Greenhouse's own
-        hostnames, not a tenant - matching them against the company name rejected 173 of the
-        460 active ATS rows on the first attempt. `careers-bancorpbank` splits to
-        {careers, bancorpbank}, and `bancorpbank` is not generic, so it stays a tenant.
-        """
-        parts = [x for x in re.split(r"[-_]", label) if x]
-        return bool(parts) and all(
-            x in _GENERIC_HOST_LABEL or re.fullmatch(r"wd\d+|v\d+|\d+", x) for x in parts)
 
     # SCOPE: only the platforms that put the tenant in the SUBDOMAIN. That is the class
     # `company_identity` cannot see and the class that produced every demonstrated failure -

@@ -1633,6 +1633,54 @@ def test_validate_empty_needs_the_board_to_be_this_companys(monkeypatch):
         "a page under the readability floor is no evidence in either direction: %r" % (kind,))
 
 
+def test_the_embed_vouch_recognises_the_slug_shapes_production_actually_emits():
+    """Wave-5 R1+R2: `_tenant_near` was calibrated on subdomain HOST LABELS and wave 4
+    applied it to PATH TOKENS, which routinely carry a whole extra word -- so the embed
+    vouch refused 44 real own-board slugs (`armissecurity`, `khealthcareers`,
+    `bluevineisrael`) and ALL 83 Workday boards, because `wayback_rescue.extract_ats`
+    returns the composite `tenant/site` as the token and `_norm` concatenates it into
+    something no name can near-equal. The wave-4 Qualcomm census cell passed only by
+    hand-writing a token shape production cannot emit.
+
+    The calibration: (1) on a subdomain-tenant host with a checkable label,
+    `tenant_is_this_company` already decided -- the token is not double-checked;
+    (2) on path-tenant hosts, generic tail WORDS are stripped from the token before the
+    near-match; (3) `_name_targets` also yields the parenthetical alias forms, so
+    `VMware (Broadcom)` can match its own acquirer tenant. The tightness cells pin that
+    none of this re-opens containment: `lili`/`elililly` and `bancor`/`bancorpbank` still
+    refuse, and the +-1 length window stays +-1 -- at +-2 a digit-stripped Comeet uid
+    (`A5.000` -> `a`) is CONTAINED in `zap` and another company's board is promoted
+    (wave-5 R2, 8 wrong accepts measured at +-2 on the real pools).
+    """
+    from pipeline import identity_gate as G
+    gh = "https://boards-api.greenhouse.io/v1/boards/%s/jobs"
+
+    # the extra-word class: real slugs of real registry rows (wave-5 R1's sweep)
+    assert G.embedded_board_ok("Armis", "armissecurity", gh % "armissecurity")
+    assert G.embedded_board_ok("K Health", "khealthcareers", gh % "khealthcareers")
+    assert G.embedded_board_ok("BlueVine", "bluevineisrael", gh % "bluevineisrael")
+    # the Workday composite token, exactly as extract_ats returns it
+    assert G.embedded_board_ok(
+        "MSD", "msd/SearchJobs",
+        "https://msd.wd5.myworkdayjobs.com/wday/cxs/msd/SearchJobs/jobs")
+    # parenthetical alias: the acquirer tenant is IN the registry name
+    assert G.embedded_board_ok(
+        "VMware (Broadcom)", "broadcom/External_Career",
+        "https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career/jobs")
+    assert G.embedded_board_ok("Merck (MSD)", "msd",
+                               "https://msd.wd5.myworkdayjobs.com/wday/cxs/msd/S/jobs")
+
+    # tightness survives the calibration -- every recorded incident shape still refuses
+    assert not G.embedded_board_ok("Lili", "elililly", gh % "elililly")
+    assert not G.embedded_board_ok("Cogniteam", "riskified", gh % "riskified")
+    assert not G.embedded_board_ok(
+        "Bancor", "bancorpbank", "https://careers-bancorpbank.icims.com/jobs/search?ss=1")
+    # the +-1 window pin (kills embed-near-window-drift)
+    assert not G.embedded_board_ok(
+        "zap group", "A5.000",
+        "https://www.comeet.com/careers-api/2.0/company/A5.000/positions?token=x")
+
+
 def test_a_held_page_cannot_vouch_for_a_board_it_merely_embeds(tmp_path, monkeypatch):
     """Wave-4 R1 (B1, reproduced end-to-end): `validate_empty.check` fetches the row's
     CAREERS page, `extract_ats` returns whatever board that page embeds, and the gate was
