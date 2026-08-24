@@ -234,7 +234,7 @@ Costs and counts are the 2026-08-23 measurements; re-derive with
 
 | source | how it is read | key? | measured |
 |---|---|---|---|
-| `linkedin` | **the discovery source.** `linkedin.com/jobs/search`, 9 keywords, `f_TPR` past week. KEYLESS guest endpoint first, Web Unlocker only where blocked | no* | 364 employers → 182 new companies, 7 credits, 113s |
+| `linkedin` | **the discovery source.** `linkedin.com/jobs/search`, 9 keywords × (national + 2 peripheral-city windows: Be'er Sheva, Haifa — city queries free-only), `f_TPR` past week. KEYLESS guest endpoint first, Web Unlocker only where blocked | no* | 364 employers → 182 new companies, 7 credits, 113s |
 | `workable` | `jobs.workable.com/api/v1/jobs?location=Israel` — one ATS, EVERY tenant. The only source returning the employer's own website | no | 20 rows → 11 kept, 11/11 with a real careers lead |
 | `indeed` | `il.indeed.com/jobs` through the Web Unlocker; parsed from the `mosaic-provider-jobcards` blob | yes | 58 raw → 46 kept |
 | `telegram` | public `t.me/s/<channel>` previews — no bot, no account, no quota | no | 6 channels, 16–18 of 20 parsed each |
@@ -243,7 +243,7 @@ Costs and counts are the 2026-08-23 measurements; re-derive with
 \* the paid path is a fallback; `SOURCE_PATH` records which one served, and the run warns if
 everything is suddenly billed.
 
-**Four things about this table cost real coverage to learn**, and the workings are in
+**Five things about this table cost real coverage to learn**, and the workings are in
 `docs/sessions/2026-08-24-discovery.md`:
 
 1. **The two LinkedIn endpoints have different ceilings.** The paid page caps at ~80 jobs per
@@ -256,6 +256,13 @@ everything is suddenly billed.
    If yield falls, add a keyword; never a boolean, never more paid pages.
 4. **The Indeed dataset is dead** (`gd_l4dx9j9sscpvs7no2`, `rate_limit` on every input for
    five days). Do not re-enable it; Indeed goes through the Unlocker.
+5. **A city location is its own query window** — the per-query cap applies to geography too.
+   Measured against the national window: Be'er Sheva 14 of 20 jobs unseen nationally, Haifa
+   11 of 20; Jerusalem 3 of 31 and Herzliya **0 of 20** (Tel Aviv metro is already inside the
+   Tel Aviv-weighted national window — metro cities buy nothing). City queries pass a paid
+   budget of ZERO, so they structurally cannot bill: the paid worst case stays the national
+   sweep's ~18 whatever LinkedIn does to the runner.
+
 ### What it costs, and what stops it costing more
 
 **One Bright Data pool: 5,000 credits/month**, shared by Web Unlocker + SERP + Web Scraper
@@ -265,7 +272,7 @@ Per MONTH, not per day.
 
 | | credits/day |
 |---|---|
-| LinkedIn breadth — keyless guest endpoint, 9 keywords × 50 pages | **~7** (≤18 if LinkedIn blocks it outright) |
+| LinkedIn breadth — keyless guest endpoint, 9 keywords × 50 pages + 18 city queries (free-only) | **~7** (≤18 if LinkedIn blocks it outright; the city product cannot bill) |
 | Workable — keyless, all tenants | **0** |
 | Indeed — Unlocker, 5 queries + retries | 6 |
 | LinkedIn targeted backfill — dataset, per RECORD | 67 |

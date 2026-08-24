@@ -1758,3 +1758,85 @@ def test_the_better_careers_lead_wins_when_two_sources_find_one_company():
     src = inspect.getsource(dd.main)
     assert "_real_lead" in src and 'j.get("careers_hint")' in src
     assert '_v.pop("_real_lead", None)' in src, "the internal flag must not reach the queue"
+
+
+# --- discovery lane, 2026-08-24: the city windows and the free walk's depth ---
+
+
+def test_city_queries_never_pay_even_when_the_guest_endpoint_is_blocked():
+    """The city windows are free-only BY CONSTRUCTION: they pass pages=0, which the paid
+    fallback gate reads as 'no paid budget'. Bright Data at 97% of pool taught why this must
+    be structural — a blocked runner multiplying the paid worst case by the city product
+    would triple the breadth bill in silence."""
+    import discovery_daily as dd
+    import bd_rescue
+    calls = {"paid": 0}
+    def never_paid(url, timeout=120):
+        calls["paid"] += 1
+        return ""
+    real_guest, real_unlock = dd._li_guest, bd_rescue.unlock
+    had = os.environ.get("BRIGHTDATA_API_KEY")
+    os.environ["BRIGHTDATA_API_KEY"] = "test"
+    try:
+        bd_rescue.unlock = never_paid
+        dd._li_guest = lambda kw, loc, d, st: ([], False)   # hard block on every page
+        got = dd.linkedin_search("data analyst", pages=0, location="Haifa, Israel")
+        assert got == [] and calls["paid"] == 0, (got, calls)
+    finally:
+        dd._li_guest, bd_rescue.unlock = real_guest, real_unlock
+        if had is None:
+            os.environ.pop("BRIGHTDATA_API_KEY", None)
+        else:
+            os.environ["BRIGHTDATA_API_KEY"] = had
+
+
+def test_the_drift_denominator_is_keyed_per_query_not_per_keyword():
+    """LI_CARDS_PRESENT was keyed by keyword. The city windows re-run the same keywords, so
+    two queries would merge into one entry and main()'s pop-after-first would charge the
+    second query's cards to nobody — under-counting the parser-drift denominator."""
+    import discovery_daily as dd
+    real_guest = dd._li_guest
+    def one_urn_page(kw, loc, d, st):
+        if st > 0:
+            return [], True
+        dd._li_last_present[0] = {f"{kw}|{loc}"}
+        card = ('<li><div class="base-card" data-entity-urn="urn:li:jobPosting:1">'
+                '<a class="base-card__full-link" href="https://il.linkedin.com/jobs/view/a-1">'
+                '<span class="sr-only"> T </span></a>'
+                '<h4 class="base-search-card__subtitle">A Co</h4></div></li>')
+        return dd._li_cards(card), True
+    try:
+        dd._li_guest = one_urn_page
+        dd.LI_CARDS_PRESENT.clear()
+        dd.linkedin_search("x", pages=0, location="Israel")
+        dd.linkedin_search("x", pages=0, location="Haifa, Israel")
+        assert ("x", "Israel") in dd.LI_CARDS_PRESENT
+        assert ("x", "Haifa, Israel") in dd.LI_CARDS_PRESENT
+    finally:
+        dd._li_guest = real_guest
+        dd.LI_CARDS_PRESENT.clear()
+
+
+def test_the_query_plan_is_national_paid_city_free():
+    """National queries keep the paid fallback (pages=None -> LINKEDIN_PAGES); city queries
+    carry pages=0. The split is what keeps plan_spend's '~N paid worst case' line truthful
+    without plan_spend knowing the cities exist."""
+    import discovery_daily as dd
+    qs = dd._li_queries()
+    national = [(kw, loc, pg) for kw, loc, pg in qs if loc == "Israel"]
+    city = [(kw, loc, pg) for kw, loc, pg in qs if loc != "Israel"]
+    assert [kw for kw, _, _ in national] == dd._LI_KEYWORDS
+    assert all(pg is None for _, _, pg in national)
+    assert all(pg == 0 for _, _, pg in city), "a city query with a paid budget can bill"
+    assert len(city) == len(dd._LI_CITIES) * len(dd._LI_KEYWORDS), \
+        "every keyword gets every city window — the pool is per QUERY"
+
+
+def test_the_city_list_is_peripheral_only():
+    """Measured 2026-08-23: Herzliya added 0 of 20 jobs over the national window and
+    Jerusalem 3 of 31 — Tel Aviv metro is already inside the Tel Aviv-weighted national
+    search. A metro city added 'for coverage' spends pages on a window we already have."""
+    import discovery_daily as dd
+    for city in dd._LI_CITIES:
+        for metro in ("herzliya", "jerusalem", "tel aviv", "ramat gan", "givatayim"):
+            assert metro not in city.lower(), f"{city} is inside the national window already"

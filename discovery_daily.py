@@ -104,6 +104,23 @@ _LI_KEYWORDS = ["data analyst", "business intelligence", "product analyst", "BI 
                 "analytics", "data scientist", "אנליסט", "growth analyst",
                 "marketing analyst"]
 
+# The same window mechanism, applied to GEOGRAPHY: a city location is its own query, so it
+# opens its own ~10-cards-a-page window centred on that city (verified 2026-08-24: both
+# strings below return a radius around the named city, not a global fallback). Measured
+# 2026-08-23 against the national window: Be'er Sheva 14 of 20 jobs unseen nationally,
+# Haifa 11 of 20 — Jerusalem 3 of 31 and Herzliya 0 of 20 are inside the Tel Aviv-weighted
+# national window already, so metro cities buy nothing and stay OUT of this list.
+_LI_CITIES = ["Be'er Sheva, Israel", "Haifa, Israel"]
+
+
+def _li_queries():
+    """Every breadth query as (keyword, location, pages): national queries keep the paid
+    Unlocker fallback (pages=None -> LINKEDIN_PAGES); city queries pass pages=0, which the
+    fallback gate reads as 'no paid budget' — they are free-only BY CONSTRUCTION, so a
+    blocked runner can never make the city product bill."""
+    return ([(kw, "Israel", None) for kw in _LI_KEYWORDS]
+            + [(kw, city, 0) for city in _LI_CITIES for kw in _LI_KEYWORDS])
+
 # Only the DATASET ID is still used, by the targeted backfill below. The breadth sweep moved
 # to the Web Unlocker (see linkedin_search) on 2026-08-23, so the keyword/limit config that
 # used to live here is gone rather than left looking live — an unused constant that reads
@@ -373,6 +390,10 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     """
     from bd_rescue import unlock
     pages = LINKEDIN_PAGES if pages is None else pages
+    # A query is (keyword, location) — the city windows re-run the same keywords, so both
+    # the drift denominator and the log label must carry the location or they collide.
+    qkey = (keyword, location)
+    qlabel = keyword if location == "Israel" else f"{keyword} @ {location}"
     seen, out = set(), []
     # guest pages hold 10, unlocked pages hold 60 — same 80-job pool, different step size
     paid_pages, blanks, repeats = 0, 0, 0
@@ -394,7 +415,7 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
         #                  just page 0.
         if ok and cards:
             SOURCE_PATH["linkedin_free"] += 1
-            LI_CARDS_PRESENT[keyword] |= _li_last_present[0]
+            LI_CARDS_PRESENT[qkey] |= _li_last_present[0]
             blanks = 0
         elif ok:
             # Counted as `linkedin_blank`, NOT `linkedin_free`. Incrementing the free counter
@@ -404,7 +425,7 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
             SOURCE_PATH["linkedin_blank"] += 1
             # record the denominator even on a blank, or a page whose urns we FAIL to parse
             # contributes nothing to the drift metric and the regression stays invisible
-            LI_CARDS_PRESENT[keyword] |= _li_last_present[0]
+            LI_CARDS_PRESENT[qkey] |= _li_last_present[0]
             blanks += 1
             if blanks < LINKEDIN_BLANK_TOLERANCE:
                 continue              # a hole inside the pool — free to step over
@@ -430,10 +451,10 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
             SOURCE_PATH["linkedin_paid"] += 1
             paid_pages += 1
             blanks = 0
-            LI_CARDS_PRESENT[keyword] |= _li_urn_ids(html)
+            LI_CARDS_PRESENT[qkey] |= _li_urn_ids(html)
             cards = _li_cards(html)
             if not cards:
-                print(f"  [linkedin:{keyword}] page {i}: no cards from EITHER path "
+                print(f"  [linkedin:{qlabel}] page {i}: no cards from EITHER path "
                       f"({len(html or '')} bytes unlocked) — markup change or hard block")
                 break
         if not cards:
@@ -463,7 +484,7 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     if ended_on_cap and out:
         # Ending on the iteration cap means there was more to read. Never silent: a walk that
         # stopped because it ran out of iterations must not look like one that ran out of jobs.
-        print(f"  [linkedin:{keyword}] stopped at the {LINKEDIN_GUEST_PAGES}-page cap with "
+        print(f"  [linkedin:{qlabel}] stopped at the {LINKEDIN_GUEST_PAGES}-page cap with "
               f"{len(out)} jobs — raise LINKEDIN_GUEST_PAGES, the pool was not exhausted")
     return out
 
@@ -826,6 +847,8 @@ def plan_spend(today=None):
     per_day = budget_per_day(today)
     if per_day is None:
         return LINKEDIN_LIMIT_MAX, 100, "ledger unreadable — running at configured maximum"
+    # Deliberately NOT len(_li_queries()): the city windows pass pages=0 and structurally
+    # cannot reach the paid path, so only the national keywords can bill.
     n_kw = len(_LI_KEYWORDS)
     # CHARGE BREADTH WHAT IT COSTS, NOT WHAT IT USED TO COST. The breadth sweep is billed
     # per REQUEST now (at most LINKEDIN_PAGES per keyword, and usually 0 because the guest
@@ -976,14 +999,17 @@ def main():
     print(f"[workable] {len(wk)} Israel jobs across all tenants -> {kept_wk} new (0 credits)")
 
     # BREADTH — the discovery source. Keyless guest endpoint first, Web Unlocker only where
-    # LinkedIn blocks it (1 credit per PAGE of ~60 cards, never per record).
+    # LinkedIn blocks it (1 credit per PAGE of ~60 cards, never per record). National queries
+    # first, then the free-only city windows (see _li_queries).
     n_li_raw = n_li_present = 0
-    for kw in _LI_KEYWORDS:
+    queries = _li_queries()
+    for kw, loc, pg in queries:
+        label = kw if loc == "Israel" else f"{kw} @ {loc}"
         try:
-            cards = linkedin_search(kw)
-            n_li_present += len(LI_CARDS_PRESENT.pop(kw, set()))
+            cards = linkedin_search(kw, pages=pg, location=loc)
+            n_li_present += len(LI_CARDS_PRESENT.pop((kw, loc), set()))
         except Exception as e:  # noqa: BLE001
-            print(f"[linkedin:{kw}] ERR {type(e).__name__}: {str(e)[:120]}")
+            print(f"[linkedin:{label}] ERR {type(e).__name__}: {str(e)[:120]}")
             cards = []
         n_li_raw += len(cards)
         kept = 0
@@ -997,7 +1023,7 @@ def main():
             seen.add(k)
             jobs.append(j)
             kept += 1
-        print(f"[linkedin:{kw}] {len(cards)} cards -> {kept} new")
+        print(f"[linkedin:{label}] {len(cards)} cards -> {kept} new")
     # PRESENT, not parsed. `n_li_raw` counts what _li_cards managed to build; if LinkedIn
     # flips an attribute order or wraps the subtitle, half the cards vanish and the source
     # still reports itself healthy. That is this repo's signature failure applied to its own
@@ -1011,7 +1037,8 @@ def main():
     # SOURCE_PATH existed with three writes and ZERO reads — a guard that was documented and
     # did not exist. Which path served is the difference between "LinkedIn went quiet" and
     # "the free endpoint started refusing us and we are now paying for everything".
-    print(f"[linkedin] {n_li_raw} cards across {len(_LI_KEYWORDS)} keywords · "
+    print(f"[linkedin] {n_li_raw} cards across {len(queries)} queries "
+          f"({len(_LI_KEYWORDS)} national + {len(queries) - len(_LI_KEYWORDS)} city, free-only) · "
           f"path free={SOURCE_PATH['linkedin_free']} paid={SOURCE_PATH['linkedin_paid']} "
           f"({UNLOCKER_CALLS['linkedin']} Unlocker credits)")
     if SOURCE_PATH["linkedin_paid"] and not SOURCE_PATH["linkedin_free"]:
