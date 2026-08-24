@@ -1643,6 +1643,71 @@ def _ungated_registry_writers():
     return bad
 
 
+# ---------------------------------------------------------------------------------------
+# Declared identity: pipeline/identity_facts.py is the ONE table the gates consult before
+# any heuristic. These pin the table's self-consistency against the real registry, its
+# layering (it imports nothing from pipeline/), and the recorded incidents that must
+# never become declarable.
+# ---------------------------------------------------------------------------------------
+
+_NEGATIVE_IDENTITY = [
+    # (company, foreign tenant token, foreign board) -- every one a recorded wrong write
+    ("Lili", "elililly", "https://boards-api.greenhouse.io/v1/boards/elililly/jobs"),
+    ("Bancor", "bancorpbank", "https://careers-bancorpbank.icims.com/jobs/search?ss=1"),
+    ("Cogniteam", "riskified", "https://boards-api.greenhouse.io/v1/boards/riskified/jobs"),
+    ("Riskified", "novartis", "https://novartis.wd3.myworkdayjobs.com/wday/cxs/novartis/riskified/jobs"),
+    ("NanoLock Security", "gen", "https://gen.wd1.myworkdayjobs.com/wday/cxs/gen/x/jobs"),
+    ("SimilarTech", "similarweb", "https://boards-api.greenhouse.io/v1/boards/similarweb/jobs"),
+    ("Bit", "bitdefender", "https://boards-api.greenhouse.io/v1/boards/bitdefender/jobs"),
+    ("Sight Diagnostics", "sightsciences", "https://recruiting2.ultipro.com/SIG1008SIGH/x"),
+    ("Dun & Bradstreet (Israel) Ltd.", "israeljobs", "https://boards-api.greenhouse.io/v1/boards/israeljobs/jobs"),
+]
+
+
+def test_the_declared_identity_table_is_consistent_with_the_registry():
+    """Every `tenants` entry names a real row and matches that row's board; every entry
+    carries evidence. Run against the LIVE registry on purpose: a declaration that has
+    drifted from the board it vouches for is a wrong accept waiting to happen."""
+    import csv
+    import os
+    from pipeline import identity_facts as F
+    from pipeline import identity_gate as G
+    from pipeline.company_identity import ATS_HOST
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
+        rows = [r for r in csv.reader(fh) if r and len(r) >= 6][1:]
+    problems = F.validate(rows, ATS_HOST, G._plumbing)
+    assert not problems, "\n".join(problems)
+    assert F.facts("merck (msd)") and F.tenants("MERCK (MSD)") == {"msd"}, "lookup is case-folded"
+    assert F.facts("no such company") == {} and F.tenants("no such company") == frozenset()
+
+
+def test_identity_facts_imports_nothing_from_the_package():
+    """Layering: identity_facts < company_identity < identity_gate. The table must stay a
+    leaf, or the next import cycle hides behind a lazy import the way the old gate did."""
+    import ast
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    tree = ast.parse(open(os.path.join(root, "pipeline", "identity_facts.py"), encoding="utf-8").read())
+    mods = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Import):
+            mods |= {a.name for a in n.names}
+        elif isinstance(n, ast.ImportFrom):
+            mods.add(n.module or "")
+    assert not any(m.startswith("pipeline") for m in mods), sorted(mods)
+
+
+@pytest.mark.parametrize("name,tok,api", _NEGATIVE_IDENTITY)
+def test_a_recorded_wrong_write_is_neither_declared_nor_admitted(name, tok, api):
+    """The incidents this whole lane exists for. None may be declared (the table would then
+    be the wrong write), and none may be admitted by the gates today."""
+    from pipeline import identity_facts as F
+    from pipeline import identity_gate as G
+    assert F._norm(tok) not in F.tenants(name), "a recorded incident was DECLARED"
+    assert not G.embedded_board_ok(name, tok, api)
+
+
 def test_the_gate_caller_map_is_derived_not_typed():
     """`identity_gate.GATE_CALLERS` is the one map from a tool to the gate it calls -- the
     artifact a fresh agent needs and nothing carried before. It is a literal so it can be

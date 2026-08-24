@@ -1007,5 +1007,15 @@
     "replace": "            and not is_recruiter(r[0])   # agencies are never activated",
     "why": "the hunt ACTIVATES; without the terminal exclusion a deactivated redundant twin and every alias-of row re-enter it and get re-hunted onto a board already scanned. listing_hunt was the last tool spelling its own 3-token terminal list.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "facts-domain-drop",
+    "file": "pipeline/company_identity.py",
+    "symbol": "verdict",
+    "class": "M1-gate-removal",
+    "find": "    for parent in identity_facts.domains(cname):",
+    "replace": "    for parent in ():",
+    "why": "neuters the declared brand/parent domains (the old KNOWN_PARENT): UserWay on levelaccess.com becomes foreign again. That table had zero direct tests before this record.",
+    "must_be_killed_by_behavioural": true
   }
 ]

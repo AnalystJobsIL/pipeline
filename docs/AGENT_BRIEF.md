@@ -125,7 +125,7 @@ and `render` owns what goes in it.
 
 ### Shared plumbing — read freely, change loudly
 
-`pipeline/`: `notes.py` `verdicts.py` `identity_gate.py` `company_identity.py` `atomic.py` `http.py`
+`pipeline/`: `notes.py` `verdicts.py` `identity_gate.py` `identity_facts.py` `company_identity.py` `atomic.py` `http.py`
 `companies.py` `stages.py` `sources.py`. Every lane imports these and no lane owns them. If
 your change needs one modified, **say so in your report and name the lanes it could affect** —
 `identity_gate` gates every activating write path (`company_identity` supplies its primitives)

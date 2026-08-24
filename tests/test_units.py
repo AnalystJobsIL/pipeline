@@ -227,6 +227,7 @@ def test_triage_pool_survives_note_erosion():
     ("Central Bottling Company Israel", "https://www.cbccom.com/", True),
     ("Quantum Source", "https://www.qs-labs.com/", True),
     ("AWS", "https://www.amazon.jobs/", True),
+    ("UserWay", "https://www.levelaccess.com/careers/", True),   # only identity_facts can pass this
     ("Nebius", "https://careers.nebius.com/", True),
     ("Wix", "https://boards.greenhouse.io/wix", True),
     # impostors: each of these ACTIVATED a company off another employer's board

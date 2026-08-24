@@ -22,6 +22,8 @@ from __future__ import annotations
 import re
 import urllib.parse
 
+from pipeline import identity_facts
+
 # Hosts where the company identity lives in the PATH/token, not the domain. The token is
 # already slug-checked at resolution time, so the domain proves nothing either way.
 ATS_HOST = re.compile(
@@ -31,28 +33,8 @@ ATS_HOST = re.compile(
     r"comeet\.com|jobs\.ashbyhq|jobs\.gem\.com|ultipro|trinethire|inflightcloud|"
     r"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats|jobvite|taleo\.net)", re.I)
 
-# Brand/parent pairs a string comparison can never derive. Keep SMALL and evidence-based —
-# every entry is a claim that one company's board legitimately carries the other's roles.
-KNOWN_PARENT = {
-    "aws": ("amazon.jobs", "amazon.com"),
-    "amazon web services": ("amazon.jobs", "amazon.com"),
-    "google israel": ("google.com", "abc.xyz"),
-    "microsoft israel": ("microsoft.com",),
-    "microsoft (xbox/gaming)": ("microsoft.com",),
-    "volkswagen (cariad)": ("volkswagen-group.com", "cariad.technology"),
-    "siemens digital industries software": ("sw.siemens.com", "siemens.com"),
-    "siemens eda": ("sw.siemens.com", "siemens.com"),
-    "applied materials israel": ("appliedmaterials.com",),
-    # branded careers domains and post-acquisition boards, each verified by hand
-    "ge healthcare israel": ("gehealthcare.com",),
-    "procter & gamble": ("pgcareers.com",),
-    "deutsche post dhl": ("dhl.com",),
-    "johnson & johnson": ("jnj.com",),
-    "general motors israel": ("gm.com",),
-    "userway": ("levelaccess.com",),          # acquired by Level Access
-    "abbott": ("jobs.abbott",),
-    "abb": ("careers.abb", "abb.com"),
-}
+# Brand/parent DOMAINS (AWS -> amazon.jobs) are declared in pipeline/identity_facts.py --
+# the one table for company identity facts -- and read through `domains()` below.
 
 # Industry words are NOT identity. Matching on one sent Tamar Robotics to arberobotics.com
 # (Arbe Robotics) and Phoenix Financial to phoenixtma.com — both real companies, neither
@@ -195,7 +177,7 @@ def verdict(company: str, url: str) -> str:
     if not dom or not cn:
         return "unknown"
 
-    for parent in KNOWN_PARENT.get(cname, ()):
+    for parent in identity_facts.domains(cname):
         if host.endswith(parent) or dom == registrable(parent):
             return "match"
 
