@@ -22,11 +22,11 @@
   {
     "id": "crack-oktowrite-invert",
     "file": "pipeline/identity_gate.py",
-    "symbol": "ok_to_write",
+    "symbol": "activation_ok",
     "class": "M2-gate-inversion",
-    "find": "    return page_names_company(name, api_url, html=html) is True\n    if tenant_is_this_company(name, api_url):",
-    "replace": "    return page_names_company(name, api_url, html=html) is not None\n    if tenant_is_this_company(name, api_url):",
-    "why": "`is True` -> `is not None` lets an UNREADABLE page (None) pass as evidence; that is the novrfy hole",
+    "find": "    return page_names_company(name, api_url, html=html) is True",
+    "replace": "    return page_names_company(name, api_url, html=html) is not None",
+    "why": "`is True` -> `is not None` lets an UNREADABLE page pass as evidence. Re-aimed when activation_ok's separate html branch was collapsed into one rule.",
     "must_be_killed_by_behavioural": true
   },
   {
@@ -364,8 +364,8 @@
     "file": "pipeline/identity_gate.py",
     "symbol": "activation_ok",
     "class": "M4-dead-conjunct",
-    "find": "    if is_foreign(name, api_url) or not looks_like_a_job_listing_page(api_url):\n        return False\n    if html:",
-    "replace": "    if is_foreign(name, api_url):\n        return False\n    if html:",
+    "find": "    if is_foreign(name, api_url) or not looks_like_a_job_listing_page(api_url):\n        return False",
+    "replace": "    if is_foreign(name, api_url):\n        return False",
     "why": "drops clause 3 of the activation rule; a nav menu scores like a board under SCRAPE_ASSUME_IL",
     "must_be_killed_by_behavioural": true
   },

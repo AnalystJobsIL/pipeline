@@ -1046,3 +1046,54 @@ see `docs/sessions/2026-08-24-registry.md` for why nine waves did not converge w
     `test_every_ownership_mirror_agrees_with_the_tool_it_mirrors` keeps them honest. The
     remaining two need `listing_hunt` to grow an extractable `targets(rows)`; that is the
     real fix and it is a `registry`-lane job.
+
+## From the rebuild's wave-1 review, 2026-08-24
+
+Three reviewers, all findings reproduced before action. Seven were fixed; these are filed.
+
+49. **`activation_ok` refuses a legitimate acquisition on a subdomain-tenant machine
+    endpoint, and that is deliberate** — lane: shared plumbing, and the fix is a data column.
+    `page_names_company` returns `None` for a page it could not read and `is True` refuses
+    `None`, so where the endpoint is a machine API (`/wday/cxs/<tenant>/<site>/jobs`, HTTP
+    400 on GET) a failed tenant near-match IS the refusal — no page can ever be read there.
+
+        activation_ok("Habana Labs (Intel)", "workday",
+                      "https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/x/jobs", 12) -> False
+
+    That is item 21's shape re-entering through the `None` branch rather than a `mismatch`
+    veto. It is accepted for a narrower reason than item 21 covers: these five callers
+    ACTIVATE a currently-parked row, so a wrong refusal leaves the row parked, visible and
+    recoverable, while a wrong acceptance publishes another company's jobs under this
+    company's name. Item 21 measured the cost of vetoing rows that were already ACTIVE.
+    The real fix is the `acquired-by` column, not a cleverer string test.
+
+50. **On PATH-tenant platforms the gate admits without ever reading the page it holds** —
+    lane: `registry`. `tenant_is_this_company` answers True when there is nothing checkable,
+    and greenhouse/lever/comeet/ashby put the tenant in the PATH, so:
+
+        tenant_is_this_company("Bancor", "https://boards-api.greenhouse.io/v1/boards/bancorpbank/jobs") -> True
+
+    i.e. `activation_ok` accepts it even when the caller's own HTML says "Bancorp". The
+    equivalent iCIMS URL is refused, because iCIMS is a subdomain-tenant platform the
+    predicate scopes. Not fixed here because the obvious repair — read the page whenever we
+    hold it — is what item 33 measured refusing 358 rows, and the obvious repair to THAT —
+    match the name's head token — is measured wrong too: `page_mentions_company("Sight",
+    <Sight Sciences' page>)` is True, and `Sight Diagnostics` is a different company on that
+    same board. Tightening `_slug_matches` to near-equality for PATH tenants is the fix that
+    would work; it is real work, not a one-liner.
+
+51. **A `_WALLED_HOST` entry can be deleted with the suite green whenever that platform has
+    no pool members** — lane: `registry`. `test_the_walled_pool_survives_another_tools_note_
+    rewrite` defends whichever platform currently has rows (workday, 22 of them); dropping
+    `icims\.com` — the platform the Bancor incident happened on — is green today because the
+    parked iCIMS pool is 0, and becomes silent coverage loss the moment an iCIMS row parks.
+    A per-platform floor, or making the guard iterate `_PLATFORM_ALIAS`, closes it.
+
+52. **The 14-night chain simulation has never actually completed** — lane: `registry`.
+    Reviewer R3 attempted it and disclosed that it did not finish: `listing_hunt` spawns
+    out-of-process Chromium that an in-process socket stub cannot reach, so night 1 ran past
+    40 minutes. Only night 0 was captured (`active=862 crack=50 hunt~=216 unsupATS=50
+    darktriage=354 monitored=232 unreach=20 avgnote=102.5`). **Treat "no pool reaches zero
+    over 14 nights" as UNPROVEN, not as verified** — every prior claim of that came from a
+    simulation with the renderer stubbed at a different layer. A headless-safe harness (or a
+    `NO_RENDER=1` switch in `listing_hunt`) is what makes this measurable.

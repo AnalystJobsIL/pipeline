@@ -84,6 +84,11 @@ def _classify_killer(work, test_id):
         if not m:
             continue
         body = m.group(0)
+        # Strip the docstring before looking for markers. These tests EXPLAIN themselves,
+        # and a docstring that says "was caught only by an inspect.getsource assertion"
+        # made its own test classify as static -- so a behavioural guard was reported as a
+        # source-text one purely for describing the bug it fixes.
+        body = re.sub(r'"""(?:.|\n)*?"""', "", body, count=1)
         if any(k in body for k in _BEHAVIOURAL_MARKERS):
             return "behavioural"
         if any(k in body for k in _STATIC_MARKERS):
