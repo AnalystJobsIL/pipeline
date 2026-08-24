@@ -7928,6 +7928,19 @@
     "stage_note": "Listed on the Tel Aviv Stock Exchange since 2021, ticker TASE:PNRG (OTC: PHNGF)",
     "sub_sector": "aluminum-air and zinc-air metal-air battery systems for backup power, off-grid energy and EV range extension"
   },
+  "Phoenix Financial": {
+    "as_of": "2026-08-24",
+    "business_model": "earns premiums and fees from insurance underwriting, pension/provident fund management, and wealth/asset management (manages ~$200B AUM)",
+    "customer_type": "consumers and businesses (retail policyholders, pension savers, institutional investors)",
+    "employees_global": 1637,
+    "founded": 1949,
+    "il_center": "Givatayim (HQ)",
+    "sector": "fintech",
+    "size_band": "L",
+    "stage": "public",
+    "stage_note": "TASE: PHOE (formerly Phoenix Holdings, renamed Aug 2024)",
+    "sub_sector": "insurance, pensions & asset management (life, P&C, health, retirement, wealth)"
+  },
   "Pi Security": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS — sells an AI-powered security platform that analyzes code, cloud infrastructure, and communications to triage and remediate vulnerabilities",
@@ -9009,6 +9022,19 @@
     "stage": "public",
     "stage_note": "Listed on Frankfurt (ETR: SAP) and NYSE (SAP); ~111,000 employees at end of 2025",
     "sub_sector": "ERP and business-process cloud software; Israeli R&D focuses on cloud platform, identity management (Gigya/CDC), UX and personalization"
+  },
+  "SHILA Medical Services LTD": {
+    "as_of": "2026-08-24",
+    "business_model": "leases and manages dental clinic facilities/infrastructure to independent dental professionals, and offers a companion app (ShilaFix) for service coordination",
+    "customer_type": "dental professionals / clinics",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "healthtech",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "small, privately held Israeli company; no VC/funding history found",
+    "sub_sector": "dental practice facilities & services provider (non-clinical infrastructure for dental professionals)"
   },
   "SIGA OT Solutions": {
     "as_of": "2026-08-22",
