@@ -64,6 +64,11 @@ CENSUS = os.path.join("cloud_state", "registry_census.json")
 # named; a slash cannot appear in a company_name that also has to be a csv field we match on.
 _NOTES_KEY = "//notes//"
 ALARMS = os.path.join("cloud_state", "registry_alarms.json")
+# The resolution ladder lives in ITS OWN file, written only by the job that can honestly
+# probe it (listing-hunt.yml: Playwright + Bright Data). `alarms_state` READS this file and
+# never writes it, so a re-emission can never feed back into what it re-emits.
+LADDER = os.path.join("cloud_state", "registry_ladder.json")
+_POOLS_KEY = "//pools//"        # per-tool pool sizes in the census, for pool_floor
 TODAY = dt.date.today().isoformat()
 
 # A row may leave the registry only for one of these reasons, and the reason must LEAD one
@@ -159,7 +164,8 @@ def census_diff(rows, prev=None):
     notes = {r[0]: (r[5] if len(r) > 5 else "") or "" for r in rows if r}
     _nk = _NOTES_KEY if _NOTES_KEY in prev else "__notes__"      # read the older format too
     prev_notes = (prev.get(_nk) or {}) if isinstance(prev.get(_nk), dict) else {}
-    prev_active = {k: v for k, v in prev.items() if k not in (_NOTES_KEY, "__notes__")}
+    prev_active = {k: v for k, v in prev.items()
+                   if k not in (_NOTES_KEY, "__notes__", _POOLS_KEY)}
     gone, unexplained = [], []
     for name in prev_active:
         if name in now:
@@ -198,9 +204,12 @@ def _reason_tail(note, cap=200):
 def save_census(rows, path=CENSUS):
     d = census(rows)
     d[_NOTES_KEY] = {r[0]: _reason_tail(r[5]) for r in rows}
+    # per-tool pool sizes, so tomorrow's `pool_floor` has a baseline. Keyed by the tool
+    # name (`label.split(" (")[0]`), not the label: a cron edit must not reset the baseline.
+    d[_POOLS_KEY] = {label.split(" (")[0]: len(m) for label, m in pools(rows).items()}
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     write_json(path, d, indent=0, sort_keys=True)
-    return len(d) - 1
+    return len(d) - 2
 
 
 # ---------------------------------------------------------------- the ownership matrix
@@ -441,10 +450,16 @@ def alarms_state(rows=None, prev=None):
 
     (Reproduced 2026-08-23 by running `alarms()` with those three names unset and playwright
     unimportable.) A daily audit block nobody reads is the thing this module exists to avoid,
-    so the mail hook calls THIS function. Ladder status reaches the mail the honest way: each
-    registry workflow's `--census` writes `cloud_state/registry_alarms.json`, and the line
-    below reports it when it goes stale — which is also how a workflow that stopped running
-    at all becomes visible.
+    so the mail hook calls THIS function. Ladder status reaches the mail the honest way: the
+    one job that can probe the ladder (listing-hunt.yml) writes `cloud_state/
+    registry_ladder.json` via `--ladder`, and this function re-emits its rungs and reports
+    the file's DATE when it goes stale — which is also how a workflow that stopped running
+    becomes visible.
+
+    Every line here must be STABLE while the underlying state is stable: the inbox relay
+    dedups the digest on a content hash, so a line carrying "Nd old" or "as of <today>"
+    would re-email the whole digest every day, forever. Dates in this output are always
+    the date something last HAPPENED, never today's.
     """
     rows = read_rows() if rows is None else rows
     out = []
@@ -471,21 +486,45 @@ def alarms_state(rows=None, prev=None):
         if not members and label.startswith(("triage_dark", "listing_hunt", "probe_candidates")):
             out.append(f"re-check pool EMPTY: {label} — a predicate inverted, or the notes "
                        f"column was clobbered")
+    out += pool_floor(rows, prev=prev)
     try:
-        stamp = json.load(open(ALARMS, encoding="utf-8"))
-        age = (dt.date.today() - dt.date.fromisoformat(stamp.get("date") or "1970-01-01")).days
+        stamp = json.load(open(LADDER, encoding="utf-8"))
+        when = stamp.get("date") or "1970-01-01"
+        age = (dt.date.today() - dt.date.fromisoformat(when)).days
         if age > 2:
-            out.append(f"registry ladder status is {age}d old ({ALARMS}) — the workflow that "
-                       f"refreshes it has not run")
-        # Re-emit the ladder lines this file recorded - but NEVER a line that is itself a
-        # re-emission. `--census` writes `alarms()` back to this same file, so without the
-        # prefix test each run re-reads its own output and prepends another
-        # "(ladder, as of ...)": 2 alarms, then 3, then 4, unbounded, into a git-tracked
-        # state file and (once the mail hook lands) into the daily email.
-        out += [f"(ladder, as of {stamp['date']}) {x}" for x in (stamp.get("alarms") or [])
-                if "rung DOWN" in x and not x.startswith("(ladder, as of")]
+            # the file's date, not an age: stable while stale, changes only when the
+            # refreshing workflow actually runs (see the docstring on dedup)
+            out.append(f"registry ladder last refreshed {when} ({LADDER}) — the workflow "
+                       f"that refreshes it has not run")
+        # `--ladder` writes rung lines only, from the job that can probe them; this file is
+        # never written by anything that reads it, so no re-emission can loop back.
+        out += [f"(ladder) {x}" for x in (stamp.get("rungs") or []) if "rung DOWN" in x]
     except Exception:  # noqa: BLE001
         pass
+    return out
+
+
+def pool_floor(rows, prev=None):
+    """Per-tool pool floors (docs/BACKLOG.md 34). `check_invariants` check E has ONE
+    aggregate floor (`pool_n < 50`) and wave 8 watched `crack_walled` go 25 -> 2 -> 0
+    under it, green every night. This compares each tool's pool to the size the last
+    census recorded. Thresholds are literal on purpose: `alarms_state` is pinned against
+    reading env. The first census after deploy has no `//pools//` and never alarms."""
+    prev = load_census() if prev is None else prev
+    was = prev.get(_POOLS_KEY) or {}
+    if not was:
+        return []
+    out = []
+    for label, members in pools(rows).items():
+        tool = label.split(" (")[0]
+        before, now = was.get(tool), len(members)
+        if before is None:
+            continue
+        if before > 0 and now == 0:
+            out.append(f"re-check pool COLLAPSED to zero: {tool} was {before} — a predicate "
+                       f"inverted or the notes column was clobbered")
+        elif before >= 8 and now < before * 0.5:
+            out.append(f"re-check pool halved: {tool} {before} -> {now}")
     return out
 
 
@@ -587,12 +626,29 @@ def main():
             print(f"{flag} {plat_name:18} {e['rows']:3} rows "
                   f"({e['active']} active): {', '.join(e['companies'])}")
         return 0
+    if "--ladder" in argv:
+        # the ladder file: rung lines ONLY, from the one job that can honestly probe them.
+        # live=False: reads keys/imports, spends nothing.
+        rungs = [f"resolution rung DOWN: {k} — {st['detail']}"
+                 for k, st in resources(live=False).items()
+                 if not st["ok"] and not k.startswith(("SerpApi", "CLAUDE_CODE_OAUTH_TOKEN",
+                                                       "DuckDuckGo"))]
+        os.makedirs(os.path.dirname(LADDER) or ".", exist_ok=True)
+        write_json(LADDER, {"date": TODAY, "rungs": rungs})
+        print(f"ladder written: {len(rungs)} rung(s) down -> {LADDER}")
+        return 0
     a = _report(rows, live=live, want_ats=("--ats" in argv or "--census" in argv))
     if "--census" in argv:
+        # The MAIL alarms (alarms_state, no ladder) are what this file records: writing the
+        # full `alarms()` here put two permanently-false `rung DOWN` lines into a file the
+        # mail hook re-emits (docs/BACKLOG.md 13, the second time). Computed BEFORE the
+        # census is saved, so it is judged against the previous baseline.
+        a_mail = alarms_state(rows)
         n = save_census(rows)
         os.makedirs(os.path.dirname(ALARMS) or ".", exist_ok=True)
-        write_json(ALARMS, {"date": TODAY, "alarms": a})
-        print(f"\ncensus written: {n} companies -> {CENSUS}; {len(a)} alarms -> {ALARMS}")
+        write_json(ALARMS, {"date": TODAY, "alarms": a_mail})
+        print(f"\ncensus written: {n} companies -> {CENSUS}; {len(a_mail)} mail alarms -> "
+              f"{ALARMS} (full report above: {len(a)})")
     return 0
 
 

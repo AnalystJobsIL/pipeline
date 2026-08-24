@@ -696,18 +696,87 @@ def test_every_crack_walled_refusal_note_is_short_and_fixed_length():
         "variable-length: %s" % long_ones)
 
 
-def test_the_alarm_file_does_not_amplify_itself():
-    """`alarms_state` re-emits the ladder lines it reads back from
-    `cloud_state/registry_alarms.json`, and `--census` writes `alarms()` back to that same
-    file. Without a prefix test each run re-reads its own output and prepends another
-    "(ladder, as of ...)": 2 alarms, then 3, then 4, unbounded - into a git-tracked state
-    file, and into the daily email once the mail hook lands. Measured before the fix:
-    2 -> 3 -> 4 -> 5. After: 2 -> 3 -> 3 -> 3."""
-    import inspect
-    import registry_health
-    src = inspect.getsource(registry_health.alarms_state)
-    assert 'startswith("(ladder, as of' in src, (
-        "alarms_state re-emits its own re-emissions; the alarm file grows without bound")
+_ROWS3 = [["A", "scrape", "u", "https://a.example/careers", "false",
+           "unreachable; could not scan"],
+          ["B", "greenhouse", "b", "https://boards-api.greenhouse.io/v1/boards/b/jobs",
+           "true", "re-audit 2026-08-21: deep-verified 3/1 IL"],
+          ["C", "scrape", "u", "https://c.example/careers", "false",
+           "deep-validated 2026-08-21: no ATS detected | monitored candidate"]]
+
+
+def test_the_alarm_file_does_not_amplify_itself(tmp_path, monkeypatch):
+    """`alarms_state` re-emits the ladder rungs it reads. The first version read them from
+    the SAME file `--census` wrote `alarms()` into, so each run re-read its own output and
+    prepended another "(ladder, as of ...)": 2 alarms, then 3, then 4, unbounded, into a
+    git-tracked state file. A source-substring pin guarded a prefix test; now the ladder
+    has its OWN file (`--ladder`, written by listing-hunt.yml, never by anything that reads
+    it) and this test drives the loop instead of grepping for the guard."""
+    import json
+    import registry_health as R
+    ladder = tmp_path / "ladder.json"
+    ladder.write_text(json.dumps({"date": R.TODAY,
+                                  "rungs": ["resolution rung DOWN: Playwright — missing"]}),
+                      encoding="utf-8")
+    monkeypatch.setattr(R, "LADDER", str(ladder))
+    first = R.alarms_state(_ROWS3, prev={})
+    second = R.alarms_state(_ROWS3, prev={})
+    assert first == second
+    assert sum(1 for x in first if x.startswith("(ladder)")) == 1
+    assert not any("(ladder) (ladder)" in x for x in first)
+
+
+def test_the_mailed_alarm_lines_do_not_change_on_a_day_nothing_changed(tmp_path, monkeypatch):
+    """The inbox relay dedups the digest on a content hash: a line carrying "Nd old" or
+    "as of <today>" would re-email the whole digest every day, forever. Every date in
+    `alarms_state`'s output is the date something last HAPPENED. A stale ladder is
+    reported by the file's date, not by an age."""
+    import json
+    import re
+    import registry_health as R
+    ladder = tmp_path / "ladder.json"
+    ladder.write_text(json.dumps({"date": "2026-08-01", "rungs": []}), encoding="utf-8")
+    monkeypatch.setattr(R, "LADDER", str(ladder))
+    a = R.alarms_state(_ROWS3, prev={})
+    b = R.alarms_state(_ROWS3, prev={})
+    assert a == b
+    dated = [x for x in a if re.search(r"\d{4}-\d{2}-\d{2}", x)]
+    assert dated and all("last refreshed 2026-08-01" in x for x in dated), (
+        "the only dated line may be the ladder's own file date: %r" % (dated,))
+    assert not any(re.search(r"\d+d old", x) for x in a)
+
+
+def test_a_pool_that_falls_to_zero_is_an_alarm():
+    """docs/BACKLOG.md 34: check_invariants has one aggregate floor and crack_walled went
+    25 -> 2 -> 0 under it, green every night. `pool_floor` compares each tool to the size
+    the last census recorded; the first census after deploy (no `//pools//`) never alarms."""
+    import registry_health as R
+    now = {label.split(" (")[0]: len(m) for label, m in R.pools(_ROWS3).items()}
+    assert now["crack_walled"] == 0 and now["probe_candidates"] == 1, now
+    prev = {"//pools//": {"crack_walled": 25, "probe_candidates": 1,
+                          "listing_hunt": now["listing_hunt"] * 4 or 40}}
+    out = R.pool_floor(_ROWS3, prev)
+    assert any("COLLAPSED to zero: crack_walled was 25" in x for x in out), out
+    assert not any("probe_candidates" in x for x in out), "a stable pool must be silent"
+    assert any(x.startswith("re-check pool halved: listing_hunt") for x in out) == (
+        now["listing_hunt"] * 4 >= 8), out
+    assert R.pool_floor(_ROWS3, {}) == [] and R.pool_floor(_ROWS3, {"A": "false"}) == []
+    # a 3 -> 1 pool is noise, not a collapse: below the >= 8 floor, and not zero
+    assert R.pool_floor(_ROWS3, {"//pools//": {"probe_candidates": 3}}) == []
+
+
+def test_the_pool_census_key_is_not_mistaken_for_a_company(tmp_path):
+    """`save_census` stores per-tool pool sizes under a sentinel key; `census_diff` must
+    exclude it like `//notes//`, or seven phantom companies appear in `added`/`gone` on
+    the next run."""
+    import json
+    import registry_health as R
+    path = tmp_path / "census.json"
+    R.save_census(_ROWS3, path=str(path))
+    prev = json.load(open(path, encoding="utf-8"))
+    assert "//pools//" in prev and prev["//pools//"]["probe_candidates"] == 1
+    d = R.census_diff(_ROWS3, prev)
+    assert d["added"] == [] and d["gone"] == [] and d["prev_rows"] == 3
+    assert not d["first_census"]
 
 
 def test_the_weekly_audit_uses_the_tenant_gate_it_defines():
