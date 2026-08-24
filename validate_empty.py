@@ -49,7 +49,15 @@ def check(name, url):
                 # `extract_ats` returns whatever board the page embeds. This branch promoted
                 # it to ACTIVE on a job count alone, so a careers page embedding a different
                 # company's board promoted that board. The page is in hand; use it.
-                return ("confirmed", None)
+                #
+                # Return `suspect`, NOT `confirmed`. `confirmed` is the tool's word for
+                # "board exists, genuinely 0 Israel now" and for "could not re-check", and
+                # `main()` handles it with `confirmed += 1` and nothing else -- no note, no
+                # print, no row write. A refusal returned that way is indistinguishable from
+                # a real empty, so the row re-enters the same Sunday pool and is refused
+                # again, silently, forever. `suspect` writes an `empty-but-suspect` note the
+                # next reader can see, and leaves the row's re-check token intact.
+                return ("suspect", f"{il} IL but {api[:44]} is not this company's board")
             if il > 0:                              # scraper missed a live board with Israel jobs!
                 return ("promote", [name, plat, tok, api, "true",
                                     f"cross-validated; {n_all}/{il} IL (was empty)"])

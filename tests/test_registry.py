@@ -1403,14 +1403,26 @@ def _registry_writes(tree):
     out = []
     for n in ast.walk(tree):
         if isinstance(n, ast.Assign):
+            # A target may be a bare Subscript (`fr[3] = ...`) or a TUPLE of them
+            # (`fields[1], fields[2], fields[3] = plat, tok, api`). Only checking the bare
+            # form made `apply_resolved.py:61` invisible -- a module `self-heal.yml` runs at
+            # 06:00, which rewrites col 3 and never touches col 4, so nothing else caught it
+            # either. That is the enumeration failing at the one job it exists for.
+            targets = []
             for tg in n.targets:
+                targets.extend(tg.elts if isinstance(tg, (ast.Tuple, ast.List)) else [tg])
+            for i, tg in enumerate(targets):
                 if not (isinstance(tg, ast.Subscript)
                         and isinstance(tg.slice, ast.Constant)):
                     continue
                 if tg.slice.value == 3:
                     out.append(n)
                 elif tg.slice.value == 4:
+                    # For a tuple target the value is the matching element of the RHS tuple;
+                    # for a bare target it is the whole value.
                     v = n.value
+                    if isinstance(v, (ast.Tuple, ast.List)) and len(v.elts) == len(targets):
+                        v = v.elts[i]
                     if isinstance(v, ast.Constant) and v.value == "true":
                         out.append(n)
         elif isinstance(n, ast.List) and len(n.elts) >= 6:
@@ -1971,3 +1983,207 @@ def test_repair_still_needs_the_whole_name_to_be_the_domain(tmp_path, monkeypatc
     assert "dia.mil" not in out["DiA Imaging Analytics"][3], (
         "repaired DiA Imaging Analytics onto the Defense Intelligence Agency: %r"
         % (out["DiA Imaging Analytics"],))
+
+
+# ---------------------------------------------------------------------------------------
+# Wave-1 review findings. Each of these kills a mutation that left the suite green, or a
+# case a reviewer drove end-to-end and the suite did not notice.
+# ---------------------------------------------------------------------------------------
+
+
+def test_the_page_test_wants_the_name_as_a_PHRASE_not_scattered_words():
+    """Kills `page-strict-off`.
+
+    `strict=True` is the entire Bancor/Bancorp lesson: it requires the company's words
+    CONSECUTIVELY. Relaxed to plain containment, a page that happens to contain "Time" and
+    "Know" anywhere becomes evidence for "Time To Know", and this predicate is the sole
+    discriminator behind every column-3/4 write in the repo.
+
+    Reviewer R2 flipped `strict=True` to `strict=False` and the suite stayed green: the two
+    tests that mention `strict=True` call `page_mentions_company` DIRECTLY, so they kept
+    asserting the primitive after the gate stopped using it.
+    """
+    from pipeline import identity_gate as G
+    scattered = ("<html><p>It is time to learn what we know about hiring.</p>"
+                 + "<p>We know a lot. Time flies.</p>" * 90 + "</html>")
+    assert G.page_names_company("Time To Know", "", html=scattered) is False, (
+        "the name's words appear scattered, not as a phrase; that is not evidence")
+    phrase = "<html><h1>Time To Know</h1>" + "<p>Time To Know is hiring.</p>" * 90 + "</html>"
+    assert G.page_names_company("Time To Know", "", html=phrase) is True, (
+        "positive control: the name as a phrase must still count")
+
+
+def test_identity_ok_still_refuses_a_foreign_ORDINARY_domain():
+    """Kills `identity-foreign-drop`.
+
+    `listing_hunt` hunts ordinary careers pages, so almost every candidate it produces takes
+    `identity_ok`'s non-ATS path -- where `is_foreign` is the ONLY gate applied. Removing it
+    re-opens the incident the module docstring is named after: FairFly activated off
+    `fireflyspace.com`, 25 Firefly Aerospace roles published under FairFly's name.
+    """
+    from pipeline import identity_gate as G
+    assert G.identity_ok("FairFly", "https://www.fireflyspace.com/careers/") is False, (
+        "FairFly onto Firefly Aerospace's careers page")
+    assert G.identity_ok("FairFly", "https://www.fairfly.com/careers/") is True, (
+        "positive control: the company's own domain must still pass")
+
+
+def test_ok_to_write_still_requires_the_url_to_claim_to_list_jobs():
+    """Kills `oktowrite-listing-drop`.
+
+    Clause 3 of the activation rule. `activation_ok`'s copy of it had a mutation; the twin in
+    `ok_to_write` had none, so it could be dropped with the suite green -- and then
+    `crack_walled` persists an About or nav page as the row's `api_url`, which
+    `listing_hunt`'s fast path scrapes the next night.
+    """
+    from pipeline import identity_gate as G
+    from pipeline.company_identity import looks_like_a_job_listing_page
+    page = "<html><h1>Wiz</h1>" + "<p>Wiz is a cloud security company.</p>" * 90 + "</html>"
+    about = "https://www.wiz.io/about"
+    assert not looks_like_a_job_listing_page(about), "fixture drift"
+    assert G.ok_to_write("Wiz", about, html=page) is False, (
+        "an About page whose text names the company is still not a listings page")
+    board = "https://boards.greenhouse.io/wizinc/jobs"
+    assert looks_like_a_job_listing_page(board)
+    assert G.ok_to_write("Wiz", board, html=page) is True, "positive control regressed"
+
+
+def test_the_jobvite_taleo_branch_is_a_gate_and_not_a_pass_through():
+    """Kills `identity-jobvite-open`.
+
+    `company_identity.ATS_HOST` omits jobvite and taleo, so `verdict()` compares the company
+    against the ATS VENDOR's domain and `is_foreign` refuses a correct board outright. The
+    branch that works around it is the one place `identity_ok` skips `is_foreign` entirely
+    and leans on the page test alone -- and no test in the repo named either platform, so the
+    whole branch could be replaced by `return True`.
+
+    `crack_walled.listing_urls()` builds exactly these URLs, so this is a live path.
+    """
+    from pipeline import identity_gate as G
+    verint = "<html><h1>Verint Careers</h1>" + "<p>Verint is hiring.</p>" * 90 + "</html>"
+    varonis = "<html><h1>Varonis Careers</h1>" + "<p>Varonis is hiring.</p>" * 90 + "</html>"
+    assert G.identity_ok("Varonis", "https://jobs.jobvite.com/verint/jobs",
+                         html=verint) is False, "Varonis onto Verint's Jobvite board"
+    assert G.identity_ok("Varonis", "https://jobs.jobvite.com/varonis/jobs",
+                         html=varonis) is True, "positive control: Varonis' own board"
+
+
+def test_a_scoped_tenant_mismatch_still_refuses():
+    """Kills `tenant-mismatch-drop`.
+
+    Every existing test asserts a tenant mismatch must NOT block an ATS row -- that is
+    `docs/BACKLOG.md` 21's 36-row measurement. None asserted the mismatch veto still fires
+    where it IS scoped, so it could be deleted with the suite green. Reviewer R2 measured the
+    effect on the real registry: refused rows 38 -> 35, and the three that flip are
+    `Sight Sciences`, `Sight Diagnostics` and `Kubiya`.
+
+    `Sight Sciences` and `Sight Diagnostics` are two different companies on the SAME
+    `recruiting2.ultipro.com/SIG1008SIGH/` board, which is the mis-attribution shape itself.
+    """
+    from pipeline import identity_gate as G
+    assert G.tenant_is_this_company(
+        "Sight Diagnostics",
+        "https://recruiting2.ultipro.com/SIG1008SIGH/JobBoard/x/") is False, (
+        "Sight Diagnostics onto the board Sight Sciences is active on")
+    assert G.tenant_is_this_company(
+        "Riskified",
+        "https://riskified.wd3.myworkdayjobs.com/wday/cxs/riskified/c/jobs") is True, (
+        "positive control: a company's own subdomain tenant must still pass")
+
+
+def test_the_name_stripping_retry_survives_because_46_rows_need_it():
+    """Kills `namestop-neutered`.
+
+    `page_mentions_company(strict=True)` wants the registry name's words consecutively, so
+    any row whose name carries a suffix the page omits fails structurally -- 46 rows contain
+    "Israel". The `_NAME_STOP` retry is the second chance. Neutering it is a real behaviour
+    change that, before this test, was caught ONLY by an `inspect.getsource` assertion.
+    """
+    from pipeline import identity_gate as G
+    page = ("<html><h1>Microsoft Careers</h1>"
+            + "<p>Microsoft is hiring engineers.</p>" * 90 + "</html>")
+    assert G.page_names_company("Microsoft Israel", "", html=page) is True, (
+        "a page that says 'Microsoft' is still Microsoft Israel's page")
+    other = "<html><h1>Novartis</h1>" + "<p>Novartis is hiring.</p>" * 90 + "</html>"
+    assert G.page_names_company("Microsoft Israel", "", html=other) is False, (
+        "positive control: the retry must not accept a page naming someone else")
+
+
+def test_apply_resolved_will_not_re_point_an_active_row_at_a_foreign_board(
+        tmp_path, monkeypatch):
+    """`apply_resolved` was invisible to the derived enumeration until 2026-08-24.
+
+    Its write is a TUPLE target -- `fields[1], fields[2], fields[3] = plat, tok, api` -- and
+    the detector only unpacked bare `Subscript` targets. It writes col 3 and never col 4, so
+    nothing else caught it either. It runs in `self-heal.yml` at 06:00, straight after the
+    resolver and straight before `git commit`, and it had no identity check at all.
+
+    It cannot ACTIVATE a row, but it can RE-POINT an already-active one, which publishes the
+    other company's jobs under this company's name just the same.
+    """
+    import sys
+    import json
+    import apply_resolved as A
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Bancor", "greenhouse", "bancor", "https://boards-api.greenhouse.io/v1/boards/bancor/jobs",
+         "true", "verified board"],
+        ["Fiverr", "greenhouse", "old", "https://boards-api.greenhouse.io/v1/boards/old/jobs",
+         "true", "verified board"],
+    ])
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "resolved_configs.json").write_text(json.dumps({
+        "Bancor": ["icims", "bancorpbank",
+                   "https://careers-bancorpbank.icims.com/jobs/search?ss=1"],
+        "Fiverr": ["greenhouse", "fiverr",
+                   "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs"],
+    }), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["apply_resolved.py"])
+    A.main()
+
+    out = _read(tmp_path)
+    assert "bancorpbank" not in out["Bancor"][3], (
+        "re-pointed an ACTIVE row at The Bancorp Bank's board: %r" % (out["Bancor"],))
+    assert out["Fiverr"][3].endswith("/boards/fiverr/jobs"), (
+        "positive control: a legitimate re-resolution must still apply: %r" % (out["Fiverr"],))
+
+
+def test_validate_empty_does_not_silently_withhold_a_row_it_refuses(monkeypatch):
+    """Reviewer R1's finding, both halves.
+
+    (1) OVER-BLOCK: the gate had a separate `if html:` branch that demanded
+    `page_names_company(...) is True` and nothing else. `page_mentions_company(strict=True)`
+    wants the registry name's words CONSECUTIVELY, so `Siemens Healthineers` on a page that
+    says only "Siemens" was refused -- in a 54-row Sunday pool full of names that cannot
+    appear verbatim on their own page (`Dun & Bradstreet (Israel) Ltd.`,
+    `Mercedes-Benz (MBRDNA)`, `Qualitest acq`). One rule now: the tenant admits, page refuses.
+
+    (2) SILENT: the refusal returned `("confirmed", None)` -- the tool's own word for "board
+    exists, genuinely 0 Israel now" AND for "could not re-check". `main()` handles it with
+    `confirmed += 1` and nothing else: no note, no print, no row write. The row re-entered
+    the same pool the next Sunday and was refused again, invisibly, forever. It now returns
+    `suspect`, which writes an `empty-but-suspect` note a human can read.
+    """
+    import validate_empty as V
+    from pipeline import identity_gate as G
+    board = "https://boards-api.greenhouse.io/v1/boards/siemens/jobs"
+    monkeypatch.setattr(V, "_get", lambda u, timeout=10:
+                        "<html><h1>Siemens Careers</h1>"
+                        + "<p>Siemens is hiring in Tel Aviv.</p>" * 90 + "</html>")
+    monkeypatch.setattr(V, "_verify", lambda name, plat, tok, api: (30, 9))
+    monkeypatch.setattr(V, "extract_ats", lambda html, name: ("greenhouse", "siemens", board))
+    kind, row = V.check("Siemens Healthineers", "https://www.siemens.com/careers")
+    assert kind == "promote" and row and row[4] == "true", (
+        "a page that says 'Siemens' is still Siemens Healthineers' own page: %r" % (kind,))
+
+    # and a genuinely foreign board is refused VISIBLY, not as a bare `confirmed`
+    bancorp = "https://careers-bancorpbank.icims.com/jobs/search?ss=1"
+    monkeypatch.setattr(V, "_get", lambda u, timeout=10:
+                        "<html><h1>Bancorp Bank</h1>"
+                        + "<p>The Bancorp Bank is hiring.</p>" * 90 + "</html>")
+    monkeypatch.setattr(V, "extract_ats", lambda html, name: ("icims", "bancorpbank", bancorp))
+    kind, payload = V.check("Bancor", "https://www.bancor.network/careers")
+    assert kind == "suspect", (
+        "a refusal must leave a trace a human can read, not return the success-path "
+        "tuple: got %r" % (kind,))
+    assert payload and "not this company's board" in payload

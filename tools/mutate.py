@@ -141,7 +141,12 @@ def _registry_writers():
         hit = False
         for n in ast.walk(tree):
             if isinstance(n, ast.Assign):
+                # Targets may be bare or a TUPLE of subscripts -- `apply_resolved.py:61` is
+                # `fields[1], fields[2], fields[3] = ...`, which the bare-only check missed.
+                targets = []
                 for tg in n.targets:
+                    targets.extend(tg.elts if isinstance(tg, (ast.Tuple, ast.List)) else [tg])
+                for i, tg in enumerate(targets):
                     if not (isinstance(tg, ast.Subscript)
                             and isinstance(tg.slice, ast.Constant)):
                         continue
@@ -150,9 +155,13 @@ def _registry_writers():
                     # way. Same rule as tests/test_registry.py's detector; they must agree.
                     if tg.slice.value == 3:
                         hit = True
-                    elif (tg.slice.value == 4 and isinstance(n.value, ast.Constant)
-                            and n.value.value == "true"):
-                        hit = True
+                    elif tg.slice.value == 4:
+                        v = n.value
+                        if (isinstance(v, (ast.Tuple, ast.List))
+                                and len(v.elts) == len(targets)):
+                            v = v.elts[i]
+                        if isinstance(v, ast.Constant) and v.value == "true":
+                            hit = True
             elif isinstance(n, ast.List) and len(n.elts) >= 6:
                 e = n.elts[4]
                 if isinstance(e, ast.Constant) and e.value == "true":

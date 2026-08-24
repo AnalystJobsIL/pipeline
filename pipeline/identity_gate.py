@@ -342,19 +342,41 @@ def activation_ok(name, platform, api_url, n_jobs=0, html=""):
     `page_names_company` needs 2000 chars to answer anything but `None`. That was built,
     measured and reverted: `docs/BACKLOG.md` 33. And a tenant MISMATCH cannot be a veto on
     its own either -- it costs 36 legitimate acquisitions (item 21). So the tenant string
-    admits, and only page content can refuse.
+    admits; refusal needs page evidence.
+
+    **What that costs, stated rather than implied.** `page_names_company` returns `None` for
+    a page it could not read, and `is True` refuses `None` -- so on a subdomain-tenant host
+    whose endpoint is a machine API (`/wday/cxs/<tenant>/<site>/jobs`, HTTP 400 on GET) a
+    failed tenant near-match IS the refusal, because no page can ever be read there:
+
+        activation_ok("Habana Labs (Intel)", "workday",
+                      "https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/x/jobs", 12)
+        -> False        # a real acquisition, refused
+
+    That is item 21's shape re-entering through the `None` branch rather than through a
+    `mismatch` veto. It is accepted here deliberately and for a narrower reason than item 21
+    covers: these five callers ACTIVATE a currently-parked row, so a wrong refusal leaves the
+    row parked, visible and recoverable, while a wrong acceptance publishes another company's
+    jobs under this company's name. Item 21 measured the cost of vetoing rows that were
+    already ACTIVE, which is not this. `docs/BACKLOG.md` 49 carries the measurement; the fix
+    is an `acquired-by` column, not a cleverer string test.
     """
     if not n_jobs:
         return False
     if is_foreign(name, api_url) or not looks_like_a_job_listing_page(api_url):
         return False
-    if html:
-        # The caller holds the page it resolved from. That is the evidence that produced the
-        # candidate; re-fetching would be strictly weaker (see `page_names_company`).
-        return page_names_company(name, api_url, html=html) is True
+    # ONE rule, whether or not the caller holds the page. `html` avoids a re-fetch and is
+    # stronger evidence than one (see `page_names_company`), but it does not change the
+    # decision procedure -- and it must not, because a separate html branch was measured
+    # over-blocking: `page_mentions_company(..., strict=True)` wants the registry name's
+    # words consecutively, so `Siemens Healthineers` on a page that says only "Siemens" was
+    # refused. That branch silently withheld rows in `validate_empty`'s 54-row Sunday pool.
+    #
+    # NOT fixed by matching the name's head token: `Sight` matches `Sight Sciences`' page,
+    # and `Sight Diagnostics` is a different company parked on the same board. Measured.
     if tenant_is_this_company(name, api_url):
         return True
-    return page_names_company(name, api_url) is True
+    return page_names_company(name, api_url, html=html) is True
 
 
 def identity_ok(name, url, html=""):

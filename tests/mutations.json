@@ -408,5 +408,95 @@
     "replace": "            elif verdict == \"found-never\" and not _gate.identity_ok(name, url):",
     "why": "narrows the guarded branch so the real `found` verdict activates unguarded",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "apply-resolved-gate-drop",
+    "file": "apply_resolved.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "                if fields[4] == \"true\" and (",
+    "replace": "                if False and (",
+    "why": "apply_resolved runs at self-heal.yml 06:00 and re-points an ACTIVE row's api_url. Its write is a TUPLE target, which made it invisible to the derived enumeration until 2026-08-24.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "apply-resolved-gate-invert",
+    "file": "apply_resolved.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "                        or not _gate.tenant_is_this_company(name, api)):",
+    "replace": "                        or _gate.tenant_is_this_company(name, api)):",
+    "why": "inverts the tenant veto: refuses the correct boards and admits the foreign ones",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "apply-resolved-gate-narrow",
+    "file": "apply_resolved.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "                if fields[4] == \"true\" and (",
+    "replace": "                if fields[4] == \"never\" and (",
+    "why": "narrows the guard so no row is ever checked",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "page-strict-off",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "page_names_company",
+    "class": "M2-gate-inversion",
+    "find": "    if page_mentions_company(name, html, strict=True):",
+    "replace": "    if page_mentions_company(name, html, strict=False):",
+    "why": "strict=True is the whole Bancor/Bancorp lesson: without it the name's words may appear scattered anywhere on the page.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "identity-foreign-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "identity_ok",
+    "class": "M1-gate-removal",
+    "find": "    if is_foreign(name, url):\n        return False\n    if host and ATS_HOST.search(host):",
+    "replace": "    if False:\n        return False\n    if host and ATS_HOST.search(host):",
+    "why": "On an ordinary careers domain -- the shape listing_hunt actually finds -- is_foreign is the ONLY gate identity_ok applies. Removing it re-opens FairFly onto fireflyspace.com.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "oktowrite-listing-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "ok_to_write",
+    "class": "M4-dead-conjunct",
+    "find": "    if is_foreign(name, url) or not looks_like_a_job_listing_page(url):\n        return False\n    return page_names_company",
+    "replace": "    if is_foreign(name, url):\n        return False\n    return page_names_company",
+    "why": "activation_ok's copy of clause 3 has a mutation; ok_to_write's identical clause had none. Dropping it lets crack_walled persist an About/nav page as the row's api_url.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "identity-jobvite-open",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "identity_ok",
+    "class": "M1-gate-removal",
+    "find": "        return (looks_like_a_job_listing_page(url)\n                and page_names_company(name, url, html=html) is True)",
+    "replace": "        return True",
+    "why": "the jobvite/taleo branch is the one place identity_ok skips is_foreign and relies solely on the page test; no test exercised either platform.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "tenant-mismatch-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "tenant_is_this_company",
+    "class": "M1-gate-removal",
+    "find": "    if _verdict(name, url) == \"mismatch\":\n        return False",
+    "replace": "    if False:\n        return False",
+    "why": "the scoped mismatch veto is the sole refuser on Sight Sciences, Sight Diagnostics and Kubiya (38 -> 35 refused rows on the real registry).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "namestop-neutered",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "page_names_company",
+    "class": "M1-gate-removal",
+    "find": "                    if w.lower() not in _NAME_STOP)",
+    "replace": "                    if w.lower() not in set())",
+    "why": "neuters the _NAME_STOP retry, so every row whose name carries a suffix the page omits is silently refused. R2 showed the only killer was an inspect.getsource assertion -- this record is what makes must_be_killed_by_behavioural do work.",
+    "must_be_killed_by_behavioural": true
   }
 ]

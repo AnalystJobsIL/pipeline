@@ -17,6 +17,10 @@ import os
 import re
 import sys
 
+# One seam, called through the MODULE (never bound with `from ... import x as y`, which
+# makes a separate global that patching the gate cannot reach).
+from pipeline import identity_gate as _gate
+
 
 def _parse(line):
     return next(csv.reader(io.StringIO(line)))
@@ -58,6 +62,23 @@ def main():
         if name in resolved and len(fields) >= 4:
             plat, tok, api = resolved[name][0], resolved[name][1], resolved[name][2]
             if [fields[1], fields[2], fields[3]] != [plat, tok, api]:
+                # This tool cannot ACTIVATE a row -- it never writes col 4 -- but it can
+                # RE-POINT an already-active one at another company's board, and its gate is
+                # upstream in `resolve_llm._verify`, not here. It was invisible to the
+                # derived writer enumeration until 2026-08-24 because its write is a TUPLE
+                # target (`fields[1], fields[2], fields[3] = ...`).
+                #
+                # A VETO on proven foreignness, never a demand for proof. `api` is usually a
+                # machine endpoint, so requiring `page_names_company` here would refuse every
+                # ATS re-point -- the same over-block measured at 358 rows in
+                # docs/BACKLOG.md 33. `tenant_is_this_company` returns True when there is
+                # nothing checkable, so this fires only on a real mismatch.
+                if fields[4] == "true" and (
+                        _gate.is_foreign(name, api)
+                        or not _gate.tenant_is_this_company(name, api)):
+                    print(f"  [XX]  {name[:28]:29} -> resolver proposed {api[:44]}, which is "
+                          f"not this company's board; active row left pointing where it was")
+                    continue
                 fields[1], fields[2], fields[3] = plat, tok, api
                 if len(fields) >= 6:
                     # through the append-log: a bare concatenation has no cap, and the next
