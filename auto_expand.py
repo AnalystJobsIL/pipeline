@@ -74,13 +74,13 @@ def _row_for_scrape(name, jobs2, good_url, cache):
                 "aggregator URL; resolve real careers page before activating"]
     if not _gate.activation_ok(name, "scrape", good_url, len(jobs2)):
         return [name, "scrape", good_url, good_url, "false",
-                "scraped page is not this company's; not activated"]
+                "scraped page is not this company's; no listing found"]
     cache[name] = jobs2
     return [name, "scrape", good_url, good_url, "true",
             f"auto-expand scrape; {len(jobs2)} IL"]
 
 
-def _row_for_ats(payload):
+def _row_for_ats(payload, seed_url):
     """The `ats` row builder, extracted so the gate has a seam a test can reach.
 
     `main()` writes through `pipeline.companies.CSV_PATH`, which is an ABSOLUTE path fixed
@@ -90,8 +90,15 @@ def _row_for_ats(payload):
     """
     nm, plat, tok, api, n_all, il = payload
     if not _gate.activation_ok(nm, plat, api, n_all):
-        return [nm, "scrape", api, api, "false",
-                "auto-expand: resolved board is not this company's"]
+        # SEED url in cols 2-3, never the refused board. Persisting the refused `api` put
+        # a FOREIGN host into the row's address, and `identity_gate.is_walled` derives
+        # crack_walled's pool membership from that host -- so a row parked this way joined
+        # the crack pool pointing at Novartis's Workday (docs/BACKLOG.md 54). The sibling
+        # `retry_unreachable._row_for` already reset to the row's own URL; now both do.
+        # And the note carries `no listing found` -- the hand-off token -- for the same
+        # reason as retry's: a token-free refusal orphans the row out of every pool.
+        return [nm, "scrape", seed_url, seed_url, "false",
+                "auto-expand: another company's board; no listing found"]
     return [nm, plat, tok, api, "true", f"auto-expand; {n_all}/{il} IL"]
 
 
@@ -147,7 +154,7 @@ def main():
                 r, kind = lr, "ats"
                 n_llm += 1
         if kind == "ats":
-            row = _row_for_ats(r[1])
+            row = _row_for_ats(r[1], url)
             n_resolved += 1 if row[4] == "true" else 0
             n_unreach += 0 if row[4] == "true" else 1
         elif kind == "scrape":

@@ -114,14 +114,22 @@ def _row_for(name, url, kind, payload, cache):
     if kind == "ats":
         nm, plat, tok, api, n_all, il = payload
         if not _gate.activation_ok(nm, plat, api, n_all):
+            # The refusal note MUST carry a re-check-pool token. The first version of
+            # this string carried none and REPLACED the whole cell, so the 9 rows whose
+            # only token was `unreachable` left every pool at once -- including this
+            # tool's own selector -- became orphans, and 11 orphans trip
+            # check_invariants' bad(), which blocks the digest commit. `no listing found`
+            # is the deliberate hand-off: this tool could not find the RIGHT board, which
+            # is listing_hunt's job, and it is the same convention listing_hunt's own
+            # identity refusal uses.
             return [nm, "scrape", url, url, "false",
-                    "retry: resolved board is not this company's"]
+                    "retry: another company's board; no listing found"]
         return [nm, plat, tok, api, "true", f"retry-resolved; {n_all}/{il} IL"]
     if kind == "scrape":
         jobs2, good_url = payload if isinstance(payload, tuple) else (payload, url)
         if not _gate.activation_ok(name, "scrape", good_url, len(jobs2)):
             return [name, "scrape", url, url, "false",
-                    "retry: scraped page is not this company's"]
+                    "retry: another company's page; no listing found"]
         cache[name] = jobs2
         return [name, "scrape", good_url, good_url, "true", f"retry-scrape; {len(jobs2)} IL"]
     if kind == "empty":

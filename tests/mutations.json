@@ -627,5 +627,35 @@
     "replace": "    if False and os.environ.get(\"BRIGHTDATA_API_KEY\"):",
     "why": "removes the residential-unlocker rung, so a bot-walled page returns None and every caller reads that as refusal. The docstring argues at length for gating on the KEY rather than SCRAPE_VIA_UNLOCKER; one token reverses it.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-refusal-token-drop",
+    "file": "retry_unreachable.py",
+    "symbol": "_row_for",
+    "class": "M7-constant-drift",
+    "find": "                    \"retry: another company's board; no listing found\"]",
+    "replace": "                    \"retry: another company's board\"]",
+    "why": "drops the hand-off token from the refusal note. The token-free version orphaned 9 named rows out of every pool at once, and 11 orphans block the digest commit via check_invariants bad().",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-refusal-token-drop",
+    "file": "auto_expand.py",
+    "symbol": "_row_for_ats",
+    "class": "M7-constant-drift",
+    "find": "                \"auto-expand: another company's board; no listing found\"]",
+    "replace": "                \"auto-expand: another company's board\"]",
+    "why": "same token rule for the sibling: a refusal that matches no pool orphans the appended row.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-ats-seed-leak",
+    "file": "auto_expand.py",
+    "symbol": "_row_for_ats",
+    "class": "M7-constant-drift",
+    "find": "        return [nm, \"scrape\", seed_url, seed_url, \"false\",",
+    "replace": "        return [nm, \"scrape\", api, api, \"false\",",
+    "why": "re-opens docs/BACKLOG.md 54: persisting the REFUSED board puts a foreign host into the row's address, and identity_gate.is_walled derives crack_walled's pool membership from that host.",
+    "must_be_killed_by_behavioural": true
   }
 ]

@@ -1688,11 +1688,20 @@ def test_auto_expand_row_builder_refuses_a_foreign_board(monkeypatch):
     from pipeline import identity_gate as G
     monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
 
-    foreign = E._row_for_ats(("Bancor", "icims", "bancorpbank", _BANCORP, 30, 9))
+    seed = "https://www.bancor.network/careers"
+    foreign = E._row_for_ats(("Bancor", "icims", "bancorpbank", _BANCORP, 30, 9), seed)
     assert foreign[4] != "true", (
         "built an active row on The Bancorp Bank's board: %r" % (foreign,))
+    # docs/BACKLOG.md 54, closed: the refusal must record the SEED url, never the refused
+    # board -- `identity_gate.is_walled` derives crack_walled's pool membership from the
+    # row's host, so persisting the refused board put a foreign Workday/iCIMS host into a
+    # pool that exists to crack THIS company's board.
+    assert foreign[2] == seed and foreign[3] == seed, (
+        "the refused board leaked into the row's address: %r" % (foreign,))
+    assert _BANCORP not in foreign[3]
 
-    ours = E._row_for_ats(("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12))
+    ours = E._row_for_ats(("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12),
+                          "https://www.fiverr.com/jobs")
     assert ours[4] == "true" and ours[3] == _FIVERR, (
         "positive control regressed: %r" % (ours,))
 
@@ -2165,45 +2174,65 @@ def test_apply_resolved_will_not_re_point_an_active_row_at_a_foreign_board(
         "positive control: a legitimate re-resolution must still apply: %r" % (out["Fiverr"],))
 
 
-def test_validate_empty_does_not_silently_withhold_a_row_it_refuses(monkeypatch):
-    """Reviewer R1's finding, both halves.
+def test_validate_empty_a_readable_page_decides_and_a_refusal_is_visible(monkeypatch):
+    """The census pin for `activation_ok`'s html ordering. This gate has flipped once; the
+    three cells below are the record of why it must not flip again without a new predicate.
 
-    (1) OVER-BLOCK: the gate had a separate `if html:` branch that demanded
-    `page_names_company(...) is True` and nothing else. `page_mentions_company(strict=True)`
-    wants the registry name's words CONSECUTIVELY, so `Siemens Healthineers` on a page that
-    says only "Siemens" was refused -- in a 54-row Sunday pool full of names that cannot
-    appear verbatim on their own page (`Dun & Bradstreet (Israel) Ltd.`,
-    `Mercedes-Benz (MBRDNA)`, `Qualitest acq`). One rule now: the tenant admits, page refuses.
-
-    (2) SILENT: the refusal returned `("confirmed", None)` -- the tool's own word for "board
-    exists, genuinely 0 Israel now" AND for "could not re-check". `main()` handles it with
-    `confirmed += 1` and nothing else: no note, no print, no row write. The row re-entered
-    the same pool the next Sunday and was refused again, invisibly, forever. It now returns
-    `suspect`, which writes an `empty-but-suspect` note a human can read.
+    * WAVE 1 (page-first, page-only): `Siemens Healthineers` on its own readable page that
+      says only "Siemens" was refused -- and the refusal was SILENT (`("confirmed", None)`,
+      indistinguishable from a genuine empty). The blocking part was the SILENCE.
+    * WAVE 3 (tenant-first): `tenant_is_this_company` is True by VACUITY on every
+      path-tenant platform, so the page in hand was never consulted and `Cogniteam` was
+      PROMOTED onto Riskified's greenhouse board off a careers URL that no longer serves
+      Cogniteam's page. A wrong write, on a schedule.
+    * RESOLUTION (per the calibration-dispute rule -- both error cells non-empty, so do not
+      tune, pick the bar-consistent direction): a READABLE page the caller holds decides,
+      either way; only an UNREADABLE page (None) falls through to the tenant clause. These
+      callers activate PARKED rows: a wrong refusal is parked, visible in the suspect list
+      and recoverable; a wrong acceptance ships another company's jobs. The Siemens-class
+      name-shape cost is accepted, VISIBLE, and filed with row names in docs/BACKLOG.md.
     """
     import validate_empty as V
     from pipeline import identity_gate as G
-    board = "https://boards-api.greenhouse.io/v1/boards/siemens/jobs"
+
+    # Cell 1 -- the wave-3 attack: readable page that names someone else => refuse, visibly.
+    board = "https://boards-api.greenhouse.io/v1/boards/riskified/jobs"
+    monkeypatch.setattr(V, "_get", lambda u, timeout=10:
+                        "<html><h1>Riskified Careers</h1>"
+                        + "<p>Riskified builds fraud prevention. Join Riskified.</p>" * 60
+                        + "</html>")
+    monkeypatch.setattr(V, "_verify", lambda name, plat, tok, api: (30, 9))
+    monkeypatch.setattr(V, "extract_ats",
+                        lambda html, name: ("greenhouse", "riskified", board))
+    kind, payload = V.check("Cogniteam", "https://www.cogniteam.com/careers")
+    assert kind == "suspect", (
+        "a readable page naming another company must refuse the board it embeds, and the "
+        "refusal must be visible: got %r" % (kind,))
+    assert payload and "not this company's" in payload
+
+    # Cell 2 -- the wave-1 name-shape case, now refused BUT VISIBLE, never silent-confirmed.
+    board2 = "https://boards-api.greenhouse.io/v1/boards/siemens/jobs"
     monkeypatch.setattr(V, "_get", lambda u, timeout=10:
                         "<html><h1>Siemens Careers</h1>"
                         + "<p>Siemens is hiring in Tel Aviv.</p>" * 90 + "</html>")
-    monkeypatch.setattr(V, "_verify", lambda name, plat, tok, api: (30, 9))
-    monkeypatch.setattr(V, "extract_ats", lambda html, name: ("greenhouse", "siemens", board))
-    kind, row = V.check("Siemens Healthineers", "https://www.siemens.com/careers")
-    assert kind == "promote" and row and row[4] == "true", (
-        "a page that says 'Siemens' is still Siemens Healthineers' own page: %r" % (kind,))
-
-    # and a genuinely foreign board is refused VISIBLY, not as a bare `confirmed`
-    bancorp = "https://careers-bancorpbank.icims.com/jobs/search?ss=1"
-    monkeypatch.setattr(V, "_get", lambda u, timeout=10:
-                        "<html><h1>Bancorp Bank</h1>"
-                        + "<p>The Bancorp Bank is hiring.</p>" * 90 + "</html>")
-    monkeypatch.setattr(V, "extract_ats", lambda html, name: ("icims", "bancorpbank", bancorp))
-    kind, payload = V.check("Bancor", "https://www.bancor.network/careers")
+    monkeypatch.setattr(V, "extract_ats",
+                        lambda html, name: ("greenhouse", "siemens", board2))
+    kind, payload = V.check("Siemens Healthineers", "https://www.siemens.com/careers")
     assert kind == "suspect", (
-        "a refusal must leave a trace a human can read, not return the success-path "
-        "tuple: got %r" % (kind,))
-    assert payload and "not this company's" in payload
+        "the accepted cost of the readable-page rule is a VISIBLE suspect, never a silent "
+        "confirmed and never a promote on unconsulted evidence: got %r" % (kind,))
+
+    # Cell 3 -- unreadable page + affirmative subdomain tenant => the tenant clause still
+    # admits, so the machine-endpoint / filler-stripped-core population stays activatable.
+    wd = "https://qualcomm.wd5.myworkdayjobs.com/wday/cxs/qualcomm/External/jobs"
+    # 500 <= len < 2000: past check()'s own can't-re-check floor, below the page
+    # predicate's readability floor -- a JS shell, the realistic walled shape.
+    monkeypatch.setattr(V, "_get", lambda u, timeout=10: "<html>" + "x" * 900 + "</html>")
+    monkeypatch.setattr(V, "extract_ats", lambda html, name: ("workday", "qualcomm", wd))
+    kind, row = V.check("Qualcomm Israel", "https://www.qualcomm.com/careers")
+    assert kind == "promote" and row and row[4] == "true", (
+        "an UNREADABLE page is no evidence; the affirmative tenant must still admit: %r"
+        % (kind,))
 
 
 def test_no_note_write_costs_a_row_its_own_re_check_token():
@@ -2370,3 +2399,41 @@ def test_the_unlocker_rung_inside_the_page_test_still_exists(monkeypatch):
     assert G.page_names_company("Bit", "https://careers.bit.example/", html=walled) is None, (
         "with no key we could not look, and that is not the same as looking and finding "
         "someone else")
+
+
+def test_every_refusal_note_keeps_the_row_in_a_re_check_pool(monkeypatch):
+    """A refusal must hand the row to SOME scheduled tool, never orphan it.
+
+    Wave-3 R3 measured the first version of `retry_unreachable`'s two refusal notes: they
+    carried no pool token and REPLACED the whole cell, so the 9 rows whose only token was
+    `unreachable` (3M, Augwind Energy, Chakratec, Cyberbit, ElMindA, Panoply, Product
+    Madness, Siemens Healthineers, Upsolver) left every pool at once -- including this
+    tool's own selector, so they could never be retried -- became orphans, and at 11
+    orphans `check_invariants` fires `bad()`, which blocks the digest commit itself.
+
+    The convention pinned here: an identity refusal ends with `no listing found`, the
+    hand-off token -- this tool could not find the RIGHT board, which is `listing_hunt`'s
+    job. It is the same convention listing_hunt's own identity refusal already uses, and
+    the token is in `check_invariants.POOL`, listing_hunt's selector, and
+    `scan_dead_domains`' selector.
+    """
+    import re
+    import check_invariants as ci
+    import retry_unreachable as R
+    import auto_expand as E
+    from pipeline import identity_gate as G
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+
+    seed = "https://www.bancor.network/careers"
+    rows = [
+        R._row_for("Bancor", seed, "ats",
+                   ("Bancor", "icims", "bancorpbank", _BANCORP, 30, 9), {}),
+        R._row_for("Bancor", seed, "scrape", (["a", "b"], _BANCORP), {}),
+        E._row_for_ats(("Bancor", "icims", "bancorpbank", _BANCORP, 30, 9), seed),
+        E._row_for_scrape("Bancor", ["a", "b"], _BANCORP, {}),
+    ]
+    for row in rows:
+        assert row[4] == "false", "fixture drift: these must all be refusals: %r" % (row,)
+        assert re.search(ci.POOL, row[5], re.I), (
+            "a refusal note that matches no re-check pool orphans the row and, at 11 "
+            "orphans, blocks the digest commit: %r" % (row,))

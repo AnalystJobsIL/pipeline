@@ -365,18 +365,44 @@ def activation_ok(name, platform, api_url, n_jobs=0, html=""):
         return False
     if is_foreign(name, api_url) or not looks_like_a_job_listing_page(api_url):
         return False
-    # ONE rule, whether or not the caller holds the page. `html` avoids a re-fetch and is
-    # stronger evidence than one (see `page_names_company`), but it does not change the
-    # decision procedure -- and it must not, because a separate html branch was measured
-    # over-blocking: `page_mentions_company(..., strict=True)` wants the registry name's
-    # words consecutively, so `Siemens Healthineers` on a page that says only "Siemens" was
-    # refused. That branch silently withheld rows in `validate_empty`'s 54-row Sunday pool.
+    # A page the CALLER already holds is decisive when it is readable -- in either
+    # direction. This ordering is the resolution of a measured calibration dispute in which
+    # both error cells were non-empty, and it has flipped once already, so the census is
+    # recorded here rather than re-derived a third time:
     #
-    # NOT fixed by matching the name's head token: `Sight` matches `Sight Sciences`' page,
-    # and `Sight Diagnostics` is a different company parked on the same board. Measured.
+    #   * page-first, page-only (the first form): refused `Siemens Healthineers` on its own
+    #     page (readable, says only "Siemens" -- `strict=True` wants the registry name's
+    #     words consecutively), and the refusal was SILENT. That silence, not the refusal,
+    #     was the blocking finding; the refusal path is visible now (`validate_empty`
+    #     returns `suspect` and writes a note).
+    #   * tenant-first (the second form): `tenant_is_this_company` answers True by VACUITY
+    #     on every path-tenant platform (greenhouse/lever/ashby/comeet -- 6 of the 7
+    #     platforms `extract_ats` can return), so the page in hand was never consulted and
+    #     `Cogniteam` was activated onto Riskified's greenhouse board off a careers URL
+    #     that no longer serves Cogniteam's page. A proven wrong write, on a schedule.
+    #
+    # No string predicate separates every wrong-page case from every name-shape mismatch
+    # (`Sight` matches Sight Sciences' page and Sight Diagnostics is a different company on
+    # that same board -- head-token matching is measured unsafe). So the rule follows the
+    # bar: these callers ACTIVATE a parked row, where a wrong refusal is parked, visible
+    # and recoverable, and a wrong acceptance ships another company's jobs. Readable page
+    # evidence decides; only an UNREADABLE page (None -- machine endpoints, bot walls)
+    # falls through to the tenant clause, which keeps the 358 path-tenant rows and the
+    # filler-stripped-core rows activatable. The name-shape cost this accepts is filed
+    # with the row names in docs/BACKLOG.md.
+    if html:
+        v = page_names_company(name, api_url, html=html)
+        if v is not None:
+            return v is True
+        # unreadable in hand: no evidence either way -- fall through to the tenant clause
     if tenant_is_this_company(name, api_url):
         return True
-    return page_names_company(name, api_url, html=html) is True
+    if html:
+        # page unreadable AND tenant mismatch/undecidable: nothing affirms this board.
+        # (A re-fetch of `api_url` here would re-run the unlocker attempt the first call
+        # already made; it cannot say more than that call did.)
+        return False
+    return page_names_company(name, api_url) is True
 
 
 def identity_ok(name, url, html=""):
