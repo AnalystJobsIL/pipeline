@@ -1014,18 +1014,29 @@ see: a `site` that moved to another business unit's postings (`n > 0`, all forei
 Eightfold `?domain=` that serves a different tenant with real postings — both are
 registry-validation problems.
 
-**It reaches the reader.** The digest's audit block carries `- **Boards:** new today: …;
-cleared: … · N fetch errors (name: reason; …) · N regressed to zero (…) · N empty (…) · N
-scrape rows on an ATS host` (`health.mail_lines(stale, previous)`, delta against
-yesterday's `stale.json` first because the standing counts read the same every morning;
-six names per class then `+k more`; absent when everything was healthy) and `Failed
-companies: Decart (HttpError: HTTP 404 for …)` — until 2026-08-24 that line said
-`(HttpError)` and the empty/regressed counts reached nobody. The same line is a
-`::warning::` in the run log. A scoped run (`--only`/`--limit`) prints the line but does
-not write `stale.json`. **Both are public**: `digests/latest.md` is committed to the public
-pipeline repo and the Actions log is world-readable; the text is an exception's first 70
-characters (every Comeet URL truncates before `?token=`; `docs/index.html` renders none of
-it), and there is no redaction step.
+**It reaches the reader — two bullets in the audit block** (`health.mail_lines(stale,
+previous, scanned)`):
+
+```
+- **Boards** changed today: new: Dell Technologies: fetch-error · cleared: Guardz
+- **Boards** standing: 4 fetch errors (Decart: HttpError: HTTP 404 for …; Dell Technologies:
+  BoardEmpty: … 0 postings worldwide) · 25 regressed to zero (…) · 36 empty (…) · 25 scrape rows on an ATS host
+```
+
+Read the first line every morning and the second only when a number moved: the standing
+counts are the same most days, which is why a new fetch error gets its own line. `new` is
+a row that entered `stale.json` or changed reason since yesterday; `cleared` means
+recovered — judged only over rows this run scanned (a row deactivated overnight is not a
+recovery) and never for an Israel-scoped fetcher's measurement zero. Six names per class,
+then `+k more`. No line at all means every board was healthy and nothing changed. Beside
+it, `Failed companies: Decart (HttpError: HTTP 404 for …)`, eight names then a count —
+until 2026-08-24 that line said `(HttpError)` and the empty/regressed counts reached
+nobody. The same lines are `::warning::` in the run log. A scoped run (`--only`/`--limit`)
+prints them but does not write `stale.json`. **Both are public**: `digests/latest.md` is
+committed to the public pipeline repo and the Actions log is world-readable; the text is
+an exception's first 70 characters with every URL query string stripped first (`?token=`
+sat at character 75 of the two shortest Comeet URLs — a 5-character margin is not a
+redaction step; `docs/index.html` renders none of it).
 
 Scrape rows rot differently, in `refresh_scrape_cache.py`, and the two words matter
 (constants re-read from the code 2026-08-24 — this paragraph said `ROT_PARK_DAYS` was 3 and

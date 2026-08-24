@@ -789,6 +789,39 @@ def fetch_scrape(row):
                          or _SCRAPE_CACHE.get(row.get("token", ""), []))
 
 
+_GENERIC_LABELS = {"jobs", "careers", "apply", "boards", "www"}
+_LINKEDIN_EMPLOYER = _re.compile(r"/jobs/view/.*?-at-([a-z0-9-]+?)-\d{6,}(?:[/?#]|$)")
+
+
+def slug_names_declared_identity(company, url):
+    """Does the LinkedIn slug's employer half name a DECLARED identity of `company`?
+
+    The slug guard (`company_identity.url_names_other_company`) drops a card whose
+    "<title>-at-<employer>-<id>" names someone else — which is also what an acquisition
+    looks like. The one exemption is a declaration in `pipeline/identity_facts.py`
+    (tenants and domain labels), matched against a whole leading run of the employer's
+    slug words, exactly:
+
+        "Merck (MSD)"   tenant `msd`      …/x-at-msd-4454120001          -> True
+        "Merck (MSD)"                     …/x-at-msdelivery-4454120001   -> False (not a whole word)
+        "SentinelOne"   `sentinellabs`    …/x-at-sentinel-labs-4454…     -> True  (words joined)
+        "Itamar Medical" `zoll`           …/x-at-zollinger-corp-4454…    -> False
+        "AWS"           domain `amazon`   …/amazon-consultant-at-acme-…  -> False (title half)
+        "Siemens EDA"   `sw`              anything                       -> False (2 chars)
+
+    A blanket "never drop a registry name" is deliberately NOT done: the 147 rows once
+    published under the wrong employer carried registry names too (docs/BACKLOG.md 9).
+    """
+    from .identity_facts import domains, normalize, tenants
+    m = _LINKEDIN_EMPLOYER.search((url or "").lower())
+    words = m.group(1).split("-") if m else []
+    prefixes = {"".join(words[:i]) for i in range(1, len(words) + 1)}
+    toks = set(tenants(company))
+    for d in domains(company):
+        toks |= {normalize(lbl) for lbl in d.lower().split(".") if lbl not in _GENERIC_LABELS}
+    return any(len(t) >= 3 and t in prefixes for t in toks)
+
+
 def fetch_discovery(row):
     """LinkedIn/Indeed discovery layer (Bright Data scrapers, run out-of-band by
     discovery_daily.py). Reads discovered_cache.json; each job already carries its real
@@ -816,28 +849,6 @@ def fetch_discovery(row):
     # still carries the old name (NVIDIA / at-mellanox) — the same shape as a mis-attributed
     # card (docs/BACKLOG.md 9). `check_invariants` runs the same predicate over the board
     # as a WARNING, so a card kept here can only ever be a warning line there.
-    # The one exemption: a DECLARED identity (`pipeline/identity_facts.py`). "Merck (MSD)"
-    # is declared with tenant `msd`, so a card whose slug says `at-msd` is that company's
-    # own posting, not a mis-attribution. A blanket
-    # "never drop a registry name" is deliberately NOT done: the 147 mis-attributed rows
-    # also carried registry names.
-    from .identity_facts import domains as _declared_domains, normalize as _norm_id
-    from .identity_facts import tenants as _declared_tenants
-
-    _GENERIC = {"jobs", "careers", "apply", "boards", "www"}
-
-    def _declared_in_slug(company, url):
-        # only the employer half of "<title>-at-<employer>-<id>", and only a whole leading
-        # run of its words, matched EXACTLY: `sentinel-labs` is `sentinellabs`, `zollinger`
-        # is not `zoll`, and `msd` (3 chars, "Merck (MSD)") is `at-msd-…` and nothing else
-        m = _re.search(r"/jobs/view/.*?-at-([a-z0-9-]+?)-\d{6,}(?:[/?#]|$)", (url or "").lower())
-        words = m.group(1).split("-") if m else []
-        prefixes = {"".join(words[:i]) for i in range(1, len(words) + 1)}
-        toks = set(_declared_tenants(company))
-        for d in _declared_domains(company):
-            toks |= {_norm_id(lbl) for lbl in d.lower().split(".") if lbl not in _GENERIC}
-        return any(len(t) >= 3 and t in prefixes for t in toks)   # "sw" cannot carry identity
-
     kept, dropped = [], {"expired": 0, "recruiter": 0, "slug-mismatch": 0}
     for j in jobs:
         if j.get("posted_date") and str(j["posted_date"])[:10] < cut:
@@ -845,7 +856,7 @@ def fetch_discovery(row):
         elif _is_rec(j.get("company")):
             dropped["recruiter"] += 1
         elif (url_names_other_company(j.get("company"), j.get("url"))
-              and not _declared_in_slug(j.get("company"), j.get("url"))):
+              and not slug_names_declared_identity(j.get("company"), j.get("url"))):
             dropped["slug-mismatch"] += 1
         else:
             kept.append(j)

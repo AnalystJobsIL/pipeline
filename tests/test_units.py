@@ -1618,8 +1618,6 @@ def test_telegram_does_not_assert_israel_either():
     assert is_israel_job(j) is True
 
 
-
-
 # --- fourth-wave re-verdict, 2026-08-23 -------------------------------------------------
 def test_the_free_walk_is_not_bounded_by_the_paid_dial():
     """`for i in range(pages * 6)` tied the FREE guest walk to `LINKEDIN_PAGES`, the PAID
@@ -1833,15 +1831,6 @@ def test_a_starved_targeted_cap_skips_the_trigger_loudly(capsys):
     assert "skipped" not in capsys.readouterr().out, "0 is plan_spend's message, not ours"
     src_main = __import__("inspect").getsource(dd.main)
     assert "_targeted_cap_or_zero" in src_main, "the gate must actually be wired in main()"
-
-
-# --------------------------------------------------------------------------- #
-# ats-fetch lane, 2026-08-24 — see docs/sessions/2026-08-24-ats-fetch.md
-# --------------------------------------------------------------------------- #
-def _pcsx_position(i, jid, display, locs, std):
-    return {"id": jid, "displayJobId": display, "name": f"Role {i}", "locations": locs,
-            "standardizedLocations": std, "postedTs": 1786106796, "creationTs": 1786011493,
-            "positionUrl": f"/careers/job/{jid}"}
 
 
 # --- scraper lane, 2026-08-24: render/parse split, error vs empty, the pooled refresh ---
@@ -2787,11 +2776,49 @@ def test_refresh_rotates_the_processing_order_by_day(tmp_path, monkeypatch):
     assert seen[0] != seen[1] and sorted(seen[0]) == sorted(seen[1]) == names
 
 
+# --- scraper lane, 2026-08-24: render/parse split, error vs empty, the pooled refresh ---
+# Every test here is offline: the parse is a pure function of a `Rendered` bundle, the refresh
+# is driven by a fake `scrape_result`, and the process pool by a module-level fake worker.
+
+import csv as _csv
+import datetime as _dtm
+import html as _html
+import json as _json
+import re as _re
+import time as _time
+from types import SimpleNamespace as _NS
+
+
+def test_a_stale_or_alarmed_collect_stamp_reaches_the_mail(tmp_path, monkeypatch):
+    """BACKLOG 85 (2026-08-24): a refresh that crashed last night left a stamp dated
+    yesterday, and `stages.require("collect", 1)` is silent at exactly one day; a mass-failure
+    night stamps TODAY with `alarm=…`, which nothing read. Both are now a bold line in all
+    three renderers and a workflow warning."""
+    import datetime as dt
+    import html as _h
+    from pipeline import stages
+    from pipeline import digest as D
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    assert stages.alarms("collect") == ["collect never ran"]
+    stages.stamp("collect", scraped=425, with_jobs=217)
+    assert stages.alarms("collect") == []
+    stages.stamp("collect", scraped=425, with_jobs=3, alarm="mass-failure-errors-96%")
+    assert stages.alarms("collect") == ["collect mass-failure-errors-96%"]
+    yesterday = (dt.date.today() - dt.timedelta(days=1)).isoformat()
+    import json as _j
+    data = stages._load(); data["collect"]["date"] = yesterday; data["collect"].pop("alarm")
+    _j.dump(data, open(stages.PATH, "w", encoding="utf-8"))
+    assert stages.alarms("collect") == ["collect last ran 1d ago — the digest read stale input"]
+    stats = {"stage_alarms": stages.alarms("collect"), "paths": {}, "stages": stages.summary()}
+    _, md = D.build_markdown([], dt.date.today().isoformat(), stats)
+    assert "- **Stages:** collect last ran 1d ago" in md
+    assert "STAGES: collect last ran 1d ago" in D._text_audit(stats)
+    assert "<b>Stages:</b> collect last ran 1d ago" in D._html_audit(stats, lambda v: _h.escape(str(v)))
+
+
 # --------------------------------------------------------------------------- #
 # ats-fetch lane, 2026-08-24 — see docs/sessions/2026-08-24-ats-fetch.md
 # --------------------------------------------------------------------------- #
-
-
 def _pcsx_position(i, jid, display, locs, std):
     return {"id": jid, "displayJobId": display, "name": f"Role {i}", "locations": locs,
             "standardizedLocations": std, "postedTs": 1786106796, "creationTs": 1786011493,
@@ -2989,13 +3016,13 @@ def test_board_health_reaches_the_mail_with_the_reason():
         "Leadspace": {"reason": "empty-board"}, "Any.do": {"reason": "empty-board"},
         "Salesforce": {"reason": "regressed-to-zero"},
         **{f"S{i}": {"reason": "misconfig-scrape-on-ats"} for i in range(25)}})
-    assert line == ["2 fetch errors (Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/...; "
+    assert line == ["standing: 2 fetch errors (Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/...; "
                     "Dell Technologies: BoardEmpty: dell.wd1: 0 postings worldwide) · "
                     "1 regressed to zero (Salesforce) · 2 empty (Any.do; Leadspace) · "
                     "25 scrape rows on an ATS host"]
     assert health.mail_lines({}) == [], "nothing to say when every board is healthy"
     many = health.mail_lines({f"C{i:02d}": {"reason": "empty-board"} for i in range(9)})
-    assert many == ["9 empty (C00; C01; C02; C03; C04; C05; +3 more)"]
+    assert many == ["standing: 9 empty (C00; C01; C02; C03; C04; C05; +3 more)"]
     # the run puts it in the summary, and every renderer prints it
     src = inspect.getsource(run_mod.run)
     assert '"fetch_health": _fetch_health_lines' in src and "health.mail_lines(stale, _previous, scanned=health_results)" in src
@@ -3009,9 +3036,9 @@ def test_board_health_reaches_the_mail_with_the_reason():
     assert "+22 more" in html2 and "C8 (" not in html2 and "+22 more" in text2, "the HTML mail is capped too"
     summary = {"companies_scanned": 1, "fetch_health": line}
     _, md = digest.build_markdown([], "2026-08-24", summary, {})
-    assert "- **Boards:** 2 fetch errors (Decart: HttpError: HTTP 404" in md
+    assert "- **Boards** standing: 2 fetch errors (Decart: HttpError: HTTP 404" in md
     _, html, text = digest.build_digest([], "2026-08-24", summary)
-    assert "BOARDS: 2 fetch errors" in text and "<b>Boards:</b> 2 fetch errors" in html
+    assert "BOARDS standing: 2 fetch errors" in text and "<b>Boards</b> standing: 2 fetch errors" in html
 
 
 def test_discovery_drops_are_counted_and_printed(monkeypatch, capsys):
@@ -3037,6 +3064,10 @@ def test_discovery_drops_are_counted_and_printed(monkeypatch, capsys):
     monkeypatch.setattr(_json, "load", lambda f: cache)
     from pipeline.company_identity import url_names_other_company as _u
     assert _u("AWS", cache[4]["url"]), "the raw guard would drop the declared identity"
+    sd = fetchers.slug_names_declared_identity
+    assert sd("Merck (MSD)", "https://il.linkedin.com/jobs/view/x-at-msd-4454120001?trk=x")
+    assert not sd("Merck (MSD)", "https://il.linkedin.com/jobs/view/x-at-msdelivery-4454120001")
+    assert not sd("AWS", "https://il.linkedin.com/jobs/view/amazon-consultant-at-acme-consulting-4454120008")
     kept = fetchers.fetch_discovery({"company_name": "Discovery"})
     assert [j["title"] for j in kept] == ["a", "e", "i", "j"], ("declared `amazon`/`sentinellabs`/`msd` kept as a whole "
         "leading run of the employer's words (exact, so 3-char `msd` is safe); `sw` (2 chars), `zoll` inside `zollinger`, "
@@ -3065,19 +3096,6 @@ def test_every_list_description_and_date_goes_through_the_same_normaliser(monkey
         "result": [{"id": 7, "jobOpeningName": "Analyst", "datePosted": "not a date"}]})
     bh = fetchers.fetch_bamboohr({"company_name": "H", "ats_platform": "bamboohr", "token": "h", "api_url": "https://h.bamboohr.com/careers/list"})
     assert bh[0]["posted_date"] == ""
-
-
-# --- scraper lane, 2026-08-24: render/parse split, error vs empty, the pooled refresh ---
-# Every test here is offline: the parse is a pure function of a `Rendered` bundle, the refresh
-# is driven by a fake `scrape_result`, and the process pool by a module-level fake worker.
-
-import csv as _csv
-import datetime as _dtm
-import html as _html
-import json as _json
-import re as _re
-import time as _time
-from types import SimpleNamespace as _NS
 
 
 def test_the_empty_board_probe_fails_closed_on_a_dead_endpoint_and_open_on_a_burst(monkeypatch):
@@ -3159,25 +3177,29 @@ def test_the_boards_line_leads_with_what_changed_since_yesterday():
     that line is invisible by day three. The line now opens with the delta. `run.py` reads
     yesterday's file BEFORE `record()` rewrites it."""
     import inspect
-    from pipeline import health, run as run_mod
+    from pipeline import digest, health, run as run_mod
     prev = {"Guardz": {"reason": "fetch-error"}, "Any.do": {"reason": "empty-board"},
             "Adobe": {"reason": "empty-board"}}
     now = {"Decart": {"reason": "fetch-error", "error": "HttpError: HTTP 404"},
            "Any.do": {"reason": "empty-board"},
            "Adobe": {"reason": "fetch-error", "error": "BoardEmpty: 0 postings worldwide"}}
     assert health.mail_lines(now, prev) == [
-        "new today: Adobe: fetch-error; Decart: fetch-error · cleared: Guardz · "
-        "2 fetch errors (Adobe: BoardEmpty: 0 postings worldwide; Decart: HttpError: HTTP 404) · "
+        "changed today: new: Adobe: fetch-error; Decart: fetch-error · cleared: Guardz",
+        "standing: 2 fetch errors (Adobe: BoardEmpty: 0 postings worldwide; Decart: HttpError: HTTP 404) · "
         "1 empty (Any.do)"]
-    assert health.mail_lines(now, now)[0].startswith("2 fetch errors"), "no delta, no prefix"
+    assert health.mail_lines(now, now) == [health.mail_lines(now, prev)[1]], "no delta, no delta line"
+    two = health.mail_lines(now, prev)
+    _, md3 = digest.build_markdown([], "2026-08-24", {"companies_scanned": 1, "fetch_health": two}, {})
+    assert "- **Boards** changed today: new: Adobe" in md3 and "- **Boards** standing: 2 fetch errors" in md3, \
+        "one bullet per line, so the delta is not buried in the standing counts"
     # "cleared" means recovered: not a row nobody scanned (deactivated overnight), and not an
     # empty-board on a platform whose zero is a measurement (never broken; 26 Workday rows
     # would have read as "cleared" the first morning the rule landed)
     prev2 = {"Adobe": {"reason": "empty-board", "platform": "workday"},
              "Leadspace": {"reason": "empty-board", "platform": "lever"},
              "Gone Co": {"reason": "fetch-error", "platform": "ashby"}}
-    assert health.mail_lines({}, prev2, scanned={"Adobe", "Leadspace"}) == ["cleared: Leadspace"]
-    assert health.mail_lines({}, prev2) == ["cleared: Gone Co; Leadspace"]
+    assert health.mail_lines({}, prev2, scanned={"Adobe", "Leadspace"}) == ["changed today: cleared: Leadspace"]
+    assert health.mail_lines({}, prev2) == ["changed today: cleared: Gone Co; Leadspace"]
     src = inspect.getsource(run_mod.run)
     assert src.index("health.previous()") < src.index("health.record(")
     assert "stale_boards" not in src, "a summary key nothing renders is a lie waiting to happen"
@@ -3203,30 +3225,3 @@ def test_platform_check_catches_a_scoped_fetcher_that_forgot_to_declare_it(monke
     monkeypatch.setattr(fetchers.fetch_greenhouse, "israel_scoped", True, raising=False)
     assert grid()["greenhouse"][-2:] == ["MISSING", "ok"], \
         "claims to narrow to Israel but does not — would switch off empty-board for 104 rows"
-
-
-def test_a_stale_or_alarmed_collect_stamp_reaches_the_mail(tmp_path, monkeypatch):
-    """BACKLOG 85 (2026-08-24): a refresh that crashed last night left a stamp dated
-    yesterday, and `stages.require("collect", 1)` is silent at exactly one day; a mass-failure
-    night stamps TODAY with `alarm=…`, which nothing read. Both are now a bold line in all
-    three renderers and a workflow warning."""
-    import datetime as dt
-    import html as _h
-    from pipeline import stages
-    from pipeline import digest as D
-    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
-    assert stages.alarms("collect") == ["collect never ran"]
-    stages.stamp("collect", scraped=425, with_jobs=217)
-    assert stages.alarms("collect") == []
-    stages.stamp("collect", scraped=425, with_jobs=3, alarm="mass-failure-errors-96%")
-    assert stages.alarms("collect") == ["collect mass-failure-errors-96%"]
-    yesterday = (dt.date.today() - dt.timedelta(days=1)).isoformat()
-    import json as _j
-    data = stages._load(); data["collect"]["date"] = yesterday; data["collect"].pop("alarm")
-    _j.dump(data, open(stages.PATH, "w", encoding="utf-8"))
-    assert stages.alarms("collect") == ["collect last ran 1d ago — the digest read stale input"]
-    stats = {"stage_alarms": stages.alarms("collect"), "paths": {}, "stages": stages.summary()}
-    _, md = D.build_markdown([], dt.date.today().isoformat(), stats)
-    assert "- **Stages:** collect last ran 1d ago" in md
-    assert "STAGES: collect last ran 1d ago" in D._text_audit(stats)
-    assert "<b>Stages:</b> collect last ran 1d ago" in D._html_audit(stats, lambda v: _h.escape(str(v)))

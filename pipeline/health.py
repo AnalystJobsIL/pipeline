@@ -132,19 +132,21 @@ def _names(items, with_reason=False):
 
 
 def mail_lines(stale, previous=None, scanned=None):
-    """One line for the digest's audit block, from `record()`'s return value. Empty list when
-    every board was healthy, so the mail says nothing rather than "0 problems".
+    """Up to two lines for the digest's audit block, from `record()`'s return value:
 
-    Leads with the DELTA against yesterday's stale.json when `previous` is given — the
-    standing counts (empty boards, scrape rows on an ATS host) are the same every morning,
-    and a new fetch error inside an unchanging 500-character line is invisible by day three.
+        changed today: new: Decart: fetch-error · cleared: Guardz
+        standing: 3 fetch errors (Decart: HttpError: HTTP 404 …) · 2 regressed to zero (X; Y)
+                  · 4 empty (…) · 25 scrape rows on an ATS host
 
-    Example:  Boards: new today: Decart (fetch-error); cleared: Guardz · 3 fetch errors
-              (Decart: HttpError: HTTP 404 …) · 2 regressed to zero (X; Y) · 4 empty (…) ·
-              25 scrape rows on an ATS host
+    The delta is its own line because the standing counts read the same every morning and
+    a new fetch error inside an unchanging 500-character line is invisible by day three.
+    Either line is omitted when it has nothing to say; an empty list means every board was
+    healthy and nothing changed, so the mail says nothing rather than "0 problems".
+    "cleared" means recovered: only rows this run scanned, never an Israel-scoped fetcher's
+    measurement zero (§5a).
     """
     stale = stale or {}
-    parts = []
+    delta, parts = [], []
     if previous is not None:
         previous = {n: v for n, v in previous.items() if isinstance(v, dict)}
         new = sorted(n for n in stale if n not in previous or previous[n].get("reason") != stale[n].get("reason"))
@@ -157,9 +159,9 @@ def mail_lines(stale, previous=None, scanned=None):
                       and not (v.get("reason") in ("empty-board", "regressed-to-zero")
                                and israel_scoped(v.get("platform"))))
         if new:
-            parts.append("new today: " + _names([(n, stale[n].get("reason", "")) for n in new], with_reason=True))
+            delta.append("new: " + _names([(n, stale[n].get("reason", "")) for n in new], with_reason=True))
         if gone:
-            parts.append("cleared: " + _names([(n, "") for n in gone]))
+            delta.append("cleared: " + _names([(n, "") for n in gone]))
     by = {}
     for name, v in stale.items():
         by.setdefault(v.get("reason", ""), []).append((name, v.get("error", "")))
@@ -175,7 +177,12 @@ def mail_lines(stale, previous=None, scanned=None):
         parts.append(f"{len(xs)} empty ({_names(xs)})")
     if by.get("misconfig-scrape-on-ats"):
         parts.append(f"{len(by['misconfig-scrape-on-ats'])} scrape rows on an ATS host")
-    return [" · ".join(parts)] if parts else []
+    out = []
+    if delta:
+        out.append("changed today: " + " · ".join(delta))
+    if parts:
+        out.append("standing: " + " · ".join(parts))
+    return out
 
 
 def previous(stale_path=STALE):
