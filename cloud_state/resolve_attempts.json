@@ -4,48 +4,48 @@
   "last": "2026-08-17"
  },
  "Explorium": {
-  "fails": 1,
-  "last": "2026-08-17"
+  "fails": 2,
+  "last": "2026-08-24"
  },
  "AI21 Labs": {
-  "fails": 1,
-  "last": "2026-08-17"
+  "fails": 2,
+  "last": "2026-08-24"
  },
  "Questar Auto Technologies": {
   "fails": 1,
   "last": "2026-08-17"
  },
  "XM Cyber": {
-  "fails": 1,
-  "last": "2026-08-17"
+  "fails": 2,
+  "last": "2026-08-24"
  },
  "Upstream Security": {
   "fails": 1,
   "last": "2026-08-17"
  },
  "Outbrain": {
-  "fails": 1,
-  "last": "2026-08-17"
+  "fails": 2,
+  "last": "2026-08-24"
  },
  "At-Bay": {
-  "fails": 1,
-  "last": "2026-08-17"
+  "fails": 2,
+  "last": "2026-08-24"
  },
  "Adobe": {
-  "fails": 1,
-  "last": "2026-08-17"
+  "fails": 2,
+  "last": "2026-08-24"
  },
  "Broadcom": {
-  "fails": 1,
-  "last": "2026-08-17"
+  "fails": 2,
+  "last": "2026-08-24"
  },
  "PayPal": {
-  "fails": 1,
-  "last": "2026-08-17"
+  "fails": 2,
+  "last": "2026-08-24"
  },
  "Snyk": {
-  "fails": 1,
-  "last": "2026-08-17"
+  "fails": 2,
+  "last": "2026-08-24"
  },
  "Finaloop": {
   "fails": 1,
@@ -298,5 +298,209 @@
  "Aman Group": {
   "fails": 1,
   "last": "2026-08-22"
+ },
+ "Balance": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Wiliot": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Bright Security": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Enlight Renewable Energy": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "BeeHero": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Portnox": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Radiflow": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Greeneye Technology": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Apple": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "ABB": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "ParaZero": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Dynamic Yield": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Hunters": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Bridgewise": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "ASTERRA": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "AWS": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Akamai": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Deutsche Telekom": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Fortinet": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Microsoft (Xbox/Gaming)": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Workiz": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Miggo Security": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "HUB Security": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Sivo": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Beewise": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Sightec": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Microsoft Israel": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "MDClone": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Loox": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Stigg": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Digital Turbine": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Comeet": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Amazon Israel": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "BigPanda": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Anchor": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Fairmatic": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Sony (Sony Semiconductor Israel)": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Navan": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "myInterview": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Eureka Security": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Cybersixgill": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Nova": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Mentee Robotics": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Menora Mivtachim Group": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Revolut": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Modellama": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "PassportCard": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "topgummiceuticals": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Amazon Web Services (AWS)": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Tripleten": {
+  "fails": 1,
+  "last": "2026-08-24"
+ },
+ "Nagomi Security": {
+  "fails": 1,
+  "last": "2026-08-24"
  }
 }

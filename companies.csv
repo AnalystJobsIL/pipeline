@@ -325,7 +325,7 @@ Cynet,scrape,https://www.cynet.com/careers/,https://www.cynet.com/careers/,true,
 CYREBRO,scrape,https://www.cyrebro.io/careers/,https://www.cyrebro.io/careers/,true,universal-scrape; 2 Israel jobs
 Hypernative,scrape,https://www.hypernative.io/careers,https://www.hypernative.io/careers,true,universal-scrape; 9 Israel jobs
 Earnix,scrape,https://earnix.com/careers/,https://earnix.com/careers/,true,universal-scrape; 5 Israel jobs
-Okoora,scrape,https://www.okoora.com/careers,https://www.okoora.com/careers,true,universal-scrape; 16 Israel jobs
+Okoora,comeet,85.00C,https://www.comeet.com/careers-api/2.0/company/85.00C/positions?token=58C1BBC2C60B1826D410A410A4163058C26D4,true,universal-scrape; 16 Israel jobs | self-heal 2026-08-24: re-resolved to comeet
 IDE Technologies,scrape,https://www.ide-tech.com/en/careers/,https://www.ide-tech.com/en/careers/,true,universal-scrape; 2 Israel jobs
 Netafim,scrape,https://orbia-orbia-precision-agriculture-netafim.teamtailor.com,https://orbia-orbia-precision-agriculture-netafim.teamtailor.com,true,universal-scrape; 3 Israel jobs
 ForSight Robotics,scrape,https://www.forsightrobotics.com/careers/,https://www.forsightrobotics.com/careers/,true,universal-scrape; 6 Israel jobs
@@ -1168,13 +1168,13 @@ Ryltech.co.il,scrape,,https://www.ryltech.co.il/he/jobs/,true,"dark-triage 2026-
 TechBiz Global,recruitee,jobs.techbiz.global,https://jobs.techbiz.global/api/offers/,true,auto-expand; 208/2 IL
 Boolzai,scrape,https://secrethunter.io/jobz/da4de0b3d2,https://www.boolzai.co.il/career/,false,scanned; no open Israel roles now | probe-woken: re-hunt pending
 Traffic Icons,scrape,,https://trafficicons.com/careers,true,listing-hunt 2026-08-22: verified 5 IL via https://trafficicons.com/careers
-kueez,scrape,,https://careers.smartrecruiters.com/Kueez,true,listing-hunt 2026-08-22: verified 3 IL via https://careers.smartrecruiters.com/Kueez
+kueez,smartrecruiters,Kueez,https://api.smartrecruiters.com/v1/companies/Kueez/postings,true,listing-hunt 2026-08-22: verified 3 IL via https://careers.smartrecruiters.com/Kueez | self-heal 2026-08-24: re-resolved to smartrecruiters
 The5ers.com,comeet,AA.003,https://www.comeet.com/careers-api/2.0/company/AA.003/positions?token=AA34A75352F5FBB4A754A755518551805FBB,true,"cross-validated; 4/4 IL (was empty) | scanned; no open Israel roles now | listing-hunt 2026-08-23: no IL listing; monitored candidate | dark-triage 2026-08-23: extract-gap (LLM found 4: Bookkeeper, Affiliate Manager)"
 factify,scrape,,https://www.factify.com/careers,false,aggregator URL; resolve real careers page before activating (purged 2026-08-23: duckduckgo.com is a search | dark-triage 2026-08-23: wrong-page (LLM: not fact | listing-hunt 2026-08-23: no IL listing; monitored candidate
 Ocean,scrape,https://secrethunter.io/jobz/76911e37d1,https://www.welcomeocean.com/,false,scanned; no open Israel roles now | dark-triage 2026-08-23: wrong-page (LLM: not Ocean's careers page (Scenic Group cruise-line careers page (b)) | listing-hunt 2026-08-23: no IL listing; monitored candidate
 Reco,scrape,,https://www.reco.ai/careers,true,listing-hunt 2026-08-22: verified 13 IL via https://www.reco.ai/careers
 sett,scrape,,https://www.sett.ai/careers/,true,listing-hunt 2026-08-22: verified 17 IL via https://www.sett.ai/careers/
-autods,scrape,,https://job-boards.greenhouse.io/autods,true,listing-hunt 2026-08-22: verified 3 IL via https://job-boards.greenhouse.io/autods
+autods,greenhouse,autods,https://boards-api.greenhouse.io/v1/boards/autods/jobs,true,listing-hunt 2026-08-22: verified 3 IL via https://job-boards.greenhouse.io/autods | self-heal 2026-08-24: re-resolved to greenhouse
 Primis Tech,scrape,,https://www.primis.tech/careers/,true,listing-hunt 2026-08-23: verified 2 IL via https://www.primis.tech/careers/ | scanned; no open Israel roles now
 Thales,workday,thales/Careers,https://thales.wd3.myworkdayjobs.com/wday/cxs/thales/Careers/jobs,true,added 2026-08-22: Imperva acquirer; verified 15/14 IL
 Incode,greenhouse,incode,https://boards-api.greenhouse.io/v1/boards/incode/jobs,true,re-audit 2026-08-23: verified 9/0 IL (was false-empty) | acquirer of Identiq; scanned; no open Israel roles now (2026-08-23) | listing-hunt 2026-08-23: no IL listing; monitored candidat
