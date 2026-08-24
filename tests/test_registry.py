@@ -15,6 +15,7 @@ per-lane file costs nothing and cannot be deleted by a stale copy of somebody el
 lane's guards disappear — including this one's.
 """
 import ast
+import json
 import os
 import re
 
@@ -1368,26 +1369,27 @@ def test_the_walled_pool_survives_another_tools_note_rewrite():
 # live network, and it is not a spelling this repo uses for the gate any more.
 _GATE_NAMES = {"activation_ok", "ok_to_write", "identity_ok", "page_names_company",
                "tenant_is_this_company", "is_foreign", "page_mentions_company",
-               "looks_like_a_job_listing_page", "is_aggregator", "verdict",
-               "identity_verdict"}
+               "looks_like_a_job_listing_page", "verdict", "identity_verdict"}
+# `is_aggregator` is deliberately NOT in the set. It answers "is this a job board for many
+# employers", not "is this THIS company's page" -- FairFly was activated off fireflyspace.com
+# by a path that checked exactly and only is_aggregator. With it listed, a writer whose sole
+# predicate is the aggregator test counts as identity-gated, which is the FairFly hole
+# wearing the enumeration as camouflage. (Removed 2026-08-24; the enumeration stayed green,
+# i.e. no current writer relies on it as their only gate.)
 
 # Writers whose column-3/4 writes are NOT a proposal and so need no identity evidence.
 # Each entry must say why, and each is checked below against what the workflows actually run.
-_RESTORE_ONLY = {
-    "merge_csv_rows.py": "git-layer conflict resolution: restores the TARGET's already-"
-                         "repaired api_url onto our row. It proposes no new address.",
-}
-_LEGACY_UNSCHEDULED = {
-    "comeet_resolve.py": "one-shot Comeet backfill probe, no workflow runs it",
-    "ingest_research.py": "one-shot import of research_companies.json",
-    "recheck_suspects.py": "one-shot re-check of a hand-listed set",
-    "resolve_any.py": "superseded by auto_expand's resolution ladder",
-    "resolve_deep.py": "superseded by auto_expand's resolution ladder",
-    "resolve_parallel.py": "superseded by auto_expand's resolution ladder",
-    "resolve_unknowns.py": "superseded by auto_expand's resolution ladder",
-    "scrape_batch.py": "one-shot batch scrape, no workflow runs it",
-    "validate_bd.py": "one-shot Bright Data validation probe",
-}
+#
+# ONE file, `tests/writer_allowlist.json`, read by this test AND by `tools/mutate.py`'s
+# coverage exemption. The driver used to re-derive the list by regexing THIS file's source
+# for `"<name>.py": "` -- which matched any dict here with .py keys, so an unrelated test
+# table could silently widen the mutation-coverage exemption. A shared literal cannot drift
+# from itself.
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                       "writer_allowlist.json"), encoding="utf-8") as _f:
+    _ALLOWLIST = json.load(_f)
+_RESTORE_ONLY = _ALLOWLIST["restore_only"]
+_LEGACY_UNSCHEDULED = _ALLOWLIST["legacy_unscheduled"]
 
 
 def _registry_writes(tree):
@@ -1706,6 +1708,30 @@ def test_auto_expand_row_builder_refuses_a_foreign_board(monkeypatch):
         "positive control regressed: %r" % (ours,))
 
 
+def test_an_acquired_subdomain_tenant_activates_without_a_readable_page(monkeypatch):
+    """The Habana/Intel class. All 66 active Workday rows are `/wday/cxs/<tenant>/<site>/jobs`
+    machine endpoints -- HTTP 400 on GET, so a page can NEVER decide them (measurement 4,
+    module docstring of `pipeline/identity_gate.py`). The gate's order is: a page in hand
+    decides; otherwise the tenant does; a page FETCH is the last resort. This pins the middle
+    step: a matching subdomain tenant must activate with the page oracle answering None,
+    or every one of those 66 rows is refused the day it passes through re-resolution.
+
+    The stub table maps "Intel Israel" to None -- unreadable, not "does not name us". That
+    distinction is the wave-1/wave-3 census result: None falls through to the tenant;
+    only an actual False refuses.
+    """
+    import auto_expand as E
+    from pipeline import identity_gate as G
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)   # Intel Israel -> None
+
+    api = "https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/External/jobs"
+    row = E._row_for_ats(("Intel Israel", "workday", "intel", api, 412, 38),
+                         "https://intel.com/careers")
+    assert row[4] == "true" and row[3] == api, (
+        "a machine endpoint with a matching subdomain tenant must activate "
+        "even though its page is unreadable: %r" % (row,))
+
+
 # ---------------------------------------------------------------------------------------
 # Guards written to kill a SURVIVING mutation.
 #
@@ -1728,9 +1754,9 @@ def test_a_board_that_verifies_with_zero_jobs_is_not_a_recovery():
     try:
         G.page_names_company = lambda n, u, html="": True     # perfect page evidence
         url = "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs"
-        assert G.activation_ok("Fiverr", "greenhouse", url, 0) is False, (
+        assert G.activation_ok("Fiverr", url, 0) is False, (
             "a board verifying with zero jobs was accepted as a recovery")
-        assert G.activation_ok("Fiverr", "greenhouse", url, 12) is True, (
+        assert G.activation_ok("Fiverr", url, 12) is True, (
             "positive control: a board with jobs and page evidence must still activate")
     finally:
         G.page_names_company = orig
@@ -1751,11 +1777,11 @@ def test_activation_still_requires_the_url_to_claim_to_list_jobs():
         G.page_names_company = lambda n, u, html="": True
         nav = "https://www.acme-example.com/solution/research-academy-space"
         assert not looks_like_a_job_listing_page(nav), "fixture drift: pick a non-listing url"
-        assert G.activation_ok("Acme", "scrape", nav, 6) is False, (
+        assert G.activation_ok("Acme", nav, 6) is False, (
             "activated on a page that does not claim to list jobs")
         board = "https://www.acme-example.com/careers/openings"
         assert looks_like_a_job_listing_page(board)
-        assert G.activation_ok("Acme", "scrape", board, 6) is True, (
+        assert G.activation_ok("Acme", board, 6) is True, (
             "positive control regressed")
     finally:
         G.page_names_company = orig
@@ -2386,7 +2412,12 @@ def test_the_unlocker_rung_inside_the_page_test_still_exists(monkeypatch):
     """
     import bd_rescue
     from pipeline import identity_gate as G
-    walled = "<html><body>Access denied</body></html>"          # < 2000 chars
+    # ~520 chars: under the 2000 floor (so the rung fires) but well ABOVE a drifted one.
+    # At the original 39 chars, `2000 -> 200` in the trigger still fired the rung and the
+    # drift survived this test -- yet it silently drops the retry for every real bot wall
+    # that renders a 200-2000 char challenge shell, which is most of them (the Bit page
+    # this pins renders ~1.4k). The page must sit in that band to guard the band.
+    walled = "<html><body>" + "Access denied. " * 33 + "</body></html>"
     full = "<html><h1>Bit Careers</h1>" + "<p>Bit is hiring.</p>" * 200 + "</html>"
 
     monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")

@@ -302,6 +302,13 @@ def ok_to_write(name, url, html=""):
     (ARCHITECTURE.md section 8's first bug class). Each false refusal also stamped a *wrong*
     `not this company's board` verdict into the row's note.
 
+    The signature deliberately has no `platform` parameter. It used to, the body read
+    it nowhere, and a reviewer transposed `(name, platform)` at four call sites with
+    the whole suite green -- `platform` absorbed the name and the identity decision
+    silently ran on the platform string. A parameter that gates nothing is a slot for
+    a transposition to hide in. (Transposing the two that remain is caught: a URL in
+    the name slot fails every predicate and the positive controls go red.)
+
     Pass `html=` when the caller already has the page; it avoids a second fetch and is
     stronger evidence than a re-fetch (see `page_names_company` cause 1).
     """
@@ -310,7 +317,7 @@ def ok_to_write(name, url, html=""):
     return page_names_company(name, url, html=html) is True
 
 
-def activation_ok(name, platform, api_url, n_jobs=0, html=""):
+def activation_ok(name, api_url, n_jobs=0, html=""):
     """May this row be ACTIVATED onto `api_url`? For tools that verified jobs first.
 
     The five schedule-driven tools that build a whole row literal
@@ -349,7 +356,7 @@ def activation_ok(name, platform, api_url, n_jobs=0, html=""):
     whose endpoint is a machine API (`/wday/cxs/<tenant>/<site>/jobs`, HTTP 400 on GET) a
     failed tenant near-match IS the refusal, because no page can ever be read there:
 
-        activation_ok("Habana Labs (Intel)", "workday",
+        activation_ok("Habana Labs (Intel)",
                       "https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/x/jobs", 12)
         -> False        # a real acquisition, refused
 

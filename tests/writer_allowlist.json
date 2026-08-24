@@ -1,0 +1,16 @@
+{
+  "restore_only": {
+    "merge_csv_rows.py": "git-layer conflict resolution: restores the TARGET's already-repaired api_url onto our row. It proposes no new address."
+  },
+  "legacy_unscheduled": {
+    "comeet_resolve.py": "one-shot Comeet backfill probe, no workflow runs it",
+    "ingest_research.py": "one-shot import of research_companies.json",
+    "recheck_suspects.py": "one-shot re-check of a hand-listed set",
+    "resolve_any.py": "superseded by auto_expand's resolution ladder",
+    "resolve_deep.py": "superseded by auto_expand's resolution ladder",
+    "resolve_parallel.py": "superseded by auto_expand's resolution ladder",
+    "resolve_unknowns.py": "superseded by auto_expand's resolution ladder",
+    "scrape_batch.py": "one-shot batch scrape, no workflow runs it",
+    "validate_bd.py": "one-shot Bright Data validation probe"
+  }
+}

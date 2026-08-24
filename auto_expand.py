@@ -72,7 +72,7 @@ def _row_for_scrape(name, jobs2, good_url, cache):
     if is_aggregator(good_url):
         return [name, "scrape", good_url, good_url, "false",
                 "aggregator URL; resolve real careers page before activating"]
-    if not _gate.activation_ok(name, "scrape", good_url, len(jobs2)):
+    if not _gate.activation_ok(name, good_url, len(jobs2)):
         return [name, "scrape", good_url, good_url, "false",
                 "scraped page is not this company's; no listing found"]
     cache[name] = jobs2
@@ -89,7 +89,7 @@ def _row_for_ats(payload, seed_url):
     to test, and `retry_unreachable._row_for` is the same shape for the same reason.
     """
     nm, plat, tok, api, n_all, il = payload
-    if not _gate.activation_ok(nm, plat, api, n_all):
+    if not _gate.activation_ok(nm, api, n_all):
         # SEED url in cols 2-3, never the refused board. Persisting the refused `api` put
         # a FOREIGN host into the row's address, and `identity_gate.is_walled` derives
         # crack_walled's pool membership from that host -- so a row parked this way joined

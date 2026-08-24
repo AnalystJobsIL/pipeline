@@ -91,7 +91,7 @@ def main():
                 # finds whatever board a page embeds, and a company page that embeds another
                 # company's board (or a bot-wall interstitial that embeds the vendor's own)
                 # activated that board under this company's name.
-                if v and v[0] and not _gate.activation_ok(name, plat, api, v[0], html=html):
+                if v and v[0] and not _gate.activation_ok(name, api, v[0], html=html):
                     print(f"  [XX] {name}: {plat} verified {v[0]} but {api[:44]} is not "
                           f"this company's board", flush=True)
                     v = None

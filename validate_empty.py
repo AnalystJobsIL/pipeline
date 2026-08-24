@@ -46,7 +46,7 @@ def check(name, url):
         v = _verify(name, plat, tok, api)
         if v:
             n_all, il = v
-            if il > 0 and not _gate.activation_ok(name, plat, api, il, html=html):
+            if il > 0 and not _gate.activation_ok(name, api, il, html=html):
                 # `extract_ats` returns whatever board the page embeds. This branch promoted
                 # it to ACTIVE on a job count alone, so a careers page embedding a different
                 # company's board promoted that board. The page is in hand; use it.

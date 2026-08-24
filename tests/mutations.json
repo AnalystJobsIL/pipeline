@@ -204,7 +204,7 @@
     "file": "bd_rescue.py",
     "symbol": "main",
     "class": "M1-gate-removal",
-    "find": "                if v and v[0] and not _gate.activation_ok(name, plat, api, v[0], html=html):",
+    "find": "                if v and v[0] and not _gate.activation_ok(name, api, v[0], html=html):",
     "replace": "                if False:",
     "why": "bd_rescue's state before this refactor: it activated Bancor onto The Bancorp Bank's board",
     "must_be_killed_by_behavioural": true
@@ -214,8 +214,8 @@
     "file": "bd_rescue.py",
     "symbol": "main",
     "class": "M2-gate-inversion",
-    "find": "                if v and v[0] and not _gate.activation_ok(name, plat, api, v[0], html=html):",
-    "replace": "                if v and v[0] and _gate.activation_ok(name, plat, api, v[0], html=html) is None:",
+    "find": "                if v and v[0] and not _gate.activation_ok(name, api, v[0], html=html):",
+    "replace": "                if v and v[0] and _gate.activation_ok(name, api, v[0], html=html) is None:",
     "why": "truthiness inverted with the token intact",
     "must_be_killed_by_behavioural": true
   },
@@ -224,8 +224,8 @@
     "file": "bd_rescue.py",
     "symbol": "main",
     "class": "M3-branch-narrowing",
-    "find": "                if v and v[0] and not _gate.activation_ok(name, plat, api, v[0], html=html):",
-    "replace": "                if v and v[0] < 0 and not _gate.activation_ok(name, plat, api, v[0], html=html):",
+    "find": "                if v and v[0] and not _gate.activation_ok(name, api, v[0], html=html):",
+    "replace": "                if v and v[0] < 0 and not _gate.activation_ok(name, api, v[0], html=html):",
     "why": "narrows the guard to an impossible job count",
     "must_be_killed_by_behavioural": true
   },
@@ -234,7 +234,7 @@
     "file": "wayback_rescue.py",
     "symbol": "main",
     "class": "M1-gate-removal",
-    "find": "        if r and not _gate.activation_ok(name, r[0], r[2], r[3]):",
+    "find": "        if r and not _gate.activation_ok(name, r[2], r[3]):",
     "replace": "        if False:",
     "why": "resurrects an archived board with no identity check -- its state before this refactor",
     "must_be_killed_by_behavioural": true
@@ -244,8 +244,8 @@
     "file": "wayback_rescue.py",
     "symbol": "main",
     "class": "M2-gate-inversion",
-    "find": "        if r and not _gate.activation_ok(name, r[0], r[2], r[3]):",
-    "replace": "        if r and _gate.activation_ok(name, r[0], r[2], r[3]) is None:",
+    "find": "        if r and not _gate.activation_ok(name, r[2], r[3]):",
+    "replace": "        if r and _gate.activation_ok(name, r[2], r[3]) is None:",
     "why": "truthiness inverted with the token intact",
     "must_be_killed_by_behavioural": true
   },
@@ -254,8 +254,8 @@
     "file": "wayback_rescue.py",
     "symbol": "main",
     "class": "M3-branch-narrowing",
-    "find": "        if r and not _gate.activation_ok(name, r[0], r[2], r[3]):",
-    "replace": "        if r and r[3] < 0 and not _gate.activation_ok(name, r[0], r[2], r[3]):",
+    "find": "        if r and not _gate.activation_ok(name, r[2], r[3]):",
+    "replace": "        if r and r[3] < 0 and not _gate.activation_ok(name, r[2], r[3]):",
     "why": "narrows the guard to an impossible job count",
     "must_be_killed_by_behavioural": true
   },
@@ -264,7 +264,7 @@
     "file": "validate_empty.py",
     "symbol": "check",
     "class": "M1-gate-removal",
-    "find": "            if il > 0 and not _gate.activation_ok(name, plat, api, il, html=html):",
+    "find": "            if il > 0 and not _gate.activation_ok(name, api, il, html=html):",
     "replace": "            if False:",
     "why": "promotes whatever board the page embeds -- its state before this refactor",
     "must_be_killed_by_behavioural": true
@@ -274,8 +274,8 @@
     "file": "validate_empty.py",
     "symbol": "check",
     "class": "M2-gate-inversion",
-    "find": "            if il > 0 and not _gate.activation_ok(name, plat, api, il, html=html):",
-    "replace": "            if il > 0 and _gate.activation_ok(name, plat, api, il, html=html) is None:",
+    "find": "            if il > 0 and not _gate.activation_ok(name, api, il, html=html):",
+    "replace": "            if il > 0 and _gate.activation_ok(name, api, il, html=html) is None:",
     "why": "truthiness inverted with the token intact",
     "must_be_killed_by_behavioural": true
   },
@@ -284,8 +284,8 @@
     "file": "validate_empty.py",
     "symbol": "check",
     "class": "M3-branch-narrowing",
-    "find": "            if il > 0 and not _gate.activation_ok(name, plat, api, il, html=html):",
-    "replace": "            if il < 0 and not _gate.activation_ok(name, plat, api, il, html=html):",
+    "find": "            if il > 0 and not _gate.activation_ok(name, api, il, html=html):",
+    "replace": "            if il < 0 and not _gate.activation_ok(name, api, il, html=html):",
     "why": "narrows the guard to an impossible Israel-job count",
     "must_be_killed_by_behavioural": true
   },
@@ -294,7 +294,7 @@
     "file": "retry_unreachable.py",
     "symbol": "_row_for",
     "class": "M1-gate-removal",
-    "find": "        if not _gate.activation_ok(nm, plat, api, n_all):",
+    "find": "        if not _gate.activation_ok(nm, api, n_all):",
     "replace": "        if False:",
     "why": "returns an active row straight from resolve()'s payload -- its state before this refactor",
     "must_be_killed_by_behavioural": true
@@ -304,8 +304,8 @@
     "file": "retry_unreachable.py",
     "symbol": "_row_for",
     "class": "M2-gate-inversion",
-    "find": "        if not _gate.activation_ok(nm, plat, api, n_all):",
-    "replace": "        if _gate.activation_ok(nm, plat, api, n_all) is None:",
+    "find": "        if not _gate.activation_ok(nm, api, n_all):",
+    "replace": "        if _gate.activation_ok(nm, api, n_all) is None:",
     "why": "truthiness inverted with the token intact",
     "must_be_killed_by_behavioural": true
   },
@@ -314,8 +314,8 @@
     "file": "retry_unreachable.py",
     "symbol": "_row_for",
     "class": "M3-branch-narrowing",
-    "find": "        if not _gate.activation_ok(nm, plat, api, n_all):",
-    "replace": "        if n_all < 0 and not _gate.activation_ok(nm, plat, api, n_all):",
+    "find": "        if not _gate.activation_ok(nm, api, n_all):",
+    "replace": "        if n_all < 0 and not _gate.activation_ok(nm, api, n_all):",
     "why": "narrows the guard to an impossible job count",
     "must_be_killed_by_behavioural": true
   },
@@ -324,7 +324,7 @@
     "file": "auto_expand.py",
     "symbol": "_row_for_ats",
     "class": "M1-gate-removal",
-    "find": "    if not _gate.activation_ok(nm, plat, api, n_all):",
+    "find": "    if not _gate.activation_ok(nm, api, n_all):",
     "replace": "    if False:",
     "why": "auto_expand runs TWICE daily and APPENDS new rows; this was its state before the refactor",
     "must_be_killed_by_behavioural": true
@@ -334,8 +334,8 @@
     "file": "auto_expand.py",
     "symbol": "_row_for_ats",
     "class": "M2-gate-inversion",
-    "find": "    if not _gate.activation_ok(nm, plat, api, n_all):",
-    "replace": "    if _gate.activation_ok(nm, plat, api, n_all) is None:",
+    "find": "    if not _gate.activation_ok(nm, api, n_all):",
+    "replace": "    if _gate.activation_ok(nm, api, n_all) is None:",
     "why": "truthiness inverted with the token intact",
     "must_be_killed_by_behavioural": true
   },
@@ -344,8 +344,8 @@
     "file": "auto_expand.py",
     "symbol": "_row_for_ats",
     "class": "M3-branch-narrowing",
-    "find": "    if not _gate.activation_ok(nm, plat, api, n_all):",
-    "replace": "    if n_all < 0 and not _gate.activation_ok(nm, plat, api, n_all):",
+    "find": "    if not _gate.activation_ok(nm, api, n_all):",
+    "replace": "    if n_all < 0 and not _gate.activation_ok(nm, api, n_all):",
     "why": "narrows the guard to an impossible job count",
     "must_be_killed_by_behavioural": true
   },
@@ -504,7 +504,7 @@
     "file": "retry_unreachable.py",
     "symbol": "_row_for",
     "class": "M1-gate-removal",
-    "find": "        if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "find": "        if not _gate.activation_ok(name, good_url, len(jobs2)):",
     "replace": "        if False:",
     "why": "the scrape exit of retry_unreachable's row builder. Its ats sibling three lines above had M1/M2/M3 and this had none, because coverage was counted per FILE."
   },
@@ -513,8 +513,8 @@
     "file": "retry_unreachable.py",
     "symbol": "_row_for",
     "class": "M2-gate-inversion",
-    "find": "        if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
-    "replace": "        if _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "find": "        if not _gate.activation_ok(name, good_url, len(jobs2)):",
+    "replace": "        if _gate.activation_ok(name, good_url, len(jobs2)):",
     "why": "deleting one token inverts the gate BOTH ways: activates Voiceitt, parks Pliops. 253 tests stayed green."
   },
   {
@@ -522,8 +522,8 @@
     "file": "retry_unreachable.py",
     "symbol": "_row_for",
     "class": "M3-branch-narrowing",
-    "find": "        if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
-    "replace": "        if len(jobs2) < 0 and not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "find": "        if not _gate.activation_ok(name, good_url, len(jobs2)):",
+    "replace": "        if len(jobs2) < 0 and not _gate.activation_ok(name, good_url, len(jobs2)):",
     "why": "narrows the scrape guard to an impossible job count"
   },
   {
@@ -531,7 +531,7 @@
     "file": "auto_expand.py",
     "symbol": "_row_for_scrape",
     "class": "M1-gate-removal",
-    "find": "    if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "find": "    if not _gate.activation_ok(name, good_url, len(jobs2)):",
     "replace": "    if False:",
     "why": "auto_expand runs 08:00 and 20:00 and APPENDS rows; the scrape branch had no mutation."
   },
@@ -540,8 +540,8 @@
     "file": "auto_expand.py",
     "symbol": "_row_for_scrape",
     "class": "M2-gate-inversion",
-    "find": "    if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
-    "replace": "    if _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "find": "    if not _gate.activation_ok(name, good_url, len(jobs2)):",
+    "replace": "    if _gate.activation_ok(name, good_url, len(jobs2)):",
     "why": "inverts the scrape gate in both directions"
   },
   {
@@ -549,8 +549,8 @@
     "file": "auto_expand.py",
     "symbol": "_row_for_scrape",
     "class": "M3-branch-narrowing",
-    "find": "    if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
-    "replace": "    if len(jobs2) < 0 and not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "find": "    if not _gate.activation_ok(name, good_url, len(jobs2)):",
+    "replace": "    if len(jobs2) < 0 and not _gate.activation_ok(name, good_url, len(jobs2)):",
     "why": "narrows the scrape guard to an impossible job count"
   },
   {
@@ -656,6 +656,36 @@
     "find": "        return [nm, \"scrape\", seed_url, seed_url, \"false\",",
     "replace": "        return [nm, \"scrape\", api, api, \"false\",",
     "why": "re-opens docs/BACKLOG.md 54: persisting the REFUSED board puts a foreign host into the row's address, and identity_gate.is_walled derives crack_walled's pool membership from that host.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-ats-transpose",
+    "file": "auto_expand.py",
+    "symbol": "_row_for_ats",
+    "class": "M8-argument-transposition",
+    "find": "if not _gate.activation_ok(nm, api, n_all):",
+    "replace": "if not _gate.activation_ok(api, nm, n_all):",
+    "why": "wave-3 R2: while activation_ok carried a dead `platform` parameter, transposing (name, platform) at four call sites left 258 tests green -- the identity decision silently ran on the platform string. The parameter is gone; the transposition that remains puts a URL in the name slot, every predicate fails, and the positive-control row goes false.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "page-readability-floor-drift",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "page_names_company",
+    "class": "M7-constant-drift",
+    "find": "    if len(html) < 2000:\n        return None",
+    "replace": "    if len(html) < 200:\n        return None",
+    "why": "the floor is WHY undecidable pages are three-valued: under 2000 chars nothing on the page is evidence. Drifted to 200, a JS challenge shell 'answers' -- and it answers False, so the tenant clause that legitimately admits the 66 Workday machine endpoints is never reached. The census pin's cell 3 (900-char shell, affirmative tenant) goes red.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "unlocker-trigger-floor-drift",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "page_names_company",
+    "class": "M7-constant-drift",
+    "find": "    if len(html) < 2000 and os.environ.get(\"BRIGHTDATA_API_KEY\"):",
+    "replace": "    if len(html) < 200 and os.environ.get(\"BRIGHTDATA_API_KEY\"):",
+    "why": "same constant, other consumer: drifted to 200 the unlocker retry fires only for near-empty pages, and every bot wall rendering a 200-2000 char challenge shell (the Bit class the rung exists for) silently reads as None -- a refusal at every caller. Killed by the unlocker-rung test now that its walled page is ~520 chars.",
     "must_be_killed_by_behavioural": true
   }
 ]

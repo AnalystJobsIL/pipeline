@@ -121,7 +121,7 @@ def main():
             r = rescue(name, url)
         except Exception:  # noqa: BLE001
             r = None
-        if r and not _gate.activation_ok(name, r[0], r[2], r[3]):
+        if r and not _gate.activation_ok(name, r[2], r[3]):
             # An archived snapshot is the oldest evidence in the pipeline, and this branch
             # had no identity check at all. Refuse rather than resurrect a board that is not
             # this company's - a wrong resurrection is indistinguishable from a real one in

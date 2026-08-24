@@ -193,16 +193,31 @@ def _gate_call_sites(path):
         tree = ast.parse(src)
     except SyntaxError:
         return out
+    # The three ACTIVATION gates only. `page_names_company` and
+    # `tenant_is_this_company` are the building blocks those are made of: they are
+    # called in places that compute a verdict rather than gate a write (e.g. inside
+    # `crack_walled.crack_one`), and they are covered by their own mutations against
+    # `pipeline/identity_gate.py`. Requiring M1/M2/M3 at every internal call of them
+    # would demand ~30 mutations for predicates that gate nothing.
+    gate_names = {"activation_ok", "ok_to_write", "identity_ok"}
+    # ALIASES FIRST. `check = _gate.activation_ok` (or `from pipeline.identity_gate
+    # import activation_ok as check`) then `if not check(...)` is a working gate whose
+    # call line names no gate -- this detector saw nothing, so the site needed no
+    # mutation, so a defeat there was invisible. The repo bans the import-as form for a
+    # different reason (alias binding breaks monkeypatching), but a detector should not
+    # depend on a style rule staying obeyed.
+    aliases = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Assign) and isinstance(n.value, (ast.Attribute, ast.Name)):
+            nm = getattr(n.value, "attr", None) or getattr(n.value, "id", None)
+            if nm in gate_names:
+                aliases |= {t.id for t in n.targets if isinstance(t, ast.Name)}
+        elif isinstance(n, ast.ImportFrom) and "identity_gate" in (n.module or ""):
+            aliases |= {a.asname for a in n.names if a.name in gate_names and a.asname}
     for n in ast.walk(tree):
         if isinstance(n, ast.Call):
             fname = getattr(n.func, "attr", getattr(n.func, "id", ""))
-            # The three ACTIVATION gates only. `page_names_company` and
-            # `tenant_is_this_company` are the building blocks those are made of: they are
-            # called in places that compute a verdict rather than gate a write (e.g. inside
-            # `crack_walled.crack_one`), and they are covered by their own mutations against
-            # `pipeline/identity_gate.py`. Requiring M1/M2/M3 at every internal call of them
-            # would demand ~30 mutations for predicates that gate nothing.
-            if fname in ("activation_ok", "ok_to_write", "identity_ok"):
+            if fname in gate_names or fname in aliases:
                 out.add(lines[n.lineno - 1].strip())
     return out
 
@@ -250,13 +265,15 @@ def coverage(muts):
 def _load_exempt():
     """Writers whose col-3/4 write is not a proposal, or that no workflow runs.
 
-    Kept in one place with `tests/test_registry.py`'s allow-list, which asserts none of the
-    unscheduled ones has become scheduled.
+    THE SAME FILE `tests/test_registry.py` loads -- its allow-list test asserts none of the
+    unscheduled entries has become scheduled, and this driver exempts exactly that set from
+    mutation coverage. The first version regexed the TEST FILE's source for `"<x>.py": "`,
+    which matched any dict with .py keys anywhere in 2,500 lines of tests -- an unrelated
+    test table could silently widen this exemption.
     """
-    path = os.path.join(ROOT, "tests", "test_registry.py")
-    src = open(path, encoding="utf-8").read()
-    names = re.findall(r'"([a-z_]+\.py)":\s*"', src)
-    return names
+    with open(os.path.join(ROOT, "tests", "writer_allowlist.json"), encoding="utf-8") as f:
+        d = json.load(f)
+    return list(d["restore_only"]) + list(d["legacy_unscheduled"])
 
 
 def main():
