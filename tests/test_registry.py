@@ -630,7 +630,8 @@ def test_a_tenant_mismatch_alone_must_not_block_an_ats_row():
     `company_identity.is_foreign` early-returning False on ATS hosts, and move a near-equality
     tenant rule into shared plumbing. It was built, wired into `listing_hunt`'s fast path and
     `deep_validate`'s recovered branch, measured against the live registry - and REVERTED,
-    because it rejects **36 ACTIVE rows**, and they are overwhelmingly legitimate acquisitions
+    because it rejects **24 ACTIVE rows** (measured 2026-08-24; an earlier version of this
+    docstring said 36), and they are overwhelmingly legitimate acquisitions
     and parent-company boards that this repo names by name:
 
         Momentis Surgical -> greenhouse/memic          (ARCHITECTURE section 2 cites this one)
@@ -639,6 +640,9 @@ def test_a_tenant_mismatch_alone_must_not_block_an_ats_row():
         VMware (Broadcom) -> broadcom.wd1.myworkdayjobs
         Splunk (Cisco)    -> cisco.wd5.myworkdayjobs
         HP Indigo         -> hp.wd5.myworkdayjobs
+
+    Habana, VMware, Splunk and Itamar are DECLARED now (`pipeline/identity_facts.py`) and
+    pass; the rest still stand as the measured cost of a string-only rule.
 
     A tenant that names the acquirer is INHERITANCE, not theft, and `page_mentions_company`
     cannot separate the two either - the acquirer's board does not say the subsidiary's name.
@@ -673,7 +677,10 @@ def test_a_tenant_mismatch_alone_must_not_block_an_ats_row():
                   and ATS_HOST.search(urllib.parse.urlparse(r[3]).netloc or "")]
     would_block = [r[0] for r in active_ats if not tenant_is_this_company(r[0], r[3])]
     assert len(active_ats) > 300, "sanity: most active rows are on an ATS host"
-    assert len(would_block) > 20, (
+    # 24 at the rebuild's close; 22 once pipeline/identity_facts declared Citrix and Itamar
+    # (re-measure: Census B in the plan). The floor guards against the rule being
+    # WIDENED into an activation gate, not against declarations lowering the count.
+    assert len(would_block) > 15, (
         "the tenant rule no longer rejects a large set of ACTIVE rows. If that is because "
         "the rule got smarter, good - re-measure and update this test. If it is because it "
         "was quietly widened into an activation gate, do not: it blocks real acquisitions.")

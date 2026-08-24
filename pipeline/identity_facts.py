@@ -83,6 +83,19 @@ DECLARED = {
         "tenants": ("flextronics",),
         "why": "Flex's legal tenant is flextronics: flextronics.wd1.myworkdayjobs.com. 2026-08-24"},
 
+    # --- Workday rows the tenant rule REFUSED (they were 2 of the 24 blocked active rows);
+    #     declared here rather than argued about in a string test
+    "Citrix (Cloud Software Group)": {
+        "tenants": ("tibco",),
+        "why": "Citrix is part of Cloud Software Group, whose Workday tenant is tibco: "
+               "https://tibco.wd5.myworkdayjobs.com/wday/cxs/tibco/Cloud_Software_Group/jobs. "
+               "No string relation exists in either direction (item 71). 2026-08-24"},
+    "Itamar Medical": {
+        "tenants": ("zoll",),
+        "why": "acquired by ZOLL Medical 2021; board is "
+               "https://zoll.wd5.myworkdayjobs.com/wday/cxs/zoll/ZOLLMedicalCorp/jobs. "
+               "verdict() scores this `mismatch`; only a declaration can admit it. 2026-08-24"},
+
     # --- brand/parent domains, migrated verbatim from company_identity.KNOWN_PARENT
     #     (admit-only, ordinary hosts; each was verified by hand when it was added there)
     "AWS": {"domains": ("amazon.jobs", "amazon.com"), "why": "KNOWN_PARENT migration"},
