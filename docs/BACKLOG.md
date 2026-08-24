@@ -1097,3 +1097,61 @@ Three reviewers, all findings reproduced before action. Seven were fixed; these 
     over 14 nights" as UNPROVEN, not as verified** — every prior claim of that came from a
     simulation with the renderer stubbed at a different layer. A headless-safe harness (or a
     `NO_RENDER=1` switch in `listing_hunt`) is what makes this measurable.
+
+## From the rebuild's wave-2 review, 2026-08-24
+
+Six blocking findings, all reproduced and fixed. These are the residuals.
+
+53. **`probe_candidates`' pool is three tokens `listing_hunt` owns and rewrites: 148 -> 4
+    over 14 nights** — lane: `registry`, PRE-EXISTING (`git diff` on that file across the
+    whole rebuild is empty). Its selector is
+    `monitored candidate|host documented|no IL listing`, and `pipeline/verdicts.py` attributes
+    all three to `listing_hunt`/`crack_walled`. `listing_hunt`'s failure branch does
+    `replace_own(fr[5], "listing-hunt", "listing-hunt <date>: no listing found")`, which by
+    design deletes its own previous `no IL listing; monitored candidate` segment — and with
+    it the entire predicate another tool's pool stands on.
+
+    **This is exactly the anti-pattern `identity_gate.is_walled` was rewritten to fix for
+    `crack_walled`, left standing for `probe_candidates`.** The fix has the same shape: give
+    the pool a durable signal (`probe_candidates` has one — the row's own `api_url` host and
+    its `candidate_probe.json` baseline) instead of a string a different tool owns.
+
+    Measured two ways. String algebra on the real registry: applying `listing_hunt`'s own
+    write to only its 227 selected rows removes **139** rows from the probe pool. And live,
+    in the 14-night simulation: `148 -> 4`, monotone, no recovery, `registry_health` printing
+    `4  probe_candidates (05:00 daily)` and raising no alarm because there is no per-tool
+    floor (item 34). Caveat the reviewer stated and I keep: the simulation's stubbed
+    `hunt_one` never returns a candidate URL on a `nolisting` verdict, so the branch that
+    re-adds `monitored candidate` never fired; a real hunt would re-add some rows. The
+    139-row single-night figure is stub-free and stands on its own.
+
+54. **`auto_expand._row_for_ats`'s refusal persists the REFUSED board into cols 2-3; its
+    sibling resets to the row's own URL** — lane: `registry`. Same payload, two builders:
+
+        auto_expand : ['Riskified', 'scrape', 'https://novartis.wd3...', 'https://novartis.wd3...', 'false', ...]
+        retry       : ['Riskified', 'scrape', 'https://www.riskified.com/careers/', ...same..., 'false', ...]
+
+    `_row_for_ats`'s own docstring names `retry_unreachable._row_for` as "the same shape for
+    the same reason", and they diverge. It matters more than cosmetics now that
+    `identity_gate.is_walled` derives pool membership from `row[3]`'s host: a row parked this
+    way joins `crack_walled`'s pool pointing at Novartis's Workday. Not blocking because
+    `auto_expand` appends rows from the discovery cache, so no `companies.csv` selector can
+    enumerate a reachable row.
+
+55. **The `taleo.net` half of `_ATS_NOT_IN_ATS_HOST` is untested and its registry set is
+    empty** — lane: `registry`. `test_the_jobvite_taleo_branch_is_a_gate_and_not_a_pass_through`
+    is named for both platforms and both of its assertions use `jobs.jobvite.com`. Deleting
+    `taleo\.net` from the regex is green. Reachable set is 0 today (`taleo.net` appears in 0
+    of 1210 rows, `jobvite.com` also 0), so it is filed rather than blocking — one line to
+    close by duplicating the jobvite assertions for `radware.taleo.net`.
+
+56. **`apply_resolved`'s veto is scoped to ACTIVE rows, so a PARKED row is re-pointed with
+    no identity check** — lane: `registry`. Deliberate scope ("this tool cannot activate a
+    row"), and worth revisiting: a parked row holding a foreign address is exactly what
+    `ok_to_write`'s docstring calls "what `listing_hunt`'s fast path later activates on".
+
+57. **`check_invariants.NOTE_CAP` is declared and never used** — lane: `infra`. `grep -n
+    NOTE_CAP check_invariants.py` returns one line, the assignment. The 220-char cap is
+    enforced only inside `pipeline/notes.py`, so any writer that bypasses that module (there
+    was one, `validate_empty`, fixed in this wave) is unguarded by the blocking gate that
+    runs in front of the digest. One `bad()` on `len(r[5]) > NOTE_CAP` closes it.
