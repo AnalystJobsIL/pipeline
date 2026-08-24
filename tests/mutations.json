@@ -24,9 +24,9 @@
     "file": "pipeline/identity_gate.py",
     "symbol": "activation_ok",
     "class": "M2-gate-inversion",
-    "find": "    return page_names_company(name, api_url, html=html) is True",
-    "replace": "    return page_names_company(name, api_url, html=html) is not None",
-    "why": "`is True` -> `is not None` lets an UNREADABLE page pass as evidence. Re-aimed when activation_ok's separate html branch was collapsed into one rule.",
+    "find": "        if v is not None:\n            return v is True",
+    "replace": "        if v is not None:\n            return v is not None",
+    "why": "`is True` -> `is not None` at the point where a held page decides: inside the guard `v is not None` is vacuously true, so a page naming ANOTHER company (v is False) admits the board. Re-aimed twice: once when the separate html branch collapsed to one rule, again when the census ordering made the held page decide first (f1b28a8). Killed by census cell 1 (Cogniteam/Riskified).",
     "must_be_killed_by_behavioural": true
   },
   {
@@ -414,7 +414,7 @@
     "file": "apply_resolved.py",
     "symbol": "main",
     "class": "M1-gate-removal",
-    "find": "                if fields[4] == \"true\" and (",
+    "find": "                if len(fields) >= 5 and fields[4] == \"true\" and (",
     "replace": "                if False and (",
     "why": "apply_resolved runs at self-heal.yml 06:00 and re-points an ACTIVE row's api_url. Its write is a TUPLE target, which made it invisible to the derived enumeration until 2026-08-24.",
     "must_be_killed_by_behavioural": true
@@ -434,8 +434,8 @@
     "file": "apply_resolved.py",
     "symbol": "main",
     "class": "M3-branch-narrowing",
-    "find": "                if fields[4] == \"true\" and (",
-    "replace": "                if fields[4] == \"never\" and (",
+    "find": "                if len(fields) >= 5 and fields[4] == \"true\" and (",
+    "replace": "                if len(fields) >= 5 and fields[4] == \"never\" and (",
     "why": "narrows the guard so no row is ever checked",
     "must_be_killed_by_behavioural": true
   },
