@@ -937,6 +937,14 @@ fixes; one was a claim I made that a doc of this repo already contradicted on th
     state what is true and let the session log carry how it was got wrong. Proposal, not an
     action: this is a documentation pass and the brief forbids deleting in one.
 
+    **CLOSED 2026-08-24:** §2 is 361 of 1209 lines (29.9%). Fifteen post-mortem blocks
+    moved to `docs/sessions/2026-08-24-registry.md` under their own heading; the
+    hand-written ownership matrix replaced by the derived `registry_health.py` pointer
+    with the pool constants named; seven stale facts corrected against code. The ~300
+    target was not forced: going lower meant deleting normative reference content
+    (state-transition diagram, verdict taxonomy, the three rule sections), and a
+    reference that is complete beats one that is short.
+
 41. **`registry_health.py` has four retyped pool mirrors and a guard that checks one** —
     lane: `registry`. `_HUNT_SHAPE`, `_PROBE_SHAPE`, `_EXTRACT_GAP` and the crack literal
     mirror four tools' filters; only `triage_dark`'s predicates are imported.

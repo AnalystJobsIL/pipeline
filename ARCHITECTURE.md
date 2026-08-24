@@ -413,79 +413,11 @@ python registry_health.py        # read-only: census, who re-checks what, which 
 
 **What the registry is.** One row per company in `companies.csv`
 (`company_name, ats_platform, token, api_url, active, notes`). `active=true` means the digest
-fetches it every morning. `notes` is an append-log: each tool stamps
-`<tool> <date>: <finding>` and strips only its own previous stamp. **Never write that cell by
-hand — use `pipeline/notes.py`.**
-
-**Five questions, five answers:**
-
-| you want to know | answer | where |
-|---|---|---|
-| why isn't company X in my email? | read its row's `notes` — it names the tool, the date and the finding | §5b has the ordered runbook |
-| what re-checks a parked row? | run the command above; it prints the pool of every scheduled tool, derived from that tool's own filter. **A row is usually claimed by several** — a row carrying `unsupported ATS` is claimed by six | the matrix below |
-| can I just flip a row to `active=true`? | **No.** Three gates, all in `pipeline/company_identity`, and on a walled ATS none of them work — see "the identity problem" below | "The activation rule" |
-| a company vanished from the file — why? | `python registry_health.py` diffs against `cloud_state/registry_census.json` and prints every vanished name with its last note. **Deleting a row is not durable**; park it | "Never DELETE a row" |
-| which ATS should we build a fetcher for? | `python registry_health.py --ats` — it separates `BUILD` (no fetcher) from `WIRE` (fetcher exists, the row just needs its tenant cracked) | §1's support policy |
-
-**The identity problem, which is the whole difficulty of this lane.** "There are Israel jobs
-on this page" is not "these are THIS company's jobs". The three gates
-(`is_aggregator`, `is_foreign`, `looks_like_a_job_listing_page`) work on ordinary domains and
-**are all inert on a walled/multi-tenant ATS**: `is_foreign` returns `False` for every ATS
-host by design, because the tenant may legitimately be an acquirer's
-(`Momentis Surgical` really does post under `memic`). So on those hosts:
-
-* **The gate is `pipeline/identity_gate.py`.** One module, imported at module level by every
-  tool that writes the registry. `page_names_company` is three-valued and `None` (page
-  unreadable) counts as **no evidence**, not as approval. `ok_to_write` gates the *write*
-  rather than any one `return`, because persisting a foreign address into `api_url` with a
-  `host documented` note hands it to `listing_hunt`'s fast path, which activates it the next
-  night under a different tool's name. `activation_ok` is the composite for tools that
-  verified jobs first, and its asymmetry is deliberate: the tenant string may ADMIT, only
-  page content may REFUSE. Both directions were measured — a tenant veto costs 36 legitimate
-  acquisitions, and a mandatory page read costs 358 path-tenant rows whose endpoints return
-  0–28 bytes (`docs/BACKLOG.md` 21 and 33).
-
-* **Never count the write paths by hand.** Every hand-written list of them in this repo has
-  been wrong, including one written specifically to prevent a miscount. Derive it:
-
-  ```bash
-  python -m pytest tests/test_registry.py -k every_registry_writer   # asserts all of them are gated
-  python tools/mutate.py --all                                       # asserts the gates are real
-  ```
-
-  `test_every_registry_writer_consults_an_identity_predicate` finds writers from source in
-  **both** shapes — `fr[3] = …` / `fr[4] = "true"`, and the whole-row literal
-  `[name, plat, tok, api, "true", note]`. On 2026-08-24 that is **22 modules, 14 of them the
-  literal shape**, which is why the older AST guard in `tests/test_units.py` saw 8: a list
-  literal has no subscript assignment. Five of the fourteen run on cron and had no identity
-  check of any kind until that date — `bd_rescue` and `retry_unreachable` (02:30),
-  `wayback_rescue` and `validate_empty` (Sun 04:00), `auto_expand` (08:00 and 20:00). Driven
-  against the commit before the fix, four of them activate `Bancor` onto The Bancorp Bank's
-  iCIMS board.
-
-* **One writer is gated upstream, not locally**: `apply_resolved.py` rewrites columns 1–3
-  with its gate in `resolve_llm._verify`. It cannot activate a row, but it can re-point an
-  already-active one.
-
-* **`deep_validate` reaches the page test only when the tenant test fails first** — its gate
-  is `tenant_is_this_company(...) or page_names_company(...) is True`, and the tenant test
-  answers True on 430 of the 461 active ATS rows because it does not scope path-tenant
-  platforms. That is the 358-row measurement above, not an oversight.
-
-* On ordinary domains `is_foreign` still does the work, because a page test there would
-  refuse every JS-rendered careers page — the same silent-exclusion trap in the other
-  direction.
-
-The archaeology of how each of those was got wrong is in
-`docs/sessions/2026-08-24-registry.md`. This section states what is true.
-
-**Before you change any row filter:** re-run the command above and check the `OWNED BY
-NOTHING` line. A row owned by no recurring job is coverage that silently never happens, and
-that is the single most common way this codebase breaks (§8).
-
-`companies.csv` is **the source of truth for coverage** — the registry of who gets read and
-the log of what we know. Columns: `company_name, ats_platform, token, api_url, active,
-notes`. Three real rows, one of each kind:
+fetches it every morning. For API rows `api_url` is the endpoint; for scrape rows it is the
+**listings page URL**. `notes` is an append-log: each tool appends ` | <tool> <date>:
+<finding>` and strips only its own previous stamp, so a row accumulates one current verdict
+per tool. **Never write that cell by hand — use `pipeline/notes.py`.** Three real rows, one
+of each kind:
 
 ```csv
 Fiverr,comeet,60.002,https://www.comeet.com/careers-api/2.0/company/60.002/positions?token=62188018812631018862C4188,true,
@@ -493,29 +425,39 @@ Google Israel,scrape,,https://www.google.com/about/careers/applications/jobs/res
 Imagindairy,scrape,https://www.imagindairy.com/careers,https://imagindairy.com/careers/,false,"chrome-verified 2026-08-22: careers live, CURRENT OPENINGS empty (true 0) - monitored candidate"
 ```
 
-For API rows `api_url` is the endpoint; for scrape rows it is the **listings page URL**.
-`notes` is the row-verdict log: each tool appends ` | <tool> <date>: <finding>` and strips
-its own previous suffix, so a row accumulates one current verdict per tool.
-**Who still replaces instead of appending** (re-derived 2026-08-23; the four tools this
-paragraph used to name had all been fixed and it was never updated —
-`grep -n '\[5\] *=' *.py` is the check, and it takes ten seconds):
+**Five questions, five answers:**
 
-- **Whole ROW, deliberately** — `retry_unreachable._row_for`, `recheck_suspects.py`'s
-  *promote* branch (not its cleared branch, which appends), `validate_empty.py`'s promote
-  branch. These build a row from scratch; there is no prior verdict worth keeping.
-- **Whole CELL — all three fixed 2026-08-23.** `audit_empty_rows`, `crack_walled` and
-  `deep_validate` each overwrote `notes` on their *activation* branch. An activation is
-  exactly when you can least afford it: the assignment deleted the `alias-of` /
-  `domain-dead` token that keeps the row out of the wrong pool, and the `dark-triage` mode
-  that routed it there. All three now call `notes.replace_own`.
-  `test_activation_branches_append_to_the_note_instead_of_replacing_it` walks the AST for
-  `fr[5] = <not a call>` and fails on the next one. Note the older guard
-  `test_every_note_writer_uses_the_append_log_helper` could not see these: a whole-cell
-  assignment does no hand-rolled trim, so it passed that check for months.
+| you want to know | answer | where |
+|---|---|---|
+| why isn't company X in my email? | read its row's `notes` — it names the tool, the date and the finding | §5b has the ordered runbook |
+| what re-checks a parked row? | run the command above; it prints the pool of every scheduled tool, derived from that tool's own filter. **A row is usually claimed by several** | "the ownership matrix" |
+| can I just flip a row to `active=true`? | **No.** Three gates, all in `pipeline/company_identity`, and on a walled ATS none of them work | "The activation rule" |
+| a company vanished from the file — why? | `python registry_health.py` diffs against `cloud_state/registry_census.json` and prints every vanished name with its last note. **Deleting a row is not durable**; park it | "Never DELETE a row" |
+| which ATS should we build a fetcher for? | `python registry_health.py --ats` — it separates `BUILD` (no fetcher) from `WIRE` (fetcher exists, the row just needs its tenant cracked) | §1's support policy |
 
-Never copy the replace pattern for a diagnostic verdict: overwriting destroys the
-`monitored candidate` / `host documented` tokens that `listing_hunt`'s fast-path keys on.
-Taxonomy:
+**The identity problem is the whole difficulty of this lane.** "There are Israel jobs on this
+page" is not "these are THIS company's jobs", and all three gates below are inert on a
+walled/multi-tenant ATS. `pipeline/identity_gate.py` answers it; every registry writer imports
+it at module level — see "The activation rule". **Never count those write paths by hand:**
+every hand-written list of them here has been wrong, including one written to prevent a
+miscount. Derive it —
+
+```bash
+python -m pytest tests/test_registry.py -k every_registry_writer   # asserts all of them are gated
+python tools/mutate.py --all                                       # asserts the gates are real
+```
+
+— because `test_every_registry_writer_consults_an_identity_predicate` finds writers in **both**
+source shapes: `fr[3] = …` / `fr[4] = "true"`, and the whole-row literal
+`[name, plat, tok, api, "true", note]`, which the AST guard in `tests/test_units.py` cannot
+see (a list literal has no subscript assignment). `apply_resolved.py` is gated upstream
+instead, in `resolve_llm._verify`: it cannot activate a row, but can re-point an active one.
+How each rule below was got wrong is in `docs/sessions/2026-08-24-registry.md`; this section
+states what is true.
+
+**Before you change any row filter:** re-run the command above and read the `OWNED BY
+NOTHING` line. A row owned by no recurring job is coverage that silently never happens — the
+single most common way this codebase breaks (§8). Taxonomy of verdicts:
 
 | state | active | meaning | who re-checks it |
 |---|---|---|---|
@@ -526,7 +468,7 @@ Taxonomy:
 | `monitored candidate` / `host documented` | false | real page documented, extraction unproven | daily probe + 14-day re-hunt |
 | `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | that evening's 19:00 hunt (fast-path) |
 | `no listing found` / `no ATS detected` | false | full render found nothing parseable | weekly audit + hunt cron |
-| `unsupported ATS <x>` | false | ATS known, no extraction path yet. **Run `python registry_health.py --ats`** — it splits `WIRE` (a fetcher exists, the row just needs its tenant cracked) from `BUILD` (no fetcher). On 2026-08-24: **3 WIRE** (phenom 19, eightfold.ai 10, oraclecloud.com 4) / **5 BUILD** (icims.com 8, successfactors 7, avature.net 3, taleo.net 2, jobvite.com 1) over 54 rows. Three of those `BUILD` names clear §1's own "seen 3+ times" threshold. *(This cell has been wrong twice by being typed rather than run; see the session log.)* | **six** jobs claim it (crack_walled, listing_hunt, triage_dark, probe_candidates, audit_empty_rows, deep_validate) — run `registry_health.py` rather than trusting this cell |
+| `unsupported ATS <x>` | false | ATS known, no extraction path yet. **Run `python registry_health.py --ats`** — it splits `WIRE` (a fetcher exists, the row just needs its tenant cracked) from `BUILD` (no fetcher) and reports which `BUILD` names clear §1's "seen 3+ times" threshold. *(Typing that split into this cell has produced a wrong statement twice; run it.)* | several jobs claim it — run `registry_health.py`, don't trust this cell |
 | `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS — strict TLS on the scanning machine produced 6 false positives) | re-tested **daily** by `scan_dead_domains` (`_rescannable` defaults to 1d) inside the 05:00 digest, and again by the Sunday audit; **a revived domain clears the flag automatically** |
 | `defunct: …` | false | company confirmed shut down/acquired | permanently excluded |
 | `alias-of <name>` | false | a SECOND row for a company already scanned at the same board (eBay / eBay Israel) | nobody — **terminal**, and re-opening it republishes every role twice |
@@ -561,11 +503,14 @@ Recruiting/staffing agencies are excluded everywhere via `pipeline/recruiters.py
  listing_hunt 19:00 takes the FAST-PATH: scrape the stored URL directly; verified -> ACTIVE
 ```
 
-Terminal-ish states: `defunct:` (company gone — permanently excluded) and `domain-dead`
-(DNS/conn dead, GET-verified — candidate for defunct research). Everything else is
-re-checked on some cadence; **a failing API row keeps `active=true`** (its roles stay on
-the job board via the failed-company exemption, §5a) while a rotting *scrape* row is
-parked, because only parked rows are visible to the hunt/audit machinery.
+Every state except `defunct:` and `domain-dead` is re-checked on some cadence. **A failing
+API row keeps `active=true`** (its roles stay on the job board via the failed-company
+exemption, §5a) while a rotting *scrape* row is parked, because only parked rows are visible
+to the hunt/audit machinery. **Empty is not broken:** `page-empty` rows are ACTIVE, because a
+validated working careers page with no openings today is a healthy daily source; only ERRORS
+park a row, at 7 days, and a 45-day empty streak just asks triage to re-read the page (it can
+tell "no openings" from "openings we fail to extract"). So the ownership matrix below applies
+to rows that are still `active=false`.
 
 ### The verdict-string rule (read before changing ANY resolver)
 
@@ -573,62 +518,52 @@ Re-check pools are **allowlists of note substrings**, and the allowlist now live
 place: `pipeline/verdicts.py` (`TOKENS` / `in_pool` / `stale`). Add any new verdict string
 to `TOKENS` there. `audit_empty_rows` and `deep_validate` import `in_pool`; the tools that
 legitimately want a subset (`crack_walled` → walled ATSes, `probe_candidates` → documented
-candidates) narrow it explicitly rather than re-implementing it. Hand-maintained copies
-drifted once already — `listing_hunt` knew 15 tokens while the other two knew 7, leaving
-**64 companies invisible to two pools**. If a string is missing from `TOKENS`,
-its coverage is lost with no error anywhere. This is exactly how 52 rows became stranded
-(`bd_rescue.py` wrote `scanned via brightdata; …`, which matched none of them).
+candidates) narrow it explicitly rather than re-implementing it. **If a string is missing from
+`TOKENS`, its coverage is lost with no error anywhere** — hand-maintained copies have already
+cost 64 companies two of their pools, and a verdict spelled only in the writing tool
+(`bd_rescue.py`'s `scanned via brightdata; …`) stranded 52 rows.
 Corollary: a diagnostic verdict must **append** (`base | tool date: finding`), never
 replace the cell — overwriting also destroys the `monitored candidate` / `host documented`
 tokens that `listing_hunt`'s fast-path keys on.
 
-**The pool is defined in FOUR places, and they do not agree** (measured 2026-08-23).
-`pipeline/verdicts.TOKENS` (18) is the module that claims to be the single source;
-`listing_hunt.main()` carries its own 17-token regex, `check_invariants.POOL` a third copy
-(18), and `registry_health._HUNT_SHAPE` a fourth (17) — **this lane added that fourth**,
-inside a function whose own docstring says a retyped mirror would be the sixth copy "in a
-repo whose worst documented bug was three copies drifting". It is retyped because
-`listing_hunt` has no extractable `targets(rows)` to import; that extraction is the fix
-(`docs/BACKLOG.md`, "One pool predicate per tool") and until it lands this sentence is the
-honest statement of the cost. Diff: `url-cleared` and `url-flagged` are in both inline copies and **missing
-from `TOKENS`**. 39 rows carry one today and **9 of them are invisible** to
-`audit_empty_rows` and `deep_validate`, which import `in_pool` — the other 30 happen to carry
-a second pool token as well. (An earlier draft of this paragraph said "57 rows are
-invisible", conflating the two counts; re-measure with
-`python -c "import csv;from pipeline.verdicts import in_pool;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:];n=[x for x in r if 'url-cleared' in x[5].lower() or 'url-flagged' in x[5].lower()];print(len(n),len([x for x in n if not in_pool(x[5])]))"`.) And `verdicts.TERMINAL` omits `alias-of`,
-which the two inline copies exclude — that omission is what put 2 alias rows into an
-*activating* pool (below). Neither is fixable from this lane (`pipeline/verdicts.py` is
-shared plumbing); both are in `docs/BACKLOG.md` under "One re-check pool definition" and
-"One terminal-state list", and
-`test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_supposed_to` pins
-the current gap so it cannot grow while the fix waits. Reproduce:
+**The pool is still spelled in THREE places that do not agree** — `verdicts.TOKENS`,
+`listing_hunt.HUNT_POOL`, `check_invariants.POOL`. (`registry_health` was a fourth; it now
+IMPORTS `HUNT_POOL`, which is the pattern to copy. The inline copies persist only because
+`listing_hunt` has no extractable `targets(rows)` yet — `docs/BACKLOG.md`, "One pool predicate
+per tool".) A token the inline copies know and `TOKENS` does not makes its rows invisible to
+`audit_empty_rows` and `deep_validate`;
+`test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_supposed_to` pins the
+gap so it cannot grow while the fix waits. Print the diff, and the rows it costs:
 
 ```bash
-python -c "
-from pipeline.verdicts import TOKENS
-import check_invariants as ci
-t={x.lower() for x in TOKENS}
-c={x.lower() for x in ci.POOL.split('|') if x and '(' not in x}
-print('in the inline copies, NOT in TOKENS:', sorted(c-t))
-print('in TOKENS, not in check_invariants :', sorted(t-c))"
+python -c "from pipeline.verdicts import TOKENS;import check_invariants as ci;t={x.lower() for x in TOKENS};c={x.lower() for x in ci.POOL.split('|') if x and '(' not in x};print('inline, NOT in TOKENS:',sorted(c-t));print('TOKENS, not inline:',sorted(t-c))"
+python -c "import csv;from pipeline.verdicts import in_pool;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:];n=[x for x in r if 'url-cleared' in x[5].lower() or 'url-flagged' in x[5].lower()];print(len(n),len([x for x in n if not in_pool(x[5])]))"
 ```
 
-**Append through `pipeline/notes.py`, never by hand** (2026-08-23). The cell is capped at
-220 chars, and every writer used to make room by SLICING the base — `(base + " | " + seg)[:220]`
-or `base[:220 - len(seg) - 3]`. The newest segment lives at the END of the base, so the trim
-ate exactly the thing worth keeping: 87 rows came to read `dark-triage 2026-08-22: page-emp`
-(also `page-e`, and on one row `pa`), naming a mode no downstream filter matches.
-`notes.append()` drops OLD WHOLE segments until the new one fits; `notes.replace_own(marker)`
-re-stamps this tool's own segment and leaves every other tool's alone. Keep segments SHORT —
-one full URL in a segment is 117 characters and will evict everything else.
-`test_every_note_writer_uses_the_append_log_helper` fails on the next hand-rolled trim.
+**Append through `pipeline/notes.py`, never by hand.** The cell is capped at 220 chars, and a
+writer that makes room by SLICING the base — `(base + " | " + seg)[:220]` or
+`base[:220 - len(seg) - 3]` — eats exactly the thing worth keeping, because the newest
+segment lives at the END (87 rows once read `dark-triage 2026-08-22: page-emp`, a mode no
+downstream filter matches). `notes.append()` drops OLD WHOLE segments until the new one fits;
+`notes.replace_own(marker)` re-stamps this tool's own segment and leaves every other tool's
+alone. Keep segments SHORT — one full URL is 117 characters and will evict everything else.
+`test_every_note_writer_uses_the_append_log_helper` fails on the next hand-rolled trim, and
+`test_activation_branches_append_to_the_note_instead_of_replacing_it` on the next whole-CELL
+assignment (`fr[5] = <not a call>`), which the helper guard cannot see because a whole-cell
+assignment does no hand-rolled trim. Whole-CELL is worst on an **activation** branch: it
+deletes the `alias-of` / `domain-dead` token that keeps the row out of the wrong pool and the
+`dark-triage` mode that routed it there. Whole-ROW replacement is legitimate where the tool
+builds a row from scratch (`retry_unreachable._row_for`, `recheck_suspects`' and
+`validate_empty`'s *promote* branches) — re-derive that list rather than trusting it:
+`grep -n '\[5\] *=' *.py` takes ten seconds.
 
 Every re-check filter must have a **staleness escape** (`_stale_hunt` 14d, `_revalidatable`
 30d, `_recrackable` **1d** — daily, because the ATS host is already documented, so a re-check
-is one fetch of a known endpoint rather than a rediscovery). A filter of the form `"tool-name" not in note` freezes coverage
-forever — that pattern has been introduced and removed three times.
+is one fetch of a known endpoint rather than a rediscovery). A filter of the form
+`"tool-name" not in note` freezes coverage forever — that pattern has been introduced and
+removed three times.
 
-### The activation rule (2026-08-23 — read before flipping any row to active)
+### The activation rule (read before flipping any row to active)
 
 "There are Israel jobs on this page" is not "these are THIS company's jobs", and it is not
 "this is a page that lists jobs". A row may only be activated when all three hold:
@@ -636,21 +571,15 @@ forever — that pattern has been introduced and removed three times.
 1. `pipeline.aggregators.is_aggregator(url)` is false — an aggregator's "similar jobs"
    sidebar is other employers' roles.
 2. `pipeline.company_identity.is_foreign(company, url)` is false — FairFly was activated off
-   fireflyspace.com (25 Firefly Aerospace roles), SimilarTech off greenhouse `similarweb`
-   (25 of Similarweb's), "Moonsite - Moonsoft Development" off Moon Active's Ashby board.
-   For an ATS host the identity is the TENANT SLUG, and a rebrand or acquisition looks
-   identical to a mis-resolution — Momentis really does post under `memic` — so identity
-   is settled by `page_mentions_company(..., strict=True)`, never by the domain alone.
-
-   **`weak` is not part of this, despite what this paragraph and section 3 said until
-   2026-08-24.** `company_identity.verdict()` produces `"weak"` at `:235` and **nothing in
-   the repo reads it** (`grep -rn '"weak"' --include=*.py .` returns exactly that one
-   line). `is_foreign` is `verdict() == "mismatch"` only, so a `weak` row passes every gate
-   except `crack_walled._ok_to_write`'s page test — including
-   `Phoenix Financial -> phoenixtma.com`, which `company_identity`'s own docstring gives as
-   its example of "a real company, not the right one". Two documents described a
-   consumer that does not exist. Giving `weak` one is `pipeline` plumbing:
-   `docs/BACKLOG.md` 43.
+   fireflyspace.com (25 Firefly Aerospace roles); `pipeline/identity_gate.py`'s docstring
+   lists the rest. For an ATS host the identity is the TENANT SLUG, and a rebrand or
+   acquisition looks identical to a mis-resolution — Momentis really does post under `memic`
+   — so identity is settled by page content, never by the domain alone. **`weak` is not part
+   of this**: `company_identity.verdict()` produces `"weak"` and nothing in the repo reads it
+   (`grep -rn '"weak"' --include=*.py .` returns the producing line and one test), so a
+   `weak` row — `Phoenix Financial -> phoenixtma.com`, that module's own example of "a real
+   company, not the right one" — passes every gate except a page test. Giving `weak` a
+   consumer is `pipeline` plumbing: `docs/BACKLOG.md` 43.
 3. `pipeline.company_identity.looks_like_a_job_listing_page(url)` is true — `SCRAPE_ASSUME_IL`
    makes every card on the page an Israel role, so a nav menu scores like a board:
    `iai.co.il/solution/research-academy-space` "verified 6 IL" whose titles were "Domain
@@ -659,6 +588,42 @@ forever — that pattern has been introduced and removed three times.
 `test_every_activation_path_checks_company_identity` walks the AST of every root script for
 `row[4] = "true"` and fails if that module never consults `company_identity`.
 
+**On a walled ATS all three clauses are inert.** The tenant lives in the SUBDOMAIN
+(`careers-bancorpbank.icims.com`) and `company_identity.verdict` only checks a tenant in the
+PATH, so it returns the blanket `"ats"` — its own docstring defines that as *"we cannot
+tell"* — and `is_foreign` reads it as False; the other two say yes, because it IS a real
+listings page, just somebody else's. That is what let `Bancor` (Israeli crypto) onto The
+Bancorp Bank's board. `pipeline/identity_gate.py` is the answer, in three rules. Both
+directions were measured — a tenant veto costs 36 legitimate acquisitions, a mandatory page
+read costs 358 path-tenant rows whose endpoints return 0–28 bytes (`docs/BACKLOG.md` 21 and
+33) — so **a readable page decides in BOTH directions; the tenant may ADMIT where nothing is
+readable, and only an explicit subdomain-tenant mismatch refuses without one.**
+
+1. **`activation_ok(name, api_url, n_jobs, html="")` — a readable page in hand decides,
+   either way.** A page the caller already holds beats a re-fetch, so when
+   `page_names_company` can read it its answer settles the row in BOTH directions. Only an
+   UNREADABLE page (`None` — machine endpoints returning 0–28 bytes, bot walls) falls through
+   to `tenant_is_this_company`, which keeps the path-tenant rows activatable. **A page fetch
+   is the last resort, not the first.** Zero `n_jobs` is the `empty-board` shape: refused.
+2. **`embedded_board_ok(name, token, api_url)` — a board found INSIDE a held page must vouch
+   for itself.** For callers that fetch the row's careers page and run `extract_ats` on it,
+   the page is evidence about the PAGE, not about whatever board it embeds: a stale shared
+   template embed promoted Riskified's Greenhouse onto Cogniteam's row. **A held page can
+   REFUSE a board, never ADMIT one** — the extracted tenant must near-equal the company name,
+   and "cannot tell" refuses here (unlike in `tenant_is_this_company`) because both callers
+   surface the refusal visibly on a row that stays parked with its re-check tokens.
+3. **Refusing to ACTIVATE is not enough — the hand-off rule.** A gate that blocks activation
+   but still writes the candidate into `api_url` moves the wrong activation to the next night
+   under another tool's name, because `host documented` is a `probe_candidates` pool token
+   AND `listing_hunt`'s documented fast-path token. `ok_to_write` therefore gates the WRITE
+   rather than any one `return`, and requires `page_names_company(...) is True` — unreadable
+   is refused too. **Every refusal note ends in a pool token**, so the row is handed to a
+   named receiver rather than dropped; that receiver's selector is `listing_hunt.HUNT_POOL`,
+   imported and guarded, never retyped.
+
+On ordinary domains `is_foreign` still does the work, because a page test there would refuse
+every JS-rendered careers page — the same silent-exclusion trap in the other direction.
+
 ### The single-writer rule (most dangerous rule here — read before any write)
 
 `companies.csv` writers must **re-read the file immediately before every write**
@@ -666,19 +631,19 @@ forever — that pattern has been introduced and removed three times.
 hold a start-of-run snapshot; two concurrent snapshot-writers silently destroy each other's
 verdicts (lost-update incident 2026-08-22).
 
-**All 24 `companies.csv` writers, by safety class** (verified 2026-08-22; re-counted twice
-on 2026-08-23. This census is what a new writer gets checked against, so its being short
-is the whole risk. Reproduce, and note the
-grep must accept `CSV_PATH` as well as the literal, or it misses `resolve_any` and
-`resolve_unknowns`, which open a filename held in a variable:
-`for f in *.py; do grep -qE 'companies.csv|CSV_PATH' "$f" && grep -qE 'write_csv_rows|csv\.writer' "$f" && echo "$f"; done | wc -l`):
+**Every `companies.csv` writer, by safety class.** The census is what a new writer gets
+checked against, so its being short is the whole risk — re-derive it rather than trusting the
+list below, and note the grep must accept `CSV_PATH` as well as the literal or it misses
+`resolve_any` and `resolve_unknowns`, which open a filename held in a variable:
+
+```bash
+for f in *.py; do grep -qE 'companies.csv|CSV_PATH' "$f" && grep -qE 'write_csv_rows|csv\.writer' "$f" && echo "$f"; done | wc -l
+```
 
 - **Compliant** (re-read + match by name before every write): `crack_walled.py`,
   `probe_candidates.py`, `listing_hunt.py`, `audit_empty_rows.py`, `deep_validate.py`,
-  `scan_dead_domains.py`, `refresh_scrape_cache.py` (parking pass), and the three the census
-  had missed — `triage_dark.py` (18:00), `repair_dead_urls.py` and `repair_extract_gap.py`
-  (both 19:00). All three re-read before every write; they were absent from the list, not
-  from the discipline.
+  `scan_dead_domains.py`, `refresh_scrape_cache.py` (parking pass), `triage_dark.py`,
+  `repair_dead_urls.py`, `repair_extract_gap.py`.
 - **Modified-rows merge** (equally safe — merges only the names it changed into a fresh
   read): `bd_rescue.py`, `retry_unreachable.py`, `wayback_rescue.py`, `validate_empty.py`,
   `validate_bd.py`, `recheck_suspects.py`.
@@ -686,221 +651,115 @@ grep must accept `CSV_PATH` as well as the literal, or it misses `resolve_any` a
   `resolve_any.py`, `resolve_parallel.py`, `resolve_unknowns.py`.
   (`resolve_deep.py` and `scrape_batch.py` write only `out/*.csv`, never the registry.)
 - **Line-based snapshot, sub-second window** (tolerated): `apply_resolved.py`.
-- **The git layer, not the in-process one**: `merge_csv_rows.py`. It was missing from every
-  earlier version of this census, which is worth noticing — it is the one writer with no
-  in-process safety class, and it is the tool "Never DELETE a row" below blames for
-  resurrecting `Time To Know`.
+- **The git layer, not the in-process one**: `merge_csv_rows.py` — the one writer with no
+  in-process safety class, and the tool the deletion rule below blames.
 
-No whole-snapshot index-keyed writer remains. If you add one it will silently revert
-concurrent verdicts — use one of the first three patterns.
+No whole-snapshot index-keyed writer remains; add one and it will silently revert concurrent
+verdicts. Use one of the first three patterns.
 
-**Never DELETE a row. Park it with a reason** (2026-08-23). No tool deletes rows — every
-writer above is read-modify-write or append-only — but a human commit does, and a deletion
-is the one registry edit that does not survive the git layer. Worked example, reproducible
-with `git log`:
-
-(Row counts below are **body rows**, header excluded — `wc -l` on the file gives one more,
-and mixing the two is the standing confusion `HANDOFF.md` flags. This table printed the
-header-inclusive numbers until 2026-08-24, in the section that elsewhere criticises
-switching denominators mid-sentence.)
-
-| commit | body rows | what happened |
-|---|---|---|
-| `9c4372ef` | 1189 | `Time To Know` deleted on purpose ("time.com is Time To Know") |
-| `8644d8fd` | **1190** | a concurrent cloud run's conflict path ran `merge_csv_rows`, whose `changed` set still held that row, and `target.append(r)` **resurrected it** |
-| `0180e755` | 1189 | re-deleted, silently, inside a commit whose subject is about Oracle HCM |
-
-`check_invariants.py` checks the registry's SHAPE, never its SIZE, so all three passed.
-Fifteen name-deletions exist in the whole history of the file
-(`git log --oneline -- companies.csv | wc -l` -> 69 on 2026-08-24; this sentence said
-"68-commit" the day before, which is a hard-coded count inside the paragraph arguing
-that nothing reports a size change)
-(13 of them one deliberate purge of LinkedIn-sidebar-poisoned rows on 2026-08-21), and
-nothing anywhere reported one. Two rules follow:
+**Never DELETE a row. Park it with a reason.** No tool deletes rows, but a human commit does,
+and a deletion is the one registry edit the git layer does not preserve: a concurrent cloud
+run's conflict path runs `merge_csv_rows`, whose `changed` set still holds the row, and
+`target.append(r)` resurrects it — after which someone re-deletes it silently inside an
+unrelated commit. `check_invariants.py` checks the registry's SHAPE, never its SIZE, so every
+commit in that cycle passes; the worked example with hashes is in
+`docs/sessions/2026-08-24-registry.md`. Two rules follow:
 
 1. **A row leaves the registry by being parked, not by being removed.** A parked row keeps
    its evidence, stays in a re-check pool if it should, and cannot be resurrected into a
    different meaning by a merge. Use `defunct:`, `alias-of`, `domain-dead`, or an explicit
    `removed <date>: <reason>` segment.
-2. **If you do delete, the reason must be in the row's own note before it goes** — that is
-   the only place `registry_health.py` can find it afterwards.
+2. **If you do delete, the reason must be in the row's own note before it goes** — `python
+   registry_health.py` (census diff against `cloud_state/registry_census.json`;
+   `--census` re-baselines after an intentional removal) is the only detector, and the note
+   is the only place it can find the reason afterwards. Every row count it prints is **body
+   rows**, header excluded — `wc -l` gives one more, and mixing the two is the standing
+   confusion `HANDOFF.md` flags.
 
-`registry_health.py` is the detector: it keeps a census in
-`cloud_state/registry_census.json` and reports every vanished name with its last known
-note, split into explained and unexplained. It never writes `companies.csv`.
+**Concurrency has TWO layers — both must be handled.** In-process discipline (above) protects
+writers on one machine. The **git layer** needs `merge_csv_rows.py`: a cloud run commits a
+file whose baseline may be hours old, so `git pull --rebase` hits a content conflict and the
+retry loop would discard the entire run (a 3.5-hour listing-hunt cycle was lost this way,
+2026-08-22). Every csv-committing workflow therefore snapshots `/tmp/base.csv` right after
+checkout, and on conflict resets to origin and replays only the rows this run changed
+(`merge_csv_rows.py base ours target`). Copy that pattern into any new workflow that writes
+the registry — and **`git add` the csv in it**: the digest's candidate probe writes verdicts
+there while `candidate_probe.json` advances baselines, and committing one without the other
+loses the wake *and* consumes its signal.
 
-```bash
-python registry_health.py            # census diff, pools, ladder, alarms — no writes
-python registry_health.py --census   # re-baseline after an intentional removal
-```
-
-**Concurrency has TWO layers — both must be handled.** In-process discipline (above)
-protects writers on one machine. The **git layer** needs `merge_csv_rows.py`: a cloud run
-commits a file whose baseline may be hours old, so `git pull --rebase` hits a content
-conflict and the retry loop would discard the entire run (a 3.5-hour listing-hunt cycle was
-lost this way, 2026-08-22). Every csv-committing workflow therefore snapshots
-`/tmp/base.csv` right after checkout, and on conflict resets to origin and replays only the
-rows this run changed (`merge_csv_rows.py base ours target`). Copy that pattern into any
-new workflow that writes the registry.
-
-**Every workflow that edits `companies.csv` must `git add` it.** The digest workflow does —
-the candidate probe writes verdicts there while `candidate_probe.json` advances baselines;
-committing one without the other loses the wake *and* consumes its signal.
-
-Cloud workflows that commit the csv serialize via the `repo-state` concurrency group —
-eight of them (audit-coverage, auto-expand, deep-validate, listing-hunt, retry-unreachable,
+Cloud workflows that commit the csv serialize via the `repo-state` concurrency group — eight
+of them (audit-coverage, auto-expand, deep-validate, listing-hunt, retry-unreachable,
 scrape-refresh, self-heal, triage-dark) — **except `daily-digest.yml`**, which uses its own
-group, so a digest CAN overlap an audit/hunt run; both re-read, so verdicts survive. A local `--apply` run adds a third
-writer: avoid the cron windows in §4 (and never run two browser-driving tools at once —
-Playwright sync instances conflict).
+group, so a digest CAN overlap an audit/hunt run; both re-read, so verdicts survive. A local
+`--apply` run adds a third writer: avoid the cron windows in §4, and never run two
+browser-driving tools at once (Playwright sync instances conflict).
 
 ### Who re-checks a parked row — the ownership matrix
 
 Every inactive row must be owned by at least one *recurring* job, or it is permanently dark.
-**The matrix below is re-derived by a command, not typed by hand** — `registry_health.pools()`
-reproduces each scheduled tool's own row filter, so the counts cannot silently rot:
-
-**But "mirrors" is doing real work in that sentence, and it is only literally true for one
-tool.** `pools()` *imports* `triage_dark.TARGET_NOTES`/`SKIP_NOTES`,
-`listing_hunt._triaged_page_empty` and `looks_like_junk` from the tools themselves; the
-filters for `listing_hunt`, `probe_candidates`, `repair_extract_gap` and `crack_walled` are
-**retyped** as `_HUNT_SHAPE`, `_PROBE_SHAPE`, `_EXTRACT_GAP` and a crack literal. Measured
-2026-08-24 the drift is **0** on all four — but they are unguarded, and `_EXTRACT_GAP` is
-strictly looser than `repair_extract_gap.MODE` (no date required), which is the direction
-that *hides* orphans. `docs/BACKLOG.md` item 1 carries the census and the guard extension.
+**There is no hand-written matrix here any more**: `registry_health.pools()` computes it by
+importing each scheduled tool's own predicate, so it cannot drift from the tool it describes.
 
 ```bash
 python registry_health.py | sed -n '/re-check ownership/,/OWNED BY NOTHING/p'
 ```
 
-Counts below are that command's output on **2026-08-23**, after this session's two pool
-fixes. Ownership is by note content, not by mode. **The figures exclude each tool's
-staleness cooldown** — a cooldown delays a re-check, it does not remove ownership — so the
-rows a given night actually processes are fewer: `crack_walled` owns the 25 in the table and
-`_recrackable` (daily) leaves a handful of those for any given night; `audit_empty_rows` owns
-255 and `AUDIT_TTL_DAYS` (30) leaves far fewer locally — but `state/` is gitignored, so the
-cloud run re-audits all 255 (§5), which is why it needed `AUDIT_TIME_BUDGET_MIN`.
+It prints one line per pool — the `pools()` keys below, verbatim — with the parked rows that
+tool claims tonight, then a final `OWNED BY NOTHING` line. **That last line is the one to
+read:** `orphans()` subtracts pool membership, so a pool that over-counts can only ever
+UNDER-report orphans, the one direction that loses coverage silently. Counts move nightly (the
+18:00 triage re-stamps rows), which is why they are derived, not typed; staleness cooldowns
+are deliberately NOT applied, because a cooldown delays a re-check without removing ownership,
+so a given night processes fewer rows than the pool holds.
 
-**Update 2026-08-23 — `page-empty` rows are ACTIVE now.** They were inactive, which meant a
-role posted at one of them waited for the next triage cycle to be seen. But a `page-empty`
-row has a *validated, working* careers page that simply has no openings today: that is a
-healthy daily source, not a dark row. 130 were activated and are scraped every day like any
-other company. Two rules follow, both now enforced:
-- **Empty is not broken.** `refresh_scrape_cache` used to park any active scrape row that
-  came back empty 3 days running — in this market a company can have no openings for a
-  month. Empty rows are now NEVER parked; a 45-day streak only asks triage to re-read the
-  page (it can tell "no openings" from "openings we fail to extract") and the row stays
-  active throughout. Only ERRORS park a row, at 7 days.
-- Consequently the table below applies to rows that are still `active=false`.
+| `pools()` key | cron (`.github/workflows/`) | what it owns | activates? |
+|---|---|---|---|
+| `triage_dark (18:00 daily)` | `triage-dark.yml` `0 18 * * *` | rows matching its own `TARGET_NOTES` minus `SKIP_NOTES` — classifies a dark row's failure mode and routes it | no |
+| `listing_hunt (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | parked rows matching `HUNT_POOL`, minus terminal, recruiters, discovery junk and `_triaged_page_empty` | **yes** |
+| `repair_extract_gap (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | rows triage stamped `extract-gap` (the tool's own `MODE`) that carry an `http` address | **yes** |
+| `crack_walled (19:00 daily + Sun)` | `listing-hunt.yml` `0 19 * * *`, `audit-coverage.yml` `0 4 * * 0` | rows `identity_gate.is_walled` claims — the note token OR a walled ATS host — minus terminal and recruiters | **yes** |
+| `probe_candidates (05:00 daily)` | `daily-digest.yml` `0 5 * * *` | rows matching `PROBE_POOL` with an `http` address, minus terminal; wakes rather than activates (`_wake_note` strips every stale segment) | no |
+| `audit_empty_rows (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0` | `verdicts.in_pool` minus terminal and recruiters | **yes** |
+| `deep_validate (Sat 04:00)` | `deep-validate.yml` `0 4 * * 6` | the same selector as the audit, at a different depth (Chromium render + network sniff) | **yes** |
 
-| tool | cadence | rows | claims rows whose note matches | activates? |
-|---|---|---|---|---|
-| `triage_dark` | daily 18:00 | 242 | `no listing found` / `no IL listing` / `no ATS detected` / **`dark-triage`**, minus `SKIP_NOTES` and minus `probe-woken` | no — but its rewrite drops the old `page-empty` stamp, re-opening the hunt |
-| `listing_hunt` | daily 19:00 | 211 | the wide parked-shape regex, **minus** `page-empty`, terminal, recruiters and `looks_like_junk` | **yes** |
-| `repair_extract_gap` | daily 19:00 | 40 | `dark-triage …: extract-gap` | **yes** |
-| `probe_candidates` | daily 05:00 | 153 | `monitored candidate` / `host documented` / `no IL listing` | no — `_wake_note` strips every stale segment |
-| `crack_walled` | daily 19:00 + weekly | 25 | `unsupported ATS` + not terminal + not recruiter | **yes** |
-| `scan_dead_domains` | daily 05:00 | — | liveness only — **never looks at roles** | no |
-| `audit_empty_rows` | weekly Sun 04:00 | 255 | `verdicts.in_pool` + not terminal + not recruiter + not audited in `AUDIT_TTL_DAYS` (30) | **yes** |
-| `deep_validate` | weekly Sat 04:00 | 255 | `in_pool` + `_revalidatable` (30d) + not terminal + not recruiter | **yes** |
+`scan_dead_domains` (05:00 digest and the Sunday audit) is deliberately **not** a pool: it
+tests liveness, never roles, and excludes only `defunct` rather than the whole terminal list,
+because re-testing a `domain-dead` row is its purpose. Audit and deep-validate selecting the
+identical row set 24 hours apart is this lane's clearest consolidation target
+(`docs/BACKLOG.md`).
 
-These counts move every night (the 18:00 triage re-stamps rows), which is the point of
-deriving them rather than typing them. **The first version of `pools()` retyped each tool's
-filter and was wrong on the day it shipped** — `triage_dark` read 270 against the tool's real
-242 because the copy omitted `SKIP_NOTES`, and `listing_hunt` 244 against 243 because it
-omitted `looks_like_junk`. `orphans()` subtracts this membership, so an over-counting mirror
-can only ever UNDER-report orphans: the one direction that loses coverage silently. It now
-imports `triage_dark.TARGET_NOTES` / `SKIP_NOTES`, `listing_hunt._triaged_page_empty` and
-`looks_like_junk` from the tools themselves, and
-`test_the_ownership_matrix_is_built_from_the_tools_own_predicates` fails if they disagree.
+**Never retype a pool regex — import the tool's constant.** The guarded constants are
+`listing_hunt.HUNT_POOL`, `probe_candidates.PROBE_POOL`, `pipeline/verdicts.TERM_RX` (the one
+terminal list; `alias-of` is in it) and `identity_gate.is_walled`.
+`test_the_ownership_matrix_is_built_from_the_tools_own_predicates` asserts the matrix holds
+the tools' own objects — identity, not equality — so a retyped mirror fails the suite. Every
+mirror this repo has had was wrong in the LOOSE direction; the four are listed in the session
+log.
 
-**Ordering: the 05:00 wake must survive to the 19:00 hunt.** `probe_candidates._wake_note`
-strips the `dark-triage` segment, which also resets `triage_dark._needs_triage` to true — so
-the 18:00 triage re-claimed the woken row an hour before the hunt could use it, and a
-re-stamped `page-empty` then removed it from the hunt entirely (`_actionable_mode` returns
-False for `page-empty` and `acquired`). The wake is not recoverable: `probe_candidates`
-persists the new baseline **before** the wake test, so the signal is spent. `triage_dark` now
-skips any row carrying `probe-woken`. This is the 105/105 inert-wake bug in the opposite
-direction, and it is why the matrix has an ordering column at all.
+Four more rules this matrix exists to enforce, each violated in production at least once:
 
-**A time budget without rotation is not a budget.** `scan_dead_domains` and
-`probe_candidates` run inside the 05:00 digest and were given 10-minute budgets — over loops
-that iterate in **CSV file order** with no state term in the predicate. A row found ALIVE
-writes nothing, so all of the liveness targets (**230** on 2026-08-24; `registry_health.py` does not print
-this one, so it is the row of the matrix below that nothing catches rotting) kept their
-position forever: a truncated
-run re-walked the same prefix every night and never reached the tail, and a `probe_candidates`
-row past the cut could never wake at all, because a wake needs two observations. Both now
-sort least-recently-checked first (`cloud_state/scan_seen.json`, and a `last` key in
-`candidate_probe.json`). Two consecutive 40-row truncated nights now overlap on **0**
-companies; before, 40 of 40. Any new budget in this lane needs a rotation key in the same
-commit.
-
-**On a walled ATS, none of the three activation gates can see the tenant** (2026-08-23).
-The tenant lives in the SUBDOMAIN — `careers-bancorpbank.icims.com` — and
-`company_identity.verdict` only checks a tenant in the PATH, so it returns the blanket
-`"ats"`, which its own docstring defines as *"we cannot tell"*, and `is_foreign` reads that
-as False. `_slug_matches` passes too, on plain containment. `is_aggregator` and
-`looks_like_a_job_listing_page` both say yes: it IS a real listings page, just somebody
-else's. So the generic answer in "The activation rule" below is exactly the answer that let
-`Bancor` (Israeli crypto) onto The Bancorp Bank's board. Two things stop it, and both are in
-`crack_walled.py`:
-
-1. **`_page_names_company(name, url)` — three-valued.** True = the page names this company,
-   False = it names someone else, **None = we could not read it, which is NO EVIDENCE and
-   must not read as either**. Bancorp's page says "Bancorp" 18 times and `Bancor` as a word
-   zero times. It uses a LENIENT TLS context (strict TLS cost 6 false positives once, above),
-   falls back to the residential unlocker whenever a Bright Data key exists — not only behind
-   `SCRAPE_VIA_UNLOCKER`, which `audit-coverage.yml` does not set — and retries with the
-   company's generic/geographic words stripped, because 46 registry rows CONTAIN `Israel` in the name (only **40** end with it — `… Israel` denotes a suffix, so the two readings differ and this sentence used the looser one while quoting the suffix notation)
-   and `strict=True` wants the name's words consecutively.
-2. **The `notours` verdict writes the note and never `fr[3]`.** This is the part that is easy
-   to get wrong: refusing to ACTIVATE is not enough. `crack_walled`'s `novrfy` branch persists
-   its candidate as the row's `api_url` and stamps `host documented` — which is a
-   `probe_candidates` pool token AND `listing_hunt`'s documented fast-path token. A gate that
-   blocks activation but still writes the address just moves the wrong activation to the next
-   night, under another tool's name. `listing_hunt` has always refused to persist a foreign
-   URL for this reason; the crack path does now too.
-
-There is no residue: `_ok_to_write` requires `_page_names_company(...) **is True**`, so an
-UNREADABLE page (`None`) is refused too, and it gates the WRITE rather than any one `return`
-— both `fr[3]` assignments in `main()` sit under it. That last part was not true for one
-commit: the gate was first written per-return, which left the `cracked-api`/oraclehcm path
-and the 0-Israel-jobs `novrfy` path ungated. The real fix is still one level down —
-`verdict()` should extract the subdomain tenant (`docs/BACKLOG.md` item 9) — but nothing
-here persists an address it could not confirm.
-
-**Every activating pool must exclude the terminal states itself.** `verdicts.in_pool()`
-does not: `TERMINAL` there is `defunct / domain-dead / duplicate of / redundant / recruiter`
-and **omits `alias-of`**. On 2026-08-23 that put `GE HealthCare Israel` and `eBay Israel`
-into `audit_empty_rows`' pool, and three more (`Chakratec`, plus those two) into
-`crack_walled`'s, which had no terminal filter at all. Both tools activate directly, and an
-alias row points at a board that *works* — so the audit would have searched, found that same
-board, verified it with real Israel jobs and re-activated the duplicate: every eBay role
-published twice under two company names. `check_invariants` check B would not catch it
-(the names differ). Pools after the fix, on the SAME basis as the matrix above (no cooldown applied):
-audit 260 → **258**, crack 30 → **25**. Reproduce with
-`python -c "import csv,re;from pipeline.verdicts import in_pool;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:];b=[x for x in r if x[4]=='false' and in_pool(x[5] or '')];t=re.compile(r'defunct|domain-dead|alias-of',re.I);print(len(b),len([x for x in b if not t.search(x[5] or '')]))"`
--> `260 258` on 2026-08-24.) (With `_recrackable`'s daily cooldown a given night
-sees far fewer — 6 to 10 — which is what an earlier draft of this line quoted, silently
-switching denominators mid-sentence.)
-Guarded by `test_no_activating_pool_can_re_open_a_terminal_row`.
-
-**`audit_empty_rows` and `deep_validate` now select the identical 255 rows** — same
-predicate, different depth (raw HTML vs Chromium render + network sniff), 24 hours apart.
-That is the clearest consolidation target in this lane; it is in `docs/BACKLOG.md`.
-
-Two traps this matrix exists to prevent, both of which were live:
-- **An inert wake.** `probe_candidates` cleared `listing-hunt|crack-walled` but not
-  `dark-triage`, so `listing_hunt._triaged_page_empty` still excluded every woken
-  page-empty row: 105/105 wakes went nowhere. A wake must clear *every* stamp that any
-  downstream filter excludes on.
-- **Note erosion retiring a row from its own pool.** Each re-stamp trims the base note to
-  fit 220 chars; once the original verdict eroded (`no IL listing; monitored candidate` →
-  `no `), the row matched no pool at all. `triage_dark.TARGET_NOTES` therefore matches its
-  **own** `dark-triage` stamp, which makes it self-sustaining.
-
-(Moved here from `HANDOFF.md` §1b on 2026-08-23: it is a durable rule, not session news.)
+- **An activating pool must exclude the terminal states itself** —
+  `test_no_activating_pool_can_re_open_a_terminal_row`. An `alias-of` row points at a board
+  that *works*, so an audit would find it, verify real Israel jobs and re-activate the
+  duplicate: every role published twice under two company names, which `check_invariants`
+  check B cannot catch because the names differ.
+- **A wake must clear *every* stamp any downstream filter excludes on, and survive to its
+  receiver.** `probe_candidates._wake_note` strips `dark-triage`, which also resets
+  `triage_dark._needs_triage` — so the 18:00 triage re-claimed the woken row an hour before
+  the 19:00 hunt, and a re-stamped `page-empty` removed it from the hunt entirely
+  (`_actionable_mode` is False for `page-empty` and `acquired`). Nothing is recoverable
+  afterwards: the baseline is persisted **before** the wake test. `triage_dark` now skips any
+  row carrying `probe-woken`.
+- **Any new time budget needs a rotation key in the same commit.** `scan_dead_domains` and
+  `probe_candidates` run inside the 05:00 digest on 10-minute budgets over loops in **CSV
+  file order**, and a row found ALIVE writes nothing — so a truncated run re-walked the same
+  prefix nightly, never reached the tail, and a row past the cut could never wake (a wake
+  needs two observations). Both now sort least-recently-checked first
+  (`cloud_state/scan_seen.json`, and a `last` key in `candidate_probe.json`).
+- **A pool token must survive note erosion.** Each re-stamp trims the base to fit 220 chars;
+  once the verdict eroded (`no IL listing; monitored candidate` → `no `) the row matched no
+  pool at all. `triage_dark.TARGET_NOTES` therefore matches its **own** `dark-triage` stamp,
+  which makes it self-sustaining.
 
 ## 3. Resolution ladder — how a dark company becomes covered
 *lane: `registry`*
