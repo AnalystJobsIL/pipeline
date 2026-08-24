@@ -1082,6 +1082,13 @@ Three reviewers, all findings reproduced before action. Seven were fixed; these 
     same board. Tightening `_slug_matches` to near-equality for PATH tenants is the fix that
     would work; it is real work, not a one-liner.
 
+    **The held-page half is CLOSED by f1b28a8 (wave 3):** `activation_ok` now lets a
+    READABLE page the caller holds decide, either way, before any tenant clause --
+    pinned by `test_validate_empty_a_readable_page_decides_and_a_refusal_is_visible`.
+    What remains open is exactly the no-page half: an activation with no html in hand
+    on a path-tenant platform is still admitted by vacuity, and the slug-tightening
+    above is still the fix that would work.
+
 51. **A `_WALLED_HOST` entry can be deleted with the suite green whenever that platform has
     no pool members** — lane: `registry`. `test_the_walled_pool_survives_another_tools_note_
     rewrite` defends whichever platform currently has rows (workday, 22 of them); dropping
@@ -1138,6 +1145,11 @@ Six blocking findings, all reproduced and fixed. These are the residuals.
     `auto_expand` appends rows from the discovery cache, so no `companies.csv` selector can
     enumerate a reachable row.
 
+    **CLOSED by f1b28a8 (wave 3):** both builders now persist the SEED url on refusal,
+    the note carries the `no listing found` hand-off token, and the divergence cannot
+    quietly return -- `expand-ats-seed-leak` in `tests/mutations.json` re-introduces the
+    leak and must go red.
+
 55. **The `taleo.net` half of `_ATS_NOT_IN_ATS_HOST` is untested and its registry set is
     empty** — lane: `registry`. `test_the_jobvite_taleo_branch_is_a_gate_and_not_a_pass_through`
     is named for both platforms and both of its assertions use `jobs.jobvite.com`. Deleting
@@ -1155,3 +1167,52 @@ Six blocking findings, all reproduced and fixed. These are the residuals.
     enforced only inside `pipeline/notes.py`, so any writer that bypasses that module (there
     was one, `validate_empty`, fixed in this wave) is unguarded by the blocking gate that
     runs in front of the digest. One `bad()` on `len(r[5]) > NOTE_CAP` closes it.
+
+## From the rebuild's wave-3 review, 2026-08-24
+
+Three blocking findings (one per reviewer), all reproduced and fixed in f1b28a8 and fc02764:
+the held-page ordering (census pinned), the orphaning refusal notes (hand-off token pinned),
+and the dead `platform` parameter (removed; M8 transposition record). fc02764 also closed two
+harness masks found while fixing: the gate-call-site detector now resolves aliases, and
+`is_aggregator` no longer counts as an identity predicate in the writer enumeration (the
+FairFly shape). These are the residuals.
+
+58. **The readable-page rule's accepted cost: a pool row whose own page names only a
+    name-shape variant is refused, visibly** — lane: `registry`. The wave-1/wave-3
+    calibration dispute ended per protocol (both error cells non-empty, so no threshold
+    tuning): a readable page decides either way, and `Siemens Healthineers` on its own
+    board whose page says only "Siemens" becomes a VISIBLE `empty-but-suspect`, never a
+    silent confirm and never an unread promote. That row is the one proven member
+    (end-to-end repro, wave 1). The exposure upper bound is derivable, not fixed — rows in
+    `validate_empty`'s pool whose name still has >1 token after `_NAME_STOP` stripping:
+
+        python -c "import csv,re;from pipeline.identity_gate import _NAME_STOP;rows=[r for r in csv.reader(open('companies.csv',encoding='utf-8')) if r and len(r)>=6][1:];pool=[r for r in rows if 'no open israel roles' in (r[5] or '').lower()];c=[r[0] for r in pool if len([w for w in re.findall('[A-Za-z0-9]+',r[0]) if w.lower() not in _NAME_STOP])>1];print(len(pool),len(c),c)"
+
+    (59 pool rows, 22 candidates when filed; a candidate only lands in the cell if its page
+    actually omits the tail word, which needs a page read to know.) The durable fix is not a
+    looser matcher — head-token matching is measured unsafe (`Sight` matches Sight Sciences'
+    page; Sight Diagnostics is a different company on that same board). It is a data column
+    (`display-name` / `page-name`), the same resolution the tenant veto reached.
+
+59. **`validate_empty` runs with no `BRIGHTDATA_API_KEY`, so the gate's unlocker rung is
+    silently inert on the Sunday audit** — lane: `infra`. In `audit-coverage.yml` the only
+    `env:` carrying the key is the `crack_walled` step; the `validate_empty` step has none.
+    `pipeline/identity_gate.py`'s `page_names_company` gates the residential retry on the
+    KEY by design (a missing flag must not downgrade the gate — its docstring), so on this
+    step every bot-walled careers page reads as `None`. Direction is over-refusal only: an
+    unreadable page falls to the tenant clause, and a subdomain mismatch that the unlocker
+    HTML would have overturned lands as a visible `empty-but-suspect`, never a wrong write.
+    One `env:` line on the step closes it.
+
+60. **The push-conflict merge resurrects note segments a fresher run deliberately deleted,
+    and 47 of 152 woken rows lose their wake to it** — lane: `infra`, PRE-EXISTING.
+    `probe_candidates._wake_note` strips the `listing-hunt` / `dark-triage` /
+    `crack-walled` segments so the 19:00 hunt re-selects the row; `merge_csv_rows`'
+    conflict path unions ours with theirs and re-adds those segments from `theirs`
+    precisely because ours no longer owns the keys. Measured on the real registry: a
+    resurrected `listing-hunt <date>` stamp re-arms the 14-day cooldown on 47 of the 152
+    woken rows (Pliops, Lili, MediWound, AiVF, Siemens Healthineers, ...), and the same
+    recovery block restores `cloud_state/candidate_probe.json` wholesale from ours, so the
+    baseline has already advanced — the wake is SPENT, not deferred. Only fires on a push
+    conflict (same trigger as item 35, same file). A merge that honours deletions needs the
+    deleting tool to own its keys in the union, not just in its own cell.
