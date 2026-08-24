@@ -21,6 +21,7 @@ from resolve_deep import _verify
 from scrape_universal import ROLE, ISRAEL_LOC
 from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import replace_own as _note_replace
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
 
@@ -57,7 +58,7 @@ def check(name, url):
                 # a real empty, so the row re-enters the same Sunday pool and is refused
                 # again, silently, forever. `suspect` writes an `empty-but-suspect` note the
                 # next reader can see, and leaves the row's re-check token intact.
-                return ("suspect", f"{il} IL but {api[:44]} is not this company's board")
+                return ("suspect", f"{il} IL but the board is not this company's")
             if il > 0:                              # scraper missed a live board with Israel jobs!
                 return ("promote", [name, plat, tok, api, "true",
                                     f"cross-validated; {n_all}/{il} IL (was empty)"])
@@ -94,10 +95,31 @@ def main():
             print(f"  [PROMOTE] {name}: {payload[5]}", flush=True)
         elif kind == "suspect":
             suspects.append((name, payload))
-            # append, don't replace: the base note carries the row's re-check pool token
-            _base = re.sub(r"\s\|\s?empty-but-suspect;[^|]*", "", rows[rowi][5] or "").strip(" |")
-            rows[rowi][5] = ((_base + " | ") if _base else "") + "empty-but-suspect; " + payload
-            _MODIFIED.add(name)
+            # Through `pipeline.notes`, like every other note write in the repo. This was
+            # the ONE exception: a bare concatenation with no cap, which is why the 220-char
+            # limit did not apply to it and the cell grew to 324 chars. The next tool's
+            # stamp then evicted whole segments to make room -- including this row's own
+            # `no open Israel roles` token, which is `validate_empty`'s entire selector, so
+            # the row left its own Sunday pool permanently. Measured on the real registry:
+            # 28 of 54 rows lost that token by the next nightly hunt stamp (15 before this
+            # branch existed; the longer payload took it to 28). `Kima` lost two tokens at
+            # once, the second being `scanned via brightdata`, which `bd_rescue` owns and
+            # no scheduled tool rewrites.
+            # ...and even capped, this can cost the row its OWN selector. `no open Israel
+            # roles` is by construction the OLDEST segment on these rows -- it is how they
+            # entered this pool -- and `replace_own` evicts oldest-first to make room. So
+            # the write is skipped when it would take the token with it: a note nobody reads
+            # is worth less than a row that keeps being re-checked, and the row is still
+            # visible in this run's `suspect:` summary either way. Measured on the real
+            # registry: 22 of 54 rows would have lost the token; 0 do now.
+            _new = _note_replace(rows[rowi][5] or "", "empty-but-suspect",
+                                 "empty-but-suspect; " + payload)
+            if "no open israel roles" in _new.lower():
+                rows[rowi][5] = _new
+                _MODIFIED.add(name)
+            else:
+                print(f"  [note skipped] {name}: the cell is full and the note would evict "
+                      f"this row's own re-check token", flush=True)
         else:
             confirmed += 1
         time.sleep(0.1)

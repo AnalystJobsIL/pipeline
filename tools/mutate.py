@@ -176,26 +176,74 @@ def _registry_writers():
     return out
 
 
-def coverage(muts):
-    """Every ACTIVATING writer must carry a mutation in M1, M2 and M3.
+def _gate_call_sites(path):
+    """Every line that calls the identity gate, as its stripped source text.
 
-    Derived, not hand-listed: a seventh activating tool becomes a red build on the commit
-    that adds it, instead of a review finding eight waves later.
+    PER CALL SITE, not per file. `retry_unreachable` and `auto_expand` each call
+    `activation_ok` TWICE -- once for an `ats` payload and once, three lines below, for a
+    `scrape` one. A per-file rule counted the `ats` mutations and reported no gap, so the
+    scrape gate had no mutation at all: deleting its `not` inverted the write in both
+    directions (activating `Voiceitt`, parking `Pliops`) with 253 tests green.
+    """
+    import ast
+    src = open(path, encoding="utf-8").read()
+    lines = src.split("\n")
+    out = set()
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return out
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call):
+            fname = getattr(n.func, "attr", getattr(n.func, "id", ""))
+            # The three ACTIVATION gates only. `page_names_company` and
+            # `tenant_is_this_company` are the building blocks those are made of: they are
+            # called in places that compute a verdict rather than gate a write (e.g. inside
+            # `crack_walled.crack_one`), and they are covered by their own mutations against
+            # `pipeline/identity_gate.py`. Requiring M1/M2/M3 at every internal call of them
+            # would demand ~30 mutations for predicates that gate nothing.
+            if fname in ("activation_ok", "ok_to_write", "identity_ok"):
+                out.add(lines[n.lineno - 1].strip())
+    return out
+
+
+def coverage(muts):
+    """Every gate CALL SITE in an activating writer must carry an M1, M2 and M3 mutation.
+
+    Derived, not hand-listed: a new activating tool -- or a second gate call inside an
+    existing one -- becomes a red build on the commit that adds it, instead of a review
+    finding a wave later.
     """
     from collections import defaultdict
-    have = defaultdict(set)
+    per_site = defaultdict(set)
     for m in muts:
-        have[m["file"]].add(m["class"].split("-")[0])
-    covered = json.load(open(os.path.join(ROOT, "tests", "mutations.json"),
-                             encoding="utf-8"))  # noqa: F841  (documents the source)
+        per_site[(m["file"], m["find"].strip())].add(m["class"].split("-")[0])
     exempt = set(_load_exempt())
     gaps = []
     for w in _registry_writers():
         if w in exempt:
             continue
-        missing = {"M1", "M2", "M3"} - have.get(w, set())
-        if missing:
-            gaps.append((w, sorted(missing)))
+        sites = _gate_call_sites(os.path.join(ROOT, w))
+        if not sites:
+            # This tool gates with a composite of the building blocks rather than one of the
+            # three named activation gates (`deep_validate`'s tenant-or-page expression,
+            # `repair_dead_urls`' `names_us`). Fall back to the per-FILE rule for those.
+            classes = set()
+            for (f, _find), cls in per_site.items():
+                if f == w:
+                    classes |= cls
+            missing = {"M1", "M2", "M3"} - classes
+            if missing:
+                gaps.append((w, sorted(missing)))
+            continue
+        for site in sorted(sites):
+            classes = set()
+            for (f, find), cls in per_site.items():
+                if f == w and site in find:
+                    classes |= cls
+            missing = {"M1", "M2", "M3"} - classes
+            if missing:
+                gaps.append(("%s  [%s]" % (w, site[:52]), sorted(missing)))
     return gaps
 
 

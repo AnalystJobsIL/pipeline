@@ -2186,4 +2186,70 @@ def test_validate_empty_does_not_silently_withhold_a_row_it_refuses(monkeypatch)
     assert kind == "suspect", (
         "a refusal must leave a trace a human can read, not return the success-path "
         "tuple: got %r" % (kind,))
-    assert payload and "not this company's board" in payload
+    assert payload and "not this company's" in payload
+
+
+def test_no_note_write_costs_a_row_its_own_re_check_token():
+    """`validate_empty`'s note must not evict the selector that put the row in its pool.
+
+    `main()`'s `empty-but-suspect` write was the ONE note write in the repo that did not go
+    through `pipeline.notes` -- a bare concatenation with no cap, so the 220-char limit never
+    applied and the cell reached 324 chars. The next tool's stamp then evicted whole segments
+    to make room, and on these rows the OLDEST segment is `no open Israel roles`, which is
+    `validate_empty`'s entire selector. The row left its own Sunday pool permanently, and no
+    scheduled tool ever rewrites that token.
+
+    Measured on the real registry: 39 of 54 rows kept the token before this branch existed,
+    26 with the first version of it, 52 now. Capping alone was not enough -- `replace_own`
+    evicts oldest-first, which is exactly the wrong end -- so the write is skipped when it
+    would take the token with it.
+    """
+    import csv as _csv
+    import os as _os
+    from pipeline.notes import replace_own
+    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    with open(_os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
+        rows = [r for r in _csv.reader(fh) if r and len(r) >= 6][1:]
+    sel = [r for r in rows if "no open israel roles" in (r[5] or "").lower()]
+    assert sel, "fixture drift: validate_empty's pool is empty"
+
+    seg = "empty-but-suspect; 3 IL but the board is not this company's"
+    kept = 0
+    for r in sel:
+        new = replace_own(r[5] or "", "empty-but-suspect", seg)
+        # main() skips the write when it would cost the selector -- mirror that here
+        final = new if "no open israel roles" in new.lower() else (r[5] or "")
+        assert len(final) <= 220, (
+            "%s: the note write must respect the 220-char cap (got %d)"
+            % (r[0], len(final)))
+        after = replace_own(final, "listing-hunt", "listing-hunt 2026-08-24: no listing found")
+        if "no open israel roles" in after.lower():
+            kept += 1
+    assert kept >= len(sel) - 5, (
+        "%d of %d rows lose their own re-check selector to this note; the write is supposed "
+        "to be skipped rather than cost the row its pool" % (len(sel) - kept, len(sel)))
+
+
+def test_the_scrape_branch_of_each_row_builder_is_gated_too(monkeypatch):
+    """The `ats` and `scrape` branches are separate gates three lines apart.
+
+    Both `retry_unreachable._row_for` and `auto_expand`'s loop call `activation_ok` twice --
+    once for an `ats` payload, once for a `scrape` one. The mutation catalogue covered the
+    `ats` call site in both files and NOTHING for the scrape call site, because coverage was
+    counted per FILE. Deleting one `not` from the scrape guard inverted it in both
+    directions -- activating `Voiceitt` (a bare domain) and parking `Pliops` (a real careers
+    page) -- with 253 tests green.
+    """
+    import retry_unreachable as R
+    from pipeline import identity_gate as G
+    monkeypatch.setattr(G, "page_names_company", lambda n, u, html="": None)
+
+    stored = "https://STORED.example/careers"
+    bare_domain = R._row_for("Voiceitt", stored, "scrape",
+                             (["a", "b", "c", "d", "e"], "https://www.voiceitt.com/"), {})
+    assert bare_domain[4] == "false", (
+        "a bare domain is not a listings page and must not activate: %r" % (bare_domain,))
+    real = R._row_for("Pliops", stored, "scrape",
+                      (["a", "b", "c", "d", "e"], "https://pliops.com/careers"), {})
+    assert real[4] == "true" and real[3] == "https://pliops.com/careers", (
+        "positive control: a real careers page must still activate: %r" % (real,))

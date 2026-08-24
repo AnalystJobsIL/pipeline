@@ -498,5 +498,104 @@
     "replace": "                    if w.lower() not in set())",
     "why": "neuters the _NAME_STOP retry, so every row whose name carries a suffix the page omits is silently refused. R2 showed the only killer was an inspect.getsource assertion -- this record is what makes must_be_killed_by_behavioural do work.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-scrape-remove",
+    "file": "retry_unreachable.py",
+    "symbol": "_row_for",
+    "class": "M1-gate-removal",
+    "find": "        if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "replace": "        if False:",
+    "why": "the scrape exit of retry_unreachable's row builder. Its ats sibling three lines above had M1/M2/M3 and this had none, because coverage was counted per FILE."
+  },
+  {
+    "id": "retry-scrape-invert",
+    "file": "retry_unreachable.py",
+    "symbol": "_row_for",
+    "class": "M2-gate-inversion",
+    "find": "        if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "replace": "        if _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "why": "deleting one token inverts the gate BOTH ways: activates Voiceitt, parks Pliops. 253 tests stayed green."
+  },
+  {
+    "id": "retry-scrape-narrow",
+    "file": "retry_unreachable.py",
+    "symbol": "_row_for",
+    "class": "M3-branch-narrowing",
+    "find": "        if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "replace": "        if len(jobs2) < 0 and not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "why": "narrows the scrape guard to an impossible job count"
+  },
+  {
+    "id": "expand-scrape-remove",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "            elif not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "replace": "            elif False:",
+    "why": "auto_expand runs 08:00 and 20:00 and APPENDS rows; the scrape branch had no mutation."
+  },
+  {
+    "id": "expand-scrape-invert",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "            elif not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "replace": "            elif _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "why": "inverts the scrape gate in both directions"
+  },
+  {
+    "id": "expand-scrape-narrow",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "            elif not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "replace": "            elif len(jobs2) < 0 and not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "why": "narrows the scrape guard to an impossible job count"
+  },
+  {
+    "id": "crack-novrfy-remove",
+    "file": "crack_walled.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "                        if _gate.ok_to_write(name, got[1]):",
+    "replace": "                        if True:",
+    "why": "the novrfy branch persists fr[3] without activating; listing_hunt's fast path activates on that address the next night."
+  },
+  {
+    "id": "crack-novrfy-narrow",
+    "file": "crack_walled.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "                        if _gate.ok_to_write(name, got[1]):",
+    "replace": "                        if n_il < 0 and _gate.ok_to_write(name, got[1]):",
+    "why": "narrows the novrfy guard so the address is never persisted (silent coverage loss direction)"
+  },
+  {
+    "id": "crack-activate-invert",
+    "file": "crack_walled.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "                    if verdict.startswith(\"cracked\") and not _gate.ok_to_write(name, got[1]):",
+    "replace": "                    if verdict.startswith(\"cracked\") and _gate.ok_to_write(name, got[1]) is None:",
+    "why": "ok_to_write returns a bool, so `is None` is always False -- the refusal branch never runs and every cracked verdict activates."
+  },
+  {
+    "id": "hunt-persist-invert",
+    "file": "listing_hunt.py",
+    "symbol": "main",
+    "class": "M2-gate-inversion",
+    "find": "                        if not _gate.identity_ok(name, url):",
+    "replace": "                        if _gate.identity_ok(name, url) is None:",
+    "why": "identity_ok returns a bool; `is None` is always False, so the nolisting branch persists every candidate address."
+  },
+  {
+    "id": "hunt-persist-narrow",
+    "file": "listing_hunt.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "                        if not _gate.identity_ok(name, url):",
+    "replace": "                        if n_il < 0 and not _gate.identity_ok(name, url):",
+    "why": "narrows the persist guard to an impossible Israel-job count"
   }
 ]
