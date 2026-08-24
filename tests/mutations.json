@@ -717,5 +717,75 @@
     "replace": "    return any(f and abs(len(f) - len(t)) <= 99 and (f in t or t in f)\n               for f in forms for t in targets)",
     "why": "widens near-equality to plain containment: `lili` is a substring of `elililly`, so Lili promotes onto Eli Lilly's board -- the recorded incident the tightness rule exists for.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-ats-njobs-const",
+    "file": "auto_expand.py",
+    "symbol": "_row_for_ats",
+    "class": "M8-argument-mis-passing",
+    "find": "    if not _gate.activation_ok(nm, api, n_all):",
+    "replace": "    if not _gate.activation_ok(nm, api, 1):",
+    "why": "wave-4 R2: the count argument replaced with a truthy literal -- the gate's zero-jobs clause is intact in source and inert at this call site; a 0/0 board activates.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-scrape-njobs-const",
+    "file": "auto_expand.py",
+    "symbol": "_row_for_scrape",
+    "class": "M8-argument-mis-passing",
+    "find": "    if not _gate.activation_ok(name, good_url, len(jobs2)):",
+    "replace": "    if not _gate.activation_ok(name, good_url, 1):",
+    "why": "wave-4 R2: the count argument replaced with a truthy literal -- the gate's zero-jobs clause is intact in source and inert at this call site; a 0/0 board activates.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-ats-njobs-const",
+    "file": "retry_unreachable.py",
+    "symbol": "_row_for",
+    "class": "M8-argument-mis-passing",
+    "find": "        if not _gate.activation_ok(nm, api, n_all):",
+    "replace": "        if not _gate.activation_ok(nm, api, 1):",
+    "why": "wave-4 R2: the count argument replaced with a truthy literal -- the gate's zero-jobs clause is intact in source and inert at this call site; a 0/0 board activates.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-scrape-njobs-const",
+    "file": "retry_unreachable.py",
+    "symbol": "_row_for",
+    "class": "M8-argument-mis-passing",
+    "find": "        if not _gate.activation_ok(name, good_url, len(jobs2)):",
+    "replace": "        if not _gate.activation_ok(name, good_url, 1):",
+    "why": "wave-4 R2: the count argument replaced with a truthy literal -- the gate's zero-jobs clause is intact in source and inert at this call site; a 0/0 board activates.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "wayback-njobs-const",
+    "file": "wayback_rescue.py",
+    "symbol": "main",
+    "class": "M8-argument-mis-passing",
+    "find": "        if r and not _gate.activation_ok(name, r[2], r[3]):",
+    "replace": "        if r and not _gate.activation_ok(name, r[2], 1):",
+    "why": "wave-4 R2: the count argument replaced with a truthy literal -- the gate's zero-jobs clause is intact in source and inert at this call site; a 0/0 board activates.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "validate-empty-transpose",
+    "file": "validate_empty.py",
+    "symbol": "check",
+    "class": "M8-argument-transposition",
+    "find": "            if il > 0 and (not _gate.activation_ok(name, api, il, html=html)",
+    "replace": "            if il > 0 and (not _gate.activation_ok(api, name, il, html=html)",
+    "why": "wave-4 R2: name<->api_url transposed at a call site whose n_jobs slot is pre-guarded (a truthy-constant mutation is an equivalent mutant here); a URL in the name slot fails every predicate and the positive control goes red.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-activate-transpose",
+    "file": "bd_rescue.py",
+    "symbol": "main",
+    "class": "M8-argument-transposition",
+    "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)",
+    "replace": "                if v and v[0] and not (_gate.activation_ok(api, name, v[0], html=html)",
+    "why": "wave-4 R2: name<->api_url transposed at a call site whose n_jobs slot is pre-guarded (a truthy-constant mutation is an equivalent mutant here); a URL in the name slot fails every predicate and the positive control goes red.",
+    "must_be_killed_by_behavioural": true
   }
 ]

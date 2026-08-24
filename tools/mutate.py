@@ -256,7 +256,15 @@ def coverage(muts):
             for (f, find), cls in per_site.items():
                 if f == w and site in find:
                     classes |= cls
-            missing = {"M1", "M2", "M3"} - classes
+            # M8 (argument mutation) is demanded at activation_ok sites since wave-4 R2:
+            # M1/M2/M3 mutate a call's PRESENCE and POLARITY, and a catalogue satisfying
+            # only those never asks whether the ARGUMENTS are right -- the dead-platform
+            # transposition and the truthy-constant count both lived in that gap. Scoped
+            # to activation_ok because its sites carry the row-building payloads;
+            # ok_to_write/identity_ok take (name, url) already covered by their own
+            # gate-level records.
+            need = {"M1", "M2", "M3"} | ({"M8"} if "activation_ok" in site else set())
+            missing = need - classes
             if missing:
                 gaps.append(("%s  [%s]" % (w, site[:52]), sorted(missing)))
     return gaps

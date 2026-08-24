@@ -2453,6 +2453,63 @@ def test_the_scrape_branch_of_each_row_builder_is_gated_too(monkeypatch):
         "an aggregator page must park before the identity gate is even asked: %r" % (agg,))
 
 
+def test_a_zero_job_count_refuses_at_every_call_site_not_just_inside_the_gate(
+        tmp_path, monkeypatch):
+    """Wave-4 R2 (B3): `activation_ok`'s `if not n_jobs: return False` was pinned only by a
+    DIRECT call -- `G.activation_ok("Fiverr", url, 0)` -- which tests the gate, not the
+    seven arguments handed to it. Replacing the count with a truthy literal at any call
+    site (`activation_ok(nm, api, 1)`) left the whole suite green, and the write it changes
+    is `active=false -> true` on a board that verified with ZERO jobs -- the empty-board
+    shape the self-heal exists to clean up.
+
+    Page evidence is stubbed PERFECT (constant True) on purpose: the predicate under test
+    is the COUNT ARGUMENT, and with every other clause admitting, only the count can
+    refuse -- so a call site feeding the gate a constant instead of its count goes red
+    here and nowhere else. The two call sites with redundant pre-guards
+    (`validate_empty`'s `il > 0 and`, `bd_rescue`'s `v and v[0] and`) make that mutation
+    an equivalent mutant there; their M8 records transpose `(name, api)` instead.
+    """
+    import sys
+    import retry_unreachable as R
+    import auto_expand as E
+    import wayback_rescue as W
+    from pipeline import identity_gate as G
+    monkeypatch.setattr(G, "page_names_company", lambda n, u, html="": True)
+
+    seed = "https://www.fiverr.com/jobs"
+    z = R._row_for("Fiverr", seed, "ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 0, 0), {})
+    assert z[4] == "false", "retry ats: zero-job board activated: %r" % (z,)
+    z = R._row_for("Pliops", seed, "scrape", ([], "https://pliops.com/careers"), {})
+    assert z[4] == "false", "retry scrape: zero-job page activated: %r" % (z,)
+    z = E._row_for_ats(("Fiverr", "greenhouse", "fiverr", _FIVERR, 0, 0), seed)
+    assert z[4] == "false", "expand ats: zero-job board activated: %r" % (z,)
+    z = E._row_for_scrape("Pliops", [], "https://pliops.com/careers", {})
+    assert z[4] == "false", "expand scrape: zero-job page activated: %r" % (z,)
+    # positive control: with a real count every one of the four accepts
+    ok = R._row_for("Fiverr", seed, "ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12), {})
+    assert ok[4] == "true", "positive control regressed: %r" % (ok,)
+
+    # wayback passes r[3] straight from the archive payload -- drive main()
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["ZeroCo", "", "", "https://www.zeroco.example/careers", "false",
+         "unreachable; could not scan"],
+        ["Fiverr", "", "", "https://www.fiverr.com/jobs", "false",
+         "unreachable; could not scan"],
+    ])
+    res = {"ZeroCo": ("greenhouse", "zeroco",
+                      "https://boards-api.greenhouse.io/v1/boards/zeroco/jobs", 0, 0),
+           "Fiverr": ("greenhouse", "fiverr", _FIVERR, 40, 12)}
+    monkeypatch.setattr(W, "rescue", lambda name, url: res[name])
+    monkeypatch.setattr(W.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(sys, "argv", ["wayback_rescue.py"])
+    W.main()
+    out = _read(tmp_path)
+    assert out["ZeroCo"][4] == "false", (
+        "wayback: a zero-job archived board activated: %r" % (out["ZeroCo"],))
+    assert out["Fiverr"][4] == "true", "positive control regressed: %r" % (out["Fiverr"],)
+
+
 def test_a_tenant_that_matches_only_the_FILLER_STRIPPED_core_is_still_admitted():
     """Kills `tenant-filler-neutered`.
 
