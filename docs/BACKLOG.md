@@ -1618,6 +1618,14 @@ Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-d
     purpose). Found by wave-3 attacker A; conflicts on the 00:00 push are rare (the hunt
     ends by 00:30) but the loss is silent and repeats nightly.
 
+96. **Three scraper constants no test observes** — lane: `scraper`. Predicted (not applied)
+    survivors of the 2026-08-24 mutation sweep: `_extract`'s plain-fetch gate
+    (`deadline.remaining() >= 3` → `>= 30` would silently stop the plain-HTTP rescue for any
+    company with 3–30 s left), `_readable`'s 2,000-byte floor (the classification table only
+    uses 500 / 2,500 / 3,000), and `_LINK_PAGES_PER_PREFIX = 25` (every test injects
+    `pages_per_prefix`, so the module default is never read; a live board with 25 positions
+    would yield 2 under `= 2`). One assertion each, then a `tests/mutations.json` record (92).
+
 94. **`daily-digest.yml`'s conflict path restores `cloud_state/` wholesale** — lane: `infra`
     (HANDOFF open item 7 already names `seen.db`). It can also revert a `collect` stamp that
     scrape-refresh pushed after the 05:00 checkout; the next 00:00 run re-stamps, so no mail
