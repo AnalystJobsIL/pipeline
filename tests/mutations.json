@@ -827,5 +827,25 @@
     "replace": "    r\"aggregator URL|redirects to|scanned via brightdata|\"",
     "why": "wave-4 R3: the receiver side of the wave-3 hand-off. Dropping this alternative emptied the hunt pool of 27 named rows (InnovoPro, LawGeex, FairFly, ...) with pytest, check_invariants and registry_health all green -- the senders were guarded, the receiver was not, and both mirrors were retyped copies.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-scrape-seed-leak",
+    "file": "auto_expand.py",
+    "symbol": "_row_for_scrape",
+    "class": "M7-constant-drift",
+    "find": "        return [name, \"scrape\", seed_url, seed_url, \"false\",\n                \"scraped page is not this company's; no listing found\"]",
+    "replace": "        return [name, \"scrape\", good_url, good_url, \"false\",\n                \"scraped page is not this company's; no listing found\"]",
+    "why": "wave-4 R1 (filed): the third builder kept the leak items 54 closed for the other two -- a refused ATS-hosted `good_url` in cols 2-3 joins crack_walled's pool via is_walled's host derivation.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "validate-empty-floor-down",
+    "file": "validate_empty.py",
+    "symbol": "check",
+    "class": "M7-constant-drift",
+    "find": "    if len(html) < 500:",
+    "replace": "    if len(html) < 50:",
+    "why": "wave-4 R2 (filed): the floor was killed only when drifted UP. Down at 50, a JS challenge shell 'answers' the textual scan and every walled row in the Sunday pool becomes a permanent false suspect.",
+    "must_be_killed_by_behavioural": true
   }
 ]

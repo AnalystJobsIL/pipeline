@@ -54,7 +54,7 @@ def _load_cache():
         return {}
 
 
-def _row_for_scrape(name, jobs2, good_url, cache):
+def _row_for_scrape(name, jobs2, good_url, seed_url, cache):
     """The scrape row builder — the seam a test can reach, like `_row_for_ats` below.
 
     This branch lived inline in `main()`, and `main()` writes through the ABSOLUTE
@@ -73,7 +73,12 @@ def _row_for_scrape(name, jobs2, good_url, cache):
         return [name, "scrape", good_url, good_url, "false",
                 "aggregator URL; resolve real careers page before activating"]
     if not _gate.activation_ok(name, good_url, len(jobs2)):
-        return [name, "scrape", good_url, good_url, "false",
+        # SEED url, not the refused page -- the same rule `_row_for_ats` and
+        # `retry_unreachable._row_for` follow (docs/BACKLOG.md 54): `good_url` is a
+        # FOLLOWED link that routinely leaves the company's own host, and a refused
+        # ATS-hosted page persisted into cols 2-3 puts a foreign host into the row's
+        # address, which `identity_gate.is_walled` reads as crack-pool membership.
+        return [name, "scrape", seed_url, seed_url, "false",
                 "scraped page is not this company's; no listing found"]
     cache[name] = jobs2
     return [name, "scrape", good_url, good_url, "true",
@@ -159,7 +164,7 @@ def main():
             n_unreach += 0 if row[4] == "true" else 1
         elif kind == "scrape":
             jobs2, good_url = r[1] if isinstance(r[1], tuple) else (r[1], url)
-            row = _row_for_scrape(name, jobs2, good_url, cache)
+            row = _row_for_scrape(name, jobs2, good_url, url, cache)
             n_resolved += 1 if row[4] == "true" else 0
             n_unreach += 0 if row[4] == "true" else 1
         elif kind == "empty":

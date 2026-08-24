@@ -1145,10 +1145,12 @@ Six blocking findings, all reproduced and fixed. These are the residuals.
     `auto_expand` appends rows from the discovery cache, so no `companies.csv` selector can
     enumerate a reachable row.
 
-    **CLOSED by f1b28a8 (wave 3):** both builders now persist the SEED url on refusal,
-    the note carries the `no listing found` hand-off token, and the divergence cannot
-    quietly return -- `expand-ats-seed-leak` in `tests/mutations.json` re-introduces the
-    leak and must go red.
+    **CLOSED by f1b28a8 (wave 3) for the two builders it named** -- and wave-4 R1 showed
+    that annotation overstated: `auto_expand._row_for_scrape`, 25 lines above, kept the
+    identical leak (`good_url` is a FOLLOWED link that routinely leaves the company's own
+    host). The third builder was closed in wave 4; `expand-ats-seed-leak` and
+    `expand-scrape-seed-leak` in `tests/mutations.json` re-introduce each leak and must go
+    red.
 
 55. **The `taleo.net` half of `_ATS_NOT_IN_ATS_HOST` is untested and its registry set is
     empty** — lane: `registry`. `test_the_jobvite_taleo_branch_is_a_gate_and_not_a_pass_through`
@@ -1237,3 +1239,45 @@ FairFly shape). These are the residuals.
     suspect volume in practice says otherwise, the durable answer is the same data column
     item 50 names (`acquired-by`), not a looser matcher — `lili` is a substring of
     `elililly` and that promotion is a recorded incident.
+
+62. **`restore_only` is exempt from the scheduled-leak check `legacy_unscheduled` gets** —
+    lane: `registry`. `test_the_writer_allow_list_only_covers_tools_no_workflow_runs`
+    intersects only `_LEGACY_UNSCHEDULED` with the scheduled set; both buckets feed
+    `tools/mutate.py:_load_exempt` identically, so a name added to `restore_only` is
+    exempted from the enumeration AND mutation coverage with no workflow check. No defeat
+    rides it today (the wayback behavioural fixture still fails when R2 demonstrated the
+    bypass). The close is one line: intersect both buckets, and demand that a
+    `restore_only` entry's writes never touch col 4.
+
+63. **`_modules_a_workflow_runs` sees only `python <name>.py` run-lines and does not follow
+    imports** — lane: `registry`. A `python -m` invocation or a wrapper script would not
+    register, and three scheduled modules import from `legacy_unscheduled` ones
+    (`auto_expand` <- `resolve_deep`, `retry_unreachable` <- `ingest_research`,
+    `audit_empty_rows` <- `comeet_resolve`). Verified harmless at 8636b48: every ungated
+    write in those three sits under a `__main__` guard or writes `out/deep_rows.csv`, so
+    nothing a scheduled importer touches reaches a registry write. It stays true only by
+    convention; the derivation should follow imports or the allow-list test should assert
+    the imported modules' writer functions are never called.
+
+64. **Registry writers run inside the 05:00-08:30 UTC freeze, and three writer workflows
+    commit without `check_invariants`** — lane: `infra`, PRE-EXISTING. `self-heal.yml`
+    06:00 runs `apply_resolved.py`; `auto-expand.yml` 08:00 appends rows. The freeze rule
+    as written (CLAUDE.md) binds the operator's dispatch/cancel, not the crons — but the
+    digest at 05:00 reads what 02:30 wrote, and `auto-expand`/`retry-unreachable`/
+    `audit-coverage` commit `[skip ci]` with no `check_invariants` step
+    (`grep -rn check_invariants .github/workflows` -> daily-digest.yml, tests.yml only).
+    Wave 3/4 changed neither the schedules nor the rows-per-run.
+
+65. **`empty-but-suspect` waits out `listing_hunt`'s 14-day cooldown, and no scheduled tool
+    clears the verdict** — lane: `registry`. A suspect row usually already carries a
+    `listing-hunt <date>` stamp, so the hunt suppresses it for the rest of the cooldown
+    (latency, not loss — the row stays owned). `recheck_suspects.py` is the only clearer
+    and appears in no workflow. The hand-off works; it is just slow, and its terminal
+    reader is manual.
+
+66. **`retry_unreachable`'s `ats` refusal branch may have an empty reachable set** — lane:
+    `registry`, a measurement note from wave-4 R3: `resolve_deep.ATS_PATTERNS` yields only
+    path-tenant platforms (plus `apply.workable.com`, whose labels are all plumbing), so
+    `tenant_is_this_company` never vetoes there and `is_foreign` is False on every ATS
+    host — the branch fires today only via the gate's page-fetch tail. Do not count a
+    fixture on this branch as proof of a live path; the scrape branch is the reachable one.

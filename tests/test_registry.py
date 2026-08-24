@@ -1623,6 +1623,15 @@ def test_validate_empty_needs_the_board_to_be_this_companys(monkeypatch):
     assert kind == "promote" and row and row[4] == "true", (
         "positive control regressed: %r %r" % (kind, row))
 
+    # the 500-char floor in BOTH directions: drifted UP it refuses readable pages (killed
+    # above -- the 3000-char pages), drifted DOWN it treats a sub-500 shell as evidence.
+    # This page has 2 role-near-Israel hits and ~240 chars: "can't re-check", never suspect.
+    monkeypatch.setattr(V, "_get", lambda u, timeout=10:
+                        "<html>" + "Tel Aviv data analyst role. " * 8 + "</html>")
+    kind, row = V.check("Fiverr", "https://www.fiverr.com/jobs")
+    assert kind == "confirmed", (
+        "a page under the readability floor is no evidence in either direction: %r" % (kind,))
+
 
 def test_a_held_page_cannot_vouch_for_a_board_it_merely_embeds(tmp_path, monkeypatch):
     """Wave-4 R1 (B1, reproduced end-to-end): `validate_empty.check` fetches the row's
@@ -2442,13 +2451,19 @@ def test_the_scrape_branch_of_each_row_builder_is_gated_too(monkeypatch):
     # Extracted to `_row_for_scrape` for exactly this reason.
     import auto_expand as E
     cache = {}
-    bare2 = E._row_for_scrape("Voiceitt", ["a", "b", "c"], "https://www.voiceitt.com/", cache)
+    seed2 = "https://SEED.example/careers"
+    bare2 = E._row_for_scrape("Voiceitt", ["a", "b", "c"], "https://www.voiceitt.com/",
+                              seed2, cache)
     assert bare2[4] == "false" and "Voiceitt" not in cache, (
         "auto_expand's scrape gate must refuse what retry's refuses: %r" % (bare2,))
-    real2 = E._row_for_scrape("Pliops", ["a", "b", "c"], "https://pliops.com/careers", cache)
+    assert bare2[2] == seed2 and bare2[3] == seed2, (
+        "the refused page leaked into the row's address -- the item-54 rule applies to "
+        "the THIRD builder too: %r" % (bare2,))
+    real2 = E._row_for_scrape("Pliops", ["a", "b", "c"], "https://pliops.com/careers",
+                              seed2, cache)
     assert real2[4] == "true" and cache.get("Pliops") == ["a", "b", "c"], (
         "positive control: accept must activate AND populate the scrape cache: %r" % (real2,))
-    agg = E._row_for_scrape("AnyCo", ["a"], "https://www.linkedin.com/jobs/x", cache)
+    agg = E._row_for_scrape("AnyCo", ["a"], "https://www.linkedin.com/jobs/x", seed2, cache)
     assert agg[4] == "false" and "aggregator" in agg[5], (
         "an aggregator page must park before the identity gate is even asked: %r" % (agg,))
 
@@ -2563,7 +2578,8 @@ def test_a_zero_job_count_refuses_at_every_call_site_not_just_inside_the_gate(
     assert z[4] == "false", "retry scrape: zero-job page activated: %r" % (z,)
     z = E._row_for_ats(("Fiverr", "greenhouse", "fiverr", _FIVERR, 0, 0), seed)
     assert z[4] == "false", "expand ats: zero-job board activated: %r" % (z,)
-    z = E._row_for_scrape("Pliops", [], "https://pliops.com/careers", {})
+    z = E._row_for_scrape("Pliops", [], "https://pliops.com/careers",
+                          "https://SEED.example/careers", {})
     assert z[4] == "false", "expand scrape: zero-job page activated: %r" % (z,)
     # positive control: with a real count every one of the four accepts
     ok = R._row_for("Fiverr", seed, "ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12), {})
@@ -2708,7 +2724,7 @@ def test_every_refusal_note_keeps_the_row_in_a_re_check_pool(monkeypatch):
                    ("Bancor", "icims", "bancorpbank", _BANCORP, 30, 9), {}),
         R._row_for("Bancor", seed, "scrape", (["a", "b"], _BANCORP), {}),
         E._row_for_ats(("Bancor", "icims", "bancorpbank", _BANCORP, 30, 9), seed),
-        E._row_for_scrape("Bancor", ["a", "b"], _BANCORP, {}),
+        E._row_for_scrape("Bancor", ["a", "b"], _BANCORP, seed, {}),
     ]
     import listing_hunt as LH
     import registry_health as RH
