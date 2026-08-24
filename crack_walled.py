@@ -43,9 +43,11 @@ from pipeline.company_identity import is_foreign
 from pipeline.company_identity import looks_like_a_job_listing_page, page_mentions_company
 from pipeline.recruiters import is_recruiter
 
-# States no re-check pool may re-open. `pipeline.verdicts.TERMINAL` PLUS `alias-of`, which
-# belongs there and is not (docs/BACKLOG.md, "One terminal-state list").
-TERMINAL = re.compile(r"defunct|domain-dead|alias-of", re.I)
+# States no re-check pool may re-open — THE shared list (docs/BACKLOG.md 47, closed).
+# This copy used to spell 3 of the 6 tokens; deriving it WIDENS the exclusion by
+# `duplicate of`/`redundant`/`recruiter` — 9 rows measured, every one correctly final
+# (recruiter rows, a kept-inactive duplicate, three redundant-scrape twins).
+from pipeline.verdicts import TERM_RX as TERMINAL
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the

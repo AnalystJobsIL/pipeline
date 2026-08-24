@@ -1040,6 +1040,17 @@ see `docs/sessions/2026-08-24-registry.md` for why nine waves did not converge w
     about identity gates. Do it with `ALLOWED_ORPHANS` in the same change, since these 10
     rows are why that list exists.
 
+    **CLOSED 2026-08-24 (consolidation), with the measurement redrawing the plan:**
+    `verdicts.TERMINAL` gained `alias-of` (37 rows, all genuine aliases, newly terminal);
+    `audit_empty_rows`, `crack_walled`, `probe_candidates` and `triage_dark` all derive
+    from `TERM_RX` (probe and triage measured zero change; audit/crack widen by 9 named
+    rows — recruiters, a kept-inactive duplicate, three redundant-scrape twins — all
+    correctly final and none carrying a pool token, so pool membership moved 0).
+    `scan_dead_domains` is the ONE deliberate divergence, kept and documented at its
+    selector: excluding `domain-dead` would end its core function (re-testing dead domains
+    so a revived one is cleared) — that is where this item's original 10-row cost lived,
+    and the answer was to not unify that tool, not to pay the cost.
+
 48. **The re-check pool is still defined in four places** — lane: shared plumbing, unchanged
     by the rebuild for the same reason as 47. `pipeline/verdicts.TOKENS` (18),
     `listing_hunt.main()`'s inline regex (16), `check_invariants.POOL` (17),

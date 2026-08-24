@@ -36,8 +36,13 @@ TOKENS = {
     "dark-triage":             "triage_dark",
 }
 
-# states that are deliberately final — never re-checked
-TERMINAL = ("defunct", "domain-dead", "duplicate of", "redundant", "recruiter")
+# states that are deliberately final — never re-checked. THE one list: audit_empty_rows,
+# crack_walled, probe_candidates and triage_dark all derive from TERM_RX below. The one
+# deliberate divergence is scan_dead_domains, which excludes ONLY `defunct` — re-testing
+# `domain-dead` rows is its purpose (a revived domain must be cleared), and that is
+# documented at its selector. `alias-of` was missing here for a wave while two tools
+# spelled their own copies "TERMINAL plus alias-of" (docs/BACKLOG.md 47).
+TERMINAL = ("defunct", "domain-dead", "duplicate of", "redundant", "recruiter", "alias-of")
 
 POOL_RX = re.compile("|".join(re.escape(t) for t in TOKENS), re.I)
 TERM_RX = re.compile("|".join(TERMINAL), re.I)

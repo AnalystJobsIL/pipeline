@@ -21,6 +21,7 @@ import sys
 import time
 import urllib.request
 from pipeline.atomic import write_csv_rows, write_json
+from pipeline.verdicts import is_terminal
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the
@@ -101,7 +102,7 @@ def main():
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
                and PROBE_POOL.search(r[5] or "")
-               and "domain-dead" not in r[5] and "defunct" not in r[5]
+               and not is_terminal(r[5])   # THE shared list; measured no change here
                and (r[3] or "").startswith("http")]
     # Least-recently-probed first. The target filter has no date term, so with a budget and
     # file-order targets the same prefix is probed every day and the tail never is - and a row

@@ -93,8 +93,11 @@ def main():
                if r and len(r) >= 6 and r[4] == "false"
                and re.search(r"no ATS detected|no IL listing|no listing found|monitored candidate|unsupported ATS",
                              r[5] or "")
+               # DELIBERATELY NOT the shared TERM_RX: excluding `domain-dead` here would
+               # end this tool's core function — re-testing dead domains so a revived one
+               # is cleared. Unification was measured at 31 rows lost (docs/BACKLOG.md 47);
+               # only `defunct` (a business judgment, not a network state) is final here.
                and _rescannable(r[5] or "") and "defunct" not in (r[5] or "")
-               # (already-dead rows are re-tested after 30d so a revived domain is cleared)
                and (r[3] or "").startswith("http")]
     # least-recently-scanned first, so a budget-truncated run resumes where it stopped
     targets.sort(key=lambda ir: seen.get(ir[1][0], ""))
