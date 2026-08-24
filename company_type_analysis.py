@@ -3,7 +3,7 @@
 
 Reads real board jobs from the matched table (default: cloud_state/seen.db — the CI-
 accumulated set; --db to point elsewhere), runs roleprofile.extract on each, joins each
-company's firmographics record (state/firmographics.json export), and aggregates
+company's firmographics record (the committed cloud_state/firmographics.json), and aggregates
 requirement patterns along three company-type axes: sector, stage, size_band.
 
     python company_type_analysis.py                # writes out/company_type_analysis.{json,md}
@@ -26,10 +26,11 @@ from collections import Counter, defaultdict
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from pipeline import roleprofile
-from pipeline.firmographics import identity_key
+from pipeline.firmographics import SHARED_EXPORT, identity_key
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FIRMO = os.path.join(HERE, "state", "firmographics.json")
+# the COMMITTED export — `state/firmographics.json` is gitignored and absent in the cloud
+FIRMO = SHARED_EXPORT
 
 
 # The researcher's free-text sectors fragment ("adtech", "adtech / martech", "marketing
@@ -102,9 +103,12 @@ def main():
                     else os.path.join(HERE, "cloud_state", "seen.db"),
                     help="seen.db holding the matched jobs (default: the chain's fetched "
                          "copy of CI's db when present, else the worktree cloud_state)")
+    ap.add_argument("--firmo", default=FIRMO, help="firmographics export to join (default: "
+                    "the committed cloud_state/firmographics.json)")
     a = ap.parse_args()
 
-    with open(FIRMO, encoding="utf-8") as f:
+    print(f"db: {a.db}\nfirmographics: {a.firmo}")
+    with open(a.firmo, encoding="utf-8") as f:
         firmo = json.load(f)
     jobs = load_jobs(a.db)
 

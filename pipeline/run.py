@@ -27,11 +27,8 @@ import traceback
 from collections import Counter
 
 from . import aggregators
-from . import company_info as company_info_mod
 from . import firmographics as firmographics_mod
 
-FIRMO_MAX_PER_RUN = 5  # research calls can web-search (~1-3 min each); bulk = backfill script
-BLURB_MAX_PER_RUN = 30  # one claude call each, inside the digest timeout
 EMAIL_MAX_ROLES = 40   # a daily email nobody scrolls is a daily email nobody reads
 FIRST_SCAN_MAX_ROLES = 15  # roles at employers this digest is seeing for the first time
 BOARD_MAX_ROLES = 1500  # page-weight backstop; each role renders a full detail card
@@ -164,6 +161,9 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                 accepted.append(j)
 
     print("  " + jdfill.summary(), flush=True)
+    # the enrich stage's verdict on itself (both backfill scripts stamp it) and the inline fill's
+    for _line in stages.alarms("enrich") + jdfill.alarms():
+        _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
 
     # Aggregator breadth layer: Google-for-Jobs via SerpApi (covers Israel). Gated behind
     # AGGREGATOR_ENABLED=1 (set only in the scheduled cloud job) so local/test runs never
@@ -325,96 +325,21 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     if len(llm_cache) != llm_cache_before:
         st.save_llm_cache(llm_cache, run_date)
 
-    # company summaries ("what it does + how it earns money") for the interactive digest.
-    # Precedence: researched static profiles (company_profiles.json, committed) > claude
-    # cache (sqlite) > freshly generated claude summary (fallback so nothing is blank).
-    profiles = {}
-    ppath = os.path.join(REPO_ROOT, "company_profiles.json")
-    if os.path.exists(ppath):
-        try:
-            with open(ppath, encoding="utf-8") as f:
-                profiles = json.load(f)
-        except (ValueError, OSError):
-            profiles = {}
-    company_info = {**st.load_company_info(), **{k: v for k, v in profiles.items() if v}}
-    if use_llm:
-        # Budgeted like the firmographics below: the board is no longer a 14-day window, so
-        # the "companies with no blurb yet" set can be large on the first run after a
-        # coverage jump — and each blurb is a claude call inside the digest's own timeout.
-        todo = sorted(c for c in {j["company"] for j in board_jobs} if not company_info.get(c))
-        if len(todo) > BLURB_MAX_PER_RUN:
-            print(f"  company blurbs: {len(todo)} missing, doing {BLURB_MAX_PER_RUN} this "
-                  f"run (cached; the rest follow on later runs)", flush=True)
-        for company in todo[:BLURB_MAX_PER_RUN]:
-            ctx = next((j.get("description") for j in board_jobs
-                        if j["company"] == company and j.get("description")), "")
-            summ = company_info_mod.summarize_company(company, ctx)
-            company_info[company] = summ
-            st.save_company_info({company: summ}, run_date)
-            stats["company_summaries"] += 1
-
-    # Structured firmographics for companies the store hasn't researched yet. Same lazy
-    # cached pattern as the blurbs above, but each call may web-search (~1-3 min), so cap
-    # per run and let research_firmographics.py do bulk backfill.
-    if use_llm:
-        import datetime as _dt
-        firmo = st.load_firmographics()
-        # failure memory: permanently failing names (junk/ambiguous) retry at most weekly,
-        # so they can't capture the fixed per-run budget and starve real new companies
-        failures = st.load_firmo_failures()
-        week_ago = (_dt.date.today() - _dt.timedelta(days=7)).isoformat()
-        # identity is normalized (§7): "SolarEdge Technologies" on the board must find the
-        # stored "SolarEdge" profile, and a failure strike on one variant gates the other
-        _idk = firmographics_mod.identity_key
-        firmo_norms = {_idk(c) for c in firmo}
-        failed_norms = {_idk(c) for c, (att, last) in failures.items() if last > week_ago}
-        candidates = sorted(c for c in {j["company"] for j in board_jobs}
-                            if c not in firmo
-                            and _idk(c) not in firmo_norms
-                            and not firmographics_mod.looks_like_junk(c)
-                            and _idk(c) not in failed_norms)
-        # intra-batch dedupe: "X" and "X Israel" surfacing in one digest are one company —
-        # they must not spend two of the five budget slots and mint a duplicate group
-        missing, _batch = [], set()
-        for c in candidates:
-            if _idk(c) not in _batch:
-                _batch.add(_idk(c))
-                missing.append(c)
-        for company in missing[:FIRMO_MAX_PER_RUN]:
-            ctx = next((j.get("description") for j in board_jobs
-                        if j["company"] == company and j.get("description")), "")
-            try:
-                rec = firmographics_mod.research_company(company, ctx)
-            except firmographics_mod.ResearchUnavailable:
-                break  # infrastructure outage: don't blame names, don't burn the budget
-            if rec:
-                st.save_firmographics({company: rec}, run_date)
-                stats["firmographics_researched"] += 1
-            else:
-                st.record_firmo_failure(company, run_date)
-
-    # sqlite ∪ the committed JSON export. The two stores (local `state/seen.db`, cloud
-    # `cloud_state/seen.db`) cannot be git-merged, which is how 919 researched profiles
-    # ended up on one laptop while the cloud digest that RENDERS them had an empty table.
-    # The export is the artifact both sides read; the fresher `as_of` wins per company.
-    _shared = firmographics_mod.load_shared()
-    _firmo_store = dict(_shared)
-    for _c, _rec in st.load_firmographics().items():
-        _firmo_store[_c] = firmographics_mod.newer(_shared.get(_c), _rec)
-    # Look the record up under the NORMALIZED identity, so "SolarEdge Technologies" on the
-    # board finds the stored "SolarEdge" (ARCHITECTURE §7), and cover every company we have
-    # ever matched — the archive renders the same card and showed facts for 5 of 50.
-    _by_key = {firmographics_mod.identity_key(k): v for k, v in _firmo_store.items()}
-    _all_companies = {j["company"] for j in st.get_matched_since("0000-01-01")}
-    firmo_display = {c: (_firmo_store.get(c) or _by_key.get(firmographics_mod.identity_key(c)))
-                     for c in _all_companies}
-    firmo_display = {k: v for k, v in firmo_display.items() if v}
-
-    # write the union back out so this run's own research reaches the other store too
-    try:
-        firmographics_mod.save_shared(_firmo_store)
-    except Exception as e:  # noqa: BLE001
-        print(f"  [firmographics] shared export skipped: {e}", file=sys.stderr)
+    # Company intel — blurbs + researched facts for every card (lane: company-intel,
+    # ARCHITECTURE §7). One call: bounded in calls and minutes (FIRMO_MAX_PER_RUN /
+    # FIRMO_TIME_BUDGET_MIN / BLURB_MAX_PER_RUN), never raises, never writes the shared
+    # export on a scoped run, and reports itself into the audit block below.
+    company_info, firmo_display, _intel = firmographics_mod.enrich_for_run(
+        st, board_jobs=board_jobs, email_jobs=email_jobs,
+        all_companies={j["company"] for j in st.get_matched_since("0000-01-01")},
+        run_date=run_date, use_llm=use_llm, scoped=bool(only or limit),
+        profiles_path=os.path.join(REPO_ROOT, "company_profiles.json"))
+    _intel_lines, _intel_warn = firmographics_mod.audit_lines(_intel)
+    for _line in _intel_warn:
+        print(f"::warning::company-intel {_line}", flush=True)
+    print(f"  [company-intel] {'; '.join(_intel_lines)}", flush=True)
+    stats["firmographics_researched"] += _intel["researched"]
+    stats["company_summaries"] += _intel["blurbs_written"]
 
     # Stamp BEFORE the summary is built, or the audit block this run prints says
     # "publish: never run" about the very run printing it — the stamp was written after
@@ -441,6 +366,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         "registry_alarms": _registry_alarms_lines,
         "stage_alarms": _stage_alarms,
         "fetch_health": _fetch_health_lines,
+        "company_intel": _intel_lines,
         "paths": dict(paths),
         "failed_companies": failed_companies,
     }

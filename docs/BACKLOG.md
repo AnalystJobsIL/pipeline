@@ -1712,3 +1712,114 @@ write list; each item names the lane that owns it and the command that proves it
     answered 500 on 14 tenants and never reproduced — so keep Workday rows on one worker
     and measure before trusting it. Note `http.py`'s 30 s timeout × 3 retries makes a
     hung host cost ~100 s on any worker.
+
+97. **Retire (or weekly) the Windows firmographics chain** — lane: `company-intel` (+ `infra`
+    for the scheduled task `IsraeliJobs-Firmographics`). Since 2026-08-24 the cloud digest is
+    the writer of record and covers the board on its own (ARCHITECTURE §7); the chain spends
+    the shared subscription on ~800 registry rows that never render and its output reaches the
+    cloud only when someone commits `cloud_state/firmographics.json` by hand. Condition: seven
+    consecutive mornings of a healthy `Company intel:` line with no `::warning::company-intel`.
+    Then delete `run_firmo_chain.cmd`, `firmo_health_check.py` and the task; `research_firmographics.py`
+    stays as the by-hand bulk tool. Until then: `--workers 3` hits `529 Overloaded` (2 of 3
+    calls on 2026-08-24 09:13) — drop to 2.
+98. **29 identity-duplicate groups in the export** — lane: `company-intel`. AMD / AMD Israel,
+    Intel / Intel Corporation / Intel Israel, Amazon / AWS / Amazon Israel … (list:
+    ARCHITECTURE §7, "Identity"). `display_index` picks deterministically (fullest, then
+    shortest name); merging the records (keep the winner, inherit non-empty fields per
+    `firmographics.merge`) is a data change to the committed export, best done in one commit
+    with a before/after count.
+99. **`_STAGE_LABEL` in `pipeline/digest.py` is not total over `firmographics.STAGES`** — lane:
+    `render`. `private-enterprise` (44 records) renders as the raw enum on every card (today's
+    SHILA card); `subsidiary`/`government`/`nonprofit` label values the researcher can never emit.
+    Pin: `assert not (firmographics.STAGES - set(digest._STAGE_LABEL))`. Declined by the operator
+    for the company-intel session on 2026-08-24 as out of lane.
+100. **Two junk regexes for one rule** — lane: `render` (+ `company-intel`). `digest._ABOUT_JUNK`
+    misses `UNKNOWN` and `Error:`; `company_info._JUNK_OUT` misses `unable to confirm`. The
+    renderer's gate should import the writer's and extend it. Since 2026-08-24
+    `company_profiles.json` is filtered through `_JUNK_OUT` on load, so nothing reaches the card
+    today; the drift remains.
+101. **`looks_like_junk` cannot catch a bare job title** — lane: `company-intel`. Restated from
+    item 11: a name that is ENTIRELY role words plus seniority modifiers ("Senior Data Analyst",
+    "BI Developer") is not junk. Pin: `assert looks_like_junk("Senior Data Analyst")`.
+102. **`company_info` has no `''`-aware API** — lane: shared (`pipeline/store.py`). The monthly
+    retry of empty blurbs reads `st.conn` directly in `firmographics._blurbs`; move to a
+    `load_company_info_status()` when the store owner next touches the table, and give blurbs
+    the same failure memory `firmo_failed` gives research.
+103. **`daily-digest.yml`'s conflict path and the export** — lane: `infra`. Item 94's wholesale
+    restore also reverts `cloud_state/firmographics.json`; `merge_json_cache.merge` is the right
+    tool (company-keyed dict) and `firmographics.merge` the right per-record rule.
+104. **Mutation records for the company-intel guards** — lane: `registry` (owns `tools/mutate.py`).
+    The catalogue in `docs/sessions/2026-08-24-company-intel.md` §"Mutation sweep" was run
+    through `tools.mutate.run_one` from a scratch runner; a `--catalogue PATH` flag would let
+    each lane keep its own file beside `tests/mutations.json`.
+
+
+## From the `jd-text` lane, 2026-08-24
+
+Record: `docs/sessions/2026-08-24-jd-text.md`. Numbers re-derived that day; re-derive before acting.
+
+105. **`cloud_state/pipeline_stages.json` has a lost-update window and a wholesale restore** —
+    lane: `infra`. `scrape-refresh.yml` (00:00, `timeout-minutes: 330`, group `repo-state`) and
+    `daily-digest.yml` (05:00, its own group) can overlap by design, and both read-modify-write
+    the stamp file (`refresh_scrape_cache.py:537`, `pipeline/run.py` `stages.stamp("publish")`,
+    now `jdfill.record_enrich`). Worse, the digest's conflict path (`daily-digest.yml:163-164`)
+    copies `cloud_state` back wholesale from checkout time, deleting any stamp another job wrote
+    since. The `enrich` stamp is now load-bearing for the mail; a per-key merge of this file
+    (like `merge_json_cache`) belongs in the conflict path. Found by the wave-0 design attack.
+106. **The markdown mail never prints the inline jd-fill count** — lane: `render`.
+    `jd_filled_inline` is in the summary dict (`pipeline/run.py`) and rendered by `_text_audit`
+    (`digest.py:1385`) and `_html_audit` (`:1418`) but not by `build_markdown` — the one that
+    becomes `digests/latest.md`. One line after `digest.py:635`
+    (`- LLM calls this run:`): `f"- JDs fetched inline: {s.get('jd_filled_inline', 0)}"`. Until
+    then the step log's `jd-fill: 93/153 …` line is the only place the number exists.
+107. **A role judged on a bare title keeps that verdict after its text arrives** — lane:
+    `classifier`. `llm_cache` is keyed `company|title` (`seniority.py:313`) with no record of
+    whether a description was present; a Workday role rejected on 2026-08-23 with `""` is
+    `llm_cache` forever, even though the native rung now fetches its JD before `classify`. The
+    key (or the cached value) should carry a "had description" bit so a later run with text
+    re-judges once. Measured need: 60 of 153 inline fills failed on 2026-08-24, all classified
+    bare; their verdicts are cached.
+108. **`merge_json_cache` merges per company; the enrichment writes per job** — lane: `infra`.
+    `merge_json_cache.py:46-56` keeps OUR whole job list for any company `enrich_scrape_jd`
+    touched (base snapshot is taken at checkout, `daily-digest.yml:41-42`). If `scrape-refresh`
+    commits first on an overlap day, origin's NEW cards for that company are dropped in favour
+    of our older cards-with-descriptions; if the digest commits first, `_carry_jd` keeps
+    everything. The correct merge key is `url`/`job_id` — exactly what
+    `refresh_scrape_cache._carry_jd:242` already uses. Blast radius today: 20 todo jobs.
+109. **6 of the 7 short `matched` rows carry URLs that are not job pages** — lane: `roles`.
+    `python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(*c.execute(\"select company,url from matched where length(coalesce(description,''))<300\"),sep='\n')"`
+    → two Meta rows point at `metacareers.com/jobs?offices[0]=…` (a search page), Navan at an
+    Indeed `viewjob`, Nebius/Taboola at `?gh_jid=` embeds, Port.io at a comeet page. The URL
+    a discovery source carries becomes the role's URL on first sight (`store.upsert_matched`),
+    and a later sighting from the company's own board does not replace it when the merge key
+    matches. Consequence measured: 4 Unlocker credits on 2026-08-24 for 0 fills.
+    `jdfill.is_job_url` now refuses the search pages before the Unlocker; the Greenhouse and
+    Comeet rungs read the other four. The Meta rows need a real URL from the store's side.
+110. **`bd_rescue.unlock` discards what the Unlocker reports** — lane: `registry`.
+    `bd_rescue.py:42-53` swallows the exception and never reads `x-brd-error-code`, so a dead
+    token (401), a refused host (`policy_20140` — every `myworkdayjobs.com` page) and a walled
+    page (`reject_block`) all look like "no HTML". `pipeline.jdfill.Unlocker` reads them; the
+    five other spenders (`crack_walled`, `retry_unreachable`, `deep_validate`, `listing_hunt`,
+    `discovery_daily`'s Indeed path) should share it, and stop retrying `policy_*` hosts.
+111. **The aggregator loop in `pipeline/run.py` has no inline fill** — lane: `infra`. The
+    SerpApi/Google-Jobs block (`AGGREGATOR_ENABLED`, dark today) classifies without
+    `jdfill.maybe_fill`; if it is ever switched on its roles are judged bare.
+112. **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
+    lane: `docs` + `infra`. Both are `run_backfill` with a different `items`/`save` pair. One
+    driver module (say `enrich_jd`) with `--target cache|matched` needs: the two `run:` lines in
+    `daily-digest.yml`, `docs/gen_modules.py` + `docs/MODULES.md`, `docs/AGENT_BRIEF.md`'s lane
+    row, and this file. Not done in the jd-text pass because a rename crosses three lanes.
+113. **Eightfold/Microsoft and Phenom job text** — lane: `jd-text`. Eightfold's
+    `/api/apply/v2/jobs/{id}?domain=<domain>` answers a plain GET (Microsoft, `job_description`
+    6,758 chars, 2026-08-24) but the `domain` is not in the public URL
+    (`jobs.careers.microsoft.com/global/en/job/{id}`), so `native_url` cannot derive it; 1 row
+    today. Phenom (`descriptionTeaser` deliberately dropped, `fetchers.py:642`) has 0 rows and
+    no verified detail endpoint. Wire both when either platform reaches 3 rows; until then the
+    inline `by_platform` counters say what the plain page yields.
+114. **Only `collect` and `enrich` reach the bold `Stages:` line** — lane: `infra`
+    (`pipeline/run.py`). `repair: never run` and a stale `expand` sit inside the collapsed
+    `Stage order:` line with a `::warning::` nobody reads; `stages.alarms()` should be
+    called for every stage in `stages.ORDER` except `publish`. Found by the wave-2 rehearsal.
+115. **A scoped run prints `wrote: … docs/index.html`** — lane: `infra` (`pipeline/run.py`).
+    It actually wrote `out/docs-preview/index.html` (the guard works); the line makes an
+    operator think a local experiment clobbered the board.

@@ -1236,127 +1236,187 @@ active rows had no baseline entry). To settle it, run the row yourself:
   reproduce with the named tool, and if the verdict flips — fix the row AND encode the
   miss as a detection pattern so the class is covered, not the instance.
 
-## 7. Company firmographics — the company-type layer
+## 7. Company intel — the facts and the blurb on every card
 *lane: `company-intel`*
 
-Structured per-company facts (sector, stage, size, business model) that join with the
-matched jobs to answer **"what does this TYPE of company ask for?"**. Built 2026-08-22;
-distinct from the prose blurbs in `company_info` (§0's "About" text) — same lazy-cached
-pattern, structured JSON instead of two sentences.
+Two things about the employer render on every board, archive and email card: the **facts**
+chips (sector · stage · ~employees · founded · Israel centre) from `pipeline/firmographics.py`,
+and the two-sentence **About** blurb from `pipeline/company_info.py`. One call in the digest
+produces both — `firmographics.enrich_for_run` — and one line in the mail's run audit says
+what it did. Everything below was re-verified on 2026-08-24 (`docs/sessions/2026-08-24-company-intel.md`
+has the commands); a number without a command next to it is a number to distrust.
 
 ### The record
 
-One JSON object per company, produced by `pipeline/firmographics.py::research_company`
-(a `claude -p --allowedTools WebSearch` call, ~15-60s) and validated before caching:
+One JSON object per company, from `research_company` (a `claude -p --allowedTools WebSearch`
+call, **40–80 s** measured at 3 workers on 2026-08-24; the 240 s timeout does trip), validated
+before caching:
 
 ```json
 {"sector": "cybersecurity", "sub_sector": "cloud security (CNAPP)",
- "stage": "acquired-by-bigtech",              // enum: public | acquired-by-bigtech | growth-private | early-private
+ "stage": "acquired-by-bigtech",   // enum: public | acquired-by-bigtech | growth-private | early-private | private-enterprise
  "stage_note": "acquired by Google $32B, closed 2026-03",
- "size_band": "L",                            // enum: S <200 | M 200-1000 | L 1000-5000 | XL >5000
- "employees_global": 3148, "founded": 2020,   // founded accepts 1600..today (Barclays=1690!)
+ "size_band": "L",                 // enum: S <200 | M 200-1000 | L 1000-5000 | XL >5000 — always band_for(employees_global)
+ "employees_global": 3148, "founded": 2020,   // founded accepts 1600..today (Barclays=1690)
  "business_model": "SaaS per cloud workload", "customer_type": "enterprises",
  "il_center": "Tel Aviv", "as_of": "2026-08-22",
  "employees_source": "linkedin", "employees_as_of": "2026-08-22"}   // present when a fill pass touched it
 ```
 
-**Validation philosophy: reject, never repair.** A record with no identifiable sector, an
-out-of-enum stage, or an implausible number is dropped entirely (`_coerce` returns None) —
-a failure is retried on a later pass, junk is never cached. The researcher is instructed
-to answer null over guessing; the fill passes below close the nulls.
+**Validation: reject, never repair.** No sector, an out-of-enum stage, an implausible number →
+`_coerce` returns None and nothing is cached. `growth-private` vs `private-enterprise` is the
+funding model, not size or age (Stripe is growth-private; Bosch, EY, a bank are
+private-enterprise). Anything that writes `employees_global` re-derives `size_band` with
+`band_for` — 0 of 940 records contradict it (`python -c "import json;from pipeline.firmographics import band_for as b;d=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));print(sum(1 for r in d.values() if r.get('employees_global') and b(r['employees_global'])!=r['size_band']))"`).
 
-**Retry throttles (quota protection, added after adversarial review 2026-08-22):**
-research failures land in the `firmo_failed` table (both the bulk script and the run.py
-hook consult it) and retry at most **weekly** — so ambiguous names can't re-spend a
-web-search call every chain run or capture the hook's 5-per-run budget. Companies whose
-employee count neither fill pass could establish get `employees_lookup_miss` stamped on
-the record and retry **monthly**. Anything that writes `employees_global` must re-derive
-`size_band` via `pipeline.firmographics.band_for` — the researcher's `_coerce` and both
-fill passes all do; a band/count contradiction means someone bypassed it. All three
-chain scripts force UTF-8 stdout (`sys.stdout.reconfigure`): under the scheduled task
-stdout is a redirected file, Windows picks cp1252, and a Hebrew company name in a print
-used to kill the whole stage.
+**Identity.** `firmographics.identity_key` (not `store._norm_company`, which strips one
+suffix) folds repeated suffixes, `X Israel` site-forms and a small alias map, and is what every
+targeting decision, join and display lookup uses. The export still holds **29 identity groups
+with more than one record** (AMD / AMD Israel, Intel / Intel Corporation / Intel Israel, …):
+`python -c "import json,collections;from pipeline.firmographics import identity_key as k;d=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));g=collections.defaultdict(list);[g[k(c)].append(c) for c in d];print(sum(1 for v in g.values() if len(v)>1))"`.
+They are researched-once legacies and cost nothing now; a group answers for a board name through
+`display_index` — the canonical name first ("Amazon", not the alias "AWS" nor the suffixed
+"Dell Technologies"), then a non-site-form ("Dell Technologies" over "Dell Israel"), then the
+fullest record — so a fill pass touching a site record cannot promote it to speak for the
+group, and the answer no longer depends on sort order. Merging them is a data change, filed in
+`docs/BACKLOG.md`. Leaked job titles ("Sql developer - X", "my team") and bare category words
+("AppSec", "DevOps") are refused by `looks_like_junk` before any call; a partial-word title
+("Senior Data Analyst") still passes (BACKLOG, `company-intel`).
 
-**Failure-classification semantics (wave-2 review):** `research_company` distinguishes
-the NAME failing (model answers unknown / junk / validation reject → returns None →
-caller records a `firmo_failed` strike) from the INFRASTRUCTURE failing (CLI logged out,
-timeout, network → raises `ResearchUnavailable` → caller records **nothing**; the bulk
-script and web fill abort after 3 consecutive, the run.py hook stops its loop). Without
-this, one expired-login chain run at 03:00 stamped week/month gates onto the entire
-pending backlog.
+### Where the data lives — one file, two sqlite caches
 
-**Identity rules (wave-2 review):** leaked job-title "companies" ("Sql developer - X",
-"my team") are pre-filtered by `firmographics.looks_like_junk` — never researched; the
-earlier claim that research "correctly fails" them was false (the model profiles the
-company mentioned *inside* the string, creating a duplicate under the junk key).
-Company identity is **normalized** (`store._norm_company`) when targeting research and
-when `company_type_analysis` joins jobs to profiles — "SolarEdge" and "SolarEdge
-Technologies" are one company; 9 such duplicate pairs were merged on 2026-08-22.
-Re-research of an existing record **merge-preserves** the `employees_*` fields the fill
-passes paid for whenever the fresh record has no count of its own — `--refresh-days`
-must never regress established counts to null.
+`cloud_state/firmographics.json` is the record of truth: sorted JSON that git merges line by
+line. `cloud_state/seen.db` (the runner) and the gitignored `state/seen.db` (the owner's laptop)
+are caches. Every reader and both writers go through `union_store` (export ∪ sqlite, `merge`
+per company: later `as_of` wins, a same-day tie goes to the record with more filled fields, and
+the winner inherits the loser's non-empty fields — an employee fill that never bumps `as_of`
+cannot lose, and a re-research that re-found no `founded` cannot erase the one we had).
+`load_shared_status` tells `ok` from `missing` from `corrupt`; a corrupt file is reported in the
+mail and **never overwritten** — the old `{}`-on-any-error would have replaced 940 records with
+the 921 in sqlite (rehearsed 2026-08-24, case d). `save_shared` writes through a per-process
+temp name (the digest and the local chain both write this file on the laptop) and returns
+whether the file now holds the union; an unwritten export is `export NOT written (…)` in the
+mail. A scoped local run (`--only`/`--limit`) is produce-only: it writes neither the export
+nor the sqlite cache.
 
-### Collection & re-collection (three layers, all idempotent)
+**Who commits the file.** The cloud digest, every morning (`daily-digest.yml` stages
+`cloud_state/`). The Windows chain below writes it and does **not** commit it — the previous
+version of this section said the chain "publishes automatically"; the record showed HEAD at 924
+records against 940 on disk, with the last export commit made by hand (`git log --format='%h %an %s' -- cloud_state/firmographics.json`).
 
-1. **Bulk / catch-up** — `research_firmographics.py` researches every company that is
-   missing or stale (`--refresh-days N`; `as_of` is the staleness clock). Targets =
-   active `companies.csv` rows **∪ companies appearing in `cloud_state/seen.db` matched**
-   (CI's discovery surfaces employers we never listed). `--dry-run` reports, `--export`
-   writes `state/firmographics.json`. Thread-pooled, saves per-company — Ctrl-C-safe.
-2. **Employee fills** — `bd_employees.py` fetches LinkedIn company pages via Bright Data
-   Web Unlocker (1 credit/page) for null `employees_global`; then `fill_employees_llm.py`
-   re-researches (a) remaining nulls and (b) **suspect LinkedIn matches** — a count
-   contradicting the page's own size bucket or under 10, which is how generic names
-   (Bit, Aleph, Sunflower) match the wrong page. Every filled count carries
-   `employees_source` + `employees_as_of`.
-3. **Steady state** — two automatic paths keep it current with zero operator effort:
-   - the Windows scheduled task **`IsraeliJobs-Firmographics`** (every 6h:
-     09:00/15:00/21:00/03:00 local, catch-up on wake) runs `run_firmo_chain.cmd` =
-     research → LinkedIn fill → web verify/fill → export, logging to `state/firmo_chain.log`;
-   - `pipeline/run.py` researches up to `FIRMO_MAX_PER_RUN` (5) unprofiled board companies
-     per digest run (stat `firmographics_researched`) — this is the only writer on the
-     **cloud** side.
+### The digest hook (the cloud side — the writer of record)
 
-### The split-store trap — CLOSED 2026-08-23 (read this before "why is the data missing?")
+`pipeline/run.py` makes one call, `firmographics.enrich_for_run(st, board_jobs=…, email_jobs=…,
+all_companies=…, run_date=…, use_llm=…, scoped=…, profiles_path=…)`, which returns
+`(company_info, firmo_display, report)` and **never raises** — a locked sqlite used to take the
+whole morning's email and board down with it. In order:
 
-It used to be: the full dataset lived in the **local** `state/seen.db` (`firmographics`
-table) and its gitignored export, while the **cloud** `cloud_state/seen.db` held only what
-its own 5-per-run hook had accumulated. 919 researched profiles sat on one laptop while the
-cloud digest — the only thing that RENDERS them — had an empty table and re-researched from
-zero. sqlite is the reason: git cannot merge a binary, so neither store could publish to
-the other.
+1. read the export (status), seed sqlite from it (`sync_store`, idempotent), build the union;
+   start the ONE wall clock — `FIRMO_TIME_BUDGET_MIN` (15) covers blurbs and research together
+   (a research-only budget let 30 blurbs run 45 minutes before the budget started);
+2. **blurbs** for board companies without one, one per identity ("Meta" and "Meta Israel" had
+   both paid): `company_profiles.json` (hand-written; filtered through the same junk rule as a
+   generated blurb) > sqlite > one `claude -p` each, at most `BLURB_MAX_PER_RUN` (30), each
+   call clamped to the minutes left. An empty answer (UNKNOWN / junk / CLI text) is cached as
+   `''` and retried **monthly**, not every morning (5 names were re-bought daily for a week);
+   three empties in a row stop the loop, and if nothing at all was written that is a blurb
+   outage: the three `''` rows are taken back, research is skipped, the mail warns;
+3. **research** for board companies with no record under any identity: the email's companies
+   first, then the board by live-role count, at most `FIRMO_MAX_PER_RUN` (5) calls inside what
+   is left of the clock, each call clamped to it. A name failure (unknown / prose / rejected)
+   is a `firmo_failed` strike and a weekly retry; an infrastructure failure
+   (`ResearchUnavailable`: CLI missing, non-zero exit, timeout) stops both loops and records
+   **nothing**; `SOFT_OUTAGE_MIN_FAILS` (3) failures with no success — checked inside the loop —
+   is an outage too, no strikes. With fewer than three candidates a soft outage is
+   indistinguishable from bad names: the names are struck (weekly retry) and the mail warns;
+4. `firmo_display` for every company ever matched, looked up by identity, each record passed
+   through `chip_safe` (`il_center` cut to its first `;` clause, ≤48 chars, no dangling
+   parenthesis — 426 of 940 stored answers are paragraphs; the stored text is untouched);
+5. a company with facts but no blurb gets `company_info.derive_blurb` — the facts read as prose,
+   free, never cached, replaced the day a real blurb arrives;
+6. publish the union back to the export, unless the run is scoped or the export was corrupt.
 
-The stores now converge through **`cloud_state/firmographics.json`**, a sorted JSON export
-that git diffs line by line. `research_firmographics.py --export` writes it (so the 6-hourly
-Windows chain publishes automatically), and `pipeline/run.py` reads **sqlite ∪ export**,
-fresher `as_of` winning per company, then writes the union back. Whichever machine did the
-research, every consumer sees it.
+Env knobs, defaults = today's behaviour: `FIRMO_MAX_PER_RUN`, `FIRMO_TIME_BUDGET_MIN`,
+`BLURB_MAX_PER_RUN`. Worst case per morning: 35 calls, 15 minutes. All three consumers of the
+CLI (`research_company`, `summarize_company`, `fill_employees_llm.lookup`) go through one seam,
+`firmographics._claude` — `shell` only on Windows (the old `shell=True` on Linux ran a bare
+`claude`; on Windows the timeout is advisory, it kills `cmd.exe` not its child), and
+`extract_json` takes the first *substantive* JSON object anywhere in the answer (the old greedy
+`\{.*\}` turned a valid answer with one brace in its preamble into a weekly strike; a restated
+`{"unknown": true}` before the real answer is skipped).
 
-If you add another table with two writers, do the same thing — do not seed one sqlite from
-the other, which lasts exactly until the next conflict-recovery commit reverts it.
+### What the mail says
+
+`audit_lines(report)` is one `- **Company intel:** …` line in the run audit (markdown, text
+and HTML) plus a `::warning::company-intel …` in the workflow log for anything abnormal. The
+arithmetic reconciles: `researched + failed + skipped + waiting = candidates`.
+
+| state | line |
+|---|---|
+| nothing to do | `all 54 board companies profiled (1 more unprofiled: research failed, weekly retry) · blurbs: 0 asked, 0 written · export 940 records, newest 2026-08-24, 20 newer than the store` |
+| work done | `2 of 54 board companies unprofiled (cap 5/run, budget 15m): 2 researched, 0 failed · blurbs: 2 asked, 2 written, 1 derived from facts · export …` |
+| budget | `… 2 researched, 3 skipped (budget 15m spent) · blurbs: 12 asked, 11 written, 1 empty, 18 skipped (budget)` |
+| names failed | `… 0 researched, 2 failed … · blurbs: 2 asked, 0 written, 2 empty` + warning `every research answer failed (2 of 2) — below the 3-fail outage rule, so the names were struck` |
+| CLI down | `claude unavailable after 0 blurbs calls (Not logged in …) — 2 unprofiled board companies wait for the next run` + warning, **no strikes** |
+| soft outage | `research soft outage suspected: every answer failed and none succeeded — stopped, no strikes recorded` / `blurb soft outage suspected: three empty answers and none written — stopped, nothing cached, research skipped` + warning |
+| export | `export MISSING at …` (recreated) / `export CORRUPT at … — cards render from sqlite only (921 records); file left untouched` / `export NOT written (PermissionError: …)` + warning |
+| hook crashed | `company intel FAILED (OperationalError: database is locked) — cards render from whatever was assembled` + warning |
+| `--no-llm` | `research off (--no-llm); all 55 board companies profiled · blurbs: 0 asked, 0 written · …` |
+
+`N newer than the store` is the number of export records the runner's sqlite lacked or held an
+older copy of — after the daily seed it is the count of profiles that arrived from outside the
+cloud since yesterday, i.e. the only evidence in the mail that the Windows chain ran. Every
+line above was produced by the rehearsal driver on 2026-08-24 against scratch copies with a
+fake `claude` on PATH (`docs/sessions/2026-08-24-company-intel.md`, "Rehearsal").
+
+### The local chain (optional accelerator, proposed for retirement)
+
+The Windows scheduled task `IsraeliJobs-Firmographics` runs `run_firmo_chain.cmd` every 6 h
+(03/09/15/21 local; §4 notes it is invisible to Actions): `research_firmographics.py --workers 3
+--refresh-days 180` (all ~883 active registry rows ∪ matched, not just the board; 20 stale
+refreshes per run once records pass 180 days — none do before 2027-02) → `bd_employees.py`
+(LinkedIn via Bright Data, 1 credit/page, null counts only — 0 today) → `fill_employees_llm.py`
+(web verify for nulls and suspect LinkedIn matches) → `--export` → `firmo_health_check.py`
+(exit 1 + a Desktop alert file after 48 h without a trustworthy run). Since 2026-08-24 the
+chain reads and writes the **union**: it no longer re-buys a company the cloud researched that
+morning (Phoenix Financial and SHILA Medical were, on 2026-08-24 — two of the day's four
+researched) and its `--export` no longer deletes the cloud's records (19 were at risk that
+evening). It still spends the shared subscription on ~800 registry rows that never render;
+only the board needs facts, and the digest hook covers the board on its own. Retirement is a
+`docs/BACKLOG.md` item with the condition (seven mornings of a healthy mail line first).
 
 ### Consumption
 
-`company_type_analysis.py` joins matched jobs (default `--db cloud_state/seen.db`) with
-the export, runs `pipeline/roleprofile.py::extract` per job, and aggregates requirement
-stats (top skills, median years, degree-required rate, lead share, AI-mention rate) along
-three axes: sector / stage / size_band → `out/company_type_analysis.{json,md}`.
-Free-text sectors are collapsed through `primary_sector()`'s alias table there — extend
-that table when a new sector variant fragments the grouping; don't edit stored records.
+`company_type_analysis.py` joins matched jobs (default db: `state/cloud_seen_fetch.db` when the
+chain has fetched it, else `cloud_state/seen.db`; both printed) with the committed export
+(`--firmo` to override — it used to read the gitignored `state/firmographics.json`, absent in the
+cloud), runs `pipeline/roleprofile.py::extract` per job and aggregates requirement stats along
+sector / stage / size_band → `out/company_type_analysis.{json,md}`. Free-text sectors collapse
+through `primary_sector()`'s alias table there; extend the table, don't edit stored records.
+
+### Guards and how to rehearse
+
+`tests/test_company_intel.py` (55 cases, one per shipped bug or claim above; no test spawns
+`claude` or touches `cloud_state/`; 17 of 18 mutations in the session record's catalogue are
+killed by them, the 18th is an equivalent mutant). To rehearse tomorrow's digest without spending anything:
+copy `cloud_state/seen.db` and the export to a scratch dir, put a fake `claude` shim first on
+PATH, point `firmographics.SHARED_EXPORT` at the copy and call `pipeline.run.run(use_llm=True,
+only=[…], db_path=copy)` — the driver in the session record does exactly this and asserts `git
+status` is unchanged afterwards.
 
 ### Known limitations
 
-- Discovery sometimes leaks **job titles or categories as company names** ("AppSec",
-  "my team", "Sql developer - …"); `looks_like_junk` pre-filters the title-shaped ones
-  for free, but bare category words ("AppSec") pass the filter and burn weekly-gated
-  research attempts until the discovery-side parser is fixed.
-- "Discovery"-class **ambiguous names** can't be researched safely without JD context;
-  the run.py hook passes context, the bulk script does not.
-- Employee counts for acquired subsidiaries are the **unit's** approximate headcount
-  (see `employees_source` for the story) — don't sum them with parent-company records.
-- The researcher found several listed companies **dead or absorbed** (Alike Health,
-  Syte, Sckipio, SimilarTech, NanoLock, Rewire R&D) — firmographics is currently the only
-  place that knowledge lands; the `companies.csv` rows are not auto-parked from it.
+- Bare category words are refused exactly (`CATEGORY_NAMES`); a name that is entirely role
+  words ("Senior Data Analyst") still passes `looks_like_junk` (BACKLOG, `company-intel`).
+- Ambiguous discovery names are researched with the job's text as context in the digest; the
+  bulk script passes no context.
+- Employee counts for acquired subsidiaries are the unit's approximate headcount (see
+  `employees_source`) — don't sum them with parent-company records.
+- The researcher keeps finding listed companies dead or absorbed (Alike Health, Syte, Sckipio,
+  SimilarTech, NanoLock, Rewire R&D); that knowledge lands only in the record — rows are not
+  auto-parked from it (BACKLOG "Let company-death knowledge flow back").
+- `private-enterprise` renders as the raw enum on a card (`_STAGE_LABEL` in `pipeline/digest.py`
+  has no entry; 44 records) — `render` lane, BACKLOG.
 
 ## 8. Failure classes — what this codebase does instead of erroring
 *lane: any — every lane has been bitten by these*

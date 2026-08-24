@@ -2,18 +2,14 @@
 
 Generated once per company via `claude -p` (a judgment/knowledge task the keyword layer
 can't do) and cached in the store so it's not regenerated daily. Used to populate the
-expandable "About <company>" section of the interactive digest.
+expandable "About <company>" section of the interactive digest. When no blurb exists but
+the firmographics record does, `derive_blurb` reads the facts as prose instead — no call.
 """
 from __future__ import annotations
 
 import re
-import subprocess
 
-
-def _is_windows():
-    import os
-    return os.name == "nt"
-
+from .firmographics import ResearchUnavailable, claude_text  # noqa: F401 — re-exported
 
 _PROMPT = (
     "In 2 short, plain-English sentences, describe (1) what the company \"{company}\" does, "
@@ -29,18 +25,11 @@ _PROMPT = (
 
 
 def summarize_company(company, context="", timeout=90):
-    """Return a 2-sentence 'what it does + how it earns money' summary, or '' on failure."""
+    """Return a 2-sentence 'what it does + how it earns money' summary, or '' when the model
+    could not identify the company (UNKNOWN, junk, first-person). Raises ResearchUnavailable
+    when the CLI itself failed — the caller must not cache '' for an outage."""
     prompt = _PROMPT.format(company=company, context=(context or "")[:600])
-    try:
-        proc = subprocess.run(
-            ["claude", "-p"], input=prompt, capture_output=True, text=True,
-            encoding="utf-8", errors="replace", timeout=timeout, shell=_is_windows(),
-        )
-    except Exception:  # noqa: BLE001
-        return ""
-    if proc.returncode != 0:
-        return ""
-    out = " ".join((proc.stdout or "").split())
+    out = " ".join(claude_text(prompt, timeout=timeout).split())
     # strip any accidental leading label
     out = re.sub(r"^(sure[,:]?|here('|)s|answer:)\s*", "", out, flags=re.I).strip()
     # Never persist a CLI/auth error or other non-prose as a company blurb — a failed
@@ -58,3 +47,33 @@ _JUNK_OUT = re.compile(
     r"^unknown\b|\bI['’]?m\b|\bI\s+(?:don['’]?t|do not|can['’]?t|cannot|couldn['’]?t|"
     r"am|have|would|need|recommend)\b|\bI['’]d\b|no (?:job post )?context was provided|"
     r"web[- ]search access", re.I)
+
+
+_STAGE_PROSE = {"public": "a public company", "acquired-by-bigtech": "an acquired company",
+                "growth-private": "a growth-stage private company",
+                "early-private": "an early-stage private company",
+                "private-enterprise": "a privately held company"}
+
+
+def derive_blurb(company, rec):
+    """The firmographics record read as an About blurb, or '' when there is nothing to say.
+
+    Two `claude` calls used to answer overlapping questions for every new company: the blurb
+    ("what it does, how it earns") and the research (`sub_sector`, `business_model`). When
+    the blurb is missing — never asked, or the model answered UNKNOWN — the researched facts
+    already hold the answer. Pure string assembly, so it is never cached and a real blurb
+    written later still wins."""
+    if not isinstance(rec, dict):
+        return ""
+    what = " ".join(str(rec.get("sub_sector") or "").split()).rstrip(".")
+    how = " ".join(str(rec.get("business_model") or "").split()).rstrip(".")
+    if not (what or how):
+        return ""
+    stage = _STAGE_PROSE.get(str(rec.get("stage") or ""), "a company")
+    sector = " ".join(str(rec.get("sector") or "").split())
+    head = f"{company} is {stage}" + (f" in {sector}" if sector else "")
+    first = head + (f": {what}" if what else "") + "."
+    second = (f" It makes money through {how}." if how else "")
+    who = " ".join(str(rec.get("customer_type") or "").split()).rstrip(".")
+    third = f" Customers: {who}." if who and how else ""
+    return (first + second + third)[:600]

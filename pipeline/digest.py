@@ -646,6 +646,8 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
         lines.append("- **Stages:** " + "; ".join(s["stage_alarms"]))
     for _line in s.get("fetch_health") or []:
         lines.append("- **Boards** " + _line)
+    if s.get("company_intel"):
+        lines.append("- **Company intel:** " + "; ".join(s["company_intel"]))
     if s.get("stages"):
         lines.append(f"- Stage order: {s['stages']}")
     if s.get("failed_companies"):
@@ -1395,6 +1397,8 @@ def _text_audit(s):
         lines.append("  STAGES: " + "; ".join(s["stage_alarms"]))
     for _line in s.get("fetch_health") or []:
         lines.append("  BOARDS " + _line)
+    if s.get("company_intel"):
+        lines.append("  COMPANY INTEL: " + "; ".join(s["company_intel"]))
     if s.get("stages"):
         lines.append(f"  stage order: {s['stages']}")
     if s.get("failed_companies"):
@@ -1426,6 +1430,8 @@ def _html_audit(s, esc):
         + (f'<br><b>Stages:</b> {esc("; ".join(s.get("stage_alarms") or []))}'
            if s.get("stage_alarms") else "")
         + "".join(f'<br><b>Boards</b> {esc(_line)}' for _line in (s.get("fetch_health") or []))
+        + (f'<br><b>Company intel:</b> {esc("; ".join(s.get("company_intel") or []))}'
+           if s.get("company_intel") else "")
         + (f'<br>Stage order: {esc(s.get("stages",""))}' if s.get("stages") else "")
         + (f'<br>Failed companies: {esc(fc)}' if fc else "")
         + '</div>'

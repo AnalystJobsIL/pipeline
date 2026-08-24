@@ -29,7 +29,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from pipeline.companies import load_companies
 from pipeline.firmographics import (ResearchUnavailable, band_for, identity_key,
-                                    looks_like_junk, research_company)
+                                    looks_like_junk, research_company, save_shared,
+                                    sync_store, union_store)
 from pipeline.store import SeenStore
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -71,6 +72,7 @@ def fetch_cloud_db():
 
 def _stamp_ok():
     """Write the health heartbeat firmo_health_check.py watches."""
+    os.makedirs(os.path.join(HERE, "state"), exist_ok=True)  # gitignored: absent on a fresh clone
     with open(os.path.join(HERE, "state", "firmo_last_ok.txt"), "w", encoding="utf-8") as f:
         f.write(dt.datetime.now().isoformat(timespec="seconds"))
 
@@ -111,11 +113,13 @@ def main():
     today = dt.date.today().isoformat()
 
     if a.export:
-        recs = st.load_firmographics()
-        for path in (EXPORT, SHARED_EXPORT):
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(recs, f, ensure_ascii=False, indent=2, sort_keys=True)
+        # the UNION, atomically — the local table alone overwrote the file and deleted
+        # every record the cloud digest had researched since (19 at risk on 2026-08-24)
+        recs = union_store(st)
+        save_shared(recs)
+        os.makedirs(os.path.dirname(EXPORT), exist_ok=True)
+        with open(EXPORT, "w", encoding="utf-8") as f:
+            json.dump(recs, f, ensure_ascii=False, indent=2, sort_keys=True)
         print(f"exported {len(recs)} records -> {EXPORT} + {SHARED_EXPORT}")
         return
 
@@ -123,7 +127,12 @@ def main():
     if seeded:
         print(f"seeded {seeded} POC records")
 
-    have = st.load_firmographics()
+    # sqlite ∪ the committed export: a company the cloud digest researched this morning
+    # must not be bought again here (Phoenix Financial and SHILA were, on 2026-08-24)
+    synced = sync_store(st, today)
+    if synced:
+        print(f"synced {synced} records from the shared export into the local store")
+    have = union_store(st)
     names = [r["company_name"] for r in load_companies()]
     # also cover companies that appear on the actual board (CI's matched table) but are
     # not in companies.csv — CI's discovery layer surfaces jobs from employers we never

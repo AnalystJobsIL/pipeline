@@ -17,13 +17,11 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import json
 import re
-import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from pipeline.firmographics import ResearchUnavailable, band_for, identity_key
+from pipeline.firmographics import ResearchUnavailable, band_for, claude_json, identity_key  # noqa: F401
 from pipeline.store import SeenStore
 
 # chain redirects stdout to a file -> cp1252 on Windows -> Hebrew names crash prints
@@ -78,20 +76,11 @@ def suspect(rec):
 def lookup(company, rec, timeout=240):
     prompt = _PROMPT.format(company=company, sector=rec.get("sector", "?"),
                             sub=rec.get("sub_sector", ""), il=rec.get("il_center", "?"))
-    try:
-        proc = subprocess.run(["claude", "-p", "--allowedTools", "WebSearch"],
-                              input=prompt, capture_output=True, text=True, encoding="utf-8",
-                              errors="replace", timeout=timeout, shell=True)
-    except Exception as e:  # noqa: BLE001 — infrastructure, not the company
-        raise ResearchUnavailable(str(e))
-    if proc.returncode != 0:
-        raise ResearchUnavailable((proc.stderr or proc.stdout or "")[:200])
-    m = re.search(r"\{.*\}", (proc.stdout or ""), re.S)
-    if not m:
-        return None
-    try:
-        out = json.loads(m.group(0))
-    except ValueError:
+    # the one CLI seam (firmographics.claude_json): `shell=True` here ran a bare `claude`
+    # with no arguments on Linux, and the greedy brace regex threw away answers with a
+    # brace in the preamble
+    out = claude_json(prompt, tools=("WebSearch",), timeout=timeout)
+    if out is None:
         return None
     n = out.get("employees")
     if not (isinstance(n, (int, float)) and 1 <= n <= 5_000_000):

@@ -2358,6 +2358,19 @@
     "stage_note": "Series A stage; ~$16M total raised (PitchBook, 2026) from investors incl. Samsung, Bosch, Dynamic Loop Capital",
     "sub_sector": "open-source end-to-end MLOps/LLMOps platform for experiment tracking, orchestration, data management and model serving (formerly Allegro AI)"
   },
+  "CloudHiro": {
+    "as_of": "2026-08-24",
+    "business_model": "SaaS subscription for its optimization platform (also sold via AWS Marketplace), typically priced against a share of the cloud spend it manages/saves",
+    "customer_type": "enterprises and cloud-heavy mid-market IT/FinOps teams",
+    "employees_global": 13,
+    "founded": 2019,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "SaaS / cloud infrastructure",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Founder-owned; Tracxn/Crunchbase list CloudHiro as unfunded with no disclosed venture rounds as of 2026",
+    "sub_sector": "FinOps platform for automated cloud cost optimization on Azure and AWS (reservation/commitment management, waste detection, Kubernetes cost visibility)"
+  },
   "CloudShare": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS subscriptions for on-demand cloud lab environments used in training, demos and testing",
@@ -3435,6 +3448,19 @@
     "stage_note": "IPO on Tel Aviv Stock Exchange Feb 2021 raising ~$82.5M; traded as ECPA, renamed E.E.A.M.I / ticker EEAM in Dec 2024",
     "sub_sector": "AI-driven, water-free robotic cleaning systems for utility-scale solar PV farms"
   },
+  "Edwards Lifesciences": {
+    "as_of": "2026-08-24",
+    "business_model": "Manufactures and sells implantable heart valves, transcatheter valve systems and related delivery/monitoring products to hospitals worldwide, largely through direct sales teams and distributors",
+    "customer_type": "hospitals and cardiac care centers (interventional cardiologists, cardiac surgeons)",
+    "employees_global": 15734,
+    "founded": 1958,
+    "il_center": "Caesarea (Edwards Israel Innovation Center / ex-Valtech Cardio R&D); HQ in Irvine, California",
+    "sector": "healthtech",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NYSE: EW; spun off from Baxter International in 2000",
+    "sub_sector": "structural heart medical devices — transcatheter and surgical heart valve repair/replacement (TAVR, mitral & tricuspid)"
+  },
   "Elad Software Systems": {
     "as_of": "2026-08-22",
     "business_model": "Project-based professional services, IT outsourcing/staffing and systems integration fees, plus software licenses and maintenance for its own products (e.g. Chameleon EMR)",
@@ -4211,6 +4237,19 @@
     "stage_note": "Formerly Nasdaq: GMDA; delisted May 2024 after Chapter 11-style restructuring, now wholly owned by Highbridge Capital (subsidiary of Ayrmid Ltd, $30M new capital)",
     "sub_sector": "Allogeneic cell therapies (NAM-enabled) — FDA-approved Omisirge (omidubicel) cord-blood graft for stem cell transplant"
   },
+  "GenCell Energy": {
+    "as_of": "2026-08-24",
+    "business_model": "Sells fuel-cell power units (GenCell BOX, FOX, EVOX) plus service contracts and consumables to telecom, utility and defense customers",
+    "customer_type": "telecom operators, electric utilities, defense and industrial enterprises",
+    "employees_global": 72,
+    "founded": 2011,
+    "il_center": "Petah Tikva (HQ and R&D)",
+    "sector": "cleantech / energy",
+    "size_band": "S",
+    "stage": "public",
+    "stage_note": "Listed on the Tel Aviv Stock Exchange as GNCL (OTC: GNCLF); IPO'd on TASE in 2021",
+    "sub_sector": "hydrogen and ammonia-fed alkaline fuel cell systems for off-grid and backup power"
+  },
   "General Motors": {
     "as_of": "2026-08-22",
     "business_model": "designs, builds and sells vehicles (Chevrolet, GMC, Cadillac, Buick) plus financing (GM Financial) and software/subscription services",
@@ -4707,6 +4746,19 @@
     "stage_note": "$150M round in 2023 at ~$2.7B valuation (up from $2.45B in Aug 2022); ~$574M raised total",
     "sub_sector": "Cloud HRIS platform ('Bob') for HR, payroll, compensation and workforce management aimed at mid-sized modern companies"
   },
+  "High Lander": {
+    "as_of": "2026-08-24",
+    "business_model": "Licenses/subscriptions for its Mission Control drone-fleet-management and Universal UTM platforms, sold to drone operators, integrators and government aviation authorities",
+    "customer_type": "government aviation authorities, defense and public-safety agencies, utilities and critical-infrastructure operators",
+    "employees_global": 58,
+    "founded": 2018,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "drones / aerospace software",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Venture-backed; ~$17-19M raised across Series A/B from investors including EDGE Group and Paras Defence & Space Technologies",
+    "sub_sector": "autonomous drone fleet management (DFM) and unmanned traffic management (UTM) software for BVLOS operations"
+  },
   "Highcon": {
     "as_of": "2026-08-21",
     "business_model": "Sells capital equipment (digital die-cutting/creasing machines) plus consumables and service contracts to packaging converters",
@@ -5100,6 +5152,19 @@
     "stage": "acquired-by-bigtech",
     "stage_note": "Acquired by Thales Group for $3.6B, closed 4 Dec 2023 (bought from Thoma Bravo, which took it private in 2019); previously NASDAQ: IMPV",
     "sub_sector": "application, API and data security — WAF, DDoS protection, bot/ATO defense and database activity monitoring"
+  },
+  "Incode": {
+    "as_of": "2026-08-23",
+    "business_model": "SaaS subscription/per-verification fees for identity verification, KYC and fraud-prevention APIs",
+    "customer_type": "enterprises (banks, fintechs, retail, hospitality, healthcare, governments)",
+    "employees_global": 672,
+    "founded": 2015,
+    "il_center": "Tel Aviv (R&D, Yigal Alon 94, expanded via Identiq acquisition); HQ in San Francisco",
+    "sector": "identity verification / fraud prevention",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "VC-backed; $220M Series B (Dec 2021) at $1.25B valuation, ~$411M raised total; acquired Israeli Identiq in June 2026",
+    "sub_sector": "AI biometric identity verification, KYC onboarding and anti-fraud platform"
   },
   "Incredo (DouxMatok)": {
     "as_of": "2026-08-23",
@@ -6014,6 +6079,19 @@
     "stage_note": "NASDAQ: LYFT, IPO March 2019",
     "sub_sector": "consumer ridesharing marketplace plus bike/scooter sharing and rider-driver logistics"
   },
+  "MAX Security": {
+    "as_of": "2026-08-24",
+    "business_model": "Subscription fees for its threat-intelligence platform/alerts plus project-based consulting, due diligence, investigations, executive protection and crisis-response retainers",
+    "customer_type": "enterprises",
+    "employees_global": 481,
+    "founded": 1996,
+    "il_center": "Tel Aviv-Yafo (HQ)",
+    "sector": "security & risk intelligence",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Founder-owned since 1996 (Noam J. Schiller, Founder & President); Crunchbase/Tracxn show no disclosed funding rounds or institutional investors",
+    "sub_sector": "geopolitical risk consulting, travel-security intelligence and protective services for multinationals operating in volatile regions"
+  },
   "MDClone": {
     "as_of": "2026-08-23",
     "business_model": "enterprise SaaS/software subscription licensing of its data platform to health systems, plus deployment and support",
@@ -6691,6 +6769,19 @@
     "stage": "public",
     "stage_note": "NASDAQ: NXPI; spun off from Philips in 2006, IPO 2010",
     "sub_sector": "Chips for automotive, industrial IoT, mobile and communication infrastructure (MCUs, radar, secure connectivity)"
+  },
+  "Nagomi Security": {
+    "as_of": "2026-08-24",
+    "business_model": "SaaS subscription for its proactive defense platform, sold to enterprise security teams",
+    "customer_type": "enterprises",
+    "employees_global": 82,
+    "founded": 2023,
+    "il_center": "Tel Aviv (R&D); co-HQ in New York",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "$23M Series A led by TCV (Apr 2024) with CrowdStrike Falcon Fund and Okta Ventures, after a $7M Team8 seed; $30M total, no Series B announced",
+    "sub_sector": "proactive/threat exposure management — maps an org's existing security tools against relevant adversary techniques and prioritizes remediation"
   },
   "Nano Dimension": {
     "as_of": "2026-08-22",
@@ -7930,16 +8021,16 @@
   },
   "Phoenix Financial": {
     "as_of": "2026-08-24",
-    "business_model": "earns premiums and fees from insurance underwriting, pension/provident fund management, and wealth/asset management (manages ~$200B AUM)",
-    "customer_type": "consumers and businesses (retail policyholders, pension savers, institutional investors)",
-    "employees_global": 1637,
+    "business_model": "Earns insurance premiums, pension/asset management fees, and investment income across insurance, retirement, wealth and financing segments",
+    "customer_type": "consumers, businesses and institutional clients in Israel",
+    "employees_global": 5170,
     "founded": 1949,
-    "il_center": "Givatayim (HQ)",
-    "sector": "fintech",
-    "size_band": "L",
+    "il_center": "Givatayim / Tel Aviv area (HQ)",
+    "sector": "insurance / financial services",
+    "size_band": "XL",
     "stage": "public",
-    "stage_note": "TASE: PHOE (formerly Phoenix Holdings, renamed Aug 2024)",
-    "sub_sector": "insurance, pensions & asset management (life, P&C, health, retirement, wealth)"
+    "stage_note": "TASE: PHOE; renamed from The Phoenix Holdings to Phoenix Financial in Aug 2024",
+    "sub_sector": "Israel's largest insurance, pension and asset-management group (life, P&C, health, retirement, wealth, credit)"
   },
   "Pi Security": {
     "as_of": "2026-08-21",
@@ -8997,6 +9088,19 @@
     "stage_note": "Acquired by NVIDIA; deal announced Apr 2024, closed Dec 2024 at ~$700-800M after US/EU antitrust review",
     "sub_sector": "GPU orchestration and workload scheduling platform for AI/ML compute clusters (Kubernetes-based)"
   },
+  "Ryltech.co.il": {
+    "as_of": "2026-08-24",
+    "business_model": "Sells DBA/IT managed services, monitoring subscriptions and consulting projects on retainer and time-and-materials contracts",
+    "customer_type": "Israeli and international businesses running large SQL Server / ERP systems (mid-market enterprises)",
+    "employees_global": 24,
+    "founded": 2003,
+    "il_center": "Ashkelon (HQ)",
+    "sector": "IT services",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Owner-founded Israeli private services firm (founded by Yehuda Lasri; Israeli Companies Registrar no. 514621499); no disclosed venture or growth funding",
+    "sub_sector": "Outsourced/remote database administration (SQL Server), performance tuning, and SAP Business One / Priority ERP maintenance"
+  },
   "SAP": {
     "as_of": "2026-08-21",
     "business_model": "Cloud subscriptions and software licenses plus support/services for enterprise business applications",
@@ -9025,16 +9129,16 @@
   },
   "SHILA Medical Services LTD": {
     "as_of": "2026-08-24",
-    "business_model": "leases and manages dental clinic facilities/infrastructure to independent dental professionals, and offers a companion app (ShilaFix) for service coordination",
-    "customer_type": "dental professionals / clinics",
-    "employees_global": null,
-    "founded": null,
-    "il_center": "Tel Aviv (HQ)",
-    "sector": "healthtech",
-    "size_band": "S",
+    "business_model": "Fee-for-service private dental, complementary-medicine and aesthetic treatments sold to patients through a nationwide clinic network",
+    "customer_type": "consumers",
+    "employees_global": 4500,
+    "founded": 1988,
+    "il_center": "Tel Aviv (HQ, 11 Yirmiyahu St); ~170 clinics across Israel",
+    "sector": "healthcare services",
+    "size_band": "L",
     "stage": "private-enterprise",
-    "stage_note": "small, privately held Israeli company; no VC/funding history found",
-    "sub_sector": "dental practice facilities & services provider (non-clinical infrastructure for dental professionals)"
+    "stage_note": "Wholly-owned for-profit subsidiary of Clalit Health Services (founded by Clalit in 1988); no venture funding",
+    "sub_sector": "Clalit Health Services subsidiary operating the Clalit Smile dental clinic chain plus complementary-medicine and aesthetics clinics (~170 sites)"
   },
   "SIGA OT Solutions": {
     "as_of": "2026-08-22",
@@ -9262,6 +9366,19 @@
     "stage": "growth-private",
     "stage_note": "Series C $50M (Feb 2022) led by OurCrowd/Aurum; ~$125M raised total, now Series D per Tracxn",
     "sub_sector": "AI-powered full-field digital cell morphology microscopy for hematology labs"
+  },
+  "SeatPick": {
+    "as_of": "2026-08-24",
+    "business_model": "Affiliate/referral commissions from ticket marketplaces (StubHub, Ticketmaster, Viagogo et al.) when users click through and buy, plus SEO-driven traffic monetization",
+    "customer_type": "consumers (live-event ticket buyers); ticket marketplaces as revenue partners",
+    "employees_global": 33,
+    "founded": 2017,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "consumer internet / e-commerce",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Founder-owned and bootstrapped since 2017 with no disclosed venture round; company site describes itself as 'profitable, bootstrapped, AI-first'",
+    "sub_sector": "metasearch and price-comparison engine for live event tickets (sports, music, theatre) aggregating 50+ resale and primary marketplaces"
   },
   "Secret Double Octopus": {
     "as_of": "2026-08-23",
@@ -9720,6 +9837,19 @@
     "stage_note": "Listed on Frankfurt/Xetra as VOW3 (pref) / VOW (ordinary); Porsche SE holds the voting majority",
     "sub_sector": "mass-market vehicle manufacturing group (Škoda, VW, Audi, Porsche, SEAT); Israeli arm scouts connected-car, sensor and cyber startups"
   },
+  "Skyhawk Security": {
+    "as_of": "2026-08-24",
+    "business_model": "SaaS subscription to its cloud detection-and-response platform, priced per cloud workload/account, sold direct and via cloud marketplaces and channel partners",
+    "customer_type": "enterprises running public-cloud workloads (security/SOC and cloud teams)",
+    "employees_global": 60,
+    "founded": 2022,
+    "il_center": "Tel Aviv (HQ, R&D)",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Spun out of Radware (NASDAQ: RDWR) in May 2022 with a $35M strategic investment led by Tiger Global at a $180M valuation; no further round announced as of Aug 2026",
+    "sub_sector": "AI-driven cloud runtime threat detection and response (CDR) with automated purple-team/red-team simulation across AWS, Azure and GCP"
+  },
   "Smart Shooter": {
     "as_of": "2026-08-21",
     "business_model": "Sells SMASH fire-control sights, remote weapon stations and support under defense contracts (e.g. US Army, IDF, NATO forces)",
@@ -9856,6 +9986,19 @@
     "stage": "public",
     "stage_note": "Acquired Apr 2026 by Vitalist Inc. (TSX-V: VITA) for ~CA$12.3M in shares; previously Series A private (~$21M raised total)",
     "sub_sector": "AI-powered gesture-detection remote patient monitoring (RPM) via smartwatch/wearable sensors (SafeBeing platform)"
+  },
+  "Sony (Sony Semiconductor Israel)": {
+    "as_of": "2026-08-23",
+    "business_model": "designs and sells cellular IoT system-on-chip modems/chipsets (ALT1250, ALT1350) to device makers and module vendors, plus licensing and support",
+    "customer_type": "IoT device OEMs, cellular module makers, automotive/telematics and smart-metering vendors",
+    "employees_global": 300,
+    "founded": 2005,
+    "il_center": "Hod Hasharon (HQ and main R&D)",
+    "sector": "semiconductors",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Completed spin-off from Sony Semiconductor Solutions 2026-04-27 with $50M initial funding led by Pitango Group; Sony retains a large minority stake (Sony had acquired Altair in 2016 for $212M); brand reverted to Altair Semiconductor",
+    "sub_sector": "low-power cellular IoT chipsets (LTE-M / NB-IoT, NTN satellite, GNSS) for connected devices"
   },
   "Sorbet": {
     "as_of": "2026-08-23",
@@ -10255,6 +10398,22 @@
     "stage_note": "NASDAQ: TMUS; majority-owned by Deutsche Telekom",
     "sub_sector": "US mobile network operator (wireless carrier, 5G and home internet)"
   },
+  "TCM Technologies LTD": {
+    "as_of": "2026-08-24",
+    "business_model": "Fee-for-service project contracts, managed services, outsourced/placed technical staff and BPO for defense, government and enterprise clients",
+    "customer_type": "Israeli MoD/IDF, defense industries, government ministries, municipalities and large enterprises",
+    "employees_as_of": "2026-08-24",
+    "employees_global": 75,
+    "employees_linkedin_miss": "2026-08-24",
+    "employees_source": "web: JobKarov company profile for TCM טכנולוגיות בע\"מ (Lod ICT/defense integrator) lists company size band 51–100 employees, 2026; midpoint taken — no exact figure published on tcm.co.il, in press, or on i (estimate)",
+    "founded": 2004,
+    "il_center": "Lod (HQ)",
+    "sector": "IT services / defense ICT",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held Israeli company, no disclosed venture funding; Companies Registrar no. 513517821, incorporated 09/03/2004",
+    "sub_sector": "systems engineering, cyber and IT infrastructure integration, BPO and software outsourcing for Israeli defense and government bodies"
+  },
   "TELUS Digital": {
     "as_of": "2026-08-23",
     "business_model": "Fee-for-service outsourcing — per-seat/per-hour CX and content-moderation contracts plus project-based digital consulting and AI training-data work",
@@ -10506,6 +10665,19 @@
     "stage_note": "NYSE: TDC, public since 2007 spin-off from NCR",
     "sub_sector": "cloud data warehouse and lakehouse platform (VantageCloud) for large-scale enterprise analytics and AI"
   },
+  "Teva Pharmaceutical": {
+    "as_of": "2026-08-23",
+    "business_model": "manufactures and sells generic, branded specialty and OTC drugs plus active pharmaceutical ingredients to distributors, pharmacy chains, payers and health systems worldwide",
+    "customer_type": "wholesalers, pharmacy chains, hospitals and healthcare payers",
+    "employees_global": 33327,
+    "founded": 1901,
+    "il_center": "Tel Aviv (global HQ); R&D in Netanya, plants in Kfar Saba and Neot Hovav, logistics in Shoham",
+    "sector": "pharmaceuticals",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NYSE: TEVA / TASE: TEVA; listed since 1951 on TASE, ADRs on NYSE",
+    "sub_sector": "generic and specialty medicines (CNS, respiratory, biosimilars) plus API manufacturing"
+  },
   "Texas Instruments": {
     "as_of": "2026-08-22",
     "business_model": "designs, manufactures and sells analog and embedded semiconductor chips (owns its fabs) to ~100,000 customers via direct sales and ti.com",
@@ -10531,6 +10703,19 @@
     "stage": "public",
     "stage_note": "Euronext Paris: HO; FY2025 sales EUR 22.1bn, French state ~26% shareholder",
     "sub_sector": "defence electronics, avionics, space and cybersecurity/digital-identity systems; Israeli site is application & data security R&D (Imperva)"
+  },
+  "The5ers.com": {
+    "as_of": "2026-08-23",
+    "business_model": "Charges traders one-off evaluation/challenge fees for funded-account programs and keeps a share (typically 20-50%) of profits generated on firm capital",
+    "customer_type": "consumers (retail traders)",
+    "employees_global": 148,
+    "founded": 2016,
+    "il_center": "Ra'anana (HQ); additional office in London",
+    "sector": "fintech",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Founder-owned (Gil Ben-Hur), legal entity Five Percent Online Ltd; bootstrapped — no disclosed venture rounds",
+    "sub_sector": "online proprietary trading firm funding retail forex/futures traders via evaluation challenges"
   },
   "Theator": {
     "as_of": "2026-08-23",
@@ -10797,6 +10982,21 @@
     "stage": "growth-private",
     "stage_note": "$16.5M Series B (2023) led by Firstime VC with LG Technology Ventures, Millennium Food-Tech; ~$52M raised to date",
     "sub_sector": "ferments food waste into lactic acid and PLA bioplastic (CIRCULAC)"
+  },
+  "Tripleten": {
+    "as_of": "2026-08-24",
+    "business_model": "B2C tuition for online bootcamp programs (installments/ISA-style deferred payment and a tuition-refund job guarantee), plus subsidized enrollments in some markets",
+    "customer_type": "consumers (career-switchers and working professionals); some employer/government-subsidized tuition",
+    "employees_as_of": "2026-08-24",
+    "employees_global": 438,
+    "employees_source": "web: Growjo company profile (2026) estimates ~438 employees / $61.3M revenue for TripleTen; corroborating range: LeadIQ listed ~272 for the legacy 'Practicum by Yandex' entity (Sept 2025), and parent Nebiu (estimate)",
+    "founded": 2019,
+    "il_center": "Tel Aviv (Alon Tower 1, Yigal Alon 94) — local market + go-to-market team; group HQ in Amsterdam (Nebius), US operations HQ",
+    "sector": "edtech",
+    "size_band": "M",
+    "stage": "public",
+    "stage_note": "100%-owned subsidiary of Nebius Group N.V. (NASDAQ: NBIS); Nebius Q2 2026 shareholder letter still reports TripleTen as a wholly owned segment (~$41M revenue in 2025, +88% y/y)",
+    "sub_sector": "online cohort-based tech reskilling bootcamps (software engineering, data analytics, QA, AI) with job-placement guarantee"
   },
   "Tritone Technologies": {
     "as_of": "2026-08-22",
@@ -11382,6 +11582,19 @@
     "stage": "public",
     "stage_note": "Listed on the Australian Securities Exchange as ASX:WBT",
     "sub_sector": "ReRAM (resistive RAM) non-volatile embedded memory IP licensed to foundries and chipmakers"
+  },
+  "Weizmann Institute of Science": {
+    "as_of": "2026-08-24",
+    "business_model": "Government allocations, philanthropic donations and endowment income fund research; supplementary revenue from competitive grants, tuition, and patent licensing/royalties via Yeda Research & Development (≈2,000 patent families, e.g. Copaxone)",
+    "customer_type": "government funding bodies, philanthropic donors, grant agencies, and pharma/biotech/tech licensees; graduate students as enrollees",
+    "employees_global": 2599,
+    "founded": 1934,
+    "il_center": "Rehovot (main and only campus, HQ)",
+    "sector": "academic research / higher education",
+    "size_band": "L",
+    "stage": "private-enterprise",
+    "stage_note": "Non-profit public-benefit research institute founded 1934 (as the Daniel Sieff Research Institute, renamed 1949); no equity investors — funded by state budget, endowment (~$600M, 2019) and philanthropy",
+    "sub_sector": "multidisciplinary basic-science research institute and graduate school (life sciences, physics, chemistry, math & computer science), with commercialization through its Yeda tech-transfer arm"
   },
   "Weka": {
     "as_of": "2026-08-22",
