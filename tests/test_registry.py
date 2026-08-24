@@ -2034,11 +2034,11 @@ def test_the_embed_vouch_recognises_the_slug_shapes_production_actually_emits():
         "zap group", "A5.000",
         "https://www.comeet.com/careers-api/2.0/company/A5.000/positions?token=x")
 
-    # wave-6 R1 (B1): a parenthetical half that is PURE FILLER is not an identity.
-    # `Dun & Bradstreet (Israel) Ltd.` must not make bare `israel` a target -- with the
-    # word-stripping layer, `israeljobs`/`israelcareers`/`israeltech` all collapsed onto
-    # it and another company's board promoted on the Sunday path. The alias rule stays
-    # for halves anchored by a non-filler word (Merck (MSD), VMware (Broadcom)).
+    # wave-6 R1 (B1): `Dun & Bradstreet (Israel) Ltd.` must not make bare `israel` a
+    # target -- with the word-stripping layer, `israeljobs`/`israelcareers`/`israeltech`
+    # all collapsed onto it and another company's board promoted on the Sunday path.
+    # First closed by a pure-filler guard; now impossible by construction, because the
+    # parenthetical is not split at all -- acquisitions are DECLARED, not parsed.
     assert not G.embedded_board_ok("Dun & Bradstreet (Israel) Ltd.", "israeljobs",
                                    gh % "israeljobs"), (
         "`israel` became an identity target via the parenthetical alias split")

@@ -869,16 +869,6 @@
     "must_be_killed_by_behavioural": true
   },
   {
-    "id": "embed-filler-target",
-    "file": "pipeline/identity_gate.py",
-    "symbol": "_name_targets",
-    "class": "M1-gate-removal",
-    "find": "        if not core:\n            # a variant that is PURE filler is not an identity.",
-    "replace": "        if False:\n            # a variant that is PURE filler is not an identity.",
-    "why": "wave-6 R1 (B1): with the filter gone, `Dun & Bradstreet (Israel) Ltd.`'s parenthetical half makes bare `israel` a target and every israel* slug promotes another company's board on the Sunday path.",
-    "must_be_killed_by_behavioural": true
-  },
-  {
     "id": "tenant-short-exact-drop",
     "file": "pipeline/identity_gate.py",
     "symbol": "_tenant_near",

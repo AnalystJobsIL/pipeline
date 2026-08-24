@@ -18,7 +18,7 @@ Bancor onto The Bancorp Bank's iCIMS, DiA Imaging Analytics onto `dia.mil`.
 * `company_identity.is_foreign` returns `False` for **every** ATS host by design, because an
   acquirer's tenant is legitimate — Momentis Surgical really does post under `memic`. So on
   the ~461 active ATS rows, `is_foreign` is not a gate at all.
-* A blanket tenant-mismatch veto refuses **36 legitimate acquisitions** (Momentis→memic,
+* A blanket tenant-mismatch veto refuses **24 legitimate acquisitions** (36 when first measured; Momentis→memic,
   Habana Labs→intel, VMware→broadcom, Splunk→cisco) and 7 of the 9 active rows on
   `crack_walled`'s own target platforms — Oracle CX pod ids (`hctz`, `edel`, `iawmqy`) are
   opaque and can never near-match a name. Proposed and rejected three times.
@@ -161,8 +161,8 @@ _NAME_FILLER = {"israel", "israeli", "ltd", "inc", "the", "group", "technologies
 
 
 # A tenant slug routinely carries a legal or numeric suffix the registry name omits:
-# wizinc/Wiz, gongio/Gong, outbraininc/Outbrain, playtikaltd/Playtika, hippo70/Hippo
-# Insurance, tipaltisolutions/Tipalti. Requiring near-equality without stripping these
+# wizinc/Wiz, gongio/Gong, outbraininc/Outbrain, playtikaltd/Playtika,
+# tipaltisolutions/Tipalti (hippo70/Hippo Insurance is NOT handled: measured wave 5). Requiring near-equality without stripping these
 # rejected 99 of the 460 active ATS rows. Stripping is safe in the direction that
 # matters: `bancorpbank` and `bitdefender` carry no such suffix, so they still fail.
 _TENANT_SUFFIX = re.compile(
@@ -184,34 +184,19 @@ def _plumbing(label):
 
 
 def _name_targets(name):
-    """The normalized forms of a registry name a tenant token may near-equal.
-
-    A parenthetical is an ALIAS, not a suffix: 21 registry rows are named `A (B)` --
-    `Merck (MSD)`, `VMware (Broadcom)`, `Habana Labs (Intel)` -- and concatenating both
-    halves (`merckmsd`) produces a form no real tenant can near-equal, so every one of
-    those rows refused its OWN board (wave-5 R2). Each half is its own target; the name
-    itself declares the entity, so a tenant matching either half is that row's evidence.
-    """
+    """The normalized forms of a registry name a tenant token may near-equal: the whole
+    name and its filler-stripped core. NOTHING else. An `A (B)` parenthetical is no longer
+    split into an alias: that heuristic admitted exactly the seven acquisitions it was
+    built for (now DECLARED in pipeline/identity_facts.py -- measured, no other row
+    depended on it) and, on `Dun & Bradstreet (Israel) Ltd.`, made bare `israel` an
+    identity target (wave-6 R1, B1). A declared row never reaches this function; an
+    undeclared one gets exactly its own name. To make an acquisition legitimate, declare
+    it -- do not teach this function another string trick."""
     from pipeline.company_identity import _norm
-    variants = [name or ""]
-    m = re.match(r"^(.*?)\((.*?)\)\s*(.*)$", name or "")
-    if m:
-        variants += [(m.group(1) + " " + m.group(3)).strip(), m.group(2).strip()]
-    out = set()
-    for v in variants:
-        core = _norm("".join(w for w in re.findall(r"[A-Za-z0-9]+", v)
-                             if w.lower() not in _NAME_FILLER))
-        if not core:
-            # a variant that is PURE filler is not an identity. `Dun & Bradstreet
-            # (Israel) Ltd.`'s parenthetical half made bare `israel` a target, and with
-            # `_EMBED_TOKEN_FORMS` stripping, `israeljobs`/`israelcareers`/`israeltech`
-            # all collapsed onto it -- another company's board promoted on the Sunday
-            # path (wave-6 R1, B1). The halves the alias rule exists for (msd, intel,
-            # broadcom, aristocrat...) are all non-filler and keep both forms.
-            continue
-        cn = _norm(v)
-        out |= {t for t in (cn, core) if t and len(t) >= 2}
-    return out
+    v = name or ""
+    core = _norm("".join(w for w in re.findall(r"[A-Za-z0-9]+", v)
+                         if w.lower() not in _NAME_FILLER))
+    return {t for t in (_norm(v), core) if t and len(t) >= 2}
 
 
 def _tenant_near(candidate, targets):
@@ -339,7 +324,7 @@ def tenant_is_this_company(name, url):
     # SCOPE FIRST. The `mismatch` test below must not run on a path-tenant platform: on
     # greenhouse, `Momentis Surgical` -> `memic` scores `mismatch` and is a LEGITIMATE
     # acquirer board (ARCHITECTURE section 2 cites it by name). Scoping after the mismatch
-    # test blocked it, which is the 36-row regression docs/BACKLOG.md 21 measured and
+    # test blocked it, which is the 36-row (24 today) regression docs/BACKLOG.md 21 measured and
     # rejected. Only the subdomain-tenant platforms below are in scope.
     if not _SUBDOMAIN_TENANT_HOST.search(host):
         return True
@@ -502,7 +487,7 @@ def activation_ok(name, api_url, n_jobs=0, html=""):
     `comeet.co/careers-api` 0, `api.ashbyhq.com/posting-api` 28) because
     `page_names_company` needs 2000 chars to answer anything but `None`. That was built,
     measured and reverted: `docs/BACKLOG.md` 33. And a tenant MISMATCH cannot be a veto on
-    its own either -- it costs 36 legitimate acquisitions (item 21). So the tenant string
+    its own either -- it costs 24 legitimate acquisitions (item 21; 36 when first measured). So the tenant string
     admits; refusal needs page evidence.
 
     **What that costs, stated rather than implied.** `page_names_company` returns `None` for
