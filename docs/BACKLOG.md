@@ -541,6 +541,12 @@ structural problem that keeps producing them.
     removal against the note **as of the last census**, so the explained/unexplained split
     degrades toward "everything is unexplained" the longer the refresher is missing.
 
+    **CLOSED 2026-08-24:** `daily-digest.yml` runs `registry_health.py --census` AFTER the
+    invariant guard and before the commit (continue-on-error, so it can never withhold the
+    digest); a census taken before the gate would bless a corrupted registry as the new
+    baseline. `pipeline/run.py` calls `alarms_state()` directly (0.19s import, no network)
+    and the digest renders the lines as `- **Registry:** …` in all three renderers.
+
 13. **The mail hook is now `alarms_state`, not `alarms`** — supersedes item 3 above. Item 3's
     patch called `alarms()`, which probes the resolution ladder; `daily-digest.yml` installs
     no Playwright and sets `BRIGHTDATA_*` only on unrelated steps, so it would have printed
@@ -553,6 +559,15 @@ structural problem that keeps producing them.
     Ladder status still reaches the mail, the honest way: each registry workflow's
     `--census` writes `cloud_state/registry_alarms.json`, and `alarms_state` reports it when
     it goes stale — which is also how a workflow that stopped running becomes visible.
+
+    **CLOSED 2026-08-24 — and it nearly returned through a file:** `--census` used to write
+    the FULL `alarms()` (ladder included) into the file `alarms_state` re-emits from. Now
+    `--census` records `alarms_state` only, and the ladder has its own file
+    (`cloud_state/registry_ladder.json`, written by `listing-hunt.yml --ladder`, the one job
+    with Playwright, and never by anything that reads it). Every mailed line is stable while
+    the state is stable — no `Nd old`, no `as of <today>` — because the inbox relay dedups
+    the digest on a content hash. Pinned by `test_the_mail_hook_does_not_record_the_ladder`
+    and `test_the_mailed_alarm_lines_do_not_change_on_a_day_nothing_changed`.
 
 14. **`tests/test_units.py` has no per-lane split, and a stale copy silently reverts another
     lane's guards** — lane: `docs`. Commit `9e4ce72` committed a checkout-era copy of the
@@ -879,6 +894,13 @@ fixes; one was a claim I made that a doc of this repo already contradicted on th
     happens" ARCHITECTURE.md section 8 calls the most common way this codebase breaks, and
     the health tool this lane built cannot report it. A per-tool floor in
     `registry_health.alarms()` is the cheap half and is `registry`-lane work.
+
+    **CLOSED 2026-08-24 (the alarm half):** `registry_health.pool_floor` compares each
+    tool's pool to the size the last census recorded (`//pools//` in
+    `cloud_state/registry_census.json`): collapse to zero, or halving from >= 8, alarms
+    by name in the daily mail. Literal thresholds; the first census after deploy never
+    alarms. Deliberately NOT in `check_invariants` — that is the hard gate, and a pool
+    collapse must be mailed, not used to withhold the digest.
 
 35. **`merge_csv_rows._TOOL` does not key `url-repaired`, and its overflow trim deletes the
     other writer's segments** — lane: shared plumbing. The marker is keyed by `seg[:28]`,
