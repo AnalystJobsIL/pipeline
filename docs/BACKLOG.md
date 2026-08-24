@@ -1742,7 +1742,7 @@ write list; each item names the lane that owns it and the command that proves it
     item 11: a name that is ENTIRELY role words plus seniority modifiers ("Senior Data Analyst",
     "BI Developer") is not junk. Pin: `assert looks_like_junk("Senior Data Analyst")`.
 102. **`company_info` has no `''`-aware API** — lane: shared (`pipeline/store.py`). The monthly
-    retry of empty blurbs reads `st.conn` directly in `firmographics._blurbs`; move to a
+    retry of empty blurbs reads `st.conn` directly in `company_intel._blurbs`; move to a
     `load_company_info_status()` when the store owner next touches the table, and give blurbs
     the same failure memory `firmo_failed` gives research.
 103. **`daily-digest.yml`'s conflict path and the export** — lane: `infra`. Item 94's wholesale
