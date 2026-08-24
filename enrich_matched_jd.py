@@ -1,51 +1,42 @@
 #!/usr/bin/env python3
 """Backfill JD text for EVERY matched role, whatever its source or age.
 
-`enrich_scrape_jd.py` fills descriptions in `scraped_cache.json` — i.e. only for
-scrape-source companies. But four API fetchers return no description at all
-(`workday` 88 companies, `smartrecruiters` 19, `bamboohr` 12, `microsoft` 1: the
-JD is simply not in their LIST response), so those roles reach the board with a
-title and nothing else — no requirements, no skills, no tags, and a classifier
-that had to judge on the title alone.
+`enrich_scrape_jd.py` fills descriptions in `scraped_cache.json` — only scrape-source
+companies. But four list endpoints return no description at all (workday, smartrecruiters,
+bamboohr, Microsoft's Eightfold search — see `pipeline/jdfill.py`), so those roles reach the
+board with a title and nothing else, and a classifier that judged on the title alone.
 
-This walks the `matched` table itself, which is the one place that holds every
-role we ever accepted, and fills any row whose stored description is too short to
-be a real JD. It is deliberately age-blind: a role first seen last week that we
-never got the text for is exactly the case the board is missing today.
+This walks the `matched` table itself — the one place that holds every role we ever
+accepted — and fills any row whose stored description is too short to be a real JD. It is
+deliberately age-blind: a role first seen last week that we never got the text for is
+exactly the case the board is missing today.
 
-    plain GET -> Bright Data Web Unlocker (budget-capped) -> store, or stamp
-    `jd_attempted` and retry after 7 days.
+    native JSON -> plain GET -> Bright Data Web Unlocker (budget-capped) -> store, or stamp
+    `jd_attempted` ("YYYY-MM-DD", or "YYYY-MM-DD transient" for a failure worth retrying
+    tomorrow rather than in 7 days).
 
-Idempotent, safe to re-run, and never shortens a description it already has.
+Idempotent, safe to re-run, never shortens a description it already has, and records what it
+did in the `enrich` stage stamp so the daily mail can say when it failed.
 
 Usage: python enrich_matched_jd.py [--db cloud_state/seen.db] [--limit N] [--dry-run]
+                                   [--cooldown-days 7]
 Env:   MATCHED_JD_TIME_BUDGET_MIN (default 25), MATCHED_JD_BD_CAP (default 250)
 """
 from __future__ import annotations
 
 import argparse
-import datetime as dt
 import os
 import sqlite3
 import sys
-import time
 
-from bd_rescue import _load_secrets, unlock
-from enrich_scrape_jd import _plain_fetch, extract_jd
+from pipeline.jdfill import (DESC_MAX, MIN_DESC, RETRY_DAYS, Item, Unlocker, alarm_for,
+                             load_secrets, record_enrich, run_backfill)
 
-# stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
-# company names and arrows in their summaries, and an UnicodeEncodeError there kills the
-# process AFTER the useful work — in the cloud conflict path that is a `|| true`, so the
-# whole merge is discarded silently. Report, never raise, on the report itself.
-for _s in (sys.stdout, sys.stderr):
+for _s in (sys.stdout, sys.stderr):        # a cp1252 pipe must not kill the report
     try:
         _s.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
         pass
-
-
-MIN_DESC = 300          # below this it is a stub, not a job description
-RETRY_DAYS = 7
 
 
 def _ensure_column(conn):
@@ -55,70 +46,62 @@ def _ensure_column(conn):
         conn.commit()
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", default="cloud_state/seen.db")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--dry-run", action="store_true")
-    args = ap.parse_args()
+    ap.add_argument("--cooldown-days", type=int, default=RETRY_DAYS)
+    args = ap.parse_args(argv)
+    # a run against a copy stamps beside the copy, never the repo's cloud_state file
+    stamp = None if args.db == ap.get_default("db") else args.db + ".stages.json"
+    try:
+        return _run(args, stamp)
+    except Exception as e:  # noqa: BLE001 - say so in the mail, then fail the step loudly
+        record_enrich(alarm=f"crash:{type(e).__name__}", path=stamp)
+        raise
 
-    _load_secrets()
-    budget_min = int(os.environ.get("MATCHED_JD_TIME_BUDGET_MIN", "25"))
-    bd_cap = int(os.environ.get("MATCHED_JD_BD_CAP", "250"))
-    bd_ok = bool(os.environ.get("BRIGHTDATA_API_KEY") and os.environ.get("BRIGHTDATA_ZONE"))
-    today = dt.date.today().isoformat()
-    retry_before = (dt.date.today() - dt.timedelta(days=RETRY_DAYS)).isoformat()
 
+def _run(args, stamp):
+    load_secrets()
     if not os.path.exists(args.db):
         print(f"no {args.db}; nothing to enrich")
         return 0
     conn = sqlite3.connect(args.db)
     _ensure_column(conn)
-
     rows = conn.execute(
-        """SELECT mkey, company, title, url, length(COALESCE(description,'')),
-                  COALESCE(jd_attempted,'')
-           FROM matched
-           WHERE length(COALESCE(description,'')) < ?
+        """SELECT mkey, company, title, url, COALESCE(jd_attempted,'')
+           FROM matched WHERE length(COALESCE(description,'')) < ?
            ORDER BY last_seen DESC, first_seen DESC""", (MIN_DESC,)).fetchall()
-    todo = [r for r in rows if (r[3] or "").startswith("http") and r[5] <= retry_before]
-    cooling = len(rows) - len(todo)
-    if args.limit:
-        todo = todo[:args.limit]
-    print(f"{len(rows)} matched roles under {MIN_DESC} chars; "
-          f"{cooling} in cooldown/no-url; attempting {len(todo)}", flush=True)
+    items = [Item(mkey, url, f"{comp} | {title}", att, comp)
+             for mkey, comp, title, url, att in rows if (url or "").startswith("http")]
+    print(f"{len(rows)} matched roles under {MIN_DESC} chars, {len(items)} with a url"
+          + (f"; attempting at most {args.limit}" if args.limit else ""), flush=True)
 
-    t0 = time.time()
-    n_ok = n_bd = n_fail = 0
-    for i, (mkey, comp, title, url, _n, _a) in enumerate(todo, 1):
-        if budget_min and (time.time() - t0) / 60 > budget_min:
-            print(f"  time budget {budget_min}m spent at {i}/{len(todo)}", flush=True)
-            break
-        html = _plain_fetch(url)
-        jd = extract_jd(html) if html else ""
-        if not jd and bd_ok and n_bd < bd_cap:
-            n_bd += 1
-            try:
-                jd = extract_jd(unlock(url))
-            except Exception:  # noqa: BLE001
-                jd = ""
-        tag = "OK " if jd else "-- "
-        print(f"  [{tag}] {i}/{len(todo)} {comp[:26]:<26} {title[:40]:<40} "
-              f"{len(jd)}", flush=True)
-        if args.dry_run:
-            continue
-        if jd:
+    bd = Unlocker(cap=int(os.environ.get("MATCHED_JD_BD_CAP", "250")))
+
+    def save(item, text, stamp):
+        if text:
             conn.execute("UPDATE matched SET description=?, jd_attempted=? WHERE mkey=?",
-                         (jd[:6000], today, mkey))
-            n_ok += 1
+                         (text[:DESC_MAX], stamp, item.key))
         else:
-            conn.execute("UPDATE matched SET jd_attempted=? WHERE mkey=?", (today, mkey))
-            n_fail += 1
+            conn.execute("UPDATE matched SET jd_attempted=? WHERE mkey=?", (stamp, item.key))
         conn.commit()
 
+    c = run_backfill(items, save=save,
+                     minutes=float(os.environ.get("MATCHED_JD_TIME_BUDGET_MIN", "25")),
+                     bd=bd, dry_run=args.dry_run, retry_days=args.cooldown_days,
+                     count_cap=args.limit, log=lambda s: print(s, flush=True))
     conn.close()
-    print(f"=== matched JD backfill: {n_ok} filled ({n_bd} via Bright Data), "
-          f"{n_fail} unfetchable (retry in {RETRY_DAYS}d) ===")
+    if not args.dry_run:
+        record_enrich(alarm=alarm_for(c, bd), path=stamp, matched_ran=1,
+                      matched_filled=c["filled"], matched_bd=c["bd"], matched_fail=c["fail"],
+                      matched_bd_unavailable=c["bd_unavailable"], matched_cooldown=c["cooldown"],
+                      matched_unfillable=c["unfillable"])
+    print(f"=== matched JD backfill: {c['filled']} filled ({c['bd']} via Bright Data), "
+          f"{c['fail']} unfetchable (retry in {args.cooldown_days}d), {c['cooldown']} in cooldown, "
+          f"{c['bd_unavailable']} waiting on Bright Data"
+          + (f" [{bd.unavailable}]" if bd.unavailable else "") + " ===")
     return 0
 
 

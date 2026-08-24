@@ -8,6 +8,7 @@ quietly stop covering companies or start reporting the wrong ones.
 """
 import datetime as dt
 import os
+import re
 import sys
 
 import pytest
@@ -3225,3 +3226,553 @@ def test_platform_check_catches_a_scoped_fetcher_that_forgot_to_declare_it(monke
     monkeypatch.setattr(fetchers.fetch_greenhouse, "israel_scoped", True, raising=False)
     assert grid()["greenhouse"][-2:] == ["MISSING", "ok"], \
         "claims to narrow to Israel but does not — would switch off empty-board for 104 rows"
+
+# =====================================================================================
+# jd-text lane, 2026-08-24 — the description ladder (pipeline/jdfill.py) and its drivers.
+# Each test pins a shipped bug; the session record is docs/sessions/2026-08-24-jd-text.md.
+# =====================================================================================
+import datetime as _jd_dt
+import json as _jd_json
+import subprocess as _jd_sp
+import sys as _jd_sys
+import urllib.error as _jd_uerr
+
+
+def _jd_shell(n=17_000):
+    """The shape of a Workday job page to a plain GET: 17 KB of script, 0 chars of text."""
+    return "<html><head><script>" + "var x=1;" * (n // 8) + "</script></head><body></body></html>"
+
+
+def _jd_page(intro="Company intro. " * 30):
+    return ("<html><body><p>" + intro + "</p><h2>About the role</h2><p>You will own dashboards "
+            "and analysis. " * 10 + "</p><h2>Requirements</h2><ul><li>5+ years of experience in "
+            "data analysis</li><li>SQL skills</li></ul></body></html>")
+
+
+def test_jd_caps_are_the_store_and_fetcher_caps():
+    """Four hardcoded 6000s and three 300s used to live in separate files; the lane now has one
+    of each and they must equal what the fetchers and the store enforce."""
+    from pipeline import fetchers, jdfill
+    assert jdfill.DESC_MAX == fetchers._DESC_MAX == 6000
+    assert jdfill.MIN_DESC == jdfill._MIN_DESC == 300
+    import enrich_scrape_jd as esj
+    assert esj._MIN_TEXT == 300 and esj._DESC_MAX == 6000 and esj._RETRY_DAYS == 7
+
+
+def test_extract_jd_needs_two_markers_and_starts_at_the_role():
+    from pipeline.jdfill import extract_jd, html_to_text
+    assert html_to_text(_jd_shell()) == ""
+    assert extract_jd(_jd_shell()) == ""
+    one_marker = "<p>" + "We offer innovative benefits and full-time work. " * 20 + "</p>"
+    assert extract_jd(one_marker) == ""                       # one marker family, not two
+    jd = extract_jd(_jd_page())
+    assert jd.startswith("About the role") and "Requirements" in jd
+
+
+def test_native_url_is_derived_from_the_public_url_alone():
+    """`matched` has no platform column and a job dict carries no api_url, so the native rung
+    must recognise a platform from host + path. Every Workday row in the registry must round
+    trip: its api_url names the cxs tenant/site; the public job URL must map back to them."""
+    from pipeline.companies import load_companies
+    from pipeline.jdfill import native_url
+    n = 0
+    for r in load_companies():
+        if r["ats_platform"] != "workday":
+            continue
+        parts = r["api_url"].split("/")
+        tenant, site, host = parts[5], parts[6], parts[2]
+        got = native_url(f"https://{host}/{site}/job/Israel-Tel-Aviv/Data-Analyst_JR-1")
+        assert got and got[0] == "workday", r["company_name"]
+        assert got[1][0] == f"https://{host}/wday/cxs/{tenant}/{site}/job/Israel-Tel-Aviv/Data-Analyst_JR-1"
+        n += 1
+    assert n >= 60
+    assert native_url("https://x.wd5.myworkdayjobs.com/job") is None            # no site segment
+    assert native_url("https://jobs.smartrecruiters.com/Wix/744000012345-data-analyst") == \
+        ("smartrecruiters", ["https://api.smartrecruiters.com/v1/companies/Wix/postings/744000012345"])
+    assert native_url("https://bringoz.bamboohr.com/careers/39") == \
+        ("bamboohr", ["https://bringoz.bamboohr.com/careers/39/detail"])
+    assert native_url("https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68")[0] == "comeet"
+    assert native_url("https://boards.greenhouse.io/wix/jobs/123") == \
+        ("greenhouse", ["https://boards-api.greenhouse.io/v1/boards/wix/jobs/123"])
+    # a `?gh_jid=` embed: the registry's greenhouse slug first, then the name, then the host
+    gh = native_url("https://www.taboola.com/careers/job/8035268?gh_jid=8035268", "Taboola")
+    assert gh[0] == "greenhouse" and gh[1][0].endswith("/boards/taboola/jobs/8035268")
+    assert native_url("https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv") is None
+
+
+def test_is_job_url_refuses_search_pages():
+    """4 Unlocker credits went on 2026-08-24 to URLs that cannot carry a JD."""
+    from pipeline.jdfill import is_job_url
+    assert not is_job_url("https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel")
+    assert not is_job_url("https://careers.nebius.com/")
+    assert is_job_url("https://careers.nebius.com/?gh_jid=4942511101")
+    assert is_job_url("https://il.indeed.com/viewjob?jk=736a52986835829a")
+    assert is_job_url("https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68")
+
+
+class _FakeBD:
+    def __init__(self, body="", reason="bd-unavailable"):
+        self.used, self.body, self.reason, self.unavailable = 0, body, reason, ""
+
+    def __call__(self, url, timeout=90):
+        self.used += 1
+        return (200, self.body, "") if self.body else (None, "", self.reason)
+
+
+def test_fetch_jd_ladder_order_and_reasons(monkeypatch):
+    """native -> html -> Bright Data; every failure has a reason and transient means
+    'retry tomorrow', not 'park for a week'."""
+    from pipeline import jdfill
+    calls = []
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": (calls.append("native"), ("JD " * 200, "ok"))[1])
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (calls.append("html"), (200, _jd_page()))[1])
+    bd = _FakeBD(body=_jd_page())
+    jd = jdfill.fetch_jd("https://x/jobs/1", bd=bd)
+    assert (jd.via, jd.reason, calls, bd.used) == ("native", "ok", ["native"], 0)
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    jd = jdfill.fetch_jd("https://x/jobs/1", bd=bd)
+    assert (jd.via, jd.reason, bd.used) == ("html", "ok", 0)              # html hit: BD untouched
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
+    assert jdfill.fetch_jd("https://x/jobs/1") == ("", "none", "shell", False)  # inline: no BD
+    jd = jdfill.fetch_jd("https://x/jobs/1", bd=bd)
+    assert (jd.via, jd.reason, bd.used) == ("bd", "ok", 1)
+    jd = jdfill.fetch_jd("https://x/jobs?q=1", bd=bd)                   # search page: no credit
+    assert (jd.reason, bd.used) == ("not-a-job-url", 1)
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (None, ""))
+    assert jdfill.fetch_jd("https://x/jobs/1") == ("", "none", "timeout", True)
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (503, ""))
+    assert jdfill.fetch_jd("https://x/jobs/1").transient is True
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (404, ""))
+    assert jdfill.fetch_jd("https://x/jobs/1") == ("", "none", "http-404", False)
+    jd = jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD())
+    assert (jd.reason, jd.transient) == ("bd-unavailable", True)
+    assert jdfill.fetch_jd("").reason == "no-url"
+
+
+def test_fetch_jd_never_routes_through_pipeline_http(monkeypatch):
+    """http.py retries 30 s x 3 on a miss; 60 misses at that price eat the inline budget."""
+    from pipeline import http, jdfill
+    monkeypatch.setattr(http, "_request", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("no")))
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen",
+                        lambda *a, **k: (_ for _ in ()).throw(_jd_uerr.URLError("down")))
+    jd = jdfill.fetch_jd("https://paloaltonetworks.wd5.myworkdayjobs.com/panw/job/IL/Analyst_JR-1")
+    assert jd.reason == "timeout" and jd.transient
+
+
+class _Resp:
+    def __init__(self, body, err=""):
+        self.status, self._b, self.headers = 200, body.encode(), {"x-brd-error-code": err} if err else {}
+
+    def read(self, n=None):
+        return self._b
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def test_unlocker_stops_on_account_errors_not_on_walled_pages(monkeypatch):
+    """Bright Data answers HTTP 200 even when it failed, and says so in x-brd-error-code
+    (target 403 -> reject_block); a bad token is a real 401 (measured 2026-08-24). Only the
+    account-level answer may stop the run; five walled pages must not."""
+    from pipeline import jdfill
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    sent = []
+
+    def urlopen(req, timeout=0):
+        sent.append(req)
+        if answers[0] == 401:
+            raise _jd_uerr.HTTPError(req.full_url, 401, "Invalid token", {}, None)
+        return _Resp(*answers[0])
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen", urlopen)
+    answers = [401]
+    u = jdfill.Unlocker(cap=10)
+    assert u("https://x/1") == (401, "", "bd-unavailable") and u.unavailable == "http-401"
+    assert u("https://x/2")[2] == "bd-unavailable" and len(sent) == 1 and u.used == 1
+    answers = [("", "reject_block")]
+    u = jdfill.Unlocker(cap=10, breaker=5)
+    for i in range(4):
+        assert u(f"https://x/{i}")[2] == "bd-reject_block" and not u.unavailable
+    answers = [(_jd_page(), "")]
+    assert u("https://x/ok")[2] == "" and u.streak == 0                  # a success resets
+    answers = [("", "policy_20140")]
+    for i in range(6):
+        u(f"https://x/w{i}")
+    assert not u.unavailable                                            # it HAS succeeded once
+    u2 = jdfill.Unlocker(cap=10, breaker=5)
+    for i in range(5):
+        u2(f"https://x/w{i}")
+    assert u2.unavailable == "no-success-after-5" and u2("https://x/more") == (None, "", "bd-unavailable")
+    u3 = jdfill.Unlocker(cap=1)
+    u3("https://x/1")
+    assert u3("https://x/2") == (None, "", "bd-capped")
+    monkeypatch.delenv("BRIGHTDATA_API_KEY")
+    n = len(sent)
+    assert jdfill.Unlocker()("https://x/1") == (None, "", "bd-unavailable") and len(sent) == n
+
+
+def test_cooldown_due_boundaries_and_the_transient_stamp():
+    """Both drivers used opposite comparisons (`>` vs `<=`) with no test on either boundary;
+    a legacy bare-date stamp and the new ' transient' suffix must both parse."""
+    from pipeline.jdfill import due, stamp_value
+    today = _jd_dt.date(2026, 8, 24)
+    assert due("", today)
+    assert due("2026-08-17", today) and not due("2026-08-18", today)          # exactly 7 days
+    assert due("2026-08-23 transient", today) and not due("2026-08-24 transient", today)
+    assert due("2026-08-20", today, definitive=3) and not due("2026-08-22", today, definitive=3)
+    assert stamp_value(today, False) == "2026-08-24" and stamp_value(today, True) == "2026-08-24 transient"
+
+
+def test_run_backfill_counts_stamps_and_respects_dry_run(monkeypatch):
+    from pipeline import jdfill
+    outcomes = {"https://a/1": jdfill.JD("D" * 400, "html", "ok", False),
+                "https://a/2": jdfill.JD("", "none", "no-markers", False),
+                "https://a/3": jdfill.JD("", "bd", "bd-unavailable", True),
+                "https://a/4": jdfill.JD("B" * 400, "bd", "ok", False)}
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: outcomes[u])
+    saved = []
+    items = [jdfill.Item(i, u, f"C | {i}", "") for i, u in enumerate(outcomes)]
+    items.append(jdfill.Item(9, "https://a/1", "C | cool", "2026-08-20"))
+    today = _jd_dt.date(2026, 8, 24)
+    c = jdfill.run_backfill(items, save=lambda it, t, s: saved.append((it.key, bool(t), s)),
+                            minutes=None, today=today, log=lambda s: None)
+    assert (c["tried"], c["filled"], c["bd"], c["fail"], c["bd_unavailable"], c["cooldown"]) == (4, 2, 1, 1, 1, 1)
+    assert c["reason:no-markers"] == 1 and c["via:bd"] == 2 and jdfill.alarm_for(c) == ""
+    # a native rung is one cheap GET: a row stamped before the rung existed is not held a week
+    wd = jdfill.Item(7, "https://x.wd5.myworkdayjobs.com/s/job/IL/Analyst_1", "C | wd", "2026-08-23")
+    outcomes[wd.url] = jdfill.JD("W" * 400, "native", "ok", False)
+    assert jdfill.run_backfill([wd], save=lambda *a: None, minutes=None, today=today, log=lambda s: None)["filled"] == 1
+    outcomes["https://x/jobs?q=1"] = jdfill.JD("", "none", "not-a-job-url", False)
+    c = jdfill.run_backfill([jdfill.Item(8, "https://x/jobs?q=1", "C | s")], save=lambda *a: None,
+                            minutes=None, today=today, log=lambda s: None)
+    assert (c["unfillable"], c["fail"]) == (1, 0)
+    # the wall clock: 0 minutes attempts nothing (an env of "0" must never mean unbounded)
+    c = jdfill.run_backfill(items[:3], save=lambda *a: None, minutes=0, today=today, log=lambda s: None)
+    assert (c["tried"], c["skipped_budget"]) == (0, 3)
+    assert saved == [(0, True, "2026-08-24"), (1, False, "2026-08-24"),
+                     (2, False, "2026-08-24 transient"), (3, True, "2026-08-24")]
+    saved.clear()
+    c = jdfill.run_backfill(items, save=lambda *a: saved.append(a), minutes=None, today=today,
+                            dry_run=True, count_cap=2, log=lambda s: None)
+    assert saved == [] and c["tried"] == 2 and c["skipped_budget"] == 2
+    c = jdfill.run_backfill(items[-1:], save=lambda *a: None, minutes=None, today=today,
+                            retry_days=0, log=lambda s: None)
+    assert c["tried"] == 1 and c["cooldown"] == 0                      # --cooldown-days reaches due()
+
+
+def test_backfill_alarm_fires_on_mass_zero_and_on_an_unusable_unlocker():
+    from collections import Counter
+    from pipeline.jdfill import alarm_for
+    c = Counter(tried=10, filled=0); c["reason:shell"] = 7; c["reason:timeout"] = 3
+    assert alarm_for(c) == "jd-massfail(shell x7)"
+    assert alarm_for(Counter(tried=9, filled=0)) == ""
+    assert alarm_for(Counter(tried=10, filled=1)) == ""
+    bd = _FakeBD(); bd.unavailable = "http-401"
+    assert alarm_for(Counter(tried=3, filled=1, bd_unavailable=2), bd) == "bd-unavailable(http-401)"
+    assert alarm_for(Counter(tried=12, filled=0, bd_unavailable=12), bd) == "bd-unavailable(http-401)"  # the actionable half first
+    assert alarm_for(Counter(tried=3, filled=3), bd) == ""
+
+
+def test_record_enrich_unions_replaces_and_fills_the_gap(tmp_path, monkeypatch):
+    """Two scripts, one stamp. The workflow's `if: always()` step used to run a bare
+    `stages stamp enrich`, erasing whatever the scripts had recorded; now it calls
+    record_enrich() with no arguments, which only fills a gap."""
+    from pipeline import jdfill, stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    today = _jd_dt.date.today().isoformat()
+    yday = (_jd_dt.date.today() - _jd_dt.timedelta(days=1)).isoformat()
+    e = jdfill.record_enrich()                                          # never ran: gap filled
+    assert e["alarm"] == "no-report(scrape,matched)" and e["date"] == today
+    e = jdfill.record_enrich(scrape_ran=1, scrape_filled=3)
+    assert e["scrape_filled"] == 3 and "alarm" not in e                 # a report supersedes no-report
+    e = jdfill.record_enrich()                                          # one driver died silently
+    assert e["alarm"] == "no-report(matched)" and e["scrape_filled"] == 3
+    stages.stamp("publish", email=1)                                    # another stage in between
+    e = jdfill.record_enrich(alarm="bd-unavailable(http-401)", matched_ran=1, matched_filled=1)
+    assert e["scrape_filled"] == 3 and e["matched_filled"] == 1 and e["alarm"] == "bd-unavailable(http-401)"
+    assert jdfill.record_enrich() == e                                  # no-arg on a full day: no-op
+    assert stages._load()["publish"]["email"] == 1 and stages.alarms("enrich") == ["enrich bd-unavailable(http-401)"]
+    data = stages._load(); data["enrich"]["date"] = yday
+    (tmp_path / "stages.json").write_text(_jd_json.dumps(data), encoding="utf-8")
+    assert stages.alarms("enrich") == ["enrich last ran 1d ago — the digest read stale input",
+                                       "enrich bd-unavailable(http-401)"]
+    e = jdfill.record_enrich()                                          # the scripts died at import
+    assert e["date"] == yday and e["alarm"] == "no-report(scrape,matched)"   # the date is NOT moved
+    assert stages.alarms("enrich")[0].startswith("enrich last ran 1d ago")
+    e = jdfill.record_enrich(scrape_ran=1, scrape_filled=0)
+    assert e["date"] == today and "matched_filled" not in e and "alarm" not in e   # yesterday's replaced
+    other = tmp_path / "elsewhere.json"
+    jdfill.record_enrich(path=str(other), matched_ran=1)                # a copy's stamp goes beside the copy
+    assert other.exists() and "matched_ran" not in stages._load()["enrich"]
+
+
+def test_jd_filler_reports_per_platform_reasons_and_alarms_on_mass_failure(monkeypatch):
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "shell", False))
+    f = jdfill.JDFiller(budget_min=5)
+    for i in range(10):
+        f.maybe_fill({"title": "Data Analyst", "url": f"https://x.wd5.myworkdayjobs.com/s/job/a/b{i}",
+                      "description": "", "ats_platform": "workday"})
+    assert (f.tried, f.filled) == (10, 0) and f.by_platform[("workday", "shell")] == 10
+    assert f.alarms() == ["inline jd-fill 0/10 — every fetch failed (workday shell 10)"]
+    assert "0/10 descriptions fetched inline" in f.summary() and "workday shell 10" in f.summary()
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("D" * 400, "native", "ok", False))
+    g = jdfill.JDFiller(budget_min=5)
+    job = {"title": "Data Analyst", "url": "https://x/jobs/1", "description": ""}
+    assert g.maybe_fill(job) and len(job["description"]) == 400 and g.alarms() == []
+    assert "native 1" in g.summary()
+
+
+def test_jd_text_imports_no_root_module():
+    """`jdfill` used to import a root script that imports bd_rescue, which imports half the
+    registry ladder — a syntax error in any of them killed both backfills at import, behind
+    `|| echo`. The lane must import from the package only."""
+    code = ("import sys, pipeline.jdfill, enrich_scrape_jd, enrich_matched_jd; "
+            "print(sorted(m for m in ('bd_rescue','scrape_universal','resolve_deep',"
+            "'retry_unreachable','wayback_rescue') if m in sys.modules))")
+    out = _jd_sp.run([_jd_sys.executable, "-c", code], capture_output=True, text=True,
+                     cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.strip() == "[]", out.stdout
+
+
+def test_matched_backfill_driver_fills_stamps_and_records(tmp_path, monkeypatch):
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    db = str(tmp_path / "seen.db")
+    st = store.SeenStore(db)
+    base = {"company": "ACME", "location": "TLV", "posted_date": "2026-08-20", "seniority": "mid",
+            "sources": ["workday"]}
+    st.upsert_matched({**base, "title": "Data Analyst", "url": "https://a/jobs/1", "description": ""}, "2026-08-20")
+    st.upsert_matched({**base, "title": "BI Analyst", "url": "https://a/jobs/2", "description": ""}, "2026-08-20")
+    st.upsert_matched({**base, "title": "Full", "url": "https://a/jobs/3", "description": "F" * 900}, "2026-08-20")
+    st.close()
+    outcomes = {"https://a/jobs/1": jdfill.JD("D" * 500, "native", "ok", False),
+                "https://a/jobs/2": jdfill.JD("", "none", "no-markers", False)}
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: outcomes[u])
+    assert emj.main(["--db", db]) == 0
+    assert not (tmp_path / "stages.json").exists() and (tmp_path / "seen.db.stages.json").exists()
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "seen.db.stages.json"))   # a non-default --db stamps beside itself
+    import sqlite3
+    rows = dict(sqlite3.connect(db).execute("select url, length(description)||'|'||coalesce(jd_attempted,'') from matched"))
+    today = _jd_dt.date.today().isoformat()
+    assert rows == {"https://a/jobs/1": f"500|{today}", "https://a/jobs/2": f"0|{today}", "https://a/jobs/3": "900|"}
+    e = stages._load()["enrich"]
+    assert (e["matched_filled"], e["matched_fail"]) == (1, 1)
+    assert emj.main(["--db", db]) == 0                                  # second run: all cooling
+    assert stages._load()["enrich"]["matched_cooldown"] == 1
+    # --limit caps ATTEMPTS: a cooling row must not consume it (the old driver filtered first)
+    outcomes["https://a/jobs/2"] = jdfill.JD("E" * 500, "html", "ok", False)
+    assert emj.main(["--db", db, "--limit", "1", "--cooldown-days", "0"]) == 0
+    assert stages._load()["enrich"]["matched_filled"] == 1
+    with pytest.raises(Exception):
+        (tmp_path / "notdb.txt").write_text("not a database", encoding="utf-8")
+        emj.main(["--db", str(tmp_path / "notdb.txt")])
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "notdb.txt.stages.json"))
+    assert stages._load()["enrich"]["alarm"].startswith("crash:")
+
+
+def test_scrape_backfill_driver_write_is_byte_identical_and_dry_run_writes_nothing(tmp_path, monkeypatch):
+    from pipeline import jdfill, stages
+    import enrich_scrape_jd as esj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    cache = {"Zeta": [{"title": "Data Analyst", "url": "https://z/jobs/1", "description": "",
+                       "location": "Tel Aviv, Israel"},
+                      {"title": "Data Analyst", "url": "https://z/jobs/2", "description": "",
+                       "_jd_attempted": _jd_dt.date.today().isoformat()},
+                      {"title": "Backend Engineer", "url": "https://z/jobs/3", "description": ""}],
+             "Alpha": [{"title": "Analytics Cookies", "url": "https://a/jobs/9", "description": ""}]}
+    p = tmp_path / "cache.json"
+    p.write_text(_jd_json.dumps(cache, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+    seen = []
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: (seen.append(u), jdfill.JD("D" * 400, "html", "ok", False))[1])
+    before = p.read_bytes()
+    assert esj.main(["--cache", str(p), "--dry-run"]) == 0
+    assert p.read_bytes() == before and not (tmp_path / "stages.json").exists()
+    assert seen == ["https://z/jobs/1"]                                 # gates: cooldown, title, chrome
+    assert esj.main(["--cache", str(p)]) == 0
+    monkeypatch.setattr(stages, "PATH", str(p) + ".stages.json")       # a non-default --cache stamps beside itself
+    got = _jd_json.loads(p.read_text(encoding="utf-8"))
+    assert len(got["Zeta"][0]["description"]) == 400 and got["Zeta"][0]["_jd_attempted"] == _jd_dt.date.today().isoformat()
+    want = _jd_json.dumps(got, ensure_ascii=False, indent=1, sort_keys=True).encode("utf-8")
+    assert p.read_bytes().replace(b"\r\n", b"\n") == want            # same bytes the old open("w") wrote
+    assert stages._load()["enrich"]["scrape_filled"] == 1
+
+
+def test_carry_jd_keeps_the_description_and_the_transient_stamp():
+    """The nightly refresh rebuilds every card; without the carry the 7-day cooldown and the
+    paid-for text vanished every night. The new ' transient' suffix must travel verbatim."""
+    from refresh_scrape_cache import _carry_jd
+    old = [{"url": "https://z/1", "description": "D" * 400, "_jd_attempted": "2026-08-20"},
+           {"url": "https://z/2", "description": "", "_jd_attempted": "2026-08-23 transient"}]
+    new = _carry_jd([{"url": "https://z/1", "description": ""}, {"url": "https://z/2", "description": ""},
+                     {"url": "https://z/3", "description": ""}], old)
+    assert new[0]["description"] == "D" * 400 and new[0]["_jd_attempted"] == "2026-08-20"
+    assert new[1]["_jd_attempted"] == "2026-08-23 transient" and "_jd_attempted" not in new[2]
+
+
+def test_native_readers_parse_the_real_payload_shapes():
+    """Fixtures are the shapes measured live on 2026-08-24 (Palo Alto / Wix / Bringoz / Nebius / Port.io)."""
+    from pipeline import jdfill
+    body = "<p>Role. " * 60 + "</p><h2>Requirements</h2><ul><li>experience</li></ul>"
+    assert len(jdfill._text_or_empty(jdfill._wd_read(_jd_json.dumps({"jobPostingInfo": {"jobDescription": body}})))) > 300
+    sr = {"jobAd": {"sections": {"jobDescription": {"title": "Job Description", "text": body},
+                                 "qualifications": {"title": "Qualifications", "text": "<li>SQL</li>"}}}}
+    assert "Qualifications" in jdfill._text_or_empty(jdfill._sr_read(_jd_json.dumps(sr)))
+    assert jdfill._text_or_empty(jdfill._bh_read(_jd_json.dumps({"result": {"jobOpening": {"description": body}}})))
+    assert jdfill._text_or_empty(jdfill._gh_read(_jd_json.dumps({"content": body.replace("<", "&lt;").replace(">", "&gt;")})))
+    page = ('<script>window.x = [{"name": "Description", "value": "' + ("Analysis. " * 40).replace('"', "") +
+            '"}, {"name": "Requirements", "value": "\\u003Cul\\u003E\\u003Cli\\u003E5+ years\\u003C/li\\u003E\\u003C/ul\\u003E"}]</script>')
+    out = jdfill._comeet_read(page)
+    assert "Requirements" in out and "<li>5+ years</li>" in out
+    assert jdfill._comeet_read("<html>nothing</html>") == ""
+
+
+# --- wave-1a mutation sweep: every guard that survived a flip gets its assertion -----------
+def test_jd_guards_the_mutation_sweep_found_unpinned(monkeypatch):
+    from pipeline import jdfill
+    # extract_jd: singular/plural of one marker is one marker; a long markerless body is no JD
+    assert jdfill.extract_jd("<p>" + "This requirement. These requirements. " * 20 + "</p>") == ""
+    # is_job_url: three path segments qualify without a digit
+    assert jdfill.is_job_url("https://careers.x.com/en/positions/senior-bi")
+    assert not jdfill.is_job_url("https://careers.x.com/positions")
+    # native_url: the Workday site is the segment before /job/, not the first (locale prefixes)
+    assert jdfill.native_url("https://x.wd5.myworkdayjobs.com/en-US/panw/job/IL/A_JR1")[1][0] == \
+        "https://x.wd5.myworkdayjobs.com/wday/cxs/x/panw/job/IL/A_JR1"
+    assert jdfill.native_url("https://jobs.smartrecruiters.com/Wix/data-analyst") is None
+    assert jdfill.native_url("https://z.bamboohr.com/careers") is None
+    assert jdfill.native_url("https://www.comeet.com/jobs/port") is None
+    assert jdfill.native_url("https://boards.greenhouse.io/embed/job_board/jobs/123") is None
+    assert jdfill.native_jd("https://acme.com/careers/1") == ("", "not-native")
+    # gh_jid slug order: the registry's token first, then the name-derived slug
+    from pipeline.companies import load_companies
+    row = next(r for r in load_companies() if r["ats_platform"] == "greenhouse" and r["token"]
+               and r["token"] != re.sub(r"[^a-z0-9]", "", r["company_name"].lower()))
+    cands = jdfill.native_url("https://careers.example.com/x?gh_jid=1", row["company_name"])[1]
+    assert cands[0] == f"https://boards-api.greenhouse.io/v1/boards/{row['token']}/jobs/1"
+    assert cands[1].endswith(f"/boards/{re.sub(r'[^a-z0-9]', '', row['company_name'].lower())}/jobs/1")
+    # native_jd walks every candidate: a 200 that is not JSON, then a 404, then the real one
+    answers = iter([(200, "<html>wrong board</html>"), (404, ""), (200, _jd_json.dumps({"content": _jd_page()}))])
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: next(answers))
+    monkeypatch.setattr(jdfill, "native_url", lambda u, c="": ("greenhouse", ["a", "b", "c"]))
+    assert jdfill.native_jd("https://x/?gh_jid=1")[1] == "ok"
+    monkeypatch.undo()
+    # fetch_jd: shell vs no-markers, the 500 boundary, http:// urls, the BD-body-without-JD branch,
+    # a search page whose GET timed out stays transient, a BD gateway 5xx is transient
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, "<p>" + "Company intro. " * 60 + "</p>"))
+    assert jdfill.fetch_jd("https://x/jobs/1").reason == "no-markers"
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (500, ""))
+    assert jdfill.fetch_jd("http://x/jobs/1") == ("", "none", "http-500", True)
+    assert jdfill.fetch_jd("https://x/jobs?q=1", bd=_FakeBD()) == ("", "none", "http-500", True)
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
+    assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(body=_jd_shell())) == ("", "bd", "bd-shell", False)
+    assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(reason="bd-http-502")).transient is True
+    assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(reason="bd-capped")).transient is True
+    assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(reason="bd-reject_block")).transient is False
+
+
+def test_unlocker_reads_the_error_header_even_with_a_body_and_needs_both_keys(monkeypatch):
+    from pipeline import jdfill
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    answers = []
+    def urlopen(req, timeout=0):
+        a = answers[0]
+        if isinstance(a, int):
+            raise _jd_uerr.HTTPError(req.full_url, a, "x", {}, None)
+        if a == "net":
+            raise _jd_uerr.URLError("down")
+        return _Resp(*a)
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen", urlopen)
+    u = jdfill.Unlocker(cap=10)
+    answers[:] = [(_jd_page(), "reject_block")]          # a real block page carries HTML: still a failure
+    assert u("https://x/1")[2] == "bd-reject_block"
+    answers[:] = ["net"]
+    assert u("https://x/2") == (None, "", "bd-timeout")
+    answers[:] = [502]
+    assert u("https://x/3") == (502, "", "bd-http-502") and not u.unavailable
+    for code in (402, 403):
+        v = jdfill.Unlocker(cap=10)
+        answers[:] = [code]
+        assert v("https://x/1")[2] == "bd-unavailable" and v.unavailable == f"http-{code}"
+    monkeypatch.delenv("BRIGHTDATA_ZONE")
+    assert jdfill.Unlocker().unavailable == "no-key"
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setenv("JD_BD", "0")
+    assert jdfill.Unlocker().unavailable == "disabled"                  # the local off-switch
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, timeout=15, **k: (200, f"<p>t={timeout}</p>"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    seen = []
+    monkeypatch.setattr(jdfill, "extract_jd", lambda h: (seen.append(h), "")[1])
+    jdfill.fetch_jd("https://x/jobs/1")
+    jdfill.run_backfill([jdfill.Item(1, "https://x/jobs/1", "C | 1")], save=lambda *a: None, minutes=None,
+                        log=lambda s: None)
+    assert seen == ["<p>t=15</p>", "<p>t=25</p>"]                       # inline 15 s, backfill 25 s
+
+
+def test_run_backfill_wall_clock_and_the_stamp_bookkeeping(monkeypatch, tmp_path):
+    from pipeline import jdfill, stages
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("D" * 400, "html", "ok", False))
+    clock = [0.0]
+    monkeypatch.setattr(jdfill.time, "time", lambda: clock[0])
+    items = [jdfill.Item(i, f"https://x/jobs/{i}", f"C | {i}") for i in range(3)]
+    def slow_save(*a):
+        clock[0] += 90.0                                                 # each fetch "took" 90 s
+    c = jdfill.run_backfill(items, save=slow_save, minutes=1, today=_jd_dt.date(2026, 8, 24), log=lambda s: None)
+    assert (c["tried"], c["skipped_budget"]) == (1, 2)
+    monkeypatch.undo()
+    from collections import Counter
+    bd = _FakeBD(); bd.unavailable = "http-401"
+    assert jdfill.alarm_for(Counter(tried=10, filled=0, bd_unavailable=10, **{"reason:bd-unavailable": 10}), bd) \
+        == "bd-unavailable(http-401)"                                     # the actionable half wins
+    assert jdfill.alarm_for(Counter(tried=3, filled=1, bd_unavailable=2), _FakeBD()) == ""   # bd usable: no alarm
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    e1 = jdfill.record_enrich(alarm="X", scrape_ran=1, scrape_filled=0)
+    e2 = jdfill.record_enrich(alarm="X", matched_ran=1, matched_filled=0)
+    assert e2["alarm"] == "X" and e2["finished_at"] >= e1["finished_at"]   # identical alarms collapse
+    assert jdfill.record_enrich(alarm="Y", matched_filled=0)["alarm"] == "X; Y"
+
+
+def test_jd_filler_env_contract_and_budget(monkeypatch):
+    from pipeline import jdfill
+    calls = []
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: (calls.append(u), jdfill.JD("D" * 400, "html", "ok", False))[1])
+    job = {"title": "Data Analyst", "url": "https://x/jobs/1", "description": ""}
+    monkeypatch.setenv("JDFILL", "0")
+    f = jdfill.JDFiller()
+    assert f.maybe_fill(dict(job)) is False and f.tried == 0 and calls == []
+    monkeypatch.setenv("JDFILL", "1")
+    monkeypatch.setenv("JDFILL_TIME_BUDGET_MIN", "0.5")
+    f = jdfill.JDFiller()
+    assert f.budget == 0.5 and f.maybe_fill(dict(job)) is True
+    monkeypatch.setattr(jdfill.time, "time", lambda: f.t0 + 3600)
+    assert f.maybe_fill(dict(job)) is False and f.skipped_budget == 1 and "skipped (budget 0.5m spent)" in f.summary()
+    assert f.maybe_fill({"title": "Data Analyst", "url": None, "description": None}) is False   # malformed job: no crash
+
+
+def test_scrape_backfill_keeps_fetched_text_when_the_loop_dies(tmp_path, monkeypatch):
+    """The matched driver commits per row; the cache driver used to write only at the end, so
+    a crash, a kill or the job timeout discarded every description (and credit) of the run."""
+    from pipeline import jdfill, stages
+    import enrich_scrape_jd as esj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    cache = {"Z": [{"title": "Data Analyst", "url": "https://z/jobs/1", "description": ""},
+                   {"title": "BI Analyst", "url": "https://z/jobs/2", "description": ""}]}
+    p = tmp_path / "cache.json"
+    p.write_text(_jd_json.dumps(cache), encoding="utf-8")
+    def boom(u, **k):
+        if u.endswith("/2"):
+            raise RuntimeError("network stack died")
+        return jdfill.JD("D" * 400, "html", "ok", False)
+    monkeypatch.setattr(jdfill, "fetch_jd", boom)
+    with pytest.raises(RuntimeError):
+        esj.main(["--cache", str(p)])
+    got = _jd_json.loads(p.read_text(encoding="utf-8"))
+    assert len(got["Z"][0]["description"]) == 400                        # the first fetch survived
+    monkeypatch.setattr(stages, "PATH", str(p) + ".stages.json")
+    assert stages._load()["enrich"]["alarm"] == "crash:RuntimeError"

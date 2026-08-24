@@ -1418,6 +1418,121 @@ status` is unchanged afterwards.
 - `private-enterprise` renders as the raw enum on a card (`_STAGE_LABEL` in `pipeline/digest.py`
   has no entry; 44 records) — `render` lane, BACKLOG.
 
+## 7a. Job-description text — the jd-text layer
+*lane: `jd-text` — `pipeline/jdfill.py` (the library), `enrich_scrape_jd.py`, `enrich_matched_jd.py`*
+
+**What it is for.** The classifier's LLM tier reads the description and judges; the board's
+requirements, skills, years, degree and every tag are computed from it (§6, `docs/TAGGING.md`).
+A role without text is judged on its title and renders a bare card. Four list endpoints carry
+no description at all — `workday` 66 active rows, `smartrecruiters` 16, `bamboohr` 11,
+Microsoft's Eightfold search 1 (re-derived 2026-08-24:
+`python -c "import csv,collections;print(collections.Counter(r['ats_platform'] for r in csv.DictReader(open('companies.csv',encoding='utf-8-sig')) if r['active']=='true'))"`;
+the `eightfold`/`phenom` fetchers return `""` too but have 0 rows) — and scrape cards and
+discovery cards arrive empty as well.
+
+**One ladder, three callers** (`pipeline.jdfill.fetch_jd`):
+
+```
+native JSON ──▶ plain HTML ──▶ Bright Data Web Unlocker      (each rung only if the previous failed)
+ workday cxs      extract_jd     drivers only; never inline; never for a search/list URL
+ smartrecruiters  (two section
+ bamboohr          markers,      every outcome carries a REASON: ok · shell · no-markers ·
+ comeet            role-start    http-NNN · timeout · not-a-job-url · bd-unavailable · bd-capped
+ greenhouse        trim)         transient (timeout / 5xx / bd-*) ⇒ retry tomorrow, else in 7 days
+```
+
+| caller | when | what it walks | Bright Data |
+|---|---|---|---|
+| `JDFiller` (`pipeline/run.py`, before `seniority.classify`) | 05:00, in the digest | every Israel-matched role whose title the classifier could accept, `JDFILL_TIME_BUDGET_MIN` (25) | never |
+| `enrich_scrape_jd.py` | 05:00, before the pipeline | description-less, relevance-gated, non-chrome jobs in `scraped_cache.json` | `JD_ENRICH_BD_CAP` 400, `JD_ENRICH_TIME_BUDGET_MIN` 25 |
+| `enrich_matched_jd.py` | 05:00, before the pipeline | every `matched` row under 300 chars, any age, any source | `MATCHED_JD_BD_CAP` 250, `MATCHED_JD_TIME_BUDGET_MIN` 20 (yml) |
+
+The native rung is derived from the **public job URL alone** (host + path; the `matched`
+table has no platform column and a job dict has no `api_url`): Workday
+`/wday/cxs/{host label}/{site}/job/…` (tenant == host label on all 83 registry rows —
+`test_native_url_is_derived_from_the_public_url_alone`), SmartRecruiters
+`api.smartrecruiters.com/v1/companies/{token}/postings/{id}`, BambooHR `/careers/{id}/detail`,
+comeet.com pages (the posting is embedded as JSON sections), Greenhouse
+`boards-api…/boards/{slug}/jobs/{id}` incl. `?gh_jid=` embeds (slug: the registry's greenhouse
+token for that company, then the name, then the host label). Measured live 2026-08-24 with
+`python <scratch>/smoke.py` (session record): Workday 4,616 chars, Comeet 4,334, Greenhouse
+6,000, SmartRecruiters 2,799, BambooHR 3,192, each in ≤ 1.2 s and 0 credits. **Why it had to
+exist:** to a plain GET the Workday job page is 17,099 bytes of script and `html_to_text()`
+returns **0 characters**, and Bright Data refuses the host outright
+(`x-brd-error-code: policy_20140` — robots.txt, no-KYC residential) — so before this rung
+those roles could never be filled by anything, and the Unlocker credits spent on them were
+wasted. Eightfold's `/api/apply/v2/jobs/{id}?domain=` also answered (Microsoft, 7.9 KB) but is
+not wired: 1 row, and the domain is not in the URL. Phenom: 0 rows, **unverified**.
+
+**What each morning's numbers mean.** The `enrich` stage stamp
+(`cloud_state/pipeline_stages.json`) is written by the two drivers through
+`jdfill.record_enrich`, which UNION-merges into today's stamp (two scripts, one stamp);
+its keys appear verbatim in the mail's `Stage order:` line and its `alarm` in the bold
+`- **Stages:**` line (`stages.alarms("enrich")`, read by `pipeline/run.py` right after the
+fetch loop, next to the `collect` alarm). The workflow's `if: always()` step no longer stamps
+(that erased the counts — same defect the scraper lane fixed for `collect`); it calls
+`record_enrich()` with no arguments, which only names a driver whose `<name>_ran=1` is
+missing from today's stamp (`alarm=no-report(scrape)`) — the line you get when a script died
+at import behind `|| echo`, which no `except` can see.
+
+| in the mail | meaning |
+|---|---|
+| `enrich: <date> (TODAY) scrape_filled=7 scrape_bd=7 scrape_fail=6 scrape_bd_unavailable=0 scrape_cooldown=14 matched_filled=0 …` | a normal morning; compare with the baseline below |
+| `- **Stages:** enrich bd-unavailable(http-401)` | the Unlocker key is dead / the pool is gone; the roles that needed it were stamped `transient` and retry tomorrow — nothing was parked for a week |
+| `- **Stages:** enrich jd-massfail(shell x12)` | ≥10 tried, 0 filled — a broken run, not a measurement (rule 2); the top reason is named (`bd-unavailable` takes precedence when both hold) |
+| `- **Stages:** enrich crash:DatabaseError` | a driver raised; the step log has the traceback |
+| `- **Stages:** enrich no-report(scrape,matched)` | the named driver(s) never reached their stamp today (import death, kill, timeout); the stamp's `date` is left where it was, so `Stage order:` still shows when the layer last really ran |
+| `- **Stages:** inline jd-fill 0/153 — every fetch failed (workday shell 90, …)` | the inline path failed wholesale inside the digest |
+| `jd-fill: 93/153 descriptions fetched inline (native 80, html 13); failed: workday shell 40 …` | step log only (`run.py`); per platform × reason. **Not in the markdown mail** — `docs/BACKLOG.md` 106 |
+
+**Baseline to compare tomorrow against** (`gh run view 32694484572 --log`, 2026-08-24, before
+this layer existed): inline `jd-fill: 93/153`; scrape backfill `7 filled (7 via Bright Data),
+6 unfetchable, 14 in cooldown`; matched backfill `0 filled (4 via Bright Data), 4 unfetchable`
+— those 4 credits went to URLs that are not job pages (two Meta *search* pages, an Indeed
+page, a `?gh_jid=` embed), which `is_job_url` now refuses before the Unlocker. Where the value
+is: the native rung covers **0 of the 20** jobs the scrape backfill will attempt (they are
+comeet 6, shopify 5, nebius 3 …; comeet and `gh_jid` are covered by their own rungs) and **1
+of the 7** short `matched` rows; its measurable value is the **inline** path — the 60 roles a
+day that were judged on a bare title.
+
+**Cooldown.** A stamp is `YYYY-MM-DD` (page read, no JD: retry after 7 days — unchanged) or
+`YYYY-MM-DD transient` (retry after 1 day: timeout, 5xx, Unlocker unavailable/capped/gateway
+5xx). A URL with a native rung ignores the cooldown — one JSON GET is cheaper than the
+bookkeeping, and rows stamped before the rung existed would otherwise wait a week. A
+search/list URL is `unfillable`, counted apart from failures. `refresh_scrape_cache._carry_jd`
+copies the value verbatim across the nightly rebuild; `--cooldown-days N` on either driver is
+the one dial. Per-URL patience: 15 s inline, 25 s in the backfills. The Unlocker
+(`jdfill.Unlocker`) stops the run on a 401/402/403 *from the API itself* or a missing key
+(account-level, cannot be caused by a target page — measured: a bad token is a real 401),
+treats a 200 with `x-brd-error-code` as that URL's failure (`reject_block` is a walled page,
+`policy_*` a refused host), and trips a breaker after 5 consecutive failures with no success
+in the run. `JD_BD=0` disables it for a local run — necessary, because `load_secrets()`
+re-arms the keys from `secrets.env`, so `env -u BRIGHTDATA_API_KEY` alone spends credits.
+
+**Rehearse it without side effects:**
+
+```bash
+cp scraped_cache.json /tmp/c.json && cp cloud_state/seen.db /tmp/s.db
+JD_BD=0 python enrich_scrape_jd.py --cache /tmp/c.json --dry-run
+JD_BD=0 python enrich_matched_jd.py --db /tmp/s.db --cooldown-days 0 --dry-run
+JDFILL=1 python -m pipeline.run --only "Palo Alto Networks,Wix,Bringoz,Port.io" --no-llm --db /tmp/s.db
+```
+A driver pointed at a copy (`--cache`/`--db` not the default) stamps `<copy>.stages.json`
+beside it, never the repo's `cloud_state/pipeline_stages.json` (`JD_STAGES_OUT` overrides
+either way) — an attacker session found the first version of this layer writing a scratch
+run's counts into the real stamp, which the mail would have quoted. Guards: the `jd-text
+lane, 2026-08-24` block of `tests/test_units.py` (21 tests, incl. the mutation-sweep set),
+`test_a_re_sighting_without_a_description_never_erases_the_stored_one` (the store never
+downgrades a description), `test_the_jd_filler_only_spends_a_fetch_on_a_role_that_could_be_accepted`.
+
+**Known limitations** (all in `docs/BACKLOG.md`, with owners): the markdown mail does not
+print the inline count (106); a role rejected on a bare title keeps its cached `llm_cache`
+verdict after the text arrives (107); `merge_json_cache` merges per company, so on a conflict
+day the enrichment's copy of a company wins over origin's newer cards (108); 6 of the 7
+short `matched` rows carry URLs that are not job pages, acquired from discovery sources (109);
+`bd_rescue.unlock` still discards the status the Unlocker reports (110); the aggregator loop
+in `run.py` (dark) has no inline fill (111); the two drivers could be one module (112).
+
 ## 8. Failure classes — what this codebase does instead of erroring
 *lane: any — every lane has been bitten by these*
 

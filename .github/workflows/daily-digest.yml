@@ -90,9 +90,9 @@ jobs:
         run: python enrich_matched_jd.py --db cloud_state/seen.db || echo "matched JD backfill skipped"
         continue-on-error: true
 
-      - name: Stamp the 'enrich' stage
+      - name: Stamp the 'enrich' stage (gap-filler only — never erases the scripts' counts)
         if: always()
-        run: python -m pipeline.stages stamp enrich
+        run: python -c "from pipeline.jdfill import record_enrich; print(record_enrich())"
         continue-on-error: true
 
       - name: Run the pipeline (Claude classification via subscription token)
