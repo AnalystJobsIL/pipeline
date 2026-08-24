@@ -1,42 +1,24 @@
 """The one identity gate every registry writer consults before writing `api_url`/`active`.
 
-**Why this module exists.** These predicates lived in `crack_walled.py` — a leaf tool — and
-four other modules imported them, three of them *lazily from inside a function* to dodge an
-import cycle (`crack_walled` imports `deep_validate` and `audit_empty_rows` at module level;
-both imported back from `crack_walled` inside `main()`). A gate reachable only through a lazy
-import is invisible to any static check of "does this tool gate its writes", which is exactly
-the check the registry needs most. `docs/BACKLOG.md` 30.
+"There are Israel jobs on this page" is not "these are THIS company's jobs": activating a
+row onto another company's board publishes one company's roles under another's name (FairFly
+off fireflyspace.com, SimilarTech off Similarweb, Bancor onto The Bancorp Bank, Lili onto Eli
+Lilly). The rules, each with its one-line reason, are on the functions below; the
+measurements behind them -- do not re-litigate -- are in
+docs/decisions/2026-08-24-identity-gate-calibration.md. The short version:
 
-**What it is for.** "There are Israel jobs on this page" is not "these are THIS company's
-jobs". Activating a row onto another company's board publishes one company's roles under
-another's name, on a public board and in an email. That has happened repeatedly: FairFly off
-`fireflyspace.com` (25 Firefly Aerospace roles), SimilarTech off Similarweb's Greenhouse,
-Bancor onto The Bancorp Bank's iCIMS, DiA Imaging Analytics onto `dia.mil`.
+* `company_identity.is_foreign` is False on EVERY ATS host by design (an acquirer's tenant
+  is legitimate), so on ATS rows it is not a gate at all.
+* the tenant string is evidence in neither direction (a veto costs 24 real acquisitions;
+  `verdict()` is wrong both ways); a mandatory page read costs 358 path-tenant rows whose
+  endpoints return 0-28 bytes. So: a readable page decides both ways; the tenant admits
+  only where nothing is readable; a board found INSIDE a held page must vouch for itself.
+* DECLARED identity (`pipeline/identity_facts.py`) is consulted before any of this and is
+  authoritative for declared rows.
 
-**The measurements that shaped it — do not re-litigate these** (`docs/BACKLOG.md` 21 and 33):
-
-* `company_identity.is_foreign` returns `False` for **every** ATS host by design, because an
-  acquirer's tenant is legitimate — Momentis Surgical really does post under `memic`. So on
-  the ~461 active ATS rows, `is_foreign` is not a gate at all.
-* A blanket tenant-mismatch veto refuses **24 legitimate acquisitions** (36 when first measured; Momentis→memic,
-  Habana Labs→intel, VMware→broadcom, Splunk→cisco) and 7 of the 9 active rows on
-  `crack_walled`'s own target platforms — Oracle CX pod ids (`hctz`, `edel`, `iawmqy`) are
-  opaque and can never near-match a name. Proposed and rejected three times.
-* `company_identity.verdict()` is wrong in **both** directions: `mismatch` for correct rows
-  (onsemi, Fortinet, Verint, Dell) and a plain `ats` for the two boards most needing refusal
-  (Riskified→`novartis.wd3.myworkdayjobs.com`, Bancor→`careers-bancorpbank.icims.com`).
-  **The tenant string is not evidence in either direction.**
-* Requiring a page read where the tenant is undecidable refuses **358 path-tenant rows**:
-  `boards-api.greenhouse.io/.../jobs` returns 0 bytes, `comeet.co/careers-api/...` 0 bytes,
-  `api.ashbyhq.com/posting-api/...` 28 bytes, and `_page_names_company` needs 2000 chars to
-  answer anything but `None`. Machine API endpoints are not readable pages — all 66 active
-  Workday rows are `/wday/cxs/<tenant>/<site>/jobs`, which returns HTTP 400 on GET.
-
-So: **page content is the only discriminator that works in both directions**, and the page
-test is scoped to candidates that could plausibly BE a page.
-
-lane: `registry` owns the behaviour; the module is `pipeline/` because five root tools import
-it. Changing it affects `ats-fetch`, `scraper` and `infra`, which all read the registry.
+lane: `registry` owns the behaviour; the module is `pipeline/` because the root tools import
+it at module level (a gate reachable only through a lazy import is invisible to static
+checks -- docs/BACKLOG.md 30). Changing it affects `ats-fetch`, `scraper` and `infra`.
 """
 from __future__ import annotations
 
@@ -126,22 +108,10 @@ def host_platform(url):
 
 
 def is_walled(row):
-    """Is this row in the walled-ATS pool? DURABLE data first, note token second.
-
-    The pool used to be the literal string `unsupported ATS` in the note and nothing else.
-    That string is written by `deep_validate` inside ITS OWN segment
-    (`deep-validated <date>: unsupported ATS icims.com`), and `pipeline.notes.replace_own`
-    deletes a tool's previous segment when it writes a new one — by design. So every
-    `deep_validate` verdict that is not `unsupported` silently removed the row from
-    `crack_walled`'s pool, permanently.
-
-    Measured on the real registry 2026-08-24: the token lived only inside `deep_validate`'s
-    own segment on **24 of the 25** pool rows, and one simulated all-dark Saturday took the
-    pool 25 -> **0**, with pytest, `check_invariants` and `registry_health` all green —
-    no guard has a per-tool floor (`docs/BACKLOG.md` 34).
-
-    A pool predicate must not be a string another tool owns and rewrites.
-    """
+    """Is this row in the walled-ATS pool? DURABLE data (the stored host) first, the
+    `unsupported ATS` note token second -- that token lives inside deep_validate's own
+    segment, which `notes.replace_own` rewrites, and a pool that is another tool's string
+    went 25 -> 0 in one simulated night with every guard green. See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
     note = row[5] if len(row) > 5 else ""
     return ("unsupported ATS" in (note or "")
             or host_platform(row[3] if len(row) > 3 else "") is not None)
@@ -243,25 +213,14 @@ def _embed_token_forms(token):
 def embedded_board_ok(name, token, api_url):
     """May a board found INSIDE a held page be written onto this row?
 
-    The callers that hold a page (`validate_empty`, `bd_rescue`) fetch the row's CAREERS
-    page and run `extract_ats` on it -- so their `api_url` is whatever board that page
-    EMBEDS, while their `html` is the page itself. `page_names_company`'s affirmative
-    answer is about the page, and `activation_ok` treating it as evidence about the board
-    promoted Riskified's Greenhouse onto Cogniteam's row off Cogniteam's OWN page carrying
-    a stale shared-template embed (wave-4 R1, reproduced on the scheduled Sunday path;
-    the SimilarTech-off-Similarweb incident is the same shape). A held page can REFUSE a
-    board -- it names someone else -- but it can never ADMIT one.
-
-    So the board must vouch for itself: an explicit subdomain-tenant mismatch refuses
-    (Bancor / careers-bancorpbank.icims.com), and otherwise the extracted tenant token
-    must near-equal the company name, by the same `_tenant_near` rule the subdomain check
-    uses. "Cannot tell" (opaque Comeet uid, an acquirer's slug like Momentis->memic)
-    REFUSES here, unlike in `tenant_is_this_company` -- because both callers surface the
-    refusal visibly (a `suspect` line, a bd refusal print) on rows that stay parked with
-    their re-check tokens, while a wrong acceptance ships another company's jobs. That is
-    the census resolution's direction, applied to the same bar. Cost filed with the
-    derivation: docs/BACKLOG.md 61.
-    """
+    The callers that hold a page (`validate_empty`, `bd_rescue`, `wayback_rescue`) run
+    `extract_ats` on the row's careers page, so `api_url` is whatever board the page EMBEDS
+    and the page's affirmative answer is about the page, not the board -- a held page can
+    REFUSE a board, never ADMIT one (Cogniteam's own page promoted Riskified's board). So the
+    board vouches for itself: subdomain mismatch refuses; a DECLARED row's own token decides;
+    otherwise the token must near-equal the name. "Cannot tell" REFUSES here (visibly: the
+    callers write a suspect note) -- Comeet uids and undeclared acquirer slugs are that
+    class, docs/BACKLOG.md 61. See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
     if not tenant_is_this_company(name, api_url):
         return False
     targets = _name_targets(name)
@@ -289,34 +248,15 @@ def embedded_board_ok(name, token, api_url):
 
 
 def tenant_is_this_company(name, url):
-    """Does an ATS URL's TENANT really belong to `name`? Use INSTEAD of `is_foreign` here.
+    """Does an ATS URL's TENANT belong to `name`? Use INSTEAD of `is_foreign` on ATS hosts.
 
-    `pipeline.company_identity.is_foreign` early-returns **False for every ATS host** — by
-    design, because a rebrand or acquisition looks identical to a mis-resolution and blocking
-    outright costs real coverage (Momentis really does post under `memic`). The cost is that
-    clauses 2 and 3 of the activation rule are inert on 432 of the 1,199 rows, and it even
-    overrides an explicit `mismatch`:
-
-        NanoLock Security -> gen.wd1.myworkdayjobs.com   verdict=mismatch  is_foreign=False
-                                                          (that is Gen Digital's tenant)
-
-    So, for the paths that ACTIVATE or PERSIST an address:
-
-    * an explicit `mismatch` is honoured even on an ATS host — `verdict` only says that when
-      it found a tenant belonging to someone else;
-    * **where the tenant lives differs by platform**, and `_slug_candidates` returns host
-      labels and path segments in ONE flat list, so an `any()` over it accepts a foreign
-      tenant whenever the PATH happens to match. `novartis.wd3.myworkdayjobs.com/riskified`
-      is Novartis's Workday with a site named `riskified`. If the host carries a
-      non-generic label, THAT is the tenant and the path is only a site name;
-    * the tenant must be NEAR-EQUAL to the name, not merely contain it. `_slug_matches`
-      passes `Bancor`/`careers-bancorpbank` and `Bit`/`careers-bitdefender` on plain
-      containment — the same "containment must be TIGHT" lesson `company_identity` already
-      learned for domains (rad.com/RADLogics);
-    * a Comeet uid (`60.002`) is opaque and comes from the company's own page — exempt.
-
-    Non-ATS URLs return True: `is_foreign` is the right gate there and works correctly.
-    """
+    Order: not an ATS host -> True (`is_foreign` is the right gate there); a path-tenant
+    platform -> True (the tenant is the row's own token, checked by `embedded_board_ok`);
+    a DECLARED row -> its declaration decides, both ways, against the host's non-plumbing
+    subdomain labels only (never a path: novartis.wd3.../riskified is Novartis's); an
+    explicit `verdict()` mismatch -> False; otherwise a subdomain label must NEAR-EQUAL the
+    name (tight: `bancorpbank` is not `Bancor`), and a host whose labels are all plumbing
+    cannot tell -> True. See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
     import urllib.parse as _up
     from pipeline.company_identity import (ATS_HOST, verdict as _verdict,
                                            _slug_candidates, _norm)
@@ -369,29 +309,12 @@ def tenant_is_this_company(name, url):
 
 def page_names_company(name, url, html=""):
     """Three-valued: True = the page names this company, False = it names someone else,
-    None = we could not read it, which is NO EVIDENCE and must not read as either.
+    None = could not read it, which is NO EVIDENCE and must not read as either.
 
-    On a walled ATS the tenant lives in the SUBDOMAIN (`careers-bancorpbank.icims.com`), and
-    `company_identity.verdict` only checks a tenant in the PATH — so it returns the blanket
-    `"ats"`, which its own docstring defines as "we cannot tell", and `is_foreign` reads that
-    as False. `_slug_matches("Bancor", "bancorpbank")` passes too, on plain containment. Both
-    were true on 2026-08-23 and one `--apply` would have moved Bancor (Israeli crypto,
-    ex-Bprotocol) onto The Bancorp Bank's iCIMS board: that page says "Bancorp" 18 times and
-    Bancor-as-a-word zero times.
-
-    The first version of this gate was a plain strict-TLS urllib fetch returning a bare bool,
-    and review measured it False on **12 of 60 rows the pipeline had already verified as that
-    company's own board** (Meta, Akamai, Ford, Microsoft Israel, ...). Three causes, each a
-    paid-for lesson:
-
-    1. **403 to a plain fetch** — `Bit`'s own careers page. The crack loop reaches these with
-       Playwright, so re-fetching with urllib is strictly weaker evidence than the evidence
-       that produced the candidate; prefer HTML the caller already has, via `html=`.
-    2. **Strict TLS** — see `_LENIENT`.
-    3. **`strict=True` wants the name's words consecutively**, so any row whose registry name
-       carries a suffix the page omits fails structurally: 46 rows contain "Israel". Retry
-       against the name with the generic/geographic words stripped.
-    """
+    Prefer `html=` the caller already holds (a re-fetch is weaker evidence than what produced
+    the candidate); lenient TLS on purpose; bot walls are retried through the unlocker under
+    a per-process paid-call budget; `strict=True` needs the name's words consecutively, so a
+    `_NAME_STOP`-stripped core is retried. Under 2000 chars nothing is evidence. See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
     if not html:
         try:
             req = urllib.request.Request(url, headers={"User-Agent": _UA})
@@ -428,31 +351,13 @@ def page_names_company(name, url, html=""):
 
 
 def ok_to_write(name, url, html=""):
-    """May this url be written into the row's `api_url`? Positive confirmation only.
-
-    A tool has several exits and gating them individually is how two 0-Israel-jobs paths were
-    missed: `crack_walled`'s `cracked-api` never called the gate at all, and `novrfy`
-    persisted on an UNREADABLE page. This is the one check a write block runs regardless of
-    which branch produced the candidate, so a future `return` that forgets the gate cannot
-    re-open the hole. Unreadable (`None`) is refused: a persisted ADDRESS is what
-    `listing_hunt`'s fast path later activates on, and "we could not look" is not evidence.
-
-    **The tenant string is deliberately NOT a veto here** — see this module's docstring. It
-    reads like the obvious extra safety net and it is wrong in both directions at once, so
-    stacking it on top of a mandatory page test buys nothing and costs silent exclusion
-    (ARCHITECTURE.md section 8's first bug class). Each false refusal also stamped a *wrong*
-    `not this company's board` verdict into the row's note.
-
-    The signature deliberately has no `platform` parameter. It used to, the body read
-    it nowhere, and a reviewer transposed `(name, platform)` at four call sites with
-    the whole suite green -- `platform` absorbed the name and the identity decision
-    silently ran on the platform string. A parameter that gates nothing is a slot for
-    a transposition to hide in. (Transposing the two that remain is caught: a URL in
-    the name slot fails every predicate and the positive controls go red.)
-
-    Pass `html=` when the caller already has the page; it avoids a second fetch and is
-    stronger evidence than a re-fetch (see `page_names_company` cause 1).
-    """
+    """May this url be written into the row's `api_url`? Positive confirmation only: a
+    readable page that names the company, on something that looks like a listing page, on a
+    host `is_foreign` does not reject. Unreadable (`None`) is refused -- a persisted address
+    is what the hunt's fast path later activates on, and "we could not look" is not
+    evidence. The tenant string is deliberately NOT a veto here, and the signature
+    deliberately has no `platform` parameter (a parameter the body never reads is a slot for
+    a transposition to hide in). See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
     if is_foreign(name, url) or not looks_like_a_job_listing_page(url):
         return False
     return page_names_company(name, url, html=html) is True
@@ -461,83 +366,24 @@ def ok_to_write(name, url, html=""):
 def activation_ok(name, api_url, n_jobs=0, html=""):
     """May this row be ACTIVATED onto `api_url`? For tools that verified jobs first.
 
-    The five schedule-driven tools that build a whole row literal
-    `[name, plat, tok, api, "true", note]` -- `bd_rescue` and `retry_unreachable` (02:30
-    daily), `wayback_rescue` and `validate_empty` (Sun 04:00), `auto_expand` (08:00/20:00) --
-    had NO identity check of any kind until 2026-08-24. They were invisible to the guard in
-    `tests/test_units.py`, which finds writers by looking for a subscript assignment to
-    index 4 and therefore cannot see a list literal. Fourteen of the repo's 22 registry
-    writers are that shape.
-
-    The clauses, and why each is the one it is:
-
-    * **`n_jobs`** -- a board that verifies with zero jobs is the `empty-board` shape, not a
-      recovery. Callers pass whatever they actually counted (Israel jobs for a scrape row,
-      total for an API row); zero from either is refused.
-    * **`is_foreign`** -- the right gate on an ordinary domain, and inert on an ATS host,
-      where it returns False by design for all ~461 active ATS rows.
-    * **`looks_like_a_job_listing_page`** -- clause 3 of the activation rule
-      (ARCHITECTURE.md section 2). Measured 2026-08-24: all 861 active rows pass it,
-      including every machine API endpoint, so it costs nothing and catches a nav menu.
-    * **the identity evidence** -- `html` if the caller already fetched the page (strictly
-      stronger than a re-fetch, and free), else tenant-or-page.
-
-    **Why tenant-OR-page and not tenant-AND-page.** `tenant_is_this_company` answers True
-    when there is nothing checkable -- a path-tenant platform, an opaque Comeet uid. If a
-    failure there fell through to a mandatory page read, the gate would refuse the 358
-    path-tenant rows whose endpoints return 0-28 bytes (`boards-api.greenhouse.io` 0,
-    `comeet.co/careers-api` 0, `api.ashbyhq.com/posting-api` 28) because
-    `page_names_company` needs 2000 chars to answer anything but `None`. That was built,
-    measured and reverted: `docs/BACKLOG.md` 33. And a tenant MISMATCH cannot be a veto on
-    its own either -- it costs 24 legitimate acquisitions (item 21; 36 when first measured). So the tenant string
-    admits; refusal needs page evidence.
-
-    **What that costs, stated rather than implied.** `page_names_company` returns `None` for
-    a page it could not read, and `is True` refuses `None` -- so on a subdomain-tenant host
-    whose endpoint is a machine API (`/wday/cxs/<tenant>/<site>/jobs`, HTTP 400 on GET) a
-    failed tenant near-match IS the refusal, because no page can ever be read there:
-
-        activation_ok("Habana Labs (Intel)",
-                      "https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/x/jobs", 12)
-        -> False        # a real acquisition, refused
-
-    That is item 21's shape re-entering through the `None` branch rather than through a
-    `mismatch` veto. It is accepted here deliberately and for a narrower reason than item 21
-    covers: these five callers ACTIVATE a currently-parked row, so a wrong refusal leaves the
-    row parked, visible and recoverable, while a wrong acceptance publishes another company's
-    jobs under this company's name. Item 21 measured the cost of vetoing rows that were
-    already ACTIVE, which is not this. `docs/BACKLOG.md` 49 carries the measurement; the fix
-    is an `acquired-by` column, not a cleverer string test.
-    """
+    Clauses, in order: zero `n_jobs` is the empty-board shape, refused; `is_foreign` (inert
+    on ATS hosts) and `looks_like_a_job_listing_page` (a nav menu scores like a board under
+    SCRAPE_ASSUME_IL); then a READABLE page the caller holds decides in BOTH directions; an
+    unreadable one (machine endpoints, bot walls) falls through to `tenant_is_this_company`;
+    a page FETCH is the last resort. Tenant-OR-page, not AND: requiring a page read where
+    the tenant is undecidable refuses the 358 path-tenant rows whose endpoints return 0-28
+    bytes. The ordering is the adjudication of a calibration dispute with both error cells
+    non-empty -- do not tune it, declare the row instead (`pipeline/identity_facts.py`).
+    See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
     if not n_jobs:
         return False
     if is_foreign(name, api_url) or not looks_like_a_job_listing_page(api_url):
         return False
-    # A page the CALLER already holds is decisive when it is readable -- in either
-    # direction. This ordering is the resolution of a measured calibration dispute in which
-    # both error cells were non-empty, and it has flipped once already, so the census is
-    # recorded here rather than re-derived a third time:
-    #
-    #   * page-first, page-only (the first form): refused `Siemens Healthineers` on its own
-    #     page (readable, says only "Siemens" -- `strict=True` wants the registry name's
-    #     words consecutively), and the refusal was SILENT. That silence, not the refusal,
-    #     was the blocking finding; the refusal path is visible now (`validate_empty`
-    #     returns `suspect` and writes a note).
-    #   * tenant-first (the second form): `tenant_is_this_company` answers True by VACUITY
-    #     on every path-tenant platform (greenhouse/lever/ashby/comeet -- 6 of the 7
-    #     platforms `extract_ats` can return), so the page in hand was never consulted and
-    #     `Cogniteam` was activated onto Riskified's greenhouse board off a careers URL
-    #     that no longer serves Cogniteam's page. A proven wrong write, on a schedule.
-    #
-    # No string predicate separates every wrong-page case from every name-shape mismatch
-    # (`Sight` matches Sight Sciences' page and Sight Diagnostics is a different company on
-    # that same board -- head-token matching is measured unsafe). So the rule follows the
-    # bar: these callers ACTIVATE a parked row, where a wrong refusal is parked, visible
-    # and recoverable, and a wrong acceptance ships another company's jobs. Readable page
-    # evidence decides; only an UNREADABLE page (None -- machine endpoints, bot walls)
-    # falls through to the tenant clause, which keeps the 358 path-tenant rows and the
-    # filler-stripped-core rows activatable. The name-shape cost this accepts is filed
-    # with the row names in docs/BACKLOG.md.
+    # A page the CALLER holds decides in BOTH directions when readable; an unreadable one
+    # falls through to the tenant clause. This ordering flipped once (page-first refused
+    # Siemens Healthineers silently; tenant-first activated Cogniteam onto Riskified's
+    # board) and is the adjudicated resolution of a both-cells-non-empty dispute -- see
+    # docs/decisions/2026-08-24-identity-gate-calibration.md. Do not tune; declare.
     if html:
         v = page_names_company(name, api_url, html=html)
         if v is not None:
@@ -554,15 +400,10 @@ def activation_ok(name, api_url, n_jobs=0, html=""):
 
 
 def identity_ok(name, url, html=""):
-    """The gate for tools that hunt or repair an ordinary careers page, not just an ATS.
-
-    Scoped deliberately: the page test runs **only** on ATS hosts, where `is_foreign` is
-    inert by design. On an ordinary careers domain `is_foreign` works and nothing changes,
-    because `page_names_company` answers `None` for any page under 2000 chars and a great
-    many legitimate company careers pages are JS-rendered — routing those through it would
-    trade a real hole for silent exclusion, which is the mistake this lane has already made
-    once and measured at 358 rows.
-    """
+    """The gate for tools that hunt or repair an ordinary careers page, not just an ATS:
+    `is_foreign` decides on ordinary domains (routing them through the page test would trade
+    a real hole for silent exclusion -- measured at 358 rows); on an ATS host, `ok_to_write`.
+    See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
     host = (urllib.parse.urlparse(url or "").netloc or "").lower()
     # jobvite/taleo used to need their own branch here because `ATS_HOST` omitted them and
     # `is_foreign` refused their correct boards outright. `ATS_HOST` now names them
