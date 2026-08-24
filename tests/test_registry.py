@@ -1708,6 +1708,35 @@ def test_a_recorded_wrong_write_is_neither_declared_nor_admitted(name, tok, api)
     assert not G.embedded_board_ok(name, tok, api)
 
 
+def test_a_declared_tenant_decides_the_subdomain_check_in_both_directions(monkeypatch):
+    """Hook 2. A declared row's board must carry a declared tenant in its SUBDOMAIN
+    labels: the declaration admits it (overriding the string `mismatch` verdict that
+    refuses `Itamar Medical` -> zoll today) and refuses any other tenant. Undeclared rows
+    are untouched (the census is byte-identical). And a declared tenant that appears only
+    in the PATH of a foreign host is NOT a match -- that is the Riskified/Novartis incident
+    walked back in through the table, and the M3 record `facts-tenant-scope-widen` is
+    exactly that edit."""
+    from pipeline import identity_facts as F
+    from pipeline import identity_gate as G
+    wd = "https://%s.wd1.myworkdayjobs.com/wday/cxs/%s/x/jobs"
+    # a real declaration (G1): its own tenant admits, a foreign tenant refuses
+    assert G.tenant_is_this_company("Habana Labs (Intel)", wd % ("intel", "intel"))
+    assert not G.tenant_is_this_company("Habana Labs (Intel)", wd % ("gen", "gen"))
+    # a declaration overrides the string verdict (Itamar-shape: verdict says mismatch)
+    monkeypatch.setitem(F._INDEX, "itamar medical", {"tenants": ("zoll",), "why": "test"})
+    assert G.tenant_is_this_company("Itamar Medical", wd % ("zoll", "zoll"))
+    # path-tenant platforms are not this function's business: scope returns first
+    assert G.tenant_is_this_company(
+        "Merck (MSD)", "https://boards-api.greenhouse.io/v1/boards/anything/jobs")
+    # the Riskified path-position attack: declared tenant in the PATH of a foreign host
+    monkeypatch.setitem(F._INDEX, "riskified", {"tenants": ("riskified",), "why": "test"})
+    assert not G.tenant_is_this_company(
+        "Riskified", "https://novartis.wd3.myworkdayjobs.com/wday/cxs/novartis/riskified/jobs"), (
+        "a declared tenant matched against a PATH segment of another company's host")
+    assert G.tenant_is_this_company(
+        "Riskified", "https://riskified.wd3.myworkdayjobs.com/wday/cxs/riskified/x/jobs")
+
+
 def test_the_gate_caller_map_is_derived_not_typed():
     """`identity_gate.GATE_CALLERS` is the one map from a tool to the gate it calls -- the
     artifact a fresh agent needs and nothing carried before. It is a literal so it can be

@@ -1017,5 +1017,25 @@
     "replace": "    for parent in ():",
     "why": "neuters the declared brand/parent domains (the old KNOWN_PARENT): UserWay on levelaccess.com becomes foreign again. That table had zero direct tests before this record.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "facts-tenant-veto-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "tenant_is_this_company",
+    "class": "M1-gate-removal",
+    "find": "    declared = identity_facts.tenants(name)\n    if declared:\n        labels = [l for l in host.split(\".\")[:-2] if not _plumbing(l)]\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(_norm(l) in declared for l in labels)\n",
+    "replace": "    declared = identity_facts.tenants(name)\n    if False:\n        labels = [l for l in host.split(\".\")[:-2] if not _plumbing(l)]\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(_norm(l) in declared for l in labels)\n",
+    "why": "removes the declared-tenant hook: a declaration can no longer override the string verdict (Itamar-shape stays refused) nor refuse a foreign tenant on a declared row.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "facts-tenant-scope-widen",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "tenant_is_this_company",
+    "class": "M3-branch-narrowing",
+    "find": "    declared = identity_facts.tenants(name)\n    if declared:\n        labels = [l for l in host.split(\".\")[:-2] if not _plumbing(l)]\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(_norm(l) in declared for l in labels)\n",
+    "replace": "    declared = identity_facts.tenants(name)\n    if declared:\n        labels = list(_slug_candidates(urllib.parse.urlparse(url)))\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(_norm(l) in declared for l in labels)\n",
+    "why": "matches the declared tenant against `_slug_candidates` -- host labels AND path segments in one list -- so `riskified` in the PATH of novartis.wd3 admits Novartis's Workday: the recorded incident, re-opened through the declarations table.",
+    "must_be_killed_by_behavioural": true
   }
 ]

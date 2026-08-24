@@ -46,6 +46,7 @@ import ssl
 import urllib.parse
 import urllib.request
 
+from pipeline import identity_facts
 from pipeline.company_identity import (ATS_HOST, is_foreign,
                                        looks_like_a_job_listing_page, page_mentions_company)
 
@@ -334,6 +335,17 @@ def tenant_is_this_company(name, url):
     # rejected. Only the subdomain-tenant platforms below are in scope.
     if not _SUBDOMAIN_TENANT_HOST.search(host):
         return True
+    # DECLARED identity decides first, in BOTH directions, and before the string verdict
+    # below can veto it: `Itamar Medical` -> zoll.wd5 scores `mismatch` and a declaration
+    # must be able to override a string. Matched against the host's non-plumbing SUBDOMAIN
+    # labels only -- never the path: `_slug_candidates` returns path segments in the same
+    # list, and `novartis.wd3.myworkdayjobs.com/en-US/riskified` must stay Novartis's.
+    declared = identity_facts.tenants(name)
+    if declared:
+        labels = [l for l in host.split(".")[:-2] if not _plumbing(l)]
+        if not labels:
+            return True                        # nothing checkable: unchanged
+        return any(_norm(l) in declared for l in labels)
     if _verdict(name, url) == "mismatch":
         return False
 
