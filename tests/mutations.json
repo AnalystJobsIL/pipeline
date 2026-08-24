@@ -529,28 +529,28 @@
   {
     "id": "expand-scrape-remove",
     "file": "auto_expand.py",
-    "symbol": "main",
+    "symbol": "_row_for_scrape",
     "class": "M1-gate-removal",
-    "find": "            elif not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
-    "replace": "            elif False:",
+    "find": "    if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "replace": "    if False:",
     "why": "auto_expand runs 08:00 and 20:00 and APPENDS rows; the scrape branch had no mutation."
   },
   {
     "id": "expand-scrape-invert",
     "file": "auto_expand.py",
-    "symbol": "main",
+    "symbol": "_row_for_scrape",
     "class": "M2-gate-inversion",
-    "find": "            elif not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
-    "replace": "            elif _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "find": "    if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "replace": "    if _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
     "why": "inverts the scrape gate in both directions"
   },
   {
     "id": "expand-scrape-narrow",
     "file": "auto_expand.py",
-    "symbol": "main",
+    "symbol": "_row_for_scrape",
     "class": "M3-branch-narrowing",
-    "find": "            elif not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
-    "replace": "            elif len(jobs2) < 0 and not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "find": "    if not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
+    "replace": "    if len(jobs2) < 0 and not _gate.activation_ok(name, \"scrape\", good_url, len(jobs2)):",
     "why": "narrows the scrape guard to an impossible job count"
   },
   {

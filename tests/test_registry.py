@@ -1801,6 +1801,12 @@ def test_crack_walled_novrfy_does_not_persist_an_address_it_could_not_confirm(
     `novrfy` branch writes `fr[3]` without activating, which reads as harmless and is not:
     `listing_hunt`'s documented fast path reads that address the next night and activates
     on it, so persisting an unconfirmed URL only delays the wrong activation by 24 hours.
+
+    The positive direction is asserted too, and it is not decoration: `crack-novrfy-narrow`
+    (`if n_il < 0 and ok_to_write(...)`) makes the persist NEVER happen, which passed this
+    fixture's negative assertions and survived a full sweep. A confirmed address on `novrfy`
+    MUST be persisted -- that `host documented` stamp is what feeds the fast path its next
+    candidate, and losing it silently is coverage loss, not safety.
     """
     import sys
     import crack_walled as C
@@ -1809,18 +1815,29 @@ def test_crack_walled_novrfy_does_not_persist_an_address_it_could_not_confirm(
     _registry(tmp_path, [
         ["OraCo", "", "", "https://oraco.example/careers", "false",
          "unsupported ATS icims.com"],
+        ["GoodCo", "", "", "https://goodco.example/careers", "false",
+         "unsupported ATS icims.com"],
     ])
-    board = "https://someoneelse.icims.com/jobs/search?ss=1"
+    boards = {"OraCo": "https://someoneelse.icims.com/jobs/search?ss=1",
+              "GoodCo": "https://goodco.icims.com/jobs/search?ss=1"}
     monkeypatch.setattr(C, "crack_one",
-                        lambda name, seed, plat: ("novrfy", ("scrape", board), 0, "0 IL"))
-    monkeypatch.setattr(G, "page_names_company", lambda n, u, html="": None)   # unreadable
+                        lambda name, seed, plat: ("novrfy", ("scrape", boards[name]),
+                                                  0, "0 IL"))
+    # per-company table, never a constant: OraCo's page is unreadable, GoodCo's names it
+    monkeypatch.setattr(G, "page_names_company",
+                        lambda n, u, html="": {"GoodCo": True}.get(n))
     monkeypatch.setattr(sys, "argv", ["crack_walled.py", "--apply"])
     C.main()
 
     out = _read(tmp_path)
-    assert board not in out["OraCo"][3], (
+    assert boards["OraCo"] not in out["OraCo"][3], (
         "persisted an address it could not confirm: %r" % (out["OraCo"],))
     assert out["OraCo"][4] == "false"
+    assert out["GoodCo"][3] == boards["GoodCo"], (
+        "positive control: a CONFIRMED novrfy address must be persisted -- it is the fast "
+        "path's next candidate: %r" % (out["GoodCo"],))
+    assert "host documented" in out["GoodCo"][5]
+    assert out["GoodCo"][4] == "false", "novrfy documents, it must not activate"
 
 
 def test_every_ownership_mirror_agrees_with_the_tool_it_mirrors():
@@ -2253,6 +2270,22 @@ def test_the_scrape_branch_of_each_row_builder_is_gated_too(monkeypatch):
                       (["a", "b", "c", "d", "e"], "https://pliops.com/careers"), {})
     assert real[4] == "true" and real[3] == "https://pliops.com/careers", (
         "positive control: a real careers page must still activate: %r" % (real,))
+
+    # auto_expand's scrape branch is the SAME gate in the sibling tool. It lived inline in
+    # `main()` -- which writes through the absolute CSV_PATH, unreachable by any fixture --
+    # so its three catalogue mutations survived a full sweep: a gate nothing could exercise.
+    # Extracted to `_row_for_scrape` for exactly this reason.
+    import auto_expand as E
+    cache = {}
+    bare2 = E._row_for_scrape("Voiceitt", ["a", "b", "c"], "https://www.voiceitt.com/", cache)
+    assert bare2[4] == "false" and "Voiceitt" not in cache, (
+        "auto_expand's scrape gate must refuse what retry's refuses: %r" % (bare2,))
+    real2 = E._row_for_scrape("Pliops", ["a", "b", "c"], "https://pliops.com/careers", cache)
+    assert real2[4] == "true" and cache.get("Pliops") == ["a", "b", "c"], (
+        "positive control: accept must activate AND populate the scrape cache: %r" % (real2,))
+    agg = E._row_for_scrape("AnyCo", ["a"], "https://www.linkedin.com/jobs/x", cache)
+    assert agg[4] == "false" and "aggregator" in agg[5], (
+        "an aggregator page must park before the identity gate is even asked: %r" % (agg,))
 
 
 def test_a_tenant_that_matches_only_the_FILLER_STRIPPED_core_is_still_admitted():

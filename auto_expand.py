@@ -54,6 +54,32 @@ def _load_cache():
         return {}
 
 
+def _row_for_scrape(name, jobs2, good_url, cache):
+    """The scrape row builder — the seam a test can reach, like `_row_for_ats` below.
+
+    This branch lived inline in `main()`, and `main()` writes through the ABSOLUTE
+    `CSV_PATH`, so no fixture could drive it without touching the real registry. The
+    mutation catalogue carried M1/M2/M3 for this gate and all three SURVIVED a full sweep:
+    the gate existed, and nothing could prove it did anything.
+
+    Order matters and is preserved: `is_aggregator` first (a "similar jobs" sidebar is
+    OTHER companies' postings — the Telegram bridge seeds job-post links as careers_url),
+    then the identity gate, because `is_aggregator` asks "is this a job board for many
+    employers", NOT "is this THIS company's page" — FairFly was activated off
+    fireflyspace.com by a path with exactly this shape. `cache` is written only on accept.
+    """
+    from pipeline.aggregators import is_aggregator
+    if is_aggregator(good_url):
+        return [name, "scrape", good_url, good_url, "false",
+                "aggregator URL; resolve real careers page before activating"]
+    if not _gate.activation_ok(name, "scrape", good_url, len(jobs2)):
+        return [name, "scrape", good_url, good_url, "false",
+                "scraped page is not this company's; not activated"]
+    cache[name] = jobs2
+    return [name, "scrape", good_url, good_url, "true",
+            f"auto-expand scrape; {len(jobs2)} IL"]
+
+
 def _row_for_ats(payload):
     """The `ats` row builder, extracted so the gate has a seam a test can reach.
 
@@ -126,27 +152,9 @@ def main():
             n_unreach += 0 if row[4] == "true" else 1
         elif kind == "scrape":
             jobs2, good_url = r[1] if isinstance(r[1], tuple) else (r[1], url)
-            # secrethunter/t.me included: the Telegram bridge seeds job-post links as
-            # careers_url, and scraping those ingests other companies' postings too
-            from pipeline.aggregators import is_aggregator
-            if is_aggregator(good_url):
-                # Scraping an aggregator page ingests its "similar jobs" sidebar — postings
-                # from OTHER companies attributed to this one. Park inactive instead.
-                row = [name, "scrape", good_url, good_url, "false",
-                       "aggregator URL; resolve real careers page before activating"]
-                n_unreach += 1
-            elif not _gate.activation_ok(name, "scrape", good_url, len(jobs2)):
-                # `is_aggregator` asks "is this page a job board for many employers"; it does
-                # NOT ask "is this THIS company's page". FairFly was activated off
-                # fireflyspace.com by a path with exactly this shape.
-                row = [name, "scrape", good_url, good_url, "false",
-                       "scraped page is not this company's; not activated"]
-                n_unreach += 1
-            else:
-                cache[name] = jobs2
-                row = [name, "scrape", good_url, good_url, "true",
-                       f"auto-expand scrape; {len(jobs2)} IL"]
-                n_resolved += 1
+            row = _row_for_scrape(name, jobs2, good_url, cache)
+            n_resolved += 1 if row[4] == "true" else 0
+            n_unreach += 0 if row[4] == "true" else 1
         elif kind == "empty":
             row = [name, "scrape", url, url, "false", "scanned; no open Israel roles now"]
             n_empty += 1
