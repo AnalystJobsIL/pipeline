@@ -49,8 +49,8 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
+      - name: Install Claude Code CLI (pinned — the classifier's flags are checked against this version)
+        run: npm install -g @anthropic-ai/claude-code@2.1.241
 
       - name: Discovery layer (LinkedIn+Indeed via Bright Data, if key set)
         env:
@@ -160,8 +160,11 @@ jobs:
               # origin's copy before the three-way merge below ever sees it, so the merge
               # would compare ours against ours and every company another workflow cached
               # since checkout would still be lost. The merge restores it instead.
+              # -T: `cp -r ours/cloud_state cloud_state` into an EXISTING directory nests it
+              # (cloud_state/cloud_state/seen.db) and origin's seen.db / board / digest were
+              # committed instead of this run's — 4 conflict days (found 2026-08-24, wave 1)
               for p in discovered_cache.json research_companies.json cloud_state digests docs; do
-                [ -e "/tmp/ours/$p" ] && { mkdir -p "$(dirname "$p")"; cp -r "/tmp/ours/$p" "$p"; } 2>/dev/null || true
+                [ -e "/tmp/ours/$p" ] && { mkdir -p "$(dirname "$p")"; cp -rT "/tmp/ours/$p" "$p"; } 2>/dev/null || true
               done
               if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
                 python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true

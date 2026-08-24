@@ -3776,3 +3776,627 @@ def test_scrape_backfill_keeps_fetched_text_when_the_loop_dies(tmp_path, monkeyp
     assert len(got["Z"][0]["description"]) == 400                        # the first fetch survived
     monkeypatch.setattr(stages, "PATH", str(p) + ".stages.json")
     assert stages._load()["enrich"]["alarm"] == "crash:RuntimeError"
+
+
+import json, shutil, subprocess  # noqa: E402  (classifier block)
+
+# --- classifier lane, 2026-08-24: the LLM tier is bounded, structured, and reports itself ---
+# (ARCHITECTURE.md §7b). Every test below pins a defect that shipped or a guard the adversarial
+# waves predicted would be unpinned.
+
+def _fake_seam(monkeypatch, script):
+    """Replace `seniority._claude` with `script(prompt) -> dict | LLMUnavailable`; returns the
+    call list. The shape mirrors tests/test_company_intel.py's `env` fixture."""
+    calls = []
+
+    def fake(prompt, **kw):
+        calls.append({"prompt": prompt, **kw})
+        out = script(prompt)
+        if isinstance(out, Exception):
+            raise out
+        return out
+    monkeypatch.setattr(seniority, "_claude", fake)
+    return calls
+
+
+def _ok(verdict, reason="r", model="claude-sonnet-5-20260101"):
+    return {"verdict": verdict, "reason": reason, "models": [model], "seconds": 0.01}
+
+
+_AMBIG = {"company": "Acme", "title": "Data Analyst II"}          # strong title, unknown seniority
+_TEXT = "About the role: analytics. Requirements: 5+ years SQL, dashboards, stakeholders. " * 8
+
+
+def test_classify_keyword_tier_matches_the_golden_fixture():
+    """301 titles (every llm_cache key + every matched role on 2026-08-24) with their
+    keyword-tier relevance/seniority and no-LLM decision. A regex 'tidy' that moves one of
+    them must show here, not in tomorrow's mail."""
+    import json
+    gold = json.load(open(os.path.join(os.path.dirname(__file__), "fixtures", "classifier",
+                                       "titles.json"), encoding="utf-8"))
+    assert len(gold) >= 300
+    for g in gold:
+        if g["has_desc"]:
+            continue          # the fixture holds titles only; description-backed rows are in the store
+        r = seniority.classify({"company": g["company"], "title": g["title"]}, use_llm=False)
+        assert (r["relevance"], r["seniority"], r["decision"]) == \
+               (g["relevance"], g["seniority"], g["nollm"]), g["title"]
+
+
+def test_the_seam_is_tool_less_structured_shell_less_and_never_runs_in_the_repo(monkeypatch, tmp_path):
+    """The bare `claude -p` ran claude-fable-5 with every tool enabled, a persisted session,
+    and the repo as cwd — 24,845 cache-creation tokens of CLAUDE.md + CLAUDE.local.md per
+    fresh context, and a job description could instruct an agent holding Bash."""
+    seen = {}
+
+    def fake_run(cmd, **kw):
+        seen["cmd"], seen["kw"] = cmd, kw
+        return subprocess.CompletedProcess(cmd, 0, stdout=json.dumps(
+            {"is_error": False, "structured_output": {"verdict": "NO", "reason": "x"},
+             "modelUsage": {"claude-sonnet-5": {}}}), stderr="")
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(shutil, "which", lambda _: "/usr/bin/claude")
+    out = seniority._claude("posting", cwd=str(tmp_path))
+    cmd, kw = seen["cmd"], seen["kw"]
+    assert cmd[0] == "/usr/bin/claude" and cmd[1] == "-p"
+    for flag in ("--tools", "--no-session-persistence", "--json-schema", "--system-prompt",
+                 "--output-format", "--model", "--effort"):
+        assert flag in cmd, flag
+    assert cmd[cmd.index("--tools") + 1] == ""                 # ALL tools off
+    assert cmd[cmd.index("--output-format") + 1] == "json"
+    assert "--bare" not in cmd                                  # skips keychain: "Not logged in", exit 0
+    assert kw.get("shell", False) is False                      # cmd.exe mangled the schema
+    assert kw["cwd"] == str(tmp_path) and kw["input"] == "posting"
+    assert kw["encoding"] == "utf-8" and kw["errors"] == "replace"
+    assert out["verdict"] == "NO" and out["models"] == ["claude-sonnet-5"]
+
+
+def test_the_seam_never_defaults_its_cwd_to_the_repo(monkeypatch):
+    seen = {}
+    monkeypatch.setattr(subprocess, "run", lambda cmd, **kw: (seen.update(kw) or
+                        subprocess.CompletedProcess(cmd, 0, stdout="{}", stderr="")))
+    monkeypatch.setattr(shutil, "which", lambda _: "claude")
+    seniority._claude("p")
+    assert os.path.abspath(seen["cwd"]) != os.path.abspath(os.getcwd())
+
+
+@pytest.mark.parametrize("rc,stdout,stderr,kind", [
+    (1, "", "Failed to authenticate. API Error: 401 OAuth access token is invalid.", "auth"),
+    (0, json.dumps({"is_error": True, "result": "Not logged in · Please run /login"}), "", "auth"),
+    (1, "", "error: unknown option '--json-schema'", "drift"),
+    (1, "", "API Error: 529 overloaded", "transient"),
+])
+def test_infrastructure_failures_raise_with_their_kind(monkeypatch, rc, stdout, stderr, kind):
+    """A keychain-less login exits 0 with `is_error:true` in the envelope; the old parser
+    grepped stdout for YES/NO and would have read a verdict out of an error message."""
+    monkeypatch.setattr(subprocess, "run",
+                        lambda cmd, **kw: subprocess.CompletedProcess(cmd, rc, stdout=stdout, stderr=stderr))
+    monkeypatch.setattr(shutil, "which", lambda _: "claude")
+    with pytest.raises(seniority.LLMUnavailable) as e:
+        seniority._claude("p")
+    assert e.value.kind == kind
+
+
+def test_a_missing_cli_is_infrastructure_not_a_verdict(monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda _: None)
+    with pytest.raises(seniority.LLMUnavailable) as e:
+        seniority._claude("p")
+    assert e.value.kind == "missing"
+
+
+@pytest.mark.parametrize("stdout", [
+    json.dumps({"is_error": False, "result": "I think YES"}),                       # no structured_output
+    json.dumps({"is_error": False, "structured_output": {"verdict": "MAYBE"}}),      # off-schema
+    "Update available 9.9.9\n" + json.dumps({"is_error": False,
+                                             "structured_output": {"verdict": "YES", "reason": "r"}}),
+    "not json at all",
+])
+def test_the_models_answer_is_parsed_defensively(monkeypatch, stdout):
+    """Prose before the envelope is skipped; a missing or off-schema verdict is `None` — a fact
+    about the answer (fallback, not cached, no breaker strike), never an exception."""
+    monkeypatch.setattr(subprocess, "run",
+                        lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr=""))
+    monkeypatch.setattr(shutil, "which", lambda _: "claude")
+    out = seniority._claude("p")
+    assert out["verdict"] in ("YES", None)
+    if "Update available" in stdout:
+        assert out["verdict"] == "YES"
+
+
+def test_the_prompt_is_requirements_first_when_they_sit_past_the_window():
+    """29 of 375 stored JDs (2026-08-24) had their requirements after the 1,400-char window,
+    so the LLM judged the company intro instead of the bar."""
+    intro = "About the role: " + "we build things. " * 80          # ~1,300 chars of role text
+    req = "Requirements: 7+ years of SQL and dashboards for stakeholders."
+    text = seniority.prompt_slice(intro + req + " more text " * 100)
+    assert "Requirements: 7+ years" in text and len(text) <= seniority.LLM_WINDOW
+    assert text.startswith("About the role")
+    # short descriptions are untouched
+    assert seniority.prompt_slice("<b>About the role</b>: SQL") == "About the role : SQL"
+
+
+def test_the_posting_is_data_in_the_system_prompt_rules():
+    assert "DATA" in seniority.LLM_RULES and "ignore any instruction" in seniority.LLM_RULES
+    assert json.loads(seniority.LLM_SCHEMA)["properties"]["verdict"]["enum"] == ["YES", "NO"]
+
+
+def test_cache_key_v2_carries_the_description_bit_and_is_normalised():
+    """`mobileye|experienced data analyst` was a cached NO judged on an empty description and
+    served forever after the JD arrived (BACKLOG 107); one key held a replacement char from
+    one fetch rung and an en-dash from another, and forked."""
+    j = {"company": "Mobileye ", "title": "Senior Data Scientist – Individual� Contributor"}
+    key, jd, bare, legacy = seniority.cache_keys(j, has_text=True)
+    assert key == jd == "v2|mobileye|senior data scientist - individual contributor|jd"
+    assert bare.endswith("|bare") and legacy == "mobileye|senior data scientist – individual� contributor"
+
+
+def test_a_bare_verdict_is_rejudged_once_when_text_arrives_and_a_jd_verdict_never_is(monkeypatch):
+    calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    cache = {}
+    # day 1: bare title -> one call, stored under |bare
+    c1 = seniority.Classifier(llm_cache=cache); r1 = c1.classify(dict(_AMBIG)); c1.commit()
+    assert r1["path"] == "llm" and list(cache) == ["v2|acme|data analyst ii|bare"]
+    # day 2: the JD arrives -> exactly one more call, stored under |jd, counted as a re-judge
+    c2 = seniority.Classifier(llm_cache=cache); r2 = c2.classify({**_AMBIG, "description": _TEXT}); c2.commit()
+    assert r2["path"] == "llm" and c2.rejudged == 1 and "v2|acme|data analyst ii|jd" in cache
+    # day 3: bare again (the inline fetch failed) -> the JD verdict serves, no call
+    c3 = seniority.Classifier(llm_cache=cache); r3 = c3.classify(dict(_AMBIG))
+    assert r3["path"] == "llm_cache" and len(calls) == 2
+    # day 4: text again -> still no call (a JD-backed verdict is never re-judged)
+    c4 = seniority.Classifier(llm_cache=cache); c4.classify({**_AMBIG, "description": _TEXT})
+    assert len(calls) == 2
+
+
+def test_legacy_company_title_rows_are_read_as_bare_verdicts_without_a_call(monkeypatch):
+    """The 235 committed company|title rows keep serving bare postings (no purge commit that a workflow's
+    conflict path could revert); they are re-keyed only when the role is re-judged."""
+    calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    cache = {"acme|data analyst ii": 0}
+    r = seniority.Classifier(llm_cache=cache).classify(dict(_AMBIG))
+    assert r["path"] == "llm_cache" and r["decision"] == "reject" and calls == []
+    # with text the legacy NO is re-judged once
+    clf = seniority.Classifier(llm_cache=cache); r = clf.classify({**_AMBIG, "description": _TEXT}); clf.commit()
+    assert r["path"] == "llm" and r["decision"] == "accept" and clf.flipped_to_yes == 1
+    assert cache["v2|acme|data analyst ii|jd"] is True and len(calls) == 1
+
+
+def test_an_auth_failure_opens_the_breaker_on_the_first_hit(monkeypatch):
+    """An expired token used to cost up to 163 x 90 s of silent timeouts; now one call, then
+    every ambiguous role is `llm_skipped` and the mail says why."""
+    calls = _fake_seam(monkeypatch, lambda p: seniority.LLMUnavailable("401 OAuth access token is invalid", "auth"))
+    clf = seniority.Classifier(llm_cache={})
+    paths = [clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})["path"] for i in range(5)]
+    assert paths == ["llm_failed_fallback"] + ["llm_skipped"] * 4 and len(calls) == 1
+    assert clf.off_reason.startswith("llm-unavailable(auth")
+    assert any("llm-unavailable(auth" in a and "4 roles judged on keywords alone" in a for a in clf.alarms())
+    assert clf.commit() == 0 and clf.attempts == 1
+
+
+def test_transient_failures_open_the_breaker_after_three_in_a_row_but_a_bad_answer_never_does(monkeypatch):
+    seq = iter([seniority.LLMUnavailable("timeout(45s)")] * 3)
+    calls = _fake_seam(monkeypatch, lambda p: next(seq))
+    clf = seniority.Classifier(llm_cache={})
+    paths = [clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})["path"] for i in range(4)]
+    assert paths == ["llm_failed_fallback"] * 3 + ["llm_skipped"] and len(calls) == 3
+    # the MODEL failing to answer in-schema is not infrastructure: no strike, keeps trying
+    calls = _fake_seam(monkeypatch, lambda p: _ok(None, "no structured verdict"))
+    clf = seniority.Classifier(llm_cache={})
+    paths = [clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})["path"] for i in range(5)]
+    assert paths == ["llm_failed_fallback"] * 5 and not clf.off_reason and len(calls) == 5
+
+
+def test_a_mass_no_or_mass_yes_morning_is_quarantined_not_cached(monkeypatch):
+    """30 fresh verdicts all NO (base rate 18 %) is a broken morning, not 30 measurements —
+    cached, it would be broken for a year."""
+    for verdict, word in (("NO", "mass-no"), ("YES", "mass-yes")):
+        _fake_seam(monkeypatch, lambda p, v=verdict: _ok(v))
+        cache = {}
+        clf = seniority.Classifier(llm_cache=cache)
+        for i in range(seniority.QUARANTINE_MIN_FRESH):
+            clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})
+        assert clf.quarantine().startswith(word)
+        assert clf.commit() == 0 and cache == {} and len(clf.staged) == 30
+        assert any(word in a and "30 of this run's 30 verdicts NOT cached" in a for a in clf.alarms())
+    # a mixed morning commits
+    seq = iter(["YES", "NO", "NO", "NO", "NO"] * 6)
+    _fake_seam(monkeypatch, lambda p: _ok(next(seq)))
+    cache = {}
+    clf = seniority.Classifier(llm_cache=cache)
+    for i in range(30):
+        clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})
+    assert not clf.quarantine() and clf.commit() == 30 and len(cache) == 30
+
+
+def test_the_summary_reconciles_and_names_the_model(monkeypatch):
+    _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    clf = seniority.Classifier(llm_cache={"v2|acme|data analyst 9|bare": 1})
+    for i in range(10):
+        clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})
+    clf.classify({"title": "Senior Software Engineer"})
+    clf.classify({"title": "Senior Data Analyst"})
+    s = clf.summary()
+    assert s.startswith("classify: 12 judged = keyword 2 + llm 9 (9 yes) + cache 1 + failed 0 + skipped 0; failed calls 0;")
+    assert "model claude-sonnet-5-20260101 x9" in s and "breaker closed" in s
+    assert sum(clf.paths.values()) == 12 and clf.attempts == 9 and clf.alarms() == []
+
+
+def test_model_drift_is_an_alarm(monkeypatch):
+    _fake_seam(monkeypatch, lambda p: _ok("NO", model="claude-fable-5"))
+    clf = seniority.Classifier(llm_cache={}, model="sonnet")
+    clf.classify(dict(_AMBIG))
+    assert any("model drift" in a and "claude-fable-5" in a for a in clf.alarms())
+
+
+def test_the_wrapper_keeps_its_signature_and_writes_the_cache_at_once(monkeypatch):
+    _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    cache = {}
+    r = seniority.classify(dict(_AMBIG), use_llm=True, llm_cache=cache)
+    assert r["path"] == "llm" and cache == {"v2|acme|data analyst ii|bare": True}
+    assert seniority.classify(dict(_AMBIG), use_llm=False)["path"] == "keyword_nollm"
+
+
+def test_no_llm_mode_never_touches_the_seam_or_the_cache(monkeypatch):
+    calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    cache = {"v2|acme|data analyst ii|jd": 1}
+    clf = seniority.Classifier(use_llm=False, llm_cache=cache)
+    assert clf.classify({**_AMBIG, "description": _TEXT})["path"] == "keyword_nollm"
+    assert calls == [] and clf.commit() == 0
+
+
+def test_run_py_holds_one_classifier_and_the_mail_gets_its_alarms():
+    """The producer must be wired, not just the renderer (a blanked producer left the suite
+    green in the registry lane's confirmation wave). Both classify sites, the summary, the
+    alarms into `_stage_alarms`, the commit-then-save order, and `llm_calls` = attempts."""
+    import inspect
+    from pipeline import run as run_mod
+    src = inspect.getsource(run_mod.run)
+    assert "clf = seniority.Classifier(use_llm=use_llm, llm_cache=llm_cache)" in src
+    assert src.count("c = clf.classify(j)") == 2                 # the ATS loop AND the aggregator loop
+    assert "seniority.classify(" not in src
+    assert 'print("  " + clf.summary(), flush=True)' in src
+    assert "for _line in clf.alarms():" in src and "_stage_alarms.append(_line)" in src
+    assert 'stats["llm_calls"] = clf.attempts' in src
+    assert src.index("if clf.commit():") < src.index("st.save_llm_cache(llm_cache, run_date)") < src.index("company_intel.enrich_for_run(")
+    assert "sum(paths.values()) != stats[\"israel_matched\"]" in src
+
+
+def test_save_llm_cache_writes_only_new_or_changed_rows(tmp_path):
+    """Every row used to be upserted every run: all 247 said updated=2026-08-24."""
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.save_llm_cache({"a": True, "b": False}, "2026-08-01")
+    st.save_llm_cache({"a": True, "b": True, "c": False}, "2026-08-02")
+    rows = dict((k, u) for k, u in st.conn.execute("SELECT title_key, updated FROM llm_cache"))
+    assert rows == {"a": "2026-08-01", "b": "2026-08-02", "c": "2026-08-02"}
+    assert st.load_llm_cache() == {"a": True, "b": True, "c": False}
+
+
+def test_the_digest_labels_the_skipped_path():
+    from pipeline import digest
+    assert digest._path_label("llm_skipped") != "llm_skipped"
+
+
+@pytest.mark.parametrize("loc", ["Yavne, Israel", "Afula", "Tiberias", "Eilat", "Dimona", "Safed",
+                                 "Tzfat", "Akko", "Nahariya", "Yavneh"])
+def test_the_latin_place_list_has_the_hebrew_lists_cities(loc):
+    """יבנה/עפולה/טבריה/אילת/דימונה/צפת/עכו/נהריה were Hebrew-only: an English careers page
+    in Yavne was not Israel."""
+    assert israel.is_israel_job({"location": loc}) is True
+
+
+def test_acre_is_deliberately_not_a_place():
+    assert israel.is_israel_job({"location": "1200 Green Acre Rd, Austin"}) is False
+
+
+def test_the_fake_cli_answers_through_the_real_seam(tmp_path):
+    """The rehearsal shim (tests/fixtures/classifier) must be reachable through PATH with the
+    real argv on THIS OS — on ubuntu that is the exec-bit shell shim tomorrow's run shape uses."""
+    fx = os.path.join(os.path.dirname(__file__), "fixtures", "classifier")
+    env = {**os.environ, "PATH": fx + os.pathsep + os.environ.get("PATH", ""),
+           "FAKE_CLAUDE": "yes", "FAKE_CLAUDE_LOG": str(tmp_path / "log")}
+    code = ("import json,sys; from pipeline import seniority as S; "
+            "print(json.dumps(S._claude('Job title: Data Analyst\\nCompany: X', cwd=sys.argv[1])))")
+    p = subprocess.run([sys.executable, "-c", code, str(tmp_path)], capture_output=True, text=True,
+                       env=env, cwd=os.path.dirname(os.path.dirname(__file__)), timeout=60)
+    assert p.returncode == 0, p.stderr
+    out = json.loads(p.stdout.strip().splitlines()[-1])
+    assert out["verdict"] == "YES" and out["models"] == ["claude-sonnet-5"]
+    call = json.loads(open(tmp_path / "log", encoding="utf-8").read().splitlines()[0])
+    assert "--tools" in call["argv"] and call["cwd"] == str(tmp_path) and call["stdin_len"] > 10
+
+
+# --- wave 1 (cache & regression attacker), 2026-08-24: each of these shipped in the first cut ---
+
+def test_failed_calls_count_against_the_minutes_budget(monkeypatch):
+    """A 45 s timeout added 0 to the budget: 40 % timeouts under the breaker's bar could run
+    146 min of wall clock inside a 45-min budget."""
+    clock = [0.0]
+    monkeypatch.setattr(seniority.time, "time", lambda: clock[0])
+
+    def script(p):
+        clock[0] += 25 * 60                       # every call "takes" 25 minutes
+        raise seniority.LLMUnavailable("timeout(45s)")
+    _fake_seam(monkeypatch, script)
+    clf = seniority.Classifier(llm_cache={}, budget_min=45)
+    paths = [clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})["path"] for i in range(3)]
+    assert clf.seconds == 50 * 60 and "min spent" in clf.budget_reason   # 2 timeouts < the breaker's 3
+    assert paths == ["llm_failed_fallback"] * 2 + ["llm_skipped"] and clf.attempts == 2
+
+
+def test_the_cap_and_the_time_budget_skip_instead_of_failing_v2(monkeypatch):
+    _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    clf = seniority.Classifier(llm_cache={}, cap=2)
+    paths = [clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})["path"] for i in range(4)]
+    assert paths == ["llm", "llm", "llm_skipped", "llm_skipped"]
+    assert clf.budget_reason == "llm-budget(cap 2 calls)" and clf.skipped == 2
+    assert any("2 roles judged on keywords alone (2 accepted and emailed, 0 rejected until the next run)" in a
+               for a in clf.alarms())
+    clf = seniority.Classifier(llm_cache={}, budget_min=1)
+    assert clf.classify({**_AMBIG, "title": "Data Analyst 0"})["path"] == "llm"
+    clf.seconds = 61.0
+    assert clf.classify({**_AMBIG, "title": "Data Analyst 1"})["path"] == "llm_skipped"
+    assert "min spent" in clf.budget_reason
+
+
+def test_quarantine_withholds_only_the_suspect_cohort_and_commit_is_complete(monkeypatch):
+    """A mass-NO morning used to throw away the brand-new roles' verdicts too and re-buy
+    every one of them tomorrow; a second commit() used to write nothing."""
+    _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    cache = {f"v2|acme|old analyst {i}|bare": False for i in range(5)}
+    clf = seniority.Classifier(llm_cache=cache)
+    for i in range(30):                                               # 30 fresh, all NO
+        clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})
+    for i in range(5):                                                # 5 re-judges, NO -> NO
+        clf.classify({"company": "Acme", "title": f"Old Analyst {i}", "description": _TEXT})
+    assert clf.quarantine().startswith("mass-no(30 fresh")
+    assert len(clf.quarantined_keys()) == 30 and clf.commit() == 5   # the re-judges are kept
+    assert sum(k.endswith("|jd") for k in cache) == 5
+    clf.classify({**_AMBIG, "title": "Late Analyst", "description": _TEXT})   # staged after commit
+    assert clf.commit() == 0                                          # fresh cohort still held
+    assert any("31 of this run's 36 verdicts NOT cached" in a for a in clf.alarms())
+
+
+def test_mass_yes_is_measured_on_fresh_verdicts_not_re_judgements(monkeypatch):
+    """The re-judge cohort's cached YES rate is 46-59 % (it is the accepted roles); a morning
+    that merely re-affirms the cache must not read as mass-yes."""
+    _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    cache = {f"v2|acme|old analyst {i}|bare": True for i in range(40)}
+    clf = seniority.Classifier(llm_cache=cache)
+    for i in range(40):
+        clf.classify({"company": "Acme", "title": f"Old Analyst {i}", "description": _TEXT})
+    assert clf.rejudged == 40 and clf.yes == 40 and clf.quarantine() == ""
+    assert clf.commit() == 40
+
+
+def test_mass_flip_is_a_ratio_not_a_cliff(monkeypatch):
+    seq = iter(["YES"] * 19 + ["NO"])
+    _fake_seam(monkeypatch, lambda p: _ok(next(seq)))
+    cache = {f"v2|acme|old analyst {i}|bare": (i == 19) for i in range(20)}   # 19 NO, 1 YES
+    clf = seniority.Classifier(llm_cache=cache)
+    for i in range(20):
+        clf.classify({"company": "Acme", "title": f"Old Analyst {i}", "description": _TEXT})
+    assert clf.flipped_to_yes == 19 and clf.flipped_to_no == 1
+    assert clf.quarantine().startswith("mass-flip") and clf.commit() == 0
+
+
+def test_has_text_uses_the_same_measure_as_jdfill():
+    """`prompt_slice` is always shorter than the raw text; gating on it left a long
+    boilerplate JD `|bare` forever (jdfill would never refill it)."""
+    d = "We are a leading company. " * 20 + "About the role: SQL and dashboards for stakeholders."
+    assert len(d.strip()) >= seniority.MIN_DESC > len(seniority.prompt_slice(d))
+    key, *_ = seniority.cache_keys({"company": "Acme", "title": "Data Analyst II"},
+                                   len(d.strip()) >= seniority.MIN_DESC)
+    assert key.endswith("|jd")
+
+
+def test_desc_is_ml_counts_ml_in_the_requirements_but_analytics_over_the_whole_role():
+    """Measuring both on the requirements section alone inverted real analyst roles whose
+    responsibilities carried the counter-signal."""
+    jd = ("About the role: you will build dashboards, define KPIs, run A/B tests and answer "
+          "business questions for stakeholders across the company using SQL. "
+          "Requirements: 5+ years experience; hands-on machine learning; deep learning; "
+          "predictive model experience; a plus: feature engineering.")
+    assert seniority.classify({"company": "Acme", "title": "Senior Data Scientist",
+                               "description": jd}, use_llm=False)["decision"] == "accept"
+    ml = ("About the role: research. Requirements: machine learning, deep learning, PyTorch, "
+          "model training, neural networks.")
+    assert seniority.classify({"company": "Acme", "title": "Senior Data Scientist",
+                               "description": ml}, use_llm=False)["decision"] == "reject"
+
+
+def test_skipped_counts_only_roles_that_lost_the_llm(monkeypatch):
+    _fake_seam(monkeypatch, lambda p: seniority.LLMUnavailable("401", "auth"))
+    cache = {"acme|old analyst": False}
+    clf = seniority.Classifier(llm_cache=cache)
+    clf.classify(dict(_AMBIG))                                                    # attempt, breaker opens
+    r = clf.classify({"company": "Acme", "title": "Old Analyst", "description": _TEXT})
+    assert r["path"] == "llm_cache" and clf.skipped == 0 and clf.served_bare == 1  # served, not skipped
+
+
+def test_the_scratch_cwd_is_one_fixed_directory(monkeypatch, tmp_path):
+    """87 leaked `classify-*` temp dirs were found after one afternoon of the wrapper."""
+    seen = []
+    monkeypatch.setattr(seniority, "_claude", lambda p, **kw: (seen.append(kw["cwd"]) or _ok("NO")))
+    monkeypatch.setattr(seniority.tempfile, "gettempdir", lambda: str(tmp_path))
+    for _ in range(3):
+        seniority.classify({**_AMBIG, "title": "Data Analyst X"}, use_llm=True, llm_cache={})
+    assert len(set(seen)) == 1 and os.path.isdir(seen[0]) and seen[0].startswith(str(tmp_path))
+
+
+def test_save_llm_cache_refuses_non_boolean_verdicts(tmp_path):
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.save_llm_cache({"a": True, "b": "NO", "c": None, "d": 2}, "2026-08-24")
+    assert st.load_llm_cache() == {"a": True}
+
+
+def test_a_title_that_normalises_to_nothing_keeps_its_raw_key():
+    k = seniority.cache_keys({"company": "Acme", "title": "��"}, False)[0]
+    assert k == "v2|acme|��|bare"
+
+
+# --- wave 1 (seam & injection attacker), 2026-08-24 ---
+
+def test_a_bad_token_on_2_1_241_is_auth_on_the_first_hit(monkeypatch):
+    """The real 2.1.241 failure: exit 1, EMPTY stderr, the envelope on stdout with
+    `api_error_status: 401`. The first cut read stderr-or-stdout and called it transient —
+    three strikes, and the mail named a session UUID."""
+    env = json.dumps({"is_error": True, "duration_api_ms": 0, "num_turns": 1, "session_id": "a668-1401",
+                      "api_error_status": 401, "terminal_reason": "api_error",
+                      "result": "Failed to authenticate. API Error: 401 OAuth access token is invalid."})
+    monkeypatch.setattr(subprocess, "run",
+                        lambda cmd, **kw: subprocess.CompletedProcess(cmd, 1, stdout=env, stderr=""))
+    monkeypatch.setattr(shutil, "which", lambda _: "claude")
+    with pytest.raises(seniority.LLMUnavailable) as e:
+        seniority._claude("p")
+    assert e.value.kind == "auth" and str(e.value).startswith("Failed to authenticate")
+
+
+def test_the_auth_regex_does_not_fire_on_request_ids_or_the_models_reason():
+    assert seniority._kind("API Error: 500 (request_id req_1401xyz)") == "transient"
+    assert seniority._kind("API Error: 401 OAuth access token is invalid") == "auth"
+    assert seniority._kind("Failed to authenticate.") == "auth"
+    # a good call's stdout is the posting's own words; never classify on it
+    good = json.dumps({"is_error": False, "structured_output": {"verdict": "NO", "reason": "401 auth funnel dashboards"}})
+    assert seniority._claude.__doc__  # (the seam reads the envelope, below)
+    env = seniority._envelope(good)
+    assert env["structured_output"]["verdict"] == "NO"
+
+
+def test_the_envelope_is_the_result_object_not_the_first_brace():
+    yes = json.dumps({"is_error": False, "structured_output": {"verdict": "YES", "reason": "r"}})
+    assert seniority._envelope("note {} follows " + yes)["structured_output"]["verdict"] == "YES"
+    assert seniority._envelope('{"type":"system","subtype":"init"}\n' + yes)["structured_output"]["verdict"] == "YES"
+    assert seniority._envelope("no braces at all") is None
+    assert seniority._envelope("prose {\"a\": 1} tail")["a"] == 1
+
+
+def test_the_envelope_scan_is_bounded():
+    import time as _t
+    t0 = _t.time()
+    assert seniority._envelope("x { not json " * 400_000) is None
+    assert _t.time() - t0 < 5
+
+
+def test_the_rules_are_one_line_and_reach_the_cli_through_the_windows_shim(tmp_path):
+    """cmd.exe truncates an argv element at its first newline: every Windows rehearsal was
+    running 116 of 1,336 chars of rules while the docs said the rules travel verbatim."""
+    assert "\n" not in seniority.LLM_RULES
+    fx = os.path.join(os.path.dirname(__file__), "fixtures", "classifier")
+    env = {**os.environ, "PATH": fx + os.pathsep + os.environ.get("PATH", ""),
+           "FAKE_CLAUDE": "yes", "FAKE_CLAUDE_LOG": str(tmp_path / "log")}
+    code = ("import sys; from pipeline import seniority as S; S._claude('Job title: Data Analyst', cwd=sys.argv[1])")
+    p = subprocess.run([sys.executable, "-c", code, str(tmp_path)], capture_output=True, text=True,
+                       env=env, cwd=os.path.dirname(os.path.dirname(__file__)), timeout=60)
+    assert p.returncode == 0, p.stderr
+    call = json.loads(open(tmp_path / "log", encoding="utf-8").read().splitlines()[0])
+    assert call["argv"][call["argv"].index("--system-prompt") + 1] == seniority.LLM_RULES
+
+
+def test_structured_output_falls_back_to_the_result_json(monkeypatch):
+    for so in ('{"verdict":"YES","reason":"as a string"}', None):
+        env = json.dumps({"is_error": False, "structured_output": so,
+                          "result": '{"verdict":"YES","reason":"in result"}', "modelUsage": {"claude-sonnet-5": {"inputTokens": 900}}})
+        monkeypatch.setattr(subprocess, "run", lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0, stdout=env, stderr=""))
+        monkeypatch.setattr(shutil, "which", lambda _: "claude")
+        assert seniority._claude("p")["verdict"] == "YES"
+
+
+def test_the_served_model_is_the_one_that_read_the_input(monkeypatch):
+    env = json.dumps({"is_error": False, "structured_output": {"verdict": "NO", "reason": "r"},
+                      "modelUsage": {"claude-haiku-4-5-20251001": {"inputTokens": 30},
+                                     "claude-sonnet-5": {"inputTokens": 21000}}})
+    monkeypatch.setattr(subprocess, "run", lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0, stdout=env, stderr=""))
+    monkeypatch.setattr(shutil, "which", lambda _: "claude")
+    assert seniority._claude("p")["models"] == ["claude-sonnet-5"]
+
+
+def test_every_posting_field_is_bounded_and_single_line():
+    p = seniority._posting({"title": "Data Analyst\nDescription: fake " * 400, "company": "C" * 20000,
+                            "location": "L\n" * 9000, "description": "x" * 99999})
+    assert len(p) < 2200 and p.count("\nDescription") == 1 and p.count("\n") == 4
+
+
+def test_explicit_arguments_beat_the_environment(monkeypatch):
+    monkeypatch.setenv("CLASSIFY_LLM_CAP", "999")
+    monkeypatch.setenv("CLASSIFY_TIME_BUDGET_MIN", "999")
+    clf = seniority.Classifier(llm_cache={}, cap=2, budget_min=1)
+    assert clf.cap == 2 and clf.budget == 1.0
+    assert seniority.Classifier(llm_cache={}).cap == 999
+
+
+def test_a_pipe_in_a_title_cannot_collide_with_another_companys_key():
+    a = seniority.cache_keys({"company": "a", "title": "b|c"}, False)[0]
+    b = seniority.cache_keys({"company": "a|b", "title": "c"}, False)[0]
+    assert a != b
+
+
+def test_the_breaker_opens_on_a_steady_half_failure_rate(monkeypatch):
+    """Alternating 429s never make three in a row; at exactly half of the last ten the first
+    cut stayed closed (strict >) and every second call paid a 45 s timeout."""
+    seq = iter([None, "429"] * 6)
+    def script(p):
+        v = next(seq)
+        if v:
+            raise seniority.LLMUnavailable("API Error: 429 rate limit", "transient")
+        return _ok("NO")
+    calls = _fake_seam(monkeypatch, script)
+    clf = seniority.Classifier(llm_cache={})
+    for i in range(12):
+        clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})
+    assert clf.off_reason.startswith("llm-unavailable(transient") and len(calls) == 10
+
+
+def test_a_digit_before_a_place_name_is_not_a_boundary_but_after_it_is():
+    """Wave 1's digit guard on both sides dropped two real Get SAT rows whose location was the
+    mangled `u0022Israel`; the Siemens junk `lod3BakeYZ7` must still be rejected."""
+    assert israel.is_israel_job({"location": "u0022Israel"}) is True
+    assert israel.is_israel_job({"location": "lod3BakeYZ7"}) is False
+    assert israel.is_israel_job({"location": "lod2"}) is False
+
+
+# --- wave 2 confirmers, 2026-08-25 ---
+
+def test_a_morning_broken_in_both_cohorts_withholds_both(monkeypatch):
+    """The flipped `|jd` cohort used to commit behind a mass-NO — and `|jd` is never re-judged."""
+    _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    cache = {f"v2|acme|old analyst {i}|bare": True for i in range(12)}
+    clf = seniority.Classifier(llm_cache=cache)
+    for i in range(30):
+        clf.classify({**_AMBIG, "title": f"Data Analyst {i}"})
+    for i in range(12):
+        clf.classify({"company": "Acme", "title": f"Old Analyst {i}", "description": _TEXT})
+    assert "mass-no" in clf.quarantine() and "mass-flip" in clf.quarantine()
+    assert len(clf.quarantined_keys()) == 42 and clf.commit() == 0
+    assert not any(k.endswith("|jd") for k in cache)
+
+
+def test_the_requirements_header_is_a_header_not_the_eeo_footer():
+    """`(?![,.;])` and the `of/your/the` lookbehinds: "basis of qualifications, merit" and
+    "We hire on qualifications." must not anchor the requirements window."""
+    m = seniority._REQ_HEADER.search("We hire on qualifications. Requirements: 5 years")
+    assert m and m.group(0).startswith("Requirements")
+    assert seniority._REQ_HEADER.search("decided on the basis of qualifications, merit, and need") is None
+    assert seniority._REQ_HEADER.search("you meet the requirements of the job") is None
+
+
+@pytest.mark.parametrize("loc", ["Kfar-Saba", "Center-District", "Rosh-Haayin", "Bnei-Brak", "Hod-Hasharon"])
+def test_a_hyphen_inside_a_place_name_is_a_space(loc):
+    """The scraper's `ISRAEL_LOC` accepted 32 hyphen forms that `israel.py` then dropped."""
+    assert israel.is_israel_job({"location": loc}) is True
+
+
+def test_a_confident_foreign_country_code_beats_israeli_text():
+    assert israel.is_israel_job({"country_code": "US", "location": "New York",
+                                 "url": "https://x.com/tel-aviv-office-tour"}) is False
+
+
+def test_a_long_envelope_is_still_found_inside_the_scan_window():
+    env = json.dumps({"is_error": False, "structured_output": {"verdict": "YES", "reason": "r" * 3000}})
+    assert seniority._envelope("x" * 1000 + env)["structured_output"]["verdict"] == "YES"
+    assert seniority._MAX_SCAN >= 100_000
+
+
+def test_a_non_string_description_does_not_crash_the_digest():
+    for d in ({"a": 1}, ["x"], 7):
+        assert seniority.classify({"title": "Senior Data Scientist", "description": d}, use_llm=False)["decision"] in ("accept", "reject")

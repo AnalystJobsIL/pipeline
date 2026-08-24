@@ -20,9 +20,10 @@ is claimed — if you take one, say so in `HANDOFF.md`.
    `platform_check` reports the gaps but the consolidation itself is the real fix.
 2. Relative-date parsing exists in 5 places with different capabilities (none handle
    "week"/"hour"; SerpApi dates never normalize at all).
-3. `_REQ_HEADER` in `seniority.py` is dead code — `_desc_is_ml`'s docstring claims it reads
-   the requirements section but it uses `_ROLE_START`, which lands on boilerplate 22% of the
-   time and cuts the requirements past the 1400-char LLM window.
+3. ~~`_REQ_HEADER` in `seniority.py` is dead code~~ — **closed 2026-08-24 (`classifier`)**:
+   `_desc_is_ml` and the LLM's `prompt_slice` both start at the requirements header when one
+   exists (375 stored JDs: `_ROLE_START` hit 183, `_REQ_HEADER` 119, and in 29 of those the
+   requirements began past the 1,400-char window); 0 of the 252 asserted title-only decisions moved on the first cut; 3 changed on purpose in wave 1 and carry `"changed"`.
 4. `metrics.jsonl` (one JSON line per run) would answer "is coverage growing / did a source
    die / did the classifier stop working" — none of which is answerable today.
 5. Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
@@ -1772,7 +1773,10 @@ Record: `docs/sessions/2026-08-24-jd-text.md`. Numbers re-derived that day; re-d
     becomes `digests/latest.md`. One line after `digest.py:635`
     (`- LLM calls this run:`): `f"- JDs fetched inline: {s.get('jd_filled_inline', 0)}"`. Until
     then the step log's `jd-fill: 93/153 …` line is the only place the number exists.
-107. **A role judged on a bare title keeps that verdict after its text arrives** — lane:
+107. ~~**A role judged on a bare title keeps that verdict after its text arrives**~~ —
+    **closed 2026-08-24 (`classifier`, ARCHITECTURE §7b)**: keys are `v2|company|title|jd`
+    or `|bare`; a bare verdict is re-judged once text arrives, a `|jd` one never; the 235
+    readable legacy rows are read as bare (12 title-only rows are unreachable). The original text, for the record — lane:
     `classifier`. `llm_cache` is keyed `company|title` (`seniority.py:313`) with no record of
     whether a description was present; a Workday role rejected on 2026-08-23 with `""` is
     `llm_cache` forever, even though the native rung now fetches its JD before `classify`. The
@@ -1823,3 +1827,108 @@ Record: `docs/sessions/2026-08-24-jd-text.md`. Numbers re-derived that day; re-d
 115. **A scoped run prints `wrote: … docs/index.html`** — lane: `infra` (`pipeline/run.py`).
     It actually wrote `out/docs-preview/index.html` (the guard works); the line makes an
     operator think a local experiment clobbered the board.
+
+## From the `classifier` lane, 2026-08-24
+
+Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
+
+116. **Legacy `llm_cache` rows are never purged** — lane: `classifier`. The 247 rows keyed
+    `company|title` (12 of them title-only, unreachable) are read as bare verdicts and re-keyed
+    only when a role is re-judged; they stay in `cloud_state/seen.db` until someone runs
+    `DELETE FROM llm_cache WHERE title_key NOT LIKE 'v2|%'` — **from a cloud run's own
+    commit or on a quiet day, never from a local checkout**: every `repo-state` job's conflict
+    path restores `cloud_state/` wholesale (105), so a hand-committed binary that races a
+    workflow is silently reverted. Count them: `python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(c.execute(\"select sum(title_key not like 'v2|%') from llm_cache\").fetchone())"`.
+    `updated` is only meaningful from the first v2 run (before it every row was upserted daily).
+117. **One `claude -p` seam for the repo** — lane: `infra` (a shared `llm` module under `pipeline/`, not yet created). Two seams now
+    exist with the same shape and different guarantees: `seniority._claude` (tools off, schema,
+    system prompt, `is_error` read, cwd = scratch, no shell) and `firmographics._claude`
+    (`--allowedTools WebSearch`, return code only, cwd = repo — so every blurb and research call
+    still reads `CLAUDE.md` + `CLAUDE.local.md`, ~20k tokens). Hoist the classifier's into
+    that module with `tools=` and let `company-intel` migrate; `resolve_llm.py`,
+    `triage_dark.py`, `scrape_universal.py` spawn their own too.
+118. **Greenhouse `location.name` is a work-mode at some tenants** — lane: `ats-fetch`.
+    Cloudflare's 296 postings say `Hybrid` / `In-Office`; the office is in `offices[]`, which
+    `fetch_greenhouse` (`fetchers.py:242`) does not read, so an Israeli Cloudflare role would be
+    dropped by the Israel gate. Read `offices[].name`/`location` into the location string.
+119. **`digest._LOC_CANON` and the four seniority vocabularies are copies** — lane: `render`.
+    `digest.py:381-393` keeps its own city table (Latin + Hebrew) with no derivation from
+    `israel.py` (the 40 names added today render un-canonicalised); `digest._SEN_INFER`,
+    `digest._SEN_LEAD`, `roleprofile._LEAD` restate `seniority._SENIOR`, and `roleprofile.py:441`
+    files `financial analyst` under Business Analyst while `seniority` hard-excludes it.
+120. **Company intel rediscovers an outage the classifier already found** — lane:
+    `company-intel`. When the classifier's breaker opens (`Classifier.off_reason`), the digest
+    still spends up to 15 min of `enrich_for_run` learning the same thing; one process-level
+    "claude unavailable since …" flag (or reading `clf.off_reason` in `run.py`) would skip it.
+121. **CLI start-up dominates the LLM tier's wall time** — lane: `classifier`. Locally a call is
+    13.5 s wall for 3.2 s of API (`duration_api_ms`); 163 calls ≈ 37 min, which is why the
+    minutes budget is 60. Unverified on the ubuntu runner (read tomorrow's `attempts N in M
+    min`). `--bare` might trim it under token auth but breaks keychain login locally and is
+    untested with `CLAUDE_CODE_OAUTH_TOKEN`; batching several postings per call was rejected
+    (cross-contamination, cache shape) — revisit if the runner is as slow.
+122. **The cap and the budget bite the same companies every day** — lane: `classifier`.
+    `run.py` walks `companies.csv` in file order, so once `CLASSIFY_LLM_CAP` /
+    `CLASSIFY_TIME_BUDGET_MIN` is spent the alphabetical tail is `llm_skipped` (keyword rule,
+    not cached) run after run. The mail names the count; a rotation (start from where
+    yesterday stopped) or "skipped roles first" would drain it.
+123. **A quarantined cohort is re-bought every morning until someone reads the mail** — lane:
+    `classifier`. `Classifier.commit()` withholds a mass-NO / mass-YES / mass-flip cohort (never
+    cached), so the next run pays for the same postings again, bounded only by `CLASSIFY_LLM_CAP`.
+    Two consecutive quarantines should open the breaker for the day; that needs one bit of
+    state across runs (the `publish` stamp in `cloud_state/pipeline_stages.json` is the place).
+124. **One role on two boards is classified twice in one run, and the bare copy can win** —
+    lane: `roles` (with `classifier`). `store.merge_duplicates` runs AFTER `classify`
+    (`pipeline/run.py`), so a company listed on comeet and greenhouse pays two LLM calls; if the
+    bare copy is judged YES first and the JD-backed copy NO, `accepted` keeps the YES for today's
+    board while the cache stores the NO. Dedupe on `store.merge_key` before classifying.
+125. **Every workflow's conflict path nests `cloud_state/` instead of restoring it** — lane:
+    `infra`, **high**. `cp -r "/tmp/ours/$p" "$p"` into an EXISTING directory copies INTO it
+    (a second `cloud_state` directory inside the first, likewise `docs` and `digests`), so
+    on a conflict day origin's `seen.db`, board and digest are committed instead of the run's —
+    the run's verdicts, `matched` upserts and `sent` marks are lost, yesterday's board is
+    published and yesterday's digest re-relayed. Fired 4x in production (`8644d8f` shows
+    `seen.db` shrinking 1,241,088 → 794,624 bytes). `daily-digest.yml` now uses `cp -rT`
+    (classifier lane, 2026-08-24, out of lane); the seven other `repo-state` workflows with the
+    same block are untouched. Repro: `mkdir -p /tmp/t/cloud_state /tmp/t/ours/cloud_state; touch /tmp/t/ours/cloud_state/seen.db; cd /tmp/t; cp -r ours/cloud_state cloud_state; find . -name seen.db`.
+126. **`scrape_universal.ISRAEL_LOC` has no word boundaries** — lane: `scraper`. It is pure
+    substring matching: `Akkodis`, `melody`, `explode`, `The Azores`, `unsafed`, `Lodz` all match
+    (`Akko`, `lod`, `Azor`, `safed`, `Lod`). Benign in today's pages (10 of 165 matches were inside
+    a word, all `Israeli`/Hebrew prefixes) but it feeds `_from_dom`'s 220-char proximity test and
+    `_page_is_il` under `SCRAPE_ASSUME_IL`, and the 40 names added 2026-08-24 (`tlv`, `yehud`, `gedera`, `nesher`, `eilat`, `akko`, `safed` …) widened it.
+    Build it with `israel.py`'s lookarounds (`(?<![a-z0-9])…(?![a-z0-9])`); it stays a superset.
+127. **The bold `Stages:` / `Registry:` alarms sit INSIDE the collapsed `<details>` audit block**
+    of the markdown that becomes the email — lane: `render` (`digest.py:628-655`), contradicting
+    `stages.py:13` ("a bold line in the audit, not a token inside a collapsed block"). Emit the
+    alarm lines above the `<details>` and keep the counts inside.
+128. **The declared step budgets sum past the job's `timeout-minutes: 150`** — lane: `infra`.
+    scan_dead_domains ~15 + probe_candidates 10 + enrich_scrape_jd 25 + enrich_matched_jd 20 +
+    JDFILL 25 + classify 60 + FIRMO 15 = 170 min before the two unbounded discovery steps and
+    862 fetches; a timeout kill skips the Persist step, so nothing the run paid for survives.
+    Raise `timeout-minutes` (210) or make Persist `if: always()`. Related: the
+    `npm install -g @anthropic-ai/claude-code@2.1.241` step is the only hard-fail install and
+    gates the whole day, while the classifier degrades cleanly to `missing` — give it
+    `continue-on-error: true`.
+129. **Keyword-tier gaps the wave-1 title sweep left open** — lane: `classifier`. Of 3,723 live
+    + cached titles: `analysis`/`analytical` and `head of data` now reach the LLM (fixed), but
+    STRONG titles are never ML-vetoed (`Senior Product Data Scientist` accepts on the title
+    alone, by design), `Lead Generation Analyst` reads as senior (`lead`), and `Analytical
+    Consultant` / `Manager, Performance Research and Analysis` (16 titles) are `signal` +
+    `unknown` seniority, so they cost an LLM call each. Re-sweep after a week of `[llm]` reasons.
+130. **`test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason` fails at HEAD on
+    2026-08-25** — lane: `scraper`. `assert (11 <= 12 and False)`: the stamp reads
+    `unprocessed-14`, not `shrink-abort-…`. Verified in a throwaway worktree of HEAD (`ef96190`+)
+    with no classifier change applied, so it is date- or fixture-dependent, not a regression of
+    2026-08-24's work. The suite is otherwise green (508 of 509).
+131. **Two documents the `docs` lane owns still describe the old classifier** — lane: `docs`.
+    `README.md:86` says "`claude -p` fallback for ambiguous titles only" (the LLM tier is
+    title-agnostic and bounded, §7b); `docs/AGENT_BRIEF.md:93` gives the lane "`llm_cache`
+    invalidation" where §7b says "the `llm_cache` table's key scheme", and the brief has no note
+    that the lane touched `run.py`/`store.py`/`digest.py`/`daily-digest.yml` under an approved
+    out-of-lane exception (recorded in `HANDOFF.md` and the session note).
+132. **`run.py`'s classifier wiring is pinned by a source-string test, not a behavioural one** —
+    lane: `classifier` + `infra`. `stats["llm_calls"] = 0` or dropping `clf.commit()` is caught only
+    by `test_run_py_holds_one_classifier_and_the_mail_gets_its_alarms` (`inspect.getsource`) — the
+    class of guard `tools/mutate.py` marks `must_be_killed_by_behavioural`. The end-to-end
+    behaviour is exercised by `tests/rehearse_classifier.py` (by hand), not by pytest. A pytest
+    that runs `pipeline.run.run(only=…)` with `fetchers.fetch_company` and `seniority._claude`
+    monkeypatched and a tmp db would close it.

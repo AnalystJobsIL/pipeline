@@ -48,7 +48,7 @@ every lane imports and no lane owns — changing it is a report-it-loudly event.
   ┌ 5 CLASSIFY ───────────────────────────────────────────────── lane: classifier┐
   │  pipeline/israel.py    is this role in Israel?                               │
   │  pipeline/seniority.py keyword rules, then `claude -p` for the ambiguous      │
-  │                        judgments cached per company|title ──▶ seen.db matched │
+  │                        judgments cached v2|company|title|jd|bare ▶ seen.db   │
   └──────────────────────────────────────────────────────────────────────────────┘
                    │
   ┌ 6 RENDER ─────────────────────────────────────────────────── lane: render ───┐
@@ -88,8 +88,10 @@ marketing analytics, analytics leadership. **The title does not matter**: a "Dat
 posting counts if the work is really product/business analytics. **Out**: core ML/model
 building, data engineering, software engineering, finance/FP&A, security/SOC, and
 junior/intern/entry-level. Deterministic keyword rules decide the clear cases; ambiguous
-titles go to `claude -p`, whose YES/NO **role judgment** is cached per `company|title` in
-`cloud_state/seen.db` (distinct from a row's coverage **verdict**, §2).
+titles go to one bounded, tool-less `claude -p` call (§7b), whose YES/NO **role judgment** is
+cached in `cloud_state/seen.db` under `v2|company|title|jd` or `|bare` — a verdict judged
+on a bare title is re-judged once the description arrives (distinct from a row's coverage
+**verdict**, §2).
 
 **Vocabulary** (used consistently below):
 - **the digest** = the 05:00 run that produces both the email and the board.
@@ -1132,9 +1134,13 @@ In order — each step names the file to open:
    ```bash
    python -c "from pipeline.seniority import classify; print(classify({'title':'Senior Data Analyst','company':'X','description':'…'}, use_llm=False))"
    ```
-   It returns the decision, path (`keyword` / `llm` / `llm_cache` / `keyword_nollm` /
-   `llm_failed_fallback`) and reason. The cache key column in `llm_cache` is `title_key`. A cached role judgment lives in `cloud_state/seen.db` → `llm_cache`
-   (key `company|title`); delete that row to force re-judgment.
+   It returns the decision, path (`keyword` / `keyword_nollm` / `llm` / `llm_cache` /
+   `llm_failed_fallback` / `llm_skipped`) and reason (§7b). A cached role judgment lives in
+   `cloud_state/seen.db` → `llm_cache`, column `title_key`, key `v2|<company>|<title>|jd`
+   (judged with the description) or `|bare` (title only; re-judged once text arrives), with
+   the 2026-08-24 rows still under the legacy `company|title`; delete the row to force a
+   re-judgment. The step log carries the LLM's one-line reason for every fresh verdict
+   (`[llm] company | title -> YES/NO: …`).
 7. **Emailed before?** `seen.db` → `sent` table is the across-day dedup: a role is emailed
    once. The 2-week job board still shows it; the email only carries the last 48h.
 8. **Not in `companies.csv` at all?** Check `research_companies.json` (resolution queue) and
@@ -1534,6 +1540,241 @@ day the enrichment's copy of a company wins over origin's newer cards (108); 6 o
 short `matched` rows carry URLs that are not job pages, acquired from discovery sources (109);
 `bd_rescue.unlock` still discards the status the Unlocker reports (110); the aggregator loop
 in `run.py` (dark) has no inline fill (111); the two drivers could be one module (112).
+
+## 7b. Classification — which roles qualify, and how the LLM tier is bounded
+*lane: `classifier` — `pipeline/israel.py`, `pipeline/seniority.py`, the `llm_cache` table's key scheme*
+
+Step 5 of the flow. Every Israel-matched posting goes through two deterministic gates and,
+for the ambiguous residue, one bounded LLM call. Written 2026-08-24 and attacked the same day
+(five Opus reviewers, then three confirmers — `docs/sessions/2026-08-24-classifier.md`).
+**Start here — rehearse tomorrow's classifier morning without spending anything:**
+
+```bash
+python tests/rehearse_classifier.py --case fail --only "Fiverr,Wix,Similarweb,Taboola"
+#   --case yes|no|all_no|all_yes|is_error|no_structured|prose_before_json|unknown_flag|
+#          fail|rate_limit|sleep|flaky   (12 fake-CLI modes) | nollm (the fake never runs)
+```
+It copies `seen.db` to a scratch dir, puts `tests/fixtures/classifier/` first on PATH, runs
+`pipeline.run` scoped, and prints PASS/FAIL per check (paths reconcile, attempts ≥ llm+failed,
+the predicted `Stages:` text, the cache-row delta, the full argv incl. the rules text, cwd ≠
+repo, `git status` unchanged; the argv/cwd checks only when the fake was called). Every
+number below carries the command that re-derives it, or says it does not.
+
+### The two gates, in order
+
+**Gate 1 — is it in Israel?** `israel.is_israel_job(job)` is **per posting, never per
+company**: an explicit country code decides (`IL`/`ISR` yes, anything else no — `IS`/`ISL`
+are Iceland), and only when the code is blank does a place-name scan of `location` + `url`
+decide. Two lists, Latin `_IL_PLACES` and Hebrew `_IL_PLACES_HE`; a space in a name also
+matches a hyphen, apostrophes and the Hebrew maqaf are spelling (`Kfar-Saba`, `Giv'atayim`,
+`תל־אביב` all pass), a digit after a name blocks it (`lod3BakeYZ7` does not pass) but not before (`u0022Israel`, a mangled feed, does). The scraper's `ISRAEL_LOC` is
+derived from both lists (`check_invariants` G). So a multinational with an Israeli branch
+passes on the posting's own location (the Workday / Eightfold / Phenom / `custom_json`
+fetchers are `israel_scoped`: they ask the board for Israel), an Israeli-only employer passes
+because its postings name the city or district, and a scrape row is pre-filtered at scrape
+time (a location-less card counts only when the listing URL is Israel-filtered, or under
+`SCRAPE_ASSUME_IL` for rows the resolvers pre-vetted). There is **no company-level Israel
+flag** — `companies.csv` has six columns and none is one — and the measurement says none is
+needed:
+
+> 70 random active API rows (comeet/greenhouse/ashby/lever/workable/smartrecruiters/recruitee/
+> breezy/bamboohr), 2026-08-24: **3,370 postings → 674 pass**; dropped 1,493 on a non-IL
+> country code, 601 remote/hybrid, 599 other cities, 3 with no location. The only "bare
+> Remote/Hybrid, no country" employers were Cloudflare (296 — greenhouse's `location.name` is
+> a work-mode there, the office lives in `offices[]`; BACKLOG 118) and Aim Security (6, US
+> sales); the genuine loss class (an Israeli employer's bare "Remote") was ≈5 postings, 0.15 %.
+> The sampling script is in the session note; the wave-1 reviewer's independent live pull of
+> 41 boards (1,401 jobs → 187 Israel) found **0 false negatives and 0 false positives**.
+> Scrape rows: `python -c "import json;from pipeline import israel;d=json.load(open('scraped_cache.json',encoding='utf-8'));j=[x for v in d.values() for x in v];print(len(j),sum(israel.is_israel_job(x) for x in j))"` → `1225 1221` (the 4 dropped are Siemens rows whose location is the junk `lod3BakeYZ7`).
+
+Known and accepted: `Nazareth, PA` and `Eilat Street, Brooklyn` pass when a feed sends no
+country code (0 such postings in 3,723 today); bare `acre` is deliberately absent (US street
+addresses). Latin names the Hebrew list had and this one lacked (Yavne, Afula, Tiberias, Eilat,
+Dimona, Safed/Tzfat, Akko, Nahariya), six districts in seven spellings, and 23 towns — 40 entries — were added
+on 2026-08-24 (`test_the_latin_place_list_has_the_hebrew_lists_cities`).
+
+**Gate 2 — does it qualify?** `seniority` decides from the lowercased **title** first:
+
+| title says | decision | `path` |
+|---|---|---|
+| engineering / ML / infra / PM / finance (FP&A, actuary) / a non-data "<x> analyst" (`_HARD_EXCLUDE`, `_HARD_EXCLUDE_MISC`) — **unless a strong analyst phrase is also present**, then the LLM decides ("Business Analyst, Software Solutions") | reject | `keyword` |
+| no analytics signal at all (`_SIGNAL`, Hebrew included) | reject | `keyword` |
+| junior / intern / student / entry-level (`_JUNIOR`, Hebrew included) | reject | `keyword` |
+| a strong analyst title **and** a senior marker (`_STRONG` + `_SENIOR`) — unless a systems/finance domain word sits beside it (`_BA_DOMAIN`: Salesforce BA, HRIS BA, credit …), then the LLM decides | accept | `keyword` |
+| anything else with an analytics signal — the residue | **the LLM tier** | `llm` `llm_cache` `llm_failed_fallback` `llm_skipped` |
+| the residue under `--no-llm` | keywords + description veto (`_sig_accept_nollm`, `_desc_is_ml`) | `keyword_nollm` |
+
+The keyword tier is frozen by a golden fixture: `tests/fixtures/classifier/titles.json` holds
+301 rows (every `llm_cache` key and every matched role on 2026-08-24); the **252 title-only
+rows** are asserted by `test_classify_keyword_tier_matches_the_golden_fixture`, the 49
+description-backed rows are skipped (the fixture stores no text — the description veto is
+guarded by its own tests). Three rows changed on purpose in wave 1 and carry `"changed"`:
+`salesforce business analyst` (→ LLM tier) and two Hebrew senior data titles (→ accepted in
+fallback). `_desc_is_ml` counts ML words in the **requirements section** (when `_REQ_HEADER`
+finds one — a header, not the EEO footer's "basis of qualifications, merit") and analytics
+words over the whole role text; the wave-1 reviewer's corpus (1,336 real (company, title,
+description) rows) moved **0** decisions under that change.
+
+### The LLM tier — one seam, bounded four ways
+
+`Classifier` (one per run, held by `pipeline/run.py`, which calls `clf.classify(j)` at its two
+classify sites, then `clf.commit()` and `save_llm_cache` right after the loop — before rendering
+and company intel, so a crash there cannot lose paid verdicts; `Classifier._judge → _claude` is
+the only path to the CLI; the decision dict and the one-posting reproduce command are in §5b
+item 6) calls:
+
+```
+claude -p --model sonnet --effort low --tools "" --no-session-persistence
+          --output-format json --json-schema {verdict: YES|NO, reason} --system-prompt <LLM_RULES>
+```
+posting on stdin, `shell=False` on every OS (`shutil.which("claude")`), `cwd=` one fixed
+scratch directory — **never the repo**: from the repo root every call read `CLAUDE.md` and the
+gitignored `CLAUDE.local.md` (24,845 cache-creation input tokens against 4,633 from a scratch
+dir; re-derive with `claude -p --output-format json "Reply OK"` from each directory and read
+`modelUsage[*].cacheCreationInputTokens`). `LLM_RULES` is one line on purpose: a `.cmd` shim
+(cmd.exe) truncates an argv element at a newline, and the Windows rehearsals were running 116
+of 1,336 chars of rules before wave 1. The posting the model sees (`_posting`): title, company
+and location each whitespace-collapsed and capped (200/120/200 chars), then
+`prompt_slice(description)` — HTML stripped, the company intro skipped (`_ROLE_START`),
+**requirements-first** (`role[:600] … requirements[:800]` when the header sits past 600 chars;
+`LLM_WINDOW` = 1,400, `_ROLE_HEAD` = 600 — in 29 of 375 stored JDs the requirements began
+past the old window). The rules say the posting is data; two live injection probes
+(wave 1: a forged "hiring-panel approval" through the title field, a "SYSTEM OVERRIDE" plus a
+schema-escape payload through the description) answered NO with the injection named. The
+reason of every fresh verdict is printed to the step log: `[llm] company | title -> YES/NO: …`.
+
+| bound | default | env / constant | what the mail says when it bites |
+|---|---|---|---|
+| calls per run | 300 | `CLASSIFY_LLM_CAP` — a runaway backstop; the minutes bind first at ~14 s/call | `classify llm-budget(cap 300 calls) — N roles judged on keywords alone (A accepted and emailed, R rejected until the next run), B served their cached bare verdict` |
+| minutes per run (sum of call durations incl. timeouts, not wall-clock) | 60 | `CLASSIFY_TIME_BUDGET_MIN` | `classify llm-budget(60 min spent) — …` |
+| seconds per call | 45 | `CLASSIFY_TIMEOUT` / `LLM_TIMEOUT` | a `transient` failure |
+| model | `sonnet` | `CLASSIFY_MODEL` / `LLM_MODEL` | `classify model drift: asked sonnet, served …` when the answering model (largest `inputTokens` in `modelUsage`) is another family |
+| quarantine floor | 30 fresh verdicts | `CLASSIFY_QUARANTINE_MIN` / `QUARANTINE_MIN_FRESH` (the rehearsal sets 10) | see below |
+
+An explicit constructor argument beats the environment (`Classifier(cap=2)` in a test is 2).
+
+**Failure contract.** `_claude` reads the JSON envelope first, whatever the exit code — on
+CLI 2.1.241 a bad token exits 1 with an **empty stderr** and the envelope on stdout
+(`is_error: true`, `api_error_status: 401`, `result: "Failed to authenticate…"`), and a
+keychain-less login exits **0** with `is_error: true`. Infrastructure raises
+`LLMUnavailable(kind)`: `auth` (`api_error_status` 401/403, or `_AUTH` on the envelope's
+`result`/stderr — never on a good call's stdout, which is the posting's own words), `drift`
+(`unknown option` — the CLI is pinned `@2.1.241` in `daily-digest.yml` for this reason),
+`missing` (no `claude` on PATH), `transient` (timeout, 429/529, anything else). The first
+three open the circuit breaker on the **first** hit; `transient` after
+`BREAKER_CONSECUTIVE` = 3 in a row, or ≥5 failures making up at least half of the last
+`BREAKER_WINDOW` = 10 attempts. An answer that is not in-schema is a fact about the model
+(`llm_failed_fallback`, not cached, no strike; `structured_output` missing ⇒ the `result`
+JSON is read instead). With the breaker open, every further residue role is served its cached
+bare verdict if one exists (path `llm_cache`), else judged by the `--no-llm` rule (path
+`llm_skipped`). Before 2026-08-24 an expired token cost up to 163 × 90 s of silent timeouts
+with no line in the mail; now it is one call and one bold line.
+
+**Quarantine.** Two cohorts, judged separately at the end of the run. FRESH verdicts (roles
+never judged before): ≥30 with 0 YES, or a YES rate above `MASS_YES_RATE` = 55 % (the cache's
+base rate is 18 %: 45 of 247), is a broken morning, not a measurement. RE-JUDGEMENTS of
+verdicts **this seam** made (`v2|…|bare`): ≥10 of them, more than half flipping and fewer than
+a tenth of the flips going the other way, is the same thing — legacy verdicts (another
+prompt, another model, judged bare) are *expected* to move when their JD arrives and do not
+count. The digest still ships; only the suspect cohort is withheld from the cache (the staged
+verdicts still decide postings later in the same run); the mail says
+`classify mass-no(…) — N of this run's M verdicts NOT cached`. A withheld cohort is re-bought
+tomorrow, bounded by the cap; nothing escalates yet (BACKLOG 123).
+
+### The verdict cache (`cloud_state/seen.db` → `llm_cache`, column `title_key`)
+
+Key `v2|<company>|<title>|jd` when the raw description is ≥ `MIN_DESC` = 300 chars (the same
+measure `jdfill.maybe_fill` gates on), else `v2|<company>|<title>|bare`; company and title
+NFKC-normalised, typographic dashes folded, replacement characters dropped, `|` → `/`,
+lowercased (`_norm`; five committed keys carry an en/em dash — the fold that matters today; the replacement-character and NFKC folds are preventive, 0 keys need them). Lookup order: `|jd`, then `|bare`, then the legacy `company|title` key — **the 235
+committed `company|title` rows are read as bare verdicts** (12 older title-only rows are
+unreachable) **and never purged from a local checkout** (BACKLOG 116). These counts decay from the first v2 run on — re-derive the split, and the base rate the quarantine uses, with
+`python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(c.execute(\"select count(*), sum(title_key like 'v2|%'), sum(title_key not like 'v2|%' and instr(title_key,'|')>0), sum(instr(title_key,'|')=0), round(1.0*sum(verdict)/count(*),3) from llm_cache\").fetchone())"` → `(247, 0, 235, 12, 0.182)` on 2026-08-25. A bare verdict is
+re-judged **once** when the description arrives (BACKLOG 107, closed — `mobileye|experienced
+data analyst` was a NO judged on an empty description and served forever after the JD came);
+a `|jd` verdict is never re-judged on a bare title, so a role whose inline fetch fails one
+day does not flip-flop. `store.save_llm_cache` writes only new or changed boolean rows, so
+`updated` is the judgment date from the first v2 run on (before, every row was upserted every
+run: all 247 said `2026-08-24`). Rows:
+`python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(c.execute('select count(*),sum(verdict),sum(title_key like \"v2|%\") from llm_cache').fetchone())"`
+
+### What the mail says — the audit block, its arithmetic, and the alarms
+
+`- Decision paths: keyword=…, keyword_nollm=…, llm=…, llm_cache=…, llm_failed_fallback=…,
+llm_skipped=…` (alphabetical, only non-zero paths) sums to `Israel-matched` — checked in
+`run.py`; a breach is a `::warning::` and a `Stages:` line, non-blocking. `- LLM calls this
+run:` is **attempts** (fresh + failed; a failed re-judge that kept its cached bare verdict is an
+attempt on the `llm_cache` path, so attempts ≥ llm + failed). The step log adds one line:
+`classify: N judged = keyword K + llm A (Y yes) + cache C + failed F + skipped S; failed calls
+X; attempts T in M min, rejudged R (flipped +a/-b); model …; breaker closed|…` — `keyword K`
+merges the `keyword` and `keyword_nollm` paths, `failed F` is the path count and `failed calls
+X` the attempt failures (the alarm below uses X). The classifier's alarms ride the bold
+**`Stages:`** line (`::warning::stage classify …`):
+
+| morning | `Stages:` says | rehearsed by |
+|---|---|---|
+| healthy | nothing from `classify` | `yes`, `no`, `flaky`, `prose_before_json`, `nollm` |
+| token expired / logged out | `classify llm-unavailable(auth: Failed to authenticate. API Error: 401 …) — N roles judged on keywords alone (A accepted and emailed, R rejected until the next run), B served their cached bare verdict` | `fail`, `is_error` |
+| CLI drift (flag removed) | `classify llm-unavailable(drift: error: unknown option '--json-schema') — …` | `unknown_flag` |
+| rate-limited / timing out | `classify llm-unavailable(transient: API Error: 429 … x3) — …` | `rate_limit`, `sleep` |
+| ≥10 calls answered off-schema | `classify N of N LLM calls failed (answer: no structured verdict xN)` | `no_structured` |
+| cap or minutes spent | `classify llm-budget(…) — N roles judged on keywords alone (…)` | unit test only (`test_the_cap_and_the_time_budget_skip_instead_of_failing_v2`) |
+| every fresh verdict NO / mostly YES | `classify mass-no(…) — N of this run's M verdicts NOT cached` | `all_no`, `all_yes` (the driver empties the scratch cache for these; `--fresh` does it for any mode; needs ≥ `CLASSIFY_QUARANTINE_MIN` fresh roles — 10 companies, not 4) |
+| re-judgements of this seam's verdicts flipping one way | `classify mass-flip(…) — …` | unit test only (`test_mass_flip_is_a_ratio_not_a_cliff`) |
+
+Real-CLI rehearsal (15 companies, sonnet, 2026-08-24): `classify: 232 judged = keyword 213 +
+llm 19 (4 yes) + cache 0 + failed 0 + skipped 0; attempts 19 in 4.3 min, rejudged 18 (flipped
++1/-3)`. Full `--no-llm` pass over every active row: 862 companies, 23,190 jobs, **4,837
+Israel-matched = 4,563 keyword + 274 keyword_nollm**; the 274 are the LLM residue, so day 1
+after this change is at most 274 attempts (estimate: 100–190 — a legacy verdict is re-judged
+only where the inline fill now delivers a description).
+
+### Guards
+`tests/test_units.py`, classifier block (61 cases added 2026-08-24; the file collects 344,
+the suite 509): the argv is pinned (tools off, json, schema, the full one-line rules, no
+session, no shell, cwd ≠ repo); every failure kind incl. the real 2.1.241 401 envelope; the
+`_AUTH` regex on request ids and the model's own words; envelope-not-first-brace and the
+bounded scan; `result` fallback; the served model; every posting field bounded; the
+requirements-first slice; key v2 lookup order, legacy read, re-judge-once, bare→jd→bare = one
+call, `|` in a title; explicit args beat env; breaker first-hit, three-in-a-row and steady
+half-rate; failed calls charge the budget; cap and budget; quarantine per cohort, fresh-only
+rate, ratio flips, complete commits; summary arithmetic; model drift; the wrapper's signature;
+`--no-llm` never touching the seam; `run.py` wiring by source (both classify sites,
+commit-then-save before company intel, `llm_calls = attempts`); `save_llm_cache` writing only
+changed boolean rows; the digest labelling `llm_skipped`; place-name parity and the accepted
+false positives; the fake CLI reachable through the real seam on this OS — on ubuntu that is
+the exec-bit `claude` shim, and `tests.yml` proves the Linux argv path on every push (no
+manual dispatch needed, `CLAUDE.local.md` §3).
+
+### Which model, and why
+
+Bare `claude -p` on this subscription runs **claude-fable-5** (`total_cost_usd` 0.577 for a
+one-word answer; sonnet 0.104–0.137; haiku 0.027 — read `total_cost_usd` from
+`--output-format json`). Yesterday's 163 fresh calls were the most expensive model in the
+lineup answering YES/NO. A/B on 25 description-backed postings the keyword tier could not
+decide, hand-labelled from the JD (19 confident labels, 6 the JD itself leaves open), each
+judged once by each model through `_claude(model=…)` (75 calls, 2026-08-24):
+
+| model | agrees with the 19 labels | YES / 25 | mean wall s |
+|---|---|---|---|
+| `sonnet` (default) | **18** | 11 | 14.1 |
+| `fable` (the old default) | 17 | 11 | 14.7 |
+| `haiku` | 15 | 14 | 26.6 |
+
+sonnet–fable agree on 23/25, sonnet–haiku 18/25. The one sonnet miss is a JD whose years
+line only exists in a sibling posting. Per call, measured locally: `duration_api_ms` 3–5 s,
+wall 14–16 s — the difference is CLI start-up, not the flags (three argv variants within
+0.1 s); each call reads ≈21k cached input tokens for ≈$0.009. **Unverified as of 2026-08-24:**
+the start-up cost on the ubuntu runner (tomorrow's `classify:` line prints `attempts N in M
+min`), and whether `--bare` with the OAuth token env would trim it (`--bare` skips the
+keychain and breaks the local login; no token on this machine to test the CI shape).
+
+### The proof: the first digest run after this lands (pushed 2026-08-25, after that day's 05:00 run)
+`Decision paths` sums to `Israel-matched`; no `classify` text on the `Stages:` line;
+`LLM calls this run` between 100 and 274 (below 100 or above 274 wants a second look); the step log's `classify:` line names
+`claude-sonnet-5` and its `attempts N in M min` is the runner's real per-call cost; the
+`cloud run:` commit's `seen.db` has `v2|…|jd` rows dated 2026-08-25 and the legacy rows
+untouched.
 
 ## 8. Failure classes — what this codebase does instead of erroring
 *lane: any — every lane has been bitten by these*

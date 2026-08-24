@@ -1,0 +1,2413 @@
+[
+{
+"company": "365scores",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "8fig",
+"title": "credit risk analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "8fig",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "aidoc",
+"title": "ai data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "aidoc",
+"title": "strategic product analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "alice (formerly activefence)",
+"title": "fraud threat analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "alice (formerly activefence)",
+"title": "mobile threat analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "alice (formerly activefence)",
+"title": "technical fraud threat analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "allcloud",
+"title": "salesforce business analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject",
+"changed": "2026-08-24 wave 1 (intended)"
+},
+{
+"company": "amazon israel",
+"title": "applied scientist, personalization, personalization",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "amazon israel",
+"title": "senior applied scientist, personalization, personalization strategic initiatives science",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "amazon web services (aws)",
+"title": "applied scientist, agentic ai, aws agentic ai",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "amazon web services (aws)",
+"title": "sr gtm ssa analytics, emea gtm data and ai specialists solutions architecture",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "amazon",
+"title": "applied scientist, agentic ai, aws agentic ai",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "amazon",
+"title": "applied scientist, personalization, personalization",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "amazon",
+"title": "applied scientist, personalization, personalization strategic initiatives science",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "amazon",
+"title": "senior applied scientist, personalization, personalization strategic initiatives science",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "amazon",
+"title": "sr gtm ssa analytics, emea gtm data and ai specialists solutions architecture",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "appcharge",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "applied materials",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "appsflyer",
+"title": "financial data analyst - temporary position (9 months)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "apptor-ai",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "aqurate",
+"title": "משרות פנוית בדאטה ואנליטיקה",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "arm",
+"title": "staff ai research scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "arpeely",
+"title": "data scientist team lead",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "arpeely",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "artlist",
+"title": "product analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "ashley digital",
+"title": "marketing analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "augury",
+"title": "ai applied scientist – insights & recommendations",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "augury",
+"title": "algorithm and applied ai scientist (dsp)",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "autofleet",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "",
+"title": "big data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "biocatch",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "blockaid",
+"title": "product analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "blockaid",
+"title": "security data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "bounce ai",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "bounce",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "bright data",
+"title": "financial fraud analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "",
+"title": "business analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "",
+"title": "business analyst (gtm)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "",
+"title": "business analyst - channels",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "cal (israel credit cards)",
+"title": "data scientist | visa jb-26773",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "cato networks",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "central bottling company israel ltd",
+"title": "business intelligence developer 17621",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "chainalysis",
+"title": "intelligence analyst - fraud researcher",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "chainalysis",
+"title": "intelligence analyst - threat hunter",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "chainalysis",
+"title": "senior intelligence analyst, iran focus",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "chainalysis",
+"title": "senior operations analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "check point software",
+"title": "cyber threat intelligence analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "check point software",
+"title": "cyber threat intelligence analyst - french speaker",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "check point software",
+"title": "incident response analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "check point software",
+"title": "malware analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "checkout.com",
+"title": "fraud data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "checkout.com",
+"title": "fraud data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "cheq",
+"title": "data &amp; analytics",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "clover security",
+"title": "senior ai analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "cognyte",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "cognyte",
+"title": "data science team leader",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "comblack",
+"title": "business intelligence developer",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "commit",
+"title": "מפתח/ת bi",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "compugen",
+"title": "senior scientist, antibody engineering & discovery",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "cynet",
+"title": "cyops analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "d-fend solutions",
+"title": "market intelligence analyst (drone & counter-drone systems)",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "",
+"title": "data analyst, algorithms",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "deel",
+"title": "senior director, credit risk and analytics",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "dentsu israel",
+"title": "marketing analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "deutsche post dhl",
+"title": "analytics technologies",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "diageo",
+"title": "performance analytics analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "discount bank",
+"title": "אנליסט.ית אשראי וחיתום בכיר.ה",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "doitintl",
+"title": "engineering manager -analytics house",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "dream security",
+"title": "cti analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "dream security",
+"title": "senior research scientist — sovereign ai research",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "earnix",
+"title": "data scientist - ai research",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "entrypoint",
+"title": "data analyst -5664",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "epam systems, inc.",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "experda",
+"title": "experienced bi consultant & data developer",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "extreme",
+"title": "network operations analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "ey",
+"title": "מנתח-ת נתונים סניור",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept",
+"changed": "2026-08-24 wave 1 (intended)"
+},
+{
+"company": "f5",
+"title": "people operations analyst ii",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "fetcherr",
+"title": "data science team lead",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "fetcherr",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "fetcherr",
+"title": "data scientist engineer",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "fireblocks",
+"title": "analytics ai engineer",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "flex (flextronics)",
+"title": "material planning analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "flex (flextronics)",
+"title": "materials planning analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "fortinet",
+"title": "incident response analyst:",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "freightos",
+"title": "director of global accounting & reporting",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "fresenius medical care",
+"title": "financial planning analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "genpact",
+"title": "business analyst 4a",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "gett",
+"title": "business analyst- maternity leave replacement",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "gett",
+"title": "experienced product analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "gett",
+"title": "senior salesforce and business applications analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "global-e",
+"title": "finance operations analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "global-e",
+"title": "payment operations analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "glow",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "gong",
+"title": "senior data scientist - ai research & reliability",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "",
+"title": "gtm business analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "guardio",
+"title": "people operations & analytics",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "guardio",
+"title": "senior bi engineer",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "harel insurance & finance",
+"title": "business analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "helfy",
+"title": "marketing analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "hexight",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "hexion inc.",
+"title": "data scientist engineer",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "honeybook",
+"title": "senior fraud analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "honeycomb insurance",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "hsbc global services limited",
+"title": "it business analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "hsbc",
+"title": "it business analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "hypernative",
+"title": "fraud analyst herzliya full-time",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "iai - israel aerospace industries",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "icon strategic solutions",
+"title": "contract analyst i",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "insightec",
+"title": "bi analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "intuit israel",
+"title": "staff ai scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "isracard",
+"title": "מוביל אסטרטגיות דאטה ופרויקטים",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept",
+"changed": "2026-08-24 wave 1 (intended)"
+},
+{
+"company": "jfrog",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "keshet media group",
+"title": "bi / data developer – long-term maternity leave cover",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "kla",
+"title": "research scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "lab42",
+"title": "senior cyber defense analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "legit security",
+"title": "appsec analyst team lead",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "legit security",
+"title": "security team analyst lead",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "lightricks",
+"title": "commercial operations analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "lightricks",
+"title": "research scientist - audiovisual understanding, model foundations",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "lightricks",
+"title": "research scientist - ltx model applications",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "liveu",
+"title": "bi developer",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "lusha",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "max security",
+"title": "protective intelligence analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "medtronic",
+"title": "ai/data science team manager",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "medtronic",
+"title": "contract and tender analyst - 1 year contract (maternity leave cover)",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "medtronic",
+"title": "supply chain analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "melio",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "melio",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "meta",
+"title": "data scientist, product analytics",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "microsoft",
+"title": "principal data science manager",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "minute media",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "mize",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "mize",
+"title": "operations analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "mobileye",
+"title": "business analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "mobileye",
+"title": "experienced data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "mobileye",
+"title": "forecast analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "modellama",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "modellama",
+"title": "data analyst raanana full-time",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "modellama",
+"title": "research analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "moon active",
+"title": "business data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "moon active",
+"title": "marketing data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "natural intelligence",
+"title": "marketing analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "nebius",
+"title": "business intelligence developer",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "nebius",
+"title": "cyber threat intelligence analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "nebius",
+"title": "vulnerability assessment analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "ness technologies",
+"title": "מפתח/ת bi",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "nift",
+"title": "applied data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "nift",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "nisha pro",
+"title": "data quality analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "noma security",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "nuvei",
+"title": "occ monitoring analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "oak",
+"title": "product analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "one zero bank",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "one פתרונות טכנולוגיים",
+"title": "one טכנולוגיות מגייסת data scientist / genai tech lead לארגון ממשלתי",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "opc energy",
+"title": "אנליסט/ית פיתוח עסקי",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "opmed.ai",
+"title": "principal data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "palo alto networks",
+"title": "data science manager (ai solutions-machines)",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "palo alto networks",
+"title": "principal/ senior data scientist - llm agents",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "palo alto networks",
+"title": "senior principal data scientist - llm agents (cortex)",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "palo alto networks",
+"title": "senior/principal linux security analytics researcher (cortex)",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "paragon",
+"title": "ai research scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "paragon",
+"title": "operational intelligence analyst team lead",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "paz - yellow",
+"title": "trade marketing analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "percepto",
+"title": "data insights operations",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "phoenix financial",
+"title": "business analyst - 50400095",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "phoenix financial",
+"title": "campaign analyst - 50400271",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "phoenix financial",
+"title": "data scientist - 50400399",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "plarium",
+"title": "product data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "play perfect",
+"title": "fraud analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "play perfect",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "playtika",
+"title": "business analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "playtika",
+"title": "data science expert",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "playtika",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "plus500",
+"title": "business development analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "",
+"title": "product analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "",
+"title": "product analyst (maternity-leave replacement)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "",
+"title": "product analyst (temporary position)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "",
+"title": "product data scientist (customer-facing)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "prologic ltd",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "qlik israel",
+"title": "bi developer (qlik specialist)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "qodo",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "qualitest",
+"title": "23487 - data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "qualitest",
+"title": "23507 - quantitative research analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "questar auto technologies",
+"title": "senior data scientist — individual contributor",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "rapyd",
+"title": "financial operations analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "revolut",
+"title": "fincrime analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "revolut",
+"title": "fincrime analyst (aml/ctf)",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "riskified",
+"title": "data science team lead",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "sela",
+"title": "technical business analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "semiconductor devices",
+"title": "מהנדס/ת נתונים",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "sensifai health",
+"title": "lead data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "shabak - israeli security agency - career",
+"title": "network forensic analyst-2615",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "shavit software",
+"title": "data science",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "shopify",
+"title": "credit risk analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "shopify",
+"title": "recovery analyst, merchant lending credit",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "shopify",
+"title": "security incident response, senior analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "shopify",
+"title": "senior credit risk analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "shopify",
+"title": "senior indirect tax analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "similarweb",
+"title": "big data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "similarweb",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "similarweb",
+"title": "ml & big data analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "similarweb",
+"title": "product analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "similarweb",
+"title": "product data scientist (customer-facing)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "skoda / volkswagen group",
+"title": "head of governance &amp; reporting",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "skyforce physical ai",
+"title": "senior applied scientist - agentic ai",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "solaredge technologies",
+"title": "sales data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "sunflower",
+"title": "bi developer",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "sunflower",
+"title": "bi developer - payments",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "sunflower",
+"title": "business analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "sunflower",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "sunflower",
+"title": "marketing analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "supermeat",
+"title": "food scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "superplay",
+"title": "head of bi",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "taboola",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "tairc",
+"title": "research statisticians",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "tavily",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "tavily",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "teads",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "team8",
+"title": "briya- medical data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "techbiz global",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "telus digital ai data solutions",
+"title": "online data analyst - hebrew (il)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "telus digital",
+"title": "media search analyst - hebrew (israel)",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "telus digital",
+"title": "online data analyst - israel",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "tenengroup",
+"title": "business analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "tipalti",
+"title": "applied ai scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "tipuli tech",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "torq",
+"title": "data engineer (product & customer insights)",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "voyantis",
+"title": "senior data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "walkme",
+"title": "product analyst (temporary position)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "wix",
+"title": "business analyst - channels",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "wiz",
+"title": "data scientist expert",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "workday",
+"title": "ai data quality analyst (paradox)",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "worldquant",
+"title": "quantitative developer",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "yael korentec technologies",
+"title": "bi developer – defense company, northern israel",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "zenity",
+"title": "senior applied ai scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "zipher",
+"title": "data analyst",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "zipher",
+"title": "data scientist",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "בנק דיסקונט",
+"title": "אנליסט.ית אשראי ראש.ת צוות- ענף אנליזת אשראי וחיתום- חטיבה עסקית",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "הפניקס",
+"title": "אנליסט/ית טרנספורמציית ai",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "חברה דיסקרטית",
+"title": "אנליסט ג'וניור או\"ש ובקרה | ארגון ביטחוני מוביל",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "מטריקס",
+"title": "דרוש/ה אנליסט/ת סייבר",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "",
+"title": "מפתח/ת bi",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "עידור מחשבים בע\"מ",
+"title": "אנליסט/ית אקטואר לחברת ביטוח מובילה בפתח תקווה",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "reject"
+},
+{
+"company": "קומבלק איי.טי. בע\"מ",
+"title": "data quality analyst",
+"has_desc": false,
+"relevance": "signal",
+"seniority": "unknown",
+"nollm": "reject"
+},
+{
+"company": "Fiverr",
+"title": "Senior Business Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Global-e",
+"title": "Data Analyst (Chargeback)",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Guardio",
+"title": "Senior BI Developer",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Holisto",
+"title": "Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Holisto",
+"title": "Senior Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Abra",
+"title": "Data Analytics Architect",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "365Scores",
+"title": "Senior Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "AppsFlyer",
+"title": "Senior FinOps Analyst",
+"has_desc": true,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "AppsFlyer",
+"title": "Senior Product Manager - Analytics",
+"has_desc": true,
+"relevance": "signal",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Taboola",
+"title": "Data Analyst, Algorithms",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Taboola",
+"title": "Product Analyst (Maternity-Leave Replacement)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Taboola",
+"title": "Product Analyst - Taboola News (Maternity Leave Cover)",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Rapyd",
+"title": "Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Port",
+"title": "Senior BI Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "DealHub",
+"title": "GTM Business Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Cato Networks",
+"title": "Marketing Ops & Analytics Manager",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Yotpo",
+"title": "Business Analyst (GTM)",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "NoTraffic",
+"title": "Global Compensation & People Analytics Manager",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "HoneyBook",
+"title": "Marketing Analytics Lead",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Aidoc",
+"title": "Senior Product Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Scopely",
+"title": "Senior Product Analyst - Stumble Guys!",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "OTORIO",
+"title": "Senior Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Meta Israel",
+"title": "Data Scientist, Product Analytics",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Gamida Cell",
+"title": "Senior Business Analyst, Commercial Data & Analytics",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "TechBiz Global GmbH",
+"title": "Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Gong",
+"title": "Senior Product Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Alpha | Similarweb Partner",
+"title": "Big Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Shavit Software",
+"title": "Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Parametrix GmbH",
+"title": "Technical Data Analyst (Tel Aviv)",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Trivago",
+"title": "Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Melio",
+"title": "Senior Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Recruitx",
+"title": "Data Analyst JB-4122",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "comblack",
+"title": "Senior Business Intelligence Developer",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Nogamy",
+"title": "Business Intelligence Developer",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Keshet Media Group",
+"title": "Senior Data Analyst-Commercial analytics",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Rounds",
+"title": "Senior Business Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Armis",
+"title": "Senior Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "ONE ZERO BANK",
+"title": "Senior Data Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Percepto",
+"title": "Senior Product Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Chargeflow",
+"title": "Senior BI Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Oak - Identity Security OS",
+"title": "Product Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "unknown",
+"nollm": "accept"
+},
+{
+"company": "Prisma Photonics",
+"title": "Senior Product Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Rounds",
+"title": "Senior Product Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "PrettyDamnQuick",
+"title": "Data Analytics Lead",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Palo Alto Networks",
+"title": "Principal Product Analyst (Cortex)",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Ballerine",
+"title": "AI Fraud Data Analyst (Senior)",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "TytoCare",
+"title": "Product Analytics Manager",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Navan",
+"title": "Senior Product Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Port.io",
+"title": "Senior BI Analyst",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Nebius",
+"title": "Head of Analytics",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Port.io",
+"title": "Senior BI Analyst Tel Aviv - Israel",
+"has_desc": false,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Ecoppia",
+"title": "Senior Business Intelligence Developer",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "Peak Innovation",
+"title": "Credit Risk Analytics Team Lead",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+},
+{
+"company": "SHILA Medical Services LTD",
+"title": "Senior Compensation and Benefits & Financial Analytics Manager",
+"has_desc": true,
+"relevance": "strong",
+"seniority": "senior",
+"nollm": "accept"
+}
+]

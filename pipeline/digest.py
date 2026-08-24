@@ -1303,6 +1303,7 @@ def _path_label(path):
         "llm": "LLM",
         "llm_cache": "LLM(cached)",
         "llm_failed_fallback": "LLM-failed→fallback",
+        "llm_skipped": "LLM-skipped→fallback",
     }.get(path, path or "?")
 
 

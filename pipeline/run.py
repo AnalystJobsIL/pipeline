@@ -62,7 +62,6 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     os.makedirs(out_dir, exist_ok=True)
     st = store.SeenStore(db_path) if db_path else store.SeenStore()
     llm_cache = st.load_llm_cache()
-    llm_cache_before = len(llm_cache)
 
     # Ordering contract (pipeline/stages.py): this run's input quality depends on stages
     # that ran EARLIER, in other workflows. If one of them did not run, the digest is
@@ -118,6 +117,9 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     paths = Counter()
     from .jdfill import JDFiller
     jdfill = JDFiller()
+    # ONE classifier per run (lane: classifier, ARCHITECTURE §7b): the LLM tier's cap, time
+    # budget, circuit breaker and verdict staging live on it; the mail line comes from it
+    clf = seniority.Classifier(use_llm=use_llm, llm_cache=llm_cache)
     failed_companies = []
     accepted = []
     health_results = {}                       # free detection: outcome per company this run
@@ -152,10 +154,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             # list responses carry none, so fetch it before judging (budgeted, title-gated)
             if jdfill.maybe_fill(j):
                 stats["jd_filled_inline"] += 1
-            c = seniority.classify(j, use_llm=use_llm, llm_cache=llm_cache)
+            c = clf.classify(j)
             paths[c["path"]] += 1
-            if c["path"] == "llm":
-                stats["llm_calls"] += 1
             if c["decision"] == "accept":
                 j["_class"] = c
                 accepted.append(j)
@@ -182,13 +182,27 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             if not israel.is_israel_job(j):
                 continue
             stats["israel_matched"] += 1
-            c = seniority.classify(j, use_llm=use_llm, llm_cache=llm_cache)
+            c = clf.classify(j)
             paths[c["path"]] += 1
-            if c["path"] == "llm":
-                stats["llm_calls"] += 1
             if c["decision"] == "accept":
                 j["_class"] = c
                 accepted.append(j)
+
+    # persist this run's LLM verdicts NOW (not after rendering): an exception anywhere in the
+    # rendering / company-intel code below must not lose what was paid for (a runner timeout
+    # still loses it — the commit lives in the Persist step). `commit` withholds a quarantined
+    # cohort (alarmed below); `save` writes only new/changed rows so `updated` is real.
+    stats["llm_calls"] = clf.attempts
+    if clf.commit():
+        st.save_llm_cache(llm_cache, run_date)
+    print("  " + clf.summary(), flush=True)
+    # the classifier's verdict on itself: breaker open, budget spent, a mass-NO/YES morning
+    for _line in clf.alarms():
+        _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
+    if sum(paths.values()) != stats["israel_matched"]:
+        _line = (f"classify paths {sum(paths.values())} != israel-matched "
+                 f"{stats['israel_matched']} — the audit block does not reconcile")
+        _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
 
     # free, daily detection: record which boards returned 0/error so the self-heal step can
     # re-resolve them (and discovery can backfill). Never let health tracking break the digest.
@@ -320,10 +334,6 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         board_jobs = board_jobs[:BOARD_MAX_ROLES]
     stats["new"] = len(email_jobs)
     stats["board_count"] = len(board_jobs)
-
-    # persist any freshly-computed LLM verdicts (safe even in produce/dry-run)
-    if len(llm_cache) != llm_cache_before:
-        st.save_llm_cache(llm_cache, run_date)
 
     # Company intel — blurbs + researched facts for every card (pipeline/company_intel.py,
     # lane: company-intel, ARCHITECTURE §7). One call: bounded in calls and minutes (FIRMO_MAX_PER_RUN /

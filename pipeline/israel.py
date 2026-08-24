@@ -15,9 +15,6 @@ from __future__ import annotations
 
 import re
 
-# ISO country codes that mean Israel.
-_IL_COUNTRY_CODES = {"IL", "ISR", "ISL_ISRAEL"}  # ISL guarded below (Iceland is ISL/IS)
-
 # Canonical: only these two are Israel. Kept separate to avoid the Iceland (IS/ISL) trap.
 IL_ALPHA2 = "IL"
 IL_ALPHA3 = "ISR"
@@ -62,6 +59,18 @@ _IL_PLACES = [
     "tirat carmel", "tirat hakarmel",
     "even yehuda",
     "azor",
+    # the Latin siblings of Hebrew names below that had none (2026-08-24). Not bare "acre":
+    # `(?<![a-z])acre(?![a-z])` matches US street addresses; "akko" carries that city.
+    "yavne", "yavneh", "afula", "tiberias", "eilat", "dimona", "safed", "tzfat", "akko",
+    "nahariya",
+    # districts (how Greenhouse/Lever tenants write an Israeli office) and the towns a
+    # 41-board live sample + a hand list found missing (2026-08-24 wave 1)
+    "center district", "central district", "tel aviv district", "haifa district",
+    "northern district", "southern district", "jerusalem district", "hamerkaz", "tlv",
+    "yehud", "beit shemesh", "bet shemesh", "rosh pina", "zichron yaakov", "zikhron yaakov",
+    "gedera", "netivot", "ofakim", "nesher", "kiryat tivon", "binyamina", "pardes hanna",
+    "petah tiqva", "kfar sava", "hertzliya", "herzliyya", "qiryat gat", "qiryat ono",
+    "rishon letsiyon", "kiryat yam",
 ]
 
 # The same places in Hebrew. An Israeli careers page writes its own locations in Hebrew —
@@ -111,11 +120,19 @@ _IL_PLACES_HE = [
 
 # Precompiled word-boundary regexes for place matching. The lookarounds are ASCII-only on
 # purpose: a Hebrew name is already delimited by the surrounding punctuation/whitespace, and
-# `(?<![a-z])` never blocks it.
+# `(?<![a-z])` never blocks it. A digit AFTER a name blocks it ("lod3BakeYZ7" was a Siemens
+# junk location that passed on `lod`) but a digit BEFORE does not: two real Get SAT rows carry
+# the mangled location `u0022Israel` (wave 2, 2026-08-25). A space inside a name
+# also matches a hyphen — the scraper's `ISRAEL_LOC` already accepted "Kfar-Saba" and this
+# module then dropped the role it had just found (32 such forms, 2026-08-24).
 _PLACE_PATTERNS = [
-    re.compile(r"(?<![a-z])" + re.escape(p) + r"(?![a-z])", re.IGNORECASE)
+    re.compile(r"(?<![a-z])" + re.escape(p.replace("'", "")).replace(r"\ ", r"[\s-]")
+               + r"(?![a-z0-9])", re.IGNORECASE)
     for p in _IL_PLACES + _IL_PLACES_HE
 ]
+# apostrophes and the Hebrew maqaf are spelling, not delimiters: Giv'atayim / Yoqne'am /
+# תל־אביב must read as the listed form
+_SPELLING = str.maketrans({"'": "", "\u2019": "", "\u05be": "-", "`": ""})
 
 
 def country_is_israel(code) -> bool:
@@ -134,7 +151,7 @@ def text_mentions_israel(*texts) -> bool:
     for t in texts:
         if not t:
             continue
-        s = str(t)
+        s = str(t).translate(_SPELLING)
         for pat in _PLACE_PATTERNS:
             if pat.search(s):
                 return True

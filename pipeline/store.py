@@ -191,7 +191,14 @@ class SeenStore:
         return {k: bool(v) for k, v in cur.fetchall()}
 
     def save_llm_cache(self, cache, run_date):
+        """Write only NEW or CHANGED verdicts, so `updated` is the judgment date. Every row
+        used to be upserted on every run (all 247 said 2026-08-24; verdict age unknowable)."""
+        have = dict(self.conn.execute("SELECT title_key, verdict FROM llm_cache").fetchall())
         for k, v in cache.items():
+            if not isinstance(v, bool):        # a verdict is True/False; "NO" would store as YES
+                continue
+            if k in have and have[k] == (1 if v else 0):
+                continue
             self.conn.execute(
                 """INSERT INTO llm_cache (title_key, verdict, updated) VALUES (?,?,?)
                    ON CONFLICT(title_key) DO UPDATE SET verdict=excluded.verdict,
