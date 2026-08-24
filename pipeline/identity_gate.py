@@ -59,8 +59,10 @@ from pipeline.company_identity import (ATS_HOST, is_foreign,
 #   your tool wants to PERSIST an address, no job counts    -> ok_to_write
 #   your tool hunts/repairs an ORDINARY careers page        -> identity_ok
 #
-# The caller lists below are DERIVED (tests/test_registry.py scans every root tool with
-# tools/mutate.py's call-site detector and compares); edit a caller and this goes red.
+# The caller lists below are DERIVED over the registry WRITERS (tests/test_registry.py
+# scans them with tools/mutate.py's call-site detector and compares); edit a caller and
+# this goes red. Read-only tools that call a gate to REPORT it (registry_health --explain)
+# are not callers in this sense.
 # ---------------------------------------------------------------------------------------
 GATE_CALLERS = {
     "activation_ok": ("auto_expand.py", "bd_rescue.py", "retry_unreachable.py",

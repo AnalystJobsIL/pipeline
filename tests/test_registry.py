@@ -1812,9 +1812,11 @@ def test_the_gate_caller_map_is_derived_not_typed():
     spec.loader.exec_module(M)
     gates = tuple(G.GATE_CALLERS)
     derived = {g: set() for g in gates}
-    for path in sorted(glob.glob(os.path.join(root, "*.py"))):
-        for _site, callee in M._gate_call_sites(path, gate_names=gates):
-            derived[callee].add(os.path.basename(path))
+    # over the registry WRITERS (the same derived set the mutation coverage uses), not every
+    # root file: registry_health --explain CALLS the gates to report them and writes nothing
+    for base in M._registry_writers():
+        for _site, callee in M._gate_call_sites(os.path.join(root, base), gate_names=gates):
+            derived[callee].add(base)
     literal = {g: set(v) for g, v in G.GATE_CALLERS.items()}
     assert derived == literal, (
         "GATE_CALLERS drifted from the source: %s"
