@@ -40,7 +40,12 @@ for _s in (sys.stdout, sys.stderr):
 
 
 _TOOL = re.compile(r"^\s*(dark-triage|listing-hunt|deep-validated|crack-walled|domain-dead|"
-                   r"re-audit|repair|probe-woken|bd-tried|scanned via brightdata)\b")
+                   r"re-audit|repair|probe-woken|bd-tried|scanned via brightdata|"
+                   # empty-but-suspect joined in wave 7: its varying `N IL` count sat
+                   # inside the seg[:28] fallback key, so a conflict Sunday carried TWO
+                   # suspect segments per row (bounded, but 23 wasted segments measured;
+                   # docs/BACKLOG.md 67)
+                   r"empty-but-suspect)\b")
 
 
 def _merge_notes(theirs: str, ours: str, cap: int = 220) -> str:
@@ -64,7 +69,9 @@ def _merge_notes(theirs: str, ours: str, cap: int = 220) -> str:
     joined = " | ".join(out)
     if len(joined) <= cap:
         return joined
-    # trim oldest-last segments, never the newest
+    # `out` is ours-first then theirs-unique, so pop() trims from the THEIRS tail --
+    # the stale duplicates -- and ours' own segments survive. Measured on the real
+    # registry: 0 of 1210 rows lose their own pool selector this way.
     while out and len(" | ".join(out)) > cap:
         out.pop()
     return " | ".join(out)[:cap]

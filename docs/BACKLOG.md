@@ -1348,10 +1348,16 @@ FairFly shape). These are the residuals.
     trim pops the stale duplicate first. Cost is one wasted note segment. One `_TOOL`
     entry (`empty-but-suspect`) closes it.
 
+    **CLOSED 2026-08-24 (wave-7 close):** `empty-but-suspect` is a keyed tool prefix; two
+    conflict-Sunday segments dedupe to one with ours winning, verified.
+
 68. **`_merge_notes` pops the NEWEST segment while its docstring says "never the newest"**
     — lane: `infra`, PRE-EXISTING. `out` is built oldest-first and `out.pop()` trims the
     tail. In every measured case this is protective (the own selector is `out[0]`), so
     behaviour is fine and the DOCSTRING is what needs the fix — flag with item 67.
+
+    **CLOSED 2026-08-24:** the comment now states what the code does and why it is
+    protective (theirs-tail trims first; 0 of 1210 rows lose their own selector).
 
 69. **`_tenant_near`'s ±1 window is loose for names whose core is ≤3 chars** — lane:
     `registry`. Five reachable pool rows (`MAX Security`, `MSD`, `Z2A Digital`,
@@ -1402,3 +1408,22 @@ green; each tool now owns an `in_*_pool` predicate that `main()` selects with,
     `discovery_daily.py` does not clear `ended_on_cap` on the paid-budget break, so every
     city query on a blocked runner prints the raise-the-cap tripwire — the exact evidence
     the 30->50 bump cited. Unproven without network; both are the discovery lane's.
+
+## Wave 7 (the confirmation review) — GO, and the program's close, 2026-08-24
+
+Zero blocking. The wave-6 batch verified end-to-end: the acceptance census is
+byte-identical across all 464 rows (the only change in 2,875 census lines is the intended
+`israel` target removal), the atomic merge is byte-identical on the success path, all
+three pool extractions select identically, and all nine workflow gates sit before their
+commits. Five filed test gaps, four closed the same day with cells and records
+(`tenant-short-exact-tighten`, `unlock-spent-increment-drop`, `invariants-terminal-narrow`,
+`merge-inplace-revert` — each verified killed); items 67 and 68 closed. Catalogue 101.
+
+71. **A generic-adjacent parenthetical still yields a generic target: `Citrix (Cloud
+    Software Group)` -> `cloud`** — lane: `registry`, PRE-EXISTING (identical at 93f6f5d).
+    The wave-6 filter removes only PURE-filler variants; `cloud` is not in `_NAME_FILLER`,
+    so it admits any tenant within the ±1 containment window (`icloud`, `clouds`). No
+    wrong accept is exhibitable on today's registry and the row is outside every embed
+    caller's pool. Deliberately NOT closed by widening `_NAME_FILLER` — that set feeds
+    `tenant_is_this_company` registry-wide and needs its own measured change; the durable
+    answer is the same data column as items 50/61.
