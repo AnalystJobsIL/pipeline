@@ -206,19 +206,24 @@ def _gate_call_sites(path):
     # mutation, so a defeat there was invisible. The repo bans the import-as form for a
     # different reason (alias binding breaks monkeypatching), but a detector should not
     # depend on a style rule staying obeyed.
-    aliases = set()
+    aliases = {}
     for n in ast.walk(tree):
         if isinstance(n, ast.Assign) and isinstance(n.value, (ast.Attribute, ast.Name)):
             nm = getattr(n.value, "attr", None) or getattr(n.value, "id", None)
             if nm in gate_names:
-                aliases |= {t.id for t in n.targets if isinstance(t, ast.Name)}
+                aliases.update({t.id: nm for t in n.targets if isinstance(t, ast.Name)})
         elif isinstance(n, ast.ImportFrom) and "identity_gate" in (n.module or ""):
-            aliases |= {a.asname for a in n.names if a.name in gate_names and a.asname}
+            aliases.update({a.asname: a.name for a in n.names
+                            if a.name in gate_names and a.asname})
     for n in ast.walk(tree):
         if isinstance(n, ast.Call):
             fname = getattr(n.func, "attr", getattr(n.func, "id", ""))
-            if fname in gate_names or fname in aliases:
-                out.add(lines[n.lineno - 1].strip())
+            if fname in gate_names:
+                out.add((lines[n.lineno - 1].strip(), fname))
+            elif fname in aliases:
+                # the RESOLVED gate name rides along: the M8 demand keys on it, and an
+                # aliased call's source line does not contain the gate's name (wave-5 R2)
+                out.add((lines[n.lineno - 1].strip(), aliases[fname]))
     return out
 
 
@@ -251,7 +256,7 @@ def coverage(muts):
             if missing:
                 gaps.append((w, sorted(missing)))
             continue
-        for site in sorted(sites):
+        for site, callee in sorted(sites):
             classes = set()
             for (f, find), cls in per_site.items():
                 if f == w and site in find:
@@ -263,7 +268,7 @@ def coverage(muts):
             # to activation_ok because its sites carry the row-building payloads;
             # ok_to_write/identity_ok take (name, url) already covered by their own
             # gate-level records.
-            need = {"M1", "M2", "M3"} | ({"M8"} if "activation_ok" in site else set())
+            need = {"M1", "M2", "M3"} | ({"M8"} if callee == "activation_ok" else set())
             missing = need - classes
             if missing:
                 gaps.append(("%s  [%s]" % (w, site[:52]), sorted(missing)))

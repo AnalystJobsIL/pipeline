@@ -102,7 +102,10 @@ def rescue(name, url):
         plat, tok, api = det
         v = _verify(name, plat, tok, api)          # verify against the LIVE ATS API
         if v and v[0]:
-            return (plat, tok, api, v[0], v[1])
+            # the snapshot html rides along: the caller gates on the page this board was
+            # extracted FROM, exactly like bd_rescue -- an archived page is the OLDEST
+            # evidence in the pipeline and must not vouch by absence
+            return (plat, tok, api, v[0], v[1], html)
         time.sleep(0.5)
     return None
 
@@ -121,16 +124,19 @@ def main():
             r = rescue(name, url)
         except Exception:  # noqa: BLE001
             r = None
-        if r and not _gate.activation_ok(name, r[2], r[3]):
+        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])
+                      and _gate.embedded_board_ok(name, r[1], r[2])):
             # An archived snapshot is the oldest evidence in the pipeline, and this branch
-            # had no identity check at all. Refuse rather than resurrect a board that is not
-            # this company's - a wrong resurrection is indistinguishable from a real one in
-            # every later verdict.
+            # had no identity check at all; then it had the no-html gate, which is the
+            # tenant clause, vacuously True on 6 of the 7 platforms `extract_ats` returns
+            # -- a real pool row (Panoply) was resurrected onto Riskified's board (wave-5
+            # R1). The page can refuse; the board must vouch for itself -- the same two
+            # clauses as bd_rescue, on the same extract shape.
             print(f"  [XX] {name}: archived {r[2][:44]} is not this company's board",
                   flush=True)
             r = None
         if r:
-            plat, tok, api, n_all, il = r
+            plat, tok, api, n_all, il = r[:5]
             rows[rowi] = [name, plat, tok, api, "true", f"wayback-rescued; {n_all}/{il} IL"]
             _MODIFIED.add(name)
             fixed += 1

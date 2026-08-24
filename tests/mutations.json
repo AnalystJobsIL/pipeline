@@ -234,8 +234,8 @@
     "file": "wayback_rescue.py",
     "symbol": "main",
     "class": "M1-gate-removal",
-    "find": "        if r and not _gate.activation_ok(name, r[2], r[3]):",
-    "replace": "        if False:",
+    "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+    "replace": "        if r and not (True\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
     "why": "resurrects an archived board with no identity check -- its state before this refactor",
     "must_be_killed_by_behavioural": true
   },
@@ -244,8 +244,8 @@
     "file": "wayback_rescue.py",
     "symbol": "main",
     "class": "M2-gate-inversion",
-    "find": "        if r and not _gate.activation_ok(name, r[2], r[3]):",
-    "replace": "        if r and _gate.activation_ok(name, r[2], r[3]) is None:",
+    "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+    "replace": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5]) is None\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
     "why": "truthiness inverted with the token intact",
     "must_be_killed_by_behavioural": true
   },
@@ -254,8 +254,8 @@
     "file": "wayback_rescue.py",
     "symbol": "main",
     "class": "M3-branch-narrowing",
-    "find": "        if r and not _gate.activation_ok(name, r[2], r[3]):",
-    "replace": "        if r and r[3] < 0 and not _gate.activation_ok(name, r[2], r[3]):",
+    "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+    "replace": "        if r and r[4] < 0 and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
     "why": "narrows the guard to an impossible job count",
     "must_be_killed_by_behavioural": true
   },
@@ -763,8 +763,8 @@
     "file": "wayback_rescue.py",
     "symbol": "main",
     "class": "M8-argument-mis-passing",
-    "find": "        if r and not _gate.activation_ok(name, r[2], r[3]):",
-    "replace": "        if r and not _gate.activation_ok(name, r[2], 1):",
+    "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+    "replace": "        if r and not (_gate.activation_ok(name, r[2], 1, html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
     "why": "wave-4 R2: the count argument replaced with a truthy literal -- the gate's zero-jobs clause is intact in source and inert at this call site; a 0/0 board activates.",
     "must_be_killed_by_behavioural": true
   },
@@ -846,6 +846,36 @@
     "find": "    if len(html) < 500:",
     "replace": "    if len(html) < 50:",
     "why": "wave-4 R2 (filed): the floor was killed only when drifted UP. Down at 50, a JS challenge shell 'answers' the textual scan and every walled row in the Sunday pool becomes a permanent false suspect.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "wayback-embed-vouch-drop",
+    "file": "wayback_rescue.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+    "replace": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])):",
+    "why": "wave-5 R1: drops the board-vouches-for-itself clause at the third extract_ats caller; an archived page's foreign embed resurrects (Panoply onto Riskified's board).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "wayback-html-drop",
+    "file": "wayback_rescue.py",
+    "symbol": "main",
+    "class": "M8-argument-mis-passing",
+    "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+    "replace": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=\"\")\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+    "why": "wave-5 R1: drops the snapshot page from the gate -- the tenant clause (vacuous on path platforms) then decides, and a hijacked-domain snapshot with a name-matching embed resurrects.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "embed-near-window-drift",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "_tenant_near",
+    "class": "M7-constant-drift",
+    "find": "    return any(f and abs(len(f) - len(t)) <= 1 and (f in t or t in f)\n               for f in forms for t in targets)",
+    "replace": "    return any(f and abs(len(f) - len(t)) <= 2 and (f in t or t in f)\n               for f in forms for t in targets)",
+    "why": "wave-5 R2: at +-2 the digit-stripped Comeet uid `A5.000` -> `a` is CONTAINED in `zap` and 8 cross-company accepts appear on the two embed write paths, all suite-green. The window is the whole tightness; only the extreme value (99) was recorded.",
     "must_be_killed_by_behavioural": true
   }
 ]

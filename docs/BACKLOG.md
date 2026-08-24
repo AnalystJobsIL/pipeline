@@ -1240,6 +1240,15 @@ FairFly shape). These are the residuals.
     item 50 names (`acquired-by`), not a looser matcher — `lili` is a substring of
     `elililly` and that promotion is a recorded incident.
 
+    **Recalibrated in wave 5** after R1/R2 measured the predicate against the slug shapes
+    production actually emits (44 own-board path tokens with a generic tail word, all 83
+    Workday composite tokens, 21 parenthetical names): a checkable subdomain label that
+    passed `tenant_is_this_company` is no longer double-checked against the token; generic
+    tail WORDS are stripped from path tokens; `_name_targets` yields parenthetical alias
+    halves. Own-board acceptance after: workday 66/83, greenhouse 91/106, comeet 1/127.
+    The remaining refusal classes stand as filed above (Comeet uids; rebrand slugs like
+    SentinelOne->sentinellabs; names whose extra word is not generic).
+
 62. **`restore_only` is exempt from the scheduled-leak check `legacy_unscheduled` gets** —
     lane: `registry`. `test_the_writer_allow_list_only_covers_tools_no_workflow_runs`
     intersects only `_LEGACY_UNSCHEDULED` with the scheduled set; both buckets feed
@@ -1281,3 +1290,26 @@ FairFly shape). These are the residuals.
     `tenant_is_this_company` never vetoes there and `is_foreign` is False on every ATS
     host — the branch fires today only via the gate's page-fetch tail. Do not count a
     fixture on this branch as proof of a live path; the scrape branch is the reachable one.
+
+## From the rebuild's wave-5 review, 2026-08-24 (the final wave)
+
+67. **`merge_csv_rows._merge_notes` has no `_TOOL` key for `empty-but-suspect`, so the
+    conflict path can carry two suspect segments for one row** — lane: `infra`,
+    PRE-EXISTING. The dedup key falls to `seg[:28]`, which contains the varying `N IL`
+    prefix. Measured (wave-5 R3): bounded — six consecutive conflict Sundays hold at one
+    duplicate, 0 of 1210 rows lose their own selector, `check_invariants` exits 0; the
+    trim pops the stale duplicate first. Cost is one wasted note segment. One `_TOOL`
+    entry (`empty-but-suspect`) closes it.
+
+68. **`_merge_notes` pops the NEWEST segment while its docstring says "never the newest"**
+    — lane: `infra`, PRE-EXISTING. `out` is built oldest-first and `out.pop()` trims the
+    tail. In every measured case this is protective (the own selector is `out[0]`), so
+    behaviour is fine and the DOCSTRING is what needs the fix — flag with item 67.
+
+69. **`_tenant_near`'s ±1 window is loose for names whose core is ≤3 chars** — lane:
+    `registry`. Five reachable pool rows (`MAX Security`, `MSD`, `Z2A Digital`,
+    `zap group`, `3M`) would accept any 2-4-char token containing the core. No wrong
+    accept is exhibitable without live pages (wave-5 R3 named the rows; the one real
+    coincidence, `Z2A Digital` <- KELA's Comeet uid `2A.004`, predates the window pin).
+    If one ever fires, the fix is a minimum-length floor on the target, not a wider
+    window — the window is pinned at ±1 by `embed-near-window-drift`.

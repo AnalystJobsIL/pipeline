@@ -1633,6 +1633,61 @@ def test_validate_empty_needs_the_board_to_be_this_companys(monkeypatch):
         "a page under the readability floor is no evidence in either direction: %r" % (kind,))
 
 
+def test_wayback_cannot_resurrect_a_board_the_snapshot_merely_embeds(
+        tmp_path, monkeypatch):
+    """Wave-5 R1 (B1, reproduced end-to-end): `wayback_rescue` is the THIRD caller of the
+    `extract_ats(html, name)` shape, on strictly older evidence than the other two -- and
+    it was left on the pre-wave-4 gate, passing no `html=`, so `activation_ok` fell to the
+    tenant clause, vacuously True on 6 of the 7 platforms `extract_ats` returns. A real
+    pool row (`Panoply`) was activated onto Riskified's greenhouse board from an archived
+    snapshot, on the Sunday cron, behind continue-on-error, while `validate_empty` refused
+    the identical page two workflow lines later.
+
+    `rescue()` now returns the snapshot html and the write is gated exactly like
+    `bd_rescue`'s: the page can refuse, and the board must vouch for itself. The old
+    guard test stubbed `rescue` wholesale, so it could never see any of this -- these
+    stubs sit at `latest_snapshots`/`_get`/`_verify`, the named network boundaries, and
+    `extract_ats` and the whole gate run for real.
+    """
+    import sys
+    import wayback_rescue as W
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Panoply", "scrape", "https://panoply.io/careers/jobs",
+         "https://panoply.io/careers/jobs", "false", "unreachable; could not scan"],
+        ["Kima", "scrape", "https://www.kima.network/careers",
+         "https://www.kima.network/careers", "false", "unreachable; could not scan"],
+        ["Voiceitt", "scrape", "https://www.voiceitt.com/careers",
+         "https://www.voiceitt.com/careers", "false", "unreachable; could not scan"],
+    ])
+    def page(company, slug):
+        return ("<html><h1>" + company + " Careers</h1>"
+                + ("<p>" + company + " is hiring in Tel Aviv.</p>") * 60
+                + '<a href="https://boards.greenhouse.io/embed/job_board?for=' + slug
+                + '&amp;t=1">Open positions</a></html>')
+    # Panoply: own archived page, FOREIGN embed. Kima: own page, own board. Voiceitt: the
+    # snapshot serves ANOTHER company's page carrying a name-matching embed (a hijacked
+    # domain archived) -- the held-page clause must refuse it.
+    snaps = {"https://panoply.io/careers/jobs": page("Panoply", "riskified"),
+             "https://www.kima.network/careers": page("Kima", "kima"),
+             "https://www.voiceitt.com/careers": page("Riskified", "voiceitt")}
+    monkeypatch.setattr(W, "latest_snapshots", lambda url: ["snap://" + url])
+    monkeypatch.setattr(W, "_get", lambda u, *a, **k: snaps.get(u[7:], ""))
+    monkeypatch.setattr(W, "_verify", lambda name, plat, tok, api: (12, 3))
+    monkeypatch.setattr(W.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(sys, "argv", ["wayback_rescue.py"])
+    W.main()
+    out = _read(tmp_path)
+    assert out["Panoply"][4] == "false", (
+        "an archived page cannot vouch for a board it merely embeds: %r" % (out["Panoply"],))
+    assert "riskified" not in out["Panoply"][3]
+    assert out["Kima"][4] == "true" and "kima" in out["Kima"][3], (
+        "positive control regressed: %r" % (out["Kima"],))
+    assert out["Voiceitt"][4] == "false", (
+        "a snapshot naming another company activated a name-matching embed: %r"
+        % (out["Voiceitt"],))
+
+
 def test_the_embed_vouch_recognises_the_slug_shapes_production_actually_emits():
     """Wave-5 R1+R2: `_tenant_near` was calibrated on subdomain HOST LABELS and wave 4
     applied it to PATH TOKENS, which routinely carry a whole extra word -- so the embed
@@ -1808,8 +1863,9 @@ def test_wayback_rescue_cannot_activate_another_companys_archived_board(
         ["Fiverr", "", "", "https://www.fiverr.com/jobs", "false",
          "unreachable; could not scan"],
     ])
-    res = {"Bancor": ("icims", "bancorpbank", _BANCORP, 30, 9),
-           "Fiverr": ("greenhouse", "fiverr", _FIVERR, 40, 12)}
+    page = "<html>" + "x" * 3000 + "</html>"
+    res = {"Bancor": ("icims", "bancorpbank", _BANCORP, 30, 9, page),
+           "Fiverr": ("greenhouse", "fiverr", _FIVERR, 40, 12, page)}
     monkeypatch.setattr(W, "rescue", lambda name, url: res[name])
     monkeypatch.setattr(W.time, "sleep", lambda *a: None)
     monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
@@ -2642,8 +2698,8 @@ def test_a_zero_job_count_refuses_at_every_call_site_not_just_inside_the_gate(
          "unreachable; could not scan"],
     ])
     res = {"ZeroCo": ("greenhouse", "zeroco",
-                      "https://boards-api.greenhouse.io/v1/boards/zeroco/jobs", 0, 0),
-           "Fiverr": ("greenhouse", "fiverr", _FIVERR, 40, 12)}
+                      "https://boards-api.greenhouse.io/v1/boards/zeroco/jobs", 0, 0, ""),
+           "Fiverr": ("greenhouse", "fiverr", _FIVERR, 40, 12, "")}
     monkeypatch.setattr(W, "rescue", lambda name, url: res[name])
     monkeypatch.setattr(W.time, "sleep", lambda *a: None)
     monkeypatch.setattr(sys, "argv", ["wayback_rescue.py"])
@@ -2790,5 +2846,13 @@ def test_every_refusal_note_keeps_the_row_in_a_re_check_pool(monkeypatch):
     # a retyped mirror is how the loss stayed silent; the mirror must BE the tool's
     assert RH._HUNT_SHAPE is LH.HUNT_POOL, (
         "registry_health's hunt mirror is no longer listing_hunt's own constant")
+    # ...and check_invariants.POOL, the THIRD copy, is pinned set-equal to the receiver's
+    # alternatives plus its one deliberate extra (`dark-triage` has its own pool). The old
+    # guard checked only the narrowing direction; a token added to POOL alone WIDENS the
+    # blocking gate's idea of "owned" and masks orphans (wave-5 R2 exhibited three).
+    assert (set(ci.POOL.split("|")) ==
+            set(LH.HUNT_POOL.pattern.split("|")) | {"dark-triage"}), (
+        "check_invariants.POOL has drifted from listing_hunt.HUNT_POOL: %r vs %r"
+        % (sorted(set(ci.POOL.split("|"))), sorted(set(LH.HUNT_POOL.pattern.split("|")))))
     # validate_empty's hand-off shape stays in the receiver's pool too
     assert LH.HUNT_POOL.search("empty-but-suspect; 3 IL but the board is not this company's")
