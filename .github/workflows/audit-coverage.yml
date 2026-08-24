@@ -31,9 +31,17 @@ jobs:
         with:
           python-version: "3.11"
       - name: Wayback-rescue unreachable
+        env:
+          # docs/BACKLOG.md 59: without the key, page_names_company's unlocker rung is
+          # silently inert and every bot-walled page reads as no-evidence
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
         run: python wayback_rescue.py
         continue-on-error: true
       - name: Cross-validate the empties
+        env:
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
         run: python validate_empty.py
         continue-on-error: true
 
@@ -71,6 +79,10 @@ jobs:
         continue-on-error: true
       - name: Coverage report
         run: python coverage_report.py
+      - name: Registry invariants gate the commit
+        # deliberately NOT continue-on-error: a run that broke an invariant
+        # loses its work rather than committing it -- docs/BACKLOG.md 64.
+        run: python check_invariants.py
       - name: Commit audit results
         run: |
           git config user.name  "audit-bot"
@@ -102,6 +114,8 @@ jobs:
               #  both are merged below, so nothing else is restored)
               if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
                 python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
+                # the merged registry passes the same gate before it is committed
+                python check_invariants.py || { echo "::error::merged registry fails invariants"; exit 1; }
               fi
               # scraped_cache.json has eight writers across six workflows, each rewriting the
               # whole dict — restoring ours wholesale deleted every company another workflow

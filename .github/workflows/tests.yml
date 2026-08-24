@@ -33,3 +33,22 @@ jobs:
         run: python check_invariants.py
       - name: Platform wiring report (informational)
         run: python -m pipeline.platform_check || true
+
+  # The suite alone proved insufficient FIVE times this rebuild: a one-token edit on an
+  # activating path stayed green until tools/mutate.py said otherwise, and the catalogue
+  # only ran when an operator remembered to run it (wave-4 R3 named this gap). Now every
+  # push pays the ~20 minutes. 89 records at last count -- each a recorded defeat or a
+  # near-miss -- plus the derived per-call-site coverage check, which fails the build the
+  # commit a new activating writer appears without its mutations.
+  mutation-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install pytest
+        run: python -m pip install --quiet pytest
+      - name: Every mutation dies and every writer is covered
+        run: python tools/mutate.py --all
