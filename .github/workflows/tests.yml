@@ -37,8 +37,9 @@ jobs:
   # The suite alone proved insufficient FIVE times this rebuild: a one-token edit on an
   # activating path stayed green until tools/mutate.py said otherwise, and the catalogue
   # only ran when an operator remembered to run it (wave-4 R3 named this gap). Now every
-  # push pays the ~20 minutes. 89 records at last count -- each a recorded defeat or a
-  # near-miss -- plus the derived per-call-site coverage check, which fails the build the
+  # push pays the ~15 minutes. The catalogue is tests/mutations.json (the run prints what
+  # it ran) -- each record a recorded defeat or a near-miss -- plus the derived
+  # per-call-site coverage check, which fails the build the
   # commit a new activating writer appears without its mutations.
   mutation-gate:
     runs-on: ubuntu-latest

@@ -49,6 +49,26 @@ import urllib.request
 from pipeline.company_identity import (ATS_HOST, is_foreign,
                                        looks_like_a_job_listing_page, page_mentions_company)
 
+# ---------------------------------------------------------------------------------------
+# WHICH GATE DOES MY TOOL CALL?  Four public gates; picking the wrong one is how a held page
+# came to ADMIT a board it merely embedded (wave-4 R1).
+#
+#   your tool holds a PAGE and found a board embedded in it -> embedded_board_ok  (+ activation_ok)
+#   your tool built a whole row from VERIFIED job counts    -> activation_ok
+#   your tool wants to PERSIST an address, no job counts    -> ok_to_write
+#   your tool hunts/repairs an ORDINARY careers page        -> identity_ok
+#
+# The caller lists below are DERIVED (tests/test_registry.py scans every root tool with
+# tools/mutate.py's call-site detector and compares); edit a caller and this goes red.
+# ---------------------------------------------------------------------------------------
+GATE_CALLERS = {
+    "activation_ok": ("auto_expand.py", "bd_rescue.py", "retry_unreachable.py",
+                      "validate_empty.py", "wayback_rescue.py"),
+    "ok_to_write": ("crack_walled.py",),
+    "identity_ok": ("listing_hunt.py", "repair_extract_gap.py"),
+    "embedded_board_ok": ("bd_rescue.py", "validate_empty.py", "wayback_rescue.py"),
+}
+
 # `scan_dead_domains.alive()` uses a lenient context on purpose — ARCHITECTURE.md section 2:
 # "strict TLS on the scanning machine produced 6 false positives". A gate that re-introduces
 # strict TLS re-introduces those.

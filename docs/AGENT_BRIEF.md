@@ -125,10 +125,10 @@ and `render` owns what goes in it.
 
 ### Shared plumbing — read freely, change loudly
 
-`pipeline/`: `notes.py` `verdicts.py` `company_identity.py` `atomic.py` `http.py`
+`pipeline/`: `notes.py` `verdicts.py` `identity_gate.py` `company_identity.py` `atomic.py` `http.py`
 `companies.py` `stages.py` `sources.py`. Every lane imports these and no lane owns them. If
 your change needs one modified, **say so in your report and name the lanes it could affect** —
-`company_identity` alone gates four activation paths, and `notes` gates every write to
+`identity_gate` gates every activating write path (`company_identity` supplies its primitives)
 `companies.csv`.
 
 `pipeline/run.py` is the orchestrator: `infra` owns it, but any lane may need a hook in it.
@@ -136,7 +136,7 @@ Propose the hook, do not smuggle it.
 
 ### Not in any lane (deliberately)
 
-**`docs/MODULES.md` classifies every one of the 67 root modules**, and `docs/check_docs.py`
+**`docs/MODULES.md` classifies every root module**, and `docs/check_docs.py`
 fails the test suite if a new one is unclassified. 25 are `legacy` — one-shot captures,
 probes and superseded resolvers — and nothing scheduled imports any of them; the linter
 proves that on every push rather than asking you to trust it. Do not spend time there.

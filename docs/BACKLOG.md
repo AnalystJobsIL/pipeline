@@ -1,5 +1,8 @@
 # Backlog — what is known-wrong and not yet fixed
 
+> Item numbers restart per section (1-15 are reused). Cite an item by its SECTION heading
+> plus its number; numbers above 15 happen to be unique, by luck, not design.
+
 Everything here is **durable**: a design debt or a known gap that outlives any one session.
 Current-state items ("what broke last night", "what to watch tomorrow") belong in
 `HANDOFF.md`, not here; dated narrative belongs in `docs/sessions/`.

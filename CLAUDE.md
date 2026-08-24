@@ -38,7 +38,8 @@ already destroyed a day of work:
 4. **Re-read `companies.csv` immediately before every write**, and match rows by company
    name, never by index. Two snapshot-writers destroy each other's verdicts.
 5. **"There are Israel jobs on this page" is not "these are THIS company's jobs".** No row
-   activates without `pipeline/company_identity` and `looks_like_a_job_listing_page`.
+   activates without `pipeline/identity_gate` (the gate; `company_identity` is only its
+   primitives, inert on every ATS host by design).
 
 ## Working here
 

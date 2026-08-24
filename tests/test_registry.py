@@ -91,29 +91,48 @@ def test_activation_branches_append_to_the_note_instead_of_replacing_it():
             f"{mod.__name__} still overwrites the whole notes cell: {offenders}")
 
 def test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_supposed_to():
-    """There are THREE hand-maintained lists of verdict tokens — `pipeline.verdicts.TOKENS`
-    (the one that claims to be the single source of truth), `listing_hunt.main()`'s inline
-    regex, and `check_invariants.POOL` — and on 2026-08-23 they disagreed. This pins the
-    disagreement so it cannot grow silently while the real fix (collapse all three onto
-    TOKENS) waits in docs/BACKLOG.md, "One re-check pool definition".
+    """THREE spellings of the re-check pool exist -- `pipeline.verdicts.TOKENS` (claims to
+    be the source of truth), `check_invariants.POOL` (the blocking gate's copy) and
+    `listing_hunt.HUNT_POOL` (the hunt's own selector) -- and they differ on purpose in
+    exactly the ways EXEMPT names. This pins every difference so a NEW one is red, and
+    prints what each exemption costs on the live registry (derived, never typed).
 
-    When `url-cleared`/`url-flagged` are added to TOKENS, EXPECTED_GAP goes empty and the
-    two inline copies can be deleted. Until then a row carrying only one of those tokens is
-    invisible to `audit_empty_rows` and `deep_validate`: 57 rows carry one today."""
+    Closing the gap (TOKENS gaining url-cleared/url-flagged; HUNT_POOL gaining dark-triage
+    or the docs saying why not) is docs/BACKLOG.md "One re-check pool definition"."""
+    import csv
+    import os
     import re
     import check_invariants
-    from pipeline.verdicts import TOKENS
+    import listing_hunt
+    from pipeline.verdicts import TOKENS, POOL_RX
     tokens = {t.lower() for t in TOKENS}
-    # the two tokens the inline copies know and TOKENS does not
-    EXPECTED_GAP = {"url-cleared", "url-flagged"}
     ci = {t.lower() for t in check_invariants.POOL.split("|") if t and "(" not in t}
-    assert EXPECTED_GAP <= ci, "check_invariants lost a token the registry writes"
-    assert EXPECTED_GAP & tokens == set(), (
-        "pipeline/verdicts.TOKENS gained url-cleared/url-flagged — good. Now delete this "
-        "test's EXPECTED_GAP, point listing_hunt.main() and check_invariants.POOL at "
-        "verdicts.in_pool, and close the BACKLOG item.")
-    for t in tokens - EXPECTED_GAP - {"no il listing", "roles-text present"}:
-        assert t in ci, f"check_invariants.POOL is missing the verdict token {t!r}"
+    hunt = {t.lower() for t in listing_hunt.HUNT_POOL.pattern.split("|") if t and "(" not in t}
+    EXEMPT = {
+        "url-cleared": "POOL+HUNT only: the stored address was an aggregator/foreign page; "
+                       "rows carrying ONLY this are invisible to audit_empty_rows/deep_validate",
+        "url-flagged": "same as url-cleared",
+        "no il listing": "TOKENS only: every live carrier also carries a POOL token",
+        "roles-text present": "TOKENS only: every live carrier also carries a POOL token",
+        "dark-triage": "TOKENS+POOL, not HUNT: triage_dark owns those rows; the hunt "
+                       "must not re-hunt a row triage just verdicted",
+    }
+    assert (ci - tokens) == {"url-cleared", "url-flagged"}, sorted(ci - tokens)
+    assert (tokens - ci) == {"no il listing", "roles-text present"}, sorted(tokens - ci)
+    assert (ci - hunt) == {"dark-triage"}, sorted(ci - hunt)
+    assert (hunt - ci) == set(), sorted(hunt - ci)
+    assert set(EXEMPT) == (ci ^ tokens) | (ci ^ hunt), "an exemption is undocumented or stale"
+    # the cost, derived from the live registry and printed with the assertion context
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
+        parked = [r for r in csv.reader(fh) if r and len(r) >= 6 and r[4] == "false"]
+    cirx = re.compile(check_invariants.POOL, re.I)
+    only_ci = [r[0] for r in parked if cirx.search(r[5] or "") and not POOL_RX.search(r[5] or "")]
+    not_hunt = [r[0] for r in parked if POOL_RX.search(r[5] or "")
+                and not listing_hunt.HUNT_POOL.search(r[5] or "")]
+    print(f"\nexemption cost today: {len(only_ci)} parked rows invisible to audit/deep "
+          f"(url-cleared/url-flagged), {len(not_hunt)} invisible to the hunt (dark-triage)")
+
 
 def test_a_company_cannot_leave_the_registry_without_a_reason():
     """No tool deletes rows — but a human commit does, and nothing reported one. `Time To
@@ -1622,6 +1641,31 @@ def _ungated_registry_writers():
         if lines:
             bad[base] = lines
     return bad
+
+
+def test_the_gate_caller_map_is_derived_not_typed():
+    """`identity_gate.GATE_CALLERS` is the one map from a tool to the gate it calls -- the
+    artifact a fresh agent needs and nothing carried before. It is a literal so it can be
+    read; this derives it with tools/mutate.py's call-site detector (alias-aware) and fails
+    on drift, so a new caller or a changed gate cannot leave the map lying."""
+    import ast
+    import glob
+    import importlib.util
+    import os
+    from pipeline import identity_gate as G
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    spec = importlib.util.spec_from_file_location("mutate", os.path.join(root, "tools", "mutate.py"))
+    M = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(M)
+    gates = tuple(G.GATE_CALLERS)
+    derived = {g: set() for g in gates}
+    for path in sorted(glob.glob(os.path.join(root, "*.py"))):
+        for _site, callee in M._gate_call_sites(path, gate_names=gates):
+            derived[callee].add(os.path.basename(path))
+    literal = {g: set(v) for g, v in G.GATE_CALLERS.items()}
+    assert derived == literal, (
+        "GATE_CALLERS drifted from the source: %s"
+        % {g: sorted(derived[g] ^ literal[g]) for g in gates if derived[g] != literal[g]})
 
 
 def test_the_writer_allow_list_only_covers_tools_no_workflow_runs():

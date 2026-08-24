@@ -124,7 +124,7 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/aggregators.py` | is this URL an aggregator? Gates activation and runtime |
 | `pipeline/atomic.py` | **shared** - atomic writes for every state file |
 | `pipeline/companies.py` | **shared** - load companies.csv into row dicts |
-| `pipeline/company_identity.py` | **shared** - does this URL belong to this company? Gates all four activation paths |
+| `pipeline/company_identity.py` | **shared** - the identity PRIMITIVES (`is_foreign`, `verdict`, `page_mentions_company`, `looks_like_a_job_listing_page`); the gate that composes them is `identity_gate.py` |
 | `pipeline/company_info.py` | the two-sentence company blurb |
 | `pipeline/digest.py` | the board, the archive and the email |
 | `pipeline/fetchers.py` | one normalizer per ATS platform -> the common job shape. 16 platforms |

@@ -176,7 +176,7 @@ def _registry_writers():
     return out
 
 
-def _gate_call_sites(path):
+def _gate_call_sites(path, gate_names=("activation_ok", "ok_to_write", "identity_ok")):
     """Every line that calls the identity gate, as its stripped source text.
 
     PER CALL SITE, not per file. `retry_unreachable` and `auto_expand` each call
@@ -199,7 +199,10 @@ def _gate_call_sites(path):
     # `crack_walled.crack_one`), and they are covered by their own mutations against
     # `pipeline/identity_gate.py`. Requiring M1/M2/M3 at every internal call of them
     # would demand ~30 mutations for predicates that gate nothing.
-    gate_names = {"activation_ok", "ok_to_write", "identity_ok"}
+    # `gate_names` is a parameter so tests/test_registry.py can derive identity_gate's
+    # GATE_CALLERS with embedded_board_ok included; coverage() keeps the three-name default
+    # (demanding M1/M2/M3 at every embedded_board_ok site would red the sweep for nothing).
+    gate_names = set(gate_names)
     # ALIASES FIRST. `check = _gate.activation_ok` (or `from pipeline.identity_gate
     # import activation_ok as check`) then `if not check(...)` is a working gate whose
     # call line names no gate -- this detector saw nothing, so the site needed no

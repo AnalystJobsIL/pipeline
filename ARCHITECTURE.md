@@ -438,7 +438,7 @@ Imagindairy,scrape,https://www.imagindairy.com/careers,https://imagindairy.com/c
 |---|---|---|
 | why isn't company X in my email? | read its row's `notes` — it names the tool, the date and the finding | §5b has the ordered runbook |
 | what re-checks a parked row? | run the command above; it prints the pool of every scheduled tool, derived from that tool's own filter. **A row is usually claimed by several** | "the ownership matrix" |
-| can I just flip a row to `active=true`? | **No.** Three gates, all in `pipeline/company_identity`, and on a walled ATS none of them work | "The activation rule" |
+| can I just flip a row to `active=true`? | **No.** The gates live in `pipeline/identity_gate` (four, one per caller shape -- the `GATE_CALLERS` table at the top of that module); `company_identity`'s primitives alone are inert on a walled ATS | "The activation rule" |
 | a company vanished from the file — why? | `python registry_health.py` diffs against `cloud_state/registry_census.json` and prints every vanished name with its last note. **Deleting a row is not durable**; park it | "Never DELETE a row" |
 | which ATS should we build a fetcher for? | `python registry_health.py --ats` — it separates `BUILD` (no fetcher) from `WIRE` (fetcher exists, the row just needs its tenant cracked) | §1's support policy |
 
