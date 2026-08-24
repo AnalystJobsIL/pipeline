@@ -575,10 +575,115 @@ def _report(rows, live=False, want_ats=False):
     return a
 
 
+def explain(name, rows=None, fetch=False, out=print):
+    """`python registry_health.py --explain "<name>" [--fetch]` -- why was this row
+    activated or refused? Every predicate the gates use, with its REAL return value and
+    the inputs it compared, in the order the gates consult them.
+
+    OFFLINE by default, absolutely: `page_names_company` is a 25s GET plus, when the page
+    is short and BRIGHTDATA_API_KEY is set, a paid Bright Data unlock; `ok_to_write`,
+    `activation_ok` and `identity_ok` all reach it. So without `--fetch` none of those four
+    is called and `resources()` is never called (it loads secrets.env into os.environ and
+    would arm the unlocker for the rest of the process). Pinned by a test that makes any
+    network call raise.
+    """
+    from pipeline import identity_facts as F
+    from pipeline import identity_gate as G
+    from pipeline import company_identity as C
+    from pipeline.aggregators import is_aggregator
+    from pipeline.firmographics import looks_like_junk
+    from pipeline.verdicts import in_pool
+    import listing_hunt as _hunt
+    import probe_candidates as _probe
+    import triage_dark as _triage
+    import crack_walled as _crack
+    from merge_csv_rows import _TOOL
+    rows = read_rows() if rows is None else rows
+    key = " ".join((name or "").strip().lower().split())
+    row = next((r for r in rows if " ".join(r[0].strip().lower().split()) == key), None)
+    if row is None:
+        out(f"no registry row named {name!r} (match is case-insensitive, exact otherwise)")
+        return 1
+    name, plat, tok, api, active, note = row[:6]
+    out(f"== row ==\n  {name} | {plat} | token={tok!r} | active={active}\n  {api}")
+    for seg in [x.strip() for x in (note or "").split("|") if x.strip()]:
+        out(f"  note | {seg}")
+
+    out("== exclusions (any True parks the row before identity is even asked) ==")
+    out(f"  is_recruiter          = {is_recruiter(name)}")
+    out(f"  is_aggregator(api)    = {is_aggregator(api)}")
+    out(f"  looks_like_junk       = {looks_like_junk(name)}")
+
+    out("== declared identity (pipeline/identity_facts.py -- consulted before any heuristic) ==")
+    fx = F.facts(name)
+    if fx:
+        out(f"  DECLARED tenants={sorted(F.tenants(name))} domains={list(F.domains(name))}")
+        out(f"  why: {fx.get('why', '')}")
+    else:
+        out("  none declared -- to make an acquired company's board legitimate, add a row to "
+            "pipeline/identity_facts.DECLARED (never a note token, never a rename)")
+
+    out("== identity, offline ==")
+    out(f"  looks_like_a_job_listing_page = {C.looks_like_a_job_listing_page(api)}")
+    out(f"  verdict                       = {C.verdict(name, api)!r}")
+    out(f"  is_foreign                    = {C.is_foreign(name, api)}  (False on EVERY ATS host by design)")
+
+    out("== platform ==")
+    out(f"  host_platform = {G.host_platform(api)!r}   is_walled = {G.is_walled(row)}")
+
+    out("== tenant (subdomain-tenant platforms only; True means 'not refused', incl. vacuously) ==")
+    import urllib.parse as _up
+    host = (_up.urlparse(api or "").netloc or "").lower()
+    # reads two privates of identity_gate on purpose: re-implementing the comparison here
+    # is how a mirror is born. A public `tenant_evidence()` is filed as follow-up.
+    labels = [l for l in host.split(".")[:-2] if not G._plumbing(l)] if host else []
+    out(f"  subdomain platform = {bool(G._SUBDOMAIN_TENANT_HOST.search(host))}   "
+        f"checkable labels = {labels}   name targets = {sorted(G._name_targets(name))}")
+    out(f"  tenant_is_this_company = {G.tenant_is_this_company(name, api)}")
+    if tok:
+        out(f"  embedded_board_ok(token={tok!r}) = {G.embedded_board_ok(name, tok, api)}")
+
+    out("== page test ==")
+    if fetch:
+        v = G.page_names_company(name, api)
+        out(f"  page_names_company = {v!r}" + ("  (None = could not read -- NO EVIDENCE; "
+                                              "ok_to_write refuses on None)" if v is None else ""))
+    else:
+        out("  not fetched; pass --fetch (1 GET, and up to 1 Bright Data unlock if the page is short)")
+
+    out("== pools (who re-checks this row if it is parked) ==")
+    for label, pred in (("triage_dark (18:00 daily)", _triage.in_triage_pool),
+                        ("listing_hunt (19:00 daily)", _hunt.in_hunt_pool),
+                        ("crack_walled (19:00 daily + Sun)", _crack.in_crack_pool),
+                        ("probe_candidates (05:00 daily)", _probe.in_probe_pool)):
+        out(f"  {label:34} {bool(pred(row))}")
+    out(f"  {'audit_empty_rows / deep_validate':34} {bool(active == 'false' and in_pool(note or '') and not is_terminal_note(note or ''))}")
+    out(f"  {'terminal (no pool may re-open)':34} {is_terminal_note(note or '')}")
+
+    out("== last stamp -> tool -> gate ==")
+    segs = [x.strip() for x in (note or "").split("|") if x.strip()]
+    last = segs[-1] if segs else ""
+    m = _TOOL.match(last)
+    tool = m.group(1) if m else "(untagged prose)"
+    tool_file = {"listing-hunt": "listing_hunt.py", "crack-walled": "crack_walled.py",
+                 "dark-triage": "triage_dark.py", "deep-validated": "deep_validate.py",
+                 "re-audit": "audit_empty_rows.py", "repair": "repair_dead_urls.py",
+                 "probe-woken": "probe_candidates.py", "bd-tried": "bd_rescue.py",
+                 "scanned via brightdata": "bd_rescue.py"}.get(tool, "")
+    gates = [g for g, files in G.GATE_CALLERS.items() if tool_file in files]
+    out(f"  last segment: {last!r}\n  stamped by: {tool}  ({tool_file or 'n/a'})\n"
+        f"  that tool's gate(s): {gates or ['none -- it does not activate']}")
+    return 0
+
+
 def main():
     argv = sys.argv[1:]
     live = "--resources" in argv
     rows = read_rows()
+    if "--explain" in argv:
+        i = argv.index("--explain")
+        who = argv[i + 1] if i + 1 < len(argv) and not argv[i + 1].startswith("--") else ""
+        return explain(who, rows, fetch="--fetch" in argv)
     if "--json" in argv:
         _res = resources(live=live)
         print(json.dumps({"census": {k: v for k, v in census_diff(rows).items()

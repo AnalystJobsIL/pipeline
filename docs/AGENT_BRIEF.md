@@ -171,9 +171,11 @@ Declare these in your plan before spending them:
    re-run.
 3. **Never `git add -A`** — another lane's work is in this tree. Stage explicit paths.
 4. **`python check_invariants.py` must pass before you commit** anything touching
-   `companies.csv`. `python -m pytest -q` (123 cases, ~2s) must pass before any push. Every
+   `companies.csv`. `python -m pytest -q` must pass before any push. Every
    one of them is a bug that shipped; if one goes red, your change is wrong. `pytest` also
    runs `docs/check_docs.py`, so a doc that names a file you deleted fails the suite.
+   Asking "why was company X activated or refused?" is one command, offline:
+   `python registry_health.py --explain "<name>"` (add `--fetch` for the one page GET).
 5. **Commit as `ajil-bot` and push with plain `git push`.** Read `CLAUDE.local.md` first —
    the public repos must not be linkable to the owner's personal account.
 6. **Prefer letting the crons run.** If you must dispatch a workflow manually, delete the run

@@ -1759,6 +1759,43 @@ def test_a_declared_row_refuses_an_undeclared_token_on_a_path_platform(monkeypat
     assert G.embedded_board_ok("Armis", "armisgroup", gh % "armisgroup")
 
 
+def test_explain_answers_why_a_row_was_activated_or_refused_without_touching_the_network(
+        monkeypatch):
+    """`registry_health.py --explain` is the one entry point for "why this verdict?". It
+    must print every section (an agent reads it top to bottom) and, without --fetch,
+    make ZERO network calls -- `page_names_company` is a 25s GET plus a possible paid
+    unlock, and every naive reproduction of a verdict used to spend it."""
+    import urllib.request
+    import registry_health as R
+    import bd_rescue
+
+    def boom(*a, **k):
+        raise AssertionError("network call from --explain without --fetch")
+    monkeypatch.setattr(urllib.request, "urlopen", boom)
+    monkeypatch.setattr(bd_rescue, "unlock", boom)
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    rows = [["Habana Labs (Intel)", "workday", "intel/External",
+             "https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/External/jobs", "true",
+             "re-audit 2026-08-21: deep-verified 40/6 IL | listing-hunt 2026-08-23: found"],
+            ["SeeTree", "scrape", "https://www.seetree.ai", "https://www.seetree.ai", "false",
+             "chrome-verified 2026-08-22: no careers page (redirects home); discovery-net only"]]
+    lines = []
+    assert R.explain("habana labs (intel)", rows, out=lines.append) == 0
+    text = "\n".join(lines)
+    for header in ("== row ==", "== exclusions", "== declared identity", "== identity, offline ==",
+                   "== platform ==", "== tenant", "== page test ==", "== pools", "== last stamp"):
+        assert header in text, header
+    assert "DECLARED tenants=['intel']" in text
+    assert "tenant_is_this_company = True" in text
+    assert "not fetched; pass --fetch" in text
+    assert "stamped by: listing-hunt" in text and "identity_ok" in text
+    lines.clear()
+    assert R.explain("SeeTree", rows, out=lines.append) == 0
+    text = "\n".join(lines)
+    assert "none declared" in text and "terminal (no pool may re-open)" in text
+    assert R.explain("no such row", rows, out=lines.append) == 1
+
+
 def test_the_gate_caller_map_is_derived_not_typed():
     """`identity_gate.GATE_CALLERS` is the one map from a tool to the gate it calls -- the
     artifact a fresh agent needs and nothing carried before. It is a literal so it can be
