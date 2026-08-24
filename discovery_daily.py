@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
-"""Daily discovery layer: LinkedIn + Indeed jobs scrapers (Bright Data) for Israel analytics roles.
+"""Daily discovery layer: LinkedIn, Indeed and Workable sweeps for Israel analytics roles.
 
-- Triggers small discovery queries (quota-capped), waits, fetches records.
-- Jobs are normalized and written to discovered_cache.json -> read by fetch_discovery in the
-  pipeline (company shown as the real employer, url = posting link).
-- Companies NOT already in companies.csv are written to out/discovered_companies.json — the
+- Jobs are normalized and merged into discovered_cache.json -> read by fetch_discovery in
+  the pipeline (company shown as the real employer, url = posting link).
+- Companies NOT already in companies.csv are queued into research_companies.json — the
   auto-expand loop then resolves their own ATS so they migrate to free direct scanning.
+- The LinkedIn breadth sweep is keyless (guest endpoint) with a per-page Web Unlocker
+  fallback; Workable is keyless; Indeed and the targeted backfill bill Bright Data.
 
-Budget, MEASURED not estimated (2026-08-23, from cloud_state/source_health.json after the
-08-23 cloud run): 30 LinkedIn records + 78 linkedin-targeted records = 108 Bright Data
-dataset records/day, plus 5 Web Unlocker requests (one per INDEED_QUERIES entry). That is
-~3,240 dataset records/month, not the "~40/day = ~1,200/mo" this docstring claimed until
-2026-08-23 — the targeted sweep, which did not exist when the line was written, is by
-itself two thirds of the spend. Re-derive before adding a query:
+Re-derive the spend before adding a query — never estimate it:
 
     python -c "import json;print(json.load(open('cloud_state/source_health.json')))"
+
+The measurements behind every dial in this file: docs/sessions/2026-08-24-discovery.md.
 """
 from __future__ import annotations
 
@@ -43,40 +41,17 @@ for _s in (sys.stdout, sys.stderr):
 
 # THE BREADTH SWEEP IS THE DISCOVERY SOURCE. Its job is to return employers the registry
 # has never heard of; the jobs are the secondary output. Judge any change to it by
-# new-companies-per-run, not by records or by jobs.
-#
-# It was returning ZERO new companies. Measured 2026-08-23 on the day's own run: 29 jobs,
-# 27 employers, 25 of them already registry rows and 11 of them staffing agencies we discard
-# — 0 new. Two reasons, both fixed here:
-#
-#   1. `limit_per_input` was 15. LinkedIn ranks by relevance and the head of that ranking is
-#      saturated with big employers and agencies; UNKNOWN COMPANIES LIVE IN THE TAIL, and
-#      the yield accelerates with depth rather than flattening:
-#          first  15 records -> 15 employers,  1 new
-#          first  30 records -> 29 employers,  3 new
-#          first  50 records -> 46 employers,  3 new
-#          first 100 records -> 84 employers, 15 new
-#   2. No recency filter, so every run re-ranked the same saturated head. The dataset
-#      honours `time_range` — "Past week" overlapped the unfiltered run by only 14/61 —
-#      and it is also SELF-LIMITING: it bills what was actually posted in the window
-#      (61 records against a limit of 100), so depth costs nothing on a quiet keyword.
-#      Recency wins on yield per record too: 10 new companies from 61 records, against
-#      15 from an unfiltered 100.
-#
-# Re-measure with docs/… no: with the snippet in ARCHITECTURE.md section 1a. If new-company
-# yield ever reads 0 again, this sweep has re-saturated and depth is the first dial.
-# Kept because plan_spend still reports a breadth "limit"; LINKEDIN_LIMIT_MIN and
-# LINKEDIN_WINDOW were removed on 2026-08-23 — they were read nowhere after the sweep moved
-# off the per-record dataset, and an unused constant that reads like a setting is the trap
-# this file's own Indeed note is about. The real dials are LINKEDIN_PAGES, INDEED_DAYS and
-# the `days=` argument of linkedin_search.
+# new-companies-per-run, not by records or by jobs. LinkedIn ranks by relevance and the
+# head of that ranking is saturated with registry rows and agencies — UNKNOWN COMPANIES
+# LIVE IN THE TAIL (measured: first 15 records -> 1 new company, first 100 -> 15), so if
+# new-company yield ever reads 0, depth and recency (`f_TPR`) are the first dials.
+# Kept only because plan_spend still reports a breadth "limit"; the real dials are
+# LINKEDIN_PAGES, LINKEDIN_GUEST_PAGES, INDEED_DAYS and linkedin_search's `days=`.
 LINKEDIN_LIMIT_MAX = int(os.environ.get("LINKEDIN_LIMIT_MAX", "100"))
-# WIDTH, not depth, is what the Unlocker path buys. LinkedIn's public search runs out at
-# ~60-85 jobs per keyword however many pages you ask for, so a deep sweep on four keywords
-# hits a ceiling the per-record dataset does not — that is why the dataset found 58 new
-# companies to the Unlocker's 35 at first. But a keyword costs only ~2 credits here, so the
-# answer is more keywords, and it beats the dataset outright. Measured 2026-08-23, one run,
-# each keyword's contribution ON TOP of the ones before it:
+# WIDTH beats depth: LinkedIn's PAID search runs out at ~60-85 jobs per keyword however
+# many pages you ask for, and a keyword costs ~2 credits, so the answer to a falling yield
+# is more keywords. Marginal contribution per keyword, measured 2026-08-23 (order-dependent
+# — a later keyword sees fewer unknowns — so re-measure the whole list, not one row):
 #
 #   data analyst          64 employers  17 new     analytics          +2   +2
 #   business intelligence +6            +4         data scientist     +24  +11
@@ -85,21 +60,9 @@ LINKEDIN_LIMIT_MAX = int(os.environ.get("LINKEDIN_LIMIT_MAX", "100"))
 #                                                  marketing analyst  +12  +7
 #   dropped: "BI analyst" (+1 employer) and "insights analyst" (+0) — saturated
 #
-#   11 keywords = 25 credits = 175 employers = 73 NEW companies
-#   vs the dataset's 391 credits = 147 employers = 58 new
-#
-# Marginal yield is ORDER-DEPENDENT (a later keyword sees fewer unknowns), so re-measure the
-# whole list rather than trusting any single row above. If total new companies falls toward
-# zero, add keywords before adding pages — depth is the dial that does not work here.
-#
-# AND DO NOT COMBINE THEM INTO ONE BOOLEAN QUERY. LinkedIn supports
-# `("data analyst" OR "data scientist" OR ...)` in `keywords`, and it is a trap: the ~60-80
-# result cap is PER QUERY, not per keyword, so one combined query buys one window instead of
-# nine. Measured 2026-08-23, same day, same baseline:
-#     one OR query over 7 terms   2 credits   60 jobs   50 employers   10 new companies
-#     nine separate queries      18 credits             184 employers  76 new companies
-# Sixteen extra credits for 66 extra companies. Each distinct query gets its own window;
-# that IS the mechanism, and it is why the keyword list is long and flat rather than clever.
+# DO NOT COMBINE THEM INTO ONE BOOLEAN OR QUERY. The result cap is PER QUERY, not per
+# keyword, so one combined query buys ONE window: measured, 10 new companies against 76
+# from nine separate queries. That window mechanism is why this list is long and flat.
 _LI_KEYWORDS = ["data analyst", "business intelligence", "product analyst", "BI developer",
                 "analytics", "data scientist", "אנליסט", "growth analyst",
                 "marketing analyst"]
@@ -121,21 +84,15 @@ def _li_queries():
     return ([(kw, "Israel", None) for kw in _LI_KEYWORDS]
             + [(kw, city, 0) for city in _LI_CITIES for kw in _LI_KEYWORDS])
 
-# Only the DATASET ID is still used, by the targeted backfill below. The breadth sweep moved
-# to the Web Unlocker (see linkedin_search) on 2026-08-23, so the keyword/limit config that
-# used to live here is gone rather than left looking live — an unused constant that reads
-# like a setting is how the Indeed dataset sat "configured" for five days returning zero.
+# Used only by the targeted backfill. The breadth sweep's old dataset config is deleted,
+# not parked — an unused constant that reads like a setting is a trap (see the Indeed note).
 LINKEDIN_DATASET = "gd_lpfll7v5hcqtkxl6l"
 
-# NOTE: the Bright Data Indeed DATASET (gd_l4dx9j9sscpvs7no2) returned ZERO records on
-# every run for five days — every snapshot came back `dataset_size: 0,
-# error_codes: {"rate_limit": 15}`, i.e. Indeed rate-limits that collector for all 15
-# inputs. It printed "[indeed] 0 records" and nobody noticed. Do not re-enable it; Indeed is
-# read through the Web Unlocker instead, below.
-#
-# Indeed, read directly. il.indeed.com serves its results as one embedded JSON blob, and
-# the Web Unlocker renders the page past the bot wall — so this needs no dataset, no
-# polling, and one request per query instead of a 90-second snapshot job.
+# DEAD END: the Bright Data Indeed DATASET (gd_l4dx9j9sscpvs7no2) is rate-limited by Indeed
+# on every input — five straight days of `dataset_size: 0`, printed "[indeed] 0 records",
+# nobody noticed. Do not re-enable it. Indeed is read through the Web Unlocker instead:
+# il.indeed.com embeds its results as one JSON blob, so one rendered request per query
+# replaces a 90-second snapshot job.
 INDEED_QUERIES = ["data analyst", "business intelligence", "BI developer",
                   "product analyst", "אנליסט"]
 INDEED_DAYS = 7          # fromage: only postings from the last week are worth discovering
@@ -147,14 +104,9 @@ _MOSAIC = re.compile(
 def indeed_search(query, days=INDEED_DAYS, limit=25, tries=2):
     """Return raw Indeed job cards for one Israel query.
 
-    RETRIES, and says WHY it got nothing. Every failure mode here used to collapse to a bare
-    `[]` — an unlocker exception, a bot-wall page with no mosaic blob, and a genuinely empty
-    result set were indistinguishable, and the caller printed "0 cards" for all three. That
-    is `ARCHITECTURE.md` section 8 item 2: a mass zero is a broken run, not a measurement.
-    Observed 2026-08-23: "data analyst" returned 15 cards in one run and 0 in the next an
-    hour later, and "business intelligence" returned 0 in both — the first is a transient
-    fetch failure, the second may be real, and nothing in the log let you tell them apart.
-    One retry, because the failure is transient; the reason is printed either way."""
+    Retries once (the fetch failure mode is transient) and always prints WHY it got
+    nothing: an unlocker failure, a bot wall with no mosaic blob, and a genuinely empty
+    result set must never collapse into the same bare "0 cards" (ARCHITECTURE.md §8.2)."""
     from bd_rescue import unlock
     url = ("https://il.indeed.com/jobs?q=" + urllib.parse.quote_plus(query)
            + "&l=" + urllib.parse.quote_plus("Israel") + f"&fromage={days}")
@@ -218,49 +170,30 @@ def indeed_normalize(r):
 # --------------------------------------------------------------------------------------- #
 # LinkedIn, read the cheap way
 # --------------------------------------------------------------------------------------- #
-# THE TWO BRIGHT DATA PRODUCTS BILL DIFFERENTLY, and the difference is ~55x:
-#   * Web Scraper API (the dataset) — 1 credit per RECORD. 391 jobs cost 391 credits, even
-#     though it is only ONE trigger. Depth is charged by the row.
-#   * Web Unlocker — 1 credit per REQUEST. One rendered page of LinkedIn's PUBLIC job search
-#     carries 60 job cards, so 60 jobs cost 1 credit.
-# ($1.50/1K records vs $1.00/1K requests, brightdata.com/pricing/web-scraper, 2026-08-23.)
+# THE TWO BRIGHT DATA PRODUCTS BILL DIFFERENTLY, and the difference is ~55x: the dataset
+# charges 1 credit per RECORD (391 jobs = 391 credits from one trigger), the Web Unlocker
+# 1 credit per REQUEST (one rendered public-search page = 60 cards = 1 credit). So the
+# breadth sweep reads `linkedin.com/jobs/search` and gives up the dataset's `job_summary`
+# — acceptable because its product is EMPLOYER NAMES; a surviving role gets its text from
+# `pipeline/jdfill.py` later. The targeted sweep keeps the dataset: it needs the `company`
+# filter, which the public search only exposes as a numeric `f_C` id we do not have.
 #
-# So the breadth sweep — the part that has to go DEEP, because unknown companies live in the
-# tail — reads `linkedin.com/jobs/search` through the unlocker instead. Measured 2026-08-23:
-# the full 4-keyword past-week sweep costs ~8-12 credits where the dataset cost 391.
-#
-# What is given up: the dataset carries `job_summary`, this does not. That is acceptable HERE
-# because the breadth sweep's product is EMPLOYER NAMES, and the classifier decides the clear
-# cases on title alone; a role that survives gets its text from `pipeline/jdfill.py` later.
-# The targeted sweep keeps the dataset: it needs the `company` filter, which the public search
-# only exposes as a numeric `f_C` id we do not have, and at 67 credits it is cheap anyway.
-#
-# `f_TPR=r604800` is the past-week window (seconds) and it verifiably filters: past-week and
-# past-month results overlapped by only 20 of 60.
-# TWO pages, because LinkedIn's public search HARD-CAPS at 80 distinct jobs per keyword and
-# two requests reach all 80. Measured 2026-08-23 on "data analyst", Israel, past week:
-#   start=0 -> 60 cards, 60 new    start=50  -> 60 cards, 0 new
-#   start=25 -> 60 cards, 20 new   start=75/100 -> 60 cards, 0 new
-# So a third request is pure waste (~9 credits/day across the keyword list) and there is no
-# depth beyond 80 to buy at any price. That cap is the whole reason WIDTH beats DEPTH here:
-# the only way to see more of LinkedIn through this door is more keywords.
+# `f_TPR=r604800` is the past-week window (seconds) and it verifiably filters (past-week
+# and past-month overlapped by only 20 of 60).
+# TWO paid pages, because the PAID search hard-caps at ~80 distinct jobs per keyword and
+# two requests reach all 80 (measured: start=50/75/100 all returned 0 new cards) — a third
+# is pure waste, and depth beyond 80 is not for sale on this endpoint at any price.
 LINKEDIN_PAGES = int(os.environ.get("LINKEDIN_PAGES", "2"))   # PAID pages per keyword
 # How many consecutive empty guest pages before the pool is called finished. Free requests,
 # so tolerance is nearly free; one blank is NOT exhaustion (measured: a walk that stopped at
 # the first blank saw 55 of 71 reachable jobs).
 LINKEDIN_BLANK_TOLERANCE = int(os.environ.get("LINKEDIN_BLANK_TOLERANCE", "3"))
 # The FREE walk's own bound, deliberately NOT derived from LINKEDIN_PAGES (the paid dial).
-# Tying them capped the guest walk at `pages * 6` = 12 pages and made `LINKEDIN_PAGES=0`
-# return [] for every keyword in silence, while every docstring here invites tuning it.
-#
-# And the "~80 distinct jobs per query" cap this file used to assert is WRONG for this
-# endpoint: it was measured on the PAID /jobs/search page (60 cards/page, exhausted by 80).
-# The guest endpoint goes far deeper. Measured 2026-08-23, walking until three consecutive
-# blanks: `analytics` 201 jobs / 148 employers, `data scientist` 162 / 106. Against that,
-# `linkedin_search` was shipping TEN. Width still beats a boolean OR, but depth is real here.
-# 50, not 30: the 2026-08-24 cloud run ended FOUR keywords on the 30-page cap with the pool
-# not exhausted (data analyst 208, business intelligence 206, analytics 226, אנליסט 269 jobs)
-# — 500 card slots is ~1.9x the deepest pool seen. Free requests; the cost is seconds.
+# Tying them together silently zeroed the free walk when the paid dial was zeroed. And the
+# paid page's ~80-job cap does NOT apply here: the guest endpoint goes 200+ deep (measured:
+# `analytics` 201 jobs / 148 employers). 50, not 30: the 2026-08-24 run ended FOUR keywords
+# on the 30-page cap with pools not exhausted (208/206/226/269 jobs) — 500 card slots is
+# ~1.9x the deepest pool seen. Free requests; the cost is seconds.
 LINKEDIN_GUEST_PAGES = int(os.environ.get("LINKEDIN_GUEST_PAGES", "50"))
 # Credits are the unit that matters and nothing counted them per source. One Unlocker call =
 # one credit, so this IS the bill for the sweeps that use it.
@@ -271,13 +204,10 @@ UNLOCKER_CALLS = _collections.Counter()
 SOURCE_PATH = _collections.Counter()
 _UA_BROWSER = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
-# The `</li>` in the lookahead is load-bearing. Without it the LAST card on a page runs to
-# the end of the document, and any later element carrying these class names is absorbed into
-# it — the right-rail "people also viewed" block is built from the same `base-search-card`
-# component and has no jobPosting urn, so it is not a boundary. A last card lacking its own
-# subtitle then emitted a LONDON "Senior Manager" at "Acme Corp" as a Tel Aviv job dated
-# today, carrying the previous card's id. `url_names_other_company` waves it through because
-# company and url are wrong together. Every page has a last card.
+# The `</li>` in the lookahead is load-bearing: without it the LAST card on a page runs to
+# the end of the document and absorbs the right-rail "people also viewed" block (same
+# `base-search-card` classes, no jobPosting urn, so no boundary) — which once emitted a
+# London job as a Tel Aviv one under the previous card's id. Every page has a last card.
 _LI_CARD = re.compile(
     r'data-entity-urn="urn:li:jobPosting:(?P<id>\d+)"(?P<body>.*?)'
     r'(?=data-entity-urn="urn:li:jobPosting:|</li>|\Z)', re.S)
@@ -285,12 +215,10 @@ _LI_URL = re.compile(r'base-card__full-link[^>]*href="([^"?]+)')
 _LI_TITLE = re.compile(r'<span class="sr-only">\s*(.*?)\s*</span>', re.S)
 _LI_COMPANY = re.compile(
     r'base-search-card__subtitle[^>]*>\s*(?:<a[^>]*>)?\s*([^<]{2,80})', re.S)
-# The employer's LinkedIn SLUG sits in the same subtitle block and was stepped over.
-# It is worth more than the display name: a stable identifier, the only NON-aggregator
-# seed this layer can hand the resolver (a discovered job's own url is the POSTING —
-# docs/BACKLOG.md item 2, 206 of 1,233 queue entries), and slugs such as
-# `barak-recruitment-and-consultancy` are a free is_recruiter signal. Same bytes,
-# already paid for. Verified 2026-08-23: present on 10 of 10 cards.
+# The employer's LinkedIn SLUG (same subtitle block, same bytes) is worth more than the
+# display name: a stable identifier, the only NON-aggregator seed this layer can hand the
+# resolver (docs/BACKLOG.md item 2), and a free is_recruiter signal
+# (`barak-recruitment-and-consultancy`).
 _LI_SLUG = re.compile(
     r'base-search-card__subtitle.*?linkedin\.com/company/([a-z0-9\-_.%]+)', re.S | re.I)
 _LI_LOC = re.compile(r'job-search-card__location[^>]*>\s*([^<]{2,80})', re.S)
@@ -376,17 +304,13 @@ _li_last_present = [set()]
 
 
 def linkedin_search(keyword, pages=None, days=7, location="Israel"):
-    """LinkedIn job search: KEYLESS first, Web Unlocker only where that is blocked.
+    """LinkedIn job search: KEYLESS guest endpoint first, Web Unlocker only where blocked.
 
-    The guest endpoint returns the same markup for nothing, so the whole sweep is $0 on a
-    machine LinkedIn will talk to. It will NOT talk to every machine — GitHub's Azure ranges
-    are among the most-blocked — so the paid path stays, and `SOURCE_PATH` records which one
-    actually served. Without that record, a silent degradation to a free path returning
-    nothing would look exactly like a dead source, which is the failure `pipeline/sources.py`
-    exists to catch.
-
-    Walks pages until one yields no card we have not already seen. The pool for one Israel
-    keyword in a week is ~80 jobs — a hard per-QUERY cap — so it stops on its own.
+    LinkedIn does not talk to every machine (GitHub's Azure ranges are among the
+    most-blocked), so the paid path stays, and `SOURCE_PATH` records which path actually
+    served — without that record a free path silently returning nothing looks exactly like
+    a dead source. Walks until the pool is exhausted or the page cap trips (and says which).
+    `pages` is the PAID budget; 0 makes the query free-only (the city windows rely on it).
     """
     from bd_rescue import unlock
     pages = LINKEDIN_PAGES if pages is None else pages
@@ -400,30 +324,22 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     ended_on_cap = True
     for i in range(LINKEDIN_GUEST_PAGES):
         cards, ok = _li_guest(keyword, location, days, i * 10)
-        # An HTTP 200 with an empty body IS LinkedIn's soft rate-limit, and treating it as a
-        # successful empty result skipped the fallback and killed the keyword with no message
-        # — a mass zero read as a measurement (ARCHITECTURE section 8 item 2), re-created in
-        # brand-new code. A free page that yields nothing gets the paid path, not a break.
-        # THREE states, and conflating any two of them loses jobs. Earlier versions of this
-        # loop conflated all three in turn:
+        # THREE states, and conflating any two loses jobs:
         #   ok + cards  -> the good case
-        #   ok + blank  -> AMBIGUOUS. The guest endpoint emits intermittent 200-empty pages
-        #                  INSIDE the pool, so one blank is not exhaustion — a walk that
-        #                  stopped at the first blank saw 55 of 71 reachable jobs, a 23%
-        #                  silent loss per keyword. Probing costs nothing, so probe.
-        #   not ok      -> blocked. Use the paid path, for EVERY page of the budget, not
-        #                  just page 0.
+        #   ok + blank  -> AMBIGUOUS: the endpoint emits intermittent 200-empty pages INSIDE
+        #                  the pool (an HTTP 200 empty body is also its soft rate-limit), so
+        #                  one blank is not exhaustion — probing is free, so probe.
+        #   not ok      -> blocked: use the paid path, for EVERY page of the budget.
         if ok and cards:
             SOURCE_PATH["linkedin_free"] += 1
             LI_CARDS_PRESENT[qkey] |= _li_last_present[0]
             blanks = 0
         elif ok:
-            # Counted as `linkedin_blank`, NOT `linkedin_free`. Incrementing the free counter
-            # here made the "we are now paying for everything" alarm at the end of the sweep
-            # unreachable under a soft block — `paid and not free` was never true because the
-            # blanks had bumped `free`. That alarm exists for exactly the soft-block case.
+            # `linkedin_blank`, never the free counter: a blank is a request MADE, not one
+            # that PRODUCED, and bumping free here disarms the `paid and not free` soft-block
+            # alarm at the end of the sweep — the exact case that alarm exists for.
             SOURCE_PATH["linkedin_blank"] += 1
-            # record the denominator even on a blank, or a page whose urns we FAIL to parse
+            # record the denominator even on a blank, or a page whose urns we fail to parse
             # contributes nothing to the drift metric and the regression stays invisible
             LI_CARDS_PRESENT[qkey] |= _li_last_present[0]
             blanks += 1
@@ -432,18 +348,13 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
             if out:
                 ended_on_cap = False
                 break                 # cards already collected and the tail is quiet: done
-            # Nothing at all after LINKEDIN_BLANK_TOLERANCE blank pages. A working endpoint
-            # returning consistently nothing is indistinguishable from a soft rate-limit, so
-            # buy ONE paid page to tell "this keyword has no results" from "we are throttled".
-            # Without this a soft block silently costs the whole keyword.
+            # Nothing at all after the tolerance: a working-but-empty keyword and a soft
+            # rate-limit are indistinguishable — buy ONE paid page to tell them apart.
         if not ok or (blanks >= LINKEDIN_BLANK_TOLERANCE and not out):
             if paid_pages >= pages or not os.environ.get("BRIGHTDATA_API_KEY"):
                 break                 # paid budget spent, or there is no paid path at all
-            # The paid page index is its OWN counter. Reusing the guest index meant that
-            # once the guest endpoint was blocked — the documented GitHub-runner case — only
-            # `start=0` was ever fetched, so 60 of the ~80 available cards arrived and the
-            # rest were silently dropped (~20 x 9 keywords a day) while the credits-per-card
-            # line reported a flattering 60 cards/credit.
+            # The paid page index is its OWN counter: reusing the guest index under a hard
+            # block only ever fetched start=0, silently dropping ~20 of ~80 cards a keyword.
             q = urllib.parse.urlencode({"keywords": keyword, "location": location,
                                         "f_TPR": f"r{days * 86400}", "start": paid_pages * 25})
             html = unlock(f"https://www.linkedin.com/jobs/search?{q}", timeout=120)
@@ -459,22 +370,17 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
                 break
         if not cards:
             break
-        # NOTE: no `elif out: break` here. That is what limited a hard-blocked guest endpoint
-        # — the documented GitHub-runner case — to ONE paid page: the second iteration broke
-        # before reaching the fallback, so 60 of the ~80 available cards arrived and the rest
-        # vanished with the credits-per-card line reporting a flattering 60/credit. The loop
-        # is bounded by `paid_pages >= pages` and by the fresh-card check below.
+        # Deliberately NO `elif out: break` here — that limited a hard-blocked guest endpoint
+        # to ONE paid page. The loop is bounded by `paid_pages >= pages` and by freshness.
         fresh = [c for c in cards if c["job_id"] not in seen]
         seen.update(c["job_id"] for c in cards)
         out += fresh
         if fresh:
             repeats = 0
             continue
-        # A page of entirely-repeated cards is NOT proof the pool is finished — the guest
-        # endpoint's paging is unstable and re-serves a window it has already given. Breaking
-        # on the first one made the yield nondeterministic across runs of the same keyword
-        # minutes apart (16 jobs vs 100), and the low run reads as keyword saturation, which
-        # sends the next reader to the wrong dial entirely.
+        # A page of entirely-repeated cards is NOT proof the pool is finished: the guest
+        # paging is unstable and re-serves windows (breaking on the first repeat made the
+        # same keyword yield 16 jobs or 100 depending on the minute). Tolerate a few.
         repeats += 1
         if repeats >= LINKEDIN_BLANK_TOLERANCE:
             ended_on_cap = False
@@ -495,12 +401,9 @@ def linkedin_normalize(c):
     title, comp = c["title"], c["company"]
     if not title or not comp:
         return None
-    # Stamp today when the card carries no <time datetime> (promoted and reposted cards
-    # routinely do not). An undated job is skipped by BOTH the write-side prune
-    # (`if d and d < cut`) and the read-side TTL (`not posted_date or ...`), so it never
-    # ages out and `_alive()` keeps it on the board forever — and because this run's copy
-    # wins the (company,title) merge, one undated card converts a normal job into a
-    # permanent one.
+    # Stamp today when the card carries no <time datetime> (promoted/reposted cards often
+    # do not): an undated job is skipped by BOTH the write-side prune and the read-side
+    # TTL, so it never ages out and sits on the board forever.
     d = c["posted_date"] or _dt.date.today().isoformat()
     if d < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
         return None
@@ -525,28 +428,18 @@ def linkedin_normalize(c):
 # --------------------------------------------------------------------------------------- #
 # Workable, read across ALL tenants at once
 # --------------------------------------------------------------------------------------- #
-# Every other source here is job-search-shaped: ask a keyword, get postings. This one asks an
-# ATS for every Israeli job on its whole platform, and it is the only source that hands back
-# the employer's OWN WEBSITE.
+# Asks one ATS for every Israeli job on its whole platform, keyless — and it is the ONLY
+# source that hands back the employer's own website (`company.website`): every other
+# source's url is a POSTING, which is why 206 of 1,233 research-queue seeds are aggregators
+# (docs/BACKLOG.md item 2). DEAD ENDS, do not re-try: SmartRecruiters' cross-tenant search
+# ignores every geo filter (country/countryCode/location all return the same 9,649), and
+# Recruitee's cross-tenant API ignores `location=` (NL/PL/DE only).
 #
-# That last part matters more than the jobs. A discovered job's `url` is always the posting —
-# on LinkedIn, Indeed or secrethunter — so the `careers_url` this layer seeds into
-# research_companies.json is an aggregator for 206 of 1,233 entries (docs/BACKLOG.md item 2),
-# and the resolver cannot do anything with it. A Workable record carries
-# `company.website`, which is a real lead.
-#
-# Verified 2026-08-23, keyless, no Bright Data: HTTP 200, `totalSize: 140` Israeli jobs,
-# 20 per page, each with company.title + company.website.
-# NOT usable the same way: SmartRecruiters' cross-tenant search ignores every geo filter
-# tried (country/countryCode/location all returned the same unfiltered 9,649), and
-# Recruitee's `jobs.recruitee.com/api/offers/` ignores `location=` and returns NL/PL/DE only.
-# ONE page, because pagination does not work and chasing it was stopped deliberately.
-# `totalSize` says 140 Israeli jobs; the response carries a `nextPageToken`, and NONE of
-# `page` / `offset` / `start` / `from` / the token itself as a query param advances the
-# result set — every variant returns the identical first 20 ids (tested 2026-08-23), and
-# POSTing the token 404s. So this reaches 20 of 140 and a second request bills nothing but
-# wastes time. Worth keeping anyway: those 20 yielded 7 new companies, all 7 with a real
-# careers URL, for zero credits. If someone works out the pagination, raise this.
+# ONE page, a dead end chased to the wall (2026-08-23): `totalSize` says 140 Israeli jobs,
+# but NONE of `page` / `offset` / `start` / `from` / the response's own `nextPageToken` as
+# a query param advances past the identical first 20 ids, and POSTing the token 404s.
+# Still worth keeping: those 20 yielded 7 new companies, all with a real careers URL, for
+# zero credits. If someone works out the pagination, raise this.
 WORKABLE_PAGES = int(os.environ.get("WORKABLE_PAGES", "1"))
 
 
@@ -582,12 +475,8 @@ def workable_normalize(r):
     title = str(r.get("title") or "").strip()
     if not comp or not title:
         return None
-    # `created`, not `published`/`created_at` — those two are not in the payload at all, so
-    # every Workable job entered the cache with posted_date "" and became immortal (skipped
-    # by BOTH the write-side prune and the read-side TTL while _alive refreshes last_seen).
-    # Live keys 2026-08-23: benefitsSection company created department description
-    # employmentType id isFeatured language location locations requirementsSection
-    # socialSharingDescription state title updated url workplace.
+    # `created` is the key the payload actually carries — `published`/`created_at` are not
+    # in it, and an empty posted_date makes a job immortal (see linkedin_normalize).
     d = str(r.get("created") or r.get("published") or r.get("created_at") or "")[:10]
     d = d or _dt.date.today().isoformat()          # never undated — see linkedin_normalize
     if d < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
@@ -689,19 +578,12 @@ def normalize(name, r):
 # --------------------------------------------------------------------------------------- #
 # Bright Data spend, month to date
 # --------------------------------------------------------------------------------------- #
-# NOBODY COULD READ THIS ACCOUNT'S QUOTA. `/customer/balance` answers 403 ("your API key
-# lacks the required permissions"), so the "5k free tier" repeated in every docstring here
-# was inherited belief, never a checked number — and this lane raised steady-state spend from
-# ~190 to ~455 records/day without being able to see the ceiling.
-#
-# `datasets/v3/snapshots` needs no extra permission and IS the ledger: one row per trigger
-# with the `dataset_size` that was billed. Summing the current month gives the only spend
-# number this repo can actually produce. It costs one API call and bills no records.
-#
-# The ceiling is 5,000 credits/month, VERIFIED against Bright Data's own docs on 2026-08-23
-# (docs.brightdata.com/general/account/billing-and-pricing/free-tier): "5,000 free credits
-# per month", renewing on the 1st, no rollover, shared by Web Unlocker API + SERP API +
-# Web Scraper API at one credit per request or record. It is per MONTH, not per day.
+# `/customer/balance` answers 403 for this token, so the account's own ceiling is
+# unreadable; `datasets/v3/snapshots` + `zone/cost` need no extra permission and ARE the
+# ledger. The ceiling used is 5,000 credits/month — verified against Bright Data's docs
+# (docs.brightdata.com/general/account/billing-and-pricing/free-tier): renews on the 1st,
+# no rollover, shared by Web Unlocker + SERP + Web Scraper at 1 credit/request-or-record.
+# Per MONTH, not per day.
 # `/customer/balance` would confirm the account's own figure but answers 403 for this token;
 # widening its billing scope at https://brightdata.com/cp/setting/users would let this read
 # the real number instead of the documented default.
@@ -718,18 +600,10 @@ def _bd_get(url):
 def bd_spend_this_month(today=None):
     """(credits_used_this_month, breakdown_dict); (None, None) on any failure.
 
-    **All four products share ONE pool of 5,000 credits per month** — Web Unlocker API,
-    SERP API and Web Scraper API at one credit per request or record, resetting on the 1st
-    with no rollover (docs.brightdata.com/general/account/billing-and-pricing/free-tier,
-    read 2026-08-23). So counting dataset records alone understates the bill, and it
-    understated it badly: 2,989 records looked like 60% of the month, while adding the 646
-    unlocker and 471 SERP requests the same account had already spent made it **4,106, or
-    82%**. Discovery is not even the only spender — enrich_scrape_jd, enrich_matched_jd,
-    bd_rescue, crack_walled, retry_unreachable and deep_validate.google_via_unlocker all
-    draw on the same pool from other workflows.
-
-    Two endpoints, because neither has the whole number and `/customer/balance` is 403 for
-    this token:
+    All products share ONE monthly pool, so counting dataset records alone understates the
+    bill badly (measured: 60% reported at a true 82%) — and discovery is not the only
+    spender: six other scripts draw on the same pool from other workflows. Two endpoints,
+    because neither has the whole number and `/customer/balance` is 403 for this token:
       * `datasets/v3/snapshots`  -> Web Scraper API records (per trigger, `dataset_size`)
       * `zone/cost`              -> `reqs_unblocker` + `reqs_serp` for the zone
     """
@@ -751,13 +625,9 @@ def bd_spend_this_month(today=None):
         d = _bd_get(f"https://api.brightdata.com/zone/cost?zone={zone}"
                     f"&from={first}&to={today.isoformat()}")
         cost = next(iter(d.values()), {}).get("custom", {}) if isinstance(d, dict) else {}
-        # An HTTP 200 in an UNRECOGNISED shape — empty dict, a list, renamed keys, or a
-        # wrong/empty BRIGHTDATA_ZONE — used to yield a confident 0 + 0, and the caller then
-        # reported 2,989 instead of 4,106 (60% instead of 82%): exactly the under-count this
-        # function exists to prevent, with no message. Absent keys mean UNREADABLE, not zero.
-        # Key-presence was not enough: a JSON `null` passes `"reqs_unblocker" in cost` and
-        # `int(None or 0)` then yields a confident, silent 0. Validate the VALUE. And a
-        # multi-zone account would have read an arbitrary zone via next(iter(...)), so pin it.
+        # An HTTP 200 in an unrecognised shape must read as UNREADABLE, never as zero —
+        # and validate the VALUE, not key presence (a JSON null passes `in` and int()s to a
+        # confident 0). Pin the zone: next(iter(...)) reads an arbitrary one.
         if isinstance(d, dict) and zone and zone in d:
             cost = d[zone].get("custom", {}) if isinstance(d.get(zone), dict) else {}
         if not isinstance(cost, dict) or not isinstance(cost.get("reqs_unblocker"),
@@ -770,11 +640,8 @@ def bd_spend_this_month(today=None):
         out["unlocker_reqs"] = out["serp_reqs"] = None
     known = [v for v in out.values() if isinstance(v, int)]
     if len(known) < 3:
-        # Returning the partial sum was worse than returning nothing: on 2026-08-23 that is
-        # 2,989 (dataset only) instead of 4,106 — 60% instead of 82% — which then drives
-        # budget_per_day into over-spending AND keeps the 80% warning from ever firing.
-        # `budget_per_day` already treats None correctly: an unreadable ledger does not
-        # throttle. Unknown must look unknown.
+        # A partial sum is worse than nothing: it under-reports, over-spends AND silences
+        # the 80% warning. budget_per_day treats None correctly — unknown must look unknown.
         print("  [bd-spend] zone/cost unavailable — spend UNKNOWN, not throttling")
         return None, out
     return sum(known), out
@@ -850,15 +717,9 @@ def plan_spend(today=None):
     # Deliberately NOT len(_li_queries()): the city windows pass pages=0 and structurally
     # cannot reach the paid path, so only the national keywords can bill.
     n_kw = len(_LI_KEYWORDS)
-    # CHARGE BREADTH WHAT IT COSTS, NOT WHAT IT USED TO COST. The breadth sweep is billed
-    # per REQUEST now (at most LINKEDIN_PAGES per keyword, and usually 0 because the guest
-    # endpoint is free) — not per record. Subtracting `breadth_limit * n_kw` reserved
-    # 15 x 9 = 135 credits/day for something that costs 18, and since breadth was itself
-    # derived from per_day, `left` came out as `per_day mod n_kw` — a number between 0 and 8
-    # NO MATTER HOW LARGE THE BUDGET WAS. The targeted backfill was therefore starved at
-    # every budget below ~31,000/month, including the "set BD_MONTHLY_BUDGET and both run
-    # flat out" case this function's docstring promised. It printed "budget reserved for the
-    # breadth sweep", which reserved nothing.
+    # CHARGE BREADTH WHAT IT COSTS: per REQUEST (at most LINKEDIN_PAGES per keyword, and
+    # usually 0 — the guest endpoint is free), never per record. Reserving the per-record
+    # figure starved the targeted backfill at every realistic budget.
     breadth = LINKEDIN_LIMIT_MAX
     left = per_day - LINKEDIN_PAGES * n_kw
     # the targeted sweep bills ~0.75 records/company (67 for 88, measured), and only what
@@ -909,27 +770,17 @@ def _targeted_inputs(cap=100, day=None):
     COMPANY. This is the recovery path for the largest open coverage item in the repo: the
     active rows whose all-time-high job count is zero because their board MOVED.
 
-    **The company goes in the `company` field, never in `keyword`.** The dataset takes a
-    dedicated `company` input, and until 2026-08-23 this function built
-    `keyword: "<name> data analyst"` instead — LinkedIn then ranked on "data analyst" and
-    treated the name as spare tokens. A/B tested live that day, 20 stale companies each:
+    **The company goes in the `company` field, never in `keyword`** — concatenated into the
+    keyword, LinkedIn ranks on the keyword and treats the name as spare tokens. A/B, 20
+    stale companies each:
 
         keyword: "<name> data analyst"    160 records billed,  0 on-target
         company: "<name>", keyword: "..."  25 records billed, 22 on-target (88%)
 
-    Two things follow, and the second is why `cap` could go from 20 to 100. Scoping is not
-    just more accurate, it is **6x cheaper**: an unscoped keyword query always returns
-    `limit_per_input` records (LinkedIn can always fill 8 slots with SOMETHING), while a
-    scoped one returns only what that employer actually has — 13 of the 20 returned nothing
-    and billed nothing. Measured cost is ~1.25 records/company, so the whole targetable list
-    now fits in one run for less than the old 20 cost. `cap` and the rotation below are kept
-    only as a bound in case `stale.json` grows past 100; today it holds 88 targetable rows,
-    so nothing rotates.
-
-    ROTATES when it has to. `stale.json` is rebuilt every digest in companies.csv row order
-    (pipeline/health.record iterates `results.items()`), so `unresolved[:cap]` was a stable
-    prefix, not a sample: the same 20 names went to Bright Data every single day and the
-    other 90 of 110 were never searched once. The window advances by day-of-year.
+    Scoping is also ~6x cheaper: a scoped query bills only what that employer actually has
+    (~1.25 records/company). ROTATES by day-of-year: `stale.json` is rebuilt in stable row
+    order, so a fixed `[:cap]` prefix is not a sample — it re-searches the same names daily
+    and never reaches the rest.
     """
     import datetime as _d
     stale = _load_json("cloud_state/stale.json")
@@ -965,13 +816,10 @@ def main():
     jobs, seen = [], set()
     per_source = {}
     # `per_source` feeds pipeline/sources.py, which answers ONE question: is this source
-    # still returning anything? That is a property of the source, so every entry here counts
-    # RAW RECORDS RECEIVED, before normalize()/dedup. Until 2026-08-23 indeed recorded
-    # post-filter unique jobs while the dataset sources recorded raw records, so the same
-    # number meant two different things and a fully-rejected Indeed page would have been
-    # scored as a dead source. The kept count is printed on the line below each source.
-    # Indeed first: it is a single unlocked request per query, so it costs seconds and
-    # cannot be starved by the dataset polling below timing out.
+    # still returning anything? That is a property of the SOURCE, so every entry counts RAW
+    # RECORDS RECEIVED, before normalize()/dedup — a fully-rejected page is not a dead
+    # source. Indeed first: one unlocked request per query, so it cannot be starved by the
+    # dataset polling below timing out.
     n_indeed_raw = 0
     for q in (INDEED_QUERIES if have_bd else []):
         try:
@@ -1041,19 +889,14 @@ def main():
             jobs.append(j)
             kept += 1
         print(f"[linkedin:{label}] {len(cards)} cards -> {kept} new")
-    # PRESENT, not parsed. `n_li_raw` counts what _li_cards managed to build; if LinkedIn
-    # flips an attribute order or wraps the subtitle, half the cards vanish and the source
-    # still reports itself healthy. That is this repo's signature failure applied to its own
-    # discovery source, so the liveness number is what the page CONTAINED.
+    # PRESENT, not parsed: if LinkedIn changes its markup, half the cards vanish from the
+    # parse while the source still looks healthy — liveness is what the page CONTAINED.
     if n_li_present and n_li_raw < n_li_present * 0.8:
         print(f"::warning::LinkedIn parser recovered only {n_li_raw} of {n_li_present} cards "
               f"present — markup drift, check _li_cards. See ARCHITECTURE.md 1a.", flush=True)
-    # cards PRESENT is the source's liveness; a broken PARSER is the ::warning:: above,
-    # a different failure with a different owner.
     per_source["linkedin"] = n_li_present
-    # SOURCE_PATH existed with three writes and ZERO reads — a guard that was documented and
-    # did not exist. Which path served is the difference between "LinkedIn went quiet" and
-    # "the free endpoint started refusing us and we are now paying for everything".
+    # Which path served is the difference between "LinkedIn went quiet" and "the free
+    # endpoint started refusing us and we are now paying for everything".
     print(f"[linkedin] {n_li_raw} cards across {len(queries)} queries "
           f"({len(_LI_KEYWORDS)} national + {len(queries) - len(_LI_KEYWORDS)} city, free-only) · "
           f"path free={SOURCE_PATH['linkedin_free']} paid={SOURCE_PATH['linkedin_paid']} "
@@ -1073,22 +916,16 @@ def main():
     targeted = _targeted_inputs(cap=targeted_cap) if targeted_cap else []
     if targeted:
         li_ds = LINKEDIN_DATASET
-        # Cap by RECORDS. `plan_spend` sizes this sweep on an empirical 0.75 records per
-        # company, but the API's own worst case is `limit_per_input * len(inputs)` = 8 x 100 =
-        # 800 records in one morning — 16% of the monthly pool from a run budgeted at 75. The
-        # low unit cost comes from the `company` scoping; if LinkedIn ever changes how that
-        # filter behaves, an unscoped query returns limit_per_input every time. Enforce the
-        # budget against the trigger's own limit rather than against an assumption.
+        # Cap by RECORDS against the trigger's own limit, not against the empirical 0.75
+        # records/company: the API's worst case is limit_per_input * inputs = 800 records
+        # in one morning if the `company` scoping ever stops working.
         per_input = max(1, min(8, int(targeted_cap / max(1, len(targeted)))))
         runs.append(("linkedin-targeted", li_ds, "keyword", targeted, per_input))
         print(f"targeting {len(targeted)} unresolved-broken companies via discovery")
     else:
-        # Record the zero whenever the sweep does not run — for EITHER reason. This was
-        # `elif not targeted_cap:`, so it covered the no-budget case and missed the one its
-        # own comment named: a HEALTHY stale.json with nothing to target. The key then simply
-        # stopped being written, `sources.stale()` kept reading the frozen `last_run`, and the
-        # digest printed `linkedin-targeted: nothing for Nd` every morning forever — a death
-        # report for a source that was working perfectly and had nothing to do.
+        # Record the zero whenever the sweep does not run, for EITHER reason (no budget OR
+        # nothing to target) — an unwritten key freezes `last_run` and reads as a death
+        # report for a source that was working perfectly.
         per_source["linkedin-targeted"] = 0
         print("targeted backfill SKIPPED this run — no budget or nothing to target")
     for n, ds, disc, inputs, limit in runs:
@@ -1116,17 +953,13 @@ def main():
         print(f"[names] {n_junior} junior/student postings kept for their employer name "
               f"only — not cached, not published")
     if cacheable:
-        # MERGE, never truncate. This file is shared with discovery_telegram.py, which runs
-        # AFTER this step; a truncating write here deleted every Telegram-sourced job on
-        # 2026-08-21 (79 verified roles lost, unrecoverable because the telegram watermark
-        # had already advanced past them). Merge by (company,title), prune past the TTL.
+        # MERGE, never truncate: discovery_telegram.py shares this file and runs AFTER this
+        # step — a truncating write here cost 79 verified Telegram roles once (2026-08-21),
+        # unrecoverable because the telegram watermark had advanced past them. And ABSENT is
+        # legitimately empty while CORRUPT is not: overwriting a half-written file with this
+        # run's jobs alone is the same incident by another door.
         import datetime as _dtm
         cut = (_dtm.date.today() - _dtm.timedelta(days=21)).isoformat()
-        # ABSENT is legitimately empty; CORRUPT is not. This function then writes the merged
-        # list back, so collapsing the two deleted every cached job from one half-written
-        # file — and this is the process that WRITES that file, first, non-atomically, under
-        # `|| echo` + continue-on-error. discovery_telegram then advances its watermark over
-        # the wreckage. That is the 2026-08-21 incident, 79 verified roles, exactly.
         prev = []
         if os.path.exists("discovered_cache.json"):
             try:
@@ -1140,12 +973,9 @@ def main():
                     # shape that still destroyed the cache
                     raise ValueError(f"list of {type(prev[0]).__name__}, not job dicts")
             except ValueError as e:
-                # Skip the CACHE WRITE only. This used to `return`, which sat above
-                # sources.record(), report_bd_spend(), the research_companies.json bridge and
-                # out/discovered_companies.json — so a corrupt-cache morning was also a
-                # morning with no source-health record and no budget warning. That is the
-                # same defect discovery_telegram._health() was moved to fix, in the other
-                # script. Fail safe on the file; keep reporting.
+                # Skip the CACHE WRITE only, never `return`: main() must always reach
+                # sources.record(), the spend report and the names bridge (see the no-return
+                # test). Fail safe on the file; keep reporting.
                 print(f"::error::discovered_cache.json exists but will not parse ({e}) — "
                       f"NOT overwriting it with this run's jobs alone. Fix or delete the "
                       f"file and re-run; nothing has been lost yet.", flush=True)
@@ -1173,22 +1003,17 @@ def main():
     else:
         print("no records fetched — keeping yesterday's discovered_cache.json")
     # companies we don't scan directly yet -> hand to the auto-expand resolver.
-    # VALIDATE AT THE SOURCE (HANDOFF §4d item 9): the employer field arrives verbatim from
-    # the aggregator, and sometimes it is the whole posting headline ("Data researcher -
-    # Navina") or a staffing agency. Five such rows were ACTIVE and fetched daily before
-    # this filter existed, and every downstream layer had to grow its own guard against
-    # them. A non-company also costs the nightly hunt a search: it went looking for
-    # "AppSec"'s careers page and came back with remoterocketship.com/company/guildmortgage.
+    # VALIDATE AT THE SOURCE: the employer field arrives verbatim from the aggregator and is
+    # sometimes a posting headline ("Data researcher - Navina") or a staffing agency —
+    # unfiltered, such rows went ACTIVE and every downstream layer grew its own guard.
     from pipeline.firmographics import looks_like_junk
     from pipeline.recruiters import is_recruiter as _is_rec
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
     new_cos = {}
     n_junk = n_rec = 0
-    # NEW COMPANIES PER SOURCE is the number this layer exists to produce, and until
-    # 2026-08-23 nothing printed it — only the aggregate. That is how the breadth sweep came
-    # to return 0 new companies for an unknown length of time while its record count looked
-    # perfectly healthy (29 jobs, 27 employers, 25 of them already rows). A source can be
-    # alive, on-budget and completely useless at the same time; this is the line that says so.
+    # NEW COMPANIES PER SOURCE is the number this layer exists to produce — a source can be
+    # alive, on-budget and completely useless at the same time (a healthy-looking record
+    # count once hid a 0-new-companies breadth sweep), and this is the line that says so.
     import collections as _c
     yield_by_src = _c.Counter()
     seen_by_src = _c.defaultdict(set)
