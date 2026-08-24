@@ -78,6 +78,18 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     _dead_sources = _sources_mod.stale()
     for _line in _dead_sources:
         print(f"::warning::discovery source {_line}", flush=True)
+    # Registry health reaches a reader (docs/BACKLOG.md 12/13/34). alarms_state, NOT
+    # alarms(): the latter probes the resolution ladder and this job installs no Playwright.
+    # Registry facts only, no env, no network, ~0.25s; judged against YESTERDAY's census
+    # (the census re-baselines after the invariant gate, later in the workflow).
+    try:
+        from registry_health import alarms_state as _registry_alarms
+        _registry_alarms_lines = _registry_alarms()
+    except Exception as e:              # noqa: BLE001 -- never block the product, but SAY so
+        print(f"  [registry] health check skipped: {e!r}", file=sys.stderr, flush=True)
+        _registry_alarms_lines = []
+    for _line in _registry_alarms_lines:
+        print(f"::warning::registry {_line}", flush=True)
 
     rows = load_companies()
     # never scan recruiting/staffing agencies — they re-post dozens of client roles and flood
@@ -409,6 +421,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         "first_scan": stats["first_scan"],
         "stages": stages.summary(),
         "dead_sources": _dead_sources,
+        "registry_alarms": _registry_alarms_lines,
         "paths": dict(paths),
         "failed_companies": failed_companies,
     }

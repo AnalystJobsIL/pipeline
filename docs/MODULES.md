@@ -51,6 +51,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `triage_dark.py` | triage-dark | 18:00 classification of every parked row by failure mode (`dark-triage <date>: <mode>`) |
 | `validate_empty.py` | audit-coverage | Sunday cross-validation that 'validated-empty' rows really are empty |
 | `wayback_rescue.py` | audit-coverage | Sunday rescue of unreachable rows via the Wayback Machine |
+| `registry_health.py` | daily-digest (`--census`, after the invariant gate), listing-hunt (`--ladder`) | read-only registry census + row-deletion guard, recomputed re-check ownership matrix, per-tool pool floors, and the unsupported-ATS build queue. `--census` and `--ladder` are the only things it writes; `alarms_state()` is what the daily mail prints |
 
 ## Libraries - no workflow runs them, live code imports them
 
@@ -67,7 +68,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 
 ## Operator tools - a human or an agent runs these on demand
 
-Live and documented, but nothing in CI calls them. The firmographics three are driven by the Windows scheduled task `IsraeliJobs-Firmographics`, which no GitHub Action can see.
+Live and documented; nothing in CI calls them on their own (registry_health moved to Scheduled when the digest started running its census). The firmographics three are driven by the Windows scheduled task `IsraeliJobs-Firmographics`, which no GitHub Action can see.
 
 | module | what it does |
 |---|---|
@@ -76,7 +77,6 @@ Live and documented, but nothing in CI calls them. The firmographics three are d
 | `company_type_analysis.py` | joins firmographics with matched jobs -> out/company_type_analysis.{json,md} (ARCHITECTURE.md section 7) |
 | `fill_employees_llm.py` | re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Same Windows chain |
 | `firmo_health_check.py` | tripwire: is the firmographics chain actually classifying anything? |
-| `registry_health.py` | read-only registry census + row-deletion guard, recomputed re-check ownership matrix, live probe of every resolution rung, and the unsupported-ATS build queue. `--census` is the only thing it writes |
 | `research_firmographics.py` | bulk firmographics research + `--export`. Run every 6h by the Windows task `IsraeliJobs-Firmographics` via run_firmo_chain.cmd |
 | `setup_brightdata.py` | one-time: store the Bright Data token + zone in secrets.env |
 | `setup_serpapi_key.py` | one-time: store the SerpApi key (quota exhausted until 2026-09-01) |

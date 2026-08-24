@@ -62,6 +62,7 @@ ABSENT_OK = {
     "state/firmographics.json": "gitignored local export",
     "state/firmo_chain.log": "gitignored log",
     "digests/latest.html": "produced by the digest run",
+    "cloud_state/registry_ladder.json": "produced by listing-hunt.yml (registry_health --ladder)",
     "run_daily.ps1": "present, but only referenced historically",
     # proposals, named on purpose so the backlog stays greppable
     "pipeline/ats.py": "docs/BACKLOG.md consolidation item 1",

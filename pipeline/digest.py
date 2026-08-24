@@ -640,6 +640,8 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
         lines.append(f"- Held over (email cap): {s['email_overflow']}")
     if s.get("dead_sources"):
         lines.append("- **Sources not producing:** " + "; ".join(s["dead_sources"]))
+    if s.get("registry_alarms"):
+        lines.append("- **Registry:** " + "; ".join(s["registry_alarms"]))
     if s.get("stages"):
         lines.append(f"- Stage order: {s['stages']}")
     if s.get("failed_companies"):
@@ -1376,6 +1378,8 @@ def _text_audit(s):
         lines.append(f"  held over (email cap): {s['email_overflow']}")
     if s.get("dead_sources"):
         lines.append("  SOURCES NOT PRODUCING: " + "; ".join(s["dead_sources"]))
+    if s.get("registry_alarms"):
+        lines.append("  REGISTRY: " + "; ".join(s["registry_alarms"]))
     if s.get("stages"):
         lines.append(f"  stage order: {s['stages']}")
     if s.get("failed_companies"):
@@ -1402,6 +1406,8 @@ def _html_audit(s, esc):
            if s.get("email_overflow") else "")
         + (f'<br><b>Sources not producing:</b> {esc("; ".join(s.get("dead_sources") or []))}'
            if s.get("dead_sources") else "")
+        + (f'<br><b>Registry:</b> {esc("; ".join(s.get("registry_alarms") or []))}'
+           if s.get("registry_alarms") else "")
         + (f'<br>Stage order: {esc(s.get("stages",""))}' if s.get("stages") else "")
         + (f'<br>Failed companies: {esc(", ".join(fc))}' if fc else "")
         + '</div>'

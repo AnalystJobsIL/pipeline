@@ -745,6 +745,70 @@ def test_the_mailed_alarm_lines_do_not_change_on_a_day_nothing_changed(tmp_path,
     assert not any(re.search(r"\d+d old", x) for x in a)
 
 
+def test_the_digest_renders_registry_alarms_only_when_there_are_any():
+    """The health block joins the Run-audit block in all three renderers, copying the
+    `dead_sources` carrier. An empty list renders nothing -- the inbox relay dedups the
+    digest on a content hash, so a healthy day must not change the body at all."""
+    from pipeline import digest as D
+    base = {"companies_scanned": 1, "companies_failed": 0, "jobs_fetched": 0,
+            "israel_matched": 0, "accepted": 0, "after_merge": 0, "new": 0,
+            "board_count": 0, "llm_calls": 0, "jd_filled_inline": 0, "email_overflow": 0,
+            "first_scan": 0, "stages": "", "dead_sources": [], "paths": {},
+            "failed_companies": []}
+    quiet = dict(base, registry_alarms=[])
+    loud = dict(base, registry_alarms=["re-check pool COLLAPSED to zero: crack_walled was 25"])
+    md_q = D.build_markdown([], "2026-08-24", quiet)[1]      # (subject, body)
+    md_l = D.build_markdown([], "2026-08-24", loud)[1]
+    assert "Registry" not in md_q and "**Registry:** re-check pool COLLAPSED" in md_l
+    assert "REGISTRY" not in D._text_audit(quiet)          # returns one string
+    assert "REGISTRY: re-check pool COLLAPSED" in D._text_audit(loud)
+    esc = lambda x: str(x)
+    assert "Registry" not in D._html_audit(quiet, esc)
+    assert "<b>Registry:</b> re-check pool COLLAPSED" in D._html_audit(loud, esc)
+
+
+def test_the_census_refreshes_only_after_the_invariant_gate():
+    """Text-parsed (no PyYAML in CI). The census step must sit AFTER the hard invariant
+    guard -- a census before it blesses a corrupted registry as the new baseline -- and
+    must be continue-on-error so it can never withhold the digest. The ladder file is
+    written by the one job with Playwright, and that job must actually `git add` it."""
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    dd = open(os.path.join(root, ".github", "workflows", "daily-digest.yml"),
+              encoding="utf-8").read()
+    i_gate = dd.index("python check_invariants.py")
+    i_census = dd.index("registry_health.py --census")
+    i_add = dd.index("git add cloud_state")
+    assert i_gate < i_census < i_add, "the census must run after the gate and before the commit"
+    block = dd[i_census:i_census + 300]
+    assert "continue-on-error: true" in block, "the census step must never withhold the digest"
+    lh = open(os.path.join(root, ".github", "workflows", "listing-hunt.yml"),
+              encoding="utf-8").read()
+    assert "registry_health.py --ladder" in lh
+    assert "cloud_state/registry_ladder.json" in lh[lh.index("git add companies.csv"):], (
+        "listing-hunt lists explicit paths in its git add; the ladder file must be one")
+
+
+def test_the_mail_hook_does_not_record_the_ladder():
+    """`--census` must write `alarms_state` (registry facts) to the alarms file, never
+    `alarms()` (which adds the resolution ladder): the digest job installs no Playwright,
+    and recording the ladder from there is exactly BACKLOG 13's bug via a file."""
+    import ast
+    import inspect
+    import registry_health as R
+    tree = ast.parse(inspect.getsource(R.main).lstrip())
+    writes = [n for n in ast.walk(tree) if isinstance(n, ast.Call)
+              and getattr(n.func, "id", "") == "write_json"
+              and getattr(n.args[0], "id", "") == "ALARMS"]
+    assert writes, "the --census branch no longer writes ALARMS"
+    src = ast.get_source_segment(inspect.getsource(R.main).lstrip(), writes[0])
+    assert "a_mail" in src, src
+    assigns = [n for n in ast.walk(tree) if isinstance(n, ast.Assign)
+               and any(getattr(t, "id", "") == "a_mail" for t in n.targets)]
+    assert assigns and getattr(assigns[0].value.func, "id", "") == "alarms_state", (
+        "a_mail must come from alarms_state, not alarms")
+
+
 def test_a_pool_that_falls_to_zero_is_an_alarm():
     """docs/BACKLOG.md 34: check_invariants has one aggregate floor and crack_walled went
     25 -> 2 -> 0 under it, green every night. `pool_floor` compares each tool to the size

@@ -123,6 +123,14 @@ jobs:
       - name: Invariant guard (blocks a corrupted registry from being committed)
         run: python check_invariants.py
 
+      - name: Re-baseline the registry census (only a registry that passed the gate)
+        # AFTER the hard invariant guard on purpose: a census taken before it would bless a
+        # corrupted registry as the new baseline, and the deletion registry_health exists
+        # to report would be invisible from then on. The alarms the pipeline mailed this
+        # morning were judged against YESTERDAY's census. No env, no network, ~0.3s.
+        run: python registry_health.py --census || echo "registry census skipped"
+        continue-on-error: true
+
       - name: Persist state back to the repo
         run: |
           git config user.name  "github-actions[bot]"

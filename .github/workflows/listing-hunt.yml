@@ -100,6 +100,11 @@ jobs:
       # implicit cron ordering into something the next stage can actually READ: the digest
       # warns in its audit block when its prerequisites did not run today, instead of
       # silently building on yesterday's URLs.
+      - name: Record the resolution-ladder state (this is the one job with Playwright + Bright Data)
+        # rung lines only, to cloud_state/registry_ladder.json; alarms_state re-emits them in
+        # the daily mail and reports this file's date when it goes stale. live=False: no spend.
+        run: python registry_health.py --ladder || echo "ladder probe skipped"
+        continue-on-error: true
       - name: Stamp the 'repair' stage
         if: always()
         run: python -m pipeline.stages stamp repair
@@ -113,7 +118,7 @@ jobs:
         run: |
           git config user.name  "audit-bot"
           git config user.email "audit@users.noreply.github.com"
-          git add companies.csv scraped_cache.json cloud_state/pipeline_stages.json
+          git add companies.csv scraped_cache.json cloud_state/pipeline_stages.json cloud_state/registry_ladder.json
           git commit -m "listing-hunt $(date -u +%F) [skip ci]" || { echo "no change"; exit 0; }
           for i in 1 2 3 4 5; do
             if git pull --rebase --autostash origin ${GITHUB_REF_NAME}; then
