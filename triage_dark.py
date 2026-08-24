@@ -83,6 +83,16 @@ TARGET_NOTES = re.compile(r"no listing found|no IL listing|no ATS detected|dark-
 from pipeline.verdicts import TERM_RX as SKIP_NOTES
 
 
+def in_triage_pool(r):
+    """The triage pool's OWN membership rule (the dateless ownership core -- `main()`
+    composes it with `probe-woken` and `_needs_triage`, which are cooldowns, not
+    ownership). `registry_health` imports this; a `search`->`match` edit here went
+    suite-green while the 18:00 selection dropped to zero (wave-6 R2)."""
+    return (len(r) >= 6 and r[4] == "false"
+            and bool(TARGET_NOTES.search(r[5] or ""))
+            and not SKIP_NOTES.search(r[5] or ""))
+
+
 def fetch(url, timeout=15):
     """Returns (status, html). status None = unreachable; -1 = blocked."""
     try:
@@ -262,8 +272,7 @@ def main():
 
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [r for r in rows
-               if r and len(r) >= 6 and r[4] == "false"
-               and TARGET_NOTES.search(r[5] or "") and not SKIP_NOTES.search(r[5] or "")
+               if r and in_triage_pool(r)
                # A row woken by the 05:00 probe belongs to TONIGHT'S 19:00 hunt. Triage runs
                # at 18:00, one hour earlier, and `probe_candidates._wake_note` strips the
                # `dark-triage` segment — which resets `_needs_triage` to True, so the woken

@@ -62,6 +62,15 @@ _NAME_STOP = {"israel", "israeli", "ltd", "ltd.", "inc", "inc.", "the", "group",
               "companies", "corp", "corporation", "holdings", "international", "global",
               "studios"}
 
+# Paid-call budget for the unlocker rung below. BACKLOG 36 filed the rung as uncapped
+# spend; closing BACKLOG 59 put the key on two Sunday cron steps, which armed it (wave-6
+# R3: ceiling 69+9 calls/Sunday, growing with the pool, vs bd_rescue's own triple-capped
+# <=600/night). One process = one workflow step, so a per-process counter IS the per-step
+# cap. Exhausted, the rung is skipped and the page honestly reads None -- identical to the
+# key being absent for that row.
+_UNLOCK_BUDGET = int(os.environ.get("PAGE_UNLOCK_BUDGET", "100") or 0)
+_UNLOCK_SPENT = 0
+
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
@@ -169,9 +178,17 @@ def _name_targets(name):
         variants += [(m.group(1) + " " + m.group(3)).strip(), m.group(2).strip()]
     out = set()
     for v in variants:
-        cn = _norm(v)
         core = _norm("".join(w for w in re.findall(r"[A-Za-z0-9]+", v)
                              if w.lower() not in _NAME_FILLER))
+        if not core:
+            # a variant that is PURE filler is not an identity. `Dun & Bradstreet
+            # (Israel) Ltd.`'s parenthetical half made bare `israel` a target, and with
+            # `_EMBED_TOKEN_FORMS` stripping, `israeljobs`/`israelcareers`/`israeltech`
+            # all collapsed onto it -- another company's board promoted on the Sunday
+            # path (wave-6 R1, B1). The halves the alias rule exists for (msd, intel,
+            # broadcom, aristocrat...) are all non-filler and keep both forms.
+            continue
+        cn = _norm(v)
         out |= {t for t in (cn, core) if t and len(t) >= 2}
     return out
 
@@ -185,7 +202,12 @@ def _tenant_near(candidate, targets):
     if not nc:
         return False
     forms = {nc, _TENANT_SUFFIX.sub("", nc)}
-    return any(f and abs(len(f) - len(t)) <= 1 and (f in t or t in f)
+    # A form or target under 3 chars must match EXACTLY: the +-1-with-containment window
+    # collapses at that length -- `_TENANT_SUFFIX` digit-stripping turns the Comeet uid
+    # `F2.004` into `f`, which is contained in `f5`, and `hp` admits `hpe` (wave-6 R3's
+    # cross-accept inventory). `hp`'s own tenant `hp` still matches by equality.
+    return any(f and (f == t if min(len(f), len(t)) < 3
+                      else abs(len(f) - len(t)) <= 1 and (f in t or t in f))
                for f in forms for t in targets)
 
 
@@ -350,7 +372,9 @@ def page_names_company(name, url, html=""):
                 400000).decode("utf-8", "replace")
         except Exception:  # noqa: BLE001
             html = ""
-    if len(html) < 2000 and os.environ.get("BRIGHTDATA_API_KEY"):
+    global _UNLOCK_SPENT
+    if (len(html) < 2000 and os.environ.get("BRIGHTDATA_API_KEY")
+            and _UNLOCK_SPENT < _UNLOCK_BUDGET):
         # A bot wall renders nearly empty; the residential unlocker sees what a browser sees.
         # Gate on the KEY, not on SCRAPE_VIA_UNLOCKER: audit-coverage.yml runs the crack tool
         # without that flag, and a missing flag must not silently downgrade the gate.
@@ -360,6 +384,7 @@ def page_names_company(name, url, html=""):
         # module in. Moving `unlock` into `pipeline/` is filed as plumbing work.
         try:
             from bd_rescue import unlock
+            _UNLOCK_SPENT += 1
             html = (html or "") + chr(10) + (unlock(url) or "")
         except Exception:  # noqa: BLE001
             pass

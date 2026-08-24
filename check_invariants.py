@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import csv
 import re
+
+from pipeline.verdicts import TERMINAL as _VERDICTS_TERMINAL
 import sys
 from collections import Counter
 
@@ -61,7 +63,10 @@ POOL = (r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|host
 #   alias-of — a second row for a company we already scan at the SAME url. Not a
 #   dark company; the opposite, a company covered twice (roles listed under both
 #   "Intel" and "Intel Israel").
-TERMINAL = r"defunct|domain-dead|alias-of"
+# THE shared list (docs/BACKLOG.md 47) — this file gates three writer workflows'
+# commits now, and a private narrower copy here is exactly what registry_health
+# records producing 4 of 5 false-positive orphans.
+TERMINAL = "|".join(re.escape(t) for t in _VERDICTS_TERMINAL)
 # the modes triage_dark.py may write. A truncated one ("page-emp") matches no pool.
 TRIAGE_MODES = {"page-empty", "extract-gap", "wrong-page", "url-dead", "js-shell",
                 "blocked", "acquired"}

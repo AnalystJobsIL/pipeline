@@ -877,5 +877,95 @@
     "replace": "    return any(f and abs(len(f) - len(t)) <= 2 and (f in t or t in f)\n               for f in forms for t in targets)",
     "why": "wave-5 R2: at +-2 the digit-stripped Comeet uid `A5.000` -> `a` is CONTAINED in `zap` and 8 cross-company accepts appear on the two embed write paths, all suite-green. The window is the whole tightness; only the extreme value (99) was recorded.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "embed-filler-target",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "_name_targets",
+    "class": "M1-gate-removal",
+    "find": "        if not core:\n            # a variant that is PURE filler is not an identity.",
+    "replace": "        if False:\n            # a variant that is PURE filler is not an identity.",
+    "why": "wave-6 R1 (B1): with the filter gone, `Dun & Bradstreet (Israel) Ltd.`'s parenthetical half makes bare `israel` a target and every israel* slug promotes another company's board on the Sunday path.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "tenant-short-exact-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "_tenant_near",
+    "class": "M3-branch-narrowing",
+    "find": "    return any(f and (f == t if min(len(f), len(t)) < 3",
+    "replace": "    return any(f and (f == t if min(len(f), len(t)) < 1",
+    "why": "wave-6 R3: disables the short-form equality rule; the digit-stripped Comeet uid `f` is contained in `f5` and `hp` admits `hpe`. Also defangs the len>=2 target floor mutant R1 filed -- with equality required, a 1-char target admits only its exact token.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "embed-words-anchor-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "_EMBED_TOKEN_WORDS",
+    "class": "M7-constant-drift",
+    "find": "    r\"networks|network|city|medical|global|digital)$\")",
+    "replace": "    r\"networks|network|city|medical|global|digital)\")",
+    "why": "wave-6 R1 (filed): without the tail anchor, `techstars` strips its `tech` PREFIX to `stars` and matches the registry name `Stars` -- mid-token stripping manufactures identities.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "unlock-budget-drop",
+    "file": "pipeline/identity_gate.py",
+    "symbol": "page_names_company",
+    "class": "M7-constant-drift",
+    "find": "    if (len(html) < 2000 and os.environ.get(\"BRIGHTDATA_API_KEY\")\n            and _UNLOCK_SPENT < _UNLOCK_BUDGET):",
+    "replace": "    if (len(html) < 2000 and os.environ.get(\"BRIGHTDATA_API_KEY\")\n            and True):",
+    "why": "wave-6 R3: removes the paid-call budget from the unlocker rung -- BACKLOG 36's uncapped spend, armed the day the key landed on two Sunday cron steps.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "verdicts-terminal-drop-redundant",
+    "file": "pipeline/verdicts.py",
+    "symbol": "TERMINAL",
+    "class": "M7-constant-drift",
+    "find": "TERMINAL = (\"defunct\", \"domain-dead\", \"duplicate of\", \"redundant\", \"recruiter\", \"alias-of\")",
+    "replace": "TERMINAL = (\"defunct\", \"domain-dead\", \"duplicate of\", \"recruiter\", \"alias-of\")",
+    "why": "wave-6 R2: the unified list's ADDED tokens were unguarded; dropping `redundant` re-opens Marvell Israel (a deactivated scrape twin) into crack_walled's activating pool, publishing its roles under two rows.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "probe-pool-match",
+    "file": "probe_candidates.py",
+    "symbol": "in_probe_pool",
+    "class": "M3-branch-narrowing",
+    "find": "            and bool(PROBE_POOL.search(r[5] or \"\"))",
+    "replace": "            and bool(PROBE_POOL.match(r[5] or \"\"))",
+    "why": "wave-6 R2: search->match at the consumer anchored the pool token to position 0; every real note carries it mid-cell, so the 05:00 probe emptied 130 -> 0 with the suite green -- and the probe is the only writer that wakes rows for the hunt.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "triage-target-match",
+    "file": "triage_dark.py",
+    "symbol": "in_triage_pool",
+    "class": "M3-branch-narrowing",
+    "find": "            and bool(TARGET_NOTES.search(r[5] or \"\"))",
+    "replace": "            and bool(TARGET_NOTES.match(r[5] or \"\"))",
+    "why": "wave-6 R2: same edit, 18:00 triage: 18 -> 0 selected, suite green.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "triage-skip-drop",
+    "file": "triage_dark.py",
+    "symbol": "in_triage_pool",
+    "class": "M1-gate-removal",
+    "find": "            and not SKIP_NOTES.search(r[5] or \"\"))",
+    "replace": "            and True)",
+    "why": "wave-6 R2 (filed): deleting the terminal exclusion admits 23 domain-dead/defunct rows to a notes writer whose 220-char trim eventually drops the terminal token itself.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "crack-pool-terminal-drop",
+    "file": "crack_walled.py",
+    "symbol": "in_crack_pool",
+    "class": "M1-gate-removal",
+    "find": "            and not TERMINAL.search(r[5] or \"\")\n            and not is_recruiter(r[0]))",
+    "replace": "            and not is_recruiter(r[0]))",
+    "why": "wave-6 R2: the crack pool ACTIVATES; without the terminal exclusion the redundant twin and the alias rows re-enter it.",
+    "must_be_killed_by_behavioural": true
   }
 ]

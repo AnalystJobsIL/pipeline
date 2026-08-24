@@ -157,6 +157,9 @@ jobs:
               done
               if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
                 python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
+                # the merged registry passes the same gate before it is committed -- the
+                # fourth sibling of the block in retry-unreachable/auto-expand/audit-coverage
+                python check_invariants.py || { echo "::error::merged registry fails invariants"; exit 1; }
               fi
               # scraped_cache.json has eight writers across six workflows, each rewriting the
               # whole dict — restoring ours wholesale deleted every company another workflow

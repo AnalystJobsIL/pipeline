@@ -50,9 +50,8 @@ from pipeline.recruiters import is_recruiter
 from pipeline.verdicts import in_pool
 
 # States no re-check pool may re-open — THE shared list (docs/BACKLOG.md 47, closed).
-# This copy used to spell 3 of the 6 tokens; deriving it WIDENS the exclusion by
-# `duplicate of`/`redundant`/`recruiter` — 9 rows measured, every one correctly final
-# (recruiter rows, a kept-inactive duplicate, three redundant-scrape twins).
+# This copy used to spell 3 of the 6 tokens; deriving it changes THIS tool's pool by 0
+# rows (`in_pool()` already excluded the other tokens) — wave-6 R1 measured it.
 from pipeline.verdicts import TERM_RX as TERMINAL
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
@@ -305,9 +304,10 @@ def main():
     parked = [(i, r) for i, r in enumerate(rows)
               if r and len(r) >= 6 and r[4] == "false" and not _fresh(r[0])
               and in_pool(r[5] or "")
-              # `in_pool` treats only defunct/domain-dead/duplicate/redundant/recruiter as
-              # terminal — `alias-of` is NOT in pipeline/verdicts.TERMINAL (see
-              # docs/BACKLOG.md). An alias row is the SECOND row for a company we already
+              # `alias-of` IS in the shared `pipeline/verdicts.TERMINAL` since the
+              # consolidation (docs/BACKLOG.md 47), so `in_pool` excludes alias rows too;
+              # the belt-and-braces check below predates that and stays because this tool
+              # ACTIVATES. An alias row is the SECOND row for a company we already
               # scan at the same board, so this tool would search, find that same working
               # board, verify it with real Israel jobs and re-activate the duplicate —
               # publishing every eBay role twice. `listing_hunt` and `deep_validate` both

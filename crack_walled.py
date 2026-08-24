@@ -44,9 +44,10 @@ from pipeline.company_identity import looks_like_a_job_listing_page, page_mentio
 from pipeline.recruiters import is_recruiter
 
 # States no re-check pool may re-open — THE shared list (docs/BACKLOG.md 47, closed).
-# This copy used to spell 3 of the 6 tokens; deriving it WIDENS the exclusion by
-# `duplicate of`/`redundant`/`recruiter` — 9 rows measured, every one correctly final
-# (recruiter rows, a kept-inactive duplicate, three redundant-scrape twins).
+# This copy used to spell 3 of the 6 tokens; deriving it moves exactly ONE row out of
+# this pool (`Marvell Israel`, note `redundant scrape dup of working ATS twin`, whose
+# active twin is scanned) — wave-6 R1 measured it; the wider 9-row figure in an earlier
+# version of this comment was the parked-row census, not this pool.
 from pipeline.verdicts import TERM_RX as TERMINAL
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
@@ -92,6 +93,18 @@ def _platform_of(note, url=""):
         return _gate.host_platform(url)          # note token gone (or never written): use the host
     p = m.group(1).lower()
     return _gate._PLATFORM_ALIAS.get(p, p)
+
+
+def in_crack_pool(r):
+    """The crack pool's OWN membership rule (dateless -- `main()` adds `_recrackable`,
+    the rotation cooldown). `registry_health` imports this instead of re-spelling
+    `is_walled + terminal + recruiter`, and the behavioural cells pin each exclusion:
+    a `redundant`-noted walled twin (Marvell Israel) must never re-enter -- dropping
+    that token from the shared TERMINAL went suite-green until this existed (wave-6 R2).
+    """
+    return (len(r) >= 6 and r[4] == "false" and _gate.is_walled(r)
+            and not TERMINAL.search(r[5] or "")
+            and not is_recruiter(r[0]))
 
 
 def listing_urls(platform, m, page_url):
@@ -289,18 +302,14 @@ def main():
     _budget = int(os.environ.get("CRACK_TIME_BUDGET_MIN", "0"))
     _t0 = time.time()
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
+    # The terminal/recruiter exclusions live in `in_crack_pool` above -- this pool had
+    # NO terminal exclusion at all while the cracked branch activates; an `alias-of` twin
+    # already scans at the same board, so cracking it re-creates the duplicate the parking
+    # exists to remove, and a `domain-dead` host cannot be cracked by anything. Measured
+    # 2026-08-23: 5 of the 33 eligible rows were terminal (15% of a 60-minute budget).
     targets = [(i, r) for i, r in enumerate(rows)
-               if r and len(r) >= 6 and r[4] == "false" and _gate.is_walled(r)
-               and _recrackable(r[5] or "")
-               # This pool had NO terminal exclusion at all, while the cracked branch below
-               # sets active=true. An `alias-of` row is the second row for a company we
-               # already scan at that same board, so cracking it re-creates the duplicate
-               # the parking exists to remove; a `domain-dead` host cannot be cracked by
-               # anything. Measured 2026-08-23: 5 of the 33 eligible rows (Chakratec,
-               # Sonovia, GE HealthCare Israel, Tamar Robotics, eBay Israel) — 15% of a
-               # 60-minute nightly budget spent on rows that must never activate.
-               and not TERMINAL.search(r[5] or "")
-               and not is_recruiter(r[0])]
+               if r and in_crack_pool(r)
+               and _recrackable(r[5] or "")]
     # ROTATE: least-recently-cracked first. `_budget` below simply breaks out of the loop,
     # and this tool had no ordering at all, so on any night the budget bit the tail of the
     # list was never reached - "a time budget without rotation is permanent tail blindness",

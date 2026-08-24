@@ -60,6 +60,10 @@ jobs:
           DEEP_TIME_BUDGET_MIN: "280"
         run: python deep_validate.py --apply
         continue-on-error: true
+      - name: Registry invariants gate the commit
+        # deliberately NOT continue-on-error: a run that broke an invariant
+        # loses its work rather than committing it -- docs/BACKLOG.md 64.
+        run: python check_invariants.py
       - name: Commit verdicts
         run: |
           git config user.name  "audit-bot"
@@ -91,6 +95,8 @@ jobs:
               #  both are merged below, so nothing else is restored)
               if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
                 python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
+                # the merged registry passes the same gate before it is committed
+                python check_invariants.py || { echo "::error::merged registry fails invariants"; exit 1; }
               fi
               # scraped_cache.json has eight writers across six workflows, each rewriting the
               # whole dict — restoring ours wholesale deleted every company another workflow

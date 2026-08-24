@@ -1735,6 +1735,33 @@ def test_the_embed_vouch_recognises_the_slug_shapes_production_actually_emits():
         "zap group", "A5.000",
         "https://www.comeet.com/careers-api/2.0/company/A5.000/positions?token=x")
 
+    # wave-6 R1 (B1): a parenthetical half that is PURE FILLER is not an identity.
+    # `Dun & Bradstreet (Israel) Ltd.` must not make bare `israel` a target -- with the
+    # word-stripping layer, `israeljobs`/`israelcareers`/`israeltech` all collapsed onto
+    # it and another company's board promoted on the Sunday path. The alias rule stays
+    # for halves anchored by a non-filler word (Merck (MSD), VMware (Broadcom)).
+    assert not G.embedded_board_ok("Dun & Bradstreet (Israel) Ltd.", "israeljobs",
+                                   gh % "israeljobs"), (
+        "`israel` became an identity target via the parenthetical alias split")
+    assert G.embedded_board_ok("Dun & Bradstreet (Israel) Ltd.", "dunbradstreet",
+                               gh % "dunbradstreet"), (
+        "positive control: the row's real identity must still vouch")
+
+    # wave-6 R3's cross-accept inventory: under 3 chars the +-1-with-containment window
+    # collapses, so short forms must match EXACTLY. `_TENANT_SUFFIX` digit-stripping
+    # turns the Comeet uid `F2.004` into `f`, contained in `f5`; `hp` admitted `hpe`.
+    # HP's own two-char tenant still matches by equality.
+    assert not G.embedded_board_ok(
+        "F5", "F2.004",
+        "https://www.comeet.com/careers-api/2.0/company/F2.004/positions?token=x")
+    assert not G.embedded_board_ok("HP", "hpe", gh % "hpe")
+    assert G.embedded_board_ok("HP", "hp", gh % "hp"), (
+        "positive control: a short OWN tenant must still match exactly")
+
+    # the word-strip regex is TAIL-anchored: without the anchor, `techstars` strips its
+    # 'tech' PREFIX to 'stars' and another company's board matches the name `Stars`.
+    assert not G.embedded_board_ok("Stars", "techstars", gh % "techstars")
+
 
 def test_a_held_page_cannot_vouch_for_a_board_it_merely_embeds(tmp_path, monkeypatch):
     """Wave-4 R1 (B1, reproduced end-to-end): `validate_empty.check` fetches the row's
@@ -2804,6 +2831,58 @@ def test_the_unlocker_rung_inside_the_page_test_still_exists(monkeypatch):
     assert G.page_names_company("Bit", "https://careers.bit.example/", html=walled) is None, (
         "with no key we could not look, and that is not the same as looking and finding "
         "someone else")
+
+    # ...and the rung is BUDGETED: the key on a Sunday cron made the uncapped rung
+    # recurring paid spend (BACKLOG 36, armed by closing 59). Budget exhausted, the row
+    # honestly reads None -- same as the key being absent, never a False.
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    monkeypatch.setattr(G, "_UNLOCK_BUDGET", 0)
+    monkeypatch.setattr(G, "_UNLOCK_SPENT", 0)
+    assert G.page_names_company("Bit", "https://careers.bit.example/", html=walled) is None, (
+        "an exhausted unlocker budget must read as no-evidence, not spend anyway")
+
+
+def test_each_pool_predicate_selects_and_excludes_on_real_note_shapes():
+    """Wave-6 R2 (B3 x2): the pool constants were shared and identity-asserted, but no
+    test drove the CONSUMERS -- `search` -> `match` at probe_candidates emptied the 05:00
+    probe 130 -> 0 and the 18:00 triage 18 -> 0 with the suite green, and dropping
+    `redundant` from the unified TERMINAL re-opened `Marvell Israel` (a deactivated
+    scrape twin of a working ATS row) into crack_walled's ACTIVATING pool. These cells
+    run each tool's own `in_*_pool` predicate -- the same callable `main()` selects with
+    and `registry_health` imports -- over real note shapes with the pool token MID-NOTE,
+    so an anchored match can never pass by accident.
+    """
+    import probe_candidates as PC
+    import triage_dark as TD
+    import crack_walled as CW
+
+    # probe: token mid-note selects; a terminal token excludes; a non-http url excludes
+    base = "deep-validated 2026-08-21: no ATS detected (rendered) | monitored candidate"
+    row = lambda note, url="https://x.example/careers": ["X", "scrape", url, url, "false", note]
+    assert PC.in_probe_pool(row(base))
+    assert not PC.in_probe_pool(row(base + " | alias-of Y 2026-08-23: same board"))
+    assert not PC.in_probe_pool(row(base, url="ftp://x"))
+    assert not PC.in_probe_pool(["X", "s", "u", "https://x.example", "true", base])
+
+    # triage: mid-note target token selects; the unified terminal set excludes
+    t = "unreachable; could not scan | listing-hunt 2026-08-23: no listing found"
+    assert TD.in_triage_pool(["X", "scrape", "u", "https://x.example", "false", t])
+    assert not TD.in_triage_pool(["X", "scrape", "u", "https://x.example", "false",
+                                  t + " | defunct (site gone)"])
+
+    # crack: a walled host selects; the REDUNDANT twin must never re-enter (the row shape
+    # is Marvell Israel's, verbatim class); a recruiter never enters
+    wd = "https://marvell.wd1.myworkdayjobs.com/MarvellCareers"
+    walled = ["Marvell Israel", "scrape", wd, wd, "false",
+              "deep-validated 2026-08-21: unsupported ATS myworkdayjobs.com"]
+    assert CW.in_crack_pool(walled)
+    twin = list(walled)
+    twin[5] = "universal-scrape; 2 Israel jobs [deactivated: redundant scrape dup of working ATS twin]"
+    assert not CW.in_crack_pool(twin), (
+        "a deactivated redundant twin re-entered the ACTIVATING crack pool -- dropping "
+        "`redundant` from the shared TERMINAL was suite-green until this cell")
+    rec = list(walled); rec[0] = "Experis Israel"
+    assert not CW.in_crack_pool(rec)
 
 
 def test_every_refusal_note_keeps_the_row_in_a_re_check_pool(monkeypatch):

@@ -238,6 +238,8 @@ def pools(rows):
     not remove ownership.
     """
     import triage_dark as _triage
+    import crack_walled as _crack
+    import probe_candidates as _probe
     import listing_hunt as _hunt
     from pipeline.firmographics import looks_like_junk
 
@@ -257,8 +259,7 @@ def pools(rows):
 
     return {
         "triage_dark (18:00 daily)":
-            sel(lambda n, r: bool(_triage.TARGET_NOTES.search(n))
-                and not _triage.SKIP_NOTES.search(n)),
+            sel(lambda n, r: _triage.in_triage_pool(r)),
         "listing_hunt (19:00 daily)": sel(_hunt_pool),
         "repair_extract_gap (19:00 daily)":
             sel(lambda n, r: bool(_extract_gap_mode().search(n))
@@ -268,11 +269,9 @@ def pools(rows):
         # host-derived half and under-counted this pool by 7 rows, and `orphans()` subtracts
         # this membership, so it under-reported orphans by the same rows.
         "crack_walled (19:00 daily + Sun)":
-            sel(lambda n, r: _gate.is_walled(r) and not is_terminal_note(n)
-                and not is_recruiter(r[0])),
+            sel(lambda n, r: _crack.in_crack_pool(r)),
         "probe_candidates (05:00 daily)":
-            sel(lambda n, r: bool(_PROBE_SHAPE.search(n)) and not is_terminal_note(n)
-                and (r[3] or "").startswith("http")),
+            sel(lambda n, r: _probe.in_probe_pool(r)),
         "audit_empty_rows (Sun 04:00)":
             sel(lambda n, r: in_pool(n) and not is_terminal_note(n) and not is_recruiter(r[0])),
         "deep_validate (Sat 04:00)":

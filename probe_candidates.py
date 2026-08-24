@@ -85,6 +85,17 @@ def probe(url):
 PROBE_POOL = re.compile(r"monitored candidate|host documented|no IL listing")
 
 
+def in_probe_pool(r):
+    """The probe pool's OWN membership rule -- `main()` selects with it and
+    `registry_health` imports it. A retyped mirror of a pool is how coverage losses were
+    reported as owned (wave-4 R3); a shared CONSTANT alone is how a `search`->`match` edit
+    at the consumer emptied this pool 130 -> 0 with the suite green (wave-6 R2)."""
+    return (len(r) >= 6 and r[4] == "false"
+            and bool(PROBE_POOL.search(r[5] or ""))
+            and not is_terminal(r[5])
+            and (r[3] or "").startswith("http"))
+
+
 def main():
     apply = "--apply" in sys.argv
     # Runs INSIDE the digest, in front of the email — same reasoning as scan_dead_domains:
@@ -99,11 +110,7 @@ def main():
     except Exception:  # noqa: BLE001
         state = {}
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
-    targets = [(i, r) for i, r in enumerate(rows)
-               if r and len(r) >= 6 and r[4] == "false"
-               and PROBE_POOL.search(r[5] or "")
-               and not is_terminal(r[5])   # THE shared list; measured no change here
-               and (r[3] or "").startswith("http")]
+    targets = [(i, r) for i, r in enumerate(rows) if r and in_probe_pool(r)]
     # Least-recently-probed first. The target filter has no date term, so with a budget and
     # file-order targets the same prefix is probed every day and the tail never is - and a row
     # past the cut can NEVER wake, because a wake needs two observations and the first one it

@@ -25,6 +25,8 @@ import csv
 import re
 import sys
 
+from pipeline.atomic import write_csv_rows
+
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the
 # process AFTER the useful work — in the cloud conflict path that is a `|| true`, so the
@@ -109,8 +111,12 @@ def merge(base_path, ours_path, target_path):
             target.append(r)
             added += 1
 
-    with open(target_path, "w", encoding="utf-8", newline="") as f:
-        csv.writer(f).writerows(target)
+    # ATOMIC, like every other companies.csv truncating writer. This was the ONE that
+    # wrote in place: a runner eviction mid-write left a 400-line registry behind `|| true`
+    # on the digest's conflict path, and the invariant gate there could only catch it
+    # after the fact (wave-6 R2, B4). `os.replace` makes the kill window leave the OLD
+    # file, which is always a valid registry.
+    write_csv_rows(target_path, target)
     print(f"merge_csv_rows: {len(changed)} rows changed by this run "
           f"→ {applied} applied, {added} appended, "
           f"{len(changed) - applied - added} already identical"

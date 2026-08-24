@@ -899,6 +899,8 @@ fixes; one was a claim I made that a doc of this repo already contradicted on th
     BD step is `continue-on-error`) but it accelerates the date on which item 37 starts
     writing false verdicts.
 
+    **CLOSED 2026-08-24:** the rung carries a per-process budget (`PAGE_UNLOCK_BUDGET`, default 100 — one process is one workflow step). Exhausted, the page honestly reads None, identical to the key being absent for that row. Armed the day item 59's closure put the key on two Sunday cron steps (wave-6 R3: ceiling 69+9 calls/Sunday, growing with the pool); pinned by `unlock-budget-drop`.
+
 37. **When Bright Data runs out, every walled row degrades to `None` and every tool writes
     `not this company's board`** — lane: `registry`. `_page_names_company` is carefully
     three-valued and `_ok_to_write` collapses `None` and `False` into one refusal that stamps
@@ -1311,10 +1313,16 @@ FairFly shape). These are the residuals.
     (`grep -rn check_invariants .github/workflows` -> daily-digest.yml, tests.yml only).
     Wave 3/4 changed neither the schedules nor the rows-per-run.
 
-    **The invariants half is CLOSED 2026-08-24:** all three writer workflows run
-    `check_invariants.py` (not continue-on-error) before their commit step, and again on
-    the merged registry inside the conflict-recovery path. The freeze-window observation
-    stands as written.
+    **The invariants half is CLOSED 2026-08-24 — in two passes, because the first
+    overclaimed:** the first commit gated three workflows and wave-6 R3 named the five
+    other cron writers still committing ungated (self-heal, triage-dark, listing-hunt,
+    scrape-refresh, deep-validate) plus wave-6 R2 the fourth conflict-recovery sibling
+    (daily-digest's). All NINE committing workflows now run `check_invariants.py` before
+    their commit step and on the recovery-path merged registry, and `merge_csv_rows` —
+    the one truncating companies.csv writer outside `pipeline.atomic` — writes atomically,
+    so a runner kill mid-merge leaves the OLD file. The asymmetry R3 measured (an ungated
+    writer's break makes every GATED workflow discard its runs) is thereby gone: whoever
+    breaks it, fails. The freeze-window observation stands as written.
 
 65. **`empty-but-suspect` waits out `listing_hunt`'s 14-day cooldown, and no scheduled tool
     clears the verdict** — lane: `registry`. A suspect row usually already carries a
@@ -1353,6 +1361,12 @@ FairFly shape). These are the residuals.
     If one ever fires, the fix is a minimum-length floor on the target, not a wider
     window — the window is pinned at ±1 by `embed-near-window-drift`.
 
+    **The minimum-length rule landed in wave 6:** a form or target under 3 chars must
+    match EXACTLY, which closes the digit-stripped-Comeet-uid class (`F2.004` -> `f`
+    contained in `f5`) and `hp`/`hpe`, with the acceptance census byte-identical.
+    The residual is near-length collisions above the floor (`orca`/`orcam`), still
+    outside every caller's reachable set; the durable answer remains the data column.
+
 ## From the `discovery` lane follow-up, 2026-08-24
 
 70. **The intake filters throw away company names every day and nothing records WHICH.**
@@ -1369,3 +1383,22 @@ FairFly shape). These are the residuals.
     it, so this would feed the research queue names no sweep can see yet. Probe before
     wiring, per the Telegram-channel rule: the number that matters is how many items parse
     to a company name. New work, not a resumption — nothing in the repo has tried it.
+
+## From the extended program's wave-6 review, 2026-08-24
+
+Four verified blocking findings, all fixed in the wave-6 batch: the parenthetical-filler
+target (B1: bare `israel` as an identity for `Dun & Bradstreet (Israel) Ltd.` — a pure-filler
+alias half is no longer a target); the ungated fourth conflict-recovery sibling plus the
+non-atomic merge writer (B4); the unguarded new TERMINAL tokens (B3 — `redundant` drop
+re-opened Marvell Israel into the activating crack pool, suite green); and the consumer-side
+pool selectors (B3 — `search`->`match` emptied the probe 130->0 and triage 18->0, suite
+green; each tool now owns an `in_*_pool` predicate that `main()` selects with,
+`registry_health` imports, and behavioural cells drive on mid-note tokens).
+
+70. **The LinkedIn guest walk's worst case grew ~5x inside the digest job** — lane:
+    `discovery`, filed from wave-6 R1: `f6d7605` makes the sweep 27 queries and `efdf76a`
+    raises `LINKEDIN_GUEST_PAGES` 30->50, so the ceiling is ~1,350 sequential requests
+    inside `daily-digest.yml`'s 150-minute budget, behind continue-on-error. Also filed:
+    `discovery_daily.py` does not clear `ended_on_cap` on the paid-budget break, so every
+    city query on a blocked runner prints the raise-the-cap tripwire — the exact evidence
+    the 30->50 bump cited. Unproven without network; both are the discovery lane's.
