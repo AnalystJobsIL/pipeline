@@ -1238,3 +1238,5 @@ aspectiva,scrape,,https://www.comeet.com/jobs/aspectiva/35.000,true,scanned; no 
 Aryon Security,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed | listing-hunt 2026-08-25: no pages reachable
 Agilite,scrape,,https://agilitegear.com/pages/careers,true,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed | listing-hunt 2026-08-25: verified 9 IL via agilitegear.com
 Houzz,scrape,,https://jobs.lever.co/houzz?location=Israel,true,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed | listing-hunt 2026-08-25: verified 3 IL via jobs.lever.co
+PlainID,comeet,C4.00C,https://www.comeet.com/careers-api/2.0/company/C4.00C/positions?token=4CC17FC1CC8E644CCE644CC4CC13300,true,auto-expand; 7/4 IL
+Candex Technologies,ashby,candex,https://api.ashbyhq.com/posting-api/job-board/candex,true,auto-expand; 17/8 IL
