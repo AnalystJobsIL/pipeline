@@ -1776,6 +1776,228 @@ keychain and breaks the local login; no token on this machine to test the CI sha
 `cloud run:` commit's `seen.db` has `v2|…|jd` rows dated 2026-08-25 and the legacy rows
 untouched.
 
+## 7c. The role record — the entity the product is about
+*lane: `roles` — `pipeline/roles.py`, `pipeline/store.py` (`matched`/`sent`), the role-selection block of `pipeline/run.py`*
+
+Step 6 of the flow. A ROLE is one opening at one employer; a POSTING is one listing of it on
+one board. Until 2026-08-25 the role had no owner and no durable record: `matched` (sqlite,
+committed as a binary) keyed on `company|title`, forgot its history on every >3-day gap,
+stored nothing about closure, reposts, tags or the classifier's verdict — and held the same
+posting under two company names three times over (Armis+OTORIO, Port+Port.io, Meta+Meta
+Israel; Port and Port.io both *active*, so the board showed one posting twice). Written
+2026-08-25 and attacked the same day (four Opus reviewers, then confirmers —
+`docs/sessions/2026-08-24-roles.md`). **Start here — rehearse tomorrow's role morning
+without spending anything:**
+
+```bash
+python tests/rehearse_roles.py --case happy       # six scripted days; also clobber | corrupt | massclose
+python tests/rehearse_roles.py --golden           # HEAD vs this tree on the same days: only the claim collapse may differ
+python tests/rehearse_roles.py --real --only "Fiverr,Wix,Lightricks"   # live fetch, no LLM, no Bright Data
+```
+Each replaces the fetchers with `tests/fixtures/roles/days.json` (the shapes found in the
+committed store), runs `pipeline.run` scoped against a scratch store + ledger, and prints
+PASS/FAIL per check from the produced digests (the `Roles:` line, `Decision paths`
+reconcile, the exact board, the ledger equals the store, `git status` unchanged).
+
+### The record, and where it lives
+
+Two text files beside the sqlite store, written by `pipeline/roles.py` through
+`pipeline/atomic` and committed by the digest's existing `git add cloud_state`:
+
+| file | one line per | changes on a normal day |
+|---|---|---|
+| `cloud_state/roles.jsonl` | role (`role_id` = today's `mkey`), sorted, keys sorted | one short line per open role (`last_seen`, `updated`) |
+| `cloud_state/roles_text.jsonl` | role's description (`sha1`, `len`, text) | only when a description changes (a JD backfill day) |
+
+A record carries everything the pipeline knows about the role: the `matched` columns
+(`company title location url posted_date seniority sources[] seen_ids[] first_seen last_seen
+jd_attempted`), `status` (`open | closed | superseded | purged`, with `closed_on` /
+`superseded_by`), `episodes` (every opening — sqlite *resets* `first_seen` on a >3-day
+reappearance because the email must re-alert, and the ledger keeps the earlier opening
+instead of undoing that), `reposts` (dates the posting was bumped ≥3 days past its
+episode's `first_seen` — the render rule, recorded at ingest), `class` (decision / path /
+reason from the classifier), `tags` (`roleprofile.extract` snapshot, `v: 1`, recomputed when
+the description's sha1 changes — `render` owns the vocabulary, this lane owns the column),
+`attribution` (platform, host, tenant slug, `claimed_by`: the other company names that
+fetched the same posting), `sent` (`seen_id → first_sent`, mirrored from the `sent` table)
+and `emailed_on` (`store.mark_sent` stamps the mirror itself, so it lands in the same
+commit as the `sent` table — `mark_sent.py` runs after the digest flushed the ledger).
+Nothing is ever deleted; a wrong row becomes `superseded` or `purged`.
+
+**The contract, in §7's words: the export is authoritative, sqlite is a per-machine cache.**
+`matched` stays the working index because four other tools read or write it by SQL
+(`enrich_matched_jd.py`, `company_type_analysis.py`, `research_firmographics.py`,
+`check_invariants.py`). At open, `Ledger.open_sync` reconciles the two field by field
+(`roles.reconcile`: longer description wins either way, `jd_attempted` is kept so a
+rehydrated store does not re-spend Bright Data, `first_seen` is sqlite's whenever the row
+exists, lists union) and supplies whatever one side lacks — a role sqlite lost is
+re-inserted from the ledger with its text, and a `sent` mark the ledger carries is
+re-inserted so the role is not re-emailed. sqlite holds exactly one status, `superseded`;
+open/closed live in the ledger alone (a rehydrated row that carried `open` once out-voted the
+ledger's closure — caught by the clobber rehearsal, pinned). **No ledger seam can take the
+digest down:** a line that is valid JSON but wrong-typed is a bad line (`roles._valid`),
+and `open_sync` / `resolve_claims` / `record_run` are guarded — an exception becomes
+`roles <seam> failed: …` on the bold `Stages:` line, the ledger freezes for the day and
+the run goes on (an unguarded `open_sync` once raised out of `run()`, past the Persist
+step: no email, no board, the morning's verdicts lost). A record without ISO dates is
+never rehydrated (it would be invisible to every `first_seen >= ?` read and re-inserted
+forever); the mail says `ledger N != store N` when they differ.
+
+**What the ledger does NOT protect against, stated so nobody relies on it:** the conflict
+path in `daily-digest.yml` restores `cloud_state/` wholesale (`cp -rT`), and both ledger
+files ride the same commit as `seen.db` — a day lost that way is lost in both. What it buys:
+a diffable, line-tolerant record (`git log -p cloud_state/roles.jsonl` answers "when did
+this role close"), rehydration when the sqlite copy alone is damaged, and the precondition
+for a row-level merge on the conflict path (`docs/BACKLOG.md` 134, `infra`).
+
+A ledger that is unparseable, or has more than 10 % bad lines, is **corrupt**: nothing is
+read from it, nothing is written to it, sqlite carries the day, and the mail's bold
+`Stages:` line says `roles ledger corrupt (…) — not overwritten` until a human looks (a
+corrupt `roles_text.jsonl` alone freezes only itself; statuses still record and the text
+is read from sqlite). A BOM, CRLF, blank lines and the odd bad line are tolerated
+(skipped, counted, reported).
+
+### One posting under two names — the wrong-company guard
+
+`job["company"]` is copied verbatim from the registry row (`pipeline/fetchers.py`, 14
+sites; `scrape_universal.py:485`), so a posting is attributed by *which row fetched it*, and
+two active rows read the same board in 13 identity groups today (`registry`, BACKLOG 133).
+This layer makes the product right regardless: after `merge_duplicates`,
+`Ledger.resolve_claims` groups this run's postings across companies by `roles.same_posting`
+— the titles must agree (equal, or the longer one is the shorter plus words from that
+job's own *location*: the scraper glues it on) **and** they share a strong `seen_id` or a
+url. Never a url alone (Meta's url is the listing page, shared by every Meta role) and
+never an id alone (a scrape row's `job_id` is sometimes the listing page, `#` or a
+`mailto:` — six SpearUAV roles carried one id); "Data Analyst" vs "Data Analyst, Growth"
+is two roles, and because that agreement is not transitive (its word-set is the longer
+job's own location) a group collapses only when every pair agrees. Each group keeps ONE
+company (`Ledger._winner`): the one whose own name is in the url or tenant slug (`armis`
+in `armissecurity`, `port` in `/jobs/port/`; the ATS hosts themselves and path plumbing
+never count — `Smart Shooter` is not named by every smartrecruiters url; TLD-ish tokens
+ignored, three-letter tokens must match a segment exactly) — evidence outranks
+incumbency, or a wrong name stored before this guard existed would be sticky forever; else
+the one already holding the posting (no flip-flop); else a native-ATS row over a scrape
+over a discovery card; else not the "X Israel" site form, not a lowercase stub row, then
+the shortest identity, then A–Z. The losers' `seen_ids` and sources are unioned into the
+winner (so `filter_new` still sees them sent — a posting emailed yesterday under the wrong
+name is therefore not re-emailed under the right one), the losers are named on the
+winner's `attribution.claimed_by` and in the mail, and a loser row already in the store
+becomes `superseded` — kept, off the board and the archive (`get_matched_since` excludes
+it by default). A superseded row fetched again while its winner is neither fetched nor in
+fetch-failure grace reclaims itself (`N reclaimed` in the mail): the winner's registry row
+was parked, and the opening must not vanish from every product. `Ledger.sweep_store`
+applies the same rule at open to what the store already holds, so a double whose other
+half was parked (OTORIO, Meta Israel) does not sit in the archive under the wrong name
+forever. It is a dedupe with stability, not an attribution judgement: for a
+Broadcom/VMware-class pair both names are real employers, the winner is the stable one,
+and the card shows only the winner (BACKLOG 137 asks `render` for an "also listed as").
+
+Measured against the committed store on 2026-08-25 (read-only):
+```bash
+python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(*c.execute(\"select url,group_concat(company,' | ') from matched where url!='' group by url having count(distinct company)>1\"),sep='\n')"
+```
+→ 3 urls under two names each (the three above). A full no-LLM dry run on a **scratch
+copy** the same day (`--no-llm`, real fetchers, no Bright Data; the scratch store grew from
+111 to 165 roles because a keyword-only run accepts more than the LLM tier does, which is
+also why its board says 135 against the 61 the production run published on 08-24):
+**862 scanned · 6 failed · 22,859 jobs · 4,844 Israel-matched · `claim conflicts 2
+(Port<-Port.io, HP<-HP Indigo)`** — the HP pair was not known before the run found it.
+Unverified against a production run until the 2026-08-26 mail.
+
+### Judged once per role per text (closes BACKLOG 124)
+
+Classification now happens after the fetch loop, in `roles.classify_grouped`: candidates
+are grouped by `store.merge_key`; every copy that carries its **own** description is
+judged, longest first (two listings under one title can be two openings with two JDs, and
+the one that qualifies must not be lost to the other), the fullest copy gets the inline
+JD fill, and a copy with no text of its own never pays a call — it inherits the first
+accepting verdict, is marked `_inherited`, and `store.merge_duplicates` never lets it be
+the canonical: a bare LinkedIn card's url must not become the role's record, while the
+posting date it carries is real and is kept (`merge_duplicates` never discards a known
+ISO date — so a role first met through a two-week-old card is not "48h-new" merely
+because the board row is undated). Skipped copies count as `merged-copy` in `Decision
+paths`, so the classifier's reconciliation (`sum(paths) == Israel-matched`) still holds;
+the classifier's own `classify:` line says "N judged" with N smaller by exactly that
+count. Dry run 2026-08-25: `keyword 4146 + keyword_nollm 244 + merged-copy 454 = 4844`.
+Proof against HEAD: `tests/rehearse_roles.py --golden` carries a same-company pair (bare
+dated card + undated board row) and requires the emails to agree on every day.
+
+### Open, closed, reopened, re-posted — and the mass-close hold
+
+`_alive` in `run.py` stays the liveness rule (seen in the latest scan of its employer, or
+a 7-day grace while that board errors), judged on the alive set *before* the page-weight
+cap. `Ledger.record_run` only *records* what it decided: on a full run every company but
+the failed ones is judged (a role whose employer is no registry row — a discovery card, a
+recruiter stripped from the scan — cannot be fetched and is dead by `_alive`, so it
+closes too); on a scoped `--only` run only the scanned companies are, so a local run
+closes nothing elsewhere. A failed board closes nothing (`failed_names` is collected by
+name in the fetch loop — splitting the mail string on `" ("` used to turn
+`Microsoft (Xbox/Gaming)` into `Microsoft` for `_alive` and the ledger alike; 15 registry
+names contain `" ("`). A record absorbed for the first time is classified, never
+counted as a closure. open→closed stamps `closed_on`; closed→open appends an episode and
+counts `reopened`; a bumped `posted_date` is a repost. **A mass-close is an alarm, never a
+closure:** more closures in one run than `max(10, 25 % of the open set)`
+(`MASS_CLOSE_MIN`, `MASS_CLOSE_FRAC`; 50 % let a morning where 40 % of boards answered
+`[]` close 80 roles silently) is a broken fetch, not a measurement — statuses are held
+and the bold `Stages:` line says `roles mass-close held (N of M …)`. Rehearsed:
+`--case massclose`.
+
+### What the mail says
+
+One line in the audit block, from `summary["roles"]`:
+
+```
+- **Roles:** open 146 · closed today 16 · reopened 0 · reposted 12 · merged-copy 454 · ledger 165 = store 165; claim conflicts 2 (Port<-Port.io, HP<-HP Indigo)
+```
+`open` is this run's count of records left `open`: the alive set, plus roles at companies
+the run did not judge that were open before (a scoped run), plus a held cohort on a
+mass-close morning — so it can exceed `board` (measured: `open 64` against `board 61` on
+a scoped A/B); `ledger N = store N` is the reconciliation — a
+`!=` is an alarm; `rehydrated N` appears when sqlite had lost rows. On the FIRST run after
+this lands `reposted` counts every historical bump at once (the record is new); from then
+on it is the day's. A run that finds NO ledger beside a populated store says
+`roles ledger missing — N role(s) absorbed from sqlite` on the `Stages:` line and
+`absorbed N (M already closed)` on the `Roles:` line: those are classifications, not
+closures, and never trip the mass-close hold — which is why the seed files are committed
+already judged. Alarms travel on the existing bold `Stages:` line and as
+`::warning::stage …` in the step log: `roles ledger corrupt (…)`, `roles ledger rehydrated
+N role(s) sqlite had lost`, `roles ledger write failed: …` (the sqlite side still commits),
+`roles ledger N != store N after sync`, `roles mass-close held (…)`. Claim conflicts also
+print `::warning::roles …`.
+
+### Guards
+
+`tests/test_units.py`, "lane: roles" — 42 cases, every one a defect the rehearsal or an
+attacker reproduced: the file contract (round-trip, bad-line tolerance, the corrupt
+threshold, duplicate-id resolution, wrong-typed lines, a text-only wreck, the run date);
+every `reconcile` rule; identity (the three real double shapes kept once; Bounce/Bounce
+AI, two Meta titles and "Data Analyst, Growth" NOT merged; a listing-page id shared by six
+roles; every pair in a bucket; url evidence over incumbency; the stub-row and TLD-token
+tie-breaks; a superseded row reclaiming itself); the store sweep, idempotent; judged once
+per text with the paths arithmetic, the inherited copy never canonical, a known date kept;
+closure only where the run looked, every company on a full run, never on a failed board
+(names with `" ("`), on the alive set not the capped page, the mass-close hold and its
+25 %, a fresh record never a closure; episodes and reposts across a reopening;
+rehydration of rows and `sent` marks, `sent` stamped by `mark_sent`; `jd_attempted`
+declared. `tests/rehearse_roles.py --golden` is the regression proof against HEAD.
+
+### Known limitations
+
+- The ledger is not a merge on the conflict path (above; BACKLOG 134).
+- `open` on a scoped local run counts roles at unscanned companies as whatever they were —
+  the number is the ledger's state, not that run's board.
+- A collapse into an established company can cost an email item: `HP<-HP Indigo` with
+  both rows new keeps `HP`, which is `seen_before` with an old `posted_date`, so the role
+  is emailed under neither name (a correct dedupe; the first-scan section selects on the
+  company). And a loser's `seen_id` already in `sent` suppresses the winner from today's
+  email — the same posting is never emailed twice, even to correct its name.
+- A scoped `--only` run never reclaims a superseded row: its winner may be out of scope
+  rather than parked; only a full run (or one that scanned the winner's company) can.
+- Other SQL readers of `matched` do not know `status`: `enrich_matched_jd.py` will keep
+  trying to backfill a superseded row's empty description (BACKLOG 140, `jd-text`) and
+  `research_firmographics.py` still counts superseded-only companies (141).
+- Tags are only as good as the text captured while the role was open (`docs/TAGGING.md`).
+
 ## 8. Failure classes — what this codebase does instead of erroring
 *lane: any — every lane has been bitten by these*
 

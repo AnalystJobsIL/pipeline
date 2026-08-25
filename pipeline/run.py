@@ -62,6 +62,11 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     os.makedirs(out_dir, exist_ok=True)
     st = store.SeenStore(db_path) if db_path else store.SeenStore()
     llm_cache = st.load_llm_cache()
+    # the role record (lane: roles, ARCHITECTURE §7c): sqlite ∪ the text ledger beside it,
+    # before anything reads `matched`; its alarms join the bold `Stages:` line below
+    from . import roles
+    ledger = roles.Ledger(st, run_date)
+    ledger.open_sync()
 
     # Ordering contract (pipeline/stages.py): this run's input quality depends on stages
     # that ran EARLIER, in other workflows. If one of them did not run, the digest is
@@ -72,7 +77,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     stages.require("enrich", 1)
     # the scrape's own verdict on itself (a crashed refresh, a mass-failure night) — a bold
     # line in the audit and a workflow warning, not a token inside a collapsed block
-    _stage_alarms = stages.alarms("collect")
+    _stage_alarms = stages.alarms("collect") + ledger.alarms
     for _line in _stage_alarms:
         print(f"::warning::stage {_line}", flush=True)
     # a discovery source that has quietly stopped returning records is invisible otherwise
@@ -121,7 +126,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # budget, circuit breaker and verdict staging live on it; the mail line comes from it
     clf = seniority.Classifier(use_llm=use_llm, llm_cache=llm_cache)
     failed_companies = []
-    accepted = []
+    failed_names = set()                      # by NAME: 15 registry names contain " (" themselves
+    candidates = []                           # Israel-matched postings, judged once per ROLE below
     health_results = {}                       # free detection: outcome per company this run
 
     for r in rows:
@@ -137,6 +143,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             _msg = _re.sub(r'\?\S*', '', str(e))[:70]
             why = f"{e.__class__.__name__}: {_msg}"
             failed_companies.append(f"{r['company_name']} ({why})")
+            failed_names.add(r["company_name"])
             health_results[r["company_name"]] = {"platform": r["ats_platform"], "n": 0,
                                                   "status": "error", "api": r.get("api_url", ""),
                                                   "error": why}
@@ -150,16 +157,12 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             if not israel.is_israel_job(j):
                 continue
             stats["israel_matched"] += 1
-            # the JD is what the LLM tier reads; workday/smartrecruiters/bamboohr/microsoft
-            # list responses carry none, so fetch it before judging (budgeted, title-gated)
-            if jdfill.maybe_fill(j):
-                stats["jd_filled_inline"] += 1
-            c = clf.classify(j)
-            paths[c["path"]] += 1
-            if c["decision"] == "accept":
-                j["_class"] = c
-                accepted.append(j)
+            candidates.append(j)
 
+    # one judgment per ROLE, not per board it is listed on (lane: roles, BACKLOG 124): a
+    # role fetched from two rows is judged once, on its longest description; copies count
+    # as `merged-copy` so `sum(paths) == israel_matched` still reconciles below
+    accepted = roles.classify_grouped(candidates, clf, jdfill, stats, paths)
     print("  " + jdfill.summary(), flush=True)
     # the enrich stage's verdict on itself (both backfill scripts stamp it) and the inline fill's
     for _line in stages.alarms("enrich") + jdfill.alarms():
@@ -178,15 +181,9 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     if gjobs:
         stats["google_jobs_fetched"] = len(gjobs)
         stats["jobs_fetched"] += len(gjobs)
-        for j in gjobs:
-            if not israel.is_israel_job(j):
-                continue
-            stats["israel_matched"] += 1
-            c = clf.classify(j)
-            paths[c["path"]] += 1
-            if c["decision"] == "accept":
-                j["_class"] = c
-                accepted.append(j)
+        gcands = [j for j in gjobs if israel.is_israel_job(j)]
+        stats["israel_matched"] += len(gcands)
+        accepted += roles.classify_grouped(gcands, clf, jdfill, stats, paths)
 
     # persist this run's LLM verdicts NOW (not after rendering): an exception anywhere in the
     # rendering / company-intel code below must not lose what was paid for (a runner timeout
@@ -226,6 +223,12 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     stats["accepted"] = len(accepted)
     merged = store.merge_duplicates(accepted)
+    # one posting fetched under two company names (two registry rows on one board) is ONE
+    # role: kept under one name, the other named in the mail — never published twice
+    merged, _claim_lines = ledger.resolve_claims(merged, failed=failed_names,
+                                                 scanned={r["company_name"] for r in rows})
+    for _line in _claim_lines:
+        print(f"::warning::roles {_line}", flush=True)
     stats["after_merge"] = len(merged)
 
     # WHICH COMPANIES DID WE ALREADY KNOW, before this run wrote anything? An undated role
@@ -258,7 +261,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         return fs >= cutoff if (len(fs) == 10 and fs[4] == "-") else False
 
     # companies whose fetch failed THIS run keep yesterday's last_seen — don't mass-drop them
-    failed_names = {f.split(" (")[0] for f in failed_companies}
+    # (`failed_names` is collected by name in the fetch loop: splitting the mail string on
+    # " (" broke for the 15 registry names that contain " (" — Microsoft (Xbox/Gaming) …)
     yesterday = (today - dt.timedelta(days=1)).isoformat()
     # ...but only while the failure is FRESH. Without this, a board that breaks permanently
     # freezes its roles on the job board forever, and they are the ones a reader applies to.
@@ -324,6 +328,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # opening because its employer has nine of them would make the board wrong. Flooding is
     # an EMAIL problem (capped at 3/company above); the board is sortable and searchable.
     board_jobs = [j for j in st.get_matched_since("0000-01-01") if _alive(j)]
+    alive_jobs = list(board_jobs)             # the role record judges closure on THIS, not the capped page
     if len(board_jobs) > BOARD_MAX_ROLES:
         # Pure page-weight backstop, not a policy: every role renders a full detail card,
         # so an unbounded board is a multi-megabyte page nobody can load on a phone.
@@ -334,6 +339,16 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         board_jobs = board_jobs[:BOARD_MAX_ROLES]
     stats["new"] = len(email_jobs)
     stats["board_count"] = len(board_jobs)
+
+    # the role record's own verdict on the run: what closed, reopened, was re-posted; the
+    # ledger flushed (or why not). Closure is judged only where this run actually looked.
+    _role_lines = ledger.record_run(
+        run_date, board_jobs=alive_jobs, merged=merged,
+        scanned_ok={r["company_name"] for r in rows}, failed=failed_names, paths=paths,
+        scoped=bool(only or limit))
+    _role_lines = _role_lines + _claim_lines
+    for _line in [a for a in ledger.alarms if a not in _stage_alarms]:
+        _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
 
     # Company intel — blurbs + researched facts for every card (pipeline/company_intel.py,
     # lane: company-intel, ARCHITECTURE §7). One call: bounded in calls and minutes (FIRMO_MAX_PER_RUN /
@@ -377,6 +392,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         "stage_alarms": _stage_alarms,
         "fetch_health": _fetch_health_lines,
         "company_intel": _intel_lines,
+        "roles": _role_lines,
         "paths": dict(paths),
         "failed_companies": failed_companies,
     }

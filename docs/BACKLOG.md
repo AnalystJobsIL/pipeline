@@ -1933,3 +1933,69 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     behaviour is exercised by `tests/rehearse_classifier.py` (by hand), not by pytest. A pytest
     that runs `pipeline.run.run(only=…)` with `fetchers.fetch_company` and `seniority._claude`
     monkeypatched and a tmp db would close it.
+
+## From the `roles` lane, 2026-08-25
+
+Record: `docs/sessions/2026-08-24-roles.md`; spec: `ARCHITECTURE.md` §7c. Closed by this
+pass: **124** (judged once per role per text, `roles.classify_grouped`) and the store half
+of **109** (a bare discovery card that inherits its verdict is never the canonical in
+`merge_duplicates`, so the board's own url is the role's url; the date the card carries is
+kept; the Meta listing-url rows are superseded).
+
+132. **Retire `matched` once its four SQL readers read the ledger** — lane: `roles`. The
+    ledger (`cloud_state/roles.jsonl` + `roles_text.jsonl`) is the record; sqlite `matched`
+    is kept only because `enrich_matched_jd.py` (writes `description`/`jd_attempted` by raw
+    SQL), `company_type_analysis.py`, `research_firmographics.py` and `check_invariants.py`
+    (check H) read it. When each reads `roles.load()` instead, `matched` becomes a derived
+    cache and `seen.db` shrinks by its 105 descriptions (~340 KB before VACUUM).
+133. **13 active registry groups read one board under two identities** — lane: `registry`.
+    Hippo/Hippo Insurance, Cisco/Splunk (Cisco), HP/HP Indigo, Intel/Habana Labs (Intel),
+    Broadcom/VMware (Broadcom), Primis/Primis Tech, Vayyar/Vayyar Imaging, Spear UAV/SpearUAV,
+    Sckipio/Scopio Labs (two UNRELATED companies on comeet `87.00c`), Crazy Labs/CrazyLabs,
+    Siemens/Siemens EDA, ONE ZERO ×3, Kornit Digital/kornit — plus Port/Port.io (both
+    active, the posting was on the board twice until 2026-08-25). `test_no_two_active_rows_
+    scan_the_same_board` keys on `identity_key` and so passes on all of them. The runtime
+    guard (§7c) keeps the product right; the registry fix is `alias-of` parking for the
+    same-identity pairs and a decision for the parent/subsidiary ones. Enumerate:
+    `python -c "import csv,collections;r=[x for x in csv.DictReader(open('companies.csv',encoding='utf-8')) if x['active']=='true'];g=collections.defaultdict(list);[g[x['api_url']].append(x['company_name']) for x in r if x['api_url']];print(*[v for v in g.values() if len(v)>1],sep='\n')"`.
+134. **The conflict path restores `cloud_state/` wholesale, so the ledger cannot merge** —
+    lane: `infra`. `daily-digest.yml`'s `cp -rT` (and the seven `repo-state` siblings) copies
+    ours over origin's; a `merge_jsonl_rows` script (no such file yet) keyed on `role_id` (newer `updated` wins,
+    lists union — `roles.reconcile` is the rule) would make `roles*.jsonl` the first state
+    file that survives a conflict day row by row, and is the precedent for doing the same to
+    `seen.db`'s other tables (HANDOFF open item 7, BACKLOG 125).
+135. **`sent` is now mirrored in the ledger (`sent{}` per role, `emailed_on`)** — lane:
+    `infra` + `roles`. `mark_sent.py` still writes the sqlite `sent` table right after the
+    run, and `open_sync` mirrors it into the ledger the next morning; once BACKLOG 6 ("intent,
+    not delivery") is solved the delivery stamp should land in the ledger directly and the
+    table can go.
+136. ~~**Discovery-net roles are never closed by `record_run`**~~ — **closed 2026-08-25
+    (wave 1)**: on a full run every company but the failed ones is judged, so a role whose
+    employer is no registry row (discovery card, stripped recruiter) closes when `_alive`
+    drops it; scoped runs still judge only what they scanned.
+137. **`render` re-derives what the ledger now records** — lane: `render`. `digest.py:793-809`
+    recomputes the repost badge from `posted_date - first_seen`, `_seniority_chip` ignores
+    the stored `seniority`, and `roleprofile.extract` runs on every card each render; the
+    ledger carries `reposts`, `status`, `closed_on`, `tags` (`v: 1`) per role. Reading them
+    would make the archive able to say "closed on <date>" and the board's insights stable
+    across renders. `docs/TAGGING.md` should say tags are persisted (this lane could not
+    edit it).
+138. **`firmographics` sqlite table is redundant with its export** — lane: `company-intel`.
+    Same shape as 132: `cloud_state/firmographics.json` is authoritative (§7), the table is a
+    cache, and it is ~half of the daily 1.4 MB binary (HANDOFF watch item 3).
+140. **`enrich_matched_jd.py` does not know `matched.status`** — lane: `jd-text`. Its
+    query (`WHERE length(COALESCE(description,'')) < ?`) picks superseded rows too (2 of the
+    3 today have an empty description), so it spends Bright Data on roles that can never
+    appear anywhere; add `AND COALESCE(status,'') != 'superseded'` (one line).
+141. **`research_firmographics.py` and `run.py` disagree on the company set** — lane:
+    `company-intel`. `SELECT DISTINCT company FROM matched` (research_firmographics.py:144)
+    still includes superseded-only companies (OTORIO, Meta Israel, Port.io) while
+    `run.py`'s `all_companies` excludes them; read through `get_matched_since` or filter on
+    status. `company_type_analysis.py:64` has the same query (analysis only).
+139. **A pipeline outage longer than 3 days resets every role's `first_seen`** — lane:
+    `roles`. `upsert_matched`'s reappearance rule (gap > 3 days ⇒ new opening) fires for
+    EVERY role after a 4-day gap in runs, so every role gets a new episode and would be
+    email-eligible again (`filter_new` then suppresses the ones already sent, so the visible
+    damage is the board's "new" badges and the `reopened` count). Seen in the rehearsal
+    fixture when day 6 was 5 days after day 5. The rule should compare against the last RUN
+    date, not the calendar.

@@ -1037,5 +1037,35 @@
     "replace": "    declared = identity_facts.tenants(name)\n    if False:\n        return identity_facts.normalize((token or \"\").split(\"/\")[0]) in declared\n    return any(_tenant_near(c, targets) for c in _embed_token_forms(token))",
     "why": "removes the declared-token hook on path-tenant platforms: a declared row is judged by the heuristics again, so a foreign slug the near-match happens to like is admitted despite the declaration saying otherwise.",
     "must_be_killed_by_behavioural": true
-  }
+  },
+{
+    "id": "roles-winner-drop-holder",
+    "file": "pipeline/roles.py",
+    "symbol": "_winner",
+    "class": "M1-gate-removal",
+    "find": "                    0 if _store.merge_key(j) in held else 1,",
+    "replace": "                    0,",
+    "why": "the claim winner's stability rule deleted with every roles test green: in every fixture the holder also carried the url's word or the shorter identity. Without it a two-claimant posting flips company names (and re-emails) on any tie-break edit. Found by the wave-1 mutation attacker, 2026-08-25.",
+    "must_be_killed_by_behavioural": true
+},
+{
+    "id": "roles-mail-line-removed",
+    "file": "pipeline/digest.py",
+    "symbol": "build_markdown",
+    "class": "M1-gate-removal",
+    "find": "    if s.get(\"roles\"):\n        lines.append(\"- **Roles:** \" + \"; \".join(s[\"roles\"]))",
+    "replace": "    if False:\n        lines.append(\"- **Roles:** \" + \"; \".join(s[\"roles\"]))",
+    "why": "the whole role-record line could vanish from the daily email with the suite green: only tests/rehearse_roles.py read the markdown, and no workflow runs it. The SCHEDULING.md failure class: the mail stops saying what the run did and nothing notices.",
+    "must_be_killed_by_behavioural": true
+},
+{
+    "id": "roles-record-run-looked-nowhere",
+    "file": "pipeline/run.py",
+    "symbol": "run",
+    "class": "M8-argument-mis-passing",
+    "find": "        scanned_ok={r[\"company_name\"] for r in rows}, failed=failed_names, paths=paths,",
+    "replace": "        scanned_ok=set(), failed=failed_names, paths=paths,",
+    "why": "the call site telling record_run where the run looked: with an empty set nothing ever closes on a scoped run and the ledger keeps dead roles forever, with pytest green until the end-to-end fixture test existed.",
+    "must_be_killed_by_behavioural": true
+}
 ]

@@ -4051,7 +4051,10 @@ def test_run_py_holds_one_classifier_and_the_mail_gets_its_alarms():
     from pipeline import run as run_mod
     src = inspect.getsource(run_mod.run)
     assert "clf = seniority.Classifier(use_llm=use_llm, llm_cache=llm_cache)" in src
-    assert src.count("c = clf.classify(j)") == 2                 # the ATS loop AND the aggregator loop
+    # 2026-08-25 (`roles` lane, disclosed): both loops now judge through ONE seam,
+    # roles.classify_grouped(candidates, clf, ...) — one call per ROLE, not per posting
+    assert src.count("roles.classify_grouped(") == 2            # the ATS loop AND the aggregator loop
+    assert "clf.classify(" not in src, "no loop may judge a posting behind the seam's back"
     assert "seniority.classify(" not in src
     assert 'print("  " + clf.summary(), flush=True)' in src
     assert "for _line in clf.alarms():" in src and "_stage_alarms.append(_line)" in src
@@ -4440,3 +4443,828 @@ def test_alarms_stand_above_the_collapsed_audit_in_the_mail():
     assert md.count("- **Stages:**") == 1 and "- **Registry:** r" in md
     _, quiet = digest.build_markdown([], "2026-08-25", {"paths": {}}, {})
     assert "Needs a look" not in quiet
+
+
+# =========================================================================================
+# lane: roles — the role record (pipeline/roles.py, ARCHITECTURE §7c). One assertion per
+# shipped bug: three postings sat under two companies each in the committed store on
+# 2026-08-25 (Port/Port.io both ACTIVE, so the board showed one posting twice); a role on
+# two boards paid two LLM calls and the bare copy could win (BACKLOG 124); nothing recorded
+# closure, reposts, tags or the classifier's verdict; sqlite alone could not be diffed.
+# =========================================================================================
+def _role(company, title, url, sid, src="greenhouse", desc="", **kw):
+    j = {"company": company, "title": title, "location": "Tel Aviv, IL", "url": url,
+         "posted_date": kw.pop("posted_date", "2026-08-20"), "ats_platform": src,
+         "job_id": sid, "description": desc, "seniority": "", **kw}
+    return j
+
+
+def test_roles_ledger_round_trips_and_tolerates_the_odd_bad_line(tmp_path):
+    from pipeline import roles
+    p = str(tmp_path / "roles.jsonl")
+    recs = {"a|x": {"role_id": "a|x", "company": "A", "title": "x", "seen_ids": ["gh:1"],
+                    "updated": "2026-08-24"},
+            "b|y": {"role_id": "b|y", "company": "בְּ Hebrew", "title": "y", "updated": "2026-08-24"}}
+    roles.dump(p, recs)
+    back, status, bad = roles.load(p)
+    assert status == "ok" and bad == 0 and set(back) == {"a|x", "b|y"}
+    assert back["b|y"]["company"] == "בְּ Hebrew"                       # utf-8, not ascii escapes
+    # a BOM, CRLF endings, a blank line and ONE bad line among many are tolerated...
+    lines = open(p, encoding="utf-8").read().splitlines()
+    junk = "﻿" + "\r\n".join(lines * 6 + ["{not json", ""]) + "\r\n"
+    open(p, "w", encoding="utf-8", newline="").write(junk)
+    back, status, bad = roles.load(p)
+    assert status == "ok" and bad == 1 and len(back) == 2
+    # ...more than CORRUPT_FRAC bad lines is a wreck: nothing loads, and nothing overwrites it
+    open(p, "w", encoding="utf-8").write("{bad}\n{worse}\n" + lines[0] + "\n")
+    back, status, bad = roles.load(p)
+    assert status == "corrupt" and back == {}
+    # a duplicate role_id keeps the newer `updated`
+    open(p, "w", encoding="utf-8").write(
+        '{"role_id":"a|x","updated":"2026-08-20","v":1}\n{"role_id":"a|x","updated":"2026-08-24","v":2}\n'
+        '{"role_id":"a|x","updated":"2026-08-22","v":3}\n')
+    assert roles.load(p)[0]["a|x"]["v"] == 2
+
+
+def test_reconcile_never_downgrades_and_carries_the_backfill_stamp():
+    """sqlite and the ledger disagree after enrich_matched_jd.py wrote between runs, or after
+    a rehydration: the longer description wins in either direction, jd_attempted is kept (a
+    rehydrated sqlite without it would re-spend Bright Data), first_seen is SQLITE's (its
+    >3-day-gap reset is what the email re-alerts on; the ledger keeps the older opening in
+    `episodes` instead), an ISO posted_date beats a relative one, lists union."""
+    from pipeline import roles
+    row = {"company": "A", "title": "x", "url": "u2", "location": "TLV", "seniority": "",
+           "posted_date": "3 days ago", "sources": ["scrape"], "seen_ids": ["scrape:u2"],
+           "first_seen": "2026-08-20", "last_seen": "2026-08-24", "description": "R" * 900,
+           "jd_attempted": "", "status": None, "superseded_by": None}
+    rec = {"company": "A", "title": "x", "url": "u1", "location": "Haifa", "seniority": "senior",
+           "posted_date": "2026-08-18", "sources": ["greenhouse"], "seen_ids": ["greenhouse:1"],
+           "first_seen": "2026-08-16", "last_seen": "2026-08-22", "description": "L" * 1500,
+           "jd_attempted": "2026-08-23", "status": "closed", "superseded_by": ""}
+    m = roles.reconcile(row, rec)
+    assert len(m["description"]) == 1500 and m["jd_attempted"] == "2026-08-23"
+    assert m["first_seen"] == "2026-08-20" and m["last_seen"] == "2026-08-24"
+    assert roles.reconcile(None, rec)["first_seen"] == "2026-08-16", "a rehydration takes the ledger's"
+    assert m["posted_date"] == "2026-08-18"                      # ISO beats "3 days ago"
+    assert m["url"] == "u2" and m["location"] == "TLV"           # the newer sighting's
+    assert m["sources"] == ["greenhouse", "scrape"] and m["seen_ids"] == ["greenhouse:1", "scrape:u2"]
+    assert m["status"] == "closed"                               # sqlite's NULL never erases it
+    assert roles.reconcile(row, None)["status"] == "open"
+
+
+def test_one_posting_under_two_companies_is_kept_once(tmp_path):
+    """The three shapes found in the committed store on 2026-08-25:
+    Armis/OTORIO — same seen_id (OTORIO's row reads Armis's greenhouse tenant);
+    Port/Port.io — DIFFERENT seen_ids, same url, the scrape title has the location glued on;
+    Meta/Meta Israel — same seen_id but the url is the LISTING page, shared by every Meta
+    role, so two different Meta titles on that url must NOT merge. And Bounce vs Bounce AI
+    are two companies on two boards: never merged."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    L = roles.Ledger(st)
+    L.open_sync()
+    gh = "https://job-boards.greenhouse.io/armissecurity/jobs/6016139004"
+    port = "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68"
+    meta = "https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel"
+    jobs = [_role("OTORIO", "Senior Data Analyst", gh, "6016139004", desc="D" * 400),
+            _role("Armis", "Senior Data Analyst", gh, "6016139004"),
+            _role("Port.io", "Senior BI Analyst Tel Aviv - Israel", port, port, src="scrape"),
+            _role("Port", "Senior BI Analyst", port, "15.F68", src="comeet"),
+            _role("Meta Israel", "Data Scientist, Product Analytics", meta, "129", src="scrape"),
+            _role("Meta", "Data Scientist, Product Analytics", meta, "129", src="scrape"),
+            _role("Meta", "Product Analyst, Reality Labs", meta, "777", src="scrape"),
+            _role("Bounce AI", "Data Analyst", "https://www.comeet.com/jobs/bounce/E9.00C/x/1", "1", src="comeet"),
+            _role("Bounce", "Data Analyst", "https://jobs.ashbyhq.com/Bounce/2", "2", src="ashby")]
+    merged = store.merge_duplicates(jobs)
+    kept, lines = L.resolve_claims(merged)
+    names = sorted((j["company"], j["title"]) for j in kept)
+    assert names == [("Armis", "Senior Data Analyst"), ("Bounce", "Data Analyst"),
+                     ("Bounce AI", "Data Analyst"), ("Meta", "Data Scientist, Product Analytics"),
+                     ("Meta", "Product Analyst, Reality Labs"), ("Port", "Senior BI Analyst")]
+    assert lines == ["claim conflicts 3 (Armis<-OTORIO, Port<-Port.io, Meta<-Meta Israel)"]
+    armis = next(j for j in kept if j["company"] == "Armis")
+    assert armis["_claimed_by"] == ["OTORIO"] and armis["seen_ids"] == ["greenhouse:6016139004"]
+    p = next(j for j in kept if j["company"] == "Port")
+    assert p["seen_ids"] == ["comeet:15.F68", "scrape:" + port], "the loser's ids travel, so it never re-emails"
+    # stability: once the store holds it under Port, a later run keeps Port — and a loser
+    # already in the store is superseded, not deleted
+    for j in kept:
+        st.upsert_matched(j, "2026-08-24")
+    st.upsert_matched(_role("Port.io", "Senior BI Analyst Tel Aviv - Israel", port, port, src="scrape"), "2026-08-24")
+    kept2, _ = L.resolve_claims(store.merge_duplicates(jobs))
+    assert [j["company"] for j in kept2 if j["title"].startswith("Senior BI")] == ["Port"]
+    assert st.conn.execute("select status, superseded_by from matched where company='Port.io'").fetchone() \
+        == ("superseded", "port|senior bi analyst")
+    assert not any(r["company"] == "Port.io" for r in st.get_matched_since("0000-01-01"))
+    assert any(r["company"] == "Port.io" for r in st.get_matched_since("0000-01-01", include_superseded=True))
+    st.close()
+
+
+def test_the_store_sweep_supersedes_a_double_whose_other_half_is_no_longer_fetched(tmp_path):
+    """OTORIO and Meta Israel were parked (`alias-of`) on 2026-08-23, so their rows are never
+    fetched again — yet their `matched` rows stood, one on the archive page under the wrong
+    name. The sweep at open applies the claim rule to what the store already holds."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    gh = "https://job-boards.greenhouse.io/armissecurity/jobs/6016139004"
+    st.upsert_matched(_role("OTORIO", "Senior Data Analyst", gh, "6016139004"), "2026-08-16")
+    st.upsert_matched(_role("Armis", "Senior Data Analyst", gh, "6016139004"), "2026-08-20")
+    L = roles.Ledger(st)
+    rep = L.open_sync()
+    assert rep["superseded"] == 1
+    assert st.conn.execute("select status from matched where company='OTORIO'").fetchone() == ("superseded",)
+    assert L.records["otorio|senior data analyst"]["superseded_by"] == "armis|senior data analyst"
+    assert roles.Ledger(st).open_sync()["superseded"] == 0, "idempotent"
+    st.close()
+
+
+def test_one_role_on_two_boards_is_judged_once_on_its_longest_text():
+    """BACKLOG 124: `merge_duplicates` ran AFTER classify, so a company on comeet and
+    greenhouse paid two calls, and if the bare copy was judged first its verdict won."""
+    from collections import Counter
+    from pipeline import roles
+
+    class Clf:
+        def __init__(self):
+            self.seen = []
+
+        def classify(self, j):
+            self.seen.append(len(j.get("description") or ""))
+            return {"decision": "accept", "path": "llm", "reason": "r"}
+
+    class Fill:
+        def maybe_fill(self, j):
+            return False
+    a = _role("Wix", "Data Analyst", "u1", "1", src="comeet")
+    b = _role("Wix", "Data Analyst", "u2", "2", src="greenhouse", desc="J" * 800)
+    c = _role("Wix", "BI Developer", "u3", "3", src="comeet")
+    stats, paths, clf = Counter(), Counter(), Clf()
+    acc = roles.classify_grouped([a, b, c], clf, Fill(), stats, paths)
+    assert clf.seen == [800, 0], "one judgment per role, on the copy with the text"
+    assert paths == Counter({"llm": 2, "merged-copy": 1}) and sum(paths.values()) == 3
+    assert [j["job_id"] for j in acc] == ["2", "1", "3"] and all(j["_class"]["path"] == "llm" for j in acc)
+    assert a["description"] == "J" * 800 and a["_inherited"], "the bare copy inherits verdict and text"
+
+
+def test_record_run_closes_only_where_it_looked_and_never_mass_closes(tmp_path):
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    jobs = [_role("C%d" % i, "Data Analyst", "u%d" % i, str(i)) for i in range(12)]
+    for j in jobs:
+        st.upsert_matched(j, "2026-08-20")
+    L = roles.Ledger(st)
+    L.open_sync()
+    board = st.get_matched_since("0000-01-01")
+    line = L.record_run("2026-08-20", board_jobs=board, merged=jobs, scanned_ok={j["company"] for j in jobs},
+                        failed=set(), paths={"merged-copy": 0})
+    assert line == ["open 12 · closed today 0 · reopened 0 · reposted 0 · absorbed 12 (0 already closed) · ledger 12 = store 12"]
+    # a scoped run that looked at C0 only: C0 gone -> closed; the other 11 untouched
+    line = L.record_run("2026-08-22", board_jobs=board[1:], merged=[], scanned_ok={"C0"}, failed=set())
+    assert line[0].startswith("open 11 · closed today 1 ·") and L.records["c0|data analyst"]["closed_on"] == "2026-08-22"
+    # a failed fetch is not a closure either
+    L.record_run("2026-08-23", board_jobs=board[2:], merged=[], scanned_ok={"C1"}, failed={"C1"})
+    assert L.records["c1|data analyst"]["status"] == "open"
+    # everything vanishing in one run is a broken fetch: statuses HELD, the mail told
+    line = L.record_run("2026-08-24", board_jobs=[], merged=[], scanned_ok={j["company"] for j in jobs}, failed=set())
+    assert any("mass-close held (11 of 11" in a for a in L.alarms), L.alarms
+    assert sum(1 for r in L.records.values() if r["status"] == "open") == 11
+    # ...and the ledger on disk agrees with the store
+    back, status, _ = roles.load(L.path)
+    assert status == "ok" and len(back) == 12 and "description" not in back["c0|data analyst"]
+    assert not any(k.startswith("_") for k in back["c0|data analyst"])
+    st.close()
+
+
+def test_a_reopened_role_keeps_its_history_and_a_bumped_date_is_a_repost(tmp_path):
+    """sqlite RESETS first_seen when a role reappears after >3 days (a new opening must
+    re-alert) — the ledger keeps every episode instead of forgetting the first."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Acme", "Data Analyst", "u", "1", posted_date="2026-08-01", desc="D" * 500)
+    st.upsert_matched(j, "2026-08-01")
+    L = roles.Ledger(st)
+    L.open_sync()
+    L.record_run("2026-08-01", board_jobs=st.get_matched_since("0000-01-01"), merged=[j], scanned_ok={"Acme"}, failed=set())
+    L.record_run("2026-08-03", board_jobs=[], merged=[], scanned_ok={"Acme"}, failed=set())   # closed
+    rec = L.records["acme|data analyst"]
+    assert rec["status"] == "closed" and rec["closed_on"] == "2026-08-03"
+    j2 = {**j, "posted_date": "2026-08-20"}
+    st.upsert_matched(j2, "2026-08-20")                            # >3-day gap: sqlite resets first_seen
+    L2 = roles.Ledger(st)
+    L2.open_sync()
+    line = L2.record_run("2026-08-20", board_jobs=st.get_matched_since("0000-01-01"), merged=[j2], scanned_ok={"Acme"}, failed=set())
+    rec = L2.records["acme|data analyst"]
+    assert rec["status"] == "open" and rec["closed_on"] is None
+    assert [e["first_seen"] for e in rec["episodes"]] == ["2026-08-01", "2026-08-20"]
+    assert "reopened 1" in line[0]
+    assert rec["tags"]["v"] == roles.TAGS_V and rec["desc_len"] == 500
+    # the date bump: still open (seen 2 days ago), posted_date now 2026-08-23 on an episode
+    # first seen 2026-08-20 -> a repost, not a reopening
+    st.upsert_matched({**j2, "posted_date": "2026-08-23"}, "2026-08-22")
+    line = L2.record_run("2026-08-22", board_jobs=st.get_matched_since("0000-01-01"), merged=[], scanned_ok={"Acme"}, failed=set())
+    assert L2.records["acme|data analyst"]["reposts"] == ["2026-08-23"] and "reposted 1" in line[0]
+    assert len(L2.records["acme|data analyst"]["episodes"]) == 2
+    st.close()
+
+
+def test_a_corrupt_ledger_is_reported_and_never_overwritten(tmp_path):
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.upsert_matched(_role("Acme", "Data Analyst", "u", "1"), "2026-08-20")
+    p, _ = roles.ledger_paths(st.path)
+    open(p, "w", encoding="utf-8").write("{garbage\n{more garbage\n")
+    before = open(p, encoding="utf-8").read()
+    L = roles.Ledger(st)
+    rep = L.open_sync()
+    assert rep["ledger"] == "corrupt" and L.frozen
+    assert any(a.startswith("roles ledger corrupt") for a in L.alarms)
+    line = L.record_run("2026-08-20", board_jobs=st.get_matched_since("0000-01-01"), merged=[], scanned_ok={"Acme"}, failed=set())
+    assert "ledger frozen" in line[0]
+    assert open(p, encoding="utf-8").read() == before, "a wreck is never overwritten"
+    assert st.get_matched_since("0000-01-01")[0]["company"] == "Acme", "sqlite carried the day"
+    st.close()
+
+
+def test_the_ledger_rehydrates_what_sqlite_lost_including_sent_marks(tmp_path):
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Acme", "Data Analyst", "u", "1", desc="D" * 700)
+    st.upsert_matched(j, "2026-08-20")
+    st.mark_sent({**j, "seen_ids": ["greenhouse:1"]}, "2026-08-21")
+    L = roles.Ledger(st)
+    L.open_sync()
+    L.record_run("2026-08-21", board_jobs=st.get_matched_since("0000-01-01"), merged=[j], scanned_ok={"Acme"}, failed=set())
+    assert L.records["acme|data analyst"]["emailed_on"] == "2026-08-21"
+    st.conn.execute("delete from matched")
+    st.conn.execute("delete from sent")
+    st.conn.commit()
+    L2 = roles.Ledger(st)
+    rep = L2.open_sync()
+    assert rep["rehydrated"] == 1 and rep["rehydrated_sent"] == 1
+    row = st.get_matched_since("0000-01-01")[0]
+    assert row["company"] == "Acme" and len(row["description"]) == 700 and row["first_seen"] == "2026-08-20"
+    assert st.is_sent("greenhouse:1"), "the one rehydration that prevents a re-email"
+    assert any("rehydrated 1 role" in a for a in L2.alarms)
+    st.close()
+
+
+def test_jd_attempted_is_declared_so_the_backfill_alter_is_a_no_op(tmp_path):
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    cols = {r[1] for r in st.conn.execute("pragma table_info(matched)")}
+    assert {"jd_attempted", "status", "superseded_by", "seen_ids"} <= cols
+    st.close()
+
+
+# --- wave 1 (attribution attacker, 2026-08-25): five ways the first guard was wrong --------
+def _sj(company, title, url, jid, src="scrape", loc="Tel Aviv, Israel"):
+    return {"company": company, "title": title, "url": url, "job_id": jid, "ats_platform": src,
+            "location": loc, "posted_date": "", "description": "", "seniority": ""}
+
+
+def test_a_listing_page_id_shared_by_every_role_on_a_board_never_fuses_them():
+    """scrape_universal.py:485 sets job_id to the per-job link, and on boards where that link
+    IS the listing page (SpearUAV: 12 rows, 6 titles, one `scrape:https://spearuav.com/
+    category/careers/`; Pynt: `scrape:#`; Aleph Farms: `scrape:mailto:…`) every role shares
+    one seen_id. The first guard short-circuited on a shared id and would have fused six
+    openings into one, five of them the winner's own. Titles must agree first."""
+    from pipeline import roles, store
+    lp = "https://spearuav.com/category/careers/"
+    jobs = [_sj("Spear UAV", "UAV Systems Integrator", lp, lp),
+            _sj("SpearUAV", "Flight Tests Manager", lp, lp),
+            _sj("SpearUAV", "UAV Systems Integrator", lp, lp),
+            _sj("SpearUAV", "System Engineer", lp, lp)]
+    m = store.merge_duplicates(jobs)
+    groups = [sorted(m[i]["company"] + "/" + m[i]["title"] for i in g) for g in roles.Ledger._groups(m)]
+    assert groups == [["Spear UAV/UAV Systems Integrator", "SpearUAV/UAV Systems Integrator"]]
+    assert roles._strong_ids({"seen_ids": ["scrape:#", "scrape:mailto:cv@x", "scrape:", "comeet:1"]}) == {"comeet:1"}
+
+
+def test_every_pair_in_a_bucket_is_tested_so_the_second_double_is_caught_too():
+    """Union-find compared only the bucket's first member with the rest, so on Meta's shared
+    listing url only the FIRST title pair grouped; `Product Analyst` shipped twice."""
+    from pipeline import roles, store
+    meta = "https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel"
+    jobs = [_sj("Meta", "Data Scientist", meta, "1"), _sj("Meta", "Product Analyst", meta, "2"),
+            _sj("Meta Israel", "Data Scientist", meta, "3"), _sj("Meta Israel", "Product Analyst", meta, "4")]
+    assert len(roles.Ledger._groups(store.merge_duplicates(jobs))) == 2
+
+
+def test_a_title_prefix_is_only_the_same_role_when_the_rest_is_its_location():
+    """'Data Analyst' vs 'Data Analyst, Growth' vs 'Data Analyst, Monetization' on one
+    listing url are three roles; the bare prefix rule merged them, and which one survived
+    depended on registry row order (3 different outcomes over 6 permutations)."""
+    import itertools
+    from pipeline import roles, store
+    meta = "https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel"
+    base = [_sj("Meta Israel", "Data Analyst", meta, "9"), _sj("Meta", "Data Analyst, Growth", meta, "10"),
+            _sj("Meta", "Data Analyst, Monetization", meta, "11")]
+    assert {len(roles.Ledger._groups(store.merge_duplicates(list(p)))) for p in itertools.permutations(base)} == {0}
+    assert not roles.same_posting(_sj("A", "Data Analyst", "u", "1"), _sj("B", "Data Analyst Intern", "u", "2"))
+    # ...while the scraper's location-glued title still matches the board's own
+    assert roles.same_posting(_sj("Port", "Senior BI Analyst", "u", "1", src="comeet"),
+                              _sj("Port.io", "Senior BI Analyst Tel Aviv - Israel", "u", "u", loc="Tel Aviv - Israel"))
+    assert roles.same_posting(_sj("A", "Data Analyst", "u", "1"), _sj("B", "Data Analyst Israel", "u", "2", loc="Haifa"))
+
+
+def test_the_url_evidence_outranks_a_pre_guard_wrong_holder():
+    """'Already held in the store' ranked above the url's own word made a mis-attribution
+    committed before the guard existed sticky forever: the store held OTORIO for a
+    `job-boards.greenhouse.io/armissecurity/...` posting and Armis lost its first scan."""
+    from pipeline import roles
+    gh = "https://job-boards.greenhouse.io/armissecurity/jobs/6016139004"
+    m = [_sj("OTORIO", "Senior Data Analyst", gh, "6016139004", src="greenhouse"),
+         _sj("Armis", "Senior Data Analyst", gh, "6016139004", src="greenhouse")]
+    assert m[roles.Ledger._winner(m, [0, 1], {"otorio|senior data analyst"})]["company"] == "Armis"
+    # no url evidence either way -> the holder keeps it (no flip-flop). Zebra would LOSE
+    # every later rule (longer identity, later in A-Z), so only the holder rule can pick it
+    u = "https://x.wd5.myworkdayjobs.com/en-US/careers/job/1"
+    m = [_sj("Alpha", "Data Analyst", u, "1", src="workday"), _sj("Zebra Robotics", "Data Analyst", u, "1", src="workday")]
+    assert m[roles.Ledger._winner(m, [0, 1], set())]["company"] == "Alpha"
+    assert m[roles.Ledger._winner(m, [0, 1], {"zebra robotics|data analyst"})]["company"] == "Zebra Robotics"
+
+
+def test_a_superseded_row_reclaims_itself_when_its_winner_is_no_longer_fetched(tmp_path):
+    """Day 1: Port wins, Port.io superseded. Day 2: the registry parks Port; only Port.io is
+    fetched. Without the reclaim the opening was on neither the board, the email nor the
+    archive while being fetched every morning — and `record_run` never closed it."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    L = roles.Ledger(st)
+    L.open_sync()
+    port = "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68"
+    p = _sj("Port", "Senior BI Analyst", port, "15.F68", src="comeet")
+    pio = _sj("Port.io", "Senior BI Analyst Tel Aviv - Israel", port, port, loc="Tel Aviv - Israel")
+    for j in (p, pio):
+        st.upsert_matched(j, "2026-08-24")
+    kept, _ = L.resolve_claims(store.merge_duplicates([p, pio]))
+    assert [j["company"] for j in kept] == ["Port"]
+    assert st.conn.execute("select status from matched where company='Port.io'").fetchone() == ("superseded",)
+    # day 2: Port parked, Port.io alone (a fresh Ledger, as every run has)
+    L = roles.Ledger(st)
+    L.open_sync()
+    kept, lines = L.resolve_claims(store.merge_duplicates([pio]))
+    assert [j["company"] for j in kept] == ["Port.io"] and lines == ["1 reclaimed (superseded, winner no longer fetched)"]
+    assert st.conn.execute("select status from matched where company='Port.io'").fetchone() == (None,)
+    assert any(r["company"] == "Port.io" for r in st.get_matched_since("0000-01-01"))
+    # ...but not while the winner's board merely FAILED today (it is in fetch-failure grace)
+    st.supersede("port io|senior bi analyst tel aviv israel", "port|senior bi analyst")
+    L2 = roles.Ledger(st)
+    kept, _ = L2.resolve_claims(store.merge_duplicates([pio]), failed={"Port"})
+    assert st.conn.execute("select status from matched where company='Port.io'").fetchone() == ("superseded",)
+    st.close()
+
+
+def test_the_store_sweep_never_groups_records_without_a_real_id():
+    """A ledger record has no job_id, so `seen_id()` of one with empty seen_ids and no url
+    is the bare ':' — every such record in the store would have been one group."""
+    from pipeline import roles
+    recs = [{"role_id": "a|x", "company": "Acme", "title": "Data Analyst", "url": "", "seen_ids": []},
+            {"role_id": "b|y", "company": "Beta", "title": "Data Analyst", "url": "", "seen_ids": []}]
+    assert roles.Ledger._groups(recs) == []
+
+
+def test_the_tie_break_prefers_the_real_spelling_over_a_stub_row():
+    """Shortest-identity-wins handed 9 Kornit postings to the lowercase stub row `kornit`,
+    and the `israel`-stripping identity key let 'Siemens Israel' tie 'Siemens' on length."""
+    from pipeline import roles
+    k = "https://careers.kornit.com/cmcareer/x"
+    m = [_sj("kornit", "Data Analyst", k, "1"), _sj("Kornit Digital", "Data Analyst", k, "1")]
+    assert m[roles.Ledger._winner(m, [0, 1], set())]["company"] == "Kornit Digital"
+    m = [_sj("Siemens Israel", "Data Analyst", "https://jobs.siemens.com/x", "1"), _sj("Siemens", "Data Analyst", "https://jobs.siemens.com/x", "1")]
+    assert m[roles.Ledger._winner(m, [0, 1], set())]["company"] == "Siemens"
+
+
+def test_names_in_url_ignores_tld_tokens_and_needs_four_letters_to_prefix_match():
+    """'monday.com' → token `com` matched the `comeet` segment of EVERY comeet url; 'Smart
+    Shooter' matched every SmartRecruiters url; 'my team' matched teamtailor."""
+    from pipeline import roles
+    assert not roles.names_in_url("monday.com", "https://www.comeet.com/jobs/wiz/1/x/A1.002")
+    assert not roles.names_in_url("my team", "https://x.teamtailor.com/jobs/1")
+    assert roles.names_in_url("Armis", "https://job-boards.greenhouse.io/armissecurity/jobs/6016139004")
+    assert roles.names_in_url("Port", "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68")
+    assert roles.names_in_url("Wix", "https://www.comeet.com/jobs/wix/1/x/1")          # 3-letter exact match
+    assert not roles.names_in_url("Wix", "https://www.comeet.com/jobs/wixen/1/x/1")    # ...but no 3-letter prefix
+
+
+# --- wave 1 (ledger attacker, 2026-08-25): the seams could take the digest down ------------
+def test_a_wrong_typed_ledger_line_freezes_the_ledger_instead_of_the_digest(tmp_path):
+    """`{"sent": "yesterday"}` is valid JSON with a string role_id, so `load` accepted it and
+    `open_sync` died on `.items()` — out of run(), past the Persist step: no email, no
+    board, the morning's LLM verdicts lost. Now a wrong-typed field is a bad line (10 % of
+    them = corrupt = frozen), and every seam can only alarm."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.upsert_matched(_role("Acme", "Data Analyst", "u", "1"), "2026-08-20")
+    p, _ = roles.ledger_paths(st.path)
+    bad = ('{"role_id":"a|x","company":"A","title":"x","url":"u1","seen_ids":["greenhouse:1"],'
+           '"sources":["greenhouse"],"first_seen":"2026-08-20","last_seen":"2026-08-24","status":"open",'
+           '"sent":"yesterday"}\n')
+    open(p, "w", encoding="utf-8").write(bad)
+    L = roles.Ledger(st, "2026-08-25")
+    rep = L.open_sync()
+    assert rep["ledger"] == "corrupt" and L.frozen and any("corrupt" in a for a in L.alarms)
+    for line in ('{"role_id":"a|x","episodes":"none"}\n', '{"role_id":"a|x","tags":[1]}\n',
+                 '{"role_id":"a|x","last_seen":20260824}\n', '{"role_id":"a|x","episodes":["2026-08-20"]}\n'):
+        assert roles.load.__wrapped__(p) if False else not roles._valid(__import__("json").loads(line)), line
+    # ...and a seam that raises for any other reason is an alarm, not an exception
+    L2 = roles.Ledger(st, "2026-08-25")
+    L2.st = None
+    assert L2.open_sync() == {"ledger": "failed"} and L2.frozen
+    assert any(a.startswith("roles open_sync failed: AttributeError") for a in L2.alarms)
+    assert L2.record_run("2026-08-25", board_jobs=[], merged=[], scanned_ok=set(), failed=set()) == ["roles: not recorded (see Stages)"]
+    st.close()
+
+
+def test_a_failed_board_whose_name_holds_a_parenthesis_is_still_a_failed_board():
+    """`failed_names = {f.split(" (")[0] ...}` turned 'Microsoft (Xbox/Gaming)' into
+    'Microsoft' for `_alive` AND for the ledger — 15 registry names contain " (", and their
+    roles were closed (and lost the 7-day grace) on any 503. run.py now collects the set
+    by name in the fetch loop. (A source-text guard on purpose: the behaviour is in the
+    end-to-end fixture test below; this pins the one line that must not come back.)"""
+    import os
+    src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "pipeline", "run.py"), encoding="utf-8").read()
+    assert 'failed_names.add(r["company_name"])' in src
+    assert 'split(" (")[0]' not in src
+
+
+def test_closure_is_judged_on_the_alive_set_not_the_page_capped_board():
+    """`BOARD_MAX_ROLES` truncates the rendered page; the ledger was judging "still open"
+    against the truncated list, closing every live role past the cut."""
+    import os
+    src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "pipeline", "run.py"), encoding="utf-8").read()
+    assert "alive_jobs = list(board_jobs)" in src and "board_jobs=alive_jobs" in src
+    assert src.index("alive_jobs = list(board_jobs)") < src.index("if len(board_jobs) > BOARD_MAX_ROLES")
+
+
+def test_a_full_run_judges_every_company_and_a_fresh_record_never_counts_as_a_closure(tmp_path):
+    """Roles whose employer is no registry row (a discovery card, a recruiter stripped from
+    `rows`) stayed `open` forever and the mail's `open` sat ~16 above the board. On a full
+    run every non-failed company is judged. And a record absorbed for the first time is
+    classified, never counted toward the mass-close guard (the first real run absorbed 35
+    archived roles and would have HELD them all)."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    alive = [_role("Acme", "Data Analyst", "u1", "1")]
+    dead = [_role("Ghost Co %d" % i, "Data Analyst", "g%d" % i, str(i + 10)) for i in range(20)]
+    for j in dead:
+        st.upsert_matched(j, "2026-08-10")
+    st.upsert_matched(alive[0], "2026-08-24")
+    L = roles.Ledger(st, "2026-08-25")
+    L.open_sync()
+    board = [r for r in st.get_matched_since("0000-01-01") if r["company"] == "Acme"]
+    line = L.record_run("2026-08-25", board_jobs=board, merged=alive, scanned_ok={"Acme"}, failed=set(), scoped=False)
+    assert line[0].startswith("open 1 · closed today 0 ·"), line
+    assert [a for a in L.alarms if not a.startswith("roles ledger missing")] == [], L.alarms
+    assert sum(1 for r in L.records.values() if r["status"] == "closed") == 20
+    assert L.records["ghost co 3|data analyst"]["closed_on"] == "2026-08-10"     # its last sighting
+    # a scoped run leaves the unscanned alone
+    L2 = roles.Ledger(st, "2026-08-26")
+    L2.open_sync()
+    L2.record_run("2026-08-26", board_jobs=[], merged=[], scanned_ok={"Acme"}, failed=set(), scoped=True)
+    assert L2.records["acme|data analyst"]["status"] == "closed"
+    assert all(r["status"] == "closed" for k, r in L2.records.items() if k != "acme|data analyst")
+    st.close()
+
+
+def test_the_mass_close_fraction_catches_a_forty_percent_zero_out():
+    """At 50 % a broken run where 40 % of boards returned [] closed 80 of 200 roles with no
+    alarm; the fraction is 25 % now (floor 10)."""
+    from pipeline import roles
+    assert roles.MASS_CLOSE_FRAC <= 0.25 and roles.MASS_CLOSE_MIN == 10
+    assert 80 > max(roles.MASS_CLOSE_MIN, roles.MASS_CLOSE_FRAC * 200)       # 40 % of 200 -> held
+    assert not 11 > max(roles.MASS_CLOSE_MIN, roles.MASS_CLOSE_FRAC * 200)   # 11 real closures -> not
+
+
+def test_a_record_without_iso_dates_is_not_rehydrated_forever_and_the_line_says_not_equal(tmp_path):
+    """A ledger line with `first_seen: ""` was re-inserted every morning (invisible to every
+    `first_seen >= ?` read), two alarms a day, and the mail printed `ledger 1 = store 0`."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    p, _ = roles.ledger_paths(st.path)
+    open(p, "w", encoding="utf-8").write('{"role_id":"ghost|data analyst","company":"Ghost","title":"Data Analyst","first_seen":"","last_seen":"","seen_ids":["gh:1"],"sources":["gh"]}\n')
+    L = roles.Ledger(st, "2026-08-25")
+    rep = L.open_sync()
+    assert rep["rehydrated"] == 0 and rep["unrehydratable"] == 1
+    assert st.conn.execute("select count(*) from matched").fetchone() == (0,)
+    line = L.record_run("2026-08-25", board_jobs=[], merged=[], scanned_ok=set(), failed=set())
+    assert "ledger 1 != store 0" in line[0]
+    st.close()
+
+
+def test_mark_sent_stamps_the_ledger_mirror_in_the_same_commit(tmp_path):
+    """`mark_sent.py` runs AFTER the digest flushed the ledger, so the cohort just emailed —
+    the one a rollback would re-email — had no `sent` mirror until the next morning."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Acme", "Data Analyst", "u", "1")
+    st.upsert_matched(j, "2026-08-25")
+    L = roles.Ledger(st, "2026-08-25")
+    L.open_sync()
+    L.record_run("2026-08-25", board_jobs=st.get_matched_since("0000-01-01"), merged=[j], scanned_ok={"Acme"}, failed=set())
+    st.mark_sent({**j, "seen_ids": ["greenhouse:1"]}, "2026-08-25")
+    back, _, _ = roles.load(L.path)
+    assert back["acme|data analyst"]["sent"] == {"greenhouse:1": "2026-08-25"}
+    assert back["acme|data analyst"]["emailed_on"] == "2026-08-25"
+    st.close()
+
+
+def test_a_corrupt_descriptions_file_freezes_only_itself(tmp_path):
+    """A wrecked roles_text.jsonl froze the healthy roles.jsonl too, and the alarm quoted the
+    other file's bad-line count."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.upsert_matched(_role("Acme", "Data Analyst", "u", "1", desc="D" * 400), "2026-08-25")
+    _, tp = roles.ledger_paths(st.path)
+    open(tp, "w", encoding="utf-8").write("{wreck\n{wreck\n")
+    L = roles.Ledger(st, "2026-08-25")
+    rep = L.open_sync()
+    assert rep["ledger"] == "missing" and not L.frozen and L.text_frozen
+    assert any("roles_text.jsonl, 2 bad lines" in a for a in L.alarms), L.alarms
+    line = L.record_run("2026-08-25", board_jobs=st.get_matched_since("0000-01-01"), merged=[], scanned_ok={"Acme"}, failed=set())
+    assert line[0].startswith("open 1 ·") and roles.load(L.path)[1] == "ok"
+    assert open(tp, encoding="utf-8").read() == "{wreck\n{wreck\n"
+    st.close()
+
+
+def test_updated_is_the_run_date_not_the_wall_clock(tmp_path):
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.upsert_matched(_role("Acme", "Data Analyst", "u", "1"), "2020-01-01")
+    L = roles.Ledger(st, "2020-01-02")
+    L.open_sync()
+    assert roles.load(L.path)[0]["acme|data analyst"]["updated"] == "2020-01-02"
+    st.close()
+
+
+# --- wave 1 (regression attacker, 2026-08-25): classify-once must not move the windows ------
+def test_a_bare_card_that_inherited_its_verdict_is_never_the_canonical_but_its_date_survives():
+    """A bare LinkedIn card (ISO date, LinkedIn url) listed beside the employer's undated
+    board row: classify-once let the card into `merge_duplicates`, where its ISO date made
+    it canonical — the stored url became LinkedIn's and the email judged a different date.
+    Now an inherited copy can never be canonical (the board's url wins) while a known
+    posting date is never discarded (the role is not 48h-new because we lack a date)."""
+    from collections import Counter
+    from pipeline import roles, store
+
+    class Clf:
+        def classify(self, j):
+            return {"decision": "accept", "path": "keyword", "reason": "r"}
+
+    class Fill:
+        def maybe_fill(self, j):
+            return False
+    card = _role("Acme", "Senior Data Analyst", "https://www.linkedin.com/jobs/view/x-4400000001",
+                 "https://www.linkedin.com/jobs/view/x-4400000001", src="discovery-linkedin", posted_date="2026-08-10")
+    board = _role("Acme", "Senior Data Analyst", "https://boards.greenhouse.io/acme/jobs/1", "1",
+                  src="greenhouse", posted_date="", desc="R" * 600)
+    acc = roles.classify_grouped([card, board], Clf(), Fill(), Counter(), Counter())
+    assert card["_inherited"] and "_inherited" not in board
+    m = store.merge_duplicates(acc)
+    assert len(m) == 1 and m[0]["url"] == board["url"] and m[0]["posted_date"] == "2026-08-10"
+    assert m[0]["seen_ids"] == sorted({store.seen_id(card), store.seen_id(board)})
+
+
+def test_two_listings_with_different_texts_are_each_judged_and_either_can_qualify():
+    """One title, two postings, two JDs (one core-ML, one analytics): judging only the
+    longest text rejected the role HEAD had accepted through its other listing. Every copy
+    with its own text is judged; a bare copy inherits the accepting verdict."""
+    from collections import Counter
+    from pipeline import roles
+
+    class Clf:
+        def __init__(self):
+            self.seen = []
+
+        def classify(self, j):
+            d = j.get("description") or ""
+            self.seen.append(len(d))
+            ok = "analytics" in d
+            return {"decision": "accept" if ok else "reject", "path": "llm", "reason": "r"}
+
+    class Fill:
+        def maybe_fill(self, j):
+            return False
+    ml = _role("Acme", "Data Scientist", "u1", "1", desc="deep learning models " * 40)
+    an = _role("Acme", "Data Scientist", "u2", "2", desc="product analytics, SQL " * 10)
+    bare = _role("Acme", "Data Scientist", "u3", "3")
+    stats, paths, clf = Counter(), Counter(), Clf()
+    acc = roles.classify_grouped([bare, ml, an], clf, Fill(), stats, paths)
+    assert clf.seen == [len(ml["description"]), len(an["description"])], "longest first, bare never"
+    assert [j["job_id"] for j in acc] == ["2", "3"], "the ML posting stays rejected; the bare copy inherits the accept"
+    assert paths == Counter({"llm": 2, "merged-copy": 1})
+    # the same text twice is judged once
+    stats, paths, clf = Counter(), Counter(), Clf()
+    roles.classify_grouped([dict(an), dict(an, job_id="9", url="u9")], clf, Fill(), stats, paths)
+    assert clf.seen == [len(an["description"])] and paths == Counter({"llm": 1, "merged-copy": 1})
+
+
+# --- wave 1 (mutation attacker, 2026-08-25): three guards that guarded nothing ------------
+def test_the_store_holder_wins_when_the_url_names_neither_company():
+    """Rule 2 never decided anything: in every fixture the holder also had the url's word or
+    the shorter identity, so `0 if merge_key(j) in held else 1` deleted with the suite green
+    — and a two-claimant posting would flip company names (and re-email) on any tie-break edit."""
+    from pipeline import roles
+    u = "https://x.wd5.myworkdayjobs.com/en-US/careers/job/1"     # names neither company
+    m = [_sj("Acme", "Data Analyst", u, "1", src="workday"),
+         _sj("Zebra Robotics", "Data Analyst", u, "1", src="workday")]
+    assert m[roles.Ledger._winner(m, [0, 1], set())]["company"] == "Acme"      # no history: shortest
+    assert m[roles.Ledger._winner(m, [0, 1], {"zebra robotics|data analyst"})]["company"] \
+        == "Zebra Robotics", "the name the board already carries wins; it must not flip-flop"
+
+
+def test_jd_attempted_survives_a_ledger_that_never_heard_of_the_backfill():
+    """`max(both)` was only exercised with the stamp on the LEDGER side, so taking the
+    ledger's value alone passed — and would re-spend Bright Data on every role
+    enrich_matched_jd.py attempted since the ledger was last written."""
+    from pipeline import roles
+    row = {"company": "A", "title": "x", "last_seen": "2026-08-24", "jd_attempted": "2026-08-24"}
+    rec = {"company": "A", "title": "x", "last_seen": "2026-08-24", "jd_attempted": ""}
+    assert roles.reconcile(row, rec)["jd_attempted"] == "2026-08-24"
+    assert roles.reconcile(row, {**rec, "jd_attempted": "2026-08-20"})["jd_attempted"] == "2026-08-24"
+
+
+def test_a_rehydrated_row_carries_no_status_but_superseded(tmp_path):
+    """sqlite carries ONE status, `superseded`; open/closed are the ledger's. Rehydrating
+    the record's own `status` wrote 'closed'/'open' — and a stale `superseded_by` — into
+    the index four other tools read by SQL, with the suite green."""
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    base = {"company": "A", "title": "x", "first_seen": "2026-08-20", "last_seen": "2026-08-22"}
+    st.insert_matched({**base, "mkey": "a|x", "status": "closed", "superseded_by": ""})
+    st.insert_matched({**base, "mkey": "b|y", "status": "open", "superseded_by": "c|z"})
+    st.insert_matched({**base, "mkey": "c|z", "status": "superseded", "superseded_by": "b|y"})
+    got = {k: (s, sb) for k, s, sb in st.conn.execute("select mkey, status, superseded_by from matched")}
+    assert got["a|x"] == (None, None) and got["b|y"] == (None, None), "only the ledger knows open/closed"
+    assert got["c|z"] == ("superseded", "b|y"), "...but `superseded` is sqlite's to keep"
+    st.close()
+
+
+def test_the_roles_line_reaches_the_mail_in_all_three_renderings():
+    """The role record's verdict was asserted in the summary dict and in a rehearsal CI
+    never runs; deleting the lines that emit it left the suite green and the email silent
+    about what closed, reopened and was re-posted."""
+    from pipeline import digest
+    s = {"paths": {}, "roles": ["open 5 · closed today 1 · ledger 5 = store 5", "claim conflicts 1 (A<-B)"]}
+    _, md = digest.build_markdown([], "2026-08-25", s, {})
+    assert "- **Roles:** open 5 · closed today 1 · ledger 5 = store 5; claim conflicts 1 (A<-B)" in md
+    import html
+    assert "  ROLES: open 5 · closed today 1" in digest._text_audit(s)
+    assert "<b>Roles:</b> open 5" in digest._html_audit(s, lambda v: html.escape(str(v)))
+
+
+def test_the_role_record_runs_end_to_end_on_two_scripted_days(tmp_path, monkeypatch):
+    """The three call-site facts no unit test read — claims resolved BEFORE the upserts,
+    `record_run` told where the run looked, the `Roles:` line in the produced markdown —
+    each survived with `pytest` green because only `tests/rehearse_roles.py` (which no
+    workflow runs) exercised `run()`. Two fixture days, in-process, scoped, no network."""
+    import json, os
+    from pipeline import fetchers, run as R, stages, roles
+    fix = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "roles", "days.json"), encoding="utf-8"))
+
+    def _job(spec):
+        return dict(fix["jobs"][spec]) if isinstance(spec, str) else {**fix["jobs"][spec["base"]], **{k: v for k, v in spec.items() if k != "base"}}
+    monkeypatch.setattr(R, "_load_secrets_env", lambda: None)
+    monkeypatch.setattr(R, "load_companies", lambda: [dict(r) for r in fix["companies"]])
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    monkeypatch.setenv("JD_BD", "0")
+    for k in ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE", "JDFILL", "CLAUDE_CODE_OAUTH_TOKEN", "AGGREGATOR_ENABLED"):
+        monkeypatch.delenv(k, raising=False)
+    only = [c["company_name"] for c in fix["companies"]]
+    db = str(tmp_path / "seen.db")
+    outs = []
+    for day in fix["days"][2:5]:                                      # 08-22 (Acme DA seen) -> 08-23 (gone, one day grace) -> 08-24 (closed)
+        fetch = day["fetch"]
+
+        def fake_fetch(row, _f=fetch):
+            got = _f.get(row["company_name"], [])
+            if got == "ERROR":
+                raise RuntimeError("503 (fixture)")
+            return [_job(s) for s in got]
+        monkeypatch.setattr(fetchers, "fetch_company", fake_fetch)
+        payload, base = R.run(use_llm=False, only=only, run_date=day["date"], out_dir=str(tmp_path / "out"), db_path=db)
+        outs.append((payload["summary"], open(base + ".md", encoding="utf-8").read()))
+    s1, md1 = outs[0]                                                  # 08-22
+    s2, md2 = outs[-1]                                                 # 08-24
+    assert "claim conflicts 2 (Armis<-OTORIO, Port<-Port.io)" in "; ".join(s1["roles"])
+    assert "- **Roles:** open" in md1 and "claim conflicts 2" in md1, "the line is in the email itself"
+    assert "closed today 1 ·" in s2["roles"][0], s2["roles"]          # record_run was told where the run looked
+    recs, status, _ = roles.load(roles.ledger_paths(db)[0])
+    assert status == "ok" and recs["acme analytics|data analyst"]["status"] == "closed"
+    assert not any(r["company"] in ("OTORIO", "Port.io") for r in recs.values()), "losers never reached the store: claims resolved before the upserts"
+    assert sum(s2["paths"].values()) == s2["israel_matched"]
+
+
+# --- wave 2 (confirmer, 2026-08-25): the corners the fixes left ---------------------------
+def test_a_non_string_inside_a_list_is_a_bad_line_not_a_frozen_morning():
+    """`_valid` checked list TYPES, not elements: one `12345` inside `seen_ids` passed, then
+    `open_sync` died sorting it — after one sqlite row had already been mutated — and the
+    frozen ledger was never rewritten, so the two sides drifted and stayed drifted."""
+    from pipeline import roles
+    assert not roles._valid({"role_id": "a|x", "seen_ids": ["comeet:1", 12345]})
+    assert not roles._valid({"role_id": "a|x", "sources": [None]})
+    assert not roles._valid({"role_id": "a|x", "reposts": [1]})
+    assert roles._valid({"role_id": "a|x", "seen_ids": ["comeet:1"], "reposts": ["2026-08-20"]})
+
+
+def test_a_title_agreement_that_is_not_transitive_collapses_nothing():
+    """`_titles_agree` takes its word-set from the LONGER job's location, so A~B and B~C can
+    hold with A≁C ('Analyst' / 'Analyst Global' / 'Analyst Global Israel' at three companies
+    on one listing url). Union-find fused all three; only a clique may collapse."""
+    from pipeline import roles
+    u = "https://jobs.example.com/listing"
+    jobs = [_sj("AlphaCo", "Analyst", u, "1", loc="Tel Aviv"),
+            _sj("BetaCo", "Analyst Global", u, "2", loc="Global"),
+            _sj("GammaCo", "Analyst Global Israel", u, "3", loc="Israel")]
+    assert roles.same_posting(jobs[0], jobs[1]) and roles.same_posting(jobs[1], jobs[2])
+    assert not roles.same_posting(jobs[0], jobs[2])
+    assert roles.Ledger._groups(jobs) == []
+    # ...while a real clique still does
+    trio = [_sj("A", "Data Analyst", u, "9"), _sj("B", "Data Analyst", u, "9"), _sj("C", "Data Analyst", u, "9")]
+    assert roles.Ledger._groups(trio) == [[0, 1, 2]]
+
+
+def test_a_missing_ledger_over_a_populated_store_is_announced_and_counted(tmp_path):
+    """With no roles.jsonl every record is `fresh`, so every dead role closed at once with
+    no mass-close alarm and `closed today 0`. The first run (or a lost file) now says so
+    on the Stages line and on the Roles line."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    for i in range(12):
+        st.upsert_matched(_role("C%d" % i, "Data Analyst", "u%d" % i, str(i)), "2026-08-10")
+    L = roles.Ledger(st, "2026-08-25")
+    L.open_sync()
+    assert any(a.startswith("roles ledger missing — 12 role(s) absorbed") for a in L.alarms)
+    line = L.record_run("2026-08-25", board_jobs=[], merged=[], scanned_ok=set(), failed=set(), scoped=False)
+    assert "absorbed 12 (12 already closed)" in line[0] and "closed today 0" in line[0]
+    st.close()
+
+
+def test_an_ats_host_never_names_the_company_in_the_url():
+    """`Smart Shooter` matched every smartrecruiters url, `Comeet` every comeet.com url,
+    `Deutsche Post DHL` pinpointhq — a free rank-0 claim against the real tenant."""
+    from pipeline import roles
+    assert not roles.names_in_url("Smart Shooter", "https://jobs.smartrecruiters.com/OtherCo/1")
+    assert not roles.names_in_url("Comeet", "https://www.comeet.com/jobs/wix/1/x/1")
+    assert not roles.names_in_url("Deutsche Post DHL", "https://x.pinpointhq.com/postings/1")
+    assert roles.names_in_url("Wix", "https://www.comeet.com/jobs/wix/1/x/1")
+
+
+def test_a_title_outside_the_latin_hebrew_alphabet_is_compared_raw():
+    """`_norm` keeps Latin + Hebrew, so Siemens and Siemens EDA's shared '高级精益工程师' at one
+    url normalized to "" and `same_posting` bailed — the one Siemens pair that published twice."""
+    from pipeline import roles
+    u = "https://jobs.siemens.com/en_US/externaljobs/JobDetail/519397"
+    assert roles.same_posting(_sj("Siemens", "高级精益工程师", u, "519397"), _sj("Siemens EDA", "高级精益工程师", u, "519397"))
+    assert not roles.same_posting(_sj("Siemens", "高级精益工程师", u, "519397"), _sj("Siemens EDA", "精益工程师", u, "519397"))
+
+
+def test_a_row_is_never_superseded_by_itself(tmp_path):
+    """'Acme Ltd' and 'Acme' share one mkey; superseding it by itself put the row off the
+    board AND the archive with no reclaim possible (its winner is fetched daily)."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    L = roles.Ledger(st, "2026-08-25")
+    L.open_sync()
+    L._supersede("acme|data analyst", "acme|data analyst")
+    assert st.conn.execute("select count(*) from matched where status='superseded'").fetchone() == (0,)
+    st.close()
+
+
+def test_orphan_text_lines_do_not_survive_a_flush(tmp_path):
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.upsert_matched(_role("Acme", "Data Analyst", "u", "1", desc="D" * 400), "2026-08-25")
+    _, tp = roles.ledger_paths(st.path)
+    open(tp, "w", encoding="utf-8").write('{"role_id":"ghost|x","sha1":"0","len":1,"description":"x","updated":"2026-08-01"}\n')
+    L = roles.Ledger(st, "2026-08-25")
+    L.open_sync()
+    L.record_run("2026-08-25", board_jobs=st.get_matched_since("0000-01-01"), merged=[], scanned_ok={"Acme"}, failed=set())
+    assert set(roles.load(tp)[0]) == {"acme|data analyst"}
+    st.close()
+
+
+def test_a_scoped_run_never_reclaims_for_a_winner_that_was_merely_out_of_scope(tmp_path):
+    """`--only "Port.io"` on the real store un-superseded Port.io and republished it: the
+    winner (Port) was absent from today's keys because it was not SCANNED, not because it
+    was parked. A winner outside the scanned set is not evidence of anything."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    port = "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68"
+    p = _sj("Port", "Senior BI Analyst", port, "15.F68", src="comeet")
+    pio = _sj("Port.io", "Senior BI Analyst Tel Aviv - Israel", port, port, loc="Tel Aviv - Israel")
+    for j in (p, pio):
+        st.upsert_matched(j, "2026-08-24")
+    L = roles.Ledger(st, "2026-08-24")
+    L.open_sync()
+    L.resolve_claims(store.merge_duplicates([p, pio]), scanned={"Port", "Port.io"})
+    assert st.conn.execute("select status from matched where company='Port.io'").fetchone() == ("superseded",)
+    L2 = roles.Ledger(st, "2026-08-25")
+    L2.open_sync()
+    _, lines = L2.resolve_claims(store.merge_duplicates([pio]), scanned={"Port.io"})   # scoped: Port not scanned
+    assert lines == [] and st.conn.execute("select status from matched where company='Port.io'").fetchone() == ("superseded",)
+    _, lines = L2.resolve_claims(store.merge_duplicates([pio]), scanned={"Port.io", "Port"})   # Port scanned, gone: parked
+    assert lines == ["1 reclaimed (superseded, winner no longer fetched)"]
+    st.close()

@@ -15,6 +15,12 @@ Two separate dedup concerns, handled with two different keys:
 
 The LLM verdict cache lives in the same DB so `claude -p` is not re-invoked for a title
 already judged on a previous day.
+
+3. The role RECORD (lane: roles, ARCHITECTURE §7c) is `matched` plus the text ledger next to
+   this file — `roles.jsonl` / `roles_text.jsonl`, written by `pipeline/roles.py`. sqlite is
+   the working index every SQL reader keeps using; the ledger is the durable, diffable,
+   never-deleting copy. `status='superseded'` marks a row whose posting another company
+   row also fetched (the same job under two names): kept, but off the board and the archive.
 """
 from __future__ import annotations
 
@@ -77,15 +83,25 @@ def merge_duplicates(jobs):
     merged = []
     for k in order:
         members = groups[k]
-        # canonical = prefer an entry with an ISO date, then one with a url, else first.
+        # canonical = prefer an entry with an ISO date, then one with a url, else first —
+        # never a copy that only INHERITED its verdict (pipeline/roles.classify_grouped): a
+        # bare discovery card's LinkedIn url and date must not become the role's record
         canonical = sorted(
             members,
             key=lambda j: (
+                1 if j.get("_inherited") else 0,
                 0 if re.match(r"^\d{4}-\d{2}-\d{2}$", str(j.get("posted_date", ""))) else 1,
                 0 if j.get("url") else 1,
             ),
         )[0]
         out = dict(canonical)
+        # a known posting date is never discarded: a bare discovery card cannot be the
+        # canonical (its url is LinkedIn's), but the date it carries is real evidence
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(out.get("posted_date", ""))):
+            for m in members:
+                if re.match(r"^\d{4}-\d{2}-\d{2}$", str(m.get("posted_date", ""))):
+                    out["posted_date"] = m["posted_date"]
+                    break
         out["seen_ids"] = sorted({seen_id(m) for m in members})
         out["sources"] = sorted({m.get("ats_platform", "") for m in members})
         merged.append(out)
@@ -150,13 +166,22 @@ class SeenStore:
                 sources     TEXT,
                 description TEXT,
                 first_seen  TEXT,
-                last_seen   TEXT
+                last_seen   TEXT,
+                seen_ids    TEXT,
+                jd_attempted TEXT,
+                status      TEXT,
+                superseded_by TEXT
             )""")
-        try:  # migration: carry posting ids so mark_sent gets real seen_ids
-            self.conn.execute("ALTER TABLE matched ADD COLUMN seen_ids TEXT")
-        except sqlite3.OperationalError:
-            pass
+        # migrations for stores created before a column existed. `jd_attempted` used to be
+        # added out-of-band by enrich_matched_jd.py (its ALTER is now a no-op here);
+        # `status`/`superseded_by` are the roles lane's (pipeline/roles.py).
+        for col in ("seen_ids", "jd_attempted", "status", "superseded_by"):
+            try:
+                self.conn.execute(f"ALTER TABLE matched ADD COLUMN {col} TEXT")
+            except sqlite3.OperationalError:
+                pass
         self.conn.commit()
+        self.path = path
 
     # ---- seen/sent tracking -------------------------------------------------
     def is_sent(self, sid):
@@ -181,6 +206,10 @@ class SeenStore:
                  merged_job.get("location"), merged_job.get("url"), run_date, run_date),
             )
         self.conn.commit()
+        # the ledger's `sent` mirror, in the same commit (pipeline/roles.py, lane: roles)
+        from . import roles as _roles
+        _roles.stamp_sent(self.path, {sid: run_date
+                                      for sid in merged_job.get("seen_ids", [seen_id(merged_job)])})
 
     def count_sent(self):
         return self.conn.execute("SELECT COUNT(*) FROM sent").fetchone()[0]
@@ -346,22 +375,75 @@ class SeenStore:
                  new_desc, run_date, run_date))
         self.conn.commit()
 
-    def get_matched_since(self, cutoff_iso):
-        """Return matched roles with first_seen >= cutoff (ISO date), newest first."""
+    MATCHED_COLS = ["mkey", "company", "title", "location", "url", "posted_date", "seniority",
+                    "sources", "seen_ids", "description", "first_seen", "last_seen",
+                    "jd_attempted", "status", "superseded_by"]
+
+    def get_matched_since(self, cutoff_iso, include_superseded=False):
+        """Return matched roles with first_seen >= cutoff (ISO date), newest first.
+
+        A `superseded` row is the same posting another company row also fetched (one job
+        under two names); it stays in the store but is off the board and the archive unless
+        asked for."""
         cur = self.conn.execute(
-            """SELECT company, title, location, url, posted_date, seniority, sources,
-                      seen_ids, description, first_seen, last_seen FROM matched
-               WHERE first_seen >= ? ORDER BY first_seen DESC, posted_date DESC""",
+            f"""SELECT {', '.join(self.MATCHED_COLS)} FROM matched
+                WHERE first_seen >= ?
+                {'' if include_superseded else "AND COALESCE(status,'') != 'superseded'"}
+                ORDER BY first_seen DESC, posted_date DESC""",
             (cutoff_iso,))
-        cols = ["company", "title", "location", "url", "posted_date", "seniority",
-                "sources", "seen_ids", "description", "first_seen", "last_seen"]
         rows = []
         for r in cur.fetchall():
-            d = dict(zip(cols, r))
+            d = dict(zip(self.MATCHED_COLS, r))
             d["sources"] = (d["sources"] or "").split("+") if d["sources"] else []
             d["seen_ids"] = (d["seen_ids"] or "").split("+") if d["seen_ids"] else []
             rows.append(d)
         return rows
+
+    # ---- the roles ledger's seams (pipeline/roles.py is the only caller) --------------
+    def supersede(self, mkey, by_mkey):
+        """One posting under two company names: keep the loser's row, off the product."""
+        self.conn.execute("UPDATE matched SET status='superseded', superseded_by=? WHERE mkey=?",
+                          (by_mkey, mkey))
+        self.conn.commit()
+
+    def update_matched(self, mkey, **fields):
+        """Field-level write used by the ledger reconcile (never touches first_seen's rule)."""
+        cols = [c for c in fields if c in self.MATCHED_COLS and c != "mkey"]
+        if not cols:
+            return
+        vals = [("+".join(sorted(fields[c])) if isinstance(fields[c], (list, set)) else fields[c])
+                for c in cols]
+        self.conn.execute(f"UPDATE matched SET {', '.join(c + '=?' for c in cols)} WHERE mkey=?",
+                          (*vals, mkey))
+        self.conn.commit()
+
+    def insert_matched(self, rec):
+        """Rehydrate one role the ledger has and sqlite lacks. Idempotent (INSERT OR IGNORE).
+        sqlite carries one status only, `superseded`; open/closed are the ledger's."""
+        rec = dict(rec)
+        if rec.get("status") != "superseded":
+            rec["status"], rec["superseded_by"] = None, None
+        vals = [("+".join(sorted(rec.get(c) or [])) if c in ("sources", "seen_ids")
+                 else rec.get(c)) for c in self.MATCHED_COLS]
+        self.conn.execute(
+            f"INSERT OR IGNORE INTO matched ({', '.join(self.MATCHED_COLS)}) "
+            f"VALUES ({', '.join('?' * len(self.MATCHED_COLS))})", vals)
+        self.conn.commit()
+
+    def load_sent(self):
+        """{seen_id: first_sent} — what has been emailed, for the ledger's `sent` mirror."""
+        return dict(self.conn.execute("SELECT seen_id, first_sent FROM sent").fetchall())
+
+    def upsert_sent_missing(self, rows):
+        """Rehydrate `sent` from the ledger: rows = {seen_id: first_sent}. Returns inserted."""
+        n = 0
+        for sid, first in rows.items():
+            cur = self.conn.execute(
+                "INSERT OR IGNORE INTO sent (seen_id, first_sent, last_seen) VALUES (?,?,?)",
+                (sid, first, first))
+            n += cur.rowcount
+        self.conn.commit()
+        return n
 
     def close(self):
         self.conn.close()

@@ -1,0 +1,36 @@
+{
+  "_comment": "Scripted fetch results for tests/rehearse_roles.py, one entry per run day. A company mapping to the string \"ERROR\" raises in fetch_company (a failed board). Shapes are the ones found in the committed store on 2026-08-25: the same posting under two names (Armis/OTORIO by seen_id; Port/Port.io by url + a location-glued title), a repost (date bumped), a closure and a reopening.",
+  "companies": [
+    {"company_name": "Armis", "ats_platform": "greenhouse", "token": "armissecurity", "api_url": "https://boards-api.greenhouse.io/v1/boards/armissecurity/jobs", "active": "true", "notes": ""},
+    {"company_name": "OTORIO", "ats_platform": "greenhouse", "token": "armissecurity", "api_url": "https://boards-api.greenhouse.io/v1/boards/armissecurity/jobs", "active": "true", "notes": ""},
+    {"company_name": "Port", "ats_platform": "comeet", "token": "59.004", "api_url": "https://www.comeet.com/careers-api/2.0/company/59.004/positions", "active": "true", "notes": ""},
+    {"company_name": "Port.io", "ats_platform": "scrape", "token": "", "api_url": "https://www.port.io/careers", "active": "true", "notes": ""},
+    {"company_name": "Acme Analytics", "ats_platform": "comeet", "token": "11.001", "api_url": "https://www.comeet.com/careers-api/2.0/company/11.001/positions", "active": "true", "notes": ""},
+    {"company_name": "Beta Games", "ats_platform": "lever", "token": "beta", "api_url": "https://api.lever.co/v0/postings/beta", "active": "true", "notes": ""}
+  ],
+  "jobs": {
+    "armis": {"company": "Armis", "title": "Senior Data Analyst", "location": "Tel Aviv, Israel", "country_code": "IL", "url": "https://job-boards.greenhouse.io/armissecurity/jobs/6016139004", "posted_date": "2026-08-18", "ats_platform": "greenhouse", "job_id": "6016139004", "description": "About the role: Armis is looking for a Senior Data Analyst. Requirements: 4+ years of experience as a data analyst, SQL, Python, Tableau. BSc in Statistics."},
+    "otorio": {"company": "OTORIO", "title": "Senior Data Analyst", "location": "Tel Aviv, Israel", "country_code": "IL", "url": "https://job-boards.greenhouse.io/armissecurity/jobs/6016139004", "posted_date": "2026-08-18", "ats_platform": "greenhouse", "job_id": "6016139004", "description": ""},
+    "port": {"company": "Port", "title": "Senior BI Analyst", "location": "Tel Aviv-Yafo, Tel Aviv District, IL", "country_code": "IL", "url": "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68", "posted_date": "2026-08-19", "ats_platform": "comeet", "job_id": "15.F68", "description": "Port is hiring a Senior BI Analyst. Requirements: 5+ years experience with SQL, Looker, dbt; ownership of the data warehouse."},
+    "portio": {"company": "Port.io", "title": "Senior BI Analyst Tel Aviv - Israel", "location": "Tel Aviv - Israel", "country_code": "", "url": "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68", "posted_date": "", "ats_platform": "scrape", "job_id": "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68", "description": ""},
+    "acme1": {"company": "Acme Analytics", "title": "Data Analyst", "location": "Haifa, Israel", "country_code": "IL", "url": "https://www.comeet.com/jobs/acme/11.001/data-analyst/AA.001", "posted_date": "2026-08-15", "ats_platform": "comeet", "job_id": "AA.001", "description": "Data Analyst, 3+ years of experience. SQL, Excel, Power BI. Marketing analytics."},
+    "acme2": {"company": "Acme Analytics", "title": "Marketing Analyst", "location": "Haifa, Israel", "country_code": "IL", "url": "https://www.comeet.com/jobs/acme/11.001/marketing-analyst/AA.002", "posted_date": "2026-08-19", "ats_platform": "comeet", "job_id": "AA.002", "description": "Marketing Analyst with 3+ years of experience in marketing analytics; SQL, GA4, Looker."},
+    "beta_card": {"company": "Beta Games", "title": "Senior Data Analyst", "location": "Tel Aviv, Israel", "country_code": "IL", "url": "https://www.linkedin.com/jobs/view/senior-data-analyst-at-beta-games-4400000001", "posted_date": "2026-08-10", "ats_platform": "discovery-linkedin", "job_id": "https://www.linkedin.com/jobs/view/senior-data-analyst-at-beta-games-4400000001", "description": ""},
+    "beta_board": {"company": "Beta Games", "title": "Senior Data Analyst", "location": "Tel Aviv, Israel", "country_code": "IL", "url": "https://jobs.lever.co/beta/2222", "posted_date": "", "ats_platform": "lever", "job_id": "2222", "description": "Senior Data Analyst: 5+ years of experience, SQL, Python, Looker; own the product analytics roadmap and stakeholder reporting."},
+    "beta1": {"company": "Beta Games", "title": "Product Analyst", "location": "Tel Aviv, Israel", "country_code": "IL", "url": "https://jobs.lever.co/beta/1111", "posted_date": "2026-08-18", "ats_platform": "lever", "job_id": "1111", "description": "Product Analyst, 4+ years of experience with SQL and Amplitude; experiment analysis, A/B tests."}
+  },
+  "days": [
+    {"date": "2026-08-20", "fetch": {"Armis": ["armis"], "OTORIO": ["otorio"], "Port": ["port"], "Port.io": ["portio"], "Acme Analytics": ["acme1", "acme2"], "Beta Games": ["beta1"]},
+     "expect": {"claims": "claim conflicts 2 (Armis<-OTORIO, Port<-Port.io)", "board": ["Acme Analytics|Data Analyst", "Acme Analytics|Marketing Analyst", "Armis|Senior Data Analyst", "Beta Games|Product Analyst", "Port|Senior BI Analyst"], "closed_today": 0, "reopened": 0}},
+    {"date": "2026-08-21", "fetch": {"Armis": ["armis"], "OTORIO": ["otorio"], "Port": ["port"], "Port.io": ["portio"], "Acme Analytics": ["acme1", {"base": "acme2", "posted_date": "2026-08-24"}], "Beta Games": ["beta1", "beta_card", "beta_board"]},
+     "expect": {"claims": "claim conflicts 2 (Armis<-OTORIO, Port<-Port.io)", "board_n": 6, "closed_today": 0, "reposted": 1, "canonical_url": {"beta games|senior data analyst": "https://jobs.lever.co/beta/2222"}}},
+    {"date": "2026-08-22", "fetch": {"Armis": ["armis"], "OTORIO": ["otorio"], "Port": ["port"], "Port.io": ["portio"], "Acme Analytics": ["acme1", {"base": "acme2", "posted_date": "2026-08-24"}], "Beta Games": "ERROR"},
+     "expect": {"board_n": 6, "closed_today": 0, "failed": 1}},
+    {"date": "2026-08-23", "fetch": {"Armis": ["armis"], "OTORIO": ["otorio"], "Port": ["port"], "Port.io": ["portio"], "Acme Analytics": [{"base": "acme2", "posted_date": "2026-08-24"}], "Beta Games": ["beta1", "beta_card", "beta_board"]},
+     "expect": {"board_n": 6, "closed_today": 0}},
+    {"date": "2026-08-24", "fetch": {"Armis": ["armis"], "OTORIO": ["otorio"], "Port": ["port"], "Port.io": ["portio"], "Acme Analytics": [{"base": "acme2", "posted_date": "2026-08-24"}], "Beta Games": ["beta1", "beta_card", "beta_board"]},
+     "expect": {"board_n": 5, "closed_today": 1, "closed": ["Acme Analytics|Data Analyst"]}},
+    {"date": "2026-08-26", "fetch": {"Armis": ["armis"], "OTORIO": ["otorio"], "Port": ["port"], "Port.io": ["portio"], "Acme Analytics": [{"base": "acme1", "posted_date": "2026-08-26"}, {"base": "acme2", "posted_date": "2026-08-24"}], "Beta Games": ["beta1", "beta_card", "beta_board"]},
+     "expect": {"board_n": 6, "closed_today": 0, "reopened": 1, "episodes": {"acme analytics|data analyst": 2}}}
+  ]
+}
