@@ -1042,6 +1042,7 @@ def test_the_weekly_audit_confirms_identity_from_the_candidate_not_the_rows_own_
     import os
     import sys
     import audit_empty_rows as A
+    monkeypatch.setattr(A, "_playwright_available", lambda: False)   # the deep rung never renders in a fixture
     monkeypatch.chdir(tmp_path)
     _registry(tmp_path, [
         # r[3] carries the company's OWN careers page — the realistic shape: 236 of the
