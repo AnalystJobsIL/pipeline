@@ -198,9 +198,12 @@ def _gather(name, url):
     return ("\n".join(lines) if lines else "(no pages reachable)"), n_pages
 
 
-def _ask_claude(prompt, timeout=120):
+def _ask_claude(prompt, timeout=120, *, system=None, schema=None):
     """One structured call through the shared seam (`pipeline/llm.py`): `--model sonnet`
-    (`LLM_RESOLVE_MODEL`), `--tools ""`, the schema above, a scratch cwd, no shell. Until
+    (`LLM_RESOLVE_MODEL`), `--tools ""`, a JSON schema, a scratch cwd, no shell. The ATS
+    resolver's `_SYSTEM`/`_SCHEMA` are the defaults; `listing_hunt` (a `{"url"}` pick) and
+    `deep_validate` pass their own -- the first version hard-wired the ATS schema and the
+    hunt's picker silently returned "" every night (wave-2 confirmation, I1). Until
     2026-08-25 this was a bare `claude -p` -- the default model with every tool enabled,
     the repo (and CLAUDE.md) as cwd, and the object regex-extracted from prose: the shape
     the classifier lane measured at ~10x the cost per call and retired on 2026-08-24.
@@ -208,7 +211,7 @@ def _ask_claude(prompt, timeout=120):
     recorded in `LAST["error"]` for the caller's log."""
     from pipeline import llm
     try:
-        return llm.call_json(prompt, system=_SYSTEM, schema=_SCHEMA,
+        return llm.call_json(prompt, system=system or _SYSTEM, schema=schema or _SCHEMA,
                              model=os.environ.get("LLM_RESOLVE_MODEL", "sonnet"),
                              timeout=timeout)
     except llm.LLMUnavailable as e:

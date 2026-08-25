@@ -61,6 +61,11 @@ TODAY = dt.date.today().isoformat()
 _LINKISH = re.compile(r"job|position|opening|vacanc|search|career|role|משרות|דרושים|join", re.I)
 _IL = re.compile(r"israel|tel.?aviv|herzliya|haifa|jerusalem|ramat|petah|netanya|beer.?sheva", re.I)
 
+# the picker's own contract for the shared seam: one field, not the ATS resolver's five
+_PICK_SYSTEM = ("You pick, from harvested links, the one page that lists a company's open "
+                "job positions. Answer in the JSON schema you are given.")
+_PICK_SCHEMA = json.dumps({"type": "object", "properties": {"url": {"type": "string"}},
+                           "required": ["url"], "additionalProperties": False})
 _PICK_PROMPT = """You are locating the page that LISTS open job positions for the company
 "{name}" (has an Israel office). Below are links harvested from its careers/website pages,
 as "text -> url" lines. Pick the ONE url most likely to show the actual list of open
@@ -235,7 +240,8 @@ def hunt_one(name, seed, documented=False, mode=""):
     picked = ""
     if shutil.which("claude"):
         p = _ask_claude(_PICK_PROMPT.format(
-            name=name, links="\n".join(f"{t} -> {u}" for t, u in links[:40])))
+            name=name, links="\n".join(f"{t} -> {u}" for t, u in links[:40])),
+            system=_PICK_SYSTEM, schema=_PICK_SCHEMA)
         picked = str((p or {}).get("url") or "").strip()
     ordered = ([picked] if picked.startswith("http") else [])
     ordered += [u for _, u in links if _IL.search(u)][:1]

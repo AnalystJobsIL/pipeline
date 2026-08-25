@@ -35,7 +35,7 @@ from audit_empty_rows import SIGS, _WD, _slug_matches, fetch, verify, AGG
 from pipeline.aggregators import is_aggregator
 from bd_rescue import _load_secrets, unlock
 from pipeline.recruiters import is_recruiter
-from resolve_llm import _ATS_HINT, _PROMPT, _ask_claude
+from resolve_llm import _ATS_HINT, _PROMPT, _SCHEMA, _SYSTEM, _ask_claude
 # One seam, called through the MODULE, never bound with `from ... import x as y`. A
 # `from` binding is a separate module global, so patching the gate would not reach it -
 # which is how two fixtures silently started hitting the live network instead of their
@@ -235,8 +235,9 @@ def validate_one(rend, name, seed_url):
         feedback = ""
         for _ in range(2):
             _LLM["used"] += 1
+            # the ATS resolver's contract, stated rather than inherited by default
             p = _ask_claude(_PROMPT.format(name=name, evidence="\n".join(evid)[:8000],
-                                           feedback=feedback))
+                                           feedback=feedback), system=_SYSTEM, schema=_SCHEMA)
             if not p or p.get("platform") in (None, "", "unknown"):
                 print(f"       (llm: {'no answer' if not p else 'unknown'} for {name})", flush=True)
                 break

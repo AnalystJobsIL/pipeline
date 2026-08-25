@@ -3923,6 +3923,23 @@ def test_unrelated():
     assert sel == ["tests/test_x.py::test_string"], sel
     sel = M.select_tests(root, {"id": "r3", "file": "unrelated.py"})
     assert sel == ["tests/test_x.py::test_unrelated"], sel
+    # a helper class's test_-method and a non-test_ function are not ids pytest collects
+    (tests / "test_y.py").write_text("""
+import unrelated
+class Helper:
+    def test_ghost(self):
+        assert unrelated.Z
+class TestReal:
+    def test_real(self):
+        assert unrelated.Z
+def helper_not_a_test():
+    return unrelated.Z
+""", encoding="utf-8")
+    M._SELECTOR_CACHE.clear()          # derived once per process; the tree changed here
+    sel = M.select_tests(root, {"id": "r5", "file": "unrelated.py"})
+    assert sel == ["tests/test_x.py::test_unrelated", "tests/test_y.py::TestReal::test_real"], sel
+    assert M._collectable_ids(root) >= {"tests/test_y.py::TestReal::test_real"}
+    assert not any("Helper" in i or "helper_not" in i for i in M._collectable_ids(root))
     # the optional `killers` hint is unioned in, never required
     sel = M.select_tests(root, {"id": "r4", "file": "auto_expand.py",
                                 "killers": ["tests/test_x.py::test_alias"]})
@@ -3957,6 +3974,9 @@ def test_a_baseline_red_test_is_never_reported_as_a_killer(tmp_path):
         "def test_p(tmp_path):\n    assert 0\n", encoding="utf-8")
     v = M._verdict(1, out3, red, str(tmp_path), True)
     assert v and v[0] == "KILLED" and v[2] == "tests/test_units.py::test_p", v
+    only_red = "FAILED tests/test_units.py::test_p[case a] - AssertionError\n"
+    assert M._verdict(1, only_red, red, str(tmp_path), True) is None, (
+        "the red case itself counted as a killer (bare-name exclusion)")
     # a ghost id (rc 4, `ERROR: not found`) is UNSETTLED, never a kill (wave-1 F1)
     assert M._verdict(4, "ERROR: not found: tests/test_a.py::test_ghost\nno tests ran\n",
                       set(), str(tmp_path), True) is M.UNSETTLED
@@ -4049,7 +4069,11 @@ def test_mutation_ids_are_unique_and_every_subset_fits_a_windows_command_line():
     assert len(" ".join(argv)) < 30_000
     red = ["tests/test_units.py::test_red_%d[param-%d]" % (i, i) for i in range(40)]
     argv = M._pytest_argv(many, red)
-    assert len(" ".join(argv)) < 30_000 and argv.count("--deselect") == 40, len(" ".join(argv))
+    assert len(" ".join(argv)) <= M._ARGV_CAP and argv.count("--deselect") == 40, len(" ".join(argv))
+    # 300 ids that fit alone but not with 40 deselects: the collapse must count both
+    some = ["tests/test_units.py::test_%d" % i for i in range(700)]
+    assert len(" ".join(M._pytest_argv(some))) <= M._ARGV_CAP
+    assert len(" ".join(M._pytest_argv(some, red))) <= M._ARGV_CAP
     for m in muts:
         assert len(" ".join(M._pytest_argv(M.select_tests(M.ROOT, m), red))) < 30_000, m["id"]
 
@@ -4401,3 +4425,31 @@ def test_clear_agg_urls_reads_every_segment_not_only_the_first(tmp_path):
     ])
     assert E.clear_agg_urls(apply=True, path=str(p)) == ["DnB"]
     assert _read(tmp_path)["DnB"][3] == ""
+
+
+def test_the_hunts_link_picker_and_deep_validate_keep_their_own_schemas(monkeypatch):
+    """Wave-2 I1 (INTRODUCED, fixed before push): `listing_hunt` and `deep_validate` import
+    `resolve_llm._ask_claude` for their OWN prompts; hard-wiring the ATS schema into it
+    made the hunt's `{"url"}` pick return "" every night with everything green."""
+    import json as _json
+    import listing_hunt as LH
+    import deep_validate as DV
+    import resolve_llm as L
+    from pipeline import llm
+    seen = []
+
+    def fake(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
+        seen.append(_json.loads(schema))
+        return {"url": "https://x.example/jobs"} if "url" in _json.loads(schema)["properties"] \
+            else {"platform": "unknown", "token": "", "api_url": "", "careers_url": "", "reason": "x"}
+    monkeypatch.setattr(llm, "call_json", fake)
+    assert L._ask_claude("p", system=LH._PICK_SYSTEM, schema=LH._PICK_SCHEMA)["url"].startswith("http")
+    assert set(seen[-1]["properties"]) == {"url"}
+    assert L._ask_claude("p")["platform"] == "unknown" and "platform" in seen[-1]["properties"]
+    # the hunt's call site passes its own contract (source-level: the picker is inside a
+    # Playwright loop no fixture drives)
+    import inspect
+    src = inspect.getsource(LH.hunt_one)
+    assert "schema=_PICK_SCHEMA" in src and "system=_PICK_SYSTEM" in src
+    src = inspect.getsource(DV)
+    assert "schema=_SCHEMA" in src and "system=_SYSTEM" in src
