@@ -2151,7 +2151,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     classify → roles → render → deliver — with, for each: discovered, spent, failed, fell
     back (`llm_failed_fallback`, `bd-unavailable`, carried scrape rows, row-merged nights),
     added (new active rows, newly covered companies), sent (`new:` per day, inbox issue
-    times); then a Claude Code skill `.claude/skills/ops-review/SKILL.md` that runs the
+    times); then a Claude Code skill (a SKILL.md under .claude/skills/ops-review/) that runs the
     script FIRST and only interprets its output (an agent must never re-derive the numbers
     by hand — §8), ending with the three things most worth a session, each pointing at a
     BACKLOG item. Half a day; the interim prompt that does it by hand is in
