@@ -6254,7 +6254,7 @@ def test_the_names_bridge_hands_the_slug_to_the_recruiter_gate():
 
     import discovery_daily
     src = inspect.getsource(discovery_daily.main)
-    assert 'company_slug' in src.split("if _is_rec(", 1)[1].split(")", 1)[0]
+    assert '_is_rec(c, j.get("company_slug"' in src
 
 
 def test_a_telegram_post_with_no_company_line_is_skipped_not_shifted_into_a_city_named_employer():
@@ -6281,25 +6281,113 @@ def test_a_telegram_post_with_no_company_line_is_skipped_not_shifted_into_a_city
 
 @pytest.mark.parametrize("name,expected", [
     ("Tel Aviv", True), ("tel-aviv", True), ("Haifa", True), ("Israel", True),
-    ("ירושלים", True),
+    ("ירושלים", True), ("Remote", True),
+    # the spellings the channel family actually writes (7 of 29 were missed by the
+    # borrowed list until spaces/hyphens were squashed and the extras added)
+    ("Petahtikva", True), ("Nessziona", True), ("Airportcity", True), ("Yokneam Illit", True),
     ("Jerusalem Venture Partners", False), ("Tel Aviv Stock Exchange", False),
-    ("Riskified", False), ("", False),
+    ("Riskified", False), ("", False), (None, False),
 ])
 def test_a_place_name_never_enters_the_research_queue(name, expected):
     """No downstream identity check can refuse a company named after the city its host is
     named after (`registry_health --explain "Tel Aviv"` -> tenant_is_this_company = True),
-    so intake is the one gate that can say no. Exact match on the whole name only."""
-    import discovery_daily as dd
-    assert dd.is_place_name(name) is expected
+    so intake is the one gate that can say no. Whole-name match only."""
+    import discovery_telegram as d
+    assert d.is_place_name(name) is expected
 
 
-def test_both_intake_bridges_refuse_a_place_name():
+def test_the_place_gate_is_telegram_only_and_reaches_cache_and_queue():
+    """Only a Telegram post can put a city in the employer slot, and the borrowed place list
+    would veto real employers on the structured sources (Nesher, Eilat, Airport City ...). So
+    the gate lives in discovery_telegram, and it guards BOTH the cache (what
+    fetch_discovery publishes from) and the queue — the 2026-08-25 review found the first
+    version blocked the registry row and left the board door open."""
     import inspect
 
     import discovery_daily as dd
     import discovery_telegram as dt
-    assert "is_place_name(c)" in inspect.getsource(dd.main)
-    assert "is_place_name(c)" in inspect.getsource(dt.main)
+    assert not hasattr(dd, "is_place_name")
+    src = inspect.getsource(dt.main)
+    assert 'is_place_name(j["company"])' in src            # the cache side
+    assert "is_place_name(c)" in src                        # the queue side
+    assert 'is_place_name(e.get("name"))' in src            # yesterday's queue, pruned
+
+
+def test_an_undated_no_company_post_is_not_cached_or_queued(tmp_path, monkeypatch, capsys):
+    """title / city / skills / seniority / url, no date: the date guard cannot see it, the
+    city walks into the employer slot ('Petahtikva'). The bridge refuses it AND the cache
+    never holds it, so nothing downstream can publish a role at a city."""
+    import json as _j
+
+    import discovery_telegram as d
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "discovered_cache.json").write_text("[]", encoding="utf-8")
+    (tmp_path / "research_companies.json").write_text("[]", encoding="utf-8")
+    post = ["Director of finance", "Petahtikva", "US GAAP, Tax", "Director",
+            "https://secrethunter.io/jobz/xc"]
+    good = ["Data Analyst", "Riskified", "Tel Aviv", "20/8/26", "SQL, Python", "Senior",
+            "https://secrethunter.io/jobz/a2"]
+    jobs = [(2, d.parse_post(post, "2026-08-25")), (3, d.parse_post(good, "2026-08-25"))]
+    assert jobs[0][1]["company"] == "Petahtikva"             # the parser cannot know
+    from pipeline import sources as _src
+    monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
+    monkeypatch.setattr(d, "CHANNELS", ["c1"])
+    monkeypatch.setattr(d, "scan_channel", lambda chan, last: (jobs, 0))
+    monkeypatch.setattr("pipeline.companies.load_companies", lambda active_only=False: [])
+    d.main()
+    cache = _j.loads((tmp_path / "discovered_cache.json").read_text(encoding="utf-8"))
+    queue = _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))
+    assert [j["company"] for j in cache] == ["Riskified"]
+    assert [e["name"] for e in queue] == ["Riskified"]
+    assert "not an employer, not cached: Petahtikva" in capsys.readouterr().out
+
+
+def test_the_cache_write_drops_agency_cards_including_carried_ones_and_the_junior_flag(tmp_path, monkeypatch, capsys):
+    """fetch_discovery judges the display name only, so 8 'Dialog' (dialog-recruiting)
+    cards were still on the publishing path after the names bridge learned the slug. The
+    cache write is the lane's chokepoint: this run's cards and every carried one are
+    judged by name + slug, and the private _junior flag is stripped from carried records
+    too (912 of 1,202 committed records carried it)."""
+    import json as _j
+
+    import discovery_daily as dd
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    prev = [{"company": "Dialog", "company_slug": "dialog-recruiting", "title": "Data Scientist",
+             "url": "u1", "posted_date": "2026-08-24", "ats_platform": "discovery-linkedin", "_junior": False},
+            {"company": "Wix", "company_slug": "wix", "title": "BI Analyst", "url": "u2",
+             "posted_date": "2026-08-24", "ats_platform": "discovery-linkedin", "_junior": False}]
+    (tmp_path / "discovered_cache.json").write_text(_j.dumps(prev), encoding="utf-8")
+    (tmp_path / "research_companies.json").write_text(_j.dumps(
+        [{"name": "Dialog", "careers_url": "x", "ats": "unknown", "slug": "dialog-recruiting"},
+         {"name": "Wix", "careers_url": "x", "ats": "unknown", "slug": "wix"}]), encoding="utf-8")
+    fresh = [{"company": "Fiverr", "company_slug": "fiverr", "title": "Data Analyst", "url": "u3",
+              "posted_date": "2026-08-25", "ats_platform": "discovery-linkedin", "_junior": False},
+             {"company": "Nisha Pro", "company_slug": "nishapro", "title": "Analytical Consultant",
+              "url": "u4", "posted_date": "2026-08-25", "ats_platform": "discovery-linkedin"}]
+    from pipeline import sources as _src
+    monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
+    monkeypatch.setattr(dd, "indeed_search", lambda q: [])
+    monkeypatch.setattr(dd, "workable_search", lambda: [])
+    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": list(fresh))
+    monkeypatch.setattr(dd, "linkedin_normalize", lambda c: c)
+    monkeypatch.setattr(dd, "_li_queries", lambda: [("x", "Israel", 0)])
+    monkeypatch.setattr(dd, "plan_spend", lambda today=None: (100, 0, "test"))
+    monkeypatch.setattr(dd, "report_bd_spend", lambda: None)
+    monkeypatch.setattr(dd, "load_companies", lambda active_only=False: [])
+    monkeypatch.setattr(dd, "_load_secrets", lambda: None)
+    monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
+    dd.main()
+    cache = _j.loads((tmp_path / "discovered_cache.json").read_text(encoding="utf-8"))
+    assert sorted(j["company"] for j in cache) == ["Fiverr", "Wix"]
+    assert not any("_junior" in j for j in cache)
+    queue = _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))
+    assert sorted(e["name"] for e in queue) == ["Fiverr", "Wix"]
+    out = capsys.readouterr().out
+    assert "cache: dropped 2 agency cards" in out
+    assert "queue: dropped 1 agency entries: Dialog" in out
+    assert "agency, not an employer: Nisha Pro" in out
 
 
 # --- the guest walk: a replay harness, so a scripted page sequence reproduces a live log ---

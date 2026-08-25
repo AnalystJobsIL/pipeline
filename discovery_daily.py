@@ -760,21 +760,6 @@ def _targeted_cap_or_zero(cap):
     return cap
 
 
-def is_place_name(name):
-    """True when a 'company name' is a city / region / country. A Telegram post with no
-    company line put its CITY in the employer slot (2026-08-20, "Director of finance" at
-    "Tel Aviv"); the name passed is_recruiter and looks_like_junk, was queued, resolved by
-    listing_hunt onto secrethunter's Tel Aviv city board and ACTIVATED — 145 cards of other
-    companies' jobs, 7 on the board, 2 in the 2026-08-25 mail. No downstream identity check
-    can refuse a company named after the city its host is named after
-    (`registry_health --explain "Tel Aviv"` -> tenant_is_this_company = True), so intake is
-    the one gate that can say no. Exact match on the whole name — "Jerusalem Venture
-    Partners" is an employer, "Jerusalem" is not."""
-    from pipeline import israel as _il
-    n = " ".join(str(name or "").strip().lower().replace("-", " ").split())
-    return bool(n) and n in {p.lower().replace("-", " ") for p in _il._IL_PLACES + _il._IL_PLACES_HE}
-
-
 def _load_json(path):
     try:
         return json.load(open(path, encoding="utf-8"))
@@ -976,6 +961,7 @@ def main():
             jobs.append(j)
     # Junior postings were flagged rather than dropped (see linkedin_normalize) so their
     # EMPLOYER still reaches the names funnel. They must not reach the job cache.
+    from pipeline.recruiters import is_recruiter as _is_rec
     n_junior = sum(1 for j in jobs if j.get("_junior"))
     # ...and the flag itself is routing state, never a field of the shared cache: it had
     # leaked into 912 of 1,202 committed records by 2026-08-25 (`_real_lead` below is
@@ -1013,7 +999,7 @@ def main():
                       f"NOT overwriting it with this run's jobs alone. Fix or delete the "
                       f"file and re-run; nothing has been lost yet.", flush=True)
                 cacheable = []
-        merged, keys = [], set()
+        merged, keys, n_agency = [], set(), 0
         for j in (cacheable + [p for p in prev if isinstance(p, dict)]) if cacheable else []:
             k = ((j.get("company") or "").lower(), (j.get("title") or "").lower())
             if k in keys:
@@ -1021,8 +1007,17 @@ def main():
             d = str(j.get("posted_date") or "")[:10]
             if d and d < cut:
                 continue                       # prune: the read side drops these anyway
+            # The cache is what fetch_discovery publishes from, and it judges the display
+            # name only — 8 "Dialog" (dialog-recruiting) cards sat in it on 2026-08-25 while
+            # the names bridge had just learned to read the slug. Judged HERE, for this
+            # run's cards and every carried one, so the file never holds an agency's card.
+            if _is_rec(j.get("company"), j.get("company_slug", "")):
+                n_agency += 1
+                continue
             keys.add(k)
-            merged.append(j)
+            merged.append({kk: v for kk, v in j.items() if kk != "_junior"})   # carried too
+        if n_agency:
+            print(f"cache: dropped {n_agency} agency cards (name or LinkedIn slug)")
         if cacheable:
             with open("discovered_cache.json", "w", encoding="utf-8") as f:
                 json.dump(merged, f, ensure_ascii=False, indent=1)
@@ -1040,10 +1035,9 @@ def main():
     # sometimes a posting headline ("Data researcher - Navina") or a staffing agency —
     # unfiltered, such rows went ACTIVE and every downstream layer grew its own guard.
     from pipeline.firmographics import looks_like_junk
-    from pipeline.recruiters import is_recruiter as _is_rec
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
     new_cos = {}
-    n_junk = n_rec = n_place = 0
+    n_junk = n_rec = 0
     # NEW COMPANIES PER SOURCE is the number this layer exists to produce — a source can be
     # alive, on-budget and completely useless at the same time (a healthy-looking record
     # count once hid a 0-new-companies breadth sweep), and this is the line that says so.
@@ -1068,12 +1062,12 @@ def main():
         if looks_like_junk(c):
             n_junk += 1
             continue
-        if is_place_name(c):
-            n_place += 1
-            continue
-        # the slug is free evidence the display name hides ("Dialog" / dialog-recruiting)
+        # the slug is free evidence the display name hides ("Dialog" / dialog-recruiting).
+        # Printed, not just counted: a wrong rejection has to be visible to be appealed.
         if _is_rec(c, j.get("company_slug", "")):
             n_rec += 1
+            print(f"  [names] agency, not an employer: {c}"
+                  + (f" (slug {j['company_slug']})" if not _is_rec(c) else ""))
             continue
         # Seed the resolver with a REAL careers lead where the source gave us one
         # (Workable hands back company.website). Otherwise all we have is the posting,
@@ -1082,9 +1076,9 @@ def main():
                               "ats": "unknown", "slug": j.get("company_slug", ""),
                               "_real_lead": bool(j.get("careers_hint"))}
         yield_by_src[src] += 1
-    if n_junk or n_rec or n_place:
-        print(f"discovery: rejected {n_junk} job-title-shaped names, {n_place} place names "
-              f"and {n_rec} agencies before they could become rows")
+    if n_junk or n_rec:
+        print(f"discovery: rejected {n_junk} job-title-shaped names and {n_rec} agencies "
+              f"before they could become rows")
     for src in sorted(seen_by_src):
         n = yield_by_src[src]
         print(f"[yield] {src}: {len(seen_by_src[src])} employers -> {n} NEW companies"
@@ -1101,9 +1095,19 @@ def main():
             research = json.load(open("research_companies.json", encoding="utf-8"))
         except Exception:  # noqa: BLE001
             research = []
+        # A gate learned today must also unlearn yesterday's queue: auto_expand re-checks
+        # the NAME only, and "Dialog" (dialog-recruiting) sat at position 129 of its next
+        # batch on 2026-08-25. Pruned here, where this layer already holds the file.
+        kept = [e for e in research
+                if not _is_rec(e.get("name"), e.get("slug", ""))]
+        pruned = len(research) - len(kept)
+        if pruned:
+            print(f"queue: dropped {pruned} agency entries: "
+                  + ", ".join((e.get("name") or "?") for e in research if e not in kept))
+        research = kept
         known = {(e.get("name") or "").strip().lower() for e in research}
         added = [v for k, v in new_cos.items() if k not in known]
-        if added:
+        if added or pruned:
             research.extend(added)
             with open("research_companies.json", "w", encoding="utf-8") as f:
                 json.dump(research, f, ensure_ascii=False, indent=1)

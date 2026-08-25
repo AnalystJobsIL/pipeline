@@ -86,6 +86,26 @@ def _clean_text(body_html):
 
 _TITLEISH = re.compile(r"[A-Za-z\u0590-\u05FF]")
 _DATE_LINE = re.compile(r"\d{1,2}/\d{1,2}/\d{2}")      # the format's "20/8/26" line
+# Spellings this channel family writes that pipeline/israel's place lists do not carry
+# (measured over the 229 cached telegram cards, 2026-08-25: 7 of 29 city strings).
+_EXTRA_PLACES = ("remote", "hybrid", "yokneam illit", "shoham", "israel")
+
+
+def is_place_name(name):
+    """True when a Telegram "company" is really a city / region / country.
+
+    Only this source can put a place in the employer slot — a post with no company line
+    shifts the city up (see parse_post) — so only this source is gated by it: the same
+    check on the structured sources would veto real employers that share a place name
+    (Nesher, Eilat, Airport City, Caesarea are all plausible company names). Whole-name
+    match with spaces and hyphens squashed, so "Petahtikva" == "Petah Tikva"."""
+    from pipeline import israel as _il
+    n = re.sub(r"[\s\-']", "", str(name or "").lower())
+    if not n:
+        return False
+    places = {re.sub(r"[\s\-']", "", p.lower())
+              for p in list(_il._IL_PLACES) + list(_il._IL_PLACES_HE) + list(_EXTRA_PLACES)}
+    return n in places
 
 
 def parse_post(lines, msg_date):
@@ -240,6 +260,15 @@ def main():
     # telegram-sourced jobs. A zero here is now recorded as a zero, which is what makes
     # `sources.stale()` able to say the feed died.
     _health(len(new_jobs))
+    # A post whose "company" is a city (an undated no-company post — the dated shape is
+    # refused in parse_post) or an agency is not a job we can attribute: it must not reach
+    # the cache, which is what fetch_discovery publishes from. Printed, so a wrong
+    # rejection can be appealed.
+    from pipeline.recruiters import is_recruiter
+    unattributable = [j for j in new_jobs if is_place_name(j["company"]) or is_recruiter(j["company"])]
+    for j in unattributable:
+        print(f"  [names] not an employer, not cached: {j['company']} | {j['title']}")
+    new_jobs = [j for j in new_jobs if j not in unattributable]
     if not new_jobs:
         print("no new telegram posts")
         return
@@ -259,12 +288,17 @@ def main():
     with open("discovered_cache.json", "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=1)
     # bridge new companies into the auto-expand queue (same as discovery_daily)
-    from discovery_daily import is_place_name
     from pipeline.companies import load_companies
     from pipeline.firmographics import looks_like_junk
-    from pipeline.recruiters import is_recruiter
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
     research = _load_json("research_companies.json", [])
+    # unlearn yesterday's queue too (same rule as discovery_daily's bridge)
+    kept = [e for e in research
+            if not is_place_name(e.get("name")) and not is_recruiter(e.get("name"), e.get("slug", ""))]
+    pruned = len(research) - len(kept)
+    if pruned:
+        print(f"queue: dropped {pruned} place-named / agency entries")
+    research = kept
     known = {(e.get("name") or "").strip().lower() for e in research}
     queued = 0
     for j in added:
@@ -276,7 +310,7 @@ def main():
             research.append({"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""})
             known.add(c.lower())
             queued += 1
-    if queued:
+    if queued or pruned:
         with open("research_companies.json", "w", encoding="utf-8") as f:
             json.dump(research, f, ensure_ascii=False, indent=1)
     with open(STATE_PATH, "w", encoding="utf-8") as f:
