@@ -198,6 +198,13 @@ def save_census(rows, path=CENSUS):
 
 # ---------------------------------------------------------------- the ownership matrix
 
+def _validate_empty_pool():
+    """The Sunday cross-validation's own predicate (it activates; it was in no matrix and
+    had no terminal exclusion until 2026-08-25). Lazy: it imports the scraper stack."""
+    from validate_empty import in_validate_empty_pool
+    return in_validate_empty_pool
+
+
 def _extract_gap_pool():
     """The tool's OWN predicate, imported (`_EXTRACT_GAP` was a retyped mirror, LOOSER than
     the tool -- the direction that hides orphans; then `MODE` alone, which lacked the
@@ -255,6 +262,8 @@ def pools(rows):
             sel(lambda n, r: _crack.in_crack_pool(r)),
         "probe_candidates (05:00 daily)":
             sel(lambda n, r: _probe.in_probe_pool(r)),
+        "validate_empty (Sun 04:00)":
+            sel(lambda n, r: _validate_empty_pool()(r)),
         "audit_empty_rows (Sun 04:00)":
             sel(lambda n, r: in_pool(n) and not is_terminal_note(n) and not is_recruiter(r[0])),
         "deep_validate (Sat 04:00)":

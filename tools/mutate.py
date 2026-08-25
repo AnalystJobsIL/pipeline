@@ -252,7 +252,9 @@ def _test_refs(test_path, known):
     basenames = {m.split(".")[-1]: m for m in known}
     funcs = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
     for n in tree.body:
-        if isinstance(n, ast.ClassDef):
+        # pytest collects only `Test*` classes (python_classes); a helper class with a
+        # `test_`-prefixed method would emit a node id pytest cannot resolve (wave-1 F3)
+        if isinstance(n, ast.ClassDef) and n.name.startswith("Test"):
             for f in n.body:
                 if isinstance(f, ast.FunctionDef):
                     funcs[n.name + "::" + f.name] = f
@@ -344,6 +346,27 @@ def _selector_state(root, tests_dir):
     return _SELECTOR_CACHE[key]
 
 
+def _collectable_ids(work):
+    """Every node id pytest could collect from `work/tests` -- the archive the mutant runs
+    in, not the working tree the selector read (wave-1 F2: an uncommitted or renamed test
+    in this shared checkout is a ghost id in the archive, and a ghost id is rc 4 with zero
+    tests run)."""
+    out = set()
+    for path in glob.glob(os.path.join(work, "tests", "test_*.py")):
+        rel = "tests/" + os.path.basename(path)
+        try:
+            tree = ast.parse(open(path, encoding="utf-8").read())
+        except SyntaxError:
+            continue
+        for n in tree.body:
+            if isinstance(n, ast.FunctionDef) and n.name.startswith("test_"):
+                out.add(rel + "::" + n.name)
+            elif isinstance(n, ast.ClassDef) and n.name.startswith("Test"):
+                out |= {rel + "::" + n.name + "::" + f.name for f in n.body
+                        if isinstance(f, ast.FunctionDef) and f.name.startswith("test_")}
+    return out
+
+
 def select_tests(root, mut, tests_dir=None):
     """Node ids of the tests that can see `mut["file"]`, sorted; [] means no subset."""
     tests_dir = tests_dir or os.path.join(root, "tests")
@@ -363,18 +386,21 @@ def select_tests(root, mut, tests_dir=None):
 
 def _pytest_argv(node_ids, deselect=()):
     ids = list(node_ids)
-    argv = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"]
-    if ids and len(" ".join(argv + ids)) > _ARGV_CAP:
-        # collapse the largest file's ids to the whole file
+    base = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"]
+    des = [x for d in deselect for x in ("--deselect", d)]
+
+    def total(cur):
+        return len(" ".join(base + cur + des))
+    # collapse file by file (largest first) until the WHOLE argv -- deselects included
+    # (wave-1 F6: they were appended after the check) -- fits the Windows limit
+    while ids and total(ids) > _ARGV_CAP and any("::" in i for i in ids):
         by_file = {}
         for i in ids:
             by_file.setdefault(i.split("::")[0], []).append(i)
-        biggest = max(by_file, key=lambda f: len(by_file[f]))
+        expanded = {f: v for f, v in by_file.items() if any("::" in i for i in v)}
+        biggest = max(expanded, key=lambda f: len(expanded[f]))
         ids = [biggest] + [i for f, v in by_file.items() if f != biggest for i in v]
-    argv += ids
-    for d in deselect:
-        argv += ["--deselect", d]
-    return argv
+    return base + ids + des
 
 
 def _pytest(work, node_ids, deselect=()):
@@ -388,27 +414,38 @@ def _pytest(work, node_ids, deselect=()):
 
 
 def _parse_failures(out):
-    """Full node ids (with `[param]`) of every FAILED/ERROR line in a `-q` run."""
-    ids = re.findall(r"^(?:FAILED|ERROR) ([\w./\\-]+::[^\s]+)", out or "", re.M)
+    """Full node ids (with `[param]`, spaces included) of every FAILED/ERROR line in a `-q`
+    run. `ERROR: not found: x` (a ghost id, rc 4) is deliberately NOT a failure."""
+    ids = re.findall(r"^(?:FAILED|ERROR) ([\w./\\-]+::.*?)(?: - .*)?$", out or "", re.M)
     if not ids:
         ids = re.findall(r"^([\w./\\-]+\.py::\w+)", out or "", re.M)
-    return [i.split(" - ")[0] for i in ids]
+    return [i.strip() for i in ids if "::" in i]
 
 
 def _bare(node_id):
     return node_id.split("[")[0].replace("\\", "/")
 
 
+UNSETTLED = ("UNSETTLED", "pytest did not run the tests", "")
+
+
 def _verdict(returncode, out, baseline_red, work, must_beh):
     """None = this run is GREEN for the mutant (nothing but baseline-red tests failed);
-    else ("KILLED", kind, killer) or ("FAIL", detail, killer)."""
-    fails = [f for f in _parse_failures(out) if _bare(f) not in baseline_red]
+    ("KILLED", kind, killer) / ("FAIL", detail, killer); or UNSETTLED when pytest did not
+    actually judge the tests -- rc 2/3/4 (usage error, interrupted, a node id it could not
+    resolve: `ERROR: not found`), or a red run whose failures it did not name. Wave-1 F1:
+    that last shape used to read as a KILL with zero tests run, and it bypassed the
+    behavioural rule. `baseline_red` holds FULL node ids: one red `[caseA]` retires that
+    case only, never the whole parametrised test (F4)."""
     if returncode in (0, 5):
         return None
+    if returncode not in (0, 1):
+        return UNSETTLED
+    fails = [f for f in _parse_failures(out) if f.replace("\\", "/") not in baseline_red]
     if not fails:
         if _parse_failures(out):
             return None                   # only baseline-red tests failed
-        return ("KILLED", "unknown", "?")   # red for a reason the summary did not name
+        return UNSETTLED                  # rc 1 with no FAILED line: not a measurement
     killers = []
     for f in fails:
         b = _bare(f)
@@ -436,6 +473,10 @@ def _baseline(work_root):
         raise SystemExit("baseline pytest did not run cleanly (rc=%d):\n%s"
                          % (proc.returncode, (proc.stdout or "")[-2000:]))
     red = _parse_failures(proc.stdout)
+    if proc.returncode not in (0, 1) or len(red) > 40:
+        raise SystemExit("baseline: HEAD is not a suite to mutate against (rc=%d, %d red) --"
+                         " fix the suite first; the deselect list has no shorter form"
+                         % (proc.returncode, len(red)))
     # pytest.ini already carries `-q`, so our `-q` makes it `-qq`: no "N passed" line, only
     # the progress dots. Count those instead of parsing a summary that is not printed.
     prog = [ln for ln in (proc.stdout or "").splitlines() if re.match(r"^[.FsxXE]+\s+\[", ln)]
@@ -459,18 +500,33 @@ def run_one(mut, work_root, baseline=_NO_BASELINE):
     must_beh = mut.get("must_be_killed_by_behavioural", True)
     deselect = sorted(baseline.red_ids)
 
-    # 1. the subset that can see the mutated module. A KILLED here is final: the full suite
-    #    is a superset and would contain the same killer. Anything else falls back.
-    subset = select_tests(ROOT, mut)
+    # 1. the subset that can see the mutated module -- only ids the ARCHIVE can collect
+    #    (a `killers` typo or a test that exists only in the working tree is a ghost id:
+    #    rc 4, zero tests run, and until wave-1 F1 that read as a kill). A KILLED here is
+    #    final: the full suite is a superset and would contain the same killer. Anything
+    #    else falls back.
+    wanted = select_tests(ROOT, mut)
+    ok_ids = _collectable_ids(work)
+    ghosts = [i for i in mut.get("killers") or [] if i not in ok_ids]
+    if ghosts:
+        return {"status": "FAIL", "detail": "catalogue names test(s) the archive has not: %s"
+                % ", ".join(ghosts)[:80], "killer": "", "mode": "-", "subset": 0,
+                "secs": time.time() - t0}
+    subset = [i for i in wanted if i in ok_ids]
     reason = "no-subset"
     if subset:
-        v = _verdict(*_run(work, subset, deselect), baseline.red_names, work, must_beh)
+        v = _verdict(*_run(work, subset, deselect), baseline.red_ids, work, must_beh)
         if v and v[0] == "KILLED":
             return {"status": "KILLED", "detail": v[1], "killer": v[2],
                     "mode": "subset", "subset": len(subset), "secs": time.time() - t0}
-        reason = "green" if v is None else "static-only"
+        reason = "green" if v is None else ("unsettled" if v is UNSETTLED else "static-only")
     # 2. the whole suite, exactly as the gate always ran it
-    v = _verdict(*_run(work, [], deselect), baseline.red_names, work, must_beh)
+    v = _verdict(*_run(work, [], deselect), baseline.red_ids, work, must_beh)
+    if v is UNSETTLED:
+        return {"status": "FAIL", "detail": "pytest did not judge the full suite (rc 2/3/4 or "
+                "an unnamed failure) -- harness or archive problem, not a verdict",
+                "killer": "", "mode": "fallback:" + reason, "subset": len(subset),
+                "secs": time.time() - t0}
     if v is None:
         return {"status": "FAIL", "detail": "SURVIVED — the suite is green with this mutation applied",
                 "killer": "", "mode": "fallback:" + reason, "subset": len(subset),
@@ -498,30 +554,8 @@ def _registry_writers():
             continue
         hit = False
         for n in ast.walk(tree):
-            if isinstance(n, ast.Assign):
-                # Targets may be bare or a TUPLE of subscripts -- `apply_resolved.py:61` is
-                # `fields[1], fields[2], fields[3] = ...`, which the bare-only check missed.
-                targets = []
-                for tg in n.targets:
-                    targets.extend(tg.elts if isinstance(tg, (ast.Tuple, ast.List)) else [tg])
-                for i, tg in enumerate(targets):
-                    if not (isinstance(tg, ast.Subscript)
-                            and isinstance(tg.slice, ast.Constant)):
-                        continue
-                    # index 4 only when it ACTIVATES. `fr[4] = "false"` is a park and needs
-                    # no identity evidence -- refresh_scrape_cache parks rotted scrapes that
-                    # way; `fr[3] = ""` CLEARS an address rather than proposing one. Same
-                    # rule as tests/test_registry.py's detector; they must agree.
-                    v = n.value
-                    if (isinstance(v, (ast.Tuple, ast.List))
-                            and len(v.elts) == len(targets)):
-                        v = v.elts[i]
-                    if tg.slice.value == 3:
-                        if not (isinstance(v, ast.Constant) and v.value == ""):
-                            hit = True
-                    elif tg.slice.value == 4:
-                        if isinstance(v, ast.Constant) and v.value == "true":
-                            hit = True
+            if _row_write(n):
+                hit = True
             elif isinstance(n, ast.List) and len(n.elts) >= 6:
                 e = n.elts[4]
                 if isinstance(e, ast.Constant) and e.value == "true":
@@ -529,6 +563,55 @@ def _registry_writers():
         if hit:
             out.append(os.path.basename(path))
     return out
+
+
+def _row_write(n):
+    """Does this statement write companies.csv column 3 (api_url) or ACTIVATE column 4?
+
+    The one rule both detectors share (tests/test_registry.py imports this). Shapes:
+    `fr[3] = x` / `fr[4] = "true"` (bare or tuple targets -- `apply_resolved.py:61` is
+    `fields[1], fields[2], fields[3] = ...`); `fr[3] += x` and every other augmented
+    assignment; a slice target `fr[3:4] = ...`; `fr.__setitem__(3, x)`. Exempt on purpose:
+    `fr[4] = "false"` (a park needs no identity evidence) and `fr[3] = ""` (a clearing,
+    not a proposal). Column 4 with ANY value other than those two constants counts
+    (`fr[4] = flag` is an activation the reader cannot rule out -- wave-1 F7).
+    """
+    def col(tg):
+        if isinstance(tg, ast.Subscript):
+            if isinstance(tg.slice, ast.Slice):
+                return "slice"
+            if isinstance(tg.slice, ast.Constant) and tg.slice.value in (3, 4):
+                return tg.slice.value
+        return None
+    if isinstance(n, ast.Assign):
+        targets = []
+        for tg in n.targets:
+            targets.extend(tg.elts if isinstance(tg, (ast.Tuple, ast.List)) else [tg])
+        for i, tg in enumerate(targets):
+            c = col(tg)
+            if c is None:
+                continue
+            if c == "slice":
+                return True
+            v = n.value
+            if isinstance(v, (ast.Tuple, ast.List)) and len(v.elts) == len(targets):
+                v = v.elts[i]
+            if c == 3 and not (isinstance(v, ast.Constant) and v.value == ""):
+                return True
+            if c == 4 and not (isinstance(v, ast.Constant) and v.value == "false"):
+                return True
+        return False
+    if isinstance(n, ast.AugAssign):
+        return col(n.target) is not None
+    if isinstance(n, ast.Call):
+        f = n.func
+        if isinstance(f, ast.Attribute) and f.attr == "__setitem__" and n.args:
+            a0 = n.args[0]
+            return isinstance(a0, ast.Constant) and a0.value in (3, 4)
+        if isinstance(f, ast.Attribute) and f.attr == "setitem" and len(n.args) >= 2:
+            a1 = n.args[1]
+            return isinstance(a1, ast.Constant) and a1.value in (3, 4)
+    return False
 
 
 def _gate_call_sites(path, gate_names=("activation_ok", "ok_to_write", "identity_ok")):
@@ -688,6 +771,9 @@ def main():
     t_all = time.time()
 
     baseline = _NO_BASELINE
+    if a.skip_baseline:
+        print("WARNING: --skip-baseline: killers are UNFILTERED -- with even one test red at "
+              "HEAD every mutation reads as killed by it. Local iteration only.")
     if not a.skip_baseline:
         baseline = _baseline(work_root)
         print("baseline  %s in %.0f s; %d red at HEAD (excluded from every verdict)%s"

@@ -22,6 +22,22 @@ from scrape_universal import ROLE, ISRAEL_LOC
 from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import replace_own as _note_replace
+from pipeline.recruiters import is_recruiter
+from pipeline.verdicts import is_terminal
+
+
+def in_validate_empty_pool(r):
+    """This tool's OWN membership rule (Sun 04:00, ACTIVATES). Until 2026-08-25 the selector
+    was the bare substring `no open israel roles` over EVERY row -- no `active` filter, no
+    terminal filter -- so the day ten same-board twins were parked `alias-of` and a city
+    name was parked `redundant`, three of them (Primis Tech, kornit, Tel Aviv) were still
+    selected, and the promote branch would have re-activated them on Sunday with
+    `check_invariants` green (wave-1 pools attacker, reproduced on the real `main()`).
+    A row with no address cannot be cross-validated either."""
+    return (len(r) >= 6 and r[4] == "false"
+            and "no open israel roles" in (r[5] or "").lower()
+            and (r[3] or "").startswith("http")
+            and not is_terminal(r[5] or "") and not is_recruiter(r[0]))
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
 
@@ -84,8 +100,7 @@ _MODIFIED = set()   # names this run rewrote (single-writer merge)
 
 def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
-    idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows)
-           if len(r) >= 6 and "no open israel roles" in (r[5] or "").lower()}
+    idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows) if in_validate_empty_pool(r)}
     print(f"cross-validating {len(idx)} validated-empty companies ...")
     promoted, suspects, confirmed = 0, [], 0
     for name, (rowi, url) in idx.items():

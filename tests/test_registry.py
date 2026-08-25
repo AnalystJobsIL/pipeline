@@ -1619,32 +1619,14 @@ def _registry_writes(tree):
     Likewise `fr[3] = ""` CLEARS an address rather than proposing one (auto_expand's
     `--clear-agg-urls` un-buries rows parked on an aggregator shell that way, 2026-08-25).
     """
+    # ONE rule, shared with tools/mutate.py (`_row_write`): the two detectors drifted once
+    # (a bare-target-only check hid apply_resolved.py:61) and wave-1 F7 showed both blind
+    # to `fr[3] += url`, `fr[3:4] = [url]`, `fr.__setitem__(3, url)` and `fr[4] = flag`.
+    M = _mutate_module()
     out = []
     for n in ast.walk(tree):
-        if isinstance(n, ast.Assign):
-            # A target may be a bare Subscript (`fr[3] = ...`) or a TUPLE of them
-            # (`fields[1], fields[2], fields[3] = plat, tok, api`). Only checking the bare
-            # form made `apply_resolved.py:61` invisible -- a module `self-heal.yml` runs at
-            # 06:00, which rewrites col 3 and never touches col 4, so nothing else caught it
-            # either. That is the enumeration failing at the one job it exists for.
-            targets = []
-            for tg in n.targets:
-                targets.extend(tg.elts if isinstance(tg, (ast.Tuple, ast.List)) else [tg])
-            for i, tg in enumerate(targets):
-                if not (isinstance(tg, ast.Subscript)
-                        and isinstance(tg.slice, ast.Constant)):
-                    continue
-                # For a tuple target the value is the matching element of the RHS tuple;
-                # for a bare target it is the whole value.
-                v = n.value
-                if isinstance(v, (ast.Tuple, ast.List)) and len(v.elts) == len(targets):
-                    v = v.elts[i]
-                if tg.slice.value == 3:
-                    if not (isinstance(v, ast.Constant) and v.value == ""):
-                        out.append(n)
-                elif tg.slice.value == 4:
-                    if isinstance(v, ast.Constant) and v.value == "true":
-                        out.append(n)
+        if M._row_write(n):
+            out.append(n)
         elif isinstance(n, ast.List) and len(n.elts) >= 6:
             e = n.elts[4]
             if isinstance(e, ast.Constant) and e.value == "true":
@@ -3668,7 +3650,8 @@ def _llm_stub(monkeypatch, answers):
     def _fake(name, url):
         calls.append(name)
         asked, res = answers.get(name, (False, None))
-        L.LAST.update(asked=asked, pages=1 if asked else 0, candidates=1 if asked else 0)
+        L.LAST.update(asked=asked, pages=1 if asked else 0, candidates=1 if asked else 0,
+                      calls=1 if asked else 0)
         return res
     monkeypatch.setattr(L, "resolve_llm", _fake)
     return calls
@@ -3963,8 +3946,21 @@ def test_a_baseline_red_test_is_never_reported_as_a_killer(tmp_path):
     assert v[0] == "KILLED" and v[2] == "tests/test_units.py::test_real" and v[1] == "behavioural", v
     argv = M._pytest_argv(["tests/test_units.py::test_real"], ["tests/test_units.py::test_red[p]"])
     assert "--deselect" in argv and "tests/test_units.py::test_red[p]" in argv, argv
-    # the parametrised form is stripped for the killer comparison
-    assert M._bare("tests/test_units.py::test_red[p]") == "tests/test_units.py::test_red"
+    # exclusion is by FULL id: one red `[caseA]` retires that case only (wave-1 F4), and a
+    # param with a space survives parsing (F5)
+    red = {"tests/test_units.py::test_p[case a]"}
+    out3 = ("FAILED tests/test_units.py::test_p[case a] - AssertionError\n"
+            "FAILED tests/test_units.py::test_p[case b] - AssertionError\n")
+    assert M._parse_failures(out3) == ["tests/test_units.py::test_p[case a]",
+                                       "tests/test_units.py::test_p[case b]"]
+    (tmp_path / "tests" / "test_units.py").write_text(
+        "def test_p(tmp_path):\n    assert 0\n", encoding="utf-8")
+    v = M._verdict(1, out3, red, str(tmp_path), True)
+    assert v and v[0] == "KILLED" and v[2] == "tests/test_units.py::test_p", v
+    # a ghost id (rc 4, `ERROR: not found`) is UNSETTLED, never a kill (wave-1 F1)
+    assert M._verdict(4, "ERROR: not found: tests/test_a.py::test_ghost\nno tests ran\n",
+                      set(), str(tmp_path), True) is M.UNSETTLED
+    assert M._verdict(1, "some crash text with no FAILED line\n", set(), str(tmp_path), True) is M.UNSETTLED
 
 
 def test_the_full_suite_runs_when_the_subset_does_not_settle_the_record(tmp_path, monkeypatch):
@@ -4015,6 +4011,26 @@ def test_the_full_suite_runs_when_the_subset_does_not_settle_the_record(tmp_path
     r = M.run_one(mut, str(tmp_path / "w5"))
     assert r["status"] == "FAIL" and "ONLY by source-text" in r["detail"], r
 
+    # wave-1 F1: a subset pytest could not run (rc 4) falls back; a full suite it could not
+    # run is a harness FAIL, never a kill
+    ghost = (4, "ERROR: not found: tests/test_units.py::test_beh\nno tests ran in 0.01s\n")
+    calls.clear(); monkeypatch.setattr(M, "_run", _runner([ghost, beh]))
+    r = M.run_one(mut, str(tmp_path / "w6"))
+    assert r["status"] == "KILLED" and r["mode"] == "fallback:unsettled" and len(calls) == 2, r
+    calls.clear(); monkeypatch.setattr(M, "_run", _runner([ghost, ghost]))
+    r = M.run_one(mut, str(tmp_path / "w7"))
+    assert r["status"] == "FAIL" and "did not judge" in r["detail"], r
+    # a `killers` id the archive cannot collect is a loud catalogue error
+    calls.clear(); monkeypatch.setattr(M, "_run", _runner([beh]))
+    r = M.run_one({**mut, "killers": ["tests/test_units.py::test_nope"]}, str(tmp_path / "w8"))
+    assert r["status"] == "FAIL" and "archive has not" in r["detail"] and calls == [], r
+    # and a selected id that only the WORKING TREE has is dropped before pytest sees it
+    calls.clear(); monkeypatch.setattr(M, "_run", _runner([beh]))
+    monkeypatch.setattr(M, "select_tests", lambda root, mut, tests_dir=None: [
+        "tests/test_units.py::test_beh", "tests/test_units.py::test_only_in_worktree"])
+    r = M.run_one(mut, str(tmp_path / "w9"))
+    assert r["status"] == "KILLED" and calls == [["tests/test_units.py::test_beh"]], (r, calls)
+
 
 def test_mutation_ids_are_unique_and_every_subset_fits_a_windows_command_line():
     """Ids key the per-mutant work dirs (parallel sweep); a duplicate would share one.
@@ -4026,11 +4042,16 @@ def test_mutation_ids_are_unique_and_every_subset_fits_a_windows_command_line():
     for m in muts:
         argv = M._pytest_argv(M.select_tests(M.ROOT, m))
         assert len(" ".join(argv)) < 30_000, m["id"]
-    # the collapse rule itself
+    # the collapse rule itself -- measured WITH the deselects (wave-1 F6)
     many = ["tests/test_units.py::test_%d" % i for i in range(2000)] + ["tests/test_registry.py::test_a"]
     argv = M._pytest_argv(many)
     assert "tests/test_units.py" in argv and "tests/test_registry.py::test_a" in argv
     assert len(" ".join(argv)) < 30_000
+    red = ["tests/test_units.py::test_red_%d[param-%d]" % (i, i) for i in range(40)]
+    argv = M._pytest_argv(many, red)
+    assert len(" ".join(argv)) < 30_000 and argv.count("--deselect") == 40, len(" ".join(argv))
+    for m in muts:
+        assert len(" ".join(M._pytest_argv(M.select_tests(M.ROOT, m), red))) < 30_000, m["id"]
 
 
 def test_the_census_step_never_probes_the_ladder_it_cannot_see(monkeypatch, capsys):
@@ -4176,3 +4197,192 @@ def test_llm_call_json_returns_the_structured_object_and_call_is_unchanged(monke
     with pytest.raises(llm.LLMUnavailable) as ei:
         llm.call_json("p", **kw)
     assert ei.value.kind == "auth"
+
+
+def test_both_writer_detectors_are_one_rule_and_see_the_evasive_shapes(tmp_path):
+    """Wave-1 F7: `fr[3] = "" ; fr[3] += url`, `fr[3:4] = [url]`, `fr.__setitem__(3, url)`
+    and `fr[4] = flag` were invisible to both detectors, so such a module was no "registry
+    writer" and needed no gate and no mutations. One rule now, exercised here shape by
+    shape, and the two enumerations must agree module for module."""
+    import glob
+    M = _mutate_module()
+    cases = {
+        'fr[3] = url': True, 'fr[3] = ""': False, 'fr[3] = "" or url': True,
+        'fr[3] += url': True, 'fr[3:4] = [url]': True, 'fr.__setitem__(3, url)': True,
+        'operator.setitem(fr, 4, "true")': True,
+        'fr[4] = "true"': True, 'fr[4] = "false"': False, 'fr[4] = flag': True,
+        'fr[4] = "tr" + "ue"': True, 'fr[4] += "true"': True,
+        'fr[1], fr[2], fr[3] = plat, tok, api': True, 'fr[5] = note': False,
+        'a[3] = 1': True,
+    }
+    for stmt, want in cases.items():
+        tree = ast.parse(stmt)
+        got = any(M._row_write(n) for n in ast.walk(tree))
+        assert got == want, "%s -> %s" % (stmt, got)
+    mine = {os.path.basename(p) for p in glob.glob(os.path.join(M.ROOT, "*.py"))
+            if _registry_writes(ast.parse(open(p, encoding="utf-8").read()))}
+    assert mine == set(M._registry_writers()), sorted(mine ^ set(M._registry_writers()))
+
+
+def test_the_sunday_cross_validation_never_selects_a_terminal_or_active_row(tmp_path, monkeypatch):
+    """Kills `validate-empty-terminal-drop`. `validate_empty` (Sun 04:00) ACTIVATES and
+    selected on the bare substring `no open israel roles` over every row: on 2026-08-25
+    it would have re-activated Primis Tech (`alias-of Primis`), kornit and `Tel Aviv`
+    (`redundant`) with check_invariants green (wave-1 pools attacker)."""
+    import sys
+    import validate_empty as V
+    import registry_health as RH
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Primis Tech", "scrape", "", "https://www.primis.tech/careers/", "false",
+         "scanned; no open Israel roles now | alias-of Primis 2026-08-25: identical board URL"],
+        ["Tel Aviv", "scrape", "", "https://jobs.secrettelaviv.com/", "false",
+         "scanned; no open Israel roles now | redundant: not a company 2026-08-25"],
+        ["Houzz", "scrape", "", "", "false", "scanned; no open Israel roles now | url-cleared 2026-08-25: x"],
+        ["Fiverr", "greenhouse", "fiverr", _FIVERR, "true", "scanned; no open Israel roles now"],
+        ["GoodCo", "scrape", "", "https://www.goodco.com/careers", "false",
+         "scanned; no open Israel roles now"],
+    ])
+    checked = []
+
+    def _check(name, url):
+        checked.append(name)
+        return ("promote", [name, "greenhouse", "fiverr", _FIVERR, "true", "cross-validated; 12/4 IL (was empty)"])
+    monkeypatch.setattr(V, "check", _check)
+    monkeypatch.setattr(G, "page_names_company", lambda name, url, html="": True)
+    monkeypatch.setattr(sys, "argv", ["validate_empty.py"])
+    rows = RH.read_rows(str(tmp_path / "companies.csv"))
+    assert [r[0] for r in RH.pools(rows)["validate_empty (Sun 04:00)"]] == ["GoodCo"]
+    V.main()
+    out = _read(tmp_path)
+    assert checked == ["GoodCo"], "selected a terminal, address-less or active row: %r" % (checked,)
+    assert out["Primis Tech"][4] == "false" and out["Tel Aviv"][4] == "false", out
+    assert out["GoodCo"][4] == "true", "positive control regressed: %r" % (out["GoodCo"],)
+
+
+def test_bd_rescue_gives_up_after_three_tries_even_with_a_retry_segment_after_its_own(tmp_path, monkeypatch):
+    """Kills `bd-tried-anchor`. The give-up counter was read with `x(\\d+)$`; since
+    2026-08-25 `retry_unreachable` appends its segment after `bd-tried`, so the anchor
+    read x1 forever: up to 5 paid unlocks x 9 rows every 8 days, permanently."""
+    import sys
+    import bd_rescue as B
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["A Ltd", "scrape", "", "https://a.example/careers", "false",
+         "unreachable; could not scan | bd-tried 2026-08-01 x2 | retry 2026-08-20: still unreachable"],
+        ["B Ltd", "scrape", "", "https://b.example/careers", "false",
+         "unreachable; could not scan | bd-tried 2026-08-01 x3 | retry 2026-08-20: still unreachable"],
+        ["C Ltd", "scrape", "", "https://c.example/careers", "false",
+         "unreachable; could not scan | alias-of C 2026-08-25: identical board URL"],
+    ])
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "x")
+    monkeypatch.delenv("BD_LIMIT", raising=False)
+    monkeypatch.setattr(B, "_load_secrets", lambda *a, **k: None)
+    monkeypatch.setattr(B, "alt_urls", lambda url: [url])
+    unlocked = []
+    monkeypatch.setattr(B, "unlock", lambda u, timeout=90: unlocked.append(u) or "")
+    monkeypatch.setattr(B.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(sys, "argv", ["bd_rescue.py"])
+    B.main()
+    out = _read(tmp_path)
+    assert unlocked == ["https://a.example/careers"], (
+        "x3 must be skipped and a terminal row never unlocked: %r" % (unlocked,))
+    assert "bd-tried 20" in out["A Ltd"][5] and " x3" in out["A Ltd"][5], out["A Ltd"][5]
+    assert "retry 2026-08-20: still unreachable" in out["A Ltd"][5]
+
+
+def test_the_resolver_refuses_a_board_not_grounded_on_the_companys_own_page(monkeypatch):
+    """Kills `llm-own-page-drop` and `llm-embed-vouch-drop`. The search ladder puts other
+    companies' pages into the evidence and `_slug_matches` is a five-character prefix
+    (any Comeet uid passes): `Similarweb` -> greenhouse `similartech` and `Sunflower
+    Sustainable Investments` -> Claroty's Comeet `F2.004` both verified with real jobs
+    (wave-1 write-path attacker). A proposal must be grounded on the company's OWN page."""
+    import resolve_llm as L
+    from pipeline import identity_gate as G
+    monkeypatch.setattr(L, "fetch_company", lambda row: [{"title": "Analyst", "location": "Tel Aviv"}] * 3)
+    monkeypatch.setattr(G, "page_names_company", lambda name, url, html="": True)
+    st = "https://boards-api.greenhouse.io/v1/boards/similartech/jobs"
+    # evidence from a search hit on the OTHER company's site / on the vendor's host only
+    foreign = [("https://www.similartech.com/careers", "<html>similartech greenhouse</html>"),
+               ("https://boards.greenhouse.io/similartech", "<html>similartech</html>")]
+    import pytest
+    with pytest.raises(ValueError):
+        L._verify("Similarweb", "greenhouse", "similartech", st, pages=foreign)
+    with pytest.raises(ValueError):
+        L._verify("Sunflower Sustainable Investments", "comeet", "F2.004",
+                  "https://www.comeet.com/careers-api/2.0/company/F2.004/positions?token=x",
+                  pages=[("https://www.claroty.com/careers", "<html>comeet_uid F2.004</html>")])
+    # positive controls: the token on the company's own page
+    own = [("https://www.fiverr.com/jobs", "<html>boards.greenhouse.io/fiverr</html>")]
+    assert L._verify("Fiverr", "greenhouse", "fiverr", _FIVERR, pages=own) == (3, 3)
+    assert L._verify("Upwind Security", "comeet", "49.004",
+                     "https://www.comeet.com/careers-api/2.0/company/49.004/positions?token=x",
+                     pages=[("https://www.upwind.io/careers", "<html>comeet_uid: 49.004</html>")]) == (3, 3)
+    # a held OWN page can still refuse a board it merely embeds (Cogniteam/Riskified)
+    with pytest.raises(ValueError):
+        L._verify("Cogniteam", "greenhouse", "riskified",
+                  "https://boards-api.greenhouse.io/v1/boards/riskified/jobs",
+                  pages=[("https://www.cogniteam.com/careers", "<html>greenhouse.io/riskified</html>")])
+    # and `_gather` feeds `_PAGES` so `resolve_llm` grounds without the caller threading it
+    monkeypatch.setattr(L, "_search_candidates", lambda name, limit=5: [])
+    monkeypatch.setattr(L, "_fetch_html", lambda u, timeout=25, cap=300_000: (u, "<html>boards.greenhouse.io/fiverr</html>"))
+    L._gather("Fiverr", "https://www.fiverr.com/jobs")
+    assert L._PAGES and L._PAGES[0][0] == "https://www.fiverr.com/jobs"
+
+
+def test_auto_expand_charges_every_claude_call_and_pins_the_search_cap(tmp_path, monkeypatch, capsys):
+    """Kills `expand-search-cap-drift` and `llm-calls-uncounted`. `resolve_llm` retries once
+    with the verification error; the budget must count both calls (wave-1 F6)."""
+    import resolve_llm as L
+    queue = [{"name": "A%02d Ltd" % i, "careers_url": _LI} for i in range(45)]
+    E = _expand_env(tmp_path, monkeypatch, queue)
+    monkeypatch.delenv("AUTO_EXPAND_SEARCH_CAP", raising=False)
+    monkeypatch.setenv("LLM_RESOLVE_CAP", "100")
+    calls = []
+
+    def _fake(name, url):
+        calls.append(name)
+        L.LAST.update(asked=False, pages=0, candidates=0, calls=0)
+        return None
+    monkeypatch.setattr(L, "resolve_llm", _fake)
+    E.main()
+    assert len(calls) == 40, "the default search cap is 40 per run: %d" % len(calls)
+    # a two-call attempt costs two
+    E = _expand_env(tmp_path, monkeypatch, queue[:3])
+    monkeypatch.setenv("LLM_RESOLVE_CAP", "3")
+    calls.clear()
+
+    def _two(name, url):
+        calls.append(name)
+        L.LAST.update(asked=True, pages=1, candidates=1, calls=2)
+        return None
+    monkeypatch.setattr(L, "resolve_llm", _two)
+    E.main()
+    assert calls == ["A00 Ltd", "A01 Ltd"], "retries were not charged: %r" % (calls,)
+    assert "dfer A02 Ltd (cap" in capsys.readouterr().out
+
+
+def test_auto_expand_survives_a_malformed_rotation_key(tmp_path, monkeypatch):
+    """Wave-1 F7: a non-string value in `cloud_state/auto_expand_seen.json` (a hand edit,
+    a merge) raised TypeError inside the sort and killed the expand step."""
+    queue = [{"name": n, "careers_url": _LI} for n in ("A Ltd", "B Ltd")]
+    E = _expand_env(tmp_path, monkeypatch, queue, seen={"A Ltd": 20260825, "B Ltd": None})
+    monkeypatch.setenv("LLM_RESOLVE_CAP", "1")
+    monkeypatch.setenv("AUTO_EXPAND_SEARCH_CAP", "1")
+    calls = _llm_stub(monkeypatch, {})
+    E.main()
+    assert calls == ["A Ltd"], calls
+
+
+def test_clear_agg_urls_reads_every_segment_not_only_the_first(tmp_path):
+    """Wave-1 filed note: `note.startswith` missed a buried row whose note led with a
+    triage stamp (`Dun & Bradstreet (Israel) Ltd.`)."""
+    import auto_expand as E
+    p = _registry(tmp_path, [
+        ["DnB", "scrape", _SH, _SH, "false",
+         "dark-triage 2026-08-20: wrong-page | scanned; no open Israel roles now"],
+    ])
+    assert E.clear_agg_urls(apply=True, path=str(p)) == ["DnB"]
+    assert _read(tmp_path)["DnB"][3] == ""

@@ -23,6 +23,7 @@ from resolve_deep import ATS_PATTERNS, _verify
 from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import replace_own as _note_replace
+from pipeline.verdicts import is_terminal
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
 _UID = re.compile(r"comeet_uid[\"'\s:=]+[\"']?([0-9A-Za-z]{2}\.[0-9A-Za-z]{3})")
@@ -117,7 +118,8 @@ _MODIFIED = set()   # names this run rewrote (single-writer merge)
 def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows)
-           if len(r) >= 6 and "unreachable" in (r[5] or "").lower()}
+           if len(r) >= 6 and "unreachable" in (r[5] or "").lower()
+           and not is_terminal(r[5] or "")}
     print(f"wayback-rescuing {len(idx)} unreachable companies ...")
     fixed = 0
     for name, (rowi, url) in idx.items():

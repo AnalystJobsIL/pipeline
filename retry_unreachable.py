@@ -217,9 +217,9 @@ def main():
         changed = {r[0]: r for r in rows
                    if r and len(r) > 5 and r[0] in _MODIFIED}
         fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
-        for idx, fr in enumerate(fresh):
+        for pos, fr in enumerate(fresh):
             if fr and len(fr) > 5 and fr[0] in changed and changed[fr[0]] != fr:
-                fresh[idx] = changed[fr[0]]
+                fresh[pos] = changed[fr[0]]
         write_csv_rows("companies.csv", fresh)
         with open("scraped_cache.json", "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)

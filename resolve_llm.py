@@ -95,7 +95,10 @@ def _is_aggregator(url):
 
 # What the LAST call did, for the caller's budget: `auto_expand` charges its `claude -p`
 # cap only when a call was actually made (`asked`), and prints why a name was deferred.
-LAST = {"asked": False, "pages": 0, "candidates": 0, "error": ""}
+LAST = {"asked": False, "pages": 0, "candidates": 0, "error": "", "calls": 0}
+# (page url, html) of every page the LAST call read: the evidence a proposal must be
+# grounded in (see `_verify`)
+_PAGES = []
 # Own counter for the paid rung. `deep_validate._BD` is per PROCESS with a 150 default
 # (docs/BACKLOG.md 10/20), so borrowing it would let one auto-expand run spend 150 credits.
 _BD_OWN = {"used": 0}
@@ -179,12 +182,14 @@ def _gather(name, url):
     candidates += [u for u in _search_candidates(name) if u not in candidates]
     LAST["candidates"] = len(candidates)
     n_pages = 0
+    del _PAGES[:]
     for u in candidates[:3]:
         final, html = _fetch_html(u)
         if not html:
             lines.append(f"page: {u} -> unreachable")
             continue
         n_pages += 1
+        _PAGES.append((final or u, html))
         title = re.search(r"<title[^>]*>(.*?)</title>", html, re.I | re.S)
         lines.append(f"page: {u} (final: {final}) title: "
                      f"{(title.group(1).strip()[:120] if title else '?')}")
@@ -211,7 +216,36 @@ def _ask_claude(prompt, timeout=120):
         return None
 
 
-def _verify(name, platform, token, api_url):
+def _own_page_names_token(name, token, api_url, pages=None):
+    """Is the proposed board GROUNDED on a page that is the company's own?
+
+    The search ladder (2026-08-25) puts pages from a plain web search into the evidence,
+    and `_slug_matches` is a five-character prefix (plus an unconditional pass for any
+    Comeet uid): `Similarweb` -> greenhouse `similartech`, `Sunflower Sustainable
+    Investments` -> Claroty's Comeet `F2.004` both verify with real jobs (wave-1 write-path
+    attacker, 1,303 cross-accepts measured over the active tokens). So the token must
+    appear in the HTML of a page on the company's OWN domain: `is_foreign` decides
+    ordinary domains, and a page on an ATS vendor host (`boards.greenhouse.io/<other>`) is
+    "cannot tell" and does not count. A held page can REFUSE a board it merely embeds --
+    `embedded_board_ok` -- but for Comeet uids that rule cannot near-match (BACKLOG 61), so
+    the own-page requirement is the whole gate there, which is exactly the
+    "uids come from the company's own page" premise `_slug_matches` assumed and the ladder
+    broke."""
+    from pipeline.company_identity import ATS_HOST, is_foreign
+    from urllib.parse import urlparse
+    needle = str(token or "").lower()
+    if not needle:
+        return False
+    for url, html in (pages if pages is not None else _PAGES):
+        host = urlparse(url).netloc.lower()
+        if not host or ATS_HOST.search(host) or _is_aggregator(url) or is_foreign(name, url):
+            continue                                   # not the company's own page
+        if needle in (html or "").lower():
+            return True
+    return False
+
+
+def _verify(name, platform, token, api_url, pages=None):
     """Fetch through the production fetcher; returns (n_all, n_il) or raises."""
     if platform not in FETCHERS or platform in ("scrape", "discovery"):
         raise ValueError(f"unsupported platform {platform!r}")
@@ -223,6 +257,13 @@ def _verify(name, platform, token, api_url):
     from audit_empty_rows import _slug_matches
     if token and not _slug_matches(name, token):
         raise ValueError(f"foreign slug {token!r} for {name!r}")
+    # ...and resemblance is not evidence: the board must be GROUNDED on the company's own
+    # page (2026-08-25), and a held page may refuse a board it merely embeds
+    if not _own_page_names_token(name, token, api_url, pages):
+        raise ValueError(f"board {token!r} was not found on {name!r}'s own page")
+    from pipeline import identity_gate as _gate
+    if platform != "comeet" and not _gate.embedded_board_ok(name, token, api_url):
+        raise ValueError(f"board {token!r} does not vouch for {name!r}")
     jobs = fetch_company({"company_name": name, "ats_platform": platform,
                           "token": token, "api_url": api_url})
     if not jobs:
@@ -246,7 +287,7 @@ def _try_comeet_via_page(name, careers_url):
 def resolve_llm(name, url):
     """Full fallback attempt. Returns ('ats', (name, platform, token, api_url, n_all, n_il))
     or None. Never raises."""
-    LAST.update(asked=False, pages=0, candidates=0, error="")
+    LAST.update(asked=False, pages=0, candidates=0, error="", calls=0)
     try:
         evidence, n_pages = _gather(name, url)
         if n_pages == 0:
@@ -257,6 +298,7 @@ def resolve_llm(name, url):
         feedback = ""
         for _attempt in range(2):
             LAST["asked"] = True
+            LAST["calls"] += 1              # the caller's budget counts CALLS, retries included
             p = _ask_claude(_PROMPT.format(name=name, evidence=evidence[:8000],
                                            feedback=feedback))
             if not p or p.get("platform") in (None, "", "unknown"):

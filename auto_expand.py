@@ -73,7 +73,9 @@ def _load_seen():
     try:
         with open(SEEN_PATH, encoding="utf-8") as f:
             d = json.load(f)
-        return d if isinstance(d, dict) else {}
+        # only str dates sort against str; a hand-edited or merged value of another type
+        # would TypeError the whole (non-continue-on-error) expand step (wave-1 F7)
+        return {k: v for k, v in d.items() if isinstance(v, str)} if isinstance(d, dict) else {}
     except Exception:  # noqa: BLE001
         return {}
 
@@ -206,8 +208,7 @@ def main():
                 seen[name] = _today()
                 import resolve_llm as _llm
                 lr = _llm.resolve_llm(name, url)
-                if _llm.LAST["asked"]:
-                    llm_budget -= 1          # charge a CALL, not an attempt
+                llm_budget -= _llm.LAST["calls"]   # charge CALLS (retries included), not attempts
                 if lr:
                     r, kind = lr, "ats"
                     n_llm += 1
@@ -283,8 +284,9 @@ def clear_agg_urls(apply=False, path=None):
         if len(r) < 6 or r[4] != "false" or not _is_agg_url(r[3] or ""):
             continue
         note = r[5] or ""
-        if not any(note.startswith(t) for t in _OWN_PARKED):
-            continue
+        from pipeline.notes import split as _segments
+        if not any(seg.startswith(t) for seg in _segments(note) for t in _OWN_PARKED):
+            continue                     # any SEGMENT, not only the first
         host = urlparse(r[3]).netloc
         r[2] = r[3] = ""
         r[5] = _note_append(note, f"url-cleared {_today()}: {host} aggregator seed")

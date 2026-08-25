@@ -1237,5 +1237,65 @@
     "replace": "                             model=os.environ.get(\"LLM_RESOLVE_MODEL\", \"opus\"),",
     "why": "the resolver's model is a budget decision (the bare call ran the default, ~10x the cost per call); a drift back is silent in every log.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "validate-empty-terminal-drop",
+    "file": "validate_empty.py",
+    "symbol": "in_validate_empty_pool",
+    "class": "M5-population-widening",
+    "find": "            and not is_terminal(r[5] or \"\") and not is_recruiter(r[0]))",
+    "replace": "            and not is_recruiter(r[0]))",
+    "why": "the Sunday cross-validation activates; without the terminal exclusion it re-activated three rows parked alias-of/redundant on 2026-08-25 (wave-1 pools attacker).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-tried-anchor",
+    "file": "bd_rescue.py",
+    "symbol": "main",
+    "class": "M7-constant-drift",
+    "find": "            mm = re.search(r\"bd-tried \\d{4}-\\d{2}-\\d{2} x(\\d+)\", note)",
+    "replace": "            mm = re.search(r\"x(\\d+)$\", note)",
+    "why": "a $-anchored counter never sees x3 once retry_unreachable appends after it: paid unlocks forever (wave-1 F4).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "llm-own-page-drop",
+    "file": "resolve_llm.py",
+    "symbol": "_verify",
+    "class": "M1-gate-removal",
+    "find": "    if not _own_page_names_token(name, token, api_url, pages):",
+    "replace": "    if False:",
+    "why": "with search-sourced evidence, _slug_matches alone admitted Similarweb -> similartech and any Comeet uid (wave-1 write-path attacker).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "llm-embed-vouch-drop",
+    "file": "resolve_llm.py",
+    "symbol": "_verify",
+    "class": "M1-gate-removal",
+    "find": "    if platform != \"comeet\" and not _gate.embedded_board_ok(name, token, api_url):",
+    "replace": "    if False:",
+    "why": "a held own page can refuse a board it merely embeds (Cogniteam's page + a stale riskified embed).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-search-cap-drift",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M7-constant-drift",
+    "find": "    search_budget = int(os.environ.get(\"AUTO_EXPAND_SEARCH_CAP\", \"40\"))",
+    "replace": "    search_budget = int(os.environ.get(\"AUTO_EXPAND_SEARCH_CAP\", \"400\"))",
+    "why": "the search cap paces the queue and bounds DDG + unlock spend per run; it was unpinned (wave-1 F6).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "llm-calls-uncounted",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M8-argument-mis-passing",
+    "find": "                llm_budget -= _llm.LAST[\"calls\"]   # charge CALLS (retries included), not attempts",
+    "replace": "                llm_budget -= 1   # charge CALLS (retries included), not attempts",
+    "why": "resolve_llm retries once; charging one per attempt lets the retry double the spend the cap describes (wave-1 F6 near-miss).",
+    "must_be_killed_by_behavioural": true
   }
 ]

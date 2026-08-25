@@ -19,6 +19,7 @@ import urllib.request
 
 from pipeline import identity_gate as _gate
 from pipeline.notes import replace_own as _note_replace
+from pipeline.verdicts import is_terminal
 
 from resolve_deep import _verify
 from retry_unreachable import alt_urls
@@ -69,8 +70,11 @@ def main():
         return
     limit = int(os.environ.get("BD_LIMIT", "0"))
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
+    # terminal rows are never re-attempted (an `alias-of` twin parked while unreachable
+    # would otherwise be unlocked -- and paid for -- 90 s before retry_unreachable skips it)
     idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows)
-           if len(r) >= 6 and "unreachable" in (r[5] or "").lower()}
+           if len(r) >= 6 and "unreachable" in (r[5] or "").lower()
+           and not is_terminal(r[5] or "")}
     import datetime as _dtm
     recent = (_dtm.date.today() - _dtm.timedelta(days=7)).isoformat()
     def _skip(name):
@@ -127,7 +131,9 @@ def main():
             still += 1
             import datetime as _dtm
             note = rows[rowi][5] if len(rows[rowi]) > 5 else ""
-            mm = re.search(r"x(\d+)$", note)
+            # unanchored: retry_unreachable appends its own segment AFTER this one 90 s
+            # later, so a `$` anchor read `x1` forever and the give-up at x3 never came
+            mm = re.search(r"bd-tried \d{4}-\d{2}-\d{2} x(\d+)", note)
             n_try = (int(mm.group(1)) if mm else 0) + 1
             _base = rows[rowi][5] or "unreachable; could not scan"
             rows[rowi][5] = _note_replace(
