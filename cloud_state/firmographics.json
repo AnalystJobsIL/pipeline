@@ -5352,6 +5352,19 @@
     "stage_note": "NASDAQ: INTU, listed since 1993; ~19,000 employees as of 2026",
     "sub_sector": "Financial management software — tax prep (TurboTax), SMB accounting (QuickBooks), consumer finance (Credit Karma), marketing (Mailchimp)"
   },
+  "Investing": {
+    "as_of": "2026-08-25",
+    "business_model": "advertising, premium subscriptions (InvestingPro), and affiliate/referral fees from brokers and financial services",
+    "customer_type": "retail investors and traders, plus advertisers and brokers",
+    "employees_global": 250,
+    "founded": 2007,
+    "il_center": "Tel Aviv (main operations/R&D hub); legal entity registered in Nicosia, Cyprus",
+    "sector": "fintech",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Majority stake acquired by Joffre Capital (Hong Kong PE/investment firm) in 2021 for ~$500M; chairman has since floated pursuing an IPO",
+    "sub_sector": "financial markets data, news, and trading tools platform (real-time quotes, analysis, broker reviews, InvestingPro subscriptions)"
+  },
   "Ironblocks": {
     "as_of": "2026-08-22",
     "business_model": "sells on-chain monitoring/firewall security products (e.g. real-time threat detection contracts) to Web3 protocols",
@@ -7083,6 +7096,19 @@
     "stage": "public",
     "stage_note": "NYSE: NKE",
     "sub_sector": "sportswear and footwear giant; its Tel Aviv computer-vision R&D center (from the 2018 Invertex acquisition, ~$10M) was shut down in 2023"
+  },
+  "Nisha Pro": {
+    "as_of": "2026-08-25",
+    "business_model": "places and outsources IT/tech professionals to client companies, earning placement fees and staffing/outsourcing contract margins",
+    "customer_type": "enterprises (hiring managers at tech, finance, and industrial companies needing IT staff)",
+    "employees_global": 350,
+    "founded": 2011,
+    "il_center": "Airport City (HQ)",
+    "sector": "IT staffing / workforce outsourcing",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "privately held, incorporated 2011, part of Nisha Group (family-founded recruitment group, no VC funding found)",
+    "sub_sector": "tech recruitment and outsourced IT project staffing (software, QA, infrastructure) for Israeli enterprises"
   },
   "NoTraffic": {
     "as_of": "2026-08-21",

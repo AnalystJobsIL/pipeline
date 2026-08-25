@@ -15,18 +15,32 @@
   "workers": 4
  },
  "enrich": {
-  "date": "2026-08-24",
-  "finished_at": "2026-08-24T05:59:14+00:00"
+  "date": "2026-08-25",
+  "finished_at": "2026-08-25T05:47:45+00:00",
+  "matched_bd": 0,
+  "matched_bd_unavailable": 0,
+  "matched_cooldown": 3,
+  "matched_fail": 1,
+  "matched_filled": 3,
+  "matched_ran": 1,
+  "matched_unfillable": 0,
+  "scrape_bd": 0,
+  "scrape_bd_unavailable": 0,
+  "scrape_cooldown": 6,
+  "scrape_fail": 2,
+  "scrape_filled": 29,
+  "scrape_ran": 1,
+  "scrape_unfillable": 4
  },
  "expand": {
   "date": "2026-08-24",
   "finished_at": "2026-08-24T23:40:42+00:00"
  },
  "publish": {
-  "board": 61,
-  "date": "2026-08-24",
-  "email": 6,
-  "finished_at": "2026-08-24T06:09:26+00:00",
-  "scanned": 862
+  "board": 81,
+  "date": "2026-08-25",
+  "email": 12,
+  "finished_at": "2026-08-25T06:07:53+00:00",
+  "scanned": 877
  }
 }
