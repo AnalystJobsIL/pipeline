@@ -2373,3 +2373,22 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     day), then falls back to DDG for the rest of the month. Fine, but the order could be
     DDG-first with SerpApi as the tie-breaker for names DDG cannot find — measure the DDG
     hit-rate on the runners from the `dfer … no-candidates` counts first.
+197. **`url-cleared` costs the `scanned; no open` token its place under the 220 cap** — lane:
+    `registry`. On the 28 un-buried rows the oldest segment is `scanned; no open Israel roles
+    now`; after triage + hunt + one deep-validate stamp it is evicted (headroom 32 chars,
+    every deep-validate verdict is 38–53). Only `validate_empty` keys on it, and those rows
+    have no address to validate, so the loss is nil today — but a pool that keys on an
+    eroding token is the shape that hid 87 truncated modes once. Durable fix: key the
+    Sunday cross-validation on state (`active=false` + an http address + no verified stamp),
+    not on a note substring. Measured by the wave-1 pools attacker (14-night simulation).
+198. **`Sckipio`'s "comeet 87.00C is Scopio Labs' board" lives only in a note segment** —
+    lane: `registry` (+ shared `identity_facts`). The 94-char `url-cleared` segment is the
+    longest on the row and is evicted after four nights of routine stamps; the two pools
+    that keep the row both activate. A NEGATIVE declaration (`identity_facts`: this
+    tenant is NOT this company's) is the durable form; today the table only declares what
+    a company owns.
+199. **An address-less (`url-cleared`) row pays one unlocker search on every DDG-empty
+    hunt night** — lane: `registry`. `hunt_one` with an empty seed goes `ddg` →
+    `google_via_unlocker` when `len(cands) < 2`; bounded by `DEEP_BD_SEARCH_CAP` in the
+    hunt's process. 29 such rows today. Cost, not correctness; count it against the 4,500
+    ceiling (192) if the hunt's BD line in the mail grows.
