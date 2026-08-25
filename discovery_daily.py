@@ -362,11 +362,20 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
             SOURCE_PATH["linkedin_blocked"] += 1
         if not ok or (blanks >= LINKEDIN_BLANK_TOLERANCE and not out):
             if paid_pages >= pages or not os.environ.get("BRIGHTDATA_API_KEY"):
-                # paid budget spent, or there is no paid path at all
-                why = (f"BLOCKED by LinkedIn on guest page {i} and no paid page left "
-                       f"(paid {paid_pages}/{pages})" if not ok else
-                       f"{blanks} blank guest pages in a row and no paid page left to tell "
-                       f"an empty keyword from a soft rate-limit (paid {paid_pages}/{pages})")
+                # paid budget spent, or there is no paid path at all — and the message
+                # says which: "no paid page left (paid 0/2)" was the wording when the real
+                # cause was a missing key.
+                no_paid = (f"no paid path (BRIGHTDATA_API_KEY unset)"
+                           if not os.environ.get("BRIGHTDATA_API_KEY") else
+                           f"no paid page left (paid {paid_pages}/{pages})")
+                if not ok:
+                    why = f"BLOCKED by LinkedIn on guest page {i} and {no_paid}"
+                elif pages:
+                    why = (f"{blanks} blank guest pages in a row and {no_paid} to tell an "
+                           f"empty keyword from a soft rate-limit")
+                # else: a free-only query (pages=0) that found nothing is the ordinary
+                # empty city keyword — a drained pool, not an alarm; `blank=` on the
+                # sweep line is where a soft-limit spike shows.
                 break
             # The paid page index is its OWN counter: reusing the guest index under a hard
             # block only ever fetched start=0, silently dropping ~20 of ~80 cards a keyword.
@@ -658,8 +667,11 @@ def bd_spend_this_month(today=None):
     return sum(known), out
 
 
-def report_bd_spend():
-    """Print month-to-date Bright Data credit spend, and warn before the ceiling."""
+def report_bd_spend(targeted_cap=None):
+    """Print month-to-date Bright Data credit spend, and warn before the ceiling.
+    `targeted_cap` is what plan_spend() actually decided this run, so the warning can say
+    what was cut rather than assert it: at 80% of pool the cap is still 20-100 and only
+    reaches 0 past ~96% late in the month."""
     mtd, parts = bd_spend_this_month()
     if mtd is None:
         print("[bd-spend] ledger unavailable — spend is UNKNOWN")
@@ -688,10 +700,11 @@ def report_bd_spend():
     if pct >= 80:
         print(f"::warning::Bright Data at {pct:.0f}% of the monthly free pool "
               f"({mtd}/{BD_MONTHLY_BUDGET} credits, shared by every workflow that touches "
-              f"BD). plan_spend() has cut the targeted sweep to zero; dataset records are "
-              f"{rec_share:.0%} of the spend (this layer's own per-RECORD LinkedIn sweep — "
-              f"53% of the 2026-08 pool), Unlocker + SERP requests the rest — see "
-              f"ARCHITECTURE.md 1a.", flush=True)
+              f"BD). This run's targeted cap: "
+              f"{'unknown' if targeted_cap is None else targeted_cap}"
+              f"{' (cut to zero)' if targeted_cap == 0 else ''}; dataset records are "
+              f"{rec_share:.0%} of the spend (this layer's own per-RECORD LinkedIn sweep), "
+              f"Unlocker + SERP requests the rest — see ARCHITECTURE.md 1a.", flush=True)
 
 
 def budget_per_day(today=None):
@@ -1090,28 +1103,28 @@ def main():
     # Bridge to auto-expand: out/ is gitignored (ephemeral on cloud runners), so the queue
     # auto_expand.py actually drains is the committed research_companies.json — merge into it.
     n_queued = 0
-    if new_cos:
-        try:
-            research = json.load(open("research_companies.json", encoding="utf-8"))
-        except Exception:  # noqa: BLE001
-            research = []
-        # A gate learned today must also unlearn yesterday's queue: auto_expand re-checks
-        # the NAME only, and "Dialog" (dialog-recruiting) sat at position 129 of its next
-        # batch on 2026-08-25. Pruned here, where this layer already holds the file.
-        kept = [e for e in research
-                if not _is_rec(e.get("name"), e.get("slug", ""))]
-        pruned = len(research) - len(kept)
-        if pruned:
-            print(f"queue: dropped {pruned} agency entries: "
-                  + ", ".join((e.get("name") or "?") for e in research if e not in kept))
-        research = kept
-        known = {(e.get("name") or "").strip().lower() for e in research}
-        added = [v for k, v in new_cos.items() if k not in known]
-        if added or pruned:
-            research.extend(added)
-            with open("research_companies.json", "w", encoding="utf-8") as f:
-                json.dump(research, f, ensure_ascii=False, indent=1)
-            n_queued = len(added)
+    try:
+        research = json.load(open("research_companies.json", encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        research = []
+    # A gate learned today must also unlearn yesterday's queue: auto_expand re-checks the
+    # NAME only, and "Dialog" (dialog-recruiting) sat at position 129 of its next batch on
+    # 2026-08-25. Pruned here, where this layer already holds the file, on EVERY run — a
+    # morning with nothing new to queue must not leave yesterday's agency in place.
+    kept = [e for e in research if not _is_rec(e.get("name"), e.get("slug", ""))]
+    pruned = len(research) - len(kept)
+    if pruned:
+        print(f"queue: dropped {pruned} agency entries: "
+              + ", ".join((e.get("name") or "?") for e in research if e not in kept))
+    research = kept
+    known = {(e.get("name") or "").strip().lower() for e in research}
+    added = [v for k, v in new_cos.items() if k not in known]
+    if added or pruned:
+        research.extend(added)
+        with open("research_companies.json", "w", encoding="utf-8") as f:
+            json.dump(research, f, ensure_ascii=False, indent=1)
+        n_queued = len(added)
+        if added:
             print(f"queued {n_queued} new companies into research_companies.json")
     # A source returning zero is the signal, not the absence of one: the Indeed dataset
     # printed "0 records" every day for five days and nothing ever said a source had died.
@@ -1122,7 +1135,7 @@ def main():
             print(f"::warning::discovery source {line}", flush=True)
     except Exception as e:  # noqa: BLE001
         print(f"[source-health] skipped: {e}")
-    report_bd_spend()
+    report_bd_spend(targeted_cap if have_bd else None)
     # The line an operator reads. It printed len(jobs) and len(new_cos) — 634 cached and
     # 179 for migration on 2026-08-25, when 621 were cached (13 junior kept for the name
     # only) and 51 queued (128 already waiting). Every number here is one an earlier line

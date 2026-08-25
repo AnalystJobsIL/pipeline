@@ -242,6 +242,23 @@ def _health(n_parsed):
         print(f"[source-health] skipped: {e}")
 
 
+def _prune_queue():
+    """Drop from research_companies.json what this layer's gates now refuse (a place name,
+    an agency by name or slug). auto_expand re-checks the name only; the queue is the one
+    file both bridges hold, so a gate learned today unlearns yesterday here."""
+    from pipeline.recruiters import is_recruiter
+    research = _load_json("research_companies.json", None)
+    if not isinstance(research, list):
+        return                       # absent or unreadable: nothing to prune, never truncate
+    kept = [e for e in research
+            if not is_place_name(e.get("name")) and not is_recruiter(e.get("name"), e.get("slug", ""))]
+    if len(kept) < len(research):
+        print(f"queue: dropped {len(research) - len(kept)} place-named / agency entries: "
+              + ", ".join(str(e.get("name")) for e in research if e not in kept))
+        with open("research_companies.json", "w", encoding="utf-8") as f:
+            json.dump(kept, f, ensure_ascii=False, indent=1)
+
+
 def main():
     state = _load_json(STATE_PATH, {})
     new_jobs = []
@@ -269,6 +286,9 @@ def main():
     for j in unattributable:
         print(f"  [names] not an employer, not cached: {j['company']} | {j['title']}")
     new_jobs = [j for j in new_jobs if j not in unattributable]
+    # Unlearn yesterday's queue on EVERY run, before the quiet-day return: what the gates
+    # refuse today must not sit in research_companies.json for auto_expand at 08:47.
+    _prune_queue()
     if not new_jobs:
         print("no new telegram posts")
         return
@@ -292,13 +312,6 @@ def main():
     from pipeline.firmographics import looks_like_junk
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
     research = _load_json("research_companies.json", [])
-    # unlearn yesterday's queue too (same rule as discovery_daily's bridge)
-    kept = [e for e in research
-            if not is_place_name(e.get("name")) and not is_recruiter(e.get("name"), e.get("slug", ""))]
-    pruned = len(research) - len(kept)
-    if pruned:
-        print(f"queue: dropped {pruned} place-named / agency entries")
-    research = kept
     known = {(e.get("name") or "").strip().lower() for e in research}
     queued = 0
     for j in added:
@@ -310,7 +323,7 @@ def main():
             research.append({"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""})
             known.add(c.lower())
             queued += 1
-    if queued or pruned:
+    if queued:
         with open("research_companies.json", "w", encoding="utf-8") as f:
             json.dump(research, f, ensure_ascii=False, indent=1)
     with open(STATE_PATH, "w", encoding="utf-8") as f:

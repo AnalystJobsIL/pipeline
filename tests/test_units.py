@@ -6310,7 +6310,8 @@ def test_the_place_gate_is_telegram_only_and_reaches_cache_and_queue():
     src = inspect.getsource(dt.main)
     assert 'is_place_name(j["company"])' in src            # the cache side
     assert "is_place_name(c)" in src                        # the queue side
-    assert 'is_place_name(e.get("name"))' in src            # yesterday's queue, pruned
+    assert 'is_place_name(e.get("name"))' in inspect.getsource(dt._prune_queue)   # yesterday's queue
+    assert "_prune_queue()" in src.split("if not new_jobs:", 1)[0]   # ...on EVERY run, before the quiet-day return
 
 
 def test_an_undated_no_company_post_is_not_cached_or_queued(tmp_path, monkeypatch, capsys):
@@ -6374,7 +6375,7 @@ def test_the_cache_write_drops_agency_cards_including_carried_ones_and_the_junio
     monkeypatch.setattr(dd, "linkedin_normalize", lambda c: c)
     monkeypatch.setattr(dd, "_li_queries", lambda: [("x", "Israel", 0)])
     monkeypatch.setattr(dd, "plan_spend", lambda today=None: (100, 0, "test"))
-    monkeypatch.setattr(dd, "report_bd_spend", lambda: None)
+    monkeypatch.setattr(dd, "report_bd_spend", lambda targeted_cap=None: None)
     monkeypatch.setattr(dd, "load_companies", lambda active_only=False: [])
     monkeypatch.setattr(dd, "_load_secrets", lambda: None)
     monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
@@ -6388,6 +6389,45 @@ def test_the_cache_write_drops_agency_cards_including_carried_ones_and_the_junio
     assert "cache: dropped 2 agency cards" in out
     assert "queue: dropped 1 agency entries: Dialog" in out
     assert "agency, not an employer: Nisha Pro" in out
+
+
+def test_the_queue_is_pruned_even_on_a_morning_with_nothing_new(tmp_path, monkeypatch, capsys):
+    """The first version pruned inside `if new_cos:` / after the telegram early return, so a
+    quiet morning left yesterday's agency in the queue for auto_expand at 08:47."""
+    import json as _j
+
+    import discovery_daily as dd
+    import discovery_telegram as dt
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "discovered_cache.json").write_text("[]", encoding="utf-8")
+    q = [{"name": "Dialog", "careers_url": "x", "ats": "unknown", "slug": "dialog-recruiting"},
+         {"name": "Tel Aviv", "careers_url": "x", "ats": "unknown", "slug": ""},
+         {"name": "Wix", "careers_url": "x", "ats": "unknown", "slug": "wix"}]
+    (tmp_path / "research_companies.json").write_text(_j.dumps(q), encoding="utf-8")
+    from pipeline import sources as _src
+    monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
+    # telegram: no new posts at all
+    monkeypatch.setattr(dt, "CHANNELS", ["c1"])
+    monkeypatch.setattr(dt, "scan_channel", lambda chan, last: ([], 0))
+    dt.main()
+    names = [e["name"] for e in _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))]
+    assert names == ["Wix"], names
+    assert "no new telegram posts" in capsys.readouterr().out
+    # daily: every source empty, nothing to queue — an agency entry still leaves
+    (tmp_path / "research_companies.json").write_text(_j.dumps(q[:1] + q[2:]), encoding="utf-8")
+    for fn in ("indeed_search", "workable_search"):
+        monkeypatch.setattr(dd, fn, lambda *a, **k: [])
+    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": [])
+    monkeypatch.setattr(dd, "_li_queries", lambda: [("x", "Israel", 0)])
+    monkeypatch.setattr(dd, "plan_spend", lambda today=None: (100, 0, "test"))
+    monkeypatch.setattr(dd, "report_bd_spend", lambda targeted_cap=None: None)
+    monkeypatch.setattr(dd, "load_companies", lambda active_only=False: [])
+    monkeypatch.setattr(dd, "_load_secrets", lambda: None)
+    monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
+    dd.main()
+    names = [e["name"] for e in _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))]
+    assert names == ["Wix"], names
 
 
 # --- the guest walk: a replay harness, so a scripted page sequence reproduces a live log ---
@@ -6418,6 +6458,9 @@ def _li_replay(script):
     return guest
 
 
+_LAST_COUNTS = {}          # SOURCE_PATH as it stood after the last _run_walk (restored after)
+
+
 def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=None):
     import discovery_daily as dd
     import bd_rescue
@@ -6430,12 +6473,18 @@ def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=
     try:
         dd._li_guest = _li_replay(script)
         bd_rescue.unlock = unlock or (lambda url, timeout=120: "")
+        saved = dict(dd.SOURCE_PATH)
         for k in ("linkedin_free", "linkedin_blank", "linkedin_blocked", "linkedin_paid"):
             dd.SOURCE_PATH[k] = 0
         out = dd.linkedin_search("business intelligence", pages=pages, location=location)
+        _LAST_COUNTS.clear()
+        _LAST_COUNTS.update(dd.SOURCE_PATH)
         return out, (capsys.readouterr().out if capsys else "")
     finally:
         dd._li_guest, bd_rescue.unlock = real_guest, real_unlock
+        if "saved" in locals():
+            dd.SOURCE_PATH.clear()
+            dd.SOURCE_PATH.update(saved)
         if had is None:
             os.environ.pop("BRIGHTDATA_API_KEY", None)
         else:
@@ -6463,10 +6512,13 @@ def test_a_blocked_guest_walk_does_not_print_the_raise_the_cap_tripwire(capsys):
     # blocked on page 0 with no paid budget (every Haifa query on 2026-08-25 printed
     # "0 cards -> 0 new" and nothing else)
     ([(0, False)], 0, "k", "stopped with 0 jobs: BLOCKED by LinkedIn on guest page 0"),
-    # blocked, paid path exists but the key is missing
-    ([(5, True), (0, False)], 2, None, "BLOCKED by LinkedIn on guest page 1"),
-    # nothing but blanks and no paid page: empty keyword or soft-limit, undecidable
-    ([(0, True)], 0, "k", "blank guest pages in a row and no paid page left"),
+    # blocked, paid path exists but the key is missing — the message says WHICH
+    ([(5, True), (0, False)], 2, None, "BLOCKED by LinkedIn on guest page 1 and no paid path (BRIGHTDATA_API_KEY unset)"),
+    # a free-only query (pages=0) that found nothing is the ordinary empty city keyword:
+    # a drained pool, silent — `blank=` on the sweep line is where a soft-limit shows
+    ([(0, True)], 0, "k", ""),
+    # ...but with a paid budget the walk buys a page first, and an empty paid page says so
+    ([(0, True)], 1, "k", "no cards from EITHER path"),
 ])
 def test_every_exit_from_the_guest_walk_names_the_reason_it_stopped(capsys, script, pages, key, expect):
     """Four ways out of the walk; a drained pool says nothing, every other exit says what
@@ -6500,9 +6552,9 @@ def test_a_blocked_guest_request_is_counted_on_its_own_path():
     (pages=0), so exactly one blocked request is made."""
     import discovery_daily as dd
     _run_walk([(10, True), (10, True), (0, False)], pages=0)
-    assert dd.SOURCE_PATH["linkedin_free"] == 2
-    assert dd.SOURCE_PATH["linkedin_blocked"] == 1
-    assert dd.SOURCE_PATH["linkedin_paid"] == 0
+    assert _LAST_COUNTS["linkedin_free"] == 2
+    assert _LAST_COUNTS["linkedin_blocked"] == 1
+    assert _LAST_COUNTS["linkedin_paid"] == 0
     import inspect
     assert "blocked=" in inspect.getsource(dd.main), "the counter must reach the [linkedin] line"
 
@@ -6558,3 +6610,9 @@ def test_the_bright_data_warning_no_longer_blames_the_other_spenders():
     src = inspect.getsource(dd.report_bd_spend)
     assert "other spenders are the problem" not in src
     assert "rec_share" in src.split("::warning::", 1)[1]
+    # ...and it must not assert a cut that did not happen: at 80% of pool the targeted cap
+    # is still 20-100 (only ~96% late in the month zeroes it), so the warning prints the
+    # cap plan_spend() actually chose this run
+    assert "has cut the targeted sweep to zero" not in src
+    assert "targeted_cap" in src.split("::warning::", 1)[1]
+    assert "report_bd_spend(targeted_cap if have_bd else None)" in inspect.getsource(dd.main)
