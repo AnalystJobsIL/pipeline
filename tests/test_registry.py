@@ -954,7 +954,9 @@ def test_the_weekly_audit_uses_the_tenant_gate_it_defines():
     src = inspect.getsource(audit_empty_rows.main)
     calls = {getattr(n.func, 'attr', getattr(n.func, 'id', '')) for n in ast.walk(ast.parse(src.lstrip()))
              if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
-    assert "tenant_is_this_company" in calls, (
+    # since 2026-08-25 the gate is `activation_verdict` (tenant vouch -> human page -> deferral);
+    # `tenant_is_this_company` alone was vacuous on every path-tenant platform
+    assert "activation_verdict" in calls or "activation_verdict(" in src, (
         "main() still activates on is_foreign alone, which is False for every ATS host")
     assert "if not n_all:" in src, "verify() returning 0 jobs must not count as a recovery"
 
@@ -5419,3 +5421,18 @@ def test_validate_empty_counts_its_deferrals_and_always_writes_its_suspect_note(
     assert "empty-but-suspect" in got["Full Ltd"][5] and "dark-triage 2026-08-20: extract-gap" in got["Full Ltd"][5], (
         "the suspect note is always written now; the protected facts survive it")
     assert "empty-but-suspect" not in got["Defer Ltd"][5] and "no open Israel roles" in got["Defer Ltd"][5]
+
+
+def test_triage_never_writes_another_tools_pool_token_inside_its_own_segment():
+    """Kills `triage-own-words-drop`. Bit's reason carried `unsupported ATS`, deep_validate's
+    token and the crack pool's fact; every re-triage rewrote the segment and took Bit out of
+    the crack pool with every guard green (rehearsed twice on 2026-08-26 -- the second time
+    after a cron re-stamped the row with the old text)."""
+    import inspect
+    import triage_dark as T
+    assert "unsupported ATS" not in T._own_words("ashby slug 404s; unsupported ATS")
+    assert "walled ATS" in T._own_words("x; Unsupported ATS")
+    assert "monitored candidate" not in T._own_words("looks like a monitored candidate")
+    assert T._own_words("plain reason") == "plain reason"
+    src = inspect.getsource(T.main)
+    assert "_own_words(detail)" in src, "the stamp must go through the rewording"

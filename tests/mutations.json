@@ -1986,5 +1986,15 @@
   "replace": "            if \"no open israel roles\" in _new.lower():\n                rows[rowi][5] = _new\n                _MODIFIED.add(name)",
   "why": "the guard silently discarded the suspect finding on 67 of 93 signals-arm rows (BACKLOG 200); the token is protected now.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "triage-own-words-drop",
+  "file": "triage_dark.py",
+  "symbol": "_own_words",
+  "class": "M1-gate-removal",
+  "find": "    d = str(detail or \"\")\n    for tok, safe in _FOREIGN_TOKENS:",
+  "replace": "    d = str(detail or \"\")\n    for tok, safe in ():",
+  "why": "another tool's pool token inside triage's segment is rewritten away on the next re-triage (Bit, twice).",
+  "must_be_killed_by_behavioural": true
  }
 ]

@@ -83,6 +83,24 @@ TARGET_NOTES = re.compile(r"no listing found|no IL listing|no ATS detected|dark-
 from pipeline.verdicts import TERM_RX as SKIP_NOTES
 
 
+# Another tool's pool token must never ride inside THIS tool's segment: `replace_own`
+# rewrites the whole segment every re-triage, and a token that lived there is gone with it.
+# Bit's reason text carried `unsupported ATS` (deep_validate's -- the crack pool's fact) and
+# every re-triage silently took Bit out of the crack pool (rehearsed twice, 2026-08-26).
+_FOREIGN_TOKENS = (("unsupported ATS", "walled ATS"), ("monitored candidate", "monitored page"),
+                   ("host documented", "host seen"), ("no open Israel roles", "no open roles"),
+                   ("empty-but-suspect", "empty but suspect"), ("cross-validated", "cross validated"))
+
+
+def _own_words(detail):
+    """The triage reason with every other tool's pool token reworded."""
+    d = str(detail or "")
+    for tok, safe in _FOREIGN_TOKENS:
+        import re as _re
+        d = _re.sub(_re.escape(tok), safe, d, flags=_re.I)
+    return d
+
+
 def in_triage_pool(r):
     """The triage pool's OWN membership rule (the dateless ownership core -- `main()`
     composes it with `probe-woken` and `_needs_triage`, which are cooldowns, not
@@ -309,7 +327,7 @@ def main():
                     # newest segment in half instead — 87 rows read `page-emp`, and one
                     # `pa` — and a mode no filter matches drops the row from its pool.
                     fr[5] = _note_replace(fr[5], "dark-triage",
-                                          f"dark-triage {TODAY}: {mode} ({detail})")
+                                          f"dark-triage {TODAY}: {mode} ({_own_words(detail)})")
             write_csv_rows("companies.csv", fresh)
         time.sleep(0.2)
 
