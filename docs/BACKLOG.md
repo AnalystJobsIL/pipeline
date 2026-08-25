@@ -1736,6 +1736,9 @@ write list; each item names the lane that owns it and the command that proves it
     Get-ScheduledTaskInfo`. Until 97's condition is met, the cheapest mitigation is to
     point the task at a separate clone (or `--out` to a scratch path) rather than the
     checkout lanes work in.
+    **Operator, 2026-08-25: do NOT retire or disable the task yet — wait for the condition
+    above.** Leave it running; only the mitigation (a separate clone / scratch output path)
+    is open for a lane to take.
     Then delete `run_firmo_chain.cmd`, `firmo_health_check.py` and the task; `research_firmographics.py`
     stays as the by-hand bulk tool. Until then: `--workers 3` hits `529 Overloaded` (2 of 3
     calls on 2026-08-24 09:13) — drop to 2.
