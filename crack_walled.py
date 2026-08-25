@@ -355,7 +355,8 @@ def main():
             fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
             for fr in fresh:
                 if fr and fr[0] == name:
-                    if verdict.startswith("cracked") and not _gate.ok_to_write(name, got[1]):
+                    _wv = _gate.write_verdict(name, got[1]) if verdict.startswith("cracked") else "ok"
+                    if verdict.startswith("cracked") and _wv != "ok":
                         # Identity gate: a cracked page with real Israel roles is still the
                         # WRONG page if it belongs to someone else (FairFly/fireflyspace,
                         # COTI/jobs.citi.com). Document where we looked; do not activate.
@@ -368,9 +369,13 @@ def main():
                         # tool's `unsupported ATS` token from 22 of 25 rows against 13 for
                         # the short one, and one all-refusing night collapses this tool's
                         # own pool from 25 to 3. The URL is already in column 3.
+                        # ...and only a PROVEN refusal says so (docs/BACKLOG.md 37): an
+                        # unreadable page is `unverified` -- the row keeps its tokens and
+                        # tomorrow's crack tries again; the walled host is the pool fact.
                         fr[5] = _note_replace(
                             fr[5], "crack-walled",
-                            f"crack-walled {TODAY}: not this company's board")
+                            f"crack-walled {TODAY}: " + ("not this company's board" if _wv == "not-ours"
+                                                         else "unverified (page unreadable)"))
                     elif verdict.startswith("cracked"):
                         plat, lu = got
                         fr[1], fr[2], fr[3] = plat, "", lu
@@ -395,7 +400,8 @@ def main():
                         # note reading "verified 0 IL"; and `novrfy` persisted the address
                         # whenever the page was merely UNREADABLE. Both are re-checked below
                         # by `_ok_to_write`, which no future `return` can bypass.
-                        if _gate.ok_to_write(name, got[1]):
+                        _wv = _gate.write_verdict(name, got[1])
+                        if _wv == "ok":
                             fr[3] = got[1]
                             fr[5] = _note_replace(
                                 fr[5], "crack-walled",
@@ -403,7 +409,8 @@ def main():
                         else:
                             fr[5] = _note_replace(
                                 fr[5], "crack-walled",
-                                f"crack-walled {TODAY}: not this company's board")
+                                f"crack-walled {TODAY}: " + ("not this company's board" if _wv == "not-ours"
+                                                             else "unverified (page unreadable)"))
                     else:
                         fr[5] = _note_replace(fr[5], "crack-walled",
                                               f"crack-walled {TODAY}: {verdict}")

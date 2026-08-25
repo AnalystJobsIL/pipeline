@@ -108,6 +108,21 @@ def fetch(url, timeout=15):
 
 _LLM_USED = {"n": 0}
 
+# The page judge's contract, stated (BACKLOG 117, 2026-08-25): until now this was the last
+# bare `claude -p` in the lane -- default model, every tool, `shell=True` on Windows, the
+# answer regex-extracted from prose. `pipeline.llm.call_json` is the one seam (resolve_llm
+# and listing_hunt already use it); the schema is what the model must return.
+_SYSTEM = ("You judge one web page for a jobs pipeline. Answer only through the schema. "
+           "Count a role only if the page actually lists it as an open position -- ignore "
+           "'no openings' / 'send us your CV' text, team blurbs and testimonials. Roles may "
+           "be in Hebrew.")
+_SCHEMA = {"type": "object",
+           "properties": {"is_careers_page_for_this_company": {"type": "boolean"},
+                          "open_roles": {"type": "array", "items": {"type": "string"}},
+                          "note": {"type": "string"}},
+           "required": ["is_careers_page_for_this_company", "open_roles", "note"],
+           "additionalProperties": False}
+
 
 def llm_page_verdict(company, url, text):
     """Ask Claude two things a regex cannot judge: is this actually THIS company's careers
@@ -116,33 +131,21 @@ def llm_page_verdict(company, url, text):
     an unusual format). Returns (verdict, detail) or None if unavailable.
       verdict: 'confirmed-empty' | 'has-roles' | 'wrong-page'
     """
-    import shutil
-    import subprocess
+    from pipeline import llm
     cap = int(os.environ.get("TRIAGE_LLM_CAP", "120"))
-    if _LLM_USED["n"] >= cap or not shutil.which("claude"):
+    if _LLM_USED["n"] >= cap:
         return None
     _LLM_USED["n"] += 1
     nl = chr(10)
-    prompt = (
-        'Company: "' + company + '"' + nl
-        + "Page URL: " + url + nl + nl
-        + "Below is the visible text of a web page. Answer STRICTLY as JSON:" + nl
-        + '{"is_careers_page_for_this_company": true/false, '
-        + '"open_roles": ["exact role titles listed; [] if none"], '
-        + '"note": "one short phrase"}' + nl
-        + "Count a role only if the page actually lists it as an open position (ignore "
-        + "'no openings' / 'send us your CV' text, team blurbs and testimonials). "
-        + "Roles may be in Hebrew." + nl + nl + "PAGE TEXT:" + nl + text[:7000])
+    prompt = ('Company: "' + company + '"' + nl + "Page URL: " + url + nl + nl
+              + "Is this the company's own careers page, and which open roles does it list "
+              + "(exact titles; [] if none)?" + nl + nl + "PAGE TEXT:" + nl + text[:7000])
     try:
-        p = subprocess.run(["claude", "-p"], input=prompt, capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", timeout=120,
-                           shell=(os.name == "nt"))
-        import json as _json
-        m = re.search(r"\{.*\}", p.stdout or "", re.S)
-        if not m:
-            return None
-        d = _json.loads(m.group(0))
-    except Exception:  # noqa: BLE001
+        d = llm.call_json(prompt, system=_SYSTEM, schema=_SCHEMA,
+                          model=os.environ.get("TRIAGE_LLM_MODEL", "sonnet"), timeout=120)
+    except llm.LLMUnavailable:
+        return None                       # no CLI / no auth / timeout: the regex verdict stands
+    if not isinstance(d, dict):
         return None
     if not d.get("is_careers_page_for_this_company", True):
         return ("wrong-page", f"LLM: not {company}'s careers page ({str(d.get('note',''))[:40]})")

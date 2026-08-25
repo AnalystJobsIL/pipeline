@@ -236,7 +236,10 @@ def test_a_walled_ats_crack_must_confirm_the_page_names_the_company():
     # the two gates that let it through, pinned so their weakness is not re-discovered
     url = "https://careers-bancorpbank.icims.com/jobs/search"
     assert verdict("Bancor", url) == "ats", "a subdomain tenant is still unchecked"
-    assert _slug_matches("Bancor", "bancorpbank") is True, "still passes on containment"
+    assert _slug_matches("Bancor", "bancorpbank") is False, (
+        "since 2026-08-26 `bancorpbank` is a DECLARED not_tenant of Bancor: refused without a page")
+    assert _slug_matches("Fiverr", "fiverr") and _slug_matches("Ibex Medical Analytics", "ib1"), (
+        "near-equal vouches; a slug that merely fails near-equality is `cannot tell`, not refused")
 
     src = inspect.getsource(crack_walled.crack_one)
     calls = {getattr(n.func, "attr", getattr(n.func, "id", "")) for n in ast.walk(ast.parse(src))
@@ -621,12 +624,16 @@ def test_no_crack_walled_branch_can_write_an_unconfirmed_url():
     assert hasattr(IG, "ok_to_write"), "the shared gate moved to pipeline/identity_gate.py"
     src = inspect.getsource(crack_walled.main)
     tree = ast.parse(src.lstrip())
-    # every statement that assigns fr[3] or fr[4] must sit under a test of _ok_to_write
+    # every statement that assigns fr[3] or fr[4] must sit under a test of the write gate's
+    # verdict: `_wv = _gate.write_verdict(...)` (2026-08-25; `ok_to_write` is its boolean view)
+    assigns = [ast.unparse(n.value) for n in ast.walk(tree) if isinstance(n, ast.Assign)
+               and any(ast.unparse(t) == "_wv" for t in n.targets)]
+    assert assigns and all("write_verdict" in a for a in assigns), assigns
     guarded, unguarded = 0, []
     for node in ast.walk(tree):
         if not isinstance(node, ast.If):
             continue
-        if "ok_to_write" not in ast.unparse(node.test):
+        if "_wv" not in ast.unparse(node.test):
             continue
         for st in ast.walk(node):
             if isinstance(st, ast.Assign):
@@ -644,8 +651,8 @@ def test_no_crack_walled_branch_can_write_an_unconfirmed_url():
     del unguarded
     assert guarded >= 1, "no fr[3]/fr[4] write sits under an _ok_to_write test"
     # the gate itself must demand a POSITIVE confirmation, not merely "not False"
-    g = inspect.getsource(IG.ok_to_write)
-    assert "is True" in g, (
+    g = inspect.getsource(IG.write_verdict)
+    assert 'return "unreadable"' in g and IG.ok_to_write("X", "https://x.example/careers") is False, (
         "an UNREADABLE page (None) must not pass: novrfy writes an address that "
         "listing_hunt's fast-path later activates on")
 
@@ -1590,6 +1597,7 @@ def test_the_walled_pool_survives_another_tools_note_rewrite():
 # `.id` -- a `from ... import x as _x` binding is what made two fixtures silently hit the
 # live network, and it is not a spelling this repo uses for the gate any more.
 _GATE_NAMES = {"activation_ok", "ok_to_write", "identity_ok", "page_names_company",
+               "activation_verdict", "write_verdict", "board_vouches",
                "tenant_is_this_company", "is_foreign", "page_mentions_company",
                "looks_like_a_job_listing_page", "embedded_board_ok", "verdict",
                "identity_verdict"}
@@ -1773,11 +1781,18 @@ def test_identity_facts_imports_nothing_from_the_package():
 @pytest.mark.parametrize("name,tok,api", _NEGATIVE_IDENTITY)
 def test_a_recorded_wrong_write_is_neither_declared_nor_admitted(name, tok, api):
     """The incidents this whole lane exists for. None may be declared (the table would then
-    be the wrong write), and none may be admitted by the gates today."""
+    be the wrong write), none may be admitted by the gates, and since 2026-08-26 each is a
+    NEGATIVE declaration (`identity_facts.not_tenants`) so `board_vouches` refuses it without
+    a page -- the only durable form (docs/BACKLOG.md 198). Kills `facts-not-tenants-drop`,
+    `vouch-neg-drop`, `tenant-neg-drop`, `embed-neg-drop`."""
     from pipeline import identity_facts as F
     from pipeline import identity_gate as G
     assert F._norm(tok) not in F.tenants(name), "a recorded incident was DECLARED"
+    assert F._norm(tok) in F.not_tenants(name), "a recorded incident is not a NEGATIVE declaration"
     assert not G.embedded_board_ok(name, tok, api)
+    assert G.board_vouches(name, tok, api) is False
+    assert not G.tenant_is_this_company(name, api) or "greenhouse" in api or "comeet" in api, (
+        "a subdomain negative refuses in tenant_is_this_company too")
 
 
 def test_a_declared_tenant_decides_the_subdomain_check_in_both_directions(monkeypatch):
@@ -3145,16 +3160,18 @@ def test_the_gate_reads_page_evidence_with_the_arguments_the_right_way_round(mon
         "Bancor", "https://careers-bancorpbank.icims.com/jobs/search", 9, html=ban) is False
 
     # fetch tail (no html, tenant mismatch): the LAST page call in the gate.
+    # (was NanoLock Security -- since 2026-08-25 `gen` is its DECLARED not_tenant and refuses
+    # without a page, by design; an undeclared near-miss is the shape this tail is for)
     served = {"https://gen.wd1.myworkdayjobs.com/wday/cxs/gen/x/jobs":
-              ("<h1>NanoLock Security Careers</h1>"
-               + "<p>NanoLock Security is hiring in Israel.</p>" * 80).encode()}
+              ("<h1>Kaleidoo Careers</h1>"
+               + "<p>Kaleidoo is hiring in Israel.</p>" * 80).encode()}
     class _Resp:
         def __init__(self, data): self._d = data
         def read(self, n=-1): return self._d
     monkeypatch.setattr(G.urllib.request, "urlopen",
                         lambda req, timeout=25, context=None: _Resp(served[req.full_url]))
     assert G.activation_ok(
-        "NanoLock Security", "https://gen.wd1.myworkdayjobs.com/wday/cxs/gen/x/jobs", 5
+        "Kaleidoo", "https://gen.wd1.myworkdayjobs.com/wday/cxs/gen/x/jobs", 5
     ) is True, ("the fetch tail must admit when the fetched page names the company")
 
 
@@ -5025,6 +5042,11 @@ def test_the_merge_trims_the_theirs_tail_then_a_fact_and_never_slices():
     assert len(merged) <= 220 and merged.startswith("deep-validated 2026-08-20"), merged
     assert "dark-triage 2026-09-01: page-empty" in merged, "ours' protected fact stays; theirs' tail goes whole"
     assert not re.search(r"\d{4}-\d{2}-\d{2}:?\s*$", merged) and "page-empt" not in merged.replace("page-empty", "")
+    # only PROTECTED segments left and still over the cap: theirs' tail goes WHOLE (the old
+    # `[:cap]` would cut the `unsupported ATS` segment mid-word)
+    t3 = ours + " | deep-validated 2026-09-03: unsupported ATS phenom (" + "u" * 40 + ")"
+    m3 = M._merge_notes(t3, ours, cap=220)
+    assert m3 == ours, m3
     # ours' own newest segment survives ahead of theirs' unique tail
     o2 = "alias-of X 2026-08-01: twin | listing-hunt 2026-09-01: own verdict (" + "a" * 100 + ")"
     t2 = "alias-of X 2026-08-01: twin | crack-walled 2026-09-01: theirs (" + "b" * 100 + ")"
@@ -5056,7 +5078,8 @@ def test_the_fact_pool_floor_blocks_at_fifty(tmp_path):
     def run(with_http):
         rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"]]
         rows += [[f"Live {i}", "greenhouse", f"live{i}", f"https://boards-api.greenhouse.io/v1/boards/live{i}/jobs", "true", ""] for i in range(60)]
-        rows += [[f"Parked {i}", "scrape", "", (f"https://www.p{i}.example/careers" if with_http else ""), "false", "no listing found"] for i in range(60)]
+        # 20 fact rows when `with_http` is off: under the floor of 50, above a drifted floor of 5
+        rows += [[f"Parked {i}", "scrape", "", (f"https://www.p{i}.example/careers" if (with_http or i < 20) else ""), "false", "no listing found"] for i in range(60)]
         with open(tmp_path / "companies.csv", "w", encoding="utf-8", newline="") as fh:
             csv.writer(fh).writerows(rows)
         r = subprocess.run([sys.executable, os.path.join(root, "check_invariants.py")], cwd=tmp_path,
@@ -5084,3 +5107,228 @@ def test_the_rehearsal_catches_a_cell_overwrite_and_bans_dns():
             "try:\n    socket.gethostbyname('example.com'); print('ESCAPED')\nexcept Exception as e:\n    print('banned', type(e).__name__)") % root
     r2 = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=root, timeout=120)
     assert "banned" in r2.stdout and "ESCAPED" not in r2.stdout, r2.stdout + r2.stderr
+
+
+# ---------------------------------------------------------------------------------------
+# Batch 4 (2026-08-26): the third state. "Cannot tell" is no longer spelled True.
+# ---------------------------------------------------------------------------------------
+
+def test_a_negative_declaration_forces_the_park():
+    """Kills `facts-not-tenants-validate`: an ACTIVE row on a board it declares not its own
+    is a validate() problem (declare, then park -- never both)."""
+    from pipeline import identity_facts as F
+    from pipeline import identity_gate as G
+    from pipeline.company_identity import ATS_HOST
+    rows = [["Bancor", "icims", "", "https://careers-bancorpbank.icims.com/jobs/search", "true", ""]]
+    probs = F.validate(rows, ATS_HOST, G._plumbing)
+    assert any("Bancor" in p and "ACTIVE" in p for p in probs), probs
+    rows[0][4] = "false"
+    assert not any("Bancor" in p for p in F.validate(rows, ATS_HOST, G._plumbing))
+    # a token cannot be both
+    import pytest as _pt
+    orig = F.DECLARED["Bancor"]
+    F.DECLARED["Bancor"] = {"tenants": ("bancorpbank",), "not_tenants": ("bancorpbank",), "why": "x http"}
+    try:
+        assert any("both" in p for p in F.validate(rows, ATS_HOST, G._plumbing))
+    finally:
+        F.DECLARED["Bancor"] = orig
+
+
+def test_board_vouches_has_three_answers_and_never_spells_cannot_tell_as_true():
+    """Kills `vouch-uid-true`, `vouch-none-false`, `vouch-near-drop` (BACKLOG 33/50)."""
+    from pipeline import identity_gate as G
+    gh = "https://boards-api.greenhouse.io/v1/boards/%s/jobs"
+    assert G.board_vouches("Fiverr", "fiverr", gh % "fiverr") is True
+    assert G.board_vouches("Momentis Surgical", "memic", gh % "memic") is True, "declared"
+    assert G.board_vouches("Momentis Surgical", "other", gh % "other") is False, "declared row, other tenant"
+    assert G.board_vouches("Ibex Medical Analytics", "ib1", "https://ib1.recruitee.com/api/offers/") is None
+    assert G.board_vouches("Upwind Security", "49.004", "https://www.comeet.com/careers-api/2.0/company/49.004/positions?token=x") is None
+    assert G.board_vouches("Cogniteam", "riskified", gh % "riskified") is False
+    assert G.board_vouches("Riskified", "novartis/riskified", "https://novartis.wd3.myworkdayjobs.com/wday/cxs/novartis/riskified/jobs") is False
+    assert G.board_vouches("Bancor", "", "https://careers-bancorpbank.icims.com/jobs/search") is False, "the negative reads the subdomain too"
+    assert G.board_vouches("NVIDIA", "nvidia/NVIDIAExternalCareerSite", "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/x/jobs") is True
+    assert G.board_vouches("Intelligems", "intelligems", "https://apply.workable.com/api/v1/widget/accounts/intelligems?details=true") is True
+    assert G.board_vouches("SupPlant", "", "https://careers.workable.com/") is None, "all-plumbing host: cannot tell"
+    assert G.board_vouches("Acme", "", "https://www.acme.example/careers") is True, "an ordinary host: is_foreign is the test there"
+    assert G.board_vouches("FairFly", "", "https://fireflyspace.com/careers") is None, "a foreign domain cannot vouch"
+    # scrape rows store the URL (or nothing) in column 2: the slug comes from the URL
+    assert G.checkable_token("https:", "https://www.comeet.com/jobs/bridgewise/F9.009") == "bridgewise"
+    assert G.board_vouches("Bridgewise", "https:", "https://www.comeet.com/jobs/bridgewise/F9.009") is True
+
+
+def test_human_board_url_maps_every_registry_api_shape_and_never_an_endpoint(monkeypatch):
+    """Kills `human-url-api-fallback` and `human-url-comeet-drop`."""
+    from pipeline import identity_gate as G
+    H = G.human_board_url
+    assert H("https://boards-api.greenhouse.io/v1/boards/fiverr/jobs") == "https://job-boards.greenhouse.io/fiverr"
+    assert H("https://api.ashbyhq.com/posting-api/job-board/deel") == "https://jobs.ashbyhq.com/deel"
+    assert H("https://api.lever.co/v0/postings/logz?mode=json") == "https://jobs.lever.co/logz"
+    assert H("https://api.eu.lever.co/v0/postings/x?mode=json") == "https://jobs.eu.lever.co/x"
+    assert H("https://api.smartrecruiters.com/v1/companies/Wix2/postings") == "https://careers.smartrecruiters.com/Wix2"
+    assert H("https://ib1.recruitee.com/api/offers/") == "https://ib1.recruitee.com/"
+    assert H("https://mush.bamboohr.com/careers/list") == "https://mush.bamboohr.com/careers"
+    assert H("https://any-do.breezy.hr/json") == "https://any-do.breezy.hr/"
+    assert H("https://apply.workable.com/api/v1/widget/accounts/d-id?details=true") == "https://apply.workable.com/d-id/"
+    assert H("https://www.comeet.com/jobs/upwind/49.004") == "https://www.comeet.com/jobs/upwind/49.004"
+    assert H("https://www.acme.example/careers") == "https://www.acme.example/careers"
+    assert H("https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/x/jobs") is None, "an unmapped endpoint is not a page"
+    assert H("") is None
+    # Comeet's API form: learned from the positions the endpoint returns, never guessed
+    import pipeline.http as _http
+    monkeypatch.setattr(_http, "get_json", lambda u, **k: [{"url_comeet_hosted_page": "https://www.comeet.com/jobs/upwind/49.004/Data-Analyst/AB.C12"}])
+    assert G._comeet_human_url("https://www.comeet.com/careers-api/2.0/company/49.004/positions?token=x") == "https://www.comeet.com/jobs/upwind/49.004"
+    assert H("https://www.comeet.com/careers-api/2.0/company/49.004/positions?token=x") == "https://www.comeet.com/jobs/upwind/49.004"
+    monkeypatch.setattr(_http, "get_json", lambda u, **k: (_ for _ in ()).throw(OSError("down")))
+    assert H("https://www.comeet.com/careers-api/2.0/company/49.004/positions?token=x") is None
+
+
+def test_activation_verdict_names_its_refusals_and_defers_when_nothing_can_tell(monkeypatch):
+    """Kills `activation-unverified-admit`, `activation-human-page-drop`,
+    `activation-vouch-false-admit` (BACKLOG 33/37/50)."""
+    from pipeline import identity_gate as G
+    gh = "https://boards-api.greenhouse.io/v1/boards/%s/jobs"
+    reads = []
+    def fake_page(name, url, html=""):
+        reads.append(url)
+        if html:
+            return ("Cogniteam" in html) if "cogniteam" in name.lower() else None
+        return {"https://job-boards.greenhouse.io/ib1": None,
+                "https://job-boards.greenhouse.io/panw": False,
+                "https://job-boards.greenhouse.io/sevenai": True}.get(url)
+    monkeypatch.setattr(G, "page_names_company", fake_page)
+    V = G.activation_verdict
+    assert V("Fiverr", gh % "fiverr", 0) == "empty"
+    assert V("Fiverr", "https://www.fiverr.example/about-us/leadership", 3) == "not-listing"
+    assert V("Fiverr", gh % "fiverr", 3, token="fiverr") == "ok" and not reads, "a vouching tenant needs no page"
+    assert V("Cogniteam", gh % "riskified", 3, token="riskified") == "not-ours" and not reads, "a negative needs no page"
+    assert V("CyberArk", gh % "panw", 5, token="panw") == "not-ours" and reads[-1] == "https://job-boards.greenhouse.io/panw", (
+        "cannot tell -> the HUMAN board page decides, never the API endpoint")
+    assert V("7AI", gh % "sevenai", 5, token="sevenai") == "ok"
+    assert V("Ibex Medical Analytics", gh % "ib1", 5, token="ib1") == "unverified", "unreadable human page: deferred, not refused"
+    monkeypatch.setattr(G, "_comeet_human_url", lambda u: None)
+    assert V("Upwind Security", "https://www.comeet.com/careers-api/2.0/company/49.004/positions?token=x", 5, token="49.004") == "unverified"
+    # a subdomain near-miss is "cannot tell" too (Oracle pod ids): the endpoint is the last resort
+    reads.clear()
+    assert V("onsemi", "https://hctz.fa.us2.oraclecloud.com/hcmRestApi/x", 5) == "unverified" and reads == ["https://hctz.fa.us2.oraclecloud.com/hcmRestApi/x"]
+    # a held readable page decides both ways, before any of that
+    assert V("Cogniteam", gh % "riskified", 3, html="<html>" + "Cogniteam careers " * 200 + "</html>", token="riskified") == "not-ours", (
+        "a declared negative still refuses even when the held page names the company")
+    assert V("Cogniteam", gh % "cogniteam", 3, html="<html>" + "Cogniteam careers " * 200 + "</html>", token="cogniteam") == "ok"
+    assert G.activation_ok("Fiverr", gh % "fiverr", 3) is True and G.activation_ok("Ibex Medical Analytics", gh % "ib1", 5) is False
+    assert G.write_verdict("Cogniteam", "https://job-boards.greenhouse.io/riskified", token="riskified") == "not-ours"
+    assert G.write_verdict("Ibex Medical Analytics", "https://job-boards.greenhouse.io/ib1", token="ib1") == "unreadable"
+    assert G.ok_to_write("7AI", "https://job-boards.greenhouse.io/sevenai") is True
+
+
+def test_only_a_proven_refusal_is_stamped_not_this_companys_board(tmp_path, monkeypatch):
+    """Kills `activation-unverified-stamp` (deep_validate), `crack-unreadable-stamp`
+    (crack_walled), `validate-empty-unverified-stamp` (BACKLOG 37): an unreadable page
+    writes no claim and the row's tokens survive."""
+    import csv
+    import deep_validate as D
+    import crack_walled as C
+    import validate_empty as V
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(G, "page_names_company", lambda name, url, html="": None)
+    monkeypatch.setattr(G, "_comeet_human_url", lambda u: None)
+    # deep_validate: a recovered board nothing vouches for -> `unverified`, not `not this company's`
+    rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"],
+            ["Ibex Medical Analytics", "scrape", "", "https://www.ibex.example/careers", "false", "no listing found | dark-triage 2026-08-20: js-shell (x)"]]
+    with open("companies.csv", "w", encoding="utf-8", newline="") as fh:
+        csv.writer(fh).writerows(rows)
+    D._apply_verdict_to_file("Ibex Medical Analytics", "recovered", "recruitee", "ib1", "https://ib1.recruitee.com/api/offers/", 5, 2, "")
+    out = [r for r in csv.reader(open("companies.csv", encoding="utf-8"))][1]
+    assert out[4] == "false" and "not this company" not in out[5] and "unverified" in out[5] and "dark-triage 2026-08-20" in out[5], out
+    # ...and a proven one still is
+    monkeypatch.setitem(__import__("pipeline.identity_facts", fromlist=["x"])._INDEX, "ibex medical analytics", {"not_tenants": ("riskified",), "why": "test"})
+    D._apply_verdict_to_file("Ibex Medical Analytics", "recovered", "greenhouse", "riskified", "https://boards-api.greenhouse.io/v1/boards/riskified/jobs", 5, 2, "")
+    out = [r for r in csv.reader(open("companies.csv", encoding="utf-8"))][1]
+    assert "not this company's board" in out[5], out
+    # crack_walled: the write gate names its refusal
+    assert G.write_verdict("Ibex Medical Analytics", "https://ib1.recruitee.com/") == "unreadable"
+    src = open(C.__file__, encoding="utf-8").read()
+    assert src.count('unverified (page unreadable)') == 2 and "write_verdict" in src
+    # validate_empty: nothing vouches -> confirmed (no note), never suspect's false claim
+    monkeypatch.setattr(V, "_get", lambda url: "<html>" + "x" * 3000 + "</html>")
+    monkeypatch.setattr(V, "extract_ats", lambda html, name: ("recruitee", "ib1", "https://ib1.recruitee.com/api/offers/"))
+    monkeypatch.setattr(V, "_verify", lambda name, plat, tok, api: (5, 2))
+    assert V.check("Ibex Medical Analytics", "https://www.ibex.example/careers") == ("confirmed", None)
+    monkeypatch.setattr(V, "extract_ats", lambda html, name: ("greenhouse", "riskified", "https://boards-api.greenhouse.io/v1/boards/riskified/jobs"))
+    v = V.check("Ibex Medical Analytics", "https://www.ibex.example/careers")
+    assert v[0] == "suspect" and "not this company" in v[1]
+
+
+def test_apply_resolved_vetoes_a_declared_negative_on_a_parked_row(tmp_path, monkeypatch):
+    """Kills `apply-resolved-parked-scope` and `apply-resolved-vouch-drop` (BACKLOG 56)."""
+    import csv
+    import json
+    import apply_resolved as A
+    monkeypatch.chdir(tmp_path)
+    rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"],
+            ["Cogniteam", "scrape", "", "https://www.cogniteam.example/careers", "false", "no listing found"],
+            ["Fiverr", "scrape", "", "https://www.fiverr.example/careers", "false", "no listing found"]]
+    with open("companies.csv", "w", encoding="utf-8", newline="") as fh:
+        csv.writer(fh).writerows(rows)
+    res = {"Cogniteam": ["greenhouse", "riskified", "https://boards-api.greenhouse.io/v1/boards/riskified/jobs"],
+           "Fiverr": ["greenhouse", "fiverr", "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs"]}
+    (tmp_path / "resolved.json").write_text(json.dumps(res), encoding="utf-8")
+    monkeypatch.setenv("RESOLVED_OUT", str(tmp_path / "resolved.json"))
+    monkeypatch.setattr("sys.argv", ["apply_resolved.py", "--apply"])
+    try:
+        A.main()
+    except SystemExit:
+        pass
+    out = {r[0]: r for r in csv.reader(open("companies.csv", encoding="utf-8"))}
+    assert out["Cogniteam"][3] == "https://www.cogniteam.example/careers", "a parked row is vetoed too"
+    assert out["Fiverr"][3].endswith("/fiverr/jobs"), "positive control: a vouching board is re-pointed"
+
+
+def test_check_invariants_lists_the_active_rows_whose_tenant_cannot_vouch(tmp_path):
+    """Kills `c3b-warn-drop`: the hand-check list is printed, as a warn, never a gate."""
+    import csv
+    import os
+    import subprocess
+    import sys
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    (tmp_path / "cloud_state").mkdir()
+    rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"]]
+    rows += [[f"Live {i}", "greenhouse", f"live{i}", f"https://boards-api.greenhouse.io/v1/boards/live{i}/jobs", "true", ""] for i in range(60)]
+    rows += [["Findings", "lever", "findigs", "https://api.lever.co/v0/postings/findigs?mode=json", "true", ""]]
+    rows += [[f"Parked {i}", "scrape", "", f"https://www.p{i}.example/careers", "false", "no listing found"] for i in range(60)]
+    with open(tmp_path / "companies.csv", "w", encoding="utf-8", newline="") as fh:
+        csv.writer(fh).writerows(rows)
+    r = subprocess.run([sys.executable, os.path.join(root, "check_invariants.py")], cwd=tmp_path,
+                       capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, r.stdout[-600:]
+    assert "cannot vouch" in r.stdout and "Findings -> findigs" in r.stdout, r.stdout[-800:]
+
+
+def test_triage_asks_the_page_judge_through_the_shared_seam_with_its_own_schema(monkeypatch):
+    """Kills `triage-llm-schema-drop` and `triage-llm-unavailable-raise` (BACKLOG 117):
+    the last bare `claude -p` in the lane goes through `pipeline.llm.call_json`, states its
+    schema, and an unavailable CLI is `None` (the regex verdict stands), never a crash."""
+    import triage_dark as T
+    from pipeline import llm
+    seen = {}
+    def fake(prompt, *, system, schema, model, timeout, **kw):
+        seen.update(schema=schema, system=system, model=model)
+        return {"is_careers_page_for_this_company": True, "open_roles": ["Data Analyst"], "note": "ok"}
+    monkeypatch.setattr(llm, "call_json", fake)
+    monkeypatch.setenv("TRIAGE_LLM_CAP", "5")
+    T._LLM_USED["n"] = 0
+    v = T.llm_page_verdict("Acme", "https://acme.example/careers", "Data Analyst - Tel Aviv")
+    assert v and v[0] == "has-roles" and "Data Analyst" in v[1]
+    assert set(seen["schema"]["required"]) == {"is_careers_page_for_this_company", "open_roles", "note"}
+    assert "open position" in seen["system"] and seen["model"]
+    monkeypatch.setattr(llm, "call_json", lambda *a, **k: {"is_careers_page_for_this_company": False, "open_roles": [], "note": "another firm"})
+    assert T.llm_page_verdict("Acme", "https://x", "t")[0] == "wrong-page"
+    monkeypatch.setattr(llm, "call_json", lambda *a, **k: {"is_careers_page_for_this_company": True, "open_roles": [], "note": "nothing"})
+    assert T.llm_page_verdict("Acme", "https://x", "t")[0] == "confirmed-empty"
+    def down(*a, **k):
+        raise llm.LLMUnavailable("cli-missing", kind="missing")
+    monkeypatch.setattr(llm, "call_json", down)
+    assert T.llm_page_verdict("Acme", "https://x", "t") is None
+    src = open(T.__file__, encoding="utf-8").read()
+    assert 'subprocess.run(["claude"' not in src, "the bare claude -p is gone"
+    T._LLM_USED["n"] = 0

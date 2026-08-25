@@ -275,3 +275,39 @@ evidence decides; only an UNREADABLE page (None -- machine endpoints, bot walls)
 falls through to the tenant clause, which keeps the 358 path-tenant rows and the
 filler-stripped-core rows activatable. The name-shape cost this accepts is filed
 with the row names in docs/BACKLOG.md.
+
+
+## The third state (2026-08-25, registry batch 4)
+
+Both error cells of the calibration above stayed non-empty because "cannot tell" was
+spelled `True` on every path-tenant platform (greenhouse, lever, ashby, comeet, recruitee,
+bamboohr, breezy): `tenant_is_this_company` scopes them out, `_slug_matches` was a
+five-character prefix, and the only page there is a machine endpoint. The fix that was
+built and reverted (read the endpoint) refused 358 rows; the fix that was measured wrong
+(a tenant veto) refused 81 of 460 active rows.
+
+**Decision.** `identity_gate.board_vouches(name, token, api_url)` is three-valued and is the
+only string test the activation paths consult. `False` = a declared `not_tenants` token, a
+subdomain-tenant mismatch, or a declared row on an undeclared tenant — refuses without a
+page. `True` = a declared tenant or a near-equal one — admits without a page. `None` =
+nothing checkable (a Comeet uid, an all-plumbing host, an ordinary host) or a slug that merely
+fails near-equality — and the consumer of `None` is ONE read of the platform's **human** board
+page (`human_board_url`; for Comeet's API form, learned from the endpoint's own positions:
+`comeet.com/jobs/x/49.004` serves a generic 200, `jobs/upwind/49.004` names Upwind). Where
+nothing can be read the row is `unverified`: deferred, unstamped, tokens kept.
+
+**Census, 2026-08-25.** 360 active path-platform rows: 187 near, 120 Comeet uid, 2 declared,
+51 not near (24 `scrape` rows whose slug is read from the URL; 27 native-ATS rows —
+`check_invariants` C3b's hand-check list, 28 with `Findings -> findigs`). Census A (every
+gate's answer on the 521 ATS-host rows, 457 active): **0 deltas** from the batch. The 30
+parked path-platform rows: 14 get a human-page read, 12 (Comeet API-form twins, all
+`alias-of`) are `unverified`, 0 admitted by vacuity. Item 22's eight rows: NanoLock Security,
+Sight Diagnostics, Lili cleared (`url-cleared`, negatives declared); Deutsche Telekom declared
+(`telekom-growthhub`); NVIDIA declared (`nvidia`, `mellanox`); Sight Sciences, Synopsys,
+Nutanix, Genoox, Sony left; Quris AI and Fetcher stay in the hunt pool.
+
+**Deliberately not done.** A tenant veto on undeclared rows; reading API endpoints as pages;
+`_tenant_near` window changes (69); a display-name column (58/61). The precondition stated,
+not assumed: human board pages exceed 2000 chars — if one does not, the failure mode is
+deferral, and the first Sunday's `[??] ... deferred` lines measure it.
+

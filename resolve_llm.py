@@ -268,14 +268,13 @@ def _verify(name, platform, token, api_url, pages=None):
     # slug/tenant must resemble the company: search fallbacks WILL offer another company's
     # board that verifies with real jobs (CyberArk->PANW, Imperva->Thales, Lili->Eli Lilly).
     # This tier previously relied on prompt-grounding alone — the one unguarded path.
-    from audit_empty_rows import _slug_matches
-    if token and not _slug_matches(name, token):
-        raise ValueError(f"foreign slug {token!r} for {name!r}")
+    from pipeline import identity_gate as _gate
+    if _gate.board_vouches(name, token, api_url) is False:
+        raise ValueError(f"board {token!r} is declared or proven not {name!r}'s")
     # ...and resemblance is not evidence: the board must be GROUNDED on the company's own
     # page (2026-08-25), and a held page may refuse a board it merely embeds
     if not _own_page_names_token(name, token, api_url, pages, platform):
         raise ValueError(f"board {token!r} was not found on {name!r}'s own page")
-    from pipeline import identity_gate as _gate
     if platform != "comeet" and not _gate.embedded_board_ok(name, token, api_url):
         raise ValueError(f"board {token!r} does not vouch for {name!r}")
     jobs = fetch_company({"company_name": name, "ats_platform": platform,

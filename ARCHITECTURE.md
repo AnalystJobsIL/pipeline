@@ -767,15 +767,31 @@ listings page, just somebody else's. That is what let `Bancor` (Israeli crypto) 
 Bancorp Bank's board. `pipeline/identity_gate.py` is the answer, in three rules. Both
 directions were measured — a tenant veto costs 36 legitimate acquisitions, a mandatory page
 read costs 358 path-tenant rows whose endpoints return 0–28 bytes (`docs/BACKLOG.md` 21 and
-33) — so **a readable page decides in BOTH directions; the tenant may ADMIT where nothing is
-readable, and only an explicit subdomain-tenant mismatch refuses without one.**
+33) — so **a readable page decides in BOTH directions; the tenant may ADMIT where it vouches,
+a declared negative or a subdomain-tenant mismatch refuses without a page, and "cannot tell"
+is a third state** (2026-08-25): `identity_gate.board_vouches(name, token, api_url)` answers
+`True` / `False` / `None`, and `None` is settled by ONE read of the platform's *human* board
+page (`human_board_url`: greenhouse/ashby/lever/smartrecruiters/recruitee/bamboohr/breezy/
+workable by string, Comeet's API form from its own positions' `url_comeet_hosted_page`) —
+never the API endpoint, whose 0–28 bytes refused 358 rows when tried. Where no page can be
+read the row is **`unverified`**: activation deferred, no `not this company's board` stamp,
+the re-check tokens untouched. Negative declarations (`identity_facts.not_tenants`, with
+evidence: Sckipio/87.00C, Bancor/bancorpbank, Riskified/novartis, Similarweb↔SimilarTech,
+Lili/elililly, Cogniteam/riskified, NanoLock/gen, Sight Diagnostics/sightsciences, Bit/
+bitdefender) are the only thing that refuses a path-tenant board without a page; the tenant
+string still never vetoes an undeclared row (a veto refused 81 of 460 active rows). Census
+2026-08-25: 360 active path-platform rows = 187 near · 120 Comeet uid · 2 declared · 51 not
+near (24 of them `scrape` rows whose slug comes from the URL); `check_invariants` C3b lists
+the 28 active rows whose tenant cannot vouch, as a warn — the hand-check list, never a gate.
 
-1. **`activation_ok(name, api_url, n_jobs, html="")` — a readable page in hand decides,
-   either way.** A page the caller already holds beats a re-fetch, so when
-   `page_names_company` can read it its answer settles the row in BOTH directions. Only an
-   UNREADABLE page (`None` — machine endpoints returning 0–28 bytes, bot walls) falls through
-   to `tenant_is_this_company`, which keeps the path-tenant rows activatable. **A page fetch
-   is the last resort, not the first.** Zero `n_jobs` is the `empty-board` shape: refused.
+1. **`activation_ok(name, api_url, n_jobs, html="")` = `activation_verdict(...) == "ok"`;
+   the verdicts are `ok` · `empty` · `not-listing` · `not-ours` · `unverified`.** A declared
+   negative refuses first (a declaration beats a page: Cogniteam's own page carried
+   Riskified's embed). Then a page the caller already holds decides in BOTH directions when
+   readable. Then the tenant: `board_vouches` True admits, False refuses, None sends one GET to
+   `human_board_url` — `True` admits, `False` refuses, unreadable or no page = `unverified`.
+   Callers stamp `not this company's board` ONLY on `not-ours` (`crack_walled`, `deep_validate`,
+   `validate_empty`); `unverified` writes no claim. Zero `n_jobs` is `empty`: refused.
 2. **`embedded_board_ok(name, token, api_url)` — a board found INSIDE a held page must vouch
    for itself.** For callers that fetch the row's careers page and run `extract_ats` on it,
    the page is evidence about the PAGE, not about whatever board it embeds: a stale shared
@@ -788,7 +804,9 @@ readable, and only an explicit subdomain-tenant mismatch refuses without one.**
    under another tool's name, because `host documented` is a `probe_candidates` pool token
    AND `listing_hunt`'s documented fast-path token. `ok_to_write` therefore gates the WRITE
    rather than any one `return`, and requires `page_names_company(...) is True` — unreadable
-   is refused too. **Every refusal note ends in a pool token**, so the row is handed to a
+   is refused too, but `write_verdict` names it `unreadable` and the caller stamps
+   `unverified (page unreadable)`, never a false `not this company's board` (`docs/BACKLOG.md`
+   37). **Every refusal note ends in a pool token**, so the row is handed to a
    named receiver rather than dropped; that receiver's selector is `listing_hunt.HUNT_POOL`,
    imported and guarded, never retyped.
 

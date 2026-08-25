@@ -141,6 +141,18 @@ def main():
         if slugged:
             warn(f"{len(slugged)} active rows whose endpoint names a different company "
                  f"(check each: an acquisition looks the same): {slugged[:6]}")
+        # C3b. the hand-check list (2026-08-26): ACTIVE, undeclared, on a path-tenant platform,
+        # and the tenant can neither vouch nor be refused -- "cannot tell" spelled out, never
+        # an activation gate (these rows are already active; a wrong one is parked by hand)
+        from pipeline.identity_gate import board_vouches as _vouch, checkable_token as _ctok, _UID
+        unsure = [f"{r[0]} -> {_ctok(r[2], r[3])}" for r in body
+                  if len(r) > 4 and r[4] == "true" and not _declared(r[0])
+                  and _vouch(r[0], r[2], r[3] or "") is None
+                  and _ctok(r[2], r[3]) and not _UID.fullmatch(_ctok(r[2], r[3]))
+                  and re.search(r"greenhouse|lever|ashby|comeet|recruitee|bamboohr|breezy|smartrecruiters", r[3] or "", re.I)]
+        if unsure:
+            warn(f"{len(unsure)} active path-platform rows whose tenant cannot vouch for the name "
+                 f"(hand-check; declare or park): {unsure[:6]}")
     except Exception:  # noqa: BLE001
         pass
 

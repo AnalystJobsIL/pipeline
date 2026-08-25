@@ -151,16 +151,16 @@ _COMEET = re.compile(r"comeet", re.I)
 _UNSUPPORTED = re.compile(r"(eightfold\.ai|avature\.net|oraclecloud\.com|jobvite\.com|phenom)", re.I)
 
 
-def _slug_matches(name, token):
-    """The slug/tenant must share a word with the company name — rejects boards that belong
-    to a different company found on the same page. Comeet uids (e.g. '7A.008') are opaque
-    and come from a comeetvar read on the company's own page, so they pass."""
-    t = re.sub(r"[^a-z0-9]", "", str(token).lower())
-    if re.fullmatch(r"[0-9A-F]{2}\.[0-9A-F]{3}", str(token)):
-        return True
-    words = [w for w in re.findall(r"[a-z0-9]+", name.lower()) if len(w) >= 3]
-    joined = "".join(re.findall(r"[a-z0-9]+", name.lower()))
-    return any(w in t for w in words) or (len(t) >= 4 and t in joined) or joined.startswith(t[:5])
+def _slug_matches(name, token, api_url=""):
+    """May this slug/tenant be CONSIDERED for `name`? `identity_gate.board_vouches(...) is
+    not False` (2026-08-26, docs/BACKLOG.md 33/50): a declared `not_tenants` token or a
+    subdomain-tenant mismatch is refused here, without a page; everything else -- a
+    near-equal slug, an opaque Comeet uid, a slug that merely fails near-equality
+    (`Ibex Medical Analytics`/`ib1`) -- passes to the activation gate, where "cannot tell"
+    is settled by a read of the platform's HUMAN board page, or deferred. The old body was
+    a five-character prefix plus containment (`Bancor`/`bancorpbank`, `Lili`/`elililly`
+    passed; 532 foreign cells accepted over the active tokens)."""
+    return _gate.board_vouches(name, token, api_url) is not False
 
 
 # Host labels that are the ATS's own plumbing, never a tenant name.

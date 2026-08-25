@@ -303,6 +303,7 @@ fixed in-lane the same day (see `docs/sessions/2026-08-24-discovery.md`). These 
 outside the `discovery` lane and are NOT fixed.
 
 9. **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
+    **Registry half CLOSED 2026-08-25:** NVIDIA declared `tenants=(nvidia, mellanox)` in `identity_facts`, which is what `fetch_discovery`'s declared-identity exemption reads.
    *(lane: `ats-fetch` / shared — `pipeline/fetchers.py:588-591`.)* Three filters, one list
    comprehension, no logging: 22 of 205 cached jobs are dropped as recruiters every run and
    nothing says so. Worse, `url_names_other_company` drops a job whenever the registry name
@@ -660,6 +661,7 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
 ## The root cause, and why the obvious fix is wrong — registry lane, 2026-08-24 (wave 4)
 
 21. **`company_identity.is_foreign` returns False for EVERY ATS host, and that is
+    **2026-08-25 (`registry`, batch 4):** unchanged by design -- the tenant string still never vetoes an undeclared path-tenant row; what changed is that "cannot tell" is no longer spelled True (33/50). The 36-row acquisition class is now declarable per row (`identity_facts.tenants`), the incident class refusable per row (`not_tenants`).
     deliberate** — lane: shared plumbing, but **do not "fix" it the obvious way**.
 
     Three independent reviewers converged on the same recommendation: make `is_foreign` see
@@ -728,6 +730,7 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     to loosen the string rule.
 
 22. **17 rows carrying a `listing_hunt` fast-path token have a walled-ATS `api_url` today**
+    **CLOSED 2026-08-25 (`registry`, batch 4):** 8 rows at HEAD, hand-checked: NanoLock Security (Gen Digital's Workday), Sight Diagnostics (Sight Sciences' UltiPro), Lili (Comeet's own site) -> `url-cleared` + negatives declared; Deutsche Telekom -> declared `telekom-growthhub`; Sight Sciences, Synopsys, Nutanix, Genoox, Sony left as they are; Quris AI and Fetcher stay in the hunt pool. `check_invariants` C3b now lists the active rows whose tenant cannot vouch (28) as the standing hand-check list.
     — lane: `registry`, unclaimed, and it needs item 21 decided first. The fast path gates on
     `is_foreign` alone, so for those rows it does not gate. Six of the 17 look wrong on
     inspection (`NanoLock Security`, `Sight Diagnostics`, `Fetcher`, `Quris AI`, and two
@@ -885,6 +888,7 @@ Three independent agents, all NO-GO. Two of the defects were mine, introduced by
 fixes; one was a claim I made that a doc of this repo already contradicted on the line above.
 
 33. **`tenant_is_this_company`'s "cannot tell" satisfies the audit's gate on 382 of 460
+    **CLOSED 2026-08-25 (`registry`, batch 4):** "cannot tell" is a third state. `identity_gate.board_vouches` answers True/False/None; `_slug_matches` is `board_vouches(...) is not False`; `activation_verdict` settles None by one read of `human_board_url` (never the API endpoint) or defers as `unverified`. Census A: 0 deltas on the 521 ATS-host rows; 360 active path-platform rows = 187 near / 120 uid / 2 declared / 51 not near.
     active ATS rows** — lane: `registry`, **and the obvious fix is measured wrong**. The
     predicate returns True both for "the tenant is near-equal" and for "there is nothing here
     to check". Measured 2026-08-24: **430 of the 461** active ATS-host rows get a True, and
@@ -960,6 +964,7 @@ fixes; one was a claim I made that a doc of this repo already contradicted on th
     **CLOSED 2026-08-24:** the rung carries a per-process budget (`PAGE_UNLOCK_BUDGET`, default 100 — one process is one workflow step). Exhausted, the page honestly reads None, identical to the key being absent for that row. Armed the day item 59's closure put the key on two Sunday cron steps (wave-6 R3: ceiling 69+9 calls/Sunday, growing with the pool); pinned by `unlock-budget-drop`.
 
 37. **When Bright Data runs out, every walled row degrades to `None` and every tool writes
+    **CLOSED 2026-08-25 (`registry`, batch 4):** `write_verdict` (`ok|not-ours|unreadable`) and `activation_verdict` (`ok|empty|not-listing|not-ours|unverified`); `crack_walled` stamps `unverified (page unreadable)`, `deep_validate` `unverified (no readable page)`, `validate_empty` writes nothing and prints `[??] ... deferred`. Only `not-ours` says `not this company's board`.
     `not this company's board`** — lane: `registry`. `_page_names_company` is carefully
     three-valued and `_ok_to_write` collapses `None` and `False` into one refusal that stamps
     the same positive claim. With `BRIGHTDATA_API_KEY` unset, wave 8 drove Bancor and
@@ -1164,6 +1169,7 @@ Three reviewers, all findings reproduced before action. Seven were fixed; these 
     the data column this item named exists, as a table.
 
 50. **On PATH-tenant platforms the gate admits without ever reading the page it holds** —
+    **CLOSED 2026-08-25 (`registry`, batch 4):** the no-page half. A path-platform board that cannot vouch is read on its HUMAN page (`human_board_url`), and a declared negative (`identity_facts.not_tenants`) refuses without one. Undeclared rows are still never vetoed by the tenant string (21 stands).
     lane: `registry`. `tenant_is_this_company` answers True when there is nothing checkable,
     and greenhouse/lever/comeet/ashby put the tenant in the PATH, so:
 
@@ -1333,6 +1339,7 @@ FairFly shape). These are the residuals.
 ## From the rebuild's wave-4 review, 2026-08-24
 
 61. **`embedded_board_ok`'s accepted cost: a held page cannot vouch for a board it merely
+    **2026-08-25 (`registry`, batch 4):** the Comeet-uid half is narrower now: `activation_verdict` learns the human page from the endpoint's own positions (`_comeet_human_url`) and reads it; a uid whose endpoint cannot be read is `unverified`, not refused. `embedded_board_ok` itself is unchanged (a held page still cannot admit).
     embeds, so an embed whose tenant token does not near-match the name is a visible
     suspect, never a promote** — lane: `registry`. The wave-4 B1: `validate_empty` and
     `bd_rescue` fetch the row's CAREERS page and gate the BOARD `extract_ats` finds inside
@@ -1885,6 +1892,7 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     workflow is silently reverted. Count them: `python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(c.execute(\"select sum(title_key not like 'v2|%') from llm_cache\").fetchone())"`.
     `updated` is only meaningful from the first v2 run (before it every row was upserted daily).
 117. ~~**One `claude -p` seam for the repo**~~ — **half closed 2026-08-25**: `pipeline/llm.py` exists (`call()`, envelope-first, tool-less) and `seniority` uses it; `firmographics._claude`, `resolve_llm.py`, `triage_dark.py`, `scrape_universal.py` still spawn their own — lane: `company-intel` / `registry` / `scraper` to migrate (a shared `llm` module under `pipeline/`, was not yet created). Two seams now
+    **Registry half CLOSED 2026-08-25 (batch 5):** `triage_dark.llm_page_verdict` -- the lane's last bare `claude -p` -- goes through `pipeline.llm.call_json` with its own `_SYSTEM`/`_SCHEMA` (`TRIAGE_LLM_MODEL`, default sonnet); `LLMUnavailable` is `None` (the regex verdict stands). Records `triage-llm-schema-drop`, `triage-llm-unavailable-raise`.
     exist with the same shape and different guarantees: `seniority._claude` (tools off, schema,
     system prompt, `is_error` read, cwd = scratch, no shell) and `firmographics._claude`
     (`--allowedTools WebSearch`, return code only, cwd = repo — so every blurb and research call
@@ -2409,6 +2417,7 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     Sunday cross-validation on state (`active=false` + an http address + no verified stamp),
     not on a note substring. Measured by the wave-1 pools attacker (14-night simulation).
 198. **`Sckipio`'s "comeet 87.00C is Scopio Labs' board" lives only in a note segment** —
+    **CLOSED 2026-08-25 (`registry`, batch 4):** `identity_facts.not_tenants` -- Sckipio `87.00C` and the other recorded wrong writes are negative declarations with evidence; `validate()` refuses a row ACTIVE on its own not_tenant; `tests/test_registry.py::_NEGATIVE_IDENTITY` asserts each is declared and refused by `board_vouches`.
     lane: `registry` (+ shared `identity_facts`). The 94-char `url-cleared` segment is the
     longest on the row and is evicted after four nights of routine stamps; the two pools
     that keep the row both activate. A NEGATIVE declaration (`identity_facts`: this

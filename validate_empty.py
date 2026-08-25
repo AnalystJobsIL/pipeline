@@ -86,8 +86,13 @@ def check(name, url):
         v = _verify(name, plat, tok, api)
         if v:
             n_all, il = v
-            if il > 0 and (not _gate.activation_ok(name, api, il, html=html)
-                           or not _gate.embedded_board_ok(name, tok, api)):
+            _av = _gate.activation_verdict(name, api, il, html=html, token=tok) if il > 0 else "empty"
+            if il > 0 and _av == "unverified":
+                # nothing could tell (2026-08-26, docs/BACKLOG.md 37): no stamp, no claim;
+                # the row keeps its tokens and next Sunday reads again
+                print(f"  [??] {name}: {il} IL on {api[:50]} but nothing vouches for the board -- deferred", flush=True)
+                return ("confirmed", None)
+            if il > 0 and (_av != "ok" or not _gate.embedded_board_ok(name, tok, api)):
                 # `extract_ats` returns whatever board the page embeds. This branch promoted
                 # it to ACTIVE on a job count alone, so a careers page embedding a different
                 # company's board promoted that board. The page is in hand; use it -- and

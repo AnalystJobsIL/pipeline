@@ -75,7 +75,7 @@ def main():
                 # nothing checkable, so this fires only on a real mismatch.
                 # ...on EVERY row, parked included (BACKLOG 56): a parked row holding a
                 # foreign address is exactly what listing_hunt's fast path later activates on
-                if _gate.is_foreign(name, api) or not _gate.tenant_is_this_company(name, api):
+                if _gate.is_foreign(name, api) or _gate.board_vouches(name, tok, api) is False:
                     print(f"  [XX]  {name[:28]:29} -> resolver proposed {api[:44]}, which is "
                           f"not this company's board; row left pointing where it was")
                     continue

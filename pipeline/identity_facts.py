@@ -21,6 +21,14 @@ DECLARATION, not a cleverer string test (`docs/BACKLOG.md` registry items 21, 49
   would walk that incident back in through this table.
 * `domains` — domain suffixes an ordinary (non-ATS) careers host may carry for this company.
   Admit-only; consulted by `company_identity.verdict` (this key IS the old `KNOWN_PARENT`).
+* `not_tenants` — normalized tenant tokens that are PROVEN to be another company's board
+  (2026-08-26, docs/BACKLOG.md 198). The only thing that refuses a path-tenant board
+  without a page read: `identity_gate.board_vouches` answers False on one of these before
+  any string test, `tenant_is_this_company` / `embedded_board_ok` refuse it, and a note
+  segment can no longer be the sole memory of a wrong write (`Sckipio`'s `url-cleared`
+  segment was evicted after four routine stamps). Refuse-only: a row may declare both
+  `tenants` and `not_tenants`. `validate()` refuses a `not_tenants` token that equals the
+  SAME row's live active token — declaring the incident forces the park.
 * `why` — the evidence: the board URL, the acquisition, the date. Required. A row without
   evidence is a guess, and a guess here publishes one company's roles under another's name.
 
@@ -130,6 +138,66 @@ DECLARED = {
     "UserWay": {"domains": ("levelaccess.com",), "why": "acquired by Level Access; KNOWN_PARENT migration"},
     "Abbott": {"domains": ("jobs.abbott",), "why": "KNOWN_PARENT migration"},
     "ABB": {"domains": ("careers.abb", "abb.com"), "why": "KNOWN_PARENT migration"},
+
+    # --- item 22 / 9 hand-checks, 2026-08-25
+    "Deutsche Telekom": {
+        "tenants": ("telekom-growthhub",),
+        "why": "Telekom's Eightfold tenant is telekom-growthhub: "
+               "https://telekom-growthhub.eightfold.ai/careers?location=Israel (the active row's "
+               "board; the tenant rule cannot near-match it). 2026-08-25"},
+    "NVIDIA": {
+        "tenants": ("nvidia", "mellanox"),
+        "why": "nvidia.wd5.myworkdayjobs.com is NVIDIA's Workday; Mellanox (acquired 2020) still "
+               "appears as the employer slug on LinkedIn cards (at-mellanox-technologies), which "
+               "fetch_discovery keeps only for a declared identity (BACKLOG 9). 2026-08-25"},
+
+    # --- NEGATIVE declarations: the recorded wrong writes (tests/test_registry.py
+    #     `_NEGATIVE_IDENTITY` is derived from these). Each names the board that was
+    #     written or proposed, and whose it really is. 2026-08-26.
+    "Sckipio": {
+        "not_tenants": ("87.00C",),
+        "why": "comeet 87.00C is Scopio Labs' board (https://www.comeet.com/jobs/scopio/87.00C); "
+               "written 2026-08-21 as Sckipio's, url-cleared 2026-08-25 (BACKLOG 133/198)"},
+    "Bancor": {
+        "not_tenants": ("bancorpbank",),
+        "why": "careers-bancorpbank.icims.com is The Bancorp Bank's iCIMS; crack_walled was one "
+               "--apply from writing it 2026-08-24"},
+    "Riskified": {
+        "not_tenants": ("novartis",),
+        "why": "novartis.wd3.myworkdayjobs.com/en-US/riskified is Novartis's Workday with a site "
+               "named riskified; the audit proposed it 2026-08-23"},
+    "Similarweb": {
+        "not_tenants": ("similartech",),
+        "why": "greenhouse similartech is SimilarTech's board; the resolver proposed it for "
+               "Similarweb 2026-08-25 (own board: boards-api.greenhouse.io/v1/boards/similarweb)"},
+    "SimilarTech": {
+        "not_tenants": ("similarweb",),
+        "why": "greenhouse similarweb is Similarweb's board (55 roles nearly published under "
+               "SimilarTech, check_invariants C3's founding case)"},
+    "Lili": {
+        "not_tenants": ("elililly",),
+        "why": "greenhouse elililly is Eli Lilly's; DDG offered it for Lili (fintech) 2026-08-22"},
+    "Cogniteam": {
+        "not_tenants": ("riskified",),
+        "why": "Cogniteam's own careers page carried a stale Riskified greenhouse embed that "
+               "validate_empty promoted 2026-08-23 (wave-4 R1)"},
+    "NanoLock Security": {
+        "not_tenants": ("gen",),
+        "why": "gen.wd1.myworkdayjobs.com is Gen Digital's Workday; the row pointed at it as a "
+               "listing-hunt fast-path candidate (BACKLOG 22)"},
+    "Sight Diagnostics": {
+        "not_tenants": ("sightsciences", "sig1008sigh"),
+        "why": "recruiting2.ultipro.com/SIG1008SIGH is Sight Sciences' (US ophthalmic) board, "
+               "the active row Sight Sciences holds; page_mentions_company('Sight', ...) matches "
+               "it (BACKLOG 22/50)"},
+    "Bit": {
+        "not_tenants": ("bitdefender",),
+        "why": "greenhouse bitdefender is Bitdefender's; containment (`bit` in `bitdefender`) "
+               "admitted it before near-equality (wave-2)"},
+    "Dun & Bradstreet (Israel) Ltd.": {
+        "not_tenants": ("israeljobs",),
+        "why": "the parenthetical split made bare `israel` an identity target (wave-6 R1, B1); "
+               "no board of that name is D&B's"},
 }
 
 # Deliberately NOT declared, and why -- so the next reader does not "fix" them:
@@ -170,6 +238,11 @@ def domains(name):
     return tuple(facts(name).get("domains", ()))
 
 
+def not_tenants(name):
+    """Tenant tokens PROVEN to be another company's, normalized; empty when none."""
+    return frozenset(_norm(t) for t in facts(name).get("not_tenants", ()) if _norm(t))
+
+
 def validate(rows, ats_host_rx, plumbing):
     """Self-consistency of DECLARED against the real registry. Returns a list of problems
     (empty = consistent). Called by the test suite, never at import.
@@ -183,10 +256,25 @@ def validate(rows, ats_host_rx, plumbing):
     for name, d in DECLARED.items():
         if not (d.get("why") or "").strip():
             problems.append(f"{name}: no `why` -- a declaration without evidence is a guess")
-        if not d.get("tenants") and not d.get("domains"):
+        if not d.get("tenants") and not d.get("domains") and not d.get("not_tenants"):
             problems.append(f"{name}: declares nothing")
         row = by_name.get(_key(name))
-        if d.get("tenants"):
+        neg = {_norm(t) for t in d.get("not_tenants", ())}
+        if neg & {_norm(t) for t in d.get("tenants", ())}:
+            problems.append(f"{name}: a token is declared both a tenant and a not_tenant")
+        if neg and row is not None and row[4] == "true":
+            host = (urllib.parse.urlparse(row[3] or "").netloc or "").lower()
+            labels = [l for l in host.split(".")[:-2] if not plumbing(l)]
+            # whole labels and their hyphen parts: `careers-bancorpbank` carries `bancorpbank`
+            live = {_norm(l) for l in labels} | {_norm(x) for l in labels for x in re.split(r"[-_]", l)}
+            live.add(_norm((row[2] or "").split("/")[0]))
+            live |= {_norm(seg) for seg in urllib.parse.urlparse(row[3] or "").path.split("/")}
+            if neg & live:
+                problems.append(f"{name}: is ACTIVE on a board it declares not its own "
+                                f"({sorted(neg & live)}) -- park the row, then declare")
+        if not d.get("tenants"):
+            continue
+        if True:
             if row is None:
                 problems.append(f"{name}: declares tenants but is not a registry row")
                 continue

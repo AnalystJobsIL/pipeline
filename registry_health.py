@@ -683,6 +683,10 @@ def explain(name, rows=None, fetch=False, out=print):
     out(f"  tenant_is_this_company = {G.tenant_is_this_company(name, api)}")
     if tok:
         out(f"  embedded_board_ok(token={tok!r}) = {G.embedded_board_ok(name, tok, api)}")
+    out(f"  board_vouches(token={G.checkable_token(tok, api)!r}) = {G.board_vouches(name, tok, api)!r}"
+        "   (False = refused without a page; None = a human page decides, or unverified)")
+    out(f"  human_board_url = {G.human_board_url(api) if not re.search(r'careers-api/2.0', api or '') else '(Comeet API: learned from the positions, 1 GET)'!r}")
+    out(f"  DECLARED not_tenants={sorted(F.not_tenants(name))}")
 
     out("== page test ==")
     if fetch:

@@ -298,9 +298,14 @@ def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail):
     # `_cand` is the candidate and only the candidate; an empty one is no
     # evidence and is refused by `not _cand`.
     _cand = api or ""
-    _ident = bool(_cand) and (
-        tenant_is_this_company(name, _cand)
-        or _gate.page_names_company(name, _cand) is True)
+    # `activation_verdict` (2026-08-26): a held page is not in hand here, so the board's
+    # tenant vouches (declared / near-equal), a declared negative or a subdomain mismatch
+    # refuses, and "cannot tell" is settled by ONE read of the platform's HUMAN board page
+    # -- never the API endpoint (0-28 bytes; refused 358 rows when tried) -- or deferred
+    # as `unverified`, which stamps no claim and keeps the row's tokens.
+    _av = (_gate.activation_verdict(name, _cand, n_all, token=tok or "")
+           if verdict == "recovered" and _cand else "empty")
+    _ident = _av == "ok"
     # Clause 3 of the activation rule (ARCHITECTURE.md section 2) is
     # `looks_like_a_job_listing_page`, and the wave-8 rewrite dropped it —
     # the import stayed, nothing called it. Restored SCOPED TO `scrape`,
@@ -340,7 +345,11 @@ def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail):
         # replaces: 103 chars -> 216/31, this form -> 198/7.
         fr[5] = _note_replace(
             fr[5], "deep-validated",
-            f"deep-validated {TODAY}: not this company's board")
+            f"deep-validated {TODAY}: " + {
+                "not-ours": "not this company's board",
+                "empty": "verified 0 jobs (empty board)",
+                "not-listing": "not a listings page",
+            }.get(_av, "unverified (no readable page)"))
     elif verdict == "recovered":
         fr[1], fr[2], fr[3] = plat, tok, api
         fr[4] = "true"

@@ -1353,8 +1353,8 @@
   "file": "apply_resolved.py",
   "symbol": "main",
   "class": "M3-branch-narrowing",
-  "find": "                if _gate.is_foreign(name, api) or not _gate.tenant_is_this_company(name, api):",
-  "replace": "                if fields[4] == \"true\" and (_gate.is_foreign(name, api) or not _gate.tenant_is_this_company(name, api)):",
+  "find": "                if _gate.is_foreign(name, api) or _gate.board_vouches(name, tok, api) is False:",
+  "replace": "                if fields[4] == \"true\" and (_gate.is_foreign(name, api) or _gate.board_vouches(name, tok, api) is False):",
   "why": "the veto scoped to active rows re-pointed parked rows at foreign boards (BACKLOG 56).",
   "must_be_killed_by_behavioural": true
  },
@@ -1543,8 +1543,8 @@
   "file": "pipeline/notes.py",
   "symbol": "append",
   "class": "M1-gate-removal",
-  "find": "    if parts:                            # only terminal segments left: the newcomer is dropped\n        return SEP.join(parts)[:cap]",
-  "replace": "    if parts:                            # only terminal segments left: the newcomer is dropped\n        return SEP.join(parts + [seg])[:cap]",
+  "find": "        return SEP.join(parts)           # (a base already over the cap is left as it was: no slice)",
+  "replace": "        return SEP.join(parts + [seg])[:cap]",
   "why": "wave-1 (2026-08-26): slicing the joined cell cut a protected segment mid-word or left `crack-walled <date>: ` dangling; check F then blocked the digest (mixed seed 1, night 5).",
   "must_be_killed_by_behavioural": true
  },
@@ -1563,8 +1563,8 @@
   "file": "probe_candidates.py",
   "symbol": "_wake_note",
   "class": "M3-branch-narrowing",
-  "find": "_STALE_SEGMENT = re.compile(r\"^(listing-hunt|crack-walled|probe-woken)\b\")",
-  "replace": "_STALE_SEGMENT = re.compile(r\"^(listing-hunt|crack-walled|probe-woken|dark-triage)\b\")",
+  "find": "_STALE_SEGMENT = re.compile(r\"^(listing-hunt|crack-walled|probe-woken)\\b\")",
+  "replace": "_STALE_SEGMENT = re.compile(r\"^(listing-hunt|crack-walled|probe-woken|dark-triage)\\b\")",
   "why": "the wake deleted `dark-triage <date>: <mode>` -- 39/39 extract-gap rows and 115/228 triage rows left their pool on the first wake (wave-1, 2026-08-26).",
   "must_be_killed_by_behavioural": true
  },
@@ -1606,7 +1606,10 @@
   "find": "               and (force or _needs_triage(r[5] or \"\"))]",
   "replace": "               and \"probe-woken\" not in (r[5] or \"\")\n               and (force or _needs_triage(r[5] or \"\"))]",
   "why": "the exclusion was permanent (nothing cleared the stamp): a woken row left triage's schedule forever while in_triage_pool still counted it.",
-  "must_be_killed_by_behavioural": true
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_registry.py::test_triage_does_not_consume_a_probe_wake_before_the_hunt_can_use_it"
+  ]
  },
  {
   "id": "growth-line-drop",
@@ -1643,8 +1646,8 @@
   "file": "pipeline/notes.py",
   "symbol": "_PROTECTED_EXTRA",
   "class": "M3-branch-narrowing",
-  "find": "dark-triage \\\\d{4}-\\\\d{2}-\\\\d{2}: [a-z-]+|no open israel roles|",
-  "replace": "dark-triage \\\\d{4}-\\\\d{2}-\\\\d{2}: [a-z-]*|no open israel roles|",
+  "find": "dark-triage \\d{4}-\\d{2}-\\d{2}: [a-z-]+|no open israel roles|",
+  "replace": "dark-triage \\d{4}-\\d{2}-\\d{2}: [a-z-]*|no open israel roles|",
   "why": "a dangling `dark-triage <date>:` must stay evictable, or the corruption checks F/F2 exist for becomes permanent.",
   "must_be_killed_by_behavioural": true
  },
@@ -1656,7 +1659,10 @@
   "find": "        if policy == \"worst\":\n            for k in keys:",
   "replace": "        if policy == \"worst_\":\n            for k in keys:",
   "why": "turns off the batch's headline evidence while `rehearsal OK` still prints (attacker 2, B3).",
-  "must_be_killed_by_behavioural": true
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_registry.py::test_the_rehearsal_catches_a_cell_overwrite_and_bans_dns"
+  ]
  },
  {
   "id": "merge-trim-ours-head",
@@ -1716,6 +1722,209 @@
   "find": "    socket.gethostbyname = boom           # type: ignore[assignment]\n",
   "replace": "",
   "why": "repair_dead_urls decides 'dead host' by DNS; an unbanned resolver makes the rehearsal depend on the network (attacker 2, R6).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_registry.py::test_the_rehearsal_catches_a_cell_overwrite_and_bans_dns"
+  ]
+ },
+ {
+  "id": "facts-not-tenants-drop",
+  "file": "pipeline/identity_facts.py",
+  "symbol": "not_tenants",
+  "class": "M1-gate-removal",
+  "find": "    return frozenset(_norm(t) for t in facts(name).get(\"not_tenants\", ()) if _norm(t))",
+  "replace": "    return frozenset()",
+  "why": "the negative declarations are the only thing refusing a path-tenant board without a page.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "facts-not-tenants-validate",
+  "file": "pipeline/identity_facts.py",
+  "symbol": "validate",
+  "class": "M3-branch-narrowing",
+  "find": "        if neg and row is not None and row[4] == \"true\":",
+  "replace": "        if neg and row is not None and row[4] == \"maybe\":",
+  "why": "declaring an incident must force the park; an active row on its own not_tenant is a contradiction the suite must see.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "vouch-neg-drop",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "board_vouches",
+  "class": "M1-gate-removal",
+  "find": "    if (ntok and ntok in neg) or (label_tokens & neg):\n        return False",
+  "replace": "    if False:\n        return False",
+  "why": "a declared not_tenant must refuse before any string test.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "vouch-uid-true",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "board_vouches",
+  "class": "M3-branch-narrowing",
+  "find": "    if not tok or _UID.fullmatch(tok):\n        return None                            # opaque: a uid vouches for nothing",
+  "replace": "    if not tok or _UID.fullmatch(tok):\n        return True                            # opaque: a uid vouches for nothing",
+  "why": "a Comeet uid carries no identity; True here is the old vacuity (BACKLOG 61).",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "vouch-none-false",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "board_vouches",
+  "class": "M3-branch-narrowing",
+  "find": "    if targets and any(_tenant_near(c, targets) for c in _embed_token_forms(tok)):\n        return True\n    return None",
+  "replace": "    if targets and any(_tenant_near(c, targets) for c in _embed_token_forms(tok)):\n        return True\n    return False",
+  "why": "a slug that merely fails near-equality is `cannot tell`, not refused: a veto here refused 81 of 460 active rows (BACKLOG 21).",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "vouch-near-drop",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "board_vouches",
+  "class": "M1-gate-removal",
+  "find": "    if targets and any(_tenant_near(c, targets) for c in _embed_token_forms(tok)):\n        return True\n    return None",
+  "replace": "    return None",
+  "why": "a near-equal tenant must vouch without a page, or every path-platform activation pays a GET.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "tenant-neg-drop",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "tenant_is_this_company",
+  "class": "M1-gate-removal",
+  "find": "    if any(identity_facts.normalize(l) in identity_facts.not_tenants(name) for l in labels):\n        return False                           # a PROVEN other company's tenant",
+  "replace": "    if False:\n        return False                           # a PROVEN other company's tenant",
+  "why": "the subdomain gate must honour a negative declaration too (Bancor/bancorpbank).",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "embed-neg-drop",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "embedded_board_ok",
+  "class": "M1-gate-removal",
+  "find": "    if identity_facts.normalize((token or \"\").split(\"/\")[0]) in identity_facts.not_tenants(name):\n        return False                           # a PROVEN other company's board",
+  "replace": "    if False:\n        return False                           # a PROVEN other company's board",
+  "why": "the embed vouch must honour a negative declaration (Cogniteam/riskified).",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "human-url-api-fallback",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "human_board_url",
+  "class": "M1-gate-removal",
+  "find": "    (re.compile(r\"^https?://boards-api\\.greenhouse\\.io/v1/boards/([^/?#]+)\", re.I),\n     r\"https://job-boards.greenhouse.io/\\1\"),\n",
+  "replace": "",
+  "why": "without the human-page map the gate reads the greenhouse API endpoint (0 bytes) and every cannot-tell greenhouse row is deferred forever (BACKLOG 33).",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "human-url-comeet-drop",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "human_board_url",
+  "class": "M1-gate-removal",
+  "find": "    if _COMEET_API.match(u):\n        return _comeet_human_url(u)",
+  "replace": "",
+  "why": "Comeet is 121 active rows; without the learned human page every Comeet recovery is deferred forever.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "activation-unverified-admit",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "activation_verdict",
+  "class": "M3-branch-narrowing",
+  "find": "    p = page_names_company(name, human)\n    if p is None:\n        return \"unverified\"",
+  "replace": "    p = page_names_company(name, human)\n    if p is None:\n        return \"ok\"",
+  "why": "an unreadable human page is no evidence; admitting it is the old vacuity with a GET on top.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "activation-human-page-drop",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "activation_verdict",
+  "class": "M8-argument-mis-passing",
+  "find": "    human = human_board_url(api_url) or api_url",
+  "replace": "    human = api_url",
+  "why": "without the human-page read every cannot-tell row is deferred forever (coverage loss).",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "activation-vouch-false-admit",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "activation_verdict",
+  "class": "M3-branch-narrowing",
+  "find": "    v = board_vouches(name, token, api_url)\n    if v is False:\n        return \"not-ours\"                      # a declaration beats a page: Cogniteam's own",
+  "replace": "    v = board_vouches(name, token, api_url)\n    if v is False:\n        return \"ok\"                            # a declaration beats a page: Cogniteam's own",
+  "why": "a refused board must not activate.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "activation-unverified-stamp",
+  "file": "deep_validate.py",
+  "symbol": "apply_verdict",
+  "class": "M8-argument-mis-passing",
+  "find": "            }.get(_av, \"unverified (no readable page)\"))",
+  "replace": "            }.get(_av, \"not this company's board\"))",
+  "why": "an unverified board must not be stamped as proven foreign (BACKLOG 37).",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "crack-unreadable-stamp",
+  "file": "crack_walled.py",
+  "symbol": "main",
+  "class": "M8-argument-mis-passing",
+  "find": "                            f\"crack-walled {TODAY}: \" + (\"not this company's board\" if _wv == \"not-ours\"\n                                                         else \"unverified (page unreadable)\"))",
+  "replace": "                            f\"crack-walled {TODAY}: not this company's board\")",
+  "why": "the primary refusal path must distinguish unreadable from proven foreign.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "validate-empty-unverified-stamp",
+  "file": "validate_empty.py",
+  "symbol": "check",
+  "class": "M1-gate-removal",
+  "find": "            if il > 0 and _av == \"unverified\":",
+  "replace": "            if False:",
+  "why": "an unverified board must not become a `suspect` note claiming it is not this company's.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "apply-resolved-vouch-drop",
+  "file": "apply_resolved.py",
+  "symbol": "main",
+  "class": "M1-gate-removal",
+  "find": "                if _gate.is_foreign(name, api) or _gate.board_vouches(name, tok, api) is False:",
+  "replace": "                if _gate.is_foreign(name, api):",
+  "why": "the resolver's re-point must honour a negative declaration.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "c3b-warn-drop",
+  "file": "check_invariants.py",
+  "symbol": "main",
+  "class": "M1-gate-removal",
+  "find": "        if unsure:\n            warn(f\"{len(unsure)} active path-platform rows whose tenant cannot vouch for the name \"",
+  "replace": "        if False:\n            warn(f\"{len(unsure)} active path-platform rows whose tenant cannot vouch for the name \"",
+  "why": "the hand-check list is the only visibility on active rows admitted by vacuity.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "triage-llm-schema-drop",
+  "file": "triage_dark.py",
+  "symbol": "llm_page_verdict",
+  "class": "M8-argument-mis-passing",
+  "find": "        d = llm.call_json(prompt, system=_SYSTEM, schema=_SCHEMA,",
+  "replace": "        d = llm.call_json(prompt, system=_SYSTEM, schema={\"type\": \"object\"},",
+  "why": "without its schema the page judge's answer is prose again (BACKLOG 117).",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "triage-llm-unavailable-raise",
+  "file": "triage_dark.py",
+  "symbol": "llm_page_verdict",
+  "class": "M1-gate-removal",
+  "find": "    except llm.LLMUnavailable:\n        return None                       # no CLI / no auth / timeout: the regex verdict stands",
+  "replace": "    except ValueError:\n        return None                       # no CLI / no auth / timeout: the regex verdict stands",
+  "why": "an unavailable CLI must leave the regex verdict standing, not crash the 18:00 triage.",
   "must_be_killed_by_behavioural": true
  }
 ]

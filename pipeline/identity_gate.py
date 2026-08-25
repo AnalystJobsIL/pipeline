@@ -48,8 +48,12 @@ from pipeline.company_identity import (ATS_HOST, is_foreign,
 # ---------------------------------------------------------------------------------------
 GATE_CALLERS = {
     "activation_ok": ("auto_expand.py", "bd_rescue.py", "retry_unreachable.py",
-                      "validate_empty.py", "wayback_rescue.py"),
-    "ok_to_write": ("crack_walled.py",),
+                      "wayback_rescue.py"),
+    # the same gate with its refusals named (2026-08-25): callers that STAMP a refusal
+    # must know `not-ours` from `unverified`
+    "activation_verdict": ("deep_validate.py", "validate_empty.py"),
+    "ok_to_write": (),
+    "write_verdict": ("crack_walled.py",),
     "identity_ok": ("listing_hunt.py", "repair_extract_gap.py"),
     "embedded_board_ok": ("bd_rescue.py", "validate_empty.py", "wayback_rescue.py"),
 }
@@ -223,6 +227,8 @@ def embedded_board_ok(name, token, api_url):
     class, docs/BACKLOG.md 61. See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
     if not tenant_is_this_company(name, api_url):
         return False
+    if identity_facts.normalize((token or "").split("/")[0]) in identity_facts.not_tenants(name):
+        return False                           # a PROVEN other company's board
     targets = _name_targets(name)
     if not targets:
         return False
@@ -275,9 +281,11 @@ def tenant_is_this_company(name, url):
     # must be able to override a string. Matched against the host's non-plumbing SUBDOMAIN
     # labels only -- never the path: `_slug_candidates` returns path segments in the same
     # list, and `novartis.wd3.myworkdayjobs.com/en-US/riskified` must stay Novartis's.
+    labels = [l for l in host.split(".")[:-2] if not _plumbing(l)]
+    if any(identity_facts.normalize(l) in identity_facts.not_tenants(name) for l in labels):
+        return False                           # a PROVEN other company's tenant
     declared = identity_facts.tenants(name)
     if declared:
-        labels = [l for l in host.split(".")[:-2] if not _plumbing(l)]
         if not labels:
             return True                        # nothing checkable: unchanged
         return any(identity_facts.normalize(l) in declared for l in labels)
@@ -305,6 +313,203 @@ def tenant_is_this_company(name, url):
     if not labels:
         return True                                    # no checkable tenant: cannot tell
     return any(near(l) for l in labels)
+
+
+_UID = re.compile(r"[0-9A-F]{2}\.[0-9A-F]{3}", re.I)
+
+
+def checkable_token(token, api_url):
+    """The one tenant token a board carries that a name can be compared with: the row's
+    own token when it is one (registry column 2, `tenant/site` composites reduced to the
+    tenant), else the first identity-bearing slug in the URL (`scrape` rows store the URL
+    itself, or nothing, in column 2 -- 24 active rows). A Comeet uid is returned as-is so
+    the caller can see it is opaque; an empty string means nothing is checkable."""
+    from pipeline.company_identity import _slug_candidates
+    t = (token or "").split("/")[0].strip()
+    if t and not t.lower().startswith("http"):
+        return t
+    try:
+        cands = _slug_candidates(urllib.parse.urlparse(api_url or ""))
+    except Exception:  # noqa: BLE001
+        cands = []
+    return cands[0] if cands else ""
+
+
+def board_vouches(name, token, api_url):
+    """Does the board's TENANT vouch for `name`? Three-valued, and the only string test the
+    activation paths consult since 2026-08-26 (docs/BACKLOG.md 33/50):
+
+      False -- a declared `not_tenants` token, a subdomain-tenant mismatch, or a declared
+               row whose board carries a tenant it did not declare. Refuses without a page.
+      True  -- a declared tenant, or a tenant that NEAR-EQUALS the name (`_tenant_near`
+               over `_embed_token_forms`, the rule `embedded_board_ok` already applies).
+      None  -- CANNOT TELL: nothing checkable (a Comeet uid, a host whose labels are all
+               plumbing, an ordinary non-ATS host) or a path-platform slug that merely
+               fails near-equality (`Ibex Medical Analytics`/`ib1`, `7AI`/`sevenai`).
+               Never spelled True any more: the consumer of None is a page read of the
+               platform's HUMAN board page (`human_board_url`), and where there is none
+               the row is `unverified` -- deferred, not refused, not stamped.
+
+    The tenant string still never VETOES an undeclared path-platform row: near-equality
+    refused 81 of 460 active ATS rows when tried as a veto (Mobileye, amat, sentinellabs --
+    docs/BACKLOG.md 21). Negatives are declarations, with evidence, per row."""
+    tok = checkable_token(token, api_url)
+    ntok = identity_facts.normalize(tok)
+    neg = identity_facts.not_tenants(name)
+    host = (urllib.parse.urlparse(api_url or "").netloc or "").lower()
+    from pipeline.company_identity import ATS_HOST
+    labels = [l for l in host.split(".")[:-2] if not _plumbing(l)] if host else []
+    # whole labels and their hyphen parts: `careers-bancorpbank` carries `bancorpbank`
+    label_tokens = {identity_facts.normalize(l) for l in labels} | {
+        identity_facts.normalize(x) for l in labels for x in re.split(r"[-_]", l)}
+    if (ntok and ntok in neg) or (label_tokens & neg):
+        return False
+    if not host or not ATS_HOST.search(host):
+        # an ordinary host: `is_foreign` is the identity test there (a page test would
+        # refuse every JS-rendered careers page -- measured at 358 rows), so the domain
+        # vouches unless it is foreign; the callers' own is_foreign clause refuses first
+        return None if is_foreign(name, api_url) else True
+    if _SUBDOMAIN_TENANT_HOST.search(host) and labels:
+        declared = identity_facts.tenants(name)
+        if declared:                           # both directions, subdomain labels only
+            return any(identity_facts.normalize(l) in declared for l in labels)
+        targets = _name_targets(name)
+        if targets and any(_tenant_near(l, targets) for l in labels):
+            return True
+        # a near-miss -- even `verdict()`'s `mismatch` -- is NOT a refusal here: Oracle pod
+        # ids (`hctz`, `edel`) and Eightfold tenants are opaque by construction, and the
+        # veto refused 7 of the 9 rows on crack_walled's own platforms
+        # (test_the_write_gate_does_not_refuse_...). The page decides; a declaration refuses.
+        return None
+    # a path-tenant platform -- or a subdomain platform whose labels are all plumbing
+    # (apply.workable.com/.../accounts/<slug>): the row's token is the checkable thing
+    declared = identity_facts.tenants(name)
+    if declared:
+        return bool(ntok) and ntok in declared
+    if not tok or _UID.fullmatch(tok):
+        return None                            # opaque: a uid vouches for nothing
+    targets = _name_targets(name)
+    if targets and any(_tenant_near(c, targets) for c in _embed_token_forms(tok)):
+        return True
+    return None
+
+
+# API endpoint -> the page a human would open for the same board. The pattern each maps
+# is the registry's shape (census 2026-08-26: greenhouse 103/103, ashby 51/51, lever 24/24,
+# smartrecruiters 16/16, recruitee 7/7, bamboohr 9/9, breezy 5/5, workable 21/21). The
+# Comeet API form carries a uid and no slug, so it maps to nothing -- `unverified`.
+_HUMAN_URL = (
+    (re.compile(r"^https?://boards-api\.greenhouse\.io/v1/boards/([^/?#]+)", re.I),
+     r"https://job-boards.greenhouse.io/\1"),
+    (re.compile(r"^https?://api\.ashbyhq\.com/posting-api/job-board/([^/?#]+)", re.I),
+     r"https://jobs.ashbyhq.com/\1"),
+    (re.compile(r"^https?://api\.(eu\.)?lever\.co/v0/postings/([^/?#]+)", re.I),
+     r"https://jobs.\1lever.co/\2"),
+    (re.compile(r"^https?://api\.smartrecruiters\.com/v1/companies/([^/?#]+)", re.I),
+     r"https://careers.smartrecruiters.com/\1"),
+    (re.compile(r"^https?://([a-z0-9-]+)\.recruitee\.com/api/", re.I),
+     r"https://\1.recruitee.com/"),
+    (re.compile(r"^https?://([a-z0-9-]+)\.bamboohr\.com/careers/list", re.I),
+     r"https://\1.bamboohr.com/careers"),
+    (re.compile(r"^https?://([a-z0-9-]+)\.breezy\.hr/json", re.I),
+     r"https://\1.breezy.hr/"),
+    (re.compile(r"^https?://apply\.workable\.com/api/v\d/widget/accounts/([^/?#]+)", re.I),
+     r"https://apply.workable.com/\1/"),
+)
+_MACHINE = re.compile(r"careers-api/|/api/|/json\b|\.json(\?|$)|/wday/cxs/|/widget/|/v\d/", re.I)
+
+
+_COMEET_API = re.compile(r"^https?://www\.comeet\.(?:com|co)/careers-api/2\.0/company/([^/?#]+)/positions", re.I)
+
+
+def _comeet_human_url(api_url):
+    """Comeet's API form carries a uid and no slug, and the human page needs both
+    (`comeet.com/jobs/x/49.004` serves a generic 200; `jobs/upwind/49.004` names Upwind --
+    measured 2026-08-26). Every position the API returns carries `url_comeet_hosted_page`,
+    which is that human page plus the position: one GET of the endpoint the caller is
+    about to activate, and the slug is known. None when the endpoint cannot be read."""
+    try:
+        from pipeline import http as _http
+        data = _http.get_json(api_url)
+    except Exception:  # noqa: BLE001
+        return None
+    for p in data if isinstance(data, list) else []:
+        m = re.match(r"^(https?://www\.comeet\.(?:com|co)/jobs/[^/?#]+/[^/?#]+)", str(p.get("url_comeet_hosted_page") or ""), re.I)
+        if m:
+            return m.group(1)
+    return None
+
+
+def human_board_url(api_url):
+    """The page a person would read for this board, or None when there is none to read
+    (an unmapped machine endpoint). A pure string map except for Comeet's API form, whose
+    human page is learned from the endpoint's own positions (`_comeet_human_url`, one GET).
+    An ordinary, non-machine URL is its own human page."""
+    u = (api_url or "").strip()
+    if not u.startswith("http"):
+        return None
+    for rx, repl in _HUMAN_URL:
+        m = rx.match(u)
+        if m:
+            return m.expand(repl)
+    if _COMEET_API.match(u):
+        return _comeet_human_url(u)
+    return None if _MACHINE.search(u) else u
+
+
+def activation_verdict(name, api_url, n_jobs=0, html="", token=""):
+    """`activation_ok` with its refusals named (2026-08-26; docs/BACKLOG.md 33/37/50):
+
+      ok           -- activate
+      empty        -- zero verified jobs: the empty-board shape
+      not-listing  -- `looks_like_a_job_listing_page` says no
+      not-ours     -- PROVEN another company's: `is_foreign`, a held readable page that
+                      names someone else, `board_vouches` False, or the human board page
+                      naming someone else. The only verdict a caller may stamp
+                      `not this company's board` on.
+      unverified   -- nothing could tell: the tenant cannot vouch and no human page
+                      could be read. Deferred, not refused: no stamp, the row's re-check
+                      token stays, the next night tries again.
+
+    Order: a READABLE page the caller holds decides both ways; `board_vouches` True admits
+    and False refuses without a page; None sends ONE GET to `human_board_url` -- never the
+    API endpoint, whose 0-28 bytes read as None and refused 358 rows when tried."""
+    if not n_jobs:
+        return "empty"
+    if is_foreign(name, api_url):
+        return "not-ours"
+    if not looks_like_a_job_listing_page(api_url):
+        return "not-listing"
+    v = board_vouches(name, token, api_url)
+    if v is False:
+        return "not-ours"                      # a declaration beats a page: Cogniteam's own
+    if html:                                   # page carried Riskified's embed (wave-4 R1)
+        p = page_names_company(name, api_url, html=html)
+        if p is not None:
+            return "ok" if p else "not-ours"
+    if v is True:
+        return "ok"
+    # the platform's HUMAN page where one is mapped; else the endpoint itself, the old last
+    # resort (Oracle/Workday endpoints can answer; greenhouse's 0 bytes read as None)
+    human = human_board_url(api_url) or api_url
+    p = page_names_company(name, human)
+    if p is None:
+        return "unverified"
+    return "ok" if p else "not-ours"
+
+
+def write_verdict(name, url, html="", token=""):
+    """`ok_to_write` with its refusals named: `ok`, `not-ours` (proven), `unreadable`
+    (no evidence -- refuse the write, but stamp nothing that claims otherwise)."""
+    if is_foreign(name, url) or not looks_like_a_job_listing_page(url):
+        return "not-ours" if is_foreign(name, url) else "unreadable"
+    if board_vouches(name, token, url) is False:
+        return "not-ours"
+    target = url if html else (human_board_url(url) or url)
+    v = page_names_company(name, target, html=html)
+    if v is None:
+        return "unreadable"
+    return "ok" if v else "not-ours"
 
 
 def page_names_company(name, url, html=""):
@@ -358,9 +563,7 @@ def ok_to_write(name, url, html=""):
     evidence. The tenant string is deliberately NOT a veto here, and the signature
     deliberately has no `platform` parameter (a parameter the body never reads is a slot for
     a transposition to hide in). See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
-    if is_foreign(name, url) or not looks_like_a_job_listing_page(url):
-        return False
-    return page_names_company(name, url, html=html) is True
+    return write_verdict(name, url, html=html) == "ok"
 
 
 def activation_ok(name, api_url, n_jobs=0, html=""):
@@ -375,28 +578,12 @@ def activation_ok(name, api_url, n_jobs=0, html=""):
     bytes. The ordering is the adjudication of a calibration dispute with both error cells
     non-empty -- do not tune it, declare the row instead (`pipeline/identity_facts.py`).
     See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
-    if not n_jobs:
-        return False
-    if is_foreign(name, api_url) or not looks_like_a_job_listing_page(api_url):
-        return False
-    # A page the CALLER holds decides in BOTH directions when readable; an unreadable one
-    # falls through to the tenant clause. This ordering flipped once (page-first refused
+    # The ordering (held page -> tenant -> human page) flipped once (page-first refused
     # Siemens Healthineers silently; tenant-first activated Cogniteam onto Riskified's
     # board) and is the adjudicated resolution of a both-cells-non-empty dispute -- see
     # docs/decisions/2026-08-24-identity-gate-calibration.md. Do not tune; declare.
-    if html:
-        v = page_names_company(name, api_url, html=html)
-        if v is not None:
-            return v is True
-        # unreadable in hand: no evidence either way -- fall through to the tenant clause
-    if tenant_is_this_company(name, api_url):
-        return True
-    if html:
-        # page unreadable AND tenant mismatch/undecidable: nothing affirms this board.
-        # (A re-fetch of `api_url` here would re-run the unlocker attempt the first call
-        # already made; it cannot say more than that call did.)
-        return False
-    return page_names_company(name, api_url) is True
+    # Since 2026-08-26 "the tenant cannot tell" no longer admits: `activation_verdict`.
+    return activation_verdict(name, api_url, n_jobs, html=html) == "ok"
 
 
 def identity_ok(name, url, html=""):
