@@ -1035,7 +1035,8 @@ def main():
         if looks_like_junk(c):
             n_junk += 1
             continue
-        if _is_rec(c):
+        # the slug is free evidence the display name hides ("Dialog" / dialog-recruiting)
+        if _is_rec(c, j.get("company_slug", "")):
             n_rec += 1
             continue
         # Seed the resolver with a REAL careers lead where the source gave us one

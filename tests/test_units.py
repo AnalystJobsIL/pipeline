@@ -6219,3 +6219,35 @@ def test_outcome_never_replaces_a_same_day_digest_a_rerun_lost(tmp_path, monkeyp
     (into / "digests" / "latest.md").write_text("# 🎯 2 new senior analytics roles — 2026-08-25\n", encoding="utf-8")
     assert P.main(["outcome", "--into", str(into), "--date", "2026-08-26"]) == 0
     assert (into / "digests" / "latest.md").read_text(encoding="utf-8").startswith("# ⚠️ No digest for 2026-08-26")
+
+
+# --- discovery lane, 2026-08-25: what the 05:36 run published and the log could not say ---
+@pytest.mark.parametrize("name,slug,expected", [
+    # both classified as staffing firms by cloud_state/firmographics.json while
+    # is_recruiter() said no; Nisha Pro shipped in the 2026-08-25 mail as "newly covered"
+    ("Nisha Pro", "nishapro", True),
+    ("Shavit Software", "shavit-software", True),
+    ("שביט סופטוור", "", True),                 # its Hebrew twin, a separate queue entry
+    # the slug says what the name hides: recruiters.py has named Dialog an SQLink
+    # placement firm since 2026-08-17, and the slug was captured on 827/848 cached cards
+    ("Dialog", "dialog-recruiting", True),
+    ("Dialog", "", False),                      # the bare name alone stays unjudged
+    # IT-services firms that also hire directly stay employers (the Matrix rule)
+    ("Genpact", "genpact", False),
+    ("appsforce", "appsforce", False),
+    ("Wix", "wix", False),
+])
+def test_a_recruiter_slug_catches_an_agency_whose_display_name_does_not(name, slug, expected):
+    from pipeline.recruiters import is_recruiter
+    assert is_recruiter(name, slug) is expected
+    assert is_recruiter(name) is (expected and slug != "dialog-recruiting")
+
+
+def test_the_names_bridge_hands_the_slug_to_the_recruiter_gate():
+    """The LinkedIn card carries `company_slug`; the bridge called `is_recruiter(c)` with the
+    display name only, so `dialog-recruiting` queued 'Dialog' as a new employer."""
+    import inspect
+
+    import discovery_daily
+    src = inspect.getsource(discovery_daily.main)
+    assert 'company_slug' in src.split("if _is_rec(", 1)[1].split(")", 1)[0]

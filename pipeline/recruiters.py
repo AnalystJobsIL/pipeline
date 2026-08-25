@@ -41,6 +41,17 @@ _CONFIRMED = {
     # discovery layer carries the employer NAME, not the row, so its re-posts kept coming
     # in under a company we already scan.
     "alpha | similarweb partner", "alpha similarweb partner",
+    # Added 2026-08-25. Both were classified as staffing firms by OUR OWN enrichment layer
+    # (cloud_state/firmographics.json: Nisha Pro 2026-08-25 "IT staffing / workforce
+    # outsourcing … placement fees"; Shavit Software 2026-08-22 "IT staffing / outsourcing …
+    # placing … BI … consultants at client companies") while is_recruiter() said no — and
+    # Nisha Pro was published in the 2026-08-25 email as a newly covered company, its blurb
+    # saying "staffing" directly under the role. No Hebrew form of Nisha Pro exists in any
+    # data file (grep 2026-08-25 = 0), so none is listed; Shavit's is in _HEBREW_MARKERS.
+    "nisha pro", "nisha group", "shavit software",
+    # Researched and KEPT OUT the same day, same firmographics scan: Genpact ("IT services /
+    # business process outsourcing", 40/40 IL on its own board) and appsforce ("software
+    # outsourcing", an active deep-validated row) both hire directly — the Matrix case.
 }
 
 # Some agencies are only ever written in Hebrew, and some carry the parent group in the
@@ -67,16 +78,24 @@ _HEBREW_MARKERS = (
     # above and both walked straight past it:
     "קבוצת יעל",      # Yael Group — `yael group` / `yael korentec technologies`
     "לוג-און תוכנה",  # Log-On Software — `log-on software`
+    # Third time the same shape: found 2026-08-25 as its OWN research-queue entry beside
+    # the Latin "Shavit Software", seeded from an Indeed posting whose title names a
+    # client ("לחברה מובילה במרכז דרוש/ה אנליסט/ית") — the Idor Computers tell.
+    "שביט סופטוור",   # Shavit Software — `shavit software`
     # Re-run after touching _CONFIRMED. Anything Hebrew that prints here and is a staffing
-    # or IT-outsourcing firm belongs above:
+    # or IT-outsourcing firm belongs above. It scans the QUEUE and the job cache as well as
+    # the registry: the 2026-08-25 twin (Shavit) was in research_companies.json, one
+    # auto_expand run before it would have reached companies.csv where this used to look.
     #   python -c "
-    #   import re,csv
+    #   import re,csv,json
     #   from pipeline.recruiters import is_recruiter
     #   from pipeline.firmographics import looks_like_junk
     #   h=re.compile(r'[֐-׿]')
-    #   for r in csv.reader(open('companies.csv',encoding='utf-8')):
-    #       if r and h.search(r[0]) and not is_recruiter(r[0]) and not looks_like_junk(r[0]):
-    #           print(r[0])"
+    #   names={r[0] for r in csv.reader(open('companies.csv',encoding='utf-8')) if r}
+    #   names|={e['name'] for e in json.load(open('research_companies.json',encoding='utf-8'))}
+    #   names|={j['company'] for j in json.load(open('discovered_cache.json',encoding='utf-8'))}
+    #   for n in sorted(names):
+    #       if h.search(n) and not is_recruiter(n) and not looks_like_junk(n): print(n)"
     # Researched 2026-08-23 (web + the wording of their own postings), not guessed:
     "עידור מחשבים",   # Idor Computers, ~100 staff, "professional IT outsourcing services"
                       # for banks/insurers. Decided by its OWN posting, which names a CLIENT
@@ -102,7 +121,18 @@ _KEYWORD = re.compile(
     r"placement agenc|talent acquisition|gotfriends|hr solutions)\b", re.I)
 
 
-def is_recruiter(name):
+def is_recruiter(name, slug=""):
+    """True for a staffing / placement firm. `slug` is optional and FREE evidence: a
+    LinkedIn company slug often says what the display name hides — "Dialog" (8 cached
+    cards, 2026-08-25) is `dialog-recruiting`, and recruiters.py's own comment has named
+    Dialog as an SQLink placement firm since 2026-08-17. The slug was captured on 827 of
+    848 cached LinkedIn jobs and read by nothing."""
+    if slug and _is_recruiter_name(str(slug).replace("-", " ")):
+        return True
+    return _is_recruiter_name(name)
+
+
+def _is_recruiter_name(name):
     n = " ".join(str(name or "").strip().lower().split())
     # hyphen == space for the exact-match list, or "Malam-Team" misses the "malam team"
     # entry that was added for it. Both spellings appear in the registry.
