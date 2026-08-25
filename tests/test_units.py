@@ -5679,6 +5679,13 @@ import subprocess as _sp
 _REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _PERSIST = os.path.join(_REPO, "persist_state.py")
 _GIT = _shutil.which("git")
+# The git-backed guards below spawn ~40 git/python processes each (12 of them, ~40-100 s a
+# pass). `tools/mutate.py` runs the WHOLE suite once per mutation (108) from a `git archive`
+# export -- an hour of proving nothing about a registry mutation, which timed the gate out
+# on 2026-08-25. They run only from a real checkout, i.e. `pytest` and `tests.yml`'s guard.
+_needs_git = pytest.mark.skipif(
+    _GIT is None or not os.path.isdir(os.path.join(_REPO, ".git")),
+    reason="needs git and a real checkout (the mutation harness runs from a git archive)")
 
 
 def _g(cwd, *args, check=True):
@@ -5727,7 +5734,7 @@ _STAMPS = json.dumps({"collect": {"date": "2026-08-24", "finished_at": "2026-08-
                       "expand": {"date": "2026-08-24", "finished_at": "2026-08-24T10:17:01+00:00"}}, indent=1)
 
 
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_persist_merges_stage_stamps_per_key_on_a_conflict_day(tmp_path):
     """The 0b41823 case: listing-hunt stamped `repair` at 22:12; auto-expand, checked out at
     20:00, hit a push conflict at 23:40 and restored its own copy of pipeline_stages.json
@@ -5809,7 +5816,7 @@ def test_tool_keys_cover_every_marker_replace_own_is_called_with():
     assert _seg_key("activated 2026-08-25: 3 IL") == "activated"
 
 
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_persist_stages_only_owned_paths_tolerates_a_missing_one_and_expands_a_directory(tmp_path):
     origin, a, b = _repo_pair(tmp_path, {"companies.csv": "company_name,a,b,c,active,notes\n", "cloud_state/x.json": "{}"})
     (b / "cloud_state" / "new.json").write_text("{}", encoding="utf-8")   # untracked, under an owned dir
@@ -5822,7 +5829,7 @@ def test_persist_stages_only_owned_paths_tolerates_a_missing_one_and_expands_a_d
     assert _origin(origin, "unowned.txt") is None, "only owned paths are ever staged"
 
 
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_persist_restores_a_registry_that_fails_its_gate_and_still_lands_the_rest(tmp_path):
     """User-approved policy 2026-08-25: a corrupt registry never lands, the paid-for state
     beside it does, and the run is red."""
@@ -5841,7 +5848,7 @@ def test_persist_restores_a_registry_that_fails_its_gate_and_still_lands_the_res
     assert r.returncode == 1 and _origin(origin, "cloud_state/s.json") == '{"kept": true}'
 
 
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_persist_conflict_on_the_registry_lands_both_rows_and_the_notes_union(tmp_path):
     hdr = "company_name,ats_platform,token,api_url,active,notes\n"
     seed = hdr + "X,scrape,,https://x/careers,false,monitored candidate\nY,scrape,,https://y/jobs,false,no listing found\n"
@@ -6044,7 +6051,7 @@ def test_outcome_writes_the_two_files_only_when_something_failed(tmp_path, monke
     assert not into2.exists(), "a healthy run writes nothing (no daily commit)"
 
 
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_outcome_commits_the_notice_alone_from_a_fresh_worktree(tmp_path, monkeypatch):
     """The notice commit starts from origin/master in its own worktree: a dirty, half-merged
     or corrupt registry in the runner's checkout can never ride along."""
@@ -6083,7 +6090,7 @@ def test_daily_digest_steps_have_ids_no_swallows_and_an_outcome_step():
 
 
 # --- wave 1 (3 Opus attackers, 2026-08-25): the commit path -----------------------------
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_persist_survives_an_untracked_file_that_fails_its_gate_and_skips_side_files(tmp_path):
     """An untracked `cloud_state/.tmp_*` leftover (what `pipeline/atomic._swap` leaves when a
     step is killed mid-write) failed the JSON gate, was unlinked, and then `git add` named it:
@@ -6104,7 +6111,7 @@ def test_persist_survives_an_untracked_file_that_fails_its_gate_and_skips_side_f
     assert ".tmp_" not in tree and "-journal" not in tree and ".json.tmp" not in tree
 
 
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_persist_rebases_a_plain_divergence_without_a_git_identity_in_the_checkout(tmp_path):
     """`actions/checkout` sets no user.name/email and a runner's hostname has no domain, so
     `git pull --rebase` refused to commit (`x@host.(none)`) and every divergence read as a
@@ -6123,7 +6130,7 @@ def test_persist_rebases_a_plain_divergence_without_a_git_identity_in_the_checko
     assert "user.name" not in (b / ".git" / "config").read_text(encoding="utf-8")
 
 
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_persist_restores_a_vanished_owned_file_instead_of_pushing_its_deletion(tmp_path):
     origin, a, b = _repo_pair(tmp_path, {"companies.csv": "h\nrow\n", "scraped_cache.json": "{}"})
     (b / "companies.csv").unlink()
@@ -6133,7 +6140,7 @@ def test_persist_restores_a_vanished_owned_file_instead_of_pushing_its_deletion(
     assert _origin(origin, "companies.csv") == "h\nrow\n" and _origin(origin, "scraped_cache.json") == '{"A": [1]}'
 
 
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_persist_keeps_the_runs_bytes_when_a_clean_rebase_fails_its_gate(tmp_path):
     """A clean rebase can produce a file that fails a gate (two appends → a duplicate row; a
     heading rewritten on origin). The per-file merge must start from the RUN's commit, not
@@ -6149,7 +6156,7 @@ def test_persist_keeps_the_runs_bytes_when_a_clean_rebase_fails_its_gate(tmp_pat
     assert _origin(origin, "digests/latest.md").startswith("# yesterday")
 
 
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_persist_never_commits_the_deletion_of_a_vanished_state_directory(tmp_path):
     """`rm -rf cloud_state` then `--own cloud_state` pushed an empty tree and reported
     success: every state file gone, every role re-emailed. Vanished tracked files under an
@@ -6162,7 +6169,7 @@ def test_persist_never_commits_the_deletion_of_a_vanished_state_directory(tmp_pa
     assert _origin(origin, "cloud_state/x.json") == "{}" and _origin(origin, "cloud_state/roles.jsonl") == "{}\n"
 
 
-@pytest.mark.skipif(_GIT is None, reason="git not installed")
+@_needs_git
 def test_persist_judges_a_second_conflict_against_the_first_merge_not_the_checkout(tmp_path):
     """After a row-merge `ours` already contains origin@t1; a second conflict judged against
     the CHECKOUT base saw origin's t1 keys as 'changed by us' and overwrote origin's t2 edits."""
