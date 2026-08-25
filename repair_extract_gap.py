@@ -82,15 +82,17 @@ def main():
             # resolvers refuse to CREATE such a row; re-activating one is the same mistake
             # one step later (SeatPick, off djinni.co — caught only by check_invariants,
             # which fails the whole digest commit rather than this one row).
+            # `continue`, not `il = []`: falling through to the `else` below counted a
+            # refused row TWICE ("1 activated, 6 still dark" over 4 rows -- BACKLOG 45)
             still += 1
             print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but the URL is an "
                   f"aggregator ({r[3][:44]}) — not activated", flush=True)
-            il = []
+            continue
         if il and not looks_like_a_job_listing_page(r[3]):
             still += 1
             print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but {r[3][:40]} "
                   f"is not a listings page — not activated", flush=True)
-            il = []
+            continue
         if il and not _gate.identity_ok(r[0], r[3]):
             # `is_foreign` alone was the gate here, and it returns False for every ATS host
             # by design - so on an ATS this branch had no identity test at all, while it
@@ -114,7 +116,7 @@ def main():
             still += 1
             print(f"  [XX]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but the page "
                   f"belongs to another company ({r[3][:44]}) — not activated", flush=True)
-            il = []
+            continue
         if il:
             fixed += 1
             print(f"  [OK]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL", flush=True)

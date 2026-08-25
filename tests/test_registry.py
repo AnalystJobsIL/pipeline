@@ -3843,3 +3843,245 @@ def test_auto_expand_clear_agg_urls_keeps_the_row_hunt_owned(tmp_path, monkeypat
     assert "url-cleared" in row[5] and "scanned; no open Israel roles now" in row[5], row
     assert LH.in_hunt_pool(row) and in_pool(row[5]), "the un-buried row left a pool: %r" % row
     assert out["Loris"][3] == "https://loris.ai/careers" and out["Fiverr"][4] == "true", out
+
+
+# ---------------------------------------------------------------------------------------
+# tools/mutate.py, 2026-08-25 (docs/BACKLOG.md 170): the gate ran the whole suite per
+# record and was cancelled at 45 min on every push. Now a derived subset runs first and the
+# full suite only when the subset does not settle the record; a baseline run excludes
+# tests red at HEAD from every verdict. These guards pin the parts that could quietly turn
+# a KILLED into a false green (or a red test into a false killer).
+# ---------------------------------------------------------------------------------------
+
+def _mutate_module():
+    import importlib.util
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    spec = importlib.util.spec_from_file_location("mutate_under_test",
+                                                  os.path.join(root, "tools", "mutate.py"))
+    M = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(M)
+    return M
+
+
+def test_the_mutation_selector_keeps_every_documented_killer():
+    """Every `Kills \`<id>\`` docstring names a record that exists, and that test is in
+    the record's subset; and every record that must die behaviourally has at least one
+    behavioural/direct test in its subset (else it could never resolve without the
+    full-suite fallback, and a selector that misses killers is a slow gate, not a wrong
+    one -- but it should be visible here rather than in a 45-minute CI log)."""
+    M = _mutate_module()
+    muts = M._load()
+    by_id = {m["id"]: m for m in muts}
+    kills = M._kills_map()
+    assert kills, "no `Kills` docstrings found -- the convention has gone"
+    missing = sorted(set(kills) - set(by_id))
+    assert not missing, "docstrings name records that do not exist: %r" % missing
+    for mid, tests in kills.items():
+        subset = set(M.select_tests(M.ROOT, by_id[mid]))
+        assert tests <= subset, "%s: documented killer(s) not selected: %r" % (mid, tests - subset)
+    starved = []
+    for m in muts:
+        if not m.get("must_be_killed_by_behavioural", True):
+            continue
+        subset = M.select_tests(M.ROOT, m)
+        if not any(M._classify_killer(M.ROOT, t) in ("behavioural", "direct") for t in subset):
+            starved.append(m["id"])
+    assert not starved, "records with no behavioural test in their subset: %r" % starved
+
+
+def test_the_mutation_selector_sees_through_aliases_helpers_and_strings(tmp_path):
+    """The linkage in this suite is mostly function-local imports, module-level aliases
+    and `importlib.import_module("<tool>")` strings; a selector blind to any of them
+    silently degrades to full-suite fallbacks."""
+    M = _mutate_module()
+    (tmp_path / "pipeline").mkdir()
+    (tmp_path / "pipeline" / "__init__.py").write_text("", encoding="utf-8")
+    (tmp_path / "pipeline" / "identity_gate.py").write_text("X = 1\n", encoding="utf-8")
+    (tmp_path / "crack_walled.py").write_text(
+        "def f():\n    from pipeline import identity_gate\n    return identity_gate.X\n",
+        encoding="utf-8")
+    (tmp_path / "auto_expand.py").write_text("Y = 2\n", encoding="utf-8")
+    (tmp_path / "unrelated.py").write_text("Z = 3\n", encoding="utf-8")
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "test_x.py").write_text("""
+import importlib
+import pytest
+from pipeline import identity_gate as IG
+
+
+def _helper():
+    import crack_walled
+    return crack_walled.f()
+
+
+def test_alias():
+    assert IG.X == 1
+
+
+def test_helper():
+    assert _helper() == 1
+
+
+@pytest.mark.parametrize("tool", ["auto_expand"])
+def test_string(tool):
+    assert importlib.import_module(tool)
+
+
+def test_unrelated():
+    import unrelated
+    assert unrelated.Z == 3
+""", encoding="utf-8")
+    root = str(tmp_path)
+    sel = M.select_tests(root, {"id": "r1", "file": "pipeline/identity_gate.py"})
+    assert sel == ["tests/test_x.py::test_alias", "tests/test_x.py::test_helper"], sel
+    sel = M.select_tests(root, {"id": "r2", "file": "auto_expand.py"})
+    assert sel == ["tests/test_x.py::test_string"], sel
+    sel = M.select_tests(root, {"id": "r3", "file": "unrelated.py"})
+    assert sel == ["tests/test_x.py::test_unrelated"], sel
+    # the optional `killers` hint is unioned in, never required
+    sel = M.select_tests(root, {"id": "r4", "file": "auto_expand.py",
+                                "killers": ["tests/test_x.py::test_alias"]})
+    assert sel == ["tests/test_x.py::test_alias", "tests/test_x.py::test_string"], sel
+
+
+def test_a_baseline_red_test_is_never_reported_as_a_killer(tmp_path):
+    """A test red at HEAD (a scraper date flake was red all of 2026-08-25) would make every
+    mutation look KILLED. It is deselected from every run AND subtracted from the parsed
+    failures, so a mutant that only that test catches reads as GREEN (= survived)."""
+    M = _mutate_module()
+    red = {"tests/test_units.py::test_red"}
+    out = "FAILED tests/test_units.py::test_red - AssertionError\n1 failed in 1.0s\n"
+    assert M._verdict(1, out, red, str(tmp_path), True) is None
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_units.py").write_text(
+        "def test_red():\n    assert 0\n\ndef test_real(tmp_path):\n    assert 0\n",
+        encoding="utf-8")
+    out2 = out + "FAILED tests/test_units.py::test_real - AssertionError\n"
+    v = M._verdict(1, out2, red, str(tmp_path), True)
+    assert v[0] == "KILLED" and v[2] == "tests/test_units.py::test_real" and v[1] == "behavioural", v
+    argv = M._pytest_argv(["tests/test_units.py::test_real"], ["tests/test_units.py::test_red[p]"])
+    assert "--deselect" in argv and "tests/test_units.py::test_red[p]" in argv, argv
+    # the parametrised form is stripped for the killer comparison
+    assert M._bare("tests/test_units.py::test_red[p]") == "tests/test_units.py::test_red"
+
+
+def test_the_full_suite_runs_when_the_subset_does_not_settle_the_record(tmp_path, monkeypatch):
+    """The subset may only END a record with a satisfying KILLED. Green, empty, or a
+    static-only kill must fall back to the whole suite, exactly as the gate always ran --
+    that is what keeps the verdict semantics identical to the single-run version."""
+    M = _mutate_module()
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_units.py").write_text(
+        "def test_beh(tmp_path):\n    pass\n\ndef test_static():\n    import inspect\n"
+        "    ast.parse('x')\n", encoding="utf-8")
+    (tmp_path / "mod.py").write_text("GATE = True\n", encoding="utf-8")
+
+    def _fake_archive(dest):
+        import shutil as _sh
+        _sh.copytree(str(tmp_path), dest, dirs_exist_ok=True)
+    monkeypatch.setattr(M, "_archive", _fake_archive)
+    monkeypatch.setattr(M, "select_tests", lambda root, mut, tests_dir=None: ["tests/test_units.py::test_beh"])
+    calls = []
+
+    def _runner(script):
+        def _run(work, node_ids, deselect):
+            calls.append(list(node_ids))
+            return script[len(calls) - 1]
+        return _run
+    mut = {"id": "m", "file": "mod.py", "find": "GATE = True", "replace": "GATE = False"}
+    beh = (1, "FAILED tests/test_units.py::test_beh - AssertionError\n")
+    static = (1, "FAILED tests/test_units.py::test_static - AssertionError\n")
+    green = (0, "1 passed\n")
+
+    calls.clear(); monkeypatch.setattr(M, "_run", _runner([green, beh]))
+    r = M.run_one(mut, str(tmp_path / "w1"))
+    assert r["status"] == "KILLED" and r["mode"] == "fallback:green" and len(calls) == 2 and calls[1] == [], (r, calls)
+
+    calls.clear(); monkeypatch.setattr(M, "_run", _runner([static, beh]))
+    r = M.run_one(mut, str(tmp_path / "w2"))
+    assert r["status"] == "KILLED" and r["mode"] == "fallback:static-only" and len(calls) == 2, (r, calls)
+
+    calls.clear(); monkeypatch.setattr(M, "_run", _runner([beh]))
+    r = M.run_one(mut, str(tmp_path / "w3"))
+    assert r["status"] == "KILLED" and r["mode"] == "subset" and len(calls) == 1, (r, calls)
+
+    calls.clear(); monkeypatch.setattr(M, "_run", _runner([green, green]))
+    r = M.run_one(mut, str(tmp_path / "w4"))
+    assert r["status"] == "FAIL" and "SURVIVED" in r["detail"] and len(calls) == 2, (r, calls)
+
+    calls.clear(); monkeypatch.setattr(M, "_run", _runner([static, static]))
+    r = M.run_one(mut, str(tmp_path / "w5"))
+    assert r["status"] == "FAIL" and "ONLY by source-text" in r["detail"], r
+
+
+def test_mutation_ids_are_unique_and_every_subset_fits_a_windows_command_line():
+    """Ids key the per-mutant work dirs (parallel sweep); a duplicate would share one.
+    And a subset's argv must stay under CreateProcess's 32 KiB on the dev machine."""
+    M = _mutate_module()
+    muts = M._load()
+    ids = [m["id"] for m in muts]
+    assert len(set(ids)) == len(ids), sorted({i for i in ids if ids.count(i) > 1})
+    for m in muts:
+        argv = M._pytest_argv(M.select_tests(M.ROOT, m))
+        assert len(" ".join(argv)) < 30_000, m["id"]
+    # the collapse rule itself
+    many = ["tests/test_units.py::test_%d" % i for i in range(2000)] + ["tests/test_registry.py::test_a"]
+    argv = M._pytest_argv(many)
+    assert "tests/test_units.py" in argv and "tests/test_registry.py::test_a" in argv
+    assert len(" ".join(argv)) < 30_000
+
+
+def test_the_census_step_never_probes_the_ladder_it_cannot_see(monkeypatch, capsys):
+    """`registry_health.py --census` runs in the digest's census step -- no Bright Data
+    env, no Playwright -- and printed two permanently false `rung DOWN` lines at the top
+    of the operator's report every morning (run 32813499709, 2026-08-25). The ladder is
+    `--ladder`'s (listing-hunt.yml, the one job with the keys); the census prints the
+    registry facts and the MAIL alarms only."""
+    import sys
+    import registry_health as RH
+    for k in ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE", "SERPAPI_KEY"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setattr("bd_rescue._load_secrets", lambda *a, **k: None)
+    # BACKLOG 44: no key must not read as "key present"
+    detail = RH.resources(live=False)["SerpApi"]["detail"]
+    assert "no SERPAPI_KEY" in detail, detail
+    rows = RH.read_rows()
+    probed = []
+    monkeypatch.setattr(RH, "resources", lambda live=False: probed.append(live) or {})
+    RH._report(rows, ladder=False)
+    out = capsys.readouterr().out
+    assert probed == [], "the census report probed the ladder"
+    assert "rung DOWN" not in out and "resolution ladder" not in out, out[-400:]
+    assert "re-check ownership" in out
+    # positive control: the default report still prints the ladder
+    RH._report(rows)
+    assert probed == [False] and "resolution ladder" in capsys.readouterr().out
+    # BACKLOG 44: an unknown flag says so and exits 2 instead of printing the report
+    monkeypatch.setattr(sys, "argv", ["registry_health.py", "--pools"])
+    assert RH.main() == 2
+    assert "unknown flag" in capsys.readouterr().out
+
+
+def test_repair_extract_gap_counts_a_refused_row_once(tmp_path, monkeypatch, capsys):
+    """BACKLOG 45: a row refused by a gate fell through to the `else` and was counted
+    twice -- "1 activated, 6 still dark" over four rows is the log a human reads to
+    decide whether the gate is too tight."""
+    import sys
+    import repair_extract_gap as G
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["NanoLock Security", "", "", "https://gen.wd1.myworkdayjobs.com/en-US/careers/",
+         "false", "dark-triage 2026-01-01: extract-gap (356 role phrases after render)"],
+        ["GoodCo", "", "", "https://www.goodco.com/careers/openings", "false",
+         "dark-triage 2026-01-01: extract-gap (12 role phrases after render)"],
+        ["Dark Ltd", "", "", "https://www.dark.example/careers", "false",
+         "dark-triage 2026-01-01: extract-gap (3 role phrases after render)"],
+    ])
+    monkeypatch.setattr("scrape_universal.scrape", lambda name, url: (
+        [] if name == "Dark Ltd" else [{"title": "Engineer", "location": "Tel Aviv"}]))
+    monkeypatch.setattr(IG, "page_names_company", lambda name, url, html="": False)
+    monkeypatch.setattr(sys, "argv", ["repair_extract_gap.py", "--apply"])
+    G.main()
+    out = capsys.readouterr().out
+    assert "=== repair: 1 activated, 2 still dark ===" in out, out[-300:]

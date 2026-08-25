@@ -374,7 +374,8 @@ def resources(live=False):
 
     if not live:
         add("SerpApi", bool(os.environ.get("SERPAPI_KEY")),
-            "key present; quota NOT checked (use --resources)")
+            "key present; quota NOT checked (use --resources)"
+            if os.environ.get("SERPAPI_KEY") else "no SERPAPI_KEY")
         return out
 
     key = os.environ.get("SERPAPI_KEY", "")
@@ -526,7 +527,7 @@ def alarms(rows=None, live=False, res=None, prev=None):
 
 # ---------------------------------------------------------------- report
 
-def _report(rows, live=False, want_ats=False):
+def _report(rows, live=False, want_ats=False, ladder=True):
     from collections import Counter
     act = [r for r in rows if r[4] == "true"]
     print(f"registry: {len(rows)} rows · {len(act)} active · {len(rows) - len(act)} parked")
@@ -554,10 +555,12 @@ def _report(rows, live=False, want_ats=False):
     orph = orphans(rows)
     print(f"  {len(orph):4}  OWNED BY NOTHING" + (f": {orph[:6]}" if orph else ""))
 
-    print("\nresolution ladder:")
-    res = resources(live=live)          # bind it: `alarms(..., res=res)` below needs it,
-    for key, st in res.items():         # and probing twice costs a Bright Data credit
-        print(f"  [{'OK' if st['ok'] else '--'}] {key}: {st['detail']}")
+    res = None
+    if ladder:
+        print("\nresolution ladder:")
+        res = resources(live=live)      # bind it: `alarms(..., res=res)` below needs it,
+        for key, st in res.items():     # and probing twice costs a Bright Data credit
+            print(f"  [{'OK' if st['ok'] else '--'}] {key}: {st['detail']}")
 
     if want_ats:
         print("\nunsupported ATS platforms — rows waiting on a native fetcher")
@@ -569,7 +572,7 @@ def _report(rows, live=False, want_ats=False):
             print(f"  {flag} {plat_name:18} {e['rows']:3} rows ({e['active']} active): "
                   f"{', '.join(e['companies'][:6])}{note}")
 
-    a = alarms(rows, live=live, res=res)
+    a = (alarms(rows, live=live, res=res) if ladder else alarms_state(rows))
     print(f"\nalarms for the daily mail: {len(a)}")
     for line in a:
         print(f"  ! {line}")
@@ -677,8 +680,17 @@ def explain(name, rows=None, fetch=False, out=print):
     return 0
 
 
+_FLAGS = ("--explain", "--fetch", "--resources", "--ats", "--census", "--ladder", "--json")
+
+
 def main():
     argv = sys.argv[1:]
+    unknown = [a for a in argv if a.startswith("--") and a not in _FLAGS]
+    if unknown:
+        # an unknown flag used to print the default report and exit 0 -- `--pools` looked
+        # like it had answered (docs/BACKLOG.md 44)
+        print(f"registry_health: unknown flag(s) {unknown}; known: {', '.join(_FLAGS)}")
+        return 2
     live = "--resources" in argv
     rows = read_rows()
     if "--explain" in argv:
@@ -717,7 +729,12 @@ def main():
         write_json(LADDER, {"date": TODAY, "rungs": rungs})
         print(f"ladder written: {len(rungs)} rung(s) down -> {LADDER}")
         return 0
-    a = _report(rows, live=live, want_ats=("--ats" in argv or "--census" in argv))
+    # `--census` runs inside the digest's census step, which has no Bright Data env and
+    # no Playwright: probing the ladder THERE printed two permanently false `rung DOWN`
+    # lines at the top of the operator's report every morning (2026-08-25). The ladder
+    # belongs to `--ladder` in listing-hunt.yml, the one job that can honestly probe it.
+    a = _report(rows, live=live, want_ats=("--ats" in argv or "--census" in argv),
+                ladder="--census" not in argv)
     if "--census" in argv:
         # The MAIL alarms (alarms_state, no ladder) are what this file records: writing the
         # full `alarms()` here put two permanently-false `rung DOWN` lines into a file the
