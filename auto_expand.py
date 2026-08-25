@@ -39,6 +39,7 @@ import sys
 import csv
 import json
 import os
+import re
 from urllib.parse import urlparse
 
 from pipeline.aggregators import is_aggregator as _is_agg_url
@@ -78,6 +79,28 @@ def _load_seen():
         return {k: v for k, v in d.items() if isinstance(v, str)} if isinstance(d, dict) else {}
     except Exception:  # noqa: BLE001
         return {}
+
+
+_LI_SITE = re.compile(r'data-tracking-control-name="about_website"[^>]+href="([^"?]+)', re.I)
+
+
+def _site_from_slug(slug, timeout=8):
+    """The company's own website from its public LinkedIn company page -- the one
+    non-aggregator seed intake can produce (BACKLOG 178; 399 of 1,544 queue entries carry
+    a slug). One bounded GET; "" on anything but a clear `about_website` link."""
+    if not slug or not re.fullmatch(r"[a-z0-9-]+", str(slug)):
+        return ""
+    try:
+        import urllib.request
+        req = urllib.request.Request(f"https://www.linkedin.com/company/{slug}/about/",
+                                     headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            html = r.read(400_000).decode("utf-8", "replace")
+    except Exception:  # noqa: BLE001
+        return ""
+    m = _LI_SITE.search(html)
+    site = (m.group(1) if m else "").strip()
+    return site if site.startswith("http") and not _is_agg_url(site) else ""
 
 
 def _names_now():
@@ -197,6 +220,15 @@ def main():
     for e in batch:
         name, url = e["name"].strip(), e["careers_url"]
         agg_seed = _is_agg_url(url)
+        if agg_seed and e.get("slug") and search_budget > 0:
+            # the slug can turn an aggregator seed into the company's OWN site (BACKLOG 178):
+            # one GET, bounded by the same search cap as the LLM tier; a real site is a
+            # tier-1 seed like any other, and the LLM tier then reads a real page too
+            site = _site_from_slug(e.get("slug"))
+            if site:
+                search_budget -= 1
+                url, agg_seed = site, False
+                print(f"  slug {name}: {e.get('slug')} -> {site[:60]}", flush=True)
         if agg_seed:
             # never rendered: the page is a posting on someone else's board (see module doc)
             r, kind = None, "unreachable"

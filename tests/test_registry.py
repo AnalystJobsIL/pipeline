@@ -4730,3 +4730,53 @@ def test_a_corrupt_scrape_cache_is_never_written_over(tmp_path, monkeypatch):
     monkeypatch.delenv("RETRY_LIMIT", raising=False)
     R.main()
     assert (tmp_path / "scraped_cache.json").read_text(encoding="utf-8") == "[not an object"
+
+
+def test_crack_walled_offers_the_native_api_for_a_cracked_eightfold_or_phenom_tenant():
+    """Kills `crack-eightfold-api-drop`. The fetchers exist since 2026-08-24; a cracked
+    tenant was still written as a nightly browser render (BACKLOG 77)."""
+    import crack_walled as C
+    m = C._HOST_PATTERNS["eightfold"].search("https://careers.qualcomm.com/api/pcsx/search?domain=qualcomm.com")
+    urls = C.listing_urls("eightfold", m, "https://careers.qualcomm.com/careers")
+    assert urls[0] == ("eightfold", "https://careers.qualcomm.com/api/pcsx/search?domain=qualcomm.com"), urls
+    assert ("scrape", "https://careers.qualcomm.com/careers?location=Israel") in urls
+    m = C._HOST_PATTERNS["eightfold"].search("https://paypal.eightfold.ai/careers")
+    urls = C.listing_urls("eightfold", m, "https://www.paypal.com/careers")
+    assert urls[0] == ("eightfold", "https://paypal.eightfold.ai/api/pcsx/search?domain=paypal.com"), urls
+    m = C._HOST_PATTERNS["phenom"].search("https://careers.gehealthcare.com/widgets")
+    urls = C.listing_urls("phenom", m, "https://careers.gehealthcare.com/")
+    assert urls[0] == ("phenom", "https://careers.gehealthcare.com/widgets"), urls
+    # the API candidate is verified through the production fetcher and returned as cracked-api
+    import inspect
+    src = inspect.getsource(C.crack_one)
+    assert 'if kind in ("oraclehcm", "eightfold", "phenom"):' in src
+
+
+def test_auto_expand_turns_a_linkedin_slug_into_the_companys_own_seed(tmp_path, monkeypatch):
+    """Kills `expand-slug-seed-drop`. 399 of 1,544 queue entries carry the LinkedIn slug the
+    bridge writes; it was never read (BACKLOG 178). A slug that resolves to the company's own
+    site is a tier-1 seed; one that does not leaves the name an aggregator seed."""
+    from pipeline import identity_gate as G
+    E = _expand_env(tmp_path, monkeypatch, [
+        {"name": "Fiverr", "careers_url": _LI, "slug": "fiverr"},
+        {"name": "Nope Ltd", "careers_url": _LI, "slug": "nope-ltd"},
+    ])
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    monkeypatch.setattr(E, "_site_from_slug", lambda slug, timeout=8: "https://www.fiverr.com/" if slug == "fiverr" else "")
+    rendered = []
+
+    def _resolve(name, url):
+        rendered.append((name, url))
+        return ("ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12))
+    monkeypatch.setattr(E, "resolve", _resolve)
+    calls = _llm_stub(monkeypatch, {})
+    E.main()
+    out = _read(tmp_path)
+    assert rendered == [("Fiverr", "https://www.fiverr.com/")], rendered
+    assert out["Fiverr"][4] == "true" and "Nope Ltd" not in out
+    assert calls == ["Nope Ltd"], calls
+    # the slug parser itself: a real about-page shape, and an aggregator link is refused
+    html = '<a data-tracking-control-name="about_website" href="https://www.fiverr.com/?trk=x">'
+    monkeypatch.setattr(E, "_LI_SITE", E._LI_SITE)
+    assert E._LI_SITE.search(html).group(1) == "https://www.fiverr.com/"
+    assert E._site_from_slug("has space") == ""

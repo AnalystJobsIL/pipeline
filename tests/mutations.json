@@ -1417,5 +1417,25 @@
     "replace": "        if True:\n            with open(\"scraped_cache.json\", \"w\", encoding=\"utf-8\") as f:",
     "why": "same rule in the 02:30 chain (BACKLOG 156).",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "crack-eightfold-api-drop",
+    "file": "crack_walled.py",
+    "symbol": "listing_urls",
+    "class": "M6-fallback-removal",
+    "find": "        api = ([(\"eightfold\", f\"https://{host}/api/pcsx/search?domain={dom}\")] if dom",
+    "replace": "        api = ([] if dom",
+    "why": "a cracked Eightfold tenant must become an API row, not a nightly browser render (BACKLOG 77).",
+    "must_be_killed_by_behavioural": false
+  },
+  {
+    "id": "expand-slug-seed-drop",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "        if agg_seed and e.get(\"slug\") and search_budget > 0:",
+    "replace": "        if False:",
+    "why": "the slug is the one non-aggregator seed intake produces; ignoring it leaves 399 names on the LLM tier alone (BACKLOG 178).",
+    "must_be_killed_by_behavioural": true
   }
 ]

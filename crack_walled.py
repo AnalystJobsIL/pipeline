@@ -121,8 +121,18 @@ def listing_urls(platform, m, page_url):
     if platform in ("eightfold", "phenom"):
         host = m.group(1)
         host = host if "." in host else f"{host}.eightfold.ai"
-        return [("scrape", f"https://{host}/careers?location=Israel"),
-                ("scrape", f"https://{host}/careers")]
+        # The native fetchers exist (2026-08-24, `fetch_eightfold` / `fetch_phenom`): a
+        # cracked tenant becomes an API row, verified through `verify()` like oraclehcm,
+        # instead of a nightly browser render (BACKLOG 77). Eightfold's `?domain=` is the
+        # COMPANY's domain (careers.qualcomm.com -> qualcomm.com); on the shared
+        # app.eightfold.ai host it is the careers page's own host.
+        page_host = urllib.parse.urlparse(page_url or "").netloc.lower().replace("www.", "")
+        dom = (host.split(".", 1)[1] if host.count(".") > 1 and "eightfold.ai" not in host
+               else (page_host if page_host and "eightfold.ai" not in page_host else ""))
+        api = ([("eightfold", f"https://{host}/api/pcsx/search?domain={dom}")] if dom
+               else []) if platform == "eightfold" else [("phenom", f"https://{host}/widgets")]
+        return api + [("scrape", f"https://{host}/careers?location=Israel"),
+                      ("scrape", f"https://{host}/careers")]
     if platform == "successfactors":
         return [("scrape", page_url)]           # RMK career sites: scrape the site itself
     if platform == "avature":
@@ -213,11 +223,13 @@ def crack_one(name, seed, platform):
     from pipeline.israel import is_israel_job
     foreign = None
     for kind, lu in captures[:3]:
-        if kind == "oraclehcm":
+        if kind in ("oraclehcm", "eightfold", "phenom"):
+            # a native API candidate: verified through the production fetcher, and the
+            # write is gated exactly like every other `cracked-*` verdict in main()
             try:
-                n_all, n_il = verify(name, "oraclehcm", "", lu)
+                n_all, n_il = verify(name, kind, "", lu)
                 if n_il or n_all:
-                    return ("cracked-api", ("oraclehcm", lu), n_il, f"{n_all} total")
+                    return ("cracked-api", (kind, lu), n_il, f"{n_all} total")
             except Exception:  # noqa: BLE001
                 continue
         else:
