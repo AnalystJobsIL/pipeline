@@ -937,11 +937,26 @@ Four more rules this matrix exists to enforce, each violated in production at le
   Each re-stamp trims the base to fit 220 chars; once the verdict eroded (`no IL listing;
   monitored candidate` → `no `) the row matched no pool at all. `triage_dark.TARGET_NOTES`
   therefore matches its **own** `dark-triage` stamp, the fact pools above stand on the row's
-  address, and `notes.append` **never evicts a protected segment** — a terminal token (the
-  only thing keeping a row out of every activating pool, and by construction the oldest
-  segment) or `unsupported ATS` (the crack pool's membership fact); `merge_csv_rows` honours
-  the same protection on the conflict path. `tests/rehearse_registry.py --nights 14` is the
-  proof, and `tests.yml` runs it on every push.
+  address, and `notes.append` **never evicts a protected segment while an unprotected one
+  remains, and never slices anything** — protected: a terminal token (the only thing keeping
+  a row out of every activating pool), `unsupported ATS` (the crack pool's fact), `dark-triage
+  <date>: <mode>` (triage's and extract-gap's), `no open Israel roles` / `empty-but-suspect` /
+  `cross-validated` (validate_empty's). One rule: the oldest unprotected segment goes first,
+  a protected one never goes, and when only protected segments remain the newcomer is
+  dropped whole — that tool loses tonight's date on a saturated row, never a pool
+  (`docs/BACKLOG.md` 205). `merge_csv_rows` honours the same rule on the conflict path. The
+  first version cut the newcomer to `crack-walled <date>: ` when protected segments filled the
+  cell, and check F then blocked the whole night's registry commit; letting the oldest fact
+  yield instead cost 12 rows their `no open Israel roles` selector (wave-1, 2026-08-26).
+  **The probe's wake keeps the facts too**: `_wake_note` strips only `listing-hunt` /
+  `crack-walled` / an older `probe-woken`, stamps a DATED `probe-woken <date>`, the hunt's
+  page-empty exclusion yields to a wake at least as new as the triage stamp, and the hunt
+  consumes the stamp with its verdict — an undated wake nothing removed had retired 6 rows
+  from triage's schedule forever. `registry_health.pool_growth` reports a pool that grew by
+  half since the last census (the mail line `re-check pool grew:`), because two of these pools
+  activate. `tests/rehearse_registry.py --nights 14` (production's flags, DNS banned,
+  `repair_dead_urls` and `wayback_rescue` on the schedule, `REHEARSE_SELF_TEST=overwrite` as
+  its own control) is the proof; `tests.yml` runs `worst` and `mixed` seeds 1–5 on every push.
 
 ## 3. Resolution ladder — how a dark company becomes covered
 *lane: `registry`*

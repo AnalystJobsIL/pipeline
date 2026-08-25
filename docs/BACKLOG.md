@@ -1199,7 +1199,7 @@ Three reviewers, all findings reproduced before action. Seven were fixed; these 
     A per-platform floor, or making the guard iterate `_PLATFORM_ALIAS`, closes it.
 
 52. **The 14-night chain simulation has never actually completed** — lane: `registry`.
-    **CLOSED 2026-08-26 (`registry`):** `tests/rehearse_registry.py` — every scheduled tool's real `main()` over a copy of the registry, network forbidden, each per-row verdict seam stubbed at the tool's own function, a fake clock, the real UTC schedule; `worst` and `mixed` policies; `--trace NAME`. 14 nights `worst` at HEAD: every pool flat, 0 orphans, no floor alarm. Two nights over 200 rows run in pytest; the 14 run in `tests.yml` (infra line, disclosed).
+    **CLOSED 2026-08-26 (`registry`):** `tests/rehearse_registry.py` — every scheduled tool's real `main()` over a copy of the registry, network forbidden, each per-row verdict seam stubbed at the tool's own function, a fake clock, the real UTC schedule; `worst` and `mixed` policies; `--trace NAME`. 14 nights `worst` at HEAD: every pool flat, 0 orphans, no floor alarm. Two nights over 200 rows run in pytest; the 14 run in `tests.yml` (infra line, disclosed). **Wave 1 (`d17fe7a`):** `mixed` seed 1 failed night 5 (a truncated newcomer, check F) and the harness pinned `VALIDATE_EMPTY_SIGNALS=1`, which production never sets — with production's value the token arm lost Enzymit on night 4. Both fixed; the rehearsal now runs production's flags, bans DNS, schedules `repair_dead_urls` + `wayback_rescue`, has `REHEARSE_SELF_TEST=overwrite` as its own control, and CI runs `worst` + `mixed` seeds 1–5 (all flat, 27 s each).
     Reviewer R3 attempted it and disclosed that it did not finish: `listing_hunt` spawns
     out-of-process Chromium that an in-process socket stub cannot reach, so night 1 ran past
     40 minutes. Only night 0 was captured (`active=862 crack=50 hunt~=216 unsupATS=50
@@ -2400,7 +2400,7 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     DDG-first with SerpApi as the tie-breaker for names DDG cannot find — measure the DDG
     hit-rate on the runners from the `dfer … no-candidates` counts first.
 197. **`url-cleared` costs the `scanned; no open` token its place under the 220 cap** — lane:
-    **CLOSED 2026-08-26 (`registry`):** `validate_empty` is a fact pool (the probe's rows minus walled hosts) with the empty-class token arm today and the probe-baseline arm behind `VALIDATE_EMPTY_SIGNALS=1` (staged: it activates; 28 → 29 today, ~113 with the arm).
+    **CLOSED 2026-08-26 (`registry`):** `validate_empty` is a fact pool (the probe's rows minus walled hosts) with the empty-class token arm today and the probe-baseline arm behind `VALIDATE_EMPTY_SIGNALS=1` (staged: it activates; 28 → 29 today, 93 with the arm). Its own facts (`empty-but-suspect`, `cross-validated`) are protected segments since `d17fe7a`. **Before enabling the arm, 200–202 below.**
     `registry`. On the 28 un-buried rows the oldest segment is `scanned; no open Israel roles
     now`; after triage + hunt + one deep-validate stamp it is evicted (headroom 32 chars,
     every deep-validate verdict is 38–53). Only `validate_empty` keys on it, and those rows
@@ -2420,3 +2420,54 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     `google_via_unlocker` when `len(cands) < 2`; bounded by `DEEP_BD_SEARCH_CAP` in the
     hunt's process. 29 such rows today. Cost, not correctness; count it against the 4,500
     ceiling (192) if the hunt's BD line in the mail grows.
+
+200. **`validate_empty` discards its own `suspect` finding on 67 of the 93 signals-arm rows**
+    — lane: `registry`. `main()` writes the `empty-but-suspect` note only when the old segment
+    carried `no open israel roles`; rows that enter by the probe fact never satisfy that guard,
+    so every Sunday's `suspect` on them is a print and nothing else (wave-1 attacker, 2026-08-26;
+    26 written / 67 skipped). Harmless while `VALIDATE_EMPTY_SIGNALS` is unset; a precondition
+    for setting it. Fix: stamp on every `suspect`, through `replace_own`.
+201. **The probe's `ever` fact is set by any 200 page — soft-404s, ATS vendor landing pages,
+    bot-block interstitials — and is never cleared** — lane: `registry`. Measured: the 11
+    Comeet-widget rows (`www.comeet.com/jobs/*`) return a constant `sig=3, il=0` (a JS-shell
+    fingerprint) and can never wake; 93 of 194 existing baselines flip `ever` on the first
+    `--apply`; `Lili`, `Behalf`, `InnovoPro`, `Nokod Security`, `Enabley` point at other
+    companies' or portfolio boards that always show `apply now`. Activation is still held by
+    `activation_ok` + `embedded_board_ok`, so the cost is fetch-burn and unclearable
+    membership, not a wrong write. Before the arm ships: exclude constant-signal shapes from
+    `ever`, and re-test `is_aggregator` on the *promoted* `api` in `check()` (a VC/portfolio
+    board legitimately carrying the company's slug passes both gate clauses by construction).
+202. **17 aggregator/agency addresses, a PDF and an API search page are inside the 228-row probe
+    pool** — lane: `registry` (+ `pipeline/aggregators` for the list). `is_aggregator` does not
+    know `roberthalf.com`, `usajobs.gov`, `careeronestop.org`, `consider.com/boards`,
+    `jobquasar.com`, `nbn.org.il/jobboard`, `jobs.jvpvc.com`, `careers.meron.co`,
+    `legaltechjobs.com`, `employbl.com`, `jobappnetwork.com`; `Continuse Biometrics` points at
+    a 600 KB PDF and `RapidAPI` at `rapidapi.com/search/Jobs`. 57 of the 103 rows the fact
+    pool added carry a hunt verdict `another company's board` / `url-flagged` — the probe now
+    measures those pages nightly and a wake re-arms the hunt on a known-wrong seed. Fix: teach
+    `is_aggregator` the hosts (measure first: each is one row), skip `.pdf` / non-HTML
+    content types in `probe()`, and let `_wake_note` keep a hunt segment that says
+    `another company's board`.
+203. **The probe cannot baseline its pool: ~130 rows/night at the 10-minute budget, 97 of 228
+    have no usable baseline, 46 of 177 state entries are error-only, and a wake needs two
+    successes (≥ 4 nights, never for the persistent-error subset)** — lane: `registry`.
+    Measured from the three committed `candidate_probe.json` states (117 → 176 → 194 entries).
+    The 11 Comeet rows consume 11 slots forever (201). Options: a per-row cooldown for
+    error-only entries, a smaller timeout for hosts that timed out twice, or splitting the
+    pool across two mornings. Also: 17 state entries no longer in the pool are never pruned.
+204. **The rehearsal's `mixed` policy asserts only the union invariants** — lane: `registry`.
+    Per-pool retention and the `halved` alarm are `worst`-only by design (rows legitimately
+    MOVE under `mixed`), so a pool may go 39 → 3 under `mixed` with nothing red, the promote
+    branch of `validate_empty.check` is never exercised, and `PROBE_TIME_BUDGET_MIN=0` probes
+    all 228 rows a night (the real budget's starvation is not rehearsed). The self-test and
+    the five seeds in CI are the current mitigation; a per-pool "net of legitimate moves"
+    invariant is the fix.
+205. **A note whose protected segments fill the cell silently drops every later stamp** —
+    lane: `registry`, accepted for now. With eviction forbidden to take a protected segment
+    and slicing forbidden, such a row returns the same cell for every newcomer: the writing
+    tool keeps no date, so it re-does the row every night (`stale()` stays True) and records
+    nothing. Today only three rows are saturated (`GE HealthCare Israel`, `eBay Israel`,
+    `Moonsite`, all `alias-of` — terminal, selected by no pool); 4 non-terminal rows have
+    under 60 chars of room (`Addionics` 54). Measure nightly with the harness; if a live row
+    saturates, the fix is a shorter `dark-triage` reason (p90 109 chars today, max 138), not
+    a wider cell and not eviction.

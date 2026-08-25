@@ -51,40 +51,35 @@ def _protected(seg):
     return bool(_terminal_rx().search(seg) or _PROTECTED_EXTRA.search(seg))
 
 
-def _terminal(seg):
-    return bool(_terminal_rx().search(seg))
-
-
 def append(base: str, segment: str, cap: int = CAP, keep=None) -> str:
     """`base` with `segment` appended, trimmed to `cap` by dropping OLD whole segments --
     never a TERMINAL one. An `alias-of` / `defunct` / `domain-dead` segment is the only
     thing keeping a row out of every ACTIVATING pool, and by construction it is the oldest
     segment on the row (2026-08-26: 19 parked rows carried a terminal token that was not the
     newest segment on a note > 150 chars -- one or two more stamps evicted it). `keep` is
-    the protecting regex (default: the shared terminal list). Eviction order: the oldest
-    UNPROTECTED segment, then the oldest protected NON-terminal one (another pool's fact
-    yields to the newest verdict rather than either being cut), and when only terminal
-    segments remain and the newcomer still does not fit, the newcomer is DROPPED whole --
-    on a terminal row no re-check verdict matters. Nothing is ever sliced: a wave-1
-    attacker (2026-08-26) drove the old `room <= 0` branch to cut a protected `dark-triage`
-    segment mid-word and the `room > 0` branch to leave `crack-walled <date>: ` -- the
-    dangling verdict check_invariants F then blocked the digest on."""
+    the protecting regex (default: the shared terminal list). ONE rule: a protected segment
+    is never evicted, and nothing is ever sliced -- when only protected segments remain and
+    the newcomer does not fit, the newcomer is DROPPED whole. A wave-1 attacker (2026-08-26)
+    drove the old `room <= 0` branch to cut a protected `dark-triage` segment mid-word and
+    the `room > 0` branch to leave `crack-walled <date>: ` (check_invariants F then blocked
+    the digest); letting the oldest protected fact yield instead cost 12 rows their
+    `no open Israel roles` selector. Dropping the newcomer costs that tool tonight's date on
+    a saturated row (it re-does the row tomorrow), never a pool (docs/BACKLOG.md 205)."""
     seg = " ".join(str(segment or "").split())
     if not seg:
         return str(base or "")[:cap]
     protected = _protected if keep is None else (lambda p: bool(keep.search(p)))
     parts = split(base)
     while parts and len(SEP.join(parts + [seg])) > cap:
-        victims = ([i for i, p in enumerate(parts) if not protected(p)]
-                   or [i for i, p in enumerate(parts) if not _terminal(p)])
+        victims = [i for i, p in enumerate(parts) if not protected(p)]
         if not victims:
             break
-        parts.pop(victims[0])            # oldest UNPROTECTED first, then oldest non-terminal
+        parts.pop(victims[0])            # oldest UNPROTECTED first
     out = SEP.join(parts + [seg])
     if len(out) <= cap:
         return out
-    if parts:                            # only terminal segments left: the newcomer is dropped
-        return SEP.join(parts)[:cap]
+    if parts:                            # only protected segments left: the newcomer is dropped
+        return SEP.join(parts)           # (a base already over the cap is left as it was: no slice)
     # a single segment longer than the cap is the caller's problem, not the log's: keep the
     # verdict and lose its tail rather than emit something that parses as a different verdict
     return seg[:cap]
@@ -102,9 +97,5 @@ def replace_own(base: str, marker: str, segment: str, cap: int = CAP) -> str:
 
 def has_terminal(note: str) -> bool:
     """Is this segment protected (terminal, or another pool's membership fact)? The merge
-    asks before trimming; `is_terminal_segment` is the narrower question it asks last."""
+    asks before trimming."""
     return _protected(note or "")
-
-
-def is_terminal_segment(seg: str) -> bool:
-    return _terminal(seg or "")

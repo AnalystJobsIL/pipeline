@@ -4941,18 +4941,17 @@ def test_two_rehearsed_nights_keep_every_pool():
 # ---------------------------------------------------------------------------------------
 
 def test_append_never_slices_a_protected_segment_and_evicts_a_fact_before_cutting():
-    """Kills `append-slice-restore` and `append-fact-evict-drop`. Two protected segments
+    """Kills `append-slice-restore` and `append-fact-evict`. Two protected segments
     filled the cell: the old code cut `dark-triage ...: <mode>` mid-word (silent) or left
     `crack-walled <date>: ` dangling (check F then BLOCKED the digest -- mixed seed 1,
     night 5)."""
     from pipeline.notes import append
     a = "deep-validated 2026-08-20: unsupported ATS icims.com (" + "x" * 60 + ")"
-    b = "dark-triage 2026-08-23: blocked (" + "y" * 90 + ")"
+    b = "dark-triage 2026-08-23: blocked (" + "y" * 70 + ")"
     new = "crack-walled 2026-08-31: nocapture (ATS host not seen in render)"
     out = append(a + " | " + b, new)
-    assert out.endswith(new) and len(out) <= 220, out
-    assert "unsupported ATS" not in out and "dark-triage 2026-08-23: blocked" in out, (
-        "the OLDEST protected non-terminal fact yields whole; nothing is cut")
+    assert out == a + " | " + b, "two protected facts stay; the newcomer is dropped whole, nothing is cut"
+    assert "crack-walled" not in out
     # terminal-only base: the newcomer is dropped whole, never a dangling `tool date: `
     t = "alias-of Kornit Digital 2026-08-25: identical board URL (BACKLOG 133) " + "z" * 130
     out2 = append(t, new)
@@ -5020,10 +5019,11 @@ def test_the_merge_trims_the_theirs_tail_then_a_fact_and_never_slices():
     `dark-triage <date>: page-empt` when only protected segments remained."""
     import re
     import merge_csv_rows as M
-    ours = "deep-validated 2026-08-20: unsupported ATS phenom (" + "x" * 70 + ") | dark-triage 2026-09-01: page-empty (" + "y" * 80 + ")"
-    theirs = "deep-validated 2026-08-20: unsupported ATS phenom (" + "x" * 70 + ") | listing-hunt 2026-09-02: no listing found (" + "z" * 60 + ")"
+    ours = "deep-validated 2026-08-20: unsupported ATS phenom (" + "x" * 40 + ") | dark-triage 2026-09-01: page-empty (" + "y" * 60 + ")"
+    theirs = "deep-validated 2026-08-20: unsupported ATS phenom (" + "x" * 40 + ") | listing-hunt 2026-09-02: no listing found (" + "z" * 60 + ")"
     merged = M._merge_notes(theirs, ours, cap=220)
     assert len(merged) <= 220 and merged.startswith("deep-validated 2026-08-20"), merged
+    assert "dark-triage 2026-09-01: page-empty" in merged, "ours' protected fact stays; theirs' tail goes whole"
     assert not re.search(r"\d{4}-\d{2}-\d{2}:?\s*$", merged) and "page-empt" not in merged.replace("page-empty", "")
     # ours' own newest segment survives ahead of theirs' unique tail
     o2 = "alias-of X 2026-08-01: twin | listing-hunt 2026-09-01: own verdict (" + "a" * 100 + ")"

@@ -1443,7 +1443,7 @@
   "file": "pipeline/notes.py",
   "symbol": "append",
   "class": "M1-gate-removal",
-  "find": "        victims = ([i for i, p in enumerate(parts) if not protected(p)]\n                   or [i for i, p in enumerate(parts) if not _terminal(p)])",
+  "find": "        victims = [i for i, p in enumerate(parts) if not protected(p)]",
   "replace": "        victims = list(range(len(parts)))",
   "why": "eviction must never take the alias-of/defunct segment that keeps a row out of every activating pool (19 rows at risk).",
   "must_be_killed_by_behavioural": true
@@ -1549,13 +1549,13 @@
   "must_be_killed_by_behavioural": true
  },
  {
-  "id": "append-fact-evict-drop",
+  "id": "append-fact-evict",
   "file": "pipeline/notes.py",
   "symbol": "append",
-  "class": "M3-branch-narrowing",
-  "find": "        victims = ([i for i, p in enumerate(parts) if not protected(p)]\n                   or [i for i, p in enumerate(parts) if not _terminal(p)])",
-  "replace": "        victims = [i for i, p in enumerate(parts) if not protected(p)]",
-  "why": "when only protected segments remain, the oldest NON-terminal fact must yield whole rather than anything being cut or the newcomer dropped on a live row.",
+  "class": "M1-gate-removal",
+  "find": "        victims = [i for i, p in enumerate(parts) if not protected(p)]",
+  "replace": "        victims = ([i for i, p in enumerate(parts) if not protected(p)]\n                   or [i for i, p in enumerate(parts) if not _terminal_rx().search(p)])",
+  "why": "letting a protected non-terminal fact yield evicted `no open Israel roles` on 12 real rows (validate_empty's selector); a protected segment is never evicted.",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -1633,8 +1633,8 @@
   "file": "pipeline/notes.py",
   "symbol": "append",
   "class": "M3-branch-narrowing",
-  "find": "        parts.pop(victims[0])            # oldest UNPROTECTED first, then oldest non-terminal",
-  "replace": "        parts.pop(victims[-1])           # oldest UNPROTECTED first, then oldest non-terminal",
+  "find": "        parts.pop(victims[0])            # oldest UNPROTECTED first",
+  "replace": "        parts.pop(victims[-1])           # oldest UNPROTECTED first",
   "why": "evicting the NEWEST unprotected segment inverts the module's one rule (attacker 2, B3).",
   "must_be_killed_by_behavioural": true
  },
@@ -1663,8 +1663,8 @@
   "file": "merge_csv_rows.py",
   "symbol": "_merge_notes",
   "class": "M3-branch-narrowing",
-  "find": "        victims = ([i for i in range(len(out) - 1, -1, -1) if not has_terminal(out[i])]",
-  "replace": "        victims = ([i for i in range(len(out)) if not has_terminal(out[i])]",
+  "find": "        victims = [i for i in range(len(out) - 1, -1, -1) if not has_terminal(out[i])] or [len(out) - 1]",
+  "replace": "        victims = [i for i in range(len(out)) if not has_terminal(out[i])] or [len(out) - 1]",
   "why": "the merge must trim the THEIRS tail (stale duplicates), never ours' head -- the lost update the comment says it prevents.",
   "must_be_killed_by_behavioural": true
  },
@@ -1673,8 +1673,8 @@
   "file": "merge_csv_rows.py",
   "symbol": "_merge_notes",
   "class": "M1-gate-removal",
-  "find": "                   or [len(out) - 1])\n        out.pop(victims[0])\n    return \" | \".join(out)",
-  "replace": "                   or [])\n        if not victims:\n            break\n        out.pop(victims[0])\n    return \" | \".join(out)[:cap]",
+  "find": "        victims = [i for i in range(len(out) - 1, -1, -1) if not has_terminal(out[i])] or [len(out) - 1]\n        out.pop(victims[0])\n    return \" | \".join(out)",
+  "replace": "        victims = [i for i in range(len(out) - 1, -1, -1) if not has_terminal(out[i])]\n        if not victims:\n            break\n        out.pop(victims[0])\n    return \" | \".join(out)[:cap]",
   "why": "the conflict path sliced a protected segment mid-word (`page-empt`) or left `dark-triage <date>: ` dangling, blocking the digest (attacker 2, R2).",
   "must_be_killed_by_behavioural": true
  },

@@ -97,13 +97,12 @@ def _merge_notes(theirs: str, ours: str, cap: int = 220, base: str | None = None
     # a conflict day must not evict the `alias-of` that keeps a row out of every pool
     # ...and never a SLICE (2026-08-26, attacker 2): when only protected segments remained
     # the old `[:cap]` cut one mid-word (`dark-triage 2026-09-01: page-empt` -- the 87-row
-    # bug, back through the conflict path). Order, from the theirs tail: unprotected, then
-    # a protected non-terminal fact, then a whole terminal segment rather than a cut one.
-    from pipeline.notes import has_terminal, is_terminal_segment
+    # bug, back through the conflict path). From the theirs tail: an unprotected segment,
+    # else the tail itself -- `ours` is already within the cap, so the tail is always one of
+    # theirs' stale duplicates, dropped whole.
+    from pipeline.notes import has_terminal
     while out and len(" | ".join(out)) > cap:
-        victims = ([i for i in range(len(out) - 1, -1, -1) if not has_terminal(out[i])]
-                   or [i for i in range(len(out) - 1, -1, -1) if not is_terminal_segment(out[i])]
-                   or [len(out) - 1])
+        victims = [i for i in range(len(out) - 1, -1, -1) if not has_terminal(out[i])] or [len(out) - 1]
         out.pop(victims[0])
     return " | ".join(out)
 
