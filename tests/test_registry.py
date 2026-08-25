@@ -456,9 +456,15 @@ def test_triage_does_not_consume_a_probe_wake_before_the_hunt_can_use_it():
     test, so the signal is spent. Same class as the inert wake, opposite direction."""
     import inspect
     import triage_dark
+    from probe_candidates import _wake_note
+    note = "no ATS detected | listing-hunt 2026-08-20: no listing found | dark-triage 2026-08-24: extract-gap (2 role phrases)"
+    woken = _wake_note(note)
+    assert "dark-triage 2026-08-24: extract-gap" in woken, "the wake must keep triage's dated segment"
+    assert not triage_dark._needs_triage(woken), "a kept, fresh triage stamp is what keeps triage off the woken row"
     src = inspect.getsource(triage_dark.main)
-    assert '"probe-woken" not in' in src, (
-        "triage claims woken rows and burns the wake an hour before the hunt runs")
+    assert '"probe-woken" not in' not in src, (
+        "a `probe-woken` exclusion in main() is permanent (nothing cleared it): 6 rows left "
+        "triage's schedule forever while in_triage_pool still counted them")
 
 def test_the_search_ladder_warning_fires_on_a_trailing_window_not_the_whole_run():
     """The first gate was `produced == 0` for the RUN, so one productive search anywhere
@@ -4927,3 +4933,154 @@ def test_two_rehearsed_nights_keep_every_pool():
                         "--nights", "2", "--rows", "200", "--policy", "worst"],
                        capture_output=True, text=True, cwd=root, timeout=600)
     assert r.returncode == 0 and "rehearsal OK" in r.stdout, r.stdout[-1200:] + r.stderr[-400:]
+
+
+# ---------------------------------------------------------------------------------------
+# Batch 3 wave 1 (2026-08-26): the wake keeps the protected facts, the wake is dated and
+# consumed, append never slices, a pool that grows is reported, the census key is stable.
+# ---------------------------------------------------------------------------------------
+
+def test_append_never_slices_a_protected_segment_and_evicts_a_fact_before_cutting():
+    """Kills `append-slice-restore` and `append-fact-evict-drop`. Two protected segments
+    filled the cell: the old code cut `dark-triage ...: <mode>` mid-word (silent) or left
+    `crack-walled <date>: ` dangling (check F then BLOCKED the digest -- mixed seed 1,
+    night 5)."""
+    from pipeline.notes import append
+    a = "deep-validated 2026-08-20: unsupported ATS icims.com (" + "x" * 60 + ")"
+    b = "dark-triage 2026-08-23: blocked (" + "y" * 90 + ")"
+    new = "crack-walled 2026-08-31: nocapture (ATS host not seen in render)"
+    out = append(a + " | " + b, new)
+    assert out.endswith(new) and len(out) <= 220, out
+    assert "unsupported ATS" not in out and "dark-triage 2026-08-23: blocked" in out, (
+        "the OLDEST protected non-terminal fact yields whole; nothing is cut")
+    # terminal-only base: the newcomer is dropped whole, never a dangling `tool date: `
+    t = "alias-of Kornit Digital 2026-08-25: identical board URL (BACKLOG 133) " + "z" * 130
+    out2 = append(t, new)
+    assert out2 == t[:220] and "crack-walled" not in out2
+    import re
+    assert not re.search(r"\d{4}-\d{2}-\d{2}:?\s*$", out2)
+
+
+def test_the_wake_is_dated_keeps_the_triage_fact_and_the_hunt_consumes_it(monkeypatch):
+    """Kills `wake-strips-triage`, `wake-undated`, `hunt-keeps-wake`,
+    `page-empty-ignores-wake`. 39/39 extract-gap rows and 115/228 triage rows left their
+    pool on the first wake; `probe-woken` then lived forever."""
+    import re
+    import probe_candidates as PC
+    import listing_hunt as LH
+    import triage_dark as TD
+    import repair_extract_gap as RG
+    note = ("listing-hunt 2026-08-20: no IL listing; monitored candidate | "
+            "dark-triage 2026-08-24: extract-gap (2 role phrases after render)")
+    woken = PC._wake_note(note)
+    assert re.search(r"probe-woken \d{4}-\d{2}-\d{2}: re-hunt pending$", woken), woken
+    row = ["X", "scrape", "", "https://www.x.example/careers", "false", woken]
+    assert TD.in_triage_pool(row) and RG.in_extract_gap_pool(row) and LH.in_hunt_pool(row)
+    assert "listing-hunt" not in woken
+    # page-empty yields to a wake at least as new as the stamp; not to an older one
+    pe = "dark-triage 2026-08-24: page-empty (live page, 0 roles)"
+    assert LH._triaged_page_empty(pe)
+    assert not LH._triaged_page_empty(pe + " | probe-woken 2026-08-25: re-hunt pending")
+    assert not LH._triaged_page_empty(pe + " | probe-woken: re-hunt pending"), "legacy undated = fresh once"
+    assert LH._triaged_page_empty("probe-woken 2026-08-01: re-hunt pending | " + pe)
+    # the hunt's write consumes the wake; a second wake does not stack
+    consumed = LH._consume_wake(woken)
+    assert "probe-woken" not in consumed and "dark-triage 2026-08-24: extract-gap" in consumed
+    assert PC._wake_note(woken).count("probe-woken") == 1
+    src = open(LH.__file__, encoding="utf-8").read()
+    assert src.count('_consume_wake(fr[5]), "listing-hunt"') == 5, "every hunt stamp consumes the wake"
+
+
+def test_a_pool_that_grows_by_half_is_a_mail_line_and_the_deep_key_is_stable():
+    """Kills `growth-line-drop` and `deep-key-rename`. 127 -> 228 re-baselined silently;
+    `deep_validate` -> `deep_validate rung` skipped that floor until the next census."""
+    import registry_health as RH
+    rows = [["A%d" % i, "scrape", "", "https://a%d.example/careers" % i, "false", "no listing found"]
+            for i in range(30)]
+    prev = {RH._POOLS_KEY: {"probe_candidates": 12, "listing_hunt": 30, "deep_validate": 4}}
+    lines = RH.pool_growth(rows, prev=prev)
+    assert any("probe_candidates 12 -> 30" in x for x in lines), lines
+    assert not any("listing_hunt" in x for x in lines)
+    assert "deep_validate" in {k.split(" (")[0] for k in RH.pools(rows)}, "census key renamed"
+    assert lines[0] in RH.alarms_state(rows, prev=prev)
+
+
+def test_append_evicts_the_oldest_unprotected_first_and_a_dangling_mode_is_not_protected():
+    """Kills `append-newest-first` and `protected-mode-empty`."""
+    from pipeline.notes import append, _protected
+    base = "listing-hunt 2026-08-01: no listing found | crack-walled 2026-08-02: nocapture (" + "q" * 60 + ")"
+    out = append(base, "deep-validated 2026-08-03: x" + "w" * 60)
+    assert "listing-hunt 2026-08-01" not in out and "crack-walled 2026-08-02" in out, out
+    assert _protected("dark-triage 2026-08-22: page-empty") and not _protected("dark-triage 2026-08-22: "), (
+        "a dangling mode must stay evictable")
+
+
+def test_the_merge_trims_the_theirs_tail_then_a_fact_and_never_slices():
+    """Kills `merge-trim-ours-head` and `merge-slice-restore`. The conflict path re-created
+    `dark-triage <date>: page-empt` when only protected segments remained."""
+    import re
+    import merge_csv_rows as M
+    ours = "deep-validated 2026-08-20: unsupported ATS phenom (" + "x" * 70 + ") | dark-triage 2026-09-01: page-empty (" + "y" * 80 + ")"
+    theirs = "deep-validated 2026-08-20: unsupported ATS phenom (" + "x" * 70 + ") | listing-hunt 2026-09-02: no listing found (" + "z" * 60 + ")"
+    merged = M._merge_notes(theirs, ours, cap=220)
+    assert len(merged) <= 220 and merged.startswith("deep-validated 2026-08-20"), merged
+    assert not re.search(r"\d{4}-\d{2}-\d{2}:?\s*$", merged) and "page-empt" not in merged.replace("page-empty", "")
+    # ours' own newest segment survives ahead of theirs' unique tail
+    o2 = "alias-of X 2026-08-01: twin | listing-hunt 2026-09-01: own verdict (" + "a" * 100 + ")"
+    t2 = "alias-of X 2026-08-01: twin | crack-walled 2026-09-01: theirs (" + "b" * 100 + ")"
+    m2 = M._merge_notes(t2, o2, cap=220)
+    assert "listing-hunt 2026-09-01" in m2 and "alias-of X" in m2, m2
+
+
+def test_validate_empty_keys_on_each_of_its_own_facts_and_they_are_protected():
+    """Kills `validate-empty-arm-and` and `protect-suspect-drop` (attacker 2, R4)."""
+    import validate_empty as V
+    from pipeline.notes import append
+    row = lambda note: ["Enzymit", "scrape", "", "https://www.enzymit.example/careers", "false", note]
+    assert V.in_validate_empty_pool(row("empty-but-suspect 2026-08-24; 2+ role-near-Israel mentions in HTML"))
+    assert V.in_validate_empty_pool(row("cross-validated; 3/0 IL (was empty)"))
+    n = "empty-but-suspect 2026-08-24; 2+ role-near-Israel mentions in HTML"
+    for i in range(6):
+        n = append(n, f"deep-validated 2026-09-0{i + 1}: no ATS detected (rendered; " + "r" * 80 + ")")
+    assert "empty-but-suspect 2026-08-24" in n and V.in_validate_empty_pool(row(n)), n
+
+
+def test_the_fact_pool_floor_blocks_at_fifty(tmp_path):
+    """Kills `fact-floor-drift`: check E's fact floor is the probe pool's floor."""
+    import csv
+    import os
+    import subprocess
+    import sys
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    (tmp_path / "cloud_state").mkdir()
+    def run(with_http):
+        rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"]]
+        rows += [[f"Live {i}", "greenhouse", f"live{i}", f"https://boards-api.greenhouse.io/v1/boards/live{i}/jobs", "true", ""] for i in range(60)]
+        rows += [[f"Parked {i}", "scrape", "", (f"https://www.p{i}.example/careers" if with_http else ""), "false", "no listing found"] for i in range(60)]
+        with open(tmp_path / "companies.csv", "w", encoding="utf-8", newline="") as fh:
+            csv.writer(fh).writerows(rows)
+        r = subprocess.run([sys.executable, os.path.join(root, "check_invariants.py")], cwd=tmp_path,
+                           capture_output=True, text=True, timeout=120)
+        return r.returncode, r.stdout + r.stderr
+    rc_ok, out_ok = run(True)
+    rc_bad, out_bad = run(False)
+    assert "fact pool" not in out_ok, out_ok[-600:]
+    assert rc_bad != 0 and "fact pool" in out_bad and "floor 50" in out_bad, out_bad[-600:]
+
+
+def test_the_rehearsal_catches_a_cell_overwrite_and_bans_dns():
+    """Kills `harness-retention-off` and `harness-dns-open`. The harness's own control: the
+    classic overwrite (`fr[5] = seg`) must FAIL a worst night; DNS must not escape."""
+    import os
+    import subprocess
+    import sys
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env = dict(os.environ, REHEARSE_SELF_TEST="overwrite")
+    r = subprocess.run([sys.executable, os.path.join(root, "tests", "rehearse_registry.py"),
+                        "--nights", "1", "--rows", "120", "--policy", "worst"],
+                       capture_output=True, text=True, cwd=root, timeout=600, env=env)
+    assert r.returncode != 0 and "lost" in r.stdout, r.stdout[-800:] + r.stderr[-300:]
+    code = ("import socket, sys; sys.path.insert(0, %r); import tests.rehearse_registry as R; R._forbid_sockets()\n"
+            "try:\n    socket.gethostbyname('example.com'); print('ESCAPED')\nexcept Exception as e:\n    print('banned', type(e).__name__)") % root
+    r2 = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=root, timeout=120)
+    assert "banned" in r2.stdout and "ESCAPED" not in r2.stdout, r2.stdout + r2.stderr

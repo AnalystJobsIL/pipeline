@@ -51,10 +51,16 @@ class _NoNet(Exception):
 
 
 def _forbid_sockets():
+    """Every way out: connect, connect_ex, and DNS (`repair_dead_urls.resolves` decides
+    "dead host" with `socket.gethostbyname`, which the first version let through)."""
     def boom(*a, **k):
         raise _NoNet("network reached from inside the rehearsal -- a seam is unstubbed")
     socket.socket.connect = boom          # type: ignore[assignment]
+    socket.socket.connect_ex = boom       # type: ignore[assignment]
     socket.create_connection = boom       # type: ignore[assignment]
+    socket.getaddrinfo = boom             # type: ignore[assignment]
+    socket.gethostbyname = boom           # type: ignore[assignment]
+    socket.gethostbyname_ex = boom        # type: ignore[assignment]
 
 
 class _FakeDate(_dt.date):
@@ -152,6 +158,21 @@ def _stub_all(policy, rng):
     import scrape_universal as SU
     SU.scrape = lambda name, url, **k: []
 
+    import repair_dead_urls as RD
+    import wayback_rescue as WB
+    # repair_dead_urls: `resolves` decides membership (worst: every host is dead), the
+    # candidates are fetched (worst: unreadable) -- nothing may be written from no page
+    RD.resolves = lambda host, tries=3: False if policy == "worst" else rng.random() < 0.7
+    RD.candidates = lambda name, dead_url: []      # the search ladder (ddg/unlocker) is a seam, not a fixture
+    RD.fetch = lambda url: (None, "")
+    RD._unlock = lambda url: ""
+    RD.time.sleep = lambda s: None
+    # wayback_rescue: the archive read (worst: nothing archived)
+    WB.rescue = lambda name, url: None
+    if os.environ.get("REHEARSE_SELF_TEST") == "overwrite":
+        # the harness's own control: the classic cell overwrite must be CAUGHT (a
+        # mutation that turns the retention check off would let this pass)
+        LH._note_replace = lambda base, marker, seg, cap=220: seg
 
 class _NoRenderer:
     def __enter__(self):
@@ -159,6 +180,7 @@ class _NoRenderer:
 
     def __exit__(self, *a):
         return False
+
 
 
 def _run(mod, argv):
@@ -188,6 +210,7 @@ def _invariants_ok():
 SCHEDULE = [   # (label, module name, argv, weekday filter: None = daily, 5 = Sat, 6 = Sun)
     ("02:30 bd_rescue", "bd_rescue", ["bd_rescue.py"], None),
     ("02:30 retry_unreachable", "retry_unreachable", ["retry_unreachable.py"], None),
+    ("19:00 repair_dead_urls", "repair_dead_urls", ["repair_dead_urls.py", "--apply"], None),
     ("05:00 scan_dead_domains", "scan_dead_domains", ["scan_dead_domains.py", "--apply"], None),
     ("05:00 probe_candidates", "probe_candidates", ["probe_candidates.py", "--apply"], None),
     ("18:00 triage_dark", "triage_dark", ["triage_dark.py", "--apply"], None),
@@ -196,10 +219,13 @@ SCHEDULE = [   # (label, module name, argv, weekday filter: None = daily, 5 = Sa
     ("19:00 crack_walled", "crack_walled", ["crack_walled.py", "--apply"], None),
     ("Sun 04:00 validate_empty", "validate_empty", ["validate_empty.py"], 6),
     ("Sun 04:00 audit_empty_rows", "audit_empty_rows", ["audit_empty_rows.py", "--apply"], 6),
+    ("Sun 04:00 wayback_rescue", "wayback_rescue", ["wayback_rescue.py"], 6),
 ]
+# Scheduled companies.csv writers deliberately NOT here: auto_expand (appends NEW rows from a
+# discovery queue; it never rewrites a parked row) -- listed so the omission is a decision.
 
 
-def rehearse(nights=14, policy="worst", rows_cap=0, seed=1, verbose=True, trace=()):
+def rehearse(nights=14, policy="worst", rows_cap=0, seed=1, verbose=True, trace=(), signals=False):
     work = tempfile.mkdtemp(prefix="rehearse_registry_")
     src = _rows(os.path.join(ROOT, "companies.csv"))
     if rows_cap:
@@ -222,9 +248,11 @@ def rehearse(nights=14, policy="worst", rows_cap=0, seed=1, verbose=True, trace=
                        "TRIAGE_LLM_CAP": "0", "AUDIT_TIME_BUDGET_MIN": "0",
                        "AUDIT_DEEP_BUDGET_MIN": "0", "PROBE_TIME_BUDGET_MIN": "0",
                        "SCAN_TIME_BUDGET_MIN": "0", "PAGE_UNLOCK_BUDGET": "0",
-                       # the durable form of the Sunday cross-validation (BACKLOG 197): the
-                       # token arm alone erodes at the cap, which is the finding, not the target
-                       "VALIDATE_EMPTY_SIGNALS": "1"})
+                       "REPAIR_URL_TIME_BUDGET_MIN": "0",
+                       # PRODUCTION's configuration: no workflow sets VALIDATE_EMPTY_SIGNALS,
+                       # so the rehearsal must not either (attacker 2: with the pin, the
+                       # token arm's erosion was invisible). `--signals` opts in.
+                       "VALIDATE_EMPTY_SIGNALS": "1" if signals else "0"})
     _forbid_sockets()
     rng = random.Random(seed)
     import registry_health as RH
@@ -315,8 +343,9 @@ def main():
     ap.add_argument("--rows", type=int, default=0, help="parked-row cap (0 = all)")
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--trace", default="", help="comma-separated company names to print each night")
+    ap.add_argument("--signals", action="store_true", help="VALIDATE_EMPTY_SIGNALS=1 (staged; not production)")
     a = ap.parse_args()
-    failures = rehearse(a.nights, a.policy, a.rows, a.seed,
+    failures = rehearse(a.nights, a.policy, a.rows, a.seed, signals=a.signals,
                         trace=[t.strip() for t in a.trace.split(",") if t.strip()])
     for f in failures:
         print("FAIL " + f)

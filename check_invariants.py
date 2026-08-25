@@ -152,7 +152,13 @@ def main():
     # A row is owned by a TOKEN pool (POOL) or by a FACT pool: any parked row with a real
     # http, non-aggregator address is the probe's (probe_candidates.in_probe_pool, 2026-08-26)
     def _fact_owned(r):
-        return (r[3] or "").startswith("http") and not is_aggregator(r[3])
+        # the probe's OWN predicate, not a retyped mirror of it: the mirror missed
+        # `looks_like_junk` and credited two job-title rows as owned (wave-1, 2026-08-26)
+        try:
+            from probe_candidates import in_probe_pool
+            return in_probe_pool(r)
+        except Exception:  # noqa: BLE001
+            return (r[3] or "").startswith("http") and not is_aggregator(r[3])
     orphans = [r[0] for r in body
                if len(r) >= 6 and r[4] == "false"
                and not re.search(TERMINAL, r[5] or "", re.I)

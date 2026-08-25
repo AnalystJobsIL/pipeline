@@ -208,11 +208,14 @@ def test_probe_wake_actually_reaches_the_hunt():
             "| dark-triage 2026-08-22: page-empty (live page, 0 roles)")
     woken = _wake_note(note)
     assert not listing_hunt._triaged_page_empty(woken), "wake left the row hunt-excluded"
-    # every stale segment must go, not just the first: after removing one, the separator
-    # loses its leading space and a `\s\|` pattern silently stops matching
-    assert "listing-hunt" not in woken and "dark-triage" not in woken
+    # every stale re-hunt segment must go, not just the first: after removing one, the
+    # separator loses its leading space and a `\s\|` pattern silently stops matching.
+    # The triage segment STAYS (2026-08-26): it is a protected pool fact, and the hunt's
+    # page-empty exclusion yields to the (dated) wake instead.
+    assert "listing-hunt" not in woken and "dark-triage 2026-08-22: page-empty" in woken
     assert "no ATS detected" in woken, "the base verdict was destroyed"
     assert woken.endswith(WAKE_STAMP), "the wake stamp was truncated off the end"
+    assert listing_hunt.in_hunt_pool(["X", "scrape", "", "https://x.example/c", "false", woken])
 
 
 def test_triage_pool_survives_note_erosion():

@@ -35,7 +35,11 @@ import re as _re
 # (docs/BACKLOG.md 27, 197).
 # (`no open Israel roles` rather than `scanned; no open`: older rows carry that segment as a
 # head-cut fragment -- `a; no open Israel roles now` -- and the pool matches the substring)
-_PROTECTED_EXTRA = _re.compile(r"unsupported ATS|dark-triage \d{4}-\d{2}-\d{2}: [a-z-]+|no open israel roles", _re.I)
+# `empty-but-suspect <date>` / `cross-validated` are validate_empty's own facts and its
+# token arm (the shipped configuration -- the signals arm is staged): the Sunday deep stamp
+# evicted Enzymit's and the row left the ONE pool that could re-check it (wave-1 attacker 2).
+_PROTECTED_EXTRA = _re.compile(r"unsupported ATS|dark-triage \d{4}-\d{2}-\d{2}: [a-z-]+|no open israel roles|"
+                               r"empty-but-suspect|cross-validated", _re.I)   # dated or not: older rows carry it bare
 
 
 def _terminal_rx():
@@ -47,31 +51,40 @@ def _protected(seg):
     return bool(_terminal_rx().search(seg) or _PROTECTED_EXTRA.search(seg))
 
 
+def _terminal(seg):
+    return bool(_terminal_rx().search(seg))
+
+
 def append(base: str, segment: str, cap: int = CAP, keep=None) -> str:
     """`base` with `segment` appended, trimmed to `cap` by dropping OLD whole segments --
     never a TERMINAL one. An `alias-of` / `defunct` / `domain-dead` segment is the only
     thing keeping a row out of every ACTIVATING pool, and by construction it is the oldest
     segment on the row (2026-08-26: 19 parked rows carried a terminal token that was not the
     newest segment on a note > 150 chars -- one or two more stamps evicted it). `keep` is
-    the protecting regex (default: the shared terminal list); if only protected segments
-    remain and the new one still does not fit, the NEW segment is truncated -- on a terminal
-    row no re-check verdict matters."""
+    the protecting regex (default: the shared terminal list). Eviction order: the oldest
+    UNPROTECTED segment, then the oldest protected NON-terminal one (another pool's fact
+    yields to the newest verdict rather than either being cut), and when only terminal
+    segments remain and the newcomer still does not fit, the newcomer is DROPPED whole --
+    on a terminal row no re-check verdict matters. Nothing is ever sliced: a wave-1
+    attacker (2026-08-26) drove the old `room <= 0` branch to cut a protected `dark-triage`
+    segment mid-word and the `room > 0` branch to leave `crack-walled <date>: ` -- the
+    dangling verdict check_invariants F then blocked the digest on."""
     seg = " ".join(str(segment or "").split())
     if not seg:
         return str(base or "")[:cap]
     protected = _protected if keep is None else (lambda p: bool(keep.search(p)))
     parts = split(base)
     while parts and len(SEP.join(parts + [seg])) > cap:
-        victims = [i for i, p in enumerate(parts) if not protected(p)]
+        victims = ([i for i, p in enumerate(parts) if not protected(p)]
+                   or [i for i, p in enumerate(parts) if not _terminal(p)])
         if not victims:
             break
-        parts.pop(victims[0])            # oldest UNPROTECTED first
+        parts.pop(victims[0])            # oldest UNPROTECTED first, then oldest non-terminal
     out = SEP.join(parts + [seg])
     if len(out) <= cap:
         return out
-    if parts:                            # only protected segments left: cut the newcomer
-        room = cap - len(SEP.join(parts)) - len(SEP)
-        return SEP.join(parts + [seg[:max(room, 0)]]) if room > 0 else SEP.join(parts)[:cap]
+    if parts:                            # only terminal segments left: the newcomer is dropped
+        return SEP.join(parts)[:cap]
     # a single segment longer than the cap is the caller's problem, not the log's: keep the
     # verdict and lose its tail rather than emit something that parses as a different verdict
     return seg[:cap]
@@ -88,6 +101,10 @@ def replace_own(base: str, marker: str, segment: str, cap: int = CAP) -> str:
 
 
 def has_terminal(note: str) -> bool:
-    """Is this segment protected (terminal, or the crack pool's `unsupported ATS` fact)?
-    The merge asks before trimming."""
+    """Is this segment protected (terminal, or another pool's membership fact)? The merge
+    asks before trimming; `is_terminal_segment` is the narrower question it asks last."""
     return _protected(note or "")
+
+
+def is_terminal_segment(seg: str) -> bool:
+    return _terminal(seg or "")

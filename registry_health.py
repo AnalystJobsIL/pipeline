@@ -274,7 +274,9 @@ def pools(rows):
             sel(lambda n, r: _retry_pool()(r)),
         "audit_empty_rows (Sun 04:00)":
             sel(lambda n, r: in_pool(n) and not is_terminal_note(n) and not is_recruiter(r[0])),
-        "deep_validate rung (Sun 04:00)":
+        # keyed `deep_validate` on purpose: `pool_floor` compares by the label's head, and
+        # renaming the head resets that pool's baseline silently (wave-1 attacker, 2026-08-26)
+        "deep_validate (Sun 04:00, the audit's Chromium rung)":
             sel(lambda n, r: in_pool(n) and not is_terminal_note(n) and not is_recruiter(r[0])),
     }
 
@@ -479,6 +481,7 @@ def alarms_state(rows=None, prev=None):
             out.append(f"re-check pool EMPTY: {label} — a predicate inverted, or the notes "
                        f"column was clobbered")
     out += pool_floor(rows, prev=prev)
+    out += pool_growth(rows, prev=prev)
     try:
         stamp = json.load(open(LADDER, encoding="utf-8"))
         when = stamp.get("date") or "1970-01-01"
@@ -517,6 +520,24 @@ def pool_floor(rows, prev=None):
                        f"inverted or the notes column was clobbered")
         elif before >= 8 and now < before * 0.5:
             out.append(f"re-check pool halved: {tool} {before} -> {now}")
+    return out
+
+
+def pool_growth(rows, prev=None):
+    """The other direction of `pool_floor`: a pool that GREW by half or more since the last
+    census. Not a failure -- a predicate widened on purpose does this (probe 127 -> 228 on
+    2026-08-26) -- but two of these pools ACTIVATE rows, and 66 rows entering a promote
+    path with nobody told is the kind of silence this file exists to end. Same keying and
+    the same stability rule as `pool_floor`: the line repeats only while the size differs
+    from the census, which is rewritten every morning."""
+    prev = load_census() if prev is None else prev
+    was = prev.get(_POOLS_KEY) or {}
+    out = []
+    for label, members in pools(rows).items():
+        tool = label.split(" (")[0]
+        before, now = was.get(tool), len(members)
+        if before is not None and before >= 8 and now >= before * 1.5:
+            out.append(f"re-check pool grew: {tool} {before} -> {now} (a predicate widened?)")
     return out
 
 

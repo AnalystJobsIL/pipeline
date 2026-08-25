@@ -35,6 +35,9 @@ jobs:
         # every scheduled registry tool's real main() over a copy of the registry with the
         # network forbidden; exit 1 on the first pool that loses a row it should keep
         run: python tests/rehearse_registry.py --nights 14 --policy worst
+      - name: Five mixed-policy rehearsals (seeded; the truncation seed 1 found on 2026-08-26)
+        run: |
+          for s in 1 2 3 4 5; do python tests/rehearse_registry.py --nights 14 --policy mixed --seed $s || exit 1; done
       - name: Platform wiring report (informational)
         run: python -m pipeline.platform_check || true
 

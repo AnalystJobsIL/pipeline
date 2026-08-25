@@ -162,9 +162,26 @@ def in_hunt_pool(r):
 
 def _triaged_page_empty(note):
     """Triage proved this row has a LIVE page with genuinely no roles, so the hunt
-    skips it and triage owns the re-check. Module-level on purpose: probe_candidates
-    must strip this exact stamp to wake a row, and a private copy would drift."""
-    return bool(re.search(r"dark-triage [^|]*:\s*page-empty", note or ""))
+    skips it and triage owns the re-check -- UNLESS the daily probe has since woken the
+    row: a `probe-woken <date>` at least as new as the triage stamp is newer evidence
+    (the page's signals rose), and the wake is the whole reason the probe exists. An
+    undated wake (rows stamped before 2026-08-26) counts as fresh once; the hunt strips
+    every wake it consumes (`_consume_wake`), so a stale wake cannot linger."""
+    m = re.search(r"dark-triage (\d{4}-\d{2}-\d{2})[^|]*:\s*page-empty", note or "")
+    if not m:
+        return False
+    w = re.search(r"probe-woken(?: (\d{4}-\d{2}-\d{2}))?", note or "")
+    if w and (not w.group(1) or w.group(1) >= m.group(1)):
+        return False
+    return True
+
+
+def _consume_wake(note):
+    """The hunt is the wake's one consumer: whatever verdict it writes tonight replaces
+    the `probe-woken` segment. Left in place, the stamp was PERMANENT -- `triage_dark`
+    used to skip any row carrying it, forever (6 rows on 2026-08-26)."""
+    from pipeline.notes import split, SEP
+    return SEP.join(p for p in split(note) if not p.lower().startswith("probe-woken"))
 
 
 def hunt_one(name, seed, documented=False, mode=""):
@@ -408,7 +425,7 @@ def main():
                         # page-shape refusal are different findings and used to be recorded
                         # with the same words, which is the diagnosis the next tool reads.
                         fr[5] = _note_replace(
-                            fr[5], "listing-hunt",
+                            _consume_wake(fr[5]), "listing-hunt",
                             f"listing-hunt {TODAY}: {refused}; no listing found")
                     elif verdict == "found":
                         fr[1], fr[2], fr[3] = "scrape", "", url
@@ -416,7 +433,7 @@ def main():
                         # replace only our own segment: the found-branch used to overwrite
                         # the cell and threw away the triage mode that routed the row here
                         fr[5] = _note_replace(
-                            fr[5], "listing-hunt",
+                            _consume_wake(fr[5]), "listing-hunt",
                             f"listing-hunt {TODAY}: verified {n_il} IL via "
                             f"{urlparse(url).netloc or url[:40]}")
                     elif verdict == "nolisting" and url:
@@ -440,7 +457,7 @@ def main():
                             # other tool's verdict, and a full URL in one segment evicts
                             # them all. The address itself is not being stored anyway.
                             fr[5] = _note_replace(
-                                fr[5], "listing-hunt",
+                                _consume_wake(fr[5]), "listing-hunt",
                                 f"listing-hunt {TODAY}: another company's board; "
                                 f"no listing found")
                             continue
@@ -448,11 +465,11 @@ def main():
                         # drop OLD WHOLE segments to make room — slicing the base cut
                         # the newest one in half ("dark-triage 2026-08-22: page-emp")
                         fr[5] = _note_replace(
-                            fr[5], "listing-hunt",
+                            _consume_wake(fr[5]), "listing-hunt",
                             f"listing-hunt {TODAY}: no IL listing; monitored candidate")
                     else:
                         fr[5] = _note_replace(
-                            fr[5], "listing-hunt",
+                            _consume_wake(fr[5]), "listing-hunt",
                             f"listing-hunt {TODAY}: "
                             + ("no listing found" if verdict == "nolisting" else detail))
                 write_csv_rows("companies.csv", fresh)

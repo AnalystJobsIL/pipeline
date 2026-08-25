@@ -42,10 +42,16 @@ _JOB_SIG = re.compile(r"apply now|open position|current opening|we'?re hiring|jo
 _IL_SIG = re.compile(r"israel|tel[\s-]?aviv|herzliya|haifa|petah|ramat[\s-]?gan|beer[\s-]?sheva", re.I)
 
 
-WAKE_STAMP = "probe-woken: re-hunt pending"
+WAKE_STAMP = f"probe-woken {TODAY}: re-hunt pending"
 # Verdicts that mean "already decided, don't hunt". A wake must clear ALL of them or the
 # row stays excluded from the very hunt the probe exists to trigger.
-_STALE_SEGMENT = re.compile(r"^(listing-hunt|crack-walled|dark-triage)\b")
+# The re-hunt verdicts a wake clears -- and ONLY those. `dark-triage <date>: <mode>` stays:
+# it is triage's and the extract-gap pool's membership FACT (pipeline/notes.py protects it
+# from eviction, and a wake that deleted it took 39/39 extract-gap rows and 115/228 triage
+# rows out of their pool -- wave-1 attacker, 2026-08-26). The hunt reads the mode on a
+# woken row too, and `listing_hunt._triaged_page_empty` yields to a wake at least as new
+# as the triage stamp, which is what the old wholesale strip was for.
+_STALE_SEGMENT = re.compile(r"^(listing-hunt|crack-walled|probe-woken)\b")
 
 
 def _wake_note(note: str, cap: int = 220) -> str:
