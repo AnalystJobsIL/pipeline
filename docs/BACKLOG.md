@@ -2271,6 +2271,24 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     `https://acme.com/x//secrettelaviv.com` is an aggregator and
     `careers.acme.com/?ref=jobs.secrettelaviv.com` is not; pre-existing, theoretical, noted
     by the 2026-08-25 review. The `(?://|^)` alternative should anchor on the scheme.
+188. **A corrupt `research_companies.json` is silently replaced by this run's additions** —
+    lane: `discovery`. `discovery_daily.py:1109` does `except Exception: research = []` and
+    then writes `added` over the file; `discovery_telegram._load_json(..., [])` collapses
+    absent and unreadable the same way. The job cache already distinguishes ABSENT from
+    CORRUPT (`_load_cache` / the `::error::` path) — the queue needs the same guard, or a
+    half-written file (both steps are continue-on-error and runs do get cancelled) deletes
+    1,500 names and prints "N new companies queued, 0 already waiting". Pre-existing; found
+    by the 2026-08-25 rehearsal.
+189. **Three loose ends from the 2026-08-25 attack waves, none load-bearing today** — lane:
+    `discovery`. (a) `discovery: rejected N … agencies` counts POSTINGS, not names (27
+    "place names" were 2 names in the rehearsal) — say "postings" or count distinct.
+    (b) On the corrupt-cache path the line `cache: 0 this run -> 0 total (0 carried)` prints
+    right after the `::error::` that says the file was NOT touched. (c) The blank-tail exit
+    after cards (`linkedin_search`, `if out: break`) is the one silent exit that is also
+    indistinguishable from a soft rate-limit; `blank=` on the sweep line is the only tell.
+    Also for `infra`: `test_a_blank_page_does_not_disarm_the_everything_is_billed_alarm`
+    slices the source between `elif ok:` and `if not ok or`, a window that now holds the
+    `linkedin_blocked` branch too — still green, but no longer isolates what it names.
 183. **`bd_spend_this_month`'s zone pinning is dead code, and the API's real `cost` is
     discarded** — lane: `discovery`. `zone/cost` keys its reply by CUSTOMER id
     (`{"hl_b9b328bb": {"custom": {"cost": 3.846, "reqs_unblocker": 1649, "reqs_serp": 915}}}`),
