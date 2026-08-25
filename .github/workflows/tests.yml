@@ -31,6 +31,10 @@ jobs:
         run: python -m pytest
       - name: Registry invariants
         run: python check_invariants.py
+      - name: Fourteen rehearsed nights keep every re-check pool (registry lane, BACKLOG 52)
+        # every scheduled registry tool's real main() over a copy of the registry with the
+        # network forbidden; exit 1 on the first pool that loses a row it should keep
+        run: python tests/rehearse_registry.py --nights 14 --policy worst
       - name: Platform wiring report (informational)
         run: python -m pipeline.platform_check || true
 

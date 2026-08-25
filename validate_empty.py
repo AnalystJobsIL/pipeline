@@ -59,7 +59,8 @@ def _probe_saw_signals(name, state=None):
         except Exception:  # noqa: BLE001
             state = {}
     e = state.get(name)
-    return isinstance(e, dict) and "il" in e and (int(e.get("il") or 0) > 0 or int(e.get("sig") or 0) > 0)
+    return isinstance(e, dict) and (bool(e.get("ever"))
+                                    or int(e.get("il") or 0) > 0 or int(e.get("sig") or 0) > 0)
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
 TODAY = __import__("datetime").date.today().isoformat()

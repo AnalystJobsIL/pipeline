@@ -808,6 +808,7 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     (`SeeTree`).** An alarm nobody can act on is how a digest teaches its reader to skim.
 
 27. **`crack_walled` retires 13 of its own 25 pool rows per all-refusing night** — lane:
+    **CLOSED 2026-08-26 (`registry`):** `unsupported ATS` is a protected segment in `notes.append` and the conflict merge (the rehearsal took the crack pool 14 → 9 on night one before this; flat after). The wider-cell fix is not needed.
     `registry`, unclaimed, and it is the residual the note-shortening could not remove. The
     refusal segment is 49 chars against a pool whose mean note is 203/220, so `notes.append`
     still evicts another tool's `unsupported ATS` token from 13 rows — better than the 16 the
@@ -1198,6 +1199,7 @@ Three reviewers, all findings reproduced before action. Seven were fixed; these 
     A per-platform floor, or making the guard iterate `_PLATFORM_ALIAS`, closes it.
 
 52. **The 14-night chain simulation has never actually completed** — lane: `registry`.
+    **CLOSED 2026-08-26 (`registry`):** `tests/rehearse_registry.py` — every scheduled tool's real `main()` over a copy of the registry, network forbidden, each per-row verdict seam stubbed at the tool's own function, a fake clock, the real UTC schedule; `worst` and `mixed` policies; `--trace NAME`. 14 nights `worst` at HEAD: every pool flat, 0 orphans, no floor alarm. Two nights over 200 rows run in pytest; the 14 run in `tests.yml` (infra line, disclosed).
     Reviewer R3 attempted it and disclosed that it did not finish: `listing_hunt` spawns
     out-of-process Chromium that an in-process socket stub cannot reach, so night 1 ran past
     40 minutes. Only night 0 was captured (`active=862 crack=50 hunt~=216 unsupATS=50
@@ -1211,6 +1213,7 @@ Three reviewers, all findings reproduced before action. Seven were fixed; these 
 Six blocking findings, all reproduced and fixed. These are the residuals.
 
 53. **`probe_candidates`' pool is three tokens `listing_hunt` owns and rewrites: 148 -> 4
+    **CLOSED 2026-08-26 (`registry`, `03ec78b`):** `in_probe_pool` is a fact pool (parked + http non-aggregator address, minus junk/terminal-row); `PROBE_POOL` deleted. 127 → 228 rows; one simulated all-failing hunt night leaves 228 (was 127 → 20). `tests/rehearse_registry.py` at `e1b55d7` lost 19 probe rows on night one; flat at HEAD.
     over 14 nights** — lane: `registry`, PRE-EXISTING (`git diff` on that file across the
     whole rebuild is empty). Its selector is
     `monitored candidate|host documented|no IL listing`, and `pipeline/verdicts.py` attributes
@@ -1515,6 +1518,7 @@ commits. Five filed test gaps, four closed the same day with cells and records
 ## From the health / declared-identity / legibility program's confirmation wave, 2026-08-24
 
 72. **`verdicts.TERMINAL`'s `recruiter` token matches the substring in `SmartRecruiters`** —
+    **CLOSED 2026-08-26 (`registry`, shared plumbing disclosed):** `TERM_RX` word-bounds `recruiter`; `is_terminal_row(r)` asks the NAME (`is_recruiter`) and every `in_*_pool` uses it. Measured: 0 pool moves on the five SmartRecruiters-noted rows (Bosch Israel and Wix (Wixpress) stay terminal via `alias-of`); nine agency-named parked rows stop counting as coverage owed.
     lane: `registry`, PRE-EXISTING (the unification widened its reach to `listing_hunt` and
     `deep_validate`). Three ACTIVE rows carry the substring in a note with no pool token
     today — `Armis`, `HiBob`, `kueez` — so nothing changes tonight; the day any of them is
@@ -2355,6 +2359,7 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
 (registry half)**; 84 measured (0 reachable). Filed:
 
 190. **The 02:30 chain is not in `registry_health.pools()`** — lane: `registry`. `bd_rescue`
+    **CLOSED 2026-08-26 (`registry`):** `retry_unreachable.in_retry_pool` is the chain's one selector (`bd_rescue` imports it); in `pools()` (9 rows) and `--explain`.
     and `retry_unreachable` both activate and both select parked rows on the `unreachable`
     token (retry minus terminal since 2026-08-25), but neither exports an `in_*_pool` and the
     ownership matrix does not list them, so `orphans()` cannot credit a row to them and
@@ -2395,6 +2400,7 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     DDG-first with SerpApi as the tie-breaker for names DDG cannot find — measure the DDG
     hit-rate on the runners from the `dfer … no-candidates` counts first.
 197. **`url-cleared` costs the `scanned; no open` token its place under the 220 cap** — lane:
+    **CLOSED 2026-08-26 (`registry`):** `validate_empty` is a fact pool (the probe's rows minus walled hosts) with the empty-class token arm today and the probe-baseline arm behind `VALIDATE_EMPTY_SIGNALS=1` (staged: it activates; 28 → 29 today, ~113 with the arm).
     `registry`. On the 28 un-buried rows the oldest segment is `scanned; no open Israel roles
     now`; after triage + hunt + one deep-validate stamp it is evicted (headroom 32 chars,
     every deep-validate verdict is 38–53). Only `validate_empty` keys on it, and those rows

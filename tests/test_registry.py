@@ -4842,8 +4842,16 @@ def test_a_terminal_segment_is_never_evicted_by_append_or_by_the_merge():
         n = append(n, f"dark-triage 2026-09-0{i + 1}: wrong-page (a long reason that pushes the cell toward the cap, night {i})")
     assert "alias-of Kornit Digital" in n and len(n) <= 220, n
     assert n.startswith("alias-of"), "the protected segment keeps its place; the newest fits or is cut"
-    # positive control: an unprotected old segment still goes first
-    n2 = append("listing-hunt 2026-08-01: no listing found | dark-triage 2026-08-02: x", "y" * 200)
+    # ...and so is the crack pool's membership fact (BACKLOG 27; the 14-night rehearsal
+    # lost 6 crack rows on night one before this)
+    n3 = "deep-validated 2026-08-21: unsupported ATS icims.com"
+    for i in range(8):
+        n3 = append(n3, f"listing-hunt 2026-09-0{i + 1}: no listing found (" + "r" * 60 + ")")
+    assert "unsupported ATS icims.com" in n3 and len(n3) <= 220, n3
+    # positive control: an unprotected old segment still goes first (`dark-triage <mode>`
+    # is protected too since 2026-08-26 -- the extract-gap pool's fact -- so use two
+    # unprotected ones)
+    n2 = append("listing-hunt 2026-08-01: no listing found | crack-walled 2026-08-02: nocapture", "y" * 200)
     assert "listing-hunt 2026-08-01" not in n2 and n2.endswith("y" * 200)
     # the conflict merge trims from theirs' TAIL -- and the terminal segment is theirs'
     # tail here (ours never carried it): it must survive the trim all the same
@@ -4890,5 +4898,31 @@ def test_the_sunday_cross_validation_is_a_fact_pool_staged_behind_the_probe_sign
     assert V.in_validate_empty_pool(tok) and not V.in_validate_empty_pool(sig) and not V.in_validate_empty_pool(wd)
     monkeypatch.setenv("VALIDATE_EMPTY_SIGNALS", "1")
     assert V.in_validate_empty_pool(sig), "the probe saw signals on this page: durable membership"
+    # `ever` survives a later probe that sees nothing (set once, never cleared)
+    (tmp_path / "cloud_state" / "candidate_probe.json").write_text('{"Sig Ltd": {"sig": 0, "il": 0, "ever": true, "last": "2026-08-26"}}', encoding="utf-8")
+    assert V.in_validate_empty_pool(sig), "a quiet night must not erase what the probe once saw"
+    import probe_candidates as PC
+    import sys
+    _registry(tmp_path, [sig])
+    monkeypatch.setattr(PC, "probe", lambda url: {"sig": 0, "il": 0})
+    monkeypatch.setattr(sys, "argv", ["probe_candidates.py", "--apply"])
+    monkeypatch.delenv("PROBE_TIME_BUDGET_MIN", raising=False)
+    PC.main()
+    st = json.loads((tmp_path / "cloud_state" / "candidate_probe.json").read_text(encoding="utf-8"))
+    assert st["Sig Ltd"]["ever"] is True and st["Sig Ltd"]["sig"] == 0, st
     assert not V.in_validate_empty_pool(["Nope", "scrape", "", "https://www.nope.example/careers", "false", "no listing found"])
     assert not V.in_validate_empty_pool(wd), "walled hosts stay crack_walled's"
+
+
+def test_two_rehearsed_nights_keep_every_pool():
+    """The 14-night claim (BACKLOG 52) has a harness now: `tests/rehearse_registry.py`
+    drives every scheduled tool's real `main()` and note writers over a copy of the
+    registry with the network forbidden. Two `worst` nights over 200 parked rows run here
+    (~15 s); the full 14 run in tests.yml. It runs as a SUBPROCESS: the harness patches
+    modules and the clock process-wide."""
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    r = subprocess.run([sys.executable, os.path.join(root, "tests", "rehearse_registry.py"),
+                        "--nights", "2", "--rows", "200", "--policy", "worst"],
+                       capture_output=True, text=True, cwd=root, timeout=600)
+    assert r.returncode == 0 and "rehearsal OK" in r.stdout, r.stdout[-1200:] + r.stderr[-400:]

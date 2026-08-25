@@ -204,7 +204,7 @@ Believer Meats,ashby,believer,https://api.ashbyhq.com/posting-api/job-board/beli
 Loora,ashby,loora,https://api.ashbyhq.com/posting-api/job-board/loora,true,research-resolved; 2 jobs / 2 Israel
 Aidoc,greenhouse,aidocmedical,https://boards-api.greenhouse.io/v1/boards/aidocmedical/jobs,true,research-resolved; 32 jobs / 24 Israel
 Datarails,greenhouse,datarails,https://boards-api.greenhouse.io/v1/boards/datarails/jobs,true,research-resolved; 13 jobs / 5 Israel
-Bit,scrape,,https://careers.bits.bi/jobs,false,dark-triage 2026-08-23: blocked — ashby slug 'bit' 404s and bit.cloud/careers 403s a plain fetch; unsupported ATS | listing-hunt 2026-08-24: no IL listing; monitored candidate | crack-walled 2026-08-24: skip
+Bit,scrape,,https://careers.bits.bi/jobs,false,listing-hunt 2026-08-24: no IL listing; monitored candidate | crack-walled 2026-08-24: skip | dark-triage 2026-08-23: blocked (ashby slug 'bit' 404s; bit.cloud/careers 403s a plain fetch)
 Logz.io,lever,logz,https://api.lever.co/v0/postings/logz?mode=json,true,research-resolved; 3 jobs / 2 Israel
 Token Security,greenhouse,tokensecurity,https://boards-api.greenhouse.io/v1/boards/tokensecurity/jobs,true,research-resolved; 8 jobs / 4 Israel
 Oasis Security,greenhouse,oasissecurity,https://boards-api.greenhouse.io/v1/boards/oasissecurity/jobs,true,research-resolved; 63 jobs / 3 Israel

@@ -609,7 +609,7 @@ single most common way this codebase breaks (§8). Taxonomy of verdicts:
 | `… N/0 IL` (N>0) | true | board healthy, N global roles, none in Israel | every digest — lights up automatically |
 | `… 0/0 IL` | true | zero of zero: **may be a dead token/moved board**, `pipeline/health.py` calls this `empty-board`. Discriminator: comeet returns HTTP **400** for dead creds, **200 + `[]`** for a live empty board | digest → `stale.json` → 06:00 self-heal (5 strikes) |
 | `host documented, 0 IL now` | false | walled-ATS host found, extraction unproven | daily probe + hunt |
-| `monitored candidate` / `host documented` | false | real page documented, extraction unproven | daily probe + 14-day re-hunt |
+| `monitored candidate` / `host documented` | false | real page documented, extraction unproven — but the probe no longer keys on these words: **any parked row with an http, non-aggregator address is the probe's** (the address is the documentation) | daily probe + 14-day re-hunt |
 | `probe-woken: re-hunt pending` | false | probe saw signals rise; awaiting same-day hunt | that evening's 19:00 hunt (fast-path) |
 | `no listing found` / `no ATS detected` | false | full render found nothing parseable | weekly audit + hunt cron |
 | `unsupported ATS <x>` | false | ATS known, no extraction path yet. **Run `python registry_health.py --ats`** — it splits `WIRE` (a fetcher exists, the row just needs its tenant cracked) from `BUILD` (no fetcher) and reports which `BUILD` names clear §1's "seen 3+ times" threshold. *(Typing that split into this cell has produced a wrong statement twice; run it.)* | several jobs claim it — run `registry_health.py`, don't trust this cell |
@@ -660,9 +660,17 @@ to rows that are still `active=false`.
 
 ### The verdict-string rule (read before changing ANY resolver)
 
-Re-check pools are **allowlists of note substrings**, and the allowlist now lives in ONE
-place: `pipeline/verdicts.py` (`TOKENS` / `in_pool` / `stale`). Add any new verdict string
-to `TOKENS` there. `audit_empty_rows` and `deep_validate` import `in_pool`; the tools that
+There are two kinds of re-check pool (2026-08-26). **Fact pools** key on durable row
+facts — `active`, an http non-aggregator address, the walled host (`identity_gate.is_walled`),
+the probe's own baseline — and cannot erode: `probe_candidates`, `validate_empty`,
+`crack_walled`, the 02:30 chain (`retry_unreachable.in_retry_pool`). **Token pools** key on a
+stamp the *same* tool writes (`triage_dark`) or on the allowlist of note substrings that lives
+in ONE place, `pipeline/verdicts.py` (`TOKENS` / `in_pool` / `stale`): `listing_hunt`, the
+audit and its Chromium rung. Add any new verdict string to `TOKENS` there. **A pool must never
+stand on a token inside another tool's segment**: `replace_own` deletes it by design — the
+probe pool stood on `monitored candidate` inside `listing-hunt`'s segment and one all-failing
+hunt night took it 127 → 20 (docs/BACKLOG.md 53; measured by `tests/rehearse_registry.py`,
+which at `e1b55d7` lost 19 probe rows and 6 crack rows on night one and is flat now). `audit_empty_rows` and `deep_validate` import `in_pool`; the tools that
 legitimately want a subset (`crack_walled` → walled ATSes, `probe_candidates` → documented
 candidates) narrow it explicitly rather than re-implementing it. **If a string is missing from
 `TOKENS`, its coverage is lost with no error anywhere** — hand-maintained copies have already
@@ -881,24 +889,25 @@ so a given night processes fewer rows than the pool holds.
 | `listing_hunt (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | parked rows matching `HUNT_POOL`, minus terminal, recruiters, discovery junk and `_triaged_page_empty` | **yes** |
 | `repair_extract_gap (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | `in_extract_gap_pool`: rows triage stamped `extract-gap` (`MODE`) with an `http` address, minus terminal and recruiters — the terminal exclusion arrived 2026-08-25, the day it selected a freshly parked `alias-of` twin | **yes** |
 | `crack_walled (19:00 daily + Sun)` | `listing-hunt.yml` `0 19 * * *`, `audit-coverage.yml` `0 4 * * 0` | rows `identity_gate.is_walled` claims — the note token OR a walled ATS host — minus terminal and recruiters | **yes** |
-| `probe_candidates (05:00 daily)` | `daily-digest.yml` `0 5 * * *` | rows matching `PROBE_POOL` with an `http` address, minus terminal; wakes rather than activates (`_wake_note` strips every stale segment) | no |
+| `probe_candidates (05:00 daily)` | `daily-digest.yml` `0 5 * * *` | every parked row with an http, non-aggregator address, minus junk names and `is_terminal_row` — a fact pool (`PROBE_POOL` no longer exists); wakes rather than activates (`_wake_note` strips every stale segment) | no |
+| `validate_empty (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0` | the probe's rows minus walled hosts, whose note carries an empty-class verdict — or, behind `VALIDATE_EMPTY_SIGNALS=1`, whose probe baseline saw job/Israel signals (staged: it activates) | **yes** |
+| `retry_unreachable + bd_rescue (02:30 daily)` | `retry-unreachable.yml` `30 2 * * *` | parked, an http address, the word `unreachable`, not `is_terminal_row` — one predicate both tools select with | **yes** |
 | `audit_empty_rows (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0` | `verdicts.in_pool` minus terminal and recruiters | **yes** |
 | `deep_validate rung (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0`, inside `audit_empty_rows` | the rows the cheap rung left dark, minus those deep-validated within 30 d — Chromium render + network sniff, `deep_validate.validate_one`/`apply_verdict` | **yes** |
 
 `scan_dead_domains` (05:00 digest and the Sunday audit) is deliberately **not** a pool: it
 tests liveness, never roles, and excludes only `defunct` rather than the whole terminal list,
-because re-testing a `domain-dead` row is its purpose. The **02:30 chain** is not in `pools()`
-either, and it activates: `bd_rescue` then `retry_unreachable` (`retry-unreachable.yml`) both
-select parked rows carrying `unreachable` (retry minus terminal since 2026-08-25); adding them
-as `in_*_pool` entries is `docs/BACKLOG.md` (registry). Audit and deep-validate used to select
+because re-testing a `domain-dead` row is its purpose — and the one terminal token a tool
+legitimately clears. Audit and deep-validate used to select
 the identical row set 24 hours apart (270 rows on 2026-08-25); since 2026-08-26 the Chromium
 render is the audit's second rung over what its cheap rung left dark, with its own 30-day
 cooldown and `AUDIT_DEEP_BUDGET_MIN` — one Sunday pass, one workflow fewer.
 
-**Never retype a pool regex — import the tool's constant.** The guarded constants are
-`listing_hunt.HUNT_POOL`, `probe_candidates.PROBE_POOL`, `pipeline/verdicts.TERM_RX` (the one
-terminal list; `alias-of` is in it), `identity_gate.is_walled` and
-`repair_extract_gap.in_extract_gap_pool`.
+**Never retype a pool regex — import the tool's predicate.** Every scheduled tool exports
+`in_*_pool(r)` and `registry_health.pools()` imports it; the guarded constants underneath are
+`listing_hunt.HUNT_POOL`, `pipeline/verdicts.TERM_RX` (the one terminal list; `alias-of` is in
+it, `recruiter` is word-bounded) and `identity_gate.is_walled`. Every predicate's terminal test
+is `verdicts.is_terminal_row(r)` — a terminal token OR an agency NAME.
 `test_the_ownership_matrix_is_built_from_the_tools_own_predicates` asserts the matrix holds
 the tools' own objects — identity, not equality — so a retyped mirror fails the suite. Every
 mirror this repo has had was wrong in the LOOSE direction; the four are listed in the session
@@ -924,10 +933,15 @@ Four more rules this matrix exists to enforce, each violated in production at le
   prefix nightly, never reached the tail, and a row past the cut could never wake (a wake
   needs two observations). Both now sort least-recently-checked first
   (`cloud_state/scan_seen.json`, and a `last` key in `candidate_probe.json`).
-- **A pool token must survive note erosion.** Each re-stamp trims the base to fit 220 chars;
-  once the verdict eroded (`no IL listing; monitored candidate` → `no `) the row matched no
-  pool at all. `triage_dark.TARGET_NOTES` therefore matches its **own** `dark-triage` stamp,
-  which makes it self-sustaining.
+- **A pool token must survive note erosion — or the pool must not stand on a token at all.**
+  Each re-stamp trims the base to fit 220 chars; once the verdict eroded (`no IL listing;
+  monitored candidate` → `no `) the row matched no pool at all. `triage_dark.TARGET_NOTES`
+  therefore matches its **own** `dark-triage` stamp, the fact pools above stand on the row's
+  address, and `notes.append` **never evicts a protected segment** — a terminal token (the
+  only thing keeping a row out of every activating pool, and by construction the oldest
+  segment) or `unsupported ATS` (the crack pool's membership fact); `merge_csv_rows` honours
+  the same protection on the conflict path. `tests/rehearse_registry.py --nights 14` is the
+  proof, and `tests.yml` runs it on every push.
 
 ## 3. Resolution ladder — how a dark company becomes covered
 *lane: `registry`*

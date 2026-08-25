@@ -1527,5 +1527,25 @@
     "replace": "            and True          # crack_walled owns walled hosts",
     "why": "a myworkdayjobs row is crack_walled's; cross-validating it over plain HTTP re-creates the wall verdicts.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "protect-unsupported-drop",
+    "file": "pipeline/notes.py",
+    "symbol": "_protected",
+    "class": "M1-gate-removal",
+    "find": "    return bool(_terminal_rx().search(seg) or _PROTECTED_EXTRA.search(seg))",
+    "replace": "    return bool(_terminal_rx().search(seg))",
+    "why": "the crack pool's membership fact lives in deep_validate's segment; evicting it emptied the pool 14 -> 9 in one rehearsed night (BACKLOG 27).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "probe-ever-drop",
+    "file": "probe_candidates.py",
+    "symbol": "main",
+    "class": "M8-argument-mis-passing",
+    "find": "        cur[\"ever\"] = (bool(_p.get(\"ever\")) or int(_p.get(\"il\") or 0) > 0 or int(_p.get(\"sig\") or 0) > 0\n                       or cur[\"il\"] > 0 or cur[\"sig\"] > 0)   # a pre-`ever` baseline counts too",
+    "replace": "        cur[\"ever\"] = (cur[\"il\"] > 0 or cur[\"sig\"] > 0)   # a pre-`ever` baseline counts too",
+    "why": "`ever` is set once and never cleared; recomputing it from tonight alone erased 64 validate_empty rows in one rehearsed quiet night.",
+    "must_be_killed_by_behavioural": true
   }
 ]

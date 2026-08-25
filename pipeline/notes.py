@@ -21,9 +21,30 @@ def split(note: str) -> list:
     return [p for p in (s.strip() for s in str(note or "").split("|")) if p]
 
 
+import re as _re
+
+# Segments eviction may never take. The rule: a segment ONE tool owns that is another
+# pool's membership FACT -- the terminal tokens (the only thing keeping a row out of every
+# activating pool), `unsupported ATS <x>` (deep_validate's; the crack pool's fact for a row
+# whose address is not on a walled host), `dark-triage <date>: <mode>` (triage's; the
+# extract-gap pool's fact and triage's own) and `scanned; no open` (the resolvers'; the
+# Sunday cross-validation's fact). Each owner still rewrites its own segment through
+# `replace_own`; only OTHER tools' stamps can no longer push these out. The 14-night
+# rehearsal (tests/rehearse_registry.py) took the crack pool 14 -> 9 on night one and the
+# extract-gap / validate_empty pools by 3 and 6 rows on the first Sunday before this
+# (docs/BACKLOG.md 27, 197).
+# (`no open Israel roles` rather than `scanned; no open`: older rows carry that segment as a
+# head-cut fragment -- `a; no open Israel roles now` -- and the pool matches the substring)
+_PROTECTED_EXTRA = _re.compile(r"unsupported ATS|dark-triage \d{4}-\d{2}-\d{2}: [a-z-]+|no open israel roles", _re.I)
+
+
 def _terminal_rx():
     from pipeline.verdicts import TERM_RX      # lazy: verdicts imports nothing of ours
     return TERM_RX
+
+
+def _protected(seg):
+    return bool(_terminal_rx().search(seg) or _PROTECTED_EXTRA.search(seg))
 
 
 def append(base: str, segment: str, cap: int = CAP, keep=None) -> str:
@@ -38,10 +59,10 @@ def append(base: str, segment: str, cap: int = CAP, keep=None) -> str:
     seg = " ".join(str(segment or "").split())
     if not seg:
         return str(base or "")[:cap]
-    rx = _terminal_rx() if keep is None else keep
+    protected = _protected if keep is None else (lambda p: bool(keep.search(p)))
     parts = split(base)
     while parts and len(SEP.join(parts + [seg])) > cap:
-        victims = [i for i, p in enumerate(parts) if not rx.search(p)]
+        victims = [i for i, p in enumerate(parts) if not protected(p)]
         if not victims:
             break
         parts.pop(victims[0])            # oldest UNPROTECTED first
@@ -67,5 +88,6 @@ def replace_own(base: str, marker: str, segment: str, cap: int = CAP) -> str:
 
 
 def has_terminal(note: str) -> bool:
-    """Does the note carry a protected (terminal) segment? The merge asks before trimming."""
-    return bool(_terminal_rx().search(note or ""))
+    """Is this segment protected (terminal, or the crack pool's `unsupported ATS` fact)?
+    The merge asks before trimming."""
+    return _protected(note or "")

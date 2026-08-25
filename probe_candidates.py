@@ -146,6 +146,13 @@ def main():
         if not (isinstance(prev, dict) and "il" in prev and "sig" in prev):
             prev = None
         cur["last"] = TODAY                # rotation key; see the sort above
+        # `ever`: this page has shown a job/Israel signal at least once -- set once, never
+        # cleared. The latest sig/il is a baseline for WAKING (it must move); `ever` is the
+        # durable fact validate_empty keys on (2026-08-26): a night where every page shows
+        # nothing must not erase what was seen (the 14-night rehearsal lost 64 rows that way)
+        _p = prev or {}
+        cur["ever"] = (bool(_p.get("ever")) or int(_p.get("il") or 0) > 0 or int(_p.get("sig") or 0) > 0
+                       or cur["il"] > 0 or cur["sig"] > 0)   # a pre-`ever` baseline counts too
         state[name] = cur
         if prev is None:
             continue                      # first observation = baseline, no wake
