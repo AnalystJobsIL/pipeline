@@ -3569,7 +3569,7 @@ def test_bd_validated_row_survives_the_retry_pass(tmp_path, monkeypatch):
 
 
 def test_retry_unreachable_never_reopens_a_terminal_row(tmp_path, monkeypatch):
-    """Kills `retry-terminal-drop`. An `alias-of` row points at a board that WORKS -- a
+    """Kills `retry-pool-terminal-remove`. An `alias-of` row points at a board that WORKS -- a
     successful retry would publish every role twice under two names."""
     import sys
     import retry_unreachable as R
@@ -4845,11 +4845,13 @@ def test_a_terminal_segment_is_never_evicted_by_append_or_by_the_merge():
     # positive control: an unprotected old segment still goes first
     n2 = append("listing-hunt 2026-08-01: no listing found | dark-triage 2026-08-02: x", "y" * 200)
     assert "listing-hunt 2026-08-01" not in n2 and n2.endswith("y" * 200)
-    # the conflict merge: theirs' tail is trimmed, never the terminal segment
-    ours = base + " | dark-triage 2026-09-01: wrong-page (" + "z" * 120 + ")"
-    theirs = base + " | listing-hunt 2026-09-02: no listing found (" + "w" * 80 + ")"
+    # the conflict merge trims from theirs' TAIL -- and the terminal segment is theirs'
+    # tail here (ours never carried it): it must survive the trim all the same
+    ours = "dark-triage 2026-09-01: wrong-page (" + "z" * 80 + ") | repair 2026-09-01: " + "q" * 80
+    theirs = base
     merged = M._merge_notes(theirs, ours, cap=220)
     assert "alias-of Kornit Digital" in merged and len(merged) <= 220, merged
+    assert "dark-triage 2026-09-01" in merged, "ours' newest verdict still wins its place"
 
 
 def test_the_0230_chain_has_one_selector_that_the_mirror_imports(tmp_path, monkeypatch):

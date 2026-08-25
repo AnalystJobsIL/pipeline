@@ -1079,16 +1079,6 @@
     "must_be_killed_by_behavioural": true
   },
   {
-    "id": "retry-terminal-drop",
-    "file": "retry_unreachable.py",
-    "symbol": "in_retry_pool",
-    "class": "M5-population-widening",
-    "find": "            and not is_terminal_row(r))\n\n\ndef main():",
-    "replace": "            and True)\n\n\ndef main():",
-    "why": "the selector had no terminal exclusion until 2026-08-25: an alias-of row carrying `unreachable` would be re-attempted and could re-activate the duplicate.",
-    "must_be_killed_by_behavioural": true
-  },
-  {
     "id": "bd-empt-keeps-unreachable",
     "file": "bd_rescue.py",
     "symbol": "main",
