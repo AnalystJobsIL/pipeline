@@ -4320,11 +4320,12 @@ def test_the_resolver_refuses_a_board_not_grounded_on_the_companys_own_page(monk
     assert L._verify("Upwind Security", "comeet", "49.004",
                      "https://www.comeet.com/careers-api/2.0/company/49.004/positions?token=x",
                      pages=[("https://www.upwind.io/careers", "<html>comeet_uid: 49.004</html>")]) == (3, 3)
-    # a held OWN page can still refuse a board it merely embeds (Cogniteam/Riskified)
+    # a held OWN page can still refuse a board it merely embeds (the Cogniteam/Riskified
+    # shape): `similartech` passes the 5-char slug prefix AND sits on Similarweb's own page
+    # as a stale embed -- only `embedded_board_ok` refuses it
     with pytest.raises(ValueError):
-        L._verify("Cogniteam", "greenhouse", "riskified",
-                  "https://boards-api.greenhouse.io/v1/boards/riskified/jobs",
-                  pages=[("https://www.cogniteam.com/careers", "<html>greenhouse.io/riskified</html>")])
+        L._verify("Similarweb", "greenhouse", "similartech", st,
+                  pages=[("https://www.similarweb.com/careers", "<html>greenhouse.io/similartech</html>")])
     # and `_gather` feeds `_PAGES` so `resolve_llm` grounds without the caller threading it
     monkeypatch.setattr(L, "_search_candidates", lambda name, limit=5: [])
     monkeypatch.setattr(L, "_fetch_html", lambda u, timeout=25, cap=300_000: (u, "<html>boards.greenhouse.io/fiverr</html>"))
