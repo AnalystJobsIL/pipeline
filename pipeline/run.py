@@ -38,6 +38,94 @@ from .companies import load_companies
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(REPO_ROOT, "out")
+LAST_RUN_PATH = os.path.join(REPO_ROOT, "cloud_state", "last_run.json")
+
+# ---- the run's own legibility (lane: infra) ------------------------------------------
+# The Actions log of a digest is ~900 lines with no structure; a crash was a bare traceback
+# and, because `digests/latest.md` was left as yesterday's, no email at all (the relay dedups
+# by content hash). `_phase` groups the log under Actions and records where the run is, so
+# `main()` can write out/crash.json for the failure notice (`persist_state.py outcome`).
+_PHASE = {"name": "start"}
+
+
+def _phase(name):
+    """Mark a milestone: a collapsible `::group::` in the Actions log, the phase name for
+    the crash file. Plain print elsewhere, so local runs and tests read unchanged."""
+    if os.environ.get("GITHUB_ACTIONS"):
+        if _PHASE["name"] != "start":
+            print("::endgroup::", flush=True)
+        print(f"::group::{name}", flush=True)
+    _PHASE["name"] = name
+
+
+def _workflow_step_alarms(env=None):
+    """`daily-digest.yml`'s pre-steps are continue-on-error; a failed one used to be a red
+    line in a log nobody opens. The workflow passes `toJSON(steps)` as
+    WORKFLOW_STEP_OUTCOMES; every failed/cancelled step becomes one bold line in the mail."""
+    env = os.environ if env is None else env
+    raw = env.get("WORKFLOW_STEP_OUTCOMES")
+    if not raw:
+        return []
+    try:
+        steps = json.loads(raw)
+    except ValueError:
+        return ["workflow step outcomes unreadable (WORKFLOW_STEP_OUTCOMES is not JSON)"]
+    if not isinstance(steps, dict):
+        return []
+    return [f"workflow step '{k}' {v.get('outcome')} before the pipeline ran — its output is "
+            f"missing from this digest; see the run log"
+            for k, v in steps.items()
+            if isinstance(v, dict) and v.get("outcome") in ("failure", "cancelled")]
+
+
+def _last_run_alarms(run_date, path=None):
+    """`persist_state.py outcome` records a failed run in cloud_state/last_run.json (a step
+    after the pipeline -- mark_sent, the gate, persist, the board publish -- cannot reach
+    the mail it failed to deliver). The next digest says so; older than two days is silent."""
+    path = path or LAST_RUN_PATH
+    try:                                  # a reporter never raises: a malformed state file is silence
+        with open(path, encoding="utf-8") as f:
+            last = json.load(f)
+        if not isinstance(last, dict):
+            return []
+        failed = last.get("failed_steps")
+        failed = failed if isinstance(failed, dict) else {}
+        status = str(last.get("status", ""))
+        if status == "success" and not failed:
+            return []
+        age = (dt.date.fromisoformat(run_date) - dt.date.fromisoformat(str(last.get("date")))).days
+        if not 0 <= age <= 1:             # yesterday's or today's; the file is only rewritten on failure
+            return []
+        when = "an earlier run today" if age == 0 else f"the {last.get('date')} run"
+        what = ", ".join(f"{k} ({v})" for k, v in failed.items()) or status
+        verdict = f"{status}: {what}" if status != "success" else f"completed with a failed step: {what}"
+        url = str(last.get("run_url") or "")
+        return [f"{when} {verdict}" + (f" — {url}" if url.startswith("https://") else "")]
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _write_step_summary(summary, run_date, docs_dir):
+    """The mail's alarm lines and audit counts, on the run page ($GITHUB_STEP_SUMMARY)."""
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not path:
+        return
+    g = lambda k: summary.get(k, "?")  # noqa: E731 -- a reporter never raises
+    lines = [f"## Digest {run_date}: email {g('new')} · board {g('board_count')} · "
+             f"scanned {g('companies_scanned')} ({g('companies_failed')} failed) · "
+             f"LLM calls {g('llm_calls')}", ""]
+    for key, label in (("stage_alarms", "Stages"), ("registry_alarms", "Registry"),
+                       ("dead_sources", "Sources not producing"), ("render", "Render"),
+                       ("fetch_health", "Boards"), ("company_intel", "Company intel"), ("roles", "Roles")):
+        for x in summary.get(key) or []:
+            lines.append(f"- **{label}:** {x}")
+    lines += ["", "```", *str(summary.get("stages", "")).split(" | "), "```",
+              f"paths: {summary.get('paths')} · board written to `{docs_dir}`", ""]
+    try:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write("\n" + "\n".join(lines))
+    except Exception as e:  # noqa: BLE001 -- runs after the digest is written; must not cost it
+        print(f"  [summary] not written: {e}", flush=True)
 
 
 def _load_secrets_env():
@@ -71,13 +159,23 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # Ordering contract (pipeline/stages.py): this run's input quality depends on stages
     # that ran EARLIER, in other workflows. If one of them did not run, the digest is
     # built on stale URLs / a stale cache — that must be visible in the audit, not silent.
+    _phase("prerequisites")
     from . import stages
     stages.require("repair", 1)
     stages.require("collect", 1)
     stages.require("enrich", 1)
-    # the scrape's own verdict on itself (a crashed refresh, a mass-failure night) — a bold
-    # line in the audit and a workflow warning, not a token inside a collapsed block
-    _stage_alarms = stages.alarms("collect") + ledger.alarms
+    # every stage's own verdict on itself — a crashed refresh, a mass-failure night, a hunt
+    # that never stamped, yesterday's digest that never reached its stamp (BACKLOG 114) —
+    # a bold line above the fold and a workflow warning, not a token in a collapsed block.
+    # Then the workflow's: a pre-step that failed, and a step after yesterday's pipeline
+    # that failed (mark_sent / gate / persist / publish reach the mail only the next day).
+    _stage_alarms = (stages.alarms("collect") + stages.alarms("repair", 1)
+                     + stages.alarms("expand", 1)
+                     # `publish` is this run's own stage: a stamp older than yesterday means
+                     # yesterday's digest never reached its stamp (a crash or a timeout)
+                     + [a.replace("— the digest read stale input", "— yesterday's digest never completed")
+                        for a in stages.alarms("publish", 1)]
+                     + _workflow_step_alarms() + _last_run_alarms(run_date) + ledger.alarms)
     for _line in _stage_alarms:
         print(f"::warning::stage {_line}", flush=True)
     # a discovery source that has quietly stopped returning records is invisible otherwise
@@ -94,7 +192,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         _registry_alarms_lines = _registry_alarms()
     except Exception as e:              # noqa: BLE001 -- never block the product, but SAY so
         print(f"  [registry] health check skipped: {e!r}", file=sys.stderr, flush=True)
-        _registry_alarms_lines = []
+        _registry_alarms_lines = [f"registry health check crashed: {e.__class__.__name__}: {str(e)[:80]}"]
     for _line in _registry_alarms_lines:
         print(f"::warning::registry {_line}", flush=True)
 
@@ -130,6 +228,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     candidates = []                           # Israel-matched postings, judged once per ROLE below
     health_results = {}                       # free detection: outcome per company this run
 
+    _phase(f"fetch {len(rows)} boards")
     for r in rows:
         stats["companies_scanned"] += 1
         try:
@@ -162,6 +261,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # one judgment per ROLE, not per board it is listed on (lane: roles, BACKLOG 124): a
     # role fetched from two rows is judged once, on its longest description; copies count
     # as `merged-copy` so `sum(paths) == israel_matched` still reconciles below
+    _phase(f"classify {len(candidates)} Israel-matched postings")
     accepted = roles.classify_grouped(candidates, clf, jdfill, stats, paths)
     print("  " + jdfill.summary(), flush=True)
     # the enrich stage's verdict on itself (both backfill scripts stamp it) and the inline fill's
@@ -203,6 +303,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     # free, daily detection: record which boards returned 0/error so the self-heal step can
     # re-resolve them (and discovery can backfill). Never let health tracking break the digest.
+    _phase("board health")
     _fetch_health_lines = []
     try:
         from . import health
@@ -219,8 +320,12 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         for _line in _fetch_health_lines:
             print(f"::warning::boards {_line}", flush=True)
     except Exception as e:  # noqa: BLE001
+        # every `Boards` line AND stale.json (the self-heal's queue) just vanished: say so
         print(f"  [health] skipped: {e}", file=sys.stderr)
+        _line = f"board health crashed: {e.__class__.__name__}: {str(e)[:80]} — no Boards lines, stale.json not written"
+        _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
 
+    _phase("role record")
     stats["accepted"] = len(accepted)
     merged = store.merge_duplicates(accepted)
     # one posting fetched under two company names (two registry rows on one board) is ONE
@@ -354,6 +459,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # lane: company-intel, ARCHITECTURE §7). One call: bounded in calls and minutes (FIRMO_MAX_PER_RUN /
     # FIRMO_TIME_BUDGET_MIN / BLURB_MAX_PER_RUN), never raises, never writes the shared
     # export on a scoped run, and reports itself into the audit block below.
+    _phase("company intel")
     company_info, firmo_display, _intel = company_intel.enrich_for_run(
         st, board_jobs=board_jobs, email_jobs=email_jobs,
         all_companies={j["company"] for j in st.get_matched_since("0000-01-01")},
@@ -421,6 +527,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # role record supplies "also listed as" / re-posted / closed-on. Never raises — a product
     # that fails is reported (a warning here, a bold line in the mail) and NOT written, so
     # yesterday's file stays; a failed email ships a stub that names the failure.
+    _phase("render")
     rendered = digest_mod.render_all(email_jobs, board_jobs, arch, run_date, summary, company_info,
                                      firmographics=firmo_display, board_url=os.environ.get("BOARD_URL", ""),
                                      analytics_html=analytics_html, contact_url=contact_url,
@@ -432,6 +539,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     if not rendered["email_ok"]:
         # the stub is not a digest: nothing in it was delivered, so nothing may be marked sent
         email_jobs = []
+    _phase("write")
     base = os.path.join(out_dir, f"digest-{run_date}")
     with open(base + ".html", "w", encoding="utf-8") as f:
         f.write(rendered["html"])
@@ -464,12 +572,36 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     st.close()
 
+    if os.environ.get("GITHUB_ACTIONS"):
+        print("::endgroup::", flush=True)
+    _PHASE["name"] = "done"
+    _write_step_summary(summary, run_date, docs_dir)
     print(f"\n=== digest {run_date} ===")
     print(f"email (last 48h): {summary['new']} roles · board (active): {summary['board_count']} roles"
           f"  (scanned {summary['companies_scanned']} cos, {summary['companies_failed']} failed, "
           f"{summary['llm_calls']} LLM calls)")
-    print(f"wrote: {base}.html / .txt / .json + docs/index.html")
+    # the real directory: a scoped run writes out/docs-preview/, never the published board
+    try:
+        _rel = os.path.relpath(docs_dir, REPO_ROOT)
+    except ValueError:                    # another drive on Windows
+        _rel = docs_dir
+    print(f"wrote: {base}.html / .txt / .md / .json + {_rel}/index.html")
     return payload, base
+
+
+def _record_crash(exc, out_dir=OUT_DIR):
+    """out/crash.json: what `persist_state.py outcome` puts in the failure notice."""
+    tb = traceback.format_exception(type(exc), exc, exc.__traceback__)
+    tail = "".join(tb).splitlines()[-15:]
+    rec = {"phase": _PHASE["name"], "exc_type": type(exc).__name__, "message": str(exc)[:300],
+           "traceback_tail": tail, "when": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+        with open(os.path.join(out_dir, "crash.json"), "w", encoding="utf-8") as f:
+            json.dump(rec, f, ensure_ascii=False, indent=1)
+    except OSError:
+        pass
+    return rec
 
 
 def main():
@@ -482,9 +614,17 @@ def main():
     ap.add_argument("--out", default=OUT_DIR)
     ap.add_argument("--db", help="override seen-store path")
     a = ap.parse_args()
-    run(use_llm=not a.no_llm, limit=a.limit,
-        only=a.only.split(",") if a.only else None,
-        run_date=a.date, out_dir=a.out, db_path=a.db)
+    try:
+        run(use_llm=not a.no_llm, limit=a.limit,
+            only=a.only.split(",") if a.only else None,
+            run_date=a.date, out_dir=a.out, db_path=a.db)
+    except Exception as e:  # noqa: BLE001 -- a crash must name its phase, on the run page and in the notice
+        rec = _record_crash(e, a.out)
+        if os.environ.get("GITHUB_ACTIONS") and _PHASE["name"] not in ("start", "done"):
+            print("::endgroup::", flush=True)
+        print(f"::error::pipeline crashed in phase '{rec['phase']}': {rec['exc_type']}: {rec['message']}", flush=True)
+        traceback.print_exc()
+        return 1
     return 0
 
 

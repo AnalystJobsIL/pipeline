@@ -804,8 +804,9 @@ def test_the_census_refreshes_only_after_the_invariant_gate():
               encoding="utf-8").read()
     i_gate = dd.index("python check_invariants.py")
     i_census = dd.index("registry_health.py --census")
-    i_add = dd.index("git add cloud_state")
+    i_add = dd.index("persist_state.py commit")          # the one delivery path (infra, 2026-08-25)
     assert i_gate < i_census < i_add, "the census must run after the gate and before the commit"
+    assert "--own cloud_state" in dd[i_add:i_add + 400], "the digest must persist cloud_state"
     block = dd[i_census:i_census + 300]
     assert "continue-on-error: true" in block, "the census step must never withhold the digest"
     lh = open(os.path.join(root, ".github", "workflows", "listing-hunt.yml"),
@@ -817,15 +818,15 @@ def test_the_census_refreshes_only_after_the_invariant_gate():
     i_l = lh.index("registry_health.py --ladder")
     step = lh[lh.rfind("- name:", 0, i_l):i_l]
     assert "BRIGHTDATA_API_KEY" in step and "BRIGHTDATA_ZONE" in step, step
-    commit = lh[lh.index("git add companies.csv"):]
+    commit = lh[lh.index("persist_state.py commit"):]
     assert "cloud_state/registry_ladder.json" in commit, (
-        "listing-hunt lists explicit paths in its git add; the ladder file must be one")
-    # ...and it must be added on its OWN, tolerantly: the step that writes it is
-    # continue-on-error, and `git add a b missing` under bash -e aborts before `git commit`
-    # -- the whole night's registry writes discarded (confirmation-wave R1, B4). The
-    # mandatory paths and the optional file may never share one `git add`.
-    ladder_add = next(l for l in commit.splitlines() if "registry_ladder.json" in l and "git add" in l)
-    assert "companies.csv" not in ladder_add and "||" in ladder_add, ladder_add
+        "listing-hunt lists explicit paths it owns; the ladder file must be one")
+    # ...and a missing optional path must never abort the commit: the step that writes it
+    # is continue-on-error, and `git add a b missing` under bash -e used to abort before
+    # `git commit` -- the whole night's registry writes discarded (confirmation-wave R1,
+    # B4). That tolerance is now persist_state.py's contract, pinned by
+    # test_persist_stages_only_owned_paths_tolerates_a_missing_one_and_expands_a_directory.
+    assert "git add" not in commit, "no inline git add beside the delivery path"
 
 
 def test_the_digest_summary_is_wired_to_alarms_state():

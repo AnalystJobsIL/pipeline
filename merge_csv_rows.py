@@ -48,25 +48,43 @@ _TOOL = re.compile(r"^\s*(dark-triage|listing-hunt|deep-validated|crack-walled|d
                    # `scrape rotted (error 7d) <date>` (refresh_scrape_cache): the day count and
                    # date sat inside the seg[:28] key, so two nights' segments both survived a
                    # conflict merge (scraper lane, 2026-08-24)
-                   r"empty-but-suspect|scrape rotted)\b")
+                   # 2026-08-25 (infra): every dated tool prefix found in the live registry, so
+                   # a conflict day cannot carry two of any tool's segment -- `url-repaired`
+                   # (12 live rows) and `self-heal` (4) were keyed by seg[:28] (BACKLOG 35/67)
+                   r"empty-but-suspect|scrape rotted|url-repaired|url-cleared|url-flagged|"
+                   r"self-heal|activated|platform-fix|identity|chrome-verified)\b")
 
 
-def _merge_notes(theirs: str, ours: str, cap: int = 220) -> str:
+def _seg_key(seg):
+    m = _TOOL.match(seg)
+    return m.group(1) if m else seg[:28]
+
+
+def _merge_notes(theirs: str, ours: str, cap: int = 220, base: str | None = None) -> str:
     """Union the ` | `-separated verdict segments of two notes, ours winning per tool.
 
     Each tool owns a segment (`dark-triage <date>: …`, `listing-hunt <date>: …`). Two
     writers touching the same row must not delete each other's segments — that is how 351
     triage modes were lost. Segments are keyed by tool name; untagged prose is kept once.
+
+    With `base` (the row's note at checkout): a segment that was in base and that ours
+    DROPPED is a deliberate deletion — `probe_candidates._wake_note` strips the
+    `listing-hunt` / `dark-triage` segments so the hunt re-selects the row — and it is not
+    resurrected from theirs unless theirs rewrote it since (BACKLOG 15/60: 47 of 152 wakes
+    were being spent by the conflict merge).
     """
     def split(n):
         return [s.strip() for s in (n or "").split("|") if s.strip()]
 
+    base_keys = {_seg_key(s): s for s in split(base)} if base is not None else {}
+    ours_keys = {_seg_key(s) for s in split(ours)}
     seen, out = {}, []
     for seg in split(ours) + split(theirs):       # ours first: it wins its own tool key
-        m = _TOOL.match(seg)
-        key = m.group(1) if m else seg[:28]
+        key = _seg_key(seg)
         if key in seen:
             continue
+        if key in base_keys and key not in ours_keys and base_keys[key] == seg:
+            continue                              # ours deleted it; theirs still has the old one
         seen[key] = True
         out.append(seg)
     joined = " | ".join(out)
@@ -104,7 +122,8 @@ def merge(base_path, ours_path, target_path):
                 if len(r) > 5 and len(cur) > 5:
                     ours_note = r[5]                       # BEFORE the union below
                     r = list(r)
-                    r[5] = _merge_notes(cur[5], r[5])
+                    _b = base.get(r[0])
+                    r[5] = _merge_notes(cur[5], r[5], base=_b[5] if _b and len(_b) > 5 else None)
                     merged_notes += 1
                     # A long run carries the address the row had at CHECKOUT. If another
                     # writer has since replaced a dead hostname with a verified one, that

@@ -34,10 +34,6 @@ jobs:
     timeout-minutes: 330
     steps:
       - uses: actions/checkout@v5
-      - name: Snapshot companies.csv baseline (git-layer merge)
-        run: |
-          cp companies.csv /tmp/base.csv || true
-          cp scraped_cache.json /tmp/base_cache.json || true
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
@@ -61,52 +57,25 @@ jobs:
         run: python deep_validate.py --apply
         continue-on-error: true
       - name: Registry invariants gate the commit
-        # deliberately NOT continue-on-error: a run that broke an invariant
-        # loses its work rather than committing it -- docs/BACKLOG.md 64.
+        # deliberately NOT continue-on-error: a broken registry makes the job red here,
+        # and persist_state.py (below, `if: always()`) restores companies.csv from the
+        # checkout while every other owned path still lands -- BACKLOG 64, policy of
+        # 2026-08-25 (ARCHITECTURE §4).
         run: python check_invariants.py
+      - name: Stage stamps on the run page
+        if: always()
+        run: python -m pipeline.stages >> "$GITHUB_STEP_SUMMARY"
+        continue-on-error: true
       - name: Commit verdicts
+        # One delivery path for every workflow (persist_state.py, lane: infra): stages ONLY
+        # the paths this job owns, gates them (JSON parses, sqlite quick_check,
+        # check_invariants on the registry -- a failing file is restored, the rest lands,
+        # the step is red), and on a push conflict merges each file by its own rule instead
+        # of copying a checkout-era copy over origin's newer one. `if: always()`: a failed
+        # step or a timeout no longer discards the night's work (BACKLOG 39/128).
+        if: always()
+        timeout-minutes: 10
         run: |
-          git config user.name  "audit-bot"
-          git config user.email "audit@users.noreply.github.com"
-          git add companies.csv
-          git commit -m "deep-validate parked companies $(date -u +%F) [skip ci]" || { echo "no change"; exit 0; }
-          for i in 1 2 3 4 5; do
-            if git pull --rebase --autostash origin ${GITHUB_REF_NAME}; then
-              git push origin HEAD:${GITHUB_REF_NAME} && exit 0
-            else
-              # CONFLICT on companies.csv: rebase can't merge it, and giving up here
-              # discards the whole run (3.5h listing-hunt lost 2026-08-22). Re-apply just
-              # THIS run's row changes onto origin's current file and retry.
-              git rebase --abort 2>/dev/null || true
-              # preserve EVERY artifact this run produced — `git reset --hard` below would
-              # otherwise destroy seen.db (re-emailing every role), caches and digests.
-              rm -rf /tmp/ours && mkdir -p /tmp/ours
-              for p in companies.csv scraped_cache.json discovered_cache.json                        research_companies.json cloud_state digests docs; do
-                [ -e "$p" ] && cp -r "$p" /tmp/ours/ 2>/dev/null || true
-              done
-              git fetch origin ${GITHUB_REF_NAME} || true
-              git reset --hard origin/${GITHUB_REF_NAME} || true
-              # Copy back ONLY what THIS job owns. `cp -r cloud_state .` restored the whole
-              # directory as it was at CHECKOUT TIME, so a run that conflicts hours later
-              # silently reverted every cloud_state/seen.db row other workflows had committed
-              # in between — sent/matched/llm_cache/firmographics, last-writer-wins on a
-              # binary git cannot merge (HANDOFF open item 7). Only the digest owns seen.db.
-              # (this job commits only companies.csv / scraped_cache.json;
-              #  both are merged below, so nothing else is restored)
-              if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
-                python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
-                # the merged registry passes the same gate before it is committed
-                python check_invariants.py || { echo "::error::merged registry fails invariants"; exit 1; }
-              fi
-              # scraped_cache.json has eight writers across six workflows, each rewriting the
-              # whole dict — restoring ours wholesale deleted every company another workflow
-              # had cached since checkout. Merge it per company key, like the csv.
-              if [ -f /tmp/base_cache.json ] && [ -f /tmp/ours/scraped_cache.json ]; then
-                python merge_json_cache.py /tmp/base_cache.json /tmp/ours/scraped_cache.json                        scraped_cache.json scraped_cache.json || true
-              fi
-              git add -A . || true
-              git commit -m "row-merged state $(date -u +%F) [skip ci]" || true
-            fi
-            sleep $((i*15))
-          done
-          echo "::error::push failed after 5 retries"; exit 1
+          python persist_state.py commit --as "audit-bot" \
+            -m "deep-validate parked companies $(date -u +%F) [skip ci]" \
+            --own companies.csv

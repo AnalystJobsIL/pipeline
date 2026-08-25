@@ -20,7 +20,7 @@ table in the repo and is checked against the real crons.
 4 ENRICH   pipeline/jdfill.py (job text) · pipeline/firmographics.py (company facts)
 5 CLASSIFY pipeline/israel.py → pipeline/seniority.py (keywords, then `claude -p`)
 6 RENDER   pipeline/digest.py · pipeline/roleprofile.py
-7 DELIVER  merge_csv_rows.py · merge_json_cache.py · the workflows
+7 DELIVER  persist_state.py (merge_csv_rows · merge_json_cache) · the workflows
 ```
 
 ## The five rules that cost real data to learn
@@ -28,7 +28,7 @@ table in the repo and is checked against the real crons.
 Full versions in `ARCHITECTURE.md` §2 and §8. Short versions, because each of these has
 already destroyed a day of work:
 
-1. **A green workflow means nothing.** 25 of the 77 workflow steps are
+1. **A green workflow means nothing.** 35 of the 77 workflow steps are
    `continue-on-error: true`. Verify a capability by what it PRODUCED, and quote the number.
 2. **A mass-zero result is a broken run, not a measurement.** Strip its verdicts, diagnose,
    re-run — do not let it commit.

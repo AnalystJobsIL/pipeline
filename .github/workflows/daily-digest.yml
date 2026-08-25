@@ -17,6 +17,13 @@ name: Daily jobs digest (cloud)
 #
 # State (which postings were already digested + the LLM/company caches) lives in
 # cloud_state/seen.db and is committed back after each run so tomorrow only shows NEW roles.
+#
+# How a failure reaches you (lane: infra, ARCHITECTURE.md §4): every step has an `id`, the
+# pre-steps are continue-on-error WITHOUT a `|| echo` swallow so their outcome is truthful,
+# the pipeline step receives `toJSON(steps)` and prints a bold line in the mail for each
+# failed one, and the last step (`persist_state.py outcome`, always) records the run in
+# cloud_state/last_run.json and -- when the digest itself was lost -- commits a dated
+# failure notice as digests/latest.md, so the relay emails THAT instead of silence.
 
 on:
   schedule:
@@ -33,13 +40,13 @@ concurrency:
 jobs:
   digest:
     runs-on: ubuntu-latest
-    timeout-minutes: 150   # discovery polling + 718 fetches + firmographics
+    # per-step timeouts sum to 270 min (each is its script's own budget + headroom); the job
+    # cap sits above that sum so the persist/outcome steps are reached by a step failing,
+    # never by the job being cancelled from under them (BACKLOG 128). Measured: the whole
+    # job ran 32 min on 2026-08-25.
+    timeout-minutes: 285
     steps:
       - uses: actions/checkout@v5
-      - name: Snapshot companies.csv baseline (git-layer merge)
-        run: |
-          cp companies.csv /tmp/base.csv || true
-          cp scraped_cache.json /tmp/base_cache.json || true
 
       - uses: actions/setup-python@v6
         with:
@@ -50,32 +57,48 @@ jobs:
           node-version: "20"
 
       - name: Install Claude Code CLI (pinned — the classifier's flags are checked against this version)
+        id: cli
+        timeout-minutes: 10
+        # continue-on-error: the classifier degrades to `missing` and says so in the mail;
+        # a flaky npm registry must not skip the whole day (and a skipped pipeline behind a
+        # hard-failed step used to mean silence: yesterday's digest re-relayed unlabelled)
         run: npm install -g @anthropic-ai/claude-code@2.1.241
+        continue-on-error: true
 
       - name: Discovery layer (LinkedIn+Indeed via Bright Data, if key set)
+        id: discovery
+        timeout-minutes: 25
         env:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
-        run: python discovery_daily.py || echo "discovery skipped"
+        run: python discovery_daily.py
         continue-on-error: true
 
       - name: Telegram-channel discovery (keyless t.me/s preview)
-        run: python discovery_telegram.py || echo "telegram discovery skipped"
+        id: telegram
+        timeout-minutes: 10
+        run: python discovery_telegram.py
         continue-on-error: true
 
       - name: Re-test dead domains (plain GETs; ~7-15 min over ~390 rows)
-        run: python scan_dead_domains.py --apply || echo "liveness scan skipped"
+        id: liveness
+        timeout-minutes: 20
+        run: python scan_dead_domains.py --apply
         continue-on-error: true
 
       - name: Probe monitored candidates (wake rows whose pages grew job signals)
-        run: python probe_candidates.py --apply || echo "probe skipped"
+        id: probe
+        timeout-minutes: 15
+        run: python probe_candidates.py --apply
         continue-on-error: true
 
       - name: Enrich scrape-source jobs with JD text (plain fetch, Unlocker fallback)
+        id: enrich_scrape
+        timeout-minutes: 30
         env:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
-        run: python enrich_scrape_jd.py || echo "jd enrichment skipped"
+        run: python enrich_scrape_jd.py
         continue-on-error: true
 
       # scrape-source JDs live in scraped_cache.json (step above); API-source roles have
@@ -83,19 +106,25 @@ jobs:
       # never carry a description. This walks the matched STORE — every role we ever
       # accepted, at any age — and fills the ones still missing their text.
       - name: Backfill JD text for already-matched roles (any age, any source)
+        id: enrich_matched
+        timeout-minutes: 25
         env:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           MATCHED_JD_TIME_BUDGET_MIN: "20"
-        run: python enrich_matched_jd.py --db cloud_state/seen.db || echo "matched JD backfill skipped"
+        run: python enrich_matched_jd.py --db cloud_state/seen.db
         continue-on-error: true
 
       - name: Stamp the 'enrich' stage (gap-filler only — never erases the scripts' counts)
+        id: stamp_enrich
         if: always()
         run: python -c "from pipeline.jdfill import record_enrich; print(record_enrich())"
         continue-on-error: true
 
       - name: Run the pipeline (Claude classification via subscription token)
+        id: pipeline
+        # fetch ~880 boards (~8 min) + classify (60 min budget) + company intel (15) + render
+        timeout-minutes: 110
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # NOTE: SerpApi & JSearch both verified to NOT cover Israel (google_jobs rejects
@@ -107,6 +136,8 @@ jobs:
           JDFILL: "1"
           JDFILL_TIME_BUDGET_MIN: "25"
           GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
+          # the pre-steps' outcomes: a failed one is a bold `Stages:` line in the mail
+          WORKFLOW_STEP_OUTCOMES: ${{ toJSON(steps) }}
         run: |
           mkdir -p cloud_state out digests
           python -m pipeline.run --db cloud_state/seen.db
@@ -114,84 +145,71 @@ jobs:
           if [ -f "out/digest-${DATE}.md" ]; then
             cp "out/digest-${DATE}.md" digests/latest.md
             echo "DIGEST_JSON=out/digest-${DATE}.json" >> "$GITHUB_ENV"
+          else
+            # a green run with no digest file (a dispatch straddling UTC midnight) would
+            # otherwise be a silent day: no mail, no notice
+            echo "::error::pipeline exited 0 but wrote no out/digest-${DATE}.md"; exit 1
           fi
 
+      # The marks (sqlite `sent` + the ledger mirror) and digests/latest.md land in ONE commit
+      # below, so a persist failure burns nothing; the only window left is the relay itself
+      # (BACKLOG 6). A mark_sent crash must not withhold the digest: continue-on-error, and
+      # its failure reaches tomorrow's mail through cloud_state/last_run.json.
       - name: Mark digested roles as sent
+        id: mark_sent
         run: |
-          [ -n "$DIGEST_JSON" ] && [ -s "$DIGEST_JSON" ]             && python mark_sent.py "$DIGEST_JSON" --db cloud_state/seen.db             || echo "nothing to mark sent"
+          if [ -n "$DIGEST_JSON" ] && [ -s "$DIGEST_JSON" ]; then
+            python mark_sent.py "$DIGEST_JSON" --db cloud_state/seen.db
+          else
+            echo "nothing to mark sent (no digest payload this run)"
+          fi
+        continue-on-error: true
 
       - name: Invariant guard (blocks a corrupted registry from being committed)
+        id: gate
         run: python check_invariants.py
 
       - name: Re-baseline the registry census (only a registry that passed the gate)
+        id: census
         # AFTER the hard invariant guard on purpose: a census taken before it would bless a
         # corrupted registry as the new baseline, and the deletion registry_health exists
         # to report would be invisible from then on. The alarms the pipeline mailed this
         # morning were judged against YESTERDAY's census. No env, no network, ~0.3s.
-        run: python registry_health.py --census || echo "registry census skipped"
+        run: python registry_health.py --census
         continue-on-error: true
 
       - name: Persist state back to the repo
+        id: persist
+        # One delivery path for every workflow (persist_state.py, lane: infra): stages ONLY
+        # the paths this job owns, gates them (JSON parses, sqlite quick_check,
+        # check_invariants on the registry -- a failing file is restored, the rest lands,
+        # the step is red), and on a push conflict merges each file by its own rule
+        # (pipeline_stages.json per stage key, the caches per company, the registry per
+        # row) instead of copying a checkout-era copy over origin's newer one.
+        # `if: always()`: a crash or a timeout no longer discards the LLM verdicts and
+        # caches the run paid for (BACKLOG 39/128). companies.csv MUST be here:
+        # probe_candidates.py clears verdicts on woken rows, and cloud_state/candidate_probe.json
+        # advances the baseline — without committing the csv the wake is lost AND its signal
+        # is consumed forever. Persist runs BEFORE the board publish on purpose.
+        if: always()
+        timeout-minutes: 10
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # companies.csv MUST be here: probe_candidates.py clears verdicts on woken rows,
-          # and cloud_state/candidate_probe.json (committed below) advances the baseline —
-          # without committing the csv the wake is lost AND its signal is consumed forever.
-          git add cloud_state digests/latest.md discovered_cache.json scraped_cache.json research_companies.json companies.csv docs/index.html docs/archive.html
-          git commit -m "cloud run: state + digest for $(date -u +%F) [skip ci]" || echo "nothing to commit"
-          for i in 1 2 3 4 5; do
-            if git pull --rebase --autostash origin master; then
-              git push && exit 0
-            else
-              # CONFLICT on companies.csv: rebase can't merge it, and giving up here
-              # discards the whole run (3.5h listing-hunt lost 2026-08-22). Re-apply just
-              # THIS run's row changes onto origin's current file and retry.
-              git rebase --abort 2>/dev/null || true
-              # preserve EVERY artifact this run produced — `git reset --hard` below would
-              # otherwise destroy seen.db (re-emailing every role), caches and digests.
-              rm -rf /tmp/ours && mkdir -p /tmp/ours
-              for p in companies.csv scraped_cache.json discovered_cache.json                        research_companies.json cloud_state digests docs; do
-                [ -e "$p" ] && cp -r "$p" /tmp/ours/ 2>/dev/null || true
-              done
-              git fetch origin master || true
-              git reset --hard origin/master || true
-              # NOT scraped_cache.json: restoring it wholesale here would overwrite
-              # origin's copy before the three-way merge below ever sees it, so the merge
-              # would compare ours against ours and every company another workflow cached
-              # since checkout would still be lost. The merge restores it instead.
-              # -T: `cp -r ours/cloud_state cloud_state` into an EXISTING directory nests it
-              # (cloud_state/cloud_state/seen.db) and origin's seen.db / board / digest were
-              # committed instead of this run's — 4 conflict days (found 2026-08-24, wave 1)
-              for p in discovered_cache.json research_companies.json cloud_state digests docs; do
-                [ -e "/tmp/ours/$p" ] && { mkdir -p "$(dirname "$p")"; cp -rT "/tmp/ours/$p" "$p"; } 2>/dev/null || true
-              done
-              if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
-                python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
-                # the merged registry passes the same gate before it is committed -- the
-                # fourth sibling of the block in retry-unreachable/auto-expand/audit-coverage
-                python check_invariants.py || { echo "::error::merged registry fails invariants"; exit 1; }
-              fi
-              # scraped_cache.json has eight writers across six workflows, each rewriting the
-              # whole dict — restoring ours wholesale deleted every company another workflow
-              # had cached since checkout. Merge it per company key, like the csv.
-              if [ -f /tmp/base_cache.json ] && [ -f /tmp/ours/scraped_cache.json ]; then
-                python merge_json_cache.py /tmp/base_cache.json /tmp/ours/scraped_cache.json                        scraped_cache.json scraped_cache.json || true
-              fi
-              git add -A . || true
-              git commit -m "row-merged state $(date -u +%F) [skip ci]" || true
-            fi
-            sleep $((i*15))
-          done
-          echo "::error::state push failed"; exit 1
+          python persist_state.py commit --as "github-actions[bot]" \
+            -m "cloud run: state + digest for $(date -u +%F) [skip ci]" \
+            --own cloud_state digests/latest.md discovered_cache.json scraped_cache.json \
+                  research_companies.json companies.csv docs/index.html docs/archive.html
 
       - name: Publish the 2-week board to the public org repo (needs BOARD_DEPLOY_KEY)
+        id: publish
+        # a red persist (one refused file, the rest pushed) must not cost the board a day
+        if: ${{ !cancelled() && steps.pipeline.outcome == 'success' }}
+        timeout-minutes: 10
         env:
           DEPLOY_KEY: ${{ secrets.BOARD_DEPLOY_KEY }}
           TOKEN: ${{ secrets.BOARD_DEPLOY_TOKEN }}
         run: |
-          [ -z "$DEPLOY_KEY" ] && [ -z "$TOKEN" ] && { echo "no board credentials set; skipping board publish"; exit 0; }
-          [ -s docs/index.html ] || { echo "no board html"; exit 0; }
+          [ -z "$DEPLOY_KEY" ] && [ -z "$TOKEN" ] && { echo "::error::no board credentials set; board NOT published"; exit 1; }
+          [ -s docs/index.html ] || { echo "::error::docs/index.html is empty; board NOT published"; exit 1; }
           if [ -n "$DEPLOY_KEY" ]; then
             # SSH deploy key scoped to AnalystJobsIL/board (write); survives PAT expiry/policy issues
             mkdir -p ~/.ssh && chmod 700 ~/.ssh
@@ -210,13 +228,26 @@ jobs:
           BR=$(git symbolic-ref --short HEAD)     # board repo's default branch is main, not master
           git config user.name  "board-bot"
           git config user.email "board@users.noreply.github.com"
-          git add index.html archive.html
+          git add index.html
+          [ -f archive.html ] && git add archive.html
           git commit -m "board $(date -u +%F)" || { echo "no change"; exit 0; }
           for i in 1 2 3 4 5; do
             git pull --rebase --autostash origin "$BR" && git push origin "HEAD:$BR" && exit 0
             git rebase --abort 2>/dev/null || true; sleep $((i*20))
           done
           echo "::error::board push failed"; exit 1
+
+      - name: Report the run's outcome (a lost digest becomes a mailed notice; any failure reaches tomorrow's mail)
+        id: outcome
+        if: always()
+        timeout-minutes: 5
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        # commits cloud_state/last_run.json (+ digests/latest.md when the digest was lost)
+        # ALONE, from a fresh worktree of origin/master -- never this checkout's tree
+        run: python persist_state.py outcome --commit
 
 # (workflow re-index nudge)
 

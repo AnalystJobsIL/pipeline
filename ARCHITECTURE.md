@@ -111,8 +111,10 @@ on a bare title is re-judged once the description arrives (distinct from a row's
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And **25 of the 77 workflow steps carry `continue-on-error: true`** (counted 2026-08-24 by
-`docs/check_docs.py`, which fails if this sentence and the workflows disagree), so a hard
+And **35 of the 77 workflow steps carry `continue-on-error: true`** (counted 2026-08-25 by
+`docs/check_docs.py`, which fails if this sentence and the workflows disagree; nine of the 35
+are the `Stage stamps on the run page` / CLI-install steps added that day, tolerated on
+purpose — their outcome is what the mail and the run page read, never the badge), so a hard
 failure in an audit/hunt step still shows a green run — check the step log, not the badge.
 
 ```bash
@@ -910,8 +912,8 @@ the short version of the three gates and the code that enforces them.
   Only `refresh_scrape_cache.py` self-protects automatically (aborts if the rebuilt cache
   shrinks >20%); every other runner needs the operator to apply this rule.
 
-## 4. Schedules and latency guarantees (UTC)
-*lane: `infra` — one session at a time. Checked against the real crons by `docs/check_docs.py`.*
+## 4. Schedules, delivery, and what happens when a run breaks (UTC)
+*lane: `infra` — one session at a time. The cron table is checked against the real crons by `docs/check_docs.py`.*
 
 This table is the **only** schedule in the repo, and `docs/check_docs.py` fails if any
 `.github/workflows/*.yml` cron is missing from it or disagrees with it. It was wrong for
@@ -922,15 +924,25 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 |---|---|---|
 | `0 0 * * *` | scrape-refresh | re-render all scrape rows (JD carry-forward keeps enrichment) |
 | `30 2 * * *` | retry-unreachable | Bright Data re-fetch of flaky endpoints |
-| `0 5 * * *` | daily-digest | discovery → telegram → liveness scan → probe candidates → JD-enrich → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** |
-| — 05:45 / 08:30 | inbox relay (private repo `AnalystJobsIL/inbox`, not this repo's crons) | digest → email via issue+mention, content-hash dedup |
+| `0 5 * * *` | daily-digest | discovery → telegram → liveness scan → probe candidates → JD-enrich → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** → report the run's outcome |
+| — `17 6,7,8,10 * * *` | inbox relay (private repo `AnalystJobsIL/inbox`, not this repo's crons) | digest → email via issue+mention, content-hash dedup |
 | `0 6 * * *` | self-heal | re-resolve stale/rotted boards |
 | `0 8,20 * * *` | auto-expand | drain resolution queue (deterministic + LLM tiers) |
 | `0 18 * * *` | triage-dark | classify every parked row by failure mode (`dark-triage <date>: <mode>`) |
 | `0 19 * * *` | listing-hunt | repair-extract-gap (35 min) → re-hunt woken/eligible dark rows (200 min) → walled-ATS re-crack (60 min) |
 | `0 4 * * 6` | deep-validate | Saturday: Chromium render + network sniff over `_revalidatable` rows |
 | `0 4 * * 0` | audit-coverage | Sunday: wayback rescue, empty cross-validation, full parked-row re-audit, **liveness re-scan (revives domains), walled-ATS re-crack**, coverage report |
-| on push | tests | `pytest`, `check_invariants.py`, `pipeline.platform_check`, `docs/check_docs.py` — the only workflow with no `continue-on-error` step |
+| on push | tests | `pytest` (which runs `docs/check_docs.py`), `check_invariants.py`, `pipeline.platform_check`, the mutation gate — the only workflow with no `continue-on-error` step |
+
+**When the email actually arrives.** The 05:00 cron is queued by GitHub for ~35 minutes
+and the job runs ~30 (05:36→06:08 on 2026-08-25, run 32813499709), so the digest lands on
+`master` at ~06:08. The relay used to poll at 05:45 and 08:30: the 05:45 pass found
+yesterday's file every morning (run 32815273635 at 06:02 printed `already posted … 08-24`)
+and the mail waited for 08:30 — inbox issues at 05:59, 08:59, 06:23 on three consecutive
+days. Since 2026-08-25 the relay polls at **06:17, 07:17, 08:17 and 10:17**, deduped by the
+sha256 of `digests/latest.md`, so **expect the email at ~06:20 UTC (09:20 Israel)**; a
+slow run or a re-run is caught by the later passes. Re-derive with
+`gh issue list -R AnalystJobsIL/inbox --limit 5 --json createdAt,title`.
 
 **Concurrency:** eight of the nine scheduled workflows share the `repo-state` group, so a
 long run makes the next one queue or be superseded with no error. `daily-digest.yml` has its
@@ -945,28 +957,143 @@ Latency: active API rows — **same-day**; active scrape rows — **~1 day** (00
 05:00 digest); monitored candidates — **~1–2 days** (probe wake → 19:00 hunt verify → next
 digest); deep re-hunt every 14 days and the weekend audits are backstops only.
 
+### The delivery path: one script, nine workflows (2026-08-25)
+
+Every workflow that commits state ends in the same step —
+
+```yaml
+- name: Commit verdicts            # (the name varies; the shape does not)
+  if: always()                     # a crash or a timeout no longer discards the night's work
+  timeout-minutes: 10
+  run: python persist_state.py commit --as audit-bot -m "listing-hunt $(date -u +%F) [skip ci]" \
+         --own companies.csv scraped_cache.json cloud_state/pipeline_stages.json cloud_state/registry_ladder.json
+```
+
+— and `persist_state.py` (root, `infra`; `python persist_state.py table` prints the rules)
+does what nine hand-copied shell blocks used to do, with the lessons they had each learned
+separately now enforced once. `--own` is the whole contract: **a path this job does not own
+is never staged, never restored, never merged** (the old blocks ended in `git add -A .`).
+Before staging, every owned `*.json`/`*.jsonl` must parse, `seen.db` must pass `PRAGMA
+quick_check` (opened read-write, so a hot rollback journal is replayed rather than read as
+corruption), `digests/latest.md` must start with a heading, `docs/*.html` must be ≥ 500
+bytes, and `companies.csv` must pass `check_invariants.py`; a file that fails is restored
+from the checkout commit, everything else still lands, and the step exits 1 — user-approved
+on 2026-08-25 as the replacement for "a run that broke an invariant loses its work". Sqlite
+side files (`-journal`, `-wal`, `-shm`) and atomic-write leftovers (`.tmp_*`, `*.tmp`) are
+never staged; a tracked file that vanished from an owned directory is restored, never
+committed as a deletion (`rm -rf cloud_state` + `--own cloud_state` used to push an empty
+tree and report success). On a push conflict the script aborts the rebase, resets to
+origin, and rebuilds each owned path from three versions — the checkout commit (the base;
+there is no snapshot step any more), the run's own commit, and origin's — by the file's own
+rule (the table is in §5, beside the writers); a second conflict in the same run is judged
+against the first merge, not the checkout. After a *clean* rebase only the files git
+actually rewrote are re-gated, and a rewrite that does not parse goes through the per-file
+merge instead of being pushed.
+
+Why per-key for the stamps: on 2026-08-24 listing-hunt stamped `repair` at 22:12
+(`82d425c`); auto-expand, checked out at 20:00, hit a conflict at 23:40 and its block
+copied its own `pipeline_stages.json` back over origin's, deleting the key (`0b41823`,
+author expand-bot) — the mail then said `repair: never run`. Same on 08-23 (`33d0306` →
+`bab228f`). `tests/rehearse_infra.py --conflict` replays that night on temporary repos and
+asserts origin keeps both stamps, both registry writes and the refresh's deliberate
+deletion; the unit guards are the `lane: infra` block at the end of `tests/test_units.py`.
+
+### When a run breaks, the mail says so
+
+The alarm channel *is* the email, so a run that produced no email used to be silent: the
+relay dedups on the content hash of `digests/latest.md`, and a crashed digest left
+yesterday's file in place. Four mechanisms, all in `daily-digest.yml` + `pipeline/run.py`:
+
+1. **A failed pre-step is a bold line.** Every step has an `id`; the pre-steps
+   (discovery, telegram, liveness, probe, the two JD backfills, the census) are
+   `continue-on-error` *without* the old `|| echo "… skipped"` (which made a crash read
+   as success), and the pipeline step receives `WORKFLOW_STEP_OUTCOMES: ${{ toJSON(steps) }}`
+   → `- **Stages:** workflow step 'liveness' failure before the pipeline ran — its output
+   is missing from this digest; see the run log`, above the fold.
+2. **Every stage alarms, not two.** `run.py` reads `stages.alarms` for `collect`,
+   `enrich`, `repair` (1 day), `expand` (1 day) and `publish` (1 day — *yesterday's digest
+   never completed*), closing BACKLOG 114; the health and registry excepts append an alarm
+   instead of only writing stderr.
+3. **A lost digest becomes a mailed notice.** The last step, `persist_state.py outcome
+   --commit` (`if: always()`), reads `toJSON(steps)`, `job.status`, out/crash.json (written
+   by `run.py main()` with the phase — fetch / classify / board health / role record /
+   company intel / render / write — and the traceback tail) and the stage stamps. When the
+   `pipeline`, `gate` or `persist` step failed, the job was cancelled before persist
+   succeeded, or the job is red and the pipeline never ran (skipped behind a failed
+   checkout / setup / CLI install — the CLI install is `continue-on-error` for that reason,
+   the classifier degrades to `missing` and says so), it writes a dated `digests/latest.md`:
+   `# ⚠️ No digest for <date> — the daily run failed` · *Failed at* `pipeline` · phase ·
+   exception · run link · what did run tonight · whether a digest was built (and that
+   nothing was marked sent) · that yesterday's board stays published · whether the caches
+   were saved. It commits that file and `cloud_state/last_run.json` **alone, from a fresh
+   worktree of `origin/master`**, so a half-merged registry can never ride along — and
+   **delivery decides, not step outcomes**: when origin's `latest.md` already carries a
+   digest headed with today's date (this run's, or an earlier run's the same day), no
+   notice is written, whatever went red (a persist step that pushed the digest and then
+   refused one file; a failed board publish; a `mark_sent` crash — those are tomorrow's
+   line). Every field the notice prints is escaped the way `digest.py` escapes the mail (an
+   exception message can carry a scraped page). `tests/rehearse_infra.py --notice` prints it.
+4. **A step after the pipeline reaches tomorrow's mail.** `cloud_state/last_run.json`
+   (written only when something failed: date, status, failed steps, run URL) → the next
+   digest's `Stages:` line: `the 2026-08-25 run failure: publish (failure) — <url>`.
+   Two days old is silent.
+
+`mark_sent` stays before the persist step on purpose: the `sent` marks (sqlite + the
+ledger mirror) and `digests/latest.md` land in **one** commit, so a failed persist burns
+nothing; the one window left is the relay itself (BACKLOG 6). A `mark_sent` crash is
+`continue-on-error` (a re-emailed role beats a withheld digest) and reaches tomorrow's mail
+through `cloud_state/last_run.json`.
+
+**Reading a run.** The digest log is grouped by phase (`::group::`), every failure is an
+annotation (`::error::pipeline crashed in phase 'classify …': KeyError: …`,
+`::error::invariant: …`), and the run page's summary carries the mail's alarm lines, the
+audit counts and one stage stamp per line (`$GITHUB_STEP_SUMMARY`; every other workflow
+appends `python -m pipeline.stages`). Locally, `python tests/rehearse_infra.py --mail`
+runs three boards with a failed pre-step, a stale `publish` stamp and yesterday's failed
+publish injected, and `--golden <rev>` proves the mail differs from `<rev>` only in the
+alarm lines (2026-08-25 against `dcca442`: exactly `+ - **Stages:** repair never ran`).
+
 ## 5. State files
 *lane: `infra` (who writes what) — `shared` for everyone who reads them*
 
 | file | contents | written by |
 |---|---|---|
 | `companies.csv` | the coverage registry + verdicts | resolvers/audits (see rule below) |
-| `cloud_state/seen.db` | tables: `sent` (email dedup), `matched` (job-board rows), `llm_cache` (role judgments), `company_info` (blurbs), `firmographics` | pipeline runs |
-| `scraped_cache.json` | rendered scrape-row jobs (+enriched JDs) | scrape-refresh, enrich, auto-expand |
-| `discovered_cache.json` | discovery-net jobs (21-day TTL at read) | discovery_daily, discovery_telegram |
-| `research_companies.json` | resolution queue (names + seed URLs) | discovery bridges; drained by auto-expand |
+| `cloud_state/seen.db` | tables: `sent` (email dedup), `matched` (job-board rows), `llm_cache` (role judgments), `company_info` (blurbs), `firmographics` | the digest (and `enrich_matched_jd.py` inside the same job) — the one cloud writer, so a conflict day keeps the run's file whole |
+| `cloud_state/roles.jsonl`, `roles_text.jsonl` | the role record (§7c) | the digest |
+| `scraped_cache.json` | rendered scrape-row jobs (+enriched JDs) | scrape-refresh, enrich, auto-expand, retry-unreachable, audit-coverage, listing-hunt — merged per company on a conflict |
+| `discovered_cache.json` | discovery-net jobs (21-day TTL at read) | discovery_daily, discovery_telegram — merged by `(company, title)` on a conflict |
+| `research_companies.json` | resolution queue (names + seed URLs) | discovery bridges; read by auto-expand — merged by name on a conflict |
 | `cloud_state/telegram_seen.json` | last message id per channel | discovery_telegram |
 | `cloud_state/candidate_probe.json` | probe signal baselines | probe_candidates |
-| `cloud_state/stale.json` | per-company health verdicts: `fetch-error`, `regressed-to-zero`, `empty-board`, `misconfig-scrape-on-ats` | pipeline/health.py during digest |
-| `cloud_state/health_baseline.json` | **all-time high-water** job count per company (monotonic — never decreases, which is why `regressed-to-zero` latches) | pipeline/health.py |
+| `cloud_state/stale.json` | per-company health verdicts: `fetch-error`, `regressed-to-zero`, `empty-board`, `misconfig-scrape-on-ats` | pipeline/health.py during digest, and self-heal's Monday `health_check.py` — merged per company on a conflict (the Monday copy was never committed until 2026-08-25) |
+| `cloud_state/health_baseline.json` | **all-time high-water** job count per company (monotonic — never decreases, which is why `regressed-to-zero` latches) | pipeline/health.py (digest) and self-heal's Monday `health_check.py` — merged per company on a conflict |
 | `cloud_state/resolve_attempts.json` | self-heal retry throttle (weekly; 5 strikes → abandoned) | resolve_broken.py |
 | `cloud_state/scrape_rot.json` | consecutive empty/error days per scrape row, with the last error code / HTTP status (§5a) | refresh_scrape_cache.py |
-| `cloud_state/firmographics.json` | **the shared, git-mergeable export of the `firmographics` table.** sqlite cannot be merged, so this text file is what the local and cloud stores converge through; the digest reads sqlite ∪ this file (fresher `as_of` wins) and writes the union back | `research_firmographics.py --export`, `pipeline/run.py` |
-| `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest warns in its audit when a prerequisite stage did not run today | each stage's workflow, via `python -m pipeline.stages stamp <stage>` — except `collect`, which `refresh_scrape_cache.py` stamps itself with its counts (§5a) |
+| `cloud_state/scan_seen.json` | the liveness re-scan's rotation | scan_dead_domains (digest; the Sunday audit commits it since 2026-08-25 — BACKLOG 17) |
+| `cloud_state/firmographics.json` | **the shared, git-mergeable export of the `firmographics` table.** sqlite cannot be merged, so this text file is what the local and cloud stores converge through; the digest reads sqlite ∪ this file (fresher `as_of` wins) and writes the union back | `research_firmographics.py --export`, `pipeline/run.py` — merged per company on a conflict |
+| `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest alarms in the mail when a prerequisite stage did not run today | listing-hunt (`repair`), scrape-refresh (`collect`, with its counts), auto-expand (`expand`), the digest (`enrich` via `jdfill.record_enrich`, `publish`) — **merged per stage key on a conflict** (§4; until 2026-08-25 a conflict deleted other jobs' stamps) |
+| `cloud_state/last_run.json` | the digest job's outcome when something failed: date, status, failed steps, run URL (§4) | `persist_state.py outcome`, from the digest's last step |
+| `cloud_state/registry_census.json`, `registry_alarms.json`, `registry_ladder.json` | the registry health census, its alarms, the resolution-ladder probe | `registry_health.py` (digest `--census`; listing-hunt `--ladder`) |
 | `cloud_state/source_health.json` | per discovery source: records returned this run, and the last day it returned any (`pipeline/sources.py`). A source that goes quiet is a workflow warning AND a line in the digest audit — Indeed returned zero for five days unnoticed | discovery_daily, discovery_telegram |
+| `digests/latest.md`, `docs/index.html`, `docs/archive.html` | the email, the board, the archive — what the relay and the board repo read | the digest (`latest.md` is also the failure notice on a lost day, §4) |
+| `out/` (gitignored) | `digest-<date>.{md,html,txt,json}`, crash.json on a crash, `rehearse-*/` | pipeline.run, the rehearsal scripts |
 | `state/` (gitignored) | resume markers (audit done-list). Written in the cloud too but **never committed**, so the Sunday audit re-audits every parked row from scratch (a SerpApi budget fact) | audit/local runs |
 
-(The single-writer and commit-together rules live with the csv schema in §2.)
+**How each file is rebuilt on a push conflict** (`persist_state.py table`):
+
+| path | rule |
+|---|---|
+| `companies.csv` | rows by company name, note segments unioned per tool (`merge_csv_rows.merge`); a segment the run deleted on purpose (`probe-woken` strips the hunt/triage stamps) stays deleted unless origin rewrote it (BACKLOG 15/60) |
+| `scraped_cache.json`, `cloud_state/firmographics.json`, `health_baseline.json`, `stale.json`, `scan_seen.json` | per company key (`merge_json_cache.merge`); a key the run dropped and origin left alone stays dropped (BACKLOG 95) — unless the run dropped more than a quarter of the base (a broken run, not deletions: kept, with a warning); a corrupt side yields to the other, never `{}` |
+| `cloud_state/pipeline_stages.json` | per stage key; the side that did not touch a stage yields, both touched → the newer `finished_at`; a stamp is never deleted |
+| `discovered_cache.json`, `research_companies.json` | JSON lists merged by `(company, title)` / `name` (BACKLOG 10/30) |
+| everything else the job owns (`seen.db`, `roles*.jsonl`, `digests/latest.md`, `docs/*.html`, the per-workflow state files) | the run's bytes — one cloud writer each; an unlisted path is taken the same way with a `::warning::` |
+
+The writers column is the `--own` list of each workflow's persist step (`grep -n -- --own
+.github/workflows/*.yml`); `test_every_path_a_workflow_owns_has_a_persist_strategy` fails
+when a workflow names a path the table above does not know. (The single-writer and
+commit-together rules live with the csv schema in §2.)
 
 ## 5a. Fetch-failure semantics (what a broken careers board does to our job board)
 *lanes: `ats-fetch` · `scraper` · `infra`*
@@ -1083,9 +1210,9 @@ that empties parked; the code had said 7 / never since 2026-08-23):
   children are terminated, its rows are `hang` errors, and the next chunk starts on a fresh
   pool — one hung Chromium used to turn a finished night into a 330-minute killed job. The
   processing order rotates by the day, so a budget cut never strands the same rows twice.
-  Known and not mine: on a push CONFLICT the workflow's `merge_json_cache.py` keeps every
-  company key that only origin has, so a night's deletions (empties, expired carries, parks)
-  are undone for that night — `docs/BACKLOG.md` 95, `infra`.
+  Until 2026-08-25 a push CONFLICT undid a night's deletions (empties, expired carries,
+  parks) — `merge_json_cache.py` kept every company key origin still had; the deletion
+  rule now stands (BACKLOG 95, `infra`; `tests/rehearse_infra.py --conflict` proves it).
 
 Every exit stamps the `collect` stage with its counts, and the digest prints that line in
 its audit, keys alphabetical — the local rehearsal of 2026-08-24 rendered exactly:
@@ -1161,7 +1288,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
 - "Why isn't company X in my email?" → §5b above (ordered runbook).
 - "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
 - "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
-  **25 of the 77 workflow steps are `continue-on-error`, so a green run can still hide a
+  **35 of the 77 workflow steps are `continue-on-error`, so a green run can still hide a
   failed step** — read the step, not the badge.
 - Coverage snapshot:
   ```bash

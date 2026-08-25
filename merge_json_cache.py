@@ -13,6 +13,10 @@ The merge is per company key, against the checkout-time baseline:
     otherwise               -> keep theirs (origin's, possibly newer)
     key only in theirs      -> keep it (this is the deletion that was happening)
     key only in ours        -> keep it (we just cached it)
+    key in base, not in ours, unchanged in theirs -> DROP it: this run deleted it on purpose
+                               (an empty scrape, an expired carry, a parked row) and origin
+                               never touched it. Without this rule a night's deletions came
+                               back on every push-conflict night (docs/BACKLOG.md 95).
 
 Usage: python merge_json_cache.py BASE OURS THEIRS OUT
        (THEIRS is the file currently in the tree after `git reset --hard origin`)
@@ -53,6 +57,9 @@ def merge(base, ours, theirs):
         elif k not in theirs:
             out[k] = v            # untouched by us and absent from theirs: don't lose it
             kept += 1
+    for k in base:
+        if k not in ours and k in theirs and theirs[k] == base[k]:
+            del out[k]            # we deleted it, origin left it alone: the deletion stands
     return out, changed, kept
 
 
@@ -63,8 +70,8 @@ def main():
     base, ours, theirs, out = sys.argv[1:5]
     b, o, t = load(base), load(ours), load(theirs)
     merged, changed, kept = merge(b, o, t)
-    with open(out, "w", encoding="utf-8") as f:
-        json.dump(merged, f, ensure_ascii=False, indent=1, sort_keys=True)
+    from pipeline.atomic import write_json
+    write_json(out, merged, indent=1, sort_keys=True)     # atomic, like every other state writer
     print(f"merged {out}: {len(merged)} companies "
           f"(theirs {len(t)}, ours {len(o)}, {changed} changed by this run, {kept} rescued)")
     return 0

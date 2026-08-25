@@ -93,7 +93,7 @@ Pick ONE. The split exists so that two lanes never write the same file.
 | **`classifier`** | 5 | which roles qualify, and the LLM tier that decides the ambiguous ones | `pipeline/seniority.py`, `pipeline/israel.py`, the `llm_cache` key scheme; `pipeline/llm.py` is shared |
 | **`roles`** | 6 | the role as an ENTITY: is it the same one, is it still open, was it re-posted, when does it leave the board | `pipeline/store.py` (`matched`/`sent`, `merge_key`, `seen_id`, `merge_duplicates`, `filter_new`, `upsert_matched`), the role-selection block in `pipeline/run.py`, repost detection |
 | **`render`** | 6 | how a role reads; every tag on a card | `pipeline/jdtext.py` (text→structure), `pipeline/rolecard.py` (the card), `pipeline/digest.py` (rendering), `pipeline/roleprofile.py` (the lexicon), `docs/TAGGING.md` — model: `ARCHITECTURE.md` §7d |
-| **`infra`** *(one at a time)* | 8 | delivery and the machinery under all of it: merges, workflows, the relay | `merge_*.py`, `check_invariants.py`, `.github/workflows/*`, `mark_sent.py`, `pipeline/run.py` (orchestration only) |
+| **`infra`** *(one at a time)* | 8 | delivery and the machinery under all of it: merges, workflows, the relay | `persist_state.py`, `merge_*.py`, `check_invariants.py`, `.github/workflows/*`, `mark_sent.py`, `pipeline/run.py` (orchestration only), `tests/rehearse_infra.py` |
 | **`docs`** | — | making all of the above legible to the next agent and to a visitor, and keeping it honest | `README.md`, `ARCHITECTURE.md`, `HANDOFF.md`, `CLAUDE.md`, `docs/*` incl. `docs/check_docs.py` |
 
 **Exactly one agent may hold `registry` at a time, and one `infra`.** `registry` writes the
@@ -165,7 +165,7 @@ Declare these in your plan before spending them:
 
 ## Rules that will bite you
 
-1. **A green workflow means nothing.** 25 of the 77 workflow steps are `continue-on-error`.
+1. **A green workflow means nothing.** 35 of the 77 workflow steps are `continue-on-error`.
    Read the step output; confirm a capability did work by looking at what it produced.
 2. **A mass-zero result is a broken run, not a measurement.** Strip its verdicts, diagnose,
    re-run.

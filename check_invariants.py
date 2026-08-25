@@ -223,6 +223,7 @@ def main():
         print("INVARIANT VIOLATIONS:", file=sys.stderr)
         for e in err:
             print("  -", e, file=sys.stderr)
+            print(f"::error::invariant: {e}")     # an annotation on the run page, not only a log line
         return 1
     print(f"companies.csv OK: {len(body)} rows, {active} active, 0 orphans, "
           f"pool={pool_n}, widths={dict(widths)}")

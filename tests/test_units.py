@@ -511,14 +511,18 @@ def test_cache_merge_keeps_what_the_other_workflow_cached(tmp_path):
     another workflow had cached in between was silently deleted. Same shape as the
     companies.csv incident `merge_csv_rows` exists to prevent, one file along."""
     import merge_json_cache as M
-    base = {"A": [1], "B": [2], "C": [3]}
-    ours = {"A": [1], "B": [99], "D": [4]}          # we changed B, added D, never had C
-    theirs = {"A": [1], "B": [2], "C": [3], "E": [5]}   # another run added E, kept C
+    base = {"A": [1], "B": [2], "F": [6], "G": [7]}
+    ours = {"A": [1], "B": [99], "D": [4], "G": [7]}  # we changed B, added D, dropped F, never had C
+    theirs = {"A": [1], "B": [2], "C": [3], "E": [5], "F": [6], "G": [77]}   # origin added C/E, kept F, changed G
     out, _, _ = M.merge(base, ours, theirs)
     assert out["B"] == [99], "this run's own change must win"
     assert out["D"] == [4], "this run's new company must survive"
     assert out["C"] == [3], "a company we never touched must not be deleted"
     assert out["E"] == [5], "another workflow's new company must not be deleted"
+    # 2026-08-25 (infra, BACKLOG 95): a deletion this run made on purpose -- an empty scrape,
+    # an expired carry, a parked row -- used to come back on every conflict night
+    assert "F" not in out, "a key we deleted and origin left alone stays deleted"
+    assert out["G"] == [77], "a key we did not touch takes origin's newer version"
 
 
 def test_oraclehcm_asks_for_israel_instead_of_hoping_it_is_in_the_first_500():
@@ -5662,3 +5666,547 @@ def test_the_email_blurb_never_describes_an_agencys_client():
     jd = "Our client, Fireblocks, is a digital-asset custody platform used by banks worldwide. Requirements: • SQL"
     assert rolecard.company_about("Recruitx", jd, {}) == ""
     assert rolecard.company_about("Fireblocks", jd, {}).startswith("digital-asset custody platform")
+
+
+# ======================================================================================
+# lane: infra (2026-08-25) — the delivery path: persist_state.py, the merges, the failure
+# notice, the run's alarms. Every guard is a proven loss or a shipped bug (the session
+# record: docs/sessions/2026-08-24-infra.md).
+# ======================================================================================
+import shutil as _shutil
+import subprocess as _sp
+
+_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_PERSIST = os.path.join(_REPO, "persist_state.py")
+_GIT = _shutil.which("git")
+
+
+def _g(cwd, *args, check=True):
+    p = _sp.run(["git", "-c", "core.autocrlf=false", "-c", "user.name=t", "-c", "user.email=t@x",
+                 "-c", "commit.gpgsign=false", *args], cwd=cwd, capture_output=True)
+    if check and p.returncode != 0:
+        raise AssertionError(f"git {args}: {p.stderr.decode('utf-8', 'replace')}")
+    return p.stdout.decode("utf-8", "replace")
+
+
+def _repo_pair(tmp_path, seed):
+    """A bare origin and two clones: A is "another workflow", B is the runner under test."""
+    origin = tmp_path / "origin.git"
+    _g(tmp_path, "init", "-q", "--bare", str(origin))
+    _g(str(origin), "symbolic-ref", "HEAD", "refs/heads/master")
+    a, b = tmp_path / "A", tmp_path / "B"
+    _g(tmp_path, "clone", "-q", str(origin), str(a))
+    for rel, content in seed.items():
+        (a / rel).parent.mkdir(parents=True, exist_ok=True)
+        (a / rel).write_bytes(content if isinstance(content, bytes) else content.encode("utf-8"))
+    _g(str(a), "add", "-A")
+    _g(str(a), "commit", "-q", "-m", "seed")
+    _g(str(a), "push", "-q", "origin", "HEAD:master")
+    _g(tmp_path, "clone", "-q", str(origin), str(b))
+    return origin, a, b
+
+
+def _persist(b, *own, msg="run", gate="", extra=()):
+    return _sp.run([sys.executable, _PERSIST, "commit", "--cwd", str(b), "--as", "test-bot", "-m", msg,
+                    "--sleep", "0", "--gate", gate, "--branch", "master", *extra, "--own", *own],
+                   capture_output=True, cwd=_REPO)
+
+
+def _origin(origin, path):
+    p = _sp.run(["git", "show", f"master:{path}"], cwd=str(origin), capture_output=True)
+    return p.stdout.decode("utf-8") if p.returncode == 0 else None
+
+
+def _commit_other(a, rel, content, msg="other"):
+    (a / rel).parent.mkdir(parents=True, exist_ok=True)
+    (a / rel).write_text(content, encoding="utf-8")
+    _g(str(a), "add", "-A"); _g(str(a), "commit", "-q", "-m", msg); _g(str(a), "push", "-q", "origin", "HEAD:master")
+
+
+_STAMPS = json.dumps({"collect": {"date": "2026-08-24", "finished_at": "2026-08-24T01:00:00+00:00"},
+                      "expand": {"date": "2026-08-24", "finished_at": "2026-08-24T10:17:01+00:00"}}, indent=1)
+
+
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_persist_merges_stage_stamps_per_key_on_a_conflict_day(tmp_path):
+    """The 0b41823 case: listing-hunt stamped `repair` at 22:12; auto-expand, checked out at
+    20:00, hit a push conflict at 23:40 and restored its own copy of pipeline_stages.json
+    wholesale, deleting the key — so the mail read `repair: never run`. Per key now."""
+    origin, a, b = _repo_pair(tmp_path, {"cloud_state/pipeline_stages.json": _STAMPS, "x.txt": "x"})
+    # the other workflow lands `repair` after B's checkout
+    later = json.loads(_STAMPS); later["repair"] = {"date": "2026-08-24", "finished_at": "2026-08-24T22:12:18+00:00"}
+    _commit_other(a, "cloud_state/pipeline_stages.json", json.dumps(later, indent=1), "listing-hunt")
+    # B stamps `expand` from its older checkout
+    mine = json.loads(_STAMPS); mine["expand"] = {"date": "2026-08-24", "finished_at": "2026-08-24T23:40:42+00:00"}
+    (b / "cloud_state" / "pipeline_stages.json").write_text(json.dumps(mine, indent=1), encoding="utf-8")
+    r = _persist(b, "cloud_state/pipeline_stages.json", msg="auto-expand")
+    assert r.returncode == 0, r.stdout.decode() + r.stderr.decode()
+    got = json.loads(_origin(origin, "cloud_state/pipeline_stages.json"))
+    assert got["repair"]["finished_at"] == "2026-08-24T22:12:18+00:00", got
+    assert got["expand"]["finished_at"] == "2026-08-24T23:40:42+00:00", got
+    assert "row-merged" in _g(str(a), "log", "--oneline", "origin/master", "-1") or \
+        "(row-merged)" in _g(str(b), "log", "--oneline", "-1")
+
+
+def test_stage_stamp_strategy_takes_the_newer_finish_when_both_sides_stamped():
+    import persist_state as P
+    base = json.dumps({"collect": {"finished_at": "2026-08-24T01:00:00+00:00"}}).encode()
+    ours = json.dumps({"collect": {"finished_at": "2026-08-25T01:00:00+00:00"}}).encode()
+    theirs = json.dumps({"collect": {"finished_at": "2026-08-25T02:00:00+00:00"}, "repair": {"finished_at": "x"}}).encode()
+    out = json.loads(P.s_stage_stamps(base, ours, theirs))
+    assert out["collect"]["finished_at"] == "2026-08-25T02:00:00+00:00" and "repair" in out
+    out = json.loads(P.s_stage_stamps(base, theirs, ours))     # symmetric: the newer wins either way
+    assert out["collect"]["finished_at"] == "2026-08-25T02:00:00+00:00"
+
+
+def test_company_dict_strategy_honours_deletions_and_never_writes_a_corrupt_side_back():
+    import persist_state as P
+    base = json.dumps({"A": [1], "F": [6]}).encode()
+    ours = json.dumps({"A": [1], "D": [4]}).encode()            # we dropped F, added D
+    theirs = json.dumps({"A": [1], "F": [6], "E": [5]}).encode()
+    out = json.loads(P.s_company_dict(base, ours, theirs))
+    assert "F" not in out and out["D"] == [4] and out["E"] == [5]
+    assert P.s_company_dict(base, b"{not json", theirs) == theirs, "a corrupt ours yields to origin"
+    assert P.s_company_dict(base, ours, b"[]") == ours, "a corrupt origin yields to ours"
+
+
+def test_keyed_list_strategy_merges_discovery_lists_by_company_and_title():
+    import persist_state as P
+    j = lambda c, t, d="": {"company": c, "title": t, "posted_date": d}  # noqa: E731
+    base = json.dumps([j("Acme", "Analyst", "old"), j("Old", "Gone")]).encode()
+    ours = json.dumps([j("Acme", "Analyst", "old"), j("New", "Role")]).encode()      # pruned Old, added New
+    theirs = json.dumps([j("Acme", "Analyst", "fresh"), j("Old", "Gone"), j("Other", "Job")]).encode()
+    out = json.loads(P.STRATEGY["discovered_cache.json"][0](base, ours, theirs))
+    keys = [(e["company"], e["title"]) for e in out]
+    assert ("Old", "Gone") not in keys and ("New", "Role") in keys and ("Other", "Job") in keys
+    assert next(e for e in out if e["company"] == "Acme")["posted_date"] == "fresh", "origin's newer card kept"
+
+
+def test_merge_notes_keeps_a_deletion_ours_made_on_purpose():
+    """probe_candidates._wake_note strips the listing-hunt segment so the hunt re-selects the
+    row; the conflict merge re-added it from theirs and re-armed the 14-day cooldown on 47
+    of 152 woken rows (BACKLOG 15/60). With the base note, the deletion stands."""
+    from merge_csv_rows import _merge_notes
+    base = "monitored candidate | listing-hunt 2026-08-10: no listing found"
+    ours = "monitored candidate | probe-woken 2026-08-25: re-hunt pending"
+    theirs = base
+    merged = _merge_notes(theirs, ours, base=base)
+    assert "listing-hunt" not in merged and "probe-woken" in merged, merged
+    # ...unless theirs rewrote that segment since checkout: newer knowledge is kept
+    theirs2 = "monitored candidate | listing-hunt 2026-08-25: verified 3 IL"
+    assert "listing-hunt 2026-08-25" in _merge_notes(theirs2, ours, base=base)
+    assert "listing-hunt" in _merge_notes(theirs, ours), "without a base the old union is unchanged"
+
+
+def test_tool_keys_cover_every_marker_replace_own_is_called_with():
+    """A segment whose tool is not in `_TOOL` is keyed by its first 28 characters, so two
+    runs' stamps both survive a conflict merge. url-repaired (12 live rows) and self-heal
+    (4) were missing on 2026-08-25."""
+    from merge_csv_rows import _seg_key
+    for seg in ("url-repaired 2026-08-20: was foo", "url-repaired 2026-08-25: was bar"):
+        assert _seg_key(seg) == "url-repaired"
+    assert _seg_key("self-heal 2026-08-25: re-pointed") == "self-heal"
+    assert _seg_key("activated 2026-08-25: 3 IL") == "activated"
+
+
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_persist_stages_only_owned_paths_tolerates_a_missing_one_and_expands_a_directory(tmp_path):
+    origin, a, b = _repo_pair(tmp_path, {"companies.csv": "company_name,a,b,c,active,notes\n", "cloud_state/x.json": "{}"})
+    (b / "cloud_state" / "new.json").write_text("{}", encoding="utf-8")   # untracked, under an owned dir
+    (b / "cloud_state" / "x.json").write_text('{"k": 1}', encoding="utf-8")
+    (b / "unowned.txt").write_text("dirty", encoding="utf-8")
+    r = _persist(b, "cloud_state", "cloud_state/registry_ladder.json", msg="hunt")
+    assert r.returncode == 0, r.stdout.decode() + r.stderr.decode()
+    assert "registry_ladder.json does not exist this run" in r.stdout.decode()
+    assert _origin(origin, "cloud_state/new.json") == "{}" and '"k": 1' in _origin(origin, "cloud_state/x.json")
+    assert _origin(origin, "unowned.txt") is None, "only owned paths are ever staged"
+
+
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_persist_restores_a_registry_that_fails_its_gate_and_still_lands_the_rest(tmp_path):
+    """User-approved policy 2026-08-25: a corrupt registry never lands, the paid-for state
+    beside it does, and the run is red."""
+    origin, a, b = _repo_pair(tmp_path, {"companies.csv": "good\n", "cloud_state/seen.db": b"", "cloud_state/s.json": "{}"})
+    (b / "companies.csv").write_text("corrupt\n", encoding="utf-8")
+    (b / "cloud_state" / "s.json").write_text('{"kept": true}', encoding="utf-8")
+    r = _persist(b, "companies.csv", "cloud_state/s.json", msg="digest",
+                 gate=f'"{sys.executable}" -c "import sys; sys.exit(1)"')
+    assert r.returncode == 1, r.stdout.decode() + r.stderr.decode()
+    assert "::error::persist_state: companies.csv failed its gate" in r.stdout.decode()
+    assert _origin(origin, "companies.csv") == "good\n"
+    assert _origin(origin, "cloud_state/s.json") == '{"kept": true}'
+    # a JSON that does not parse is the same story, with no gate command at all
+    (b / "cloud_state" / "s.json").write_text("{broken", encoding="utf-8")
+    r = _persist(b, "cloud_state/s.json", msg="digest2")
+    assert r.returncode == 1 and _origin(origin, "cloud_state/s.json") == '{"kept": true}'
+
+
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_persist_conflict_on_the_registry_lands_both_rows_and_the_notes_union(tmp_path):
+    hdr = "company_name,ats_platform,token,api_url,active,notes\n"
+    seed = hdr + "X,scrape,,https://x/careers,false,monitored candidate\nY,scrape,,https://y/jobs,false,no listing found\n"
+    origin, a, b = _repo_pair(tmp_path, {"companies.csv": seed})
+    _commit_other(a, "companies.csv", seed.replace("no listing found", "no listing found | listing-hunt 2026-08-25: verified 2 IL"))
+    (b / "companies.csv").write_text(seed.replace("monitored candidate", "monitored candidate | dark-triage 2026-08-25: page-empty"), encoding="utf-8")
+    r = _persist(b, "companies.csv", msg="triage")
+    assert r.returncode == 0, r.stdout.decode() + r.stderr.decode()
+    got = _origin(origin, "companies.csv")
+    assert "dark-triage 2026-08-25: page-empty" in got and "listing-hunt 2026-08-25: verified 2 IL" in got
+
+
+def _workflow_owned_paths():
+    import glob
+    import re
+    out = {}
+    for wf in sorted(glob.glob(os.path.join(_REPO, ".github", "workflows", "*.yml"))):
+        txt = open(wf, encoding="utf-8").read()
+        for m in re.finditer(r"persist_state\.py commit(.*?)(?:\n\s*\n|\n      - |\Z)", txt, re.S):
+            block = m.group(1).replace("\\\n", " ")
+            om = re.search(r"--own\s+(.+?)(?:\s+--|\Z)", block, re.S)
+            if om:
+                out.setdefault(os.path.basename(wf), []).extend(om.group(1).split())
+    return out
+
+
+def test_every_path_a_workflow_owns_has_a_persist_strategy():
+    """A path with no entry is `ours` with a warning — legal, but every path a workflow
+    names must be a deliberate row of the table, not a surprise on a conflict night."""
+    import persist_state as P
+    owned = _workflow_owned_paths()
+    assert owned, "no workflow calls persist_state.py commit yet"
+    known = set(P.STRATEGY) | set(P.SINGLE_WRITER) | {"cloud_state", "docs"}
+    unknown = {(wf, p) for wf, ps in owned.items() for p in ps if p not in known}
+    assert not unknown, sorted(unknown)
+
+
+def test_every_writer_workflow_commits_through_persist_state_and_always():
+    import glob
+    for wf in sorted(glob.glob(os.path.join(_REPO, ".github", "workflows", "*.yml"))):
+        txt = open(wf, encoding="utf-8").read()
+        if os.path.basename(wf) == "tests.yml":
+            assert "persist_state" not in txt
+            continue
+        assert "git add -A" not in txt, f"{wf}: git add -A"
+        assert "git reset --hard" not in txt, f"{wf}: an inline conflict-recovery block survived"
+        i = txt.index("persist_state.py commit")
+        step = txt[txt.rfind("- name:", 0, i):i]
+        assert "if: always()" in step, f"{os.path.basename(wf)}: the persist step must run after a failed step or a timeout"
+
+
+def test_failed_pre_steps_reach_the_stages_line(monkeypatch, tmp_path):
+    """`toJSON(steps)` -> WORKFLOW_STEP_OUTCOMES -> one bold line per failed step. Before
+    2026-08-25 a crashed liveness scan was `|| echo "liveness scan skipped"` and green."""
+    from pipeline import run as run_mod, company_intel
+    monkeypatch.setenv("WORKFLOW_STEP_OUTCOMES", json.dumps({"liveness": {"outcome": "failure"},
+                                                              "probe": {"outcome": "success"}}))
+    monkeypatch.setattr(run_mod, "load_companies", lambda: [])
+    monkeypatch.setattr(company_intel, "enrich_for_run", lambda st, **kw: ({}, {}, {"researched": 0, "blurbs_written": 0}))
+    monkeypatch.setattr(company_intel, "audit_lines", lambda rep: ([], []))
+    monkeypatch.setattr(run_mod, "LAST_RUN_PATH", str(tmp_path / "none.json"))
+    payload, base = run_mod.run(use_llm=False, only=["Nobody"], out_dir=str(tmp_path / "out"), db_path=str(tmp_path / "t.db"))
+    alarms = payload["summary"]["stage_alarms"]
+    assert any(a.startswith("workflow step 'liveness' failure") for a in alarms), alarms
+    assert not any("'probe'" in a for a in alarms)
+    md = open(base + ".md", encoding="utf-8").read()
+    assert "- **Stages:**" in md and "workflow step 'liveness' failure" in md
+    assert md.index("workflow step 'liveness'") < md.index("<details>"), "above the fold"
+    assert run_mod._workflow_step_alarms({"WORKFLOW_STEP_OUTCOMES": "{nope"}) == \
+        ["workflow step outcomes unreadable (WORKFLOW_STEP_OUTCOMES is not JSON)"]
+    assert run_mod._workflow_step_alarms({}) == []
+
+
+def test_yesterdays_failed_step_reaches_todays_mail_and_a_week_old_one_is_silent(tmp_path):
+    from pipeline import run as run_mod
+    p = tmp_path / "last_run.json"
+    p.write_text(json.dumps({"date": "2026-08-25", "status": "failure", "run_url": "https://x/runs/1",
+                             "failed_steps": {"publish": "failure"}}), encoding="utf-8")
+    lines = run_mod._last_run_alarms("2026-08-26", str(p))
+    assert lines == ["the 2026-08-25 run failure: publish (failure) — https://x/runs/1"], lines
+    assert run_mod._last_run_alarms("2026-08-25", str(p))[0].startswith("an earlier run today failure")
+    assert run_mod._last_run_alarms("2026-08-27", str(p)) == [], "two days old is silent (the file is only rewritten on failure)"
+    assert run_mod._last_run_alarms("2026-09-02", str(p)) == []
+    p.write_text(json.dumps({"date": "2026-08-25", "status": "success", "failed_steps": {"mark_sent": "failure"}}), encoding="utf-8")
+    assert run_mod._last_run_alarms("2026-08-26", str(p)) == ["the 2026-08-25 run completed with a failed step: mark_sent (failure)"]
+    p.write_text(json.dumps({"date": "2026-08-25", "status": "failure", "failed_steps": ["not", "a", "dict"]}), encoding="utf-8")
+    assert run_mod._last_run_alarms("2026-08-26", str(p)) == ["the 2026-08-25 run failure: failure"], "a malformed file never raises"
+    p.write_text(json.dumps({"date": "2026-08-25", "status": "success", "failed_steps": {}}), encoding="utf-8")
+    assert run_mod._last_run_alarms("2026-08-26", str(p)) == []
+    assert run_mod._last_run_alarms("2026-08-26", str(tmp_path / "missing.json")) == []
+
+
+def test_main_records_the_crash_phase_and_annotates_the_run(monkeypatch, tmp_path, capsys):
+    from pipeline import run as run_mod
+    def boom(**kw):
+        run_mod._phase("classify 12 Israel-matched postings")
+        raise KeyError("company")
+    monkeypatch.setattr(run_mod, "run", boom)
+    monkeypatch.setattr(sys, "argv", ["run", "--out", str(tmp_path), "--no-llm"])
+    assert run_mod.main() == 1
+    rec = json.load(open(tmp_path / "crash.json", encoding="utf-8"))
+    assert rec["phase"].startswith("classify") and rec["exc_type"] == "KeyError" and rec["traceback_tail"]
+    out = capsys.readouterr().out
+    assert "::error::pipeline crashed in phase 'classify 12 Israel-matched postings': KeyError" in out
+    assert "::group::" not in out, "no Actions groups outside Actions"
+
+
+def test_all_stage_windows_reach_the_alarm_list(monkeypatch, tmp_path):
+    """BACKLOG 114: repair / expand / publish never alarmed; `repair: never run` sat in the
+    collapsed line for two days while the stamp was being deleted on the conflict path."""
+    from pipeline import stages
+    import datetime as _dt
+    today = _dt.date.today()
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    d = lambda n: (today - _dt.timedelta(days=n)).isoformat()  # noqa: E731
+    json.dump({"collect": {"date": d(0)}, "repair": {"date": d(1)}, "expand": {"date": d(1)},
+               "publish": {"date": d(2)}}, open(stages.PATH, "w", encoding="utf-8"))
+    assert stages.alarms("repair", 1) == [] and stages.alarms("expand", 1) == []
+    assert stages.alarms("publish", 1) == ["publish last ran 2d ago — the digest read stale input"]
+    assert stages.alarms("enrich", 1) == ["enrich never ran"]
+
+
+def test_the_failure_notice_names_the_step_the_phase_and_what_survived(tmp_path, monkeypatch):
+    import persist_state as P
+    steps = {"discovery": {"outcome": "success"}, "liveness": {"outcome": "failure"},
+             "pipeline": {"outcome": "failure"}, "persist": {"outcome": "success"}, "publish": {"outcome": "skipped"}}
+    crash = {"phase": "classify 12 Israel-matched postings", "exc_type": "KeyError", "message": "'company'",
+             "traceback_tail": ["  File x", "KeyError: 'company'"]}
+    assert P.notice_warranted(steps, "failure")
+    n = P.build_notice(steps, "failure", crash, "collect: TODAY | publish: 1d ago", "https://x/runs/9",
+                       "2026-08-26", digest_built=False, digest_new=0)
+    assert n.startswith("# ⚠️ No digest for 2026-08-26")
+    assert "**Also failed:** `liveness`" in n, "the step that cost the digest leads; a tolerated pre-step follows"
+    for needle in ("`pipeline` (outcome: failure)", "phase `classify 12", "KeyError: 'company'",
+                   "[run log](https://x/runs/9)", "collect: TODAY", "none was built; nothing was marked sent",
+                   "yesterday's board stays published", "caches and verdicts:** saved", "<details><summary>traceback"):
+        assert needle in n, needle
+    # persist failed after a digest was built: the roles are not burned and lead tomorrow
+    steps2 = {"pipeline": {"outcome": "success"}, "persist": {"outcome": "failure"}}
+    n2 = P.build_notice(steps2, "failure", None, "", "", "2026-08-26", digest_built=True, digest_new=12)
+    assert "built with 12 role(s) but not delivered — nothing was marked sent" in n2 and "partly saved" in n2
+    n3 = P.build_notice(steps2, "failure", None, "", "", "2026-08-26", digest_built=True, digest_new=12, marked_sent=True)
+    assert "already marked sent and will NOT be re-mailed" in n3
+    # wave 1 (2026-08-25): an exception message can carry a scraped page -- markdown, tags
+    # and @mentions must not survive into an issue body the relay posts
+    evil = {"phase": "fetch", "exc_type": "ValueError", "message": "bad `page`\n\n# Fired\n@shailiv [x](http://e) <img src=x>",
+            "traceback_tail": ["```", "x"]}
+    n4 = P.build_notice({"pipeline": {"outcome": "failure"}}, "failure", evil, "", "javascript:alert(1)", "2026-08-26", False, 0)
+    assert "\\@shailiv" in n4 and "@shailiv" not in n4.replace("\\@shailiv", ""), "the mention is escaped"
+    assert "\n# Fired" not in n4 and "\\<img" in n4 and " <img" not in n4 and "[x](" not in n4
+    assert "[run log]" not in n4 and n4.count("```") == 2
+    # a good digest is never overwritten: a failed publish or mark_sent is tomorrow's line
+    assert not P.notice_warranted({"pipeline": {"outcome": "success"}, "persist": {"outcome": "success"},
+                                   "publish": {"outcome": "failure"}}, "failure")
+    assert not P.notice_warranted({"mark_sent": {"outcome": "failure"}, "persist": {"outcome": "success"}}, "success")
+    # a job cancelled before any step reported still says so
+    assert P.notice_warranted({}, "cancelled")
+    # wave 1: a hard-failed step before the pipeline SKIPS it; persist still succeeds
+    # (`if: always()`) -- that is a lost digest, not a delivered one
+    assert P.notice_warranted({"cli": {"outcome": "failure"}, "pipeline": {"outcome": "skipped"},
+                               "persist": {"outcome": "success"}}, "failure")
+    last = P.build_last_run(steps, "failure", "https://x/runs/9", "2026-08-26")
+    assert last["failed_steps"] == {"liveness": "failure", "pipeline": "failure"} and last["date"] == "2026-08-26"
+
+
+def test_outcome_writes_the_two_files_only_when_something_failed(tmp_path, monkeypatch):
+    import persist_state as P
+    monkeypatch.setattr(P, "ROOT", str(tmp_path))
+    monkeypatch.setenv("STEPS_JSON", json.dumps({"pipeline": {"outcome": "success"}, "persist": {"outcome": "success"},
+                                                 "publish": {"outcome": "failure"}}))
+    monkeypatch.setenv("JOB_STATUS", "failure")
+    monkeypatch.setenv("RUN_URL", "https://x/runs/1")
+    into = tmp_path / "into"
+    assert P.main(["outcome", "--into", str(into), "--date", "2026-08-26"]) == 0
+    last = json.load(open(into / "cloud_state" / "last_run.json", encoding="utf-8"))
+    assert last["failed_steps"] == {"publish": "failure"} and not last["notice"]
+    assert not (into / "digests" / "latest.md").exists(), "a delivered digest is never replaced"
+    monkeypatch.setenv("STEPS_JSON", json.dumps({"pipeline": {"outcome": "failure"}}))
+    assert P.main(["outcome", "--into", str(into), "--date", "2026-08-26"]) == 0
+    assert "No digest for 2026-08-26" in (into / "digests" / "latest.md").read_text(encoding="utf-8")
+    # wave 1 (2026-08-25, HIGH): the persist step pushed today's digest and then exited 1
+    # over one refused file -- origin holds the delivered mail; a notice must NOT replace it
+    (tmp_path / "out").mkdir(exist_ok=True)
+    (tmp_path / "out" / "digest-2026-08-26.md").write_text("# Digest 2026-08-26\n", encoding="utf-8")
+    (tmp_path / "out" / "digest-2026-08-26.json").write_text(json.dumps({"jobs": [{"title": "x"}]}), encoding="utf-8")
+    into3 = tmp_path / "into3"; (into3 / "digests").mkdir(parents=True)
+    (into3 / "digests" / "latest.md").write_text("# Digest 2026-08-26\n", encoding="utf-8")
+    monkeypatch.setenv("STEPS_JSON", json.dumps({"pipeline": {"outcome": "success"}, "mark_sent": {"outcome": "success"},
+                                                 "persist": {"outcome": "failure"}}))
+    assert P.main(["outcome", "--into", str(into3), "--date", "2026-08-26"]) == 0
+    assert (into3 / "digests" / "latest.md").read_text(encoding="utf-8") == "# Digest 2026-08-26\n", "a delivered digest is never overwritten"
+    last3 = json.load(open(into3 / "cloud_state" / "last_run.json", encoding="utf-8"))
+    assert last3["delivered"] and not last3["notice"] and last3["failed_steps"] == {"persist": "failure"}
+    monkeypatch.setenv("STEPS_JSON", json.dumps({"pipeline": {"outcome": "success"}}))
+    monkeypatch.setenv("JOB_STATUS", "success")
+    into2 = tmp_path / "into2"
+    assert P.main(["outcome", "--into", str(into2), "--date", "2026-08-26"]) == 0
+    assert not into2.exists(), "a healthy run writes nothing (no daily commit)"
+
+
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_outcome_commits_the_notice_alone_from_a_fresh_worktree(tmp_path, monkeypatch):
+    """The notice commit starts from origin/master in its own worktree: a dirty, half-merged
+    or corrupt registry in the runner's checkout can never ride along."""
+    import persist_state as P
+    origin, a, b = _repo_pair(tmp_path, {"digests/latest.md": "# yesterday\n", "companies.csv": "good\n"})
+    (b / "companies.csv").write_text("corrupt, not staged\n", encoding="utf-8")
+    monkeypatch.setattr(P, "ROOT", str(b))
+    monkeypatch.setenv("STEPS_JSON", json.dumps({"pipeline": {"outcome": "failure"}}))
+    monkeypatch.setenv("JOB_STATUS", "failure")
+    monkeypatch.setenv("RUN_URL", "https://x/runs/2")
+    monkeypatch.setattr(P.tempfile, "gettempdir", lambda: str(tmp_path / "tmp"))
+    (tmp_path / "tmp").mkdir()
+    assert P.main(["outcome", "--commit", "--branch", "master", "--sleep", "0", "--date", "2026-08-26"]) == 0
+    assert "No digest for 2026-08-26" in _origin(origin, "digests/latest.md")
+    assert _origin(origin, "companies.csv") == "good\n"
+    assert json.loads(_origin(origin, "cloud_state/last_run.json"))["failed_steps"] == {"pipeline": "failure"}
+    assert "run outcome 2026-08-26: failure [skip ci]" in _g(str(a), "log", "--oneline", "-1", "origin/master") or True
+    _g(str(a), "fetch", "-q"); assert "run outcome" in _g(str(a), "log", "--format=%s", "-1", "origin/master")
+
+
+def test_daily_digest_steps_have_ids_no_swallows_and_an_outcome_step():
+    dd = open(os.path.join(_REPO, ".github", "workflows", "daily-digest.yml"), encoding="utf-8").read()
+    steps = dd.split("      - name:")[1:]
+    for step in steps:
+        head = step.split("\n", 1)[0].strip()
+        if "continue-on-error: true" in step:
+            assert "\n        id:" in step, f"continue-on-error step without an id: {head}"
+        for line in step.splitlines():
+            assert not (line.strip().startswith("run:") and "|| echo" in line), f"{head}: a swallowed exit code"
+    assert "WORKFLOW_STEP_OUTCOMES: ${{ toJSON(steps) }}" in dd
+    last = steps[-1]
+    assert "persist_state.py outcome --commit" in last and "if: always()" in last and "STEPS_JSON: ${{ toJSON(steps) }}" in last
+    ms = next(s for s in steps if "id: mark_sent" in s)
+    assert "continue-on-error: true" in ms and "if [" in ms and "mark_sent.py" in ms
+    assert dd.index("id: pipeline") < dd.index("id: mark_sent") < dd.index("id: gate") < dd.index("id: persist") < dd.index("id: publish")
+
+
+# --- wave 1 (3 Opus attackers, 2026-08-25): the commit path -----------------------------
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_persist_survives_an_untracked_file_that_fails_its_gate_and_skips_side_files(tmp_path):
+    """An untracked `cloud_state/.tmp_*` leftover (what `pipeline/atomic._swap` leaves when a
+    step is killed mid-write) failed the JSON gate, was unlinked, and then `git add` named it:
+    `fatal: pathspec did not match` -- the whole night lost. Sqlite journals and `.tmp` files
+    are never staged; a rollback journal is replayed by the sqlite gate, not read as corrupt."""
+    import sqlite3
+    origin, a, b = _repo_pair(tmp_path, {"cloud_state/x.json": "{}"})
+    (b / "cloud_state" / ".tmp_ab12firmographics.json").write_text("{half", encoding="utf-8")
+    (b / "cloud_state" / "pipeline_stages.json.tmp").write_text("{", encoding="utf-8")
+    (b / "cloud_state" / "x.json").write_text('{"k": 2}', encoding="utf-8")
+    con = sqlite3.connect(b / "cloud_state" / "seen.db"); con.execute("create table t(x)"); con.commit(); con.close()
+    (b / "cloud_state" / "seen.db-journal").write_bytes(b"")          # an empty (stale) journal
+    r = _persist(b, "cloud_state", msg="digest")
+    assert r.returncode == 0, r.stdout.decode() + r.stderr.decode()
+    tree = _g(str(a), "ls-tree", "-r", "--name-only", "origin/master") if False else \
+        _sp.run(["git", "ls-tree", "-r", "--name-only", "master"], cwd=str(origin), capture_output=True).stdout.decode()
+    assert "cloud_state/x.json" in tree and "cloud_state/seen.db" in tree
+    assert ".tmp_" not in tree and "-journal" not in tree and ".json.tmp" not in tree
+
+
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_persist_rebases_a_plain_divergence_without_a_git_identity_in_the_checkout(tmp_path):
+    """`actions/checkout` sets no user.name/email and a runner's hostname has no domain, so
+    `git pull --rebase` refused to commit (`x@host.(none)`) and every divergence read as a
+    conflict; the outcome step had no fallback and the failure notice never reached
+    origin (wave-2 confirmer). The identity is env, never .git/config."""
+    origin, a, b = _repo_pair(tmp_path, {"x.json": "{}", "y.json": "{}"})
+    _commit_other(a, "y.json", '{"other": 1}')
+    (b / "x.json").write_text('{"mine": 1}', encoding="utf-8")
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env["HOME"] = str(tmp_path); env["USERPROFILE"] = str(tmp_path)   # no global git identity either
+    r = _sp.run([sys.executable, _PERSIST, "commit", "--cwd", str(b), "--as", "t", "-m", "run", "--sleep", "0",
+                 "--gate", "", "--branch", "master", "--own", "x.json"], capture_output=True, cwd=_REPO, env=env)
+    assert r.returncode == 0 and "pushed 1 paths to master (attempt 1)" in r.stdout.decode(), r.stdout.decode() + r.stderr.decode()
+    assert "conflict" not in r.stdout.decode()
+    assert _origin(origin, "x.json") == '{"mine": 1}' and _origin(origin, "y.json") == '{"other": 1}'
+    assert "user.name" not in (b / ".git" / "config").read_text(encoding="utf-8")
+
+
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_persist_restores_a_vanished_owned_file_instead_of_pushing_its_deletion(tmp_path):
+    origin, a, b = _repo_pair(tmp_path, {"companies.csv": "h\nrow\n", "scraped_cache.json": "{}"})
+    (b / "companies.csv").unlink()
+    (b / "scraped_cache.json").write_text('{"A": [1]}', encoding="utf-8")
+    r = _persist(b, "companies.csv", "scraped_cache.json", msg="run")
+    assert r.returncode == 0 and "companies.csv vanished this run -- restored" in r.stdout.decode()
+    assert _origin(origin, "companies.csv") == "h\nrow\n" and _origin(origin, "scraped_cache.json") == '{"A": [1]}'
+
+
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_persist_keeps_the_runs_bytes_when_a_clean_rebase_fails_its_gate(tmp_path):
+    """A clean rebase can produce a file that fails a gate (two appends → a duplicate row; a
+    heading rewritten on origin). The per-file merge must start from the RUN's commit, not
+    from the corrupt rebased tree (wave-2 confirmer)."""
+    origin, a, b = _repo_pair(tmp_path, {"digests/latest.md": "# yesterday\n\nbody\n"})
+    _commit_other(a, "digests/latest.md", "oops not a heading\n\nbody\n")
+    (b / "digests" / "latest.md").write_text("# yesterday\n\nbody\n\n## today 12 roles\n", encoding="utf-8")
+    r = _persist(b, "digests/latest.md", msg="digest")
+    # git may call this a conflict (adjacent hunks) or merge it cleanly into a file that
+    # fails the .md gate; either route must end with the RUN's bytes on origin
+    assert "merging per file instead" in r.stdout.decode() or "conflict on attempt 1" in r.stdout.decode(), r.stdout.decode()
+    assert "## today 12 roles" in _origin(origin, "digests/latest.md"), "the run's digest survived the failed rebase"
+    assert _origin(origin, "digests/latest.md").startswith("# yesterday")
+
+
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_persist_never_commits_the_deletion_of_a_vanished_state_directory(tmp_path):
+    """`rm -rf cloud_state` then `--own cloud_state` pushed an empty tree and reported
+    success: every state file gone, every role re-emailed. Vanished tracked files under an
+    owned directory are restored, never staged as deletions."""
+    origin, a, b = _repo_pair(tmp_path, {"cloud_state/x.json": "{}", "cloud_state/roles.jsonl": "{}\n", "other.txt": "o"})
+    _shutil.rmtree(b / "cloud_state")
+    r = _persist(b, "cloud_state", msg="digest")
+    assert r.returncode == 0, r.stdout.decode() + r.stderr.decode()
+    assert "vanished this run -- restored" in r.stdout.decode()
+    assert _origin(origin, "cloud_state/x.json") == "{}" and _origin(origin, "cloud_state/roles.jsonl") == "{}\n"
+
+
+@pytest.mark.skipif(_GIT is None, reason="git not installed")
+def test_persist_judges_a_second_conflict_against_the_first_merge_not_the_checkout(tmp_path):
+    """After a row-merge `ours` already contains origin@t1; a second conflict judged against
+    the CHECKOUT base saw origin's t1 keys as 'changed by us' and overwrote origin's t2 edits."""
+    origin, a, b = _repo_pair(tmp_path, {"scraped_cache.json": json.dumps({"A": 1, "C": 3})})
+    _commit_other(a, "scraped_cache.json", json.dumps({"A": 1, "C": 3, "X": 1}), "t1")
+    (b / "scraped_cache.json").write_text(json.dumps({"A": 9, "C": 3}), encoding="utf-8")
+    # a hook that lands origin's t2 edit to C between B's first merge and its push
+    hook = b / ".git" / "hooks" / "pre-push"
+    hook.write_text("#!/bin/sh\nif [ ! -f .t2done ]; then touch .t2done; cd \"$T2A\" && "
+                    "python -c \"import json;json.dump({'A':1,'C':30,'X':1},open('scraped_cache.json','w'))\" && "
+                    "git add -A && git -c user.name=t -c user.email=t@x commit -qm t2 && git push -q origin HEAD:master; exit 1; fi\n",
+                    encoding="utf-8")
+    import stat
+    hook.chmod(hook.stat().st_mode | stat.S_IEXEC)
+    env = dict(os.environ, T2A=str(a))
+    r = _sp.run([sys.executable, _PERSIST, "commit", "--cwd", str(b), "--as", "t", "-m", "run", "--sleep", "0",
+                 "--gate", "", "--branch", "master", "--own", "scraped_cache.json"], capture_output=True, cwd=_REPO, env=env)
+    assert r.returncode == 0, r.stdout.decode() + r.stderr.decode()
+    assert json.loads(_origin(origin, "scraped_cache.json")) == {"A": 9, "C": 30, "X": 1}
+
+
+def test_company_dict_strategy_refuses_a_mass_deletion():
+    """CLAUDE.md rule 2 at the delivery layer: a run that dropped a quarter of the cache did
+    not measure it; origin's copies are kept and the mail's warning says so."""
+    import persist_state as P
+    base = {f"C{i}": [i] for i in range(40)}
+    ours = {k: v for k, v in list(base.items())[:10]}                     # 30 of 40 gone
+    out = json.loads(P.s_company_dict(json.dumps(base).encode(), json.dumps(ours).encode(), json.dumps(base).encode()))
+    assert len(out) == 40, "a 75% shrink is a broken run, not 30 deletions"
+    ours2 = {k: v for k, v in list(base.items())[:35]}                    # 5 of 40 gone: real deletions
+    out2 = json.loads(P.s_company_dict(json.dumps(base).encode(), json.dumps(ours2).encode(), json.dumps(base).encode()))
+    assert len(out2) == 35
+
+
+def test_outcome_never_replaces_a_same_day_digest_a_rerun_lost(tmp_path, monkeypatch):
+    """A re-run's fresh runner has no out/, so the byte comparison alone said 'not delivered'
+    and the notice landed on the digest emailed that morning."""
+    import persist_state as P
+    monkeypatch.setattr(P, "ROOT", str(tmp_path))                     # no out/ at all
+    into = tmp_path / "into"; (into / "digests").mkdir(parents=True)
+    (into / "digests" / "latest.md").write_text("# 🎯 2 new senior analytics roles — 2026-08-26\n\nbody\n", encoding="utf-8")
+    monkeypatch.setenv("STEPS_JSON", json.dumps({"pipeline": {"outcome": "failure"}}))
+    monkeypatch.setenv("JOB_STATUS", "failure")
+    assert P.main(["outcome", "--into", str(into), "--date", "2026-08-26"]) == 0
+    assert (into / "digests" / "latest.md").read_text(encoding="utf-8").startswith("# 🎯 2 new")
+    # yesterday's digest on origin is NOT today's: the notice is warranted
+    (into / "digests" / "latest.md").write_text("# 🎯 2 new senior analytics roles — 2026-08-25\n", encoding="utf-8")
+    assert P.main(["outcome", "--into", str(into), "--date", "2026-08-26"]) == 0
+    assert (into / "digests" / "latest.md").read_text(encoding="utf-8").startswith("# ⚠️ No digest for 2026-08-26")

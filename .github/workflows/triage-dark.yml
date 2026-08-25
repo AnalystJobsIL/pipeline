@@ -34,8 +34,6 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
-      - name: Snapshot companies.csv baseline (git-layer merge)
-        run: cp companies.csv /tmp/base.csv || true
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
@@ -66,32 +64,25 @@ jobs:
         continue-on-error: true
 
       - name: Registry invariants gate the commit
-        # deliberately NOT continue-on-error: a run that broke an invariant
-        # loses its work rather than committing it -- docs/BACKLOG.md 64.
+        # deliberately NOT continue-on-error: a broken registry makes the job red here,
+        # and persist_state.py (below, `if: always()`) restores companies.csv from the
+        # checkout while every other owned path still lands -- BACKLOG 64, policy of
+        # 2026-08-25 (ARCHITECTURE §4).
         run: python check_invariants.py
+      - name: Stage stamps on the run page
+        if: always()
+        run: python -m pipeline.stages >> "$GITHUB_STEP_SUMMARY"
+        continue-on-error: true
       - name: Commit modes
+        # One delivery path for every workflow (persist_state.py, lane: infra): stages ONLY
+        # the paths this job owns, gates them (JSON parses, sqlite quick_check,
+        # check_invariants on the registry -- a failing file is restored, the rest lands,
+        # the step is red), and on a push conflict merges each file by its own rule instead
+        # of copying a checkout-era copy over origin's newer one. `if: always()`: a failed
+        # step or a timeout no longer discards the night's work (BACKLOG 39/128).
+        if: always()
+        timeout-minutes: 10
         run: |
-          git config user.name  "audit-bot"
-          git config user.email "audit@users.noreply.github.com"
-          git add companies.csv
-          git commit -m "dark triage $(date -u +%F) [skip ci]" || { echo "no change"; exit 0; }
-          for i in 1 2 3 4 5; do
-            if git pull --rebase --autostash origin ${GITHUB_REF_NAME}; then
-              git push origin HEAD:${GITHUB_REF_NAME} && exit 0
-            else
-              git rebase --abort 2>/dev/null || true
-              rm -rf /tmp/ours && mkdir -p /tmp/ours
-              cp companies.csv /tmp/ours/ 2>/dev/null || true
-              git fetch origin ${GITHUB_REF_NAME} || true
-              git reset --hard origin/${GITHUB_REF_NAME} || true
-              if [ -f /tmp/base.csv ] && [ -f /tmp/ours/companies.csv ]; then
-                python merge_csv_rows.py /tmp/base.csv /tmp/ours/companies.csv companies.csv || true
-                # the merged registry passes the same gate before it is committed
-                python check_invariants.py || { echo "::error::merged registry fails invariants"; exit 1; }
-              fi
-              git add companies.csv || true
-              git commit -m "dark triage $(date -u +%F) (row-merged) [skip ci]" || true
-            fi
-            sleep $((i*15))
-          done
-          echo "::error::push failed after 5 retries"; exit 1
+          python persist_state.py commit --as "audit-bot" \
+            -m "dark triage $(date -u +%F) [skip ci]" \
+            --own companies.csv

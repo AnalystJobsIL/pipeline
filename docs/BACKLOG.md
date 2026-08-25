@@ -1610,7 +1610,7 @@ Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-d
     measurement (today, with `pipeline.store.merge_key`: 1,225 jobs / 1,194 keys / 31 dropped,
     not 1,110 / 1,079 / 12).
 
-95. **`merge_json_cache.merge` cannot express a deletion** — lane: `infra`. It starts from
+95. ~~**`merge_json_cache.merge` cannot express a deletion**~~ — **closed 2026-08-25 (`infra`)**: the deletion rule is in `merge()`, pinned by the cache-merge guard and `tests/rehearse_infra.py --conflict`. Original text: — lane: `infra`. It starts from
     `theirs` and iterates `ours`, so a company key the refresh deliberately dropped tonight
     (empty, carry expired after `CARRY_MAX_DAYS`, parked) comes back with yesterday's jobs
     on every push-conflict night, and the `pipeline_stages.json` restored beside it still
@@ -1627,7 +1627,7 @@ Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-d
     `pages_per_prefix`, so the module default is never read; a live board with 25 positions
     would yield 2 under `= 2`). One assertion each, then a `tests/mutations.json` record (92).
 
-94. **`daily-digest.yml`'s conflict path restores `cloud_state/` wholesale** — lane: `infra`
+94. ~~**`daily-digest.yml`'s conflict path restores `cloud_state/` wholesale**~~ — **closed 2026-08-25 (`infra`)**: `persist_state.py` rebuilds each owned path from the run's own commit; nothing is copied. Original text: — lane: `infra`
     (HANDOFF open item 7 already names `seen.db`). It can also revert a `collect` stamp that
     scrape-refresh pushed after the 05:00 checkout; the next 00:00 run re-stamps, so no mail
     number changes, but the same wholesale copy is what the other workflows were cured of.
@@ -1746,7 +1746,7 @@ write list; each item names the lane that owns it and the command that proves it
     retry of empty blurbs reads `st.conn` directly in `company_intel._blurbs`; move to a
     `load_company_info_status()` when the store owner next touches the table, and give blurbs
     the same failure memory `firmo_failed` gives research.
-103. **`daily-digest.yml`'s conflict path and the export** — lane: `infra`. Item 94's wholesale
+103. ~~**`daily-digest.yml`'s conflict path and the export**~~ — **closed 2026-08-25 (`infra`)**: `cloud_state/firmographics.json` merges per company on a conflict (`persist_state.STRATEGY`). Original text: — lane: `infra`. Item 94's wholesale
     restore also reverts `cloud_state/firmographics.json`; `merge_json_cache.merge` is the right
     tool (company-keyed dict) and `firmographics.merge` the right per-record rule.
 104. **Mutation records for the company-intel guards** — lane: `registry` (owns `tools/mutate.py`).
@@ -1759,7 +1759,7 @@ write list; each item names the lane that owns it and the command that proves it
 
 Record: `docs/sessions/2026-08-24-jd-text.md`. Numbers re-derived that day; re-derive before acting.
 
-105. **`cloud_state/pipeline_stages.json` has a lost-update window and a wholesale restore** —
+105. ~~**`cloud_state/pipeline_stages.json` has a lost-update window and a wholesale restore**~~ — **the restore half closed 2026-08-25 (`infra`)**: stamps merge per key on a conflict (ARCHITECTURE §4); the in-process read-modify-write window of two overlapping jobs stays (item 159). Original text: —
     lane: `infra`. `scrape-refresh.yml` (00:00, `timeout-minutes: 330`, group `repo-state`) and
     `daily-digest.yml` (05:00, its own group) can overlap by design, and both read-modify-write
     the stamp file (`refresh_scrape_cache.py:537`, `pipeline/run.py` `stages.stamp("publish")`,
@@ -1820,11 +1820,11 @@ Record: `docs/sessions/2026-08-24-jd-text.md`. Numbers re-derived that day; re-d
     today. Phenom (`descriptionTeaser` deliberately dropped, `fetchers.py:642`) has 0 rows and
     no verified detail endpoint. Wire both when either platform reaches 3 rows; until then the
     inline `by_platform` counters say what the plain page yields.
-114. **Only `collect` and `enrich` reach the bold `Stages:` line** — lane: `infra`
+114. ~~**Only `collect` and `enrich` reach the bold `Stages:` line**~~ — **closed 2026-08-25 (`infra`)**: `repair`/`expand`/`publish` alarm with a one-day window. Original text: — lane: `infra`
     (`pipeline/run.py`). `repair: never run` and a stale `expand` sit inside the collapsed
     `Stage order:` line with a `::warning::` nobody reads; `stages.alarms()` should be
     called for every stage in `stages.ORDER` except `publish`. Found by the wave-2 rehearsal.
-115. **A scoped run prints `wrote: … docs/index.html`** — lane: `infra` (`pipeline/run.py`).
+115. ~~**A scoped run prints `wrote: … docs/index.html`**~~ — **closed 2026-08-25 (`infra`)**: the tail prints the real directory. Original text: — lane: `infra` (`pipeline/run.py`).
     It actually wrote `out/docs-preview/index.html` (the guard works); the line makes an
     operator think a local experiment clobbered the board.
 
@@ -1901,7 +1901,7 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     of the markdown that becomes the email — lane: `render` (`digest.py:628-655`), contradicting
     `stages.py:13` ("a bold line in the audit, not a token inside a collapsed block"). Emit the
     alarm lines above the `<details>` and keep the counts inside.
-128. **The declared step budgets sum past the job's `timeout-minutes: 150`** — lane: `infra`.
+128. ~~**The declared step budgets sum past the job's `timeout-minutes: 150`**~~ — **closed 2026-08-25 (`infra`)**: job 180 min, per-step timeouts, persist `if: always()`; the CLI install stays a hard fail on purpose (the classifier is pinned to it). Original text: — lane: `infra`.
     scan_dead_domains ~15 + probe_candidates 10 + enrich_scrape_jd 25 + enrich_matched_jd 20 +
     JDFILL 25 + classify 60 + FIRMO 15 = 170 min before the two unbounded discovery steps and
     862 fetches; a timeout kill skips the Persist step, so nothing the run paid for survives.
@@ -1958,7 +1958,7 @@ kept; the Meta listing-url rows are superseded).
     guard (§7c) keeps the product right; the registry fix is `alias-of` parking for the
     same-identity pairs and a decision for the parent/subsidiary ones. Enumerate:
     `python -c "import csv,collections;r=[x for x in csv.DictReader(open('companies.csv',encoding='utf-8')) if x['active']=='true'];g=collections.defaultdict(list);[g[x['api_url']].append(x['company_name']) for x in r if x['api_url']];print(*[v for v in g.values() if len(v)>1],sep='\n')"`.
-134. **The conflict path restores `cloud_state/` wholesale, so the ledger cannot merge** —
+134. ~~**The conflict path restores `cloud_state/` wholesale, so the ledger cannot merge**~~ — **closed 2026-08-25 (`infra`)** in the only way the ledger needs today: the digest is its single writer, so a conflict keeps the run's file whole; a row-level jsonl merge is item 160 if a second writer ever appears. Original text: —
     lane: `infra`. `daily-digest.yml`'s `cp -rT` (and the seven `repo-state` siblings) copies
     ours over origin's; a `merge_jsonl_rows` script (no such file yet) keyed on `role_id` (newer `updated` wins,
     lists union — `roles.reconcile` is the rule) would make `roles*.jsonl` the first state
@@ -2059,3 +2059,80 @@ kept; the Meta listing-url rows are superseded).
     binding on 2026-08-24 (`jd-fill: 93/153` at 06:07, budget to 06:24) and the fill now runs
     once per role, not per copy — but the headroom shrank quietly. Start the clock at the
     first `maybe_fill`, or construct the filler after the loop.
+
+## From the `infra` lane, 2026-08-25
+
+Record: `docs/sessions/2026-08-24-infra.md`; spec ARCHITECTURE §4/§5. Closed there: 10 (the
+two list caches merge by key), 15/60 (base-aware note union), 17, 39, 94, 95, 103, 105 (restore
+half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
+
+153. **`pipeline/health.py` writes `stale.json` and `health_baseline.json` with no temp file**
+    — lane: shared (`pipeline/health.py:117-122`). `json.dump(data, open(path, "w"))` inside
+    `except OSError: pass`; a kill mid-write leaves a truncated baseline, `_load` reads `{}`,
+    every board's high-water mark resets to 0 and `regressed-to-zero` can never fire again.
+    `pipeline.atomic.write_json` is three lines away. Found by the 2026-08-25 hand-over audit.
+154. **`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the
+    `Boards` lines** — lane: `scraper` + `ats-fetch`. `fetch_scrape` returns `[]` for
+    never-scraped, empty and error-with-expired-carry alike and cannot raise, so `run.py`
+    records `status: "empty"` and `health.stale_reason` can never say `fetch-error` for a
+    scrape row. The file that carries the verdict (`why: error`, `http`, `error`) is read by
+    nobody (`grep -rn scrape_rot` → writer, workflow, two tests). Either `run.py` reads it to
+    mark `status: "error"` (and self-heal must then skip scrape rows) or the `Boards` line
+    reads the `collect` stamp's `errors=` count beside it.
+155. **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for
+    twice a day** — lane: `jd-text`. `enrich_scrape_jd` stamps `_jd_attempted` on the cache
+    job (7 d); `store.upsert_matched` drops it; `enrich_matched_jd` twelve seconds later finds
+    `matched.jd_attempted == ''`, `jdfill.due('')` is True and the same URL goes to the
+    Unlocker again (`MATCHED_JD_BD_CAP` 250). Carry `_jd_attempted → jd_attempted` in the
+    upsert, or skip URLs the cache already stamped. Also: `enrich_scrape_jd._todo` treats
+    only `""` as missing while `enrich_matched_jd` uses `< 300` chars.
+156. **Three loaders turn a corrupt `scraped_cache.json` into `{}` and write it back** —
+    lane: `registry` (`retry_unreachable.py:154-156` + `:190`, `auto_expand.py:50-54` +
+    `:183`) and `scraper` (`refresh_scrape_cache.py:431-436`). A momentarily unreadable
+    file becomes an empty cache on the next write. Copy `discovery_daily.py:975-983`'s
+    pattern: refuse to write over what could not be read. (The git-conflict path no longer
+    does this — `persist_state.s_company_dict` yields to the readable side.)
+157. **`mark_sent.py` and `pipeline.run` default to `state/seen.db` (gitignored) while
+    `enrich_matched_jd.py` defaults to `cloud_state/seen.db`** — lane: `infra`. The cloud
+    always passes `--db`; locally the three tools disagree on which store they mean. One
+    default (`cloud_state/seen.db` when it exists) or none.
+158. **`test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason` is red on origin
+    since `f720627` (four consecutive pushes, 2026-08-25)** — lane: `scraper`. Its third
+    scenario expects the first ~10 processed rows to include the 5 emptied ones, but
+    `refresh_scrape_cache.py:446-448` rotates the processing order by `date.today().toordinal()
+    % len(rows)`, so on some dates the budget-cut run never reaches them and `alarm` is not
+    `shrink-abort-…` (assert `11 <= 12 and False`). Pin the rotation (monkeypatch the date or
+    the offset) inside the test. Until then every push to master is red on that one test.
+159. **`pipeline_stages.json` is still read-modify-written in process by two overlapping
+    jobs** — lane: shared (`pipeline/stages.py:40-49`, fixed `.tmp` name). `scrape-refresh`
+    (00:00, 330-min timeout) and the digest (05:00, its own group) can both stamp; the
+    conflict-path half is closed (item 105), the in-process half needs a lock or a per-stage
+    file.
+160. **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+    the right conflict rule today** — lane: `roles` + `infra`. If a second workflow ever
+    writes them (BACKLOG 132's retirement of `matched`, or a mark-sent-from-the-relay), add
+    a row-level strategy to `persist_state.STRATEGY` first (`roles.reconcile` is the rule);
+    the unit guard `test_every_path_a_workflow_owns_has_a_persist_strategy` will not catch a
+    second writer of an `ours` path — only a reviewer will.
+161. **The relay marks nothing** — lane: `infra` (out of this repo). `mark_sent` records
+    intent (BACKLOG 6); the private relay could `PATCH` a `delivered` file back, or the
+    pipeline could read the inbox's latest issue hash at 05:00 and re-queue anything unsent.
+    Not started; the four relay passes bound the exposure to one bad morning.
+163. **A failed `checkout` / `setup-python` still means silence** — lane: `infra`. The
+    persist and outcome steps are `if: always()`, but without a checkout there is no
+    `persist_state.py` to run: no `last_run.json`, no notice, yesterday's digest re-relayed
+    unlabelled. The residual of BACKLOG 6; the only in-job mitigation is a shell fallback
+    that curls the notice into the inbox, which would need a token the public repo must not
+    hold. Watch for it by absence: a morning with no inbox issue and no notice.
+164. **Every Sunday audit starts from row 1** — lane: `infra` + `registry` (restates 38 with
+    the writer line): `audit_empty_rows.py:280` writes its resume ledger to
+    `state/audit_done.json` and `state/` is gitignored, so the 90-minute budget re-audits the
+    same head of the list weekly. Own it under `cloud_state/` and add it to
+    `audit-coverage.yml`'s `--own`.
+162. **`check_invariants.POOL` still differs from `pipeline.verdicts.TOKENS`** — lanes:
+    `registry` (owns the deliberate gap, pinned by `test_the_three_copies…`) + `infra`.
+    Measured 2026-08-25: `url-cleared`/`url-flagged` are in-pool for the gate and
+    `listing_hunt` and out-of-pool for `audit_empty_rows`/`deep_validate`/`registry_health`
+    → 10 orphans by `verdicts.in_pool`, 1 by the gate. Deriving `POOL` from `TOKENS` was
+    tried and reverted this session because the registry lane pins all three copies on
+    purpose; the fix is `TOKENS` gaining the two strings (shared plumbing).

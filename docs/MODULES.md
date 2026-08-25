@@ -9,11 +9,11 @@ The `runs in` and `imported by` columns are **computed from the code**, not type
 
 | class | meaning | count |
 |---|---|---|
-| `scheduled` | a workflow invokes it | 28 |
-| `library` | no workflow runs it; live code imports it | 6 |
+| `scheduled` | a workflow invokes it | 27 |
+| `library` | no workflow runs it; live code imports it | 8 |
 | `operator` | a human or agent runs it; nothing in CI does | 9 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
-| | **total root modules** | **68** |
+| | **total root modules** | **69** |
 
 `pipeline/` is listed at the end. Lane ownership for all of these is in `docs/AGENT_BRIEF.md`.
 
@@ -39,8 +39,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `health_check.py` | self-heal | weekly backstop to the free health detection inside pipeline.run |
 | `listing_hunt.py` | listing-hunt | finds the real listings URL for dark rows and verifies it; the 200-minute night job |
 | `mark_sent.py` | daily-digest | marks a produced digest's roles delivered - records intent, not delivery (see docs/BACKLOG.md) |
-| `merge_csv_rows.py` | audit-coverage, auto-expand, daily-digest, deep-validate, listing-hunt, retry-unreachable, scrape-refresh, self-heal, triage-dark | git-layer segment-aware merge for companies.csv; every csv-committing workflow calls it |
-| `merge_json_cache.py` | audit-coverage, auto-expand, daily-digest, deep-validate, listing-hunt, retry-unreachable, scrape-refresh, self-heal | three-way merge for the company-keyed JSON caches |
+| `persist_state.py` | audit-coverage, auto-expand, daily-digest, deep-validate, listing-hunt, retry-unreachable, scrape-refresh, self-heal, triage-dark | the one commit/pull-rebase/push path every state-committing workflow calls: gates the owned files, merges each by its own rule on a push conflict; `outcome` writes the digest's failure notice and cloud_state/last_run.json (ARCHITECTURE §4) |
 | `probe_candidates.py` | daily-digest | cheap daily signal probe of monitored-candidate pages; wakes rows for the hunt |
 | `refresh_scrape_cache.py` | scrape-refresh | 00:00 pooled re-render of every scrape row: error/empty rot, JD carry-forward, park after 7 error nights, the `collect` stamp the mail prints (ARCHITECTURE §5a) |
 | `registry_health.py` | daily-digest, listing-hunt | read-only registry census + row-deletion guard, recomputed re-check ownership matrix, per-tool pool floors, and the unsupported-ATS build queue. `--census` and `--ladder` are the only things it writes; `alarms_state()` is what the daily mail prints; `--explain "<name>"` answers "why was this row activated/refused" offline |
@@ -61,6 +60,8 @@ If one of these stops working the pipeline degrades silently, because most of th
 |---|---|---|
 | `comeet_resolve.py` | `audit_empty_rows.py`, `resolve_llm.py` | reads `window.comeetvar` off a rendered page to recover a Comeet uid+token |
 | `ingest_research.py` | `resolve_parallel.py`, `resolve_unknowns.py`, `retry_unreachable.py` | resolve+verify helpers for the research queue. **Not deletable**: `retry_unreachable` (02:30 daily) imports `PROBE_FAST`, `_cand_slugs` and `_try` from it |
+| `merge_csv_rows.py` | `persist_state.py`, `registry_health.py`, `tests/test_registry.py` +1 more | git-layer segment-aware merge for companies.csv; persist_state.py applies it on every push conflict |
+| `merge_json_cache.py` | `persist_state.py`, `tests/test_units.py` | three-way merge for the company-keyed JSON caches (deletions honoured since 2026-08-25); persist_state.py applies it |
 | `probe_ats.py` | `ingest_research.py`, `probe_expand.py` | guessable-slug probing. **Not deletable**: `ingest_research` imports `slug_variants` |
 | `resolve_deep.py` | `auto_expand.py`, `bd_rescue.py`, `recheck_suspects.py` +4 more | deterministic resolver tier (recognizable ATS URLs, iframes) |
 | `resolve_llm.py` | `auto_expand.py`, `deep_validate.py`, `listing_hunt.py` | the LLM resolution tier: evidence bundle -> one `claude -p` proposal -> verified through the real fetcher |
