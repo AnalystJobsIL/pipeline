@@ -111,7 +111,7 @@ on a bare title is re-judged once the description arrives (distinct from a row's
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And **33 of the 72 workflow steps carry `continue-on-error: true`** (counted 2026-08-25 by
+And **33 of the 73 workflow steps carry `continue-on-error: true`** (counted 2026-08-25 by
 `docs/check_docs.py`, which fails if this sentence and the workflows disagree; nine of the 35
 are the `Stage stamps on the run page` / CLI-install steps added that day, tolerated on
 purpose — their outcome is what the mail and the run page read, never the badge), so a hard
@@ -1420,7 +1420,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
 - "Why isn't company X in my email?" → §5b above (ordered runbook).
 - "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
 - "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
-  **33 of the 72 workflow steps are `continue-on-error`, so a green run can still hide a
+  **33 of the 73 workflow steps are `continue-on-error`, so a green run can still hide a
   failed step** — read the step, not the badge.
 - Coverage snapshot:
   ```bash

@@ -4921,6 +4921,7 @@ def test_two_rehearsed_nights_keep_every_pool():
     (~15 s); the full 14 run in tests.yml. It runs as a SUBPROCESS: the harness patches
     modules and the clock process-wide."""
     import subprocess
+    import sys
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     r = subprocess.run([sys.executable, os.path.join(root, "tests", "rehearse_registry.py"),
                         "--nights", "2", "--rows", "200", "--policy", "worst"],
