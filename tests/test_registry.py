@@ -118,8 +118,10 @@ def test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_suppos
     exactly the ways EXEMPT names. This pins every difference so a NEW one is red, and
     prints what each exemption costs on the live registry (derived, never typed).
 
-    Closing the gap (TOKENS gaining url-cleared/url-flagged; HUNT_POOL gaining dark-triage
-    or the docs saying why not) is docs/BACKLOG.md "One re-check pool definition"."""
+    2026-08-25: TOKENS gained `url-cleared`/`url-flagged` (auto_expand's `--clear-agg-urls`
+    writes the first, so the 9 rows carrying only that token are no longer invisible to
+    audit_empty_rows/deep_validate). The remaining deliberate gap is HUNT_POOL lacking
+    dark-triage (docs/BACKLOG.md "One re-check pool definition")."""
     import csv
     import os
     import re
@@ -130,15 +132,12 @@ def test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_suppos
     ci = {t.lower() for t in check_invariants.POOL.split("|") if t and "(" not in t}
     hunt = {t.lower() for t in listing_hunt.HUNT_POOL.pattern.split("|") if t and "(" not in t}
     EXEMPT = {
-        "url-cleared": "POOL+HUNT only: the stored address was an aggregator/foreign page; "
-                       "rows carrying ONLY this are invisible to audit_empty_rows/deep_validate",
-        "url-flagged": "same as url-cleared",
         "no il listing": "TOKENS only: every live carrier also carries a POOL token",
         "roles-text present": "TOKENS only: every live carrier also carries a POOL token",
         "dark-triage": "TOKENS+POOL, not HUNT: triage_dark owns those rows; the hunt "
                        "must not re-hunt a row triage just verdicted",
     }
-    assert (ci - tokens) == {"url-cleared", "url-flagged"}, sorted(ci - tokens)
+    assert (ci - tokens) == set(), sorted(ci - tokens)
     assert (tokens - ci) == {"no il listing", "roles-text present"}, sorted(tokens - ci)
     assert (ci - hunt) == {"dark-triage"}, sorted(ci - hunt)
     assert (hunt - ci) == set(), sorted(hunt - ci)
@@ -151,8 +150,8 @@ def test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_suppos
     only_ci = [r[0] for r in parked if cirx.search(r[5] or "") and not POOL_RX.search(r[5] or "")]
     not_hunt = [r[0] for r in parked if POOL_RX.search(r[5] or "")
                 and not listing_hunt.HUNT_POOL.search(r[5] or "")]
-    print(f"\nexemption cost today: {len(only_ci)} parked rows invisible to audit/deep "
-          f"(url-cleared/url-flagged), {len(not_hunt)} invisible to the hunt (dark-triage)")
+    assert only_ci == [], "a POOL token TOKENS does not know: %r" % (only_ci[:5],)
+    print(f"\nexemption cost today: {len(not_hunt)} parked rows invisible to the hunt (dark-triage)")
 
 
 def test_a_company_cannot_leave_the_registry_without_a_reason():
@@ -1617,6 +1616,8 @@ def _registry_writes(tree):
 
     `fr[4] = "false"` is deliberately NOT a write here: parking a row needs no identity
     evidence, only activating one does. refresh_scrape_cache parks rotted scrapes that way.
+    Likewise `fr[3] = ""` CLEARS an address rather than proposing one (auto_expand's
+    `--clear-agg-urls` un-buries rows parked on an aggregator shell that way, 2026-08-25).
     """
     out = []
     for n in ast.walk(tree):
@@ -1633,14 +1634,15 @@ def _registry_writes(tree):
                 if not (isinstance(tg, ast.Subscript)
                         and isinstance(tg.slice, ast.Constant)):
                     continue
+                # For a tuple target the value is the matching element of the RHS tuple;
+                # for a bare target it is the whole value.
+                v = n.value
+                if isinstance(v, (ast.Tuple, ast.List)) and len(v.elts) == len(targets):
+                    v = v.elts[i]
                 if tg.slice.value == 3:
-                    out.append(n)
+                    if not (isinstance(v, ast.Constant) and v.value == ""):
+                        out.append(n)
                 elif tg.slice.value == 4:
-                    # For a tuple target the value is the matching element of the RHS tuple;
-                    # for a bare target it is the whole value.
-                    v = n.value
-                    if isinstance(v, (ast.Tuple, ast.List)) and len(v.elts) == len(targets):
-                        v = v.elts[i]
                     if isinstance(v, ast.Constant) and v.value == "true":
                         out.append(n)
         elif isinstance(n, ast.List) and len(n.elts) >= 6:
@@ -3621,3 +3623,223 @@ def test_rescue_activations_keep_the_prior_note(tmp_path, monkeypatch):
     row = _read(tmp_path)["Fiverr"]
     assert row[4] == "true" and "cross-validated" in row[5], row
     assert "dark-triage 2026-08-24: page-empty" in row[5], "the triage mode was erased: %r" % row
+
+
+# ---------------------------------------------------------------------------------------
+# auto_expand + resolve_llm, 2026-08-25 (docs/BACKLOG.md 177): the aggregator seed is
+# never rendered, never parked; the LLM tier is asked only with a page in hand; the paid
+# search rung is capped; the queue rotates. `main()` is driven through `CSV_PATH` and
+# `load_companies` on the module (an absolute path fixed at import; a chdir does not
+# redirect it -- the older row-builder tests explain why they stopped short of main()).
+# ---------------------------------------------------------------------------------------
+
+_LI = "https://il.linkedin.com/jobs/view/data-analyst-at-houzz-4281234567"
+_SH = "https://secrethunter.io/jobz/98765"
+
+
+def _expand_env(tmp_path, monkeypatch, queue, registry_rows=(), seen=None):
+    import shutil
+    import sys
+    import auto_expand as E
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, list(registry_rows))
+    monkeypatch.setattr(E, "CSV_PATH", str(tmp_path / "companies.csv"))
+    monkeypatch.setattr(E, "DRY_RUN", False)
+    (tmp_path / "research_companies.json").write_text(json.dumps(queue), encoding="utf-8")
+    (tmp_path / "cloud_state").mkdir(exist_ok=True)
+    key = tmp_path / "cloud_state" / "auto_expand_seen.json"
+    if seen is not None:
+        key.write_text(json.dumps(seen), encoding="utf-8")
+    elif key.exists():
+        key.unlink()
+    monkeypatch.setattr(shutil, "which", lambda x: "/usr/bin/claude")
+    monkeypatch.setattr(sys, "argv", ["auto_expand.py"])
+    for k in ("AUTO_EXPAND_LIMIT", "LLM_RESOLVE_CAP", "AUTO_EXPAND_SEARCH_CAP"):
+        monkeypatch.delenv(k, raising=False)
+    return E
+
+
+def _llm_stub(monkeypatch, answers):
+    """answers: name -> (asked, result). Records the call order."""
+    import resolve_llm as L
+    calls = []
+
+    def _fake(name, url):
+        calls.append(name)
+        asked, res = answers.get(name, (False, None))
+        L.LAST.update(asked=asked, pages=1 if asked else 0, candidates=1 if asked else 0)
+        return res
+    monkeypatch.setattr(L, "resolve_llm", _fake)
+    return calls
+
+
+def test_auto_expand_never_renders_or_parks_an_aggregator_seed(tmp_path, monkeypatch):
+    """Kills `expand-agg-seed-resolves` and `expand-agg-parks-empty`. 338 of the 342
+    queued names on 2026-08-25 were LinkedIn / secrethunter postings: each cost a 17-25 s
+    render that could only end in a refusal, and the ten that got an LLM shot were parked
+    as `scanned; no open Israel roles now` with the posting as their address."""
+    from pipeline import identity_gate as G
+    E = _expand_env(tmp_path, monkeypatch, [
+        {"name": "Houzz", "careers_url": _LI},
+        {"name": "yad2", "careers_url": _SH},
+        {"name": "Fiverr", "careers_url": "https://www.fiverr.com/jobs"},
+    ])
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    rendered = []
+
+    def _resolve(name, url):
+        rendered.append(name)
+        return ("ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12))
+    monkeypatch.setattr(E, "resolve", _resolve)
+    _llm_stub(monkeypatch, {})
+    E.main()
+
+    out = _read(tmp_path)
+    assert rendered == ["Fiverr"], "an aggregator seed was rendered: %r" % (rendered,)
+    assert "Houzz" not in out and "yad2" not in out, (
+        "an aggregator seed was PARKED (buried under the posting's URL): %r" % (out,))
+    assert out["Fiverr"][4] == "true" and out["Fiverr"][3] == _FIVERR, (
+        "positive control regressed: %r" % (out["Fiverr"],))
+    seen = json.loads((tmp_path / "cloud_state" / "auto_expand_seen.json").read_text())
+    assert set(seen) == {"Houzz", "yad2"}, "the rotation key must stamp every LLM-tier entry: %r" % seen
+
+
+def test_auto_expand_llm_shots_rotate_least_recently_tried_first(tmp_path, monkeypatch):
+    """Kills `expand-rotation-drop`. Deferred names are never parked, so without the key
+    the same file-order prefix would take every run's shots forever (the rule ARCHITECTURE
+    section 2 states for scan_dead_domains and probe_candidates)."""
+    import datetime as _dt
+    queue = [{"name": n, "careers_url": _LI} for n in ("A Ltd", "B Ltd", "C Ltd")]
+    E = _expand_env(tmp_path, monkeypatch, queue,
+                    seen={"A Ltd": _dt.date.today().isoformat(), "B Ltd": "2026-08-01"})
+    monkeypatch.setenv("LLM_RESOLVE_CAP", "1")
+    monkeypatch.setenv("AUTO_EXPAND_SEARCH_CAP", "1")
+    calls = _llm_stub(monkeypatch, {})
+    E.main()
+    assert calls == ["C Ltd"], "never tried must come first: %r" % (calls,)
+    seen = json.loads((tmp_path / "cloud_state" / "auto_expand_seen.json").read_text())
+    assert "C Ltd" in seen and seen["A Ltd"] == _dt.date.today().isoformat()
+
+    # positive control: with no key, file order
+    E = _expand_env(tmp_path, monkeypatch, queue)
+    monkeypatch.setenv("LLM_RESOLVE_CAP", "1")
+    monkeypatch.setenv("AUTO_EXPAND_SEARCH_CAP", "1")
+    calls = _llm_stub(monkeypatch, {})
+    E.main()
+    assert calls == ["A Ltd"], calls
+
+
+def test_auto_expand_llm_budget_counts_claude_calls_not_attempts(tmp_path, monkeypatch, capsys):
+    """Kills `expand-budget-counts-attempts`. A name whose search ladder found no page
+    costs no `claude -p` call, so it must not consume the call cap; the log says WHY each
+    name was deferred so `cannot search` and `searched and failed` stay distinguishable
+    (CLAUDE.md rule 2)."""
+    queue = [{"name": n, "careers_url": _LI} for n in ("A Ltd", "B Ltd", "C Ltd")]
+    E = _expand_env(tmp_path, monkeypatch, queue)
+    monkeypatch.setenv("LLM_RESOLVE_CAP", "1")
+    calls = _llm_stub(monkeypatch, {"A Ltd": (False, None), "B Ltd": (False, None),
+                                    "C Ltd": (True, None)})
+    E.main()
+    log = capsys.readouterr().out
+    assert calls == ["A Ltd", "B Ltd", "C Ltd"], (
+        "an evidence-free attempt consumed the call cap: %r" % (calls,))
+    assert "dfer A Ltd (no-candidates" in log and "dfer C Ltd (llm-none" in log, log
+    assert "deferred 3 (llm-none 1, no-candidates 2)" in log, log
+    # positive control: a call IS charged
+    E = _expand_env(tmp_path, monkeypatch, queue)
+    monkeypatch.setenv("LLM_RESOLVE_CAP", "1")
+    calls = _llm_stub(monkeypatch, {n: (True, None) for n in ("A Ltd", "B Ltd", "C Ltd")})
+    E.main()
+    assert calls == ["A Ltd"], calls
+    assert "dfer B Ltd (cap" in capsys.readouterr().out
+
+
+def test_auto_expand_rereads_the_registry_before_every_append(tmp_path, monkeypatch):
+    """Kills `expand-dupe-guard-drop`. `have` was computed once before a multi-minute
+    loop; a concurrent writer that added the same name mid-run got a twin row."""
+    from pipeline import identity_gate as G
+    E = _expand_env(tmp_path, monkeypatch, [{"name": "Fiverr", "careers_url": "https://www.fiverr.com/jobs"}])
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+
+    def _resolve(name, url):
+        with open(tmp_path / "companies.csv", "a", encoding="utf-8", newline="") as fh:
+            fh.write("Fiverr,greenhouse,fiverr,%s,true,added by another writer mid-run\n" % _FIVERR)
+        return ("ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12))
+    monkeypatch.setattr(E, "resolve", _resolve)
+    E.main()
+    with open(tmp_path / "companies.csv", encoding="utf-8") as fh:
+        names = [r.split(",")[0] for r in fh.read().splitlines()[1:]]
+    assert names.count("Fiverr") == 1, "a twin row was appended: %r" % (names,)
+
+
+def test_resolve_llm_does_not_ask_claude_without_a_reachable_page(monkeypatch):
+    """Kills `llm-evidence-free-asks`. With an aggregator seed and SerpApi at 0 the
+    evidence was the literal `(no pages reachable)` and the model was asked anyway --
+    0 of 50 shots resolved over five runs."""
+    import resolve_llm as L
+    monkeypatch.setattr(L, "_fetch_html", lambda u, timeout=25, cap=300_000: (u, ""))
+    monkeypatch.setattr(L, "_search_candidates", lambda name, limit=5: ["https://x.example/careers"])
+
+    def _boom(prompt, timeout=120):
+        raise AssertionError("claude was asked with no page in hand")
+    monkeypatch.setattr(L, "_ask_claude", _boom)
+    assert L.resolve_llm("X Ltd", _LI) is None
+    assert L.LAST["asked"] is False and L.LAST["pages"] == 0, L.LAST
+    # positive control: one readable page -> the model IS asked
+    monkeypatch.setattr(L, "_fetch_html", lambda u, timeout=25, cap=300_000: (u, "<html><title>X careers</title></html>"))
+    monkeypatch.setattr(L, "_ask_claude", lambda prompt, timeout=120: {"platform": "unknown"})
+    assert L.resolve_llm("X Ltd", _LI) is None
+    assert L.LAST["asked"] is True and L.LAST["pages"] == 1, L.LAST
+
+
+def test_resolve_llm_search_ladder_uses_ddg_and_caps_the_unlocker(monkeypatch):
+    """Kills `llm-ddg-rung-drop` and `llm-bd-cap-default`. The same ladder
+    `audit_empty_rows.serp` got on 2026-08-23; the paid rung has its OWN counter (the
+    `deep_validate` one is per process with a 150 default) and defaults to 5 per run."""
+    import deep_validate as D
+    import resolve_llm as L
+    monkeypatch.delenv("SERPAPI_KEY", raising=False)
+    monkeypatch.setattr(D, "ddg", lambda name, limit=4: ["https://www.x.example/careers", _LI])
+    monkeypatch.setattr(D, "google_via_unlocker", lambda name, limit=4: (_ for _ in ()).throw(AssertionError("paid rung used while DDG answered")))
+    assert L._search_candidates("X Ltd") == ["https://www.x.example/careers"], "DDG rung missing or aggregator leak"
+
+    paid = []
+    monkeypatch.setattr(D, "ddg", lambda name, limit=4: [])
+    monkeypatch.setattr(D, "google_via_unlocker", lambda name, limit=4: paid.append(name) or ["https://g.example/careers"])
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    monkeypatch.delenv("LLM_BD_SEARCH_CAP", raising=False)
+    L._BD_OWN["used"] = 0
+    got = [L._search_candidates("X Ltd") for _ in range(7)]
+    assert len(paid) == 5, "the paid rung is not capped at 5 by default: %d calls" % len(paid)
+    assert got[0] == ["https://g.example/careers"] and got[6] == []
+    monkeypatch.setenv("LLM_BD_SEARCH_CAP", "0")
+    L._BD_OWN["used"] = 0
+    paid.clear()
+    assert L._search_candidates("X Ltd") == [] and paid == [], "cap 0 must spend nothing"
+    L._BD_OWN["used"] = 0
+
+
+def test_auto_expand_clear_agg_urls_keeps_the_row_hunt_owned(tmp_path, monkeypatch):
+    """Kills `expand-clear-token-drop`. The 28 rows buried under an aggregator shell are
+    un-buried by blanking the address and stamping `url-cleared` -- a token in
+    listing_hunt.HUNT_POOL and (since 2026-08-25) verdicts.TOKENS, so every re-check
+    still owns the row and none re-tests the shell."""
+    import auto_expand as E
+    import listing_hunt as LH
+    from pipeline.verdicts import in_pool
+    p = _registry(tmp_path, [
+        ["Houzz", "scrape", _LI, _LI, "false", "scanned; no open Israel roles now"],
+        ["Loris", "scrape", "https://loris.ai/careers", "https://loris.ai/careers", "false",
+         "listing-hunt 2026-08-20: no listing found"],
+        ["Fiverr", "greenhouse", "fiverr", _FIVERR, "true", ""],
+    ])
+    before = p.read_text(encoding="utf-8")
+    assert E.clear_agg_urls(apply=False, path=str(p)) == ["Houzz"]
+    assert p.read_text(encoding="utf-8") == before, "a dry run wrote"
+    assert E.clear_agg_urls(apply=True, path=str(p)) == ["Houzz"]
+    out = _read(tmp_path)
+    row = out["Houzz"]
+    assert row[2] == "" and row[3] == "" and row[4] == "false", row
+    assert "url-cleared" in row[5] and "scanned; no open Israel roles now" in row[5], row
+    assert LH.in_hunt_pool(row) and in_pool(row[5]), "the un-buried row left a pool: %r" % row
+    assert out["Loris"][3] == "https://loris.ai/careers" and out["Fiverr"][4] == "true", out

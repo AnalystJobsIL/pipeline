@@ -4,7 +4,8 @@ with the CLAUDE_CODE_OAUTH_TOKEN subscription secret).
 
 When resolve_deep's deterministic heuristics give up — or land on an aggregator page the
 auto-expand guard refuses to scrape — this tier does what a human resolver does: find the
-company's real careers page (SerpApi web search when the input URL is an aggregator link),
+company's real careers page (a SEARCH when the input URL is an aggregator link -- SerpApi,
+then DuckDuckGo, then Google through the Bright Data unlocker, capped by LLM_BD_SEARCH_CAP),
 read the evidence (iframes / scripts / links / ATS-domain strings), let Claude name the
 platform and construct the public JSON endpoint, then VERIFY by actually fetching jobs
 through pipeline.fetchers. A proposal that doesn't fetch real jobs is discarded — a
@@ -83,8 +84,49 @@ def _is_aggregator(url):
     return _is_agg(url)   # shared blocklist (pipeline/aggregators.py)
 
 
+# What the LAST call did, for the caller's budget: `auto_expand` charges its `claude -p`
+# cap only when a call was actually made (`asked`), and prints why a name was deferred.
+LAST = {"asked": False, "pages": 0, "candidates": 0}
+# Own counter for the paid rung. `deep_validate._BD` is per PROCESS with a 150 default
+# (docs/BACKLOG.md 10/20), so borrowing it would let one auto-expand run spend 150 credits.
+_BD_OWN = {"used": 0}
+
+
+def _search_candidates(name, limit=5):
+    """Careers-page candidates by SEARCHING, three rungs in cost order -- the same ladder
+    `audit_empty_rows.serp` got on 2026-08-23 and this tier did not.
+
+    Until 2026-08-25 this was SerpApi only. With that quota at 0 (resets 2026-09-01) and an
+    aggregator seed contributing no page, `_gather` produced the literal
+    `(no pages reachable)` and `claude -p` was still asked -- 20 evidence-free calls a day
+    that returned `unknown` every time (docs/BACKLOG.md 177). DuckDuckGo is free and works
+    on the runners; the unlocker rung is capped per run by LLM_BD_SEARCH_CAP (default 5:
+    the project ceiling is 4,500 credits/month from 2026-09 and two runs a day at 5 is ~7%
+    of it). Lazy imports: `deep_validate` imports this module at top level.
+    """
+    urls = _serp_candidates(name, limit)
+    if urls:
+        return urls
+    try:
+        from deep_validate import ddg
+        urls = [u for u in (ddg(name) or []) if not _is_aggregator(u)][:limit]
+    except Exception:  # noqa: BLE001
+        urls = []
+    if urls:
+        return urls
+    cap = int(os.environ.get("LLM_BD_SEARCH_CAP", "5"))
+    if _BD_OWN["used"] >= cap or not os.environ.get("BRIGHTDATA_API_KEY"):
+        return []
+    _BD_OWN["used"] += 1
+    try:
+        from deep_validate import google_via_unlocker
+        return [u for u in (google_via_unlocker(name) or []) if not _is_aggregator(u)][:limit]
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def _serp_candidates(name, limit=5):
-    """Real careers-page candidates via SerpApi general web search (key optional)."""
+    """Rung 1 only: SerpApi general web search (key optional)."""
     key = os.environ.get("SERPAPI_KEY")
     if not key:
         return []
@@ -120,21 +162,26 @@ def _extract_evidence(html):
 
 
 def _gather(name, url):
+    """(evidence text, number of pages actually read). Zero pages is NO evidence."""
     lines = []
     candidates = []
     if url and not _is_aggregator(url):
         candidates.append(url)
-    candidates += [u for u in _serp_candidates(name) if u not in candidates]
+    candidates += [u for u in _search_candidates(name) if u not in candidates]
+    LAST["candidates"] = len(candidates)
+    n_pages = 0
     for u in candidates[:3]:
         final, html = _fetch_html(u)
         if not html:
             lines.append(f"page: {u} -> unreachable")
             continue
+        n_pages += 1
         title = re.search(r"<title[^>]*>(.*?)</title>", html, re.I | re.S)
         lines.append(f"page: {u} (final: {final}) title: "
                      f"{(title.group(1).strip()[:120] if title else '?')}")
         lines += _extract_evidence(html)
-    return "\n".join(lines) if lines else "(no pages reachable)"
+    LAST["pages"] = n_pages
+    return ("\n".join(lines) if lines else "(no pages reachable)"), n_pages
 
 
 def _ask_claude(prompt, timeout=120):
@@ -190,10 +237,17 @@ def _try_comeet_via_page(name, careers_url):
 def resolve_llm(name, url):
     """Full fallback attempt. Returns ('ats', (name, platform, token, api_url, n_all, n_il))
     or None. Never raises."""
+    LAST.update(asked=False, pages=0, candidates=0)
     try:
-        evidence = _gather(name, url)
+        evidence, n_pages = _gather(name, url)
+        if n_pages == 0:
+            # No page was read, so there is nothing for the model to reason FROM; a call
+            # here is a paid coin flip that always lands on `unknown` (measured 0/50 over
+            # five runs). The caller sees LAST["asked"] is False and does not charge it.
+            return None
         feedback = ""
         for _attempt in range(2):
+            LAST["asked"] = True
             p = _ask_claude(_PROMPT.format(name=name, evidence=evidence[:8000],
                                            feedback=feedback))
             if not p or p.get("platform") in (None, "", "unknown"):

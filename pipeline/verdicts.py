@@ -22,6 +22,8 @@ TOKENS = {
     "no ATS detected":         "deep_validate",
     "unsupported ATS":         "deep_validate / crack_walled",
     "scanned via brightdata":  "bd_rescue",
+    "url-cleared":             "auto_expand --clear-agg-urls / cleanup_after_hunt",
+    "url-flagged":             "cleanup_after_hunt",
     "roles-text present":      "bd_rescue",
     "empty-but-suspect":       "validate_empty",
     "no listing found":        "listing_hunt",

@@ -55,6 +55,13 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           LLM_RESOLVE_CAP: ${{ github.event.inputs.llm_cap || '10' }}
+          # The tier's search ladder (resolve_llm): SerpApi -> DuckDuckGo -> Google via the
+          # unlocker. The paid rung is capped per run (2 runs/day at 5 ~= 7% of the 4,500
+          # monthly ceiling); a name enters the tier at most AUTO_EXPAND_SEARCH_CAP times.
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          LLM_BD_SEARCH_CAP: "5"
+          AUTO_EXPAND_SEARCH_CAP: "20"
         run: python auto_expand.py
 
 
@@ -89,6 +96,7 @@ jobs:
         run: |
           python persist_state.py commit --as "expand-bot" \
             -m "auto-expand: crack more companies $(date -u +%FT%H:%M) [skip ci]" \
-            --own companies.csv scraped_cache.json cloud_state/pipeline_stages.json
+            --own companies.csv scraped_cache.json cloud_state/pipeline_stages.json \
+                  cloud_state/auto_expand_seen.json
 
 # (workflow re-index nudge)

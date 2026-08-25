@@ -1127,5 +1127,95 @@
     "replace": "            rows[rowi] = payload",
     "why": "the promote write replaced the whole row, erasing every other tool's segment on a Sunday activation.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-agg-seed-resolves",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "        agg_seed = _is_agg_url(url)\n        if agg_seed:",
+    "replace": "        agg_seed = _is_agg_url(url)\n        if False:",
+    "why": "the 2026-08-25 waste textually: every aggregator seed rendered for 17-25 s before the cap check, 76 wasted minutes a run.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-agg-parks-empty",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "                elif agg_seed:\n                    defer = \"llm-none\" if _llm.LAST[\"asked\"] else \"no-candidates\"",
+    "replace": "                elif False:\n                    defer = \"llm-none\" if _llm.LAST[\"asked\"] else \"no-candidates\"",
+    "why": "an aggregator seed the tier could not crack falls through to the `unreachable` row with the shell as its address -- the burying BACKLOG 177 measured at 28 rows.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-rotation-drop",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M7-constant-drift",
+    "find": "    todo.sort(key=lambda e: seen.get((e.get(\"name\") or \"\").strip(), \"\"))",
+    "replace": "    pass",
+    "why": "a budget without a rotation key re-walks the same prefix forever (ARCHITECTURE section 2).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-budget-counts-attempts",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M8-argument-mis-passing",
+    "find": "                if _llm.LAST[\"asked\"]:\n                    llm_budget -= 1",
+    "replace": "                if True:\n                    llm_budget -= 1",
+    "why": "charging the call cap for an evidence-free attempt starves the names that DO have a page.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-dupe-guard-drop",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "            if name.lower() in _names_now():      # re-read before the append (rule 4)",
+    "replace": "            if False:      # re-read before the append (rule 4)",
+    "why": "rule 4: `have` was a start-of-run snapshot; a concurrent writer's row got a twin.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-clear-token-drop",
+    "file": "auto_expand.py",
+    "symbol": "clear_agg_urls",
+    "class": "M7-constant-drift",
+    "find": "        r[5] = _note_append(note, f\"url-cleared {_today()}: {host} aggregator seed\")",
+    "replace": "        r[5] = _note_append(note, f\"cleared {_today()}: {host} aggregator seed\")",
+    "why": "a token no pool knows orphans the un-buried row (the verdict-string rule).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "llm-evidence-free-asks",
+    "file": "resolve_llm.py",
+    "symbol": "resolve_llm",
+    "class": "M1-gate-removal",
+    "find": "        if n_pages == 0:\n            # No page was read",
+    "replace": "        if False:\n            # No page was read",
+    "why": "20 evidence-free `claude -p` calls a day, 0/50 resolved (BACKLOG 177).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "llm-ddg-rung-drop",
+    "file": "resolve_llm.py",
+    "symbol": "_search_candidates",
+    "class": "M6-fallback-removal",
+    "find": "        from deep_validate import ddg\n        urls = [u for u in (ddg(name) or []) if not _is_aggregator(u)][:limit]",
+    "replace": "        urls = []",
+    "why": "with SerpApi at 0 a ladder without the free rung is SerpApi-only again -- the audit's 2026-08-23 defect, one tool over.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "llm-bd-cap-default",
+    "file": "resolve_llm.py",
+    "symbol": "_search_candidates",
+    "class": "M7-constant-drift",
+    "find": "    cap = int(os.environ.get(\"LLM_BD_SEARCH_CAP\", \"5\"))",
+    "replace": "    cap = int(os.environ.get(\"LLM_BD_SEARCH_CAP\", \"150\"))",
+    "why": "the paid rung's default is the operator's 4,500/month ceiling made concrete; 150 is deep_validate's per-process figure and would let one run spend 150 credits.",
+    "must_be_killed_by_behavioural": true
   }
 ]

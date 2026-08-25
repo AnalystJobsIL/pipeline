@@ -157,14 +157,16 @@ def _registry_writers():
                         continue
                     # index 4 only when it ACTIVATES. `fr[4] = "false"` is a park and needs
                     # no identity evidence -- refresh_scrape_cache parks rotted scrapes that
-                    # way. Same rule as tests/test_registry.py's detector; they must agree.
+                    # way; `fr[3] = ""` CLEARS an address rather than proposing one. Same
+                    # rule as tests/test_registry.py's detector; they must agree.
+                    v = n.value
+                    if (isinstance(v, (ast.Tuple, ast.List))
+                            and len(v.elts) == len(targets)):
+                        v = v.elts[i]
                     if tg.slice.value == 3:
-                        hit = True
+                        if not (isinstance(v, ast.Constant) and v.value == ""):
+                            hit = True
                     elif tg.slice.value == 4:
-                        v = n.value
-                        if (isinstance(v, (ast.Tuple, ast.List))
-                                and len(v.elts) == len(targets)):
-                            v = v.elts[i]
                         if isinstance(v, ast.Constant) and v.value == "true":
                             hit = True
             elif isinstance(n, ast.List) and len(n.elts) >= 6:
