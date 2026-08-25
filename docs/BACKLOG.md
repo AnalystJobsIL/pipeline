@@ -490,6 +490,7 @@ write list**, which is why it is a proposal and not a commit. Ordered by what it
    ```
 
 6. **`audit_empty_rows` and `deep_validate` select the identical 255 rows** — lane:
+    **CLOSED 2026-08-26 (`registry`, `8a4deac`):** `deep_validate.validate_one` + the extracted `apply_verdict` are the Sunday audit's second rung over what the cheap rung left dark (`audit_empty_rows._deep_rung`, `AUDIT_DEEP_BUDGET_MIN` 120, deep's own 30-day cooldown, oldest-stamped first); `deep-validate.yml` retired; `deep_validate.py --only` for an on-demand pass. Both selected the identical 270 rows the day before.
    `registry`, unclaimed. Same predicate, different depth (raw HTML vs Chromium render +
    network sniff), 24 hours apart, on consecutive weekend mornings. Sunday's audit re-walks
    everything Saturday's deep validation just failed on. The lean shape is one Saturday pass
@@ -967,6 +968,7 @@ fixes; one was a claim I made that a doc of this repo already contradicted on th
     consume the row's re-check token.
 
 38. **`audit_empty_rows`' rotation key is in gitignored `state/`, so the Sunday budget
+    **CLOSED 2026-08-26 (`registry`, + one `--own` line in audit-coverage.yml, disclosed):** `cloud_state/audit_seen.json`, registered in `persist_state.STRATEGY`; a local `state/audit_done.json` is read once as a migration. 164 is the same fix.
     re-walks the same prefix forever** — lane: `registry` + `infra`. `state/` is gitignored
     and `audit-coverage.yml` never stages it, so in Actions `done` is always `{}` and
     `parked.sort(key=lambda ir: done.get(ir[1][0], ""))` is a stable sort on a constant —
@@ -1262,6 +1264,7 @@ Six blocking findings, all reproduced and fixed. These are the residuals.
     jobvite cells in the same test.
 
 56. **`apply_resolved`'s veto is scoped to ACTIVE rows, so a PARKED row is re-pointed with
+    **CLOSED 2026-08-26 (`registry`):** the veto (proven foreignness) applies to every row.
     no identity check** — lane: `registry`. Deliberate scope ("this tool cannot activate a
     row"), and worth revisiting: a parked row holding a foreign address is exactly what
     `ok_to_write`'s docstring calls "what `listing_hunt`'s fast path later activates on".
@@ -1398,6 +1401,7 @@ FairFly shape). These are the residuals.
     breaks it, fails. The freeze-window observation stands as written.
 
 65. **`empty-but-suspect` waits out `listing_hunt`'s 14-day cooldown, and no scheduled tool
+    **CLOSED 2026-08-26 (`registry`):** the suspect stamp is dated (`empty-but-suspect <date>; …`) and `listing_hunt.actionable_mode` (module-level now) treats one newer than its own last verdict as actionable; `recheck_suspects.py` stays legacy.
     clears the verdict** — lane: `registry`. A suspect row usually already carries a
     `listing-hunt <date>` stamp, so the hunt suppresses it for the rest of the cooldown
     (latency, not loss — the row stays owned). `recheck_suspects.py` is the only clearer
@@ -1831,6 +1835,7 @@ Record: `docs/sessions/2026-08-24-jd-text.md`. Numbers re-derived that day; re-d
     `jdfill.is_job_url` now refuses the search pages before the Unlocker; the Greenhouse and
     Comeet rungs read the other four. The Meta rows need a real URL from the store's side.
 110. **`bd_rescue.unlock` discards what the Unlocker reports** — lane: `registry`.
+    **CLOSED 2026-08-26 (`registry`):** `unlock_status()` reads `x-brd-error-code` and `LAST["error"]` says why for every spender that imports `unlock`; a `policy_*` host is stamped `bd-policy <date>: <code>` and never retried; a 401/402/403 from the API stops the pass with a `::warning::` and no stamp.
     `bd_rescue.py:42-53` swallows the exception and never reads `x-brd-error-code`, so a dead
     token (401), a refused host (`policy_20140` — every `myworkdayjobs.com` page) and a walled
     page (`reject_block`) all look like "no HTML". `pipeline.jdfill.Unlocker` reads them; the
@@ -2119,6 +2124,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     upsert, or skip URLs the cache already stamped. Also: `enrich_scrape_jd._todo` treats
     only `""` as missing while `enrich_matched_jd` uses `< 300` chars.
 156. **Three loaders turn a corrupt `scraped_cache.json` into `{}` and write it back** —
+    **Registry half CLOSED 2026-08-26:** `auto_expand._load_cache` and `retry_unreachable.main` report `::error::` and skip the cache write when the file is unreadable (absent stays `{}`). `refresh_scrape_cache.py` is the `scraper` half.
     lane: `registry` (`retry_unreachable.py:154-156` + `:190`, `auto_expand.py:50-54` +
     `:183`) and `scraper` (`refresh_scrape_cache.py:431-436`). A momentarily unreadable
     file becomes an empty cache on the next write. Copy `discovery_daily.py:975-983`'s
@@ -2157,6 +2163,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     that curls the notice into the inbox, which would need a token the public repo must not
     hold. Watch for it by absence: a morning with no inbox issue and no notice.
 164. **Every Sunday audit starts from row 1** — lane: `infra` + `registry` (restates 38 with
+    **CLOSED 2026-08-26** with 38.
     the writer line): `audit_empty_rows.py:280` writes its resume ledger to
     `state/audit_done.json` and `state/` is gitignored, so the 90-minute budget re-audits the
     same head of the list weekly. Own it under `cloud_state/` and add it to

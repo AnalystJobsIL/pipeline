@@ -4596,18 +4596,14 @@ def test_a_dated_suspect_verdict_re_arms_the_hunt(monkeypatch):
     is actionable; one the hunt already answered is not."""
     import listing_hunt as LH
     import validate_empty as V
-    src = __import__("inspect").getsource(LH.main)
-    assert "empty-but-suspect (\\d{4}" in src
-    # drive the closure through main()'s selector: build the two notes and use the module's
-    # own regexes the way _actionable_mode does
-    import re
-    def actionable(note):
-        ms = re.search(r"empty-but-suspect (\d{4}-\d{2}-\d{2})", note)
-        mh = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note)
-        return bool(ms and (not mh or ms.group(1) > mh.group(1)))
     newer = "listing-hunt 2026-08-20: no listing found | empty-but-suspect 2026-08-24; 3 IL but the board is not this company's"
     older = "empty-but-suspect 2026-08-10; 3 IL | listing-hunt 2026-08-20: no listing found"
-    assert actionable(newer) and not actionable(older)
+    assert LH.actionable_mode(newer), "a suspect newer than the hunt's verdict must re-arm the hunt"
+    assert not LH.actionable_mode(older), "a suspect the hunt already answered must not"
+    assert not LH.actionable_mode("listing-hunt 2026-08-20: no listing found")
+    # the triage-mode rule it sits beside is untouched (positive controls)
+    assert LH.actionable_mode("dark-triage 2026-08-24: url-dead | listing-hunt 2026-08-20: no listing found")
+    assert not LH.actionable_mode("dark-triage 2026-08-24: page-empty")
     assert LH.HUNT_POOL.search(newer)                     # still the hunt's row
     assert "empty-but-suspect {TODAY}" in __import__("inspect").getsource(V.main)
 
@@ -4676,7 +4672,12 @@ def test_bd_rescue_reads_the_unlockers_error_code_and_never_retries_a_policy_hos
     monkeypatch.setattr(B, "alt_urls", lambda url: [url, url + "/careers"])
     monkeypatch.setattr(B.time, "sleep", lambda *a: None)
     calls = []
-    monkeypatch.setattr(B, "unlock_status", lambda u, timeout=90: calls.append(u) or ("", "policy_20140"))
+
+    def _policy(u, timeout=90):
+        calls.append(u)
+        B.LAST.update(error="policy_20140", status=200)
+        return ""
+    monkeypatch.setattr(B, "unlock", _policy)
     monkeypatch.setattr(sys, "argv", ["bd_rescue.py"])
     B.main()
     row = _read(tmp_path)["Wd Ltd"]
@@ -4687,7 +4688,10 @@ def test_bd_rescue_reads_the_unlockers_error_code_and_never_retries_a_policy_hos
     # a dead token stops the whole pass without stamping anything
     _registry(tmp_path, [["A Ltd", "scrape", "", "https://a.example/careers", "false",
                           "unreachable; could not scan"]])
-    monkeypatch.setattr(B, "unlock_status", lambda u, timeout=90: ("", "http-401"))
+    def _dead(u, timeout=90):
+        B.LAST.update(error="http-401", status=401)
+        return ""
+    monkeypatch.setattr(B, "unlock", _dead)
     import pytest
     with pytest.raises(SystemExit):
         B.main()

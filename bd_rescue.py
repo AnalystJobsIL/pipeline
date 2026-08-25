@@ -118,7 +118,9 @@ def main():
         best_html, best_url, resolved = "", url, False
         policy = ""
         for alt in alt_urls(url)[:5]:              # try up to 5 candidate URLs via the unlocker
-            html, err = unlock_status(alt)
+            LAST["error"] = ""                  # `unlock` is the seam fixtures stub; read LAST after it
+            html = unlock(alt)
+            err = LAST["error"]
             if err.startswith("http-4"):
                 # 401/402/403 from the API itself: the ACCOUNT is unusable -- stop spending
                 print(f"::warning::bd_rescue: Bright Data answered {err}; stopping the pass",

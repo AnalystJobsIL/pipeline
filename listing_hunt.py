@@ -275,6 +275,42 @@ def hunt_one(name, seed, documented=False, mode=""):
     return ("nolisting", best, 0, f"tried {len(tried)} candidates")
 
 
+
+def actionable_mode(note):
+    """A fresh triage mode OVERRIDES the 14-day hunt cooldown.
+
+    The cooldown means "the generic hunt already failed here". But a mode means we now
+    know WHY it failed and will run a different strategy (search instead of the dead
+    seed, LLM extraction instead of regex, unlocker instead of a plain fetch). Without
+    this, every row triaged today stays suppressed for 14 days and the modes are dead
+    weight — the hunt pool was literally 0 rows before this was added."""
+    # a dated `empty-but-suspect` newer than this tool's last verdict is actionable too:
+    # validate_empty saw Israel-role text on a page the scraper called empty, and no
+    # scheduled tool cleared that verdict (BACKLOG 65) -- the hunt is the right reader
+    ms = re.search(r"empty-but-suspect (\d{4}-\d{2}-\d{2})", note or "")
+    mh = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
+    if ms and (not mh or ms.group(1) > mh.group(1)):
+        return True
+    m = re.search(r"dark-triage (\d{4}-\d{2}-\d{2}): ([a-z-]+)", note or "")
+    if not m:
+        return False
+    if m.group(2) in ("page-empty", "acquired"):
+        return False                      # nothing to hunt; the daily probe owns these
+    h = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
+    return (not h) or m.group(1) >= h.group(1)   # mode is at least as new as the stamp
+
+def stale_hunt(note):
+    """Re-hunt ANY hunted row after 14 days — a board empty today isn't empty forever.
+    NOTE: this used to require the literal 'monitored candidate', which made the
+    'no listing found' verdict TERMINAL (rows silently retired from the pool forever,
+    so one broken cycle could permanently delete hundreds of companies' coverage)."""
+    m = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
+    if not m:
+        return False
+    age = (dt.date.today() - dt.date.fromisoformat(m.group(1))).days
+    return age >= 14
+
+
 def main():
     from bd_rescue import _load_secrets
     _load_secrets()
@@ -283,39 +319,7 @@ def main():
     limit = int(os.environ.get("HUNT_LIMIT", "0"))
     budget_min = int(os.environ.get("HUNT_TIME_BUDGET_MIN", "0"))
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
-    def _actionable_mode(note):
-        """A fresh triage mode OVERRIDES the 14-day hunt cooldown.
-
-        The cooldown means "the generic hunt already failed here". But a mode means we now
-        know WHY it failed and will run a different strategy (search instead of the dead
-        seed, LLM extraction instead of regex, unlocker instead of a plain fetch). Without
-        this, every row triaged today stays suppressed for 14 days and the modes are dead
-        weight — the hunt pool was literally 0 rows before this was added."""
-        # a dated `empty-but-suspect` newer than this tool's last verdict is actionable too:
-        # validate_empty saw Israel-role text on a page the scraper called empty, and no
-        # scheduled tool cleared that verdict (BACKLOG 65) -- the hunt is the right reader
-        ms = re.search(r"empty-but-suspect (\d{4}-\d{2}-\d{2})", note or "")
-        mh = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
-        if ms and (not mh or ms.group(1) > mh.group(1)):
-            return True
-        m = re.search(r"dark-triage (\d{4}-\d{2}-\d{2}): ([a-z-]+)", note or "")
-        if not m:
-            return False
-        if m.group(2) in ("page-empty", "acquired"):
-            return False                      # nothing to hunt; the daily probe owns these
-        h = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
-        return (not h) or m.group(1) >= h.group(1)   # mode is at least as new as the stamp
-
-    def _stale_hunt(note):
-        """Re-hunt ANY hunted row after 14 days — a board empty today isn't empty forever.
-        NOTE: this used to require the literal 'monitored candidate', which made the
-        'no listing found' verdict TERMINAL (rows silently retired from the pool forever,
-        so one broken cycle could permanently delete hundreds of companies' coverage)."""
-        m = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
-        if not m:
-            return False
-        age = (dt.date.today() - dt.date.fromisoformat(m.group(1))).days
-        return age >= 14
+    _actionable_mode, _stale_hunt = actionable_mode, stale_hunt   # module-level: importable, testable
 
     targets = [(i, r) for i, r in enumerate(rows)
                if r and in_hunt_pool(r)
