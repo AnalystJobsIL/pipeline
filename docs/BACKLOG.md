@@ -2156,6 +2156,21 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     by hand — §8), ending with the three things most worth a session, each pointing at a
     BACKLOG item. Half a day; the interim prompt that does it by hand is in
     `docs/sessions/2026-08-24-infra.md` ("Ops review by hand").
+167. **A company named "Tel Aviv" in the mail** — lane: `discovery`. The 2026-08-25 digest's
+    *Newly covered companies* lists `### Tel Aviv` with Alma's blurb and two roles at
+    `jobs.secrettelaviv.com/job/...` — a discovery card whose employer became the site's city
+    word. Reproduce: `git show 58212df:digests/latest.md | grep -n -A5 "^### Tel Aviv"`;
+    then `python -c "import json;print([j for j in json.load(open('discovered_cache.json')) if j['company']=='Tel Aviv'][:3])"`.
+    Adjacent to 151 (aggregator-URL residue). Found by the first ops review of today's mail.
+168. **A location that swallowed the title's tail** — lane: `scraper` (+ `render` for the
+    card). Gett: `**Experienced Product Analyst** … 📍 ced Product Analyst Tel Aviv` in the
+    same digest — the DOM extraction split the card text at a fixed offset. Reproduce:
+    `git show 58212df:digests/latest.md | grep -n "ced Product Analyst"`; the cached card is
+    in `scraped_cache.json` under `Gett`.
+169. **Location and employment type glued into a Comeet title** — lane: `scraper`.
+    Modellama: `**Data Analyst Raanana Full-time**` beside a clean `Data Analyst` from
+    LinkedIn for the same role (so the roles ledger also sees two titles for one posting).
+    Reproduce: `git show 58212df:digests/latest.md | grep -n "Raanana Full"`.
 162. **`check_invariants.POOL` still differs from `pipeline.verdicts.TOKENS`** — lanes:
     `registry` (owns the deliberate gap, pinned by `test_the_three_copies…`) + `infra`.
     Measured 2026-08-25: `url-cleared`/`url-flagged` are in-pool for the gate and
