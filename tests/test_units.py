@@ -6428,3 +6428,45 @@ def test_the_guest_walk_cap_still_reports_when_it_is_really_hit(capsys):
     finally:
         dd.LINKEDIN_GUEST_PAGES = real
     assert len(out) == 30 and "the 3-page cap — raise LINKEDIN_GUEST_PAGES" in log
+
+
+def test_the_final_summary_line_reports_what_was_cached_and_what_was_queued():
+    """`=== 634 discovered jobs cached · 179 new companies for migration ===` on 2026-08-25,
+    from len(jobs) and len(new_cos) — when 621 were cached (13 junior kept for the employer
+    name only) and 51 queued (128 already waiting in research_companies.json). The earlier
+    lines had every truthful number; the one an operator reads used neither."""
+    import ast
+    import inspect
+
+    import discovery_daily as dd
+    tree = ast.parse(inspect.getsource(dd.main))
+    prints = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "print"]
+    last = max(prints, key=lambda n: n.lineno)          # ast.walk is not source-ordered
+    src = ast.unparse(last)
+    assert "===" in src
+    assert "len(cacheable)" in src and "n_queued" in src and "n_junior" in src
+    assert "len(jobs)" not in src
+
+
+def test_the_private_junior_flag_never_reaches_the_shared_cache(tmp_path, monkeypatch):
+    """`_junior` is routing state (keep the employer, drop the job). It leaked into 912 of the
+    1,202 committed discovered_cache.json records; `_real_lead` is stripped for the same
+    reason two screens below."""
+    import inspect
+
+    import discovery_daily as dd
+    src = inspect.getsource(dd.main)
+    build = src.split("cacheable = [", 1)[1].split("]", 1)[0]
+    assert '"_junior"' in build and "k != " in build, build
+
+
+def test_the_bright_data_warning_no_longer_blames_the_other_spenders():
+    """53% of the 2026-08 pool was this layer's own per-record LinkedIn dataset (1,527
+    credits on 08-23 alone); the warning told the reader 'the other spenders are the
+    problem'. A warning that misdirects is worse than none."""
+    import inspect
+
+    import discovery_daily as dd
+    src = inspect.getsource(dd.report_bd_spend)
+    assert "other spenders are the problem" not in src
+    assert "rec_share" in src.split("::warning::", 1)[1]

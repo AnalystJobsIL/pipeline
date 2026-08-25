@@ -688,8 +688,10 @@ def report_bd_spend():
     if pct >= 80:
         print(f"::warning::Bright Data at {pct:.0f}% of the monthly free pool "
               f"({mtd}/{BD_MONTHLY_BUDGET} credits, shared by every workflow that touches "
-              f"BD). plan_spend() has already throttled discovery; if this keeps firing the "
-              f"other spenders are the problem — see ARCHITECTURE.md 1a.", flush=True)
+              f"BD). plan_spend() has cut the targeted sweep to zero; dataset records are "
+              f"{rec_share:.0%} of the spend (this layer's own per-RECORD LinkedIn sweep — "
+              f"53% of the 2026-08 pool), Unlocker + SERP requests the rest — see "
+              f"ARCHITECTURE.md 1a.", flush=True)
 
 
 def budget_per_day(today=None):
@@ -975,7 +977,11 @@ def main():
     # Junior postings were flagged rather than dropped (see linkedin_normalize) so their
     # EMPLOYER still reaches the names funnel. They must not reach the job cache.
     n_junior = sum(1 for j in jobs if j.get("_junior"))
-    cacheable = [j for j in jobs if not j.get("_junior")]
+    # ...and the flag itself is routing state, never a field of the shared cache: it had
+    # leaked into 912 of 1,202 committed records by 2026-08-25 (`_real_lead` below is
+    # stripped for the same reason).
+    cacheable = [{k: v for k, v in j.items() if k != "_junior"} for j in jobs
+                 if not j.get("_junior")]
     if n_junior:
         print(f"[names] {n_junior} junior/student postings kept for their employer name "
               f"only — not cached, not published")
@@ -1089,6 +1095,7 @@ def main():
         json.dump(list(new_cos.values()), f, ensure_ascii=False, indent=1)
     # Bridge to auto-expand: out/ is gitignored (ephemeral on cloud runners), so the queue
     # auto_expand.py actually drains is the committed research_companies.json — merge into it.
+    n_queued = 0
     if new_cos:
         try:
             research = json.load(open("research_companies.json", encoding="utf-8"))
@@ -1100,7 +1107,8 @@ def main():
             research.extend(added)
             with open("research_companies.json", "w", encoding="utf-8") as f:
                 json.dump(research, f, ensure_ascii=False, indent=1)
-            print(f"queued {len(added)} new companies into research_companies.json")
+            n_queued = len(added)
+            print(f"queued {n_queued} new companies into research_companies.json")
     # A source returning zero is the signal, not the absence of one: the Indeed dataset
     # printed "0 records" every day for five days and nothing ever said a source had died.
     try:
@@ -1111,7 +1119,13 @@ def main():
     except Exception as e:  # noqa: BLE001
         print(f"[source-health] skipped: {e}")
     report_bd_spend()
-    print(f"=== {len(jobs)} discovered jobs cached · {len(new_cos)} new companies for migration ===")
+    # The line an operator reads. It printed len(jobs) and len(new_cos) — 634 cached and
+    # 179 for migration on 2026-08-25, when 621 were cached (13 junior kept for the name
+    # only) and 51 queued (128 already waiting). Every number here is one an earlier line
+    # already printed truthfully.
+    print(f"=== {len(cacheable)} discovered jobs cached ({n_junior} junior kept for the employer "
+          f"name only) · {n_queued} new companies queued, {len(new_cos) - n_queued} already "
+          f"waiting in research_companies.json ===")
 
 
 if __name__ == "__main__":
