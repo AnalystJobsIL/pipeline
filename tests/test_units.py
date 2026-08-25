@@ -5936,6 +5936,8 @@ def test_yesterdays_failed_step_reaches_todays_mail_and_a_week_old_one_is_silent
 
 def test_main_records_the_crash_phase_and_annotates_the_run(monkeypatch, tmp_path, capsys):
     from pipeline import run as run_mod
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)      # CI sets it; the test is about the local shape
+    monkeypatch.setitem(run_mod._PHASE, "name", "start")
     def boom(**kw):
         run_mod._phase("classify 12 Israel-matched postings")
         raise KeyError("company")
