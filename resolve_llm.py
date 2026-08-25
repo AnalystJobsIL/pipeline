@@ -216,7 +216,7 @@ def _ask_claude(prompt, timeout=120):
         return None
 
 
-def _own_page_names_token(name, token, api_url, pages=None):
+def _own_page_names_token(name, token, api_url, pages=None, platform=""):
     """Is the proposed board GROUNDED on a page that is the company's own?
 
     The search ladder (2026-08-25) puts pages from a plain web search into the evidence,
@@ -236,12 +236,23 @@ def _own_page_names_token(name, token, api_url, pages=None):
     needle = str(token or "").lower()
     if not needle:
         return False
+    own = []
     for url, html in (pages if pages is not None else _PAGES):
         host = urlparse(url).netloc.lower()
         if not host or ATS_HOST.search(host) or _is_aggregator(url) or is_foreign(name, url):
             continue                                   # not the company's own page
+        own.append(url)
         if needle in (html or "").lower():
             return True
+    if platform == "comeet":
+        # Comeet loads the uid at runtime, so the company's own static HTML rarely carries
+        # it (Upwind Security, live 2026-08-25: uid 49.004 seen only on comeet.com). Read
+        # the own page the way the premise says -- a comeetvar read in a real browser --
+        # and require the SAME uid.
+        for url in own[:2]:
+            got = _try_comeet_via_page(name, url)
+            if got and str(got[1]).lower() == needle:
+                return True
     return False
 
 
@@ -259,7 +270,7 @@ def _verify(name, platform, token, api_url, pages=None):
         raise ValueError(f"foreign slug {token!r} for {name!r}")
     # ...and resemblance is not evidence: the board must be GROUNDED on the company's own
     # page (2026-08-25), and a held page may refuse a board it merely embeds
-    if not _own_page_names_token(name, token, api_url, pages):
+    if not _own_page_names_token(name, token, api_url, pages, platform):
         raise ValueError(f"board {token!r} was not found on {name!r}'s own page")
     from pipeline import identity_gate as _gate
     if platform != "comeet" and not _gate.embedded_board_ok(name, token, api_url):

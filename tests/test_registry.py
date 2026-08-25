@@ -4317,9 +4317,23 @@ def test_the_resolver_refuses_a_board_not_grounded_on_the_companys_own_page(monk
     # positive controls: the token on the company's own page
     own = [("https://www.fiverr.com/jobs", "<html>boards.greenhouse.io/fiverr</html>")]
     assert L._verify("Fiverr", "greenhouse", "fiverr", _FIVERR, pages=own) == (3, 3)
-    assert L._verify("Upwind Security", "comeet", "49.004",
-                     "https://www.comeet.com/careers-api/2.0/company/49.004/positions?token=x",
+    api49 = "https://www.comeet.com/careers-api/2.0/company/49.004/positions?token=x"
+    assert L._verify("Upwind Security", "comeet", "49.004", api49,
                      pages=[("https://www.upwind.io/careers", "<html>comeet_uid: 49.004</html>")]) == (3, 3)
+    # Comeet loads the uid at runtime: an own page whose static HTML lacks it is read in a
+    # real browser (`_try_comeet_via_page`) and must yield the SAME uid -- and that read is
+    # never attempted on a page that is not the company's own
+    reads = []
+    monkeypatch.setattr(L, "_try_comeet_via_page", lambda name, url: reads.append(url) or ("comeet", "49.004", api49))
+    assert L._verify("Upwind Security", "comeet", "49.004", api49,
+                     pages=[("https://www.upwind.io/careers", "<html>no uid in static html</html>"),
+                            ("https://www.comeet.com/jobs/upwind/49.004", "<html>49.004</html>")]) == (3, 3)
+    assert reads == ["https://www.upwind.io/careers"], reads
+    reads.clear()
+    with pytest.raises(ValueError):
+        L._verify("Sunflower Sustainable Investments", "comeet", "49.004", api49,
+                  pages=[("https://www.comeet.com/jobs/upwind/49.004", "<html>49.004</html>")])
+    assert reads == [], "a vendor-host page must never be read as the company's own"
     # a held OWN page can still refuse a board it merely embeds (the Cogniteam/Riskified
     # shape): `similartech` passes the 5-char slug prefix AND sits on Similarweb's own page
     # as a stale embed -- only `embedded_board_ok` refuses it
