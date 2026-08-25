@@ -2129,6 +2129,12 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     `state/audit_done.json` and `state/` is gitignored, so the 90-minute budget re-audits the
     same head of the list weekly. Own it under `cloud_state/` and add it to
     `audit-coverage.yml`'s `--own`.
+165. **`persist_state.commit()` and `outcome()` grew under two attack waves** — lane: `infra`.
+    719 lines, `outcome()` 91 and `commit()` 71 — each guard is a branch with a one-line
+    why, which is right for a file that must never lose a night, but it no longer reads on
+    one screen. Split `commit()` into `stage → push loop → conflict` helpers and `outcome()`
+    into `decide → write → publish`, behind the existing 20 guards, on a quiet day; no
+    behaviour change.
 162. **`check_invariants.POOL` still differs from `pipeline.verdicts.TOKENS`** — lanes:
     `registry` (owns the deliberate gap, pinned by `test_the_three_copies…`) + `infra`.
     Measured 2026-08-25: `url-cleared`/`url-flagged` are in-pool for the gate and
