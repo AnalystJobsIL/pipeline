@@ -1217,5 +1217,15 @@
     "replace": "    cap = int(os.environ.get(\"LLM_BD_SEARCH_CAP\", \"150\"))",
     "why": "the paid rung's default is the operator's 4,500/month ceiling made concrete; 150 is deep_validate's per-process figure and would let one run spend 150 credits.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "extract-gap-terminal-drop",
+    "file": "repair_extract_gap.py",
+    "symbol": "in_extract_gap_pool",
+    "class": "M5-population-widening",
+    "find": "            and not TERM_RX.search(r[5] or \"\") and not is_recruiter(r[0]))",
+    "replace": "            and not is_recruiter(r[0]))",
+    "why": "an activating pool without a terminal exclusion re-opens an alias-of row off its own extract-gap stamp (GenCell Energy, 2026-08-25).",
+    "must_be_killed_by_behavioural": true
   }
 ]

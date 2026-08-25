@@ -41,6 +41,20 @@ TODAY = dt.date.today().isoformat()
 MODE = re.compile(r"dark-triage \d{4}-\d{2}-\d{2}: extract-gap")
 
 
+def in_extract_gap_pool(r):
+    """This tool's OWN membership rule -- `main()` selects with it, `registry_health`
+    imports it. An ACTIVATING pool must exclude the terminal states itself (ARCHITECTURE
+    section 2): until 2026-08-25 this one did not, and the day ten same-board twins were
+    parked as `alias-of` it selected `GenCell Energy` -- a row whose board WORKS -- for the
+    19:00 run, which would have re-activated the duplicate off its own extract-gap stamp.
+    Recruiters are never activated anywhere."""
+    from pipeline.recruiters import is_recruiter
+    from pipeline.verdicts import TERM_RX
+    return (len(r) >= 6 and r[4] == "false"
+            and bool(MODE.search(r[5] or "")) and (r[3] or "").startswith("http")
+            and not TERM_RX.search(r[5] or "") and not is_recruiter(r[0]))
+
+
 def main():
     apply = "--apply" in sys.argv
     limit = int(sys.argv[sys.argv.index("--limit") + 1]) if "--limit" in sys.argv else 0
@@ -54,8 +68,7 @@ def main():
     from pipeline.aggregators import is_aggregator
 
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
-    targets = [r for r in rows if r and len(r) >= 6 and r[4] == "false"
-               and MODE.search(r[5] or "") and (r[3] or "").startswith("http")]
+    targets = [r for r in rows if r and in_extract_gap_pool(r)]
     if limit:
         targets = targets[:limit]
     print(f"repairing {len(targets)} extract-gap rows\n", flush=True)

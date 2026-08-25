@@ -198,13 +198,13 @@ def save_census(rows, path=CENSUS):
 
 # ---------------------------------------------------------------- the ownership matrix
 
-def _extract_gap_mode():
-    """The tool's OWN regex, imported. `_EXTRACT_GAP` was a retyped mirror and it was LOOSER
-    than `repair_extract_gap.MODE` (no date anchor), which is the direction that hides
-    orphans: a row this matched but the tool did not was counted as owned when nothing owns
-    it. Lazy because `repair_extract_gap` pulls in the scraper stack at import."""
-    from repair_extract_gap import MODE
-    return MODE
+def _extract_gap_pool():
+    """The tool's OWN predicate, imported (`_EXTRACT_GAP` was a retyped mirror, LOOSER than
+    the tool -- the direction that hides orphans; then `MODE` alone, which lacked the
+    terminal exclusion the tool itself lacked until 2026-08-25). Lazy because
+    `repair_extract_gap` pulls in the scraper stack at import."""
+    from repair_extract_gap import in_extract_gap_pool
+    return in_extract_gap_pool
 
 
 def pools(rows):
@@ -246,8 +246,7 @@ def pools(rows):
             sel(lambda n, r: _triage.in_triage_pool(r)),
         "listing_hunt (19:00 daily)": sel(lambda n, r: _hunt.in_hunt_pool(r)),
         "repair_extract_gap (19:00 daily)":
-            sel(lambda n, r: bool(_extract_gap_mode().search(n))
-                and (r[3] or "").startswith("http")),
+            sel(lambda n, r: _extract_gap_pool()(r)),
         # IMPORT the tool's own predicate, do not retype it. The retyped version was
         # `"unsupported ATS" in n`, which is only half of `is_walled` -- it missed the
         # host-derived half and under-counted this pool by 7 rows, and `orphans()` subtracts

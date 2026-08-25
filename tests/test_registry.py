@@ -2562,7 +2562,7 @@ def test_every_ownership_mirror_agrees_with_the_tool_it_mirrors():
     import registry_health as R
     from pipeline import identity_gate as G
     from pipeline.recruiters import is_recruiter
-    from repair_extract_gap import MODE
+    from repair_extract_gap import in_extract_gap_pool
 
     rows = R.read_rows()
     labelled = R.pools(rows)
@@ -2575,12 +2575,10 @@ def test_every_ownership_mirror_agrees_with_the_tool_it_mirrors():
         "the crack mirror disagrees with identity_gate.is_walled by %d row(s): %s"
         % (len(crack_matrix ^ crack_real), sorted(crack_matrix ^ crack_real)[:8]))
 
-    gap_real = {r[0] for r in rows
-                if r[4] == "false" and MODE.search(r[5] or "")
-                and (r[3] or "").startswith("http")}
+    gap_real = {r[0] for r in rows if in_extract_gap_pool(r)}
     gap_matrix = {r[0] for r in labelled["repair_extract_gap (19:00 daily)"]}
     assert gap_matrix == gap_real, (
-        "the extract-gap mirror disagrees with repair_extract_gap.MODE by %d row(s): %s"
+        "the extract-gap mirror disagrees with repair_extract_gap.in_extract_gap_pool by %d row(s): %s"
         % (len(gap_matrix ^ gap_real), sorted(gap_matrix ^ gap_real)[:8]))
 
     # ...and the three pools whose tools export an `in_*_pool` callable: the matrix must
@@ -4085,3 +4083,33 @@ def test_repair_extract_gap_counts_a_refused_row_once(tmp_path, monkeypatch, cap
     G.main()
     out = capsys.readouterr().out
     assert "=== repair: 1 activated, 2 still dark ===" in out, out[-300:]
+
+
+def test_the_extract_gap_repair_never_selects_a_terminal_row(tmp_path, monkeypatch):
+    """Kills `extract-gap-terminal-drop`. `repair_extract_gap` ACTIVATES (19:00, thirty
+    minutes before the hunt) and its selector had no terminal exclusion: on 2026-08-25,
+    the day ten same-board twins were parked `alias-of`, it selected `GenCell Energy` --
+    whose board works -- off the row's own extract-gap stamp. Re-activating an alias
+    publishes every role twice."""
+    import sys
+    import repair_extract_gap as G
+    import registry_health as RH
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["GenCell Energy", "scrape", "", "https://www.gencellprojects.com/jobs", "false",
+         "dark-triage 2026-08-20: extract-gap (5 role phrases after render) | "
+         "alias-of GenCell 2026-08-25: identical board URL"],
+        ["GoodCo", "", "", "https://www.goodco.com/careers/openings", "false",
+         "dark-triage 2026-01-01: extract-gap (12 role phrases after render)"],
+    ])
+    monkeypatch.setattr("scrape_universal.scrape",
+                        lambda name, url: [{"title": "Engineer", "location": "Tel Aviv"}])
+    monkeypatch.setattr(IG, "page_names_company", lambda name, url, html="": True)
+    monkeypatch.setattr(sys, "argv", ["repair_extract_gap.py", "--apply"])
+    G.main()
+    out = _read(tmp_path)
+    assert out["GenCell Energy"][4] == "false", "an alias-of row was re-activated: %r" % (out["GenCell Energy"],)
+    assert out["GoodCo"][4] == "true", "positive control regressed: %r" % (out["GoodCo"],)
+    # the ownership mirror IS the tool's predicate
+    rows = RH.read_rows(str(tmp_path / "companies.csv"))
+    assert [r[0] for r in RH.pools(rows)["repair_extract_gap (19:00 daily)"]] == [], rows
