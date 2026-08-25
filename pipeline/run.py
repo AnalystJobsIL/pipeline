@@ -397,11 +397,6 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         "failed_companies": failed_companies,
     }
 
-    # email = last ~48h (concise daily); board = last 2 weeks (searchable/sortable)
-    subject, html, text = digest_mod.build_digest(email_jobs, run_date, summary)
-    md_title, md_body = digest_mod.build_markdown(email_jobs, run_date, summary, company_info,
-                                                  board_url=os.environ.get("BOARD_URL", ""),
-                                                  firmographics=firmo_display)
     # optional aggregate analytics: set GOATCOUNTER_CODE to your goatcounter subdomain
     gc = os.environ.get("GOATCOUNTER_CODE", "").strip()
     analytics_html = (f'<script data-goatcounter="https://{gc}.goatcounter.com/count" '
@@ -409,31 +404,6 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         os.environ.get("ANALYTICS_SNIPPET", "")
     contact_url = os.environ.get("CONTACT_URL",
                                  "https://github.com/AnalystJobsIL/board/issues/new")
-    # researched company facts (sector / stage / employees / founded / IL centre). They were
-    # being collected for every board company and rendered nowhere. Look them up under the
-    # normalized identity so "SolarEdge Technologies" on the board finds stored "SolarEdge".
-    board_html = digest_mod.build_board_html(board_jobs, run_date, summary, company_info,
-                                             analytics_html=analytics_html,
-                                             contact_url=contact_url,
-                                             firmographics=firmo_display)
-
-    base = os.path.join(out_dir, f"digest-{run_date}")
-    with open(base + ".html", "w", encoding="utf-8") as f:
-        f.write(html)
-    with open(base + ".txt", "w", encoding="utf-8") as f:
-        f.write(text)
-    with open(base + ".md", "w", encoding="utf-8") as f:
-        f.write(md_body)
-    # interactive board for GitHub Pages (served from /docs)
-    # a scoped run (--only / --limit) must NOT overwrite the published board with a
-    # partial one; local experiments were clobbering docs/index.html
-    if only or limit:
-        docs_dir = os.path.join(out_dir, "docs-preview")
-    else:
-        docs_dir = os.path.join(REPO_ROOT, "docs")
-    os.makedirs(docs_dir, exist_ok=True)
-    with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8") as f:
-        f.write(board_html)
     # archive: everything ever matched that is NOT on the current board
     onboard = {(j["company"], j["title"]) for j in board_jobs}   # = still open
     arch = [j for j in st.get_matched_since("0000-01-01")
@@ -446,12 +416,38 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         print(f"  archive: {len(arch)} closed roles in the store, rendering the newest "
               f"{BOARD_MAX_ROLES}", flush=True)
         arch = arch[:BOARD_MAX_ROLES]
-    arch_html = digest_mod.build_board_html(arch, run_date, summary, company_info=company_info,
-                                        heading="archived roles (no longer on the "
-                                                "employer's careers page)",
-                                        firmographics=firmo_display)
-    with open(os.path.join(docs_dir, "archive.html"), "w", encoding="utf-8") as f:
-        f.write(arch_html)
+    # Render every product in one call (lane: render, ARCHITECTURE §7d): board and archive
+    # first, so what went wrong rendering them reaches the email that is built last; the
+    # role record supplies "also listed as" / re-posted / closed-on. Never raises — a product
+    # that fails is reported (a warning here, a bold line in the mail) and NOT written, so
+    # yesterday's file stays; a failed email ships a stub that names the failure.
+    rendered = digest_mod.render_all(email_jobs, board_jobs, arch, run_date, summary, company_info,
+                                     firmographics=firmo_display, board_url=os.environ.get("BOARD_URL", ""),
+                                     analytics_html=analytics_html, contact_url=contact_url,
+                                     ledger=ledger.records)
+    for _line in rendered["warnings"]:
+        print(f"::warning::{_line}", flush=True)
+    summary["render"] = rendered["render_lines"]
+    subject, md_body = rendered["subject"], rendered["md_body"]
+    if not rendered["email_ok"]:
+        # the stub is not a digest: nothing in it was delivered, so nothing may be marked sent
+        email_jobs = []
+    base = os.path.join(out_dir, f"digest-{run_date}")
+    with open(base + ".html", "w", encoding="utf-8") as f:
+        f.write(rendered["html"])
+    with open(base + ".txt", "w", encoding="utf-8") as f:
+        f.write(rendered["text"])
+    with open(base + ".md", "w", encoding="utf-8") as f:
+        f.write(md_body)
+    # interactive board for GitHub Pages (served from /docs)
+    # a scoped run (--only / --limit) must NOT overwrite the published board with a
+    # partial one; local experiments were clobbering docs/index.html
+    docs_dir = os.path.join(out_dir, "docs-preview") if (only or limit) else os.path.join(REPO_ROOT, "docs")
+    os.makedirs(docs_dir, exist_ok=True)
+    for _name, _ok in (("index.html", rendered["board_ok"]), ("archive.html", rendered["archive_ok"])):
+        if _ok:                                   # a failed product keeps yesterday's file
+            with open(os.path.join(docs_dir, _name), "w", encoding="utf-8") as f:
+                f.write(rendered["board_html" if _name == "index.html" else "archive_html"])
     # machine-readable payload for the send + mark-sent steps
     payload = {
         "run_date": run_date,

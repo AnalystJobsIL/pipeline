@@ -52,7 +52,7 @@ every lane imports and no lane owns — changing it is a report-it-loudly event.
   └──────────────────────────────────────────────────────────────────────────────┘
                    │
   ┌ 6 RENDER ─────────────────────────────────────────────────── lane: render ───┐
-  │  pipeline/digest.py + roleprofile.py   the board, the archive, the email,     │
+  │  jdtext.py → rolecard.py → digest.py   the board, the archive, the email,     │
   │                                        every tag on a role card              │
   └──────────────────────────────────────────────────────────────────────────────┘
                    │
@@ -1997,6 +1997,173 @@ declared. `tests/rehearse_roles.py --golden` is the regression proof against HEA
   trying to backfill a superseded row's empty description (BACKLOG 140, `jd-text`) and
   `research_firmographics.py` still counts superseded-only companies (141).
 - Tags are only as good as the text captured while the role was open (`docs/TAGGING.md`).
+
+## 7d. Render — how a role reads (jdtext → rolecard → digest)
+*lane: `render` — `pipeline/jdtext.py`, `pipeline/rolecard.py`, `pipeline/digest.py`, `pipeline/roleprofile.py`, `docs/TAGGING.md`*
+
+Step 6 of the flow. Three products come out of one set of cards every morning: the email
+(`build_markdown` → `digests/latest.md`), the board and the archive (`build_board_html` →
+`docs/index.html`, `docs/archive.html`). Until 2026-08-25 all of it lived in one 1,444-line
+`digest.py` (`git show 60fae33:pipeline/digest.py | wc -l`) that derived and rendered in the same loop, filtered mangled titles without a
+trace, never saw the role record, and kept its own copies of four other lanes' vocabularies.
+Every number here was produced on 2026-08-25 by the command beside it. **Start here —
+rehearse tomorrow's products without spending anything:**
+
+```bash
+git show 60fae33:pipeline/digest.py > out/base_digest.py && python tests/rehearse_render.py --golden out/base_digest.py --date 2026-08-25
+#   6 products vs the pre-split file, loaded as a member of `pipeline`. Against 60fae33 TODAY this is 1/6 (subject only):
+#   the five diffs are the enumerated behaviour changes below plus the roles lane's `Roles:` line. A PURE move must be 6/6.
+python tests/rehearse_render.py --cards [--cards-golden <an earlier out/rehearse-render/cards/cards.json>]  # the card model for every store role; degraded / cross-check counts; field-level diff against an earlier dump
+python tests/rehearse_render.py --real --only "Fiverr,Wix,Lightricks"   # live scoped run, no LLM, no Bright Data; the Render line
+python tests/rehearse_render.py --full                                  # tomorrow's email: unscoped, scratch store, ~30-60 min
+```
+
+### The two parts, four files
+
+```
+matched row (+ ledger record) ──▶ jdtext ──▶ rolecard.build ──▶ card ──▶ digest.build_* ──▶ product
+                                  (text→structure)  (the role as it reads)     (escape + lay out)
+```
+
+| file | what it is | may import |
+|---|---|---|
+| `pipeline/jdtext.py` | **part 1a — the JD as text.** Requirements / responsibilities as bullets with MUST/PLUS badges, the "what the company does" sentence, the location label (`_LOC_GROUPS`: every spelling `israel.py` knows), the seniority chip, the posted-date labels. Pure functions; testable from a string. A fragment of 3–7 characters survives only when it IS a lexicon skill ("Python"); a two-word fragment starting with a capital is a decorative header unless it is a skill or a soft skill ("Team player"). | stdlib; `roleprofile.SKILLS`/`SOFT_SKILLS` for those two checks |
+| `pipeline/rolecard.py` | **part 1b — the card.** `build(job, run_date, *, ledger_rec, company_info, firmographics, archived)` → one dict of raw strings and lists per role; `cross_check(cards)` → the wrong-company shapes across a product; `report(cards, hidden)` → the mail fragment. Holds the stage labels (total over `firmographics.STAGES`, asserted at import), the blurb gate (`company_info._JUNK_OUT` ∪ one render-only case), the seniority canon (`seniority._SENIOR/_JUNIOR/_HEBREW_SENIOR` + `roleprofile._LEAD`). | `jdtext`, `roleprofile`, `seniority`, `firmographics`, `company_info`, `roles` |
+| `pipeline/roleprofile.py` | **the lexicon.** 98 skills, 5 clusters, 8 task groups, 3 AI buckets, 9 soft skills, degree, years, family. `docs/TAGGING.md` is its documentation. | stdlib |
+| `pipeline/digest.py` | **part 2 — rendering.** `render_all` (run.py's one entry), `build_markdown`, `build_board_html`, the legacy `build_digest` (only its `subject` is read; BACKLOG 142). The only file that escapes (the two local `esc` closures, `_md_esc`, `_md_line`, `_md_blurb`, `_md_alarm`, `_safe_url`) — cards are never pre-escaped. | `rolecard`, `roleprofile`, `jdtext` (`_company_blurb`, `_age_note`) |
+
+The split was a pure move first: with `tests/rehearse_render.py --golden` against a snapshot
+of the pre-split file (the working tree of that hour: `60fae33` plus the roles lane's three
+`Roles:` hunks — no longer reachable from git, so this number is the session's, not
+re-derivable), all six products (board, archive, markdown, subject, legacy html/txt) came back
+**byte-identical** over the committed store (57 board · 51 archive · 17 email roles) before
+any behaviour changed; every change after that produced only its enumerated diff.
+
+### The card, and what never raises
+
+`rolecard.build` returns a bare card first (company, display name, title, url, location,
+posted, age) and then fills it; an exception anywhere in the fill leaves the bare card with
+`card["issues"] = ["card degraded (ValueError)"]`, and a malformed ledger record adds
+`"ledger record unreadable (…)"`. `digest.render_all` wraps each product the same way: a
+renderer that raises is reported — `::warning::render …` in the step log, a bold line in the
+mail — and its file is **not written**, so yesterday's board stays published (wave 1 found the
+first version shipping a 221-byte apology page over the live board); the other products still
+ship. Measured 2026-08-25 over the store: **108 cards, 0 degraded** (`--cards`).
+
+Cards are built **board and archive first, then the email** (`render_all`; the hook in
+`pipeline/run.py`, approved out-of-lane 2026-08-25, replaced four `build_*` calls with one) —
+that order is what lets a board-render problem reach the mail that is written last.
+
+### What the mail says
+
+Every run audit carries one line:
+
+```
+- **Render:** board N cards[, M degraded (card degraded M)][, K hidden: mangled title][, shared-board A/B][, title-twin A/B][, display-collision A/B][, blurb-names-other A→B] · archive N cards[…] · email N cards[…]
+```
+
+(the same list, machine-readable, is `summary["render"]` in the payload JSON and the `RENDER:` /
+`<b>Render:</b>` line of the two legacy audits). The degraded, hidden, shared-board, title-twin
+and FAILED cases — from the board, the archive and the email alike — also stand above the fold
+under **Needs a look** as `- **Render:** …` and in the step log as `::warning::render …` (at
+most three wrong-company alarms per product, de-duplicated); display-collision and
+blurb-names-other are counted in the audit line only:
+
+| fragment | meaning | who fixes |
+|---|---|---|
+| `M degraded (…)` | a card's derivation raised; the bare card rendered, the reason is in parentheses | `render` |
+| `K hidden: mangled title` | the scraped title is a run-together card blob (`jdtext._MANGLED_TITLE`, or >100 chars); the row is not rendered — before 2026-08-25 this was silent | `scraper` |
+| `shared-board A/B` | two *employers* (`rolecard.same_employer`: not one name and its prefix-spelling — Kornit Digital / kornit) whose cards were read from one ATS tenant (`rolecard._tenant`: host + first non-plumbing path segment on Greenhouse/Lever/Ashby/Comeet/SmartRecruiters/Workable, the host alone elsewhere; aggregator hosts and Comeet's API url are nobody's tenant; more than 3 employers on one key is a platform host, not a board) — the Scopio Labs / Sckipio class (the registry's "13 active groups read one board", `docs/BACKLOG.md:1978`, numbered 133 — the number is duplicated, 147): the winner is whatever `roles.Ledger._winner` decided, a human should look | `registry` |
+| `title-twin A/B` | one normalised title under two names that are one employer by `rolecard.same_employer` (equal keys; equal without spaces — Spear UAV / SpearUAV; a name plus site/legal words — Port / Port.io, Kornit / Kornit Digital; a division written `X (Parent)` — Splunk (Cisco) / Cisco; never a name plus an arbitrary word — Aleph / Aleph Farms are two): the claim guard saw two postings; the reader sees one role twice. On the committed store on 2026-08-25: Port / Port.io and Bounce / Bounce AI | `roles` |
+| `display-collision A/B` | two differently named companies whose short cell names collide (judged on the names as written — the identity key strips exactly the suffixes the short name drops) — both now render their full name; informational | — |
+| `blurb-names-other A→B` | A's About text names employer B and not A — counted, never dropped (acquirers and customers are named legitimately; company-intel owns the blurb). A company whose only name token is an ordinary word (Global-e, Port, Meta, Rise) accuses nobody: it would fire on every blurb using the word | `company-intel` |
+| `<product> FAILED (…) — yesterday's file kept` | a renderer raised. Board / archive: the file was not written, yesterday's page stays published. Email: a stub that names the failure IS written to `digests/latest.md` (a reader must learn why there is no digest), and `mark_sent` is given no roles, so nothing is burned as delivered | `render` |
+
+`- **Render:** board …` missing from the mail means `render_all` was not reached — the run died
+before rendering. If the *email* renderer raised, the mail is a stub whose only lines are the
+alarms and that same `- **Render:** board … · archive …`. The verdicts were already saved
+either way; see §7b.
+
+### The wrong-company question, from this layer
+
+A card shows `job["company"]` — the registry row that fetched the posting — and the ledger's
+claim guard (§7c) decides which row keeps a posting two rows fetched. Render cannot
+re-attribute; what it does is make the situation visible in every product:
+
+- **also listed as X** — from the ledger's `attribution.claimed_by` (or this morning's
+  `_claimed_by`, before the flush) on the board card, the archive card and the email heading
+  (`### Port _(also listed as Port.io)_`); the name is in the search blob so a reader looking
+  for the loser's name finds the card (closes the render half of BACKLOG 137).
+- **shared-board**, **title-twin**, **display-collision**, **blurb-names-other** —
+  `rolecard.cross_check`, above, run over the board, the archive and the email cards. On the
+  committed store on 2026-08-25: `--cards` → `cross-check ['title-twin Bounce/Bounce AI',
+  'title-twin Port/Port.io']` — the two doubles the wave-1 attacker found on the shipped board,
+  now named in the mail; the fixture cases are pinned by
+  `test_cross_check_names_the_wrong_company_shapes_and_only_those`.
+- **Blurb and facts** are looked up by the raw company name (`company_intel.enrich_for_run`
+  keys both maps by it), so a card cannot pick up another *name's* record; the known crossing
+  is inside one identity group — `identity_key("AppSec Labs") == identity_key("AppSec")`, so
+  one blurb serves both (BACKLOG 144, `company-intel`).
+
+### What the ledger contributes — a record, not a cache
+
+Only what the text cannot say: `also_listed_as`, the re-post dates (`reposts`; the same
+`REPOST_DAYS = 3` rule render applies itself when no record is present), and — **archive
+cards only** — `closed on <date>` (a mass-close-held board row must never say "closed" beside
+an apply button). Tags are recomputed from the text on every render; the ledger's `tags`
+snapshot is the roles lane's column (§7c), and using it here would let the archive render
+last month's vocabulary beside today's board.
+
+### Vocabularies: one owner each
+
+| was | is | measured on the store (108 cards / 111 rows — the denominator is named per row) |
+|---|---|---|
+| `_STAGE_LABEL` with 3 keys the researcher cannot emit and without `private-enterprise` (44 of the 940 exported records) | total over `firmographics.STAGES`, asserted at import, pinned by test | `private-enterprise` → "private enterprise" on 2 board cards (the same 2 in the email) and 1 archive card — the 3 of 111 rows at such a company |
+| `_ABOUT_JUNK`, a copy of `company_info._JUNK_OUT` missing `error:` and `UNKNOWN` | `_JUNK_OUT` ∪ `unable to (confirm|verify)` | no card changed |
+| `_SEN_INFER` / `_SEN_LEAD` / `roleprofile._LEAD`, three regexes that disagreed on a bare "Analytics Lead" and knew no Hebrew | `rolecard.sen_canon` over the classifier's + the lexicon's | 2 titles Senior → Lead+ (no stored title is Hebrew; `sen_canon('', 'אנליסט בכיר') == 'Senior'` is pinned, unexercised) |
+| `_LOC_CANON`, 34 spellings of the 121 + 68 `israel.py` knows | `jdtext._LOC_GROUPS`, every token resolves (pinned) | **16 of 108** cards relabelled (6 board · 10 archive; 17 of the 111 raw rows), 12 distinct pairs: `תל אביב -יפו` → Tel Aviv, `ראשון לציון` → Rishon LeZion, `Raanana` → Ra'anana, `Modiin-Maccabim-Reut` → Modi'in, `Office` → Tel Aviv, `On Site` → Kiryat Gat, `Center` / `Center District` / `Givat Haim (Me'uchad)` → Central Israel, `North District` → Northern Israel, `Haifa District` → Haifa area, `Tel Aviv District` → Tel Aviv area |
+| `_REQ_HARD` matching the equal-opportunity footer that `seniority._REQ_HEADER` had been fixed for | the footer rejected inside `_req_header_match`'s candidate loop (the lookbehinds would have lost "The Requirements:") | 0 of 111 changed |
+| `_bullets` dropping any fragment under 8 characters and any two-word fragment starting with a capital; `_RUNON_SPLIT` cutting "Fluent English" in half; no junk rule for a LinkedIn scrape's tail ("Send your CV to: x@y", "רמת ותק") | a short fragment survives only when it IS a lexicon skill; a two-word skill / soft skill is a bullet; no split after Fluent/Native/Excellent/Good/Strong; the tail is junk and a section end | 8 of 108 cards' requirement bullets changed, all for the better: one "Team player" (+ its chip); six rejoined "Fluent/Excellent … English" lines; three junk lines dropped on two cards (two LinkedIn tails, one "hr@…" address) — one card is in two of those groups (`--cards --cards-golden` diff, listed in the session record) |
+
+Not unified, by decision: the four requirements-header regexes are three lanes' (`jdfill`,
+`seniority`, this one) and each serves a different question (is there a JD at all / where does
+the prompt slice start / where do the bullets start); the stored `matched.seniority` column is
+empty for all 111 rows and is not read (BACKLOG 145).
+
+### Guards
+
+`tests/test_units.py`, the `# lane: render` block — 13 assertions plus the 8 wave-1 pins: a card never raises; hidden
+and degraded counts reach the mail, the footer and the payload; a renderer that raises is not written and
+the other products still ship; stage labels total; the blurb gate; the EEO footer; every
+`israel.py` place resolves; the seniority vocabulary; the ledger supplies only what render
+cannot compute (closed-on archive-only, tags never); `cross_check` names the four shapes and
+nothing else (X / X Israel and LinkedIn hosts are not shapes); also-listed-as in all three
+products, escaped; scraped text (`<script>`, `](x)`, `@user`, `` ` ``) never reaches any product
+unescaped — including the email blurb, which went out raw before 2026-08-25, and `<`, which
+`_md_esc` did not escape; and a behavioural run of `pipeline.run` proving the board renders
+before the mail and the mail says so. Wave 1 added: a row with non-string fields is a bad
+card, not a crash; a url with whitespace never reaches the mail bare; every line another lane
+writes into `stats` is neutralised but readable; a mangled title is hidden from the mail too;
+newlines, backslashes and stray chips cannot break the mail's structure; a failed board is
+not written; "Fluent English" is one bullet and a LinkedIn tail is none; the email blurb
+never describes an agency's client.
+
+### Known limitations
+
+- The `Render:` line reports *rendering*; a role attributed to the wrong company by the
+  registry (one tenant, two identities) is *named*, not corrected — `registry`, BACKLOG 133.
+- `build_digest` still runs and writes two files nothing reads (BACKLOG 142, `infra` removes
+  the call; then `_text_audit`/`_html_audit` and the company-intel mutation fixture that pins
+  their source text go with it).
+- `roles.tenant_slug` is not the tenant the shared-board check needs: it returns the **second**
+  non-plumbing segment of host+path, which for `job-boards.greenhouse.io/<slug>/jobs/<id>` is the
+  posting id, not the slug (`segs[1]`, not `segs[0]`). `rolecard._tenant` keeps its own (host,
+  first non-plumbing segment) rule and borrows only roles' `_PLUMBING` list — tolerant of the
+  module being absent (BACKLOG 143).
+- `same_employer` is a heuristic: a name plus a word outside `_SITE_WORDS` is two companies, a
+  division must be written `X (Parent)` to be its parent's; the registry-wide worst case (every
+  active company posting one "Data Analyst") measured 45 issues before these rules, most of
+  them false — the mail caps them at 6 per line and 3 alarms per product.
 
 ## 8. Failure classes — what this codebase does instead of erroring
 *lane: any — every lane has been bitten by these*

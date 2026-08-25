@@ -5268,3 +5268,397 @@ def test_a_scoped_run_never_reclaims_for_a_winner_that_was_merely_out_of_scope(t
     _, lines = L2.resolve_claims(store.merge_duplicates([pio]), scanned={"Port.io", "Port"})   # Port scanned, gone: parked
     assert lines == ["1 reclaimed (superseded, winner no longer fetched)"]
     st.close()
+
+
+# =========================================================================================
+# lane: render — how a role reads (pipeline/jdtext.py → pipeline/rolecard.py →
+# pipeline/digest.py, ARCHITECTURE §7d). One assertion per shipped bug or per rule the
+# 2026-08-25 split made explicit: a card never raises, nothing is hidden silently, the
+# ledger's facts reach the card, the wrong-company shapes are named in the mail, every
+# vocabulary the renderer uses is the owning lane's, and scraped text never escapes
+# unescaped into any of the three products.
+# =========================================================================================
+def _job(company="Acme", title="Senior Data Analyst", url="https://job-boards.greenhouse.io/acme/jobs/1",
+         desc="", **kw):
+    j = {"company": company, "title": title, "location": "Tel Aviv, Israel", "url": url,
+         "posted_date": "2026-08-20", "first_seen": "2026-08-20", "last_seen": "2026-08-25",
+         "description": desc, "mkey": f"{str(company).lower()}|{str(title).lower()}", "sources": ["greenhouse"],
+         "seen_ids": ["greenhouse:1"], "seniority": ""}
+    j.update(kw)
+    return j
+
+
+_JD = ("About the role: Acme builds a payments platform for merchants. Responsibilities: • Build "
+       "dashboards in Tableau • Analyze funnels and recommend actions • Partner with product. "
+       "Requirements: • 4+ years of experience as a data analyst • Strong SQL — must • Python — "
+       "advantage • BSc in Statistics or Economics. We are an equal opportunity employer and "
+       "consider applicants without regard to race.")
+
+
+def test_a_card_never_raises_and_a_failure_is_named_on_it(monkeypatch):
+    """One poisoned description used to be able to take the whole board down."""
+    from pipeline import rolecard, roleprofile
+    monkeypatch.setattr(roleprofile, "extract", lambda *a, **k: (_ for _ in ()).throw(ValueError("x")))
+    c = rolecard.build(_job(desc=_JD), "2026-08-25")
+    assert c["title"] == "Senior Data Analyst" and c["loc"] == "Tel Aviv" and c["url"]
+    assert c["issues"] == ["card degraded (ValueError)"] and c["skills"] == []
+    # a non-dict ledger record is the roles lane's problem, not a crash here
+    c2 = rolecard.build(_job(desc=_JD), "2026-08-25", ledger_rec={"attribution": "junk", "reposts": 3})
+    assert c2["also_listed_as"] == [] and any(i.startswith("ledger record unreadable") for i in c2["issues"])
+
+
+def test_hidden_and_degraded_cards_are_counted_in_the_mail_not_dropped_silently(monkeypatch):
+    """build_board_html filtered mangled titles with no trace (digest.py:728 before the split)."""
+    from pipeline import digest, roleprofile
+    jobs = [_job(desc=_JD), _job(title="Data Analyst ⋅ Tel Aviv ⋅ Apply", url="https://x.io/2", mkey="acme|2")]
+    rep = {}
+    html = digest.build_board_html(jobs, "2026-08-25", {"companies_scanned": 1}, {}, report=rep)
+    assert rep["hidden"] == 1 and html.count('<tr class="row"') == 1
+    assert "1 hidden: mangled title" in rep["frag"] and any("hidden" in a for a in rep["alarms"])
+    assert "render: 1 cards, 1 hidden: mangled title" in html        # the footer says so too
+    r = digest.render_all([], jobs, [], "2026-08-25", {"paths": {}}, {})
+    assert "- **Render:** board 1 cards, 1 hidden: mangled title · archive 0 cards · email 0 cards" in r["md_body"]
+    assert r["md_body"].index("**Needs a look**") < r["md_body"].index("- **Render:** 1 role(s) hidden") < r["md_body"].index("<details>")
+    assert any("hidden" in w for w in r["warnings"])
+
+
+def test_a_renderer_that_raises_keeps_yesterdays_file_and_says_so_in_the_mail(monkeypatch):
+    """The morning's verdicts are saved before rendering; the board and email must not be
+    lost to one exception either — the other products still ship, and the failed one is
+    NOT written (wave 1: a placeholder page would have been published over the live board)."""
+    from pipeline import digest
+    real = digest.build_board_html
+
+    def boom(jobs, *a, **k):
+        if "archived" in k.get("heading", ""):
+            raise RuntimeError("template exploded")
+        return real(jobs, *a, **k)
+    monkeypatch.setattr(digest, "build_board_html", boom)
+    r = digest.render_all([_job(desc=_JD)], [_job(desc=_JD)], [_job(desc=_JD)], "2026-08-25",
+                          {"paths": {}, "companies_scanned": 1}, {})
+    assert '<tr class="row"' in r["board_html"] and r["board_ok"] is True
+    assert r["archive_ok"] is False and r["archive_html"] == ""
+    assert "render: archive FAILED (RuntimeError: template exploded) — yesterday's file kept" in r["warnings"]
+    assert "- **Render:** archive FAILED" in r["md_body"] and r["subject"].startswith("[Israeli Jobs]")
+    assert "### Acme" in r["md_body"]                                # the email itself still rendered
+    assert "RENDER: board 1 cards" in r["text"] and "<b>Render:</b> board 1 cards" in r["html"]   # all three renderings
+    assert r["render_lines"] == ["board 1 cards", "email 1 cards"]   # = the mail's line, for the payload
+
+
+def test_every_stage_the_researcher_can_emit_has_a_card_label():
+    """`private-enterprise` rendered as the raw enum on 44 cards (BACKLOG 99)."""
+    from pipeline import rolecard, firmographics
+    assert set(rolecard._STAGE_LABEL) == firmographics.STAGES
+    assert rolecard.firmo_facts({"stage": "private-enterprise", "sector": "banking"}) == ["banking", "private enterprise"]
+
+
+def test_the_blurb_gate_is_the_writers_gate_plus_the_render_only_case():
+    """Two junk regexes for one rule (BACKLOG 100): `UNKNOWN` and `Error:` slipped the
+    renderer's, `unable to confirm` slipped the writer's."""
+    from pipeline import rolecard
+    for junk in ("UNKNOWN", "Error: not logged in", "I'm unable to confirm what Acme does", "Traceback (most recent"):
+        assert rolecard.company_about("Acme", "", {"Acme": junk}) == "", junk
+    assert rolecard.company_about("Acme", "", {"Acme": "Acme builds payment rails for merchants."}).startswith("Acme builds")
+
+
+def test_an_equal_opportunity_footer_never_anchors_the_requirements_section():
+    """`seniority._REQ_HEADER` was fixed for the EEO footer; the renderer's own header
+    regex was not. The guard lives in the candidate loop so 'The Requirements:' still counts."""
+    from pipeline import jdtext
+    eeo = ("Great role. We consider all qualifications and requirements without regard to race, "
+           "religion or protected status. Apply now.")
+    assert jdtext._requirements_snippet(eeo) == []
+    assert jdtext._req_header_match("The Requirements: • 3+ years of SQL experience • Tableau") is not None
+    reqs = jdtext._requirements_snippet(_JD)
+    assert [t for t, _ in reqs][:3] == ["4+ years of experience as a data analyst", "Strong SQL", "Python"]
+    assert dict(reqs)["Strong SQL"] == "must" and dict(reqs)["Python"] == "plus"   # a 6-char bullet used to be dropped as junk
+    assert [t for t, _ in jdtext._requirements_snippet("Requirements: • Excel • SQL • Team player • Go")] == ["Excel", "SQL", "Team player"]
+
+
+def test_every_place_israel_py_recognises_renders_as_one_label():
+    """`_LOC_CANON` covered 34 of the 121+68 tokens (BACKLOG 119): Herzliya had six
+    spellings on the board and a Hebrew city rendered untranslated beside its English twin."""
+    from pipeline import jdtext, israel
+    unresolved = []
+    for tok in list(israel._IL_PLACES) + list(israel._IL_PLACES_HE):
+        label = jdtext._norm_location(tok)
+        if tok in ("israel", "ישראל"):
+            assert label == "Israel (unspecified)"
+            continue
+        if label == "Israel (unspecified)" or label == tok or jdtext._HEBREW.search(label):
+            unresolved.append((tok, label))
+    assert unresolved == [], unresolved
+    cases = {"Tel Aviv-Yafo, Tel Aviv District, IL": "Tel Aviv", "Herzelia": "Herzliya", "Raanana": "Ra'anana",
+             "ראשון לציון, מחוז המרכז": "Rishon LeZion", "תל אביב -יפו": "Tel Aviv",
+             "On Site - Kiryat Gat, Israel": "Kiryat Gat", "Office - Israel - Tel Aviv": "Tel Aviv",
+             "Senior BI Analyst Tel Aviv - Israel": "Tel Aviv", "Tel Aviv District, Israel": "Tel Aviv area",
+             "Center, Center District, IL": "Central Israel", "Bar-Lev, Israel": "Bar-Lev",
+             "Remote": "Israel (unspecified)", "": "Israel (unspecified)", None: "Israel (unspecified)"}
+    assert {k: jdtext._norm_location(k) for k in cases} == cases
+
+
+def test_the_seniority_chip_uses_the_classifiers_vocabulary():
+    """Three copies of one regex disagreed on a bare 'Analytics Lead' and knew no Hebrew."""
+    from pipeline import rolecard
+    assert rolecard.sen_canon("3+ yrs", "Marketing Analytics Lead") == "Lead+"
+    assert rolecard.sen_canon("", "אנליסט/ית דאטה בכיר/ה") == "Senior"
+    assert rolecard.sen_canon("", "Data Analyst Intern") == "Junior"
+    assert rolecard.sen_canon("Advanced (5-8 Years)", "Data Analyst") == "Senior"
+    assert rolecard.sen_canon("", "Data Analyst") == "—"
+
+
+def test_the_ledger_supplies_only_what_render_cannot_compute():
+    """Also-listed-as, re-post dates and (archive only) closed-on come from the role
+    record; tags do not — a vocabulary change here must show on every card the same day."""
+    from pipeline import rolecard
+    rec = {"attribution": {"claimed_by": ["Acme Israel", "Acme.io", "acme ltd"]}, "reposts": ["2026-08-23", "2026-08-26"],
+           "status": "closed", "closed_on": "2026-08-24", "tags": {"v": 1, "skills": [["COBOL", "prog"]]}}
+    board = rolecard.build(_job(desc=_JD, posted_date="2026-08-20"), "2026-08-25", ledger_rec=rec)
+    # the same employer under another spelling (Acme Israel, acme ltd) is not "also listed as"
+    assert board["also_listed_as"] == ["Acme.io"] and board["repost"] and board["repost_dates"] == ["2026-08-23", "2026-08-26"]
+    assert board["closed_on"] == "" and board["new"] is False           # never "closed" beside an apply button
+    assert "COBOL" not in board["skill_names"] and "SQL" in board["skill_names"]
+    assert "Acme.io" in board["blob"]                                   # the loser's name still finds the card
+    arch = rolecard.build(_job(desc=_JD), "2026-08-25", ledger_rec=rec, archived=True)
+    assert arch["closed_on"] == "2026-08-24"
+    inrun = rolecard.build(_job(desc=_JD, _claimed_by=["Beta Games", "Acme"]), "2026-08-25")
+    assert inrun["also_listed_as"] == ["Beta Games"]                    # this morning's claim, before the flush
+
+
+def test_cross_check_names_the_wrong_company_shapes_and_only_those():
+    """Two unrelated companies on one Comeet tenant (Scopio Labs / Sckipio) is the live
+    case; an aggregator host, a blurb naming an acquirer, and X/X Israel are not."""
+    from pipeline import rolecard
+    build = lambda **k: rolecard.build(_job(**k), "2026-08-25")
+    cards = [build(company="Scopio Labs", url="https://www.comeet.com/jobs/scopio/87.00C/analyst/AB.1", mkey="s|1"),
+             build(company="Sckipio", url="https://www.comeet.com/jobs/scopio/87.00C/bi/AB.2", mkey="k|2"),
+             build(company="Meta", url="https://www.metacareers.com/jobs/1", mkey="m|1"),
+             build(company="Meta Israel", url="https://www.metacareers.com/jobs/2", mkey="mi|2"),
+             build(company="Nift", url="https://il.linkedin.com/jobs/view/1", mkey="n|1"),
+             build(company="Bounce", url="https://il.linkedin.com/jobs/view/2", mkey="b|2"),
+             build(company="Oak - Identity", url="https://oak.io/jobs/1", mkey="o|1"),
+             build(company="Oak Group", url="https://oakgroup.co/jobs/2", mkey="og|2")]
+    cards[2]["about"] = "Meta builds social products."
+    cards[6]["about"] = "A company acquired by Sckipio last year."          # names another employer, not itself
+    issues = rolecard.cross_check(cards)
+    assert "shared-board Sckipio/Scopio Labs" in issues
+    assert "title-twin Meta/Meta Israel" in issues                    # one role, two spellings, twice on the page
+    assert not any("shared-board" in i and "Meta" in i for i in issues)   # one employer on its own site: no shared board
+    assert not any("Nift" in i or "Bounce" in i for i in issues)      # LinkedIn is nobody's tenant
+    assert "display-collision Oak - Identity/Oak Group" in issues
+    assert [c["display_company"] for c in cards[6:]] == ["Oak - Identity", "Oak Group"]
+    assert "blurb-names-other Oak - Identity→Sckipio" in issues and cards[6]["about"]   # counted, never dropped
+    # wave 2 (R1): the mail's fragment is the capped STRING, not its characters
+    from pipeline import digest
+    r = digest.render_all([], cards[2:4], [], "2026-08-25", {"paths": {}}, {})
+    assert "- **Render:** board 2 cards, title-twin Meta/Meta Israel · archive 0 cards · email 0 cards" in r["md_body"]
+    assert r["render_lines"][0].count(", ") <= 7 and "t, i, t" not in r["md_body"]
+    assert r["warnings"] == ["render: title-twin Meta/Meta Israel — one posting may be under the wrong name, check the card"]
+    # wave 2: same employer both ways on real registry names
+    for a, b in (("Spear UAV", "SpearUAV"), ("Crazy Labs", "CrazyLabs"), ("Cisco", "Splunk (Cisco)"),
+                 ("Intel", "Habana Labs (Intel)"), ("HP", "HP Indigo"), ("one zero", "ONE ZERO BANK"),
+                 ("Kornit Digital", "kornit"), ("AWS", "Amazon Web Services (AWS)")):
+        assert rolecard.same_employer(a, b), (a, b)
+    for a, b in (("Papaya Gaming", "Papaya Global"), ("Aleph", "Aleph Farms"), ("Scopio Labs", "Sckipio")):
+        assert not rolecard.same_employer(a, b), (a, b)
+    # wave 2: a company named by one common word accuses no blurb; Workable's public board is per account
+    ge = [rolecard.build(_job(company="Global-e", url="https://x.io/1", mkey="g|1"), "2026-08-25"),
+          rolecard.build(_job(company="Nebius", url="https://y.io/1", mkey="n|1"), "2026-08-25")]
+    ge[1]["about"] = "Nebius is a global AI cloud."
+    assert not any(i.startswith("blurb-names-other") for i in rolecard.cross_check(ge))
+    assert rolecard._tenant("https://jobs.workable.com/company/abc123/jobs-at-acme") == "jobs.workable.com/abc123"
+    assert rolecard._tenant("https://any-do.breezy.hr/p/123") == "any-do.breezy.hr"
+    # wave 1: the same employer twice on one board tenant is not a shared board; an API host
+    # shared by 23 employers is a platform, not a board; a tracking parameter is not a host
+    kornit = [rolecard.build(_job(company=c, url="https://careers.kornit.com/all-positions", mkey=c), "2026-08-25")
+              for c in ("Kornit Digital", "kornit")]
+    assert not any(i.startswith("shared-board") for i in rolecard.cross_check(kornit))
+    lever = [rolecard.build(_job(company=f"Co{i}", url="https://api.lever.co/v0/postings/x", mkey=str(i)), "2026-08-25")
+             for i in range(6)]
+    assert rolecard.cross_check(lever) == []
+    assert rolecard._tenant("https://job-boards.greenhouse.io/scopio/jobs/1?gh_src=indeed.com") == "job-boards.greenhouse.io/scopio"
+    assert rolecard._tenant("https://onezero.bamboohr.com/careers/45") == "onezero.bamboohr.com"
+    assert rolecard._tenant("https://www.comeet.co/careers-api/2.0/company/1/positions") == ""
+    assert rolecard._tenant("https://il.linkedin.com/jobs/view/1?x=greenhouse") == ""
+
+
+def test_also_listed_as_reaches_all_three_products_escaped():
+    from pipeline import digest
+    led = {"acme|senior data analyst": {"attribution": {"claimed_by": ["Acme <b>Israel</b>"]}}}
+    j = _job(desc=_JD)
+    r = digest.render_all([j], [j], [], "2026-08-25", {"paths": {}}, {}, ledger=led)
+    assert "### Acme _(also listed as Acme \\<b\\>Israel\\</b\\>)_" in r["md_body"]
+    assert "Also listed as Acme &lt;b&gt;Israel&lt;/b&gt;" in r["board_html"]
+    assert "<b>Israel</b>" not in r["board_html"]
+
+
+def test_scraped_text_never_reaches_a_product_unescaped():
+    """Company, title, url, blurb and a claimant name are scraped text. `_{about}_` went
+    into the mail with no escaping at all before the split."""
+    from pipeline import digest
+    evil = "<script>alert(1)</script>](http://x) @claude `x`"
+    j = _job(company="Acme " + evil, title="Analyst " + evil, url="javascript:alert(1)", desc=_JD, mkey="e|1")
+    ci = {j["company"]: "Acme is a [phish](http://x) <img src=x> @claude_bot company (really)."}
+    led = {"e|1": {"attribution": {"claimed_by": ["Zed " + evil]}}}
+    r = digest.render_all([j], [j], [j], "2026-08-25", {"paths": {}}, ci, ledger=led)
+    for name in ("board_html", "archive_html"):
+        assert "<script>alert(1)" not in r[name] and "javascript:" not in r[name] and "<img" not in r[name]
+    md = r["md_body"]
+    assert "<script>alert(1)" not in md and "javascript:" not in md and "](http://x)" not in md and "<img" not in md
+    assert "@claude" not in md.replace("\\@claude", "")               # every @ in the mail is escaped
+    assert "_Acme is a phish http://x img src=x \\@claude_bot company (really)._" in md or "(really)" in md
+
+
+def test_the_pipeline_renders_the_board_before_the_mail_and_the_mail_says_so(monkeypatch, tmp_path):
+    """The hook in run.py (approved out-of-lane 2026-08-25): one render_all call, board and
+    archive first, the Render line in the markdown and in the payload summary."""
+    from pipeline import run as run_mod, company_intel
+    row = {"company_name": "Acme", "ats_platform": "greenhouse", "token": "acme",
+           "api_url": "https://boards-api.greenhouse.io/v1/boards/acme/jobs", "active": "true", "notes": ""}
+    jobs = [{"company": "Acme", "title": "Senior Data Analyst", "location": "Tel Aviv, Israel", "country_code": "",
+             "url": "https://job-boards.greenhouse.io/acme/jobs/1", "posted_date": "", "job_id": "1", "description": _JD},
+            {"company": "Acme", "title": "BI Analyst ⋅ Tel Aviv ⋅ Apply now", "location": "Tel Aviv, Israel",
+             "country_code": "", "url": "https://job-boards.greenhouse.io/acme/jobs/2", "posted_date": "", "job_id": "2",
+             "description": _JD}]
+    monkeypatch.setattr(run_mod, "load_companies", lambda: [dict(row)])
+    monkeypatch.setattr(run_mod.fetchers, "fetch_company", lambda r: [dict(j) for j in jobs])
+    monkeypatch.setattr(company_intel, "enrich_for_run", lambda st, **kw: ({}, {}, {"researched": 0, "blurbs_written": 0}))
+    monkeypatch.setattr(company_intel, "audit_lines", lambda rep: ([], []))
+    payload, base = run_mod.run(use_llm=False, only=["Acme"], out_dir=str(tmp_path / "out"), db_path=str(tmp_path / "t.db"))
+    md = open(base + ".md", encoding="utf-8").read()
+    line = next(l for l in md.splitlines() if l.startswith("- **Render:** board"))
+    assert line.startswith("- **Render:** board 1 cards, 1 hidden: mangled title · archive 0 cards · email ")
+    assert md.index("- **Render:** 1 role(s) hidden") < md.index("<details>") < md.index(line)
+    assert payload["summary"]["render"] == line[len("- **Render:** "):].split(" · ")   # payload = the mail's line
+    assert payload["summary"]["render"][0].startswith("board 1 cards, 1 hidden")
+    assert (tmp_path / "out" / "docs-preview" / "index.html").read_text(encoding="utf-8").count('<tr class="row"') == 1
+    assert (tmp_path / "out" / "docs-preview" / "archive.html").exists()
+
+
+# --- wave 1 (4 Opus attackers, 2026-08-25): wrong company · injection · regression · docs ---
+def test_a_row_with_non_string_fields_is_a_bad_card_not_a_crash():
+    """`_bare` ran outside the guard: a title that was an int took the board, the archive
+    AND the email down (one list comprehension each). Now every field is coerced first."""
+    from pipeline import rolecard, digest
+    bad = _job(title=123, first_seen=20260820, posted_date=None, url=["https://x.io/1"], location=b"Tel Aviv",
+               description=["a", "b"], company=None, mkey="bad|1")
+    c = rolecard.build(bad, "2026-08-25")
+    assert c["title"] == "123" and c["first_seen"] == "20260820" and c["url"] == "https://x.io/1" and c["company"] == ""
+    assert rolecard.build(None, "2026-08-25")["title"] == "(untitled)"
+    r = digest.render_all([bad, _job(desc=_JD)], [bad, _job(desc=_JD)], [], "2026-08-25", {"paths": {}}, {})
+    assert r["board_ok"] and r["email_ok"] and r["board_html"].count('<tr class="row"') == 2
+    assert "### Acme" in r["md_body"]
+
+
+def test_a_url_with_whitespace_never_reaches_the_mail_bare():
+    """`_safe_url` checked only the scheme; the mail prints the url bare, so a space inside a
+    scraped url was a markdown injection (`https://ok/1 [Verify here](https://evil)`)."""
+    from pipeline import digest
+    evil = "https://ok.example/1 [Verify your application here](https://evil.example/phish)"
+    j = _job(url=evil, desc=_JD)
+    _, md = digest.build_markdown([j], "2026-08-25", {"paths": {}}, {})
+    assert "evil.example" not in md and "](" not in md.replace("\\](", "")
+    assert digest._safe_url("https://ok.example/1\n## heading") == ""
+    assert digest._safe_url('https://ok.example/1"onmouseover="x') == ""
+    assert digest._safe_url("https://ok.example/path?a=1&b=2#frag") == "https://ok.example/path?a=1&b=2#frag"
+    assert digest._safe_url("https://ok.example/1\u200b[x](https://evil)") == ""   # wave 2: zero-width joiner
+
+
+def test_every_stats_line_in_the_mail_is_neutralised_but_readable():
+    """The audit and alarm lines other lanes write into `stats` (a registry name, an
+    exception text) went into the issue body raw: a `</details>` closed the audit early,
+    an `@name` pinged someone. `keyword_nollm` and `A<-B` must survive unchanged."""
+    from pipeline import digest
+    s = {"paths": {"keyword_nollm": 4, "merged-copy": 1}, "failed_companies": ["Acme (HttpError: </details><img src=x> @claude)"],
+         "roles": ["claim conflicts 1 (Port<-Port.io)"], "stage_alarms": ["collect [x](http://evil) `y`"],
+         "registry_alarms": ["census <b>bold</b>"], "dead_sources": ["indeed @claude"], "company_intel": ["ok"],
+         "fetch_health": ["standing: 3 fetch errors (Decart: HTTP 404)"], "stages": "collect 2026-08-25"}
+    _, md = digest.build_markdown([], "2026-08-25", s, {})
+    import re as _re
+    assert md.count("\n</details>") == 1 and "\\</details>" in md and not _re.search(r"(?<!\\)<img", md)
+    assert "@claude" not in md.replace("\\@claude", "")
+    assert "keyword_nollm=4" in md and "(Port<-Port.io)" in md and "\\[x\\]" in md and "\\`y\\`" in md
+    assert "census \\<b>bold\\</b>" in md and "standing: 3 fetch errors (Decart: HTTP 404)" in md
+
+
+def test_a_mangled_title_is_hidden_from_the_mail_too_and_counted():
+    """The guard was board-only: the card blob still went out as an email bullet."""
+    from pipeline import digest
+    blob = _job(title="Data Analyst ⋅ Tel Aviv ⋅ Apply", url="https://x.io/2", mkey="acme|2")
+    r = digest.render_all([blob, _job(desc=_JD)], [], [], "2026-08-25", {"paths": {}}, {})
+    assert "⋅ Apply" not in r["md_body"] and "email 1 cards, 1 hidden: mangled title" in r["md_body"]
+    assert r["render_lines"] == ["board 0 cards", "archive 0 cards", "email 1 cards, 1 hidden: mangled title"]
+    from pipeline import jdtext
+    for t in ("Data Analyst / Tel Aviv / Full time / Apply", "BI Analyst > Tel Aviv > Apply now",
+              "Data Analyst\nTel Aviv\nApply Now", "Data Analyst – Apply now"):
+        assert jdtext._MANGLED_TITLE.search(t), t
+    assert not jdtext._MANGLED_TITLE.search("BI Developer – Defense company, Northern Israel")
+
+
+def test_newlines_backslashes_and_stray_chips_cannot_break_the_mails_structure():
+    """`_md_esc` kept newlines (a title split the bullet and opened a heading), never
+    escaped `\\` (the input's own backslash ate the escape), and a researcher's chip with a
+    newline closed the code span."""
+    from pipeline import digest, rolecard
+    j = _job(title="Data Analyst\n\n## Fake section\n\nSee below", company="Acme\\", desc=_JD)
+    firmo = {"Acme\\": {"sector": "fintech\n\n## INJECTED\n\n[x](http://evil)", "employees_global": True,
+                        "founded": {"y": 1}, "il_center": ["a", "b"], "stage": "public"}}
+    _, md = digest.build_markdown([j], "2026-08-25", {"paths": {}}, {}, firmographics=firmo)
+    assert "\n## Fake" not in md and "\n## INJECTED" not in md and "\n[x](http" not in md
+    assert "`fintech ## INJECTED [x](http://evil)` · `public`" in md      # one line, inside a code span
+    assert "\\\\" in md                                   # the backslash itself is escaped
+    assert rolecard.firmo_facts(firmo["Acme\\"]) == ["fintech ## INJECTED [x](http://evil)", "public"]
+    assert "employees" not in " ".join(rolecard.firmo_facts(firmo["Acme\\"]))   # True is not a headcount
+    assert rolecard.firmo_facts({"sector": ["fintech", "saas"], "stage": "public"}) == ["public"]   # wave 2: a list is not a sector
+    assert digest._md_esc("a\\@b") == "a\\\\\\@b"
+
+
+def test_a_failed_board_is_not_written_so_yesterdays_page_survives(monkeypatch, tmp_path):
+    """Pre-split a raise killed the job and the committed docs/index.html stayed yesterday's.
+    Post-split the placeholder would have been committed and published over the live board."""
+    from pipeline import run as run_mod, company_intel, digest
+    row = {"company_name": "Acme", "ats_platform": "greenhouse", "token": "acme",
+           "api_url": "https://boards-api.greenhouse.io/v1/boards/acme/jobs", "active": "true", "notes": ""}
+    jobs = [{"company": "Acme", "title": "Senior Data Analyst", "location": "Tel Aviv, Israel", "country_code": "",
+             "url": "https://job-boards.greenhouse.io/acme/jobs/1", "posted_date": "", "job_id": "1", "description": _JD}]
+    monkeypatch.setattr(run_mod, "load_companies", lambda: [dict(row)])
+    monkeypatch.setattr(run_mod.fetchers, "fetch_company", lambda r: [dict(j) for j in jobs])
+    monkeypatch.setattr(company_intel, "enrich_for_run", lambda st, **kw: ({}, {}, {"researched": 0, "blurbs_written": 0}))
+    monkeypatch.setattr(company_intel, "audit_lines", lambda rep: ([], []))
+    real = digest.build_board_html
+
+    def boom(jobs, *a, **k):
+        if "archived" not in k.get("heading", ""):
+            raise RuntimeError("board template exploded")
+        return real(jobs, *a, **k)
+    monkeypatch.setattr(digest, "build_board_html", boom)
+    docs = tmp_path / "out" / "docs-preview"
+    docs.mkdir(parents=True)
+    (docs / "index.html").write_text("YESTERDAY", encoding="utf-8")
+    payload, base = run_mod.run(use_llm=False, only=["Acme"], out_dir=str(tmp_path / "out"), db_path=str(tmp_path / "t.db"))
+    assert (docs / "index.html").read_text(encoding="utf-8") == "YESTERDAY"          # not overwritten
+    assert (docs / "archive.html").exists()                                          # the good product shipped
+    md = open(base + ".md", encoding="utf-8").read()
+    assert "- **Render:** board FAILED (RuntimeError: board template exploded) — yesterday's file kept" in md
+    assert payload["summary"]["render"] == ["archive 0 cards", "email 1 cards"]
+
+
+def test_fluent_english_is_one_bullet_and_a_linkedin_tail_is_none():
+    """A `_RUNON_SPLIT` before `English` cut 'Fluent English' into 'Fluent' (dropped as
+    junk) and 'English …' (a bullet); the rejoined line then dragged a LinkedIn footer
+    ('Send your CV to: x@y … רמת ותק …') into the requirements."""
+    from pipeline import jdtext
+    reqs = [t for t, _ in jdtext._requirements_snippet(
+        "Requirements: • 3+ years as an analyst • Excellent communication skills with fluent English (written and verbal) "
+        "• Fluent English. 📍 Central Israel | 🏠 Hybrid 📩 Send your CV to: someone@pickpeak.co רמת ותק בכירות בינונית סוג תעסוקה")]
+    assert reqs[1].startswith("Excellent communication skills with fluent English")
+    assert not any("Send your CV" in r or "@" in r or "רמת ותק" in r for r in reqs)
+
+
+def test_the_email_blurb_never_describes_an_agencys_client():
+    """`_company_blurb`'s unanchored fallback took the first 'X is a …' of the text — in an
+    agency's posting that sentence describes the client, under the agency's name."""
+    from pipeline import rolecard
+    jd = "Our client, Fireblocks, is a digital-asset custody platform used by banks worldwide. Requirements: • SQL"
+    assert rolecard.company_about("Recruitx", jd, {}) == ""
+    assert rolecard.company_about("Fireblocks", jd, {}).startswith("digital-asset custody platform")

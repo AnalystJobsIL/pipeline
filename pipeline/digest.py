@@ -1,526 +1,83 @@
-"""Build the email digest (subject + HTML + plaintext) from accepted new jobs.
+"""Render the products (lane: render, ARCHITECTURE.md §7d, part 2).
+
+Three products from the same cards: the Markdown that becomes the daily email
+(`build_markdown` -> digests/latest.md), the board and the archive (`build_board_html` ->
+docs/index.html, docs/archive.html), and the legacy html/text digest (`build_digest`, whose
+`subject` is the only part anything reads). `render_all` is the one entry point run.py uses.
 
 The digest is intentionally auditable: besides the job listings it carries a run-summary
 (how many scanned / Israel-matched / accepted / new, the keyword-vs-LLM path breakdown,
 and any companies whose fetch failed) so the reader can trust what they're seeing.
+
+This file derives nothing from a posting's text — `pipeline/jdtext.py` does, and
+`pipeline/rolecard.py` assembles one card per role. This file is where escaping happens
+(`esc`, `_md_esc`, `_safe_url`) and the only place it may.
 """
 from __future__ import annotations
 
-import datetime as _dt
 import html
-import re as _re
 import re
+from urllib.parse import urlsplit
 
-from . import roleprofile
+from . import rolecard, roleprofile
+from .jdtext import _company_blurb, _age_note   # markdown's company-level blurb; footer count
 
 
 def _safe_url(u):
-    """Only http/https survive — blocks javascript:/data: from scraped/discovered links."""
+    """Only http/https survive — blocks javascript:/data: from scraped/discovered links — and
+    only printable ASCII with no quotes or angle brackets: the mail prints it bare, so a
+    space — or a zero-width character — inside a scraped url is a markdown injection, not a
+    url (every one of the 973 real urls in the registry and the store is plain ASCII)."""
     u = str(u or "").strip()
-    return u if u[:7].lower() == "http://" or u[:8].lower() == "https://" else ""
+    if not (u[:7].lower() == "http://" or u[:8].lower() == "https://"):
+        return ""
+    return "" if re.search(r"[^\x21-\x7e]|[<>\"'`\\]", u) else u
 
 
-_MD_META = re.compile(r"[\`*_{}\[\]()#+\-!@~|>]")
+_MD_META = re.compile(r"[\\`*_{}\[\]()#+\-!@~|<>]")   # `<` too: the issue body is rendered as HTML
 
 
 def _md_esc(s):
     """Escape Markdown metacharacters so scraped company/title text can't inject links,
-    @mentions, or formatting into the emailed issue."""
-    return _MD_META.sub(lambda m: "\\" + m.group(0), str(s or ""))
+    @mentions, or formatting into the emailed issue. One line: a newline in a scraped title
+    would end the bullet and open a heading. `\\` first, or the input's own backslash eats
+    the escape just added."""
+    return _MD_META.sub(lambda m: "\\" + m.group(0), " ".join(str(s or "").split()))
+
+
+_MD_LINE = re.compile(r"[\\`\[\]@]|<(?=[A-Za-z/!])")     # `<` only where it opens a tag: `A<-B` stays
+
+
+def _md_line(s):
+    """A line another lane wrote into `stats` (a registry name, an exception text, a stage
+    stamp) goes into the issue body as its own bullet: neutralise what can open a link, a
+    tag, a code span or an @mention, and nothing else — `keyword_nollm` must stay readable."""
+    return _MD_LINE.sub(lambda m: "\\" + m.group(0), " ".join(str(s or "").split()))
 
 
 def _fmt_date(d):
     return d or "—"
 
 
-def _short(text, n=240):
-    """Trim text to n chars at a word boundary."""
-    t = " ".join(str(text or "").split())
-    if len(t) <= n:
-        return t
-    cut = t[:n].rsplit(" ", 1)[0]
-    return cut + "…"
+_MD_BLURB = re.compile(r"[\\`\[\]<>*_]")
 
 
-# --------------------------------------------------------------------------- #
-# snippet / metadata helpers (address the digest UX review)
-# --------------------------------------------------------------------------- #
-_ZW = re.compile(r"[﻿​‎‏­]")           # BOM / zero-width / soft hyphen
-_LABEL_PREFIX = re.compile(r"^\s*(experience level\s*:[^.]*\.\s*)?(description\s*:\s*)?", re.I)
-_EXP_LEVEL = re.compile(r"experience level\s*:\s*([^.]+)", re.I)
-_YEARS = re.compile(r"(\d+)\s*\+?\s*(?:-\s*\d+\s*)?years?\b", re.I)
-# markers that indicate the role-specific part of a JD begins here
-_ROLE_MARKER = re.compile(
-    r"(responsibilities|requirements|what you.?ll (?:do|be doing|bring)|qualifications|"
-    r"about the role|about the position|in this role|role overview|your role|"
-    r"we.?re looking for|we are looking for|as an?\s|you will|what you bring)", re.I)
-# "<Company> is a/an/the <predicate>." -> company one-liner
-_COMPANY_IS = re.compile(r"\b(?:is|are)\s+(?:a|an|the)\s+(.{5,90}?)[\.\n;]", re.I)
-_HEBREW = re.compile(r"[֐-׿]")
-# a failed `claude -p` (or similar CLI error) must never render as an About blurb —
-# and neither must a first-person "I'm not sure what this company does" meta answer:
-# a job seeker should read facts about the company, never the model talking about itself.
-_ABOUT_JUNK = re.compile(r"not logged in|please run|/login|usage:|command not found|invalid api|"
-                         r"api key|traceback|rate limit|quota|unauthor|permission denied|"
-                         r"\bI['’]?m\b|\bI\s+(?:don['’]?t|do not|can['’]?t|cannot|"
-                         r"couldn['’]?t|am|have|would|need|recommend)\b|\bI['’]d\b|"
-                         r"unable to (?:confirm|verify)|no (?:job post )?context was provided|"
-                         r"web[- ]search access", re.I)
-# a title with a breadcrumb separator or a place/CTA fused onto it is a scraped card blob
-_MANGLED_TITLE = re.compile(r"[⋅•·|►▸]|,\s*israel\b|tel[\s-]?aviv,|"
-                            r"(?<=[a-z])(?:Tel Aviv|Israel|Apply|Remote|Full[\s-]?time)|"
-                            r"israel(?=[A-Za-z])", re.I)
+def _md_alarm(s):
+    """An alarm line carries scraped company names; strip what can open a link, a tag or a
+    span and neutralise @mentions — without the backslashes `_md_esc` leaves in prose."""
+    return _MD_BLURB.sub("", " ".join(str(s or "").split())).replace("@", "\\@")
 
 
-def _clean_desc(desc):
-    d = " ".join(_ZW.sub("", str(desc or "")).split())
-    return re.sub(r"\s*\bShow (?:more|less)\b", "", d)   # LinkedIn scrape artifact
-
-
-def _company_blurb(desc, company=""):
-    """Extract a short 'what the company does' phrase from a JD, or ''.
-
-    Prefer a phrase anchored on the company NAME ("<Company> is/builds/provides …") — that
-    can't accidentally grab role text ("… is looking for a Data Analyst"), and it catches
-    the article-less forms the generic pattern misses ("Blockaid is redefining trust …")."""
-    d = _LABEL_PREFIX.sub("", _clean_desc(desc)).lstrip(" •")
-    if company:
-        anchored = _re.search(
-            _re.escape(company)
-            + r"[^.•]{0,40}?\b(?:is|are|builds?|provides?|offers?|powers?|helps?|enables?|"
-            r"delivers?|develops?|creates?|makes?)\s+"
-            r"(?!seeking|looking|hiring|searching|recruiting|excited|thrilled|proud|now\b)"
-            r"(?:(?:a|an|the)\s+)?(.{6,110}?)[.•\n;]",
-            d[:400], _re.I)
-        if anchored:
-            words = anchored.group(1).strip().rstrip(".").split()
-            stray = {"of", "to", "for", "and", "or", "with", "that", "which",
-                     "by", "from", "as", "but", "nor"}
-            if len(words) >= 3 and words[0].lower() not in stray:
-                return " ".join(words[:16])
-    m = _COMPANY_IS.search(d[:220])
-    if not m:
-        return ""
-    words = m.group(1).strip().rstrip(".").split()
-    return " ".join(words[:12])
-
-
-# hard requirement headers — the practical "what you need" section. Tried first, earliest
-# wins. NOTE: "we're looking for" is deliberately NOT here — it usually opens a company
-# intro ("We are looking for a <role> to join…"), not a qualifications list.
-_REQ_HARD = _re.compile(r"(requirements?|qualifications?|what (?:you.?ll|you will) (?:bring|need)|"
-                        r"what are we looking for|what we.?re looking for|what we expect|"
-                        r"(?:perfect|ideal) job for someone who (?:has|is)|"
-                        r"to thrive in this role,? you.?ll need|what you need to succeed|"
-                        r"דרישות(?: התפקיד)?|מה אנחנו מחפשים|כישורים נדרשים|"
-                        r"what (?:will make|makes) you successful|who you are|about you|"
-                        r"what we.?re looking for in you|must[- ]have|your (?:profile|experience|"
-                        r"background)|minimum qualifications|desired (?:skills|qualifications)|"
-                        r"skills (?:&|and) (?:experience|qualifications)|you(?:'?ll)? (?:have|bring))"
-                        r"\s*:?", _re.I)
-_REQ_SOFT = _re.compile(r"(ideal candidate|what you.?ll do|what you.?ll own)\s*:?", _re.I)
-# a new JD section starting = stop the requirements segment there
-# NOTE: "advantage"/"bonus"/"nice to have" are deliberately NOT section terminators —
-# they appear INLINE in bullets ("Vertica knowledge – strong advantage") and as the
-# nice-to-have SUB-list we want to keep (badged as plus via _PLUS_SECTION below).
-_SECTION_END = _re.compile(r"(?:•\s*)?\b(responsibilit|benefits?|perks|about (?:us|the company)|"
-                           r"why join|what we offer|"
-                           r"we offer|our (?:stack|tech)|equal opportunit|why you.?ll love|"
-                           r"what makes\b|please (?:ensure|note)|founded in \d{4}|"
-                           r"היקף משרה|אנחנו על המפה|קו\"ח|שעות עבודה)\b\s*:?", _re.I)
-# a nice-to-have SUB-header inside the requirements section: everything after it is
-# still shown, but badged "plus" — never dropped, never presented as required
-_PLUS_SECTION = _re.compile(r"(?:•\s*)?\b(?:advantages?|nice[- ]to[- ]haves?|"
-                            r"bonus(?: points)?(?: if you have)?|it would be (?:great|a plus)|"
-                            r"preferred qualifications|יתרון(?: משמעותי)? אם)\b\s*:", _re.I)
-# leaked section-header words to strip from the front of a bullet
-_LEAD_JUNK = _re.compile(r"^(responsibilities|requirements?|qualifications?|the role|"
-                         r"about the role|role description|what you.?ll (?:need|bring|do|own))"
-                         r"\s*:?\s*", _re.I)
-# a bullet that is ONLY a category header (e.g. "Experience & Technical Skills") — drop it
-_HEADER_ONLY = _re.compile(r"^(experience|technical skills?|education|skills?|qualifications?|"
-                           r"requirements?|nice to have|advantages?|bonus(?: points)?|"
-                           r"about you|background|responsibilities|"
-                           r"what we(?:'re| are)? ?(?:expect|need|want|require|value|look\w*)|"
-                           r"what you.?ll (?:need|do|bring|own|be doing)|technical|professional)"
-                           r"(?:\s*(?:&|and|/|,)\s*(?:experience|technical|skills?|education|"
-                           r"qualifications?|requirements?|background))*\s*:?$", _re.I)
-# fallback splitter (no • markers survived): sentences / dashed clauses
-_SENT_SPLIT = _re.compile(r"(?<=[a-z0-9%)א-ת])\.\s+(?=[A-Z0-9א-ת])|\s[–—]\s(?=[A-Z0-9])")
-# scraped requirement lists often lose their bullets entirely ("...related field 3+ years
-# of experience Strong SQL skills"); split a long run-on before words that typically open
-# a fresh requirement (English capitalized openers / Hebrew openers)
-_RUNON_SPLIT = _re.compile(
-    r"(?<=[a-zא-ת)%\.]) (?=(?:\d+\+? years?|Strong|Proven|Excellent|Experience|Experienced|"
-    r"Knowledge|Familiarity|Ability|Proficien\w*|Fluent|High(?: proficiency| level)|Advanced|"
-    r"Deep|Solid|Hands[- ]on|Degree|B\.?Sc|M\.?Sc|Bachelor|Master|Team player|Self[- ]|"
-    r"Willingness|Availability|English|Hebrew|Excellent|Very|Good|Great|"
-    r"At least|Minimum(?: of)?|Fluency|Fluent|"
-    r"ניסיון|תואר|ידע|יכולת|שליטה|אנגלית|היכרות|נכונות)\b)")
-# a requirement's own must/nice-to-have marker, at the end of the bullet
-_REQ_MUST = _re.compile(r"\s*[-–—(:]*\s*(?:a\s+)?(?:must(?:\s+have)?|mandatory|requir\w*|חובה)[.!)]?\s*$", _re.I)
-_REQ_PLUS = _re.compile(r"\s*[-–—(:]*\s*(?:an?\s+)?(?:(?:big|strong|significant|major|huge|"
-                        r"added|great|definite)\s+)?(?:advantage|plus|nice to have|preferred|"
-                        r"bonus|יתרון(?: משמעותי)?)[.!)]?\s*$", _re.I)
-
-
-# scraped lists also glue requirements with " - Hands on…" separators; split before a
-# capitalized opener but never right before a bare must/advantage marker
-_DASH_SPLIT = _re.compile(r"\s+-\s+(?=[A-Z])(?!(?:Must|Mandatory|Requir|Advantage|Plus|Big|Nice|An?\b))")
-# never render as a requirement: recruiter hashtags, links, résumé notes, culture blurbs
-_BULLET_JUNK = _re.compile(r"^#|https?://|www\.|#li-|\brésumé\b|resume(?:/cv)? you attach|"
-                           r"why you.?ll love|equal opportunit|privacy policy|"
-                           r"apply now|click here|meet 100% of|not about checklists|"
-                           r"encourage you to apply|describes you perfectly", _re.I)
-
-
-_LEAD_MUST = _re.compile(r"^\s*(?:must(?:[- ]haves?)?|mandatory|חובה)(?:\s*[-–—:]+\s*|\s+(?=[A-Zא-ת]))", _re.I)
-_LEAD_PLUS = _re.compile(r"^\s*(?:advantage|nice to have|bonus|יתרון)\s*[-–—:]+\s*", _re.I)
-
-
-def _req_badge(p):
-    """Split a bullet's leading or trailing must/advantage marker off into a badge tag."""
-    if _LEAD_PLUS.search(p):
-        return _LEAD_PLUS.sub("", p), "plus"
-    if _LEAD_MUST.search(p):
-        return _LEAD_MUST.sub("", p), "must"
-    if _REQ_PLUS.search(p):
-        return _REQ_PLUS.sub("", p).rstrip(" -–—(:"), "plus"
-    if _REQ_MUST.search(p):
-        return _REQ_MUST.sub("", p).rstrip(" -–—(:"), "must"
-    return p, None
-
-
-def _clean_bullet(p, cap=210):
-    """Tidy one requirement fragment: strip markers/leaked headers, fix stray spacing from
-    justified source text ("Ph . D", "4 + years", "SQL ,"), cap length uniformly."""
-    p = " ".join(str(p or "").split()).strip(" \t•·–—-:;.")
-    p = _LEAD_JUNK.sub("", p).strip(" :–—-")
-    p = re.sub(r"\s+([,.;:%)])", r"\1", p)          # no space before punctuation
-    p = re.sub(r"(\d)\s+\+", r"\1+", p)             # "4 +" -> "4+"
-    p = re.sub(r"\(\s+", "(", p)                    # "( x" -> "(x"
-    if len(p) > cap:
-        p = p[:cap].rsplit(" ", 1)[0].rstrip(" ,;:–—-") + "…"
-    if p.count("(") > p.count(")"):                 # unbalanced truncated parenthetical
-        li = p.rfind("(")
-        if len(p[li + 1:].strip()) < 2:             # dangling empty "(" -> drop it
-            p = p[:li].rstrip(" -–—,")
-        else:                                       # real content -> just close it
-            p = p.rstrip(" -–—,") + ")"
-    # drop a dangling connector left by mid-sentence truncation ("... experience with", "is an")
-    p = re.sub(r"[\s,]+(?:is an?|are|with|and|or|to|of|the|for|in|on|an?|is)$", "", p, flags=re.I)
-    # a header match like "The ideal candidate" leaves a subject-less "is highly skilled…"
-    p = re.sub(r"^(?:is|are|has|have|will be)\s+", "", p, flags=re.I)
-    return p.rstrip(" -–—,;:")
-
-
-_REQ_SIGNAL = _re.compile(
-    r"\b(experience|years?|degree|proficien|knowledge|ability|familiar|proven|strong|expert|"
-    r"hands[- ]on|sql|python|excel|tableau|looker|power ?bi|bachelor|master|fluent|"
-    r"understanding|background|skilled|passion|track record|mindset)\b", _re.I)
-
-
-def _looks_like_header(c):
-    """A short, all-capitalized fragment with no requirement signal is a decorative section
-    header a company used to title its list (e.g. 'Your Chain of Strengths') — not a bullet."""
-    words = c.split()
-    if len(words) > 5 or _re.search(r"\d", c) or _REQ_SIGNAL.search(c):
-        return False
-    caps = sum(1 for w in words if w[:1].isupper())
-    return len(words) >= 2 and caps >= len(words) - 1
-
-
-# a fragment opening with an imperative verb is a RESPONSIBILITY, not a requirement —
-# used to reject header matches that were really a mid-sentence "…ad-hoc requirements"
-_RESP_VERB = _re.compile(r"^(develop|create|perform|build|design|lead|manage|work|partner|"
-                         r"collaborate|own|drive|support|monitor|analy[sz]e|define|deliver|"
-                         r"maintain|conduct|translate|identify|provide|present|research|"
-                         r"optimi[sz]e|execute|prepare|implement|serve|gather|track|run)\b", _re.I)
-
-
-def _req_header_match(d2):
-    """First _REQ_HARD match that anchors a real requirements SECTION: the text right
-    after it must not open with a responsibility verb (which means the 'header' was a
-    mid-sentence word like '…ad-hoc requirements Develop dashboards…')."""
-    cands = list(_REQ_HARD.finditer(d2))[:5]
-    for m in cands:
-        head = d2[m.end():m.end() + 160].strip(" ?:-–—•")
-        first = _clean_bullet(head.split("•")[0])
-        if first and not _RESP_VERB.match(first):
-            return m
-    return (cands[0] if cands else None) or _REQ_SOFT.search(d2)
-
-
-_PLUS_HEADER_ONLY = _re.compile(r"^(?:advantages?|nice[- ]to[- ]haves?|bonus(?: points)?"
-                                r"(?: if you have)?|preferred qualifications|יתרונות)\s*:?$", _re.I)
-
-
-def _bullets(seg, default_badge):
-    """Split one section of requirement text into clean (text, badge) fragments.
-    A bare 'Advantages'/'Nice to have' sub-header flips the default badge to 'plus'
-    for everything after it."""
-    raw = seg.split("•") if "•" in seg else _SENT_SPLIT.split(seg)
-    # secondary pass: a fragment that is still a wall of text gets the run-on splitters
-    raw = [piece for p in raw
-           for piece in (_RUNON_SPLIT.split(p) if len(p) > 80 else [p])]
-    raw = [piece for p in raw
-           for piece in (_DASH_SPLIT.split(p) if len(p) > 80 else [p])]
-    parts = []
-    for p in raw:
-        # peel the must/advantage marker BEFORE the length cap so it can't be half-cut
-        txt, badge = _req_badge(" ".join(str(p or "").split()))
-        c = _clean_bullet(txt)
-        if _PLUS_HEADER_ONLY.match(c):
-            default_badge = "plus"
-            continue
-        if not (8 <= len(c) <= 220) or _HEADER_ONLY.match(c) or _looks_like_header(c):
-            continue
-        if _BULLET_JUNK.search(c):
-            continue
-        # a long fragment with no requirement vocabulary is company/culture boilerplate
-        if len(c) > 120 and not _REQ_SIGNAL.search(c):
-            continue
-        parts.append((c, badge or default_badge))
-    return parts
-
-
-def _requirements_snippet(desc, n=2600):
-    """The practical part of a JD (Requirements / What you'll bring) as clean
-    (text, badge) fragments, badge in {'must','plus',None}. Deterministic — header
-    regex + <li>-marker splitting, no LLM. Returns [] when absent."""
-    d2 = _LABEL_PREFIX.sub("", _clean_desc(desc))
-    m = _req_header_match(d2)
-    if not m:
-        return []
-    seg = d2[m.end():].strip(" ?:-–—•")
-    e = _SECTION_END.search(seg)
-    if e and e.start() > 20:
-        seg = seg[:e.start()]
-    seg = seg[:n]
-    # a "Advantages:"/"Bonus points:" sub-header splits the section: everything after
-    # it is real content shown with a plus badge, never dropped or shown as required
-    ps = _PLUS_SECTION.search(seg)
-    if ps and ps.start() > 20:
-        parts = _bullets(seg[:ps.start()], None) + _bullets(seg[ps.end():], "plus")
-    else:
-        parts = _bullets(seg, None)
-    out = []
-    for c, b in parts:
-        if c.lower() not in (x.lower() for x, _ in out):
-            out.append((c, b))
-    return out[:12]
-
-
-_RESP_HEAD = _re.compile(r"(responsibilit(?:ies|y)|what (?:you|you'?ll) (?:do|be doing|own|work on)|"
-                         r"your (?:role|impact|day[- ]to[- ]day)|in this role,? you|role overview|"
-                         r"day[- ]to[- ]day|you will be|as part of (?:the|this) role|"
-                         r"תחומי אחריות|מה תעשו|היומיום של)\s*:?", _re.I)
-# responsibilities lists glue the same way requirement lists do — split before an
-# imperative opener when the bullets got lost in scraping
-_RUNON_RESP = _re.compile(
-    r"(?<=[a-zא-ת)%.]) (?=(?:Develop|Create|Perform|Build|Design|Lead|Manage|Work|Partner|"
-    r"Collaborate|Own|Drive|Support|Monitor|Analy[sz]e|Define|Deliver|Maintain|Conduct|"
-    r"Translate|Identify|Provide|Present|Research|Optimi[sz]e|Execute|Prepare|Implement|"
-    r"Serve|Gather|Track|Run|Ensure|ניתוח|בניית|עבודה|אחריות)\b)")
-
-
-def _responsibilities_snippet(desc, n=2200):
-    """The day-to-day part of a JD (Responsibilities / What you'll do) as clean bullet
-    fragments. Deterministic, mirrors _requirements_snippet. Returns [] when absent."""
-    d2 = _LABEL_PREFIX.sub("", _clean_desc(desc))
-    m = _RESP_HEAD.search(d2)
-    if not m:
-        return []
-    seg = d2[m.end():].strip(" ?:-–—•")
-    # the section ends where requirements (or any other section) begin
-    ends = [x.start() for x in (_REQ_HARD.search(seg), _SECTION_END.search(seg))
-            if x and x.start() > 20]
-    if ends:
-        seg = seg[:min(ends)]
-    seg = seg[:n]
-    raw = seg.split("•") if "•" in seg else _SENT_SPLIT.split(seg)
-    raw = [pc for p in raw for pc in (_RUNON_RESP.split(p) if len(p) > 90 else [p])]
-    parts = []
-    for p in raw:
-        c = _clean_bullet(" ".join(str(p or "").split()))
-        if not (8 <= len(c) <= 220) or _HEADER_ONLY.match(c) or _looks_like_header(c):
-            continue
-        if _BULLET_JUNK.search(c):
-            continue
-        if c.lower() not in (x.lower() for x in parts):
-            parts.append(c)
-    return parts[:8]
-
-
-def _role_snippet(desc, n=230):
-    """Prefer the role-specific text: strip field labels + leading company boilerplate,
-    jump to a responsibilities/requirements marker when present."""
-    d = _LABEL_PREFIX.sub("", _clean_desc(desc))
-    if not d:
-        return ""
-    m = _ROLE_MARKER.search(d)
-    if m and m.start() < 700:
-        d = d[m.start():]
-    else:
-        # drop a leading "<Company> is a … ." sentence if that's all we have
-        cm = _COMPANY_IS.search(d[:220])
-        if cm and cm.end() < 220:
-            d = d[cm.end():].strip(" .,-")
-    return _short(d, n)
-
-
-def _seniority_chip(desc):
-    m = _EXP_LEVEL.search(desc or "")
-    if m:
-        return m.group(1).strip().rstrip(".")
-    y = _YEARS.search(desc or "")
-    return f"{y.group(1)}+ yrs" if y else ""
-
-
-_LOC_DROP = {"il", "israel", "isr", "tel aviv district", "central district", "center district",
-             "hamerkaz", "haifa district", "southern district", "northern district",
-             "jerusalem district", "hadarom", "hatzafon", "center"}
-# canonicalize the many spellings of the same city to one label
-_LOC_CANON = {"tel aviv-yafo": "Tel Aviv", "tel aviv-jaffa": "Tel Aviv", "tel aviv jaffa": "Tel Aviv",
-              "telaviv": "Tel Aviv", "tel-aviv": "Tel Aviv", "tlv": "Tel Aviv",
-              "ramat-gan": "Ramat Gan", "petah-tikva": "Petah Tikva", "petach tikva": "Petah Tikva",
-              "rishon lezion": "Rishon LeZion", "rishon le zion": "Rishon LeZion",
-              "kiryat bialik": "Kiryat Bialik", "beer sheva": "Be'er Sheva", "beersheba": "Be'er Sheva",
-              "יפו": "Tel Aviv", "תל אביב": "Tel Aviv", "תל אביב-יפו": "Tel Aviv",
-              "באר שבע": "Be'er Sheva", "רעננה": "Ra'anana", "הרצליה": "Herzliya",
-              "חיפה": "Haifa", "ירושלים": "Jerusalem", "פתח תקווה": "Petah Tikva",
-              "רמת גן": "Ramat Gan", "חולון": "Holon", "נתניה": "Netanya",
-              "יקנעם עילית": "Yokneam", "יקנעם": "Yokneam", "טירת כרמל": "Tirat Carmel",
-              "מחוז הצפון": "Northern Israel", "מחוז המרכז": "Central Israel",
-              "מחוז תל אביב": "Tel Aviv", "מחוז חיפה": "Haifa area", "ישראל": "Israel (unspecified)"}
-
-
-def _norm_location(loc):
-    # split on commas AND " - " / " / " separators (e.g. "Israel - Petah Tikva")
-    raw = re.split(r"\s[-/]\s|,", str(loc or ""))
-    parts = [p.strip() for p in raw if p.strip()]
-    kept = [p for p in parts if p.lower() not in _LOC_DROP]
-    out = []
-    for p in kept:                      # drop consecutive duplicates (e.g. "Tel Aviv, Tel Aviv")
-        if not out or out[-1].lower() != p.lower():
-            out.append(p)
-    city = out[0] if out else (parts[0] if parts else "")
-    if not city or city.lower() in ("israel", "isr", "il"):
-        return "Israel (unspecified)"
-    return _LOC_CANON.get(city.lower(), city)
-
-
-_SEN_INFER = re.compile(r"\b(senior|sr\.?|principal|staff|head of|lead|director|vp|chief|expert|manager)\b", re.I)
-
-
-_SEN_LEAD = re.compile(r"\b(team ?lead|tech ?lead|group lead|manager|head of|principal|staff|"
-                       r"director|vp|vice president|chief)\b", re.I)
-
-
-def _sen_canon(chip, title):
-    """Collapse any seniority hint to ONE tidy label so the column scans in a glance:
-    Junior / Mid / Senior / Lead+ (— when unknown). The raw parsed value (e.g.
-    'Advanced (5-8 Years)') is preserved by the caller as a hover tooltip."""
-    c = (chip or "").lower()
-    t = (title or "").lower()
-    if "junior" in c or "entry" in c or "intern" in c:
-        return "Junior"
-    if _SEN_LEAD.search(c) or _SEN_LEAD.search(t):
-        return "Lead+"
-    if any(w in c for w in ("senior", "advanced", "expert", "mid-senior")) or _SEN_INFER.search(t):
-        return "Senior"
-    m = re.search(r"(\d+)", c)
-    if m:
-        y = int(m.group(1))
-        return "Lead+" if y >= 8 else "Senior" if y >= 5 else "Mid"
-    if "mid" in c:
-        return "Mid"
-    return "—"
-
-
-def _sen_rank(chip):
-    """Numeric rank for correct seniority sorting (junior→lead; unknown last)."""
-    c = (chip or "").lower()
-    if c in ("", "—"):
-        return 99
-    if "junior" in c or "entry" in c:
-        return 1
-    if any(w in c for w in ("lead", "manager", "head", "principal", "staff", "director", "vp", "chief")):
-        return 6
-    if "mid-senior" in c:
-        return 4
-    if "senior" in c:
-        return 5
-    if "mid" in c:
-        return 3
-    m = re.search(r"(\d+)", c)
-    if m:
-        y = int(m.group(1))
-        return 6 if y >= 5 else 5 if y >= 3 else 3
-    return 6 if ("advanced" in c or "expert" in c) else 4
-
-
-_EMP = [("maternity", "Maternity cover"), ("temporary", "Temp"), ("contract", "Contract"),
-        ("internship", "Intern"), ("part-time", "Part-time")]
-
-
-def _employment_badge(title):
-    t = (title or "").lower()
-    for kw, label in _EMP:
-        if kw in t:
-            return label
-    return ""
-
-
-_REL_DAYS = re.compile(r"(\d+)\+?\s*day", re.I)
-_REL_MONTHS = re.compile(r"(\d+)\+?\s*month", re.I)
-
-
-def _rel_date(posted_date, run_date):
-    """'today' / '3d ago' style label. Recovers relative strings ('Posted 4 Days Ago')
-    that slipped through un-normalized, and NEVER leaks raw junk — unparseable → '—'."""
-    s = str(posted_date or "")
-    try:
-        p = _dt.date.fromisoformat(s[:10])
-        r = _dt.date.fromisoformat(str(run_date)[:10])
-        days = (r - p).days
-        return "today" if days <= 0 else "1d ago" if days == 1 else f"{days}d ago"
-    except (ValueError, TypeError):
-        pass
-    sl = s.lower()
-    if "today" in sl or "just posted" in sl or "just now" in sl:
-        return "today"
-    if "yesterday" in sl:
-        return "1d ago"
-    m = _REL_DAYS.search(sl)
-    if m:
-        return f"{int(m.group(1))}d ago"
-    m = _REL_MONTHS.search(sl)
-    if m:
-        return f"{int(m.group(1)) * 30}d ago"
-    m = re.match(r"posted\s+(\d+)", sl)          # 'Posted 4 [Days Ago]' truncations
-    if m:
-        return f"{int(m.group(1))}d ago"
-    return "—"
-
-
-def _age_note(posted_date, run_date):
-    """Return a staleness flag for ISO dates older than ~45 days, else ''."""
-    try:
-        d = _dt.date.fromisoformat(str(posted_date)[:10])
-        r = _dt.date.fromisoformat(str(run_date)[:10])
-    except ValueError:
-        return ""
-    days = (r - d).days
-    if days >= 60:
-        return f" · ⚠️ posted ~{days // 30}mo ago"
-    if days >= 45:
-        return f" · ⚠️ posted {days}d ago"
-    return ""
+def _md_blurb(s):
+    """A blurb goes into the mail as italic prose. Escaping it prints backslashes (the
+    code-span lesson, test_company_facts_are_not_backslash_escaped…); stripping the seven
+    characters that can open a link, a span, a tag or a style is enough (parentheses stay:
+    without a `]` before them they are prose)."""
+    return _MD_BLURB.sub("", " ".join(str(s or "").split())).replace("@", "\\@")
 
 
 def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
-                   firmographics=None):
+                   firmographics=None, ledger=None, render_issues=None):
     """Return (title, body_markdown) — a COMPACT, email-friendly digest.
 
     Grouped by company (freshest first). Each company shows its one-line "what it does /
@@ -530,9 +87,15 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     the full role description is one tap away on the apply link.
 
     `company_info` maps company name -> a plain-text "what it does + how it earns money".
+    `ledger` maps role_id -> the role record (pipeline/roles.py) when the caller has it;
+    `render_issues` is `render_all`'s report over the board and archive, so what went wrong
+    rendering the products the reader is about to click through reaches the mail.
     """
     company_info = company_info or {}
     firmographics = firmographics or {}
+    ledger = ledger or {}
+    render_issues = render_issues or {"lines": [], "alarms": []}
+    email_cards = []
     # Roles at an employer this digest has never scanned before. `_posted_in` refuses to
     # call their back catalogue 48h-fresh — correctly, we have no idea when they were
     # posted — but they are news to the reader, so they get their own honest heading
@@ -571,34 +134,42 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
                   f"They are on the board now, and they lead tomorrow's digest — nothing "
                   f"is dropped.", ""]
 
+    email_hidden = [0]
+
     def _render(company, jobs_c, dated=True):
-        about = company_info.get(company) or _company_blurb(jobs_c[0].get("description"))
-        if about and _ABOUT_JUNK.search(about):   # never email a CLI error or meta answer
-            about = _company_blurb(jobs_c[0].get("description")) or ""
-        lines.append(f"### {_md_esc(company)}")
+        cards = [rolecard.build(j, run_date, ledger_rec=ledger.get(j.get("mkey")),
+                                company_info=company_info, firmographics=firmographics) for j in jobs_c]
+        email_hidden[0] += sum(1 for c in cards if c["mangled"])
+        cards = [c for c in cards if not c["mangled"]]     # a card blob is not a role, in the mail either
+        if not cards:
+            return
+        email_cards.extend(cards)
+        about = cards[0]["about"]
+        head = f"### {_md_esc(company)}"
+        also = sorted({n for c in cards for n in c["also_listed_as"]})
+        if also:
+            head += f" _(also listed as {_md_esc(', '.join(also))})_"
+        lines.append(head)
         if about:
-            lines.append(f"_{about}_")
-        facts = _firmo_facts(firmographics.get(company))
+            lines.append(f"_{_md_blurb(about)}_")
+        facts = rolecard.firmo_facts(firmographics.get(company))
         if facts:
             # inside a code span markdown takes the text literally, so escaping it only
             # prints the backslashes: `\~16,068 employees`. Strip backticks instead, which
             # are the one character that could break out of the span.
             lines.append("`" + "` · `".join(f.replace("`", "'") for f in facts) + "`")
         lines.append("")
-        for j in jobs_c:
-            url = j.get("url") or ""
-            title_txt = j.get("title") or "(untitled)"
-            if _HEBREW.search(title_txt):
-                title_txt += " (Hebrew)"
-            su = _safe_url(url)
+        for c in cards:
+            title_txt = c["title"] + (" (Hebrew)" if c["hebrew_title"] else "")
+            su = _safe_url(c["url"])
             head = (f"**{_md_esc(title_txt)}** — {su}" if su
                     else f"**{_md_esc(title_txt)}**")
-            chip = _seniority_chip(j.get("description"))
-            posted = j.get("posted_date") or ""
-            meta = [f"📍 {_norm_location(j.get('location'))}"]
+            chip = c["raw_chip"]
+            posted = c["posted"]
+            meta = [f"📍 {c['loc']}"]
             # an undated role at a first-scan company: say "date unknown", never "—" next
             # to a heading that claims 48h freshness
-            meta.append((f"🗓 {posted}" + _age_note(posted, run_date)) if posted
+            meta.append((f"🗓 {posted}" + c["age"]) if posted
                         else ("🗓 date not published" if not dated else "🗓 —"))
             if chip:
                 meta.append(f"🎓 {chip}")
@@ -626,12 +197,24 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     # still sees it (docs/BACKLOG.md 127); the counts stay collapsed below
     s = stats
     alarms = []
+    _email_issues = rolecard.cross_check(email_cards)
+    _email_frag, _email_alarms = rolecard.report(email_cards, email_hidden[0])
+    if _email_issues:
+        _email_frag += ", " + _capped(_email_issues, 6)
+        _email_alarms += [f"{i} — one posting may be under the wrong name, check the card"
+                          for i in _email_issues[:3] if i.startswith(("shared-board", "title-twin"))]
+    render_issues.setdefault("lines", []).append(f"email {_email_frag}")
+    # the email's own alarms join the board's, so run.py's ::warning:: lines carry them too
+    render_issues.setdefault("alarms", []).extend(a for a in _email_alarms if a not in render_issues["alarms"])
     if s.get("dead_sources"):
-        alarms.append("- **Sources not producing:** " + "; ".join(s["dead_sources"]))
+        alarms.append("- **Sources not producing:** " + "; ".join(_md_line(x) for x in s["dead_sources"]))
     if s.get("registry_alarms"):
-        alarms.append("- **Registry:** " + "; ".join(s["registry_alarms"]))
+        alarms.append("- **Registry:** " + "; ".join(_md_line(x) for x in s["registry_alarms"]))
     if s.get("stage_alarms"):
-        alarms.append("- **Stages:** " + "; ".join(s["stage_alarms"]))
+        alarms.append("- **Stages:** " + "; ".join(_md_line(x) for x in s["stage_alarms"]))
+    _render_alarms = list(render_issues.get("alarms") or [])
+    if _render_alarms:
+        alarms.append("- **Render:** " + "; ".join(_md_alarm(a) for a in _render_alarms))
     if alarms:
         lines += ["---", "**Needs a look**", ""] + alarms + [""]
     # collapsed audit so the email stays clean but is still verifiable
@@ -642,23 +225,25 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
         f"- Companies scanned: **{s.get('companies_scanned',0)}** (failed: {s.get('companies_failed',0)})",
         f"- Jobs fetched: {s.get('jobs_fetched',0)} · Israel-matched: {s.get('israel_matched',0)}",
         f"- Accepted: {s.get('accepted',0)} · after merge: {s.get('after_merge',0)} · **new: {s.get('new',0)}**",
-        f"- Decision paths: {paths}",
-        f"- LLM calls this run: {s.get('llm_calls',0)}",
+        f"- Decision paths: {_md_line(paths)}",
+        f"- LLM calls this run: {s.get('llm_calls',0)}"
+        + (f" · JDs fetched inline: {s.get('jd_filled_inline', 0)}" if s.get("jd_filled_inline") else ""),
     ]
     if s.get("first_scan"):
         lines.append(f"- At newly covered companies: {s['first_scan']}")
     if s.get("email_overflow"):
         lines.append(f"- Held over (email cap): {s['email_overflow']}")
     for _line in s.get("fetch_health") or []:
-        lines.append("- **Boards** " + _line)
+        lines.append("- **Boards** " + _md_line(_line))
     if s.get("company_intel"):
-        lines.append("- **Company intel:** " + "; ".join(s["company_intel"]))
+        lines.append("- **Company intel:** " + "; ".join(_md_line(x) for x in s["company_intel"]))
     if s.get("roles"):
-        lines.append("- **Roles:** " + "; ".join(s["roles"]))
+        lines.append("- **Roles:** " + "; ".join(_md_line(x) for x in s["roles"]))
+    lines.append("- **Render:** " + " · ".join(_md_line(x) for x in render_issues["lines"]))
     if s.get("stages"):
-        lines.append(f"- Stage order: {s['stages']}")
+        lines.append(f"- Stage order: {_md_line(s['stages'])}")
     if s.get("failed_companies"):
-        lines.append("- Failed companies: " + _capped(s["failed_companies"]))
+        lines.append("- Failed companies: " + _md_line(_capped(s["failed_companies"])))
     lines += ["", "</details>"]
     return title, "\n".join(lines)
 
@@ -670,46 +255,9 @@ def _capped(names, n=8):
     return ", ".join(names[:n]) + (f", +{len(names) - n} more" if len(names) > n else "")
 
 
-def _newcut(run_date):
-    import datetime as _dt
-    try:
-        return (_dt.date.fromisoformat(run_date) - _dt.timedelta(days=1)).isoformat()
-    except Exception:
-        return "9999"
-
-
-_STAGE_LABEL = {"early-private": "early-stage private", "growth-private": "growth-stage private",
-                "public": "public", "acquired-by-bigtech": "acquired", "subsidiary": "subsidiary",
-                "government": "government", "nonprofit": "non-profit"}
-
-
-def _firmo_facts(rec):
-    """"What is this company, actually" — the researched facts, as short display chips.
-
-    The firmographics layer researches sector/stage/employees/founded/IL-centre for every
-    company on the board and then nothing rendered it: the answer to "should I want to work
-    here" lived only in a sqlite table. Order is the order a reader asks it in.
-    """
-    if not isinstance(rec, dict):
-        return []
-    out = []
-    if rec.get("sector"):
-        out.append(str(rec["sector"]))
-    stage = _STAGE_LABEL.get(str(rec.get("stage") or ""), str(rec.get("stage") or ""))
-    if stage:
-        out.append(stage)
-    n = rec.get("employees_global")
-    if isinstance(n, int) and n > 0:
-        out.append(f"~{n:,} employees".replace(",", ","))
-    if rec.get("founded"):
-        out.append(f"founded {rec['founded']}")
-    if rec.get("il_center"):
-        out.append(str(rec["il_center"]))
-    return [c for c in (x.strip() for x in out) if c][:5]
-
-
 def build_board_html(jobs, run_date, stats, company_info=None, analytics_html="", contact_url="",
-                     heading="senior analytics roles in Israel", firmographics=None):
+                     heading="senior analytics roles in Israel", firmographics=None, ledger=None,
+                     report=None):
     """Interactive board (GitHub Pages): an accessible, expandable, sortable TABLE.
 
     Columns: Company / Role / Location / Posted / Seniority. Rows expand (click or Enter/Space)
@@ -720,125 +268,81 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
     """
     company_info = company_info or {}
     firmographics = firmographics or {}
+    ledger = ledger or {}
+    archived = "archived" in heading
 
-    def _display_company(name):
-        """Short display name for the table cell: keep the brand, drop taglines and
-        legal suffixes ('Oak - Identity Security OS' -> 'Oak'). Full name stays in the
-        tooltip, the expanded card, and the search blob."""
-        n = str(name or "")
-        n = re.split(r"\s+[-–—|]\s+", n)[0]
-        n = re.sub(r"\s+(?:ltd\.?|inc\.?|בע\"מ)$", "", n, flags=re.I)
-        n = re.sub(r"\s+(?:technologies|media group|group)$", "", n, flags=re.I)
-        return n.strip() or name
-
-    # defensive: never render a run-together scraped card blob as a title
-    jobs = [j for j in jobs if not _MANGLED_TITLE.search(j.get("title") or "")
-            and len(j.get("title") or "") <= 100]
-    ordered = sorted(jobs, key=lambda j: str(j.get("posted_date") or ""), reverse=True)
+    # defensive: never render a run-together scraped card blob as a title — but count it,
+    # so a scrape that mangles titles is a number in the mail, not a silent hole
+    cards = [rolecard.build(j, run_date, ledger_rec=ledger.get(j.get("mkey")), company_info=company_info,
+                            firmographics=firmographics, archived=archived) for j in jobs]
+    hidden = sum(1 for c in cards if c["mangled"])
+    cards = [c for c in cards if not c["mangled"]]
+    issues = rolecard.cross_check(cards)
+    frag, alarms = rolecard.report(cards, hidden)
+    if issues:
+        frag += ", " + _capped(issues, 6)
+        alarms += [f"{i} — one posting may be under the wrong name, check the card"
+                   for i in [x for x in issues if x.startswith(("shared-board", "title-twin"))][:3]]
+    ordered = sorted(cards, key=lambda c: str(c["posted"] or ""), reverse=True)
     n = len(ordered)
 
     def esc(s):
         return html.escape(str(s or ""))
 
     rows = []
-    profiles = []
-    for j in ordered:
-        company = j.get("company", "")
-        rtitle = j.get("title") or "(untitled)"
-        prof = roleprofile.extract(rtitle, j.get("description"))
-        resp_parts = _responsibilities_snippet(j.get("description"))
-        req_parts = _requirements_snippet(j.get("description"))
-        # WHERE an AI mention sits is signal: requirements = prior experience you must
-        # bring; responsibilities = something the role will do (learnable on the job)
-        prof["ai_req"] = (roleprofile.classify_ai(" • ".join(t for t, _ in req_parts))
-                          if req_parts else [])
-        prof["soft"] = (roleprofile.classify_soft(" • ".join(t for t, _ in req_parts))
-                        if req_parts else [])
-        prof["ai_day"] = roleprofile.classify_ai(" • ".join(resp_parts)) if resp_parts else []
-        if not prof["ai_day"] and not prof["ai_req"]:
-            prof["ai_day"] = prof["ai"]     # mentioned only in intro prose
-        if resp_parts:
-            prof["tasks"] = roleprofile.classify_tasks(resp_parts)
-        else:
-            # prose-style JDs ("As an analyst you will …") have no bullet section to
-            # extract, but the pre-requirements text still tells us the day-to-day
-            d2 = _LABEL_PREFIX.sub("", _clean_desc(j.get("description")))
-            mreq = _req_header_match(d2)
-            intro = (d2[:mreq.start()] if mreq else d2)[:2200]
-            # split prose into sentence chunks so the emphasis threshold means something
-            chunks = [c for c in _SENT_SPLIT.split(intro) if len(c) > 15] or ([intro] if intro else [])
-            prof["tasks"] = roleprofile.classify_tasks(chunks)
-        profiles.append(prof)
-        about = (company_info.get(company) or _company_blurb(j.get("description"), company) or "")
-        if _ABOUT_JUNK.search(about):           # a failed `claude -p` error must never show
-            about = _company_blurb(j.get("description"), company) or ""
-        # The summaries are already constrained to 2-3 sentences at the source; show them
-        # whole. The cap is only a safety net for pathological output — cut at a sentence
-        # boundary so the "how it makes money" half is never chopped mid-thought.
-        if len(about) > 700:
-            cut = about[:700]
-            p = max(cut.rfind(". "), cut.rfind("! "))
-            about = cut[:p + 1] if p > 200 else cut[:cut.rfind(" ")] + "…"
-        raw_chip = _seniority_chip(j.get("description")) or ""
-        chip = _sen_canon(raw_chip, rtitle)
-        rank = _sen_rank(raw_chip or chip)
-        loc = _norm_location(j.get("location"))
-        pdate = j.get("posted_date") or ""
-        age = _age_note(pdate, run_date)
-        url = esc(_safe_url(j.get("url")))
-        emp = _employment_badge(rtitle)
-        skill_names = [s for s, _ in prof["skills"]]
-        # skills + task tokens join the search blob so the filter box finds
-        # "sql", "tableau", "reporting", "stakeholders" jobs
-        blob = esc(f"{company} {rtitle} {loc} {chip} "
-                   + " ".join(skill_names) + " " + prof["family"] + " "
-                   + " ".join(tok for _, tok in prof["tasks"]) + " "
-                   + " ".join(tok for _, tok in prof["ai_day"]) + " "
-                   + " ".join(tok + "-req" for _, tok in prof["ai_req"]) + " "
-                   + " ".join(tok for _, tok in prof["soft"])).lower()
+    profiles = ordered
+    _BADGE_TIP = {"must": "The posting marks this as a hard requirement",
+                  "plus": "Marked as an advantage — nice to have, not required"}
+    for c in ordered:
+        company, rtitle = c["company"], c["title"]
+        about, loc, pdate, age = c["about"], c["loc"], c["posted"], c["age"]
+        chip, emp, skill_names = c["chip"], c["emp"], c["skill_names"]
+        resp_parts, req_parts = c["resp"], c["req"]
+        url = esc(_safe_url(c["url"]))
+        blob = esc(c["blob"]).lower()
         emp_html = f' <span class="emp">{esc(emp)}</span>' if emp else ''
-        # a posting whose posted_date jumped well past when WE first saw it was re-posted
-        # (bumped) by the company — mark it honestly instead of letting it look brand-new
-        fs0 = (j.get("first_seen") or "")[:10]
-        pd0 = pdate[:10]
-        repost = False
-        try:
-            if len(fs0) == 10 and len(pd0) == 10:
-                repost = (_dt.date.fromisoformat(pd0) - _dt.date.fromisoformat(fs0)).days >= 3
-        except ValueError:
-            repost = False
+        fs0, pd0 = c["first_seen"], pdate[:10]
+        repost = c["repost"]
         if repost:
             emp_html += (f' <span class="repb" title="Re-posted by the company on {esc(pd0)} — '
                          f'this listing first appeared here on {esc(fs0)}">reposted</span>')
-        else:
-            fs = pd0 or fs0
-            if fs and fs >= _newcut(run_date):
-                emp_html += ' <span class="newb">new</span>'
-        # honest label: a LinkedIn URL is not "the company site"
-        apply_label = ('View the posting on LinkedIn →' if 'linkedin.com' in url.lower()
+        elif c["new"]:
+            emp_html += ' <span class="newb">new</span>'
+        # honest label: a LinkedIn URL is not "the company site" (judged on the host, not on
+        # a tracking parameter that merely mentions linkedin.com)
+        _host = urlsplit(_safe_url(c["url"])).netloc.lower() if url else ""
+        apply_label = ('View the posting on LinkedIn →' if _host.endswith("linkedin.com")
                        else 'Apply on the company site →')
         apply = (f'<a class="apply" href="{url}" target="_blank" rel="noopener">'
                  f'{apply_label}</a>') if url else ''
         # --- two-column detail card: company + day-to-day (left) | demands (right) ---
-        _BADGE_TIP = {"must": "The posting marks this as a hard requirement",
-                      "plus": "Marked as an advantage — nice to have, not required"}
         left = ""
         if about:
             left += f'<p class="about" dir="auto"><b>About {esc(company)}</b> — {esc(about)}</p>'
-        facts = _firmo_facts(firmographics.get(company))
+        facts = c["facts"]
         if facts:
             left += ('<p class="cofacts">'
                      + "".join(f'<span>{esc(f)}</span>' for f in facts) + '</p>')
         if repost:
-            left += (f'<p class="repline">↻ Re-posted {esc(pd0)} — this listing first '
+            when = esc(", ".join(c["repost_dates"]) if c["repost_dates"] else pd0)
+            left += (f'<p class="repline">↻ Re-posted {when} — this listing first '
                      f'appeared here {esc(fs0)}</p>')
-        ai_day, ai_req = prof["ai_day"], prof["ai_req"]
-        if resp_parts or prof["tasks"] or ai_day:
+        if c["also_listed_as"]:
+            left += (f'<p class="repline" title="The same posting was fetched from another registry row; '
+                     f'it is shown once, under the name the posting itself supports">'
+                     f'Also listed as {esc(", ".join(c["also_listed_as"]))}</p>')
+        if c["closed_on"]:
+            left += f'<p class="repline">Closed on {esc(c["closed_on"])} — no longer on the employer&#8217;s page</p>'
+        if c["issues"]:
+            left += (f'<p class="about muted" dir="auto">Part of this card could not be built '
+                     f'({esc("; ".join(c["issues"]))}) — open the listing for the details.</p>')
+        ai_day, ai_req = c["ai_day"], c["ai_req"]
+        if resp_parts or c["tasks"] or ai_day:
             left += '<p class="rlabel">Day to day</p>'
             chips = "".join(
                 f'<button class="skilltag ttag" data-skill="{esc(tok)}" '
                 f'title="{esc(roleprofile.TASK_DESC.get(lbl, lbl))} · click to filter the board">'
-                f'{esc(lbl)}</button>' for lbl, tok in prof["tasks"])
+                f'{esc(lbl)}</button>' for lbl, tok in c["tasks"])
             chips += "".join(
                 f'<button class="skilltag aitag" data-skill="{esc(tok)}" '
                 f'title="{esc(roleprofile.AI_DESC.get(lbl, lbl))} · click to filter the board">'
@@ -875,23 +379,17 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
                 f'title="{esc(roleprofile.SKILL_DESC.get(s, s))} · click to filter the board">'
                 f'{esc(s)}</button>' for s in skill_names[:12])
             right += f'<p class="rlabel">Skills mentioned</p><div class="skills">{tags}</div>'
-        if prof["soft"]:
+        if c["soft"]:
             stags = "".join(
                 f'<button class="skilltag stag" data-skill="{esc(tok)}" '
                 f'title="{esc(roleprofile.SOFT_DESC.get(lbl, lbl))} · click to filter the board">'
-                f'{esc(lbl)}</button>' for lbl, tok in prof["soft"])
+                f'{esc(lbl)}</button>' for lbl, tok in c["soft"])
             right += f'<p class="rlabel">Soft skills asked for</p><div class="skills">{stags}</div>'
-        # degree marker: level + fields + required-vs-plus, e.g. "BSc · CS/Industrial Eng."
-        deg = prof["degree"]
-        deg_txt = ""
-        if deg:
-            deg_txt = deg["level"] + (" · " + "/".join(deg["fields"]) if deg["fields"] else "")
-            if deg["status"] == "preferred":
-                deg_txt += " (a plus)"
+        deg, deg_txt = c["degree"], c["deg_txt"]
         # no facts card on desktop — everything it held is on the row (or meaningless in
         # isolation, like a bare "Senior"). The dup-marked facts survive for MOBILE only,
         # where the Location/Posted/Degree columns are hidden.
-        facts = [("Location", loc, True), ("Posted", _rel_date(pdate, run_date), True)]
+        facts = [("Location", loc, True), ("Posted", c["rel_date"], True)]
         if deg_txt:
             facts.append(("Degree", deg_txt, True))
         shown = [f for f in facts if not f[2]]        # facts the row doesn't already show
@@ -911,27 +409,26 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
                         '<span class="skmore" style="display:none"></span>')
         else:
             skl_cell = '<span class="nd">—</span>'
-        yrs_cell = f"{prof['years']}+" if prof["years"] else '<span class="nd">—</span>'
+        yrs_cell = f"{c['years']}+" if c["years"] else '<span class="nd">—</span>'
         if deg:
             deg_cell = esc(deg["level"]) + ((' <span class="rq rq-plus" title="The posting marks '
                                              'the degree as an advantage, not a requirement">plus</span>')
                                             if deg["status"] == "preferred" else '')
         else:
             deg_cell = '<span class="nd">—</span>'
-        deg_rank = {"BSc": 1, "MSc": 2, "PhD": 3}.get(deg["level"], 0) if deg else 0
         rows.append(
             f'<tr class="row" tabindex="0" role="button" aria-expanded="false" '
             f'data-blob="{blob}" data-company="{esc(company).lower()}" '
             f'data-role="{esc(rtitle).lower()}" data-loc="{esc(loc).lower()}" '
-            f'data-date="{esc(pdate)}" data-years="{prof["years"] or 99}" '
-            f'data-deg="{deg_rank}" data-skills="{esc(" ".join(skill_names)).lower()}">'
-            f'<td class="cco" title="{esc(company)}">{esc(_display_company(company))}</td>'
+            f'data-date="{esc(pdate)}" data-years="{c["years"] or 99}" '
+            f'data-deg="{c["deg_rank"]}" data-skills="{esc(" ".join(skill_names)).lower()}">'
+            f'<td class="cco" title="{esc(company)}">{esc(c["display_company"])}</td>'
             f'<td class="cro">{esc(rtitle)}{emp_html}</td>'
             f'<td class="cskl">{skl_cell}</td>'
             f'<td class="cloc">{esc(loc)}</td>'
             f'<td class="cyrs" title="Years of experience asked for">{yrs_cell}</td>'
             f'<td class="cdeg">{deg_cell}</td>'
-            f'<td class="cdate" title="{esc(pdate)}">{esc(_rel_date(pdate, run_date))}{esc(age)}</td></tr>'
+            f'<td class="cdate" title="{esc(pdate)}">{esc(c["rel_date"])}{esc(age)}</td></tr>'
             f'<tr class="detail"><td colspan="7"><div class="db">{detail}</div></td></tr>')
 
     # ---- aggregated demand view: what the market is asking for, computed per posting ----
@@ -993,9 +490,11 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
                 f'(of {agg["total"]} open; click anything to filter)</summary>'
                 f'<div class="ins-clusters">{ccards}</div></details>')
 
-    fresh = sum(1 for j in ordered if not _age_note(j.get("posted_date"), run_date))
-    audit = (f"{n} open roles · {fresh} posted recently · "
+    fresh = sum(1 for c in ordered if not c["age"])
+    audit = (f"{n} {'archived' if archived else 'open'} roles · {fresh} posted recently · "
              f"{stats.get('companies_scanned',0)} companies scanned · refreshed {esc(run_date)}")
+    if hidden or any(c["issues"] for c in cards):
+        audit += f" · render: {frag}"
     contact = (f' · <a href="{esc(contact_url)}" target="_blank" rel="noopener">Contact</a>'
                if contact_url else '')
     if "archived" not in heading:
@@ -1274,7 +773,7 @@ var justRz=false;
             '<p><b>Everything is extracted deterministically from the posting text</b> — a fixed '
             'keyword lexicon and header rules, no AI guessing. A tag can be missing simply because '
             'the posting never stated it; postings without a captured description show no tags at all.</p>'
-            f'<p><b>Skills</b> are matched from a curated ~55-term lexicon and grouped into '
+            f'<p><b>Skills</b> are matched from a curated {len(roleprofile.SKILLS)}-term lexicon and grouped into '
             f'non-overlapping clusters: {esc(cl)}. Hover any tag for its meaning.</p>'
             '<p><b>MUST / PLUS badges</b> mirror the posting&#8217;s own wording (&#8220;a must&#8221;, '
             '&#8220;an advantage&#8221;, חובה / יתרון) — absence of a badge means the posting didn&#8217;t '
@@ -1299,8 +798,11 @@ var justRz=false;
             'saw it, with the original date in the card.</p>'
             '</div></details>')
     foot = f'<div class="foot">{esc(audit)}{contact}</div>'
-    return (head + top + insights + table + legend + foot + '</div>' + js
+    page = (head + top + insights + table + legend + foot + '</div>' + js
             + analytics_html + '</body></html>')
+    if isinstance(report, dict):        # only once the page exists: a raise above leaves it empty
+        report.update(cards=cards, hidden=hidden, issues=issues, frag=frag, alarms=alarms)
+    return page
 
 
 def _path_label(path):
@@ -1409,6 +911,8 @@ def _text_audit(s):
         lines.append("  COMPANY INTEL: " + "; ".join(s["company_intel"]))
     if s.get("roles"):
         lines.append("  ROLES: " + "; ".join(s["roles"]))
+    if s.get("render"):
+        lines.append("  RENDER: " + " · ".join(s["render"]))
     if s.get("stages"):
         lines.append(f"  stage order: {s['stages']}")
     if s.get("failed_companies"):
@@ -1417,6 +921,7 @@ def _text_audit(s):
 
 
 def _html_audit(s, esc):
+    esc = (lambda x, _e=esc: _e(str(x or "")))          # a bare html.escape chokes on ints; 0 renders blank as before
     paths = s.get("paths", {})
     fc = _capped(s.get("failed_companies", []))
     return (
@@ -1444,7 +949,78 @@ def _html_audit(s, esc):
            if s.get("company_intel") else "")
         + (f'<br><b>Roles:</b> {esc("; ".join(s.get("roles") or []))}'
            if s.get("roles") else "")
+        + (f'<br><b>Render:</b> {esc(" · ".join(s.get("render") or []))}'
+           if s.get("render") else "")
         + (f'<br>Stage order: {esc(s.get("stages",""))}' if s.get("stages") else "")
         + (f'<br>Failed companies: {esc(fc)}' if fc else "")
         + '</div>'
     )
+
+
+# names other lanes' tests reach through this module
+_firmo_facts = rolecard.firmo_facts
+
+
+def render_all(email_jobs, board_jobs, arch_jobs, run_date, stats, company_info=None, *,
+               firmographics=None, board_url="", analytics_html="", contact_url="", ledger=None):
+    """Every product from one call, board and archive FIRST so their render report reaches
+    the mail that is built last. Returns a dict:
+
+        board_html, board_ok              -> docs/index.html (write only when ok)
+        archive_html, archive_ok          -> docs/archive.html (write only when ok)
+        md_title, md_body, email_ok       -> digests/latest.md (the email; a stub naming the failure when not ok)
+        subject, html, text               -> the legacy digest (only `subject` is read)
+        render_lines                      -> the `Render:` line's fragments, = the mail's (for the payload)
+        warnings                          -> what run.py should print as ::warning::
+
+    Never raises for a product's sake: a renderer that fails is reported (a warning, a bold
+    line in the mail) and NOT written, so yesterday's board stays published; the other
+    products still ship — an exception here would lose the morning's verdicts (they are
+    saved before rendering, but the email and board would be blank).
+    """
+    ledger = ledger or {}
+    out = {"render_lines": [], "warnings": []}
+    issues = {"lines": [], "alarms": []}
+
+    def _product(name, fn):
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001
+            msg = f"{name} FAILED ({e.__class__.__name__}: {str(e)[:80]}) — yesterday's file kept"
+            issues["alarms"].append(msg)
+            return None
+
+    rep_b, rep_a = {}, {}
+    board = _product("board", lambda: build_board_html(
+        board_jobs, run_date, stats, company_info, analytics_html=analytics_html,
+        contact_url=contact_url, firmographics=firmographics, ledger=ledger, report=rep_b))
+    archive = _product("archive", lambda: build_board_html(
+        arch_jobs, run_date, stats, company_info=company_info,
+        heading="archived roles (no longer on the employer's careers page)",
+        firmographics=firmographics, ledger=ledger, report=rep_a))
+    for label, rep in (("board", rep_b), ("archive", rep_a)):
+        if rep:
+            issues["lines"].append(f"{label} {rep['frag']}")
+            issues["alarms"] += rep["alarms"]
+    # a product that failed is NOT written: run.py keeps yesterday's file on disk, so the
+    # public board never shows an apology page (the failure is in the mail and the log)
+    out["board_ok"], out["archive_ok"] = board is not None, archive is not None
+    out["board_html"], out["archive_html"] = board or "", archive or ""
+    md = _product("email", lambda: build_markdown(
+        email_jobs, run_date, stats, company_info, board_url=board_url,
+        firmographics=firmographics, ledger=ledger, render_issues=issues))
+    out["email_ok"] = md is not None
+    if md is None:
+        title = f"🎯 digest {run_date} — the email could not be rendered"
+        md = (title, f"# {title}\n\n**Needs a look**\n\n- **Render:** "
+              + "; ".join(_md_alarm(a) for a in issues["alarms"]) + "\n\n- **Render:** "
+              + " · ".join(_md_line(x) for x in issues["lines"]))
+    out["md_title"], out["md_body"] = md
+    out["render_lines"] = list(issues["lines"])
+    legacy = _product("legacy digest", lambda: build_digest(email_jobs, run_date,
+                                                             {**stats, "render": out["render_lines"]}))
+    out["subject"], out["html"], out["text"] = legacy if legacy else (
+        f"[Israeli Jobs] digest — {run_date}", "", "")
+    out["warnings"] = [f"render: {a}" for a in dict.fromkeys(issues["alarms"])]
+    return out
+

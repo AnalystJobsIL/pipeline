@@ -345,8 +345,8 @@ def classify_tasks(bullets):
     """Map responsibility bullets to the day-to-day TASK_GROUPS the role EMPHASIZES.
 
     Each bullet is single-assigned via classify_bullet; a group earns its chip only
-    when it wins at least 2 bullets (or 1 for very short lists) — one passing mention
-    is not a day-to-day focus. Returns [(label, token)] dominant-first."""
+    when it wins at least 2 bullets, or a quarter of a short list — one passing mention
+    is not a day-to-day focus. Returns [(label, token)] pairs, dominant-first."""
     bullets = [b for b in (bullets or []) if b]
     if not bullets:
         return []

@@ -127,7 +127,7 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/company_identity.py` | **shared** - the identity PRIMITIVES (is_foreign, verdict, page_mentions_company, looks_like_a_job_listing_page); the gate that composes them is identity_gate |
 | `pipeline/company_info.py` | the two-sentence company blurb, and `derive_blurb` (the facts read as prose when the blurb is missing) |
 | `pipeline/company_intel.py` | the digest hook: blurbs + facts for one run, bounded and never raising, and the `Company intel:` line in the mail's run audit (ARCHITECTURE.md section 7) |
-| `pipeline/digest.py` | the board, the archive and the email |
+| `pipeline/digest.py` | renders cards into the board, the archive and the email; `render_all` is run.py's one entry |
 | `pipeline/fetchers.py` | one normalizer per ATS platform -> the common job shape. 16 platforms |
 | `pipeline/firmographics.py` | the company record (sector / stage / size / founded), its identity key, the `claude` seam and the shared export both stores converge through (ARCHITECTURE.md section 7) |
 | `pipeline/health.py` | per-company ATS health -> cloud_state/stale.json + health_baseline.json |
@@ -136,11 +136,13 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/identity_gate.py` | **shared** - the one gate every registry writer consults before it writes api_url/active; page content is the discriminator, the tenant string is not |
 | `pipeline/israel.py` | deterministic Israel-location filter |
 | `pipeline/jdfill.py` | fetches a job description for a role that arrived without one |
+| `pipeline/jdtext.py` | the JD as text -> requirements / responsibilities / blurb / location / seniority chip (pure; stdlib + the lexicon for two checks) |
 | `pipeline/llm.py` | **shared** - the one `claude -p` seam: tool-less, schema-constrained, envelope-first, never from the repo (ARCHITECTURE.md section 7b); seniority calls it, firmographics migrates (BACKLOG 117) |
 | `pipeline/notes.py` | **shared** - the companies.csv notes append-log. Never hand-roll a trim |
 | `pipeline/platform_check.py` | self-check that an ATS platform is wired into all of its sites |
 | `pipeline/recruiters.py` | recruiting-agency exclusion |
-| `pipeline/roleprofile.py` | per-job skills / role family / IC-vs-lead / years |
+| `pipeline/rolecard.py` | one card per role from a `matched` row + its ledger record; cross-card wrong-company checks; never raises |
+| `pipeline/roleprofile.py` | the lexicon: skills / role family / IC-vs-lead / years / degree / task groups / AI / soft skills |
 | `pipeline/run.py` | **the orchestrator.** Owned by `infra`; any lane may need a hook in it - propose it, do not smuggle it |
 | `pipeline/seniority.py` | relevance + experience classification; the LLM tier for ambiguous titles |
 | `pipeline/sources.py` | **shared** - per-discovery-source liveness |

@@ -1729,12 +1729,12 @@ write list; each item names the lane that owns it and the command that proves it
     shortest name); merging the records (keep the winner, inherit non-empty fields per
     `firmographics.merge`) is a data change to the committed export, best done in one commit
     with a before/after count.
-99. **`_STAGE_LABEL` in `pipeline/digest.py` is not total over `firmographics.STAGES`** — lane:
+99. ~~**`_STAGE_LABEL` in `pipeline/digest.py` is not total over `firmographics.STAGES`**~~ — **closed 2026-08-25** (`rolecard._STAGE_LABEL` total over `firmographics.STAGES`, asserted at import; `test_every_stage_the_researcher_can_emit_has_a_card_label`). Original text: — lane:
     `render`. `private-enterprise` (44 records) renders as the raw enum on every card (today's
     SHILA card); `subsidiary`/`government`/`nonprofit` label values the researcher can never emit.
     Pin: `assert not (firmographics.STAGES - set(digest._STAGE_LABEL))`. Declined by the operator
     for the company-intel session on 2026-08-24 as out of lane.
-100. **Two junk regexes for one rule** — lane: `render` (+ `company-intel`). `digest._ABOUT_JUNK`
+100. ~~**Two junk regexes for one rule**~~ — **closed 2026-08-25** (`rolecard._ABOUT_JUNK = company_info._JUNK_OUT ∪ unable-to-confirm`; `test_the_blurb_gate_is_the_writers_gate_plus_the_render_only_case`). Original text: — lane: `render` (+ `company-intel`). `digest._ABOUT_JUNK`
     misses `UNKNOWN` and `Error:`; `company_info._JUNK_OUT` misses `unable to confirm`. The
     renderer's gate should import the writer's and extend it. Since 2026-08-24
     `company_profiles.json` is filtered through `_JUNK_OUT` on load, so nothing reaches the card
@@ -1767,7 +1767,7 @@ Record: `docs/sessions/2026-08-24-jd-text.md`. Numbers re-derived that day; re-d
     copies `cloud_state` back wholesale from checkout time, deleting any stamp another job wrote
     since. The `enrich` stamp is now load-bearing for the mail; a per-key merge of this file
     (like `merge_json_cache`) belongs in the conflict path. Found by the wave-0 design attack.
-106. **The markdown mail never prints the inline jd-fill count** — lane: `render`.
+106. ~~**The markdown mail never prints the inline jd-fill count**~~ — **closed 2026-08-25** (`build_markdown` prints `· JDs fetched inline: N` after `LLM calls this run` when the count is non-zero — wave-1 docs attacker caught the first closure as false: the line had only been added to the two legacy audits). Original text: — lane: `render`.
     `jd_filled_inline` is in the summary dict (`pipeline/run.py`) and rendered by `_text_audit`
     (`digest.py:1385`) and `_html_audit` (`:1418`) but not by `build_markdown` — the one that
     becomes `digests/latest.md`. One line after `digest.py:635`
@@ -1851,7 +1851,7 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     Cloudflare's 296 postings say `Hybrid` / `In-Office`; the office is in `offices[]`, which
     `fetch_greenhouse` (`fetchers.py:242`) does not read, so an Israeli Cloudflare role would be
     dropped by the Israel gate. Read `offices[].name`/`location` into the location string.
-119. **`digest._LOC_CANON` and the four seniority vocabularies are copies** — lane: `render`.
+119. **`digest._LOC_CANON` and the four seniority vocabularies are copies** — **partly closed 2026-08-25** (locations: `jdtext._LOC_GROUPS` covers every `israel.py` token, pinned; seniority: `rolecard.sen_canon` uses `seniority._SENIOR/_JUNIOR/_HEBREW_SENIOR` + `roleprofile._LEAD`. Open: the four requirements-header regexes are three lanes' and answer three different questions — left as they are, by decision) — lane: `render`.
     `digest.py:381-393` keeps its own city table (Latin + Hebrew) with no derivation from
     `israel.py` (the 40 names added today render un-canonicalised); `digest._SEN_INFER`,
     `digest._SEN_LEAD`, `roleprofile._LEAD` restate `seniority._SENIOR`, and `roleprofile.py:441`
@@ -1973,7 +1973,7 @@ kept; the Meta listing-url rows are superseded).
     (wave 1)**: on a full run every company but the failed ones is judged, so a role whose
     employer is no registry row (discovery card, stripped recruiter) closes when `_alive`
     drops it; scoped runs still judge only what they scanned.
-137. **`render` re-derives what the ledger now records** — lane: `render`. `digest.py:793-809`
+137. **`render` re-derives what the ledger now records** — **partly closed 2026-08-25** (the `digest.py:793-809` pointer below is pre-split; the rule now lives in `rolecard._fill`/`_from_ledger`) (the render half: `also listed as` on the board card, the archive card and the email heading from `attribution.claimed_by`; re-post dates and archive-only `closed on` from the record. Declined: reading the ledger's `tags` for rendering — a record, not a cache; a vocabulary change must show on every card the same morning (ARCHITECTURE §7d)) — lane: `render`. `digest.py:793-809`
     recomputes the repost badge from `posted_date - first_seen`, `_seniority_chip` ignores
     the stored `seniority`, and `roleprofile.extract` runs on every card each render; the
     ledger carries `reposts`, `status`, `closed_on`, `tags` (`v: 1`) per role. Reading them
@@ -1999,6 +1999,52 @@ kept; the Meta listing-url rows are superseded).
     damage is the board's "new" badges and the `reopened` count). Seen in the rehearsal
     fixture when day 6 was 5 days after day 5. The rule should compare against the last RUN
     date, not the calendar.
+142. **`build_digest` is a dead renderer that every lane still pays for** — lane: `infra` (+
+    `company-intel`). `run.py` calls it and writes `out/digest-<date>.html/.txt`; nothing reads
+    them (verified 2026-08-25 across all 10 workflows and every `.py`) — only its `subject`
+    reaches the JSON payload, which `mark_sent.py` never reads. Each new mail line is therefore
+    written three times (`build_markdown`, `_text_audit`, `_html_audit`). Remove the call in
+    `run.py` (keep a one-line subject), then delete the two audits; the company-intel mutation
+    fixture `tests/fixtures/company_intel/mutations.json` (`ci-intel-line-md/txt`) pins their
+    source text and must be updated in the same commit.
+143. **`roles.tenant_slug` is not a tenant** — lane: `roles`. It returns the second
+    non-plumbing segment of host+path (`_url_segments` already drops the host words and the
+    ATS plumbing), so `job-boards.greenhouse.io/scopio/jobs/1` → `1` and
+    `il.linkedin.com/jobs/view/123` → `123`: the posting id, not the tenant. `attribution.slug`
+    is written from it, but no record in the committed ledger carries an `attribution` dict yet,
+    so the damage is latent. `rolecard._tenant` (host + first non-plumbing path segment on
+    multi-tenant ATS hosts, the host alone elsewhere, aggregators excluded) is the rule the
+    shared-board check needed; adopt it or import it.
+144. **One identity group, two employers: the blurb crosses** — lane: `company-intel`.
+    `identity_key("AppSec Labs") == identity_key("AppSec")` (`labs` is a stripped suffix), and
+    `company_intel.py` deliberately shares a blurb across a group's name-forms — so one
+    company's About text serves both cards. `rolecard.cross_check` counts a blurb that names
+    another *rendered* employer and not its own (`blurb-names-other`), but the AppSec pair is
+    invisible to it (same key). Needs either a declared-distinct list in `identity_facts` or a
+    narrower suffix rule.
+145. **`matched.seniority` is empty for every row** — lane: `roles` / `classifier`. All 111
+    rows carry `''` on 2026-08-25 (`select count(*) from matched where seniority=''`), so the
+    column the store defines is written by nothing; the card derives seniority from the
+    posting's own text and the title instead (`rolecard.sen_canon`). Either write the
+    classifier's verdict into it or drop the column.
+146. **Tests reach into `digest`'s private names** — lane: `docs` (test owners). `_text_audit`,
+    `_html_audit`, `_path_label`, `_firmo_facts` are imported by `tests/test_units.py`,
+    `tests/test_company_intel.py` and `tests/test_registry.py`; `digest.py` re-exports
+    `_firmo_facts` from `rolecard` for that reason alone. When 142 lands, retarget the audit
+    tests at `build_markdown` and drop the re-export.
+147. **BACKLOG numbers 70, 71, 132 and 133 are each used twice** — lane: `docs`. `grep -oE '^[0-9]+\.' docs/BACKLOG.md | sort -n | uniq -d` → `1.`–`15.` (numbered sub-lists inside items, false positives), then the real duplicates `70.`, `71.`, `132.`, `133.`; a citation of "BACKLOG 133" lands on the classifier's `claude -p` item before the registry's "13 active groups read one board" item. Renumber the second block of each (and every citation) in one commit.
+148. **`docs/AGENT_BRIEF.md`'s roles paragraph is stale** — lane: `docs`. "Reposts are detected at render time by comparing `posted_date` against `first_seen`" (the ledger records them, `pipeline/roles.py`), "the tags are not stored" (`cloud_state/roles.jsonl` carries a `tags` snapshot, `v: 1`), "105 rows" (111 on 2026-08-25). The render lane row was corrected on 2026-08-25 (disclosed, out of lane); the paragraph was not.
+149. **`same_employer` and `blurb-names-other` are heuristics with a known false-positive
+    surface** — lane: `render`. Wave 2 measured the registry-wide worst case (every active
+    company posting one "Data Analyst") at 45 cross-check issues; after `_SITE_WORDS`, the
+    space-stripped comparison, the `X (Parent)` rule and the common-word stoplist the named
+    pairs are right, but the rules are lists. A declared-identity source (`identity_facts`)
+    would replace them; until then, a false `shared-board`/`title-twin` is a line in the
+    mail, never a change to a product.
+150. **A failed email stub replaces yesterday's `digests/latest.md`** — lane: `render` /
+    `infra`. When `build_markdown` raises, `render_all` ships a stub that names the failure
+    and `run.py` gives `mark_sent` no roles (nothing is burned); the relay still mails the
+    stub. Whether a reader prefers the stub or yesterday's digest again is a product decision.
 151. **39 of the 111 shipped roles keep an aggregator url as their canonical** — lane:
     `roles`. HEAD's BACKLOG 109 damage: a LinkedIn/Indeed card reached `matched` first, so
     the reader's link is the card's. The 21 open ones self-heal on the next sighting
