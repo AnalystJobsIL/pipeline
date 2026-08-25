@@ -1206,7 +1206,7 @@ Whalo,scrape,,https://www.whalo.com/careers,true,scanned; no open Israel roles n
 HAAT Delivery,scrape,https://secrethunter.io/jobz/de8d529497,https://careers.haat.delivery/careers,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Crossriver,scrape,,https://www.crossriver.com/careers,true,scanned; no open Israel roles now | listing-hunt 2026-08-24: verified 13 IL via www.crossriver.com
 Guideline,scrape,https://secrethunter.io/jobz/82ad06c612,https://secrethunter.io/jobz/82ad06c612,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no pages reachable
-Reindeer,scrape,,https://jobs.ashbyhq.com/reindeer-ai,true,scanned; no open Israel roles now | listing-hunt 2026-08-24: verified 8 IL via jobs.ashbyhq.com
+Reindeer,ashby,reindeer-ai,https://api.ashbyhq.com/posting-api/job-board/reindeer-ai,true,scanned; no open Israel roles now | listing-hunt 2026-08-24: verified 8 IL via jobs.ashbyhq.com | self-heal 2026-08-25: re-resolved to ashby
 somekhchaikin,scrape,https://secrethunter.io/jobz/6bd59c3f66,https://secrethunter.io/jobz/6bd59c3f66,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: another company's board; no listing found
 Universal McCann Israel,scrape,https://secrethunter.io/jobz/d93fb3c4d3,https://secrethunter.io/jobz/d93fb3c4d3,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: another company's board; no listing found
 Tel Aviv,scrape,,https://jobs.secrettelaviv.com/,true,scanned; no open Israel roles now | listing-hunt 2026-08-24: verified 145 IL via jobs.secrettelaviv.com
