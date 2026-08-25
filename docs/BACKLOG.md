@@ -1725,6 +1725,17 @@ write list; each item names the lane that owns it and the command that proves it
     the shared subscription on ~800 registry rows that never render and its output reaches the
     cloud only when someone commits `cloud_state/firmographics.json` by hand. Condition: seven
     consecutive mornings of a healthy `Company intel:` line with no `::warning::company-intel`.
+    **2026-08-25 evidence (`discovery` lane, found by accident):** the task is still armed —
+    `IsraeliJobs-Firmographics`, trigger every 6 h from 09:00 local (09/15/21/03), last run
+    15:00:01, next 21:00 — and it runs `run_firmo_chain.cmd` INSIDE the shared checkout, so
+    it rewrote `cloud_state/firmographics.json` at 15:00 and 15:42 (12 new profiles, e.g.
+    AGILINA — itself a placement firm) while a lane session was mid-commit. Side effects
+    for every lane: a dirty tracked file that nobody staged, `git pull --rebase` refusing
+    ("You have unstaged changes") until it is stashed, and a diff that looks like someone
+    else's uncommitted work. Reproduce: `Get-ScheduledTask -TaskName IsraeliJobs-* |
+    Get-ScheduledTaskInfo`. Until 97's condition is met, the cheapest mitigation is to
+    point the task at a separate clone (or `--out` to a scratch path) rather than the
+    checkout lanes work in.
     Then delete `run_firmo_chain.cmd`, `firmo_health_check.py` and the task; `research_firmographics.py`
     stays as the by-hand bulk tool. Until then: `--workers 3` hits `529 Overloaded` (2 of 3
     calls on 2026-08-24 09:13) — drop to 2.
