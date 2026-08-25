@@ -896,8 +896,9 @@ def test_a_pool_that_falls_to_zero_is_an_alarm():
     the last census recorded; the first census after deploy (no `//pools//`) never alarms."""
     import registry_health as R
     now = {label.split(" (")[0]: len(m) for label, m in R.pools(_ROWS3).items()}
-    assert now["crack_walled"] == 0 and now["probe_candidates"] == 1, now
-    prev = {"//pools//": {"crack_walled": 25, "probe_candidates": 1,
+    # the probe is a FACT pool since 2026-08-26: both parked http rows of _ROWS3 are its
+    assert now["crack_walled"] == 0 and now["probe_candidates"] == 2, now
+    prev = {"//pools//": {"crack_walled": 25, "probe_candidates": 2,
                           "listing_hunt": now["listing_hunt"] * 4 or 40}}
     out = R.pool_floor(_ROWS3, prev)
     assert any("COLLAPSED to zero: crack_walled was 25" in x for x in out), out
@@ -918,7 +919,7 @@ def test_the_pool_census_key_is_not_mistaken_for_a_company(tmp_path):
     path = tmp_path / "census.json"
     R.save_census(_ROWS3, path=str(path))
     prev = json.load(open(path, encoding="utf-8"))
-    assert "//pools//" in prev and prev["//pools//"]["probe_candidates"] == 1
+    assert "//pools//" in prev and prev["//pools//"]["probe_candidates"] == 2
     d = R.census_diff(_ROWS3, prev)
     assert d["added"] == [] and d["gone"] == [] and d["prev_rows"] == 3
     assert not d["first_census"]
@@ -3448,9 +3449,6 @@ def test_every_refusal_note_keeps_the_row_in_a_re_check_pool(monkeypatch):
     # a retyped mirror is how the loss stayed silent; the mirror must BE the tool's
     # the hunt mirror is the tool's own predicate now -- see
     # test_every_ownership_mirror_agrees_with_the_tool_it_mirrors, which pins all five
-    import probe_candidates as PC
-    assert RH._PROBE_SHAPE is PC.PROBE_POOL, (
-        "registry_health's probe mirror is no longer probe_candidates' own constant")
     # ...and check_invariants.POOL, the THIRD copy, is pinned set-equal to the receiver's
     # alternatives plus its one deliberate extra (`dark-triage` has its own pool). The old
     # guard checked only the narrowing direction; a token added to POOL alone WIDENS the
@@ -4794,3 +4792,101 @@ def test_auto_expand_turns_a_linkedin_slug_into_the_companys_own_seed(tmp_path, 
     monkeypatch.setattr(E, "_LI_SITE", E._LI_SITE)
     assert E._LI_SITE.search(html).group(1) == "https://www.fiverr.com/"
     assert E._site_from_slug("has space") == ""
+
+
+# ---------------------------------------------------------------------------------------
+# Durable pools, 2026-08-26 (BACKLOG 53, 197, 27, 72, 190): a pool keys on row FACTS, not
+# on a token inside another tool's segment; a terminal segment is never evicted.
+# ---------------------------------------------------------------------------------------
+
+def test_the_probe_pool_survives_the_hunts_own_verdict():
+    """Kills `probe-pool-http-remove`, `probe-pool-aggregator-remove`,
+    `probe-pool-terminal-remove`. The old selector stood on `monitored candidate` inside
+    listing_hunt's own segment, which its next verdict deletes: 127 -> 20 in one simulated
+    all-failing night."""
+    import probe_candidates as PC
+    from pipeline.notes import replace_own
+    row = ["X Ltd", "scrape", "", "https://www.x.example/careers", "false",
+           "listing-hunt 2026-08-20: no IL listing; monitored candidate"]
+    assert PC.in_probe_pool(row)
+    row[5] = replace_own(row[5], "listing-hunt", "listing-hunt 2026-08-26: no listing found")
+    assert PC.in_probe_pool(row), "the hunt's own re-verdict must not evict the probe's row"
+    assert not PC.in_probe_pool(["X Ltd", "scrape", "", "", "false", "url-cleared 2026-08-25: x"]), "nothing to probe"
+    assert not PC.in_probe_pool(["X Ltd", "scrape", "", "https://il.linkedin.com/jobs/view/1", "false", "scanned; no open"]), "a posting is not a candidate page"
+    assert not PC.in_probe_pool(["X Ltd", "scrape", "", "https://www.x.example/careers", "false", "alias-of X 2026-08-25: twin"]), "terminal"
+    assert not PC.in_probe_pool(["Experis Israel", "scrape", "", "https://www.experis.example/careers", "false", "no listing found"]), "an agency by NAME"
+    assert not PC.in_probe_pool(["X Ltd", "scrape", "", "https://www.x.example/careers", "true", ""]), "active rows are not candidates"
+    assert not hasattr(PC, "PROBE_POOL"), "the token regex is gone; the row's address is the pool"
+
+
+def test_the_terminal_test_asks_the_name_and_word_bounds_recruiter():
+    """Kills `recruiter-boundary-remove` and `terminal-row-name-remove` (BACKLOG 72)."""
+    from pipeline.verdicts import is_terminal, is_terminal_row
+    assert not is_terminal("listing-hunt 2026-08-20: no IL listing via careers.smartrecruiters.com/Wix2"), (
+        "`SmartRecruiters` in a note is not a recruiter verdict")
+    assert is_terminal("recruiter (staffing agency)") and is_terminal("alias-of X 2026-08-25")
+    assert is_terminal_row(["Experis Israel", "scrape", "", "https://x", "false", "no listing found"]), "an agency by name"
+    assert not is_terminal_row(["Fiverr", "scrape", "", "https://x", "false", "no listing found"])
+    assert is_terminal_row(["Fiverr", "scrape", "", "https://x", "false", "defunct: gone"])
+
+
+def test_a_terminal_segment_is_never_evicted_by_append_or_by_the_merge():
+    """Kills `terminal-keep-remove` and `merge-keep-remove`. 19 parked rows carried a
+    terminal token that was not the newest segment on a note > 150 chars; one or two more
+    routine stamps evicted the alias-of that kept them out of every activating pool."""
+    from pipeline.notes import append
+    import merge_csv_rows as M
+    base = "alias-of Kornit Digital 2026-08-25: identical board URL (BACKLOG 133)"
+    n = base
+    for i in range(8):
+        n = append(n, f"dark-triage 2026-09-0{i + 1}: wrong-page (a long reason that pushes the cell toward the cap, night {i})")
+    assert "alias-of Kornit Digital" in n and len(n) <= 220, n
+    assert n.startswith("alias-of"), "the protected segment keeps its place; the newest fits or is cut"
+    # positive control: an unprotected old segment still goes first
+    n2 = append("listing-hunt 2026-08-01: no listing found | dark-triage 2026-08-02: x", "y" * 200)
+    assert "listing-hunt 2026-08-01" not in n2 and n2.endswith("y" * 200)
+    # the conflict merge: theirs' tail is trimmed, never the terminal segment
+    ours = base + " | dark-triage 2026-09-01: wrong-page (" + "z" * 120 + ")"
+    theirs = base + " | listing-hunt 2026-09-02: no listing found (" + "w" * 80 + ")"
+    merged = M._merge_notes(theirs, ours, cap=220)
+    assert "alias-of Kornit Digital" in merged and len(merged) <= 220, merged
+
+
+def test_the_0230_chain_has_one_selector_that_the_mirror_imports(tmp_path, monkeypatch):
+    """Kills `retry-pool-terminal-remove` and `retry-pool-narrow` (BACKLOG 190)."""
+    import retry_unreachable as R
+    import registry_health as RH
+    p = R.in_retry_pool
+    assert p(["A", "scrape", "", "https://a.example/careers", "false", "unreachable; could not scan"])
+    assert p(["A", "scrape", "", "https://a.example/careers", "false",
+              "listing-hunt 2026-08-20: no IL listing | bd-tried 2026-08-25 x1 | retry 2026-08-25: still unreachable"]), (
+        "the token mid-note must select")
+    assert not p(["A", "scrape", "", "https://a.example/careers", "false", "unreachable; could not scan | alias-of B 2026-08-25: twin"])
+    assert not p(["A", "scrape", "", "", "false", "unreachable; could not scan"]), "nothing to retry without an address"
+    assert not p(["A", "scrape", "", "https://a.example/careers", "false", "listing-hunt 2026-08-20: host unreachableXYZ"]), "a word, not a substring"
+    rows = [["A", "scrape", "", "https://a.example/careers", "false", "unreachable; could not scan"],
+            ["B", "scrape", "", "https://b.example/careers", "false", "no listing found"]]
+    pools = RH.pools(rows)
+    assert [r[0] for r in pools["retry_unreachable + bd_rescue (02:30 daily)"]] == ["A"]
+    lines = []
+    assert RH.explain("A", rows, out=lines.append) == 0
+    assert any("retry_unreachable + bd_rescue" in ln and "True" in ln for ln in lines)
+
+
+def test_the_sunday_cross_validation_is_a_fact_pool_staged_behind_the_probe_signals(tmp_path, monkeypatch):
+    """Kills `validate-empty-walled-remove` (BACKLOG 197). Token arm today; the probe's
+    own baseline is the durable arm, behind VALIDATE_EMPTY_SIGNALS=1 until one Sunday's
+    log, because this pool activates."""
+    import validate_empty as V
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "cloud_state" / "candidate_probe.json").write_text('{"Sig Ltd": {"sig": 3, "il": 1, "last": "2026-08-25"}}', encoding="utf-8")
+    monkeypatch.delenv("VALIDATE_EMPTY_SIGNALS", raising=False)
+    tok = ["Tok Ltd", "scrape", "", "https://www.tok.example/careers", "false", "scanned; no open Israel roles now"]
+    sig = ["Sig Ltd", "scrape", "", "https://www.sig.example/careers", "false", "listing-hunt 2026-08-20: no listing found"]
+    wd = ["Wd Ltd", "scrape", "", "https://x.wd1.myworkdayjobs.com/careers", "false", "scanned; no open Israel roles now"]
+    assert V.in_validate_empty_pool(tok) and not V.in_validate_empty_pool(sig) and not V.in_validate_empty_pool(wd)
+    monkeypatch.setenv("VALIDATE_EMPTY_SIGNALS", "1")
+    assert V.in_validate_empty_pool(sig), "the probe saw signals on this page: durable membership"
+    assert not V.in_validate_empty_pool(["Nope", "scrape", "", "https://www.nope.example/careers", "false", "no listing found"])
+    assert not V.in_validate_empty_pool(wd), "walled hosts stay crack_walled's"

@@ -102,9 +102,9 @@ def in_crack_pool(r):
     a `redundant`-noted walled twin (Marvell Israel) must never re-enter -- dropping
     that token from the shared TERMINAL went suite-green until this existed (wave-6 R2).
     """
+    from pipeline.verdicts import is_terminal_row
     return (len(r) >= 6 and r[4] == "false" and _gate.is_walled(r)
-            and not TERMINAL.search(r[5] or "")
-            and not is_recruiter(r[0]))
+            and not is_terminal_row(r))
 
 
 def listing_urls(platform, m, page_url):

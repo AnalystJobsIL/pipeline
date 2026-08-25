@@ -77,23 +77,24 @@ def probe(url):
     return {"sig": len(_JOB_SIG.findall(body)), "il": len(_IL_SIG.findall(body))}
 
 
-# The probe pool's NOTE SHAPES. This constant is the ONE definition -- `registry_health`
-# imports it for the ownership matrix (a retyped mirror is how the crack pool's count and
-# the hunt pool's orphans were both mis-reported; see those tools' notes). It is also the
-# pool item 53 measures eroding when `listing_hunt` rewrites its own segment: the durable
-# fix filed there is a signal this tool owns, not a wider regex here.
-PROBE_POOL = re.compile(r"monitored candidate|host documented|no IL listing")
-
-
 def in_probe_pool(r):
     """The probe pool's OWN membership rule -- `main()` selects with it and
-    `registry_health` imports it. A retyped mirror of a pool is how coverage losses were
-    reported as owned (wave-4 R3); a shared CONSTANT alone is how a `search`->`match` edit
-    at the consumer emptied this pool 130 -> 0 with the suite green (wave-6 R2)."""
+    `registry_health` imports it. A FACT pool (2026-08-26, docs/BACKLOG.md 53): any parked
+    row with a real, non-aggregator http address is a monitored candidate -- the address IS
+    the documentation (listing_hunt / crack_walled persisted it into col 3). The old rule
+    stood on three tokens (`monitored candidate|host documented|no IL listing`) that live
+    INSIDE listing_hunt's own segment, which its next verdict deletes by design: one
+    all-failing hunt night took the pool 127 -> 20 (string algebra on the real registry),
+    148 -> 4 over 14 simulated nights -- and nothing alarmed. A retyped mirror of a pool is
+    how coverage losses were reported as owned (wave-4 R3)."""
+    from pipeline.aggregators import is_aggregator
+    from pipeline.firmographics import looks_like_junk
+    from pipeline.verdicts import is_terminal_row
     return (len(r) >= 6 and r[4] == "false"
-            and bool(PROBE_POOL.search(r[5] or ""))
-            and not is_terminal(r[5])
-            and (r[3] or "").startswith("http"))
+            and (r[3] or "").startswith("http")
+            and not is_aggregator(r[3])
+            and not looks_like_junk(r[0])
+            and not is_terminal_row(r))
 
 
 def main():

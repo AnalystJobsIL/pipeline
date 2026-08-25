@@ -47,7 +47,11 @@ TOKENS = {
 TERMINAL = ("defunct", "domain-dead", "duplicate of", "redundant", "recruiter", "alias-of")
 
 POOL_RX = re.compile("|".join(re.escape(t) for t in TOKENS), re.I)
-TERM_RX = re.compile("|".join(TERMINAL), re.I)
+# `recruiter` is WORD-bounded: `SmartRecruiters` in a note carried it into five rows, two of
+# them parked and thereby terminal-by-substring in NO pool (Bosch Israel, Wix (Wixpress);
+# docs/BACKLOG.md 72). Agency-hood is decided by the NAME -- `is_terminal_row` below.
+TERM_RX = re.compile("|".join(r"\b" + t + r"\b" if t == "recruiter" else re.escape(t)
+                              for t in TERMINAL), re.I)
 
 
 def in_pool(note: str) -> bool:
@@ -58,6 +62,15 @@ def in_pool(note: str) -> bool:
 
 def is_terminal(note: str) -> bool:
     return bool(TERM_RX.search(note or ""))
+
+
+def is_terminal_row(r) -> bool:
+    """THE terminal test for a pool predicate: a terminal note token OR an agency NAME.
+    Every `in_*_pool` calls this rather than pairing `TERM_RX` with its own `is_recruiter`
+    (2026-08-26): one rule, and the nine agency-named parked rows that had no token stop
+    counting as coverage anyone owes."""
+    from pipeline.recruiters import is_recruiter
+    return is_terminal(r[5] if len(r) > 5 else "") or is_recruiter(r[0] if r else "")
 
 
 def stale(note: str, tool: str, days: int) -> bool:

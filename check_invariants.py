@@ -19,7 +19,7 @@ from __future__ import annotations
 import csv
 import re
 
-from pipeline.verdicts import TERMINAL as _VERDICTS_TERMINAL
+from pipeline.verdicts import TERMINAL as _VERDICTS_TERMINAL, TERM_RX as _VERDICTS_TERM_RX
 import sys
 from collections import Counter
 
@@ -66,7 +66,7 @@ POOL = (r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|host
 # THE shared list (docs/BACKLOG.md 47) — this file gates three writer workflows'
 # commits now, and a private narrower copy here is exactly what registry_health
 # records producing 4 of 5 false-positive orphans.
-TERMINAL = "|".join(re.escape(t) for t in _VERDICTS_TERMINAL)
+TERMINAL = _VERDICTS_TERM_RX.pattern   # the shared regex verbatim (word-bounded `recruiter`)
 # the modes triage_dark.py may write. A truncated one ("page-emp") matches no pool.
 TRIAGE_MODES = {"page-empty", "extract-gap", "wrong-page", "url-dead", "js-shell",
                 "blocked", "acquired"}
@@ -149,11 +149,16 @@ def main():
     # changed, hundreds of companies retired at once (check E is its other half). A handful
     # of orphans is a bug in one tool's note, and withholding the day's product to report it
     # is the trade that failed on 2026-08-23. Threshold, then.
+    # A row is owned by a TOKEN pool (POOL) or by a FACT pool: any parked row with a real
+    # http, non-aggregator address is the probe's (probe_candidates.in_probe_pool, 2026-08-26)
+    def _fact_owned(r):
+        return (r[3] or "").startswith("http") and not is_aggregator(r[3])
     orphans = [r[0] for r in body
                if len(r) >= 6 and r[4] == "false"
                and not re.search(TERMINAL, r[5] or "", re.I)
                and not is_recruiter(r[0])
-               and not re.search(POOL, r[5] or "", re.I)]
+               and not re.search(POOL, r[5] or "", re.I)
+               and not _fact_owned(r)]
     unexpected = sorted(set(orphans) - ALLOWED_ORPHANS)
     if len(unexpected) > ORPHAN_BLOCK_AT:
         bad(f"{len(unexpected)} inactive rows match NO re-check pool (retired coverage): "
@@ -167,6 +172,10 @@ def main():
                  and not re.search(TERMINAL, r[5] or "", re.I))
     if pool_n < 50:
         bad(f"re-check pool collapsed to {pool_n} rows (floor 50) — predicate inverted?")
+    fact_n = sum(1 for r in body if len(r) >= 6 and r[4] == "false" and _fact_owned(r)
+                 and not re.search(TERMINAL, r[5] or "", re.I))
+    if fact_n < 50:
+        bad(f"the fact pool (parked rows with an http address) collapsed to {fact_n} (floor 50)")
 
     # F. truncation eating verdicts
     dangling = [r[0] for r in body if len(r) > 5

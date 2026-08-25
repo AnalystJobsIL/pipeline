@@ -110,6 +110,22 @@ def _today():
     return _dtm.date.today().isoformat()
 
 
+_UNREACHABLE = re.compile(r"\bunreachable\b", re.I)
+
+
+def in_retry_pool(r):
+    """The 02:30 chain's OWN membership rule, shared: `bd_rescue` (90 s earlier, paid)
+    imports it and `registry_health` mirrors it (docs/BACKLOG.md 190 -- the chain was in no
+    matrix, so `orphans()` could not credit a row to it and `pool_floor` could not watch it).
+    Parked, an http address, the `unreachable` token as a word, not terminal (an `alias-of`
+    twin points at a board that WORKS), not an agency."""
+    from pipeline.verdicts import is_terminal_row
+    return (len(r) >= 6 and r[4] == "false"
+            and bool(_UNREACHABLE.search(r[5] or ""))
+            and (r[3] or "").startswith("http")
+            and not is_terminal_row(r))
+
+
 def _note(base, segment, disproved=True):
     """This tool's verdict, APPENDED to what the row already carries (rule 3).
 
@@ -172,9 +188,7 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     # `unreachable` is the selector; a terminal row (`defunct`, `alias-of`, ...) that also
     # carries it must never be re-attempted -- an alias row points at a board that WORKS.
-    idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows)
-           if len(r) >= 6 and "unreachable" in (r[5] or "").lower()
-           and not is_terminal(r[5] or "")}
+    idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows) if in_retry_pool(r)}
     names = list(idx)
     if limit:
         names = names[:limit]

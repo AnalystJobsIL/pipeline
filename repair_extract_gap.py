@@ -48,11 +48,10 @@ def in_extract_gap_pool(r):
     parked as `alias-of` it selected `GenCell Energy` -- a row whose board WORKS -- for the
     19:00 run, which would have re-activated the duplicate off its own extract-gap stamp.
     Recruiters are never activated anywhere."""
-    from pipeline.recruiters import is_recruiter
-    from pipeline.verdicts import TERM_RX
+    from pipeline.verdicts import is_terminal_row
     return (len(r) >= 6 and r[4] == "false"
             and bool(MODE.search(r[5] or "")) and (r[3] or "").startswith("http")
-            and not TERM_RX.search(r[5] or "") and not is_recruiter(r[0]))
+            and not is_terminal_row(r))
 
 
 def main():

@@ -98,9 +98,8 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     # terminal rows are never re-attempted (an `alias-of` twin parked while unreachable
     # would otherwise be unlocked -- and paid for -- 90 s before retry_unreachable skips it)
-    idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows)
-           if len(r) >= 6 and "unreachable" in (r[5] or "").lower()
-           and not is_terminal(r[5] or "")}
+    from retry_unreachable import in_retry_pool          # the chain's ONE selector
+    idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows) if in_retry_pool(r)}
     import datetime as _dtm
     recent = (_dtm.date.today() - _dtm.timedelta(days=7)).isoformat()
     def _skip(name):

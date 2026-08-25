@@ -107,7 +107,6 @@ def is_terminal_note(note: str) -> bool:
 # the tool is case-sensitive -- measured 136 -> 136 on the real registry, zero rows moved.
 # _EXTRACT_GAP, the looser retyped extract-gap mirror, is deleted: `_extract_gap_mode()`
 # below has imported the tool's own MODE since the rebuild and nothing else read the copy.
-from probe_candidates import PROBE_POOL as _PROBE_SHAPE
 
 
 def read_rows(path=CSV_PATH):
@@ -205,6 +204,13 @@ def _validate_empty_pool():
     return in_validate_empty_pool
 
 
+def _retry_pool():
+    """The 02:30 chain's predicate (bd_rescue + retry_unreachable share it). Lazy: retry
+    pulls in the scraper stack."""
+    from retry_unreachable import in_retry_pool
+    return in_retry_pool
+
+
 def _extract_gap_pool():
     """The tool's OWN predicate, imported (`_EXTRACT_GAP` was a retyped mirror, LOOSER than
     the tool -- the direction that hides orphans; then `MODE` alone, which lacked the
@@ -264,6 +270,8 @@ def pools(rows):
             sel(lambda n, r: _probe.in_probe_pool(r)),
         "validate_empty (Sun 04:00)":
             sel(lambda n, r: _validate_empty_pool()(r)),
+        "retry_unreachable + bd_rescue (02:30 daily)":
+            sel(lambda n, r: _retry_pool()(r)),
         "audit_empty_rows (Sun 04:00)":
             sel(lambda n, r: in_pool(n) and not is_terminal_note(n) and not is_recruiter(r[0])),
         "deep_validate rung (Sun 04:00)":
@@ -670,6 +678,8 @@ def explain(name, rows=None, fetch=False, out=print):
                         ("probe_candidates (05:00 daily)", _probe.in_probe_pool)):
         out(f"  {label:34} {bool(pred(row))}")
     out(f"  {'audit_empty_rows / deep_validate':34} {bool(active == 'false' and in_pool(note or '') and not is_terminal_note(note or ''))}")
+    out(f"  {'retry_unreachable + bd_rescue (02:30)':34} {bool(_retry_pool()(row))}")
+    out(f"  {'validate_empty (Sun 04:00)':34} {bool(_validate_empty_pool()(row))}")
     out(f"  {'terminal (no pool may re-open)':34} {is_terminal_note(note or '')}")
 
     out("== last stamp -> tool -> gate ==")
@@ -681,6 +691,9 @@ def explain(name, rows=None, fetch=False, out=print):
                  "dark-triage": "triage_dark.py", "deep-validated": "deep_validate.py",
                  "re-audit": "audit_empty_rows.py", "repair": "repair_dead_urls.py",
                  "probe-woken": "probe_candidates.py", "bd-tried": "bd_rescue.py",
+                 "bd-policy": "bd_rescue.py", "retry": "retry_unreachable.py",
+                 "retry-resolved": "retry_unreachable.py", "retry-scrape": "retry_unreachable.py",
+                 "cross-validated": "validate_empty.py", "empty-but-suspect": "validate_empty.py",
                  "scanned via brightdata": "bd_rescue.py"}.get(tool, "")
     gates = [g for g, files in G.GATE_CALLERS.items() if tool_file in files]
     out(f"  last segment: {last!r}\n  stamped by: {tool}  ({tool_file or 'n/a'})\n"

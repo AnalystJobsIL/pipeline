@@ -1081,10 +1081,10 @@
   {
     "id": "retry-terminal-drop",
     "file": "retry_unreachable.py",
-    "symbol": "main",
+    "symbol": "in_retry_pool",
     "class": "M5-population-widening",
-    "find": "           if len(r) >= 6 and \"unreachable\" in (r[5] or \"\").lower()\n           and not is_terminal(r[5] or \"\")}",
-    "replace": "           if len(r) >= 6 and \"unreachable\" in (r[5] or \"\").lower()}",
+    "find": "            and not is_terminal_row(r))\n\n\ndef main():",
+    "replace": "            and True)\n\n\ndef main():",
     "why": "the selector had no terminal exclusion until 2026-08-25: an alias-of row carrying `unreachable` would be re-attempted and could re-activate the duplicate.",
     "must_be_killed_by_behavioural": true
   },
@@ -1213,8 +1213,8 @@
     "file": "repair_extract_gap.py",
     "symbol": "in_extract_gap_pool",
     "class": "M5-population-widening",
-    "find": "            and not TERM_RX.search(r[5] or \"\") and not is_recruiter(r[0]))",
-    "replace": "            and not is_recruiter(r[0]))",
+    "find": "            and not is_terminal_row(r))",
+    "replace": "            and True)",
     "why": "an activating pool without a terminal exclusion re-opens an alias-of row off its own extract-gap stamp (GenCell Energy, 2026-08-25).",
     "must_be_killed_by_behavioural": true
   },
@@ -1436,6 +1436,106 @@
     "find": "        if (agg_seed and e.get(\"slug\") and search_budget > 0\n                and os.environ.get(\"AUTO_EXPAND_SLUG_SEED\", \"0\") == \"1\"):",
     "replace": "        if False:",
     "why": "the slug is the one non-aggregator seed intake produces; ignoring it leaves 399 names on the LLM tier alone (BACKLOG 178).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "recruiter-boundary-remove",
+    "file": "pipeline/verdicts.py",
+    "symbol": "TERM_RX",
+    "class": "M3-branch-narrowing",
+    "find": "TERM_RX = re.compile(\"|\".join(r\"\\b\" + t + r\"\\b\" if t == \"recruiter\" else re.escape(t)",
+    "replace": "TERM_RX = re.compile(\"|\".join(re.escape(t)",
+    "why": "`SmartRecruiters` in a note made five rows terminal by substring, two of them parked in no pool (BACKLOG 72).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "terminal-row-name-remove",
+    "file": "pipeline/verdicts.py",
+    "symbol": "is_terminal_row",
+    "class": "M1-gate-removal",
+    "find": "    return is_terminal(r[5] if len(r) > 5 else \"\") or is_recruiter(r[0] if r else \"\")",
+    "replace": "    return is_terminal(r[5] if len(r) > 5 else \"\")",
+    "why": "agency-hood is decided by the NAME; without it nine agency-named parked rows count as coverage owed.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "terminal-keep-remove",
+    "file": "pipeline/notes.py",
+    "symbol": "append",
+    "class": "M1-gate-removal",
+    "find": "        victims = [i for i, p in enumerate(parts) if not rx.search(p)]",
+    "replace": "        victims = list(range(len(parts)))",
+    "why": "eviction must never take the alias-of/defunct segment that keeps a row out of every activating pool (19 rows at risk).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "merge-keep-remove",
+    "file": "merge_csv_rows.py",
+    "symbol": "_merge_notes",
+    "class": "M1-gate-removal",
+    "find": "        victims = [i for i in range(len(out) - 1, -1, -1) if not has_terminal(out[i])]",
+    "replace": "        victims = [len(out) - 1]",
+    "why": "the conflict path must honour the same protection or a conflict day undoes it.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "probe-pool-http-remove",
+    "file": "probe_candidates.py",
+    "symbol": "in_probe_pool",
+    "class": "M1-gate-removal",
+    "find": "            and (r[3] or \"\").startswith(\"http\")\n            and not is_aggregator(r[3])",
+    "replace": "            and True\n            and not is_aggregator(r[3])",
+    "why": "a url-cleared row has nothing to probe.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "probe-pool-aggregator-remove",
+    "file": "probe_candidates.py",
+    "symbol": "in_probe_pool",
+    "class": "M1-gate-removal",
+    "find": "            and not is_aggregator(r[3])\n            and not looks_like_junk(r[0])",
+    "replace": "            and True\n            and not looks_like_junk(r[0])",
+    "why": "a posting on someone else's board is not a candidate page.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "probe-pool-terminal-remove",
+    "file": "probe_candidates.py",
+    "symbol": "in_probe_pool",
+    "class": "M1-gate-removal",
+    "find": "            and not looks_like_junk(r[0])\n            and not is_terminal_row(r))",
+    "replace": "            and not looks_like_junk(r[0])\n            and True)",
+    "why": "an alias-of twin with an http address must not be probed and woken.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-pool-terminal-remove",
+    "file": "retry_unreachable.py",
+    "symbol": "in_retry_pool",
+    "class": "M1-gate-removal",
+    "find": "            and (r[3] or \"\").startswith(\"http\")\n            and not is_terminal_row(r))",
+    "replace": "            and (r[3] or \"\").startswith(\"http\")\n            and True)",
+    "why": "the chain must never re-attempt a terminal row (BACKLOG 190).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-pool-narrow",
+    "file": "retry_unreachable.py",
+    "symbol": "in_retry_pool",
+    "class": "M3-branch-narrowing",
+    "find": "            and bool(_UNREACHABLE.search(r[5] or \"\"))",
+    "replace": "            and (r[5] or \"\").startswith(\"unreachable\")",
+    "why": "the token mid-note (`retry <date>: still unreachable` as the third segment) must still select.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "validate-empty-walled-remove",
+    "file": "validate_empty.py",
+    "symbol": "in_validate_empty_pool",
+    "class": "M1-gate-removal",
+    "find": "            and not _g.is_walled(r)          # crack_walled owns walled hosts",
+    "replace": "            and True          # crack_walled owns walled hosts",
+    "why": "a myworkdayjobs row is crack_walled's; cross-validating it over plain HTTP re-creates the wall verdicts.",
     "must_be_killed_by_behavioural": true
   }
 ]

@@ -93,8 +93,14 @@ def _merge_notes(theirs: str, ours: str, cap: int = 220, base: str | None = None
     # `out` is ours-first then theirs-unique, so pop() trims from the THEIRS tail --
     # the stale duplicates -- and ours' own segments survive. Measured on the real
     # registry: 0 of 1210 rows lose their own pool selector this way.
+    # ...but never a terminal segment (2026-08-26, the same protection `notes.append` has):
+    # a conflict day must not evict the `alias-of` that keeps a row out of every pool
+    from pipeline.notes import has_terminal
     while out and len(" | ".join(out)) > cap:
-        out.pop()
+        victims = [i for i in range(len(out) - 1, -1, -1) if not has_terminal(out[i])]
+        if not victims:
+            break
+        out.pop(victims[0])
     return " | ".join(out)[:cap]
 
 

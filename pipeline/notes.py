@@ -21,18 +21,39 @@ def split(note: str) -> list:
     return [p for p in (s.strip() for s in str(note or "").split("|")) if p]
 
 
-def append(base: str, segment: str, cap: int = CAP) -> str:
-    """`base` with `segment` appended, trimmed to `cap` by dropping OLD whole segments."""
+def _terminal_rx():
+    from pipeline.verdicts import TERM_RX      # lazy: verdicts imports nothing of ours
+    return TERM_RX
+
+
+def append(base: str, segment: str, cap: int = CAP, keep=None) -> str:
+    """`base` with `segment` appended, trimmed to `cap` by dropping OLD whole segments --
+    never a TERMINAL one. An `alias-of` / `defunct` / `domain-dead` segment is the only
+    thing keeping a row out of every ACTIVATING pool, and by construction it is the oldest
+    segment on the row (2026-08-26: 19 parked rows carried a terminal token that was not the
+    newest segment on a note > 150 chars -- one or two more stamps evicted it). `keep` is
+    the protecting regex (default: the shared terminal list); if only protected segments
+    remain and the new one still does not fit, the NEW segment is truncated -- on a terminal
+    row no re-check verdict matters."""
     seg = " ".join(str(segment or "").split())
     if not seg:
         return str(base or "")[:cap]
+    rx = _terminal_rx() if keep is None else keep
     parts = split(base)
     while parts and len(SEP.join(parts + [seg])) > cap:
-        parts.pop(0)                     # oldest first
+        victims = [i for i, p in enumerate(parts) if not rx.search(p)]
+        if not victims:
+            break
+        parts.pop(victims[0])            # oldest UNPROTECTED first
     out = SEP.join(parts + [seg])
+    if len(out) <= cap:
+        return out
+    if parts:                            # only protected segments left: cut the newcomer
+        room = cap - len(SEP.join(parts)) - len(SEP)
+        return SEP.join(parts + [seg[:max(room, 0)]]) if room > 0 else SEP.join(parts)[:cap]
     # a single segment longer than the cap is the caller's problem, not the log's: keep the
     # verdict and lose its tail rather than emit something that parses as a different verdict
-    return out if len(out) <= cap else seg[:cap]
+    return seg[:cap]
 
 
 def replace_own(base: str, marker: str, segment: str, cap: int = CAP) -> str:
@@ -43,3 +64,8 @@ def replace_own(base: str, marker: str, segment: str, cap: int = CAP) -> str:
     """
     kept = [p for p in split(base) if not p.lower().startswith(str(marker).lower())]
     return append(SEP.join(kept), segment, cap)
+
+
+def has_terminal(note: str) -> bool:
+    """Does the note carry a protected (terminal) segment? The merge asks before trimming."""
+    return bool(_terminal_rx().search(note or ""))

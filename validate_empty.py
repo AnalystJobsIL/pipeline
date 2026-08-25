@@ -12,6 +12,8 @@ companies.csv in place. This is a deterministic audit — no LLM, no browser.
 from __future__ import annotations
 
 import csv
+import os
+import json
 import re
 import time
 import urllib.request
@@ -34,10 +36,30 @@ def in_validate_empty_pool(r):
     selected, and the promote branch would have re-activated them on Sunday with
     `check_invariants` green (wave-1 pools attacker, reproduced on the real `main()`).
     A row with no address cannot be cross-validated either."""
-    return (len(r) >= 6 and r[4] == "false"
-            and "no open israel roles" in (r[5] or "").lower()
-            and (r[3] or "").startswith("http")
-            and not is_terminal(r[5] or "") and not is_recruiter(r[0]))
+    from probe_candidates import in_probe_pool
+    from pipeline import identity_gate as _g
+    n = (r[5] or "").lower()
+    empty_class = ("no open israel roles" in n or "cross-validated" in n or "empty-but-suspect" in n)
+    return (in_probe_pool(r)                 # parked, http, not aggregator/junk/terminal/agency
+            and not _g.is_walled(r)          # crack_walled owns walled hosts
+            and (empty_class or (os.environ.get("VALIDATE_EMPTY_SIGNALS", "0") == "1"
+                                 and _probe_saw_signals(r[0]))))
+
+
+def _probe_saw_signals(name, state=None):
+    """The 05:00 probe's OWN baseline (`cloud_state/candidate_probe.json`): a page that
+    answered plain HTTP and showed a job or Israel signal. Written by one tool, never
+    evicted -- durable in the sense col 3 is. The token arm above erodes at the 220 cap
+    (docs/BACKLOG.md 197: headroom 32 chars after triage+hunt); this arm converges the pool
+    on the durable definition. Behind VALIDATE_EMPTY_SIGNALS=1 until one Sunday's log
+    (28 -> ~51 -> ~113 rows; this pool ACTIVATES, so it is staged)."""
+    if state is None:
+        try:
+            state = json.load(open("cloud_state/candidate_probe.json", encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            state = {}
+    e = state.get(name)
+    return isinstance(e, dict) and "il" in e and (int(e.get("il") or 0) > 0 or int(e.get("sig") or 0) > 0)
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
 TODAY = __import__("datetime").date.today().isoformat()

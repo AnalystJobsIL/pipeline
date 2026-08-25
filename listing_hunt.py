@@ -147,10 +147,10 @@ def in_hunt_pool(r):
     exists to remove; the wider list adds `duplicate of`/`redundant`/`recruiter`
     (measured: 0 rows moved). Known hazard inherited with it: `recruiter` matches
     `SmartRecruiters` in a note (registry_health.explained documents the class)."""
+    from pipeline.verdicts import is_terminal_row
     return (len(r) >= 6 and r[4] == "false"
             and bool(HUNT_POOL.search(r[5] or ""))
-            and not TERMINAL.search(r[5] or "")
-            and not is_recruiter(r[0])   # agencies are never activated
+            and not is_terminal_row(r)   # terminal token OR an agency name
             # discovery leaks job titles and category words in as company names
             # ("AppSec", "my team", "Sql developer - X"). Searching for a careers page
             # for a non-company burns the time budget and returns nonsense.
