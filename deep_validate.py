@@ -209,7 +209,7 @@ def validate_one(rend, name, seed_url):
             # COMEET.init extraction first (token+uid probe), then the slow reader
             from audit_empty_rows import comeet_static_try, comeet_try
             got = comeet_static_try(name, html) or comeet_try(name, u)
-        if got and not _slug_matches(name, got[1]):
+        if got and not _slug_matches(name, got[1], got[2]):
             got = None
         if not got:
             m = _UNSUP.search(blob)
@@ -246,7 +246,7 @@ def validate_one(rend, name, seed_url):
             tok = str(p.get("token", "")).strip()
             api = str(p.get("api_url", "")).strip()
             print(f"       (llm proposes {plat}:{tok} for {name})", flush=True)
-            if not _slug_matches(name, tok):
+            if not _slug_matches(name, tok, api):
                 print(f"       (llm proposal rejected: foreign slug)", flush=True)
                 break
             try:
@@ -426,7 +426,11 @@ def main():
                   f"{(plat + ':' + str(tok) + f' -> {n_all}/{n_il} IL') if plat else detail}",
                   flush=True)
             if apply:
-                _apply_verdict_to_file(name, verdict, plat, tok, api, n_all, n_il, detail)
+                try:
+                    _apply_verdict_to_file(name, verdict, plat, tok, api, n_all, n_il, detail)
+                except Exception as e:  # noqa: BLE001
+                    # one row's write must not end the night (the step is continue-on-error)
+                    print(f"::warning::deep_validate: write failed for {name}: {str(e)[:80]}", flush=True)
             time.sleep(0.3)
     print(f"\n=== deep validation: {stats} · BD searches used: {_BD['used']} ===", flush=True)
 

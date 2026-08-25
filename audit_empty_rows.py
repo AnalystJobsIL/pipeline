@@ -423,9 +423,9 @@ def main():
                 if not html:
                     continue
                 got = propose_from_html(html)
-                if got and not _slug_matches(name, got[1]):
-                    # signature belongs to some OTHER company on the page (serp noise like
-                    # CyberArk->PANW). Never accept a mismatched slug/tenant.
+                if got and not _slug_matches(name, got[1], got[2]):
+                    # a DECLARED negative or a subdomain mismatch (serp noise like
+                    # CyberArk->PANW is settled by the activation gate's page read below)
                     print(f"  [!=] {name}: rejected foreign slug {got[0]}:{got[1]}", flush=True)
                     got = None
                 if got:
@@ -460,76 +460,24 @@ def main():
             print(f"  [--] {name}: {plat}:{tok} verified but returned 0 jobs - not a recovery",
                   flush=True)
             continue
-        # An acquirer's tenant is indistinguishable from theft by string alone - on the
-        # subdomain platforms `Habana Labs (Intel)` really does post under `intel`, and 31
-        # active rows are in that shape - so a tenant mismatch gets a SECOND chance from page
-        # content, the same discriminator crack_walled uses. Only a row that fails both is
-        # refused. (docs/BACKLOG.md 21 is why a bare tenant block is not acceptable here.)
-        # NOTE: `tenant_is_this_company` returns True in two different situations -
-        # "the tenant is near-equal to the name" and "there is nothing here to check" - and
-        # accepting the second as confirmation skips the page read below on 430 of the 461
-        # active ATS rows (measured 2026-08-24; only ~72 of those had a tenant actually
-        # compared), leaving plain containment (`_slug_matches`) deciding the rest. This
-        # comment said "382 of 460" for a day, copied from a backlog item whose own
-        # breakdown summed to a third number - see docs/BACKLOG.md 33.
-        #
-        # The obvious fix - require a POSITIVE near-equality match, else fall through to the
-        # page read - was built, measured and REVERTED on 2026-08-24. On exactly the
-        # platforms it would newly gate, there is no page to read:
-        #
-        #   fetch("https://boards-api.greenhouse.io/v1/boards/fiverr/jobs")        -> 0 bytes
-        #   fetch("https://www.comeet.co/careers-api/2.0/company/60.002/positions")-> 0 bytes
-        #   fetch("https://api.ashbyhq.com/posting-api/job-board/deel")            -> 28 bytes
-        #
-        # `_page_names_company` needs 2000 chars to answer anything but `None`, so the
-        # "fall through" refuses all 358 rows and stamps a false verdict on each - the same
-        # over-block wave 8 caught in `deep_validate`, one tool over. docs/BACKLOG.md 33
-        # carries the measurement and the two fixes that would actually work.
-        _tenant_ok = tenant_is_this_company(name, api or "")
-        if not _tenant_ok:
-            # SECOND CHANCE - from the CANDIDATE page, and only from it.
-            #
-            # This read `fetch(r[3])` as a fallback until 2026-08-24. `r[3]` is the row's
-            # OWN stored careers url, so the check found the company's name on the company's
-            # own website and accepted that as proof that a THIRD PARTY's board belongs to
-            # it. It rubber-stamped every mismatch this gate exists to catch:
-            #
-            #   Riskified -> novartis.wd3.myworkdayjobs.com/wday/cxs/novartis/riskified/jobs
-            #     tenant_is_this_company -> False   (the gate worked)
-            #     page_mentions_company("Riskified", <riskified.com>) -> True  (override)
-            #
-            # and it was not a corner case but the default path: a plain GET of the
-            # endpoints this tool proposes returns "" (Workday `/wday/cxs/...` is POST-only,
-            # Greenhouse blocks the UA), and 236 of the 255 rows in the Sunday pool carry an
-            # http url for it to fall back to. Unreadable candidate == no evidence == refuse.
-            # Use `crack_walled._page_names_company`, not a local
-            # `bool(fetch(...)) and page_mentions_company(...)`. The local form was a
-            # two-valued copy of a three-valued predicate: it folds "could not read the
-            # page" into "the page names someone else", and - more to the point - it skips
-            # the residential-unlocker fallback and the retry that strips generic and
-            # geographic words from the company name. That retry is not decoration: 46 rows
-            # are named `<something> Israel`, and their boards are titled without it.
-            #
-            # ARCHITECTURE.md section 2 claimed all five write paths ran through the shared
-            # predicate while this tool and `repair_dead_urls` each carried their own. A
-            # doc-level claim of shared behaviour over two silently diverging copies is the
-            # bug class this lane exists to remove, so the copies go rather than the claim.
-            #
-            _tenant_ok = _gate.page_names_company(name, api or "") is True
-        if is_foreign(name, api or "") or not _tenant_ok:
-            # Identity gate: this tool SEARCHES for a board, which is exactly how you end up
-            # holding another company's — and it verifies, with real jobs. Refuse it.
-            #
-            # `is_foreign` alone is not that gate: it returns False for EVERY ATS host, which
-            # is 460 of the 846 active rows. This file DEFINES `tenant_is_this_company` for
-            # precisely this case and `main()` never called it - so a search that proposed
-            # `novartis.wd3.myworkdayjobs.com/riskified` for Riskified passed both
-            # `_slug_matches` (containment) and `is_foreign` (constant False) and activated.
-            # Scoped to subdomain-tenant platforms, so the 36 legitimate acquirer boards
-            # (Momentis/memic, Habana/intel) are untouched - see docs/BACKLOG.md 21.
+        # Identity gate, named (2026-08-25, confirmation wave R1): this tool SEARCHES for
+        # a board, which is exactly how you end up holding another company's -- and it
+        # verifies, with real jobs. `activation_verdict` is the one gate: a declared
+        # negative or a subdomain mismatch refuses without a page; a tenant that vouches
+        # admits; "cannot tell" is settled by ONE read of the platform's HUMAN board page
+        # (never the API endpoint -- Greenhouse returns 0 bytes, Workday is POST-only:
+        # the read that refused 358 rows when it was tried here on 2026-08-24), else the
+        # row is `unverified`: left dark for the Chromium rung, no claim stamped. Before
+        # this, `_slug_matches` (a five-character prefix) was the only clause that could
+        # refuse a path-tenant board here, and `tenant_is_this_company` is vacuously True
+        # on those platforms: `CyberArk -> paloaltonetworks` verified with real jobs and
+        # would have written the row (docs/BACKLOG.md 33/50).
+        _av = _gate.activation_verdict(name, api or "", n_all, token=tok or "")
+        if _av != "ok":
             still.append((name, ""))
-            print(f"  [XX] {name}: {plat} {tok} verified {n_il} IL but the board belongs to "
-                  f"another company ({(api or '')[:44]})", flush=True)
+            print(f"  [{'XX' if _av == 'not-ours' else '??'}] {name}: {plat} {tok} verified {n_il} IL "
+                  f"but {'the board belongs to another company' if _av == 'not-ours' else 'nothing vouches for the board (' + _av + ')'} "
+                  f"({(api or '')[:44]})", flush=True)
             continue
         fixed.append((name, plat, n_all, n_il))
         print(f"  [OK] {name}: {plat} {tok} -> {n_all} jobs / {n_il} IL", flush=True)

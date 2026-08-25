@@ -298,13 +298,22 @@ nothing can be read the row is `unverified`: deferred, unstamped, tokens kept.
 
 **Census, 2026-08-25.** 360 active path-platform rows: 187 near, 120 Comeet uid, 2 declared,
 51 not near (24 `scrape` rows whose slug is read from the URL; 27 native-ATS rows —
-`check_invariants` C3b's hand-check list, 28 with `Findings -> findigs`). Census A (every
-gate's answer on the 521 ATS-host rows, 457 active): **0 deltas** from the batch. The 30
+`check_invariants` C3b's hand-check list, 28 with `Findings -> findigs`). The 30
 parked path-platform rows: 14 get a human-page read, 12 (Comeet API-form twins, all
 `alias-of`) are `unverified`, 0 admitted by vacuity. Item 22's eight rows: NanoLock Security,
 Sight Diagnostics, Lili cleared (`url-cleared`, negatives declared); Deutsche Telekom declared
 (`telekom-growthhub`); NVIDIA declared (`nvidia`, `mellanox`); Sight Sciences, Synopsys,
 Nutanix, Genoox, Sony left; Quris AI and Fetcher stay in the hunt pool.
+
+**Census A, honestly (confirmation wave R3):** `tenant_is_this_company`, `embedded_board_ok`
+and `is_walled` answer identically on every one of the 521 ATS-host rows (457 active) — one
+named delta, Deutsche Telekom, now declared. `activation_ok` does NOT: with no readable page
+at all, 197 of the 457 active rows that the old gate admitted by tenant vacuity are now
+`unverified` (lever 24/24, smartrecruiters 16/16, comeet 123 — 121 of them via the learned
+page, greenhouse 10, ashby 4, workable 5, recruitee/bamboohr/breezy/eightfold 13; workday,
+oracle and icims 0). In production each costs one GET of the human page on re-activation;
+nothing is unsettleable, and a row can be declared. The 121 uid rows are not on C3b's list
+(`docs/BACKLOG.md` 206); the Sunday `deferred (nothing vouches; no stamp): N` line is the count.
 
 **Deliberately not done.** A tenant veto on undeclared rows; reading API endpoints as pages;
 `_tenant_near` window changes (69); a display-name column (58/61). The precondition stated,

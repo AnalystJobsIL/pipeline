@@ -1740,8 +1740,22 @@ _NEGATIVE_IDENTITY = [
     ("SimilarTech", "similarweb", "https://boards-api.greenhouse.io/v1/boards/similarweb/jobs"),
     ("Bit", "bitdefender", "https://boards-api.greenhouse.io/v1/boards/bitdefender/jobs"),
     ("Sight Diagnostics", "sightsciences", "https://recruiting2.ultipro.com/SIG1008SIGH/x"),
+    ("Sight Diagnostics", "SIG1008SIGH", "https://recruiting2.ultipro.com/SIG1008SIGH/JobBoard/x/"),
     ("Dun & Bradstreet (Israel) Ltd.", "israeljobs", "https://boards-api.greenhouse.io/v1/boards/israeljobs/jobs"),
+    ("Sckipio", "87.00C", "https://www.comeet.com/careers-api/2.0/company/87.00C/positions?token=x"),
+    ("Sckipio", "", "https://www.comeet.com/careers-api/2.0/company/87.00C/positions?token=x"),
+    ("Similarweb", "similartech", "https://boards-api.greenhouse.io/v1/boards/similartech/jobs"),
 ]
+
+
+def test_every_declared_negative_is_in_the_incident_list():
+    """The list above is the suite's memory of the incidents; the table is the code's. They
+    must agree (confirmation wave R7: three declared tokens were missing here)."""
+    from pipeline import identity_facts as F
+    listed = {(F._key(n), F._norm(t)) for n, t, _ in _NEGATIVE_IDENTITY}
+    for name, d in F.DECLARED.items():
+        for t in d.get("not_tenants", ()):
+            assert (F._key(name), F._norm(t)) in listed, (name, t)
 
 
 def test_the_declared_identity_table_is_consistent_with_the_registry():
@@ -1787,8 +1801,9 @@ def test_a_recorded_wrong_write_is_neither_declared_nor_admitted(name, tok, api)
     `vouch-neg-drop`, `tenant-neg-drop`, `embed-neg-drop`."""
     from pipeline import identity_facts as F
     from pipeline import identity_gate as G
-    assert F._norm(tok) not in F.tenants(name), "a recorded incident was DECLARED"
-    assert F._norm(tok) in F.not_tenants(name), "a recorded incident is not a NEGATIVE declaration"
+    ctok = G.checkable_token(tok, api)
+    assert F._norm(ctok) not in F.tenants(name), "a recorded incident was DECLARED"
+    assert F._norm(ctok) in F.not_tenants(name), "a recorded incident is not a NEGATIVE declaration"
     assert not G.embedded_board_ok(name, tok, api)
     assert G.board_vouches(name, tok, api) is False
     assert not G.tenant_is_this_company(name, api) or "greenhouse" in api or "comeet" in api, (
@@ -5044,7 +5059,7 @@ def test_the_merge_trims_the_theirs_tail_then_a_fact_and_never_slices():
     assert not re.search(r"\d{4}-\d{2}-\d{2}:?\s*$", merged) and "page-empt" not in merged.replace("page-empty", "")
     # only PROTECTED segments left and still over the cap: theirs' tail goes WHOLE (the old
     # `[:cap]` would cut the `unsupported ATS` segment mid-word)
-    t3 = ours + " | deep-validated 2026-09-03: unsupported ATS phenom (" + "u" * 40 + ")"
+    t3 = ours + " | crack-walled 2026-09-03: unsupported ATS phenom (" + "u" * 40 + ")"
     m3 = M._merge_notes(t3, ours, cap=220)
     assert m3 == ours, m3
     # ours' own newest segment survives ahead of theirs' unique tail
@@ -5146,6 +5161,18 @@ def test_board_vouches_has_three_answers_and_never_spells_cannot_tell_as_true():
     assert G.board_vouches("Cogniteam", "riskified", gh % "riskified") is False
     assert G.board_vouches("Riskified", "novartis/riskified", "https://novartis.wd3.myworkdayjobs.com/wday/cxs/novartis/riskified/jobs") is False
     assert G.board_vouches("Bancor", "", "https://careers-bancorpbank.icims.com/jobs/search") is False, "the negative reads the subdomain too"
+    # a negative that would NEAR-MATCH the name is still refused by the two older gates
+    # (kills `tenant-neg-drop`, `embed-neg-drop`: every recorded pair fails near-equality on
+    # its own, so only a synthetic near-miss can tell the check from the string rule)
+    from pipeline import identity_facts as F
+    wd = "https://acmeinc.wd1.myworkdayjobs.com/wday/cxs/acmeinc/x/jobs"
+    assert G.tenant_is_this_company("Acme", wd) and G.embedded_board_ok("Acme", "acmeinc", gh % "acmeinc")
+    F._INDEX["acme"] = {"not_tenants": ("acmeinc",), "why": "test"}
+    try:
+        assert G.tenant_is_this_company("Acme", wd) is False
+        assert G.embedded_board_ok("Acme", "acmeinc", gh % "acmeinc") is False
+    finally:
+        del F._INDEX["acme"]
     assert G.board_vouches("NVIDIA", "nvidia/NVIDIAExternalCareerSite", "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/x/jobs") is True
     assert G.board_vouches("Intelligems", "intelligems", "https://apply.workable.com/api/v1/widget/accounts/intelligems?details=true") is True
     assert G.board_vouches("SupPlant", "", "https://careers.workable.com/") is None, "all-plumbing host: cannot tell"
@@ -5153,6 +5180,11 @@ def test_board_vouches_has_three_answers_and_never_spells_cannot_tell_as_true():
     assert G.board_vouches("FairFly", "", "https://fireflyspace.com/careers") is None, "a foreign domain cannot vouch"
     # scrape rows store the URL (or nothing) in column 2: the slug comes from the URL
     assert G.checkable_token("https:", "https://www.comeet.com/jobs/bridgewise/F9.009") == "bridgewise"
+    assert G.checkable_token("", "https://api.lever.co/v0/postings/wiz?mode=json") == "wiz", "the tenant, not the platform"
+    assert G.checkable_token("", "https://apply.workable.com/api/v3/widget/accounts/supplant?details=true") == "supplant"
+    assert G.checkable_token("", "https://www.comeet.com/careers-api/2.0/company/87.00C/positions?token=x") == "87.00C"
+    assert G.board_vouches("Sckipio", "", "https://www.comeet.com/careers-api/2.0/company/87.00C/positions?token=x") is False
+    assert G.board_vouches("CyberArk", "paloaltonetworks", "") is None, "no address: nothing can vouch (was True)"
     assert G.board_vouches("Bridgewise", "https:", "https://www.comeet.com/jobs/bridgewise/F9.009") is True
 
 
@@ -5218,6 +5250,14 @@ def test_activation_verdict_names_its_refusals_and_defers_when_nothing_can_tell(
     assert G.write_verdict("Cogniteam", "https://job-boards.greenhouse.io/riskified", token="riskified") == "not-ours"
     assert G.write_verdict("Ibex Medical Analytics", "https://job-boards.greenhouse.io/ib1", token="ib1") == "unreadable"
     assert G.ok_to_write("7AI", "https://job-boards.greenhouse.io/sevenai") is True
+    # the write gate reads the HUMAN page for an API endpoint it holds no html for
+    # (kills `write-verdict-human-drop`, confirmation wave R4)
+    reads.clear()
+    assert G.write_verdict("7AI", gh % "sevenai", token="sevenai") == "ok" and reads[-1] == "https://job-boards.greenhouse.io/sevenai"
+    # a malformed Comeet payload is "no page", never a crash (R5)
+    import pipeline.http as _http
+    monkeypatch.setattr(_http, "get_json", lambda u, **k: ["oops"])
+    assert G._comeet_human_url("https://www.comeet.com/careers-api/2.0/company/49.004/positions?token=x") is None
 
 
 def test_only_a_proven_refusal_is_stamped_not_this_companys_board(tmp_path, monkeypatch):
@@ -5253,7 +5293,8 @@ def test_only_a_proven_refusal_is_stamped_not_this_companys_board(tmp_path, monk
     monkeypatch.setattr(V, "_get", lambda url: "<html>" + "x" * 3000 + "</html>")
     monkeypatch.setattr(V, "extract_ats", lambda html, name: ("recruitee", "ib1", "https://ib1.recruitee.com/api/offers/"))
     monkeypatch.setattr(V, "_verify", lambda name, plat, tok, api: (5, 2))
-    assert V.check("Ibex Medical Analytics", "https://www.ibex.example/careers") == ("confirmed", None)
+    v0 = V.check("Ibex Medical Analytics", "https://www.ibex.example/careers")
+    assert v0[0] == "deferred" and "nothing vouches" in v0[1], "its own verdict, counted by main(); never `confirmed`"
     monkeypatch.setattr(V, "extract_ats", lambda html, name: ("greenhouse", "riskified", "https://boards-api.greenhouse.io/v1/boards/riskified/jobs"))
     v = V.check("Ibex Medical Analytics", "https://www.ibex.example/careers")
     assert v[0] == "suspect" and "not this company" in v[1]
@@ -5332,3 +5373,49 @@ def test_triage_asks_the_page_judge_through_the_shared_seam_with_its_own_schema(
     src = open(T.__file__, encoding="utf-8").read()
     assert 'subprocess.run(["claude"' not in src, "the bare claude -p is gone"
     T._LLM_USED["n"] = 0
+
+
+def test_the_audit_write_is_the_named_verdict_and_a_serp_noise_slug_is_refused_by_the_page(monkeypatch):
+    """Kills `audit-verdict-drop` (confirmation wave R1). `_slug_matches` cannot refuse an
+    undeclared slug -- by design -- so the audit's WRITE must be the activation verdict, whose
+    human-page read settles `CyberArk -> paloaltonetworks`."""
+    import ast
+    import inspect
+    import audit_empty_rows as A
+    from pipeline import identity_gate as G
+    src = inspect.getsource(A.main)
+    assert "activation_verdict(" in src and "_av != \"ok\"" in src
+    assert 'tenant_is_this_company(name, api or "")' not in src, "the vacuous clause is gone from the write path"
+    monkeypatch.setattr(G, "page_names_company",
+                        lambda name, url, html="": {"https://job-boards.greenhouse.io/paloaltonetworks": False}.get(url))
+    assert A._slug_matches("CyberArk", "paloaltonetworks", "https://boards-api.greenhouse.io/v1/boards/paloaltonetworks/jobs") is True, (
+        "the string test defers (cannot tell)")
+    assert G.activation_verdict("CyberArk", "https://boards-api.greenhouse.io/v1/boards/paloaltonetworks/jobs", 7,
+                                token="paloaltonetworks") == "not-ours", "...and the page refuses"
+
+
+def test_validate_empty_counts_its_deferrals_and_always_writes_its_suspect_note(tmp_path, monkeypatch, capsys):
+    """Kills `validate-empty-deferred-drop` and `validate-empty-suspect-guard-restore`
+    (BACKLOG 200, confirmation wave R2)."""
+    import csv
+    import validate_empty as V
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    long = "dark-triage 2026-08-20: extract-gap (" + "x" * 100 + ") | listing-hunt 2026-08-21: no listing found (" + "y" * 60 + ")"
+    rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"],
+            ["Defer Ltd", "scrape", "", "https://www.defer.example/careers", "false", "scanned; no open Israel roles now"],
+            ["Full Ltd", "scrape", "", "https://www.full.example/careers", "false", long]]
+    with open("companies.csv", "w", encoding="utf-8", newline="") as fh:
+        csv.writer(fh).writerows(rows)
+    monkeypatch.setenv("VALIDATE_EMPTY_SIGNALS", "1")
+    (tmp_path / "cloud_state" / "candidate_probe.json").write_text('{"Full Ltd": {"sig": 2, "il": 1}}', encoding="utf-8")
+    monkeypatch.setattr(V, "check", lambda name, url: ("deferred", "3 IL but nothing vouches") if name == "Defer Ltd"
+                        else ("suspect", "2+ role-near-Israel mentions in HTML"))
+    monkeypatch.setattr("sys.argv", ["validate_empty.py"])
+    V.main()
+    out = capsys.readouterr().out
+    assert "deferred (nothing vouches; no stamp): 1 -- Defer Ltd" in out, out[-600:]
+    got = {r[0]: r for r in csv.reader(open("companies.csv", encoding="utf-8"))}
+    assert "empty-but-suspect" in got["Full Ltd"][5] and "dark-triage 2026-08-20: extract-gap" in got["Full Ltd"][5], (
+        "the suspect note is always written now; the protected facts survive it")
+    assert "empty-but-suspect" not in got["Defer Ltd"][5] and "no open Israel roles" in got["Defer Ltd"][5]

@@ -89,9 +89,10 @@ def check(name, url):
             _av = _gate.activation_verdict(name, api, il, html=html, token=tok) if il > 0 else "empty"
             if il > 0 and _av == "unverified":
                 # nothing could tell (2026-08-26, docs/BACKLOG.md 37): no stamp, no claim;
-                # the row keeps its tokens and next Sunday reads again
-                print(f"  [??] {name}: {il} IL on {api[:50]} but nothing vouches for the board -- deferred", flush=True)
-                return ("confirmed", None)
+                # the row keeps its tokens and next Sunday reads again. Its OWN verdict,
+                # not `confirmed` (which main() counts and forgets): main() counts these
+                # and prints them in the summary, so a Sunday that defers 60 rows says so.
+                return ("deferred", f"{il} IL on {api[:50]} but nothing vouches for the board")
             if il > 0 and (_av != "ok" or not _gate.embedded_board_ok(name, tok, api)):
                 # `extract_ats` returns whatever board the page embeds. This branch promoted
                 # it to ACTIVE on a job count alone, so a careers page embedding a different
@@ -131,7 +132,7 @@ def main():
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows) if in_validate_empty_pool(r)}
     print(f"cross-validating {len(idx)} validated-empty companies ...")
-    promoted, suspects, confirmed = 0, [], 0
+    promoted, suspects, confirmed, deferred = 0, [], 0, []
     for name, (rowi, url) in idx.items():
         try:
             kind, payload = check(name, url)
@@ -147,6 +148,9 @@ def main():
             _MODIFIED.add(name)
             promoted += 1
             print(f"  [PROMOTE] {name}: {payload[5]}", flush=True)
+        elif kind == "deferred":
+            deferred.append(name)
+            print(f"  [??] {name}: {payload} -- deferred", flush=True)
         elif kind == "suspect":
             suspects.append((name, payload))
             # Through `pipeline.notes`, like every other note write in the repo. This was
@@ -171,12 +175,11 @@ def main():
             # cooldown, and no scheduled tool cleared it)
             _new = _note_replace(rows[rowi][5] or "", "empty-but-suspect",
                                  f"empty-but-suspect {TODAY}; " + payload)
-            if "no open israel roles" in _new.lower():
-                rows[rowi][5] = _new
-                _MODIFIED.add(name)
-            else:
-                print(f"  [note skipped] {name}: the cell is full and the note would evict "
-                      f"this row's own re-check token", flush=True)
+            # always written since 2026-08-25: `no open Israel roles` and this segment are
+            # PROTECTED in pipeline/notes (nothing evicts them), so the guard that skipped
+            # the write on 67 of 93 rows (docs/BACKLOG.md 200) is gone
+            rows[rowi][5] = _new
+            _MODIFIED.add(name)
         else:
             confirmed += 1
         time.sleep(0.1)
@@ -188,6 +191,8 @@ def main():
             fresh[_i] = changed[fr[0]]
     write_csv_rows("companies.csv", fresh)
     print(f"\n=== promoted {promoted} · suspects {len(suspects)} · confirmed-empty {confirmed} ===")
+    if deferred:
+        print(f"    deferred (nothing vouches; no stamp): {len(deferred)} -- {', '.join(deferred[:8])}", flush=True)
     for n, why in suspects[:25]:
         print(f"   suspect: {n} ({why})")
 

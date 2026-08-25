@@ -2431,6 +2431,7 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     ceiling (192) if the hunt's BD line in the mail grows.
 
 200. **`validate_empty` discards its own `suspect` finding on 67 of the 93 signals-arm rows**
+    **CLOSED 2026-08-25 (`registry`, confirmation wave):** the guard is gone -- `no open Israel roles` and `empty-but-suspect` are protected segments, so the write cannot cost the row its selector; every `suspect` is stamped, every `deferred` is counted in the Sunday summary.
     — lane: `registry`. `main()` writes the `empty-but-suspect` note only when the old segment
     carried `no open israel roles`; rows that enter by the probe fact never satisfy that guard,
     so every Sunday's `suspect` on them is a print and nothing else (wave-1 attacker, 2026-08-26;
@@ -2480,3 +2481,14 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     under 60 chars of room (`Addionics` 54). Measure nightly with the harness; if a live row
     saturates, the fix is a shorter `dark-triage` reason (p90 109 chars today, max 138), not
     a wider cell and not eviction.
+206. **197 active ATS rows re-activate only through a human-page read now, and the 121
+    Comeet-uid rows among them are not on C3b's hand-check list** — lane: `registry`.
+    `activation_verdict` no longer admits by tenant vacuity: lever 24/24, smartrecruiters
+    16/16, comeet 123, greenhouse 10, ashby 4, workable 5, others 13 (workday/oracle/icims 0)
+    depend on `human_board_url` (Comeet's learned from the endpoint's positions, two GETs).
+    Precondition untested until the first Sunday: the human pages exceed 2000 chars. Watch
+    `validate_empty`'s `deferred (nothing vouches; no stamp): N`, `deep_validate`'s
+    `unverified (no readable page)` stamps and `crack_walled`'s `unverified (page unreadable)`;
+    if a platform defers wholesale, declare its rows or map its page. C3b deliberately skips
+    uid tokens (a uid is opaque, not a near-miss); a `deferred` count in the mail is the cheap
+    visibility, filed here rather than built blind.

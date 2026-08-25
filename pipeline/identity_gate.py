@@ -51,7 +51,7 @@ GATE_CALLERS = {
                       "wayback_rescue.py"),
     # the same gate with its refusals named (2026-08-25): callers that STAMP a refusal
     # must know `not-ours` from `unverified`
-    "activation_verdict": ("deep_validate.py", "validate_empty.py"),
+    "activation_verdict": ("audit_empty_rows.py", "deep_validate.py", "validate_empty.py"),
     "ok_to_write": (),
     "write_verdict": ("crack_walled.py",),
     "identity_ok": ("listing_hunt.py", "repair_extract_gap.py"),
@@ -316,6 +316,7 @@ def tenant_is_this_company(name, url):
 
 
 _UID = re.compile(r"[0-9A-F]{2}\.[0-9A-F]{3}", re.I)
+_COMEET_API = re.compile(r"^https?://www\.comeet\.(?:com|co)/careers-api/2\.0/company/([^/?#]+)/positions", re.I)
 
 
 def checkable_token(token, api_url):
@@ -328,11 +329,16 @@ def checkable_token(token, api_url):
     t = (token or "").split("/")[0].strip()
     if t and not t.lower().startswith("http"):
         return t
+    m = _COMEET_API.match(api_url or "")
+    if m:
+        return m.group(1)                      # the uid IS the checkable thing (a negative can name it)
     try:
         cands = _slug_candidates(urllib.parse.urlparse(api_url or ""))
     except Exception:  # noqa: BLE001
         cands = []
-    return cands[0] if cands else ""
+    # the LAST candidate: host labels come first and `api.lever.co` yields `lever`, the
+    # platform, not the tenant (confirmation wave R6)
+    return cands[-1] if cands else ""
 
 
 def board_vouches(name, token, api_url):
@@ -364,7 +370,9 @@ def board_vouches(name, token, api_url):
         identity_facts.normalize(x) for l in labels for x in re.split(r"[-_]", l)}
     if (ntok and ntok in neg) or (label_tokens & neg):
         return False
-    if not host or not ATS_HOST.search(host):
+    if not host:
+        return None                            # no address at all: nothing can vouch
+    if not ATS_HOST.search(host):
         # an ordinary host: `is_foreign` is the identity test there (a page test would
         # refuse every JS-rendered careers page -- measured at 358 rows), so the domain
         # vouches unless it is foreign; the callers' own is_foreign clause refuses first
@@ -419,9 +427,6 @@ _HUMAN_URL = (
 _MACHINE = re.compile(r"careers-api/|/api/|/json\b|\.json(\?|$)|/wday/cxs/|/widget/|/v\d/", re.I)
 
 
-_COMEET_API = re.compile(r"^https?://www\.comeet\.(?:com|co)/careers-api/2\.0/company/([^/?#]+)/positions", re.I)
-
-
 def _comeet_human_url(api_url):
     """Comeet's API form carries a uid and no slug, and the human page needs both
     (`comeet.com/jobs/x/49.004` serves a generic 200; `jobs/upwind/49.004` names Upwind --
@@ -431,12 +436,13 @@ def _comeet_human_url(api_url):
     try:
         from pipeline import http as _http
         data = _http.get_json(api_url)
+        for p in data if isinstance(data, list) else []:
+            m = re.match(r"^(https?://www\.comeet\.(?:com|co)/jobs/[^/?#]+/[^/?#]+)",
+                         str(p.get("url_comeet_hosted_page") or ""), re.I)
+            if m:
+                return m.group(1)
     except Exception:  # noqa: BLE001
-        return None
-    for p in data if isinstance(data, list) else []:
-        m = re.match(r"^(https?://www\.comeet\.(?:com|co)/jobs/[^/?#]+/[^/?#]+)", str(p.get("url_comeet_hosted_page") or ""), re.I)
-        if m:
-            return m.group(1)
+        pass                                   # a malformed payload (`["oops"]`) is "no page"
     return None
 
 
