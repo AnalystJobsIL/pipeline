@@ -6300,3 +6300,131 @@ def test_both_intake_bridges_refuse_a_place_name():
     import discovery_telegram as dt
     assert "is_place_name(c)" in inspect.getsource(dd.main)
     assert "is_place_name(c)" in inspect.getsource(dt.main)
+
+
+# --- the guest walk: a replay harness, so a scripted page sequence reproduces a live log ---
+_LI_CARD_HTML = ('<li><div class="base-card" data-entity-urn="urn:li:jobPosting:%d">'
+                 '<a class="base-card__full-link" href="https://il.linkedin.com/jobs/view/a-%d">'
+                 '<span class="sr-only"> Data Analyst </span></a>'
+                 '<h4 class="base-search-card__subtitle">A Co</h4></div></li>')
+
+
+def _li_replay(script):
+    """A `_li_guest` stand-in driven by [(n_cards, ok), ...], one tuple per guest page; pages
+    past the end repeat the last tuple ("blocked from here on" and "hit the cap" are both
+    that). Ids are globally unique so fresh/repeats behave like a real walk, and
+    `_li_last_present` is set the way the real fetcher sets it. Pure in-memory: the 108x
+    mutation gate runs the whole suite per mutation, so no subprocess, no network."""
+    import discovery_daily as dd
+    counter = [0]
+
+    def guest(kw, loc, d, st):
+        n, ok = script[min(st // 10, len(script) - 1)]
+        if not ok:
+            dd._li_last_present[0] = set()
+            return [], False
+        html = "".join(_LI_CARD_HTML % (counter[0] + k, counter[0] + k) for k in range(n))
+        counter[0] += n
+        dd._li_last_present[0] = dd._li_urn_ids(html)
+        return dd._li_cards(html), True
+    return guest
+
+
+def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=None):
+    import discovery_daily as dd
+    import bd_rescue
+    real_guest, real_unlock = dd._li_guest, bd_rescue.unlock
+    had = os.environ.get("BRIGHTDATA_API_KEY")
+    if key is None:
+        os.environ.pop("BRIGHTDATA_API_KEY", None)
+    else:
+        os.environ["BRIGHTDATA_API_KEY"] = key
+    try:
+        dd._li_guest = _li_replay(script)
+        bd_rescue.unlock = unlock or (lambda url, timeout=120: "")
+        for k in ("linkedin_free", "linkedin_blank", "linkedin_blocked", "linkedin_paid"):
+            dd.SOURCE_PATH[k] = 0
+        out = dd.linkedin_search("business intelligence", pages=pages, location=location)
+        return out, (capsys.readouterr().out if capsys else "")
+    finally:
+        dd._li_guest, bd_rescue.unlock = real_guest, real_unlock
+        if had is None:
+            os.environ.pop("BRIGHTDATA_API_KEY", None)
+        else:
+            os.environ["BRIGHTDATA_API_KEY"] = had
+
+
+def test_a_blocked_guest_walk_does_not_print_the_raise_the_cap_tripwire(capsys):
+    """2026-08-25, run 32813499709: `[linkedin:business intelligence @ Be'er Sheva, Israel]
+    stopped at the 50-page cap with 16 jobs — raise LINKEDIN_GUEST_PAGES, the pool was not
+    exhausted`. Five queries printed it. None had reached the cap: LinkedIn had BLOCKED the
+    runner mid-walk and the city query had no paid page to fall back on. `ended_on_cap` was
+    a boolean cleared on two exits and inherited by the rest — and that false line was the
+    evidence the 30->50 page bump had cited the day before (BACKLOG 70)."""
+    out, log = _run_walk([(10, True), (6, True), (0, False)], pages=0,
+                         location="Be'er Sheva, Israel", capsys=capsys)
+    assert len(out) == 16
+    assert "raise LINKEDIN_GUEST_PAGES" not in log and "-page cap" not in log
+    assert "stopped with 16 jobs: BLOCKED by LinkedIn on guest page 2" in log
+    assert "paid 0/0" in log
+
+
+@pytest.mark.parametrize("script,pages,key,expect", [
+    # genuine exhaustion: cards, then three blanks -> drained, nothing to report
+    ([(10, True), (0, True)], 2, "k", ""),
+    # blocked on page 0 with no paid budget (every Haifa query on 2026-08-25 printed
+    # "0 cards -> 0 new" and nothing else)
+    ([(0, False)], 0, "k", "stopped with 0 jobs: BLOCKED by LinkedIn on guest page 0"),
+    # blocked, paid path exists but the key is missing
+    ([(5, True), (0, False)], 2, None, "BLOCKED by LinkedIn on guest page 1"),
+    # nothing but blanks and no paid page: empty keyword or soft-limit, undecidable
+    ([(0, True)], 0, "k", "blank guest pages in a row and no paid page left"),
+])
+def test_every_exit_from_the_guest_walk_names_the_reason_it_stopped(capsys, script, pages, key, expect):
+    """Four ways out of the walk; a drained pool says nothing, every other exit says what
+    happened. The guard that makes the NEXT added `break` go red instead of silently
+    inheriting someone else's message."""
+    _out, log = _run_walk(script, pages=pages, key=key, capsys=capsys)
+    if expect:
+        assert expect in log, log
+    else:
+        assert "stopped with" not in log, log
+
+
+def test_a_re_served_window_is_exhaustion_and_says_nothing(capsys):
+    """The repeats exit: the guest paging re-serves the same window; three repeats in a row
+    is the pool drained. That is a quiet exit, not a tripwire."""
+    import discovery_daily as dd
+    same = dd._li_cards("".join(_LI_CARD_HTML % (k, k) for k in range(10)))
+    real = dd._li_guest
+    try:
+        dd._li_guest = lambda kw, loc, d, st: (list(same), True)
+        out = dd.linkedin_search("x", pages=0)
+    finally:
+        dd._li_guest = real
+    assert len(out) == 10 and "stopped with" not in capsys.readouterr().out
+
+
+def test_a_blocked_guest_request_is_counted_on_its_own_path():
+    """`SOURCE_PATH` had free / blank / paid. A blocked request bumped none of them, so
+    `path free=159 paid=14` on 2026-08-25 hid ~22 refused requests and 13 zero-card queries.
+    The repeated-tuple replay blocks page 2 onwards; the walk stops on the first block
+    (pages=0), so exactly one blocked request is made."""
+    import discovery_daily as dd
+    _run_walk([(10, True), (10, True), (0, False)], pages=0)
+    assert dd.SOURCE_PATH["linkedin_free"] == 2
+    assert dd.SOURCE_PATH["linkedin_blocked"] == 1
+    assert dd.SOURCE_PATH["linkedin_paid"] == 0
+    import inspect
+    assert "blocked=" in inspect.getsource(dd.main), "the counter must reach the [linkedin] line"
+
+
+def test_the_guest_walk_cap_still_reports_when_it_is_really_hit(capsys):
+    import discovery_daily as dd
+    real = dd.LINKEDIN_GUEST_PAGES
+    dd.LINKEDIN_GUEST_PAGES = 3
+    try:
+        out, log = _run_walk([(10, True)] * 3, pages=0, capsys=capsys)
+    finally:
+        dd.LINKEDIN_GUEST_PAGES = real
+    assert len(out) == 30 and "the 3-page cap — raise LINKEDIN_GUEST_PAGES" in log

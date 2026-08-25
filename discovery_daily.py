@@ -321,7 +321,13 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     seen, out = set(), []
     # guest pages hold 10, unlocked pages hold 60 — same 80-job pool, different step size
     paid_pages, blanks, repeats = 0, 0, 0
-    ended_on_cap = True
+    # WHY the walk stopped, printed at the end when non-empty. One string, not a boolean:
+    # `ended_on_cap` was set True up front and cleared on the two exhaustion exits only, so
+    # the exits added later (blocked with no paid budget; paid page empty) inherited the cap
+    # message — on 2026-08-25 five queries LinkedIn had BLOCKED mid-walk printed "raise
+    # LINKEDIN_GUEST_PAGES, the pool was not exhausted", the very evidence the 30->50 bump
+    # had cited. Empty means drained: nothing to report. Same idiom as indeed_search.
+    why = ""
     for i in range(LINKEDIN_GUEST_PAGES):
         cards, ok = _li_guest(keyword, location, days, i * 10)
         # THREE states, and conflating any two loses jobs:
@@ -346,13 +352,22 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
             if blanks < LINKEDIN_BLANK_TOLERANCE:
                 continue              # a hole inside the pool — free to step over
             if out:
-                ended_on_cap = False
                 break                 # cards already collected and the tail is quiet: done
             # Nothing at all after the tolerance: a working-but-empty keyword and a soft
             # rate-limit are indistinguishable — buy ONE paid page to tell them apart.
+        else:
+            # A blocked request is a request MADE on a path of its own. Counted nowhere
+            # before 2026-08-25, 13 of 18 city queries printed "0 cards" that day and the
+            # log could not say whether Haifa was refused or empty.
+            SOURCE_PATH["linkedin_blocked"] += 1
         if not ok or (blanks >= LINKEDIN_BLANK_TOLERANCE and not out):
             if paid_pages >= pages or not os.environ.get("BRIGHTDATA_API_KEY"):
-                break                 # paid budget spent, or there is no paid path at all
+                # paid budget spent, or there is no paid path at all
+                why = (f"BLOCKED by LinkedIn on guest page {i} and no paid page left "
+                       f"(paid {paid_pages}/{pages})" if not ok else
+                       f"{blanks} blank guest pages in a row and no paid page left to tell "
+                       f"an empty keyword from a soft rate-limit (paid {paid_pages}/{pages})")
+                break
             # The paid page index is its OWN counter: reusing the guest index under a hard
             # block only ever fetched start=0, silently dropping ~20 of ~80 cards a keyword.
             q = urllib.parse.urlencode({"keywords": keyword, "location": location,
@@ -365,11 +380,9 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
             LI_CARDS_PRESENT[qkey] |= _li_urn_ids(html)
             cards = _li_cards(html)
             if not cards:
-                print(f"  [linkedin:{qlabel}] page {i}: no cards from EITHER path "
-                      f"({len(html or '')} bytes unlocked) — markup change or hard block")
+                why = (f"page {i}: no cards from EITHER path ({len(html or '')} bytes "
+                       f"unlocked) — markup change or hard block")
                 break
-        if not cards:
-            break
         # Deliberately NO `elif out: break` here — that limited a hard-blocked guest endpoint
         # to ONE paid page. The loop is bounded by `paid_pages >= pages` and by freshness.
         fresh = [c for c in cards if c["job_id"] not in seen]
@@ -383,15 +396,13 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
         # same keyword yield 16 jobs or 100 depending on the minute). Tolerate a few.
         repeats += 1
         if repeats >= LINKEDIN_BLANK_TOLERANCE:
-            ended_on_cap = False
             break
     else:
-        ended_on_cap = True
-    if ended_on_cap and out:
         # Ending on the iteration cap means there was more to read. Never silent: a walk that
         # stopped because it ran out of iterations must not look like one that ran out of jobs.
-        print(f"  [linkedin:{qlabel}] stopped at the {LINKEDIN_GUEST_PAGES}-page cap with "
-              f"{len(out)} jobs — raise LINKEDIN_GUEST_PAGES, the pool was not exhausted")
+        why = f"the {LINKEDIN_GUEST_PAGES}-page cap — raise LINKEDIN_GUEST_PAGES, the pool was not exhausted"
+    if why:
+        print(f"  [linkedin:{qlabel}] stopped with {len(out)} jobs: {why}")
     return out
 
 
@@ -914,7 +925,8 @@ def main():
     # endpoint started refusing us and we are now paying for everything".
     print(f"[linkedin] {n_li_raw} cards across {len(queries)} queries "
           f"({len(_LI_KEYWORDS)} national + {len(queries) - len(_LI_KEYWORDS)} city, free-only) · "
-          f"path free={SOURCE_PATH['linkedin_free']} paid={SOURCE_PATH['linkedin_paid']} "
+          f"path free={SOURCE_PATH['linkedin_free']} blank={SOURCE_PATH['linkedin_blank']} "
+          f"blocked={SOURCE_PATH['linkedin_blocked']} paid={SOURCE_PATH['linkedin_paid']} "
           f"({UNLOCKER_CALLS['linkedin']} Unlocker credits)")
     if SOURCE_PATH["linkedin_paid"] and not SOURCE_PATH["linkedin_free"]:
         print("::warning::LinkedIn free guest endpoint is refusing every request; the whole "
