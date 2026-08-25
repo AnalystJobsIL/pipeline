@@ -1046,6 +1046,7 @@ see `docs/sessions/2026-08-24-registry.md` for why nine waves did not converge w
     consumer that does not exist; both corrected 2026-08-24.
 
 44. **Three `registry_health.py` reporting defects** — lane: `registry`, none of which can
+    **CLOSED 2026-08-25 (`registry`):** no key reads `no SERPAPI_KEY`; an unknown flag prints the known flags and exits 2; the doubled ladder alarm is gone with the census step no longer probing the ladder at all.
     write a row. `--resources` correctly reports a missing key, but the default report prints
     `SerpApi: key present; quota NOT checked` unconditionally when `live` is false, even with
     no `SERPAPI_KEY` at all. The ladder alarm is emitted twice once `registry_alarms.json`
@@ -1053,6 +1054,7 @@ see `docs/sessions/2026-08-24-registry.md` for why nine waves did not converge w
     exits 0 rather than saying it did not understand.
 
 45. **`repair_extract_gap` double-counts its summary** — lane: `registry`. `still` is
+    **CLOSED 2026-08-25 (`registry`):** refusal branches `continue`; `test_repair_extract_gap_counts_a_refused_row_once`.
     incremented once per failed gate rather than once per row, so a run over 4 rows printed
     "1 activated, 6 still dark". Cosmetic, but it is the log a human reads to decide whether
     the gate is too tight.
@@ -1538,6 +1540,7 @@ commits. Five filed test gaps, four closed the same day with cells and records
 Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-derive before acting.
 
 84. **A rot-parked row that carries `dark-triage …: page-empty` never reaches the hunt** —
+    **Measured 2026-08-25 (`registry`):** reachable set today is 0 — no parked row carries both `scrape rotted` and a `page-empty` stamp — so the rule stays filed, not built.
     lane: `registry`. `refresh_scrape_cache._park` writes `scrape rotted (error Nd) …; parked
     for re-hunt`, but `listing_hunt.in_hunt_pool` excludes any note matching the page-empty
     triage stamp, and 108 of the 207 rot-tracked rows carry one. Simulated across those 108:
@@ -1643,6 +1646,7 @@ Record: `docs/sessions/2026-08-24-ats-fetch.md`. Everything below is outside tha
 write list; each item names the lane that owns it and the command that proves it.
 
 76. **Three active scrape rows have a validated native fetcher waiting** — lane: `registry`
+    **Rows converted 2026-08-25 (`registry`, `bebbee9`):** Qualcomm→eightfold 37 IL, GE HealthCare→phenom 23 IL, Fortinet→oraclehcm 15/503 IL (each re-verified through `fetch_company` that day). The `check_invariants.PLATFORM_HOST` half is item 193.
     (a `companies.csv` write; the fetchers shipped and are covered in `tests/test_units.py`).
     Measured 2026-08-24 with `python -c "from pipeline.fetchers import fetch_company; ..."`:
     | row today | convert to | `api_url` | result |
@@ -1769,6 +1773,7 @@ write list; each item names the lane that owns it and the command that proves it
     restore also reverts `cloud_state/firmographics.json`; `merge_json_cache.merge` is the right
     tool (company-keyed dict) and `firmographics.merge` the right per-record rule.
 104. **Mutation records for the company-intel guards** — lane: `registry` (owns `tools/mutate.py`).
+    **CLOSED 2026-08-25 (`registry`):** `tools/mutate.py --catalogue PATH` (repeatable; coverage runs over the union). The company-intel catalogue itself is that lane's to add.
     The catalogue in `docs/sessions/2026-08-24-company-intel.md` §"Mutation sweep" was run
     through `tools.mutate.run_one` from a scratch runner; a `--catalogue PATH` flag would let
     each lane keep its own file beside `tests/mutations.json`.
@@ -1968,6 +1973,7 @@ kept; the Meta listing-url rows are superseded).
     (check H) read it. When each reads `roles.load()` instead, `matched` becomes a derived
     cache and `seen.db` shrinks by its 105 descriptions (~340 KB before VACUUM).
 133. **13 active registry groups read one board under two identities** — lane: `registry`.
+    **Same-identity half CLOSED 2026-08-25 (`registry`, `bebbee9`):** ten twins parked `alias-of` their canonical row (Hippo Insurance, Vayyar Imaging, SpearUAV, GenCell Energy, Crazy Labs, Siemens EDA, one zero, ONE ZERO Digital Bank, kornit, Primis Tech); comeet 87.00C is Scopio Labs' (its slug page renders, Sckipio's redirect to the vendor root) so Sckipio is un-addressed and hunt-owned. The parent/subsidiary pairs are item 194. Found on the way: `repair_extract_gap` had no terminal exclusion and selected GenCell Energy the moment it was parked — fixed (`in_extract_gap_pool`).
     Hippo/Hippo Insurance, Cisco/Splunk (Cisco), HP/HP Indigo, Intel/Habana Labs (Intel),
     Broadcom/VMware (Broadcom), Primis/Primis Tech, Vayyar/Vayyar Imaging, Spear UAV/SpearUAV,
     Sckipio/Scopio Labs (two UNRELATED companies on comeet `87.00c`), Crazy Labs/CrazyLabs,
@@ -2176,6 +2182,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     BACKLOG item. Half a day; the interim prompt that does it by hand is in
     `docs/sessions/2026-08-24-infra.md` ("Ops review by hand").
 167. **A company named "Tel Aviv" in the mail** — source FIXED 2026-08-25 (`0870d87`,
+    **Registry half CLOSED 2026-08-25 (`registry`, `bebbee9`):** row parked `redundant: not a company …` (terminal; `--explain` shows no pool), 145 cards dropped from `scraped_cache.json`. The 7 ledger roles remain `roles`'.
     `e82f467`); residue re-filed for `registry` + `roles`. As first filed this pointed at
     the wrong file: the two mailed roles did NOT come from the discovery cache but from an
     ACTIVE registry row — `companies.csv:1212` `Tel Aviv,scrape,,https://jobs.secrettelaviv.com/,true,… listing-hunt 2026-08-24: verified 145 IL via jobs.secrettelaviv.com`.
@@ -2204,6 +2211,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     LinkedIn for the same role (so the roles ledger also sees two titles for one posting).
     Reproduce: `git show 58212df:digests/latest.md | grep -n "Raanana Full"`.
 170. **The mutation gate cannot finish any more: 108 mutations × the whole suite** — lane:
+    **CLOSED 2026-08-25 (`registry`, `701d1a9`):** derived per-record test subset + full-suite fallback (verdicts unchanged), baseline-red exclusion, `--jobs 4`, `--catalogue`; local sweep of 124 records finishes — see `docs/sessions/2026-08-25-registry.md` for the CI time on the first push.
     `registry` (owns `tools/mutate.py`) + `infra` (owns `tests.yml`). `tests.yml`'s
     `mutation-gate` job (`timeout-minutes: 45`) has been `cancelled` at exactly 45 min on
     every push since `f720627` (2026-08-25 01:00, four runs before the infra push; last green
@@ -2217,6 +2225,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     and keep one full-suite pass per push in the `guard` job. Until then every push is red
     on this job and `python tools/mutate.py --all` is a local-only check.
 177. **`auto_expand` buries real employers as `scanned; no open Israel roles now` when the
+    **CLOSED 2026-08-25 (`registry`, `a2a2f94`, `63d9822`):** aggregator seeds skip `resolve_deep` and are deferred (never parked) on a rotation key; `resolve_llm` has the SerpApi→DDG→unlocker ladder (`LLM_BD_SEARCH_CAP` 5/run) and is asked only with a page in hand; the 28 buried rows were un-addressed (`--clear-agg-urls --apply`, `url-cleared`, hunt-owned). Live control: Upwind Security → comeet 49.004, 51/15 IL, one call, DDG only.
     seed is an aggregator URL, and burns 20 evidence-free `claude -p` calls a day doing it**
     — lane: `registry`. Five consecutive `auto-expand.yml` runs (08-23 → 08-25) printed
     `resolved 0 (LLM-cracked 0), empty 10, unreachable 0, deferred 240`. 337 of the 341
@@ -2312,9 +2321,55 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     `report_bd_spend` prints a projected $2.39 from list prices. Verified live 2026-08-25;
     left as-is because a second zone is needed to test the fix.
 162. **`check_invariants.POOL` still differs from `pipeline.verdicts.TOKENS`** — lanes:
+    **CLOSED 2026-08-25 (`registry`, out-of-lane one-liner disclosed):** `TOKENS` gained `url-cleared`/`url-flagged`; `test_the_three_copies…` now asserts `POOL − TOKENS == ∅` and 0 parked rows invisible to audit/deep. Remaining deliberate gap: `HUNT_POOL` lacks `dark-triage`.
     `registry` (owns the deliberate gap, pinned by `test_the_three_copies…`) + `infra`.
     Measured 2026-08-25: `url-cleared`/`url-flagged` are in-pool for the gate and
     `listing_hunt` and out-of-pool for `audit_empty_rows`/`deep_validate`/`registry_health`
     → 10 orphans by `verdicts.in_pool`, 1 by the gate. Deriving `POOL` from `TOKENS` was
     tried and reverted this session because the registry lane pins all three copies on
     purpose; the fix is `TOKENS` gaining the two strings (shared plumbing).
+
+## From the `registry` lane, 2026-08-25
+
+Record: `docs/sessions/2026-08-25-registry.md`; spec: `ARCHITECTURE.md` §2/§3. Closed by
+this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity half), 167
+(registry half)**; 84 measured (0 reachable). Filed:
+
+190. **The 02:30 chain is not in `registry_health.pools()`** — lane: `registry`. `bd_rescue`
+    and `retry_unreachable` both activate and both select parked rows on the `unreachable`
+    token (retry minus terminal since 2026-08-25), but neither exports an `in_*_pool` and the
+    ownership matrix does not list them, so `orphans()` cannot credit a row to them and
+    `pool_floor` cannot watch them. Extract `in_retry_pool(r)` (shared by both, imported by
+    the mirror), like the five others.
+191. **`no-url` is a triage mode `check_invariants.TRIAGE_MODES` does not know** — lane:
+    `infra` (the list at `check_invariants.py:71`). `triage_dark` writes it (`triage_dark.py:158`)
+    and `listing_hunt` handles it (`seed_is_bad`), but every registry workflow prints
+    `14 rows carry a truncated/unknown triage mode … no-url` daily — a false warning that
+    will mask a real truncation. Measured 2026-08-25: 14 rows, 9 of them in the hunt pool.
+192. **`BD_MONTHLY_BUDGET` is 5,000; the operator's ceiling from 2026-09 is 4,500** — lane:
+    `discovery` (`discovery_daily.py:610`) + `infra` (the env in the workflows). Decision
+    2026-08-25: this month's overage (5,553 measured, 6,886 projected ≈ $2.39) is accepted;
+    next month must not pass 4,500 for the whole project. The registry's new paid rung is
+    `LLM_BD_SEARCH_CAP=5`/run (≈300/month, 7% of 4,500) and is counted separately from
+    `DEEP_BD_SEARCH_CAP` (per process, 150).
+193. **`check_invariants.PLATFORM_HOST` has no `eightfold` / `phenom` entry** — lane: `infra`.
+    Since 2026-08-25 two active rows are on those platforms (Qualcomm `/api/pcsx/`, GE
+    HealthCare `/widgets`); check C2 cannot fire for them. Tenant hosts vary, the path does
+    not — key the pattern on the path (BACKLOG 76's second half).
+194. **Four parent/subsidiary pairs still scan one board under two names** — lane:
+    `registry`, needs a decision per pair: Cisco / Splunk (Cisco), HP / HP Indigo,
+    Intel / Habana Labs (Intel), Broadcom / VMware (Broadcom) — all Workday, identical
+    `api_url`, 0 open roles on either row today. Either the subsidiary row becomes `alias-of`
+    the parent (its roles were never separable at the board) or it keeps a distinct
+    `display-name` once that column exists (items 50/61). Enumerate with the one-liner at 133.
+195. **`tests.yml`'s `mutation-gate` comment still says "~15 minutes" and the `guard` job
+    is red on BACKLOG 158** — lane: `infra` + `scraper`. The harness now excludes that
+    baseline-red test from every verdict and prints it as a `::warning::`, so the gate is
+    honest about it, but the `guard` job itself stays red until 158 is fixed. Keep
+    `timeout-minutes: 45` as the backstop (a build where every mutant survives is ~35 min
+    and fails anyway).
+196. **`resolve_llm` still asks SerpApi first** — lane: `registry`. When the quota resets on
+    2026-09-01 the ladder spends 250 free searches in ~6 days at 20 entries/run (two runs a
+    day), then falls back to DDG for the rest of the month. Fine, but the order could be
+    DDG-first with SerpApi as the tie-breaker for names DDG cannot find — measure the DDG
+    hit-rate on the runners from the `dfer … no-candidates` counts first.

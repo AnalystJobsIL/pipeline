@@ -628,9 +628,11 @@ Recruiting/staffing agencies are excluded everywhere via `pipeline/recruiters.py
             │  research_companies.json queue
             ▼
    ┌──── auto_expand (08:00/20:00) ────┐   resolve_deep → resolve_llm (capped, else deferred)
-   │ resolved+verified │  failed        │
-   ▼                   ▼                ▼
- ACTIVE ROW        parked: "scanned; no open" / "unreachable" / "aggregator URL"
+   │ resolved+verified │  failed        │   an AGGREGATOR seed (a LinkedIn / Indeed /
+   ▼                   ▼                ▼   secrethunter posting — 338 of the 342 queued
+ ACTIVE ROW        parked: "scanned; no open" / "unreachable"     names on 2026-08-25) skips
+                   (never for an aggregator seed: it is DEFERRED  resolve_deep and is only
+                    and rotated via cloud_state/auto_expand_seen.json) ever deferred
    │  ▲                   │
    │  │                   │ listing_hunt 19:00 (finds listings URL, verifies >=1 IL job)
    │  │                   │ crack_walled / deep_validate (on demand)
@@ -668,16 +670,22 @@ cost 64 companies two of their pools, and a verdict spelled only in the writing 
 (`bd_rescue.py`'s `scanned via brightdata; …`) stranded 52 rows.
 Corollary: a diagnostic verdict must **append** (`base | tool date: finding`), never
 replace the cell — overwriting also destroys the `monitored candidate` / `host documented`
-tokens that `listing_hunt`'s fast-path keys on.
+tokens that `listing_hunt`'s fast-path keys on. The one legitimate removal is of a token the
+tool has **disproved and owns**: `bd_rescue`'s validated branch strips `unreachable` (its
+own, per `TOKENS`) because that token is the selector of the 02:30 `retry_unreachable`
+pass that runs 90 seconds later — leaving it in re-selected the row and, until 2026-08-25,
+the retry rebuilt the cell and erased the verdict Bright Data had just been paid for
+(`git show b3d1d49 -- companies.csv`: 9 rows, nightly, `recovered 0`).
 
-**The pool is still spelled in THREE places that do not agree** — `verdicts.TOKENS`,
-`listing_hunt.HUNT_POOL`, `check_invariants.POOL`. (`registry_health` was a fourth; it now
-IMPORTS `HUNT_POOL`, which is the pattern to copy. The inline copies persist only because
-`listing_hunt` has no extractable `targets(rows)` yet — `docs/BACKLOG.md`, "One pool predicate
-per tool".) A token the inline copies know and `TOKENS` does not makes its rows invisible to
-`audit_empty_rows` and `deep_validate`;
-`test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_supposed_to` pins the
-gap so it cannot grow while the fix waits. Print the diff, and the rows it costs:
+**The pool is still spelled in THREE places** — `verdicts.TOKENS`, `listing_hunt.HUNT_POOL`,
+`check_invariants.POOL` — and since 2026-08-25 `TOKENS` is a superset of both inline copies
+(`url-cleared` / `url-flagged` joined it when `auto_expand --clear-agg-urls` started writing
+the first). The one deliberate remaining difference is `HUNT_POOL` lacking `dark-triage`
+(triage owns those rows). `registry_health` IMPORTS `HUNT_POOL`, which is the pattern to
+copy; `test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_supposed_to`
+pins every difference so a new one is red. Print the diff, and the rows it would cost
+(on 2026-08-25 the first prints two empty lists and `[]`; the second `46 1`, the 1 being
+a carrier that is also terminal):
 
 ```bash
 python -c "from pipeline.verdicts import TOKENS;import check_invariants as ci;t={x.lower() for x in TOKENS};c={x.lower() for x in ci.POOL.split('|') if x and '(' not in x};print('inline, NOT in TOKENS:',sorted(c-t));print('TOKENS, not inline:',sorted(t-c))"
@@ -696,10 +704,13 @@ alone. Keep segments SHORT — one full URL is 117 characters and will evict eve
 assignment (`fr[5] = <not a call>`), which the helper guard cannot see because a whole-cell
 assignment does no hand-rolled trim. Whole-CELL is worst on an **activation** branch: it
 deletes the `alias-of` / `domain-dead` token that keeps the row out of the wrong pool and the
-`dark-triage` mode that routed it there. Whole-ROW replacement is legitimate where the tool
-builds a row from scratch (`retry_unreachable._row_for`, `recheck_suspects`' and
-`validate_empty`'s *promote* branches) — re-derive that list rather than trusting it:
-`grep -n '\[5\] *=' *.py` takes ten seconds.
+`dark-triage` mode that routed it there. **No scheduled tool rebuilds the cell from a literal
+any more** (2026-08-25: `retry_unreachable._row_for` takes the row's note and appends through
+`replace_own`; `bd_rescue`, `wayback_rescue` and `validate_empty`'s write site do the same on
+activation) — the whole-ROW literal `[name, plat, tok, api, "true", f"..."]` is the shape the
+guard above now walks too. The two tools that still build a row from scratch,
+`recheck_suspects` and `validate_bd`, are `legacy_unscheduled` in `tests/writer_allowlist.json`
+and run in no workflow. Re-derive rather than trust: `grep -n '"true", f"' *.py`.
 
 Every re-check filter must have a **staleness escape** (`_stale_hunt` 14d, `_revalidatable`
 30d, `_recrackable` **1d** — daily, because the ATS host is already documented, so a re-check
@@ -728,7 +739,7 @@ gates conclude.
    acquisition looks identical to a mis-resolution — Momentis really does post under `memic`
    — so identity is settled by page content, never by the domain alone. **`weak` is not part
    of this**: `company_identity.verdict()` produces `"weak"` and nothing in the repo reads it
-   (`grep -rn '"weak"' --include=*.py .` returns the producing line and one test), so a
+   (`grep -rn '"weak"' --include=*.py .` — the producer, tests and `registry_health`'s explain line; no consumer), so a
    `weak` row — `Phoenix Financial -> phoenixtma.com`, that module's own example of "a real
    company, not the right one" — passes every gate except a page test. Giving `weak` a
    consumer is `pipeline` plumbing: `docs/BACKLOG.md` 43.
@@ -868,7 +879,7 @@ so a given night processes fewer rows than the pool holds.
 |---|---|---|---|
 | `triage_dark (18:00 daily)` | `triage-dark.yml` `0 18 * * *` | rows matching its own `TARGET_NOTES` minus `SKIP_NOTES` — classifies a dark row's failure mode and routes it | no |
 | `listing_hunt (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | parked rows matching `HUNT_POOL`, minus terminal, recruiters, discovery junk and `_triaged_page_empty` | **yes** |
-| `repair_extract_gap (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | rows triage stamped `extract-gap` (the tool's own `MODE`) that carry an `http` address | **yes** |
+| `repair_extract_gap (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | `in_extract_gap_pool`: rows triage stamped `extract-gap` (`MODE`) with an `http` address, minus terminal and recruiters — the terminal exclusion arrived 2026-08-25, the day it selected a freshly parked `alias-of` twin | **yes** |
 | `crack_walled (19:00 daily + Sun)` | `listing-hunt.yml` `0 19 * * *`, `audit-coverage.yml` `0 4 * * 0` | rows `identity_gate.is_walled` claims — the note token OR a walled ATS host — minus terminal and recruiters | **yes** |
 | `probe_candidates (05:00 daily)` | `daily-digest.yml` `0 5 * * *` | rows matching `PROBE_POOL` with an `http` address, minus terminal; wakes rather than activates (`_wake_note` strips every stale segment) | no |
 | `audit_empty_rows (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0` | `verdicts.in_pool` minus terminal and recruiters | **yes** |
@@ -876,13 +887,17 @@ so a given night processes fewer rows than the pool holds.
 
 `scan_dead_domains` (05:00 digest and the Sunday audit) is deliberately **not** a pool: it
 tests liveness, never roles, and excludes only `defunct` rather than the whole terminal list,
-because re-testing a `domain-dead` row is its purpose. Audit and deep-validate selecting the
+because re-testing a `domain-dead` row is its purpose. The **02:30 chain** is not in `pools()`
+either, and it activates: `bd_rescue` then `retry_unreachable` (`retry-unreachable.yml`) both
+select parked rows carrying `unreachable` (retry minus terminal since 2026-08-25); adding them
+as `in_*_pool` entries is `docs/BACKLOG.md` (registry). Audit and deep-validate selecting the
 identical row set 24 hours apart is this lane's clearest consolidation target
 (`docs/BACKLOG.md`).
 
 **Never retype a pool regex — import the tool's constant.** The guarded constants are
 `listing_hunt.HUNT_POOL`, `probe_candidates.PROBE_POOL`, `pipeline/verdicts.TERM_RX` (the one
-terminal list; `alias-of` is in it) and `identity_gate.is_walled`.
+terminal list; `alias-of` is in it), `identity_gate.is_walled` and
+`repair_extract_gap.in_extract_gap_pool`.
 `test_the_ownership_matrix_is_built_from_the_tools_own_predicates` asserts the matrix holds
 the tools' own objects — identity, not equality — so a retyped mirror fails the suite. Every
 mirror this repo has had was wrong in the LOOSE direction; the four are listed in the session
@@ -919,11 +934,25 @@ Four more rules this matrix exists to enforce, each violated in production at le
 New names enter via discovery (`research_companies.json` queue) or manual seeding. Then:
 
 1. `auto_expand.py` (cron 08:00/20:00): deterministic `resolve_deep` — recognizable ATS
-   URLs, iframes. Failures get ONE shot at tier 2 (capped `LLM_RESOLVE_CAP`/run; excess
-   **deferred**, not parked).
-2. `resolve_llm.py`: evidence bundle (page fetch + SerpApi search + ATS-hint extraction) →
-   single `claude -p` proposal `{platform, token, api_url}` → **verified** via the real
-   fetcher. One retry carrying the verification error.
+   URLs, iframes — for a seed on the company's own site. An **aggregator seed** (a LinkedIn /
+   Indeed / secrethunter posting) never reaches it: rendering that page can only yield a
+   refusal, `empty` or `unreachable`, and until 2026-08-25 it cost 17–25 s of Playwright per
+   name AFTER the LLM cap was spent (76 wasted minutes a run, twice a day, with the ten names
+   that did get a shot buried as `scanned; no open Israel roles now` under the posting's URL).
+   Failures go to tier 2, capped two ways per run — `LLM_RESOLVE_CAP` (10) `claude -p` CALLS,
+   charged only when a page was read, and `AUTO_EXPAND_SEARCH_CAP` (20) names that may enter
+   the tier — and a name the tier cannot crack is **deferred**, never parked, on a
+   least-recently-tried rotation (`cloud_state/auto_expand_seen.json`; the log says why:
+   `dfer <name> (no-llm|cap|no-candidates|llm-none)`). The 28 rows buried before that date
+   were un-addressed with `auto_expand.py --clear-agg-urls --apply` (`url-cleared`, hunt-owned).
+2. `resolve_llm.py`: evidence bundle (page fetch + the search ladder SerpApi →
+   `deep_validate.ddg` → `google_via_unlocker`, the paid rung capped per run by
+   `LLM_BD_SEARCH_CAP`, default 5 → ATS-hint extraction) → single `claude -p` proposal
+   `{platform, token, api_url}` → **verified** via the real fetcher. One retry carrying the
+   verification error. **No page read, no call**: with zero reachable pages the model is
+   not asked (`LAST["asked"]` tells the caller), because 0 of 50 evidence-free shots ever
+   resolved. Live control 2026-08-25: `Upwind Security` (a buried secrethunter seed) →
+   comeet `49.004`, 51/15 IL, 29 s, one call, DDG only.
 3. `listing_hunt.py` (cron 19:00): for rows still dark — find the LISTINGS URL (harvested
    links; Claude picks; rebrand redirects resolved), verify via `scrape_universal`.
    Woken/documented rows take the **fast-path**: scrape the stored URL first.
@@ -962,7 +991,9 @@ the short version of the three gates and the code that enforces them.
   phrase". Nothing reads `weak` — see section 2 and `docs/BACKLOG.md` 43.)
 - **Every rung that searches needs all three fallbacks.** The ladder is SerpApi (cheapest,
   currently useless) → `deep_validate.ddg` (free) → `deep_validate.google_via_unlocker`
-  (Bright Data, capped by `DEEP_BD_SEARCH_CAP`). Verified against the live account on
+  (Bright Data, capped by `DEEP_BD_SEARCH_CAP` in `deep_validate`/`audit_empty_rows`, and by
+  `resolve_llm`'s own `LLM_BD_SEARCH_CAP` since 2026-08-25 — it had been SerpApi-only, i.e.
+  a no-op, for the whole month). Verified against the live account on
   2026-08-23: `total_searches_left: 0`, `this_month_usage: 250`, Free Plan, resets
   2026-09-01 —
   `python -c "import os,json,urllib.request;from bd_rescue import _load_secrets;_load_secrets();print(json.load(urllib.request.urlopen('https://serpapi.com/account?api_key='+os.environ['SERPAPI_KEY'])).get('total_searches_left'))"`.
