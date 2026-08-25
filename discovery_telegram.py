@@ -85,6 +85,7 @@ def _clean_text(body_html):
 
 
 _TITLEISH = re.compile(r"[A-Za-z\u0590-\u05FF]")
+_DATE_LINE = re.compile(r"\d{1,2}/\d{1,2}/\d{2}")      # the format's "20/8/26" line
 
 
 def parse_post(lines, msg_date):
@@ -102,10 +103,18 @@ def parse_post(lines, msg_date):
     if len(lines) < 4:
         return None
     title, company, city = lines[0], lines[1], lines[2]
+    # NO company line at all — title / city / date / skills / seniority / url. Positional
+    # parsing then emits the CITY as the employer and the DATE as the city: shipped
+    # 2026-08-20 as {"company": "Tel Aviv", "location": "20/8/26, Israel"} and became a
+    # registry row (BACKLOG 167). 2 of 320 live posts on 2026-08-25; skipped and counted,
+    # never guessed — the secrethunter link is a JS shell, so there is no employer to
+    # recover from it.
+    if _DATE_LINE.match(city):
+        return None
     if not _TITLEISH.search(company):
         return None                                        # company must contain a letter
     company = company.replace("(.)", ".").strip()          # "Placer(.)ai" -> "Placer.ai"
-    rest = lines[4:] if re.match(r"\d{1,2}/\d{1,2}/\d{2}", lines[3]) else lines[3:]
+    rest = lines[4:] if _DATE_LINE.match(lines[3]) else lines[3:]
     url = ""
     skills = seniority = ""
     for ln in rest:
@@ -250,6 +259,7 @@ def main():
     with open("discovered_cache.json", "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=1)
     # bridge new companies into the auto-expand queue (same as discovery_daily)
+    from discovery_daily import is_place_name
     from pipeline.companies import load_companies
     from pipeline.firmographics import looks_like_junk
     from pipeline.recruiters import is_recruiter
@@ -260,9 +270,9 @@ def main():
     for j in added:
         c = j["company"].strip()
         # a Telegram post's "company" is whatever the poster typed, so it is the most
-        # likely of all the sources to be a job title or a team name
+        # likely of all the sources to be a job title, a team name — or a city
         if (c.lower() not in have and c.lower() not in known
-                and not is_recruiter(c) and not looks_like_junk(c)):
+                and not is_recruiter(c) and not looks_like_junk(c) and not is_place_name(c)):
             research.append({"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""})
             known.add(c.lower())
             queued += 1

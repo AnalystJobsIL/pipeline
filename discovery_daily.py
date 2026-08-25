@@ -747,6 +747,21 @@ def _targeted_cap_or_zero(cap):
     return cap
 
 
+def is_place_name(name):
+    """True when a 'company name' is a city / region / country. A Telegram post with no
+    company line put its CITY in the employer slot (2026-08-20, "Director of finance" at
+    "Tel Aviv"); the name passed is_recruiter and looks_like_junk, was queued, resolved by
+    listing_hunt onto secrethunter's Tel Aviv city board and ACTIVATED — 145 cards of other
+    companies' jobs, 7 on the board, 2 in the 2026-08-25 mail. No downstream identity check
+    can refuse a company named after the city its host is named after
+    (`registry_health --explain "Tel Aviv"` -> tenant_is_this_company = True), so intake is
+    the one gate that can say no. Exact match on the whole name — "Jerusalem Venture
+    Partners" is an employer, "Jerusalem" is not."""
+    from pipeline import israel as _il
+    n = " ".join(str(name or "").strip().lower().replace("-", " ").split())
+    return bool(n) and n in {p.lower().replace("-", " ") for p in _il._IL_PLACES + _il._IL_PLACES_HE}
+
+
 def _load_json(path):
     try:
         return json.load(open(path, encoding="utf-8"))
@@ -1010,7 +1025,7 @@ def main():
     from pipeline.recruiters import is_recruiter as _is_rec
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
     new_cos = {}
-    n_junk = n_rec = 0
+    n_junk = n_rec = n_place = 0
     # NEW COMPANIES PER SOURCE is the number this layer exists to produce — a source can be
     # alive, on-budget and completely useless at the same time (a healthy-looking record
     # count once hid a 0-new-companies breadth sweep), and this is the line that says so.
@@ -1035,6 +1050,9 @@ def main():
         if looks_like_junk(c):
             n_junk += 1
             continue
+        if is_place_name(c):
+            n_place += 1
+            continue
         # the slug is free evidence the display name hides ("Dialog" / dialog-recruiting)
         if _is_rec(c, j.get("company_slug", "")):
             n_rec += 1
@@ -1046,9 +1064,9 @@ def main():
                               "ats": "unknown", "slug": j.get("company_slug", ""),
                               "_real_lead": bool(j.get("careers_hint"))}
         yield_by_src[src] += 1
-    if n_junk or n_rec:
-        print(f"discovery: rejected {n_junk} job-title-shaped names and {n_rec} agencies "
-              f"before they could become rows")
+    if n_junk or n_rec or n_place:
+        print(f"discovery: rejected {n_junk} job-title-shaped names, {n_place} place names "
+              f"and {n_rec} agencies before they could become rows")
     for src in sorted(seen_by_src):
         n = yield_by_src[src]
         print(f"[yield] {src}: {len(seen_by_src[src])} employers -> {n} NEW companies"

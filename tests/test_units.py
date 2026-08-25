@@ -6255,3 +6255,48 @@ def test_the_names_bridge_hands_the_slug_to_the_recruiter_gate():
     import discovery_daily
     src = inspect.getsource(discovery_daily.main)
     assert 'company_slug' in src.split("if _is_rec(", 1)[1].split(")", 1)[0]
+
+
+def test_a_telegram_post_with_no_company_line_is_skipped_not_shifted_into_a_city_named_employer():
+    """t.me/secretfinancejobs/5348 (2026-08-20) has no company line: title / city / date /
+    skills / seniority / url. Positional parsing emitted company="Tel Aviv",
+    location="20/8/26, Israel"; the name passed every intake gate, was queued, resolved by
+    listing_hunt onto secrethunter's Tel Aviv city board and activated — 145 cards of other
+    companies' jobs, 7 on the 2026-08-25 board, 2 in that day's mail (BACKLOG 167)."""
+    import discovery_telegram as d
+    real = ["Director of finance", "Tel Aviv", "20/8/26",
+            "US GAAP, Tax strategy, Treasury, Financial Reporting, Leadership, AI tools, Communication",
+            "Director", "https://secrethunter.io/jobz/54dbf0dd1c?utm_source=telegram", "--"]
+    assert d.parse_post(real, "2026-08-20T14:05:42+00:00") is None
+    # the three healthy shapes the channels actually use keep parsing — the guard is narrow
+    plain = ["Data Analyst", "Riskified", "Tel Aviv", "SQL, Python", "Senior",
+             "https://secrethunter.io/jobz/a1"]
+    dated = ["Data Analyst", "Explorium", "Tel Aviv", "20/8/26", "SQL, Python", "Senior",
+             "https://secrethunter.io/jobz/a2"]
+    decorated = ["🔥🔥🔥"] + dated
+    assert [d.parse_post(p, "2026-08-20")["company"] for p in (plain, dated, decorated)] == \
+        ["Riskified", "Explorium", "Explorium"]
+    assert d.parse_post(dated, "2026-08-20")["location"] == "Tel Aviv, Israel"
+
+
+@pytest.mark.parametrize("name,expected", [
+    ("Tel Aviv", True), ("tel-aviv", True), ("Haifa", True), ("Israel", True),
+    ("ירושלים", True),
+    ("Jerusalem Venture Partners", False), ("Tel Aviv Stock Exchange", False),
+    ("Riskified", False), ("", False),
+])
+def test_a_place_name_never_enters_the_research_queue(name, expected):
+    """No downstream identity check can refuse a company named after the city its host is
+    named after (`registry_health --explain "Tel Aviv"` -> tenant_is_this_company = True),
+    so intake is the one gate that can say no. Exact match on the whole name only."""
+    import discovery_daily as dd
+    assert dd.is_place_name(name) is expected
+
+
+def test_both_intake_bridges_refuse_a_place_name():
+    import inspect
+
+    import discovery_daily as dd
+    import discovery_telegram as dt
+    assert "is_place_name(c)" in inspect.getsource(dd.main)
+    assert "is_place_name(c)" in inspect.getsource(dt.main)
