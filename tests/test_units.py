@@ -35,6 +35,10 @@ def test_aggregator_public_surface():
     ("https://boards-api.greenhouse.io/v1/boards/wix/jobs", False),
     ("https://careers.wix.com/", False),
     ("", False),
+    # 2026-08-25: secrethunter's city board activated a row named "Tel Aviv" (145 cards)
+    ("https://jobs.secrettelaviv.com/", True),
+    ("jobs.secrettelaviv.com/job/product-analyst-129/", True),
+    ("https://secretdoubleoctopus.com/careers", False),   # a real employer, so no secret* pattern
 ])
 def test_is_aggregator(url, expected):
     assert aggregators.is_aggregator(url) is expected

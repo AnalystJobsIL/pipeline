@@ -106,6 +106,12 @@ import re as _re
 
 HOSTS = (
     "linkedin.", "indeed.", "glassdoor.", "secrethunter.", "t.me/",
+    # secrethunter's per-city board. Missing here, listing_hunt "verified 145 IL via
+    # jobs.secrettelaviv.com" and activated a row named "Tel Aviv" (2026-08-24); 7 of the
+    # 81 roles on the 2026-08-25 board and 2 in that day's mail were other companies'
+    # postings under it. A literal, NOT a `secret*` pattern: Secret Double Octopus
+    # (secretdoubleoctopus.com) is a real active employer.
+    "secrettelaviv.",
     # builtin runs a domain PER CITY — builtinnyc.com, builtinchicago.org, builtinla.com,
     # builtinaustin.com, builtinboston.com, builtinseattle.com, builtinsf.com, builtincolorado.com
     "builtin.com", "builtinnyc.", "builtinchicago.", "builtinla.", "builtinaustin.",
