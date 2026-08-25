@@ -502,6 +502,7 @@ write list**, which is why it is a proposal and not a commit. Ordered by what it
 
 7. **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
    supported fetcher with 4 active rows** — lane: `ats-fetch`. `Fortinet` is the worked
+    **CLOSED 2026-08-26 (`ats-fetch`, measured):** `registry` converted Fortinet to `oraclehcm` on 2026-08-25 (76); `fetch_company` on that row returns 503 requisitions / 15 IL today and 5 `oraclehcm` rows are active. `registry_health.py --ats` still lists `oraclecloud.com` as WIRE for Loris and Nokia — tenants for a fetcher that exists, `registry`'s to crack.
    example: it is an *active scrape* row pointed at
    `edel.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/...` (11 IL verified by the hunt),
    being browser-rendered every night for something the native REST fetcher could read.
@@ -1585,6 +1586,7 @@ Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-d
     Found by wave-1 attacker D.
 
 86. **`pipeline/fetchers.fetch_scrape` hard-codes `scraped_cache.json` next to the package**
+    **CLOSED 2026-08-26 (`ats-fetch`):** `SCRAPE_CACHE_IN=<file>` — read once, when the cache is first loaded; a missing file is an empty cache. Pinned by `test_scrape_cache_in_points_the_digest_at_a_scratch_cache`.
     — lane: `ats-fetch`. A rehearsal that wants the digest to read a scratch cache has to
     pre-seed `fetchers._SCRAPE_CACHE` from a Python driver (the scraper session did exactly
     that). An env override (`SCRAPE_CACHE_IN`) or a `path=` parameter would make
@@ -1703,6 +1705,7 @@ write list; each item names the lane that owns it and the command that proves it
 
 79. **The single `jazzhr` row (Questar Auto Technologies) is scanned daily and can never
     **Row CLOSED 2026-08-26 (`registry`):** `scrape` on `questar.applytojob.com/apply` — `scrape_universal` extracts 4 Herzliya roles from it (measured). Retiring the `jazzhr` platform (`FETCHERS`, `health._PSEUDO_OR_BY_DESIGN`, `platform_check`, `PLATFORM_HOST`) is `ats-fetch`'s.
+    **Code half CLOSED 2026-08-26 (`ats-fetch`):** `jazzhr` left `FETCHERS`, `health._PSEUDO_OR_BY_DESIGN`, `platform_check` (15 platforms · 21 MISSING, was 16 · 24) — and `applytojob.com|jazz.co` left `health.ATS_HOST`, without which the converted Questar row (and myInterview, already in `stale.json`) read as `misconfig-scrape-on-ats` at the next 05:00. A resolver that still detects the host (item 213) now fails closed at `fetch_company`. `docs/ATS_PLATFORMS.md:18` is item 209.
     produce** — lane: `registry`. `fetch_jazzhr` returns `[]` by design; the row's
     `api_url` is an `/apply` page. Convert it to a `scrape` row on that page or park it,
     then retire the `jazzhr` platform (`FETCHERS`, `health._PSEUDO_OR_BY_DESIGN`,
@@ -1733,6 +1736,7 @@ write list; each item names the lane that owns it and the command that proves it
 82. **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
     run's `stale.json` without the `error` reasons, prints no `mail_lines`, and re-fetches
     all 66 active Workday rows in a burst** — lane: whoever owns `self-heal.yml`'s step
+    **Module half CLOSED 2026-08-26 (`ats-fetch`):** `health_check.py` records the same `Class: message` text run.py does (query strings stripped before the 70-char cut) and prints both `Boards` lines judged against the digest's file, so the Monday overwrite no longer strips the reasons. Whether the Monday sweep should exist at all (a second writer of `stale.json`, 62 Workday POSTs in a burst) stays with `infra` / `self-heal.yml`.
     (`infra`) + `ats-fetch` for the module. Found by the wave-1 health review. It should
     pass `error=` into its results dict and either print `health.mail_lines()` to the
     workflow log or be retired: the daily run has done the same sweep inline since
@@ -1900,6 +1904,7 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     that module with `tools=` and let `company-intel` migrate; `resolve_llm.py`,
     `triage_dark.py`, `scrape_universal.py` spawn their own too.
 118. **Greenhouse `location.name` is a work-mode at some tenants** — lane: `ats-fetch`.
+    **CLOSED 2026-08-26 (`ats-fetch`, measured):** Cloudflare, the example here, has 0 Israel offices — but the class is real. Census over all 103 active greenhouse boards (7,870 postings, 548 Israel by `location.name`): reading the single `offices[]` entry when the location names no Israeli place — and the office carries a `location` (a parent node of the office tree has none: SentinelOne's country node under a United Kingdom posting, the code attacker's catch) — gains +5 (Eleos Health "IL" ×2, Electreon "Remote"/"HQ Beit Yanni"/"Beit Yanai"), loses 0, changes no id; appending EVERY office would have gained 20: 6 single-office matches (these 5 plus the SentinelOne parent node this rule excludes) plus 14 false positives (Datadog 10, Forter 2, Fireblocks 1, BigID 1). Multi-office postings are item 211. `fetch_greenhouse.israel_scoped = False` is declared (the request is unscoped).
     Cloudflare's 296 postings say `Hybrid` / `In-Office`; the office is in `offices[]`, which
     `fetch_greenhouse` (`fetchers.py:242`) does not read, so an Israeli Cloudflare role would be
     dropped by the Israel gate. Read `offices[].name`/`location` into the location string.
@@ -2120,12 +2125,14 @@ two list caches merge by key), 15/60 (base-aware note union), 17, 39, 94, 95, 10
 half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
 
 153. **`pipeline/health.py` writes `stale.json` and `health_baseline.json` with no temp file**
+    **CLOSED 2026-08-26 (`ats-fetch`):** both files through `pipeline.atomic.write_json`; a writer that dies leaves the old file byte-identical and no `.tmp_*` behind, and `record` still never raises (`test_health_writes_stale_and_baseline_atomically`).
     — lane: shared (`pipeline/health.py:117-122`). `json.dump(data, open(path, "w"))` inside
     `except OSError: pass`; a kill mid-write leaves a truncated baseline, `_load` reads `{}`,
     every board's high-water mark resets to 0 and `regressed-to-zero` can never fire again.
     `pipeline.atomic.write_json` is three lines away. Found by the 2026-08-25 hand-over audit.
 154. **`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the
     `Boards` lines** — lane: `scraper` + `ats-fetch`. `fetch_scrape` returns `[]` for
+    **CLOSED 2026-08-26 (`ats-fetch`; nothing left for `scraper`):** `health.record` reads the rot file for scrape rows with an empty cache (`overnight_verdict`): a fresh `why: error` relabels a `regressed-to-zero` as `fetch-error` with the scraper's reason (`scrape: http:403 (1 night)`), `why: empty` with `found > 0` withdraws it (never announced as `cleared`), entries older than 2 days are ignored, and a row with baseline 0 gets no flag (18 such rows on 08-26 — item 208). Replay of the committed 08-25 files: 59 → 56 stale rows (Akamai, Bright Security relabelled; Wiliot withdrawn; Questar, myInterview via item 79). No run.py change.
     never-scraped, empty and error-with-expired-carry alike and cannot raise, so `run.py`
     records `status: "empty"` and `health.stale_reason` can never say `fetch-error` for a
     scrape row. The file that carries the verdict (`why: error`, `http`, `error`) is read by
@@ -2303,6 +2310,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     per push, so the gate's owner decides.
 184. **`fetch_discovery` judges the display name only; the slug it has in hand says
     "recruiting"** — lane: `ats-fetch`. `pipeline/fetchers.py:856` is
+    **CLOSED 2026-08-26 (`ats-fetch`):** the slug is passed; on the committed cache 155 → 163 cards judged recruiter (+8, all `Dialog`/`dialog-recruiting`). `registry_health.py:90` (and 276/280/291/654) and `auto_expand.py:200` are still name-only (`registry`).
     `elif _is_rec(j.get("company")):` while the same dict carries `company_slug`
     (`dialog-recruiting`). `is_recruiter(name, slug="")` takes it since `70dba5f`; the
     cache write now drops such cards, so this is belt-and-braces for cards written by an
@@ -2492,3 +2500,70 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     if a platform defers wholesale, declare its rows or map its page. C3b deliberately skips
     uid tokens (a uid is opaque, not a near-miss); a `deferred` count in the mail is the cheap
     visibility, filed here rather than built blind.
+
+## From the `ats-fetch` lane, 2026-08-26
+
+Record: `docs/sessions/2026-08-26-ats-fetch.md`. Closed there: 7, 79 (code half), 82 (module
+half), 86, 118, 153, 154, 184. Open, with owners:
+
+207. **The mail attributes the classifier's verdicts to haiku** — lane: `classifier`. The
+    2026-08-25 `classify:` line reads `model claude-haiku-4-5-20251001 x237, claude-sonnet-5 x4`
+    while `seniority.LLM_MODEL = "sonnet"`. `pipeline/llm.py::call` names the `modelUsage` entry
+    with the most `inputTokens`; one `claude -p --model sonnet --output-format json` call on
+    2026-08-26 (CLI 2.1.246) answered with `haiku: inputTokens 898, outputTokens 9` and
+    `sonnet: inputTokens 2, outputTokens 4` — sonnet produced the answer, haiku the side-turn.
+    The attribution is the bug, not the routing; count `outputTokens` (or trust the requested
+    model) and the A/B in ARCHITECTURE §7b stays valid.
+208. **18 scrape rows whose page errored overnight and that never produced surface nowhere but
+    `collect: errors=`** — lane: `scraper` (+ `discovery`). By design (154) health flags only
+    a regression; Uber `http:404`, Ford timeout, Xsight Labs `http:429`, TripleW, Clutch
+    Security, FundGuard, Sorbet, Blender, Fugu, Bayer, Mercedes-Benz (MBRDNA), Blaize, Denso,
+    Blings.io, Jit, Phinergy, Akamai Technologies, Zim (2026-08-26) are owned by the rot's
+    7-night parking and then the registry pools. If a dead-on-arrival scrape URL should reach
+    discovery's targeted sweep earlier, the `collect` stamp is the place to name them.
+209. **Platform and row counts other lanes' files still carry** — lane: `docs`.
+    `docs/ATS_PLATFORMS.md:18` lists `jazzhr` (retired); `docs/gen_modules.py:95` and its
+    output `docs/MODULES.md:132` say "16 platforms" (15); `ARCHITECTURE.md`'s one-screen map
+    (lines 37–38: "16 platforms, 433 API rows", "412 rows"), `README.md:12,13,31` and
+    `docs/AGENT_BRIEF.md:49,52-53,90` say 433 / 412 / 846 — today 431 API / 438 scrape / 870 active
+    (§1's one-liner). This lane's section says so; the container is `docs`'.
+210. **BACKLOG 83 re-sized: the fetch loop is 3.8–4.7 min of a 20-minute step, the classify
+    phase 14.8** — lane: `infra` (83) + `classifier`. Run `32813499709` (2026-08-25): the
+    loop opened 05:47:46, its 771st row (`[discovery]`) logged 05:51:33, first classify output
+    05:52:27; classify to 06:06:19 (`attempts 241 in 12.9 min` of it LLM); the step doubled vs
+    08-24 (10 m 14 s). Parallelising the loop is worth at most its 4–5 min; the 241 attempts
+    (186 re-judged under the `v2` key on its first morning) are the item.
+211. **Greenhouse postings listing Israel as one of several offices are left out by design** —
+    lane: `ats-fetch`. 14 on 2026-08-26 (Fireblocks 1, Forter 2, BigID 1, Datadog 10 — the
+    Datadog ten are Paris / Madrid / multi-city EMEA jobs with a global office set, the
+    Forter two are London jobs with a Tel Aviv office). A per-tenant convention, not a global rule; revisit if a tenant that
+    posts analyst roles this way appears.
+212. **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
+    Israel)` renders as the wrong half** — lane: `render`. `jdtext._norm_location` splits on
+    the parenthesis and returns the first part that is not noise, so Electreon's card reads
+    `Remote` / `HQ Beit Yanni` rather than Beit Yanai (found by the semantics attacker on the
+    first cut, whose SentinelOne `United Kingdom (Israel)` case no longer arises: an office
+    without a `location` — a parent node — never vouches). Whether the office half should
+    win the display label is `render`'s; the fetcher could put the office first when the
+    location is a work mode (`ats-fetch`, if `render` prefers that).
+213. **Resolver maps still name `applytojob`/`jazzhr` as a platform host** — lane: `registry`.
+    `detect_ats.py:18`, `resolve_llm.py:37`, `pipeline/company_identity.py:31`. A resolver
+    that detects it now fails closed (`fetch_company` raises on the unknown platform, so no
+    row is written) — decide whether it should route the host to a `scrape` row instead
+    (Questar and myInterview prove the page scrapes).
+214. **A row leaving `stale.json` because `ATS_HOST` shrank reads as `cleared`** — lane:
+    `ats-fetch`. `mail_lines` suppresses the two other cosmetic clears (an Israel-scoped
+    measurement zero, a scrape zero the scraper explained) but not this one: myInterview on
+    2026-08-27 is not a recovery, and the next host removed from `ATS_HOST` will print the
+    same line silently. A `misconfig-scrape-on-ats` row that is absent today because the
+    host is no longer in `ATS_HOST` is the predicate; one line beside the other two.
+215. **`docs/check_docs.py` is green in the shared checkout and red on CI: it walks
+    `.claude/worktrees/`** — lane: `docs` (+ `registry` for the line). `_basenames()` skips
+    `.git`/`out`/… but not `.claude`, and the stale agent worktree `agent-a4942005e88090349`
+    (at `bebbee9`) still holds the deleted `deep-validate` workflow file, so BACKLOG line 494
+    (`registry`, `8a4deac`: "the Saturday deep-validate cron is now the Sunday audit's rung",
+    which names that file) resolves locally and fails in a fresh checkout ("ERROR [paths]
+    docs/BACKLOG.md names deep-validate.yml"). `tests.yml` has been red on every push since at least `0a32bf7`
+    (2026-08-25 19:47). Found 2026-08-26 by verifying this lane's staged blobs in a clean
+    `git worktree`. Fix both halves: add `.claude` to `_SKIP_DIRS`, and put the deleted
+    workflow's name in `ABSENT_OK` with the reason (or reword line 494).

@@ -3,11 +3,16 @@
 now does inline every day. Fetches every active company and records the same stale-board list
 + baseline via pipeline.health, catching slow drift the daily run might smooth over.
 
-Writes cloud_state/stale.json (the re-resolve queue) + cloud_state/health_baseline.json.
+Writes cloud_state/stale.json (the re-resolve queue) + cloud_state/health_baseline.json —
+the same two files the digest wrote at 05:00, so this is a second writer of the queue on
+Mondays. It carries the same exception text the digest does (until 2026-08-26 it recorded a
+bare `status: error`, so a Monday overwrite stripped every `error` reason from stale.json)
+and prints the same two `Boards` lines the mail shows, judged against the digest's file.
 """
 from __future__ import annotations
 
 import csv
+import re
 
 from pipeline import fetchers, health, israel
 
@@ -27,10 +32,18 @@ def main():
                              "status": "ok" if jobs else "empty", "api": api}
             st = "ok" if jobs else "empty"
         except Exception as e:  # noqa: BLE001
-            results[name] = {"platform": plat, "n": 0, "status": "error", "api": api}
+            # the class AND the message, query strings stripped first — exactly what
+            # pipeline/run.py records, so a Monday sweep does not erase Sunday's reasons
+            msg = re.sub(r"\?\S*", "", str(e))[:70]
+            why = f"{type(e).__name__}: {msg}"
+            results[name] = {"platform": plat, "n": 0, "status": "error", "api": api,
+                             "error": why}
             il, st = 0, f"error:{type(e).__name__}"
         print(f"  {name[:26]:27} {st:14} {results[name]['n']:>4}/{il:>3} IL", flush=True)
+    previous = health.previous()                       # before record() rewrites the file
     stale = health.record(results)
+    for line in health.mail_lines(stale, previous, scanned=results):
+        print(f"  boards {line}", flush=True)
     print(f"\n=== {len(results)} checked · {len(stale)} STALE -> {health.STALE} ===", flush=True)
 
 

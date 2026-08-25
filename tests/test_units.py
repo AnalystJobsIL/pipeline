@@ -2990,7 +2990,7 @@ def test_health_does_not_flag_israel_scoped_fetchers_as_empty_boards(tmp_path):
     from pipeline import fetchers, health
     scoped = sorted(k for k, f in fetchers.FETCHERS.items() if getattr(f, "israel_scoped", False))
     assert scoped == ["custom_json", "eightfold", "microsoft", "phenom", "workday"]
-    for plat in scoped + ["scrape", "discovery", "jazzhr"]:
+    for plat in scoped + ["scrape", "discovery"]:
         assert health.stale_reason(plat, "", 0, "empty", 0) is None, plat
     for plat in ("greenhouse", "comeet", "lever", "ashby", "workable"):
         assert health.stale_reason(plat, "", 0, "empty", 0) == "empty-board", plat
@@ -6619,3 +6619,345 @@ def test_the_bright_data_warning_no_longer_blames_the_other_spenders():
     assert "has cut the targeted sweep to zero" not in src
     assert "targeted_cap" in src.split("::warning::", 1)[1]
     assert "report_bd_spend(targeted_cap if have_bd else None)" in inspect.getsource(dd.main)
+
+# =====================================================================================
+# ats-fetch lane, 2026-08-26 — the scraper's overnight verdict reaches board health, the
+# jazzhr platform retired, Greenhouse offices[], SCRAPE_CACHE_IN, the recruiter slug, atomic
+# state writes. Record: docs/sessions/2026-08-26-ats-fetch.md.
+# =====================================================================================
+import datetime as _af_dt
+import json as _af_json
+
+
+def _af_rot(today, **entries):
+    """{name: (why, error, found[, days_old[, nights]])} -> a scrape_rot.json shape."""
+    rot = {}
+    for name, spec in entries.items():
+        why, err, found = spec[0], spec[1], spec[2]
+        days_old = spec[3] if len(spec) > 3 else 0
+        nights = spec[4] if len(spec) > 4 else 1
+        last = (today - _af_dt.timedelta(days=days_old)).isoformat()
+        rot[name] = {"since": last, "why": why, "n": nights, "last": last, "error": err,
+                     "found": found, "http": 403 if err.startswith("http:403") else 200}
+    return rot
+
+
+def test_a_scrape_row_the_scraper_could_not_read_is_a_fetch_error_not_a_regression(tmp_path):
+    """docs/BACKLOG.md 154: `fetch_scrape` returns [] for a walled page and an empty page
+    alike, so on 2026-08-25 all 34 `regressed-to-zero` rows were scrape rows — two of them
+    (Akamai http:403, Bright Security goto:TimeoutError) walls the scraper had recorded in
+    `scrape_rot.json`, and one (Wiliot) a page with 8 roles and none in Israel. Health now
+    reads the rot file: an overnight error RELABELS the regression with its reason, a
+    measurement withdraws it, and a row that never produced (baseline 0) gets no flag from
+    it — 18 such rows that morning would otherwise have entered the weekly self-heal and the
+    targeted LinkedIn rotation (the scraper's own rot parking owns them)."""
+    from pipeline import health
+    today = _af_dt.date(2026, 8, 26)
+    rot = _af_rot(today, Akamai=("error", "http:403", 0), **{"Bright Security": ("error", "goto:TimeoutError", 0)},
+                  Wiliot=("empty", "", 8), Voom=("empty", "", 0), Uber=("error", "http:404", 0))
+    rot_p = tmp_path / "rot.json"; rot_p.write_text(_af_json.dumps(rot), encoding="utf-8")
+    base_p = tmp_path / "b.json"
+    base_p.write_text(_af_json.dumps({"Akamai": 7, "Bright Security": 2, "Wiliot": 8, "Voom": 3}), encoding="utf-8")
+    res = {n: {"platform": "scrape", "n": 0, "status": "empty", "api": f"https://{n.lower().replace(' ', '')}.example/careers"}
+           for n in ("Akamai", "Bright Security", "Wiliot", "Voom", "Uber")}
+    stale = health.record(res, baseline_path=str(base_p), stale_path=str(tmp_path / "s.json"),
+                          rot_path=str(rot_p), write=False, today=today)
+    assert stale["Akamai"] == {"careers_url": res["Akamai"]["api"], "platform": "scrape",
+                               "reason": "fetch-error", "error": "scrape: http:403 (1 night)"}
+    assert stale["Bright Security"]["reason"] == "fetch-error"
+    assert stale["Bright Security"]["error"] == "scrape: goto:TimeoutError (1 night)"
+    assert stale["Voom"]["reason"] == "regressed-to-zero", "an honestly empty page (found 0) is still a regression"
+    assert "Wiliot" not in stale, "8 roles found, none in Israel: a measurement"
+    assert "Uber" not in stale, "baseline 0: the rot file never CREATES a flag, it only relabels one"
+    # a stale rot entry (the refresh did not run, or a mass-failure night wrote nothing)
+    # falls back to the baseline rule — yesterday's verdict about a page nobody re-read
+    old = _af_rot(today, Akamai=("error", "http:403", 0, 5), Wiliot=("empty", "", 8, 5))
+    rot_p.write_text(_af_json.dumps(old), encoding="utf-8")
+    stale = health.record(res, baseline_path=str(base_p), stale_path=str(tmp_path / "s.json"),
+                          rot_path=str(rot_p), write=False, today=today)
+    assert stale["Akamai"]["reason"] == "regressed-to-zero" and "error" not in stale["Akamai"]
+    assert stale["Wiliot"]["reason"] == "regressed-to-zero"
+    # the ordering rule is intact: a misconfigured row is reported as such whatever the rot says
+    assert health.stale_reason("scrape", "https://boards.greenhouse.io/x", 0, "empty", 5, overnight="error") == "misconfig-scrape-on-ats"
+    # the rot verdict never touches an ATS row or a status the fetch decided itself
+    assert health.stale_reason("greenhouse", "u", 0, "empty", 5, overnight="measurement") == "regressed-to-zero"
+    assert health.stale_reason("greenhouse", "u", 0, "empty", 5, overnight="error") == "regressed-to-zero", "an overnight verdict is a scrape thing"
+    assert health.stale_reason("scrape", "u", 0, "error", 5, overnight="measurement") == "fetch-error"
+    assert health.stale_reason(" Scrape ", "https://boards.greenhouse.io/x", 3, "ok", 0) == "misconfig-scrape-on-ats", "platform case/space-insensitive"
+    # the fetch-side reason wins over the rot's; a wrong-shape rot file is an empty one
+    rot_p.write_text(_af_json.dumps(rot), encoding="utf-8")
+    both = health.record({"Akamai": {**res["Akamai"], "status": "error", "error": "HttpError: HTTP 500"}},
+                         baseline_path=str(base_p), stale_path=str(tmp_path / "s.json"), rot_path=str(rot_p), write=False, today=today)
+    assert both["Akamai"] == {"careers_url": res["Akamai"]["api"], "platform": "scrape", "reason": "fetch-error", "error": "HttpError: HTTP 500"}
+    for bad in ('["Akamai"]', "null", '"s"'):
+        rot_p.write_text(bad, encoding="utf-8")
+        assert health.record(res, baseline_path=str(base_p), stale_path=str(tmp_path / "s.json"),
+                             rot_path=str(rot_p), write=False, today=today)["Akamai"]["reason"] == "regressed-to-zero", bad
+        assert health.mail_lines({}, {"Akamai": {"reason": "regressed-to-zero", "platform": "scrape"}}, scanned={"Akamai"},
+                                 rot_path=str(rot_p), today=today) == ["changed today: cleared: Akamai"], bad
+    # the pure predicate, edge by edge
+    ov = health.overnight_verdict
+    assert ov({}, today) is None and ov(None, today) is None and ov("x", today) is None
+    assert ov({"why": "error", "last": "not-a-date"}, today) is None
+    assert ov({"why": "error", "last": "2026-08-25", "error": "http:429", "n": 3}, today) == ("error", "scrape: http:429 (3 nights)")
+    assert ov({"why": "error", "last": "2026-08-25"}, today) == ("error", "scrape: error (1 night)")
+    assert ov({"why": "empty", "last": "2026-08-25", "found": "8"}, today) == ("measurement", "scrape: 8 roles, none in Israel")
+    assert ov({"why": "empty", "last": "2026-08-25"}, today) is None, "a legacy entry without `found` is an honest zero"
+    assert ov({"why": "error", "last": "2026-08-27", "error": "x"}, today) is None, "a date in the future is not last night"
+    # a corrupt or absent rot file is exactly today's behaviour
+    rot_p.write_text("{not json", encoding="utf-8")
+    assert health.record(res, baseline_path=str(base_p), stale_path=str(tmp_path / "s.json"),
+                         rot_path=str(rot_p), write=False, today=today)["Akamai"]["reason"] == "regressed-to-zero"
+    assert health.record(res, baseline_path=str(base_p), stale_path=str(tmp_path / "s.json"),
+                         rot_path=str(tmp_path / "missing.json"), write=False, today=today)["Akamai"]["reason"] == "regressed-to-zero"
+
+
+def test_a_scrape_zero_the_scraper_explained_is_not_announced_as_cleared(tmp_path):
+    """A row that leaves stale.json because the scraper found roles (none in Israel) was
+    never broken; `cleared:` must not name it — the same rule the Workday measurement zeros
+    already had. A row that recovered, or whose rot entry is stale, is still announced."""
+    from pipeline import health
+    today = _af_dt.date(2026, 8, 26)
+    rot = _af_rot(today, Wiliot=("empty", "", 8), Stale=("empty", "", 8, 6))
+    rot_p = tmp_path / "rot.json"; rot_p.write_text(_af_json.dumps(rot), encoding="utf-8")
+    prev = {n: {"reason": "regressed-to-zero", "platform": "scrape", "careers_url": "u"} for n in ("Wiliot", "Voom", "Stale")}
+    prev["Decart"] = {"reason": "fetch-error", "platform": "ashby", "careers_url": "u"}
+    lines = health.mail_lines({}, prev, scanned={"Wiliot", "Voom", "Stale", "Decart"}, rot_path=str(rot_p), today=today)
+    assert lines == ["changed today: cleared: Decart; Stale; Voom"]
+    # no scrape regression in yesterday's file -> the rot file is not even opened (a spy on
+    # `_load`, not a missing path: a missing path cannot tell lazy from eager)
+    import pipeline.health as _h
+    loads = []
+    real_load = _h._load
+    try:
+        _h._load = lambda p: (loads.append(p), real_load(p))[1]
+        lines = health.mail_lines({}, {"Decart": prev["Decart"]}, scanned={"Decart"}, rot_path=str(rot_p))
+        assert lines == ["changed today: cleared: Decart"] and loads == []
+        stale = health.record({"Wix": {"platform": "comeet", "n": 0, "status": "empty", "api": "u"},
+                               "Akamai": {"platform": "scrape", "n": 3, "status": "ok", "api": "u"}},
+                              baseline_path=str(tmp_path / "b2.json"), stale_path=str(tmp_path / "s2.json"),
+                              rot_path=str(rot_p), write=False)
+        assert str(rot_p) not in loads, "rot consulted only for a scrape row with an empty cache"
+    finally:
+        _h._load = real_load
+
+
+def test_replay_of_the_committed_stale_and_rot_files_through_the_new_health_rule():
+    """The four real rows of 2026-08-25, inline (the census that motivated the rule), then
+    the invariant over whatever the committed files hold today: no scrape row survives as
+    `regressed-to-zero` while a fresh rot entry says the page errored or found roles."""
+    import os as _os
+    from pipeline import health
+    today = _af_dt.date(2026, 8, 26)
+    rot = {"Akamai": {"since": "2026-08-25", "why": "error", "n": 1, "last": "2026-08-25", "error": "http:403", "found": 0, "http": 403},
+           "Bright Security": {"since": "2026-08-25", "why": "error", "n": 1, "last": "2026-08-25", "error": "goto:TimeoutError", "found": 0},
+           "Wiliot": {"since": "2026-08-23", "why": "empty", "last": "2026-08-25", "n": 1, "error": "", "found": 8, "http": 200},
+           "AU10TIX": {"since": "2026-08-25", "why": "empty", "n": 1, "last": "2026-08-25", "error": "", "found": 0, "http": 200}}
+    want = {"Akamai": "fetch-error", "Bright Security": "fetch-error", "Wiliot": None, "AU10TIX": "regressed-to-zero"}
+    for name, expect in want.items():
+        v = health.overnight_verdict(rot[name], today)
+        got = health.stale_reason("scrape", "https://x.example/careers", 0, "empty", 5, overnight=v[0] if v else None)
+        assert got == expect, name
+    repo = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    paths = [_os.path.join(repo, p) for p in ("cloud_state/stale.json", "cloud_state/scrape_rot.json",
+                                              "cloud_state/health_baseline.json", "scraped_cache.json", "companies.csv")]
+    if not all(_os.path.exists(p) for p in paths):
+        pytest.skip("committed state files not present")
+    import csv as _csv
+    rot = _af_json.load(open(paths[1], encoding="utf-8"))
+    cache = _af_json.load(open(paths[3], encoding="utf-8"))
+    rows = [r for r in _csv.DictReader(open(paths[4], encoding="utf-8")) if r["active"] == "true" and r["ats_platform"] == "scrape"]
+    res = {r["company_name"]: {"platform": "scrape", "api": r["api_url"], "n": len(cache.get(r["company_name"], [])),
+                               "status": "ok" if cache.get(r["company_name"]) else "empty"} for r in rows}
+    last = max((e.get("last", "") for e in rot.values() if isinstance(e, dict)), default="") or today.isoformat()
+    stale = health.record(res, baseline_path=paths[2], stale_path=paths[0], rot_path=paths[1], write=False,
+                          today=_af_dt.date.fromisoformat(last))
+    for name, v in stale.items():
+        if v["platform"] == "scrape" and v["reason"] == "regressed-to-zero":
+            ov = health.overnight_verdict(rot.get(name), _af_dt.date.fromisoformat(last))
+            assert ov is None, f"{name}: {ov} survived as regressed-to-zero"
+        if v["platform"] == "scrape" and v["reason"] == "fetch-error":
+            assert v["error"].startswith("scrape: "), name
+
+
+def test_greenhouse_reads_the_single_office_when_the_location_names_no_place(monkeypatch):
+    """docs/BACKLOG.md 118: `location.name` is free text — "Hybrid", "IL", "Remote" — and
+    the office sits in `offices[]`. Census 2026-08-26 over all 103 active boards: reading
+    the office when there is exactly one — and it carries a `location` — gained 5 Israel
+    matches and lost none; reading every office would have added 14 false positives (Datadog
+    10 — EMEA jobs listing a global office set — Forter 2, Fireblocks 1, BigID 1), and an
+    office WITHOUT a location is a parent node of the tenant's office tree (SentinelOne's
+    "Israel" node under a United Kingdom posting — the code attacker's finding, a false
+    positive the first cut of this rule promoted). A location already naming an Israeli
+    place is left byte-identical."""
+    from pipeline import fetchers, israel
+    tlv = {"name": "Tel Aviv Office", "location": "Tel Aviv-Yafo, Tel Aviv District, Israel"}
+    payload = {"jobs": [
+        {"id": 1, "title": "a", "location": {"name": "Hybrid"}, "offices": [tlv], "absolute_url": "u1"},
+        {"id": 2, "title": "b", "location": {"name": "Paris, France"}, "offices": [{"name": "Paris", "location": "Paris, France"}, tlv], "absolute_url": "u2"},
+        {"id": 3, "title": "c", "location": {"name": "Tel Aviv, Israel"}, "offices": [tlv], "absolute_url": "u3"},
+        {"id": 4, "title": "d", "location": {"name": "Remote"}, "offices": [{"name": None, "location": None}], "absolute_url": "u4"},
+        {"id": 5, "title": "e", "location": {"name": "Berlin"}, "absolute_url": "u5"},
+        {"id": 6, "title": "f", "location": {"name": ""}, "offices": [tlv], "absolute_url": "u6"},
+        {"id": 7, "title": "g", "location": {"name": "Berlin"}, "offices": [{"name": "Berlin", "location": "Berlin, Germany"}], "absolute_url": "u7"},
+        {"id": 8, "title": "h", "location": {"name": "United Kingdom"}, "offices": [{"name": "Israel", "location": None, "child_ids": [1]}], "absolute_url": "u8"},
+        {"id": 9, "title": "i", "location": {"name": "Hybrid"}, "offices": {"name": "Tel Aviv"}, "absolute_url": "u9"},
+        {"id": 10, "title": "j", "location": {"name": "Hybrid"}, "offices": [{"name": 7, "location": 9}], "absolute_url": "u10"},
+    ]}
+    monkeypatch.setattr(fetchers.http, "get_json", lambda *a, **k: payload)
+    jobs = {j["title"]: j for j in fetchers.fetch_greenhouse({"company_name": "X", "api_url": "https://boards-api.greenhouse.io/v1/boards/x/jobs"})}
+    assert jobs["a"]["location"] == "Hybrid (Tel Aviv Office Tel Aviv-Yafo, Tel Aviv District, Israel)" and israel.is_israel_job(jobs["a"])
+    assert jobs["b"]["location"] == "Paris, France" and not israel.is_israel_job(jobs["b"]), "two offices: ambiguous, untouched"
+    assert jobs["c"]["location"] == "Tel Aviv, Israel", "already a place: byte-identical"
+    assert jobs["d"]["location"] == "Remote", "an office with no text adds nothing"
+    assert jobs["e"]["location"] == "Berlin", "no offices field at all"
+    assert jobs["f"]["location"] == "Tel Aviv Office Tel Aviv-Yafo, Tel Aviv District, Israel", "blank location: the office stands alone"
+    assert jobs["g"]["location"] == "Berlin, Germany", "an office that extends the location replaces it, never 'Berlin (Berlin, Germany)'"
+    assert jobs["h"]["location"] == "United Kingdom" and not israel.is_israel_job(jobs["h"]), "a parent node (no location) never vouches"
+    assert jobs["i"]["location"] == "Hybrid" and jobs["j"]["location"] == "Hybrid (7 9)", "malformed offices never crash the board"
+    assert [j["job_id"] for j in fetchers.fetch_greenhouse({"company_name": "X", "api_url": "u"})] == [str(i) for i in range(1, 11)]
+    assert fetchers.fetch_greenhouse.israel_scoped is False, "declared unscoped: the request is the whole board"
+
+
+def test_jazzhr_is_retired_and_a_scrape_row_on_applytojob_is_not_a_misconfig():
+    """docs/BACKLOG.md 79: JazzHR has no public JSON, `fetch_jazzhr` returned [] by design,
+    and its one row (Questar) sat in stale.json as `empty-board` for weeks. The row is a
+    scrape row on `questar.applytojob.com/apply` since 2026-08-26 (4 Herzliya roles) — so
+    `applytojob.com` must leave `health.ATS_HOST` with the platform, or the digest flags the
+    right configuration as `misconfig-scrape-on-ats` the next morning (myInterview already was)."""
+    from pipeline import fetchers, health, platform_check
+    import contextlib, io
+    assert "jazzhr" not in fetchers.FETCHERS and not hasattr(fetchers, "fetch_jazzhr")
+    with pytest.raises(ValueError):
+        fetchers.fetch_company({"company_name": "Questar", "ats_platform": "jazzhr", "api_url": "u", "token": ""})
+    assert health._PSEUDO_OR_BY_DESIGN == ("scrape", "discovery")
+    for url in ("https://questar.applytojob.com/apply", "https://myinterview.applytojob.com/apply/", "https://x.jazz.co/apply"):
+        assert health.stale_reason("scrape", url, 4, "ok", 0) is None, url
+        assert health.stale_reason("scrape", url, 0, "empty", 0) is None, url
+    assert health.stale_reason("scrape", "https://boards.greenhouse.io/x", 3, "ok", 0) == "misconfig-scrape-on-ats"
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        platform_check.check()
+    grid = {l.split()[0] for l in buf.getvalue().splitlines() if l}
+    assert "jazzhr" not in grid and "greenhouse" in grid
+    assert "15 platforms" in buf.getvalue()
+
+
+def test_scrape_cache_in_points_the_digest_at_a_scratch_cache(tmp_path, monkeypatch):
+    """docs/BACKLOG.md 86: `fetch_scrape` hard-coded `scraped_cache.json` next to the
+    package, so a rehearsal had to pre-seed `fetchers._SCRAPE_CACHE` from Python.
+    `SCRAPE_CACHE_IN` is the reader's half of the scraper's `SCRAPE_CACHE_OUT` seam; it is
+    read once, when the cache is first loaded, and a file that is not there is an empty cache."""
+    from pipeline import fetchers
+    p = tmp_path / "cache.json"
+    p.write_text(_af_json.dumps({"Wix": [{"title": "Data Analyst", "url": "u", "location": "Tel Aviv"}]}), encoding="utf-8")
+    monkeypatch.setenv("SCRAPE_CACHE_IN", str(p))
+    monkeypatch.setattr(fetchers, "_SCRAPE_CACHE", None)
+    assert [j["title"] for j in fetchers.fetch_scrape({"company_name": "Wix", "token": ""})] == ["Data Analyst"]
+    assert fetchers.fetch_scrape({"company_name": "Fiverr", "token": ""}) == []
+    monkeypatch.setenv("SCRAPE_CACHE_IN", str(tmp_path / "elsewhere.json"))
+    assert [j["title"] for j in fetchers.fetch_scrape({"company_name": "Wix", "token": ""})] == ["Data Analyst"], "read once per process"
+    monkeypatch.setattr(fetchers, "_SCRAPE_CACHE", None)
+    assert fetchers.fetch_scrape({"company_name": "Wix", "token": ""}) == [], "a missing file is an empty cache, never a crash"
+    monkeypatch.setenv("SCRAPE_CACHE_IN", "")
+    monkeypatch.setattr(fetchers, "_SCRAPE_CACHE", None)
+    fetchers.fetch_scrape({"company_name": "Wix", "token": ""})
+    import os as _os
+    default = _af_json.load(open(_os.path.join(_os.path.dirname(fetchers.__file__), "..", "scraped_cache.json"), encoding="utf-8"))
+    assert set(fetchers._SCRAPE_CACHE) == set(default), "an empty SCRAPE_CACHE_IN falls back to the repo's cache, not the scratch one"
+
+
+def test_fetch_discovery_drops_a_card_whose_slug_says_recruiting(monkeypatch, capsys):
+    """docs/BACKLOG.md 184: the LinkedIn slug is free evidence the display name hides —
+    "Dialog" is `dialog-recruiting` (8 cards on 2026-08-25, kept and judged). `is_recruiter`
+    has taken the slug since 70dba5f; `fetch_discovery` now passes it. The cache write
+    already drops such cards, so this catches cards written by an older run."""
+    import json as _json
+    from pipeline import fetchers
+    today = dt.date.today().isoformat()
+    cache = [{"company": "Dialog", "company_slug": "dialog-recruiting", "title": "a",
+              "url": "https://il.linkedin.com/jobs/view/a-at-dialog-4454120001", "posted_date": today},
+             {"company": "Wix", "company_slug": "wix", "title": "b",
+              "url": "https://il.linkedin.com/jobs/view/b-at-wix-4454120002", "posted_date": today},
+             {"company": "Wix", "company_slug": None, "title": "c",
+              "url": "https://il.linkedin.com/jobs/view/c-at-wix-4454120003", "posted_date": today}]
+    monkeypatch.setattr(_json, "load", lambda f: cache)
+    kept = fetchers.fetch_discovery({"company_name": "Discovery"})
+    assert [j["title"] for j in kept] == ["b", "c"]
+    assert "dropped: recruiter 1" in capsys.readouterr().out
+
+
+def test_health_check_carries_the_error_text_and_prints_the_boards_lines(tmp_path, monkeypatch, capsys):
+    """docs/BACKLOG.md 82: the Monday sweep recorded a bare `status: error`, so its overwrite
+    of stale.json stripped every reason the digest had written, and it printed no `Boards`
+    line at all. It now records the same `Class: message` text run.py does (query strings
+    stripped first — a Comeet `?token=` is public otherwise) and prints both lines."""
+    import health_check
+    from pipeline import fetchers, health
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Decart,ashby,,https://api.ashbyhq.com/posting-api/job-board/decart-ai?token=SECRET,true,\n"
+        "Wix,comeet,,https://www.comeet.co/careers-api/2.0/company/x/positions?token=SECRET,true,\n"
+        "Parked,comeet,,u,false,\n", encoding="utf-8")
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / health.STALE).write_text(_af_json.dumps({"Wix": {"reason": "fetch-error", "platform": "comeet", "careers_url": "u"}}), encoding="utf-8")
+
+    def fake(row):
+        if row["company_name"] == "Decart":
+            raise fetchers.http.HttpError(f"HTTP 404 for {row['api_url']}: Not Found")
+        return [{"title": "Data Analyst", "location": "Tel Aviv", "url": "u", "country_code": "IL"}]
+    monkeypatch.setattr(fetchers, "fetch_company", fake)
+    health_check.main()
+    out = capsys.readouterr().out
+    stale = _af_json.loads((tmp_path / health.STALE).read_text(encoding="utf-8"))
+    assert list(stale) == ["Decart"] and stale["Decart"]["reason"] == "fetch-error"
+    import re as _re
+    assert stale["Decart"]["error"] == "HttpError: " + _re.sub(r"\?\S*", "", "HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai?token=SECRET: Not Found")[:70]
+    assert "SECRET" not in stale["Decart"]["error"], "query string stripped before the 70-char cut, as run.py does"
+    assert "boards changed today: new: Decart: fetch-error · cleared: Wix" in out
+    assert "boards standing: 1 fetch error (Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai" in out
+    assert "SECRET" not in out.split("boards")[1], "the query string is stripped before the reason is printed"
+    assert "2 checked · 1 STALE" in out
+
+
+def test_health_writes_stale_and_baseline_atomically(tmp_path, monkeypatch):
+    """docs/BACKLOG.md 153: `json.dump(data, open(path, "w"))` inside `except OSError: pass`
+    — a kill mid-write left a truncated baseline, `_load` read `{}`, every high-water mark
+    reset to 0 and `regressed-to-zero` could never fire again. Written through
+    `pipeline.atomic.write_json` now: a writer that dies leaves the old file byte-identical
+    and no temp file behind, and `record` still never raises."""
+    from pipeline import atomic, health
+    base = tmp_path / "cloud_state" / "health_baseline.json"; base.parent.mkdir()
+    stale_p = tmp_path / "cloud_state" / "stale.json"
+    base.write_text('{"Wix": 40}', encoding="utf-8")
+    before = base.read_bytes()
+    real_dump = atomic.json.dump
+
+    def dying(obj, f, **kw):
+        f.write('{"Wix": 4')
+        raise OSError("disk full")
+    monkeypatch.setattr(atomic.json, "dump", dying)
+    res = {"Wix": {"platform": "comeet", "n": 0, "status": "empty", "api": "u"}}
+    stale = health.record(res, baseline_path=str(base), stale_path=str(stale_p), rot_path=str(tmp_path / "r.json"))
+    assert stale["Wix"]["reason"] == "regressed-to-zero", "the verdict is still returned"
+    assert base.read_bytes() == before and not stale_p.exists()
+    assert not [p for p in base.parent.iterdir() if p.name.startswith(".tmp_")], "no temp file left behind"
+    monkeypatch.setattr(atomic.json, "dump", real_dump)
+    health.record(res, baseline_path=str(base), stale_path=str(stale_p), rot_path=str(tmp_path / "r.json"))
+    assert _af_json.loads(base.read_text(encoding="utf-8")) == {"Wix": 40}
+    assert _af_json.loads(stale_p.read_text(encoding="utf-8"))["Wix"]["reason"] == "regressed-to-zero"
+
+
+# --- scraper lane, 2026-08-26: the position-page ladder, the LLM seam, the cleaners ---
+
+
+def _position_page(n, loc="Ra'anana"):
+    return f"<html><h1>Data Analyst {n}</h1><p>Location: {loc}</p></html>", 200
+
+
+def _links_page(n=4):
+    links = "".join(f'<a href="/careers-position/role-{i}/">Role {i}</a>' for i in range(n))
+    return f"<body><p>We are hiring</p>{links}</body>"
+
+

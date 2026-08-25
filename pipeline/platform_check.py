@@ -3,8 +3,9 @@
 Adding a platform means touching ~22 places across ~14 files. Miss one and the platform is
 SILENTLY half-wired: it fetches when hand-configured, but no resolver can ever discover it,
 or its rows are permanently mis-flagged. That failure is invisible — there is no error, just
-coverage that never happens (jazzhr has sat in stale.json as `empty-board` forever for
-exactly this reason).
+coverage that never happens (`jazzhr` sat in stale.json as `empty-board` for weeks for
+exactly this reason, before the platform was retired on 2026-08-26 — no public JSON, its one
+row is a scrape row now).
 
 This converts that silent half-wiring into a visible report. Read-only.
 
@@ -49,7 +50,7 @@ def check():
         "comeet": "comeet", "greenhouse": "greenhouse", "lever": "lever",
         "smartrecruiters": "smartrecruiters", "recruitee": "recruitee", "ashby": "ashby",
         "workday": "myworkdayjobs", "oraclehcm": "oraclecloud", "workable": "workable",
-        "breezy": "breezy", "bamboohr": "bamboohr", "jazzhr": "jazzhr|applytojob",
+        "breezy": "breezy", "bamboohr": "bamboohr",
         "microsoft": "microsoft", "custom_json": "amazon",
         "eightfold": "eightfold|pcsx", "phenom": "phenom|/widgets",
     }
@@ -64,14 +65,14 @@ def check():
         #  (1) a fetcher whose request narrows to Israel ("Israel" / "ISR" in its source)
         #      must DECLARE `israel_scoped` (True; or False for a hybrid like oraclehcm whose
         #      unscoped pass makes a zero real evidence), or health flags its healthy zeros;
-        #  (2) health's verdict for an empty fetch must be None exactly for scoped or
-        #      by-design-empty platforms. A regex over health.py's source stood here before
+        #  (2) health's verdict for an empty fetch must be None exactly for scoped
+        #      platforms. A regex over health.py's source stood here before
         #      and went stale the day that line changed.
         fn = FETCHERS[p]
         scoped = bool(getattr(fn, "israel_scoped", False))
         declared = hasattr(fn, "israel_scoped")      # True, or an explicit False (oraclehcm:
         narrows = bool(re.search(r"Israel|ISR", inspect.getsource(fn)))   # a hybrid pass)
-        verdict_ok = (health.stale_reason(p, "", 0, "empty", 0) is None) == (scoped or p == "jazzhr")
+        verdict_ok = (health.stale_reason(p, "", 0, "empty", 0) is None) == scoped
         # both directions: narrows ⇒ declared (a forgotten attribute flags healthy zeros);
         # scoped ⇒ narrows (a fetcher that does NOT ask for Israel yet claims to would
         # switch empty-board detection off for its whole platform)

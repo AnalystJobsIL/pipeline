@@ -37,6 +37,7 @@ import re as _re
 from urllib.parse import urlsplit
 
 from . import http
+from .israel import text_mentions_israel
 
 _DESC_MAX = 6000  # chars of plain-text description kept — enough to reach the Requirements
                   # section (often past a long company-jargon intro) for the board's extractor
@@ -239,11 +240,32 @@ def fetch_greenhouse(row):
     data = http.get_json(api)
     jobs = []
     for p in data.get("jobs", []):
-        loc = (p.get("location") or {}).get("name", "")
+        loc = _clean((p.get("location") or {}).get("name", ""))
+        # `location.name` is free text a tenant may fill with a work mode ("Hybrid", "IL",
+        # "Remote"); the office is in `offices[]` (present only with content=true). Read it
+        # when it is unambiguous — exactly one office, and one that carries a `location`
+        # (a parent node of the office hierarchy has none: SentinelOne's country node sat
+        # under a United Kingdom posting) — and the location names no IL place already.
+        # Census 2026-08-26 over all 103 active boards (7,870 postings): +5 IL matches
+        # (Eleos Health "IL" x2, Electreon "Remote"/"HQ Beit Yanni"/"Beit Yanai"), 0 lost;
+        # appending EVERY office would have added 14 false positives (10 Datadog EMEA jobs
+        # listing a global office set, Forter 2, Fireblocks 1, BigID 1). The request itself
+        # is unscoped (declared below).
+        offices = p.get("offices")
+        if isinstance(offices, list) and len(offices) == 1 and isinstance(offices[0], dict) \
+                and offices[0].get("location") and not text_mentions_israel(loc):
+            name, where = _clean(str(offices[0].get("name") or "")), _clean(str(offices[0]["location"]))
+            off = where if name.lower() in where.lower() else f"{name} {where}"
+            if off.lower() in loc.lower():
+                pass                                   # the location already says it
+            elif loc.lower() in off.lower():
+                loc = off                              # the office is the fuller form
+            else:
+                loc = f"{loc} ({off})" if loc else off
         jobs.append({
             "company": row["company_name"],
             "title": _clean(p.get("title")),
-            "location": _clean(loc),
+            "location": loc,
             "country_code": "",  # greenhouse list gives no code; rely on text match
             "url": p.get("absolute_url") or "",
             "posted_date": _iso_date(p.get("updated_at") or p.get("first_published")),
@@ -252,6 +274,11 @@ def fetch_greenhouse(row):
             "description": _snippet(p.get("content")),
         })
     return jobs
+
+
+# Declared, not scoped: the request is the whole board (the offices[] read above only
+# normalises a location), so an empty list IS evidence.
+fetch_greenhouse.israel_scoped = False
 
 
 def fetch_lever(row):
@@ -773,13 +800,16 @@ def clean_scraped(jobs):
 
 def fetch_scrape(row):
     """Custom / server-rendered career sites with no public API. The heavy Playwright scrape is run
-    out-of-band (scrape_batch.py) and cached in scraped_cache.json; here we just read the cache so the
-    daily pipeline stays fast. api_url holds the careers URL (used as the cache key fallback)."""
+    out-of-band (refresh_scrape_cache.py, 00:00 UTC) and cached in scraped_cache.json; here we just
+    read the cache so the daily pipeline stays fast. api_url holds the careers URL (used as the
+    cache key fallback). `SCRAPE_CACHE_IN=<file>` points a rehearsal at a scratch cache (the
+    scraper's `SCRAPE_CACHE_OUT` is the writer's half of the same seam); read once per process."""
     global _SCRAPE_CACHE
     if _SCRAPE_CACHE is None:
         import json
         import os
-        path = os.path.join(os.path.dirname(__file__), "..", "scraped_cache.json")
+        path = (os.environ.get("SCRAPE_CACHE_IN")
+                or os.path.join(os.path.dirname(__file__), "..", "scraped_cache.json"))
         try:
             with open(path, encoding="utf-8") as f:
                 _SCRAPE_CACHE = json.load(f)
@@ -853,7 +883,7 @@ def fetch_discovery(row):
     for j in jobs:
         if j.get("posted_date") and str(j["posted_date"])[:10] < cut:
             dropped["expired"] += 1
-        elif _is_rec(j.get("company")):
+        elif _is_rec(j.get("company"), j.get("company_slug") or ""):   # the slug says "recruiting" when the name hides it
             dropped["recruiter"] += 1
         elif (url_names_other_company(j.get("company"), j.get("url"))
               and not slug_names_declared_identity(j.get("company"), j.get("url"))):
@@ -864,13 +894,6 @@ def fetch_discovery(row):
         print(f"  [discovery] kept {len(kept)} of {len(jobs)} cached jobs (dropped: "
               + ", ".join(f"{k} {v}" for k, v in dropped.items() if v) + ")", flush=True)
     return kept
-
-
-def fetch_jazzhr(row):
-    """JazzHR has no consistent public JSON API. The one row (Questar) points at an
-    /apply page, not a JSON endpoint — return empty and let the runner log it as skipped
-    rather than crash the whole run."""
-    return []
 
 
 def fetch_oraclehcm(row):
@@ -941,7 +964,6 @@ FETCHERS = {
     "ashby": fetch_ashby,
     "workday": fetch_workday,
     "custom_json": fetch_custom_json,
-    "jazzhr": fetch_jazzhr,
     "workable": fetch_workable,
     "breezy": fetch_breezy,
     "bamboohr": fetch_bamboohr,

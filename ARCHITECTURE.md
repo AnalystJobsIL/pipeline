@@ -176,22 +176,34 @@ including the claim "none".
 
 1. **Native ATS fetchers** — `pipeline/fetchers.py` `FETCHERS` map. A `companies.csv` row
    whose `ats_platform` names a platform is fetched live every digest run via its public
-   JSON API, sequentially, ~1 s a row (median 0.5 s; `oraclehcm` 4–15 s, the slowest
-   single row a 22 s greenhouse): **436 API rows on
-   2026-08-24** — comeet 123, greenhouse 104, workday 66, ashby 50, lever 24, workable 22,
-   smartrecruiters 16, bamboohr 11, recruitee 8, breezy 5, oraclehcm 4, jazzhr 1,
-   custom_json 1, microsoft 1 — beside 425 scrape rows and the 1 discovery row (862 active).
-   Re-derive, never trust:
+   JSON API, sequentially (median 0.5 s a row locally; `oraclehcm` 4–15 s, the slowest
+   single row a 22 s greenhouse): **431 API rows on 2026-08-26** — comeet 122, greenhouse
+   103, workday 62, ashby 52, lever 24, workable 21, smartrecruiters 16, bamboohr 9,
+   recruitee 8, oraclehcm 5, breezy 5, custom_json 1, microsoft 1, eightfold 1, phenom 1 —
+   beside 438 scrape rows and the 1 discovery row (870 active). Re-derive, never trust:
    `python -c "import csv,collections;r=[x for x in csv.DictReader(open('companies.csv',encoding='utf-8')) if x['active']=='true'];print(len(r),collections.Counter(x['ats_platform'] for x in r).most_common())"`.
-   Adding a platform = one `fetch_x(row)` normalizer + a map entry (§6). **The loop is
-   sequential and it is most of the pipeline step's time:** the per-row fetch times sum to
-   7.0–7.2 min (421 s / 434 s over 436 rows, two censuses on 2026-08-24, the census
-   script's own 3 s Workday pacing excluded), i.e. ~69 % of the "Run the pipeline" step
-   (10 m 14 s) and ~26 % of the 27-minute digest job (05:42→06:09; the 05:00 cron queued
-   42 min). Parallelising it lives in `pipeline/run.py` (`infra`, `docs/BACKLOG.md` 83);
+   Adding a platform = one `fetch_x(row)` normalizer + a map entry (§6). `fetch_greenhouse`
+   reads a posting's single `offices[]` entry into `location` when that office carries a
+   `location` (a parent node of the tenant's office tree has none) and `location.name` names
+   no Israeli place — tenants fill it with a work mode (`Hybrid`, `IL`, `Remote`); census
+   2026-08-26 over all 103 boards, 7,870 postings: +5 Israel matches (Eleos Health ×2,
+   Electreon ×3), 0 lost, where reading every office would have added 14 false positives,
+   10 of them Datadog, and a parent-node office promoted one United Kingdom posting
+   (`docs/BACKLOG.md` 118). **The loop is sequential and it is no longer most of the step's time:** on the
+   runner it took **3.8–4.7 min for 877 boards** on 2026-08-25 (run `32813499709`: the loop
+   opened at 05:47:46, the `[discovery]` row — the 771st of the 870 rows in today's
+   registry, so ~100 from the end of that day's 877 — logged at 05:51:33, and the first
+   classify output at 05:52:27 bounds the rows after it), 19–23 % of a "Run
+   the pipeline" step of 20 m 09 s. This sentence said "~69 %" until 2026-08-26 — from a
+   7.0–7.2 min local census on 08-24 (436 API rows · 425 scrape · 862 active that day)
+   against a 10 m 14 s step, "~26 % of a 27-minute job"; on 08-25 the job was 31.6 min
+   (the 05:00 cron queued 36 min) and the step doubled because the classify phase grew to
+   14.8 min (`attempts 241 in 12.9 min` of it in the LLM tier), not the fetch.
+   Parallelising it lives in `pipeline/run.py` (`infra`, `docs/BACKLOG.md` 83 — at most
+   the loop's 4–5 min, so ~2–3 min);
    Workday's tolerance for parallel POSTs is unmeasured (one burst of 25 at 10 threads
    answered 200; one earlier burst answered 500 on 14 tenants and never reproduced).
-2. **Scrape rows** (`ats_platform=scrape`; **425 active on 2026-08-24**, re-derive with the
+2. **Scrape rows** (`ats_platform=scrape`; **438 active on 2026-08-26**, re-derive with the
    one-liner above) — `api_url` holds a LISTINGS page URL. `refresh_scrape_cache.py`
    (00:00 UTC, `scrape-refresh.yml`, step `Refresh the scrape cache`, with `SCRAPE_LLM=1`
    and `SCRAPE_VIA_UNLOCKER=1`) renders every row with `scrape_universal.py` in a process
@@ -204,19 +216,51 @@ including the claim "none".
    yields wins** (one exception: fewer than 3 structured hits may be a "featured posting"
    widget, so the DOM pass still runs and is unioned in as `structured+dom`): structured JSON (JSON-LD / `__NEXT_DATA__` / captured XHR bodies) →
    rendered-DOM job links with an Israel token near the title → repeated heading /
-   class-hinted card groups → position-links (N same-prefix links, each page fetched) →
-   **LLM extraction** (`SCRAPE_LLM=1`: Claude reads the visible text, returns JSON; gated
-   on jobs-signals). `scrape_result()` returns the jobs plus `status` ∈ `ok` / `empty` /
-   `error` and the winning strategy; `scrape()` — what every other lane calls — is its
-   list-only wrapper and never raises. One company gets `SCRAPE_COMPANY_BUDGET_S` (150 s)
-   of wall clock; every network wait is clamped to what is left. Measured 2026-08-24: the
-   last sequential cloud run (`gh run list -R AnalystJobsIL/pipeline --workflow
-   scrape-refresh.yml`, then `gh run view 32677334301 --log`) did 428 rows in 111.6 min,
-   median 11.4 s, max 368 s (Ford); the first pooled run, local, LLM and unlocker off, did
-   425 rows in 37 min, median 17 s, p95 37 s, max 103 s. Local scoped runs write nothing to
+   class-hinted card groups → **position-links** (N same-prefix links, each position page
+   opened on a three-rung ladder — plain HTTP with the browser's User-Agent, then one
+   short-lived Chromium visit, then the residential unlocker for ≤ `SCRAPE_UNLOCK_PAGES`
+   pages — each rung only when the one before opened nothing; a listing with ≥ 3 positions
+   none of which any rung could open is `links:unread:<status>` / `links:blocked:<wall>`, an
+   **error** the refresh carries and never parks, §5a) → **LLM extraction** (`SCRAPE_LLM=1`:
+   `pipeline.llm.call_json` — tool-less, schema `{positions:[{title,location}]}`, scratch
+   cwd, `SCRAPE_LLM_MODEL` default `sonnet`, effort low, up to 20,000 characters of the
+   page's text centred on the jobs signal whose window is densest in role words — 7,000
+   characters cut 9 of the 27 pages that reached the tier on 2026-08-26; gated on
+   jobs-signals. **The A/B, 2026-08-26**, sonnet vs opus through the seam on those 27
+   pages: identical title sets on 25, the two differences opus's (a "Future Opportunities"
+   non-position; a QA demo board split four ways instead of two), sonnet
+   `total_cost_usd` $0.026/call vs opus $0.060 (2.3×), 14.0 s vs 14.7 s mean — sonnet is
+   the default; fable's answers from the cloud cache agreed with both wherever the 7,000
+   cut had not hidden the roles (Central Bottling 4 → 20, Ravin AI 1 → 6, Zota 1 → 5 under
+   the wider window). Until 2026-08-26 this was
+   a bare `claude -p`: claude-fable-5 at ~5× sonnet's price, **every tool enabled, the repo
+   as cwd with `secrets.env` on disk, an arbitrary website's text as the prompt** — a
+   prompt-injection path, closed; what a hostile page can still do is suppress its own
+   roles, and nothing here claims otherwise). `scrape_result()` returns the jobs plus
+   `status` ∈ `ok` / `empty` / `error`, the winning strategy and what the visit spent
+   (`llm_calls`, `llm_error`, `unlock_calls`, `unlock_ok` — summed into the `collect` stamp);
+   `scrape()` — what every other lane calls — is its list-only wrapper and never raises. One
+   company gets `SCRAPE_COMPANY_BUDGET_S` (150 s) of wall clock; every network wait is
+   clamped to what is left. A card's location is the place name itself, anchored on the
+   nearest `ISRAEL_LOC` hit at or after the title and extended only over `-Yafo` / `District`
+   / `, Israel` (until 2026-08-26 a 28-character capture before ", Israel" put the title's
+   tail into 236 of the 261 over-long locations in the cache: `"ced Product Analyst Tel
+   Aviv, Israel"`); a Comeet-widget tail `<place>? <level>? <type>` is split off the title
+   (`"Fraud Analyst Herzliya Full-time"` → `Fraud Analyst` / `Herzliya`; a foreign place is
+   kept as the location so `pipeline.israel`, not the scraper, drops the role — 86 cached
+   titles carried one); `ISRAEL_LOC` is word-bounded like `israel._PLACE_PATTERNS`
+   (BACKLOG 126). Replayed offline over 57 captured real pages (old vs new extractor, same
+   bundles, 2026-08-26): 140 postings identical, 12 gained (SeatPick, via position links —
+   the cloud had needed the LLM), 2 lost: Hypernative's `United States` role that had been
+   published as Herzliya, and a Checkmarx page whose only "location" was the phrase "and
+   Israel" in a 22-country list. Measured: the cloud run of 2026-08-25 (`gh run view
+   32794469465 --log`) did 440 rows in 32 min, median 13 s, p95 39 s, max 150 s (Ford),
+   `via` links 73 · cards 59 · dom 47 · structured 38 · llm 26 · structured+dom 2; the last
+   sequential run (`32677334301`, 2026-08-24) 428 rows in 111.6 min. Local scoped runs write nothing to
    the repo — `python refresh_scrape_cache.py --only "Wix,Fiverr"` (add `--apply` to merge
-   the hits into `scraped_cache.json`, or `SCRAPE_CACHE_OUT=<file>` to merge elsewhere;
-   `--dry-run` for every row) — but they still render live pages, so with `SCRAPE_LLM` or
+   the hits into `scraped_cache.json`, or `SCRAPE_CACHE_OUT=<file>` to merge elsewhere —
+   the digest's reader has the matching `SCRAPE_CACHE_IN=<file>`, so `python -m
+   pipeline.run` can be pointed at that scratch cache; `--dry-run` for every row) — but they still render live pages, so with `SCRAPE_LLM` or
    `SCRAPE_VIA_UNLOCKER` set (`secrets.env`!) they still spend.
 3. **Discovery nets** — `discovery_daily.py` (Bright Data LinkedIn/Indeed keyword sweeps)
    and `discovery_telegram.py` (public t.me/s channel previews) write
@@ -224,10 +268,13 @@ including the claim "none".
    companies with no readable board — and the intake that feeds NEW companies into
    resolution (below).
 
-Full `FETCHERS` map — **18 keys, 16 platforms** (this line said 16 keys until 2026-08-24;
+Full `FETCHERS` map — **17 keys, 15 platforms** (this line said 16 keys until 2026-08-24
+and 18 / 16 until 2026-08-26, when `jazzhr` — no public JSON, a fetcher that returned `[]`
+by design — was retired with its last row converted to `scrape`, and `applytojob.com` left
+`health.ATS_HOST` with it so that row is not flagged as a misconfiguration;
 `python -c "from pipeline.fetchers import FETCHERS;print(len(FETCHERS),sorted(FETCHERS))"`):
 comeet, greenhouse, lever, smartrecruiters, recruitee, ashby, workday, oraclehcm,
-custom_json (Amazon), jazzhr (returns `[]` by design — no public API), workable, breezy,
+custom_json (Amazon), workable, breezy,
 bamboohr, **eightfold** (the `/api/pcsx/search` endpoint; `microsoft` is the same fetcher
 under the name its rows have always carried, because the store keys roles on
 `{ats_platform}:{job_id}`), **phenom** (`POST /widgets`), plus the pseudo-platforms `scrape`
@@ -236,12 +283,15 @@ and `discovery`. Five fetchers ask the board for Israel itself and carry
 explains.
 
 Support policy: a platform seen 3+ times gets native support; otherwise the scraper's
-strategies carry it. **Eightfold and Phenom now have validated native fetchers** (2026-08-24:
-`careers.qualcomm.com` → `count=36`, 31–36 roles by requisition per call (its pager is
-unstable), where its scrape row is verified at 8; `careers.gehealthcare.com` → 20, where its active scrape row reports 0) **but no active
-row uses them yet** — the conversion is a `companies.csv` write and sits in `docs/BACKLOG.md`
-for `registry`. iCIMS (7 rows), SuccessFactors (7) and Avature (2) have none; `python
-registry_health.py --ats` is the queue.
+strategies carry it. **Eightfold, Phenom and Oracle HCM read their converted rows live**
+(`registry` converted them 2026-08-25, `bebbee9`; re-fetched 2026-08-26 through
+`fetch_company`: Qualcomm eightfold **37 roles / 37 IL** (its scrape row had been verified
+at 8), GE HealthCare phenom **23 / 23** (its scrape row reported 0), Fortinet oraclehcm
+**503 fetched / 15 IL**, Microsoft 14 / 14 — until 2026-08-26 this sentence said no active
+row used them). iCIMS (6 rows), SuccessFactors (6) and Avature (2) have none; `python
+registry_health.py --ats` is the queue (2026-08-26: WIRE eightfold.ai 7 rows, phenom 6,
+oraclecloud 3 — tenants for fetchers that exist, `registry`'s to crack; BUILD
+successfactors 6, icims 6).
 
 ## 1a. Intake — the discovery net
 *lane: `discovery`*
@@ -1274,8 +1324,10 @@ falls back to `deep_validate.google_via_unlocker` — this sentence said "needs
 retries at most weekly, abandons after 5 strikes → "discovery covers it").
 
 **What `pipeline/health.py` writes to `stale.json`, in the order it decides** (every
-digest, from each row's outcome; `health_check.py` is the weekly backstop with the same
-code): `misconfig-scrape-on-ats` (a `scrape` row whose URL is a native-ATS host) →
+digest, from each row's outcome, both files through `pipeline.atomic.write_json` since
+2026-08-26; `health_check.py` is the Monday backstop with the same code — since 2026-08-26
+it records the same `Class: message` text and prints the two `Boards` lines, where until
+then its overwrite stripped every `error` reason the digest had written): `misconfig-scrape-on-ats` (a `scrape` row whose URL is a native-ATS host) →
 `fetch-error` (raised) → `regressed-to-zero` (baseline > 0, now 0; the baseline is the
 all-time high, so this latches) → `empty-board` (0 postings, no baseline). **Zero is a
 measurement, not a fault, for a fetcher marked `israel_scoped`** — workday, eightfold /
@@ -1301,10 +1353,25 @@ board is 200 `[]` (verified 2026-08-24).
 **`regressed-to-zero` is not raised for scoped fetchers either.** Their baseline is a
 search-hit count, not an Israel-role count — Workday's `searchText=Israel` returns text
 matches from anywhere (NVIDIA: 40 postings, 0 tagged IL) — so "had 1, now 0" is noise (53
-of 83 Workday rows carry a baseline > 0 on 2026-08-24, 11 of them 1–3), and the probe above
+of 83 Workday rows carried a baseline > 0 on 2026-08-24, 11 of them 1–3; 37 of the 62
+active on 2026-08-26), and the probe above
 already answers the question a regression flag was asking. It still fires for every other
-platform (today's 25 entries are all `scrape` rows). Two blind spots no health rule can
-see: a `site` that moved to another business unit's postings (`n > 0`, all foreign), and an
+platform — on 2026-08-25 all 34 entries were `scrape` rows — **and for a scrape row it is
+read together with what the scraper recorded overnight** (`health.overnight_verdict`, from
+`cloud_state/scrape_rot.json`, the file `refresh_scrape_cache.py` writes at 00:00 and nothing
+read until 2026-08-26): `why: error` relabels the regression `fetch-error` with the scraper's
+reason (`scrape: http:403 (1 night)`); `why: empty` with `found > 0` withdraws it (roles
+found, none in Israel — a measurement, and never announced as `cleared`); `found 0` keeps
+it. An entry older than 2 days (the refresh did not run, or a mass-failure night wrote
+nothing) is ignored. The verdict only ever REPLACES a regression: a row that never produced
+(baseline 0) gets no flag from a rot error — 18 such rows on 2026-08-26 (Uber `http:404`,
+Ford timeout, Xsight Labs `http:429`, …) would otherwise have entered the weekly self-heal
+(a page re-capture, exactly what the scraper had just failed at, plus a strike) and
+discovery's cap-10 targeted rotation; the scraper's own 7-night rot parking owns them.
+Replayed on the committed 2026-08-25 files (438 scrape rows): 59 → 56 stale rows — Akamai
+and Bright Security relabelled, Wiliot (8 roles, none IL) withdrawn, Questar and myInterview
+no longer `misconfig-scrape-on-ats` (`applytojob.com` left `ATS_HOST` with `jazzhr`). Two
+blind spots no health rule can see: a `site` that moved to another business unit's postings (`n > 0`, all foreign), and an
 Eightfold `?domain=` that serves a different tenant with real postings — both are
 registry-validation problems.
 
@@ -1313,9 +1380,12 @@ previous, scanned)`):
 
 ```
 - **Boards** changed today: new: Dell Technologies: fetch-error · cleared: Guardz
-- **Boards** standing: 4 fetch errors (Decart: HttpError: HTTP 404 for …; Dell Technologies:
-  BoardEmpty: … 0 postings worldwide) · 25 regressed to zero (…) · 36 empty (…) · 25 scrape rows on an ATS host
+- **Boards** standing: 3 fetch errors (Decart: HttpError: HTTP 404 for …; Dell Technologies:
+  BoardEmpty: … 0 postings worldwide; Akamai: scrape: http:403 (1 night)) · 31 regressed to zero (…) · 36 empty (…) · 25 scrape rows on an ATS host
 ```
+
+(Illustrative — the shape, with one of each reason. The real 2026-08-25 line read `2 fetch
+errors · 34 regressed to zero · 36 empty · 25 scrape rows on an ATS host`.)
 
 Read the first line every morning and the second only when a number moved: the standing
 counts are the same most days, which is why a new fetch error gets its own line. `new` is
@@ -1519,10 +1589,10 @@ active rows had no baseline entry). To settle it, run the row yourself:
   (`resolve_broken.py`, self-heal), `ATS_PATTERNS` (`resolve_deep.py`), the pattern list
   **and platform enum** in `resolve_llm.py`'s prompt, and `ATS_HOST` (`pipeline/health.py`).
   `deep_validate.py` re-imports `SIGS`, so it needs nothing. `python -m
-  pipeline.platform_check` prints the grid: 24 MISSING cells on 2026-08-24 — 22 in
-  `registry`'s resolver files (resolve_broken 8, resolve_deep 8, resolve_llm 3, SIGS 3)
-  and 2 in `health.ATS_HOST` for `eightfold`/`phenom`, left out on purpose
-  (`docs/BACKLOG.md` 78); the last two columns check that a fetcher narrowing to Israel
+  pipeline.platform_check` prints the grid: **21 MISSING cells over 15 platforms on
+  2026-08-26** (24 over 16 until `jazzhr` left) — 19 in `registry`'s resolver files
+  (resolve_broken 7, resolve_deep 7, resolve_llm 3, SIGS 2) and 2 in `health.ATS_HOST` for
+  `eightfold`/`phenom`, left out on purpose (`docs/BACKLOG.md` 78); the last two columns check that a fetcher narrowing to Israel
   declares `israel_scoped` and that health's empty-board verdict matches the declaration —
   behaviour, not source text. Validate against a live
   tenant with canned payloads in `tests/test_units.py` — the previous Eightfold fetcher
