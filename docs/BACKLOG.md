@@ -1999,3 +1999,17 @@ kept; the Meta listing-url rows are superseded).
     damage is the board's "new" badges and the `reopened` count). Seen in the rehearsal
     fixture when day 6 was 5 days after day 5. The rule should compare against the last RUN
     date, not the calendar.
+151. **39 of the 111 shipped roles keep an aggregator url as their canonical** — lane:
+    `roles`. HEAD's BACKLOG 109 damage: a LinkedIn/Indeed card reached `matched` first, so
+    the reader's link is the card's. The 21 open ones self-heal on the next sighting
+    (`upsert_matched` overwrites `url`; the inherited-copy rule keeps the board's from now
+    on); the 18 closed ones keep it in the archive forever. One-shot repair: re-canonicalise
+    from `seen_ids` (any non-`discovery-*` id names the board) — or accept it.
+    Count: `python -c "import json;print(sum(1 for l in open('cloud_state/roles.jsonl',encoding='utf-8') if any(h in json.loads(l).get('url','') for h in ('linkedin.com','indeed.com'))))"`.
+152. **The inline JD fill's wall-clock budget now starts with the whole fetch phase already
+    spent** — lane: `roles` (with `jd-text`). `JDFiller.t0` is set at construction, before
+    the fetch loop, and classify-once moved the first `maybe_fill` from "after company #1" to
+    "after all 862" (~8 min of fetching inside the 25-min `JDFILL_TIME_BUDGET_MIN`). Not
+    binding on 2026-08-24 (`jd-fill: 93/153` at 06:07, budget to 06:24) and the fill now runs
+    once per role, not per copy — but the headroom shrank quietly. Start the clock at the
+    first `maybe_fill`, or construct the filler after the loop.
