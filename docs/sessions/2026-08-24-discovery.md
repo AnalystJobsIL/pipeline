@@ -1132,7 +1132,9 @@ Not 100% smooth. Two things a reader was told to apply to were not employers.
   `test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason` (scraper lane, a
   wall-clock budget assertion; fails identically on the untouched tree).
 - `cloud_state/firmographics.json` gained 12 researched companies (as_of 2026-08-25) in
-  the working tree mid-session from another lane's local run; left unstaged.
+  the working tree mid-session — NOT another lane: the Windows task
+  `IsraeliJobs-Firmographics` (every 6 h, 15:00 and 15:42 writes) runs `run_firmo_chain.cmd`
+  inside this checkout. Left unstaged; evidence filed on BACKLOG 97.
 
 ### Morning check, 2026-08-26 (run log + mail)
 
