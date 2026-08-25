@@ -436,9 +436,12 @@ def _baseline(work_root):
         raise SystemExit("baseline pytest did not run cleanly (rc=%d):\n%s"
                          % (proc.returncode, (proc.stdout or "")[-2000:]))
     red = _parse_failures(proc.stdout)
-    tail = [ln for ln in (proc.stdout or "").splitlines() if re.search(r"\d+ passed|\d+ failed", ln)]
-    return Baseline(frozenset(red), frozenset(_bare(r) for r in red), secs,
-                    tail[-1].strip() if tail else "?")
+    # pytest.ini already carries `-q`, so our `-q` makes it `-qq`: no "N passed" line, only
+    # the progress dots. Count those instead of parsing a summary that is not printed.
+    prog = [ln for ln in (proc.stdout or "").splitlines() if re.match(r"^[.FsxXE]+\s+\[", ln)]
+    dots = sum(ln.split()[0].count(".") for ln in prog)
+    summary = "%d passed, %d failed" % (dots, len(red)) if prog else "?"
+    return Baseline(frozenset(red), frozenset(_bare(r) for r in red), secs, summary)
 
 
 def run_one(mut, work_root, baseline=_NO_BASELINE):

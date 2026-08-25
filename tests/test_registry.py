@@ -3651,6 +3651,9 @@ def _expand_env(tmp_path, monkeypatch, queue, registry_rows=(), seen=None):
     elif key.exists():
         key.unlink()
     monkeypatch.setattr(shutil, "which", lambda x: "/usr/bin/claude")
+    # never the real resolver (Playwright + network): a test that wants one sets its own
+    monkeypatch.setattr(E, "resolve", lambda name, url: (_ for _ in ()).throw(
+        AssertionError("resolve_deep.resolve called on %s" % url)))
     monkeypatch.setattr(sys, "argv", ["auto_expand.py"])
     for k in ("AUTO_EXPAND_LIMIT", "LLM_RESOLVE_CAP", "AUTO_EXPAND_SEARCH_CAP"):
         monkeypatch.delenv(k, raising=False)
