@@ -2171,6 +2171,19 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     Modellama: `**Data Analyst Raanana Full-time**` beside a clean `Data Analyst` from
     LinkedIn for the same role (so the roles ledger also sees two titles for one posting).
     Reproduce: `git show 58212df:digests/latest.md | grep -n "Raanana Full"`.
+170. **The mutation gate cannot finish any more: 108 mutations × the whole suite** — lane:
+    `registry` (owns `tools/mutate.py`) + `infra` (owns `tests.yml`). `tests.yml`'s
+    `mutation-gate` job (`timeout-minutes: 45`) has been `cancelled` at exactly 45 min on
+    every push since `f720627` (2026-08-25 01:00, four runs before the infra push; last green
+    `60fae33`, 35 min). `run_one` (`tools/mutate.py:115`) runs `python -m pytest -q` — the
+    entire suite — once per mutation, and the guard job now measures the suite at 55 s on
+    the runner: 108 × 55 s ≈ 100 min before any overhead, so no timeout fixes it. The
+    infra lane's git-backed guards already skip under the archive export (`_needs_git`); the
+    remaining growth is the roles/render/classifier fixtures added 2026-08-24/25. Fix in
+    `mutate.py`: run only the tests that can see a registry mutation (`tests/test_registry.py`
+    plus the `tests/test_units.py` guards each catalogue entry names as its killer, `-k`),
+    and keep one full-suite pass per push in the `guard` job. Until then every push is red
+    on this job and `python tools/mutate.py --all` is a local-only check.
 162. **`check_invariants.POOL` still differs from `pipeline.verdicts.TOKENS`** — lanes:
     `registry` (owns the deliberate gap, pinned by `test_the_three_copies…`) + `infra`.
     Measured 2026-08-25: `url-cleared`/`url-flagged` are in-pool for the gate and
