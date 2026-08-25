@@ -1995,6 +1995,9 @@
   "find": "    d = str(detail or \"\")\n    for tok, safe in _FOREIGN_TOKENS:",
   "replace": "    d = str(detail or \"\")\n    for tok, safe in ():",
   "why": "another tool's pool token inside triage's segment is rewritten away on the next re-triage (Bit, twice).",
-  "must_be_killed_by_behavioural": true
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_registry.py::test_triage_never_writes_another_tools_pool_token_inside_its_own_segment"
+  ]
  }
 ]
