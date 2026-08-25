@@ -10,7 +10,8 @@ the platform endpoint, and verify it through pipeline.fetchers before touching t
 Only endpoint-verified boards get reactivated; everything else keeps its parked note.
 
 Usage: python audit_empty_rows.py [--apply]   (default is dry-run report)
-Env:   AUDIT_TIME_BUDGET_MIN (default 90) · SERP_RESERVE · DEEP_BD_SEARCH_CAP
+Env:   AUDIT_TIME_BUDGET_MIN (default 90) · AUDIT_DEEP_BUDGET_MIN (default 120, the Chromium
+       rung over what the cheap pass left dark) · SERP_RESERVE · DEEP_BD_SEARCH_CAP
        (named DEEP_ because the unlocker cap is read from the same variable
        `deep_validate` uses; there is no AUDIT_BD_SEARCH_CAP and setting one does
        nothing - the docstring advertised it for a day)
@@ -34,6 +35,65 @@ from pipeline.israel import is_israel_job
 TODAY = dt.date.today().isoformat()
 # a "0 openings" verdict is a snapshot, not a property of the company
 AUDIT_TTL_DAYS = 30
+AUDIT_SEEN = os.path.join("cloud_state", "audit_seen.json")   # {name: last-audited date}
+
+
+def _playwright_available():
+    try:
+        import playwright  # noqa: F401
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _deep_rung(names, apply, budget_min):
+    """Rung 2 of the Sunday audit (BACKLOG 6, 2026-08-26): the rows the cheap HTML pass
+    left dark, rendered in Chromium with `deep_validate.validate_one` (network sniff, LLM
+    judgment) and written through `deep_validate.apply_verdict` -- the same validator and
+    the same gates the Saturday cron ran over the IDENTICAL row set 24 h before this one.
+    Its own cooldown (`_revalidatable`, 30 d), its own time budget, oldest-stamped first;
+    stops cleanly and the next Sunday continues. No Playwright -> says so and returns."""
+    import deep_validate as DV
+    if not names:
+        return {}
+    if not _playwright_available():
+        print(f"deep rung: Playwright not importable -- {len(names)} dark rows keep their "
+              f"notes (install it in the workflow)", flush=True)
+        return {}
+    rows = {r[0]: r for r in csv.reader(open("companies.csv", encoding="utf-8"))
+            if r and len(r) >= 6}
+    todo = [rows[n] for n in names if n in rows and rows[n][4] == "false"
+            and DV._revalidatable(rows[n][5] or "") and (rows[n][3] or "").startswith("http")]
+
+    def _stamp(r):
+        m = re.search(r"deep-validated (\d{4}-\d{2}-\d{2})", r[5] or "")
+        return m.group(1) if m else ""
+    todo.sort(key=_stamp)
+    print(f"\ndeep rung: {len(todo)} of {len(names)} dark rows are due a Chromium render "
+          f"(budget {budget_min:g} min)", flush=True)
+    stats = {"recovered": 0, "unsupported": 0, "dark": 0, "unreachable": 0}
+    t0 = time.time()
+    with DV.Renderer() as rend:
+        for n, r in enumerate(todo, 1):
+            if budget_min and (time.time() - t0) / 60 > budget_min:
+                print(f"deep rung: budget {budget_min:g} min reached at {n - 1}/{len(todo)} -- "
+                      f"stopping cleanly; the rest keep their notes for next Sunday", flush=True)
+                break
+            name = r[0]
+            try:
+                verdict, plat, tok, api, n_all, n_il, detail = DV.validate_one(rend, name, r[3])
+            except Exception as e:  # noqa: BLE001
+                verdict, detail = "unreachable", f"error {str(e)[:50]}"
+                plat = tok = api = None
+                n_all = n_il = 0
+            stats[verdict] = stats.get(verdict, 0) + 1
+            tag = {"recovered": "OK", "unsupported": "UN", "dark": "--", "unreachable": "xx"}.get(verdict, "??")
+            print(f"  [{tag}] deep {n}/{len(todo)} {name}: "
+                  f"{(plat + ':' + str(tok) + f' -> {n_all}/{n_il} IL') if plat else detail}", flush=True)
+            if apply:
+                DV._apply_verdict_to_file(name, verdict, plat, tok, api, n_all, n_il, detail)
+    print(f"=== deep rung: {stats} · BD searches used: {DV._BD['used']} ===", flush=True)
+    return stats
 
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
@@ -276,15 +336,22 @@ def comeet_try(name, page_url):
 def main():
     _load_secrets()
     apply = "--apply" in sys.argv
-    os.makedirs("state", exist_ok=True)
-    done_path = "state/audit_done.json"
+    # The rotation key lives in COMMITTED state. It was `state/audit_done.json` -- gitignored,
+    # so in Actions `done` was always {} and the 90-minute budget re-walked the same head of
+    # the list every Sunday (BACKLOG 38/164; the same starvation scan_dead_domains fixed via
+    # cloud_state/scan_seen.json). A local `state/` copy is read once as a migration.
+    os.makedirs("cloud_state", exist_ok=True)
+    done_path = AUDIT_SEEN
     # {name: last-audited ISO date}. This was a bare append-only LIST, i.e. a once-EVER gate:
     # 721 names had accumulated and 130 currently-parked rows could never be re-audited, no
     # matter how stale their verdict. A company with no roles in March may have ten in August.
     try:
         raw = json.load(open(done_path, encoding="utf-8"))
     except Exception:  # noqa: BLE001
-        raw = {}
+        try:
+            raw = json.load(open("state/audit_done.json", encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            raw = {}
     if isinstance(raw, list):        # migrate: age the backlog out over AUDIT_TTL_DAYS
         raw = {n: TODAY for n in raw}   # rather than re-opening all 721 in one run
     done = raw
@@ -485,6 +552,9 @@ def main():
             write_csv_rows("companies.csv", fresh)
     print(f"\n=== recovered {len(fixed)} boards · unsupported-ATS {len(unsupported)} · "
           f"still dark {len(still)} ===")
+    # rung 2: what the cheap pass could not settle, rendered (BACKLOG 6)
+    _deep_rung([n for n, _ in still] + [n for n, _ in unsupported], apply,
+               float(os.environ.get("AUDIT_DEEP_BUDGET_MIN", "120") or 0))
 
 
 if __name__ == "__main__":

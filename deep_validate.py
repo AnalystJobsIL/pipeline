@@ -17,7 +17,8 @@ Verdicts are PERSISTED into the row note so no company is re-ground pointlessly:
   - 'deep-validated <date>: unreachable'                  (nothing to render)
 
 Env: DEEP_LIMIT (0=all) · DEEP_BD_SEARCH_CAP (default 150 Unlocker google searches)
-Usage: python deep_validate.py [--apply]
+Usage: python deep_validate.py [--apply] [--only "A,B"]   # on demand; the Sunday audit runs
+       the same validator as its Chromium rung (audit_empty_rows, BACKLOG 6)
 """
 from __future__ import annotations
 
@@ -270,10 +271,114 @@ def _revalidatable(note, days=None):
     return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days >= days
 
 
+def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail):
+    """Fold one `validate_one` verdict into the row `fr` (in place). The gates and the
+    fixed-length notes below are the whole reason this is one function: `audit_empty_rows`
+    runs it as its Chromium rung on Sunday (BACKLOG 6, 2026-08-26) and `main()` runs it for
+    an on-demand `--only` pass -- one implementation, one set of guards."""
+    # Tenant test FIRST, page test only as a second chance - the shape
+    # `audit_empty_rows` already uses, and for the reason wave 8 measured.
+    #
+    # Gating directly on `_gate.ok_to_write(api)` looked stricter and was simply
+    # broken: `api` here is a MACHINE endpoint. All 66 active Workday rows
+    # are `/wday/cxs/<tenant>/<site>/jobs`, which answers a GET with 400, so
+    # `_page_names_company` returns None ("could not read") and the row was
+    # refused - with a false `not this company's board` stamped on it. Live
+    # sample of 72 currently-active rows: True 47 / None 19 / False 6, i.e.
+    # 35% would have been refused on re-examination, including six false
+    # negatives on companies' OWN boards (one zero, Matrix IT, Valens
+    # Semiconductor, Grip Security, Verint). That made Saturday stricter than
+    # Sunday in the commit whose whole point was to stop them disagreeing.
+    #
+    # The earlier `api or r[3] or ""` was worse in the other direction: when
+    # the LLM tier proposes `platform: "scrape"` with no api_url (and
+    # `fetch_scrape` keys on company_name, so `verify()` succeeds), the gate
+    # fell through to the ROW'S OWN careers page - re-creating in this file
+    # the precise bug the same commit deleted from `audit_empty_rows`.
+    # `_cand` is the candidate and only the candidate; an empty one is no
+    # evidence and is refused by `not _cand`.
+    _cand = api or ""
+    _ident = bool(_cand) and (
+        tenant_is_this_company(name, _cand)
+        or _gate.page_names_company(name, _cand) is True)
+    # Clause 3 of the activation rule (ARCHITECTURE.md section 2) is
+    # `looks_like_a_job_listing_page`, and the wave-8 rewrite dropped it —
+    # the import stayed, nothing called it. Restored SCOPED TO `scrape`,
+    # which is where the original had it: an API endpoint like
+    # `/wday/cxs/<tenant>/<site>/jobs` or `boards-api.greenhouse.io/...` is
+    # not shaped like a listings page and never will be, so applying it to
+    # every platform would refuse every native-ATS recovery. Without it a
+    # `scrape` proposal from the LLM tier could activate a row pointing at
+    # `.../about-us/leadership`.
+    if verdict == "recovered" and not (
+            n_all and not is_foreign(name, _cand) and _ident
+            and (plat != "scrape"
+                 or looks_like_a_job_listing_page(_cand))):
+        # Identity gate: rendering the STORED url and finding roles proves
+        # roles exist there, not that they are this company's. The stored
+        # url of a dark row is often the hunt's best GUESS.
+        #
+        # Until 2026-08-24 this was `is_foreign(...) or not
+        # looks_like_a_job_listing_page(...)` and nothing else - i.e. no gate
+        # at all on an ATS host, because `is_foreign` returns False for every
+        # one of them by design (section 2, docs/BACKLOG.md 21). Driven with
+        # a stubbed `validate_one`, this branch activated
+        # `novartis...myworkdayjobs.com/riskified` for Riskified,
+        # `careers-bancorpbank.icims.com` for Bancor, and a 0-jobs board -
+        # the same three shapes `audit_empty_rows` refuses. The two tools
+        # select the IDENTICAL 255 rows (docs/BACKLOG.md 6) and run 24h
+        # apart, so Saturday silently re-opened what Sunday had closed.
+        #
+        # `n_all` first: a board that verifies with zero jobs is the
+        # `empty-board` shape, not a recovery.
+        #
+        # The note is fixed-length and carries NO url. At 103 chars the old
+        # form evicted a pool token from 216 of the 255 rows in this tool's
+        # own pool and pushed 31 of them out of `in_pool` entirely - and
+        # since this tool's own filter IS `in_pool`, a row it refused could
+        # never be re-examined by it again. Measured against the segment it
+        # replaces: 103 chars -> 216/31, this form -> 198/7.
+        fr[5] = _note_replace(
+            fr[5], "deep-validated",
+            f"deep-validated {TODAY}: not this company's board")
+    elif verdict == "recovered":
+        fr[1], fr[2], fr[3] = plat, tok, api
+        fr[4] = "true"
+        # Append-log, not a rewrite (ARCHITECTURE.md section 2). The two
+        # branches around this one already use replace_own; this one
+        # overwrote the cell, discarding the `dark-triage` mode that had
+        # routed the row here and every other tool's verdict with it.
+        fr[5] = _note_replace(
+            fr[5], "re-audit",
+            f"re-audit {TODAY}: deep-verified {n_all}/{n_il} IL (was dark)")
+    else:
+        note = {"unsupported": f"unsupported ATS {detail}",
+                "dark": "no ATS detected (rendered)",
+                "unreachable": "unreachable"}[verdict]
+        # preserve other tools' verdicts (and the monitored-candidate /
+        # host-documented tokens listing_hunt's fast-path keys on) — only
+        # replace our own previous stamp
+        fr[5] = _note_replace(fr[5], "deep-validated",
+                              f"deep-validated {TODAY}: {note}")
+
+
+def _apply_verdict_to_file(name, verdict, plat, tok, api, n_all, n_il, detail):
+    """Re-read + match by NAME before every write (single-writer discipline: a held
+    snapshot + row-index writes silently revert other writers)."""
+    fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+    for fr in fresh:
+        if fr and fr[0] == name and len(fr) >= 6:
+            apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail)
+    write_csv_rows("companies.csv", fresh)
+
+
 def main():
     _load_secrets()
     apply = "--apply" in sys.argv
     limit = int(os.environ.get("DEEP_LIMIT", "0"))
+    only = set()
+    if "--only" in sys.argv:
+        only = {x.strip() for x in sys.argv[sys.argv.index("--only") + 1].split(",") if x.strip()}
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     targets = [(i, r) for i, r in enumerate(rows)
                if r and len(r) >= 6 and r[4] == "false"
@@ -284,7 +389,8 @@ def main():
                # re-validate after DEEP_REVALIDATE_DAYS instead of never: excluding every
                # already-stamped row made deep validation a once-ever terminal state
                and _revalidatable(r[5] or "")
-               and not is_recruiter(r[0])]
+               and not is_recruiter(r[0])
+               and (not only or r[0] in only)]
     if limit:
         targets = targets[:limit]
     print(f"deep-validating {len(targets)} parked companies "
@@ -311,98 +417,7 @@ def main():
                   f"{(plat + ':' + str(tok) + f' -> {n_all}/{n_il} IL') if plat else detail}",
                   flush=True)
             if apply:
-                # single-writer discipline: re-read + match by NAME before every write
-                # (a held snapshot + row-index writes silently revert other writers)
-                fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
-                for fr in fresh:
-                    if not fr or fr[0] != name or len(fr) < 6:
-                        continue
-
-                    # Tenant test FIRST, page test only as a second chance - the shape
-                    # `audit_empty_rows` already uses, and for the reason wave 8 measured.
-                    #
-                    # Gating directly on `_gate.ok_to_write(api)` looked stricter and was simply
-                    # broken: `api` here is a MACHINE endpoint. All 66 active Workday rows
-                    # are `/wday/cxs/<tenant>/<site>/jobs`, which answers a GET with 400, so
-                    # `_page_names_company` returns None ("could not read") and the row was
-                    # refused - with a false `not this company's board` stamped on it. Live
-                    # sample of 72 currently-active rows: True 47 / None 19 / False 6, i.e.
-                    # 35% would have been refused on re-examination, including six false
-                    # negatives on companies' OWN boards (one zero, Matrix IT, Valens
-                    # Semiconductor, Grip Security, Verint). That made Saturday stricter than
-                    # Sunday in the commit whose whole point was to stop them disagreeing.
-                    #
-                    # The earlier `api or r[3] or ""` was worse in the other direction: when
-                    # the LLM tier proposes `platform: "scrape"` with no api_url (and
-                    # `fetch_scrape` keys on company_name, so `verify()` succeeds), the gate
-                    # fell through to the ROW'S OWN careers page - re-creating in this file
-                    # the precise bug the same commit deleted from `audit_empty_rows`.
-                    # `_cand` is the candidate and only the candidate; an empty one is no
-                    # evidence and is refused by `not _cand`.
-                    _cand = api or ""
-                    _ident = bool(_cand) and (
-                        tenant_is_this_company(name, _cand)
-                        or _gate.page_names_company(name, _cand) is True)
-                    # Clause 3 of the activation rule (ARCHITECTURE.md section 2) is
-                    # `looks_like_a_job_listing_page`, and the wave-8 rewrite dropped it —
-                    # the import stayed, nothing called it. Restored SCOPED TO `scrape`,
-                    # which is where the original had it: an API endpoint like
-                    # `/wday/cxs/<tenant>/<site>/jobs` or `boards-api.greenhouse.io/...` is
-                    # not shaped like a listings page and never will be, so applying it to
-                    # every platform would refuse every native-ATS recovery. Without it a
-                    # `scrape` proposal from the LLM tier could activate a row pointing at
-                    # `.../about-us/leadership`.
-                    if verdict == "recovered" and not (
-                            n_all and not is_foreign(name, _cand) and _ident
-                            and (plat != "scrape"
-                                 or looks_like_a_job_listing_page(_cand))):
-                        # Identity gate: rendering the STORED url and finding roles proves
-                        # roles exist there, not that they are this company's. The stored
-                        # url of a dark row is often the hunt's best GUESS.
-                        #
-                        # Until 2026-08-24 this was `is_foreign(...) or not
-                        # looks_like_a_job_listing_page(...)` and nothing else - i.e. no gate
-                        # at all on an ATS host, because `is_foreign` returns False for every
-                        # one of them by design (section 2, docs/BACKLOG.md 21). Driven with
-                        # a stubbed `validate_one`, this branch activated
-                        # `novartis...myworkdayjobs.com/riskified` for Riskified,
-                        # `careers-bancorpbank.icims.com` for Bancor, and a 0-jobs board -
-                        # the same three shapes `audit_empty_rows` refuses. The two tools
-                        # select the IDENTICAL 255 rows (docs/BACKLOG.md 6) and run 24h
-                        # apart, so Saturday silently re-opened what Sunday had closed.
-                        #
-                        # `n_all` first: a board that verifies with zero jobs is the
-                        # `empty-board` shape, not a recovery.
-                        #
-                        # The note is fixed-length and carries NO url. At 103 chars the old
-                        # form evicted a pool token from 216 of the 255 rows in this tool's
-                        # own pool and pushed 31 of them out of `in_pool` entirely - and
-                        # since this tool's own filter IS `in_pool`, a row it refused could
-                        # never be re-examined by it again. Measured against the segment it
-                        # replaces: 103 chars -> 216/31, this form -> 198/7.
-                        fr[5] = _note_replace(
-                            fr[5], "deep-validated",
-                            f"deep-validated {TODAY}: not this company's board")
-                    elif verdict == "recovered":
-                        fr[1], fr[2], fr[3] = plat, tok, api
-                        fr[4] = "true"
-                        # Append-log, not a rewrite (ARCHITECTURE.md section 2). The two
-                        # branches around this one already use replace_own; this one
-                        # overwrote the cell, discarding the `dark-triage` mode that had
-                        # routed the row here and every other tool's verdict with it.
-                        fr[5] = _note_replace(
-                            fr[5], "re-audit",
-                            f"re-audit {TODAY}: deep-verified {n_all}/{n_il} IL (was dark)")
-                    else:
-                        note = {"unsupported": f"unsupported ATS {detail}",
-                                "dark": "no ATS detected (rendered)",
-                                "unreachable": "unreachable"}[verdict]
-                        # preserve other tools' verdicts (and the monitored-candidate /
-                        # host-documented tokens listing_hunt's fast-path keys on) — only
-                        # replace our own previous stamp
-                        fr[5] = _note_replace(fr[5], "deep-validated",
-                                              f"deep-validated {TODAY}: {note}")
-                write_csv_rows("companies.csv", fresh)
+                _apply_verdict_to_file(name, verdict, plat, tok, api, n_all, n_il, detail)
             time.sleep(0.3)
     print(f"\n=== deep validation: {stats} · BD searches used: {_BD['used']} ===", flush=True)
 

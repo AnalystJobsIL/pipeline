@@ -183,10 +183,17 @@ def main():
         i, n = int(sys.argv[sys.argv.index("--shard") + 1]), int(sys.argv[sys.argv.index("--shard") + 2])
         names = names[i::n]
 
+    # ABSENT is {}; CORRUPT is reported and never written over (BACKLOG 156)
+    cache_ok = True
     try:
-        cache = json.load(open("scraped_cache.json", encoding="utf-8"))
-    except Exception:  # noqa: BLE001
-        cache = {}
+        cache = json.load(open("scraped_cache.json", encoding="utf-8")) \
+            if os.path.exists("scraped_cache.json") else {}
+        if not isinstance(cache, dict):
+            raise ValueError("not an object")
+    except Exception as e:  # noqa: BLE001
+        print(f"::error::scraped_cache.json is unreadable ({str(e)[:60]}) -- this run will NOT "
+              f"write it", flush=True)
+        cache, cache_ok = {}, False
     fixed = still = 0
     for name in names:
         rowi, url = idx[name]
@@ -221,8 +228,9 @@ def main():
             if fr and len(fr) > 5 and fr[0] in changed and changed[fr[0]] != fr:
                 fresh[pos] = changed[fr[0]]
         write_csv_rows("companies.csv", fresh)
-        with open("scraped_cache.json", "w", encoding="utf-8") as f:
-            json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
+        if cache_ok:
+            with open("scraped_cache.json", "w", encoding="utf-8") as f:
+                json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
     print(f"=== recovered {fixed}, still unreachable {still} ===", flush=True)
 
 

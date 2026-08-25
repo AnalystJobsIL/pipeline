@@ -73,11 +73,11 @@ def main():
                 # ATS re-point -- the same over-block measured at 358 rows in
                 # docs/BACKLOG.md 33. `tenant_is_this_company` returns True when there is
                 # nothing checkable, so this fires only on a real mismatch.
-                if len(fields) >= 5 and fields[4] == "true" and (
-                        _gate.is_foreign(name, api)
-                        or not _gate.tenant_is_this_company(name, api)):
+                # ...on EVERY row, parked included (BACKLOG 56): a parked row holding a
+                # foreign address is exactly what listing_hunt's fast path later activates on
+                if _gate.is_foreign(name, api) or not _gate.tenant_is_this_company(name, api):
                     print(f"  [XX]  {name[:28]:29} -> resolver proposed {api[:44]}, which is "
-                          f"not this company's board; active row left pointing where it was")
+                          f"not this company's board; row left pointing where it was")
                     continue
                 fields[1], fields[2], fields[3] = plat, tok, api
                 if len(fields) >= 6:

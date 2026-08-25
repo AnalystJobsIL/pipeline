@@ -28,7 +28,7 @@ table in the repo and is checked against the real crons.
 Full versions in `ARCHITECTURE.md` §2 and §8. Short versions, because each of these has
 already destroyed a day of work:
 
-1. **A green workflow means nothing.** 35 of the 77 workflow steps are
+1. **A green workflow means nothing.** 33 of the 72 workflow steps are
    `continue-on-error: true`. Verify a capability by what it PRODUCED, and quote the number.
 2. **A mass-zero result is a broken run, not a measurement.** Strip its verdicts, diagnose,
    re-run — do not let it commit.

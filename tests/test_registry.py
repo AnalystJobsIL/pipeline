@@ -1164,9 +1164,9 @@ def test_the_deep_validate_refusal_note_is_short_and_carries_no_url(tmp_path, mo
     import re
     import inspect
     import deep_validate as D
-    src = inspect.getsource(D.main)
+    src = inspect.getsource(D.apply_verdict)      # the write block moved here 2026-08-26 (BACKLOG 6)
     seg = re.search(r'f"deep-validated \{TODAY\}: ([^"]*)"', src)
-    assert seg, "could not find the deep-validated refusal segment in main()"
+    assert seg, "could not find the deep-validated refusal segment in apply_verdict()"
     body = seg.group(1)
     assert "{" not in body, (
         "the refusal note interpolates %r — a variable-length note (usually a URL) is how "
@@ -4502,3 +4502,227 @@ def test_the_hunts_link_picker_and_deep_validate_keep_their_own_schemas(monkeypa
     assert "schema=_PICK_SCHEMA" in src and "system=_PICK_SYSTEM" in src
     src = inspect.getsource(DV)
     assert "schema=_SCHEMA" in src and "system=_SYSTEM" in src
+
+
+# ---------------------------------------------------------------------------------------
+# The Sunday chain, 2026-08-26 (BACKLOG 6, 38/164): one escalating pass, a committed key.
+# ---------------------------------------------------------------------------------------
+
+class _NoRenderer:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def test_the_sunday_audit_escalates_what_its_cheap_rung_left_dark(tmp_path, monkeypatch, capsys):
+    """Kills `audit-deep-rung-drop`. The Saturday cron rendered the IDENTICAL 270 rows the
+    Sunday audit had just read over plain HTTP. Now the render is the audit's second rung,
+    over what the first left dark, through deep_validate's own validator and gates."""
+    import sys
+    import audit_empty_rows as A
+    import deep_validate as DV
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Fiverr", "scrape", "", "https://www.fiverr.com/jobs", "false",
+         "listing-hunt 2026-08-01: no listing found"],
+        ["DarkCo", "scrape", "", "https://www.darkco.example/careers", "false",
+         "listing-hunt 2026-08-01: no listing found"],
+        ["Fresh Ltd", "scrape", "", "https://www.fresh.example/careers", "false",
+         "listing-hunt 2026-08-01: no listing found | deep-validated 2026-08-20: no ATS detected (rendered)"],
+    ])
+    monkeypatch.setattr(A, "_load_secrets", lambda *a, **k: None)
+    monkeypatch.setattr(A, "fetch", lambda u, timeout=20: "")          # the cheap rung finds nothing
+    monkeypatch.setattr(A, "serp", lambda name, limit=5: [])
+    monkeypatch.setattr(A.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(A, "_playwright_available", lambda: True)
+    monkeypatch.setattr(DV, "Renderer", _NoRenderer)
+    rendered = []
+
+    def _validate(rend, name, seed):
+        rendered.append(name)
+        if name == "Fiverr":
+            return ("recovered", "greenhouse", "fiverr", _FIVERR, 40, 12, "")
+        return ("dark", None, None, None, 0, 0, "no ATS detected (rendered)")
+    monkeypatch.setattr(DV, "validate_one", _validate)
+    monkeypatch.setattr(DV.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    monkeypatch.setattr(sys, "argv", ["audit_empty_rows.py", "--apply"])
+    monkeypatch.delenv("AUDIT_TIME_BUDGET_MIN", raising=False)
+    monkeypatch.delenv("AUDIT_DEEP_BUDGET_MIN", raising=False)
+    A.main()
+    out = _read(tmp_path)
+    assert rendered == ["Fiverr", "DarkCo"], (
+        "the deep rung must render exactly the dark rows due a render (Fresh Ltd was "
+        "deep-validated 6 days ago): %r" % (rendered,))
+    assert out["Fiverr"][4] == "true" and "deep-verified 40/12 IL" in out["Fiverr"][5], out["Fiverr"]
+    assert out["DarkCo"][4] == "false" and "deep-validated 20" in out["DarkCo"][5], out["DarkCo"]
+    assert "deep-validated 2026-08-20" in out["Fresh Ltd"][5]
+    # the rotation key is COMMITTED state now (BACKLOG 38/164), keyed by name
+    seen = json.loads((tmp_path / "cloud_state" / "audit_seen.json").read_text(encoding="utf-8"))
+    assert set(seen) >= {"Fiverr", "DarkCo", "Fresh Ltd"}
+    assert not (tmp_path / "state").exists() or not (tmp_path / "state" / "audit_done.json").exists()
+    log = capsys.readouterr().out
+    assert "deep rung: 2 of 3 dark rows" in log, log[-500:]
+    # no Playwright: the rung says so and renders nothing (no crash behind continue-on-error)
+    monkeypatch.setattr(A, "_playwright_available", lambda: False)
+    (tmp_path / "cloud_state" / "audit_seen.json").unlink()       # re-select the three rows
+    rendered.clear()
+    A.main()
+    assert rendered == [] and "Playwright not importable" in capsys.readouterr().out
+
+
+def test_the_audit_rotation_key_is_committed_state_and_persist_knows_it():
+    """Kills `audit-seen-path-drift`. `state/` is gitignored, so in Actions the key was
+    always {} and the 90-minute budget re-walked the same head of the list every Sunday."""
+    import audit_empty_rows as A
+    import persist_state as P
+    assert A.AUDIT_SEEN.replace("\\", "/") == "cloud_state/audit_seen.json"
+    assert "cloud_state/audit_seen.json" in P.STRATEGY
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    wf = open(os.path.join(root, ".github", "workflows", "audit-coverage.yml"), encoding="utf-8").read()
+    i = wf.index("--own")
+    assert "cloud_state/audit_seen.json" in wf[i:i + 300], "audit-coverage.yml must --own the key"
+    assert "AUDIT_DEEP_BUDGET_MIN" in wf and "BRIGHTDATA_API_KEY" in wf[wf.index("Re-audit parked rows"):]
+    assert not os.path.exists(os.path.join(root, ".github", "workflows", "deep-validate.yml")), (
+        "the Saturday cron is the audit's second rung now (BACKLOG 6)")
+
+
+def test_a_dated_suspect_verdict_re_arms_the_hunt(monkeypatch):
+    """Kills `hunt-suspect-drop`. BACKLOG 65: `empty-but-suspect` waited out the 14-day
+    cooldown and no scheduled tool cleared it. A suspect newer than the hunt's last verdict
+    is actionable; one the hunt already answered is not."""
+    import listing_hunt as LH
+    import validate_empty as V
+    src = __import__("inspect").getsource(LH.main)
+    assert "empty-but-suspect (\\d{4}" in src
+    # drive the closure through main()'s selector: build the two notes and use the module's
+    # own regexes the way _actionable_mode does
+    import re
+    def actionable(note):
+        ms = re.search(r"empty-but-suspect (\d{4}-\d{2}-\d{2})", note)
+        mh = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note)
+        return bool(ms and (not mh or ms.group(1) > mh.group(1)))
+    newer = "listing-hunt 2026-08-20: no listing found | empty-but-suspect 2026-08-24; 3 IL but the board is not this company's"
+    older = "empty-but-suspect 2026-08-10; 3 IL | listing-hunt 2026-08-20: no listing found"
+    assert actionable(newer) and not actionable(older)
+    assert LH.HUNT_POOL.search(newer)                     # still the hunt's row
+    assert "empty-but-suspect {TODAY}" in __import__("inspect").getsource(V.main)
+
+
+def test_apply_resolved_vetoes_a_foreign_board_on_a_parked_row_too(tmp_path, monkeypatch):
+    """Kills `apply-resolved-parked-scope`. BACKLOG 56: the veto was scoped to ACTIVE rows,
+    so a parked row was re-pointed at a foreign address the hunt's fast path later
+    activates on."""
+    import sys
+    import apply_resolved as AR
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    p = _registry(tmp_path, [
+        ["Bancor", "scrape", "", "https://www.bancor.network/careers", "false", "no listing found"],
+        ["Fiverr", "scrape", "", "https://www.fiverr.com/jobs", "false", "no listing found"],
+    ])
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "resolved_configs.json").write_text(json.dumps({
+        "Bancor": ["icims", "bancorpbank", _BANCORP],
+        "Fiverr": ["greenhouse", "fiverr", _FIVERR]}), encoding="utf-8")
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    monkeypatch.setattr(sys, "argv", ["apply_resolved.py"])
+    AR.main()
+    out = _read(tmp_path)
+    assert _BANCORP not in out["Bancor"][3], "a parked row was re-pointed at another company's board: %r" % (out["Bancor"],)
+    assert out["Fiverr"][3] == _FIVERR, "positive control regressed: %r" % (out["Fiverr"],)
+
+
+def test_bd_rescue_reads_the_unlockers_error_code_and_never_retries_a_policy_host(tmp_path, monkeypatch):
+    """Kills `bd-policy-retry` and `bd-error-code-drop`. BACKLOG 110: a dead token (401), a
+    host Bright Data's policy refuses (`policy_20140`, every myworkdayjobs page) and a walled
+    page (`reject_block`) all read as "no HTML"."""
+    import io
+    import sys
+    import urllib.error
+    import urllib.request
+    import bd_rescue as B
+
+    class _Resp(io.BytesIO):
+        def __init__(self, body, err):
+            super().__init__(body)
+            self.status = 200
+            self.headers = {"x-brd-error-code": err} if err else {}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "x")
+    monkeypatch.setattr(urllib.request, "urlopen", lambda req, timeout=90: _Resp(b"<html>" + b"x" * 3000, ""))
+    assert B.unlock("https://a.example") and B.LAST["error"] == ""
+    monkeypatch.setattr(urllib.request, "urlopen", lambda req, timeout=90: _Resp(b"wall", "reject_block"))
+    assert B.unlock("https://a.example") == "" and B.LAST["error"] == "reject_block"
+    monkeypatch.setattr(urllib.request, "urlopen", lambda req, timeout=90: _Resp(b"", "policy_20140"))
+    html, err = B.unlock_status("https://x.myworkdayjobs.com/y")
+    assert html == "" and err == "policy_20140" and B._policy_closed(err)
+
+    # main(): a policy refusal stamps `bd-policy` and the row is never unlocked again
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [["Wd Ltd", "scrape", "", "https://wd.myworkdayjobs.com/x", "false",
+                          "unreachable; could not scan"]])
+    monkeypatch.delenv("BD_LIMIT", raising=False)
+    monkeypatch.setattr(B, "_load_secrets", lambda *a, **k: None)
+    monkeypatch.setattr(B, "alt_urls", lambda url: [url, url + "/careers"])
+    monkeypatch.setattr(B.time, "sleep", lambda *a: None)
+    calls = []
+    monkeypatch.setattr(B, "unlock_status", lambda u, timeout=90: calls.append(u) or ("", "policy_20140"))
+    monkeypatch.setattr(sys, "argv", ["bd_rescue.py"])
+    B.main()
+    row = _read(tmp_path)["Wd Ltd"]
+    assert len(calls) == 1 and "bd-policy 20" in row[5] and "policy_20140" in row[5], (calls, row)
+    calls.clear()
+    B.main()
+    assert calls == [], "a policy-closed host was unlocked again"
+    # a dead token stops the whole pass without stamping anything
+    _registry(tmp_path, [["A Ltd", "scrape", "", "https://a.example/careers", "false",
+                          "unreachable; could not scan"]])
+    monkeypatch.setattr(B, "unlock_status", lambda u, timeout=90: ("", "http-401"))
+    import pytest
+    with pytest.raises(SystemExit):
+        B.main()
+    assert _read(tmp_path)["A Ltd"][5] == "unreachable; could not scan"
+
+
+def test_a_corrupt_scrape_cache_is_never_written_over(tmp_path, monkeypatch):
+    """Kills `expand-corrupt-cache-write` and `retry-corrupt-cache-write`. BACKLOG 156: a
+    momentarily unreadable scraped_cache.json became {} and was written back, deleting
+    every company's cards."""
+    import sys
+    import auto_expand as E
+    import retry_unreachable as R
+    from pipeline import identity_gate as G
+    E = _expand_env(tmp_path, monkeypatch, [{"name": "Fiverr", "careers_url": "https://www.fiverr.com/jobs"}])
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    monkeypatch.setattr(E, "resolve", lambda name, url: ("scrape", ([{"title": "x", "location": "Tel Aviv"}], url)))
+    (tmp_path / "scraped_cache.json").write_text("{corrupt", encoding="utf-8")
+    E.main()
+    assert (tmp_path / "scraped_cache.json").read_text(encoding="utf-8") == "{corrupt"
+    assert _read(tmp_path)["Fiverr"][4] == "true", "the registry row still lands"
+    # positive control: a readable cache is written
+    (tmp_path / "scraped_cache.json").write_text("{}", encoding="utf-8")
+    E = _expand_env(tmp_path, monkeypatch, [{"name": "Fiverr2", "careers_url": "https://www.fiverr.com/jobs"}])
+    monkeypatch.setattr(E, "resolve", lambda name, url: ("scrape", ([{"title": "x", "location": "Tel Aviv"}], url)))
+    monkeypatch.setattr(G, "page_names_company", lambda n, u, html="": True)
+    E.main()
+    assert "Fiverr2" in json.loads((tmp_path / "scraped_cache.json").read_text(encoding="utf-8"))
+    # retry_unreachable, same rule
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [["Fiverr", "", "", "https://www.fiverr.com/jobs", "false", "unreachable; could not scan"]])
+    (tmp_path / "scraped_cache.json").write_text("[not an object", encoding="utf-8")
+    monkeypatch.setattr(R, "attempt", lambda name, url: ("scrape", ([{"title": "x", "location": "Tel Aviv"}], url)))
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    monkeypatch.setattr(sys, "argv", ["retry_unreachable.py"])
+    monkeypatch.delenv("RETRY_LIMIT", raising=False)
+    R.main()
+    assert (tmp_path / "scraped_cache.json").read_text(encoding="utf-8") == "[not an object"

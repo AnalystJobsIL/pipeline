@@ -1337,5 +1337,85 @@
     "replace": "    if e is None:",
     "why": "flipping empty->error must start a NEW streak, or 60 honest empty days park a company on its first transient error.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "audit-deep-rung-drop",
+    "file": "audit_empty_rows.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "    _deep_rung([n for n, _ in still] + [n for n, _ in unsupported], apply,",
+    "replace": "    _deep_rung([], apply,",
+    "why": "the Chromium rung IS the retired Saturday cron; dropping its input silently stops rendering every dark row (BACKLOG 6).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "audit-seen-path-drift",
+    "file": "audit_empty_rows.py",
+    "symbol": "AUDIT_SEEN",
+    "class": "M7-constant-drift",
+    "find": "AUDIT_SEEN = os.path.join(\"cloud_state\", \"audit_seen.json\")   # {name: last-audited date}",
+    "replace": "AUDIT_SEEN = os.path.join(\"state\", \"audit_seen.json\")   # {name: last-audited date}",
+    "why": "a gitignored rotation key is a stable sort on a constant in Actions: file order every Sunday (BACKLOG 38/164).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "hunt-suspect-drop",
+    "file": "listing_hunt.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "        if ms and (not mh or ms.group(1) > mh.group(1)):\n            return True",
+    "replace": "        if False:\n            return True",
+    "why": "a suspect verdict newer than the hunt's last one must re-arm the hunt (BACKLOG 65).",
+    "must_be_killed_by_behavioural": false
+  },
+  {
+    "id": "apply-resolved-parked-scope",
+    "file": "apply_resolved.py",
+    "symbol": "main",
+    "class": "M3-branch-narrowing",
+    "find": "                if _gate.is_foreign(name, api) or not _gate.tenant_is_this_company(name, api):",
+    "replace": "                if fields[4] == \"true\" and (_gate.is_foreign(name, api) or not _gate.tenant_is_this_company(name, api)):",
+    "why": "the veto scoped to active rows re-pointed parked rows at foreign boards (BACKLOG 56).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-policy-retry",
+    "file": "bd_rescue.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "        return bool(\"bd-policy\" in note\n                    or (m2 and (m2.group(1) >= recent or int(m2.group(2)) >= 3)))",
+    "replace": "        return bool(m2 and (m2.group(1) >= recent or int(m2.group(2)) >= 3))",
+    "why": "a policy-closed host retried nightly spends a credit for the same answer (BACKLOG 110).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-error-code-drop",
+    "file": "bd_rescue.py",
+    "symbol": "unlock_status",
+    "class": "M1-gate-removal",
+    "find": "            err = r.headers.get(\"x-brd-error-code\") or \"\"       # 200 with a failure inside",
+    "replace": "            err = \"\"       # 200 with a failure inside",
+    "why": "the unlocker answers 200 with the failure in a header; ignoring it reads a wall as a page (BACKLOG 110).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "expand-corrupt-cache-write",
+    "file": "auto_expand.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "        if _CACHE_OK[\"readable\"]:\n            with open(\"scraped_cache.json\", \"w\", encoding=\"utf-8\") as f:",
+    "replace": "        if True:\n            with open(\"scraped_cache.json\", \"w\", encoding=\"utf-8\") as f:",
+    "why": "writing {} over an unreadable cache deletes every company's cards (BACKLOG 156).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-corrupt-cache-write",
+    "file": "retry_unreachable.py",
+    "symbol": "main",
+    "class": "M1-gate-removal",
+    "find": "        if cache_ok:\n            with open(\"scraped_cache.json\", \"w\", encoding=\"utf-8\") as f:",
+    "replace": "        if True:\n            with open(\"scraped_cache.json\", \"w\", encoding=\"utf-8\") as f:",
+    "why": "same rule in the 02:30 chain (BACKLOG 156).",
+    "must_be_killed_by_behavioural": true
   }
 ]

@@ -111,7 +111,7 @@ on a bare title is re-judged once the description arrives (distinct from a row's
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And **35 of the 77 workflow steps carry `continue-on-error: true`** (counted 2026-08-25 by
+And **33 of the 72 workflow steps carry `continue-on-error: true`** (counted 2026-08-25 by
 `docs/check_docs.py`, which fails if this sentence and the workflows disagree; nine of the 35
 are the `Stage stamps on the run page` / CLI-install steps added that day, tolerated on
 purpose — their outcome is what the mail and the run page read, never the badge), so a hard
@@ -851,8 +851,8 @@ there while `candidate_probe.json` advances baselines, and committing one withou
 loses the wake *and* consumes its signal.
 
 Cloud workflows that commit the csv serialize via the `repo-state` concurrency group — eight
-of them (audit-coverage, auto-expand, deep-validate, listing-hunt, retry-unreachable,
-scrape-refresh, self-heal, triage-dark) — **except `daily-digest.yml`**, which uses its own
+of them (audit-coverage, auto-expand, listing-hunt, retry-unreachable, scrape-refresh,
+self-heal, triage-dark) — **except `daily-digest.yml`**, which uses its own
 group, so a digest CAN overlap an audit/hunt run; both re-read, so verdicts survive. A local
 `--apply` run adds a third writer: avoid the cron windows in §4, and never run two
 browser-driving tools at once (Playwright sync instances conflict).
@@ -883,16 +883,17 @@ so a given night processes fewer rows than the pool holds.
 | `crack_walled (19:00 daily + Sun)` | `listing-hunt.yml` `0 19 * * *`, `audit-coverage.yml` `0 4 * * 0` | rows `identity_gate.is_walled` claims — the note token OR a walled ATS host — minus terminal and recruiters | **yes** |
 | `probe_candidates (05:00 daily)` | `daily-digest.yml` `0 5 * * *` | rows matching `PROBE_POOL` with an `http` address, minus terminal; wakes rather than activates (`_wake_note` strips every stale segment) | no |
 | `audit_empty_rows (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0` | `verdicts.in_pool` minus terminal and recruiters | **yes** |
-| `deep_validate (Sat 04:00)` | `deep-validate.yml` `0 4 * * 6` | the same selector as the audit, at a different depth (Chromium render + network sniff) | **yes** |
+| `deep_validate rung (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0`, inside `audit_empty_rows` | the rows the cheap rung left dark, minus those deep-validated within 30 d — Chromium render + network sniff, `deep_validate.validate_one`/`apply_verdict` | **yes** |
 
 `scan_dead_domains` (05:00 digest and the Sunday audit) is deliberately **not** a pool: it
 tests liveness, never roles, and excludes only `defunct` rather than the whole terminal list,
 because re-testing a `domain-dead` row is its purpose. The **02:30 chain** is not in `pools()`
 either, and it activates: `bd_rescue` then `retry_unreachable` (`retry-unreachable.yml`) both
 select parked rows carrying `unreachable` (retry minus terminal since 2026-08-25); adding them
-as `in_*_pool` entries is `docs/BACKLOG.md` (registry). Audit and deep-validate selecting the
-identical row set 24 hours apart is this lane's clearest consolidation target
-(`docs/BACKLOG.md`).
+as `in_*_pool` entries is `docs/BACKLOG.md` (registry). Audit and deep-validate used to select
+the identical row set 24 hours apart (270 rows on 2026-08-25); since 2026-08-26 the Chromium
+render is the audit's second rung over what its cheap rung left dark, with its own 30-day
+cooldown and `AUDIT_DEEP_BUDGET_MIN` — one Sunday pass, one workflow fewer.
 
 **Never retype a pool regex — import the tool's constant.** The guarded constants are
 `listing_hunt.HUNT_POOL`, `probe_candidates.PROBE_POOL`, `pipeline/verdicts.TERM_RX` (the one
@@ -959,7 +960,7 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
 3. `listing_hunt.py` (cron 19:00): for rows still dark — find the LISTINGS URL (harvested
    links; Claude picks; rebrand redirects resolved), verify via `scrape_universal`.
    Woken/documented rows take the **fast-path**: scrape the stored URL first.
-4. `deep_validate.py` (Sat 04:00) / `crack_walled.py` (daily 19:00 + Sun): Chromium render + network-request
+4. `deep_validate.py` (the Sunday audit's second rung; `--only` on demand) / `crack_walled.py` (daily 19:00 + Sun): Chromium render + network-request
    sniffing (`/wday/cxs/`, `careers-api`, `COMEET.init` static token extraction, …),
    platform host guessing, Claude evidence judgment.
 5. Manual Chrome sweep: a human/agent reads the page in a real browser; every miss becomes
@@ -1048,8 +1049,7 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 | `0 8,20 * * *` | auto-expand | drain resolution queue (deterministic + LLM tiers) |
 | `0 18 * * *` | triage-dark | classify every parked row by failure mode (`dark-triage <date>: <mode>`) |
 | `0 19 * * *` | listing-hunt | repair-extract-gap (35 min) → re-hunt woken/eligible dark rows (200 min) → walled-ATS re-crack (60 min) |
-| `0 4 * * 6` | deep-validate | Saturday: Chromium render + network sniff over `_revalidatable` rows |
-| `0 4 * * 0` | audit-coverage | Sunday: wayback rescue, empty cross-validation, full parked-row re-audit, **liveness re-scan (revives domains), walled-ATS re-crack**, coverage report |
+| `0 4 * * 0` | audit-coverage | Sunday: wayback rescue, empty cross-validation, full parked-row re-audit (cheap rung, then `deep_validate`'s Chromium rung over what stayed dark — the Saturday cron until 2026-08-26), **liveness re-scan (revives domains), walled-ATS re-crack**, coverage report |
 | on push | tests | `pytest` (which runs `docs/check_docs.py`), `check_invariants.py`, `pipeline.platform_check`, the mutation gate — the only workflow with no `continue-on-error` step |
 
 **When the email actually arrives.** The 05:00 cron is queued by GitHub for ~35 minutes
@@ -1406,7 +1406,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
 - "Why isn't company X in my email?" → §5b above (ordered runbook).
 - "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
 - "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
-  **35 of the 77 workflow steps are `continue-on-error`, so a green run can still hide a
+  **33 of the 72 workflow steps are `continue-on-error`, so a green run can still hide a
   failed step** — read the step, not the badge.
 - Coverage snapshot:
   ```bash

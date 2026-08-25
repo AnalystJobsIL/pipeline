@@ -15,6 +15,7 @@ import json
 import os
 import re
 import time
+import urllib.error
 import urllib.request
 
 from pipeline import identity_gate as _gate
@@ -49,8 +50,15 @@ def _load_secrets():
                 os.environ.setdefault(k, v)
 
 
-def unlock(url, timeout=90):
-    """Fetch url through Web Unlocker; returns HTML ('' on failure)."""
+# what the LAST unlock reported: "" on success, else `policy_20140` (the host is closed to
+# residential access -- every myworkdayjobs.com page), `reject_block` (walled),
+# `http-401` (a dead token: the ACCOUNT is unusable), `timeout`. Six spenders share this
+# function and used to see every one of those as "no HTML" (BACKLOG 110).
+LAST = {"error": "", "status": None}
+
+
+def unlock_status(url, timeout=90):
+    """(html, error). `error` is "" on success; see LAST."""
     body = json.dumps({"zone": os.environ["BRIGHTDATA_ZONE"], "url": url,
                        "format": "raw"}).encode()
     req = urllib.request.Request("https://api.brightdata.com/request", data=body, method="POST",
@@ -58,9 +66,27 @@ def unlock(url, timeout=90):
                                           "Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
-            return r.read(2_000_000).decode("utf-8", "replace")
+            text = r.read(2_000_000).decode("utf-8", "replace")
+            err = r.headers.get("x-brd-error-code") or ""       # 200 with a failure inside
+            LAST.update(error=err, status=r.status)
+            return ("" if err else text), err
+    except urllib.error.HTTPError as e:
+        LAST.update(error=f"http-{e.code}", status=e.code)
+        return "", f"http-{e.code}"
     except Exception:  # noqa: BLE001
-        return ""
+        LAST.update(error="timeout", status=None)
+        return "", "timeout"
+
+
+def unlock(url, timeout=90):
+    """Fetch url through Web Unlocker; returns HTML ('' on failure). `LAST["error"]` says why."""
+    return unlock_status(url, timeout)[0]
+
+
+def _policy_closed(err):
+    """A `policy_*` code is Bright Data refusing the HOST, not a transient: retrying it
+    nightly spends a credit for the same answer."""
+    return str(err or "").startswith("policy_")
 
 
 def main():
@@ -80,7 +106,9 @@ def main():
     def _skip(name):
         note = rows[idx[name][0]][5] if len(rows[idx[name][0]]) > 5 else ""
         m2 = re.search(r"bd-tried (\d{4}-\d{2}-\d{2}) x(\d+)", note)
-        return bool(m2 and (m2.group(1) >= recent or int(m2.group(2)) >= 3))
+        # a host Bright Data's policy refuses is never retried (BACKLOG 110)
+        return bool("bd-policy" in note
+                    or (m2 and (m2.group(1) >= recent or int(m2.group(2)) >= 3)))
     names = [n for n in idx if not _skip(n)]
     names = names[:limit] if limit else names
     print(f"bright-data rescuing {len(names)} unreachable ...")
@@ -88,8 +116,17 @@ def main():
     for name in names:
         rowi, url = idx[name]
         best_html, best_url, resolved = "", url, False
+        policy = ""
         for alt in alt_urls(url)[:5]:              # try up to 5 candidate URLs via the unlocker
-            html = unlock(alt)
+            html, err = unlock_status(alt)
+            if err.startswith("http-4"):
+                # 401/402/403 from the API itself: the ACCOUNT is unusable -- stop spending
+                print(f"::warning::bd_rescue: Bright Data answered {err}; stopping the pass",
+                      flush=True)
+                raise SystemExit(0)
+            if _policy_closed(err):
+                policy = err
+                break                            # the host is refused, not the page
             if len(html) < 600 or "NoSuchKey" in html[:400]:
                 continue
             if len(html) > len(best_html):
@@ -125,6 +162,15 @@ def main():
                     print(f"  [OK] {name}: {plat} jobs={n_all} il={il}", flush=True)
                     break
         if resolved:
+            time.sleep(1)
+            continue
+        if policy and not best_html:
+            still += 1
+            import datetime as _dtm
+            rows[rowi][5] = _note_replace(rows[rowi][5] or "unreachable; could not scan",
+                                          "bd-policy", f"bd-policy {_dtm.date.today().isoformat()}: {policy}")
+            _MOD.add(name)
+            print(f"  pol  {name} ({policy}: host closed to the unlocker; not retried)", flush=True)
             time.sleep(1)
             continue
         if not best_html:

@@ -40,6 +40,7 @@ def in_validate_empty_pool(r):
             and not is_terminal(r[5] or "") and not is_recruiter(r[0]))
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
+TODAY = __import__("datetime").date.today().isoformat()
 
 
 def _get(url, timeout=10):
@@ -137,8 +138,11 @@ def main():
             # is worth less than a row that keeps being re-checked, and the row is still
             # visible in this run's `suspect:` summary either way. Measured on the real
             # registry: 22 of 54 rows would have lost the token; 0 do now.
+            # dated, so listing_hunt can tell a suspect newer than its last verdict from
+            # one it already hunted (BACKLOG 65: the suspect used to wait out the 14-day
+            # cooldown, and no scheduled tool cleared it)
             _new = _note_replace(rows[rowi][5] or "", "empty-but-suspect",
-                                 "empty-but-suspect; " + payload)
+                                 f"empty-but-suspect {TODAY}; " + payload)
             if "no open israel roles" in _new.lower():
                 rows[rowi][5] = _new
                 _MODIFIED.add(name)

@@ -86,11 +86,26 @@ def _names_now():
     return {r["company_name"].strip().lower() for r in load_companies(CSV_PATH, active_only=False)}
 
 
+_CACHE_OK = {"readable": True}
+
+
 def _load_cache():
+    """ABSENT is {}; CORRUPT is reported and the run's cache write is SKIPPED -- writing
+    `{}` over a momentarily unreadable file deleted every company's cards (BACKLOG 156;
+    the guard discovery_daily already has)."""
+    _CACHE_OK["readable"] = True
+    if not os.path.exists("scraped_cache.json"):
+        return {}
     try:
         with open("scraped_cache.json", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:  # noqa: BLE001
+            d = json.load(f)
+        if not isinstance(d, dict):
+            raise ValueError("not an object")
+        return d
+    except Exception as e:  # noqa: BLE001
+        print(f"::error::scraped_cache.json is unreadable ({str(e)[:60]}) -- this run will NOT "
+              f"write it; cards resolved tonight are kept in the registry only", flush=True)
+        _CACHE_OK["readable"] = False
         return {}
 
 
@@ -245,8 +260,9 @@ def main():
         print(f"  {'[dry] ' if DRY_RUN else ''}{kind[:4]:4} {name}", flush=True)
 
     if not DRY_RUN:
-        with open("scraped_cache.json", "w", encoding="utf-8") as f:
-            json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
+        if _CACHE_OK["readable"]:
+            with open("scraped_cache.json", "w", encoding="utf-8") as f:
+                json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
         os.makedirs(os.path.dirname(SEEN_PATH) or ".", exist_ok=True)
         from pipeline.atomic import write_json
         write_json(SEEN_PATH, seen)

@@ -241,6 +241,7 @@ STRATEGY = {
     "cloud_state/stale.json": (s_company_dict, "digest + self-heal's Monday sweep; per company"),
     "cloud_state/scan_seen.json": (s_company_dict, "digest + Sunday audit; per company"),
     "cloud_state/auto_expand_seen.json": (s_company_dict, "auto-expand's rotation key; per company name"),
+    "cloud_state/audit_seen.json": (s_company_dict, "the Sunday audit's rotation key; per company name"),
     "cloud_state/pipeline_stages.json": (s_stage_stamps, "per stage key, newer finished_at wins, never deleted"),
     "discovered_cache.json": (_keyed_list(_job_key), "list keyed (company, title); two discovery writers"),
     "research_companies.json": (_keyed_list(_name_key), "list keyed name; two discovery writers"),

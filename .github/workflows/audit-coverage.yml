@@ -52,10 +52,18 @@ jobs:
           npm install -g @anthropic-ai/claude-code
         continue-on-error: true
 
-      - name: Re-audit parked rows (ATS-signature verify; recovers false-empties)
+      - name: Re-audit parked rows (cheap rung, then the Chromium rung over what stayed dark)
         env:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           SERP_RESERVE: "50"
+          # the Chromium rung is deep_validate's validator (was Saturday's own cron until
+          # 2026-08-26, over the identical row set 24 h earlier -- BACKLOG 6); its caps
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          DEEP_LLM_CAP: "150"
+          DEEP_BD_SEARCH_CAP: "150"
+          AUDIT_DEEP_BUDGET_MIN: "120"
         run: python audit_empty_rows.py --apply
         continue-on-error: true
 
@@ -99,6 +107,7 @@ jobs:
           # until 2026-08-25 (BACKLOG 17)
           python persist_state.py commit --as "audit-bot" \
             -m "coverage audit $(date -u +%F) [skip ci]" \
-            --own companies.csv scraped_cache.json cloud_state/scan_seen.json
+            --own companies.csv scraped_cache.json cloud_state/scan_seen.json \
+                  cloud_state/audit_seen.json
 
 # (workflow re-index nudge)

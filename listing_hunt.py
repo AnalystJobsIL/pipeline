@@ -291,6 +291,13 @@ def main():
         seed, LLM extraction instead of regex, unlocker instead of a plain fetch). Without
         this, every row triaged today stays suppressed for 14 days and the modes are dead
         weight — the hunt pool was literally 0 rows before this was added."""
+        # a dated `empty-but-suspect` newer than this tool's last verdict is actionable too:
+        # validate_empty saw Israel-role text on a page the scraper called empty, and no
+        # scheduled tool cleared that verdict (BACKLOG 65) -- the hunt is the right reader
+        ms = re.search(r"empty-but-suspect (\d{4}-\d{2}-\d{2})", note or "")
+        mh = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
+        if ms and (not mh or ms.group(1) > mh.group(1)):
+            return True
         m = re.search(r"dark-triage (\d{4}-\d{2}-\d{2}): ([a-z-]+)", note or "")
         if not m:
             return False

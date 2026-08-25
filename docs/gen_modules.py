@@ -23,7 +23,7 @@ CLASS = {
  "check_invariants": ("scheduled", "structural gate on companies.csv + the store; blocks the digest commit"),
  "coverage_report": ("scheduled", "Sunday summary: of everything researched, how much is scanned"),
  "crack_walled": ("scheduled", "Chromium + network sniffing against walled ATSes (Phenom/Eightfold/iCIMS/SuccessFactors)"),
- "deep_validate": ("scheduled", "Saturday deep re-validation; owns `google_via_unlocker`, the only search rung that works today"),
+ "deep_validate": ("library", "the Chromium rung of the Sunday audit (`validate_one` / `apply_verdict`, imported by audit_empty_rows; `--only` on demand); owns `google_via_unlocker`, the only search rung that works today"),
  "discovery_daily": ("scheduled", "LinkedIn + Indeed sweeps via Bright Data -> discovered_cache.json + new employer names"),
  "discovery_telegram": ("scheduled", "public t.me/s channel previews; keyless"),
  "enrich_matched_jd": ("scheduled", "age-blind JD backfill over the matched table itself"),

@@ -266,7 +266,7 @@ def pools(rows):
             sel(lambda n, r: _validate_empty_pool()(r)),
         "audit_empty_rows (Sun 04:00)":
             sel(lambda n, r: in_pool(n) and not is_terminal_note(n) and not is_recruiter(r[0])),
-        "deep_validate (Sat 04:00)":
+        "deep_validate rung (Sun 04:00)":
             sel(lambda n, r: in_pool(n) and not is_terminal_note(n) and not is_recruiter(r[0])),
     }
 
