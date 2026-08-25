@@ -1,7 +1,18 @@
 {
  "collect": {
-  "date": "2026-08-24",
-  "finished_at": "2026-08-24T02:30:40+00:00"
+  "carried": 3,
+  "date": "2026-08-25",
+  "empty": 177,
+  "errors": 23,
+  "finished_at": "2026-08-25T01:11:57+00:00",
+  "minutes": 32,
+  "no_il": 5,
+  "parked": 0,
+  "rows": 440,
+  "scraped": 440,
+  "unprocessed": 0,
+  "with_jobs": 240,
+  "workers": 4
  },
  "enrich": {
   "date": "2026-08-24",
