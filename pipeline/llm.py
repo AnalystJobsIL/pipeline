@@ -3,6 +3,8 @@
 `call()` runs the CLI once — tool-less, schema-constrained, no session, no shell, never from
 the repo — and returns the model's answer, or raises `LLMUnavailable(kind)` for anything
 that is infrastructure rather than opinion. `pipeline/seniority.py` is the first consumer;
+`call_json()` (2026-08-25, `resolve_llm`) is the same invocation returning the structured
+object itself, for callers whose schema is not a YES/NO verdict.
 `pipeline/firmographics.py` keeps its own seam until it migrates (docs/BACKLOG.md 117).
 """
 from __future__ import annotations
@@ -73,12 +75,9 @@ def _kind(text):
     return "transient"
 
 
-def call(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
-    """Run `claude -p` once, tool-less and structured. Returns
-    {"verdict": "YES"|"NO"|None, "reason", "models", "seconds"} — `verdict=None` means the
-    MODEL failed to answer in-schema (a fact about the answer, not cached, no breaker strike).
-    Raises LLMUnavailable for infrastructure: CLI missing, non-zero exit (bad token, unknown
-    flag, rate limit), `is_error` in the envelope (a keychain-less login exits 0!), timeout.
+def _invoke(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
+    """The one invocation. Returns (envelope, structured_output-or-None, seconds); raises
+    LLMUnavailable for infrastructure. `call()` and `call_json()` are two readings of it.
 
     No shell on any OS: `shutil.which` resolves claude.EXE / claude.cmd / the npm shim, and
     the schema and rules travel as argv elements verbatim (through cmd.exe they did not).
@@ -113,11 +112,23 @@ def call(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
         msg = _ascii(proc.stderr or (data or {}).get("result") or f"exit {proc.returncode}")
         raise LLMUnavailable(msg, kind=_kind(msg))
     if data is None:
-        return {"verdict": None, "reason": "no JSON envelope", "models": [],
-                "seconds": time.time() - t0}
+        return None, None, time.time() - t0
     so = data.get("structured_output")
     if not isinstance(so, dict):          # a string payload, or the field gone: `result` holds it
         so = _envelope(so if isinstance(so, str) else "") or _envelope(str(data.get("result") or "")) or {}
+    return data, so, time.time() - t0
+
+
+def call(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
+    """Run `claude -p` once, tool-less and structured. Returns
+    {"verdict": "YES"|"NO"|None, "reason", "models", "seconds"} — `verdict=None` means the
+    MODEL failed to answer in-schema (a fact about the answer, not cached, no breaker strike).
+    Raises LLMUnavailable for infrastructure: CLI missing, non-zero exit (bad token, unknown
+    flag, rate limit), `is_error` in the envelope (a keychain-less login exits 0!), timeout."""
+    data, so, secs = _invoke(prompt, system=system, schema=schema, model=model,
+                             timeout=timeout, cwd=cwd, effort=effort)
+    if data is None:
+        return {"verdict": None, "reason": "no JSON envelope", "models": [], "seconds": secs}
     v = str(so.get("verdict") or "").strip().upper()
     usage = data.get("modelUsage") or {}
     # the CLI bills a haiku side-turn on every call; the model that ANSWERED is the one that
@@ -126,6 +137,16 @@ def call(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
     return {"verdict": v if v in ("YES", "NO") else None,
             "reason": _ascii(so.get("reason") or "no structured verdict"),
             "models": [served] if served else [],
-            "seconds": time.time() - t0}
+            "seconds": secs}
+
+
+def call_json(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
+    """`call()` for a caller whose schema is an OBJECT rather than a verdict: the structured
+    output as a dict, or None when the model produced none (infrastructure still raises
+    LLMUnavailable). `resolve_llm` was the last bare `claude -p` (default model, every tool,
+    `shell=True` on Windows, the repo as cwd, the answer regex-extracted from prose)."""
+    _data, so, _secs = _invoke(prompt, system=system, schema=schema, model=model,
+                               timeout=timeout, cwd=cwd, effort=effort)
+    return so if isinstance(so, dict) and so else None
 
 

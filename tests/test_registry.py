@@ -4116,3 +4116,63 @@ def test_the_extract_gap_repair_never_selects_a_terminal_row(tmp_path, monkeypat
     # the ownership mirror IS the tool's predicate
     rows = RH.read_rows(str(tmp_path / "companies.csv"))
     assert [r[0] for r in RH.pools(rows)["repair_extract_gap (19:00 daily)"]] == [], rows
+
+
+def test_the_resolver_asks_through_the_shared_seam_tool_less_and_structured(monkeypatch, tmp_path):
+    """Kills `llm-resolver-model-drift`. `resolve_llm._ask_claude` was the last bare
+    `claude -p` (default model, every tool on, `shell=True` on Windows, the repo as cwd,
+    the answer regex-extracted) -- the shape the classifier lane measured at ~10x the cost
+    and retired. It now goes through `pipeline/llm.py`, whose argv is pinned here."""
+    import subprocess
+    import resolve_llm as L
+    from pipeline import llm
+    seen = {}
+
+    def fake_run(cmd, **kw):
+        seen["cmd"], seen["kw"] = cmd, kw
+        return subprocess.CompletedProcess(cmd, 0, stdout=json.dumps(
+            {"structured_output": {"platform": "greenhouse", "token": "fiverr",
+                                   "api_url": _FIVERR, "careers_url": "", "reason": "x"}}), stderr="")
+    monkeypatch.setattr(llm.subprocess, "run", fake_run)
+    monkeypatch.setattr(llm.shutil, "which", lambda x: "/usr/bin/claude")
+    monkeypatch.delenv("LLM_RESOLVE_MODEL", raising=False)
+    out = L._ask_claude("Company: Fiverr\nEvidence:\n...")
+    assert out["platform"] == "greenhouse" and out["api_url"] == _FIVERR, out
+    cmd = seen["cmd"]
+    assert cmd[cmd.index("--model") + 1] == "sonnet", cmd
+    assert cmd[cmd.index("--tools") + 1] == "" and "--json-schema" in cmd and "--system-prompt" in cmd
+    schema = json.loads(cmd[cmd.index("--json-schema") + 1])
+    assert set(schema["properties"]) == {"platform", "token", "api_url", "careers_url", "reason"}
+    assert "unknown" in schema["properties"]["platform"]["enum"]
+    assert seen["kw"].get("shell") is None and seen["kw"]["input"].startswith("Company: Fiverr")
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    assert os.path.abspath(seen["kw"]["cwd"]) != os.path.abspath(root), "the repo must not be the cwd"
+    # infrastructure reads as None and is recorded, never raised into auto_expand
+    monkeypatch.setattr(llm.shutil, "which", lambda x: None)
+    assert L._ask_claude("x") is None and L.LAST["error"].startswith("missing")
+
+
+def test_llm_call_json_returns_the_structured_object_and_call_is_unchanged(monkeypatch):
+    """`call_json` is a second reading of the one invocation; `call`'s verdict contract
+    (YES/NO/None, models, seconds) must be byte-for-byte what the classifier rehearsed."""
+    import subprocess
+    from pipeline import llm
+    env = {"structured_output": {"verdict": "YES", "reason": "3+ yrs"},
+           "modelUsage": {"claude-sonnet-5": {"inputTokens": 500}, "claude-haiku-4-5": {"inputTokens": 20}}}
+    monkeypatch.setattr(llm.subprocess, "run", lambda cmd, **kw: subprocess.CompletedProcess(
+        cmd, 0, stdout=json.dumps(env), stderr=""))
+    monkeypatch.setattr(llm.shutil, "which", lambda x: "/usr/bin/claude")
+    kw = dict(system="s", schema="{}", model="sonnet", timeout=5)
+    assert llm.call_json("p", **kw) == {"verdict": "YES", "reason": "3+ yrs"}
+    v = llm.call("p", **kw)
+    assert v["verdict"] == "YES" and v["reason"] == "3+ yrs" and v["models"] == ["claude-sonnet-5"]
+    monkeypatch.setattr(llm.subprocess, "run", lambda cmd, **kw: subprocess.CompletedProcess(
+        cmd, 0, stdout="not json at all", stderr=""))
+    assert llm.call_json("p", **kw) is None
+    assert llm.call("p", **kw)["verdict"] is None
+    monkeypatch.setattr(llm.subprocess, "run", lambda cmd, **kw: subprocess.CompletedProcess(
+        cmd, 1, stdout=json.dumps({"is_error": True, "api_error_status": 401, "result": "Failed to authenticate"}), stderr=""))
+    import pytest
+    with pytest.raises(llm.LLMUnavailable) as ei:
+        llm.call_json("p", **kw)
+    assert ei.value.kind == "auth"

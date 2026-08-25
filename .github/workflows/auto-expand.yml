@@ -61,7 +61,7 @@ jobs:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           LLM_BD_SEARCH_CAP: "5"
-          AUTO_EXPAND_SEARCH_CAP: "20"
+          AUTO_EXPAND_SEARCH_CAP: "40"
         run: python auto_expand.py
 
 

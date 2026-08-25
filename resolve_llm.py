@@ -39,7 +39,7 @@ _ATS_HINT = re.compile(
     r"careers-page|jobs?\.[a-z0-9-]+\.[a-z]{2,}"
     r")[^\s\"'<>]*", re.I)
 
-_PROMPT = """You resolve which ATS (applicant tracking system) hosts a company's job board, and
+_SYSTEM = """You resolve which ATS (applicant tracking system) hosts a company's job board, and
 construct its PUBLIC JSON API endpoint from evidence scraped off its careers page(s).
 
 Known endpoint patterns (platform -> api_url):
@@ -55,20 +55,29 @@ Known endpoint patterns (platform -> api_url):
   (POST endpoint; tenant, wdN and site all appear inside myworkdayjobs.com URLs in evidence)
 - workable: https://apply.workable.com/api/v1/widget/accounts/{{slug}}?details=true
 - breezy: https://{{slug}}.breezy.hr/json
-- bamboohr: https://{{slug}}.bamboohr.com/careers/list
+- bamboohr: https://{slug}.bamboohr.com/careers/list
 
-Company: {name}
+Answer in the JSON schema you are given: platform (one of the listed platforms, or
+"unknown"), token (the slug/uid/tenant-site token for that platform, or empty), api_url (the
+exact endpoint URL, or empty), careers_url (the company's real careers page found in the
+evidence, or empty), reason (one short sentence). Use platform "unknown" when the evidence
+is insufficient — do NOT invent slugs or tenants that don't appear in the evidence."""
+
+_PROMPT = """Company: {name}
 Evidence:
 {evidence}
-{feedback}
-Respond with ONLY one JSON object, no prose:
-{{"platform": "<comeet|greenhouse|lever|smartrecruiters|recruitee|ashby|workday|workable|breezy|bamboohr|unknown>",
- "token": "<the slug/uid/tenant-site token for that platform, or empty>",
- "api_url": "<the exact endpoint URL, or empty>",
- "careers_url": "<the company's real careers page found in evidence, or empty>",
- "reason": "<one short sentence>"}}
-Use platform "unknown" when the evidence is insufficient — do NOT invent slugs or tenants
-that don't appear in the evidence."""
+{feedback}"""
+
+_PLATFORMS = ["comeet", "greenhouse", "lever", "smartrecruiters", "recruitee", "ashby",
+              "workday", "workable", "breezy", "bamboohr", "unknown"]
+_SCHEMA = json.dumps({"type": "object",
+                      "properties": {"platform": {"type": "string", "enum": _PLATFORMS},
+                                     "token": {"type": "string"},
+                                     "api_url": {"type": "string"},
+                                     "careers_url": {"type": "string"},
+                                     "reason": {"type": "string"}},
+                      "required": ["platform", "token", "api_url", "careers_url", "reason"],
+                      "additionalProperties": False})
 
 
 def _fetch_html(url, timeout=25, cap=300_000):
@@ -86,7 +95,7 @@ def _is_aggregator(url):
 
 # What the LAST call did, for the caller's budget: `auto_expand` charges its `claude -p`
 # cap only when a call was actually made (`asked`), and prints why a name was deferred.
-LAST = {"asked": False, "pages": 0, "candidates": 0}
+LAST = {"asked": False, "pages": 0, "candidates": 0, "error": ""}
 # Own counter for the paid rung. `deep_validate._BD` is per PROCESS with a 150 default
 # (docs/BACKLOG.md 10/20), so borrowing it would let one auto-expand run spend 150 credits.
 _BD_OWN = {"used": 0}
@@ -185,20 +194,20 @@ def _gather(name, url):
 
 
 def _ask_claude(prompt, timeout=120):
-    if not shutil.which("claude"):
-        return None
+    """One structured call through the shared seam (`pipeline/llm.py`): `--model sonnet`
+    (`LLM_RESOLVE_MODEL`), `--tools ""`, the schema above, a scratch cwd, no shell. Until
+    2026-08-25 this was a bare `claude -p` -- the default model with every tool enabled,
+    the repo (and CLAUDE.md) as cwd, and the object regex-extracted from prose: the shape
+    the classifier lane measured at ~10x the cost per call and retired on 2026-08-24.
+    Infrastructure failures (no CLI, bad token, timeout) read as `None` here and are
+    recorded in `LAST["error"]` for the caller's log."""
+    from pipeline import llm
     try:
-        proc = subprocess.run(["claude", "-p"], input=prompt, capture_output=True,
-                              text=True, encoding="utf-8", errors="replace",
-                              timeout=timeout, shell=(os.name == "nt"))
-    except Exception:  # noqa: BLE001
-        return None
-    m = re.search(r"\{.*\}", proc.stdout or "", re.S)
-    if not m:
-        return None
-    try:
-        return json.loads(m.group(0))
-    except Exception:  # noqa: BLE001
+        return llm.call_json(prompt, system=_SYSTEM, schema=_SCHEMA,
+                             model=os.environ.get("LLM_RESOLVE_MODEL", "sonnet"),
+                             timeout=timeout)
+    except llm.LLMUnavailable as e:
+        LAST["error"] = f"{e.kind}: {e}"
         return None
 
 
@@ -237,7 +246,7 @@ def _try_comeet_via_page(name, careers_url):
 def resolve_llm(name, url):
     """Full fallback attempt. Returns ('ats', (name, platform, token, api_url, n_all, n_il))
     or None. Never raises."""
-    LAST.update(asked=False, pages=0, candidates=0)
+    LAST.update(asked=False, pages=0, candidates=0, error="")
     try:
         evidence, n_pages = _gather(name, url)
         if n_pages == 0:

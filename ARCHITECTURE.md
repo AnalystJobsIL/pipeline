@@ -940,7 +940,7 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
    name AFTER the LLM cap was spent (76 wasted minutes a run, twice a day, with the ten names
    that did get a shot buried as `scanned; no open Israel roles now` under the posting's URL).
    Failures go to tier 2, capped two ways per run — `LLM_RESOLVE_CAP` (10) `claude -p` CALLS,
-   charged only when a page was read, and `AUTO_EXPAND_SEARCH_CAP` (20) names that may enter
+   charged only when a page was read, and `AUTO_EXPAND_SEARCH_CAP` (40) names that may enter
    the tier — and a name the tier cannot crack is **deferred**, never parked, on a
    least-recently-tried rotation (`cloud_state/auto_expand_seen.json`; the log says why:
    `dfer <name> (no-llm|cap|no-candidates|llm-none)`). The 28 rows buried before that date
@@ -949,7 +949,10 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
    `deep_validate.ddg` → `google_via_unlocker`, the paid rung capped per run by
    `LLM_BD_SEARCH_CAP`, default 5 → ATS-hint extraction) → single `claude -p` proposal
    `{platform, token, api_url}` → **verified** via the real fetcher. One retry carrying the
-   verification error. **No page read, no call**: with zero reachable pages the model is
+   verification error. The call goes through the shared seam `pipeline/llm.py::call_json`
+   (`--model sonnet` via `LLM_RESOLVE_MODEL`, `--tools ""`, a JSON schema with the platform
+   enum, scratch cwd, no shell) — until 2026-08-25 it was the last bare `claude -p` in the
+   repo. **No page read, no call**: with zero reachable pages the model is
    not asked (`LAST["asked"]` tells the caller), because 0 of 50 evidence-free shots ever
    resolved. Live control 2026-08-25: `Upwind Security` (a buried secrethunter seed) →
    comeet `49.004`, 51/15 IL, 29 s, one call, DDG only.

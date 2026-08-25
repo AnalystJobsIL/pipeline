@@ -5,8 +5,9 @@ writes results DIRECTLY into companies.csv + scraped_cache.json. Scheduled in th
 shrinking the unresolved set every run until it reaches zero — no PC, no babysitting.
 
 Env:  AUTO_EXPAND_LIMIT (default 200) companies per run; LLM_RESOLVE_CAP (default 10)
-`claude -p` calls per run; AUTO_EXPAND_SEARCH_CAP (default 20) names that may enter the
-LLM tier per run (each costs a search; a call is charged only when a page was read).
+`claude -p` calls per run; AUTO_EXPAND_SEARCH_CAP (default 40) names that may enter the
+LLM tier per run (each costs a free search and at most one capped unlock; a call is
+charged only when a page was read, so the search cap is the one that paces the queue).
 Prints the remaining-unresolved count so the workflow / log shows progress.
 
 An AGGREGATOR seed (a LinkedIn / Indeed / secrethunter posting -- 338 of the 342 queued
@@ -173,7 +174,7 @@ def main():
     from collections import Counter
     llm_available = bool(_shutil.which("claude"))
     llm_budget = int(os.environ.get("LLM_RESOLVE_CAP", "10")) if llm_available else 0
-    search_budget = int(os.environ.get("AUTO_EXPAND_SEARCH_CAP", "20"))
+    search_budget = int(os.environ.get("AUTO_EXPAND_SEARCH_CAP", "40"))
     n_resolved = n_empty = n_unreach = n_llm = n_dupe = 0
     deferred = Counter()
     for e in batch:

@@ -1227,5 +1227,15 @@
     "replace": "            and not is_recruiter(r[0]))",
     "why": "an activating pool without a terminal exclusion re-opens an alias-of row off its own extract-gap stamp (GenCell Energy, 2026-08-25).",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "llm-resolver-model-drift",
+    "file": "resolve_llm.py",
+    "symbol": "_ask_claude",
+    "class": "M7-constant-drift",
+    "find": "                             model=os.environ.get(\"LLM_RESOLVE_MODEL\", \"sonnet\"),",
+    "replace": "                             model=os.environ.get(\"LLM_RESOLVE_MODEL\", \"opus\"),",
+    "why": "the resolver's model is a budget decision (the bare call ran the default, ~10x the cost per call); a drift back is silent in every log.",
+    "must_be_killed_by_behavioural": true
   }
 ]
