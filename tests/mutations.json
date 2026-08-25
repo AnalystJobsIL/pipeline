@@ -1363,8 +1363,8 @@
     "file": "listing_hunt.py",
     "symbol": "actionable_mode",
     "class": "M1-gate-removal",
-    "find": "        if ms and (not mh or ms.group(1) > mh.group(1)):\n            return True",
-    "replace": "        if False:\n            return True",
+    "find": "    if ms and (not mh or ms.group(1) > mh.group(1)):\n        return True",
+    "replace": "    if False:\n        return True",
     "why": "a suspect verdict newer than the hunt's last one must re-arm the hunt (BACKLOG 65).",
     "must_be_killed_by_behavioural": true
   },
