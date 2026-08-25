@@ -2135,6 +2135,27 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     one screen. Split `commit()` into `stage → push loop → conflict` helpers and `outcome()`
     into `decide → write → publish`, behind the existing 20 guards, on a quiet day; no
     behaviour change.
+166. **An ops report over the last N days, and a skill that reads it** — lane: `infra`
+    (user request, 2026-08-25). Everything needed is already committed, just not compiled:
+    `git log -p --since=N.days -- digests/latest.md` is a day-by-day archive of every audit
+    block (scanned / failed / fetched / Israel-matched / accepted / new / LLM calls / Boards
+    changed / Company intel / Roles / Stage order with the scrape's and the JD layer's
+    counts); `git log -p -- cloud_state/pipeline_stages.json` is what each nightly stage did;
+    `cloud_state/source_health.json` what discovery returned; `cloud_state/last_run.json`
+    the failed steps; bot commits tagged `(row-merged)` are the conflict nights; `gh run
+    list -R AnalystJobsIL/pipeline` the durations and red runs; `gh issue list -R
+    AnalystJobsIL/inbox` when the mail went out. Bright Data spend is the one number only in
+    the run log (`discovery_daily.report_bd_spend`). Build `ops_report.py --days N` (root,
+    infra-owned, offline except `gh`; a `docs/gen_modules.py` line) that compiles these into
+    one markdown table per day and per flow step — intake → registry → fetch → enrich →
+    classify → roles → render → deliver — with, for each: discovered, spent, failed, fell
+    back (`llm_failed_fallback`, `bd-unavailable`, carried scrape rows, row-merged nights),
+    added (new active rows, newly covered companies), sent (`new:` per day, inbox issue
+    times); then a Claude Code skill `.claude/skills/ops-review/SKILL.md` that runs the
+    script FIRST and only interprets its output (an agent must never re-derive the numbers
+    by hand — §8), ending with the three things most worth a session, each pointing at a
+    BACKLOG item. Half a day; the interim prompt that does it by hand is in
+    `docs/sessions/2026-08-24-infra.md` ("Ops review by hand").
 162. **`check_invariants.POOL` still differs from `pipeline.verdicts.TOKENS`** — lanes:
     `registry` (owns the deliberate gap, pinned by `test_the_three_copies…`) + `infra`.
     Measured 2026-08-25: `url-cleared`/`url-flagged` are in-pool for the gate and
