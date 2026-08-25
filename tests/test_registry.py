@@ -75,11 +75,32 @@ def test_activation_branches_append_to_the_note_instead_of_replacing_it():
     import audit_empty_rows
     import crack_walled
     import deep_validate
-    for mod in (audit_empty_rows, crack_walled, deep_validate):
+    import bd_rescue
+    import retry_unreachable
+    import wayback_rescue
+
+    def _row_literal_with_a_literal_note(value):
+        """`[name, plat, tok, api, "true", <not a call>]` -- the WHOLE-ROW shape. The
+        2026-08-24 registry rebuild found this shape in 14 writers and gated every one;
+        three of them (bd_rescue 02:30, retry_unreachable 02:30, wayback_rescue Sun)
+        still rebuilt the notes cell from an f-string on their activation branch, and
+        retry did it on EVERY branch -- which is how a night's `unreachable` erased
+        listing-hunt's and Bright Data's verdicts (2026-08-25)."""
+        return (isinstance(value, ast.List) and len(value.elts) >= 6
+                and isinstance(value.elts[4], ast.Constant)
+                and value.elts[4].value in ("true", "false")
+                and not isinstance(value.elts[5], (ast.Call, ast.Name)))
+
+    for mod in (audit_empty_rows, crack_walled, deep_validate,
+                bd_rescue, retry_unreachable, wayback_rescue):
         offenders = []
         for node in ast.walk(ast.parse(inspect.getsource(mod))):
+            if isinstance(node, ast.Return) and _row_literal_with_a_literal_note(node.value):
+                offenders.append(ast.unparse(node)[:70])
             if not isinstance(node, ast.Assign):
                 continue
+            if _row_literal_with_a_literal_note(node.value):
+                offenders.append(ast.unparse(node)[:70])
             for tgt in node.targets:
                 # `fr[5] = <something that is not a call into pipeline.notes>`
                 if (isinstance(tgt, ast.Subscript)
@@ -3408,3 +3429,195 @@ def test_every_refusal_note_keeps_the_row_in_a_re_check_pool(monkeypatch):
         % (sorted(set(ci.POOL.split("|"))), sorted(set(LH.HUNT_POOL.pattern.split("|")))))
     # validate_empty's hand-off shape stays in the receiver's pool too
     assert LH.HUNT_POOL.search("empty-but-suspect; 3 IL but the board is not this company's")
+
+
+# ---------------------------------------------------------------------------------------
+# The 02:30 chain (bd_rescue -> retry_unreachable) and the Sunday rescues, 2026-08-25.
+# Proof of the defect: `git show b3d1d49 -- companies.csv` -- nine rows lose
+# `| listing-hunt 2026-08-24: no IL listing; monitored candidate` in one night, and the
+# Bright Data verdict paid for 90 seconds earlier in the same job is gone with it.
+# ---------------------------------------------------------------------------------------
+
+_HUNTED = "unreachable; could not scan | listing-hunt 2026-08-24: no IL listing; monitored candidate"
+
+
+def _chain_registry(tmp_path):
+    return _registry(tmp_path, [
+        ["Chakratec", "scrape", "https://www.chakratec.com/careers",
+         "https://www.chakratec.com/careers", "false", _HUNTED],
+        ["Cyberbit", "scrape", "https://www.cyberbit.com/careers",
+         "https://www.cyberbit.com/careers", "false", _HUNTED],
+        ["Fiverr", "", "", "https://www.fiverr.com/jobs", "false",
+         "unreachable; could not scan"],
+    ])
+
+
+def test_retry_unreachable_keeps_other_tools_segments_when_still_unreachable(
+        tmp_path, monkeypatch):
+    """Kills `retry-note-base-drop`. A night that finds nothing must leave the row exactly
+    as it found it plus one dated `retry` segment -- never rebuild the cell."""
+    import sys
+    import retry_unreachable as R
+    import listing_hunt as LH
+    import probe_candidates as PC
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _chain_registry(tmp_path)
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    monkeypatch.setattr(R, "attempt", lambda name, url: (
+        ("ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12)) if name == "Fiverr"
+        else ("unreachable", None)))
+    monkeypatch.setattr(sys, "argv", ["retry_unreachable.py"])
+    monkeypatch.delenv("RETRY_LIMIT", raising=False)
+    R.main()
+
+    out = _read(tmp_path)
+    row = out["Chakratec"]
+    assert "listing-hunt 2026-08-24: no IL listing; monitored candidate" in row[5], (
+        "the hunt's segment was erased by a still-unreachable night: %r" % (row[5],))
+    assert "unreachable" in row[5].lower(), "the selector token must survive: %r" % (row[5],)
+    assert "retry 20" in row[5], "no dated retry stamp: %r" % (row[5],)
+    assert row[4] == "false" and row[3] == "https://www.chakratec.com/careers"
+    assert LH.in_hunt_pool(row) and PC.in_probe_pool(row), (
+        "the row left the hunt or probe pool: %r" % (row,))
+    # positive control: a real recovery activates, drops the disproved token, keeps its own
+    ok = out["Fiverr"]
+    assert ok[4] == "true" and ok[3] == _FIVERR and "retry-resolved" in ok[5], ok
+    assert "unreachable" not in ok[5].lower(), "an activation keeps a disproved token: %r" % ok
+
+
+def test_bd_validated_row_survives_the_retry_pass(tmp_path, monkeypatch):
+    """Kills `bd-empt-keeps-unreachable`. The chain as the workflow runs it: bd_rescue
+    reaches Chakratec's page (no board -> `scanned via brightdata`), cannot reach Cyberbit
+    (`bd-tried`); retry_unreachable then runs 90 s later on the SAME csv. The reached row
+    must not be re-attempted, and its paid verdict, its listing-hunt segment and BD's
+    best_url must all be there in the morning."""
+    import sys
+    import bd_rescue as B
+    import retry_unreachable as R
+    import listing_hunt as LH
+    import probe_candidates as PC
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _chain_registry(tmp_path)
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "x")
+    monkeypatch.delenv("BD_LIMIT", raising=False)
+    monkeypatch.setattr(B, "_load_secrets", lambda *a, **k: None)
+    monkeypatch.setattr(B, "alt_urls", lambda url: [url.replace("/careers", "/jobs")])
+    monkeypatch.setattr(B, "unlock", lambda u, timeout=90: (
+        "" if "cyberbit" in u else "<html>" + "x" * 3000 + "</html>"))
+    monkeypatch.setattr(B, "extract_ats", lambda html, name: None)
+    monkeypatch.setattr(B.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    monkeypatch.setattr(sys, "argv", ["bd_rescue.py"])
+    B.main()
+
+    attempted = []
+
+    def _attempt(name, url):
+        attempted.append(name)
+        return ("unreachable", None)
+    monkeypatch.setattr(R, "attempt", _attempt)
+    monkeypatch.setattr(sys, "argv", ["retry_unreachable.py"])
+    monkeypatch.delenv("RETRY_LIMIT", raising=False)
+    R.main()
+
+    out = _read(tmp_path)
+    reached = out["Chakratec"]
+    assert "Chakratec" not in attempted, "retry re-attempted a row Bright Data had reached"
+    assert "scanned via brightdata" in reached[5], "BD's paid verdict is gone: %r" % reached
+    assert "listing-hunt 2026-08-24" in reached[5], "the hunt's segment is gone: %r" % reached
+    assert "unreachable" not in reached[5].lower(), "a disproved token survived: %r" % reached
+    assert reached[3] == "https://www.chakratec.com/jobs", "BD's best_url was reverted: %r" % reached
+    assert LH.in_hunt_pool(reached) and PC.in_probe_pool(reached), reached
+    # positive control: the row BD could NOT reach is still retry's to attempt
+    unreached = out["Cyberbit"]
+    assert attempted == ["Cyberbit"], "only the unreached row is retry's: %r" % (attempted,)
+    assert "unreachable" in unreached[5].lower() and "bd-tried" in unreached[5], unreached
+    assert "listing-hunt 2026-08-24" in unreached[5], unreached
+
+
+def test_retry_unreachable_never_reopens_a_terminal_row(tmp_path, monkeypatch):
+    """Kills `retry-terminal-drop`. An `alias-of` row points at a board that WORKS -- a
+    successful retry would publish every role twice under two names."""
+    import sys
+    import retry_unreachable as R
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Fiverr Israel", "", "", "https://www.fiverr.com/jobs", "false",
+         "unreachable; could not scan | alias-of Fiverr"],
+        ["Fiverr", "", "", "https://www.fiverr.com/jobs", "false",
+         "unreachable; could not scan"],
+    ])
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    seen = []
+
+    def _attempt(name, url):
+        seen.append(name)
+        return ("ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12))
+    monkeypatch.setattr(R, "attempt", _attempt)
+    monkeypatch.setattr(sys, "argv", ["retry_unreachable.py"])
+    monkeypatch.delenv("RETRY_LIMIT", raising=False)
+    R.main()
+    out = _read(tmp_path)
+    assert seen == ["Fiverr"], "a terminal row was attempted: %r" % (seen,)
+    assert out["Fiverr Israel"][4] == "false" and "alias-of" in out["Fiverr Israel"][5]
+    assert out["Fiverr"][4] == "true", "positive control regressed: %r" % (out["Fiverr"],)
+
+
+def test_rescue_activations_keep_the_prior_note(tmp_path, monkeypatch):
+    """Kills `bd-activate-cell-overwrite`, `wayback-activate-cell-overwrite` and
+    `validate-empty-promote-overwrite`. An activation is when a row can least afford to
+    lose its `dark-triage` mode or a terminal token (ARCHITECTURE section 2)."""
+    import sys
+    import bd_rescue as B
+    import wayback_rescue as W
+    import validate_empty as V
+    from pipeline import identity_gate as G
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    page = "<html>" + "x" * 3000 + "</html>"
+    prior = "dark-triage 2026-08-24: blocked | unreachable; could not scan | bd-tried 2026-08-01 x1"
+
+    # bd_rescue
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [["Fiverr", "", "", "https://www.fiverr.com/jobs", "false", prior]])
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "x")
+    monkeypatch.delenv("BD_LIMIT", raising=False)
+    monkeypatch.setattr(B, "_load_secrets", lambda *a, **k: None)
+    monkeypatch.setattr(B, "alt_urls", lambda url: [url])
+    monkeypatch.setattr(B, "unlock", lambda u, timeout=90: page)
+    monkeypatch.setattr(B, "extract_ats", lambda html, name: ("greenhouse", "fiverr", _FIVERR))
+    monkeypatch.setattr(B, "_verify", lambda name, plat, tok, api: (12, 5))
+    monkeypatch.setattr(B.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(sys, "argv", ["bd_rescue.py"])
+    B.main()
+    row = _read(tmp_path)["Fiverr"]
+    assert row[4] == "true" and "brightdata-rescued" in row[5], row
+    assert "dark-triage 2026-08-24: blocked" in row[5], "the triage mode was erased: %r" % row
+    assert "unreachable" not in row[5].lower() and "bd-tried" not in row[5], row
+
+    # wayback_rescue
+    _registry(tmp_path, [["Fiverr", "", "", "https://www.fiverr.com/jobs", "false", prior]])
+    monkeypatch.setattr(W, "rescue", lambda name, url: ("greenhouse", "fiverr", _FIVERR, 40, 12, page))
+    monkeypatch.setattr(W.time, "sleep", lambda *a: None)
+    monkeypatch.setattr(sys, "argv", ["wayback_rescue.py"])
+    W.main()
+    row = _read(tmp_path)["Fiverr"]
+    assert row[4] == "true" and "wayback-rescued" in row[5], row
+    assert "dark-triage 2026-08-24: blocked" in row[5], "the triage mode was erased: %r" % row
+    assert "unreachable" not in row[5].lower(), row
+
+    # validate_empty (Sun 04:00) -- its promote row is built from the page in check()
+    _registry(tmp_path, [["Fiverr", "", "", "https://www.fiverr.com/jobs", "false",
+                          "dark-triage 2026-08-24: page-empty | scanned; no open Israel roles now"]])
+    monkeypatch.setattr(V, "_get", lambda u, timeout=10: page)
+    monkeypatch.setattr(V, "_verify", lambda name, plat, tok, api: (30, 9))
+    monkeypatch.setattr(V, "extract_ats", lambda html, name: ("greenhouse", "fiverr", _FIVERR))
+    monkeypatch.setattr(sys, "argv", ["validate_empty.py"])
+    V.main()
+    row = _read(tmp_path)["Fiverr"]
+    assert row[4] == "true" and "cross-validated" in row[5], row
+    assert "dark-triage 2026-08-24: page-empty" in row[5], "the triage mode was erased: %r" % row

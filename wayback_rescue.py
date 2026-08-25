@@ -22,6 +22,7 @@ from pipeline import israel
 from resolve_deep import ATS_PATTERNS, _verify
 from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import replace_own as _note_replace
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
 _UID = re.compile(r"comeet_uid[\"'\s:=]+[\"']?([0-9A-Za-z]{2}\.[0-9A-Za-z]{3})")
@@ -137,7 +138,12 @@ def main():
             r = None
         if r:
             plat, tok, api, n_all, il = r[:5]
-            rows[rowi] = [name, plat, tok, api, "true", f"wayback-rescued; {n_all}/{il} IL"]
+            # append, never replace: the row's `dark-triage` / `alias-of` / hunt segments
+            # survive an activation (rule 3); a found board disproves `unreachable`.
+            rows[rowi] = [name, plat, tok, api, "true",
+                          _note_replace(_note_replace(rows[rowi][5], "unreachable", ""),
+                                        "wayback-rescued",
+                                        f"wayback-rescued; {n_all}/{il} IL")]
             _MODIFIED.add(name)
             fixed += 1
             print(f"  [OK] {name}: {plat} jobs={n_all} il={il}", flush=True)

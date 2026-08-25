@@ -633,8 +633,8 @@
     "file": "retry_unreachable.py",
     "symbol": "_row_for",
     "class": "M7-constant-drift",
-    "find": "                    \"retry: another company's board; no listing found\"]",
-    "replace": "                    \"retry: another company's board\"]",
+    "find": "                    _note(note, \"retry: another company's board; no listing found\")]",
+    "replace": "                    _note(note, \"retry: another company's board\")]",
     "why": "drops the hand-off token from the refusal note. The token-free version orphaned 9 named rows out of every pool at once, and 11 orphans block the digest commit via check_invariants bad().",
     "must_be_killed_by_behavioural": true
   },
@@ -1038,7 +1038,7 @@
     "why": "removes the declared-token hook on path-tenant platforms: a declared row is judged by the heuristics again, so a foreign slug the near-match happens to like is admitted despite the declaration saying otherwise.",
     "must_be_killed_by_behavioural": true
   },
-{
+  {
     "id": "roles-winner-drop-holder",
     "file": "pipeline/roles.py",
     "symbol": "_winner",
@@ -1047,8 +1047,8 @@
     "replace": "                    0,",
     "why": "the claim winner's stability rule deleted with every roles test green: in every fixture the holder also carried the url's word or the shorter identity. Without it a two-claimant posting flips company names (and re-emails) on any tie-break edit. Found by the wave-1 mutation attacker, 2026-08-25.",
     "must_be_killed_by_behavioural": true
-},
-{
+  },
+  {
     "id": "roles-mail-line-removed",
     "file": "pipeline/digest.py",
     "symbol": "build_markdown",
@@ -1057,8 +1057,8 @@
     "replace": "    if False:\n        lines.append(\"- **Roles:** \" + \"; \".join(s[\"roles\"]))",
     "why": "the whole role-record line could vanish from the daily email with the suite green: only tests/rehearse_roles.py read the markdown, and no workflow runs it. The SCHEDULING.md failure class: the mail stops saying what the run did and nothing notices.",
     "must_be_killed_by_behavioural": true
-},
-{
+  },
+  {
     "id": "roles-record-run-looked-nowhere",
     "file": "pipeline/run.py",
     "symbol": "run",
@@ -1067,5 +1067,65 @@
     "replace": "        scanned_ok=set(), failed=failed_names, paths=paths,",
     "why": "the call site telling record_run where the run looked: with an empty set nothing ever closes on a scoped run and the ledger keeps dead roles forever, with pytest green until the end-to-end fixture test existed.",
     "must_be_killed_by_behavioural": true
-}
+  },
+  {
+    "id": "retry-note-base-drop",
+    "file": "retry_unreachable.py",
+    "symbol": "_row_for",
+    "class": "M7-constant-drift",
+    "find": "            _note(note, f\"retry {_today()}: still unreachable\", disproved=False)]",
+    "replace": "            \"unreachable; could not scan\"]",
+    "why": "the 2026-08-25 defect textually: a still-unreachable night rebuilt the cell from a literal and erased listing-hunt's and bd_rescue's segments on 9 rows nightly (b3d1d49).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "retry-terminal-drop",
+    "file": "retry_unreachable.py",
+    "symbol": "main",
+    "class": "M5-population-widening",
+    "find": "           if len(r) >= 6 and \"unreachable\" in (r[5] or \"\").lower()\n           and not is_terminal(r[5] or \"\")}",
+    "replace": "           if len(r) >= 6 and \"unreachable\" in (r[5] or \"\").lower()}",
+    "why": "the selector had no terminal exclusion until 2026-08-25: an alias-of row carrying `unreachable` would be re-attempted and could re-activate the duplicate.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-empt-keeps-unreachable",
+    "file": "bd_rescue.py",
+    "symbol": "main",
+    "class": "M8-argument-mis-passing",
+    "find": "        note = _note_replace(_reached_note(rows[rowi][5]), \"scanned via brightdata\",",
+    "replace": "        note = _note_replace(rows[rowi][5], \"scanned via brightdata\",",
+    "why": "the validated branch appended after the `unreachable` token instead of removing it, so retry_unreachable re-selected the row 90 s later and rewrote the cell (2026-08-25).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "bd-activate-cell-overwrite",
+    "file": "bd_rescue.py",
+    "symbol": "main",
+    "class": "M7-constant-drift",
+    "find": "                                  _note_replace(_reached_note(rows[rowi][5]),\n                                                \"brightdata-rescued\",\n                                                f\"brightdata-rescued; {n_all}/{il} IL\")]",
+    "replace": "                                  f\"brightdata-rescued; {n_all}/{il} IL\"]",
+    "why": "the activation branch rebuilt the notes cell from an f-string (rule 3) while its own non-activating branches used replace_own.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "wayback-activate-cell-overwrite",
+    "file": "wayback_rescue.py",
+    "symbol": "main",
+    "class": "M7-constant-drift",
+    "find": "                          _note_replace(_note_replace(rows[rowi][5], \"unreachable\", \"\"),\n                                        \"wayback-rescued\",\n                                        f\"wayback-rescued; {n_all}/{il} IL\")]",
+    "replace": "                          f\"wayback-rescued; {n_all}/{il} IL\"]",
+    "why": "same shape as bd-activate-cell-overwrite on the Sunday rescue.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "validate-empty-promote-overwrite",
+    "file": "validate_empty.py",
+    "symbol": "main",
+    "class": "M7-constant-drift",
+    "find": "            payload[5] = _note_replace(rows[rowi][5] if len(rows[rowi]) > 5 else \"\",\n                                       \"cross-validated\", payload[5])\n            rows[rowi] = payload",
+    "replace": "            rows[rowi] = payload",
+    "why": "the promote write replaced the whole row, erasing every other tool's segment on a Sunday activation.",
+    "must_be_killed_by_behavioural": true
+  }
 ]

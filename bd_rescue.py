@@ -30,6 +30,15 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 _MOD = set()   # names this run rewrote (single-writer merge)
 
 
+def _reached_note(base):
+    """The unlocker REACHED the page, so `unreachable` is disproved: remove that token (it
+    is this tool's own, per `pipeline.verdicts.TOKENS`) and the `bd-tried` counter, keep
+    every other tool's segment. Leaving `unreachable` in place re-selected the row for
+    `retry_unreachable` 90 seconds later in the same job, which rewrote the cell and erased
+    the verdict this call had just paid a credit for (2026-08-25, 9 rows nightly)."""
+    return _note_replace(_note_replace(base, "unreachable", ""), "bd-tried", "")
+
+
 def _load_secrets():
     p = os.path.join(ROOT, "secrets.env")
     if os.path.exists(p):
@@ -104,7 +113,9 @@ def main():
                     n_all, il = v
                     _MOD.add(name)
                     rows[rowi] = [name, plat, tok, api, "true",
-                                  f"brightdata-rescued; {n_all}/{il} IL"]
+                                  _note_replace(_reached_note(rows[rowi][5]),
+                                                "brightdata-rescued",
+                                                f"brightdata-rescued; {n_all}/{il} IL")]
                     fixed += 1
                     resolved = True
                     print(f"  [OK] {name}: {plat} jobs={n_all} il={il}", flush=True)
@@ -134,7 +145,7 @@ def main():
         # keep the row hunt-eligible: append our verdict to the existing note instead of
         # replacing it (replacing destroyed monitored-candidate/host-documented tokens and
         # landed on a string no re-check matched — 31 rows were stranded this way)
-        note = _note_replace(rows[rowi][5], "scanned via brightdata",
+        note = _note_replace(_reached_note(rows[rowi][5]), "scanned via brightdata",
                              note + " - monitored candidate")
         rows[rowi] = [name, "scrape", best_url, best_url, "false", note]
         _MOD.add(name)

@@ -94,6 +94,11 @@ def main():
         except Exception:  # noqa: BLE001
             kind, payload = "confirmed", None
         if kind == "promote":
+            # rule 3 at the write site: `check()` builds the row from the page, and the
+            # row's OTHER segments (`dark-triage`, an `alias-of`, the hunt's stamp) live in
+            # the registry, not in the page -- merge here rather than replace.
+            payload[5] = _note_replace(rows[rowi][5] if len(rows[rowi]) > 5 else "",
+                                       "cross-validated", payload[5])
             rows[rowi] = payload
             _MODIFIED.add(name)
             promoted += 1

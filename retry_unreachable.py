@@ -26,6 +26,8 @@ from resolve_deep import ATS_PATTERNS, _verify
 from scrape_universal import ISRAEL_LOC, scrape
 from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import replace_own as _note_replace
+from pipeline.verdicts import is_terminal
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
@@ -103,13 +105,36 @@ def attempt(name, url):
     return ("empty", None) if reached else ("unreachable", None)
 
 
-def _row_for(name, url, kind, payload, cache):
+def _today():
+    import datetime as _dtm
+    return _dtm.date.today().isoformat()
+
+
+def _note(base, segment, disproved=True):
+    """This tool's verdict, APPENDED to what the row already carries (rule 3).
+
+    Until 2026-08-25 every branch rebuilt the notes cell from a literal, so a night's
+    `unreachable; could not scan` deleted listing-hunt's `no IL listing; monitored candidate`
+    and bd_rescue's paid `scanned via brightdata` verdict 90 seconds after it was written
+    (`git show b3d1d49 -- companies.csv`: 9 rows, every night, `recovered 0`). `retry` is the
+    one marker for every branch, so a row carries one current verdict from this tool; the
+    `unreachable` token is removed only when this attempt DISPROVED it (the page answered),
+    because that token is the selector of this tool and of bd_rescue.
+    """
+    if disproved:
+        base = _note_replace(base, "unreachable", "")
+    return _note_replace(base, "retry", segment)
+
+
+def _row_for(name, url, kind, payload, cache, note=""):
     """The one seam every branch of this tool passes through, so the gate lives here.
 
     Until 2026-08-24 the `ats` and `scrape` branches returned an ACTIVE row straight from
     `resolve()`'s payload with no identity evidence. This tool runs 02:30 daily and rewrites
     rows already marked `unreachable`, which is exactly the population whose stored address
-    is least trustworthy.
+    is least trustworthy. `note` is the row's CURRENT cell: every branch appends to it
+    through `_note` rather than replacing it (the default keeps the older one-argument
+    fixtures valid: with an empty base each branch yields exactly its own segment).
     """
     if kind == "ats":
         nm, plat, tok, api, n_all, il = payload
@@ -123,25 +148,33 @@ def _row_for(name, url, kind, payload, cache):
             # is listing_hunt's job, and it is the same convention listing_hunt's own
             # identity refusal uses.
             return [nm, "scrape", url, url, "false",
-                    "retry: another company's board; no listing found"]
-        return [nm, plat, tok, api, "true", f"retry-resolved; {n_all}/{il} IL"]
+                    _note(note, "retry: another company's board; no listing found")]
+        return [nm, plat, tok, api, "true", _note(note, f"retry-resolved; {n_all}/{il} IL")]
     if kind == "scrape":
         jobs2, good_url = payload if isinstance(payload, tuple) else (payload, url)
         if not _gate.activation_ok(name, good_url, len(jobs2)):
             return [name, "scrape", url, url, "false",
-                    "retry: another company's page; no listing found"]
+                    _note(note, "retry: another company's page; no listing found")]
         cache[name] = jobs2
-        return [name, "scrape", good_url, good_url, "true", f"retry-scrape; {len(jobs2)} IL"]
+        return [name, "scrape", good_url, good_url, "true",
+                _note(note, f"retry-scrape; {len(jobs2)} IL")]
     if kind == "empty":
-        return [name, "scrape", url, url, "false", "scanned; no open Israel roles now"]
-    return [name, "scrape", url, url, "false", "unreachable; could not scan"]
+        return [name, "scrape", url, url, "false",
+                _note(note, f"retry {_today()}: scanned; no open Israel roles now")]
+    # still unreachable: the token STAYS (it is this tool's and bd_rescue's selector) and
+    # nothing else on the row is touched -- the base note is exactly what came in.
+    return [name, "scrape", url, url, "false",
+            _note(note, f"retry {_today()}: still unreachable", disproved=False)]
 
 
 def main():
     limit = int(os.environ.get("RETRY_LIMIT", "0"))
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
+    # `unreachable` is the selector; a terminal row (`defunct`, `alias-of`, ...) that also
+    # carries it must never be re-attempted -- an alias row points at a board that WORKS.
     idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows)
-           if len(r) >= 6 and "unreachable" in (r[5] or "").lower()}
+           if len(r) >= 6 and "unreachable" in (r[5] or "").lower()
+           and not is_terminal(r[5] or "")}
     names = list(idx)
     if limit:
         names = names[:limit]
@@ -161,7 +194,8 @@ def main():
             kind, payload = attempt(name, url)
         except Exception:  # noqa: BLE001
             kind, payload = "unreachable", None
-        newrow = _row_for(name, url, kind, payload, cache)
+        newrow = _row_for(name, url, kind, payload, cache,
+                          note=rows[rowi][5] if len(rows[rowi]) > 5 else "")
         still += (kind == "unreachable")
         fixed += (kind != "unreachable")
         if sharded:
