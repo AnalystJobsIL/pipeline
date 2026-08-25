@@ -1677,18 +1677,21 @@ write list; each item names the lane that owns it and the command that proves it
     and `domain=tevapharm.com` with 403 (the reverse of the old `/api/apply/v2/jobs` path).
 
 77. **`crack_walled` recognises `/api/pcsx` and `/widgets` hosts and still emits `scrape`
+    **Eightfold half CLOSED 2026-08-26 (`registry`):** `listing_urls` offers the `/api/pcsx/search?domain=` endpoint first and `crack_one` verifies it through `verify()` like oraclehcm (`cracked-api`). Phenom's `/widgets` is offered too but is POST-only, so `ok_to_write`'s page read returns None and the write is refused — it lands with the path-tenant batch's human-URL mapper. `deep_validate._UNSUP` keeps both names on purpose: `unsupported ATS <x>` is the hand-off token that routes the row to `crack_walled`.
     rows for them** — lane: `registry` (`crack_walled.py:79-80,121-125`). Now that
     `fetch_eightfold` / `fetch_phenom` exist, a cracked Eightfold/Phenom tenant should
     become an API row with the endpoint above, not a nightly browser render. Same for
     `deep_validate._UNSUP`, which still lists `eightfold.ai` as unsupported.
 
 78. **`health.ATS_HOST` does not name `eightfold.ai`** — lane: `registry` + `ats-fetch`,
+    **Measured 2026-08-26 (`registry`):** the three `*.eightfold.ai` scrape rows do not convert — Ericsson `app.eightfold.ai?domain=ericsson.com` → `BoardEmpty` (0 worldwide), Deutsche Telekom `telekom-growthhub` → 404 on the pcsx path, PayPal 0 of 75 IL (76). Adding the host to `ATS_HOST` would still hand them to `resolve_broken` for nothing; stays open until they can be converted.
     deliberately left. Adding it would flag the 3 active scrape rows whose `api_url` host
     is `*.eightfold.ai` (Deutsche Telekom, Ericsson, PayPal Israel) as `misconfig-scrape-on-ats` and hand them to `resolve_broken`, whose `_HTML_ATS`
     cannot resolve an Eightfold tenant — a weekly strike for nothing. Add both halves
     together (77 first).
 
 79. **The single `jazzhr` row (Questar Auto Technologies) is scanned daily and can never
+    **Row CLOSED 2026-08-26 (`registry`):** `scrape` on `questar.applytojob.com/apply` — `scrape_universal` extracts 4 Herzliya roles from it (measured). Retiring the `jazzhr` platform (`FETCHERS`, `health._PSEUDO_OR_BY_DESIGN`, `platform_check`, `PLATFORM_HOST`) is `ats-fetch`'s.
     produce** — lane: `registry`. `fetch_jazzhr` returns `[]` by design; the row's
     `api_url` is an `/apply` page. Convert it to a `scrape` row on that page or park it,
     then retire the `jazzhr` platform (`FETCHERS`, `health._PSEUDO_OR_BY_DESIGN`,
@@ -1696,6 +1699,7 @@ write list; each item names the lane that owns it and the command that proves it
     the row is gone.
 
 80. **Greenhouse EU boards are unreadable without a renderer** — lane: `scraper` /
+    **Measured 2026-08-26 (`registry`):** rendered in Chromium (6 s settle), `job-boards.eu.greenhouse.io/outbraininc` is 10,887 chars with **0** job links and no Israel mention; the `/embed/job_board?for=` variant 6,231 chars, 0 links. No scrape row is possible today; the EU-fallback rule stays with `scraper`/resolver.
     `registry`. Outbrain's board is `job-boards.eu.greenhouse.io/outbraininc`; the US
     `boards-api.greenhouse.io` answers `{"jobs":[],"meta":{"total":0}}` (so it reads as
     empty, HANDOFF watch-list item 0), `boards-api.eu.greenhouse.io` is NXDOMAIN, and the
@@ -2255,6 +2259,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     for at least five runs while the queue grew 74 → 355. Reproduce:
     `gh run view <auto-expand run id> -R AnalystJobsIL/pipeline --log | grep -E "unresolved:|=== resolved"`.
 178. **`auto_expand` ignores the `slug` the LinkedIn bridge already writes** — lane:
+    **Built, OFF by default 2026-08-26 (`registry`):** `_site_from_slug` reads the `about_website` link off the public LinkedIn company page and, under `AUTO_EXPAND_SLUG_SEED=1`, a real site replaces the aggregator seed for tier 1. Measured from the dev machine: fiverr / riskified / upwind-security all return no link (guest page), and every GET competes with discovery's LinkedIn budget on the runner — so it stays inert until the fetch is worth it. Filed as-is; enabling is one env line.
     `registry`. `research_companies.json` entries carry `slug` (`nishapro`,
     `shavit-software`, `dialog-recruiting`) — the one non-aggregator seed intake can
     produce (`linkedin.com/company/<slug>` → the company's own site), and `auto_expand.todo`
@@ -2371,6 +2376,7 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     HealthCare `/widgets`); check C2 cannot fire for them. Tenant hosts vary, the path does
     not — key the pattern on the path (BACKLOG 76's second half).
 194. **Four parent/subsidiary pairs still scan one board under two names** — lane:
+    **CLOSED 2026-08-26 (`registry`, operator decision):** Splunk (Cisco), HP Indigo, Habana Labs (Intel), VMware (Broadcom) parked `alias-of <parent>`; roles were never separable at the board and none of the eight rows had an open role. 865 → 861 active, orphans unchanged.
     `registry`, needs a decision per pair: Cisco / Splunk (Cisco), HP / HP Indigo,
     Intel / Habana Labs (Intel), Broadcom / VMware (Broadcom) — all Workday, identical
     `api_url`, 0 open roles on either row today. Either the subsidiary row becomes `alias-of`
@@ -2383,6 +2389,7 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     `timeout-minutes: 45` as the backstop (a build where every mutant survives is ~35 min
     and fails anyway).
 196. **`resolve_llm` still asks SerpApi first** — lane: `registry`. When the quota resets on
+    **Measure first (2026-08-26):** the `dfer … no-candidates` vs `llm-none` counts in the 08:00/20:00 logs over the week of 08-26 → 09-01 are the DDG hit rate; reorder only if DDG ≥ 60 %.
     2026-09-01 the ladder spends 250 free searches in ~6 days at 20 entries/run (two runs a
     day), then falls back to DDG for the rest of the month. Fine, but the order could be
     DDG-first with SerpApi as the tie-breaker for names DDG cannot find — measure the DDG
@@ -2402,6 +2409,7 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     tenant is NOT this company's) is the durable form; today the table only declares what
     a company owns.
 199. **An address-less (`url-cleared`) row pays one unlocker search on every DDG-empty
+    **Measure first (2026-08-26):** the hunt's BD count in the mail over the same week for the 38 address-less rows; escalate to 192 only if it moves the month.
     hunt night** — lane: `registry`. `hunt_one` with an empty seed goes `ddg` →
     `google_via_unlocker` when `len(cands) < 2`; bounded by `DEEP_BD_SEARCH_CAP` in the
     hunt's process. 29 such rows today. Cost, not correctness; count it against the 4,500

@@ -4762,6 +4762,19 @@ def test_auto_expand_turns_a_linkedin_slug_into_the_companys_own_seed(tmp_path, 
         {"name": "Nope Ltd", "careers_url": _LI, "slug": "nope-ltd"},
     ])
     monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    asked = []
+    monkeypatch.setattr(E, "_site_from_slug", lambda slug, timeout=8: asked.append(slug) or ("https://www.fiverr.com/" if slug == "fiverr" else ""))
+    # OFF by default: the guest page carries no website link and the GET costs discovery's
+    # LinkedIn budget -- nothing is asked unless the operator enables it
+    monkeypatch.delenv("AUTO_EXPAND_SLUG_SEED", raising=False)
+    calls0 = _llm_stub(monkeypatch, {})
+    E.main()
+    assert asked == [] and calls0 == ["Fiverr", "Nope Ltd"], (asked, calls0)
+    E = _expand_env(tmp_path, monkeypatch, [
+        {"name": "Fiverr", "careers_url": _LI, "slug": "fiverr"},
+        {"name": "Nope Ltd", "careers_url": _LI, "slug": "nope-ltd"},
+    ])
+    monkeypatch.setenv("AUTO_EXPAND_SLUG_SEED", "1")
     monkeypatch.setattr(E, "_site_from_slug", lambda slug, timeout=8: "https://www.fiverr.com/" if slug == "fiverr" else "")
     rendered = []
 

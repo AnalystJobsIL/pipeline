@@ -220,7 +220,12 @@ def main():
     for e in batch:
         name, url = e["name"].strip(), e["careers_url"]
         agg_seed = _is_agg_url(url)
-        if agg_seed and e.get("slug") and search_budget > 0:
+        if (agg_seed and e.get("slug") and search_budget > 0
+                and os.environ.get("AUTO_EXPAND_SLUG_SEED", "0") == "1"):
+            # OFF by default (2026-08-26): a guest GET of the LinkedIn company page carried
+            # no `about_website` link for fiverr / riskified / upwind-security, and every
+            # GET competes with discovery's LinkedIn budget on the runner. Built, measured,
+            # inert until the page shape (or a logged-in fetch) makes it worth a credit.
             # the slug can turn an aggregator seed into the company's OWN site (BACKLOG 178):
             # one GET, bounded by the same search cap as the LLM tier; a real site is a
             # tier-1 seed like any other, and the LLM tier then reads a real page too
