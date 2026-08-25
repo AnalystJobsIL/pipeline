@@ -280,21 +280,35 @@ It is *backfill for known-broken rows* and lives here for historical reasons —
 (it found roles at 15 active companies whose own board reports 0), never counted towards
 discovery, and the first thing to cut if the Bright Data budget binds.
 
-### The five live sources
+### The five live sources (four running, 2026-08-25)
 
-Costs and counts are the 2026-08-23 measurements; re-derive with
+Costs and counts are the 2026-08-23 measurements, with the 2026-08-25 cloud run beside
+them where it differs; re-derive with
 `python -c "import json;print(json.load(open('cloud_state/source_health.json')))"`.
+The 2026-08-25 run (32813499709): Indeed 63 raw → 54 kept · Workable 20 → 12 new ·
+LinkedIn 1,493 cards across 27 queries, `free=159 paid=14` · Telegram 15 parsed, 13 merged ·
+**targeted skipped (cap 0, pool at 111%) — cap 4 and zero records on 08-24, cap 0 on 08-25**.
 
 | source | how it is read | key? | measured |
 |---|---|---|---|
-| `linkedin` | **the discovery source.** `linkedin.com/jobs/search`, 9 keywords × (national + 2 peripheral-city windows: Be'er Sheva, Haifa — city queries free-only), `f_TPR` past week. KEYLESS guest endpoint first, Web Unlocker only where blocked | no* | 364 employers → 182 new companies, 7 credits, 113s |
+| `linkedin` | **the discovery source.** `linkedin.com/jobs/search`, 9 keywords × (national + 2 peripheral-city windows: Be'er Sheva, Haifa — city queries free-only), `f_TPR` past week. KEYLESS guest endpoint first, Web Unlocker only where blocked | no* | 364 employers → 182 new companies, 7 credits, 113s (08-23); 312 → 158 new, 14 credits (08-25) |
 | `workable` | `jobs.workable.com/api/v1/jobs?location=Israel` — one ATS, EVERY tenant. The only source returning the employer's own website | no | 20 rows → 11 kept, 11/11 with a real careers lead |
 | `indeed` | `il.indeed.com/jobs` through the Web Unlocker; parsed from the `mosaic-provider-jobcards` blob | yes | 58 raw → 46 kept |
 | `telegram` | public `t.me/s/<channel>` previews — no bot, no account, no quota | no | 6 channels, 16–18 of 20 parsed each |
 | `linkedin-targeted` | BD dataset, one input per broken-board company, scoped by the **`company` field**. Backfill, **NOT discovery** | yes | 88 companies → 67 records, 57 on-target |
 
-\* the paid path is a fallback; `SOURCE_PATH` records which one served, and the run warns if
-everything is suddenly billed.
+\* the paid path is a fallback; `SOURCE_PATH` records which one served — `linkedin_free`,
+`linkedin_blank` (a 200 with no cards: a hole in the pool or a soft limit), `linkedin_blocked`
+(403/429/timeout: a request MADE that produced nothing) and `linkedin_paid` — all four on the
+`[linkedin] … path free= blank= blocked= paid=` line from the 2026-08-26 run on (the 08-25
+log still shows `free=159 paid=14`), and the run warns if
+everything is suddenly billed. Before that day a blocked request was counted nowhere: 7 of 9
+national keywords and 13 of 18 city queries hit a block on 2026-08-25 and the log could not
+say so. Every query that stops for any reason other than a drained pool prints
+`stopped with N jobs: <why>` — a free-only city query that found nothing counts as
+drained (an empty Be'er Sheva keyword is ordinary; a soft-limit spike shows in `blank=`); the old boolean printed "raise LINKEDIN_GUEST_PAGES" for five
+queries LinkedIn had blocked (guarded by
+`test_a_blocked_guest_walk_does_not_print_the_raise_the_cap_tripwire`).
 
 **Five things about this table cost real coverage to learn**, and the workings are in
 `docs/sessions/2026-08-24-discovery.md`:
@@ -314,7 +328,12 @@ everything is suddenly billed.
    11 of 20; Jerusalem 3 of 31 and Herzliya **0 of 20** (Tel Aviv metro is already inside the
    Tel Aviv-weighted national window — metro cities buy nothing). City queries pass a paid
    budget of ZERO, so they structurally cannot bill: the paid worst case stays the national
-   sweep's ~18 whatever LinkedIn does to the runner.
+   sweep's ~18 whatever LinkedIn does to the runner. **First cloud measurement,
+   2026-08-25:** the 18 city queries returned 119 cards → 15 new jobs (all Be'er Sheva);
+   **Haifa returned 0 cards on all 9 keywords** and 4 of the 5 non-empty Be'er Sheva walks
+   were cut short by a block — whether Haifa was refused or empty was undecidable until the
+   `blocked=` counter landed the same day. Re-measure on the 08-26 log before backing the
+   city product off; the paid cost stayed at 14 (the national sweep's), as designed.
 
 ### What it costs, and what stops it costing more
 
@@ -330,7 +349,22 @@ Per MONTH, not per day.
 | Indeed — Unlocker, 5 queries + retries | 6 |
 | LinkedIn targeted backfill — dataset, per RECORD | 67 |
 | everything else (JD enrichment, rescue, crack, repair) | ~44 |
-| **total before SERP** | **~124** → ~3,700/month, inside the free pool |
+| **discovery's own share, before SERP** | **~124** → ~3,700/month |
+
+**That ~3,700 was discovery-only arithmetic presented as the pool total, and the pool is
+NOT inside the free tier.** Measured 2026-08-25 (day 25 of 31), what `report_bd_spend()`
+printed: **5,553 / 5,000 credits (111%)**, projected **6,886** (≈ $2.39 at PAYG) —
+`dataset_records=2989, unlocker_reqs=1649, serp_reqs=915`. 2,919 of the 2,989 records are
+this layer's own LinkedIn dataset (`gd_lpfll7v5hcqtkxl6l`), **1,527 of them spent on
+2026-08-23** during that day's A/B measurements (both from the Bright Data
+`datasets/v3/snapshots` ledger, read live by the 2026-08-25 review — not reproducible
+offline); the 915 SERP requests are
+`deep_validate.google_via_unlocker` from six other scripts (BACKLOG 6) and were excluded
+from the old table by construction. Breadth (LinkedIn ≤18 + Indeed ~6 Unlocker requests)
+is deliberately never throttled and spends BEFORE `plan_spend()` runs, so on a day that
+prints `budget 0 credits/day` the run has already billed ~20; the targeted sweep is what
+`plan_spend()` cuts: cap 4 on 08-24 (a doomed trigger, 0 records), cap 0 on 08-25 (72 targetable rows in
+`cloud_state/stale.json` have no recovery path until the pool resets on 2026-09-01).
 
 Three of the five sources need no key at all, which is why `main()` does **not** return early
 when `BRIGHTDATA_API_KEY` is missing — that gate used to sit above the keyless sources *and*
@@ -341,7 +375,7 @@ Two mechanisms keep this honest, and both exist because the number was wrong bef
 
 - **`report_bd_spend()`** prints the whole pool every run and projects month-end with a
   dollar figure, warning past 80%. Counting only dataset records under-reported 4,106 as
-  2,989. `/customer/balance` is 403 for this token, so the figure is reconstructed from
+  2,989 (2026-08-23; on 08-25 it is 5,553 against the same 2,989). `/customer/balance` is 403 for this token, so the figure is reconstructed from
   `datasets/v3/snapshots` + `zone/cost`; an unreadable or unrecognised reply reads as
   **unknown**, never as zero.
 - **`plan_spend()`** pro-rates what is left over the days left in the month. Breadth is never
@@ -377,9 +411,26 @@ Live: `secretdatajobs` · `secretmarketingjobs` · `secretproductjobs` · `secre
 `secretjobs`. Rejected as unstructured (2026-08-21): `israjobs`, `hightechforolims`,
 `jobs_SQL`.
 
-Widening intake is cheap **because the resolver queue is not the bottleneck** — measured
-2026-08-23, `auto_expand`'s drainable backlog was 77 against a limit of 200 per run, twice a
-day. Check that before assuming otherwise (command in `docs/sessions/2026-08-24-discovery.md`).
+**Widening intake is no longer free — the resolver queue IS the bottleneck.** On 2026-08-23
+`auto_expand`'s drainable backlog was 77 against a batch of 250 per run (the workflow's
+limit; the module default is 200) and the sentence here said widening was cheap.
+Re-measured 2026-08-25: **342 drainable names** (`research_companies.json` holds 1,544
+entries, 514 seeded with an aggregator URL), and the last five `auto-expand.yml` runs each
+printed `resolved 0 (LLM-cracked 0), empty 10, unreachable 0` — the last three with
+`deferred 240`. The binding dial is `LLM_RESOLVE_CAP=10`, not the batch size: 338 of the
+342 seeds are aggregator postings (222 `linkedin.com/jobs/view/…`, 91 the
+`secrethunter.io/jobz/<id>` JS shell, 25 `il.indeed.com`), `resolve_llm` starts with zero
+candidate pages for an aggregator seed and asks
+SerpApi (exhausted until 2026-09-01) for more, so the 10 names that get their one LLM shot
+per run come back `None` and are written as `scanned; no open Israel roles now` rows with
+the shell URL as their board — 44 such rows now (ctera, Houzz, yad2, Upwind Security, RISCO
+Group …). Of the 70 aggregator-seeded rows 7 are active: six turned on by dark-triage
+(`activated 2026-08-23: validated page`) and exactly one by `listing_hunt` — `Tel Aviv`,
+the wrong one. So the
+`[yield] linkedin: 312 employers -> 158 NEW companies` line is a true count of names and a
+false promise of coverage until the queue drains. Fix is `registry`'s (BACKLOG 177/178);
+re-derive with the `gh run view … --log | grep -E "unresolved:|=== resolved"` command in
+`docs/sessions/2026-08-24-discovery.md` (2026-08-25 section).
 ### What intake refuses, and where each gate lives
 
 A name that gets past here becomes a `companies.csv` row two `auto_expand` runs later, so
@@ -389,13 +440,21 @@ this is the cheapest place in the system to say no. Both bridges apply the same 
 |---|---|---|
 | already known | `pipeline/companies.py` (`load_companies`) | any name already in the registry, active or parked |
 | `looks_like_junk` | `pipeline/firmographics.py` | a leaked job title / category / team phrase ("Data researcher - Navina", "AppSec") |
-| `is_recruiter` | `pipeline/recruiters.py` | staffing and placement firms, which re-post dozens of clients' roles |
+| `is_recruiter` | `pipeline/recruiters.py` | staffing and placement firms, which re-post dozens of clients' roles. Since 2026-08-25 it also judges the LinkedIn `company_slug` — "Dialog" is `dialog-recruiting` — and its own firmographics record is evidence: Nisha Pro shipped in the 08-25 mail as "newly covered" with a blurb saying "staffing" |
+| `is_place_name` | `discovery_telegram.py` — **the Telegram path only**, cache AND queue | a name that is exactly a city / region / country (`pipeline/israel`'s place lists plus the spellings the channels write, spaces squashed: "Petahtikva"). Only a Telegram post can put a city in the employer slot, and the same check on the structured sources would veto real employers that share a place name (Nesher, Eilat, Airport City). A company named "Tel Aviv" defeats every downstream identity check because its host is named after the same city (`registry_health --explain "Tel Aviv"` → `tenant_is_this_company = True`); 1 of 1,633 distinct name strings across registry ∪ queue ∪ cache on 2026-08-25, and it IS an active row until `registry` parks it (BACKLOG 167) |
 
 Job-level exclusion happens later and separately, in `fetchers.fetch_discovery`: the 21-day
 TTL, `is_recruiter` again (a discovery job carries the real employer name, so it bypasses
 the row-level check in `pipeline/run.py`), and `company_identity.url_names_other_company`
 for a card whose URL slug names a different employer — 147 board rows were once published
-under the wrong company that way.
+under the wrong company that way. **Since 2026-08-25 the cache WRITE is the layer's own
+chokepoint:** `discovery_daily` judges every card it writes and every card it carries by
+name + LinkedIn slug (8 "Dialog" / `dialog-recruiting` cards had sat in the committed cache
+while `fetch_discovery` judged the display name only — BACKLOG 184), strips the private
+`_junior` flag from carried records, and both bridges prune from `research_companies.json`
+whatever the gates now refuse, on every run whether or not they found anything new
+(`auto_expand` re-checks the name only; "Dialog" was at position 129 of its next batch).
+Every rejection prints the name, so a wrong one can be appealed from the step log.
 
 **A Latin entry in `_CONFIRMED` does not cover the Hebrew spelling.** One live Indeed query
 on 2026-08-23 returned `קומבלק איי.טי. בע"מ` (Comblack IT — `comblack` had been on the list
@@ -413,14 +472,16 @@ every one on the free keyword path — `reject / keyword / junior-intern-entry-l
 call — while the post still contributes its employer to the names funnel. A second filter
 here would cost coverage and buy nothing.
 
-### Three rules this layer costs data to re-learn
+### Four rules this layer costs data to re-learn
 
 1. **Merge `discovered_cache.json`, never truncate it.** `discovery_daily.py` runs first and
    `discovery_telegram.py` second, into the same file. A truncating write on 2026-08-21
    deleted every Telegram-sourced job — **79 verified roles, unrecoverable**, because the
    Telegram watermark in `cloud_state/telegram_seen.json` had already advanced past them.
-   Both writers merge by `(company, title)` with this run's copy winning, and prune past the
-   21-day TTL.
+   Both writers merge by `(company, title)`. `discovery_daily` lets this run's copy win and
+   prunes past the 21-day TTL; `discovery_telegram` only appends keys the cache does not
+   hold and prunes nothing (the read side's TTL covers it) — stated here because the
+   sentence used to claim both did both (found wrong 2026-08-25).
 2. **Record source liveness BEFORE any early return.** `pipeline/sources.py` exists to
    answer one question — did this source return anything today — and its whole value is that
    a **zero gets recorded as a zero**. `discovery_telegram.main()` used to `return` on an
@@ -441,17 +502,40 @@ here would cost coverage and buy nothing.
    `misconfig-scrape-on-ats` (22 of the 110): that reason is a warning about the ROW's shape,
    not a broken board, and the digest reads those companies fine every morning. Guarded by
    `test_targeted_discovery_window_rotates_over_every_stale_company`.
+4. **A Telegram post with no company line is skipped, never shifted.** The secrethunter
+   format is positional and one post in ~160 (2 of 320 live posts, 2026-08-25) omits the
+   company: title / city / date / skills / seniority / url. Positional parsing then emits the
+   CITY as the employer and the DATE as the city — `{"company": "Tel Aviv", "location":
+   "20/8/26, Israel"}` was queued on 2026-08-20, resolved by `listing_hunt` onto
+   `jobs.secrettelaviv.com` (secrethunter's city board, not on the aggregator list until
+   2026-08-25), activated, and put **7 of the 81 roles on the 2026-08-25 board and 2 in that
+   day's mail** under a company that does not exist, with a blurb about Alma. `parse_post`
+   now returns `None` when the date sits in the city slot; the secrethunter link is a JS
+   shell, so there is no employer to recover. Guarded by
+   `test_a_telegram_post_with_no_company_line_is_skipped_not_shifted_into_a_city_named_employer`.
 
 ### Known limitations of this layer
 
 - **The seed URL a bridge can offer is always an aggregator**, because a discovered job's
-  `url` IS its posting on LinkedIn / Indeed / secrethunter — 206 of 1,233 queue entries and
-  45 registry rows carry one. `secrethunter.io/jobz/<id>` cannot be followed to the real
+  `url` IS its posting on LinkedIn / Indeed / secrethunter — **514 of 1,544** queue entries
+  and **70** registry rows carry one (2026-08-25; was 206 of 1,233 and 45 on 08-23). The
+  LinkedIn bridge already writes a `slug` (`nishapro`, `shavit-software`) that `auto_expand`
+  ignores — the one non-aggregator seed this layer can produce. `secrethunter.io/jobz/<id>` cannot be followed to the real
   posting: it is a 33,495-byte JS shell, byte-identical for every job id. The fix belongs to
   `registry` (`auto_expand.py`) and is item 2 in `docs/BACKLOG.md`.
 - **A single Telegram channel dying is not visible in the mail** — one aggregate `telegram`
   key, because `sources.stale()` has one 2-day threshold for every key. Per-channel counts
   are in the step log. `docs/BACKLOG.md` item 3.
+- **A deliberately skipped sweep reads as a dead one.** `linkedin-targeted` records a zero
+  on every budget-starved run (correct — an unwritten key froze `last_run`), but
+  `sources.stale()` cannot tell "skipped: no budget" from "died": from 2026-08-26 the mail's
+  *Sources not producing* line will say `linkedin-targeted: nothing for 3d` and count up
+  daily until the pool resets on 2026-09-01. Needs a per-key reason in `pipeline/sources.py`
+  (shared plumbing) — BACKLOG 179.
+- **This layer has no line of its own in the mail.** `pipeline/stages.ORDER` has no
+  `discover` stamp, so the mail shows source deaths (`dead_sources`) and nothing else about
+  intake — the yield, the blocked count and the queue depth live in the step log only.
+  BACKLOG 180 (`infra`).
 - The **breadth** sweep is now the only unscoped LinkedIn query, and unscoped means
   LinkedIn decides what "relevant" is. Before the `company` fix the targeted sweep was
   effectively a second breadth sweep, and it did find 17 employers we had never seen

@@ -373,8 +373,9 @@ outside the `discovery` lane and are NOT fixed.
     it on a quiet day, with the test suite as the harness, and not while another lane holds
     `companies.csv`.
 
-15. **The comment density in `discovery_daily.py` needs a reader who was not in the
-    incidents.** *(lane: `discovery`, or `docs`.)* It carries **0.77 lines of prose per line
+15. ~~**The comment density in `discovery_daily.py` needs a reader who was not in the
+    incidents.**~~ — **closed 2026-08-25**: done in `30aece9` (498 → 348 prose lines).
+    *(lane: `discovery`, or `docs`.)* It carries **0.77 lines of prose per line
     of code** (370 comment + 120 docstring against 635 code). Each paragraph documents a real
     defect and this repo's house style is to keep the incident next to the code — but
     collectively they now bury what they protect. The author of a comment is the worst judge
@@ -1468,9 +1469,13 @@ green; each tool now owns an `in_*_pool` predicate that `main()` selects with,
     `discovery`, filed from wave-6 R1: `f6d7605` makes the sweep 27 queries and `efdf76a`
     raises `LINKEDIN_GUEST_PAGES` 30->50, so the ceiling is ~1,350 sequential requests
     inside `daily-digest.yml`'s 150-minute budget, behind continue-on-error. Also filed:
-    `discovery_daily.py` does not clear `ended_on_cap` on the paid-budget break, so every
+    ~~`discovery_daily.py` does not clear `ended_on_cap` on the paid-budget break, so every
     city query on a blocked runner prints the raise-the-cap tripwire — the exact evidence
-    the 30->50 bump cited. Unproven without network; both are the discovery lane's.
+    the 30->50 bump cited.~~ **Proven and fixed 2026-08-25** (`6edc8ec`): the 05:36 run
+    printed it for five blocked queries; one exit-reason string now, guarded by
+    `test_a_blocked_guest_walk_does_not_print_the_raise_the_cap_tripwire`. The first half
+    (the ~1,350-request worst case inside the digest job) is still open; measured 2026-08-25
+    the 27 queries took 4m15s with LinkedIn blocking mid-walk.
 
 ## Wave 7 (the confirmation review) — GO, and the program's close, 2026-08-24
 
@@ -2156,12 +2161,25 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     by hand — §8), ending with the three things most worth a session, each pointing at a
     BACKLOG item. Half a day; the interim prompt that does it by hand is in
     `docs/sessions/2026-08-24-infra.md` ("Ops review by hand").
-167. **A company named "Tel Aviv" in the mail** — lane: `discovery`. The 2026-08-25 digest's
-    *Newly covered companies* lists `### Tel Aviv` with Alma's blurb and two roles at
-    `jobs.secrettelaviv.com/job/...` — a discovery card whose employer became the site's city
-    word. Reproduce: `git show 58212df:digests/latest.md | grep -n -A5 "^### Tel Aviv"`;
-    then `python -c "import json;print([j for j in json.load(open('discovered_cache.json')) if j['company']=='Tel Aviv'][:3])"`.
-    Adjacent to 151 (aggregator-URL residue). Found by the first ops review of today's mail.
+167. **A company named "Tel Aviv" in the mail** — source FIXED 2026-08-25 (`0870d87`,
+    `e82f467`); residue re-filed for `registry` + `roles`. As first filed this pointed at
+    the wrong file: the two mailed roles did NOT come from the discovery cache but from an
+    ACTIVE registry row — `companies.csv:1212` `Tel Aviv,scrape,,https://jobs.secrettelaviv.com/,true,… listing-hunt 2026-08-24: verified 145 IL via jobs.secrettelaviv.com`.
+    Chain: a Telegram post with no company line (`t.me/secretfinancejobs/5348`) → `parse_post`
+    emitted the CITY as the employer → queued → `listing_hunt` resolved it onto secrethunter's
+    city board, which was not on `aggregators.HOSTS`, and activated it (`registry_health
+    --explain "Tel Aviv"` → `tenant_is_this_company = True`: a company named after its
+    host's city defeats every identity primitive) → 145 cards in `scraped_cache.json`, 7
+    open roles in `cloud_state/roles.jsonl` (8.6% of the 81-role board), 2 in the mail, a
+    blurb about Alma. Fixed at intake: the parser skips the dated shape, the Telegram path refuses a
+    place name at both the cache and the queue, the host is an aggregator (so `run.py`
+    skips the row from the next run).
+    **Still to do — `registry`:** park or delete row 1212 (parking alone re-arms it: its
+    note matches the re-check pools and the hunt will "verify" it again — the host now being
+    an aggregator is what stops that); drop the `Tel Aviv` key from `scraped_cache.json`;
+    remove the queue entry. **`roles`:** the 7 ledger records are never looked at again once
+    the row is skipped, so they never close — close them explicitly.
+    Reproduce: `grep -n "^Tel Aviv," companies.csv`; `grep -c secrettelaviv docs/index.html`.
 168. **A location that swallowed the title's tail** — lane: `scraper` (+ `render` for the
     card). Gett: `**Experienced Product Analyst** … 📍 ced Product Analyst Tel Aviv` in the
     same digest — the DOM extraction split the card text at a fixed offset. Reproduce:
@@ -2184,6 +2202,83 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     plus the `tests/test_units.py` guards each catalogue entry names as its killer, `-k`),
     and keep one full-suite pass per push in the `guard` job. Until then every push is red
     on this job and `python tools/mutate.py --all` is a local-only check.
+177. **`auto_expand` buries real employers as `scanned; no open Israel roles now` when the
+    seed is an aggregator URL, and burns 20 evidence-free `claude -p` calls a day doing it**
+    — lane: `registry`. Five consecutive `auto-expand.yml` runs (08-23 → 08-25) printed
+    `resolved 0 (LLM-cracked 0), empty 10, unreachable 0, deferred 240`. 337 of the 341
+    drainable queue names are seeded with `linkedin.com/jobs/view/…` or the
+    `secrethunter.io/jobz/<id>` JS shell; `resolve_llm._gather` starts with zero candidate
+    pages for an aggregator seed (`resolve_llm.py:125-131`) and asks SerpApi (429 until
+    2026-09-01), so every LLM shot returns `None` and `auto_expand.py:170-172` writes an
+    `empty` row with the shell as its board — 44 rows now: ctera, Houzz, yad2, Upwind
+    Security, RISCO Group, Tonic Security, Agilite … Only 7 of 70 aggregator-seeded rows
+    were ever rescued by `listing_hunt`. Cheap guard: never write an `empty`/`unreachable`
+    verdict when `_is_agg_url(url)` — defer instead, and skip the LLM tier while SerpApi is
+    down. The names funnel — the stated point of intake — has added zero active companies
+    for at least five runs while the queue grew 74 → 355. Reproduce:
+    `gh run view <auto-expand run id> -R AnalystJobsIL/pipeline --log | grep -E "unresolved:|=== resolved"`.
+178. **`auto_expand` ignores the `slug` the LinkedIn bridge already writes** — lane:
+    `registry`. `research_companies.json` entries carry `slug` (`nishapro`,
+    `shavit-software`, `dialog-recruiting`) — the one non-aggregator seed intake can
+    produce (`linkedin.com/company/<slug>` → the company's own site), and `auto_expand.todo`
+    never reads it. Adjacent to 2 and 177.
+179. **A deliberately skipped source reads as a dead one** — lane: whoever holds
+    `pipeline/sources.py` (shared plumbing). `linkedin-targeted` records a zero on every
+    budget-starved run (correct), but `stale()` cannot tell "skipped: no budget" from
+    "died": from 2026-08-26 the mail's *Sources not producing* line says
+    `linkedin-targeted: nothing for 3d` and counts up daily until the pool resets on
+    2026-09-01. Proposed: `record()` accepts a per-key reason (`{"linkedin-targeted":
+    {"count": 0, "skipped": "budget"}}`) and `stale()` prints it instead. Same family as 3.
+180. **Intake has no line of its own in the mail** — lane: `infra` (+ `render` for the
+    line). `pipeline/stages.ORDER` has no `discover` stamp, so the mail shows source deaths
+    and nothing else: the per-source yield, `blocked=`, the queue depth (170) and the BD
+    pool percentage live in the step log only. Proposed: a `discover` stage stamped by
+    `discovery_daily.main()` with `new_companies`, `queued`, `queue_depth`, `bd_pct`,
+    `blocked`, and one `- **Intake:**` line rendered from it.
+181. **`discovery-indeed` descriptions can never be fetched inline** — lane: `jd-text`.
+    `jd-fill … discovery-indeed http-401 17` on 2026-08-25: `il.indeed.com/viewjob?jk=…`
+    answers 401/403 to any non-browser client (verified on two cache URLs). Meanwhile
+    `indeed_normalize` already stores the card snippet — 82 of 82 cached Indeed jobs have a
+    `description`, mean 164 chars. Mark the platform `unfillable` inline (the counter
+    exists) or route it through the Unlocker under a cap; today it spends a request per job
+    to replace text we hold with nothing.
+182. **Two mutation cells for the 2026-08-25 discovery guards** — lane: `infra`
+    (`tests/mutations.json`). `M7-constant-drift`: drop `"secrettelaviv."` from
+    `aggregators.HOSTS`. `M2-gate-inversion`: change `linkedin_search`'s final `if why:` to
+    `if why and out:` (restores the Haifa blind spot). Each is a 109th/110th full-suite pass
+    per push, so the gate's owner decides.
+184. **`fetch_discovery` judges the display name only; the slug it has in hand says
+    "recruiting"** — lane: `ats-fetch`. `pipeline/fetchers.py:856` is
+    `elif _is_rec(j.get("company")):` while the same dict carries `company_slug`
+    (`dialog-recruiting`). `is_recruiter(name, slug="")` takes it since `70dba5f`; the
+    cache write now drops such cards, so this is belt-and-braces for cards written by an
+    older run. One-line fix: `_is_rec(j.get("company"), j.get("company_slug", ""))`.
+    Same for `registry_health.py:614` (`--explain` prints the name-only verdict, so it says
+    `is_recruiter = False` for a name the intake gate refuses) and `auto_expand.py:122`
+    (item 178).
+185. **A lettered decoration header still shifts a Telegram post by one line** — lane:
+    `discovery`. `parse_post` strips leading lines with NO letters ("🔥🔥🔥"); a header like
+    "🔥 HOT JOB 🔥", "New!" or "#דרושים" survives the strip, the job title becomes the
+    employer and the company becomes the city. Not observed in any of the six channels
+    (the 2026-08-25 rehearsal constructed it); the comment above the loop already says it
+    fires the first time a channel decorates. A date-anchored parse (title = the line
+    three above the date) would cover the dated shape.
+186. **A Telegram post with company present and CITY missing is skipped** — lane:
+    `discovery`, documented limitation. `parse_post` cannot tell title/city/date from
+    title/company/date, and the module's contract is "skipped and counted, never guessed";
+    0 of 229 cached cards had the shape, 2 of 320 live posts had the other one.
+187. **`aggregators._AGG_RX` fires on any `//` inside a path** — lane: `discovery`.
+    `https://acme.com/x//secrettelaviv.com` is an aggregator and
+    `careers.acme.com/?ref=jobs.secrettelaviv.com` is not; pre-existing, theoretical, noted
+    by the 2026-08-25 review. The `(?://|^)` alternative should anchor on the scheme.
+183. **`bd_spend_this_month`'s zone pinning is dead code, and the API's real `cost` is
+    discarded** — lane: `discovery`. `zone/cost` keys its reply by CUSTOMER id
+    (`{"hl_b9b328bb": {"custom": {"cost": 3.846, "reqs_unblocker": 1649, "reqs_serp": 915}}}`),
+    so `zone in d` (`discovery_daily.py` ~line 631) is never true and the "arbitrary one"
+    fallback its own comment forbids is the path always taken — correct today only because
+    there is exactly one key. The reply also carries the accrued dollar `cost` (3.846) while
+    `report_bd_spend` prints a projected $2.39 from list prices. Verified live 2026-08-25;
+    left as-is because a second zone is needed to test the fix.
 162. **`check_invariants.POOL` still differs from `pipeline.verdicts.TOKENS`** — lanes:
     `registry` (owns the deliberate gap, pinned by `test_the_three_copies…`) + `infra`.
     Measured 2026-08-25: `url-cleared`/`url-flagged` are in-pool for the gate and

@@ -1007,3 +1007,142 @@ free-only)`, per-city `[linkedin:<kw> @ Be'er Sheva, Israel]` lines, no cap-trip
 (or tripping at 50 — that is data, raise again), and either a healthy targeted cap or the
 explicit `dataset trigger skipped` line. A `linkedin_blank` spike would mean the +18 free
 queries drew soft-limiting: back the city product off before touching anything else.
+
+
+## Session 2026-08-25 — the run audit, and what the mail published under a city's name
+
+Lane `discovery`, third session. Brief: clear the pending backlog, audit the 05:36 UTC run
+(32813499709), prove every claim in §1a. Spend: **0 Bright Data credits, 0 LLM calls, no
+workflow dispatched, no `companies.csv` write.** Two Opus planning agents (design +
+refutation), three Opus attackers on the diff, one Opus verifier over the rewritten §1a.
+
+### What today's run did, by output
+
+| step | number | verdict |
+|---|---|---|
+| Indeed | 63 raw → 54 kept, 5 queries + 1 retry | fine |
+| Workable | 20 → 12 new, 0 credits | fine |
+| LinkedIn national | 1,374 cards / 9 kw, `free=159 paid=14` (7 of 9 keywords hit a block and bought both paid pages) | worked; the block was invisible |
+| LinkedIn city — first cloud run | Be'er Sheva 119 cards → 15 new; **Haifa 0 cards × 9**; 13 of 18 city queries `0 cards`; **5 false "raise LINKEDIN_GUEST_PAGES" lines** (4 Be'er Sheva + national `אנליסט`) | bug |
+| Telegram | 15 parsed, 13 merged, 2 queued | fine |
+| targeted | cap 0 (pool 111%), skipped; zero records since 08-24 | by design; false stale alarm from 08-26 |
+| names funnel | `[yield]` 179 NEW; 51 queued (128 already waiting); summary line said 634 cached / 179 | line was wrong |
+| resolver (downstream) | 341 drainable; 5 auto_expand runs `resolved 0, empty 10, deferred 240` | §1a claim false |
+| Bright Data | 5,553 / 5,000 (111%), projected 6,886; 2,919 = this lane's own dataset | §1a table false |
+| mail / board | `### Tel Aviv` (an aggregator row: 7 of 81 board roles, 145 cards, Alma's blurb); `### Nisha Pro` (a staffing firm) | bugs |
+
+Not 100% smooth. Two things a reader was told to apply to were not employers.
+
+### What was wrong → what changed (six commits, each revertable alone)
+
+7. (after waves B/C) **corrections** — the three guest-walk should-fixes above, the
+   unconditional queue prune, and the twelve §1a numbers.
+1. `70dba5f` **recruiters** — Nisha Pro / Shavit Software / שביט סופטוור on the lists, with
+   `cloud_state/firmographics.json` as the dated source; `is_recruiter(name, slug="")` reads
+   the LinkedIn slug ("Dialog" = `dialog-recruiting`, 8 cards). Measured over 1,633 names:
+   exactly 4 newly rejected, 0 registry rows affected.
+2. `e82f467` **aggregators** — `secrettelaviv.` (a literal; Secret Double Octopus is why not
+   a pattern). `check_invariants` warning bucket **0 → 1** (the commit message says
+   55 → 56; that number was wrong — 55 was the count of `secrethunter.` rows the design
+   agent guessed at, nothing in the repo is 55).
+3. `0870d87` **telegram** — a post with no company line (`t.me/secretfinancejobs/5348`:
+   title / city / date / …) returns `None`; a place name is refused at the bridge.
+4. `6edc8ec` **guest walk** — one `why` string instead of `ended_on_cap`; `linkedin_blocked`
+   counted; `[linkedin] … free= blank= blocked= paid=`. Replay harness; 6 of 7 new
+   assertions fail on the old walk.
+5. `932e8d6` **main()** — summary line from `len(cacheable)`/`n_queued`; `_junior` stripped;
+   the BD warning names its own cost centre instead of "the other spenders".
+6. `9bcb617` **chokepoints** — after wave B: the cache write judges every written AND carried
+   card by name + slug (163 agency cards leave the committed cache tomorrow), strips
+   `_junior` from carried records, both bridges prune the queue (12 agency entries +
+   `Tel Aviv` leave `research_companies.json` at 05:40, before the 08:47 `auto_expand`);
+   the place gate moves to the Telegram path only, guards cache + queue, squashes spaces
+   ("Petahtikva"), and stops vetoing Nesher / Eilat / Airport City on structured sources.
+
+### The adversarial waves
+
+- **Wave A (plan):** design + refutation — 7/7 claims confirmed; corrections: 4 + 1 (not 5)
+  city tripwires, the `if not cards: break` line was unreachable, the exact t.me post
+  layout, 514/1,544 queue seeds, `LLM_RESOLVE_CAP=10` is the binding dial.
+- **Wave B (diff):** intake-gate fuzz over 3,985 name occurrences → 0 false positives, but
+  three BLOCKERS the first fixes had left open (recruiter-by-slug and place-named cards
+  still on the publishing path; Dialog at queue position 129) — all closed in commit 6.
+  End-to-end rehearsal of both steps in a scratch copy: no exception, every summary
+  number reconciles with the files written, corrupt-cache and no-key paths still reach
+  `sources.record`; found the lettered decoration header (BACKLOG 185) and `_junior` on
+  carried records (fixed). Guest-walk differential attack: 19 hand-picked + 2,000 random
+  page scripts × 4 budgets × key/no-key × 5 caps × 3 tolerances through the old and the new
+  walk — **0 differences** in jobs, paid calls, URLs or counters; mutation check 9 red / 4
+  green on the old file (the 4 are the silence pins). Three should-fixes taken in commit 7:
+  "no paid page left (paid 0/2)" when the real cause was a missing key; a free-only city
+  keyword with genuinely nothing printed an alarm-shaped line (now silent — `blank=` shows
+  a spike); the 80% BD warning asserted "cut the targeted sweep to zero" when the cap at 80%
+  is still 20–100 (it now prints the cap `plan_spend()` chose).
+- **Wave C (docs):** every §1a number re-derived by command — 12 mismatches, all corrected
+  in the same commit: 341 → 342 drainable; "337 of 341 are LinkedIn/secrethunter" → 338 of
+  342 aggregator seeds (222 LinkedIn, 91 secrethunter, 25 Indeed); "five runs each
+  deferred 240" → all five `resolved 0 / empty 10`, the last three `deferred 240`; "cap 0
+  since 08-24" → cap 4 on 08-24, cap 0 on 08-25; "7 rescued by listing_hunt" → 7 active,
+  one via listing_hunt (Tel Aviv), six via dark-triage; `AUTO_EXPAND_LIMIT=200` → 250 on
+  the runner; `blocked=` "since 08-25" → from the 08-26 log; 4,106 dated; "had become"
+  → IS an active row; and one code claim that was false — the Telegram writer neither
+  TTL-prunes nor lets the fresh copy win (doc corrected, behaviour unchanged). Plus the
+  queue prune was conditional on finding something new — now unconditional in both
+  bridges (`test_the_queue_is_pruned_even_on_a_morning_with_nothing_new`).
+
+### Claims I could NOT verify
+
+- "2 of 320 live posts omit the company line" — the adversarial agent measured it live on
+  2026-08-25 across 3 pages × 6 channels; not reproducible offline.
+- "16–18 of 20 parse" per Telegram channel — from 2026-08-23; today's front pages had
+  1–4 new posts each, so the probe cannot be re-run against the same denominator.
+- The 2026-08-23 LinkedIn row ("364 employers → 182 new, 7 credits, 113s") — that run's
+  log is beyond `gh run view` today; kept as dated history beside today's numbers.
+- Whether Haifa returned 0 because LinkedIn refused the runner or because the window was
+  empty — undecidable from today's log; the `blocked=` counter decides it from 08-26.
+
+### Claims I deleted or inverted
+
+- "~124/day → ~3,700/month, **inside the free pool**" → discovery's own share; the pool is at
+  111%, SERP was excluded by construction, 53% is this lane's dataset.
+- "Widening intake is cheap because the resolver queue is not the bottleneck (77 vs 200)" →
+  inverted: 341 vs 250, +43/day, 0 resolved in 5 runs, `LLM_RESOLVE_CAP=10` binds.
+- "Three rules" → four (the missing-company shift).
+- The `::warning::` text "if this keeps firing the other spenders are the problem".
+- BACKLOG 167 as filed pointed at `discovered_cache.json`; the mailed roles came from
+  `companies.csv:1212` + `scraped_cache.json`. Rewritten with the chain and the residue.
+
+### What I did NOT finish
+
+- **Registry residue (BACKLOG 167):** row `Tel Aviv` is still `active=true` (run.py skips
+  it from tomorrow); its 145 cards in `scraped_cache.json`; 7 open records in
+  `cloud_state/roles.jsonl` that never close because the run never looks again. Parking
+  alone re-arms it — the host being an aggregator now is what stops the hunt.
+- **The names funnel is dead until `registry` acts (BACKLOG 177/178):** 0 resolved in 5
+  runs, 10 real employers/run buried as `scanned; no open Israel roles now` on the
+  secrethunter JS shell, 20 evidence-free `claude -p`/day.
+- **False alarm from tomorrow (BACKLOG 179):** `linkedin-targeted: nothing for 3d` in the
+  mail, counting up daily to 09-01, for a sweep that is skipped on purpose.
+- BACKLOG 8 (`f_C` harvest — needs BD + network), 14 (module split — registry and infra
+  lanes were active today), 70/71 (rejected-names ledger, Geektime feed — operator chose
+  not this session), 4 (SerpApi — 09-01), 181–187 (filed today). `fetchers.fetch_discovery`
+  and `auto_expand.py:122` still judge the name only (184/178) — the chokepoints make that
+  belt-and-braces rather than the only gate.
+- One pre-existing red in the suite, not this lane's:
+  `test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason` (scraper lane, a
+  wall-clock budget assertion; fails identically on the untouched tree).
+- `cloud_state/firmographics.json` gained 12 researched companies (as_of 2026-08-25) in
+  the working tree mid-session from another lane's local run; left unstaged.
+
+### Morning check, 2026-08-26 (run log + mail)
+
+- `[linkedin] … path free=N blank=N blocked=N paid=N` — if `blocked` is large and every
+  Haifa line reads `stopped with 0 jobs: BLOCKED … page 0`, the city product is drawing the
+  limiter: back it off (`_LI_CITIES`) before touching anything else.
+- No `raise LINKEDIN_GUEST_PAGES` line unless preceded by `the 50-page cap` with a real job
+  count — that one is data.
+- `cache: dropped N agency cards` (expect ~163 the first morning) and `queue: dropped 12
+  agency entries: …` / `queue: dropped 1 place-named / agency entries` once, then 0.
+- Mail: no `### Tel Aviv`, no Nisha Pro / Shavit / Dialog; the *Sources not producing*
+  line WILL say `linkedin-targeted: nothing for 3d` — expected, BACKLOG 179.
+- `=== N discovered jobs cached (J junior …) · Q new companies queued, W already waiting ===`.
