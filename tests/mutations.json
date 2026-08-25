@@ -1159,16 +1159,6 @@
     "must_be_killed_by_behavioural": true
   },
   {
-    "id": "expand-budget-counts-attempts",
-    "file": "auto_expand.py",
-    "symbol": "main",
-    "class": "M8-argument-mis-passing",
-    "find": "                if _llm.LAST[\"asked\"]:\n                    llm_budget -= 1",
-    "replace": "                if True:\n                    llm_budget -= 1",
-    "why": "charging the call cap for an evidence-free attempt starves the names that DO have a page.",
-    "must_be_killed_by_behavioural": true
-  },
-  {
     "id": "expand-dupe-guard-drop",
     "file": "auto_expand.py",
     "symbol": "main",
@@ -1263,7 +1253,7 @@
     "file": "resolve_llm.py",
     "symbol": "_verify",
     "class": "M1-gate-removal",
-    "find": "    if not _own_page_names_token(name, token, api_url, pages):",
+    "find": "    if not _own_page_names_token(name, token, api_url, pages, platform):",
     "replace": "    if False:",
     "why": "with search-sourced evidence, _slug_matches alone admitted Similarweb -> similartech and any Comeet uid (wave-1 write-path attacker).",
     "must_be_killed_by_behavioural": true
@@ -1296,6 +1286,56 @@
     "find": "                llm_budget -= _llm.LAST[\"calls\"]   # charge CALLS (retries included), not attempts",
     "replace": "                llm_budget -= 1   # charge CALLS (retries included), not attempts",
     "why": "resolve_llm retries once; charging one per attempt lets the retry double the spend the cap describes (wave-1 F6 near-miss).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "scrape-error-inverted",
+    "file": "refresh_scrape_cache.py",
+    "symbol": "_apply_result",
+    "class": "M2-gate-inversion",
+    "find": "    jobs = None if res[\"status\"] == \"error\" else res[\"jobs\"]   # ERROR != confirmed-empty",
+    "replace": "    jobs = None if res[\"status\"] != \"error\" else res[\"jobs\"]   # ERROR != confirmed-empty",
+    "why": "error and empty swapped: a 403 night reads as confirmed-empty and deletes a company's jobs (the 2026-08-24 scraper defect).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "scrape-carry-on-empty",
+    "file": "refresh_scrape_cache.py",
+    "symbol": "_apply_result",
+    "class": "M5-population-widening",
+    "find": "    jobs = None if res[\"status\"] == \"error\" else res[\"jobs\"]   # ERROR != confirmed-empty",
+    "replace": "    jobs = None if res[\"status\"] == \"error\" or not res[\"jobs\"] else res[\"jobs\"]   # ERROR != confirmed-empty",
+    "why": "an honest empty must not carry yesterday's jobs forward as if the page had broken.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "scrape-massfail-threshold",
+    "file": "refresh_scrape_cache.py",
+    "symbol": "MASS_FAILURE_PCT",
+    "class": "M7-constant-drift",
+    "find": "MASS_FAILURE_PCT = 20",
+    "replace": "MASS_FAILURE_PCT = 80",
+    "why": "a mass-failure night at 21-79% errors would commit its deletions silently.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "scrape-park-outside-error",
+    "file": "refresh_scrape_cache.py",
+    "symbol": "_apply_result",
+    "class": "M5-population-widening",
+    "find": "        days, _ = _rot_bump(rot, name, \"empty\", today, res)",
+    "replace": "        days, _n = _rot_bump(rot, name, \"empty\", today, res)\n        if _n >= ROT_PARK_DAYS:\n            st.parked.append((name, f\"empty {days}d\"))",
+    "why": "empty is not broken: only ERRORS park a row (ARCHITECTURE section 2).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "scrape-since-not-reset",
+    "file": "refresh_scrape_cache.py",
+    "symbol": "_rot_bump",
+    "class": "M3-branch-narrowing",
+    "find": "    if e is None or e.get(\"why\") != why:",
+    "replace": "    if e is None:",
+    "why": "flipping empty->error must start a NEW streak, or 60 honest empty days park a company on its first transient error.",
     "must_be_killed_by_behavioural": true
   }
 ]

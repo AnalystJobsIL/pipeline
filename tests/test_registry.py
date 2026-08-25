@@ -1657,14 +1657,31 @@ def _call_names(node):
 
 
 def _modules_a_workflow_runs(root):
-    """Derived the way docs/gen_modules.py derives it, so the two cannot disagree."""
+    """Derived the way docs/gen_modules.py derives it, so the two cannot disagree. Both
+    `python x.py` and `python -m x` run-lines count (BACKLOG 63)."""
     import glob as _glob
     runs = set()
     for wf in _glob.glob(os.path.join(root, ".github", "workflows", "*.yml")):
         text = open(wf, encoding="utf-8").read()
         for m in re.finditer(r"python3?\s+(?:-u\s+)?([A-Za-z0-9_]+)\.py\b", text):
             runs.add(m.group(1) + ".py")
+        for m in re.finditer(r"python3?\s+(?:-u\s+)?-m\s+([A-Za-z0-9_]+)\b", text):
+            runs.add(m.group(1) + ".py")
     return runs
+
+
+def _root_imports(root, module):
+    """Root modules `module` imports anywhere in its body (function-local imports included)."""
+    tree = ast.parse(open(os.path.join(root, module), encoding="utf-8").read())
+    have = {os.path.basename(p) for p in __import__("glob").glob(os.path.join(root, "*.py"))}
+    out = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Import):
+            out |= {a.name + ".py" for a in n.names if a.name + ".py" in have}
+        elif isinstance(n, ast.ImportFrom) and not n.level and n.module:
+            if n.module + ".py" in have:
+                out.add(n.module + ".py")
+    return out
 
 
 def _ungated_registry_writers():
@@ -1890,10 +1907,42 @@ def test_the_writer_allow_list_only_covers_tools_no_workflow_runs():
     """
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     scheduled = _modules_a_workflow_runs(root)
-    leaked = sorted(set(_LEGACY_UNSCHEDULED) & scheduled)
+    # BOTH buckets (BACKLOG 62): `restore_only` was exempted from this check while feeding
+    # the same mutation-coverage exemption, so a name added there escaped both.
+    leaked = sorted((set(_LEGACY_UNSCHEDULED) | set(_RESTORE_ONLY)) & scheduled
+                    - {"merge_csv_rows.py"})       # the one restore_only a workflow runs, by design
     assert not leaked, (
         "these modules are allow-listed as one-shot/legacy but a workflow now runs them, so "
         "they write the registry on a schedule with no identity gate: %s" % leaked)
+    for mod in _RESTORE_ONLY:
+        # a restore_only writer restores a value; it must never ACTIVATE
+        tree = ast.parse(open(os.path.join(root, mod), encoding="utf-8").read())
+        acts = [n for n in _registry_writes(tree)
+                if (isinstance(n, ast.List) and isinstance(n.elts[4], ast.Constant)
+                    and n.elts[4].value == "true")
+                or (isinstance(n, ast.Assign) and any(
+                    isinstance(t, ast.Subscript) and isinstance(t.slice, ast.Constant)
+                    and t.slice.value == 4 for t in n.targets))]
+        assert not acts, "%s is restore_only but activates: %r" % (mod, [ast.unparse(a)[:60] for a in acts])
+    # BACKLOG 63: a scheduled module may import a legacy writer -- the import must not be a
+    # back door. Every col-3/4 write in an imported legacy module must sit inside its own
+    # `main()` (never a helper the importer could call, never module level).
+    for mod in sorted(scheduled):
+        if not os.path.exists(os.path.join(root, mod)):
+            continue
+        for legacy in sorted(_root_imports(root, mod) & set(_LEGACY_UNSCHEDULED)):
+            tree = ast.parse(open(os.path.join(root, legacy), encoding="utf-8").read())
+            parents = {}
+            for p in ast.walk(tree):
+                for c in ast.iter_child_nodes(p):
+                    parents[c] = p
+            for w in _registry_writes(tree):
+                fn = w
+                while fn in parents and not isinstance(fn, ast.FunctionDef):
+                    fn = parents[fn]
+                assert isinstance(fn, ast.FunctionDef) and fn.name == "main", (
+                    "%s imports %s, whose registry write at line %d is reachable outside "
+                    "main(): %s" % (mod, legacy, w.lineno, ast.unparse(w)[:60]))
     for mod, why in list(_RESTORE_ONLY.items()) + list(_LEGACY_UNSCHEDULED.items()):
         assert why and len(why) > 20, "allow-listed %s without a real reason" % mod
         assert os.path.exists(os.path.join(root, mod)), (
@@ -3714,7 +3763,7 @@ def test_auto_expand_llm_shots_rotate_least_recently_tried_first(tmp_path, monke
 
 
 def test_auto_expand_llm_budget_counts_claude_calls_not_attempts(tmp_path, monkeypatch, capsys):
-    """Kills `expand-budget-counts-attempts`. A name whose search ladder found no page
+    """Kills `llm-calls-uncounted` (its predecessor `expand-budget-counts-attempts` was retired when the charge became LAST["calls"]). A name whose search ladder found no page
     costs no `claude -p` call, so it must not consume the call cap; the log says WHY each
     name was deferred so `cannot search` and `searched and failed` stay distinguishable
     (CLAUDE.md rule 2)."""

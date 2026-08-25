@@ -184,6 +184,7 @@ fixed, and every one of them is outside the `discovery` lane's write list.
        for c in $(git log --format=%h -- companies.csv); do echo "$c $(git show $c:companies.csv | python -c "import sys,csv;print(sum(1 for r in csv.reader(sys.stdin) if r))")"; done
 
 2. **The discovery bridges can only seed an aggregator URL, and the registry keeps it.**
+    **CLOSED 2026-08-25 (`registry`, via 177):** the proposal is the code — `auto_expand.py` skips `resolve_deep` for an aggregator seed and never writes its `empty`/`unreachable` row (deferred on rotation); `--clear-agg-urls` un-buried the 28 rows. The counts are stale (queue 514 of 1,544 aggregator-seeded at HEAD, not 206 of 1,233); the secrethunter 33,495-byte shell finding still holds.
    *(lane: `registry`.)* A discovered job's `url` IS the posting on LinkedIn / Indeed /
    secrethunter, so `careers_url` in `research_companies.json` is an aggregator for **206 of
    1,233 entries** (132 secrethunter.io, 45 linkedin.com, 26 il.indeed.com; measured
@@ -388,6 +389,7 @@ Found while fixing the re-check pools. Each of these is **outside the `registry`
 write list**, which is why it is a proposal and not a commit. Ordered by what it costs today.
 
 1. **One re-check pool definition** — lane: `docs` (or whoever next touches shared
+    **CLOSED 2026-08-25:** both halves landed — `verdicts.TOKENS` carries `url-cleared`/`url-flagged` (162), and every `registry_health.pools()` mirror imports the tool's own `in_*_pool` (`_EXTRACT_GAP` deleted, `_PROBE_SHAPE` = `probe_candidates.PROBE_POOL`). Residual: one token list spelled three times with one deliberate gap (`HUNT_POOL` lacks `dark-triage`), pinned by `test_the_three_copies…`.
    plumbing). `pipeline/verdicts.TOKENS` is supposed to be the single source, and there are
    **four** copies: `TOKENS` (18 tokens), `listing_hunt.main()`'s inline regex (17),
    `check_invariants.POOL` (18), and `registry_health._HUNT_SHAPE` (17) — **this lane added
@@ -428,6 +430,7 @@ write list**, which is why it is a proposal and not a commit. Ordered by what it
    `ARCHITECTURE.md` §2.
 
 2. **One terminal-state list** — lane: shared plumbing. `verdicts.TERMINAL` is
+    **CLOSED (47, 2026-08-24):** `verdicts.TERMINAL` carries `alias-of`; `check_invariants`, `registry_health` and the four tools derive from `TERM_RX`. Live residual is 72 (`recruiter` substring), planned in the durable-pools batch.
    `defunct / domain-dead / duplicate of / redundant / recruiter` and **omits `alias-of`**,
    which is why `audit_empty_rows` and `crack_walled` had alias rows in *activating* pools
    (fixed 2026-08-24 by spelling the exclusion out in each tool, which is now the FOURTH
@@ -436,6 +439,7 @@ write list**, which is why it is a proposal and not a commit. Ordered by what it
    go too.
 
 3. **Registry alarms in the daily mail** — lanes: `infra` (`pipeline/run.py`) + `render`
+    **CLOSED (12/13, 2026-08-24):** `pipeline/run.py` calls `registry_health.alarms_state()` and all three renderers print `- **Registry:** …`.
    (`pipeline/digest.py`). `registry_health.alarms()` returns the short lines that answer
    "did a company disappear, and can the ladder still crack anything" — and today they reach
    nobody, because no registry tool has a path into the digest. The channel already exists:
@@ -647,6 +651,7 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     a solved problem: **when you close something, grep for the places that describe it.**
 
 20. **`audit_empty_rows`'s docstring advertises `AUDIT_BD_SEARCH_CAP`; the code reads
+    **CLOSED 2026-08-25 (verified):** the docstring now says there is no `AUDIT_BD_SEARCH_CAP` and why `DEEP_` is the name. The per-process counter note (no shared cap with Saturday) still holds and matters for item 6.
     `DEEP_BD_SEARCH_CAP`** — lane: `registry`, one line. And per item 10, `deep_validate._BD`
     is per-process module state, so the Sunday audit does NOT share a counter with Saturday's
     deep-validate however it is named.
@@ -1003,6 +1008,7 @@ fixes; one was a claim I made that a doc of this repo already contradicted on th
     reference that is complete beats one that is short.
 
 41. **`registry_health.py` has four retyped pool mirrors and a guard that checks one** —
+    **CLOSED 2026-08-25 (verified):** all mirrors import the tools' predicates; `test_every_ownership_mirror_agrees_with_the_tool_it_mirrors` pins all of them.
     lane: `registry`. `_HUNT_SHAPE`, `_PROBE_SHAPE`, `_EXTRACT_GAP` and the crack literal
     mirror four tools' filters; only `triage_dark`'s predicates are imported.
     `test_the_ownership_matrix_is_built_from_the_tools_own_predicates` pins the triage count
@@ -1119,6 +1125,7 @@ see `docs/sessions/2026-08-24-registry.md` for why nine waves did not converge w
     and the answer was to not unify that tool, not to pay the cost.
 
 48. **The re-check pool is still defined in four places** — lane: shared plumbing, unchanged
+    **Registry half CLOSED 2026-08-25:** `listing_hunt.HUNT_POOL` + `in_hunt_pool` are module-level and imported by the mirror; `url-cleared`/`url-flagged` are in `TOKENS` (the '9 invisible rows' claim is stale). What survives is one token list spelled three times (1's residual).
     by the rebuild for the same reason as 47. `pipeline/verdicts.TOKENS` (18),
     `listing_hunt.main()`'s inline regex (16), `check_invariants.POOL` (17),
     `registry_health._HUNT_SHAPE` (16). `url-cleared` and `url-flagged` are in the inline

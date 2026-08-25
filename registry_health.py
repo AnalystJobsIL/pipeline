@@ -751,7 +751,15 @@ def main():
         a_mail = alarms_state(rows)
         n = save_census(rows)
         os.makedirs(os.path.dirname(ALARMS) or ".", exist_ok=True)
-        write_json(ALARMS, {"date": TODAY, "alarms": a_mail})
+        # the record of what was mailed: `since` moves only when the alarms CHANGE, and the
+        # file is rewritten only then -- a daily `date` churned a committed state file for
+        # nothing (docs/BACKLOG.md 74)
+        try:
+            prev = json.load(open(ALARMS, encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            prev = {}
+        if prev.get("alarms") != a_mail:
+            write_json(ALARMS, {"since": TODAY, "alarms": a_mail})
         print(f"\ncensus written: {n} companies -> {CENSUS}; {len(a_mail)} mail alarms -> "
               f"{ALARMS} (full report above: {len(a)})")
     return 0
