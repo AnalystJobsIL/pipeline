@@ -1194,47 +1194,47 @@ Nagomi Security,scrape,,https://www.comeet.com/jobs/NagomiSecurity/89.00B,true,s
 CloudHiro,scrape,,https://cloudhiro.com/careers/,true,scanned; no open Israel roles now | listing-hunt 2026-08-23: verified 6 IL via cloudhiro.com
 Weizmann Institute of Science,scrape,,https://www.weizmann.ac.il/career/en/jobs,true,scanned; no open Israel roles now | listing-hunt 2026-08-23: verified 2 IL via www.weizmann.ac.il
 AGILINA,scrape,,https://hrplus-1669824102.teamtailor.com/jobs,true,"dark-triage 2026-08-24: wrong-page (LLM: not AGILINA's careers page (generic recruiting agency page, no speci)) | listing-hunt 2026-08-24: verified 5 IL via hrplus-1669824102.teamtailor.com"
-Z2A Digital,scrape,https://secrethunter.io/jobz/1947158626,https://secrethunter.io/jobz/1947158626,false,scanned; no open Israel roles now | listing-hunt 2026-08-23: no pages reachable
+Z2A Digital,scrape,,,false,scanned; no open Israel roles now | listing-hunt 2026-08-23: no pages reachable | url-cleared 2026-08-25: secrethunter.io aggregator seed
 Dun & Bradstreet (Israel) Ltd.,scrape,https://secrethunter.io/jobz/5fc7b31ec3,https://secrethunter.io/jobz/5fc7b31ec3,false,"dark-triage 2026-08-24: wrong-page (LLM: not Dun & Bradstreet (Israel) Ltd.'s careers page (generic secrethunter.io homepage, no com))"
 MAX Security,scrape,,https://www.max-security.com/careers-israel/,true,scanned; no open Israel roles now | listing-hunt 2026-08-23: verified 3 IL via www.max-security.com
-SWAPP.AI,scrape,https://secrethunter.io/jobz/ced438bd3c,https://secrethunter.io/jobz/ced438bd3c,false,scanned; no open Israel roles now | listing-hunt 2026-08-23: no pages reachable
-Qualitest acq,scrape,https://secrethunter.io/jobz/1b8d69458c,https://secrethunter.io/jobz/1b8d69458c,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: another company's board; no listing found
+SWAPP.AI,scrape,,,false,scanned; no open Israel roles now | listing-hunt 2026-08-23: no pages reachable | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Qualitest acq,scrape,,,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: another company's board; no listing found | url-cleared 2026-08-25: secrethunter.io aggregator seed
 Keter,scrape,https://secrethunter.io/jobz/7181572a53,https://www.comeet.com/jobs/keter-north-america/E3.001,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no IL listing; monitored candidate
-"Xtra Mile Marketing Solutions, Inc.",scrape,https://secrethunter.io/jobz/0a7e374c36,https://secrethunter.io/jobz/0a7e374c36,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no pages reachable
+"Xtra Mile Marketing Solutions, Inc.",scrape,,,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no pages reachable | url-cleared 2026-08-25: secrethunter.io aggregator seed
 Tailor Brands,scrape,https://secrethunter.io/jobz/376d82389a,https://www.comeet.com/jobs/tailorbrands/94.009,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Whalo,scrape,,https://www.whalo.com/careers,true,scanned; no open Israel roles now | listing-hunt 2026-08-24: verified 1 IL via www.whalo.com
 HAAT Delivery,scrape,https://secrethunter.io/jobz/de8d529497,https://careers.haat.delivery/careers,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Crossriver,scrape,,https://www.crossriver.com/careers,true,scanned; no open Israel roles now | listing-hunt 2026-08-24: verified 13 IL via www.crossriver.com
-Guideline,scrape,https://secrethunter.io/jobz/82ad06c612,https://secrethunter.io/jobz/82ad06c612,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no pages reachable
+Guideline,scrape,,,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no pages reachable | url-cleared 2026-08-25: secrethunter.io aggregator seed
 Reindeer,ashby,reindeer-ai,https://api.ashbyhq.com/posting-api/job-board/reindeer-ai,true,scanned; no open Israel roles now | listing-hunt 2026-08-24: verified 8 IL via jobs.ashbyhq.com | self-heal 2026-08-25: re-resolved to ashby
-somekhchaikin,scrape,https://secrethunter.io/jobz/6bd59c3f66,https://secrethunter.io/jobz/6bd59c3f66,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: another company's board; no listing found
-Universal McCann Israel,scrape,https://secrethunter.io/jobz/d93fb3c4d3,https://secrethunter.io/jobz/d93fb3c4d3,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: another company's board; no listing found
+somekhchaikin,scrape,,,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: another company's board; no listing found | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Universal McCann Israel,scrape,,,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: another company's board; no listing found | url-cleared 2026-08-25: secrethunter.io aggregator seed
 Tel Aviv,scrape,,https://jobs.secrettelaviv.com/,true,scanned; no open Israel roles now | listing-hunt 2026-08-24: verified 145 IL via jobs.secrettelaviv.com
 Investing,scrape,,https://www.investing-careers.com/open-positions,true,scanned; no open Israel roles now | listing-hunt 2026-08-24: verified 3 IL via www.investing-careers.com
-Mami,scrape,https://secrethunter.io/jobz/09901cb171,https://secrethunter.io/jobz/09901cb171,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: another company's board; no listing found
+Mami,scrape,,,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: another company's board; no listing found | url-cleared 2026-08-25: secrethunter.io aggregator seed
 Kendago,scrape,https://secrethunter.io/jobz/cc1d5af6ca,https://www.kendago.com/career/,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no IL listing; monitored candidate
 TERMINAL X,scrape,https://secrethunter.io/jobz/b08554ad15,https://www.terminal-x.ai/careers,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no IL listing; monitored candidate
 FrontStory,scrape,https://secrethunter.io/jobz/22ae2ebf73,https://www.frontstory.com/careers,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Directeam,scrape,,https://www.comeet.com/jobs/directeam/29.008,true,scanned; no open Israel roles now | listing-hunt 2026-08-24: verified 3 IL via www.comeet.com
 Black Rabbit,scrape,https://secrethunter.io/jobz/f27ac9705f,https://www.comeet.com/jobs/blackrabbit/E9.009,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Deloitte,scrape,https://secrethunter.io/jobz/b18b0a1701,https://apply.deloitte.co.uk/UKCareers/,false,scanned; no open Israel roles now | listing-hunt 2026-08-24: no IL listing; monitored candidate
-Fireberry,scrape,https://secrethunter.io/jobz/6feee9c5ab,https://secrethunter.io/jobz/6feee9c5ab,false,scanned; no open Israel roles now
-MER Group,scrape,https://secrethunter.io/jobz/785d76b0b5,https://secrethunter.io/jobz/785d76b0b5,false,scanned; no open Israel roles now
-Upwind Security,scrape,https://secrethunter.io/jobz/cd1aa4815c,https://secrethunter.io/jobz/cd1aa4815c,false,scanned; no open Israel roles now
-SCD,scrape,https://secrethunter.io/jobz/46a3fd3682,https://secrethunter.io/jobz/46a3fd3682,false,scanned; no open Israel roles now
-Unframe AI,scrape,https://secrethunter.io/jobz/8047c93e96,https://secrethunter.io/jobz/8047c93e96,false,scanned; no open Israel roles now
-scaleops,scrape,https://secrethunter.io/jobz/4d44c7b792,https://secrethunter.io/jobz/4d44c7b792,false,scanned; no open Israel roles now
-Notch,scrape,https://secrethunter.io/jobz/ab9012c2b9,https://secrethunter.io/jobz/ab9012c2b9,false,scanned; no open Israel roles now
-Fido,scrape,https://secrethunter.io/jobz/fad1f02dd3,https://secrethunter.io/jobz/fad1f02dd3,false,scanned; no open Israel roles now
-yad2,scrape,https://secrethunter.io/jobz/d7231d36c3,https://secrethunter.io/jobz/d7231d36c3,false,scanned; no open Israel roles now
-IBI Investment House,scrape,https://secrethunter.io/jobz/85967dd0a5,https://secrethunter.io/jobz/85967dd0a5,false,scanned; no open Israel roles now
-ctera,scrape,https://secrethunter.io/jobz/5c68969d70,https://secrethunter.io/jobz/5c68969d70,false,scanned; no open Israel roles now
-SkySoft Solutions By Commit,scrape,https://secrethunter.io/jobz/f4cfd6a0c6,https://secrethunter.io/jobz/f4cfd6a0c6,false,scanned; no open Israel roles now
-Tonic Security,scrape,https://secrethunter.io/jobz/335dd5d7de,https://secrethunter.io/jobz/335dd5d7de,false,scanned; no open Israel roles now
-Shabak - Israeli Security Agency - Career,scrape,https://secrethunter.io/jobz/99f02d4c36,https://secrethunter.io/jobz/99f02d4c36,false,scanned; no open Israel roles now
-isi,scrape,https://secrethunter.io/jobz/068f747c34,https://secrethunter.io/jobz/068f747c34,false,scanned; no open Israel roles now
-RISCO Group,scrape,https://secrethunter.io/jobz/791611ae91,https://secrethunter.io/jobz/791611ae91,false,scanned; no open Israel roles now
-aspectiva,scrape,https://secrethunter.io/jobz/a0a8bbe950,https://secrethunter.io/jobz/a0a8bbe950,false,scanned; no open Israel roles now
-Aryon Security,scrape,https://secrethunter.io/jobz/614ee0fb63,https://secrethunter.io/jobz/614ee0fb63,false,scanned; no open Israel roles now
-Agilite,scrape,https://secrethunter.io/jobz/0d044f504d,https://secrethunter.io/jobz/0d044f504d,false,scanned; no open Israel roles now
-Houzz,scrape,https://secrethunter.io/jobz/1d459020fd,https://secrethunter.io/jobz/1d459020fd,false,scanned; no open Israel roles now
+Fireberry,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+MER Group,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Upwind Security,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+SCD,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Unframe AI,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+scaleops,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Notch,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Fido,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+yad2,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+IBI Investment House,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+ctera,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+SkySoft Solutions By Commit,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Tonic Security,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Shabak - Israeli Security Agency - Career,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+isi,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+RISCO Group,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+aspectiva,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Aryon Security,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Agilite,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
+Houzz,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed
