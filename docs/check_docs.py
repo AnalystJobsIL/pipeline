@@ -72,6 +72,9 @@ ABSENT_OK = {
     "israeli-jobs-private-notes/Set-Claude-Token.cmd": "lives outside this repo",
     "Set-BrightData-Key.cmd": "a Desktop launcher, outside this repo (docs/BRIGHTDATA.md)",
     "digest-email.yml": "lives in the private AnalystJobsIL/inbox repo, not this one",
+    # retired 2026-08-26 (`registry`, 8a4deac): the Saturday cron became the Sunday audit's deep
+    # rung; BACKLOG line 494 names the old file on purpose (BACKLOG 215)
+    "deep-validate.yml": "retired workflow, named historically by docs/BACKLOG.md",
 }
 
 # Path-shaped tokens inside backticks. Deliberately narrow: extensions we actually use.
@@ -106,7 +109,8 @@ def read(p: str) -> str:
 
 
 _BASENAMES: set[str] = set()
-_SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", "out", "node_modules", ".venv"}
+_SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", "out", "node_modules", ".venv",
+              ".claude"}   # agent worktrees hold stale copies of deleted files (BACKLOG 215)
 
 
 def _basenames() -> set[str]:
