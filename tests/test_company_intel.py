@@ -1157,3 +1157,26 @@ def test_bd_employees_does_not_touch_the_llm_seam():
     src = inspect.getsource(bd_employees)
     assert "claude" not in src.lower(), "bd_employees must not spawn the CLI"
     assert "pipeline.llm" not in src and "research_company" not in src
+
+
+def test_the_bulk_cron_counts_its_own_spend():
+    """The 10:00 UTC cron became the MAIN spender when the bulk moved to the cloud, and its
+    first real run (2026-08-26, 3 calls) reported none of it. The digest hook says
+    `N calls, Ns, N searches[, N SEARCHLESS]` and warns on a searchless answer; a job that
+    spends the same subscription invisibly is how the search mandate quietly stops holding."""
+    import inspect
+
+    import research_firmographics
+    src = inspect.getsource(research_firmographics.main)
+    assert "meta = {}" in src, "no audit dict"
+    assert 'research_company, name, "", 240, meta' in src, "the workers do not fill it"
+    assert "seam:" in src and "SEARCHLESS" in src, "it is collected and never reported"
+    assert "::warning::company-intel" in src, "a searchless run must warn"
+
+
+def test_research_company_accepts_meta_positionally_as_the_workers_pass_it():
+    """The thread pool submits positionally; a signature change would silently pass `meta`
+    as the timeout."""
+    import inspect
+    names = list(inspect.signature(F.research_company).parameters)
+    assert names[:4] == ["company", "context", "timeout", "meta"], names

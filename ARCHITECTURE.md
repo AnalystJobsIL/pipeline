@@ -2173,6 +2173,33 @@ seeds sqlite from the export next morning. It has its own job and nothing waits 
 needs no meaningful cap. `--workers 2`, not 3: `docs/BACKLOG.md` 97 records `529 Overloaded`
 on 2 of 3 calls at 3. Research is one-time per company — nothing re-researches before
 **2027-02** at `--refresh-days 180` — so this drains a backlog rather than running a treadmill.
+It reports its own spend the way the digest hook does (`seam: <model> | N calls, Ns, N
+searches[, N SEARCHLESS]`, and a `::warning::` on a searchless answer): it is the **main**
+spender now, and a job that spends the shared subscription invisibly is how the search mandate
+quietly stops holding.
+
+**Validated in the cloud, 2026-08-26 20:54 UTC** (one `workflow_dispatch` at `limit=3`, run
+record deleted per `CLAUDE.local.md` §3). What it produced, not that it was green:
+
+```
+skipping 1 junk (job-title) names: Tel Aviv
+897 active companies, 968 researched, 8 to do
+ok   Varonis: Cybersecurity / public / L
+FAIL Sivo (strike pending)
+ok   Steakholder Foods: FoodTech / public / S
+2 researched, 1 failed, 970 total in store
+exported 970 records -> …/cloud_state/firmographics.json
+```
+
+committed as `57f34a6`, **one path, 26 insertions, never `seen.db`**. Both records are
+checkable: Varonis → `Nasdaq: VRNS`; Steakholder Foods → `Nasdaq: STKH (formerly MITC/MeaTech
+3D)`, a historical detail training data alone is unlikely to volunteer. Render coverage
+**99.2 % → 99.4 %** (894 of 899). Unlike the Windows chain, **the export reached the cloud and
+stayed there.**
+
+That run also proved the split-brain in `firmo_failed`: the runner saw **8 to do** where the
+laptop's dry run had seen 3 plus 5 strike-gated, because the two stores keep separate failure
+memories — `docs/BACKLOG.md` 243.
 
 **The local Windows chain (`IsraeliJobs-Firmographics`, every 6 h) is now redundant** and is
 proposed for retirement in `docs/BACKLOG.md` 97, with the operator's 2026-08-26 instruction

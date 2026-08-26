@@ -137,6 +137,39 @@ newest edits stayed theirs and uncommitted. All three affected sessions were tol
 Filed as `docs/BACKLOG.md` 241 for `infra`; the fix is `git commit --only -- <owned>`, with
 `discovery`'s caveat that `--only` errors on an empty commit.
 
+## 5b. The cloud validation (evening) — and what it cost to make the rehearsal honest
+
+**BACKLOG 246 closed, and the first attempt at it was still blind.** The driver had no
+assertions and returned 0 whatever happened. I gave it 14 checks — and then deleted the
+poisoned-blurb drop from a throwaway worktree and *all fourteen still passed*, because every
+one of them looked at the **export** while the poison lives in `company_info`, which goes to
+the **cards**. The check that closes it reads the rendered board and digest and asserts that
+no blurb cached under a refused name appears there. Clean tree: exit 0. Fix deleted: exit 1,
+naming `Tel Aviv -> Alma, a Sisram Medical company, develops...`. 110 checks across 7 cases.
+
+One thing is a NOTE and not a check, deliberately: `### Tel Aviv` still has a digest section,
+from 7 open ledger rows. That is `223`, lane `roles`; asserting it would make this driver
+permanently red for an item this lane cannot close, so it prints the name, the item and the
+owning lane instead.
+
+**The employee fill** had been moved onto the seam that morning and never run once — untested
+code that spends a shared subscription. Three guards now: the seam's shape (pinned model,
+WebSearch on both axes, no shell on any platform — it was `shell=True` on *every* platform,
+which on Linux ran a bare `claude`, and a cwd that is not the repo); the 1..5,000,000 clamp,
+which refuses 0, -5, 9,000,000, null and `"many"` and is the only thing between a hallucinated
+number and a card reading `~0 employees`; and an exit-0 error envelope raising
+`ResearchUnavailable(auth)`, because `fill_employees_llm.main` catches only that. Plus one
+pinning `bd_employees` OUT of the seam, so an LLM outage cannot stop the cheap Bright Data
+counter.
+
+**The cloud run** (`workflow_dispatch`, `limit=3`, 20:54 UTC, record deleted per
+`CLAUDE.local.md` §3) is in §7 with its output. Two things it taught that the laptop could
+not: the runner saw **8 to do** where the laptop's dry run saw 3 plus 5 gated — the two
+`firmo_failed` stores are split-brained (`243`) — and the cron was spending the subscription
+**invisibly**, reporting none of the calls, seconds or searches the digest hook reports. Now
+it does, with the same `SEARCHLESS` warning; a job that spends silently is how the search
+mandate quietly stops holding.
+
 ## 6. Morning check — 2026-08-27
 
 1. The `Company intel:` line names **sonnet**, shows `N searches` with **no `SEARCHLESS`**,
@@ -146,6 +179,8 @@ Filed as `docs/BACKLOG.md` 241 for `infra`; the fix is `git commit --only -- <ow
    remaining backlog, and it commits `cloud_state/firmographics.json` alone.
 4. `state/firmographics.json` vs `cloud_state/firmographics.json` — if they diverge again, the
    chain is still losing work to the shared checkout and 97's retirement is overdue.
+5. The **10:00 UTC** run is now the one that matters most: its `seam:` line must show
+   `N searches` with no `SEARCHLESS`, and its commit must touch exactly one path.
 
 ## 7. NOT finished
 

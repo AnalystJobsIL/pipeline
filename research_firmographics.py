@@ -211,11 +211,18 @@ def main():
     if a.limit:
         todo = todo[: a.limit]
 
+    # The seam's own audit. Without it this job spends the subscription
+    # invisibly: the digest hook reports `N calls, Ns, N searches[, N
+    # SEARCHLESS]` and warns on a searchless answer, and this job -- now the
+    # MAIN spender since the bulk moved to the 10:00 cron -- said nothing at
+    # all. A searchless answer is a parametric guess, and nothing
+    # re-researches before 2027-02 at --refresh-days 180.
+    meta = {}
     done = failed = 0
     infra_streak = infra_errors = 0
     failed_names = []
     with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
-        futs = {ex.submit(research_company, name): name for name in todo}
+        futs = {ex.submit(research_company, name, "", 240, meta): name for name in todo}
         for fut in as_completed(futs):
             name = futs[fut]
             try:
@@ -274,6 +281,18 @@ def main():
         for n in failed_names:
             st.record_firmo_failure(n, today)
     print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store")
+    if meta.get("calls"):
+        models = ", ".join(
+            "%s%s" % (m, "" if n == 1 else " x%d" % n)
+            for m, n in sorted(meta.get("models", {}).items(), key=lambda kv: -kv[1]))
+        extra = ""
+        if meta.get("searchless"):
+            extra = ", %d SEARCHLESS" % meta["searchless"]
+        print("seam: %s | %d calls, %.0fs, %d searches%s" % (
+            models, meta["calls"], meta.get("seconds", 0), meta.get("searches", 0), extra))
+    if meta.get("searchless"):
+        print("::warning::company-intel %d research answer(s) made no web search - "
+              "those records are guesses, not researched facts" % meta["searchless"])
     # health heartbeat: stamped ONLY when the run PROVED the infrastructure works —
     # something was researched, or every attempt at least reached the model (zero infra
     # errors) and it wasn't an all-fail soft outage. A 1-2 name run where EVERY attempt
