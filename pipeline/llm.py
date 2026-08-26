@@ -145,16 +145,40 @@ def _served(data, model=""):
     named haiku on every tool-using call (docs/BACKLOG.md 207, the mail's `haiku x237`).
     Most OUTPUT tokens is no better -- haiku's search summaries beat the answer on one
     probe. Trust what we asked for when it is present; fall back to output tokens."""
-    usage = (data or {}).get("modelUsage") or {}
-    if not usage:
+    usage = (data or {}).get("modelUsage")
+    if not isinstance(usage, dict) or not usage:
         return None
-    want = str(model or "").strip().lower()
+
+    def field(m, key):
+        try:
+            return int((usage.get(m) or {}).get(key) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    # OUTPUT tokens are the evidence of speaking. An envelope that carries none at all is
+    # not a fallback we can detect, so rank by input instead of calling every model silent
+    # -- that is also the shape `tests/test_units.py` pins for the classifier.
+    key = "outputTokens" if any(field(m, "outputTokens") for m in usage) else "inputTokens"
+
+    def out(m):
+        return field(m, key)
+
+    # a `[1m]`/`[...]` context suffix is a CLI alias, not part of the model id
+    want = re.sub(r"\[.*?\]", "", str(model or "")).strip().lower()
     if want:
-        for m, u in usage.items():
-            canon = str((u or {}).get("canonicalModel") or m).lower()
-            if want == canon or want in canon or want == str(m).lower():
-                return m
-    return max(usage, key=lambda m: (usage[m] or {}).get("outputTokens") or 0)
+        # EXACT first, then substring -- one combined pass let a substring hit on an earlier
+        # dict entry beat an exact match on a later one (`claude-opus-4` naming
+        # `claude-opus-4-1` while `claude-opus-4-20250514` wrote 900 of the 905 tokens).
+        for pred in (lambda m, c: want in (c, str(m).lower()),
+                     lambda m, c: want in c):
+            for m in usage:
+                c = str((usage.get(m) or {}).get("canonicalModel") or m).lower()
+                # and it must have actually SPOKEN. Preferring the asked model even at zero
+                # output tokens makes `seniority.alarms()`'s drift check structurally unable
+                # to fire -- it would report success on a run the CLI served from a fallback.
+                if pred(m, c) and out(m):
+                    return m
+    return max(usage, key=out)
 
 
 def _searches(data):
@@ -162,8 +186,16 @@ def _searches(data):
     -- that counts the SERVER-side tool and reads 0 even when Claude Code's client-side
     WebSearch ran twice (measured 2026-08-26). The per-model counter is the real one, and
     it is what tells a researched fact from a parametric guess."""
-    usage = (data or {}).get("modelUsage") or {}
-    return sum((u or {}).get("webSearchRequests") or 0 for u in usage.values())
+    usage = (data or {}).get("modelUsage")
+    if not isinstance(usage, dict):
+        return 0
+    total = 0
+    for u in usage.values():
+        try:
+            total += int((u or {}).get("webSearchRequests") or 0)
+        except (TypeError, ValueError):     # a drifted CLI must not raise on the SUCCESS path
+            pass
+    return total
 
 
 def call(prompt, *, system, schema, model, timeout, cwd=None, effort="low", tools=""):

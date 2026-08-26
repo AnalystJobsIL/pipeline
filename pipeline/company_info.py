@@ -47,7 +47,7 @@ def summarize_company(company, context="", timeout=90, meta=None):
     res = _F.ask(_F._DATA.format(company=company, context=(context or "")[:600]),
                  system=_SYSTEM, schema=_SCHEMA, model=_F.BLURB_MODEL,
                  effort=_F.BLURB_EFFORT, tools=(), timeout=timeout, meta=meta)
-    out = _F.result_object(res) or {}
+    out = _F.result_object(res, _SCHEMA) or {}
     if out.get("known") is False:
         return ""
     text = " ".join(str(out.get("blurb") or "").split())

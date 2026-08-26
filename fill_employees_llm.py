@@ -99,7 +99,7 @@ def lookup(company, rec, timeout=240, meta=None):
                           sub=rec.get("sub_sector", ""), il=rec.get("il_center", "?"))
     res = F.ask(prompt, system=_SYSTEM, schema=_SCHEMA, model=F.EMPLOYEES_MODEL,
                 effort=F.EMPLOYEES_EFFORT, tools=F.SEARCH, timeout=timeout, meta=meta)
-    out = F.result_object(res)
+    out = F.result_object(res, _SCHEMA)
     if out is None:
         return None
     n = out.get("employees")

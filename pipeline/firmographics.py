@@ -107,12 +107,35 @@ _TITLE_VOCAB = _TITLE_HEAD | _TITLE_MOD
 _TITLE_TOKEN = re.compile(r"[a-z0-9'+.&-]+")
 
 
+_LATIN_ALPHA = re.compile(r"[^\W\d_]", re.UNICODE)
+
+
 def is_bare_job_title(name):
     """True when a name is ENTIRELY role words plus seniority modifiers, with no separator
-    for `_JUNK_NAME` to key on: "Senior Data Analyst", "BI Developer", "Head of Data"."""
-    toks = [t.strip("'.&-") for t in _TITLE_TOKEN.findall(str(name or "").lower())]
+    for `_JUNK_NAME` to key on: "Senior Data Analyst", "BI Developer", "Head of Data".
+
+    TWO or more tokens, always. Every single member of `_TITLE_HEAD` is by itself a
+    one-token all-vocabulary name, and several are real companies: **Analyst** (Analyst
+    I.M.S., a TASE-listed Israeli investment house that employs the very analysts this board
+    is about), Engineering (Engineering Ingegneria Informatica), Team (NYSE: TISI), Head
+    (HEAD N.V.), Lead, Architect, Designer. A bare noun is a word, not a leaked headline;
+    BACKLOG 11/101 asked for the multi-token case, and "my team" is already covered by
+    `_JUNK_NAME`'s own anchored arm. (Wave-1 attacker, 2026-08-26.)
+
+    And the closure test must see the WHOLE name. `_TITLE_TOKEN` matches Latin only, so a
+    Hebrew token is invisible to `all(...)` rather than out-of-vocabulary, and
+    'Analyst בע"מ' or 'מערכות Team' would read as entirely role vocabulary -- the
+    mirror image of the ARCHITECTURE section 1a bug where a Latin entry did not cover the
+    Hebrew spelling. If the matched tokens do not account for every letter in the name, this
+    rule does not get to judge it."""
+    raw = str(name or "")
+    toks = [t.strip("'.&-") for t in _TITLE_TOKEN.findall(raw.lower())]
     toks = [t for t in toks if t]
-    if not toks or len(toks) > 6:            # a 7-token all-vocabulary string is a sentence
+    if len(toks) < 2 or len(toks) > 6:       # 1 token is a word; 7+ is a sentence
+        return False
+    # every letter the tokenizer did NOT capture (Hebrew, Cyrillic, accents) vetoes
+    leftover = _TITLE_TOKEN.sub("", raw.lower())
+    if _LATIN_ALPHA.search(leftover):
         return False
     return all(t in _TITLE_VOCAB for t in toks) and any(t in _TITLE_HEAD for t in toks)
 
@@ -136,12 +159,17 @@ def is_place_name(name):
     how three coverage losses were reported as owned. israel.py is the `classifier` lane's
     file: read and derive, never write.
 
-    MULTI-WORD ONLY, and that is the whole safety argument. "Nesher", "Eilat", "Azor",
-    "Yakum", "Afek" and "Lod" are single-word entries that are also real Israeli company
-    names (Nesher Israel Cement); "Tel Aviv", "Ramat Gan", "Petah Tikva" are nobody's brand.
-    Whole-name match after squashing spaces and hyphens, so "Tel-Aviv" and "Petahtikva" read
-    as the listed form while "Tel Aviv Stock Exchange" and "Jerusalem Venture Partners" --
-    a place PLUS other tokens -- never match.
+    Only entries that are MULTI-WORD IN THE LIST are loaded, which is what keeps "Nesher",
+    "Eilat", "Azor", "Yakum", "Afek" and "Lod" -- single-word list entries that are also real
+    Israeli company names (Nesher Israel Cement) -- out of the gate entirely.
+
+    Be precise about what that does NOT buy, because the first version of this docstring got
+    it wrong (wave-1 attacker, 2026-08-26): `_squash` removes the spaces BEFORE the
+    membership test, so every loaded entry is also matchable as one word. "Raanana",
+    "Beersheva" and "Petahtikva" all match, and so would a company that happened to be
+    named one of those. The protection is the LIST MEMBERSHIP, not the word count -- and it
+    is whole-name, so "Tel Aviv Stock Exchange" and "Jerusalem Venture Partners" (a place
+    PLUS other tokens) never match. Nothing in the repo's 1,690 real names collides.
 
     This is NOT folded into `looks_like_junk`: `discovery` decided on 2026-08-25 that the
     place gate is Telegram-only, because the same check on the structured sources would veto
@@ -255,12 +283,27 @@ _PROMPT = (
 )
 
 
+_REFUSAL = re.compile(r"(?i)^(unknown|n/?a|none|not\b|no\b|could ?n.?t\b|unable\b)")
+
+
+def _known(rec):
+    """`known` as a truth value. The schema types it boolean, but the `result` fallback is
+    NOT schema-validated -- and that is exactly the path a refusal arrives on. A string
+    "false" is truthy in Python, so `rec.get("known") is False` accepted it (wave-1)."""
+    v = rec.get("known", True)
+    if isinstance(v, str):
+        return v.strip().lower() not in ("false", "no", "0", "")
+    return bool(v)
+
+
 def _coerce(rec, company):
     """Validate/clean a parsed record; return the clean dict or None if junk."""
     # `unknown: true` was the prose escape hatch; `known: false` is the schema's. Both are
     # read: the `result` fallback can still carry the old shape.
-    if not isinstance(rec, dict) or rec.get("unknown") or rec.get("known") is False:
+    if not isinstance(rec, dict) or rec.get("unknown") or not _known(rec):
         return None
+    if _REFUSAL.match(str(rec.get("sector") or "").strip()):
+        return None                 # a refusal written INTO the field _coerce insists on
     out = {}
     for key in ("sector", "sub_sector", "stage_note", "business_model", "customer_type", "il_center"):
         v = rec.get(key)
@@ -377,6 +420,11 @@ def ask(prompt, *, system, schema, model, effort, tools=(), timeout=240, meta=No
                             timeout=timeout, effort=effort, tools=tools)
     except llm.LLMUnavailable as e:
         raise ResearchUnavailable(str(e), kind=getattr(e, "kind", "transient")) from e
+    except Exception as e:  # noqa: BLE001
+        # `_served`/`_searches` read a drifted envelope on the SUCCESS path, and this seam has
+        # five consumers whose only handler is `except ResearchUnavailable` -- an
+        # AttributeError here killed research_firmographics and triage_dark outright (wave-1).
+        raise ResearchUnavailable(f"{type(e).__name__}: {e}"[:200], kind="transient") from e
     if meta is not None:
         record_call(meta, res, model)
         if tools and not (res.get("searches") or 0):
@@ -394,21 +442,75 @@ def record_call(meta, res, asked=""):
     meta["seconds"] = meta.get("seconds", 0.0) + (res.get("seconds") or 0.0)
     meta["searches"] = meta.get("searches", 0) + (res.get("searches") or 0)
     if asked:
-        meta.setdefault("asked", set()).add(asked)
+        # a list, not a set: `last_run.json` and the health lane are one json.dumps away
+        seen = meta.setdefault("asked", [])
+        if asked not in seen:
+            seen.append(asked)
     for m in res.get("models") or ():
         meta.setdefault("models", {})[m] = meta.setdefault("models", {}).get(m, 0) + 1
     return meta
 
 
-def result_object(res):
+def _schema_shaped(obj, schema):
+    """True when `obj` looks like an answer to `schema`, not merely like JSON.
+
+    WAVE-1, HIGH. The first version of the `result` fallback took the first object carrying
+    any key outside {unknown, known}, and `_coerce` insists only on a non-empty `sector` --
+    so when the model wrote prose like "the context is from Wix, whose profile is {...Wix
+    record...}, but Tel Aviv is a city, so {"known": false}", the NEIGHBOURING COMPANY'S
+    record was returned as the answer, `research_company_detail` reported success, and it was
+    cached until 2027-02. That is the 2026-08-25 Alma-under-Tel-Aviv incident re-entering
+    through the new code path. Requiring the schema's own keys makes a foreign object
+    unrepresentable; the honest cost is a "no JSON in the answer" reason."""
+    if not isinstance(obj, dict):
+        return False
+    try:
+        want = set(json.loads(schema).get("required") or ())
+    except Exception:                                     # noqa: BLE001
+        want = set()
+    return bool(want) and want <= set(obj)
+
+
+def result_object(res, schema=None):
     """`structured_output`, or THIS module's read of `result` when the model answered around
     the schema (the CLI may leave structured_output null when the turn ended after a tool).
+
     Deliberately not `llm._envelope`'s fallback: that takes the FIRST object, and an answer
     restating {"unknown": true} ahead of the real record would become a weekly strike -- the
-    greedy-brace defect `extract_json` was written for."""
+    greedy-brace defect `extract_json` was written for. And when a schema is given, only a
+    SCHEMA-SHAPED object is accepted, LAST one wins (see `_schema_shaped`)."""
     if res.get("data"):
         return res["data"]
-    return extract_json(str((res.get("envelope") or {}).get("result") or ""))
+    raw = str((res.get("envelope") or {}).get("result") or "")
+    if schema is None:
+        return extract_json(raw)
+    # LAST wins, and a bare escape hatch counts as an answer. The model's real answer is the
+    # last thing it writes; an earlier object is context it is reasoning ABOUT. Taking the
+    # first schema-shaped object returned a neighbouring company's record as the profile
+    # ("...the context is from Wix, whose profile is {...}. But Tel Aviv is a city, so
+    # {"known": false}") -- and `_coerce` accepted it, because it is a perfectly valid
+    # record. It is just not this company's.
+    best = None
+    for obj in _json_objects(raw):
+        escape = bool(set(obj) & {"unknown", "known"}) and len(obj) <= 2
+        if _schema_shaped(obj, schema) or escape:
+            best = obj
+    return best
+
+
+def _json_objects(text):
+    """Every top-level JSON object in `text`, in order."""
+    dec = json.JSONDecoder()
+    i = (text or "").find("{")
+    while i != -1:
+        try:
+            obj, end = dec.raw_decode(text, i)
+        except ValueError:
+            i = text.find("{", i + 1)
+            continue
+        if isinstance(obj, dict):
+            yield obj
+        i = text.find("{", end)
 
 
 def extract_json(text):
@@ -444,7 +546,7 @@ def research_company_detail(company, context="", timeout=240, meta=None):
     res = ask(_DATA.format(company=company, context=(context or "")[:600]),
               system=_RESEARCH_SYSTEM, schema=_RESEARCH_SCHEMA, model=RESEARCH_MODEL,
               effort=RESEARCH_EFFORT, tools=SEARCH, timeout=timeout, meta=meta)
-    rec = result_object(res)
+    rec = result_object(res, _RESEARCH_SCHEMA)
     if rec is None:
         return None, "no JSON in the answer"
     if rec.get("unknown") or rec.get("known") is False:

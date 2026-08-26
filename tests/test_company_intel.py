@@ -174,7 +174,7 @@ def test_email_companies_are_researched_before_board_only_companies():
     ({"research_off": True, "candidates": 3}, "research off (--no-llm); 3 of 10", 0),
     ({}, "all 10 board companies profiled", 0),
     ({"candidates": 3, "researched": 2, "failed": 1}, "3 of 10 board companies unprofiled (cap 5/run, budget 10m): 2 researched, 1 failed", 0),
-    ({"candidates": 7, "researched": 5}, "2 over the cap wait for the next run", 0),
+    ({"candidates": 7, "researched": 5}, "2 wait for the next run", 0),
     ({"candidates": 3, "failed": 3, "soft_outage": True}, "soft outage suspected", 1),
     ({"candidates": 2, "failed": 2}, "2 of 10 board companies unprofiled", 1),
     ({"candidates": 2, "unavailable_after": 1, "unavailable_in": "blurbs", "unavailable_reason": "timed out"}, "claude unavailable after 1 blurbs call (timed out)", 1),
@@ -713,7 +713,8 @@ def test_the_mail_separates_a_weekly_retry_from_a_name_that_is_never_retried(env
     st.record_firmo_failure("Peak Innovation", TODAY)
     _ci, _fd, rep = _run(st, [_job("Peak Innovation"), _job("Tel Aviv"), _job("Wix")])
     line = CI.audit_lines(rep)[0][0]
-    assert "1 research failed, weekly retry" in line and "1 not a company" in line
+    assert "1 more: research failed, weekly retry" in line, line
+    assert "1 more: not a company" in line, line
 
 
 def test_the_export_line_counts_what_was_published_not_what_was_read(env):
@@ -836,3 +837,196 @@ def test_every_company_intel_mutation_still_aims_at_real_code():
         if n != 1:
             stale.append((m["id"], m["file"], n))
     assert not stale, f"mutations that no longer aim at real code: {stale}"
+
+
+def test_a_bare_head_noun_is_a_company_not_a_job_title():
+    """WAVE-1 FINDING, 2026-08-26. The first version of the closure rule made every one of
+    the 31 members of `_TITLE_HEAD` junk on its own, and several are real companies:
+    **Analyst** is Analyst I.M.S., a TASE-listed Israeli investment house that employs the
+    very analysts this board is about, and a discovery card under that display name would
+    have been refused at intake and never become a registry row. Also Engineering
+    (Engineering Ingegneria Informatica), Team (NYSE: TISI), Head (HEAD N.V.), Lead,
+    Architect, Designer. BACKLOG 11/101 asked for the MULTI-token case."""
+    from pipeline.firmographics import _TITLE_HEAD
+    caught = sorted(w for w in _TITLE_HEAD if F.is_bare_job_title(w) or F.looks_like_junk(w))
+    assert not caught, f"bare head nouns refused as job titles: {caught}"
+    # and the multi-token cases the backlog actually asked for still fire
+    for junk in ("Senior Data Analyst", "BI Developer", "Head of Data", "Infrastructure Team"):
+        assert F.is_bare_job_title(junk), junk
+    assert F.looks_like_junk("my team"), "still caught by _JUNK_NAME's own anchored arm"
+
+
+def test_the_title_rule_never_judges_a_name_on_its_latin_fragment():
+    """WAVE-1 FINDING. `_TITLE_TOKEN` is Latin-only, so a Hebrew token was INVISIBLE to the
+    closure test rather than out-of-vocabulary, and 'Analyst בע"מ' read as entirely role
+    vocabulary. That is the mirror image of the ARCHITECTURE section 1a bug where a Latin
+    entry did not cover the Hebrew spelling — and section 1a records that Hebrew employer
+    names arrive live from Indeed and Telegram."""
+    for name in ('Analyst בע"מ', "אנליסט Analyst",
+                 "מערכות Team", "Engineering אלביט"):
+        assert not F.is_bare_job_title(name), name
+        assert not F.looks_like_junk(name), name
+
+
+def test_every_refusal_prints_the_name_it_refused(env, capsys):
+    """ARCHITECTURE section 1a: "every rejection prints the name, so a wrong one can be
+    appealed from the step log". A count alone makes a false positive unrecoverable — which
+    is section 8's first failure class, a row quietly leaving a pool on a green run."""
+    st, _export, _calls, _ = env
+    st.save_company_info({"Tel Aviv": "Alma, a Sisram Medical company, makes lasers."}, TODAY)
+    _run(st, [_job("Tel Aviv"), _job("Senior Data Analyst"), _job("Wix")])
+    err = capsys.readouterr().err
+    assert "not a company" in err
+    assert "Tel Aviv" in err and "Senior Data Analyst" in err
+
+
+# --- wave 1, 2026-08-26: eight defects the attackers reproduced -------------------------
+
+def test_the_result_fallback_never_profiles_a_company_from_the_context():
+    """WAVE-1, HIGH. `structured_output` is null whenever the turn ends after a tool — i.e.
+    on every WebSearch call — so the `result` fallback is a live path. Taking the FIRST
+    schema-shaped object returned the company the model was reasoning ABOUT: "the context is
+    from Wix, whose profile is {...Wix record...}. But Tel Aviv is a city, so
+    {"known": false}" stored Wix's public profile under `Tel Aviv`, `_coerce` accepted it
+    (it is a perfectly valid record — just not this company's), and
+    `research_company_detail` reported SUCCESS. That is the 2026-08-25 Alma incident
+    re-entering through new code. The model's answer is the LAST thing it writes."""
+    rec = {"known": True, "sector": "web dev", "sub_sector": "b", "stage": "public",
+           "stage_note": "NASDAQ: WIX", "size_band": "XL", "employees_global": 5000,
+           "founded": 2006, "business_model": "SaaS", "customer_type": "SMBs",
+           "il_center": "TA"}
+    prose = f'context is from Wix, whose profile is {json.dumps(rec)}. But Tel Aviv is a city: {{"known": false}}'
+    got = F.result_object({"data": None, "envelope": {"result": prose}}, F._RESEARCH_SCHEMA)
+    assert got == {"known": False}, got
+    assert F._coerce(dict(got), "Tel Aviv") is None
+    # a genuine answer still reads
+    ok = f'here it is {json.dumps(rec)}'
+    assert F._coerce(dict(F.result_object({"data": None, "envelope": {"result": ok}},
+                                          F._RESEARCH_SCHEMA)), "Wix")
+
+
+def test_known_is_a_truth_value_and_a_refusal_in_the_sector_field_is_rejected():
+    """WAVE-1. `rec.get("known") is False` accepted the string "false" — and the `result`
+    fallback, the one path a refusal arrives on, is NOT schema-validated. `_coerce` also
+    insists on exactly one field, so a model refusing INTO that field stored a profile whose
+    sector read "unknown - could not identify"."""
+    base = {"sector": "fintech", "sub_sector": "", "stage": "", "stage_note": "",
+            "size_band": "", "employees_global": None, "founded": None,
+            "business_model": "", "customer_type": "", "il_center": ""}
+    for falsey in (False, "false", "FALSE", "no", 0, None, ""):
+        assert F._coerce({**base, "known": falsey}, "X") is None, falsey
+    assert F._coerce(dict(base), "X"), "an absent `known` means known"
+    for refusal in ("unknown", "unknown - could not identify", "N/A", "not a company",
+                    "none", "could not identify"):
+        assert F._coerce({**base, "sector": refusal}, "X") is None, refusal
+
+
+def test_the_seam_never_raises_anything_but_research_unavailable(monkeypatch):
+    """WAVE-1. `_served`/`_searches` read the envelope on the SUCCESS path, and five
+    consumers' only handler is `except ResearchUnavailable` — `research_firmographics` and
+    `triage_dark` died with a traceback on a drifted envelope."""
+    import shutil as _sh
+    from pipeline import llm
+    monkeypatch.setattr(_sh, "which", lambda n, *a, **k: "/usr/bin/claude")
+    for broken in ({"modelUsage": []}, {"modelUsage": {"m": {"webSearchRequests": "two"}}},
+                   {"modelUsage": {"a": {"outputTokens": "x"}, "b": {"outputTokens": 1}}}):
+        env = {"type": "result", "is_error": False, "structured_output": {"known": True,
+               "sector": "s", "sub_sector": "", "stage": "", "stage_note": "",
+               "size_band": "", "employees_global": None, "founded": None,
+               "business_model": "", "customer_type": "", "il_center": ""}, **broken}
+        monkeypatch.setattr(llm.subprocess, "run",
+                            lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0, stdout=json.dumps(env), stderr=""))
+        try:
+            F.research_company("X")
+        except F.ResearchUnavailable:
+            pass                                  # translated: the contract holds
+        except Exception as e:                    # noqa: BLE001
+            raise AssertionError(f"untranslated {type(e).__name__}: {e}")
+
+
+def test_the_served_model_must_have_actually_spoken():
+    """WAVE-1. Preferring the asked model even at ZERO output tokens made
+    `seniority.alarms()`'s `classify model drift` check structurally unable to fire — it
+    would report success on a run the CLI served from a fallback. And one combined
+    exact/substring pass let a substring hit on an earlier entry beat an exact match on a
+    later one."""
+    from pipeline import llm
+    usage = {"claude-sonnet-5": {"outputTokens": 0, "canonicalModel": "claude-sonnet-5"},
+             "claude-haiku-4-5": {"outputTokens": 480, "canonicalModel": "claude-haiku-4-5"}}
+    assert llm._served({"modelUsage": usage}, "sonnet") == "claude-haiku-4-5"
+    # exact beats substring, whatever the dict order
+    usage2 = {"claude-opus-4-1": {"outputTokens": 5, "canonicalModel": "claude-opus-4-1"},
+              "claude-opus-4": {"outputTokens": 900, "canonicalModel": "claude-opus-4"}}
+    assert llm._served({"modelUsage": usage2}, "claude-opus-4") == "claude-opus-4"
+    # a `[1m]` context suffix is a CLI alias, not part of the id — it must not read as drift
+    usage3 = {"claude-sonnet-5": {"outputTokens": 9, "canonicalModel": "claude-sonnet-5"}}
+    assert llm._served({"modelUsage": usage3}, "sonnet[1m]") == "claude-sonnet-5"
+    assert llm._served({"modelUsage": {}}, "sonnet") is None
+    assert llm._searches({"modelUsage": None}) == 0
+
+
+def test_enrich_for_run_survives_a_malformed_budget_env(monkeypatch, tmp_path):
+    """WAVE-1, HIGH. `_report()` calls `_knob()` and runs OUTSIDE the never-raises try, so
+    `FIRMO_TIME_BUDGET_MIN=8m` — or the empty string a GitHub `${{ vars.X }}` yields when
+    the variable is unset — killed the run at the company-intel phase, after the classifier
+    spend and before rendering. `run.py::_load_secrets_env` sets env INSIDE run(), so this
+    is reachable from one line of secrets.env."""
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    monkeypatch.setattr(F, "SHARED_EXPORT", str(tmp_path / "f.json"))
+    for bad in ("8m", "", "abc", "5.0"):
+        monkeypatch.setenv("FIRMO_TIME_BUDGET_MIN", bad)
+        monkeypatch.setenv("FIRMO_MAX_PER_RUN", bad)
+        ci, fd, rep = CI.enrich_for_run(st, board_jobs=[_job("Wix")], run_date=TODAY,
+                                        use_llm=False)
+        assert isinstance(rep, dict) and not rep.get("error"), (bad, rep.get("error"))
+        assert CI.audit_lines(rep)[0]
+
+
+def test_a_hebrew_company_name_cannot_kill_the_run_through_the_audit_line():
+    """WAVE-1, HIGH. `companies.csv` has an ACTIVE row whose name is Hebrew, `run.py` prints
+    this line OUTSIDE the never-raises guard, and the owner's console is cp1252 — so
+    reporting the failure would BE the failure. `_ascii`'s own docstring names this hazard;
+    the reason was folded and the company NAME was not."""
+    rep = CI._report()
+    rep.update(candidates=1, failed=1, board_companies=1,
+               failed_reasons=[("IEC \u05d7\u05d1\u05e8\u05ea \u05d4\u05d7\u05e9\u05de\u05dc", "model could not identify")])
+    line = CI.audit_lines(rep)[0][0]
+    # NOT isascii(): the line has always joined on U+00B7, which cp1252 encodes fine. The
+    # real property is that run.py's print survives the owner's console, and what breaks it
+    # is Hebrew — an interpolated name, not the separator.
+    line.encode("cp1252")
+    assert "IEC" in line and "ח" not in line, line
+
+
+def test_the_blurb_cap_env_actually_caps_the_calls(env, monkeypatch):
+    """WAVE-1. `_report()` published `blurb_cap` from the env while `_blurbs` still sliced
+    with the import-time constant — the one loop that can spend 30 calls, left with exactly
+    the defect the call-time change exists to kill."""
+    st, _export, calls, _ = env
+    monkeypatch.setenv("BLURB_MAX_PER_RUN", "2")
+    jobs = [_job(f"Co{i}") for i in range(5)]
+    _ci, _fd, rep = _run(st, jobs)
+    assert rep["blurb_cap"] == 2
+    assert rep["blurbs_asked"] == 2, rep["blurbs_asked"]
+    assert len([c for c in calls if not c["tools"]]) == 2
+
+
+def test_a_non_company_never_renders_facts_chips_either(env):
+    """WAVE-1. The RECORD can already exist for such a name — the bulk researcher reads
+    `SELECT DISTINCT company FROM matched`, the table that held `Tel Aviv`. Refusing the
+    blurb is not enough if the chips still render under that heading."""
+    st, _export, _calls, _ = env
+    st.save_firmographics({"Tel Aviv": REC, "Wix": REC}, TODAY)
+    _ci, fd, _rep = _run(st, [_job("Tel Aviv"), _job("Wix")])
+    assert "Tel Aviv" not in fd and fd.get("Wix")
+
+
+def test_the_bulk_researcher_uses_the_money_gate_not_the_shared_one():
+    """WAVE-1. `research_firmographics.py` is the 10:00 UTC cron that owns the registry
+    backlog and it reads from `matched`. It gated with `looks_like_junk`, which deliberately
+    excludes the place arm because that predicate is shared with the registry's pools."""
+    import inspect
+
+    import research_firmographics
+    src = inspect.getsource(research_firmographics.main)
+    assert "not_a_company(n)" in src, "the bulk spender must use this lane's own gate"

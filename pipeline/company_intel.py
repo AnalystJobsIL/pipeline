@@ -47,7 +47,16 @@ _DEFAULTS = {"FIRMO_MAX_PER_RUN": 5, "FIRMO_TIME_BUDGET_MIN": 8, "BLURB_MAX_PER_
 
 
 def _knob(name, cast=int):
-    return cast(os.environ.get(name, _DEFAULTS[name]))
+    """Never raises. `_report()` calls this and `_report()` runs OUTSIDE `enrich_for_run`'s
+    try, so a bad env value (`FIRMO_TIME_BUDGET_MIN=8m`, or the empty string a GitHub
+    `${{ vars.X }}` yields when the variable is unset) took the whole run down at the
+    company-intel phase -- after the classifier spend, before rendering. As import-time
+    constants the same typo raised before anything was paid for; moving them to call time
+    moved the blast radius, so it has to be caught here (wave-1)."""
+    try:
+        return cast(os.environ.get(name, _DEFAULTS[name]))
+    except (TypeError, ValueError):
+        return cast(_DEFAULTS[name])
 
 
 # Kept as module names because tests, mutations and the audit line all read them; the values
@@ -61,6 +70,10 @@ FIRMO_MAX_PER_RUN = _knob("FIRMO_MAX_PER_RUN")
 FIRMO_TIME_BUDGET_MIN = _knob("FIRMO_TIME_BUDGET_MIN", float)
 BLURB_MAX_PER_RUN = _knob("BLURB_MAX_PER_RUN")
 RESEARCH_TIMEOUT_S = 240
+# the floor below which a research call is not worth launching: measured 18-40s per
+# call on 2026-08-26, so 120s is ~3x the typical cost and well under the 240s cap.
+RESEARCH_MIN_S = 120
+_RESEARCH_RESERVE_S = RESEARCH_MIN_S
 BLURB_RETRY_DAYS = 30      # a company the blurb model could not identify is asked again monthly
 STRIKE_RETRY_DAYS = 7      # a name research failed on is retried weekly
 SOFT_OUTAGE_MIN_FAILS = 3  # this many name-failures and no success in one run = not the names
@@ -76,7 +89,8 @@ def _report():
             "export_status": "ok",
             "export_records": 0, "export_newest": "", "store_records": 0, "synced": 0,
             "published": False, "publish_error": "", "scoped": False, "error": "", "gated": 0,
-            "gated_junk": 0, "blurbs_refused": 0, "blurbs_dropped": 0, "llm": {}, "searchless": 0,
+            "gated_junk": 0, "blurbs_refused": 0, "blurbs_dropped": 0, "llm": {},
+            "unavailable_kind": "",
             "registry_backlog": 0, "llm_off_upstream": "", "failed_reasons": [],
             "cap": _knob("FIRMO_MAX_PER_RUN"), "budget_min": _knob("FIRMO_TIME_BUDGET_MIN", float),
             "blurb_cap": _knob("BLURB_MAX_PER_RUN")}
@@ -168,6 +182,13 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None):
     for c in poisoned:
         company_info.pop(c, None)
     rep["blurbs_dropped"] = len(poisoned)
+    if poisoned:
+        # ARCHITECTURE section 1a: "every rejection prints the name, so a wrong one can be
+        # appealed from the step log". A count alone makes a false positive unrecoverable --
+        # section 8's first failure class, a row quietly leaving a pool on a green run.
+        print(f"  [company-intel] blurb dropped, not a company: "
+              f"{_ascii(', '.join(sorted(poisoned)), 200)}",
+              file=sys.stderr, flush=True)
     board = {j["company"] for j in board_jobs}
     # one blurb per identity: "Meta" and "Meta Israel" are one company (both had paid)
     by_key = {}
@@ -187,6 +208,10 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None):
     missing = sorted(c for c in board if not company_info.get(c))
     refused = {c for c in missing if not_a_company(c)}
     rep["blurbs_refused"] = len(refused)
+    if refused:
+        print(f"  [company-intel] blurb refused, not a company: "
+              f"{_ascii(', '.join(sorted(refused)), 200)}",
+              file=sys.stderr, flush=True)
     missing = [c for c in missing if c not in refused]
     rep["blurbs_missing"] = len(missing)
     if not use_llm or not missing:
@@ -206,11 +231,15 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None):
         batch.add(identity_key(c))
         todo.append(c)
     rep["blurbs_waiting"] = len(missing) - len(todo)
-    todo = todo[:BLURB_MAX_PER_RUN]
+    todo = todo[:rep["blurb_cap"]]   # the env-read cap, not the import-time constant
     clock = clock or _Clock(rep["budget_min"])
     empties, empty_names = 0, []
     for i, company in enumerate(todo):
-        if clock.remaining() < 30:
+        # RESERVE research's share. Blurbs run first on the same clock, and at 30 board
+        # companies x ~15s they can eat 450s of a 480s budget, leaving research 30s and a
+        # `0 researched` morning that reads like nothing was wrong (wave-1). The reserve is
+        # the research cap's own minimum cost, so the two loops cannot starve each other.
+        if clock.remaining() - _RESEARCH_RESERVE_S < 30:
             rep["blurbs_skipped_budget"] = len(todo) - i
             break
         try:
@@ -266,6 +295,8 @@ def _research_targets(st, board_jobs, email_jobs, firmo, run_date):
             continue  # profiled, or "X Israel" beside "X" in one digest: one slot, one record
         if not_a_company(c):
             gated_junk += 1     # a job title / category word / bare place: never, not weekly
+            print(f"  [company-intel] research refused, not a company: {_ascii(c, 60)}",
+                  file=sys.stderr, flush=True)
             continue
         if k in failed_norms:
             gated += 1          # research failed on this name: retried weekly
@@ -281,7 +312,12 @@ def _research(st, targets, board_jobs, run_date, rep, clock=None):
     done, failed_names = {}, []
     for i, company in enumerate(todo):
         remaining = clock.remaining()
-        if remaining < 60:
+        if remaining < RESEARCH_MIN_S:
+            # 60s was below the real cost of a call (~18-40s measured, 240s worst case), so
+            # the loop launched calls it then killed at the clamped timeout -- and
+            # `timeout(60s)` arrives as LLMUnavailable, i.e. the mail said
+            # `claude unavailable after 0 research calls` when nothing was down and the
+            # blurb loop had simply spent the budget (wave-1).
             rep["skipped_budget"] = len(todo) - i
             break
         if not done and len(failed_names) >= SOFT_OUTAGE_MIN_FAILS:
@@ -295,6 +331,11 @@ def _research(st, targets, board_jobs, run_date, rep, clock=None):
                 company, _context_for(company, board_jobs),
                 timeout=int(min(RESEARCH_TIMEOUT_S, remaining)), meta=rep["llm"])
         except ResearchUnavailable as e:
+            if getattr(e, "kind", "") == "transient" and "timeout(" in str(e) \
+                    and remaining <= RESEARCH_TIMEOUT_S:
+                # our own clamp killed it, not the CLI: that is budget, not an outage
+                rep["skipped_budget"] = len(todo) - i
+                break
             # infrastructure outage: don't blame the names, don't burn the budget
             rep["unavailable_after"] = i
             rep["unavailable_in"] = "research"
@@ -327,9 +368,10 @@ def enrich_for_run(st, *, board_jobs, email_jobs=(), all_companies=None, run_dat
     the day's email and board (one locked sqlite `save_firmographics` used to). On an
     unexpected exception the reader still gets whatever was assembled, and the audit line
     says `company intel FAILED: ...`."""
-    rep = _report()
     holder = {"company_info": {}, "firmo_display": {}}
+    rep = {}
     try:
+        rep = _report()
         return _enrich(st, board_jobs=board_jobs, email_jobs=email_jobs,
                        all_companies=all_companies, run_date=run_date, use_llm=use_llm,
                        scoped=scoped, profiles_path=profiles_path, rep=rep, holder=holder)
@@ -381,7 +423,11 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
     by_key = display_index(firmo)
     wanted = set(all_companies or ()) | board
     firmo_display = {c: (firmo.get(c) or by_key.get(identity_key(c))) for c in wanted}
-    firmo_display = {k: chip_safe(v) for k, v in firmo_display.items() if v}
+    # The RECORD may already exist for a name that is not a company -- the bulk researcher
+    # reads `SELECT DISTINCT company FROM matched`, which is the table that held `Tel Aviv`.
+    # Refusing the blurb is not enough if the facts chips still render under that heading.
+    firmo_display = {k: chip_safe(v) for k, v in firmo_display.items()
+                     if v and not not_a_company(k)}
     holder["firmo_display"] = firmo_display
 
     # a company with facts but no blurb reads its facts as prose — no call, not cached
@@ -433,7 +479,19 @@ def _ascii(s, n=80):
 def audit_lines(rep):
     """(mail lines, ::warning:: lines) from `enrich_for_run`'s report. Pure; no I/O.
 
-    One line a reader can reconcile: researched + failed + skipped + waiting = candidates."""
+    One line a reader can reconcile: researched + failed + skipped + waiting = candidates.
+
+    This is called from run.py OUTSIDE `enrich_for_run`'s never-raises guard, so a raise here
+    kills the run after classification and before rendering. Every key is read with `.get`,
+    and the whole body is belt-and-braces: reporting the run must never be what ends it."""
+    try:
+        return _audit_lines(rep)
+    except Exception as e:  # noqa: BLE001
+        msg = f"company intel audit unavailable ({_ascii(f'{type(e).__name__}: {e}')})"
+        return [msg], [msg]
+
+
+def _audit_lines(rep):
     parts, warn = [], []
     n, c = rep["board_companies"], rep["candidates"]
     if rep.get("error"):
@@ -442,9 +500,9 @@ def audit_lines(rep):
         warn.append(msg)
     # One counter used to call every gated name "research failed, weekly retry" -- false for
     # a job title or a bare place, which are never retried at all.
-    _g = ([f"{rep['gated']} research failed, weekly retry"] if rep.get("gated") else []) + \
-         ([f"{rep['gated_junk']} not a company"] if rep.get("gated_junk") else [])
-    gated = f" ({' + '.join(_g)} — unprofiled)" if _g else ""
+    _g = ([f"{rep['gated']} more: research failed, weekly retry"] if rep.get("gated") else []) + \
+         ([f"{rep['gated_junk']} more: not a company"] if rep.get("gated_junk") else [])
+    gated = f" ({' + '.join(_g)})" if _g else ""
     if rep["research_off"]:
         parts.append((f"research off (--no-llm); {c} of {n} board companies unprofiled"
                       if c else f"research off (--no-llm); all {n} board companies profiled") + gated)
@@ -452,11 +510,15 @@ def audit_lines(rep):
         parts.append(f"all {n} board companies profiled" + gated)
     else:
         bits = [f"{rep['researched']} researched", f"{rep['failed']} failed"]
+        if rep.get("stopped_outage"):
+            bits.append(f"{rep['stopped_outage']} not attempted (stopped)")
         if rep["skipped_budget"]:
             bits.append(f"{rep['skipped_budget']} skipped (budget {rep['budget_min']:g}m spent)")
-        waiting = c - rep["researched"] - rep["failed"] - rep["skipped_budget"]
+        waiting = (c - rep["researched"] - rep["failed"] - rep["skipped_budget"]
+                   - rep.get("stopped_outage", 0))
         if rep["unavailable_after"] is None and waiting > 0:
-            bits.append(f"{waiting} over the cap wait for the next run")
+            over = " over the cap" if waiting > rep["cap"] else ""
+            bits.append(f"{waiting}{over} wait for the next run")
         parts.append(f"{c} of {n} board companies unprofiled (cap {rep['cap']}/run, "
                      f"budget {rep['budget_min']:g}m): " + ", ".join(bits) + gated)
     if rep["soft_outage"]:
@@ -490,6 +552,8 @@ def audit_lines(rep):
         b.append(f"{rep['blurbs_derived']} derived from facts")
     if rep["blurbs_waiting"]:
         b.append(f"{rep['blurbs_waiting']} waiting (monthly retry / same company)")
+    if rep.get("blurbs_dropped"):
+        b.append(f"{rep['blurbs_dropped']} cached under a non-company name, dropped")
     if rep.get("blurbs_refused"):
         b.append(f"{rep['blurbs_refused']} refused (not a company)")
     parts.append("blurbs: " + ", ".join(b))
@@ -517,18 +581,32 @@ def audit_lines(rep):
         parts.append(msg)
         warn.append(msg)
     if rep.get("failed_reasons"):
-        why = "; ".join(f"{c}: {_ascii(r, 60)}" for c, r in rep["failed_reasons"][:2])
+        # the NAME too: companies.csv has an active row whose name is Hebrew, and
+        # run.py prints this line on a console that may be cp1252 -- outside the
+        # never-raises guard, so reporting the failure would BE the failure
+        why = "; ".join(f"{_ascii(c, 40)}: {_ascii(r, 60)}"
+                        for c, r in rep.get("failed_reasons") or [])
         parts.append(f"why failed: {why}")
     if rep["export_status"] == "ok":
         e = f"export {rep['export_records']} records, newest {rep['export_newest'] or '?'}"
         if rep["synced"]:
             e += f", {rep['synced']} newer than the store"
-        if rep.get("registry_backlog", 0) >= 0:
-            e += f", registry backlog {rep.get('registry_backlog', 0)}"
+        _rb = rep.get("registry_backlog", 0)
+        e += (f", registry backlog {_rb}" if isinstance(_rb, int) and _rb >= 0
+              else ", registry backlog not counted")
         parts.append(e)
-        if rep.get("registry_backlog", 0) > 0 and not rep["researched"] and not rep["research_off"]:
-            warn.append(f"{rep['registry_backlog']} active registry rows still have no facts "
-                        f"and this run researched none — the backlog is not draining")
+        # NOT "backlog > 0 and researched == 0": the digest researches BOARD companies, and
+        # the registry backlog is drained by the 10:00 UTC cron, so that fired on every
+        # healthy morning — and a warning that is always on is a warning nobody reads.
+        # ...and not when the names FAILED or the budget ran out: each already has its
+        # own warning, and two warnings for one condition is how a reader learns to skim.
+        # ...and not when the names FAILED or the budget ran out: each already has its
+        # own warning, and two warnings for one condition is how a reader learns to skim.
+        if (rep["candidates"] and not rep["researched"] and not rep["failed"]
+                and not rep["research_off"] and not rep["skipped_budget"]
+                and rep["unavailable_after"] is None and not rep["soft_outage"]):
+            warn.append(f"{rep['candidates']} board companies needed facts and this run "
+                        f"attempted none, with no outage or budget reported")
         if rep.get("publish_error") or (not rep["published"] and not rep.get("scoped")
                                         and not rep.get("error")):
             msg = "export NOT written" + (f" ({_ascii(rep.get('publish_error'), 120)})"

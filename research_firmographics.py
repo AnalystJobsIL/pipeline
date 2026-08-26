@@ -29,7 +29,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from pipeline.companies import load_companies
 from pipeline.firmographics import (ResearchUnavailable, band_for, identity_key,
-                                    looks_like_junk, research_company, save_shared,
+                                    not_a_company, research_company, save_shared,
                                     sync_store, union_store)
 from pipeline.store import SeenStore
 
@@ -146,7 +146,11 @@ def main():
         names += [n for n in board if n not in names]
     # leaked job titles ("Sql developer - X", "my team") are never companies: skip for
     # free, forever — researching them profiles the embedded company under a junk key
-    junk = [n for n in names if looks_like_junk(n)]
+    # not_a_company, not looks_like_junk: this is the 10:00 UTC cron that owns the
+    # registry backlog, and it reads from `matched`, the same table that held
+    # `Tel Aviv`. looks_like_junk deliberately excludes the place arm (it is shared
+    # with the registry's pools); this spender needs it (wave-1).
+    junk = [n for n in names if not_a_company(n)]
     if junk:
         print(f"skipping {len(junk)} junk (job-title) names: {', '.join(junk[:5])}"
               + (" ..." if len(junk) > 5 else ""))
