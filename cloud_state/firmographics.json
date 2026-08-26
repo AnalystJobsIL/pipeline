@@ -10406,6 +10406,19 @@
     "stage_note": "Raised $100M Series D in May 2022 at an $8B valuation (Greenoaks, Coatue); ~$287M total raised",
     "sub_sector": "Zero-knowledge (STARK) proof scaling technology for Ethereum — developer of the Starknet L2 rollup and StarkEx"
   },
+  "Steakholder Foods": {
+    "as_of": "2026-08-26",
+    "business_model": "B2B",
+    "customer_type": "Food manufacturers/meat producers",
+    "employees_global": 50,
+    "founded": 2019,
+    "il_center": "Ness Ziona (HQ)",
+    "sector": "FoodTech",
+    "size_band": "S",
+    "stage": "public",
+    "stage_note": "Nasdaq: STKH (formerly MITC/MeaTech 3D)",
+    "sub_sector": "Cultivated meat / 3D bioprinting"
+  },
   "Sternum": {
     "as_of": "2026-08-22",
     "business_model": "sells a device-embedded security + observability platform (runtime exploit prevention, monitoring) to device manufacturers, subscription/licensing",
@@ -11619,6 +11632,19 @@
     "stage": "public",
     "stage_note": "Listed on Euronext Paris, ticker FR (Valeo SA), founded company since 1923",
     "sub_sector": "Tier-1 automotive supplier: ADAS/sensors, electrification, lighting and thermal systems"
+  },
+  "Varonis": {
+    "as_of": "2026-08-26",
+    "business_model": "B2B",
+    "customer_type": "Enterprise",
+    "employees_global": 2800,
+    "founded": 2005,
+    "il_center": "Herzliya (R&D); HQ in New York, US",
+    "sector": "Cybersecurity",
+    "size_band": "L",
+    "stage": "public",
+    "stage_note": "Nasdaq: VRNS",
+    "sub_sector": "Data Security & Analytics"
   },
   "Vayyar": {
     "as_of": "2026-08-21",
