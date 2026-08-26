@@ -616,3 +616,206 @@ def test_soft_outage_threshold_is_three_not_one_or_ninety_nine(env):
     rep = CI._report()
     CI._research(st, ["B", "C", "D"], [_job("B"), _job("C"), _job("D")], TODAY, rep)
     assert rep["soft_outage"] and not ({"B", "C", "D"} & set(st.load_firmo_failures()))
+
+
+# --- 2026-08-26: the junk gate, the seam's audit, and the shim that must not guess -------
+
+def test_the_rehearsal_shim_can_classify_every_argv_the_real_seam_builds():
+    """The old shim branched on the literal string `allowedTools` in its argv, with a `||`
+    fall-through to the BLURB branch. When the seam moved onto pipeline/llm.py that predicate
+    became a coin flip and the fall-through would have answered every research call with a
+    blurb -- every one reading as a name failure, while the driver printed a plausible line
+    and exited 0 regardless. This goes red instead."""
+    import sys as _sys
+    _sys.path.insert(0, "tests/fixtures/company_intel")
+    import fake_claude
+    import fill_employees_llm
+    for want, schema in (("research", F._RESEARCH_SCHEMA),
+                         ("blurb", company_info._SCHEMA),
+                         ("employees", fill_employees_llm._SCHEMA)):
+        assert fake_claude.classify(["-p", "--json-schema", schema])[0] == want, want
+    # and it must not be made to always-pass
+    assert fake_claude.classify(["-p"])[0] == "unknown"
+    assert fake_claude.classify(["-p", "--json-schema", '{"required":["nope"]}'])[0] == "unknown"
+
+
+def test_a_bare_job_title_is_junk_and_no_real_company_in_the_repo_is(tmp_path):
+    """BACKLOG 11, restated as 101: `_JUNK_NAME` needs a role word FOLLOWED BY a separator,
+    so "Senior Data Analyst" and "BI Developer" were not junk and reached the auto-expand
+    queue. Closure rule: every token role/modifier vocabulary AND at least one head noun.
+
+    The head requirement is the safety. Swept over every real name in the repo on 2026-08-26
+    (companies.csv 1,244 + the export + research_companies.json + discovered_cache.json =
+    1,690 names) it fires on exactly two: "my team" (already junk) and "Infrastructure Team",
+    which was live in research_companies.json, one auto_expand run from being a row."""
+    for junk in ("Senior Data Analyst", "BI Developer", "Product Analyst", "Head of Data",
+                 "Infrastructure Team", "QA Engineer", "Full Stack Developer"):
+        assert F.is_bare_job_title(junk) and F.looks_like_junk(junk), junk
+    # the realistic false positives: all-vocabulary but head-less, or outside the vocabulary
+    for real in ("Unit", "Team8", "Data.ai", "Cloud Security", "Solutions IQ", "Riskified",
+                 "Lead Edge Capital", "CyberArk", "Check Point Software"):
+        assert not F.is_bare_job_title(real), real
+    # `Unit` is an ACTIVE ashby registry row; the first draft of this rule junked it
+    assert not F.looks_like_junk("Unit")
+
+
+def test_only_a_multiword_place_is_a_place_and_the_gate_is_this_lanes_alone():
+    """"Tel Aviv" became a registry row, a firmo_failed strike, and a board section carrying
+    another company's blurb (BACKLOG 167/223). MULTI-WORD only is the whole safety argument:
+    "Nesher", "Eilat", "Azor", "Yakum" are single-word entries in israel._IL_PLACES that are
+    also real Israeli company names (Nesher Israel Cement).
+
+    And it must stay OUT of `looks_like_junk`: `discovery` decided on 2026-08-25 that the
+    place gate is Telegram-only because the same check on the structured sources would veto
+    real employers, and `looks_like_junk` reaches six modules across four lanes and,
+    transitively, check_invariants' pool D."""
+    for place in ("Tel Aviv", "Tel-Aviv", "Ramat Gan", "Petah Tikva", "petahtikva"):
+        assert F.is_place_name(place) and F.not_a_company(place), place
+        assert not F.looks_like_junk(place), f"{place} must NOT reach the shared predicate"
+    for real in ("Tel Aviv Stock Exchange", "Jerusalem Venture Partners", "Haifa Chemicals",
+                 "Nesher", "Eilat", "Yakum", "Afek", "Caesarea", "Riskified"):
+        assert not F.is_place_name(real), real
+    # derived from the classifier lane's lists, never retyped (the ISRAEL_LOC precedent)
+    from pipeline import israel
+    multi = [x for x in israel._IL_PLACES + israel._IL_PLACES_HE if len(x.split()) > 1]
+    assert len(multi) > 20, "the classifier's place lists shrank under us"
+    assert all(F.is_place_name(x) for x in multi)
+
+
+def test_no_active_registry_row_is_refused_by_the_money_gate():
+    """A false positive here is a silently excluded company (ARCHITECTURE.md section 8).
+    Re-derive it rather than trusting the number in the commit message."""
+    import csv as _csv
+    rows = [r["company_name"] for r in _csv.DictReader(open("companies.csv", encoding="utf-8-sig"))
+            if r["active"].strip().lower() == "true"]
+    refused = [n for n in rows if F.not_a_company(n)]
+    assert not refused, f"the gate would refuse ACTIVE registry rows: {refused}"
+
+
+def test_the_blurb_loop_refuses_a_name_that_is_not_a_company(env):
+    """THE 2026-08-25 DAMAGE. `_research_targets` has always gated on junk; `_blurbs` had no
+    gate at all, so the model was handed "Tel Aviv" plus a secrettelaviv job's text as
+    context and profiled a company mentioned INSIDE the context -- company_info['Tel Aviv']
+    came back as Alma/Sisram Medical, was cached, and rendered as a board section. Widening
+    `looks_like_junk` would NOT have prevented it: this loop never consulted it."""
+    st, _export, calls, _ = env
+    ci, _fd, rep = _run(st, [_job("Tel Aviv"), _job("Senior Data Analyst"), _job("Wix")])
+    assert rep["blurbs_refused"] == 2
+    assert "Tel Aviv" not in ci and "Senior Data Analyst" not in ci
+    assert not [c for c in calls if "Tel Aviv" in c["prompt"]], "no call was spent on it"
+    assert rep["gated_junk"] == 2 and rep["researched"] == 1
+
+
+def test_the_mail_separates_a_weekly_retry_from_a_name_that_is_never_retried(env):
+    """One `gated` counter called every gated name "research failed, weekly retry" -- false
+    for a job title or a bare place, which are never retried at all."""
+    st, _export, _calls, _ = env
+    st.record_firmo_failure("Peak Innovation", TODAY)
+    _ci, _fd, rep = _run(st, [_job("Peak Innovation"), _job("Tel Aviv"), _job("Wix")])
+    line = CI.audit_lines(rep)[0][0]
+    assert "1 research failed, weekly retry" in line and "1 not a company" in line
+
+
+def test_the_export_line_counts_what_was_published_not_what_was_read(env):
+    """Today's mail said `export 942 records, newest 2026-08-25` on a morning that went on to
+    write 946, four of them dated 2026-08-26 -- the run understating its own work."""
+    st, export, _calls, _ = env
+    export.write_text(json.dumps({"Old": REC}), encoding="utf-8")
+    _ci, _fd, rep = _run(st, [_job("Wix")])
+    assert rep["published"] and rep["export_records"] == 2, rep["export_records"]
+    assert f"export {rep['export_records']} records" in CI.audit_lines(rep)[0][0]
+
+
+def test_a_research_answer_that_never_searched_is_counted_and_warned(env):
+    """Measured 2026-08-26: a prompt that merely SUGGESTED search searched on 1 of 4
+    companies, and every searchless answer was staler than the record it would have replaced.
+    A searchless research answer is a parametric guess cached until 2027-02, and the only
+    reason anyone would ever notice is this counter."""
+    st, _export, _calls, fake = env
+
+    def script(prompt, tools):
+        return json.dumps(REC)
+    fake.script = script
+    _ci, _fd, rep = _run(st, [_job("Wix")])
+    assert rep["llm"]["searches"] == 1 and not rep["llm"].get("searchless")
+
+    # now make the seam report a search-free research answer
+    rep2 = CI._report()
+    res = {"data": REC, "envelope": {}, "models": ["claude-sonnet-5"], "searches": 0,
+           "seconds": 1.0}
+    F.record_call(rep2["llm"], res, "sonnet")
+    rep2["llm"]["searchless"] = 1
+    rep2["llm"]["calls"] = 1
+    _line, warn = CI.audit_lines(rep2)
+    assert any("no web search" in w for w in warn), warn
+    assert "SEARCHLESS" in CI.audit_lines(rep2)[0][0]
+
+
+def test_the_seam_audit_reaches_the_mail(env):
+    """Today's whole company-intel step was one line and an opaque 2m22s group: 8 calls, no
+    model, no timing, no evidence the search ran."""
+    st, _export, _calls, _ = env
+    _ci, _fd, rep = _run(st, [_job("Wix"), _job("Fiverr")])
+    line = CI.audit_lines(rep)[0][0]
+    assert "seam:" in line and "calls" in line and "searches" in line, line
+
+
+def test_a_failed_name_carries_its_reason_into_the_mail(env):
+    """`research_company` collapses three different outcomes into None and `firmo_failed` has
+    no reason column, so the cause of a 7-day strike existed only in stderr."""
+    st, _export, _calls, fake = env
+    fake.script = lambda p, t: json.dumps({"unknown": True}) if t else "Co does X. It earns Y."
+    _ci, _fd, rep = _run(st, [_job("Nowhere Ltd")])
+    assert rep["failed"] == 1 and rep["failed_reasons"], rep
+    assert "could not identify" in rep["failed_reasons"][0][1]
+    assert "why failed: Nowhere Ltd" in CI.audit_lines(rep)[0][0]
+
+
+def test_audit_lines_never_raises_on_a_legacy_report(env):
+    """`audit_lines` is called at run.py:468, OUTSIDE enrich_for_run's never-raises guard, so
+    a KeyError there kills the run after classification and before rendering."""
+    legacy = {"research_off": False, "board_companies": 1, "candidates": 0, "researched": 0,
+              "failed": 0, "skipped_budget": 0, "unavailable_after": None,
+              "unavailable_reason": "", "unavailable_in": "", "soft_outage": False,
+              "blurb_outage": False, "blurbs_stopped": False, "cap": 5, "budget_min": 8,
+              "blurbs_written": 0, "blurbs_asked": 0, "blurbs_empty": 0, "blurbs_missing": 0,
+              "blurbs_skipped_budget": 0, "blurbs_derived": 0, "blurbs_waiting": 0,
+              "export_status": "ok", "export_records": 1, "export_newest": "2026-01-01",
+              "store_records": 1, "synced": 0, "published": True, "publish_error": "",
+              "scoped": False, "error": "", "gated": 0}
+    lines, warn = CI.audit_lines(legacy)      # every new key must be read with .get
+    assert lines and isinstance(warn, list)
+
+
+def test_the_budget_knobs_are_read_at_call_time_not_at_import(monkeypatch):
+    """As module constants they froze at first import, so a rehearsal that set the env
+    afterwards silently tested the defaults it meant to override."""
+    monkeypatch.setenv("FIRMO_MAX_PER_RUN", "2")
+    monkeypatch.setenv("FIRMO_TIME_BUDGET_MIN", "3")
+    monkeypatch.setenv("BLURB_MAX_PER_RUN", "4")
+    rep = CI._report()
+    assert (rep["cap"], rep["budget_min"], rep["blurb_cap"]) == (2, 3.0, 4)
+
+
+def test_the_digest_budget_fits_inside_the_mail_relay_slack():
+    """Measured 2026-08-26: the digest ran 05:38:55 -> 06:04:13 (25m18s) and the inbox relay
+    polls at 06:17, so there are ~13 minutes of slack before the mail slips an hour to the
+    07:17 poll. A 15-minute budget was LARGER than the slack -- safe only because it was
+    never spent. The bulk backlog belongs to the 10:00 UTC cron, not to the mail's path."""
+    assert CI._DEFAULTS["FIRMO_TIME_BUDGET_MIN"] <= 10
+
+
+def test_a_blurb_already_cached_under_a_non_company_name_is_dropped_at_read_time(env):
+    """Gating the loop only stops us BUYING another one. cloud_state/seen.db holds
+    company_info['Tel Aviv'] = "Alma, a Sisram Medical company, ..." — cached 2026-08-25 from
+    a secrettelaviv job's text used as context — and that is the text rendering under
+    `### Tel Aviv` on the board today. Dropping it at read time fixes every machine at once
+    and needs no write to seen.db, which is SINGLE_WRITER: daily-digest (committing the
+    laptop's copy would clobber the runner's matched/roles/llm_cache)."""
+    st, _export, _calls, _ = env
+    st.save_company_info({"Tel Aviv": "Alma, a Sisram Medical company, makes lasers."}, TODAY)
+    st.save_company_info({"Wix": "Wix builds websites. It sells subscriptions."}, TODAY)
+    ci, _fd, rep = _run(st, [_job("Tel Aviv"), _job("Wix")])
+    assert "Tel Aviv" not in ci, "the poisoned blurb must not reach a card"
+    assert ci.get("Wix"), "a real blurb is untouched"
+    assert rep["blurbs_dropped"] == 1

@@ -21,7 +21,7 @@ import sys
 
 from . import firmographics as _F
 from .firmographics import (ResearchUnavailable, display_index, identity_key,  # noqa: F401
-                            load_shared_status, looks_like_junk, save_shared, sync_store,
+                            load_shared_status, not_a_company, save_shared, sync_store,
                             union_store)
 
 
@@ -30,13 +30,36 @@ def research_company(*a, **kw):
     return _F.research_company(*a, **kw)
 
 
+def research_company_detail(*a, **kw):
+    """Same late binding for the (record, reason) form. The reason is what makes a
+    firmo_failed strike explicable: `research_company` collapses three different
+    outcomes into None, and the strike is a 7-day gate."""
+    return _F.research_company_detail(*a, **kw)
+
+
 # ---- the digest hook: blurbs + facts for one run ----------------------------------- #
 # Everything the digest needs from this lane, in one call that never raises, is bounded
 # in calls AND minutes, and reports itself (`audit_lines`) into the mail. Env-overridable
 # with today's values as defaults; `pipeline/run.py` holds none of these numbers.
-FIRMO_MAX_PER_RUN = int(os.environ.get("FIRMO_MAX_PER_RUN", "5"))
-FIRMO_TIME_BUDGET_MIN = float(os.environ.get("FIRMO_TIME_BUDGET_MIN", "15"))  # blurbs AND research
-BLURB_MAX_PER_RUN = int(os.environ.get("BLURB_MAX_PER_RUN", "30"))
+# Read at CALL time, not at import. As module constants they froze at first import, so a
+# rehearsal that set the env afterwards silently tested the defaults it meant to override.
+_DEFAULTS = {"FIRMO_MAX_PER_RUN": 5, "FIRMO_TIME_BUDGET_MIN": 8, "BLURB_MAX_PER_RUN": 30}
+
+
+def _knob(name, cast=int):
+    return cast(os.environ.get(name, _DEFAULTS[name]))
+
+
+# Kept as module names because tests, mutations and the audit line all read them; the values
+# are the defaults, and `_report()` re-reads the env every run.
+FIRMO_MAX_PER_RUN = _knob("FIRMO_MAX_PER_RUN")
+# 8, not 15. Measured 2026-08-26: the digest ran 05:38:55 -> 06:04:13 (25m18s) and the inbox
+# relay polls at 06:17, so there are ~13 minutes of slack before the mail slips a whole hour
+# to the 07:17 poll. A 15-minute budget was LARGER than the slack -- safe only because it was
+# never spent (this step used 2m22s). The bulk backlog belongs to the 10:00 UTC cron, which
+# has its own job and nothing waiting on it.
+FIRMO_TIME_BUDGET_MIN = _knob("FIRMO_TIME_BUDGET_MIN", float)
+BLURB_MAX_PER_RUN = _knob("BLURB_MAX_PER_RUN")
 RESEARCH_TIMEOUT_S = 240
 BLURB_RETRY_DAYS = 30      # a company the blurb model could not identify is asked again monthly
 STRIKE_RETRY_DAYS = 7      # a name research failed on is retried weekly
@@ -48,12 +71,15 @@ def _report():
             "failed": 0, "skipped_budget": 0, "unavailable_after": None,
             "unavailable_reason": "", "unavailable_in": "", "soft_outage": False,
             "blurb_outage": False, "blurbs_stopped": False,
-            "cap": FIRMO_MAX_PER_RUN, "budget_min": FIRMO_TIME_BUDGET_MIN,
             "blurbs_written": 0, "blurbs_asked": 0, "blurbs_empty": 0, "blurbs_missing": 0,
             "blurbs_skipped_budget": 0, "blurbs_derived": 0, "blurbs_waiting": 0,
             "export_status": "ok",
             "export_records": 0, "export_newest": "", "store_records": 0, "synced": 0,
-            "published": False, "publish_error": "", "scoped": False, "error": "", "gated": 0}
+            "published": False, "publish_error": "", "scoped": False, "error": "", "gated": 0,
+            "gated_junk": 0, "blurbs_refused": 0, "blurbs_dropped": 0, "llm": {}, "searchless": 0,
+            "registry_backlog": 0, "llm_off_upstream": "", "failed_reasons": [],
+            "cap": _knob("FIRMO_MAX_PER_RUN"), "budget_min": _knob("FIRMO_TIME_BUDGET_MIN", float),
+            "blurb_cap": _knob("BLURB_MAX_PER_RUN")}
 
 
 def _load_profiles(path):
@@ -131,6 +157,17 @@ class _Clock:
 def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None):
     from . import company_info as _ci
     company_info = {**st.load_company_info(), **_load_profiles(profiles_path)}
+    # A blurb ALREADY CACHED under a name that is not a company still renders: gating the
+    # loop only stops us buying another one. cloud_state/seen.db holds
+    # company_info['Tel Aviv'] = "Alma, a Sisram Medical company, ..." (cached 2026-08-25,
+    # from a secrettelaviv job's text used as context), and that is the text under
+    # `### Tel Aviv` on the board. Dropping it at READ time fixes every machine at once and
+    # needs no write to seen.db -- which is SINGLE_WRITER: daily-digest, so committing the
+    # laptop's copy would clobber the runner's matched/roles/llm_cache tables.
+    poisoned = [c for c in company_info if not_a_company(c)]
+    for c in poisoned:
+        company_info.pop(c, None)
+    rep["blurbs_dropped"] = len(poisoned)
     board = {j["company"] for j in board_jobs}
     # one blurb per identity: "Meta" and "Meta Israel" are one company (both had paid)
     by_key = {}
@@ -140,7 +177,17 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None):
     for c in board:
         if not company_info.get(c) and by_key.get(identity_key(c)):
             company_info[c] = by_key[identity_key(c)]
+    # THE GATE THAT WAS MISSING. `_research_targets` has always refused a junk name; the
+    # blurb loop had no gate at all, so on 2026-08-25 the model was handed the name
+    # "Tel Aviv" together with a secrettelaviv job's text as context and profiled a company
+    # mentioned INSIDE that context: company_info['Tel Aviv'] came back as Alma/Sisram
+    # Medical, was cached, and rendered under `### Tel Aviv` on the board. The research
+    # prompt forbids exactly that; the blurb prompt did not. Widening `looks_like_junk`
+    # (BACKLOG 11/101) would NOT have prevented it -- this loop never consulted it.
     missing = sorted(c for c in board if not company_info.get(c))
+    refused = {c for c in missing if not_a_company(c)}
+    rep["blurbs_refused"] = len(refused)
+    missing = [c for c in missing if c not in refused]
     rep["blurbs_missing"] = len(missing)
     if not use_llm or not missing:
         return company_info, missing
@@ -169,6 +216,7 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None):
         try:
             rep["blurbs_asked"] += 1
             summ = _ci.summarize_company(company, _context_for(company, board_jobs),
+                                         meta=rep["llm"],
                                          timeout=int(max(10, min(90, clock.remaining()))))
         except ResearchUnavailable as e:
             rep["blurbs_asked"] -= 1
@@ -211,17 +259,20 @@ def _research_targets(st, board_jobs, email_jobs, firmo, run_date):
     cutoff = (_dt.date.fromisoformat(run_date) - _dt.timedelta(days=STRIKE_RETRY_DAYS)).isoformat()
     norms = {identity_key(c) for c in firmo}
     failed_norms = {identity_key(c) for c, (_att, last) in failures.items() if last > cutoff}
-    out, batch, gated = [], set(), 0
+    out, batch, gated, gated_junk = [], set(), 0, 0
     for c in _research_order(board_jobs, email_jobs):
         k = identity_key(c)
         if c in firmo or k in norms or k in batch:
             continue  # profiled, or "X Israel" beside "X" in one digest: one slot, one record
-        if k in failed_norms or looks_like_junk(c):
-            gated += 1  # a failed name retries weekly; a leaked job title never
+        if not_a_company(c):
+            gated_junk += 1     # a job title / category word / bare place: never, not weekly
+            continue
+        if k in failed_norms:
+            gated += 1          # research failed on this name: retried weekly
             continue
         batch.add(k)
         out.append(c)
-    return out, gated
+    return out, gated, gated_junk
 
 
 def _research(st, targets, board_jobs, run_date, rep, clock=None):
@@ -240,19 +291,24 @@ def _research(st, targets, board_jobs, run_date, rep, clock=None):
             rep["skipped_budget"] = len(todo) - i
             break
         try:
-            rec = research_company(company, _context_for(company, board_jobs),
-                                   timeout=int(min(RESEARCH_TIMEOUT_S, remaining)))
+            rec, why = research_company_detail(
+                company, _context_for(company, board_jobs),
+                timeout=int(min(RESEARCH_TIMEOUT_S, remaining)), meta=rep["llm"])
         except ResearchUnavailable as e:
             # infrastructure outage: don't blame the names, don't burn the budget
             rep["unavailable_after"] = i
             rep["unavailable_in"] = "research"
             rep["unavailable_reason"] = str(e)
+            rep["unavailable_kind"] = getattr(e, "kind", "")
             break
         if rec:
             st.save_firmographics({company: rec}, run_date)
             done[company] = rec
         else:
             failed_names.append(company)
+            # the cause used to exist only in stderr, and the strike is a 7-day gate -- so
+            # nobody could tell a hallucinating model from a name that is not a company
+            rep["failed_reasons"].append((company, why))
     rep["researched"] = len(done)
     rep["failed"] = len(failed_names)
     if failed_names and not done and len(failed_names) >= SOFT_OUTAGE_MIN_FAILS:
@@ -313,7 +369,8 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
                                           clock)
     holder["company_info"] = company_info
 
-    targets, rep["gated"] = _research_targets(st, board_jobs, email_jobs, firmo, run_date)
+    targets, rep["gated"], rep["gated_junk"] = _research_targets(
+        st, board_jobs, email_jobs, firmo, run_date)
     rep["candidates"] = len(targets)
     if use_llm and targets and rep["unavailable_after"] is None and not rep["blurb_outage"]:
         firmo.update(_research(st, targets, board_jobs, run_date, rep, clock))
@@ -335,12 +392,33 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
             company_info[c] = text
             rep["blurbs_derived"] += 1
 
+    # How many ACTIVE registry rows would render with no facts at all, counted through
+    # identity_key -- the name-match version reports 39 false gaps where the truth is 29,
+    # because display_index already answers for "Dell" from "Dell Technologies". This is the
+    # number that makes "is every company we know about researched?" answerable each morning
+    # instead of re-derived by hand.
+    try:
+        from .companies import load_companies
+        rep["registry_backlog"] = sum(
+            1 for r in load_companies(active_only=True)
+            if not (firmo.get(r["company_name"]) or by_key.get(identity_key(r["company_name"]))))
+    except Exception as e:  # noqa: BLE001 — a gauge must never cost the mail
+        rep["registry_backlog"] = -1
+        print(f"  [company-intel] registry backlog not counted: {e!r}", file=sys.stderr, flush=True)
+
     if not scoped and rep["export_status"] != "corrupt":
         try:
             rep["published"] = save_shared(firmo)
         except Exception as e:  # noqa: BLE001
             rep["publish_error"] = f"{type(e).__name__}: {e}"[:120]
             print(f"  [company-intel] shared export NOT written: {e}", file=sys.stderr, flush=True)
+    # The line must describe the file a reader can open NOW, not the one we opened at 05:00.
+    # Captured at the top, it reported `export 942 records, newest 2026-08-25` on a morning
+    # that went on to write 946 with four records dated 2026-08-26 -- the confidently-stale
+    # statement this repo punishes hardest. `synced` keeps its read-time meaning.
+    if rep["published"]:
+        rep["export_records"] = len(firmo)
+        rep["export_newest"] = max((str(r.get("as_of") or "") for r in firmo.values()), default="")
     return company_info, firmo_display, rep
 
 
@@ -362,8 +440,11 @@ def audit_lines(rep):
         msg = f"company intel FAILED ({_ascii(rep['error'], 160)}) — cards render from whatever was assembled"
         parts.append(msg)
         warn.append(msg)
-    gated = (f" ({rep['gated']} more unprofiled: research failed, weekly retry)"
-             if rep.get("gated") else "")
+    # One counter used to call every gated name "research failed, weekly retry" -- false for
+    # a job title or a bare place, which are never retried at all.
+    _g = ([f"{rep['gated']} research failed, weekly retry"] if rep.get("gated") else []) + \
+         ([f"{rep['gated_junk']} not a company"] if rep.get("gated_junk") else [])
+    gated = f" ({' + '.join(_g)} — unprofiled)" if _g else ""
     if rep["research_off"]:
         parts.append((f"research off (--no-llm); {c} of {n} board companies unprofiled"
                       if c else f"research off (--no-llm); all {n} board companies profiled") + gated)
@@ -409,12 +490,45 @@ def audit_lines(rep):
         b.append(f"{rep['blurbs_derived']} derived from facts")
     if rep["blurbs_waiting"]:
         b.append(f"{rep['blurbs_waiting']} waiting (monthly retry / same company)")
+    if rep.get("blurbs_refused"):
+        b.append(f"{rep['blurbs_refused']} refused (not a company)")
     parts.append("blurbs: " + ", ".join(b))
+    llm = rep.get("llm") or {}
+    if llm.get("calls"):
+        served = ", ".join(f"{m.replace('claude-', '')}{'' if n == 1 else f' x{n}'}"
+                           for m, n in sorted(llm.get("models", {}).items(), key=lambda kv: -kv[1]))
+        bits = [f"{llm['calls']} calls", f"{llm.get('seconds', 0):.0f}s",
+                f"{llm.get('searches', 0)} searches"]
+        if llm.get("searchless"):
+            bits.append(f"{llm['searchless']} SEARCHLESS")
+        parts.append("seam: " + (served + " · " if served else "") + ", ".join(bits))
+        # a research call that never searched is a parametric guess cached until 2027-02
+        if llm.get("searchless"):
+            warn.append(f"{llm['searchless']} research answer(s) made no web search — those "
+                        f"records are parametric guesses, not researched facts")
+        asked = {a for a in (llm.get("asked") or set())}
+        drift = [m for m in llm.get("models", {}) if asked and not any(
+            str(a).lower() in str(m).lower() for a in asked)]
+        if drift:
+            warn.append(f"model drift: asked {sorted(asked)}, served {_ascii(str(drift))}")
+    if rep.get("llm_off_upstream"):
+        msg = (f"research and blurbs skipped: the classifier's breaker was already open "
+               f"({_ascii(rep['llm_off_upstream'], 80)})")
+        parts.append(msg)
+        warn.append(msg)
+    if rep.get("failed_reasons"):
+        why = "; ".join(f"{c}: {_ascii(r, 60)}" for c, r in rep["failed_reasons"][:2])
+        parts.append(f"why failed: {why}")
     if rep["export_status"] == "ok":
         e = f"export {rep['export_records']} records, newest {rep['export_newest'] or '?'}"
         if rep["synced"]:
             e += f", {rep['synced']} newer than the store"
+        if rep.get("registry_backlog", 0) >= 0:
+            e += f", registry backlog {rep.get('registry_backlog', 0)}"
         parts.append(e)
+        if rep.get("registry_backlog", 0) > 0 and not rep["researched"] and not rep["research_off"]:
+            warn.append(f"{rep['registry_backlog']} active registry rows still have no facts "
+                        f"and this run researched none — the backlog is not draining")
         if rep.get("publish_error") or (not rep["published"] and not rep.get("scoped")
                                         and not rep.get("error")):
             msg = "export NOT written" + (f" ({_ascii(rep.get('publish_error'), 120)})"

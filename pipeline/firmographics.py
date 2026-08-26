@@ -78,10 +78,97 @@ CATEGORY_NAMES = {"appsec", "devops", "devsecops", "data", "security", "cyber", 
                   "frontend", "fullstack", "mobile", "web"}
 
 
+# A leaked headline has no separator for `_JUNK_NAME` to key on ("Senior Data Analyst",
+# "BI Developer", "Infrastructure Team"), so those reach the auto-expand queue and become
+# companies.csv rows two runs later (BACKLOG 11, restated as 101). The rule is CLOSURE, not
+# a pattern: every token must be role/modifier vocabulary AND at least one must be a head
+# noun. The head requirement is the safety -- "Cloud Security", "Data.ai" and "Solutions IQ"
+# are all-vocabulary but head-less; "Team8" tokenizes outside it.
+_TITLE_HEAD = frozenset("""
+developer developers engineer engineers engineering scientist scientists researcher
+researchers analyst analysts architect architects designer designers manager managers lead
+leads head specialist specialists consultant consultants intern interns administrator
+programmer tester team teams""".split())
+
+# NOT heads, on purpose: unit, group, division, department, position, role. Each is a real
+# company name -- `Unit` (ashby/unit, fintech BaaS) is an ACTIVE registry row.
+_TITLE_MOD = frozenset("""
+senior sr junior jr principal staff chief vp director associate assistant entry level trainee
+apprentice deputy global regional experienced mid middle expert full stack fullstack backend
+frontend front back end software data bi business product marketing sales financial finance
+research systems system solution solutions platform infrastructure security cyber cloud
+network networking machine learning ai ml nlp llm computer vision web mobile game embedded
+algorithm algorithms automation quality qa test testing support customer technical tech
+project program operation operations people hr growth content graphic ui ux ios android java
+python sql php net node react devops sre analytics database db etl ops
+my our the of and for a an in at with to""".split())
+
+_TITLE_VOCAB = _TITLE_HEAD | _TITLE_MOD
+_TITLE_TOKEN = re.compile(r"[a-z0-9'+.&-]+")
+
+
+def is_bare_job_title(name):
+    """True when a name is ENTIRELY role words plus seniority modifiers, with no separator
+    for `_JUNK_NAME` to key on: "Senior Data Analyst", "BI Developer", "Head of Data"."""
+    toks = [t.strip("'.&-") for t in _TITLE_TOKEN.findall(str(name or "").lower())]
+    toks = [t for t in toks if t]
+    if not toks or len(toks) > 6:            # a 7-token all-vocabulary string is a sentence
+        return False
+    return all(t in _TITLE_VOCAB for t in toks) and any(t in _TITLE_HEAD for t in toks)
+
+
+def _squash(s):
+    return re.sub(r"[\s\-'\u2019\u05be]+", "", str(s or "").lower())
+
+
+_PLACES = None
+PLACE_OK = frozenset()      # a real employer whose whole name is a place. Empty on
+                            # 2026-08-26; every addition needs a registry row behind it.
+
+
+def is_place_name(name):
+    """True when the WHOLE name is a MULTI-WORD Israeli place -- a leaked location in the
+    employer slot. "Tel Aviv" became a registry row, a firmo_failed strike, and a board
+    section carrying another company's blurb (2026-08-25, BACKLOG 167/223).
+
+    Derived from pipeline/israel.py's two lists rather than retyped -- the
+    `scrape_universal.ISRAEL_LOC` precedent -- because a retyped mirror of a shared list is
+    how three coverage losses were reported as owned. israel.py is the `classifier` lane's
+    file: read and derive, never write.
+
+    MULTI-WORD ONLY, and that is the whole safety argument. "Nesher", "Eilat", "Azor",
+    "Yakum", "Afek" and "Lod" are single-word entries that are also real Israeli company
+    names (Nesher Israel Cement); "Tel Aviv", "Ramat Gan", "Petah Tikva" are nobody's brand.
+    Whole-name match after squashing spaces and hyphens, so "Tel-Aviv" and "Petahtikva" read
+    as the listed form while "Tel Aviv Stock Exchange" and "Jerusalem Venture Partners" --
+    a place PLUS other tokens -- never match.
+
+    This is NOT folded into `looks_like_junk`: `discovery` decided on 2026-08-25 that the
+    place gate is Telegram-only, because the same check on the structured sources would veto
+    real employers that share a place name. `looks_like_junk` reaches six modules across four
+    lanes and, transitively, check_invariants' pool D. This lane spends money, so this lane
+    gates itself -- through `not_a_company`, not through everyone's predicate."""
+    global _PLACES
+    if _PLACES is None:
+        from .israel import _IL_PLACES, _IL_PLACES_HE
+        _PLACES = frozenset(_squash(x) for x in list(_IL_PLACES) + list(_IL_PLACES_HE)
+                            if len(x.split()) > 1)
+    n = _squash(name)
+    return bool(n) and n in _PLACES and n not in PLACE_OK
+
+
 def looks_like_junk(name):
     """True when a 'company name' is really a leaked job title / category / team phrase."""
     n = " ".join(str(name or "").lower().split())
-    return n in CATEGORY_NAMES or bool(_JUNK_NAME.search(name or ""))
+    return (n in CATEGORY_NAMES or bool(_JUNK_NAME.search(name or ""))
+            or is_bare_job_title(name))
+
+
+def not_a_company(name):
+    """The gate this lane spends money behind: a leaked job title, a bare category word, or
+    a bare place. `looks_like_junk` is what the registry and discovery lanes share; the place
+    half is deliberately kept out of it (see `is_place_name`)."""
+    return looks_like_junk(name) or is_place_name(name)
 
 
 # ---- firmographics identity -------------------------------------------------------- #
@@ -292,6 +379,11 @@ def ask(prompt, *, system, schema, model, effort, tools=(), timeout=240, meta=No
         raise ResearchUnavailable(str(e), kind=getattr(e, "kind", "transient")) from e
     if meta is not None:
         record_call(meta, res, model)
+        if tools and not (res.get("searches") or 0):
+            # a research answer that made no web search is a PARAMETRIC guess. Measured
+            # 2026-08-26: searchless answers were staler than the records they replaced --
+            # Aidoc missed its own 2026-04 Series E. Counted so the mail can say so.
+            meta["searchless"] = meta.get("searchless", 0) + 1
     return res
 
 
