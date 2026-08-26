@@ -819,3 +819,20 @@ def test_a_blurb_already_cached_under_a_non_company_name_is_dropped_at_read_time
     assert "Tel Aviv" not in ci, "the poisoned blurb must not reach a card"
     assert ci.get("Wix"), "a real blurb is untouched"
     assert rep["blurbs_dropped"] == 1
+
+
+def test_every_company_intel_mutation_still_aims_at_real_code():
+    """A mutation whose `find` no longer occurs is not a guard, it is a comment.
+    `ci-intel-line-md` rotted silently when the `render` lane rewrote digest.py, and three
+    more died when the seam migrated — and nobody noticed, because tests.yml runs
+    `python tools/mutate.py --all` whose DEFAULT catalogue is tests/mutations.json, so this
+    catalogue is in no CI path at all. This test is that CI path, at zero cost."""
+    cat = json.load(open("tests/fixtures/company_intel/mutations.json", encoding="utf-8"))
+    assert len(cat) >= 30, "the catalogue lost records"
+    assert len({m["id"] for m in cat}) == len(cat), "duplicate mutation id"
+    stale = []
+    for m in cat:
+        n = open(m["file"], encoding="utf-8").read().count(m["find"])
+        if n != 1:
+            stale.append((m["id"], m["file"], n))
+    assert not stale, f"mutations that no longer aim at real code: {stale}"

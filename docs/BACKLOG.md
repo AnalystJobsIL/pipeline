@@ -2877,3 +2877,85 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     tree this was written from — named here without its path, because the file is not committed
     yet and `docs/check_docs.py` fails on a doc that names a path which does not exist.
     in the current working tree.
+
+
+## From the `company-intel` lane, 2026-08-26 (evening)
+
+241. **`persist_state.py commit --own PATH` commits the WHOLE index, not the owned paths** —
+    lane: `infra`. `_commit` (persist_state.py:420) is `git("commit", "-q", "-m", msg)` with
+    no pathspec and no `--only`, so after `stage()` has `git add`-ed the owned paths it
+    commits whatever else is already staged. On a runner the index holds nothing else and
+    this is invisible; in the shared laptop checkout, where four lane sessions work at once,
+    it is not. **Reproduced 2026-08-26:** `persist_state.py commit --own
+    cloud_state/firmographics.json` produced `f71d4ac` carrying **17 files** — the
+    `discovery`, `scraper`, `ats-fetch` and `docs` lanes' staged work, under this lane's
+    commit message and authorship. Withdrawn in `2709dc9` (a forward commit built through a
+    temporary index; no rewrite, no force push, the working tree never touched, so their
+    newest edits stayed theirs). Fix: `git("commit", "-q", "--only", "-m", msg, "--", *owned)`
+    — with the caveat `discovery` raised, that `--only` with a pathspec errors on an empty
+    commit, so the existing "nothing to commit" path needs to keep handling that. Sits beside
+    **238**: both are a job's `--own` list claiming more than the step actually wrote.
+
+242. **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** —
+    lane: `company-intel`. Supersedes the implied approach in **98**. `merge` picks its winner
+    with `newer()` (later `as_of`, then fullness); `display_index` ranks canonical name first,
+    then non-site-form, then fullest. They **disagree**, and for 8 of the 29 groups the site
+    or alias record is the newer one, so the naive merge writes the parent with the child's
+    facts: **Amazon** would read AWS's 150,000 employees and founded 2006 instead of 1,576,000
+    and 1994; **Microsoft** founded 1989 (the year its Israeli R&D centre opened) instead of
+    1975; **Broadcom** 1991 instead of 1961; Intel, Cisco, NVIDIA, Western Digital and Applied
+    Materials likewise. A correct merge pins the winner to `display_index`'s choice and fills
+    only its EMPTY fields — on 2026-08-26 that changes 0 field values, i.e. it is a pure
+    deletion of 29 keys. **And even then it is undone in one morning**: `union_store` is
+    export ∪ sqlite, so a deleted key returns from `cloud_state/seen.db` on the next run and
+    `save_shared` writes it back. Making it stick needs either a tombstone
+    (`{"merged_into": ..., "as_of": ...}`, which `sync_store` then seeds over the sqlite row
+    for free, and which `display_index` / any counting consumer must learn to skip) or a
+    sqlite deletion — and `cloud_state/seen.db` is `SINGLE_WRITER: daily-digest`. Value today
+    is zero: `display_index` already answers every group correctly. Do this only alongside a
+    reason to touch the export anyway.
+
+243. **`firmo_failed` has no reason column, and the reason now exists** — lane: shared
+    (`pipeline/store.py`), consumer `company-intel`. The table is `(company TEXT PRIMARY KEY,
+    attempts INTEGER, last TEXT)`; the cause of a 7-day gate only ever existed in stderr. As
+    of 2026-08-26 `firmographics.research_company_detail` returns `(record, reason)` and the
+    reason rides the run audit into `digests/latest.md`, which is committed every morning, so
+    `git log -p -- digests/latest.md` answers "why did this name fail" for any past run. The
+    durable version belongs in this file's preamble item 8 (one generic attempts table serving
+    both `firmo_failed` and `cloud_state/resolve_attempts.json`), not in a schema migration on
+    a committed sqlite binary for a two-row table.
+
+244. **Company-death knowledge still dies in `stage_note`** — lane: `company-intel` produces,
+    `registry` writes. Restates preamble item 10 with a measurement. A shutdown/absorption
+    vocabulary over `stage_note` finds **23 candidates, 15 of them active registry rows**,
+    with clear true positives (Believer Meats insolvency Dec 2025, Castor court-ordered
+    liquidation, Highcon creditor protection, XACT Robotics shut down, Aporia→Coralogix,
+    Qwak→JFrog, Run:ai→NVIDIA, Otterize→Cyera, Veriti→Check Point, Deepchecks→Check Point) and
+    obvious false positives (`Ford`, `Nike`) that a second signal removes. The rule needs BOTH
+    signals: this lane's evidence (the note matches AND `stage != "public"`) and the registry's
+    own (active, and no matched role in >= 30 days, or a note already carrying `page-empty`).
+    Deliberately NOT automated: an acquired company that still hires (Wiz is
+    `acquired-by-bigtech` and hiring) parked by a plausible verdict is `ARCHITECTURE.md` §8's
+    first failure class. The right shape is a read-only proposal list a human pastes through
+    `pipeline/notes.py`.
+
+245. **`is_place_name` is multi-word only, so a single-word city can still leak** — lane:
+    `company-intel`. `Nesher`, `Eilat`, `Azor`, `Yakum`, `Afek` and `Lod` are single-word
+    entries in `israel._IL_PLACES` that are also real Israeli company names (Nesher Israel
+    Cement), so the whole-name place gate deliberately ignores them. A Telegram post whose
+    city line shifts into the employer slot as a single word therefore still reaches this
+    lane. `discovery_telegram.is_place_name` DOES catch those, at the source, which is the
+    right place; this is a note that the second line of defence is narrower than the first,
+    not a request to widen it. `PLACE_OK` is the escape hatch if a real employer is ever
+    caught; it is empty on 2026-08-26.
+
+246. **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** — lane:
+    `company-intel`. It prints a plausible line and returns success even when every research
+    call failed, which is how a broken shim could have gone unnoticed (see the 2026-08-26
+    shim rebuild). It needs `rehearse_classifier.py`'s shape: a `checks` list, PASS/FAIL per
+    line and `sys.exit(0 if ok else 1)`. The checks that matter: `researched + failed +
+    skipped + waiting == candidates`; `export N records` equals the scratch export's real key
+    count after the run; the export key count never FALLS; `firmo_failed` gains rows only in
+    the cases that predict strikes (zero on `fail`, `is_error`, soft outage); the research
+    argv carries `--model`, `--effort` and the search grant on both axes with `cwd` not the
+    repo; and `git status --short` unchanged (already there).

@@ -3,8 +3,8 @@
   "id": "ci-outage-continues",
   "file": "pipeline/company_intel.py",
   "cls": "M2",
-  "find": "            rep[\"unavailable_in\"] = \"research\"\n            rep[\"unavailable_reason\"] = str(e)\n            break",
-  "replace": "            rep[\"unavailable_in\"] = \"research\"\n            rep[\"unavailable_reason\"] = str(e)\n            continue"
+  "find": "            rep[\"unavailable_kind\"] = getattr(e, \"kind\", \"\")\n            break",
+  "replace": "            rep[\"unavailable_kind\"] = getattr(e, \"kind\", \"\")\n            continue"
  },
  {
   "id": "ci-soft-outage-strikes",
@@ -38,8 +38,8 @@
   "id": "ci-corrupt-reads-empty-ok",
   "file": "pipeline/firmographics.py",
   "cls": "M3",
-  "find": "    except Exception:  # noqa: BLE001 \u2014 bad JSON, a half-written file, permissions\n        return {}, \"corrupt\"",
-  "replace": "    except Exception:  # noqa: BLE001 \u2014 bad JSON, a half-written file, permissions\n        return {}, \"ok\""
+  "find": "    except Exception:  # noqa: BLE001 — bad JSON, a half-written file, permissions\n        return {}, \"corrupt\"",
+  "replace": "    except Exception:  # noqa: BLE001 — bad JSON, a half-written file, permissions\n        return {}, \"ok\""
  },
  {
   "id": "ci-blurb-empty-respend",
@@ -59,15 +59,15 @@
   "id": "ci-json-greedy",
   "file": "pipeline/firmographics.py",
   "cls": "M2",
-  "find": "    for i, ch in enumerate(raw or \"\"):\n        if ch != \"{\":\n            continue",
-  "replace": "    for i, ch in enumerate(raw or \"\"):\n        if ch != \"{\" or i != (raw or \"\").find(\"{\"):\n            continue"
+  "find": "            if set(obj) - {\"unknown\", \"known\"}:\n                return obj",
+  "replace": "            if True:\n                return obj"
  },
  {
-  "id": "ci-shell-always",
-  "file": "pipeline/firmographics.py",
+  "id": "ci-seam-cwd-is-repo",
+  "file": "pipeline/llm.py",
   "cls": "M2",
-  "find": "                              shell=_is_windows())",
-  "replace": "                              shell=True)"
+  "find": "                              cwd=cwd or tempfile.gettempdir())",
+  "replace": "                              cwd=cwd or os.path.dirname(os.path.dirname(__file__)))"
  },
  {
   "id": "ci-derive-blurb-cached",
@@ -99,10 +99,10 @@
  },
  {
   "id": "ci-intel-line-md",
-  "file": "pipeline/digest.py",
+  "file": "pipeline/company_intel.py",
   "cls": "M1",
-  "find": "    if s.get(\"company_intel\"):\n        lines.append(\"- **Company intel:** \" + \"; \".join(s[\"company_intel\"]))",
-  "replace": "    if False:\n        lines.append(\"- **Company intel:** \" + \"; \".join(s[\"company_intel\"]))"
+  "find": "    parts.append(\"seam: \" + (served + \" · \" if served else \"\") + \", \".join(bits))",
+  "replace": "    pass"
  },
  {
   "id": "ci-intel-line-txt",
@@ -124,5 +124,110 @@
   "cls": "M1",
   "find": "    except Exception as e:  # noqa: BLE001\n        rep[\"error\"] = f\"{type(e).__name__}: {e}\"[:160]",
   "replace": "    except ZeroDivisionError as e:  # noqa: BLE001\n        rep[\"error\"] = f\"{type(e).__name__}: {e}\"[:160]"
+ },
+ {
+  "id": "ci-research-tools-empty",
+  "file": "pipeline/firmographics.py",
+  "cls": "M1",
+  "find": "              effort=RESEARCH_EFFORT, tools=SEARCH, timeout=timeout, meta=meta)",
+  "replace": "              effort=RESEARCH_EFFORT, tools=(), timeout=timeout, meta=meta)"
+ },
+ {
+  "id": "ci-research-permission-dropped",
+  "file": "pipeline/llm.py",
+  "cls": "M3",
+  "find": "    if tl:\n        cmd += [\"--allowedTools\", tl]",
+  "replace": "    if False:\n        cmd += [\"--allowedTools\", tl]"
+ },
+ {
+  "id": "ci-model-unpinned",
+  "file": "pipeline/firmographics.py",
+  "cls": "M7",
+  "find": "RESEARCH_MODEL = os.environ.get(\"FIRMO_RESEARCH_MODEL\", \"sonnet\")",
+  "replace": "RESEARCH_MODEL = os.environ.get(\"FIRMO_RESEARCH_MODEL\", \"\")"
+ },
+ {
+  "id": "ci-search-mandate-softened",
+  "file": "pipeline/firmographics.py",
+  "cls": "M7",
+  "find": "    \"ALWAYS search the web before you answer. Call WebSearch at least once for every company, \"",
+  "replace": "    \"Use web search for current facts. \""
+ },
+ {
+  "id": "ci-searchless-uncounted",
+  "file": "pipeline/firmographics.py",
+  "cls": "M1",
+  "find": "            meta[\"searchless\"] = meta.get(\"searchless\", 0) + 1",
+  "replace": "            pass"
+ },
+ {
+  "id": "ci-searches-wrong-counter",
+  "file": "pipeline/llm.py",
+  "cls": "M2",
+  "find": "    return sum((u or {}).get(\"webSearchRequests\") or 0 for u in usage.values())",
+  "replace": "    return ((data or {}).get(\"usage\") or {}).get(\"server_tool_use\", {}).get(\"web_search_requests\", 0)"
+ },
+ {
+  "id": "ci-served-by-input-tokens",
+  "file": "pipeline/llm.py",
+  "cls": "M1",
+  "find": "    return max(usage, key=lambda m: (usage[m] or {}).get(\"outputTokens\") or 0)",
+  "replace": "    return max(usage, key=lambda m: (usage[m] or {}).get(\"inputTokens\") or 0)"
+ },
+ {
+  "id": "ci-blurbs-not-gated",
+  "file": "pipeline/company_intel.py",
+  "cls": "M1",
+  "find": "    refused = {c for c in missing if not_a_company(c)}",
+  "replace": "    refused = set()"
+ },
+ {
+  "id": "ci-poisoned-blurb-kept",
+  "file": "pipeline/company_intel.py",
+  "cls": "M1",
+  "find": "    poisoned = [c for c in company_info if not_a_company(c)]",
+  "replace": "    poisoned = []"
+ },
+ {
+  "id": "ci-title-arm-any-not-all",
+  "file": "pipeline/firmographics.py",
+  "cls": "M3",
+  "find": "    return all(t in _TITLE_VOCAB for t in toks) and any(t in _TITLE_HEAD for t in toks)",
+  "replace": "    return any(t in _TITLE_VOCAB for t in toks)"
+ },
+ {
+  "id": "ci-place-arm-substring",
+  "file": "pipeline/firmographics.py",
+  "cls": "M3",
+  "find": "    return bool(n) and n in _PLACES and n not in PLACE_OK",
+  "replace": "    return bool(n) and any(p in n for p in _PLACES) and n not in PLACE_OK"
+ },
+ {
+  "id": "ci-place-arm-in-shared-predicate",
+  "file": "pipeline/firmographics.py",
+  "cls": "M3",
+  "find": "    return (n in CATEGORY_NAMES or bool(_JUNK_NAME.search(name or \"\"))\n            or is_bare_job_title(name))",
+  "replace": "    return (n in CATEGORY_NAMES or bool(_JUNK_NAME.search(name or \"\"))\n            or is_bare_job_title(name) or is_place_name(name))"
+ },
+ {
+  "id": "ci-export-count-pre-write",
+  "file": "pipeline/company_intel.py",
+  "cls": "M2",
+  "find": "        rep[\"export_records\"] = len(firmo)",
+  "replace": "        pass"
+ },
+ {
+  "id": "ci-coerce-accepts-known-false",
+  "file": "pipeline/firmographics.py",
+  "cls": "M3",
+  "find": "    if not isinstance(rec, dict) or rec.get(\"unknown\") or rec.get(\"known\") is False:",
+  "replace": "    if not isinstance(rec, dict) or rec.get(\"unknown\"):"
+ },
+ {
+  "id": "ci-budget-back-to-fifteen",
+  "file": "pipeline/company_intel.py",
+  "cls": "M7",
+  "find": "\"FIRMO_TIME_BUDGET_MIN\": 8,",
+  "replace": "\"FIRMO_TIME_BUDGET_MIN\": 15,"
  }
 ]
