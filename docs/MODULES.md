@@ -58,14 +58,14 @@ If one of these stops working the pipeline degrades silently, because most of th
 | module | imported by | what it does |
 |---|---|---|
 | `comeet_resolve.py` | `audit_empty_rows.py`, `resolve_llm.py` | reads `window.comeetvar` off a rendered page to recover a Comeet uid+token |
-| `deep_validate.py` | `audit_empty_rows.py`, `crack_walled.py`, `listing_hunt.py` +7 more | the Chromium rung of the Sunday audit (`validate_one` / `apply_verdict`, imported by audit_empty_rows; `--only` on demand); owns `google_via_unlocker`, the only search rung that works today |
+| `deep_validate.py` | `audit_empty_rows.py`, `crack_walled.py`, `listing_hunt.py` +8 more | the Chromium rung of the Sunday audit (`validate_one` / `apply_verdict`, imported by audit_empty_rows; `--only` on demand); owns `google_via_unlocker`, the only search rung that works today |
 | `ingest_research.py` | `resolve_parallel.py`, `resolve_unknowns.py`, `retry_unreachable.py` | resolve+verify helpers for the research queue. **Not deletable**: `retry_unreachable` (02:30 daily) imports `PROBE_FAST`, `_cand_slugs` and `_try` from it |
 | `merge_csv_rows.py` | `persist_state.py`, `registry_health.py`, `tests/test_registry.py` +1 more | git-layer segment-aware merge for companies.csv; persist_state.py applies it on every push conflict |
 | `merge_json_cache.py` | `persist_state.py`, `tests/test_units.py` | three-way merge for the company-keyed JSON caches (deletions honoured since 2026-08-25); persist_state.py applies it |
 | `probe_ats.py` | `ingest_research.py`, `probe_expand.py` | guessable-slug probing. **Not deletable**: `ingest_research` imports `slug_variants` |
 | `resolve_deep.py` | `auto_expand.py`, `bd_rescue.py`, `recheck_suspects.py` +4 more | deterministic resolver tier (recognizable ATS URLs, iframes) |
 | `resolve_llm.py` | `auto_expand.py`, `deep_validate.py`, `listing_hunt.py` +1 more | the LLM resolution tier: evidence bundle -> one `claude -p` proposal -> verified through the real fetcher |
-| `scrape_universal.py` | `bd_rescue.py`, `check_invariants.py`, `crack_walled.py` +9 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
+| `scrape_universal.py` | `bd_rescue.py`, `check_invariants.py`, `crack_walled.py` +10 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
 
 ## Operator tools - a human or an agent runs these on demand
 
@@ -129,6 +129,7 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/company_info.py` | the two-sentence company blurb, and `derive_blurb` (the facts read as prose when the blurb is missing) |
 | `pipeline/company_intel.py` | the digest hook: blurbs + facts for one run, bounded and never raising, and the `Company intel:` line in the mail's run audit (ARCHITECTURE.md section 7) |
 | `pipeline/digest.py` | renders cards into the board, the archive and the email; `render_all` is run.py's one entry |
+| `pipeline/discovery_queue.py` | the research_companies.json queue, read and written safely (ABSENT is not CORRUPT; atomic writes) - written only by the two discovery bridges |
 | `pipeline/fetchers.py` | one normalizer per ATS platform -> the common job shape. 16 platforms |
 | `pipeline/firmographics.py` | the company record (sector / stage / size / founded), its identity key, the `claude` seam and the shared export both stores converge through (ARCHITECTURE.md section 7) |
 | `pipeline/health.py` | per-company ATS health -> cloud_state/stale.json + health_baseline.json |

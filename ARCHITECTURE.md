@@ -358,9 +358,12 @@ discovery, and the first thing to cut if the Bright Data budget binds.
 Costs and counts are the 2026-08-23 measurements, with the 2026-08-25 cloud run beside
 them where it differs; re-derive with
 `python -c "import json;print(json.load(open('cloud_state/source_health.json')))"`.
-The 2026-08-25 run (32813499709): Indeed 63 raw → 54 kept · Workable 20 → 12 new ·
-LinkedIn 1,493 cards across 27 queries, `free=159 paid=14` · Telegram 15 parsed, 13 merged ·
-**targeted skipped (cap 0, pool at 111%) — cap 4 and zero records on 08-24, cap 0 on 08-25**.
+The **2026-08-26** run (32934864207, the current numbers): Indeed 62 raw → 51 kept ·
+Workable 20 → 12 new · LinkedIn 2,118 cards across 27 queries,
+`free=224 blank=58 blocked=30 paid=13` · Telegram 19 parsed, 10 merged · **targeted skipped
+(cap 0, pool at 118%)**. The 2026-08-25 run (32813499709) for comparison: Indeed 63 → 54 ·
+Workable 20 → 12 · LinkedIn 1,493 cards, `free=159 paid=14` · Telegram 15 parsed, 13 merged ·
+cap 4 and zero records on 08-24, cap 0 on 08-25.
 
 | source | how it is read | key? | measured |
 |---|---|---|---|
@@ -377,7 +380,26 @@ LinkedIn 1,493 cards across 27 queries, `free=159 paid=14` · Telegram 15 parsed
 log still shows `free=159 paid=14`), and the run warns if
 everything is suddenly billed. Before that day a blocked request was counted nowhere: 7 of 9
 national keywords and 13 of 18 city queries hit a block on 2026-08-25 and the log could not
-say so. Every query that stops for any reason other than a drained pool prints
+say so. **A blank page is not an empty pool, and until 2026-08-26 the walk never looked again.**
+`_li_guest` returning HTTP 200 with no cards is ambiguous by construction — a hole inside the
+result pool, or LinkedIn's soft rate-limit — and the walk stepped over up to
+`LINKEDIN_BLANK_TOLERANCE` (3) of them and moved on. Of the 58 blanks on 2026-08-26, 24 were
+the three-in-a-row drain run of the 8 queries that ended silently, so **34 were mid-pool
+holes**: a ceiling of ~340 unread cards against that day's 2,118. Ground truth the same
+morning — the operator's own LinkedIn session, `data analyst · Israel · past week`, 92 results
+— found Koladin, Intelligent Business, CaliAlfa and Riskified's DS lead on the first two
+pages, refused by no gate and in no cache. A blank page carrying **no urns either** is now
+re-asked once and the rescue counted as `recovered=` on the sweep line. Three properties keep
+it safe, and each is a guard: the re-ask **never returns "blocked"** (a soft limit escalating
+to 403 would otherwise land on the one clause NOT guarded by `and not out` and buy Unlocker
+pages, on a pool already at 118%); a page carrying urns but no cards is markup DRIFT and is
+never re-asked, because a re-read cannot fix it; and the budget is per SWEEP
+(`LINKEDIN_BLANK_RETRIES` 20) and **disarms itself** after `LINKEDIN_BLANK_GIVE_UP` (5)
+failures — "the blanks are structural" is a thing to learn inside the run, not from
+tomorrow's log. If `recovered=` reads ~0 on 2026-08-27, that is the answer and the re-ask
+should go.
+
+Every query that stops for any reason other than a drained pool prints
 `stopped with N jobs: <why>` — a free-only city query that found nothing counts as
 drained (an empty Be'er Sheva keyword is ordinary; a soft-limit spike shows in `blank=`); the old boolean printed "raise LINKEDIN_GUEST_PAGES" for five
 queries LinkedIn had blocked (guarded by
@@ -486,24 +508,43 @@ Live: `secretdatajobs` · `secretmarketingjobs` · `secretproductjobs` · `secre
 
 **Widening intake is no longer free — the resolver queue IS the bottleneck.** On 2026-08-23
 `auto_expand`'s drainable backlog was 77 against a batch of 250 per run (the workflow's
-limit; the module default is 200) and the sentence here said widening was cheap.
-Re-measured 2026-08-25: **342 drainable names** (`research_companies.json` holds 1,544
-entries, 514 seeded with an aggregator URL), and the last five `auto-expand.yml` runs each
-printed `resolved 0 (LLM-cracked 0), empty 10, unreachable 0` — the last three with
-`deferred 240`. The binding dial is `LLM_RESOLVE_CAP=10`, not the batch size: 338 of the
-342 seeds are aggregator postings (222 `linkedin.com/jobs/view/…`, 91 the
-`secrethunter.io/jobz/<id>` JS shell, 25 `il.indeed.com`), `resolve_llm` starts with zero
-candidate pages for an aggregator seed and asks
-SerpApi (exhausted until 2026-09-01) for more, so the 10 names that get their one LLM shot
-per run come back `None` and are written as `scanned; no open Israel roles now` rows with
-the shell URL as their board — 44 such rows now (ctera, Houzz, yad2, Upwind Security, RISCO
-Group …). Of the 70 aggregator-seeded rows 7 are active: six turned on by dark-triage
-(`activated 2026-08-23: validated page`) and exactly one by `listing_hunt` — `Tel Aviv`,
-the wrong one. So the
-`[yield] linkedin: 312 employers -> 158 NEW companies` line is a true count of names and a
-false promise of coverage until the queue drains. Fix is `registry`'s (BACKLOG 177/178);
-re-derive with the `gh run view … --log | grep -E "unresolved:|=== resolved"` command in
-`docs/sessions/2026-08-24-discovery.md` (2026-08-25 section).
+limit; the module default is 200) and the sentence here said widening was cheap. It is the
+opposite now, and the SHAPE of the problem changed on 2026-08-25 when `registry` closed
+BACKLOG 177 — so the paragraph that stood here (342 drainable, five runs at `resolved 0`,
+44 buried rows) described a world that no longer exists.
+
+**Re-measured 2026-08-26** against `research_companies.json` (1,606 entries, 576 carrying an
+aggregator seed): **411 drainable names**, of which **408 are aggregator postings** (290
+`il.linkedin.com/jobs/view/…`, 88 the `secrethunter.io/jobz/<id>` JS shell, 27
+`il.indeed.com`) and **282 carry the LinkedIn `slug`** this layer already writes. That
+morning's run printed `unresolved: 414 · processing 250` and `resolved 3 (LLM-cracked 3),
+empty 0, unreachable 0, deferred 247 (cap 243, llm-none 4)`; 411 is 414 minus the three it
+resolved, so the two files reconcile.
+
+**What 177 fixed, and what it did not.** An aggregator seed is now deferred instead of being
+written as a row, so the burial this section used to describe is gone: rows reading
+`scanned; no open Israel roles now` on a shell URL are **1** (was 44), and registry rows
+whose address is an aggregator are **2, none of them active** (was 70, 7 active). What
+remains is throughput. `LLM_RESOLVE_CAP=10` stands against a queue that grew by ~70 names on
+2026-08-26 alone (74 queued + 1 from Telegram, 3 resolved), so **243 of that batch's 250
+names were deferred `cap` before they were attempted at all**. The
+`[yield] linkedin: 406 employers -> 212 NEW companies` line is therefore a true count of
+NAMES and a false promise of COVERAGE until the cap rises — `registry`'s dial,
+`docs/BACKLOG.md` 225. Re-derive with:
+
+```bash
+python -c "
+import json,csv
+from pipeline.aggregators import is_aggregator
+from pipeline.recruiters import is_recruiter
+q=json.load(open('research_companies.json',encoding='utf-8'))
+h={r['company_name'].strip().lower() for r in csv.DictReader(open('companies.csv',encoding='utf-8'))}
+t=[e for e in q if e.get('careers_url') and (e.get('name') or '').strip().lower() not in h
+   and not is_recruiter(e.get('name'))]
+print(len(q),'queued ·',len(t),'drainable ·',
+      sum(1 for e in t if is_aggregator(e['careers_url'])),'aggregator-seeded')"
+```
+
 ### What intake refuses, and where each gate lives
 
 A name that gets past here becomes a `companies.csv` row two `auto_expand` runs later, so
@@ -513,7 +554,7 @@ this is the cheapest place in the system to say no. Both bridges apply the same 
 |---|---|---|
 | already known | `pipeline/companies.py` (`load_companies`) | any name already in the registry, active or parked |
 | `looks_like_junk` | `pipeline/firmographics.py` | a leaked job title / category / team phrase ("Data researcher - Navina", "AppSec") |
-| `is_recruiter` | `pipeline/recruiters.py` | staffing and placement firms, which re-post dozens of clients' roles. Since 2026-08-25 it also judges the LinkedIn `company_slug` — "Dialog" is `dialog-recruiting` — and its own firmographics record is evidence: Nisha Pro shipped in the 08-25 mail as "newly covered" with a blurb saying "staffing" |
+| `is_recruiter` | `pipeline/recruiters.py` | staffing and placement firms, which re-post dozens of clients' roles — **and, since 2026-08-26, job-board BRANDS**: the 08-26 mail published `### Jobgether` as a newly covered employer with a role under it, while `jobgether.` had been on `aggregators.HOSTS` for weeks. The repo had ruled on the HOST and not on the NAME, and a discovery card carries the name. `ethosia` and `staffin` the same day (`\bstaffing\b` does not match "Staffin"). Bare brand AND display form are listed, because display names drift; NOT derived from `HOSTS` by brand stem, which was measured and hits `google`. Since 2026-08-25 it also judges the LinkedIn `company_slug` — "Dialog" is `dialog-recruiting` — and its own firmographics record is evidence: Nisha Pro shipped in the 08-25 mail as "newly covered" with a blurb saying "staffing" |
 | `is_place_name` | `discovery_telegram.py` — **the Telegram path only**, cache AND queue | a name that is exactly a city / region / country (`pipeline/israel`'s place lists plus the spellings the channels write, spaces squashed: "Petahtikva"). Only a Telegram post can put a city in the employer slot, and the same check on the structured sources would veto real employers that share a place name (Nesher, Eilat, Airport City). A company named "Tel Aviv" defeats every downstream identity check because its host is named after the same city (`registry_health --explain "Tel Aviv"` → `tenant_is_this_company = True`); 1 of 1,633 distinct name strings across registry ∪ queue ∪ cache on 2026-08-25, and it IS an active row until `registry` parks it (BACKLOG 167) |
 
 Job-level exclusion happens later and separately, in `fetchers.fetch_discovery`: the 21-day
@@ -545,7 +586,7 @@ every one on the free keyword path — `reject / keyword / junior-intern-entry-l
 call — while the post still contributes its employer to the names funnel. A second filter
 here would cost coverage and buy nothing.
 
-### Four rules this layer costs data to re-learn
+### Five rules this layer costs data to re-learn
 
 1. **Merge `discovered_cache.json`, never truncate it.** `discovery_daily.py` runs first and
    `discovery_telegram.py` second, into the same file. A truncating write on 2026-08-21
@@ -586,6 +627,27 @@ here would cost coverage and buy nothing.
    now returns `None` when the date sits in the city slot; the secrethunter link is a JS
    shell, so there is no employer to recover. Guarded by
    `test_a_telegram_post_with_no_company_line_is_skipped_not_shifted_into_a_city_named_employer`.
+
+5. **ABSENT and CORRUPT are different things, for the QUEUE as well as the cache** — and
+   whatever cannot be re-read must abort **before the watermark moves**. Rule 1 was learned on
+   `discovered_cache.json` in 2026-08-21; `research_companies.json` had the same bug until
+   2026-08-26 (BACKLOG 188): `except Exception: research = []` followed by a write, so one
+   half-written file replaced 1,606 queued names with whatever that morning found — no error,
+   exit 0. Two shapes, and only the first is obvious: unparseable bytes, and **valid JSON of
+   the wrong type** (`{"Wix": {...}}`), which `json.load` accepts and which then died one line
+   later iterating a dict's keys — killing `main()` *before* `sources.record()`, so the day's
+   source liveness went unrecorded too. Both bridges now read through
+   `pipeline/discovery_queue.py` (`load()` raises `QueueUnreadable`; the check is `isinstance`,
+   not `except`) and write through `pipeline/atomic.py`, because `open(path, "w")` truncating
+   is what MAKES the corrupt file the reader then has to survive. `discovery_daily` skips only
+   the queue write and names the companies it could not queue; `discovery_telegram` writes
+   **nothing at all** — not the cache, not `cloud_state/telegram_seen.json` — because a
+   Telegram post is not re-servable and a watermark past an unqueued employer loses that name
+   for good. Its queue bridge also reads `new_jobs` rather than `added`, or the re-run after an
+   abort would find every card already cached and queue nothing. Guarded by
+   `test_an_unreadable_queue_is_never_overwritten_by_discovery_daily` (both shapes) and
+   `test_an_unreadable_queue_stops_telegram_before_the_watermark` (which re-runs and asserts
+   the names come back exactly once).
 
 ### Known limitations of this layer
 

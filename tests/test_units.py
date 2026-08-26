@@ -6481,17 +6481,32 @@ _LI_CARD_HTML = ('<li><div class="base-card" data-entity-urn="urn:li:jobPosting:
                  '<h4 class="base-search-card__subtitle">A Co</h4></div></li>')
 
 
-def _li_replay(script):
+def _li_replay(script, calls=None):
     """A `_li_guest` stand-in driven by [(n_cards, ok), ...], one tuple per guest page; pages
     past the end repeat the last tuple ("blocked from here on" and "hit the cap" are both
     that). Ids are globally unique so fresh/repeats behave like a real walk, and
     `_li_last_present` is set the way the real fetcher sets it. Pure in-memory: the 108x
-    mutation gate runs the whole suite per mutation, so no subprocess, no network."""
+    mutation gate runs the whole suite per mutation, so no subprocess, no network.
+
+    An entry may also be a LIST of tuples, consumed in order at that `start` and repeating
+    its last element — the only way to express "this page was blank and the re-ask found
+    cards". Indexing by `start` alone cannot: a retry re-reads the same offset and so got the
+    identical tuple, and `linkedin_blank_recovered` could never be anything but 0. `calls`
+    records every start requested, so a test can bound the retry budget.
+    """
     import discovery_daily as dd
     counter = [0]
+    pending = {}
 
     def guest(kw, loc, d, st):
-        n, ok = script[min(st // 10, len(script) - 1)]
+        if calls is not None:
+            calls.append(st)
+        entry = script[min(st // 10, len(script) - 1)]
+        if isinstance(entry, list):
+            q = pending.setdefault(st, list(entry))
+            n, ok = q.pop(0) if len(q) > 1 else q[0]
+        else:
+            n, ok = entry
         if not ok:
             dd._li_last_present[0] = set()
             return [], False
@@ -6505,7 +6520,8 @@ def _li_replay(script):
 _LAST_COUNTS = {}          # SOURCE_PATH as it stood after the last _run_walk (restored after)
 
 
-def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=None):
+def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=None,
+              calls=None):
     import discovery_daily as dd
     import bd_rescue
     real_guest, real_unlock = dd._li_guest, bd_rescue.unlock
@@ -6515,17 +6531,22 @@ def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=
     else:
         os.environ["BRIGHTDATA_API_KEY"] = key
     try:
-        dd._li_guest = _li_replay(script)
+        dd._li_guest = _li_replay(script, calls)
         bd_rescue.unlock = unlock or (lambda url, timeout=120: "")
         saved = dict(dd.SOURCE_PATH)
-        for k in ("linkedin_free", "linkedin_blank", "linkedin_blocked", "linkedin_paid"):
+        for k in ("linkedin_free", "linkedin_blank", "linkedin_blocked", "linkedin_paid",
+                  "linkedin_blank_recovered"):
             dd.SOURCE_PATH[k] = 0
+        dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0)
+        saved_pause, dd._BLANK_RETRY_PAUSE = dd._BLANK_RETRY_PAUSE, 0.0
         out = dd.linkedin_search("business intelligence", pages=pages, location=location)
         _LAST_COUNTS.clear()
         _LAST_COUNTS.update(dd.SOURCE_PATH)
         return out, (capsys.readouterr().out if capsys else "")
     finally:
         dd._li_guest, bd_rescue.unlock = real_guest, real_unlock
+        if "saved_pause" in locals():
+            dd._BLANK_RETRY_PAUSE = saved_pause
         if "saved" in locals():
             dd.SOURCE_PATH.clear()
             dd.SOURCE_PATH.update(saved)
@@ -8181,3 +8202,168 @@ def test_the_rebase_cli_reports_usage_and_a_failed_write_instead_of_exiting_zero
     assert _af_json.loads((tmp_path / "cloud_state" / "health_baseline.json").read_text(encoding="utf-8")) == {"NetApp": 0}
     assert _af_json.loads((tmp_path / "cloud_state" / "stale.json").read_text(encoding="utf-8")) == {}
     # a write that fails is a non-zero exit, not a cheerful zero
+
+
+# --- 2026-08-26 discovery: the blank guest page, the three brands, and the queue guard ---
+
+def test_a_blank_guest_page_is_re_asked_once_before_it_counts():
+    """2026-08-26 run 32934864207: `free=224 blank=58 blocked=30`. 24 of those 58 blanks were
+    the three-in-a-row drain run of the 8 queries that ended silently, so 34 were MID-POOL
+    holes the walk stepped over and never re-read — a ceiling of ~340 unread cards against
+    the day's 2,118. Ground truth the same morning, from the operator's own LinkedIn session:
+    Koladin, Intelligent Business, CaliAlfa and Riskified's DS lead were on LinkedIn's first
+    two pages for `data analyst`, refused by no intake gate, and in no cache."""
+    out, _ = _run_walk([(10, True), [(0, True), (10, True)], (10, True), (0, True)], pages=0)
+    assert len(out) == 30, "the re-ask must recover the page the old walk skipped"
+    assert _LAST_COUNTS["linkedin_blank_recovered"] == 1
+    # every REQUEST still bumps exactly one path counter: 2 for the recovered page
+    assert _LAST_COUNTS["linkedin_blank"] >= 1 and _LAST_COUNTS["linkedin_free"] == 3
+
+
+def test_a_twice_blank_page_is_still_blank():
+    """The retry is one probe, not a loop: a page that is blank twice counts as blank and the
+    walk ends on the tolerance exactly as before."""
+    out, _ = _run_walk([(10, True), [(0, True), (0, True)]], pages=0)
+    assert len(out) == 10
+    assert _LAST_COUNTS["linkedin_blank_recovered"] == 0
+
+
+def test_a_blocked_re_ask_never_buys_a_paid_page():
+    """The safety property the whole design rests on. `if not ok or (blanks >= tolerance and
+    not out)` guards the BLANK clause with `and not out` and the BLOCKED clause with nothing,
+    so if the re-ask were allowed to report a 403 the soft limit it provoked would convert a
+    free early exit into Unlocker spend — on a pool measured at 118% on 2026-08-26. A retry
+    may only ever help: its failure is reported as the original blank."""
+    paid = []
+    out, _ = _run_walk([(10, True), [(0, True), (0, False)]], pages=2, key="k",
+                       unlock=lambda url, timeout=120: paid.append(url) or "")
+    assert paid == [], "a blocked re-ask must not reach the paid path"
+    assert _LAST_COUNTS["linkedin_paid"] == 0 and _LAST_COUNTS["linkedin_blocked"] == 0
+    assert len(out) == 10
+
+
+def test_the_blank_re_ask_is_bounded_and_disarms_itself():
+    """Budgeted per SWEEP and self-disabling: "the blanks are structural" is something to
+    learn inside the run, not from tomorrow's log. Without the give-up counter a keyword that
+    alternates cards and blanks would re-ask on every blank page for the whole walk."""
+    import collections
+
+    import discovery_daily as dd
+    calls = []
+    _run_walk([(10, True), (0, True)] * 8, pages=0, calls=calls)
+    retried = sum(v - 1 for v in collections.Counter(calls).values() if v > 1)
+    assert retried == dd.LINKEDIN_BLANK_GIVE_UP, (
+        f"expected the re-ask to disarm after {dd.LINKEDIN_BLANK_GIVE_UP} misses, "
+        f"made {retried}")
+
+
+def test_the_three_aggregator_brands_are_the_only_names_whose_verdict_changed():
+    """2026-08-26: the mail published `### Jobgether` — a remote-job aggregator — as a newly
+    covered employer, with a role under it. `jobgether.` and `ethosia.` were already on
+    `aggregators.HOSTS`, i.e. the repo had ruled on the HOST and not on the NAME, and a
+    discovery card carries the name. Measured over the 3,586 (name, slug) pairs in
+    companies.csv u research_companies.json u discovered_cache.json: exactly 3 names flip and
+    ZERO companies.csv rows. The counter-examples are why the entries are explicit rather
+    than derived from `aggregators.HOSTS` by brand stem — those stems include `google`, and
+    Google is a real employer with 12 cached cards."""
+    from pipeline.recruiters import is_recruiter
+    for n in ("Google", "Together AI", "Gather", "Ethos", "Genpact", "appsforce", "Matrix IT"):
+        assert not is_recruiter(n), f"{n} is a real employer"
+    assert is_recruiter("Quik Hire Staffing"), "_KEYWORD already covers it; no entry needed"
+    # the display forms seen in the data, AND the bare brands a display name drifts to
+    for n in ("Jobgether", "Ethosia", "Staffin Israel", "Staffin", "Ethosia Human Resources"):
+        assert is_recruiter(n), n
+
+
+def _queue_fixture(tmp_path, monkeypatch, queue_bytes):
+    import json as _j
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "research_companies.json").write_bytes(queue_bytes)
+    from pipeline import sources as _src
+    monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
+    return _j
+
+
+_TRUNCATED = (b'[{"name": "Wix", "careers_url": "x", "ats": "unknown", "slug": "wix"},\n'
+              b' {"name": "Fiver')
+_WRONG_TYPE = b'{"Wix": {"name": "Wix"}}'
+
+
+@pytest.mark.parametrize("queue_bytes", [_TRUNCATED, _WRONG_TYPE])
+def test_an_unreadable_queue_is_never_overwritten_by_discovery_daily(tmp_path, monkeypatch,
+                                                                    capsys, queue_bytes):
+    """BACKLOG 188. `except Exception: research = []` then `json.dump(added)` replaced 1,606
+    queued names with whatever that morning found — no error, exit 0. And the guard has to be
+    isinstance-based, not exception-based: `{"Wix": {...}}` PARSES, so the old code sailed
+    past it and died one line later on `e.get(...)` over a dict's keys — killing main() before
+    `sources.record()`, so the day's source liveness went unrecorded too."""
+    import discovery_daily as dd
+    _queue_fixture(tmp_path, monkeypatch, queue_bytes)
+    fresh = [{"company": "Newco", "company_slug": "newco", "title": "Data Analyst",
+              "url": "u3", "posted_date": "2026-08-25", "ats_platform": "discovery-linkedin"}]
+    monkeypatch.setattr(dd, "indeed_search", lambda q: [])
+    monkeypatch.setattr(dd, "workable_search", lambda: [])
+    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": list(fresh))
+    monkeypatch.setattr(dd, "linkedin_normalize", lambda c: c)
+    monkeypatch.setattr(dd, "_li_queries", lambda: [("x", "Israel", 0)])
+    monkeypatch.setattr(dd, "plan_spend", lambda today=None: (100, 0, "test"))
+    monkeypatch.setattr(dd, "report_bd_spend", lambda targeted_cap=None: None)
+    monkeypatch.setattr(dd, "load_companies", lambda active_only=False: [])
+    monkeypatch.setattr(dd, "_load_secrets", lambda: None)
+    monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
+    dd.main()                                    # must not raise (the wrong-type case did)
+    assert (tmp_path / "research_companies.json").read_bytes() == queue_bytes
+    out = capsys.readouterr().out
+    assert "::error::" in out and "research_companies.json" in out
+    assert "Newco" in out, "name the companies it could not queue — they may not come back"
+    assert (tmp_path / "cloud_state" / "source_health.json").exists(), \
+        "main() must still reach sources.record()"
+    assert "0 new companies queued" in out
+
+
+def test_an_unreadable_queue_stops_telegram_before_the_watermark(tmp_path, monkeypatch, capsys):
+    """The watermark is the thing that cannot be undone. Skipping the queue write while
+    advancing `telegram_seen.json` is the 2026-08-21 incident (79 roles, unrecoverable) with
+    the queue in the cache's place — a channel's front page moves on, so the post is gone.
+    The run must write NOTHING and be replayable."""
+    import discovery_telegram as dt
+    _j = _queue_fixture(tmp_path, monkeypatch, _TRUNCATED)
+    (tmp_path / "discovered_cache.json").write_text("[]", encoding="utf-8")
+    good = ["Data Analyst", "Riskified", "Tel Aviv", "20/8/26", "SQL", "Senior",
+            "https://secrethunter.io/jobz/a2"]
+    jobs = [(9, dt.parse_post(good, "2026-08-25"))]
+    monkeypatch.setattr(dt, "CHANNELS", ["c1"])
+    monkeypatch.setattr(dt, "scan_channel", lambda chan, last: (jobs, 0))
+    monkeypatch.setattr("pipeline.companies.load_companies", lambda active_only=False: [])
+    dt.main()
+    out = capsys.readouterr().out.lower()
+    assert "without advancing the watermark" in out and "riskified" in out
+    assert (tmp_path / "research_companies.json").read_bytes() == _TRUNCATED
+    assert not (tmp_path / dt.STATE_PATH).exists(), "the watermark must not move"
+    assert _j.loads((tmp_path / "discovered_cache.json").read_text(encoding="utf-8")) == [], \
+        "nothing may be written at all, or the re-run cannot recover the names"
+    # ...and the operator fixes the file and re-runs: everything comes back, exactly once
+    (tmp_path / "research_companies.json").write_text("[]", encoding="utf-8")
+    dt.main()
+    assert [e["name"] for e in _j.loads(
+        (tmp_path / "research_companies.json").read_text(encoding="utf-8"))] == ["Riskified"]
+    assert len(_j.loads((tmp_path / "discovered_cache.json").read_text(encoding="utf-8"))) == 1
+    assert (tmp_path / dt.STATE_PATH).exists()
+
+
+def test_the_queue_and_the_job_cache_are_written_atomically():
+    """`open(path, "w")` truncates immediately, so a killed write IS the corrupt file the
+    guard above then has to survive — and both discovery steps are `continue-on-error` in one
+    `daily-digest.yml` job, so a cancelled run leaves the next step to truncate it.
+    `pipeline/atomic.py` exists for exactly this and the queue was not using it."""
+    import inspect
+
+    import discovery_daily as dd
+    import discovery_telegram as dt
+    from pipeline import discovery_queue
+    assert "write_json" in inspect.getsource(discovery_queue.write)
+    for fn in (dd.main, dt.main, dt._prune_queue):
+        src = inspect.getsource(fn)
+        assert 'open("research_companies.json", "w"' not in src, fn.__name__
+        assert 'open("discovered_cache.json", "w"' not in src, fn.__name__
