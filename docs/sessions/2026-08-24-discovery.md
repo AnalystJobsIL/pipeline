@@ -1299,3 +1299,111 @@ peer's half-staged `scrape_universal.py` being copied into the verification work
 in a worktree built from a commit, never from the index, and commit through a private
 `GIT_INDEX_FILE`** — the recipe is in this session's scratch script and the technique is one
 line: `read-tree HEAD`, `update-index` your blobs, `write-tree`, `commit-tree`, `update-ref`.
+
+### Afternoon: the full audit, and the dry run that changed the answer
+
+The morning's audit covered one keyword and half its results. Asked to confirm coverage rather
+than sample it, I enumerated **all nine production keywords** from the operator's signed-in
+LinkedIn session (`f_TPR` past week, `sortBy=DD`), paging until a short page or a block:
+
+| keyword | ids enumerated | pool state |
+|---|---|---|
+| `data analyst` | 92 | exhausted |
+| `business intelligence` | 125 | still full pages at stop (header claims 966) |
+| `product analyst` | 50 | still full pages (header claims 688) |
+| `BI developer` | 32 | exhausted (header claims 355 — inflated) |
+| `analytics` | 50 | still full pages (header claims 998) |
+| `data scientist` | 50 | still full pages |
+| `אנליסט` | 50 | still full pages |
+| `growth analyst` | 21 | exhausted |
+| `marketing analyst` | 21 | exhausted |
+
+**257 distinct ids; 40 (15.6 %) were in that morning's committed cache.** Raw, that number
+flatters nothing and means little — LinkedIn's keyword matching is loose. Classified over the
+one keyword enumerated to exhaustion AND fully titled (`data analyst`, 45 postings):
+
+| bucket | n | verdict |
+|---|---|---|
+| in cache | 15 | correct |
+| agency / job-board, gates reject | 5 | correct |
+| company whose own board we already read (Mobileye, Riskified, Navan, Chainalysis, Nestlé, Arpeely) | 6 | correct — the card is redundant |
+| remote/global job-spam (Crossing Hurdles, Hired, Jobs Ai, Proxify …) | 10 | correct |
+| junior | 1 | correct |
+| **genuine miss** | **6** | Koladin, CaliAlfa, XT Group, Intelligent Business, EPAM, INGIMA |
+
+Every one of the six is a company with **no registry row** — i.e. the names funnel's job, not
+the jobs funnel's. `not in discovered_cache` is emphatically **not** the same as `missed`, and
+any future audit that skips the "we read their board directly" bucket will overstate the gap
+by about 6 in 45.
+
+**The finding that outranks the blank pages.** The signed-in search reports 966 results for
+`business intelligence` and 998 for `analytics`; that morning's guest walk collected 131 and
+314 cards for the identical queries. Header counts are inflated (`BI developer` claims 355
+against an enumerable pool of 32), so the gap is not the arithmetic difference — but the pools
+genuinely differ and the sweep cannot page into it. That is a **ceiling of the keyless
+endpoint**, not a bug in the walking, and nothing shipped today touches it. Filed as
+BACKLOG 227; the audit's own depth is filed as 228 so the 15.6 % is never quoted as a
+coverage rate.
+
+### The dry runs
+
+**A — both bridges end to end, real network, keyless, sandboxed state, 0 credits.**
+
+```
+[linkedin] 811 cards across 27 queries · free=93 blank=41 recovered=0 blocked=18 paid=0 (0 Unlocker credits)
+cache: dropped 79 agency cards   queue: dropped 3 agency entries: Jobgether, Ethosia, Staffin Israel
+discovery: rejected 0 job-title-shaped names and 12 agencies
+[yield] linkedin: 267 employers -> 141 NEW companies
+=== telegram: 14 jobs merged · 5 new companies queued ===
+```
+
+Reconciled after the run: cache 1,333 → 1,428, queue 1,606 → 1,642, **0** agency cards left in
+the cache, **0** agency names left in the queue, **0** `_junior` leaks, **0** of the three new
+brands, `source_health` written, 0 Unlocker calls, live state files untouched. The 189(a) fix
+shows as `rejected … 12 agencies` with twelve distinct names printed once each.
+
+**`recovered=0`, and that is a result, not a null.** Five re-asks, five misses, then the
+give-up counter disarmed the mechanism — on an address LinkedIn is throttling (18 blocked, 41
+blank of 152 fetches). It is the safety half proven on the real network, and the first
+real-network evidence that these blanks may be soft-limiting rather than holes.
+
+**B — scripted end to end, for the halves a throttled address cannot reach.** A mid-pool hole
+that IS recoverable → `recovered=1` and all 30 cards (3 pages) land in the cache, where the old
+walk got 20. A 403 on the re-ask with a Bright Data key present → **0** Unlocker pages. A
+corrupt queue → byte-identical file, `sources.record` still reached, the unqueued names named
+in the error.
+
+**What dry-running found that two Opus critics had not.** `_li_guest` waits up to 40 s on the
+socket, so a budget of *20 re-asks* is 13 minutes of worst-case wall clock on top of a step
+that took 4m11s that morning and is killed at 25 by `daily-digest.yml` — and the step is
+`continue-on-error: true`, so the overrun would have cost the whole day's cache and queue write
+in silence. A count bounds how many re-asks are worth making; it does not bound what they cost
+when the network misbehaves. `LINKEDIN_BLANK_RETRY_SECONDS` (90 s) makes the worst case
+4.2 + 2.2 = 6.4 min. Guarded by `test_the_blank_re_ask_has_a_wall_clock_bound_not_just_a_count`.
+
+### The decision rule, written before the evidence
+
+`recovered=` prints in the step log only — intake still has no line in the mail (BACKLOG 180):
+
+```bash
+gh run view <daily-digest run id> --repo AnalystJobsIL/pipeline --log \
+  | grep -E "\[linkedin\] |recovered=|cache: dropped|queue: dropped|### Jobgether"
+```
+
+- `recovered=` **~0** → the blanks are soft-limiting, not holes. **Remove the re-ask; do not
+  tune it.** It is bounded and harmless, but a mechanism that recovers nothing is a mechanism
+  the next reader has to reason about for no return.
+- `recovered=` **>0** → the holes are real; the next rung is a second pass over the blank
+  starts at the end of the walk, and BACKLOG 226 says so.
+- `cache: dropped ~18 agency cards` and `queue: dropped 2-3 agency entries` on the first
+  morning, then ~0 — the three brands leaving the committed files once.
+- No `### Jobgether` in the mail, and no `### Tel Aviv` (BACKLOG 223, `roles`).
+
+### Mistakes worth keeping
+
+Two of my own, both caught by measuring rather than reading: I caught fetch *exceptions* but
+not HTTP 429 *statuses*, so 217 rate-limited responses were stored as if they were data; and
+the second extractor dropped the `<title>` fallback that had worked in the morning, so 213
+titles came back `NOTITLE` from pages that had the title all along. Job detail pages are
+**825 KB** each — 213 of them froze the renderer. Anyone repeating this audit should match on
+job id (which the cache stores in the posting URL) and fetch detail pages only for the misses.

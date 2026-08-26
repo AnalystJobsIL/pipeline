@@ -404,8 +404,30 @@ pages, on a pool already at 118%); a page carrying urns but no cards is markup D
 never re-asked, because a re-read cannot fix it; and the budget is per SWEEP
 (`LINKEDIN_BLANK_RETRIES` 20) and **disarms itself** after `LINKEDIN_BLANK_GIVE_UP` (5)
 failures — "the blanks are structural" is a thing to learn inside the run, not from
-tomorrow's log. If `recovered=` reads ~0 on 2026-08-27, that is the answer and the re-ask
-should go.
+tomorrow's log. **And a fourth, added after dry-running it: a WALL-CLOCK budget**
+(`LINKEDIN_BLANK_RETRY_SECONDS`, 90 s). A count is not a bound — `_li_guest` waits up to 40 s
+on the socket, so 20 re-asks that all hang is 13 minutes on top of a step that took 4m11s on
+2026-08-26 and is killed at 25 by `daily-digest.yml`, with `continue-on-error: true`, so the
+overrun would cost the whole day's cache AND queue write in silence. Worst case is now
+4.2 + 2.2 = 6.4 min. Review did not catch this; running it did.
+
+**What the 2026-08-26 dry runs proved, and what they did not.** Both bridges end to end
+against sandbox copies of every state file, keyless (0 BD credits): 811 cards over 27
+queries, cache 1,333 → 1,428, queue 1,606 → 1,642, **0** agency cards and **0** agency names
+left behind, `Jobgether`/`Ethosia`/`Staffin Israel` all gone, `source_health` written, 0
+Unlocker calls. `recovered=0` **from this address** — 5 re-asks, 5 misses, then the give-up
+counter disarmed it, which is the safety half proven on the real network (LinkedIn throttles
+this machine: 18 blocked, 41 blank). The value half is proven only by a scripted end-to-end,
+where a real mid-pool hole IS recovered and its cards reach the cache. **So the re-ask is
+safe by measurement and useful only by construction.** If `recovered=` reads ~0 on the runner
+too, the blanks are soft-limiting rather than holes and the re-ask should be REMOVED, not
+tuned. The counter prints in the step log only — intake has no line in the mail (BACKLOG 180),
+so the check is:
+
+```bash
+gh run view <daily-digest run id> --repo AnalystJobsIL/pipeline --log \
+  | grep -E "^\S+ \[linkedin\] |recovered=|cache: dropped|queue: dropped"
+```
 
 Every query that stops for any reason other than a drained pool prints
 `stopped with N jobs: <why>` — a free-only city query that found nothing counts as
@@ -666,6 +688,20 @@ here would cost coverage and buy nothing.
   ignores — the one non-aggregator seed this layer can produce. `secrethunter.io/jobz/<id>` cannot be followed to the real
   posting: it is a 33,495-byte JS shell, byte-identical for every job id. The fix belongs to
   `registry` (`auto_expand.py`) and is item 2 in `docs/BACKLOG.md`.
+- **The keyless guest endpoint sees far less than LinkedIn holds, and that ceiling is not
+  ours to walk past.** Measured 2026-08-26 from the operator's signed-in session against the
+  same nine keywords the sweep uses (`f_TPR` past week): `business intelligence` reports
+  **966** results and `analytics` **998**, while that morning's guest walk collected **131**
+  and **314** cards for the identical queries. Some of that gap is LinkedIn's loose keyword
+  matching and its inflated header count — `BI developer` claims 355 results and its
+  enumerable pool is **32** — but the direction is consistent and it is not a paging bug: the
+  pools genuinely differ. Of **257** distinct job ids enumerated across all nine keywords that
+  day, **40 (15.6 %)** were in the cache. Classifying the one keyword enumerated to exhaustion
+  AND fully titled (`data analyst`, 45 postings): 15 in cache, 5 agencies the gates reject, 6
+  at companies whose own board we already read, 10 remote/global spam, 1 junior, leaving
+  **6 genuine misses**, every one at a company with no registry row. So the per-keyword
+  genuine-miss rate is ~13 % and it lands exactly where the names funnel is supposed to work.
+  The blank-page re-ask does not address this; widening the endpoint would. `docs/BACKLOG.md` 227.
 - **A single Telegram channel dying is not visible in the mail** — one aggregate `telegram`
   key, because `sources.stale()` has one 2-day threshold for every key. Per-channel counts
   are in the step log. `docs/BACKLOG.md` item 3.

@@ -2691,8 +2691,40 @@ from origin `b2090f6` and run 32934864207; re-derive before acting.
     blanks (2 ended on the cap, 17 blocked), so 58 - 24 = **34 blank pages were mid-pool
     holes** the walk stepped over and never re-read — a ceiling of ~340 cards, 16% of the
     day's 2,118. If the 08-27 log shows `recovered≈0`, the blanks are structural and the next
-    rung is a second pass over the blank starts at the end of the walk. Pages 3–4 of the audit
-    (start=50, 75) could not be read — LinkedIn answered 429 to the machine mid-audit.
+    rung is a second pass over the blank starts at the end of the walk.
+
+    **Dry-run result, same day:** a live keyless run of both bridges (sandboxed state, 0
+    credits) got `recovered=0` — 5 re-asks, 5 misses, then the give-up counter disarmed it.
+    That address is throttled (18 blocked, 41 blank of 152 fetches), so it is not the runner's
+    regime, but it is the first real-network evidence and it points at soft-limiting rather
+    than holes. A scripted end-to-end proves the recovery works when a blank IS a hole. The
+    decision rule is therefore fixed in advance: **if `recovered=` is ~0 on the 08-27 runner
+    log, remove the re-ask; do not tune it.** Dry-running also found the missing wall-clock
+    bound (`LINKEDIN_BLANK_RETRY_SECONDS`, 90 s) that review had not — 20 re-asks x a 40 s
+    socket timeout is 13 min against a 25 min step limit.
+
+227. **The keyless guest endpoint is a coverage ceiling, and it is now the largest known gap
+    in this layer** — lane: `discovery`. Measured 2026-08-26 from the operator's signed-in
+    LinkedIn session over the same nine keywords: `business intelligence` reports 966 results
+    and `analytics` 998, against 131 and 314 cards from that morning's guest walk. Header
+    counts are inflated (`BI developer` claims 355, enumerable pool 32), so the gap is not
+    966-minus-131 — but the pools do differ and the sweep cannot page into the difference. Of
+    257 ids enumerated across all nine keywords, 40 (15.6 %) were in the cache; on the one
+    keyword enumerated to exhaustion and fully titled (`data analyst`, 45 postings) the
+    breakdown was 15 cached, 5 agency, 6 at companies we read directly, 10 remote spam, 1
+    junior, **6 genuine misses** (Koladin, CaliAlfa, XT Group, Intelligent Business, EPAM,
+    INGIMA) — all at companies with no registry row. Options, none costed: harvest the
+    signed-in search through the Unlocker (paid per request, and the pool is at 118 %); add
+    keywords, which is the cheap lever this layer already knows works; or accept the ceiling
+    and lean on the names funnel. **Do not re-run the enumeration casually** — LinkedIn 429'd
+    the machine twice during the audit, and job detail pages are 825 KB each.
+228. **The 2026-08-26 audit is 4 of 9 keywords deep** — lane: `discovery`. `data analyst`
+    (92), `BI developer` (32), `growth analyst` (21) and `marketing analyst` (21) were
+    enumerated to exhaustion; `business intelligence` (125+), `product analyst`, `analytics`,
+    `data scientist` and `אנליסט` (50 each) were still returning full pages when the audit
+    stopped, and 217 of the 257 ids were never title-classified (rate limit + page weight). The
+    15.6 % figure is therefore a floor on what LinkedIn shows, not a coverage rate. Re-run
+    against a fresh cache with pacing before drawing a trend.
 
 ## From the `ats-fetch` lane, 2026-08-26 (evening)
 
