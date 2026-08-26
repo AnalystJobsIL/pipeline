@@ -150,6 +150,44 @@ Filed as `docs/BACKLOG.md` 241 for `infra`; the fix is `git commit --only -- <ow
 ## 7. NOT finished
 
 `docs/BACKLOG.md` **241–246**, and the pre-existing `97` (the Windows task is redundant now
-but is `infra`'s to retire), `98` (see 242 for why the obvious merge is wrong), `120`
-(the classifier's breaker is not yet read — the kwarg exists, the `run.py` hook does not),
-`138`, `142`, `144`.
+but is `infra`'s to retire), `98` (see 242 for why the obvious merge is wrong), `138`, `142`,
+`144`.
+
+### Correction, same evening — two things above were wrong when re-checked
+
+Written down because a confident document that is no longer true is what this repo punishes
+hardest, and both were mine.
+
+1. **`120` was not "the kwarg exists, the hook does not". The kwarg did not exist either.**
+   `audit_lines` rendered `llm_off_upstream` and *nothing set it* — a mail sentence that could
+   never fire, which is worse than an unstarted item because it reads as done. Now actually
+   wired in `5f11603`: `_SHARED_OUTAGE` matches only `auth`/`missing` (a transient 529 in
+   another process says nothing about this one; `drift` is about the classifier's own flags),
+   plus one argument at `run.py`'s existing call site — `infra`'s file, the hook the plan
+   disclosed. Guarded both ways: the kwarg's behaviour, and that `run.py` passes it.
+2. **`141` was closed in the same commit but was missing from this list**, along with
+   `--export`'s help string, which claimed it writes `state/firmographics.json` while writing
+   `cloud_state/`.
+
+**And the gauge was measuring the wrong universe.** `registry_backlog` counted active
+*registry rows*, but a company reaches a card by having a **role** — 27 companies with role
+records are not active rows, and `Peak Innovation` renders without facts where the gauge could
+not see it. The universe is now active rows ∪ every company ever matched ∪ today's board. The
+`Discovery` row is excluded by **platform** (`ats_platform == "discovery"`), not by name —
+it is the LinkedIn+Indeed layer, not an employer, so it was a permanent backlog of 1 and a
+research call every week forever; `Discovery Inc` is a real company and a name-based rule
+would have refused it.
+
+Verified with `research_firmographics.py --dry-run`, zero spend: *"899 active companies, 968
+researched, 3 to do"*, and it refuses `Tel Aviv` through the new gate. **One thing that dry
+run exposed and I did not fix:** it reports **5** strike-gated names where
+`cloud_state/seen.db`'s `firmo_failed` holds **2** — the laptop's and the runner's failure
+memories are split-brained, so "gated" means something different on each machine. That belongs
+with `243`.
+
+**Backlog numbering collided.** Items **240–246 are each used two or three times** on
+`origin/master`: three lanes filed into the same range within the hour (`scraper` 240–245,
+this lane 241–246, `ats-fetch` 238–240). Nothing is lost — every item's text is intact — but
+the numbers are no longer unique, so cite this lane's by **lane and date** until the `docs`
+lane renumbers. `147` already tracks the earlier 70/71/132/133/215 collisions; this is the
+same failure at four-lane concurrency, and it is an argument for allocating ranges per lane.
