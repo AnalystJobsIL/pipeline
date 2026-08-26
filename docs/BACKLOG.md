@@ -1599,6 +1599,7 @@ Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-d
     --apply`. Delete the shim and the three rows together; `docs/check_docs.py` enforces it.
 
 88. **Strategy 2 (rendered-DOM links) produces run-together cards, and `_loc_from_ctx` keeps
+    **CLOSED 2026-08-26 (`scraper`):** the `X, Israel` capture is gone — `_loc_from_ctx(ctx, anchor)` anchors on the place name nearest the title and extends only over `-Yafo`/`District`/`, Israel`; the ±40 pre-slices in `_from_cards`/`_from_position_links` are gone too. Replayed over 57 captured pages: 0 real postings lost to it (Gett/Flytrex/Edwards/WSC/Weebit locations corrected). Pinned in `test_a_scraped_location_is_a_place_not_the_card_around_it` (+9 cases) and `test_scrape_the_dom_strategy_anchors_the_location_on_the_title`.
     up to 28 characters of title in the location when the card has no punctuation** — lane:
     `scraper`. On the captured Port.io page the DOM pass added 16 entries with location
     `"Editor Tel Aviv - Israel"` — 6 US-titled roles and 10 mangled twins of real Tel Aviv
@@ -1610,6 +1611,7 @@ Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-d
     `([A-Za-z][\w.\-' ]{1,28},?\s*Israel)` capture to stop at a title boundary.
 
 89. **Two scraper costs nobody has measured, and one silent cap** — lane: `scraper`.
+    **Measured 2026-08-26 (`scraper`):** the cloud's zero-result rows take median 13 s, p95 34 s (172 rows, 2026-08-25 log), so the ≤ 15 s plain re-fetch is not the night's cost; the doubled document is still unmeasured for duplicate cards (the dedupe key absorbs them). The 25-page cap is now observed by a test (96). Open.
     `_LINK_PAGES_PER_PREFIX = 25` truncates strategy 4 without a flag (Bright Data sits at
     exactly 25 in the cache; a deadline truncation IS flagged since wave 3). (a) The plain-HTTP re-fetch
     after strategies 1–2 miss runs for every empty company (~200 × ≤15 s a night) and its HTML
@@ -1652,6 +1654,7 @@ Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-d
     ends by 00:30) but the loss is silent and repeats nightly.
 
 96. **Three scraper constants no test observes** — lane: `scraper`. Predicted (not applied)
+    **CLOSED 2026-08-26 (`scraper`):** `test_scrape_three_constants_the_code_reads_are_observed` (2.5 s vs 3.5 s left; 1,999 vs 2,000 bytes; a 30-link board yields 25 under the module default). No `tests/mutations.json` record (92, `registry`).
     survivors of the 2026-08-24 mutation sweep: `_extract`'s plain-fetch gate
     (`deadline.remaining() >= 3` → `>= 30` would silently stop the plain-HTTP rescue for any
     company with 3–30 s left), `_readable`'s 2,000-byte floor (the classification table only
@@ -1705,8 +1708,8 @@ write list; each item names the lane that owns it and the command that proves it
 
 79. **The single `jazzhr` row (Questar Auto Technologies) is scanned daily and can never
     **Row CLOSED 2026-08-26 (`registry`):** `scrape` on `questar.applytojob.com/apply` — `scrape_universal` extracts 4 Herzliya roles from it (measured). Retiring the `jazzhr` platform (`FETCHERS`, `health._PSEUDO_OR_BY_DESIGN`, `platform_check`, `PLATFORM_HOST`) is `ats-fetch`'s.
-    **Code half CLOSED 2026-08-26 (`ats-fetch`):** `jazzhr` left `FETCHERS`, `health._PSEUDO_OR_BY_DESIGN`, `platform_check` (15 platforms · 21 MISSING, was 16 · 24) — and `applytojob.com|jazz.co` left `health.ATS_HOST`, without which the converted Questar row (and myInterview, already in `stale.json`) read as `misconfig-scrape-on-ats` at the next 05:00. A resolver that still detects the host (item 213) now fails closed at `fetch_company`. `docs/ATS_PLATFORMS.md:18` is item 209.
     produce** — lane: `registry`. `fetch_jazzhr` returns `[]` by design; the row's
+    **Code half CLOSED 2026-08-26 (`ats-fetch`):** `jazzhr` left `FETCHERS`, `health._PSEUDO_OR_BY_DESIGN`, `platform_check` (15 platforms · 21 MISSING, was 16 · 24) — and `applytojob.com|jazz.co` left `health.ATS_HOST`, without which the converted Questar row (and myInterview, already in `stale.json`) read as `misconfig-scrape-on-ats` at the next 05:00. A resolver that still detects the host (item 213) now fails closed at `fetch_company`. `docs/ATS_PLATFORMS.md:18` is item 209.
     `api_url` is an `/apply` page. Convert it to a `scrape` row on that page or park it,
     then retire the `jazzhr` platform (`FETCHERS`, `health._PSEUDO_OR_BY_DESIGN`,
     `platform_check`, `check_invariants` host map) — `ats-fetch` will do the code half once
@@ -1896,6 +1899,7 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     workflow is silently reverted. Count them: `python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(c.execute(\"select sum(title_key not like 'v2|%') from llm_cache\").fetchone())"`.
     `updated` is only meaningful from the first v2 run (before it every row was upserted daily).
 117. ~~**One `claude -p` seam for the repo**~~ — **half closed 2026-08-25**: `pipeline/llm.py` exists (`call()`, envelope-first, tool-less) and `seniority` uses it; `firmographics._claude`, `resolve_llm.py`, `triage_dark.py`, `scrape_universal.py` still spawn their own — lane: `company-intel` / `registry` / `scraper` to migrate (a shared `llm` module under `pipeline/`, was not yet created). Two seams now
+    **Scraper half CLOSED 2026-08-26:** `scrape_universal._run_claude` goes through `pipeline.llm.call_json` with its own `_LLM_SYSTEM`/`_LLM_SCHEMA` (`SCRAPE_LLM_MODEL`, default sonnet, effort low, 20k chars of page text); `LLMUnavailable` is counted on the bundle and trips a per-process breaker (auth/missing/drift); `subprocess` is no longer imported by the module. The A/B and the security argument are in ARCHITECTURE §1. `firmographics._claude` is the last bare seam (`company-intel`).
     **Registry half CLOSED 2026-08-25 (batch 5):** `triage_dark.llm_page_verdict` -- the lane's last bare `claude -p` -- goes through `pipeline.llm.call_json` with its own `_SYSTEM`/`_SCHEMA` (`TRIAGE_LLM_MODEL`, default sonnet); `LLMUnavailable` is `None` (the regex verdict stands). Records `triage-llm-schema-drop`, `triage-llm-unavailable-raise`.
     exist with the same shape and different guarantees: `seniority._claude` (tools off, schema,
     system prompt, `is_error` read, cwd = scratch, no shell) and `firmographics._claude`
@@ -1949,6 +1953,7 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     `listing-hunt`, `scrape-refresh`, `self-heal`) got the same one-token fix on 2026-08-25 — closed;
     what remains is verifying the next conflict-day commit keeps the run's `seen.db`. Repro: `mkdir -p /tmp/t/cloud_state /tmp/t/ours/cloud_state; touch /tmp/t/ours/cloud_state/seen.db; cd /tmp/t; cp -r ours/cloud_state cloud_state; find . -name seen.db`.
 126. **`scrape_universal.ISRAEL_LOC` has no word boundaries** — lane: `scraper`. It is pure
+    **CLOSED 2026-08-26 (`scraper`):** `_build_israel_loc` wraps the alternation in case-SENSITIVE lookarounds (`(?-i:…)`; under `re.I` `israel._PLACE_PATTERNS`' `(?![a-z0-9])` also blocks an uppercase continuation, and `HerzliyaJunior Software Developer` / `R&DRegularTel Aviv` are real card shapes — 7 roles lost in the replay before the scoping); measured on the committed cache: 0 locations change. Note for `classifier`: `israel._PLACE_PATTERNS` has the same `re.I` trap, inert only because the scraper hands it a clean place. `bd_rescue`, `resolve_deep`, `retry_unreachable`, `validate_bd` import the same object and see the same tightening.
     substring matching: `Akkodis`, `melody`, `explode`, `The Azores`, `unsafed`, `Lodz` all match
     (`Akko`, `lod`, `Azor`, `safed`, `Lod`). Benign in today's pages (10 of 165 matches were inside
     a word, all `Israeli`/Hebrew prefixes) but it feeds `_from_dom`'s 220-char proximity test and
@@ -1973,6 +1978,7 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     Consultant` / `Manager, Performance Research and Analysis` (16 titles) are `signal` +
     `unknown` seniority, so they cost an LLM call each. Re-sweep after a week of `[llm]` reasons.
 130. **`test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason` fails at HEAD on
+    **CLOSED 2026-08-26 (`scraper`):** duplicate of 158 — one clock (`_today()`), a pure `_rotate(rows, day)`, the sandbox pins the rotation and the budget scenarios read an injected clock (no `time.sleep` against a wall-clock budget).
     2026-08-25** — lane: `scraper`. `assert (11 <= 12 and False)`: the stamp reads
     `unprocessed-14`, not `shrink-abort-…`. Verified in a throwaway worktree of HEAD (`ef96190`+)
     with no classifier change applied, so it is date- or fixture-dependent, not a regression of
@@ -2131,6 +2137,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     every board's high-water mark resets to 0 and `regressed-to-zero` can never fire again.
     `pipeline.atomic.write_json` is three lines away. Found by the 2026-08-25 hand-over audit.
 154. **`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the
+    **Measured 2026-08-26 (`scraper`):** the `ats-fetch` lane is adding the reader in `pipeline/health.py` (`overnight_verdict` from the rot entry's `{why, n, last, error, found, http}` — uncommitted in the same tree as this note was written); the fields are unchanged and the new `links:*` codes arrive through `error`. The rot file now also carries `links:*` codes for rows whose positions could not be opened, and the `collect` stamp carries `links_unread=N`, so the `Boards` line's `regressed-to-zero` for a scrape row can be checked against `errors=`/`links_unread=` on the same mail. The reader is still `ats-fetch`/`infra`'s.
     `Boards` lines** — lane: `scraper` + `ats-fetch`. `fetch_scrape` returns `[]` for
     **CLOSED 2026-08-26 (`ats-fetch`; nothing left for `scraper`):** `health.record` reads the rot file for scrape rows with an empty cache (`overnight_verdict`): a fresh `why: error` relabels a `regressed-to-zero` as `fetch-error` with the scraper's reason (`scrape: http:403 (1 night)`), `why: empty` with `found > 0` withdraws it (never announced as `cleared`), entries older than 2 days are ignored, and a row with baseline 0 gets no flag (18 such rows on 08-26 — item 208). Replay of the committed 08-25 files: 59 → 56 stale rows (Akamai, Bright Security relabelled; Wiliot withdrawn; Questar, myInterview via item 79). No run.py change.
     never-scraped, empty and error-with-expired-carry alike and cannot raise, so `run.py`
@@ -2147,6 +2154,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     upsert, or skip URLs the cache already stamped. Also: `enrich_scrape_jd._todo` treats
     only `""` as missing while `enrich_matched_jd` uses `< 300` chars.
 156. **Three loaders turn a corrupt `scraped_cache.json` into `{}` and write it back** —
+    **Scraper half CLOSED 2026-08-26:** `refresh_scrape_cache._load` returns `(data, state)`; an unreadable cache refuses the run before rendering a page (`::error::`, `alarm=cache-unreadable`, exit 1 — stamped first, the commit step is `if: always()`); an unreadable rot file alarms `rot-unreadable` and parks nothing; an empty file is absent. `test_refresh_refuses_an_unreadable_cache_and_survives_an_unreadable_rot_file`.
     **Registry half CLOSED 2026-08-26:** `auto_expand._load_cache` and `retry_unreachable.main` report `::error::` and skip the cache write when the file is unreadable (absent stays `{}`). `refresh_scrape_cache.py` is the `scraper` half.
     lane: `registry` (`retry_unreachable.py:154-156` + `:190`, `auto_expand.py:50-54` +
     `:183`) and `scraper` (`refresh_scrape_cache.py:431-436`). A momentarily unreadable
@@ -2158,6 +2166,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     always passes `--db`; locally the three tools disagree on which store they mean. One
     default (`cloud_state/seen.db` when it exists) or none.
 158. **`test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason` is red on origin
+    **CLOSED 2026-08-26 (`scraper`):** see 130. `tests.yml`'s `guard` job goes green on the first push after this; the mutation harness's baseline-red exclusion (195) then has nothing to exclude.
     since `f720627` (four consecutive pushes, 2026-08-25)** — lane: `scraper`. Its third
     scenario expects the first ~10 processed rows to include the 5 emptied ones, but
     `refresh_scrape_cache.py:446-448` rotates the processing order by `date.today().toordinal()
@@ -2239,11 +2248,13 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     the row is skipped, so they never close — close them explicitly.
     Reproduce: `grep -n "^Tel Aviv," companies.csv`; `grep -c secrettelaviv docs/index.html`.
 168. **A location that swallowed the title's tail** — lane: `scraper` (+ `render` for the
+    **CLOSED 2026-08-26 (`scraper`):** see 88 — Gett's `"ced Product Analyst Tel Aviv, Israel"` → `"Tel Aviv, Israel"` is a pinned case. The card the digest showed is rebuilt at the next refresh.
     card). Gett: `**Experienced Product Analyst** … 📍 ced Product Analyst Tel Aviv` in the
     same digest — the DOM extraction split the card text at a fixed offset. Reproduce:
     `git show 58212df:digests/latest.md | grep -n "ced Product Analyst"`; the cached card is
     in `scraped_cache.json` under `Gett`.
 169. **Location and employment type glued into a Comeet title** — lane: `scraper`.
+    **CLOSED 2026-08-26 (`scraper`):** `_split_title_tail` strips `<place>? <level>? <type>$` when a place or a level stands beside the type (`"Data Analyst Raanana Full-time"` → `Data Analyst` / `Raanana`; 46 Comeet-URL tails in the cache; the 13 real titles ending in a type or level word are untouched). The place moves into the location; a foreign one stays there for `pipeline.israel` to drop (Hypernative's US role, published as Herzliya until now). One-night cost for `roles`: a retitled row gets a new sha1 `job_id`, so the ledger may see a repost the morning after. `test_scrape_a_comeet_widget_title_is_split_never_rejected`.
     Modellama: `**Data Analyst Raanana Full-time**` beside a clean `Data Analyst` from
     LinkedIn for the same role (so the roles ledger also sees two titles for one posting).
     Reproduce: `git show 58212df:digests/latest.md | grep -n "Raanana Full"`.
@@ -2404,6 +2415,7 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     the parent (its roles were never separable at the board) or it keeps a distinct
     `display-name` once that column exists (items 50/61). Enumerate with the one-liner at 133.
 195. **`tests.yml`'s `mutation-gate` comment still says "~15 minutes" and the `guard` job
+    **Scraper half CLOSED 2026-08-26:** 158 is fixed; the comment and the exclusion are `infra`'s.
     is red on BACKLOG 158** — lane: `infra` + `scraper`. The harness now excludes that
     baseline-red test from every verdict and prints it as a `::warning::`, so the gate is
     honest about it, but the `guard` job itself stays red until 158 is fixed. Keep
@@ -2567,3 +2579,69 @@ half), 86, 118, 153, 154, 184. Open, with owners:
     (2026-08-25 19:47). Found 2026-08-26 by verifying this lane's staged blobs in a clean
     `git worktree`. Fix both halves: add `.claude` to `_SKIP_DIRS`, and put the deleted
     workflow's name in `ABSENT_OK` with the reason (or reword line 494).
+
+## From the `scraper` lane, 2026-08-26
+
+Record: `docs/sessions/2026-08-24-scraper.md` (2026-08-26 section). Numbers re-derived that day; re-derive before acting.
+
+215. **Why can the runner open a listing but none of its position pages?** — lane: `scraper`.
+    On 2026-08-25 the cloud scored 17 companies with jobs as `empty` (`found=0`, HTTP 200,
+    9–15 s each); 4 of the 13 still active produce their jobs again from a residential
+    address, all via strategy 4 (22 postings: Get SAT, BlueBird, Red Access, WSC Sports;
+    four more — AU10TIX, Bits of Gold, REE, StarkWare — had only the listing page itself as
+    a "position", excluded since the same day). The cause is not reproducible from this machine. What lands
+    on 2026-08-27: the ladder (plain with the browser UA → a Chromium visit → ≤ 5 unlocker
+    pages), the `links:unread:<status>` / `links:blocked:<wall>` rot codes, `links_unread=N`
+    in the stamp. Read `cloud_state/scrape_rot.json` that morning: `403` = a WAF on the
+    datacenter address (rung 2/3 should have cleared it — if `links_unread` is still ~8,
+    Chromium from that address is scored too and the unlocker is the only rung that reads);
+    `net` = egress/DNS (an infra question); an opened page with no `<h1>` = a JS-rendered
+    detail page (a fourth rung: render the position page). If none of the 4 (`Get SAT`,
+    `BlueBird Aero Systems`, `Red Access`, `WSC Sports`) is back in `with_jobs` and none is
+    in `links_unread`, the
+    hypothesis was wrong and the change is inert — say so.
+216. **IP-shaped error rows are visible to no re-check pool, by design** — lane: `scraper` +
+    `registry`. A row whose code is `links:*` / `block:*` / `http:403` / `http:429` is never
+    parked (parking it would hand it to a hunt running on the same refused address — a churn
+    loop), so it never reaches `listing_hunt`, the Sunday audit or triage. Its streak keeps
+    counting in `scrape_rot.json` (`n`, `error`). After ~30 observed nights someone should
+    look: is it the runner's address, the site, or a URL that moved? A `code-<code>-N`
+    alarm fires when one code covers > 5 % of rows; a per-row age alarm does not exist yet.
+217. **`scrape-refresh.yml` installs `@anthropic-ai/claude-code` unpinned** — lane: `infra`.
+    `daily-digest.yml` pins `@2.1.241` (the classifier reads that version's error envelope);
+    the four other CLI-installing workflows take whatever npm serves at 00:00. A CLI drift
+    now shows as `llm_fail=N` / `alarm=llm-down` on the `collect` line rather than silently
+    (the seam classifies `unknown option` as `drift`), but pinning is cheaper than reading it.
+218. **`validate_bd.py` pre-slices ±40 characters around the place before calling
+    `_loc_from_ctx`** — lane: `registry` (`validate_bd.py:63`). That window is the bleed
+    generator `scrape_universal` stopped using on 2026-08-26 (BACKLOG 88); the function now
+    takes `(ctx, anchor=None)` and returns `""` for no place (it returned `"Israel"`), so the
+    two call sites there should pass the whole card text and treat `""` as "no location".
+219. **Strategy 5's model, measured once** — lane: `scraper`. The sonnet-vs-opus A/B of
+    2026-08-26 (ARCHITECTURE §1) was on the 27 captured pages that reach strategy 5 that day;
+    `llm_calls`/`llm_won` in the `collect` line are the live numbers. Re-measure after a week:
+    if `llm_won / llm_calls` drops below what the A/B found, the cheaper model is missing
+    layouts the pricier one read.
+220. **A `links:` carry has no ceiling** — lane: `scraper`. By the operator's rule a listing
+    that still lists ≥ 3 unreadable positions keeps yesterday's jobs indefinitely. A board
+    that closed roles but keeps the links up would keep stale cards on the board until the
+    listing itself shrinks below 3. Acceptable today (the class was 4 companies); if a row
+    sits in `links_unread` for more than ~30 nights, hand-check it (216).
+221. **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
+    can lend the next card's place** — lane: `scraper`. `_DOM_JS` concatenates four ancestors'
+    text; `_loc_from_ctx(ctx, anchor)` takes the nearest place at or after the title, which in
+    `Herzliya Data & Analytics Data Analyst Apply Tel Aviv R&D Backend Engineer` is the next
+    card's (wave-1 attacker A, M2 — the old code returned `"Herzliya Data &"`, dirty but the
+    right city). Fix in the JS: bound `ctx` to the nearest ancestor whose class names a card
+    (`job|card|position|opening|row`), and pass the card's own text. Needs live renders to
+    measure (the two committed DOM fixtures are Arm and Xtend, both single-column).
+222. **`pipeline/llm.py` — the child inherits the whole environment, and `shutil.which` on
+    Windows prefers a `claude.cmd` in the cwd** — lane: shared (`infra`/`classifier`). Wave-1
+    attacker C: `_invoke` calls `subprocess.run` with no `env=`, so the CLI child carries
+    `BRIGHTDATA_API_KEY`/`BRIGHTDATA_ZONE` it never needs (the seam is `--tools ""` today, and
+    that guarantee rests on an unpinned CLI's flag semantics — 217); `shutil.which("claude")`
+    on Windows returns a relative `.\claude.CMD` from the cwd, which then fails under
+    `cwd=tempdir` as `transient` — one wasted spawn per company all night, never tripping the
+    breaker. Pass a filtered `env=` (PATH, HOME/USERPROFILE, the OAuth token), resolve the
+    executable to an absolute path, and classify `not recognized as an internal or external`
+    / `command not found` as `missing`.

@@ -243,7 +243,7 @@
   {
    "company": "Xtend",
    "title": "Backend Team Lead (C++) Tel-Aviv R&DAll",
-   "location": "Tel-Aviv R&DAll",
+   "location": "Tel-Aviv",
    "country_code": "",
    "url": "https://www.xtend.me/positions/position-df_665",
    "posted_date": "",
@@ -276,7 +276,7 @@
   {
    "company": "Xtend",
    "title": "Business Development Manager Tel-Aviv All",
-   "location": "Tel-Aviv All",
+   "location": "Tel-Aviv",
    "country_code": "",
    "url": "https://www.xtend.me/positions/position-07_e65",
    "posted_date": "",
@@ -471,5 +471,6 @@
    "job_id": "https://www.xtend.me/positions/position-da_56a",
    "description": ""
   }
- ]
+ ],
+ "note": "expected regenerated 2026-08-26: locations are the place itself (BACKLOG 88); titles unchanged"
 }

@@ -128,9 +128,12 @@ python audit_empty_rows.py                             # dry-run (add --apply to
 `pipeline.run` only writes `out/digest-<date>.{html,txt,json}` — emailing and board
 publishing are separate workflow steps, so a local run cannot notify anyone. Most tools
 follow the same convention: **dry-run by default, `--apply` to write**. Useful env vars:
-`SCRAPE_LLM=1` (LLM extraction fallback), `SCRAPE_ASSUME_IL=1` (accept page-level Israel
+`SCRAPE_LLM=1` (LLM extraction fallback — **spends the Claude subscription**, one tool-less
+`claude -p` per page that reaches strategy 5; `SCRAPE_LLM_MODEL` picks the model, §1),
+`SCRAPE_ASSUME_IL=1` (accept page-level Israel
 signal), `SCRAPE_VIA_UNLOCKER=1` (**spends Bright Data**: residential fetch of a page the
-plain fetch could not read), `SCRAPE_WORKERS` / `SCRAPE_COMPANY_BUDGET_S` /
+plain fetch could not read, and of at most `SCRAPE_UNLOCK_PAGES` (5) position pages per
+company when neither plain HTTP nor Chromium could open any), `SCRAPE_WORKERS` / `SCRAPE_COMPANY_BUDGET_S` /
 `SCRAPE_REFRESH_TIME_BUDGET_MIN` (refresh pool size / per-company seconds / minutes before
 the tail is carried over), `SCRAPE_CACHE_OUT` / `SCRAPE_ROT_OUT` / `SCRAPE_STAGES_OUT`
 (redirect the refresh's three outputs), `LLM_RESOLVE_CAP`, `JD_ENRICH_CAP`/`JD_ENRICH_BD_CAP`, `SERPAPI_KEY`,
@@ -249,11 +252,23 @@ including the claim "none".
    (`"Fraud Analyst Herzliya Full-time"` → `Fraud Analyst` / `Herzliya`; a foreign place is
    kept as the location so `pipeline.israel`, not the scraper, drops the role — 86 cached
    titles carried one); `ISRAEL_LOC` is word-bounded like `israel._PLACE_PATTERNS`
-   (BACKLOG 126). Replayed offline over 57 captured real pages (old vs new extractor, same
-   bundles, 2026-08-26): 140 postings identical, 12 gained (SeatPick, via position links —
-   the cloud had needed the LLM), 2 lost: Hypernative's `United States` role that had been
-   published as Herzliya, and a Checkmarx page whose only "location" was the phrase "and
-   Israel" in a 22-country list. Measured: the cloud run of 2026-08-25 (`gh run view
+   (BACKLOG 126; the lookarounds are case-sensitive on purpose — under `re.I` they blocked
+   the run-together card text real boards serve, `HerzliyaJunior Software Developer`,
+   `R&DRegularTel Aviv`). Replayed offline over 75 captured real pages (old vs new
+   extractor, same bundles, after both waves, 2026-08-26): **150 postings identical,
+   36 gained, 12 lost**. Gained: Infinidat 24 (every card carries its own `Herzliya`; the
+   old 220-character rule found 6), SeatPick 12 (position links — the cloud had needed the
+   LLM). Lost: six "postings" that were the listing page's own `<h1>` (`AU10TIX Careers -
+   Join us!`, `Careers - REE` …), two whose "location" was the CSS token `lod`, Hypernative's
+   `United States` role that had been published as Herzliya (now kept with its real place
+   and dropped by `pipeline.israel`, so the company counts as `no_il`), and a Checkmarx page
+   whose only "location" was the phrase "and Israel" in a 22-country list. Pecan AI's six
+   roles — single-role pages whose only Israel is boilerplate prose and which name no
+   foreign country — are kept as `Israel`, the one judgement call in `_read_position_page`;
+   Utila's two Singapore/EMEA roles, published as Tel Aviv until now, are not (the 12th
+   and 11th losses). A foreign-tail role never satisfies first-hit-wins (`add.israeli()`
+   is what a strategy counts), so three US widget titles in page state cannot hide the
+   DOM-rendered Israeli board. Measured: the cloud run of 2026-08-25 (`gh run view
    32794469465 --log`) did 440 rows in 32 min, median 13 s, p95 39 s, max 150 s (Ford),
    `via` links 73 · cards 59 · dom 47 · structured 38 · llm 26 · structured+dom 2; the last
    sequential run (`32677334301`, 2026-08-24) 428 rows in 111.6 min. Local scoped runs write nothing to
@@ -1416,19 +1431,49 @@ that empties parked; the code had said 7 / never since 2026-08-23):
   page, stamped `block:access-denied` / `block:cloudflare` / … in the rot file — unless plain
   HTTP got a readable page; a 200 with nothing captured at all; a
   browser that failed mid-way and captured fewer roles than yesterday, for at most
-  `PARTIAL_MAX_NIGHTS` (2)). Yesterday's jobs are carried forward for at most
+  `PARTIAL_MAX_NIGHTS` (2); **a listing that lists ≥ 3 positions none of which could be
+  opened** on any of strategy 4's three rungs — `links:unread:<http status | net>` or
+  `links:blocked:<wall vendor>`; a strategy-4 pass the company budget cut short before any
+  position was read — `deadline:links`, runner-shaped, whether or not it found jobs). Yesterday's jobs are carried forward for at most
   `CARRY_MAX_DAYS` (14) — never forever — and after `ROT_PARK_DAYS` (7) **observed** error
   nights (a flip from `empty` starts a new streak; a night the budget skipped does not
   count) the row is parked (`scrape rotted (error Nd) …`) so the registry's re-check pools own it again (the hunt
   pool lists that token; a row that also carries a `page-empty` triage stamp is owned by
   triage only — `docs/BACKLOG.md` 84), because **active rows are otherwise invisible to
-  listing-hunt and the weekly audits**. The first night that can produce an `error` at all
-  is 2026-08-25, so `parked=0` is the only possible value until about 2026-08-31. Until 2026-08-24 `scrape()` swallowed every navigation failure into `[]`, so
-  this branch had never run: the rot file held 207 `empty` entries and 0 `error`, and a 403
-  night silently deleted a company's jobs. The first pooled dry-run (425 rows, 2026-08-24,
-  residential IP, LLM and unlocker off) found 48 errors: 24 Cloudflare walls, 4 Incapsula,
-  9 HTTP 404, 8 HTTP 403, 1 HTTP 503, 2 navigation failures. The cloud run has the LLM tier
-  and the unlocker on, so its `with_jobs` should be a little higher and its walls fewer.
+  listing-hunt and the weekly audits**. **Two error shapes are exempt (2026-08-26).** An
+  IP-shaped code — `links:*`, `block:*`, `http:403`, `http:429` — says the *runner's
+  address* was refused, not that the page is gone: such a row is never parked, because
+  the listing-hunt runs on the same address and would re-verify the same URL, re-activate
+  the row and re-park it a week later (a churn loop; 11 of the 23 error rows on 2026-08-25
+  were this shape); its streak keeps counting in `scrape_rot.json` (`error`, `http`, `n`)
+  and the carry expires as usual. **A streak is one shape of error** — `links`, `ip`,
+  `runner`, `page` (`rot[name]["shape"]`): a shape change starts a new streak, so twenty
+  carried `links:` nights can never fund the carry expiry or the park clock of one
+  page-shaped night from the same cloaking WAF (wave-1 attacker B). A `links:` code goes one step further, by the operator's
+  rule of 2026-08-25 ("I don't want you to discard"): the listing is alive and visibly
+  lists the roles, so yesterday's jobs are carried **without expiry** for as long as that
+  holds — the night the listing lists fewer than three positions it is an ordinary
+  `empty` and the carry ends. It is loud: `links_unread=N` in the stamp, an
+  `alarm=links-unread-N` token (so a bold `Stages:` line in the mail), and a `::warning::`
+  naming the companies in the step log. Why this class exists: on 2026-08-25 the cloud run
+  scored 17 companies with jobs the night before as `empty` (`found=0`, HTTP 200, 9–15 s
+  each; the `links:` code is set only after the LLM tier — which reads the listing that
+  DID answer — has also found nothing, and strategy 4 runs on a deadline that reserves that
+  tier's 40 s when `SCRAPE_LLM` is on); re-scraped from a residential address, 4 of the 13 still active produced their
+  jobs again, all via position links (Get SAT 10, BlueBird 7, Red Access 3, WSC Sports 2;
+  four more had only the listing page itself as a "position", junk the href hygiene of
+  the same day now excludes) — the runner could open the listing and none of its
+  position pages, and nothing recorded it. What the runner is refused by is **not
+  reproducible from this machine**; the 08-27 rot codes are the first evidence (`403` = a
+  WAF on the datacenter address, which rung 2/3 should now clear; `net` = egress; an
+  opened page with no title = a JS-rendered detail page). Runner-shaped codes (`hang:`,
+  `pool:`, `worker:`, `internal:`, `launch:`) never park either. Page-shaped codes —
+  `http:404/410`, `http:5xx`, `goto:*`, `render:blank` — are the parking class. The first
+  night that could produce an `error` at all was 2026-08-25 (23 of 440: 10 × `http:403`,
+  8 × `http:404`, 4 × `goto:TimeoutError`, 1 × `http:429`), so the first parks land
+  ~2026-09-01 and only for the page-shaped eight. Until 2026-08-24 `scrape()` swallowed
+  every navigation failure into `[]`, so this branch had never run: the rot file held 207
+  `empty` entries and 0 `error`, and a 403 night silently deleted a company's jobs.
   `no_il` in the stamp counts companies where roles were found but none in Israel — the
   case that used to be byte-identical to "nothing on the page".
 - **a broken night is not a measurement.** Errors above `MASS_FAILURE_PCT` (20% of ≥ 20
@@ -1450,27 +1495,47 @@ that empties parked; the code had said 7 / never since 2026-08-23):
   rule now stands (BACKLOG 95, `infra`; `tests/rehearse_infra.py --conflict` proves it).
 
 Every exit stamps the `collect` stage with its counts, and the digest prints that line in
-its audit, keys alphabetical — the local rehearsal of 2026-08-24 rendered exactly:
+its audit, keys alphabetical — the cloud run of 2026-08-25 rendered exactly:
 
-    - Stage order: repair: … | collect: 2026-08-24 (TODAY) carried=6 empty=160 errors=48
-      minutes=37 no_il=0 parked=0 rows=425 scraped=425 unprocessed=0 with_jobs=217 workers=4 | …
+    - Stage order: repair: never run | collect: 2026-08-25 (TODAY) carried=3 empty=177 errors=23
+      minutes=32 no_il=5 parked=0 rows=440 scraped=440 unprocessed=0 with_jobs=240 workers=4 | …
 
-Read it with this arithmetic, which holds on every exit: `with_jobs + empty + errors =
+and from 2026-08-27 the line also carries `links_unread=N`, `via=links73+cards59+dom47+…`
+(which strategy carried how many companies — a strategy collapsing is visible the next
+morning instead of only in the step log), and, on a run with the flags set,
+`llm_calls llm_won llm_fail` (`SCRAPE_LLM`) and `unlock_calls unlock_ok`
+(`SCRAPE_VIA_UNLOCKER`) — the two shared quotas this step spends, counted nowhere until
+then. Read it with this arithmetic, which holds on every exit: `with_jobs + empty + errors =
 scraped`, `scraped + unprocessed = rows`, `no_il ≤ empty` (roles found, none in Israel),
-`carried ≤ errors` (error rows whose cached jobs, up to 14 nights old, were kept). A line
-that does not reconcile, or that lacks a key, is not from this code. `alarm=` appears only
-when something is wrong — `mass-failure-errors-NN%`,
-`errors-NN%`, `shrink-abort-A-to-B`, `unprocessed-N` (above 5% of rows), `no-jobs` — and a
+`carried ≤ errors` (error rows whose cached jobs were kept), `links_unread ≤ errors`,
+`llm_won ≤ llm_calls`, `unlock_ok ≤ unlock_calls`, and the `via` counts sum to `with_jobs`.
+A line that does not reconcile, or that lacks a key, is not from this code. `alarm=`
+appears only when something is wrong — `mass-failure-errors-NN%`, `errors-NN%`,
+`shrink-abort-A-to-B`, `unprocessed-N` (above 5% of rows), `no-jobs`, `links-unread-N`
+(any N), `code-<error code>-N` (one code on at least 3 % of the rows and at least 5 rows — the
+band between the shrink guard's 20 % of the companies that had jobs and mass-failure's 20 %
+of all rows; the 17-company event of 2026-08-25 was 3.9 %), `llm-down` (at least three LLM
+calls were made and every one failed: the token, the CLI or the quota — a breaker or
+deadline skip is not a failed call), `errors-NN%` and `no-jobs` only once `MASS_FAILURE_MIN_ROWS`
+rows were scraped (a `--limit 3` is not an outage), `rot-unreadable` (the streak file could not be read;
+streaks restart, nothing parks tonight), `cache-unreadable` (the cache file could not be
+read: the run refused before rendering a page, stamped, exited 1 — a `{}` rebuilt from one
+night's successes would have been a 1,200-job deletion, BACKLOG 156; an empty file is
+absent, not unreadable) — and a
 line reading `collect: <yesterday> (1d ago)` means the refresh crashed before stamping (the
-workflow no longer re-stamps it blindly): on such a night nothing was committed at all —
-the refresh step is not `continue-on-error` and the commit step has no `if: always()` — so
-the digest served the previous cache; `gh run list -R AnalystJobsIL/pipeline --workflow
+workflow no longer re-stamps it blindly); the commit step is `if: always()` since
+2026-08-25 (this sentence said the opposite until 2026-08-26), so whatever the crash left
+on disk is what lands — the cache is written atomically, so that is last night's file;
+`gh run list -R AnalystJobsIL/pipeline --workflow
 scrape-refresh.yml` finds the run, the failing step is `Refresh the scrape cache`. Both
 cases are also a **bold `- **Stages:**` line in the audit and a `::warning::` in the digest
 log** (`stages.alarms("collect")`, read by `pipeline/run.py`): a stamp older than today, or
 one carrying `alarm=`. Offline,
 `scrape_rot.json` carries each empty/error row's last error code, HTTP status, roles found
-before the Israel filter, and the number of nights observed.
+before the Israel filter, and the number of nights observed. Determinism: the streak date
+and the day-rotation of the processing order read one clock (`_today()`); the tests pin it
+(the shrink-guard test was red on every push from `f720627` to 2026-08-26 because the
+rotation moved its rows on some calendar days — BACKLOG 158).
 
 **The four unrelated "14"s** — don't conflate them: the job board's 14-day `first_seen`
 window; `CARRY_MAX_DAYS`=14 (stale scrape jobs); the 14-day deep re-hunt cadence; and

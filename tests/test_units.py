@@ -890,7 +890,15 @@ def test_a_role_is_never_listed_in_both_email_sections(tmp_path):
     ("IL, Netanya (On-site)", "Netanya"),
     ("Senior BI Developer, Ra'anana", "Ra'anana"),
     ("Tel Aviv, Israel", "Tel Aviv, Israel"),
-    ("nothing here", "Israel"),
+    ("nothing here", ""),                    # 2026-08-26: no place is "" — the caller's url_is_il gate decides
+    ("ced Product Analyst Tel Aviv, Israel", "Tel Aviv, Israel"),      # Gett, BACKLOG 168
+    ("DevOps Engineer in Ramat Gan, Israel", "Ramat Gan, Israel"),     # Checkmarx
+    ("Head of Marketing Tel Aviv District, Israel", "Tel Aviv District, Israel"),
+    ("Amsterdam, Netherlands; Tel Aviv, Israel; London, United Kingdom", "Tel Aviv, Israel"),
+    ("It was acknowledged as one of Israel", ""),                      # prose, not a place
+    ("Location: Israel", "Israel"),
+    ("Tel Aviv-Yafo, Israel (Hybrid)", "Tel Aviv-Yafo, Israel"),
+    ("Akkodis Lodz melody explode", ""),                               # BACKLOG 126: inside a word
 ])
 def test_a_scraped_location_is_a_place_not_the_card_around_it(card, loc):
     """The scraper took a fixed 12-character window either side of the place name, which
@@ -1990,7 +1998,7 @@ def test_scrape_llm_strategy_is_off_without_the_env_and_uses_the_runner(monkeypa
 
     def runner(prompt, timeout_s):
         ran.append(prompt)
-        return 'Sure: [{"title": "Senior Data Analyst", "location": ""}]'
+        return {"positions": [{"title": "Senior Data Analyst", "location": ""}]}
     monkeypatch.delenv("SCRAPE_LLM", raising=False)
     jobs, _ = N._extract("Co", url, _rendered(page_html=page), fetch=_no_fetch, llm=runner)
     assert jobs == [] and ran == []
@@ -2079,9 +2087,12 @@ def test_scrape_result_tells_a_broken_page_from_an_empty_board(fields, jobs, exp
 @pytest.mark.parametrize("fixture", ["arm", "xtend"])
 def test_new_parse_matches_the_pre_refactor_extractor_on_captured_pages(fixture):
     """Render payloads captured on 2026-08-24 with the extractor as it was BEFORE the
-    render/parse split, and the jobs it produced. The split must reproduce them exactly.
-    (Only the two DOM-strategy pages were small enough to commit; the other strategies were
-    diffed the same way on 23 captured pages in the session record, not in the repo.)"""
+    render/parse split, and the jobs it produced. The split reproduced them exactly; on
+    2026-08-26 the `expected` locations were regenerated once — the place itself instead
+    of the title's tail (`"AI Research Scientist Raanana, Israel"` → `"Raanana, Israel"`,
+    BACKLOG 88) — with every title unchanged. (Only the two DOM-strategy pages were small
+    enough to commit; the other strategies were diffed the same way on 57 captured pages
+    in the session record, not in the repo.)"""
     import scrape_universal as N
     here = os.path.dirname(os.path.abspath(__file__))
     fx = _json.load(open(os.path.join(here, "fixtures", "scrape", f"{fixture}.json"), encoding="utf-8"))
@@ -2142,6 +2153,10 @@ def _refresh_sandbox(tmp_path, monkeypatch, rows, old_cache=None, rot=None, outc
     monkeypatch.setattr(R, "CACHE_PATH", str(paths.cache))
     monkeypatch.setattr(R, "ROT_PATH", str(paths.rot))
     monkeypatch.setattr(stages, "PATH", str(paths.stages))
+    # the day-rotation is pure and pinned by its own test; here every scenario reads the
+    # registry in order (BACKLOG 158: the shrink test was red on the dates the rotation moved
+    # its emptied rows past the budget cut)
+    monkeypatch.setattr(R, "_rotate", lambda rows, day: rows)
     monkeypatch.delenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", raising=False)
     monkeypatch.delenv("SCRAPE_WORKERS", raising=False)
     outcomes = outcomes or {}
@@ -2188,7 +2203,7 @@ def test_refresh_carries_jobs_forward_on_error_but_never_on_empty(tmp_path, monk
            "Delta": {"since": _days_ago(14), "why": "error", "last": _days_ago(1), "n": 13}}
     P = _refresh_sandbox(tmp_path, monkeypatch,
                          [("Acme",), ("Beta",), ("Gamma",), ("Delta",)] + [(n,) for n in stable],
-                         old, rot, {"Acme": ("error", "http:403"), "Beta": ("empty", ""),
+                         old, rot, {"Acme": ("error", "http:404"), "Beta": ("empty", ""),
                                     "Delta": ("error", "goto:TimeoutError")})
     assert P.R.run(["--workers", "1"]) == 0
     cache = _json.loads(P.cache.read_text(encoding="utf-8"))
@@ -2217,7 +2232,7 @@ def test_refresh_rereads_the_registry_before_parking_and_keeps_other_writers_not
     matched by name, and another tool's segment written during the run survives."""
     rot = {"Acme": {"since": _days_ago(9), "why": "error", "last": _days_ago(1), "n": 8}}
     P = _refresh_sandbox(tmp_path, monkeypatch, [("Acme", "listing-hunt 2026-08-01: verified 3 IL"), ("Zed",)],
-                         {"Acme": [_il_job("Acme")]}, rot, {"Acme": ("error", "http:403")})
+                         {"Acme": [_il_job("Acme")]}, rot, {"Acme": ("error", "http:404")})
     real = P.R.scrape_result
 
     def racing(name, url, **kw):          # another writer touches the registry mid-run
@@ -2269,7 +2284,9 @@ def test_refresh_mass_failure_guard_refuses_to_rot_park_or_drop(tmp_path, monkey
     assert P.R.run(["--workers", "1"]) == 0
     assert _json.loads(P.rot.read_text(encoding="utf-8"))["B"]["why"] == "error", "rot advanced"
     assert _rows_by_name(P.csv)["A"]["active"] == "false"
-    assert _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]["alarm"] == "errors-100%+no-jobs"
+    # three rows are below MASS_FAILURE_MIN_ROWS: no percentage token, no `no-jobs` (a
+    # `--limit 3` or a budget-starved night must not read as an outage)
+    assert "alarm" not in _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
 
 
 def test_refresh_time_budget_carries_the_unprocessed_and_stamps_the_count(tmp_path, monkeypatch):
@@ -2372,33 +2389,43 @@ def test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason(tmp_path, mo
     # company's jobs unnoticed. It is measured over what was processed.
     P = _refresh_sandbox(tmp_path / "starved", monkeypatch, [(n,) for n in names], old, {},
                          {n: ("empty", "") for n in names[:19]})
-    real = P.R.scrape_result
-
-    def slow(name, url, **kw):
-        _time.sleep(0.02)
-        return real(name, url, **kw)
-    monkeypatch.setattr(P.R, "scrape_result", slow)
-    monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0.0075")     # ~20 rows
-    assert P.R.run(["--workers", "1"]) == 0
+    clock = _TickingClock(P, monkeypatch)                  # one second per company; no real sleeps
+    monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", str(19 / 60))     # ~20 rows
+    assert P.R.run(["--workers", "1"], clock=clock) == 0
     stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
     assert stamp["alarm"].startswith("shrink-abort-") and stamp["unprocessed"] > 0
     assert _json.loads(P.cache.read_text(encoding="utf-8")) == old
     # ...and it is measured over what was PROCESSED, not the whole cache: 10 of 25 processed,
-    # 5 of those lost = 50% (the whole-cache view would say 5 of 25 = 20%, no abort)
+    # 5 of those lost = 50% (the whole-cache view would say 5 of 25 = 20%, no abort).
+    # BACKLOG 158: this scenario was red on the calendar days the rotation moved the five
+    # emptied rows past the budget cut, and flaky on a slow runner (real sleeps against a
+    # wall-clock budget); the sandbox pins the rotation and the clock is injected.
     P = _refresh_sandbox(tmp_path / "half", monkeypatch, [(n,) for n in names], old, {},
                          {n: ("empty", "") for n in names[:5]})
-    real2 = P.R.scrape_result
-
-    def slow2(name, url, **kw):
-        _time.sleep(0.02)
-        return real2(name, url, **kw)
-    monkeypatch.setattr(P.R, "scrape_result", slow2)
-    monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0.0035")     # ~10 rows
-    assert P.R.run(["--workers", "1"]) == 0
+    clock = _TickingClock(P, monkeypatch)
+    monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", str(9 / 60))      # ~10 rows
+    assert P.R.run(["--workers", "1"], clock=clock) == 0
     stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
     assert 8 <= stamp["scraped"] <= 12 and stamp["alarm"].startswith("shrink-abort-")
     # the token names what was PROCESSED (had = scraped), not the 25-company cache
     assert int(stamp["alarm"].split("-")[2]) == stamp["scraped"], stamp["alarm"]
+
+
+class _TickingClock:
+    """A clock the refresh reads instead of `time.time`: advances one second per scraped
+    company, so a time budget selects a row count, not a race."""
+
+    def __init__(self, P, monkeypatch):
+        self.t = 1_000_000.0
+        real = P.R.scrape_result
+
+        def ticking(name, url, **kw):
+            self.t += 1.0
+            return real(name, url, **kw)
+        monkeypatch.setattr(P.R, "scrape_result", ticking)
+
+    def __call__(self):
+        return self.t
 
 
 def test_refresh_pool_and_inline_paths_build_the_same_cache(tmp_path, monkeypatch):
@@ -2752,7 +2779,7 @@ def test_refresh_a_failed_registry_write_keeps_the_streak_that_justified_it(tmp_
     rot = {"Acme": {"since": _days_ago(8), "why": "error", "last": _days_ago(1), "n": 7}}
     P = _refresh_sandbox(tmp_path, monkeypatch, [("Acme",)] + [(f"Ok{i}",) for i in range(6)],
                          {"Acme": [_il_job("Acme")], **{f"Ok{i}": [_il_job(f"Ok{i}")] for i in range(6)}},
-                         rot, {"Acme": ("error", "http:403")})
+                         rot, {"Acme": ("error", "http:404")})
 
     def broken(parked, today):
         raise OSError("busy")
@@ -2765,27 +2792,37 @@ def test_refresh_a_failed_registry_write_keeps_the_streak_that_justified_it(tmp_
 
 def test_refresh_rotates_the_processing_order_by_day(tmp_path, monkeypatch):
     """Wave 3 (2026-08-24): rows were submitted in registry order, so a budget cut stranded
-    the same tail (carried, never re-scraped) every night. The order rotates by the day;
-    the bookkeeping is unaffected."""
+    the same tail (carried, never re-scraped) every night. The order rotates by the day —
+    `_rotate` is pure and read through the one `_today()` clock (BACKLOG 158: the second
+    `date.today()` call the rotation used to make could straddle midnight, and it made the
+    shrink test's outcome depend on the calendar)."""
     import datetime as dt
     names = [f"Co{i:02d}" for i in range(10)]
-    seen = []
-    for day in (0, 1):
-        P = _refresh_sandbox(tmp_path / str(day), monkeypatch, [(n,) for n in names], {}, {})
-        real = P.R.scrape_result
-        order = []
+    rows = [{"company_name": n} for n in names]
+    d0 = dt.date(2026, 8, 30)                       # ordinal % 10 == 3 for this date
+    import refresh_scrape_cache as R
+    real_rotate = R._rotate                        # taken before the sandbox replaces it
+    r0 = R._rotate(rows, d0)
+    r1 = R._rotate(rows, d0 + dt.timedelta(days=1))
+    assert [r["company_name"] for r in r0] != [r["company_name"] for r in r1]
+    assert sorted(r["company_name"] for r in r0) == sorted(r["company_name"] for r in r1) == names
+    assert r1[0]["company_name"] == r0[1]["company_name"], "one day moves the start by one row"
+    assert R._rotate([], d0) == []
+    # and the run reads it through `_today()`: the sandbox pins `_rotate`; restore it here
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], {}, {})
+    monkeypatch.setattr(P.R, "_rotate", real_rotate)
+    monkeypatch.setattr(P.R, "_today", lambda: d0)
+    real = P.R.scrape_result
+    order = []
 
-        def spy(name, url, **kw):
-            order.append(name)
-            return real(name, url, **kw)
-        monkeypatch.setattr(P.R, "scrape_result", spy)
-        base = dt.date.today() + dt.timedelta(days=day)
-        monkeypatch.setattr(P.R._dt, "date", type("D", (), {
-            "today": staticmethod(lambda b=base: b), "fromisoformat": staticmethod(dt.date.fromisoformat)}))
-        assert P.R.run(["--workers", "1"]) == 0
-        seen.append(order)
-        assert set(_json.loads(P.cache.read_text(encoding="utf-8"))) == set(names)
-    assert seen[0] != seen[1] and sorted(seen[0]) == sorted(seen[1]) == names
+    def spy(name, url, **kw):
+        order.append(name)
+        return real(name, url, **kw)
+    monkeypatch.setattr(P.R, "scrape_result", spy)
+    assert P.R.run(["--workers", "1"]) == 0
+    assert order[0] == names[d0.toordinal() % 10] and sorted(order) == names
+    assert _json.loads(P.rot.read_text(encoding="utf-8")) == {}
+    assert _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]["via"] == "dom10"
 
 
 # --- scraper lane, 2026-08-24: render/parse split, error vs empty, the pooled refresh ---
@@ -6620,6 +6657,182 @@ def test_the_bright_data_warning_no_longer_blames_the_other_spenders():
     assert "targeted_cap" in src.split("::warning::", 1)[1]
     assert "report_bd_spend(targeted_cap if have_bd else None)" in inspect.getsource(dd.main)
 
+
+# --- scraper lane, 2026-08-26: never discard what the runner cannot read; count what it spends ---
+
+
+def _rot_entry(n, why="error", days=None):
+    return {"since": _days_ago(days if days is not None else n + 1), "why": why,
+            "last": _days_ago(1), "n": n}
+
+
+def test_refresh_an_address_refused_row_is_carried_and_never_parked(tmp_path, monkeypatch):
+    """Design critic, 2026-08-25: parking a row whose ERROR is IP-shaped (`http:403`/`429`, a
+    wall, `links:*`) hands it to listing-hunt, which runs on the same blocked address,
+    re-verifies the same URL, re-activates the row and re-parks it a week later — a churn
+    loop that deactivates healthy Israeli companies. Only a PAGE-shaped code parks."""
+    R = __import__("refresh_scrape_cache")
+    assert all(R._ip_shaped(c) for c in ("http:403", "http:429", "block:cloudflare",
+                                          "links:unread:403", "links:blocked:incapsula"))
+    assert all(R._parkable(c) for c in ("http:404", "http:410", "http:503", "goto:TimeoutError",
+                                         "render:blank"))
+    assert not any(R._parkable(c) for c in ("hang:>450s", "pool:BrokenProcessPool", "worker:X",
+                                             "internal:TypeError", "launch:Error", ""))
+    assert R._code({"error": "partial:links:unread:403"}) == "links:unread:403"
+    stable = [f"Ok{i}" for i in range(12)]
+    old = {"Wall": [_il_job("Wall")], "Gone": [_il_job("Gone")], **{n: [_il_job(n)] for n in stable}}
+    rot = {"Wall": _rot_entry(9), "Gone": _rot_entry(9)}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("Wall",), ("Gone",)] + [(n,) for n in stable], old, rot,
+                         {"Wall": ("error", "http:403"), "Gone": ("error", "http:404")})
+    assert P.R.run(["--workers", "1"]) == 0
+    rows = _rows_by_name(P.csv)
+    assert rows["Wall"]["active"] == "true" and "scrape rotted" not in rows["Wall"]["notes"]
+    assert rows["Gone"]["active"] == "false" and "scrape rotted (error 10d)" in rows["Gone"]["notes"]
+    cache = _json.loads(P.cache.read_text(encoding="utf-8"))
+    assert cache["Wall"] == old["Wall"], "carried like any error, within CARRY_MAX_DAYS"
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert rot["Wall"]["n"] == 10 and rot["Wall"]["error"] == "http:403", "the streak keeps counting"
+    assert "Gone" not in rot
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["parked"] == 1 and stamp["errors"] == 2 and stamp["links_unread"] == 0
+
+
+def test_refresh_positions_unreadable_from_the_runner_keeps_the_jobs_and_says_so(tmp_path, monkeypatch):
+    """2026-08-25: 17 companies with jobs came back `empty` because every position page of
+    their listing failed to open from the runner (strategy 4), and the mail printed them as
+    `regressed-to-zero`. Operator's rule: never discard. A `links:` code carries yesterday's
+    jobs past CARRY_MAX_DAYS, parks nothing at any streak length, counts in the stamp and
+    alarms — until the listing itself stops listing positions (an ordinary empty)."""
+    old = {"Held": [_il_job("Held", 1), _il_job("Held", 2)], "Blocked": [_il_job("Blocked")],
+           **{f"Ok{i}": [_il_job(f"Ok{i}")] for i in range(12)}}
+    rot = {"Held": _rot_entry(20, days=21), "Blocked": _rot_entry(8)}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("Held",), ("Blocked",), ("Fresh",)] + [(f"Ok{i}",) for i in range(12)],
+                         old, rot, {"Held": ("error", "links:unread:403"),
+                                    "Blocked": ("error", "links:blocked:cloudflare"),
+                                    "Fresh": ("error", "links:unread:net")})
+    assert P.R.run(["--workers", "1"]) == 0
+    cache = _json.loads(P.cache.read_text(encoding="utf-8"))
+    assert cache["Held"] == old["Held"], "21 days of errors, still carried: the listing lists the roles"
+    assert cache["Blocked"] == old["Blocked"] and "Fresh" not in cache
+    rows = _rows_by_name(P.csv)
+    assert all(rows[n]["active"] == "true" for n in ("Held", "Blocked", "Fresh"))
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["links_unread"] == 3 and stamp["carried"] == 2 and stamp["parked"] == 0
+    assert "links-unread-3" in stamp["alarm"], stamp["alarm"]
+    assert stamp["with_jobs"] + stamp["empty"] + stamp["errors"] == stamp["scraped"] == 15
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert rot["Held"]["n"] == 21 and rot["Held"]["error"] == "links:unread:403"
+    # the alarm reaches the mail like every other one
+    assert any("links-unread-3" in line for line in P.stages_mod.alarms("collect"))
+    # the night the listing lists fewer than three positions it is an ordinary empty: dropped
+    P2 = _refresh_sandbox(tmp_path / "ends", monkeypatch, [("Held",)] + [(f"Ok{i}",) for i in range(12)],
+                          old, {"Held": _rot_entry(21, days=22)}, {"Held": ("empty", "")})
+    assert P2.R.run(["--workers", "1"]) == 0
+    assert "Held" not in _json.loads(P2.cache.read_text(encoding="utf-8"))
+
+
+def test_refresh_one_error_code_on_many_rows_is_named_below_the_mass_failure_bar(tmp_path, monkeypatch):
+    """The band between the shrink guard (20 % of the companies that had jobs) and the
+    mass-failure guard (20 % of all rows) had no voice: 17 of 440 rows failing the same way
+    on 2026-08-25 alarmed nothing. One code on more than CODE_ALARM_PCT of the rows is a
+    named token; a code on one row is not."""
+    names = [f"Co{i:02d}" for i in range(100)]
+    outcomes = {n: ("error", "links:unread:403") for n in names[:8]}
+    outcomes[names[8]] = ("error", "http:404")
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], {}, {}, outcomes)
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert "code-links:unread:403-8" in stamp["alarm"] and "code-http:404" not in stamp["alarm"]
+    assert "mass-failure" not in stamp["alarm"] and stamp["errors"] == 9
+    for v in stamp.values():
+        assert _re.fullmatch(r"[A-Za-z0-9_.%+:-]+", str(v)), v
+    assert stamp["via"] == "dom91"
+
+
+def test_refresh_refuses_an_unreadable_cache_and_survives_an_unreadable_rot_file(tmp_path, monkeypatch):
+    """BACKLOG 156 (scraper half): a momentarily unreadable scraped_cache.json read as `{}`
+    and the night's successes were written back over 1,200 jobs. Unreadable cache: refuse
+    before scraping, stamp the reason first (the commit step is `if: always()` and owns the
+    stamp), exit 1. Unreadable rot: alarm, continue, park nothing. Empty file: absent."""
+    R = __import__("refresh_scrape_cache")
+    assert R._load(str(tmp_path / "none.json")) == ({}, "absent")
+    (tmp_path / "empty.json").write_text("  \n", encoding="utf-8")
+    assert R._load(str(tmp_path / "empty.json")) == ({}, "unreadable"), "zero bytes is a hard kill's leftover"
+    (tmp_path / "bad.json").write_text("{\"A\": [", encoding="utf-8")
+    assert R._load(str(tmp_path / "bad.json")) == ({}, "unreadable")
+    (tmp_path / "list.json").write_text("[1, 2]", encoding="utf-8")
+    assert R._load(str(tmp_path / "list.json")) == ({}, "unreadable")
+    names = [f"Co{i:02d}" for i in range(25)]
+    P = _refresh_sandbox(tmp_path / "cache", monkeypatch, [(n,) for n in names], {}, {})
+    P.cache.write_text("{\"A\": [", encoding="utf-8")
+    before = _snapshot(P.cache, P.rot, P.csv)
+    calls = []
+    monkeypatch.setattr(P.R, "scrape_result", lambda *a, **k: calls.append(a) or None)
+    assert P.R.run(["--workers", "1"]) == 1
+    assert calls == [], "refused before a single page was rendered"
+    assert _snapshot(P.cache, P.rot, P.csv) == before
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["alarm"] == "cache-unreadable" and stamp["scraped"] == 0 and stamp["rows"] == 25
+    assert {"with_jobs", "empty", "errors", "carried", "no_il", "links_unread", "parked", "via",
+            "unprocessed"} <= set(stamp) and stamp["unprocessed"] == 25, "every documented key, zero-filled"
+    assert any("cache-unreadable" in line for line in P.stages_mod.alarms("collect"))
+    # a scoped --apply never merges over an unreadable file either
+    P2 = _refresh_sandbox(tmp_path / "apply", monkeypatch, [("Acme",)], {}, {})
+    P2.cache.write_text("{\"A\": [", encoding="utf-8")
+    assert P2.R.run(["--only", "Acme", "--apply", "--workers", "1"]) == 1
+    assert P2.cache.read_text(encoding="utf-8") == "{\"A\": ["
+    # the rot file is derivable state: streaks restart, nothing parks on evidence we cannot see
+    old = {n: [_il_job(n)] for n in names}
+    P3 = _refresh_sandbox(tmp_path / "rot", monkeypatch, [(n,) for n in names], old, {},
+                          {names[0]: ("error", "http:404")})
+    P3.rot.write_text("not json", encoding="utf-8")
+    assert P3.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P3.stages.read_text(encoding="utf-8"))["collect"]
+    assert "rot-unreadable" in stamp["alarm"] and stamp["parked"] == 0
+    rot = _json.loads(P3.rot.read_text(encoding="utf-8"))
+    assert rot[names[0]]["n"] == 1 and _rows_by_name(P3.csv)[names[0]]["active"] == "true"
+    assert len(_json.loads(P3.cache.read_text(encoding="utf-8"))) == 25
+
+
+def test_refresh_counts_the_llm_and_unlocker_spend_in_the_stamp(tmp_path, monkeypatch):
+    """Until 2026-08-26 strategy 5 (`claude -p`) and the Bright Data unlocker were called
+    and counted nowhere — the two shared quotas this script spends. The worker carries the
+    counts, the stamp prints them only on a run that could have spent (the flags set), and
+    a night where every LLM call failed says `llm-down` (the token-expiry symptom)."""
+    names = ["Won", "Tried", "Unlocked", "Plain"]
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], {}, {})
+    real = P.R.scrape_result
+
+    def spending(name, url, **kw):
+        res = real(name, url, **kw)
+        extra = {"Won": dict(strategy="llm", llm_calls=1), "Tried": dict(llm_calls=1),
+                 "Unlocked": dict(unlock_calls=1, unlock_ok=1), "Plain": dict(unlock_calls=1)}[name]
+        return _NS(**{**res.__dict__, **extra})
+    monkeypatch.setattr(P.R, "scrape_result", spending)
+    monkeypatch.delenv("SCRAPE_LLM", raising=False)
+    monkeypatch.delenv("SCRAPE_VIA_UNLOCKER", raising=False)
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert not {"llm_calls", "llm_won", "llm_fail", "unlock_calls", "unlock_ok"} & set(stamp)
+    assert stamp["via"] == "dom3+llm1"
+    monkeypatch.setenv("SCRAPE_LLM", "1")
+    monkeypatch.setenv("SCRAPE_VIA_UNLOCKER", "1")
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert (stamp["llm_calls"], stamp["llm_won"], stamp["llm_fail"]) == (2, 1, 0)
+    assert (stamp["unlock_calls"], stamp["unlock_ok"]) == (2, 1) and "alarm" not in stamp
+    # every LLM call failing is the outage, whatever the other strategies found
+    monkeypatch.setattr(P.R, "scrape_result",
+                        lambda name, url, **kw: _NS(**{**real(name, url, **kw).__dict__,
+                                                       "llm_calls": 1, "llm_error": "auth"}))
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["llm_fail"] == 4 and "llm-down" in stamp["alarm"]
+    # the worker dict carries the three fields, always (a result without them reads as 0/"")
+    got = P.R._worker(("X", "https://x.example/careers"))
+    assert {"llm_calls", "llm_error", "unlock_calls", "unlock_ok"} <= set(got)
+
+
 # =====================================================================================
 # ats-fetch lane, 2026-08-26 — the scraper's overnight verdict reaches board health, the
 # jazzhr platform retired, Greenhouse offices[], SCRAPE_CACHE_IN, the recruiter slug, atomic
@@ -6961,3 +7174,650 @@ def _links_page(n=4):
     return f"<body><p>We are hiring</p>{links}</body>"
 
 
+def test_scrape_positions_nobody_can_open_are_an_error_not_an_empty_board():
+    """2026-08-25: 17 companies whose listing lists positions came back `empty` because every
+    position page failed to open from the runner (found=0, HTTP 200). A listing with >= 3
+    positions and none readable on any rung is `links:unread:<status>` / `links:blocked:<wall>`
+    — classified as an ERROR the refresh carries — and never a fake HTTP code."""
+    import scrape_universal as N
+    url = "https://co.example/careers"
+    page = _links_page()
+    # every plain fetch refused: rung 2 is asked, gets nothing, the outcome is an error
+    visited = []
+
+    def refused(u, t):
+        return (None, 403) if "/careers-position/" in u else (None, None)
+
+    def no_visit(urls, deadline):
+        visited.extend(urls)
+        return {u: (None, None) for u in urls}
+    r = _rendered(page_html=page)
+    jobs, strategy = N._extract("Co", url, r, fetch=refused, visit=no_visit)
+    assert jobs == [] and strategy == "" and r.error == "links:unread:403"
+    assert len(visited) == 4, "rung 2 was offered every page plain HTTP could not open"
+    assert N._classify(r, jobs) == ("error", "links:unread:403")
+    res = N.scrape_result("Co", url, render=lambda u, t, d: _rendered(page_html=page),
+                          fetch=refused, visit=no_visit)
+    assert res.status == "error" and res.error == "links:unread:403" and res.jobs == []
+    # connection failures carry no status: `net`, never an invented 403
+    r = _rendered(page_html=page)
+    N._extract("Co", url, r, fetch=lambda u, t: (None, None), visit=no_visit)
+    assert r.error == "links:unread:net"
+    # a 200 challenge page per position is a wall, named by vendor
+    wall = "<html><title>Just a moment...</title><body>cf-browser-verification</body></html>"
+    r = _rendered(page_html=page)
+    N._extract("Co", url, r, fetch=lambda u, t: (wall, 200) if "/careers-position/" in u else (None, None),
+               visit=no_visit)
+    assert r.error == "links:blocked:cloudflare"
+    # fewer than three positions is not evidence of anything: an ordinary empty
+    r = _rendered(page_html=_links_page(2))
+    N._extract("Co", url, r, fetch=refused, visit=no_visit)
+    assert r.error == "" and N._classify(r, [])[0] == "empty"
+    # rung 2 opening the pages is a plain success — no error, no rescue flag
+    r = _rendered(page_html=page)
+    jobs, strategy = N._extract("Co", url, r, fetch=refused,
+                                visit=lambda urls, d: {u: _position_page(u[-2]) for u in urls})
+    assert strategy == "links" and len(jobs) == 4 and r.error == ""
+    # a readable page that is not a position (a soft 404) counts as OPENED: the listing is
+    # stale, not unreadable — an empty, so the carry can end
+    r = _rendered(page_html=page)
+    jobs, _ = N._extract("Co", url, r, fetch=lambda u, t: ("<html><h1>Page not found - Co</h1><p>Tel Aviv</p></html>", 200)
+                         if "/careers-position/" in u else (None, None), visit=no_visit)
+    assert jobs == [] and r.error == "" and N._classify(r, jobs)[0] == "empty"
+
+
+def test_scrape_the_unlocker_rung_is_bounded_and_counted(monkeypatch):
+    """Rung 3 sends at most UNLOCK_PAGES position pages through Bright Data, only under
+    SCRAPE_VIA_UNLOCKER, and every request lands on the bundle's `unlock_calls`/`unlock_ok`
+    — the one Bright Data spend this module makes, counted for the stamp."""
+    import scrape_universal as N
+    url = "https://co.example/careers"
+    page = _links_page(8)
+    calls = []
+
+    def fake_unlock(u, timeout=90):
+        calls.append(u)
+        return _position_page(u[-2])[0] if len(calls) <= 2 else ""
+    monkeypatch.setattr(N, "UNLOCK_PAGES", 3)
+    monkeypatch.setenv("SCRAPE_VIA_UNLOCKER", "1")
+    import bd_rescue
+    monkeypatch.setattr(bd_rescue, "unlock", fake_unlock)
+    monkeypatch.setattr(bd_rescue, "_load_secrets", lambda: None)
+    r = _rendered(page_html=page)
+    # the listing itself answers plainly (or the unlocker would be asked for IT first)
+    refused = lambda u, t: (None, 403) if "/careers-position/" in u else (page, 200)
+    no_visit = lambda urls, d: {u: (None, None) for u in urls}
+    jobs, strategy = N._extract("Co", url, r, fetch=refused, visit=no_visit)
+    assert strategy == "links" and len(jobs) == 2 and r.error == ""
+    assert len(calls) == 3 == r.unlock_calls and r.unlock_ok == 2
+    calls.clear()
+    res = N.scrape_result("Co", url, render=lambda u, t, d: _rendered(page_html=page),
+                          fetch=refused, visit=no_visit)
+    assert (res.unlock_calls, res.unlock_ok) == (3, 2)
+    # off: nothing is spent and the outcome is the error
+    monkeypatch.delenv("SCRAPE_VIA_UNLOCKER")
+    calls.clear()
+    r = _rendered(page_html=page)
+    N._extract("Co", url, r, fetch=refused, visit=no_visit)
+    assert calls == [] and r.unlock_calls == 0 and r.error == "links:unread:403"
+
+
+def test_scrape_llm_tier_is_counted_breaks_on_an_outage_and_never_raises(monkeypatch):
+    """Strategy 5 was a bare `claude -p` (fable, every tool, the repo as cwd, page text as
+    the prompt) and nobody counted it. Through `pipeline.llm.call_json` now: the bundle
+    records each call, an LLMUnavailable is a counted failure (auth/missing/drift close the
+    tier for the process; the next company makes no call and says why), a schema miss is a
+    counted empty answer, and no runner failure escapes the strategy."""
+    import scrape_universal as N
+    from pipeline.llm import LLMUnavailable
+    url = "https://co.example/careers"
+    page = "<body><h2>Open positions</h2><div>Senior Data Analyst</div></body>"
+    monkeypatch.setenv("SCRAPE_LLM", "1")
+    monkeypatch.setattr(N, "_LLM_DOWN", None)
+    seen = []
+
+    def default_runner_auth(prompt, tmo):
+        seen.append(prompt)
+        raise LLMUnavailable("Failed to authenticate", kind="auth")
+    monkeypatch.setattr(N, "_run_claude", default_runner_auth)
+    r = _rendered(page_html=page)
+    jobs, strategy = N._extract("Co", url, r, fetch=_no_fetch)
+    assert jobs == [] and strategy == "" and r.llm_calls == 1 and r.llm_error.startswith("auth:")
+    assert N._LLM_DOWN == "auth"
+    r2 = _rendered(page_html=page)
+    N._extract("Co", url, r2, fetch=_no_fetch)
+    assert r2.llm_calls == 0 and r2.llm_error == "down:auth" and len(seen) == 1, "the breaker held"
+    res = N.scrape_result("Co", url, render=lambda u, t, d: _rendered(page_html=page), fetch=_no_fetch)
+    assert (res.llm_calls, res.llm_error, res.status) == (0, "down:auth", "empty")
+    # a transient failure does not close the tier
+    monkeypatch.setattr(N, "_LLM_DOWN", None)
+    monkeypatch.setattr(N, "_run_claude", lambda p, t: (_ for _ in ()).throw(LLMUnavailable("timeout(120s)", kind="transient")))
+    r3 = _rendered(page_html=page)
+    N._extract("Co", url, r3, fetch=_no_fetch)
+    assert r3.llm_calls == 1 and r3.llm_error.startswith("transient:") and N._LLM_DOWN is None
+    # the model answered off-schema, or a runner bug: counted, never raised
+    monkeypatch.setattr(N, "_run_claude", lambda p, t: None)
+    r4 = _rendered(page_html=page)
+    N._extract("Co", url, r4, fetch=_no_fetch)
+    assert r4.llm_calls == 1 and r4.llm_error == "no-schema"
+    monkeypatch.setattr(N, "_run_claude", lambda p, t: 1 / 0)
+    r5 = _rendered(page_html=page)
+    N._extract("Co", url, r5, fetch=_no_fetch)
+    assert r5.llm_calls == 1 and r5.llm_error == "runner:ZeroDivisionError"
+    # a good answer: one call, no error, the roles
+    monkeypatch.setattr(N, "_run_claude", lambda p, t: {"positions": [{"title": "Senior Data Analyst", "location": "Haifa"}]})
+    r6 = _rendered(page_html=page)
+    jobs, strategy = N._extract("Co", url, r6, fetch=_no_fetch)
+    assert strategy == "llm" and r6.llm_calls == 1 and r6.llm_error == "" and jobs[0]["location"] == "Haifa"
+    # no jobs signal on the page: no call at all
+    r7 = _rendered(page_html="<body><p>About us</p></body>")
+    N._extract("Co", url, r7, fetch=_no_fetch)
+    assert r7.llm_calls == 0 and r7.llm_error == ""
+
+
+def test_scrape_llm_seam_is_tool_less_schema_bound_and_not_the_repo(monkeypatch):
+    """The default runner goes through `pipeline.llm.call_json` with the scraper's system
+    prompt and schema, the model from SCRAPE_LLM_MODEL, low effort — so the CLI runs with
+    `--tools ""`, a JSON schema and a scratch cwd (see `llm._invoke`), never the bare
+    `claude -p` that read CLAUDE.local.md and had every tool enabled on an arbitrary page."""
+    import scrape_universal as N
+    from pipeline import llm
+    got = {}
+
+    def fake_call_json(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
+        got.update(prompt=prompt, system=system, schema=schema, model=model, timeout=timeout, effort=effort)
+        return {"positions": []}
+    monkeypatch.setattr(llm, "call_json", fake_call_json)
+    monkeypatch.setenv("SCRAPE_LLM_MODEL", "opus")
+    assert N._run_claude("PAGE", 77) == {"positions": []}
+    assert got["model"] == "opus" and got["timeout"] == 77 and got["effort"] == "low"
+    assert "DATA" in got["system"] and "instructions" in got["system"]
+    schema = _json.loads(got["schema"])
+    assert schema["required"] == ["positions"] and schema["additionalProperties"] is False
+    monkeypatch.delenv("SCRAPE_LLM_MODEL")
+    N._run_claude("PAGE", 1)
+    assert got["model"] == N._LLM_MODEL
+    assert not hasattr(N, "subprocess"), "no subprocess in this module: the seam is the only spawn"
+
+
+def test_scrape_a_comeet_widget_title_is_split_never_rejected():
+    """86 cached titles read "Fraud Analyst Herzliya Full-time" (BACKLOG 169). The tail
+    `<place>? <level>? <type>` is split off when a place or a level stands beside the type;
+    the place moves into the location, and a foreign one is left for `pipeline.israel` to
+    drop (so the company counts as `no_il`, never silently empty). Real titles that merely end
+    in a type or a level word are untouched (design critic, 2026-08-25)."""
+    import scrape_universal as N
+    split = N._split_title_tail
+    assert split("Fraud Analyst Herzliya Full-time") == ("Fraud Analyst", "Herzliya")
+    assert split("Data Analyst Raanana Full-time") == ("Data Analyst", "Raanana")
+    assert split("Head of Sales Ramat Gan Full-time") == ("Head of Sales", "Ramat Gan")
+    assert split("Backend Developer Tel Aviv Mid Full-time") == ("Backend Developer", "Tel Aviv")
+    # attacker A (HIGH): the level column is data the classifier reads off the title
+    assert split("Data Analyst Tel Aviv Junior Full-time") == ("Data Analyst Junior", "Tel Aviv")
+    assert split("BI Analyst Herzliya Student Full-time") == ("BI Analyst Student", "Herzliya")
+    assert split("Fraud Analyst Herzliya Senior Full-time") == ("Fraud Analyst Senior", "Herzliya")
+    assert split("Data Analyst Remote Full-time") == ("Data Analyst", ""), "a work mode is not a place"
+    assert split("Head of Product Management Full-time") == ("Head of Product Management Full-time", "")
+    assert split("Product Management Internship") == ("Product Management Internship", "")
+    assert split("Support Partner Raanana Intermediate Full-time") == ("Support Partner", "Raanana")
+    assert split("Content Marketing Manager Ramat Gan Mid-level Full-time") == ("Content Marketing Manager", "Ramat Gan")
+    assert split("Security Engineer (Customer Facing) United States Intermediate Full-time") == \
+        ("Security Engineer (Customer Facing)", "United States")
+    assert split("QA Engineer Intermediate Full-time") == ("QA Engineer", "")    # a level that says nothing
+    for keep in ("Director of Product Management", "Program Management", "WiFi Software Development Intern",
+                 "Aeromechanics student", "Client Solution Manager, Tech & Commerce, 12 Month Contract",
+                 "Medical Sales Representative- temporary", "Sales Development Representative - Tel Aviv",
+                 "Head of Audit - Israel", "Senior DevOps Engineer - Remote", "Data Analyst Full-time"):
+        assert split(keep) == (keep, ""), keep
+    # through `add`: the split place beats an empty/bare location; a foreign one is kept as
+    # the location so the Israel filter — not the scraper — drops the role
+    from pipeline import israel
+    add, jobs = N._make_adder("Co", "https://co.example/careers")
+    assert add("Fraud Analyst Herzliya Full-time", "", "/j/1")
+    assert add("Data Analyst Raanana Full-time", "Israel", "/j/2")
+    assert add("Backend Developer Tel Aviv Mid Full-time", "Herzliya, Israel", "/j/3")
+    assert add("Security Engineer (Customer Facing) United States Intermediate Full-time", "Herzliya", "/j/4"), \
+        "kept WITH the foreign place: pipeline.israel drops it and the company counts as no_il"
+    assert add("Data Analyst Remote Full-time", "Tel Aviv", "/j/5")
+    assert [(j["title"], j["location"]) for j in jobs] == [
+        ("Fraud Analyst", "Herzliya"), ("Data Analyst", "Raanana"), ("Backend Developer", "Herzliya, Israel"),
+        ("Security Engineer (Customer Facing)", "United States"), ("Data Analyst", "Tel Aviv")]
+    assert [israel.is_israel_job(j) for j in jobs] == [True, True, True, False, True]
+
+
+def test_scrape_the_dom_strategy_anchors_the_location_on_the_title():
+    """The DOM context is four ancestors' text run together: the place nearest the title is
+    this card's, not the first one on the page. A card whose only place is in its title
+    keeps it; a sibling card's place is not borrowed."""
+    import scrape_universal as N
+    dom = [{"title": "Data Analyst", "url": "https://co.example/jobs/1",
+            "ctx": "Open roles Haifa office · Senior Backend Engineer Haifa · Data Analyst Tel Aviv · Apply"},
+           {"title": "Site Manager Beer Sheva", "url": "https://co.example/jobs/2",
+            "ctx": "Site Manager Beer Sheva · View job"}]
+    add, jobs = N._make_adder("Co", "https://co.example/careers")
+    N._from_dom(dom, add)
+    assert [(j["title"], j["location"]) for j in jobs] == [
+        ("Data Analyst", "Tel Aviv"), ("Site Manager Beer Sheva", "Beer Sheva")]
+
+
+def test_scrape_three_constants_the_code_reads_are_observed():
+    """BACKLOG 96: predicted survivors of the 2026-08-24 mutation sweep — the plain-fetch
+    gate (3 s left), `_readable`'s 2,000-byte floor and the module default of
+    `_LINK_PAGES_PER_PREFIX` (every other test injects `pages_per_prefix`)."""
+    import scrape_universal as N
+    url = "https://co.example/careers"
+    fetched = []
+
+    def fetch(u, t):
+        fetched.append(u)
+        return None, None
+    # 2.5 s left: no plain fetch; 3.5 s left: one
+    N._extract("Co", url, _rendered(page_html="<body>x</body>"), fetch=fetch, deadline=N.Deadline(t_end=_time.monotonic() + 2.5))
+    assert fetched == []
+    N._extract("Co", url, _rendered(page_html="<body>x</body>"), fetch=fetch, deadline=N.Deadline(t_end=_time.monotonic() + 3.5))
+    assert fetched == [url]
+    assert not N._readable("<html>" + "a" * 1986 + "</html>") and N._readable("<html>" + "a" * 1987 + "</html>")
+    assert N._LINK_PAGES_PER_PREFIX == 25
+    page = _links_page(30)
+    add, jobs = N._make_adder("Co", url)
+    out = N._from_position_links(page, url, add, fetch=lambda u, t: _position_page(u.rstrip("/").split("-")[-1]),
+                                 visit=lambda urls, d: {})
+    assert out.attempted == 25 and len(jobs) == 25
+
+
+def test_scrape_llm_excerpt_centres_on_the_densest_jobs_section():
+    """Coralogix (2026-08-26): "We're Hiring!" in the <title> made the excerpt the page's
+    first 20,000 characters of widget text, and the 12 roles below it were never sent. The
+    excerpt follows the jobs signal whose window is densest in role-like words."""
+    import scrape_universal as N
+    widget = "Accessibility Preferences Reading Mask High Contrast " * 40
+    roles = "".join(f"<li>Senior Data Analyst {i}</li>" for i in range(12))
+    page = (f"<html><head><title>Careers - Co (We're Hiring!)</title></head><body><div>{widget}</div>"
+            f"<div>About our values and benefits</div><h2>Open positions</h2><ul>{roles}</ul></body></html>")
+    ex = N._llm_excerpt(page)
+    assert "Senior Data Analyst 11" in ex and "Open positions" in ex
+    assert N._llm_excerpt("<body><p>About us</p></body>") == ""
+    assert len(N._llm_excerpt("<body><p>Open positions</p>" + "x " * 30000 + "</body>")) <= N._LLM_TEXT_CHARS + 1500
+
+
+# --- scraper lane, 2026-08-26, wave 1 (attackers B and C) ---
+
+
+def test_refresh_a_streak_is_one_shape_of_error_so_one_page_night_cannot_discard_a_links_row(tmp_path, monkeypatch):
+    """Attacker B (HIGH): with the streak keyed on the word "error", twenty carried `links:`
+    nights funded both the carry expiry and the park clock, and ONE page-shaped night (a 404
+    from the same cloaking WAF) dropped the jobs and parked the row with an empty alarm. A
+    streak is one shape; a shape change starts a new one. `deadline:` is runner-shaped."""
+    R = __import__("refresh_scrape_cache")
+    assert R._shape("links:unread:403") == "links" and R._shape("http:403") == "ip"
+    assert R._shape("deadline:links") == "runner" and R._shape("http:404") == "page"
+    assert not R._parkable("deadline:links")
+    old = {"X": [_il_job("X")], **{f"Ok{i}": [_il_job(f"Ok{i}")] for i in range(12)}}
+    rot = {"X": {"since": _days_ago(21), "why": "error", "last": _days_ago(1), "n": 20,
+                 "shape": "links", "error": "links:unread:403"}}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("X",)] + [(f"Ok{i}",) for i in range(12)], old, rot,
+                         {"X": ("error", "http:404")})
+    assert P.R.run(["--workers", "1"]) == 0
+    assert _json.loads(P.cache.read_text(encoding="utf-8"))["X"] == old["X"], "carried: a new streak"
+    assert _rows_by_name(P.csv)["X"]["active"] == "true"
+    r = _json.loads(P.rot.read_text(encoding="utf-8"))["X"]
+    assert (r["n"], r["shape"], r["since"]) == (1, "page", _TODAY)
+    # six refused-address nights do not fund a park on the first page-shaped one either
+    rot = {"X": {"since": _days_ago(7), "why": "error", "last": _days_ago(1), "n": 6, "shape": "ip", "error": "http:403"}}
+    P = _refresh_sandbox(tmp_path / "ip", monkeypatch, [("X",)] + [(f"Ok{i}",) for i in range(12)], old, rot,
+                         {"X": ("error", "http:404")})
+    assert P.R.run(["--workers", "1"]) == 0
+    assert _rows_by_name(P.csv)["X"]["active"] == "true"
+    # a partial read that DID open pages is not "positions nobody could open"
+    P = _refresh_sandbox(tmp_path / "partial", monkeypatch, [("X",)] + [(f"Ok{i}",) for i in range(12)], old, {},
+                         {"X": ("error", "partial:links:unread:403")})
+    assert P.R.run(["--workers", "1"]) == 0
+    assert _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]["links_unread"] == 0
+
+
+def test_refresh_parks_only_what_the_registry_write_flipped(tmp_path, monkeypatch):
+    """Attacker B: `_park` matched `active == "true"` exactly while the loader accepts any
+    case; a row it did not flip lost its streak anyway and restarted its clock forever."""
+    rows = [("X",)] + [(f"Ok{i}",) for i in range(12)]
+    old = {n[0]: [_il_job(n[0])] for n in rows}
+    rot = {"X": {"since": _days_ago(8), "why": "error", "last": _days_ago(1), "n": 7, "shape": "page"}}
+    P = _refresh_sandbox(tmp_path, monkeypatch, rows, old, rot, {"X": ("error", "http:404")})
+    lines = P.csv.read_text(encoding="utf-8").splitlines()
+    lines = [l.replace(",true,", ",TRUE,") if l.startswith("X,") else l for l in lines]
+    P.csv.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    assert P.R.run(["--workers", "1"]) == 0
+    assert _rows_by_name(P.csv)["X"]["active"] == "false", "the loader's rule, not a byte compare"
+    assert "X" not in _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert P.R._park([("Nobody", "error 8d")], _TODAY) == []
+
+
+def test_refresh_alarm_floors_and_the_per_code_bar_at_full_scale(tmp_path, monkeypatch):
+    """Attacker B: `errors-NN%`/`no-jobs` had no row floor (1 error in 4 measured rows read
+    as an outage); `code-<code>-N` at 5 % missed the 17-of-440 event it was written for."""
+    R = __import__("refresh_scrape_cache")
+    st = R.RunState()
+    st.counts.update(scraped=440, errors=17); st.codes["http:404"] = 17
+    assert "code-http:404-17" in R._alarm(st)
+    st = R.RunState(); st.counts.update(scraped=440, errors=12, with_jobs=200); st.codes["http:404"] = 12
+    assert R._alarm(st) == ""
+    st = R.RunState(); st.counts.update(scraped=4, errors=1, unprocessed=21); st.codes["http:503"] = 1
+    assert "errors-" not in R._alarm(st) and "no-jobs" not in R._alarm(st) and "unprocessed-21" in R._alarm(st)
+    st = R.RunState(); st.spend.update(llm_calls=2, llm_fail=2)
+    assert "llm-down" not in R._alarm(st), "two failed calls are not an outage"
+    st.spend.update(llm_calls=3, llm_fail=3)
+    assert "llm-down" in R._alarm(st)
+    assert len(R._token("x" * 100)) == 40 and R._via({"": 3, "dom": 1}) == "unknown3+dom1"
+
+
+def test_refresh_llm_skips_are_not_failures(tmp_path, monkeypatch):
+    """Attackers B and C: a breaker skip (`down:auth`, 0 calls) or a deadline skip counted as
+    `llm_fail`, so `llm_fail > llm_calls` and `llm-down` fired on a healthy night."""
+    names = ["Won"] + [f"Skip{i}" for i in range(12)]
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], {}, {})
+    real = P.R.scrape_result
+
+    def spending(name, url, **kw):
+        res = real(name, url, **kw)
+        extra = dict(strategy="llm", llm_calls=1) if name == "Won" else dict(llm_calls=0, llm_error="deadline")
+        return _NS(**{**res.__dict__, **extra})
+    monkeypatch.setattr(P.R, "scrape_result", spending)
+    monkeypatch.setenv("SCRAPE_LLM", "1")
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert (stamp["llm_calls"], stamp["llm_won"], stamp["llm_fail"]) == (1, 1, 0) and "alarm" not in stamp
+
+
+def test_scrape_llm_locations_pass_the_same_gate_and_a_two_country_one_is_dropped(monkeypatch):
+    """Attacker C (HIGH): the LLM copied an office sidebar beside a foreign card —
+    `"Tel Aviv, Israel New York, NY, United States"` — and the Israel filter took the first
+    token; three foreign roles would have shipped as Israeli. Strategy 5's locations go
+    through `_clean_loc` and a location naming an Israeli AND a foreign place is not this
+    role's place. A present-but-malformed payload is a wasted call, said so."""
+    import scrape_universal as N
+    url = "https://co.example/careers"
+    page = "<body><h2>Open positions</h2><div>Data Analyst</div></body>"
+    monkeypatch.setenv("SCRAPE_LLM", "1")
+    answer = {"positions": [
+        {"title": "Data Analyst", "location": "Tel Aviv, Israel New York, NY, United States"},
+        {"title": "BI Developer", "location": "Tel Aviv, Israel London, United Kingdom"},
+        {"title": "Analytics Engineer", "location": "  Apply  Tel Aviv  "},
+        {"title": "‫Data Scientist‬", "location": "‏Haifa‎"},
+    ]}
+    r = _rendered(page_html=page)
+    jobs, strategy = N._extract("Co", url, r, fetch=_no_fetch, llm=lambda p, t: answer)
+    assert [(j["title"], j["location"]) for j in jobs] == [("Analytics Engineer", "Tel Aviv"),
+                                                            ("Data Scientist", "Haifa")]
+    assert r.llm_calls == 1 and r.llm_error == ""
+    for bad in ({"positions": "x"}, {"positions": [None, 1, {"title": 5}]}, {"nope": []}, [1]):
+        r = _rendered(page_html=page)
+        jobs, _ = N._extract("Co", url, r, fetch=_no_fetch, llm=lambda p, t, b=bad: b)
+        assert jobs == [] and r.llm_calls == 1, bad
+    r = _rendered(page_html=page)
+    N._extract("Co", url, r, fetch=_no_fetch, llm=lambda p, t: {"positions": "x"})
+    assert r.llm_error == "no-schema"
+
+
+def test_scrape_a_page_that_only_says_it_is_not_hiring_makes_no_call(monkeypatch):
+    """Attacker C: "We have no open positions at this time" carries the signal token and
+    paid for a guaranteed-zero call on every such page (177 empty rows a night)."""
+    import scrape_universal as N
+    for txt in ("We have no open positions at this time.", "There are currently no open positions. Send us your CV",
+                "No current openings.", "We are not hiring right now"):
+        assert N._llm_excerpt(f"<body><p>{txt}</p></body>") == "", txt
+    assert N._llm_excerpt("<body><p>No open positions in Berlin, but see our open positions below</p><ul><li>Data Analyst</li></ul></body>")
+
+
+def test_scrape_strategy_four_leaves_the_llm_tier_its_floor(monkeypatch):
+    """Attacker C (MED/HIGH): on 8 of 8 blocked boards the three rungs spent the whole 150 s
+    budget and strategy 5 — which reads the listing that DID answer — never ran; the row
+    became `links:unread`, carried forever. With SCRAPE_LLM on, strategy 4 runs on a
+    deadline that reserves the LLM's floor."""
+    import scrape_universal as N
+    d = N.Deadline.start(100)
+    assert 59 <= d.reserve(40).remaining() <= 60
+    assert N.Deadline(t_end=_time.monotonic() + 5).reserve(40).remaining() <= 1.1
+    assert N.Deadline(t_end=_time.monotonic() - 1).reserve(40).expired(), "never extended"
+
+    class Budget(N.Deadline):
+        pass
+    assert isinstance(Budget(t_end=_time.monotonic() + 100).reserve(40), Budget), "the caller's subclass survives"
+    url = "https://co.example/careers"
+    page = _links_page(6).replace("We are hiring", "Open positions: Data Analyst")
+    seen = {}
+
+    def slow_visit(urls, deadline):
+        seen["left_when_visited"] = deadline.remaining()
+        return {u: (None, None) for u in urls}
+    monkeypatch.setenv("SCRAPE_LLM", "1")
+    r = _rendered(page_html=page)
+    N._extract("Co", url, r, fetch=lambda u, t: (None, 403) if "/careers-position/" in u else (page, 200),
+               visit=slow_visit, deadline=N.Deadline.start(100),
+               llm=lambda p, t: {"positions": [{"title": "Data Analyst", "location": "Haifa"}]})
+    assert seen["left_when_visited"] <= 60, "rung 2 saw the reserved deadline"
+    assert r.llm_calls == 1 and r.llm_error == "", "the LLM tier still ran"
+    assert r.error == "", "the LLM tier read the listing, so the night is not an error"
+
+
+def test_scrape_position_links_are_real_hrefs_and_judged_per_prefix():
+    """Attacker A (HIGH): `_LINK_PREFIX` matched the HOST (`careers.arm.com/` made `/DEI`
+    and `/benefits` a board), fragments and Mustache templates counted as positions (8fig's
+    `/jobs/#icon-dropdown`, `{{ data.authorLink }}`) and would have been sent through the
+    unlocker; and a readable junk prefix hid a blocked real one because the counters were
+    global. Hrefs are filtered, the prefix is judged on its path, the outcome per prefix."""
+    import scrape_universal as N
+    url = "https://www.8fig.co/jobs/"
+    junk = "".join(f'<a href="{h}">x</a>' for h in ("#icon-arrow-left", "#icon-dropdown", "{{ data.authorLink }}",
+                                                     "javascript:void(0)", "mailto:hr@8fig.co", "/jobs/#top"))
+    add, jobs = N._make_adder("Co", url)
+    out = N._from_position_links(f"<body>{junk}</body>", url, add, fetch=lambda u, t: (None, 403),
+                                 visit=lambda urls, d: {})
+    assert out.attempted == 0 and out.code() == "" and jobs == []
+    # a careers HOST is not a positions prefix
+    arm = "".join(f'<a href="https://careers.arm.com/{p}">x</a>' for p in ("DEI", "benefits", "apprenticeships"))
+    out = N._from_position_links(arm, "https://careers.arm.com/", add, fetch=lambda u, t: (None, 403),
+                                 visit=lambda urls, d: {})
+    assert out.attempted == 0
+    # a readable junk prefix beside a blocked real one: the real one is the verdict
+    page = ("".join(f'<a href="/careers/{p}/">x</a>' for p in ("benefits", "life", "dei", "faq"))
+            + "".join(f'<a href="/job-openings/position/{i}/">Role {i}</a>' for i in range(3)))
+
+    def fetch(u, t):
+        if "/job-openings/" in u:
+            return None, 403
+        return "<html><h1>Life at Co</h1><p>" + "x" * 3000 + "</p></html>", 200
+    visited = []
+    r = _rendered(page_html=page)
+    jobs, _ = N._extract("Co", "https://co.example/careers/", r, fetch=fetch,
+                         visit=lambda urls, d: visited.extend(urls) or {u: (None, None) for u in urls})
+    assert sorted(visited) == [f"https://co.example/job-openings/position/{i}/" for i in range(3)]
+    assert r.error == "links:unread:403", "the blocked real prefix, not the readable junk one"
+
+
+def test_scrape_a_prose_israel_is_same_line_and_in_israel_is_a_place():
+    """Attacker A (MED): `\\s+` crossed newlines, so a card's own title voided its location
+    and the fallback took a JSON-LD HQ address 7,000 characters away; "Remote in Israel" and
+    "central israel" read as prose. Same line, function words only, a nearby fallback."""
+    import scrape_universal as N
+    assert N._loc_from_ctx("AI Solution Manager \n\n\t\t Israel \n Operations", anchor=0) == "Israel"
+    far = "AI Solution Manager \n\n\t Israel \n" + "x " * 4000 + '"addressLocality": "Ramat-Gan"'
+    assert N._loc_from_ctx(far, anchor=0) == "Israel"
+    assert N._loc_from_ctx("one of Israel's fastest growing " + "y " * 150 + "Ramat-Gan office", anchor=0) == "", \
+        "prose, and the only other place is 300 characters away"
+    for card in ("Remote in Israel", "Hybrid in Israel", "anywhere in Israel", "central israel", "Located in Israel"):
+        assert N._loc_from_ctx(card) != "", card
+    assert N._loc_from_ctx("It was acknowledged as one of Israel") == ""
+    assert N._loc_from_ctx("Tel-Aviv Yafo, Israel") == "Tel-Aviv Yafo, Israel"
+    assert N._loc_from_ctx("Yokneam Illit") == "Yokneam Illit"
+    # the DOM strategy keeps a prose-only card when the listing itself is Israel-scoped
+    dom = [{"title": "Data Analyst", "url": "https://co.example/jobs/1",
+            "ctx": "Data Analyst · we are one of Israel's leading teams · Apply"}]
+    add, jobs = N._make_adder("Co", "https://co.example/jobs?location=Israel")
+    N._from_dom(dom, add, url_is_il=True)
+    assert [(j["title"], j["location"]) for j in jobs] == [("Data Analyst", "Israel")]
+    add, jobs = N._make_adder("Co", "https://co.example/jobs")
+    N._from_dom(dom, add, url_is_il=False)
+    assert jobs == []
+
+
+def test_scrape_place_boundaries_are_case_sensitive_and_a_lone_prose_page_is_israeli():
+    """Wave-1 replay: the word-bounding compiled under re.I blocked "HerzliyaJunior Software
+    Developer" — run-together card text Infinidat and Snap really serve — and lost 7 roles;
+    the lookarounds are case-sensitive. And a single-role page whose only Israel is prose
+    and which names no foreign country (Pecan AI, 6 roles) is an Israeli role; one naming
+    Singapore or 22 countries (Utila, Checkmarx) is not."""
+    import scrape_universal as N
+    assert N.ISRAEL_LOC.search("HerzliyaJunior Software Developer").group(0) == "Herzliya"
+    assert N.ISRAEL_LOC.search("Tel AvivApply now").group(0) == "Tel Aviv"
+    assert N.ISRAEL_LOC.search("Snap Product R&DRegularTel Aviv").group(0) == "Tel Aviv"   # Snap's card
+    for junk in ("Akkodis", "Lodz", "melody", "unsafed", "lod3BakeYZ7"):
+        assert not N.ISRAEL_LOC.search(junk), junk
+    dom = [{"title": "Junior Software Developer", "url": "https://co.example/jobs/1",
+            "ctx": " Junior Software Developer HerzliyaJunior Software DeveloperR&D"}]
+    add, jobs = N._make_adder("Co", "https://co.example/careers")
+    N._from_dom(dom, add)
+    assert [(j["title"], j["location"]) for j in jobs] == [("Junior Software Developer", "Herzliya")]
+    pecan = "<html><h1>Solution Engineer</h1><p>Pecan was acknowledged as one of Israel's fastest growing startups.</p></html>"
+    utila = "<html><h1>Sales Engineer, APAC</h1><p>Singapore (Remote). We are one of Israel's leading teams.</p></html>"
+    add, jobs = N._make_adder("Co", "https://co.example/careers")
+    assert N._read_position_page(pecan, "https://co.example/careers/se/", add)
+    assert not N._read_position_page(utila, "https://co.example/careers/apac/", add)
+    assert [(j["title"], j["location"]) for j in jobs] == [("Solution Engineer", "Israel")]
+
+
+# --- scraper lane, 2026-08-26, wave 2 (mutation sweep: 117 mutants, the survivors pinned) ---
+
+
+def test_scrape_wave2_survivors_are_pinned(monkeypatch):
+    """The wave-2 sweep ran 117 one-token mutants of today's code: 80 died, 37 survived.
+    One was a live defect — the case-sensitive left edge let `azor` match inside `Razor`
+    (Razor Labs, New York) — the rest were unobserved constants and branches. Each
+    assertion here failed on its mutant."""
+    import scrape_universal as N
+    from pipeline import israel
+    for junk in ("Razor Labs", "RAZOR", "unsafed", "Akkodis", "explode"):
+        assert not N.ISRAEL_LOC.search(junk), junk
+    assert N.ISRAEL_LOC.search("R&DRegularTel Aviv").group(0) == "Tel Aviv"
+    assert not israel.is_israel_job({"location": "Razor Labs, New York", "country_code": "", "title": "x", "company": "c"})
+    # constants the code reads
+    assert N.UNLOCK_PAGES == 5 and N._VISIT_PAGE_TIMEOUT_S == 15 and N._UNLOCK_PAGE_TIMEOUT_S == 25
+    assert N._LLM_TEXT_CHARS == 20_000 and N._LLM_RESERVE_S == 40
+    # the excerpt reads past 7,000 characters and keeps its left margin; the densest window wins
+    widget = "Accessibility Preferences Reading Mask High Contrast " * 400
+    roles = "".join(f"<li>Senior Data Analyst {i}</li>" for i in range(12))
+    page = f"<html><head><title>Careers (We're Hiring!)</title></head><body><div>{widget}</div><h2>Open positions</h2><ul>{roles}</ul></body></html>"
+    assert "Senior Data Analyst 11" in N._llm_excerpt(page)
+    assert "Data Engineer" in N._llm_excerpt("<body><p>Data Analyst  Data Engineer  BI Developer</p><h2>Open positions</h2><p>x</p></body>")
+    # the LLM floor and every breaker kind
+    from pipeline.llm import LLMUnavailable
+    monkeypatch.setenv("SCRAPE_LLM", "1")
+    add, jobs = N._make_adder("Co", "https://co.example/careers")
+    assert N._from_llm("<body><h2>Open positions</h2><p>Data Analyst</p></body>", "u", False, add,
+                       runner=lambda p, t: 1 / 0, deadline=N.Deadline(t_end=_time.monotonic() + 20)) == (0, "deadline")
+    for kind in ("auth", "missing", "drift"):
+        monkeypatch.setattr(N, "_LLM_DOWN", None)
+        monkeypatch.setattr(N, "_run_claude", lambda p, t, k=kind: (_ for _ in ()).throw(LLMUnavailable("x", kind=k)))
+        N._from_llm("<body><h2>Open positions</h2><p>Data Analyst</p></body>", "u", False, add)
+        assert N._LLM_DOWN == kind
+    # href filters, each on its own
+    url = "https://co.example/careers/"
+    add, jobs = N._make_adder("Co", url)
+    refused = lambda u, t: (None, 403)
+    mustache = "".join(f'<a href="/careers-position/{{{{ item{i}.slug }}}}">x</a>' for i in range(3))
+    assert N._from_position_links(mustache, url, add, fetch=refused, visit=lambda u, d: {}).attempted == 0
+    frag = "".join(f'<a href="/careers-position/{h}">x</a>' for h in ("r1", "r1#apply", "r2", "r3"))
+    assert N._from_position_links(frag, url, add, fetch=refused, visit=lambda u, d: {}).attempted == 3
+    pages = "".join(f'<a href="?page={i}">x</a>' for i in (2, 3, 4))
+    assert N._from_position_links(pages, url, add, fetch=refused, visit=lambda u, d: {}).attempted == 0
+    two = "".join(f'<a href="/careers-position/r{i}/">x</a>' for i in (1, 2))
+    assert N._from_position_links(two, url, add, fetch=refused, visit=lambda u, d: {}).attempted == 0
+    # the plain-200 rescue must not turn a links: error into "empty"
+    r = _rendered(page_html="<body>x</body>", plain_status=200, plain_html="<html>" + "a" * 3000 + "</html>")
+    r.error = "links:unread:403"
+    assert N._classify(r, []) == ("error", "links:unread:403")
+    assert N._pair("<html>") == ("<html>", None) and N._pair(None) == (None, None)
+    add, jobs = N._make_adder("Co", url)
+    assert not add("Senior Data Analyst " * 6, "Tel Aviv", "/x"), "a 120-character blob is not a title"
+    # the anchored position page reads its own place, not the header's
+    add, jobs = N._make_adder("Co", url)
+    N._read_position_page("<html><header>headquartered in Haifa</header><h1>Senior Data Analyst</h1><p>Ramat Gan, Israel</p></html>",
+                          url + "x/", add)
+    assert jobs[0]["location"] == "Ramat Gan, Israel"
+    # plain fetches send the browser's headers
+    seen = {}
+
+    class Resp:
+        status = 200
+
+        def read(self, n):
+            return b"<html>ok</html>"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+    import urllib.request as ur
+    monkeypatch.setattr(ur, "urlopen", lambda req, timeout: seen.update(req.headers) or Resp())
+    N._fetch_url("https://co.example/", 5)
+    assert "AppleWebKit" in seen["User-agent"] and "he" in seen["Accept-language"]
+
+
+def test_refresh_wave2_survivors_are_pinned(tmp_path, monkeypatch):
+    """The refresh half of the wave-2 sweep."""
+    R = __import__("refresh_scrape_cache")
+    assert R._token("") == "-" and R._via({}) == "none" and R._via({"structured+dom": 2}) == "structured-dom2"
+    st = R.RunState(); st.counts.update(scraped=200, errors=6, with_jobs=100); st.codes["http:404"] = 6
+    assert "code-http:404-6" in R._alarm(st), "exactly 3 % fires"
+    st = R.RunState(); st.counts.update(scraped=100, errors=90); st.codes["http:404"] = 90
+    assert "code-" not in R._alarm(st, mass_failure=True)
+    st = R.RunState(); st.spend.update(llm_calls=5, llm_fail=1)
+    assert "llm-down" not in R._alarm(st)
+    # a read-only run is never refused, and never writes the refusal stamp
+    P = _refresh_sandbox(tmp_path, monkeypatch, [("Acme",)], {}, {})
+    P.cache.write_text("{\"A\": [", encoding="utf-8")
+    P.stages.write_text("{}", encoding="utf-8")
+    assert P.R.run(["--only", "Acme", "--workers", "1"]) == 0
+    assert P.R.run(["--dry-run", "--workers", "1"]) == 0
+    assert P.stages.read_text(encoding="utf-8") == "{}"
+    # a row the registry write did not flip keeps its streak
+    rows = [("X",), ("Y",)] + [(f"Ok{i}",) for i in range(12)]
+    old = {n[0]: [_il_job(n[0])] for n in rows}
+    rot = {n: {"since": _days_ago(8), "why": "error", "last": _days_ago(1), "n": 7, "shape": "page"} for n in ("X", "Y")}
+    P = _refresh_sandbox(tmp_path / "flip", monkeypatch, rows, old, rot,
+                         {"X": ("error", "http:404"), "Y": ("error", "http:404")})
+    real = P.R.scrape_result
+
+    def racing(name, url, **kw):          # Y is deactivated by another writer mid-run
+        lines = P.csv.read_text(encoding="utf-8").splitlines()
+        lines = [l.replace(",true,", ",false,") if l.startswith("Y,") else l for l in lines]
+        P.csv.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return real(name, url, **kw)
+    monkeypatch.setattr(P.R, "scrape_result", racing)
+    assert P.R.run(["--workers", "1"]) == 0
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert "X" not in rot and rot["Y"]["n"] == 8, "Y was not flipped by us, so its streak survives"
+
+
+def test_scrape_a_budget_cut_before_the_positions_were_read_is_not_empty_and_foreign_roles_win_nothing(monkeypatch):
+    """Wave-2 confirmer: (NEW-1) a strategy-4 pass the deadline cut short with zero jobs read
+    as `empty` — the original defect through the budget instead of the rungs; it is now
+    `deadline:links`, runner-shaped (carried, never parked). (NEW-2) a foreign-tail role is
+    kept for `no_il` but must not satisfy first-hit-wins, or three Comeet-widget US titles in
+    page state would hide the DOM-rendered Israeli board."""
+    import scrape_universal as N
+    url = "https://co.example/careers"
+    page = _links_page(6)
+    r = _rendered(page_html=page)
+    jobs, strategy = N._extract("Co", url, r, fetch=lambda u, t: (None, 403), deadline=N.Deadline(t_end=_time.monotonic() - 1))
+    assert jobs == [] and r.truncated and r.error == "deadline:links"
+    assert N._classify(r, jobs) == ("error", "deadline:links")
+    assert __import__("refresh_scrape_cache")._shape("deadline:links") == "runner"
+    blobs = [_json.dumps({"jobs": [{"title": f"{t} United States Full-time", "location": "", "url": f"/j/{i}"}
+                                  for i, t in enumerate(("Solutions Engineer", "Account Executive", "Sales Manager"))]})]
+    dom = [{"title": "Data Analyst", "url": "https://co.example/jobs/9", "ctx": "Data Analyst Tel Aviv, Israel Apply"}]
+    r = _rendered(blobs=blobs, dom=dom)
+    jobs, strategy = N._extract("Co", url, r, fetch=_no_fetch)
+    assert strategy in ("structured+dom", "dom")
+    assert ("Data Analyst", "Tel Aviv, Israel") in [(j["title"], j["location"]) for j in jobs]
+    from pipeline import israel
+    assert sum(israel.is_israel_job(j) for j in jobs) == 1

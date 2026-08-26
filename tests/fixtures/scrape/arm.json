@@ -418,7 +418,7 @@
   {
    "company": "Arm",
    "title": "Staff AI Research Scientist",
-   "location": "AI Research Scientist Raanana, Israel",
+   "location": "Raanana, Israel",
    "country_code": "",
    "url": "https://careers.arm.com/job/raanana/staff-ai-research-scientist/33099/99346417872",
    "posted_date": "",
@@ -429,7 +429,7 @@
   {
    "company": "Arm",
    "title": "Procurement Associate",
-   "location": "AI Research Scientist Raanana, Israel",
+   "location": "Raanana, Israel",
    "country_code": "",
    "url": "https://careers.arm.com/job/bengaluru/procurement-associate/33099/99664471728",
    "posted_date": "",
@@ -437,5 +437,6 @@
    "job_id": "https://careers.arm.com/job/bengaluru/procurement-associate/33099/99664471728",
    "description": ""
   }
- ]
+ ],
+ "note": "expected regenerated 2026-08-26: locations are the place itself (BACKLOG 88); titles unchanged"
 }

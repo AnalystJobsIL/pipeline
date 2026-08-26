@@ -19,16 +19,21 @@ Env: SCRAPE_WORKERS (default min(4, cpus)) · SCRAPE_REFRESH_TIME_BUDGET_MIN · 
 What one night records (ARCHITECTURE.md §5a): a company that answered with no Israel roles is
 EMPTY (dropped from the cache, `empty` streak in scrape_rot.json, never parked); one whose page
 could not be read is an ERROR (yesterday's jobs carried for at most CARRY_MAX_DAYS, `error`
-streak, parked for re-hunt after ROT_PARK_DAYS). If errors exceed MASS_FAILURE_PCT of the rows
-processed, the runner broke — not 100 sites at once — and the run is not a measurement: the
-cache keeps every old entry, no streak advances, nothing is parked, and the `collect` stamp
-carries `alarm=mass-failure…` so the morning email says so.
+streak, parked for re-hunt after ROT_PARK_DAYS). Two error shapes are treated differently
+(2026-08-26): an IP-SHAPED code (`links:*`, `block:*`, `http:403`, `http:429`) says the runner's
+address was refused, not that the page is gone — such a row is never parked (the hunt runs on the
+same address and would re-activate it into a loop), and a `links:` code — the listing is alive and
+lists positions we could not open — carries yesterday's jobs without expiry, never discarding them.
+If errors exceed MASS_FAILURE_PCT of the rows processed, the runner broke — not 100 sites at once —
+and the run is not a measurement: the cache keeps every old entry, no streak advances, nothing is
+parked, and the `collect` stamp carries `alarm=mass-failure…` so the morning email says so.
 """
 from __future__ import annotations
 
 import datetime as _dt
 import json
 import os
+import re
 import sys
 import time
 from dataclasses import dataclass, field
@@ -80,6 +85,63 @@ SHRINK_MIN_ROWS = 5
 DEFAULT_WORKERS = min(4, os.cpu_count() or 1)
 TASKS_PER_WORKER = 25            # rows per worker process before it is recycled
 STALL_S = 3 * COMPANY_BUDGET_S   # no result for this long = a worker is stuck, not slow
+# One error code on at least this share of the rows is an event with a name (a WAF on the
+# runner's address, a dead CDN) — below the mass-failure bar, above what a normal night shows
+# (the 17-of-440 event of 2026-08-25 is 3.9 %; wave-1 attacker B measured 5 % missing it).
+CODE_ALARM_PCT = 3
+
+
+def _today():
+    """The one clock for the streak date and the day-rotation. Two `date.today()` calls used
+    to straddle midnight (the cron starts AT 00:00 UTC); the tests pin this name."""
+    return _dt.date.today()
+
+
+def _rotate(rows, day):
+    """Rotate the processing order by the day, so a night the budget cuts short does not leave
+    the same registry tail unprocessed (and carried) every night. Pure; asserted directly."""
+    if not rows:
+        return rows
+    k = day.toordinal() % len(rows)
+    return rows[k:] + rows[:k]
+
+
+def _code(res):
+    """The error code without a `partial:` wrapper — the shape decides parking and carrying."""
+    return str(res.get("error") or "").removeprefix("partial:")
+
+
+def _ip_shaped(code):
+    """The runner's ADDRESS was refused, not the page: a wall, a 403/429, or a listing whose
+    position pages could not be opened. The listing-hunt runs on the same address, so parking
+    such a row only re-finds the same URL and re-parks it a week later (design critic, 2026-08-25)."""
+    return code.startswith(("links:", "block:")) or code in ("http:403", "http:429")
+
+
+def _runner_shaped(code):
+    """Our own process broke, not the site: a stuck Chromium, a dead pool, a missing driver,
+    a company budget that ran out mid-crawl (`deadline:` — the board is slow, not gone)."""
+    return code.startswith(("hang:", "worker:", "pool:", "internal:", "launch:", "deadline:"))
+
+
+def _shape(code):
+    """The KIND of error, which is what a streak is made of: `links` (positions unreadable),
+    `ip` (the address refused), `runner` (our process), `page` (the page itself). Wave-1
+    attacker B: with the streak keyed on the word "error" alone, twenty carried `links:`
+    nights funded both the carry expiry and the park clock, and one page-shaped night from
+    the same cloaking WAF (a 404) dropped the jobs AND parked the row with no alarm."""
+    if code.startswith("links:"):
+        return "links"
+    if _ip_shaped(code):
+        return "ip"
+    if _runner_shaped(code):
+        return "runner"
+    return "page"
+
+
+def _parkable(code):
+    """Only a PAGE-shaped code (404/410/5xx, navigation failure, a blank render) may park a row."""
+    return bool(code) and not _ip_shaped(code) and not _runner_shaped(code)
 
 
 @dataclass
@@ -90,9 +152,14 @@ class RunState:
     revalidate: list = field(default_factory=list)
     counts: dict = field(default_factory=lambda: {"scraped": 0, "with_jobs": 0, "empty": 0,
                                                   "no_il": 0, "errors": 0, "carried": 0,
-                                                  "unprocessed": 0})
+                                                  "unprocessed": 0, "links_unread": 0})
+    spend: dict = field(default_factory=lambda: {"llm_calls": 0, "llm_won": 0, "llm_fail": 0,
+                                                 "unlock_calls": 0, "unlock_ok": 0})
     strategies: dict = field(default_factory=dict)
+    codes: dict = field(default_factory=dict)      # error code -> count, for the per-code alarm
+    llm_errors: dict = field(default_factory=dict) # LLMUnavailable kind -> count (auth/transient/...)
     errors: list = field(default_factory=list)
+    unread: list = field(default_factory=list)     # companies whose positions could not be opened
 
 
 # ---------------------------------------------------------------------------------------------
@@ -108,15 +175,20 @@ def _worker(task):
         return {"name": name, "jobs": res.jobs, "status": res.status, "error": res.error,
                 "http_status": res.http_status, "strategy": res.strategy,
                 "rescued": bool(getattr(res, "rescued", False)),
+                "llm_calls": int(getattr(res, "llm_calls", 0) or 0),
+                "llm_error": str(getattr(res, "llm_error", "") or ""),
+                "unlock_calls": int(getattr(res, "unlock_calls", 0) or 0),
+                "unlock_ok": int(getattr(res, "unlock_ok", 0) or 0),
                 "seconds": round(res.elapsed_s, 1)}
     except BaseException as e:  # noqa: BLE001
         return {"name": name, "jobs": [], "status": "error",
                 "error": f"worker:{type(e).__name__}", "http_status": None, "strategy": "",
+                "llm_calls": 0, "llm_error": "", "unlock_calls": 0, "unlock_ok": 0,
                 "seconds": round(time.time() - t0, 1)}
 
 
 def _scrape_all(rows, *, workers, budget_min=0, pool_cls=None, grace_s=600, worker=None,
-                tasks_per_worker=TASKS_PER_WORKER, stall_s=STALL_S):
+                tasks_per_worker=TASKS_PER_WORKER, stall_s=STALL_S, clock=time.time):
     """Yield one result dict per row until the time budget is spent. `workers <= 1` runs
     inline (the reference path); otherwise a process pool, one Playwright per process —
     two sync Playwrights in ONE interpreter collided silently and zeroed a hunt cycle.
@@ -131,10 +203,10 @@ def _scrape_all(rows, *, workers, budget_min=0, pool_cls=None, grace_s=600, work
     this one hung Chromium turned a finished night into a 330-minute killed job."""
     tasks = [(r["company_name"], r["api_url"]) for r in rows]
     worker = worker or _worker
-    t0 = time.time()
+    t0 = clock()
 
     def over():
-        return bool(budget_min) and (time.time() - t0) / 60 > budget_min
+        return bool(budget_min) and (clock() - t0) / 60 > budget_min
 
     if workers <= 1:
         for t in tasks:
@@ -159,7 +231,7 @@ def _scrape_all(rows, *, workers, budget_min=0, pool_cls=None, grace_s=600, work
             futs = {ex.submit(worker, t): t[0] for t in tasks[start:start + chunk]}
             pending = set(futs)
             while pending:
-                left = None if not budget_min else max(0.0, budget_min * 60 - (time.time() - t0))
+                left = None if not budget_min else max(0.0, budget_min * 60 - (clock() - t0))
                 wait_s = stall_s if left is None else min(stall_s, left)
                 done, pending = cf.wait(pending, timeout=wait_s, return_when=cf.FIRST_COMPLETED)
                 for f in done:
@@ -190,7 +262,9 @@ def _scrape_all(rows, *, workers, budget_min=0, pool_cls=None, grace_s=600, work
                         if not f.cancelled():
                             yield {"name": futs[f], "jobs": [], "status": "error",
                                    "error": f"hang:>{int(stall_s)}s", "http_status": None,
-                                   "strategy": "", "rescued": False, "seconds": float(stall_s)}
+                                   "strategy": "", "rescued": False, "llm_calls": 0,
+                                   "llm_error": "", "unlock_calls": 0, "unlock_ok": 0,
+                                   "seconds": float(stall_s)}
                     break
         finally:
             children = _children_of(ex)
@@ -228,7 +302,8 @@ def _result_of(fut, name):
     if exc is None:
         return fut.result()
     return {"name": name, "jobs": [], "status": "error", "error": f"pool:{type(exc).__name__}",
-            "http_status": None, "strategy": "", "seconds": 0.0}
+            "http_status": None, "strategy": "", "llm_calls": 0, "llm_error": "",
+            "unlock_calls": 0, "unlock_ok": 0, "seconds": 0.0}
 
 
 # ---------------------------------------------------------------------------------------------
@@ -259,9 +334,12 @@ def _rot_bump(rot, name, why, today, res=None):
     version kept `since`, so a company that had been honestly empty for 60 days would have
     been parked on its first transient error). Parking counts observed nights, not wall-clock
     days, so nights the budget skipped a row do not advance its clock."""
+    shape = _shape(_code(res or {})) if why == "error" else ""
     e = rot.get(name)
-    if e is None or e.get("why") != why:
+    if e is None or e.get("why") != why or (shape and e.get("shape") not in (None, shape)):
         e = rot[name] = {"since": today, "why": why, "n": 0}
+    if shape:
+        e["shape"] = shape                   # an entry from before shapes existed adopts tonight's
     if e.get("last") != today:
         e["n"] = int(e.get("n", 0)) + 1
     else:
@@ -279,6 +357,15 @@ def _apply_result(row, res, old, rot, today, st: RunState):
     """Fold one company's result into the run: cache, rot streaks, park/flag lists."""
     name = row["company_name"]
     st.counts["scraped"] += 1
+    # what the company cost, whatever it returned (the LLM tier and the unlocker are the two
+    # shared quotas this script spends; until 2026-08-26 neither call was counted anywhere)
+    st.spend["llm_calls"] += int(res.get("llm_calls") or 0)
+    if res.get("llm_error") and int(res.get("llm_calls") or 0):
+        st.spend["llm_fail"] += 1            # a CALL failed; a breaker/deadline skip is not one
+        kind = str(res["llm_error"]).split(":")[0]
+        st.llm_errors[kind] = st.llm_errors.get(kind, 0) + 1
+    st.spend["unlock_calls"] += int(res.get("unlock_calls") or 0)
+    st.spend["unlock_ok"] += int(res.get("unlock_ok") or 0)
     jobs = None if res["status"] == "error" else res["jobs"]   # ERROR != confirmed-empty
     il = [j for j in (jobs or []) if israel.is_israel_job(j)]
     if (jobs is not None and res.get("rescued") and res.get("error") and name in old
@@ -294,21 +381,32 @@ def _apply_result(row, res, old, rot, today, st: RunState):
         res = {**res, "error": f"partial:{res['error']}"}
         jobs = None
     if jobs is None:
+        code = _code(res)
         st.counts["errors"] += 1
+        st.codes[code] = st.codes.get(code, 0) + 1
         st.errors.append(f"{name} ({res['error']})")
         days, nights = _rot_bump(rot, name, "error", today, res)
-        if name in old and days < CARRY_MAX_DAYS:
+        if str(res.get("error") or "").startswith("links:"):     # not a partial read that DID open pages
+            # the listing is alive and lists positions we could not open from here: the
+            # roles demonstrably exist, so yesterday's are kept for as long as that holds —
+            # never discarded on a clock (operator decision, 2026-08-25). The carry ends the
+            # night the listing itself lists fewer than three positions (an ordinary empty).
+            st.counts["links_unread"] += 1
+            st.unread.append(name)
+        if name in old and (days < CARRY_MAX_DAYS or code.startswith("links:")):
             st.cache[name] = old[name]
             st.counts["carried"] += 1
         elif name in old:
             print(f"  {name}: carry expired after {CARRY_MAX_DAYS}d of errors — dropping "
                   f"stale jobs", flush=True)
-        if nights >= ROT_PARK_DAYS:
+        if nights >= ROT_PARK_DAYS and _parkable(code):        # nights of THIS shape only
             st.parked.append((name, f"error {days}d"))
         return
     if il:
         st.counts["with_jobs"] += 1
         st.strategies[res["strategy"]] = st.strategies.get(res["strategy"], 0) + 1
+        if res.get("strategy") == "llm":
+            st.spend["llm_won"] += 1
         st.cache[name] = st.successes[name] = _carry_jd(il, old.get(name, []))
         rot.pop(name, None)                                    # healthy again
     else:
@@ -322,19 +420,49 @@ def _apply_result(row, res, old, rot, today, st: RunState):
             st.revalidate.append((name, days))
 
 
-def _alarm(st: RunState, *, mass_failure=False, shrink=None):
+_TOKEN_RX = re.compile(r"[^A-Za-z0-9_.%+:-]")
+
+
+def _token(s):
+    """A stamp value must be one space-free token (`stages.summary()` renders k=v joined by
+    spaces); anything else becomes `-`, so an error code can never break the line."""
+    return _TOKEN_RX.sub("-", str(s))[:40] or "-"
+
+
+def _via(strategies):
+    """`links73+cards59+dom47` — which strategies carried the night, in the stamp, so a
+    strategy collapsing (an extractor change, a blocked address) is visible the next morning
+    instead of only in the step log."""
+    items = sorted(strategies.items(), key=lambda kv: (-kv[1], kv[0]))
+    return "+".join(f"{_token(k or 'unknown').replace('+', '-')}{v}" for k, v in items) or "none"
+
+
+def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=False):
     """Space-free tokens: `stages.summary()` renders k=v joined by spaces and stages by ` | `."""
     c, tokens = st.counts, []
     if mass_failure:
         tokens.append(f"mass-failure-errors-{100 * c['errors'] // max(1, c['scraped'])}%")
-    elif c["scraped"] and c["errors"] * 100 > MASS_FAILURE_PCT * c["scraped"]:
+    elif c["scraped"] >= MASS_FAILURE_MIN_ROWS and c["errors"] * 100 > MASS_FAILURE_PCT * c["scraped"]:
         tokens.append(f"errors-{100 * c['errors'] // c['scraped']}%")
     if shrink:
         tokens.append(f"shrink-abort-{shrink[0]}-to-{shrink[1]}")
     if c["unprocessed"] * 20 > (c["scraped"] + c["unprocessed"]):     # more than 5% of rows
         tokens.append(f"unprocessed-{c['unprocessed']}")
-    if c["scraped"] and not c["with_jobs"]:
+    if c["scraped"] >= MASS_FAILURE_MIN_ROWS and not c["with_jobs"]:
         tokens.append("no-jobs")
+    # the operator's rule: a listing whose positions could not be opened is never quiet
+    if c["links_unread"]:
+        tokens.append(f"links-unread-{c['links_unread']}")
+    # one code on many rows, below the mass-failure bar: the band where neither guard speaks
+    rows = c["scraped"] + c["unprocessed"]
+    for code, n in sorted(st.codes.items(), key=lambda kv: (-kv[1], kv[0])):
+        if not mass_failure and n * 100 >= CODE_ALARM_PCT * max(1, rows) and n >= MASS_FAILURE_MIN_ROWS // 4:
+            tokens.append(f"code-{_token(code)}-{n}")
+    s = st.spend
+    if s["llm_calls"] >= 3 and s["llm_fail"] >= s["llm_calls"]:
+        tokens.append("llm-down")            # every call failed: the token, the CLI, the quota
+    if rot_unreadable:
+        tokens.append("rot-unreadable")
     return "+".join(tokens)
 
 
@@ -347,15 +475,18 @@ def _park(parked, today):
     import csv
     fresh = list(csv.reader(open(CSV_PATH, encoding="utf-8")))
     names = dict(parked)
+    flipped = []
     for fr in fresh:
-        if fr and len(fr) > 5 and fr[0] in names and fr[4] == "true":
+        if fr and len(fr) > 5 and fr[0] in names and fr[4].strip().lower() == "true":
             fr[4] = "false"
             fr[5] = _note_replace(
                 fr[5], "scrape rotted",
                 f"scrape rotted ({names[fr[0]]}) {today}: extraction yields 0 — "
                 f"no ATS detected; parked for re-hunt")
+            flipped.append(fr[0])
     write_csv_rows(CSV_PATH, fresh)
-    print(f"parked {len(parked)} rotted scrape rows for re-hunt: {[n for n, _ in parked][:8]}")
+    print(f"parked {len(flipped)} rotted scrape rows for re-hunt: {flipped[:8]}")
+    return flipped                      # the streaks of the rest stay on disk
 
 
 def _flag(revalidate, today):
@@ -429,35 +560,70 @@ def _select_rows(o: Opts, cache):
 
 
 def _load(path):
+    """(data, state). `state` is "ok", "absent" (no file — an interrupted atomic write leaves
+    nothing) or "unreadable" (present and not a JSON object, zero bytes included — a hard
+    kill leaves those, and a `{}` in their place was 25 companies gone in the rehearsal). Until 2026-08-26 every case read as `{}` and a momentarily
+    unreadable cache was rebuilt from tonight's successes alone and written back over 1,200
+    jobs (docs/BACKLOG.md 156)."""
+    raw = None
+    for attempt in range(3):            # another lane's os.replace() can race one read
+        try:
+            with open(path, encoding="utf-8") as f:
+                raw = f.read()
+            break
+        except FileNotFoundError:
+            return {}, "absent"
+        except OSError:
+            time.sleep(0.2 * (attempt + 1))
+    if raw is None:
+        return {}, "unreadable"
+    if not raw.strip():
+        return {}, "unreadable"         # zero bytes is what a hard kill leaves: not "no cache"
     try:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:  # noqa: BLE001
-        return {}
+        data = json.loads(raw)
+    except ValueError:
+        return {}, "unreadable"
+    return (data, "ok") if isinstance(data, dict) else ({}, "unreadable")
 
 
-def run(argv=None, *, pool_cls=None, worker=None):
+def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     o = _parse(sys.argv[1:] if argv is None else argv)
-    old = _load(CACHE_PATH)
-    rot = _load(ROT_PATH)
-    today = _dt.date.today().isoformat()
+    old, old_state = _load(CACHE_PATH)
+    rot, rot_state = _load(ROT_PATH)
+    day = _today()                      # read once: the cron fires AT midnight
+    today = day.isoformat()
     rows = _select_rows(o, old)
-    if not o.scoped and rows:
-        # rotate the processing order by the day, so a night the budget cuts short does not
-        # leave the same registry tail unprocessed (and carried) every night
-        k = _dt.date.today().toordinal() % len(rows)
-        rows = rows[k:] + rows[:k]
+    if not o.scoped:
+        rows = _rotate(rows, day)
     budget = float(os.environ.get("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0"))
     grace = int(os.environ.get("SCRAPE_INFLIGHT_GRACE_S", "600"))
     st = RunState()
+    if old_state == "unreadable" and not (o.scoped or o.dry_run):
+        # the one file this script must not rebuild from a night's successes alone: without
+        # yesterday's entries nothing can be carried and the shrink guard is blind, so the
+        # write would be the 1,200-job deletion BACKLOG 156 describes. Refuse before spending
+        # 30 minutes of Chromium; stamp first so the mail says why (the commit step is
+        # `if: always()` and owns the stamp file).
+        print(f"::error::{CACHE_PATH} is unreadable — refusing to rebuild the cache without it",
+              flush=True)
+        st.counts["unprocessed"] = len(rows)
+        stages.stamp("collect", rows=len(rows), **st.counts, parked=0, workers=o.workers,
+                     minutes=0, via=_via({}), alarm="cache-unreadable")
+        return 1
+    if rot_state == "unreadable":
+        # derivable state: a night of coverage is worth more than a streak counter. The
+        # unreadable file is REPLACED by tonight's streaks (they restart from 1); nothing
+        # is parked on evidence this run cannot see.
+        print(f"::warning::{ROT_PATH} is unreadable — streaks restart tonight, nothing is parked",
+              flush=True)
     print(f"refreshing {len(rows)} scrape rows with {o.workers} worker(s)"
           + (f", budget {budget:g} min" if budget else "")
           + (" [scoped: nothing is written]" if o.scoped and not o.apply else "")
           + (" [dry-run]" if o.dry_run else ""), flush=True)
-    t0 = time.time()
+    t0 = clock()
     results = {}
     for res in _scrape_all(rows, workers=o.workers, budget_min=budget, pool_cls=pool_cls,
-                           grace_s=grace, worker=worker):
+                           grace_s=grace, worker=worker, clock=clock):
         results[res["name"]] = res
         # progress in COMPLETION order, so the cloud log is readable while the pool runs;
         # the bookkeeping below is in registry order, so the output is deterministic
@@ -478,8 +644,15 @@ def run(argv=None, *, pool_cls=None, worker=None):
     if st.counts["unprocessed"]:
         print(f"time budget {budget:g}min reached — carried over {st.counts['unprocessed']} "
               f"unprocessed companies", flush=True)
+    if st.unread:
+        # the operator's rule (2026-08-25): a listing whose positions we could not open is
+        # never quietly empty. Named here, counted in the stamp, kept in the cache.
+        kept = sum(1 for n in st.unread if n in st.cache)
+        print(f"::warning::positions unreadable from this runner for {len(st.unread)} "
+              f"companies ({kept} with yesterday's jobs carried; all kept active): "
+              f"{st.unread[:12]}", flush=True)
     c = st.counts
-    minutes = int((time.time() - t0) / 60)
+    minutes = int((clock() - t0) / 60)
     mass_failure = (c["scraped"] >= MASS_FAILURE_MIN_ROWS
                     and c["errors"] * 100 > MASS_FAILURE_PCT * c["scraped"])
     # the mass-EMPTY guard, measured over what was actually processed: of the companies that
@@ -490,13 +663,23 @@ def run(argv=None, *, pool_cls=None, worker=None):
     shrink = ((len(had), len(had) - len(lost))
               if not o.scoped and len(had) >= SHRINK_MIN_ROWS and len(lost) * 5 > len(had)
               else None)
-    alarm = _alarm(st, mass_failure=mass_failure, shrink=shrink)
-    parks = 0 if (mass_failure or shrink) else len(st.parked)
-    detail = dict(rows=len(rows), **c, parked=parks, workers=o.workers, minutes=minutes)
+    alarm = _alarm(st, mass_failure=mass_failure, shrink=shrink,
+                   rot_unreadable=rot_state == "unreadable")
+    parks = 0 if (mass_failure or shrink or rot_state == "unreadable") else len(st.parked)
+    detail = dict(rows=len(rows), **c, parked=parks, workers=o.workers, minutes=minutes,
+                  via=_via(st.strategies))
+    # the two shared quotas, only on a run that could have spent them (a local run without
+    # the flags would otherwise carry five permanent zeros)
+    if os.environ.get("SCRAPE_LLM"):
+        detail.update(llm_calls=st.spend["llm_calls"], llm_won=st.spend["llm_won"],
+                      llm_fail=st.spend["llm_fail"])
+    if os.environ.get("SCRAPE_VIA_UNLOCKER"):
+        detail.update(unlock_calls=st.spend["unlock_calls"], unlock_ok=st.spend["unlock_ok"])
     if alarm:
         detail["alarm"] = alarm
     print(f"=== collect: " + " ".join(f"{k}={v}" for k, v in detail.items())
-          + f" | strategies {st.strategies}" + (f"\n    errors: {st.errors[:12]}" if st.errors else ""),
+          + f" | strategies {st.strategies}" + (f" | llm errors {st.llm_errors}" if st.llm_errors else "")
+          + (f"\n    errors: {st.errors[:12]}" if st.errors else ""),
           flush=True)
 
     if o.dry_run:
@@ -504,7 +687,10 @@ def run(argv=None, *, pool_cls=None, worker=None):
         return 0
     if o.scoped:
         if o.apply and st.successes:
-            fresh = _load(CACHE_PATH)                # re-read: another writer may have added keys
+            fresh, state = _load(CACHE_PATH)          # re-read: another writer may have added keys
+            if state == "unreadable":
+                print(f"::error::{CACHE_PATH} is unreadable — not merging over it")
+                return 1
             fresh.update(st.successes)
             write_json(CACHE_PATH, fresh, sort_keys=True)
             print(f"merged {len(st.successes)} companies into {CACHE_PATH}")
@@ -527,10 +713,11 @@ def run(argv=None, *, pool_cls=None, worker=None):
               f"empty (>20%); keeping the old cache, rot and registry untouched")
         return 0
     write_json(CACHE_PATH, st.cache, sort_keys=True)
-    if st.parked:
-        _park(st.parked, today)      # the registry first: if this write fails, the streaks
-    for name, _why in st.parked:     # that justified it are still on disk for tomorrow
-        rot.pop(name, None)          # a re-activated row gets its ROT_PARK_DAYS of grace again
+    if parks:
+        # the registry first: if this write fails, the streaks that justified it are still
+        # on disk for tomorrow; only a row the write really flipped loses its streak
+        for name in _park(st.parked, today):
+            rot.pop(name, None)       # a re-activated row gets its ROT_PARK_DAYS of grace again
     write_json(ROT_PATH, rot)
     if st.revalidate:
         _flag(st.revalidate, today)
