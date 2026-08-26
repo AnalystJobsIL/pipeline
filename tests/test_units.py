@@ -6537,7 +6537,7 @@ def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=
         for k in ("linkedin_free", "linkedin_blank", "linkedin_blocked", "linkedin_paid",
                   "linkedin_blank_recovered"):
             dd.SOURCE_PATH[k] = 0
-        dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0)
+        dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)
         saved_pause, dd._BLANK_RETRY_PAUSE = dd._BLANK_RETRY_PAUSE, 0.0
         out = dd.linkedin_search("business intelligence", pages=pages, location=location)
         _LAST_COUNTS.clear()
@@ -8428,3 +8428,33 @@ def test_the_queue_and_the_job_cache_are_written_atomically():
         src = inspect.getsource(fn)
         assert 'open("research_companies.json", "w"' not in src, fn.__name__
         assert 'open("discovered_cache.json", "w"' not in src, fn.__name__
+
+
+def test_the_blank_re_ask_has_a_wall_clock_bound_not_just_a_count():
+    """A count is not a bound. `_li_guest` waits up to 40 s on the socket, so 20 re-asks that
+    all time out is 13 minutes on top of a step that took 4m11s on 2026-08-26 and is killed at
+    25 (`daily-digest.yml`) with `continue-on-error: true` — i.e. a silent loss of the whole
+    day's cache and queue write. Found by dry-running the change, not by review."""
+    import discovery_daily as dd
+    real, pause = dd._li_guest, dd._BLANK_RETRY_PAUSE
+    dd._BLANK_RETRY_PAUSE = 0.0
+    dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)
+    calls = []
+
+    def slow_blank(kw, loc, d, st):
+        calls.append(st)
+        dd._li_last_present[0] = set()
+        if len(calls) % 2:                      # first attempt blank, re-ask "slow" but ok
+            return [], True
+        dd._blank_retry["spent"] += 1000        # stand in for a socket that hung
+        return [], True
+    try:
+        dd._li_guest = slow_blank
+        for start in range(0, 200, 10):
+            dd._guest_page("x", "Israel", 7, start)
+        # one re-ask was allowed; after it blew the clock budget, no more were made
+        assert dd._blank_retry["spent"] >= dd.LINKEDIN_BLANK_RETRY_SECONDS
+        assert dd._blank_retry["left"] == dd.LINKEDIN_BLANK_RETRIES - 1, dd._blank_retry
+    finally:
+        dd._li_guest, dd._BLANK_RETRY_PAUSE = real, pause
+        dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)

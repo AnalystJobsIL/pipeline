@@ -323,6 +323,12 @@ _li_last_present = [set()]
 #     "the blanks are structural" is a thing to learn inside the run, not from tomorrow's log.
 LINKEDIN_BLANK_RETRIES = int(os.environ.get("LINKEDIN_BLANK_RETRIES", "20"))
 LINKEDIN_BLANK_GIVE_UP = int(os.environ.get("LINKEDIN_BLANK_GIVE_UP", "5"))
+# ...and a WALL-CLOCK budget, because a count is not a bound. `_li_guest` waits up to 40 s on
+# the socket, so 20 re-asks that all time out is 13 minutes — on top of a step that took 4m11s
+# on 2026-08-26 and is killed at 25 (`daily-digest.yml`), with `continue-on-error: true`, so a
+# timeout costs the whole day's cache AND queue write in silence. The count bounds how many
+# re-asks are worth making; this bounds what they can cost when the network misbehaves.
+LINKEDIN_BLANK_RETRY_SECONDS = float(os.environ.get("LINKEDIN_BLANK_RETRY_SECONDS", "90"))
 # Zero by default, and that is deliberate rather than lazy: the walk already fires up to
 # LINKEDIN_GUEST_PAGES back-to-back requests per query with no delay between them, so a pause
 # on the RE-ASK alone would be theatre — and a real one is charged 27 times a sweep inside a
@@ -330,7 +336,7 @@ LINKEDIN_BLANK_GIVE_UP = int(os.environ.get("LINKEDIN_BLANK_GIVE_UP", "5"))
 # is what actually stops it hammering a throttle. Raise it from the workflow if the 08-27 log
 # shows the re-ask provoking blocks.
 _BLANK_RETRY_PAUSE = float(os.environ.get("LINKEDIN_BLANK_RETRY_PAUSE", "0"))
-_blank_retry = {"left": LINKEDIN_BLANK_RETRIES, "misses": 0}
+_blank_retry = {"left": LINKEDIN_BLANK_RETRIES, "misses": 0, "spent": 0.0}
 
 
 def _guest_page(keyword, location, days, start):
@@ -344,12 +350,15 @@ def _guest_page(keyword, location, days, start):
     cards, ok = _li_guest(keyword, location, days, start)
     if not (ok and not cards and not _li_last_present[0]):
         return cards, ok                      # good page, blocked, or drift — not our case
-    if _blank_retry["left"] <= 0 or _blank_retry["misses"] >= LINKEDIN_BLANK_GIVE_UP:
-        return cards, ok                      # budget spent, or the blanks are structural
+    if (_blank_retry["left"] <= 0 or _blank_retry["misses"] >= LINKEDIN_BLANK_GIVE_UP
+            or _blank_retry["spent"] >= LINKEDIN_BLANK_RETRY_SECONDS):
+        return cards, ok         # budget spent, blanks are structural, or it got too slow
     _blank_retry["left"] -= 1
     if _BLANK_RETRY_PAUSE:
         time.sleep(_BLANK_RETRY_PAUSE)
+    _t0 = time.monotonic()
     again, ok_again = _li_guest(keyword, location, days, start)
+    _blank_retry["spent"] += time.monotonic() - _t0
     SOURCE_PATH["linkedin_blank"] += 1        # attempt 1: a request MADE that produced nothing
     if ok_again and again:
         _blank_retry["misses"] = 0
@@ -950,7 +959,7 @@ def main():
     # LinkedIn blocks it (1 credit per PAGE of ~60 cards, never per record). National queries
     # first, then the free-only city windows (see _li_queries).
     n_li_raw = n_li_present = 0
-    _blank_retry.update(left=LINKEDIN_BLANK_RETRIES, misses=0)   # one budget per SWEEP
+    _blank_retry.update(left=LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)  # one per SWEEP
     queries = _li_queries()
     for kw, loc, pg in queries:
         label = kw if loc == "Israel" else f"{kw} @ {loc}"
