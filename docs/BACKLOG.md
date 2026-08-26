@@ -2564,6 +2564,11 @@ half), 86, 118, 153, 154, 184. Open, with owners:
     row is written) — decide whether it should route the host to a `scrape` row instead
     (Questar and myInterview prove the page scrapes).
 214. **A row leaving `stale.json` because `ATS_HOST` shrank reads as `cleared`** — lane:
+    **CLOSED 2026-08-26 (`ats-fetch`)**: `mail_lines` suppresses it too. The row was flagged
+    yesterday, so `ATS_HOST` matched yesterday's URL and `previous` still holds that URL — a
+    non-match today can only mean the pattern shrank. Confirmed against the real 08-26 delta:
+    myInterview is the only name it removes; Fortinet and Reindeer, whose URLs still match, are
+    still announced (they really were moved to native platforms by `registry`). Original text:
     `ats-fetch`. `mail_lines` suppresses the two other cosmetic clears (an Israel-scoped
     measurement zero, a scrape zero the scraper explained) but not this one: myInterview on
     2026-08-27 is not a recovery, and the next host removed from `ATS_HOST` will print the
@@ -2688,3 +2693,187 @@ from origin `b2090f6` and run 32934864207; re-derive before acting.
     day's 2,118. If the 08-27 log shows `recovered≈0`, the blanks are structural and the next
     rung is a second pass over the blank starts at the end of the walk. Pages 3–4 of the audit
     (start=50, 75) could not be read — LinkedIn answered 429 to the machine mid-audit.
+
+## From the `ats-fetch` lane, 2026-08-26 (evening)
+
+Record: `docs/sessions/2026-08-26-ats-fetch.md` (second section). Closed there: **214** (an
+`ATS_HOST` shrink is no longer a `cleared:`), and the latched-baseline class below (227) with
+`health.rebase` + `health_check.py --rebase-scrape`. Numbers re-derived 2026-08-26 18:00–19:30
+UTC against `origin/master` (`b2090f6`); re-derive before acting.
+
+227. ~~**26 scrape baselines were latched by an extractor change, not by 26 broken boards**~~ —
+    **closed 2026-08-26 (`ats-fetch`)**, kept because the class recurs. `cloud_state/health_baseline.json`
+    is an all-time high per company, so when the scraper stopped emitting a page's own title as a
+    posting (`74570c6`, `scraper`), 30 scrape rows flipped to `regressed-to-zero` in one night and
+    would have stayed there forever — a weekly `resolve_broken` strike each and a diluted
+    targeted-discovery rotation. **No rule could undo it**: all 52 of the postings behind those 30
+    rows pass today's `fetchers.clean_scraped` AND `pipeline.israel.is_israel_job` (they carried
+    the page footer's "Israel" — that is *why* the old extractor emitted them), so a replay
+    separates nothing, and an Israel-only baseline would have counted all 52 too. `health.rebase`
+    is now the one place a baseline decreases; it takes an operator's list, refuses any row that
+    is not a `regressed-to-zero` with a baseline > 0, and writes both files together so the
+    correction is never announced as `cleared:`. Applied: 26 rows to 0 (25 chrome-only —
+    NetApp's 13 nav pages `@ Tel Aviv, ISR`, `Sitemap @ Israel Jobs 2`, `All Jobs @
+    israel"},"uri"` — plus Sanofi's 3, which are `jobs.sanofi.com/en/job/united-states/…` roles
+    stamped `Israel`); `stale.json` 119 → 93, standing regressions 55 → 29. **Four rows were
+    deliberately left flagged** because the page really did lose a real Israeli opening — see 228.
+    The next extractor change re-poisons: the sanctioned repeat is
+    `python health_check.py --rebase-scrape <rev>` (the evidence) then `--apply "A,B,…"`.
+228. **Four real Israeli openings disappeared from the cache with the junk, and one wall is
+    recorded as an empty page** — lane: `scraper`. The 2026-08-26 extractor dropped these along
+    with the chrome, and their rows are (correctly) still `regressed-to-zero`: **GenCell**
+    `Commercial Manager` (`gencellprojects.com/jobs/commercial-manager`), **Predicta Med**
+    `Senior AI Engineer` (Ramat Gan), **lakeFS** `Director of Product Management`
+    (`lakefs.io/careers/director-of-product-management/`), **nsKnox** `Customer Service
+    Professional – Student Position`. Worth a look at whether the new position-page ladder can
+    reach them. Separately, **lakeFS's `scrape_rot.json` entry reads `why: empty` while carrying
+    `error: "http:403", http: 403`** — a wall classified as an empty page; had it said `error`,
+    `health.overnight_verdict` would already be calling it `fetch-error` instead of a regression.
+229. **`stale.json`'s `careers_url` is a page address again, not an API endpoint** — lane:
+    `ats-fetch`, **closed 2026-08-26**. `health.record` wrote it as the row's `api_url` verbatim,
+    so the committed queue carried **42 query strings (36 of them on the 93 rows that survive the
+    re-base), 9 being Comeet `?token=` values**
+    (AI21 Labs, Argus, Explorium, Foretellix, Frontegg, Hunters, Scopio Labs, Trullion, XM
+    Cyber); `health._public` now cuts the query and the committed file was rewritten in the same
+    commit (0 remaining). **This is hygiene, not a redaction, and the first draft of this item
+    said otherwise — the attacker was right to kill it:** the same tokens are in `companies.csv`
+    (128 rows carry a `token=`) in the same public repo and in this file's own git history, and
+    a Comeet read token is public anyway. Zero tokens left the public repo. What the change buys
+    is that the field means what it is named — the queue is a list of addresses to go and LOOK
+    at, and its only consumer renders the page. **Note for `registry`:**
+    `resolve_broken.candidates()` renders `careers_url` through `_public_url`, so three rows now
+    render an unfiltered board instead of an Israel-filtered one (Apple `?location=israel-ISR`,
+    Siemens, Deutsche Telekom `?location=Israel`) — for sniffing which ATS a page uses, which is
+    all that rung does, that is neutral or better (verified: of the 93 queued rows, the 9 Comeet
+    ones resolve to `None` with or without the token, because `resolve_deep` has no Comeet URL
+    pattern at all — item 230 — and lever/workable slug patterns stop at `?` regardless).
+230. **The `misconfig-scrape-on-ats` queue cannot be drained by the tool that owns it: the comeet
+    rung of every resolver only knows `window.comeetvar`, which a Comeet-HOSTED page never sets**
+    — lane: `registry` (found by `ats-fetch`). 15 of the 25 misconfig rows are
+    Comeet-hosted boards — 14 of the shape `www.comeet.com/jobs/<slug>/<uid>`, the 15th
+    `www.comeet.com/careers` — a hosted board, not a company page with an
+    embedded widget — and that page never defines the variable `resolve_deep._detect_ats` and
+    `comeet_resolve.resolve()` both read (measured 2026-08-26: `resolve()` → `None` for Beewise
+    and Modellama, 12.5 s each; `_capture` saw `comeetvar={}` on four rows). The token **is** in
+    the request list: `https://www.comeet.co/jobs/<UID>/social?token=<TOKEN>&company-name=<slug>`,
+    and the recovered token drives `fetch_comeet` (Beewise `0B.001` **16 jobs / 6 IL** with 6/6
+    descriptions and 6/6 ISO dates against 5 IL and neither from the scrape; Modellama 2/2;
+    aspectiva 4/4; Comeet's own board 0/0). One rung over `_capture`'s URLs —
+    `comeet\.(?:com|co)/jobs/([0-9A-F]{2}\.[0-9A-F]{3})/social\?token=([0-9A-F]+)` — and the 06:00
+    self-heal converts all 15 unaided. The token is not optional: the positions endpoint answers
+    **HTTP 400** with no token and with an empty one (three uids tried).
+231. **`resolve_broken._HTML_ATS` has no comeet / bamboohr / workable rung** — lane: `registry`.
+    Its four rungs are workday / greenhouse / lever / ashby, so the Bright Data fallback cannot
+    see the platforms holding most of the misconfig queue: Miggo Security
+    `miggo.bamboohr.com/careers/list` (**8 jobs / 7 IL**, measured), Fairmatic
+    `apply.workable.com/api/v1/widget/accounts/fairmatic` (live, 0), and every comeet row in 230.
+    `candidates()` takes every stale row, so each unconvertible row spends a weekly strike
+    (`cloud_state/resolve_attempts.json`: all at `fails: 1`) until `give_up_after=5` abandons it.
+    Today's self-heal: `119 stale · resolving 33 · resolved 1`. Three patterns, one line each;
+    the fetchers already exist. `pipeline/platform_check.py` also counts 7 missing
+    `resolve_broken` cells, but a DIFFERENT seven (bamboohr, breezy, custom_json, eightfold,
+    microsoft, oraclehcm, phenom): its check is a text search, and `_ATS_LINK` at
+    `resolve_broken.py:90` mentions `comeet` and `workable`, so both read `ok` there while
+    having no rung at all. Only bamboohr overlaps.
+232. **Five duplicate rows of `Amazon` and `Microsoft` are active scrape rows on ATS hosts** —
+    lane: `registry`. `AWS`, `Amazon Israel`, `Amazon Web Services (AWS)` duplicate
+    `Amazon,custom_json,ISR,https://www.amazon.jobs/en/search.json?country=ISR`; `Microsoft
+    Israel` and `Microsoft (Xbox/Gaming)` duplicate `Microsoft,microsoft,microsoft,…/api/pcsx/
+    search?domain=microsoft.com`. All five are `misconfig-scrape-on-ats` every morning and none
+    can ever be converted — `apply_resolved.py` never writes column 4, so only a registry writer
+    can retire them. The two Microsoft twins' entire scrape cache is one junk posting each
+    (`"Careers at Microsoft"`, the page's own `<h1>`). Retiring them takes the standing misconfig
+    line down by 5. (None of the five carries an `alias-of` note today, and none sits at the
+    canonical row's URL — they are duplicates that were never declared as such.)
+233. **BACKLOG 80 and HANDOFF watch-item 0 are wrong: the Greenhouse EU JSON API exists** — lane:
+    `docs` (+ `scraper` for 80's conclusion). `https://boards.eu.greenhouse.io/v1/boards/<slug>/jobs`
+    answers the same JSON as the US host — Unframe AI `unframe`: **32 postings / 10 Israel on both**,
+    2026-08-26, through `fetch_greenhouse` unmodified. What is NXDOMAIN is `boards-api.eu.greenhouse.io`,
+    the `-api` form, which is what 80 actually tested. Outbrain is not a counter-example: it answers
+    **0 on both hosts**, so its board moved elsewhere. So 80's "there is no JSON to fetch: the fix is
+    a scrape row on the EU URL" is false — the fix is an ordinary greenhouse row on either host.
+    `check_invariants.PLATFORM_HOST["greenhouse"]` is `r"greenhouse\.io"` and check C2 is a
+    `re.search`, so the EU host is already admitted (verified); no invariant change is needed.
+234. **`apply_resolved.py` stamps `self-heal <date>` on a batch no self-heal produced, and a
+    converted row keeps every pool token its scrape life earned** — lane: `registry`. The string
+    is `pipeline.notes.replace_own`'s marker, so it cannot simply be reworded; a
+    `--note-marker` / `RESOLVED_NOTE_MARKER` (default `self-heal`, so the 06:00 job is unchanged)
+    would let a hand-measured batch stamp its real provenance. And because `replace_own` touches
+    only the `self-heal` segment, a converted row still reads `deep-validated 2026-08-21: no ATS
+    detected (rendered)` / `url-cleared 2026-08-25: secrethunter.io aggregator` / `scanned; no
+    open Israel roles now` while serving 2–10 Israel roles live. Harmless to `check_invariants`
+    (checks D and E gate on `active == "false"`), wrong to a reader and to any future pool that
+    stops gating on `active`.
+235. **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
+    hold two role records** — lane: `scraper` (+ `roles`). 31 of the 50 cached titles on the 15
+    comeet rows carry a place/level/type tail after the 2026-08-26 extractor (`'Head of System
+    Engineering Beit HaEmek (Northern District), IL Senior Full-time, Salaried'` where the API
+    says `'Head of System Engineering'`). `merge_key` is `company|title`, so the tail forks the
+    record: `modellama|data analyst` and `modellama|data analyst raanana full time` are the same
+    posting and both were emailed on 2026-08-25, and `port io|senior bi analyst tel aviv israel`
+    had to be superseded. Converting those rows to the API cures the instances; the class recurs
+    on every scraped Comeet widget.
+236. **The fetch loop is the largest block of the pipeline step again — because the classify
+    phase got cheap** — lane: `infra` (re-sizes 83 / 210). Run `32934864207` (2026-08-26): the
+    loop ran 05:52:39.9 → 05:58:23.5 = **5 m 44 s for 870 boards**, the classify phase
+    05:58:23 → 06:01:31 = **3.1 min** (28 LLM calls; the `v2` verdict cache had landed), inside
+    a "Run the pipeline" step of 11.3 min — so the loop is **≈50 %** of it, against 19–23 % the
+    morning before. The loop's absolute cost is stable at 4–6 min; only its share moved. Measured
+    for the same item: `fetch_oraclehcm` issues **8 requests per row whatever the board's size**
+    —
+    the five rows cost **55.4 s** together (re-measured three times: onsemi 11.5, Fortinet 9.0,
+    Verint 4.2 for 49 jobs, Dell 15.1 for 446, JPMorganChase 15.6 — the first draft said Dell
+    39.2 s and ~80 s in total, from one cold run the doc auditor could not reproduce).
+    Short-circuiting *once `TotalJobsCount` is reached* saves **~1.4 s, on Verint alone** (the
+    other four have more than 500 postings, so the unscoped pass is unskippable); also stopping
+    the keyword pass on a short page saves ~7.5 s over the five
+    rows, which is not worth a change to a working fetcher (`ats-fetch`, measured and declined).
+237. **`tests/rehearse_infra.py`'s golden check has a dead allow-list, and §5's baseline cell is
+    now inexact** — lane: `infra` (+ `docs`). `golden()` builds an `allowed` tuple at
+    `tests/rehearse_infra.py:211` and then asserts against a single hardcoded prefix at 212, so
+    the tuple is unused: a legitimate change to any other audit line fails the check with a
+    misleading message. And `ARCHITECTURE.md:1370` (`:1300` before this commit) calls the baseline "monotonic — never
+    decreases, which is why `regressed-to-zero` latches"; since 2026-08-26 one operator tool
+    lowers it (227). Suggested: "…monotonic in the pipeline — only `health_check.py
+    --rebase-scrape` lowers one, and only an operator runs it".
+238. **A merge can put an operator's re-based rows back in the queue with their baselines at 0**
+    — lane: `infra` (found by this lane's semantics attacker, 2026-08-26; the MAIL half is
+    closed, the STATE half is not). `merge_json_cache.merge`'s third rule — `elif k not in
+    theirs: out[k] = v` ("untouched by us and absent from theirs: don't lose it") — cannot tell
+    "we did not touch this key" from "the other side deliberately removed it". `self-heal.yml`
+    declares `--own cloud_state/stale.json` on **every** daily run but only writes the file on
+    Mondays, so Tuesday–Sunday `ours == base` while `theirs` is a hand commit that removed rows:
+    on any owned-path conflict all 26 re-based rows come back, while their baselines (a
+    different file, correctly merged) stay 0 — an inconsistent queue, up to a day of pointless
+    `resolve_broken` renders and ~33 Bright Data records in discovery's targeted sweep.
+    Reproduced against the real blobs: 26/26 rows resurrected, 0/26 baselines. **The mail can no
+    longer lie about it** (`mail_lines` judges `cleared` on this run's own `n`, so the
+    resurrected rows leaving again are silent, not `cleared: Airbnb; Apollo Power; …`), and the
+    05:00 digest rebuilds `stale.json` from scratch, so the state self-heals within a day. The
+    fix belongs to whoever owns the merge: a file a job did not write this run should yield to
+    origin wholesale rather than rescue keys into it, or the `--own` list should be the paths a
+    step actually wrote.
+239. **Workiz's scrape row may be an embedded Comeet board** — lane: `registry`. Its one cached
+    posting at `74570c6` was the page's own title, but the URL fragment is `#job-B8.058` — a
+    Comeet position id, which says `workiz.com/careers/` hosts a Comeet widget rather than being
+    genuinely empty. Its baseline was re-based to 0 with the other chrome rows (the card would
+    never have passed the classifier, so no coverage was lost), but the ROW is worth a look:
+    with item 230's rung it would convert. Same shape, less certain: Taranis
+    (`#link__list__content`).
+240. **Four sentences in other lanes' files that today's measurements contradict** — lane: `docs`
+    (with the owner named per line). Found by this lane's doc-claims auditor, 2026-08-26, each
+    re-derived by command: (a) `HANDOFF.md`'s watch-item 0 ("so the EU board has no public JSON
+    API — the page is a JS shell and needs the renderer") and `docs/BACKLOG.md` 80 ("There is no
+    JSON to fetch: the fix is a scrape row on the EU URL") — both refuted by item 233; 80's
+    *measurement* (a rendered EU page with 0 job links) stands, only its conclusion is wrong.
+    (b) `CLAUDE.md:5` and `README.md:12` say the pipeline reads **846** companies out of a
+    ~1,200-row registry; it is **873 of 1,244** (this is item 209, still open). (c)
+    `ARCHITECTURE.md:2005` (`jd-text`) says "workday (66 active companies), smartrecruiters 16,
+    bamboohr 11"; today it is workday **62**, smartrecruiters 16, bamboohr **9** — dated
+    2026-08-24 in the text, but it now disagrees with §1's Counter two sections away. (d)
+    `docs/MODULES.md:133` says `pipeline/fetchers.py` has "16 platforms"; `len(FETCHERS)` is
+    **17** keys (15 real + `scrape` + `discovery`). Also noticed while auditing, for `discovery`:
+    `docs/MODULES.md` lists their new queue module **twice** (:132 and :151) in the working
+    tree this was written from — named here without its path, because the file is not committed
+    yet and `docs/check_docs.py` fails on a doc that names a path which does not exist.
+    in the current working tree.

@@ -71,6 +71,15 @@ _ROT_FRESH_DAYS = 2
 
 _MAIL_MAX_NAMES = 6
 
+# Fetch errors get their own group and a far larger cap, because the bug this fixes was three
+# new ones hidden behind thirty REGRESSIONS, not behind other fetch errors. It is not
+# unlimited: each name carries up to 120 characters of exception text, the line is copied
+# verbatim into `digests/latest.md`, `docs/index.html` and the GitHub issue the inbox relay
+# turns into the email — and an issue body is capped at 65,536 bytes, so an uncapped line on a
+# runner-wide network failure (846 rows × ~135 chars ≈ 114 KB) would silence the very mail that
+# was supposed to report it. 25 names ≈ 3 KB, and the largest real morning on record is 3.
+_MAIL_MAX_ERRORS = 25
+
 
 def _load(path):
     """A state file, or {} — for a missing file, unreadable JSON, or valid JSON that is not
@@ -112,6 +121,25 @@ def _int(value, default):
 def _scrape_with_empty_cache(r):
     """The one kind of row the rot file has anything to say about."""
     return (r.get("platform") or "").strip().lower() == "scrape" and r.get("status") == "empty"
+
+
+def _public(api_url):
+    """A row's address with its query string cut — what `stale.json` records as `careers_url`.
+
+    **This is hygiene, not a redaction, and calling it one would be false.** The queue used to
+    copy the row's `api_url` verbatim, so the committed file carried 36 query strings, 9 of
+    them Comeet `?token=` values — but the same tokens sit in `companies.csv` (128 rows carry
+    a `token=`) in the same public repo, and a Comeet read token is public anyway: the widget
+    hands it to every visitor. Nothing is hidden by this and nothing needed to be.
+
+    What it does buy is that the field means what it is called. `stale.json` is a queue of
+    ADDRESSES to go and look at, its only consumer renders the page
+    (`resolve_broken.candidates()` -> `_public_url` -> `_capture`, a browser visit, or the
+    unlocker), and no consumer anywhere parses or re-requests the query — verified across
+    `resolve_broken`, `resolve_deep`, `discovery_daily._targeted_inputs` and `health_check`.
+    An `api_url` with `?details=true` or `?mode=json` on it was an API endpoint pretending to
+    be a careers page."""
+    return re.sub(r"\?\S*", "", str(api_url or ""))
 
 
 def overnight_verdict(entry, today=None):
@@ -191,10 +219,17 @@ def record(results, baseline_path=BASELINE, stale_path=STALE, rot_path=ROT, *, w
         baseline[name] = best
         plat = (r.get("platform") or "").strip()
         verdict = overnight_verdict(rot.get(name), today) if _scrape_with_empty_cache(r) else None
-        reason = stale_reason(plat, r.get("api", ""), n, r.get("status", "ok"), best,
+        # decide AND store on the same string: `mail_lines` re-tests the stored URL against
+        # `ATS_HOST` to tell "the host list shrank" from a real recovery (BACKLOG 214), so a
+        # verdict reached on a URL the file does not keep would suppress that row's recovery
+        # for ever. Judging on the public form is also the better rule: an ATS host that
+        # appears only inside a query string (`?redirect=…jobs.lever.co/x`) is not this row's
+        # board. No registry row has one today (0 of 1,245) — this keeps it that way.
+        api = _public(r.get("api", ""))
+        reason = stale_reason(plat, api, n, r.get("status", "ok"), best,
                               overnight=verdict[0] if verdict else None)
         if reason:
-            stale[name] = {"careers_url": r.get("api", ""), "platform": plat, "reason": reason}
+            stale[name] = {"careers_url": api, "platform": plat, "reason": reason}
             error = r.get("error") or (verdict[1] if verdict and reason == "fetch-error" else "")
             if error:
                 stale[name]["error"] = str(error)[:120]
@@ -209,43 +244,178 @@ def record(results, baseline_path=BASELINE, stale_path=STALE, rot_path=ROT, *, w
     return stale
 
 
-def _names(items, with_reason=False):
-    shown = items[:_MAIL_MAX_NAMES]
-    txt = "; ".join((f"{n}: {e}" if with_reason and e else n) for n, e in shown)
-    if len(items) > _MAIL_MAX_NAMES:
-        txt += f"; +{len(items) - _MAIL_MAX_NAMES} more"
+def rebase(names, baseline_path=BASELINE, stale_path=STALE, *, write=False):
+    """Lower the all-time-high baseline of `names` to 0 and drop the `regressed-to-zero` rows
+    it was holding up — the ONE place in the repo where a baseline decreases, and an
+    operator's call, never a run's.
+
+    A cached posting cannot be re-extracted, so when a change in what the scraper can extract
+    makes a page yield nothing, no rule can tell a lost role from lost page chrome: on
+    2026-08-26 thirty scrape rows regressed at once because `74570c6` stopped emitting cards
+    that were a page's own title with the footer's "Israel" as their location — and all 52 of
+    those old postings still pass today's `clean_scraped` and `is_israel_job`, so a replay
+    cannot separate them either. Twenty-six of the thirty were chrome; four had lost a real
+    opening and keep their flag, which is what the flag is for.
+    `health_check.py --rebase-scrape <rev>` prints the postings each baseline was built from
+    so a person can make that call.
+
+    A name is accepted only when `stale[name]["reason"] == "regressed-to-zero"` and its
+    baseline is > 0: a fetch error, a misconfiguration or a row nobody flagged is never
+    silently zeroed. Both files are written in one call, each atomically — but
+    `atomic.write_json` is atomic per FILE and not across the pair, so a kill between the two
+    can leave a lowered baseline beside a stale row that still names it; the next 05:00 run
+    rebuilds `stale.json` from scratch and repairs it. What makes the correction safe is NOT
+    this ordering: `mail_lines` judges `cleared` on whether the row produced anything this run
+    (`_fetched_none`), so a row that leaves the queue without producing is never announced as
+    a recovery however it left — including when a merge puts it back and the next run drops it
+    again (`docs/BACKLOG.md` 238).
+
+    `write=False` returns the plan and touches nothing.
+    Returns {"rebased": {name: old_baseline}, "refused": {name: why}}.
+    """
+    baseline, stale = _load(baseline_path), _load(stale_path)
+    rebased, refused = {}, {}
+    for name in dict.fromkeys(names or ()):          # de-duplicated, order kept
+        entry = stale.get(name)
+        old = _int(baseline.get(name), 0)
+        if not isinstance(entry, dict) or entry.get("reason") != "regressed-to-zero":
+            refused[name] = f"not flagged regressed-to-zero ({(entry or {}).get('reason') or 'absent'})"
+        elif old <= 0:
+            refused[name] = "no baseline to lower" if name in baseline else "no baseline"
+        else:
+            rebased[name] = old
+    if write and rebased:
+        for name in rebased:
+            baseline[name] = 0
+            stale.pop(name, None)
+        try:
+            for path, data in ((baseline_path, baseline), (stale_path, stale)):
+                os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+                write_json(path, data)
+        except OSError as e:                          # an operator tool may say so out loud
+            refused["<write>"] = str(e)
+    return {"rebased": rebased, "refused": refused}
+
+
+def _names(items, cap=_MAIL_MAX_NAMES):
+    """`[(name, error)]` -> `A: why; B; +k more`. `cap=None` never truncates."""
+    shown = items if cap is None else items[:cap]
+    txt = "; ".join(f"{n}: {e}" if e else n for n, e in shown)
+    if cap is not None and len(items) > cap:
+        txt += f"; +{len(items) - cap} more"
     return txt
+
+
+# The stale reasons in the order the mail meets them, the noun it uses, and how many names
+# it may print. `None` = every name, always: for a fetch error the NAME is the message, and
+# on 2026-08-26 two of three new ones (Greeneye Technology `http:404`, Mobileye) sat inside
+# `+30 more` behind 30 scrape rows an extractor change had flipped overnight.
+_REASONS = (
+    ("fetch-error", "fetch error{s}", _MAIL_MAX_ERRORS),
+    ("regressed-to-zero", "regressed to zero", _MAIL_MAX_NAMES),
+    ("empty-board", "empty", _MAIL_MAX_NAMES),
+    ("misconfig-scrape-on-ats", "scrape row{s} on an ATS host", _MAIL_MAX_NAMES),
+)
+
+
+def _fetched_none(scanned, name):
+    """Did this run fetch `name` and get nothing? False when the caller passed only names
+    (a set), or no entry, or an entry without a usable count — "we cannot tell" must never
+    suppress a real recovery.
+
+    Not `_int`: that helper reads `value or default`, so it answers 1 for a real 0, and 0 is
+    the whole question here."""
+    entry = scanned.get(name) if hasattr(scanned, "get") else None
+    if not isinstance(entry, dict) or entry.get("n") is None:
+        return False
+    try:
+        return int(entry["n"]) == 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _by_reason(rows, quiet=()):
+    """`{name: entry}` -> one `N label (names)` part per reason, in `_REASONS` order. A reason
+    in `quiet` prints its count only (25 unchanging misconfig names every morning is the
+    noise the delta line exists to escape). A reason the table does not know still gets a
+    part under its own name — the delta must never lose a row."""
+    by = {}
+    for name, v in (rows or {}).items():
+        v = v if isinstance(v, dict) else {}
+        by.setdefault(v.get("reason") or "", []).append((name, v.get("error") or ""))
+    known = {r for r, _, _ in _REASONS}
+    table = _REASONS + tuple((r, r or "unclassified", _MAIL_MAX_NAMES)
+                             for r in sorted(set(by) - known))
+    parts = []
+    for reason, label, cap in table:
+        xs = sorted(by.get(reason) or [])
+        if not xs:
+            continue
+        label = label.format(s="s" if len(xs) != 1 else "")
+        parts.append(f"{len(xs)} {label}" if reason in quiet
+                     else f"{len(xs)} {label} ({_names(xs, cap)})")
+    return parts
 
 
 def mail_lines(stale, previous=None, scanned=None, rot_path=ROT, today=None):
     """Up to two lines for the digest's audit block, from `record()`'s return value:
 
-        changed today: new: Decart: fetch-error · cleared: Guardz
+        changed today: new: 1 fetch error (Decart: HttpError: HTTP 404 …) · 2 regressed to
+                  zero (X; Y) · cleared: Guardz
         standing: 3 fetch errors (Decart: HttpError: HTTP 404 …) · 2 regressed to zero (X; Y)
                   · 4 empty (…) · 25 scrape rows on an ATS host
 
     The delta is its own line because the standing counts read the same every morning and
     a new fetch error inside an unchanging 500-character line is invisible by day three.
+    **Both lines group by reason through `_by_reason`, in one order, and a fetch error is
+    never truncated**: until 2026-08-26 the delta was one alphabetical list cut at six names,
+    and on the morning 30 scrape rows regressed at once (an extractor change, not 30 broken
+    boards) two of the three NEW fetch errors — Greeneye Technology `http:404` and Mobileye's
+    Lever timeout — sat inside `+30 more`.
     Either line is omitted when it has nothing to say; an empty list means every board was
     healthy and nothing changed, so the mail says nothing rather than "0 problems".
-    "cleared" means recovered: only rows this run scanned, never an Israel-scoped fetcher's
-    measurement zero (§5a), and never a scrape regression that last night's scraper explained
-    as "roles found, none in Israel" (`rot_path`, read only when such a row exists).
+    "cleared" means the row left `stale.json`, which is not always a recovery — four things
+    it never announces are listed inline below.
     """
     stale = stale or {}
-    delta, parts = [], []
+    delta = []
     if previous is not None:
         previous = {n: v for n, v in previous.items() if isinstance(v, dict)}
+        stale = {n: v for n, v in stale.items() if isinstance(v, dict)}
         new = sorted(n for n in stale if n not in previous or previous[n].get("reason") != stale[n].get("reason"))
-        # "cleared" must mean the board recovered. Three things that are not that: a row this
+        # "cleared" must mean the board recovered. Four things that are not that: a row this
         # run did not scan at all (deactivated overnight — it would read as cleared forever),
-        # an `empty-board` on a platform whose zero is a measurement (it was never broken;
-        # 26 Workday rows left the file the day that rule landed), and a scrape row whose
-        # zero the scraper measured (roles found, none in Israel).
+        # a row that left because `ATS_HOST` shrank under it (below), an `empty-board` on a
+        # platform whose zero is a measurement (it was never broken; 26 Workday rows left the
+        # file the day that rule landed), and a scrape row whose zero the scraper measured
+        # (roles found, none in Israel).
         rot = None
         gone = []
         for n, v in previous.items():
             if n in stale or (scanned is not None and n not in scanned):
+                continue
+            # THE GENERAL RULE, when the caller passed this run's outcomes and not just names
+            # (`run.py` and `health_check.py` both pass the results dict): a row flagged for
+            # having no postings "recovered" only if it HAS postings now. Anything else that
+            # took it out of the file — an operator re-basing a latched baseline (`rebase`),
+            # a rule change, a merge that restored a row we had removed — is not a recovery,
+            # and this catches all of them without knowing which one happened.
+            #
+            # **In production this rule fires FIRST and the three below are its fallback** —
+            # `run.py` and `health_check.py` both pass the results dict, so the scrape-rot read
+            # in particular is now reached only by a caller that passes a bare set of names
+            # (the tests do). They are kept because that caller is legitimate and because each
+            # one states a rule this file would otherwise only imply; they are not dead, but
+            # they are no longer what does the work.
+            if v.get("reason") in ("empty-board", "regressed-to-zero") and _fetched_none(scanned, n):
+                continue
+            # ...and a `misconfig-scrape-on-ats` row that is absent because ATS_HOST itself
+            # lost a host. The row was flagged yesterday, so the pattern matched yesterday's
+            # URL — and `previous` holds that same URL — so a non-match today can only mean
+            # the pattern shrank: a rule change, not a recovery (myInterview on 2026-08-26,
+            # when `applytojob.com|jazz.co` left with the `jazzhr` platform, BACKLOG 214).
+            # Pure (no fetcher import, no file IO), so it runs before the two that are not.
+            if v.get("reason") == "misconfig-scrape-on-ats" and not ATS_HOST.search(v.get("careers_url") or ""):
                 continue
             if v.get("reason") in ("empty-board", "regressed-to-zero") and israel_scoped(v.get("platform")):
                 continue
@@ -257,24 +427,12 @@ def mail_lines(stale, previous=None, scanned=None, rot_path=ROT, today=None):
             gone.append(n)
         gone.sort()
         if new:
-            delta.append("new: " + _names([(n, stale[n].get("reason", "")) for n in new], with_reason=True))
+            delta.append("new: " + " · ".join(_by_reason({n: stale[n] for n in new})))
         if gone:
             delta.append("cleared: " + _names([(n, "") for n in gone]))
-    by = {}
-    for name, v in stale.items():
-        by.setdefault(v.get("reason", ""), []).append((name, v.get("error", "")))
-    if by.get("fetch-error"):
-        xs = sorted(by["fetch-error"])
-        parts.append(f"{len(xs)} fetch error{'s' if len(xs) != 1 else ''} "
-                     f"({_names(xs, with_reason=True)})")
-    if by.get("regressed-to-zero"):
-        xs = sorted(by["regressed-to-zero"])
-        parts.append(f"{len(xs)} regressed to zero ({_names(xs)})")
-    if by.get("empty-board"):
-        xs = sorted(by["empty-board"])
-        parts.append(f"{len(xs)} empty ({_names(xs)})")
-    if by.get("misconfig-scrape-on-ats"):
-        parts.append(f"{len(by['misconfig-scrape-on-ats'])} scrape rows on an ATS host")
+    # the standing line names the misconfig rows by count only: 25 of them, the same 25 every
+    # morning, is exactly the noise the delta line exists to escape
+    parts = _by_reason(stale, quiet=("misconfig-scrape-on-ats",))
     out = []
     if delta:
         out.append("changed today: " + " · ".join(delta))

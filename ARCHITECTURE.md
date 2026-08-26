@@ -179,11 +179,14 @@ including the claim "none".
 
 1. **Native ATS fetchers** — `pipeline/fetchers.py` `FETCHERS` map. A `companies.csv` row
    whose `ats_platform` names a platform is fetched live every digest run via its public
-   JSON API, sequentially (median 0.5 s a row locally; `oraclehcm` 4–15 s, the slowest
-   single row a 22 s greenhouse): **431 API rows on 2026-08-26** — comeet 122, greenhouse
-   103, workday 62, ashby 52, lever 24, workable 21, smartrecruiters 16, bamboohr 9,
+   JSON API, sequentially (median 0.5 s a row locally; `oraclehcm` 4–16 s — it spends 8
+   requests on every row whatever the board's size, 4.2 s for Verint's 49 jobs and 15.1 s for
+   Dell's 446, measured 2026-08-26 and left alone, `docs/BACKLOG.md` 236 — the slowest
+   single row a 22 s greenhouse): **435 API rows on 2026-08-26 (evening; 431 at 05:00, then +1 from the
+   06:36 self-heal and +3 from the 08:52 auto-expand)** — comeet 123, greenhouse
+   105, workday 62, ashby 52, lever 25, workable 21, smartrecruiters 16, bamboohr 9,
    recruitee 8, oraclehcm 5, breezy 5, custom_json 1, microsoft 1, eightfold 1, phenom 1 —
-   beside 438 scrape rows and the 1 discovery row (870 active). Re-derive, never trust:
+   beside 437 scrape rows and the 1 discovery row (873 active). Re-derive, never trust:
    `python -c "import csv,collections;r=[x for x in csv.DictReader(open('companies.csv',encoding='utf-8')) if x['active']=='true'];print(len(r),collections.Counter(x['ats_platform'] for x in r).most_common())"`.
    Adding a platform = one `fetch_x(row)` normalizer + a map entry (§6). `fetch_greenhouse`
    reads a posting's single `offices[]` entry into `location` when that office carries a
@@ -192,12 +195,17 @@ including the claim "none".
    2026-08-26 over all 103 boards, 7,870 postings: +5 Israel matches (Eleos Health ×2,
    Electreon ×3), 0 lost, where reading every office would have added 14 false positives,
    10 of them Datadog, and a parent-node office promoted one United Kingdom posting
-   (`docs/BACKLOG.md` 118). **The loop is sequential and it is no longer most of the step's time:** on the
-   runner it took **3.8–4.7 min for 877 boards** on 2026-08-25 (run `32813499709`: the loop
-   opened at 05:47:46, the `[discovery]` row — the 771st of the 870 rows in today's
-   registry, so ~100 from the end of that day's 877 — logged at 05:51:33, and the first
-   classify output at 05:52:27 bounds the rows after it), 19–23 % of a "Run
-   the pipeline" step of 20 m 09 s. This sentence said "~69 %" until 2026-08-26 — from a
+   (`docs/BACKLOG.md` 118). **The loop is sequential, and its share of the step is decided by
+   the classifier, not by the loop:** on 2026-08-26 (run `32934864207`) it ran 05:52:39.9 →
+   05:58:23.5 = **5 m 44 s for 870 boards**, against a classify phase of **3.1 min**
+   (05:58:23 → 06:01:31, 28 LLM calls — the `v2` verdict cache had landed) inside a "Run the
+   pipeline" step of 11.3 min: **≈50 %**. The morning before (run `32813499709`) the same loop
+   was **3.8–4.7 min for 877 boards** and **19–23 %** of a 20 m 09 s step, because classify then
+   cost 14.8 min (the loop opened at 05:47:46, the `[discovery]` row — the 771st of the 870 rows
+   in that day's registry, so ~100 from the end of its 877 — logged at 05:51:33, and the first
+   classify output at 05:52:27 bounds the rows after it). The loop's ABSOLUTE cost is stable at
+   4–6 min; only its share swings, so quote both numbers or neither (`docs/BACKLOG.md` 236).
+   This sentence said "~69 %" until 2026-08-26 — from a
    7.0–7.2 min local census on 08-24 (436 API rows · 425 scrape · 862 active that day)
    against a 10 m 14 s step, "~26 % of a 27-minute job"; on 08-25 the job was 31.6 min
    (the 05:00 cron queued 36 min) and the step doubled because the classify phase grew to
@@ -1390,24 +1398,79 @@ blind spots no health rule can see: a `site` that moved to another business unit
 Eightfold `?domain=` that serves a different tenant with real postings — both are
 registry-validation problems.
 
+**And one the rot file cannot answer either: the baseline is an all-time high, so a change in
+what the scraper can EXTRACT latches as a regression.** On 2026-08-26 thirty scrape rows
+flipped to `regressed-to-zero` in one night, all with a rot entry saying `empty, found 0` —
+not thirty broken boards but `74570c6` (`scraper`) no longer emitting a page's own title as a
+posting. The evidence is that 52 postings vanished from the cache and **47 were page chrome or
+foreign roles** (NetApp's thirteen nav pages carrying `Tel Aviv, ISR`; `Sitemap` @ `Israel Jobs
+2`; `All Jobs` @ `israel"},"uri"`; Sanofi's three `jobs.sanofi.com/en/job/united-states/…`
+roles stamped `Israel`) — while **four** were real Israeli openings, one each at GenCell,
+Predicta Med, lakeFS and nsKnox (the doc auditor re-counted: 47/5 was the split of postings
+over re-based vs kept ROWS, and lakeFS's second card is its page title, so it is 48/4). **No rule can separate them**: every one of the 52 passes today's
+`fetchers.clean_scraped` and `israel.is_israel_job` — the chrome carried the footer's "Israel",
+which is why it was extracted — and an Israel-only baseline would have counted all 52 too. So
+the baseline is monotonic in the pipeline and one operator tool lowers it:
+`python health_check.py --rebase-scrape <rev>` prints, for every scrape row flagged today, the
+postings its baseline was built from at `<rev>`, and `--apply "A,B,…"` sends that list to
+`health.rebase` — which refuses anything that is not a `regressed-to-zero` with a baseline > 0,
+and rewrites `health_baseline.json` and `stale.json` together so the correction is never
+announced as `cleared:` the next morning. Applied 2026-08-26: 26 rows to 0, **`stale.json`
+119 → 93 and the standing regression count 55 → 29**; the four rows that had lost a real
+opening keep their baseline and stay flagged, which is what the flag is for
+(`docs/BACKLOG.md` 227–228). The next extractor change re-poisons; this is the sanctioned
+repeat, not a one-off. **What it costs is honest to say: those 26 leave a queue two jobs read
+and enter the bucket §5b's one-liner counts, which went 224 → 250 of 873 active rows** — no
+alarm, no rotation, and `stale_reason` will never flag them again on its own, so the only way
+back is the scraper producing a posting.
+
 **It reaches the reader — two bullets in the audit block** (`health.mail_lines(stale,
 previous, scanned)`):
 
 ```
-- **Boards** changed today: new: Dell Technologies: fetch-error · cleared: Guardz
+- **Boards** changed today: new: 1 fetch error (Dell Technologies: BoardEmpty: … 0 postings
+  worldwide) · 2 regressed to zero (X; Y) · cleared: Guardz
 - **Boards** standing: 3 fetch errors (Decart: HttpError: HTTP 404 for …; Dell Technologies:
   BoardEmpty: … 0 postings worldwide; Akamai: scrape: http:403 (1 night)) · 31 regressed to zero (…) · 36 empty (…) · 25 scrape rows on an ATS host
 ```
 
-(Illustrative — the shape, with one of each reason. The real 2026-08-25 line read `2 fetch
-errors · 34 regressed to zero · 36 empty · 25 scrape rows on an ATS host`.)
+(Illustrative — the shape, with one of each reason. The real 2026-08-26 standing line read
+`5 fetch errors · 55 regressed to zero · 34 empty · 25 scrape rows on an ATS host`, and its
+delta carried 36 names — 30 scrape `regressed-to-zero`, 3 `fetch-error`, 3 `misconfig`.)
 
 Read the first line every morning and the second only when a number moved: the standing
-counts are the same most days, which is why a new fetch error gets its own line. `new` is
-a row that entered `stale.json` or changed reason since yesterday; `cleared` means
-recovered — judged only over rows this run scanned (a row deactivated overnight is not a
-recovery) and never for an Israel-scoped fetcher's measurement zero. Six names per class,
-then `+k more`. No line at all means every board was healthy and nothing changed. Beside
+counts are the same most days, which is why a new fetch error gets its own line. **Both lines
+are built by one function (`health._by_reason`) in one reason order, and a fetch error is not
+made to compete with a regression for a slot** — six names per class then `+k more`, except
+`fetch-error`, which gets **25**, because there the name carries the message. Until 2026-08-26
+the delta was one alphabetical list cut at six, and on the morning thirty scrape rows regressed
+at once (one extractor change, above) two of the three NEW fetch errors — Greeneye Technology
+`http:404` and Mobileye's Lever read timeout — shipped inside `+30 more`, which is the one
+thing that line exists to prevent. The 25 is a cap and not `None` on purpose: this string is
+copied verbatim into `digests/latest.md`, into the board page's audit block and into the GitHub
+issue the relay turns into the email, and **an issue body dies at 65,536 bytes** — an uncapped
+line on a runner-wide network failure (846 rows × ~135 characters ≈ 114 KB) would silence the
+very mail that was meant to report it. The largest real morning on record is 3.
+
+`new` is a row that entered `stale.json` or changed reason since yesterday. `cleared` means the
+row LEFT `stale.json`, which is not the same as a board recovering — five ways lead there and four are suppressed —
+and **the general rule is
+the run's own outcome: a row flagged for having no postings recovered only if it HAS postings
+now** (`run.py` and `health_check.py` both pass `mail_lines` this run's results, `n` included;
+"we cannot tell" — a caller that passed only names, an unknown row, a missing count — never
+suppresses). That one rule covers every way a row can leave the file without recovering,
+including ones nobody has thought of yet: an operator re-basing a latched baseline (above), a
+rule change, or a merge restoring a row that had been removed. Three narrower suppressions sit
+beside it for callers that pass only names: a row this run did not scan at all (deactivated
+overnight — it would read as cleared forever); an Israel-scoped fetcher's measurement zero; a
+scrape zero the scraper explained as "roles found, none in Israel"; and a
+`misconfig-scrape-on-ats` row whose stored URL no longer matches `ATS_HOST` — the row was
+flagged yesterday, so the pattern matched yesterday's URL, and a non-match today can only mean
+the pattern shrank (myInterview on 2026-08-26, when `applytojob.com|jazz.co` left with the
+`jazzhr` platform, `docs/BACKLOG.md` 214; Fortinet and Reindeer, whose URLs still match, were
+still announced — `registry` really had moved them to native platforms). A row whose
+CONFIGURATION was corrected is the sixth way and IS announced, correctly but misleadingly: it
+is a fix, not a board recovering. No line at all means every board was healthy and nothing changed. Beside
 it, `Failed companies: Decart (HttpError: HTTP 404 for …)`, eight names then a count —
 until 2026-08-24 that line said `(HttpError)` and the empty/regressed counts reached
 nobody. The same lines are `::warning::` in the run log. A scoped run (`--only`/`--limit`)
@@ -1415,7 +1478,16 @@ prints them but does not write `stale.json`. **Both are public**: `digests/lates
 committed to the public pipeline repo and the Actions log is world-readable; the text is
 an exception's first 70 characters with every URL query string stripped first (`?token=`
 sat at character 75 of the two shortest Comeet URLs — a 5-character margin is not a
-redaction step; `docs/index.html` renders none of it).
+redaction step; `docs/index.html` renders none of it). `stale.json`'s `careers_url` is cut the
+same way since 2026-08-26 (`health._public`) — **but call that hygiene, not redaction**: the 42
+query strings the committed file carried (36 of them on the 93 rows that survive the re-base)
+included 9 Comeet `?token=` values that are *also* in `companies.csv`
+in the same public repo (128 rows there carry a `token=`), and a Comeet read token is public by
+design, handed to every visitor by the widget. Nothing was hidden and nothing needed to be.
+What it buys is that the field means what it is named: `stale.json` is a queue of addresses to
+go and LOOK at, and its only consumer renders the page (`resolve_broken.candidates()` →
+`_public_url` → a browser visit, or the unlocker) — an `api_url` with `?details=true` or
+`?mode=json` on it was an API endpoint wearing a careers page's name (`docs/BACKLOG.md` 229).
 
 Scrape rows rot differently, in `refresh_scrape_cache.py`, and the two words matter
 (constants re-read from the code 2026-08-24 — this paragraph said `ROT_PARK_DAYS` was 3 and
@@ -1639,6 +1711,15 @@ active rows had no baseline entry). To settle it, run the row yourself:
   companies get `active=false` + a `defunct:` note, never an active row.
 - **Add a company you found manually**: never hand-write an unverified row. Verify first —
   `python -c "from audit_empty_rows import verify; print(verify('Name','greenhouse','slug','https://boards-api.greenhouse.io/v1/boards/slug/jobs'))"`
+  — and note that **Greenhouse EU tenants answer the same JSON at
+  `https://boards.eu.greenhouse.io/v1/boards/<slug>/jobs`** (Unframe AI `unframe`: 32 postings,
+  10 Israel, on *both* hosts through `fetch_greenhouse` unmodified, 2026-08-26). It is the
+  `-api` form, `boards-api.eu.greenhouse.io`, that is NXDOMAIN — the confusion behind
+  `docs/BACKLOG.md` 80 and `HANDOFF.md`'s watch-item 0, which say the EU board has no JSON API
+  and wants a scrape row (`docs/BACKLOG.md` 233). Prefer the US host and fall back to the EU one
+  when it answers `{"jobs":[],"meta":{"total":0}}` for a board that visibly has postings; a US
+  zero is not proof of an EU tenant — Outbrain reads 0 on both. `check_invariants`'
+  `PLATFORM_HOST["greenhouse"]` is `r"greenhouse\.io"`, so check C2 already admits the EU host.
   (returns `(total, israel)`; raises if the endpoint is bad) or, for a listings page,
   `python scrape_universal.py "Name" "https://…"` — it must extract ≥1 Israel job. Then add
   the row with `active=true` and a dated note, e.g.
@@ -1651,7 +1732,10 @@ active rows had no baseline entry). To settle it, run the row yourself:
   and set `fetch_x.israel_scoped = True` if the request already narrows to Israel (§5a).
   Add the `FETCHERS` entry, then wire **the five detection tables** or no resolver will
   ever discover the platform on its own: `SIGS` (`audit_empty_rows.py`), `_HTML_ATS`
-  (`resolve_broken.py`, self-heal), `ATS_PATTERNS` (`resolve_deep.py`), the pattern list
+  (`resolve_broken.py`, self-heal) — and, when the platform's token appears only in a NETWORK
+  REQUEST rather than in the page's HTML, `resolve_deep._detect_ats`'s URL loop, which is what
+  Comeet's own hosted board needs and does not have (`docs/BACKLOG.md` 230: 15 rows the
+  self-heal re-renders every week and can never convert) — `ATS_PATTERNS` (`resolve_deep.py`), the pattern list
   **and platform enum** in `resolve_llm.py`'s prompt, and `ATS_HOST` (`pipeline/health.py`).
   `deep_validate.py` re-imports `SIGS`, so it needs nothing. `python -m
   pipeline.platform_check` prints the grid: **21 MISSING cells over 15 platforms on
