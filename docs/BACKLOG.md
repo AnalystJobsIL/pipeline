@@ -2344,7 +2344,8 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     `https://acme.com/x//secrettelaviv.com` is an aggregator and
     `careers.acme.com/?ref=jobs.secrettelaviv.com` is not; pre-existing, theoretical, noted
     by the 2026-08-25 review. The `(?://|^)` alternative should anchor on the scheme.
-188. **A corrupt `research_companies.json` is silently replaced by this run's additions** —
+188. ~~**A corrupt `research_companies.json` is silently replaced by this run's additions**~~ — **CLOSED 2026-08-26 (`cf07bad`).** Both bridges read through the new `pipeline/discovery_queue.py` (`load()` raises `QueueUnreadable`; the check is `isinstance`, not `except`, because a valid `{"Wix": {…}}` parsed fine and then died one line later iterating a dict's keys — before `sources.record()`) and write through `pipeline/atomic`, since `open(path, "w")` truncating is what MAKES the corrupt file. `discovery_daily` skips only the queue write and names the companies it could not queue; `discovery_telegram` writes NOTHING — not the cache, not the watermark — and queues from `new_jobs` rather than `added`, or the re-run after an abort finds every card already cached and queues nothing. Guarded by `test_an_unreadable_queue_is_never_overwritten_by_discovery_daily` (both corrupt shapes) and `test_an_unreadable_queue_stops_telegram_before_the_watermark` (which re-runs and asserts the names come back exactly once). Still open elsewhere: `auto_expand.py:194` reads the queue with a bare `json.load` (`registry`), and `persist_state._keyed_list` has no mass-deletion guard (`infra`) — see 241's family.
+    Original report:
     lane: `discovery`. `discovery_daily.py:1109` does `except Exception: research = []` and
     then writes `added` over the file; `discovery_telegram._load_json(..., [])` collapses
     absent and unreadable the same way. The job cache already distinguishes ABSENT from
