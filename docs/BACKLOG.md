@@ -3171,13 +3171,20 @@ re-derive again before acting.
 248. **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
     board** — lane: `scraper`. A held page (one naming no place of its own) is refused when
     the group named a foreign region AND that page's own text names a foreign place — but
-    "its own text" includes the footer and nav every posting on the board shares. Measured on
-    the 81 bundles: **13 Israeli postings across 11 boards** (Teva 3, Aleph Farms, Gett,
-    SeatPick, REE, Centraleyes, Firefly, Arm, Edwards, IDE, WSC Sports) sit one foreign
-    sibling away from being dropped, because their shared chrome already mentions a foreign
-    place. Where it fires today it is right (C2A, CyberArk, Checkmarx ×2 — landing pages and
-    the Braga role). The fix is to scan the page MINUS its board-constant text (the
-    intersection of the group's pages is computable — every page in a link group shares it).
+    "its own text" includes the footer and nav every posting on the board shares.
+
+    **The exposure is 1 page, not the 13 first reported.** Re-measured over the 81 bundles
+    (the wave-2 figure counted every posting on a board that mentions a foreign place
+    anywhere, not the HELD pages the rule can actually refuse): only **7 pages are held at
+    all**, on 2 boards (Pecan AI 6, Checkmarx 1), and exactly **1** has `page_foreign` —
+    Checkmarx's `Application Security Research Team Leader`, the Braga role, which the rule
+    is right to refuse. An anchored variant (foreign evidence within 1,500 characters of the
+    title, the way `_loc_from_ctx` anchors a place) was written and measured: it disagrees
+    with the page-wide test on **0** of those pages, so it buys nothing today and was not
+    shipped. The design concern stands for boards outside the corpus — a board-constant
+    footer is not evidence about a role — but nothing is bleeding, and the honest fix is to
+    scan the page MINUS the text its siblings share (computable: every page in a link group
+    carries it), not to widen a place list.
 
 249. **A closed role still donates its description to a new posting with the same title and
     place** — lane: `scraper`. `_carry_jd`'s (title, place) key cannot tell a promotion from
