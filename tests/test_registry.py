@@ -5439,3 +5439,123 @@ def test_triage_never_writes_another_tools_pool_token_inside_its_own_segment():
     assert T._own_words("plain reason") == "plain reason"
     src = inspect.getsource(T.main)
     assert "_own_words(detail)" in src, "the stamp must go through the rewording"
+
+
+# ---------------------------------------------------------------------------
+# lane: registry, 2026-08-27 — the page judge, the mode set, the hunt's LLM cap.
+# ---------------------------------------------------------------------------
+
+def _argv_strict_run(reply):
+    """A `subprocess.run` stand-in that enforces the SAME argv contract the real one does.
+
+    The point of this helper is what it refuses. The obvious way to test an LLM caller here
+    is to monkeypatch `pipeline.llm.call_json` and inspect what it was handed — and that is
+    exactly the shape of the test that let `triage_dark._SCHEMA` ship as a dict and stay
+    broken for two days (`tests/test_registry.py`, the 2026-08-25 batch-5 guard: it asserted
+    `seen["schema"]["required"]`, i.e. it PINNED the dict). A fake that accepts anything
+    proves nothing about the boundary, so this one rejects a non-str argv element with the
+    real TypeError, and the test below drives the whole `pipeline/llm.py` seam.
+    """
+    import json as _json
+
+    class _Proc:
+        pass
+
+    def run(cmd, **kw):
+        for part in cmd:
+            if not isinstance(part, (str, bytes)):
+                raise TypeError("expected str, bytes or os.PathLike object, not "
+                                + type(part).__name__)
+        p = _Proc()
+        p.returncode, p.stderr = 0, ""
+        p.stdout = _json.dumps({"is_error": False, "structured_output": reply,
+                                "modelUsage": {"claude-sonnet-5": {"outputTokens": 40}}})
+        return p
+    return run
+
+
+def test_the_triage_page_judge_reaches_the_model_through_the_real_seam(monkeypatch):
+    """`triage_dark.llm_page_verdict` must return a verdict, not None, when the CLI answers.
+
+    Until 2026-08-27 it could not: `_SCHEMA` was a dict, `pipeline/llm.py` puts the schema
+    into argv, and `subprocess.run` raised TypeError before spawning. `_invoke` turns any
+    spawn failure into `LLMUnavailable(kind="missing")` and this function swallows that as
+    "no CLI / no auth: the regex verdict stands" — so `wrong-page` became an unproduceable
+    verdict and every `page-empty` row was an unconfirmed regex guess. Live effect on
+    2026-08-26: 20 rows triaged, 0 LLM verdicts, cap counter reading as spend.
+    """
+    import shutil
+    import triage_dark as T
+    from pipeline import llm
+    monkeypatch.setattr(shutil, "which", lambda _n: "claude")
+    monkeypatch.setattr(llm.shutil, "which", lambda _n: "claude")
+    monkeypatch.setattr(llm.subprocess, "run", _argv_strict_run(
+        {"is_careers_page_for_this_company": True,
+         "open_roles": ["Data Analyst", "BI Developer"], "note": "two roles"}))
+    monkeypatch.setattr(T, "_LLM_USED", {"n": 0})
+    got = T.llm_page_verdict("Wix", "https://www.wix.com/jobs", "PAGE TEXT")
+    assert got is not None, "the judge is unreachable again — check the schema is a string"
+    assert got[0] == "has-roles" and "Data Analyst" in got[1]
+
+
+def test_the_triage_page_judge_can_still_say_wrong_page(monkeypatch):
+    """The verdict `wrong-page` exists ONLY on this path — no regex produces it — so it is
+    the one mode whose absence from a night's triage means the judge is dead rather than
+    that no row deserved it."""
+    import shutil
+    import triage_dark as T
+    from pipeline import llm
+    monkeypatch.setattr(shutil, "which", lambda _n: "claude")
+    monkeypatch.setattr(llm.shutil, "which", lambda _n: "claude")
+    monkeypatch.setattr(llm.subprocess, "run", _argv_strict_run(
+        {"is_careers_page_for_this_company": False, "open_roles": [], "note": "a blog"}))
+    monkeypatch.setattr(T, "_LLM_USED", {"n": 0})
+    got = T.llm_page_verdict("Wix", "https://www.wix.com/blog", "PAGE TEXT")
+    assert got and got[0] == "wrong-page"
+
+
+def test_the_triage_mode_set_is_every_mode_the_classifier_can_return():
+    """`triage_dark.MODES` is this module's own object and must stay complete.
+
+    A mode that no filter matches drops its rows out of every pool silently, and the
+    detector for that (`check_invariants` check F2) compares against a HAND COPY of this
+    set — which had 7 of the 8 and reported 24 rows carrying the real mode `no-url` as
+    "truncated/unknown" every night. The set is derived here from the module's own AST so a
+    ninth mode cannot be added without adding it to `MODES` too. ARCHITECTURE.md section 2:
+    never retype a pool, import the tool's predicate.
+    """
+    import ast
+    import triage_dark as T
+    tree = ast.parse(open(T.__file__, encoding="utf-8").read())
+    fn = next(n for n in ast.walk(tree)
+              if isinstance(n, ast.FunctionDef) and n.name == "classify")
+    returned = set()
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Return) and isinstance(node.value, ast.Tuple) \
+                and node.value.elts and isinstance(node.value.elts[0], ast.Constant) \
+                and isinstance(node.value.elts[0].value, str):
+            returned.add(node.value.elts[0].value)
+    assert returned, "classify's shape changed — re-point this guard"
+    assert returned == set(T.MODES), (
+        f"triage_dark.MODES disagrees with classify: "
+        f"returned-not-declared={sorted(returned - set(T.MODES))} "
+        f"declared-not-returned={sorted(set(T.MODES) - returned)}")
+
+
+def test_the_hunt_actually_reads_the_llm_cap_its_docstring_promises(monkeypatch):
+    """`listing_hunt`'s docstring has advertised `HUNT_LLM_CAP (default 200)` since the tool
+    was written, and until 2026-08-27 nothing read it: no counter, no `os.environ.get`. The
+    hunt is the lane's largest Claude consumer (a picker call per company plus scrape
+    strategy 5, `SCRAPE_LLM: "1"` in the workflow) and its only bound was wall clock. A
+    documented cap that does not exist is worse than no cap: the next reader budgets against
+    it.
+    """
+    import listing_hunt as H
+    monkeypatch.setenv("HUNT_LLM_CAP", "2")
+    H._LLM_USED["n"] = 0
+    assert H._llm_budget_left() is True
+    H._LLM_USED["n"] = 2
+    assert H._llm_budget_left() is False, "the cap is read but never enforced"
+    src = open(H.__file__, encoding="utf-8").read()
+    assert 'os.environ.get("HUNT_LLM_CAP"' in src,         "the docstring advertises HUNT_LLM_CAP; the code must actually read it"
+    assert "_llm_budget_left()" in src.split("def _llm_budget_left")[-1],         "the budget helper exists but no caller consults it"

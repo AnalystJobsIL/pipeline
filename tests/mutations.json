@@ -114,8 +114,8 @@
   "file": "deep_validate.py",
   "symbol": "main",
   "class": "M4-dead-conjunct",
-  "find": "                            n_all and not is_foreign(name, _cand) and _ident",
-  "replace": "                            not is_foreign(name, _cand) and _ident",
+  "find": "            n_all and not is_foreign(name, _cand) and _ident",
+  "replace": "            not is_foreign(name, _cand) and _ident",
   "why": "drops the emptiness clause, so a board that verifies with zero jobs counts as a recovery",
   "must_be_killed_by_behavioural": true
  },
@@ -352,10 +352,10 @@
  {
   "id": "activation-njobs-drop",
   "file": "pipeline/identity_gate.py",
-  "symbol": "activation_ok",
+  "symbol": "activation_verdict",
   "class": "M4-dead-conjunct",
-  "find": "    if not n_jobs:\n        return False",
-  "replace": "    if False:\n        return False",
+  "find": "    if not n_jobs:\n        return \"empty\"",
+  "replace": "    if False:\n        return \"empty\"",
   "why": "a board that verifies with zero jobs is the empty-board shape, not a recovery",
   "must_be_killed_by_behavioural": true
  },

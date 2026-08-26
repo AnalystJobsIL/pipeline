@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import csv
 import datetime as dt
+import json
 import os
 import re
 import sys
@@ -124,6 +125,17 @@ def fetch(url, timeout=15):
         return None, ""
 
 
+# Every mode `classify_row` can return, as this module's OWN object. Anything that filters
+# on a mode must import THIS, never retype it: `check_invariants.TRIAGE_MODES` was a hand
+# copy that had 7 of these 8, so 24 rows carrying the real mode `no-url` were reported
+# nightly as "truncated/unknown triage mode (no pool matches it)" -- a false alarm on rows
+# `listing_hunt` does own (see the `routing:` line at the end of `main`). Same rule as
+# `listing_hunt.HUNT_POOL` and `verdicts.TERM_RX` in ARCHITECTURE.md section 2.
+# `test_the_triage_mode_set_is_every_mode_the_classifier_can_return` derives this set from
+# the module's own AST, so a new mode that is not added here is red.
+MODES = frozenset({"url-dead", "page-empty", "extract-gap", "js-shell",
+                   "blocked", "wrong-page", "no-url", "acquired"})
+
 _LLM_USED = {"n": 0}
 
 # The page judge's contract, stated (BACKLOG 117, 2026-08-25): until now this was the last
@@ -134,12 +146,22 @@ _SYSTEM = ("You judge one web page for a jobs pipeline. Answer only through the 
            "Count a role only if the page actually lists it as an open position -- ignore "
            "'no openings' / 'send us your CV' text, team blurbs and testimonials. Roles may "
            "be in Hebrew.")
-_SCHEMA = {"type": "object",
-           "properties": {"is_careers_page_for_this_company": {"type": "boolean"},
-                          "open_roles": {"type": "array", "items": {"type": "string"}},
-                          "note": {"type": "string"}},
-           "required": ["is_careers_page_for_this_company", "open_roles", "note"],
-           "additionalProperties": False}
+# `call_json` puts this straight into argv (`pipeline/llm.py`), so it must be a STRING.
+# It was a dict from 2026-08-25 until 2026-08-27, and `subprocess.run` raised TypeError
+# BEFORE spawning -- which `_invoke` re-raises as `LLMUnavailable(kind="missing")`, i.e.
+# exactly the shape of "the claude CLI is not installed". So the judge below silently
+# returned None on every row for two days while its cap counter read as spend, and the
+# only test covering it monkeypatched `call_json` itself and pinned the dict. Every other
+# schema in the repo is `json.dumps`'d; this one is now too, and
+# `test_every_llm_schema_constant_is_a_string` (tests/test_units.py) proves it for all of
+# them at once.
+_SCHEMA = json.dumps({"type": "object",
+                      "properties": {"is_careers_page_for_this_company": {"type": "boolean"},
+                                     "open_roles": {"type": "array",
+                                                    "items": {"type": "string"}},
+                                     "note": {"type": "string"}},
+                      "required": ["is_careers_page_for_this_company", "open_roles", "note"],
+                      "additionalProperties": False})
 
 
 def llm_page_verdict(company, url, text):

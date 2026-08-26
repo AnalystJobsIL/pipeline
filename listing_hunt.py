@@ -13,6 +13,15 @@ an honest empty answer allowed), then VALIDATE by running scrape_universal on it
 is only activated when the scrape yields >=1 Israel job. Verdicts persist in the row note.
 
 Env: HUNT_LIMIT (0=all) · HUNT_TIME_BUDGET_MIN · HUNT_LLM_CAP (default 200)
+
+`HUNT_LLM_CAP` bounds the LINK-PICKER calls this module makes -- one per company that got
+as far as a link harvest. It was advertised here from the day the tool was written and read
+by NOTHING until 2026-08-27: no counter, no `os.environ.get`, the picker gated only by
+`shutil.which("claude")`. A documented cap that does not exist is worse than no cap, because
+the next reader budgets against it. It does NOT bound the scrape LLM tier (strategy 5, which
+the workflow arms with `SCRAPE_LLM: "1"`): those calls are made inside `scrape_universal`,
+behind that module's own excerpt gate and breaker, and are bounded here only by
+`HUNT_TIME_BUDGET_MIN` -- see docs/BACKLOG.md.
 Usage: python listing_hunt.py [--apply]
 """
 from __future__ import annotations
@@ -125,6 +134,15 @@ def _resolve_rebrand(url):
 # here emptied the hunt of 27 rows while pytest, check_invariants and registry_health all
 # stayed green (wave-4 R3). registry_health now IMPORTS this constant; the guard test
 # asserts every refusal note matches it, not just check_invariants' copy.
+# The picker's budget. Read from the environment on every check rather than captured at
+# import, so a rehearsal or a test can set it after the module is loaded.
+_LLM_USED = {"n": 0}
+
+
+def _llm_budget_left():
+    return _LLM_USED["n"] < int(os.environ.get("HUNT_LLM_CAP", "200"))
+
+
 HUNT_POOL = re.compile(
     r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|"
     r"host documented|probe-woken|scanned; no open|unreachable|"
@@ -255,7 +273,8 @@ def hunt_one(name, seed, documented=False, mode=""):
     if not links:
         return ("dead", None, 0, "no pages reachable" if not reachable else "no links")
     picked = ""
-    if shutil.which("claude"):
+    if shutil.which("claude") and _llm_budget_left():
+        _LLM_USED["n"] += 1
         p = _ask_claude(_PICK_PROMPT.format(
             name=name, links="\n".join(f"{t} -> {u}" for t, u in links[:40])),
             system=_PICK_SYSTEM, schema=_PICK_SCHEMA)
@@ -473,7 +492,8 @@ def main():
                             f"listing-hunt {TODAY}: "
                             + ("no listing found" if verdict == "nolisting" else detail))
                 write_csv_rows("companies.csv", fresh)
-    print(f"\n=== listing hunt: {stats} ===", flush=True)
+    print(f"\n=== listing hunt: {stats}, picker calls {_LLM_USED['n']}"
+          f"{'/CAPPED' if not _llm_budget_left() else ''} ===", flush=True)
 
 
 if __name__ == "__main__":

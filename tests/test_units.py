@@ -10607,3 +10607,34 @@ def test_the_ledger_says_which_kind_of_unreadable(tmp_path):
     bad = tmp_path / "roles.jsonl"
     bad.write_text("\n".join("{not json" for _ in range(30)), encoding="utf-8")
     assert emj.dead_role_ids(str(bad)) == (None, "corrupt")
+
+
+# ---------------------------------------------------------------------------
+# lane: registry (2026-08-27) — the one seam takes a STRING schema.
+# ---------------------------------------------------------------------------
+
+def test_every_llm_schema_constant_is_a_string():
+    """`pipeline/llm.py` puts `schema` straight into argv, so a dict raises TypeError in
+    `subprocess.run` BEFORE the spawn — and `_invoke` re-raises that as
+    `LLMUnavailable(kind="missing")`, which every caller reads as "the claude CLI is not
+    installed". `triage_dark._SCHEMA` was a dict from 2026-08-25 to 2026-08-27: its page
+    judge returned None on every row for two days, burning its cap counter, with no error
+    anywhere. This is the class, checked across every lane at once — the seam is shared, so
+    the next module to get this wrong is not necessarily the registry's.
+    """
+    import importlib
+    wanted = [("resolve_llm", "_SCHEMA"), ("listing_hunt", "_PICK_SCHEMA"),
+              ("triage_dark", "_SCHEMA"), ("deep_validate", "_SCHEMA"),
+              ("scrape_universal", "_LLM_SCHEMA"), ("pipeline.seniority", "LLM_SCHEMA"),
+              ("pipeline.firmographics", "_RESEARCH_SCHEMA")]
+    import json as _json
+    bad = []
+    for mod_name, attr in wanted:
+        mod = importlib.import_module(mod_name)
+        assert hasattr(mod, attr), f"{mod_name}.{attr} vanished — re-point this guard"
+        value = getattr(mod, attr)
+        if not isinstance(value, str):
+            bad.append(f"{mod_name}.{attr} is {type(value).__name__}")
+            continue
+        _json.loads(value)                     # and it must be JSON the CLI can read
+    assert not bad, f"schema constants that are not strings: {bad}"
