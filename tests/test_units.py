@@ -2169,6 +2169,11 @@ def _refresh_sandbox(tmp_path, monkeypatch, rows, old_cache=None, rot=None, outc
         if kind == "empty":
             return _NS(jobs=[], status="empty", error="", http_status=200, strategy="",
                        elapsed_s=0.1, rescued=False)
+        if kind == "weak":
+            # a reading that named roles and knew no posting's own address (2026-08-26)
+            return _NS(jobs=[_il_job(name, i + 1) for i in range(detail)], status="ok",
+                       error="", http_status=200, strategy="cards", elapsed_s=0.1,
+                       rescued=False, weak_read=True)
         return _NS(jobs=[_il_job(name, i + 1) for i in range(detail)], status="ok", error="",
                    http_status=200, strategy="dom", elapsed_s=0.1, rescued=False)
     monkeypatch.setattr(R, "scrape_result", fake)
@@ -7299,7 +7304,9 @@ def test_scrape_llm_tier_is_counted_breaks_on_an_outage_and_never_raises(monkeyp
     import scrape_universal as N
     from pipeline.llm import LLMUnavailable
     url = "https://co.example/careers"
-    page = "<body><h2>Open positions</h2><div>Senior Data Analyst</div></body>"
+    # the page names an Israeli place, or `_llm_gate` would spare the call and there would be
+    # no call to count (the gate has its own test)
+    page = "<body><h2>Open positions</h2><div>Senior Data Analyst — Tel Aviv</div></body>"
     monkeypatch.setenv("SCRAPE_LLM", "1")
     monkeypatch.setattr(N, "_LLM_DOWN", None)
     seen = []
@@ -7563,8 +7570,11 @@ def test_scrape_llm_locations_pass_the_same_gate_and_a_two_country_one_is_droppe
     role's place. A present-but-malformed payload is a wasted call, said so."""
     import scrape_universal as N
     url = "https://co.example/careers"
-    page = "<body><h2>Open positions</h2><div>Data Analyst</div></body>"
+    page = "<body><h2>Open positions</h2><div>Data Analyst — Tel Aviv</div></body>"   # `_llm_gate`
     monkeypatch.setenv("SCRAPE_LLM", "1")
+    # `listing_hunt`/`crack_walled` set SCRAPE_ASSUME_IL in the PROCESS at import, so a full
+    # run leaks it here and every location-less card would read as Israeli (BACKLOG 242)
+    monkeypatch.delenv("SCRAPE_ASSUME_IL", raising=False)
     answer = {"positions": [
         {"title": "Data Analyst", "location": "Tel Aviv, Israel New York, NY, United States"},
         {"title": "BI Developer", "location": "Tel Aviv, Israel London, United Kingdom"},
@@ -7610,7 +7620,7 @@ def test_scrape_strategy_four_leaves_the_llm_tier_its_floor(monkeypatch):
         pass
     assert isinstance(Budget(t_end=_time.monotonic() + 100).reserve(40), Budget), "the caller's subclass survives"
     url = "https://co.example/careers"
-    page = _links_page(6).replace("We are hiring", "Open positions: Data Analyst")
+    page = _links_page(6).replace("We are hiring", "Open positions: Data Analyst, Haifa")
     seen = {}
 
     def slow_visit(urls, deadline):
@@ -7707,9 +7717,17 @@ def test_scrape_place_boundaries_are_case_sensitive_and_a_lone_prose_page_is_isr
     pecan = "<html><h1>Solution Engineer</h1><p>Pecan was acknowledged as one of Israel's fastest growing startups.</p></html>"
     utila = "<html><h1>Sales Engineer, APAC</h1><p>Singapore (Remote). We are one of Israel's leading teams.</p></html>"
     add, jobs = N._make_adder("Co", "https://co.example/careers")
-    assert N._read_position_page(pecan, "https://co.example/careers/se/", add)
-    assert not N._read_position_page(utila, "https://co.example/careers/apac/", add)
+    # 2026-08-26: the judgement is the BOARD's, made once by `_Board`, so a page that names
+    # no place is held until the group is read — a board with a region in a role's name is a
+    # global one and "no place" is not Israel there (VAST Data's eleven US roles).
+    board = N._Board(add)
+    assert not board.read(pecan, "https://co.example/careers/se/")
+    assert board.flush()
     assert [(j["title"], j["location"]) for j in jobs] == [("Solution Engineer", "Israel")]
+    add2, jobs2 = N._make_adder("Co", "https://co.example/careers")
+    global_board = N._Board(add2)
+    assert not global_board.read(utila, "https://co.example/careers/apac/")
+    assert not global_board.flush() and jobs2 == []
 
 
 # --- scraper lane, 2026-08-26, wave 2 (mutation sweep: 117 mutants, the survivors pinned) ---
@@ -7739,12 +7757,15 @@ def test_scrape_wave2_survivors_are_pinned(monkeypatch):
     from pipeline.llm import LLMUnavailable
     monkeypatch.setenv("SCRAPE_LLM", "1")
     add, jobs = N._make_adder("Co", "https://co.example/careers")
-    assert N._from_llm("<body><h2>Open positions</h2><p>Data Analyst</p></body>", "u", False, add,
-                       runner=lambda p, t: 1 / 0, deadline=N.Deadline(t_end=_time.monotonic() + 20)) == (0, "deadline")
+    # a page the gate admits (it names an Israeli place); the gate itself is pinned by
+    # test_scrape_llm_gate_skips_only_what_the_adder_could_not_accept
+    llm_page = "<body><h2>Open positions</h2><p>Data Analyst — Tel Aviv</p></body>"
+    assert N._from_llm(llm_page, "u", False, add,
+                       runner=lambda p, t: 1 / 0, deadline=N.Deadline(t_end=_time.monotonic() + 20)) == (0, "deadline", 0)
     for kind in ("auth", "missing", "drift"):
         monkeypatch.setattr(N, "_LLM_DOWN", None)
         monkeypatch.setattr(N, "_run_claude", lambda p, t, k=kind: (_ for _ in ()).throw(LLMUnavailable("x", kind=k)))
-        N._from_llm("<body><h2>Open positions</h2><p>Data Analyst</p></body>", "u", False, add)
+        N._from_llm(llm_page, "u", False, add)
         assert N._LLM_DOWN == kind
     # href filters, each on its own
     url = "https://co.example/careers/"
@@ -7767,8 +7788,8 @@ def test_scrape_wave2_survivors_are_pinned(monkeypatch):
     assert not add("Senior Data Analyst " * 6, "Tel Aviv", "/x"), "a 120-character blob is not a title"
     # the anchored position page reads its own place, not the header's
     add, jobs = N._make_adder("Co", url)
-    N._read_position_page("<html><header>headquartered in Haifa</header><h1>Senior Data Analyst</h1><p>Ramat Gan, Israel</p></html>",
-                          url + "x/", add)
+    N._Board(add).read("<html><header>headquartered in Haifa</header><h1>Senior Data Analyst</h1>"
+                       "<p>Ramat Gan, Israel</p></html>", url + "x/")
     assert jobs[0]["location"] == "Ramat Gan, Israel"
     # plain fetches send the browser's headers
     seen = {}
@@ -8547,3 +8568,508 @@ def test_the_blank_re_ask_has_a_wall_clock_bound_not_just_a_count():
     finally:
         dd._li_guest, dd._BLANK_RETRY_PAUSE = real, pause
         dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)
+
+
+# =====================================================================================
+# scraper lane, 2026-08-26 (evening) — a reading that names roles but knows none of their
+# addresses must not END the ladder, and must not be believed when it replaces a board.
+# =====================================================================================
+def test_scrape_a_url_less_reading_does_not_end_the_ladder_and_its_twins_are_promoted():
+    """Quantum Machines' 18 Comeet postings were replaced by 4 card titles whose url was the
+    careers page: `_from_cards` yielded, first-hit-wins stopped, and the night shipped 4 of
+    18. `strong` (a posting that knows its own address) is what ends the ladder now; a later
+    strategy completes what an earlier one only named, instead of duplicating it.
+
+    Port.io is why the completing pass may not APPEND: over a board another strategy has
+    read, `_from_dom`'s four-ancestor `ctx` invented 16 entries — 10 mangled twins and 6 US
+    roles stamped Tel Aviv (docs/BACKLOG.md 88, 221)."""
+    import scrape_universal as N
+    url = "https://co.example/careers"
+    add, jobs = N._make_adder("Co", url)
+    for t in ("Data Engineer", "BI Developer", "Product Analyst"):
+        assert add(t, "Tel Aviv", "")                       # three url-less readings
+    assert (add.strong, add.israeli, len(add._weak)) == (0, 3, 3)
+    # the same three cards, read again by a pass that knows the addresses: no new jobs
+    for t in ("Data Engineer", "BI Developer", "Product Analyst"):
+        assert add.promote_or_skip(t + " Tel Aviv - Israel Apply", "Tel Aviv", "/jobs/" + t[:4])
+    assert (len(jobs), add.strong) == (3, 3)
+    assert all(j["url"].startswith("https://co.example/jobs/") for j in jobs)
+    assert [j["title"] for j in jobs] == ["Data Engineer", "BI Developer", "Product Analyst"]
+    # ...and a card that is NOT one of them is not invented into the board
+    assert not add.promote_or_skip("Partner Campaign Manager Palo Alto- USA", "Tel Aviv", "/jobs/us")
+    assert len(jobs) == 3
+
+
+def test_scrape_promotion_never_crosses_a_seniority_word_or_a_foreign_card():
+    """Wave-0 critic (HIGH): whole-word containment made "Java Developer" a second sighting of
+    "Senior Java Developer" — one posting lost, the survivor pointing at the other's page, and
+    `jdfill` describing the wrong role. 40 pairs of titles at one company contain each other
+    in the 2026-08-26 cache; the decoration whitelist leaves 3 crossable, and all three are
+    the same posting written twice ("… Engineer" / "… Engineer, Modi'in"). And
+    `promote_or_skip` ran none of the title/location filters, so a Palo Alto card could hand
+    its address to a Tel Aviv role."""
+    import scrape_universal as N
+    assert N._title_in("data engineer tel aviv israel apply", "data engineer")
+    assert N._title_in("cloud finops engineer israel tel aviv engineering", "cloud finops engineer"), \
+        "a place and a DEPARTMENT are card furniture — this is VAST Data's Comeet card"
+    assert not N._title_in("senior java developer", "java developer")
+    assert not N._title_in("lead data analyst tel aviv", "data analyst")
+    assert not N._title_in("backend engineer data pipeline", "backend engineer"), \
+        "a blacklist of seniority words let this one through; the whitelist does not"
+    assert not N._title_in("cyber analyst for reporting and content", "cyber analyst")
+    assert not N._title_in("hrbp manager emea", "hrbp"), "a short one-word title, by equality only"
+    url = "https://co.example/careers"
+    add, jobs = N._make_adder("Co", url)
+    add("Java Developer", "Herzliya", "")
+    assert add("Senior Java Developer", "Herzliya", "/jobs/senior-java")
+    assert len(jobs) == 2 and add.strong == 1
+    assert [j["url"] for j in jobs] == [url, "https://co.example/jobs/senior-java"]
+    # the filters apply on the promote path too: a foreign card is not our role's address
+    add2, jobs2 = N._make_adder("Co", url)
+    add2("Data Analyst", "Tel Aviv", "")
+    assert not add2.promote_or_skip("Data Analyst United States Full-time", "Palo Alto", "/jobs/us")
+    assert jobs2[0]["url"] == url, "still url-less, not pointed at the US posting"
+
+
+def test_scrape_position_links_group_by_tenant_and_skip_assets_and_aggregators():
+    """Strategy 4 could not read a Comeet embed AT ALL: `comeet.com/jobs/<tenant>/<group>/
+    <slug>/<id>` has the slug as its parent, so each of the 151 Comeet links in the cache was
+    a group of one and fell under the three-link floor. Walking up fixes that and would pay
+    for it in junk — 17 favicons under `comeet.com/common/assets/jobs-assets/` sort ahead of
+    the real board — so a link must be a page of ours first, and on an ATS the group stops at
+    the TENANT (`comeet.com/jobs/` would read a second tenant's roles as this company's)."""
+    import scrape_universal as N
+    own = "https://co.example/careers"
+    assert N._link_prefix("https://www.comeet.com/jobs/co/D6.000/backend/13.05B", own) == \
+        "https://www.comeet.com/jobs/co/"
+    assert N._link_prefix("https://www.comeet.com/jobs/rival/D6.000/x/13.05B", own) == \
+        "https://www.comeet.com/jobs/rival/", "a second tenant is its own group, never ours"
+    assert N._link_prefix("https://co.example/careers/senior-engineer/", own) == \
+        "https://co.example/careers/", "a company's own board keeps the board word"
+    assert N._link_prefix("https://www.comeet.com/common/assets/jobs-assets/favicon.png", own) == ""
+    assert N._link_prefix("https://www.linkedin.com/jobs/view/12345", own) == "", \
+        "an aggregator is other companies' postings (CLAUDE.md rule 5)"
+    assert N._link_prefix("https://cdn.phenompeople.com/CareerConnectResources/x.css", own) == ""
+
+
+def test_scrape_the_israel_default_is_the_boards_judgement_not_the_pages():
+    """A position page that names no place of its own, on an Israeli company's site, was read
+    as an Israeli role — right for Pecan AI (six roles, all Israeli), wrong for VAST Data,
+    whose global board put the Israeli HQ in every posting's boilerplate: eleven US account
+    executives shipped as Israeli on 2026-08-26. The call belongs to the GROUP, made once.
+
+    The evidence is the TITLE, never the page: a page-wide foreign scan was measured useless
+    (SeatPick's footer sells "Portugal Primeira Liga Tickets", Weebit's scripts configure a
+    "U.S. Dollar", Teva captions a photo of employees in China)."""
+    import scrape_universal as N
+    page = "<h1>{}</h1><p>one of Israel's fastest-growing companies</p>"
+    add, jobs = N._make_adder("Co", "https://co.example/careers")
+    board = N._Board(add)
+    for t in ("AI consultant", "Product Manager"):
+        assert not board.read(page.format(t), "https://co.example/careers/" + t[:3] + "/")
+    assert board.flush() and [j["title"] for j in jobs] == ["AI consultant", "Product Manager"], \
+        "an all-Israeli board: NOT `any(...)`, whose generator stopped after the first"
+    # On a board that names a region in a role's name, a held page is refused when its OWN
+    # text names a foreign place too. Refusing the whole group for a sibling's region turned
+    # a live board into a clean `empty` — a mass zero, committed silently (CLAUDE.md rule 2).
+    add2, jobs2 = N._make_adder("Co", "https://co.example/careers")
+    global_board = N._Board(add2)
+    us = "<h1>Account Executive - Austin, TX</h1><p>Israel HQ. East Coast, United States.</p>"
+    global_board.read(us, "https://co.example/careers/a/")
+    global_board.read(page.format("Account Executive - Federal"), "https://co.example/careers/b/")
+    assert global_board.foreign, "the board named a region in a role's name"
+    assert global_board.flush()
+    assert [j["title"] for j in jobs2] == ["Account Executive - Federal"], \
+        "the US page is refused by its own text; its sibling is not punished for it"
+    # a page that names its own Israeli place needs no judgement at all
+    add3, jobs3 = N._make_adder("Co", "https://co.example/careers")
+    b3 = N._Board(add3)
+    assert b3.read("<h1>Data Analyst</h1><p>Herzliya, Israel</p>", "https://co.example/careers/d/")
+    assert jobs3[0]["location"] == "Herzliya, Israel"
+
+
+def test_scrape_a_card_takes_the_nearest_href_not_the_previous_cards():
+    """`_HREF.search(page_html[pos-600:pos+1600])` returned the EARLIEST link in the window,
+    which on a list of cards is the PREVIOUS card's: Gett shipped "Senior Director of Service
+    Excellence" under the Customer Service Representative posting's address, and 36 cached
+    postings across 13 companies shared a url with a different title (2026-08-26)."""
+    import scrape_universal as N
+    html = ('<a href="/careers/first/"></a><h3>First Role</h3><p>Tel Aviv, Israel</p>'
+            '<a href="/careers/second/"></a><h3>Second Role</h3><p>Tel Aviv, Israel</p>')
+    assert N._card_href(html, html.index("<h3>Second Role")) == "/careers/second/"
+    assert N._card_href(html, html.index("<h3>First Role")) == "/careers/first/"
+    assert N._card_href("<h3>Role</h3><a href='/careers/inside/'>apply</a>", 0) == "/careers/inside/"
+    assert N._card_href("<h3>Role</h3>", 0) == ""
+
+
+def test_scrape_llm_gate_skips_only_what_the_adder_could_not_accept(monkeypatch):
+    """94 of the 128 sonnet calls on 2026-08-26 returned nothing. A page naming no Israeli
+    place, read from an address that names none either, can only produce rows `_Adder` drops
+    — so the call is spared and counted. The gate reads `_page_is_il`, which under
+    SCRAPE_ASSUME_IL is a PAGE-level signal: hand it a bare "does the url say Israel" and
+    every listing_hunt / crack_walled page silently loses its roles."""
+    import scrape_universal as N
+    assert N._llm_gate("Open positions: Data Analyst", False) == "no-il"
+    assert N._llm_gate("Open positions: Data Analyst", True) == ""
+    assert N._llm_gate("Open positions: Data Analyst, Tel Aviv", False) == ""
+    monkeypatch.setenv("SCRAPE_LLM", "1")
+    add, _ = N._make_adder("Co", "https://co.example/careers")
+    calls = []
+    assert N._from_llm("<body><h2>Open positions</h2><p>Data Analyst</p></body>", "u", False,
+                       add, runner=lambda p, t: calls.append(p)) == (0, "gate:no-il", 1)
+    assert calls == []
+    r = _rendered(page_html="<body><h2>Open positions</h2><p>Data Analyst</p></body>")
+    N._extract("Co", "https://co.example/careers", r, fetch=_no_fetch, llm=lambda p, t: {})
+    assert r.llm_skipped == 1 and r.llm_calls == 0
+
+
+def test_scrape_the_llm_excerpt_is_exactly_what_the_call_receives(monkeypatch):
+    """One window. The excerpt was sliced `[signal-1500 : signal+20000]` and re-sliced
+    `[:20000]` at the call site — which sends the same bytes, so this is legibility, not a
+    fix (the wave-0 critic caught the claim that it was a bug). What the test pins is that
+    the two can never drift apart again."""
+    import scrape_universal as N
+    monkeypatch.setenv("SCRAPE_LLM", "1")
+    filler = "Accessibility Preferences " * 2000
+    page = ("<body><p>" + filler + "</p><h2>Open positions</h2><p>Data Analyst, Tel Aviv</p>"
+            "<p>" + ("role text " * 3000) + "</p></body>")
+    seen = []
+    N._from_llm(page, "u", False, N._make_adder("Co", "https://co.example/careers")[0],
+                runner=lambda p, t: seen.append(p) or {"positions": []})
+    assert seen[0] == N._LLM_PROMPT + N._llm_excerpt(page)
+    assert len(seen[0]) - len(N._LLM_PROMPT) <= N._LLM_TEXT_CHARS
+
+
+def test_refresh_a_url_less_collapse_is_held_back_two_nights(tmp_path, monkeypatch, capsys):
+    """The night Quantum Machines' board came back as 4 url-less card titles instead of 18
+    addressed postings, the 4 were believed and 14 roles closed. A reading that knew NO
+    posting's address AND collapsed to under a third of yesterday is a partial read: held for
+    PARTIAL_MAX_NIGHTS, then believed (a board that really shrank must converge).
+
+    `weak_read` is carried from the extractor rather than inferred from the urls, because
+    `_Adder.resolve` may have given some of them an address by the time the refresh looks."""
+    import refresh_scrape_cache as R
+    old = {"Co": [_il_job("Co", i + 1) for i in range(18)]}
+    p = _refresh_sandbox(tmp_path, monkeypatch, [["Co"]], old_cache=old,
+                         outcomes={"Co": ("weak", 4)})
+    assert p.R.run(["--workers", "1"]) == 0
+    kept = _json.loads(p.cache.read_text(encoding="utf-8"))
+    assert len(kept["Co"]) == 18, "yesterday's board stayed"
+    rot = _json.loads(p.rot.read_text(encoding="utf-8"))
+    assert rot["Co"]["error"] == "partial:weak:read" and rot["Co"]["shape"] == "weak"
+    assert p.csv.read_text(encoding="utf-8").count(",true,") == 1, "a weak read never parks a row"
+    # ...and after PARTIAL_MAX_NIGHTS the smaller board is the truth
+    rot["Co"]["partial_n"] = R.PARTIAL_MAX_NIGHTS
+    rot["Co"]["last"] = _days_ago(1)
+    p.rot.write_text(_json.dumps(rot), encoding="utf-8")
+    assert p.R.run(["--workers", "1"]) == 0
+    assert len(_json.loads(p.cache.read_text(encoding="utf-8"))["Co"]) == 4
+    # a weak reading that did NOT collapse is an ordinary night
+    p2 = _refresh_sandbox(tmp_path / "b", monkeypatch, [["Co"]],
+                          old_cache={"Co": [_il_job("Co", i + 1) for i in range(4)]},
+                          outcomes={"Co": ("weak", 3)})
+    assert p2.R.run(["--workers", "1"]) == 0
+    assert len(_json.loads(p2.cache.read_text(encoding="utf-8"))["Co"]) == 3
+
+
+def test_refresh_progress_line_names_spend_only_when_there_was_some():
+    """The 2026-08-26 night spent 128 LLM calls and 48 unlocker requests and the log could not
+    say which company spent them. Now it can — and the 400 lines that spent nothing are still
+    one line long."""
+    import refresh_scrape_cache as R
+    assert R._spent({}) == ""
+    assert R._spent({"unlock_calls": 5, "unlock_ok": 2}) == " unlock=2/5"
+    assert R._spent({"llm_calls": 1, "strategy": "llm"}) == " llm=1->won"
+    assert R._spent({"llm_calls": 1, "strategy": "cards+links"}) == " llm=1->0"
+    assert R._spent({"llm_calls": 1, "llm_error": "auth:x", "strategy": ""}) == " llm=1->auth"
+    assert R._spent({"llm_skipped": 1, "llm_error": "gate:no-il"}) == " llm=skip:no-il"
+
+
+def test_refresh_stamps_llm_skipped_and_unlock_won_under_their_env_guards(tmp_path, monkeypatch):
+    """Two questions the 2026-08-26 stamp could not answer: was any of the 48 unlocker
+    requests worth it, and how many calls did the gate spare? A composite strategy label
+    (`cards+links`) must still count an LLM win — `== "llm"` stopped counting them."""
+    import refresh_scrape_cache as R
+    st = R.RunState()
+    row = {"company_name": "Co"}
+    res = {"name": "Co", "jobs": [_il_job("Co")], "status": "ok", "error": "",
+           "http_status": 200, "strategy": "links+llm", "llm_calls": 1, "llm_error": "",
+           "llm_skipped": 0, "unlock_calls": 3, "unlock_ok": 1, "seconds": 1.0}
+    R._apply_result(row, res, {}, {}, _dtm.date.today().isoformat(), st)
+    assert st.spend["llm_won"] == 1, "a composite label still names the tier that won"
+    assert st.spend["unlock_won"] == 1 and st.spend["unlock_calls"] == 3
+    st2 = R.RunState()
+    R._apply_result(row, {**res, "jobs": [], "status": "empty", "strategy": "",
+                          "llm_calls": 0, "llm_skipped": 1, "llm_error": "gate:no-il",
+                          "unlock_calls": 0, "unlock_ok": 0}, {}, {}, "2026-08-26", st2)
+    assert st2.spend["llm_skipped"] == 1 and st2.spend["unlock_won"] == 0
+    # the runaway alarm: one call per company that reaches the tier, never 400
+    st2.spend["llm_calls"] = R.LLM_RUNAWAY_CALLS + 1
+    assert "llm-calls-" in R._alarm(st2)
+    p = _refresh_sandbox(tmp_path, monkeypatch, [["Co"]], outcomes={"Co": ("ok", 1)})
+    monkeypatch.delenv("SCRAPE_LLM", raising=False)
+    monkeypatch.delenv("SCRAPE_VIA_UNLOCKER", raising=False)
+    assert p.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(p.stages.read_text(encoding="utf-8"))["collect"]
+    assert "llm_skipped" not in stamp and "unlock_won" not in stamp, "no flags, no columns"
+    monkeypatch.setenv("SCRAPE_LLM", "1")
+    monkeypatch.setenv("SCRAPE_VIA_UNLOCKER", "1")
+    assert p.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(p.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["llm_skipped"] == 0 and stamp["unlock_won"] == 0
+
+
+def test_refresh_stale_ip_alarm_fires_on_the_crossing_night_only(tmp_path, monkeypatch, capsys):
+    """BACKLOG 216: a row whose code is IP-shaped is never parked (a hunt runs on the same
+    refused address), so nothing would ever raise its hand. It is named on the night its
+    streak reaches a month — once, not every night after.
+
+    The streak counts nights the ADDRESS was refused, across every shape that means it: a WAF
+    answering 403 on the listing one night and refusing the position pages the next flips
+    `ip`/`links` and would restart a per-shape counter forever (wave-0 critic)."""
+    import refresh_scrape_cache as R
+    since = _days_ago(R.STALE_IP_NIGHTS - 1)
+    rot = {"Co": {"since": since, "ip_since": since, "why": "error", "n": 3, "shape": "ip",
+                  "error": "http:403", "last": _days_ago(1)}}
+    p = _refresh_sandbox(tmp_path, monkeypatch, [["Co"]], rot=rot,
+                         outcomes={"Co": ("error", "links:unread:403")})
+    assert p.R.run(["--workers", "1"]) == 0
+    out = capsys.readouterr().out
+    stamp = _json.loads(p.stages.read_text(encoding="utf-8"))["collect"]
+    assert "stale-ip-1" in stamp.get("alarm", ""), "the crossing night"
+    assert "has been refused" in out and "Co" in out
+    fresh = _json.loads(p.rot.read_text(encoding="utf-8"))
+    assert fresh["Co"]["ip_since"] == since, "the shape flip did not restart the clock"
+    # the night after (one more night refused) is quiet in the alarm slot, still in the log
+    p2 = _refresh_sandbox(tmp_path / "b", monkeypatch, [["Co"]],
+                          rot={"Co": {**fresh["Co"], "ip_since": _days_ago(R.STALE_IP_NIGHTS),
+                                      "since": _days_ago(R.STALE_IP_NIGHTS), "last": _days_ago(1)}},
+                          outcomes={"Co": ("error", "links:unread:403")})
+    assert p2.R.run(["--workers", "1"]) == 0
+    stamp2 = _json.loads(p2.stages.read_text(encoding="utf-8"))["collect"]
+    assert "stale-ip" not in stamp2.get("alarm", "")
+    assert "has been refused" in capsys.readouterr().out
+    # a PAGE-shaped code has a park clock of its own and never reports here
+    p3 = _refresh_sandbox(tmp_path / "c", monkeypatch, [["Co"]],
+                          rot={"Co": {"since": since, "why": "error", "n": 3, "shape": "page",
+                                      "error": "http:404", "last": _days_ago(1)}},
+                          outcomes={"Co": ("error", "http:404")})
+    assert p3.R.run(["--workers", "1"]) == 0
+    assert "stale-ip" not in _json.loads(p3.stages.read_text(encoding="utf-8"))["collect"].get("alarm", "")
+
+
+def test_refresh_residential_reads_are_marked_carried_and_dropped_aloud(tmp_path, monkeypatch, capsys):
+    """211 active scrape rows are `empty` from the cloud's datacenter address; some of them
+    have jobs a home address can read. A residential read is kept for RESIDENTIAL_MAX_DAYS,
+    counted where the operator can see it, asked for again before it expires, and dropped
+    out loud — never silently, and never by a runner claiming to be one."""
+    import refresh_scrape_cache as R
+    for flag in ("SCRAPE_LLM", "SCRAPE_VIA_UNLOCKER", "GITHUB_ACTIONS"):
+        monkeypatch.delenv(flag, raising=False)      # this test is ABOUT what the env forbids
+    today = _dtm.date.today().isoformat()
+    marked = [dict(_il_job("Co", 1), _via="residential", _read=_days_ago(3))]
+    p = _refresh_sandbox(tmp_path, monkeypatch, [["Co"]], old_cache={"Co": marked},
+                         outcomes={"Co": ("empty", None)})
+    assert p.R.run(["--workers", "1"]) == 0
+    assert len(_json.loads(p.cache.read_text(encoding="utf-8"))["Co"]) == 1, "a fresh read is kept"
+    stamp = _json.loads(p.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["carried_residential"] == 1 and stamp["empty"] == 1
+    assert stamp["with_jobs"] + stamp["empty"] + stamp["errors"] == stamp["scraped"]
+    # ...asked for again before it goes
+    due = [dict(_il_job("Co", 1), _via="residential", _read=_days_ago(R.RESIDENTIAL_MAX_DAYS - 1))]
+    p2 = _refresh_sandbox(tmp_path / "b", monkeypatch, [["Co"]], old_cache={"Co": due},
+                          outcomes={"Co": ("empty", None)})
+    assert p2.R.run(["--workers", "1"]) == 0
+    assert "expires within" in capsys.readouterr().out
+    # ...and dropped out loud when it is too old to publish
+    stale = [dict(_il_job("Co", 1), _via="residential", _read=_days_ago(R.RESIDENTIAL_MAX_DAYS + 1))]
+    p3 = _refresh_sandbox(tmp_path / "c", monkeypatch, [["Co"]], old_cache={"Co": stale},
+                          outcomes={"Co": ("empty", None)})
+    assert p3.R.run(["--workers", "1"]) == 0
+    assert "Co" not in _json.loads(p3.cache.read_text(encoding="utf-8"))
+    assert "residential read of" in capsys.readouterr().out
+    # a cloud read replaces the mark; the flag is refused where it would be a lie
+    p4 = _refresh_sandbox(tmp_path / "d", monkeypatch, [["Co"]], old_cache={"Co": marked},
+                          outcomes={"Co": ("ok", 2)})
+    assert p4.R.run(["--workers", "1"]) == 0
+    got = _json.loads(p4.cache.read_text(encoding="utf-8"))["Co"]
+    assert len(got) == 2 and not any(j.get("_via") for j in got)
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    with pytest.raises(SystemExit):
+        R._parse(["--only", "Co", "--residential"])
+    monkeypatch.delenv("GITHUB_ACTIONS")
+    with pytest.raises(SystemExit):
+        R._parse(["--residential"])                       # unscoped: would rewrite the cache
+    monkeypatch.setenv("SCRAPE_VIA_UNLOCKER", "1")
+    with pytest.raises(SystemExit):
+        R._parse(["--only", "Co", "--residential"])       # must be reproducible for 0 spend
+    monkeypatch.delenv("SCRAPE_VIA_UNLOCKER")
+    assert R._parse(["--only", "Co", "--residential"]).apply, "--residential implies --apply"
+    assert R._mark_residential([{"title": "x"}], today)[0]["_read"] == today
+    assert R._residential_age([{"_via": "residential", "_read": _days_ago(2)}], today) == 2
+    assert R._residential_age([{"_via": "residential"}, {"title": "y"}], today) is None
+
+
+def test_refresh_a_promoted_card_keeps_the_description_its_url_changed(tmp_path, monkeypatch):
+    """A promotion changes a card's address, and `_carry_jd` keyed yesterday by url/job_id
+    alone — so the first night of promotions would have dropped the fetched text of up to 345
+    cards and re-bought them from Bright Data (wave-0 critic). The (title, place) key is
+    tried FIRST, because the address is the less stable of the two: the night `_card_href`
+    stopped taking the previous card's link, an address-first match gave 59 postings across
+    6 boards the NEIGHBOURING role's description (wave-1 attacker C).
+
+    A title-only match never carries `_jd_attempted`: from here a re-post and a promotion
+    look identical, and jdfill must stay free to read a posting that is really new."""
+    import refresh_scrape_cache as R
+    # a url-less card, and the same card after `_promote` — which makes the new url its id too
+    old = [dict(_il_job("Co", 1), url="https://co.example/careers", job_id="sha1abc",
+                description="the JD", _jd_attempted="2026-08-20")]
+    new = [dict(_il_job("Co", 1), url="https://co.example/jobs/1", job_id="https://co.example/jobs/1",
+                description="")]
+    out = R._carry_jd(new, old)
+    assert out[0]["description"] == "the JD"
+    assert "_jd_attempted" not in out[0], "the cooldown does not travel on a title-only match"
+    assert out[0]["url"] == "https://co.example/jobs/1", "the new address stands"
+    # two openings of one role at one place: neither may take the other's text
+    twins_old = [dict(_il_job("Co", 1), url="/a", job_id="a", description="A"),
+                 dict(_il_job("Co", 1), url="/b", job_id="b", description="B")]
+    twins_new = [dict(_il_job("Co", 1), url="/x", job_id="x", description=""),
+                 dict(_il_job("Co", 1), url="/y", job_id="y", description="")]
+    assert [j["description"] for j in R._carry_jd(twins_new, twins_old)] == ["", ""]
+    # an unchanged address still carries both the text and the cooldown
+    same = [dict(_il_job("Co", 2), description="")]
+    got = R._carry_jd(same, [dict(_il_job("Co", 2), description="D", _jd_attempted="2026-08-21")])
+    assert got[0]["description"] == "D" and got[0]["_jd_attempted"] == "2026-08-21"
+
+
+def test_the_blank_re_ask_has_a_wall_clock_bound_not_just_a_count():
+    """A count is not a bound. `_li_guest` waits up to 40 s on the socket, so 20 re-asks that
+    all time out is 13 minutes on top of a step that took 4m11s on 2026-08-26 and is killed at
+    25 (`daily-digest.yml`) with `continue-on-error: true` — i.e. a silent loss of the whole
+    day's cache and queue write. Found by dry-running the change, not by review."""
+    import discovery_daily as dd
+    real, pause = dd._li_guest, dd._BLANK_RETRY_PAUSE
+    dd._BLANK_RETRY_PAUSE = 0.0
+    dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)
+    calls = []
+
+    def slow_blank(kw, loc, d, st):
+        calls.append(st)
+        dd._li_last_present[0] = set()
+        if len(calls) % 2:                      # first attempt blank, re-ask "slow" but ok
+            return [], True
+        dd._blank_retry["spent"] += 1000        # stand in for a socket that hung
+        return [], True
+    try:
+        dd._li_guest = slow_blank
+        for start in range(0, 200, 10):
+            dd._guest_page("x", "Israel", 7, start)
+        # one re-ask was allowed; after it blew the clock budget, no more were made
+        assert dd._blank_retry["spent"] >= dd.LINKEDIN_BLANK_RETRY_SECONDS
+        assert dd._blank_retry["left"] == dd.LINKEDIN_BLANK_RETRIES - 1, dd._blank_retry
+    finally:
+        dd._li_guest, dd._BLANK_RETRY_PAUSE = real, pause
+        dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)
+
+
+def test_scrape_a_position_page_is_judged_on_what_it_claims_not_on_its_body():
+    """Wave-1 attacker A (HIGH): Checkmarx puts the bare role in `<h1>` and the place in
+    `<title>` (`… in Braga, Portugal`), so a check that read only the heading and the body
+    let a Portuguese role through as Israeli — it was one of the 16 postings this night's
+    replay "gained". The claim a page makes about a role is its heading AND its document
+    title, and the title is also where the place is when the markup hides it."""
+    import scrape_universal as N
+    braga = ("<html><head><title>Application Security Research Team Leader in Braga, "
+             "Portugal</title></head><h1>Application Security Research Team Leader</h1>"
+             "<p>Checkmarx, one of Israel's security leaders.</p></html>")
+    p = N._parse_position_page(braga, "https://co.example/job-openings/position/05.D63/")
+    assert p["foreign"], "the place is in the document title, which the body text never held"
+    add, jobs = N._make_adder("Co", "https://co.example/job-openings/")
+    board = N._Board(add)
+    assert not board.read(braga, "https://co.example/job-openings/position/05.D63/")
+    assert not board.flush() and jobs == []
+    # ...and the same title is a location fallback when the body hides the place
+    ramat = ("<html><head><title>DevOps Engineer in Ramat Gan, Israel</title></head>"
+             "<h1>DevOps Engineer</h1><p>Join us.</p></html>")
+    assert "Ramat Gan" in N._parse_position_page(ramat, "https://co.example/job-openings/x/")["loc"]
+    # a script body is not a description: `jdfill` skips any card that already has 300 chars
+    js = "<html><h1>Controller</h1><script>" + ("var x=1;" * 200) + "</script><p>Tel Aviv</p></html>"
+    assert "var x" not in N._parse_position_page(js, "https://co.example/job-openings/c/")["desc"]
+
+
+def test_scrape_a_role_in_two_cities_keeps_each_citys_own_address():
+    """Wave-1 attacker A (HIGH): `_weak` was keyed on the title alone, so the second reading
+    of a role that runs in two cities overwrote the first's index — VAST Data lists
+    `QA Automation Engineer` in Tel Aviv AND Haifa, and the Haifa row shipped the Tel Aviv
+    posting's address (and would have been given its description)."""
+    import scrape_universal as N
+    url = "https://acme.example.com/careers"
+    add, jobs = N._make_adder("Acme", url)
+    add("QA Automation Engineer", "Tel Aviv, Israel", "")
+    add("QA Automation Engineer", "Haifa, Israel", "")
+    assert add.promote_or_skip("QA Automation Engineer", "Tel Aviv, Israel", "/jobs/tlv-111")
+    assert add.promote_or_skip("QA Automation Engineer", "Haifa, Israel", "/jobs/haifa-222")
+    assert [(j["location"], j["url"].rsplit("/", 1)[-1]) for j in jobs] == [
+        ("Tel Aviv, Israel", "tlv-111"), ("Haifa, Israel", "haifa-222")]
+    # an anchor knows no location, so an ambiguous title takes no address at all
+    add2, jobs2 = N._make_adder("Acme", url)
+    add2("QA Automation Engineer", "Tel Aviv, Israel", "")
+    add2("QA Automation Engineer", "Haifa, Israel", "")
+    add2.resolve([("QA Automation Engineer", "/jobs/one")])
+    assert all(j["url"] == url for j in jobs2), "which of the two would it have been?"
+
+
+def test_scrape_an_unopenable_address_is_never_a_jobs_address():
+    """Wave-1 attacker A: `_is_strong` correctly called a `mailto:` weak, but the write path
+    still stored it as the job's url AND its `job_id` — two Aleph Farms cards shipped under
+    one id, a dedupe collision downstream."""
+    import scrape_universal as N
+    url = "https://aleph.example/careers"
+    add, jobs = N._make_adder("Aleph", url)
+    add("QC Specialist", "Rehovot, Israel", "mailto:cv@aleph-farms.com")
+    add("Freelance PR Operations", "Rehovot, Israel", "mailto:cv@aleph-farms.com")
+    assert [j["url"] for j in jobs] == [url, url]
+    assert jobs[0]["job_id"] != jobs[1]["job_id"], "two cards, two ids"
+    assert not any("mailto" in j["job_id"] for j in jobs)
+
+
+def test_scrape_a_board_under_an_about_path_is_still_a_board():
+    """Wave-2 confirmer (blocker): the not-a-board filter was applied to the WHOLE path, so
+    every board living at `/about/careers/…` lost all its postings — six live rows do
+    (eToro, Google Israel, EqualWeb, Alison, 90seconds, TonicSecurity; 30 of the 1,240 cached
+    job urls, 20 of them Google Israel's). What is not a board is what lies BELOW the board
+    word, never what lies above it."""
+    import scrape_universal as N
+    for u, listing in (("https://www.etoro.com/about/careers/position/5a.d65/",
+                        "https://www.etoro.com/about/careers/"),
+                       ("https://www.equalweb.com/about/careers/senior-data-analyst/",
+                        "https://www.equalweb.com/about/careers/"),
+                       ("https://co.example/team/careers/senior-dev/",
+                        "https://co.example/team/careers/")):
+        assert N._link_prefix(u, listing), u
+    for u in ("https://co.example/careers/blog/2026/a-day-in-the-life/",
+              "https://co.example/careers/news/we-raised-a-round/",
+              "https://co.example/careers/life/our-team/"):
+        assert N._link_prefix(u, "https://co.example/careers") == "", u
+
+
+def test_refresh_the_partial_hold_survives_a_night_of_a_different_error():
+    """Wave-2 confirmer (blocker): the hold counter was kept only when TONIGHT was itself
+    held, and cleared otherwise — so a WAF alternating 403 with a url-less read (the very
+    board that produces both) reset it every other night and an 18 -> 4 shrink would have been
+    held forever. Sixty alternating nights never took it past 1 against a bar of 2. It now
+    survives every error night, and only a read we BELIEVED ends the hold."""
+    import refresh_scrape_cache as R
+    rot = {}
+    for night, err in enumerate(["partial:weak:read", "http:403"] * 3):
+        R._rot_bump(rot, "Co", "error", "2026-09-%02d" % (night + 1),
+                    {"error": err, "jobs": [], "http_status": 403})
+    assert rot["Co"]["partial_n"] >= R.PARTIAL_MAX_NIGHTS, rot["Co"]
+    R._rot_bump(rot, "Co", "empty", "2026-09-09", {"error": "", "jobs": [], "http_status": 200})
+    assert "partial_n" not in rot["Co"], "a believed read ends the hold"
+    # consecutive held nights still converge on schedule
+    rot2 = {}
+    for night in range(1, 4):
+        R._rot_bump(rot2, "Co", "error", "2026-10-%02d" % night,
+                    {"error": "partial:weak:read", "jobs": [], "http_status": 200})
+    assert rot2["Co"]["partial_n"] == 3

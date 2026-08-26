@@ -2591,7 +2591,14 @@ half), 86, 118, 153, 154, 184. Open, with owners:
 Record: `docs/sessions/2026-08-24-scraper.md` (2026-08-26 section). Numbers re-derived that day; re-derive before acting.
 
 215. **Why can the runner open a listing but none of its position pages?** — lane: `scraper`.
-    On 2026-08-25 the cloud scored 17 companies with jobs as `empty` (`found=0`, HTTP 200,
+    **CLOSED 2026-08-26 (evening), the hypothesis held:** the 00:39 cloud run
+    (`32915943062`) put all four back in the cache — Get SAT 10, BlueBird 7, Red Access 3,
+    WSC Sports 2 = the 22 postings — and the mail's Boards line reads them as `cleared`. One
+    row is left in the class (`Zim`, `links:unread:403`), so `alarm=links-unread-1` and
+    `unlock_calls=48 unlock_ok=42`. The remaining question is not "why" but "for how long":
+    a `links:` carry has no ceiling (220) and such a row is invisible to every re-check pool
+    (216, now alarmed at 30 nights).
+    Original text: On 2026-08-25 the cloud scored 17 companies with jobs as `empty` (`found=0`, HTTP 200,
     9–15 s each); 4 of the 13 still active produce their jobs again from a residential
     address, all via strategy 4 (22 postings: Get SAT, BlueBird, Red Access, WSC Sports;
     four more — AU10TIX, Bits of Gold, REE, StarkWare — had only the listing page itself as
@@ -2607,12 +2614,17 @@ Record: `docs/sessions/2026-08-24-scraper.md` (2026-08-26 section). Numbers re-d
     in `links_unread`, the
     hypothesis was wrong and the change is inert — say so.
 216. **IP-shaped error rows are visible to no re-check pool, by design** — lane: `scraper` +
-    `registry`. A row whose code is `links:*` / `block:*` / `http:403` / `http:429` is never
-    parked (parking it would hand it to a hunt running on the same refused address — a churn
-    loop), so it never reaches `listing_hunt`, the Sunday audit or triage. Its streak keeps
-    counting in `scrape_rot.json` (`n`, `error`). After ~30 observed nights someone should
-    look: is it the runner's address, the site, or a URL that moved? A `code-<code>-N`
-    alarm fires when one code covers > 5 % of rows; a per-row age alarm does not exist yet.
+    `registry`. **CLOSED 2026-08-26 (evening):** the per-row age alarm exists. `rot[name]
+    ["ip_since"]` counts nights the ADDRESS was refused across every shape that means it
+    (`ip`/`links`/`runner`; a WAF answering 403 one night and refusing the position pages the
+    next used to restart the per-shape streak forever), a row is named in a `::warning::`
+    every night once it passes `STALE_IP_NIGHTS` (30), and the stamp carries `stale-ip-N` on
+    the night it crosses — recorded in `ip_announced`, so a skipped night cannot lose the
+    alarm for a month and a same-day re-run cannot repeat it. Nothing parks: that was never
+    the fix. Live today: 14 IP-shaped rows, max age 2 nights, so the first possible firing is
+    ~2026-09-24. The `code-<code>-N` line above was wrong in two ways: the threshold is
+    `CODE_ALARM_PCT = 3` %, not 5, and it also needs at least `MASS_FAILURE_MIN_ROWS // 4`
+    (5) rows.
 217. **`scrape-refresh.yml` installs `@anthropic-ai/claude-code` unpinned** — lane: `infra`.
     `daily-digest.yml` pins `@2.1.241` (the classifier reads that version's error envelope);
     the four other CLI-installing workflows take whatever npm serves at 00:00. A CLI drift
@@ -2628,13 +2640,25 @@ Record: `docs/sessions/2026-08-24-scraper.md` (2026-08-26 section). Numbers re-d
     `llm_calls`/`llm_won` in the `collect` line are the live numbers. Re-measure after a week:
     if `llm_won / llm_calls` drops below what the A/B found, the cheaper model is missing
     layouts the pricier one read.
+    **The ratio changed meaning on 2026-08-27 and is no longer comparable across that date**
+    (found by wave-1 attacker C): `_llm_gate` removes from `llm_calls` exactly the calls that
+    used to return nothing (94 of 128 on 08-26), and `llm_won` now counts a composite label
+    (`"llm" in strategy.split("+")`). Compare only nights after the change, or use
+    `llm_calls + llm_skipped` as the denominator.
 220. **A `links:` carry has no ceiling** — lane: `scraper`. By the operator's rule a listing
     that still lists ≥ 3 unreadable positions keeps yesterday's jobs indefinitely. A board
     that closed roles but keeps the links up would keep stale cards on the board until the
     listing itself shrinks below 3. Acceptable today (the class was 4 companies); if a row
     sits in `links_unread` for more than ~30 nights, hand-check it (216).
 221. **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
-    can lend the next card's place** — lane: `scraper`. `_DOM_JS` concatenates four ancestors'
+    can lend the next card's place** — lane: `scraper`. **Narrowed 2026-08-26 (evening), not
+    closed:** over a board another strategy has already read, the DOM and card passes now run
+    `promote_only` — they may hand a posting its address and nothing else, so the 16 entries
+    Port.io used to gain (10 mangled twins + 6 Palo Alto roles under a Tel Aviv location) are
+    structurally impossible there. A board where the DOM pass is the FIRST reader still gets
+    them, which is the case this item keeps. Still needs live multi-column renders to
+    measure; the two committed DOM fixtures (Arm, Xtend) are single-column.
+    `_DOM_JS` concatenates four ancestors'
     text; `_loc_from_ctx(ctx, anchor)` takes the nearest place at or after the title, which in
     `Herzliya Data & Analytics Data Analyst Apply Tel Aviv R&D Backend Engineer` is the next
     card's (wave-1 attacker A, M2 — the old code returned `"Herzliya Data &"`, dirty but the
@@ -3057,3 +3081,108 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     closed for the same reason. Deutsche Telekom's pcsx path 404s and Teva's host 403s; both
     keep their scrape rows (Teva's caches 1 Israel role). Ericsson's conversion is in
     `out/resolved_configs.json`.
+
+## From the `scraper` lane, 2026-08-26 (evening)
+
+Record: `docs/sessions/2026-08-24-scraper.md` (2026-08-26 evening section). Every number was
+re-derived that night, several of them correcting a number written the same afternoon;
+re-derive again before acting.
+
+240. **A Comeet board embedded as a WIDGET is readable by no strategy** — lane: `scraper`.
+    Quantum Machines' 18 postings vanished for a night because its Comeet board arrives as an
+    XHR body, and the night the render window missed it the page had nothing else: the 161
+    `comeet.com/jobs/` occurrences in the HTML are **inside the widget's JavaScript**, not
+    `<a href>` anchors, so strategy 4 (which scans `_HREF`) and `_Adder.resolve` (which reads
+    the page's anchors) are both blind to them. Verified live 2026-08-26 with the XHR dropped:
+    `4 via cards, 4 url-less`, exactly what the cloud produced. What protects the board today
+    is the refresh's `weak:read` hold, which keeps yesterday's 18 — coverage, not a read.
+    The fix has a known shape: project memory `comeet-resolution` records that
+    `window.comeetvar` carries the uid+token that resolves any Comeet board through Comeet's
+    own API, and `_render` already evaluates JS in the page. That is a sixth strategy with its
+    own network call and its own identity question (whose tenant is it?), so it wants its own
+    measurement and its own adversarial pass — 23 companies in the cache carry `comeet.com`
+    job urls, so the class is not small. Reproduce:
+    `python -c "import scrape_universal as N;r=N._render('https://www.quantum-machines.co/careers/',45000,N.Deadline.start(150));r.bodies=[];print(N._extract('Quantum Machines','https://www.quantum-machines.co/careers/',r,deadline=N.Deadline.start(150))[1])"`
+
+241. **`_loc_from_ctx` lets a page's office address outrank the location the role states** —
+    lane: `scraper`. Weebit Nano publishes `Demand Generation & Digital Marketing Manager`
+    with `Job Location USA, Remote` and `Experienced Analog Design Engineer` with `Job
+    Location France, Grenoble`; both are cached as **`Hod Hasharon`**, the company's office,
+    because the anchored place search finds it nearer the title than the role's own stated
+    place. This is not new tonight (HEAD does the same) and it is the same class as the VAST
+    Data defect the `_Board` judgement fixed — a page that names a place is trusted over one
+    that does not, but nothing ranks TWO places on one page by which one the role claims.
+    Two roles are wrong in the committed cache. Fixing it means teaching `_loc_from_ctx` (or
+    its caller) that `Job Location: X` beats a bare place elsewhere — measure over the 81
+    bundles before changing anything, because `_loc_from_ctx` is also imported by
+    `validate_bd.py` (`registry`, see 218).
+
+242. **`SCRAPE_ASSUME_IL` is set process-wide at import by two root modules, so the whole test
+    suite runs with it on** — lane: `registry` (owns `listing_hunt.py` and `crack_walled.py`).
+    `listing_hunt.py:334` and `crack_walled.py:221` do `os.environ["SCRAPE_ASSUME_IL"] = "1"`
+    at module scope; `tests/test_registry.py` imports them, so from that moment every later
+    test sees the flag — which makes every location-less card on an Israel-token page an
+    Israeli role. Found when a scraper test passed alone and failed in the full run
+    (`test_scrape_llm_locations_pass_the_same_gate…`), now defended locally with an explicit
+    `monkeypatch.delenv`. The same shape found `Deadline.reserve` on 2026-08-24 via
+    `repair_extract_gap.py` setting `SCRAPE_LLM=1` at import. The fix is one line each: set
+    the flag inside `main()`, not at import.
+
+243. **The replay harness cannot see what strategy 4 spends** — lane: `scraper`. The harness
+    (replay2 and state, in the session scratchpad — named without backticks on purpose: the
+    doc linter checks that every path a doc names exists, and these live outside the repo)
+    serves position pages from the captured bundle and inject an empty rung 2,
+    which is what makes them hermetic — and also means a company whose prefixes were not in
+    the capture crawls for free and yields nothing, and the listing-level unlocker call is
+    never exercised at all. Two of the boards that gained a prefix tonight (Infinidat,
+    Port.io) have zero captured plain pages. A capture pass that records rung 2/3 responses,
+    or a counter asserted in the harness, would close it. Until then the cost figures in
+    ARCHITECTURE §1 item 2 come from the CAPTURE log (median 17 s, p95 37 s, max 52 s over 81
+    boards), not from the replay. A second caveat, measured by the wave-2
+    confirmer: replay2 keys a posting by (title, url), so a role running in two cities
+    collapses to one — it reports VAST Data as 29 Israeli where the extractor really produces
+    37. state is the accurate one; use replay2 for LOST/GAINED, not for absolute counts.
+
+244. **A deadline that cuts strategy 4 short loses the prefix's wall evidence** — lane:
+    `scraper`. On the `deadline.expired()` early return, `worst` is never assigned, so
+    `out.walled` / `out.statuses` stay empty and a fully-walled prefix that ran out of budget
+    reports `deadline:links` (runner-shaped, carried, never parked) instead of
+    `links:blocked:<vendor>`. Both carry, so no jobs are lost; what is lost is the reason, on
+    exactly the rows BACKLOG 215 asks the operator to read. Pre-existing, and reachable more
+    often now that 23 of 81 boards run strategy 4 (wave-1 attacker A).
+
+245. **The synthetic worker dicts do not carry the fields the real one does** — lane:
+    `scraper`. `_result_of`'s `pool:` dict and the inline `hang:` dict omit `weak_read`,
+    `llm_skipped` and `rescued`; `_worker`'s `except` branch omits `weak_read`. Nothing breaks
+    today because every consumer uses `.get()`, and the next reader who uses `[]` will get a
+    `KeyError` on exactly the paths that fire only in the cloud (wave-1 attacker C). One
+    shared builder for "a result that never ran" would end the class.
+
+247. **The foreign-place vocabulary is a list, and a list is never finished** — lane:
+    `scraper`. `_FOREIGN_PAGE_RX` is what tells a global board from an Israeli one, and it
+    names Austin, Houston and New York but not Denver, Chicago, Atlanta or Miami, and not
+    `US- Remote`. A page reading `Account Executive - Denver, CO` on an Israeli company's
+    board still ships as `loc=Israel` (wave-2 confirmer). The vocabulary is the wrong shape
+    for the job: what would actually settle it is the role's OWN location field where the
+    board publishes one (Comeet's `POSITION_DATA.location`, which strategy 1 already reads
+    when the XHR lands). Until then, add places when one is seen, and do not pretend the
+    class is closed.
+
+248. **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
+    board** — lane: `scraper`. A held page (one naming no place of its own) is refused when
+    the group named a foreign region AND that page's own text names a foreign place — but
+    "its own text" includes the footer and nav every posting on the board shares. Measured on
+    the 81 bundles: **13 Israeli postings across 11 boards** (Teva 3, Aleph Farms, Gett,
+    SeatPick, REE, Centraleyes, Firefly, Arm, Edwards, IDE, WSC Sports) sit one foreign
+    sibling away from being dropped, because their shared chrome already mentions a foreign
+    place. Where it fires today it is right (C2A, CyberArk, Checkmarx ×2 — landing pages and
+    the Braga role). The fix is to scan the page MINUS its board-constant text (the
+    intersection of the group's pages is computable — every page in a link group shares it).
+
+249. **A closed role still donates its description to a new posting with the same title and
+    place** — lane: `scraper`. `_carry_jd`'s (title, place) key cannot tell a promotion from
+    a re-post, so when yesterday's `Data Analyst / Tel Aviv` closes and a new one opens, the
+    new card inherits the old text. The 7-day cooldown deliberately does NOT travel on that
+    match, so `jdfill` re-reads it and the text self-corrects — but the board shows the dead
+    role's description until it does (wave-1 attacker B's F3, still live after the fix).
+    A per-posting identity that survives a url change would end it; there is none today.

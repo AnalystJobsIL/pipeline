@@ -226,21 +226,41 @@ including the claim "none".
    `fetch_scrape`. `scrape_universal` is two halves: `_render(url)`, the only Playwright
    touchpoint (page state, XHR bodies, rendered links, HTML, the main document's HTTP
    status — or an error code when navigation failed), and `_extract(...)`, a pure function
-   of that bundle — testable offline — that escalates through **5 strategies, the first that
-   yields wins** (one exception: fewer than 3 structured hits may be a "featured posting"
-   widget, so the DOM pass still runs and is unioned in as `structured+dom`): structured JSON (JSON-LD / `__NEXT_DATA__` / captured XHR bodies) →
+   of that bundle — testable offline — that escalates through **5 strategies, ended by a
+   reading that carries the postings' OWN addresses** (`_Adder.strong`: 3 of them after the
+   structured pass, 1 after the DOM and card passes; after the position-link pass any Israeli
+   reading ends it, because the only tier left is the LLM, which returns titles alone and
+   could merely repeat what is already there). Until
+   2026-08-26 any yield ended it, and a reading that named roles without addressing them —
+   card titles with no href, and every LLM answer, which is text-only — counted: Quantum
+   Machines' 18 Comeet postings were replaced by 4 url-less card titles for a night. A
+   url-less reading is kept and the ladder continues, so a later strategy **completes** it
+   (`_promote`) instead of duplicating it; over a board another strategy has already read,
+   the passes that re-read the LISTING's own markup may only complete, never append
+   (`promote_only` — strategy 2's four-ancestor context invented 16 entries on Port.io,
+   `docs/BACKLOG.md` 88/221). `ScrapeResult.strategy` names every stage that contributed, in
+   ladder order, so `cards+links` and `structured+links` join `structured+dom` in the stamp's
+   `via=` (rendered `cards-links`, `+` being the separator between counts). The five:
+   structured JSON (JSON-LD / `__NEXT_DATA__` / captured XHR bodies) →
    rendered-DOM job links with an Israel token near the title → repeated heading /
-   class-hinted card groups → **position-links** (N same-prefix links, each position page
+   class-hinted card groups → **position-links** (N links sharing a prefix, each position page
    opened on a three-rung ladder — plain HTTP with the browser's User-Agent, then one
    short-lived Chromium visit, then the residential unlocker for ≤ `SCRAPE_UNLOCK_PAGES`
-   pages — each rung only when the one before opened nothing; a listing with ≥ 3 positions
+   pages **per prefix group**, and one company can present several — each rung only when the
+   one before opened nothing; a listing with ≥ 3 positions
    none of which any rung could open is `links:unread:<status>` / `links:blocked:<wall>`, an
    **error** the refresh carries and never parks, §5a) → **LLM extraction** (`SCRAPE_LLM=1`:
    `pipeline.llm.call_json` — tool-less, schema `{positions:[{title,location}]}`, scratch
    cwd, `SCRAPE_LLM_MODEL` default `sonnet`, effort low, up to 20,000 characters of the
    page's text centred on the jobs signal whose window is densest in role words — 7,000
    characters cut 9 of the 27 pages that reached the tier on 2026-08-26; gated on
-   jobs-signals. **The A/B, 2026-08-26**, sonnet vs opus through the seam on those 27
+   jobs-signals, and since 2026-08-26 on `_llm_gate` as well: a page naming no Israeli place,
+   read from an address that names none either, can only return rows `_Adder` will drop, so
+   the call is spared and counted (`llm_skipped` in the stamp). Of the 128 calls on the
+   08-26 night **94 returned nothing**; over the 81 captured pages the gate skips 2 of the 37
+   that reach the tier and 0 of the winners. It reads `_page_is_il`, which under
+   `SCRAPE_ASSUME_IL` is a PAGE-level signal — narrow that to "does the url say Israel" and
+   every `listing_hunt` / `crack_walled` page loses its roles. **The A/B, 2026-08-26**, sonnet vs opus through the seam on those 27
    pages: identical title sets on 25, the two differences opus's (a "Future Opportunities"
    non-position; a QA demo board split four ways instead of two), sonnet
    `total_cost_usd` $0.026/call vs opus $0.060 (2.3×), 14.0 s vs 14.7 s mean — sonnet is
@@ -251,8 +271,11 @@ including the claim "none".
    as cwd with `secrets.env` on disk, an arbitrary website's text as the prompt** — a
    prompt-injection path, closed; what a hostile page can still do is suppress its own
    roles, and nothing here claims otherwise). `scrape_result()` returns the jobs plus
-   `status` ∈ `ok` / `empty` / `error`, the winning strategy and what the visit spent
-   (`llm_calls`, `llm_error`, `unlock_calls`, `unlock_ok` — summed into the `collect` stamp);
+   `status` ∈ `ok` / `empty` / `error`, the contributing stages, whether the reading was
+   url-less (`weak_read`, which the refresh's shrink guard needs — after the ladder's last
+   step the urls no longer say) and what the visit spent
+   (`llm_calls`, `llm_error`, `llm_skipped`, `unlock_calls`, `unlock_ok` — summed into the
+   `collect` stamp, which also carries `unlock_won` and `carried_residential`);
    `scrape()` — what every other lane calls — is its list-only wrapper and never raises. One
    company gets `SCRAPE_COMPANY_BUDGET_S` (150 s) of wall clock; every network wait is
    clamped to what is left. A card's location is the place name itself, anchored on the
@@ -265,29 +288,56 @@ including the claim "none".
    titles carried one); `ISRAEL_LOC` is word-bounded like `israel._PLACE_PATTERNS`
    (BACKLOG 126; the lookarounds are case-sensitive on purpose — under `re.I` they blocked
    the run-together card text real boards serve, `HerzliyaJunior Software Developer`,
-   `R&DRegularTel Aviv`). Replayed offline over 75 captured real pages (old vs new
-   extractor, same bundles, after both waves, 2026-08-26): **150 postings identical,
-   36 gained, 12 lost**. Gained: Infinidat 24 (every card carries its own `Herzliya`; the
-   old 220-character rule found 6), SeatPick 12 (position links — the cloud had needed the
-   LLM). Lost: six "postings" that were the listing page's own `<h1>` (`AU10TIX Careers -
-   Join us!`, `Careers - REE` …), two whose "location" was the CSS token `lod`, Hypernative's
-   `United States` role that had been published as Herzliya (now kept with its real place
-   and dropped by `pipeline.israel`, so the company counts as `no_il`), and a Checkmarx page
-   whose only "location" was the phrase "and Israel" in a 22-country list. Pecan AI's six
-   roles — single-role pages whose only Israel is boilerplate prose and which name no
-   foreign country — are kept as `Israel`, the one judgement call in `_read_position_page`;
-   Utila's two Singapore/EMEA roles, published as Tel Aviv until now, are not (the 12th
-   and 11th losses). A foreign-tail role never satisfies first-hit-wins (`add.israeli()`
-   is what a strategy counts), so three US widget titles in page state cannot hide the
-   DOM-rendered Israeli board. Measured: the cloud run of 2026-08-25 (`gh run view
-   32794469465 --log`) did 440 rows in 32 min, median 13 s, p95 39 s, max 150 s (Ford),
-   `via` links 73 · cards 59 · dom 47 · structured 38 · llm 26 · structured+dom 2; the last
-   sequential run (`32677334301`, 2026-08-24) 428 rows in 111.6 min. Local scoped runs write nothing to
+   `R&DRegularTel Aviv`). **A card that names no place of its own** is the one judgement
+   call, and it belongs to the BOARD, not the page: `_parse_position_page` reports what a
+   position page says (its heading, its `<title>`, whether either names a place outside
+   Israel) and `_Board` decides once per link group — a page that named nothing is read as
+   Israeli unless the group named a foreign region in a role's own name AND that page's own
+   text names a foreign place too. Judging it per page shipped **eleven US account
+   executives of VAST Data's global board as Israeli roles** on 2026-08-26 (`Account
+   Executive - Austin, TX`, whose place was in an `og:title` the check never read); judging
+   it per GROUP alone emptied Pecan AI's six genuinely Israeli roles, which is a mass zero
+   committed silently (§2 rule 2). The foreign test is the role's own claim, never a
+   page-wide scan: SeatPick's footer sells "Portugal Primeira Liga Tickets", Weebit's scripts
+   configure a "U.S. Dollar", Teva captions a photo of employees in China. A foreign-tail
+   role never ends the ladder (`add.strong` is what a strategy counts, and `add.israeli`
+   excludes it), so three US widget titles in page state cannot hide the DOM-rendered
+   Israeli board. Replayed offline over **81 captured real pages** (HEAD `d661c0b` vs the
+   tree, same bundles, hermetic — rung 2 injected empty; 2026-08-26 evening): **315 postings
+   identical, 0 lost, 16 gained, 45 given their own address, 5 addresses corrected**;
+   url-less postings fall from 124 to 80 of 340. Gained: sett's 16 Tel Aviv roles, which the
+   cloud had bought an LLM call for (`17 via llm` on 08-26). Corrected: Gett's `Senior
+   Director of Service Excellence` and `Senior Product Manager - Billing`, which pointed at
+   the NEIGHBOURING card's posting — 18 cached postings across 5 companies share a url with
+   a different title, the signature of a card-href window that took the earliest link before
+   the heading instead of the nearest. Measured: the cloud run of 2026-08-25 (`gh run view
+   32915943062 --log`) did 438 rows in 28 min, `via cards56+dom48+links42+structured35+
+   llm34+structured-dom2`, `llm_calls=128 llm_won=34 unlock_calls=48 unlock_ok=42`; 08-25's
+   (`32794469465`) 440 rows in 32 min, median 13 s, p95 39 s, max 150 s (Ford); the last
+   sequential run (`32677334301`, 2026-08-24) 428 rows in 111.6 min. **Reading a company
+   costs more since 2026-08-26** — the ladder no longer stops at a url-less reading, so 23 of
+   the 81 captured boards now open position pages: median 17 s, p95 37 s, max 52 s per
+   company against the 150 s budget, none near it. Local scoped runs write nothing to
    the repo — `python refresh_scrape_cache.py --only "Wix,Fiverr"` (add `--apply` to merge
    the hits into `scraped_cache.json`, or `SCRAPE_CACHE_OUT=<file>` to merge elsewhere —
    the digest's reader has the matching `SCRAPE_CACHE_IN=<file>`, so `python -m
    pipeline.run` can be pointed at that scratch cache; `--dry-run` for every row) — but they still render live pages, so with `SCRAPE_LLM` or
    `SCRAPE_VIA_UNLOCKER` set (`secrets.env`!) they still spend.
+
+   **A board only a home address can read.** The runner's datacenter IP is served a degraded
+   page by some sites, and `--residential` (local only: it refuses under `GITHUB_ACTIONS`,
+   without `--only`/`--only-missing`, or with `SCRAPE_LLM`/`SCRAPE_VIA_UNLOCKER` set, so the
+   claim is always reproducible for 0 spend) stamps each merged card `_via: residential` with
+   the date it was read. The cloud then keeps that entry while it scores the company `empty`,
+   for `RESIDENTIAL_MAX_DAYS` (14) — counted as `carried_residential`, asked for again three
+   nights before it expires, and dropped out loud with a `residential:expired` rot code so
+   board health reports a fetch error rather than a regression. **Measured 2026-08-26**, and
+   it is why nothing was merged: of the 218 active scrape rows with no cache entry, a
+   residential pass produced jobs for **6** (39 postings) — and 5 of the 6 came `via links`,
+   i.e. from the position-link fix above, which the cloud gets for free. The class this
+   mechanism exists for is smaller than the 4-of-13 sample of 2026-08-25 suggested; re-run
+   `python refresh_scrape_cache.py --only-missing --dry-run --workers 4` before believing
+   any figure here.
 3. **Discovery nets** — `discovery_daily.py` (Bright Data LinkedIn/Indeed keyword sweeps)
    and `discovery_telegram.py` (public t.me/s channel previews) write
    `discovered_cache.json`, read by `fetch_discovery`. This is the safety net for
@@ -1626,9 +1676,19 @@ that empties parked; the code had said 7 / never since 2026-08-23):
   the row and re-park it a week later (a churn loop; 11 of the 23 error rows on 2026-08-25
   were this shape); its streak keeps counting in `scrape_rot.json` (`error`, `http`, `n`)
   and the carry expires as usual. **A streak is one shape of error** — `links`, `ip`,
-  `runner`, `page` (`rot[name]["shape"]`): a shape change starts a new streak, so twenty
-  carried `links:` nights can never fund the carry expiry or the park clock of one
-  page-shaped night from the same cloaking WAF (wave-1 attacker B). A `links:` code goes one step further, by the operator's
+  `weak`, `runner`, `page` (`rot[name]["shape"]`): a shape change starts a new streak, so
+  twenty carried `links:` nights can never fund the carry expiry or the park clock of one
+  page-shaped night from the same cloaking WAF (wave-1 attacker B). Two clocks deliberately
+  survive a shape change, because the thing they measure does not: `ip_since` (how long the
+  address has been refused, across `ip`/`links`/`runner` — a WAF that answers 403 one night
+  and refuses the position pages the next would otherwise reset it forever, and the 30-night
+  `stale-ip` alarm could never fire) and `partial_n` (nights a read was held back — one 403
+  between two held nights would otherwise restart it and a real shrink would never
+  converge). **`weak` is the second exempt shape (2026-08-26):** `weak:read` — the board was
+  read as bare titles, none of them addressed, and it collapsed to under a third of
+  yesterday — and `residential:expired`. Both say *our reading* failed, never that the page
+  did, so neither may ever park a row; `weak:read` holds yesterday's jobs for
+  `PARTIAL_MAX_NIGHTS` and then believes the smaller board. A `links:` code goes one step further, by the operator's
   rule of 2026-08-25 ("I don't want you to discard"): the listing is alive and visibly
   lists the roles, so yesterday's jobs are carried **without expiry** for as long as that
   holds — the night the listing lists fewer than three positions it is an ordinary
@@ -1681,13 +1741,18 @@ its audit, keys alphabetical — the cloud run of 2026-08-25 rendered exactly:
 
 and from 2026-08-27 the line also carries `links_unread=N`, `via=links73+cards59+dom47+…`
 (which strategy carried how many companies — a strategy collapsing is visible the next
-morning instead of only in the step log), and, on a run with the flags set,
-`llm_calls llm_won llm_fail` (`SCRAPE_LLM`) and `unlock_calls unlock_ok`
+morning instead of only in the step log), `carried_residential=N` and `dropped_residential=N`
+(§1 item 2 — boards only a home address could read, kept or expired tonight), and, on a run
+with the flags set, `llm_calls llm_won llm_fail llm_skipped` (`SCRAPE_LLM`) and
+`unlock_calls unlock_ok unlock_won`
 (`SCRAPE_VIA_UNLOCKER`) — the two shared quotas this step spends, counted nowhere until
-then. Read it with this arithmetic, which holds on every exit: `with_jobs + empty + errors =
+then, and from 2026-08-27 attributable per company in the step log (`unlock=2/5`,
+`llm=1->won`, `llm=skip:no-il` after the timing, printed only when there was spend). Read it
+with this arithmetic, which holds on every exit: `with_jobs + empty + errors =
 scraped`, `scraped + unprocessed = rows`, `no_il ≤ empty` (roles found, none in Israel),
 `carried ≤ errors` (error rows whose cached jobs were kept), `links_unread ≤ errors`,
-`llm_won ≤ llm_calls`, `unlock_ok ≤ unlock_calls`, and the `via` counts sum to `with_jobs`.
+`carried_residential ≤ empty`, `llm_won ≤ llm_calls`, `unlock_won ≤ unlock_ok ≤
+unlock_calls`, and the `via` counts sum to `with_jobs`.
 A line that does not reconcile, or that lacks a key, is not from this code. `alarm=`
 appears only when something is wrong — `mass-failure-errors-NN%`, `errors-NN%`,
 `shrink-abort-A-to-B`, `unprocessed-N` (above 5% of rows), `no-jobs`, `links-unread-N`
@@ -1700,7 +1765,12 @@ rows were scraped (a `--limit 3` is not an outage), `rot-unreadable` (the streak
 streaks restart, nothing parks tonight), `cache-unreadable` (the cache file could not be
 read: the run refused before rendering a page, stamped, exited 1 — a `{}` rebuilt from one
 night's successes would have been a 1,200-job deletion, BACKLOG 156; an empty file is
-absent, not unreadable) — and a
+absent, not unreadable), `stale-ip-N` (N rows whose address has been refused for another
+`STALE_IP_NIGHTS` (30) — such a row is never parked, because the hunt runs on the same
+address, so this is the only thing that raises its hand; the row records the age it was
+announced at, so a skipped night cannot lose it and a re-run cannot repeat it) and
+`llm-calls-N` (more than `LLM_RUNAWAY_CALLS` (250) calls in one night: the signal gate broke
+open, not the fleet changed) — and a
 line reading `collect: <yesterday> (1d ago)` means the refresh crashed before stamping (the
 workflow no longer re-stamps it blindly); the commit step is `if: always()` since
 2026-08-25 (this sentence said the opposite until 2026-08-26), so whatever the crash left

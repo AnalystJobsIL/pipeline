@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import hashlib as _hashlib
+import html as _html
 import json
 import os
 import re
@@ -153,6 +154,9 @@ _LLM_SCHEMA = json.dumps({"type": "object",
                           "required": ["positions"], "additionalProperties": False},
                          separators=(",", ":"))
 _LLM_PROMPT = "CAREERS PAGE TEXT:\n\n"
+# the ladder in order; `_Adder.label()` names every stage that contributed a posting, so a
+# board read as titles by one and addressed by another is `cards+links`, not `cards`
+_STAGES = ("structured", "dom", "cards", "links", "llm")
 # strategy 5 must leave the LLM tier at least this much of the company budget
 _LLM_RESERVE_S = 40
 # bidi controls survive into titles and reorder the board's line (cosmetic spoofing)
@@ -345,7 +349,7 @@ _PROSE_BEFORE = re.compile(r"(?:^|[^A-Za-z])(?:of|an|a|the|and|to|from|by|with|a
 
 
 def _loc_from_ctx(ctx, anchor=None):
-    """The place a card names, or "" when it names none. Anchored ON the place name (the
+    r"""The place a card names, or "" when it names none. Anchored ON the place name (the
     match nearest to `anchor`, the title's index when the caller knows it) and extended only
     rightwards over `_LOC_SUFFIX`. Until 2026-08-26 a `([A-Za-z][\w.\-' ]{1,28},?\s*Israel)`
     capture ran first and took up to 28 characters of whatever preceded ", Israel" — the
@@ -422,6 +426,8 @@ class Rendered:
     truncated: bool = False                        # a strategy stopped early on the deadline
     llm_calls: int = 0                             # strategy 5 invocations during this visit
     llm_error: str = ""                            # "" | the LLMUnavailable kind/message
+    llm_skipped: int = 0                           # ...calls `_llm_gate` spared
+    weak_read: bool = False                        # roles named, no posting's own address found
     unlock_calls: int = 0                          # residential-unlocker requests this visit
     unlock_ok: int = 0                             # ...that returned a page
 
@@ -436,8 +442,10 @@ class ScrapeResult:
     strategy: str = ""         # first strategy that produced jobs
     elapsed_s: float = 0.0
     rescued: bool = False      # jobs came from plain/unlocker HTML after a failed render
+    weak_read: bool = False    # roles were named but NO posting's own address was found
     llm_calls: int = 0         # what the visit spent — the refresh sums these into the stamp
     llm_error: str = ""
+    llm_skipped: int = 0       # ...and what the gate spared
     unlock_calls: int = 0
     unlock_ok: int = 0
 
@@ -649,21 +657,211 @@ def _split_title_tail(title):
 
 
 
+def _abs_url(url_, base):
+    """`url_` resolved against the page it was read from, fragment dropped — "" when it is
+    not an http(s) address (a `mailto:`, a template, a bare anchor)."""
+    if not url_:
+        return ""
+    u = urllib.parse.urljoin(base, str(url_).strip()).split("#", 1)[0]
+    return u if urllib.parse.urlsplit(u).scheme in ("http", "https") else ""
+
+
+_POSTING_QUERY = re.compile(r"(?:^|&)(?:job|jobid|job_id|gh_jid|posting|req|reqid|id|p|pid)=", re.I)
+
+
+def _is_strong(url_, listing):
+    """Does this reading know the POSTING's own address? A card with no href, a bare
+    fragment and the listing page itself are all weak: the role is named but nothing can be
+    fetched for it — `jdfill` has no page to read and the board's link is the careers page.
+    A weak reading is a real reading; it just must not END the ladder (2026-08-26: Quantum
+    Machines' 18 Comeet postings were replaced by 4 url-less card titles).
+
+    The listing wearing a query string is still the listing: `?utm_source=nav` and `?page=2`
+    are the same page, and taking one for a posting would end the ladder AND give the board
+    a link back to itself. Only a query that names a posting counts (`?gh_jid=`, `?job=`)."""
+    u = _abs_url(url_, listing)
+    if not u:
+        return False
+    base = _abs_url(listing, listing)
+    if _same_page(u, base):
+        return bool(_POSTING_QUERY.search(urllib.parse.urlsplit(u).query or ""))
+    return True
+
+
+def _same_page(a, b):
+    """Same host and path, whatever the query — the test `_is_strong` is built on."""
+    pa, pb = urllib.parse.urlsplit(a), urllib.parse.urlsplit(b)
+    return (pa.netloc.lower(), pa.path.rstrip("/").lower()) == (pb.netloc.lower(), pb.path.rstrip("/").lower())
+
+
+_NOT_WORD = re.compile(r"[^0-9a-zא-ת]+")
+
+
+def _norm_title(s):
+    """A title as its words alone, for matching one strategy's reading against another's."""
+    return _NOT_WORD.sub(" ", (s or "").lower()).strip()
+
+
+# what a card may say AROUND its title without becoming a different posting: the apply verb,
+# the job type, the widget's own furniture. Everything else — a seniority word, a team, a
+# product — makes it another role.
+_DECORATION = frozenset("""
+apply now view see details more read back to at in on of and or the a an job jobs career
+careers position positions opening openings role roles vacancy we are hiring full part time
+temporary permanent contract freelance hybrid remote onsite site office
+based new open
+engineering engineers research development r&d sales marketing finance hr people operations
+ops product design support legal security qa customer success business technology tech
+""".split())
+
+
+def _place_words():
+    """Every word that appears in an ISRAELI place name (`pipeline.israel`'s two lists),
+    lowercased — a normalised title has no case left to read. Foreign places are deliberately
+    NOT here: "Product Manager" and "Product Manager - New York" are two postings, and
+    treating `new`/`york`/`emea` as furniture let the foreign one hand the Israeli one its
+    address (wave-1 attacker A)."""
+    from pipeline.israel import _IL_PLACES, _IL_PLACES_HE
+    words = set()
+    for place in list(_IL_PLACES) + list(_IL_PLACES_HE):
+        words.update(_NOT_WORD.sub(" ", str(place).lower()).split())
+    return frozenset(words)
+
+
+_PLACE_WORDS = _place_words()
+
+
+def _is_decoration(residue):
+    """Is what one title adds around another nothing but card furniture? A NUMBER is not:
+    "Data Analyst" and "Data Analyst 2" are two openings (wave-1 attacker A). A lone letter
+    is — it is what normalising "R&D" leaves behind."""
+    return all(w in _DECORATION or w in _PLACE_WORDS or (len(w) == 1 and w.isalpha())
+               for w in residue.split())
+
+
+def _title_in(hay, needle):
+    """Is `hay` the same posting as `needle`, read a second time? Both normalised. What `hay`
+    adds must be DECORATION — a place, a job type, "Apply" — and a whitelist is the only safe
+    direction here: a blacklist of seniority words let "Backend Engineer" claim the address of
+    "Backend Engineer – Data Pipeline". 40 pairs of titles at one company contain each other
+    in the 2026-08-26 cache, and taking one for the other puts the wrong address on a role,
+    loses the longer one, and sends `jdfill` to the wrong description.
+
+    A short one-word needle matches only by equality: "HRBP" inside "HRBP Manager EMEA" is no
+    evidence at all, while "filmer editor" inside "filmer editor tel aviv israel apply" is
+    the same card twice."""
+    if not hay or not needle:
+        return False
+    if hay == needle:
+        return True
+    if len(needle) < 8 and " " not in needle:
+        return False
+    m = re.search(rf"(?<![0-9a-zא-ת]){re.escape(needle)}(?![0-9a-zא-ת])", hay)
+    return bool(m) and _is_decoration(hay[:m.start()] + " " + hay[m.end():])
+
+
 class _Adder:
     """The one write path. Calling it applies the title/location filters and the dedupe
     key, appends the common job shape to `jobs`, and returns True when it did. `israeli`
     counts the Israeli jobs — what first-hit-wins measures: a foreign-tail role is kept for
-    `no_il` but must not satisfy a strategy (wave-2 confirmer, NEW-2)."""
+    `no_il` but must not satisfy a strategy (wave-2 confirmer, NEW-2). `strong` counts those
+    that also know their own address, which is what ENDS the ladder: a later strategy may
+    still give a url-less reading its url (`_promote`, `resolve`) instead of duplicating it."""
 
     def __init__(self, company, url):
         self.company, self.url = company, url
         self.jobs, self.israeli, self._seen = [], 0, set()
+        self.strong = 0                  # Israeli jobs carrying the posting's own address
+        self._weak = {}                  # normalised title -> index in `jobs`, url-less
+        self.stage = ""                  # the strategy writing right now
+        self.appended = {}               # stage -> jobs it appended (promotions are not new)
 
-    def __call__(self, title, loc, url_, date="", desc="", jid=""):
+    def label(self):
+        """`cards+links`: every stage that contributed a posting, in ladder order. A stage
+        that only promoted an earlier reading is not named — it found nothing new."""
+        return "+".join(s for s in _STAGES if self.appended.get(s))
+
+    def _match_weak(self, title, loc=None):
+        """The url-less reading this one is a second sighting of, as a `_weak` key. The
+        LONGEST title contained in it wins, so "Data Analyst" cannot claim the card a
+        "Senior Data Analyst" reading names.
+
+        A title can run in two cities — VAST Data lists `QA Automation Engineer` in Tel Aviv
+        AND Haifa — so the key carries the place: a caller that knows one must match it, and
+        a caller that does not (an anchor's text is a title alone) may promote only when the
+        title is unambiguous. Keying on the title alone gave the Haifa row the Tel Aviv
+        posting's address (wave-1 attacker A)."""
+        t = _norm_title(title)
+        hits = [k for k in self._weak if _title_in(t, k[0])]
+        if not hits:
+            return None
+        best = max(len(k[0]) for k in hits)
+        hits = [k for k in hits if len(k[0]) == best]
+        if len(hits) == 1:
+            return hits[0]
+        here = (loc or "").strip().lower()
+        exact = [k for k in hits if k[1] == here]
+        return exact[0] if here and len(exact) == 1 else None
+
+    def _promotable(self, title, loc=None):
+        """`_match_weak`, consumed: the index of the job to complete, or None."""
+        key = self._match_weak(title, loc)
+        return None if key is None else self._weak.pop(key)
+
+    def _promote(self, idx, url_, date="", desc="", jid=""):
+        """Give an already-read job the address a later strategy found for it."""
+        j = self.jobs[idx]
+        j["url"] = _abs_url(url_, self.url)
+        j["job_id"] = jid or j["url"]
+        j["posted_date"] = j["posted_date"] or _norm_date(date)
+        j["description"] = j["description"] or (desc or "")[:6000]
+        self.strong += 1
+        return True
+
+    def promote_or_skip(self, title, loc, url_, date="", desc="", jid=""):
+        """The write path for a strategy reading the LISTING's own markup after another has
+        already read the board: it may complete what is there and nothing more. Strategy 2's
+        `ctx` has no card boundary, so on a board it has not read it invents twins and lends
+        the neighbouring card's place — 16 of them on Port.io, 6 with a US role's title
+        under a Tel Aviv location (docs/BACKLOG.md 88, 221). It passes the SAME filters as
+        an appending read: a foreign card must not hand its address to an Israeli role."""
+        judged = self._judge(title, loc)
+        if judged is None or judged[2] or not _is_strong(url_, self.url):
+            return False
+        idx = self._promotable(judged[0], judged[1])
+        return False if idx is None else self._promote(idx, url_, date, desc, jid)
+
+    def resolve(self, anchors):
+        """Last: give every still-url-less job the ONE address on the page whose link text
+        names it. The LLM tier reads TEXT and can only return titles, and a card layout may
+        keep its link outside the heading group. Ambiguity yields nothing — a title two
+        different links claim keeps none, because a wrong address is worse than none (the
+        board would send the reader to another role, and `jdfill` would describe it)."""
+        claims = {}
+        for text, u in anchors:
+            if not self._weak or not _is_strong(u, self.url):
+                continue
+            key = self._match_weak(text)
+            if key is not None:
+                claims.setdefault(key, set()).add(_abs_url(u, self.url).rstrip("/"))
+        for key, urls in claims.items():
+            # Comeet serves one posting under a location-facet suffix as well as bare
+            # (`…/EA.44C` and `…/EA.44C-17.10C`), which read as two claimants and refused
+            # eight VAST Data titles their own address (wave-1 attacker A). One address that
+            # every other is an extension of is still one address: take the shortest.
+            short = min(urls, key=len)
+            if all(u == short or u.startswith(short + "-") for u in urls):
+                self._promote(self._weak.pop(key), short)
+
+    def _judge(self, title, loc):
+        """The filters every reading passes, whatever strategy made it: `(title, loc,
+        foreign)`, or None when this is not a posting of ours. One copy, because a second
+        write path that skipped them let a Palo Alto card hand its address to a Tel Aviv
+        role (wave-0 critic)."""
         title = _BIDI.sub("", title or "").strip()
         loc = _BIDI.sub("", loc or "")
         if not title or len(title) > 90:
-            return False
+            return None
         title, place = _split_title_tail(title)
         foreign = bool(place) and not ISRAEL_LOC.search(place)
         if foreign or (place and not (loc and ISRAEL_LOC.search(loc) and loc.strip().lower() != "israel")):
@@ -673,18 +871,38 @@ class _Adder:
             loc = place
         # drop run-together card blobs (breadcrumb/location/sentence leaked into the title)
         if not title or TITLE_JUNK.search(title) or BAD_TITLE.match(title):
-            return False
+            return None
         # a card whose own tail names a foreign place is kept WITH that place: `pipeline.israel`
         # drops it and the refresh counts the company as `no_il`, not as an empty board
         if not foreign and not ISRAEL_LOC.search(loc or ""):
+            return None
+        return title, loc, foreign
+
+    def __call__(self, title, loc, url_, date="", desc="", jid=""):
+        judged = self._judge(title, loc)
+        if judged is None:
             return False
-        if url_ and url_.startswith("/"):
-            url_ = urllib.parse.urljoin(self.url, url_)
+        title, loc, foreign = judged
+        strong = _is_strong(url_, self.url)
+        if strong and not foreign:
+            # the same card, read again by a later strategy that DOES know its address
+            idx = self._promotable(title, loc)
+            if idx is not None:
+                return self._promote(idx, url_, date, desc, jid)
+        # a `mailto:` is not an address a reader or `jdfill` can open, and two cards sharing
+        # one shipped the same `job_id` twice (Aleph Farms; wave-1 attacker A)
+        url_ = _abs_url(url_, self.url)
         key = (title.lower(), (loc or "").lower())
         if key in self._seen:
             return False
         self._seen.add(key)
         self.israeli += not foreign
+        if not foreign:
+            if strong:
+                self.strong += 1
+            else:
+                self._weak[(_norm_title(title), (loc or "").strip().lower())] = len(self.jobs)
+        self.appended[self.stage] = self.appended.get(self.stage, 0) + 1
         company, url = self.company, self.url
         self.jobs.append({"company": company, "title": title[:90], "location": loc,
                           # NOT "IL": israel.is_israel_job treats a country_code as
@@ -712,12 +930,15 @@ def _from_structured(raw, add):
             _get(o, _DESC_KEYS), _get(o, ID_KEYS))
 
 
-def _from_dom(dom, add, url_is_il=False):
+def _from_dom(dom, add, url_is_il=False, promote_only=False):
     """2) rendered DOM job-card links: a role-like title, a posting-like href, an Israel token
     within 220 chars of the title (or in the title itself). A card whose only Israel token is
     prose keeps a bare "Israel" when the listing itself is Israel-scoped. Known limit: `ctx`
     is four ancestors' text with no card boundary, so in a "place | department | title" grid
-    the anchor can pick the next card's place (docs/BACKLOG.md 221)."""
+    the anchor can pick the next card's place (docs/BACKLOG.md 221) — which is why
+    `promote_only` exists: over a board another strategy has already read, this pass may only
+    hand a posting its address, never invent one."""
+    write = add.promote_or_skip if promote_only else add
     for d in dom:
         t = d.get("title", "")
         u2 = d.get("url", "")
@@ -728,8 +949,8 @@ def _from_dom(dom, add, url_is_il=False):
                 and (near or ISRAEL_LOC.search(t))):
             # no date from here: `ctx` is four ancestors' text run together, so a "Posted …"
             # in it belongs to whichever card is nearest, not provably to this one
-            add(t, _loc_from_ctx(ctx, anchor=ctx.find(t)) or _loc_from_ctx(t)
-                or ("Israel" if url_is_il else ""), u2)
+            write(t, _loc_from_ctx(ctx, anchor=ctx.find(t)) or _loc_from_ctx(t)
+                  or ("Israel" if url_is_il else ""), u2)
 
 
 def _page_is_il(url, page_html):
@@ -744,10 +965,30 @@ def _page_is_il(url, page_html):
     return bool(os.environ.get("SCRAPE_ASSUME_IL") and ISRAEL_LOC.search(page_html or ""))
 
 
-def _from_cards(page_html, url_is_il, add):
+def _card_href(page_html, pos):
+    """The card's OWN link: the nearest `<a href>` to its heading — the anchor that wraps it
+    (just before) or the one inside it (just after), whichever is closer. Until 2026-08-26
+    this was the FIRST href in `[pos-600, pos+1600]`, i.e. the EARLIEST in the window, which
+    on a list of cards is the PREVIOUS card's link: Gett shipped "Senior Director of Service
+    Excellence" under the Customer Service Representative posting's address, and 36 cached
+    postings across 13 companies shared a url with a different title."""
+    before = None
+    for m in _HREF.finditer(page_html[max(0, pos - 600):pos]):
+        before = m                                   # the LAST one before the heading wins
+    after = _HREF.search(page_html[pos:pos + 1600])
+    if before is None or after is None:
+        m = before or after
+        return m.group(1) if m else ""
+    return (before if len(page_html[max(0, pos - 600):pos]) - before.end() <= after.start()
+            else after).group(1)
+
+
+def _from_cards(page_html, url_is_il, add, promote_only=False):
     """3) repeated heading-group fallback (Radancy/Google-style server-rendered listings):
     job cards as N same-class <h2>/<h3> siblings. A card with no location is kept only when
-    the page itself is Israel-scoped (`url_is_il`)."""
+    the page itself is Israel-scoped (`url_is_il`). `promote_only`: see `_from_dom` — over a
+    board already read, a heading group may only complete what is there."""
+    write = add.promote_or_skip if promote_only else add
     groups = {}
     for pat in _CARD_PATTERNS:
         for m in re.finditer(pat, page_html, re.I):
@@ -774,8 +1015,7 @@ def _from_cards(page_html, url_is_il, add):
             loc = _loc_from_ctx(ctx, anchor=0)      # the card's text starts with its title
             if not loc and not url_is_il:
                 continue
-            mhref = _HREF.search(page_html[max(0, pos - 600):pos + 1600])
-            add(t, loc or "Israel", mhref.group(1) if mhref else "", date=_date_from_card(ctx[:400]))
+            write(t, loc or "Israel", _card_href(page_html, pos), date=_date_from_card(ctx[:400]))
 
 
 @dataclass
@@ -808,7 +1048,14 @@ class LinksOutcome:
 
 # a position link that lands on an error page: opened, read, not a job ("Page not found -
 # Massivit" was a title the replay produced on 2026-08-26)
-_NOT_A_POSITION = re.compile(r"\b(?:page not found|not found|404|error|oops)\b", re.I)
+_NOT_A_POSITION = re.compile(
+    r"\b(?:page not found|not found|404|error|oops)\b|"
+    # ...or the heading of a BOARD we followed a link into: a country facet, a results page,
+    # a "job opportunities at X" index. Each of these came back as a one-role company on
+    # 2026-08-26 (TELUS `All open positions`, Google Israel `job details`).
+    r"^\W*(?:all |current |view all |search |browse )?(?:open positions|open roles|job "
+    r"details|job openings|job opportunities|jobs|careers|search jobs|all jobs|positions)"
+    r"\b\W*(?:at\b|$)", re.I)
 
 
 # a country/city that, named anywhere on a single-role page, says the role may not be
@@ -818,26 +1065,141 @@ _FOREIGN_PAGE_RX = re.compile(
     r"Netherlands|Poland|Ukraine|Portugal|India|Canada|Singapore|Australia|Japan|China|Brazil|"
     r"Mexico|Ireland|Sweden|Switzerland|Austria|Romania|Bulgaria|Serbia|Cyprus|Greece|Turkey|"
     r"UAE|Dubai|London|New York|Berlin|Paris|Bangalore|Amsterdam|Lisbon|Warsaw|Kyiv|Kiev|"
-    r"Boston|Austin|Palo Alto|San Francisco|Seattle|Toronto)(?![A-Za-z])")
+    r"Boston|Austin|Houston|Palo Alto|San Francisco|Seattle|Toronto|"
+    # the region a global board writes into the role's own name (Utila's sales bench)
+    r"EMEA|APAC|LATAM|NORAM|ANZ|DACH)(?![A-Za-z])")
 
 
-def _read_position_page(ph, u2, add):
-    """Parse one opened position page; True when it yielded a job. The one judgement call:
+def _parse_position_page(ph, u2):
+    """What one opened position page says — `{title, url, loc, desc, il, foreign}` — or None
+    when it is not a posting at all. Pure. The judgement call it used to make on its own:
     a single-role page that names no place of its own, mentions Israel only in prose
     ("one of Israel's fastest-growing…") and names NO foreign country anywhere is read as
     an Israeli role — Pecan AI's six roles have exactly that shape; a page that names
-    Singapore or lists 22 countries (Utila, Checkmarx) is not."""
+    Singapore or lists 22 countries (Utila, Checkmarx) is not.
+
+    That call is not this function's to make: it depends on the BOARD, not the page. An
+    Israeli company with a global board (VAST Data, Utila) puts its Israeli address in every
+    posting's boilerplate, so "mentions Israel, names no place of its own" was true of eleven
+    US account executives — `Account Executive - Austin, TX` shipped as an Israeli role on
+    2026-08-26. So this returns what the page SAYS, and `_from_position_links` decides, once,
+    for the whole group: a board that named a foreign place anywhere is not one where "no
+    place" means Israel. Foreign is judged over the title too — it comes from an attribute
+    on a JS-shell page, so it is not in the visible text this used to search."""
     mt = (re.search(r"<h1[^>]*>\s*([^<]{3,90})\s*</h1>", ph, re.S)
           or re.search(r'property=["\']og:title["\'][^>]*content=["\']([^"\']{3,90})', ph))
     if not mt or _NOT_A_POSITION.search(mt.group(1)):
-        return False
-    txt = re.sub(r"<[^>]+>", " ", ph)
+        return None
+    # the page's own text, WITHOUT its scripts: a minified bundle is not a description, and
+    # `jdfill` skips any card that already has 300 characters of one (wave-1 attacker A)
+    body = re.sub(r"<(script|style|noscript|svg)[^>]*>.*?</\1>", " ", ph, flags=re.S | re.I)
+    txt = re.sub(r"<[^>]+>", " ", body)
     title = mt.group(1).strip()
     at = txt.find(title)
-    loc = _loc_from_ctx(txt, anchor=at if at >= 0 else None)
-    if not loc and ISRAEL_LOC.search(txt) and not _FOREIGN_PAGE_RX.search(txt):
-        loc = "Israel"
-    return add(title, loc, u2, desc=re.sub(r"\s+", " ", txt)[:4000])
+    # what the page CLAIMS this role is: the heading plus the document title, which is where
+    # a board that does not print the place in its markup puts it — Checkmarx's
+    # `<title>Application Security Research Team Leader in Braga, Portugal</title>` over an
+    # `<h1>` with no place shipped a Portuguese role as Israeli (wave-1 attacker A)
+    doc = re.search(r"<title[^>]*>(.*?)</title>", ph, re.S | re.I)
+    claim = f"{title} {_html.unescape(doc.group(1)) if doc else ''}"
+    return {"title": title, "url": u2,
+            "loc": _loc_from_ctx(txt, anchor=at if at >= 0 else None) or _loc_from_ctx(claim),
+            "desc": re.sub(r"\s+", " ", txt)[:4000],
+            "il": bool(ISRAEL_LOC.search(txt)),
+            # what this role SAYS it is — never a page-wide scan, which measured useless:
+            # SeatPick's footer sells "Portugal Primeira Liga Tickets", Weebit's scripts
+            # configure a "U.S. Dollar", Teva captions a photo of employees in China.
+            "foreign": bool(_FOREIGN_PAGE_RX.search(claim)),
+            # ...and whether the page ANYWHERE names a foreign place, which is only ever used
+            # to refuse a role that named no place of its own on a board that has both
+            "page_foreign": bool(_FOREIGN_PAGE_RX.search(txt))}
+
+
+# an asset is never a position page, whatever its path says (the walk below reaches
+# `comeet.com/common/assets/jobs-assets/`, which is 17 favicons)
+_ASSET_RX = re.compile(r"\.(?:png|jpe?g|gif|svg|webp|avif|bmp|tiff?|ico|css|js|mjs|map|json|xml|"
+                       r"txt|csv|pdf|docx?|woff2?|otf|eot|ttf|mp4|webm|mp3|zip)$", re.I)
+# ...and a section of the careers SITE that is not its board. The walk-up groups
+# `/careers/blog/2026/<post>/` under `/careers/`, and nothing downstream asks whether an
+# `<h1>` is a role: three blog posts shipped as Israeli openings (wave-1 attacker A). Judged
+# on what lies BELOW the board word, never on the whole path — six live rows are boards at
+# `/about/careers/…` (eToro, Google Israel, EqualWeb, Alison, 90seconds, TonicSecurity) and a
+# whole-path test rejected all 30 of their postings (wave-2 confirmer).
+_NOT_A_BOARD_PATH = re.compile(r"(?:^|/)(?:blog|news|press|stories|story|culture|life|team|people|"
+                               r"benefits|events|faq|about|privacy|terms|legal)(?:/|$)", re.I)
+
+
+def _ats_host(host):
+    """Is this host an ATS a company embeds its own board from? The identity layer's table
+    is the one authority (`pipeline.company_identity.ATS_HOST`, read-only here) — an
+    aggregator is not on it, which is what keeps a `linkedin.com/jobs/` group (other
+    companies' postings, CLAUDE.md rule 5) out of strategy 4."""
+    from pipeline.company_identity import ATS_HOST
+    return bool(ATS_HOST.search(host or ""))
+
+
+def _link_prefix(u2, listing, depth=3):
+    """The group a position link belongs to: its parent path, or the nearest ancestor of it
+    that a board names (`/jobs/`, `/careers/`, `/position/`…). "" when it is not a position
+    link of this company's at all.
+
+    The prefix is judged on its PATH — `careers.arm.com/` matched on the HOST and made
+    `/DEI`, `/benefits`, `/apprenticeships` one board. Walking up is what lets a per-posting
+    path be grouped at all: a Comeet embed's
+    `comeet.com/jobs/<tenant>/<group>/<slug>/<id>` has the slug as its parent, so every one
+    of the 151 Comeet links in the 2026-08-26 cache was a group of ONE and fell under the
+    three-link floor — strategy 4 could not read a Comeet board at all until then.
+
+    Walking up buys reach and would pay for it in junk, so the link must first be a page of
+    OURS at all: an asset is not a position (the walk reaches `comeet.com/common/assets/
+    jobs-assets/`, 17 favicons that sort AHEAD of the real board), and a link that leaves
+    this company's site for anywhere but its own ATS is not ours to read — a
+    `linkedin.com/jobs/` group is other companies' postings (CLAUDE.md rule 5). The path
+    test stays where it always was, on the PREFIX: requiring `_POSTING_HREF` of every link
+    would drop every board whose postings live under `/careers/<slug>/` (BlueBird, sett)."""
+    path = urllib.parse.urlsplit(u2).path or ""
+    if _ASSET_RX.search(path):
+        return ""
+    on_ats = _ats_host(urllib.parse.urlsplit(u2).netloc)
+    if not on_ats and not _same_site(u2, listing):
+        return ""
+    pref = re.sub(r"[^/]+/?$", "", u2)
+    below = ""
+    for _ in range(depth + 1):
+        path = urllib.parse.urlsplit(pref).path or "/"
+        if _LINK_PREFIX.search(path):
+            if _NOT_A_BOARD_PATH.search(urllib.parse.urlsplit(u2).path[len(path):]):
+                return ""                    # under the board word, but not on the board
+            # On an ATS the TENANT lives in the path (`comeet.com/jobs/<tenant>/…`), so the
+            # group must stop one level below the board word: `comeet.com/jobs/` would put a
+            # second tenant's link on the page into this company's board (CLAUDE.md rule 5).
+            # On the company's own site there is no tenant level to keep.
+            return below if on_ats and below else pref
+        if path.rstrip("/").count("/") < 1:
+            break
+        pref, below = re.sub(r"[^/]+/$", "", pref), pref
+    return ""
+
+
+# a second-level label that is not an identity: `acme.co.il` and `alljobs.co.il` are two
+# companies, and 24 active rows sit on such a host (20 `.co.il`, 2 `.co.uk`, an `.org.il`,
+# an `.ac.il`) — a two-label test made every one of them "the same site" as every aggregator
+# on the same suffix (wave-1 attacker A)
+_GENERIC_SLD = frozenset("co com net org ac gov edu muni k12 or ne".split())
+
+
+def _registrable(host):
+    """The part of a host that names the owner: the last two labels, or three when the
+    second-to-last is a public suffix rather than a name."""
+    parts = host.lower().split(":")[0].split(".")
+    n = 3 if len(parts) >= 3 and parts[-2] in _GENERIC_SLD else 2
+    return ".".join(parts[-n:])
+
+
+def _same_site(a, b):
+    """Same site: equal registrable hosts (`careers.wix.com` and `wix.com`)."""
+    ha, hb = (urllib.parse.urlsplit(x).netloc for x in (a, b))
+    return bool(ha) and bool(hb) and _registrable(ha) == _registrable(hb)
 
 
 def _from_position_links(page_html, url, add, fetch=_fetch_url, deadline=None,
@@ -865,10 +1227,8 @@ def _from_position_links(page_html, url, add, fetch=_fetch_url, deadline=None,
         parts = urllib.parse.urlsplit(u2)
         if parts.scheme not in ("http", "https") or parts.path.rstrip("/") == listing_path:
             continue
-        pref = re.sub(r"[^/]+/?$", "", u2)
-        # the prefix is judged on its PATH: `careers.arm.com/` matched on the host and made
-        # `/DEI`, `/benefits`, `/apprenticeships` a board
-        if _LINK_PREFIX.search(urllib.parse.urlsplit(pref).path or "/"):
+        pref = _link_prefix(u2, url)
+        if pref:
             prefixes.setdefault(pref, set()).add(u2)
 
     worst = None                                    # the unreadable prefix, if any
@@ -877,11 +1237,13 @@ def _from_position_links(page_html, url, add, fetch=_fetch_url, deadline=None,
             continue
         this = LinksOutcome()                       # judged PER PREFIX: a readable junk
         failed, found_any = [], False               # prefix must not hide a blocked real one
+        board = _Board(add)                          # the group's own Israel judgement
         for u2 in sorted(links)[:pages_per_prefix]:
             if deadline is not None and deadline.expired():
                 out.truncated = True                # the caller must not trust the count
                 out.attempted += this.attempted
                 out.opened += this.opened
+                found_any |= board.flush()
                 return out
             tmo = page_timeout_s if deadline is None else min(page_timeout_s, deadline.remaining())
             ph, st = _pair(fetch(u2, tmo))
@@ -894,17 +1256,17 @@ def _from_position_links(page_html, url, add, fetch=_fetch_url, deadline=None,
                 failed.append(u2)
                 continue
             this.opened += 1                        # readable, whether or not it is a job
-            if _read_position_page(ph, u2, add):
-                found_any = True
+            found_any |= board.read(ph, u2)
         out.attempted += this.attempted
         if not (this.unreadable() and failed):
             out.opened += this.opened
         if this.unreadable() and failed:
-            if _open_refused_pages(failed, this, deadline, visit, r, add):
+            if _open_refused_pages(failed, this, deadline, visit, r, board):
                 found_any = True
             out.opened += this.opened
             if this.unreadable() and worst is None:
                 worst = this
+        found_any |= board.flush()
         if found_any:
             break
     if worst is not None:
@@ -915,7 +1277,49 @@ def _from_position_links(page_html, url, add, fetch=_fetch_url, deadline=None,
     return out
 
 
-def _open_refused_pages(failed, this, deadline, visit, r, add):
+class _Board:
+    """One group of position pages, and the single Israel judgement they share.
+
+    A page that names its own place is added at once. A page that names none but mentions
+    Israel is held: it is an Israeli role only if NO page in this group named a foreign
+    place. That is the difference between Pecan AI (six roles, no page names a place, an
+    Israeli company — all Israeli) and VAST Data (an Israeli company whose board is global —
+    "Account Executive - Austin, TX" is not an Israeli role because the boilerplate says
+    Israel). Judging it per page shipped eleven US roles on 2026-08-26."""
+
+    def __init__(self, add):
+        self.add, self.held, self.foreign = add, [], False
+
+    def read(self, ph, u2):
+        """Parse and add one page; True when it yielded a job right away."""
+        p = _parse_position_page(ph, u2)
+        if not p:
+            return False
+        self.foreign = self.foreign or p["foreign"]
+        # a place of its own is this role's place, and settles it. A bare "Israel" is not a
+        # place — it is the country the boilerplate names, which every posting on an Israeli
+        # company's board carries whatever continent the role is on — so it waits for the
+        # group's verdict beside the pages that named nothing at all.
+        if p["loc"] and p["loc"].strip().lower() != "israel":
+            return self.add(p["title"], p["loc"], p["url"], desc=p["desc"])
+        if p["il"]:
+            self.held.append(p)
+        return False
+
+    def flush(self):
+        """Decide the held pages, once, now that the whole group has been seen. On a board
+        that named a foreign place, a held page is refused only when its OWN text names one
+        too: discarding the whole group for one sibling's region turned a live board into a
+        clean `empty` — a mass zero committed silently, which is CLAUDE.md rule 2 (wave-1
+        attacker A: it cost Pecan AI all six roles and Utila four)."""
+        held, self.held = self.held, []
+        # NOT `any(...)`: a generator inside `any` stops at the first page that yielded, and
+        # Pecan AI's six roles became one.
+        return any([self.add(p["title"], "Israel", p["url"], desc=p["desc"]) for p in held
+                    if not (self.foreign and p["page_foreign"])])
+
+
+def _open_refused_pages(failed, this, deadline, visit, r, board):
     """Rungs 2 and 3 for the position pages plain HTTP could not open. Rung 2: one short
     Chromium visit (`visit`) — a datacenter address refused by a WAF looks exactly like
     this. Rung 3, only while still unreadable and under SCRAPE_VIA_UNLOCKER: at most
@@ -927,8 +1331,7 @@ def _open_refused_pages(failed, this, deadline, visit, r, add):
         nonlocal found_any
         if ph and not _blocked_by(ph):
             this.opened += 1
-            if _read_position_page(ph, u2, add):
-                found_any = True
+            found_any |= board.read(ph, u2)
 
     if deadline is None or deadline.remaining() >= 10:
         for u2, got in (visit(failed, deadline) or {}).items():
@@ -981,37 +1384,55 @@ def _llm_excerpt(page_html):
         return ""
     best = max(sigs, key=lambda m: (len(ROLE.findall(txt[m.start():m.start() + _LLM_TEXT_CHARS])),
                                     -m.start()))
-    return txt[max(0, best.start() - 1500):best.start() + _LLM_TEXT_CHARS]
+    # ONE window, and it is exactly what the call receives: slicing 1,500 characters before
+    # the signal and then re-truncating at the call site dropped the last 1,500 characters of
+    # every excerpt that reached the cut (2026-08-26)
+    return txt[max(0, best.start() - 1500):][:_LLM_TEXT_CHARS]
+
+
+def _llm_gate(excerpt, url_is_il):
+    """Why this page is not worth a call, or "" to make one. Not a guess about what the model
+    can read: `_Adder` refuses every non-foreign job whose location holds no Israeli place,
+    and the model is shown nothing but this excerpt — so a page naming no Israeli place, read
+    from an address that does not name one either, can only produce rows the adder will drop.
+    On the 2026-08-26 night 94 of 128 calls returned nothing; `llm_skipped` counts what this
+    spares. (A minimum excerpt length was measured and dropped: it saved no call on any of
+    the 81 captured pages, and a small page is a page, not a defect.)"""
+    return "" if url_is_il or ISRAEL_LOC.search(excerpt) else "no-il"
 
 
 def _from_llm(page_html, url, url_is_il, add, runner=None, deadline=None):
     """5) LLM extraction (`SCRAPE_LLM=1`): Elementor/Wix/arbitrary layouts where nothing above
     matches but the page clearly lists positions. Gated on jobs-signals so it never fires on
-    marketing pages. Returns (calls, error): what the strategy spent and why it failed —
-    `error` is the breaker's reason when no call was made."""
+    marketing pages, then on `_llm_gate`. Returns (calls, error, skipped): what the strategy
+    spent, why it failed — `error` is the breaker's reason when no call was made — and
+    whether the gate spared a call."""
     global _LLM_DOWN
     if not os.environ.get("SCRAPE_LLM"):
-        return 0, ""
+        return 0, "", 0
     txt = _llm_excerpt(page_html)
     if not txt:
-        return 0, ""
+        return 0, "", 0
+    gated = _llm_gate(txt, url_is_il)
+    if gated:
+        return 0, f"gate:{gated}", 1
     if _LLM_DOWN and runner is None:
-        return 0, f"down:{_LLM_DOWN}"
+        return 0, f"down:{_LLM_DOWN}", 0
     tmo = _LLM_TIMEOUT_S if deadline is None else min(_LLM_TIMEOUT_S, deadline.remaining())
     if deadline is not None and tmo < 30:
-        return 0, "deadline"
+        return 0, "deadline", 0
     from pipeline.llm import LLMUnavailable
     try:
-        out = (runner or _run_claude)(_LLM_PROMPT + txt[:_LLM_TEXT_CHARS], tmo)
+        out = (runner or _run_claude)(_LLM_PROMPT + txt, tmo)
     except LLMUnavailable as e:
         if e.kind in ("auth", "missing", "drift") and runner is None:
             _LLM_DOWN = e.kind
-        return 1, f"{e.kind}:{str(e)[:60]}"
+        return 1, f"{e.kind}:{str(e)[:60]}", 0
     except Exception as e:  # noqa: BLE001 — a runner bug is a failed call, never a crash
-        return 1, f"runner:{type(e).__name__}"
+        return 1, f"runner:{type(e).__name__}", 0
     positions = (out or {}).get("positions") if isinstance(out, dict) else None
     if not isinstance(positions, list):
-        return 1, "no-schema"
+        return 1, "no-schema", 0
     for o in positions:
         if not isinstance(o, dict):
             continue
@@ -1025,25 +1446,55 @@ def _from_llm(page_html, url, url_is_il, add, runner=None, deadline=None):
                 continue
         elif url_is_il:
             loc = "Israel"
-        add(t, loc, url)
-    return 1, ""
+        # no url: the tier reads TEXT. `_Adder.resolve` gives these titles the page's own
+        # links where exactly one names them.
+        add(t, loc, "")
+    return 1, "", 0
+
+
+_ANCHOR_RX = re.compile(r"<a\b[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>", re.S | re.I)
+
+
+def _anchors(dom, page_html, url):
+    """(link text, href) for every link the page offers — the rendered DOM entries and the
+    HTML's own anchors. This is what a url-less reading is matched against; it is never a
+    source of postings by itself, so junk links cost nothing."""
+    out = [(d.get("title", ""), d.get("url", "")) for d in (dom or []) if d.get("url")]
+    for href, inner in _ANCHOR_RX.findall(page_html or ""):
+        text = _html.unescape(re.sub(r"<[^>]+>", " ", inner))
+        if 0 < len(text.strip()) <= 140:
+            out.append((text, href))
+    return out
 
 
 def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=None, visit=None):
     """Run the five strategies over a Rendered bundle. Pure apart from `fetch`/`visit`/`llm`
     (which are injectable) and the SCRAPE_* env flags. Returns (jobs, winning_strategy)."""
     add, jobs = _make_adder(company, url)
+    page_html = r.page_html
+
+    def done():
+        """The one exit: whatever is still url-less takes the address the page itself gives
+        it, if exactly one link names it. `weak_read` records what the STRATEGIES knew before
+        that — the refresh's shrink guard has to be able to tell "we read the board" from "we
+        read some titles off it", and after `resolve` the urls no longer say which (wave-0
+        critic: resolve would otherwise silence the guard on exactly the night it is for)."""
+        r.weak_read = add.strong == 0 and add.israeli > 0
+        add.resolve(_anchors(r.dom, page_html, url))
+        return jobs, add.label()
+
+    add.stage = "structured"
     _from_structured(_structured_objects(r.blobs, r.bodies), add)
-    if add.israeli >= 3:
-        return jobs, "structured"
+    if add.strong >= 3:
+        return done()
     # one or two structured hits may be a "featured posting" widget beside a DOM-rendered
     # board: let the DOM pass add to them. Three or more is the board itself, and the DOM
     # pass would only add run-together duplicates (Port.io: 16 of them).
     n_structured = add.israeli
-    _from_dom(r.dom, add, url_is_il=_page_is_il(url, r.page_html))
-    if add.israeli:
-        return jobs, ("structured+dom" if n_structured and add.israeli > n_structured
-                      else "structured" if n_structured else "dom")
+    add.stage = "dom"
+    _from_dom(r.dom, add, url_is_il=_page_is_il(url, r.page_html), promote_only=n_structured >= 3)
+    if add.strong:
+        return done()
     # headless Chromium sometimes gets a bot-stripped page while plain HTTP gets the real
     # server-rendered cards (Legit Security) — try both HTML sources
     if deadline is None or deadline.remaining() >= 3:
@@ -1059,13 +1510,15 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
     if len(r.plain_html) > len(page_html or ""):
         page_html = r.plain_html if not page_html else page_html + "\n" + r.plain_html
     if not page_html:
-        return jobs, ""
+        return done()
     url_is_il = _page_is_il(url, page_html)
-    _from_cards(page_html, url_is_il, add)
-    if add.israeli:
-        return jobs, "cards"
+    add.stage = "cards"
+    _from_cards(page_html, url_is_il, add, promote_only=add.israeli > 0)
+    if add.strong:
+        return done()
     s4_deadline = (deadline.reserve(_LLM_RESERVE_S)
                    if deadline is not None and os.environ.get("SCRAPE_LLM") else deadline)
+    add.stage = "links"
     links = _from_position_links(page_html, url, add, fetch=fetch, deadline=s4_deadline,
                                  visit=visit, r=r)
     if links.truncated:
@@ -1076,12 +1529,16 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
         r.truncated = True
         r.error = r.error or "deadline:links"
     if add.israeli:
-        return jobs, "links"
-    calls, err = _from_llm(page_html, url, url_is_il, add, runner=llm, deadline=deadline)
+        # a reading that named roles is a reading, addressed or not: the LLM tier costs a
+        # call and returns titles alone, so it can only repeat what is already here
+        return done()
+    add.stage = "llm"
+    calls, err, skipped = _from_llm(page_html, url, url_is_il, add, runner=llm, deadline=deadline)
     r.llm_calls += calls
     r.llm_error = err
+    r.llm_skipped += skipped
     if add.israeli:
-        return jobs, "llm"
+        return done()
     if links.unreadable():
         # the listing lists positions and none could be opened from here, on any rung, and
         # the LLM tier read nothing off the listing either: not an empty board. `_classify`
@@ -1167,7 +1624,9 @@ def scrape_result(company, url, timeout_ms=45000, *, budget_s=None, render=None,
         rescued = bool(jobs) and (r.error != "" or (r.http_status or 0) >= 400)
         return ScrapeResult(jobs=jobs, status=status, error=error, http_status=r.http_status,
                             strategy=strategy, elapsed_s=time.monotonic() - t0, rescued=rescued,
+                            weak_read=r.weak_read,
                             llm_calls=r.llm_calls, llm_error=r.llm_error,
+                            llm_skipped=r.llm_skipped,
                             unlock_calls=r.unlock_calls, unlock_ok=r.unlock_ok)
     except Exception as e:  # noqa: BLE001 — belt and braces: this function must not raise
         return ScrapeResult(jobs=[], status="error", error=f"internal:{type(e).__name__}",

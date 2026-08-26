@@ -36,6 +36,7 @@ import os
 import re
 import sys
 import time
+from collections import Counter as _Counter
 from dataclasses import dataclass, field
 
 from pipeline import israel
@@ -79,6 +80,20 @@ MASS_FAILURE_PCT = 20
 MASS_FAILURE_MIN_ROWS = 20
 # a rescued read smaller than yesterday's is held back this many nights before it is believed
 PARTIAL_MAX_NIGHTS = 2
+# ...and a read that knew NO posting's address is held back only when it also collapsed to
+# under this fraction of yesterday. A board really can shrink; what it does not do is shrink
+# by two thirds on the one night we could not address a single role (Quantum Machines, 18 -> 4).
+WEAK_SHRINK_RATIO = 3
+# an address refused this many nights running is nobody's to repair automatically: it is
+# never parked (a hunt runs on the same address), so it is named for a human instead (216)
+STALE_IP_NIGHTS = 30
+# how long the cloud keeps a board only a home address could read, and how early it asks for
+# a fresh one. A fortnight is one local pass; after that the roles are too old to publish.
+RESIDENTIAL_MAX_DAYS = 14
+RESIDENTIAL_WARN_DAYS = 3
+# strategy 5 asks once per company that reaches it; more calls than this means the signal
+# gate broke open, not that the fleet changed (438 rows, 128 calls on 2026-08-26)
+LLM_RUNAWAY_CALLS = 250
 # the mass-EMPTY guard needs far fewer rows to be meaningful than the mass-error one: it
 # only counts companies that HAD jobs yesterday and were scraped tonight
 SHRINK_MIN_ROWS = 5
@@ -126,22 +141,33 @@ def _runner_shaped(code):
 
 def _shape(code):
     """The KIND of error, which is what a streak is made of: `links` (positions unreadable),
-    `ip` (the address refused), `runner` (our process), `page` (the page itself). Wave-1
+    `ip` (the address refused), `weak` (a reading that knew no posting's address), `runner`
+    (our process), `page` (the page itself). Wave-1
     attacker B: with the streak keyed on the word "error" alone, twenty carried `links:`
     nights funded both the carry expiry and the park clock, and one page-shaped night from
-    the same cloaking WAF (a 404) dropped the jobs AND parked the row with no alarm."""
+    the same cloaking WAF (a 404) dropped the jobs AND parked the row with no alarm.
+
+    It strips its own `partial:` wrapper, because the ROT FILE stores the wrapped code and
+    the next reader of a stored code would otherwise shape `partial:weak:read` as `page` —
+    parkable, which `_parkable`'s docstring promises it can never be (wave-1 attacker B)."""
+    code = str(code or "").removeprefix("partial:")
     if code.startswith("links:"):
         return "links"
     if _ip_shaped(code):
         return "ip"
+    # both say "our READING failed", never "this company's page did": a url-less collapse and
+    # an expired home-address read. Neither may ever park a row.
+    if code.startswith(("weak:", "residential:")):
+        return "weak"
     if _runner_shaped(code):
         return "runner"
     return "page"
 
 
 def _parkable(code):
-    """Only a PAGE-shaped code (404/410/5xx, navigation failure, a blank render) may park a row."""
-    return bool(code) and not _ip_shaped(code) and not _runner_shaped(code)
+    """Only a PAGE-shaped code (404/410/5xx, navigation failure, a blank render) may park a
+    row. A `weak:` read is about OUR reading of a live page, never about the company."""
+    return bool(code) and _shape(code) == "page"
 
 
 @dataclass
@@ -152,14 +178,19 @@ class RunState:
     revalidate: list = field(default_factory=list)
     counts: dict = field(default_factory=lambda: {"scraped": 0, "with_jobs": 0, "empty": 0,
                                                   "no_il": 0, "errors": 0, "carried": 0,
-                                                  "unprocessed": 0, "links_unread": 0})
+                                                  "unprocessed": 0, "links_unread": 0,
+                                                  "carried_residential": 0,
+                                                  "dropped_residential": 0})
     spend: dict = field(default_factory=lambda: {"llm_calls": 0, "llm_won": 0, "llm_fail": 0,
-                                                 "unlock_calls": 0, "unlock_ok": 0})
+                                                 "llm_skipped": 0, "unlock_calls": 0,
+                                                 "unlock_ok": 0, "unlock_won": 0})
     strategies: dict = field(default_factory=dict)
     codes: dict = field(default_factory=dict)      # error code -> count, for the per-code alarm
     llm_errors: dict = field(default_factory=dict) # LLMUnavailable kind -> count (auth/transient/...)
     errors: list = field(default_factory=list)
     unread: list = field(default_factory=list)     # companies whose positions could not be opened
+    stale_ip: list = field(default_factory=list)   # (name, nights, crossed_tonight) — see 216
+    residential_due: list = field(default_factory=list)  # (name, nights left) to re-read here
 
 
 # ---------------------------------------------------------------------------------------------
@@ -175,15 +206,18 @@ def _worker(task):
         return {"name": name, "jobs": res.jobs, "status": res.status, "error": res.error,
                 "http_status": res.http_status, "strategy": res.strategy,
                 "rescued": bool(getattr(res, "rescued", False)),
+                "weak_read": bool(getattr(res, "weak_read", False)),
                 "llm_calls": int(getattr(res, "llm_calls", 0) or 0),
                 "llm_error": str(getattr(res, "llm_error", "") or ""),
+                "llm_skipped": int(getattr(res, "llm_skipped", 0) or 0),
                 "unlock_calls": int(getattr(res, "unlock_calls", 0) or 0),
                 "unlock_ok": int(getattr(res, "unlock_ok", 0) or 0),
                 "seconds": round(res.elapsed_s, 1)}
     except BaseException as e:  # noqa: BLE001
         return {"name": name, "jobs": [], "status": "error",
                 "error": f"worker:{type(e).__name__}", "http_status": None, "strategy": "",
-                "llm_calls": 0, "llm_error": "", "unlock_calls": 0, "unlock_ok": 0,
+                "llm_calls": 0, "llm_error": "", "llm_skipped": 0,
+                "unlock_calls": 0, "unlock_ok": 0,
                 "seconds": round(time.time() - t0, 1)}
 
 
@@ -309,20 +343,56 @@ def _result_of(fut, name):
 # ---------------------------------------------------------------------------------------------
 # per-company bookkeeping (pure: no I/O)
 # ---------------------------------------------------------------------------------------------
+def _title_key(j):
+    """A card's (title, place) — what survives a night when its ADDRESS changed."""
+    title = (j.get("title") or "").strip().lower()
+    return "T:%s|%s" % (title, (j.get("location") or "").strip().lower()) if title else ""
+
+
+def _addresses(j):
+    """The names a card keeps between nights: its address and its id."""
+    return [x for x in (j.get("url") or "", j.get("job_id") or "") if x]
+
+
 def _carry_jd(new_jobs, old_jobs):
-    """A rebuilt card with an empty description inherits the previous run's text (keyed by
-    url/job_id) so daily refreshes stop wiping what enrich_scrape_jd fetched — and the
-    `_jd_attempted` stamp travels regardless, or failed enrichments lose their 7-day
-    cooldown every night and re-burn Bright Data calls on the same unfetchable URLs."""
-    prev = {(j.get("url") or j.get("job_id") or ""): j
-            for j in old_jobs if isinstance(j, dict)}
+    """A rebuilt card with an empty description inherits the previous run's text so daily
+    refreshes stop wiping what enrich_scrape_jd fetched — and the `_jd_attempted` stamp
+    travels too, or failed enrichments lose their 7-day cooldown every night and re-burn
+    Bright Data calls on the same unfetchable URLs.
+
+    Matched by (title, place) FIRST, and only when it names exactly one card on each side.
+    A card's ADDRESS is the less stable key of the two: it changes when a later strategy
+    gives a url-less reading its own address, and it changed for a whole board the night
+    `_card_href` stopped taking the previous card's link — put the address first and 59
+    postings across 6 boards inherit the neighbouring role's description on that one night
+    (wave-1 attacker C), which is also what `pipeline/seniority.py` would classify.
+
+    Two openings of one role at one place are common, so a non-unique title falls back to
+    the address. The 7-day `_jd_attempted` cooldown follows the ADDRESS rather than the
+    match: an unchanged one is certainly the same posting, while a moved one may be a
+    re-post, which from here looks exactly like a promotion — and jdfill must stay free to
+    read a posting that is really new (wave-1 attacker B)."""
+    prev = {k: j for j in old_jobs if isinstance(j, dict) for k in _addresses(j)}
+    by_title, new_titles = {}, _Counter(_title_key(j) for j in new_jobs)
+    for j in old_jobs:
+        if isinstance(j, dict) and (k := _title_key(j)):
+            by_title.setdefault(k, []).append(j)
     for j in new_jobs:
-        pj = prev.get(j.get("url") or j.get("job_id") or "")
-        if not pj:
+        k = _title_key(j)
+        twins = by_title.get(k) or []
+        pj = twins[0] if k and len(twins) == 1 and new_titles[k] == 1 else None
+        if pj is None:
+            pj = next((prev[a] for a in _addresses(j) if a in prev), None)
+        if pj is None:
             continue
         if not (j.get("description") or "").strip() and (pj.get("description") or "").strip():
             j["description"] = pj["description"]
-        if pj.get("_jd_attempted") and not j.get("_jd_attempted"):
+        # the cooldown follows an unchanged ADDRESS, whichever key found the card: a posting
+        # whose address moved may be a re-post rather than a promotion, and jdfill must stay
+        # free to read it — but the ordinary night, where nothing moved, must keep its 7-day
+        # cooldown or every card re-enters the Bright Data pool nightly.
+        if (set(_addresses(j)) & set(_addresses(pj)) and pj.get("_jd_attempted")
+                and not j.get("_jd_attempted")):
             j["_jd_attempted"] = pj["_jd_attempted"]
     return new_jobs
 
@@ -334,16 +404,42 @@ def _rot_bump(rot, name, why, today, res=None):
     version kept `since`, so a company that had been honestly empty for 60 days would have
     been parked on its first transient error). Parking counts observed nights, not wall-clock
     days, so nights the budget skipped a row do not advance its clock."""
-    shape = _shape(_code(res or {})) if why == "error" else ""
+    raw = str((res or {}).get("error") or "")      # `_code` strips the wrapper we test for
+    held = raw.startswith("partial:")
+    code = _code(res or {})
+    shape = _shape(code) if why == "error" else ""
     e = rot.get(name)
+    # Two clocks survive a change of shape, because the streak `n` is per shape by design:
+    #   `ip_since`   how long the runner's ADDRESS has been refused. A WAF answers 403 on the
+    #                listing one night and refuses the position pages the next, flipping
+    #                `ip`/`links`, and our OWN failures (`runner`) say nothing either way — a
+    #                clock reset by any of them could never reach a month (wave-0/1 critics).
+    #   `partial_n`  nights a read was held back as partial. It survives every ERROR night,
+    #                held or not — one 403 between two weak nights would otherwise clear it
+    #                and an 18 -> 4 shrink would be held forever (wave-2 confirmer proved the
+    #                first version did exactly that: 60 alternating nights, `partial_n` never
+    #                past 1 against a bar of 2). A night that is not an error is a read we
+    #                believed, and it ends the hold.
+    keep_ip = shape in ("ip", "links", "runner")
+    carried = {k: v for k, v in (e or {}).items()
+               if (k == "ip_since" and keep_ip) or (k == "partial_n" and why == "error")}
     if e is None or e.get("why") != why or (shape and e.get("shape") not in (None, shape)):
         e = rot[name] = {"since": today, "why": why, "n": 0}
+    e.update(carried)
     if shape:
         e["shape"] = shape                   # an entry from before shapes existed adopts tonight's
+    if shape in ("ip", "links"):
+        e["ip_since"] = e.get("ip_since") or today
+    elif not keep_ip:
+        e.pop("ip_since", None)
     if e.get("last") != today:
         e["n"] = int(e.get("n", 0)) + 1
+        if held:
+            e["partial_n"] = int(e.get("partial_n", 0)) + 1
     else:
         e["n"] = int(e.get("n", 1))          # an entry from before `n` existed, bumped today
+    if why != "error":
+        e.pop("partial_n", None)             # a believed read ends the hold
     e["last"] = today
     if res is not None:                      # what actually happened, for the offline reader
         e["error"] = res.get("error") or ""
@@ -351,6 +447,71 @@ def _rot_bump(rot, name, why, today, res=None):
         if res.get("http_status") is not None:
             e["http"] = res["http_status"]
     return (_dt.date.fromisoformat(today) - _dt.date.fromisoformat(e["since"])).days, e["n"]
+
+
+def _mark_residential(jobs, today):
+    """Stamp each card with where and when it was read. Rides on the job dict beside
+    `_jd_attempted`, so nothing downstream needs to know about it."""
+    for j in jobs:
+        j["_via"], j["_read"] = "residential", today
+    return jobs
+
+
+def _residential_age(jobs, today):
+    """Nights since these cards were read from a home address, or None when they were not.
+    Every card must carry the mark: one cloud-read card means the cloud can read the board."""
+    if not jobs or not all(isinstance(j, dict) and j.get("_via") == "residential" for j in jobs):
+        return None
+    read = min(str(j.get("_read") or "") for j in jobs)
+    try:
+        return (_dt.date.fromisoformat(today) - _dt.date.fromisoformat(read)).days
+    except ValueError:
+        return None
+
+
+def _expire_residential(name, age, rot, today, st):
+    """Drop a home-address read the cloud can no longer stand behind — out loud, counted, and
+    leaving a code board health can read.
+
+    Without the code the row goes quiet: an empty cache beside a `why: empty` rot entry is
+    what `health.overnight_verdict` reads as `regressed-to-zero`, so a company that is merely
+    unreadable from the runner would enter the weekly self-heal and the LinkedIn rotation —
+    the exact class `overnight_verdict` was built to keep out (wave-1 attacker B)."""
+    st.counts["dropped_residential"] += 1
+    _rot_bump(rot, name, "error", today,
+              {"error": "residential:expired", "jobs": [], "http_status": None})
+    print(f"  {name}: residential read of {age}d ago expired — dropping (re-read it with: "
+          f'python refresh_scrape_cache.py --only "{name}" --residential)', flush=True)
+
+
+def _ip_age(entry, today):
+    """Nights this row's ADDRESS has been refused, counting across every shape that means it
+    (`ip_since`, which a 403 -> links flip does not restart). 0 when it is not refused, and 0
+    rather than a crash on a malformed stamp: a rot file is merged by another process on a
+    conflict night, and one bad date used to take the whole run down AFTER all the Chromium
+    work — no cache, no stamp (wave-1 attacker B)."""
+    since = (entry or {}).get("ip_since")
+    try:
+        return 0 if not since else (_dt.date.fromisoformat(today)
+                                    - _dt.date.fromisoformat(since)).days + 1
+    except (ValueError, TypeError):
+        return 0
+
+
+def _spent(res):
+    """What this company cost, for the progress line — and only when it cost something, so
+    the 400 ordinary lines stay one line long. Until 2026-08-26 the night's 128 LLM calls and
+    48 unlocker requests were a total with no way back to who spent them."""
+    parts = []
+    if res.get("unlock_calls"):
+        parts.append(f"unlock={res.get('unlock_ok', 0)}/{res['unlock_calls']}")
+    if res.get("llm_calls"):
+        won = "won" if "llm" in str(res.get("strategy") or "").split("+") else "0"
+        kind = str(res.get("llm_error") or "").split(":")[0]
+        parts.append(f"llm={res['llm_calls']}->{kind or won}")
+    elif res.get("llm_skipped"):
+        parts.append(f"llm=skip:{_token(str(res.get('llm_error') or '').split(':')[-1])}")
+    return (" " + " ".join(parts)) if parts else ""
 
 
 def _apply_result(row, res, old, rot, today, st: RunState):
@@ -364,21 +525,28 @@ def _apply_result(row, res, old, rot, today, st: RunState):
         st.spend["llm_fail"] += 1            # a CALL failed; a breaker/deadline skip is not one
         kind = str(res["llm_error"]).split(":")[0]
         st.llm_errors[kind] = st.llm_errors.get(kind, 0) + 1
+    st.spend["llm_skipped"] += int(res.get("llm_skipped") or 0)
     st.spend["unlock_calls"] += int(res.get("unlock_calls") or 0)
     st.spend["unlock_ok"] += int(res.get("unlock_ok") or 0)
     jobs = None if res["status"] == "error" else res["jobs"]   # ERROR != confirmed-empty
     il = [j for j in (jobs or []) if israel.is_israel_job(j)]
-    if (jobs is not None and res.get("rescued") and res.get("error") and name in old
-            and len(il) < len(old[name])
-            and not (rot.get(name, {}).get("why") == "error"
-                     and str(rot[name].get("error", "")).startswith("partial:")
-                     and int(rot[name].get("n", 0)) >= PARTIAL_MAX_NIGHTS)):
-        # the browser failed mid-way (a goto timeout after the first XHR page landed) and the
-        # jobs are what was captured before it did: a partial read. Yesterday's fuller list
-        # stays and tonight is an error — for at most PARTIAL_MAX_NIGHTS, after which the
-        # smaller list is the board's new truth (a board that genuinely shrank must converge;
-        # the first version compared against the list it had carried itself and never did).
-        res = {**res, "error": f"partial:{res['error']}"}
+    # a partial read: yesterday's fuller list stays and tonight is an error — for at most
+    # PARTIAL_MAX_NIGHTS, after which the smaller list is the board's new truth (a board that
+    # genuinely shrank must converge; the first version compared against the list it had
+    # carried itself and never did). Two ways to be partial:
+    #   `rescued`  the browser failed mid-way and these jobs are what landed before it did
+    #   `weak`     the board was read as bare titles, none of them addressed, and it collapsed
+    #              — Quantum Machines' 18 Comeet postings became 4 card titles on 2026-08-26
+    # `weak_read` counts what the ADDER accepted; the shrink compares what `pipeline.israel`
+    # accepts. A board whose Israel roles all genuinely closed, read weakly, satisfied the
+    # second test with an empty `il` and was booked as an error instead of an honest empty
+    # (wave-1 attacker B), so the guard needs a reading that is still Israeli.
+    partial = ((res.get("rescued") and res.get("error"))
+               or (res.get("weak_read") and il and name in old
+                   and len(il) * WEAK_SHRINK_RATIO < len(old[name])))
+    if (jobs is not None and partial and name in old and len(il) < len(old[name])
+            and int((rot.get(name) or {}).get("partial_n", 0)) < PARTIAL_MAX_NIGHTS):
+        res = {**res, "error": f"partial:{res.get('error') or 'weak:read'}"}
         jobs = None
     if jobs is None:
         code = _code(res)
@@ -393,7 +561,13 @@ def _apply_result(row, res, old, rot, today, st: RunState):
             # night the listing itself lists fewer than three positions (an ordinary empty).
             st.counts["links_unread"] += 1
             st.unread.append(name)
-        if name in old and (days < CARRY_MAX_DAYS or code.startswith("links:")):
+        res_age = _residential_age(old.get(name), today)
+        if res_age is not None and not 0 <= res_age <= RESIDENTIAL_MAX_DAYS:
+            # a home-address read has ONE expiry, whatever tonight's code is: an error night
+            # carries for 14 days and a `links:` one carries forever, and either would have
+            # kept a months-old read on the board (wave-1 attacker B)
+            _expire_residential(name, res_age, rot, today, st)
+        elif name in old and (days < CARRY_MAX_DAYS or code.startswith("links:")):
             st.cache[name] = old[name]
             st.counts["carried"] += 1
         elif name in old:
@@ -401,12 +575,28 @@ def _apply_result(row, res, old, rot, today, st: RunState):
                   f"stale jobs", flush=True)
         if nights >= ROT_PARK_DAYS and _parkable(code):        # nights of THIS shape only
             st.parked.append((name, f"error {days}d"))
+        ip_age = _ip_age(rot.get(name), today)
+        if ip_age >= STALE_IP_NIGHTS:
+            # never parked (parking hands it to a hunt on the same refused address), so after
+            # a month somebody has to look: is it us, the site, or a URL that moved? (216)
+            # The row records the age it was last announced at, so ONE skipped night cannot
+            # lose the alarm for another month, and a re-run cannot raise it twice.
+            announced = int(rot[name].get("ip_announced", 0))
+            st.stale_ip.append((name, ip_age, ip_age >= announced + STALE_IP_NIGHTS))
+            if ip_age >= announced + STALE_IP_NIGHTS:
+                rot[name]["ip_announced"] = ip_age
         return
     if il:
         st.counts["with_jobs"] += 1
         st.strategies[res["strategy"]] = st.strategies.get(res["strategy"], 0) + 1
-        if res.get("strategy") == "llm":
+        stages_won = str(res.get("strategy") or "").split("+")
+        if "llm" in stages_won:
             st.spend["llm_won"] += 1
+        # the unlocker only ever feeds the position-page rung and the listing re-fetch, so a
+        # win it paid for is one where those read the board — not merely a night where the
+        # unlocker answered and another strategy won (wave-1 attacker B)
+        if int(res.get("unlock_ok") or 0) and {"links", "llm", "cards"} & set(stages_won):
+            st.spend["unlock_won"] += 1
         st.cache[name] = st.successes[name] = _carry_jd(il, old.get(name, []))
         rot.pop(name, None)                                    # healthy again
     else:
@@ -414,10 +604,26 @@ def _apply_result(row, res, old, rot, today, st: RunState):
         if jobs:
             st.counts["no_il"] += 1                            # found roles, none in Israel
         days, _ = _rot_bump(rot, name, "empty", today, res)
+        # a board only a home address can read (the cloud gets a degraded page from its
+        # datacenter IP) keeps the jobs somebody read here, for as long as that read is
+        # fresh. Never silently: the night it expires says so, and three nights before that
+        # it asks — the row would otherwise go dark for a day before anyone could re-run it.
         # NEVER park on empty — see EMPTY_REVALIDATE_DAYS. A long streak asks triage to
-        # read the page with an LLM; the row stays ACTIVE and scanned daily either way.
+        # read the page with an LLM; the row stays ACTIVE and scanned daily either way. A
+        # residential carry is still an un-revalidated empty: the cloud has not read this
+        # board in weeks, which is exactly what triage should look at.
         if days >= EMPTY_REVALIDATE_DAYS:
             st.revalidate.append((name, days))
+        age = _residential_age(old.get(name), today)
+        if age is None:
+            return
+        if 0 <= age <= RESIDENTIAL_MAX_DAYS:
+            st.cache[name] = old[name]
+            st.counts["carried_residential"] += 1
+            if age >= RESIDENTIAL_MAX_DAYS - RESIDENTIAL_WARN_DAYS:
+                st.residential_due.append((name, RESIDENTIAL_MAX_DAYS - age))
+            return
+        _expire_residential(name, age, rot, today, st)
 
 
 _TOKEN_RX = re.compile(r"[^A-Za-z0-9_.%+:-]")
@@ -461,6 +667,12 @@ def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=Fals
     s = st.spend
     if s["llm_calls"] >= 3 and s["llm_fail"] >= s["llm_calls"]:
         tokens.append("llm-down")            # every call failed: the token, the CLI, the quota
+    if s["llm_calls"] > LLM_RUNAWAY_CALLS:
+        tokens.append(f"llm-calls-{s['llm_calls']}")   # the signal gate broke open
+    # a row crossing the month mark tonight — once per row per month, never a standing alarm
+    crossed = [n for n, _, is_new in st.stale_ip if is_new]
+    if crossed:
+        tokens.append(f"stale-ip-{len(crossed)}")
     if rot_unreadable:
         tokens.append("rot-unreadable")
     return "+".join(tokens)
@@ -514,6 +726,7 @@ class Opts:
     shard: tuple | None = None
     dry_run: bool = False
     apply: bool = False
+    residential: bool = False
     workers: int = DEFAULT_WORKERS
 
     @property
@@ -537,10 +750,26 @@ def _parse(argv):
             o.dry_run = True
         elif a == "--apply":
             o.apply = True
+        elif a == "--residential":
+            o.residential = o.apply = True
         elif a == "--workers":
             o.workers = int(next(it))
         else:
             raise SystemExit(f"unknown argument {a!r} — see the module docstring")
+    if o.residential:
+        # a claim about WHERE the page was read from, so only a run that can honestly make it
+        if os.environ.get("GITHUB_ACTIONS"):
+            raise SystemExit("--residential is a read from a home address; the runner cannot "
+                             "claim one (that address is the reason the row is empty)")
+        if not (o.only or o.only_missing):
+            # `scoped` is also true for --limit and --shard, and `--shard 0 1` IS the whole
+            # registry: one command would stamp every company as read from a home address
+            # and the cache would stop converging for a fortnight (wave-1 attacker B)
+            raise SystemExit("--residential needs --only or --only-missing: it merges INTO "
+                             "the cloud's cache and must never rewrite the whole of it")
+        for flag in ("SCRAPE_LLM", "SCRAPE_VIA_UNLOCKER"):
+            if os.environ.get(flag):
+                raise SystemExit(f"--residential must be reproducible for 0 spend; unset {flag}")
     return o
 
 
@@ -629,8 +858,8 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
         # the bookkeeping below is in registry order, so the output is deterministic
         what = (f"ERROR {res['error']}" if res["status"] == "error"
                 else f"{len(res['jobs'])}" + (f" via {res['strategy']}" if res["jobs"] else ""))
-        print(f"  [{len(results)}/{len(rows)}] {res['name']}: {what} ({res['seconds']:.0f}s)",
-              flush=True)
+        print(f"  [{len(results)}/{len(rows)}] {res['name']}: {what} "
+              f"({res['seconds']:.0f}s){_spent(res)}", flush=True)
     # bookkeeping in REGISTRY order, in the parent: the pool and the inline path produce
     # byte-identical output, only the progress lines differ
     for r in rows:
@@ -651,6 +880,18 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
         print(f"::warning::positions unreadable from this runner for {len(st.unread)} "
               f"companies ({kept} with yesterday's jobs carried; all kept active): "
               f"{st.unread[:12]}", flush=True)
+    if st.residential_due:
+        print(f"::warning::{len(st.residential_due)} companies the cloud cannot read are "
+              f"living on a home-address read that expires within {RESIDENTIAL_WARN_DAYS} "
+              f"nights — re-run `--residential` for: "
+              f"{[n for n, _ in sorted(st.residential_due, key=lambda x: x[1])[:12]]}",
+              flush=True)
+    if st.stale_ip:
+        # never parked by design, so nothing else will ever raise its hand (BACKLOG 216)
+        print(f"::warning::the runner's address has been refused for {STALE_IP_NIGHTS}+ nights "
+              f"by {len(st.stale_ip)} companies — hand-check (is it us, the site, or a moved "
+              f"URL?): {[(n, a) for n, a, _ in sorted(st.stale_ip, key=lambda x: -x[1])][:12]}",
+              flush=True)
     c = st.counts
     minutes = int((clock() - t0) / 60)
     mass_failure = (c["scraped"] >= MASS_FAILURE_MIN_ROWS
@@ -672,9 +913,10 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     # the flags would otherwise carry five permanent zeros)
     if os.environ.get("SCRAPE_LLM"):
         detail.update(llm_calls=st.spend["llm_calls"], llm_won=st.spend["llm_won"],
-                      llm_fail=st.spend["llm_fail"])
+                      llm_fail=st.spend["llm_fail"], llm_skipped=st.spend["llm_skipped"])
     if os.environ.get("SCRAPE_VIA_UNLOCKER"):
-        detail.update(unlock_calls=st.spend["unlock_calls"], unlock_ok=st.spend["unlock_ok"])
+        detail.update(unlock_calls=st.spend["unlock_calls"], unlock_ok=st.spend["unlock_ok"],
+                      unlock_won=st.spend["unlock_won"])
     if alarm:
         detail["alarm"] = alarm
     print(f"=== collect: " + " ".join(f"{k}={v}" for k, v in detail.items())
@@ -691,9 +933,13 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
             if state == "unreadable":
                 print(f"::error::{CACHE_PATH} is unreadable — not merging over it")
                 return 1
-            fresh.update(st.successes)
+            merged = ({k: _mark_residential(v, today) for k, v in st.successes.items()}
+                      if o.residential else st.successes)
+            fresh.update(merged)
             write_json(CACHE_PATH, fresh, sort_keys=True)
-            print(f"merged {len(st.successes)} companies into {CACHE_PATH}")
+            print(f"merged {len(merged)} companies into {CACHE_PATH}"
+                  + (f" as residential reads — the cloud keeps them for "
+                     f"{RESIDENTIAL_MAX_DAYS} nights" if o.residential else ""))
         else:
             print(f"scoped run: nothing written (use --apply to merge {len(st.successes)} "
                   f"companies with Israel roles into {CACHE_PATH})")
