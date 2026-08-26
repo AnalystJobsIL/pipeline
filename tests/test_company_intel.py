@@ -1078,3 +1078,82 @@ def test_the_run_hook_passes_the_breaker_reason():
     from pipeline import run as R
     src = inspect.getsource(R.run)
     assert "llm_off_reason=getattr(clf" in src, "the hook is not wired"
+
+
+# --- the employee-fill path: migrated 2026-08-26 and, until now, never exercised ---------
+
+def test_the_employee_fill_goes_through_the_seam_with_search_granted(monkeypatch):
+    """`fill_employees_llm.lookup` was moved onto pipeline/llm.py with the rest of the seam
+    and then not run once — untested code that spends a shared subscription. Headcount is the
+    single stalest field in the record, so the search mandate matters most here."""
+    import shutil as _sh
+
+    import fill_employees_llm as FE
+    from pipeline import llm
+    seen = {}
+
+    def fake_run(cmd, **kw):
+        seen["cmd"], seen["kw"] = list(cmd), kw
+        return subprocess.CompletedProcess(cmd, 0, stdout=json.dumps(
+            {"type": "result", "is_error": False,
+             "structured_output": {"employees": 4200, "is_estimate": False,
+                                   "source": "company About page, 2026"},
+             "modelUsage": {"claude-sonnet-5": {"inputTokens": 5, "outputTokens": 9,
+                                                "canonicalModel": "claude-sonnet-5",
+                                                "webSearchRequests": 2}}}), stderr="")
+    monkeypatch.setattr(llm.subprocess, "run", fake_run)
+    monkeypatch.setattr(_sh, "which", lambda n, *a, **k: "/usr/bin/claude")
+
+    meta = {}
+    got = FE.lookup("Wix", {"sector": "web", "sub_sector": "builder", "il_center": "TA"},
+                    meta=meta)
+    assert got == {"employees": 4200, "is_estimate": False,
+                   "source": "company About page, 2026"}, got
+    cmd, kw = seen["cmd"], seen["kw"]
+    assert kw.get("shell", False) is False, "it used shell=True on EVERY platform before"
+    assert "israeli-jobs-pipeline" not in str(kw.get("cwd", "")).lower()
+    assert cmd[cmd.index("--model") + 1] == F.EMPLOYEES_MODEL
+    assert cmd[cmd.index("--tools") + 1] == "WebSearch" and "--allowedTools" in cmd
+    assert cmd[cmd.index("--json-schema") + 1] == FE._SCHEMA
+    assert meta["searches"] == 2 and not meta.get("searchless")
+
+
+def test_an_implausible_headcount_is_refused_and_an_outage_raises(monkeypatch):
+    """The 1..5,000,000 clamp is the only thing between a hallucinated number and a card that
+    says '~0 employees'. And an outage must reach the caller as ResearchUnavailable —
+    `fill_employees_llm.main` catches only that, so anything else is a 03:00 traceback."""
+    import shutil as _sh
+
+    import fill_employees_llm as FE
+    from pipeline import llm
+    monkeypatch.setattr(_sh, "which", lambda n, *a, **k: "/usr/bin/claude")
+
+    def answer(payload, code=0):
+        monkeypatch.setattr(llm.subprocess, "run", lambda cmd, **kw:
+                            subprocess.CompletedProcess(cmd, code, stdout=json.dumps(payload),
+                                                        stderr=""))
+    ok = {"type": "result", "is_error": False,
+          "modelUsage": {"claude-sonnet-5": {"outputTokens": 3, "webSearchRequests": 1}}}
+    for bad in (0, -5, 9_000_000, None, "many"):
+        answer({**ok, "structured_output": {"employees": bad, "is_estimate": False,
+                                            "source": "s"}})
+        assert FE.lookup("X", {}) is None, bad
+    answer({**ok, "structured_output": {"employees": 42, "is_estimate": True, "source": "s"}})
+    assert FE.lookup("X", {})["employees"] == 42
+    # exit 0 with an error envelope: the shape the old seam scored as the NAME failing
+    answer({"type": "result", "is_error": True, "api_error_status": 401,
+            "result": "Failed to authenticate"})
+    with pytest.raises(F.ResearchUnavailable) as e:
+        FE.lookup("X", {})
+    assert e.value.kind == "auth"
+
+
+def test_bd_employees_does_not_touch_the_llm_seam():
+    """`bd_employees` is the Bright Data pass — LinkedIn pages, 1 credit each — and must stay
+    out of the CLI seam entirely, so an LLM outage cannot stop the cheap counter."""
+    import inspect
+
+    import bd_employees
+    src = inspect.getsource(bd_employees)
+    assert "claude" not in src.lower(), "bd_employees must not spawn the CLI"
+    assert "pipeline.llm" not in src and "research_company" not in src
