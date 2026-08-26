@@ -9218,3 +9218,49 @@ def test_scrape_a_labelled_place_is_the_roles_own_claim():
     plain = N._parse_position_page("<html><h1>Data Analyst</h1><p>Ramat Gan, Israel</p></html>",
                                    "https://co.example/job/q/")
     assert plain["loc"] == "Ramat Gan, Israel"
+
+
+def test_refresh_a_reposted_role_does_not_inherit_the_closed_ones_description():
+    """BACKLOG 249 (`scraper` 2026-08-26 evening): the (title, place) key cannot tell a
+    promotion from a re-post, so when yesterday's `Data Analyst / Tel Aviv` closed and a new
+    one opened, the new card inherited the dead role's text — and kept it, because
+    `enrich_scrape_jd` skips any card that already has a description.
+
+    The two shapes are distinguishable after all, by what the OLD card knew: a promotion is a
+    card that had NO address of its own being given one; a re-post is two cards that each
+    name their own, different page. Only the first carries."""
+    import refresh_scrape_cache as R
+    listing = "https://co.example/careers"
+
+    def card(url, jid, desc, title="Data Analyst"):
+        return {"title": title, "location": "Tel Aviv", "url": url, "job_id": jid,
+                "description": desc}
+
+    # a re-post: two different real pages
+    out = R._carry_jd([card(listing + "/jobs/999", "999", "")],
+                      [card(listing + "/jobs/111", "111", "CLOSED ROLE: reporting to the CMO")],
+                      listing)
+    assert out[0]["description"] == "", out[0]["description"]
+    # a promotion: yesterday's card had no address of its own
+    out = R._carry_jd([card(listing + "/jobs/1", listing + "/jobs/1", "")],
+                      [card(listing, "sha1abc", "the JD")], listing)
+    assert out[0]["description"] == "the JD"
+    # an ordinary night, nothing moved: text AND the 7-day cooldown travel
+    prev = dict(card(listing + "/jobs/5", "5", "D"), _jd_attempted="2026-08-21")
+    out = R._carry_jd([card(listing + "/jobs/5", "5", "")], [prev], listing)
+    assert out[0]["description"] == "D" and out[0]["_jd_attempted"] == "2026-08-21"
+    # no listing url is "cannot tell", and must never accuse a card of being a re-post
+    out = R._carry_jd([card(listing + "/jobs/999", "999", "")],
+                      [card(listing + "/jobs/111", "111", "the JD")], "")
+    assert out[0]["description"] == "the JD"
+
+
+def test_scrape_the_foreign_vocabulary_covers_the_cities_a_sales_bench_is_named_for():
+    """BACKLOG 247 (`scraper` 2026-08-26 evening) stays open — a list of places is never
+    finished — but the wave-2 confirmer named the gap it could reach through, and a role
+    called after a US city is the exact shape `_FOREIGN_PAGE_RX` exists to catch."""
+    import scrape_universal as N
+    for city in ("Denver", "Chicago", "Atlanta", "Miami", "Dallas", "Austin", "Houston"):
+        assert N._FOREIGN_PAGE_RX.search("Account Executive - %s, CO" % city), city
+    for israeli in ("Tel Aviv", "Herzliya", "Haifa", "Ramat Gan", "Hod HaSharon"):
+        assert not N._FOREIGN_PAGE_RX.search("Data Analyst, %s" % israeli), israeli

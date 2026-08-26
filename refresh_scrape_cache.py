@@ -346,6 +346,16 @@ def _result_of(fut, name):
 # ---------------------------------------------------------------------------------------------
 # per-company bookkeeping (pure: no I/O)
 # ---------------------------------------------------------------------------------------------
+def _is_own_address(j, listing):
+    """Does this card name a page of its own, rather than the listing it was read from?
+    Unknowable without the listing url, and an unknown answer must not accuse a card of being
+    a re-post — so no listing means "cannot tell", and the carry behaves as it always did."""
+    if not listing:
+        return False
+    from scrape_universal import _is_strong
+    return _is_strong(j.get("url"), listing)
+
+
 def _title_key(j):
     """A card's (title, place) — what survives a night when its ADDRESS changed."""
     title = (j.get("title") or "").strip().lower()
@@ -357,7 +367,7 @@ def _addresses(j):
     return [x for x in (j.get("url") or "", j.get("job_id") or "") if x]
 
 
-def _carry_jd(new_jobs, old_jobs):
+def _carry_jd(new_jobs, old_jobs, listing=""):
     """A rebuilt card with an empty description inherits the previous run's text so daily
     refreshes stop wiping what enrich_scrape_jd fetched — and the `_jd_attempted` stamp
     travels too, or failed enrichments lose their 7-day cooldown every night and re-burn
@@ -388,14 +398,22 @@ def _carry_jd(new_jobs, old_jobs):
             pj = next((prev[a] for a in _addresses(j) if a in prev), None)
         if pj is None:
             continue
-        if not (j.get("description") or "").strip() and (pj.get("description") or "").strip():
+        same_address = bool(set(_addresses(j)) & set(_addresses(pj)))
+        # A title match across TWO DIFFERENT addresses that each name their own page is a
+        # re-post, not a promotion: yesterday's `Data Analyst / Tel Aviv` closed and a new one
+        # opened. Carrying the text there put a dead role's description on a live opening and
+        # kept it (jdfill skips a card that already has one). A promotion is the other shape
+        # — yesterday's card had NO address of its own — and still carries (BACKLOG 249).
+        reposted = (not same_address and _is_own_address(pj, listing)
+                    and _is_own_address(j, listing))
+        if (not reposted and not (j.get("description") or "").strip()
+                and (pj.get("description") or "").strip()):
             j["description"] = pj["description"]
         # the cooldown follows an unchanged ADDRESS, whichever key found the card: a posting
         # whose address moved may be a re-post rather than a promotion, and jdfill must stay
         # free to read it — but the ordinary night, where nothing moved, must keep its 7-day
         # cooldown or every card re-enters the Bright Data pool nightly.
-        if (set(_addresses(j)) & set(_addresses(pj)) and pj.get("_jd_attempted")
-                and not j.get("_jd_attempted")):
+        if same_address and pj.get("_jd_attempted") and not j.get("_jd_attempted"):
             j["_jd_attempted"] = pj["_jd_attempted"]
     return new_jobs
 
@@ -600,7 +618,8 @@ def _apply_result(row, res, old, rot, today, st: RunState):
         # unlocker answered and another strategy won (wave-1 attacker B)
         if int(res.get("unlock_ok") or 0) and {"links", "llm", "cards"} & set(stages_won):
             st.spend["unlock_won"] += 1
-        st.cache[name] = st.successes[name] = _carry_jd(il, old.get(name, []))
+        st.cache[name] = st.successes[name] = _carry_jd(il, old.get(name, []),
+                                                     row.get("api_url", ""))
         rot.pop(name, None)                                    # healthy again
     else:
         st.counts["empty"] += 1

@@ -3191,7 +3191,12 @@ re-derive again before acting.
     for the job: what would actually settle it is the role's OWN location field where the
     board publishes one (Comeet's `POSITION_DATA.location`, which strategy 1 already reads
     when the XHR lands). Until then, add places when one is seen, and do not pretend the
-    class is closed.
+    class is closed. **Narrowed 2026-08-26 (evening):** the cities the wave-2 confirmer
+    could still reach through are in — Denver, Chicago, Atlanta, Miami, Dallas, Phoenix,
+    Philadelphia, San Diego, Los Angeles, Washington, Detroit, Minneapolis, Nashville,
+    Charlotte, Raleigh, Portland, Sunnyvale — and `test_scrape_the_foreign_vocabulary_covers_
+    the_cities_a_sales_bench_is_named_for` pins them. The item stays open because a list of
+    places is never finished; the durable fix is still the role's own location field.
 
 248. **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
     board** — lane: `scraper`. A held page (one naming no place of its own) is refused when
@@ -3212,7 +3217,13 @@ re-derive again before acting.
     carries it), not to widen a place list.
 
 249. **A closed role still donates its description to a new posting with the same title and
-    place** — lane: `scraper`. `_carry_jd`'s (title, place) key cannot tell a promotion from
+    place** — lane: `scraper`. **CLOSED 2026-08-26 (evening):** the two shapes ARE
+    distinguishable, by what YESTERDAY's card knew. A promotion is a card that had no address
+    of its own being given one; a re-post is two cards that each name their own, different
+    page. Only the first carries text now. No listing url means "cannot tell", and an unknown
+    answer never accuses a card of being a re-post — the carry then behaves as it always did.
+    Pinned by `test_refresh_a_reposted_role_does_not_inherit_the_closed_ones_description`.
+    Was: `_carry_jd`'s (title, place) key cannot tell a promotion from
     a re-post, so when yesterday's `Data Analyst / Tel Aviv` closes and a new one opens, the
     new card inherits the old text. The 7-day cooldown deliberately does NOT travel on that
     match, so `jdfill` re-reads it and the text self-corrects — but the board shows the dead

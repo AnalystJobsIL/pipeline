@@ -1094,6 +1094,10 @@ _FOREIGN_PAGE_RX = re.compile(
     r"Mexico|Ireland|Sweden|Switzerland|Austria|Romania|Bulgaria|Serbia|Cyprus|Greece|Turkey|"
     r"UAE|Dubai|London|New York|Berlin|Paris|Bangalore|Amsterdam|Lisbon|Warsaw|Kyiv|Kiev|"
     r"Boston|Austin|Houston|Palo Alto|San Francisco|Seattle|Toronto|"
+    # ...and the US cities a global board's sales bench is named after, which the wave-2
+    # confirmer found missing while `Account Executive - Denver, CO` still read as Israeli
+    r"Denver|Chicago|Atlanta|Miami|Dallas|Phoenix|Philadelphia|San Diego|Los Angeles|"
+    r"Washington|Detroit|Minneapolis|Nashville|Charlotte|Raleigh|Portland|Sunnyvale|"
     # the region a global board writes into the role's own name (Utila's sales bench)
     r"EMEA|APAC|LATAM|NORAM|ANZ|DACH)(?![A-Za-z])")
 
