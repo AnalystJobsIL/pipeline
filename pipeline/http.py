@@ -69,6 +69,17 @@ def get_json(url, *, timeout=DEFAULT_TIMEOUT, retries=3, headers=None):
     return json.loads(text)
 
 
+def get_text(url, *, timeout=DEFAULT_TIMEOUT, retries=3, headers=None):
+    """GET a URL and return the body as text — `get_json` without the parse.
+
+    Added 2026-08-26 for `fetchers.fetch_successfactors`: SuccessFactors career sites publish
+    no JSON at all, so that platform is read from the HTML fragment the site's own pagination
+    requests. A pure addition — every existing caller goes through `get_json`/`post_json` and
+    is unaffected — but this module is shared plumbing, so it is declared in the session
+    record rather than slipped in."""
+    return _request(url, method="GET", timeout=timeout, retries=retries, headers=headers)
+
+
 def post_json(url, body, *, timeout=DEFAULT_TIMEOUT, retries=3, headers=None):
     """POST a JSON body to a URL and parse the response as JSON."""
     text = _request(url, method="POST", body=body, timeout=timeout, retries=retries,

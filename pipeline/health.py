@@ -56,6 +56,17 @@ ATS_HOST = re.compile(r"greenhouse\.io|lever\.co|ashbyhq\.com|smartrecruiters\.c
                       # JazzHR has no public JSON, so a scrape row on that host is the RIGHT
                       # configuration (Questar, 4 Herzliya roles), not a misconfiguration.
                       r"breezy\.hr|bamboohr\.com|oraclecloud\.com|"
+                      # added 2026-08-26 with `fetch_jobvite`: a scrape row on the Jobvite
+                      # board host is now convertible, so flagging it is actionable (the
+                      # BACKLOG 78 rule — never flag what no fetcher can take over).
+                      # SAP's career-site-builder platform cannot be listed here at all: those
+                      # sites live on the tenant's own domain (jobs.sap.com,
+                      # careers.stratasys.com), so there is no host to match and
+                      # `platform_check` shows that cell MISSING on purpose. (Its name is
+                      # spelled around deliberately: that check greps THIS source, so writing
+                      # the platform's name in a comment would report a wiring that is not
+                      # here -- it did, until this comment was reworded.)
+                      r"jobs\.jobvite\.com|"
                       r"amazon\.jobs|careers\.microsoft\.com", re.I)
 BASELINE = "cloud_state/health_baseline.json"   # committed, so it persists across cloud runs
 STALE = "cloud_state/stale.json"                # committed, so the self-heal job can read it

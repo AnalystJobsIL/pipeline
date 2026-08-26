@@ -7078,7 +7078,8 @@ def test_jazzhr_is_retired_and_a_scrape_row_on_applytojob_is_not_a_misconfig():
         platform_check.check()
     grid = {l.split()[0] for l in buf.getvalue().splitlines() if l}
     assert "jazzhr" not in grid and "greenhouse" in grid
-    assert "15 platforms" in buf.getvalue()
+    # 15 until the evening of 2026-08-26, when `successfactors` and `jobvite` were added
+    assert "17 platforms" in buf.getvalue()
 
 
 def test_scrape_cache_in_points_the_digest_at_a_scratch_cache(tmp_path, monkeypatch):
@@ -8174,6 +8175,94 @@ def test_the_rebase_report_names_the_postings_a_baseline_was_built_from(tmp_path
                        encoding="utf-8")
     got = health_check.rebase_report(str(cache_p), stale_path=str(stale_p), baseline_path=str(base_p))
     assert got["NetApp"] == [] and [p["title"] for p in got["Sanofi"]] == ["T"]
+
+
+_SF_FRAGMENT = """
+<li class="job-tile job-id-1412195733 job-row-index-1" data-url="/job/Ra&amp;apos;anana-Student-DevOps-Engineer-4366202/1412195733/">
+  <span class="section-title title"><a class="jobTitle-link fontcolorb6" href="/job/x/1412195733/">
+     Student DevOps Engineer- CxP Commercial Foundation Services </a></span>
+</li>
+<li class="job-tile job-id-1420460100 job-row-index-2" data-url="/job/Rehovot-NPI-Engineer-1/1420460100/">
+  <span class="section-title title"><a class="jobTitle-link" href="/job/y/1420460100/"> NPI Engineer (Mechanical) </a></span>
+  <div id="job-1420460100-desktop-section-city-value">Rehovot
+  </div>
+  <div id="job-1420460100-desktop-section-location-value">Rehovot, IL
+  </div>
+  <div id="job-1420460100-desktop-section-date-value">2026-08-20
+  </div>
+</li>
+<li class="job-tile job-id-9 job-row-index-3" data-url="/job/Maple-Grove-Supplier-Quality-Engineer-MN/9/">
+  <span class="section-title title"><a class="jobTitle-link" href="/job/z/9/"> Sr. Supplier Quality Engineer </a></span>
+  <div id="job-9-desktop-section-location-value">Maple Grove, Minnesota, United States
+  </div>
+</li>
+"""
+
+_JV_PAGE = """
+<li class="row"><a href="/varonis/job/ovaAAfwz"><div class="job-item">
+  <div class="jv-job-list-name"> Data Engineer </div>
+  <div class="ml-auto jv-job-list-location"><span>R&amp;D</span><span> Israel </span></div>
+</div></a></li>
+<li class="row"><a href="/varonis/job/oQ2mAfwy"><div class="job-item">
+  <div class="jv-job-list-name"> Sales Manager </div>
+  <div class="ml-auto jv-job-list-location"><span>Sales</span><span> Australia </span></div>
+</div></a></li>
+"""
+
+
+def test_successfactors_and_jobvite_read_the_boards_that_published_no_json(monkeypatch):
+    """Two platforms the repo could not read at all until 2026-08-26, both HTML-only, both
+    holding rows that produced ZERO through the browser scraper: SuccessFactors (6 active rows)
+    and Jobvite (1). Live on the day they shipped: **Stratasys 0 -> 13 Israel roles**, Varonis
+    0 -> 3 (`Data Engineer`, `Data Platform Engineer`, `MDR Security Engineer`), SAP 2 -> 3.
+
+    Neither is `israel_scoped`, and SuccessFactors is the reason why: `locationsearch=Israel`
+    is honoured by jobs.sap.com and careers.stratasys.com and IGNORED by
+    jobs.bostonscientific.com, which answers the same request with 30 Minnesota tiles. The
+    third tile below is that case — it must survive the fetch and be dropped by
+    `pipeline.israel`, never by the fetcher."""
+    from pipeline import fetchers, israel
+    pages = []
+    monkeypatch.setattr(fetchers.http, "get_text",
+                        lambda u, **k: (pages.append(u), _SF_FRAGMENT if "startrow=0" in u else "")[1])
+    jobs = fetchers.fetch_company({"company_name": "T", "ats_platform": "successfactors", "token": "",
+                                   "api_url": "https://jobs.sap.com/tile-search-results/?q=&locationsearch=Israel"})
+    assert [j["job_id"] for j in jobs] == ["1412195733", "1420460100", "9"]
+    assert [j["title"] for j in jobs][:2] == ["Student DevOps Engineer- CxP Commercial Foundation Services",
+                                              "NPI Engineer (Mechanical)"]
+    # the labelled cell wins; with no cell the city that leads the slug is read (SAP renders
+    # no location at all, and its slug carries `&amp;apos;` — double-encoded)
+    assert jobs[1]["location"] == "Rehovot, IL" and jobs[1]["posted_date"] == "2026-08-20"
+    assert jobs[0]["location"] == "Ra'anana"
+    assert jobs[0]["url"] == "https://jobs.sap.com/job/Ra'anana-Student-DevOps-Engineer-4366202/1412195733/"
+    assert [israel.is_israel_job(j) for j in jobs] == [True, True, False], "Minnesota is dropped downstream"
+    assert pages[0].endswith("startrow=0") and "startrow=3" in pages[1], "paging counts tiles, not a page size"
+    assert not any(j["description"] for j in jobs) and all(j["ats_platform"] == "successfactors" for j in jobs)
+
+    pages.clear()
+    monkeypatch.setattr(fetchers.http, "get_text",
+                        lambda u, **k: (pages.append(u), _JV_PAGE if "?p=" not in u else "")[1])
+    jobs = fetchers.fetch_company({"company_name": "Varonis", "ats_platform": "jobvite", "token": "",
+                                   "api_url": "https://jobs.jobvite.com/varonis/search"})
+    assert [(j["job_id"], j["title"], j["location"]) for j in jobs] == [
+        ("ovaAAfwz", "Data Engineer", "R&D Israel"), ("oQ2mAfwy", "Sales Manager", "Sales Australia")]
+    assert jobs[0]["url"] == "https://jobs.jobvite.com/varonis/job/ovaAAfwz"
+    assert [israel.is_israel_job(j) for j in jobs] == [True, False]
+    assert pages[1].endswith("?p=2"), "paging follows ?p= and stops when a page adds nothing"
+    # both declare themselves unscoped, so a zero is evidence and health may flag an empty board
+    from pipeline import health
+    for p in ("successfactors", "jobvite"):
+        assert fetchers.FETCHERS[p].israel_scoped is False
+        assert health.stale_reason(p, "", 0, "empty", 0) == "empty-board"
+    # a scrape row left on the Jobvite board host is now a misconfiguration, because a fetcher
+    # can take it over (the BACKLOG 78 rule); SuccessFactors has no host to match, by design
+    assert health.ATS_HOST.search("https://jobs.jobvite.com/varonis/search") is not None
+    assert health.ATS_HOST.search("https://careers.stratasys.com/viewalljobs/") is None
+    # an empty board, and a page of markup with no tiles, are empty lists and not crashes
+    monkeypatch.setattr(fetchers.http, "get_text", lambda u, **k: "<html>nothing here</html>")
+    for p, u in (("successfactors", "https://x.example/tile-search-results/?q="),
+                 ("jobvite", "https://jobs.jobvite.com/x/search")):
+        assert fetchers.fetch_company({"company_name": "E", "ats_platform": p, "token": "", "api_url": u}) == []
 
 
 def test_oraclehcm_reads_the_whole_board_and_never_sends_a_location_filter(monkeypatch):

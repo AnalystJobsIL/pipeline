@@ -2977,3 +2977,50 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     advertises it (Verint: exactly 4) and is silently ignored elsewhere — onsemi, Fortinet, Dell
     and JPMorganChase each returned their ENTIRE board for `locationId=<Israel>`, which a
     trusting fetcher would have published as Israeli jobs.
+242. **`successfactors` and `jobvite` are fetchable but undiscoverable — 7 of the grid's 28
+    MISSING cells** — lane: `registry`. Both fetchers shipped 2026-08-26 and both are invisible
+    to every resolver: `successfactors` is missing from `SIGS` (`audit_empty_rows.py`),
+    `_HTML_ATS` (`resolve_broken.py`), `ATS_PATTERNS` (`resolve_deep.py`) and `resolve_llm.py`'s
+    prompt/enum; `jobvite` from `_HTML_ATS` and `ATS_PATTERNS` (it is in `SIGS` and the LLM prompt already). Until they are wired, a
+    hand-configured row fetches but nothing will ever FIND the platform in the wild — the exact
+    silent half-wiring `pipeline/platform_check.py` exists to make visible. Detection strings:
+    SuccessFactors renders `<li class="job-tile job-id-N" data-url="/job/<slug>/<id>/">` and its
+    pagination fragment is `/tile-search-results/?q=&locationsearch=&startrow=N`; Jobvite is
+    `jobs.jobvite.com/<slug>/search` with `jv-job-list-name` / `jv-job-list-location` cells.
+    `health.ATS_HOST` gained `jobs.jobvite.com` but CANNOT gain SuccessFactors — its career
+    sites live on the tenant's own domain (`jobs.sap.com`, `careers.stratasys.com`), so that
+    cell stays MISSING by design.
+243. **iCIMS: 7 active rows, every one producing zero, and no readable list** — lane: `ats-fetch`
+    (+ `registry` to find the tenants). Measured 2026-08-26: SuperSmart, Datumate, Sasa Software,
+    Cognata, Cordio Medical and Booking.com all cache **0** Israel roles (Zota caches 1). The one
+    row whose tenant is known — Booking.com,
+    `employees-holdings-workingatbooking.icims.com/jobs/search?ss=1` — answers 503 KB of JS shell
+    with **0 job links and 2 "israel" strings**, and `&format=json` changes nothing. The other
+    five are small Israeli companies whose careers page embeds an iCIMS iframe, so the tenant
+    subdomain is not even known yet (`crack_walled`'s job). Until a tenant serves a list, this
+    platform cannot have a fetcher; the rows stay with the browser scraper, which is also
+    getting nothing from them.
+244. **Avature: 2 active rows, both zero, buildable but unbounded** — lane: `ats-fetch`. Harman
+    (`jobsearch.harman.com/en_US/careers/SearchJobs/?listFilterMode=1&jobRecordsPerPage=25&jobOffset=0`)
+    answers 210 KB of server-rendered HTML with ~40 job links per page — parseable — but the
+    request carries no working location filter, so reading it means walking a global board of
+    unknown size for two rows that cache 0 Israel roles today (Harman, Bank of America). Worth
+    building only with a measured Israel count behind it: walk it once by hand first.
+245. **Three SuccessFactors tenants run an older site version the new fetcher cannot page** —
+    lane: `ats-fetch`. `fetch_successfactors` reads `/tile-search-results/`, which SAP,
+    Stratasys and Boston Scientific serve. John Deere answers **16 bytes** there (its results
+    render only in the full `/successfactors/search/` page, 38 KB with 19 "israel" strings, in
+    markup with no `job-tile` class); `jobs.volkswagen-group.com` refuses the connection from
+    this machine entirely; `www.nestlejobs.com` 404s the path and is probably not
+    career-site-builder at all. All three remain scrape rows: VW caches 7 Israel roles and
+    works, Deere and Nestlé cache 0. Add a second rung that parses the full search page when the
+    fragment is empty, with Deere as the test tenant.
+246. **Four Eightfold/Phenom scrape rows are genuinely empty, not broken — and two convert** —
+    lane: `registry`. Re-measured 2026-08-26 through the real fetchers: **Ericsson**
+    (`jobs.ericsson.com`, 1 Israel role) and **GE HealthCare** (already a live `phenom` row,
+    **23/23**) produce; Dolby, PayPal Israel, Amdocs, Procter & Gamble and eBay all answer with
+    **0 Israel roles** from their own APIs, matching their empty scrape caches — so those five
+    are honest zeros, not coverage gaps, and item 78's "add `eightfold.ai` to `ATS_HOST`" stays
+    closed for the same reason. Deutsche Telekom's pcsx path 404s and Teva's host 403s; both
+    keep their scrape rows (Teva's caches 1 Israel role). Ericsson's conversion is in
+    `out/resolved_configs.json`.

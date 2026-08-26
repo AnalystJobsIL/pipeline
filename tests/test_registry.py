@@ -441,11 +441,14 @@ def test_the_ats_queue_separates_build_from_wire():
     import registry_health as rh
     from pipeline.fetchers import FETCHERS
     q = rh.unsupported_ats(rh.read_rows())
-    for plat in ("phenom", "eightfold.ai", "oraclecloud.com"):
+    # `successfactors` and `jobvite` joined this list on 2026-08-26, when the operator lowered
+    # the support bar to one row: both are HTML-only boards the repo could not read at all,
+    # and both had rows producing nothing (Stratasys 0 -> 13 Israel roles, Varonis 0 -> 3).
+    for plat in ("phenom", "eightfold.ai", "oraclecloud.com", "successfactors", "jobvite"):
         if plat in q:
             assert q[plat]["fetcher"], plat + " has a native fetcher and the queue must say so"
             assert q[plat]["fetcher"] in FETCHERS
-    for plat in ("icims.com", "successfactors", "avature.net"):
+    for plat in ("icims.com", "avature.net"):
         if plat in q:
             assert not q[plat]["fetcher"], plat + " genuinely has no fetcher"
 

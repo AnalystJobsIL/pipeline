@@ -294,22 +294,27 @@ including the claim "none".
    companies with no readable board — and the intake that feeds NEW companies into
    resolution (below).
 
-Full `FETCHERS` map — **17 keys, 15 platforms** (this line said 16 keys until 2026-08-24
+Full `FETCHERS` map — **19 keys, 17 platforms** (this line said 16 keys until 2026-08-24, 17 / 15 until the evening of 2026-08-26
 and 18 / 16 until 2026-08-26, when `jazzhr` — no public JSON, a fetcher that returned `[]`
 by design — was retired with its last row converted to `scrape`, and `applytojob.com` left
 `health.ATS_HOST` with it so that row is not flagged as a misconfiguration;
 `python -c "from pipeline.fetchers import FETCHERS;print(len(FETCHERS),sorted(FETCHERS))"`):
 comeet, greenhouse, lever, smartrecruiters, recruitee, ashby, workday, oraclehcm,
 custom_json (Amazon), workable, breezy,
-bamboohr, **eightfold** (the `/api/pcsx/search` endpoint; `microsoft` is the same fetcher
+bamboohr, **successfactors** (no JSON at all — the `/tile-search-results/` fragment the site's
+own pagination calls, added 2026-08-26 when the operator lowered the support bar to ONE row:
+Stratasys went 0 → 13 Israel roles, SAP 2 → 3), **jobvite** (the `/`<slug>`/search` list;
+Varonis 0 → 3),
+**eightfold** (the `/api/pcsx/search` endpoint; `microsoft` is the same fetcher
 under the name its rows have always carried, because the store keys roles on
 `{ats_platform}:{job_id}`), **phenom** (`POST /widgets`), plus the pseudo-platforms `scrape`
 and `discovery`. Five fetchers ask the board for Israel itself and carry
 `israel_scoped = True` — workday, eightfold/microsoft, phenom, custom_json — which §5a
 explains.
 
-Support policy: a platform seen 3+ times gets native support; otherwise the scraper's
-strategies carry it. **Eightfold, Phenom and Oracle HCM read their converted rows live**
+Support policy: **one row earns native support** (the operator, 2026-08-26; it was "3+ times"
+until then, which had left SuccessFactors and Jobvite unread while 21 of their 27 rows
+produced nothing). Otherwise the scraper's strategies carry it. **Eightfold, Phenom and Oracle HCM read their converted rows live**
 (`registry` converted them 2026-08-25, `bebbee9`; re-fetched 2026-08-26 through
 `fetch_company`: Qualcomm eightfold **37 roles / 37 IL** (its scrape row had been verified
 at 8), GE HealthCare phenom **23 / 23** (its scrape row reported 0), Fortinet oraclehcm
@@ -1804,9 +1809,12 @@ active rows had no baseline entry). To settle it, run the row yourself:
   self-heal re-renders every week and can never convert) — `ATS_PATTERNS` (`resolve_deep.py`), the pattern list
   **and platform enum** in `resolve_llm.py`'s prompt, and `ATS_HOST` (`pipeline/health.py`).
   `deep_validate.py` re-imports `SIGS`, so it needs nothing. `python -m
-  pipeline.platform_check` prints the grid: **21 MISSING cells over 15 platforms on
-  2026-08-26** (24 over 16 until `jazzhr` left) — 19 in `registry`'s resolver files
-  (resolve_broken 7, resolve_deep 7, resolve_llm 3, SIGS 2) and 2 in `health.ATS_HOST` for
+  pipeline.platform_check` prints the grid: **28 MISSING cells over 17 platforms on
+  2026-08-26 evening** (21 over 15 that morning, 24 over 16 until `jazzhr` left) — the seven
+  new ones are the resolver tables for `successfactors` and `jobvite`, filed for `registry`
+  as `docs/BACKLOG.md` 242, plus `health.ATS_HOST` for `successfactors`, which has no host to
+  match because its career sites live on the tenant's own domain (`jobs.sap.com`,
+  `careers.stratasys.com`). The rest: `registry`'s resolver files and `health.ATS_HOST` for
   `eightfold`/`phenom`, left out on purpose (`docs/BACKLOG.md` 78); the last two columns check that a fetcher narrowing to Israel
   declares `israel_scoped` and that health's empty-board verdict matches the declaration —
   behaviour, not source text. Validate against a live

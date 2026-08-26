@@ -693,6 +693,143 @@ def fetch_phenom(row):
 fetch_phenom.israel_scoped = True
 
 
+_SF_TILE = _re.compile(r'<li[^>]*class="[^"]*job-tile[^"]*job-id-(\d+)[^"]*"[^>]*data-url="([^"]*)"', _re.I)
+_SF_TITLE = _re.compile(r'class="[^"]*jobTitle-link[^"]*"[^>]*>\s*(.*?)\s*</a>', _re.I | _re.S)
+_SF_FIELD = _re.compile(r'id="job-\d+-desktop-section-(location|city|date)-value"[^>]*>\s*(.*?)\s*</', _re.I | _re.S)
+
+
+def _sf_location(block, url):
+    """A tile's place: its labelled `Location` (or `City`) field, else the city that leads the
+    job URL slug. Tenants differ — Stratasys renders `Location: Rehovot, IL`, SAP renders no
+    location cell at all but its slug is `/job/Ra'anana-Student-DevOps-Engineer-…/1412195733/`.
+    Both are read, because a role with no place is a role `pipeline.israel` must drop."""
+    got = {k.lower(): _strip_html(v) for k, v in _SF_FIELD.findall(block)}
+    if got.get("location"):
+        return _clean(got["location"])
+    if got.get("city"):
+        return _clean(got["city"])
+    m = _re.search(r"/job/([^/]+?)-[A-Z]", _html.unescape(url or ""))
+    return _clean(m.group(1).replace("-", " ")) if m else ""
+
+
+def fetch_successfactors(row):
+    """SAP SuccessFactors "career site builder" tenants (SAP, Stratasys, Boston Scientific,
+    John Deere, VW, …). There is no public JSON: the site renders job TILES server-side, and
+    the same fragment the page's own pagination calls is fetchable directly —
+
+        GET https://<host>/tile-search-results/?q=&locationsearch=Israel&startrow=<n>
+
+    `api_url` is that URL without `startrow`. Each tile is one `<li class="job-tile job-id-N"
+    data-url="/job/<slug>/<id>/">` carrying the title in a `jobTitle-link` anchor and, on most
+    tenants, labelled `City` / `Location` cells (`id="job-<id>-desktop-section-location-value"`).
+
+    **`locationsearch=Israel` is a hint, not a filter, so this fetcher is NOT `israel_scoped`.**
+    Measured 2026-08-26: `jobs.sap.com` and `careers.stratasys.com` honour it (9 and 39 tiles,
+    Ra'anana and Rehovot), while `jobs.bostonscientific.com` returns 30 Maple Grove, Minnesota
+    tiles for the same request. Everything is handed to `pipeline.israel` as usual, which is
+    what makes a wrong-tenant answer harmless rather than a board full of American jobs.
+
+    Paging is by tiles returned, never by an assumed page size, and stops when a page repeats
+    ids (some tenants clamp `startrow` instead of ending)."""
+    base = row["api_url"]
+    host = urlsplit(base).netloc
+    out, seen, start = [], set(), 0
+    for _ in range(20):                       # hard stop: 20 fragments
+        sep = "&" if "?" in base else "?"
+        html_txt = http.get_text(f"{base}{sep}startrow={start}")
+        blocks = _re.split(r'(?=<li[^>]*class="[^"]*job-tile)', html_txt or "")
+        fresh = 0
+        for b in blocks:
+            m = _SF_TILE.search(b)
+            if not m:
+                continue
+            # double-unescaped: the attribute is entity-encoded and the slug itself often
+            # carries an apostrophe as `&apos;` (SAP: `/job/Ra&amp;apos;anana-Student-...`)
+            jid, url = m.group(1), _html.unescape(_html.unescape(m.group(2) or ""))
+            if jid in seen:
+                continue
+            seen.add(jid)
+            fresh += 1
+            t = _SF_TITLE.search(b)
+            title = _clean(_strip_html(t.group(1))) if t else ""
+            if not title:
+                continue
+            got = {k.lower(): _strip_html(v) for k, v in _SF_FIELD.findall(b)}
+            out.append({
+                "company": row["company_name"],
+                "title": title,
+                "location": _sf_location(b, url),
+                "country_code": "",
+                "url": url if url.startswith("http") else f"https://{host}{url}",
+                "posted_date": _iso_date(got.get("date")),
+                "ats_platform": "successfactors",
+                "job_id": jid,
+                "description": "",            # the tile carries none; jdfill fetches the page
+            })
+        if not fresh:
+            break
+        start += fresh
+    return out
+
+
+# Declared, not scoped: `locationsearch=` is honoured by some tenants and ignored by others
+# (Boston Scientific returns Minnesota for `locationsearch=Israel`), so an empty list means the
+# board is empty, not "no Israel roles" — a zero IS evidence here.
+fetch_successfactors.israel_scoped = False
+
+
+_JV_ROW = _re.compile(
+    r'<a[^>]+href="(/[^"/]+/job/[^"]+)"[^>]*>.*?'
+    r'class="[^"]*jv-job-list-name[^"]*"[^>]*>\s*(.*?)\s*</div>'
+    r'(?:.*?class="[^"]*jv-job-list-location[^"]*"[^>]*>\s*(.*?)\s*</div>)?',
+    _re.I | _re.S)
+
+
+def fetch_jobvite(row):
+    """Jobvite's public careers list (Varonis, …):
+
+        GET https://jobs.jobvite.com/<slug>/search[?p=<n>]
+
+    One `<li class="row">` per posting: an `/<slug>/job/<id>` link, a `jv-job-list-name` title
+    and a `jv-job-list-location` cell that holds the department and the place in two spans
+    ("R&D", "Israel"). No JSON is published — `api.jobvite.com` needs a key — and the company's
+    own careers page (`careers.varonis.com`) is a JS shell that shows none of this, which is why
+    the row produced nothing as a scrape.
+
+    `api_url` is the `/search` URL. Paging follows `?p=`; it stops when a page adds no new id."""
+    base = row["api_url"].split("?")[0]
+    out, seen = [], set()
+    for page in range(1, 21):                 # hard stop: 20 pages
+        html_txt = http.get_text(base if page == 1 else f"{base}?p={page}")
+        fresh = 0
+        for href, title, loc in _JV_ROW.findall(html_txt or ""):
+            jid = href.rstrip("/").rsplit("/", 1)[-1]
+            title = _clean(_strip_html(title))
+            if not jid or jid in seen or not title:
+                continue
+            seen.add(jid)
+            fresh += 1
+            out.append({
+                "company": row["company_name"],
+                "title": title,
+                # the cell is "<dept> <place>"; keep both, the Israel filter reads the text
+                "location": _clean(_strip_html(loc)),
+                "country_code": "",
+                "url": f"https://jobs.jobvite.com{href}",
+                "posted_date": "",            # the list carries none
+                "ats_platform": "jobvite",
+                "job_id": jid,
+                "description": "",
+            })
+        if not fresh:
+            break
+    return out
+
+
+# Declared, not scoped: the list is the whole board, so an empty list IS evidence.
+fetch_jobvite.israel_scoped = False
+
+
 def fetch_workable(row):
     """Workable public widget API: apply.workable.com/api/v1/widget/accounts/{slug}?details=true.
     Returns {name, jobs:[{title, city, state, country, url, shortcode, created_at, ...}]}."""
@@ -1013,6 +1150,8 @@ FETCHERS = {
     "workday": fetch_workday,
     "custom_json": fetch_custom_json,
     "workable": fetch_workable,
+    "successfactors": fetch_successfactors,
+    "jobvite": fetch_jobvite,
     "breezy": fetch_breezy,
     "bamboohr": fetch_bamboohr,
     "eightfold": fetch_eightfold,

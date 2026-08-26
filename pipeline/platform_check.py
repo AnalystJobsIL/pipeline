@@ -53,6 +53,9 @@ def check():
         "breezy": "breezy", "bamboohr": "bamboohr",
         "microsoft": "microsoft", "custom_json": "amazon",
         "eightfold": "eightfold|pcsx", "phenom": "phenom|/widgets",
+        # 2026-08-26: no shared host — a SuccessFactors career site lives on the tenant's own
+        # domain (jobs.sap.com, careers.stratasys.com), so the path is what identifies it
+        "successfactors": "successfactors|tile-search-results", "jobvite": "jobvite",
     }
     rows, missing_total = [], 0
     for p in platforms:
