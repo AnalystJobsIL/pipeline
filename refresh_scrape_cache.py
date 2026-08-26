@@ -79,6 +79,20 @@ MASS_FAILURE_PCT = 20
 MASS_FAILURE_MIN_ROWS = 20
 # a rescued read smaller than yesterday's is held back this many nights before it is believed
 PARTIAL_MAX_NIGHTS = 2
+# ...and a read that knew NO posting's address is held back only when it also collapsed to
+# under this fraction of yesterday. A board really can shrink; what it does not do is shrink
+# by two thirds on the one night we could not address a single role (Quantum Machines, 18 -> 4).
+WEAK_SHRINK_RATIO = 3
+# an address refused this many nights running is nobody's to repair automatically: it is
+# never parked (a hunt runs on the same address), so it is named for a human instead (216)
+STALE_IP_NIGHTS = 30
+# how long the cloud keeps a board only a home address could read, and how early it asks for
+# a fresh one. A fortnight is one local pass; after that the roles are too old to publish.
+RESIDENTIAL_MAX_DAYS = 14
+RESIDENTIAL_WARN_DAYS = 3
+# strategy 5 asks once per company that reaches it; more calls than this means the signal
+# gate broke open, not that the fleet changed (438 rows, 128 calls on 2026-08-26)
+LLM_RUNAWAY_CALLS = 250
 # the mass-EMPTY guard needs far fewer rows to be meaningful than the mass-error one: it
 # only counts companies that HAD jobs yesterday and were scraped tonight
 SHRINK_MIN_ROWS = 5
@@ -126,7 +140,8 @@ def _runner_shaped(code):
 
 def _shape(code):
     """The KIND of error, which is what a streak is made of: `links` (positions unreadable),
-    `ip` (the address refused), `runner` (our process), `page` (the page itself). Wave-1
+    `ip` (the address refused), `weak` (a reading that knew no posting's address), `runner`
+    (our process), `page` (the page itself). Wave-1
     attacker B: with the streak keyed on the word "error" alone, twenty carried `links:`
     nights funded both the carry expiry and the park clock, and one page-shaped night from
     the same cloaking WAF (a 404) dropped the jobs AND parked the row with no alarm."""
@@ -134,14 +149,17 @@ def _shape(code):
         return "links"
     if _ip_shaped(code):
         return "ip"
+    if code.startswith("weak:"):
+        return "weak"
     if _runner_shaped(code):
         return "runner"
     return "page"
 
 
 def _parkable(code):
-    """Only a PAGE-shaped code (404/410/5xx, navigation failure, a blank render) may park a row."""
-    return bool(code) and not _ip_shaped(code) and not _runner_shaped(code)
+    """Only a PAGE-shaped code (404/410/5xx, navigation failure, a blank render) may park a
+    row. A `weak:` read is about OUR reading of a live page, never about the company."""
+    return bool(code) and _shape(code) == "page"
 
 
 @dataclass
@@ -152,14 +170,18 @@ class RunState:
     revalidate: list = field(default_factory=list)
     counts: dict = field(default_factory=lambda: {"scraped": 0, "with_jobs": 0, "empty": 0,
                                                   "no_il": 0, "errors": 0, "carried": 0,
-                                                  "unprocessed": 0, "links_unread": 0})
+                                                  "unprocessed": 0, "links_unread": 0,
+                                                  "carried_residential": 0})
     spend: dict = field(default_factory=lambda: {"llm_calls": 0, "llm_won": 0, "llm_fail": 0,
-                                                 "unlock_calls": 0, "unlock_ok": 0})
+                                                 "llm_skipped": 0, "unlock_calls": 0,
+                                                 "unlock_ok": 0, "unlock_won": 0})
     strategies: dict = field(default_factory=dict)
     codes: dict = field(default_factory=dict)      # error code -> count, for the per-code alarm
     llm_errors: dict = field(default_factory=dict) # LLMUnavailable kind -> count (auth/transient/...)
     errors: list = field(default_factory=list)
     unread: list = field(default_factory=list)     # companies whose positions could not be opened
+    stale_ip: list = field(default_factory=list)   # (name, nights) refused for STALE_IP_NIGHTS+
+    residential_due: list = field(default_factory=list)  # (name, nights left) to re-read here
 
 
 # ---------------------------------------------------------------------------------------------
@@ -175,15 +197,18 @@ def _worker(task):
         return {"name": name, "jobs": res.jobs, "status": res.status, "error": res.error,
                 "http_status": res.http_status, "strategy": res.strategy,
                 "rescued": bool(getattr(res, "rescued", False)),
+                "weak_read": bool(getattr(res, "weak_read", False)),
                 "llm_calls": int(getattr(res, "llm_calls", 0) or 0),
                 "llm_error": str(getattr(res, "llm_error", "") or ""),
+                "llm_skipped": int(getattr(res, "llm_skipped", 0) or 0),
                 "unlock_calls": int(getattr(res, "unlock_calls", 0) or 0),
                 "unlock_ok": int(getattr(res, "unlock_ok", 0) or 0),
                 "seconds": round(res.elapsed_s, 1)}
     except BaseException as e:  # noqa: BLE001
         return {"name": name, "jobs": [], "status": "error",
                 "error": f"worker:{type(e).__name__}", "http_status": None, "strategy": "",
-                "llm_calls": 0, "llm_error": "", "unlock_calls": 0, "unlock_ok": 0,
+                "llm_calls": 0, "llm_error": "", "llm_skipped": 0,
+                "unlock_calls": 0, "unlock_ok": 0,
                 "seconds": round(time.time() - t0, 1)}
 
 
@@ -309,15 +334,28 @@ def _result_of(fut, name):
 # ---------------------------------------------------------------------------------------------
 # per-company bookkeeping (pure: no I/O)
 # ---------------------------------------------------------------------------------------------
+def _jd_identities(j):
+    """Every name last night's card can be recognised by tonight: its address, its id, and
+    its (title, place). The last one matters because an address can CHANGE while the posting
+    does not — that is exactly what a promotion does (a url-less reading given its own
+    address by a later strategy), and without it the first night of promotions would drop the
+    fetched description of up to 345 cards and re-buy them from Bright Data (wave-0 critic)."""
+    return [x for x in (j.get("url") or "", j.get("job_id") or "") if x] + [
+        "T:%s|%s" % ((j.get("title") or "").strip().lower(), (j.get("location") or "").strip().lower())]
+
+
 def _carry_jd(new_jobs, old_jobs):
     """A rebuilt card with an empty description inherits the previous run's text (keyed by
-    url/job_id) so daily refreshes stop wiping what enrich_scrape_jd fetched — and the
+    url/job_id/title) so daily refreshes stop wiping what enrich_scrape_jd fetched — and the
     `_jd_attempted` stamp travels regardless, or failed enrichments lose their 7-day
     cooldown every night and re-burn Bright Data calls on the same unfetchable URLs."""
-    prev = {(j.get("url") or j.get("job_id") or ""): j
-            for j in old_jobs if isinstance(j, dict)}
+    prev = {}
+    for j in old_jobs:
+        if isinstance(j, dict):
+            for k in _jd_identities(j):
+                prev.setdefault(k, j)
     for j in new_jobs:
-        pj = prev.get(j.get("url") or j.get("job_id") or "")
+        pj = next((prev[k] for k in _jd_identities(j) if k in prev), None)
         if not pj:
             continue
         if not (j.get("description") or "").strip() and (pj.get("description") or "").strip():
@@ -336,10 +374,19 @@ def _rot_bump(rot, name, why, today, res=None):
     days, so nights the budget skipped a row do not advance its clock."""
     shape = _shape(_code(res or {})) if why == "error" else ""
     e = rot.get(name)
+    # how long the runner's ADDRESS has been refused, across every shape that means it. The
+    # streak `n` is per shape by design, and a WAF that answers 403 on the listing one night
+    # and refuses the position pages the next flips between `ip` and `links` — restarting the
+    # streak each time, so a per-row age alarm keyed on `n` could never fire (wave-0 critic).
+    ip_since = (e or {}).get("ip_since") if shape in ("ip", "links") else None
     if e is None or e.get("why") != why or (shape and e.get("shape") not in (None, shape)):
         e = rot[name] = {"since": today, "why": why, "n": 0}
     if shape:
         e["shape"] = shape                   # an entry from before shapes existed adopts tonight's
+    if shape in ("ip", "links"):
+        e["ip_since"] = ip_since or e.get("ip_since") or today
+    else:
+        e.pop("ip_since", None)
     if e.get("last") != today:
         e["n"] = int(e.get("n", 0)) + 1
     else:
@@ -353,6 +400,49 @@ def _rot_bump(rot, name, why, today, res=None):
     return (_dt.date.fromisoformat(today) - _dt.date.fromisoformat(e["since"])).days, e["n"]
 
 
+def _mark_residential(jobs, today):
+    """Stamp each card with where and when it was read. Rides on the job dict beside
+    `_jd_attempted`, so nothing downstream needs to know about it."""
+    for j in jobs:
+        j["_via"], j["_read"] = "residential", today
+    return jobs
+
+
+def _residential_age(jobs, today):
+    """Nights since these cards were read from a home address, or None when they were not.
+    Every card must carry the mark: one cloud-read card means the cloud can read the board."""
+    if not jobs or not all(isinstance(j, dict) and j.get("_via") == "residential" for j in jobs):
+        return None
+    read = min(str(j.get("_read") or "") for j in jobs)
+    try:
+        return (_dt.date.fromisoformat(today) - _dt.date.fromisoformat(read)).days
+    except ValueError:
+        return None
+
+
+def _ip_age(entry, today):
+    """Nights this row's ADDRESS has been refused, counting across every shape that means it
+    (`ip_since`, which a 403 -> links flip does not restart). 0 when it is not refused."""
+    since = (entry or {}).get("ip_since")
+    return 0 if not since else (_dt.date.fromisoformat(today) - _dt.date.fromisoformat(since)).days + 1
+
+
+def _spent(res):
+    """What this company cost, for the progress line — and only when it cost something, so
+    the 400 ordinary lines stay one line long. Until 2026-08-26 the night's 128 LLM calls and
+    48 unlocker requests were a total with no way back to who spent them."""
+    parts = []
+    if res.get("unlock_calls"):
+        parts.append(f"unlock={res.get('unlock_ok', 0)}/{res['unlock_calls']}")
+    if res.get("llm_calls"):
+        won = "won" if "llm" in str(res.get("strategy") or "").split("+") else "0"
+        kind = str(res.get("llm_error") or "").split(":")[0]
+        parts.append(f"llm={res['llm_calls']}->{kind or won}")
+    elif res.get("llm_skipped"):
+        parts.append(f"llm=skip:{str(res.get('llm_error') or '').split(':')[-1]}")
+    return (" " + " ".join(parts)) if parts else ""
+
+
 def _apply_result(row, res, old, rot, today, st: RunState):
     """Fold one company's result into the run: cache, rot streaks, park/flag lists."""
     name = row["company_name"]
@@ -364,21 +454,28 @@ def _apply_result(row, res, old, rot, today, st: RunState):
         st.spend["llm_fail"] += 1            # a CALL failed; a breaker/deadline skip is not one
         kind = str(res["llm_error"]).split(":")[0]
         st.llm_errors[kind] = st.llm_errors.get(kind, 0) + 1
+    st.spend["llm_skipped"] += int(res.get("llm_skipped") or 0)
     st.spend["unlock_calls"] += int(res.get("unlock_calls") or 0)
     st.spend["unlock_ok"] += int(res.get("unlock_ok") or 0)
     jobs = None if res["status"] == "error" else res["jobs"]   # ERROR != confirmed-empty
     il = [j for j in (jobs or []) if israel.is_israel_job(j)]
-    if (jobs is not None and res.get("rescued") and res.get("error") and name in old
-            and len(il) < len(old[name])
+    if il and int(res.get("unlock_ok") or 0):
+        st.spend["unlock_won"] += 1            # a company whose read passed through the unlocker
+    # a partial read: yesterday's fuller list stays and tonight is an error — for at most
+    # PARTIAL_MAX_NIGHTS, after which the smaller list is the board's new truth (a board that
+    # genuinely shrank must converge; the first version compared against the list it had
+    # carried itself and never did). Two ways to be partial:
+    #   `rescued`  the browser failed mid-way and these jobs are what landed before it did
+    #   `weak`     the board was read as bare titles, none of them addressed, and it collapsed
+    #              — Quantum Machines' 18 Comeet postings became 4 card titles on 2026-08-26
+    partial = ((res.get("rescued") and res.get("error"))
+               or (res.get("weak_read") and name in old
+                   and len(il) * WEAK_SHRINK_RATIO < len(old[name])))
+    if (jobs is not None and partial and name in old and len(il) < len(old[name])
             and not (rot.get(name, {}).get("why") == "error"
                      and str(rot[name].get("error", "")).startswith("partial:")
                      and int(rot[name].get("n", 0)) >= PARTIAL_MAX_NIGHTS)):
-        # the browser failed mid-way (a goto timeout after the first XHR page landed) and the
-        # jobs are what was captured before it did: a partial read. Yesterday's fuller list
-        # stays and tonight is an error — for at most PARTIAL_MAX_NIGHTS, after which the
-        # smaller list is the board's new truth (a board that genuinely shrank must converge;
-        # the first version compared against the list it had carried itself and never did).
-        res = {**res, "error": f"partial:{res['error']}"}
+        res = {**res, "error": f"partial:{res.get('error') or 'weak:read'}"}
         jobs = None
     if jobs is None:
         code = _code(res)
@@ -401,11 +498,16 @@ def _apply_result(row, res, old, rot, today, st: RunState):
                   f"stale jobs", flush=True)
         if nights >= ROT_PARK_DAYS and _parkable(code):        # nights of THIS shape only
             st.parked.append((name, f"error {days}d"))
+        ip_age = _ip_age(rot.get(name), today)
+        if ip_age >= STALE_IP_NIGHTS:
+            # never parked (parking hands it to a hunt on the same refused address), so after
+            # a month somebody has to look: is it us, the site, or a URL that moved? (216)
+            st.stale_ip.append((name, ip_age))
         return
     if il:
         st.counts["with_jobs"] += 1
         st.strategies[res["strategy"]] = st.strategies.get(res["strategy"], 0) + 1
-        if res.get("strategy") == "llm":
+        if "llm" in str(res.get("strategy") or "").split("+"):
             st.spend["llm_won"] += 1
         st.cache[name] = st.successes[name] = _carry_jd(il, old.get(name, []))
         rot.pop(name, None)                                    # healthy again
@@ -414,6 +516,21 @@ def _apply_result(row, res, old, rot, today, st: RunState):
         if jobs:
             st.counts["no_il"] += 1                            # found roles, none in Israel
         days, _ = _rot_bump(rot, name, "empty", today, res)
+        # a board only a home address can read (the cloud gets a degraded page from its
+        # datacenter IP) keeps the jobs somebody read here, for as long as that read is
+        # fresh. Never silently: the night it expires says so, and three nights before that
+        # it asks — the row would otherwise go dark for a day before anyone could re-run it.
+        age = _residential_age(old.get(name), today)
+        if age is not None and age <= RESIDENTIAL_MAX_DAYS:
+            st.cache[name] = old[name]
+            st.counts["carried_residential"] += 1
+            if age >= RESIDENTIAL_MAX_DAYS - RESIDENTIAL_WARN_DAYS:
+                st.residential_due.append((name, RESIDENTIAL_MAX_DAYS - age))
+            return                    # a live residential read is not an un-revalidated empty
+        if age is not None:
+            print(f"  {name}: residential read of {age}d ago expired — dropping (re-read it "
+                  f"with: python refresh_scrape_cache.py --only \"{name}\" --residential)",
+                  flush=True)
         # NEVER park on empty — see EMPTY_REVALIDATE_DAYS. A long streak asks triage to
         # read the page with an LLM; the row stays ACTIVE and scanned daily either way.
         if days >= EMPTY_REVALIDATE_DAYS:
@@ -461,6 +578,12 @@ def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=Fals
     s = st.spend
     if s["llm_calls"] >= 3 and s["llm_fail"] >= s["llm_calls"]:
         tokens.append("llm-down")            # every call failed: the token, the CLI, the quota
+    if s["llm_calls"] > LLM_RUNAWAY_CALLS:
+        tokens.append(f"llm-calls-{s['llm_calls']}")   # the signal gate broke open
+    # a row crossing the month mark tonight — once per row per month, never a standing alarm
+    crossed = [n for n, nights in st.stale_ip if nights % STALE_IP_NIGHTS == 0]
+    if crossed:
+        tokens.append(f"stale-ip-{len(crossed)}")
     if rot_unreadable:
         tokens.append("rot-unreadable")
     return "+".join(tokens)
@@ -514,6 +637,7 @@ class Opts:
     shard: tuple | None = None
     dry_run: bool = False
     apply: bool = False
+    residential: bool = False
     workers: int = DEFAULT_WORKERS
 
     @property
@@ -537,10 +661,23 @@ def _parse(argv):
             o.dry_run = True
         elif a == "--apply":
             o.apply = True
+        elif a == "--residential":
+            o.residential = o.apply = True
         elif a == "--workers":
             o.workers = int(next(it))
         else:
             raise SystemExit(f"unknown argument {a!r} — see the module docstring")
+    if o.residential:
+        # a claim about WHERE the page was read from, so only a run that can honestly make it
+        if os.environ.get("GITHUB_ACTIONS"):
+            raise SystemExit("--residential is a read from a home address; the runner cannot "
+                             "claim one (that address is the reason the row is empty)")
+        if not o.scoped:
+            raise SystemExit("--residential needs --only or --only-missing: it merges INTO "
+                             "the cloud's cache and must never rewrite the whole of it")
+        for flag in ("SCRAPE_LLM", "SCRAPE_VIA_UNLOCKER"):
+            if os.environ.get(flag):
+                raise SystemExit(f"--residential must be reproducible for 0 spend; unset {flag}")
     return o
 
 
@@ -629,8 +766,8 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
         # the bookkeeping below is in registry order, so the output is deterministic
         what = (f"ERROR {res['error']}" if res["status"] == "error"
                 else f"{len(res['jobs'])}" + (f" via {res['strategy']}" if res["jobs"] else ""))
-        print(f"  [{len(results)}/{len(rows)}] {res['name']}: {what} ({res['seconds']:.0f}s)",
-              flush=True)
+        print(f"  [{len(results)}/{len(rows)}] {res['name']}: {what} "
+              f"({res['seconds']:.0f}s){_spent(res)}", flush=True)
     # bookkeeping in REGISTRY order, in the parent: the pool and the inline path produce
     # byte-identical output, only the progress lines differ
     for r in rows:
@@ -651,6 +788,17 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
         print(f"::warning::positions unreadable from this runner for {len(st.unread)} "
               f"companies ({kept} with yesterday's jobs carried; all kept active): "
               f"{st.unread[:12]}", flush=True)
+    if st.residential_due:
+        print(f"::warning::{len(st.residential_due)} companies the cloud cannot read are "
+              f"living on a home-address read that expires within {RESIDENTIAL_WARN_DAYS} "
+              f"nights — re-run `--residential` for: "
+              f"{[n for n, _ in sorted(st.residential_due, key=lambda x: x[1])[:12]]}",
+              flush=True)
+    if st.stale_ip:
+        # never parked by design, so nothing else will ever raise its hand (BACKLOG 216)
+        print(f"::warning::the runner's address has been refused for {STALE_IP_NIGHTS}+ nights "
+              f"by {len(st.stale_ip)} companies — hand-check (is it us, the site, or a moved "
+              f"URL?): {sorted(st.stale_ip, key=lambda x: -x[1])[:12]}", flush=True)
     c = st.counts
     minutes = int((clock() - t0) / 60)
     mass_failure = (c["scraped"] >= MASS_FAILURE_MIN_ROWS
@@ -672,9 +820,10 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     # the flags would otherwise carry five permanent zeros)
     if os.environ.get("SCRAPE_LLM"):
         detail.update(llm_calls=st.spend["llm_calls"], llm_won=st.spend["llm_won"],
-                      llm_fail=st.spend["llm_fail"])
+                      llm_fail=st.spend["llm_fail"], llm_skipped=st.spend["llm_skipped"])
     if os.environ.get("SCRAPE_VIA_UNLOCKER"):
-        detail.update(unlock_calls=st.spend["unlock_calls"], unlock_ok=st.spend["unlock_ok"])
+        detail.update(unlock_calls=st.spend["unlock_calls"], unlock_ok=st.spend["unlock_ok"],
+                      unlock_won=st.spend["unlock_won"])
     if alarm:
         detail["alarm"] = alarm
     print(f"=== collect: " + " ".join(f"{k}={v}" for k, v in detail.items())
@@ -691,9 +840,13 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
             if state == "unreadable":
                 print(f"::error::{CACHE_PATH} is unreadable — not merging over it")
                 return 1
-            fresh.update(st.successes)
+            merged = ({k: _mark_residential(v, today) for k, v in st.successes.items()}
+                      if o.residential else st.successes)
+            fresh.update(merged)
             write_json(CACHE_PATH, fresh, sort_keys=True)
-            print(f"merged {len(st.successes)} companies into {CACHE_PATH}")
+            print(f"merged {len(merged)} companies into {CACHE_PATH}"
+                  + (f" as residential reads — the cloud keeps them for "
+                     f"{RESIDENTIAL_MAX_DAYS} nights" if o.residential else ""))
         else:
             print(f"scoped run: nothing written (use --apply to merge {len(st.successes)} "
                   f"companies with Israel roles into {CACHE_PATH})")

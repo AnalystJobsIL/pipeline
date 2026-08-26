@@ -3233,13 +3233,17 @@ def test_the_boards_line_leads_with_what_changed_since_yesterday():
            "Any.do": {"reason": "empty-board"},
            "Adobe": {"reason": "fetch-error", "error": "BoardEmpty: 0 postings worldwide"}}
     assert health.mail_lines(now, prev) == [
-        "changed today: new: Adobe: fetch-error; Decart: fetch-error · cleared: Guardz",
+        # grouped by reason since 2026-08-26, and a new fetch error carries its message and is
+        # never truncated (it used to read `new: Adobe: fetch-error; Decart: fetch-error`)
+        "changed today: new: 2 fetch errors (Adobe: BoardEmpty: 0 postings worldwide; "
+        "Decart: HttpError: HTTP 404) · cleared: Guardz",
         "standing: 2 fetch errors (Adobe: BoardEmpty: 0 postings worldwide; Decart: HttpError: HTTP 404) · "
         "1 empty (Any.do)"]
     assert health.mail_lines(now, now) == [health.mail_lines(now, prev)[1]], "no delta, no delta line"
     two = health.mail_lines(now, prev)
     _, md3 = digest.build_markdown([], "2026-08-24", {"companies_scanned": 1, "fetch_health": two}, {})
-    assert "- **Boards** changed today: new: Adobe" in md3 and "- **Boards** standing: 2 fetch errors" in md3, \
+    assert "- **Boards** changed today: new: 2 fetch errors (Adobe" in md3 \
+        and "- **Boards** standing: 2 fetch errors" in md3, \
         "one bullet per line, so the delta is not buried in the standing counts"
     # "cleared" means recovered: not a row nobody scanned (deactivated overnight), and not an
     # empty-board on a platform whose zero is a measurement (never broken; 26 Workday rows
@@ -6477,17 +6481,32 @@ _LI_CARD_HTML = ('<li><div class="base-card" data-entity-urn="urn:li:jobPosting:
                  '<h4 class="base-search-card__subtitle">A Co</h4></div></li>')
 
 
-def _li_replay(script):
+def _li_replay(script, calls=None):
     """A `_li_guest` stand-in driven by [(n_cards, ok), ...], one tuple per guest page; pages
     past the end repeat the last tuple ("blocked from here on" and "hit the cap" are both
     that). Ids are globally unique so fresh/repeats behave like a real walk, and
     `_li_last_present` is set the way the real fetcher sets it. Pure in-memory: the 108x
-    mutation gate runs the whole suite per mutation, so no subprocess, no network."""
+    mutation gate runs the whole suite per mutation, so no subprocess, no network.
+
+    An entry may also be a LIST of tuples, consumed in order at that `start` and repeating
+    its last element — which is the only way to express "this page was blank and the re-ask
+    found cards". Indexing by `start` alone cannot: a retry re-reads the same offset and so
+    got the identical tuple, and `linkedin_blank_recovered` could never be anything but 0.
+    `calls` (a list) records every start requested, so a test can bound the retry budget.
+    """
     import discovery_daily as dd
     counter = [0]
+    pending = {}
 
     def guest(kw, loc, d, st):
-        n, ok = script[min(st // 10, len(script) - 1)]
+        if calls is not None:
+            calls.append(st)
+        entry = script[min(st // 10, len(script) - 1)]
+        if isinstance(entry, list):
+            q = pending.setdefault(st, list(entry))
+            n, ok = q.pop(0) if len(q) > 1 else q[0]
+        else:
+            n, ok = entry
         if not ok:
             dd._li_last_present[0] = set()
             return [], False
@@ -6501,7 +6520,8 @@ def _li_replay(script):
 _LAST_COUNTS = {}          # SOURCE_PATH as it stood after the last _run_walk (restored after)
 
 
-def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=None):
+def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=None,
+              calls=None):
     import discovery_daily as dd
     import bd_rescue
     real_guest, real_unlock = dd._li_guest, bd_rescue.unlock
@@ -6511,17 +6531,22 @@ def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=
     else:
         os.environ["BRIGHTDATA_API_KEY"] = key
     try:
-        dd._li_guest = _li_replay(script)
+        dd._li_guest = _li_replay(script, calls)
         bd_rescue.unlock = unlock or (lambda url, timeout=120: "")
         saved = dict(dd.SOURCE_PATH)
-        for k in ("linkedin_free", "linkedin_blank", "linkedin_blocked", "linkedin_paid"):
+        for k in ("linkedin_free", "linkedin_blank", "linkedin_blocked", "linkedin_paid",
+                  "linkedin_blank_recovered"):
             dd.SOURCE_PATH[k] = 0
+        dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0)
+        saved_pause, dd._BLANK_RETRY_PAUSE = dd._BLANK_RETRY_PAUSE, 0.0
         out = dd.linkedin_search("business intelligence", pages=pages, location=location)
         _LAST_COUNTS.clear()
         _LAST_COUNTS.update(dd.SOURCE_PATH)
         return out, (capsys.readouterr().out if capsys else "")
     finally:
         dd._li_guest, bd_rescue.unlock = real_guest, real_unlock
+        if "saved_pause" in locals():
+            dd._BLANK_RETRY_PAUSE = saved_pause
         if "saved" in locals():
             dd.SOURCE_PATH.clear()
             dd.SOURCE_PATH.update(saved)
@@ -7128,7 +7153,11 @@ def test_health_check_carries_the_error_text_and_prints_the_boards_lines(tmp_pat
     import re as _re
     assert stale["Decart"]["error"] == "HttpError: " + _re.sub(r"\?\S*", "", "HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai?token=SECRET: Not Found")[:70]
     assert "SECRET" not in stale["Decart"]["error"], "query string stripped before the 70-char cut, as run.py does"
-    assert "boards changed today: new: Decart: fetch-error · cleared: Wix" in out
+    # grouped by reason since 2026-08-26 (it read `new: Decart: fetch-error` before), so the
+    # Monday sweep's delta carries the same message the mail's does
+    assert ("boards changed today: new: 1 fetch error (Decart: HttpError: HTTP 404 for "
+            "https://api.ashbyhq.com/posting-api/job-board/decart-ai") in out
+    assert ") · cleared: Wix" in out
     assert "boards standing: 1 fetch error (Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai" in out
     assert "SECRET" not in out.split("boards")[1], "the query string is stripped before the reason is printed"
     assert "2 checked · 1 STALE" in out
@@ -7821,3 +7850,405 @@ def test_scrape_a_budget_cut_before_the_positions_were_read_is_not_empty_and_for
     assert ("Data Analyst", "Tel Aviv, Israel") in [(j["title"], j["location"]) for j in jobs]
     from pipeline import israel
     assert sum(israel.is_israel_job(j) for j in jobs) == 1
+
+
+# =====================================================================================
+# ats-fetch lane, 2026-08-26 (evening) — the delta line grouped by reason so a new fetch
+# error is never truncated, an ATS_HOST shrink is not a recovery (BACKLOG 214), the
+# operator's baseline re-base, and stale.json's redacted careers_url (BACKLOG 229).
+# Record: docs/sessions/2026-08-26-ats-fetch.md.
+# =====================================================================================
+
+# the 30 scrape rows that flipped to `regressed-to-zero` on 2026-08-26 — not 30 broken
+# boards but one extractor change (`74570c6`) that stopped emitting a page's own title as a
+# posting. 26 were chrome-only and were re-based; these four had lost a real opening.
+_AF2_REGRESSED = ("Airbnb", "Apollo Power", "AstraZeneca", "BlueSnap", "CyberArk",
+                  "Elbit Systems", "Electronic Arts", "Essence SmartCare", "GenCell",
+                  "Groundwork BioAg", "IBM", "Infineon Technologies", "Nestle", "NetApp",
+                  "Ottopia", "Perception Point", "Predicta Med", "Refine Intelligence",
+                  "Sanofi", "Schneider Electric", "SecuriThings", "Source Defense",
+                  "Supersonic Studios", "Synopsys Israel", "Taranis", "Teradata",
+                  "Verizon", "Workiz", "lakeFS", "nsKnox")
+_AF2_KEPT = ("GenCell", "Predicta Med", "lakeFS", "nsKnox")
+_AF2_MOBILEYE = "HttpError: network error for https://api.eu.lever.co/v0/postings/mobileye The rea"
+
+
+def _af2_delta_rows():
+    """The 36 rows that entered `stale.json` on 2026-08-26, verbatim."""
+    rows = {n: {"reason": "regressed-to-zero", "platform": "scrape",
+                "careers_url": f"https://{n.lower().replace(' ', '')}.example/careers"}
+            for n in _AF2_REGRESSED}
+    for n, err in (("Akamai", "scrape: http:403 (2 nights)"),
+                   ("Greeneye Technology", "scrape: http:404 (1 night)"),
+                   ("Mobileye", _AF2_MOBILEYE)):
+        rows[n] = {"reason": "fetch-error", "platform": "scrape" if n != "Mobileye" else "lever",
+                   "careers_url": "https://x.example/careers", "error": err}
+    for n in ("Houzz", "Unframe AI", "aspectiva"):
+        rows[n] = {"reason": "misconfig-scrape-on-ats", "platform": "scrape",
+                   "careers_url": "https://jobs.lever.co/houzz"}
+    return rows
+
+
+def test_a_new_fetch_error_is_never_hidden_behind_more():
+    """The delta line was one alphabetical list cut at six names. On 2026-08-26 thirty scrape
+    rows regressed in one night (an extractor change, not thirty broken boards) and took every
+    slot: two of the three NEW fetch errors — Greeneye Technology `http:404` and Mobileye's
+    Lever read timeout — shipped inside `+30 more`, which is the one thing that line exists to
+    prevent. It is grouped by reason now, and `fetch-error` is uncapped: there the name IS the
+    message, and the bounded companion line (`Failed companies:`, eight names) still exists."""
+    from pipeline import health
+    rows = _af2_delta_rows()
+    line = health.mail_lines(rows, {}, scanned=set(rows))[0]
+    assert line == (
+        "changed today: new: 3 fetch errors (Akamai: scrape: http:403 (2 nights); "
+        "Greeneye Technology: scrape: http:404 (1 night); Mobileye: " + _AF2_MOBILEYE + ") · "
+        "30 regressed to zero (Airbnb; Apollo Power; AstraZeneca; BlueSnap; CyberArk; "
+        "Elbit Systems; +24 more) · "
+        "3 scrape rows on an ATS host (Houzz; Unframe AI; aspectiva)")
+    # the property, not just the string: nothing is elided before the regression group
+    assert "more" not in line.split("regressed to zero")[0]
+    for name in ("Akamai", "Greeneye Technology", "Mobileye"):
+        assert name in line
+    # ...and it holds when the night is genuinely bad: 40 failures behind 400 regressions
+    many = {f"Broken {i:03d}": {"reason": "fetch-error", "platform": "ashby",
+                                "careers_url": "u", "error": f"HttpError: HTTP 50{i % 10}"}
+            for i in range(40)}
+    many.update({f"Zeroed {i:03d}": {"reason": "regressed-to-zero", "platform": "scrape",
+                                     "careers_url": "u"} for i in range(400)})
+    line = health.mail_lines(many, {}, scanned=set(many))[0]
+    assert all(f"Broken {i:03d}" in line for i in range(40))
+    assert "+394 more" in line and "40 fetch errors" in line and "400 regressed to zero" in line
+
+
+def test_the_delta_and_the_standing_line_group_by_one_builder():
+    """One `_by_reason` builds both lines in one reason order, so the reader never meets the
+    same four classes twice in two arrangements. The standing line keeps the misconfig rows as
+    a bare count (25 unchanging names every morning is the noise the delta exists to escape);
+    the delta names them, because there they are news. A reason the table does not know still
+    gets a part — the delta must never silently lose a row."""
+    from pipeline import health
+    rows = _af2_delta_rows()
+    rows["Somebody"] = {"reason": "weird-new-reason", "platform": "comeet", "careers_url": "u"}
+    rows["Nameless"] = {"reason": "", "platform": "comeet", "careers_url": "u"}
+    standing = health.mail_lines(rows, None)[0]
+    assert standing.startswith("standing: 3 fetch errors (Akamai: ")
+    assert " · 3 scrape rows on an ATS host · " in standing, "counted, not named"
+    assert "(Houzz; Unframe AI; aspectiva)" not in standing
+    assert "1 unclassified (Nameless)" in standing and "1 weird-new-reason (Somebody)" in standing
+    delta = health.mail_lines(rows, {}, scanned=set(rows))[0]
+    assert "3 scrape rows on an ATS host (Houzz; Unframe AI; aspectiva)" in delta
+    # the two lines agree on order, and singular/plural follows the count
+    assert ([p.split(" ", 1)[1].split(" (")[0] for p in standing.split("standing: ")[1].split(" · ")]
+            == ["fetch errors", "regressed to zero", "scrape rows on an ATS host",
+                "unclassified", "weird-new-reason"])
+    one = {"Decart": {"reason": "fetch-error", "platform": "ashby", "careers_url": "u",
+                      "error": "HttpError: HTTP 404"},
+           "Bit": {"reason": "misconfig-scrape-on-ats", "platform": "scrape",
+                   "careers_url": "https://boards.greenhouse.io/bit"}}
+    assert health.mail_lines(one, None) == [
+        "standing: 1 fetch error (Decart: HttpError: HTTP 404) · 1 scrape row on an ATS host"]
+    # a misconfigured row that ALSO raised names its exception in the delta (the old
+    # `with_reason` flag printed a reason for fetch errors only)
+    assert "Bit: HTTP 500" in health.mail_lines(
+        {"Bit": {**one["Bit"], "error": "HTTP 500"}}, {}, scanned={"Bit"})[0]
+
+
+def test_a_row_that_left_stale_because_the_ats_host_list_shrank_is_not_a_recovery():
+    """docs/BACKLOG.md 214, live on 2026-08-26: myInterview left `stale.json` because
+    `applytojob.com|jazz.co` left `ATS_HOST` with the `jazzhr` platform, and the mail called it
+    `cleared` — a rule change read as a board recovering. The row was flagged yesterday, so the
+    pattern matched yesterday's URL and `previous` still holds it: a non-match today can only
+    mean the pattern shrank. Fortinet and Reindeer, whose URLs still match, really were moved
+    to native platforms and are still announced."""
+    from pipeline import health
+    previous = {
+        "myInterview": {"reason": "misconfig-scrape-on-ats", "platform": "scrape",
+                        "careers_url": "https://myinterview.applytojob.com/apply/"},
+        "Questar Auto Technologies": {"reason": "misconfig-scrape-on-ats", "platform": "scrape",
+                                      "careers_url": "https://questar.applytojob.com/apply"},
+        "Fortinet": {"reason": "misconfig-scrape-on-ats", "platform": "scrape",
+                     "careers_url": "https://edel.fa.us2.oraclecloud.com/hcmUI/CandidateExperience"},
+        "Reindeer": {"reason": "misconfig-scrape-on-ats", "platform": "scrape",
+                     "careers_url": "https://jobs.ashbyhq.com/reindeer-ai"},
+    }
+    scanned = set(previous)
+    assert health.mail_lines({}, previous, scanned=scanned) == [
+        "changed today: cleared: Fortinet; Reindeer"]
+    # the anchoring fact: if `applytojob` is ever put back, this guard fails loudly rather
+    # than silently suppressing a real recovery
+    assert health.ATS_HOST.search("https://myinterview.applytojob.com/apply/") is None
+    assert health.ATS_HOST.search("https://jobs.ashbyhq.com/reindeer-ai") is not None
+    # a row still flagged today is not "cleared" at all, whatever its host
+    assert health.mail_lines({"Fortinet": previous["Fortinet"]}, previous, scanned=scanned) == [
+        "changed today: cleared: Reindeer",
+        "standing: 1 scrape row on an ATS host"]
+
+
+def test_stale_json_never_publishes_a_query_string():
+    """docs/BACKLOG.md 229: `cloud_state/stale.json` is a tracked file in the PUBLIC repo and
+    `careers_url` was the row's `api_url` verbatim — the committed file carried nine Comeet
+    `?token=` values on 2026-08-26, while §5a's redaction sentence covered only the exception
+    text. The only consumer, `resolve_broken.candidates()`, reads the path."""
+    from pipeline import health
+    res = {"Beewise": {"platform": "comeet", "n": 0, "status": "empty",
+                       "api": "https://www.comeet.com/careers-api/2.0/company/0B.001/positions?token=SECRET"},
+           "Houzz": {"platform": "scrape", "n": 0, "status": "empty",
+                     "api": "https://jobs.lever.co/houzz?location=Israel"}}
+    stale = health.record(res, baseline_path="cloud_state/health_baseline.json",
+                          stale_path="cloud_state/stale.json", write=False)
+    assert stale["Beewise"]["careers_url"] == "https://www.comeet.com/careers-api/2.0/company/0B.001/positions"
+    assert stale["Houzz"]["careers_url"] == "https://jobs.lever.co/houzz"
+    assert "SECRET" not in _af_json.dumps(stale) and "?" not in _af_json.dumps(stale)
+    assert health._public(None) == "" and health._public("https://x.example/c") == "https://x.example/c"
+    # the misconfig verdict is decided on the FULL url, so stripping the query cannot hide a
+    # row from its own rule (`?location=Israel` sits after the host either way)
+    assert stale["Houzz"]["reason"] == "misconfig-scrape-on-ats"
+
+
+def test_rebasing_a_latched_scrape_baseline_is_an_operator_correction(tmp_path):
+    """The baseline is an all-time high, so when `74570c6` stopped emitting a page's own title
+    as a posting, 30 scrape rows latched as `regressed-to-zero` — forever, each taking a weekly
+    self-heal strike and a slot in discovery's targeted rotation. No rule can undo it: all 52
+    of those postings still pass today's `clean_scraped` and `is_israel_job` (they carried the
+    page footer's "Israel"), so a replay cannot separate the 47 chrome/foreign ones from the 5
+    real openings. `health.rebase` is the one place a baseline decreases, an operator names the
+    rows, and both files move together so the correction is never announced as `cleared`."""
+    from pipeline import health
+    base_p, stale_p = tmp_path / "b.json", tmp_path / "s.json"
+    base_p.write_text(_af_json.dumps({"NetApp": 13, "Sanofi": 3, "Predicta Med": 1,
+                                      "Decart": 4, "Wix": 40, "Zeroed": 0}), encoding="utf-8")
+    stale = {n: {"reason": "regressed-to-zero", "platform": "scrape", "careers_url": "u"}
+             for n in ("NetApp", "Sanofi", "Predicta Med", "Zeroed")}
+    stale["Decart"] = {"reason": "fetch-error", "platform": "ashby", "careers_url": "u"}
+    stale_p.write_text(_af_json.dumps(stale), encoding="utf-8")
+    before = (base_p.read_bytes(), stale_p.read_bytes())
+    plan = health.rebase(["NetApp", "Sanofi"], str(base_p), str(stale_p))
+    assert plan == {"rebased": {"NetApp": 13, "Sanofi": 3}, "refused": {}}
+    assert (base_p.read_bytes(), stale_p.read_bytes()) == before, "write=False touches nothing"
+    # every refusal, and each one leaves both files alone
+    refused = health.rebase(["Decart", "Wix", "Nobody", "Zeroed"], str(base_p), str(stale_p), write=True)
+    assert refused["rebased"] == {} and set(refused["refused"]) == {"Decart", "Wix", "Nobody", "Zeroed"}
+    assert "regressed-to-zero" in refused["refused"]["Decart"] and "absent" in refused["refused"]["Wix"]
+    assert (base_p.read_bytes(), stale_p.read_bytes()) == before
+    done = health.rebase(["NetApp", "Sanofi", "NetApp"], str(base_p), str(stale_p), write=True)
+    assert done["rebased"] == {"NetApp": 13, "Sanofi": 3}, "de-duplicated"
+    baseline = _af_json.loads(base_p.read_text(encoding="utf-8"))
+    assert baseline == {"NetApp": 0, "Sanofi": 0, "Predicta Med": 1, "Decart": 4, "Wix": 40, "Zeroed": 0}
+    assert all(isinstance(v, int) for v in baseline.values()), "the {name: int} contract"
+    assert set(_af_json.loads(stale_p.read_text(encoding="utf-8"))) == {"Predicta Med", "Decart", "Zeroed"}
+    # the morning after: the row is healthy, and the correction is not announced as a recovery
+    res = {"NetApp": {"platform": "scrape", "n": 0, "status": "empty", "api": "https://careers.netapp.com/"}}
+    after = health.record(res, baseline_path=str(base_p), stale_path=str(stale_p),
+                          rot_path=str(tmp_path / "none.json"), write=False)
+    assert after == {}
+    assert health.mail_lines(after, _af_json.loads(stale_p.read_text(encoding="utf-8")),
+                             scanned=set(res), rot_path=str(tmp_path / "none.json")) == []
+
+
+def test_the_rebase_report_names_the_postings_a_baseline_was_built_from(tmp_path, capsys):
+    """Evidence, not a verdict: the report prints what each latched baseline was built from so
+    a person can tell NetApp's thirteen nav pages from Predicta Med's real opening. It reports
+    only rows that are `regressed-to-zero` scrape rows today, and a revision it cannot read is
+    an empty report, never a crash."""
+    import health_check
+    from pipeline import health
+    cache = tmp_path / "old_cache.json"
+    cache.write_text(_af_json.dumps({
+        "NetApp": [{"title": "Cookie Consent Options", "location": "Tel Aviv, ISR",
+                    "url": "https://careers.netapp.com/cookie-management"},
+                   {"title": "Sitemap", "location": "Tel Aviv, ISR",
+                    "url": "https://careers.netapp.com/sitemap"}],
+        "Sanofi": [{"title": "Regional Business Director Hematology Oncology NY NJ",
+                    "location": "Israel",
+                    "url": "https://jobs.sanofi.com/en/job/united-states/regional-business-director"}],
+        "Predicta Med": [{"title": "Senior AI Engineer", "location": "Ramat Gan, Israel",
+                          "url": "https://predicta-med.com/careers/"}],
+        "Decart": [{"title": "never reported", "location": "Tel Aviv", "url": "u"}],
+    }), encoding="utf-8")
+    base_p, stale_p = tmp_path / "b.json", tmp_path / "s.json"
+    base_p.write_text(_af_json.dumps({"NetApp": 13, "Sanofi": 3, "Predicta Med": 1, "Decart": 4}), encoding="utf-8")
+    stale = {n: {"reason": "regressed-to-zero", "platform": "scrape", "careers_url": "u"}
+             for n in ("NetApp", "Sanofi", "Predicta Med")}
+    stale["Decart"] = {"reason": "fetch-error", "platform": "ashby", "careers_url": "u"}
+    stale["Wix"] = {"reason": "regressed-to-zero", "platform": "comeet", "careers_url": "u"}
+    stale_p.write_text(_af_json.dumps(stale), encoding="utf-8")
+    got = health_check.rebase_report(str(cache), stale_path=str(stale_p), baseline_path=str(base_p))
+    assert set(got) == {"NetApp", "Sanofi", "Predicta Med"}, "scrape regressions only"
+    out = capsys.readouterr().out
+    for text in ("Cookie Consent Options", "Tel Aviv, ISR", "careers.netapp.com/sitemap",
+                 "Senior AI Engineer", "Ramat Gan, Israel", "baseline 13", "baseline 1",
+                 "job/united-states/regional-business-director"):
+        assert text in out, text
+    assert "never reported" not in out and "Wix" not in out
+    # a revision that does not exist, and a row with nothing cached at it
+    assert health_check._cache_at("nope-not-a-rev") == {}
+    assert health_check._cache_at(str(tmp_path / "missing.json")) == {}
+    got = health_check.rebase_report("nope-not-a-rev", stale_path=str(stale_p), baseline_path=str(base_p))
+    assert got == {"NetApp": [], "Sanofi": [], "Predicta Med": []}
+    assert "the baseline came from an earlier night" in capsys.readouterr().out
+    assert health.rebase([], str(base_p), str(stale_p)) == {"rebased": {}, "refused": {}}
+
+
+# --- 2026-08-26 discovery: the blank guest page, the three brands, and the queue guard ---
+
+def test_a_blank_guest_page_is_re_asked_once_before_it_counts():
+    """2026-08-26 run 32934864207: `free=224 blank=58 blocked=30`. 24 of those 58 blanks were
+    the three-in-a-row drain run of the 8 queries that ended silently, so 34 were MID-POOL
+    holes the walk stepped over and never re-read — a ceiling of ~340 unread cards against
+    the day's 2,118. Ground truth the same morning, from the operator's own LinkedIn session:
+    Koladin, Intelligent Business, CaliAlfa and Riskified's DS lead were on LinkedIn's first
+    two pages for `data analyst`, refused by no intake gate, and in no cache."""
+    out, _ = _run_walk([(10, True), [(0, True), (10, True)], (10, True), (0, True)], pages=0)
+    assert len(out) == 30, "the re-ask must recover the page the old walk skipped"
+    assert _LAST_COUNTS["linkedin_blank_recovered"] == 1
+    # every REQUEST still bumps exactly one path counter: 2 for the recovered page
+    assert _LAST_COUNTS["linkedin_blank"] >= 1 and _LAST_COUNTS["linkedin_free"] == 3
+
+
+def test_a_twice_blank_page_is_still_blank():
+    """The retry is one probe, not a loop: a page that is blank twice counts as blank and the
+    walk ends on the tolerance exactly as before."""
+    out, _ = _run_walk([(10, True), [(0, True), (0, True)]], pages=0)
+    assert len(out) == 10
+    assert _LAST_COUNTS["linkedin_blank_recovered"] == 0
+
+
+def test_a_blocked_re_ask_never_buys_a_paid_page():
+    """The safety property the whole design rests on. `if not ok or (blanks >= tolerance and
+    not out)` guards the BLANK clause with `and not out` and the BLOCKED clause with nothing,
+    so if the re-ask were allowed to report a 403 the soft limit it provoked would convert a
+    free early exit into Unlocker spend — on a pool measured at 118% on 2026-08-26. A retry
+    may only ever help: its failure is reported as the original blank."""
+    paid = []
+    out, _ = _run_walk([(10, True), [(0, True), (0, False)]], pages=2, key="k",
+                       unlock=lambda url, timeout=120: paid.append(url) or "")
+    assert paid == [], "a blocked re-ask must not reach the paid path"
+    assert _LAST_COUNTS["linkedin_paid"] == 0 and _LAST_COUNTS["linkedin_blocked"] == 0
+    assert len(out) == 10
+
+
+def test_the_blank_re_ask_is_bounded_and_disarms_itself():
+    """Budgeted per SWEEP and self-disabling: "the blanks are structural" is something to
+    learn inside the run, not from tomorrow's log. Without the give-up counter a keyword that
+    alternates cards and blanks would re-ask on every blank page for the whole walk."""
+    import collections
+
+    import discovery_daily as dd
+    calls = []
+    _run_walk([(10, True), (0, True)] * 8, pages=0, calls=calls)
+    retried = sum(v - 1 for v in collections.Counter(calls).values() if v > 1)
+    assert retried == dd.LINKEDIN_BLANK_GIVE_UP, (
+        f"expected the re-ask to disarm after {dd.LINKEDIN_BLANK_GIVE_UP} misses, "
+        f"made {retried}")
+
+
+def test_the_three_aggregator_brands_are_the_only_names_whose_verdict_changed():
+    """2026-08-26: the mail published `### Jobgether` — a remote-job aggregator — as a newly
+    covered employer, with a role under it. `jobgether.` and `ethosia.` were already on
+    `aggregators.HOSTS`, i.e. the repo had ruled on the HOST and not on the NAME, and a
+    discovery card carries the name. Measured over the 3,586 (name, slug) pairs in
+    companies.csv u research_companies.json u discovered_cache.json: exactly 3 names flip and
+    ZERO companies.csv rows. The counter-examples are why the entries are explicit rather
+    than derived from `aggregators.HOSTS` by brand stem — those stems include `google`, and
+    Google is a real employer with 12 cached cards."""
+    from pipeline.recruiters import is_recruiter
+    for n in ("Google", "Together AI", "Gather", "Ethos", "Genpact", "appsforce", "Matrix IT"):
+        assert not is_recruiter(n), f"{n} is a real employer"
+    assert is_recruiter("Quik Hire Staffing"), "_KEYWORD already covers it; no entry needed"
+    # the display forms seen in the data, AND the bare brands a display name drifts to
+    for n in ("Jobgether", "Ethosia", "Staffin Israel", "Staffin", "Ethosia Human Resources"):
+        assert is_recruiter(n), n
+
+
+def _queue_fixture(tmp_path, monkeypatch, queue_bytes):
+    import json as _j
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "research_companies.json").write_bytes(queue_bytes)
+    from pipeline import sources as _src
+    monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
+    return _j
+
+
+_TRUNCATED = (b'[{"name": "Wix", "careers_url": "x", "ats": "unknown", "slug": "wix"},\n'
+              b' {"name": "Fiver')
+_WRONG_TYPE = b'{"Wix": {"name": "Wix"}}'
+
+
+@pytest.mark.parametrize("queue_bytes", [_TRUNCATED, _WRONG_TYPE])
+def test_an_unreadable_queue_is_never_overwritten_by_discovery_daily(tmp_path, monkeypatch,
+                                                                    capsys, queue_bytes):
+    """BACKLOG 188. `except Exception: research = []` then `json.dump(added)` replaced 1,606
+    queued names with whatever that morning found — no error, exit 0. And the guard has to be
+    isinstance-based, not exception-based: `{"Wix": {...}}` PARSES, so the old code sailed
+    past it and died one line later on `e.get(...)` over a dict's keys — killing main() before
+    `sources.record()`, so the day's source liveness went unrecorded too."""
+    import discovery_daily as dd
+    _queue_fixture(tmp_path, monkeypatch, queue_bytes)
+    fresh = [{"company": "Newco", "company_slug": "newco", "title": "Data Analyst",
+              "url": "u3", "posted_date": "2026-08-25", "ats_platform": "discovery-linkedin"}]
+    monkeypatch.setattr(dd, "indeed_search", lambda q: [])
+    monkeypatch.setattr(dd, "workable_search", lambda: [])
+    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": list(fresh))
+    monkeypatch.setattr(dd, "linkedin_normalize", lambda c: c)
+    monkeypatch.setattr(dd, "_li_queries", lambda: [("x", "Israel", 0)])
+    monkeypatch.setattr(dd, "plan_spend", lambda today=None: (100, 0, "test"))
+    monkeypatch.setattr(dd, "report_bd_spend", lambda targeted_cap=None: None)
+    monkeypatch.setattr(dd, "load_companies", lambda active_only=False: [])
+    monkeypatch.setattr(dd, "_load_secrets", lambda: None)
+    monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
+    dd.main()                                    # must not raise (the wrong-type case did)
+    assert (tmp_path / "research_companies.json").read_bytes() == queue_bytes
+    out = capsys.readouterr().out
+    assert "::error::" in out and "research_companies.json" in out
+    assert "Newco" in out, "name the companies it could not queue — they may not come back"
+    assert (tmp_path / "cloud_state" / "source_health.json").exists(), \
+        "main() must still reach sources.record()"
+    assert "0 new companies queued" in out
+
+
+def test_an_unreadable_queue_stops_telegram_before_the_watermark(tmp_path, monkeypatch, capsys):
+    """The watermark is the thing that cannot be undone. Skipping the queue write while
+    advancing `telegram_seen.json` is the 2026-08-21 incident (79 roles, unrecoverable) with
+    the queue in the cache's place — a channel's front page moves on, so the post is gone.
+    The run must write NOTHING and be replayable."""
+    import discovery_telegram as dt
+    _j = _queue_fixture(tmp_path, monkeypatch, _TRUNCATED)
+    (tmp_path / "discovered_cache.json").write_text("[]", encoding="utf-8")
+    good = ["Data Analyst", "Riskified", "Tel Aviv", "20/8/26", "SQL", "Senior",
+            "https://secrethunter.io/jobz/a2"]
+    jobs = [(9, dt.parse_post(good, "2026-08-25"))]
+    monkeypatch.setattr(dt, "CHANNELS", ["c1"])
+    monkeypatch.setattr(dt, "scan_channel", lambda chan, last: (jobs, 0))
+    monkeypatch.setattr("pipeline.companies.load_companies", lambda active_only=False: [])
+    dt.main()
+    out = capsys.readouterr().out.lower()
+    assert "without advancing the watermark" in out and "riskified" in out
+    assert (tmp_path / "research_companies.json").read_bytes() == _TRUNCATED
+    assert not (tmp_path / dt.STATE_PATH).exists(), "the watermark must not move"
+    assert _j.loads((tmp_path / "discovered_cache.json").read_text(encoding="utf-8")) == [], \
+        "nothing may be written at all, or the re-run cannot recover the names"
+    # ...and the operator fixes the file and re-runs: everything comes back, exactly once
+    (tmp_path / "research_companies.json").write_text("[]", encoding="utf-8")
+    dt.main()
+    assert [e["name"] for e in _j.loads(
+        (tmp_path / "research_companies.json").read_text(encoding="utf-8"))] == ["Riskified"]
+    assert len(_j.loads((tmp_path / "discovered_cache.json").read_text(encoding="utf-8"))) == 1
+    assert (tmp_path / dt.STATE_PATH).exists()
+
+
+def test_the_queue_and_the_job_cache_are_written_atomically():
+    """`open(path, "w")` truncates immediately, so a killed write IS the corrupt file the
+    guard above then has to survive — and both discovery steps are `continue-on-error` in one
+    `daily-digest.yml` job, so a cancelled run leaves the next step to truncate it.
+    `pipeline/atomic.py` exists for exactly this and the queue was not using it."""
+    import inspect
+
+    import discovery_daily as dd
+    import discovery_telegram as dt
+    from pipeline import discovery_queue
+    assert "write_json" in inspect.getsource(discovery_queue.write)
+    for fn in (dd.main, dt.main, dt._prune_queue):
+        src = inspect.getsource(fn)
+        assert 'open("research_companies.json", "w"' not in src, fn.__name__
+        assert 'open("discovered_cache.json", "w"' not in src, fn.__name__

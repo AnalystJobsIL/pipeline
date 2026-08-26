@@ -107,6 +107,20 @@
     "stage_note": "Listed on SIX Swiss Exchange and Nasdaq Stockholm as ABBN (formed 1988 via ASEA–Brown Boveri merger)",
     "sub_sector": "electrification, motion (drives/motors), process automation and robotics for industry and infrastructure"
   },
+  "AGILINA": {
+    "as_of": "2026-08-25",
+    "business_model": "Placement fees and HR consulting/outplacement services billed to employer clients; jobs it advertises belong to client companies",
+    "customer_type": "employers (Israeli tech companies and SMBs) and job seekers",
+    "employees_global": null,
+    "employees_lookup_miss": "2026-08-25",
+    "founded": null,
+    "il_center": "Herzliya (HQ, Arie Shenkar 3)",
+    "sector": "HR / recruitment services",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned Israeli staffing/HR boutique; no venture funding or public listing found",
+    "sub_sector": "Boutique recruitment & placement agency (posts client roles on its own board) plus HR consulting, manager coaching and outplacement"
+  },
   "AI21 Labs": {
     "as_of": "2026-08-21",
     "business_model": "Sells API/platform access to its proprietary large language models and enterprise AI systems, plus cloud-marketplace and on-prem deployments",
@@ -277,6 +291,19 @@
     "stage": "public",
     "stage_note": "NASDAQ: ADBE, listed since 1986",
     "sub_sector": "Creative, document (PDF), and digital-experience/marketing cloud software with generative AI (Firefly)"
+  },
+  "Agilite": {
+    "as_of": "2026-08-26",
+    "business_model": "Designs and manufactures tactical gear sold direct-to-consumer online (agilitegear.com) and via dealers/distributors, plus bulk sales to military and police units",
+    "customer_type": "military and law-enforcement units, defense distributors/dealers, consumers (shooters, preppers, outdoors)",
+    "employees_global": 75,
+    "founded": 2007,
+    "il_center": "Holon (HQ, design); manufacturing in Israel and US",
+    "sector": "defense / tactical equipment",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Founder-owned private company since 2007 (Elie Isaacson); no venture funding rounds on record (Tracxn, LinkedIn)",
+    "sub_sector": "Israeli-designed tactical gear — plate carriers, battle belts, pouches, helmet accessories and apparel for military, law enforcement and civilians"
   },
   "Agora": {
     "as_of": "2026-08-21",
@@ -512,6 +539,7 @@
     "business_model": "B2B2C SaaS — sells/licenses an AI-education platform to schools, municipalities, and education networks",
     "customer_type": "schools, municipalities, education networks",
     "employees_global": null,
+    "employees_lookup_miss": "2026-08-26",
     "founded": null,
     "il_center": "Tel Aviv (HQ)",
     "sector": "edtech",
@@ -2025,6 +2053,21 @@
     "stage_note": "Nasdaq & Tel Aviv Stock Exchange: CAMT (Nasdaq-listed since 2000)",
     "sub_sector": "Metrology and inspection equipment for semiconductor packaging, HBM/advanced packaging and compound semiconductors"
   },
+  "Candex Technologies": {
+    "as_of": "2026-08-26",
+    "business_model": "SaaS + transaction fees: acts as the merchant-of-record intermediary that enterprises pay through to settle small/irregular vendors, integrated with their P2P/ERP systems",
+    "customer_type": "large multinational enterprises (e.g. Diageo, Danone, Roche, Sanofi)",
+    "employees_as_of": "2026-08-26",
+    "employees_global": 270,
+    "employees_source": "web: Candex press release / Procurement Magazine coverage of the Series C extension with HSBC (2026): 'more than 270 employees, operating in 50+ countries'; third-party trackers range 226 (Unify) to 305 (T (estimate)",
+    "founded": 2009,
+    "il_center": "Tel Aviv (R&D); HQ in San Francisco",
+    "sector": "fintech",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Series C extended to $40M+ in Mar 2026 with HSBC (after $33M led by 9Yards Capital, Jul 2025); total raised >$120M; investors incl. Goldman Sachs, JPMorgan, American Express, NFX, Craft Ventures",
+    "sub_sector": "Tail-spend / vendor management and procure-to-pay platform for onboarding and paying one-time and irregular suppliers"
+  },
   "Capital One": {
     "as_of": "2026-08-21",
     "business_model": "Earns interest and interchange fees on credit cards, consumer/commercial banking, and the Discover payments network",
@@ -2452,6 +2495,19 @@
     "stage_note": "$20M Series A led by SignalFire (2025); total funding $28.5M incl. $8.5M seed from Lightspeed",
     "sub_sector": "non-human identity (NHI) security — securing API keys, tokens, service accounts and secrets"
   },
+  "Cnoga Medical": {
+    "as_of": "2026-08-25",
+    "business_model": "Sells proprietary non-invasive monitoring devices (e.g. TensorTip) to consumers, clinics and distributors, plus remote-care platform/services",
+    "customer_type": "consumers, clinics/hospitals, distributors",
+    "employees_global": 27,
+    "founded": 2004,
+    "il_center": "Caesarea (HQ, R&D, manufacturing)",
+    "sector": "healthtech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "$50M Series C in Mar 2017 led by BOE Technology Group; ~$70.5M raised total (Texas Instruments among investors)",
+    "sub_sector": "Non-invasive optical medical devices for vital signs and glucose monitoring, plus remote patient monitoring"
+  },
   "CodeMonkey": {
     "as_of": "2026-08-22",
     "business_model": "SaaS subscriptions to its coding-curriculum platform sold to schools, teachers and parents",
@@ -2754,6 +2810,19 @@
     "stage": "growth-private",
     "stage_note": "$620M Series D (2022) at $3.5B valuation; secondary-market pricing ~$1.6B as of 2026",
     "sub_sector": "Banking-as-a-Service — FDIC-insured bank providing embedded lending, payments and compliance infrastructure to fintechs"
+  },
+  "Crossriver": {
+    "as_of": "2026-08-25",
+    "business_model": "Earns interest and fees on loans originated for fintech partners plus payments/card-processing and API-platform fees",
+    "customer_type": "fintechs and marketplace lenders (B2B2C), plus local commercial/consumer banking clients",
+    "employees_global": 1623,
+    "founded": 2008,
+    "il_center": "Jerusalem, Har Hotzvim (R&D, ~170 staff); HQ in Fort Lee, NJ, US",
+    "sector": "fintech",
+    "size_band": "L",
+    "stage": "growth-private",
+    "stage_note": "Venture-backed: $620M round led by a16z/Eldridge at >$3B (Mar 2022); $50M Series D from T. Rowe Price funds (Q1 2026)",
+    "sub_sector": "Banking-as-a-service and embedded-finance infrastructure (FDIC-chartered bank powering fintech lending, payments, cards and crypto rails)"
   },
   "CrowdStrike": {
     "as_of": "2026-08-21",
@@ -3279,6 +3348,19 @@
     "stage_note": "NASDAQ: APPS; ~$565M TTM revenue",
     "sub_sector": "On-device app discovery, install and monetization platform preloaded via mobile carriers and OEM devices"
   },
+  "Directeam": {
+    "as_of": "2026-08-25",
+    "business_model": "Professional services and managed-services fees for cloud consulting, DevOps implementation and FinOps engagements, plus AWS partner resale margins",
+    "customer_type": "startups and SMB tech companies",
+    "employees_global": 22,
+    "founded": 2017,
+    "il_center": "Ramat Gan / Givatayim (HQ)",
+    "sector": "cloud / DevOps consulting",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Founder-owned services firm (Directeam Cloud Solutions Ltd., founded by Hagai Tobelem and Ori Stoliar); no venture funding recorded on Crunchbase/Tracxn",
+    "sub_sector": "AWS-focused DevOps and cloud-transformation consultancy (Kubernetes enablement, cloud migration, FinOps-as-a-service, 24/7 service desk)"
+  },
   "Dolby Laboratories": {
     "as_of": "2026-08-23",
     "business_model": "patent and technology licensing royalties from consumer-electronics OEMs, plus products and services for cinema, broadcast and streaming",
@@ -3643,6 +3725,19 @@
     "stage_note": "NASDAQ: ERIC / Nasdaq Stockholm: ERIC-B; ~88,826 employees reported at Dec 31, 2025 in the Annual Report 2025",
     "sub_sector": "5G radio access networks, mobile core, OSS/BSS and enterprise communications APIs for carriers"
   },
+  "Essence SmartCare": {
+    "as_of": "2026-08-25",
+    "business_model": "Sells connected care devices (wearable pendants, fall sensors, hubs) plus monitoring software/service subscriptions, largely via telecare and PERS service providers",
+    "customer_type": "telecare operators, PERS service providers, senior-living and home-care organizations",
+    "employees_global": 300,
+    "founded": 2014,
+    "il_center": "Herzliya (HQ)",
+    "sector": "healthtech",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Wholly owned division of Essence Group, privately held since 1994 by founder-CEO Dr. Haim Amir; no venture rounds",
+    "sub_sector": "Connected senior-care / PERS wearables, fall detection and remote monitoring for aging-in-place (division of Essence Group, a smart-home security and IoT maker)"
+  },
   "Estee Lauder Companies": {
     "as_of": "2026-08-23",
     "business_model": "Manufactures and sells prestige beauty products through department stores, specialty/travel retail, own stores and e-commerce",
@@ -3937,6 +4032,22 @@
     "stage": "growth-private",
     "stage_note": "$40M Series C led by Insight Partners (Jan 2025); ~$85M raised total",
     "sub_sector": "enterprise cloud cost management and optimization (FinOps) platform unifying AWS/GCP/Azure/K8s/SaaS spend"
+  },
+  "Fireberry": {
+    "as_of": "2026-08-26",
+    "business_model": "Subscription SaaS licences per user/seat for its CRM platform, plus implementation partners",
+    "customer_type": "SMBs",
+    "employees_as_of": "2026-08-26",
+    "employees_global": 47,
+    "employees_linkedin_miss": "2026-08-26",
+    "employees_source": "web: ContactOut profile lists 47 employees (2026), consistent with LinkedIn's 11-50 range for Fireberry (Powerlink Software Ltd, Tel Aviv); no figure on the company's own site or in press (estimate)",
+    "founded": 2012,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "SaaS / CRM",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped/unfunded private company per Crunchbase and Startup Nation Finder; no venture rounds or acquisition recorded",
+    "sub_sector": "Customizable all-in-one CRM and marketing-automation platform for SMBs (formerly Powerlink)"
   },
   "Fireblocks": {
     "as_of": "2026-08-21",
@@ -4249,6 +4360,19 @@
     "stage": "growth-private",
     "stage_note": "Formerly Nasdaq: GMDA; delisted May 2024 after Chapter 11-style restructuring, now wholly owned by Highbridge Capital (subsidiary of Ayrmid Ltd, $30M new capital)",
     "sub_sector": "Allogeneic cell therapies (NAM-enabled) — FDA-approved Omisirge (omidubicel) cord-blood graft for stem cell transplant"
+  },
+  "GenCell": {
+    "as_of": "2026-08-25",
+    "business_model": "Sells and leases fuel-cell power systems (G5, BOX, A5) plus fuel, service and maintenance contracts",
+    "customer_type": "telecom operators, utilities, homeland security and industrial off-grid sites",
+    "employees_global": 72,
+    "founded": 2011,
+    "il_center": "Petah Tikva (HQ, R&D, manufacturing)",
+    "sector": "cleantech / energy",
+    "size_band": "S",
+    "stage": "public",
+    "stage_note": "TASE: GNCL, IPO November 2020; market cap ~$8M (May 2026)",
+    "sub_sector": "Alkaline fuel-cell generators and ammonia-to-hydrogen backup/off-grid power for telecom, utilities and industry"
   },
   "GenCell Energy": {
     "as_of": "2026-08-24",
@@ -4851,6 +4975,19 @@
     "stage": "growth-private",
     "stage_note": "Series E: $250M in Nov 2021 at $2.4B valuation (Tiger Global); ~$498M raised total",
     "sub_sector": "Clientflow and business management platform for independent service-based businesses (contracts, invoicing, payments, scheduling)"
+  },
+  "Houzz": {
+    "as_of": "2026-08-26",
+    "business_model": "Houzz Pro subscriptions for contractors/designers, commissions on marketplace product sales, and advertising",
+    "customer_type": "home-improvement professionals (SMBs) and consumers",
+    "employees_global": 1800,
+    "founded": 2009,
+    "il_center": "Tel Aviv (R&D); HQ in Palo Alto, US",
+    "sector": "marketplace / SaaS",
+    "size_band": "L",
+    "stage": "growth-private",
+    "stage_note": "Venture-backed; last round $400M Series E (2017) at ~$4B valuation led by ICONIQ/Sequoia",
+    "sub_sector": "home renovation & design platform: consumer marketplace plus Houzz Pro SaaS for home-improvement professionals"
   },
   "Hudson Rock": {
     "as_of": "2026-08-23",
@@ -5552,16 +5689,18 @@
   },
   "Jobgether": {
     "as_of": "2026-08-26",
-    "business_model": "freemium/subscription career-coaching and job-matching platform monetized via job seeker subscriptions and employer listings",
-    "customer_type": "job seekers (10+ yrs experience, remote-work focused); employers posting remote roles",
+    "business_model": "Recruiter/employer fees and sponsored listings for matched candidates on its remote-jobs marketplace; free for job seekers",
+    "customer_type": "employers and recruiters hiring remote talent; job seekers",
+    "employees_as_of": "2026-08-26",
     "employees_global": 39,
+    "employees_source": "web: PitchBook profile (2026) lists 39 employees; LinkedIn/ZoomInfo range 11-50 agrees. Tracxn's 472 and RocketReach's 353 are inflated aggregator/associated-member counts, not staff. (estimate)",
     "founded": 2020,
-    "il_center": "",
-    "sector": "HR tech / recruiting",
+    "il_center": "none known; HQ in Brussels, Belgium (not an Israeli company)",
+    "sector": "HR tech",
     "size_band": "S",
     "stage": "early-private",
-    "stage_note": "seed round €1.4M Mar 2023 (4Ventures, Finance.Brussels); pre-seed €900K Jul 2021",
-    "sub_sector": "AI-powered remote-job matching and career-coaching platform for job seekers"
+    "stage_note": "Seed VC, ~$2.5M total raised (Finance.Brussels, 4Ventures, Carpenter Capital); no later rounds reported",
+    "sub_sector": "AI-driven remote/hybrid job matching platform and job aggregator"
   },
   "John Deere": {
     "as_of": "2026-08-23",
@@ -6594,6 +6733,19 @@
     "stage_note": "Acquired by South Korea's Yanolja for ~$300M, deal completed January 2024 (formerly Hotelmize, raised ~$20M incl. Alibaba Entrepreneurs Fund)",
     "sub_sector": "AI-driven post-booking profit optimization (automated hotel/flight rebooking at lower rates) for travel companies"
   },
+  "Mobb": {
+    "as_of": "2026-08-25",
+    "business_model": "SaaS subscriptions for an automated code-vulnerability fixer that plugs into SAST tools and developer workflows (free community tier, paid enterprise plans)",
+    "customer_type": "enterprises and software development teams (AppSec / DevSecOps)",
+    "employees_global": 42,
+    "founded": 2021,
+    "il_center": "Tel Aviv (R&D); US office in Boston",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Venture-backed; $5.4M seed (2023) led by Ariel Maislos with MizMaa Ventures and Cyber Club London; no later round confirmed",
+    "sub_sector": "AI-based automated vulnerability remediation (auto-fixing SAST findings in application code)"
+  },
   "Mobileye": {
     "as_of": "2026-08-21",
     "business_model": "chip + software sales to automakers (design wins, per-unit); 248M+ vehicles shipped",
@@ -6954,6 +7106,19 @@
     "stage_note": "~$20.6M raised; valued at NIS 572M (~$155M) per PwC valuation at end of 2025; Mastercard Move partnership",
     "sub_sector": "Cross-border payments and neobanking for migrant workers (remittances, multi-currency accounts, payout API)"
   },
+  "Nestle": {
+    "as_of": "2026-08-25",
+    "business_model": "Manufactures and sells branded food, beverage, nutrition and pet-care products through retail and foodservice channels",
+    "customer_type": "consumers (via retailers and distributors)",
+    "employees_global": 277000,
+    "founded": 1866,
+    "il_center": "Shoham / Petah Tikva (Osem-Nestlé HQ and plants); global HQ in Vevey, Switzerland",
+    "sector": "consumer goods / food & beverage",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "SIX Swiss Exchange: NESN; Osem-Nestlé is a wholly owned Israeli subsidiary",
+    "sub_sector": "Packaged food, beverages, coffee, nutrition and pet care; Israel operations via Osem-Nestlé (fully owned since 2016)"
+  },
   "NetApp": {
     "as_of": "2026-08-22",
     "business_model": "Sells storage hardware/software systems plus subscription cloud data services and support contracts",
@@ -7138,16 +7303,19 @@
   },
   "Nisha Pro": {
     "as_of": "2026-08-25",
-    "business_model": "places and outsources IT/tech professionals to client companies, earning placement fees and staffing/outsourcing contract margins",
-    "customer_type": "enterprises (hiring managers at tech, finance, and industrial companies needing IT staff)",
-    "employees_global": 350,
+    "business_model": "Bills client companies a margin on outsourced/contract tech employees it employs on their behalf, plus placement fees",
+    "customer_type": "enterprises and high-tech companies",
+    "employees_as_of": "2026-08-25",
+    "employees_global": 300,
+    "employees_linkedin_miss": "2026-08-25",
+    "employees_source": "web: LinkedIn company page (il.linkedin.com/company/nishapro) self-reported size band 201-500 employees, 2025; midpoint used. RocketReach lists only ~17 named staff (2025), which reflects internal office s (estimate)",
     "founded": 2011,
     "il_center": "Airport City (HQ)",
-    "sector": "IT staffing / workforce outsourcing",
+    "sector": "HR / staffing",
     "size_band": "M",
     "stage": "private-enterprise",
-    "stage_note": "privately held, incorporated 2011, part of Nisha Group (family-founded recruitment group, no VC funding found)",
-    "sub_sector": "tech recruitment and outsourced IT project staffing (software, QA, infrastructure) for Israeli enterprises"
+    "stage_note": "Subsidiary of founder-owned Nisha Group (Paule Tzuker, 1995); Danel Group (TASE: DANE) took a stake in 2011 — no venture funding",
+    "sub_sector": "Tech outsourcing and contract staffing arm of Nisha Group — places software, cyber, QA and PM consultants at Israeli high-tech firms"
   },
   "NoTraffic": {
     "as_of": "2026-08-21",
@@ -8177,6 +8345,19 @@
     "stage_note": "raised $75M at $1.5B valuation in Aug 2025 (~$268M total raised); 150 layoffs in 2026 push for profitability",
     "sub_sector": "foot-traffic analytics platform using anonymized mobile location data for physical-world consumer insights"
   },
+  "PlainID": {
+    "as_of": "2026-08-26",
+    "business_model": "Subscription/licensing of its SaaS authorization platform sold to enterprises, often via IAM partners and system integrators",
+    "customer_type": "enterprises (financial services, healthcare, insurance, large IT organizations)",
+    "employees_global": 93,
+    "founded": 2014,
+    "il_center": "Tel Aviv (HQ, Yigal Alon St.); US office in New York",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Series C $75M led by Insight Partners (Dec 2021); ~$100M raised total, valuation undisclosed",
+    "sub_sector": "Identity security — policy-based access control (PBAC) / centralized authorization platform for applications, APIs and data"
+  },
   "Plarium": {
     "as_of": "2026-08-22",
     "business_model": "Free-to-play games monetized via in-app purchases of virtual goods/currency, plus in-game advertising and cross-promotion",
@@ -8876,6 +9057,19 @@
     "stage_note": "Series G $110M at ~$2B valuation (Apr 2021); ~$555M total raised; IPO discussed but still private as of 2026",
     "sub_sector": "in-memory NoSQL database / real-time data platform (commercial company behind open-source Redis, now with vector search for AI)"
   },
+  "Refine Intelligence": {
+    "as_of": "2026-08-25",
+    "business_model": "SaaS subscription sold to financial-crime/compliance teams; automated digital inquiries plus AI resolve AML and fraud alerts",
+    "customer_type": "banks and credit unions",
+    "employees_global": 26,
+    "founded": 2022,
+    "il_center": "Ness Ziona (HQ)",
+    "sector": "fintech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "$13M seed round announced Nov 2023 (Glilot Capital, Fin Capital, SYN Ventures, Ground Up Ventures); no later round found",
+    "sub_sector": "AI-driven customer-outreach platform for AML/fraud alert investigation at banks and credit unions"
+  },
   "Reflectiz": {
     "as_of": "2026-08-21",
     "business_model": "SaaS subscriptions for a platform that monitors websites' third-party/client-side code for security and compliance risks",
@@ -8901,6 +9095,21 @@
     "stage": "early-private",
     "stage_note": "VC-backed startup; $4M round in 2020 led by SPDG Ventures (investors incl. Sierra Ventures, Canaan Partners Israel, F2 Capital); no exit reported",
     "sub_sector": "GPS/GNSS anti-spoofing & anti-jamming software (Pyramid GNSS) and counter-drone (C-UAS) systems"
+  },
+  "Reindeer": {
+    "as_of": "2026-08-25",
+    "business_model": "Builds and integrates bespoke AI agents for enterprise clients under a consultancy-plus-software engagement",
+    "customer_type": "enterprises",
+    "employees_as_of": "2026-08-25",
+    "employees_global": 17,
+    "employees_source": "web: PitchBook (16 employees) and Supply Chain Digital company profile (17 employees), 2026; Startup Nation Finder still shows an older 1–10 band. WebFetch was denied, so the company site/LinkedIn could no (estimate)",
+    "founded": 2024,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "AI / enterprise automation",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "$20M seed round Dec 2025 led by Team8 / K5 Global with Lightspeed and Vesey Ventures",
+    "sub_sector": "Custom AI agents that automate back-office workflows (document processing, payment approvals, quote tracking) via a hands-on services model"
   },
   "Remilk": {
     "as_of": "2026-08-23",
@@ -8968,6 +9177,19 @@
     "stage": "early-private",
     "stage_note": "$15M Series A led by AlleyCorp (announced 2026), total funding >$30M; formerly known as Rhino Health",
     "sub_sector": "Federated computing platform for training and running AI on distributed sensitive data (health, finance, biopharma) without moving it"
+  },
+  "Ride Vision": {
+    "as_of": "2026-08-25",
+    "business_model": "Sells its camera+AI rider-alert hardware/software kit to riders and via OEM/insurer/fleet partnerships (licensing and per-unit sales)",
+    "customer_type": "consumers (motorcyclists), motorcycle OEMs, insurers",
+    "employees_global": 11,
+    "founded": 2018,
+    "il_center": "Herzliya (HQ)",
+    "sector": "automotive / mobility safety",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Venture-backed: $2.5M seed (YL Ventures, 2018) + $7M Series A led by OurCrowd (Nov 2020), ~$10.6M total; 2026 JV with Dhoot Transmission (India)",
+    "sub_sector": "AI camera-based collision-alert (ADAS) system for motorcycles and two-wheelers"
   },
   "RightHear": {
     "as_of": "2026-08-22",
@@ -10091,6 +10313,19 @@
     "stage_note": "VC-backed; $21M seed (2021, Group 11 + Viola Ventures, Meron Capital, Global Founders Capital) and a $25M debt facility from Pier Asset Management in June 2025 — no announced Series A",
     "sub_sector": "PTO-liability platform that lets employees cash out unused paid time off early while lowering employers' accrued vacation liability"
   },
+  "Source Defense": {
+    "as_of": "2026-08-25",
+    "business_model": "SaaS subscription for its client-side security platform, priced by protected web properties/traffic",
+    "customer_type": "enterprises (retail, e-commerce, financial services, healthcare)",
+    "employees_global": 46,
+    "founded": 2014,
+    "il_center": "Rosh HaAyin (HQ/R&D); US office in Connecticut",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Venture-backed; $27M Series B (Apr 2022) led by Springtide Ventures with JVP, AllegisCyber, Capital One Ventures — ~$47.5M raised total",
+    "sub_sector": "Client-side web application protection — real-time control of third-party JavaScript on websites (Magecart, formjacking, PCI DSS 4.0 script compliance)"
+  },
   "Spacial": {
     "as_of": "2026-08-21",
     "business_model": "SaaS/service fees from automating design-to-permit engineering workflows for residential construction projects",
@@ -11208,6 +11443,19 @@
     "stage_note": "NYSE: UBER, IPO May 2019",
     "sub_sector": "ride-hailing, food delivery (Uber Eats) and freight logistics platform"
   },
+  "Unframe AI": {
+    "as_of": "2026-08-26",
+    "business_model": "sells enterprise AI solutions on recurring contracts ($100M+ TCV in 12 months), outcome-based/subscription pricing",
+    "customer_type": "enterprises",
+    "employees_global": 170,
+    "founded": 2024,
+    "il_center": "Tel Aviv (R&D, ~70 staff); HQ in California; office in Berlin",
+    "sector": "enterprise AI",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "$50M Series B led by Highland Europe (2026), total raised $100M; investors Bessemer, TLV Partners, Craft, Third Point; valuation undisclosed",
+    "sub_sector": "turnkey, fully managed tailored AI solutions/agents for large enterprises (finance, manufacturing, real estate, logistics)"
+  },
   "Unit": {
     "as_of": "2026-08-21",
     "business_model": "B2B platform fees/revenue share on embedded banking products (accounts, cards, payments, lending) built via its APIs over partner banks",
@@ -11262,6 +11510,22 @@
     "stage": "growth-private",
     "stage_note": "$250M Series B led by Bessemer at $1.5B valuation, Jan 2026 ($430M total raised); 2025 Datadog acquisition talks did not close",
     "sub_sector": "runtime-powered cloud security platform (CNAPP) for cloud infrastructure and workloads"
+  },
+  "Upwind Security": {
+    "as_of": "2026-08-26",
+    "business_model": "subscription SaaS licensing of its cloud security platform, priced per protected cloud workload/asset",
+    "customer_type": "enterprises",
+    "employees_as_of": "2026-08-26",
+    "employees_global": 400,
+    "employees_linkedin_miss": "2026-08-26",
+    "employees_source": "web: Press on the $250M Series B (TechCrunch / Times of Israel, Jan 2026) says 'more than 300 employees' (HQ San Francisco, ~half in Tel Aviv); LinkedIn-derived trackers (Revelio Labs) put it at ~400 as of (estimate)",
+    "founded": 2022,
+    "il_center": "Tel Aviv (R&D); HQ in San Francisco",
+    "sector": "cybersecurity",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Series B $250M led by Bessemer at $1.5B valuation (Jan 2026); Salesforce Ventures follow-on at ~$1.6B (Mar 2026); total raised ~$430M; 2025 Datadog ~$1B acquisition talks did not close",
+    "sub_sector": "runtime-powered cloud security platform (CNAPP) using eBPF sensors for real-time threat detection and response in cloud workloads"
   },
   "UserWay": {
     "as_of": "2026-08-23",
@@ -11726,6 +11990,19 @@
     "stage_note": "NASDAQ: WDC; flash business spun off as Sandisk (NASDAQ: SNDK) in Feb 2025, which took over the Israeli flash sites",
     "sub_sector": "HDD and flash storage — controllers, firmware and ASIC R&D for memory/storage products"
   },
+  "Whalo": {
+    "as_of": "2026-08-25",
+    "business_model": "free-to-play mobile games monetized via in-app purchases and ads",
+    "customer_type": "consumers",
+    "employees_global": 37,
+    "founded": 2020,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "gaming",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Seed/Series A led by Makers Fund (Jun 2021); undisclosed round with Claltech (Apr 2025); amounts not published",
+    "sub_sector": "casual cross-platform multiplayer mobile games"
+  },
   "Wiliot": {
     "as_of": "2026-08-21",
     "business_model": "sells low-cost IoT Pixel tags plus recurring SaaS subscriptions to its cloud visibility/sensing platform",
@@ -12178,6 +12455,19 @@
     "stage_note": "Founder-owned services firm; no disclosed venture funding (Crunchbase shows no rounds)",
     "sub_sector": "boutique Israeli software house providing outsourced full-stack, front-end and mobile (React/React Native/Node) development teams to tech companies"
   },
+  "aspectiva": {
+    "as_of": "2026-08-26",
+    "business_model": "Formerly B2B SaaS licensing review-analytics/NLP to e-commerce sites; post-acquisition an internal Walmart innovation unit",
+    "customer_type": "e-commerce retailers (now Walmart internal)",
+    "employees_global": 15,
+    "founded": 2013,
+    "il_center": "Tel Aviv (R&D); parent Walmart HQ in Bentonville, US",
+    "sector": "retail tech / AI",
+    "size_band": "S",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by Walmart in February 2019 (Walmart's first Israeli acquisition; folded into Store No 8 incubation arm)",
+    "sub_sector": "NLP analysis of consumer reviews and opinions to power product insights and shopping-assistant recommendations"
+  },
   "autods": {
     "as_of": "2026-08-22",
     "business_model": "Tiered monthly/annual SaaS subscriptions for dropshippers, scaled by catalog/order volume, plus add-on sourcing and fulfillment services",
@@ -12203,6 +12493,19 @@
     "stage": "public",
     "stage_note": "80.2%-owned subsidiary of Magic Software Enterprises (NASDAQ/TASE: MGIC); Magic bought an additional 10.17% for ~$3.6M in April 2020 per its 20-F, and Magic itself is being acquired by Matrix IT",
     "sub_sector": "Outsourced software professionals and managed IT teams for mainframe and large-scale enterprise environments (COBOL, MF sysprog, DBA, infrastructure, cyber, BI), plus hi-tech recruitment and placement"
+  },
+  "ctera": {
+    "as_of": "2026-08-26",
+    "business_model": "Subscription/licensing of its enterprise file services platform, sold direct and via MSPs and channel partners (e.g. HPE, IBM)",
+    "customer_type": "enterprises, government/defense, managed service providers",
+    "employees_global": 195,
+    "founded": 2008,
+    "il_center": "Petah Tikva (HQ, R&D); US office in New York",
+    "sector": "cloud infrastructure / enterprise storage",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "~$180M raised over 6 rounds; $80M growth round led by PSG Equity (2021); earlier backers Benchmark, Bessemer, Venrock, Cisco",
+    "sub_sector": "Global file system and cloud file services (edge-to-cloud NAS, secure file sharing, ransomware protection) for enterprises"
   },
   "dentsu Israel": {
     "as_of": "2026-08-22",

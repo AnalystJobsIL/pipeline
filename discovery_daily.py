@@ -303,6 +303,63 @@ LI_CARDS_PRESENT = _collections.defaultdict(set)
 _li_last_present = [set()]
 
 
+# One bounded re-ask of a page that came back 200-EMPTY, and the budget that bounds it.
+# A blank is ambiguous — a hole inside the pool, or LinkedIn's soft rate-limit — and the walk
+# used to step over it and never look again. Measured on the 2026-08-26 sweep: of 58 blank
+# pages, 24 were the three-in-a-row drain run of the 8 queries that ended silently, so **34
+# were mid-pool holes** — a ceiling of ~340 unread cards against that day's 2,118. Ground
+# truth the same morning: four employers on LinkedIn's own first two pages for `data analyst`
+# (Koladin, Intelligent Business, CaliAlfa, Riskified's DS lead) were in no cache and refused
+# by no gate.
+#
+# THE RETRY CAN ONLY HELP, and that is the whole safety argument:
+#   * it never returns ok=False, so it cannot push the walk onto the `not ok` branch, which
+#     is the one clause NOT guarded by `and not out` — a soft limit escalating to 403 must
+#     never turn a free early exit into Unlocker spend;
+#   * only a page carrying no urns EITHER is re-asked (urns with no cards is markup drift; a
+#     re-read cannot fix it and the drift warning owns it) — which also means the denominator
+#     `_li_last_present[0]` is empty at that point and nothing can be lost by overwriting it;
+#   * it is capped per SWEEP, not per query, and disarms itself once it stops recovering:
+#     "the blanks are structural" is a thing to learn inside the run, not from tomorrow's log.
+LINKEDIN_BLANK_RETRIES = int(os.environ.get("LINKEDIN_BLANK_RETRIES", "20"))
+LINKEDIN_BLANK_GIVE_UP = int(os.environ.get("LINKEDIN_BLANK_GIVE_UP", "5"))
+# Zero by default, and that is deliberate rather than lazy: the walk already fires up to
+# LINKEDIN_GUEST_PAGES back-to-back requests per query with no delay between them, so a pause
+# on the RE-ASK alone would be theatre — and a real one is charged 27 times a sweep inside a
+# 25-minute step. The re-ask is bounded instead (20 a sweep, disarming after 5 misses), which
+# is what actually stops it hammering a throttle. Raise it from the workflow if the 08-27 log
+# shows the re-ask provoking blocks.
+_BLANK_RETRY_PAUSE = float(os.environ.get("LINKEDIN_BLANK_RETRY_PAUSE", "0"))
+_blank_retry = {"left": LINKEDIN_BLANK_RETRIES, "misses": 0}
+
+
+def _guest_page(keyword, location, days, start):
+    """`_li_guest` plus at most one re-ask of a 200-empty page. Same `(cards, ok)` contract,
+    so the three-state dispatch in the walk below is untouched.
+
+    Counters stay honest: every REQUEST bumps exactly one path counter, so a recovered page
+    reads as `blank` (attempt 1) + `free` (attempt 2) and a twice-blank page as `blank` twice,
+    while `linkedin_blank_recovered` is a subset counter saying how many blanks were rescued.
+    """
+    cards, ok = _li_guest(keyword, location, days, start)
+    if not (ok and not cards and not _li_last_present[0]):
+        return cards, ok                      # good page, blocked, or drift — not our case
+    if _blank_retry["left"] <= 0 or _blank_retry["misses"] >= LINKEDIN_BLANK_GIVE_UP:
+        return cards, ok                      # budget spent, or the blanks are structural
+    _blank_retry["left"] -= 1
+    if _BLANK_RETRY_PAUSE:
+        time.sleep(_BLANK_RETRY_PAUSE)
+    again, ok_again = _li_guest(keyword, location, days, start)
+    SOURCE_PATH["linkedin_blank"] += 1        # attempt 1: a request MADE that produced nothing
+    if ok_again and again:
+        _blank_retry["misses"] = 0
+        SOURCE_PATH["linkedin_blank_recovered"] += 1
+        return again, True
+    _blank_retry["misses"] += 1
+    _li_last_present[0] = set()
+    return [], True                           # still blank — and NEVER reported as blocked
+
+
 def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     """LinkedIn job search: KEYLESS guest endpoint first, Web Unlocker only where blocked.
 
@@ -329,7 +386,7 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     # had cited. Empty means drained: nothing to report. Same idiom as indeed_search.
     why = ""
     for i in range(LINKEDIN_GUEST_PAGES):
-        cards, ok = _li_guest(keyword, location, days, i * 10)
+        cards, ok = _guest_page(keyword, location, days, i * 10)
         # THREE states, and conflating any two loses jobs:
         #   ok + cards  -> the good case
         #   ok + blank  -> AMBIGUOUS: the endpoint emits intermittent 200-empty pages INSIDE
@@ -893,6 +950,7 @@ def main():
     # LinkedIn blocks it (1 credit per PAGE of ~60 cards, never per record). National queries
     # first, then the free-only city windows (see _li_queries).
     n_li_raw = n_li_present = 0
+    _blank_retry.update(left=LINKEDIN_BLANK_RETRIES, misses=0)   # one budget per SWEEP
     queries = _li_queries()
     for kw, loc, pg in queries:
         label = kw if loc == "Israel" else f"{kw} @ {loc}"
@@ -926,6 +984,7 @@ def main():
     print(f"[linkedin] {n_li_raw} cards across {len(queries)} queries "
           f"({len(_LI_KEYWORDS)} national + {len(queries) - len(_LI_KEYWORDS)} city, free-only) · "
           f"path free={SOURCE_PATH['linkedin_free']} blank={SOURCE_PATH['linkedin_blank']} "
+          f"recovered={SOURCE_PATH['linkedin_blank_recovered']} "
           f"blocked={SOURCE_PATH['linkedin_blocked']} paid={SOURCE_PATH['linkedin_paid']} "
           f"({UNLOCKER_CALLS['linkedin']} Unlocker credits)")
     if SOURCE_PATH["linkedin_paid"] and not SOURCE_PATH["linkedin_free"]:
@@ -1032,8 +1091,8 @@ def main():
         if n_agency:
             print(f"cache: dropped {n_agency} agency cards (name or LinkedIn slug)")
         if cacheable:
-            with open("discovered_cache.json", "w", encoding="utf-8") as f:
-                json.dump(merged, f, ensure_ascii=False, indent=1)
+            from pipeline.atomic import write_json
+            write_json("discovered_cache.json", merged)
         # `len(cacheable)` is pre-dedup, so "carried" could print NEGATIVE — and that was the
         # only tell that the previous cache had been lost. Report both honestly.
         carried = len(merged) - sum(1 for j in cacheable
@@ -1050,7 +1109,8 @@ def main():
     from pipeline.firmographics import looks_like_junk
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
     new_cos = {}
-    n_junk = n_rec = 0
+    junk_names, rec_names = set(), set()      # NAMES, not postings: one agency posting 8
+    # roles was reported as "8 agencies" (BACKLOG 189a)
     # NEW COMPANIES PER SOURCE is the number this layer exists to produce — a source can be
     # alive, on-budget and completely useless at the same time (a healthy-looking record
     # count once hid a 0-new-companies breadth sweep), and this is the line that says so.
@@ -1073,12 +1133,14 @@ def main():
                 new_cos[c.lower()]["_real_lead"] = True
             continue
         if looks_like_junk(c):
-            n_junk += 1
+            junk_names.add(c.lower())
             continue
         # the slug is free evidence the display name hides ("Dialog" / dialog-recruiting).
         # Printed, not just counted: a wrong rejection has to be visible to be appealed.
         if _is_rec(c, j.get("company_slug", "")):
-            n_rec += 1
+            if c.lower() in rec_names:
+                continue                      # already reported; one line per NAME
+            rec_names.add(c.lower())
             print(f"  [names] agency, not an employer: {c}"
                   + (f" (slug {j['company_slug']})" if not _is_rec(c) else ""))
             continue
@@ -1089,9 +1151,9 @@ def main():
                               "ats": "unknown", "slug": j.get("company_slug", ""),
                               "_real_lead": bool(j.get("careers_hint"))}
         yield_by_src[src] += 1
-    if n_junk or n_rec:
-        print(f"discovery: rejected {n_junk} job-title-shaped names and {n_rec} agencies "
-              f"before they could become rows")
+    if junk_names or rec_names:
+        print(f"discovery: rejected {len(junk_names)} job-title-shaped names and "
+              f"{len(rec_names)} agencies before they could become rows")
     for src in sorted(seen_by_src):
         n = yield_by_src[src]
         print(f"[yield] {src}: {len(seen_by_src[src])} employers -> {n} NEW companies"
@@ -1103,29 +1165,39 @@ def main():
     # Bridge to auto-expand: out/ is gitignored (ephemeral on cloud runners), so the queue
     # auto_expand.py actually drains is the committed research_companies.json — merge into it.
     n_queued = 0
+    from pipeline import discovery_queue
     try:
-        research = json.load(open("research_companies.json", encoding="utf-8"))
-    except Exception:  # noqa: BLE001
-        research = []
+        research = discovery_queue.load()
+    except discovery_queue.QueueUnreadable as e:
+        # Skip the QUEUE WRITE only, never `return`: main() must still reach sources.record(),
+        # the spend report and the summary — the same contract as the cache write above. And
+        # NAME the companies, because a discovery name is only recoverable if its source
+        # re-serves the posting tomorrow; a LinkedIn card that expires tonight is not.
+        print(f"::error::{e} — NOT overwriting it with this run's {len(new_cos)} names "
+              f"alone. Not queued: "
+              + ", ".join(sorted(v["name"] for v in new_cos.values()))
+              + ". Fix or delete the file and re-run; the cards are in "
+                "discovered_cache.json.", flush=True)
+        research = None
     # A gate learned today must also unlearn yesterday's queue: auto_expand re-checks the
     # NAME only, and "Dialog" (dialog-recruiting) sat at position 129 of its next batch on
     # 2026-08-25. Pruned here, where this layer already holds the file, on EVERY run — a
     # morning with nothing new to queue must not leave yesterday's agency in place.
-    kept = [e for e in research if not _is_rec(e.get("name"), e.get("slug", ""))]
-    pruned = len(research) - len(kept)
-    if pruned:
-        print(f"queue: dropped {pruned} agency entries: "
-              + ", ".join((e.get("name") or "?") for e in research if e not in kept))
-    research = kept
-    known = {(e.get("name") or "").strip().lower() for e in research}
-    added = [v for k, v in new_cos.items() if k not in known]
-    if added or pruned:
-        research.extend(added)
-        with open("research_companies.json", "w", encoding="utf-8") as f:
-            json.dump(research, f, ensure_ascii=False, indent=1)
-        n_queued = len(added)
-        if added:
-            print(f"queued {n_queued} new companies into research_companies.json")
+    if research is not None:
+        kept = [e for e in research if not _is_rec(e.get("name"), e.get("slug", ""))]
+        pruned = len(research) - len(kept)
+        if pruned:
+            print(f"queue: dropped {pruned} agency entries: "
+                  + ", ".join((e.get("name") or "?") for e in research if e not in kept))
+        research = kept
+        known = {(e.get("name") or "").strip().lower() for e in research}
+        added = [v for k, v in new_cos.items() if k not in known]
+        if added or pruned:
+            research.extend(added)
+            discovery_queue.write(research)
+            n_queued = len(added)
+            if added:
+                print(f"queued {n_queued} new companies into research_companies.json")
     # A source returning zero is the signal, not the absence of one: the Indeed dataset
     # printed "0 records" every day for five days and nothing ever said a source had died.
     try:
