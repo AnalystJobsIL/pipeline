@@ -1934,6 +1934,18 @@ hit instead of after three.
 (permission), because they are different axes and a caller that sets one and forgets the other
 fails silently — the model answers, in schema, having never searched.
 
+**Reading the answer.** `structured_output` is null whenever the turn ends after a tool — so on
+every WebSearch call — and the `result` fallback is therefore a live path, not a rarity. It
+accepts only **schema-shaped** objects (or a bare `known`/`unknown` escape hatch) and the
+**last** one wins, because the model's answer is the last thing it writes and anything earlier
+is context it is reasoning *about*. Taking the first object with any key outside
+`{unknown, known}` stored a neighbouring company's profile: *"the context is from Wix, whose
+profile is {…}. But Tel Aviv is a city, so {"known": false}"* returned Wix's record as Tel
+Aviv's, `_coerce` accepted it — it is a valid record, just not this company's — and the run
+reported success (wave-1, 2026-08-26). `known` is read as a truth value, because the fallback
+path is not schema-validated and the string `"false"` is truthy in Python; a refusal written
+*into* the `sector` field is rejected too, since `sector` is the one field `_coerce` insists on.
+
 #### The measurement that chose the prompt (21 calls, 2026-08-26)
 
 Four companies whose stored records carry a checkable recent fact. A system prompt that merely
@@ -2011,7 +2023,13 @@ of slack before the mail slips an hour to the 07:17 poll. `FIRMO_TIME_BUDGET_MIN
 used 2m22s). In order:
 
 1. read the export (status), seed sqlite from it (`sync_store`, idempotent), build the union;
-   start the ONE wall clock, which covers blurbs and research together;
+   start the ONE wall clock, which covers blurbs and research together — **with a reserve**:
+   blurbs run first, and 30 of them at ~15 s each would eat 450 s of a 480 s budget, leaving
+   research 30 s. Worse, the per-call timeout is clamped to what is left, so the call was
+   killed at `timeout(60s)` and arrived as an `LLMUnavailable` — the mail said *"claude
+   unavailable after 0 research calls"* when nothing was down. Research keeps a reserved
+   share, never launches a call below `RESEARCH_MIN_S` (120 s, against 18–40 s measured), and
+   a clamp-killed call is counted as budget, not as an outage;
 2. **blurbs** for board companies without one, one per identity, refusing any name that
    `not_a_company` rejects and dropping any blurb already cached under such a name:
    `company_profiles.json` (hand-written, same junk rule) > sqlite > one call each, at most
@@ -2052,9 +2070,20 @@ that production belongs in the cloud. It is still armed; it is not this lane's t
 `discovery_daily`, `discovery_telegram`, `listing_hunt`, `probe_candidates`,
 `registry_health` and `research_firmographics` — and, transitively, `check_invariants`'s pool
 D. A false positive there is a silently excluded company (§8). It gained the separator-free
-arm `docs/BACKLOG.md` 11/101 asked for: **every token role/modifier vocabulary AND at least
-one head noun.** The head requirement is the safety — it keeps `Cloud Security`, `Data.ai`,
-`Solutions IQ` and `Team8` out, and `Unit` is an active ashby row that the first draft junked.
+arm `docs/BACKLOG.md` 11/101 asked for: **two or more tokens, every one of them role/modifier
+vocabulary, and at least one a head noun.**
+
+Each clause is load-bearing. The head requirement keeps `Cloud Security`, `Data.ai`,
+`Solutions IQ` and `Team8` out, and `Unit` is an active ashby row the first draft junked. The
+**two-token** minimum is the one wave 1 had to add: every single member of `_TITLE_HEAD` is by
+itself a one-token all-vocabulary name, and several are real companies — **`Analyst`** is
+Analyst I.M.S., a TASE-listed Israeli investment house that employs the very analysts this
+board is about, and `Engineering`, `Team`, `Head`, `Lead`, `Architect` and `Designer` are all
+somebody's brand. A bare noun is a word, not a leaked headline. And the tokenizer is Latin-only,
+so a Hebrew token was **invisible** to the closure test rather than out-of-vocabulary and
+`Analyst בע"מ` read as entirely role vocabulary — the mirror image of the §1a bug where a Latin
+entry did not cover the Hebrew spelling; a name whose letters the tokenizer did not account for
+is now never judged by this rule.
 Swept over every real name in the repo (**1,690**: `companies.csv` 1,244 + the export +
 `research_companies.json` + `discovered_cache.json`) it fires on exactly two — `my team`,
 already junk, and `Infrastructure Team`, live in `research_companies.json` and one
@@ -2078,6 +2107,11 @@ secrettelaviv job's text as context and profiled a company mentioned *inside* th
 not. Widening `looks_like_junk` alone — which is all the backlog items asked for — **would not
 have prevented it**. A blurb already cached under such a name is now dropped at **read** time
 (exactly one today), which fixes every machine at once without writing `seen.db`.
+
+**Every refusal prints the name it refused** (§1a: *"every rejection prints the name, so a
+wrong one can be appealed from the step log"*). A count alone makes a false positive
+unrecoverable, which is §8's first failure class — a row quietly leaving a pool on a green
+run.
 
 The board section itself outlives this: it is rendered from 7 open ledger records, and that is
 `docs/BACKLOG.md` 223, lane `roles`.
@@ -2118,7 +2152,7 @@ records.
 
 ### Guards and how to rehearse
 
-`tests/test_company_intel.py` (**72** cases, one per shipped bug or claim above; no test
+`tests/test_company_intel.py` (**84** cases, one per shipped bug or claim above; no test
 spawns `claude` or touches `cloud_state/`). To rehearse tomorrow's digest without spending
 anything:
 
@@ -2138,6 +2172,13 @@ an argv it cannot classify writes to stderr and exits 3, which the seam reports 
 **every** research call with a blurb, each one reading as a name failure, while the driver
 printed a plausible line and exited 0 regardless.
 `test_the_rehearsal_shim_can_classify_every_argv_the_real_seam_builds` goes red instead.
+
+`tests/fixtures/company_intel/mutations.json` holds **41** records. It used to hold 18 and
+**could never have run**: it keyed the class as `cls` where `tools/mutate.py` reads
+`m["class"]`, which is why four records that no longer matched any code went unnoticed. It is
+also in no CI path — `tests.yml` runs `tools/mutate.py --all`, whose default catalogue is
+`tests/mutations.json` — so `test_every_company_intel_mutation_still_aims_at_real_code` is
+that path, at zero cost: a mutation whose `find` no longer occurs is a comment, not a guard.
 
 ### Known limitations
 
