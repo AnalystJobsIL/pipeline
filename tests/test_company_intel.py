@@ -41,14 +41,31 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(F, "SHARED_EXPORT", str(export))
     calls = []
 
-    def fake_claude(prompt, *, tools=(), timeout=240):
-        calls.append({"prompt": prompt, "tools": tuple(tools), "timeout": timeout})
+    def fake_claude(prompt, *, system="", schema="", model="", effort="", tools=(),
+                    timeout=240, meta=None):
+        """The seam is `F.ask` since 2026-08-26 (BACKLOG 117). The `script(prompt, tools)`
+        contract every test below writes against is UNCHANGED — it still returns the CLI's
+        text — and this wraps that text in the envelope shape `F.result_object` reads, so a
+        JSON answer travels as `structured_output` and prose travels as the blurb schema's
+        one field. Research is still `tools` truthy; the tests never had to learn a flag."""
+        calls.append({"prompt": prompt, "tools": tuple(tools), "timeout": timeout,
+                      "model": model, "effort": effort, "system": system, "schema": schema})
         script = getattr(fake_claude, "script", None) or (lambda p, t: json.dumps(REC) if t else "Co does X. It earns Y.")
         out = script(prompt, tools)
         if isinstance(out, Exception):
             raise out
-        return out
-    monkeypatch.setattr(F, "_claude", fake_claude)
+        try:
+            data = json.loads(out)
+            if not isinstance(data, dict):
+                raise ValueError
+        except Exception:                       # noqa: BLE001 — prose: the blurb shape
+            data = {"known": True, "blurb": out}
+        res = {"data": data, "envelope": {"result": out}, "models": [model or "fake"],
+               "searches": 1 if tools else 0, "seconds": 0.0}
+        if meta is not None:
+            F.record_call(meta, res, model)
+        return res
+    monkeypatch.setattr(F, "ask", fake_claude)
     return st, export, calls, fake_claude
 
 
@@ -222,18 +239,77 @@ def test_derive_blurb_reads_the_facts_as_prose():
     assert company_info.derive_blurb("X", None) == ""
 
 
-# --- 11. one CLI seam, no shell off Windows --------------------------------------------
-def test_claude_subprocess_never_uses_a_shell_off_windows(monkeypatch):
+def test_the_seam_pins_model_effort_search_and_never_a_shell_or_the_repo(monkeypatch):
+    """The 2026-08-24 version of this test asserted only `shell is False` off Windows and
+    `["claude", "-p", "--allowedTools", "WebSearch"]`. Every other property of that argv was
+    unpinned, and all of them were wrong: no --model (so the CLI default ran — opus[1m] from
+    ~/.claude/settings.json on the laptop, the account default on the runner, and nothing
+    recorded which), no schema, no system prompt, no --output-format json (so no modelUsage,
+    no cost, and no evidence the web search ever ran), and cwd inherited = the repo root,
+    which read CLAUDE.md and the gitignored CLAUDE.local.md into every call. BACKLOG 117."""
+    import shutil as _sh
+    from pipeline import llm
     seen = {}
 
     def fake_run(cmd, **kw):
-        seen.update(kw, cmd=cmd)
-        return subprocess.CompletedProcess(cmd, 0, stdout='{"x": 1}', stderr="")
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    monkeypatch.setattr(F, "_is_windows", lambda: False)
-    assert F.claude_json("p") == {"x": 1}
-    assert seen["shell"] is False and seen["cmd"][:2] == ["claude", "-p"]
-    assert seen["cmd"][2:] == ["--allowedTools", "WebSearch"]
+        seen["cmd"], seen["kw"] = list(cmd), kw
+        return subprocess.CompletedProcess(cmd, 0, stdout=json.dumps(
+            {"type": "result", "is_error": False,
+             "structured_output": {"known": True, "sector": "fintech", "sub_sector": "",
+                                   "stage": "public", "stage_note": "", "size_band": "",
+                                   "employees_global": None, "founded": None,
+                                   "business_model": "", "customer_type": "",
+                                   "il_center": ""},
+             "modelUsage": {"claude-sonnet-5": {"inputTokens": 5, "outputTokens": 9,
+                                                "canonicalModel": "claude-sonnet-5",
+                                                "webSearchRequests": 2}}}), stderr="")
+    monkeypatch.setattr(llm.subprocess, "run", fake_run)
+    monkeypatch.setattr(_sh, "which", lambda n, *a, **k: "/usr/bin/claude")
+
+    rec = F.research_company("Wix")
+    assert rec and rec["sector"] == "fintech"
+    cmd, kw = seen["cmd"], seen["kw"]
+    assert kw.get("shell", False) is False, "no shell on ANY OS (it ran a bare `claude` on Linux)"
+    assert "israeli-jobs-pipeline" not in str(kw.get("cwd", "")).lower(), \
+        "cwd must never be the repo: from there every call read CLAUDE.md + CLAUDE.local.md"
+    assert cmd[cmd.index("--model") + 1] == F.RESEARCH_MODEL, "the model must be pinned"
+    assert cmd[cmd.index("--effort") + 1] == F.RESEARCH_EFFORT
+    assert cmd[cmd.index("--tools") + 1] == "WebSearch", "availability"
+    assert cmd[cmd.index("--allowedTools") + 1] == "WebSearch", "and permission — both axes"
+    assert cmd[cmd.index("--output-format") + 1] == "json", "no envelope = no audit"
+    assert "--no-session-persistence" in cmd
+    assert cmd[cmd.index("--json-schema") + 1] == F._RESEARCH_SCHEMA
+    assert cmd[cmd.index("--system-prompt") + 1] == F._RESEARCH_SYSTEM
+
+
+def test_the_research_prompt_mandates_a_web_search():
+    """Measured 2026-08-26 over four companies with a checkable recent fact: a prompt that
+    merely SUGGESTED search searched on 1 of 4, and every searchless answer was staler than
+    the record it would have replaced (Aidoc missed its 2026-04 Series E and $534M; Aleph
+    Farms missed the 2025 down-round). Mandating it: 4 of 4 searched, 4 of 4 current.
+    This sentence is load-bearing — soften it and re-run that measurement, or don't."""
+    import fill_employees_llm
+    for text, who in ((F._RESEARCH_SYSTEM, "researcher"),
+                      (fill_employees_llm._SYSTEM, "employee fill")):
+        assert "ALWAYS search the web" in text, f"the {who} stopped mandating a search"
+        assert "never answer from memory" in text.lower() or "even for a company" in text, who
+    # ONE line: cmd.exe truncates an argv element at a newline (the classifier lane shipped
+    # 116 of 1,336 characters of rules that way)
+    for text in (F._RESEARCH_SYSTEM, company_info._SYSTEM, fill_employees_llm._SYSTEM):
+        assert "\n" not in text
+
+
+def test_the_schema_cannot_drift_from_the_validator():
+    """The schema is DERIVED from STAGES/SIZE_BANDS, and `minLength` on `sector` is what
+    stops a model satisfying the whole schema with empty strings — `_coerce` insists on
+    exactly one field, so an all-empty record would otherwise be ACCEPTED, cached until
+    2027-02, and rendered as a one-chip card while the mail said `1 researched`."""
+    sc = json.loads(F._RESEARCH_SCHEMA)
+    assert set(sc["properties"]["stage"]["enum"]) - {""} == F.STAGES
+    assert set(sc["properties"]["size_band"]["enum"]) - {""} == F.SIZE_BANDS
+    assert sc["properties"]["sector"].get("minLength") == 1
+    assert "known" in sc["required"], "without it _coerce cannot tell 'no sector' from 'not a company'"
+    assert sc["additionalProperties"] is False
 
 
 def test_the_three_callers_share_the_seam():
@@ -244,12 +320,38 @@ def test_the_three_callers_share_the_seam():
         assert "subprocess.run(" not in src, f"{mod.__name__} spawns claude itself"
 
 
-def test_cli_failure_raises_and_prose_returns_none(monkeypatch):
-    monkeypatch.setattr(subprocess, "run", lambda cmd, **kw: subprocess.CompletedProcess(cmd, 1, stdout="", stderr="Not logged in"))
-    with pytest.raises(F.ResearchUnavailable):
-        F.claude_json("p")
-    monkeypatch.setattr(subprocess, "run", lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0, stdout="I'm not sure, sorry.", stderr=""))
-    assert F.claude_json("p") is None
+def test_cli_failure_raises_with_a_kind_and_prose_returns_none(monkeypatch):
+    """Infrastructure RAISES (and now carries `.kind`, so an auth failure is an outage on the
+    FIRST hit instead of after SOFT_OUTAGE_MIN_FAILS); a bad ANSWER returns None and costs
+    the name a strike. The exit-0-with-an-error-envelope shape is the one that used to be
+    scored as the name failing — a real company struck for a keychain problem."""
+    import shutil as _sh
+    from pipeline import llm
+    monkeypatch.setattr(_sh, "which", lambda n, *a, **k: "/usr/bin/claude")
+
+    def stdout(text, code=0):
+        monkeypatch.setattr(llm.subprocess, "run",
+                            lambda cmd, **kw: subprocess.CompletedProcess(cmd, code, stdout=text, stderr=""))
+
+    # (a) non-zero exit -> infrastructure
+    monkeypatch.setattr(llm.subprocess, "run",
+                        lambda cmd, **kw: subprocess.CompletedProcess(cmd, 1, stdout="", stderr="Not logged in"))
+    with pytest.raises(F.ResearchUnavailable) as e:
+        F.research_company("X")
+    assert e.value.kind == "auth", "an auth failure must be nameable as one, not 'transient'"
+
+    # (b) THE SHIPPED BUG: exit 0, `is_error` in the envelope (the real 2.1.241 keychain-less
+    #     shape). The old seam read the exit code only, so this was a weekly STRIKE.
+    stdout(json.dumps({"type": "result", "is_error": True, "api_error_status": 401,
+                       "result": "Failed to authenticate"}))
+    with pytest.raises(F.ResearchUnavailable) as e:
+        F.research_company("X")
+    assert e.value.kind == "auth"
+
+    # (c) prose: a fact about the ANSWER, with a reason that now survives the run
+    stdout(json.dumps({"type": "result", "is_error": False, "result": "I'm not sure, sorry."}))
+    rec, why = F.research_company_detail("X")
+    assert rec is None and "no JSON" in why
     assert company_info.summarize_company("X") == ""
 
 

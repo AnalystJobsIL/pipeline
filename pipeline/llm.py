@@ -5,7 +5,10 @@ the repo — and returns the model's answer, or raises `LLMUnavailable(kind)` fo
 that is infrastructure rather than opinion. `pipeline/seniority.py` is the first consumer;
 `call_json()` (2026-08-25, `resolve_llm`) is the same invocation returning the structured
 object itself, for callers whose schema is not a YES/NO verdict.
-`pipeline/firmographics.py` keeps its own seam until it migrates (docs/BACKLOG.md 117).
+`call_meta()` (2026-08-26, `company-intel`) is the same invocation with the envelope's
+audit read out -- which model actually answered, how long it took, and how many web
+searches ran. `tools=` lets a caller grant the CLI's own tools, which is what let
+`firmographics` migrate and close docs/BACKLOG.md 117: no bare `claude -p` is left.
 """
 from __future__ import annotations
 
@@ -75,9 +78,22 @@ def _kind(text):
     return "transient"
 
 
-def _invoke(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
+def _tools(tools):
+    """The `--tools` value: "" (all off -- the default, and the byte every tool-less caller
+    has always built), a comma list, or "default". A sequence is joined."""
+    return tools if isinstance(tools, str) else ",".join(str(t) for t in (tools or ()))
+
+
+def _invoke(prompt, *, system, schema, model, timeout, cwd=None, effort="low", tools=""):
     """The one invocation. Returns (envelope, structured_output-or-None, seconds); raises
     LLMUnavailable for infrastructure. `call()` and `call_json()` are two readings of it.
+
+    `tools` is BOTH the availability list (`--tools`) and the permission allowlist
+    (`--allowedTools`), and they are ONE argument on purpose. They are different axes, and
+    a caller that sets one and forgets the other fails SILENTLY: the model answers, in
+    schema, having never searched. `cwd` is a scratch dir, so no project settings file
+    grants anything -- the grant has to be argv. Default "" keeps every tool-less caller's
+    argv byte-identical, which tests/test_units.py and tests/test_registry.py pin.
 
     No shell on any OS: `shutil.which` resolves claude.EXE / claude.cmd / the npm shim, and
     the schema and rules travel as argv elements verbatim (through cmd.exe they did not).
@@ -86,9 +102,12 @@ def _invoke(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
     exe = shutil.which("claude")
     if not exe:
         raise LLMUnavailable("cli-missing: claude is not on PATH", kind="missing")
-    cmd = [exe, "-p", "--model", model, "--effort", effort, "--tools", "",
+    tl = _tools(tools)
+    cmd = [exe, "-p", "--model", model, "--effort", effort, "--tools", tl,
            "--no-session-persistence", "--output-format", "json",
            "--json-schema", schema, "--system-prompt", system]
+    if tl:
+        cmd += ["--allowedTools", tl]
     t0 = time.time()
     try:
         proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
@@ -119,34 +138,74 @@ def _invoke(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
     return data, so, time.time() - t0
 
 
-def call(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
+def _served(data, model=""):
+    """The model that ANSWERED. The CLI bills a haiku side-turn on every call, and when a
+    tool runs it is haiku that reads the results: on a WebSearch probe haiku showed 23,449
+    input tokens against the answering sonnet's 6, so the old "most input tokens" rule
+    named haiku on every tool-using call (docs/BACKLOG.md 207, the mail's `haiku x237`).
+    Most OUTPUT tokens is no better -- haiku's search summaries beat the answer on one
+    probe. Trust what we asked for when it is present; fall back to output tokens."""
+    usage = (data or {}).get("modelUsage") or {}
+    if not usage:
+        return None
+    want = str(model or "").strip().lower()
+    if want:
+        for m, u in usage.items():
+            canon = str((u or {}).get("canonicalModel") or m).lower()
+            if want == canon or want in canon or want == str(m).lower():
+                return m
+    return max(usage, key=lambda m: (usage[m] or {}).get("outputTokens") or 0)
+
+
+def _searches(data):
+    """How many web searches actually ran. NOT `usage.server_tool_use.web_search_requests`
+    -- that counts the SERVER-side tool and reads 0 even when Claude Code's client-side
+    WebSearch ran twice (measured 2026-08-26). The per-model counter is the real one, and
+    it is what tells a researched fact from a parametric guess."""
+    usage = (data or {}).get("modelUsage") or {}
+    return sum((u or {}).get("webSearchRequests") or 0 for u in usage.values())
+
+
+def call(prompt, *, system, schema, model, timeout, cwd=None, effort="low", tools=""):
     """Run `claude -p` once, tool-less and structured. Returns
     {"verdict": "YES"|"NO"|None, "reason", "models", "seconds"} — `verdict=None` means the
     MODEL failed to answer in-schema (a fact about the answer, not cached, no breaker strike).
     Raises LLMUnavailable for infrastructure: CLI missing, non-zero exit (bad token, unknown
     flag, rate limit), `is_error` in the envelope (a keychain-less login exits 0!), timeout."""
     data, so, secs = _invoke(prompt, system=system, schema=schema, model=model,
-                             timeout=timeout, cwd=cwd, effort=effort)
+                             timeout=timeout, cwd=cwd, effort=effort, tools=tools)
     if data is None:
         return {"verdict": None, "reason": "no JSON envelope", "models": [], "seconds": secs}
     v = str(so.get("verdict") or "").strip().upper()
-    usage = data.get("modelUsage") or {}
-    # the CLI bills a haiku side-turn on every call; the model that ANSWERED is the one that
-    # read the most input
-    served = max(usage, key=lambda m: (usage[m] or {}).get("inputTokens") or 0) if usage else None
+    served = _served(data, model)
     return {"verdict": v if v in ("YES", "NO") else None,
             "reason": _ascii(so.get("reason") or "no structured verdict"),
             "models": [served] if served else [],
             "seconds": secs}
 
 
-def call_json(prompt, *, system, schema, model, timeout, cwd=None, effort="low"):
+def call_meta(prompt, *, system, schema, model, timeout, cwd=None, effort="low", tools=""):
+    """`call_json()` with the envelope's audit read out:
+    `{"data", "envelope", "models", "searches", "seconds"}`.
+
+    `_invoke` always had the envelope and `call_json` threw it away, so a caller could not
+    say which model answered, how long it took, or whether the web search ran at all --
+    the three things that separate a researched fact from a confident guess. `data` is the
+    structured output or None; the caller applies its OWN reading of `envelope["result"]`
+    when it wants one (`firmographics` does: `_envelope` takes the FIRST object, and a
+    restated escape hatch ahead of the real record would become a weekly strike)."""
+    data, so, secs = _invoke(prompt, system=system, schema=schema, model=model,
+                             timeout=timeout, cwd=cwd, effort=effort, tools=tools)
+    served = _served(data, model)
+    return {"data": so if isinstance(so, dict) and so else None, "envelope": data,
+            "models": [served] if served else [], "searches": _searches(data),
+            "seconds": secs}
+
+
+def call_json(prompt, *, system, schema, model, timeout, cwd=None, effort="low", tools=""):
     """`call()` for a caller whose schema is an OBJECT rather than a verdict: the structured
     output as a dict, or None when the model produced none (infrastructure still raises
     LLMUnavailable). `resolve_llm` was the last bare `claude -p` (default model, every tool,
     `shell=True` on Windows, the repo as cwd, the answer regex-extracted from prose)."""
-    _data, so, _secs = _invoke(prompt, system=system, schema=schema, model=model,
-                               timeout=timeout, cwd=cwd, effort=effort)
-    return so if isinstance(so, dict) and so else None
-
-
+    return call_meta(prompt, system=system, schema=schema, model=model, timeout=timeout,
+                     cwd=cwd, effort=effort, tools=tools)["data"]
