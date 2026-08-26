@@ -738,7 +738,7 @@ apply now view see details more read back to at in on of and or the a an job job
 careers position positions opening openings role roles vacancy we are hiring full part time
 temporary permanent contract freelance hybrid remote onsite site office
 based new open
-engineering engineers research development r&d sales marketing finance hr people operations
+engineering engineers research development sales marketing finance hr people operations
 ops product design support legal security qa customer success business technology tech
 """.split())
 
