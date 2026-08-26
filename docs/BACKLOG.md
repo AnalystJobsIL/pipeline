@@ -2645,3 +2645,46 @@ Record: `docs/sessions/2026-08-24-scraper.md` (2026-08-26 section). Numbers re-d
     breaker. Pass a filtered `env=` (PATH, HOME/USERPROFILE, the OAuth token), resolve the
     executable to an absolute path, and classify `not recognized as an internal or external`
     / `command not found` as `missing`.
+
+## From the `discovery` lane, 2026-08-26
+
+Record: `docs/sessions/2026-08-24-discovery.md` (2026-08-26 section). Numbers re-derived that day
+from origin `b2090f6` and run 32934864207; re-derive before acting.
+
+223. **A parked row's ledger roles are still mailed** — lane: `roles` (+ `render`). `Tel Aviv`
+    was parked on 2026-08-25 (`active=false`, "redundant: not a company"), yet the 2026-08-26 mail
+    carried three of its roles under `### Tel Aviv` with Alma's blurb and `🗓 —`: the 7 records in
+    `cloud_state/roles.jsonl` are `status: open`, `last_seen 2026-08-25`, and three of them got
+    `sent: 2026-08-26` (`Marketing Ops & Analytics Manager`, `Senior BI Analyst`, `Senior Product
+    Analyst`). Closure is recorded only where the run looked, and a parked row is never looked at
+    again, so nothing closes them and the mail's "new" selection still sees them (the residue
+    BACKLOG 167 left to `roles`). Rule wanted: a role whose company row is inactive is never
+    selected for the mail, and parking a row closes its open records with a reason.
+224. **`cloud_state/last_run.json` is a day stale after a green run** — lane: `infra`. Origin at
+    `b2090f6` (the 2026-08-26 06:03 state commit) holds `{"date": "2026-08-25", "run_url": "",
+    "status": "success"}` while that run's last step logged `persist_state: run 2026-08-26
+    healthy; nothing to report`. Either the healthy path deliberately does not rewrite the file
+    (then the doc should say so) or the file is not carried by the commit.
+225. **The names queue grows +70/day against 2–3 resolved per run, and its file order now decides
+    who gets the LLM shots** — lane: `registry`. 2026-08-26 08:48: `unresolved: 414 · processing
+    250`, `resolved 3 (LLM-cracked 3) … deferred 247 (cap 243, llm-none 4)`; 1,351 of the 1,606
+    entries are `ats: "unknown"`. `auto_expand.py:201-204` stable-sorts by last-tried date, so
+    among never-tried names the FILE order is the queue — and since 2026-08-26 `discovery_daily`
+    writes the file best-evidence-first (analyst-titled cached cards desc, cards desc; 44 of the
+    411 waiting names carry such a card). If `auto_expand` ever re-sorts by name or shuffles, that
+    signal is lost; if the cap stays at 10, the 367 evidence-free names never drain — that is the
+    dial, not the queue.
+226. **The breadth sweep loses whole pages to blank guest replies** — lane: `discovery` (fixed in
+    part 2026-08-26, measured 2026-08-27). Ground truth from the operator's own LinkedIn session
+    on 2026-08-26 ("data analyst · Israel · past week · most recent", the 50 newest of 92): of ~24
+    relevant employer postings that pre-dated the run the cache held ~20; Koladin, Intelligent
+    Business, CaliAlfa and Riskified's DS lead were never fetched (not gated). The sweep had
+    logged `blank=58` of 325 guest pages and `linkedin_search` ends a keyword after three
+    consecutive blanks once it holds cards. A blank page is now re-asked once (`recovered=` on the
+    sweep line). Scale, derived from the run's own counters rather than measured per page:
+    8 of the 27 queries ended silently, i.e. on exactly `LINKEDIN_BLANK_TOLERANCE`=3 terminal
+    blanks (2 ended on the cap, 17 blocked), so 58 - 24 = **34 blank pages were mid-pool
+    holes** the walk stepped over and never re-read — a ceiling of ~340 cards, 16% of the
+    day's 2,118. If the 08-27 log shows `recovered≈0`, the blanks are structural and the next
+    rung is a second pass over the blank starts at the end of the walk. Pages 3–4 of the audit
+    (start=50, 75) could not be read — LinkedIn answered 429 to the machine mid-audit.
