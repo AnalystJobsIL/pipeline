@@ -1,22 +1,22 @@
 {
  "Explorium": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/B4.00E/positions?token=4BE17B61C744BE1C7497C4BE12F817B612F8",
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/B4.00E/positions",
   "platform": "comeet",
   "reason": "empty-board"
  },
  "AI21 Labs": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/E6.001/positions?token=6E12946DC230276E13DE93708294637083708",
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/E6.001/positions",
   "platform": "comeet",
   "reason": "empty-board"
  },
  "Mobileye": {
-  "careers_url": "https://api.eu.lever.co/v0/postings/mobileye?mode=json",
+  "careers_url": "https://api.eu.lever.co/v0/postings/mobileye",
   "platform": "lever",
   "reason": "fetch-error",
   "error": "HttpError: network error for https://api.eu.lever.co/v0/postings/mobileye The rea"
  },
  "XM Cyber": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/15.005/positions?token=51519692393A2A1454A2A145423930F3F",
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/15.005/positions",
   "platform": "comeet",
   "reason": "empty-board"
  },
@@ -72,7 +72,7 @@
   "error": "scrape: http:404 (1 night)"
  },
  "Apple": {
-  "careers_url": "https://jobs.apple.com/en-us/search?location=israel-ISR",
+  "careers_url": "https://jobs.apple.com/en-us/search",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -82,27 +82,12 @@
   "reason": "regressed-to-zero"
  },
  "ABB": {
-  "careers_url": "https://careers.abb/global/en/search-results?keywords=Israel",
+  "careers_url": "https://careers.abb/global/en/search-results",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "REE Automotive": {
   "careers_url": "https://ree.auto/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Groundwork BioAg": {
-  "careers_url": "https://www.groundworkbioag.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "IBM": {
-  "careers_url": "https://www.ibm.com/careers/search?field_keyword_08[0]=Israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "AstraZeneca": {
-  "careers_url": "https://careers.astrazeneca.com/search-jobs/Israel",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -112,44 +97,29 @@
   "reason": "regressed-to-zero"
  },
  "Leadspace": {
-  "careers_url": "https://api.lever.co/v0/postings/leadspace?mode=json",
+  "careers_url": "https://api.lever.co/v0/postings/leadspace",
   "platform": "lever",
   "reason": "empty-board"
  },
  "Intelligems": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/intelligems?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/intelligems",
   "platform": "workable",
   "reason": "empty-board"
  },
  "Aporia": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/aporia?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/aporia",
   "platform": "workable",
   "reason": "empty-board"
  },
  "Hunters": {
-  "careers_url": "https://www.comeet.co/careers-api/2.0/company/67.007/positions?token=7672C6A163533D11D9C429F33D10250333D1",
+  "careers_url": "https://www.comeet.co/careers-api/2.0/company/67.007/positions",
   "platform": "comeet",
   "reason": "empty-board"
- },
- "Perception Point": {
-  "careers_url": "https://perception-point.io/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "CyberArk": {
-  "careers_url": "https://www.cyberark.com/careers/all-job-openings/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "Trullion": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/07.000/positions?token=7002A00E003F002A007002A0002A002A00",
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/07.000/positions",
   "platform": "comeet",
   "reason": "empty-board"
- },
- "BlueSnap": {
-  "careers_url": "https://www.bluesnap.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "Bridgewise": {
   "careers_url": "https://www.comeet.com/jobs/bridgewise/F9.009",
@@ -161,23 +131,13 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Ottopia": {
-  "careers_url": "https://ottopia.tech/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "ASTERRA": {
   "careers_url": "https://asterra.io/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Elbit Systems": {
-  "careers_url": "https://elbitsystemscareer.com/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Continental Israel": {
-  "careers_url": "https://jobs.continental.com/en/detail-page/job-detail/REF97327K-p-9f5c47fa289fd2dde975a1c868b127f7/logistics-project-manager/?tx_conjobs_filter%5Bfilter%5D%5Bcountry%5D%5B0%5D=Israel",
+  "careers_url": "https://jobs.continental.com/en/detail-page/job-detail/REF97327K-p-9f5c47fa289fd2dde975a1c868b127f7/logistics-project-manager/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -187,24 +147,19 @@
   "reason": "regressed-to-zero"
  },
  "Vayyar": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/vayyar?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/vayyar",
   "platform": "workable",
   "reason": "empty-board"
  },
  "Diagnostic Robotics": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/diagnostic-robotics?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/diagnostic-robotics",
   "platform": "workable",
   "reason": "empty-board"
  },
  "AWS": {
-  "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services?loc_query=Israel",
+  "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "NetApp": {
-  "careers_url": "https://careers.netapp.com/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "Akamai": {
   "careers_url": "https://akamaicareers.inflightcloud.com/search",
@@ -213,12 +168,12 @@
   "error": "scrape: http:403 (2 nights)"
  },
  "Deutsche Telekom": {
-  "careers_url": "https://telekom-growthhub.eightfold.ai/careers?location=Israel",
+  "careers_url": "https://telekom-growthhub.eightfold.ai/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Microsoft (Xbox/Gaming)": {
-  "careers_url": "https://jobs.careers.microsoft.com/global/en/search?lc=Israel&p=Gaming",
+  "careers_url": "https://jobs.careers.microsoft.com/global/en/search",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
@@ -227,18 +182,8 @@
   "platform": "ashby",
   "reason": "empty-board"
  },
- "Supersonic Studios": {
-  "careers_url": "https://supersonic.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Workiz": {
-  "careers_url": "https://www.workiz.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Frontegg": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/77.009/positions?token=7792CD6166B3BC8344F4341166B3BC83BC83BC8",
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/77.009/positions",
   "platform": "comeet",
   "reason": "empty-board"
  },
@@ -249,11 +194,6 @@
  },
  "nsKnox": {
   "careers_url": "https://nsknox.net/jobs/customer-service-professional-part-time-student-position/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Source Defense": {
-  "careers_url": "https://sourcedefense.com/company/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -268,14 +208,9 @@
   "reason": "regressed-to-zero"
  },
  "Sivo": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/sivo-insights?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/sivo-insights",
   "platform": "workable",
   "reason": "empty-board"
- },
- "Apollo Power": {
-  "careers_url": "https://apollo-power.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "Beewise": {
   "careers_url": "https://www.comeet.com/jobs/beewise/0B.001",
@@ -283,17 +218,12 @@
   "reason": "misconfig-scrape-on-ats"
  },
  "Microsoft Israel": {
-  "careers_url": "https://jobs.careers.microsoft.com/global/en/search?lc=Israel",
+  "careers_url": "https://jobs.careers.microsoft.com/global/en/search",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Synopsys Israel": {
-  "careers_url": "https://careers.synopsys.com/search-jobs/Israel/44408/2/294640/31x5/34x75/50/2",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Scopio Labs": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/87.00C/positions?token=78C2D481E30025BC43EC025BC43EC78C",
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/87.00C/positions",
   "platform": "comeet",
   "reason": "empty-board"
  },
@@ -301,11 +231,6 @@
   "careers_url": "https://www.comeet.com/jobs/mdclone/66.004",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Teradata": {
-  "careers_url": "https://careers.teradata.com/jobs?location=Israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "Loox": {
   "careers_url": "https://www.comeet.com/jobs/loox/77.00E",
@@ -338,7 +263,7 @@
   "reason": "misconfig-scrape-on-ats"
  },
  "Sightfull": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/sightfull?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/sightfull",
   "platform": "workable",
   "reason": "empty-board"
  },
@@ -352,43 +277,23 @@
   "platform": "breezy",
   "reason": "empty-board"
  },
- "Refine Intelligence": {
-  "careers_url": "https://www.refineintelligence.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Chaos Labs": {
-  "careers_url": "https://api.lever.co/v0/postings/chaoslabs?mode=json",
+  "careers_url": "https://api.lever.co/v0/postings/chaoslabs",
   "platform": "lever",
   "reason": "empty-board"
  },
  "Foretellix": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/84.007/positions?token=48716A316A31FB101FB116A3D951FB11B2A",
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/84.007/positions",
   "platform": "comeet",
   "reason": "empty-board"
  },
  "Amazon Israel": {
-  "careers_url": "https://www.amazon.jobs/en/search?loc_query=Israel&country=ISR",
+  "careers_url": "https://www.amazon.jobs/en/search",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Airbnb": {
-  "careers_url": "https://careers.airbnb.com/positions/?_offices=israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Sanofi": {
-  "careers_url": "https://jobs.sanofi.com/en/search-jobs/Israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Siemens": {
-  "careers_url": "https://jobs.siemens.com/en_US/externaljobs/SearchJobs?location=Israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Verizon": {
-  "careers_url": "https://mycareer.verizon.com/career-paths/",
+  "careers_url": "https://jobs.siemens.com/en_US/externaljobs/SearchJobs",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -399,7 +304,7 @@
   "error": "HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: "
  },
  "EyeClick": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/eyeclick?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/eyeclick",
   "platform": "workable",
   "reason": "empty-board"
  },
@@ -408,18 +313,13 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "SecuriThings": {
-  "careers_url": "https://www.securithings.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Trustmi": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/trustmi?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/trustmi",
   "platform": "workable",
   "reason": "empty-board"
  },
  "Pillar Security": {
-  "careers_url": "https://api.lever.co/v0/postings/pillar?mode=json",
+  "careers_url": "https://api.lever.co/v0/postings/pillar",
   "platform": "lever",
   "reason": "empty-board"
  },
@@ -439,34 +339,9 @@
   "reason": "misconfig-scrape-on-ats"
  },
  "ECOncrete": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/econcrete?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/econcrete",
   "platform": "workable",
   "reason": "empty-board"
- },
- "Taranis": {
-  "careers_url": "https://www.taranis.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Infineon Technologies": {
-  "careers_url": "https://www.infineon.com/careers/our-locations",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Electronic Arts": {
-  "careers_url": "https://jobs.ea.com/en_US/careers/SearchJobs?location=Israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Schneider Electric": {
-  "careers_url": "https://careers.se.com/Defaultlandingpage/?lang=en-US",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Nestle": {
-  "careers_url": "https://www.nestlejobs.com/job-search?location=Israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "Navan": {
   "careers_url": "https://navan.com/careers",
@@ -474,12 +349,12 @@
   "reason": "regressed-to-zero"
  },
  "EquityBee": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/equitybee?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/equitybee",
   "platform": "workable",
   "reason": "empty-board"
  },
  "Syte": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/syte-corporation?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/syte-corporation",
   "platform": "workable",
   "reason": "empty-board"
  },
@@ -499,17 +374,12 @@
   "reason": "regressed-to-zero"
  },
  "Argus Cyber Security": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/A7.004/positions?token=7A42DD81E907A444C444C403D203D200",
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/A7.004/positions",
   "platform": "comeet",
   "reason": "empty-board"
  },
  "Nova": {
   "careers_url": "https://www.novami.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Essence SmartCare": {
-  "careers_url": "https://www.essence-grp.com/jobs/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -535,7 +405,7 @@
   "reason": "empty-board"
  },
  "Chargeflow": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/chargeflow-1?details=true",
+  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/chargeflow-1",
   "platform": "workable",
   "reason": "empty-board"
  },
@@ -565,7 +435,7 @@
   "reason": "misconfig-scrape-on-ats"
  },
  "Amazon Web Services (AWS)": {
-  "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services?cmpid=OA_OTAW403019B",
+  "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
@@ -595,7 +465,7 @@
   "reason": "misconfig-scrape-on-ats"
  },
  "Houzz": {
-  "careers_url": "https://jobs.lever.co/houzz?location=Israel",
+  "careers_url": "https://jobs.lever.co/houzz",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  }
