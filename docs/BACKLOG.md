@@ -3148,7 +3148,7 @@ re-derive again before acting.
     `out.walled` / `out.statuses` stay empty and a fully-walled prefix that ran out of budget
     reports `deadline:links` (runner-shaped, carried, never parked) instead of
     `links:blocked:<vendor>`. Both carry, so no jobs are lost; what is lost is the reason, on
-    exactly the rows BACKLOG 215 asks the operator to read. Pre-existing, and reachable more
+    exactly the rows BACKLOG 215 (`scraper` 2026-08-26) asks the operator to read. Pre-existing, and reachable more
     often now that 23 of 81 boards run strategy 4 (wave-1 attacker A).
 
 245. **The synthetic worker dicts do not carry the fields the real one does** — lane:
