@@ -155,10 +155,6 @@ _LLM_SCHEMA = json.dumps({"type": "object",
 _LLM_PROMPT = "CAREERS PAGE TEXT:\n\n"
 # strategy 5 must leave the LLM tier at least this much of the company budget
 _LLM_RESERVE_S = 40
-# the one location shape the LLM produces that no other strategy can: "Tel Aviv, Israel
-# New York, NY" — an office sidebar copied beside a foreign card. Ambiguous, and the Israel
-# filter would take it on the first token; the tier drops it instead (wave-1 attacker C)
-_FOREIGN_RX = None   # built lazily from _FOREIGN_PLACES below
 # bidi controls survive into titles and reorder the board's line (cosmetic spoofing)
 _BIDI = re.compile("[\u200e\u200f\u202a-\u202e\u2066-\u2069]")
 # per-process breaker: the `LLMUnavailable.kind` that closed the tier (auth / missing / drift
@@ -628,10 +624,12 @@ _TAIL_MODE = r"(?:remote|hybrid|on-?site|global)"
 _FOREIGN_PLACES = ("United States", "United Kingdom", "USA", "US", "UK", "Europe", "EMEA", "Germany",
                    "Poland", "Ukraine", "Portugal", "Spain", "India", "Canada", "London", "New York",
                    "NYC", "Berlin")
+# a foreign place named anywhere in a location string (the LLM copying an office sidebar)
+_FOREIGN_RX = re.compile(r"(?<![A-Za-z])(?:" + "|".join(map(re.escape, _FOREIGN_PLACES)) + r")(?![A-Za-z])")
 _TITLE_TAIL = re.compile(
     r"^(?P<title>.*?\S)"
     r"(?:\s+(?P<place>" + "|".join(sorted(map(re.escape, _FOREIGN_PLACES), key=len, reverse=True))
-    + r"|__IL__))?"
+    + "|" + ISRAEL_LOC.pattern + r"))?"
     r"(?:\s+(?P<mode>" + _TAIL_MODE + r"))?"
     r"(?:\s+(?P<level>" + _TAIL_LEVEL_KEEP + "|" + _TAIL_LEVEL_DROP + r"))?"
     r"\s+(?P<type>" + _TAIL_TYPE + r")\s*$", re.I)
@@ -641,7 +639,7 @@ _LEVEL_KEEP_RX = re.compile(r"^" + _TAIL_LEVEL_KEEP + r"$", re.I)
 def _split_title_tail(title):
     """(title, place) — the place is "" when the title carried none. A place, a mode or a
     level must stand beside the type ("… 12 Month Contract" is a title)."""
-    m = _TITLE_TAIL_RX.match(title)
+    m = _TITLE_TAIL.match(title)
     if not m or not (m.group("place") or m.group("level") or m.group("mode")):
         return title, ""
     head, level = m.group("title"), m.group("level") or ""
@@ -650,20 +648,18 @@ def _split_title_tail(title):
     return head, (m.group("place") or "").strip()
 
 
-def _build_title_tail():
-    return re.compile(_TITLE_TAIL.pattern.replace("__IL__", ISRAEL_LOC.pattern), re.I)
 
+class _Adder:
+    """The one write path. Calling it applies the title/location filters and the dedupe
+    key, appends the common job shape to `jobs`, and returns True when it did. `israeli`
+    counts the Israeli jobs — what first-hit-wins measures: a foreign-tail role is kept for
+    `no_il` but must not satisfy a strategy (wave-2 confirmer, NEW-2)."""
 
-_TITLE_TAIL_RX = _build_title_tail()
+    def __init__(self, company, url):
+        self.company, self.url = company, url
+        self.jobs, self.israeli, self._seen = [], 0, set()
 
-
-def _make_adder(company, url):
-    """The one write path. Returns (add, jobs): `add` applies the title/location filters and
-    the dedupe key, appends the common job shape to `jobs`, and returns True when it did."""
-    seen, jobs = set(), []
-    il = {"n": 0}                        # Israeli jobs added: what first-hit-wins counts
-
-    def add(title, loc, url_, date="", desc="", jid=""):
+    def __call__(self, title, loc, url_, date="", desc="", jid=""):
         title = _BIDI.sub("", title or "").strip()
         loc = _BIDI.sub("", loc or "")
         if not title or len(title) > 90:
@@ -683,25 +679,30 @@ def _make_adder(company, url):
         if not foreign and not ISRAEL_LOC.search(loc or ""):
             return False
         if url_ and url_.startswith("/"):
-            url_ = urllib.parse.urljoin(url, url_)
+            url_ = urllib.parse.urljoin(self.url, url_)
         key = (title.lower(), (loc or "").lower())
-        if key in seen:
+        if key in self._seen:
             return False
-        seen.add(key)
-        il["n"] += not foreign
-        jobs.append({"company": company, "title": title[:90], "location": loc,
-                     # NOT "IL": israel.is_israel_job treats a country_code as
-                     # authoritative and skips its text check, so hardcoding it made
-                     # the scraper rubber-stamp its own guess (Wiliot shipped 8 jobs
-                     # in Kyiv/Dallas/Portugal as Israeli). "" forces the real check.
-                     "country_code": "",
-                     "url": url_ or url, "posted_date": _norm_date(date), "ats_platform": "scrape",
-                     "job_id": (jid or (url_ if url_ and url_ != url else "")
-                                or _hashlib.sha1(f"{company}|{title}|{loc}".encode("utf-8")
-                                                 ).hexdigest()[:16]), "description": (desc or "")[:6000]})
+        self._seen.add(key)
+        self.israeli += not foreign
+        company, url = self.company, self.url
+        self.jobs.append({"company": company, "title": title[:90], "location": loc,
+                          # NOT "IL": israel.is_israel_job treats a country_code as
+                          # authoritative and skips its text check, so hardcoding it made
+                          # the scraper rubber-stamp its own guess (Wiliot shipped 8 jobs
+                          # in Kyiv/Dallas/Portugal as Israeli). "" forces the real check.
+                          "country_code": "",
+                          "url": url_ or url, "posted_date": _norm_date(date), "ats_platform": "scrape",
+                          "job_id": (jid or (url_ if url_ and url_ != url else "")
+                                     or _hashlib.sha1(f"{company}|{title}|{loc}".encode("utf-8")
+                                                      ).hexdigest()[:16]), "description": (desc or "")[:6000]})
         return True
-    add.israeli = lambda: il["n"]        # a foreign-tail role is kept for `no_il`, but it must
-    return add, jobs                     # not satisfy a strategy (wave-2 confirmer, NEW-2)
+
+
+def _make_adder(company, url):
+    """(add, jobs) — the adder and the list it fills; every strategy writes through `add`."""
+    add = _Adder(company, url)
+    return add, add.jobs
 
 
 def _from_structured(raw, add):
@@ -896,30 +897,12 @@ def _from_position_links(page_html, url, add, fetch=_fetch_url, deadline=None,
             if _read_position_page(ph, u2, add):
                 found_any = True
         out.attempted += this.attempted
-        out.opened += this.opened
+        if not (this.unreadable() and failed):
+            out.opened += this.opened
         if this.unreadable() and failed:
-            # rung 2: plain HTTP opened none of them — a datacenter address refused by a
-            # WAF looks exactly like this. Chromium's own network stack, one short visit.
-            if deadline is None or deadline.remaining() >= 10:
-                for u2, got in (visit(failed, deadline) or {}).items():
-                    ph, st = _pair(got)
-                    if ph and not _blocked_by(ph):
-                        this.opened += 1
-                        out.opened += 1
-                        if _read_position_page(ph, u2, add):
-                            found_any = True
-            # rung 3: the residential unlocker, a bounded number of pages
-            if this.unreadable() and os.environ.get("SCRAPE_VIA_UNLOCKER"):
-                for u2 in failed[:UNLOCK_PAGES]:
-                    if deadline is not None and deadline.remaining() < 10:
-                        break
-                    tmo = _UNLOCK_PAGE_TIMEOUT_S if deadline is None else min(_UNLOCK_PAGE_TIMEOUT_S, deadline.remaining())
-                    ph = _fetch_unlocked_html(u2, tmo, r)
-                    if ph and not _blocked_by(ph):
-                        this.opened += 1
-                        out.opened += 1
-                        if _read_position_page(ph, u2, add):
-                            found_any = True
+            if _open_refused_pages(failed, this, deadline, visit, r, add):
+                found_any = True
+            out.opened += this.opened
             if this.unreadable() and worst is None:
                 worst = this
         if found_any:
@@ -930,6 +913,33 @@ def _from_position_links(page_html, url, add, fetch=_fetch_url, deadline=None,
         out.walled, out.statuses = worst.walled, worst.statuses
         out.attempted, out.opened = worst.attempted, 0
     return out
+
+
+def _open_refused_pages(failed, this, deadline, visit, r, add):
+    """Rungs 2 and 3 for the position pages plain HTTP could not open. Rung 2: one short
+    Chromium visit (`visit`) — a datacenter address refused by a WAF looks exactly like
+    this. Rung 3, only while still unreadable and under SCRAPE_VIA_UNLOCKER: at most
+    UNLOCK_PAGES pages through the residential unlocker, counted on `r`. Updates `this`
+    (the prefix's outcome); True when a page yielded a job."""
+    found_any = False
+
+    def read(u2, ph):
+        nonlocal found_any
+        if ph and not _blocked_by(ph):
+            this.opened += 1
+            if _read_position_page(ph, u2, add):
+                found_any = True
+
+    if deadline is None or deadline.remaining() >= 10:
+        for u2, got in (visit(failed, deadline) or {}).items():
+            read(u2, _pair(got)[0])
+    if this.unreadable() and os.environ.get("SCRAPE_VIA_UNLOCKER"):
+        for u2 in failed[:UNLOCK_PAGES]:
+            if deadline is not None and deadline.remaining() < 10:
+                break
+            tmo = _UNLOCK_PAGE_TIMEOUT_S if deadline is None else min(_UNLOCK_PAGE_TIMEOUT_S, deadline.remaining())
+            read(u2, _fetch_unlocked_html(u2, tmo, r))
+    return found_any
 
 
 def _pair(got):
@@ -1002,17 +1012,14 @@ def _from_llm(page_html, url, url_is_il, add, runner=None, deadline=None):
     positions = (out or {}).get("positions") if isinstance(out, dict) else None
     if not isinstance(positions, list):
         return 1, "no-schema"
-    global _FOREIGN_RX
-    if _FOREIGN_RX is None:
-        _FOREIGN_RX = re.compile(r"(?<![A-Za-z])(?:" + "|".join(map(re.escape, _FOREIGN_PLACES))
-                                 + r")(?![A-Za-z])")
     for o in positions:
         if not isinstance(o, dict):
             continue
         t, loc = str(o.get("title", "")).strip(), str(o.get("location", "")).strip()
         if loc:
             # the same gate as every other strategy — and a location that names an Israeli
-            # place AND a foreign one is a sidebar the model copied, not this role's place
+            # place AND a foreign one ("Tel Aviv, Israel New York, NY") is an office sidebar
+            # the model copied beside a foreign card, not this role's place (wave-1 attacker C)
             loc = _clean_loc(loc)[:60] if ISRAEL_LOC.search(loc) else loc[:60]
             if ISRAEL_LOC.search(loc) and _FOREIGN_RX.search(loc):
                 continue
@@ -1027,15 +1034,15 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
     (which are injectable) and the SCRAPE_* env flags. Returns (jobs, winning_strategy)."""
     add, jobs = _make_adder(company, url)
     _from_structured(_structured_objects(r.blobs, r.bodies), add)
-    if add.israeli() >= 3:
+    if add.israeli >= 3:
         return jobs, "structured"
     # one or two structured hits may be a "featured posting" widget beside a DOM-rendered
     # board: let the DOM pass add to them. Three or more is the board itself, and the DOM
     # pass would only add run-together duplicates (Port.io: 16 of them).
-    n_structured = add.israeli()
+    n_structured = add.israeli
     _from_dom(r.dom, add, url_is_il=_page_is_il(url, r.page_html))
-    if add.israeli():
-        return jobs, ("structured+dom" if n_structured and add.israeli() > n_structured
+    if add.israeli:
+        return jobs, ("structured+dom" if n_structured and add.israeli > n_structured
                       else "structured" if n_structured else "dom")
     # headless Chromium sometimes gets a bot-stripped page while plain HTTP gets the real
     # server-rendered cards (Legit Security) — try both HTML sources
@@ -1055,7 +1062,7 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
         return jobs, ""
     url_is_il = _page_is_il(url, page_html)
     _from_cards(page_html, url_is_il, add)
-    if add.israeli():
+    if add.israeli:
         return jobs, "cards"
     s4_deadline = (deadline.reserve(_LLM_RESERVE_S)
                    if deadline is not None and os.environ.get("SCRAPE_LLM") else deadline)
@@ -1068,12 +1075,12 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
         # the rungs; `deadline:` is runner-shaped, so it carries and never parks)
         r.truncated = True
         r.error = r.error or "deadline:links"
-    if add.israeli():
+    if add.israeli:
         return jobs, "links"
     calls, err = _from_llm(page_html, url, url_is_il, add, runner=llm, deadline=deadline)
     r.llm_calls += calls
     r.llm_error = err
-    if add.israeli():
+    if add.israeli:
         return jobs, "llm"
     if links.unreadable():
         # the listing lists positions and none could be opened from here, on any rung, and
