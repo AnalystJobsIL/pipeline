@@ -1240,3 +1240,6 @@ Agilite,scrape,,https://agilitegear.com/pages/careers,true,scanned; no open Isra
 Houzz,lever,houzz,https://api.lever.co/v0/postings/houzz?mode=json,true,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed | listing-hunt 2026-08-25: verified 3 IL via jobs.lever.co | self-heal 2026-08-26: re-resolved to lever
 PlainID,comeet,C4.00C,https://www.comeet.com/careers-api/2.0/company/C4.00C/positions?token=4CC17FC1CC8E644CCE644CC4CC13300,true,auto-expand; 7/4 IL
 Candex Technologies,ashby,candex,https://api.ashbyhq.com/posting-api/job-board/candex,true,auto-expand; 17/8 IL
+spinomenal,comeet,99.008,https://www.comeet.com/careers-api/2.0/company/99.008/positions?token=998432899826602FF826601CC8565813301CC8,true,auto-expand; 8/8 IL
+Figma,greenhouse,figma,https://boards-api.greenhouse.io/v1/boards/figma/jobs,true,auto-expand; 158/5 IL
+Aligned,greenhouse,aligned,https://boards-api.greenhouse.io/v1/boards/aligned/jobs,true,auto-expand; 8/3 IL
