@@ -3089,6 +3089,19 @@ re-derived that night, several of them correcting a number written the same afte
 re-derive again before acting.
 
 240. **A Comeet board embedded as a WIDGET is readable by no strategy** — lane: `scraper`.
+    **CLOSED 2026-08-26 (evening), and the diagnosis below was wrong in an instructive way.**
+    The page is not a Comeet widget: it is a **TeamMe** one (`teamme.link`) that mirrors
+    Comeet's data, `window.comeetvar` does not exist on it, and no API call was needed at all.
+    The whole board was in the company's own HTML the entire time — **52
+    `<script type="application/ld+json">` JobPosting blocks**, one per role, each with the
+    title, `jobLocation.address.addressLocality` and the posting's own url. Two general
+    defects hid them: `_find` collected job objects only out of an ARRAY of two or more (a
+    JSON-LD board publishes one `<script>` per role, never an array), and `_s` read only the
+    top level of a matched value while schema.org nests the place one deeper. Both fixed;
+    Quantum Machines now reads **19 with the XHR dropped** — the runner's exact failure — and
+    a healthy night is byte-identical (bodies before blobs, so the live Comeet response still
+    supplies the canonical addresses). No new network call, no sixth strategy. Original
+    diagnosis, kept because it is what "obviously needs its own design" looked like:
     Quantum Machines' 18 postings vanished for a night because its Comeet board arrives as an
     XHR body, and the night the render window missed it the page had nothing else: the 161
     `comeet.com/jobs/` occurrences in the HTML are **inside the widget's JavaScript**, not

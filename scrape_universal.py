@@ -219,7 +219,14 @@ _DOM_JS = r"""() => {
 # ---------------------------------------------------------------------------------------------
 # small parsers shared by the strategies
 # ---------------------------------------------------------------------------------------------
-def _s(v):
+def _s(v, _depth=2):
+    """The usable string inside a JSON value, however the board nested it.
+
+    Schema.org nests one level deeper than a hand-rolled API does — a `JobPosting`'s place is
+    `jobLocation.address.addressLocality`, and reading only the top level of `jobLocation`
+    returned "" for every one of the 52 JSON-LD postings Quantum Machines publishes in its
+    own HTML (2026-08-26). `@`-prefixed keys are JSON-LD's own chrome (`@type: Place`) and
+    never the value."""
     if isinstance(v, str):
         return v
     if isinstance(v, dict):
@@ -227,8 +234,15 @@ def _s(v):
                   "addressLocality", "title"):
             if isinstance(v.get(k), str):
                 return v[k]
+        if _depth > 0:
+            for k, nested in v.items():
+                if not str(k).startswith("@"):
+                    s = _s(nested, _depth - 1)
+                    if s:
+                        return s
+        return ""
     if isinstance(v, list):
-        return ", ".join(x for x in (_s(e) for e in v[:3]) if x)
+        return ", ".join(x for x in (_s(e, _depth) for e in v[:3]) if x)
     return ""
 
 
@@ -270,6 +284,14 @@ def _find(node, out, depth=0):
         for x in node:
             _find(x, out, depth + 1)
     elif isinstance(node, dict):
+        # schema.org's own declaration that this IS a posting, which beats the array
+        # heuristic above: a JSON-LD board publishes ONE `<script>` per role, never an array,
+        # so Quantum Machines' 52 `JobPosting` blocks — its whole board, sitting in its own
+        # HTML — were walked past every night (2026-08-26).
+        t = node.get("@type")
+        if _title_of(node) and "jobposting" in {str(x).lower() for x in
+                                                (t if isinstance(t, list) else [t])}:
+            out.append(node)
         for v in node.values():
             _find(v, out, depth + 1)
 
@@ -595,8 +617,14 @@ def _visit_pages(urls, deadline=None):
 # PARSE — pure functions of a Rendered bundle
 # ---------------------------------------------------------------------------------------------
 def _structured_objects(blobs, bodies):
+    """Job-like objects from what the page answered (XHR/fetch bodies) and what it embedded
+    (page state, JSON-LD). BODIES FIRST: when a board publishes both, the live response is
+    the canonical one and the adder keeps whichever address arrives first — Quantum Machines
+    serves its board as a Comeet XHR *and* as 52 JSON-LD blocks pointing at its own white-label
+    front, and reading the embedded copy first would have moved 19 live postings off their
+    `comeet.com` addresses for nothing."""
     raw = []
-    for txt in blobs + bodies:
+    for txt in bodies + blobs:
         if not isinstance(txt, str):          # Playwright marshals `undefined` as None
             continue
         try:

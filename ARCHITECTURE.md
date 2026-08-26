@@ -241,7 +241,16 @@ including the claim "none".
    `docs/BACKLOG.md` 88/221). `ScrapeResult.strategy` names every stage that contributed, in
    ladder order, so `cards+links` and `structured+links` join `structured+dom` in the stamp's
    `via=` (rendered `cards-links`, `+` being the separator between counts). The five:
-   structured JSON (JSON-LD / `__NEXT_DATA__` / captured XHR bodies) →
+   structured JSON — the XHR/fetch bodies the page ANSWERED first, then what it embedded
+   (`__NEXT_DATA__`, page state, JSON-LD): a live response outranks an embedded copy of the
+   same board, which is what keeps a posting on its canonical address. **A schema.org
+   `JobPosting` block is read on its own say-so** — `@type: JobPosting` is a stronger claim
+   than the "an array of two or more title-bearing objects is a board" heuristic, and a
+   JSON-LD board publishes one `<script>` per role and never an array. Quantum Machines'
+   whole board (52 blocks, in its own HTML, needing no network call) was walked past every
+   night until 2026-08-26, which is why the night its Comeet XHR did not land it shipped 4
+   card titles instead of 19; the place is read through the nesting schema.org uses
+   (`jobLocation` -> `address` -> `addressLocality`), which returned "" before →
    rendered-DOM job links with an Israel token near the title → repeated heading /
    class-hinted card groups → **position-links** (N links sharing a prefix, each position page
    opened on a three-rung ladder — plain HTTP with the browser's User-Agent, then one

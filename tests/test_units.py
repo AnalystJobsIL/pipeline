@@ -9073,3 +9073,68 @@ def test_refresh_the_partial_hold_survives_a_night_of_a_different_error():
         R._rot_bump(rot2, "Co", "error", "2026-10-%02d" % night,
                     {"error": "partial:weak:read", "jobs": [], "http_status": 200})
     assert rot2["Co"]["partial_n"] == 3
+
+
+def test_scrape_a_json_ld_board_is_read_from_the_page_itself():
+    """Quantum Machines' board is delivered as an XHR, and the night the render window missed
+    it the company shipped 4 url-less card titles instead of 18 postings. The whole board was
+    in its own HTML the entire time: **52 `<script type="application/ld+json">` JobPosting
+    blocks**, one per role, with the title, `jobLocation.address.addressLocality` and the
+    posting's own url. Two things hid them, and both were general, not Quantum Machines':
+
+    * `_find` only collected job objects out of an ARRAY of two or more — and a JSON-LD board
+      publishes one `<script>` per role, never an array. schema.org's own `@type` is a
+      stronger statement than that heuristic, so a declared `JobPosting` is now collected
+      whether or not it has siblings.
+    * `_s` read only the top level of a matched value, and schema.org nests the place one
+      deeper (`jobLocation` -> `address` -> `addressLocality`), so every location came back
+      "" and the adder dropped every row.
+
+    Reading the page needs no network call, which is why this is a strategy-1 fix and not a
+    sixth strategy (docs/BACKLOG.md 240, `scraper` 2026-08-26 evening)."""
+    import scrape_universal as N
+    posting = {
+        "@context": "https://schema.org", "@type": "JobPosting", "title": "Backend Tech Lead",
+        "url": "https://qm.teamme.link/jobs/13.05B",
+        "jobLocation": {"@type": "Place", "address": {
+            "@type": "PostalAddress", "addressLocality": "Israel, Tel Aviv Office"}},
+    }
+    assert N._s(posting["jobLocation"]) == "Israel, Tel Aviv Office", "two levels down"
+    out = []
+    N._find(posting, out)
+    assert out == [posting], "a lone JobPosting is a posting; it needs no siblings"
+    add, jobs = N._make_adder("Quantum Machines", "https://www.quantum-machines.co/careers/")
+    N._from_structured(out, add)
+    assert (len(jobs), add.strong) == (1, 1)
+    assert jobs[0]["url"] == "https://qm.teamme.link/jobs/13.05B"
+    assert jobs[0]["location"] == "Israel, Tel Aviv Office"
+    # `@type` may be a list, and a non-posting object is still judged by the array heuristic
+    out2 = []
+    N._find({**posting, "@type": ["JobPosting"]}, out2)
+    assert len(out2) == 1
+    out3 = []
+    N._find({"@type": "Organization", "name": "Quantum Machines", "title": "Backend Tech Lead"}, out3)
+    assert out3 == [], "an Organization is not a posting"
+
+
+def test_scrape_a_live_response_outranks_the_copy_embedded_beside_it():
+    """A board can publish the same roles twice — Quantum Machines answers a Comeet XHR AND
+    embeds 52 JSON-LD blocks pointing at its own white-label front. The adder keeps whichever
+    address it sees first, so the order decides what the board links to: bodies (what the
+    page ANSWERED) before blobs (what it embedded), or 19 live postings would have moved off
+    their canonical `comeet.com` addresses the night this shipped, for nothing."""
+    import scrape_universal as N
+    body = ('{"data":[{"title":"Backend Tech Lead","location":"Israel, Tel Aviv",'
+            '"url":"https://www.comeet.com/jobs/qm/D6.000/backend-tech-lead/13.05B"},'
+            '{"title":"Compiler Engineer","location":"Israel, Tel Aviv",'
+            '"url":"https://www.comeet.com/jobs/qm/D6.000/compiler-engineer/CC.F46"}]}')
+    blob = ('{"@context":"https://schema.org","@type":"JobPosting","title":"Backend Tech Lead",'
+            '"url":"https://qm.teamme.link/jobs/13.05B","jobLocation":{"@type":"Place",'
+            '"address":{"@type":"PostalAddress","addressLocality":"Israel, Tel Aviv Office"}}}')
+    add, jobs = N._make_adder("QM", "https://qm.example/careers")
+    N._from_structured(N._structured_objects([blob], [body]), add)
+    assert jobs[0]["url"].startswith("https://www.comeet.com/"), [j["url"] for j in jobs]
+    # ...and with no live answer, the embedded copy still carries the board
+    add2, jobs2 = N._make_adder("QM", "https://qm.example/careers")
+    N._from_structured(N._structured_objects([blob], []), add2)
+    assert len(jobs2) == 1 and jobs2[0]["url"] == "https://qm.teamme.link/jobs/13.05B"
