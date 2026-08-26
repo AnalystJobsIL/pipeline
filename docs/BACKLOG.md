@@ -2972,8 +2972,11 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     is zero: `display_index` already answers every group correctly. Do this only alongside a
     reason to touch the export anyway.
 
-243. **`firmo_failed` has no reason column, and the reason now exists** — lane: shared
-    (`pipeline/store.py`), consumer `company-intel`. The table is `(company TEXT PRIMARY KEY,
+243. **`firmo_failed` has no reason column, and the reason now exists** — lane: `roles`
+    (`docs/AGENT_BRIEF.md`'s table puts `pipeline/store.py` in that row), consumer
+    `company-intel`. *Note for whoever picks this up:* item **102** tags the same file
+    "lane: shared", which contradicts the brief — there is no `shared` or `store` lane, and
+    an item addressed to one is addressed to nobody. Worth one correction pass by `docs`. The table is `(company TEXT PRIMARY KEY,
     attempts INTEGER, last TEXT)`; the cause of a 7-day gate only ever existed in stderr. As
     of 2026-08-26 `firmographics.research_company_detail` returns `(record, reason)` and the
     reason rides the run audit into `digests/latest.md`, which is committed every morning, so
@@ -3285,12 +3288,12 @@ lane, and is listed at the end.
 
 ### Still open under this lane's name, and each waiting on another lane
 
-- **138** (`pipeline/store.py`, lane `roles`) — the sqlite `firmographics` table is redundant
-  with the export and is ~half the daily binary. Dropping a table is the store owner's write.
+- **138** (lane `roles`, `pipeline/store.py`) — the sqlite `firmographics` table is redundant
+  with the export and is ~half the daily binary. Dropping a table is `roles`' write.
 - **142** (lane `infra`) — `build_digest` is a dead renderer every lane pays for.
 - **241** (lane `infra`) — `persist_state.py commit --own` commits the whole index.
-- **243, the durable half** (`pipeline/store.py`) — `firmo_failed` has no reason column and
-  no shared clock. This lane now reads the **union** of both stores and carries the reason
-  into the mail; the generic attempts table this file's preamble item 8 asks for is the
-  store owner's.
+- **243, the durable half** (lane `roles`, who own `pipeline/store.py`) — `firmo_failed`
+  has no reason column and no shared clock. This lane now reads the **union** of both stores
+  and carries the reason into the mail; the generic attempts table this file's preamble item
+  8 asks for is `roles`' to build.
 
