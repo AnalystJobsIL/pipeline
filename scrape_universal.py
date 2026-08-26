@@ -1098,6 +1098,37 @@ _FOREIGN_PAGE_RX = re.compile(
     r"EMEA|APAC|LATAM|NORAM|ANZ|DACH)(?![A-Za-z])")
 
 
+# a position page that LABELS the role's place. `Job Location: France, Grenoble` is the
+# role's own claim and outranks any place found by proximity — Weebit Nano publishes its
+# USA and France roles beside its Hod Hasharon office address, and the office won
+# (BACKLOG 241, `scraper` 2026-08-26 evening).
+# Either a QUALIFIED label, whose separator a board may omit ("Job Location USA, Remote" —
+# the colon lives in the markup Weebit strips away), or a bare one that must carry its
+# separator, or the word "location" in prose becomes a label (SeatPick: "…location This is a
+# hybrid" turned a Tel Aviv role into a placeless one).
+_LOC_LABEL = re.compile(r"\b(?:(?:job|office|work|position|role)\s+locations?\s*[:–-]?|"
+                        r"locations?\s*[:–-])\s*(\S[^\n]{1,70})", re.I)
+# ...where the label's value ends and the next section of the page begins
+_LOC_LABEL_END = re.compile(r"\s+(?:job\s+brief|about|requirements?|responsibilities|apply|"
+                            r"description|overview|summary|role|position|department|type)\b", re.I)
+
+
+def _stated_place(txt):
+    """The place a position page labels as the role's, or "". Bounded: the value ends at the
+    page's next section heading, so "USA, Remote Job Brief Lead the…" yields "USA, Remote".
+
+    A label that names no place at all is not a label — SeatPick answers "Location:" with
+    "This is a hybrid role…", and treating that as authoritative cost a Tel Aviv role its
+    city."""
+    m = _LOC_LABEL.search(txt)
+    if not m:
+        return ""
+    val = re.sub(r"\s+", " ", m.group(1))
+    cut = _LOC_LABEL_END.search(val)
+    val = (val[:cut.start()] if cut else val).strip(" .,;:|–-")
+    return val if (ISRAEL_LOC.search(val) or _FOREIGN_PAGE_RX.search(val)) else ""
+
+
 def _parse_position_page(ph, u2):
     """What one opened position page says — `{title, url, loc, desc, il, foreign}` — or None
     when it is not a posting at all. Pure. The judgement call it used to make on its own:
@@ -1130,8 +1161,16 @@ def _parse_position_page(ph, u2):
     # `<h1>` with no place shipped a Portuguese role as Israeli (wave-1 attacker A)
     doc = re.search(r"<title[^>]*>(.*?)</title>", ph, re.S | re.I)
     claim = f"{title} {_html.unescape(doc.group(1)) if doc else ''}"
+    # a labelled place is the role's own claim and settles it — including when it names
+    # nowhere in Israel, which is the whole point: falling back to a proximity search there
+    # is how an office address became a US role's location
+    stated = _stated_place(txt)
+    claim = f"{claim} {stated}"
     return {"title": title, "url": u2,
-            "loc": _loc_from_ctx(txt, anchor=at if at >= 0 else None) or _loc_from_ctx(claim),
+            # anchored at the END of the label, so `Israel, Hod HaSharon (Hybrid)` reads as
+            # the city rather than the country it is prefixed with
+            "loc": (_loc_from_ctx(stated, anchor=len(stated)) if stated else
+                    (_loc_from_ctx(txt, anchor=at if at >= 0 else None) or _loc_from_ctx(claim))),
             "desc": re.sub(r"\s+", " ", txt)[:4000],
             "il": bool(ISRAEL_LOC.search(txt)),
             # what this role SAYS it is — never a page-wide scan, which measured useless:

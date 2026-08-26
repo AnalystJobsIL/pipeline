@@ -3121,7 +3121,16 @@ re-derive again before acting.
     `python -c "import scrape_universal as N;r=N._render('https://www.quantum-machines.co/careers/',45000,N.Deadline.start(150));r.bodies=[];print(N._extract('Quantum Machines','https://www.quantum-machines.co/careers/',r,deadline=N.Deadline.start(150))[1])"`
 
 241. **`_loc_from_ctx` lets a page's office address outrank the location the role states** —
-    lane: `scraper`. Weebit Nano publishes `Demand Generation & Digital Marketing Manager`
+    lane: `scraper`. **CLOSED 2026-08-26 (evening):** a position page that LABELS the place
+    (`Job Location: France, Grenoble`) is making the role's own claim, and it now settles the
+    question — including when it names nowhere in Israel, which is the whole point: falling
+    back to a proximity search there is exactly how an office address became a US role's
+    location. The label's value stops at the page's next section heading, and a label naming
+    no place at all is not a label (SeatPick answers `Location:` with "This is a hybrid
+    role…", and honouring that cost a Tel Aviv role its city). Weebit Nano's two wrong rows
+    are gone and its three Israeli roles gained `Hod HaSharon` in place of a bare `Israel`;
+    the replay's `lost 2` is those two, the only deliberate loss of the night. Pinned by
+    `test_scrape_a_labelled_place_is_the_roles_own_claim`. Was: Weebit Nano publishes `Demand Generation & Digital Marketing Manager`
     with `Job Location USA, Remote` and `Experienced Analog Design Engineer` with `Job
     Location France, Grenoble`; both are cached as **`Hod Hasharon`**, the company's office,
     because the anchored place search finds it nearer the title than the role's own stated

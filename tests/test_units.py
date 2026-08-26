@@ -9189,3 +9189,32 @@ def test_refresh_a_company_that_never_ran_has_one_shape():
     # ...and nothing hand-builds one beside it any more
     src = inspect.getsource(R)
     assert src.count('"status": "error"') == 1, "one builder, not four"
+
+
+def test_scrape_a_labelled_place_is_the_roles_own_claim():
+    """BACKLOG 241 (`scraper` 2026-08-26 evening): a page that LABELS the role's place was
+    read by proximity instead, so Weebit Nano's `Job Location USA, Remote` and `Job Location
+    France, Grenoble` roles were cached as `Hod Hasharon` — the office address printed
+    elsewhere on the same page. Two wrong rows in the committed cache; both now dropped, and
+    the Israeli roles gain their city instead of the country they are prefixed with.
+
+    A label that names no place is not a label: SeatPick answers "Location:" with "This is a
+    hybrid role…", and honouring that cost a Tel Aviv role its city."""
+    import scrape_universal as N
+    page = "<html><h1>%s</h1><p>Job Location %s Job Brief Weebit Nano, Hod Hasharon, Israel.</p></html>"
+    foreign = N._parse_position_page(page % ("Analog Design Engineer", "France, Grenoble"),
+                                     "https://co.example/job/x/")
+    assert foreign["loc"] == "" and foreign["foreign"], foreign
+    us = N._parse_position_page(page % ("Marketing Manager", "USA, Remote"), "https://co.example/job/y/")
+    assert us["loc"] == "" and us["foreign"], us
+    here = N._parse_position_page(page % ("Memory Architect", "Israel, Hod HaSharon (Hybrid)"),
+                                  "https://co.example/job/z/")
+    assert here["loc"] == "Hod HaSharon" and not here["foreign"], here
+    # the label's value stops at the next section, and prose is not a label
+    assert N._stated_place("Job Location France, Grenoble Job Brief An Analog") == "France, Grenoble"
+    assert N._stated_place("Location: This is a hybrid role in a growing team") == ""
+    assert N._stated_place("we have an office location and a remote culture") == ""
+    # ...and with no label the page is read as before
+    plain = N._parse_position_page("<html><h1>Data Analyst</h1><p>Ramat Gan, Israel</p></html>",
+                                   "https://co.example/job/q/")
+    assert plain["loc"] == "Ramat Gan, Israel"

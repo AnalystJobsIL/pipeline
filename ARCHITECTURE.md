@@ -297,7 +297,12 @@ including the claim "none".
    titles carried one); `ISRAEL_LOC` is word-bounded like `israel._PLACE_PATTERNS`
    (BACKLOG 126; the lookarounds are case-sensitive on purpose — under `re.I` they blocked
    the run-together card text real boards serve, `HerzliyaJunior Software Developer`,
-   `R&DRegularTel Aviv`). **A card that names no place of its own** is the one judgement
+   `R&DRegularTel Aviv`). **A position page that LABELS the role's place** — `Job Location:
+   France, Grenoble` — is making that role's own claim, and it settles the question over any
+   place found by proximity, including when it names nowhere in Israel: Weebit Nano prints
+   its Hod Hasharon office on every page, so its USA and France roles were cached as Israeli
+   until 2026-08-26. A label whose value names no place is not a label. **A card that names
+   no place of its own** is the one judgement
    call, and it belongs to the BOARD, not the page: `_parse_position_page` reports what a
    position page says (its heading, its `<title>`, whether either names a place outside
    Israel) and `_Board` decides once per link group — a page that named nothing is read as
