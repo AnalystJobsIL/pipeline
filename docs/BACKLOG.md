@@ -1871,7 +1871,7 @@ Record: `docs/sessions/2026-08-24-jd-text.md`. Numbers re-derived that day; re-d
     driver module (say `enrich_jd`) with `--target cache|matched` needs: the two `run:` lines in
     `daily-digest.yml`, `docs/gen_modules.py` + `docs/MODULES.md`, `docs/AGENT_BRIEF.md`'s lane
     row, and this file. Not done in the jd-text pass because a rename crosses three lanes.
-113. **Eightfold/Microsoft and Phenom job text** — lane: `jd-text`. Eightfold's
+113. ~~**Eightfold/Microsoft and Phenom job text**~~ — **CLOSED 2026-08-26 (`jd-text`)**: closed by MEASUREMENT, not code — Qualcomm's and Microsoft's job pages answer a plain GET with 6,000 characters each, so the undocumented `/api/apply/v2/jobs/{id}?domain=` rung is unnecessary; Phenom's `applyUrl` is a Workday url and is covered by `native_url` dropping a trailing `/apply` (404/406 with it, 200 and 2,865 characters without). Original text: **Eightfold/Microsoft and Phenom job text** — lane: `jd-text`. Eightfold's
     `/api/apply/v2/jobs/{id}?domain=<domain>` answers a plain GET (Microsoft, `job_description`
     6,758 chars, 2026-08-24) but the `domain` is not in the public URL
     (`jobs.careers.microsoft.com/global/en/job/{id}`), so `native_url` cannot derive it; 1 row
@@ -2047,7 +2047,7 @@ kept; the Meta listing-url rows are superseded).
 138. **`firmographics` sqlite table is redundant with its export** — lane: `company-intel`.
     Same shape as 132: `cloud_state/firmographics.json` is authoritative (§7), the table is a
     cache, and it is ~half of the daily 1.4 MB binary (HANDOFF watch item 3).
-140. **`enrich_matched_jd.py` does not know `matched.status`** — lane: `jd-text`. Its
+140. ~~**`enrich_matched_jd.py` does not know `matched.status`**~~ — **CLOSED 2026-08-26 (`jd-text`)**: the SELECT carries `COALESCE(status,'') != 'superseded'` (COALESCE is load-bearing: `insert_matched` writes NULL and `reconcile` writes `''`), and the driver additionally skips roles the ledger calls closed or purged — on 2026-08-26 two of its four candidate rows, one of which had bought a Bright Data credit. `test_the_matched_backfill_leaves_closed_and_superseded_roles_alone`. Original text: **`enrich_matched_jd.py` does not know `matched.status`** — lane: `jd-text`. Its
     query (`WHERE length(COALESCE(description,'')) < ?`) picks superseded rows too (2 of the
     3 today have an empty description), so it spends Bright Data on roles that can never
     appear anywhere; add `AND COALESCE(status,'') != 'superseded'` (one line).
@@ -2116,8 +2116,8 @@ kept; the Meta listing-url rows are superseded).
     on); the 18 closed ones keep it in the archive forever. One-shot repair: re-canonicalise
     from `seen_ids` (any non-`discovery-*` id names the board) — or accept it.
     Count: `python -c "import json;print(sum(1 for l in open('cloud_state/roles.jsonl',encoding='utf-8') if any(h in json.loads(l).get('url','') for h in ('linkedin.com','indeed.com'))))"`.
-152. **The inline JD fill's wall-clock budget now starts with the whole fetch phase already
-    spent** — lane: `roles` (with `jd-text`). `JDFiller.t0` is set at construction, before
+152. ~~**The inline JD fill's wall-clock budget now starts with the whole fetch phase already
+    spent**~~ — **CLOSED 2026-08-26 (`jd-text`)**: `JDFiller` accumulates seconds spent inside `fetch_jd` (the shape `seniority.Classifier` uses one line away in `run.py`), so the 870-board fetch loop — 5.7 of the 25 minutes on 2026-08-26 — and the LLM time between fills no longer count against it; `JDFILL_TIME_BUDGET_MIN=0` now attempts nothing rather than meaning unbounded. `test_the_inline_budget_measures_fetching_not_the_run`. Original text: — lane: `roles` (with `jd-text`). `JDFiller.t0` is set at construction, before
     the fetch loop, and classify-once moved the first `maybe_fill` from "after company #1" to
     "after all 862" (~8 min of fetching inside the 25-min `JDFILL_TIME_BUDGET_MIN`). Not
     binding on 2026-08-24 (`jd-fill: 93/153` at 06:07, budget to 06:24) and the fill now runs
@@ -2147,7 +2147,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     mark `status: "error"` (and self-heal must then skip scrape rows) or the `Boards` line
     reads the `collect` stamp's `errors=` count beside it.
 155. **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for
-    twice a day** — lane: `jd-text`. `enrich_scrape_jd` stamps `_jd_attempted` on the cache
+    twice a day** — lane: `jd-text`. **HALF CLOSED 2026-08-26**: the two drivers now agree on what a missing description is (`< MIN_DESC`, not `""`), and `_todo` dedupes by url. The INLINE half is deliberately HELD, not forgotten: making `JDFiller.maybe_fill` honour the stamp saves ~6 plain GETs a day, but the `scraper` lane is adding a `T:<title>|<location>` identity to `_carry_jd` (item 265) under which a promoted card — new url, same title and location — inherits the OLD address's failure stamp. Honouring it before that lands turns a latent starvation into a daily one for up to 7 days per promoted card. **Take this the morning after 246 is fixed.** Original:  `enrich_scrape_jd` stamps `_jd_attempted` on the cache
     job (7 d); `store.upsert_matched` drops it; `enrich_matched_jd` twelve seconds later finds
     `matched.jd_attempted == ''`, `jdfill.due('')` is True and the same URL goes to the
     Unlocker again (`MATCHED_JD_BD_CAP` 250). Carry `_jd_attempted → jd_attempted` in the
@@ -2307,7 +2307,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     pool percentage live in the step log only. Proposed: a `discover` stage stamped by
     `discovery_daily.main()` with `new_companies`, `queued`, `queue_depth`, `bd_pct`,
     `blocked`, and one `- **Intake:**` line rendered from it.
-181. **`discovery-indeed` descriptions can never be fetched inline** — lane: `jd-text`.
+181. ~~**`discovery-indeed` descriptions can never be fetched inline**~~ — **CLOSED 2026-08-26 (`jd-text`)**: `jdfill.unfillable()` names the host families no rung we own can read (indeed.com: 401/403 on 22 of 22 sampled, `reject_authwall` to the Unlocker) and is consulted BEFORE the plain GET by all three callers, so those 17 daily fetches and the weekly credit are gone and the residue is counted, not booked as failure. One canary per process per host family keeps the refusal falsifiable. `test_unfillable_names_only_hosts_no_rung_of_ours_can_read`. Original text: **`discovery-indeed` descriptions can never be fetched inline** — lane: `jd-text`.
     `jd-fill … discovery-indeed http-401 17` on 2026-08-25: `il.indeed.com/viewjob?jk=…`
     answers 401/403 to any non-browser client (verified on two cache URLs). Meanwhile
     `indeed_normalize` already stores the card snippet — 82 of 82 cached Indeed jobs have a
@@ -3311,9 +3311,147 @@ lane, and is listed at the end.
 - **138** (lane `roles`, `pipeline/store.py`) — the sqlite `firmographics` table is redundant
   with the export and is ~half the daily binary. Dropping a table is `roles`' write.
 - **142** (lane `infra`) — `build_digest` is a dead renderer every lane pays for.
-- **241** (lane `infra`) — `persist_state.py commit --own` commits the whole index.
+- **260** (lane `infra`) — `persist_state.py commit --own` commits the whole index.
 - **243, the durable half** (lane `roles`, who own `pipeline/store.py`) — `firmo_failed`
   has no reason column and no shared clock. This lane now reads the **union** of both stores
   and carries the reason into the mail; the generic attempts table this file's preamble item
   8 asks for is `roles`' to build.
 
+## From the `jd-text` lane, 2026-08-26
+
+Record: `docs/sessions/2026-08-26-jd-text.md`; spec `ARCHITECTURE.md` §7a. Closed there by code:
+140 (the matched backfill now skips closed AND superseded rows), 181 (Indeed is refused before
+the fetch, not paid for), 152 (the inline budget counts fetching, not the run). Closed by
+measurement: 113 (Eightfold needs no bespoke rung — Qualcomm and Microsoft job pages answer a
+plain GET with 6,000 characters each; Phenom's URLs are Workday URLs, fixed by the `/apply`
+rule). Numbers re-derived 2026-08-26 against cloud run `32934864207`; re-derive before acting.
+
+260. **`store.merge_duplicates` never carries the longest description onto the canonical** —
+    lane: `roles`. It picks the canonical copy by `(not _inherited, has an ISO posted_date, has
+    a url)` (`pipeline/store.py:89-96`) and then unions `seen_ids` and `sources` and *rescues*
+    `posted_date` from a non-canonical member (`:100-104`) — but never the description. So a
+    role seen both on an aggregator (real date, short snippet) and on its employer's own board
+    (no date, full JD) publishes the **snippet**, and `upsert_matched`'s `CASE WHEN length(?) >`
+    max-length rule never sees the longer text because it was dropped in memory first.
+    (`roles.classify_grouped` copies the longest text onto copies that INHERITED a verdict; two
+    copies that each carry their own text neither inherit nor benefit.)
+    Measured 2026-08-26 — **2 live board roles**, both still on the board today:
+    `python -c "import json,sqlite3;cache=json.load(open('scraped_cache.json',encoding='utf-8'));by={j['url']:len((j.get('description') or '').strip()) for js in cache.values() for j in js or [] if isinstance(j,dict) and j.get('url')};[print(r['company'],r['title'],r['desc_len'],'->',max([by.get(s.split(':',1)[1],0) for s in r['seen_ids'] if s.startswith('scrape:')] or [0])) for r in map(json.loads,open('cloud_state/roles.jsonl',encoding='utf-8')) if any(s.startswith('scrape:') for s in r['seen_ids']) and max([by.get(s.split(':',1)[1],0) for s in r['seen_ids'] if s.startswith('scrape:')] or [0]) > (r.get('desc_len') or 0)]"`
+    → `Zipher Data Analyst 170 -> 2021` and `Modellama Data Analyst 1070 -> 2200`.
+    The fix is four lines, mirroring the `posted_date` rescue that is already there. `jd-text`
+    added a backstop in `enrich_matched_jd` (the sibling rung, §7a) that repairs the row on the
+    next morning's run — but it repairs the symptom a day late, and only for the description;
+    the canonical *url* is still the aggregator's (item 109/151).
+
+261. **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
+    text anywhere** — lane: `scraper`. `companies.csv` has Navan as an active `scrape` row at
+    `https://navan.com/careers`, and `scraped_cache.json` holds **0** cards for it
+    (`python -c "import json;print(len(json.load(open('scraped_cache.json',encoding='utf-8')).get('Navan') or []))"`).
+    Its board role therefore exists only as a `discovery-indeed` card whose URL answers 401 to
+    every client we own, and it is the single reason open-board JD coverage is 75/76 rather
+    than 76/76. If the scraper can read that page, the sibling rung (§7a) fills the role with
+    no further work.
+
+262. **Shopify's careers SPA needs the Chromium rung** — lane: `scraper`. 5 relevant cached
+    cards, all `.../careers/<slug>_<uuid>`; a plain GET returns **267 KB of HTML yielding 56
+    characters of text** and the page declares no JSON-LD, so neither of jd-text's parsers can
+    help and Bright Data would return the same shell. This is the entire residue of the
+    `scrape shell` class after 2026-08-26. The scraper lane already owns a Chromium visit and a
+    position-page ladder; these five are the same shape.
+
+263. **`digest.py` renders a `0/148` inline-fill morning as the ABSENCE of a phrase** — lane:
+    `render`, extends item 106. `pipeline/digest.py:230` (and `:897`, `:937`) print
+    `· JDs fetched inline: N` only `if s.get("jd_filled_inline")`, so the one state a reader
+    most needs to see — the inline filler produced nothing — renders identically to a run where
+    `JDFILL` was never set. The denominator (`JDFiller.tried`) and the new `unfillable` residue
+    exist in `run.py`'s step-log line and nowhere in the mail. `jd-text` added
+    `inline jd-fill budget spent (…)` to the bold `Stages:` line, which covers the *budget*
+    case only. One line: print the count when the key is present, zero included.
+
+264. **`daily-digest.yml` never reports Bright Data spend, and this lane is its largest
+    unthrottled spender** — lane: `infra`. `discovery_daily.report_bd_spend` reads the live
+    `zone/cost` ledger and `plan_spend` self-throttles discovery against it, but the digest
+    workflow calls neither, and the two enrich steps have only their own caps. On 2026-08-26
+    the pool stood at **5,906/5,000 = 118 %** (projected 7,042) and this lane's caps summed to
+    650 credits/day; `jd-text` cut them to 65 (40 + 25) the same day, but nothing in the digest
+    still says what the morning cost. One `if: always()` step calling `report_bd_spend` would
+    put the number in the run log beside the `enrich` stamp's new `*_bd_calls`.
+
+265. **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
+    — lane: `scraper`. At `origin/master` `_carry_jd` keys on `url`/`job_id` only, and the
+    scraper lane's in-progress change adds a `T:<title>|<location>` identity whose stated
+    purpose is that "an address can CHANGE while the posting does not — that is exactly what a
+    promotion does". Under that change a card with a **new URL** inherits the **old URL's**
+    `_jd_attempted` stamp, and `enrich_scrape_jd` then declines to fetch the new address for up
+    to 7 days. The cooldown is a property of the ADDRESS (that is what `due()` and `fetch_jd`
+    measure); the description is a property of the POSTING. Carry the text on all three
+    identities and the stamp on `url`/`job_id` only. **This blocks item 155's inline half**:
+    `jd-text` deliberately did NOT make `JDFiller.maybe_fill` honour the stamp this session,
+    because doing so would turn that latent starvation into a daily one.
+
+266. **The Meta registry row's `api_url` IS a search page, so no Meta role can ever have a job
+    URL** — lane: `registry`. Both Meta rows point at
+    `https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel`, and all **6** cached
+    Meta cards carry that same URL as their own
+    (`python -c "import json;print({j['url'] for j in json.load(open('scraped_cache.json',encoding='utf-8')).get('Meta') or []})"`).
+    So the two Meta rows in `matched` cannot be filled by any rung, by construction — not
+    because the pages are unreadable, but because we never learned a per-posting address. Both
+    are now `closed` in the ledger, so the cost today is zero; it returns the next time Meta
+    posts an analytics role. Restates the Meta half of item 109 from the jd-text side.
+
+### Left open by the `jd-text` wave-1 attack (2026-08-26)
+
+Each was confirmed with a reproduction and deliberately NOT fixed; the reason is stated.
+
+267. ~~**`bd-unavailable` erases the reason the earlier rungs already found**~~ — **CLOSED 2026-08-26 (`jd-text`)**: `JD.pre` carries the plain rung's verdict when the Unlocker never sent a request, and `run_backfill` records it, so an outage morning no longer reports `scrape_fail=0` about five pages that timed out. Original text: **`bd-unavailable` erases the reason the earlier rungs already found** — lane: `jd-text`.
+    `run_backfill` checks `jd.reason in ("bd-unavailable", "bd-capped")` before `fail`
+    (`pipeline/jdfill.py`), and `fetch_jd` returns the Bright Data reason once the ladder
+    reaches that rung — so the plain rung's verdict is overwritten. Reproduced: five pages that
+    all timed out, with the Unlocker unavailable, stamp `scrape_bd_unavailable=5 scrape_fail=0
+    scrape_why=bd-unavailable5+not-a-job-url4`. Five pages timed out and `scrape_fail` reads 0.
+    Not fixed because the mail is not *misleading* on that morning — `bd-unavailable(...)`
+    is on the bold line and `scrape_why` names it — only less detailed, and carrying a
+    pre-Bright-Data reason needs a sixth field on `JD` whose only consumer would be this
+    counter. Fix when a second consumer appears.
+
+268. ~~**The `failing-after-N` breaker sits above a whole day's spend**~~ — **CLOSED 2026-08-26 (`jd-text`)**: the threshold is now sized against the cap — `max(breaker*2, min(breaker*4, cap//2))` — so it trips at 12 on the matched driver's cap of 25 instead of 20, while a SHORT failing streak after a success is still not an outage (the 2026-08-24 rule, still pinned). Original text: **The `failing-after-N` breaker sits above a whole day's spend** — lane: `jd-text`.
+    `FAILING_STREAK_FACTOR` is 4 and `breaker` is 5, so a run that has succeeded once stops
+    after 20 consecutive failures — against caps that were cut to 25 and 40 on 2026-08-26 and a
+    measured daily need of 7, 4 and 3. It therefore saves at most 4 credits on the driver that
+    matters. `no-success-after-5` (the account-level rule) is untouched and is the one that
+    fires in practice. Not changed because `test_a_run_that_worked_once_is_cut_off_after_four_
+    breakers_worth_of_failures` pins the 4 and a same-day churn of a just-added guard is worse
+    than the 4 credits; the honest fix is to derive the streak from the cap
+    (`breaker = max(3, cap // 5)`) next time this file is opened.
+
+269. **`pipeline/stages.py` stamps a LOCAL date beside a UTC timestamp** — lane: `infra`
+    (shared plumbing). `stamp()` writes `"date": dt.date.today()` (local) and
+    `"finished_at": datetime.now(timezone.utc)`. On any machine with an offset the two
+    disagree for hours a day — observed live in this session when the local date rolled to
+    2026-08-27 while `finished_at` still read `2026-08-26T21:05+00:00`. Every consumer that
+    compares them is wrong for that window; `jdfill.record_enrich` now accepts either calendar
+    rather than silently dropping a crash alarm, but the mismatch belongs upstream. The cloud
+    runners are UTC, so this is latent there and live on every developer machine.
+
+270. **`stages._load()` returns whatever parses, and `stamp()` then assumes a dict** — lane:
+    `infra`. A stamp file containing a JSON list parses fine and `data[stage] = …` raises
+    `TypeError` — inside the drivers' crash handler, which then re-raises the wrong exception
+    and stamps nothing. `jdfill` now guards its own call and reports `::error::` without
+    overwriting a file it could not understand, but every other `stages.stamp` caller
+    (`run.py`, `refresh_scrape_cache.py`, the workflow one-liners) has the same hole. Two
+    lines in `_load`: `return d if isinstance(d, dict) else {}`.
+
+271. ~~**`--limit` manufactures a budget alarm**~~ — **CLOSED 2026-08-26 (`jd-text`)**: `alarm_for(..., operator_cap=True)` suppresses the budget clause when the only cut was an operator's `--limit`; a wall-clock cut still alarms, and the canary no longer spends a `--limit` slot either. Original text: **`--limit` manufactures a budget alarm** — lane: `jd-text`. `run_backfill` books a
+    count-cap skip as `skipped_budget`, so `enrich_matched_jd --limit 1` on a real backlog
+    stamps `jd-budget-spent(4 left for tomorrow, cap)` — a deliberately bounded operator run
+    that reads in the mail exactly like a morning the budget cut short. The `, cap` / `, clock`
+    suffix distinguishes them for a careful reader, which is why this is filed rather than
+    fixed; a `--limit` run should probably not stamp the shared file at all.
+
+272. ~~**Two accepted costs in the schema.org parser, recorded so they are not re-discovered**~~ — **CLOSED 2026-08-26 (`jd-text`)**: (b) fixed — the block cap is 200, since 500 blocks cost 0.24 ms and at most ~5 blocks of the 200 KB maximum fit in the 1 MB window, so a low cap hid real postings behind decoys while protecting nothing. (a) `@context` stays unchecked BY DECISION, documented in `ARCHITECTURE.md` §7a: tightening it costs recall on `@graph` children that schema.org's own examples emit without a context. Original text: **Two accepted costs in the schema.org parser, recorded so they are not re-discovered** —
+    lane: `jd-text`. (a) `@context` is never checked, so any JSON object anywhere on the page
+    with `@type: "JobPosting"` and a `description` is trusted — tightening it would cost recall
+    on `@graph` children, which schema.org's own examples emit without a context. (b) The block
+    cap counts MATCHED blocks, not useful ones, so a real posting behind 25 decoy blocks is
+    still missed; 500 blocks cost 0.24 ms, so the cap protects nothing that the scan window and
+    the per-block size do not already protect, and it could simply be raised again.

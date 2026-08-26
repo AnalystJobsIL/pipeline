@@ -3390,17 +3390,17 @@ def test_fetch_jd_ladder_order_and_reasons(monkeypatch):
     jd = jdfill.fetch_jd("https://x/jobs/1", bd=bd)
     assert (jd.via, jd.reason, bd.used) == ("html", "ok", 0)              # html hit: BD untouched
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
-    assert jdfill.fetch_jd("https://x/jobs/1") == ("", "none", "shell", False)  # inline: no BD
+    assert jdfill.fetch_jd("https://x/jobs/1")[:4] == ("", "none", "shell", False)  # inline: no BD
     jd = jdfill.fetch_jd("https://x/jobs/1", bd=bd)
     assert (jd.via, jd.reason, bd.used) == ("bd", "ok", 1)
     jd = jdfill.fetch_jd("https://x/jobs?q=1", bd=bd)                   # search page: no credit
     assert (jd.reason, bd.used) == ("not-a-job-url", 1)
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (None, ""))
-    assert jdfill.fetch_jd("https://x/jobs/1") == ("", "none", "timeout", True)
+    assert jdfill.fetch_jd("https://x/jobs/1")[:4] == ("", "none", "timeout", True)
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (503, ""))
     assert jdfill.fetch_jd("https://x/jobs/1").transient is True
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (404, ""))
-    assert jdfill.fetch_jd("https://x/jobs/1") == ("", "none", "http-404", False)
+    assert jdfill.fetch_jd("https://x/jobs/1")[:4] == ("", "none", "http-404", False)
     jd = jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD())
     assert (jd.reason, jd.transient) == ("bd-unavailable", True)
     assert jdfill.fetch_jd("").reason == "no-url"
@@ -3553,6 +3553,10 @@ def test_record_enrich_unions_replaces_and_fills_the_gap(tmp_path, monkeypatch):
     assert jdfill.record_enrich() == e                                  # no-arg on a full day: no-op
     assert stages._load()["publish"]["email"] == 1 and stages.alarms("enrich") == ["enrich bd-unavailable(http-401)"]
     data = stages._load(); data["enrich"]["date"] = yday
+    # written yesterday too: `finished_at` is what separates genuinely stale news from a
+    # crash report, which deliberately leaves `date` behind but was written minutes ago
+    _stale = (_jd_dt.date.today() - _jd_dt.timedelta(days=2)).isoformat()
+    data["enrich"]["finished_at"] = _stale + "T05:52:00+00:00"
     (tmp_path / "stages.json").write_text(_jd_json.dumps(data), encoding="utf-8")
     assert stages.alarms("enrich") == ["enrich last ran 1d ago — the digest read stale input",
                                        "enrich bd-unavailable(http-401)"]
@@ -3625,12 +3629,19 @@ def test_matched_backfill_driver_fills_stamps_and_records(tmp_path, monkeypatch)
     # --limit caps ATTEMPTS: a cooling row must not consume it (the old driver filtered first)
     outcomes["https://a/jobs/2"] = jdfill.JD("E" * 500, "html", "ok", False)
     assert emj.main(["--db", db, "--limit", "1", "--cooldown-days", "0"]) == 0
-    assert stages._load()["enrich"]["matched_filled"] == 1
+    # 2026-08-26: a same-day re-run ADDS to the day instead of replacing it (a re-dispatch
+    # after a bad morning used to overwrite the real morning's counts with the re-run's
+    # zeroes, erasing the evidence the operator re-ran to preserve), and says how many
+    # times the driver ran.
+    assert stages._load()["enrich"]["matched_filled"] == 2
+    assert stages._load()["enrich"]["matched_runs"] == 3
     with pytest.raises(Exception):
         (tmp_path / "notdb.txt").write_text("not a database", encoding="utf-8")
         emj.main(["--db", str(tmp_path / "notdb.txt")])
     monkeypatch.setattr(stages, "PATH", str(tmp_path / "notdb.txt.stages.json"))
-    assert stages._load()["enrich"]["alarm"].startswith("crash:")
+    # the crash now NAMES its driver: `crash:<Exc>` alone could not tell a scrape crash
+    # from a matched one, and both look identical to a skipped step in the mail
+    assert stages._load()["enrich"]["alarm"] == "matched:crash:DatabaseError"
 
 
 def test_scrape_backfill_driver_write_is_byte_identical_and_dry_run_writes_nothing(tmp_path, monkeypatch):
@@ -3719,15 +3730,20 @@ def test_jd_guards_the_mutation_sweep_found_unpinned(monkeypatch):
     assert jdfill.native_jd("https://x/?gh_jid=1")[1] == "ok"
     monkeypatch.undo()
     # fetch_jd: shell vs no-markers, the 500 boundary, http:// urls, the BD-body-without-JD branch,
-    # a search page whose GET timed out stays transient, a BD gateway 5xx is transient
+    # a JOB url whose GET 5xx'd stays transient, a BD gateway 5xx is transient
     monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, "<p>" + "Company intro. " * 60 + "</p>"))
     assert jdfill.fetch_jd("https://x/jobs/1").reason == "no-markers"
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (500, ""))
-    assert jdfill.fetch_jd("http://x/jobs/1") == ("", "none", "http-500", True)
-    assert jdfill.fetch_jd("https://x/jobs?q=1", bd=_FakeBD()) == ("", "none", "http-500", True)
+    assert jdfill.fetch_jd("http://x/jobs/1")[:4] == ("", "none", "http-500", True)
+    # 2026-08-26: the gate moved ABOVE the fetch, so a listing url is refused before a GET is
+    # spent on it at all. The transient rule this line used to pin now belongs to job urls
+    # (asserted on the line above); a listing page is permanently unfillable, not transient.
+    assert jdfill.fetch_jd("https://x/jobs?q=1", bd=_FakeBD())[:4] == ("", "none", "not-a-job-url", False)
+    _gate_bd = _FakeBD()
+    assert jdfill.fetch_jd("https://x/jobs?q=1", bd=_gate_bd).via == "none" and _gate_bd.used == 0
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
-    assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(body=_jd_shell())) == ("", "bd", "bd-shell", False)
+    assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(body=_jd_shell()))[:4] == ("", "bd", "bd-shell", False)
     assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(reason="bd-http-502")).transient is True
     assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(reason="bd-capped")).transient is True
     assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(reason="bd-reject_block")).transient is False
@@ -3807,9 +3823,21 @@ def test_jd_filler_env_contract_and_budget(monkeypatch):
     monkeypatch.setenv("JDFILL_TIME_BUDGET_MIN", "0.5")
     f = jdfill.JDFiller()
     assert f.budget == 0.5 and f.maybe_fill(dict(job)) is True
-    monkeypatch.setattr(jdfill.time, "time", lambda: f.t0 + 3600)
+    # 2026-08-26: the budget counts SECONDS SPENT FETCHING, not wall clock since construction.
+    # The filler is built before the 870-board fetch loop, which ate 5.7 of the 25 minutes
+    # before a single fill was attempted; an hour of somebody else's work must cost it nothing.
+    f.seconds = 0.0
+    assert f.maybe_fill(dict(job)) is True and f.skipped_budget == 0
+    f.seconds = 3600.0                                          # an hour of OUR OWN fetching
     assert f.maybe_fill(dict(job)) is False and f.skipped_budget == 1 and "skipped (budget 0.5m spent)" in f.summary()
     assert f.maybe_fill({"title": "Data Analyst", "url": None, "description": None}) is False   # malformed job: no crash
+    # zero has one meaning, `run_backfill`'s: attempt nothing. It used to mean UNBOUNDED on the
+    # digest's critical path, and JDFiller(budget_min=0) silently became 20.
+    monkeypatch.setenv("JDFILL_TIME_BUDGET_MIN", "0")
+    z = jdfill.JDFiller()
+    assert z.budget == 0 and z.maybe_fill(dict(job)) is False and (z.tried, z.skipped_budget) == (0, 1)
+    monkeypatch.delenv("JDFILL_TIME_BUDGET_MIN")
+    assert jdfill.JDFiller(budget_min=0).budget == 0 and jdfill.JDFiller().budget == 20
 
 
 def test_scrape_backfill_keeps_fetched_text_when_the_loop_dies(tmp_path, monkeypatch):
@@ -3832,7 +3860,7 @@ def test_scrape_backfill_keeps_fetched_text_when_the_loop_dies(tmp_path, monkeyp
     got = _jd_json.loads(p.read_text(encoding="utf-8"))
     assert len(got["Z"][0]["description"]) == 400                        # the first fetch survived
     monkeypatch.setattr(stages, "PATH", str(p) + ".stages.json")
-    assert stages._load()["enrich"]["alarm"] == "crash:RuntimeError"
+    assert stages._load()["enrich"]["alarm"] == "scrape:crash:RuntimeError"
 
 
 import json, shutil, subprocess  # noqa: E402  (classifier block)
@@ -9268,3 +9296,1314 @@ def test_scrape_the_foreign_vocabulary_covers_the_cities_a_sales_bench_is_named_
         assert N._FOREIGN_PAGE_RX.search("Account Executive - %s, CO" % city), city
     for israeli in ("Tel Aviv", "Herzliya", "Haifa", "Ramat Gan", "Hod HaSharon"):
         assert not N._FOREIGN_PAGE_RX.search("Data Analyst, %s" % israeli), israeli
+# =====================================================================================
+# jd-text lane, 2026-08-26 — what the layer spends, what it refuses to fetch, and the text
+# that was already ours. Each test pins a defect measured that morning against cloud run
+# 32934864207; the session record is docs/sessions/2026-08-26-jd-text.md.
+# =====================================================================================
+import datetime as _j6_dt
+import json as _j6_json
+import os as _j6_os
+from collections import Counter as _j6_Counter
+
+
+class _J6BD:
+    """An Unlocker whose spend is observable: `used` counts REQUESTS, `ok` counts successes."""
+
+    def __init__(self, body="", reason="bd-unavailable", unavailable="", capped=False):
+        self.used = self.ok = 0
+        self.body, self.reason, self.unavailable, self.capped = body, reason, unavailable, capped
+
+    def __call__(self, url, timeout=90):
+        self.used += 1
+        if self.body:
+            self.ok += 1
+            return 200, self.body, ""
+        return None, "", self.reason
+
+
+def _j6_ld(desc, kind="JobPosting", wrap="{node}"):
+    node = _j6_json.dumps({"@type": kind, "description": desc})
+    return ('<html><body><p>nav</p>'
+            '<script type="application/ld+json">' + wrap.format(node=node) + "</script></body></html>")
+
+
+def test_unfillable_names_only_hosts_no_rung_of_ours_can_read(monkeypatch):
+    """il.indeed.com answered 401/403 to a plain GET on 22 of 22 urls sampled 2026-08-26 and
+    `reject_authwall` to the Unlocker; every secrethunter.io/jobz/<id> returns a
+    BYTE-IDENTICAL 33,495-byte JS shell (776 characters of text). Matching is host-or-subdomain, never substring: `is_aggregator`'s
+    regex (which also lists linkedin.) matches `indeed.com.evil.co`, and over-matching here
+    means refusing to read a page we can read."""
+    from pipeline import jdfill
+    for u in ("https://il.indeed.com/viewjob?jk=abc", "https://indeed.com/viewjob?jk=abc",
+              "https://user:pw@IL.INDEED.COM.:443/viewjob?jk=abc",
+              "https://secrethunter.io/jobz/54dbf0dd1c?utm_source=telegram"):
+        assert jdfill.unfillable(u), u
+    for u in ("https://notindeed.com/viewjob?jk=abc", "https://indeed.com.evil.co/viewjob?jk=1",
+              "https://il.indeed.com.x.net/viewjob?jk=1", "https://myindeed.com/jobs/1",
+              "https://www.linkedin.com/jobs/view/data-analyst-at-wix-4123456789",
+              "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68"):
+        assert not jdfill.unfillable(u), u
+    # the aggregator list is NOT this list: LinkedIn is on it and is the layer's biggest
+    # source of fills (91 of 110 inline on 2026-08-26)
+    from pipeline import aggregators
+    assert aggregators.is_aggregator("https://www.linkedin.com/jobs/view/x-1234567890")
+
+
+def test_a_native_rung_always_beats_the_unfillable_set(monkeypatch):
+    """The refusal is ordered AFTER the native rung so that writing a reader for a blocked
+    host makes the entry dead rather than harmful."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("J" * 500, "ok"))
+    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=abc")
+    assert (jd.via, jd.reason) == ("native", "ok")
+
+
+def test_an_unfillable_url_costs_no_fetch_no_credit_and_is_not_a_failure(monkeypatch):
+    """22 of the 38 inline failures on 2026-08-26 were addresses nothing could ever read, each
+    charged a 15-second GET, and `enrich_matched_jd` sent one of them to the Unlocker."""
+    from pipeline import jdfill
+    fetched = []
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (fetched.append(u), (200, ""))[1])
+    bd = _J6BD(body=_jd_page())
+    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=abc", bd=bd)
+    assert (jd.via, jd.reason, bd.used, fetched) == ("none", "auth-walled", 0, [])
+    jd = jdfill.fetch_jd("https://secrethunter.io/jobz/abc", bd=bd)
+    assert (jd.reason, bd.used, fetched) == ("js-shell", 0, [])
+    # ...and the backfill books it as `unfillable`, never as `fail` -- a failure count that
+    # includes what we chose not to fetch cannot be read as "the layer is broken"
+    items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
+    c = jdfill.run_backfill(items, save=lambda *a: None, minutes=None, bd=bd, dry_run=True)
+    # all 3 are refusals; the 3rd is additionally the once-per-process canary. A refusal is
+    # never `tried` and never `fail`: counting it as an attempt made a morning of nothing but
+    # Indeed rows raise a bold `jd-massfail` while the layer behaved perfectly (wave 1).
+    assert (c["unfillable"], c["probe"], c["filled"], c["tried"], bd.used) == (3, 1, 0, 1, 0)
+    assert c["fail"] == 1          # the canary was fetched and really did fail
+
+
+def test_exactly_one_refused_url_per_run_is_probed_anyway(monkeypatch):
+    """A permanent refusal must stay falsifiable. One canary per run, never through Bright
+    Data -- so 'Indeed became readable' costs one request a day to discover instead of never."""
+    from pipeline import jdfill
+    seen = []
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (seen.append(u), (403, ""))[1])
+    bd = _J6BD(body=_jd_page())
+    items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(4)]
+    c = jdfill.run_backfill(items, save=lambda *a: None, minutes=None, bd=bd, dry_run=True)
+    assert len(seen) == 1 and c["probe"] == 1 and bd.used == 0     # probed, but never paid for
+
+
+def test_is_job_url_refuses_a_locale_prefixed_search_page():
+    """`>= 3 path segments` gave every locale-prefixed careers site a free pass: 30 distinct
+    urls on 78 cached cards passed ONLY via that rule on 2026-08-26, among them a cookies
+    policy and a legal notice, and one of them (DHL) was charged to Bright Data that morning."""
+    from pipeline import jdfill
+    for u in ("https://careers.dhl.com/global/en/search-results?keywords=Israel",
+              "https://www.google.com/about/careers/applications/jobs/results/?location=Israel",
+              "https://www.amd.com/en/legal/cookies.html",
+              "https://www.dhl.com/global-en/home/footer/legal-notice.html",
+              "https://careers.x.com/us/en/search"):
+        assert not jdfill.is_job_url(u), u
+    # equality on the LAST segment, never substring: a real slug may end in a listing word
+    for u in ("https://careers.x.com/en/jobs/senior-data-analyst-jobs-tel-aviv",
+              "https://careers.x.com/en/positions/senior-bi",
+              "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68",
+              "https://x.wd5.myworkdayjobs.com/site/job/Haifa/Analyst_R1"):
+        assert jdfill.is_job_url(u), u
+
+
+def test_a_listing_page_is_refused_before_the_fetch_not_after(monkeypatch):
+    """It used to be fetched first and only then classified, so a search page whose GET timed
+    out was stamped `transient` and re-fetched every single morning, booked as `fail`."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    fetched = []
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (fetched.append(u), (None, ""))[1])
+    jd = jdfill.fetch_jd("https://careers.dhl.com/global/en/search-results?keywords=Israel",
+                         bd=_J6BD(body=_jd_page()))
+    assert (jd.reason, jd.transient, fetched) == ("not-a-job-url", False, [])
+
+
+def test_jsonld_reads_a_jobposting_and_refuses_a_company_blurb():
+    """A schema.org JobPosting is SELF-LABELLING, so it needs no marker heuristic -- but only
+    a JobPosting: an Organization's `description` is the "About <company>" blurb."""
+    from pipeline import jdfill
+    long = "We are looking for an analyst. " * 20
+    assert len(jdfill.jsonld_jd(_j6_ld("<ul><li>" + long + "</li></ul>"))) >= jdfill.MIN_DESC
+    assert jdfill.jsonld_jd(_j6_ld(long, kind="Organization")) == ""
+    assert jdfill.jsonld_jd(_j6_ld(long, kind="WebPage")) == ""
+    assert jdfill.jsonld_jd(_j6_ld("too short")) == ""                     # MIN_DESC applies
+    assert jdfill.jsonld_jd(_j6_ld(long, wrap='{{"@graph": [{node}]}}'))   # one level of @graph
+    assert jdfill.jsonld_jd(_j6_ld(long, wrap="[{node}]"))                 # a top-level array
+    multi = _j6_json.dumps([{"@type": ["JobPosting", "Thing"], "description": "short"},
+                            {"@type": "JobPosting", "description": long}])
+    assert jdfill.jsonld_jd('<script type="application/ld+json">' + multi + "</script>")
+    assert jdfill.jsonld_jd("") == "" and jdfill.jsonld_jd("<html>none</html>") == ""
+
+
+def test_jsonld_reads_the_raw_body_and_is_bounded():
+    """`html_to_text` deletes <script> before anything else, so a refactor that piped the body
+    through it would make this parser silently return "" for ever. And a body is arbitrary
+    bytes from the internet: the scan, the block count and the block size are all bounded."""
+    from pipeline import jdfill
+    body = _j6_ld("Analyst work. " * 40)
+    assert jdfill.html_to_text(body).find("JobPosting") == -1        # the evidence is gone
+    assert jdfill.jsonld_jd(body)                                    # ...but the parser sees it
+    huge = ('<script type="application/ld+json">' + "x" * (jdfill.LD_MAX_BLOCK + 10)
+            + "</script>") + _j6_ld("Analyst work. " * 40)
+    assert jdfill.jsonld_jd(huge)                                    # the oversized block is skipped
+    assert jdfill.jsonld_jd("<p>" + "y" * jdfill.LD_SCAN_BYTES + "</p>" + body) == ""  # past the scan
+
+
+def test_a_bright_data_body_rescued_by_jsonld_still_counts_as_a_bd_fill(monkeypatch):
+    """`via` names the fetch that PAID for the body; the parser is named by the reason. Get
+    that backwards and the credits-spent arithmetic breaks in the other direction. Two of the
+    three credits this lane spent on 2026-08-26 ended in `bd-no-markers`."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
+    bd = _J6BD(body=_j6_ld("Analyst work here. " * 40))
+    jd = jdfill.fetch_jd("https://x/jobs/1", bd=bd)
+    assert (jd.via, jd.reason) == ("bd", "ok-jsonld") and jd.text
+    c = jdfill.run_backfill([jdfill.Item(1, "https://x/jobs/1", "A | B")], save=lambda *a: None,
+                            minutes=None, bd=bd, dry_run=True)
+    assert (c["filled"], c["bd"], c["jsonld"]) == (1, 1, 1)
+
+
+def test_the_stamp_carries_credits_spent_not_only_credits_that_worked(tmp_path, monkeypatch):
+    """`c["bd"]` is incremented inside `if jd.text:`, so it counts FILLS. On 2026-08-26 the
+    layer spent three Unlocker requests and the mail said `scrape_bd=0 matched_bd=0` while the
+    shared pool stood at 118 % of its monthly allowance."""
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    db = str(tmp_path / "seen.db")
+    st = store.SeenStore(db)
+    st.upsert_matched({"company": "ACME", "title": "Data Analyst", "url": "https://a/jobs/1",
+                       "location": "TLV", "posted_date": "2026-08-20", "sources": ["workday"],
+                       "description": ""}, _j6_dt.date.today().isoformat())
+    st.close()
+    bd = _J6BD(reason="bd-reject_authwall")
+    monkeypatch.setattr(emj, "Unlocker", lambda *a, **k: bd)   # the driver imported it by name
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda u, **k: (bd(u), jdfill.JD("", "bd", "bd-reject_authwall", False))[1])
+    assert emj.main(["--db", db]) == 0
+    e = _j6_json.loads((tmp_path / "seen.db.stages.json").read_text(encoding="utf-8"))["enrich"]
+    assert e["matched_bd_calls"] == 1 and e["matched_bd"] == 0 and e["matched_bd_ok"] == 0
+    assert "bd-spent(1 call, 0 filled" in e["alarm"]
+
+
+def test_alarm_for_speaks_for_every_zero_ish_run_and_stays_quiet_on_a_healthy_one():
+    """Both 2026-08-24 rules were unfirable on 2026-08-26: `bd-unavailable` needs the ACCOUNT
+    to be dead, and `jd-massfail` needs 10 attempts -- which the matched driver, at 130 of 135
+    rows covered, will never reach again."""
+    from pipeline.jdfill import alarm_for
+    bd = _J6BD()
+    bd.used = 2                                    # two requests really went out
+    spent = alarm_for(_j6_Counter({"todo": 2, "tried": 2, "filled": 0, "fail": 2,
+                                   "reason:bd-no-markers": 2}), bd)
+    assert spent.startswith("bd-spent(") and "bd-no-markers2" in spent
+    # THE wave-1 P0: the rule keys on credits that FILLED (`c["bd"]`), not on total fills.
+    # `filled=3` from the free rungs used to silence two wasted credits — which is exactly the
+    # real 2026-08-26 morning (6 html fills, 1 credit burnt on a search page, mail silent).
+    assert alarm_for(_j6_Counter(todo=5, tried=5, filled=3, bd=0), bd).startswith("bd-spent(")
+    assert alarm_for(_j6_Counter(todo=5, tried=5, filled=3, bd=2), bd) == ""     # the credits DID fill
+    capped = _J6BD(capped=True); capped.used = 40
+    assert alarm_for(_j6_Counter(todo=99, tried=12, filled=3, bd_unavailable=9),
+                     capped).startswith("bd-capped(")
+    assert alarm_for(_j6_Counter(todo=17)) == "jd-nothing-attempted(17 due)"
+    # ...but a driver with nothing to do, and a day where everything is cooling, are HEALTHY.
+    # An alarm that fires every morning is one that gets trained away.
+    assert alarm_for(_j6_Counter(todo=0)) == "" and alarm_for(_j6_Counter(todo=17, cooldown=17)) == ""
+    assert alarm_for(_j6_Counter(todo=99, tried=9, filled=4, skipped_budget=55,
+                                 skipped_clock=55)).startswith("jd-budget-spent(55")
+
+
+def test_the_breaker_stops_a_run_that_worked_once_and_then_stopped_working(monkeypatch):
+    """`self.ok == 0` disarmed the breaker for the whole run after a single success, so a pass
+    that filled one role could spend the entire cap. The account-level rule is unchanged --
+    a short failing streak after a success is still not an outage."""
+    from pipeline import jdfill
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k"); monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setenv("JD_BD", "1")
+
+    class _Resp:
+        def __init__(s, body, err): s.status, s._b, s.headers = 200, body, {"x-brd-error-code": err}
+        def read(s, n=0): return s._b.encode()
+        def __enter__(s): return s
+        def __exit__(s, *a): return False
+    state = {"err": ""}
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen",
+                        lambda req, timeout=0: _Resp("body" if not state["err"] else "", state["err"]))
+    u = jdfill.Unlocker(cap=100, breaker=3)
+    assert u("https://x/ok")[2] == "" and u.ok == 1
+    state["err"] = "reject_block"
+    for i in range(3):
+        u(f"https://x/{i}")
+    assert not u.unavailable, "three failures after a success is not an outage (pinned 08-24)"
+    for i in range(jdfill.FAILING_STREAK_FACTOR * 3):
+        u(f"https://x/w{i}")
+    assert u.unavailable.startswith("failing-after-")
+
+
+def test_an_exhausted_cap_is_visible(monkeypatch):
+    """`bd-capped` set no flag, so `alarm_for` could never say the day's allowance had gone --
+    every remaining role was parked in silence."""
+    from pipeline import jdfill
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k"); monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setenv("JD_BD", "1")
+    u = jdfill.Unlocker(cap=0)
+    assert u("https://x/1")[2] == "bd-capped" and u.capped is True
+
+
+def test_a_same_day_rerun_adds_to_the_day_and_a_crash_keeps_it(tmp_path, monkeypatch):
+    """`merged.update(counts)` replaced per key, so an operator re-dispatching after a bad
+    morning overwrote the real morning's `scrape_filled=6` with the re-run's 0 (everything by
+    then in cooldown) -- destroying the evidence they re-ran to preserve. And a crash report
+    carries no counts, which used to empty the stamp."""
+    from pipeline import jdfill, stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    jdfill.record_enrich(scrape_ran=1, scrape_filled=6, scrape_fail=1, scrape_why="shell1")
+    e = jdfill.record_enrich(scrape_ran=1, scrape_filled=0, scrape_cooldown=17, scrape_why="")
+    assert (e["scrape_filled"], e["scrape_fail"], e["scrape_cooldown"]) == (6, 1, 17)
+    # a quiet re-run must not ERASE the histogram (wave 1): `scrape_why` is the only place the
+    # mail says why things failed, and the second run legitimately has nothing to add.
+    assert e["scrape_ran"] == 1 and e["scrape_runs"] == 2 and e["scrape_why"] == "shell1"
+    yday = (_j6_dt.date.today() - _j6_dt.timedelta(days=1)).isoformat()
+    data = _j6_json.loads((tmp_path / "stages.json").read_text(encoding="utf-8"))
+    data["enrich"]["date"] = yday
+    stale = (_j6_dt.date.today() - _j6_dt.timedelta(days=2)).isoformat()
+    data["enrich"]["finished_at"] = stale + "T05:52:00+00:00"   # unambiguously not today
+    data["enrich"]["alarm"] = "bd-unavailable(http-401)"
+    (tmp_path / "stages.json").write_text(_j6_json.dumps(data), encoding="utf-8")
+    e = jdfill.record_enrich(alarm="crash:DatabaseError")
+    assert e["date"] == yday and e["scrape_filled"] == 6          # yesterday's work still stated
+    assert e["alarm"] == "crash:DatabaseError"                    # yesterday's alarm is not news
+
+
+def test_a_driver_pointed_at_the_real_file_by_another_spelling_stamps_the_real_stamp(tmp_path):
+    """The sidecar was chosen by string equality, so `--cache ./scraped_cache.json` diverted
+    the stamp and the mail said `no-report(scrape)` about a driver that had run perfectly. And
+    a bare relative target produced a sidecar whose dirname is "", which killed the driver in
+    `os.makedirs("")` -- after the credits had been spent."""
+    from pipeline.jdfill import stamp_path_for
+    assert stamp_path_for("scraped_cache.json", "scraped_cache.json") is None
+    assert stamp_path_for("./scraped_cache.json", "scraped_cache.json") is None
+    side = stamp_path_for("c.json", "scraped_cache.json")
+    assert _j6_os.path.isabs(side) and _j6_os.path.dirname(side)
+
+
+def test_a_workday_apply_link_is_the_same_posting():
+    """`fetch_phenom` hands us Workday urls ending `/apply` (GE HealthCare: 23 Israel postings
+    a day). Measured 2026-08-26: the cxs endpoint 404s with the suffix and returns 2,865
+    characters without it."""
+    from pipeline import jdfill
+    a = jdfill.native_url("https://gehc.wd5.myworkdayjobs.com/S/job/Haifa/Lead_R404-1/apply")
+    b = jdfill.native_url("https://gehc.wd5.myworkdayjobs.com/S/job/Haifa/Lead_R404-1")
+    assert a == b and a[0] == "workday" and a[1][0].endswith("/job/Haifa/Lead_R404-1")
+
+
+def test_a_failed_native_rung_is_not_blamed_on_the_page(monkeypatch):
+    """`fetch_jd` threw `native_jd`'s reason away, so GE HealthCare's 404ing cxs endpoint was
+    reported as `shell` -- indistinguishable from "Workday pages are shells, as always"."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "workday-http"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
+    jd = jdfill.fetch_jd("https://x.wd5.myworkdayjobs.com/s/job/a/b")
+    assert (jd.reason, jd.native) == ("shell", "workday-http")
+    c = jdfill.run_backfill([jdfill.Item(1, "https://x.wd5.myworkdayjobs.com/s/job/a/b", "A | B")],
+                            save=lambda *a: None, minutes=None, dry_run=True)
+    assert c["native:workday-http"] == 1
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    assert jdfill.fetch_jd("https://x/jobs/1").native == ""       # no rung applied: nothing to say
+
+
+def test_the_inline_gate_runs_before_the_counter_so_the_ratio_means_something(monkeypatch):
+    """`jd-fill: 110/148` counted 22 addresses nothing could ever read as failed fetches."""
+    from pipeline import jdfill
+    fetched = []
+
+    def fake(u, **k):
+        fetched.append(u)
+        # the canary really does fetch, and here the refused host really is unreadable
+        return jdfill.JD("" if "indeed" in u else "D" * 400, "none", "http-403", False)
+    monkeypatch.setattr(jdfill, "fetch_jd", fake)
+    monkeypatch.setenv("JDFILL", "1")
+    f = jdfill.JDFiller(budget_min=10)
+    for jk in (1, 2, 3):
+        assert f.maybe_fill({"title": "Data Analyst", "description": "",
+                             "url": f"https://il.indeed.com/viewjob?jk={jk}",
+                             "ats_platform": "discovery-indeed"}) is False
+    assert f.maybe_fill({"title": "Data Analyst", "description": "",
+                         "url": "https://careers.dhl.com/global/en/search-results?keywords=Israel"}) is False
+    # 4 refusals, none of them an attempt; exactly ONE canary fetch among them, and a listing
+    # page is never a canary (only a refused HOST is a claim worth testing)
+    assert (f.tried, f.unfillable, f.probe, f.probe_ok) == (1, 4, 1, 0)
+    assert fetched == ["https://il.indeed.com/viewjob?jk=1"]
+    assert "4 unfillable" in f.summary() and "discovery-indeed auth-walled 3" in f.summary()
+    assert f.maybe_fill({"title": "Data Analyst", "description": "",
+                         "url": "https://x/jobs/1"}) is True and f.tried == 2
+
+
+def test_a_spent_inline_budget_reaches_the_mail(monkeypatch):
+    """It lived in the step log only, so a morning that judged hundreds of roles with no text
+    read exactly like a normal one."""
+    from pipeline import jdfill
+    monkeypatch.setenv("JDFILL", "1")
+    f = jdfill.JDFiller(budget_min=10)
+    f.skipped_budget = 400
+    assert any("budget spent" in a and "400" in a for a in f.alarms())
+
+
+def test_the_scrape_todo_agrees_with_the_other_driver_and_never_offers_a_url_twice():
+    """`_todo` treated any non-empty description as filled while `enrich_matched_jd` used 300
+    chars, so a 25-character teaser recused this driver for ever; and it yielded per CARD, so
+    two cards sharing a listing url were two fetches (8fig and SuperMeat, 2026-08-26)."""
+    import enrich_scrape_jd as esj
+    from pipeline.jdfill import MIN_DESC
+    u = "https://e.co/jobs/1"
+    cache = {"Q": [{"title": "Data Analyst", "url": "https://q.co/jobs/1", "description": "x" * 25}],
+             "E": [{"title": "Data Analyst", "url": u, "description": ""},
+                   {"title": "BI Analyst", "url": u, "description": ""}],
+             "F": [{"title": "Data Analyst", "url": "https://f.co/jobs/1", "description": "y" * MIN_DESC}],
+             "G": [{"title": "Chef", "url": "https://g.co/jobs/1", "description": ""}]}
+    items, gates = esj._todo(cache)
+    assert sorted(i.url for i in items) == ["https://e.co/jobs/1", "https://q.co/jobs/1"]
+    assert gates["duplicate_url"] == 1 and gates["has_desc"] == 1 and gates["dropped_title"] == 1
+
+
+def test_the_matched_backfill_leaves_closed_and_superseded_roles_alone(tmp_path, monkeypatch):
+    """Three of the five candidate rows on 2026-08-26 were roles that no longer exist --
+    Taboola (closed nine days earlier, gone from an 84-job board), Meta, Meta Israel -- and one
+    of them spent a Bright Data credit. A NULL status must still be tried: `insert_matched`
+    writes NULL and `roles.reconcile` writes '', so a bare `status != 'superseded'` is NULL for
+    every NULL row and would select nothing at all."""
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    (tmp_path / "cloud_state").mkdir()
+    db = str(tmp_path / "cloud_state" / "seen.db")
+    st = store.SeenStore(db)
+    base = {"company": "ACME", "location": "TLV", "posted_date": "2026-08-20",
+            "sources": ["workday"], "description": ""}
+    for t, u in (("Open Analyst", "https://a/jobs/1"), ("Closed Analyst", "https://a/jobs/2"),
+                 ("Gone Analyst", "https://a/jobs/3")):
+        st.upsert_matched({**base, "title": t, "url": u}, _j6_dt.date.today().isoformat())
+    st.conn.execute("UPDATE matched SET status='superseded' WHERE title='Gone Analyst'")
+    st.conn.commit()
+    assert st.conn.execute("SELECT count(*) FROM matched WHERE status IS NULL").fetchone()[0] == 2
+    st.close()
+    (tmp_path / "cloud_state" / "roles.jsonl").write_text(
+        _j6_json.dumps({"role_id": "acme|closed analyst", "status": "closed"}) + "\n", encoding="utf-8")
+    seen = []
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda u, **k: (seen.append(u), jdfill.JD("", "none", "shell", False))[1])
+    assert emj.main(["--db", db]) == 0
+    assert seen == ["https://a/jobs/1"]                      # only the live, non-superseded row
+    e = _j6_json.loads((tmp_path / "cloud_state" / "seen.db.stages.json").read_text(encoding="utf-8"))["enrich"]
+    assert e["matched_dead"] == 1 and e["matched_todo"] == 1
+
+
+def test_an_unreadable_ledger_filters_nothing_and_says_so(tmp_path, monkeypatch):
+    """The first version of the live-role filter fell back to `last_seen` older than three
+    days. A test caught it immediately: after any outage longer than that, every role's
+    last_seen goes stale at once and the whole driver would silently stop working. A ledger
+    problem must never be able to disable the layer."""
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    (tmp_path / "cloud_state").mkdir()
+    db = str(tmp_path / "cloud_state" / "seen.db")
+    st = store.SeenStore(db)
+    st.upsert_matched({"company": "ACME", "title": "Old Analyst", "url": "https://a/jobs/1",
+                       "location": "TLV", "posted_date": "", "sources": ["workday"],
+                       "description": ""}, "2026-01-01")            # last seen months ago
+    st.close()
+    assert emj.dead_role_ids(str(tmp_path / "cloud_state" / "roles.jsonl")) == (None, "missing")
+    seen = []
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda u, **k: (seen.append(u), jdfill.JD("", "none", "shell", False))[1])
+    assert emj.main(["--db", db]) == 0
+    assert seen == ["https://a/jobs/1"]
+    e = _j6_json.loads((tmp_path / "cloud_state" / "seen.db.stages.json").read_text(encoding="utf-8"))["enrich"]
+    assert "matched:ledger-missing" in e["alarm"] and e["matched_dead"] == 0
+
+
+def test_a_role_is_filled_from_another_address_it_was_seen_at(tmp_path, monkeypatch):
+    """Zipher's Data Analyst rendered from a 170-character Indeed snippet on 2026-08-26 while
+    the company's own posting, 2,021 characters of it, sat in `scraped_cache.json` under the
+    `scrape:` seen_id of that same role: `store.merge_duplicates` picks the canonical by who
+    carries a posted-date and never carries the longest description (filed, `roles` lane).
+    The cache rung costs no request; the fetch rung never spends a credit on a sibling."""
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    (tmp_path / "cloud_state").mkdir()
+    db = str(tmp_path / "cloud_state" / "seen.db")
+    st = store.SeenStore(db)
+    today = _j6_dt.date.today().isoformat()
+    st.upsert_matched({"company": "Zipher", "title": "Data Analyst", "location": "TLV",
+                       "posted_date": "2026-08-17", "sources": ["discovery-indeed"],
+                       "url": "https://il.indeed.com/viewjob?jk=b0", "description": "s" * 170,
+                       "job_id": "b0", "ats_platform": "discovery-indeed"}, today)
+    st.conn.execute("UPDATE matched SET seen_ids=? WHERE company='Zipher'",
+                    ("discovery-indeed:indeed:b0+scrape:https://zipher.ai/careers/data-analyst/",))
+    st.conn.commit(); st.close()
+    (tmp_path / "scraped_cache.json").write_text(_j6_json.dumps(
+        {"Zipher": [{"title": "Data Analyst", "url": "https://zipher.ai/careers/data-analyst/",
+                     "description": "R" * 2021}]}), encoding="utf-8")
+    bd = _J6BD(body=_jd_page())
+    monkeypatch.setattr(jdfill, "Unlocker", lambda *a, **k: bd)
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "shell", False))
+    assert emj.main(["--db", db]) == 0
+    import sqlite3 as _s
+    n = _s.connect(db).execute("SELECT length(description) FROM matched").fetchone()[0]
+    assert n == 2021 and bd.used == 0
+    e = _j6_json.loads((tmp_path / "cloud_state" / "seen.db.stages.json").read_text(encoding="utf-8"))["enrich"]
+    assert e["matched_from_cache"] == 1 and e["matched_short"] == 0
+
+
+def test_a_sibling_fetch_never_spends_a_credit(tmp_path, monkeypatch):
+    """A sibling address is a bonus, not worth a credit from a pool at 118 % of its month."""
+    from pipeline import jdfill
+    seen_bd = []
+    items = [jdfill.Item(1, "https://other/jobs/9", "A | B (sibling)")]
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
+    c = jdfill.run_backfill(items, save=lambda *a: None, minutes=5, bd=None, dry_run=True)
+    assert c["tried"] == 1 and seen_bd == []
+
+
+def test_emj_sibling_urls_only_returns_other_addresses():
+    import enrich_matched_jd as emj
+    ids = "discovery-indeed:indeed:b0+scrape:https://z.ai/careers/x/+greenhouse:8035268"
+    assert emj.sibling_urls(ids, "https://il.indeed.com/viewjob?jk=b0") == ["https://z.ai/careers/x/"]
+    assert emj.sibling_urls(ids, "https://z.ai/careers/x/") == []      # never the canonical itself
+    assert emj.sibling_urls("", "https://x") == [] and emj.sibling_urls(None, "https://x") == []
+
+
+# --- jd-text desk sweep, 2026-08-26 (wave 2): every guard a mutation walked through --------
+# 61 mutations of `pipeline/jdfill.py` and the two drivers left the suite green. Each test
+# below kills a group of them; the mutation each assertion answers is named in its docstring.
+
+
+def test_min_desc_is_one_bar_and_a_text_of_exactly_min_desc_is_a_description(monkeypatch):
+    """MIN_DESC is this layer's whole definition of "this is a job description", and six gates
+    compare against it: `extract_jd`, `_text_or_empty`, `JDFiller.maybe_fill`,
+    `enrich_scrape_jd._todo`, the matched driver's SQL and its cache-sibling rung. Every one of
+    those `>=`/`<` survived a flip to `>`/`<=`. The flip is not cosmetic: at exactly MIN_DESC
+    the SQL would still call the row short while the fill gate called it filled, so the role is
+    fetched, stored at the same length and fetched again tomorrow -- for ever, and (in the
+    matched driver) through Bright Data."""
+    from pipeline import jdfill
+    exact = "x" * jdfill.MIN_DESC
+    assert jdfill._text_or_empty(exact) == exact                       # a native payload
+    body = "<p>Requirements Responsibilities " + "a" * (jdfill.MIN_DESC - 30) + "</p>"
+    assert len(jdfill.html_to_text(body)) == jdfill.MIN_DESC
+    assert jdfill.extract_jd(body)                                     # a fetched page
+    # and exactly TWO marker families is enough -- the docstring's rule, not three
+    assert len(jdfill._marker_families(jdfill.html_to_text(body))) == 2
+    monkeypatch.setenv("JDFILL", "1")
+    f = jdfill.JDFiller(budget_min=10)
+    assert f.maybe_fill({"title": "Data Analyst", "url": "https://x/jobs/1",
+                         "description": exact}) is False and f.tried == 0
+    import enrich_scrape_jd as esj
+    items, gates = esj._todo({"Z": [{"title": "Data Analyst", "url": "https://z/jobs/1",
+                                     "description": exact}]})
+    assert items == [] and gates["has_desc"] == 1
+
+
+def test_no_rung_of_the_matched_driver_re_fetches_what_another_rung_already_filled(tmp_path,
+                                                                                   monkeypatch):
+    """Three rungs write the same table -- the cache-sibling rung, the canonical fetch, and the
+    row that was never short -- and three comparisons decide which may skip a role: the
+    SELECT's `< MIN_DESC`, `short_left`'s `< MIN_DESC` and the cache rung's `>= MIN_DESC`. All
+    of them survived the 2026-08-26 desk sweep, and each spends a fetch -- from a pool at 118 %
+    of its month -- on a role whose text we already hold.
+
+    The sibling FETCH pass this test used to cover was deleted the same day: wave 1 measured
+    its yield at 0 and showed it would publish another employer's description under this
+    company's name. What survives is the cache lookup, behind two identity gates."""
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setenv("JD_BD", "0")
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "cloud_state" / "roles.jsonl").write_text("", encoding="utf-8")
+    db = str(tmp_path / "cloud_state" / "seen.db")
+    N = jdfill.MIN_DESC
+    st = store.SeenStore(db)
+    base = {"company": "ACME", "location": "TLV", "posted_date": "2026-08-20",
+            "sources": ["workday"]}
+    today = _j6_dt.date.today().isoformat()
+    for title, u, d in (("Cache Analyst", "https://a/jobs/1", ""),
+                        ("Canon Analyst", "https://a/jobs/2", ""),
+                        ("Foreign Analyst", "https://a/jobs/3", ""),
+                        ("Full Analyst", "https://a/jobs/4", "F" * N)):
+        st.upsert_matched({**base, "title": title, "url": u, "description": d}, today)
+    foreign = "https://il.linkedin.com/jobs/view/data-analyst-at-other-corp-4389427569"
+    for title, sids in (("Cache Analyst", "scrape:https://acme.com/careers/cache-analyst"),
+                        ("Foreign Analyst", f"scrape:{foreign}")):
+        st.conn.execute("UPDATE matched SET seen_ids=? WHERE title=?", (sids, title))
+    st.conn.commit(); st.close()
+    (tmp_path / "scraped_cache.json").write_text(_j6_json.dumps(
+        {"ACME": [{"title": "Cache Analyst", "url": "https://acme.com/careers/cache-analyst",
+                   "description": "C" * N},
+                  {"title": "Data Analyst", "url": foreign, "description": "X" * N}]}),
+        encoding="utf-8")
+    fetched, texts = [], {"https://a/jobs/2": "B" * N}
+
+    def fake(u, **k):
+        fetched.append(u)
+        text = texts.get(u, "")
+        return jdfill.JD(text, "html" if text else "none", "ok" if text else "shell", False)
+    monkeypatch.setattr(jdfill, "fetch_jd", fake)
+    assert emj.main(["--db", db, "--cache", str(tmp_path / "scraped_cache.json")]) == 0
+    # jobs/1 came free from an address that names ACME; jobs/4 was never short; jobs/3's only
+    # sibling names another employer and is refused outright, so only 2 and 3 are ever fetched
+    assert sorted(fetched) == ["https://a/jobs/2", "https://a/jobs/3"]
+    import sqlite3 as _s
+    rows = dict(_s.connect(db).execute("select title, length(description) from matched"))
+    assert rows == {"Cache Analyst": N, "Canon Analyst": N, "Foreign Analyst": 0,
+                    "Full Analyst": N}
+    e = _j6_json.loads((tmp_path / "cloud_state" / "seen.db.stages.json").read_text(encoding="utf-8"))["enrich"]
+    assert (e["matched_from_cache"], e["matched_foreign_sibling"], e["matched_short"]) == (1, 1, 1)
+
+
+
+def test_the_schema_org_scan_is_bounded_by_the_three_numbers_the_code_names():
+    """A body is arbitrary bytes from the internet, so the scan, the block count and the block
+    size are bounded -- but the 08-26 bound test read all three numbers back out of the module,
+    so halving or doubling any of them changed nothing (6 surviving mutants), and the block
+    counter's `n >= LD_MAX_BLOCKS` was one flip from parsing an eleventh block."""
+    from pipeline import jdfill
+    # 2026-08-26 wave 1 raised the block cap 10 -> 25: a real JobPosting sitting behind ten
+    # `WebPage`/`Organization` decoy blocks was invisible, and 500 blocks cost 0.24 ms, so the
+    # cap was never the thing protecting us -- the scan window and the block size are.
+    assert (jdfill.LD_SCAN_BYTES, jdfill.LD_MAX_BLOCKS,
+            jdfill.LD_MAX_BLOCK) == (1_000_000, 200, 200_000)
+    junk = '<script type="application/ld+json">{"@type": "WebPage"}</script>'
+    jd = _j6_ld("Analyst work. " * 40)
+    assert jdfill.jsonld_jd(junk * (jdfill.LD_MAX_BLOCKS - 1) + jd)   # the last block is parsed
+    assert jdfill.jsonld_jd(junk * jdfill.LD_MAX_BLOCKS + jd) == ""   # one past it is not
+    # a block of exactly LD_MAX_BLOCK is parsed; only a LARGER one is skipped unread
+    node = _j6_json.dumps({"@type": "JobPosting", "description": "Analyst work. " * 40})
+    node = _j6_json.dumps({"@type": "JobPosting", "description": "Analyst work. " * 40
+                           + "x" * (jdfill.LD_MAX_BLOCK - len(node))})
+    assert len(node) == jdfill.LD_MAX_BLOCK
+    assert jdfill.jsonld_jd('<script type="application/ld+json">' + node + "</script>")
+
+
+def test_every_listing_word_and_the_filter_query_rule_are_independently_load_bearing():
+    """`_LIST_SEGMENT` and `_LIST_QUERY` covered for each other: 13 of the 15 words could be
+    deleted with the suite green, because every url the tests refuse also carries `?keywords=`
+    -- and the whole `_LIST_QUERY` clause could be deleted too, because those same urls end in
+    a listed word. Each rule now has a url only it can refuse. A search page that reaches the
+    Unlocker is a credit spent on a page that cannot carry a JD (4 on 08-24, 1 on 08-26)."""
+    from pipeline import jdfill
+    words = ("search-results", "search", "results", "jobs", "job", "careers", "career",
+             "openings", "open-positions", "vacancies", "programs", "requisitions",
+             "opportunities", "all-jobs", "job-search")
+    assert jdfill._LIST_SEGMENT == set(words)            # spelled out, never read back
+    for w in words:
+        assert not jdfill.is_job_url(f"https://careers.example.com/global/en/{w}"), w
+    # ...and the query rule alone, on a last segment we deliberately do NOT list
+    for q in ("keywords=data%20analyst", "keyword=analyst", "q=analyst", "query=analyst",
+              "search=analyst", "x=1&query=analyst"):
+        assert not jdfill.is_job_url(f"https://careers.example.com/global/en/positions?{q}"), q
+    # `location=` is deliberately NOT one of them: real job urls carry it
+    assert jdfill.is_job_url("https://careers.example.com/global/en/positions?location=Israel")
+    # DEFECT, measured by this sweep and NOT fixed here (the sweep may only touch this file):
+    # FIXED 2026-08-26 (wave 1 found it dead): the `offices` alternative demanded `=`
+    # immediately after the bracket, so it matched only `offices[=` and never a real Meta url.
+    # Meta was refused only because its last segment happens to be `jobs`; the same query under
+    # any other segment was accepted and could be charged to Bright Data.
+    assert jdfill._LIST_QUERY.search("offices[0]=Tel%20Aviv")
+    assert jdfill._LIST_QUERY.search("offices%5B0%5D=Israel")
+    assert not jdfill.is_job_url("https://www.metacareers.com/roles?offices%5B0%5D=Israel")
+    assert not jdfill.is_job_url("https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv")
+
+
+def test_the_marker_heuristic_is_read_first_and_the_fetch_keeps_its_name(monkeypatch):
+    """`_from_body` runs the two parsers in a fixed order and the reason names which one won.
+    `ok-jsonld` is the RESCUE class -- 1 of 27 sampled LinkedIn pages on 2026-08-26 carried its
+    JD only there -- so reversing the order (a surviving mutant) would relabel every ordinary
+    fill `ok-jsonld` and destroy the `jsonld` count in the stamp. `via` names the FETCH that
+    paid for the body, on the plain-HTML branch as well as the Bright Data one."""
+    from pipeline import jdfill
+    node = _j6_json.dumps({"@type": "JobPosting", "description": "Schema copy. " * 40})
+    script = '<script type="application/ld+json">' + node + "</script>"
+    text, why = jdfill._from_body(_jd_page() + script)
+    assert why == "ok" and "Schema copy" not in text          # the rendered page wins
+    assert jdfill._from_body(_jd_shell() + script)[1] == "ok-jsonld"   # only when it can't
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell() + script))
+    jd = jdfill.fetch_jd("https://x/jobs/1")
+    assert (jd.via, jd.reason) == ("html", "ok-jsonld")
+    # an ld+json block whose JSON arrives HTML-escaped is still read (the second candidate)
+    assert jdfill.jsonld_jd('<script type="application/ld+json">'
+                            + node.replace('"', "&quot;") + "</script>")
+
+
+def test_a_native_rung_that_fetched_a_stub_says_so_on_every_branch(monkeypatch):
+    """`not-native` means NO rung applied -- `fetch_jd` strips exactly that word before it
+    stamps `JD.native`, and `run_backfill`'s `native:<why>` histogram is the only place the
+    mail can see a platform endpoint that has started answering stubs. Two mutants survived:
+    `native_jd` spelling a short payload `not-native`, and `fetch_jd` dropping `native_why` on
+    the Bright Data branch -- which is exactly the branch where the credit was spent."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "native_url", lambda u, c="": ("greenhouse", ["https://api/1"]))
+    monkeypatch.setattr(jdfill, "plain_fetch",
+                        lambda u, **k: (200, _j6_json.dumps({"content": "too short"})))
+    assert jdfill.native_jd("https://x/?gh_jid=1") == ("", "greenhouse-short")
+    monkeypatch.undo()
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "greenhouse-short"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
+    jd = jdfill.fetch_jd("https://x/jobs/1", bd=_J6BD(reason="bd-reject_block"))
+    assert (jd.via, jd.native) == ("bd", "greenhouse-short")
+
+
+def test_a_run_that_worked_once_is_cut_off_after_four_breakers_worth_of_failures(monkeypatch):
+    """`FAILING_STREAK_FACTOR` is all that stands between "this pass filled one role at 08:05
+    and has failed ever since" and spending the whole cap. Both existing tests read the factor
+    back out of the module, so 4 -> 2 and 4 -> 8 both left the suite green. At the default
+    breaker of 5 the number is 20 consecutive failures after a success."""
+    from pipeline import jdfill
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k"); monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setenv("JD_BD", "1")
+    state = {"err": ""}
+
+    class _R:
+        def __init__(s): s.status, s.headers = 200, {"x-brd-error-code": state["err"]}
+        def read(s, n=0): return b"" if state["err"] else b"body"
+        def __enter__(s): return s
+        def __exit__(s, *a): return False
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen", lambda req, timeout=0: _R())
+    u = jdfill.Unlocker(cap=1000, breaker=5)
+    assert u("https://x/ok")[2] == "" and u.ok == 1
+    state["err"] = "reject_block"
+    for i in range(19):
+        u(f"https://x/{i}")
+    assert not u.unavailable and u.streak == 19       # 19 in a row is not yet a dead run
+    u("https://x/20")
+    assert u.unavailable == "failing-after-20"
+
+
+def test_the_bright_data_caps_are_the_numbers_the_08_26_audit_set():
+    """400 and 250 against a 5,000-credit MONTHLY pool already at 118 %; measured need over the
+    three preceding days was 7/0/1 (scrape) and 4/2/3 (matched). Halving or doubling either
+    cap, or either sibling constant, changed no test -- these are runaway backstops for a
+    SHARED pool, so their size is the whole point."""
+    import enrich_matched_jd as emj, enrich_scrape_jd as esj
+    assert (esj.BD_CAP, emj.BD_CAP) == (40, 25)
+    # SIBLINGS_PER_ROLE / SIBLING_BUDGET_MIN went with the sibling FETCH pass on
+    # 2026-08-26 (wave 1: 0 measured yield, and it could publish another employer's
+    # description). The cache rung that replaced it makes no requests and needs no budget.
+    assert not hasattr(emj, "SIBLINGS_PER_ROLE") and not hasattr(emj, "SIBLING_BUDGET_MIN")
+
+
+def test_the_drivers_run_on_the_budgets_their_docstrings_promise(tmp_path, monkeypatch):
+    """The docstring's promise: JD_ENRICH_TIME_BUDGET_MIN (default 25) is the real limit and
+    the count caps are only runaway backstops. Both defaults live in an `os.environ.get(...)`
+    string no test read:
+    cutting the scrape budget to 5 minutes, or its cap from 2000 to 100, left the suite green
+    while the driver would have stopped a fifth of the way through the cache."""
+    from pipeline import stages, store
+    import enrich_matched_jd as emj, enrich_scrape_jd as esj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    for v in ("JD_ENRICH_TIME_BUDGET_MIN", "JD_ENRICH_CAP", "MATCHED_JD_TIME_BUDGET_MIN"):
+        monkeypatch.delenv(v, raising=False)
+    seen = []
+    p = tmp_path / "cache.json"
+    p.write_text(_j6_json.dumps({"Z": [{"title": "Data Analyst", "url": "https://z/jobs/1",
+                                        "description": ""}]}), encoding="utf-8")
+    monkeypatch.setattr(esj, "run_backfill",
+                        lambda items, **k: (seen.append(k), _j6_Counter())[1])
+    assert esj.main(["--cache", str(p)]) == 0
+    assert (seen[0]["minutes"], seen[0]["count_cap"]) == (25.0, 2000)
+    db = str(tmp_path / "seen.db")
+    st = store.SeenStore(db)
+    st.upsert_matched({"company": "ACME", "title": "Data Analyst", "url": "https://a/jobs/1",
+                       "location": "TLV", "posted_date": "", "sources": ["workday"],
+                       "description": ""}, _j6_dt.date.today().isoformat())
+    st.close()
+    monkeypatch.setattr(emj, "run_backfill",
+                        lambda items, **k: (seen.append(k), _j6_Counter())[1])
+    assert emj.main(["--db", db]) == 0
+    assert seen[1]["minutes"] == 25.0
+
+
+def test_the_inline_refusal_outranks_a_spent_budget(monkeypatch):
+    """The gate sits above the clock so a refused address is booked `unfillable`, never as one
+    of the "N roles judged with no text" the budget alarm reports. Swapping the two survived
+    the sweep, and it would move the 22 addresses nothing could ever read (2026-08-26) into the
+    line the operator reads as "the layer ran out of minutes"."""
+    from pipeline import jdfill
+    monkeypatch.setenv("JDFILL", "1")
+    f = jdfill.JDFiller(budget_min=10)
+    f.seconds = 3600.0                                    # the budget is long gone
+    assert f.maybe_fill({"title": "Data Analyst", "description": "",
+                         "url": "https://il.indeed.com/viewjob?jk=1"}) is False
+    assert (f.unfillable, f.skipped_budget, f.tried) == (1, 0, 0)
+
+
+def test_why_string_names_only_failures_and_the_skip_counters_stay_split(monkeypatch):
+    """`why_string` is the mail's `scrape_why`/`matched_why`: counting `ok` there would make a
+    healthy morning read as its own biggest failure (surviving mutant). And `skipped_cap` vs
+    `skipped_clock` is what tells the operator whether to raise the cap or buy minutes --
+    collapsing them into the `skipped_budget` total survived too, and the alarm's suffix is the
+    only place either word appears."""
+    from pipeline import jdfill
+    c = _j6_Counter({"reason:ok": 40, "reason:ok-jsonld": 5, "reason:timeout": 2,
+                     "reason:shell": 1})
+    assert jdfill.why_string(c) == "timeout2+shell1"
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda u, **k: jdfill.JD("D" * 400, "html", "ok", False))
+    items = [jdfill.Item(i, f"https://x/jobs/{i}", f"C | {i}") for i in range(3)]
+    c = jdfill.run_backfill(items, save=lambda *a: None, minutes=None, count_cap=1,
+                            dry_run=True, log=lambda s: None)
+    assert (c["skipped_cap"], c["skipped_clock"], c["skipped_budget"]) == (2, 0, 2)
+    assert jdfill.alarm_for(c).endswith("(2 left for tomorrow, cap)")
+
+
+def test_the_scrape_stamp_counts_requests_not_only_requests_that_worked(tmp_path, monkeypatch):
+    """The matched driver's twin was pinned on 2026-08-26 and this one was not: swapping
+    `scrape_bd_calls=bd.used` for `bd.ok` left the suite green, and the number the operator
+    reads against a monthly pool at 118 % would then be the requests that SUCCEEDED -- zero on
+    exactly the morning the spend needs explaining."""
+    from pipeline import jdfill, stages
+    import enrich_scrape_jd as esj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    p = tmp_path / "cache.json"
+    p.write_text(_j6_json.dumps({"Z": [{"title": "Data Analyst", "url": "https://z/jobs/1",
+                                        "description": ""}]}), encoding="utf-8")
+    bd = _J6BD(reason="bd-reject_authwall")
+    monkeypatch.setattr(esj, "Unlocker", lambda *a, **k: bd)
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: (
+        bd(u), jdfill.JD("", "bd", "bd-reject_authwall", False))[1])
+    assert esj.main(["--cache", str(p)]) == 0
+    e = _j6_json.loads((tmp_path / "cache.json.stages.json").read_text(
+        encoding="utf-8"))["enrich"]
+    assert (e["scrape_bd_calls"], e["scrape_bd"], e["scrape_bd_ok"]) == (1, 0, 0)
+    assert "bd-spent(1 call, 0 filled" in e["alarm"]
+
+
+# =====================================================================================
+# jd-text lane, 2026-08-26 wave 1 — what five adversarial sessions found in the morning's
+# own work, before any of it was committed. Every test below pins a defect that existed in
+# the uncommitted diff. Record: docs/sessions/2026-08-26-jd-text.md.
+# =====================================================================================
+
+
+def test_a_credit_that_filled_nothing_alarms_even_when_a_free_rung_filled_plenty():
+    """THE wave-1 P0, found independently by two attackers. The rule was `c["filled"] == 0`,
+    and `filled` counts the native and plain-HTTP rungs too, so one role filled for free
+    masked any amount of Bright Data waste. Replaying the real 2026-08-26 scrape morning — 6
+    html fills and 1 credit burnt on the DHL search page — produced NO alarm at all, and the
+    end-to-end rehearsal burnt 4 credits on Shopify with an empty bold line."""
+    from pipeline.jdfill import alarm_for
+    bd = _J6BD(); bd.used = 1
+    morning = _j6_Counter({"todo": 17, "tried": 11, "filled": 6, "bd": 0, "fail": 1,
+                           "unfillable": 4, "reason:bd-no-markers": 1})
+    assert "bd-spent(1 call, 0 filled" in alarm_for(morning, bd)
+
+
+def test_a_morning_of_nothing_but_refused_addresses_is_healthy_and_silent(monkeypatch):
+    """A refusal was booked as `tried`, so a todo of Indeed rows — the exact population
+    `_UNFILLABLE` was written for — raised a bold `jd-massfail(auth-walled x11)` while the
+    layer behaved perfectly. Refusals also burnt `count_cap`: five refused rows ahead of five
+    readable ones deferred every readable row to tomorrow."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(12)]
+    c = jdfill.run_backfill(items, save=lambda *a: None, minutes=None, dry_run=True,
+                            log=lambda s: None)
+    # the canary is a real fetch, so it is a real attempt -- otherwise `summary()` prints 1/0
+    assert (c["unfillable"], c["tried"], c["fail"], c["probe"]) == (12, 1, 1, 1)
+    assert jdfill.alarm_for(c) == ""
+    mixed = items[:5] + [jdfill.Item(9, f"https://x.co/jobs/{i}", "A | B") for i in range(5)]
+    c2 = jdfill.run_backfill(mixed, save=lambda *a: None, minutes=None, count_cap=5,
+                             dry_run=True, log=lambda s: None)
+    assert (c2["tried"], c2["skipped_cap"]) == (6, 0)      # the cap is for real attempts
+
+
+def test_the_canary_probes_once_per_process_and_shouts_when_it_succeeds(monkeypatch):
+    """Three defects in one: the canary lived only in `run_backfill` while 257 of the 260
+    refused addresses in the state files belong to the INLINE filler; the matched driver
+    walked the loop twice and probed twice; and a probe that came back with a real JD was
+    indistinguishable from an ordinary fill, so nothing would ever say Indeed had become
+    readable."""
+    from pipeline import jdfill
+    seen = []
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (seen.append(u), (200, _jd_page()))[1])
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    cell = set()          # host families already probed this process
+    items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
+    kw = dict(save=lambda *a: None, minutes=None, dry_run=True, probe_cell=cell,
+              log=lambda s: None)
+    c1 = jdfill.run_backfill(items, **kw)
+    c2 = jdfill.run_backfill(items, **kw)
+    assert len(seen) == 1, "one process, one canary per host -- not one per run_backfill call"
+    assert (c1["probe"], c2["probe"]) == (1, 0)
+    assert c1["probe_ok"] == 1 and "jd-refusal-falsified" in jdfill.alarm_for(c1)
+
+
+def test_a_refused_address_is_never_stamped_so_the_canary_cannot_sleep_for_a_week(monkeypatch):
+    """The refusal used to run inside the loop's accounting and `save()` stamped it `today`
+    with `transient=False`. The next morning every refused row was in a 7-day cooldown, the
+    canary found nothing to probe, and the refusal became unfalsifiable."""
+    from pipeline import jdfill
+    stamped = []
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
+    jdfill.run_backfill(items, save=lambda it, t, s: stamped.append(it.key), minutes=None,
+                        log=lambda s: None)
+    assert stamped == [], "a refusal is not an attempt and must leave no cooldown behind"
+
+
+def test_every_alarm_clause_reaches_the_mail_and_names_its_driver():
+    """`alarm_for` returned ONE string, so `jd-budget-spent` — the last rule, and this layer's
+    real limit — was invisible on any morning where a Bright Data state also fired, which is
+    exactly the mornings with a backlog. The rehearsal caught it: a role pushed to tomorrow
+    with `bd-unavailable(disabled)` on the bold line and no mention of the budget."""
+    from pipeline.jdfill import alarm_for
+    bd = _J6BD(unavailable="http-401"); bd.used = 1
+    c = _j6_Counter({"todo": 99, "tried": 9, "filled": 0, "bd": 0, "bd_unavailable": 4,
+                     "skipped_budget": 55, "skipped_clock": 55})
+    line = alarm_for(c, bd, driver="scrape")
+    assert "scrape:bd-unavailable(http-401)" in line and "scrape:jd-budget-spent(55" in line
+    # a budget of zero is a BUDGET problem, not a todo-walker bug
+    z = _j6_Counter({"todo": 9, "skipped_budget": 9, "skipped_clock": 9})
+    assert alarm_for(z).startswith("jd-budget-spent") and "nothing-attempted" not in alarm_for(z)
+
+
+def test_the_breaker_opening_on_the_last_credit_still_reaches_the_mail():
+    """Branch 1 needed `c["bd_unavailable"]`, i.e. it needed a LATER item to be refused. Five
+    credits that all failed, with nothing behind them, opened the breaker and said nothing.
+    A run that never spent anything (JD_BD=0) must still be silent."""
+    from pipeline.jdfill import alarm_for
+    bd = _J6BD(unavailable="no-success-after-5"); bd.used = 5
+    c = _j6_Counter({"todo": 45, "tried": 45, "filled": 40, "bd": 0, "bd_unavailable": 0})
+    assert "bd-unavailable(no-success-after-5)" in alarm_for(c, bd)
+    assert alarm_for(_j6_Counter({"todo": 0}), _J6BD(unavailable="disabled")) == ""
+
+
+def test_a_gauge_is_replaced_by_a_rerun_and_only_a_flow_adds_up(tmp_path, monkeypatch):
+    """The summing merge added every int that did not end in `_ran`, so a re-dispatch put
+    `matched_short=258` and `scrape_dropped_title=1868` — larger than the entire 1,240-card
+    cache — into the stamp the morning check reads. A COUNT of what a run did adds up; a
+    GAUGE of the world at one moment is replaced."""
+    from pipeline import jdfill, stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    jdfill.record_enrich(matched_ran=1, matched_filled=1, matched_short=3, matched_dead=2,
+                         matched_todo=5)
+    e = jdfill.record_enrich(matched_ran=1, matched_filled=1, matched_short=2, matched_dead=2,
+                             matched_todo=4)
+    assert e["matched_filled"] == 2                                            # a flow
+    assert (e["matched_short"], e["matched_dead"], e["matched_todo"]) == (2, 2, 4)   # gauges
+
+
+def test_the_first_drivers_crash_is_not_downgraded_by_the_second_drivers_stamp(tmp_path, monkeypatch):
+    """A crash deliberately leaves the stamp's date at yesterday, so `fresh` was False for the
+    rest of the day and the next driver's stamp discarded the crash alarm — the mail then said
+    `no-report(scrape)`, which is also what a skipped step and a runner timeout look like. The
+    alarm is carried on "written today" (`finished_at`); the COUNTS are still carried only on
+    "dated today", so yesterday's numbers can never be re-presented under today's date."""
+    from pipeline import jdfill, stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    yday = (_j6_dt.date.today() - _j6_dt.timedelta(days=1)).isoformat()
+    jdfill.record_enrich(scrape_ran=1, scrape_filled=6)
+    data = _j6_json.loads((tmp_path / "stages.json").read_text(encoding="utf-8"))
+    data["enrich"]["date"] = yday                       # what a crash report leaves behind
+    (tmp_path / "stages.json").write_text(_j6_json.dumps(data), encoding="utf-8")
+    jdfill.record_enrich(alarm="scrape:crash:RuntimeError")
+    e = jdfill.record_enrich(matched_ran=1, matched_filled=2)
+    assert "scrape:crash:RuntimeError" in e["alarm"]
+    assert "scrape_filled" not in e, "yesterday's counts must not be re-presented under today"
+
+
+def test_a_report_clears_the_whole_no_report_clause_but_not_the_others(tmp_path, monkeypatch):
+    """`startswith("no-report")` was applied to the whole JOINED alarm string, so a
+    `no-report` that was not first survived for ever — the mail kept saying it about a driver
+    that had since reported five fills. The gap-filler is the workflow's last step and
+    re-derives the line, so a mid-run report clears all of it; every other clause stays."""
+    from pipeline import jdfill, stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    jdfill.record_enrich(alarm="scrape:bd-capped(25 spent, 3 roles waiting)")
+    jdfill.record_enrich(alarm="no-report(matched)")
+    e = jdfill.record_enrich(matched_ran=1, matched_filled=5)
+    assert "no-report" not in e.get("alarm", "") and "bd-capped" in e["alarm"]
+
+
+def test_a_stamp_file_that_is_a_json_list_does_not_mask_the_real_crash(tmp_path, monkeypatch):
+    """`stages._load()` returns whatever parses, and `[]` parses. `record_enrich` then died in
+    the drivers' crash handler with an AttributeError, re-raising the wrong exception and
+    stamping nothing at all."""
+    from pipeline import jdfill, stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    (tmp_path / "stages.json").write_text("[1, 2, 3]", encoding="utf-8")
+    # it must not raise, and it must not overwrite a file it could not understand
+    assert jdfill.record_enrich(alarm="matched:crash:OperationalError") == {}
+    assert (tmp_path / "stages.json").read_text(encoding="utf-8") == "[1, 2, 3]"
+
+
+def test_the_ledger_is_read_by_its_owners_reader_so_a_bom_cannot_disable_the_filter(tmp_path):
+    """A hand-written parser disagreed with `roles.load` on a BOM, on CRLF, on one bad line
+    and on a duplicate role_id. Every PowerShell `>` on this machine writes a BOM, and one was
+    enough to turn the whole live-role filter off — putting Taboola, the row that bought a
+    Bright Data credit on 2026-08-26, straight back into the todo."""
+    import enrich_matched_jd as emj
+    def rec(rid, status):
+        return _j6_json.dumps({"role_id": rid, "status": status, "updated": "2026-08-26",
+                               "company": "C", "title": rid, "url": "https://x/1"})
+    # one bad line in 22 is under `roles.CORRUPT_FRAC` (10 %); past that the ledger is a
+    # wreck rather than a ledger, `load` refuses it, and this filter reports
+    # `ledger-unreadable` instead of guessing
+    lines = [rec("a|b", "closed"), "{not json", rec("c|d", "purged")]
+    lines += [rec(f"open|{i}", "open") for i in range(19)]
+    p = tmp_path / "roles.jsonl"
+    raw = (chr(0xFEFF) + ('\r\n').join(lines)).encode("utf-8")
+    p.write_bytes(raw)
+    assert emj.dead_role_ids(str(p)) == ({"a|b", "c|d"}, "ok")
+    assert emj.dead_role_ids(str(tmp_path / "nope.jsonl")) == (None, "missing")   # cannot tell
+
+
+def test_a_sibling_that_names_another_company_is_never_read(tmp_path, monkeypatch):
+    """THE wave-1 NO-GO. `seen_ids` is not a list of this role's own addresses: `merge_key` is
+    `company|title`, `upsert_matched` unions ids for ever, and `roles._resolve_claims` unions a
+    losing company's ids into the winner's row. The live row `nift|data analyst` carries FIVE
+    other employers' LinkedIn postings, swept off one shared listing page. Without the identity
+    gate this rung would publish elad-software-systems' description — a defence integrator's
+    clearance requirement — under Nift's name, with Nift's apply link."""
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    (tmp_path / "cloud_state").mkdir()
+    db = str(tmp_path / "cloud_state" / "seen.db")
+    st = store.SeenStore(db)
+    st.upsert_matched({"company": "Nift", "title": "Data Analyst", "location": "TLV",
+                       "posted_date": "2026-08-17", "sources": ["discovery-linkedin"],
+                       "url": "https://www.linkedin.com/jobs/view/data-analyst-at-nift-4448328003",
+                       "description": "s" * 170}, _j6_dt.date.today().isoformat())
+    foreign = "https://il.linkedin.com/jobs/view/data-analyst-at-elad-software-systems-4389427569"
+    st.conn.execute("UPDATE matched SET seen_ids=? WHERE company='Nift'", (f"scrape:{foreign}",))
+    st.conn.commit(); st.close()
+    cache = tmp_path / "scraped_cache.json"
+    cache.write_text(_j6_json.dumps(
+        {"Nift": [{"title": "Data Analyst", "url": foreign,
+                   "description": "Security clearance required. " * 40}]}), encoding="utf-8")
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "shell", False))
+    assert emj.main(["--db", db, "--cache", str(cache)]) == 0
+    import sqlite3 as _s
+    desc = _s.connect(db).execute("SELECT description FROM matched").fetchone()[0]
+    assert "clearance" not in desc and len(desc) == 170
+    e = _j6_json.loads((tmp_path / "cloud_state" / "seen.db.stages.json").read_text(encoding="utf-8"))["enrich"]
+    assert e["matched_foreign_sibling"] == 1 and e["matched_from_cache"] == 0
+
+
+def test_the_cache_is_keyed_by_company_as_well_as_url(tmp_path):
+    """The scrape cache files a card under the page it was swept from, so a url alone can hand
+    one company's text to another — and for Nift's row those foreign cards ARE filed under
+    Nift. Company-scoping is the second half of the identity gate, not a nicety."""
+    import enrich_matched_jd as emj
+    p = tmp_path / "c.json"
+    p.write_text(_j6_json.dumps({"Zipher": [{"title": "Data Analyst", "description": "R" * 900,
+                                             "url": "https://zipher.ai/careers/data-analyst/"}]}),
+                 encoding="utf-8")
+    texts, status = emj.cache_texts(str(p))
+    assert status == "ok"
+    assert texts[("zipher", "https://zipher.ai/careers/data-analyst/")] == "R" * 900
+    assert ("other co", "https://zipher.ai/careers/data-analyst/") not in texts
+    assert emj.cache_texts(str(tmp_path / "gone.json")) == ({}, "missing")
+    (tmp_path / "bad.json").write_text("{not json", encoding="utf-8")
+    assert emj.cache_texts(str(tmp_path / "bad.json")) == ({}, "corrupt")
+
+
+def test_a_lossy_seen_ids_column_yields_no_siblings_at_all():
+    """`store.upsert_matched` joins `seen_ids` with "+", and "+" is legal in a url. Splitting
+    on it kept the truncated HEAD and dropped the tail, and both a Workday and a Comeet example
+    still passed `is_job_url` — so a truncated Comeet path, which resolves to the tenant's
+    board LISTING page, was an address we would have read as one role's description."""
+    import enrich_matched_jd as emj
+    lossy = "workday:https://a.wd3.myworkdayjobs.com/en-US/c/job/TLV/Data+Analyst_R-1"
+    assert emj.sibling_urls(lossy, "https://x") == []
+    ok = "discovery-indeed:indeed:b0+scrape:https://z.ai/careers/x/"
+    assert emj.sibling_urls(ok, "https://il.indeed.com/viewjob?jk=b0") == ["https://z.ai/careers/x/"]
+    assert emj.sibling_urls("", "https://x") == [] and emj.sibling_urls(None, "https://x") == []
+
+
+def test_the_inline_mass_failure_alarm_survived_the_refusal_gate(monkeypatch):
+    """Refusing before `tried` shrank the denominator under a fixed threshold of 10, so a
+    morning where 22 addresses were refused AND every one of the 8 readable fetches failed
+    went from a bold alarm to complete silence."""
+    from pipeline import jdfill
+    monkeypatch.setenv("JDFILL", "1")
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "http-403", False))
+    f = jdfill.JDFiller(budget_min=10)
+    for i in range(22):
+        f.maybe_fill({"title": "Data Analyst", "description": "",
+                      "url": f"https://il.indeed.com/viewjob?jk={i}",
+                      "ats_platform": "discovery-indeed"})
+    for i in range(8):
+        f.maybe_fill({"title": "Data Analyst", "description": "", "url": f"https://x.co/jobs/{i}",
+                      "ats_platform": "scrape"})
+    assert (f.tried, f.filled, f.unfillable) == (9, 0, 22)   # 8 fetches + 1 canary
+    assert any("every fetch failed" in a for a in f.alarms())
+
+
+def test_a_job_dict_with_an_unhashable_platform_cannot_kill_the_digest(monkeypatch):
+    """Both `self.refused[...]` and the older `by_platform[...]` hash the platform straight
+    from the job dict; a list or a dict there raises TypeError inside `roles.classify_grouped`
+    and takes the whole run down."""
+    from pipeline import jdfill
+    monkeypatch.setenv("JDFILL", "1")
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "shell", False))
+    f = jdfill.JDFiller(budget_min=10)
+    for platform in ([], {}, None, 7):
+        for url in ("https://il.indeed.com/viewjob?jk=1", "https://x.co/jobs/1"):
+            assert f.maybe_fill({"title": "Data Analyst", "description": "",
+                                 "ats_platform": platform, "url": url}) is False
+    assert f.summary()
+
+
+def test_a_native_failure_on_a_refused_host_keeps_its_own_reason(monkeypatch):
+    """Greenhouse's `gh_jid` rung is the one native branch that is host-agnostic, so it can
+    apply on a refused host. When it failed, the refusal overwrote its reason with
+    `auth-walled` — claiming a wall we never observed."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "greenhouse-http"))
+    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=1&gh_jid=5")
+    assert jd.native == "greenhouse-http" and jd.reason == "greenhouse-http"
+
+
+def test_probe_never_reaches_bright_data_even_if_a_caller_passes_one(monkeypatch):
+    """`probe=True` only bypassed the refusal return; the rest of the ladder, Bright Data
+    included, still ran. Today the only caller guards it — the next one would have paid."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
+    bd = _J6BD(body=_jd_page())
+    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=1", bd=bd, probe=True)
+    assert bd.used == 0 and not jd.text
+
+
+def test_the_schema_org_parser_cannot_take_the_digest_down():
+    """Two P0s in one function. CPython's JSON scanner raises `RecursionError` — a
+    `RuntimeError`, NOT a `ValueError` — on deep nesting, and `maybe_fill` has no try/except
+    inside a digest step with no `continue-on-error`: 2 KB of `[[[[` meant no board and no
+    email. And `<script[^>]*type=...` restarted at every literal `<script`, so a body with no
+    `>` to cap the run backtracked quadratically: `"<script" * 140_000` (980 KB, inside the
+    scan budget) took **528 seconds**, and 68 KB of near-match prefixes took 45 s."""
+    import time
+    from pipeline import jdfill
+    deep = '<script type="application/ld+json">' + "[" * 1500 + "]" * 1500 + "</script>"
+    assert jdfill.jsonld_jd(deep) == ""                     # must not raise
+    for body, budget in (("<script" * 140_000, 5.0),
+                         ('<script type="application/ld+json"' * 2000, 5.0)):
+        t0 = time.perf_counter()
+        assert jdfill.jsonld_jd(body) == ""
+        assert time.perf_counter() - t0 < budget, "catastrophic backtracking is back"
+
+
+def test_the_page_s_own_job_wins_and_its_markup_survives():
+    """Two more from the same wave. "Longest wins" handed the board another job's description
+    whenever a page carried a similar-jobs rail — with this row's title, company and apply link
+    still attached; schema.org puts the page's own entity first. And the description is HTML
+    INSIDE json, so it arrives double-escaped: all 23 real ld+json descriptions in the corpus
+    carried 84-265 undecoded entities and NOT ONE newline, because `html_to_text` strips tags
+    before it can ever see a `&lt;br&gt;`."""
+    from pipeline import jdfill
+    mine, theirs = "MINE. " * 60, "THEIRS. " * 200
+    page = ('<script type="application/ld+json">'
+            + _j6_json.dumps([{"@type": "JobPosting", "description": mine},
+                              {"@type": "JobPosting", "description": theirs}])
+            + "</script>")
+    assert jdfill.jsonld_jd(page).startswith("MINE.")
+    esc = _j6_json.dumps({"@type": "JobPosting",
+                          "description": "&lt;p&gt;Requirements&lt;/p&gt;&lt;br&gt;" + mine})
+    out = jdfill.jsonld_jd('<script type="application/ld+json">' + esc + "</script>")
+    assert "&lt;" not in out and "\n" in out
+    # a `@type` written as a full IRI or a prefixed name is still a JobPosting
+    for t in ("http://schema.org/JobPosting", "schema:JobPosting", "jobposting"):
+        node = _j6_json.dumps({"@type": t, "description": mine})
+        assert jdfill.jsonld_jd('<script type="application/ld+json">' + node + "</script>")
+    # a block inside an HTML comment is a staging leftover, not this page's posting
+    live = _j6_json.dumps({"@type": "JobPosting", "description": mine})
+    commented = ('<!-- <script type="application/ld+json">' + live + "</script> -->")
+    assert jdfill.jsonld_jd(commented) == ""
+
+
+def test_a_lone_surrogate_cannot_reach_the_persistence_step():
+    """`json.loads` accepts an unpaired high surrogate and keeps it in the str; every
+    `ensure_ascii=False` writer in this repo — the role ledger, `atomic.write_json`,
+    `persist_state` — then raises UnicodeEncodeError in the PERSISTENCE step, after the run's
+    LLM verdicts have already been paid for."""
+    from pipeline import jdfill
+    node = '{"@type": "JobPosting", "description": "' + "Analyst work. " * 40 + '\\ud83d"}'
+    out = jdfill.jsonld_jd('<script type="application/ld+json">' + node + "</script>")
+    assert out and out.encode("utf-8")            # would raise before the scrub
+    assert _j6_json.dumps({"d": out}, ensure_ascii=False).encode("utf-8")
+
+
+# =====================================================================================
+# jd-text lane, 2026-08-26 wave 2 — what the confirmation review and the end-to-end
+# rehearsal found in wave 1's own fixes. Record: docs/sessions/2026-08-26-jd-text.md.
+# =====================================================================================
+
+
+def test_the_whole_text_path_is_bounded_not_just_the_schema_org_scanner():
+    """Wave 1 bounded `jsonld_jd` and reported "528 s -> 356 ms". True of that function, and
+    false of the layer: `_from_body` reaches `extract_jd` -> `html_to_text` FIRST, whose own
+    `<[^>]+>` and block-tag regexes were still unbounded, and `fetch_jd` runs `html_to_text` a
+    second time for the shell/no-markers decision. Measured on the same 980 KB body: 92 s for
+    `_from_body` and 187 s for one inline role, on a digest step with no `continue-on-error`."""
+    import time
+    from pipeline import jdfill
+    body = "<script" * 140_000              # 980 KB, inside LD_SCAN_BYTES, with no `>` to stop on
+    t0 = time.perf_counter()
+    assert jdfill._from_body(body) == ("", "")
+    assert time.perf_counter() - t0 < 8.0, "html_to_text is quadratic again"
+
+
+def test_the_linear_tag_strip_is_exactly_the_regex_it_replaced():
+    """`_strip_tags` replaced `re.sub(r"<[^>]+>", " ", h)`, and the two cases where a naive
+    scanner differs are the ones that eat a job description: `<>` is not `<[^>]+>` and must
+    survive, and an unterminated `<` must be left alone rather than swallowing the rest of the
+    page — "salary < 100k" in prose would otherwise truncate everything after it. Verified
+    byte-identical to the regex on all 62 captured bodies."""
+    from pipeline.jdfill import html_to_text
+    assert html_to_text("<>") == "<>"
+    assert html_to_text("a<>b") == "a<>b"
+    assert html_to_text("salary < 100k and the rest") == "salary < 100k and the rest"
+    assert html_to_text("unterminated <div class='x'") == "unterminated <div class='x'"
+    assert html_to_text("<p>x</p><script>var y=1;</script><p>z</p>") == "x\nz"
+
+
+def test_a_stale_alarm_is_not_resurrected_by_the_clock(tmp_path, monkeypatch):
+    """`stages.stamp` writes `date` from the LOCAL clock and `finished_at` from UTC. Comparing
+    them by CALENDAR is wrong twice: one way drops a crash alarm the moment the local date
+    rolls over, the other (accepting either date) makes the window two days wide and carries a
+    genuinely stale alarm into today — which it did, on this machine, in this session."""
+    from pipeline import jdfill, stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    jdfill.record_enrich(scrape_ran=1, scrape_filled=6, alarm="scrape:jd-massfail(shell x12)")
+    data = _j6_json.loads((tmp_path / "stages.json").read_text(encoding="utf-8"))
+    old = _j6_dt.datetime.now(_j6_dt.timezone.utc) - _j6_dt.timedelta(hours=30)
+    data["enrich"]["date"] = old.date().isoformat()
+    data["enrich"]["finished_at"] = old.isoformat(timespec="seconds")
+    (tmp_path / "stages.json").write_text(_j6_json.dumps(data), encoding="utf-8")
+    e = jdfill.record_enrich(matched_ran=1, matched_filled=2)
+    assert "jd-massfail" not in e.get("alarm", ""), "30 hours old is not today"
+    # ...while a crash written minutes ago still is
+    jdfill.record_enrich(alarm="scrape:crash:RuntimeError")
+    e = jdfill.record_enrich(matched_ran=1, matched_filled=2)
+    assert "scrape:crash:RuntimeError" in e["alarm"]
+
+
+def test_a_rerunning_driver_restates_its_own_verdict_and_keeps_everyone_elses(tmp_path, monkeypatch):
+    """A re-dispatch that cleared the backlog still mailed `scrape:jd-budget-spent(3 left for
+    tomorrow)` about a run that had just finished with nothing left — a healthy layer reading
+    as a broken one. A driver owns its own clauses; the other driver's must survive."""
+    from pipeline import jdfill, stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    jdfill.record_enrich(scrape_ran=1, scrape_filled=1,
+                         alarm="scrape:jd-budget-spent(3 left for tomorrow, clock)")
+    jdfill.record_enrich(matched_ran=1, matched_filled=1, alarm="matched:bd-capped(25 spent, 1 waiting)")
+    e = jdfill.record_enrich(scrape_ran=1, scrape_filled=4)      # the re-dispatch, nothing left
+    assert "jd-budget-spent" not in e.get("alarm", "")
+    assert "matched:bd-capped(25 spent, 1 waiting)" in e["alarm"]
+    assert e["scrape_filled"] == 5
+
+
+def test_an_exhausted_cap_does_not_silence_a_mass_failure():
+    """`bd-capped` was added to a suppression rule whose comment says it is for
+    `bd-unavailable` "and only this one". With `CAP=0` the Unlocker reports capped having spent
+    nothing, so a morning of 30 failed fetches said only `bd-capped(0 spent, 0 roles waiting)`
+    and nothing at all about the 30."""
+    from pipeline.jdfill import alarm_for
+    bd = _J6BD(capped=True)                                   # used = 0
+    line = alarm_for(_j6_Counter({"todo": 30, "tried": 30, "filled": 0, "bd": 0,
+                                  "reason:shell": 30}), bd)
+    assert "bd-capped(" in line and "jd-massfail(shell x30)" in line
+
+
+def test_a_title_gate_that_swallows_everything_is_not_a_quiet_morning(tmp_path, monkeypatch):
+    """The one case the rehearsal found where a BROKEN layer still read as a healthy one: a
+    `_relevance` regression dropped 946 of 948 cards, `todo` fell to 0, and every alarm is
+    suppressed on an empty todo by design — because a driver with nothing to do IS healthy.
+    The gate may drop almost everything; it may not drop EVERYTHING while cards remain."""
+    from pipeline import jdfill, seniority, stages
+    import enrich_scrape_jd as esj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    cache = tmp_path / "c.json"
+    cache.write_text(_j6_json.dumps({"ACME": [
+        {"title": "Data Analyst", "url": f"https://a.co/jobs/{i}", "description": ""}
+        for i in range(12)]}), encoding="utf-8")
+    monkeypatch.setattr(seniority, "_relevance", lambda t: "none")       # the regression
+    monkeypatch.setattr(esj, "_relevance", lambda t: "none")
+    assert esj.main(["--cache", str(cache)]) == 0
+    e = _j6_json.loads((str(cache) + ".stages.json")) if False else _j6_json.loads(
+        (tmp_path / "c.json.stages.json").read_text(encoding="utf-8"))["enrich"]
+    assert e["scrape_todo"] == 0 and e["scrape_cards"] == 12 and e["scrape_dropped_title"] == 12
+    assert "jd-gate-swallowed(12 of 12 cards)" in e["alarm"]
+
+
+def test_the_sibling_lookup_is_keyed_by_company_not_only_by_url(tmp_path, monkeypatch):
+    """The confirmation review's surviving mutant: replacing the `(company, url)` lookup with a
+    url-only search left the whole suite green, though the gate is load-bearing on three URLs
+    in today's cache (the Microsoft and Siemens twins are each filed under two companies). The
+    scrape cache files a card under the page it was swept from, so a url alone can hand one
+    company's text to another."""
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    (tmp_path / "cloud_state").mkdir()
+    db = str(tmp_path / "cloud_state" / "seen.db")
+    shared = "https://acme.com/careers/data-analyst"
+    st = store.SeenStore(db)
+    st.upsert_matched({"company": "Acme", "title": "Data Analyst", "location": "TLV",
+                       "posted_date": "2026-08-17", "sources": ["scrape"], "url": "https://a/1",
+                       "description": "s" * 170}, _j6_dt.date.today().isoformat())
+    st.conn.execute("UPDATE matched SET seen_ids=? WHERE company='Acme'", (f"scrape:{shared}",))
+    st.conn.commit(); st.close()
+    # the SAME url, filed in the cache under a DIFFERENT company
+    cache = tmp_path / "scraped_cache.json"
+    cache.write_text(_j6_json.dumps({"Acme Holdings GmbH": [
+        {"title": "Data Analyst", "url": shared, "description": "Q" * 900}]}), encoding="utf-8")
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "shell", False))
+    assert emj.main(["--db", db, "--cache", str(cache)]) == 0
+    import sqlite3 as _s
+    assert _s.connect(db).execute("SELECT length(description) FROM matched").fetchone()[0] == 170
+
+
+def test_the_canary_costs_neither_the_operators_limit_nor_the_budget(monkeypatch):
+    """It is diagnostic, not work. It escaped `JDFILL_TIME_BUDGET_MIN` entirely (it fired with
+    the budget at zero), and inside `run_backfill` it consumed a `--limit` slot, deferring a
+    readable row to tomorrow so that a refused host could be re-tested."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    refused = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
+    readable = [jdfill.Item(9 + i, f"https://x.co/jobs/{i}", "A | B") for i in range(3)]
+    c = jdfill.run_backfill(refused + readable, save=lambda *a: None, minutes=None, count_cap=3,
+                            dry_run=True, log=lambda s: None)
+    assert c["probe"] == 1 and c["skipped_cap"] == 0        # all three readable rows still ran
+    assert c["tried"] == 4                                  # 3 real + the canary
+    monkeypatch.setenv("JDFILL", "1")
+    f = jdfill.JDFiller(budget_min=10)
+    f.seconds = 3600.0                                      # the budget is long gone
+    assert f.maybe_fill({"title": "Data Analyst", "description": "",
+                         "url": "https://il.indeed.com/viewjob?jk=1"}) is False
+    assert f.probe == 0, "a spent budget stops the canary too"
+
+
+def test_the_ledger_says_which_kind_of_unreadable(tmp_path):
+    """`roles.load` distinguishes `missing` from `corrupt` and the driver flattened both to
+    `ledger-unreadable`, so the mail could not tell a state wipe from a bad write."""
+    import enrich_matched_jd as emj
+    assert emj.dead_role_ids(str(tmp_path / "nope.jsonl")) == (None, "missing")
+    bad = tmp_path / "roles.jsonl"
+    bad.write_text("\n".join("{not json" for _ in range(30)), encoding="utf-8")
+    assert emj.dead_role_ids(str(bad)) == (None, "corrupt")
