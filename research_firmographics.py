@@ -106,7 +106,7 @@ def main():
     ap.add_argument("--refresh-days", type=int, default=None,
                     help="also re-research records older than this many days")
     ap.add_argument("--dry-run", action="store_true", help="only report, no research")
-    ap.add_argument("--export", action="store_true", help="write state/firmographics.json and exit")
+    ap.add_argument("--export", action="store_true", help="write the union to cloud_state/firmographics.json and exit")
     a = ap.parse_args()
 
     st = SeenStore()
@@ -141,7 +141,11 @@ def main():
     if os.path.exists(cloud_db):
         import sqlite3
         con = sqlite3.connect(cloud_db)
-        board = [r[0] for r in con.execute("SELECT DISTINCT company FROM matched")]
+        # BACKLOG 141: `SELECT DISTINCT company` includes superseded-only rows (OTORIO,
+        # Meta Israel, Port.io) that `run.py`'s all_companies excludes, so the bulk pass
+        # bought facts for names the board can never render.
+        board = [r[0] for r in con.execute(
+            "SELECT DISTINCT company FROM matched WHERE COALESCE(status,'') != 'superseded'")]
         con.close()
         names += [n for n in board if n not in names]
     # leaked job titles ("Sql developer - X", "my team") are never companies: skip for

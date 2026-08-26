@@ -464,7 +464,10 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         st, board_jobs=board_jobs, email_jobs=email_jobs,
         all_companies={j["company"] for j in st.get_matched_since("0000-01-01")},
         run_date=run_date, use_llm=use_llm, scoped=bool(only or limit),
-        profiles_path=os.path.join(REPO_ROOT, "company_profiles.json"))
+        profiles_path=os.path.join(REPO_ROOT, "company_profiles.json"),
+        # BACKLOG 120: both tiers spend one subscription, so the classifier's open breaker is
+        # evidence here too — without this the hook spends the whole budget rediscovering it.
+        llm_off_reason=getattr(clf, "off_reason", ""))
     _intel_lines, _intel_warn = company_intel.audit_lines(_intel)
     for _line in _intel_warn:
         print(f"::warning::company-intel {_line}", flush=True)

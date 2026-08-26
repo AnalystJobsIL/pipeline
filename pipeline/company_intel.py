@@ -77,6 +77,10 @@ _RESEARCH_RESERVE_S = RESEARCH_MIN_S
 BLURB_RETRY_DAYS = 30      # a company the blurb model could not identify is asked again monthly
 STRIKE_RETRY_DAYS = 7      # a name research failed on is retried weekly
 SOFT_OUTAGE_MIN_FAILS = 3  # this many name-failures and no success in one run = not the names
+# the classifier builds this string at seniority.py:531 as `llm-unavailable(<kind>: ...)`;
+# only the kind is load-bearing. Asking `classifier` for a `Classifier.off_kind` would
+# retire the regex -- filed, not assumed.
+_SHARED_OUTAGE = re.compile(r"llm-unavailable\((auth|missing)\b")
 
 
 def _report():
@@ -361,7 +365,7 @@ def _research(st, targets, board_jobs, run_date, rep, clock=None):
 
 
 def enrich_for_run(st, *, board_jobs, email_jobs=(), all_companies=None, run_date,
-                   use_llm=True, scoped=False, profiles_path=None):
+                   use_llm=True, scoped=False, profiles_path=None, llm_off_reason=""):
     """Blurbs + firmographics for one digest run -> (company_info, firmo_display, report).
 
     The never-raises front door: company intel is best-effort by design and must not cost
@@ -374,7 +378,8 @@ def enrich_for_run(st, *, board_jobs, email_jobs=(), all_companies=None, run_dat
         rep = _report()
         return _enrich(st, board_jobs=board_jobs, email_jobs=email_jobs,
                        all_companies=all_companies, run_date=run_date, use_llm=use_llm,
-                       scoped=scoped, profiles_path=profiles_path, rep=rep, holder=holder)
+                       scoped=scoped, profiles_path=profiles_path, rep=rep, holder=holder,
+                       llm_off_reason=llm_off_reason)
     except Exception as e:  # noqa: BLE001
         rep["error"] = f"{type(e).__name__}: {e}"[:160]
         print(f"  [company-intel] FAILED: {rep['error']}", file=sys.stderr, flush=True)
@@ -382,7 +387,7 @@ def enrich_for_run(st, *, board_jobs, email_jobs=(), all_companies=None, run_dat
 
 
 def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, scoped,
-            profiles_path, rep, holder):
+            profiles_path, rep, holder, llm_off_reason=""):
     """The work behind `enrich_for_run`; `holder` carries partial results out on failure.
 
     Never raises. Spends at most BLURB_MAX_PER_RUN + FIRMO_MAX_PER_RUN `claude` calls and
@@ -391,7 +396,16 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
     back — except on a scoped run (`--only`/`--limit`), which must leave the committed
     file alone, and except when the export is corrupt, which must not be replaced by
     the smaller sqlite table. `audit_lines(report)` turns the report into the mail."""
-    rep["research_off"] = not use_llm
+    # BACKLOG 120. The classifier reached the same CLI first and its breaker is open; both
+    # tiers spend ONE subscription, so an auth/missing failure there is an auth/missing
+    # failure here, and rediscovering it costs up to FIRMO_TIME_BUDGET_MIN of the morning at
+    # 240 s per timing-out call. Only `auth` and `missing` are shared evidence: `transient`
+    # (a 529, one hung call) says nothing about a different process, and `drift` is about the
+    # classifier's own flags.
+    if use_llm and _SHARED_OUTAGE.search(llm_off_reason or ""):
+        use_llm = False
+        rep["llm_off_upstream"] = _ascii(llm_off_reason, 80)
+    rep["research_off"] = not use_llm and not rep["llm_off_upstream"]
     rep["scoped"] = bool(scoped)
     shared, rep["export_status"] = load_shared_status()
     rep["export_records"] = len(shared)
@@ -445,9 +459,21 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
     # instead of re-derived by hand.
     try:
         from .companies import load_companies
+        # EVERYTHING THAT CAN RENDER, not just the active registry. A company reaches a card
+        # by having a ROLE, and 27 companies with role records are not active registry rows
+        # (a parked employer whose roles are still inside the board window, a discovery-only
+        # name) -- `Peak Innovation` is one, and the first version of this gauge could not
+        # see it. `all_companies` is every company ever matched, which is the render set.
+        # The `discovery` pseudo-row is excluded by platform: it is the LinkedIn+Indeed
+        # layer, not an employer, and it would otherwise be a permanent backlog of 1 and a
+        # research call every week forever.
+        rows = load_companies(active_only=True)
+        universe = {r["company_name"] for r in rows
+                    if str(r.get("ats_platform") or "").strip().lower() != "discovery"}
+        universe |= set(all_companies or ()) | board
         rep["registry_backlog"] = sum(
-            1 for r in load_companies(active_only=True)
-            if not (firmo.get(r["company_name"]) or by_key.get(identity_key(r["company_name"]))))
+            1 for n in universe
+            if not not_a_company(n) and not (firmo.get(n) or by_key.get(identity_key(n))))
     except Exception as e:  # noqa: BLE001 — a gauge must never cost the mail
         rep["registry_backlog"] = -1
         print(f"  [company-intel] registry backlog not counted: {e!r}", file=sys.stderr, flush=True)

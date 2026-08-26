@@ -1030,3 +1030,51 @@ def test_the_bulk_researcher_uses_the_money_gate_not_the_shared_one():
     import research_firmographics
     src = inspect.getsource(research_firmographics.main)
     assert "not_a_company(n)" in src, "the bulk spender must use this lane's own gate"
+
+
+def test_the_backlog_gauge_counts_everything_that_can_render(env):
+    """The first version counted ACTIVE REGISTRY ROWS, but a company reaches a card by having
+    a ROLE: 27 companies with role records are not active rows (a parked employer whose roles
+    are still inside the board window, a discovery-only name), and `Peak Innovation` was
+    invisible to the gauge while rendering without facts. The `discovery` pseudo-row is
+    excluded by PLATFORM — it is the LinkedIn+Indeed layer, not an employer, and it would
+    otherwise be a permanent backlog of 1 and a research call every week forever."""
+    st, _export, _calls, _ = env
+    _ci, _fd, rep = _run(st, [_job("Wix")], all_companies={"Wix", "Ghost Co"},
+                         use_llm=False)
+    assert rep["registry_backlog"] >= 1, "a matched company with no record must be counted"
+    # a name the gate refuses is not a backlog item
+    _ci, _fd, rep2 = _run(st, [_job("Wix")], all_companies={"Wix", "Tel Aviv"}, use_llm=False)
+    assert rep2["registry_backlog"] < rep["registry_backlog"] + 1
+
+
+def test_the_classifier_breaker_stops_this_lane_spending_too(env):
+    """BACKLOG 120. Both tiers spend ONE subscription, so the classifier's open breaker is
+    evidence here — without it the hook spends its whole budget rediscovering the same
+    outage at 240s per timing-out call. Only auth/missing are shared evidence: `transient`
+    says nothing about a different process and `drift` is about the classifier's own flags.
+
+    This guard exists because the mail branch shipped before the wiring did: `llm_off_upstream`
+    was rendered by audit_lines and set by nothing, i.e. a sentence that could never appear."""
+    st, _export, calls, _ = env
+    _ci, _fd, rep = _run(st, [_job("Nowhere Ltd")],
+                         llm_off_reason="llm-unavailable(auth: Failed to authenticate)")
+    assert rep["llm_off_upstream"], "the reason must reach the report"
+    assert not calls, "not one call may be spent"
+    line, warn = CI.audit_lines(rep)
+    assert "classifier's breaker was already open" in line[0]
+    assert any("breaker" in w for w in warn)
+    # a transient hiccup in another process is NOT evidence about this one
+    _ci, _fd, rep2 = _run(st, [_job("Nowhere Ltd")],
+                          llm_off_reason="llm-unavailable(transient: 529 overloaded)")
+    assert not rep2["llm_off_upstream"] and calls, "transient must not gate this lane"
+
+
+def test_the_run_hook_passes_the_breaker_reason():
+    """One argument at run.py's existing call site (infra's file, disclosed). Without it the
+    kwarg above is unreachable and the mail sentence can never fire."""
+    import inspect
+
+    from pipeline import run as R
+    src = inspect.getsource(R.run)
+    assert "llm_off_reason=getattr(clf" in src, "the hook is not wired"
