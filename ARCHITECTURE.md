@@ -179,9 +179,12 @@ including the claim "none".
 
 1. **Native ATS fetchers** — `pipeline/fetchers.py` `FETCHERS` map. A `companies.csv` row
    whose `ats_platform` names a platform is fetched live every digest run via its public
-   JSON API, sequentially (median 0.5 s a row locally; `oraclehcm` 4–16 s — it spends 8
-   requests on every row whatever the board's size, 4.2 s for Verint's 49 jobs and 15.1 s for
-   Dell's 446, measured 2026-08-26 and left alone, `docs/BACKLOG.md` 236 — the slowest
+   JSON API, sequentially (median 0.5 s a row locally; `oraclehcm` 1–15 s — since 2026-08-26 it reads the
+   board WHOLE up to `ORACLE_FULL_WALK_MAX` (2,000 requisitions) because every server-side
+   Israel filter Oracle CE offers is ignored, 400s, or silently returns the entire board;
+   that recovered **4 Israel roles at Fortinet** (15 → 19) and cost nothing — 52.9 s for the
+   five rows against 55.4 s, since a fully-walked board skips the keyword pass
+   (`docs/BACKLOG.md` 241, and 236 for the timings) — the slowest
    single row a 22 s greenhouse): **435 API rows on 2026-08-26 (evening; 431 at 05:00, then +1 from the
    06:36 self-heal and +3 from the 08:52 auto-expand)** — comeet 123, greenhouse
    105, workday 62, ashby 52, lever 25, workable 21, smartrecruiters 16, bamboohr 9,

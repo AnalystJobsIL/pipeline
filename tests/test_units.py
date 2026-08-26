@@ -8176,6 +8176,67 @@ def test_the_rebase_report_names_the_postings_a_baseline_was_built_from(tmp_path
     assert got["NetApp"] == [] and [p["title"] for p in got["Sanofi"]] == ["T"]
 
 
+def test_oraclehcm_reads_the_whole_board_and_never_sends_a_location_filter(monkeypatch):
+    """Oracle CE has no location filter that can be trusted, measured 2026-08-26 on all five
+    active tenants: `keyword=Israel` under-reports (Fortinet 7 hits against 19 real Israel
+    roles, JPMorganChase 0 against 4); `workLocationCountryCode=IL` is SILENTLY IGNORED and
+    returns the whole board; `locationCountryCode=IL` is HTTP 400; `selectedLocationsFacet=IL`
+    returns 0; and a numeric `locationId` works only where the tenant advertised it — elsewhere
+    it too returns everything, which would publish Texas jobs under an Israeli employer.
+
+    So the board is read WHOLE up to `ORACLE_FULL_WALK_MAX` and `pipeline.israel` decides.
+    Live effect on the first run: Fortinet 15 -> 19 Israel roles, and the five rows got
+    *faster* (52.9 s against 55.4 s) because a fully-walked board skips the keyword pass."""
+    from pipeline import fetchers
+    asked = []
+
+    def fake(url, **kw):
+        asked.append(url)
+        import re as _re
+        off = int(_re.search(r"offset=(\d+)", url).group(1))
+        total = fake.total
+        reqs = [{"Id": f"{off + i}", "Title": f"Role {off + i}",
+                 "PrimaryLocation": "Tel Aviv, Israel" if (off + i) % 50 == 0 else "Austin, TX, United States",
+                 "secondaryLocations": []} for i in range(min(100, max(0, total - off)))]
+        return {"items": [{"TotalJobsCount": total, "requisitionList": reqs}]}
+    monkeypatch.setattr(fetchers.http, "get_json", fake)
+    row = {"company_name": "Acme", "ats_platform": "oraclehcm", "token": "",
+           "api_url": "https://x.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/"
+                      "recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=CX_1"}
+
+    fake.total = 911                      # a Fortinet-sized board: read whole, no keyword pass
+    jobs = fetchers.fetch_company(row)
+    assert len(jobs) == 911, "every requisition on a board inside the bound"
+    assert not any("keyword=" in u for u in asked), "a fully-walked board asks no keyword question"
+    assert len(asked) == 10
+    # the filters that lie are never sent, on any path
+    for bad in ("locationId", "workLocationCountryCode", "locationCountryCode", "selectedLocationsFacet"):
+        assert not any(bad in u for u in asked), bad
+
+    asked.clear()
+    fake.total = 7303                     # a JPMorganChase-sized board: newest-500 + keyword
+    jobs = fetchers.fetch_company(row)
+    assert len(asked) == 8 and sum("keyword=Israel" in u for u in asked) == 3
+    assert len(jobs) == 500, "the documented blind spot, unchanged"
+
+    asked.clear()                         # the bound is a knob, and a bad value falls back
+    monkeypatch.setenv("ORACLE_FULL_WALK_MAX", "8000")
+    fake.total = 7303
+    assert len(fetchers.fetch_company(row)) == 7303
+    assert not any("keyword=" in u for u in asked)
+    monkeypatch.setenv("ORACLE_FULL_WALK_MAX", "not-a-number")
+    fake.total = 300
+    assert len(fetchers.fetch_company(row)) == 300
+    # a board that reports no total, and a malformed page, are not crashes
+    monkeypatch.delenv("ORACLE_FULL_WALK_MAX")
+    monkeypatch.setattr(fetchers.http, "get_json", lambda u, **k: {"items": [{"requisitionList": []}]})
+    assert fetchers.fetch_company(row) == []
+    monkeypatch.setattr(fetchers.http, "get_json", lambda u, **k: {"items": []})
+    assert fetchers.fetch_company(row) == []
+    monkeypatch.setattr(fetchers.http, "get_json", lambda u, **k: [])
+    assert fetchers.fetch_company(row) == []
+
+
 def test_the_rebase_cli_reports_usage_and_a_failed_write_instead_of_exiting_zero(tmp_path, monkeypatch, capsys):
     """An operator tool that prints `[XX]` and exits 0 is the green run that proves nothing.
     And `argv[i + 1]` raised IndexError for a flag given last — after printing a whole

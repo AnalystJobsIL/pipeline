@@ -914,7 +914,34 @@ def fetch_oraclehcm(row):
     api_url: https://<host>/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=<SITE>
     The finder gains limit/offset/sortBy here; requisitions live in items[0].requisitionList.
     Job page: https://<host>/hcmUI/CandidateExperience/en/sites/<SITE>/job/<Id>
+
+    **The board is READ WHOLE when it is not enormous, because Oracle CE has no location
+    filter that can be trusted.** Measured 2026-08-26 against all five active tenants:
+
+      keyword=Israel          under-reports badly -- Fortinet 7 hits against 19 real Israel
+                              roles, JPMorganChase 0 against 4
+      workLocationCountryCode=IL   SILENTLY IGNORED: returns the whole board (onsemi 685,
+                              Fortinet 911, Dell 445, JPMorganChase 7,305)
+      locationCountryCode=IL  HTTP 400
+      selectedLocationsFacet=IL    returns 0 -- kills the query
+      locationId=<numeric>    works ONLY where the tenant's own `locationsFacet` advertises
+                              that id (Verint: exactly 4). Elsewhere it is silently ignored
+                              and the whole board comes back looking like Israel -- which
+                              would publish Texas jobs under an Israeli employer, so this
+                              fetcher never sends an id the tenant did not advertise.
+
+    So the honest method is to read every requisition and let `pipeline.israel` decide, which
+    is what already happens to the newest-500 pass. The cost is bounded by ORACLE_FULL_WALK_MAX
+    (2,000 requisitions = 20 requests): onsemi 684 in 12.4 s, Fortinet 911 in 16.2 s, Dell 445
+    in 13.3 s, Verint 49 in 1.5 s. It recovered **4 Israel roles at Fortinet on the first
+    run** (15 -> 19), which the newest-500 + keyword design had never seen.
+
+    A board ABOVE the bound keeps the old two passes and is a KNOWN BLIND SPOT: JPMorganChase
+    posts 7,303 requisitions and hides 4 Israel roles behind them, which a full walk finds in
+    196 s -- three and a half minutes on a fetch loop of five, for four roles no classifier
+    would accept. Raise `ORACLE_FULL_WALK_MAX` to include it (`docs/BACKLOG.md` 241).
     """
+    import os as _os
     import re as _re
     base = row["api_url"]
     host = _re.search(r"https://([^/]+)/", base).group(1)
@@ -922,23 +949,31 @@ def fetch_oraclehcm(row):
     site = ms.group(1) if ms else "CX"
     if "expand=" not in base:
         base = base.replace("?onlyData=true", "?onlyData=true&expand=requisitionList.secondaryLocations")
-    # Two passes, deduped by requisition id:
-    #   1. the newest 500 postings (what this fetcher has always done), and
-    #   2. `keyword=Israel`, which the CE API supports the same way Workday supports
-    #      searchText. Without it a large board is simply out of reach: JPMorganChase
-    #      posts 7,354 requisitions, so its Israel roles are nowhere near the first 500,
-    #      and the fetcher reported a confident zero. Dell: 427 total, 2 in Israel.
-    # Keyword hits from other countries are dropped downstream by the Israel filter.
-    jobs, seen_ids, offset, total = [], set(), 0, None
-    pages = [(f"{base},limit=100,offset={o},sortBy=POSTING_DATES_DESC", False)
-             for o in range(0, 500, 100)]
-    pages += [(f"{base},keyword=Israel,limit=100,offset={o},sortBy=POSTING_DATES_DESC", True)
-              for o in range(0, 300, 100)]
-    for u, _is_kw in pages:
-        data = http.get_json(u)
-        it = (data.get("items") or [{}])[0]
-        total = it.get("TotalJobsCount") if total is None else total
-        reqs = it.get("requisitionList", []) or []
+    try:
+        full_max = int(_os.environ.get("ORACLE_FULL_WALK_MAX", "2000"))
+    except ValueError:
+        full_max = 2000
+    jobs, seen_ids, total = [], set(), None
+
+    def _page(url):
+        """One page -> (requisitions, TotalJobsCount or None). Never raises on shape."""
+        data = http.get_json(url)
+        it = (data.get("items") or [{}])[0] if isinstance(data, dict) else {}
+        it = it if isinstance(it, dict) else {}
+        return (it.get("requisitionList") or []), _count(it, "TotalJobsCount")
+
+    first, total = _page(f"{base},limit=100,offset=0,sortBy=POSTING_DATES_DESC")
+    # Read the whole board when it fits the bound; otherwise the old newest-500 pass plus the
+    # keyword pass, which is a supplement and not a filter (it misses more than it finds).
+    walk_to = min(total, full_max) if isinstance(total, int) and total <= full_max else 500
+    pages = [(first, None)] + [(None, f"{base},limit=100,offset={o},sortBy=POSTING_DATES_DESC")
+                               for o in range(100, walk_to, 100)]
+    if not (isinstance(total, int) and total <= full_max):
+        pages += [(None, f"{base},keyword=Israel,limit=100,offset={o},sortBy=POSTING_DATES_DESC")
+                  for o in range(0, 300, 100)]
+    for reqs, u in pages:
+        if reqs is None:
+            reqs, _t = _page(u)
         if not reqs:
             continue
         for p in reqs:
@@ -961,8 +996,9 @@ def fetch_oraclehcm(row):
     return jobs
 
 
-# Declared, not scoped: the newest-500 pass is unscoped, so an empty list means the board
-# has no postings at all — a zero IS evidence here, and the keyword pass only adds to it.
+# Declared, not scoped: the walk is unscoped, so an empty list means the board has no
+# postings at all — a zero IS evidence here. (Every server-side Israel filter this API
+# offers is either ignored or wrong; see the docstring.)
 fetch_oraclehcm.israel_scoped = False
 
 

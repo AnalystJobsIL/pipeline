@@ -2959,3 +2959,21 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     the cases that predict strikes (zero on `fail`, `is_error`, soft outage); the research
     argv carries `--model`, `--effort` and the search grant on both axes with `cwd` not the
     repo; and `git status --short` unchanged (already there).
+241. **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
+    Israel roles behind the rest** — lane: `ats-fetch`. Measured 2026-08-26 on all five active
+    tenants, with `pipeline.israel.is_israel_job` on both sides: the fetcher found 1 / 15 / 4 /
+    10 / 0 Israel roles (onsemi, Fortinet, Verint, Dell, JPMorganChase) where a full walk finds
+    1 / **19** / 4 / 10 / **4** — 8 roles invisible. `fetch_oraclehcm` now reads the whole board
+    up to `ORACLE_FULL_WALK_MAX` (2,000), which fixed Fortinet (+4) and cost nothing (52.9 s for
+    the five rows against 55.4 s, because a fully-walked board skips the keyword pass).
+    **JPMorganChase is the remaining blind spot**: 7,303 requisitions, 4 Israel roles, and a
+    full walk takes 196 s — three and a half minutes on a fetch loop of five and a half, for
+    four roles (two graduate-programme, a client-service manager, a business assistant) that no
+    classifier would accept today. Raise the knob if a big Oracle tenant ever posts analyst
+    roles. **Do not "fix" this with a server-side location filter**: `keyword=Israel`
+    under-reports (Fortinet 7 against 19), `workLocationCountryCode=IL` is silently IGNORED and
+    returns the whole board, `locationCountryCode=IL` is HTTP 400, `selectedLocationsFacet=IL`
+    returns 0, and a numeric `locationId` works only where the tenant's own `locationsFacet`
+    advertises it (Verint: exactly 4) and is silently ignored elsewhere — onsemi, Fortinet, Dell
+    and JPMorganChase each returned their ENTIRE board for `locationId=<Israel>`, which a
+    trusting fetcher would have published as Israeli jobs.
