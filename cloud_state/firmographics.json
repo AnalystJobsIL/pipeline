@@ -507,6 +507,19 @@
     "stage_note": "NASDAQ: ALLT since Nov 2006; dual-listed on TASE since 2010",
     "sub_sector": "network intelligence, traffic management and network-based security for telecom service providers"
   },
+  "Alma Labs": {
+    "as_of": "2026-08-26",
+    "business_model": "B2B2C SaaS — sells/licenses an AI-education platform to schools, municipalities, and education networks",
+    "customer_type": "schools, municipalities, education networks",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "edtech",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "No publicly disclosed funding round found; appears to be an early-stage startup onboarding first school/municipality partners for 2026-2027",
+    "sub_sector": "AI-literacy learning platform for middle schools (student + educator tools)"
+  },
   "Alpha | Similarweb Partner": {
     "as_of": "2026-08-22",
     "business_model": "Tiered SaaS subscriptions to the digital-intelligence platform plus API/raw-data access and advisory services",
@@ -5537,6 +5550,19 @@
     "stage_note": "Acquired May 2026 by Torq (venture-backed Israeli AI-SOC vendor) for an estimated ~$70M; had raised ~$46.7M, led by boldstart ventures with Insight Partners and Tiger Global",
     "sub_sector": "developer-first product security / ASPM — automated security-as-code scanning across code, CI/CD, IaC and cloud, later an AI context graph for the SOC"
   },
+  "Jobgether": {
+    "as_of": "2026-08-26",
+    "business_model": "freemium/subscription career-coaching and job-matching platform monetized via job seeker subscriptions and employer listings",
+    "customer_type": "job seekers (10+ yrs experience, remote-work focused); employers posting remote roles",
+    "employees_global": 39,
+    "founded": 2020,
+    "il_center": "",
+    "sector": "HR tech / recruiting",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "seed round €1.4M Mar 2023 (4Ventures, Finance.Brussels); pre-seed €900K Jul 2021",
+    "sub_sector": "AI-powered remote-job matching and career-coaching platform for job seekers"
+  },
   "John Deere": {
     "as_of": "2026-08-23",
     "business_model": "Sells and leases agricultural, construction and forestry machines through a global dealer network, with attached parts/service, precision-ag software subscriptions (Operations Center, See & Spray), and captive equipment financing via John Deere Financial",
@@ -6502,6 +6528,19 @@
     "stage": "public",
     "stage_note": "NASDAQ: MSFT (parent Microsoft Corp); Israel R&D center operating since 1991",
     "sub_sector": "Israeli R&D arm of Microsoft — cybersecurity (Defender/Sentinel), AI/Copilot, cloud infrastructure across Herzliya, Haifa, Tel Aviv, Nazareth"
+  },
+  "Migdal Group": {
+    "as_of": "2026-08-26",
+    "business_model": "earns premiums from life/health/general insurance policies and management fees from pension, provident, and asset-management funds",
+    "customer_type": "consumers and businesses (insurance policyholders and pension savers)",
+    "employees_global": 4435,
+    "founded": 1974,
+    "il_center": "Petah Tikva (HQ)",
+    "sector": "insurance / financial services",
+    "size_band": "L",
+    "stage": "public",
+    "stage_note": "TASE: MGDL, part of TA-125 index",
+    "sub_sector": "life, health, and general insurance plus pension and asset management (holding group)"
   },
   "Miggo Security": {
     "as_of": "2026-08-22",
@@ -9621,6 +9660,19 @@
     "stage": "early-private",
     "stage_note": "Privately held Israeli agency founded 2009; no disclosed funding rounds or acquisition (Crunchbase/ZoomInfo list no financing)",
     "sub_sector": "Israeli tech recruitment and role-outsourcing agency placing R&D, QA, infosec, BI and infrastructure consultants at client companies"
+  },
+  "ShipIn Systems": {
+    "as_of": "2026-08-26",
+    "business_model": "SaaS subscription — onboard camera/AI platform (FleetVision) sold to ship operators and insurers for fleet safety and risk monitoring",
+    "customer_type": "shipping/fleet operators and marine insurers",
+    "employees_global": 85,
+    "founded": 2018,
+    "il_center": "Tel Aviv (R&D); HQ in Newton, MA, US",
+    "sector": "maritime tech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Series A, $24M led by Zeev Ventures (with Munich Re Ventures, Hyperplane, at.inc)",
+    "sub_sector": "AI-powered visual fleet management and vessel safety analytics for shipping/insurance"
   },
   "Shopic": {
     "as_of": "2026-08-22",

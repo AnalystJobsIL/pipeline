@@ -1,95 +1,68 @@
-# 🎯 2 new senior analytics roles — 2026-08-25
+# 🎯 8 new senior analytics roles — 2026-08-26
 
 Israeli high-tech scan — experienced (≈3+ yrs) data-analysis / BI / analytics roles from the **last 48h**, freshest first. Each role title links to apply.
 
 🔎 **[Open the full board →](https://analystjobsil.github.io/board/)** — every role still open, searchable & sortable.
 
-### Fetcherr
-_Fetcherr develops AI-powered pricing and revenue management software, centered on its "Market Model" that forecasts demand and recommends real-time pricing decisions, initially for airlines and now for other volatile markets like hospitality and retail. It generates revenue by licensing its enterprise software platform to commercial teams at large companies, typically through B2B subscription or contract-based deals tied to the profit gains the model delivers._
-`travel tech / AI` · `growth-stage private` · `~170 employees` · `founded 2019` · `Tel Aviv (HQ); additional teams in US and Poland`
+### HoneyBook
+_HoneyBook is an AI-powered business management platform that helps independent, service-based professionals (like freelancers and small business owners) attract clients, book projects, sign contracts, and manage payments in one place. It makes money through SaaS subscriptions for its platform, supplemented by transaction fees on the payments it processes for its users._
+`SaaS / fintech` · `growth-stage private` · `~349 employees` · `founded 2013` · `Tel Aviv (R&D, founding site)`
 
-- **Data Analyst\- Tableau** — https://www.comeet.com/jobs/fetcherr/68.006/data-analyst--tableau/A5.D67 · 📍 Netanya · 🗓 2026-08-24 · 🎓 2+ yrs
+- **Product Data Analyst** — https://jobs.ashbyhq.com/honeybook/9d5a89da-0e05-4e47-8ddb-57a186895cc1 · 📍 Tel Aviv · 🗓 2026-08-25 · 🎓 4+ yrs
 
-### Mize
-_Mize is a Tel Aviv-based fintech-travel startup that provides technology helping travel industry clients unlock financial value from their transactions. It generates revenue by taking a cut or fee from the roughly $12 billion in annual travel sales processed through its platform._
-`traveltech / fintech` · `acquired` · `~84 employees` · `founded 2016` · `Tel Aviv (HQ/R&D); parent Yanolja in Seoul`
+### ShipIn Systems
+_ShipIn Systems develops an AI-powered maritime monitoring platform that uses onboard cameras and computer vision to detect safety, crew-behavior, and operational risks on ships. It generates revenue by selling subscription-based access to its risk-scoring and analytics platform to shipping companies and insurance partners who use the data for underwriting and risk management._
+`maritime tech` · `growth-stage private` · `~85 employees` · `founded 2018` · `Tel Aviv (R&D); HQ in Newton, MA, US`
 
-- **Data Analyst** — https://www.comeet.com/jobs/mize/88.000/data-analyst/6D.B6B · 📍 Tel Aviv · 🗓 2026-08-24 · 🎓 Intermediate
+- **Senior Product Analyst** — https://il.linkedin.com/jobs/view/senior-product-analyst-at-shipin-systems-4457490486 · 📍 Central Israel · 🗓 2026-08-25 · 🎓 4+ yrs
 
----
+### Migdal Group
+_Migdal Group is a major Israeli insurance and financial services company, offering life, health, and general (property and casualty) insurance alongside pension and long-term savings products. It generates revenue primarily through insurance premiums, management fees on pension and provident funds, and investment income earned on the assets it manages for policyholders._
+`insurance / financial services` · `public` · `~4,435 employees` · `founded 1974` · `Petah Tikva (HQ)`
 
-## Newly covered companies (8)
+- **Business Analyst** — https://il.linkedin.com/jobs/view/business-analyst-at-migdal-group-4458736498 · 📍 Petah Tikva · 🗓 2026-08-25
 
-Employers this scan reached for the **first time**, with whatever they have open now — so these are not 48h-new, they are new *to you*. Where a posting states its date it is shown; scraped cards often do not, and "we first saw it today" is not a publication date. From tomorrow these companies report like every other.
+### Jobgether
+_Jobgether operates an AI-driven job-matching platform that connects candidates with remote and hybrid job openings across partner companies. It generates revenue by charging employers and recruiters for talent-sourcing and job-distribution services rather than charging job seekers._
+`HR tech / recruiting` · `early-stage private` · `~39 employees` · `founded 2020`
 
-### Gett
-_Gett operates a ride-hailing and corporate ground transportation platform, connecting riders and businesses with drivers and transportation providers. It generates revenue by taking a commission or service fee on each ride booked through its platform, along with subscription and service fees from corporate clients using its business travel management solutions._
-`mobility / transportation` · `growth-stage private` · `~863 employees` · `founded 2010` · `Tel Aviv (HQ)`
+- **Team Lead Product Analyst** — https://il.linkedin.com/jobs/view/team-lead-product-analyst-at-jobgether-4457464817 · 📍 Israel (unspecified) · 🗓 2026-08-25
 
-- **Experienced Product Analyst** — https://gett.com/careers/53.F67/ · 📍 ced Product Analyst Tel Aviv · 🗓 date not published · 🎓 3+ yrs
+### Alma Labs
+_Alma Labs is an early-stage private company in edtech: AI-literacy learning platform for middle schools (student + educator tools). It makes money through B2B2C SaaS — sells/licenses an AI-education platform to schools, municipalities, and education networks. Customers: schools, municipalities, education networks._
+`edtech` · `early-stage private` · `Tel Aviv (HQ)`
 
-### Glow
-_Glow is an Israeli cybersecurity startup (founded 2025 by ex-Meta VP Roi Tiger) building AI-native endpoint security that maps the software and AI agents running across an enterprise, enforces safe-AI-adoption policies, and remediates threats autonomously. It sells the platform to enterprises on a subscription basis; it emerged from stealth in July 2026 with $180M raised from Sequoia, Index, and Cyberstarts at a $1.2B valuation._
-`cybersecurity` · `growth-stage private` · `~100 employees` · `founded 2025` · `Tel Aviv (HQ/R&D, ~65 employees)`
-
-- **Data Analyst** — https://jobs.ashbyhq.com/glow/84a23842-9b5c-4dde-a9a6-11fec0bec06d · 📍 Tel Aviv · 🗓 2026-07-21 · 🎓 3+ yrs
-
-### Investing
-_Investing.com operates a financial media and data platform offering real-time market news, quotes, charts, and analysis tools for stocks, currencies, commodities, and cryptocurrencies. It generates revenue primarily through advertising and premium subscription tiers that unlock advanced features, ad-free browsing, and additional financial data services._
-`fintech` · `private-enterprise` · `~250 employees` · `founded 2007` · `Tel Aviv (main operations/R&D hub)`
-
-- **Head of Analytics** — https://www.investing-careers.com/open-positions/0C.D67 · 📍 Tel Aviv · 🗓 date not published · 🎓 8+ yrs
-
-### Modellama
-_Modellama is a sports-analytics company based in Ra'anana that builds statistical models and algorithms around soccer and other sports, turning match and player data into predictions, event detection, and research insights. It earns revenue by selling these data products and insights to business customers such as sports, media, and betting-industry clients._
-`sports analytics / betting tech` · `growth-stage private` · `~23 employees` · `founded 2009` · `Ra'anana (HQ, 2 Ha-Tidhar St.)`
-
-- **Data Analyst Raanana Full\-time** — https://www.comeet.com/jobs/Modellama/26.00E/data-analyst/E8.138 · 📍 Raanana · 🗓 date not published · 🎓 5+ yrs
-- **Data Analyst** — https://www.linkedin.com/jobs/view/data-analyst-at-modellama-4428612794?_l=en · 📍 Raanana · 🗓 2026-08-17 · 🎓 5+ yrs
-
-### Nisha Pro
-_Nisha Pro is a privately held company in IT staffing / workforce outsourcing: tech recruitment and outsourced IT project staffing (software, QA, infrastructure) for Israeli enterprises. It makes money through places and outsources IT/tech professionals to client companies, earning placement fees and staffing/outsourcing contract margins. Customers: enterprises (hiring managers at tech, finance, and industrial companies needing IT staff)._
-`IT staffing / workforce outsourcing` · `private-enterprise` · `~350 employees` · `founded 2011` · `Airport City (HQ)`
-
-- **Analytical Consultant** — https://il.linkedin.com/jobs/view/analytical-consultant-at-nisha-pro-4452227689 · 📍 Tel Aviv District · 🗓 2026-08-17
-
-### Play Perfect
-_Play Perfect is a Tel Aviv-based mobile gaming company that develops skill-based games designed to entertain millions of players worldwide. It generates revenue directly from players through its skill-based gaming model, likely via in-app purchases and/or entry fees tied to competitive gameplay._
-`gaming` · `early-stage private` · `~119 employees` · `founded 2021` · `Tel Aviv (HQ)`
-
-- **Fraud Analyst** — https://www.comeet.com/jobs/play_perfect/69.001/fraud-analyst/14.A44 · 📍 Tel Aviv · 🗓 2026-08-09 · 🎓 3+ yrs
+- **Head of Data** — https://il.linkedin.com/jobs/view/head-of-data-at-alma-labs-4456925153 · 📍 Tel Aviv · 🗓 2026-08-25 · 🎓 6+ yrs
 
 ### Tel Aviv
 _Alma, a Sisram Medical company, develops and manufactures energy-based medical-aesthetic devices along with injectables, diagnostics, and personalized skincare products for aesthetic clinics worldwide. It generates revenue primarily by selling its medical devices and related consumables/products to clinics and healthcare providers globally._
 
-- **Total Rewards & People Analytics Lead** — https://jobs.secrettelaviv.com/job/total-rewards-people-analytics-lead/ · 📍 Caesarea · 🗓 date not published · 🎓 3+ yrs
-- **Product Analyst** — https://jobs.secrettelaviv.com/job/product-analyst-129/ · 📍 Tel Aviv/ Ramat · 🗓 date not published · 🎓 3+ yrs
-
-### WalkMe
-_WalkMe is a Tel Aviv-based pioneer of the Digital Adoption Platform (DAP) - software that overlays on top of other applications to provide in-app guidance, walkthroughs, tips, and automation so employees and users can navigate enterprise software more effectively. It makes money through B2B SaaS subscriptions to enterprises. Formerly public on Nasdaq (WKME), it was acquired by SAP for about $1.5 billion in 2024; it has 2,000+ customers including IBM and Nestle._
-`SaaS / productivity` · `acquired` · `~1,091 employees` · `founded 2011` · `Tel Aviv (R&D center and founding HQ)`
-
-- **Product Analyst \(Temporary Position\)** — https://jobs.lever.co/walkme/a6e57bde-d152-445b-aec9-8e356dacee8e · 📍 Tel Aviv · 🗓 2026-07-15
+- **Senior Product Analyst** — https://jobs.secrettelaviv.com/job/senior-product-analyst-52/ · 📍 Modi'in · 🗓 — · 🎓 3+ yrs
+- **Senior BI Analyst** — https://jobs.secrettelaviv.com/job/senior-bi-analyst-18/ · 📍 Modi'in · 🗓 — · 🎓 3+ yrs
+- **Marketing Ops & Analytics Manager** — https://jobs.secrettelaviv.com/job/marketing-ops-analytics-manager-2/ · 📍 Tel Aviv · 🗓 — · 🎓 3+ yrs
 
 ---
 **Needs a look**
 
-- **Registry:** 1 parked rows owned by NO recurring job (retired coverage): SeeTree
+- **Sources not producing:** linkedin-targeted: nothing for 3d (last 2026-08-23)
+- **Registry:** re-check pool grew: probe_candidates 127 -> 224 (a predicate widened?)
+- **Stages:** collect links-unread-1
+- **Render:** title-twin Port/Port.io — one posting may be under the wrong name, check the card
 
 ---
 <details><summary>Run audit</summary>
 
-- Companies scanned: **877** (failed: 2)
-- Jobs fetched: 23603 · Israel-matched: 5212
-- Accepted: 93 · after merge: 69 · **new: 12**
-- Decision paths: keyword=4524, llm=241, llm_cache=53, merged-copy=394
-- LLM calls this run: 241
-- At newly covered companies: 10
-- **Boards** changed today: new: AU10TIX: regressed-to-zero; Bits of Gold: regressed-to-zero; BlueBird Aero Systems: regressed-to-zero; Continental Israel: regressed-to-zero; Dell Technologies: fetch-error; Directeam: misconfig-scrape-on-ats; +10 more · cleared: Guardz; Okoora; ParaZero; Sightec; Sweet Security; Workiz; +2 more
-- **Boards** standing: 2 fetch errors (Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ; Dell Technologies: BoardEmpty: dell.wd1.myworkdayjobs.com/External: 0 postings worldwide — moved tena) · 34 regressed to zero (ABB; ASTERRA; AU10TIX; Akamai; Apple; BeeHero; +28 more) · 36 empty (AI21 Labs; Any.do; Aporia; Argus Cyber Security; At-Bay; Chaos Labs; +30 more) · 25 scrape rows on an ATS host
-- **Company intel:** 3 of 64 board companies unprofiled (cap 5/run, budget 15m): 2 researched, 1 failed (1 more unprofiled: research failed, weekly retry) · blurbs: 6 asked, 5 written, 1 empty, 2 derived from facts, 1 waiting (monthly retry / same company) · export 940 records, newest 2026-08-24, 20 newer than the store
-- **Roles:** open 81 · closed today 3 · reopened 5 · reposted 2 · merged-copy 394 · ledger 130 = store 130
-- Stage order: repair: never run | collect: 2026-08-25 (TODAY) carried=3 empty=177 errors=23 minutes=32 no_il=5 parked=0 rows=440 scraped=440 unprocessed=0 with_jobs=240 workers=4 | expand: 2026-08-24 (1d ago) | enrich: 2026-08-25 (TODAY) matched_bd=0 matched_bd_unavailable=0 matched_cooldown=3 matched_fail=1 matched_filled=3 matched_ran=1 matched_unfillable=0 scrape_bd=0 scrape_bd_unavailable=0 scrape_cooldown=6 scrape_fail=2 scrape_filled=29 scrape_ran=1 scrape_unfillable=4 | publish: 2026-08-25 (TODAY) board=81 email=12 scanned=877
-- Failed companies: Decart (HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ), Dell Technologies (BoardEmpty: dell.wd1.myworkdayjobs.com/External: 0 postings worldwide — moved tena)
+- Companies scanned: **870** (failed: 3)
+- Jobs fetched: 24123 · Israel-matched: 5247
+- Accepted: 96 · after merge: 65 · **new: 8**
+- Decision paths: keyword=4520, llm=28, llm_cache=271, merged-copy=428
+- LLM calls this run: 28 · JDs fetched inline: 110
+- **Boards** changed today: new: Airbnb: regressed-to-zero; Akamai: fetch-error; Apollo Power: regressed-to-zero; AstraZeneca: regressed-to-zero; BlueSnap: regressed-to-zero; CyberArk: regressed-to-zero; +30 more · cleared: BlueBird Aero Systems; Fortinet; Get SAT; Red Access; Reindeer; WSC Sports; +2 more
+- **Boards** standing: 5 fetch errors (Akamai: scrape: http:403 (2 nights); Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ; Dell Technologies: BoardEmpty: dell.wd1.myworkdayjobs.com/External: 0 postings worldwide — moved tena; Greeneye Technology: scrape: http:404 (1 night); Mobileye: HttpError: network error for https://api.eu.lever.co/v0/postings/mobileye The rea) · 55 regressed to zero (ABB; ASTERRA; AU10TIX; Airbnb; Apollo Power; Apple; +49 more) · 34 empty (AI21 Labs; Any.do; Aporia; Argus Cyber Security; At-Bay; Chaos Labs; +28 more) · 25 scrape rows on an ATS host
+- **Company intel:** 4 of 60 board companies unprofiled (cap 5/run, budget 15m): 4 researched, 0 failed (2 more unprofiled: research failed, weekly retry) · blurbs: 4 asked, 3 written, 1 empty, 3 derived from facts, 2 waiting (monthly retry / same company) · export 942 records, newest 2026-08-25
+- **Roles:** open 76 · closed today 11 · reopened 0 · reposted 3 · merged-copy 428 · ledger 135 = store 135
+- **Render:** board 76 cards, title-twin Port/Port.io · archive 56 cards · email 8 cards
+- Stage order: repair: 2026-08-25 (1d ago) | collect: 2026-08-26 (TODAY) alarm=links-unread-1 carried=2 empty=199 errors=22 links_unread=1 llm_calls=128 llm_fail=0 llm_won=34 minutes=28 no_il=0 parked=0 rows=438 scraped=438 unlock_calls=48 unlock_ok=42 unprocessed=0 via=cards56+dom48+links42+structured35+llm34+structured-dom2 with_jobs=217 workers=4 | expand: 2026-08-25 (1d ago) | enrich: 2026-08-26 (TODAY) matched_bd=0 matched_bd_unavailable=0 matched_cooldown=3 matched_fail=2 matched_filled=0 matched_ran=1 matched_unfillable=0 scrape_bd=0 scrape_bd_unavailable=0 scrape_cooldown=6 scrape_fail=1 scrape_filled=6 scrape_ran=1 scrape_unfillable=4 | publish: 2026-08-26 (TODAY) board=76 email=8 scanned=870
+- Failed companies: Mobileye (HttpError: network error for https://api.eu.lever.co/v0/postings/mobileye The rea), Decart (HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ), Dell Technologies (BoardEmpty: dell.wd1.myworkdayjobs.com/External: 0 postings worldwide — moved tena)
 
 </details>

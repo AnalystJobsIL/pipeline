@@ -23,20 +23,20 @@
   "workers": 4
  },
  "enrich": {
-  "date": "2026-08-25",
-  "finished_at": "2026-08-25T05:47:45+00:00",
+  "date": "2026-08-26",
+  "finished_at": "2026-08-26T05:52:39+00:00",
   "matched_bd": 0,
   "matched_bd_unavailable": 0,
   "matched_cooldown": 3,
-  "matched_fail": 1,
-  "matched_filled": 3,
+  "matched_fail": 2,
+  "matched_filled": 0,
   "matched_ran": 1,
   "matched_unfillable": 0,
   "scrape_bd": 0,
   "scrape_bd_unavailable": 0,
   "scrape_cooldown": 6,
-  "scrape_fail": 2,
-  "scrape_filled": 29,
+  "scrape_fail": 1,
+  "scrape_filled": 6,
   "scrape_ran": 1,
   "scrape_unfillable": 4
  },
@@ -45,11 +45,11 @@
   "finished_at": "2026-08-25T20:35:50+00:00"
  },
  "publish": {
-  "board": 81,
-  "date": "2026-08-25",
-  "email": 12,
-  "finished_at": "2026-08-25T06:07:53+00:00",
-  "scanned": 877
+  "board": 76,
+  "date": "2026-08-26",
+  "email": 8,
+  "finished_at": "2026-08-26T06:03:53+00:00",
+  "scanned": 870
  },
  "repair": {
   "date": "2026-08-25",

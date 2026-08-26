@@ -1,27 +1,27 @@
 {
  "indeed": {
-  "last_count": 63,
-  "last_nonzero": "2026-08-25",
-  "last_run": "2026-08-25"
+  "last_count": 62,
+  "last_nonzero": "2026-08-26",
+  "last_run": "2026-08-26"
  },
  "linkedin": {
-  "last_count": 1497,
-  "last_nonzero": "2026-08-25",
-  "last_run": "2026-08-25"
+  "last_count": 2125,
+  "last_nonzero": "2026-08-26",
+  "last_run": "2026-08-26"
  },
  "linkedin-targeted": {
   "last_count": 0,
   "last_nonzero": "2026-08-23",
-  "last_run": "2026-08-25"
+  "last_run": "2026-08-26"
  },
  "telegram": {
-  "last_count": 15,
-  "last_nonzero": "2026-08-25",
-  "last_run": "2026-08-25"
+  "last_count": 19,
+  "last_nonzero": "2026-08-26",
+  "last_run": "2026-08-26"
  },
  "workable": {
   "last_count": 20,
-  "last_nonzero": "2026-08-25",
-  "last_run": "2026-08-25"
+  "last_nonzero": "2026-08-26",
+  "last_run": "2026-08-26"
  }
 }

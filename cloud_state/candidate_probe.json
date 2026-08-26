@@ -1,16 +1,21 @@
 {
  "InnovoPro": {
   "sig": 0,
-  "il": 2
+  "il": 2,
+  "last": "2026-08-26",
+  "ever": true
  },
  "WINT Water Intelligence": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-24"
+  "last": "2026-08-26",
+  "ever": false
  },
  "LawGeex": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "NanoLock Security": {
   "sig": 0,
@@ -19,33 +24,42 @@
  },
  "Nokod Security": {
   "sig": 2,
-  "il": 4
+  "il": 4,
+  "last": "2026-08-26",
+  "ever": true
  },
  "Lili": {
   "sig": 3,
   "il": 0
  },
  "Behalf": {
-  "sig": 29,
-  "il": 0
+  "sig": 26,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
  },
  "Speedata": {
   "sig": 0,
   "il": 7,
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Homebiogas": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "ImageSat International": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "XJet": {
   "sig": 1,
   "il": 2,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Continental Israel": {
   "sig": 2,
@@ -54,40 +68,50 @@
  "MediWound": {
   "sig": 5,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "AiVF": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "BrainQ": {
   "sig": 0,
   "il": 8,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Buff": {
   "sig": 5,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Amimon": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "NeoGames": {
-  "sig": 2,
+  "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Panoply": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "Arnica": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Source Defense": {
   "sig": 0,
@@ -97,12 +121,14 @@
  "Kirobo": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-24"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Bancor": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-24"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Ride Vision": {
   "sig": 2,
@@ -114,35 +140,45 @@
  },
  "1MRobotics": {
   "sig": 26,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
  },
  "Siklu": {
   "sig": 2,
-  "il": 43
+  "il": 43,
+  "last": "2026-08-26",
+  "ever": true
  },
  "Israel Aerospace Industries (IAI)": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "Nokia Israel": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Emendo Biotherapeutics": {
   "sig": 2,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Nuvo": {
   "sig": 7,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Honeywell": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Skyhawk Security": {
   "sig": 2,
@@ -151,11 +187,14 @@
  "Steadicopter": {
   "sig": 0,
   "il": 1,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Compedia": {
   "sig": 51,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
  },
  "GenCell": {
   "sig": 0,
@@ -165,68 +204,86 @@
  "EqualWeb": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Duve": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Versatile": {
   "sig": 0,
   "il": 6,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "SQream": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "L7 Defense": {
   "sig": 0,
-  "il": 53
+  "il": 53,
+  "last": "2026-08-26",
+  "ever": true
  },
  "Andromeda Security": {
   "sig": 5,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "LayerX Security": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Sedric": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "Tarya": {
   "sig": 1,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
  },
  "Wobi": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "RAAAM Memory Technologies": {
   "sig": 0,
   "il": 2,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Addionics": {
   "sig": 5,
   "il": 2,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Fieldin": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "NSLComm": {
   "sig": 21,
-  "il": 5
+  "il": 5,
+  "last": "2026-08-26",
+  "ever": true
  },
  "Sight Diagnostics": {
   "sig": 0,
@@ -236,103 +293,127 @@
  "Sweetch": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Sanolla": {
   "sig": 3,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
  },
  "NRGene": {
   "sig": 1,
   "il": 1,
-  "last": "2026-08-24"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Synopsys": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Goldman Sachs": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Talenya": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "QEDIT": {
   "sig": 2,
-  "il": 2
+  "il": 2,
+  "last": "2026-08-26",
+  "ever": true
  },
  "Criaterra": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Bigabid": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Beamr": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Fetcher": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Rezonate": {
   "sig": 3,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
  },
  "Karamba Security": {
   "sig": 0,
   "il": 6,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "GK8": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-24"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Simplex": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "COTI": {
   "sig": 206,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
  },
  "TipRanks": {
   "sig": 2,
   "il": 4,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Fuse": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Nostromo Energy": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Blue White Robotics": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Salicrop": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Nucleai": {
   "sig": 3,
@@ -341,17 +422,20 @@
  "RADLogics": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "InspireMD": {
   "sig": 0,
   "il": 7,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Quris AI": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Cnoga Medical": {
   "sig": 2,
@@ -360,17 +444,21 @@
  },
  "X (Twitter)": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "Morgan Stanley": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Aptiv": {
   "sig": 10,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Nestle": {
   "sig": 3,
@@ -380,84 +468,109 @@
  "RapidAPI": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Fornova": {
   "sig": 1,
   "il": 4,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Wilk": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-24"
+  "last": "2026-08-26"
  },
  "Yo Egg": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "Noogata": {
   "sig": 5,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
  },
  "1touch.io": {
   "sig": 10,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Cynerio": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "Lasso Security": {
-  "sig": 7,
+  "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "CyCognito": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Radware": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Cyvers": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "Planck": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Ironblocks": {
   "sig": 2,
-  "il": 22
+  "il": 22,
+  "last": "2026-08-26",
+  "ever": true
  },
  "Kahun": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "Twill": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-24"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Beyond Air": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Enzymit": {
   "sig": 0,
-  "il": 14
+  "il": 14,
+  "last": "2026-08-26",
+  "ever": true
  },
  "1E Therapeutics": {
   "sig": 0,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
  },
  "Essence SmartCare": {
   "sig": 0,
@@ -467,17 +580,20 @@
  "ZF": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "SolarEdge Technologies": {
   "sig": 6,
   "il": 3,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "entrypoint": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Yael Korentec Technologies": {
   "sig": 10,
@@ -487,36 +603,44 @@
  "Bookmap": {
   "sig": 4,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Shortical": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Harel Insurance & Finance": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-24"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Tipuli Tech": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "K Logic": {
   "sig": 6,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "90min": {
   "sig": 3,
-  "il": 0
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
  },
  "SMARTECH - A Hexion Company": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "TCM Technologies LTD": {
   "sig": 4,
@@ -529,97 +653,107 @@
  "Boolzai": {
   "sig": 6,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "factify": {
   "sig": 0,
   "il": 1,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Ocean": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Simply": {
   "sig": 0,
   "il": 1,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Bit": {
   "sig": 7,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Enabley": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Sproutt": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "iForex": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Kima": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Silicom": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Better Juice": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Everysight": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Pluri": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Phytech": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Apex Security": {
   "sig": 0,
   "il": 6,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Intuition Robotics": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "FDNA": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Comcast": {
-  "sig": 14,
+  "sig": 15,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "StemRad": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Tevel Aerobotics Technologies": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Enigmatos": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "CytoReason": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "NeuroBlade": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Mobb": {
   "last": "2026-08-24"
  },
  "Privya": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Refine Intelligence": {
   "sig": 1,
@@ -627,112 +761,124 @@
   "last": "2026-08-24"
  },
  "Temi (Robotemi)": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Rafael Advanced Defense Systems": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Tritone Technologies": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Belong.Life": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "CorNeat Vision": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Continuse Biometrics": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Somatix": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Unity": {
-  "last": "2026-08-24"
+  "last": "2026-08-26"
  },
  "Sony (PlayStation)": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "UBS": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "LightSolver": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Voiceitt": {
   "sig": 0,
   "il": 4,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Namogoo": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Beach Bum": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Anetac": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Cyabra": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Cynamics": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Captain's Eye": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Plasan": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Qualcomm Israel": {
-  "last": "2026-08-24"
+  "last": "2026-08-26"
  },
  "Kai.ai": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "MedAware": {
-  "last": "2026-08-24"
+  "last": "2026-08-26"
  },
  "Nutanix": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Forsea Foods": {
   "sig": 4,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Datorios": {
   "sig": 2,
   "il": 0,
-  "last": "2026-08-24"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Finaro": {
   "sig": 1,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Cipia": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Watergen": {
-  "last": "2026-08-24"
+  "sig": 9,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
  },
  "SupPlant": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-24"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Tesla": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Kubiya": {
   "sig": 1,
@@ -740,99 +886,380 @@
   "last": "2026-08-24"
  },
  "expressvpn": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "everc": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-24"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Medison Pharma": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "zap group": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "MSD": {
   "sig": 4,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "AGILINA": {
   "last": "2026-08-24"
  },
  "Pliops": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Cogniteam": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Salvador Technologies": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Wanda Fish": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Colu": {
   "sig": 4,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Curesponse": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Innplay Labs": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Constru": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Tevel Aerobotics": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Nanomedic": {
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Keter": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Tailor Brands": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "HAAT Delivery": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "Kendago": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "TERMINAL X": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": false
  },
  "FrontStory": {
   "sig": 0,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26"
  },
  "Black Rabbit": {
   "sig": 3,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
  },
  "Deloitte": {
   "sig": 22,
   "il": 0,
-  "last": "2026-08-25"
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "Loris": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Piiano": {
+  "sig": 7,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "SatixFy": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "SeeTree": {
+  "sig": 0,
+  "il": 1,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "MetoMotion": {
+  "sig": 0,
+  "il": 1,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "Biomica": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Siemens Healthineers": {
+  "last": "2026-08-26"
+ },
+ "Informatica": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Anagog": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Product Madness": {
+  "last": "2026-08-26"
+ },
+ "Air Doctor": {
+  "sig": 3,
+  "il": 3,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "ChickP": {
+  "last": "2026-08-26"
+ },
+ "eSelf.ai": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Iguazio": {
+  "sig": 4,
+  "il": 6,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "Rookout": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Cyberint": {
+  "last": "2026-08-26"
+ },
+ "Fintica": {
+  "sig": 6,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "SatixFy Space": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Sensibo": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Cognifit": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Roblox": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Jelly Button Games": {
+  "sig": 0,
+  "il": 6,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "DockTech": {
+  "sig": 1,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "ElMindA": {
+  "last": "2026-08-26"
+ },
+ "Autoliv": {
+  "sig": 2,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "Talon Cyber Security": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Israel Aerospace Industries": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "PlayerMaker": {
+  "last": "2026-08-26"
+ },
+ "Feedvisor": {
+  "sig": 3,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "Brevel": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Upsolver": {
+  "last": "2026-08-26"
+ },
+ "Knostic": {
+  "sig": 3,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "Cyberbit": {
+  "last": "2026-08-26"
+ },
+ "SpacePharma": {
+  "last": "2026-08-26"
+ },
+ "Temi": {
+  "sig": 0,
+  "il": 2,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "Track160": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Tortech Nano Fibers": {
+  "sig": 0,
+  "il": 2,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "Votiro": {
+  "sig": 3,
+  "il": 1,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "WeSpace Technologies": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Vocalis Health": {
+  "last": "2026-08-26"
+ },
+ "Renesas Electronics": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "SolarGik": {
+  "sig": 2,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "EY": {
+  "sig": 0,
+  "il": 80,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "VYBS": {
+  "sig": 1,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "Phoenix Financial": {
+  "sig": 4,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "ICE": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "Orca-AI": {
+  "sig": 1,
+  "il": 5,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "One Step": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": false
+ },
+ "yad2": {
+  "sig": 2,
+  "il": 0,
+  "last": "2026-08-26",
+  "ever": true
+ },
+ "Tonic Security": {
+  "sig": 0,
+  "il": 6,
+  "last": "2026-08-26",
+  "ever": true
  }
 }

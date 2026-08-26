@@ -1,6 +1,6 @@
 {
- "date": "2026-08-25",
+ "since": "2026-08-26",
  "alarms": [
-  "1 parked rows owned by NO recurring job (retired coverage): SeeTree"
+  "re-check pool grew: probe_candidates 127 -> 224 (a predicate widened?)"
  ]
 }
