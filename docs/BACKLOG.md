@@ -3157,7 +3157,10 @@ re-derive again before acting.
     37. state is the accurate one; use replay2 for LOST/GAINED, not for absolute counts.
 
 244. **A deadline that cuts strategy 4 short loses the prefix's wall evidence** — lane:
-    `scraper`. On the `deadline.expired()` early return, `worst` is never assigned, so
+    `scraper`. **CLOSED 2026-08-26 (evening):** the early return now carries the prefix's
+    `walled`/`statuses` into the outcome, so a fully-walled board that ran out of budget
+    reports `links:blocked:<vendor>` and not a bare `deadline:links`. Pinned by
+    `test_scrape_a_budget_cut_still_reports_why_the_pages_would_not_open`. Was: On the `deadline.expired()` early return, `worst` is never assigned, so
     `out.walled` / `out.statuses` stay empty and a fully-walled prefix that ran out of budget
     reports `deadline:links` (runner-shaped, carried, never parked) instead of
     `links:blocked:<vendor>`. Both carry, so no jobs are lost; what is lost is the reason, on
@@ -3165,7 +3168,12 @@ re-derive again before acting.
     often now that 23 of 81 boards run strategy 4 (wave-1 attacker A).
 
 245. **The synthetic worker dicts do not carry the fields the real one does** — lane:
-    `scraper`. `_result_of`'s `pool:` dict and the inline `hang:` dict omit `weak_read`,
+    `scraper`. **CLOSED 2026-08-26 (evening):** one builder, `_never_ran(name, code, seconds)`,
+    for every "the scraper never got to read this company" result — the worker raised, the
+    pool died, the process hung. `test_refresh_a_company_that_never_ran_has_one_shape`
+    asserts its keys equal a REAL result's, that every code it carries is runner-shaped (so
+    the night carries the company's jobs and never parks the row), and that the module builds
+    no second one. Was: `_result_of`'s `pool:` dict and the inline `hang:` dict omit `weak_read`,
     `llm_skipped` and `rescued`; `_worker`'s `except` branch omits `weak_read`. Nothing breaks
     today because every consumer uses `.get()`, and the next reader who uses `[]` will get a
     `KeyError` on exactly the paths that fire only in the cloud (wave-1 attacker C). One

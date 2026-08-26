@@ -9138,3 +9138,54 @@ def test_scrape_a_live_response_outranks_the_copy_embedded_beside_it():
     add2, jobs2 = N._make_adder("QM", "https://qm.example/careers")
     N._from_structured(N._structured_objects([blob], []), add2)
     assert len(jobs2) == 1 and jobs2[0]["url"] == "https://qm.teamme.link/jobs/13.05B"
+
+
+def test_scrape_a_budget_cut_still_reports_why_the_pages_would_not_open():
+    """BACKLOG 244 (`scraper` 2026-08-26 evening): on the deadline's early return the
+    prefix's `walled`/`statuses` were dropped, so a fully-walled board that ran out of budget
+    reported `deadline:links` instead of `links:blocked:<vendor>`. Both carry and neither
+    parks, so no jobs were lost — what was lost is the one thing BACKLOG 215 tells the
+    operator to read on those rows, and 23 of 81 boards now reach strategy 4."""
+    import scrape_universal as N
+    url = "https://co.example/careers/"
+    page = "".join('<a href="/careers-position/r%d/">Role %d</a>' % (i, i) for i in range(6))
+    wall = "<html><title>Just a moment...</title>cf-browser-verification</html>"
+    calls = {"n": 0}
+
+    def fetch(u, t, *a, **k):
+        calls["n"] += 1
+        return (wall, 200)
+
+    class Dying(N.Deadline):
+        def expired(self):
+            return calls["n"] >= 3
+
+        def remaining(self):
+            return 0.0 if calls["n"] >= 3 else 50.0
+
+    add, _ = N._make_adder("Co", url)
+    out = N._from_position_links(page, url, add, fetch=fetch, deadline=Dying.start(100),
+                                 visit=lambda *a, **k: {})
+    assert out.truncated and out.attempted == 3
+    assert out.code() == "links:blocked:cloudflare", out.code()
+
+
+def test_refresh_a_company_that_never_ran_has_one_shape():
+    """BACKLOG 245 (`scraper` 2026-08-26 evening): three hand-copied dicts described "the
+    scraper never got to read this company" — the worker raised, the pool died, the process
+    hung — and they had already drifted apart (two lacked `weak_read`, all three lacked
+    `llm_skipped`). Every consumer is one `[]` away from a KeyError on paths that fire only
+    in the cloud, so there is one builder now, and every code it carries is runner-shaped:
+    such a night carries the company's jobs and never parks its row."""
+    import refresh_scrape_cache as R
+    import inspect
+    real = R._worker(("Nope", "https://nope.example/careers"))          # a real result's keys
+    for code in ("worker:RuntimeError", "pool:BrokenProcessPool", "hang:>450s"):
+        d = R._never_ran("Co", code, 1.0)
+        assert set(d) == set(real), set(real) ^ set(d)
+        assert d["status"] == "error" and d["jobs"] == [] and d["name"] == "Co"
+        assert not R._parkable(R._code(d)), code
+        assert R._shape(R._code(d)) == "runner", code
+    # ...and nothing hand-builds one beside it any more
+    src = inspect.getsource(R)
+    assert src.count('"status": "error"') == 1, "one builder, not four"

@@ -1685,7 +1685,9 @@ that empties parked; the code had said 7 / never since 2026-08-23):
   the row and re-park it a week later (a churn loop; 11 of the 23 error rows on 2026-08-25
   were this shape); its streak keeps counting in `scrape_rot.json` (`error`, `http`, `n`)
   and the carry expires as usual. **A streak is one shape of error** — `links`, `ip`,
-  `weak`, `runner`, `page` (`rot[name]["shape"]`): a shape change starts a new streak, so
+  `weak`, `runner`, `page` (`rot[name]["shape"]`) — a company the scraper never reached
+  at all (`worker:` / `pool:` / `hang:`) is built by one `_never_ran`, so those three
+  results cannot drift apart in shape as they had. A shape change starts a new streak, so
   twenty carried `links:` nights can never fund the carry expiry or the park clock of one
   page-shaped night from the same cloaking WAF (wave-1 attacker B). Two clocks deliberately
   survive a shape change, because the thing they measure does not: `ip_since` (how long the

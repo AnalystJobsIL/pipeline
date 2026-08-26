@@ -196,6 +196,19 @@ class RunState:
 # ---------------------------------------------------------------------------------------------
 # the scrape, in or out of process
 # ---------------------------------------------------------------------------------------------
+def _never_ran(name, error, seconds=0.0):
+    """A result for a company the scraper never got to read — the worker raised, the pool
+    died, the process hung. ONE builder, because there were three hand-copied copies and they
+    had already drifted: two lacked `weak_read`, all three lacked `llm_skipped`, and every
+    consumer is a `.get()` away from a `KeyError` on paths that only ever fire in the cloud
+    (BACKLOG 245, `scraper` 2026-08-26 evening). Every code it carries is runner-shaped, so
+    such a night carries the company's jobs and never parks the row."""
+    return {"name": name, "jobs": [], "status": "error", "error": error, "http_status": None,
+            "strategy": "", "rescued": False, "weak_read": False, "llm_calls": 0,
+            "llm_error": "", "llm_skipped": 0, "unlock_calls": 0, "unlock_ok": 0,
+            "seconds": seconds}
+
+
 def _worker(task):
     """Runs in a pool process (or inline). Returns a plain dict — nothing but str/list/float
     crosses the pickle boundary. Must never raise: a raised worker loses its slot."""
@@ -214,11 +227,7 @@ def _worker(task):
                 "unlock_ok": int(getattr(res, "unlock_ok", 0) or 0),
                 "seconds": round(res.elapsed_s, 1)}
     except BaseException as e:  # noqa: BLE001
-        return {"name": name, "jobs": [], "status": "error",
-                "error": f"worker:{type(e).__name__}", "http_status": None, "strategy": "",
-                "llm_calls": 0, "llm_error": "", "llm_skipped": 0,
-                "unlock_calls": 0, "unlock_ok": 0,
-                "seconds": round(time.time() - t0, 1)}
+        return _never_ran(name, f"worker:{type(e).__name__}", round(time.time() - t0, 1))
 
 
 def _scrape_all(rows, *, workers, budget_min=0, pool_cls=None, grace_s=600, worker=None,
@@ -294,11 +303,7 @@ def _scrape_all(rows, *, workers, budget_min=0, pool_cls=None, grace_s=600, work
                         yield _result_of(f, futs[f])
                     for f in pending:
                         if not f.cancelled():
-                            yield {"name": futs[f], "jobs": [], "status": "error",
-                                   "error": f"hang:>{int(stall_s)}s", "http_status": None,
-                                   "strategy": "", "rescued": False, "llm_calls": 0,
-                                   "llm_error": "", "unlock_calls": 0, "unlock_ok": 0,
-                                   "seconds": float(stall_s)}
+                            yield _never_ran(futs[f], f"hang:>{int(stall_s)}s", float(stall_s))
                     break
         finally:
             children = _children_of(ex)
@@ -335,9 +340,7 @@ def _result_of(fut, name):
     exc = fut.exception()
     if exc is None:
         return fut.result()
-    return {"name": name, "jobs": [], "status": "error", "error": f"pool:{type(exc).__name__}",
-            "http_status": None, "strategy": "", "llm_calls": 0, "llm_error": "",
-            "unlock_calls": 0, "unlock_ok": 0, "seconds": 0.0}
+    return _never_ran(name, f"pool:{type(exc).__name__}")
 
 
 # ---------------------------------------------------------------------------------------------

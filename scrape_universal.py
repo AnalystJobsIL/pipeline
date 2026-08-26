@@ -1272,6 +1272,13 @@ def _from_position_links(page_html, url, add, fetch=_fetch_url, deadline=None,
                 out.attempted += this.attempted
                 out.opened += this.opened
                 found_any |= board.flush()
+                # ...and keep WHY the pages we did try failed. The budget running out used to
+                # discard the prefix's `walled`/`statuses`, so a fully-walled board that ran
+                # out of time reported `deadline:links` — carried and never parked, like
+                # `links:blocked:<vendor>`, but without the one thing BACKLOG 215 asks the
+                # operator to read (BACKLOG 244, `scraper` 2026-08-26 evening).
+                if this.unreadable() and worst is None:
+                    out.walled, out.statuses = this.walled, this.statuses
                 return out
             tmo = page_timeout_s if deadline is None else min(page_timeout_s, deadline.remaining())
             ph, st = _pair(fetch(u2, tmo))
