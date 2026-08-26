@@ -40,7 +40,11 @@ _SCHEMA = json.dumps({
     "additionalProperties": False,
 }, separators=(",", ":"), sort_keys=True)
 
-# ONE line. The search mandate is the same load-bearing sentence as the researcher's: a
+# ONE line. The search mandate is the same load-bearing sentence
+# A prompt must contain no newline and no %% pair: cmd.exe truncates an argv element
+# at a newline, and when `claude` resolves to a .cmd it EXPANDS %VAR% from the
+# environment -- with CLAUDE_CODE_OAUTH_TOKEN in the runner's env that would
+# interpolate a secret into a prompt (wave-1, latent: no prompt contains one today). as the researcher's: a
 # headcount answered from memory is the stalest field in the record (measured 2026-08-26).
 _SYSTEM = (
     "You look up one company's current global employee count and answer ONLY through the "

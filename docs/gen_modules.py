@@ -57,6 +57,7 @@ CLASS = {
  "bd_employees": ("operator", "LinkedIn employee-count fill via the Web Unlocker, 1 credit/page. Same Windows chain"),
  "fill_employees_llm": ("operator", "re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Same Windows chain"),
  "company_type_analysis": ("operator", "joins firmographics with matched jobs -> out/company_type_analysis.{json,md} (ARCHITECTURE.md section 7)"),
+ "firmo_death_watch": ("operator", "READ-ONLY: companies the researcher found shut down or absorbed while their registry row is still active, proposed for parking (BACKLOG 244; the write is registry's)"),
  "firmo_health_check": ("operator", "tripwire: is the firmographics chain actually classifying anything?"),
  "verify_company": ("operator", "live-fetch verification of one company's endpoint - the research discipline as a script"),
  "cache_new_rows": ("operator", "superseded shim: delegates to `refresh_scrape_cache.py --only-missing` (docs/BACKLOG.md 87 retires it)"),

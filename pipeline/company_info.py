@@ -27,6 +27,10 @@ _SCHEMA = _json.dumps({
 }, separators=(",", ":"), sort_keys=True)
 
 # ONE line (cmd.exe truncates an argv element at a newline).
+# A prompt must contain no newline and no %% pair: cmd.exe truncates an argv element
+# at a newline, and when `claude` resolves to a .cmd it EXPANDS %VAR% from the
+# environment -- with CLAUDE_CODE_OAUTH_TOKEN in the runner's env that would
+# interpolate a secret into a prompt (wave-1, latent: no prompt contains one today).
 _SYSTEM = (
     "You write one About line for an Israeli job board and answer ONLY through the schema. "
     "blurb: 2 short plain-English sentences - (1) what the company does, (2) how it makes "

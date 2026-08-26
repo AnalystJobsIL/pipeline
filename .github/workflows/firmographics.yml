@@ -96,6 +96,31 @@ jobs:
           PY
         continue-on-error: true
 
+      - name: Company death watch (read-only proposals)
+        # BACKLOG 244. The researcher keeps discovering that a listed company shut down or
+        # was absorbed, and that knowledge used to die in a stage_note while the row stayed
+        # active and its board was fetched every morning. READ-ONLY and no --apply: parking
+        # a row is `registry`'s write, and an acquired company usually still hires (Wiz is
+        # acquired-by-bigtech and hiring), so a plausible automatic verdict that removes a
+        # live employer is ARCHITECTURE section 8's first failure class.
+        if: always()
+        run: python firmo_death_watch.py --summary >> "$GITHUB_STEP_SUMMARY"
+        continue-on-error: true
+
+      - name: Requirement mix by company type
+        # `company_type_analysis.py` was hand-run only, so it silently rotted when the record
+        # shape changed underneath it. Running it here means it is exercised every day
+        # against the real export, in the cloud, like everything else.
+        if: always()
+        run: |
+          python company_type_analysis.py --firmo cloud_state/firmographics.json \
+            --db cloud_state/seen.db
+          # it PRINTS a plain-text join report and WRITES the markdown; the summary
+          # wants the markdown, capped so one sector table cannot bury the page
+          echo "### Requirement mix by company type" >> "$GITHUB_STEP_SUMMARY"
+          head -40 out/company_type_analysis.md >> "$GITHUB_STEP_SUMMARY"
+        continue-on-error: true
+
       - name: Commit the export
         # ONLY cloud_state/firmographics.json. NOT cloud_state/seen.db, which is
         # `SINGLE_WRITER: daily-digest` in persist_state.STRATEGY -- a second writer would

@@ -70,6 +70,44 @@ def fetch_cloud_db():
         return None
 
 
+def _failure_union(st, cloud_db):
+    """Every machine's failure memory, latest strike per company.
+
+    `firmo_failed` is per-STORE, and until 2026-08-26 two machines researched: the runner and
+    the owner's laptop. They kept separate memories, so "struck, retry in a week" meant
+    different things depending on where the call landed -- demonstrated in the cloud that
+    evening, when the runner saw `8 to do` against the laptop's `3 to do (5 gated)`, and the
+    runner then re-bought two names the laptop had already struck.
+
+    The durable fix is one researcher, which is what the 10:00 UTC cron is for
+    (`docs/BACKLOG.md` 97): with the laptop chain retired this union reads one store and
+    costs nothing. Until then it stops the two from paying for each other's failures.
+    Latest `last` wins, and the higher attempt count with it, so a name approaching the
+    4-strike refresh eviction cannot be reset by the other machine's fresher single strike.
+    """
+    out = dict(st.load_firmo_failures())
+    if not cloud_db or not os.path.exists(cloud_db):
+        return out
+    try:
+        import sqlite3
+        con = sqlite3.connect(f"file:{cloud_db}?mode=ro", uri=True)
+        rows = list(con.execute("SELECT company, attempts, last FROM firmo_failed"))
+        con.close()
+    except Exception as e:  # noqa: BLE001 — a missing table is not an error worth a run
+        print(f"  (other store's failure memory unreadable: {e!r})")
+        return out
+    added = 0
+    for company, attempts, last in rows:
+        have = out.get(company)
+        if have is None or str(last) > str(have[1]):
+            out[company] = (max(int(attempts or 0), int((have or (0,))[0] or 0)), last)
+            added += have is None
+    if added:
+        print(f"failure memory: +{added} name(s) struck on the other store "
+              f"(split-brain, BACKLOG 243)")
+    return out
+
+
 def _stamp_ok():
     """Write the health heartbeat firmo_health_check.py watches."""
     os.makedirs(os.path.join(HERE, "state"), exist_ok=True)  # gitignored: absent on a fresh clone
@@ -163,7 +201,7 @@ def main():
     # (that starved real refreshes), and permanently failing refreshes (4+ strikes ~ a
     # month of weekly retries) are evicted from the refresh layer entirely so squatters
     # can never consume the whole cap once the store ages
-    failures = st.load_firmo_failures()
+    failures = _failure_union(st, cloud_db)
     week_ago = (dt.date.today() - dt.timedelta(days=7)).isoformat()
     failed_norms = {identity_key(c) for c, (att, last) in failures.items() if last > week_ago}
     refresh_abandoned = {c for c, (att, last) in failures.items() if att >= 4}

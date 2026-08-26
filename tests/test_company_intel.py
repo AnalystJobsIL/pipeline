@@ -9,6 +9,7 @@ the one CLI seam (`firmographics._claude`) is monkeypatched.
     python -m pytest tests/test_company_intel.py -q
 """
 import datetime as dt
+import datetime as _dt
 import json
 import os
 import subprocess
@@ -1180,3 +1181,67 @@ def test_research_company_accepts_meta_positionally_as_the_workers_pass_it():
     import inspect
     names = list(inspect.signature(F.research_company).parameters)
     assert names[:4] == ["company", "context", "timeout", "meta"], names
+
+
+# --- BACKLOG 244: the death watch proposes, it never writes ------------------------------
+
+_DW_ROWS = [{"company_name": "DeadCo", "active": "true", "notes": "scanned daily"},
+            {"company_name": "LiveCo", "active": "true", "notes": "scanned daily"},
+            {"company_name": "ParkedCo", "active": "false", "notes": "parked"}]
+
+
+def _dw(stage_note, stage="growth-private", extra=None, rows=None, last=None):
+    import firmo_death_watch as DW
+    rec = {"sector": "x", "stage": stage, "stage_note": stage_note, **(extra or {})}
+    return DW.candidates({"DeadCo": rec}, rows or _DW_ROWS, last or {}, 30,
+                         today=_dt.date(2026, 8, 27))
+
+
+def test_the_death_watch_needs_both_signals():
+    """One signal is not evidence. The record can say a company is gone while the row is
+    still producing roles (a rebrand, a subsidiary), and a quiet row is usually just quiet."""
+    prop, dropped = _dw("shut down Dec 2025 after funds ran out")
+    assert [p["company"] for p in prop] == ["DeadCo"], prop
+    assert "no matched role since ever" in prop[0]["registry_signal"]
+    # signal 2 absent: the row is still producing roles
+    prop, dropped = _dw("shut down Dec 2025", last={"DeadCo": "2026-08-26"})
+    assert not prop and dropped[0][1].startswith("still producing")
+    # signal 1 absent: a plain acquisition is NOT death — an acquired company usually hires
+    prop, _ = _dw("Acquired by Google for $32B, closed 2026-03")
+    assert not prop, "a plain acquisition must never be proposed"
+    # a public company's note about a shutdown is a plant or a product line, not the company
+    prop, dropped = _dw("closed down its Haifa plant in 2025", stage="public")
+    assert not prop and dropped[0][1] == "stage=public"
+    # an already-parked row is nobody's problem
+    prop, _ = _dw("shut down", rows=[{"company_name": "DeadCo", "active": "false", "notes": ""}])
+    assert not prop
+
+
+def test_the_death_watch_reads_stage_note_only():
+    """Scanning the descriptive fields proposed FundGuard (sub_sector: 'fund accounting and
+    administration') and Ryltech ('database administration') as insolvent. A word that names
+    a company's PRODUCT is not evidence about its survival."""
+    prop, _ = _dw("$100M Series C led by Key1 Capital (Mar 2024)",
+                  extra={"sub_sector": "fund accounting and administration platform",
+                         "business_model": "SaaS for fund administration"})
+    assert not prop, "a business description must not read as insolvency"
+
+
+def test_the_death_watch_cannot_write_anything():
+    """Parking a row is `registry`'s write, and a plausible automatic verdict that removes a
+    live employer is ARCHITECTURE section 8's first failure class. It must have no --apply."""
+    import inspect
+
+    import firmo_death_watch as DW
+    src = inspect.getsource(DW)
+    # the PARSER, not the prose: the docstring says "no --apply" and must stay allowed to
+    assert 'add_argument("--apply"' not in src, "this script must never gain an --apply"
+    assert not [f for f in ("--apply", "-y") if f in (DW.main.__doc__ or "")]
+    for forbidden in ("notes.append", "write_csv", "save_companies", "record_firmo_failure"):
+        assert forbidden not in src, forbidden
+    # the only writes are the optional --json report and stdout
+    assert src.count("open(") - src.count('open(a.firmo') - src.count("open(CSV_PATH") <= 2
+    # and it hands the registry a paste-ready note in the shape ARCHITECTURE section 6 wants
+    prop, _ = _dw("shut down Dec 2025")
+    assert prop[0]["proposed_note"].startswith("defunct 2026-08-27: ")
+    assert "firmographics as_of" in prop[0]["proposed_note"]

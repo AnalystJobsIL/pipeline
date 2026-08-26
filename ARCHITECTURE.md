@@ -111,7 +111,7 @@ on a bare title is re-judged once the description arrives (distinct from a row's
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And **34 of the 78 workflow steps carry `continue-on-error: true`** (counted 2026-08-25 by
+And **36 of the 80 workflow steps carry `continue-on-error: true`** (counted 2026-08-25 by
 `docs/check_docs.py`, which fails if this sentence and the workflows disagree; nine of the 35
 are the `Stage stamps on the run page` / CLI-install steps added that day, tolerated on
 purpose — their outcome is what the mail and the run page read, never the badge), so a hard
@@ -1846,7 +1846,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
 - "Why isn't company X in my email?" → §5b above (ordered runbook).
 - "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
 - "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
-  **34 of the 78 workflow steps are `continue-on-error`, so a green run can still hide a
+  **36 of the 80 workflow steps are `continue-on-error`, so a green run can still hide a
   failed step** — read the step, not the badge.
 - Coverage snapshot:
   ```bash
@@ -2185,7 +2185,34 @@ on 2 of 3 calls at 3. Research is one-time per company — nothing re-researches
 It reports its own spend the way the digest hook does (`seam: <model> | N calls, Ns, N
 searches[, N SEARCHLESS]`, and a `::warning::` on a searchless answer): it is the **main**
 spender now, and a job that spends the shared subscription invisibly is how the search mandate
-quietly stops holding.
+quietly stops holding. Its failure memory is the **union** of both stores' `firmo_failed`,
+latest strike winning — while two machines researched, each was re-buying names the other had
+already struck (the cloud saw `8 to do` against the laptop's `3 to do (5 gated)`); once the
+laptop chain is retired that union reads one store and costs nothing.
+
+Two more steps run there, both read-only, both because a tool nobody runs is a tool that
+rots — `company_type_analysis.py` was hand-run only and silently kept working against a
+record shape that had changed underneath it:
+
+- **`firmo_death_watch.py`** — the companies the researcher found shut down or absorbed while
+  their registry row is still active and quiet. It has **no `--apply`**: parking a row is
+  `registry`'s write, and an acquired company usually still hires (Wiz is
+  `acquired-by-bigtech` and hiring), so a plausible automatic verdict that removes a live
+  employer is §8's first failure class. **Two signals are required** — this lane's (the
+  `stage_note` matches a shutdown phrase AND `stage != public`) and the registry's own (the
+  row is active AND has produced no matched role in ≥30 days, or its notes already say the
+  board is empty). It reads **`stage_note` only**: scanning the descriptive fields proposed
+  FundGuard (`sub_sector`: "fund accounting and administration") and Ryltech ("database
+  administration") as insolvent, because a word that names a company's product is not
+  evidence about its survival. On 2026-08-27 it proposes **8** — Believer Meats, BionicHIVE,
+  Castor, Comeet, Highcon, Primis, XACT Robotics, aspectiva — with 7 more carrying this
+  lane's signal but not the registry's. *Known limit, stated because a reviewer will meet
+  it:* a `stage_note` can describe a **third party's** fate — Primis's says "IPG merged into
+  Omnicom", which is its parent's parent. No regex separates the subject from the sentence,
+  which is exactly why this proposes and a human decides.
+- **`company_type_analysis.py`** — the requirement mix by sector / stage / size_band, into
+  the step summary. Free-text sectors collapse through `primary_sector()`'s alias table;
+  extend the table, never the stored records.
 
 **Validated in the cloud, 2026-08-26 20:54 UTC** (one `workflow_dispatch` at `limit=3`, run
 record deleted per `CLAUDE.local.md` §3). What it produced, not that it was green:
@@ -2296,9 +2323,13 @@ company we know about researched?" is answered every morning instead of re-deriv
 
 `company_type_analysis.py` joins matched jobs with the committed export (`--firmo` to
 override), runs `pipeline/roleprofile.py::extract` per job and aggregates requirement stats
-along sector / stage / size_band → `out/company_type_analysis.{json,md}`. Free-text sectors
-collapse through `primary_sector()`'s alias table there; extend the table, don't edit stored
-records.
+along sector / stage / size_band → `out/company_type_analysis.{json,md}`. It runs in the
+10:00 UTC workflow now, not only by hand. A name `not_a_company` refuses is excluded from
+its "unprofiled companies" list — reporting `Tel Aviv` as a coverage gap forever is how a
+non-company becomes a standing to-do. Free-text sectors collapse through
+`primary_sector()`'s alias table; extend the table, don't edit stored records — on
+2026-08-27 it was splitting `travel tech`/`traveltech` and `sports tech`/`sports analytics`
+into separate rows and halving both counts.
 
 ### Guards and how to rehearse
 

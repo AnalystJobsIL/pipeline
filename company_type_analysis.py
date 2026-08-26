@@ -26,7 +26,7 @@ from collections import Counter, defaultdict
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from pipeline import roleprofile
-from pipeline.firmographics import SHARED_EXPORT, identity_key
+from pipeline.firmographics import not_a_company, SHARED_EXPORT, identity_key
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 # the COMMITTED export — `state/firmographics.json` is gitignored and absent in the cloud
@@ -48,6 +48,19 @@ _SECTOR_ALIASES = [
                                   "platform engineering", "data infrastructure", "observability")),
     ("e-commerce / marketplace", ("e-commerce", "ecommerce", "marketplace", "retail tech")),
     ("IT services", ("it services", "consulting", "outsourcing", "recruitment", "staffing")),
+    # measured 2026-08-27 over the live 127-job join: these split the same sector in two and
+    # halve both rows' counts. Extend the TABLE, never the stored records (ARCHITECTURE 7).
+    ("travel tech", ("travel",)),
+    ("sports tech", ("sports",)),
+    ("media / entertainment", ("media", "entertainment", "social media", "streaming")),
+    ("logistics / supply chain", ("logistic", "supply chain", "shipping", "maritime")),
+    ("foodtech", ("foodtech", "food & beverage", "food and beverage", "agritech", "agtech")),
+    ("cleantech / energy", ("cleantech", "energy", "solar", "climate")),
+    ("defense / aerospace", ("defense", "defence", "aerospace", "drone", "space")),
+    ("HR tech", ("hr tech", "hrtech", "human resources", "talent")),
+    ("edtech", ("edtech", "education")),
+    ("real estate / proptech", ("proptech", "real estate", "construction")),
+    ("consumer apps", ("consumer mobile", "consumer internet", "consumer apps")),
 ]
 
 
@@ -129,6 +142,13 @@ def main():
             # until the verify pass confirms (verified windows can lag under outages).
             rec = {**rec, "size_band": "", "employees_global": None}
         joined.append((roleprofile.extract(title, desc or ""), rec, company))
+    # A name the money gate refuses is not an unprofiled COMPANY -- reporting `Tel Aviv`
+    # as a coverage gap forever is how a non-company becomes a standing to-do item.
+    refused = {c for c in unmatched if not_a_company(c)}
+    for c in refused:
+        unmatched.pop(c, None)
+    if refused:
+        print(f"  not companies, excluded: {', '.join(sorted(refused))}")
     print(f"{len(jobs)} matched jobs, {len(joined)} joined to firmographics, "
           f"{sum(unmatched.values())} jobs at {len(unmatched)} unprofiled companies")
     if unmatched:

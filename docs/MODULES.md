@@ -11,9 +11,9 @@ The `runs in` and `imported by` columns are **computed from the code**, not type
 |---|---|---|
 | `scheduled` | a workflow invokes it | 26 |
 | `library` | no workflow runs it; live code imports it | 9 |
-| `operator` | a human or agent runs it; nothing in CI does | 9 |
+| `operator` | a human or agent runs it; nothing in CI does | 10 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
-| | **total root modules** | **69** |
+| | **total root modules** | **70** |
 
 `pipeline/` is listed at the end. Lane ownership for all of these is in `docs/AGENT_BRIEF.md`.
 
@@ -38,7 +38,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `health_check.py` | self-heal | weekly backstop to the free health detection inside pipeline.run |
 | `listing_hunt.py` | listing-hunt | finds the real listings URL for dark rows and verifies it; the 200-minute night job |
 | `mark_sent.py` | daily-digest | marks a produced digest's roles delivered - records intent, not delivery (see docs/BACKLOG.md) |
-| `persist_state.py` | audit-coverage, auto-expand, daily-digest, listing-hunt, retry-unreachable, scrape-refresh, self-heal, triage-dark | the one commit/pull-rebase/push path every state-committing workflow calls: gates the owned files, merges each by its own rule on a push conflict; `outcome` writes the digest's failure notice and cloud_state/last_run.json (ARCHITECTURE §4) |
+| `persist_state.py` | audit-coverage, auto-expand, daily-digest, firmographics, listing-hunt, retry-unreachable, scrape-refresh, self-heal, triage-dark | the one commit/pull-rebase/push path every state-committing workflow calls: gates the owned files, merges each by its own rule on a push conflict; `outcome` writes the digest's failure notice and cloud_state/last_run.json (ARCHITECTURE §4) |
 | `probe_candidates.py` | daily-digest | cheap daily signal probe of monitored-candidate pages; wakes rows for the hunt |
 | `refresh_scrape_cache.py` | scrape-refresh | 00:00 pooled re-render of every scrape row: error/empty rot, JD carry-forward, park after 7 error nights, the `collect` stamp the mail prints (ARCHITECTURE §5a) |
 | `registry_health.py` | daily-digest, listing-hunt | read-only registry census + row-deletion guard, recomputed re-check ownership matrix, per-tool pool floors, and the unsupported-ATS build queue. `--census` and `--ladder` are the only things it writes; `alarms_state()` is what the daily mail prints; `--explain "<name>"` answers "why was this row activated/refused" offline |
@@ -77,6 +77,7 @@ Live and documented, but nothing in CI calls them. The firmographics three are d
 | `cache_new_rows.py` | superseded shim: delegates to `refresh_scrape_cache.py --only-missing` (docs/BACKLOG.md 87 retires it) |
 | `company_type_analysis.py` | joins firmographics with matched jobs -> out/company_type_analysis.{json,md} (ARCHITECTURE.md section 7) |
 | `fill_employees_llm.py` | re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Same Windows chain |
+| `firmo_death_watch.py` | READ-ONLY: companies the researcher found shut down or absorbed while their registry row is still active, proposed for parking (BACKLOG 244; the write is registry's) |
 | `firmo_health_check.py` | tripwire: is the firmographics chain actually classifying anything? |
 | `research_firmographics.py` | bulk firmographics research + `--export`. Run every 6h by the Windows task `IsraeliJobs-Firmographics` via run_firmo_chain.cmd |
 | `setup_brightdata.py` | one-time: store the Bright Data token + zone in secrets.env |

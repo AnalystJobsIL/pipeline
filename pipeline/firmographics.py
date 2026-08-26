@@ -344,7 +344,11 @@ EMPLOYEES_MODEL = os.environ.get("FIRMO_EMPLOYEES_MODEL", "sonnet")
 EMPLOYEES_EFFORT = os.environ.get("FIRMO_EMPLOYEES_EFFORT", "low")
 SEARCH = ("WebSearch",)
 
-# ONE line, deliberately. `shutil.which` resolves claude.CMD on Windows and cmd.exe truncates
+# ONE line, deliberately.
+# A prompt must contain no newline and no %% pair: cmd.exe truncates an argv element
+# at a newline, and when `claude` resolves to a .cmd it EXPANDS %VAR% from the
+# environment -- with CLAUDE_CODE_OAUTH_TOKEN in the runner's env that would
+# interpolate a secret into a prompt (wave-1, latent: no prompt contains one today). `shutil.which` resolves claude.CMD on Windows and cmd.exe truncates
 # an argv element at a newline -- the classifier lane shipped 116 of 1,336 characters of
 # rules that way (ARCHITECTURE.md 7b, wave 1).
 #
