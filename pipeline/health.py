@@ -101,6 +101,19 @@ def zero_is_a_measurement(platform):
     return plat in _PSEUDO_OR_BY_DESIGN or israel_scoped(plat)
 
 
+def _int(value, default):
+    """A count field that may be missing, None or a string."""
+    try:
+        return int(value or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def _scrape_with_empty_cache(r):
+    """The one kind of row the rot file has anything to say about."""
+    return (r.get("platform") or "").strip().lower() == "scrape" and r.get("status") == "empty"
+
+
 def overnight_verdict(entry, today=None):
     """What last night's scraper recorded about a scrape row whose cache is empty this
     morning — one `cloud_state/scrape_rot.json` entry ({why, n, last, error, found, http}).
@@ -124,18 +137,10 @@ def overnight_verdict(entry, today=None):
         return None
     why = entry.get("why")
     if why == "error":
-        try:
-            n = int(entry.get("n") or 1)
-        except (TypeError, ValueError):
-            n = 1
+        n = _int(entry.get("n"), 1)
         return ("error", f"scrape: {entry.get('error') or 'error'} ({n} night{'s' if n != 1 else ''})")
-    if why == "empty":
-        try:
-            found = int(entry.get("found") or 0)
-        except (TypeError, ValueError):
-            found = 0
-        if found > 0:
-            return ("measurement", f"scrape: {found} roles, none in Israel")
+    if why == "empty" and _int(entry.get("found"), 0) > 0:
+        return ("measurement", f"scrape: {_int(entry.get('found'), 0)} roles, none in Israel")
     return None
 
 
@@ -178,17 +183,14 @@ def record(results, baseline_path=BASELINE, stale_path=STALE, rot_path=ROT, *, w
     `{}` — every high-water mark reset to 0 and `regressed-to-zero` could never fire again).
     `today` pins the rot freshness clock so a replay of committed files is date-independent."""
     baseline = _load(baseline_path)
-    rot = _load(rot_path) if any(
-        (r.get("platform") or "").strip().lower() == "scrape" and r.get("status") == "empty"
-        for r in results.values()) else {}
+    rot = _load(rot_path) if any(_scrape_with_empty_cache(r) for r in results.values()) else {}
     stale = {}
     for name, r in results.items():
         n = int(r.get("n", 0))
         best = max(int(baseline.get(name, 0)), n)
         baseline[name] = best
         plat = (r.get("platform") or "").strip()
-        verdict = (overnight_verdict(rot.get(name), today)
-                   if plat.lower() == "scrape" and r.get("status") == "empty" else None)
+        verdict = overnight_verdict(rot.get(name), today) if _scrape_with_empty_cache(r) else None
         reason = stale_reason(plat, r.get("api", ""), n, r.get("status", "ok"), best,
                               overnight=verdict[0] if verdict else None)
         if reason:

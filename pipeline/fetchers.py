@@ -233,6 +233,40 @@ def fetch_comeet(row):
     return jobs
 
 
+def _greenhouse_location(name, offices):
+    """A posting's `location.name` is free text a tenant may fill with a work mode ("Hybrid",
+    "IL", "Remote"); the office sits in `offices[]` (present only with content=true). The
+    office is read when it is unambiguous — exactly ONE office, and one that carries a
+    `location` (a parent node of the tenant's office tree has none: SentinelOne's country
+    node sat under a United Kingdom posting) — and only when the location names no IL place
+    already, so an already-matched posting is left byte-identical:
+
+        "Hybrid",  office Tel Aviv Office / Tel Aviv-Yafo, …  -> "Hybrid (Tel Aviv Office Tel Aviv-Yafo, …)"
+        "",        office Tel Aviv Office / …                  -> "Tel Aviv Office Tel Aviv-Yafo, …"
+        "Berlin",  office Berlin / Berlin, Germany             -> "Berlin, Germany"      (the fuller form)
+        "Berlin, Germany", office Berlin / Berlin, Germany     -> "Berlin, Germany"      (already said)
+        "Tel Aviv, Israel", any office                         -> "Tel Aviv, Israel"     (untouched)
+        "United Kingdom", office Israel / location None        -> "United Kingdom"       (a parent node)
+        "Paris, France", two offices                           -> "Paris, France"        (ambiguous)
+
+    Census 2026-08-26 over all 103 active boards (7,870 postings): +5 IL matches (Eleos
+    Health "IL" x2, Electreon "Remote"/"HQ Beit Yanni"/"Beit Yanai"), 0 lost; reading EVERY
+    office would have added 14 false positives (10 Datadog EMEA jobs listing a global office
+    set, Forter 2, Fireblocks 1, BigID 1). The request itself is unscoped (declared below
+    `fetch_greenhouse`)."""
+    loc = _clean(name)
+    if not (isinstance(offices, list) and len(offices) == 1 and isinstance(offices[0], dict)
+            and offices[0].get("location")) or text_mentions_israel(loc):
+        return loc
+    oname, where = _clean(str(offices[0].get("name") or "")), _clean(str(offices[0]["location"]))
+    off = where if oname.lower() in where.lower() else f"{oname} {where}"
+    if off.lower() in loc.lower():
+        return loc                                     # the location already says it
+    if loc.lower() in off.lower():
+        return off                                     # the office is the fuller form
+    return f"{loc} ({off})" if loc else off
+
+
 def fetch_greenhouse(row):
     # content=true so the list carries the job body -> used by the LLM seniority fallback.
     api = row["api_url"]
@@ -240,32 +274,10 @@ def fetch_greenhouse(row):
     data = http.get_json(api)
     jobs = []
     for p in data.get("jobs", []):
-        loc = _clean((p.get("location") or {}).get("name", ""))
-        # `location.name` is free text a tenant may fill with a work mode ("Hybrid", "IL",
-        # "Remote"); the office is in `offices[]` (present only with content=true). Read it
-        # when it is unambiguous — exactly one office, and one that carries a `location`
-        # (a parent node of the office hierarchy has none: SentinelOne's country node sat
-        # under a United Kingdom posting) — and the location names no IL place already.
-        # Census 2026-08-26 over all 103 active boards (7,870 postings): +5 IL matches
-        # (Eleos Health "IL" x2, Electreon "Remote"/"HQ Beit Yanni"/"Beit Yanai"), 0 lost;
-        # appending EVERY office would have added 14 false positives (10 Datadog EMEA jobs
-        # listing a global office set, Forter 2, Fireblocks 1, BigID 1). The request itself
-        # is unscoped (declared below).
-        offices = p.get("offices")
-        if isinstance(offices, list) and len(offices) == 1 and isinstance(offices[0], dict) \
-                and offices[0].get("location") and not text_mentions_israel(loc):
-            name, where = _clean(str(offices[0].get("name") or "")), _clean(str(offices[0]["location"]))
-            off = where if name.lower() in where.lower() else f"{name} {where}"
-            if off.lower() in loc.lower():
-                pass                                   # the location already says it
-            elif loc.lower() in off.lower():
-                loc = off                              # the office is the fuller form
-            else:
-                loc = f"{loc} ({off})" if loc else off
         jobs.append({
             "company": row["company_name"],
             "title": _clean(p.get("title")),
-            "location": loc,
+            "location": _greenhouse_location((p.get("location") or {}).get("name", ""), p.get("offices")),
             "country_code": "",  # greenhouse list gives no code; rely on text match
             "url": p.get("absolute_url") or "",
             "posted_date": _iso_date(p.get("updated_at") or p.get("first_published")),
