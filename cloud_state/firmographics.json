@@ -480,6 +480,19 @@
     "stage_note": "$140M raised to date ($100M Series B, 2021, CRV/Highland Europe); rebranded from ActiveFence to Alice in 2026",
     "sub_sector": "Safety and security layer for AI models and social platforms — real-time guardrails, adversarial intelligence, content-abuse detection"
   },
+  "Aligned": {
+    "as_of": "2026-08-26",
+    "business_model": "B2B SaaS",
+    "customer_type": "B2B",
+    "employees_global": null,
+    "founded": 2021,
+    "il_center": "Israel (R&D); HQ/offices also in New York and Europe",
+    "sector": "Software",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Raised $60M Series B (July 2026), led by PeakSpan Capital, total raised $73.8M",
+    "sub_sector": "AI-powered B2B sales execution / digital sales rooms"
+  },
   "Alike Health": {
     "as_of": "2026-08-22",
     "business_model": "Free consumer app; shut down (Nov 2024) before establishing a proven revenue model — intended monetization via anonymized health-data insights",
@@ -3993,6 +4006,19 @@
     "stage": "early-private",
     "stage_note": "Emerged from stealth Mar 2026 with $38M total ($8M Seed led by Team8 + $30M Series A led by Ten Eleven Ventures)",
     "sub_sector": "SecOps resilience — detects and fixes broken security detection/automation flows across enterprise security stacks"
+  },
+  "Figma": {
+    "as_of": "2026-08-26",
+    "business_model": "SaaS subscription platform",
+    "customer_type": "Businesses and individual designers/developers",
+    "employees_global": 1886,
+    "founded": 2012,
+    "il_center": "Tel Aviv (R&D, via Weavy acquisition); HQ in San Francisco",
+    "sector": "Software",
+    "size_band": "L",
+    "stage": "public",
+    "stage_note": "NYSE: FIG, IPO priced 2025 at ~$24B valuation",
+    "sub_sector": "Design & Collaboration Software / AI"
   },
   "Finaloop": {
     "as_of": "2026-08-21",
@@ -12819,6 +12845,19 @@
     "stage": "growth-private",
     "stage_note": "$30M Series B led by Greenfield Partners (announced ~March-April 2026), $57M total raised; earlier $27M seed+Series A led by Bessemer",
     "sub_sector": "agentic AI platform that generates and optimizes user-acquisition creatives (video + playable ads) for mobile game studios"
+  },
+  "spinomenal": {
+    "as_of": "2026-08-26",
+    "business_model": "B2B",
+    "customer_type": "Online casinos and gaming operators worldwide",
+    "employees_global": 132,
+    "founded": 2014,
+    "il_center": "Ramat Gan (HQ)",
+    "sector": "iGaming",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned, founder-led since 2014, no known VC funding rounds",
+    "sub_sector": "Casino game development and distribution"
   },
   "topgummiceuticals": {
     "as_of": "2026-08-23",
