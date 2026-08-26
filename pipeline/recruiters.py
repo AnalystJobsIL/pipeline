@@ -49,31 +49,6 @@ _CONFIRMED = {
     # saying "staffing" directly under the role. No Hebrew form of Nisha Pro exists in any
     # data file (grep 2026-08-25 = 0), so none is listed; Shavit's is in _HEBREW_MARKERS.
     "nisha pro", "nisha group", "shavit software",
-    # Added 2026-08-26, after the 05:38 mail published `### Jobgether` as a covered employer
-    # with a role under it. These are JOB-BOARD / PLACEMENT BRANDS, not employers of the
-    # roles they carry, and the category differs per entry — say which, or the next session
-    # researching "Jobgether" finds a claim about staffing the evidence does not support:
-    #   jobgether  - a remote-job AGGREGATOR. `jobgether.` is already on aggregators.HOSTS
-    #                beside remoteok./weworkremotely.: this repo had ruled on its HOST and
-    #                not on its NAME, and the name is what a discovery card carries. 15 cards
-    #                in the committed cache on 2026-08-26, one of them mailed.
-    #   ethosia    - an Israeli HR / placement agency; `ethosia.` on aggregators.HOSTS beside
-    #                drushim.co.il / alljobs.co.il / gotfriends. 2 cards.
-    #   staffin    - staffing, and the `_KEYWORD` rule misses it: `staffing` does not
-    #                match "Staffin". 1 card. ("Quik Hire Staffing" needs no entry - the
-    #                keyword already catches it; verified 2026-08-26.)
-    # The bare brand is listed beside the display form because LinkedIn display names drift
-    # (the `experis` / `experis israel` / `experis academy israel` trio above exists for that
-    # reason) and the exact-match list matches the WHOLE name: "Staffin" or "Ethosia Human
-    # Resources" would otherwise walk straight past. Measured over the 3,586 (name, slug)
-    # pairs in companies.csv u research_companies.json u discovered_cache.json: these entries
-    # flip exactly 3 names and ZERO companies.csv rows, active or parked.
-    # Deliberately NOT derived from aggregators.HOSTS by brand stem, which was tried and
-    # measured: the stems include `google` (google.com/search), and Google is a real employer
-    # with 12 cached cards. Pinned as the counter-example in the guard.
-    # No Hebrew form of any of the three exists in any data file (grep 2026-08-26 = 0 for
-    # this repo's files), so none is listed - same evidence standard as Nisha Pro above.
-    "jobgether", "ethosia", "ethosia human resources", "staffin", "staffin israel",
     # Researched and KEPT OUT the same day, same firmographics scan: Genpact ("IT services /
     # business process outsourcing", 40/40 IL on its own board) and appsforce ("software
     # outsourcing", an active deep-validated row) both hire directly — the Matrix case.

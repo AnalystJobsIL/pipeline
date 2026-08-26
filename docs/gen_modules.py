@@ -118,7 +118,6 @@ PIPELINE = {
  "verdicts": "**shared** - the single source of truth for verdict tokens and re-check pools",
  "stages": "**shared** - which nightly stage last finished, and how much it did",
  "sources": "**shared** - per-discovery-source liveness",
- "discovery_queue": "the research_companies.json queue, read and written safely (ABSENT is not CORRUPT; atomic writes) - written only by the two discovery bridges",
  "http": "**shared** - the zero-dependency HTTP helper",
 }
 

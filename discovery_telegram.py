@@ -246,25 +246,20 @@ def _prune_queue():
     """Drop from research_companies.json what this layer's gates now refuse (a place name,
     an agency by name or slug). auto_expand re-checks the name only; the queue is the one
     file both bridges hold, so a gate learned today unlearns yesterday here."""
-    from pipeline import discovery_queue
     from pipeline.recruiters import is_recruiter
-    try:
-        research = discovery_queue.load()
-    except discovery_queue.QueueUnreadable as e:
-        # SAY SO. The first version returned in silence, and an absence is not a report.
-        print(f"::error::{e} — the queue was not pruned this run and was NOT rewritten.",
-              flush=True)
-        return
+    research = _load_json("research_companies.json", None)
+    if not isinstance(research, list):
+        return                       # absent or unreadable: nothing to prune, never truncate
     kept = [e for e in research
             if not is_place_name(e.get("name")) and not is_recruiter(e.get("name"), e.get("slug", ""))]
     if len(kept) < len(research):
         print(f"queue: dropped {len(research) - len(kept)} place-named / agency entries: "
               + ", ".join(str(e.get("name")) for e in research if e not in kept))
-        discovery_queue.write(kept)
+        with open("research_companies.json", "w", encoding="utf-8") as f:
+            json.dump(kept, f, ensure_ascii=False, indent=1)
 
 
 def main():
-    from pipeline import discovery_queue        # hoisted: read below, before any write
     state = _load_json(STATE_PATH, {})
     new_jobs = []
     for chan in CHANNELS:
@@ -306,35 +301,20 @@ def main():
         print(f"::error::{e} — aborting the telegram merge WITHOUT advancing the watermark, "
               f"so nothing is lost. Fix or delete the file and re-run.", flush=True)
         return
-    # Read the queue BEFORE the cache write: if it is unreadable this run must write NOTHING
-    # — not the cache, not the watermark — or "aborting so nothing is lost" is only half true.
-    try:
-        research = discovery_queue.load()
-    except discovery_queue.QueueUnreadable as e:
-        # A Telegram post is not re-servable: the channel front page moves on. Advancing
-        # telegram_seen.json past posts whose employers were never queued loses those names
-        # for good — the 2026-08-21 incident with the queue in the cache's place.
-        print(f"::error::{e} — aborting the telegram merge WITHOUT advancing the watermark "
-              f"and WITHOUT writing the cache, so nothing is lost. Not queued: "
-              + ", ".join(sorted({j["company"].strip() for j in new_jobs}))
-              + ". Fix or delete the file and re-run.", flush=True)
-        return
     seen = {(j.get("company", "").lower(), j.get("title", "").lower()) for j in cache}
     added = [j for j in new_jobs
              if (j["company"].lower(), j["title"].lower()) not in seen]
     cache += added
-    from pipeline.atomic import write_json
-    write_json("discovered_cache.json", cache)
+    with open("discovered_cache.json", "w", encoding="utf-8") as f:
+        json.dump(cache, f, ensure_ascii=False, indent=1)
     # bridge new companies into the auto-expand queue (same as discovery_daily)
     from pipeline.companies import load_companies
     from pipeline.firmographics import looks_like_junk
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
+    research = _load_json("research_companies.json", [])
     known = {(e.get("name") or "").strip().lower() for e in research}
     queued = 0
-    # `new_jobs`, not `added`: `added` is what was new to the CACHE, and a post whose card we
-    # already hold can still carry an employer the registry has never heard of — which is
-    # also what makes the abort above recoverable, since a re-scan dedups to no cards at all.
-    for j in new_jobs:
+    for j in added:
         c = j["company"].strip()
         # a Telegram post's "company" is whatever the poster typed, so it is the most
         # likely of all the sources to be a job title, a team name — or a city
@@ -344,8 +324,10 @@ def main():
             known.add(c.lower())
             queued += 1
     if queued:
-        discovery_queue.write(research)
-    write_json(STATE_PATH, state)
+        with open("research_companies.json", "w", encoding="utf-8") as f:
+            json.dump(research, f, ensure_ascii=False, indent=1)
+    with open(STATE_PATH, "w", encoding="utf-8") as f:
+        json.dump(state, f, indent=1)
     print(f"=== telegram: {len(added)} jobs merged · {queued} new companies queued ===")
 
 
