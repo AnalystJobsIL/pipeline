@@ -558,5 +558,133 @@
  "Directeam": {
   "fails": 1,
   "last": "2026-08-25"
+ },
+ "Mobileye": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "lakeFS": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Groundwork BioAg": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "IBM": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "AstraZeneca": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Perception Point": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "CyberArk": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "BlueSnap": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Ottopia": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Elbit Systems": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Predicta Med": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "NetApp": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Supersonic Studios": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "nsKnox": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Source Defense": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Apollo Power": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Synopsys Israel": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Teradata": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "GenCell": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Refine Intelligence": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Airbnb": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Sanofi": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Verizon": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "SecuriThings": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Taranis": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Infineon Technologies": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Electronic Arts": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Schneider Electric": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Nestle": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Essence SmartCare": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "Unframe AI": {
+  "fails": 1,
+  "last": "2026-08-26"
+ },
+ "aspectiva": {
+  "fails": 1,
+  "last": "2026-08-26"
  }
 }
