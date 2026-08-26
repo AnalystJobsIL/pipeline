@@ -3193,3 +3193,24 @@ re-derive again before acting.
     match, so `jdfill` re-reads it and the text self-corrects — but the board shows the dead
     role's description until it does (wave-1 attacker B's F3, still live after the fix).
     A per-posting identity that survives a url change would end it; there is none today.
+
+250. **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+    counts move a lot** — lanes: `roles` (to expect it) and `ats-fetch` (the Boards line).
+    A posting that was read without its own address and given one by a later strategy keeps
+    its title and place but changes `job_id` (the sha1 of company|title|location becomes the
+    url), and `store.seen_id` is `{ats_platform}:{job_id}`. 45 of the 81 captured boards'
+    postings are promoted this way on the first night, and the live fleet will be larger.
+
+    **It cannot re-email anything, and I verified that rather than assuming it**:
+    `store.upsert_matched` is keyed on `merge_key` (company|title — url- and id-independent)
+    and does `new_sids |= set((old_sids or "").split("+"))`, so the record carries the old
+    seen_id alongside the new one, and `filter_new` only passes a role when NONE of its
+    seen_ids has been sent. `first_seen` is preserved for a gap of ≤3 days, so no repost is
+    manufactured either. What the `roles` lane will see is its ledger's `seen_ids` growing by
+    one on those roles for one night — churn in the record, not in the product.
+
+    For `ats-fetch`: the same night moves job COUNTS on a lot of boards at once (sett 0 → 16
+    without an LLM call, Quantum Machines 4 → 19, Checkmarx 3 → 2 with a Portugal role
+    removed, Aleph Farms' cards losing a `mailto:` url), so the `Boards changed today:`
+    delta and the `regressed-to-zero` / `cleared` sets will be noisier than usual for one
+    morning. Nothing in it is a fetch failure.
