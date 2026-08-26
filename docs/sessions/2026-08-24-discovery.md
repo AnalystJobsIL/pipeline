@@ -1148,3 +1148,154 @@ Not 100% smooth. Two things a reader was told to apply to were not employers.
 - Mail: no `### Tel Aviv`, no Nisha Pro / Shavit / Dialog; the *Sources not producing*
   line WILL say `linkedin-targeted: nothing for 3d` — expected, BACKLOG 179.
 - `=== N discovered jobs cached (J junior …) · Q new companies queued, W already waiting ===`.
+
+---
+
+## Session 2026-08-26 — the coverage audit, and the page the walk never re-read
+
+Lane `discovery`, fourth session. Brief: clear the pending backlog, find what today's run
+could do better tomorrow, and say whether an offline backlog can be ingested. **Spend: 0
+Bright Data credits, 0 pipeline LLM calls, no workflow dispatched, no `companies.csv` write.**
+Two Opus design critics before any edit; every number below re-derived from origin
+`b2090f6` and run 32934864207 rather than copied from the docs.
+
+### The operator's challenge, and what it found
+
+Asked whether the layer really catches everything, I read LinkedIn's own results from the
+operator's signed-in browser — `data analyst · Israel · past week · most recent`, **92
+results** — and diffed the 50 newest against `discovered_cache.json`, `cloud_state/roles.jsonl`,
+`scraped_cache.json`, `companies.csv` and the published board:
+
+| | |
+|---|---|
+| posted AFTER the 05:38 run | 11 — not a miss |
+| agencies / remote-spam platforms | ~15 (Nogamy, INGIMA, Recruitx, Dialog, Mertens, comblack, Quik Hire, Hired, Hire Feed, Jobs Ai, YO IT, Crossing Hurdles, Proxify, EPAM, Staffin) — correctly out |
+| relevant, pre-run, and HELD | ~20 (Artlist, HoneyBook, Fiverr, ShipIn, Mobileye, Similarweb, Fetcherr, Port.io, Navan, Tailor Brands, Unity, Rhino, ONE datAI, Mine Marketing, Arpeely …) |
+| **relevant, pre-run, and MISSING** | **4 — Koladin, Intelligent Business, CaliAlfa, Riskified's DS lead** |
+
+The four were refused by no gate (`looks_like_junk` and `is_recruiter` both clear) and were
+simply never fetched. So the answer to "did you really catch all the jobs" is **no, and the
+gap is not the gates — it is the walk**.
+
+**Where they went.** The sweep logged `free=224 blank=58 blocked=30 paid=13`. A guest page
+that answers HTTP 200 with no cards is ambiguous by construction, and `linkedin_search`
+stepped over up to `LINKEDIN_BLANK_TOLERANCE` (3) of them and never looked again. Of the 58
+blanks, **24 are accounted for as the three-in-a-row drain run of the 8 queries that ended
+silently** (2 ended on the page cap, 17 blocked, 27 queries in total), which leaves **34
+mid-pool holes** — a ceiling of ~340 unread cards against the day's 2,118, ~16%. Derived from
+the run's aggregate counters, not measured per page; `recovered=` measures it directly from
+2026-08-27.
+
+### What changed
+
+1. **A blank page is re-asked once** (`_guest_page`). Three properties, each a guard: the
+   re-ask **never reports "blocked"** — a soft limit escalating to 403 would otherwise land on
+   the one clause NOT guarded by `and not out` and buy Unlocker pages on a pool at 118%; a
+   page carrying urns but no cards is markup DRIFT and is never re-asked (and its denominator
+   cannot be lost, because that is exactly the case the re-ask declines); the budget is per
+   SWEEP (20) and **disarms after 5 misses**, so "the blanks are structural" is learned inside
+   the run. The pause defaults to **0**: the walk already fires up to 50 back-to-back requests
+   per query, so a pause on the re-ask alone would be theatre — and a real one is charged 27
+   times inside a 25-minute step (a 2 s default cost the local suite ~30 s and pushed the
+   scraper's wall-clock tests over their deadlines, which is how it was caught).
+2. **Three job-board brands gated** — `jobgether`, `ethosia`, `staffin`, with the bare brand
+   beside the display form because LinkedIn display names drift. The 08-26 mail had published
+   `### Jobgether` as a newly covered employer with a role under it while `jobgether.` had
+   been on `aggregators.HOSTS` for weeks: **the repo had ruled on the HOST and not on the
+   NAME**, and a discovery card carries the name. Measured over the 3,586 (name, slug) pairs
+   in registry ∪ queue ∪ cache: exactly **3 names flip, 0 `companies.csv` rows**. Deriving the
+   rule from `aggregators.HOSTS` by brand stem was tried and rejected by measurement — the
+   stems include `google`, a real employer with 12 cached cards, now pinned as the
+   counter-example in the guard.
+3. **The names queue can no longer be truncated by a corrupt read** (BACKLOG 188). Two shapes,
+   and only the first is obvious: unparseable bytes, and **valid JSON of the wrong type**
+   (`{"Wix": {...}}`), which `json.load` accepts and which then died one line later iterating a
+   dict's keys — killing `main()` *before* `sources.record()`, so the day's source liveness went
+   unrecorded too. Both bridges now read through `pipeline/discovery_queue.py` (the check is
+   `isinstance`, not `except`) and write through `pipeline/atomic`, because `open(path, "w")`
+   truncating is what MAKES the corrupt file the reader has to survive.
+   `discovery_telegram` writes **nothing at all** on a corrupt queue — not the cache, not the
+   watermark — because a Telegram post is not re-servable; and its queue bridge now reads
+   `new_jobs` rather than `added`, or the re-run after an abort finds every card already
+   cached and queues nothing. That last one was found by writing the test, not by the review.
+
+### The adversarial waves, and what they killed
+
+Two Opus critics, read-only, before any edit.
+
+- **C1 came back NO-GO as first specified.** The retry as planned could convert a free early
+  exit into paid spend (the blocked clause is unguarded), the cost model was self-refuting
+  (recovering blanks makes walks longer, which makes more blanks), and **the guard could not
+  be written at all**: `_li_replay` indexes its script by `start`, so a retry re-read the same
+  offset and got the identical tuple — `recovered` could never be anything but 0. The harness
+  now takes a per-start list, which is what made the fix testable.
+- **C4 was dropped entirely.** The plan was to write the queue best-evidence-first. Measured,
+  the claim was wrong: the evidence names land at position **147**, not 0–43, and **88
+  registry-resident names outrank the new ones**. Worse, `persist_state._keyed_list` is
+  documented to keep **origin's order** on a conflict, so the mechanism erases itself on the
+  first push conflict. And the real blocker is one line in another lane: `auto_expand.py`
+  stamps `seen` only inside the LLM branch, so **401 of 411 names tie at `""`** and nothing
+  rotates. Filed as BACKLOG 225 for `registry` rather than shipped here.
+
+### Is there an offline backlog to ingest? No.
+
+Every static list in the repo is drained to within a handful of names: `out/research_*.json`
+(9 files, 0–1 unknown names each), `state/sess/*`, `company_profiles.json`,
+`cloud_state/candidate_probe.json` (194 entries, 0 names outside the registry). No Startup
+Nation / Crunchbase / TASE list exists anywhere in the tree — the only hit for
+`startupnationcentral` is on the aggregator blocklist. `cloud_state/firmographics.json` (964
+records) is the obvious re-seed candidate and **cannot serve: it has no URL field at all**.
+
+The backlog IS the queue: **1,606 entries, 411 drainable, 408 of them seeded with an
+aggregator posting** (290 `il.linkedin.com`, 88 `secrethunter.io`, 27 `il.indeed.com`), and it
+grows ~70/day against 2–3 resolved. That is a `registry` throughput problem
+(`LLM_RESOLVE_CAP=10`, 243 of 250 deferred `cap` before being attempted), not an ingest one.
+
+### Claims I could NOT verify
+
+- **Pages 3–4 of the coverage audit** (`start=50`, `75`): LinkedIn answered **429** to this
+  machine mid-audit, so the audit covers the 50 newest of 92, not all 92.
+- **Whether the 34 mid-pool blanks are holes or soft-limiting.** The 24/34 split is arithmetic
+  from the aggregate counters, not a per-page observation. `recovered=` on the 08-27 sweep
+  line settles it; if it reads ~0 the re-ask should be removed, not tuned.
+- **Whether the deeper pages of the two capped keywords hold anything.** `analytics` (314) and
+  `אנליסט` (429) stopped on the 50-page cap with the pool unexhausted, but walking past page 17
+  from this machine hit a block, so raising `LINKEDIN_GUEST_PAGES` stays **unmeasured and was
+  not changed**.
+
+### Claims I deleted or corrected in §1a
+
+§1a described a world `registry` had already fixed on 2026-08-25:
+
+| the doc said | re-counted 2026-08-26 |
+|---|---|
+| "514 of 1,544 queue entries and **70 registry rows** carry an aggregator seed" | 576 of 1,606; **2 rows, none active** |
+| "**44 such rows** now (ctera, Houzz, yad2 …)" buried on the shell URL | **1** |
+| "of the 70 aggregator-seeded rows **7 are active**" | **0** |
+| "**72 targetable rows** in `stale.json`" | **94** of 119 |
+| "342 drainable names", "five runs at `resolved 0`" | 411; 08-26 resolved 3, deferred 247 |
+| the 2026-08-25 run as the current figures | replaced by 08-26, with 08-25 kept for comparison |
+
+### What I did NOT finish
+
+- **The 08-27 log is the proof of everything above** — `recovered=` on the `[linkedin]` line,
+  `cache: dropped ~18 agency cards`, `queue: dropped 2-3 agency entries`, no `### Jobgether`
+  in the mail. Owner: whoever reads that morning's mail.
+- **BACKLOG 179** (`linkedin-targeted: nothing for 3d`, a skipped sweep reading as a dead one)
+  needs `pipeline/sources.py`, shared plumbing; the operator did not approve the change, so
+  the exact diff is filed and the alarm will keep counting up to 2026-09-01.
+- **BACKLOG 223–226** filed today for `roles` (a parked row's ledger roles are still mailed —
+  `Tel Aviv` shipped 3 more on 08-26), `infra` (`last_run.json` a day stale), `registry` (the
+  queue's throughput) and this lane (the blank pages, now half-fixed).
+- The two capped keywords, BACKLOG 8 (`f_C`), 14 (the module split), 70/71, 183, 185–187.
+
+### The shared-checkout hazard, for the next session
+
+Three sessions shared this checkout and its index today, and the index is not a safe place to
+stage: another lane's `persist_state.py commit` swept **the whole index** onto master
+(`f71d4ac`, 16 other paths, repaired by `2709dc9`), and a peer's `git add` silently replaced
+blobs this lane had staged. Twice, a "failure" in this lane's own test runs turned out to be a
+peer's half-staged `scrape_universal.py` being copied into the verification worktree. **Verify
+in a worktree built from a commit, never from the index, and commit through a private
+`GIT_INDEX_FILE`** — the recipe is in this session's scratch script and the technique is one
+line: `read-tree HEAD`, `update-index` your blobs, `write-tree`, `commit-tree`, `update-ref`.
