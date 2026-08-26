@@ -3157,10 +3157,7 @@ re-derive again before acting.
     37. state is the accurate one; use replay2 for LOST/GAINED, not for absolute counts.
 
 244. **A deadline that cuts strategy 4 short loses the prefix's wall evidence** — lane:
-    `scraper`. **CLOSED 2026-08-26 (evening):** the early return now carries the prefix's
-    `walled`/`statuses` into the outcome, so a fully-walled board that ran out of budget
-    reports `links:blocked:<vendor>` and not a bare `deadline:links`. Pinned by
-    `test_scrape_a_budget_cut_still_reports_why_the_pages_would_not_open`. Was: On the `deadline.expired()` early return, `worst` is never assigned, so
+    `scraper`. On the `deadline.expired()` early return, `worst` is never assigned, so
     `out.walled` / `out.statuses` stay empty and a fully-walled prefix that ran out of budget
     reports `deadline:links` (runner-shaped, carried, never parked) instead of
     `links:blocked:<vendor>`. Both carry, so no jobs are lost; what is lost is the reason, on
@@ -3168,12 +3165,7 @@ re-derive again before acting.
     often now that 23 of 81 boards run strategy 4 (wave-1 attacker A).
 
 245. **The synthetic worker dicts do not carry the fields the real one does** — lane:
-    `scraper`. **CLOSED 2026-08-26 (evening):** one builder, `_never_ran(name, code, seconds)`,
-    for every "the scraper never got to read this company" result — the worker raised, the
-    pool died, the process hung. `test_refresh_a_company_that_never_ran_has_one_shape`
-    asserts its keys equal a REAL result's, that every code it carries is runner-shaped (so
-    the night carries the company's jobs and never parks the row), and that the module builds
-    no second one. Was: `_result_of`'s `pool:` dict and the inline `hang:` dict omit `weak_read`,
+    `scraper`. `_result_of`'s `pool:` dict and the inline `hang:` dict omit `weak_read`,
     `llm_skipped` and `rescued`; `_worker`'s `except` branch omits `weak_read`. Nothing breaks
     today because every consumer uses `.get()`, and the next reader who uses `[]` will get a
     `KeyError` on exactly the paths that fire only in the cloud (wave-1 attacker C). One
@@ -3235,3 +3227,70 @@ re-derive again before acting.
     removed, Aleph Farms' cards losing a `mailto:` url), so the `Boards changed today:`
     delta and the `regressed-to-zero` / `cleared` sets will be noisier than usual for one
     morning. Nothing in it is a fetch failure.
+
+
+## `company-intel` closures, 2026-08-27
+
+Every item this lane owned is now closed. What remains under its name is waiting on another
+lane, and is listed at the end.
+
+- **11 / 101 — CLOSED.** `looks_like_junk` gained the separator-free arm: two or more tokens,
+  all role/modifier vocabulary, at least one a head noun. Measured over 1,690 real names it
+  fires on two (`my team`, `Infrastructure Team`) and on **0 active registry rows**. The
+  two-token minimum is load-bearing — every one of the 31 head nouns is a one-token name and
+  several are companies (`Analyst` is Analyst I.M.S., TASE-listed).
+- **117 — CLOSED.** `firmographics._claude` was the last bare `claude -p` in the repo. There
+  is none left.
+- **120 — CLOSED.** The classifier's open breaker now stops this lane spending (auth/missing
+  only). It had shipped as a mail sentence nothing could set, which is worse than unstarted.
+- **141 — CLOSED.** The bulk pass no longer targets superseded-only rows.
+- **144 — CLOSED, with a canary.** The named instance is inert: `AppSec` is in
+  `CATEGORY_NAMES`, so it is refused before any call and holds no record. Measured over the
+  live export, the only identity groups whose members disagree on both sector and founding
+  year are `amazon` (a unit), `jpmorgan chase` (a spelling) and `microsoft` (a site form) —
+  three shapes of the same company, zero genuine collisions.
+  `test_no_identity_group_merges_two_genuinely_different_companies` goes red on a fourth.
+- **244 — CLOSED.** `firmo_death_watch.py`, read-only, two signals, no `--apply` and a test
+  forbidding one. 8 proposals today. It reads `stage_note` only: scanning the descriptive
+  fields called FundGuard ("fund accounting and administration") and Ryltech ("database
+  administration") insolvent.
+- **246 — CLOSED.** The rehearsal driver has 14–17 checks per case and a non-zero exit.
+  Proven both ways: clean tree exits 0; with the poisoned-blurb fix deleted it exits 1 and
+  names the leak.
+- **97 — CLOSED.** The Windows task `IsraeliJobs-Firmographics` is **disabled** (2026-08-27,
+  on the operator's instruction that production belongs in the cloud). It was not merely
+  redundant but harmful: it wrote the record of truth into the shared checkout unstaged, and
+  another lane's `git pull --rebase` destroyed 22 researched companies on 2026-08-26. The
+  cloud replacement was proven first — two runs, 973 records, `0 to do`. Reverse with
+  `Enable-ScheduledTask -TaskName 'IsraeliJobs-Firmographics'`. `run_firmo_chain.cmd` and
+  `firmo_health_check.py` are now dead weight; deleting them is a `docs`/`infra` tidy-up, and
+  `research_firmographics.py` stays as both the cron's entry point and the by-hand bulk tool.
+
+### Closed as WON'T FIX, with the reasoning
+
+- **98 / 242 — won't fix.** Merging the 29 identity-duplicate groups has **zero user-visible
+  value**: `display_index` already answers every group correctly, and a correct merge (winner
+  pinned to `display_index`'s rank, filling only its empty fields) changes **0 field values**
+  — it is a pure deletion of 29 keys. Against that: the naive `reduce(merge, group)` the item
+  implies would write Amazon with AWS's 150,000 employees and founding year 2006, and date
+  Microsoft to 1989; and even done correctly it is undone in one morning, because
+  `union_store` is export ∪ sqlite and a deleted key returns from `seen.db`. Making it stick
+  needs a tombstone contract in three library functions and three consumers, on the record of
+  truth, for no benefit. Re-open only if something else must touch the export anyway.
+- **245 — won't fix.** `is_place_name` stays multi-word-only. `Nesher`, `Eilat`, `Azor`,
+  `Yakum`, `Afek` and `Lod` are single-word entries in `israel._IL_PLACES` that are also real
+  Israeli company names, and `discovery_telegram.is_place_name` already catches single-word
+  leaks *at the source*, which is the right place. Widening this one would trade a real
+  employer for a leak the first line of defence already stops.
+
+### Still open under this lane's name, and each waiting on another lane
+
+- **138** (`pipeline/store.py`, lane `roles`) — the sqlite `firmographics` table is redundant
+  with the export and is ~half the daily binary. Dropping a table is the store owner's write.
+- **142** (lane `infra`) — `build_digest` is a dead renderer every lane pays for.
+- **241** (lane `infra`) — `persist_state.py commit --own` commits the whole index.
+- **243, the durable half** (`pipeline/store.py`) — `firmo_failed` has no reason column and
+  no shared clock. This lane now reads the **union** of both stores and carries the reason
+  into the mail; the generic attempts table this file's preamble item 8 asks for is the
+  store owner's.
+

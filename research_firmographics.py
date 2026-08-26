@@ -192,6 +192,13 @@ def main():
     # registry backlog, and it reads from `matched`, the same table that held
     # `Tel Aviv`. looks_like_junk deliberately excludes the place arm (it is shared
     # with the registry's pools); this spender needs it (wave-1).
+    # the discovery pseudo-row is not an employer and can never be profiled -- exclude it
+    # by PLATFORM, the same rule the mail's registry-backlog gauge uses. A name rule would be
+    # wrong: `Discovery Inc` is a real company.
+    pseudo = {r["company_name"] for r in load_companies(active_only=False)
+              if str(r.get("ats_platform") or "").strip().lower() == "discovery"}
+    if pseudo:
+        names = [n for n in names if n not in pseudo]
     junk = [n for n in names if not_a_company(n)]
     if junk:
         print(f"skipping {len(junk)} junk (job-title) names: {', '.join(junk[:5])}"

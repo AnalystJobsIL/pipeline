@@ -1245,3 +1245,54 @@ def test_the_death_watch_cannot_write_anything():
     prop, _ = _dw("shut down Dec 2025")
     assert prop[0]["proposed_note"].startswith("defunct 2026-08-27: ")
     assert "firmographics as_of" in prop[0]["proposed_note"]
+
+
+def test_the_discovery_pseudo_row_is_never_a_research_target():
+    """It is the LinkedIn+Indeed discovery LAYER, not an employer, so it can never be
+    profiled — but it draws jobs, so it reaches the cron through `matched` and earned a
+    strike in the cloud on 2026-08-26 (`FAIL Discovery (strike pending)`), which means a
+    wasted call every week forever. Excluded by PLATFORM, not by name: `Discovery Inc` is a
+    real company and a name rule would refuse it."""
+    import inspect
+
+    import research_firmographics
+    src = inspect.getsource(research_firmographics.main)
+    assert "ats_platform" in src and '"discovery"' in src,         "the pseudo-row must be excluded by PLATFORM, not by name"
+    assert "n not in pseudo" in src
+    # and by platform, NOT by the literal name -- Discovery Inc is a real company
+    assert '"Discovery"' not in src and "'Discovery'" not in src
+
+
+def test_no_identity_group_merges_two_genuinely_different_companies():
+    """BACKLOG 144. `identity_key` strips `labs`, so `AppSec Labs` and `AppSec` fold together,
+    and `company_intel` deliberately shares one blurb across a group — so one company's About
+    text could serve another. `rolecard.cross_check` cannot see it, because to it they are
+    one company.
+
+    Measured 2026-08-27 over the live export: the named instance is INERT — `AppSec` is in
+    CATEGORY_NAMES, so it is refused before any call and can never hold a record; neither
+    name is in the export. And of the groups whose members disagree on both sector and
+    founding year, all three are the same company under a unit, a spelling and a site form.
+
+    This is the canary: a group that is NOT one of those three, and whose members disagree on
+    both facts, is two companies sharing a blurb. Add it here only after checking it really
+    is one company."""
+    import collections
+    d = json.load(open("cloud_state/firmographics.json", encoding="utf-8"))
+    groups = collections.defaultdict(list)
+    for name in d:
+        groups[F.identity_key(name)].append(name)
+    KNOWN = {"amazon", "jpmorgan chase", "microsoft"}   # a unit, a spelling, a site form
+    suspect = []
+    for key, members in groups.items():
+        if len(members) < 2 or key in KNOWN:
+            continue
+        sectors = {(d[n].get("sector") or "").lower() for n in members}
+        founded = {d[n].get("founded") for n in members if d[n].get("founded")}
+        if len(sectors) > 1 and len(founded) > 1:
+            suspect.append((key, sorted(members), sorted(sectors), sorted(founded)))
+    assert not suspect, f"identity groups that may be two different companies: {suspect}"
+    # the named instance stays inert because the category word is refused, not because of
+    # anything about the suffix rule -- if that ever changes, this goes red
+    assert F.looks_like_junk("AppSec") and not F.looks_like_junk("AppSec Labs")
+    assert "AppSec" not in d

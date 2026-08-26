@@ -1685,9 +1685,7 @@ that empties parked; the code had said 7 / never since 2026-08-23):
   the row and re-park it a week later (a churn loop; 11 of the 23 error rows on 2026-08-25
   were this shape); its streak keeps counting in `scrape_rot.json` (`error`, `http`, `n`)
   and the carry expires as usual. **A streak is one shape of error** — `links`, `ip`,
-  `weak`, `runner`, `page` (`rot[name]["shape"]`) — a company the scraper never reached
-  at all (`worker:` / `pool:` / `hang:`) is built by one `_never_ran`, so those three
-  results cannot drift apart in shape as they had. A shape change starts a new streak, so
+  `weak`, `runner`, `page` (`rot[name]["shape"]`): a shape change starts a new streak, so
   twenty carried `links:` nights can never fund the carry expiry or the park clock of one
   page-shaped night from the same cloaking WAF (wave-1 attacker B). Two clocks deliberately
   survive a shape change, because the thing they measure does not: `ip_since` (how long the
@@ -1987,10 +1985,12 @@ python -c "import json;from pipeline.firmographics import band_for as b;d=json.l
 strings: `_coerce` insists on exactly one field, so an all-empty record would be **accepted**,
 cached until 2027-02, and rendered as a one-chip card while the mail said `1 researched`.
 
-**Coverage, 2026-08-26.** The export holds **968** records. Of the **873** active registry
-rows, **866 (99.2 %)** render with facts and **7** do not — `Aligned`, `Figma`, `Sivo`,
-`Steakholder Foods`, `Varonis`, `spinomenal`, and `Discovery`, which is the LinkedIn+Indeed
-discovery pseudo-row and not a company at all. Count it through `identity_key`, **not** by
+**Coverage, 2026-08-27.** The export holds **973** records. Of the **899** companies that can
+render a card — active registry rows ∪ every company ever matched, minus the `discovery`
+pseudo-row — **897 (99.8 %)** have facts and **2** do not: `Peak Innovation` and `Sivo`, both
+carrying a research strike and retried weekly. Count the render set, not the registry: a
+company reaches a card by having a **role**, and 27 companies with role records are not
+active rows. Count it through `identity_key`, **not** by
 name — the name-match version reports 39 false gaps, because `display_index` already answers
 for "Dell" out of "Dell Technologies":
 
@@ -2239,9 +2239,14 @@ That run also proved the split-brain in `firmo_failed`: the runner saw **8 to do
 laptop's dry run had seen 3 plus 5 strike-gated, because the two stores keep separate failure
 memories — `docs/BACKLOG.md` 243.
 
-**The local Windows chain (`IsraeliJobs-Firmographics`, every 6 h) is now redundant** and is
-proposed for retirement in `docs/BACKLOG.md` 97, with the operator's 2026-08-26 instruction
-that production belongs in the cloud. It is still armed; it is not this lane's to disable.
+**The local Windows chain is retired.** `IsraeliJobs-Firmographics` was **disabled** on
+2026-08-27 (`Disable-ScheduledTask`; reverse with `Enable-ScheduledTask -TaskName
+'IsraeliJobs-Firmographics'`), on the operator's instruction that production belongs in the
+cloud, and only after the cloud path had been proven twice. It was not merely redundant: it
+wrote the record of truth into the **shared checkout** as an unstaged tracked file, which is
+how 22 researched companies were destroyed on 2026-08-26. `run_firmo_chain.cmd` and
+`firmo_health_check.py` are now dead weight (`docs/BACKLOG.md` 97);
+`research_firmographics.py` stays, as the cron's entry point and the by-hand bulk tool.
 
 ### The gate this lane spends money behind
 
