@@ -39,6 +39,7 @@ from .companies import load_companies
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(REPO_ROOT, "out")
 LAST_RUN_PATH = os.path.join(REPO_ROOT, "cloud_state", "last_run.json")
+LAST_DELIVERED_PATH = os.path.join(REPO_ROOT, "cloud_state", "last_delivered.json")
 
 # ---- the run's own legibility (lane: infra) ------------------------------------------
 # The Actions log of a digest is ~900 lines with no structure; a crash was a bare traceback
@@ -105,6 +106,32 @@ def _last_run_alarms(run_date, path=None):
         return []
 
 
+def _receipt_alarms(run_date, path=None):
+    """`persist_state.py deliver` writes cloud_state/last_delivered.json when a digest
+    actually reaches `digests/latest.md` -- the file the relay reads. It records ONLY
+    successful deliveries, so it is the heartbeat `last_run.json` is repeatedly mistaken
+    for (that one is written only when a run FAILED, and is silent on a healthy day).
+
+    This runs BEFORE today's own delivery, so yesterday's date is the normal, quiet case.
+    Two days or more means a morning produced no mail: the run was deferred past the
+    relay's last poll, or it never happened at all. A missing file is silent -- a fresh
+    checkout has no receipt and must not alarm forever."""
+    path = path or LAST_DELIVERED_PATH
+    try:                                  # a reporter never raises: a malformed file is silence
+        with open(path, encoding="utf-8") as f:
+            last = json.load(f)
+        if not isinstance(last, dict):
+            return []
+        age = (dt.date.fromisoformat(run_date) - dt.date.fromisoformat(str(last.get("date")))).days
+        if age < 2:                       # today's (a re-run) or yesterday's: the normal case
+            return []
+        when = str(last.get("date"))
+        return [f"the last digest that reached the mail was {when} ({age}d ago) -- "
+                f"{age - 1} morning(s) produced no email"]
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def _write_step_summary(summary, run_date, docs_dir):
     """The mail's alarm lines and audit counts, on the run page ($GITHUB_STEP_SUMMARY)."""
     path = os.environ.get("GITHUB_STEP_SUMMARY")
@@ -145,7 +172,11 @@ def _load_secrets_env():
 
 
 def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, db_path=None):
-    run_date = run_date or dt.date.today().isoformat()
+    # UTC, not local: the workflow copies out/digest-$(date -u +%F).md, the H1 this
+    # date lands in is what `persist_state.py deliver` and the relay compare against,
+    # and a local `date.today()` is a different clock on the operator's machine
+    # (BACKLOG 269 is the same bug in stages.stamp).
+    run_date = run_date or dt.datetime.now(dt.timezone.utc).date().isoformat()
     _load_secrets_env()
     os.makedirs(out_dir, exist_ok=True)
     st = store.SeenStore(db_path) if db_path else store.SeenStore()
@@ -175,7 +206,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                      # yesterday's digest never reached its stamp (a crash or a timeout)
                      + [a.replace("— the digest read stale input", "— yesterday's digest never completed")
                         for a in stages.alarms("publish", 1)]
-                     + _workflow_step_alarms() + _last_run_alarms(run_date) + ledger.alarms)
+                     + _workflow_step_alarms() + _last_run_alarms(run_date)
+                     + _receipt_alarms(run_date) + ledger.alarms)
     for _line in _stage_alarms:
         print(f"::warning::stage {_line}", flush=True)
     # a discovery source that has quietly stopped returning records is invisible otherwise

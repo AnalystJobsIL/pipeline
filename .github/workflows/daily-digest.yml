@@ -136,20 +136,24 @@ jobs:
           JDFILL: "1"
           JDFILL_TIME_BUDGET_MIN: "25"
           GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
+          # the receipt `deliver` writes records which run put today's digest in the mail
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           # the pre-steps' outcomes: a failed one is a bold `Stages:` line in the mail
           WORKFLOW_STEP_OUTCOMES: ${{ toJSON(steps) }}
         run: |
           mkdir -p cloud_state out digests
           python -m pipeline.run --db cloud_state/seen.db
-          DATE=$(date -u +%F)
-          if [ -f "out/digest-${DATE}.md" ]; then
-            cp "out/digest-${DATE}.md" digests/latest.md
-            echo "DIGEST_JSON=out/digest-${DATE}.json" >> "$GITHUB_ENV"
-          else
-            # a green run with no digest file (a dispatch straddling UTC midnight) would
-            # otherwise be a silent day: no mail, no notice
-            echo "::error::pipeline exited 0 but wrote no out/digest-${DATE}.md"; exit 1
-          fi
+          # NOT a bare `cp` (2026-08-27). `digests/latest.md` IS the mail, and copying over
+          # it unconditionally is what made a second same-day run dangerous: `filter_new`
+          # has already drained `sent`, so run #2 renders `0 new senior analytics roles`,
+          # the relay sees new bytes and mails an EMPTY digest over the real morning's.
+          # `deliver` refuses a weaker same-date replacement, DEFERS past the relay's last
+          # poll rather than marking roles sent that can no longer be mailed (it exports
+          # DIGEST_JSON only when the digest landed, which is what leaves the `mark_sent`
+          # step below a no-op), and writes cloud_state/last_delivered.json -- committed by
+          # the persist step in the SAME commit as latest.md, never as a second writer.
+          # ARCHITECTURE section 4. It still exits 1 when the run wrote no digest at all.
+          python persist_state.py deliver --date "$(date -u +%F)"
 
       # The marks (sqlite `sent` + the ledger mirror) and digests/latest.md land in ONE commit
       # below, so a persist failure burns nothing; the only window left is the relay itself

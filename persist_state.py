@@ -3,6 +3,7 @@
 
     python persist_state.py commit --as NAME -m MSG --own PATH... [--branch B]
     python persist_state.py outcome [--commit]        # the run's verdict on itself (daily-digest)
+    python persist_state.py deliver --date D           # the digest -> latest.md, or why not
     python persist_state.py merge-file STRATEGY BASE OURS THEIRS OUT
     python persist_state.py table                     # the strategy table, one line per path
 
@@ -40,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import re
@@ -252,6 +254,7 @@ SINGLE_WRITER = {   # documented `ours` paths (one cloud writer each); anything 
     "cloud_state/source_health.json": "daily-digest", "cloud_state/telegram_seen.json": "daily-digest",
     "cloud_state/candidate_probe.json": "daily-digest", "cloud_state/registry_census.json": "daily-digest",
     "cloud_state/registry_alarms.json": "daily-digest", "cloud_state/last_run.json": "daily-digest",
+    "cloud_state/last_delivered.json": "daily-digest",
     "cloud_state/registry_ladder.json": "listing-hunt", "cloud_state/scrape_rot.json": "scrape-refresh",
     "cloud_state/resolve_attempts.json": "self-heal", "digests/latest.md": "daily-digest",
     "docs/index.html": "daily-digest", "docs/archive.html": "daily-digest",
@@ -582,6 +585,172 @@ def _stamps_line():
         return f"(stage stamps unreadable: {e.__class__.__name__})"
 
 
+# ---------------------------------------------------------------- deliver
+# `digests/latest.md` IS the mail: the private relay polls it, sha256-dedups it against the
+# last issue it posted, and emails whatever it finds. Until 2026-08-27 the digest step ended
+# in an unconditional `cp`, which left three failures possible:
+#
+#   * A SECOND run the same day copied a WORSE digest over a good one. `store.filter_new`
+#     drops roles already in `sent`, so run #2 renders `0 new senior analytics roles`, the
+#     relay sees new bytes and mails an EMPTY digest that replaces the real morning's. This
+#     is why the recovery cron proposed on 2026-08-27 was rejected rather than guarded
+#     (ARCHITECTURE section 4): the defect is the unconditional copy, not the schedule. It
+#     is also what made an operator re-run unsafe.
+#   * A run finishing after the relay's LAST poll still marked its roles `sent` and was
+#     never mailed -- `mark_sent` records intent, not delivery (BACKLOG 6). Those roles do
+#     not come back: `filter_new` drops them tomorrow too.
+#   * Nothing recorded that a digest HAD reached the mail, so no later run could tell a
+#     quiet morning from a missing one. `last_run.json` is not that record: it is written
+#     ONLY when a run failed, so on a healthy day it is silent and stale by design.
+#
+# So: refuse a weaker same-date replacement, defer past the relay's cutoff, and write a
+# receipt for what actually landed. The receipt is staged by the SAME
+# `persist_state.py commit --own cloud_state digests/latest.md ...` step, so it is atomic
+# with the file it describes -- never a second writer of `digests/latest.md`.
+
+RELAY_LAST_POLL = os.environ.get("RELAY_LAST_POLL_UTC", "10:17")      # ARCHITECTURE section 4
+DELIVER_MARGIN_MIN = int(os.environ.get("DELIVER_MARGIN_MIN", "20"))  # mark_sent+gate+persist
+LAST_DELIVERED = "cloud_state/last_delivered.json"
+NOTICE_H1 = "# ⚠️ No digest"
+
+
+def digest_delivered(head, run_date):
+    """True when `head` (the first bytes of `digests/latest.md`) is a REAL digest for
+    run_date. A dated failure notice is not a delivery, and neither is yesterday's file.
+    One definition, used by `deliver` and by `outcome`'s notice suppressor, so the two
+    cannot drift apart."""
+    text = head.decode("utf-8", "replace") if isinstance(head, (bytes, bytearray)) else str(head or "")
+    lines = text.lstrip().splitlines()
+    if not lines:
+        return False
+    first = lines[0]
+    return first.startswith("#") and run_date in first and not first.startswith(NOTICE_H1)
+
+
+def weak_digest(first_line, roles):
+    """A digest that must never replace a real same-date one. Two shapes: no roles at all
+    (what a re-run produces once `filter_new` has dropped everything already sent), and
+    `digest.py`'s render stub -- which is the most RECOVERABLE failure in the system,
+    because `run.py` zeroes `email_jobs` for it and nothing was marked sent."""
+    return int(roles) <= 0 or "could not be rendered" in str(first_line)
+
+
+def _read_receipt(into):
+    try:
+        with open(os.path.join(into, LAST_DELIVERED), encoding="utf-8") as f:
+            rec = json.load(f)
+        return rec if isinstance(rec, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def cutoff_overshoot(now_minutes, last_poll=None, margin=None):
+    """Minutes by which a delivery started at `now_minutes` would overshoot the relay's
+    last poll of the day, counting the margin the remaining steps need. Positive means the
+    file would land after the last poller has been and gone -- and the relay is a poller,
+    not a queue, so that mail is not late, it is never sent."""
+    hh, mm = (int(x) for x in str(last_poll or RELAY_LAST_POLL).split(":"))
+    margin = DELIVER_MARGIN_MIN if margin is None else margin
+    return (now_minutes + margin) - (hh * 60 + mm)
+
+
+def deliver(a):
+    """Copy the run's digest to `digests/latest.md` -- or refuse, and say why."""
+    run_date = a.date or dt.datetime.now(dt.timezone.utc).date().isoformat()
+    into = a.into or ROOT
+    src = os.path.join(into, a.out, f"digest-{run_date}.md")
+    if not os.path.exists(src):
+        # a green run with no digest file (a dispatch straddling UTC midnight) would
+        # otherwise be a silent day: no mail, no notice. Unchanged from the shell block.
+        _log("error", f"pipeline exited 0 but wrote no {a.out}/digest-{run_date}.md")
+        return 1
+    with open(src, "rb") as f:
+        body = f.read()
+    lines = body.decode("utf-8", "replace").lstrip().splitlines()
+    first = lines[0] if lines else ""
+    roles = 0
+    try:
+        with open(os.path.join(into, a.out, f"digest-{run_date}.json"), encoding="utf-8") as f:
+            jobs = json.load(f).get("jobs")
+        roles = len(jobs) if isinstance(jobs, list) else 0
+    except (OSError, ValueError, AttributeError):
+        pass
+
+    # ORIGIN, never the checkout. `actions/checkout` resolves `github.sha` when the RUN is
+    # created, not when the runner starts, so a queued or re-dispatched job can hold a tree
+    # that predates today's own digest and would overwrite it while believing it was first.
+    branch = a.branch or os.environ.get("GITHUB_REF_NAME") or "master"
+    whence = f"origin/{branch}"
+    if not a.no_fetch:
+        git_ok("fetch", "origin", branch, cwd=into)
+    cur = git_show(f"origin/{branch}", "digests/latest.md", cwd=into)
+    if cur is None:                       # a rehearsal repo, or no origin at all
+        whence = "worktree"
+        try:
+            with open(os.path.join(into, "digests", "latest.md"), "rb") as f:
+                cur = f.read()
+        except OSError:
+            cur = b""
+    on_origin = digest_delivered(cur[:400], run_date)
+
+    rec = _read_receipt(into)
+    try:
+        stale = (dt.date.fromisoformat(run_date) - dt.date.fromisoformat(str(rec.get("date")))).days
+    except (TypeError, ValueError):
+        stale = None
+    now = dt.datetime.now(dt.timezone.utc)
+    over = cutoff_overshoot(now.hour * 60 + now.minute)
+    # BREAK GLASS. A cutoff that fires every day would defer for ever, and the alarm for
+    # that lives in `run.py::_receipt_alarms` -- i.e. in the mail it is deferring. After two
+    # mornings with no mail, a late mail beats another day of silence. No receipt at all
+    # (a fresh checkout, or the first run after this shipped) counts as broken glass: never
+    # defer a day's mail on the strength of a file that has never existed.
+    glass = stale is None or stale >= 2
+
+    verdict = None
+    if on_origin and weak_digest(first, roles):
+        why = f"{roles} role(s)" + ("; render stub" if "could not be rendered" in first else "")
+        verdict = (f"origin already carries a digest for {run_date} and this one is weaker "
+                   f"({why}) -- an empty mail must never replace a delivered one")
+    elif over > 0 and not a.ignore_cutoff and not glass:
+        verdict = (f"{over} min past the relay's last poll ({RELAY_LAST_POLL} UTC less a "
+                   f"{DELIVER_MARGIN_MIN} min margin) -- nothing is marked sent, so these "
+                   f"{roles} role(s) lead the next digest")
+
+    if verdict:
+        # Neither `digests/latest.md` NOR `DIGEST_JSON`. The existing `mark_sent` step is
+        # already guarded on DIGEST_JSON being non-empty, so withholding it is exactly what
+        # keeps the roles unmarked -- and `build_notice` already prints the right sentence.
+        _log("warning", f"digest for {run_date} NOT delivered: {verdict}")
+        print(f"deliver: refused ({whence}); receipt is "
+              f"{'absent' if stale is None else str(stale) + 'd old'}", flush=True)
+        return 0
+
+    bits = ["replaces today's own digest" if on_origin else "first delivery for the day"]
+    if over > 0:
+        bits.append("%s %d min past the %s cutoff (%s)"
+                    % ("operator override" if not glass else "break-glass", over, RELAY_LAST_POLL,
+                       "no receipt yet" if stale is None else "%dd since the last delivery" % stale))
+    reason = "; ".join(bits)
+    if a.dry_run:
+        print(f"deliver: WOULD deliver {run_date} ({roles} role(s), {reason}); "
+              f"origin read from {whence}", flush=True)
+        return 0
+    _write_bytes(os.path.join(into, "digests", "latest.md"), body)
+    receipt = {"date": run_date, "sha256": hashlib.sha256(body).hexdigest(),
+               "roles": roles, "first_line": first[:200], "reason": reason,
+               "run_url": os.environ.get("RUN_URL", ""),
+               "written_at": now.strftime("%Y-%m-%dT%H:%M:%SZ")}
+    _write_bytes(os.path.join(into, LAST_DELIVERED), _dumps(receipt))
+    env = os.environ.get("GITHUB_ENV")
+    if env:
+        with open(env, "a", encoding="utf-8") as f:
+            f.write(f"DIGEST_JSON={a.out}/digest-{run_date}.json\n")
+    print(f"deliver: {run_date} delivered -- {roles} role(s), sha "
+          f"{receipt['sha256'][:12]}, {reason} (origin read from {whence})", flush=True)
+    return 0
+
+
 def outcome(a):
     run_date = a.date or dt.date.today().isoformat()
     try:
@@ -629,14 +798,13 @@ def outcome(a):
         # leaves today's digest on origin -- a notice would overwrite a delivered mail and
         # lie about it (wave-1 attacker, 2026-08-25). If origin's latest.md IS today's
         # digest, the red step is tomorrow's line, never a notice.
-        delivered = False
-        lp = os.path.join(into, "digests", "latest.md")
+        # origin already carries a digest for today (this run's, or an earlier run's
+        # the same day -- a re-run's fresh runner has no out/): never replace it. The
+        # same predicate `deliver` refuses a weaker replacement with, so a change to
+        # one can never leave the other behind.
         try:
-            head = open(lp, "rb").read(300).decode("utf-8", "replace")
-            # origin already carries a digest for today (this run's, or an earlier run's
-            # the same day -- a re-run's fresh runner has no out/): never replace it
-            delivered = head.lstrip().startswith("#") and run_date in head.lstrip().splitlines()[0] \
-                and not head.lstrip().startswith("# ⚠️ No digest")
+            with open(os.path.join(into, "digests", "latest.md"), "rb") as f:
+                delivered = digest_delivered(f.read(400), run_date)
         except OSError:
             delivered = False
         warranted = notice_warranted(steps, job_status) and not delivered
@@ -696,6 +864,15 @@ def main(argv=None):
     o.add_argument("--branch")
     o.add_argument("--date")
     o.add_argument("--sleep", type=float, default=10.0)
+    d = sub.add_parser("deliver", help="the digest -> digests/latest.md, or refuse and say why")
+    d.add_argument("--date", help="run-date label (YYYY-MM-DD); default today UTC")
+    d.add_argument("--out", default="out", help="where pipeline.run wrote digest-<date>.md")
+    d.add_argument("--into", default=ROOT, help=argparse.SUPPRESS)
+    d.add_argument("--branch")
+    d.add_argument("--dry-run", action="store_true", help="print the verdict, write nothing")
+    d.add_argument("--no-fetch", action="store_true", help=argparse.SUPPRESS)
+    d.add_argument("--ignore-cutoff", action="store_true",
+                   help="deliver even past the relay's last poll (an operator re-run)")
     m = sub.add_parser("merge-file", help="apply one strategy to three files (repro/debug)")
     m.add_argument("strategy", help="a path from `table`, e.g. cloud_state/pipeline_stages.json")
     m.add_argument("base"); m.add_argument("ours"); m.add_argument("theirs"); m.add_argument("out")
@@ -705,6 +882,8 @@ def main(argv=None):
         return commit(a)
     if a.cmd == "outcome":
         return outcome(a)
+    if a.cmd == "deliver":
+        return deliver(a)
     if a.cmd == "table":
         table()
         return 0

@@ -11280,3 +11280,194 @@ def test_fix_refuses_to_edit_a_file_that_is_already_dirty():
     body = body.split("def fix_facts(")[1].split("\ndef ")[0]
     assert '"git", "status", "--porcelain"' in body
     assert 'print("REFUSED: --fix will not edit a file that is already modified' in body
+# ======================================================================================
+# lane: infra (2026-08-27) — delivery, and the difference between "nothing happened" and
+# "nothing was wrong". On 2026-08-27 GitHub dispatched 1 of 5 due crons and no artefact
+# anywhere recorded it. These guard the four defects that were fixable here; the recovery
+# cron was measured (`tests/schedule_census.py`) and rejected. Record:
+# docs/sessions/2026-08-27-infra.md.
+# ======================================================================================
+import importlib.util as _iu
+
+_PS_SPEC = _iu.spec_from_file_location("_ps_mod", os.path.join(_REPO, "persist_state.py"))
+
+
+def _ps():
+    """A fresh persist_state, so a monkeypatched cutoff cannot leak between guards."""
+    mod = _iu.module_from_spec(_PS_SPEC)
+    _PS_SPEC.loader.exec_module(mod)
+    return mod
+
+
+def _tree(tmp, latest=None, roles=3, date="2026-08-27", first=None, receipt=None):
+    """A checkout-shaped directory: what origin already carries, and what the run built."""
+    for d in ("out", "digests", "cloud_state"):
+        os.makedirs(os.path.join(tmp, d), exist_ok=True)
+    if latest is not None:
+        with open(os.path.join(tmp, "digests", "latest.md"), "w", encoding="utf-8") as f:
+            f.write(latest)
+    head = first if first is not None else "# \U0001f3af %d new senior analytics roles — %s" % (roles, date)
+    with open(os.path.join(tmp, "out", "digest-%s.md" % date), "w", encoding="utf-8") as f:
+        f.write(head + "\n\nbody\n")
+    with open(os.path.join(tmp, "out", "digest-%s.json" % date), "w", encoding="utf-8") as f:
+        _json.dump({"jobs": [{"n": i} for i in range(roles)]}, f)
+    if receipt is not None:
+        with open(os.path.join(tmp, "cloud_state", "last_delivered.json"), "w", encoding="utf-8") as f:
+            _json.dump(receipt, f)
+    return tmp
+
+
+def _deliver(ps, tmp, date="2026-08-27", extra=()):
+    rc = ps.main(["deliver", "--date", date, "--into", tmp, "--no-fetch", *extra])
+    try:
+        with open(os.path.join(tmp, "digests", "latest.md"), encoding="utf-8") as f:
+            landed = f.readline().strip()
+    except OSError:
+        landed = None
+    return rc, landed
+
+
+def test_a_weaker_digest_never_replaces_a_delivered_one(tmp_path):
+    """The regression a second same-day digest run WOULD have been, and the reason the
+    recovery cron proposed on 2026-08-27 was rejected rather than guarded.
+
+    `store.filter_new` drops roles already in `sent`, so run #2 renders `0 new senior
+    analytics roles`. The old step `cp`-ed that over `digests/latest.md` unconditionally;
+    the relay hashes the file, saw new bytes, and would have mailed an EMPTY digest that
+    also destroyed the real morning's — whose roles are already marked sent and never
+    come back. The render stub (`digest.py`'s "the email could not be rendered") is the
+    same shape and worse to lose: `run.py` zeroes email_jobs for it, so nothing was sent
+    and a later run would have recovered the day."""
+    ps = _ps()
+    real = "# \U0001f3af 8 new senior analytics roles — 2026-08-27\n\nbody\n"
+    ps.RELAY_LAST_POLL = "23:59"                      # keep the cutoff out of this guard
+
+    t = _tree(str(tmp_path / "a"), latest=real, roles=0)
+    assert _deliver(ps, t)[1] == real.splitlines()[0], "a 0-role re-run replaced the real digest"
+
+    t = _tree(str(tmp_path / "b"), latest=real, roles=5,
+              first="# \U0001f3af digest 2026-08-27 — the email could not be rendered")
+    assert _deliver(ps, t)[1] == real.splitlines()[0], "the render stub replaced the real digest"
+
+    # ...and the three cases that MUST still go through, or a bad day never recovers
+    t = _tree(str(tmp_path / "c"), latest=real, roles=9)
+    assert "9 new" in _deliver(ps, t)[1], "a better same-date digest was refused"
+    t = _tree(str(tmp_path / "d"), latest="# \U0001f3af 8 new senior analytics roles — 2026-08-26\n", roles=0)
+    assert "2026-08-27" in _deliver(ps, t)[1], "yesterday's file blocked today's digest"
+    t = _tree(str(tmp_path / "e"), latest="# ⚠️ No digest for 2026-08-27 — the daily run failed\n", roles=0)
+    assert "2026-08-27" in _deliver(ps, t)[1] and "No digest" not in _deliver(ps, t)[1], \
+        "a failure notice counted as a delivery, so the retry was suppressed"
+
+
+def test_a_digest_past_the_relay_cutoff_is_deferred_not_burned(tmp_path):
+    """`mark_sent` records intent, not delivery (BACKLOG 6). The relay is a poller: a
+    digest committed after its LAST poll is not late, it is never sent — and its roles are
+    in `sent`, so `filter_new` drops them tomorrow too. Past the cutoff `deliver` writes
+    neither `digests/latest.md` nor DIGEST_JSON, and the existing `mark_sent` step is
+    already guarded on DIGEST_JSON, so withholding it is what leaves the roles unmarked.
+
+    The break-glass half matters as much: a cutoff that fires every day would defer for
+    ever, and the alarm for that (`run.py::_receipt_alarms`) lives in the mail it is
+    deferring. Two mornings with no mail, and a late mail wins."""
+    ps = _ps()
+    ps.RELAY_LAST_POLL = "00:01"                      # every wall clock is past this
+    yesterday = {"date": "2026-08-26"}
+
+    t = _tree(str(tmp_path / "defer"), latest=None, roles=5, receipt=yesterday)
+    rc, landed = _deliver(ps, t)
+    assert rc == 0, "a deferral is not a failed run: the board still publishes"
+    assert landed is None, "a digest that cannot be mailed was written to latest.md anyway"
+
+    t = _tree(str(tmp_path / "glass"), latest=None, roles=5, receipt={"date": "2026-08-25"})
+    assert "2026-08-27" in _deliver(ps, t)[1], "two mornings without mail did not break the glass"
+
+    t = _tree(str(tmp_path / "first"), latest=None, roles=5, receipt=None)
+    assert "2026-08-27" in _deliver(ps, t)[1], \
+        "no receipt yet: a day's mail was deferred on the strength of a file that never existed"
+
+    t = _tree(str(tmp_path / "op"), latest=None, roles=5, receipt=yesterday)
+    assert "2026-08-27" in _deliver(ps, t, extra=("--ignore-cutoff",))[1], \
+        "--ignore-cutoff did not let an operator re-run through"
+
+    # and the arithmetic itself, which is what ARCHITECTURE section 4 quotes
+    assert ps.cutoff_overshoot(10 * 60, last_poll="10:17", margin=20) == 3
+    assert ps.cutoff_overshoot(9 * 60, last_poll="10:17", margin=20) == -57
+
+
+def test_the_delivery_receipt_lands_in_the_same_commit_as_the_file_it_describes(tmp_path):
+    """`cloud_state/last_delivered.json` is only worth reading if it cannot disagree with
+    `digests/latest.md`. It is written by `deliver` and staged by the persist step's
+    `--own cloud_state ... digests/latest.md`, so the two are one commit — never a second
+    writer of latest.md, which is a `SINGLE_WRITER` path whose conflict rule (`s_ours`)
+    overwrites origin with the warning suppressed (BACKLOG 160)."""
+    ps = _ps()
+    ps.RELAY_LAST_POLL = "23:59"
+    t = _tree(str(tmp_path), latest=None, roles=4)
+    _deliver(ps, t)
+    with open(os.path.join(t, "cloud_state", "last_delivered.json"), encoding="utf-8") as f:
+        rec = _json.load(f)
+    body = open(os.path.join(t, "digests", "latest.md"), "rb").read()
+    import hashlib as _hl
+    assert rec["date"] == "2026-08-27" and rec["roles"] == 4
+    assert rec["sha256"] == _hl.sha256(body).hexdigest(), "the receipt does not describe the file"
+
+    wf = open(os.path.join(_REPO, ".github", "workflows", "daily-digest.yml"), encoding="utf-8").read()
+    own = re.search(r"--own ([^\n]*(?:\n\s+[^-\n][^\n]*)*)", wf).group(1)
+    assert "cloud_state" in own and "digests/latest.md" in own, \
+        "the persist step stopped owning both, so the receipt and the digest can now disagree"
+    assert "cloud_state/last_delivered.json" in ps.SINGLE_WRITER, \
+        "the receipt has no conflict rule; an unlisted path is taken from ours with a warning"
+    assert "persist_state.py deliver" in wf and "cp \"out/digest-" not in wf, \
+        "the pipeline step went back to an unconditional cp"
+
+
+def test_a_gap_in_the_delivery_receipt_reaches_the_next_mail(tmp_path):
+    """The heartbeat this repo kept mistaking `last_run.json` for. `deliver` runs AFTER
+    `pipeline.run`, so at alarm time the newest possible receipt is yesterday's — one day
+    is the quiet, normal case and only two or more means a morning produced no mail."""
+    from pipeline import run as _pr
+    p = str(tmp_path / "last_delivered.json")
+
+    def at(date):
+        with open(p, "w", encoding="utf-8") as f:
+            _json.dump({"date": date}, f)
+        return _pr._receipt_alarms("2026-08-27", path=p)
+
+    assert at("2026-08-27") == [] and at("2026-08-26") == [], \
+        "today's or yesterday's receipt alarmed; every green morning would cry wolf"
+    assert at("2026-08-25") and "2026-08-25" in at("2026-08-25")[0]
+    assert _pr._receipt_alarms("2026-08-27", path=str(tmp_path / "nope.json")) == [], \
+        "a missing receipt alarmed; a fresh checkout would alarm for ever"
+    with open(p, "w", encoding="utf-8") as f:
+        f.write("{not json")
+    assert _pr._receipt_alarms("2026-08-27", path=p) == [], "a reporter raised"
+
+
+def test_a_stale_but_healthy_last_run_is_silent(tmp_path):
+    """Pinned because it has been misread twice. `persist_state.py outcome` writes
+    `cloud_state/last_run.json` ONLY when a run was unhealthy, so on 2026-08-27 it read
+    `2026-08-25` for the honest reason that no digest had FAILED since — and
+    `_last_run_alarms` returns early on a healthy record without ever looking at the date.
+    BACKLOG 294 and 224 both filed that staleness as a degraded alarm feed; it is neither
+    stale nor an alarm. The heartbeat is `last_delivered.json`, above."""
+    from pipeline import run as _pr
+    p = str(tmp_path / "last_run.json")
+    with open(p, "w", encoding="utf-8") as f:
+        _json.dump({"date": "2026-08-01", "status": "success", "failed_steps": {}}, f)
+    assert _pr._last_run_alarms("2026-08-27", path=p) == [], \
+        "a healthy record alarmed on its age; that is what 294 wrongly asked for"
+    with open(p, "w", encoding="utf-8") as f:
+        _json.dump({"date": "2026-08-26", "status": "failure",
+                    "failed_steps": {"persist": "failure"}}, f)
+    assert _pr._last_run_alarms("2026-08-27", path=p), "a real failure went unreported"
+
+
+def test_the_run_date_is_one_clock_and_it_is_utc():
+    """The digest's H1 carries `run_date`; the workflow copies `out/digest-$(date -u +%F).md`;
+    `deliver` and the relay both compare against that H1. A local `date.today()` is a
+    different clock on the operator's machine and near UTC midnight on any runner whose
+    image is not UTC — BACKLOG 269 is the same bug in `stages.stamp`."""
+    src = open(os.path.join(_REPO, "pipeline", "run.py"), encoding="utf-8").read()
+    m = re.search(r"^\s*run_date = run_date or (.+)$", src, re.M)
+    assert m and "timezone.utc" in m.group(1), \
+        "pipeline.run's default run date is not UTC: %s" % (m.group(1) if m else "not found")

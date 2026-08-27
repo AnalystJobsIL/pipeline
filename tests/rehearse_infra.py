@@ -5,6 +5,7 @@ own state: temp git repos, a scratch store, out/rehearse-infra/. No LLM, no Brig
     python tests/rehearse_infra.py --conflict   # replay the real 2026-08-24 stamp loss on temp repos
     python tests/rehearse_infra.py --mail       # a scoped run with a failed pre-step, a stale publish
                                                 #   stamp and yesterday's failed publish injected
+    python tests/rehearse_infra.py --twice      # two same-day runs: the second must not overwrite
     python tests/rehearse_infra.py --notice     # the failure notice, as the outcome step would write it
     python tests/rehearse_infra.py --golden REV # digests/latest.md from the same inputs at REV vs the tree
     python tests/rehearse_infra.py --all
@@ -215,11 +216,86 @@ def golden(rev):
         subprocess.run(["git", "worktree", "remove", "--force", wt], cwd=ROOT, capture_output=True)
 
 
+def twice():
+    """Two digest runs on one day, against a real origin — the case no rehearsal covered
+    and the one that decided 2026-08-27's design.
+
+    The attack is not "someone runs it twice". It is that `actions/checkout` resolves
+    `github.sha` when the RUN IS CREATED, not when the runner starts, so a queued or
+    re-dispatched job holds a tree from before the morning's own push. Its `seen.db` has no
+    `sent` marks, `filter_new` re-emits the same roles, and a `cp` would put a stale or
+    empty digest over the delivered one — whose roles ARE marked sent on origin, so they
+    never come back. `deliver` therefore reads `digests/latest.md` from ORIGIN, never from
+    its own checkout, and this proves it does."""
+    print("== twice: a stale second run must not overwrite the morning's delivered digest")
+    tmp = tempfile.mkdtemp(prefix="rehearse-twice-")
+    origin = os.path.join(tmp, "origin.git")
+    _g(tmp, "init", "-q", "--bare", origin)
+    _g(origin, "symbolic-ref", "HEAD", "refs/heads/master")
+
+    morning, late = os.path.join(tmp, "morning"), os.path.join(tmp, "late")
+    _g(tmp, "clone", "-q", origin, morning)
+    for d in ("digests", "cloud_state", "out"):
+        os.makedirs(os.path.join(morning, d))
+    open(os.path.join(morning, "digests", "latest.md"), "w", encoding="utf-8").write(
+        "# yesterday\n")
+    _g(morning, "add", "-A")
+    _g(morning, "commit", "-q", "-m", "base")
+    _g(morning, "push", "-q", "origin", "HEAD:master")
+
+    # the LATE run clones NOW -- before the morning has pushed. This is the stale checkout.
+    _g(tmp, "clone", "-q", origin, late)
+    for d in ("out", "cloud_state"):
+        os.makedirs(os.path.join(late, d), exist_ok=True)
+
+    date = "2026-08-27"
+    real = f"# \U0001f3af 8 new senior analytics roles — {date}"
+    open(os.path.join(morning, "out", f"digest-{date}.md"), "w", encoding="utf-8").write(real + "\n\nbody\n")
+    json.dump({"jobs": [{"n": i} for i in range(8)]},
+              open(os.path.join(morning, "out", f"digest-{date}.json"), "w", encoding="utf-8"))
+    env = dict(os.environ, RELAY_LAST_POLL_UTC="23:59")
+    r = subprocess.run([sys.executable, PERSIST, "deliver", "--date", date, "--into", morning],
+                       capture_output=True, env=env)
+    _check(r.returncode == 0, "the morning run delivered (%s)" % r.stdout.decode("utf-8", "replace").strip()[:70])
+    _g(morning, "add", "-A")
+    _g(morning, "commit", "-q", "-m", "cloud run: state + digest")
+    _g(morning, "push", "-q", "origin", "HEAD:master")
+
+    head = open(os.path.join(late, "digests", "latest.md"), encoding="utf-8").readline().strip()
+    _check(head == "# yesterday", "the late run's checkout really is stale (it reads %r)" % head)
+
+    # run #2: `filter_new` has drained `sent` on origin, so this renders zero roles
+    open(os.path.join(late, "out", f"digest-{date}.md"), "w", encoding="utf-8").write(
+        f"# \U0001f3af 0 new senior analytics roles — {date}\n\n_No new matching openings today._\n")
+    json.dump({"jobs": []}, open(os.path.join(late, "out", f"digest-{date}.json"), "w", encoding="utf-8"))
+    ghenv = os.path.join(tmp, "ghenv")
+    open(ghenv, "w", encoding="utf-8").close()
+    r = subprocess.run([sys.executable, PERSIST, "deliver", "--date", date, "--into", late],
+                       capture_output=True, env=dict(env, GITHUB_ENV=ghenv))
+    _check(r.returncode == 0, "the second run exits 0 (a refusal is not a broken run)")
+    _check("NOT delivered" in r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace"),
+           "it said why it refused")
+    still = open(os.path.join(late, "digests", "latest.md"), encoding="utf-8").readline().strip()
+    _check(still == "# yesterday", "it left its own tree alone (%r)" % still)
+    _check(open(ghenv, encoding="utf-8").read().strip() == "",
+           "DIGEST_JSON was NOT exported, so `mark_sent` is a no-op and no role is burned")
+
+    _g(origin, "symbolic-ref", "HEAD", "refs/heads/master")
+    on_origin = _g(origin, "show", "master:digests/latest.md").splitlines()[0].strip()
+    _check(on_origin == real, "origin still carries the morning's real digest, not an empty one")
+    receipt = json.loads(_g(origin, "show", "master:cloud_state/last_delivered.json"))
+    _check(receipt["date"] == date and receipt["roles"] == 8,
+           "the receipt on origin describes the delivered digest (%s roles)" % receipt["roles"])
+    shutil.rmtree(tmp, ignore_errors=True)
+
+
 if __name__ == "__main__":
     a = sys.argv[1:]
     os.makedirs(OUT, exist_ok=True)
     if not a or "--conflict" in a or "--all" in a:
         conflict()
+    if "--twice" in a or "--all" in a:
+        twice()
     if "--notice" in a or "--all" in a:
         notice()
     if "--mail" in a or "--all" in a:
