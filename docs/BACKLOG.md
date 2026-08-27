@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**374 filed · 265 open · 109 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**375 filed · 266 open · 109 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 332.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 333.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -83,7 +83,7 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### registry — 75 open
+### registry — 76 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -160,6 +160,7 @@ closure convention in the header.
 - **329** `329@registry` **The 02:30 chain stamps `another company's board` on a row it merely could not read** —
 - **330** `330@registry` **`auto_expand`'s rotation-key flush keys on dict GROWTH, not on work done**
 - **331** `331@registry` **`resolve_deep._verify` is inside `resolve`'s "TOTAL wall clock" and never sees it** —
+- **332** `332@registry` **The queue-to-row bridge is one tool wide, and ~456 names are therefore owned by
 
 ### infra — 67 open
 
@@ -5232,4 +5233,38 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      one `_verify` call made with `budget_s=180`. Also: `probe_budget` saturates at
      `limit >= 825`, where the derived budget equals `RUN_CEILING_S` and "the clock bound the
      run instead of the batch" returns identically — the derivation needs a note or a cap.
+
+332. **The queue-to-row bridge is one tool wide, and ~456 names are therefore owned by
+     nothing** — lane: `registry`. This is the "owned by nothing" failure ARCHITECTURE
+     section 8 calls the most common way this codebase breaks, applied to a third of the
+     intake queue, and it has never been written down.
+
+     Every re-check pool in this lane keys on a ROW. `listing_hunt` reads `companies.csv` and
+     nothing else (`listing_hunt.py:359`) and its selector `in_hunt_pool(r)` takes a row; so
+     do `triage_dark`, `crack_walled`, `deep_validate`, `audit_empty_rows` and
+     `probe_candidates`. A name in `research_companies.json` has no row, so **none of the
+     search-and-crack machinery can reach it at any cadence.** Derive it rather than trust
+     this: `grep -ln research_companies *.py` names 11 modules and only ONE of them is
+     scheduled — `auto_expand`.
+
+     So the whole intake queue is worked by a single tool, whose free rung is now exhausted
+     over these names (measured 2026-08-27: 40 of 505 have any guessable ATS board, all 9
+     worth taking were taken) and whose paid tier has resolved **0 in three consecutive
+     runs**. State at that measurement: 495 unresolved, 467 walked by the probe, 456 with no
+     board and no verified domain and therefore no path of any kind.
+
+     **`323`'s park is the only bridge, and it was built without noticing that.** Parking a
+     site-seeded name creates a row, and the row is what puts the company into the hunt's
+     pool — but it is capped at `SITE_MAX=25` a run and only reaches the 47 names the
+     own-site rung can prove a domain for. 47 of 495.
+
+     **The measurement nobody has made, and it is cheap on the runner:** how many of the 456
+     have a findable careers page. It cannot be made from the dev machine — SerpApi is
+     exhausted until 2026-09-01, DuckDuckGo is rate-limited from here, and there are no
+     Bright Data credentials — but `deep_validate.google_via_unlocker` works on the runners
+     and `resolve_llm` already carries the search ladder. Sample 30 names, count how many
+     yield a careers URL, and that number decides whether the right fix is to widen the
+     bridge (park more aggressively so the hunt inherits them) or to give the hunt a queue
+     source of its own. **Do not raise `LLM_RESOLVE_CAP` to find out** — three runs at the
+     current cap have resolved 0, and the cap is not what is binding (`278@registry`).
 
