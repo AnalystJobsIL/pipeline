@@ -4,9 +4,12 @@
 what is known-broken, what nobody has claimed. Nothing else.
 
 **Three caps, and why there are three.** `docs/check_docs.py` holds this file to 250
-lines, 2,500 words and 60 words per line. The line cap alone was defeated: on 2026-08-27
-this file was 245 lines and **56,515 bytes**, because eighteen sessions had each written
-their whole narrative as one line — the longest was 4,960 characters. The word caps make
+lines, 3,200 words and 60 words per line. The line cap alone was defeated: immediately
+before the trim this file was 247 lines and **65,338 bytes**, because eighteen sessions
+had each written their whole narrative as one line — the longest was 9,011 characters,
+thirty-six times the cap. (The first version of this paragraph said 56,515 bytes and
+4,960 characters: correct numbers, measured at `ae6eeae` the evening before, six commits
+stale by the time the trim ran.) The word caps make
 the three mutually reinforcing: a narrative that will not fit on one line has to wrap,
 and wrapping blows the line count, which is what pushes it to `docs/sessions/`, which is
 where it already was. Thirteen of the eighteen already ended with `Record:`.
@@ -91,9 +94,11 @@ it is still only that one.**
 
 ## Watch list for the next session
 
-0. **250 active rows have an all-time-high job count of ZERO** — 189 of them `scrape` rows
-   (where zero is often the correct answer) and **61 native-ATS rows**, which is the
-   "the board has moved" set worth chasing. Feed a recovery run the 61, never the 250.
+0. **250 active rows have an all-time-high job count of ZERO** — 186 of them `scrape` rows
+   (where zero is often the correct answer) and **64 native-ATS rows**, which is the
+   "the board has moved" set worth chasing. Feed a recovery run the 64, never the 250.
+   *(This said 189/61 for one commit on 2026-08-27. The command below refutes it, and it
+   was three lines above the command. Re-run it; do not trust this line either.)*
 
    ```bash
    python -c "import json,csv,io,collections;b=json.load(io.open('cloud_state/health_baseline.json',encoding='utf-8'));r={x['company_name']:x for x in csv.DictReader(io.open('companies.csv',encoding='utf-8')) if x['active']=='true'};z=[n for n,v in b.items() if int(v)==0 and n in r];print(len(z),collections.Counter(r[n]['ats_platform'] for n in z).most_common())"

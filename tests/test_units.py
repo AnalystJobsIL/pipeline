@@ -11147,3 +11147,42 @@ def test_backlog_py_has_no_destructive_command():
     for token in ("def do_archive", "def _unarchive", "def _parse_archive"):
         assert token not in src, "%s came back without its proofs being made able to fail" % token
     assert 'open(LIVE, "w"' not in src.split("def write_index")[0]
+
+
+# --- docs lane, 2026-08-27, wave 3: an independent confirmer, from a clean checkout with no
+# --- .claude/ in it, re-derived every number this session published and disagreed with four --
+def test_the_push_contract_does_not_hide_its_own_verdict():
+    """`pytest.ini` already sets `addopts = -q`, so the documented `python -m pytest -q` is
+    `-q -q`, which suppresses the `N failed, M passed` summary entirely. The last line printed
+    is then a bare `FAILED <name>` - or, on a green run, nothing at all. An agent reading the
+    tail of that output can conclude the suite passed while it did not, and it is the FIRST
+    line of the pre-push contract in CLAUDE.md."""
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ini = open(os.path.join(root, "pytest.ini"), encoding="utf-8").read()
+    quiet_by_default = bool(re.search(r"^addopts\s*=.*(?<!\S)-q(?!\S)", ini, re.M))
+    for name in ("CLAUDE.md", "README.md", os.path.join("docs", "AGENT_BRIEF.md")):
+        text = open(os.path.join(root, name), encoding="utf-8").read()
+        for m in re.finditer(r"python -m pytest([^\n`]*)", text):
+            flags = m.group(1)
+            assert not (quiet_by_default and re.search(r"(?<!\S)-q(?!\S)", flags)), (
+                "%s documents `python -m pytest%s` while pytest.ini already sets -q; "
+                "the summary line disappears" % (name, flags))
+
+
+def test_the_continue_on_error_sentence_says_which_steps_it_counted():
+    """`_coe_ratio` counts `^\s*- name:`, so 80 is the NAMED-step count; there are 108 step
+    lines in the workflows and the other 28 are bare `uses:` actions that are never
+    continue-on-error. Written as "36 of the 80 workflow steps" the sentence reads as 45% of
+    the pipeline being failure-tolerant when the share of everything a workflow does is 33%.
+    It is quoted in four documents and pinned by a fact check, so the wording is load-bearing."""
+    cd = _cd()
+    named = total = 0
+    for w in sorted(glob.glob(os.path.join(cd.ROOT, ".github", "workflows", "*.yml"))):
+        txt = cd.read(w)
+        named += len(re.findall(r"^\s*- name:", txt, re.M))
+        total += len(re.findall(r"^\s*- (?:name|uses|run):", txt, re.M))
+    assert total > named, "if every step is named, this guard has nothing to protect"
+    for doc in ("CLAUDE.md", "ARCHITECTURE.md", os.path.join("docs", "AGENT_BRIEF.md")):
+        text = cd.read(os.path.join(cd.ROOT, doc))
+        for m in re.finditer(r"\d+\s+of\s+(?:the\s+)?\d+\s+(named\s+)?workflow steps", text):
+            assert m.group(1), "%s says 'workflow steps' where it means 'named workflow steps'" % doc

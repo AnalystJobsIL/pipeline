@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Make docs/BACKLOG.md a document a lane can read in thirty seconds.
 
-On 2026-08-27 it was 3,457 lines / 303 KB: 314 items across 37 chronological sections, 36%
-of the file closed-item prose, and a lane's own work scattered across up to fifteen
-sections. Numbers collide - `6` names five different items and is cited from two workflow
+On the morning of 2026-08-27 it was 3,457 lines / 303 KB with 314 items across 37
+chronological sections, a lane's own work scattered across up to fifteen of them, and
+roughly a third of the file closed-item prose. By the evening of the same day it was
+4,474 lines / 383 KB / 344 items - which is the point, and why the header of this file
+quotes no live number: run `python docs/backlog.py stats`. Numbers collide - `6` names five different items and is cited from two workflow
 files; 241, 242, 243, 244 and 245 each name three - and one section runs 241-246 twice with
 no divider. The collision has already produced a wrong read INSIDE the file: a
 `- **244 - CLOSED.**` bullet is ambiguous between a closed `company-intel` item and an open,
@@ -200,9 +202,17 @@ def render_index(items):
         "`python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails "
         "if it is stale. A merge conflict inside it is resolved by re-running that command.",
         "",
-        "**%d filed · %d open · %d closed · %d numbers name more than one item · %d items name "
-        "no lane.**" % (len(items), len(open_items), len(items) - len(open_items), len(col),
-                        sum(1 for i in open_items if i.lane == "unassigned")),
+        "**%d filed · %d open · %d closed · %d half · %d numbers name more than one item · "
+        "%d items name no lane.**" % (len(items), len(open_items),
+                                      sum(1 for i in items if i.closed),
+                                      sum(1 for i in items if i.half), len(col),
+                                      sum(1 for i in open_items if i.lane == "unassigned")),
+        "",
+        "*\"Open\" is an upper bound on work remaining, not a count of it.* A confirmer reading",
+        "ten of them by hand on 2026-08-27 found several that are resolved in their own body and",
+        "never stamped, plus the items below that a later section closed by bullet with the",
+        "original untouched. The parse is exact; the state it reports is only as good as the",
+        "closure convention in the header.",
         "",
         "**Next free number: %d.** Run `python docs/backlog.py next` before you file anything — "
         "241 through 246 each name three items because three lanes filed within an hour on "

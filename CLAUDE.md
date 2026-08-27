@@ -35,7 +35,7 @@ by 07:41. `gh run list --workflow daily-digest.yml` before you trust yesterday's
 Full versions in `ARCHITECTURE.md` §2 and §8. Short versions, because each of these has
 already destroyed a day of work:
 
-1. **A green workflow means nothing.** 36 of the 80 workflow steps are
+1. **A green workflow means nothing.** 36 of the 80 named workflow steps are
    `continue-on-error: true`. Verify a capability by what it PRODUCED, and quote the number.
 2. **A mass-zero result is a broken run, not a measurement.** Strip its verdicts, diagnose,
    re-run — do not let it commit.
@@ -82,8 +82,11 @@ anything relying on it silently returns nothing; the working search is
 
 ## Before you push — the doc contract
 
-1. `python -m pytest -q` and `python check_invariants.py` green. Every bug you fix gets an
-   assertion in `tests/test_units.py`.
+1. `python -m pytest` and `python check_invariants.py` green. Every bug you fix gets an
+   assertion in `tests/test_units.py`. **Not `-q`**: `pytest.ini` already sets it, so
+   `-q -q` suppresses the `N failed, M passed` line entirely and the last thing printed
+   is a `FAILED …` name — or nothing at all. An agent reading the tail of that output can
+   conclude the suite passed while it did not.
 2. `python docs/check_docs.py` green. It fails if a doc names a file that no longer exists,
    if a link or an `ARCHITECTURE.md` §N pointer is broken, if a root or `pipeline/` module is
    missing from `docs/MODULES.md` (or a module a cron runs is filed as `operator`), if the

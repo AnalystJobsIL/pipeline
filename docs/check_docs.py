@@ -498,9 +498,9 @@ _CENSUS = r"(?<![\d,\-–])(~?\d[\d,]*(?:[-–]\d[\d,]*)?)(?![\d\-–])"
 
 FACTS = [
     Fact("coe_ratio", "exact", _coe_ratio, "continue-on-error of workflow steps",
-         [("CLAUDE.md", r"(\d+)\s+of\s+(?:the\s+)?(\d+)\s+workflow steps"),
-          ("ARCHITECTURE.md", r"(\d+)\s+of\s+(?:the\s+)?(\d+)\s+workflow steps"),
-          ("docs/AGENT_BRIEF.md", r"(\d+)\s+of\s+(?:the\s+)?(\d+)\s+workflow steps")],
+         [("CLAUDE.md", r"(\d+)\s+of\s+(?:the\s+)?(\d+)\s+(?:named\s+)?workflow steps"),
+          ("ARCHITECTURE.md", r"(\d+)\s+of\s+(?:the\s+)?(\d+)\s+(?:named\s+)?workflow steps"),
+          ("docs/AGENT_BRIEF.md", r"(\d+)\s+of\s+(?:the\s+)?(\d+)\s+(?:named\s+)?workflow steps")],
          "this is the number that tells a reader a green run proves nothing"),
 
     Fact("fetcher_platforms", "exact", lambda: (_real_platforms(),),

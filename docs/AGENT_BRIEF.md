@@ -186,13 +186,14 @@ Declare these in your plan before spending them:
 
 ## Rules that will bite you
 
-1. **A green workflow means nothing.** 36 of the 80 workflow steps are `continue-on-error`.
+1. **A green workflow means nothing.** 36 of the 80 named workflow steps are `continue-on-error`.
    Read the step output; confirm a capability did work by looking at what it produced.
 2. **A mass-zero result is a broken run, not a measurement.** Strip its verdicts, diagnose,
    re-run.
 3. **Never `git add -A`** — another lane's work is in this tree. Stage explicit paths.
 4. **`python check_invariants.py` must pass before you commit** anything touching
-   `companies.csv`. `python -m pytest -q` must pass before any push. Every
+   `companies.csv`. `python -m pytest` must pass before any push — **not `-q`**, which
+   `pytest.ini` already sets, so a second one hides the `N failed, M passed` line. Every
    one of them is a bug that shipped; if one goes red, your change is wrong. `pytest` also
    runs `docs/check_docs.py`, so a doc that names a file you deleted fails the suite.
    Asking "why was company X activated or refused?" is one command, offline:

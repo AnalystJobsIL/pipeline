@@ -110,7 +110,7 @@ python -m pipeline.run --only "Fiverr,Wix" --no-llm   # produce-only; writes out
 python -m pipeline.run --only "Wix" --db /tmp/scratch.db   # ...and not the real seen-store
 python scrape_universal.py "Company" "https://…/careers"
 python audit_empty_rows.py                            # dry-run; --apply to write
-python -m pytest -q && python check_invariants.py && python docs/check_docs.py
+python -m pytest && python check_invariants.py && python docs/check_docs.py   # not -q: pytest.ini sets it
 ```
 
 Most tools are dry-run by default and take `--apply` to write. A local run cannot email

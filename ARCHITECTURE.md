@@ -132,8 +132,12 @@ but not self-contained: `pipeline/run.py` imports `registry_health` and
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And **36 of the 80 workflow steps carry `continue-on-error: true`** — `docs/check_docs.py`
-fails if this sentence and the workflows disagree, as the registered `coe_ratio` fact. 13
+And **36 of the 80 named workflow steps carry `continue-on-error: true`** — `docs/check_docs.py`
+fails if this sentence and the workflows disagree, as the registered `coe_ratio` fact.
+*Named* is load-bearing and was missing until 2026-08-27: there are **108** step lines in
+all, and the other 28 are bare `uses:` actions (checkout, setup-python) that are never
+continue-on-error. So the failure-tolerant share of everything a workflow does is 33 %,
+not the 45 % the sentence implied. 13
 of the 36 are stage-stamp or CLI-install steps, tolerated on purpose because their outcome
 is what the mail and the run page read and never the badge. So a hard failure in an audit
 or hunt step still shows a green run — read the step log, not the badge. And note exactly
@@ -1972,7 +1976,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
 - "Why isn't company X in my email?" → §5b above (ordered runbook).
 - "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
 - "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
-  **36 of the 80 workflow steps are `continue-on-error`, so a green run can still hide a
+  **36 of the 80 named workflow steps are `continue-on-error`, so a green run can still hide a
   failed step** — read the step, not the badge.
 - Coverage snapshot:
   ```bash

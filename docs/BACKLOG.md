@@ -39,7 +39,13 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**345 filed · 250 open · 95 closed · 28 numbers name more than one item · 28 items name no lane.**
+**345 filed · 250 open · 95 closed · 5 half · 28 numbers name more than one item · 28 items name no lane.**
+
+*"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
+ten of them by hand on 2026-08-27 found several that are resolved in their own body and
+never stamped, plus the items below that a later section closed by bullet with the
+original untouched. The parse is exact; the state it reports is only as good as the
+closure convention in the header.
 
 **Next free number: 304.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 

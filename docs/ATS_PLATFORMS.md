@@ -49,7 +49,10 @@ To add a company:
   the same JSON API** at `https://boards.eu.greenhouse.io/v1/boards/{token}/jobs` — verified
   2026-08-27, Unframe `unframe` returns 32 postings on both hosts, and `fetch_greenhouse`
   reads it unmodified. What does not exist is `boards-api.eu.greenhouse.io` (NXDOMAIN), which
-  is the form an earlier note tested before concluding there was no EU API.
+  is the form an earlier note tested before concluding there was no EU API. **This does not
+  dissolve the EU-rendered-page problem**: `outbraininc` answers `meta.total 0` on BOTH
+  hosts while `job-boards.eu.greenhouse.io/outbraininc` serves a real page, so a tenant
+  can still be reachable only by rendering (`docs/BACKLOG.md` 80).
 - Lever: `https://api.lever.co/v0/postings/{token}?mode=json`. Some companies are on
   `api.eu.lever.co`; **no code picks between them**, the row's `api_url` has to name the right
   host, and Mobileye's is currently failing with a network error against the EU host.
