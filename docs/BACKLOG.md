@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**365 filed · 259 open · 106 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**366 filed · 260 open · 106 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 323.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 324.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -83,7 +83,7 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### registry — 70 open
+### registry — 71 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -155,6 +155,7 @@ closure convention in the header.
 - **318** `318@registry` **An `israel_scoped` ACTIVE row returning zero is re-checked by nothing**
 - **320** `320@registry` **`tests.yml` has a SECOND red cause nobody has named, and it is the failure §2 warns
 - **322** `322@registry` **`il >= 1` counts a placeholder posting, and the name then leaves the queue forever** —
+- **323** `323@registry` **The own-site rung finds a real company address and then throws it away
 
 ### infra — 66 open
 
@@ -5049,3 +5050,42 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      being `unverified` rather than `ok` — i.e. deferred, retried tomorrow, never stamped.
      Not done: it wants its own measurement over how many one-posting boards in the registry
      are real, and this session had already shipped enough.
+
+323. **The own-site rung finds a real company address and then throws it away — 9 of 11 on
+     its first production run** — lane: `registry`. Measured in run `2026-08-27T17:00`, the
+     first with the rung armed:
+
+     ```
+     probe: 11 resolved, refused 18 (...); own-site seeds 11
+     ```
+
+     The 11 seeds are real, verified company domains — the page named the company in full AND
+     linked back to `linkedin.com/company/<handle>`:
+
+     ```
+     ARRISE arrise.com · TAIRC tairc.com · Surecomp surecomp.com · Qualitest qualitest.com
+     Huuuge Games huuugegames.com · Teads teads.com · Hexight hexight.io · Isracard
+     isracard.co.il · Fresenius Medical Care freseniusmedicalcare.com · TLVTech · ONE datAI
+     ```
+
+     **Nine of them ended `dfer <name> (cap; retried on rotation)` and left no row at all.**
+     Only `ONE datAI` produced one (parked, `scraped page is not this company's`) and TLVTech
+     resolved via the probe. The mechanism is a precedence, not a bug in the rung: a
+     site-seeded name has `agg_seed=False`, so when `resolve_deep` comes back `empty` or
+     `unreachable` the name reaches the LLM tier, and with `LLM_RESOLVE_CAP` spent
+     `defer = "cap"` fires **before** the park branch that would have written
+     `[name, "scrape", site, site, "false", "scanned; no open Israel roles now"]`.
+
+     So the rung's whole point — turning a LinkedIn permalink into an address the registry can
+     keep — is discarded for 9 of 11 names, twice a day, and re-discovered from scratch next
+     run.
+
+     **Not fixed here, and the reason is the interesting part.** Parking is not obviously
+     right: a parked row REMOVES the name from `_names_now()`, so the queue never offers it
+     again, and if the address is wrong the company is lost rather than retried — which is
+     exactly the shape an attacker found in the probe's own refusals this same session (a
+     defer that swallowed a row). The honest question is whether a verified own-domain page
+     is strong enough evidence to park on, and that wants its own measurement over how many
+     of these nine have a careers page the hunt could later crack. Whoever takes it: the
+     answer probably differs for `empty` (the page rendered, no Israel roles — park it, the
+     address is good) and `unreachable` (we never saw the page — defer).
