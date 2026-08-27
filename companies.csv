@@ -1243,3 +1243,15 @@ Candex Technologies,ashby,candex,https://api.ashbyhq.com/posting-api/job-board/c
 spinomenal,comeet,99.008,https://www.comeet.com/careers-api/2.0/company/99.008/positions?token=998432899826602FF826601CC8565813301CC8,true,auto-expand; 8/8 IL
 Figma,greenhouse,figma,https://boards-api.greenhouse.io/v1/boards/figma/jobs,true,auto-expand; 158/5 IL
 Aligned,greenhouse,aligned,https://boards-api.greenhouse.io/v1/boards/aligned/jobs,true,auto-expand; 8/3 IL
+Ness Technologies,smartrecruiters,nesstechnologies,https://api.smartrecruiters.com/v1/companies/nesstechnologies/postings,true,auto-expand slug-probe; 1/1 IL
+ONE datAI,scrape,https://onedatai.co.il,https://onedatai.co.il,false,scraped page is not this company's; no listing found
+TLVTech,smartrecruiters,tlvtech,https://api.smartrecruiters.com/v1/companies/tlvtech/postings,true,auto-expand slug-probe; 7/7 IL
+WorldQuant,greenhouse,worldquant,https://boards-api.greenhouse.io/v1/boards/worldquant/jobs,true,auto-expand slug-probe; 104/5 IL
+Matia,ashby,matia,https://api.ashbyhq.com/posting-api/job-board/matia,true,auto-expand slug-probe; 11/5 IL
+Chamelio,ashby,chamelio,https://api.ashbyhq.com/posting-api/job-board/chamelio,true,auto-expand slug-probe; 8/6 IL
+Triple Whale,greenhouse,triplewhale,https://boards-api.greenhouse.io/v1/boards/triplewhale/jobs,true,auto-expand slug-probe; 12/5 IL
+ControlUp,lever,controlup,https://api.lever.co/v0/postings/controlup?mode=json,true,auto-expand slug-probe; 13/4 IL
+Honeycomb Insurance,greenhouse,honeycombinsurance,https://boards-api.greenhouse.io/v1/boards/honeycombinsurance/jobs,true,auto-expand slug-probe; 11/2 IL
+Chalk,ashby,chalk,https://api.ashbyhq.com/posting-api/job-board/chalk,true,auto-expand slug-probe; 18/1 IL
+ImagineArt,ashby,imagineart,https://api.ashbyhq.com/posting-api/job-board/imagineart,true,auto-expand slug-probe; 33/1 IL
+Citadel Cyber Security,greenhouse,citadelcybersecurity,https://boards-api.greenhouse.io/v1/boards/citadelcybersecurity/jobs,true,auto-expand slug-probe; 4/4 IL
