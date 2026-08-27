@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**352 filed · 255 open · 97 closed · 5 half · 28 numbers name more than one item · 28 items name no lane.**
+**353 filed · 256 open · 97 closed · 5 half · 28 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 311.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 312.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -82,7 +82,7 @@ closure convention in the header.
 | 245 | `245@company-intel` **open** · `245@ats-fetch` **open** · `245@scraper` **open** |
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 
-### infra — 64 open
+### infra — 65 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -148,6 +148,7 @@ closure convention in the header.
 - **306** `306@infra` **A unit test that reads mutable production state can be broken by a cron, and that is how
 - **307** `307@infra` **Seven workflows already print `python -m pipeline.stages` and none of them compares it to
 - **308** `308@infra` **A day on which GitHub drops every cron in BOTH repositories is undetectable by anything in
+- **311** `311@infra` **`_needs_git` skips 11 infra guards in a git WORKTREE
 
 ### registry — 63 open
 
@@ -2851,8 +2852,18 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
 
     Re-derive with
     `gh run view <id> --json jobs --jq '.jobs[]|select(.name=="mutation-gate")|"\(.startedAt) \(.completedAt)"'`.
-    Both of those predate this session's first code push, so this is not new work's doing;
-    198 mutations against a suite that every lane keeps adding to is simply arithmetic.
+    **CORRECTION, same day: it has now actually timed out, and this session helped.** The
+    `30bc39f` run went `11:44:05 -> 12:29:21` = **45 min 16 s, conclusion `cancelled`** — i.e.
+    it hit `timeout-minutes: 45`. The two rows above predate that push, so the trend is not
+    new work's doing; but only ~44 s of headroom existed, and this session's guards measure
+    **+19.1 s on a full suite** (124.4 s at `c1323d5` -> 143.6 s at `f617a8f`, same machine,
+    back to back; ~9.5 s of that is their own call+setup time). The gate runs one full
+    baseline suite before the 198 mutants, so that delta lands on it directly. The honest
+    reading is: 198 mutations against a suite every lane keeps growing is arithmetic, and
+    this lane supplied the last minute of it.
+
+    Partly repaid: the two guards that assert on workflow YAML — which the catalogue never
+    mutates — now carry `@_not_in_the_mutation_archive` and cost the gate nothing.
 
     **Why it matters more than a slow job:** a gate that FAILS names the surviving mutant. A
     gate that TIMES OUT names nothing, and `tests.yml` has been red for other reasons since
@@ -4632,6 +4643,41 @@ hosts, so its worked example needs a different diagnosis).
 
      `309@roles` is the same defect reached from the deferral path. Re-measure with the same
      command; the three bucket counts are the before/after.
+
+311. **`_needs_git` skips 11 infra guards in a git WORKTREE — which is how every lane is
+     told to work** — lane: `infra`. `tests/test_units.py`:
+
+     ```python
+     _needs_git = pytest.mark.skipif(
+         _GIT is None or not os.path.isdir(os.path.join(_REPO, ".git")),
+         reason="needs git and a real checkout (the mutation harness runs from a git archive)")
+     ```
+
+     Its stated intent is right — run in a real checkout, skip in the mutation archive. The
+     predicate is not: **in a worktree `.git` is a FILE**, so `isdir()` is False and all 11
+     skip. `docs/AGENT_BRIEF.md` and every lane prompt say to work in a worktree, so an agent
+     running the suite before pushing has never actually run the conflict, merge or
+     push-recovery guards. They DO run in CI (`actions/checkout` makes a real `.git`
+     directory), so nothing reaches origin unverified — the damage is a **false local green**,
+     which is the exact thing `CLAUDE.md` rule 1 exists about.
+
+     **The fix is one word:** `isdir` -> `exists`. A `git archive` export has neither, so the
+     mutation harness still skips them, which is the whole point of the marker.
+
+     **Measured before filing, in a worktree at `f617a8f`:**
+
+     | predicate | result |
+     |---|---|
+     | `isdir` (today) | 1 failed, 1002 passed, **11 skipped**, 143 s |
+     | `exists` (the fix) | 1 failed, **726 passed, 0 skipped**, 192 s |
+
+     (The pass counts differ because the second run was `tests/test_units.py` alone.) All 11
+     pass in a worktree; the cost is **+50 s on every local run, for every lane**.
+
+     NOT flipped on 2026-08-27 for that reason alone: four lanes were mid-session and a
+     unilateral +50 s on everyone's inner loop is not a call one lane should make quietly.
+     Whoever takes it should say so in `HANDOFF.md` first. `infra` owns the marker;
+     the cost lands on everybody.
 
 295. **Three session records are named a day before their own H1** — lane: `docs`.
      `docs/sessions/2026-08-24-{infra,render,roles}.md` all open `# 2026-08-25`, because the

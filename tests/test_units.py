@@ -11691,6 +11691,16 @@ def test_the_role_leak_measurement_separates_the_three_buckets():
         "a posted_date backfilled after the window closed stopped counting as a leak"
 
 
+_not_in_the_mutation_archive = pytest.mark.skipif(
+    # `exists`, NOT `isdir`: in a git WORKTREE -- which is how every lane is told to work --
+    # `.git` is a file, so isdir() would skip these in every worktree as well as in the
+    # archive. A `git archive` export has neither.
+    not os.path.exists(os.path.join(_REPO, ".git")),
+    reason="asserts on workflow YAML, which the mutation catalogue never mutates -- running it "
+           "once per mutant only spends the gate's 45-minute budget (BACKLOG 195)")
+
+
+@_not_in_the_mutation_archive
 def test_no_workflow_run_block_fakes_a_line_continuation():
     r"""The bug this exists for was SYNTACTICALLY VALID, which is why the first version of
     this guard passed on it. A patch wrote the `deliver` call as ONE physical line with a
@@ -11716,6 +11726,7 @@ def test_no_workflow_run_block_fakes_a_line_continuation():
     assert checked > 500, "only %d workflow lines scanned; the reader stopped early" % checked
 
 
+@_not_in_the_mutation_archive
 def test_every_workflow_run_block_is_valid_shell():
     """Complements the guard above: that one catches a faked continuation, this one catches
     an unbalanced quote or an `fi`-less `if`. Neither subsumes the other - the 2026-08-27
