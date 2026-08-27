@@ -57,7 +57,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-08-28 | infra | the `mutation-gate` job FINISHES rather than hitting `timeout-minutes: 45`. It already timed out once: `30bc39f` ran **45m16s, `cancelled`**. It was 44m16s on `c1323d5` before this session, and this session's guards add +19.1s to the baseline suite. A timeout names no surviving mutant — BACKLOG 195/311 | — | not yet due |
 | 2026-08-28 | infra | the `mutation-gate` job finished, rather than hitting `timeout-minutes: 45`. It measured **44 min 16 s** on `c1323d5` and 37 min 44 s on `623b2a9`, both before this session's code. A timeout names no surviving mutant, and `tests.yml` is already red for other reasons — BACKLOG 195 | — | not yet due |
 | 2026-08-28 | roles | `ledger N = store N`; `purged 7` once; `reopened` NOT ~70 | — | |
-| 2026-08-28 | registry | after the 05:00 digest commits, `research_companies.json` is ~500 entries, not ~1,700 — the drain survived the REAL merge, not just `merge-file`. And the 08:00 auto-expand `probe:` line shows `N resolved` with `probe-dup-board` among its refusals | — | not yet due |
+| 2026-08-28 | registry | the drain survived the REAL merge, and the auto-expand `probe:` line shows `N resolved` with `probe-dup-board` among its refusals | 2026-08-27 | PASS, early — `599d7b8` 16:42 UTC: queue **1,693 -> 517** in one commit; the 17:00 run printed `probe: 11 resolved, refused 18 (... probe-dup-board 4 ...)` |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due (`audit-coverage.yml` is `0 4 * * 0`) |
 
 ## State at handoff — 2026-08-27 07:5x UTC, every number re-derived
