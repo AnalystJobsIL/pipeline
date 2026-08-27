@@ -10799,7 +10799,7 @@ def test_the_collected_test_count_never_falls():
     proc = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q"],
                           capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=root)
     n = sum(int(m) for m in re.findall(r"^tests[/\\][^:]+: (\d+)$", proc.stdout, re.M))
-    assert n >= 957, (
+    assert n >= 963, (
         "%d tests collected, floor is %d - a guard was deleted" % (n, 16))
 
 
@@ -10873,3 +10873,81 @@ def test_an_unanswered_morning_check_is_a_warning_and_never_an_error():
     body = src.split("def check_morning_checks")[1].split("\ndef ")[0]
     assert 'warn("morning-checks", "morning check due %s' in body
     assert 'err("morning-checks", "morning check due' not in body
+
+
+# --- docs lane, 2026-08-27: docs/BACKLOG.md was 3,457 lines with a lane's work scattered
+# --- across fifteen chronological sections and 28 numbers naming more than one item ----
+def _bl():
+    import importlib.util
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    spec = importlib.util.spec_from_file_location(
+        "backlog_under_test", os.path.join(root, "docs", "backlog.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_the_backlog_parser_finds_every_numbered_item_and_none_is_empty():
+    """`^(\\d+)\\. ` at column 0 is the contract, and it is exact rather than heuristic: it
+    matched 314 lines and exactly 314 items across 3,457 lines with zero false positives. If
+    someone reformats the file, this goes red before the index silently loses items."""
+    bl = _bl()
+    items = bl.parse()
+    assert len(items) > 300
+    assert all(i.lines and i.lines[0].strip() for i in items)
+    assert all(i.num > 0 for i in items)
+
+
+def test_the_backlog_index_is_a_faithful_regeneration():
+    """Same contract as docs/MODULES.md: it is generated, so a hand-edit is discarded by the
+    next run and a number in it cannot be fixed in place."""
+    ok, why = _bl().index_is_current()
+    assert ok, why
+
+
+def test_every_backlog_item_names_a_lane_that_exists():
+    """Item 102 was tagged `lane: shared`. There is no `shared` lane, and item 243's own prose
+    says it: 'an item addressed to one is addressed to nobody'. The lane set is parsed from
+    docs/AGENT_BRIEF.md, so adding a lane in one place stays enough."""
+    bl = _bl()
+    lanes = bl.lane_names() | {"unassigned"}
+    bad = sorted({i.lane for i in bl.parse()} - lanes)
+    assert not bad, "items name lanes that are not in the brief's table: %s" % bad
+
+
+def test_the_next_free_backlog_number_is_never_one_that_was_used_or_skipped():
+    """241 through 246 each name three items because three lanes filed within an hour on
+    2026-08-26 and none of them knew what was taken. And a never-used number is NOT free: an
+    old citation would resolve to new text, which is worse than a collision."""
+    bl = _bl()
+    items = bl.parse()
+    nxt = max(i.num for i in items) + 1
+    assert nxt not in {i.num for i in items}
+    used = {i.num for i in items}
+    gaps = set(range(1, max(used))) - used
+    assert nxt not in gaps
+
+
+def test_a_closed_backlog_item_is_only_ever_the_intersection_never_the_union():
+    """The most dangerous failure available here is a parser bug that buries open work, so
+    `closed` requires BOTH a struck-through title AND a closure paragraph. Measured: the safe
+    predicate matches 32 items; a marker in the first three lines matches 95 and has false
+    positives (2@registry, 7@infra and 1@docs are open). Items closed only by a later
+    section's bullet are REPORTED, never archived."""
+    bl = _bl()
+    for i in bl.parse():
+        if i.closed:
+            assert bl.STRUCK.search(i.lines[0]) and bl.CLOSED_MARK.search(i.body)
+        assert not (i.closed and i.bullet_closed)
+
+
+def test_backlog_py_writes_nothing_without_an_explicit_flag():
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    target = os.path.join(root, "docs", "BACKLOG.md")
+    before = open(target, "rb").read()
+    for args in (["stats"], ["next"], ["check"], ["lane", "docs"], ["show", "241"]):
+        subprocess.run([sys.executable, os.path.join(root, "docs", "backlog.py")] + args,
+                       capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       cwd=root)
+    assert open(target, "rb").read() == before

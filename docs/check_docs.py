@@ -824,6 +824,53 @@ def check_session_record_dates() -> None:
                              "that path, which is why three files are a day out."
                  % (rel(p), h1.group(1)))
 
+# ---------------------------------------------------------------- 6b. the backlog index
+def _backlog():
+    """docs/backlog.py as a module. It is a script, like this one; import it by path."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "backlog_tool", os.path.join(ROOT, "docs", "backlog.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def check_backlog() -> None:
+    """The index at the top of docs/BACKLOG.md must be a faithful regeneration.
+
+    Same contract as docs/MODULES.md: the file is generated, so a hand-edit is discarded by
+    the next run and a number in it cannot be fixed in place. The lane check can be an ERROR
+    on day one because it is green on HEAD by construction - `unassigned` is grandfathered
+    and the count is printed on the first screen of the file, so the set can only shrink.
+    """
+    path = os.path.join(ROOT, "docs", "backlog.py")
+    if not os.path.exists(path):
+        return
+    try:
+        bl = _backlog()
+        items = bl.parse()
+    except Exception as e:                                    # noqa: BLE001
+        err("backlog", "docs/backlog.py could not parse docs/BACKLOG.md (%s: %s)"
+            % (type(e).__name__, e))
+        return
+    ok, why = bl.index_is_current()
+    if not ok:
+        err("backlog", why)
+    lanes = _lane_names()
+    for i in items:
+        if lanes and i.lane not in lanes and i.lane != "unassigned":
+            err("backlog", "docs/BACKLOG.md item %d names lane `%s`, which is not in "
+                           "docs/AGENT_BRIEF.md's table. An item addressed to a lane that "
+                           "does not exist is addressed to nobody." % (i.num, i.lane))
+    held = [i for i in items if i.bullet_closed]
+    if held:
+        warn("backlog", "%d items are closed by a later section's bullet with the ORIGINAL NEVER EDITED, so a reader going top-down still files work against them: %s"
+             % (len(held), ", ".join(i.key for i in held[:8])))
+    unlaned = [i for i in items if not i.closed and i.lane == "unassigned"]
+    if unlaned:
+        warn("backlog", "%d open items name no lane. A new item may not join them - `python docs/backlog.py next` prints the number to use." % len(unlaned))
+
+
 # ---------------------------------------------------------------- 7. entry points exist
 def check_entry_docs() -> None:
     for name in ("CLAUDE.md", "README.md", "ARCHITECTURE.md", "HANDOFF.md",
@@ -835,7 +882,8 @@ def check_entry_docs() -> None:
 CHECKS = [check_entry_docs, check_paths_exist, check_links, check_section_refs,
           check_module_registry,
           check_schedule_table, check_derived_facts, check_handoff,
-          check_morning_checks, check_session_record_dates]
+          check_morning_checks, check_session_record_dates,
+          check_backlog]
 
 
 def main(argv=None) -> int:
