@@ -101,20 +101,86 @@ def ddg(name, limit=4):
 _BD = {"used": 0}
 
 
+# Hosts that are Google's own furniture or a standards namespace, never a result.
+_G_NOISE = ("google", "gstatic", "googleusercontent", "googleapis", "ggpht", "w3.org",
+            "schema.org", "youtube", "blogger", "chrome", "android")
+# A path that says "this is where the jobs are". One host can appear in the result page a
+# dozen times -- as a bare homepage, a logo link, a breadcrumb and the actual result -- and
+# the bare form always comes FIRST, so keeping the first URL per host keeps the useless one.
+_G_JOBS_PATH = re.compile(r"(job|career|position|opening|vacanc|role|hiring|apply|greenhouse|"
+                          r"lever|ashby|comeet|smartrecruiters|recruitee|workable|breezy)", re.I)
+_G_URL = re.compile(r'https?://[A-Za-z0-9.\-]+\.[A-Za-z]{2,}(?:/[^\s"\'<>]*)?')
+
+
 def google_via_unlocker(name, limit=4):
+    """Search Google through the unlocker. The ONE search rung that still works.
+
+    **This returned `[]` for every query until 2026-08-27 and nothing noticed**, which is the
+    failure ARCHITECTURE section 3 warns about in its own words: a run of "found nothing" is
+    indistinguishable from "cannot search". Two causes, both fixed here.
+
+    1. **The parse.** It looked for `href="/url?q=..."` or `href="https://..."`. Modern Google
+       serves the no-JS variant with zero result `href`s -- measured on a live 330 KB response
+       for `Maytronics careers`: `/url?q=` appeared **0** times and only 7 bare `href="http`
+       existed, all of them Google's own chrome. The result URLs are in the document as plain
+       text. Scanning for URLs and dropping Google's furniture recovers them.
+
+    2. **The locale.** The unlocker's exit node is wherever Bright Data puts it -- on
+       2026-08-27 it was Kazakhstan, and the page came back `hl=en-KZ` off `google.kz` with
+       results dominated by job-aggregator spam (vaia, bebee, trabajo, learn4good, tealhq).
+       `gl=il&hl=en` asks for the Israeli index, which is where an Israeli employer's own site
+       ranks. Measured, same three names, plain vs `gl=il`:
+
+           Maytronics  plain -> comeet.com, maytronics.com, tealhq.com, vaia.com, ...
+           Maytronics  gl=il -> maytronics.com, comeet.com, careers.maytronics.co.il
+
+       The second row is the company's site, its ATS board and its careers page; the first is
+       two of those plus noise.
+
+    3. **Which URL per host.** One host appears many times in a result page -- bare homepage,
+       logo link, breadcrumb, then the actual result -- and **the bare form always comes
+       first**, so keeping the first URL per host keeps the least useful one. Measured on a
+       live `Exodigo careers` response, Google returned BOTH
+       `https://www.comeet.com/jobs/exodigo/89.005` (the company's actual Comeet board, i.e. a
+       direct resolution) and `https://www.exodigo.com/open-roles` (its real listings page) --
+       and first-per-host discarded both in favour of `comeet.com` and `exodigo.com`. The
+       operator caught this: the hunt had settled on `exodigo.com/careers`, a real 200 page
+       that is not the listings page. Ranked per host now: a jobs-ish path beats any other
+       path beats a bare host.
+
+    Dedupe is by HOST so `limit` buys distinct candidates instead of four pages of one site --
+    the caller renders `cands[:2]`, so a duplicated host wastes the whole budget. This is
+    cloud-portable by construction: the exit is Bright Data's, not the caller's, so a runner
+    and a dev machine get the same answer.
+    """
     cap = int(os.environ.get("DEEP_BD_SEARCH_CAP", "150"))
     if _BD["used"] >= cap or not os.environ.get("BRIGHTDATA_API_KEY"):
         return []
     _BD["used"] += 1
     q = urllib.parse.quote_plus(f"{name} careers")
-    html = unlock(f"https://www.google.com/search?q={q}&num=10")
-    out = []
-    for m in re.finditer(r'href="(?:/url\?q=)?(https?://[^"&]+)', html or ""):
-        u = urllib.parse.unquote(m.group(1))
-        if ("google." not in u and "gstatic" not in u
-                and not is_aggregator(u) and u not in out):
-            out.append(u)
-    return out[:limit]
+    html = unlock(f"https://www.google.com/search?q={q}&num=20&gl=il&hl=en") or ""
+    order, best = [], {}
+    for m in _G_URL.finditer(html):
+        u = urllib.parse.unquote(m.group(0).rstrip(".,)&"))
+        parts = u.split("/", 3)
+        if len(parts) < 3:
+            continue
+        host = parts[2].lower()
+        if any(b in host for b in _G_NOISE) or is_aggregator(u):
+            continue
+        path = parts[3] if len(parts) > 3 else ""
+        # rank: a jobs-ish path beats any other path, which beats a bare host -- and among
+        # equals the SHORTEST path wins, because that is the index. `/open-roles` is the
+        # listings page and `/open-positions/field-operator-d0d83` is one posting on it;
+        # `comeet.com/jobs/silk/F6.00C` is the board and `.../F6.00C/core-python-engineer`
+        # is one row of it. Preferring length picked the leaf every time.
+        rank = (2 if _G_JOBS_PATH.search(path) else (1 if path.strip("/") else 0), -len(path))
+        if host not in best:
+            order.append(host)
+            best[host] = (rank, u)
+        elif rank > best[host][0]:
+            best[host] = (rank, u)
+    return [best[h][1] for h in order][:limit]
 
 
 def propose_from_text(text):

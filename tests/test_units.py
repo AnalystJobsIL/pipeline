@@ -13888,3 +13888,62 @@ def test_an_ambiguous_catalog_handle_is_skipped_rather_than_guessed():
     entries2 = [{"name": "Acme Labs", "careers_url": "x", "ats": "unknown", "slug": ""}]
     assert S.backfill_handles(entries2, ["acme-labs"])[0] == 1
     assert entries2[0]["slug"] == "acme-labs"
+
+
+def test_the_only_working_search_rung_actually_parses_a_result(monkeypatch):
+    """`deep_validate.google_via_unlocker` returned `[]` for EVERY query until 2026-08-27 and
+    nothing noticed -- the failure ARCHITECTURE section 3 names in its own words: a run of
+    "found nothing" is indistinguishable from "cannot search". It is the last rung of the
+    ladder (SerpApi exhausted, DDG rate-limited off the dev machine), so `deep_validate`,
+    `audit_empty_rows`, `resolve_llm` and `listing_hunt`'s fallback were all searching into a
+    void.
+
+    Cause: it looked for `href="/url?q=..."`. Modern Google serves the no-JS variant with
+    ZERO result hrefs -- measured on a live 330 KB response, `/url?q=` appeared 0 times and
+    the only 7 bare `href="http` were Google's own chrome. The result URLs are plain text in
+    the document.
+
+    Measured after the fix, live: `Maytronics careers` -> maytronics.com, comeet.com,
+    careers.maytronics.co.il -- the company's site, its ATS board and its careers page."""
+    import deep_validate as DV
+
+    page = (
+        '<!doctype html><html><head><title>Maytronics careers - Google Search</title></head>'
+        '<body><a href="/httpservice/retry/enablejs">x</a>'
+        '<a href="https://support.google.com/websearch/answer/181196">help</a>'
+        '<div>https://www.maytronics.com/careers-at-maytronics/ Maytronics Careers</div>'
+        '<div>https://www.maytronics.com/about/ About</div>'
+        '<div>https://www.comeet.com/jobs/maytronics/12.001 Open positions</div>'
+        '<div>https://www.linkedin.com/jobs/view/12345 LinkedIn</div>'
+        '<div>https://www.w3.org/2000/svg</div>'
+        '<div>https://careers.maytronics.co.il/ Careers IL</div></body></html>')
+    asked = {}
+
+    def _unlock(u):
+        asked["url"] = u
+        return page
+
+    monkeypatch.setattr(DV, "unlock", _unlock)
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    DV._BD["used"] = 0
+    out = DV.google_via_unlocker("Maytronics")
+
+    hosts = [u.split("/")[2] for u in out]
+    # THE URL THAT MATTERS PER HOST. A host appears many times in a result page -- bare
+    # homepage, logo, breadcrumb, then the real result -- and the bare form comes FIRST, so
+    # first-per-host keeps the useless one. Measured live on `Exodigo careers`: Google
+    # returned `comeet.com/jobs/exodigo/89.005` (the company's actual board) and
+    # first-per-host discarded it for `comeet.com`. With the board, `hunt_one` resolves
+    # Exodigo at 17 Israel jobs; without it, `nolisting`.
+    assert "https://www.comeet.com/jobs/maytronics/12.001" in out, out
+    assert "https://www.comeet.com" not in out, out
+    assert "www.maytronics.com" in hosts, out
+    assert "careers.maytronics.co.il" in hosts, out
+    assert not [h for h in hosts if "google" in h or "w3.org" in h], "Google's own furniture"
+    assert not [h for h in hosts if "linkedin" in h], "an aggregator survived is_aggregator"
+    # deduped by HOST, not URL: the caller renders cands[:2], so two pages of one site
+    # would spend the entire budget on it
+    assert len(hosts) == len(set(hosts)), hosts
+    # the exit node is Bright Data's and it lands wherever it lands -- Kazakhstan on
+    # 2026-08-27, whose index returns job-aggregator spam for an Israeli employer
+    assert "gl=il" in asked["url"] and "hl=en" in asked["url"], asked["url"]
