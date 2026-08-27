@@ -83,6 +83,38 @@ PROBE_NAME_REQ = 18        # 3 slugs x 6 platforms: the arithmetic ceiling of th
 _SLUG_OK = re.compile(r"[a-z0-9][a-z0-9-]{1,38}[a-z0-9]")
 
 
+
+def _get_page(url, deadline, timeout=5, cap=400_000):
+    """One GET, bounded in TIME as well as in bytes. Returns (final_url, html) or ("", "").
+
+    `urlopen(timeout=)` is a per-operation timeout, not a total one, and `read(n)` caps
+    BYTES. A server that dribbles slower than the timeout resets it on every recv: measured
+    by an attacker on 2026-08-27, 10 bytes every 3 s against `timeout=5` ran 30 s for ten
+    chunks, and at 400 KB that shape is ~33 HOURS for one TLD of one name. The host here is
+    an arbitrary third-party domain reached from discovery intake, so this is not a
+    hypothetical -- a CDN under load or a captive portal produces the same shape.
+    """
+    import urllib.request
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        resp = urllib.request.urlopen(req, timeout=timeout)
+    except Exception:  # noqa: BLE001
+        return "", ""
+    buf, n = [], 0
+    try:
+        with resp:
+            while n < cap:
+                if time.time() > deadline:
+                    break                      # the byte cap is not a time bound; this is
+                chunk = resp.read(min(65536, cap - n))
+                if not chunk:
+                    break
+                buf.append(chunk)
+                n += len(chunk)
+            return resp.geturl() or url, b"".join(buf).decode("utf-8", "replace")
+    except Exception:  # noqa: BLE001
+        return "", ""
+
 def _lossless_slugs(name, li_slug=""):
     """Slug candidates that DROP NO WORD of the name, plus LinkedIn's own handle.
 
@@ -118,6 +150,20 @@ def _lossless_slugs(name, li_slug=""):
     return out[:3]
 
 
+# The six guessable platforms as they appear in a stored URL, so a board held by a `scrape`
+# row is still recognised as that board. Keep in step with `probe_ats._PLATFORMS`.
+_ATS_PLAT = {"boards-api.greenhouse.io": "greenhouse", "boards.greenhouse.io": "greenhouse",
+             "job-boards.greenhouse.io": "greenhouse", "api.lever.co": "lever",
+             "api.eu.lever.co": "lever", "jobs.lever.co": "lever",
+             "jobs.eu.lever.co": "lever", "api.ashbyhq.com": "ashby",
+             "jobs.ashbyhq.com": "ashby", "api.smartrecruiters.com": "smartrecruiters",
+             "careers.smartrecruiters.com": "smartrecruiters"}
+_RECRUITEE_IN_URL = re.compile(r"https?://([A-Za-z0-9_-]+)\.recruitee\.com")
+_ATS_IN_URL = re.compile(
+    r"https?://(" + "|".join(re.escape(h) for h in _ATS_PLAT) +
+    r")/(?:v1/boards/|v0/postings/|posting-api/job-board/|v1/companies/)?([A-Za-z0-9_-]+)")
+
+
 def _boards_now():
     """Every (platform, token) the registry already reads. An exact key, not a name match.
 
@@ -134,9 +180,23 @@ def _boards_now():
     -- what `ARCHITECTURE.md` section 2 calls `alias-of` and treats as terminal -- and
     `check_invariants` check B cannot catch it precisely BECAUSE the names differ.
     """
-    return {((r.get("ats_platform") or "").strip().lower(),
-             (r.get("token") or "").strip().lower())
-            for r in load_companies(CSV_PATH, active_only=False)}
+    out = set()
+    for r in load_companies(CSV_PATH, active_only=False):
+        plat = (r.get("ats_platform") or "").strip().lower()
+        out.add((plat, (r.get("token") or "").strip().lower()))
+        # ...and the board a `scrape` row is really reading. 7 rows sit on a guessable ATS
+        # board while their platform column says `scrape` (Stigg -> jobs.ashbyhq.com/stigg,
+        # Nuvo -> recruitee, Unity -> greenhouse). Keyed only on the column, those boards are
+        # invisible to the duplicate check and the rung would open a SECOND active row on
+        # them under a second employer name (attacker, 2026-08-27).
+        for u in ((r.get("api_url") or ""), (r.get("token") or "")):
+            m = _ATS_IN_URL.search(u or "")
+            if m:
+                out.add((_ATS_PLAT[m.group(1).lower()], m.group(2).lower()))
+            m2 = _RECRUITEE_IN_URL.search(u or "")     # subdomain tenant, not a path one
+            if m2:
+                out.add(("recruitee", m2.group(1).lower()))
+    return out
 
 
 def _probe_resolve(name, li_slug, boards, deadline):
@@ -166,7 +226,21 @@ def _probe_resolve(name, li_slug, boards, deadline):
     h = live[0]
     if (h["plat"], h["slug"]) in boards:
         return None, "probe-dup-board"
-    return (h["plat"], h["slug"], h["url"], h["jobs"], h["il"]), ""
+    # READ THE PAGE OURSELVES. `_row_for_ats` calls `activation_ok(nm, api, n_all)` with NO
+    # html, so `board_vouches` -> None sends the gate to fetch `human_board_url` itself --
+    # and when that fetch 404s or returns a JS shell, `page_names_company` falls through to
+    # the PAID `bd_rescue.unlock` (`PAGE_UNLOCK_BUDGET` = 100 per process, and
+    # `auto-expand.yml` sets BRIGHTDATA_API_KEY). An attacker demonstrated 5 paid calls from
+    # 5 probe hits on 2026-08-27, and measured that 95 of the 498 queue names -- 19%, mostly
+    # the LinkedIn-handle slugs this rung deliberately adds -- take that path. So the claim
+    # "this rung is free" was FALSE, and it is made true here rather than asserted: we hold
+    # a page of >= 2000 chars before the gate is asked, which is exactly the condition under
+    # which it does not fetch and cannot unlock.
+    human = _gate.human_board_url(h["url"]) or h["url"]
+    _final, html = _get_page(human, deadline)
+    if len(html) < 2000:
+        return None, "probe-unread"
+    return (h["plat"], h["slug"], h["url"], h["jobs"], h["il"], html), ""
 
 
 
@@ -193,6 +267,7 @@ _LI_SITE = re.compile(r'data-tracking-control-name="about_website"[^>]+href="([^
 
 
 SITE_BUDGET_S = int(os.environ.get("AUTO_EXPAND_SITE_BUDGET_S", "600"))
+SITE_MAX = int(os.environ.get("AUTO_EXPAND_SITE_MAX", "25"))
 _SITE_TLDS = ("com", "co.il", "ai", "io")
 
 
@@ -220,21 +295,28 @@ def _site_from_guess(name, handle, timeout=5):
     """
     if not handle or not _SLUG_OK.fullmatch(handle):
         return None
-    import urllib.request
+    deadline = time.time() + 4 * timeout       # a TOTAL bound across all four TLDs
     for tld in _SITE_TLDS:
         u = "https://%s.%s" % (handle, tld)
-        try:
-            req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                html = resp.read(400_000).decode("utf-8", "replace")
-                final = resp.geturl()
-        except Exception:  # noqa: BLE001
+        final, html = _get_page(u, deadline, timeout=timeout)
+        if not final:
             continue
         if len(html) < 2000:
             continue                       # under the gate's own evidence floor: not a page
-        if _gate.page_names_company(name, final or u, html=html) is not True:
+        # THE FULL NAME, never the truncated core. `page_names_company` retries with the
+        # `_NAME_STOP`-stripped core, which is the same truncation `_lossless_slugs` refuses
+        # -- and it fired here: `PCB Technologies Ltd.` was "named" by pcb.com, the site of
+        # PCB PIEZOTRONICS, because the core `PCB` appears on it (attacker, 2026-08-27).
+        if _gate.page_mentions_company(name, html, strict=True) is not True:
             return None                    # a domain that answers but is not theirs: stop
-        if not re.search(r"linkedin\.com/company/" + re.escape(handle) + r"\b", html, re.I):
+        # ...and the linkback must be the WHOLE handle. `\b` fires on a hyphen, so `pcb` was
+        # "proved" by `linkedin.com/company/pcb-piezotronics` and `ceva` by
+        # `linkedin.com/company/ceva-sante-animale`: a PREFIX match, which is exactly the
+        # truncation this rung exists to avoid, arriving through the other half of the same
+        # test. Two independent-looking halves, one shared weakness -- the same shape as the
+        # gate's own (BACKLOG 317), which is the thing to remember rather than the two fixes.
+        if not re.search(r"linkedin\.com/company/" + re.escape(handle) + r"(?![a-z0-9-])",
+                         html, re.I):
             return None                    # no linkback: unproven, and unproven is refused
         if _gate.is_foreign(name, final or u):
             return None
@@ -320,7 +402,7 @@ def _row_for_scrape(name, jobs2, good_url, seed_url, cache):
             f"auto-expand scrape; {len(jobs2)} IL"]
 
 
-def _row_for_ats(payload, seed_url):
+def _row_for_ats(payload, seed_url, via="", html=""):
     """The `ats` row builder, extracted so the gate has a seam a test can reach.
 
     `main()` writes through `pipeline.companies.CSV_PATH`, which is an ABSOLUTE path fixed
@@ -329,7 +411,13 @@ def _row_for_ats(payload, seed_url):
     to test, and `retry_unreachable._row_for` is the same shape for the same reason.
     """
     nm, plat, tok, api, n_all, il = payload
-    if not _gate.activation_ok(nm, api, n_all):
+    # `_row_for_scrape` runs `is_aggregator` before its gate and says why; this builder ran
+    # neither. An ATS endpoint should never BE an aggregator, so this is cheap insurance on
+    # the class rather than a measured save (attacker, 2026-08-27).
+    if _is_agg_url(api or ""):
+        return [nm, "scrape", seed_url, seed_url, "false",
+                "auto-expand: aggregator URL; no listing found"]
+    if not _gate.activation_ok(nm, api, n_all, html=html):
         # SEED url in cols 2-3, never the refused board. Persisting the refused `api` put
         # a FOREIGN host into the row's address, and `identity_gate.is_walled` derives
         # crack_walled's pool membership from that host -- so a row parked this way joined
@@ -339,7 +427,13 @@ def _row_for_ats(payload, seed_url):
         # reason as retry's: a token-free refusal orphans the row out of every pool.
         return [nm, "scrape", seed_url, seed_url, "false",
                 "auto-expand: another company's board; no listing found"]
-    return [nm, plat, tok, api, "true", f"auto-expand; {n_all}/{il} IL"]
+    # `via` names the RUNG, so a class of rows can be audited and rolled back as a
+    # class. Without it a slug-probe row is indistinguishable from an LLM-resolved
+    # one, and the rollback this rung shipped with -- "if any such row is ever found
+    # to be another employer's board, disarm the rung in the same commit that parks
+    # it" -- has no way to find them. `grep slug-probe companies.csv` is the audit.
+    return [nm, plat, tok, api, "true",
+            f"auto-expand{' ' + via if via else ''}; {n_all}/{il} IL"]
 
 
 def main():
@@ -395,7 +489,17 @@ def main():
         # `resolve_llm._verify` requires and cannot get from a LinkedIn permalink -- so it
         # both lets tier-1 `resolve_deep` run at all and stops the paid tier being
         # structurally hopeless on this name (BACKLOG 278).
-        if agg_seed and site_on and time.time() < site_deadline:
+        if (agg_seed and site_on and n_sited < SITE_MAX
+                and time.time() < site_deadline):
+            # `n_sited < SITE_MAX` is the important half. A successful guess clears
+            # `agg_seed`, and the very next statement calls `resolve()` -- full
+            # `resolve_deep`: a 35 s Playwright goto plus `scrape_universal` at
+            # COMPANY_BUDGET_S=150, possibly twice. ~342 s per name with NO deadline check
+            # anywhere on that path. That is the cost the module docstring says was
+            # deliberately removed ("76 wasted minutes a run"), and at LIMIT=250 an
+            # attacker computed the uncapped version back at 4.4 HOURS against a 330-minute
+            # job timeout, holding `concurrency: repo-state` for all of it. SITE_BUDGET_S
+            # bounds the guessing GETs; only this bounds what a guess unlocks.
             _site = _site_from_guess(name, (e.get("slug") or "").strip().lower())
             if _site:
                 url, agg_seed = _site[0], False
@@ -432,7 +536,7 @@ def main():
             _j2, _scrape_url = r[1] if isinstance(r[1], tuple) else (r[1], url)
         needs_llm = (agg_seed or kind in ("empty", "unreachable")
                      or (kind == "scrape" and _is_agg_url(_scrape_url)))
-        defer = ""
+        defer, via, probe_html = "", "", ""
         # THE FREE RUNG -- before the capped tier, never after. It costs plain HTTP; the
         # tier costs a `claude -p` call. An aggregator seed reaches here having done NO HTTP
         # at all, and `resolve_llm._verify` cannot accept any answer for it without a page on
@@ -444,20 +548,40 @@ def main():
             # run re-walks the same prefix every time and 248 names are never probed at all.
             # Every time budget in this repo needs a rotation key in the same commit (s2).
             seen[name] = _today()
+            # Flush periodically: rows are appended immediately but `seen` was written only
+            # after the whole loop, and this rung stamps up to 250 names a run instead of
+            # ~10. A timeout or crash -- which the unbounded paths above make likelier --
+            # threw ALL of them away, so the next run re-walked the same prefix, which is
+            # precisely what the rotation key exists to prevent. Atomic, so a partial write
+            # is not a corrupt file (attacker, 2026-08-27).
+            if not DRY_RUN and len(seen) % 25 == 0:
+                try:
+                    from pipeline.atomic import write_json as _wj
+                    os.makedirs(os.path.dirname(SEEN_PATH) or ".", exist_ok=True)
+                    _wj(SEEN_PATH, seen)
+                except Exception:  # noqa: BLE001
+                    pass          # a rotation key is order, never a verdict: never fatal
             hit, why = _probe_resolve(name, e.get("slug"), boards_now,
                                       time.time() + PROBE_NAME_S)
             if hit:
-                plat, tok, api, n_all, n_il = hit
+                plat, tok, api, n_all, n_il, page = hit
                 # `_row_for_ats` unpacks (nm, plat, tok, api, n_all, il) -- the NAME first.
                 r, kind, needs_llm = ("ats", (name, plat, tok, api, n_all, n_il)), "ats", False
                 n_probed += 1
+                via, probe_html = "slug-probe", page
                 print("  probe %s: %s/%s %d jobs, %d IL" % (name, plat, tok, n_all, n_il),
                       flush=True)
             elif why:
+                # COUNTED, NEVER DEFERRED. A probe refusal means the free rung could not
+                # help; it is not a verdict on the company. Setting `defer` here cancelled
+                # the paid tier AND the park below, so a name the probe declined got NO ROW
+                # where it would previously have been parked `unreachable; could not scan`
+                # -- a row that sits in three re-check pools. The company would have existed
+                # only in the queue, and the drain never removes an unresolved name, so it
+                # would be re-probed twice a day forever, invisibly. Found by an attacker,
+                # 2026-08-27.
                 probe_refused[why] += 1
-                if why != "probe-no-il":
-                    defer = why
-        if needs_llm and llm_available and not defer:
+        if needs_llm and llm_available:
             if llm_budget <= 0 or search_budget <= 0:
                 defer = "cap"
             else:
@@ -488,7 +612,7 @@ def main():
             print(f"  dfer {name} ({defer}; retried on rotation)", flush=True)
             continue
         if kind == "ats":
-            row = _row_for_ats(r[1], url)
+            row = _row_for_ats(r[1], url, via=via, html=probe_html)
             if row[4] != "true" and _is_agg_url(url):
                 # An aggregator seed is DEFERRED, never parked (module docstring; BACKLOG
                 # 177). `_row_for_ats`'s refusal branch writes the SEED into cols 2-3, and
@@ -518,6 +642,21 @@ def main():
             if name.lower() in _names_now():      # re-read before the append (rule 4)
                 n_dupe += 1
                 print(f"  dupe {name} (already in the registry; not appended)", flush=True)
+                continue
+            # ...and the same discipline for the BOARD, which `_names_now` cannot see: these
+            # names differ by a legal suffix, which is the whole reason the board key exists.
+            # `_probe_resolve`'s check uses a snapshot taken before the loop, so it cannot
+            # see a row THIS RUN just appended -- two attackers independently demonstrated
+            # one run writing two ACTIVE rows on one board, with `check_invariants` exit 0,
+            # and a live candidate for tonight (`Ness Technologies` and `Ness Technologies |
+            # <hebrew>` both yield the slug `ness-technologies`). That is the `alias-of`
+            # shape section 2 calls terminal: every role published twice under two employer
+            # names, which check B cannot catch BECAUSE the names differ. Re-read, like
+            # rule 4, so it covers the probe path, the LLM path and the intra-run case.
+            if row[4] == "true" and (row[1] or "", row[2] or "") in _boards_now():
+                n_dupe += 1
+                print(f"  dupe {name} ({row[1]}/{row[2]} is already read by another row; "
+                      f"not appended)", flush=True)
                 continue
             with open(CSV_PATH, "a", newline="", encoding="utf-8") as f:
                 csv.writer(f).writerow(row)

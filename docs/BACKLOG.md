@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**363 filed · 257 open · 106 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**365 filed · 259 open · 106 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 321.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 323.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -83,7 +83,7 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### registry — 69 open
+### registry — 70 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -154,6 +154,7 @@ closure convention in the header.
 - **317** `317@registry` **A name-derived slug vouches for itself: `_tenant_near` and `page_names_company` share
 - **318** `318@registry` **An `israel_scoped` ACTIVE row returning zero is re-checked by nothing**
 - **320** `320@registry` **`tests.yml` has a SECOND red cause nobody has named, and it is the failure §2 warns
+- **322** `322@registry` **`il >= 1` counts a placeholder posting, and the name then leaves the queue forever** —
 
 ### infra — 66 open
 
@@ -246,7 +247,7 @@ closure convention in the header.
 - **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
 - **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
 
-### discovery — 16 open
+### discovery — 17 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -264,6 +265,7 @@ closure convention in the header.
 - **226** `226@discovery` **The breadth sweep loses whole pages to blank guest replies**
 - **227** `227@discovery` **The keyless guest endpoint is a coverage ceiling, and it is now the largest known gap
 - **228** `228@discovery` **The 2026-08-26 audit is 4 of 9 keywords deep**
+- **321** `321@discovery` **`is_recruiter` does not know the IT-services/outsourcing firms, and one now activates
 
 ### company-intel — 13 open
 
@@ -4994,3 +4996,40 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
 
      Whoever takes it: the control is `REHEARSE_SELF_TEST=overwrite python
      tests/rehearse_registry.py --nights 14 --policy worst`, which **must** still exit 1.
+
+321. **`is_recruiter` does not know the IT-services/outsourcing firms, and one now activates
+     with a `Data Analyst` role** — lane: `discovery` (owns `pipeline/recruiters.py`). Found
+     by an adversarial pass over the free resolution rung, 2026-08-27. `TLVTech`
+     (smartrecruiters/`tlvtech`, 7 postings, all Tel Aviv) passes every gate and activates.
+     From its own posting and site: *"a dynamic technology firm dedicated to building
+     exceptional products … **for the world's most admired companies**"*, services listed as
+     *"Fractional CTO / Fullstack Development / DevOps Services"*. That is the same category
+     `recruiters._CONFIRMED` already carries as "IT services/outsourcing; re-posts client
+     roles" — `abra`, `malamteam`, `yael group`, `log-on software`, `elad software systems`.
+     `Ness Technologies` is the same shape.
+
+     **This one reaches the product**: one of TLVTech's seven is titled `Data Analyst`, which
+     is precisely the role class this board publishes, so a client's role would appear under
+     the agency's name. `registry` did not add the names: the gate is `discovery`'s, the
+     judgement is about what these companies ARE, and a name added in the wrong lane's file
+     is how a list becomes two lists.
+
+     ```bash
+     python -c "from pipeline.recruiters import is_recruiter; print(is_recruiter('TLVTech',''), is_recruiter('Ness Technologies',''))"
+     # False False
+     ```
+
+322. **`il >= 1` counts a placeholder posting, and the name then leaves the queue forever** —
+     lane: `registry`. `Ness Technologies` activates on smartrecruiters/`nesstechnologies`
+     whose **only** posting is titled *"Test Job"* at `Tel Aviv, , Israel`. The board is real
+     and the tenant is right, so no identity rule fires; the company is simply not using it.
+     The row's existence then removes the name from `_names_now()`, so the queue never
+     retries it and its real board is never found — the cost is not the junk row, it is the
+     company.
+
+     A title-shaped filter is the obvious fix and the wrong one: `pipeline/firmographics
+     .looks_like_junk` exists for NAMES, and "Test Job" is a legitimate title for a test.
+     The honest shape is probably a one-posting board whose single title is placeholder-like
+     being `unverified` rather than `ok` — i.e. deferred, retried tomorrow, never stamped.
+     Not done: it wants its own measurement over how many one-posting boards in the registry
+     are real, and this session had already shipped enough.

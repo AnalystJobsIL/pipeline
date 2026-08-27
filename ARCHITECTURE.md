@@ -1340,10 +1340,25 @@ on the company's **own domain**. With no such page in the evidence that tier can
 whatever the model answers (`docs/BACKLOG.md` 278). The last run before the change resolved
 **0 of 9 asked**. So the missing input was an ADDRESS, and two rungs now supply one for free:
 
-| rung | what it does | measured over all 498, 2026-08-27 |
+| rung | what it does | the SHIPPED code over all 498, 2026-08-27 |
 |---|---|---|
-| `_probe_resolve` | guesses the ATS tenant from **lossless** slug forms + LinkedIn's handle, over the 6 guessable platforms | 5,212 requests, 293 s, 0.59 s/name; **29** names had an Israel-positive board; **21** survived every refusal |
-| `_site_from_guess` | guesses `<linkedin-handle>.{com,co.il,ai,io}` and demands the page **link back** to `linkedin.com/company/<handle>` | 364 valid handles → 119 answered → 104 named the company → 53 linked back → **49** passed all three |
+| `_probe_resolve` | guesses the ATS tenant from **lossless** slug forms + LinkedIn's handle, over the 6 guessable platforms, then reads the board's own human page | **20** activate. Refused: `probe-no-il` 23 · `probe-noslug` 9 · `probe-dup-board` 6 · `probe-ambiguous` 1 · `probe-unread` 1 |
+| `_site_from_guess` | guesses `<linkedin-handle>.{com,co.il,ai,io}`, demands the **full** name on the page and an **exact** linkback to `linkedin.com/company/<handle>` | **47** seeds, from 364 valid handles |
+
+298 s for both rungs across the whole queue. **These are not the numbers this section first
+carried** — it said 29/21 and 49, measured against a draft that three adversarial passes then
+changed: the probe now reads the board's human page before it accepts (which is what keeps it
+free — see below), and the site rung's two identity tests were both broken and both fixed. A
+measurement of code that no longer exists is not a measurement of this rung.
+
+**The free rung is free because it is MADE free, not because it happens to be.**
+`_row_for_ats` calls `activation_ok` with no html, so `board_vouches` returns `None`, the gate
+fetches `human_board_url` itself, and when that 404s or serves a JS shell,
+`page_names_company` falls through to the **paid** `bd_rescue.unlock` — `PAGE_UNLOCK_BUDGET`
+is 100 per process and `auto-expand.yml` sets the key. An adversarial pass demonstrated 5
+paid calls from 5 probe hits and measured 95 of the 498 names on that path. So the rung reads
+the page itself and declines below 2,000 chars (`probe-unread`), which is exactly the
+condition under which the gate does not fetch and cannot unlock.
 
 **Neither rung trusts the identity gate, and that is the finding, not an oversight.** A slug
 synthesised from the company name near-equals the name by construction, so `board_vouches`

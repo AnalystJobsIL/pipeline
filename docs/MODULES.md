@@ -31,7 +31,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 |---|---|---|
 | `apply_resolved.py` | self-heal | applies out/resolved_configs.json into companies.csv after the self-heal |
 | `audit_empty_rows.py` | audit-coverage | weekly re-verification of every parked row; also the `verify()` helper every resolver imports |
-| `auto_expand.py` | auto-expand | READS research_companies.json (it does not drain it - nothing does: no code anywhere carries an already-resolved predicate, and the file is not in this workflow's `--own` list, so a removal here could not even be staged) and resolves each name: deterministic tier, then the capped LLM tier |
+| `auto_expand.py` | auto-expand | READS research_companies.json and resolves each name: a free rung (slug probe + own-site guess), then the capped LLM tier. It still cannot DRAIN the queue -- the file is not in this workflow's `--own` list, so a removal here could not be staged -- but since 2026-08-27 the prune in the two discovery bridges drops an entry whose name the registry already holds, which is what took the queue 1,693 -> 498 |
 | `bd_rescue.py` | retry-unreachable | re-fetches unreachable rows through the Bright Data Web Unlocker |
 | `check_invariants.py` | audit-coverage, auto-expand, daily-digest, listing-hunt, retry-unreachable, scrape-refresh, self-heal, tests, triage-dark | structural gate on companies.csv + the store; blocks the digest commit |
 | `company_type_analysis.py` | firmographics | joins firmographics with matched jobs -> out/company_type_analysis.{json,md} (ARCHITECTURE.md section 7) |

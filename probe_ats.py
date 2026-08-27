@@ -69,7 +69,7 @@ def bounded_http(timeout=4, retries=1):
         http._request = orig
 
 
-def probe_bounded(name, slugs, deadline=None, budget=18):
+def probe_bounded(name, slugs, deadline=None, budget=18, stop_early=False):
     """`probe()` without stdout, with bounds, and with NORMALIZED platform names.
 
     Returns [{plat, slug, url, jobs, il}]. `plat` is `lever`, never `lever-eu`: this function
@@ -94,13 +94,29 @@ def probe_bounded(name, slugs, deadline=None, budget=18):
                               "token": slug, "api_url": url})
             except Exception:  # noqa: BLE001
                 continue
+            if deadline and time.time() > deadline:
+                # Checked AFTER the fetch too, not only before it. `fetch_smartrecruiters`
+                # paginates inside this one slot with no page cap, and its `total` comes
+                # from the server: an attacker drove 13,961 requests and 60 s+ out of a
+                # single "1-request" slot on 2026-08-27. This cannot abort a fetch already
+                # in flight -- so one overrun per name remains, and that is the residual --
+                # but it stops the NEXT one, which is what turns 13,961 back into a bound.
+                return hits
             if plat == "smartrecruiters" and not jobs:
                 continue          # SR answers 200 + [] for ANY slug, even bogus
             il = sum(1 for j in jobs if israel.is_israel_job(j))
             hits.append({"plat": norm, "slug": slug, "url": url, "jobs": len(jobs), "il": il})
             if il:
                 got_il = True
-        if got_il:
+        if got_il and stop_early:
+            # OFF for the resolution rung. This break is at the SLUG level, and it defeats
+            # the caller's "two Israel-positive boards -> defer" guard by construction: the
+            # ambiguity set can then only ever hold one slug, so the decision is made by
+            # slug ORDER instead. Demonstrated 2026-08-27 -- feeding ['chalk','chamelio']
+            # accepts chalk and ['chamelio','chalk'] accepts chamelio, both real boards.
+            # This docstring already closed the same hole on the PLATFORM axis; the slug
+            # axis was left open. 0 live cases found, and identity is not a thing to leave
+            # to list order on a zero count.
             break
     return hits
 

@@ -1214,11 +1214,22 @@ def main():
         # `_keyed_list`'s docstring says only "ours' additions appended"; the code it
         # delegates to carries an explicit deletion loop (`docs/BACKLOG.md` 314).
         #
-        # THE FLOOR IS NOT OPTIONAL. The same measurement, ours=3 against base=1,693, merged
-        # to **3**: `_keyed_list` has no mass-deletion guard of the kind every
-        # `s_company_dict` path has, so one short read of companies.csv could empty the queue
-        # in a single run, silently, with a success line. The guard therefore lives HERE, at
-        # the source, because there is nowhere downstream that would catch it.
+        # THE FLOOR, AND WHAT IT ACTUALLY DOES. The first version of this comment said a
+        # short read of companies.csv "could empty the queue in a single run". An attacker
+        # measured that on 2026-08-27 and it is BACKWARDS: `settled` shrinks with `have`, so
+        # fewer names match and FEWER entries drain. With the floor removed entirely, a
+        # registry truncated to 3 rows still keeps 1,691 of 1,693.
+        #
+        # It stays, for the reason it is actually worth: it makes a short read LOUD instead
+        # of letting a half-drained queue look like a normal night. The real hazard it was
+        # written for -- `_keyed_list` has no mass-deletion guard, and ours=3 against a base
+        # of 1,693 merges to 3 -- needs a registry that reads LONG OR WRONG, which this
+        # predicate never inspects and no accidental path was found to produce.
+        #
+        # One caveat, latent: `load_companies` resolves an ABSOLUTE `CSV_PATH` from the
+        # module's repo root while `discovery_queue` is cwd-relative, so a run whose cwd is
+        # not the repo would judge THIS queue against ANOTHER registry. The two coincide in
+        # every workflow; it is why an isolated test cannot exercise the floor.
         settled = have if len(have) >= _REGISTRY_FLOOR else set()
         if not settled:
             print(f"::warning::queue: companies.csv yielded {len(have)} names, under the "

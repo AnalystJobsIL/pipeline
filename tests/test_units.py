@@ -12466,8 +12466,11 @@ def test_a_guessed_board_with_no_israel_job_never_activates(monkeypatch):
     monkeypatch.setattr(PA, "probe_bounded",
                         lambda *a, **k: [{"plat": "ashby", "slug": "chamelio",
                                           "url": "u", "jobs": 9, "il": 6}])
+    # the rung reads the board's human page itself so the gate never fetches (and so cannot
+    # reach the paid unlocker) -- see test_the_probe_holds_the_page_so_the_gate_never_fetches
+    monkeypatch.setattr(A, "_get_page", lambda u, dl, **k: (u, "y" * 3000))
     hit, why = A._probe_resolve("Chamelio", "chamelio", set(), 1e18)
-    assert hit == ("ashby", "chamelio", "u", 9, 6), hit
+    assert hit[:5] == ("ashby", "chamelio", "u", 9, 6), hit
 
 
 def test_two_guessed_boards_for_one_name_defer_instead_of_guessing(monkeypatch):
@@ -12503,8 +12506,13 @@ def test_a_probe_hit_on_a_board_the_registry_already_reads_is_refused(monkeypatc
     hit, why = A._probe_resolve("Gong.io", "gongio", {("greenhouse", "gongio")}, 1e18)
     assert hit is None and why == "probe-dup-board", (hit, why)
     # the key is (platform, token) -- the same token on another platform is a different board
+    monkeypatch.setattr(A, "_get_page", lambda u, dl, **k: (u, "y" * 3000))
     hit, _ = A._probe_resolve("Gong.io", "gongio", {("ashby", "gongio")}, 1e18)
     assert hit is not None
+
+    # NOTE this check is an early-out that saves a page read, NOT the authoritative one:
+    # it reads a snapshot taken before the loop. The one that actually protects the registry
+    # re-reads at the append -- test_one_run_cannot_write_two_active_rows_on_the_same_board.
 
 
 def test_the_probe_bounds_are_restored_even_when_a_fetch_explodes():
@@ -12579,9 +12587,16 @@ def test_the_own_site_rung_demands_a_linkback_and_cannot_spend_a_credit(monkeypa
     calls = {"n": 0}
 
     class _R:
+        """A real stream: `_get_page` reads in CHUNKS until read() returns empty, because a
+        byte cap is not a time bound. A fake that re-serves its whole body on every read
+        inflates a 4-byte page past the 2000-char evidence floor and silently defeats the
+        very thing this test asserts."""
         def __init__(self, h):
-            self._h = h.encode()
+            self._h, self._done = h.encode(), False
         def read(self, n=None):
+            if self._done:
+                return b""
+            self._done = True
             return self._h
         def geturl(self):
             return "https://acme.com/"
@@ -12718,5 +12733,246 @@ def test_the_probe_rung_writes_a_row_end_to_end_and_defers_when_the_gate_refuses
     assert rows[0][0] == "Chamelio" and rows[0][1] == "ashby" and rows[0][2] == "chamelio"
     assert rows[0][4] == "true", rows[0]
     assert "il.linkedin.com" not in rows[0][3], "the LinkedIn seed reached api_url"
+    # The rollback mechanism. This rung shipped with a pre-committed rule -- "if any row it
+    # wrote is ever found to be another employer's board, disarm the rung in the same commit
+    # that parks the row" -- and that rule needs a way to FIND them. Without the marker a
+    # slug-probe row is indistinguishable from an LLM-resolved one and the class cannot be
+    # audited or rolled back as a class. `grep slug-probe companies.csv` is the audit.
+    assert "slug-probe" in rows[0][5], rows[0][5]
 
     assert _run(False) == [], "a gate-refused aggregator seed must leave NO row at all"
+
+
+def test_one_run_cannot_write_two_active_rows_on_the_same_board(tmp_path, monkeypatch):
+    """Two attackers found this independently on 2026-08-27, and it had a live candidate for
+    that night: `Ness Technologies` and `Ness Technologies | <hebrew>` are both in the
+    250-name batch and both yield the slug `ness-technologies`.
+
+    `_probe_resolve`'s duplicate check reads a snapshot taken BEFORE the loop, so it cannot
+    see a row this run just appended, and `_names_now()` compares only the NAME -- which is
+    useless here, because differing by a legal suffix is the entire reason the board key
+    exists. The result was two ACTIVE rows on one board with `check_invariants` exiting 0:
+    every role published twice under two employer names, the `alias-of` shape section 2
+    calls terminal, which check B cannot catch BECAUSE the names differ."""
+    import csv as _csv
+    import json as _j
+    import shutil as _sh
+    import sys as _sys
+
+    import auto_expand as E
+    import probe_ats as PA
+
+    d = tmp_path / "dup"
+    (d / "cloud_state").mkdir(parents=True)
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    (d / "research_companies.json").write_text(_j.dumps([
+        {"name": "Ness Technologies", "careers_url": "https://il.linkedin.com/jobs/view/1",
+         "ats": "unknown", "slug": ""},
+        {"name": "Ness Technologies | NT", "careers_url": "https://il.linkedin.com/jobs/view/2",
+         "ats": "unknown", "slug": ""}]), encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(E, "CSV_PATH", str(d / "companies.csv"))
+    monkeypatch.setattr(E, "DRY_RUN", False)
+    monkeypatch.setattr(_sys, "argv", ["auto_expand.py"])
+    monkeypatch.setenv("AUTO_EXPAND_PROBE", "1")
+    monkeypatch.setenv("AUTO_EXPAND_SITE", "0")
+    monkeypatch.setattr(_sh, "which", lambda x: None)
+    monkeypatch.setattr(E, "resolve", lambda n, u: ("unreachable", None))
+    # both names crack the SAME board
+    monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [
+        {"plat": "smartrecruiters", "slug": "nesstechnologies",
+         "url": "https://api.smartrecruiters.com/v1/companies/nesstechnologies/postings",
+         "jobs": 4, "il": 2}])
+    monkeypatch.setattr(E, "_get_page", lambda u, dl, **k: (u, "x" * 3000))
+    monkeypatch.setattr(E._gate, "activation_ok", lambda *a, **k: True)
+    E.main()
+
+    rows = [r for r in _csv.reader(open(d / "companies.csv", encoding="utf-8"))][1:]
+    active = [r for r in rows if r[4] == "true"]
+    boards = {(r[1], r[2]) for r in active}
+    assert len(active) == len(boards) == 1, (
+        "one run wrote %d active rows on %d distinct boards: %r" % (len(active), len(boards), rows))
+
+
+def test_a_probe_refusal_never_cancels_the_park_or_the_paid_tier(tmp_path, monkeypatch):
+    """A probe refusal means the FREE rung could not help. It is not a verdict on the
+    company, and it must not act like one.
+
+    The first version set `defer`, which skipped both the LLM tier and the park below -- so a
+    name the probe declined got NO ROW where it would previously have been parked
+    `unreachable; could not scan`, a row that sits in three re-check pools. The company would
+    then exist only in `research_companies.json`, and the drain never removes an UNRESOLVED
+    name, so it would be re-probed twice a day forever with nothing to show for it. Found by
+    an attacker, 2026-08-27, who also noted the sibling own-site rung moves names into
+    exactly this window."""
+    import csv as _csv
+    import json as _j
+    import shutil as _sh
+    import sys as _sys
+
+    import auto_expand as E
+    import probe_ats as PA
+
+    d = tmp_path / "refuse"
+    (d / "cloud_state").mkdir(parents=True)
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    # a NON-aggregator seed: without the rung this parks, and parking is the point
+    (d / "research_companies.json").write_text(_j.dumps([
+        {"name": "Zebra Analytics", "careers_url": "https://zebra-analytics.example/careers",
+         "ats": "unknown", "slug": ""}]), encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(E, "CSV_PATH", str(d / "companies.csv"))
+    monkeypatch.setattr(E, "DRY_RUN", False)
+    monkeypatch.setattr(_sys, "argv", ["auto_expand.py"])
+    monkeypatch.setenv("AUTO_EXPAND_PROBE", "1")
+    monkeypatch.setenv("AUTO_EXPAND_SITE", "0")
+    monkeypatch.setattr(_sh, "which", lambda x: None)
+    monkeypatch.setattr(E, "resolve", lambda n, u: ("unreachable", None))
+    # two Israel-positive boards -> `probe-ambiguous`, the refusal that used to defer
+    monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [
+        {"plat": "greenhouse", "slug": "zebraanalytics", "url": "u1", "jobs": 9, "il": 4},
+        {"plat": "ashby", "slug": "zebraanalytics", "url": "u2", "jobs": 7, "il": 3}])
+    E.main()
+
+    rows = [r for r in _csv.reader(open(d / "companies.csv", encoding="utf-8"))][1:]
+    assert len(rows) == 1, "the probe refusal swallowed the row entirely: %r" % rows
+    assert rows[0][4] == "false" and "unreachable" in rows[0][5], rows[0]
+    # ...and the parked row is still owned by a re-check pool, which is the whole point
+    from pipeline.verdicts import in_pool
+    assert in_pool(rows[0][5]), "the parked row is in NO re-check pool: %r" % rows[0][5]
+
+
+def test_the_probe_holds_the_page_so_the_gate_never_fetches_or_unlocks(monkeypatch):
+    """The "this rung is free" claim was FALSE until 2026-08-27 and is now enforced.
+
+    `_row_for_ats` calls `activation_ok(nm, api, n_all)` with NO html, so `board_vouches`
+    returns None, the gate fetches `human_board_url` itself, and when that 404s or returns a
+    JS shell `page_names_company` falls through to the PAID `bd_rescue.unlock`. An attacker
+    demonstrated 5 paid calls from 5 probe hits, and measured 95 of the 498 queue names on
+    that path. The rung now reads the page itself and declines below 2000 chars -- which is
+    exactly the condition under which the gate does not fetch and cannot unlock."""
+    import auto_expand as E
+    import probe_ats as PA
+    from pipeline import identity_gate as G
+
+    monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [
+        {"plat": "greenhouse", "slug": "acme", "url": "u", "jobs": 9, "il": 4}])
+
+    # a page too short to be evidence must DECLINE, not hand a bare URL to the gate
+    monkeypatch.setattr(E, "_get_page", lambda u, dl, **k: (u, "tiny"))
+    hit, why = E._probe_resolve("Acme", "acme", set(), 1e18)
+    assert hit is None and why == "probe-unread", (hit, why)
+
+    # a readable page is CARRIED to the gate...
+    monkeypatch.setattr(E, "_get_page", lambda u, dl, **k: (u, "y" * 3000))
+    hit, _ = E._probe_resolve("Acme", "acme", set(), 1e18)
+    assert hit is not None and len(hit[5]) >= 2000, hit
+
+    # ...and with a page in hand the gate cannot reach the unlocker, even armed
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "armed-but-must-not-be-used")
+    import urllib.request
+    monkeypatch.setattr(urllib.request, "urlopen", lambda *a, **k: (_ for _ in ()).throw(
+        AssertionError("the gate fetched a page the rung already held")))
+    monkeypatch.setattr(G, "page_mentions_company", lambda *a, **k: True)
+    assert G.activation_ok("Acme", "https://boards.greenhouse.io/acme", 9, html=hit[5]) is True
+
+
+def test_the_own_site_binding_refuses_a_prefix_handle_and_a_truncated_name(monkeypatch):
+    """The two-way binding was broken by BOTH of its halves at once, and it fired on two
+    real queue entries on 2026-08-27:
+
+        PCB Technologies Ltd. (handle `pcb`)  -> www.pcb.com   = PCB PIEZOTRONICS, US
+        Ceva, Inc.            (handle `ceva`) -> www.ceva.com  = Ceva Sante Animale, France
+
+    (a) the linkback used `\b` after the handle, and `\b` fires on a hyphen -- so `pcb` was
+        "proved" by `linkedin.com/company/pcb-piezotronics`, a PREFIX match;
+    (b) the name test used `page_names_company`, which retries with the `_NAME_STOP`-stripped
+        core -- the same truncation `_lossless_slugs` exists to refuse.
+
+    Two independent-looking tests, one shared weakness. That is the same shape as the
+    identity gate's own (`docs/BACKLOG.md` 317), which is the part worth remembering.
+
+    The damage was not theoretical: a foreign domain lands in cols 2-3 (the address
+    `is_walled` reads, i.e. BACKLOG 54 through a new door), it becomes the evidence
+    `resolve_llm._own_page_names_token` trusts, and the row's mere existence removes the name
+    from `_names_now()` so the real company is never resolved again."""
+    import auto_expand as A
+
+    body = "x" * 3000
+
+    def _page(html):
+        return lambda u, dl, **k: ("https://acme.com/", html)
+
+    # (a) a PREFIX linkback is not a linkback
+    monkeypatch.setattr(A, "_get_page", _page(body + " Acme Robotics linkedin.com/company/acme-piezo"))
+    monkeypatch.setattr(A._gate, "page_mentions_company", lambda *a, **k: True)
+    monkeypatch.setattr(A._gate, "is_foreign", lambda *a, **k: False)
+    assert A._site_from_guess("Acme Robotics", "acme") is None
+
+    # ...and the exact handle still is one
+    monkeypatch.setattr(A, "_get_page", _page(body + " Acme Robotics linkedin.com/company/acme"))
+    assert A._site_from_guess("Acme Robotics", "acme")[0] == "https://acme.com/"
+
+    # (b) the name must match in FULL, never through the truncated core
+    seen = {}
+
+    def _strict(name, html, strict=False):
+        seen["strict"] = strict
+        return False                       # the full name is NOT on the page
+
+    monkeypatch.setattr(A._gate, "page_mentions_company", _strict)
+    assert A._site_from_guess("Acme Robotics", "acme") is None
+    assert seen.get("strict") is True, "the full-name test must be strict, or it truncates"
+
+
+def test_the_board_key_sees_a_board_a_scrape_row_is_reading(monkeypatch):
+    """`_boards_now` keyed only on the `ats_platform` column, so 7 rows sitting on a
+    guessable ATS board while their column says `scrape` were invisible to the duplicate
+    check -- Stigg on `jobs.ashbyhq.com/stigg`, Nuvo on recruitee, Unity on greenhouse. The
+    rung would have opened a SECOND active row on those boards under a second employer name:
+    `alias-of`, which check B cannot catch because the names differ. Note recruitee is a
+    SUBDOMAIN tenant, so it needs its own pattern (attacker, 2026-08-27)."""
+    import auto_expand as A
+    from pipeline import companies as _co
+
+    monkeypatch.setattr(_co, "load_companies", lambda *a, **k: [
+        {"company_name": "Stigg", "ats_platform": "scrape", "token":
+         "https://www.stigg.io/careers", "api_url": "https://jobs.ashbyhq.com/stigg"},
+        {"company_name": "Nuvo", "ats_platform": "scrape", "token": "",
+         "api_url": "https://nuvo.recruitee.com/api/offers/"},
+        {"company_name": "Unity", "ats_platform": "scrape", "token": "",
+         "api_url": "https://boards.greenhouse.io/unity3d"},
+        {"company_name": "Gong", "ats_platform": "greenhouse", "token": "gongio",
+         "api_url": "https://boards-api.greenhouse.io/v1/boards/gongio/jobs"},
+    ])
+    monkeypatch.setattr(A, "load_companies", _co.load_companies)
+    b = A._boards_now()
+    for key in (("ashby", "stigg"), ("recruitee", "nuvo"),
+                ("greenhouse", "unity3d"), ("greenhouse", "gongio")):
+        assert key in b, "%r invisible to the duplicate check: %r" % (key, sorted(b)[:8])
+
+
+def test_the_slug_loop_probes_every_slug_before_the_caller_decides():
+    """`probe_bounded` broke out of the SLUG loop on the first Israel-positive slug, so
+    `_probe_resolve`'s "two boards -> defer" guard could never see a second one: the decision
+    fell to `_lossless_slugs` list order instead. Demonstrated with two real ashby boards --
+    ['chalk','chamelio'] accepted chalk, ['chamelio','chalk'] accepted chamelio.
+
+    Its own docstring had already closed this on the PLATFORM axis ("stopping at the first
+    would make `_PLATFORMS`'s file order an identity decision") and left the slug axis open.
+    `stop_early` defaults False so the resolution rung always sees the whole picture."""
+    import inspect
+    import probe_ats as PA
+    assert "stop_early=False" in str(inspect.signature(PA.probe_bounded))
+
+    calls = []
+    PLAT = [("greenhouse", lambda s: "u/%s" % s,
+             lambda row: [{"company": "c", "title": "t", "location": "Tel Aviv, Israel"}]
+             if not calls.append(row["token"]) else [])]
+    import unittest.mock as _m
+    with _m.patch.object(PA, "_PLATFORMS", PLAT):
+        hits = PA.probe_bounded("X", ["alpha", "beta"], deadline=None, budget=18)
+    assert calls == ["alpha", "beta"], "the second slug was never probed: %r" % calls
+    assert len({(h["plat"], h["slug"]) for h in hits if h["il"]}) == 2, hits
