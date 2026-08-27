@@ -10799,5 +10799,77 @@ def test_the_collected_test_count_never_falls():
     proc = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q"],
                           capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=root)
     n = sum(int(m) for m in re.findall(r"^tests[/\\][^:]+: (\d+)$", proc.stdout, re.M))
-    assert n >= 951, (
+    assert n >= 957, (
         "%d tests collected, floor is %d - a guard was deleted" % (n, 16))
+
+
+# --- docs lane, 2026-08-27: HANDOFF.md's cap and the morning checks --------------------
+def test_handoff_is_bounded_in_every_unit_the_cap_was_gamed_in():
+    """The 250-line cap was respected and useless. On 2026-08-27 HANDOFF.md was 245 lines
+    and 56,515 BYTES: eighteen sessions had each written their whole narrative as one line,
+    the longest 4,960 characters, and thirteen of them already ended with `Record:
+    docs/sessions/...` — so the long version existed twice and the HANDOFF copy was the
+    duplicate. The file had been split from 753 lines on 2026-08-23 to fix exactly this."""
+    cd = _cd()
+    text = cd.read(os.path.join(cd.ROOT, "HANDOFF.md"))
+    assert len(text.splitlines()) <= cd.HANDOFF_MAX_LINES
+    assert len(text.split()) <= cd.HANDOFF_MAX_WORDS
+    over = [(n, len(line.split())) for n, line in cd._handoff_prose_lines(text)
+            if len(line.split()) > cd.HANDOFF_MAX_LINE_WORDS]
+    assert not over, "session narratives on one line: %s" % over
+
+
+def test_the_per_line_cap_exempts_the_things_that_legitimately_wrap():
+    """This file carries multi-line `python -c` recovery commands and a markdown table. A cap
+    that fired on those would be deleted within a day."""
+    cd = _cd()
+    sample = "\n".join(["```", "x " * 200, "```", "    " + "y " * 200,
+                        "| " + "z " * 200 + "|", "prose"])
+    assert [n for n, _ in cd._handoff_prose_lines(sample)] == [6]
+
+
+def test_every_morning_check_verdict_is_one_a_reader_can_check():
+    """`PASS` may stand alone; anything else must say what happened. "FAIL" with no string is
+    the same silence the table exists to end."""
+    cd = _cd()
+    ok = ["PASS", "PASS — `board 76 cards`", "FAIL — `### Tel Aviv` is still in the mail",
+          "N/A — no 08-27 digest ran, nothing to read", "PARTIAL — two of four clauses hold",
+          "not yet due (audit-coverage is 0 4 * * 0)"]
+    bad = ["", "looked fine", "FAIL", "N/A", "yes", "mostly ok"]
+    assert all(cd._VERDICT_OK.match(v) for v in ok)
+    assert not any(cd._VERDICT_OK.match(v) for v in bad)
+
+
+def test_no_morning_check_is_stated_in_prose_where_nobody_can_answer_it():
+    """Fourteen `Morning check <date>:` sentences were buried in HANDOFF.md's prose and NOT
+    ONE had ever been answered. Two had already failed in public twice: `### Tel Aviv` and
+    `### Jobgether` both shipped as employer headings in the 2026-08-26 mail against checks
+    that said neither would."""
+    cd = _cd()
+    text = cd.read(os.path.join(cd.ROOT, "HANDOFF.md"))
+    body = text.split("| due | lane |")[0]
+    assert not cd._LOOSE_CHECK.search(body)
+
+
+def test_an_empty_verdict_cell_is_not_swallowed_by_the_table_parser():
+    """Found by break-testing the check itself: `line.strip().strip("|")` eats an EMPTY last
+    cell, which is exactly what an unanswered check looks like — the row then failed the
+    length test and was silently dropped, so the one case the check exists for was the one
+    case it could not see."""
+    cd = _cd()
+    row = "| 2026-08-26 | render | something |  |  |"
+    assert [c.strip() for c in row.strip().split("|")[1:-1]] == \
+        ["2026-08-26", "render", "something", "", ""]
+
+
+def test_an_unanswered_morning_check_is_a_warning_and_never_an_error():
+    """Read this before 'tightening' it. `discovery` writes the check on Tuesday; it comes
+    due while `jd-text` is pushing on Wednesday. An ERROR punishes the wrong agent, and the
+    cheapest way for that agent to go green is to DELETE the check — the linter would then
+    destroy the mechanism it exists to protect. The SHAPE of a row is an error, because that
+    is the pushing session's own work."""
+    cd = _cd()
+    src = cd.read(os.path.join(cd.ROOT, "docs", "check_docs.py"))
+    body = src.split("def check_morning_checks")[1].split("\ndef ")[0]
+    assert 'warn("morning-checks", "morning check due %s' in body
+    assert 'err("morning-checks", "morning check due' not in body

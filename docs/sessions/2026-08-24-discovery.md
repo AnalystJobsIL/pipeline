@@ -1407,3 +1407,21 @@ the second extractor dropped the `<title>` fallback that had worked in the morni
 titles came back `NOTITLE` from pages that had the title all along. Job detail pages are
 **825 KB** each — 213 of them froze the renderer. Anyone repeating this audit should match on
 job id (which the cache stores in the posting URL) and fetch detail pages only for the misses.
+
+### As written in HANDOFF.md, 2026-08-25 (`discovery`)
+
+*Moved here verbatim on 2026-08-27 by the `docs` lane, because a whole
+session written as one 3,000-character line defeated HANDOFF.md's cap.
+sha256(first 16) of the line as it stood: `d842d7e28ebf8710`.*
+
+- **2026-08-25 `discovery` (the run audit; what the mail published under a city's name — 2 Opus planners + 3 attackers + 1 verifier, 0 credits):** the 05:36 run put `### Tel Aviv` (an aggregator row: a Telegram post with no company line → city as employer → `listing_hunt` activated secrethunter's city board, 7 of 81 board roles) and `### Nisha Pro` (a staffing firm our own firmographics had classified) in the mail; LinkedIn blocked the runner mid-walk and five queries printed the false 'raise LINKEDIN_GUEST_PAGES' tripwire while a blocked request was counted nowhere. Six commits: recruiters (+slug), `secrettelaviv.` host, the missing-company shape, one exit-reason string + `blocked=`, a truthful summary line, and the cache/queue writes as chokepoints (163 agency cards and 13 queue entries leave tomorrow). §1a inverted: the pool is at 111% (53% this lane's own dataset) and the resolver queue IS the bottleneck (341 names, 0 resolved in 5 runs, 10/run buried as `empty` on a JS shell — BACKLOG 177). NOT finished: the `Tel Aviv` row/cache/7 ledger roles (registry+roles, 167), the false `linkedin-targeted: nothing for 3d` alarm from 08-26 (179), 178–187. Morning check 08-26: `[linkedin] … blocked=`, no `### Tel Aviv`, `cache: dropped ~163 agency cards`. Record: `docs/sessions/2026-08-24-discovery.md` (2026-08-25 section).
+
+
+### As written in HANDOFF.md, 2026-08-26 (`discovery`)
+
+*Moved here verbatim on 2026-08-27 by the `docs` lane, because a whole
+session written as one 3,000-character line defeated HANDOFF.md's cap.
+sha256(first 16) of the line as it stood: `5940b36b011ede05`.*
+
+- **2026-08-26 `discovery` (the coverage audit, and the dry run that changed the answer — 2 Opus design critics, both NO-GO on the first design):** the operator's signed-in LinkedIn session over all 9 keywords enumerated **257** job ids; **40 (15.6 %)** were in the cache, and on the one keyword enumerated to exhaustion AND fully titled (`data analyst`, 45 postings: 15 cached / 5 agency / 6 read directly / 10 remote spam / 1 junior) **6 were genuine misses, all at companies with no registry row**. The sweep had logged `blank=58`, of which 24 are the 3-blank drain run of the 8 queries that ended silently, leaving **34 mid-pool holes**; a blank page carrying no urns is now re-asked once (`recovered=`), and the re-ask can only ever help — it never reports `blocked`, so a 403 cannot reach the unguarded clause and buy Unlocker pages at 118 % of pool; 20/sweep, disarms after 5 misses, and (found by DRY-RUNNING, not reviewing) bounded by wall clock at 90 s, because 20 x a 40 s socket timeout is 13 min against a 25 min step. **Dry run: `recovered=0` from this throttled address** — 5 re-asks, 5 misses, disarmed as designed; scripted E2E proves recovery works when a blank IS a hole. **Decision rule fixed in advance: `recovered=`~0 on the runner ⇒ REMOVE the re-ask, do not tune it.** `### Jobgether` had shipped as a covered employer while `jobgether.` sat on `aggregators.HOSTS` — the repo had ruled on the HOST, not the NAME; +`ethosia`/`staffin` (3 names flip, 0 registry rows). BACKLOG 188 closed (`pipeline/discovery_queue.py`, isinstance not except, atomic writes; telegram writes NOTHING on a corrupt queue, not even the watermark). **Dropped after measurement:** the evidence-first queue ORDER — `persist_state._keyed_list` keeps origin's order on a conflict, so it erases itself (BACKLOG 225 instead). NEW: **227** — the guest endpoint is a coverage CEILING (BI 966 reported vs 131 walked); **228** — the audit is 4 of 9 keywords deep. Morning check 2026-08-27: `recovered=N`, `cache: dropped ~18 agency cards`, no `### Jobgether`. Record: `docs/sessions/2026-08-24-discovery.md` (2026-08-26 section).
+

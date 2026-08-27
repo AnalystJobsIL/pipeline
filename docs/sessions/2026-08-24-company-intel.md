@@ -182,3 +182,12 @@ catalogue), so the next agent runs them instead of rewriting them.
    the cloud researched that morning.
 7. `git status --short cloud_state/firmographics.json` after `git fetch`: the local chain's
    overnight export must be a superset of origin's (union), never smaller.
+
+### As written in HANDOFF.md, 2026-08-24 (`company-intel`)
+
+*Moved here verbatim on 2026-08-27 by the `docs` lane, because a whole
+session written as one 3,000-character line defeated HANDOFF.md's cap.
+sha256(first 16) of the line as it stood: `ab4903950f7570e0`.*
+
+- **2026-08-24 `company-intel` (one bounded cloud path; the mail says what it did — two adversarial waves, 6 Opus sessions, 17 wave-1 findings all fixed or filed):** `pipeline/run.py`'s two blocks are one call, `company_intel.enrich_for_run` (`pipeline/company_intel.py`) (never raises; ≤5 research calls in ≤10 min, ≤30 blurbs, first outage stops it, no strikes on an outage, `` blurbs retried monthly, facts read as prose when the blurb is missing, chips ≤48 chars); every reader/writer uses `union_store` (export ∪ sqlite, field-level merge) so the chain no longer re-buys the cloud's research (2 on 08-24) or truncates the export (19 at risk); a corrupt export is reported, never replaced; one `claude` seam (`shell` only on Windows; brace-safe JSON); the audit block carries `- **Company intel:** …` + `::warning::company-intel` (rehearsed: json / unknown / prose / fail / corrupt / missing / --no-llm). 940-record export committed. NOT done: chain retirement (BACKLOG 97), 29 duplicate groups (98), stage label (99, `render`); morning check 2026-08-25 = the `Company intel:` line must reconcile and `N newer than the store` must be 0 after the seed. Record: `docs/sessions/2026-08-24-company-intel.md`.
+

@@ -667,9 +667,35 @@ def report_facts() -> int:
     return 0
 
 
-# ---------------------------------------------------------------- 6. HANDOFF shape
+# ------------------------------------------------- 6. HANDOFF shape and the morning checks
+# The 250-line cap was respected and useless. On 2026-08-27 HANDOFF.md was 245 lines and
+# 56,515 BYTES: eighteen sessions had each written their whole narrative as a single line,
+# the longest 4,960 characters, and thirteen of them ended with `Record: docs/sessions/...`
+# — so the long version already existed and the HANDOFF copy was the duplicate. The file
+# had been split from 753 lines on 2026-08-23 to fix exactly this, which is the point: the
+# metric was gameable and got gamed.
+#
+# So the caps are made mutually reinforcing rather than mutually escapable. A narrative
+# that cannot hide on one line has to wrap; wrapping blows the line count; the line count
+# is what pushes it to docs/sessions/. Fenced blocks, indented blocks and table rows are
+# exempt from the per-line cap, because this file legitimately carries multi-line recovery
+# one-liners and a morning-check table.
 HANDOFF_MAX_LINES = 250
+HANDOFF_MAX_WORDS = 3200
+HANDOFF_MAX_LINE_WORDS = 60
 HANDOFF_REQUIRED = ["## State at handoff", "## Watch list", "## Open items"]
+
+
+def _handoff_prose_lines(text: str):
+    """(lineno, line) for lines the per-line cap applies to."""
+    fenced = False
+    for n, line in enumerate(text.splitlines(), 1):
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+            continue
+        if fenced or line.startswith(("    ", "\t", "|")):
+            continue
+        yield n, line
 
 
 def check_handoff() -> None:
@@ -681,13 +707,122 @@ def check_handoff() -> None:
     n = len(text.splitlines())
     if n > HANDOFF_MAX_LINES:
         err("handoff", "HANDOFF.md is %d lines (cap %d). It is the CURRENT-STATE file: move "
-                       "dated narrative to docs/sessions/<date>.md, durable rules to "
+                       "dated narrative to docs/sessions/<date>-<lane>.md, durable rules to "
                        "ARCHITECTURE.md, and known gaps to docs/BACKLOG.md."
             % (n, HANDOFF_MAX_LINES))
+    words = len(text.split())
+    if words > HANDOFF_MAX_WORDS:
+        err("handoff", "HANDOFF.md is %d words (cap %d). The line cap alone was defeated once "
+                       "by writing a whole session as one 4,960-character line; this is the "
+                       "cap that notices." % (words, HANDOFF_MAX_WORDS))
+    for lineno, line in _handoff_prose_lines(text):
+        if len(line.split()) > HANDOFF_MAX_LINE_WORDS:
+            err("handoff", "HANDOFF.md:%d is %d words on one line (cap %d). That is a session "
+                           "narrative, not a handoff line: put it in docs/sessions/ and leave "
+                           "the five-part entry behind."
+                % (lineno, len(line.split()), HANDOFF_MAX_LINE_WORDS))
     for required in HANDOFF_REQUIRED:
         if required not in text:
             err("handoff", "HANDOFF.md has no `%s` section" % required)
 
+
+# PASS may stand alone; anything else must say what happened, because "FAIL" with no
+# string is the same silence the table exists to end.
+_VERDICT_OK = re.compile(r"^(PASS\b.*|not yet due.*|(FAIL|N/A|PARTIAL)\b.*[—-]\s*\S.{4,})$")
+_LOOSE_CHECK = re.compile(r"morning check\s+\d{4}-\d\d-\d\d", re.I)
+
+
+def check_morning_checks() -> None:
+    """A prediction about tomorrow's mail is not finished until it has an answer.
+
+    Fourteen `Morning check <date>:` sentences were buried in HANDOFF.md's prose and NOT ONE
+    had ever been answered. Two had already failed in public twice: `### Tel Aviv` and
+    `### Jobgether` both shipped as employer headings in the 2026-08-26 mail against checks
+    that said neither would.
+
+    An unanswered check is a WARNING, deliberately, and this is the reasoning a future
+    session should read before 'tightening' it: `discovery` writes the check on Tuesday and
+    it comes due while `jd-text` is pushing on Wednesday. An ERROR would punish the wrong
+    agent, and the cheapest way for that agent to go green would be to DELETE the check —
+    the linter would then destroy the mechanism it exists to protect. The shape of a row IS
+    an error, because that is the pushing session's own work."""
+    path = os.path.join(ROOT, "HANDOFF.md")
+    if not os.path.exists(path):
+        return
+    text = read(path)
+    rows, in_table = [], False
+    for line in text.splitlines():
+        if line.startswith("| due | lane |"):
+            in_table = True
+            continue
+        if in_table:
+            if not line.startswith("|"):
+                in_table = False
+                continue
+            # split on the pipes, never strip them: an EMPTY last cell - which is exactly
+            # what an unanswered check looks like - is swallowed by strip("|") and the
+            # row then fails the len() test and is silently dropped. Found by break-test.
+            cells = [c.strip() for c in line.strip().split("|")[1:-1]]
+            if len(cells) >= 5 and not set(cells[0]) <= set("-: "):
+                rows.append(cells)
+    if not rows:
+        warn("morning-checks", "HANDOFF.md has no `## Morning checks` table. A prediction "
+                               "with nowhere to be answered is how `### Tel Aviv` shipped "
+                               "twice against a check that said it would not.")
+    lanes = _lane_names()
+    today = _today()
+    for cells in rows:
+        due, lane, must, answered, verdict = cells[0], cells[1], cells[2], cells[3], cells[4]
+        if not re.fullmatch(r"\d{4}-\d\d-\d\d", due):
+            err("morning-checks", "a morning-check row has no ISO due date: %r" % due)
+            continue
+        if lanes and lane not in lanes:
+            err("morning-checks", "morning check %s names lane `%s`, which is not in "
+                                  "docs/AGENT_BRIEF.md's table" % (due, lane))
+        if verdict in ("", "—", "-"):
+            if due <= today:
+                warn("morning-checks", "morning check due %s (`%s`) has no verdict: %s"
+                     % (due, lane, must[:70]))
+        elif not _VERDICT_OK.match(verdict):
+            err("morning-checks", "morning check %s (`%s`) has a verdict the reader cannot "
+                                  "check: %r. Use PASS / FAIL - <what happened> / N/A - "
+                                  "<why>, and quote a grep-able string, not an adjective."
+                % (due, lane, verdict[:60]))
+    body = text.split("| due | lane |")[0]
+    for m in _LOOSE_CHECK.finditer(body):
+        err("morning-checks", "HANDOFF.md states a morning check in prose (%r). Fourteen of "
+                              "those existed and none was ever answered - put it in the "
+                              "table, with the date you will answer it."
+            % body[m.start():m.start() + 40])
+
+
+def _lane_names() -> set:
+    path = os.path.join(ROOT, "docs", "AGENT_BRIEF.md")
+    if not os.path.exists(path):
+        return set()
+    return set(re.findall(r"^\| \*\*`([a-z-]+)`\*\*", read(path), re.M))
+
+
+def _today() -> str:
+    import datetime
+    return datetime.date.today().isoformat()
+
+
+def check_session_record_dates() -> None:
+    """A session file whose H1 date disagrees with its own filename. Three do:
+    2026-08-24-{infra,render,roles}.md all open `# 2026-08-25`, because the lane-spawn
+    prompt hard-codes `docs/sessions/2026-08-24-{lane}.md`. A warning, not an error: the
+    rename touches ~24 citations and belongs to whoever is doing that pass."""
+    for p in sorted(glob.glob(os.path.join(ROOT, "docs", "sessions", "*.md"))):
+        fn = re.match(r"(\d{4}-\d\d-\d\d)", os.path.basename(p))
+        if not fn:
+            continue
+        first = read(p).splitlines()[0] if read(p).splitlines() else ""
+        h1 = re.search(r"(\d{4}-\d\d-\d\d)", first)
+        if h1 and h1.group(1) != fn.group(1) and "→" not in first:
+            warn("sessions", "%s opens with %s. The lane-spawn prompt hard-codes the date in "
+                             "that path, which is why three files are a day out."
+                 % (rel(p), h1.group(1)))
 
 # ---------------------------------------------------------------- 7. entry points exist
 def check_entry_docs() -> None:
@@ -699,7 +834,8 @@ def check_entry_docs() -> None:
 
 CHECKS = [check_entry_docs, check_paths_exist, check_links, check_section_refs,
           check_module_registry,
-          check_schedule_table, check_derived_facts, check_handoff]
+          check_schedule_table, check_derived_facts, check_handoff,
+          check_morning_checks, check_session_record_dates]
 
 
 def main(argv=None) -> int:
