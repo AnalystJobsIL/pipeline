@@ -837,6 +837,18 @@ here would cost coverage and buy nothing.
   must NOT simply be raised**: a successful guess unlocks a `resolve_deep` costing ~342 s per
   name with no deadline check, so 25 is already ~142 min of a 330-min job timeout and 100
   would be ~9.5 h, holding `repo-state` throughout. `docs/BACKLOG.md` 339.
+- **`sources.stale()` is structurally blind to this source, so it has its own shape alarm.**
+  `pipeline/sources.py` asks "did it return anything today", and the answer here is 2,703
+  every day by construction — `last_nonzero` is always today, so `stale()` can NEVER fire for
+  `secrethunter`. The failure that matters is different: the sitemap keeps answering 200 while
+  its slugs become something else, nonsense that is still `[a-z0-9-]+` passes `slug_refusal`,
+  and 150 junk names enter the queue every morning behind a green step.
+  `secrethunter.shape_alarm()` is the tell — the fraction of the catalog matching a name we
+  ALREADY hold, **25.4% measured 2026-08-27** (687 of 2,703) against a 5% floor, plus a 1,000
+  floor on catalog size. Either trips and the run queues **nothing** and says so. It is a
+  shape alarm, not a quality metric; the floor sits ~5x below today's value so ordinary drift
+  cannot fire it. It lives outside `queue_entries` on purpose: that function parses, this one
+  judges, and a parser that silently returns nothing on a small input is a trap.
 - **A newly queued name goes to the FRONT of the resolver's batch, not the back.**
   `auto_expand.py:455` sorts `todo` by last-tried date and an unseen name sorts to `""`. So
   the catalog's 40/run are tried before older leads — and unlike a LinkedIn or Indeed card,

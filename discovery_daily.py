@@ -1240,12 +1240,25 @@ def main():
             sh_slugs = _slugs
             _sh_new, sh_rejects, _st = _sh.queue_entries(
                 _slugs, have, {(e.get("name") or "").strip().lower() for e in research})
+            _alarm = _sh.shape_alarm(_st, len(have))
+            if _alarm:
+                # A catalog that answers but no longer looks like the one we validated queues
+                # NOTHING. `sources.stale()` structurally cannot catch this -- the raw count
+                # is 2,703 every day by design -- so it is said here or nowhere.
+                _sh_new, _st["offered"] = [], 0
             for _e in _sh_new:
                 new_cos.setdefault(_e["name"].strip().lower(), dict(_e))
             # Set AFTER queue_entries returns, not before: a raise in between left the
             # health file saying 2,703 while zero names were added, and `setdefault` in
             # the handler below cannot correct a value that is already there.
             per_source["secrethunter"] = len(_slugs)
+            if _alarm:
+                # A catalog that answers but no longer looks like the one we validated queues
+                # NOTHING. `sources.stale()` structurally cannot catch this -- the raw count
+                # is 2,703 every day by design -- so it has to be said here or nowhere.
+                print(f"::warning::[secrethunter] {_alarm}: {_st['slugs']} slugs, only "
+                      f"{_st['match_rate']:.1%} match a name we already hold (floor "
+                      f"{_sh.SANITY_MIN_MATCH:.0%}). Queued NOTHING this run.", flush=True)
             print(f"[secrethunter] {_st['slugs']} catalog names -> {_st['known']} already in "
                   f"the registry, {_st['queued_already']} already queued, {_st['refused']} "
                   f"refused, {_st['fresh']} unresolved -> {_st['offered']} offered this run "

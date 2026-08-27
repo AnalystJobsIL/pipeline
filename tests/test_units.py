@@ -13775,6 +13775,10 @@ def test_a_catalog_name_actually_lands_in_the_queue_file_with_a_seed(tmp_path, m
     monkeypatch.setattr(dd, "load_companies", lambda active_only=False: [])
     monkeypatch.setattr(dd, "_load_secrets", lambda: None)
     monkeypatch.setattr(dd, "secrethunter_catalog", lambda: ["ness-technologies"])
+    # the shape alarm would otherwise (correctly) refuse a one-slug catalog as `catalog-short`
+    # -- which is itself proof that the guard is wired into main(), not just unit-tested
+    from pipeline import secrethunter as _sh
+    monkeypatch.setattr(_sh, "SANITY_MIN_SLUGS", 1)
     monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
     dd.main()
     q = _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))
@@ -14040,3 +14044,34 @@ def test_the_queue_arm_never_persists_an_address_that_is_not_the_companys(tmp_pa
     assert rows["Impostor Co"][4] == "false" and rows["Impostor Co"][3] == ""
     # queue names are NOT pre-vetted, so every card on a page must not count as Israel
     assert os.environ["SCRAPE_ASSUME_IL"] == "0"
+def test_a_catalog_that_answers_but_no_longer_looks_like_itself_queues_nothing():
+    """`pipeline/sources.py` answers "did this source return anything today", and for this
+    source the answer is 2,703 EVERY day by construction — so `sources.stale()` can never fire
+    for it and is structurally blind to the failure that actually matters: the sitemap keeps
+    returning 200 while its slugs become something else (a rewrite, a locale change, an id
+    scheme). The count stays healthy, nonsense that is still `[a-z0-9-]+` passes
+    `slug_refusal`, and 150 junk names enter the queue every morning behind a green step.
+
+    The tell is the fraction of the catalog matching a name we already hold: 25.4% measured
+    against origin/master on 2026-08-27 (687 of 2,703), against a 5% floor. A mass-zero result
+    is a broken run, not a measurement, so it queues NOTHING and says so."""
+    from pipeline import secrethunter as S
+    have = {"reg-%d" % i for i in range(600)} | {"wix", "fiverr"}
+    ok = ["wix", "fiverr"] + ["reg-%d" % i for i in range(600)] + ["co-%d" % i for i in range(1400)]
+    _e, _r, st = S.queue_entries(ok, have, set(), cap=10)
+    assert S.shape_alarm(st, len(have)) is None and st["offered"] == 10, st
+
+    rewritten = ["x9f2a1b%d" % i for i in range(2700)]          # answers 200, means nothing
+    _e2, _r2, st2 = S.queue_entries(rewritten, have, set(), cap=10)
+    assert S.shape_alarm(st2, len(have)) == "catalog-unrecognisable", st2
+
+    _e3, _r3, st3 = S.queue_entries(ok[:50], have, set(), cap=10)
+    assert S.shape_alarm(st3, len(have)) == "catalog-short", st3
+
+    # ...but a SHORT REGISTRY must not be mistaken for a broken catalog: the match rate then
+    # says more about us than about them, the same reasoning as the drain's _REGISTRY_FLOOR.
+    assert S.shape_alarm(st2, 2) is None, "a short registry is not a broken catalog"
+
+    # and the judgement stays OUT of the parser: queue_entries with three slugs is legal
+    e5, _r5, _st5 = S.queue_entries(["ness-technologies"], set(), set(), cap=5)
+    assert len(e5) == 1, "a small input must not be silently emptied by a policy check"

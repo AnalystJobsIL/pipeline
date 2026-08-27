@@ -167,6 +167,21 @@ were lost to ambiguity; they are simply not in the catalog.
 
 Additive to the queue's existing four-key shape, so no other lane changes.
 
+### The one alarm `pipeline/sources.py` cannot raise
+
+This source records the raw 2,703 every run by design, which is right for liveness — the only
+way the sitemap can fail is by going away — but it means `last_nonzero` is always today and
+`sources.stale()` can **never** fire for `secrethunter`. It is therefore blind to the failure
+that would actually hurt: the sitemap keeps answering 200 while its slugs become something
+else. The count stays healthy, nonsense that is still `[a-z0-9-]+` passes `slug_refusal`, and
+the queue fills with junk behind a green step.
+
+`shape_alarm()` closes it with what was already being computed — the fraction of the catalog
+matching a name we already hold. **25.4% on 2026-08-27** (687 of 2,703: 491 registry + 196
+queue) against a **5% floor**, plus a **1,000** floor on catalog size. Either trips and the
+run queues nothing and prints `::warning::`. A mass-zero-shaped result is a broken run, not a
+measurement.
+
 ## 6. The numbers, all against `origin/master` `fbfc83e`
 
 | | |

@@ -77,6 +77,24 @@ UA = "AnalystJobsIL/1.0 (+https://github.com/AnalystJobsIL/pipeline)"
 # over a stably-sorted list meant the other 90 of 110 were never searched once (1a rule 3).
 QUEUE_CAP = int(os.environ.get("SECRETHUNTER_QUEUE_CAP", "150"))
 
+# SHAPE SANITY. `pipeline/sources.py` answers "did this source return anything today", and
+# for this source the answer is 2,703 every single day by construction -- so `sources.stale()`
+# can NEVER fire for it, and it is blind to the failure that actually matters here: the
+# sitemap keeps answering 200 while its slugs become something else (a rewrite, a locale
+# change, an id scheme). The count stays healthy, `slug_refusal` passes nonsense that is still
+# `[a-z0-9-]+`, and 150 junk names enter the queue every morning behind a green step.
+#
+# The cheap tell is already computed: what fraction of the catalog matches a name we ALREADY
+# hold. Measured 2026-08-27 against origin/master, 687 of 2,703 = 25.4% (491 registry + 196
+# queue). A rewrite that kept the count but changed the slugs drives that toward zero. The
+# floor is deliberately far below today's value -- this is a shape alarm, not a quality
+# metric, and it must not fire on ordinary drift.
+SANITY_MIN_SLUGS = int(os.environ.get("SECRETHUNTER_MIN_SLUGS", "1000"))
+SANITY_MIN_MATCH = float(os.environ.get("SECRETHUNTER_MIN_MATCH", "0.05"))
+# Below this many registry names the match rate says more about US than about the catalog,
+# so the match floor is not applied -- the same reasoning as the queue drain's _REGISTRY_FLOOR.
+SANITY_MIN_HAVE = 500
+
 # `auto_expand._site_from_guess` requires `[a-z0-9-]+` before it will guess a domain, and a
 # LinkedIn handle has the same shape. A slug that cannot be either is not refused silently.
 _SLUG_OK = re.compile(r"[a-z0-9][a-z0-9-]*")
@@ -161,7 +179,11 @@ def sitemap_slugs(timeout=90):
     hdrs = {"User-Agent": UA, "Accept": "application/xml,text/xml,*/*"}
     pages = []
     try:
-        index = http.get_text(SITEMAP_INDEX_URL, timeout=timeout, headers=hdrs)
+        # A SHORT timeout on the index specifically. It is a 917-byte file and we have a
+        # working fallback, so waiting the full page timeout on it is a bad trade inside a
+        # 25-minute step -- measured 2026-08-27, this read timed out at 90 s and the fallback
+        # then served the whole catalog anyway.
+        index = http.get_text(SITEMAP_INDEX_URL, timeout=min(20, timeout), headers=hdrs)
         pages = [u for u in re.findall(r"<loc>(.*?)</loc>", index) if "type=companies" in u]
     except Exception as e:  # noqa: BLE001
         print(f"[secrethunter] sitemap index unreadable ({e}); falling back to page 1",
@@ -296,6 +318,26 @@ def handle_index(slugs):
     return idx
 
 
+def shape_alarm(stats, n_have):
+    """Has the catalog stopped being the catalog? Returns a token, or None.
+
+    Deliberately NOT inside `queue_entries`: that function parses, this one judges, and a
+    parser that silently returns nothing on a small input is a trap for every caller and test
+    that legitimately passes three slugs. The bridge asks, and the bridge decides.
+
+    `pipeline/sources.py` cannot answer this. Its question is "did the source return anything
+    today", and for this source the answer is 2,703 every day by construction -- so
+    `sources.stale()` can never fire for it, and it is blind to the sitemap answering 200
+    while its slugs become something else. Nonsense that is still `[a-z0-9-]+` passes
+    `slug_refusal` happily.
+    """
+    if int(stats.get("slugs", 0)) < SANITY_MIN_SLUGS:
+        return "catalog-short"
+    if n_have >= SANITY_MIN_HAVE and float(stats.get("match_rate", 0)) < SANITY_MIN_MATCH:
+        return "catalog-unrecognisable"
+    return None
+
+
 def backfill_handles(entries, slugs):
     """Fill an EMPTY `slug` on queue entries we ALREADY hold, in place. (filled, mismatches).
 
@@ -394,6 +436,8 @@ def queue_entries(slugs, have, queued, cap=None, day=None):
     # Refusals are recorded for the WHOLE catalog, not just the window: the ledger's value is
     # that a wrong rejection is appealable, and a name refused outside today's window is
     # exactly as wrongly refused as one inside it.
+    matched = stats["known"] + stats["queued_already"]
+    stats["match_rate"] = round(matched / max(1, len(slugs)), 4)
     entries = _window(fresh, cap, day=day)
     stats["fresh"] = len(fresh)
     stats["offered"] = len(entries)
