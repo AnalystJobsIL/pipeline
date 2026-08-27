@@ -277,7 +277,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **300** `300@docs` **`parse()` truncates an item whose body contains a column-0 `## ` or numbered
 - **301** `301@docs` **`check_docs.py` uses module-global `ERRORS`/`WARNINGS`**
 - **302** `302@docs` **`check_session_record_dates` inspects only line 1**
-- **303** `303@docs` **ARCHITECTURE section 8 s guard-rail table describes guards that have moved**
+- **303** `303@docs` **ARCHITECTURE section 8's guard-rail table describes guards that have moved**
 
 ### roles — 13 open
 
@@ -4474,7 +4474,7 @@ no-op — turned on the guard rather than on the pipeline.
      with a blank first line, YAML front-matter, or an HTML comment above its H1 is never
      checked. 17 of 17 files are fine today.
 
-303. **ARCHITECTURE section 8 s guard-rail table describes guards that have moved** - lane:
+303. **ARCHITECTURE section 8's guard-rail table describes guards that have moved** - lane:
      `docs`, but section 8 is tagged `lane: any` and this session was scoped to section 0, so
      it is filed rather than edited. Three cells are stale: `tests/test_units.py` is listed as
      "123 cases from 54 functions" (974 collected across three files today, and the count is
