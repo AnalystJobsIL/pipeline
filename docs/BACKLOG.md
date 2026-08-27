@@ -3619,3 +3619,73 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     than by reading the answers — roughly 40 sonnet calls for a 20-name sample. Not run this
     session (unauthorised spend). Until it is, "sonnet at low effort" is inherited, not
     measured, and this document should not claim otherwise.
+
+280. **41 parked rows point at another company's careers page, and 39 of them are in the probe
+    pool** — lane: `registry`. Measured 2026-08-27:
+
+    ```bash
+    python -c "import csv;from pipeline import verdicts;from pipeline.company_identity import is_foreign;\
+    rows=[r for r in csv.reader(open('companies.csv',encoding='utf-8')) if r and len(r)>=6][1:];\
+    bad=[r for r in rows if (r[3] or '').startswith('http') and is_foreign(r[0],r[3]) and r[4]!='true' and not verdicts.is_terminal_row(r)];\
+    print(len(bad));[print(r[0],r[3]) for r in bad]"
+    # 41   (46 rows in total are is_foreign; 2 active, 44 parked, 3 of those terminal)
+    ```
+
+    `in_probe_pool` claims **39 of the 41**, `in_hunt_pool` 24, the crack pool 0. The probe runs
+    on a 10-minute budget inside the 05:00 digest and BACKLOG 203 already measures that it
+    cannot reach its own pool — so 39 of 222 slots, **18%**, are spent every night fetching a
+    page that can never be this company's, and BACKLOG 201's "a busy foreign board always shows
+    `apply now`" means several of them accrue `ever=true` and can wake. The hunt's documented
+    fast-path then scrapes the stored URL first. Activation is still held by `activation_ok` /
+    `embedded_board_ok`, so the cost today is budget and noise, not a wrong row — but it is 41
+    rows' worth of the FairFly shape sitting one gate away.
+
+    **Do NOT bulk-clear on `is_foreign`.** The list cuts three ways and the same predicate
+    produces all three:
+
+    - **~33 are provably the wrong company**, mostly a search rung landing on a near-miss name:
+      Sanolla → `sanofi.com`, COTI → `coty.com`, Cynerio → `synerio.com`, **Cyvers →
+      `culvers`** (the burger chain), DockTech → `decktechinc.com`, Fintica → `fintika.co`,
+      Phoenix Financial → `arizonafinancial.org`, 90min → `90seconds.com`, Sensibo →
+      `sensiba.com`, Behalf → `roberthalf.com`, Compedia → `expediagroup.com`, ImageSat →
+      `mondelezinternational.com`, Tarya → `teyacompany.com`, Sedric → `seddiqiholding.com`,
+      L7 Defense → `gm.com`, **1E Therapeutics → `careers.lilly.com`** (the Lili → Eli Lilly
+      trap again, one gate from activation), Noogata → `yolo-japan.com`, ICE → `usajobs.gov`.
+    - **3 are real acquisitions where the parent board IS the right address** — Cyberint →
+      Check Point, Siklu → Ceragon, Jelly Button Games → Playtika. Clearing these would cost
+      real coverage. The correct home for them is `identity_facts.DECLARED`, which is
+      **shared plumbing**, so it is proposed here rather than done.
+    - **2 are matcher false positives on a correct address** — `Israel Aerospace Industries
+      (IAI) → jobs.iai.co.il` and `Air Doctor → air-dr.com`. Both are the company's own site;
+      `is_foreign` misses the acronym and the hyphen.
+
+    **Eight of the wrong ones are hosts BACKLOG 202 already names** and would fall out for free
+    if that list were extended: `jvpvc.com`, `legaltechjobs.com`, `careers.meron.co`,
+    `consider.com/boards` (AiVF and Kahun), `jobquasar.com`, `nbn.org.il/jobboard`,
+    `employbl.com`, `jobappnetwork.com`, `careeronestop.org`. And **`Dun & Bradstreet (Israel)
+    Ltd.` still carries a `secrethunter.io` address**, which `auto_expand --clear-agg-urls`
+    exists to remove — that row was missed, so the clearing pass is worth re-running and its
+    selector worth re-reading.
+
+    The shape of the fix is the one `auto_expand.clear_agg_urls` already implements: blank
+    columns 2-3, stamp `url-cleared <date>: <host> …` (which is in `listing_hunt.HUNT_POOL`),
+    and let the hunt search by NAME instead — strictly better than re-testing a foreign page
+    forever. It needs the three acquisitions declared first, and a second reader on the
+    `is_foreign` false-positive direction, so it is filed rather than taken.
+
+281. **`expand` and `repair` are the only two pipeline stages whose stamp carries no counts,
+    because the workflow's bare stamp overwrites the tool's** — lane: `registry` (the counts) +
+    `infra` (the two workflow steps). `cloud_state/pipeline_stages.json` on 2026-08-27:
+    `collect` carries 20 fields (rows, scraped, with_jobs, empty, errors, llm_calls, via, …),
+    `enrich` 15, `publish` 4 — and `expand` and `repair` carry `date` and `finished_at` and
+    nothing else, which is why the step logs say `stage 'expand' stamped: {}`. `stages.stamp`
+    REPLACES the whole entry (`pipeline/stages.py:43`), and both `auto-expand.yml` and
+    `listing-hunt.yml` run `python -m pipeline.stages stamp <stage>` as a step AFTER the tool,
+    so any payload the tool wrote would be erased. This is the same defect the `scraper` lane
+    fixed on 2026-08-24 by deleting the workflow's bare `stamp collect` and letting
+    `refresh_scrape_cache.py` stamp its own counts — copy that. Until then the registry's
+    nightly production (`repair: 2 activated, 40 still dark`, `listing hunt: {'found': 0,
+    'nolisting': 23, 'dead': 12}`, `crack-walled: {…}`, `resolved 0 … ~408 still to scan`)
+    exists only in four separate workflow logs and reaches nothing that a human reads. It is
+    also the missing input for the production mail line in **275**: with the payloads present,
+    that line is a formatting change rather than a plumbing one.

@@ -5606,3 +5606,71 @@ def test_auto_expand_reports_what_the_llm_tier_was_asked(monkeypatch, tmp_path):
     assert 'n_hopeless += 1 if not _llm.LAST["own_pages"] else 0' in src
     assert "keeps shrinking the unresolved set every run until it reaches zero" not in src, \
         "the docstring's drain claim was measured false on 2026-08-26 (414 -> 411 -> 408)"
+
+
+# A dated, SHRINKING list of mutation records whose `find` no longer matches its file. It was
+# 33 on 2026-08-27 and must only ever get shorter: `test_no_mutation_record_goes_stale_unnoticed`
+# fails both when a record goes stale that is not listed here AND when a listed one is fixed
+# without being removed, so the list cannot rot into an excuse. Empty is the goal; when it is
+# empty, delete it and the second half of the test with it. docs/BACKLOG.md 273.
+KNOWN_STALE_ANCHORS_2026_08_27 = {
+    "activation-listing-drop", "apply-resolved-gate-drop", "apply-resolved-gate-invert",
+    "apply-resolved-gate-narrow", "audit-narrow", "audit-secondchance-remove",
+    "audit-tenant-invert", "crack-activate-invert", "crack-activate-narrow",
+    "crack-activate-remove", "crack-novrfy-narrow", "crack-novrfy-remove",
+    "crack-oktowrite-callsite-invert", "crack-oktowrite-invert", "crack-pool-terminal-drop",
+    "facts-tenant-scope-widen", "facts-tenant-veto-drop", "gate-page-transpose-html",
+    "gate-page-transpose-tail", "invariants-terminal-narrow", "oktowrite-listing-drop",
+    "validate-empty-embed-vouch-drop", "validate-empty-invert", "validate-empty-narrow",
+    "validate-empty-remove", "validate-empty-terminal-drop", "validate-empty-transpose",
+}
+
+
+def _stale_mutation_anchors():
+    """Every record whose `find` does not occur EXACTLY once in the file it names.
+
+    `tools/mutate.py` archives `git archive HEAD`, whose blobs are LF; the working copy here
+    is CRLF (`core.autocrlf=true`), so normalise before counting or every multi-line anchor
+    reads as stale on Windows and as fine in CI.
+    """
+    import json
+    import os
+    recs = json.load(open("tests/mutations.json", encoding="utf-8"))
+    out = []
+    for r in recs:
+        path = r.get("file") or ""
+        if not path or not os.path.exists(path):
+            out.append((r.get("id"), "no such file: " + path))
+            continue
+        with open(path, encoding="utf-8", newline="") as f:
+            src = f.read().replace("\r\n", "\n")
+        n = src.count(r["find"])
+        if n != 1:
+            out.append((r.get("id"), f"{n} matches in {path}"))
+    return out
+
+
+def test_no_mutation_record_goes_stale_unnoticed():
+    """A stale mutation record proves nothing, and today it is only DISCOVERABLE by a
+    37-minute job that runs last in CI — so staleness accumulates until it is somebody
+    else's push. On 2026-08-27 that had reached 33 of 200 records: the 2026-08-25 batch-4
+    refactor replaced `ok_to_write` / `activation_ok` with `write_verdict` /
+    `activation_verdict`, and every record anchored on the old spelling went quiet while
+    `pytest` stayed green. This runs in under a second and names them.
+
+    It is a ratchet, not a snapshot: a record that stops being stale must LEAVE the list, so
+    the list can only shrink. That is the half that stops an allowlist becoming permission.
+    """
+    stale = dict(_stale_mutation_anchors())
+    known = KNOWN_STALE_ANCHORS_2026_08_27
+    fresh = sorted(set(stale) - known)
+    assert not fresh, (
+        "mutation record(s) went stale — the code they guard moved, so they now guard "
+        "nothing and `tools/mutate.py` will fail the push: "
+        + "; ".join(f"{i} ({stale[i]})" for i in fresh)
+        + ".  Re-anchor each onto the current code, keeping its `why`, and prove it with "
+          "`python tools/mutate.py --id <id>` reporting `killed`.")
+    fixed = sorted(known - set(stale))
+    assert not fixed, (
+        "these records are no longer stale — remove them from "
+        "KNOWN_STALE_ANCHORS_2026_08_27 so the list keeps shrinking: " + ", ".join(fixed))
