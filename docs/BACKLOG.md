@@ -265,7 +265,7 @@ closure convention in the header.
 - **226** `226@discovery` **The breadth sweep loses whole pages to blank guest replies**
 - **227** `227@discovery` **The keyless guest endpoint is a coverage ceiling, and it is now the largest known gap
 - **228** `228@discovery` **The 2026-08-26 audit is 4 of 9 keywords deep**
-- **321** `321@discovery` **`is_recruiter` does not know the IT-services/outsourcing firms, and one now activates
+- **321** `321@discovery` **The registry's policy on Israeli IT-services firms is implicit, unmeasured, and now
 
 ### company-intel — 13 open
 
@@ -4997,28 +4997,44 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      Whoever takes it: the control is `REHEARSE_SELF_TEST=overwrite python
      tests/rehearse_registry.py --nights 14 --policy worst`, which **must** still exit 1.
 
-321. **`is_recruiter` does not know the IT-services/outsourcing firms, and one now activates
-     with a `Data Analyst` role** — lane: `discovery` (owns `pipeline/recruiters.py`). Found
-     by an adversarial pass over the free resolution rung, 2026-08-27. `TLVTech`
-     (smartrecruiters/`tlvtech`, 7 postings, all Tel Aviv) passes every gate and activates.
-     From its own posting and site: *"a dynamic technology firm dedicated to building
-     exceptional products … **for the world's most admired companies**"*, services listed as
-     *"Fractional CTO / Fullstack Development / DevOps Services"*. That is the same category
-     `recruiters._CONFIRMED` already carries as "IT services/outsourcing; re-posts client
-     roles" — `abra`, `malamteam`, `yael group`, `log-on software`, `elad software systems`.
-     `Ness Technologies` is the same shape.
+321. **The registry's policy on Israeli IT-services firms is implicit, unmeasured, and now
+     decides whether a client's role reaches the board** — lane: `discovery` (owns
+     `pipeline/recruiters.py`) with `registry`. An adversarial pass over the free resolution
+     rung flagged `TLVTech` (smartrecruiters/`tlvtech`) as an agency the rung had wrongly
+     activated: 7 postings, all Tel Aviv, **one per discipline** — Data Analyst, DevOps,
+     Mobile, Backend, Full Stack, Frontend, Senior Data Engineer — which is a bench roster,
+     not a product company's openings. Its own posting text reads *"building exceptional
+     products … for the world's most admired companies"* and its site sells *"Fractional CTO
+     / Fullstack Development / DevOps Services"*.
 
-     **This one reaches the product**: one of TLVTech's seven is titled `Data Analyst`, which
-     is precisely the role class this board publishes, so a client's role would appear under
-     the agency's name. `registry` did not add the names: the gate is `discovery`'s, the
-     judgement is about what these companies ARE, and a name added in the wrong lane's file
-     is how a list becomes two lists.
+     **I nearly parked it on that, and checking the precedent first is what stopped me.** The
+     registry already carries eleven firms of exactly this class as ACTIVE, every one of them
+     `is_recruiter=False`:
 
-     ```bash
-     python -c "from pipeline.recruiters import is_recruiter; print(is_recruiter('TLVTech',''), is_recruiter('Ness Technologies',''))"
-     # False False
+     ```
+     Matrix comeet · Matrix IT breezy · Sela ashby · CommIT comeet · Aman Group workday
+     Directeam comeet · CodeValue comeet · doitintl greenhouse · AllCloud comeet
+     Moveo Group scrape · TCM Technologies LTD scrape
      ```
 
+     So TLVTech and `Ness Technologies` are **consistent with the registry as it stands**, not
+     an escape from it, and parking two rows would have meant applying a stricter rule to the
+     newest two than to the eleven already there. The rung did not introduce this; it surfaced
+     it, and the count went from 11 to 13 in one night.
+
+     The real gap is that nobody has decided. `recruiters._CONFIRMED` lists `abra`,
+     `malamteam`, `yael group`, `log-on software`, `elad software systems` as "IT services /
+     outsourcing; re-posts client roles" — which is the same description as the eleven above,
+     with the opposite verdict. **Whoever takes this should decide the CLASS, then apply it to
+     all thirteen at once**, not to whichever two a rung happened to add. What is at stake is
+     concrete: TLVTech's `Data Analyst` is this product's exact target class, so on one
+     reading it is a real Israeli analyst job and on the other it is a client's role published
+     under the wrong employer.
+
+     ```bash
+     python -c "from pipeline.recruiters import is_recruiter; print(is_recruiter('TLVTech',''), is_recruiter('Matrix',''))"
+     # False False
+     ```
 322. **`il >= 1` counts a placeholder posting, and the name then leaves the queue forever** —
      lane: `registry`. `Ness Technologies` activates on smartrecruiters/`nesstechnologies`
      whose **only** posting is titled *"Test Job"* at `Tel Aviv, , Israel`. The board is real
