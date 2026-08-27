@@ -1536,14 +1536,33 @@ Two things were also rejected, and the reasons are worth keeping:
 ### What notices, when GitHub's scheduler is the thing that failed
 
 Rejecting the recovery cron settled *retrying*. It did not settle *noticing*, and those are
-different questions. **2026-08-27, both repositories: 9 scheduled dispatches due, 1 fired**
-(pipeline 1 of 5 — 00:00 arrived 05:41, then 02:30 / 05:00 / 06:00 / 08:00 dropped, and
-10:00 never ran; relay **0 of 4**). Anything hosted on that scheduler fails with it, so the
-options divide cleanly by where their clock lives.
+different questions.
+
+**And the diagnosis sharpened during the day: 2026-08-27 was not a day of DROPPED crons, it
+was a day of absurdly LATE ones.** The 00:00 slot arrived at 05:41 (+341 min) and the 02:30
+slot at **12:57 — ten and a half hours late (+627)**. Both had already been written off. Over
+the whole history the census now reads **40 of 40 due dispatches fired, 0 provable drops**
+(`python tests/schedule_census.py --days 6`).
+
+That distinction is load-bearing in three directions:
+
+* **It makes the recovery cron worse, not better.** A slot that eventually arrives cannot be
+  rescued by a retry — the original still runs, and the recovery would race it. Calling
+  lateness a drop biases the 2026-09-10 verdict toward *building* it, which is the wrong way
+  to be wrong; the tool's grace is 720 minutes for exactly that reason.
+* **For the DIGEST, late past 10:17 is identical to dropped.** The relay's last poll is the
+  deadline, so a digest arriving at 12:57 is not late mail, it is no mail. That is precisely
+  what the cutoff-and-defer rule above exists for, and today is its first live test.
+* **It does not soften the detection problem at all.** Whether the 05:00 digest was dropped or
+  is merely nine hours late, nothing in this repo said so, and the only reason anyone knew was
+  a human looking.
+
+Anything hosted on that scheduler fails with it, so the options divide by where their clock
+lives.
 
 | option | verdict |
 |---|---|
-| A watchdog cron in this repo | **Rejected, measured.** It is the same scheduler: on 08-27 it would have been one of the four that did not fire. |
+| A watchdog cron in this repo | **Rejected, measured.** It is the same scheduler: on 08-27 it would have been one of the slots still unseen ten hours later. |
 | The relay repo's scheduler as an independent second clock | **Rejected, measured.** It is not independent: **0 of its 4 polls fired on 08-27**, the same morning. Two repos, one outage. |
 | An external free cron → `workflow_dispatch` / `repository_dispatch` | **Rejected on the identity rule, not on merit.** It is the right shape — a clock outside GitHub — but the run page publicly shows the account whose token dispatched it, and `CLAUDE.local.md` §3 exists to keep the public repos unlinkable to the owner. It becomes available the day a dedicated bot account does; that is an operator decision, filed as `308@infra`. |
 | A scheduled task on the operator's machine that **triggers** | **Rejected, same reason** — a dispatch is a dispatch, whoever sends it. Being local does not launder the attribution. |

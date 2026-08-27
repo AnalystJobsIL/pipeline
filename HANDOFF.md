@@ -87,11 +87,12 @@ it is still only that one.**
 ## Watch list for the next session
 
 0. **RUN THIS, OR TOMORROW LOOKS EXACTLY LIKE TODAY: `python digest_watchdog.py`.**
-   2026-08-27, both repos: **9 scheduled dispatches due, 1 fired** (relay 0 of 4). The only
-   reason anyone noticed was a human looking. The watchdog is the one tripwire not on
-   GitHub's scheduler — read-only, no credential, no dispatch — but it is **not installed**:
-   registering the scheduled task is an operator action and the command is in its docstring.
-   Until it is, detection is still a human. `292@infra`/`308@infra`.
+   2026-08-27 was not dropped crons, it was **absurdly late** ones: the 00:00 slot landed at
+   05:41 and the 02:30 slot at **12:57, +627 min**. For the digest that is the same thing —
+   the relay's last poll is 10:17, so late past it is no mail. Nothing in the repo said so;
+   a human looking was the only detection. The watchdog is the one tripwire not on GitHub's
+   scheduler — read-only, no credential, no dispatch — but it is **not installed**:
+   registering the task is an operator action, command in its docstring. `292@infra`.
 
 0b. **A patch script wrote a literal backslash-n into `daily-digest.yml` where a
    continuation was meant.** It would have broken every run: bash reads the `n` as an

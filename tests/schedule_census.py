@@ -32,6 +32,15 @@ An "isolated drop" is a day on which exactly one due slot did not fire and at le
 other did. That is the shape a second slot can rescue; a day where everything is dropped
 is not, because the recovery cron is served by the same scheduler.
 
+**LATE IS NOT DROPPED, and the grace has to respect that.** On 2026-08-27 the 00:00 slot
+arrived at 05:41 (+341 min) and the 02:30 slot at 12:57 (**+627 min, ten and a half hours**).
+Both had already been counted as "dropped" under the first version's 180-minute grace, and
+both were simply very late. That matters for the decision this tool exists to make: a slot
+that eventually arrives cannot be rescued by a recovery cron -- the original still runs, and
+the recovery would race it. Over-calling drops therefore biases the answer toward BUILDING
+the cron, which is the wrong direction to be wrong in. The default grace is 720 minutes for
+that reason, and a slot inside it is reported as `pending`, never as a loss.
+
 A slot only counts as due from the moment its cron string reached the default branch
 (`cron_since`), because the first draft of this tool reported FOUR isolated drops -- every
 one of them `firmographics 10:00` on days before that workflow existed -- and would have
@@ -193,7 +202,7 @@ def report(rows, grace_min):
     for day, stem, due, state, lag in rows:
         per_day[day].append((stem, due, state, lag))
     isolated, total_due, total_fired = 0, 0, 0
-    print(f"{'day':12} {'due':>4} {'fired':>6} {'dropped':>8} {'pending':>8}   worst lag")
+    print(f"{'day':12} {'due':>4} {'fired':>6} {'not seen':>9} {'pending':>8}   worst lag")
     for day in sorted(per_day):
         items = per_day[day]
         fired = [i for i in items if i[2] == "fired"]
@@ -208,10 +217,12 @@ def report(rows, grace_min):
         print(f"{day.isoformat():12} {due:>4} {len(fired):>6} {len(dropped):>8} {len(pending):>8}   "
               + (f"+{worst} min ({max(fired, key=lambda i: i[3])[0]})" if worst is not None else "-"))
         for stem, dueat, state, _lag in dropped:
-            print(f"{'':12}   dropped: {stem} {dueat.strftime('%H:%M')}")
+            print(f"{'':12}   not seen: {stem} {dueat.strftime('%H:%M')}")
     print()
-    print(f"due {total_due} · fired {total_fired} · dropped {total_due - total_fired}"
-          f" · grace {grace_min} min (a slot younger than this is 'pending', not dropped)")
+    print(f"due {total_due} · fired {total_fired} · not seen {total_due - total_fired}"
+          f" · grace {grace_min} min (a slot younger than this is 'pending', not a loss)")
+    print("  'not seen' is not proof of a drop -- 2026-08-27 saw slots arrive +341 and +627 "
+          "min late.")
     print(f"ISOLATED SINGLE-SLOT DROPS: {isolated}")
     print("  >= 3 => build the recovery digest cron (HANDOFF morning check, due 2026-09-10).")
     print("  Otherwise it stays rejected: a second cron in the same repo has no measured")
@@ -224,9 +235,11 @@ def main(argv=None):
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--repo", default=DEFAULT_REPO)
     ap.add_argument("--days", type=int, default=7)
-    ap.add_argument("--grace", type=int, default=180,
-                    help="minutes after a slot before a missing run counts as dropped "
-                         "(default 180 -- three times the worst lag observed on a good day)")
+    ap.add_argument("--grace", type=int, default=720,
+                    help="minutes after a slot before a missing run counts as dropped (default "
+                         "720 -- on 2026-08-27 a slot arrived +627 min late, so anything "
+                         "tighter reports lateness as loss and biases the verdict toward "
+                         "building the recovery cron)")
     a = ap.parse_args(argv)
     slots, skipped = workflow_slots()
     for stem, cron in skipped:
