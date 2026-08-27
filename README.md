@@ -94,8 +94,9 @@ code that implements it, are in `ARCHITECTURE.md` §0.
 - `seniority.py` — keyword tier, then one bounded, tool-less `claude -p` for the residue the keywords cannot decide (title-agnostic; `ARCHITECTURE.md` §7b).
 - `store.py` — SQLite seen-store (across-day dedup + cross-platform merge) + LLM cache.
 - `digest.py` — the board, the archive and the email, with an auditable run summary.
-- `run.py` — the orchestrator. `python -m pipeline.run` produces
-  `out/digest-<date>.{html,txt,json}` and **never** emails or publishes.
+- `run.py` — the orchestrator. A **scoped** `python -m pipeline.run --only ...` produces
+  `out/digest-<date>.{html,txt,md,json}` and `out/docs-preview/`, and never emails or
+  publishes. An unscoped one still never emails, but it does overwrite the published board.
 
 The 70 scripts at the repo root are the coverage machinery: resolvers, hunts, audits and
 one-shot probes. `docs/MODULES.md` says which are scheduled, which are libraries, which are

@@ -20,9 +20,9 @@ scheduled runs 2026-08-23 → 2026-08-27:
 | `scrape-refresh` | `0 0 * * *` | 00:38 · 00:39 · 00:38 · 00:39 | **05:41** (+5 h 41) |
 | `retry-unreachable` | `30 2 * * *` | 03:29 · 03:25 · 03:31 | **never fired** |
 | `audit-coverage` | `0 4 * * 0` | 04:40 (Sun 08-23) | next due 08-30 |
-| `daily-digest` | `0 5 * * *` | 05:34 · 05:42 · 05:36 · 05:38 | **never fired** (checked 07:41) |
+| `daily-digest` | `0 5 * * *` | 05:34 · 05:42 · 05:36 · 05:38 | **never fired** (re-checked 09:00) |
 | `self-heal` | `0 6 * * *` | 06:17 · 06:29 · 06:20 · 06:22 | **never fired** |
-| `auto-expand` | `0 8,20 * * *` | 08:34/20:26 · 08:51/20:33 · 08:47/20:32 · 08:48/**22:53** | — |
+| `auto-expand` | `0 8,20 * * *` | 08:34/20:26 · 08:51/20:33 · 08:47/20:32 · 08:48/**22:53** | **never fired** |
 | `firmographics` | `0 10 * * *` | added 2026-08-26 | **0 runs, ever** |
 | `triage-dark` | `0 18 * * *` | 18:28 · 18:39 · 18:38 · **19:46** | — |
 | `listing-hunt` | `0 19 * * *` | 19:18 · 19:24 · 19:26 · **21:34** | — |
@@ -44,6 +44,11 @@ scheduled runs 2026-08-23 → 2026-08-27:
    `17 6,7,8,10 * * *`. A digest that lands after 10:17 is not relayed that day at all. Even
    on a normal day the promise is not being kept: the 08-26 issue was created at 07:10:36Z
    and the 08-25 one at 09:01:19Z, against a documented "expect the mail at ~06:20 UTC".
+
+**Re-checked at 09:00 UTC**: still nothing. Five of the day's six due crons had not fired
+(00:00 ran at 05:41; 02:30, 05:00, 06:00 and 08:00 had not run at all), and the relay's last
+poll is 10:17 — so 2026-08-27's email is most likely lost outright, with no artefact anywhere
+recording that it was.
 
 **How to check, in one command, whether yesterday actually happened:**
 
