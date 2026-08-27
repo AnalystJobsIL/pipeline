@@ -7,6 +7,7 @@ quietly stop covering companies or start reporting the wrong ones.
     python -m pytest            # ~1s
 """
 import datetime as dt
+import glob
 import os
 import re
 import sys
@@ -10638,3 +10639,165 @@ def test_every_llm_schema_constant_is_a_string():
             continue
         _json.loads(value)                     # and it must be JSON the CLI can read
     assert not bad, f"schema constants that are not strings: {bad}"
+
+
+# --- docs lane, 2026-08-27: the docs went stale because every number in them was typed by
+# --- hand. Commit 8f049f2 shipped BOTH `check_continue_on_error` AND the sentences "846
+# --- companies" / "433 through a native ATS API"; four days later the machine-checked
+# --- number was still exactly right and every hand-typed one was wrong. These guards hold
+# --- the generalisation of that one check. ---------------------------------------------
+def _cd():
+    """`docs/check_docs.py` as a module. It is a script, not a package member, so tests
+    reach it the way the linter itself is invoked: by path."""
+    import importlib.util
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    spec = importlib.util.spec_from_file_location(
+        "check_docs_under_test", os.path.join(root, "docs", "check_docs.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@pytest.mark.parametrize("tok,prec", [
+    ("~1,200", 100), ("~900", 100), ("~870", 10), ("~875", 1), ("~1,000", 1000), ("~400", 100),
+])
+def test_the_precision_a_number_is_written_at_is_the_tolerance_it_claims(tok, prec):
+    """The whole census tolerance model, and the one piece of it a reader might find
+    surprising. There is no tolerance constant anywhere in `check_docs.py`: `~1,200` claims
+    "round to the nearest hundred", `~870` claims "to the nearest ten", and the notation
+    English already uses is the machine-readable contract."""
+    assert _cd().precision(tok) == prec
+
+
+def test_a_census_number_rounds_half_up_not_bankers():
+    """Python's round() is banker's: round(850, -2) is 800, so `~900` would be wrong for 850
+    and right for 851. A doc contract must not hinge on that."""
+    cd = _cd()
+    assert cd.bracket_holds(1244, "~1,200") and not cd.bracket_holds(1244, "~1,300")
+    assert cd.bracket_holds(875, "~900") and not cd.bracket_holds(875, "~870")
+    assert cd.bracket_holds(850, "~900")          # half-up, not 800
+
+
+def test_a_census_range_is_inclusive_and_a_bare_number_claims_nothing():
+    """The range form exists because a bracket's headroom depends on where in the bracket you
+    sit: on 2026-08-27 the registry was 1,244 against `~1,200`, five rows from red. A bare
+    point number gets no interval at all — it is the one form that is always wrong here."""
+    cd = _cd()
+    assert cd.census_span("1,200-1,300") == (1200, 1300)
+    assert cd.census_span("1,200–1,300") == (1200, 1300)     # en dash too
+    assert cd.census_span("875") is None
+    assert cd.census_span("~900") == (850, 949)
+
+
+def test_a_number_inside_a_url_or_a_link_target_is_never_a_claim():
+    cd = _cd()
+    text = "see [the 846 report](https://x/846.html) - it reads 846 companies' boards"
+    spans = cd._veto_spans(text)
+    hits = [m for m in re.finditer(r"reads\s+(~?[\d,]+)\s+companies'", text)
+            if not cd._vetoed(m.span(), spans)]
+    assert len(hits) == 1 and hits[0].group(1) == "846"
+
+
+def test_every_registered_fact_computes_and_every_site_still_matches():
+    """The anti-rot test. A registry whose patterns quietly stop matching is a linter that
+    has become decorative, which is how every doc linter ends."""
+    cd = _cd()
+    for fact, got, rows in cd._fact_report():
+        assert not isinstance(got, Exception), "%s raised %r" % (fact.name, got)
+        assert all(isinstance(g, int) and g >= 0 for g in got), (fact.name, got)
+        assert rows, "%s has no registered site" % fact.name
+        assert [r for r in rows if r[3] is not None], \
+            "%s: no doc states it any more" % fact.name
+
+
+def test_no_registered_fact_site_is_an_archive_or_the_backlog():
+    """The latent bug in the prior art: `check_continue_on_error` iterated DOC_GLOBS, which
+    includes docs/sessions/ and docs/decisions/ — files this module declares FROZEN. The
+    first session write-up to record "36 of the 80 workflow steps" would have made the check
+    permanently red, fixable only by editing history."""
+    cd = _cd()
+    for fact in cd.FACTS:
+        for doc_rel, _pattern in fact.sites:
+            assert not doc_rel.startswith(("docs/sessions/", "docs/decisions/")), \
+                "%s registers a frozen archive: %s" % (fact.name, doc_rel)
+            assert doc_rel != "docs/BACKLOG.md", \
+                "%s registers the backlog, which quotes stale numbers on purpose" % fact.name
+
+
+def test_the_continue_on_error_sentence_kept_the_words_that_make_it_land():
+    """A refactor is the classic way to lose the one sentence that makes a check matter."""
+    cd = _cd()
+    coe = [f for f in cd.FACTS if f.name == "coe_ratio"]
+    assert coe and "a green run proves nothing" in coe[0].why
+
+
+def test_a_module_a_workflow_runs_is_never_classified_operator():
+    """The blind spot that hid a whole workflow. `firmographics.yml` landed on 2026-08-26
+    running research_firmographics, firmo_death_watch and company_type_analysis, and all
+    three stayed filed as `operator` — "a human runs this" — while a cron ran them daily.
+    `check_module_registry` checked scheduled/library/legacy in both directions and this one
+    in neither."""
+    cd = _cd()
+    text = cd.read(os.path.join(cd.ROOT, "docs", "MODULES.md"))
+    klass, current = {}, None
+    for line in text.splitlines():
+        h = re.match(r"^## (\w+)", line)
+        if h:
+            w = h.group(1).lower()
+            current = {"libraries": "library"}.get(w, w) if w in (
+                "scheduled", "libraries", "operator", "legacy") else None
+        cell = re.match(r"^\| `([A-Za-z0-9_]+)\.py` \|", line)
+        if cell and current:
+            klass[cell.group(1)] = current
+    _importers, runners = cd.import_graph()
+    bad = sorted(m for m, k in klass.items() if k == "operator" and runners.get(m))
+    assert not bad, "a workflow runs these, so they are `scheduled`: %s" % bad
+
+
+def test_every_pipeline_module_is_documented():
+    """`pipeline/roles.py` — the `roles` lane's entire subject and the artifact ARCHITECTURE
+    section 7c is about — was in no registry at all, because gen_modules.py silently skips a
+    PIPELINE key it does not have and check_docs globbed root *.py only."""
+    cd = _cd()
+    text = cd.read(os.path.join(cd.ROOT, "docs", "MODULES.md"))
+    listed = set(re.findall(r"^\| `pipeline/([A-Za-z0-9_]+)\.py` \|", text, re.M))
+    on_disk = {os.path.splitext(os.path.basename(f))[0]
+               for f in glob.glob(os.path.join(cd.ROOT, "pipeline", "*.py"))} - {"__init__"}
+    assert not (on_disk - listed), "undocumented: %s" % sorted(on_disk - listed)
+
+
+def test_gen_modules_writes_nothing_when_given_a_flag():
+    """It had no argparse and wrote on ANY invocation, so `python docs/gen_modules.py --help`
+    overwrote the very file it was being asked about."""
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    target = os.path.join(root, "docs", "MODULES.md")
+    before = open(target, "rb").read()
+    subprocess.run([sys.executable, os.path.join(root, "docs", "gen_modules.py"), "--help"],
+                   capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=root)
+    assert open(target, "rb").read() == before
+
+
+def test_docs_modules_is_a_faithful_regeneration():
+    """It is generated, so a hand-edit is discarded by the next run and a stale number cannot
+    be fixed in the file. `--check` diffs without writing."""
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    proc = subprocess.run([sys.executable, os.path.join(root, "docs", "gen_modules.py"), "--check"],
+                          capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=root)
+    assert proc.returncode == 0, "docs/MODULES.md is stale:\n" + (proc.stdout or "")
+
+
+def test_the_collected_test_count_never_falls():
+    """Nine lanes append to these files from one shared checkout and nothing noticed a test
+    DISAPPEARING: commit 9e4ce72 committed a checkout-era copy of tests/test_units.py and
+    deleted seven registry-lane guards that had already been pushed in 5505d3d. `pytest` is
+    just as green with fewer tests. Raise the floor when you add tests; never lower it to go
+    green — that is the exact move this guard exists to stop."""
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    proc = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q"],
+                          capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=root)
+    n = sum(int(m) for m in re.findall(r"^tests[/\\][^:]+: (\d+)$", proc.stdout, re.M))
+    assert n >= 951, (
+        "%d tests collected, floor is %d - a guard was deleted" % (n, 16))

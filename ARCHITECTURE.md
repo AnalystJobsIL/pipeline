@@ -19,6 +19,7 @@ must update the section in the same commit. `shared` means the section describes
 every lane imports and no lane owns — changing it is a report-it-loudly event.
 
 ## The whole system on one screen
+*lane: `docs` — the only map of the whole thing; every lane keeps its own box true*
 
 ```
   ┌ 1 INTAKE ────────────────────────────────────────────────── lane: discovery ┐
@@ -31,13 +32,13 @@ every lane imports and no lane owns — changing it is a report-it-loudly event.
   │  auto_expand → resolve_deep → resolve_llm   08:00 / 20:00                    │
   │  listing_hunt · repair_* · crack_walled · deep_validate · triage_dark        │
   │  every row carries a dated verdict in `notes` (§2)      ──▶ companies.csv    │
-  └────────────────────────────────────── ~1,200 rows · run check_invariants.py for today's split ──┘
+  └────────────────────────────────────── run check_invariants.py, or registry_health.py --census, for today's counts ──┘
                    │
   ┌ 3 FETCH ──────────────────────────── lanes: ats-fetch (API) · scraper (page) ┐
-  │  pipeline/fetchers.py  16 platforms, 433 API rows      live, every digest    │
-  │  scrape_universal.py   5 escalating strategies, 412 rows (+1 discovery row)  │
+  │  pipeline/fetchers.py  17 platforms with a native API  live, every digest    │
+  │  scrape_universal.py   5 escalating strategies, + 1 discovery row            │
   │  refresh_scrape_cache.py 00:00                          ──▶ scraped_cache.json
-  └──────────────────────────────────────────────────────────────────────────────┘
+  └── the API/page split moves daily: registry_health.py --census prints it ─────┘
                    │
   ┌ 4 ENRICH ─────────────────────────── lanes: jd-text · company-intel ────────┐
   │  pipeline/jdfill.py + enrich_*_jd.py   a description for every relevant role │
@@ -47,23 +48,26 @@ every lane imports and no lane owns — changing it is a report-it-loudly event.
                    │
   ┌ 5 CLASSIFY ───────────────────────────────────────────────── lane: classifier┐
   │  pipeline/israel.py    is this role in Israel?                               │
-  │  pipeline/seniority.py keyword rules, then `claude -p` for the ambiguous      │
+  │  pipeline/seniority.py keyword rules, then sonnet for the ambiguous ones      │
   │                        judgments cached v2|company|title|jd|bare ▶ seen.db   │
   └──────────────────────────────────────────────────────────────────────────────┘
                    │
   ┌ 6 RENDER ─────────────────────────────────────────────────── lane: render ───┐
-  │  jdtext.py → rolecard.py → digest.py   the board, the archive, the email,     │
-  │                                        every tag on a role card              │
+  │  pipeline/jdtext.py → rolecard.py → digest.py   the board, the archive, the   │
+  │                                        email, every tag on a role card        │
   └──────────────────────────────────────────────────────────────────────────────┘
                    │
   ┌ 7 DELIVER ────────────────────────────────────────────────── lane: infra ────┐
   │  commit state (merge_csv_rows / merge_json_cache) → publish board →           │
-  │  AnalystJobsIL/board · digest issue → AnalystJobsIL/inbox → email 05:45/08:30 │
+  │  AnalystJobsIL/board · digest issue → inbox, polled 06:17/07:17/08:17/10:17  │
   └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Counts are from the working tree on 2026-08-23; re-derive them with the snippets in §5c
-rather than trusting this line.
+No count in that map is hand-typed any more: `docs/check_docs.py` registers each one and
+fails when it drifts from the code (`python docs/check_docs.py --facts` prints them all,
+with what each doc claims). The one number it deliberately does NOT carry is the API/page
+split, which moved 18 rows in an hour on 2026-08-27 — moving a row between those two
+buckets is the registry lane's whole job — so that one is a command, not a number.
 
 ## 0. Start here: what the user actually receives
 *lane: `docs` — every lane must keep it true*
@@ -76,11 +80,22 @@ no server):
    keyless: the digest is posted as a GitHub issue in the *private* repo
    `AnalystJobsIL/inbox` with a `cc @owner` mention, and GitHub emails the mention
    (workflow `digest-email.yml` there; deduped by content hash).
-2. **The job board** — a rolling **2-week** searchable page, `docs/index.html`, published
-   to the public repo `AnalystJobsIL/board` → https://analystjobsil.github.io/board/.
+2. **The job board** — every role still live at its employer, searchable, `docs/index.html`,
+   published to the public repo `AnalystJobsIL/board` →
+   https://analystjobsil.github.io/board/. **It is not a 2-week window**, and this line
+   said it was until 2026-08-27: `run.py` selects `get_matched_since("0000-01-01")`
+   filtered by `_alive`, because a role open for three weeks is still open and dropping
+   it would be a lie about its status. On 2026-08-27, 32 of the 76 live cards were first
+   seen more than two weeks earlier and one dated from January.
 
-**Per-company caps** (`pipeline/run.py`): the email shows at most **3** roles per company,
-the board **8** — so "only one Wix role arrived" can be the cap, not a coverage gap.
+**Caps that can explain a missing role** (`pipeline/run.py`, all re-read 2026-08-27):
+the email shows at most **3 per company** (`_cap_per_company(email_jobs, 3)`) and at most
+**`EMAIL_MAX_ROLES` = 40** in total, the overflow leading tomorrow's digest; roles at an
+employer this digest is seeing for the first time are capped at **2 each and
+`FIRST_SCAN_MAX_ROLES` = 15** together. **The board has no per-company cap** — only
+`BOARD_MAX_ROLES` = 1500 as a page-weight backstop — because hiding a live opening
+because its employer has nine of them would make the board wrong. This paragraph said
+"the board **8**" until 2026-08-27; no such cap has ever existed in the code.
 
 **What qualifies as a role** (the actual product decision, implemented in
 `pipeline/seniority.py`): experienced (**~3+ years**) data-analysis work — data/BI/product/
@@ -88,46 +103,59 @@ marketing analytics, analytics leadership. **The title does not matter**: a "Dat
 posting counts if the work is really product/business analytics. **Out**: core ML/model
 building, data engineering, software engineering, finance/FP&A, security/SOC, and
 junior/intern/entry-level. Deterministic keyword rules decide the clear cases; ambiguous
-titles go to one bounded, tool-less `claude -p` call (§7b), whose YES/NO **role judgment** is
+titles go to one bounded, tool-less sonnet call through `pipeline/llm.py` (§7b), whose
+YES/NO **role judgment** is
 cached in `cloud_state/seen.db` under `v2|company|title|jd` or `|bare` — a verdict judged
 on a bare title is re-judged once the description arrives (distinct from a row's coverage
 **verdict**, §2).
 
 **Vocabulary** (used consistently below):
 - **the digest** = the 05:00 run that produces both the email and the board.
-- **the job board** = our published 2-week page. **a careers board** = a company's own ATS
-  listing. Never abbreviate either to "the board" alone.
+- **the job board** = our published page of every role still open. **a careers board** = a
+  company's own ATS listing. Never abbreviate either to "the board" alone.
 - **role judgment** = classifier YES/NO on one posting. **row verdict** = the dated
   coverage note on a `companies.csv` row.
 - **parked** = `active=false` with a verdict explaining why; parked rows are still
   re-checked (§2), never forgotten.
 - **JD** = job description text. **discovery net** = the LinkedIn/Indeed/Telegram sweeps.
 
-**Repo layout note:** `pipeline/` holds the digest-run library (`run.py`, `fetchers.py`,
-`seniority.py`, `israel.py`, `store.py`, `digest.py`, `health.py`, `recruiters.py`).
-**Every other script named in this document lives at the repo root.**
+**Repo layout note:** `pipeline/` holds the digest-run library — 30 modules, every one of
+them listed in `docs/MODULES.md`, of which 11 are *shared plumbing* every lane imports and
+no lane owns. **A name qualified with the `pipeline/` prefix is in the package; an unqualified script
+name is at the repo root** — with the caveat that this document itself writes several
+package modules unqualified (`jdtext.py`, `rolecard.py`, `digest.py`, `jdfill.py`,
+`firmographics.py` are all in `pipeline/`, none at the root). The package is stdlib-only
+but not self-contained: `pipeline/run.py` imports `registry_health` and
+`pipeline/identity_gate.py` imports `bd_rescue`, both root scripts.
 
 ### Run it locally without side effects
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And **36 of the 80 workflow steps carry `continue-on-error: true`** (counted 2026-08-25 by
-`docs/check_docs.py`, which fails if this sentence and the workflows disagree; nine of the 35
-are the `Stage stamps on the run page` / CLI-install steps added that day, tolerated on
-purpose — their outcome is what the mail and the run page read, never the badge), so a hard
-failure in an audit/hunt step still shows a green run — check the step log, not the badge.
+And **36 of the 80 workflow steps carry `continue-on-error: true`** — `docs/check_docs.py`
+fails if this sentence and the workflows disagree, as the registered `coe_ratio` fact. 13
+of the 36 are stage-stamp or CLI-install steps, tolerated on purpose because their outcome
+is what the mail and the run page read and never the badge. So a hard failure in an audit
+or hunt step still shows a green run — read the step log, not the badge. And note exactly
+how far the guarantee reaches: the linter holds the ratio, not the sentence around it,
+which read "nine of the 35" until 2026-08-27 and was wrong in both halves.
 
 ```bash
 python -m pipeline.run --only "Fiverr,Wix" --no-llm    # produce-only: NEVER emails/publishes
                                                       # scoped runs write out/docs-preview/,
                                                       # never the published docs/
-python -m pipeline.run --db /tmp/scratch.db            # don't touch the real seen-store
+python -m pipeline.run --only "Wix" --db /tmp/scratch.db  # ...and not the real seen-store
 python scrape_universal.py "Company" "https://…/careers"   # test extraction on one page
 python audit_empty_rows.py                             # dry-run (add --apply to write)
 ```
-`pipeline.run` only writes `out/digest-<date>.{html,txt,json}` — emailing and board
-publishing are separate workflow steps, so a local run cannot notify anyone. Most tools
-follow the same convention: **dry-run by default, `--apply` to write**. Useful env vars:
+**`--only`/`--limit` is what makes a run harmless — not `--db`.** A *scoped* run writes
+`out/digest-<date>.{html,txt,md,json}` and `out/docs-preview/`, and nothing else. An
+**unscoped** run, even with `--db /tmp/scratch.db`, takes the production branch on three
+things: it overwrites the published `docs/index.html` and `docs/archive.html`, rewrites
+`cloud_state/stale.json` (which the 06:00 self-heal reads the next morning), and stamps
+the `publish` stage as though the day's digest had shipped. No run of any kind emails
+anyone — that is a separate workflow step. Most tools follow the same convention:
+**dry-run by default, `--apply` to write**. Useful env vars:
 `SCRAPE_LLM=1` (LLM extraction fallback — **spends the Claude subscription**, one tool-less
 `claude -p` per page that reaches strategy 5; `SCRAPE_LLM_MODEL` picks the model, §1),
 `SCRAPE_ASSUME_IL=1` (accept page-level Israel
@@ -138,7 +166,11 @@ company when neither plain HTTP nor Chromium could open any), `SCRAPE_WORKERS` /
 the tail is carried over), `SCRAPE_CACHE_OUT` / `SCRAPE_ROT_OUT` / `SCRAPE_STAGES_OUT`
 (redirect the refresh's three outputs), `LLM_RESOLVE_CAP`, `JD_ENRICH_CAP`/`JD_ENRICH_BD_CAP`, `SERPAPI_KEY`,
 `BRIGHTDATA_API_KEY`/`BRIGHTDATA_ZONE`, `CLAUDE_CODE_OAUTH_TOKEN` (subscription OAuth, not
-an API key). Local secrets live in the gitignored `secrets.env`.
+an API key). **`JD_BD=0` matters most and is the one that defaults to spending**: the JD
+enrichers reach for the Web Unlocker unless it is set, which is why every rehearsal
+harness in `tests/` sets it to `0`. `MATCHED_JD_BD_CAP` (25) and `DEEP_BD_SEARCH_CAP` /
+`LLM_BD_SEARCH_CAP` (5) are the other spend dials. Local secrets live in the gitignored
+`secrets.env`.
 
 ### The common job shape
 

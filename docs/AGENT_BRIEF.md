@@ -46,17 +46,17 @@ mode this whole documentation set is arranged against.
    └────────┬───────────┘
             ▼
    ┌── 2 REGISTRY ──────┐   resolve a name to a board, repair a dead one,
-   │  lane: registry ✱  │   park what is genuinely dark   ──▶ companies.csv  (846 active)
+   │  lane: registry ✱  │   park what is genuinely dark   ──▶ companies.csv  (~900 active)
    └────────┬───────────┘
             ▼
-   ┌── 3 FETCH ─────────┐   ats-fetch · native ATS APIs   (16 platforms, 433 rows)
-   │ lanes: ats-fetch   │   scraper   · the browser scraper (412 rows)
+   ┌── 3 FETCH ─────────┐   ats-fetch · native ATS APIs   (17 platforms)
+   │ lanes: ats-fetch   │   scraper   · the browser scraper (the rest)
    │       + scraper    │                                 ──▶ scraped_cache.json
    └────────┬───────────┘
             ▼
    ┌── 4 ENRICH ────────┐   jd-text      · a description for every relevant role, any age
    │ lanes: jd-text     │   company-intel · sector / stage / size / founded
-   │     + company-intel│                                 ──▶ 926 company profiles
+   │     + company-intel│                                 ──▶ ~1,000 company profiles
    └────────┬───────────┘
             ▼
    ┌── 5 CLASSIFY ──────┐   Israel filter → relevance/seniority → LLM for the ambiguous
@@ -85,13 +85,13 @@ Pick ONE. The split exists so that two lanes never write the same file.
 | lane | step | owns | primary files |
 |---|---|---|---|
 | **`discovery`** | 1 | where new roles and new employers come from | `discovery_daily.py`, `discovery_telegram.py`, `pipeline/aggregators.py`, `pipeline/recruiters.py` |
-| **`registry`** *(one at a time)* | 2 | dark rows, the 23-tool resolution ladder | `companies.csv`, `listing_hunt.py`, `triage_dark.py`, `crack_walled.py`, `deep_validate.py`, `repair_*.py`, `resolve_*.py`, `audit_empty_rows.py`, `probe_candidates.py`, `scan_dead_domains.py`, `auto_expand.py`, `apply_resolved.py` |
+| **`registry`** *(one at a time)* | 2 | dark rows, and the 5-rung resolution ladder (§3) over 9 re-check pools | **`registry_health.py`** (read-only: census, who re-checks what, which ATS to build, `--explain "<name>"`), `companies.csv`, `listing_hunt.py`, `triage_dark.py`, `crack_walled.py`, `deep_validate.py`, `repair_*.py`, `resolve_*.py`, `audit_empty_rows.py`, `probe_candidates.py`, `scan_dead_domains.py`, `auto_expand.py`, `apply_resolved.py` |
 | **`ats-fetch`** | 3 | how a board's API is read; adding a platform | `pipeline/fetchers.py`, `pipeline/platform_check.py`, `pipeline/health.py` |
-| **`scraper`** | 3 | the 5-strategy browser extraction for the 412 no-API companies | `scrape_universal.py`, `refresh_scrape_cache.py`, `cache_new_rows.py` |
+| **`scraper`** | 3 | the 5-strategy browser extraction for every company with no API | `scrape_universal.py`, `refresh_scrape_cache.py`, `cache_new_rows.py` |
 | **`jd-text`** | 4 | every relevant role gets its description, whatever its age | `pipeline/jdfill.py`, `enrich_scrape_jd.py`, `enrich_matched_jd.py` |
 | **`company-intel`** | 4 | sector / stage / employees / founded / Israel centre | `pipeline/firmographics.py`, `pipeline/company_info.py`, `research_firmographics.py`, `bd_employees.py`, `fill_employees_llm.py`, `company_type_analysis.py` |
 | **`classifier`** | 5 | which roles qualify, and the LLM tier that decides the ambiguous ones | `pipeline/seniority.py`, `pipeline/israel.py`, the `llm_cache` key scheme; `pipeline/llm.py` is shared |
-| **`roles`** | 6 | the role as an ENTITY: is it the same one, is it still open, was it re-posted, when does it leave the board | `pipeline/store.py` (`matched`/`sent`, `merge_key`, `seen_id`, `merge_duplicates`, `filter_new`, `upsert_matched`), the role-selection block in `pipeline/run.py`, repost detection |
+| **`roles`** | 6 | the role as an ENTITY: is it the same one, is it still open, was it re-posted, when does it leave the board | **`pipeline/roles.py`** (the ledger: `cloud_state/roles.jsonl` + `roles_text.jsonl`), `pipeline/store.py` (`matched`/`sent`, `merge_key`, `seen_id`, `merge_duplicates`, `filter_new`, `upsert_matched`), the role-selection block in `pipeline/run.py`, repost detection |
 | **`render`** | 6 | how a role reads; every tag on a card | `pipeline/jdtext.py` (text→structure), `pipeline/rolecard.py` (the card), `pipeline/digest.py` (rendering), `pipeline/roleprofile.py` (the lexicon), `docs/TAGGING.md` — model: `ARCHITECTURE.md` §7d |
 | **`infra`** *(one at a time)* | 8 | delivery and the machinery under all of it: merges, workflows, the relay | `persist_state.py`, `merge_*.py`, `check_invariants.py`, `.github/workflows/*`, `mark_sent.py`, `pipeline/run.py` (orchestration only), `tests/rehearse_infra.py` |
 | **`docs`** | — | making all of the above legible to the next agent and to a visitor, and keeping it honest | `README.md`, `ARCHITECTURE.md`, `HANDOFF.md`, `CLAUDE.md`, `docs/*` incl. `docs/check_docs.py` |
@@ -107,17 +107,24 @@ owned it: the record lived in `store.py` (given to `infra`), repost detection in
 (given to `render`), the description in `jd-text`, and the tags nowhere at all. Three lanes,
 no owner, for the central entity.
 
-**What exists today.** `matched` is the durable list of every role ever accepted — 105 rows —
+**What exists today.** `matched` is the durable list of every role ever accepted — 135 rows
+on 2026-08-27 (`select count(*) from matched`) —
 keyed by `company|title`, carrying location, url, posted_date, seniority, sources, the JD
 text, `first_seen`, `last_seen`, and every contributing posting's `seen_id`. `sent` records
 what has been emailed so nothing is sent twice. A role is "still open" if we saw it in the
 latest scan of its employer; when we stop seeing it, it stops being on the board and appears
-in the archive. Reposts are detected at render time by comparing `posted_date` against
-`first_seen`.
+in the archive. **Reposts are recorded in the ledger** (`pipeline/roles.py`, a `posted_date`
+at least `REPOST_DAYS` = 3 past that episode's `first_seen`; 13 records carry one today) and
+re-derived by the same rule at render time (`rolecard.REPOST_DAYS`) when no ledger record
+exists.
 
-**What does NOT exist.** The tags are not stored. Skills, role family, years, degree,
-day-to-day tasks and AI-usage are recomputed from the description on every render, so there
-is no way to ask "how many roles asked for SQL in July" — `company_type_analysis.py` answers
+**The tags ARE stored** — this paragraph said they were not until 2026-08-27, and the
+column had been built two days earlier. `cloud_state/roles.jsonl` carries a `tags` snapshot
+per role (132 of 135 records today: skills, family, years, degree, track, AI usage),
+versioned by `v` and invalidated when `tags_sha1` stops matching `desc_sha1`. What is still
+true is that the BOARD recomputes from the description on every render, so a lexicon change
+lands the same morning — and that a role's tags are only ever as good as the description
+captured while it was open. `company_type_analysis.py` answers
 that by re-deriving them each time, over whatever descriptions happen to be present now. And
 a role's tags are only ever as good as the description that was captured while it was open;
 once it closes, that text is frozen. If persisted tags are wanted, this lane owns the column
@@ -125,11 +132,15 @@ and `render` owns what goes in it.
 
 ### Shared plumbing — read freely, change loudly
 
-`pipeline/`: `notes.py` `verdicts.py` `identity_gate.py` `identity_facts.py` `company_identity.py` `atomic.py` `http.py`
-`companies.py` `stages.py` `sources.py`. Every lane imports these and no lane owns them. If
-your change needs one modified, **say so in your report and name the lanes it could affect** —
-`identity_gate` gates every activating write path (`company_identity` supplies its primitives)
-`companies.csv`.
+`pipeline/`: `notes.py` `verdicts.py` `identity_gate.py` `identity_facts.py`
+`company_identity.py` `atomic.py` `http.py` `companies.py` `stages.py` `sources.py`
+`llm.py`. Eleven modules; `docs/MODULES.md` marks the same eleven `**shared**`, and
+`llm.py` is on this list because it is the ONE process seam to Claude in the whole repo —
+the `classifier` row below names it but does not own it. Every lane imports these and no
+lane owns them. If your change needs one modified, **say so in your report and name the
+lanes it could affect** — `identity_gate` gates every write path that activates a row in
+`companies.csv` (`company_identity` supplies its primitives and is inert on every ATS host
+by design).
 
 `pipeline/run.py` is the orchestrator: `infra` owns it, but any lane may need a hook in it.
 Propose the hook, do not smuggle it.
@@ -141,7 +152,7 @@ fails the test suite if a new one is unclassified. 25 are `legacy` — one-shot 
 probes and superseded resolvers — and nothing scheduled imports any of them; the linter
 proves that on every push rather than asking you to trust it. Do not spend time there.
 
-The trap the registry exists for: 6 modules are `library` — **no workflow runs them and live
+The trap the registry exists for: 9 modules are `library` — **no workflow runs them and live
 code imports them**, so they look dead in the Actions history. `ingest_research` and
 `probe_ats` were on an earlier "safe to delete" list while `retry_unreachable.py` (02:30
 daily) imports the first, which imports the second.
@@ -161,7 +172,9 @@ Declare these in your plan before spending them:
 - **GitHub Actions concurrency group `repo-state`** — eight of the nine scheduled workflows
   share it (all but `daily-digest.yml`, which has its own). A long job makes the next one
   queue or be superseded, with no error anywhere.
-- **DuckDuckGo is blocked from this machine** and works on the runners.
+- **DuckDuckGo is rate-limited from this machine, not blocked** — it answers, then returns
+  zero for the same query minutes later (measured: `ddg("Wix")` gave 4 URLs, then 0). Treat
+  it as a rung that sometimes answers, never the only one. It is reliable on the runners.
 
 ## Rules that will bite you
 

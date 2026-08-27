@@ -14,6 +14,24 @@ import ast, glob, os, re, collections, sys
 
 sys.stdout.reconfigure(encoding="utf-8")
 
+
+def _platform_count() -> int:
+    """FETCHERS keys minus the two pseudo-platforms, by AST. It was typed by hand as "16"
+    and stayed 16 while the map grew to 19 keys / 17 platforms - and because MODULES.md is
+    GENERATED, correcting the doc did nothing: the next regeneration re-emitted the stale
+    number. A generated file can only be fixed in its generator."""
+    tree = ast.parse(open("pipeline/fetchers.py", encoding="utf-8").read())
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and any(getattr(t, "id", None) == "FETCHERS"
+                                                for t in node.targets):
+            if isinstance(node.value, ast.Dict):
+                keys = [k.value for k in node.value.keys if isinstance(k, ast.Constant)]
+                return len([k for k in keys if k not in ("scrape", "discovery")])
+    raise RuntimeError("pipeline/fetchers.py has no top-level FETCHERS dict literal")
+
+
+_PLATFORMS = _platform_count()
+
 CLASS = {
  # scheduled - a workflow invokes it
  "apply_resolved": ("scheduled", "applies out/resolved_configs.json into companies.csv after the self-heal"),
@@ -53,11 +71,11 @@ CLASS = {
  "probe_ats": ("library", "guessable-slug probing. **Not deletable**: `ingest_research` imports `slug_variants`"),
  # operator - a human or agent runs it on demand; still live
  "registry_health": ("scheduled", "read-only registry census + row-deletion guard, recomputed re-check ownership matrix, per-tool pool floors, and the unsupported-ATS build queue. `--census` and `--ladder` are the only things it writes; `alarms_state()` is what the daily mail prints; `--explain \"<name>\"` answers \"why was this row activated/refused\" offline"),
- "research_firmographics": ("operator", "bulk firmographics research + `--export`. Run every 6h by the Windows task `IsraeliJobs-Firmographics` via run_firmo_chain.cmd"),
- "bd_employees": ("operator", "LinkedIn employee-count fill via the Web Unlocker, 1 credit/page. Same Windows chain"),
- "fill_employees_llm": ("operator", "re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Same Windows chain"),
- "company_type_analysis": ("operator", "joins firmographics with matched jobs -> out/company_type_analysis.{json,md} (ARCHITECTURE.md section 7)"),
- "firmo_death_watch": ("operator", "READ-ONLY: companies the researcher found shut down or absorbed while their registry row is still active, proposed for parking (BACKLOG 244; the write is registry's)"),
+ "research_firmographics": ("scheduled", "bulk firmographics research + `--export`. Was the Windows task `IsraeliJobs-Firmographics`; that task is DISABLED and the production pass now runs in the cloud at 10:00 UTC"),
+ "bd_employees": ("operator", "LinkedIn employee-count fill via the Web Unlocker, 1 credit/page. Hand-run only - the Windows chain that drove it is disabled and no workflow runs it"),
+ "fill_employees_llm": ("operator", "re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Hand-run only - the Windows chain that drove it is disabled and no workflow runs it"),
+ "company_type_analysis": ("scheduled", "joins firmographics with matched jobs -> out/company_type_analysis.{json,md} (ARCHITECTURE.md section 7)"),
+ "firmo_death_watch": ("scheduled", "READ-ONLY: companies the researcher found shut down or absorbed while their registry row is still active, proposed for parking (BACKLOG 244; the write is registry's)"),
  "firmo_health_check": ("operator", "tripwire: is the firmographics chain actually classifying anything?"),
  "verify_company": ("operator", "live-fetch verification of one company's endpoint - the research discipline as a script"),
  "cache_new_rows": ("operator", "superseded shim: delegates to `refresh_scrape_cache.py --only-missing` (docs/BACKLOG.md 87 retires it)"),
@@ -93,10 +111,11 @@ CLASS = {
 
 PIPELINE = {
  "run": "**the orchestrator.** Owned by `infra`; any lane may need a hook in it - propose it, do not smuggle it",
- "fetchers": "one normalizer per ATS platform -> the common job shape. 16 platforms",
+ "fetchers": "one normalizer per ATS platform -> the common job shape. %d platforms, plus the two pseudo-platforms `scrape` and `discovery`" % _PLATFORMS,
  "israel": "deterministic Israel-location filter",
  "seniority": "relevance + experience classification; the LLM tier for ambiguous titles",
  "store": "the SQLite seen-store: sent / matched / llm_cache / company_info / firmographics",
+ "roles": "**the role ledger** (lane `roles`): cloud_state/roles.jsonl + roles_text.jsonl, one line per role - status / episodes / reposts / class / tags / attribution / sent - reconciled with the sqlite store at open",
  "jdtext": "the JD as text -> requirements / responsibilities / blurb / location / seniority chip (pure; stdlib + the lexicon for two checks)",
  "rolecard": "one card per role from a `matched` row + its ledger record; cross-card wrong-company checks; never raises",
  "digest": "renders cards into the board, the archive and the email; `render_all` is run.py's one entry",
@@ -173,15 +192,20 @@ HEAD = {
  "library": ("Libraries - no workflow runs them, live code imports them",
    "**These are the trap.** They look unused in the Actions history and they are load-bearing. `docs/check_docs.py` fails if a module listed here is imported by nothing."),
  "operator": ("Operator tools - a human or an agent runs these on demand",
-   "Live and documented, but nothing in CI calls them. The firmographics three are driven by the Windows scheduled task `IsraeliJobs-Firmographics`, which no GitHub Action can see."),
+   "Live and documented, and nothing in CI runs them - `docs/check_docs.py` fails if one starts to, because a module a cron runs is `scheduled` and a reader deciding what is safe to touch needs to know which. The Windows scheduled task `IsraeliJobs-Firmographics` that used to drive the firmographics tools is DISABLED (verified 2026-08-27, Get-ScheduledTask); its production work is `.github/workflows/firmographics.yml` at 10:00 UTC."),
  "legacy": ("Legacy / one-shot / superseded",
    "Kept, not run. Nothing scheduled and nothing in `pipeline/` imports any of these - `docs/check_docs.py` fails if that stops being true. They are the deletion candidates, but read the note first: several exist only to document a finding, and two still write `companies.csv`."),
 }
 
 out = []
 out.append("# Module registry - what every file is, and whether it is alive\n")
-out.append("""Generated and re-verified on 2026-08-23 by the `docs` lane. **Every root `*.py` appears
-here exactly once**, and `docs/check_docs.py` fails the test suite if a new one does not.
+out.append("""Generated by `python docs/gen_modules.py`, run from the repo root; any flag
+(`--check`) diffs it without writing. **Never hand-edit this file** - a regeneration
+silently discards the edit, which is how the sentence explaining how to regenerate it
+disappeared from this header once already.
+
+**Every root `*.py` appears here exactly once**, and `docs/check_docs.py` fails the suite
+if a new one does not, or if a module a workflow runs is filed as anything but `scheduled`.
 That is the point of the file: before it existed a reader could not tell live code from a
 one-shot probe, and `HANDOFF.md` listed two load-bearing modules as safe to delete.
 
@@ -217,7 +241,8 @@ for c in order:
             out.append("| `%s.py` | %s |" % (m, d))
 
 out.append("\n## `pipeline/` - the digest-run library\n")
-out.append("Eight of these are **shared plumbing**: every lane imports them and no lane owns them.\nChanging one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).\n")
+out.append("%d of these are **shared plumbing**: every lane imports them and no lane owns them.\nChanging one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).\n"
+           % sum(1 for v in PIPELINE.values() if "**shared**" in v))
 out.append("| module | what it does |\n|---|---|")
 for f in sorted(glob.glob("pipeline/*.py")):
     m = os.path.splitext(os.path.basename(f))[0]
@@ -231,8 +256,22 @@ out.append("""%d root modules have no `if __name__ == "__main__"` guard, so *imp
 nothing live imports them today - but that is a fact about today, not a guard:\n""" % (len(noguard), len(noguard)))
 out.append("`" + "`, `".join(noguard) + "`\n")
 
-open("docs/MODULES.md", "w", encoding="utf-8").write("\n".join(out) + "\n")
-print("wrote docs/MODULES.md")
+text = "\n".join(out) + "\n"
+if len(sys.argv) > 1:
+    # This module used to write on ANY invocation and had no argparse, so `--help` would
+    # overwrite the very file it was being asked about. Every flag is now a dry run.
+    old = open("docs/MODULES.md", encoding="utf-8").read() if os.path.exists("docs/MODULES.md") else ""
+    if old == text:
+        print("docs/MODULES.md is up to date")
+    else:
+        import difflib
+        sys.stdout.writelines(difflib.unified_diff(old.splitlines(True), text.splitlines(True),
+                                                   "docs/MODULES.md (on disk)", "regenerated"))
+        print("docs/MODULES.md is STALE - run `python docs/gen_modules.py` with no flags")
+        raise SystemExit(1)
+else:
+    open("docs/MODULES.md", "w", encoding="utf-8").write(text)
+    print("wrote docs/MODULES.md")
 for c in order:
     print(c, len(buckets[c]))
 print("no-guard:", len(noguard))
