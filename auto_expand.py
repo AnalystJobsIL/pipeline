@@ -56,6 +56,8 @@ from urllib.parse import urlparse
 from pipeline.aggregators import is_aggregator as _is_agg_url
 from pipeline import identity_gate as _gate
 from pipeline.companies import CSV_PATH, load_companies
+from pipeline.company_identity import registrable
+from pipeline.notes import append as _note_append
 from resolve_deep import resolve
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
@@ -70,14 +72,36 @@ for _s in (sys.stdout, sys.stderr):
 
 
 
+# ONE place, so BACKLOG 316's three disagreeing defaults become one. `auto-expand.yml` may
+# still override it with AUTO_EXPAND_LIMIT; what it may not do any more is disagree silently.
+AUTO_EXPAND_LIMIT_DEFAULT = 250
+
 DRY_RUN = "--dry-run" in sys.argv
 SEEN_PATH = os.path.join("cloud_state", "auto_expand_seen.json")
 
-# The free rung's bounds. Measured 2026-08-27 over all 498 drainable names: 5,212 requests,
-# 293 s, 0.59 s/name -- so 1,200 s is ~4x the whole queue and will not bind at
-# AUTO_EXPAND_LIMIT=250. It exists because the binding cost is not the 330-minute job
-# timeout, it is `concurrency: group: repo-state`, which five workflows share.
-PROBE_BUDGET_S = int(os.environ.get("AUTO_EXPAND_PROBE_BUDGET_S", "1200"))
+# The free rung's bounds. The 1,200 s that shipped on 2026-08-27 was reasoned from an
+# 8-THREAD local sweep (5,212 requests, 293 s over 498 names) and production is
+# single-threaded, so the clock bound the run instead of the batch: `cloud_state/
+# auto_expand_seen.json` carries 238 stamps dated 2026-08-27 against a batch of 250, and the
+# step log could not say so. A budget that decides coverage is a budget nobody asked for.
+#
+# So it is DERIVED from `limit`, the one knob `auto-expand.yml` already exposes: ask for 250
+# names and the clock cannot stop you at 238; ask for 600 and one run drains the queue. The
+# per-name pace is the measured single-threaded mean (4.7 s) with ~1.7x of headroom. The
+# ceiling is not about this rung at all -- it is `concurrency: repo-state`, shared by eight
+# workflows, whose smallest gap is 08:00 -> 10:00 firmographics.
+PROBE_PACE_S = 8
+RUN_CEILING_S_DEFAULT = 6600        # 110 min of the smallest `repo-state` gap (08:00 -> 10:00)
+# One `resolve_deep` call's share of the run. It had NO bound: 35 s of Playwright plus
+# `scrape_universal` at COMPANY_BUDGET_S=150, possibly twice, is ~342 s per name, and at
+# LIMIT=250 an attacker computed the uncapped shape back at 4.4 h against a 330-minute job
+# timeout. `resolve(..., budget_s=)` is the bound; this is what auto-expand asks for.
+RESOLVE_BUDGET_S_DEFAULT = 180
+
+# Every one of these is read INSIDE `main()`, never here. `DRY_RUN` below is bound from
+# `sys.argv` at import and the module's own comment calls that out as the reason it cannot be
+# tested; a budget read at module scope has exactly the same defect, and two guards written to
+# prove the run deadline works passed against a 6,600 s ceiling the test had just set to 0.
 PROBE_NAME_S = 12          # per name; the measured per-name maximum was 7.7 s
 PROBE_NAME_REQ = 18        # 3 slugs x 6 platforms: the arithmetic ceiling of the policy
 _SLUG_OK = re.compile(r"[a-z0-9][a-z0-9-]{1,38}[a-z0-9]")
@@ -150,6 +174,65 @@ def _lossless_slugs(name, li_slug=""):
     return out[:3]
 
 
+# A posting that is a PLACEHOLDER, not an opening (BACKLOG 322). `il >= 1` is the rule that
+# separates a real tenant from an impostor, and `israel.is_israel_job` reads only
+# country_code/location/url -- never the title -- so `Ness Technologies` activated on
+# smartrecruiters/`nesstechnologies` whose ONLY posting is titled "Test Job" at
+# `Tel Aviv, , Israel`. The board is real and the tenant is right; the company simply is not
+# using it. The row then removes the name from `_names_now()` and the queue never retries it:
+# the cost is not the junk row, it is the company.
+#
+# Two rules, and the SECOND one is why this is not a keyword filter. Measured 2026-08-27 over
+# the 1,175 postings in `scraped_cache.json`: 15 titles contain "test" and 13 of them are real
+# engineering roles (`Experienced Test Engineer`, `CPU Design for Test Engineer, Google
+# Cloud`, `Flight Tests Manager (ALPHA Team)`). All 13 are ADMITTED here, and the 2 that are
+# not are `Testing JazzHR` and `Krume JazzHR Demo AS Omri Testing` -- both live, both on
+# `myInterview`, an ACTIVE row that `listing_hunt` verified as "2 IL" on 2026-08-22.
+_PH_MARK = frozenset("test testing tests demo dummy placeholder untitled asdf xxx qqq zzz "
+                     "sample example ignore delete".split())
+# generic words and ATS vendor names: what is left over in a placeholder title, and nothing
+# a real role is named after. `Analyst`, `Engineer`, `Manager` are deliberately absent.
+_PH_FILLER = frozenset((
+    "job jobs position positions role roles posting postings vacancy vacancies opening "
+    "openings new open my your first a an the of and or at to for in on do not apply please "
+    "entry x 1 2 3 "
+    "jazzhr greenhouse lever ashby ashbyhq comeet workable smartrecruiters recruitee breezy "
+    "bamboohr applytojob teamtailor workday taleo icims jobvite phenom eightfold successfactors "
+    "avature ultipro oraclecloud").split())
+# letters and digits split, so `Test1` and `Test 1` cannot disagree about the same content
+_PH_WORD = re.compile(r"[a-z]+|[0-9]+")
+
+
+def is_placeholder_title(title):
+    """True for a title that is an ATS test record rather than an opening.
+
+    ONE rule: every word is either a marker or generic. `Test Job`, `Testing JazzHR`, `Job`,
+    `New Position`, `Your first job` (Workable's shipped default), `Position 1`. A title with
+    no ASCII words at all is NOT a placeholder -- a board that does not expose readable titles
+    is unreadable, which is a different verdict from unreal.
+
+    **There was a second rule and an adversarial pass killed it.** "Two markers anywhere" read
+    as a strong signal and is not: `QA Test Engineer (Manual Testing)`,
+    `Design for Test (DFT) Engineer - Silicon Test` and `Data Analyst, A/B Testing - Test &
+    Learn Platform` all carry two, and all three are real roles this product exists to find.
+    Worse, the calibration corpus could not catch it -- all 12 marker-bearing titles in
+    `scraped_cache.json` carry exactly ONE marker, so every one of them is a single word away
+    from being refused. The asymmetry decides it: a false refusal costs a COMPANY (BACKLOG
+    322's whole point is that the cost is not the junk row), a false acceptance costs a junk
+    row that four re-check pools will re-examine.
+
+    The accepted cost of dropping it, stated rather than hidden: `Krume JazzHR Demo AS Omri
+    Testing` is admitted, because `krume` and `omri` are neither markers nor generic. Its
+    sibling on the same board, `Testing JazzHR`, is still refused -- and since the board-level
+    rule needs EVERY Israel posting to be placeholder-like, `myInterview` is admitted. That
+    row is named in the backlog instead.
+    """
+    words = _PH_WORD.findall((title or "").lower())
+    if not words:
+        return False
+    return all(w in _PH_MARK or w in _PH_FILLER or w.isdigit() for w in words)
+
+
 # The six guessable platforms as they appear in a stored URL, so a board held by a `scrape`
 # row is still recognised as that board. Keep in step with `probe_ats._PLATFORMS`.
 _ATS_PLAT = {"boards-api.greenhouse.io": "greenhouse", "boards.greenhouse.io": "greenhouse",
@@ -220,7 +303,24 @@ def _probe_resolve(name, li_slug, boards, deadline):
         hits = _pa.probe_bounded(name, slugs, deadline=deadline, budget=PROBE_NAME_REQ)
     live = [h for h in hits if h["il"] >= 1]
     if not live:
-        return None, ("probe-no-il" if hits else "")
+        # `probe-noboard` used to be `""`, which `main`'s `elif why:` dropped -- so the
+        # `probe:` line reported refusals but never how many names the rung had WALKED, and
+        # a reader could not tell 238 probed names from 31. That silence is what made the
+        # 2026-08-27 run's coverage unreadable from its own log (BACKLOG 324).
+        return None, ("probe-no-il" if hits else "probe-noboard")
+    # `h["il_titles"]` must be NON-EMPTY for this to fire. `all()` over an empty list is
+    # vacuously True, so without that clause a board reporting Israel jobs whose postings
+    # carry no title at all was refused as a placeholder -- and "no titles" means the board
+    # is unreadable, which is a different verdict from unreal. Caught by three existing
+    # guards whose `probe_bounded` stubs predate the `il_titles` key.
+    real = [h for h in live
+            if not (h.get("il_titles") and all(is_placeholder_title(t) for t in h["il_titles"]))]
+    if not real:
+        # every Israel posting on every candidate board is an ATS test record. Counted and
+        # NOT deferred (same shape as `probe-no-il`), so the name flows on to the rest of the
+        # ladder and is re-probed tomorrow -- a placeholder is not a verdict on the company.
+        return None, "probe-placeholder"
+    live = real
     if len({(h["plat"], h["slug"]) for h in live}) > 1:
         return None, "probe-ambiguous"
     h = live[0]
@@ -318,6 +418,15 @@ def _site_from_guess(name, handle, timeout=5):
         if not re.search(r"linkedin\.com/company/" + re.escape(handle) + r"(?![a-z0-9-])",
                          html, re.I):
             return None                    # no linkback: unproven, and unproven is refused
+        # The address we keep is the REDIRECT TARGET, and nothing bound it to the domain we
+        # guessed: an adversarial pass redirected a guess onto `comeet.com/jobs/<someone
+        # else>/...` and onto `phoenixtma.com` (`company_identity`'s own example of a real
+        # company that is not the right one), and `is_foreign` refused neither -- it is False
+        # on every ATS host by design, and False for a `weak` verdict. `registrable` is the
+        # binding: a legitimate `x.com -> www.x.com` keeps its registrable domain, a hop onto
+        # somebody else's does not.
+        if registrable(urlparse(final or u).netloc) != registrable(urlparse(u).netloc):
+            return None
         if _gate.is_foreign(name, final or u):
             return None
         return (final or u), html
@@ -441,7 +550,14 @@ def main():
                              if DRY_RUN else
                              "WRITING to companies.csv + scraped_cache.json "
                              "(pass --dry-run to inspect without writing)"), flush=True)
-    limit = int(os.environ.get("AUTO_EXPAND_LIMIT", "200"))
+    t_run = time.time()
+    # ONE default, and the module is where it lives (BACKLOG 316: the docstring said 200, this
+    # line said 200, `auto-expand.yml`'s input default says 200 and its cron fallback says
+    # 250, so no reader could say what a scheduled run processes).
+    limit = int(os.environ.get("AUTO_EXPAND_LIMIT") or AUTO_EXPAND_LIMIT_DEFAULT)
+    run_ceiling = int(os.environ.get("AUTO_EXPAND_RUN_S") or RUN_CEILING_S_DEFAULT)
+    resolve_budget = int(os.environ.get("AUTO_EXPAND_RESOLVE_S") or RESOLVE_BUDGET_S_DEFAULT)
+    run_deadline = t_run + run_ceiling
     with open("research_companies.json", encoding="utf-8") as f:
         entries = json.load(f)
     from pipeline.recruiters import is_recruiter
@@ -478,12 +594,37 @@ def main():
     site_on = os.environ.get("AUTO_EXPAND_SITE", "1") == "1"
     site_deadline = time.time() + SITE_BUDGET_S
     probe_on = os.environ.get("AUTO_EXPAND_PROBE", "1") == "1"
-    probe_deadline = time.time() + PROBE_BUDGET_S
+    # the batch decides coverage, not the clock -- and never past the shared-runner ceiling
+    probe_budget = (int(os.environ.get("AUTO_EXPAND_PROBE_BUDGET_S") or 0)
+                    or min(limit * PROBE_PACE_S, run_ceiling))
+    probe_deadline = time.time() + probe_budget
+    # what BOUND the run. Reported, because "resolved 11 ... ~486 still to scan" is readable
+    # as three different runs and on 2026-08-27 it was read as the wrong one.
+    n_seen = n_probe_walked = 0
+    t_probe = t_site = t_resolve = 0.0
+    n_resolve_calls = 0
+    first_exhausted = ""
+    llm_cap0, search_cap0 = llm_budget, search_budget
     boards_now = _boards_now() if probe_on else set()
     deferred = Counter()
     for e in batch:
+        # ONE deadline, checked where names are CONSUMED. Every other gate in this loop is
+        # per-rung and checked before entry, so each rung could overrun by a full name and
+        # none of them composed: the four together came to ~6 h 15 m at limit=600 against
+        # `timeout-minutes: 330` (measured from the code, 2026-08-27).
+        if time.time() >= run_deadline:
+            first_exhausted = "run"
+            break
+        n_seen += 1
         name, url = e["name"].strip(), e["careers_url"]
         agg_seed = _is_agg_url(url)
+        # Set ONLY by `_site_from_guess`, which is the one rung here that proves an address:
+        # the full name on the page (strict, no `_NAME_STOP` core), an exact linkback to
+        # `linkedin.com/company/<handle>`, and `not is_foreign`. `not agg_seed` is NOT the
+        # same claim -- `_is_agg_url` is a 60-host blocklist, so a Telegram-seeded
+        # `comeet.com/jobs/<someone-else>/...` link clears it while being another employer's
+        # board. Parking on that would write their address into this row's cols 2-3 forever.
+        site_seeded, site_html, resolve_crashed = False, "", False
         # SUB-RUNG B, free: turn an aggregator seed into the company's OWN address. This is
         # the larger of the two levers, because an own-domain page is precisely what
         # `resolve_llm._verify` requires and cannot get from a LinkedIn permalink -- so it
@@ -500,9 +641,24 @@ def main():
             # attacker computed the uncapped version back at 4.4 HOURS against a 330-minute
             # job timeout, holding `concurrency: repo-state` for all of it. SITE_BUDGET_S
             # bounds the guessing GETs; only this bounds what a guess unlocks.
+            _t = time.time()
             _site = _site_from_guess(name, (e.get("slug") or "").strip().lower())
+            t_site += time.time() - _t
             if _site:
+                # The page is kept for `resolve_llm`'s evidence bundle ONLY. It must
+                # NEVER reach `activation_ok`: that is a page on OUR domain, and the gate
+                # would be asked whether it vouches for a THIRD PARTY's ATS endpoint.
+                # `activation_verdict` short-circuits on any readable held page --
+                # `page_names_company(name, api_url, html=html)` never reads `api_url` -- and
+                # `_site_from_guess` GUARANTEES this page names the company, because that is
+                # proof #1 of the rung. So the gate returns `ok` unconditionally: an
+                # adversarial pass drove `Acme Robotics` onto `lever/monday` as an ACTIVE
+                # row, which is the `alias-of` shape section 2 calls terminal and is strictly
+                # worse than the burial this change exists to fix. It is the same rule
+                # section 2 already states for `embedded_board_ok`: a held page may REFUSE a
+                # board, never ADMIT one.
                 url, agg_seed = _site[0], False
+                site_seeded, site_html = True, _site[1]
                 n_sited += 1
                 print("  site %s: %s" % (name, url[:60]), flush=True)
         if (agg_seed and e.get("slug") and search_budget > 0
@@ -523,10 +679,36 @@ def main():
             # never rendered: the page is a posting on someone else's board (see module doc)
             r, kind = None, "unreachable"
         else:
-            try:
-                r = resolve(name, url)
-            except Exception:  # noqa: BLE001
-                r = ("unreachable", None)
+            _budget = min(resolve_budget, int(run_deadline - time.time()))
+            if _budget < 10:
+                # Not enough time left to reach a verdict. Starvation is not a fact about the
+                # company: `_left()` floors at 1 s, so `resolve` would run every rung at one
+                # second and return `unreachable`, which the park below writes as a permanent
+                # row. Defer instead -- exactly as a crash does.
+                r, resolve_crashed = ("unreachable", None), True
+                first_exhausted = first_exhausted or "run"
+            else:
+                try:
+                    _t = time.time()
+                    n_resolve_calls += 1
+                    r = resolve(name, url, budget_s=_budget)
+                except TypeError:
+                    # NEVER swallowed. A TypeError here can only be a programming error --
+                    # a signature drift on `resolve` -- and the bare `except Exception` below
+                    # reported it as `unreachable; could not scan`, i.e. as a fact about the
+                    # company's website. An adversarial pass found three tests in this repo
+                    # mis-resolving for exactly that reason on 2026-08-27, and in production
+                    # the same drift would have parked every name in the batch.
+                    raise
+                except Exception:  # noqa: BLE001
+                    # A CRASH is not a scan. `resolve` wraps every failure into `unreachable`,
+                    # and once a site-seeded name parks on that verdict, one missing Chromium
+                    # on the runner turns every name in the batch into a permanent row -- a
+                    # mass-zero result committing itself, which section 8 calls a broken run
+                    # and not a measurement. Deferring is what the docstring already promises.
+                    r, resolve_crashed = ("unreachable", None), True
+                finally:
+                    t_resolve += time.time() - _t
             kind = r[0] if r else "unreachable"
 
         # LLM fallback: deterministic resolution failed outright, or "succeeded" only by
@@ -561,8 +743,11 @@ def main():
                     _wj(SEEN_PATH, seen)
                 except Exception:  # noqa: BLE001
                     pass          # a rotation key is order, never a verdict: never fatal
+            n_probe_walked += 1
+            _t = time.time()
             hit, why = _probe_resolve(name, e.get("slug"), boards_now,
                                       time.time() + PROBE_NAME_S)
+            t_probe += time.time() - _t
             if hit:
                 plat, tok, api, n_all, n_il, page = hit
                 # `_row_for_ats` unpacks (nm, plat, tok, api, n_all, il) -- the NAME first.
@@ -583,7 +768,22 @@ def main():
                 probe_refused[why] += 1
         if needs_llm and llm_available:
             if llm_budget <= 0 or search_budget <= 0:
-                defer = "cap"
+                # A `cap` means WE RAN OUT OF BUDGET, not "we learned nothing" -- and the
+                # other two defer branches below already know the difference (`llm-none` and
+                # `no-llm` are both guarded on `agg_seed`). This one was not, so a name whose
+                # address the own-site rung had PROVED and `resolve` had already scanned was
+                # dropped on the floor: nine of eleven verified domains on 2026-08-27, twice
+                # a day, re-derived from scratch the next run (BACKLOG 323).
+                #
+                # `site_seeded`, never `not agg_seed`: see the flag's definition above. Both
+                # `empty` and `unreachable` park, because the pools say so rather than the
+                # epistemics -- `unreachable; could not scan` is the ONLY one of the two that
+                # `retry_unreachable`/`bd_rescue` claim (02:30 daily, and they activate),
+                # while `scanned; no open Israel roles now` is the only one `validate_empty`
+                # claims. Deferring instead returns the name to the rung that just refused it
+                # for budget reasons, which at LLM_RESOLVE_CAP=10 against 231 cap-deferrals a
+                # run is a ~0.96 chance of the identical refusal tomorrow.
+                defer = "" if site_seeded and not resolve_crashed else "cap"
             else:
                 search_budget -= 1
                 seen[name] = _today()
@@ -630,6 +830,16 @@ def main():
         elif kind == "scrape":
             jobs2, good_url = r[1] if isinstance(r[1], tuple) else (r[1], url)
             row = _row_for_scrape(name, jobs2, good_url, url, cache)
+            if row[4] != "true" and _is_agg_url(good_url):
+                # The same guard the `ats` branch above carries, and the `cap` fix of BACKLOG
+                # 323 is what made it reachable: with `defer` cleared, a refused scrape OF AN
+                # AGGREGATOR PAGE now falls through to here instead of being deferred, and
+                # `_row_for_scrape`'s refusal branch writes that page into cols 2-3 -- the
+                # 28-row `--clear-agg-urls` shape, which `identity_gate.is_walled` then reads
+                # as this row's own address.
+                deferred["gate"] += 1
+                print("  dfer %s (gate; retried on rotation)" % name, flush=True)
+                continue
             n_resolved += 1 if row[4] == "true" else 0
             n_unreach += 0 if row[4] == "true" else 1
         elif kind == "empty":
@@ -638,6 +848,17 @@ def main():
         else:
             row = [name, "scrape", url, url, "false", "unreachable; could not scan"]
             n_unreach += 1
+        if site_seeded and row[4] != "true":
+            # PROVENANCE, not a pool selector -- which is why `pipeline/verdicts.py` needs no
+            # new token and this stays out of shared plumbing. The row keeps whichever of the
+            # two existing verdicts is TRUE (both are already in `TOKENS`); this segment only
+            # records HOW the address was obtained, so a class of rows stays auditable and
+            # revertable in one line, the way `via`/`slug-probe` already is:
+            #     grep 'own-site' companies.csv
+            # Deleting such a row returns the name to `todo` automatically, because `todo` is
+            # recomputed from `_names_now()` every run and this tool never drains the queue.
+            row[5] = _note_append(row[5], "own-site %s: %s linkback"
+                                  % (_today(), urlparse(url).netloc[:40]))
         if not DRY_RUN:
             if name.lower() in _names_now():      # re-read before the append (rule 4)
                 n_dupe += 1
@@ -670,7 +891,10 @@ def main():
         from pipeline.atomic import write_json
         write_json(SEEN_PATH, seen)
     n_defer = sum(deferred.values())
-    remaining = len(todo) - len(batch) + n_defer
+    # `len(batch) - n_seen` is the tail the run deadline skipped. Without it the 2026-08-27
+    # run's `~486 still to scan` was 12 names short of the truth, and that number is the one
+    # an operator reads (adversarial pass, 2026-08-27).
+    remaining = len(todo) - len(batch) + n_defer + (len(batch) - n_seen)
     why = ", ".join(f"{k} {v}" for k, v in sorted(deferred.items())) or "-"
     # The rung's REFUSALS, named and counted separately from its hits. A rung that reports
     # only what it shipped cannot be audited: `probe-dup-board` climbing means the queue is
@@ -682,7 +906,32 @@ def main():
           f"asked {n_asked} (hopeless {n_hopeless}); "
           f"~{remaining} still to scan ===", flush=True)
     print(f"probe: {n_probed} resolved, refused {sum(probe_refused.values())} ({probe_why}); "
-          f"own-site seeds {n_sited}", flush=True)
+          f"walked {n_probe_walked} of {n_seen}; own-site seeds {n_sited}", flush=True)
+    # WHICH GATE BOUND THE RUN, in one token, with the evidence for it on the same line. On
+    # 2026-08-27 the summary said `resolved 11 ... ~486 still to scan`, which is readable as
+    # "31 names were scanned" and was read that way -- while the rotation key says 238. A run
+    # that cannot say what stopped it cannot be audited, and its coverage is not a number.
+    # Derived, in this order, because only the first one is a fact about the RUN: the clock
+    # stopped it, or the batch did, or nothing was left to do. `queue` requires that every
+    # name in `todo` was walked AND that none is still unresolved -- this tool does not drain
+    # the queue (`research_companies.json` is not in `auto-expand.yml`'s `--own` list), so
+    # deferrals leave names behind and an earlier version printed `bound=queue` on the same
+    # screen as `~5 still to scan`. An adversarial pass, 2026-08-27.
+    if n_seen < len(batch) or first_exhausted:
+        bound = "clock:" + (first_exhausted or "probe")
+    elif len(batch) < len(todo):
+        bound = "batch"
+    elif n_defer:
+        bound = "batch"          # everything was walked and some of it did not resolve
+    else:
+        bound = "queue"
+    print(f"bound={bound} · names {n_seen}/{len(batch)} of batch (limit {limit}, "
+          f"queue {len(todo)}, skipped {len(batch) - n_seen}) · elapsed "
+          f"{int(time.time() - t_run)}s of {run_ceiling}s · probe {int(t_probe)}/"
+          f"{probe_budget}s · site {n_sited}/{SITE_MAX} in {int(t_site)}/{SITE_BUDGET_S}s · "
+          f"resolve {n_resolve_calls} calls {int(t_resolve)}s · llm "
+          f"{llm_cap0 - llm_budget}/{llm_cap0} calls, entrants "
+          f"{search_cap0 - search_budget}/{search_cap0}", flush=True)
 
 
 # Verdicts this tool writes on a parked row (its own, per pipeline.verdicts.TOKENS) --
@@ -703,7 +952,6 @@ def clear_agg_urls(apply=False, path=None):
     seed is empty. Dry-run unless `apply`. Re-reads immediately before the one write.
     """
     from pipeline.atomic import write_csv_rows
-    from pipeline.notes import append as _note_append
     path = path or CSV_PATH
     rows = list(csv.reader(open(path, encoding="utf-8")))
     changed = []

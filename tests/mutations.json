@@ -1473,8 +1473,8 @@
   "file": "retry_unreachable.py",
   "symbol": "in_retry_pool",
   "class": "M1-gate-removal",
-  "find": "            and (r[3] or \"\").startswith(\"http\")\n            and not is_terminal_row(r))",
-  "replace": "            and (r[3] or \"\").startswith(\"http\")\n            and True)",
+  "find": "    if not (len(r) >= 6 and r[4] == \"false\" and url.startswith(\"http\")\n            and not is_terminal_row(r)):",
+  "replace": "    if not (len(r) >= 6 and r[4] == \"false\" and url.startswith(\"http\")\n            and True):",
   "why": "the chain must never re-attempt a terminal row (BACKLOG 190).",
   "must_be_killed_by_behavioural": true
  },
@@ -1483,9 +1483,9 @@
   "file": "retry_unreachable.py",
   "symbol": "in_retry_pool",
   "class": "M3-branch-narrowing",
-  "find": "            and bool(_UNREACHABLE.search(r[5] or \"\"))",
-  "replace": "            and (r[5] or \"\").startswith(\"unreachable\")",
-  "why": "the token mid-note (`retry <date>: still unreachable` as the third segment) must still select.",
+  "find": "    if not _URL_DEAD.search(note):\n        return False",
+  "replace": "    if True:\n        return False",
+  "why": "BACKLOG 320: the `unreachable` token is written by ANOTHER tool -- it arrives inside `dark-triage <date>: url-dead (unreachable (dns/conn))` and triage rewrites its own segment nightly, so a pool standing on the word alone loses the row (`--policy worst` night 10, `mixed --seed 4` night 1). The durable stamp must still select.",
   "must_be_killed_by_behavioural": true
  },
  {

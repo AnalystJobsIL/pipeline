@@ -111,19 +111,56 @@ def _today():
 
 
 _UNREACHABLE = re.compile(r"\bunreachable\b", re.I)
+# `triage_dark`'s own dated stamp for the same fact -- see `in_retry_pool` (BACKLOG 320).
+_URL_DEAD = re.compile(r"dark-triage \d{4}-\d{2}-\d{2}: url-dead", re.I)
+_ATS_HOST = re.compile(r"(greenhouse|lever|ashbyhq|smartrecruiters|recruitee|comeet|"
+                       r"workable|myworkdayjobs|eightfold|icims|jobvite|taleo|"
+                       r"successfactors|avature|oraclecloud|phenom)\.", re.I)
 
 
 def in_retry_pool(r):
     """The 02:30 chain's OWN membership rule, shared: `bd_rescue` (90 s earlier, paid)
     imports it and `registry_health` mirrors it (docs/BACKLOG.md 190 -- the chain was in no
     matrix, so `orphans()` could not credit a row to it and `pool_floor` could not watch it).
-    Parked, an http address, the `unreachable` token as a word, not terminal (an `alias-of`
-    twin points at a board that WORKS), not an agency."""
+    Parked, an http address, not terminal (an `alias-of` twin points at a board that WORKS),
+    not an agency -- and the FACT that the address could not be reached, spelled two ways.
+
+    The second spelling is BACKLOG 320, and it is the rule ARCHITECTURE section 2 already
+    states: *a pool must never stand on a token inside another tool's segment*. This one did.
+    `unreachable` is not written by this tool for most of its rows; it arrives inside
+    `triage_dark`'s parenthetical, `dark-triage <date>: url-dead (unreachable (dns/conn))`,
+    and triage rewrites its own segment every night through `replace_own`. Traced with
+    `tests/rehearse_registry.py --nights 14 --policy worst --trace Biomica`:
+
+        n9  ... | url-dead (unreachable (dns/conn)) | scanned via brightdata; ... | listing-hunt
+        n10 ... | dark-triage 2026-09-05: url-dead (re-classified the same) | listing-hunt
+
+    The MODE survived; the word did not, and the row left the only pool that retries it. This
+    tool cannot stamp a durable marker of its own instead: the note is at the 220-char cap
+    with every segment protected, and `notes.append` drops a newcomer whole when only
+    protected segments remain. `dark-triage <date>: url-dead` IS protected and IS the same
+    fact, so the pool stands on that.
+    """
     from pipeline.verdicts import is_terminal_row
-    return (len(r) >= 6 and r[4] == "false"
-            and bool(_UNREACHABLE.search(r[5] or ""))
-            and (r[3] or "").startswith("http")
-            and not is_terminal_row(r))
+    from pipeline.aggregators import is_aggregator
+    from pipeline import identity_gate as _g
+    note = (r[5] if len(r) > 5 else "") or ""
+    url = (r[3] or "")
+    if not (len(r) >= 6 and r[4] == "false" and url.startswith("http")
+            and not is_terminal_row(r)):
+        return False
+    if _UNREACHABLE.search(note):
+        return True                      # this chain's own token: unchanged, 4 rows
+    if not _URL_DEAD.search(note):
+        return False
+    # The WIDENED arm only. `attempt()` derives candidate slugs from the stored address with
+    # the HOST LABEL FIRST (`Datorios` -> `sartorius.wd3.myworkdayjobs.com` yields
+    # `['sartorius', 'datorios']`, `Colu` -> `opportunities.columbia.edu` yields
+    # `['opportunities', 'colu']`), and this chain ACTIVATES. Rows whose address is already
+    # somebody else's ATS host or an aggregator are `crack_walled`'s and the hunt's, not a
+    # URL-rediscovery pass's -- taking them would feed another company's slug into the probe.
+    # Measured 2026-08-27: this clause is what keeps the widening from being one.
+    return not (is_aggregator(url) or _g.is_walled(r) or _ATS_HOST.search(url))
 
 
 def _note(base, segment, disproved=True):

@@ -126,12 +126,30 @@ def main():
     print(f"probing {len(targets)} monitored candidates "
           f"({sum(1 for _, r in targets if r[0] not in state)} without a baseline)", flush=True)
     woke = 0
+    # A fetch error and a page that simply did not move produced the SAME summary line, and
+    # the line is the only thing an operator reads: on 2026-08-27 the digest printed
+    # `=== probe: 0 candidates woke (of 218) ===` while 53 of the 219 rows (24%) failed to
+    # fetch at all -- re-derivable from that run's own state commit:
+    #     python -c "import json;s=json.load(open('cloud_state/candidate_probe.json'));\
+    #     t=[k for k,v in s.items() if v.get('last')=='2026-08-27'];\
+    #     print(len(t), sum(1 for k in t if 'il' not in s[k]))"     # 219 53
+    # A run where every page errored is a BROKEN RUN, not a measurement (ARCHITECTURE s8),
+    # and until now nothing could tell the two apart.
+    # Counted explicitly, NOT off the loop variable. `for n, ... in enumerate(targets, 1)`
+    # increments BEFORE the budget `break`, so `n` is one more than the number of rows
+    # actually processed on every truncated run -- and `n_err == n` was then unreachable, so
+    # the warning below could never fire on the shape it exists for. The pool is ~218 rows at
+    # a 12 s timeout against a 10-minute budget, so a night where every page hangs ALWAYS
+    # truncates: the mass-zero run was the one case guaranteed to print a clean `0 woke`
+    # (adversarial pass, 2026-08-27).
+    n_err = n_first = n_rows = 0
     for n, (i, r) in enumerate(targets, 1):
         if budget and (time.time() - t0) / 60 > budget:
             print(f"time budget {budget}min reached at {n}/{len(targets)} — stopping "
                   f"cleanly; unprobed rows keep their baseline for tomorrow", flush=True)
             break
         name = r[0]
+        n_rows += 1
         cur = probe(r[3])
         if cur is None:
             # a fetch error must still advance the rotation key, or the erroring rows
@@ -140,6 +158,7 @@ def main():
             e = state.get(name) or {}
             e["last"] = TODAY
             state[name] = e
+            n_err += 1
             continue
         prev = state.get(name)
         # A rotation-only entry (written by the error path below) has `last` but no
@@ -161,6 +180,7 @@ def main():
                        or cur["il"] > 0 or cur["sig"] > 0)   # a pre-`ever` baseline counts too
         state[name] = cur
         if prev is None:
+            n_first += 1
             continue                      # first observation = baseline, no wake
         if cur["il"] > prev["il"] or (cur["sig"] > 0 and prev["sig"] == 0):
             woke += 1
@@ -180,7 +200,13 @@ def main():
         # atomic: this file is git-tracked and a truncated write loses every baseline,
         # which silently costs a full wake cycle for every monitored candidate
         write_json(STATE, state, indent=1)
-    print(f"=== probe: {woke} candidates woke (of {len(targets)}) ===", flush=True)
+    print(f"=== probe: {woke} candidates woke (of {len(targets)}; read {n_rows - n_err}, "
+          f"fetch-error {n_err}, first-baseline {n_first}) ===", flush=True)
+    if n_rows and n_err == n_rows:
+        # every page failed: that is the mass-zero shape section 8 names, and a `0 woke` line
+        # is indistinguishable from a healthy quiet night without it.
+        print("::warning::probe_candidates: every page failed to fetch — "
+              "a broken run, not a measurement", flush=True)
 
 
 if __name__ == "__main__":

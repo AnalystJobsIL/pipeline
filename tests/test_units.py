@@ -12718,7 +12718,7 @@ def test_the_probe_rung_writes_a_row_end_to_end_and_defers_when_the_gate_refuses
         monkeypatch.setenv("LLM_RESOLVE_CAP", "0")
         monkeypatch.setattr(_sh, "which", lambda x: None)
         # an aggregator seed must never be rendered, before or after this change
-        monkeypatch.setattr(E, "resolve", lambda n, u: (_ for _ in ()).throw(
+        monkeypatch.setattr(E, "resolve", lambda n, u, **k: (_ for _ in ()).throw(
             AssertionError("resolve_deep.resolve called on an aggregator seed: %s" % u)))
         monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [
             {"plat": "ashby", "slug": "chamelio",
@@ -12778,7 +12778,7 @@ def test_one_run_cannot_write_two_active_rows_on_the_same_board(tmp_path, monkey
     monkeypatch.setenv("AUTO_EXPAND_PROBE", "1")
     monkeypatch.setenv("AUTO_EXPAND_SITE", "0")
     monkeypatch.setattr(_sh, "which", lambda x: None)
-    monkeypatch.setattr(E, "resolve", lambda n, u: ("unreachable", None))
+    monkeypatch.setattr(E, "resolve", lambda n, u, **k: ("unreachable", None))
     # both names crack the SAME board
     monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [
         {"plat": "smartrecruiters", "slug": "nesstechnologies",
@@ -12829,7 +12829,7 @@ def test_a_probe_refusal_never_cancels_the_park_or_the_paid_tier(tmp_path, monke
     monkeypatch.setenv("AUTO_EXPAND_PROBE", "1")
     monkeypatch.setenv("AUTO_EXPAND_SITE", "0")
     monkeypatch.setattr(_sh, "which", lambda x: None)
-    monkeypatch.setattr(E, "resolve", lambda n, u: ("unreachable", None))
+    monkeypatch.setattr(E, "resolve", lambda n, u, **k: ("unreachable", None))
     # two Israel-positive boards -> `probe-ambiguous`, the refusal that used to defer
     monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [
         {"plat": "greenhouse", "slug": "zebraanalytics", "url": "u1", "jobs": 9, "il": 4},
@@ -12976,3 +12976,563 @@ def test_the_slug_loop_probes_every_slug_before_the_caller_decides():
         hits = PA.probe_bounded("X", ["alpha", "beta"], deadline=None, budget=18)
     assert calls == ["alpha", "beta"], "the second slug was never probed: %r" % calls
     assert len({(h["plat"], h["slug"]) for h in hits if h["il"]}) == 2, hits
+
+
+def _capped_expand_run(tmp_path, monkeypatch, *, site, seed_url, resolve_kind, tag):
+    """Drive `auto_expand.main()` with the LLM budget already spent, and return the rows.
+
+    `site` is what `_site_from_guess` answers: a (url, html) pair for a proved domain, or
+    None. Everything else is production's shape -- an aggregator seed, the probe finding
+    nothing, `claude` on PATH so `llm_available` is True and the branch reached is `cap`.
+    """
+    import csv as _csv
+    import json as _j
+    import shutil as _sh
+    import sys as _sys
+
+    import auto_expand as E
+    import probe_ats as PA
+
+    d = tmp_path / tag
+    (d / "cloud_state").mkdir(parents=True)
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    (d / "research_companies.json").write_text(_j.dumps([{
+        "name": "Chamelio", "careers_url": seed_url, "ats": "unknown", "slug": "chamelio"}]),
+        encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(E, "CSV_PATH", str(d / "companies.csv"))
+    monkeypatch.setattr(E, "DRY_RUN", False)
+    monkeypatch.setattr(_sys, "argv", ["auto_expand.py"])
+    monkeypatch.setenv("AUTO_EXPAND_PROBE", "1")
+    monkeypatch.setenv("AUTO_EXPAND_SITE", "1")
+    monkeypatch.setenv("LLM_RESOLVE_CAP", "0")        # the cap is already spent
+    monkeypatch.setattr(_sh, "which", lambda x: "/usr/bin/claude")   # llm_available
+    monkeypatch.setattr(E, "_site_from_guess", lambda n, s: site)
+    monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [])     # the free rung finds none
+    monkeypatch.setattr(E, "resolve", lambda n, u, **k: (resolve_kind, None))
+    E.main()
+    return [r for r in _csv.reader(open(d / "companies.csv", encoding="utf-8"))][1:]
+
+
+def test_a_capped_run_parks_a_site_seeded_name_instead_of_deferring_it(tmp_path, monkeypatch):
+    """BACKLOG 323. The own-site rung's whole point is turning a LinkedIn permalink into an
+    address the registry can KEEP, and on its first production run (2026-08-27) nine of the
+    eleven domains it proved were dropped on the floor: a site-seeded name has `agg_seed`
+    False, so an `empty`/`unreachable` `resolve` sends it to the LLM tier, and with
+    `LLM_RESOLVE_CAP` spent `defer = "cap"` fired BEFORE the park branch that would have
+    written the address into cols 2-3. Twice a day, re-derived from scratch each run.
+
+    A `cap` means we ran out of BUDGET, not that we learned nothing -- and the sibling
+    branches already knew the difference (`llm-none` and `no-llm` are both guarded on
+    `agg_seed`); only this one was not.
+
+    Both verdicts park, and the reason is the pools, not the epistemics:
+    `unreachable; could not scan` is the only one of the two that `retry_unreachable` /
+    `bd_rescue` claim (02:30 daily, and they ACTIVATE), and `scanned; no open Israel roles
+    now` is the only one `validate_empty` claims. Deferring instead hands the name back to
+    the rung that just refused it for budget reasons."""
+    for kind, verdict in (("empty", "scanned; no open"), ("unreachable", "unreachable")):
+        rows = _capped_expand_run(
+            tmp_path, monkeypatch, site=("https://chamelio.com", "x" * 3000),
+            seed_url="https://il.linkedin.com/jobs/view/123", resolve_kind=kind,
+            tag="park-" + kind)
+        assert len(rows) == 1, (kind, rows)
+        r = rows[0]
+        assert r[0] == "Chamelio" and r[4] == "false", r
+        assert r[3] == "https://chamelio.com", "the proved address is not on the row: %r" % r
+        assert "il.linkedin.com" not in (r[2] + r[3]), "the aggregator seed reached the row"
+        assert verdict in r[5], r[5]
+        # provenance, so the class can be audited and reverted in one line
+        assert "own-site" in r[5], r[5]
+
+
+def test_a_capped_run_still_defers_a_seed_we_never_verified(tmp_path, monkeypatch):
+    """The other half of BACKLOG 323, and the half that costs data if it is wrong.
+
+    `not agg_seed` is NOT the same claim as "this address is ours": `_is_agg_url` is a host
+    blocklist, so a Telegram-seeded entry whose `careers_url` is somebody else's per-employer
+    board -- `comeet.com/jobs/<other-tenant>/...`, which no blocklist contains and correctly
+    so -- clears it. Parking on that writes ANOTHER EMPLOYER'S BOARD into this row's cols 2-3
+    permanently: `retry_unreachable` has no identity test and re-fetches it nightly, and
+    `bd_rescue` pays for it 90 seconds earlier. So the park is gated on `site_seeded`, which
+    only `_site_from_guess` sets, and only after the full name on the page, an exact linkback
+    to `linkedin.com/company/<handle>`, and `not is_foreign`.
+
+    Found by an adversarial design pass on 2026-08-27, against the first version of the fix."""
+    rows = _capped_expand_run(
+        tmp_path, monkeypatch, site=None,
+        seed_url="https://www.comeet.com/jobs/someone-else/12.345/data-analyst",
+        resolve_kind="unreachable", tag="defer-unverified")
+    assert rows == [], "an unverified address was parked as this company's: %r" % rows
+
+
+def test_a_capped_scrape_of_an_aggregator_never_reaches_the_registry(tmp_path, monkeypatch):
+    """A hole the BACKLOG 323 fix OPENS if the `ats` branch's guard is not mirrored.
+
+    `needs_llm` is also true for `kind == "scrape"` whose scraped URL is an aggregator. With
+    `defer` cleared, that name no longer stops at the defer branch -- it falls through to
+    `_row_for_scrape`, whose refusal branch writes the SEED into cols 2-3. For an aggregator
+    that seed is the LinkedIn/secrethunter shell: the 28-row shape `--clear-agg-urls` exists
+    to undo, and the address `identity_gate.is_walled` then reads as this row's own."""
+    import csv as _csv
+    import json as _j
+    import shutil as _sh
+    import sys as _sys
+
+    import auto_expand as E
+    import probe_ats as PA
+
+    agg = "https://il.linkedin.com/jobs/view/123"
+    d = tmp_path / "scrape-agg"
+    (d / "cloud_state").mkdir(parents=True)
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    (d / "research_companies.json").write_text(_j.dumps([{
+        "name": "Chamelio", "careers_url": agg, "ats": "unknown", "slug": "chamelio"}]),
+        encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(E, "CSV_PATH", str(d / "companies.csv"))
+    monkeypatch.setattr(E, "DRY_RUN", False)
+    monkeypatch.setattr(_sys, "argv", ["auto_expand.py"])
+    monkeypatch.setenv("LLM_RESOLVE_CAP", "0")
+    monkeypatch.setattr(_sh, "which", lambda x: "/usr/bin/claude")
+    monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [])
+    # the site rung proves a domain, and the render then scrapes an AGGREGATOR page off it
+    monkeypatch.setattr(E, "_site_from_guess", lambda n, s: ("https://chamelio.com", "x" * 3000))
+    monkeypatch.setattr(E, "resolve", lambda n, u, **k: ("scrape", ([{"title": "x"}], agg)))
+    monkeypatch.setattr(E._gate, "activation_ok", lambda *a, **k: False)
+    E.main()
+    rows = [r for r in _csv.reader(open(d / "companies.csv", encoding="utf-8"))][1:]
+    assert rows == [], "an aggregator page was written into cols 2-3: %r" % rows
+
+
+def test_the_probe_refuses_a_board_whose_only_israel_posting_is_a_placeholder():
+    """BACKLOG 322. `il >= 1` is the rule that separates a real tenant from an impostor, and
+    `israel.is_israel_job` reads only country_code/location/url -- never the title. So
+    `Ness Technologies` activated on smartrecruiters/`nesstechnologies`, whose ONLY posting
+    is titled "Test Job" at `Tel Aviv, , Israel`. The board is real and the tenant is right;
+    the company simply is not using it. The row then removes the name from `_names_now()`,
+    so the queue never retries it and its real board is never found -- the cost is not the
+    junk row, it is the company.
+
+    A REFUSAL, not a filter: the shape is `probe-no-il`'s, counted and never deferred, so the
+    name flows on to the rest of the ladder and is re-probed tomorrow. Nothing is removed
+    from anyone's job list."""
+    import sys as _sys
+
+    import auto_expand as E
+    import probe_ats as PA
+    import pytest as _pt
+
+    mp = _pt.MonkeyPatch()
+    try:
+        mp.setattr(_sys, "argv", ["auto_expand.py"])
+        mp.setattr(E, "_get_page", lambda u, dl, **k: (u, "x" * 3000))
+        mp.setattr(PA, "probe_bounded", lambda *a, **k: [
+            {"plat": "smartrecruiters", "slug": "nesstechnologies", "url": "u",
+             "jobs": 1, "il": 1, "il_titles": ["Test Job"]}])
+        hit, why = E._probe_resolve("Ness Technologies", "ness", set(), 1e18)
+        assert hit is None and why == "probe-placeholder", (hit, why)
+
+        # one real posting alongside the placeholder and the board is real again
+        mp.setattr(PA, "probe_bounded", lambda *a, **k: [
+            {"plat": "smartrecruiters", "slug": "nesstechnologies", "url": "u",
+             "jobs": 2, "il": 2, "il_titles": ["Test Job", "Senior Data Analyst"]}])
+        hit, why = E._probe_resolve("Ness Technologies", "ness", set(), 1e18)
+        assert hit and why == "", (hit, why)
+    finally:
+        mp.undo()
+
+
+def test_a_board_that_exposes_no_titles_is_unreadable_not_a_placeholder():
+    """`all()` over an empty list is vacuously True, so the first version of the BACKLOG 322
+    rule refused every board whose postings carry no title at all -- and "no titles" means
+    the board is unreadable, which is a different verdict from unreal. Caught by three
+    existing probe guards whose stubs predate the `il_titles` key, which is exactly what a
+    positive control is for."""
+    import sys as _sys
+
+    import auto_expand as E
+    import probe_ats as PA
+    import pytest as _pt
+
+    mp = _pt.MonkeyPatch()
+    try:
+        mp.setattr(_sys, "argv", ["auto_expand.py"])
+        mp.setattr(E, "_get_page", lambda u, dl, **k: (u, "x" * 3000))
+        mp.setattr(PA, "probe_bounded", lambda *a, **k: [
+            {"plat": "ashby", "slug": "acme", "url": "u", "jobs": 9, "il": 4}])   # no key
+        hit, why = E._probe_resolve("Acme", "acme", set(), 1e18)
+        assert hit and why == "", (hit, why)
+        mp.setattr(PA, "probe_bounded", lambda *a, **k: [
+            {"plat": "ashby", "slug": "acme", "url": "u", "jobs": 9, "il": 2,
+             "il_titles": ["", ""]}])
+        hit, why = E._probe_resolve("Acme", "acme", set(), 1e18)
+        assert hit and why == "", (hit, why)
+    finally:
+        mp.undo()
+
+
+def test_the_placeholder_rule_admits_every_real_test_engineer_title():
+    """The calibration corpus, and the reason BACKLOG 322 called a title filter "the obvious
+    fix and the wrong one". Measured over the 1,175 postings in `scraped_cache.json` on
+    2026-08-27: 15 titles contain the word "test" and 13 of them are real engineering roles.
+    All 13 are here. The two that are not are live, and both sit on `myInterview` -- an
+    ACTIVE row `listing_hunt` verified as "2 IL" on 2026-08-22, whose two postings are the
+    JazzHR demo records the vendor ships.
+
+    A rule that catches "Test Job" and also refuses "Experienced Test Engineer" would cost
+    more coverage than the defect it fixes."""
+    import sys as _sys
+
+    import auto_expand as E
+    import pytest as _pt
+
+    mp = _pt.MonkeyPatch()
+    mp.setattr(_sys, "argv", ["auto_expand.py"])
+    real = [
+        "Software QA Engineer (Manual Testing)", "Testers & Jigs Technical Project Manager",
+        "Director, Software Testing Automation & Validation",
+        "CPU Design for Test Engineer, Google Cloud",
+        "SoC Test Automation and Infrastructure Lead, Google Cloud",
+        "Senior System Test Engineer", "Scale Testing Team Leader",
+        "Experienced Test Engineer", "Interoperability Test Team Leader",
+        "Software Developer Engineer in Test", "Field Testing Engineer",
+        "System Test Automation Engineer", "Flight Tests Manager (ALPHA Team)",
+        "Senior Data Analyst", "Sample Preparation Technician",
+        # the two-marker titles the killed arm refused
+        "QA Test Engineer (Manual Testing)", "Design for Test (DFT) Engineer - Silicon Test",
+        "Data Analyst, A/B Testing - Test & Learn Platform",
+        "Senior Test Engineer, Test Automation", "Solutions Demo Lead - Demo Environments",
+        "Temp Position", "Analyst 2",
+    ]
+    # `Krume JazzHR Demo AS Omri Testing` is DELIBERATELY absent: catching it needed a
+    # "two markers anywhere" arm, and an adversarial pass showed that arm refuses
+    # `QA Test Engineer (Manual Testing)`, `Design for Test (DFT) Engineer - Silicon Test`
+    # and `Data Analyst, A/B Testing - Test & Learn Platform`. All 12 marker-bearing titles
+    # in the real cache carry exactly ONE marker, so every one of them was a single word
+    # from being refused -- and a false refusal costs a COMPANY while a false acceptance
+    # costs a junk row four pools will re-examine.
+    placeholders = ["Test Job", "Testing JazzHR", "Job", "New Position", "Job Opening",
+                    "Your first job", "Position 1", "Test1", "Test 1", "Untitled",
+                    "Open Position", "asdf1234", "xxx1"]
+    try:
+        assert [t for t in real if E.is_placeholder_title(t)] == [], "a real role was refused"
+        assert [t for t in placeholders if not E.is_placeholder_title(t)] == []
+    finally:
+        mp.undo()
+
+
+def test_the_run_says_which_gate_bound_it_and_how_many_names_it_walked(tmp_path, monkeypatch,
+                                                                       capsys):
+    """The 2026-08-27 run's summary was `resolved 11 ... deferred 238 ... ~486 still to scan`,
+    and `~486` is `len(todo) - len(batch) + n_defer` -- it counts the DEFERRED, not the
+    unscanned. It was read as "31 names were scanned"; the rotation key says 238. A run whose
+    log cannot say what stopped it has no measurable coverage, and every conclusion drawn
+    from that run inherits the ambiguity.
+
+    `bound=` names the gate in one token and puts its own evidence on the same line."""
+    import csv as _csv
+    import json as _j
+    import shutil as _sh
+    import sys as _sys
+
+    import auto_expand as E
+    import probe_ats as PA
+
+    d = tmp_path / "bound"
+    (d / "cloud_state").mkdir(parents=True)
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    (d / "research_companies.json").write_text(_j.dumps([
+        {"name": "Acme%d" % i, "careers_url": "https://il.linkedin.com/jobs/view/%d" % i,
+         "ats": "unknown", "slug": "acme%d" % i} for i in range(5)]), encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(E, "CSV_PATH", str(d / "companies.csv"))
+    monkeypatch.setattr(E, "DRY_RUN", False)
+    monkeypatch.setattr(_sys, "argv", ["auto_expand.py"])
+    monkeypatch.setenv("AUTO_EXPAND_SITE", "0")
+    monkeypatch.setenv("AUTO_EXPAND_LIMIT", "2")           # the BATCH is what binds
+    monkeypatch.setattr(_sh, "which", lambda x: None)
+    monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [])
+    E.main()
+    out = capsys.readouterr().out
+    assert "bound=batch" in out, out[-400:]
+    assert "names 2/2 of batch (limit 2, queue 5, skipped 0)" in out, out[-400:]
+    # the refusal that used to be invisible: no platform answered for either name
+    assert "probe-noboard 2" in out, out[-400:]
+    assert "walked 2 of 2" in out, out[-400:]
+    _csv  # (rows are asserted by the sibling guards; this one is about the LOG)
+
+
+def test_resolve_is_bounded_by_a_total_deadline(monkeypatch):
+    """`resolve_deep.resolve` had no time bound of any kind: a 35 s Playwright goto plus
+    `scrape_universal` at COMPANY_BUDGET_S=150, possibly twice, is ~342 s per name, and at
+    AUTO_EXPAND_LIMIT=250 an attacker computed the uncapped shape back at 4.4 HOURS against a
+    330-minute job timeout -- holding `concurrency: repo-state`, which eight workflows share,
+    for all of it (2026-08-27).
+
+    The bound has to reach the SCRAPE, not just the browser: `scrape(company, url,
+    timeout_ms)` bounds one navigation, and the total is `scrape_result(..., budget_s=)`,
+    which the list-only wrapper drops on the floor."""
+    import resolve_deep as RD
+
+    asked = []
+    monkeypatch.setattr(RD, "_capture", lambda u, timeout_ms=35000: (
+        asked.append(("capture", timeout_ms)) or ([], {}, [])))
+
+    class _R:
+        jobs = []
+
+    monkeypatch.setattr(RD, "scrape_result", lambda n, u, **k: (
+        asked.append(("scrape", k.get("budget_s"))) or _R()))
+    RD.resolve("Acme", "https://acme.com", budget_s=20)
+    assert asked[0] == ("capture", 20000), asked
+    assert asked[1][0] == "scrape" and 0 < asked[1][1] <= 20, asked
+    asked.clear()
+    RD.resolve("Acme", "https://acme.com")            # the old, unbounded contract survives
+    assert asked[0] == ("capture", 35000), asked
+    assert asked[1][1] == RD.RESOLVE_SCRAPE_S, asked
+
+
+def test_the_careers_link_follow_refuses_an_aggregator_and_another_companys_site():
+    """`resolve_deep` follows one "jobs" link off the rendered page. Two things were wrong.
+
+    The latent one: `JOBS_LINK` matches "all jobs" in a footer link to LinkedIn, and
+    `scrape_universal` has no aggregator logic of its own -- ARCHITECTURE section 3 says
+    never to call it on one, because an aggregator's "similar jobs" sidebar attributes other
+    employers' roles to this company.
+
+    The new one: the pattern matched only a call to action ("open positions", "view all
+    jobs") and so matched NOTHING on the ordinary case -- a marketing homepage whose nav says
+    just `Careers`. That is exactly the page `auto_expand`'s own-site rung hands this
+    function, and on 2026-08-27 nine of its eleven proved domains came back
+    `empty`/`unreachable` with the careers page one nav click away. The weak pattern is
+    admitted only on the SAME registrable domain, because "careers" in a link to somebody
+    else's site is precisely how a resolver adopts another company's board."""
+    import resolve_deep as RD
+
+    links = [
+        {"t": "All jobs", "h": "https://www.linkedin.com/jobs/acme"},          # aggregator
+        {"t": "Careers", "h": "https://careers.evilcorp.com/"},                # other company
+        {"t": "Careers", "h": "https://careers.acme.com/"},                    # ours, weak
+        {"t": "View all jobs", "h": "https://boards.greenhouse.io/acme"},      # NAV_SKIP
+        {"t": "Open positions", "h": "https://jobs.acme-partner.com/"},        # strong, off-site
+    ]
+    got = RD._followable(links, "https://acme.com")
+    assert "linkedin.com/jobs/acme" not in " ".join(got), got
+    assert "evilcorp" not in " ".join(got), got
+    assert "greenhouse.io" not in " ".join(got), got
+    assert "https://careers.acme.com/" in got, got
+    # the strong call-to-action still wins the ordering, as it did before the weak rung
+    assert got[0] == "https://jobs.acme-partner.com/", got
+
+
+def test_the_retry_pool_stands_on_a_durable_stamp_not_another_tools_parenthetical():
+    """BACKLOG 320, and it is the failure ARCHITECTURE section 2 warns about, in production:
+    *a pool must never stand on a token inside another tool's segment*. The 02:30 chain's
+    entire selector was the word `unreachable`, which for most of its rows is not written by
+    that chain at all -- it arrives inside `triage_dark`'s parenthetical,
+    `dark-triage <date>: url-dead (unreachable (dns/conn))`, and triage rewrites its own
+    segment every night. Traced with `--policy worst --trace Biomica`, night 10:
+
+        n9  ... url-dead (unreachable (dns/conn)) | scanned via brightdata; ... | listing-hunt
+        n10 ... dark-triage 2026-09-05: url-dead (re-classified the same) | listing-hunt
+
+    The MODE survived; the word did not, and the row left the only pool that retries it.
+    `tests.yml` was red for this on every lane's push, and `--policy mixed --seed 4` was red
+    for the same 4-row pool collapsing to zero on night 1."""
+    import retry_unreachable as RU
+
+    eroded = ["Biomica", "scrape", "", "https://biomica.com/company/careers", "false",
+              "no open Israel roles now - monitored candidate | dark-triage 2026-09-05: "
+              "url-dead (re-classified the same) | listing-hunt 2026-09-05: no listing found"]
+    assert RU.in_retry_pool(eroded), "the row left the pool when triage re-stamped its mode"
+    # the pool must still refuse what it always refused
+    assert not RU.in_retry_pool(eroded[:4] + ["true", eroded[5]]), "an ACTIVE row entered"
+    assert not RU.in_retry_pool(
+        eroded[:3] + [""] + eroded[4:]), "a row with no address entered"
+    assert not RU.in_retry_pool(
+        eroded[:5] + [eroded[5] + " | alias-of Biomica Ltd"]), "a terminal row entered"
+    assert not RU.in_retry_pool(
+        eroded[:5] + ["dark-triage 2026-09-05: page-empty"]), "an unrelated mode entered"
+
+
+def test_probe_candidates_tells_a_broken_run_from_a_quiet_one(tmp_path, monkeypatch, capsys):
+    """`=== probe: 0 candidates woke (of 218) ===` was the whole summary, and a fetch error
+    is swallowed (rotation key advanced, `continue`) without being counted. So a night where
+    every page failed printed the same line as a night where every page was read and none
+    moved. Measured from the 2026-08-27 digest's own state commit: of 219 rows probed, 53
+    (24%) failed to fetch at all. A mass-zero result is a broken run, not a measurement
+    (ARCHITECTURE section 8), and nothing could tell the two apart."""
+    import sys as _sys
+
+    import probe_candidates as PC
+
+    d = tmp_path / "pc"
+    (d / "cloud_state").mkdir(parents=True)
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Acme,scrape,,https://acme.com/careers,false,monitored candidate\n"
+        "Beta,scrape,,https://beta.com/careers,false,monitored candidate\n", encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(_sys, "argv", ["probe_candidates.py"])
+    monkeypatch.setattr(PC, "probe", lambda u: None)          # every page errors
+    PC.main()
+    out = capsys.readouterr().out
+    assert "fetch-error 2" in out, out
+    assert "read 0" in out, out
+    assert "broken run, not a measurement" in out, out
+
+
+def test_the_bound_line_names_the_gate_that_actually_stopped_the_run(tmp_path, monkeypatch,
+                                                                     capsys):
+    """The line exists because `resolved 11 ... ~486 still to scan` was read as "31 names were
+    scanned" when the rotation key says 238. Its first version lied in two ways, both found by
+    an adversarial pass on the day it was written:
+
+    * `first_exhausted = first_exhausted or ("llm" ...)` latched the LLM cap, which at
+      `LLM_RESOLVE_CAP=10` against ~231 cap-deferrals is spent in the first ten names of EVERY
+      run -- so a clock-stopped run reported `bound=clock:llm`.
+    * `bound=queue` was reached whenever the batch equalled the queue, with deferrals never
+      consulted, so it printed on the same screen as `~5 still to scan`. This tool does not
+      drain the queue: `research_companies.json` is not in `auto-expand.yml`'s `--own` list.
+    """
+    import json as _j
+    import shutil as _sh
+    import sys as _sys
+
+    import auto_expand as E
+    import probe_ats as PA
+
+    def _run(tag, n_names, env):
+        d = tmp_path / tag
+        (d / "cloud_state").mkdir(parents=True)
+        (d / "companies.csv").write_text(
+            "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+        (d / "research_companies.json").write_text(_j.dumps([
+            {"name": "Acme%d" % i, "careers_url": "https://il.linkedin.com/jobs/view/%d" % i,
+             "ats": "unknown", "slug": "acme%d" % i} for i in range(n_names)]),
+            encoding="utf-8")
+        monkeypatch.chdir(d)
+        monkeypatch.setattr(E, "CSV_PATH", str(d / "companies.csv"))
+        monkeypatch.setattr(E, "DRY_RUN", False)
+        monkeypatch.setattr(_sys, "argv", ["auto_expand.py"])
+        monkeypatch.setenv("AUTO_EXPAND_SITE", "0")
+        for k, v in env.items():
+            monkeypatch.setenv(k, v)
+        monkeypatch.setattr(_sh, "which", lambda x: "/usr/bin/claude")   # llm_available
+        monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [])
+        E.main()
+        return capsys.readouterr().out
+
+    # the LLM cap is spent and the CLOCK stops the run: the clock must be named, not the cap
+    out = _run("clock", 6, {"AUTO_EXPAND_LIMIT": "6", "LLM_RESOLVE_CAP": "0",
+                            "AUTO_EXPAND_RUN_S": "0"})
+    assert "bound=clock:run" in out, out[-300:]
+    assert "bound=clock:llm" not in out, "the cap that ran out first is not what stopped it"
+
+    # every name walked, every name deferred: that is not a drained queue
+    out = _run("notdrained", 3, {"AUTO_EXPAND_LIMIT": "9", "LLM_RESOLVE_CAP": "0",
+                                 "AUTO_EXPAND_RUN_S": "6600"})
+    assert "bound=queue" not in out, "the queue did not drain; 3 names deferred"
+    assert "names 3/3 of batch" in out, out[-300:]
+    # and the tail the clock skipped is counted in what is left, not silently dropped
+    out = _run("remaining", 6, {"AUTO_EXPAND_LIMIT": "6", "LLM_RESOLVE_CAP": "0",
+                                "AUTO_EXPAND_RUN_S": "0"})
+    assert "~6 still to scan" in out, out[-300:]
+
+
+def test_a_starved_resolve_defers_rather_than_parking_the_company_as_unreachable(tmp_path,
+                                                                                 monkeypatch):
+    """`resolve`'s `_left()` floors at one second, so an already-expired budget did not abort
+    the ladder -- it ran every rung at 1 s and returned `unreachable`. With the BACKLOG 323
+    park in place that is written to the registry as a PERMANENT row, indistinguishable from
+    a dead website, and the name leaves `_names_now()` forever. Budget starvation is not a
+    fact about a company (adversarial pass, 2026-08-27)."""
+    import csv as _csv
+    import json as _j
+    import shutil as _sh
+    import sys as _sys
+
+    import auto_expand as E
+    import probe_ats as PA
+
+    d = tmp_path / "starved"
+    (d / "cloud_state").mkdir(parents=True)
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    (d / "research_companies.json").write_text(_j.dumps([{
+        "name": "Chamelio", "careers_url": "https://il.linkedin.com/jobs/view/1",
+        "ats": "unknown", "slug": "chamelio"}]), encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(E, "CSV_PATH", str(d / "companies.csv"))
+    monkeypatch.setattr(E, "DRY_RUN", False)
+    monkeypatch.setattr(_sys, "argv", ["auto_expand.py"])
+    monkeypatch.setenv("LLM_RESOLVE_CAP", "0")
+    monkeypatch.setenv("AUTO_EXPAND_RUN_S", "3")     # a site guess will eat it
+    monkeypatch.setattr(_sh, "which", lambda x: "/usr/bin/claude")
+    monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [])
+    monkeypatch.setattr(E, "_site_from_guess",
+                        lambda n, s: ("https://chamelio.com", "x" * 3000))
+
+    called = []
+
+    def _slow_resolve(name, url, **k):
+        called.append(k.get("budget_s"))
+        import time as _t
+        _t.sleep(3.2)                     # burn the run deadline inside the first name
+        return ("empty", None)
+
+    monkeypatch.setattr(E, "resolve", _slow_resolve)
+    E.main()
+    rows = [r for r in _csv.reader(open(d / "companies.csv", encoding="utf-8"))][1:]
+    assert rows == [], "a starved run parked the company: %r" % rows
+
+
+def test_the_jobs_link_follow_never_spends_a_slot_on_the_page_it_was_handed():
+    """`FOLLOW_MAX` is 2, and an exact string compare let `?utm_source=nav` and `#openings`
+    read as pages we had not seen -- so both slots went to the page `resolve` had just
+    scraped and the real jobs link was never reached. That is the same "an earlier, worse
+    link permanently hides a better one" failure the removed `break` used to cause, arriving
+    through the slice instead (adversarial pass, 2026-08-27)."""
+    import resolve_deep as RD
+
+    links = [
+        {"t": "Careers", "h": "https://acme.com/careers?utm_source=nav"},
+        {"t": "Careers", "h": "https://acme.com/careers#openings"},
+        {"t": "Careers", "h": "https://acme.com/careers/"},
+        {"t": "Open positions", "h": "https://acme.com/jobs"},
+    ]
+    got = RD._followable(links, "https://acme.com/careers")[:RD.FOLLOW_MAX]
+    assert "https://acme.com/jobs" in got, got
+    assert not [h for h in got if "/careers" in h], "a slot went to the page we already have"
+
+
+def test_the_widened_retry_pool_refuses_another_tenants_ats_host():
+    """The BACKLOG 320 widening takes the 02:30 pool from 4 rows to ~47, and both tools on it
+    ACTIVATE (`bd_rescue` also pays). `attempt()` derives candidate slugs from the stored
+    address with the HOST LABEL FIRST -- `Datorios` at `sartorius.wd3.myworkdayjobs.com`
+    yields `['sartorius', 'datorios']`, `Colu` at `opportunities.columbia.edu` yields
+    `['opportunities', 'colu']` -- so admitting a row whose address is already somebody
+    else's ATS host feeds another company's slug straight into the probe. Those rows are
+    `crack_walled`'s and the hunt's, not a URL-rediscovery pass's (adversarial pass,
+    2026-08-27)."""
+    import retry_unreachable as RU
+
+    def row(url, note):
+        return ["X", "scrape", "", url, "false", note]
+
+    dead = "dark-triage 2026-09-05: url-dead (http 404)"
+    assert RU.in_retry_pool(row("https://acme.com/careers", dead)), "an ordinary dark row"
+    assert not RU.in_retry_pool(
+        row("https://sartorius.wd3.myworkdayjobs.com/x", dead)), "another tenant's Workday"
+    assert not RU.in_retry_pool(
+        row("https://job-boards.greenhouse.io/unity3d", dead)), "an ATS host in cols 2-3"
+    assert not RU.in_retry_pool(
+        row("https://il.linkedin.com/jobs/view/1", dead)), "an aggregator address"
+    # the chain's OWN token is unchanged -- the exclusion applies to the widened arm only,
+    # or the four rows the pool always had would leave it
+    assert RU.in_retry_pool(
+        row("https://job-boards.greenhouse.io/x", "unreachable; could not scan"))

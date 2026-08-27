@@ -953,6 +953,9 @@ mode when they are nothing of the kind (`docs/BACKLOG.md` 282, `infra`).
  listing_hunt 19:00 takes the FAST-PATH: scrape the stored URL directly; verified -> ACTIVE
 ```
 
+**A defer is not a park, and the difference is what evidence the run holds** (2026-08-27, `docs/BACKLOG.md` 323). `auto_expand` defers a name it learned nothing about — an aggregator permalink it never fetched — and parks one it scanned. The
+boundary is an explicit `site_seeded` flag, never `not is_aggregator(url)`: that predicate is a host blocklist, so another employer's per-employer board clears it, and a park writes the address into cols 2-3 permanently. A resolver **crash** defers too — `resolve` wraps every failure into `unreachable`, so parking on it would let one missing Chromium commit the whole batch, which §8 calls a broken run and not a measurement. Both park verdicts are re-checked, and they are not interchangeable: `unreachable; could not scan` is the only one `retry_unreachable`/`bd_rescue` claim, `scanned; no open Israel roles now` the only one `validate_empty` claims.
+
 Every state except `defunct:` and `domain-dead` is re-checked on some cadence — **except
 one, and it is 24 active rows** (2026-08-27, `docs/BACKLOG.md` 318). An ACTIVE row whose
 fetcher is `israel_scoped` (Workday asks the board for Israel itself) and returns 0 never
@@ -1343,7 +1346,9 @@ whatever the model answers (`docs/BACKLOG.md` 278). The last run before the chan
 | rung | what it does | the SHIPPED code over all 498, 2026-08-27 |
 |---|---|---|
 | `_probe_resolve` | guesses the ATS tenant from **lossless** slug forms + LinkedIn's handle, over the 6 guessable platforms, then reads the board's own human page | **20** activate. Refused: `probe-no-il` 23 · `probe-noslug` 9 · `probe-dup-board` 6 · `probe-ambiguous` 1 · `probe-unread` 1 |
-| `_site_from_guess` | guesses `<linkedin-handle>.{com,co.il,ai,io}`, demands the **full** name on the page and an **exact** linkback to `linkedin.com/company/<handle>` | **47** seeds, from 364 valid handles |
+| `_site_from_guess` | guesses `<linkedin-handle>.{com,co.il,ai,io}`, demands the **full** name on the page, an **exact** linkback to `linkedin.com/company/<handle>`, and a final host on the **same registrable domain** as the guess | **47** seeds, from 364 valid handles |
+
+**Re-measured over the 505 names still unresolved that evening** (2026-08-27, after the 17:00 run took 12): 10 boards would activate, **9** survive the ≥2,000-char page read, 9 of 9 pass the identity gate, and they carry **61 Israel jobs of which the keyword classifier accepts 1** (Astera Labs, *Senior Data Science Engineer*). Refusals: `probe-noboard` 456 · `probe-no-il` 22 · `probe-noslug` 9 · `probe-dup-board` 7 · `probe-ambiguous` 1. Only 40 of 505 names (7.9%) have any guessable board at all, which is the ceiling on this rung and worth knowing before anyone tunes it. The own-site rung is **not deterministic run to run** — re-running it over the same 47 names kept 43 (`docs/BACKLOG.md` 326).
 
 298 s for both rungs across the whole queue. **These are not the numbers this section first
 carried** — it said 29/21 and 49, measured against a draft that three adversarial passes then
@@ -1413,6 +1418,17 @@ believing any sentence below about how a rung performs.
    least-recently-tried rotation (`cloud_state/auto_expand_seen.json`; the log says why:
    `dfer <name> (no-llm|cap|no-candidates|llm-none)`). The 28 rows buried before that date
    were un-addressed with `auto_expand.py --clear-agg-urls --apply` (`url-cleared`, hunt-owned).
+   **The batch decides coverage, not the clock (2026-08-27).** `PROBE_BUDGET_S`'s 1,200 s
+   was reasoned from an *8-thread* local sweep while production is single-threaded, so a
+   250-name batch got 238 names probed and the log could not say so — which is how that
+   run was later read as having scanned 31. The probe budget is now derived from `limit`
+   (`min(limit * PROBE_PACE_S, RUN_CEILING_S)`, pace 8 s/name against a measured 4.7),
+   `resolve()` carries a TOTAL `budget_s` for the first time, and one run deadline is
+   checked where names are consumed rather than four per-rung clocks that never
+   composed. The run ends with `bound=queue|batch|clock:<rung>` and its own evidence, so
+   "what stopped this run" is a number rather than an inference. A dispatch needs no
+   workflow change: `limit=600` drains the queue in one run.
+
    **`LLM_RESOLVE_CAP` is the binding constraint, not `AUTO_EXPAND_SEARCH_CAP`:** on
    2026-08-26 the two runs deferred 243 and 241 names at `cap` against a search cap of 40
    that was never reached, because a name costs one search slot but one *or two* call slots.

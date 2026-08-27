@@ -104,8 +104,16 @@ def probe_bounded(name, slugs, deadline=None, budget=18, stop_early=False):
                 return hits
             if plat == "smartrecruiters" and not jobs:
                 continue          # SR answers 200 + [] for ANY slug, even bogus
-            il = sum(1 for j in jobs if israel.is_israel_job(j))
-            hits.append({"plat": norm, "slug": slug, "url": url, "jobs": len(jobs), "il": il})
+            il_titles = [(j.get("title") or "") for j in jobs if israel.is_israel_job(j)]
+            il = len(il_titles)
+            # `il_titles` is additive and exists for ONE caller: `auto_expand._probe_resolve`
+            # gates activation on `il >= 1`, and `israel.is_israel_job` reads only
+            # country_code/location/url -- never the title. So a board whose single Israel
+            # posting is titled "Test Job" (Ness Technologies, smartrecruiters, 2026-08-27)
+            # activated a row and removed the company from the queue forever. The COUNT
+            # cannot express that; the titles can. No existing consumer reads this key.
+            hits.append({"plat": norm, "slug": slug, "url": url, "jobs": len(jobs), "il": il,
+                         "il_titles": il_titles})
             if il:
                 got_il = True
         if got_il and stop_early:

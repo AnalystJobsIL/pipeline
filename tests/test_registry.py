@@ -3725,7 +3725,7 @@ def _expand_env(tmp_path, monkeypatch, queue, registry_rows=(), seen=None):
         key.unlink()
     monkeypatch.setattr(shutil, "which", lambda x: "/usr/bin/claude")
     # never the real resolver (Playwright + network): a test that wants one sets its own
-    monkeypatch.setattr(E, "resolve", lambda name, url: (_ for _ in ()).throw(
+    monkeypatch.setattr(E, "resolve", lambda name, url, **k: (_ for _ in ()).throw(
         AssertionError("resolve_deep.resolve called on %s" % url)))
     monkeypatch.setattr(sys, "argv", ["auto_expand.py"])
     for k in ("AUTO_EXPAND_LIMIT", "LLM_RESOLVE_CAP", "AUTO_EXPAND_SEARCH_CAP"):
@@ -3768,7 +3768,7 @@ def test_auto_expand_never_renders_or_parks_an_aggregator_seed(tmp_path, monkeyp
     monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
     rendered = []
 
-    def _resolve(name, url):
+    def _resolve(name, url, **k):
         rendered.append(name)
         return ("ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12))
     monkeypatch.setattr(E, "resolve", _resolve)
@@ -3842,7 +3842,7 @@ def test_auto_expand_rereads_the_registry_before_every_append(tmp_path, monkeypa
     E = _expand_env(tmp_path, monkeypatch, [{"name": "Fiverr", "careers_url": "https://www.fiverr.com/jobs"}])
     monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
 
-    def _resolve(name, url):
+    def _resolve(name, url, **k):
         with open(tmp_path / "companies.csv", "a", encoding="utf-8", newline="") as fh:
             fh.write("Fiverr,greenhouse,fiverr,%s,true,added by another writer mid-run\n" % _FIVERR)
         return ("ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12))
@@ -4756,7 +4756,7 @@ def test_a_corrupt_scrape_cache_is_never_written_over(tmp_path, monkeypatch):
     from pipeline import identity_gate as G
     E = _expand_env(tmp_path, monkeypatch, [{"name": "Fiverr", "careers_url": "https://www.fiverr.com/jobs"}])
     monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
-    monkeypatch.setattr(E, "resolve", lambda name, url: ("scrape", ([{"title": "x", "location": "Tel Aviv"}], url)))
+    monkeypatch.setattr(E, "resolve", lambda name, url, **k: ("scrape", ([{"title": "x", "location": "Tel Aviv"}], url)))
     (tmp_path / "scraped_cache.json").write_text("{corrupt", encoding="utf-8")
     E.main()
     assert (tmp_path / "scraped_cache.json").read_text(encoding="utf-8") == "{corrupt"
@@ -4764,7 +4764,7 @@ def test_a_corrupt_scrape_cache_is_never_written_over(tmp_path, monkeypatch):
     # positive control: a readable cache is written
     (tmp_path / "scraped_cache.json").write_text("{}", encoding="utf-8")
     E = _expand_env(tmp_path, monkeypatch, [{"name": "Fiverr2", "careers_url": "https://www.fiverr.com/jobs"}])
-    monkeypatch.setattr(E, "resolve", lambda name, url: ("scrape", ([{"title": "x", "location": "Tel Aviv"}], url)))
+    monkeypatch.setattr(E, "resolve", lambda name, url, **k: ("scrape", ([{"title": "x", "location": "Tel Aviv"}], url)))
     monkeypatch.setattr(G, "page_names_company", lambda n, u, html="": True)
     E.main()
     assert "Fiverr2" in json.loads((tmp_path / "scraped_cache.json").read_text(encoding="utf-8"))
@@ -4826,7 +4826,7 @@ def test_auto_expand_turns_a_linkedin_slug_into_the_companys_own_seed(tmp_path, 
     monkeypatch.setattr(E, "_site_from_slug", lambda slug, timeout=8: "https://www.fiverr.com/" if slug == "fiverr" else "")
     rendered = []
 
-    def _resolve(name, url):
+    def _resolve(name, url, **k):
         rendered.append((name, url))
         return ("ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12))
     monkeypatch.setattr(E, "resolve", _resolve)
@@ -4923,6 +4923,22 @@ def test_the_0230_chain_has_one_selector_that_the_mirror_imports(tmp_path, monke
     assert not p(["A", "scrape", "", "https://a.example/careers", "false", "unreachable; could not scan | alias-of B 2026-08-25: twin"])
     assert not p(["A", "scrape", "", "", "false", "unreachable; could not scan"]), "nothing to retry without an address"
     assert not p(["A", "scrape", "", "https://a.example/careers", "false", "listing-hunt 2026-08-20: host unreachableXYZ"]), "a word, not a substring"
+    # BACKLOG 320: the word is written by ANOTHER tool for most of these rows -- it arrives
+    # inside `dark-triage <date>: url-dead (unreachable (dns/conn))`, and triage rewrites its
+    # own segment every night through `replace_own`, so the row silently left the only pool
+    # that retries it. Traced with `--policy worst --trace Biomica`, night 10:
+    #   n9  ... url-dead (unreachable (dns/conn)) | scanned via brightdata; ... | listing-hunt
+    #   n10 ... dark-triage 2026-09-05: url-dead (re-classified the same) | listing-hunt
+    # The MODE survived; the word did not. `tests.yml` was red for this on every lane's push,
+    # and `--policy mixed --seed 4` was red for the same 4-row pool collapsing to zero.
+    assert p(["A", "scrape", "", "https://a.example/careers", "false",
+              "no open Israel roles now - monitored candidate | dark-triage 2026-09-05: "
+              "url-dead (re-classified the same) | listing-hunt 2026-09-05: no listing found"]), (
+        "the row left the pool when triage re-stamped its own mode")
+    assert not p(["A", "scrape", "", "https://a.example/careers", "false",
+                  "dark-triage 2026-09-05: page-empty"]), "an unrelated triage mode selected"
+    assert not p(["A", "scrape", "", "https://a.example/careers", "true",
+                  "dark-triage 2026-09-05: url-dead"]), "an ACTIVE row entered the pool"
     rows = [["A", "scrape", "", "https://a.example/careers", "false", "unreachable; could not scan"],
             ["B", "scrape", "", "https://b.example/careers", "false", "no listing found"]]
     pools = RH.pools(rows)

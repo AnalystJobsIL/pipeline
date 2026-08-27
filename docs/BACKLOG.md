@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**366 filed · 260 open · 106 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**369 filed · 260 open · 109 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 324.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 327.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -83,7 +83,7 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### registry — 71 open
+### registry — 70 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -150,14 +150,13 @@ closure convention in the header.
 - **290** `290@registry` **The Amazon / Microsoft twins of 232, re-measured
 - **313** `313@registry` **Parking a row conflates four different facts, and only one of them means "closed"** —
 - **315** `315@registry` **`--census` rewrites its own baseline every digest run, so a pool can alarm at most
-- **316** `316@registry` **`AUTO_EXPAND_LIMIT` has three different defaults in three places**
 - **317** `317@registry` **A name-derived slug vouches for itself: `_tenant_near` and `page_names_company` share
 - **318** `318@registry` **An `israel_scoped` ACTIVE row returning zero is re-checked by nothing**
-- **320** `320@registry` **`tests.yml` has a SECOND red cause nobody has named, and it is the failure §2 warns
 - **322** `322@registry` **`il >= 1` counts a placeholder posting, and the name then leaves the queue forever** —
-- **323** `323@registry` **The own-site rung finds a real company address and then throws it away
+- **325** `325@registry` **`_site_from_guess`'s linkback lookahead is defeated by `_`, `.` and a percent-escaped
+- **326** `326@registry` **The own-site rung is not deterministic run to run, and its numbers are quoted as if it
 
-### infra — 66 open
+### infra — 67 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -225,6 +224,7 @@ closure convention in the header.
 - **308** `308@infra` **A day on which GitHub drops every cron in BOTH repositories is undetectable by anything in
 - **311** `311@infra` **`_needs_git` skips 11 infra guards in a git WORKTREE
 - **314** `314@infra` **`persist_state._keyed_list`'s docstring says the merge only appends, and the code
+- **324** `324@infra` **Deleting a dispatched run record destroys the evidence its morning check is answered
 
 ### scraper — 19 open
 
@@ -4866,7 +4866,11 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      2026-08-27). A one-shot alarm on a self-rewriting baseline cannot see the drift it
      exists to catch.
 
-316. **`AUTO_EXPAND_LIMIT` has three different defaults in three places** — lane:
+316. ~~**`AUTO_EXPAND_LIMIT` has three different defaults in three places** — lane:
+     **CLOSED 2026-08-27 (`registry`)**: `AUTO_EXPAND_LIMIT_DEFAULT = 250` in
+     `auto_expand.py` is now the single source, and `main()` reads
+     `os.environ.get("AUTO_EXPAND_LIMIT") or AUTO_EXPAND_LIMIT_DEFAULT`. The workflow may
+     still override it; what it can no longer do is disagree silently.
      `registry`. Module default 200, workflow default 250, dispatch-input description 200.
      Same shape: `_site_from_slug`'s docstring says *"399 of 1,544 queue entries carry a
      slug"*, the live file is 465 of 1,693, and `ARCHITECTURE.md` puts the
@@ -4947,7 +4951,21 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      Worth stating plainly: this adds **0 analyst roles** to the board today. It is a
      correctness fix on a row whose note has been right, and unread, since it was written.
 
-320. **`tests.yml` has a SECOND red cause nobody has named, and it is the failure §2 warns
+320. ~~**`tests.yml` has a SECOND red cause nobody has named, and it is the failure §2 warns
+     **CLOSED 2026-08-27 (`registry`)**: `in_retry_pool` now matches the token OR
+     `dark-triage <date>: url-dead`. The mechanism was not the one filed here: traced with
+     `--trace Biomica`, `triage_dark` rewrote its OWN segment on night 10 and the
+     `(unreachable (dns/conn))` parenthetical went with it -- the mode survived, the word
+     did not. **A FOURTH red condition was found while baselining and is closed by the same
+     change**: `--policy mixed --seed 4` also exited 1 on clean `fbfc83e`, the same 4-row
+     pool collapsing to zero on night 1. Now: `worst` green, `mixed` seeds 1-5 green, the
+     `REHEARSE_SELF_TEST=overwrite` control still exits 1, census re-baselined in the same
+     commit. **Declared cost, and it is `infra`'s budget:** the pool goes 4 -> 53 and
+     `bd_rescue` (02:28, paid) imports the same selector -- 49 new rows, all eligible, <=5
+     `alt_urls` each = **<=245 unlock calls on night 1**, <=735 over ~3 weeks before the
+     `bd-tried x3` / 7-day cooldown retires them. Composition: 43 x `http 404`, 4 x `http
+     500`, 1 x `http 406`, 1 no detail; none DNS-dead, none ever tried. The operator was
+     shown these numbers and chose to let both halves of the chain take all 53.
      about, in production** — lane: `registry`. `tests/rehearse_registry.py --nights 14
      --policy worst` fails at **night 10**, and `.github/workflows/tests.yml:37` runs it, so
      every lane's push is red for this as well as for `289@jd-text`. **It is not caused by
@@ -5036,7 +5054,20 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      python -c "from pipeline.recruiters import is_recruiter; print(is_recruiter('TLVTech',''), is_recruiter('Matrix',''))"
      # False False
      ```
-322. **`il >= 1` counts a placeholder posting, and the name then leaves the queue forever** —
+322. ~~**`il >= 1` counts a placeholder posting, and the name then leaves the queue forever** —
+     **HALF-CLOSED 2026-08-27 (`registry`)**: `_probe_resolve` returns `probe-placeholder`
+     when every Israel posting on a candidate board is placeholder-like -- a refusal in the
+     shape of `probe-no-il`, counted and never deferred, so the name is re-probed tomorrow.
+     `is_placeholder_title` is calibrated against the 1,175 cached postings and admits all
+     13 real "test" titles. **Blast radius over all 505 queue names: zero -- 10 activations
+     either way.** Its only known instances are two EXISTING ACTIVE rows: `Ness
+     Technologies` (probe) and `myInterview`, whose two postings are both JazzHR demo
+     records and which `listing_hunt` verified as "2 IL" on 2026-08-22. **What is NOT
+     closed, found by an adversarial pass:** `_row_for_ats` takes a COUNT, not titles, and
+     it is the shared row builder for the probe, `resolve_deep` and `resolve_llm` -- so
+     `Ness Technologies` still activates through the LLM path, and the refusal now costs a
+     `claude -p` call the free rung used to save. The honest fix is a titles argument on the
+     shared builder. Also NOT done: the two live rows are measured, not parked.
      lane: `registry`. `Ness Technologies` activates on smartrecruiters/`nesstechnologies`
      whose **only** posting is titled *"Test Job"* at `Tel Aviv, , Israel`. The board is real
      and the tenant is right, so no identity rule fires; the company is simply not using it.
@@ -5051,7 +5082,23 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      Not done: it wants its own measurement over how many one-posting boards in the registry
      are real, and this session had already shipped enough.
 
-323. **The own-site rung finds a real company address and then throws it away — 9 of 11 on
+323. ~~**The own-site rung finds a real company address and then throws it away — 9 of 11 on
+     **CLOSED 2026-08-27 (`registry`)**: the `cap` branch now defers only what it cannot
+     park honestly -- `defer = "" if site_seeded and not resolve_crashed else "cap"`. Both
+     `empty` and `unreachable` park, and this item's own parenthetical was backwards: the
+     pools say `unreachable; could not scan` is the ONLY one of the two that
+     `retry_unreachable`/`bd_rescue` claim (02:30 daily, and they activate). The gate is an
+     explicit `site_seeded` flag, NOT `not agg_seed` -- `_is_agg_url` is a host blocklist, so
+     a Telegram-seeded `comeet.com/jobs/<other-tenant>/...` clears it and would have been
+     parked as this company's address forever. Three adversarial findings shipped with it: a
+     resolver CRASH defers rather than parks (one missing Chromium would otherwise commit
+     the whole batch -- section 8's mass-zero rule), the provenance host is capped at 40
+     chars so it cannot evict the pool's own verdict from the 220-char cell, and
+     `_site_from_guess`'s redirect target must now share a registrable domain with the guess
+     (`whistle.com` -> `tractive.com` is a different company). And the fix's own root cause
+     is closed too: `resolve_deep.JOBS_LINK` matched a call to action and nothing else, so a
+     homepage whose nav says only `Careers` was never followed -- which is why 9 of 11
+     proved domains came back empty. Measured: 43 of 47 domains survive the new binding.
      its first production run** — lane: `registry`. Measured in run `2026-08-27T17:00`, the
      first with the rung armed:
 
@@ -5089,3 +5136,41 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      of these nine have a careers page the hunt could later crack. Whoever takes it: the
      answer probably differs for `empty` (the page rendered, no Israel roles — park it, the
      address is good) and `unreachable` (we never saw the page — defer).
+
+## From the registry lane, 2026-08-27 (third session)
+
+324. **Deleting a dispatched run record destroys the evidence its morning check is answered
+     against** — lane: `infra` (with `registry`). `CLAUDE.local.md` §3 requires deleting the
+     run record of a manual dispatch, and correctly so — the run page publicly names the token
+     owner. But `HANDOFF.md`'s morning-check row for 2026-08-27 cites
+     `probe: 11 resolved, refused 18 (... probe-dup-board 4 ...)` from run `33094331990`,
+     and `gh api repos/AnalystJobsIL/pipeline/actions/runs/33094331990` is now a **404**. The
+     only surviving copy is the prose in `docs/sessions/2026-08-27-registry.md`, which is the
+     thing the check exists to verify independently. Cheap fix, no policy change: paste the
+     step's summary lines into the session record *before* the delete, and say in
+     `CLAUDE.local.md` §3 that this is part of the delete.
+
+325. **`_site_from_guess`'s linkback lookahead is defeated by `_`, `.` and a percent-escaped
+     hyphen** — lane: `registry`. The `(?![a-z0-9-])` after the handle was added on
+     2026-08-27 because `\b` fires on a hyphen and "proved" handle `pcb` from
+     `linkedin.com/company/pcb-piezotronics`. It holds for the hyphen, run-together and case
+     variants, and an adversarial pass found three it does not hold for:
+     `linkedin.com/company/pcb_piezotronics`, `.../pcb.piezotronics` and
+     `.../pcb%2Dpiezotronics` all match handle `pcb`. **Latent, not live**: in every case
+     tried, the strict `page_mentions_company` test refused the page independently, which is
+     the two-way binding working as designed. The fix is to normalise percent-escapes and
+     widen the class to `[a-z0-9._%-]`, and it wants its own re-measurement of the 47 domains
+     because a wider class can only refuse more.
+
+326. **The own-site rung is not deterministic run to run, and its numbers are quoted as if it
+     were** — lane: `registry`. Re-running `_site_from_guess` over the same 47 names it had
+     just proved kept **43**. Exactly one of the four losses is a real refusal —
+     `whistle.com` now redirects to `tractive.com`, and Tractive acquired Whistle, so a
+     different company is exactly what the new registrable-domain binding exists to refuse.
+     For the other three (`Micron Technology`, `Exyte`, `Cut Inside`) the registrable domains
+     MATCH, so that binding cannot be the refuser; they are live-page variance in the
+     ≥2,000-char floor or the strict name test. `ARRISE` refused on one run and passed on the
+     next, which measures the variance directly. Every count this rung produces should
+     therefore carry a run stamp, and a drop of a few names between runs is not evidence of a
+     regression. Worth a cheap N-of-3 retry before the rung declares a domain unprovable.
+

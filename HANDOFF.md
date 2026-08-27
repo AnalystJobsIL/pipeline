@@ -58,6 +58,8 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-08-28 | infra | the `mutation-gate` job finished, rather than hitting `timeout-minutes: 45`. It measured **44 min 16 s** on `c1323d5` and 37 min 44 s on `623b2a9`, both before this session's code. A timeout names no surviving mutant, and `tests.yml` is already red for other reasons — BACKLOG 195 | — | not yet due |
 | 2026-08-28 | roles | `ledger N = store N`; `purged 7` once; `reopened` NOT ~70 | — | |
 | 2026-08-28 | registry | the drain survived the REAL merge, and the auto-expand `probe:` line shows `N resolved` with `probe-dup-board` among its refusals | 2026-08-27 | PASS, early — `599d7b8` 16:42 UTC: queue **1,693 -> 517** in one commit; the 17:00 run printed `probe: 11 resolved, refused 18 (... probe-dup-board 4 ...)` |
+| 2026-08-28 | registry | the 08:00 auto-expand log ends `bound=batch`, `walked N of N`, `probe-noboard` among its refusals | — | not yet due |
+| 2026-08-28 | infra | the 02:28 `bd_rescue` pass reports ~49 NEW names, **≤245 unlock calls** (`registry` widened `in_retry_pool` 4 → 53 for `320`); too costly ⇒ narrow the paid half | — | not yet due |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due (`audit-coverage.yml` is `0 4 * * 0`) |
 
 ## State at handoff — 2026-08-27 07:5x UTC, every number re-derived
@@ -69,7 +71,7 @@ in full. Commands are given so the next reader re-derives rather than trusting.
 
 | | | how |
 |---|---|---|
-| registry | **1,244 rows · 873 active · 371 parked** | `python check_invariants.py` (it prints 1,245: it counts the header) |
+| registry | **1,266 rows · 894 active · 372 parked** | `python check_invariants.py` (it prints 1,267: it counts the header) |
 | by tier | **451 native-ATS · 421 scrape · 1 discovery** | `python registry_health.py --census` — and note this moved 18 rows in the hour between `ae6eeae` and `623b2a9` |
 | store | **135 matched · 59 sent · 946 firmographics · 516 llm_cache · 112 company_info** | `sqlite3 cloud_state/seen.db` |
 | ledger | **135 `roles.jsonl` · 132 `roles_text.jsonl`**, reconciling with the store | `wc -l cloud_state/roles*.jsonl` |
@@ -83,7 +85,7 @@ one assertion: `test_a_role_is_filled_from_another_address_it_was_seen_at` (`ass
 2021`) — a `jd-text` guard that reads the live `scraped_cache.json`, so a cron can re-break
 it without anyone touching code. Filed as `docs/BACKLOG.md` 289 by `registry`; the fix is
 `jd-text`'s. **Do not read a red `tests.yml` as "someone else's problem" without checking
-it is still only that one.**
+it is still only that one** — on 2026-08-27 it was not (`320@registry`, closed).
 
 ## Watch list for the next session
 
@@ -177,12 +179,8 @@ it is still only that one.**
    `llm_failed_fallback`. Re-run `claude setup-token` and reset the secret.
 4. **SerpApi exhausted until 2026-09-01.** The working search is
    `deep_validate.google_via_unlocker`.
-5. **The probe pool alarms every morning and the registry lane calls the same jump
-   intentional.** The mail reads `re-check pool grew: probe_candidates 127 -> 224 (a
-   predicate widened?)`; the 08-25 session records `probe 127→228` as the designed effect of
-   keying pools on row facts. One of the two is wrong. Either re-baseline
-   `cloud_state/registry_census.json` in the same commit as a deliberate widening, or stop
-   calling the pool flat. `registry`.
+5. **`--census` rewrites its own baseline every digest run**, so a pool alarms at most once
+   and a slow drift never alarms at all. `315@registry`.
 
 **Closed since this list was written, verified 2026-08-27:**
 *(6) `candidate_probe.json` and `scrape_rot.json` were never-yet-exercised in cloud — both
@@ -218,6 +216,7 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-27 `docs`** — the linter was green while three attackers found 46 measured contradictions in these same documents. Numbers a doc states are registered facts now; HANDOFF is 56 KB -> 18 KB with all 14 morning checks answered (8 failed); `docs/backlog.py` gives a lane its own list. **NOT finished:** BACKLOG 291, 295-302. Record: `docs/sessions/2026-08-27-docs.md`.
 - **2026-08-27 `roles`** — one `seen_id` named sixteen roles, and the merge kept the best member, not the best field. Shipped: a tenant-keyed `seen_id`, an origin-gated merge, a run log. **NOT finished:** 311-313. Record: `docs/sessions/2026-08-27-roles.md`.
 - **2026-08-27 `registry`** — `activation_ok` admitted 9 of 12 name-guessed boards, 6 another employer's: a slug made from the name near-equals the name. Shipped a free rung on `il>=1` + a queue drain (1,693->498); the 17:00 run added 11 rows, 3 relevant roles, 0 credits. **NOT finished:** 317-323. Record: `docs/sessions/2026-08-27-registry.md`.
+- **2026-08-27 `registry` (2)** — the 17:00 run scanned 238 of 250, not 31; its log could not say so. Swept all 505 remaining names free: 9 boards, 61 Israel jobs, **1** accepted role, 0 credits. Closed 316/320/323, half-closed 322. **NOT finished:** 322's LLM path, 317, 318, 324-326. Record: `docs/sessions/2026-08-27-registry.md`.
 
 *The 2026-08-23 morning session (seventeen defects, A–Q) and the digest-run history that
 used to open this file are in `docs/sessions/2026-08-23.md`, which is where the long

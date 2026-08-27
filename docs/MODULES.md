@@ -71,7 +71,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `merge_csv_rows.py` | `persist_state.py`, `registry_health.py`, `tests/test_registry.py` +1 more | git-layer segment-aware merge for companies.csv; persist_state.py applies it on every push conflict |
 | `merge_json_cache.py` | `persist_state.py`, `tests/test_units.py` | three-way merge for the company-keyed JSON caches (deletions honoured since 2026-08-25); persist_state.py applies it |
 | `probe_ats.py` | `auto_expand.py`, `ingest_research.py`, `probe_expand.py` +1 more | guessable-slug probing. **Not deletable**: `auto_expand` imports `probe_bounded`/`bounded_http` for its free rung, `ingest_research` imports `slug_variants` |
-| `resolve_deep.py` | `auto_expand.py`, `bd_rescue.py`, `recheck_suspects.py` +4 more | deterministic resolver tier (recognizable ATS URLs, iframes) |
+| `resolve_deep.py` | `auto_expand.py`, `bd_rescue.py`, `recheck_suspects.py` +5 more | deterministic resolver tier (recognizable ATS URLs, iframes) |
 | `resolve_llm.py` | `auto_expand.py`, `deep_validate.py`, `listing_hunt.py` +1 more | the LLM resolution tier: evidence bundle -> one `claude -p` proposal -> verified through the real fetcher |
 | `scrape_universal.py` | `bd_rescue.py`, `check_invariants.py`, `crack_walled.py` +10 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
 

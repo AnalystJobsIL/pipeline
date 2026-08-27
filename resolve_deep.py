@@ -18,9 +18,14 @@ import os
 import re
 import sys
 
+import time
+from urllib.parse import urlparse
+
 from pipeline import fetchers, israel
+from pipeline.aggregators import is_aggregator
 from pipeline.companies import load_companies
-from scrape_universal import ISRAEL_LOC, ROLE, scrape
+from pipeline.company_identity import registrable
+from scrape_universal import ISRAEL_LOC, ROLE, scrape, scrape_result
 
 ATS_PATTERNS = [
     ("greenhouse", re.compile(r"boards-api\.greenhouse\.io/v1/boards/([^/?]+)"),
@@ -39,6 +44,70 @@ ATS_PATTERNS = [
      lambda s: f"https://apply.workable.com/api/v1/widget/accounts/{s}?details=true"),
 ]
 NAV_SKIP = re.compile(r"ashbyhq|greenhouse|lever|workable|smartrecruiters|recruitee|comeet", re.I)
+
+# How long ONE `scrape_universal` pass may take inside `resolve`. Mirrors that module's own
+# `COMPANY_BUDGET_S` default rather than importing it, so a scraper-lane change to the global
+# default cannot silently widen this resolver's per-name cost; `budget_s` narrows it further.
+RESOLVE_SCRAPE_S = 150
+
+# The WEAK rung, added 2026-08-27. `JOBS_LINK` matches a call to action ("open positions",
+# "view all jobs") and matches nothing on the ordinary case: a marketing homepage whose nav
+# says only `Careers`. That is exactly the shape `auto_expand`'s own-site rung hands this
+# function -- a linkback-verified company HOMEPAGE, not a careers page -- and on 2026-08-27
+# nine of its eleven verified domains came back `empty`/`unreachable` with the careers page
+# one nav click away. So a second, weaker pattern is tried after the strong one, and it is
+# deliberately narrower on every other axis: it may match the HREF as well as the text, and
+# it is admitted only on the SAME registrable domain, because "careers" in a link to somebody
+# else's site is precisely how a resolver adopts another company's board.
+CAREERS_LINK = re.compile(r"(careers?|jobs|vacanc|hiring|opportunit|open\s*roles|"
+                          r"work\s*(with|for)\s*us|join\s*(us|our|the))", re.I)
+FOLLOW_MAX = 2          # candidates followed per name; each costs one `scrape`
+
+
+def _bounded_scrape(name, url, budget_s):
+    """`scrape_universal.scrape`'s never-raises contract, with the budget it declines to pass.
+
+    `scrape(company, url, timeout_ms)` bounds the BROWSER call; the TOTAL is
+    `scrape_result(..., budget_s=)`, which the list-only wrapper drops on the floor.
+    """
+    try:
+        return scrape_result(name, url, budget_s=budget_s).jobs
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _followable(links, careers_url):
+    """Candidate jobs pages, strong pattern first, ATS hosts and AGGREGATORS refused.
+
+    The aggregator refusal is not new caution, it is a latent bug being closed: `JOBS_LINK`
+    matches "all jobs" in a footer link to LinkedIn, `scrape_universal` has no aggregator
+    logic of its own (ARCHITECTURE section 3: never call it on one), and an aggregator's
+    "similar jobs" sidebar attributes other employers' roles to this company.
+    """
+    def _key(u):
+        """Compare on scheme+host+path only. An exact string test let `?utm_source=nav` and
+        `#openings` read as different pages, so both FOLLOW_MAX slots went to the page we had
+        just scraped and the real jobs link starved -- the same "an earlier, worse link hides
+        a better one" bug the `break` used to cause (adversarial pass, 2026-08-27)."""
+        q = urlparse(u)
+        return (q.scheme, q.netloc.lower(), q.path.rstrip("/").lower())
+
+    here = _key(careers_url)
+    home = registrable(urlparse(careers_url).netloc)
+    out, seen_keys = [], {here}
+    for rx, same_site_only in ((JOBS_LINK, False), (CAREERS_LINK, True)):
+        for l in links:
+            t, h = (l.get("t") or ""), (l.get("h") or "")
+            if (not h or not h.startswith("http") or _key(h) in seen_keys
+                    or NAV_SKIP.search(h) or is_aggregator(h)):
+                continue
+            if same_site_only and registrable(urlparse(h).netloc) != home:
+                continue
+            if rx.search(t) or (same_site_only and rx.search(h)):
+                seen_keys.add(_key(h))
+                out.append(h)
+    return out
+
 JOBS_LINK = re.compile(r"(open\s*positions|open\s*roles|view\s*(all\s*)?jobs|see\s*(all\s*)?"
                        r"(open\s*)?(positions|roles|jobs)|current\s*openings|join\s*(us|the\s*team)|"
                        r"we'?re\s*hiring|all\s*jobs|browse\s*jobs|explore\s*(jobs|roles|opportunities))", re.I)
@@ -102,14 +171,27 @@ def _verify(name, plat, tok, api):
     return (len(jobs), il) if jobs else None
 
 
-def resolve(name, careers_url):
+def resolve(name, careers_url, budget_s=None):
     """Return ('ats', row_tuple) | ('scrape', jobs) | ('empty', None) | ('unreachable', None).
 
     'empty'       = the careers page loaded and parsed, but has no open Israel role right now
                     (a validated scan — NOT a failure).
     'unreachable' = the page failed to load / returned nothing to parse (the only real gap).
+
+    `budget_s` is a TOTAL wall clock for the whole call, shared across the render and every
+    scrape. There was none: a 35 s Playwright goto plus `scrape_universal` at
+    `COMPANY_BUDGET_S=150`, possibly twice, is ~342 s per name with no deadline anywhere,
+    which at `AUTO_EXPAND_LIMIT=250` an attacker computed back at 4.4 HOURS against a
+    330-minute job timeout, holding `concurrency: repo-state` for all of it (2026-08-27).
+    `None` keeps the old unbounded behaviour for callers that carry their own.
     """
-    urls, comeet, links = _capture(careers_url)
+    dl = None if budget_s is None else time.time() + max(1, budget_s)
+
+    def _left(default_s):
+        """Seconds still available, never MORE than this rung's own default."""
+        return default_s if dl is None else max(1, min(default_s, int(dl - time.time())))
+
+    urls, comeet, links = _capture(careers_url, timeout_ms=_left(35) * 1000)
     reachable = len(links) > 3 or len(urls) > 8
     det = _detect_ats(urls, comeet)
     if det:
@@ -118,25 +200,25 @@ def resolve(name, careers_url):
         if v and v[0]:
             return ("ats", (name, plat, tok, api, v[0], v[1]))
         reachable = True                     # a real ATS board (even if 0 Israel) = reached
-    jobs = scrape(name, careers_url)
+    jobs = _bounded_scrape(name, careers_url, _left(RESOLVE_SCRAPE_S))
     if jobs:
         reachable = True
     il = [j for j in jobs if israel.is_israel_job(j)]
     if il:
         return ("scrape", il)
-    for l in links:                          # follow a "view jobs / open positions" link once
-        t, h = l.get("t", ""), l.get("h", "")
-        if h and JOBS_LINK.search(t) and not NAV_SKIP.search(h) and h.rstrip("/") != careers_url.rstrip("/"):
-            try:
-                jobs = scrape(name, h)
-            except Exception:  # noqa: BLE001
-                jobs = []
-            if jobs:
-                reachable = True
-            il = [j for j in jobs if israel.is_israel_job(j)]
-            if il:
-                return ("scrape", (il, h))              # keep the followed URL that worked
+    # follow a jobs link: the strong call-to-action anywhere, then a plain `Careers` nav link
+    # on this company's OWN domain. Bounded by FOLLOW_MAX and by the deadline, and the loop
+    # no longer `break`s after the first candidate -- that break meant an earlier, worse link
+    # in DOM order permanently hid a later, better one.
+    for h in _followable(links, careers_url)[:FOLLOW_MAX]:
+        if dl is not None and time.time() >= dl:
             break
+        jobs = _bounded_scrape(name, h, _left(RESOLVE_SCRAPE_S))
+        if jobs:
+            reachable = True
+        il = [j for j in jobs if israel.is_israel_job(j)]
+        if il:
+            return ("scrape", (il, h))              # keep the followed URL that worked
     return ("empty", None) if reachable else ("unreachable", None)
 
 
