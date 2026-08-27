@@ -3896,3 +3896,30 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     any test that drives a root script's `main()` without `chdir` inherits the live registry,
     the live cache and the live `cloud_state/`, and will go red on whichever cron rewrites
     them first — which is a Thursday-morning surprise for a lane that changed nothing.
+
+290. **The Amazon / Microsoft twins of 232, re-measured — 7 active rows over 2 employers, and
+    2 of the pairs share a board host+path** — lane: `registry`, an addendum to **232** rather
+    than a new item. Measured 2026-08-27:
+
+        AWS                        scrape       true   www.amazon.jobs/en/business_categories/amazon-web-services…
+        Amazon Web Services (AWS)  scrape       true   www.amazon.jobs/en/business_categories/amazon-web-services…
+        Amazon                     custom_json  true   www.amazon.jobs/en/search.json?country=ISR
+        Amazon Israel              scrape       true   www.amazon.jobs/en/search?loc_query=Israel…
+        Microsoft                  microsoft    true   apply.careers.microsoft.com/api/pcsx/search…
+        Microsoft (Xbox/Gaming)    scrape       true   jobs.careers.microsoft.com/global/en/search…
+        Microsoft Israel           scrape       true   jobs.careers.microsoft.com/global/en/search…
+
+    `test_no_two_active_rows_share_a_board` (added 2026-08-27 after this session created and
+    then parked an `Anchor` / `Anchor Fintech` duplicate) compares `api_url` byte-for-byte and
+    reports **0** — these differ only in a query string. On host + path it is **2**:
+    `Microsoft (Xbox/Gaming)` + `Microsoft Israel`, and `AWS` + `Amazon Web Services (AWS)`.
+    The guard now checks host+path too, behind a dated `KNOWN_TWINS_2026_08_27` allowlist
+    holding exactly those two pairs, so a new twin is red immediately and these two can only
+    shrink.
+
+    **Not parked here because the window forbade it** — `companies.csv` must not be written
+    between 05:00 and 08:30 UTC and this was measured at 07:35. The action is small and
+    prescribed by §2: keep one row per employer, park the rest `alias-of <the keeper>`, then
+    delete the pair from `KNOWN_TWINS_2026_08_27`. Decide the keeper by which row a fetcher
+    reads natively — `Amazon` is `custom_json` and `Microsoft` is the `microsoft` fetcher,
+    while all five others are `scrape` rows pointed at the same public search pages.

@@ -5699,6 +5699,30 @@ def test_no_two_active_rows_share_a_board():
         "active rows sharing one board — park all but one with `alias-of <the keeper>`: "
         + "; ".join(f"{names} -> {u[:70]}" for u, names in shared.items()))
 
+    # Byte-equal urls are the easy half. The Amazon/Microsoft twins of `docs/BACKLOG.md` 232
+    # differ only in a query string, so the check above cannot see them — and they publish the
+    # same board under two names just as surely. Compared on host + path, with a DATED
+    # allowlist of the two pairs that already exist, so a new one is red immediately and these
+    # two can only shrink. Do not add to this list: park the row instead.
+    from urllib.parse import urlparse
+    KNOWN_TWINS_2026_08_27 = {
+        ("Microsoft (Xbox/Gaming)", "Microsoft Israel"),
+        ("AWS", "Amazon Web Services (AWS)"),
+    }
+    def _hp(u):
+        p = urlparse(u)
+        return (p.netloc.lower(), p.path.rstrip("/").lower())
+    hp = Counter(_hp(r[3]) for r in live)
+    twins = {k: tuple(sorted(r[0] for r in live if _hp(r[3]) == k))
+             for k, n in hp.items() if n > 1}
+    fresh = {k: v for k, v in twins.items() if v not in KNOWN_TWINS_2026_08_27}
+    assert not fresh, (
+        "active rows on the same board host+path — park all but one with `alias-of`: "
+        + "; ".join(f"{v} -> {k[0]}{k[1][:50]}" for k, v in fresh.items()))
+    gone = KNOWN_TWINS_2026_08_27 - set(twins.values())
+    assert not gone, (
+        "these twins are resolved — remove them from KNOWN_TWINS_2026_08_27: " + str(gone))
+
 
 def test_the_own_page_filter_is_called_not_re_typed():
     """`_own_page_names_token` must USE `own_pages_in_evidence`, not repeat its four lines.
