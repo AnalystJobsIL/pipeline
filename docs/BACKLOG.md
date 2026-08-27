@@ -2838,6 +2838,29 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     honest about it, but the `guard` job itself stays red until 158 is fixed. Keep
     `timeout-minutes: 45` as the backstop (a build where every mutant survives is ~35 min
     and fails anyway).
+
+    **URGENT, measured 2026-08-27 (`infra`): the backstop is no longer a backstop.** The gate
+    is now finishing *inside a minute* of its own timeout, and the trend across one morning
+    is one way:
+
+    | push | mutation-gate | duration |
+    |---|---|---|
+    | `623b2a9` (registry, 07:31) | failure | 37 min 44 s |
+    | `c1323d5` (docs, 10:21) | failure | **44 min 16 s** |
+    | `timeout-minutes` | | **45** |
+
+    Re-derive with
+    `gh run view <id> --json jobs --jq '.jobs[]|select(.name=="mutation-gate")|"\(.startedAt) \(.completedAt)"'`.
+    Both of those predate this session's first code push, so this is not new work's doing;
+    198 mutations against a suite that every lane keeps adding to is simply arithmetic.
+
+    **Why it matters more than a slow job:** a gate that FAILS names the surviving mutant. A
+    gate that TIMES OUT names nothing, and `tests.yml` has been red for other reasons since
+    2026-08-25, so the change from "red with a reason" to "red with no reason" would pass
+    unnoticed. Options, cheapest first: raise `timeout-minutes` (buys a week, fixes nothing);
+    shard `--all` across two jobs; or have `mutate.py` order mutations so the ones most likely
+    to survive run first and the job fails fast with a name. `infra` owns `tests.yml`;
+    `mutate.py` and the catalogue are `registry`'s.
 196. **`resolve_llm` still asks SerpApi first** — lane: `registry`. When the quota resets on
     **Measure first (2026-08-26):** the `dfer … no-candidates` vs `llm-none` counts in the 08:00/20:00 logs over the week of 08-26 → 09-01 are the DDG hit rate; reorder only if DDG ≥ 60 %.
     2026-09-01 the ladder spends 250 free searches in ~6 days at 20 entries/run (two runs a
