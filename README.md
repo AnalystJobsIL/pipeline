@@ -124,6 +124,7 @@ that an employer we have never heard of is hiring, and that employer then gets r
 own careers board and scanned directly from then on. They are never the primary source for a
 company we already cover. One synthetic `Discovery` registry row does publish postings we have
 only seen there, so a minority of board cards link to a LinkedIn or Indeed post rather than to
-the employer's own page — on 2026-08-27 that was 18 of 76 live cards. That is a deliberate
-coverage trade, not an oversight: the alternative is dropping a real Israeli analytics opening
-because its employer has no readable board yet.
+the employer's own page — on 2026-08-27 that was 18 of 76 live cards, and 25 if you count a
+third aggregator host (`secrettelaviv.com`) that a registry row currently points at. That is
+a deliberate coverage trade, not an oversight: the alternative is dropping a real Israeli
+analytics opening because its employer has no readable board yet.
