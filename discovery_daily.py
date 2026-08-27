@@ -899,6 +899,20 @@ def _targeted_inputs(cap=100, day=None):
             for name in window]
 
 
+def secrethunter_catalog():
+    """The secrethunter catalog's company slugs — one keyless GET of its sitemap.
+
+    A module-level seam, like `indeed_search` / `workable_search` / `linkedin_search`, and for
+    the same reason: every sandbox test of `main()` neutralises its sources with
+    `monkeypatch.setattr(dd, ...)`, and a source reachable only through an import INSIDE
+    `main()` cannot be neutralised at all. The first cut of this was exactly that, and it
+    turned two offline guards into live network calls that read the real 2,703-name catalog
+    and queued 150 of them into the fixtures — in a suite whose first line is "no network,
+    no I/O"."""
+    from pipeline import secrethunter
+    return secrethunter.sitemap_slugs()
+
+
 def main():
     _load_secrets()
     os.makedirs("out", exist_ok=True)      # gitignored — absent on cloud runners
@@ -1124,7 +1138,10 @@ def main():
     from pipeline.firmographics import looks_like_junk
     have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
     new_cos = {}
-    junk_names, rec_names = set(), set()      # NAMES, not postings: one agency posting 8
+    # NAME -> the name as the source spelled it. Sets of lower-cased names until 2026-08-27:
+    # the intake ledger (BACKLOG 70) is an APPEAL trail, and `wix technologies` is a worse
+    # thing to appeal than `Wix Technologies`. Membership tests below are unchanged.
+    junk_names, rec_names = {}, {}            # NAMES, not postings: one agency posting 8
     # roles was reported as "8 agencies" (BACKLOG 189a)
     # NEW COMPANIES PER SOURCE is the number this layer exists to produce — a source can be
     # alive, on-budget and completely useless at the same time (a healthy-looking record
@@ -1148,14 +1165,14 @@ def main():
                 new_cos[c.lower()]["_real_lead"] = True
             continue
         if looks_like_junk(c):
-            junk_names.add(c.lower())
+            junk_names[c.lower()] = c
             continue
         # the slug is free evidence the display name hides ("Dialog" / dialog-recruiting).
         # Printed, not just counted: a wrong rejection has to be visible to be appealed.
         if _is_rec(c, j.get("company_slug", "")):
             if c.lower() in rec_names:
                 continue                      # already reported; one line per NAME
-            rec_names.add(c.lower())
+            rec_names[c.lower()] = c
             print(f"  [names] agency, not an employer: {c}"
                   + (f" (slug {j['company_slug']})" if not _is_rec(c) else ""))
             continue
@@ -1194,6 +1211,49 @@ def main():
               + ". Fix or delete the file and re-run; the cards are in "
                 "discovered_cache.json.", flush=True)
         research = None
+    # ---- the secrethunter company catalog: names + candidate handles, keyless ------------
+    # NOT a jobs source and never counted towards the jobs funnel — it feeds the NAMES funnel
+    # only, which is the point of this stage. Its company PAGES carry the company's own
+    # domain and every open job title in schema.org JSON-LD, but ONLY to an allowlist of
+    # named search-engine crawler UAs (measured 2026-08-27: Googlebot/bingbot/ClaudeBot get
+    # 38,649 bytes and 5 ld+json blocks; curl, Chrome, an honest `AnalystJobsIL` UA,
+    # `Claude-User` and `?_escaped_fragment_=` all get the same 34,181-byte SPA shell). We do
+    # not claim to be a crawler we are not, so those pages are not read here. The SITEMAP is
+    # not gated, and its slug is usually the LinkedIn handle — the one seed
+    # `auto_expand._site_from_guess` can turn into a proven own-domain, and the field 514 of
+    # 517 queue entries lack. `docs/decisions/2026-08-27-secrethunter-company-catalog.md`.
+    sh_rejects = []
+    # Recorded OUTSIDE the `research is not None` guard: the except branch below promises a
+    # zero "so sources.stale() can see it, never skipped", and an unreadable queue used to
+    # skip the assignment entirely -- so a corrupt research_companies.json made this source
+    # VANISH from the health report rather than read zero, which is the exact failure
+    # `pipeline/sources.py` exists to prevent (1a rule 2).
+    per_source.setdefault("secrethunter", 0)
+    if research is not None:
+        try:
+            from pipeline import secrethunter as _sh
+            _slugs = secrethunter_catalog()
+            # RAW names the catalog served, not what survived dedup: this source republishes
+            # the same 2,703 every day, so a dedup-based count would read 0 the second
+            # morning and `sources.stale()` would call a healthy source dead. The only
+            # failure this source HAS is the sitemap going away, and that shows up here.
+            _sh_new, sh_rejects, _st = _sh.queue_entries(
+                _slugs, have, {(e.get("name") or "").strip().lower() for e in research})
+            for _e in _sh_new:
+                new_cos.setdefault(_e["name"].strip().lower(), dict(_e))
+            # Set AFTER queue_entries returns, not before: a raise in between left the
+            # health file saying 2,703 while zero names were added, and `setdefault` in
+            # the handler below cannot correct a value that is already there.
+            per_source["secrethunter"] = len(_slugs)
+            print(f"[secrethunter] {_st['slugs']} catalog names -> {_st['known']} already in "
+                  f"the registry, {_st['queued_already']} already queued, {_st['refused']} "
+                  f"refused, {_st['fresh']} unresolved -> {_st['offered']} offered this run "
+                  f"(cap {_sh.QUEUE_CAP}, day-rotated) · 0 credits", flush=True)
+        except Exception as e:  # noqa: BLE001
+            # Keyless and additive: a catalog that will not answer must cost this run
+            # nothing. The zero is already set above, so `sources.stale()` sees it either way.
+            print(f"::warning::[secrethunter] catalog read failed, no names added: {e}",
+                  flush=True)
     # A gate learned today must also unlearn yesterday's queue: auto_expand re-checks the
     # NAME only, and "Dialog" (dialog-recruiting) sat at position 129 of its next batch on
     # 2026-08-25. Pruned here, where this layer already holds the file, on EVERY run — a
@@ -1267,6 +1327,21 @@ def main():
             n_queued = len(added)
             if added:
                 print(f"queued {n_queued} new companies into research_companies.json")
+    # WHAT WE REFUSED, AND WHY — `docs/BACKLOG.md` 70. Every gate above throws names away on
+    # every run and kept only a COUNT; `looks_like_junk` did not even print. A wrongly
+    # rejected employer was therefore invisible forever and un-appealable, and the source
+    # that offered it does not necessarily offer it again. Merge-only, so the date a name was
+    # FIRST refused survives. This records a decision already made; it never makes one.
+    try:
+        from pipeline import intake_ledger
+        _rej = ([(n, "junk-name") for n in junk_names.values()]
+                + [(n, "agency") for n in rec_names.values()] + list(sh_rejects))
+        if _rej:
+            _n, _s, _p = intake_ledger.record(_rej)
+            print(f"[intake-rejects] {len(_rej)} refused this run ({_n} first time, "
+                  f"{_s} seen before, {_p} aged out) · {intake_ledger.summary()}", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"[intake-rejects] skipped: {e}", flush=True)
     # A source returning zero is the signal, not the absence of one: the Indeed dataset
     # printed "0 records" every day for five days and nothing ever said a source had died.
     try:

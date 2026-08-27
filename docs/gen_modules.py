@@ -140,6 +140,8 @@ PIPELINE = {
  "stages": "**shared** - which nightly stage last finished, and how much it did",
  "sources": "**shared** - per-discovery-source liveness",
  "discovery_queue": "the research_companies.json queue, read and written safely (ABSENT is not CORRUPT; atomic writes) - written only by the two discovery bridges",
+ "secrethunter": "the secrethunter.io company catalog, read from its SITEMAP - 2,703 names plus a candidate LinkedIn handle, keyless and free. The company pages carry the own-domain and every open job title but serve it only to named crawler UAs, so they are deliberately not read (docs/decisions/2026-08-27-secrethunter-company-catalog.md)",
+ "intake_ledger": "what intake REFUSED and why - the appeal trail for a name a gate threw away (docs/BACKLOG.md 70). Merge-only, TTL-bounded, written by both discovery bridges; never a gate itself",
  "http": "**shared** - the zero-dependency HTTP helper",
 }
 

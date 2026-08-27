@@ -43,3 +43,13 @@ due, and the cheapest way to make an error go green would be to delete the check
 | 2026-08-26 | discovery | no `### Tel Aviv` in the mail | 2026-08-27 | FAIL — `digests/latest.md` still carries `### Tel Aviv` with three secrettelaviv.com jobs |
 | 2026-08-26 | discovery | `cache: dropped ~163 agency cards` | 2026-08-27 | FAIL — it dropped **277**; the prediction was 70% low, the mechanism worked |
 | 2026-08-26 | ats-fetch | Akamai/Bright Security as `fetch-error scrape:`; `cleared:` names Fortinet/Reindeer/myInterview; Questar and Wiliot absent | 2026-08-27 | PARTIAL — Akamai `fetch-error scrape: http:403 (2 nights)`, Questar/Wiliot absent, Fortinet+Reindeer cleared; **Bright Security is `regressed-to-zero`, not `fetch-error`** |
+
+## Moved 2026-08-27 by the `discovery` lane
+
+Answered the day it came due and moved straight here: `HANDOFF.md` stood at 3,194 of
+its 3,200-word cap before this session, so the table could not hold another answered
+row and a session line at the same time. Record: `docs/sessions/2026-08-27-discovery.md`.
+
+| due | lane | must be true | answered | verdict |
+|---|---|---|---|---|
+| 2026-08-27 | discovery | `recovered=N`, `cache: dropped ~18 agency cards`, no `### Jobgether` | 2026-08-27 | PASS — run 33092547374 (the 05:00 cron, 11h18m late): `recovered=5` against `blank=75`, so NOT ~0 — **the re-ask stays**; `cache: dropped 117 agency cards`; `Jobgether` refused by name at intake, so no `### Jobgether` heading |

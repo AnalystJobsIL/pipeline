@@ -6411,6 +6411,8 @@ def test_an_undated_no_company_post_is_not_cached_or_queued(tmp_path, monkeypatc
     assert jobs[0][1]["company"] == "Petahtikva"             # the parser cannot know
     from pipeline import sources as _src
     monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
+    from pipeline import intake_ledger as _led
+    monkeypatch.setattr(_led, "PATH", str(tmp_path / "cloud_state" / "intake_rejects.json"))
     monkeypatch.setattr(d, "CHANNELS", ["c1"])
     monkeypatch.setattr(d, "scan_channel", lambda chan, last: (jobs, 0))
     monkeypatch.setattr("pipeline.companies.load_companies", lambda active_only=False: [])
@@ -6447,6 +6449,8 @@ def test_the_cache_write_drops_agency_cards_including_carried_ones_and_the_junio
               "url": "u4", "posted_date": "2026-08-25", "ats_platform": "discovery-linkedin"}]
     from pipeline import sources as _src
     monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
+    from pipeline import intake_ledger as _led
+    monkeypatch.setattr(_led, "PATH", str(tmp_path / "cloud_state" / "intake_rejects.json"))
     monkeypatch.setattr(dd, "indeed_search", lambda q: [])
     monkeypatch.setattr(dd, "workable_search", lambda: [])
     monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": list(fresh))
@@ -6456,6 +6460,7 @@ def test_the_cache_write_drops_agency_cards_including_carried_ones_and_the_junio
     monkeypatch.setattr(dd, "report_bd_spend", lambda targeted_cap=None: None)
     monkeypatch.setattr(dd, "load_companies", lambda active_only=False: [])
     monkeypatch.setattr(dd, "_load_secrets", lambda: None)
+    monkeypatch.setattr(dd, "secrethunter_catalog", lambda: [])   # keyless, but still a GET
     monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
     dd.main()
     cache = _j.loads((tmp_path / "discovered_cache.json").read_text(encoding="utf-8"))
@@ -6491,6 +6496,8 @@ def test_the_queue_is_pruned_even_on_a_morning_with_nothing_new(tmp_path, monkey
     (tmp_path / "research_companies.json").write_text(_j.dumps(q), encoding="utf-8")
     from pipeline import sources as _src
     monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
+    from pipeline import intake_ledger as _led
+    monkeypatch.setattr(_led, "PATH", str(tmp_path / "cloud_state" / "intake_rejects.json"))
     # telegram: no new posts at all
     monkeypatch.setattr(dt, "CHANNELS", ["c1"])
     monkeypatch.setattr(dt, "scan_channel", lambda chan, last: ([], 0))
@@ -6508,6 +6515,7 @@ def test_the_queue_is_pruned_even_on_a_morning_with_nothing_new(tmp_path, monkey
     monkeypatch.setattr(dd, "report_bd_spend", lambda targeted_cap=None: None)
     monkeypatch.setattr(dd, "load_companies", lambda active_only=False: [])
     monkeypatch.setattr(dd, "_load_secrets", lambda: None)
+    monkeypatch.setattr(dd, "secrethunter_catalog", lambda: [])   # keyless, but still a GET
     monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
     dd.main()
     names = [e["name"] for e in _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))]
@@ -8492,6 +8500,8 @@ def _queue_fixture(tmp_path, monkeypatch, queue_bytes):
     (tmp_path / "research_companies.json").write_bytes(queue_bytes)
     from pipeline import sources as _src
     monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
+    from pipeline import intake_ledger as _led
+    monkeypatch.setattr(_led, "PATH", str(tmp_path / "cloud_state" / "intake_rejects.json"))
     return _j
 
 
@@ -8521,6 +8531,7 @@ def test_an_unreadable_queue_is_never_overwritten_by_discovery_daily(tmp_path, m
     monkeypatch.setattr(dd, "report_bd_spend", lambda targeted_cap=None: None)
     monkeypatch.setattr(dd, "load_companies", lambda active_only=False: [])
     monkeypatch.setattr(dd, "_load_secrets", lambda: None)
+    monkeypatch.setattr(dd, "secrethunter_catalog", lambda: [])   # keyless, but still a GET
     monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
     dd.main()                                    # must not raise (the wrong-type case did)
     assert (tmp_path / "research_companies.json").read_bytes() == queue_bytes
@@ -13574,3 +13585,263 @@ def test_the_board_guard_is_case_blind_to_a_comeet_uid(tmp_path, monkeypatch):
     row = ["Imagry | Autonomous Driving", "comeet", "B7.00F", "https://x", "true", "n"]
     assert ((row[1] or "").lower(), (row[2] or "").lower()) in boards, (
         "the duplicate-board guard cannot see an uppercase Comeet uid")
+# --- discovery: the secrethunter company catalog and the intake reject ledger -------------
+
+
+def test_a_catalog_slug_with_a_space_or_an_ampersand_does_not_lose_the_company():
+    """The first cut of `pipeline/secrethunter` refused any slug that was not already
+    handle-shaped and threw away 53 of 2,703 names — among them `Harmonya%20Technologies`,
+    `Valence%20Security`, `Zafran%20Security` and `Innoviz%20Technologies`, Israeli tech
+    companies whose only sin was a space in the URL. Over-refusal is the expensive direction
+    here: this repo has already paid 36 legitimate acquisitions and 358 path-tenant rows for
+    rules tightened without measuring the cost. Normalise, then refuse what is left."""
+    from pipeline import secrethunter as S
+    assert S.handle_from_slug("Harmonya Technologies") == "harmonya-technologies"
+    assert S.handle_from_slug("alvarez-&-marsal") == "alvarez-and-marsal"
+    assert S.handle_from_slug("costello'sacehardware") == "costellosacehardware"
+    for slug in ("Harmonya Technologies", "alvarez-&-marsal", "Valence Security"):
+        assert S.slug_refusal(S.handle_from_slug(slug), S.name_from_slug(slug)) is None, slug
+
+
+def test_a_raw_percent_encoded_slug_never_becomes_a_slug_shaped_wrong_handle():
+    """`handle_from_slug` is a public entry point and `sitemap_slugs` is not its only caller.
+    Given the RAW `Harmonya%20Technologies` it returned `harmonya-20technologies` — still
+    `[a-z0-9-]+`, so every downstream check accepts it, and `_site_from_guess` would go on to
+    probe a domain for a company that does not exist. Wrong in a way nothing can detect."""
+    from pipeline import secrethunter as S
+    assert S.handle_from_slug("Harmonya%20Technologies") == "harmonya-technologies"
+    assert S.handle_from_slug("%25D7%2590-unipharm-career") == "unipharm-career"
+
+
+def test_a_wholly_hebrew_catalog_slug_keeps_its_latin_half_or_is_recorded():
+    """26 of the 2,703 slugs are double percent-encoded Hebrew. A MIXED one carries a real
+    handle in its Latin tail (`אוניפארם-קריירה-unipharm-career` -> `unipharm-career`,
+    Unipharm), and discarding the whole slug as "non-latin" lost it. A slug with no Latin at
+    all genuinely reaches no rung we have — but it is REFUSED WITH A REASON, never dropped,
+    so the day a Hebrew rung exists the names are still on file."""
+    from pipeline import secrethunter as S
+    assert S.handle_from_slug("אוניפארם-קריירה-unipharm-career") == "unipharm-career"
+    assert S.handle_from_slug("איחוד-הצלה") == ""
+    assert S.slug_refusal("", "איחוד הצלה") == "non-latin-slug"
+
+
+def test_the_catalog_never_offers_more_than_its_cap_and_rotates_over_the_whole_pool():
+    """The resolver queue IS the bottleneck (`ARCHITECTURE.md` 1a): LLM_RESOLVE_CAP is 10
+    against 250-name batches and the registry lane drained this queue 1,693 -> 517 on
+    2026-08-27. Offering 2,703 names at once would undo that. And a fixed PREFIX would be its
+    own bug — `_targeted_inputs` took `unresolved[:20]` over a stably-sorted list, so the
+    same 20 names went out every day and the other 90 of 110 were never searched once."""
+    import datetime
+    from pipeline import secrethunter as S
+    pool = ["co-%03d" % i for i in range(1000)]
+    a = S._window(pool, 150, day=datetime.date(2026, 8, 27))
+    b = S._window(pool, 150, day=datetime.date(2026, 8, 28))
+    assert len(a) == 150 and len(b) == 150
+    assert a != b, "the window must move with the day, or the tail is never reached"
+    reached = set()
+    for d in range(40):
+        reached |= set(S._window(pool, 150,
+                                 day=datetime.date(2026, 1, 1) + datetime.timedelta(days=d)))
+    assert len(reached) == len(pool), "every name must be offered within a few weeks"
+    assert S._window(pool, 0) == [] and S._window([], 150) == []
+
+
+def test_a_catalog_entry_carries_a_seed_auto_expand_will_actually_look_at():
+    """`auto_expand.py:449` drops any entry with an empty `careers_url` — silently and
+    forever. And `:503` reaches for `_site_from_guess(name, slug)` ONLY when the seed is an
+    aggregator URL. So the secrethunter company page is the CORRECT seed: its host is already
+    on `aggregators.HOSTS`, which is what routes the entry into the slug rung instead of
+    burying it. An entry that looked tidier — no URL, or a guessed domain — reaches no rung
+    at all."""
+    from pipeline import secrethunter as S
+    from pipeline.aggregators import is_aggregator
+    entries, _rej, _st = S.queue_entries(["ness-technologies"], set(), set(), cap=10)
+    assert len(entries) == 1
+    e = entries[0]
+    assert sorted(e) == ["ats", "careers_url", "name", "slug"], "the queue's 4-key shape"
+    assert e["careers_url"] and is_aggregator(e["careers_url"])
+    assert e["slug"] == "ness-technologies" and e["ats"] == "unknown"
+
+
+def test_the_catalog_does_not_re_offer_a_company_the_registry_already_holds():
+    """Matching names EXACTLY, as the queue does, still offered ~100 companies we already
+    hold under a trailing `Ltd` or a stray hyphen — each one burning a slot in the queue that
+    is the bottleneck. The alias rule is deliberately narrow: a trailing legal suffix and
+    punctuation only. Dropping `technologies`/`group`/`labs` would merge genuinely different
+    firms, and a false "already known" silently loses a real employer — the more expensive
+    mistake of the two."""
+    from pipeline import secrethunter as S
+    _e, _r, st = S.queue_entries(["ness-technologies"], {"ness technologies ltd"}, set(), cap=5)
+    assert st["known"] == 1 and st["offered"] == 0
+    _e, _r, st = S.queue_entries(["ness-technologies"], set(), {"Ness Technologies"}, cap=5)
+    assert st["queued_already"] == 1 and st["offered"] == 0
+    assert not (S.alias_keys("Sela Group") & S.alias_keys("Sela Technologies"))
+
+
+def test_the_catalog_is_read_with_an_honest_user_agent_and_only_from_the_sitemap(monkeypatch):
+    """secrethunter's company PAGES serve their JSON-LD — the company's own domain and every
+    open job title — ONLY to an allowlist of named search-engine crawlers. Measured
+    2026-08-27: Googlebot / bingbot / ClaudeBot get 38,649 bytes and 5 ld+json blocks, while
+    curl, Chrome, no UA, an honest `AnalystJobsIL` UA, `Claude-User` and
+    `?_escaped_fragment_=` all get the same 34,181-byte SPA shell with no company data at
+    all. Reaching that content in the daily pipeline would mean claiming to be a crawler we
+    are not. Behavioural, not a grep of the source: the module DOCUMENTS those bot names, and
+    a guard that forbade the word would forbid the explanation."""
+    from pipeline import http, secrethunter as S
+    seen = {}
+
+    def fake_get_text(url, *, timeout=30, retries=3, headers=None):
+        seen["url"] = url
+        seen["headers"] = dict(headers or {})
+        return ("<urlset><url><loc>https://secrethunter.io/companies/wix</loc></url>"
+                "<url><loc>https://secrethunter.io/companies/wix?lang=en</loc></url></urlset>")
+
+    monkeypatch.setattr(http, "get_text", fake_get_text)
+    assert S.sitemap_slugs() == ["wix"], "the ?lang=en twin must not double every company"
+    ua = seen["headers"].get("User-Agent", "")
+    assert "AnalystJobsIL" in ua and "github.com/AnalystJobsIL" in ua
+    for bot in ("googlebot", "bingbot", "claudebot", "gptbot", "slurp", "duckduckbot",
+                "applebot", "perplexitybot"):
+        assert bot not in ua.lower(), f"the catalog must never be read as {bot}"
+    assert "/companies/" not in seen["url"], "only the sitemap is read, never a company page"
+
+
+def test_the_intake_ledger_merges_and_never_truncates_what_it_could_not_read():
+    """`docs/BACKLOG.md` 70: both bridges refused names on every run and kept only a COUNT —
+    `looks_like_junk` did not even print — so a wrongly-rejected employer was invisible and
+    un-appealable. The ledger is merge-only: `first_seen` is the date the name was FIRST
+    refused and survives every later run. And it obeys 1a rule 5 — a file that parses to the
+    wrong TYPE is a refusal to write, never a silent truncation over data (`json.load`
+    accepts `[1,2,3]` happily; the check is `isinstance`, not `except`)."""
+    import io as _io
+    import json as _j
+    import os as _os
+    import tempfile
+    from pipeline import intake_ledger as L
+    p = _os.path.join(tempfile.mkdtemp(), "rejects.json")
+    assert L.record([("Jobgether", "agency"), ("AppSec", "junk-name")],
+                    path=p, today="2026-08-01") == (2, 0, 0)
+    assert L.record([("Jobgether", "agency")], path=p, today="2026-08-27") == (0, 1, 0)
+    rec = _j.load(_io.open(p, encoding="utf-8"))["jobgether"]
+    assert rec["first_seen"] == "2026-08-01" and rec["last_seen"] == "2026-08-27"
+    assert rec["name"] == "Jobgether", "the ledger keeps the name as the source spelled it"
+    # still being refused -> kept; stopped being offered long ago -> aged out
+    assert L.record([("Jobgether", "agency")], path=p, today="2026-12-01",
+                    ttl_days=90) == (0, 1, 1)
+    assert sorted(_j.load(_io.open(p, encoding="utf-8"))) == ["jobgether"]
+    # a corrupt file is never overwritten
+    _io.open(p, "w", encoding="utf-8").write("[1, 2, 3]")
+    assert L.record([("X", "agency")], path=p) == (0, 0, 0)
+    assert _io.open(p, encoding="utf-8").read() == "[1, 2, 3]"
+    assert "unreadable" in L.summary(path=p)
+
+
+def test_both_discovery_bridges_record_what_they_refused():
+    """The ledger is worth nothing if only one bridge writes it, and the Telegram side is the
+    one that most needs it: a post scrolls off the `t.me/s` preview, so a name refused there
+    is one the source may never offer again. Structural, because the behavioural check needs
+    a live scan of six channels."""
+    import io as _io
+    import os as _os
+    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    for f in ("discovery_daily.py", "discovery_telegram.py"):
+        src = _io.open(_os.path.join(root, f), encoding="utf-8").read()
+        assert "intake_ledger" in src, f"{f} refuses names without recording them"
+
+
+def test_a_catalog_name_actually_lands_in_the_queue_file_with_a_seed(tmp_path, monkeypatch):
+    """Everything else about this source asserts `queue_entries`' RETURN value. The thing that
+    matters is what reaches `research_companies.json`, because `auto_expand.py:449` drops an
+    entry with an empty `careers_url` silently and forever, and the bridge hands its dicts
+    through `new_cos`, which stamps a private `_real_lead` on job-derived entries and pops it
+    again. Every other end-to-end test stubs the catalog to `[]`, so this path was covered
+    nowhere."""
+    import json as _j
+    import discovery_daily as dd
+    from pipeline import aggregators, sources as _src
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "discovered_cache.json").write_text("[]", encoding="utf-8")
+    (tmp_path / "research_companies.json").write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
+    from pipeline import intake_ledger as _led
+    monkeypatch.setattr(_led, "PATH", str(tmp_path / "cloud_state" / "intake_rejects.json"))
+    for fn in ("indeed_search", "workable_search"):
+        monkeypatch.setattr(dd, fn, lambda *a, **k: [])
+    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": [])
+    monkeypatch.setattr(dd, "_li_queries", lambda: [("x", "Israel", 0)])
+    monkeypatch.setattr(dd, "plan_spend", lambda today=None: (100, 0, "test"))
+    monkeypatch.setattr(dd, "report_bd_spend", lambda targeted_cap=None: None)
+    monkeypatch.setattr(dd, "load_companies", lambda active_only=False: [])
+    monkeypatch.setattr(dd, "_load_secrets", lambda: None)
+    monkeypatch.setattr(dd, "secrethunter_catalog", lambda: ["ness-technologies"])
+    monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
+    dd.main()
+    q = _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))
+    assert [e["name"] for e in q] == ["Ness Technologies"], q
+    e = q[0]
+    assert sorted(e) == ["ats", "careers_url", "name", "slug"], "no private key may leak out"
+    assert e["slug"] == "ness-technologies" and e["ats"] == "unknown"
+    # the seed must be an AGGREGATOR url -- that is what routes it into auto_expand's slug
+    # rung (`:503` fires only when `agg_seed`), and an empty one would be invisible forever
+    assert e["careers_url"] and aggregators.is_aggregator(e["careers_url"])
+    health = _j.loads((tmp_path / "cloud_state" / "source_health.json").read_text(encoding="utf-8"))
+    assert health["secrethunter"]["last_count"] == 1
+
+
+def test_the_catalog_refuses_a_sitemap_path_that_is_not_a_company(monkeypatch):
+    """The first cut captured the slug with `([^?<]+)` and checked no host, so
+    `/companies/page/2`, `/companies/all` and a `<loc>` on somebody else's domain all became
+    queue entries named `Page 2`, `All` and `Not Secrethunter` — each burning a slot in the
+    queue whose depth is the whole reason this source is capped. None is in today's sitemap;
+    they are what a regenerated one adds first."""
+    from pipeline import http, secrethunter as S
+    monkeypatch.setattr(http, "get_text", lambda url, **k: (
+        "<urlset>"
+        "<url><loc>https://secrethunter.io/companies/page/2</loc></url>"
+        "<url><loc>https://secrethunter.io/companies/all</loc></url>"
+        "<url><loc>https://evil.example.com/companies/not-secrethunter</loc></url>"
+        "<url><loc>https://secrethunter.io/companies/wix</loc></url>"
+        "</urlset>"))
+    slugs = S.sitemap_slugs()
+    assert "wix" in slugs and "page" not in slugs
+    assert not any("not-secrethunter" in s for s in slugs), "a foreign host was accepted"
+    entries, rejections, _st = S.queue_entries(slugs, set(), set(), cap=50)
+    assert [e["name"] for e in entries] == ["Wix"], entries
+    assert ("All", "reserved-path") in rejections
+
+
+def test_the_catalog_offers_one_company_once_however_many_slugs_it_has(monkeypatch):
+    """`NeuReality`/`neureality` and `Aqua Security`/`Aquasecurity` are each one company under
+    two catalog slugs. Without a self-dedup both were offered, each consuming one of the day's
+    40 slots, and the bridge's `new_cos.setdefault` then silently discarded the loser — so the
+    `N offered` log line over-reported the cap it exists to prove."""
+    from pipeline import secrethunter as S
+    slugs = ["Harmonya Technologies", "harmonya-technologies", "harmonya_technologies",
+             "alvarez-&-marsal", "alvarez-and-marsal", "wix"]
+    entries, _r, st = S.queue_entries(slugs, set(), set(), cap=40)
+    assert len({e["name"] for e in entries}) == len(entries), entries
+    assert [e["name"] for e in entries] == ["Harmonya Technologies", "Alvarez And Marsal", "Wix"]
+    assert st["dup_in_catalog"] == 3
+
+
+def test_the_reject_ledger_never_deletes_a_record_it_merely_could_not_read(tmp_path):
+    """The TTL prune tested `str(v.get("last_seen", "")) < cutoff`, and `"" < cutoff` is True —
+    so a record missing that one optional key was DELETED and counted under "aged out", in the
+    one file whose entire promise is merge-only. A value that was not a dict at all was the
+    mirror bug: unprunable, hence immortal. Both are repaired, not dropped."""
+    import io as _io
+    import json as _j
+    from pipeline import intake_ledger as L
+    p = str(tmp_path / "l.json")
+    _io.open(p, "w", encoding="utf-8").write(_j.dumps(
+        {"keepme": {"name": "KeepMe", "reason": "agency", "first_seen": "2026-08-27"}}))
+    assert L.record([], path=p, today="2026-08-27") == (0, 0, 0)
+    assert list(_j.load(_io.open(p, encoding="utf-8"))) == ["keepme"]
+    _io.open(p, "w", encoding="utf-8").write(_j.dumps({"zombie": "agency"}))
+    L.record([], path=p, today="2026-08-27")
+    assert _j.load(_io.open(p, encoding="utf-8"))["zombie"]["reason"] == "agency"
+    # an unparseable `today` must not become a first_seen, nor decide what to prune
+    L.record([("X", "agency")], path=p, today="not-a-date")
+    rec = _j.load(_io.open(p, encoding="utf-8"))["x"]
+    assert rec["first_seen"] != "not-a-date"

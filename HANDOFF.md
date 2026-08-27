@@ -47,7 +47,6 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 |---|---|---|---|---|
 | 2026-08-27 | scraper | Get SAT/BlueBird/Red Access/WSC Sports in `with_jobs` or `links_unread`, never `empty` | 2026-08-27 | PASS on the artefact — no rot record for any of the four; `via` sums to `with_jobs` 201; no `llm-down` |
 | 2026-08-27 | ats-fetch | `29 regressed to zero` standing; 0 `?` in `stale.json`; `new:` grouped; no myInterview under `cleared:` | 2026-08-27 | PARTIAL — `stale.json` has 29 `regressed-to-zero` and zero `?`; the two mail-rendered clauses are unanswerable, **no 08-27 digest ran** |
-| 2026-08-27 | discovery | `recovered=N`, `cache: dropped ~18 agency cards`, no `### Jobgether` | — | N/A — **no 08-27 digest ran**. The pre-committed rule stands: `recovered=`~0 on the runner ⇒ REMOVE the re-ask, do not tune it |
 | 2026-08-27 | company-intel | `Company intel:` names sonnet, `N searches`, no `SEARCHLESS`, export count matches the file | — | N/A — no 08-27 digest ran. For the record `firmographics.json` is 973 and `seen.db` 946; the 08-26 mail said 942, so whatever it prints, two of those three will disagree |
 | 2026-08-27 | jd-text | `Stage order:` carries `scrape_bd_calls=`/`matched_short=`; `jd-fill:` denominator ~121 | — | N/A — no 08-27 digest ran. 08-26 baseline: `jd-fill: 110/148 … discovery-indeed http-401 17` |
 | 2026-08-28 | infra | the digest log's `deliver:` line says `delivered`, and `cloud_state/last_delivered.json` carries `2026-08-28` with a sha256 matching `digests/latest.md` | — | not yet due |
@@ -217,6 +216,7 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-27 `roles`** — one `seen_id` named sixteen roles, and the merge kept the best member, not the best field. Shipped: a tenant-keyed `seen_id`, an origin-gated merge, a run log. **NOT finished:** 311-313. Record: `docs/sessions/2026-08-27-roles.md`.
 - **2026-08-27 `registry`** — `activation_ok` admitted 9 of 12 name-guessed boards, 6 another employer's: a slug made from the name near-equals the name. Shipped a free rung on `il>=1` + a queue drain (1,693->498); the 17:00 run added 11 rows, 3 relevant roles, 0 credits. **NOT finished:** 317-323. Record: `docs/sessions/2026-08-27-registry.md`.
 - **2026-08-27 `registry` (2)** — the 17:00 run scanned 238 of 250, not 31; its log could not say so. Swept all 505 remaining names free: 9 boards, 61 Israel jobs, **1** accepted role, 0 credits. Closed 316/320/323, half-closed 322. **NOT finished:** 322's LLM path, 317, 318, 324-326. Record: `docs/sessions/2026-08-27-registry.md`.
+- **2026-08-27 `discovery`** — secrethunter's own-domain JSON-LD is crawler-UA-gated and its browser route is auth-gated; the sitemap is not. Shipped it as a names source (2,002 new employers, 40/run, 0 credits) + the intake reject ledger (70). **NOT finished:** 321, 333-337. Record: `docs/sessions/2026-08-27-discovery.md`.
 
 *The 2026-08-23 morning session (seventeen defects, A–Q) and the digest-run history that
 used to open this file are in `docs/sessions/2026-08-23.md`, which is where the long

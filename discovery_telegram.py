@@ -316,6 +316,19 @@ def main():
     for j in unattributable:
         print(f"  [names] not an employer, not cached: {j['company']} | {j['title']}")
     new_jobs = [j for j in new_jobs if j not in unattributable]
+    # BACKLOG 70: printed is not recorded. A Telegram post scrolls off the t.me preview, so a
+    # name refused here is one the source may never offer again — the step log of a run
+    # nobody read is not an appeal trail. Recorded BEFORE the quiet-day return below, for the
+    # same reason `_health` is: a day with nothing new can still have refused something.
+    try:
+        from pipeline import intake_ledger
+        _rej = [(j["company"].strip(),
+                 "place-name" if is_place_name(j["company"]) else "agency")
+                for j in unattributable]
+        if _rej:
+            intake_ledger.record(_rej)
+    except Exception as e:  # noqa: BLE001
+        print(f"[intake-rejects] skipped: {e}", flush=True)
     # Unlearn yesterday's queue on EVERY run, before the quiet-day return: what the gates
     # refuse today must not sit in research_companies.json for auto_expand at 08:47.
     _prune_queue()
@@ -359,15 +372,27 @@ def main():
     # `new_jobs`, not `added`: `added` is what was new to the CACHE, and a post whose card we
     # already hold can still carry an employer the registry has never heard of — which is
     # also what makes the abort above recoverable, since a re-scan dedups to no cards at all.
+    junked = {}          # BACKLOG 70: the one gate here whose refusals nothing else records
     for j in new_jobs:
         c = j["company"].strip()
         # a Telegram post's "company" is whatever the poster typed, so it is the most
         # likely of all the sources to be a job title, a team name — or a city
-        if (c.lower() not in have and c.lower() not in known
-                and not is_recruiter(c) and not looks_like_junk(c) and not is_place_name(c)):
-            research.append({"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""})
-            known.add(c.lower())
-            queued += 1
+        if c.lower() in have or c.lower() in known:
+            continue
+        if is_recruiter(c) or is_place_name(c):
+            continue                       # already recorded at the cache gate above
+        if looks_like_junk(c):
+            junked[c.lower()] = c
+            continue
+        research.append({"name": c, "careers_url": j["url"], "ats": "unknown", "slug": ""})
+        known.add(c.lower())
+        queued += 1
+    if junked:
+        try:
+            from pipeline import intake_ledger
+            intake_ledger.record([(n, "junk-name") for n in junked.values()])
+        except Exception as e:  # noqa: BLE001
+            print(f"[intake-rejects] skipped: {e}", flush=True)
     if queued:
         discovery_queue.write(research)
     write_json(STATE_PATH, state)

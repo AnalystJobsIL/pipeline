@@ -462,7 +462,7 @@ It is *backfill for known-broken rows* and lives here for historical reasons —
 (it found roles at 15 active companies whose own board reports 0), never counted towards
 discovery, and the first thing to cut if the Bright Data budget binds.
 
-### The five live sources (four running, 2026-08-25)
+### The six live sources (five running, 2026-08-27)
 
 Costs and counts are the 2026-08-23 measurements, with the 2026-08-25 cloud run beside
 them where it differs; re-derive with
@@ -481,6 +481,7 @@ cap 4 and zero records on 08-24, cap 0 on 08-25.
 | `indeed` | `il.indeed.com/jobs` through the Web Unlocker; parsed from the `mosaic-provider-jobcards` blob | yes | 58 raw → 46 kept |
 | `telegram` | public `t.me/s/<channel>` previews — no bot, no account, no quota | no | 6 channels, 16–18 of 20 parsed each |
 | `linkedin-targeted` | BD dataset, one input per broken-board company, scoped by the **`company` field**. Backfill, **NOT discovery** | yes | 88 companies → 67 records, 57 on-target |
+| `secrethunter` | the catalog's SITEMAP only — 2,703 `/companies/<slug>` names, one keyless GET, honest UA. A NAMES source: it yields no jobs at all. The slug is usually the LinkedIn handle, which is the one seed `auto_expand._site_from_guess` can prove into an own domain. Its company PAGES carry that domain and every open title but serve it only to named crawler UAs, so they are **deliberately not read** | no | 2,703 names → 484 already in the registry, 206 already queued, 11 refused, **2,002 new**; 40/run day-rotated (set from the registry's ~22/day throughput, not from what the source could supply), 0 credits |
 
 \* the paid path is a fallback; `SOURCE_PATH` records which one served — `linkedin_free`,
 `linkedin_blank` (a 200 with no cards: a hole in the pool or a soft limit), `linkedin_blocked`
@@ -574,6 +575,7 @@ Per MONTH, not per day.
 | Workable — keyless, all tenants | **0** |
 | Indeed — Unlocker, 5 queries + retries | 6 |
 | LinkedIn targeted backfill — dataset, per RECORD | 67 |
+| secrethunter catalog — one sitemap GET, keyless | **0** |
 | everything else (JD enrichment, rescue, crack, repair) | ~44 |
 | **discovery's own share, before SERP** | **~124** → ~3,700/month |
 
@@ -687,6 +689,7 @@ this is the cheapest place in the system to say no. Both bridges apply the same 
 | `looks_like_junk` | `pipeline/firmographics.py` | a leaked job title / category / team phrase ("Data researcher - Navina", "AppSec") |
 | `is_recruiter` | `pipeline/recruiters.py` | staffing and placement firms, which re-post dozens of clients' roles — **and, since 2026-08-26, job-board BRANDS**: the 08-26 mail published `### Jobgether` as a newly covered employer with a role under it, while `jobgether.` had been on `aggregators.HOSTS` for weeks. The repo had ruled on the HOST and not on the NAME, and a discovery card carries the name. `ethosia` and `staffin` the same day (`\bstaffing\b` does not match "Staffin"). Bare brand AND display form are listed, because display names drift; NOT derived from `HOSTS` by brand stem, which was measured and hits `google`. Since 2026-08-25 it also judges the LinkedIn `company_slug` — "Dialog" is `dialog-recruiting` — and its own firmographics record is evidence: Nisha Pro shipped in the 08-25 mail as "newly covered" with a blurb saying "staffing" |
 | `is_place_name` | `discovery_telegram.py` — **the Telegram path only**, cache AND queue | a name that is exactly a city / region / country (`pipeline/israel`'s place lists plus the spellings the channels write, spaces squashed: "Petahtikva"). Only a Telegram post can put a city in the employer slot, and the same check on the structured sources would veto real employers that share a place name (Nesher, Eilat, Airport City). A company named "Tel Aviv" defeats every downstream identity check because its host is named after the same city (`registry_health --explain "Tel Aviv"` → `tenant_is_this_company = True`); 1 of 1,633 distinct name strings across registry ∪ queue ∪ cache on 2026-08-25, and it IS an active row until `registry` parks it (BACKLOG 167) |
+| the LEDGER, not a gate | `pipeline/intake_ledger.py` — written by BOTH bridges | nothing. It REFUSES nothing and decides nothing; it records what the three gates above already refused, merge-only and TTL-bounded, into `cloud_state/intake_rejects.json`. Until 2026-08-27 both bridges kept only a COUNT and `looks_like_junk` did not even print, so a wrongly-refused employer was invisible forever and un-appealable — 32 names died on 2026-08-24 alone and not one is recoverable. `first_seen` is the date a name was FIRST refused, so `grep -c agency cloud_state/intake_rejects.json` is answerable months later (`docs/BACKLOG.md` 70) |
 
 Job-level exclusion happens later and separately, in `fetchers.fetch_discovery`: the 21-day
 TTL, `is_recruiter` again (a discovery job carries the real employer name, so it bypasses
@@ -717,7 +720,7 @@ every one on the free keyword path — `reject / keyword / junior-intern-entry-l
 call — while the post still contributes its employer to the names funnel. A second filter
 here would cost coverage and buy nothing.
 
-### Five rules this layer costs data to re-learn
+### Six rules this layer costs data to re-learn
 
 1. **Merge `discovered_cache.json`, never truncate it.** `discovery_daily.py` runs first and
    `discovery_telegram.py` second, into the same file. A truncating write on 2026-08-21
@@ -780,7 +783,57 @@ here would cost coverage and buy nothing.
    `test_an_unreadable_queue_stops_telegram_before_the_watermark` (which re-runs and asserts
    the names come back exactly once).
 
+6. **A directory that publishes structured data may be publishing it only to CRAWLERS, and
+   an identical byte count is how you find out.** secrethunter.io's company pages were
+   reported as carrying schema.org JSON-LD with each company's own domain "in the plain,
+   logged-out HTML, 16/16 with plain curl". Measured 2026-08-27, they carry it for
+   `Googlebot` / `bingbot` / `ClaudeBot` (38,649 bytes, 5 `ld+json` blocks) and for nobody
+   else: `curl`, a Chrome UA, no UA at all, an honest `AnalystJobsIL` UA, `Claude-User` and
+   `?_escaped_fragment_=` each get the same **34,181-byte** shell with two blocks that are
+   secrethunter's OWN `Organization` and `WebSite`. **The tell was that 26 different
+   companies returned byte-identical bodies** — a real page varies, a shell does not, and
+   the check costs one `len()`. Three consequences, all now load-bearing: sending a crawler
+   UA we are not is refused, so the pages are not read at all and only the (ungated) sitemap
+   is; a real logged-out browser does not rescue it either, because the client-side app
+   fetches from the auth-gated `api.secrethunter.io` and renders `Error loading company
+   information` (headless AND headed, 3 of 3 pages, 0 domains); and the first "confirmation"
+   of the domain had been a grep of the raw markup that matched a substring of
+   `linkedin@ness-tech.co.il`, an email address. **Parse the structured data, never grep the
+   markup — and re-run the measurement that DISAGREES with you as carefully as the one that
+   agrees.** `docs/decisions/2026-08-27-secrethunter-company-catalog.md`.
+
 ### Known limitations of this layer
+
+- **The secrethunter catalog's employer NAMES are reconstructed from URL slugs, not read.**
+  The real names sit in the JSON-LD behind the crawler-UA gate (rule 6), so
+  `pipeline/secrethunter.name_from_slug` rebuilds them: `majestic-labs-ai` -> `Majestic Labs
+  AI` is right, `ide-technologies-ltd.` -> `Ide Technologies Ltd` is not quite. This costs
+  YIELD rather than correctness, because `_site_from_guess` demands
+  `page_mentions_company(name, html, strict=True)` before it believes any domain, so a
+  mangled name fails closed. But a name that IS eventually activated becomes a
+  `companies.csv` `company_name`, so the registry lane should expect to correct some.
+- **The TLD guess reaches the real domain 62% of the time; the RUNG yields 13.5%, and the
+  two must not be confused.** Measured 2026-08-27 over the 200 catalog slugs matching a
+  `companies.csv` `scrape` row whose `api_url` host is the company's own site, compared at
+  eTLD+1: `<slug>.<tld>` over today's four TLDs reaches the real registrable domain
+  **124/200 = 62.0%**. But that is only the FIRST of the five things `_site_from_guess` does;
+  its own docstring measures the whole rung at **49 of 364 = 13.5%** (119 domains answered,
+  104 named the company, 53 carried the linkback). An earlier version of this bullet quoted
+  the 62% as "what the rung does" and overstated it ~4x.
+  **The lever comparison is the durable part**, because both are scored on the same pairs:
+  widening the TLD list buys **+3.0 pp**, varying the STEM buys **+11.0 pp** (de-hyphenate,
+  strip a trailing `-ltd`/`-israel`: `applied-materials` -> `appliedmaterials.com`) — but the
+  rung's binding constraint is the LINKBACK (53 of 119), which stem variants do not relieve.
+  `_site_from_guess` is `auto_expand.py`, so this is `registry`'s (`docs/BACKLOG.md` 334).
+  **And the sample is biased:** pairs exist only where the slug resembles the company name,
+  which is the same property as resembling the domain — own-site rows the rule EXCLUDES score
+  **55.6%** against the included **73.0%**, a 17.4-point gap from selection alone.
+- **A newly queued name goes to the FRONT of the resolver's batch, not the back.**
+  `auto_expand.py:455` sorts `todo` by last-tried date and an unseen name sorts to `""`. So
+  the catalog's 40/run are tried before older leads — and unlike a LinkedIn or Indeed card,
+  a catalog name arrives with **no job signal at all**. The cap protects the queue's DEPTH;
+  nothing yet measures what those 40 displace, and the analyst-role yield of the 2,002 is
+  unestimated.
 
 - **The seed URL a bridge can offer is always an aggregator**, because a discovered job's
   `url` IS its posting on LinkedIn / Indeed / secrethunter — **514 of 1,544** queue entries

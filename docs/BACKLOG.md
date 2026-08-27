@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**375 filed · 266 open · 109 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**381 filed · 272 open · 109 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 333.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 339.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -83,7 +83,7 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### registry — 76 open
+### registry — 77 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -161,8 +161,9 @@ closure convention in the header.
 - **330** `330@registry` **`auto_expand`'s rotation-key flush keys on dict GROWTH, not on work done**
 - **331** `331@registry` **`resolve_deep._verify` is inside `resolve`'s "TOTAL wall clock" and never sees it** —
 - **332** `332@registry` **The queue-to-row bridge is one tool wide, and ~456 names are therefore owned by
+- **334** `334@registry` **`_site_from_guess` tries four TLDs and never varies the STEM, and the stem is worth
 
-### infra — 67 open
+### infra — 69 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -231,6 +232,30 @@ closure convention in the header.
 - **311** `311@infra` **`_needs_git` skips 11 infra guards in a git WORKTREE
 - **314** `314@infra` **`persist_state._keyed_list`'s docstring says the merge only appends, and the code
 - **324** `324@infra` **Deleting a dispatched run record destroys the evidence its morning check is answered
+- **333** `333@infra` **`cloud_state/intake_rejects.json` is committed by a directory rule and declared by
+- **335** `335@infra` **`BD_MONTHLY_BUDGET` defaults to 5,000 and no workflow sets it, so credits the
+
+### discovery — 19 open
+
+- **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
+- **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
+- **8** `8@discovery` **`linkedin-targeted` is 87% of discovery's credit cost for ~1 new company/day.**
+- **14** `14@discovery` **`discovery_daily.py` is a 1,214-line monolith doing six jobs.** *(lane: `discovery`.)*
+- **70** `70@discovery` **The intake filters throw away company names every day and nothing records WHICH.**
+- **70** `70@discovery` **The LinkedIn guest walk's worst case grew ~5x inside the digest job**
+- **71** `71@discovery` **A funding-news feed is the only source shape that finds a company BEFORE its first
+- **183** `183@discovery` **`bd_spend_this_month`'s zone pinning is dead code, and the API's real `cost` is
+- **185** `185@discovery` **A lettered decoration header still shifts a Telegram post by one line**
+- **186** `186@discovery` **A Telegram post with company present and CITY missing is skipped**
+- **187** `187@discovery` **`aggregators._AGG_RX` fires on any `//` inside a path**
+- **189** `189@discovery` **Three loose ends from the 2026-08-25 attack waves, none load-bearing today**
+- **192** `192@discovery` **`BD_MONTHLY_BUDGET` is 5,000; the operator's ceiling from 2026-09 is 4,500**
+- **226** `226@discovery` **The breadth sweep loses whole pages to blank guest replies**
+- **227** `227@discovery` **The keyless guest endpoint is a coverage ceiling, and it is now the largest known gap
+- **228** `228@discovery` **The 2026-08-26 audit is 4 of 9 keywords deep**
+- **321** `321@discovery` **The registry's policy on Israeli IT-services firms is implicit, unmeasured, and now
+- **336** `336@discovery` **theorg.com is the best-shaped company directory found so far and is unbuilt** —
+- **337** `337@discovery` **The secrethunter catalog's own-domain and job-title data has no honest route, and the
 
 ### scraper — 19 open
 
@@ -254,25 +279,22 @@ closure convention in the header.
 - **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
 - **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
 
-### discovery — 17 open
+### docs — 14 open
 
-- **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
-- **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
-- **8** `8@discovery` **`linkedin-targeted` is 87% of discovery's credit cost for ~1 new company/day.**
-- **14** `14@discovery` **`discovery_daily.py` is a 1,214-line monolith doing six jobs.** *(lane: `discovery`.)*
-- **70** `70@discovery` **The intake filters throw away company names every day and nothing records WHICH.**
-- **70** `70@discovery` **The LinkedIn guest walk's worst case grew ~5x inside the digest job**
-- **71** `71@discovery` **A funding-news feed is the only source shape that finds a company BEFORE its first
-- **183** `183@discovery` **`bd_spend_this_month`'s zone pinning is dead code, and the API's real `cost` is
-- **185** `185@discovery` **A lettered decoration header still shifts a Telegram post by one line**
-- **186** `186@discovery` **A Telegram post with company present and CITY missing is skipped**
-- **187** `187@discovery` **`aggregators._AGG_RX` fires on any `//` inside a path**
-- **189** `189@discovery` **Three loose ends from the 2026-08-25 attack waves, none load-bearing today**
-- **192** `192@discovery` **`BD_MONTHLY_BUDGET` is 5,000; the operator's ceiling from 2026-09 is 4,500**
-- **226** `226@discovery` **The breadth sweep loses whole pages to blank guest replies**
-- **227** `227@discovery` **The keyless guest endpoint is a coverage ceiling, and it is now the largest known gap
-- **228** `228@discovery` **The 2026-08-26 audit is 4 of 9 keywords deep**
-- **321** `321@discovery` **The registry's policy on Israeli IT-services firms is implicit, unmeasured, and now
+- **87** `87@docs` **Retire `cache_new_rows.py`**
+- **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
+- **146** `146@docs` **Tests reach into `digest`'s private names**
+- **291** `291@docs` **The closed-item split: designed, measured, and its first implementation deleted** —
+- **295** `295@docs` **Three session records are named a day before their own H1**
+- **296** `296@docs` **`docs/POC_COMPANY_PROFILES.md` is a dated POC report filed among live docs**
+- **297** `297@docs` **`docs/check_docs.py`'s `§N` pattern cannot see a lettered section reference**
+- **298** `298@docs` **Nothing checks that a cited `BACKLOG <n>` exists**
+- **299** `299@docs` **The HANDOFF per-line cap can still be evaded four ways**
+- **300** `300@docs` **`parse()` truncates an item whose body contains a column-0 `## ` or numbered
+- **301** `301@docs` **`check_docs.py` uses module-global `ERRORS`/`WARNINGS`**
+- **302** `302@docs` **`check_session_record_dates` inspects only line 1**
+- **303** `303@docs` **ARCHITECTURE section 8's guard-rail table describes guards that have moved**
+- **338** `338@docs` **`HANDOFF.md` is at its word cap, so two lanes finishing on the same day cannot both
 
 ### company-intel — 13 open
 
@@ -289,22 +311,6 @@ closure convention in the header.
 - **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
 - **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
 - **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
-
-### docs — 13 open
-
-- **87** `87@docs` **Retire `cache_new_rows.py`**
-- **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
-- **146** `146@docs` **Tests reach into `digest`'s private names**
-- **291** `291@docs` **The closed-item split: designed, measured, and its first implementation deleted** —
-- **295** `295@docs` **Three session records are named a day before their own H1**
-- **296** `296@docs` **`docs/POC_COMPANY_PROFILES.md` is a dated POC report filed among live docs**
-- **297** `297@docs` **`docs/check_docs.py`'s `§N` pattern cannot see a lettered section reference**
-- **298** `298@docs` **Nothing checks that a cited `BACKLOG <n>` exists**
-- **299** `299@docs` **The HANDOFF per-line cap can still be evaded four ways**
-- **300** `300@docs` **`parse()` truncates an item whose body contains a column-0 `## ` or numbered
-- **301** `301@docs` **`check_docs.py` uses module-global `ERRORS`/`WARNINGS`**
-- **302** `302@docs` **`check_session_record_dates` inspects only line 1**
-- **303** `303@docs` **ARCHITECTURE section 8's guard-rail table describes guards that have moved**
 
 ### ats-fetch — 12 open
 
@@ -5268,3 +5274,144 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      source of its own. **Do not raise `LLM_RESOLVE_CAP` to find out** — three runs at the
      current cap have resolved 0, and the cap is not what is binding (`278@registry`).
 
+## From the `discovery` lane, 2026-08-27
+
+Record: `docs/sessions/2026-08-27-discovery.md`; spec `ARCHITECTURE.md` 1a. Closed there:
+**70** (the intake reject ledger — the first of the two items filed under that number; the
+LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
+`docs/decisions/2026-08-27-secrethunter-company-catalog.md`,
+`docs/decisions/2026-08-27-it-services-employers.md`. Numbers below came from
+`python docs/backlog.py next`.
+
+333. **`cloud_state/intake_rejects.json` is committed by a directory rule and declared by
+    nothing** — lane: `infra`, found by `discovery`. The new intake reject ledger writes to
+    `cloud_state/`, which `daily-digest.yml:209` owns as a DIRECTORY, so it is committed and
+    `test_every_path_a_workflow_owns_has_a_persist_strategy` passes (its `known` set contains
+    the literal `"cloud_state"`). The BEHAVIOUR is already correct and identical to a declared
+    path — verified, not assumed:
+
+        strategy_for("cloud_state/intake_rejects.json") -> s_ours, "NO STRATEGY -- ours wins"
+        strategy_for("cloud_state/source_health.json")  -> s_ours, "single writer (daily-digest)"
+
+    (`persist_state.py:305-311`. Note the module comment says "anything else is `ours` with a
+    warning" and **no warning is actually emitted** — only the reason string differs. That
+    comment is itself slightly wrong.) `ours` IS right here: both writers are `discovery_daily`
+    then `discovery_telegram` inside the same job, and each merges with the checked-out copy
+    before writing. So this is a DECLARATION gap, not a data-loss risk — one line in
+    `persist_state.SINGLE_WRITER` so the table means what its docstring says:
+
+        "cloud_state/intake_rejects.json": "daily-digest",
+
+    plus a row in `ARCHITECTURE.md` 5's state-file table. Both files are `infra`'s;
+    `discovery` did not touch them. Until it lands there is no symptom at all — which is
+    exactly why it would otherwise be forgotten.
+
+334. **`_site_from_guess` tries four TLDs and never varies the STEM, and the stem is worth
+    ~3.7x the TLD list** — lane: `registry` (`auto_expand.py`), measured by `discovery`.
+    Ground truth: the 200 secrethunter catalog slugs that match a `companies.csv` `scrape`
+    row whose `api_url` host IS the company's own site, compared at eTLD+1 (comparing full
+    hosts undercounts — `careers.arm.com`, `jobs.apple.com` are subdomains):
+
+        raw slug x NARROW tlds (today)   124/200 = 62.0%
+        raw slug x +17 more tlds         130/200 = 65.0%   (+3.0 pp)
+        slug VARIANTS x today's tlds     146/200 = 73.0%   (+11.0 pp)
+        variants x wider tlds            152/200 = 76.0%
+        irreducible (abbreviations)       48/200 = 24.0%
+
+    The variants that pay are lossless: de-hyphenate, strip a trailing
+    `-ltd`/`-inc`/`-israel`/`-group`. They reach `applied-materials` ->
+    `appliedmaterials.com`, `boston-scientific` -> `bostonscientific.com`, `bookmap-ltd` ->
+    `bookmap.com`, `bits-of-gold-ltd` -> `bitsofgold.co.il`. What they cannot reach is the
+    abbreviation/restructuring class — `air-dr.com` for `airdoctor`, `gs.com` for
+    `goldman-sachs`, `stream.security` for `StreamSecurity` (the real domain SPLITS the name
+    across the dot), `cbccom.com` for `central-bottling-company-group-ltd`.
+
+    **THREE THINGS TO READ BEFORE SIZING THIS, all of which cut the number down.**
+
+    1. **This measures the DOMAIN GUESS, not the rung.** `_site_from_guess` then requires
+       >=2,000 chars, `page_mentions_company(..., strict=True)`, a whole-handle linkback and
+       `not is_foreign`. Its own docstring (`auto_expand.py:283-285`) measures the whole
+       thing: *"364 drainable names ... 119 domains answered, 104 named the company, 53
+       carried the linkback, and 49 satisfied ALL THREE"* — **49/364 = 13.5%**. An earlier
+       draft of this item labelled 62% as the rung's yield and was wrong by ~4x.
+    2. **The binding constraint is the LINKBACK, which stem variants do not relieve** (53 of
+       the 119 that answered). More candidate domains is not more linkbacks, so +11.0 pp on
+       the guess is materially less than +11.0 pp end-to-end. Measure it end-to-end before
+       banking it.
+    3. **The sample is selection-biased.** A pair exists only where the slug resembles the
+       company name — the same latent property as resembling the domain. Own-site rows the
+       pairing rule EXCLUDES score **55.6%** against the included **73.0%**: a 17.4-point gap
+       from selection alone. And all 200 are companies already resolved, several of them
+       foreign multinationals that `is_foreign` would discard inside the rung anyway.
+
+    **Do not truncate a meaningful token to get more**: `_lossless_slugs` already refuses
+    that, and BACKLOG 317 records what a truncated stem that near-equals a DIFFERENT company
+    costs. What this item does support, because both levers are scored on the same pairs, is
+    the COMPARISON: vary the stem before widening the TLD list.
+
+335. **`BD_MONTHLY_BUDGET` defaults to 5,000 and no workflow sets it, so credits the
+    operator BUYS cannot be spent** — lane: `infra` (`daily-digest.yml`) with `discovery`.
+    `discovery_daily.py:676` reads `int(os.environ.get("BD_MONTHLY_BUDGET", "5000"))` and
+    `daily-digest.yml:76-79` sets only `BRIGHTDATA_API_KEY` / `BRIGHTDATA_ZONE`. On
+    2026-08-27 the pool stood at **6,193 credits (124% of 5,000)**, so `budget_per_day()`
+    returned 0, `plan_spend()` cut the targeted cap to 0, and the run printed
+    `targeted backfill SKIPPED this run — no budget or nothing to target`. The operator
+    added paid credits the same day; **the layer will still refuse to spend them until
+    2026-09-01**, because the ceiling is a constant in the code and not a reading of the
+    account. One line of `env:` fixes it for the rest of the month. Note the tension with
+    BACKLOG 192, which records the operator's ceiling from 2026-09 as 4,500 while the
+    2026-08-27 instruction was "self-sufficient at 5,000 monthly" — whoever sets the env var
+    should settle which number is current.
+
+336. **theorg.com is the best-shaped company directory found so far and is unbuilt** —
+    lane: `discovery`. Spot-checked 2026-08-27 with an HONEST UA, 7 of 7 companies (Wix,
+    Fiverr, monday.com, Riskified, Similarweb, NICE, Gong): every `/org/<slug>` page serves
+    `Organization` JSON-LD in the logged-out HTML carrying **`url`** (the company's own
+    domain — the field 514 of 517 queue entries lack) AND a **LinkedIn company URL in
+    `sameAs`** — which is the handle itself rather than a guess at it, and would answer the
+    135 queue entries that have no handle at all. Also `address`, `legalName` and employee
+    records. `robots.txt` allows `/org/`; the sitemap index is `cdn.theorg.com/sitemap.xml`
+    with **192 shards**, of which the `companies-sitemap-N.xml.gz` series is the relevant
+    one. Two real weaknesses: it is **global, not Israel-scoped** (the `address` is HQ, so
+    Riskified reads New York and NICE reads Hoboken — it cannot be used as an Israel
+    filter), and it carries **no job titles**, so it cannot invert the funnel the way the
+    secrethunter ItemList would have. The shape that fits this repo is therefore a
+    **resolver for names we already hold**, not a discovery firehose: 517 queue entries in,
+    domains and handles out. A naive `name -> slug` guess resolved 7 of 7 well-known
+    companies, but the queue's names are obscure and that hit rate is NOT measured — measure
+    it against the sitemap shards before building anything.
+
+337. **The secrethunter catalog's own-domain and job-title data has no honest route, and the
+    only remaining one is commercial** — lane: `discovery`, for the operator. Recorded so it
+    is not re-attempted. The company pages carry `Organization.sameAs` (the real domain) and
+    an `ItemList` of every open title, but serve it ONLY to named search-engine crawler UAs;
+    six honest identifiers were measured against it, including `Claude-User`, and all six get
+    the 34,181-byte SPA shell. A real logged-out browser does not rescue it either — headless
+    AND headed Chromium render `Error loading company information` because the client-side app
+    fetches from the auth-gated `api.secrethunter.io` (3 of 3 pages, 0 domains, bodies
+    byte-identical across companies). **A one-shot Playwright backfill was written for this,
+    measured, found to return nothing, and DELETED** — a tool that returns 0% is an invitation
+    to "fix" it with `user_agent="Googlebot"`, which is the one outcome the decision record
+    exists to prevent. What is left is a subscription or licensing conversation with
+    secrethunter, the same bucket Startup Nation Central is in — and note that scraping behind
+    a paid login would be worse than the crawler-UA route, not better. Full workings:
+    `docs/decisions/2026-08-27-secrethunter-company-catalog.md`.
+
+338. **`HANDOFF.md` is at its word cap, so two lanes finishing on the same day cannot both
+    add a line** — lane: `docs`. Measured 2026-08-27: `origin/master`'s copy was **3,194 of
+    the 3,200-word cap** before this session, i.e. six words of headroom, after the `registry`
+    lane added its own entry the same afternoon. A minimal compliant session entry is ~30
+    words, so the second lane to finish is structurally unable to comply.
+
+    `discovery` resolved it for itself by answering its morning-check row and moving that row
+    **verbatim** to `docs/morning-checks.md` the day it came due, rather than after the seven
+    days the file's rule names — which is legitimate (the archive is where answered rows go,
+    and nothing was lost) but is a workaround, not a fix, and it only works for a lane that
+    happens to own an answered row.
+
+    The caps are right and should not simply be raised: the line cap alone was defeated once
+    by writing a whole session as one 4,960-character line, and the word cap is what noticed.
+    The real options are (a) move answered morning-check rows out on the day they are
+    answered, as a rule rather than an improvisation, (b) fold the `## Watch list` items that
+    have become durable into `ARCHITECTURE.md`, or (c) cap the session log at N entries and
+    push the rest to `docs/sessions/`, which is where the long version already lives.

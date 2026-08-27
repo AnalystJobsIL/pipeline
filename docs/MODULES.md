@@ -143,6 +143,7 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/http.py` | **shared** - the zero-dependency HTTP helper |
 | `pipeline/identity_facts.py` | **shared** - DECLARED company identity: the one table of acquired-by tenants and brand/parent domains the gates consult before any string heuristic. To make an acquired company's board legitimate, add a row here |
 | `pipeline/identity_gate.py` | **shared** - the one gate every registry writer consults before it writes api_url/active; page content is the discriminator, the tenant string is not |
+| `pipeline/intake_ledger.py` | what intake REFUSED and why - the appeal trail for a name a gate threw away (docs/BACKLOG.md 70). Merge-only, TTL-bounded, written by both discovery bridges; never a gate itself |
 | `pipeline/israel.py` | deterministic Israel-location filter |
 | `pipeline/jdfill.py` | fetches a job description for a role that arrived without one |
 | `pipeline/jdtext.py` | the JD as text -> requirements / responsibilities / blurb / location / seniority chip (pure; stdlib + the lexicon for two checks) |
@@ -154,6 +155,7 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/roleprofile.py` | the lexicon: skills / role family / IC-vs-lead / years / degree / task groups / AI / soft skills |
 | `pipeline/roles.py` | **the role ledger** (lane `roles`): cloud_state/roles.jsonl + roles_text.jsonl, one line per role - status / episodes / reposts / class / tags / attribution / sent - reconciled with the sqlite store at open |
 | `pipeline/run.py` | **the orchestrator.** Owned by `infra`; any lane may need a hook in it - propose it, do not smuggle it |
+| `pipeline/secrethunter.py` | the secrethunter.io company catalog, read from its SITEMAP - 2,703 names plus a candidate LinkedIn handle, keyless and free. The company pages carry the own-domain and every open job title but serve it only to named crawler UAs, so they are deliberately not read (docs/decisions/2026-08-27-secrethunter-company-catalog.md) |
 | `pipeline/seniority.py` | relevance + experience classification; the LLM tier for ambiguous titles |
 | `pipeline/sources.py` | **shared** - per-discovery-source liveness |
 | `pipeline/stages.py` | **shared** - which nightly stage last finished, and how much it did |
