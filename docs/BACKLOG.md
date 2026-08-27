@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**356 filed · 250 open · 106 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**359 filed · 253 open · 106 closed · 5 half · 31 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -81,7 +81,9 @@ closure convention in the header.
 | 244 | `244@company-intel` **open** · `244@ats-fetch` **open** · `244@scraper` **open** |
 | 245 | `245@company-intel` **open** · `245@ats-fetch` **open** · `245@scraper` **open** |
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
-| 311 | `311@infra` **open** · `311@ats-fetch` **open** |
+| 311 | `311@infra` **open** · `311@ats-fetch` **open** · `311@roles` **open** |
+| 312 | `312@roles` **open** · `312@roles` **open** |
+| 313 | `313@registry` **open** · `313@roles` **open** |
 
 ### infra — 65 open
 
@@ -305,7 +307,7 @@ closure convention in the header.
 - **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
 - **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
 
-### roles — 7 open
+### roles — 10 open
 
 - **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
 - **143** `143@roles` **`roles.tenant_slug` is not a tenant**
@@ -313,7 +315,10 @@ closure convention in the header.
 - **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
 - **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
 - **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **311** `311@roles` **s docstring says the merge only appends, and the code it
 - **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **312** `312@roles` ** rewrites its own baseline every digest run, so a pool can alarm at most
+- **313** `313@roles` ** has three different defaults in three places**
 
 ### classifier — 6 open
 
@@ -4825,3 +4830,32 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
     and on 2026-08-27 eight parked names normalized onto an ACTIVE row (HP Inc., NICE, Nova
     Ltd., SolarEdge Technologies, Innoviz Technologies, Orca-AI, Workday Inc, TechBiz Global
     GmbH).
+
+311. **s docstring says the merge only appends, and the code it
+     delegates to deletes** - lane:  (+ , which repeated it). The docstring reads
+     "merged as a dict by that key, origin s order kept, ours additions appended", and the
+      lane quoted it on 2026-08-27 as proof that  was
+     structurally incapable of shrinking - which shaped a whole plan. It is false:
+      carries an explicit deletion loop
+     ()
+     added for BACKLOG 95, *"without this rule a night s deletions came back on every
+     push-conflict night"*. Caught by  reading the code instead of the docstring.
+     Two real caveats the docstring should carry instead: a removal IS resurrected if origin
+     edited that same entry, and  has no mass-deletion guard of the kind the
+      paths have.
+
+312. ** rewrites its own baseline every digest run, so a pool can alarm at most
+     once and a slow drift never alarms at all** - lane: . Found while settling
+     whether the probe-pool alarm was a real regression: 127 (08-25) -> 224 (08-26) -> 219
+     (08-27), the 08-26 mail compared 224 against the pre-widening 127, and
+      is now . It fired once and
+     self-cleared - so neither side of "one of the two is wrong" was wrong, and what IS wrong
+     is s claim that it alarms every morning (now corrected). A one-shot alarm on a
+     self-rewriting baseline cannot see the drift it exists to catch.
+
+313. ** has three different defaults in three places** - lane: .
+     Module default 200, workflow default 250, dispatch-input description 200. Also
+     s docstring says "399 of 1,544 queue entries carry a slug"; the live
+     file is 465 of 1,693 and  puts the drainable-with-slug count at 282 -
+     three numbers for one fact.
+

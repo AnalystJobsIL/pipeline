@@ -101,11 +101,19 @@ it is still only that one.**
    `test_no_workflow_run_block_fakes_a_line_continuation`. **Read it before writing a patch
    script that emits YAML.**
 
-0. **250 active rows have an all-time-high job count of ZERO** — 186 of them `scrape` rows
-   (where zero is often the correct answer) and **64 native-ATS rows**, which is the
-   "the board has moved" set worth chasing. Feed a recovery run the 64, never the 250.
-   *(This said 189/61 for one commit on 2026-08-27. The command below refutes it, and it
-   was three lines above the command. Re-run it; do not trust this line either.)*
+0. **Active rows with an all-time-high job count of ZERO — run the command, do not read a
+   number here.** This line has now been wrong three times in one day (75, then 256, then
+   250/186/64) and every correction was overtaken within hours by a digest rewriting the
+   baseline. After the 13:04 run it is 241 / 182 scrape / 59 native-ATS, and 0 active rows
+   have no baseline entry at all (it said 5).
+
+   **And the framing was worse than the numbers.** This item called the native-ATS slice
+   "the board has moved" and told the next session it was the highest-yield recovery set.
+   Measured by `registry` on 2026-08-27: **36 of the 59 are already in `stale.json`**, i.e.
+   already owned by the 06:00 self-heal; the great majority carry their own
+   `re-audit 2026-08-21: verified 0/0 IL` note; and **exactly one row (Dell) carries
+   moved-tenant evidence.** It is not a recovery set. The defect-shaped slice inside it is
+   the Workday globals — see watch-item 6.
 
    ```bash
    python -c "import json,csv,io,collections;b=json.load(io.open('cloud_state/health_baseline.json',encoding='utf-8'));r={x['company_name']:x for x in csv.DictReader(io.open('companies.csv',encoding='utf-8')) if x['active']=='true'};z=[n for n,v in b.items() if int(v)==0 and n in r];print(len(z),collections.Counter(r[n]['ats_platform'] for n in z).most_common())"
@@ -135,6 +143,18 @@ it is still only that one.**
    `jobvite` all have fetchers now; `jazzhr` was deliberately retired. `registry_health.py
    --ats` is derived and correct — run it instead of trusting a list. HiBob is down to **1**
    active row, not 2, so it is moving away from the 3-row trigger, not toward it.
+6. **~24 active rows are re-checked by NOTHING, and `ARCHITECTURE.md` §2's headline claim
+   ("every state except `defunct:` and `domain-dead` is re-checked on some cadence") is
+   false because of it.** Found by `registry` on 2026-08-27.
+   `health.zero_is_a_measurement()` exempts `israel_scoped` fetchers from `empty-board` for
+   a good, documented reason — 25 healthy Workday boards clogged the self-heal queue on
+   08-24 — but the cost was never written down: such a row never enters `stale.json`, so it
+   never enters `resolve_broken.candidates()` (whose scope IS `stale.json`), and every
+   parked pool excludes it on `active == false`. `repair_dead_urls` is the one pool with no
+   active filter and it selects on the hostname failing to resolve, which a live Workday
+   tenant's does not. Broadcom's note says "Tel Aviv postings confirmed live" while its
+   all-time high is 0; one free POST settles which.
+
 5. **GitHub dispatches these crons when it feels like it, and nothing notices a run that
    never started.** On 2026-08-27 the 00:00 scrape refresh ran at **05:41**, and the 02:30,
    05:00 and 06:00 crons had not fired at all by 07:41 — so no board, no mail, and no alarm,
