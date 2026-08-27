@@ -686,5 +686,25 @@
  "aspectiva": {
   "fails": 1,
   "last": "2026-08-26"
+ },
+ "Lightricks": {
+  "fails": 1,
+  "last": "2026-08-27"
+ },
+ "Netafim": {
+  "fails": 1,
+  "last": "2026-08-27"
+ },
+ "Airspan Networks": {
+  "fails": 1,
+  "last": "2026-08-27"
+ },
+ "Lam Research": {
+  "fails": 1,
+  "last": "2026-08-27"
+ },
+ "Intuit": {
+  "fails": 1,
+  "last": "2026-08-27"
  }
 }
