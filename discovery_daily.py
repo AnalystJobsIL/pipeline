@@ -1222,7 +1222,7 @@ def main():
     # not gated, and its slug is usually the LinkedIn handle — the one seed
     # `auto_expand._site_from_guess` can turn into a proven own-domain, and the field 514 of
     # 517 queue entries lack. `docs/decisions/2026-08-27-secrethunter-company-catalog.md`.
-    sh_rejects = []
+    sh_rejects, sh_slugs = [], []
     # Recorded OUTSIDE the `research is not None` guard: the except branch below promises a
     # zero "so sources.stale() can see it, never skipped", and an unreadable queue used to
     # skip the assignment entirely -- so a corrupt research_companies.json made this source
@@ -1237,6 +1237,7 @@ def main():
             # the same 2,703 every day, so a dedup-based count would read 0 the second
             # morning and `sources.stale()` would call a healthy source dead. The only
             # failure this source HAS is the sitemap going away, and that shows up here.
+            sh_slugs = _slugs
             _sh_new, sh_rejects, _st = _sh.queue_entries(
                 _slugs, have, {(e.get("name") or "").strip().lower() for e in research})
             for _e in _sh_new:
@@ -1310,6 +1311,26 @@ def main():
                   f"(e.g. {', '.join((e.get('name') or '?') for e in drained[:5])}); "
                   f"{len(kept)} unresolved remain")
         research = kept
+        # ENRICH WHAT WE ALREADY HOLD, not only what we add. 135 of the 517 entries carried no
+        # handle at all -- including all 91 this same source queued as `secrethunter.io/jobz/`
+        # postings before there was a catalog reader -- and a handle is the ONE thing
+        # `auto_expand._site_from_guess` needs. Without it they are the subset of the queue no
+        # rung can even attempt. Never overwrites a handle we hold: ~10% genuinely differ
+        # (`Grain`/`grainfinance`, `Wayve`/`wayve-technologies`) and ours has provenance, so
+        # the disagreement is recorded and ours kept.
+        backfilled = 0
+        if sh_slugs:
+            try:
+                from pipeline import secrethunter as _sh2
+                backfilled, _mismatch = _sh2.backfill_handles(research, sh_slugs)
+                sh_rejects.extend(_mismatch)
+                if backfilled or _mismatch:
+                    _noslug = sum(1 for e in research if not (e.get("slug") or "").strip())
+                    print(f"[secrethunter] backfilled {backfilled} handles onto entries we "
+                          f"already held ({_noslug} still have none); kept ours on "
+                          f"{len(_mismatch)} disagreements", flush=True)
+            except Exception as e:  # noqa: BLE001
+                print(f"::warning::[secrethunter] handle backfill skipped: {e}", flush=True)
         known = {(e.get("name") or "").strip().lower() for e in research}
         # ...and never re-queue what the drain just took. REDUNDANT TODAY, deliberately:
         # the card loop above already skips `c.lower() in have` before a name can reach
@@ -1321,7 +1342,7 @@ def main():
         # worked. Stated here so the invariant does not depend on reading both sites.
         added = [v for k, v in new_cos.items()
                  if k not in known and k.strip().lower() not in settled]
-        if added or pruned:
+        if added or pruned or backfilled:
             research.extend(added)
             discovery_queue.write(research)
             n_queued = len(added)

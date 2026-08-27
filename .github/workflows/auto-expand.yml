@@ -62,6 +62,14 @@ jobs:
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           LLM_BD_SEARCH_CAP: "5"
           AUTO_EXPAND_SEARCH_CAP: "40"
+          # UNCHANGED VALUE, exposed so it can be retuned without a commit. Read the
+          # arithmetic before raising it: SITE_MAX bounds how many domain guesses may SUCCEED,
+          # and each success clears `agg_seed` so the next statement runs a full resolve_deep
+          # at ~342 s per name with NO deadline check on that path (auto_expand.py:635-647).
+          # 25 is already ~142 min of this job's 330-minute timeout, held against the
+          # `repo-state` concurrency group that eight workflows share; 100 would be ~9.5 h.
+          # Raise it only together with a deadline check on the resolve path.
+          AUTO_EXPAND_SITE_MAX: "25"
         run: python auto_expand.py
 
 

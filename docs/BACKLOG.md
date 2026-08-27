@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**381 filed · 272 open · 109 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**382 filed · 273 open · 109 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 339.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 340.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -83,7 +83,7 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### registry — 77 open
+### registry — 78 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -162,6 +162,7 @@ closure convention in the header.
 - **331** `331@registry` **`resolve_deep._verify` is inside `resolve`'s "TOTAL wall clock" and never sees it** —
 - **332** `332@registry` **The queue-to-row bridge is one tool wide, and ~456 names are therefore owned by
 - **334** `334@registry` **`_site_from_guess` tries four TLDs and never varies the STEM, and the stem is worth
+- **339** `339@registry` **`AUTO_EXPAND_SITE_MAX` cannot rise until the resolve path it unlocks has a deadline**
 
 ### infra — 69 open
 
@@ -5415,3 +5416,37 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     answered, as a rule rather than an improvisation, (b) fold the `## Watch list` items that
     have become durable into `ARCHITECTURE.md`, or (c) cap the session log at N entries and
     push the rest to `docs/sessions/`, which is where the long version already lives.
+
+339. **`AUTO_EXPAND_SITE_MAX` cannot rise until the resolve path it unlocks has a deadline**
+    — lane: `registry` (`auto_expand.py`), found by `discovery`. The operator asked for both
+    the intake cap and the site-guess cap to be raised together on 2026-08-27. **Only the
+    intake half was safe to do**, and this is why.
+
+    `SITE_MAX` (25/run, `auto_expand.py:370`) is not a politeness throttle. A successful guess
+    clears `agg_seed`, and the very next statement runs a full `resolve_deep` — a 35 s
+    Playwright goto plus `scrape_universal` at `COMPANY_BUDGET_S=150`, possibly twice —
+    **~342 s per name with no deadline check anywhere on that path**. `SITE_BUDGET_S` (600 s)
+    bounds the guessing GETs and explicitly NOT what a guess unlocks. So:
+
+        SITE_MAX  25 (today) -> 25 x 342 s ~= 142 min   of a 330-min job timeout
+        SITE_MAX 100         ->            ~= 9.5 hours  -- blows it
+
+    and it holds the `repo-state` concurrency group, which eight workflows share, for the
+    whole time. If the job times out, its `if: always()` persist step may not run either, so
+    the failure mode is a lost state commit, not just a slow night. `auto_expand.py:635-647`
+    records that an adversarial pass computed the uncapped version at 4.4 hours at LIMIT=250.
+
+    **What shipped instead:** `SECRETHUNTER_QUEUE_CAP` 40 -> **150** (`pipeline/secrethunter.py`,
+    and now `daily-digest.yml` env), and `AUTO_EXPAND_SITE_MAX` exposed in `auto-expand.yml`
+    **at its current 25** — a dial with the arithmetic written beside it, not a change. Both
+    caps are now reachable without a commit, which was the other half of the request.
+
+    **What raising the intake cap alone actually buys**, stated plainly so nobody expects
+    more: it does not increase the resolution rate, which `SITE_MAX` fixes at 50/day. It
+    front-loads the queue so catalog names reach that rung sooner — an unseen name sorts to
+    the front of `todo` (`auto_expand.py:455`) — at the cost of displacing older, job-backed
+    leads from each batch. All 2,002 are offered in ~14 days instead of ~50.
+
+    **To actually raise throughput**, `registry` needs a deadline check on the post-guess
+    `resolve()` path first; then `SITE_MAX` can rise with a bounded worst case. That is the
+    real item here, and it is theirs.

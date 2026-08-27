@@ -53,12 +53,32 @@ the guessed domain) both reach no rung at all.
     2,703 catalog names -> 484 already in the registry
                         -> 206 already queued
                         ->  11 refused (0.4%)
-                        -> 2,002 NEW employers,   40 offered per run, day-rotated
+                        -> 2,002 NEW employers,  150 offered per run, day-rotated
 
 Capped because `ARCHITECTURE.md` 1a says the resolver queue is the bottleneck and `registry`
 drained it 1,693 -> 517 the same day; 2,002 names in one morning would undo that. The window
 rotates by day-of-year rather than taking a prefix — `_targeted_inputs` already learned that
 lesson the expensive way (`unresolved[:20]` meant 90 of 110 names were never searched once).
+
+### The backfill — the thing I nearly left on the floor
+
+My first cut skipped every name already queued, so the source could only ADD. The operator
+caught it: the highest-yield use of a sitemap I had already downloaded was **enriching the
+entries we already hold**. 135 of 517 had no handle at all, and all **91** stranded
+`secrethunter.io/jobz/` entries — queued by this very source before there was a reader — were
+among them. A handle is the only thing `_site_from_guess` needs, so those 91 were the subset
+of the queue no rung could attempt at all.
+
+    no-handle entries filled                 71 of 135
+    of which the stranded /jobz/ ones        59 of 91
+    handles the catalog disagrees with       25  -> ours kept, logged `handle-mismatch`
+    fills lost to an ambiguous name key       0
+
+Never overwrites: `Grain`/`grainfinance` and `Wayve`/`wayve-technologies` are exactly the ~10%
+that genuinely differ, and ours came from a LinkedIn card that named the company. Where two
+slugs claim one name key, neither is written — a wrong handle points `_site_from_guess` at
+another company's domain, while an empty one costs a single lead. That conservatism cost 0
+fills today.
 
 ### The refusal rule was measured, then loosened
 
@@ -264,6 +284,9 @@ now what the docs say.
   **4 of 2,703 (0.15%)** of this catalog, so it is a list of four names rather than a policy.
   `recruiters.py` unchanged, by the operator's scoping.
   `docs/decisions/2026-08-27-it-services-employers.md`.
+- **The 40/run cap is coupled to `AUTO_EXPAND_SITE_MAX` (25/run) and NEITHER is a workflow
+  input** — 0 workflow files set either, while `AUTO_EXPAND_LIMIT`/`LLM_RESOLVE_CAP` are
+  dispatch inputs. Raising mine alone only deepens the queue. **339**, cross-lane.
 - **333@infra** the `SINGLE_WRITER` line for the ledger, **334@registry** the slug variants,
   **335@infra** `BD_MONTHLY_BUDGET`, **336@discovery** theorg.com, **337@discovery** the
   secrethunter licensing question.

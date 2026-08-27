@@ -129,10 +129,43 @@ card arrives attached to an analyst-shaped posting. The cap bounds the queue's D
 those 40 slots DISPLACE is not measured, and the analyst-role yield of the 2,002 is
 unestimated. That is the strongest argument for keeping the cap low.
 
-`SECRETHUNTER_QUEUE_CAP` (default 40) meters it, and the window is **rotated by day-of-year**
+`SECRETHUNTER_QUEUE_CAP` (default 150) meters it, and the window is **rotated by day-of-year**
 rather than taken as a prefix — the same fix `_targeted_inputs` needed when `unresolved[:20]`
 over a stably-sorted list meant the same 20 names went out daily and the other 90 of 110 were
 never searched once (§1a rule 3). Every slug is reached in ~50 days.
+
+## 5b. The catalog ENRICHES the queue, it does not only extend it
+
+The first cut skipped any name already queued, so it could only ever ADD — and that left the
+most valuable thing in the sitemap on the floor. **135 of the 517 queue entries carried no
+handle at all**, and among them **all 91** that this same source had queued as
+`secrethunter.io/jobz/` postings back when there was no catalog reader. Those 91 were the
+subset of the queue that **no rung could even attempt**: an aggregator seed is only rescued by
+`_site_from_guess(name, slug)`, and they had no slug to guess from.
+
+`backfill_handles` fills an EMPTY `slug` on an entry we already hold, from the same sitemap
+already in memory. Measured against the committed queue:
+
+| | |
+|---|---|
+| no-handle entries filled | **71 of 135** |
+| of which the stranded `secrethunter.io/jobz/` ones | **59 of 91** |
+| handles we hold that the catalog DISAGREES with | **25** — kept ours, disagreement logged |
+| fills lost to an ambiguous key | **0** |
+
+**It never overwrites a handle we already hold.** Roughly 10% genuinely differ — `Grain` vs
+`grainfinance`, `Wayve` vs `wayve-technologies` — and ours came from a LinkedIn card that
+named the company, which is provenance a third-party directory slug does not have. The
+disagreement goes to `cloud_state/intake_rejects.json` as `handle-mismatch` so it is visible
+and appealable, and ours stands.
+
+Where two catalog slugs claim the same name key, **neither** handle is written. Writing the
+wrong one would send `_site_from_guess` at another company's domain, with
+`page_mentions_company` the only thing between that and a wrong row; leaving it empty costs
+one lead. On today's data that conservatism costs nothing — 0 of the 64 still-empty entries
+were lost to ambiguity; they are simply not in the catalog.
+
+Additive to the queue's existing four-key shape, so no other lane changes.
 
 ## 6. The numbers, all against `origin/master` `fbfc83e`
 
@@ -144,7 +177,7 @@ never searched once (§1a rule 3). Every slug is reached in ~50 days.
 | already in `research_companies.json` | **206** |
 | **new employers, refused by nothing** | **2,002** |
 | refused by our gates | **11 (0.4%)** — 4 agency, 4 wholly-Hebrew, 2 over-long, 1 junk-name |
-| offered per run | 40, day-rotated |
+| offered per run | 150, day-rotated |
 
 **The refusal rule was measured, then loosened.** Its first cut refused 98 names, including
 `Harmonya%20Technologies`, `Valence%20Security`, `Zafran%20Security` and

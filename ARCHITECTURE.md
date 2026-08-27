@@ -481,7 +481,7 @@ cap 4 and zero records on 08-24, cap 0 on 08-25.
 | `indeed` | `il.indeed.com/jobs` through the Web Unlocker; parsed from the `mosaic-provider-jobcards` blob | yes | 58 raw → 46 kept |
 | `telegram` | public `t.me/s/<channel>` previews — no bot, no account, no quota | no | 6 channels, 16–18 of 20 parsed each |
 | `linkedin-targeted` | BD dataset, one input per broken-board company, scoped by the **`company` field**. Backfill, **NOT discovery** | yes | 88 companies → 67 records, 57 on-target |
-| `secrethunter` | the catalog's SITEMAP only — 2,703 `/companies/<slug>` names, one keyless GET, honest UA. A NAMES source: it yields no jobs at all. The slug is usually the LinkedIn handle, which is the one seed `auto_expand._site_from_guess` can prove into an own domain. Its company PAGES carry that domain and every open title but serve it only to named crawler UAs, so they are **deliberately not read** | no | 2,703 names → 484 already in the registry, 206 already queued, 11 refused, **2,002 new**; 40/run day-rotated (set from the registry's ~22/day throughput, not from what the source could supply), 0 credits |
+| `secrethunter` | the catalog's SITEMAP only — 2,703 `/companies/<slug>` names, one keyless GET, honest UA. A NAMES source: it yields no jobs at all. The slug is usually the LinkedIn handle, which is the one seed `auto_expand._site_from_guess` can prove into an own domain. Its company PAGES carry that domain and every open title but serve it only to named crawler UAs, so they are **deliberately not read** | no | 2,703 names → 484 already in the registry, 206 already queued, 11 refused, **2,002 new**; **150/run** day-rotated (raised from 40 by the operator to front-load the initial seeding: ~14 days rather than ~50), 0 credits. It also BACKFILLS: **71 of the 135 queue entries that had no handle at all**, including **59 of the 91** this same source had queued as `secrethunter.io/jobz/` postings before there was a catalog reader |
 
 \* the paid path is a fallback; `SOURCE_PATH` records which one served — `linkedin_free`,
 `linkedin_blank` (a 200 with no cards: a hole in the pool or a soft limit), `linkedin_blocked`
@@ -828,6 +828,15 @@ here would cost coverage and buy nothing.
   **And the sample is biased:** pairs exist only where the slug resembles the company name,
   which is the same property as resembling the domain — own-site rows the rule EXCLUDES score
   **55.6%** against the included **73.0%**, a 17.4-point gap from selection alone.
+- **The intake cap and the resolver's site-guess cap are COUPLED, and neither is a workflow
+  input.** `SECRETHUNTER_QUEUE_CAP` (150/run, `pipeline/secrethunter.py`) governs what enters
+  the queue; `AUTO_EXPAND_SITE_MAX` (25/run, `auto_expand.py:370`, twice daily) governs how
+  many of those handles the free rung may actually try. Both were code defaults no workflow set; **both are now workflow env** (2026-08-27), so
+  either can be retuned without a commit. Raising the intake cap alone does not make anything
+  resolve faster — it front-loads the queue and displaces older leads. **`AUTO_EXPAND_SITE_MAX`
+  must NOT simply be raised**: a successful guess unlocks a `resolve_deep` costing ~342 s per
+  name with no deadline check, so 25 is already ~142 min of a 330-min job timeout and 100
+  would be ~9.5 h, holding `repo-state` throughout. `docs/BACKLOG.md` 339.
 - **A newly queued name goes to the FRONT of the resolver's batch, not the back.**
   `auto_expand.py:455` sorts `todo` by last-tried date and an unseen name sorts to `""`. So
   the catalog's 40/run are tried before older leads — and unlike a LinkedIn or Indeed card,

@@ -13845,3 +13845,46 @@ def test_the_reject_ledger_never_deletes_a_record_it_merely_could_not_read(tmp_p
     L.record([("X", "agency")], path=p, today="not-a-date")
     rec = _j.load(_io.open(p, encoding="utf-8"))["x"]
     assert rec["first_seen"] != "not-a-date"
+
+
+def test_the_catalog_backfills_an_empty_handle_and_never_overwrites_one_we_hold():
+    """The catalog's value is not only the names it ADDS. 135 of 517 queue entries carried no
+    handle — including all 91 this same source had queued as `secrethunter.io/jobz/` postings
+    — and a handle is the one thing `auto_expand._site_from_guess` needs, so those entries
+    were the subset of the queue no rung could attempt. The first cut of `queue_entries`
+    skipped anything already queued, so it only ever added.
+
+    The other half of the rule matters as much: roughly 10% of the handles we already hold
+    genuinely DISAGREE with the catalog (`Grain`/`grainfinance`, `Wayve`/`wayve-technologies`)
+    and ours came from a LinkedIn card that named the company, so it has provenance a
+    directory slug does not. Record the disagreement, keep ours."""
+    from pipeline import secrethunter as S
+    entries = [{"name": "Ness Technologies", "careers_url": "x", "ats": "unknown", "slug": ""},
+               {"name": "Grain", "careers_url": "x", "ats": "unknown", "slug": "grainfinance"},
+               {"name": "Nobody At All", "careers_url": "x", "ats": "unknown", "slug": ""}]
+    filled, mism = S.backfill_handles(entries, ["ness-technologies", "grain", "wix"])
+    assert filled == 1 and entries[0]["slug"] == "ness-technologies"
+    assert entries[1]["slug"] == "grainfinance", "a handle with provenance was overwritten"
+    assert mism == [("Grain", "handle-mismatch")]
+    assert entries[2]["slug"] == "", "a name the catalog does not have must stay empty"
+    assert sorted(entries[0]) == ["ats", "careers_url", "name", "slug"], "shape unchanged"
+
+
+def test_an_ambiguous_catalog_handle_is_skipped_rather_than_guessed():
+    """Two different slugs can normalise to the same alias key. Writing either handle onto a
+    queue entry would send `_site_from_guess` at another company's domain, where
+    `page_mentions_company` is the only thing between that and a wrong row. Leaving the slug
+    empty costs one lead; guessing costs a wrong one."""
+    from pipeline import secrethunter as S
+    # `acme-labs` and `acme-labs-ltd` are almost certainly one company, but nothing here can
+    # tell that from two different ones, so the shared key is dropped and NEITHER is written.
+    # That costs a fill; the alternative costs a wrong domain.
+    idx = S.handle_index(["acme-labs", "acme-labs-ltd"])
+    assert "acme labs" not in idx and "acmelabs" not in idx, idx
+    entries = [{"name": "Acme Labs", "careers_url": "x", "ats": "unknown", "slug": ""}]
+    filled, mism = S.backfill_handles(entries, ["acme-labs", "acme-labs-ltd"])
+    assert filled == 0 and entries[0]["slug"] == "" and mism == []
+    # an unambiguous one still fills
+    entries2 = [{"name": "Acme Labs", "careers_url": "x", "ats": "unknown", "slug": ""}]
+    assert S.backfill_handles(entries2, ["acme-labs"])[0] == 1
+    assert entries2[0]["slug"] == "acme-labs"

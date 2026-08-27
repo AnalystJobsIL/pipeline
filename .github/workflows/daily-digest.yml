@@ -76,6 +76,12 @@ jobs:
         env:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          # How many secrethunter catalog names may enter research_companies.json per run.
+          # Raising it does NOT speed up resolution -- auto_expand's free rung is bounded by
+          # AUTO_EXPAND_SITE_MAX, which cannot safely rise (see auto-expand.yml). It front-
+          # loads the queue, and new names sort to the FRONT of that rung's batch, so it also
+          # displaces older job-backed leads. docs/BACKLOG.md 339.
+          SECRETHUNTER_QUEUE_CAP: "150"
         run: python discovery_daily.py
         continue-on-error: true
 

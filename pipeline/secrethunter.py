@@ -59,15 +59,23 @@ UA = "AnalystJobsIL/1.0 (+https://github.com/AnalystJobsIL/pipeline)"
 # on the free rung — call it ~22/day over two runs. The registry lane had just drained this
 # queue 1,693 -> 517 precisely because depth buries the good leads.
 #
-# A first cut used 150/run. Dry-run against sandbox copies of the real state files, that is
-# **+138 net per run** (150 queued, 12 drained) — the queue is back over 1,500 inside a week
-# and the drain is undone. 40 sits just above what the registry actually clears, reaches the
-# whole 2,002 in ~50 days, and is one env var away if someone wants it faster.
+# 40 was the throughput-matched value and reached the whole 2,002 in ~50 days. The operator
+# raised it to 150 on 2026-08-27 to front-load the initial seeding: ~14 days instead of ~50.
+# Measured cost, dry-run against sandbox copies of the real state files: **+138 net per run**
+# (150 queued, 12 drained), so the queue deepens rather than holding flat.
+#
+# WHAT THIS DOES AND DOES NOT BUY. It does not make anything resolve faster: `auto_expand`'s
+# free rung is bounded by `AUTO_EXPAND_SITE_MAX` (25/run, twice daily) and that number cannot
+# safely rise — a successful guess clears `agg_seed` and the next statement runs a full
+# `resolve_deep` at ~342 s per name with no deadline check, so 25 is already ~142 min of a
+# 330-min job timeout (`auto_expand.py:635-647`). What it DOES buy is that catalog names
+# reach the front of that rung's queue sooner, because an unseen name sorts first
+# (`auto_expand.py:455`) — at the cost of displacing older, job-backed leads. `docs/BACKLOG.md` 339.
 #
 # The window is day-ROTATED rather than a prefix, so every slug is reached rather than the
-# same 40 being offered forever — the fix `_targeted_inputs` needed when `unresolved[:20]`
+# same 150 being offered forever — the fix `_targeted_inputs` needed when `unresolved[:20]`
 # over a stably-sorted list meant the other 90 of 110 were never searched once (1a rule 3).
-QUEUE_CAP = int(os.environ.get("SECRETHUNTER_QUEUE_CAP", "40"))
+QUEUE_CAP = int(os.environ.get("SECRETHUNTER_QUEUE_CAP", "150"))
 
 # `auto_expand._site_from_guess` requires `[a-z0-9-]+` before it will guess a domain, and a
 # LinkedIn handle has the same shape. A slug that cannot be either is not refused silently.
@@ -264,6 +272,59 @@ def alias_keys(name):
         if alnum:
             out.add(alnum)
     return out
+
+
+def handle_index(slugs):
+    """alias-key -> handle, dropping any key that two DIFFERENT handles both claim.
+
+    An ambiguous key is skipped rather than resolved: writing the wrong handle onto a queue
+    entry is worse than leaving it empty, because `_site_from_guess` would then probe another
+    company's domain and `page_mentions_company` is the only thing standing between that and
+    a wrong row.
+    """
+    idx, ambiguous = {}, set()
+    for slug in slugs:
+        h = handle_from_slug(slug)
+        if not h:
+            continue
+        for k in alias_keys(name_from_slug(slug)):
+            if idx.get(k, h) != h:
+                ambiguous.add(k)
+            idx.setdefault(k, h)
+    for k in ambiguous:
+        idx.pop(k, None)
+    return idx
+
+
+def backfill_handles(entries, slugs):
+    """Fill an EMPTY `slug` on queue entries we ALREADY hold, in place. (filled, mismatches).
+
+    The catalog's value is not only the names it adds. 135 of the 517 queue entries carry no
+    handle at all — including all 91 that this same source queued as `secrethunter.io/jobz/`
+    postings before there was a catalog reader — and a handle is the ONE thing
+    `auto_expand._site_from_guess` needs. Without it those entries are the subset of the queue
+    that no rung can even attempt: an aggregator seed with nothing to guess a domain from.
+
+    NEVER overwrites a handle we already hold. Roughly 10% genuinely differ (`Grain` /
+    `grainfinance`, `Wayve` / `wayve-technologies`), and the one we hold has PROVENANCE — a
+    LinkedIn card that named the company — while the catalog's is a directory's slug. The
+    disagreement is recorded to the intake ledger and ours is kept.
+
+    Additive to the queue's existing four-key shape, so no other lane changes.
+    """
+    idx = handle_index(slugs)
+    filled, mismatches = 0, []
+    for e in entries:
+        h = next((idx[k] for k in alias_keys(e.get("name")) if k in idx), None)
+        if not h:
+            continue
+        cur = (e.get("slug") or "").strip()
+        if not cur:
+            e["slug"] = h
+            filled += 1
+        elif cur.lower() != h:
+            mismatches.append((e.get("name") or h, "handle-mismatch"))
+    return filled, mismatches
 
 
 def _window(pool, cap, day=None):
