@@ -67,7 +67,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-08-27 | jd-text | `Stage order:` carries `scrape_bd_calls=`/`matched_short=`; `jd-fill:` denominator ~121 | — | N/A — no 08-27 digest ran. 08-26 baseline: `jd-fill: 110/148 … discovery-indeed http-401 17` |
 | 2026-08-28 | infra | the digest log's `deliver:` line says `delivered`, and `cloud_state/last_delivered.json` carries `2026-08-28` with a sha256 matching `digests/latest.md` | — | not yet due |
 | 2026-08-28 | infra | the mail's `Stages:` says `the last digest that reached the mail was 2026-08-26 (2d ago)` — once. If it says nothing, `_receipt_alarms` is not wired; if it repeats on 08-29, `deliver` is not writing the receipt | — | not yet due |
-| 2026-08-28 | infra | `firmographics.yml` fired on its 10:00 slot (BACKLOG 293). Its first real slot was 10:00 on 08-27 and was still inside the census grace at 10:39, so 08-27 proves nothing either way | — | not yet due |
+| 2026-08-28 | infra | `firmographics.yml` fired on its 10:00 slot (BACKLOG 293). At 11:01 on 08-27 its run list was still empty, 61 min after its first real slot — inside the 180-min grace `tests/schedule_census.py` holds before calling a slot dropped | — | not yet due |
 | 2026-09-10 | infra | `python tests/schedule_census.py --days 14` — **≥ 3 isolated single-slot drops ⇒ build the recovery digest cron; otherwise it stays rejected.** It was 0 on 2026-08-27 | — | not yet due |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due (`audit-coverage.yml` is `0 4 * * 0`) |
 
