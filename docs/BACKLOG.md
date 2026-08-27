@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**340 filed · 308 open · 32 closed · 28 numbers name more than one item · 39 items name no lane.**
+**340 filed · 293 open · 47 closed · 28 numbers name more than one item · 39 items name no lane.**
 
 **Next free number: 299.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
@@ -54,21 +54,21 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 | 5 | `5` **open** · `5` **open** · `5` **open** · `5@discovery` **open** · `5@infra` **open** |
 | 6 | `6` **open** · `6` **open** · `6` **open** · `6@infra` **open** · `6` **open** |
 | 7 | `7` **open** · `7` **open** · `7@infra` **open** · `7@infra` **open** · `7@ats-fetch` **open** |
-| 8 | `8` **open** · `8@discovery` **open** · `8@docs` **open** |
+| 8 | `8` **open** · `8@discovery` **open** · `8@docs` closed |
 | 9 | `9` **open** · `9@ats-fetch` **open** · `9` **open** |
 | 10 | `10` **open** · `10@infra` **open** · `10@infra` **open** |
 | 11 | `11@company-intel` **open** · `11@infra` **open** |
 | 12 | `12@infra` **open** · `12@infra` **open** |
 | 13 | `13` **open** · `13` **open** |
-| 14 | `14@discovery` **open** · `14@docs` **open** |
+| 14 | `14@discovery` **open** · `14@docs` closed |
 | 15 | `15@discovery` closed · `15@infra` **open** |
 | 70 | `70@discovery` **open** · `70@discovery` **open** |
 | 71 | `71@discovery` **open** · `71@registry` **open** |
 | 132 | `132@classifier` closed · `132@roles` **open** |
-| 215 | `215@docs` **open** · `215@scraper` **open** |
+| 215 | `215@docs` closed · `215@scraper` **open** |
 | 227 | `227@discovery` **open** · `227@ats-fetch` closed |
 | 228 | `228@discovery` **open** · `228@scraper` **open** |
-| 240 | `240@docs` **open** · `240@scraper` **open** |
+| 240 | `240@docs` closed · `240@scraper` **open** |
 | 241 | `241@infra` **open** · `241@ats-fetch` **open** · `241@scraper` **open** |
 | 242 | `242@company-intel` **open** · `242@registry` **open** · `242@registry` **open** |
 | 243 | `243@roles` **open** · `243@ats-fetch` **open** · `243@scraper` **open** |
@@ -260,33 +260,6 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
 - **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
 
-### docs — 24 open
-
-- **1** `1@docs` **One re-check pool definition**
-- **8** `8@docs` **`gen_modules.py` does not round-trip its own file**
-- **14** `14@docs` **`tests/test_units.py` has no per-lane split, and a stale copy silently reverts another
-- **23** `23@docs` **`python registry_health.py` is named in no document a new agent actually reads** —
-- **24** `24@docs` **`docs/AGENT_BRIEF.md` still says DuckDuckGo is blocked from this machine**
-- **25** `25@docs` **`HANDOFF.md` contradicts itself 13 lines apart**
-- **31** `31@docs` **`docs/AGENT_BRIEF.md` sends a registry agent to the wrong files**
-- **32** `32@docs` **`HANDOFF.md`'s ATS watch-list gives the wrong answer to "what should we build"** —
-- **81** `81@docs` **Numbers other lanes' files still carry from before this session**
-- **87** `87@docs` **Retire `cache_new_rows.py`**
-- **93** `93@docs` **Stale numbers in docs the scraper lane may not write**
-- **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
-- **146** `146@docs` **Tests reach into `digest`'s private names**
-- **147** `147@docs` **BACKLOG numbers 70, 71, 132 and 133 are each used twice**
-- **148** `148@docs` **`docs/AGENT_BRIEF.md`'s roles paragraph is stale**
-- **209** `209@docs` **Platform and row counts other lanes' files still carry**
-- **215** `215@docs` **`docs/check_docs.py` is green in the shared checkout and red on CI: it walks
-- **233** `233@docs` **BACKLOG 80 and HANDOFF watch-item 0 are wrong: the Greenhouse EU JSON API exists**
-- **240** `240@docs` **Four sentences in other lanes' files that today's measurements contradict**
-- **291** `291@docs` **The closed-item split is designed, measured, and deliberately not applied**
-- **295** `295@docs` **Three session records are named a day before their own H1**
-- **296** `296@docs` **`docs/POC_COMPANY_PROFILES.md` is a dated POC report filed among live docs**
-- **297** `297@docs` **`docs/check_docs.py`'s `§N` pattern cannot see a lettered section reference**
-- **298** `298@docs` **Nothing checks that a cited `BACKLOG <n>` exists**
-
 ### discovery — 17 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
@@ -354,6 +327,18 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
 - **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
 - **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
+
+### docs — 9 open
+
+- **1** `1@docs` **One re-check pool definition**
+- **87** `87@docs` **Retire `cache_new_rows.py`**
+- **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
+- **146** `146@docs` **Tests reach into `digest`'s private names**
+- **291** `291@docs` **The closed-item split is designed, measured, and deliberately not applied**
+- **295** `295@docs` **Three session records are named a day before their own H1**
+- **296** `296@docs` **`docs/POC_COMPANY_PROFILES.md` is a dated POC report filed among live docs**
+- **297** `297@docs` **`docs/check_docs.py`'s `§N` pattern cannot see a lettered section reference**
+- **298** `298@docs` **Nothing checks that a cited `BACKLOG <n>` exists**
 
 ### classifier — 6 open
 
@@ -918,7 +903,7 @@ write list**, which is why it is a proposal and not a commit. Ordered by what it
    `deep_validate._UNSUP` lists `oraclecloud.com` as unsupported, which is what wrote those
    verdicts. Full inventory: `python registry_health.py --ats`.
 
-8. **`gen_modules.py` does not round-trip its own file** — lane: `docs`. `docs/MODULES.md`
+8. ~~**`gen_modules.py` does not round-trip its own file**~~ — lane: `docs`. `docs/MODULES.md`
    carries two hand-added lines telling the reader to regenerate it with
    `python docs/gen_modules.py`; the generator does not emit them, so **every regeneration
    silently deletes the instruction for how to regenerate**. Found 2026-08-24 by the
@@ -926,6 +911,12 @@ write list**, which is why it is a proposal and not a commit. Ordered by what it
    into the generator's header template or have `check_docs.py` assert the file matches a
    fresh generation — right now nothing notices prose disappearing from a generated doc.
 
+
+    **CLOSED 2026-08-27 (`docs`)**: `docs/MODULES.md`'s header is emitted by the generator now,
+    including the how-to-regenerate sentence a regeneration had ALREADY eaten (lines 1-18 named
+    `gen_modules.py` nowhere), and the fixed "2026-08-23" stamp is gone. `python
+    docs/gen_modules.py --check` diffs without writing; any flag is a dry run, because it used
+    to write on every invocation and `--help` overwrote the file it was being asked about.
 ## From the registry lane's adversarial review, 2026-08-24 (wave 2)
 
 Two independent read-only agents attacked the wave-1 commit (`5505d3d`). Nine of their
@@ -1002,8 +993,8 @@ structural problem that keeps producing them.
     the digest on a content hash. Pinned by `test_the_mail_hook_does_not_record_the_ladder`
     and `test_the_mailed_alarm_lines_do_not_change_on_a_day_nothing_changed`.
 
-14. **`tests/test_units.py` has no per-lane split, and a stale copy silently reverts another
-    lane's guards** — lane: `docs`. Commit `9e4ce72` committed a checkout-era copy of the
+14. ~~**`tests/test_units.py` has no per-lane split, and a stale copy silently reverts another
+    lane's guards**~~ — lane: `docs`. Commit `9e4ce72` committed a checkout-era copy of the
     file and deleted seven registry-lane tests that had been committed and pushed in
     `5505d3d`; they were restored by hand. Nine sessions append to one file in one working
     tree, and nothing detects a test *disappearing* — `pytest` is just as green with fewer
@@ -1011,6 +1002,14 @@ structural problem that keeps producing them.
     have `docs/check_docs.py` assert the collected test count never falls. Same class as the
     `Time To Know` resurrection in ARCHITECTURE §2: two writers, one file, last writer wins.
 
+
+    **CLOSED 2026-08-27 (`docs`)**: the ratchet, which is the half of this item that needs no
+    migration. `test_the_collected_test_count_never_falls` asserts the collected total against
+    a floor, and says in its own docstring that lowering the floor to go green is the exact
+    move it exists to stop. That catches the `9e4ce72` shape - a checkout-era copy reverting
+    seven already-pushed guards - which is what this item was filed for. The per-lane SPLIT is
+    not done and is not needed for it: pytest is just as green with fewer tests, so what had to
+    exist was the counting, not the filenames.
 ## From three independent verdict agents, 2026-08-24 (wave 3)
 
 All three returned NO-GO on the wave-2 state and all three named the same defect first (the
@@ -1148,7 +1147,7 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     corrected or given the declared-inheritance token from 21(a) — a code gate cannot tell
     them apart, which is the finding.
 
-23. **`python registry_health.py` is named in no document a new agent actually reads** —
+23. ~~**`python registry_health.py` is named in no document a new agent actually reads**~~ —
     lane: `docs`. It is the single command that answers all three questions the registry lane
     gets asked ("what re-checks this row", "why did a company disappear", "which ATS is worth
     building"), and `grep -c registry_health CLAUDE.md docs/AGENT_BRIEF.md README.md` returns
@@ -1159,12 +1158,20 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
 
         python registry_health.py     # registry: census, who re-checks what, which rungs work
 
-24. **`docs/AGENT_BRIEF.md` still says DuckDuckGo is blocked from this machine** — lane:
+
+    **CLOSED 2026-08-27 (`docs`)**: `python registry_health.py` and `--explain "<name>"` are in
+    `CLAUDE.md`'s local-commands block, and `registry_health.py` is now the FIRST entry in the
+    `registry` lane's file list in the brief.
+24. ~~**`docs/AGENT_BRIEF.md` still says DuckDuckGo is blocked from this machine**~~ — lane:
     `docs`. Corrected in `ARCHITECTURE.md` §3 and §8 on 2026-08-23 (it is rate-limited, not
     blocked — measured 4 URLs, then 0 for the same query minutes later). `AGENT_BRIEF` is the
     document a spawned agent reads FIRST, and it is the one place the old claim survives.
 
-25. **`HANDOFF.md` contradicts itself 13 lines apart** — lane: `docs`. L46 says
+
+    **CLOSED 2026-08-27 (`docs`)**: `docs/AGENT_BRIEF.md` now says rate-limited, with the
+    measurement (4 URLs for `Wix`, then 0 for the same query minutes later) and the note that
+    it is reliable on the runners.
+25. ~~**`HANDOFF.md` contradicts itself 13 lines apart**~~ — lane: `docs`. L46 says
     `1,189 rows · 343 parked`; L59 says `1,199 rows · 353 parked`. Both presented as current
     state; L59 is right. Same table also still says "122 unit assertions" and
     `AGENT_BRIEF` rule 4 says "123 cases"; `pytest --collect-only -q | tail -1` is the
@@ -1202,6 +1209,11 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     nothing). An earlier version of this item said 2, in the item complaining about
     duplication.
 
+
+    **CLOSED 2026-08-27 (`docs`)**: `HANDOFF.md` was rebuilt from measurement: one state table,
+    dated today, with the command beside every number. No hard-coded test count survives
+    anywhere in the docs — the collected count is a ratchet in `tests/test_units.py` instead,
+    which is the only form of that number that cannot be wrong.
 26. **Three orphan detectors, three answers** — lane: `registry` + `infra`, unclaimed.
     `registry_health.orphans()` says 1 (`SeeTree`), `ARCHITECTURE.md` §5c's hand-typed
     one-liner says 4 with zero name overlap, and `check_invariants.py` says 0 because it
@@ -1269,7 +1281,7 @@ stops this recurring.
     gate") instead of four hand-written fixtures. **Do not do this at the same time as item
     9** — fix `verdict()` first, then move what is left.
 
-31. **`docs/AGENT_BRIEF.md` sends a registry agent to the wrong files** — lane: `docs`.
+31. ~~**`docs/AGENT_BRIEF.md` sends a registry agent to the wrong files**~~ — lane: `docs`.
     L111 says "every one of the **67** root modules"; `ls *.py | wc -l` is **68** (this lane
     added `registry_health.py` and updated `docs/gen_modules.py` + `BACKLOG.md`, but the
     brief's count is hand-typed and `check_docs.py` verifies classification, not the number).
@@ -1279,7 +1291,11 @@ stops this recurring.
     reviewer timed at the 2-minute orientation could not answer any of the three questions:
     the tool that answers all three is unreachable from every entry point.
 
-32. **`HANDOFF.md`'s ATS watch-list gives the wrong answer to "what should we build"** —
+
+    **CLOSED 2026-08-27 (`docs`)**: the brief's root-module count is a registered EXACT fact
+    (`root_py_count`), so it cannot drift again, and `registry_health.py` is in the registry
+    lane's row.
+32. ~~**`HANDOFF.md`'s ATS watch-list gives the wrong answer to "what should we build"**~~ —
     lane: `docs`. L153 lists `jazzhr`, `eightfold`, `iCIMS`, `SuccessFactors` as "unchanged
     from the last handoff", implying no fetcher. `fetch_jazzhr` (`pipeline/fetchers.py:594`)
     and `fetch_eightfold` (`:655`) both exist and are wired into `FETCHERS`. Cost if
@@ -1292,6 +1308,11 @@ stops this recurring.
     same commit without fixing it here.)* The durable fix is to
     delete the hand-maintained list and point at the command.
 
+
+    **CLOSED 2026-08-27 (`docs`)**: the watch list now points at `python registry_health.py
+    --ats`, which is derived. The hand-maintained list is deleted: `eightfold`, `phenom`,
+    `successfactors` and `jobvite` all have fetchers, `jazzhr` was retired, and iCIMS is the
+    only platform left with rows and no fetcher.
 ## From the registry lane's wave-8 review, 2026-08-24
 
 Three independent agents, all NO-GO. Two of the defects were mine, introduced by wave 7's
@@ -2046,13 +2067,16 @@ Record: `docs/sessions/2026-08-24-scraper.md`. Numbers re-derived that day; re-d
     (20 → 80), `scrape-park-outside-error`, `scrape-since-not-reset` (drop the `why` change
     test in `_rot_bump`). Each is killed by a behavioural test in `tests/test_units.py` today.
 
-93. **Stale numbers in docs the scraper lane may not write** — lane: `docs`. The one-screen
+93. ~~**Stale numbers in docs the scraper lane may not write**~~ — lane: `docs`. The one-screen
     diagram in `ARCHITECTURE.md` (`433 API rows`, `16 platforms`, `412 rows`), `docs/
     AGENT_BRIEF.md:53,90` (`412`), `HANDOFF.md:175-176` (Eightfold/Phenom "no native fetchers"
     — `grep -n "def fetch_eightfold\|def fetch_phenom" pipeline/fetchers.py` finds both), and `docs/BACKLOG.md` item 13's dedup
     measurement (today, with `pipeline.store.merge_key`: 1,225 jobs / 1,194 keys / 31 dropped,
     not 1,110 / 1,079 / 12).
 
+
+    **CLOSED 2026-08-27 (`docs`)**: same as 81 — the numbers half is a registered fact; the
+    Eightfold/Phenom half was already true and is now in the ATS watch list's derived form.
 95. ~~**`merge_json_cache.merge` cannot express a deletion**~~ — **closed 2026-08-25 (`infra`)**: the deletion rule is in `merge()`, pinned by the cache-merge guard and `tests/rehearse_infra.py --conflict`. Original text: — lane: `infra`. It starts from
     `theirs` and iterates `ours`, so a company key the refresh deliberately dropped tonight
     (empty, carry expired after `CARRY_MAX_DAYS`, parked) comes back with yesterday's jobs
@@ -2135,7 +2159,7 @@ write list; each item names the lane that owns it and the command that proves it
     Lever has the same split (`api.eu.lever.co`); the three empty Lever rows today
     (Leadspace, Chaos Labs, Pillar Security) are 404 there too — genuinely empty.
 
-81. **Numbers other lanes' files still carry from before this session** — lane: `docs`
+81. ~~**Numbers other lanes' files still carry from before this session**~~ — lane: `docs`
     (`ARCHITECTURE.md`'s one-screen map: "16 platforms, 433 API rows … 412 rows" — today
     18 keys / 436 / 425; `docs/ATS_PLATFORMS.md`'s platform list lacks `eightfold` and
     `phenom` and their URL patterns; `docs/gen_modules.py` line 94 and its output
@@ -2145,6 +2169,11 @@ write list; each item names the lane that owns it and the command that proves it
     purpose — Phenom's ~350-char teaser would clear the 300-char bar and never states
     years — so both belong on that list).
 
+
+    **CLOSED 2026-08-27 (`docs`)**: retired as a CLASS, not corrected once more. Every number
+    this item lists is now a registered fact in `docs/check_docs.py` (`--facts` prints all 18
+    sites), and the two it lists that move when a CRON runs are deliberately unregistered
+    because no bracket narrow enough to be useful survives 18 rows an hour.
 82. **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
     run's `stale.json` without the `error` reasons, prints no `mail_lines`, and re-fetches
     all 66 active Workday rows in a burst** — lane: whoever owns `self-heal.yml`'s step
@@ -2505,8 +2534,18 @@ kept; the Meta listing-url rows are superseded).
     `tests/test_company_intel.py` and `tests/test_registry.py`; `digest.py` re-exports
     `_firmo_facts` from `rolecard` for that reason alone. When 142 lands, retarget the audit
     tests at `build_markdown` and drop the re-export.
-147. **BACKLOG numbers 70, 71, 132 and 133 are each used twice** — lane: `docs`. `grep -oE '^[0-9]+\.' docs/BACKLOG.md | sort -n | uniq -d` → `1.`–`15.` (numbered sub-lists inside items, false positives), then the real duplicates `70.`, `71.`, `132.`, `133.`; a citation of "BACKLOG 133" lands on the classifier's `claude -p` item before the registry's "13 active groups read one board" item. Renumber the second block of each (and every citation) in one commit.
-148. **`docs/AGENT_BRIEF.md`'s roles paragraph is stale** — lane: `docs`. "Reposts are detected at render time by comparing `posted_date` against `first_seen`" (the ledger records them, `pipeline/roles.py`), "the tags are not stored" (`cloud_state/roles.jsonl` carries a `tags` snapshot, `v: 1`), "105 rows" (111 on 2026-08-25). The render lane row was corrected on 2026-08-25 (disclosed, out of lane); the paragraph was not.
+147. ~~**BACKLOG numbers 70, 71, 132 and 133 are each used twice**~~ — lane: `docs`. `grep -oE '^[0-9]+\.' docs/BACKLOG.md | sort -n | uniq -d` → `1.`–`15.` (numbered sub-lists inside items, false positives), then the real duplicates `70.`, `71.`, `132.`, `133.`; a citation of "BACKLOG 133" lands on the classifier's `claude -p` item before the registry's "13 active groups read one board" item. Renumber the second block of each (and every citation) in one commit.
+
+    **CLOSED 2026-08-27 (`docs`)**: the header no longer claims numbers above 15 are unique.
+    Measured: **28** numbers name more than one item, not 4. The index resolves any bare number
+    to its claimants, and `python docs/backlog.py next` is what stops the next collision —
+    241-246 collided because three lanes filed within an hour and none of them knew.
+148. ~~**`docs/AGENT_BRIEF.md`'s roles paragraph is stale**~~ — lane: `docs`. "Reposts are detected at render time by comparing `posted_date` against `first_seen`" (the ledger records them, `pipeline/roles.py`), "the tags are not stored" (`cloud_state/roles.jsonl` carries a `tags` snapshot, `v: 1`), "105 rows" (111 on 2026-08-25). The render lane row was corrected on 2026-08-25 (disclosed, out of lane); the paragraph was not.
+
+    **CLOSED 2026-08-27 (`docs`)**: corrected, and the paragraph was wronger than this item
+    said: the tags ARE stored (132 of 135 ledger rows carry a `tags` snapshot with
+    `tags_sha1`), reposts are recorded in the ledger and only re-derived at render time as a
+    fallback, and `matched` is 135.
 149. **`same_employer` and `blurb-names-other` are heuristics with a known false-positive
     surface** — lane: `render`. Wave 2 measured the registry-wide worst case (every active
     company posting one "Data Analyst") at 45 cross-check issues; after `_SITE_WORDS`, the
@@ -2943,12 +2982,16 @@ half), 86, 118, 153, 154, 184. Open, with owners:
     Blings.io, Jit, Phinergy, Akamai Technologies, Zim (2026-08-26) are owned by the rot's
     7-night parking and then the registry pools. If a dead-on-arrival scrape URL should reach
     discovery's targeted sweep earlier, the `collect` stamp is the place to name them.
-209. **Platform and row counts other lanes' files still carry** — lane: `docs`.
+209. ~~**Platform and row counts other lanes' files still carry**~~ — lane: `docs`.
     `docs/ATS_PLATFORMS.md:18` lists `jazzhr` (retired); `docs/gen_modules.py:95` and its
     output `docs/MODULES.md:132` say "16 platforms" (15); `ARCHITECTURE.md`'s one-screen map
     (lines 37–38: "16 platforms, 433 API rows", "412 rows"), `README.md:12,13,31` and
     `docs/AGENT_BRIEF.md:49,52-53,90` say 433 / 412 / 846 — today 431 API / 438 scrape / 870 active
     (§1's one-liner). This lane's section says so; the container is `docs`'.
+
+    **CLOSED 2026-08-27 (`docs`)**: same as 81 — the platform and row counts are registered
+    facts, and `docs/ATS_PLATFORMS.md`'s `jazzhr` entry (which would RAISE in `fetch_company`)
+    is gone along with the four missing platforms.
 210. **BACKLOG 83 re-sized: the fetch loop is 3.8–4.7 min of a 20-minute step, the classify
     phase 14.8** — lane: `infra` (83) + `classifier`. Run `32813499709` (2026-08-25): the
     loop opened 05:47:46, its 771st row (`[discovery]`) logged 05:51:33, first classify output
@@ -2984,8 +3027,8 @@ half), 86, 118, 153, 154, 184. Open, with owners:
     2026-08-27 is not a recovery, and the next host removed from `ATS_HOST` will print the
     same line silently. A `misconfig-scrape-on-ats` row that is absent today because the
     host is no longer in `ATS_HOST` is the predicate; one line beside the other two.
-215. **`docs/check_docs.py` is green in the shared checkout and red on CI: it walks
-    `.claude/worktrees/`** — lane: `docs` (+ `registry` for the line). `_basenames()` skips
+215. ~~**`docs/check_docs.py` is green in the shared checkout and red on CI: it walks
+    `.claude/worktrees/`**~~ — lane: `docs` (+ `registry` for the line). `_basenames()` skips
     `.git`/`out`/… but not `.claude`, and the stale agent worktree `agent-a4942005e88090349`
     (at `bebbee9`) still holds the deleted `deep-validate` workflow file, so BACKLOG line 494
     (`registry`, `8a4deac`: "the Saturday deep-validate cron is now the Sunday audit's rung",
@@ -2995,6 +3038,11 @@ half), 86, 118, 153, 154, 184. Open, with owners:
     `git worktree`. Fix both halves: add `.claude` to `_SKIP_DIRS`, and put the deleted
     workflow's name in `ABSENT_OK` with the reason (or reword line 494).
 
+
+    **CLOSED 2026-08-27 (`docs`)**: verified closed, both halves. `.claude` is in `_SKIP_DIRS`,
+    and `python docs/check_docs.py` is green run from a clean `git worktree` at `ae6eeae` —
+    which is the statement that matters, since the shared checkout carries seven agent
+    worktrees.
 ## From the `scraper` lane, 2026-08-26
 
 Record: `docs/sessions/2026-08-24-scraper.md` (2026-08-26 section). Numbers re-derived that day; re-derive before acting.
@@ -3251,7 +3299,7 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     (`"Careers at Microsoft"`, the page's own `<h1>`). Retiring them takes the standing misconfig
     line down by 5. (None of the five carries an `alias-of` note today, and none sits at the
     canonical row's URL — they are duplicates that were never declared as such.)
-233. **BACKLOG 80 and HANDOFF watch-item 0 are wrong: the Greenhouse EU JSON API exists** — lane:
+233. ~~**BACKLOG 80 and HANDOFF watch-item 0 are wrong: the Greenhouse EU JSON API exists**~~ — lane:
     `docs` (+ `scraper` for 80's conclusion). `https://boards.eu.greenhouse.io/v1/boards/<slug>/jobs`
     answers the same JSON as the US host — Unframe AI `unframe`: **32 postings / 10 Israel on both**,
     2026-08-26, through `fetch_greenhouse` unmodified. What is NXDOMAIN is `boards-api.eu.greenhouse.io`,
@@ -3260,6 +3308,12 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     a scrape row on the EU URL" is false — the fix is an ordinary greenhouse row on either host.
     `check_invariants.PLATFORM_HOST["greenhouse"]` is `r"greenhouse\.io"` and check C2 is a
     `re.search`, so the EU host is already admitted (verified); no invariant change is needed.
+
+    **CLOSED 2026-08-27 (`docs`)**: `HANDOFF.md`'s watch-item 0 is corrected and
+    `docs/ATS_PLATFORMS.md` now gives the EU host its own line. Re-verified today: Unframe
+    `unframe` returns 32 postings on both hosts. **And the item was incomplete** — Outbrain is
+    not rescued by the EU API either, it answers `meta.total 0` on both, so the worked example
+    that started this needs a different diagnosis.
 234. **`apply_resolved.py` stamps `self-heal <date>` on a batch no self-heal produced, and a
     converted row keeps every pool token its scrape life earned** — lane: `registry`. The string
     is `pipeline.notes.replace_own`'s marker, so it cannot simply be reworded; a
@@ -3326,7 +3380,7 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     never have passed the classifier, so no coverage was lost), but the ROW is worth a look:
     with item 230's rung it would convert. Same shape, less certain: Taranis
     (`#link__list__content`).
-240. **Four sentences in other lanes' files that today's measurements contradict** — lane: `docs`
+240. ~~**Four sentences in other lanes' files that today's measurements contradict**~~ — lane: `docs`
     (with the owner named per line). Found by this lane's doc-claims auditor, 2026-08-26, each
     re-derived by command: (a) `HANDOFF.md`'s watch-item 0 ("so the EU board has no public JSON
     API — the page is a JS shell and needs the renderer") and `docs/BACKLOG.md` 80 ("There is no
@@ -3345,6 +3399,10 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     in the current working tree.
 
 
+
+    **CLOSED 2026-08-27 (`docs`)**: all four sentences corrected, and three attackers found 42
+    more the same morning. (a) and (b) are in this session's commits; (c) and (d) are
+    registered facts now.
 ## From the `company-intel` lane, 2026-08-26 (evening)
 
 241. **`persist_state.py commit --own PATH` commits the WHOLE index, not the owned paths** —
