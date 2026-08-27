@@ -13288,7 +13288,11 @@ def test_resolve_is_bounded_by_a_total_deadline(monkeypatch):
     monkeypatch.setattr(RD, "scrape_result", lambda n, u, **k: (
         asked.append(("scrape", k.get("budget_s"))) or _R()))
     RD.resolve("Acme", "https://acme.com", budget_s=20)
-    assert asked[0] == ("capture", 20000), asked
+    # a RANGE, not an equality: `_left()` is `int(deadline - time.time())`, so any wall-clock
+    # elapsed between the two calls lowers it. The first version pinned 20000 exactly, passed
+    # on this machine and failed on the runner at 19000 -- a flaky guard is worse than none,
+    # because it teaches the next reader that a red `tests.yml` is normal.
+    assert asked[0][0] == "capture" and 15000 <= asked[0][1] <= 20000, asked
     assert asked[1][0] == "scrape" and 0 < asked[1][1] <= 20, asked
     asked.clear()
     RD.resolve("Acme", "https://acme.com")            # the old, unbounded contract survives
