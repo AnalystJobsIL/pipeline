@@ -324,7 +324,7 @@ def _probe_resolve(name, li_slug, boards, deadline):
     if len({(h["plat"], h["slug"]) for h in live}) > 1:
         return None, "probe-ambiguous"
     h = live[0]
-    if (h["plat"], h["slug"]) in boards:
+    if (h["plat"].lower(), h["slug"].lower()) in boards:
         return None, "probe-dup-board"
     # READ THE PAGE OURSELVES. `_row_for_ats` calls `activation_ok(nm, api, n_all)` with NO
     # html, so `board_vouches` -> None sends the gate to fetch `human_board_url` itself --
@@ -874,7 +874,17 @@ def main():
             # shape section 2 calls terminal: every role published twice under two employer
             # names, which check B cannot catch BECAUSE the names differ. Re-read, like
             # rule 4, so it covers the probe path, the LLM path and the intra-run case.
-            if row[4] == "true" and (row[1] or "", row[2] or "") in _boards_now():
+            # LOWERCASED on BOTH sides. `_boards_now()` lowercases what it stores and this
+            # lookup did not, so the guard was blind to every platform whose tokens are not
+            # already lower-case -- which is exactly one, and it is Comeet, whose token is an
+            # uppercase uid. Demonstrated in production by the 19:18 run of 2026-08-27, which
+            # wrote `Imagry | Autonomous Driving` as a SECOND ACTIVE ROW on `comeet/B7.00F`
+            # beside the existing `Imagry`: the `alias-of` shape section 2 calls terminal,
+            # every role republished under two employer names, and `check_invariants` check B
+            # cannot catch it BECAUSE the names differ. The guard was written for this and
+            # missed it by a `.lower()`.
+            if (row[4] == "true"
+                    and ((row[1] or "").lower(), (row[2] or "").lower()) in _boards_now()):
                 n_dupe += 1
                 print(f"  dupe {name} ({row[1]}/{row[2]} is already read by another row; "
                       f"not appended)", flush=True)

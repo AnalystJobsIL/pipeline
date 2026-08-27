@@ -13536,3 +13536,37 @@ def test_the_widened_retry_pool_refuses_another_tenants_ats_host():
     # or the four rows the pool always had would leave it
     assert RU.in_retry_pool(
         row("https://job-boards.greenhouse.io/x", "unreachable; could not scan"))
+
+
+def test_the_board_guard_is_case_blind_to_a_comeet_uid(tmp_path, monkeypatch):
+    """The guard that stops one run writing two ACTIVE rows on one board keys on
+    `(platform, token)`. `_boards_now()` lower-cases what it STORES and the two lookups did
+    not lower-case what they ASK -- so the guard was blind to every platform whose tokens are
+    not already lower-case, which is exactly one, and it is Comeet, whose token is an
+    uppercase uid.
+
+    Demonstrated in production by the 19:18 auto-expand run of 2026-08-27, which wrote
+    `Imagry | Autonomous Driving` as a second active row on `comeet/B7.00F` beside the
+    existing `Imagry` -- the `alias-of` shape ARCHITECTURE section 2 calls terminal, every
+    role republished under two employer names, and `check_invariants` check B cannot catch it
+    BECAUSE the names differ. The guard was written for exactly this case and missed it by a
+    `.lower()`. The row was parked in the same commit."""
+    import sys as _sys
+
+    import auto_expand as E
+
+    d = tmp_path / "boards"
+    d.mkdir()
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Imagry,comeet,B7.00F,https://www.comeet.com/careers-api/2.0/company/B7.00F/"
+        "positions?token=X,true,resolved via Playwright/comeetvar\n", encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(E, "CSV_PATH", str(d / "companies.csv"))
+    monkeypatch.setattr(_sys, "argv", ["auto_expand.py"])
+    boards = E._boards_now()
+    # the store lower-cases; a lookup that does not is the bug
+    assert ("comeet", "b7.00f") in boards, boards
+    row = ["Imagry | Autonomous Driving", "comeet", "B7.00F", "https://x", "true", "n"]
+    assert ((row[1] or "").lower(), (row[2] or "").lower()) in boards, (
+        "the duplicate-board guard cannot see an uppercase Comeet uid")

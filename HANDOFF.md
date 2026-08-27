@@ -71,7 +71,7 @@ in full. Commands are given so the next reader re-derives rather than trusting.
 
 | | | how |
 |---|---|---|
-| registry | **1,266 rows · 894 active · 372 parked** | `python check_invariants.py` (it prints 1,267: it counts the header) |
+| registry | **1,266 rows · 893 active · 373 parked** | `python check_invariants.py` (it prints 1,267: it counts the header) |
 | by tier | **451 native-ATS · 421 scrape · 1 discovery** | `python registry_health.py --census` — and note this moved 18 rows in the hour between `ae6eeae` and `623b2a9` |
 | store | **135 matched · 59 sent · 946 firmographics · 516 llm_cache · 112 company_info** | `sqlite3 cloud_state/seen.db` |
 | ledger | **135 `roles.jsonl` · 132 `roles_text.jsonl`**, reconciling with the store | `wc -l cloud_state/roles*.jsonl` |
