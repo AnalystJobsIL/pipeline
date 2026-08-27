@@ -3458,7 +3458,7 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
 
 ## From the `registry` lane, 2026-08-27
 
-271. **`check_invariants.TRIAGE_MODES` is a hand copy that has 7 of the 8 modes, and 24 rows
+282. **`check_invariants.TRIAGE_MODES` is a hand copy that has 7 of the 8 modes, and 24 rows
     pay for it nightly** — lane: `infra` (owns `check_invariants.py`), found by `registry`.
     `triage_dark` writes `no-url` (its docstring line 19 lists it; `classify` returns it) and
     routes it — the tool's own last line says `routing: url-dead/no-url -> listing_hunt
@@ -3474,40 +3474,63 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     `python -c "import triage_dark as T, check_invariants as C; print(sorted(set(T.MODES) - C.TRIAGE_MODES))"`
     → `['no-url']`.
 
-272. **`tests.yml` is red for every lane on the 14-night rehearsal, and the cause is a pool
-    token that `pipeline/notes.py` does not protect** — lane: `registry`, but the fix is in
-    **shared plumbing** so it is filed rather than taken. `tests.yml` has no
+283. **`tests.yml` is red for every lane on the 14-night rehearsal: a wake is evicted before
+    its receiver ever sees it** — lane: `registry`, but the one-line fix is in **shared
+    plumbing** (`pipeline/notes.py`) so it is filed rather than taken. `tests.yml` has no
     `continue-on-error` anywhere ("It is meant to block", line 7), and
     `python tests/rehearse_registry.py --nights 14 --policy worst` exits 1:
 
         FAIL night 4: pool listing_hunt (19:00 daily) lost 1 rows it should keep: ['NeoGames']
 
-    Pre-existing, not caused by this session: the identical failure, with identical per-night
-    pool sizes, reproduces on a clean worktree at `ae6eeae`. NeoGames' note is saturated at
-    the 220-char cap and reads `probe-woken: re-hunt pending | listing-hunt 2026-08-25: no IL
-    listing; monitored candidate | dark-triage 2026-08-26: page-empty (...)`. On night 4 the
-    Sunday deep rung appends `deep-validated ...: no ATS detected (rendered)`, `notes.append`
-    evicts the oldest UNPROTECTED segment — which is listing-hunt's — and the row's only
-    surviving classification is the protected `dark-triage: page-empty`, which
-    `listing_hunt._triaged_page_empty` excludes. The row leaves the one pool that could
-    re-check it. This is exactly the failure §2's rule names ("**a pool token must survive
-    note erosion — or the pool must not stand on a token at all**"), applied to a token the
-    rule's own protected list forgot: `_PROTECTED_EXTRA` (`pipeline/notes.py:41`) protects
-    `unsupported ATS`, `dark-triage <date>: <mode>`, `no open israel roles`,
-    `empty-but-suspect`, `cross-validated` — not `monitored candidate` / `host documented`,
-    which are `listing_hunt`'s documented fast-path tokens.
+    Pre-existing, not caused by the 2026-08-27 session: the identical failure, with identical
+    per-night pool sizes, reproduces on a clean worktree at `ae6eeae`. The rehearsal's
+    invariant is right — under `worst` a row may leave a pool only by going active, terminal,
+    or losing its http address, and NeoGames does none of those.
 
-    **Two fixes, and the cheap one has a measured price.** (a) Add
-    `monitored candidate|host documented` to `_PROTECTED_EXTRA` — one line, but 251 rows carry
-    one of those tokens and it takes the rows whose every segment is protected from **47 to
-    87**, of which **17 are within 40 chars of the cap**, i.e. 17 rows where tonight's stamp
-    would be dropped whole. By the rule that is the right trade (a dropped stamp costs a tool
-    its date; an evicted token costs a row its pool), but it is a shared-plumbing change
-    affecting all nine lanes and it deserves its own adversarial pass, not a 03:00 edit.
-    (b) Make `listing_hunt`'s pool stand on row facts rather than on a note token, the way
-    `probe_candidates` was converted in BACKLOG 53 — larger, in-lane, and the durable answer.
-    Reproduce the counts: `python tests/rehearse_registry.py --nights 14 --policy worst`, then
-    the saturation measurement in `docs/sessions/2026-08-24-registry.md` (2026-08-27 section).
+    **The first diagnosis written here was wrong, and the correction is the whole point.** It
+    said the row lost `listing-hunt <date>: no IL listing; monitored candidate` to eviction.
+    It does lose that segment, and it does not matter — `HUNT_POOL` still matches on
+    `no ATS detected` from the Sunday deep rung. Driving the predicate over the four note
+    states settles it:
+
+    ```
+    note state                 HUNT_POOL  page-empty-exclusion  in_hunt_pool
+    night 0 (as committed)       True           False              True
+    wake evicted                 True           True               False   <-- here
+    listing-hunt seg evicted     True           False              True
+    night 4 (both gone)          True           True               False
+    ```
+
+    The row is dropped by the eviction of **`probe-woken: re-hunt pending`**, the undated
+    wake. `listing_hunt._triaged_page_empty` skips a `dark-triage …: page-empty` row *unless*
+    a wake at least as new as the triage stamp says the page's signals rose; the wake is the
+    row's only route back into the hunt, `notes.append` treats it as the oldest unprotected
+    segment on a note already at the 220-char cap, and an unrelated tool's stamp evicts it.
+    ARCHITECTURE §2 already states the rule this breaks — *"A wake must clear every stamp any
+    downstream filter excludes on, **and survive to its receiver**"* — and nothing enforces the
+    second half. The wake was made dated and consumable (`_consume_wake`) so it could not
+    LINGER; nothing stopped it vanishing early.
+
+    **The fix is one regex alternation and it costs nothing.** Adding `probe-woken` to
+    `_PROTECTED_EXTRA` (`pipeline/notes.py:41`):
+
+    ```
+    rows carrying probe-woken: 1
+    rows where every segment is protected (a newcomer is dropped whole): 47 -> 47  (+0)
+    near-cap rows newly all-protected: 0
+    ```
+
+    Compare the `monitored candidate` variant this item proposed before the measurement:
+    47 -> 87 (+40), 17 of them within 40 chars of the cap. That is 40x the blast radius for a
+    fix that would not have addressed the failure. The wake is also the right thing to protect
+    on principle: it is transient by design and has exactly one legitimate consumer, so
+    protecting it cannot accumulate — the hunt strips it the same night.
+
+    Whoever owns `pipeline/notes.py` should make the change with
+    `python tests/rehearse_registry.py --nights 14 --policy worst` as the proof, and add a
+    guard that a wake survives an unrelated append on a saturated note. Every lane that writes
+    a note goes through `notes.append`, so the change is theirs to announce; its measured cost
+    is zero rows.
 
 273. **27 of the 200 mutation records are still anchored on code that no longer exists** —
     lane: `registry`. `tools/mutate.py` reports each as

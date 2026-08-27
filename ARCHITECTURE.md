@@ -886,7 +886,7 @@ readings. Fixed 2026-08-27; the guard is
 seam with only `subprocess.run` replaced — the previous guard monkeypatched `call_json`
 itself and pinned the dict, which is how this shipped. **And `check_invariants`'s check F2
 has seven of the eight modes**, so the 24 `no-url` rows are reported nightly as a truncated
-mode when they are nothing of the kind (`docs/BACKLOG.md` 271, `infra`).
+mode when they are nothing of the kind (`docs/BACKLOG.md` 282, `infra`).
 
 ### State transitions (who moves a row, and when)
 
