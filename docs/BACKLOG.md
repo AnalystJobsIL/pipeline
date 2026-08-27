@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**382 filed · 273 open · 109 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**382 filed · 272 open · 110 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -83,7 +83,7 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### registry — 78 open
+### registry — 77 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -160,7 +160,6 @@ closure convention in the header.
 - **329** `329@registry` **The 02:30 chain stamps `another company's board` on a row it merely could not read** —
 - **330** `330@registry` **`auto_expand`'s rotation-key flush keys on dict GROWTH, not on work done**
 - **331** `331@registry` **`resolve_deep._verify` is inside `resolve`'s "TOTAL wall clock" and never sees it** —
-- **332** `332@registry` **The queue-to-row bridge is one tool wide, and ~456 names are therefore owned by
 - **334** `334@registry` **`_site_from_guess` tries four TLDs and never varies the STEM, and the stem is worth
 - **339** `339@registry` **`AUTO_EXPAND_SITE_MAX` cannot rise until the resolve path it unlocks has a deadline**
 
@@ -5241,7 +5240,14 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      `limit >= 825`, where the derived budget equals `RUN_CEILING_S` and "the clock bound the
      run instead of the batch" returns identically — the derivation needs a note or a cap.
 
-332. **The queue-to-row bridge is one tool wide, and ~456 names are therefore owned by
+332. ~~**The queue-to-row bridge is one tool wide, and ~456 names are therefore owned by
+     **CLOSED 2026-08-27 (`registry`)**: `listing_hunt.queue_targets()` + a reserved slice of
+     the hunt's budget (`HUNT_QUEUE_MIN` 60 of 200) now feed intake names to `hunt_one`, which
+     could always work them. Every name hunted gets a row -- the point AND the rotation key,
+     so no new state file and no `--own` change. The measurement this item asked for was made
+     instead of sampled: over the first 73 of 488 backlogged names, **33 boards found and 521
+     Israel jobs**, against 61 Israel jobs from 9 companies for the slug rung over the ENTIRE
+     queue. It also uncovered why the search half had never worked -- `327@registry`.
      nothing** — lane: `registry`. This is the "owned by nothing" failure ARCHITECTURE
      section 8 calls the most common way this codebase breaks, applied to a third of the
      intake queue, and it has never been written down.

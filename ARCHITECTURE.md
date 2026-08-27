@@ -1566,6 +1566,38 @@ the short version of the three gates and the code that enforces them.
   which is the same failure as leaving a closed hole documented. (This line also said a
   `weak` domain verdict "is settled by whether the fetched page NAMES the company as a
   phrase". Nothing reads `weak` — see section 2 and `docs/BACKLOG.md` 43.)
+- **The last rung of the search ladder was returning `[]` for every query, and nothing
+  noticed (2026-08-27).** `deep_validate.google_via_unlocker` parsed `href="/url?q=..."`;
+  modern Google serves the no-JS variant with **zero** result hrefs — measured on a live
+  330 KB response, `/url?q=` appeared 0 times and the only 7 bare `href="http` were Google's
+  own chrome. So with SerpApi exhausted and DDG rate-limited off the dev machine (2 of 10
+  queries answered, then 0 of 12 even at 60 s gaps), **every consumer of the ladder was
+  searching into a void**: `deep_validate`, `audit_empty_rows`, `resolve_llm` and
+  `listing_hunt`'s fallback. That is exactly the failure this section warns about two
+  paragraphs down — "a whole run of 'found nothing' is indistinguishable from 'cannot
+  search'" — and it was live. Three fixes: parse URLs as TEXT; ask for `gl=il&hl=en` (the
+  unlocker's exit node is wherever Bright Data puts it, and from Kazakhstan an Israeli
+  employer's own site loses to job-aggregator spam); and rank the URL **per host** instead of
+  keeping the first, because the bare homepage always appears first — Google returned
+  `comeet.com/jobs/exodigo/89.005`, Exodigo's actual board, and first-per-host discarded it
+  for `comeet.com`. Guard:
+  `test_the_only_working_search_rung_actually_parses_a_result`.
+
+- **The intake queue is worked by `listing_hunt` now, not only by `auto_expand` (2026-08-27,
+  `docs/BACKLOG.md` 332).** Every re-check pool in this lane keys on a ROW — `listing_hunt`
+  reads `companies.csv` and nothing else, and so do `triage_dark`, `crack_walled`,
+  `deep_validate`, `audit_empty_rows` and `probe_candidates` — so a name in
+  `research_companies.json` was reachable by exactly one scheduled tool, and that tool
+  guesses ATS slugs. Measured over the whole queue: **453 of 495 names have no guessable
+  board**, so 92% of the intake had no owner at any cadence and simply accumulated. The hunt's
+  `hunt_one` always could work them (it takes a NAME and searches when the seed is empty); it
+  was never given them. `queue_targets()` now feeds it, inside a **reserved** slice of the
+  time budget (`HUNT_QUEUE_MIN` 60 of `HUNT_TIME_BUDGET_MIN` 200 — running last inside one
+  shared budget is how the backlog formed), with `SCRAPE_ASSUME_IL` forced **off** because
+  queue names are raw employer names rather than pre-vetted rows. Every name it touches gets a
+  row, which is both the point and the rotation key. Yield on the first 73 names, against the
+  slug rung's 61 Israel jobs from the *entire* queue: **33 boards found, 521 Israel jobs.**
+
 - **Every rung that searches needs all three fallbacks.** The ladder is SerpApi (cheapest,
   currently useless) → `deep_validate.ddg` (free) → `deep_validate.google_via_unlocker`
   (Bright Data, capped by `DEEP_BD_SEARCH_CAP` in `deep_validate`/`audit_empty_rows`, and by
