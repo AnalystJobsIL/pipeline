@@ -5353,7 +5353,15 @@ def test_check_invariants_lists_the_active_rows_whose_tenant_cannot_vouch(tmp_pa
 def test_triage_asks_the_page_judge_through_the_shared_seam_with_its_own_schema(monkeypatch):
     """Kills `triage-llm-schema-drop` and `triage-llm-unavailable-raise` (BACKLOG 117):
     the last bare `claude -p` in the lane goes through `pipeline.llm.call_json`, states its
-    schema, and an unavailable CLI is `None` (the regex verdict stands), never a crash."""
+    schema, and an unavailable CLI is `None` (the regex verdict stands), never a crash.
+
+    2026-08-27: this test asserted `seen["schema"]["required"]` on the object it captured,
+    i.e. it PINNED the schema as a dict -- and the seam puts `schema` into argv, so a dict
+    made `subprocess.run` raise TypeError before the spawn and the judge returned None on
+    every row for two days with this test green. It now parses the string, which is what
+    the CLI is handed; the behavioural cover is
+    `test_the_triage_page_judge_reaches_the_model_through_the_real_seam`, which drives the
+    real seam with only `subprocess.run` replaced."""
     import triage_dark as T
     from pipeline import llm
     seen = {}
@@ -5365,7 +5373,10 @@ def test_triage_asks_the_page_judge_through_the_shared_seam_with_its_own_schema(
     T._LLM_USED["n"] = 0
     v = T.llm_page_verdict("Acme", "https://acme.example/careers", "Data Analyst - Tel Aviv")
     assert v and v[0] == "has-roles" and "Data Analyst" in v[1]
-    assert set(seen["schema"]["required"]) == {"is_careers_page_for_this_company", "open_roles", "note"}
+    import json as _json
+    assert isinstance(seen["schema"], str), "the seam puts this straight into argv"
+    assert set(_json.loads(seen["schema"])["required"]) == {
+        "is_careers_page_for_this_company", "open_roles", "note"}
     assert "open position" in seen["system"] and seen["model"]
     monkeypatch.setattr(llm, "call_json", lambda *a, **k: {"is_careers_page_for_this_company": False, "open_roles": [], "note": "another firm"})
     assert T.llm_page_verdict("Acme", "https://x", "t")[0] == "wrong-page"
@@ -5559,3 +5570,39 @@ def test_the_hunt_actually_reads_the_llm_cap_its_docstring_promises(monkeypatch)
     src = open(H.__file__, encoding="utf-8").read()
     assert 'os.environ.get("HUNT_LLM_CAP"' in src,         "the docstring advertises HUNT_LLM_CAP; the code must actually read it"
     assert "_llm_budget_left()" in src.split("def _llm_budget_left")[-1],         "the budget helper exists but no caller consults it"
+
+
+def test_the_resolver_counts_the_calls_that_could_not_have_verified():
+    """`_verify` will not accept a board unless its token appears on a page on the company's
+    OWN domain, so an attempt whose evidence holds no such page cannot succeed whatever the
+    model answers — it spends up to two calls and returns None. `own_pages_in_evidence`
+    names that condition, and `auto_expand` reports it as `hopeless N` rather than acting on
+    it, because the measurement cannot be made off the runner: SerpApi is exhausted,
+    DuckDuckGo is rate-limited from the dev machine and there are no Bright Data credentials
+    there, so a local sample is all `candidates=0` and says nothing.
+
+    This pins the PREDICATE, which is the part a gate would later stand on.
+    """
+    import resolve_llm as R
+    pages = [("https://www.growthspace.com/careers", "<html>own page</html>"),
+             ("https://boards.greenhouse.io/someoneelse", "<html>ats host</html>"),
+             ("https://il.linkedin.com/jobs/view/1", "<html>aggregator</html>")]
+    kept = R.own_pages_in_evidence("GrowthSpace", pages)
+    assert kept == ["https://www.growthspace.com/careers"], kept
+    assert R.own_pages_in_evidence("GrowthSpace", pages[1:]) == [], \
+        "an ATS host and an aggregator are not the company's own page"
+    assert "own_pages" in R.LAST
+
+
+def test_auto_expand_reports_what_the_llm_tier_was_asked(monkeypatch, tmp_path):
+    """The summary line is the only place the resolver queue is visible, and until
+    2026-08-27 it said `resolved 0 … deferred 250` without saying how many of the tier's
+    capped calls were even winnable. Two runs a day at `LLM_RESOLVE_CAP` 10 is the whole
+    drain rate, so `asked N (hopeless M)` is the number that decides whether the cap is
+    worth raising or the calls are worth refusing."""
+    import auto_expand as A
+    src = open(A.__file__, encoding="utf-8").read()
+    assert 'f"asked {n_asked} (hopeless {n_hopeless}); "' in src
+    assert 'n_hopeless += 1 if not _llm.LAST["own_pages"] else 0' in src
+    assert "keeps shrinking the unresolved set every run until it reaches zero" not in src, \
+        "the docstring's drain claim was measured false on 2026-08-26 (414 -> 411 -> 408)"

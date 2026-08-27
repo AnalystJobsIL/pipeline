@@ -95,7 +95,11 @@ def _is_aggregator(url):
 
 # What the LAST call did, for the caller's budget: `auto_expand` charges its `claude -p`
 # cap only when a call was actually made (`asked`), and prints why a name was deferred.
-LAST = {"asked": False, "pages": 0, "candidates": 0, "error": "", "calls": 0}
+# `own_pages` is REPORT-ONLY (2026-08-27): the number of pages in the evidence that
+# `_own_page_names_token` would be willing to look at. Zero means this attempt could not
+# have verified whatever the model answered -- see `own_pages_in_evidence` below.
+LAST = {"asked": False, "pages": 0, "candidates": 0, "error": "", "calls": 0,
+        "own_pages": 0}
 # (page url, html) of every page the LAST call read: the evidence a proposal must be
 # grounded in (see `_verify`)
 _PAGES = []
@@ -259,6 +263,34 @@ def _own_page_names_token(name, token, api_url, pages=None, platform=""):
     return False
 
 
+def own_pages_in_evidence(name, pages=None):
+    """The pages `_own_page_names_token` is willing to look at -- ITS filter, not a copy.
+
+    `_verify` will not accept a proposal unless the token appears on one of these, so when
+    this is EMPTY the call cannot succeed no matter what the model answers: every proposal
+    raises `board {token!r} was not found on {name!r}'s own page`, the retry re-prompts, and
+    the attempt ends `None` having spent two calls. The scraper lane found the same shape on
+    its own tier and gated it (`scrape_universal._llm_gate` -- "spares a call a page can
+    only lose", 94 of 128 on 2026-08-26).
+
+    This is deliberately NOT wired as a gate yet. The measurement cannot be made from the
+    dev machine -- SerpApi is exhausted, DuckDuckGo is rate-limited from here, and there are
+    no Bright Data credentials -- so a local sample gets `candidates=0` for most names and
+    says nothing about the runner, where the search rung works. Instead `auto_expand`
+    reports `hopeless N` in its summary line, so the 08:00 and 20:00 runs measure it in
+    production for free; the gate is one `if` once the number is real (docs/BACKLOG.md).
+    """
+    from pipeline.company_identity import ATS_HOST, is_foreign
+    from urllib.parse import urlparse
+    out = []
+    for url, _html in (pages if pages is not None else _PAGES):
+        host = urlparse(url).netloc.lower()
+        if not host or ATS_HOST.search(host) or _is_aggregator(url) or is_foreign(name, url):
+            continue
+        out.append(url)
+    return out
+
+
 def _verify(name, platform, token, api_url, pages=None):
     """Fetch through the production fetcher; returns (n_all, n_il) or raises."""
     if platform not in FETCHERS or platform in ("scrape", "discovery"):
@@ -300,9 +332,10 @@ def _try_comeet_via_page(name, careers_url):
 def resolve_llm(name, url):
     """Full fallback attempt. Returns ('ats', (name, platform, token, api_url, n_all, n_il))
     or None. Never raises."""
-    LAST.update(asked=False, pages=0, candidates=0, error="", calls=0)
+    LAST.update(asked=False, pages=0, candidates=0, error="", calls=0, own_pages=0)
     try:
         evidence, n_pages = _gather(name, url)
+        LAST["own_pages"] = len(own_pages_in_evidence(name))
         if n_pages == 0:
             # No page was read, so there is nothing for the model to reason FROM; a call
             # here is a paid coin flip that always lands on `unknown` (measured 0/50 over

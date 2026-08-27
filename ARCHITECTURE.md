@@ -864,6 +864,30 @@ single most common way this codebase breaks (§8). Taxonomy of verdicts:
 Recruiting/staffing agencies are excluded everywhere via `pipeline/recruiters.py`
 (`is_recruiter`) — rows, discovery jobs, and resolution queues all check it.
 
+**The dark rows carry a failure MODE as well as a verdict**, written by `triage_dark` as
+`dark-triage <date>: <mode>` and consumed by the routing in that tool's last line. The eight
+modes are `triage_dark.MODES` — **that object, never a copy**. Counted 2026-08-27:
+
+```bash
+python -c "import csv,re;from collections import Counter;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>5][1:];print(Counter(m.group(1) for x in r for m in re.finditer(r'dark-triage \d{4}-\d{2}-\d{2}: ([a-z-]+)', x[5] or '')).most_common())"
+# page-empty 139 · url-dead 61 · extract-gap 52 · js-shell 52 · wrong-page 44 · no-url 24
+# · blocked 8 · acquired 1   (382 rows carry a mode)
+```
+
+Two things that census makes visible. **`wrong-page` (44 rows) can only be produced by the
+LLM page judge**, and from 2026-08-25 to 2026-08-27 that judge could not run at all —
+`triage_dark._SCHEMA` was a dict, `pipeline/llm.py` puts the schema into argv, and
+`subprocess.run` raised `TypeError` before the spawn, which `_invoke` reports as
+`LLMUnavailable(kind="missing")`: the exact shape of "no claude CLI". So the judge returned
+`None` on every row, burning its `TRIAGE_LLM_CAP` slot each time (the counter increments
+before the call), and the 139 `page-empty` verdicts in that window are unconfirmed regex
+readings. Fixed 2026-08-27; the guard is
+`test_the_triage_page_judge_reaches_the_model_through_the_real_seam`, which drives the real
+seam with only `subprocess.run` replaced — the previous guard monkeypatched `call_json`
+itself and pinned the dict, which is how this shipped. **And `check_invariants`'s check F2
+has seven of the eight modes**, so the 24 `no-url` rows are reported nightly as a truncated
+mode when they are nothing of the kind (`docs/BACKLOG.md` 271, `infra`).
+
 ### State transitions (who moves a row, and when)
 
 ```
@@ -934,9 +958,12 @@ the retry rebuilt the cell and erased the verdict Bright Data had just been paid
 the first). The one deliberate remaining difference is `HUNT_POOL` lacking `dark-triage`
 (triage owns those rows). `registry_health` IMPORTS `HUNT_POOL`, which is the pattern to
 copy; `test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_supposed_to`
-pins every difference so a new one is red. Print the diff, and the rows it would cost
-(on 2026-08-25 the first prints two empty lists and `[]`; the second `46 1`, the 1 being
-a carrier that is also terminal):
+pins every difference so a new one is red. Print the diff, and the rows it would cost. **Re-run 2026-08-27** — both outputs had moved
+since they were written on 2026-08-25 ("two empty lists and `[]`", then `46 1`). The first
+now prints `inline, NOT in TOKENS: []` and `TOKENS, not inline: ['no il listing',
+'roles-text present']`; the asymmetry is the intended one (`TOKENS` is a superset of both
+inline copies), and `roles-text present` is not a registry verdict at all. The second prints
+`45 1`, the 1 still being a carrier that is also terminal:
 
 ```bash
 python -c "from pipeline.verdicts import TOKENS;import check_invariants as ci;t={x.lower() for x in TOKENS};c={x.lower() for x in ci.POOL.split('|') if x and '(' not in x};print('inline, NOT in TOKENS:',sorted(c-t));print('TOKENS, not inline:',sorted(t-c))"
@@ -961,7 +988,8 @@ any more** (2026-08-25: `retry_unreachable._row_for` takes the row's note and ap
 activation) — the whole-ROW literal `[name, plat, tok, api, "true", f"..."]` is the shape the
 guard above now walks too. The two tools that still build a row from scratch,
 `recheck_suspects` and `validate_bd`, are `legacy_unscheduled` in `tests/writer_allowlist.json`
-and run in no workflow. Re-derive rather than trust: `grep -n '"true", f"' *.py`.
+and run in no workflow. Re-derive rather than trust: `grep -n '"true", f"' *.py`
+(5 hits on 2026-08-27) and the writer census loop above (24 files).
 
 Every re-check filter must have a **staleness escape** (`_stale_hunt` 14d, `_revalidatable`
 30d, `_recrackable` **1d** — daily, because the ATS host is already documented, so a re-check
@@ -1025,7 +1053,10 @@ bitdefender) are the only thing that refuses a path-tenant board without a page;
 string still never vetoes an undeclared row (a veto refused 81 of 460 active rows). Census
 2026-08-25: 360 active path-platform rows = 187 near · 120 Comeet uid · 2 declared · 51 not
 near (24 of them `scrape` rows whose slug comes from the URL); `check_invariants` C3b lists
-the 28 active rows whose tenant cannot vouch, as a warn — the hand-check list, never a gate.
+the active rows whose tenant cannot vouch, as a warn — the hand-check list, never a gate.
+**28 on 2026-08-27**, down from 29 before that morning's 18 scrape-to-native conversions
+(`python check_invariants.py | grep 'tenant cannot vouch'`); the number moves whenever a row
+changes platform, so read it rather than quoting this sentence.
 
 1. **`activation_ok(name, api_url, n_jobs, html="")` = `activation_verdict(...) == "ok"`;
    the verdicts are `ok` · `empty` · `not-listing` · `not-ours` · `unverified`.** A declared
@@ -1224,6 +1255,14 @@ Four more rules this matrix exists to enforce, each violated in production at le
 
 New names enter via discovery (`research_companies.json` queue) or manual seeding. Then:
 
+**This ladder is not draining, and the top rung is why.** Measured across 2026-08-26, the
+whole nightly chain produced **two** activated rows — `repair_extract_gap` (Versatile 1 IL,
+zap group 2 IL); `listing_hunt` returned `{'found': 0, 'nolisting': 23, 'dead': 12}` over 35
+of its 210-row pool, `crack_walled` `{'skip': 4, 'nocapture': 3, 'novrfy': 2, 'notours': 1}`,
+and `auto_expand` `resolved 0` at 20:00 after `resolved 3` at 08:00. The names queue went
+**414 → 411 → 408** over the same day. Read those five numbers out of the step logs before
+believing any sentence below about how a rung performs.
+
 1. `auto_expand.py` (cron 08:00/20:00): deterministic `resolve_deep` — recognizable ATS
    URLs, iframes — for a seed on the company's own site. An **aggregator seed** (a LinkedIn /
    Indeed / secrethunter posting) never reaches it: rendering that page can only yield a
@@ -1236,6 +1275,15 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
    least-recently-tried rotation (`cloud_state/auto_expand_seen.json`; the log says why:
    `dfer <name> (no-llm|cap|no-candidates|llm-none)`). The 28 rows buried before that date
    were un-addressed with `auto_expand.py --clear-agg-urls --apply` (`url-cleared`, hunt-owned).
+   **`LLM_RESOLVE_CAP` is the binding constraint, not `AUTO_EXPAND_SEARCH_CAP`:** on
+   2026-08-26 the two runs deferred 243 and 241 names at `cap` against a search cap of 40
+   that was never reached, because a name costs one search slot but one *or two* call slots.
+   So the drain rate is the tier's hit rate times ten, twice a day — 3 of 7 asked in the
+   morning, 0 of 9 in the evening. Normalising the queue against the registry does not help:
+   exact-name matching leaves 408 unmatched names and `store._norm_company` leaves 403, of
+   which **400 are aggregator-posting URLs** (measured 2026-08-27). Raising the cap is an
+   `auto-expand.yml` change and therefore `infra`'s; the number that should decide it is
+   `hopeless` in rung 2 below.
 2. `resolve_llm.py`: evidence bundle (page fetch + the search ladder SerpApi →
    `deep_validate.ddg` → `google_via_unlocker`, the paid rung capped per run by
    `LLM_BD_SEARCH_CAP`, default 5 → ATS-hint extraction) → single `claude -p` proposal
@@ -1245,11 +1293,27 @@ New names enter via discovery (`research_companies.json` queue) or manual seedin
    enum, scratch cwd, no shell) — until 2026-08-25 it was the last bare `claude -p` in the
    repo. **No page read, no call**: with zero reachable pages the model is
    not asked (`LAST["asked"]` tells the caller), because 0 of 50 evidence-free shots ever
-   resolved. Live control 2026-08-25: `Upwind Security` (a buried secrethunter seed) →
+   resolved. **A second, narrower version of that same rule is measured but NOT yet enforced
+   (2026-08-27):** `_verify` refuses any proposal whose token does not appear on a page on
+   the company's OWN domain (`_own_page_names_token`), so an attempt whose evidence holds no
+   such page cannot succeed whatever the model answers — it spends up to two calls, re-prompts
+   once and returns `None`. `resolve_llm.own_pages_in_evidence` names that condition (it uses
+   the gate's own page filter, not a copy), `LAST["own_pages"]` records it, and `auto_expand`
+   now ends its summary `asked N (hopeless M)`. It is counted rather than refused because the
+   measurement **cannot be made off the runner** — SerpApi is exhausted, DuckDuckGo is
+   rate-limited from the dev machine and that machine has no Bright Data credentials, so a
+   local sample comes back `candidates=0` and says nothing (6 names tried on 2026-08-27: 2
+   reached own-domain pages, 4 got no search results at all). Read `hopeless` in the 08:00
+   and 20:00 logs before gating on it (`docs/BACKLOG.md` 278). Live control 2026-08-25: `Upwind Security` (a buried secrethunter seed) →
    comeet `49.004`, 51/15 IL, 29 s, one call, DDG only.
 3. `listing_hunt.py` (cron 19:00): for rows still dark — find the LISTINGS URL (harvested
    links; Claude picks; rebrand redirects resolved), verify via `scrape_universal`.
    Woken/documented rows take the **fast-path**: scrape the stored URL first.
+   `HUNT_LLM_CAP` (default 200) bounds the picker calls — it was advertised in the module
+   docstring from the day the tool was written and read by nothing until 2026-08-27, so the
+   hunt's largest Claude consumer had no call bound at all, only `HUNT_TIME_BUDGET_MIN`. It
+   still does not bound the strategy-5 calls made inside `scrape_universal` (the workflow arms
+   those with `SCRAPE_LLM: "1"`); those answer to that module's own excerpt gate and breaker.
 4. `deep_validate.py` (the Sunday audit's second rung; `--only` on demand) / `crack_walled.py` (daily 19:00 + Sun): Chromium render + network-request
    sniffing (`/wday/cxs/`, `careers-api`, `COMEET.init` static token extraction, …),
    platform host guessing, Claude evidence judgment.
@@ -1264,8 +1328,11 @@ the short version of the three gates and the code that enforces them.
   to list jobs at all (`looks_like_a_job_listing_page`). Real Israel jobs are not enough:
   `SCRAPE_ASSUME_IL` turns every card on a page into an Israel role, so a nav menu and a
   blog index both "verify".
-- Slug/tenant must resemble the company name — `_slug_matches` (`audit_empty_rows.py`,
-  and also `listing_hunt.py:178`, a fifth call site this list omitted),
+- Slug/tenant must resemble the company name — `_slug_matches` (defined in
+  `audit_empty_rows.py`; five call sites, re-derived 2026-08-27 with
+  `grep -n '_slug_matches' *.py`: `audit_empty_rows.py:426`, `crack_walled.py:189`,
+  `deep_validate.py:212` and `:249`, `listing_hunt.py:240` — the last was cited as `:178`
+  here until today, which is what happens when a doc pins a line number),
   enforced in `audit_empty_rows`, `deep_validate`, `crack_walled`, and `resolve_llm._verify`.
   **Known coverage holes in this guard:** comeet uids (`XX.XXX`) are exempt by design (the
   uid comes from the company's own page), and `_resolve_rebrand` in `listing_hunt.py` can

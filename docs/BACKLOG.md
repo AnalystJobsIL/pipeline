@@ -3455,3 +3455,167 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     cap counts MATCHED blocks, not useful ones, so a real posting behind 25 decoy blocks is
     still missed; 500 blocks cost 0.24 ms, so the cap protects nothing that the scan window and
     the per-block size do not already protect, and it could simply be raised again.
+
+## From the `registry` lane, 2026-08-27
+
+271. **`check_invariants.TRIAGE_MODES` is a hand copy that has 7 of the 8 modes, and 24 rows
+    pay for it nightly** — lane: `infra` (owns `check_invariants.py`), found by `registry`.
+    `triage_dark` writes `no-url` (its docstring line 19 lists it; `classify` returns it) and
+    routes it — the tool's own last line says `routing: url-dead/no-url -> listing_hunt
+    re-find`. `check_invariants.py:71` does not list it, so check F2 reports every such row as
+    a *truncated/unknown* triage mode. Growing: 19 rows at the 06:03 digest census on
+    2026-08-26, 24 by the 22:20 listing-hunt commit, 24 now. It is a warn, so it costs no
+    coverage — it costs the ability to notice a real truncation, which is what F2 is for.
+    **The fix is one line**, and `registry` has already shipped the half it owns:
+    `triage_dark.MODES` is now an exported `frozenset`, derived-and-pinned by
+    `test_the_triage_mode_set_is_every_mode_the_classifier_can_return`. `check_invariants`
+    should `from triage_dark import MODES as TRIAGE_MODES` instead of retyping it —
+    ARCHITECTURE.md §2, "never retype a pool, import the tool's own predicate". Reproduce:
+    `python -c "import triage_dark as T, check_invariants as C; print(sorted(set(T.MODES) - C.TRIAGE_MODES))"`
+    → `['no-url']`.
+
+272. **`tests.yml` is red for every lane on the 14-night rehearsal, and the cause is a pool
+    token that `pipeline/notes.py` does not protect** — lane: `registry`, but the fix is in
+    **shared plumbing** so it is filed rather than taken. `tests.yml` has no
+    `continue-on-error` anywhere ("It is meant to block", line 7), and
+    `python tests/rehearse_registry.py --nights 14 --policy worst` exits 1:
+
+        FAIL night 4: pool listing_hunt (19:00 daily) lost 1 rows it should keep: ['NeoGames']
+
+    Pre-existing, not caused by this session: the identical failure, with identical per-night
+    pool sizes, reproduces on a clean worktree at `ae6eeae`. NeoGames' note is saturated at
+    the 220-char cap and reads `probe-woken: re-hunt pending | listing-hunt 2026-08-25: no IL
+    listing; monitored candidate | dark-triage 2026-08-26: page-empty (...)`. On night 4 the
+    Sunday deep rung appends `deep-validated ...: no ATS detected (rendered)`, `notes.append`
+    evicts the oldest UNPROTECTED segment — which is listing-hunt's — and the row's only
+    surviving classification is the protected `dark-triage: page-empty`, which
+    `listing_hunt._triaged_page_empty` excludes. The row leaves the one pool that could
+    re-check it. This is exactly the failure §2's rule names ("**a pool token must survive
+    note erosion — or the pool must not stand on a token at all**"), applied to a token the
+    rule's own protected list forgot: `_PROTECTED_EXTRA` (`pipeline/notes.py:41`) protects
+    `unsupported ATS`, `dark-triage <date>: <mode>`, `no open israel roles`,
+    `empty-but-suspect`, `cross-validated` — not `monitored candidate` / `host documented`,
+    which are `listing_hunt`'s documented fast-path tokens.
+
+    **Two fixes, and the cheap one has a measured price.** (a) Add
+    `monitored candidate|host documented` to `_PROTECTED_EXTRA` — one line, but 251 rows carry
+    one of those tokens and it takes the rows whose every segment is protected from **47 to
+    87**, of which **17 are within 40 chars of the cap**, i.e. 17 rows where tonight's stamp
+    would be dropped whole. By the rule that is the right trade (a dropped stamp costs a tool
+    its date; an evicted token costs a row its pool), but it is a shared-plumbing change
+    affecting all nine lanes and it deserves its own adversarial pass, not a 03:00 edit.
+    (b) Make `listing_hunt`'s pool stand on row facts rather than on a note token, the way
+    `probe_candidates` was converted in BACKLOG 53 — larger, in-lane, and the durable answer.
+    Reproduce the counts: `python tests/rehearse_registry.py --nights 14 --policy worst`, then
+    the saturation measurement in `docs/sessions/2026-08-24-registry.md` (2026-08-27 section).
+
+273. **27 of the 200 mutation records are still anchored on code that no longer exists** —
+    lane: `registry`. `tools/mutate.py` reports each as
+    `** FAIL ** stale mutation: 0 matches for 'find', re-anchor` and the gate exits non-zero,
+    so this is the second thing making `tests.yml` red for every lane. It was **33** at
+    `ae6eeae`; this session re-anchored six (`deep-cand-fallback`, `deep-activate-remove`,
+    `deep-scope-narrow`, `expand-agg-seed-resolves`, `hunt-pool-terminal-drop`,
+    `scrape-since-not-reset`) plus `activation-njobs-drop`, each proved by requiring
+    `python tools/mutate.py --id <id>` to report `killed`. The remaining 27 are
+    `crack_walled` 6, `validate_empty` 6, `pipeline/identity_gate` 6, `audit_empty_rows` 3,
+    `apply_resolved` 3, `check_invariants` 1, and `crack-oktowrite-callsite-invert` /
+    `crack-pool-terminal-drop`. Cause: the 2026-08-25 batch-4 refactor replaced the boolean
+    gates (`ok_to_write`, `activation_ok`) with verdict strings (`write_verdict`,
+    `activation_verdict`) and every record anchored on the old spelling went quiet. **The
+    structural fix matters more than the 27**: staleness is only discoverable by a 37-minute
+    job that runs last in CI, so it accumulates until it is somebody else's push. A sub-second
+    check that every record's `find` matches its file exactly once belongs in `pytest`; it
+    cannot be added while 27 are red without a dated, shrinking allowlist, so it lands with
+    the last re-anchor. Count them any time with the loop in
+    `docs/sessions/2026-08-24-registry.md` (2026-08-27 section).
+
+274. **`deep-njobs-drop` is an equivalent mutant and should be retired, not re-anchored** —
+    lane: `registry`. `deep_validate.apply_verdict` computes `_ident = _av == "ok"` from
+    `activation_verdict(name, _cand, n_all, ...)`, and `identity_gate.activation_verdict`
+    opens with `if not n_jobs: return "empty"` — so for every falsy `n_all`, `_ident` is
+    already False and dropping `n_all` from the conjunct two lines later changes neither the
+    branch nor the refusal note. Nothing can kill it, by construction. The contract it
+    encodes ("a board that verifies with zero jobs is the empty-board shape, not a recovery")
+    is owned by `activation-njobs-drop` on `identity_gate.activation_verdict`. Retiring a
+    record is a deletion from the catalogue and wants a second reader, so it is filed rather
+    than done; nothing else in the repo references the id.
+
+275. **The `Registry:` mail line is an alarm channel with no production line behind it** —
+    lane: `registry` (the numbers) + `render`/`infra` (the hook). Every other lane reports
+    what it produced — `Boards changed today: …`, `Roles: open 76 · closed today 11 · …`,
+    `Render: board 76 cards …`, `Company intel: 4 of 60 …`. The registry's line renders
+    `s["registry_alarms"]` only (`pipeline/digest.py:212`), so on 2026-08-26 the mail said
+
+        - **Registry:** re-check pool grew: probe_candidates 127 -> 224 (a predicate widened?)
+
+    and nothing about the night's actual work: `repair_extract_gap` 2 activated / 40 dark,
+    `listing_hunt` `{'found': 0, 'nolisting': 23, 'dead': 12}` over 35 of a 210-row pool,
+    `crack_walled` 0 cracked, `auto_expand` `resolved 0 … ~408 still to scan`. Those numbers
+    exist — in four different workflow logs nobody reads. A production line needs a
+    `summary["registry"]` key in `pipeline/run.py` (`infra`) and one render line in
+    `pipeline/digest.py` (`render`); the registry can supply the value from
+    `registry_health` + `cloud_state/pipeline_stages.json`. Proposed shape:
+    `- **Registry:** 875 active (+N/-M) · ladder: repair 2 · hunt 0/35 · crack 0 · expand 0 ·
+    queue 408 (asked 9, hopeless N) · pools probe 222 / hunt 206 / triage 237 · orphans 0`,
+    with the alarms staying where they are, above the fold.
+
+276. **The intake queue's `ats` and `slug` fields are stale and convert nothing** — lane:
+    `registry`. `research_companies.json` carries an `ats` + tenant `slug` for 255 of its
+    1,606 entries, and 39 of those name a real ATS for a company whose `companies.csv` row is
+    still `scrape` — which reads like free coverage. Measured 2026-08-27: after excluding
+    workday/teamtailor (no slug-constructible endpoint / no fetcher) and terminal rows, **6
+    candidates remain and all 6 refuse** — `Aqua Security` (`aquasecurity`), `Unity`
+    (`unity3d`) and `Tomorrow.io` (`tomorrowio`) are **404 on both**
+    `boards-api.greenhouse.io/v1/boards/<slug>/jobs` **and** `boards.greenhouse.io/embed/
+    job_board?for=<slug>`; `Bit` (ashby) and `Finaloop` (recruitee) 404; `Nuvo` (recruitee)
+    returns 0 jobs. So the hint is old enough to be wrong, and nothing today reads it
+    (`auto_expand` uses `careers_url`, and `slug` only on the `AUTO_EXPAND_SLUG_SEED` path
+    that is off). Either intake should refresh it or the field should go. Related: the same
+    measurement kills the "just de-duplicate the queue" idea — matching queue names against
+    the registry with `store._norm_company` instead of exact lowercase takes the unmatched
+    set from **408 to 403**, and **400 of the 403 are aggregator-posting URLs**.
+
+277. **`pipeline/llm.py` should serialise a dict `schema` instead of letting it reach argv** —
+    lane: shared plumbing (`classifier` seam, used by `registry`, `scraper`,
+    `company-intel`). `call_json` puts `schema` straight into the argv list
+    (`pipeline/llm.py:106-110`), so a caller passing a dict makes `subprocess.run` raise
+    `TypeError` **before the spawn**, which `_invoke` re-raises as
+    `LLMUnavailable(kind="missing")` — the same class every caller reads as "the claude CLI is
+    not installed". `triage_dark._SCHEMA` was a dict from 2026-08-25 to 2026-08-27 and its
+    page judge returned `None` on every row for two days while burning its cap counter, with
+    the suite green. Reproduce on the old code:
+    `python -c "from pipeline import llm; llm.call_json('hi', system='s', schema={'a':1}, model='sonnet', timeout=5)"`
+    → `LLMUnavailable kind='missing' msg=TypeError: expected str, bytes or os.PathLike object,
+    not dict`. `registry` has fixed its own caller and added
+    `test_every_llm_schema_constant_is_a_string` (`tests/test_units.py`) across all seven
+    schema constants in the repo, so the class is now caught at the callers; one
+    `json.dumps(schema) if isinstance(schema, dict) else schema` at the seam would make it
+    impossible instead.
+
+278. **The resolver's LLM tier is measured only by whether it resolved, never by whether it
+    could have** — lane: `registry`. `resolve_llm._verify` will not accept a board unless its
+    token appears on a page on the company's OWN domain (`_own_page_names_token`), so an
+    attempt whose evidence holds no such page cannot succeed whatever the model answers: it
+    spends up to two calls, re-prompts once, returns `None` and the caller logs `llm-none`.
+    The scraper lane found and gated the same shape on its own tier
+    (`scrape_universal._llm_gate`, 94 of 128 calls spared on 2026-08-26). **This cannot be
+    measured off the runner** — SerpApi is exhausted, DuckDuckGo is rate-limited from the dev
+    machine and there are no Bright Data credentials there, so a local sample is mostly
+    `candidates=0` and says nothing about production. So the measurement was shipped instead
+    of the gate: `resolve_llm.own_pages_in_evidence` names the condition,
+    `resolve_llm.LAST["own_pages"]` records it, and `auto_expand`'s summary now ends
+    `asked N (hopeless M)`. **Read `hopeless` in the 08:00 and 20:00 logs of 2026-08-27.**
+    If it is most of `asked`, the gate is one `if` and the freed budget goes to names that can
+    verify; if it is near zero, the tier's problem is the model or the evidence, not the
+    selection, and this item closes without a code change.
+
+279. **Nothing has measured `effort` on the resolver's own task** — lane: `registry`.
+    `pipeline/llm.py` defaults `effort="low"` and no registry caller overrides it; the A/B
+    behind the lane's `--model sonnet` (ARCHITECTURE §7b) was the *classifier's* YES/NO
+    seniority question over 25 postings, not "construct an ATS endpoint from scraped
+    evidence", which is a harder shape. The honest experiment is cheap and replayable: capture
+    the evidence bundles from one auto-expand run (`resolve_llm._PAGES` is already the record),
+    re-ask each at `effort="low"` and `effort="medium"`, and score by `_verify` outcome rather
+    than by reading the answers — roughly 40 sonnet calls for a 20-name sample. Not run this
+    session (unauthorised spend). Until it is, "sonnet at low effort" is inherited, not
+    measured, and this document should not claim otherwise.

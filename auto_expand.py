@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
-"""Self-draining resolver. Each run takes the next batch of companies that are researched but not
-yet in companies.csv, resolves them (iframe-ATS / scrape / follow-jobs-link via resolve_deep), and
-writes results DIRECTLY into companies.csv + scraped_cache.json. Scheduled in the cloud it keeps
-shrinking the unresolved set every run until it reaches zero — no PC, no babysitting.
+"""Resolver for the names discovery finds. Each run takes the next batch of companies that are
+researched but not yet in companies.csv, resolves them (iframe-ATS / scrape / follow-jobs-link
+via resolve_deep), and writes results DIRECTLY into companies.csv + scraped_cache.json.
+
+**It does NOT drain.** This docstring claimed until 2026-08-27 that it "keeps shrinking the
+unresolved set every run until it reaches zero". Measured across one full day (2026-08-26):
+414 -> 411 -> 408. The queue is 400 aggregator seeds out of 403 unmatched names, and every
+aggregator seed needs the LLM tier, which is capped at LLM_RESOLVE_CAP (10) calls a run: the
+08:00 run resolved 3 of 7 asked, the 20:00 run 0 of 9, and 241-243 names a run were deferred
+at `cap` without being looked at. Normalising names against the registry does not help either
+-- exact-name matching leaves 408 and `store._norm_company` leaves 403 (measured 2026-08-27).
+So the drain rate is the tier's hit rate times its cap, and nothing else. The summary line
+now reports `asked N (hopeless M)` so the two runs a day measure whether those calls could
+have succeeded at all -- see `resolve_llm.own_pages_in_evidence` and docs/BACKLOG.md.
 
 Env:  AUTO_EXPAND_LIMIT (default 200) companies per run; LLM_RESOLVE_CAP (default 10)
 `claude -p` calls per run; AUTO_EXPAND_SEARCH_CAP (default 40) names that may enter the
@@ -216,6 +226,7 @@ def main():
     llm_budget = int(os.environ.get("LLM_RESOLVE_CAP", "10")) if llm_available else 0
     search_budget = int(os.environ.get("AUTO_EXPAND_SEARCH_CAP", "40"))
     n_resolved = n_empty = n_unreach = n_llm = n_dupe = 0
+    n_asked = n_hopeless = 0        # report-only: see the module docstring
     deferred = Counter()
     for e in batch:
         name, url = e["name"].strip(), e["careers_url"]
@@ -261,6 +272,12 @@ def main():
                 import resolve_llm as _llm
                 lr = _llm.resolve_llm(name, url)
                 llm_budget -= _llm.LAST["calls"]   # charge CALLS (retries included), not attempts
+                if _llm.LAST["asked"]:
+                    n_asked += 1
+                    # zero own-domain pages in the evidence means `_verify` could not have
+                    # accepted ANY answer -- the token has to appear on the company's own
+                    # page. Counted, not refused, until the number is real (2026-08-27).
+                    n_hopeless += 1 if not _llm.LAST["own_pages"] else 0
                 if lr:
                     r, kind = lr, "ats"
                     n_llm += 1
@@ -308,6 +325,7 @@ def main():
     why = ", ".join(f"{k} {v}" for k, v in sorted(deferred.items())) or "-"
     print(f"=== resolved {n_resolved} (LLM-cracked {n_llm}), empty {n_empty}, "
           f"unreachable {n_unreach}, deferred {n_defer} ({why}), dupes {n_dupe}; "
+          f"asked {n_asked} (hopeless {n_hopeless}); "
           f"~{remaining} still to scan ===", flush=True)
 
 
