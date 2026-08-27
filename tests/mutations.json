@@ -4,8 +4,8 @@
   "file": "crack_walled.py",
   "symbol": "main",
   "class": "M3-branch-narrowing",
-  "find": "if verdict.startswith(\"cracked\") and not _gate.ok_to_write(name, got[1]):",
-  "replace": "if verdict == \"cracked-scrape\" and not _gate.ok_to_write(name, got[1]) and n_il < 0:",
+  "find": "if verdict.startswith(\"cracked\") and _wv != \"ok\":",
+  "replace": "if verdict == \"cracked-scrape\" and _wv != \"ok\" and n_il < 0:",
   "why": "shipped defeat: the cracked-api/oraclehcm branch activates ungated while the source text still says ok_to_write. Found by a wave-8 reviewer with the suite at 224 passed.",
   "must_be_killed_by_behavioural": true
  },
@@ -14,7 +14,7 @@
   "file": "crack_walled.py",
   "symbol": "main",
   "class": "M1-gate-removal",
-  "find": "if verdict.startswith(\"cracked\") and not _gate.ok_to_write(name, got[1]):",
+  "find": "if verdict.startswith(\"cracked\") and _wv != \"ok\":",
   "replace": "if False:",
   "why": "the activating branch with no gate at all",
   "must_be_killed_by_behavioural": true
@@ -22,10 +22,10 @@
  {
   "id": "crack-oktowrite-invert",
   "file": "pipeline/identity_gate.py",
-  "symbol": "activation_ok",
+  "symbol": "activation_verdict",
   "class": "M2-gate-inversion",
-  "find": "        if v is not None:\n            return v is True",
-  "replace": "        if v is not None:\n            return v is not None",
+  "find": "        if p is not None:\n            return \"ok\" if p else \"not-ours\"",
+  "replace": "        if p is not None:\n            return \"ok\"",
   "why": "`is True` -> `is not None` at the point where a held page decides: inside the guard `v is not None` is vacuously true, so a page naming ANOTHER company (v is False) admits the board. Re-aimed twice: once when the separate html branch collapsed to one rule, again when the census ordering made the held page decide first (f1b28a8). Killed by census cell 1 (Cogniteam/Riskified).",
   "must_be_killed_by_behavioural": true
  },
@@ -362,10 +362,10 @@
  {
   "id": "activation-listing-drop",
   "file": "pipeline/identity_gate.py",
-  "symbol": "activation_ok",
+  "symbol": "activation_verdict",
   "class": "M4-dead-conjunct",
-  "find": "    if is_foreign(name, api_url) or not looks_like_a_job_listing_page(api_url):\n        return False",
-  "replace": "    if is_foreign(name, api_url):\n        return False",
+  "find": "    if not looks_like_a_job_listing_page(api_url):\n        return \"not-listing\"\n    v = board_vouches(name, token, api_url)",
+  "replace": "    v = board_vouches(name, token, api_url)",
   "why": "drops clause 3 of the activation rule; a nav menu scores like a board under SCRAPE_ASSUME_IL",
   "must_be_killed_by_behavioural": true
  },
@@ -394,8 +394,8 @@
   "file": "crack_walled.py",
   "symbol": "main",
   "class": "M2-gate-inversion",
-  "find": "                        if _gate.ok_to_write(name, got[1]):",
-  "replace": "                        if _gate.ok_to_write(name, got[1]) is not None:",
+  "find": "                        if _wv == \"ok\":",
+  "replace": "                        if _wv is not None:",
   "why": "the novrfy branch persists fr[3]; `is not None` makes an unreadable page pass",
   "must_be_killed_by_behavioural": true
  },
@@ -462,10 +462,10 @@
  {
   "id": "oktowrite-listing-drop",
   "file": "pipeline/identity_gate.py",
-  "symbol": "ok_to_write",
+  "symbol": "write_verdict",
   "class": "M4-dead-conjunct",
-  "find": "    if is_foreign(name, url) or not looks_like_a_job_listing_page(url):\n        return False\n    return page_names_company",
-  "replace": "    if is_foreign(name, url):\n        return False\n    return page_names_company",
+  "find": "    if is_foreign(name, url) or not looks_like_a_job_listing_page(url):\n        return \"not-ours\" if is_foreign(name, url) else \"unreadable\"",
+  "replace": "    if is_foreign(name, url):\n        return \"not-ours\"",
   "why": "activation_ok's copy of clause 3 has a mutation; ok_to_write's identical clause had none. Dropping it lets crack_walled persist an About/nav page as the row's api_url.",
   "must_be_killed_by_behavioural": true
  },
@@ -558,7 +558,7 @@
   "file": "crack_walled.py",
   "symbol": "main",
   "class": "M1-gate-removal",
-  "find": "                        if _gate.ok_to_write(name, got[1]):",
+  "find": "                        if _wv == \"ok\":",
   "replace": "                        if True:",
   "why": "the novrfy branch persists fr[3] without activating; listing_hunt's fast path activates on that address the next night."
  },
@@ -567,8 +567,8 @@
   "file": "crack_walled.py",
   "symbol": "main",
   "class": "M3-branch-narrowing",
-  "find": "                        if _gate.ok_to_write(name, got[1]):",
-  "replace": "                        if n_il < 0 and _gate.ok_to_write(name, got[1]):",
+  "find": "                        if _wv == \"ok\":",
+  "replace": "                        if n_il < 0 and _wv == \"ok\":",
   "why": "narrows the novrfy guard so the address is never persisted (silent coverage loss direction)"
  },
  {
@@ -576,8 +576,8 @@
   "file": "crack_walled.py",
   "symbol": "main",
   "class": "M2-gate-inversion",
-  "find": "                    if verdict.startswith(\"cracked\") and not _gate.ok_to_write(name, got[1]):",
-  "replace": "                    if verdict.startswith(\"cracked\") and _gate.ok_to_write(name, got[1]) is None:",
+  "find": "                    if verdict.startswith(\"cracked\") and _wv != \"ok\":",
+  "replace": "                    if verdict.startswith(\"cracked\") and _wv is None:",
   "why": "ok_to_write returns a bool, so `is None` is always False -- the refusal branch never runs and every cracked verdict activates."
  },
  {
@@ -791,20 +791,20 @@
  {
   "id": "gate-page-transpose-html",
   "file": "pipeline/identity_gate.py",
-  "symbol": "activation_ok",
+  "symbol": "activation_verdict",
   "class": "M8-argument-transposition",
-  "find": "        v = page_names_company(name, api_url, html=html)",
-  "replace": "        v = page_names_company(api_url, name, html=html)",
+  "find": "        p = page_names_company(name, api_url, html=html)",
+  "replace": "        p = page_names_company(api_url, name, html=html)",
   "why": "wave-4 R2: (name, api_url) transposed at the held-page call inside the gate itself. Every fixture's stub table keys on the first argument, so the stub missed, answered None, and the tenant clause supplied the expected verdict -- green, while every readable-page acceptance silently died.",
   "must_be_killed_by_behavioural": true
  },
  {
   "id": "gate-page-transpose-tail",
   "file": "pipeline/identity_gate.py",
-  "symbol": "activation_ok",
+  "symbol": "activation_verdict",
   "class": "M8-argument-transposition",
-  "find": "    return page_names_company(name, api_url) is True",
-  "replace": "    return page_names_company(api_url, name) is True",
+  "find": "    p = page_names_company(name, human)",
+  "replace": "    p = page_names_company(human, name)",
   "why": "wave-4 R2: same transposition at the fetch tail -- a Request built from a company name raises, html is empty, the answer is None, and the subdomain-mismatch population is refused wholesale.",
   "must_be_killed_by_behavioural": true
  },
@@ -933,7 +933,7 @@
   "file": "crack_walled.py",
   "symbol": "in_crack_pool",
   "class": "M1-gate-removal",
-  "find": "            and not TERMINAL.search(r[5] or \"\")\n            and not is_recruiter(r[0]))",
+  "find": "            and not is_terminal_row(r))",
   "replace": "            and not is_recruiter(r[0]))",
   "why": "wave-6 R2: the crack pool ACTIVATES; without the terminal exclusion the redundant twin and the alias rows re-enter it.",
   "must_be_killed_by_behavioural": true
@@ -1003,8 +1003,8 @@
   "file": "pipeline/identity_gate.py",
   "symbol": "tenant_is_this_company",
   "class": "M1-gate-removal",
-  "find": "    declared = identity_facts.tenants(name)\n    if declared:\n        labels = [l for l in host.split(\".\")[:-2] if not _plumbing(l)]\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(identity_facts.normalize(l) in declared for l in labels)\n",
-  "replace": "    declared = identity_facts.tenants(name)\n    if False:\n        labels = [l for l in host.split(\".\")[:-2] if not _plumbing(l)]\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(identity_facts.normalize(l) in declared for l in labels)\n",
+  "find": "    declared = identity_facts.tenants(name)\n    if declared:\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(identity_facts.normalize(l) in declared for l in labels)\n",
+  "replace": "    declared = identity_facts.tenants(name)\n    if False:\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(identity_facts.normalize(l) in declared for l in labels)\n",
   "why": "removes the declared-tenant hook: a declaration can no longer override the string verdict (Itamar-shape stays refused) nor refuse a foreign tenant on a declared row.",
   "must_be_killed_by_behavioural": true
  },
@@ -1013,7 +1013,7 @@
   "file": "pipeline/identity_gate.py",
   "symbol": "tenant_is_this_company",
   "class": "M3-branch-narrowing",
-  "find": "    declared = identity_facts.tenants(name)\n    if declared:\n        labels = [l for l in host.split(\".\")[:-2] if not _plumbing(l)]\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(identity_facts.normalize(l) in declared for l in labels)\n",
+  "find": "    declared = identity_facts.tenants(name)\n    if declared:\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(identity_facts.normalize(l) in declared for l in labels)\n",
   "replace": "    declared = identity_facts.tenants(name)\n    if declared:\n        labels = list(_slug_candidates(urllib.parse.urlparse(url)))\n        if not labels:\n            return True                        # nothing checkable: unchanged\n        return any(identity_facts.normalize(l) in declared for l in labels)\n",
   "why": "matches the declared tenant against `_slug_candidates` -- host labels AND path segments in one list -- so `riskified` in the PATH of novartis.wd3 admits Novartis's Workday: the recorded incident, re-opened through the declarations table.",
   "must_be_killed_by_behavioural": true

@@ -5614,15 +5614,11 @@ def test_auto_expand_reports_what_the_llm_tier_was_asked(monkeypatch, tmp_path):
 # without being removed, so the list cannot rot into an excuse. Empty is the goal; when it is
 # empty, delete it and the second half of the test with it. docs/BACKLOG.md 273.
 KNOWN_STALE_ANCHORS_2026_08_27 = {
-    "activation-listing-drop", "apply-resolved-gate-drop", "apply-resolved-gate-invert",
-    "apply-resolved-gate-narrow", "audit-narrow", "audit-secondchance-remove",
-    "audit-tenant-invert", "crack-activate-invert", "crack-activate-narrow",
-    "crack-activate-remove", "crack-novrfy-narrow", "crack-novrfy-remove",
-    "crack-oktowrite-callsite-invert", "crack-oktowrite-invert", "crack-pool-terminal-drop",
-    "facts-tenant-scope-widen", "facts-tenant-veto-drop", "gate-page-transpose-html",
-    "gate-page-transpose-tail", "invariants-terminal-narrow", "oktowrite-listing-drop",
-    "validate-empty-embed-vouch-drop", "validate-empty-invert", "validate-empty-narrow",
-    "validate-empty-remove", "validate-empty-terminal-drop", "validate-empty-transpose",
+    "apply-resolved-gate-drop", "apply-resolved-gate-invert", "apply-resolved-gate-narrow",
+    "audit-narrow", "audit-secondchance-remove", "audit-tenant-invert",
+    "invariants-terminal-narrow", "validate-empty-embed-vouch-drop", "validate-empty-invert",
+    "validate-empty-narrow", "validate-empty-remove", "validate-empty-terminal-drop",
+    "validate-empty-transpose",
 }
 
 

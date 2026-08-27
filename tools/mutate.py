@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import atexit
 import glob
 import json
 import os
@@ -409,8 +410,15 @@ def _pytest(work, node_ids, deselect=()):
     # order, not significance. Five mutations were reported as static-only kills purely
     # because a source-text guard happened to be defined above the behavioural fixture that
     # also caught them. The harness must not manufacture its own finding.
+    # A mutant's pytest must not write the REAL run page. `pipeline/run.py` appends the
+    # audit block to `$GITHUB_STEP_SUMMARY` whenever that variable is set, and this harness
+    # runs the suite up to 200 times, so the summary reached 1,087 KB and Actions dropped it
+    # whole: `$GITHUB_STEP_SUMMARY upload aborted, supports content up to a size of 1024k`.
+    # The gate's own table was the thing lost (2026-08-27).
+    env = {k: v for k, v in os.environ.items() if k != "GITHUB_STEP_SUMMARY"}
     return subprocess.run(_pytest_argv(node_ids, deselect), cwd=work, capture_output=True,
-                          text=True, encoding="utf-8", errors="replace", timeout=1800)
+                          text=True, encoding="utf-8", errors="replace", timeout=1800,
+                          env=env)
 
 
 def _parse_failures(out):
@@ -765,9 +773,14 @@ def main():
     elif not a.all:
         ap.error("pass --all, --id, --class or --coverage")
 
-    work_root = os.path.join(tempfile.gettempdir(), "ajil_mutants")
-    shutil.rmtree(work_root, ignore_errors=True)
-    os.makedirs(work_root, exist_ok=True)
+    # Per-PROCESS, and cleaned up on the way out. The path was a fixed `ajil_mutants` that
+    # every run `rmtree`d at startup, so two concurrent runs deleted each other's mutant
+    # copies mid-test: one died with `NotADirectoryError: [WinError 267]` and another
+    # reported a SURVIVED that a serial re-run showed was `killed`. A mutation gate that
+    # reports the wrong verdict under load is worse than one that is slow -- and running
+    # two at once is exactly what a reviewer does (2026-08-27).
+    work_root = tempfile.mkdtemp(prefix=f"ajil_mutants_{os.getpid()}_")
+    atexit.register(shutil.rmtree, work_root, True)
     t_all = time.time()
 
     baseline = _NO_BASELINE
