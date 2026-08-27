@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**369 filed · 260 open · 109 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**374 filed · 265 open · 109 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 327.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 332.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -83,7 +83,7 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### registry — 70 open
+### registry — 75 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -155,6 +155,11 @@ closure convention in the header.
 - **322** `322@registry` **`il >= 1` counts a placeholder posting, and the name then leaves the queue forever** —
 - **325** `325@registry` **`_site_from_guess`'s linkback lookahead is defeated by `_`, `.` and a percent-escaped
 - **326** `326@registry` **The own-site rung is not deterministic run to run, and its numbers are quoted as if it
+- **327** `327@registry` **`_get_page`'s docstring says it closed the 33-hour dribble and it did not**
+- **328** `328@registry` **`registry_health.pool_growth` cannot see a pool that grows from a small base**
+- **329** `329@registry` **The 02:30 chain stamps `another company's board` on a row it merely could not read** —
+- **330** `330@registry` **`auto_expand`'s rotation-key flush keys on dict GROWTH, not on work done**
+- **331** `331@registry` **`resolve_deep._verify` is inside `resolve`'s "TOTAL wall clock" and never sees it** —
 
 ### infra — 67 open
 
@@ -5173,4 +5178,58 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      next, which measures the variance directly. Every count this rung produces should
      therefore carry a run stamp, and a drop of a few names between runs is not evidence of a
      regression. Worth a cheap N-of-3 retry before the rung declares a domain unprovable.
+
+327. **`_get_page`'s docstring says it closed the 33-hour dribble and it did not** — lane:
+     `registry`. `auto_expand._get_page` chunks at 65536 and checks its deadline **outside**
+     the read, but `BufferedReader.read(65536)` loops *internally* until it has 65536 bytes or
+     EOF, resetting the socket timeout on every recv — so the deadline is never consulted
+     during the read, and there is no check before `urlopen` either. Measured by an
+     adversarial pass, 2026-08-27: a 0.5 s deadline returned after **15.1 s** at 100 bytes /
+     0.15 s, a 30x overrun, extrapolating to ~2.7 hours for one full chunk. This is the
+     **only** time bound on the own-site rung (4 GETs per name) and on `_probe_resolve`'s
+     mandatory page read, so one dribbling host puts a single name past `AUTO_EXPAND_RUN_S`
+     *and* past the 330-minute job timeout while holding `concurrency: repo-state`. The fix is
+     `raw.read1(...)` (one recv per call) plus a deadline test before `urlopen`. The same
+     shape is in `resolve_llm._fetch_html` (`read(300_000)`) and
+     `identity_gate.page_names_company` (`read(400000)`) — the second is shared plumbing.
+
+328. **`registry_health.pool_growth` cannot see a pool that grows from a small base** — lane:
+     `registry`. It is guarded by `before >= 8`, and the 02:30 retry pool's census baseline was
+     **4**. So the 4 → 47 widening this session shipped for `320@registry` — a 12x growth into
+     a pool whose two tools ACTIVATE and one of which PAYS — alarmed **nothing**. Measured:
+     with the real census `pool_growth()` returns `[]`; with the baseline set to 8 and the same
+     widening it returns `re-check pool grew: ... 8 -> 47 (a predicate widened?)`. Its own
+     docstring says "66 rows entering a promote path with nobody told is the kind of silence
+     this file exists to end". Note the asymmetry: `pool_floor`'s collapse clause
+     (`before > 0 and now == 0`) has no floor at all, so shrink is watched and growth is not.
+
+329. **The 02:30 chain stamps `another company's board` on a row it merely could not read** —
+     lane: `registry`. `retry_unreachable._row_for` uses the boolean `activation_ok`, which
+     collapses `unverified` (no evidence) into the same branch as `not-ours`.
+     `identity_gate.activation_verdict`'s docstring is explicit: `not-ours` is *"the only
+     verdict a caller may stamp `not this company's board` on"*. `auto_expand._row_for_ats` has
+     the identical defect. Both were 4-row problems; `320@registry` scales the first to ~47 a
+     night. Related and worth the same visit: **Biomica's note is at the 220-char cap with
+     every segment protected, so `bd_rescue`'s `bd-tried` stamp is dropped whole by
+     `notes.append` — and `_skip()` keys on that stamp, so the row is re-unlocked and re-PAID
+     every night, forever.** It is the same row `320`'s rehearsal trace is about.
+
+330. **`auto_expand`'s rotation-key flush keys on dict GROWTH, not on work done** — lane:
+     `registry`. `if not DRY_RUN and len(seen) % 25 == 0` — re-stamping a name already in
+     `seen` does not change `len(seen)`, so on a re-walk of already-stamped names the
+     intermediate flush fires **zero** times, and if the dict size happens to be a multiple of
+     25 it fires on **every** name (one atomic rewrite each). The live file holds 488 entries.
+     Both are the opposite of "flush periodically", and the loss window is exactly the
+     crash/timeout case the run deadline makes more likely. Count stamps written this run
+     instead.
+
+331. **`resolve_deep._verify` is inside `resolve`'s "TOTAL wall clock" and never sees it** —
+     lane: `registry`. `budget_s` reaches `_capture` and `_bounded_scrape`; `_verify` calls
+     `fetchers.fetch_company` at `pipeline/http` defaults (timeout 30, retries 3, backoff 2.0
+     ≈ 96 s per hung endpoint), and `fetch_smartrecruiters` paginates on the server's
+     `totalFound` with no page cap — the shape `probe_ats` documents at "13,961 requests" and
+     guards, reused here unguarded. An adversarial pass drove **1,946 requests in 8 s** out of
+     one `_verify` call made with `budget_s=180`. Also: `probe_budget` saturates at
+     `limit >= 825`, where the derived budget equals `RUN_CEILING_S` and "the clock bound the
+     run instead of the batch" returns identically — the derivation needs a note or a cap.
 
