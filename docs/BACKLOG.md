@@ -39,9 +39,9 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**344 filed · 249 open · 95 closed · 28 numbers name more than one item · 28 items name no lane.**
+**345 filed · 250 open · 95 closed · 28 numbers name more than one item · 28 items name no lane.**
 
-**Next free number: 303.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 304.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -263,6 +263,22 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
 - **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
 
+### docs — 13 open
+
+- **87** `87@docs` **Retire `cache_new_rows.py`**
+- **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
+- **146** `146@docs` **Tests reach into `digest`'s private names**
+- **291** `291@docs` **The closed-item split: designed, measured, and its first implementation deleted** —
+- **295** `295@docs` **Three session records are named a day before their own H1**
+- **296** `296@docs` **`docs/POC_COMPANY_PROFILES.md` is a dated POC report filed among live docs**
+- **297** `297@docs` **`docs/check_docs.py`'s `§N` pattern cannot see a lettered section reference**
+- **298** `298@docs` **Nothing checks that a cited `BACKLOG <n>` exists**
+- **299** `299@docs` **The HANDOFF per-line cap can still be evaded four ways**
+- **300** `300@docs` **`parse()` truncates an item whose body contains a column-0 `## ` or numbered
+- **301** `301@docs` **`check_docs.py` uses module-global `ERRORS`/`WARNINGS`**
+- **302** `302@docs` **`check_session_record_dates` inspects only line 1**
+- **303** `303@docs` **ARCHITECTURE section 8 s guard-rail table describes guards that have moved**
+
 ### roles — 13 open
 
 - **109** `109@roles` **6 of the 7 short `matched` rows carry URLs that are not job pages**
@@ -278,21 +294,6 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
 - **260** `260@roles` **`store.merge_duplicates` never carries the longest description onto the canonical** —
 - **285** `285@roles` **`seen_id` carries no tenant, so two companies on the same ATS can collide and one role
-
-### docs — 12 open
-
-- **87** `87@docs` **Retire `cache_new_rows.py`**
-- **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
-- **146** `146@docs` **Tests reach into `digest`'s private names**
-- **291** `291@docs` **The closed-item split: designed, measured, and its first implementation deleted** —
-- **295** `295@docs` **Three session records are named a day before their own H1**
-- **296** `296@docs` **`docs/POC_COMPANY_PROFILES.md` is a dated POC report filed among live docs**
-- **297** `297@docs` **`docs/check_docs.py`'s `§N` pattern cannot see a lettered section reference**
-- **298** `298@docs` **Nothing checks that a cited `BACKLOG <n>` exists**
-- **299** `299@docs` **The HANDOFF per-line cap can still be evaded four ways**
-- **300** `300@docs` **`parse()` truncates an item whose body contains a column-0 `## ` or numbered
-- **301** `301@docs` **`check_docs.py` uses module-global `ERRORS`/`WARNINGS`**
-- **302** `302@docs` **`check_session_record_dates` inspects only line 1**
 
 ### ats-fetch — 10 open
 
@@ -4472,3 +4473,15 @@ no-op — turned on the guard rather than on the pipeline.
 302. **`check_session_record_dates` inspects only line 1** — lane: `docs`. A session file
      with a blank first line, YAML front-matter, or an HTML comment above its H1 is never
      checked. 17 of 17 files are fine today.
+
+303. **ARCHITECTURE section 8 s guard-rail table describes guards that have moved** - lane:
+     `docs`, but section 8 is tagged `lane: any` and this session was scoped to section 0, so
+     it is filed rather than edited. Three cells are stale: `tests/test_units.py` is listed as
+     "123 cases from 54 functions" (974 collected across three files today, and the count is
+     deliberately not written down anywhere any more - it is a ratchet in the suite);
+     `docs/check_docs.py` is listed as failing when "HANDOFF.md grows back past 250 lines"
+     (three caps now - 250 lines, 3,200 words, 60 words per line - and it also fails on a
+     stale number, a stale backlog index, an unreadable morning-check verdict and a module a
+     cron runs that is filed as `operator`). The section is the most-read page in the repo
+     after CLAUDE.md, so a reader trusts that table.
+
