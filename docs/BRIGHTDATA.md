@@ -1,11 +1,16 @@
 # Bright Data integration — how it's set up and how to redo it
 
+*Re-verified against the tree on 2026-08-27 by the `docs` lane. The API shape, the
+`bd_rescue.py` wiring and the dashboard steps held; the product table and the budget model
+did not, and both are rewritten below.*
+
 ## What we use and why
 | Product | Used for | Cost |
 |---|---|---|
-| **Web Unlocker API** | Fetching the ~107 anti-bot-blocked careers pages (Cloudflare etc.) through residential IPs; returns the real HTML from which we extract each company's ATS board | 1 credit/request; free tier = 5,000 credits/mo (renews monthly, no rollover). Our weekly pass ≈ 430/mo |
-| **LinkedIn Jobs Scraper API** (planned) | Discovery catch-all: one daily query (analytics roles, Israel) sees postings from EVERY employer incl. Google/Meta/Apple. Each record carries company + apply-URL → we resolve that company's own ATS once (free) and scan it directly forever — LinkedIn quota is only spent on discovering NEW companies | 5K records/mo free tier |
-| Browser API / SERP API / Datasets | not used | — |
+| **Web Unlocker API** | Every residential fetch in the repo: a careers page the runner's address cannot read, a position page the scraper could not open, a JD the plain GET was refused, and `deep_validate.google_via_unlocker` (the working search since SerpApi ran out) | 1 credit/request; free tier = 5,000 credits/mo, renews monthly, no rollover. **See the budget section — there is no single "weekly pass" any more.** The "~107 blocked pages" this row used to quote is not re-derivable from anything in the tree today |
+| **LinkedIn Jobs dataset** (`LINKEDIN_DATASET`, `discovery_daily.py`) | **LIVE**, not planned — it has been running in `daily-digest.yml` since before 2026-08-23. Used by the *targeted* backfill, which needs the `company` field. Each record carries company + apply-URL → we resolve that company's own board once and scan it directly from then on | **1 credit per RECORD**: one trigger returning 391 jobs costs 391 credits |
+| **Web Unlocker for the LinkedIn breadth sweep** | the same sweep's wide pass, through the keyless guest endpoint | **1 credit per PAGE** — the code documents the difference as ~55x, which is why the breadth sweep uses this and the targeted one uses the dataset |
+| Browser API / SERP API | not used | — |
 
 ## Dashboard configuration (done via Chrome automation, Aug 2026)
 1. brightdata.com/cp → left nav **Web Access** → **Add API**
@@ -43,7 +48,29 @@ scrape/search tools backed by the same account. To add to Claude Code:
 (user runs this themselves so the token stays out of Claude's context). The pipeline deliberately
 uses the REST API instead — deterministic, works in GitHub Actions, no MCP dependency.
 
-## Budget guardrails
-- Free tier: 5,000 credits/mo. bd_rescue caps per-run via `BD_LIMIT` (default 120/day in CI).
-- LinkedIn scraper (when added): cap discovery query to ~100 records/day, dedupe against
-  companies.csv before spending anything, migrate discovered companies to direct ATS scanning.
+## Budget guardrails — one pool, many consumers
+
+There is **one** 5,000-credit monthly pool and **eight workflows hold the key**
+(`audit-coverage`, `auto-expand`, `daily-digest`, `listing-hunt`, `retry-unreachable`,
+`scrape-refresh`, `self-heal`, `triage-dark`). The "our weekly pass ≈ 430/mo" line this
+section used to carry described a world with one consumer and has been wrong for weeks —
+the pool was measured at **118 % (5,906/5,000)** on 2026-08-26.
+
+Month-to-date accounting and the projection live in `discovery_daily.py`
+(`BD_MONTHLY_BUDGET`, default 5000) and print as a `[bd-spend]` line in the digest log.
+That is the number to read; nothing else totals the pool.
+
+Per-consumer caps, all env vars, all re-derivable with
+`grep -rn "_BD_CAP\|BD_LIMIT\|UNLOCK_PAGES" --include=*.py --exclude-dir=.claude .`:
+
+| cap | default | who spends it |
+|---|---|---|
+| `BD_LIMIT` | 120/day in CI | `bd_rescue.py`, `bd_employees.py` |
+| `JD_ENRICH_BD_CAP` | 40 | `enrich_scrape_jd.py` |
+| `MATCHED_JD_BD_CAP` | 25 | `enrich_matched_jd.py` |
+| `DEEP_BD_SEARCH_CAP` / `LLM_BD_SEARCH_CAP` / `AUDIT_BD_SEARCH_CAP` | 5 | `deep_validate.py`, `resolve_llm.py`, the Sunday audit |
+| `SCRAPE_UNLOCK_PAGES` | 5 | `scrape_universal.py`, per company |
+| `JD_BD` | **`1` — it defaults to SPENDING** | every JD enricher; set `JD_BD=0` for any local run |
+
+`JD_BD` is the one to remember: it is not a cap but a switch, it defaults to on, and every
+rehearsal harness in `tests/` sets it to `0` for exactly that reason.

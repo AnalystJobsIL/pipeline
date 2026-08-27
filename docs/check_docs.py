@@ -467,7 +467,7 @@ FACTS = [
     Fact("unreferenced_roots", "exact", lambda: (_unreferenced_roots(),),
          "root modules no workflow runs and nothing imports",
          [("README.md", r"(\d+) of them are reachable from no workflow"),
-          ("docs/AGENT_BRIEF.md", r"the (\d+) unreferenced root modules")],
+          ("docs/AGENT_BRIEF.md", r"(\d+) unreferenced root modules")],
          "it is quoted as the size of a to-do, so it has to be the real size"),
 
     Fact("no_main_guard", "exact", lambda: (_no_main_guard(),),

@@ -77,7 +77,9 @@ code that implements it, are in `ARCHITECTURE.md` §0.
 | `docs/MODULES.md` | every module, what it does, and whether it is still live |
 | `docs/BACKLOG.md` | known gaps that outlive a session |
 | `docs/TAGGING.md` | every tag on a role card and where it is computed |
-| `docs/BRIGHTDATA.md` | the Web Unlocker setup and budget |
+| `docs/BRIGHTDATA.md` | the Web Unlocker setup and the one shared credit pool |
+| `docs/AUTOMATION.md` | every scheduled job, what it spends, and when it actually ran |
+| `docs/RUN_LOG.md` | every line a digest can print, and every LLM seam it may spend |
 | `docs/ATS_PLATFORMS.md` | `companies.csv` columns and the per-platform API URL patterns |
 | `docs/sessions/` | what past sessions found, in their own words |
 | `docs/decisions/` | superseded design decisions, kept for the record |

@@ -8,16 +8,24 @@ in `ARCHITECTURE.md` §6. **Never hand-write an unverified row** — §6 has the
 verifies an endpoint before you add it.
 
 Lane: `registry` owns `companies.csv`; `ats-fetch` owns the fetchers behind these patterns.
+`docs` owns this page and re-verified every pattern below against a live row on 2026-08-27.
 
 ## companies.csv
 
 The editable company list. Columns:
 
 - `company_name` — display name
-- `ats_platform` — one of `comeet`, `greenhouse`, `lever`, `smartrecruiters`, `recruitee`, `ashby`,
-  `workable`, `bamboohr`, `breezy`, `oraclehcm`, `jazzhr`, `workday`, `microsoft`, `custom_json`,
-  `scrape` (no public API — read from the rendered careers page) or `discovery` (the synthetic row
-  that reads the LinkedIn/Indeed/Telegram discovery cache)
+- `ats_platform` — **exactly one of the keys in `pipeline/fetchers.py`'s `FETCHERS` map**;
+  `fetch_company` raises `ValueError: unknown ats_platform` on anything else, so a value from
+  a stale list breaks the row. Today (re-derive with
+  `python -c "from pipeline.fetchers import FETCHERS; print(sorted(FETCHERS))"`):
+  `ashby`, `bamboohr`, `breezy`, `comeet`, `custom_json`, `eightfold`, `greenhouse`,
+  `jobvite`, `lever`, `microsoft`, `oraclehcm`, `phenom`, `recruitee`, `smartrecruiters`,
+  `successfactors`, `workable`, `workday` — plus the two pseudo-platforms `scrape` (no public
+  API; read from the rendered careers page) and `discovery` (the synthetic row that reads the
+  LinkedIn/Indeed/Telegram cache). **`jazzhr` was retired on 2026-08-26** and this list carried
+  it until 2026-08-27; `eightfold`, `phenom`, `successfactors` and `jobvite` were missing from
+  it while having live rows. `microsoft` is an alias key served by `fetch_eightfold`.
 - `token` — the platform-specific board token/slug/id used to build the API URL
 - `api_url` — the exact endpoint the scraper hits (pre-built so no guessing at runtime)
 - `active` — `true`/`false`. Set to `false` to pause polling a company without deleting the row.
@@ -37,13 +45,25 @@ To add a company:
 
 - Comeet: `https://www.comeet.com/careers-api/2.0/company/{token}/positions?token={token}`
   (token is embedded in the public careers page HTML/JS — not guessable from the URL alone)
-- Greenhouse: `https://boards-api.greenhouse.io/v1/boards/{token}/jobs`
-- Lever: `https://api.lever.co/v0/postings/{token}?mode=json` (some companies use
-  `api.eu.lever.co` instead — try both)
+- Greenhouse: `https://boards-api.greenhouse.io/v1/boards/{token}/jobs`. **The EU region has
+  the same JSON API** at `https://boards.eu.greenhouse.io/v1/boards/{token}/jobs` — verified
+  2026-08-27, Unframe `unframe` returns 32 postings on both hosts, and `fetch_greenhouse`
+  reads it unmodified. What does not exist is `boards-api.eu.greenhouse.io` (NXDOMAIN), which
+  is the form an earlier note tested before concluding there was no EU API.
+- Lever: `https://api.lever.co/v0/postings/{token}?mode=json`. Some companies are on
+  `api.eu.lever.co`; **no code picks between them**, the row's `api_url` has to name the right
+  host, and Mobileye's is currently failing with a network error against the EU host.
 - SmartRecruiters: `https://api.smartrecruiters.com/v1/companies/{token}/postings`
 - Recruitee: `https://{token}.recruitee.com/api/offers/`
 - Ashby: `https://api.ashbyhq.com/posting-api/job-board/{token}`
-- JazzHR: no consistent public JSON API — needs per-company verification
+- Workable: `https://apply.workable.com/api/v1/widget/accounts/{token}?details=true` (21 rows)
+- BambooHR: `https://{token}.bamboohr.com/careers/list` (10 rows)
+- Breezy: `https://{token}.breezy.hr/json` (5 rows)
+- Oracle HCM: `https://{host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber={site}` (5 rows)
+- Eightfold: `https://{careers-host}/api/pcsx/search?domain={domain}` (2 rows, incl. `microsoft`)
+- SuccessFactors: no JSON at all — the `/tile-search-results/` HTML fragment is parsed (2 rows)
+- Jobvite: `https://jobs.jobvite.com/{token}/search` (1 row)
+- Phenom: `https://{careers-host}/widgets` (1 row)
 - Workday: `https://{tenant}.wd{N}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs` — **POST**
   only (a plain GET 400s), body like `{"searchText":"Israel","limit":20,"offset":0}`. `{tenant}`,
   `{N}` (wd1/wd3/wd5/wd12...), and `{site}` all vary per company and must be discovered from the

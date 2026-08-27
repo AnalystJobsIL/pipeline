@@ -47,7 +47,7 @@ tools). Languages (English) are tagged on cards but excluded from the charts.
 `jdtext._requirements_snippet`: find a requirements **header** (`_REQ_HARD`, English + Hebrew
 forms), reject a candidate whose following text opens with a responsibility verb ("…ad-hoc
 requirements Develop dashboards…") or is the equal-opportunity footer ("…without regard to
-race…" — added 2026-08-25, 0 of the 111 stored roles changed), cut at the next section header
+race…" — added 2026-08-25, 0 of the 111 stored roles at that time changed), cut at the next section header
 (`_SECTION_END`), split bullets (recovering lists whose `•` markers were lost in scraping:
 `_RUNON_SPLIT`, `_DASH_SPLIT`), drop junk (`_BULLET_JUNK`: hashtags, links, "Apply now",
 culture blurbs, "Send your CV to: …", an e-mail address, a LinkedIn footer's `רמת ותק`), cap at 12. A fragment of 3–7 characters survives only when it IS a lexicon skill ("Python", "Excel"); a two-word fragment starting with a capital is a decorative header unless it is a skill or a soft skill ("Team player"); a run-on is never split after Fluent / Native / Excellent / Good / Strong ("Fluent English" is one bullet) — measured on the store 2026-08-25: 8 of 108 cards changed, listed in `docs/sessions/2026-08-24-render.md`.
@@ -57,8 +57,10 @@ mandatory / חובה" and "advantage / a plus / nice to have / יתרון" (`_re
 "Advantages:" / "Bonus points:" sub-section auto-badges everything after it as PLUS
 (`_PLUS_SECTION`). No badge means the posting didn't mark that line — absence is not signal.
 
-Coverage on the committed store, 2026-08-25: **93 of 111** roles have a requirements section,
-**75** a responsibilities section, **104** a description longer than 200 characters
+Coverage on the committed store, **re-derived 2026-08-27** with the command beside it:
+**118 of 135** roles have a requirements section, **97** a responsibilities section, **130** a
+description longer than 200 characters. (It was 93/75/104 of 111 on 2026-08-25 - the
+denominator moved, not the rule.)
 (`python -c "import sqlite3;from pipeline import jdtext as j;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);r=[d for (d,) in c.execute('select description from matched')];print(sum(1 for d in r if j._requirements_snippet(d)),sum(1 for d in r if j._responsibilities_snippet(d)),sum(1 for d in r if len(d or '')>200))"`).
 
 ## Day-to-day ("Responsibilities")
@@ -126,7 +128,8 @@ chips under the requirements column, single-word filter tokens (`ownership`, `cu
   and the lexicon's `roleprofile._LEAD` — one vocabulary, not three copies (2026-08-25: two
   "… Analytics Lead" titles moved from Senior to Lead+; a Hebrew בכיר title now reads Senior,
   pinned by test — no stored role has a Hebrew title yet).
-  The stored `matched.seniority` column is empty for all 111 rows and is not read.
+  The stored `matched.seniority` column is empty for all 135 rows and is not read (re-derived
+  2026-08-27: `select count(*) from matched where coalesce(seniority,'')<>''` returns 0).
 - **Location** — `jdtext._norm_location`: one label per place from `_LOC_GROUPS` (every
   spelling `israel.py` recognises, Latin and Hebrew; pinned by
   `test_every_place_israel_py_recognises_renders_as_one_label`), regions only when no city is

@@ -10,7 +10,8 @@ this repo are unsafe to edit concurrently.
    rules, the quotas, the pre-push contract. If you read nothing else, read this.
 1. **`ARCHITECTURE.md` §0 and "the whole system on one screen"** — what the user actually
    receives, and how to run anything locally without side effects. Non-negotiable.
-2. **`ARCHITECTURE.md` §2** — the four rules that cost real data to learn: the
+2. **`ARCHITECTURE.md` §2** — §2's **four registry rules** (distinct from `CLAUDE.md`'s
+   five, which are the whole-repo set): the
    verdict-string rule, the activation rule, the single-writer rule, and the note
    append-log. **If you are changing a resolver, an activation path, or anything that
    writes `companies.csv`, these ARE the spec.**
@@ -22,6 +23,13 @@ this repo are unsafe to edit concurrently.
 5. **Your lane's section** from the table below, and **`docs/MODULES.md`** for the modules it
    names — it says which are scheduled, which are libraries nothing appears to run, and
    which are dead weight.
+
+6. **`docs/RUN_LOG.md`** if you are about to read a digest mail or a step log — every line
+   the run can print, what emits it, and what its absence means, plus the one table of
+   every seam that spends the Claude subscription and which model it uses.
+7. **`docs/AUTOMATION.md`** if you are about to trust a schedule. `ARCHITECTURE.md` §4 says
+   when a cron is *supposed* to fire; that page has the measured lag, and on 2026-08-27
+   three crons did not fire at all.
 
 Skim only when relevant: `ARCHITECTURE.md` §3 (resolution ladder), §5 (state files and who
 writes them), §5b + §5c (the "why isn't company X in my email" runbook and the debugging
@@ -75,7 +83,7 @@ mode this whole documentation set is arranged against.
    │   lane: infra ✱    │   the merge machinery · the workflows
    └────────────────────┘
 
-   lane: docs — cuts across all eight      ✱ = only one session at a time
+   lane: docs — cuts across all eight steps  ✱ = only one session at a time
 ```
 
 ## Lanes, and what each may write
@@ -216,6 +224,9 @@ push if:
 
 | the check | what it catches |
 |---|---|
+| **derived facts** | a number a doc states drifting from the code — 10 registered facts, 18 sites. EXACT facts (`len(FETCHERS)`, module counts, the c-o-e ratio) are held to equality; CENSUS facts (active rows, profiles) may not carry a bare point number at all, only `~900` or `850-950`, because they move when a cron runs and nobody pushes. `--facts` prints all of them |
+| **the backlog index** | a stale per-lane index, or an item naming a lane that does not exist |
+| **morning checks** | a prediction stated in prose where nobody can answer it, or a verdict a reader cannot check |
 | paths exist | a doc naming a file that was renamed or deleted |
 | links resolve | a dead cross-reference between docs |
 | section references | an `ARCHITECTURE.md` §N pointer left behind by a renumber |
@@ -224,20 +235,31 @@ push if:
 | the continue-on-error ratio | the "a green run proves nothing" number drifting from the workflows |
 | the HANDOFF shape | the current-state file growing back into an archive |
 
-It cannot check whether a sentence is TRUE — only that what it points at still exists. Two
-numbers were found wrong by hand on 2026-08-23 (75 zero-baseline companies was really 256;
-33 `extract-gap` rows was really 26) and that kind of drift still needs a reader.
+It still cannot check whether a *sentence* is true — only that what it points at exists and
+that every number it registers agrees with the code. The rest needs a reader, and the
+measure of how much rest there is: three Opus attackers reading these documents against
+the tree on 2026-08-27 found **46 measured contradictions**, every one of them green under
+the linter that morning. Among them: a "rolling 2-week board" that selects
+`get_matched_since("0000-01-01")`, a per-company board cap that has never existed, and a
+local command printed under "without side effects" that overwrites the published board.
 
 **Constraints: documentation only.** Do not "tidy" code in this lane — a rename here breaks
 four other lanes silently. `docs/check_docs.py` is the one exception, and it only reads.
 When you move text, **move it** — do not rewrite it from memory. Every claim must be checked
 against the code or a live run.
 
-**What is left in this lane** (from `HANDOFF.md`, "what the `docs` lane did NOT finish"):
-the 30 unreferenced root modules are classified but not relocated; there is still no single
-automation inventory covering the Windows scheduled task alongside the Actions crons; and
-`docs/TAGGING.md`, `docs/BRIGHTDATA.md` and `docs/POC_COMPANY_PROFILES.md` have not been
-re-verified line by line against the code.
+**The lane's tools.** `docs/check_docs.py` and `docs/backlog.py` are both owned here, both
+read-only unless given an explicit write flag, both stdlib-only, and neither imports
+anything from `pipeline/`. That is the carve-out from "documentation only": this lane may
+own a tool that *reads* the code to check a document, and nothing else.
+
+**What is left in this lane, 2026-08-27.** The 30 unreferenced root modules are still
+classified but not relocated — moving a file is a code change. `docs/TAGGING.md`,
+`docs/BRIGHTDATA.md` and `docs/ATS_PLATFORMS.md` were re-verified line by line on
+2026-08-27 and corrected; `docs/POC_COMPANY_PROFILES.md` is a dated POC report that belongs
+in `docs/decisions/` (`docs/BACKLOG.md` 296). The automation inventory this paragraph used
+to ask for is `docs/AUTOMATION.md`. Open, with numbers, in `python docs/backlog.py lane
+docs`.
 
 ## Definition of done
 
