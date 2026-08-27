@@ -14,12 +14,6 @@
   "platform": "greenhouse",
   "reason": "regressed-to-zero"
  },
- "Bringg": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/bringg/jobs",
-  "platform": "greenhouse",
-  "reason": "fetch-error",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/bringg/jo"
- },
  "XM Cyber": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/15.005/positions",
   "platform": "comeet",
@@ -30,27 +24,22 @@
   "platform": "greenhouse",
   "reason": "empty-board"
  },
+ "Orca Security": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/orcasecurity/jobs",
+  "platform": "greenhouse",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/orcasecur"
+ },
  "At-Bay": {
   "careers_url": "https://boards-api.greenhouse.io/v1/boards/atbay/jobs",
   "platform": "greenhouse",
-  "reason": "empty-board"
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/atbay/job"
  },
  "Snyk": {
   "careers_url": "https://api.ashbyhq.com/posting-api/job-board/snyk",
   "platform": "ashby",
   "reason": "empty-board"
- },
- "Electreon": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/electreon/jobs",
-  "platform": "greenhouse",
-  "reason": "fetch-error",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/electreon"
- },
- "Tifin": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/tifin/jobs",
-  "platform": "greenhouse",
-  "reason": "fetch-error",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/tifin/job"
  },
  "Bright Security": {
   "careers_url": "https://www.brightsec.com/careers/",
@@ -425,5 +414,11 @@
   "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "Dream": {
+  "careers_url": "https://api.lever.co/v0/postings/wearedream",
+  "platform": "lever",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://api.lever.co/v0/postings/wearedream The read"
  }
 }

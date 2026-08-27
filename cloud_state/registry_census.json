@@ -1179,7 +1179,7 @@
 "Yael Group": "recruiter/staffing agency — never activate (re-flagged 2026-08-23)",
 "Yael Korentec Technologies": "listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-23: js-shell (job XHRs seen during render) | domain-dead 2026-08-27 (conn-dead (URLError))",
 "Yahoo": "re-audit 2026-08-21: deep-verified 1/1 IL (was dark)",
-"Yo Egg": "dark-triage 2026-08-23: wrong-page (LLM: not Yo Egg's careers page (page text empty — nothing to classify)) | listing-hunt 2026-08-24: another company's board; no listing found",
+"Yo Egg": "dark-triage 2026-08-23: wrong-page (LLM: not Yo Egg's careers page (page text empty — nothing to classify)) | domain-dead 2026-08-27 (conn-dead (URLError))",
 "Yotpo": "",
 "Z2A Digital": "scanned; no open Israel roles now | listing-hunt 2026-08-23: no pages reachable | url-cleared 2026-08-25: secrethunter.io aggregator seed",
 "ZF": "crack-walled 2026-08-23: host documented, 0 IL now | dark-triage 2026-08-23: page-empty (LLM confirms no open roles (careers page loaded but no job lis))",
@@ -1246,14 +1246,14 @@
 "מרטנס | Mertens – מקבוצת מלם תים": "listing-hunt 2026-08-23: best candidate mertens.malam.com is another company; no listing found | dark-triage 2026-08-23: extract-gap (LLM found 2: DBA אפליקטיבי, מנהל.ת מוצר Web בכיר.ה)"
 },
 "//pools//": {
-"audit_empty_rows": 256,
+"audit_empty_rows": 255,
 "crack_walled": 10,
-"deep_validate": 256,
-"listing_hunt": 204,
-"probe_candidates": 219,
+"deep_validate": 255,
+"listing_hunt": 203,
+"probe_candidates": 218,
 "repair_extract_gap": 39,
 "retry_unreachable + bd_rescue": 4,
-"triage_dark": 234,
+"triage_dark": 233,
 "validate_empty": 31
 },
 "1E Therapeutics": "false",
