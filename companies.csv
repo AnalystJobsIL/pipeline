@@ -1265,3 +1265,10 @@ Jiga,ashby,jiga,https://api.ashbyhq.com/posting-api/job-board/jiga,true,auto-exp
 Brandlight,ashby,brandlight,https://api.ashbyhq.com/posting-api/job-board/brandlight,true,auto-expand slug-probe; 9/6 IL
 Astera Labs,greenhouse,asteralabs,https://boards-api.greenhouse.io/v1/boards/asteralabs/jobs,true,auto-expand slug-probe; 159/31 IL
 Hello Heart,greenhouse,helloheart,https://boards-api.greenhouse.io/v1/boards/helloheart/jobs,true,auto-expand slug-probe; 13/4 IL
+NeuroBrave,scrape,https://neurobrave.com,https://neurobrave.com,false,scanned; no open Israel roles now | own-site 2026-08-27: neurobrave.com linkback
+ARRISE,scrape,https://arrise.com,https://arrise.com,false,scanned; no open Israel roles now | own-site 2026-08-27: arrise.com linkback
+TAIRC,scrape,https://www.tairc.com/,https://www.tairc.com/,false,scanned; no open Israel roles now | own-site 2026-08-27: www.tairc.com linkback
+Surecomp,scrape,https://surecomp.com/careers/,https://surecomp.com/careers/,true,auto-expand scrape; 2 IL
+Qualitest,scrape,https://www.qualitest.com/,https://www.qualitest.com/,false,scanned; no open Israel roles now | own-site 2026-08-27: www.qualitest.com linkback
+Huuuge Games,scrape,https://huuugegames.com,https://huuugegames.com,false,scanned; no open Israel roles now | own-site 2026-08-27: huuugegames.com linkback
+Ingenio,greenhouse,ingenio,https://boards-api.greenhouse.io/v1/boards/ingenio/jobs,true,auto-expand slug-probe; 5/1 IL

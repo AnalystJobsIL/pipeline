@@ -10904,6 +10904,30 @@
    "url": "https://www.superplay.co/careers-position/85.079"
   }
  ],
+ "Surecomp": [
+  {
+   "ats_platform": "scrape",
+   "company": "Surecomp",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://surecomp.com/careers/co/kfar-saba-israel/A9.968/sales-business-operations-manager/all",
+   "location": "Kfar Saba, Israel",
+   "posted_date": "",
+   "title": "Sales / Business Operations Manager",
+   "url": "https://surecomp.com/careers/co/kfar-saba-israel/A9.968/sales-business-operations-manager/all"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Surecomp",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://surecomp.com/careers/co/kfar-saba-israel/37.363/junior-full-stuck-engineer/all",
+   "location": "Kfar Saba, Israel",
+   "posted_date": "",
+   "title": "Junior Full Stuck Engineer",
+   "url": "https://surecomp.com/careers/co/kfar-saba-israel/37.363/junior-full-stuck-engineer/all"
+  }
+ ],
  "SysAid": [
   {
    "ats_platform": "scrape",
