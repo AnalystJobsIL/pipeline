@@ -5608,18 +5608,13 @@ def test_auto_expand_reports_what_the_llm_tier_was_asked(monkeypatch, tmp_path):
         "the docstring's drain claim was measured false on 2026-08-26 (414 -> 411 -> 408)"
 
 
-# A dated, SHRINKING list of mutation records whose `find` no longer matches its file. It was
-# 33 on 2026-08-27 and must only ever get shorter: `test_no_mutation_record_goes_stale_unnoticed`
-# fails both when a record goes stale that is not listed here AND when a listed one is fixed
-# without being removed, so the list cannot rot into an excuse. Empty is the goal; when it is
-# empty, delete it and the second half of the test with it. docs/BACKLOG.md 273.
-KNOWN_STALE_ANCHORS_2026_08_27 = {
-    "apply-resolved-gate-drop", "apply-resolved-gate-invert", "apply-resolved-gate-narrow",
-    "audit-narrow", "audit-secondchance-remove", "audit-tenant-invert",
-    "invariants-terminal-narrow", "validate-empty-embed-vouch-drop", "validate-empty-invert",
-    "validate-empty-narrow", "validate-empty-remove", "validate-empty-terminal-drop",
-    "validate-empty-transpose",
-}
+# The dated escape hatch for mutation records whose `find` no longer matches its file. It held
+# 33 ids on 2026-08-27 and was emptied the same day, which is the only state it should ever be
+# left in: `test_no_mutation_record_goes_stale_unnoticed` fails both when a record goes stale
+# that is not listed here AND when a listed one is fixed without being removed, so the list can
+# only shrink and cannot rot into an excuse. It stays (empty) rather than being deleted so the
+# next refactor has somewhere honest to record a temporary red. docs/BACKLOG.md 273.
+KNOWN_STALE_ANCHORS_2026_08_27 = frozenset()   # 33 on 2026-08-27, cleared the same day
 
 
 def _stale_mutation_anchors():
@@ -5657,6 +5652,15 @@ def test_no_mutation_record_goes_stale_unnoticed():
     It is a ratchet, not a snapshot: a record that stops being stale must LEAVE the list, so
     the list can only shrink. That is the half that stops an allowlist becoming permission.
     """
+    import os
+    import pytest
+    if os.environ.get("AJIL_MUTANT"):
+        # Inside `tools/mutate.py`'s mutant copy the source is deliberately NOT HEAD's, so
+        # the record whose text was just replaced always reads as stale. Without this the
+        # test would "kill" every mutation in the catalogue and the gate would prove nothing
+        # (measured 2026-08-27: it reported `audit-narrow  killed  test_no_mutation_record_
+        # goes_s (direct)` -- a false kill, and it would have been the same for all 197).
+        pytest.skip("the mutant's source is intentionally not HEAD's")
     stale = dict(_stale_mutation_anchors())
     known = KNOWN_STALE_ANCHORS_2026_08_27
     fresh = sorted(set(stale) - known)
@@ -5737,3 +5741,65 @@ def test_the_hunts_llm_budget_is_per_run_not_per_process():
                       and isinstance(t.value, ast.Name) and t.value.id == "_LLM_USED"
                       for t in n.targets)]
     assert resets, "listing_hunt.main() does not reset its per-run LLM counter"
+
+
+def test_the_weekly_audit_refuses_a_board_that_nothing_can_vouch_for(tmp_path, monkeypatch):
+    """The audit's `if _av != "ok": ... continue` refusal had NO behavioural coverage, and
+    only ONE of the five verdicts can actually reach it.
+
+    Everything else is already refused by a rung above: `_slug_matches` (line 426) drops any
+    tenant that does not near-match the name — of every declared negative in
+    `identity_facts.DECLARED`, **0** still pass it, so `not-ours` cannot arrive — and
+    `if not n_all` (line 454) drops the empty board before the verdict is even computed, so
+    `empty` cannot either. I checked both by building those fixtures first; both left
+    `audit-secondchance-remove` SURVIVING, which is what an unreachable branch looks like.
+
+    What DOES reach it is `unverified`: an opaque token (a Comeet uid, a near-matching path
+    tenant) makes `board_vouches` answer `None`, and when the human board page cannot be read
+    there is nothing left to decide with. The audit must then leave the row dark and stamp no
+    claim — that is the third identity state, and this refusal is the only thing enforcing it
+    here. It is also the aspectiva shape: a uid nothing can falsify.
+
+    Fiverr is the positive control: without it a gate that refuses everything passes.
+    """
+    import os
+    import sys
+    import audit_empty_rows as A
+    monkeypatch.setattr(A, "_playwright_available", lambda: False)
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [
+        ["Voiceitt", "", "", "https://www.voiceitt.com/careers", "false",
+         "no listing found 2026-01-01: dark"],
+        ["Fiverr", "", "", "https://www.fiverr.com/jobs", "false",
+         "no listing found 2026-01-01: dark"],
+    ])
+    os.makedirs(tmp_path / "state", exist_ok=True)
+    (tmp_path / "state" / "audit_done.json").write_text("{}", encoding="utf-8")
+
+    OPAQUE = "https://boards.greenhouse.io/voiceitt"    # slug matches, so every rung above
+    FIVERR = "https://boards.greenhouse.io/fiverr"      # the verdict admits it
+    pages = {
+        OPAQUE: "<html>Voiceitt careers " + OPAQUE + " " + "y" * 3000 + "</html>",
+        FIVERR: "<html>Fiverr careers " + FIVERR + " " + "w" * 3000 + "</html>",
+    }
+    monkeypatch.setattr(A, "fetch", lambda url, timeout=20: pages.get(url, ""))
+    monkeypatch.setattr(A, "serp",
+                        lambda name, limit=5: {"Voiceitt": [OPAQUE],
+                                               "Fiverr": [FIVERR]}.get(name, []))
+    monkeypatch.setattr(A, "verify", lambda name, plat, tok, api: (12, 5))
+    # the ONLY difference between the two cells: nothing can vouch for Voiceitt's board and
+    # its human page cannot be read, so the verdict is `unverified`.
+    monkeypatch.setattr(IG, "board_vouches",
+                        lambda name, tok, api: None if name == "Voiceitt" else True)
+    # `page_names_company` answering None IS "the page could not be read" -- the state the
+    # third verdict exists for. Fiverr's page reads fine.
+    monkeypatch.setattr(IG, "page_names_company",
+                        lambda name, url, html="": None if name == "Voiceitt" else True)
+    monkeypatch.setattr(sys, "argv", ["audit_empty_rows.py", "--apply"])
+    A.main()
+
+    out = _read(tmp_path)
+    assert out["Voiceitt"][4] == "false", (
+        "the audit activated a board nothing could vouch for: %r" % (out["Voiceitt"],))
+    assert out["Fiverr"][4] == "true", (
+        "positive control regressed - the gate now refuses everything: %r" % (out["Fiverr"],))

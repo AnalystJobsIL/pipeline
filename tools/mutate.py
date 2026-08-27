@@ -416,6 +416,12 @@ def _pytest(work, node_ids, deselect=()):
     # whole: `$GITHUB_STEP_SUMMARY upload aborted, supports content up to a size of 1024k`.
     # The gate's own table was the thing lost (2026-08-27).
     env = {k: v for k, v in os.environ.items() if k != "GITHUB_STEP_SUMMARY"}
+    # A mutant's source is DELIBERATELY not HEAD's, so any test that asserts "the source
+    # matches what is recorded about it" fires on every single mutation and reads as a
+    # universal killer -- which would make this whole gate vacuous. Exactly one such test
+    # exists (`test_no_mutation_record_goes_stale_unnoticed`, which checks that every
+    # record's `find` still matches its file); it skips when it sees this.
+    env["AJIL_MUTANT"] = "1"
     return subprocess.run(_pytest_argv(node_ids, deselect), cwd=work, capture_output=True,
                           text=True, encoding="utf-8", errors="replace", timeout=1800,
                           env=env)

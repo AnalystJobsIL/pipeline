@@ -3532,7 +3532,26 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     a note goes through `notes.append`, so the change is theirs to announce; its measured cost
     is zero rows.
 
-273. **27 of the 200 mutation records are still anchored on code that no longer exists** —
+273. ~~**27 of the 200 mutation records are still anchored on code that no longer exists**~~ —
+    **CLOSED 2026-08-27 (`registry`): 33 → 0.** Twenty-eight re-anchored, each accepted only
+    on `python tools/mutate.py --id <id>` reporting `killed`; three retired as equivalent
+    mutants with the evidence (274); two more (`audit-secondchance-remove`,
+    `validate-empty-embed-vouch-drop`) had no behavioural coverage at all until a fixture was
+    written for them. The structural half shipped too:
+    `test_no_mutation_record_goes_stale_unnoticed` names every stale record in under a second
+    and is a ratchet in both directions — red when a new record goes stale, red when a listed
+    one is fixed without leaving the list, so the allowlist can only shrink. It is empty.
+    Two harness defects found by running the gate concurrently and fixed: `work_root` was a
+    FIXED `$TEMP/ajil_mutants` that every run `rmtree`d at startup (two runs destroyed each
+    other's mutants; one reported a SURVIVED a serial re-run shows `killed`), and the mutant's
+    pytest inherited `GITHUB_STEP_SUMMARY`, which `pipeline/run.py` appends to — over 200 runs
+    the summary reached 1,087 KB and Actions dropped the gate's own table. **And the ratchet
+    itself had to be taught to stand down inside a mutant**: a mutant's source is deliberately
+    not HEAD's, so a test asserting "the source matches what is recorded about it" fires on
+    every mutation and reads as a universal killer. Measured before the fix:
+    `audit-narrow  killed  test_no_mutation_record_goes_s (direct)` — a false kill that would
+    have made the whole gate vacuous. `tools/mutate.py` now sets `AJIL_MUTANT=1` and the test
+    skips on it. Original text: **27 of the 200 mutation records are still anchored on code that no longer exists** —
     lane: `registry`. `tools/mutate.py` reports each as
     `** FAIL ** stale mutation: 0 matches for 'find', re-anchor` and the gate exits non-zero,
     so this is the second thing making `tests.yml` red for every lane. It was **33** at
@@ -3552,7 +3571,28 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     the last re-anchor. Count them any time with the loop in
     `docs/sessions/2026-08-24-registry.md` (2026-08-27 section).
 
-274. **`deep-njobs-drop` is an equivalent mutant and should be retired, not re-anchored** —
+274. ~~**`deep-njobs-drop` is an equivalent mutant and should be retired, not re-anchored**~~ —
+    **CLOSED 2026-08-27 (`registry`): retired, and it had two siblings.** Three records could
+    not be killed by anything because the clause each targets is already decided by a rung
+    above it. `deep-njobs-drop`: `deep_validate.apply_verdict` sets `_ident = _av == "ok"`
+    from `activation_verdict(..., n_all, ...)`, which opens `if not n_jobs: return "empty"`,
+    so dropping `n_all` from the conjunct two lines later changes neither branch nor note.
+    `audit-narrow`: its `why` is a TENANT MISMATCH, i.e. the verdict `not-ours` — and
+    `_slug_matches` (audit_empty_rows.py:426) refuses every such candidate several rungs
+    earlier. Measured: of every declared negative in `identity_facts.DECLARED`, **0** still
+    pass `_slug_matches`, so `not-ours` cannot reach the refusal at all. `audit-narrow` was
+    confirmed SURVIVING on four serial runs. Retired with `deep-njobs-drop`; the catalogue is
+    200 → 198.
+
+    **What the same investigation found that was NOT equivalent:** the audit's
+    `if _av != "ok"` refusal is live for exactly one verdict, `unverified` — an opaque token
+    (a Comeet uid, a near-matching path tenant) makes `board_vouches` answer `None`, and when
+    the human board page cannot be read there is nothing left to decide with. No fixture
+    produced that state, so `audit-secondchance-remove` survived a clean full-suite run twice.
+    `test_the_weekly_audit_refuses_a_board_that_nothing_can_vouch_for` is that fixture, and it
+    kills the record behaviourally (`subset 120, 39 s`). It is also the aspectiva shape from
+    284 — a uid nothing can falsify — so the coverage hole and the live wrong-employer row
+    were the same gap seen from two directions. Original text: **`deep-njobs-drop` is an equivalent mutant and should be retired, not re-anchored** —
     lane: `registry`. `deep_validate.apply_verdict` computes `_ident = _av == "ok"` from
     `activation_verdict(name, _cand, n_all, ...)`, and `identity_gate.activation_verdict`
     opens with `if not n_jobs: return "empty"` — so for every falsy `n_all`, `_ident` is

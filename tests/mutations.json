@@ -110,16 +110,6 @@
   "must_be_killed_by_behavioural": true
  },
  {
-  "id": "deep-njobs-drop",
-  "file": "deep_validate.py",
-  "symbol": "apply_verdict",
-  "class": "M4-dead-conjunct",
-  "find": "            n_all and not is_foreign(name, _cand) and _ident",
-  "replace": "            not is_foreign(name, _cand) and _ident",
-  "why": "drops the emptiness clause, so a board that verifies with zero jobs counts as a recovery",
-  "must_be_killed_by_behavioural": true
- },
- {
   "id": "deep-activate-remove",
   "file": "deep_validate.py",
   "symbol": "apply_verdict",
@@ -144,8 +134,8 @@
   "file": "audit_empty_rows.py",
   "symbol": "main",
   "class": "M2-gate-inversion",
-  "find": "            _tenant_ok = _gate.page_names_company(name, api or \"\") is True",
-  "replace": "            _tenant_ok = _gate.page_names_company(name, api or \"\") is not None",
+  "find": "        if _av != \"ok\":",
+  "replace": "        if not (_av != \"ok\"):",
   "why": "an unreadable page becomes evidence; the Sunday audit SEARCHES for boards, so this is the highest-risk tool for it",
   "must_be_killed_by_behavioural": true
  },
@@ -154,19 +144,9 @@
   "file": "audit_empty_rows.py",
   "symbol": "main",
   "class": "M1-gate-removal",
-  "find": "        if is_foreign(name, api or \"\") or not _tenant_ok:",
-  "replace": "        if False:",
+  "find": "        if _av != \"ok\":",
+  "replace": "        if False and _av != \"ok\":",
   "why": "the audit's refusal branch removed entirely",
-  "must_be_killed_by_behavioural": true
- },
- {
-  "id": "audit-narrow",
-  "file": "audit_empty_rows.py",
-  "symbol": "main",
-  "class": "M3-branch-narrowing",
-  "find": "        if is_foreign(name, api or \"\") or not _tenant_ok:",
-  "replace": "        if is_foreign(name, api or \"\") and not _tenant_ok:",
-  "why": "`or` -> `and` makes the refusal need BOTH, so a tenant mismatch alone stops refusing",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -264,8 +244,8 @@
   "file": "validate_empty.py",
   "symbol": "check",
   "class": "M1-gate-removal",
-  "find": "            if il > 0 and (not _gate.activation_ok(name, api, il, html=html)\n                           or not _gate.embedded_board_ok(name, tok, api)):",
-  "replace": "            if il > 0 and (False\n                           or not _gate.embedded_board_ok(name, tok, api)):",
+  "find": "            if il > 0 and (_av != \"ok\" or not _gate.embedded_board_ok(name, tok, api)):",
+  "replace": "            if il > 0 and (False or not _gate.embedded_board_ok(name, tok, api)):",
   "why": "promotes whatever board the page embeds -- its state before this refactor",
   "must_be_killed_by_behavioural": true
  },
@@ -274,8 +254,8 @@
   "file": "validate_empty.py",
   "symbol": "check",
   "class": "M2-gate-inversion",
-  "find": "            if il > 0 and (not _gate.activation_ok(name, api, il, html=html)\n                           or not _gate.embedded_board_ok(name, tok, api)):",
-  "replace": "            if il > 0 and (_gate.activation_ok(name, api, il, html=html) is None\n                           or not _gate.embedded_board_ok(name, tok, api)):",
+  "find": "            if il > 0 and (_av != \"ok\" or not _gate.embedded_board_ok(name, tok, api)):",
+  "replace": "            if il > 0 and (_av == \"ok\" or not _gate.embedded_board_ok(name, tok, api)):",
   "why": "truthiness inverted with the token intact",
   "must_be_killed_by_behavioural": true
  },
@@ -284,8 +264,8 @@
   "file": "validate_empty.py",
   "symbol": "check",
   "class": "M3-branch-narrowing",
-  "find": "            if il > 0 and (not _gate.activation_ok(name, api, il, html=html)\n                           or not _gate.embedded_board_ok(name, tok, api)):",
-  "replace": "            if il < 0 and (not _gate.activation_ok(name, api, il, html=html)\n                           or not _gate.embedded_board_ok(name, tok, api)):",
+  "find": "            if il > 0 and (_av != \"ok\" or not _gate.embedded_board_ok(name, tok, api)):",
+  "replace": "            if il < 0 and (_av != \"ok\" or not _gate.embedded_board_ok(name, tok, api)):",
   "why": "narrows the guard to an impossible Israel-job count",
   "must_be_killed_by_behavioural": true
  },
@@ -414,8 +394,8 @@
   "file": "apply_resolved.py",
   "symbol": "main",
   "class": "M1-gate-removal",
-  "find": "                if len(fields) >= 5 and fields[4] == \"true\" and (",
-  "replace": "                if False and (",
+  "find": "                if _gate.is_foreign(name, api) or _gate.board_vouches(name, tok, api) is False:",
+  "replace": "                if False:",
   "why": "apply_resolved runs at self-heal.yml 06:00 and re-points an ACTIVE row's api_url. Its write is a TUPLE target, which made it invisible to the derived enumeration until 2026-08-24.",
   "must_be_killed_by_behavioural": true
  },
@@ -424,8 +404,8 @@
   "file": "apply_resolved.py",
   "symbol": "main",
   "class": "M2-gate-inversion",
-  "find": "                        or not _gate.tenant_is_this_company(name, api)):",
-  "replace": "                        or _gate.tenant_is_this_company(name, api)):",
+  "find": "                if _gate.is_foreign(name, api) or _gate.board_vouches(name, tok, api) is False:",
+  "replace": "                if _gate.is_foreign(name, api) or _gate.board_vouches(name, tok, api) is not False:",
   "why": "inverts the tenant veto: refuses the correct boards and admits the foreign ones",
   "must_be_killed_by_behavioural": true
  },
@@ -434,8 +414,8 @@
   "file": "apply_resolved.py",
   "symbol": "main",
   "class": "M3-branch-narrowing",
-  "find": "                if len(fields) >= 5 and fields[4] == \"true\" and (",
-  "replace": "                if len(fields) >= 5 and fields[4] == \"never\" and (",
+  "find": "                if _gate.is_foreign(name, api) or _gate.board_vouches(name, tok, api) is False:",
+  "replace": "                if len(fields) >= 99 and (_gate.is_foreign(name, api) or _gate.board_vouches(name, tok, api) is False):",
   "why": "narrows the guard so no row is ever checked",
   "must_be_killed_by_behavioural": true
  },
@@ -693,8 +673,8 @@
   "file": "validate_empty.py",
   "symbol": "check",
   "class": "M1-gate-removal",
-  "find": "            if il > 0 and (not _gate.activation_ok(name, api, il, html=html)\n                           or not _gate.embedded_board_ok(name, tok, api)):",
-  "replace": "            if il > 0 and not _gate.activation_ok(name, api, il, html=html):",
+  "find": "            if il > 0 and (_av != \"ok\" or not _gate.embedded_board_ok(name, tok, api)):",
+  "replace": "            if il > 0 and _av != \"ok\":",
   "why": "drops the board-vouches-for-itself clause: a page naming THIS company then admits whatever board it embeds -- the wave-4 B1 (Cogniteam promoted onto Riskified's greenhouse off Cogniteam's own page).",
   "must_be_killed_by_behavioural": true
  },
@@ -773,8 +753,8 @@
   "file": "validate_empty.py",
   "symbol": "check",
   "class": "M8-argument-transposition",
-  "find": "            if il > 0 and (not _gate.activation_ok(name, api, il, html=html)",
-  "replace": "            if il > 0 and (not _gate.activation_ok(api, name, il, html=html)",
+  "find": "            _av = _gate.activation_verdict(name, api, il, html=html, token=tok) if il > 0 else \"empty\"",
+  "replace": "            _av = _gate.activation_verdict(api, name, il, html=html, token=tok) if il > 0 else \"empty\"",
   "why": "wave-4 R2: name<->api_url transposed at a call site whose n_jobs slot is pre-guarded (a truthy-constant mutation is an equivalent mutant here); a URL in the name slot fails every predicate and the positive control goes red.",
   "must_be_killed_by_behavioural": true
  },
@@ -963,7 +943,7 @@
   "file": "check_invariants.py",
   "symbol": "TERMINAL",
   "class": "M7-constant-drift",
-  "find": "TERMINAL = \"|\".join(re.escape(t) for t in _VERDICTS_TERMINAL)",
+  "find": "TERMINAL = _VERDICTS_TERM_RX.pattern",
   "replace": "TERMINAL = r\"defunct|domain-dead|alias-of\"",
   "why": "wave-7 confirmation: reverting the blocking gate's terminal set to the old private narrow copy was suite-green; it gates nine workflow commits.",
   "must_be_killed_by_behavioural": true
@@ -1213,8 +1193,8 @@
   "file": "validate_empty.py",
   "symbol": "in_validate_empty_pool",
   "class": "M5-population-widening",
-  "find": "            and not is_terminal(r[5] or \"\") and not is_recruiter(r[0]))",
-  "replace": "            and not is_recruiter(r[0]))",
+  "find": "    return (in_probe_pool(r)                 # parked, http, not aggregator/junk/terminal/agency",
+  "replace": "    from pipeline.aggregators import is_aggregator as _agg\n    from pipeline.firmographics import looks_like_junk as _junk\n    return ((len(r) >= 6 and r[4] == \"false\" and (r[3] or \"\").startswith(\"http\")\n             and not _agg(r[3]) and not _junk(r[0]))",
   "why": "the Sunday cross-validation activates; without the terminal exclusion it re-activated three rows parked alias-of/redundant on 2026-08-25 (wave-1 pools attacker).",
   "must_be_killed_by_behavioural": true
  },

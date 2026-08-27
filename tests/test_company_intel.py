@@ -157,10 +157,29 @@ def test_research_respects_the_time_budget(env, monkeypatch):
 
 
 def test_each_research_call_is_clamped_to_the_remaining_budget(env):
+    """A call may not ask for more seconds than the budget has left.
+
+    The clock is FROZEN, and that is the point of the fix (`registry` lane, 2026-08-27,
+    out of lane and disclosed). This test used to build its own `_Clock` implicitly from
+    `budget_min = 2` -- exactly `RESEARCH_MIN_S` -- so `_research`'s guard
+    `if remaining < RESEARCH_MIN_S: break` fired the instant ANY wall-clock time passed
+    between `_Clock.__init__` and the first `clock.remaining()`. It therefore passed only
+    when `time.time()` returned the identical float twice: green on this dev machine, red
+    on every ubuntu runner since 2026-08-26 (`IndexError: list index out of range` on
+    `calls[-1]`, because no call was ever made). It also blocked the mutation gate, which
+    cannot count a test that is red at HEAD as a killer.
+
+    `_research` already takes a `clock`, so the boundary can be stated instead of raced:
+    exactly 120 s left, the guard does not fire (`120 < 120` is False), and the clamp is
+    the only thing that can decide the timeout.
+    """
     st, _, calls, _ = env
     rep = CI._report()
-    rep["budget_min"] = 2  # 120 s left: the first call may not ask for 240 s
-    CI._research(st, ["A"], [_job("A")], TODAY, rep)
+    rep["budget_min"] = 2                      # 120 s of budget...
+    frozen = CI._Clock(2, now=lambda: 0.0)     # ...and 120 s of it still left, always
+    assert frozen.remaining() == 120
+    CI._research(st, ["A"], [_job("A")], TODAY, rep, clock=frozen)
+    assert calls, "the budget guard fired when 120 s were left"
     assert calls[-1]["timeout"] <= 120
 
 
