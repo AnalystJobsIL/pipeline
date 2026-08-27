@@ -283,7 +283,9 @@ def twice():
     open(ghenv, "w", encoding="utf-8").close()
     r = subprocess.run([sys.executable, PERSIST, "deliver", "--date", date, "--into", late],
                        capture_output=True, env=dict(env, GITHUB_ENV=ghenv))
-    _check(r.returncode == 0, "the second run exits 0 (a refusal is not a broken run)")
+    _check(r.returncode == 1, "the second run exits 1: a thinner-than-origin digest is an "
+                              "anomaly, not a no-op -- `publish` is gated only on the pipeline "
+                              "step, so exit 0 would ship this thin run's board")
     _check("NOT delivered" in r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace"),
            "it said why it refused")
     still = open(os.path.join(late, "digests", "latest.md"), encoding="utf-8").readline().strip()

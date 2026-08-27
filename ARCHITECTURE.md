@@ -1647,6 +1647,13 @@ unconditional `cp out/digest-$(date -u +%F).md digests/latest.md`, and that one 
 three failures. It is now `python persist_state.py deliver --date "$(date -u +%F)"`, still
 inside the same step — no new workflow, no new cron, no new named step.
 
+0. **The run's own candidate is checked first, and unconditionally.** It must start with
+   `#`, carry this run's date, not be a notice, and have a non-blank line after the heading.
+   That check used to sit behind the "does origin already have today's?" gate — which is
+   False on a normal morning, so on the one run of the day that actually mails, `deliver`
+   validated nothing. A zero-byte file, a body-less heading and yesterday's digest re-copied
+   under today's name all went straight through. A candidate that fails this is `exit 1`, so
+   the run goes red and `outcome` mails the dated notice instead.
 1. **A THINNER digest never replaces a fatter one.** `store.filter_new` drops roles already
    in `sent`, so a second run the same day renders fewer — often `0 new senior analytics
    roles`. The `cp` put that over the morning's real digest; the relay hashes the file, saw
@@ -1691,26 +1698,49 @@ inside the same step — no new workflow, no new cron, no new named step.
    value disarmed the entire guard, reproduced by an attacker as an empty digest replacing
    the morning's mail. A failed fetch is now an `::error::`, the source is labelled
    `STALE origin/<branch> (fetch failed)`, and anything that cannot be proved safe is
-   refused. **A refusal also re-syncs the worktree's `latest.md` with origin**, so the
+   refused — and that refusal is **loud**: a refusal we could not justify exits 1 so the
+   notice is mailed, while a justified one stays a benign exit 0. Exit 0 on an unprovable
+   refusal is a green run that mails nothing and writes nothing, which is the failure class
+   this whole section is about. **A refusal also re-syncs the worktree's `latest.md` with
+   origin** (including when origin's copy is *empty* — that is when leaving stale bytes is
+   worst), so the
    persist step's conflict path finds `ours == theirs` and cannot push checkout-era bytes
    back over the real digest under `s_ours` (whose overwrite warning is suppressed for
-   `SINGLE_WRITER` paths — BACKLOG `160@infra`).
+   `SINGLE_WRITER` paths; `160@infra` names that suppression and stays open, because what it asks for — a guard against a SECOND writer — is not what was fixed here).
    `tests/rehearse_infra.py --twice` replays all of it on temporary repos, with the stale
    run rendering 3 roles against origin's 8.
 4. **`cloud_state/last_delivered.json` records what reached `digests/latest.md`** — date,
    the sha256 of the bytes, the role count, the reason. It is written by `deliver` and
    staged by the SAME persist step (`--own cloud_state … digests/latest.md`), so the receipt
    and the file it describes are one commit, and `daily-digest` is the only workflow that
-   owns `cloud_state` as a directory. A failing gate restores the two **together**
-   (`persist_state.PAIRED`), so origin can never carry a receipt for a digest it does not
-   have. `run.py::_receipt_alarms` turns a gap of two days or more into a bold `Stages:`
+   owns `cloud_state` as a directory. A failing gate takes the two **together**
+   (`persist_state.PAIRED`) -- restored from the base commit, or *removed* when the base has
+   no version to restore to -- so origin does not end up carrying a receipt for a digest it
+   does not have. The pairing is deliberately **one-way**: a corrupt receipt is metadata and
+   must not withdraw a good digest, because `mark_sent` runs before `persist` and those
+   roles are already burned. `run.py::_receipt_alarms` turns a gap of two days or more into a bold `Stages:`
    line in the next mail — **and checks the receipt's `sha256` against the file**, because a
-   receipt trusted blindly would hide the very morning it lost.
+   receipt trusted blindly would hide the very morning it lost. The fingerprint is
+   **EOL-normalised** (`persist_state.digest_sha`): `core.autocrlf=true` is the Windows
+   default, so hashing raw bytes made a cloud-written receipt permanently disagree with the
+   same file read in the operator's checkout. The receipt also carries **`past_cutoff`**: a
+   write made after the relay's last poll is not a delivery, and counting it as one let
+   break-glass silence the alarm that armed it — a chronically-late pipeline could then
+   alternate defer / break-glass for ever at zero mail, quietly.
 
    **It is a write receipt, not a delivery receipt.** Whether the relay then mailed the file
    is not observable from this repo at all (BACKLOG `161@infra`: the relay marks nothing). On
    a day the relay's own crons are dropped — 2026-08-27 — every write still succeeds and the
    receipt still reads healthy.
+
+**How many accumulated roles actually reach a reader:** `python tests/role_leak.py --days 10`
+(read-only). On 2026-08-27 it printed **31 emailed · 13 never emailed but eligible · 42
+correctly excluded** — a ~30% leak, seven of the thirteen still open on their boards that
+morning. The cause is two clocks in one selection (`get_matched_since` filters on
+`first_seen`; `_posted_in` tests `posted_date`) and a window that moves daily, so a role whose
+`posted_date` is backfilled late is never reconsidered. That is BACKLOG `310` and it belongs
+to `roles`/`render`/`jd-text`, not here — but it is the number this lane's delivery work is
+ultimately in service of, so the measurement lives with the delivery rules.
 
 **`last_run.json` is not that receipt, and mistaking it for one has already cost two backlog
 items.** `persist_state.py outcome` writes it **only when a run was unhealthy**, and

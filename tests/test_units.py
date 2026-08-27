@@ -11411,9 +11411,10 @@ def test_the_delivery_receipt_lands_in_the_same_commit_as_the_file_it_describes(
     with open(os.path.join(t, "cloud_state", "last_delivered.json"), encoding="utf-8") as f:
         rec = _json.load(f)
     body = open(os.path.join(t, "digests", "latest.md"), "rb").read()
-    import hashlib as _hl
     assert rec["date"] == "2026-08-27" and rec["roles"] == 4
-    assert rec["sha256"] == _hl.sha256(body).hexdigest(), "the receipt does not describe the file"
+    # ps.digest_sha, not a raw sha256: the fingerprint is EOL-normalised so a Windows
+    # checkout and an Ubuntu runner agree about the same file
+    assert rec["sha256"] == ps.digest_sha(body), "the receipt does not describe the file"
 
     wf = open(os.path.join(_REPO, ".github", "workflows", "daily-digest.yml"), encoding="utf-8").read()
     own = re.search(r"--own ([^\n]*(?:\n\s+[^-\n][^\n]*)*)", wf).group(1)
@@ -11614,27 +11615,6 @@ def test_a_run_that_never_wrote_a_file_does_not_push_its_stale_copy(tmp_path):
     assert ps.s_ours(base, base, None) == base, "nothing on origin: keep what we have"
 
 
-def test_the_digest_and_its_receipt_are_restored_together(tmp_path, monkeypatch):
-    """`run_gates` restores ONE failing path from base and lets the rest of the commit push.
-    With a receipt in the same commit that leaves origin describing a digest it does not
-    have — and `_receipt_alarms` would then trust the receipt and hide the lost morning."""
-    ps = _ps()
-    assert ps.PAIRED["digests/latest.md"] == "cloud_state/last_delivered.json"
-    assert ps.PAIRED["cloud_state/last_delivered.json"] == "digests/latest.md"
-    d = tmp_path
-    os.makedirs(os.path.join(d, "digests")); os.makedirs(os.path.join(d, "cloud_state"))
-    open(os.path.join(d, "digests", "latest.md"), "w", encoding="utf-8").write("not a heading")
-    open(os.path.join(d, "cloud_state", "last_delivered.json"), "w", encoding="utf-8").write("{}")
-    restored = []
-    monkeypatch.setattr(ps, "git_show", lambda *a, **k: b"x")
-    monkeypatch.setattr(ps, "git", lambda *a, **k: restored.append(a[-1]) or "")
-    failed = ps.run_gates(["digests/latest.md", "cloud_state/last_delivered.json"],
-                          "deadbeefcafe", "", str(d))
-    assert [f[0] for f in failed] == ["digests/latest.md"], "the .md gate stopped firing"
-    assert "cloud_state/last_delivered.json" in restored, \
-        "the receipt was persisted without the digest it describes"
-
-
 def test_a_receipt_that_disagrees_with_the_file_is_reported_not_trusted(tmp_path):
     """A receipt is a claim ABOUT a file. A conflict merge or a failed gate can leave one
     describing a digest that is no longer at that path, and a receipt trusted blindly then
@@ -11648,3 +11628,325 @@ def test_a_receipt_that_disagrees_with_the_file_is_reported_not_trusted(tmp_path
     _json.dump({"date": "2026-08-27", "sha256": "0" * 64}, open(rp, "w", encoding="utf-8"))
     out = _pr._receipt_alarms("2026-08-27", path=rp, digest_path=dp)
     assert out and "is not that file" in out[0], "a receipt describing a vanished digest passed"
+
+
+def test_the_receipt_fingerprint_survives_a_windows_checkout(tmp_path):
+    """`core.autocrlf=true` is the Windows default, so the SAME digest is CRLF in the
+    operator's checkout and LF in the committed blob and on every Ubuntu runner. Hashing raw
+    bytes made the receipt's sha depend on which machine wrote it — a cloud-written receipt
+    never matched the same file read locally, and `_receipt_alarms` would report `something
+    replaced it` about a file nothing had touched. Caught by hashing the seeded receipt both
+    ways before it ever ran: 0a3aa0fa… in a Windows worktree, 71ef0dcb… for the same blob."""
+    ps = _ps()
+    lf = b"# \U0001f3af 8 new senior analytics roles \xe2\x80\x94 2026-08-26\n\nbody\n"
+    assert ps.digest_sha(lf) == ps.digest_sha(lf.replace(b"\n", b"\r\n")), \
+        "the receipt fingerprint still depends on the checkout's line endings"
+    assert ps.digest_sha(lf) != ps.digest_sha(lf.replace(b"body", b"other")), \
+        "normalising went too far: a real change no longer moves the fingerprint"
+    # and the receipt in the tree describes the digest in the tree, whatever this OS does
+    import json as _j
+    rec = _j.load(open(os.path.join(_REPO, "cloud_state", "last_delivered.json"), encoding="utf-8"))
+    body = open(os.path.join(_REPO, "digests", "latest.md"), "rb").read()
+    assert rec["sha256"] == ps.digest_sha(body), \
+        "cloud_state/last_delivered.json does not describe digests/latest.md"
+
+
+def test_the_two_callers_of_the_fingerprint_cannot_drift():
+    """`deliver` writes it and `run.py::_receipt_alarms` checks it. Two copies of the
+    normalisation would be two chances to disagree, which is the failure this whole receipt
+    exists to detect — so run.py imports the writer's function rather than re-deriving it."""
+    src = open(os.path.join(_REPO, "pipeline", "run.py"), encoding="utf-8").read()
+    body = src.split("def _receipt_alarms(")[1].split("\ndef ")[0]
+    assert "from persist_state import digest_sha" in body, \
+        "run.py re-derives the fingerprint instead of importing it"
+    assert "hashlib.sha256(f.read())" not in body, "a second, raw-bytes fingerprint crept back in"
+
+
+def test_the_role_leak_measurement_separates_the_three_buckets():
+    """`tests/role_leak.py` reports the number this pipeline is ultimately judged on — of the
+    roles it accumulated, how many reached a reader. The definition of "leaked" is the whole
+    value of it, so it is pinned: eligible means the EMPLOYER's posted_date fell inside the
+    48h window on the day WE first saw the role. A role with no posted_date, or an old one,
+    is correctly excluded and must never be counted as a loss."""
+    import importlib.util as _iu3
+    sp = _iu3.spec_from_file_location("_leak", os.path.join(_REPO, "tests", "role_leak.py"))
+    m = _iu3.module_from_spec(sp); sp.loader.exec_module(m)
+    today = dt.date(2026, 8, 27)
+    rows = [
+        ("2026-08-26", "s1", "Sent Co", "Analyst", "2026-08-26", "", "2026-08-26"),
+        ("2026-08-26", "s2", "Leak Co", "Analyst", "2026-08-25", "", "2026-08-26"),
+        ("2026-08-22", "s3", "Late Co", "Analyst", "2026-08-25", "", "2026-08-26"),
+        ("2026-08-26", "s4", "NoDate Co", "Analyst", None, "", "2026-08-26"),
+        ("2026-08-26", "s5", "Old Co", "Analyst", "2026-07-01", "", "2026-08-26"),
+        ("2026-08-26", "s6", "Dupe Co", "Analyst", "2026-08-26", "superseded", "2026-08-26"),
+    ]
+    d, leaked, excl = m.classify({"s1"}, rows, days=10, today=today)
+    assert [r[1] for r in d] == ["Sent Co"]
+    assert sorted(r[1] for r in leaked) == ["Late Co", "Leak Co"], \
+        "the leak bucket changed shape: %r" % [r[1] for r in leaked]
+    assert sorted(r[1] for r in excl) == ["NoDate Co", "Old Co"], \
+        "a correctly-excluded role was counted as a loss (or a superseded row leaked in)"
+    # the late-posted_date case is the majority of the real leak and must stay visible
+    assert any(r[1] == "Late Co" for r in leaked), \
+        "a posted_date backfilled after the window closed stopped counting as a leak"
+
+
+def test_no_workflow_run_block_fakes_a_line_continuation():
+    r"""The bug this exists for was SYNTACTICALLY VALID, which is why the first version of
+    this guard passed on it. A patch wrote the `deliver` call as ONE physical line with a
+    literal backslash-n where a line continuation was meant. bash tokenises the `n` as an
+    argument, `persist_state.py` exits 2 with `unrecognized arguments: n`, the `pipeline`
+    step (not continue-on-error) goes red, the board never publishes and the mail becomes a
+    failure notice — every day, for ever. `bash -n` is perfectly happy with it, and the
+    guard that was supposed to cover it asserted only that the substring
+    `persist_state.py deliver` appeared somewhere in the file.
+
+    So this tests INTENT, not syntax: a backslash-n outside quotes in a workflow is always a
+    faked continuation. `printf '%s\n'` in daily-digest.yml is inside quotes and legitimate,
+    which is why quoted spans are stripped first."""
+    cd = _cd()
+    checked = 0
+    for wf in sorted(glob.glob(os.path.join(cd.ROOT, ".github", "workflows", "*.yml"))):
+        for n, line in enumerate(cd.read(wf).splitlines(), 1):
+            bare = re.sub(r"'[^']*'|\"[^\"]*\"", "", line)     # drop quoted spans
+            checked += 1
+            assert "\\n" not in bare, (
+                "%s:%d has a backslash-n outside quotes - a faked line continuation:\n  %s"
+                % (os.path.basename(wf), n, line.strip()[:140]))
+    assert checked > 500, "only %d workflow lines scanned; the reader stopped early" % checked
+
+
+def test_every_workflow_run_block_is_valid_shell():
+    """Complements the guard above: that one catches a faked continuation, this one catches
+    an unbalanced quote or an `fi`-less `if`. Neither subsumes the other - the 2026-08-27
+    bug passed this check and failed that one."""
+    bash = _shutil.which("bash")
+    if not bash:
+        pytest.skip("no bash on this machine")
+    cd = _cd()
+    checked = 0
+    for wf in sorted(glob.glob(os.path.join(cd.ROOT, ".github", "workflows", "*.yml"))):
+        text = cd.read(wf)
+        for m in re.finditer(r"^(\s+)run:\s*[|>]-?\s*\n((?:\1\s+.*\n|\s*\n)+)", text, re.M):
+            body = "\n".join(l[len(m.group(1)):] for l in m.group(2).splitlines())
+            script = re.sub(r"\$\{\{[^}]*\}\}", "EXPR", body)
+            if "<<" in script:        # heredocs of other languages are not ours to parse
+                continue
+            r = _sp.run([bash, "-n"], input=script.encode("utf-8"), capture_output=True)
+            assert r.returncode == 0, "%s: a run: block is not valid shell:\n%s\n%s" % (
+                os.path.basename(wf), r.stderr.decode("utf-8", "replace")[:300], script[:400])
+            checked += 1
+    assert checked >= 20, "only %d run: blocks parsed; the extractor stopped matching" % checked
+
+
+def test_deliver_validates_its_own_candidate_on_the_run_that_actually_mails(tmp_path):
+    """`weak_digest` only ever ran behind `on_origin`, and on a normal morning origin carries
+    YESTERDAY's digest — so `on_origin` is False and, on the one run of the day that actually
+    mails, `deliver` validated nothing at all. A zero-byte file, a heading with no body, and
+    yesterday's digest re-copied under today's name all went straight to `digests/latest.md`
+    and would have been mailed (2026-08-27 wave-4 attacker)."""
+    ps = _ps()
+    ps.RELAY_LAST_POLL = "23:59"
+
+    t = _tree(str(tmp_path / "empty"), latest="# yesterday", roles=3)
+    open(os.path.join(t, "out", "digest-2026-08-27.md"), "w", encoding="utf-8").write("")
+    rc, landed = _deliver(ps, t)
+    assert rc == 1 and landed == "# yesterday", "a zero-byte digest was published as the mail"
+
+    t = _tree(str(tmp_path / "nobody"), latest="# yesterday", roles=3)
+    open(os.path.join(t, "out", "digest-2026-08-27.md"), "w", encoding="utf-8").write(
+        "# \U0001f3af 3 new senior analytics roles — 2026-08-27\n")
+    assert _deliver(ps, t)[0] == 1, "a heading with no body was published as the mail"
+
+    t = _tree(str(tmp_path / "wrongday"), latest="# yesterday", roles=3,
+              first="# \U0001f3af 3 new senior analytics roles — 2026-08-26")
+    assert _deliver(ps, t)[0] == 1, "yesterday's digest was published under today's name"
+
+    t = _tree(str(tmp_path / "ok"), latest="# yesterday", roles=3)
+    rc, landed = _deliver(ps, t)
+    assert rc == 0 and "2026-08-27" in landed, "the validation refuses a GOOD digest"
+
+
+def test_an_empty_file_on_origin_still_re_syncs_the_worktree(tmp_path, monkeypatch):
+    """`if rev is not None and cur:` skipped the re-sync when origin's file was EMPTY — which
+    is precisely when leaving this run's checkout-era bytes in place is worst, because the
+    persist step then pushes them over origin under `s_ours` with the warning suppressed."""
+    ps = _ps()
+    ps.RELAY_LAST_POLL = "00:01"      # force the CUTOFF refusal: an empty origin
+    # file makes on_origin False, so the weak branch cannot fire at all
+    monkeypatch.setattr(ps, "git_ok", lambda *a, **k: True)
+    monkeypatch.setattr(ps, "git_show", lambda rev, path, cwd=None:
+                        b"" if path.endswith("latest.md") else None)
+    stale = "# \U0001f3af 8 new senior analytics roles — 2026-08-20\nSTALE\n"
+    t = _tree(str(tmp_path), latest=stale, roles=4, receipt={"date": "2026-08-26"})
+    ps.main(["deliver", "--date", "2026-08-27", "--into", t])
+    with open(os.path.join(t, "digests", "latest.md"), "rb") as f:
+        assert f.read() == b"", "a week-old digest was left for the conflict path to push"
+
+
+def test_a_malformed_receipt_field_cannot_cost_the_day(tmp_path):
+    """`weak_digest` does `int(prior)`. An unguarded int() on a receipt field exits 1, fails
+    the pipeline step (not continue-on-error) and turns the whole day into a failure notice —
+    the same blast radius `_env_int` exists to prevent, one field over."""
+    ps = _ps()
+    ps.RELAY_LAST_POLL = "23:59"
+    real = "# \U0001f3af 8 new senior analytics roles — 2026-08-27\n\nbody\n"
+    t = _tree(str(tmp_path), latest=real, roles=3, receipt={"date": "2026-08-27", "roles": "many"})
+    rc, _ = _deliver(ps, t)
+    assert rc == 0, "a junk `roles` field in the receipt crashed the delivery path"
+
+
+def test_the_carry_note_counts_what_tomorrow_actually_tests(tmp_path):
+    """Tomorrow's cutoff is TODAY and a role must clear BOTH `get_matched_since` (first_seen)
+    and `_posted_in` (posted_date). Counting only first_seen printed `20 of 20 role(s) lead
+    the next digest` on a day when none of them did — a confidently wrong operator-facing
+    number, which this repo rates as worse than no number."""
+    ps = _ps()
+    d = str(tmp_path)
+    os.makedirs(os.path.join(d, "out"))
+    jobs = [{"first_seen": "2026-08-27", "posted_date": "2026-08-27"},   # carries
+            {"first_seen": "2026-08-27", "posted_date": "2026-08-20"},   # posted too old
+            {"first_seen": "2026-08-22", "posted_date": "2026-08-27"},   # first_seen too old
+            {"first_seen": "2026-08-27", "posted_date": None}]           # undecidable -> at risk
+    with open(os.path.join(d, "out", "digest-2026-08-27.json"), "w", encoding="utf-8") as f:
+        _json.dump({"jobs": jobs}, f)
+    note = ps._carry_note(d, "out", "2026-08-27", len(jobs))
+    assert "1 of 4" in note, "the carry count is not counting both dates: %r" % note
+    assert "3 do not" in note and "310" in note, "the at-risk roles are not reported: %r" % note
+
+
+def test_a_break_glass_write_cannot_silence_the_alarm_that_armed_it(tmp_path):
+    """A write made after the relay's last poll is very likely never mailed — tomorrow's run
+    overwrites it before tomorrow's first poll. But it still stamps today's date on the
+    receipt, so the next day read `age == 1` and went quiet, and a chronically-late pipeline
+    could alternate defer / break-glass / defer for ever at zero mail with nothing saying so.
+    Two Opus attackers found that loop independently on 2026-08-27."""
+    from pipeline import run as _pr
+    p = str(tmp_path / "r.json")
+
+    def alarms(rec, on="2026-08-28"):
+        with open(p, "w", encoding="utf-8") as f:
+            _json.dump(rec, f)
+        return _pr._receipt_alarms(on, path=p, digest_path=str(tmp_path / "absent.md"))
+
+    assert alarms({"date": "2026-08-27", "past_cutoff": False}) == [], \
+        "a normal delivery yesterday alarmed"
+    out = alarms({"date": "2026-08-27", "past_cutoff": True})
+    assert out and "probably never mailed" in out[0], \
+        "a past-cutoff write passed as a delivery and silenced the alarm: %r" % out
+    # ...and the plain staleness message says DIGEST email, not just email: a failed run
+    # does send a `no digest` notice, so "produced no email" was wrong by one noun
+    out = alarms({"date": "2026-08-25", "past_cutoff": False})
+    assert out and "produced no digest email" in out[0], out
+
+
+def test_the_digest_and_its_receipt_are_restored_together(tmp_path, monkeypatch):
+    """`run_gates` restores ONE failing path from base and lets the rest of the commit push.
+    With a receipt in the same commit that leaves origin describing a digest it does not
+    have — and `_receipt_alarms` would then trust the receipt and hide the lost morning.
+
+    The pairing is ONE-WAY, and that direction is load-bearing: a corrupt receipt is
+    metadata, and withdrawing a good digest over it would cost the day's mail *after*
+    `mark_sent` has already burned the roles (that step runs before `persist`)."""
+    ps = _ps()
+    assert ps.PAIRED["digests/latest.md"] == "cloud_state/last_delivered.json"
+    assert "cloud_state/last_delivered.json" not in ps.PAIRED, \
+        "the pairing is two-way again: a bad receipt can now withdraw a good digest"
+
+    seq = [0]
+
+    def gates(digest_body, receipt_body, base_has_mate=True):
+        seq[0] += 1
+        d = str(tmp_path / ("case%d" % seq[0]))
+        os.makedirs(os.path.join(d, "digests"), exist_ok=True)
+        os.makedirs(os.path.join(d, "cloud_state"), exist_ok=True)
+        open(os.path.join(d, "digests", "latest.md"), "w", encoding="utf-8").write(digest_body)
+        open(os.path.join(d, "cloud_state", "last_delivered.json"), "w",
+             encoding="utf-8").write(receipt_body)
+        acted = []
+        monkeypatch.setattr(ps, "git_show", lambda *a, **k: b"x" if base_has_mate else None)
+        monkeypatch.setattr(ps, "git", lambda *a, **k: acted.append(("checkout", a[-1])) or "")
+        failed = ps.run_gates(["digests/latest.md", "cloud_state/last_delivered.json"],
+                              "deadbeefcafe", "", d)
+        return [f[0] for f in failed], acted, d
+
+    bad, acted, _ = gates("not a heading", "{}")
+    assert bad == ["digests/latest.md"], "the .md gate stopped firing"
+    assert ("checkout", "cloud_state/last_delivered.json") in acted, \
+        "the receipt was persisted without the digest it describes"
+
+    # the reverse must NOT withdraw the digest
+    bad, acted, _ = gates("# a real digest", "{not json")
+    assert bad == ["cloud_state/last_delivered.json"]
+    assert ("checkout", "digests/latest.md") not in acted, \
+        "a corrupt receipt withdrew a good digest, after mark_sent had burned its roles"
+
+    # and when base has no version of the mate to restore, it is REMOVED, not left behind
+    bad, acted, d = gates("not a heading", "{}", base_has_mate=False)
+    assert not os.path.exists(os.path.join(d, "cloud_state", "last_delivered.json")), \
+        "an unrestorable receipt was shipped alone -- the exact state the pairing prevents"
+
+
+def test_only_a_cutoff_deferral_is_a_quiet_refusal(tmp_path, monkeypatch):
+    """Three refusals, three different noises, and the difference is what `publish` does.
+    `publish` is gated only on the pipeline step succeeding, so an exit 0 ships this run's
+    board to the public repo. A DEFERRAL is fine there — the board is good, only the clock
+    is wrong. A THINNER-than-origin digest is not: that run's board is thin too. And a
+    refusal we could not justify (the fetch failed) must be loudest of all, because exit 0
+    there is a green run that mails nothing and writes no notice."""
+    ps = _ps()
+    real = "# \U0001f3af 8 new senior analytics roles — 2026-08-27\n\nbody\n"
+
+    ps.RELAY_LAST_POLL = "00:01"          # deferral: quiet
+    t = _tree(str(tmp_path / "defer"), latest=None, roles=5, receipt={"date": "2026-08-26"})
+    assert _deliver(ps, t)[0] == 0, "a cutoff deferral became a red run"
+
+    ps2 = _ps(); ps2.RELAY_LAST_POLL = "23:59"     # thinner than origin: loud
+    t = _tree(str(tmp_path / "thin"), latest=real, roles=0)
+    assert _deliver(ps2, t)[0] == 1, \
+        "a thinner digest refused quietly, so its thin board still publishes"
+
+    ps3 = _ps(); ps3.RELAY_LAST_POLL = "23:59"     # unprovable: loud
+    monkeypatch.setattr(ps3, "git_ok", lambda *a, **k: False)
+    monkeypatch.setattr(ps3, "git_show", lambda *a, **k: None)
+    t = _tree(str(tmp_path / "unproven"), latest="# yesterday", roles=0)
+    assert _deliver(ps3, t, fetch=True)[0] == 1, "an unprovable refusal exited 0 into silence"
+
+
+def test_abstaining_never_adopts_a_broken_copy_from_origin(tmp_path):
+    """`s_ours` yielding to origin when this run did not touch the file is right — until
+    origin's copy is BROKEN. The run then adopts the corruption, `run_gates` re-gates it
+    against origin and restores the same bytes, and the step exits 1 *every night for as
+    long as the owner keeps abstaining*, because nothing can clear it. The old unconditional
+    `ours` healed that by accident on the first conflict; the heal is now deliberate.
+    Found by an Opus attacker against `cloud_state/telegram_seen.json` (2026-08-27)."""
+    ps = _ps()
+    good, junk = b'{"channel": 42}', b'not json{{{'
+    assert ps._well_formed("cloud_state/telegram_seen.json", good)
+    assert not ps._well_formed("cloud_state/telegram_seen.json", junk)
+    assert not ps._well_formed("digests/latest.md", b"no heading here")
+    assert ps._well_formed("digests/latest.md", b"# a heading")
+    assert not ps._well_formed("docs/index.html", b"<html>tiny</html>")
+    assert not ps._well_formed("cloud_state/x.json", None)
+    # the strategy itself still abstains when origin is FINE
+    assert ps.s_ours(good, good, b'{"channel": 99}') == b'{"channel": 99}'
+
+    # ...and the HEAL is exercised through merge_conflicted, not just asserted about the
+    # helper: the first version of this guard tested `_well_formed` in isolation and passed
+    # with the heal branch reverted, which is exactly the toothlessness it was written against
+    path = "cloud_state/telegram_seen.json"
+    d = str(tmp_path)
+    os.makedirs(os.path.join(d, "cloud_state"), exist_ok=True)
+    versions = {"BASE": good, "OURS": good, "THEIRS": junk}   # this run abstained
+    monkeypatch_show = lambda rev, pth, cwd=None: versions.get(rev)   # noqa: E731
+    real_show = ps.git_show
+    ps.git_show = monkeypatch_show
+    try:
+        ps.merge_conflicted([path], "BASE", "OURS", "THEIRS", d)
+    finally:
+        ps.git_show = real_show
+    with open(os.path.join(d, path), "rb") as f:
+        landed = f.read()
+    assert landed == good, (
+        "abstention adopted origin's malformed copy (%r) -- the gate then restores the same "
+        "bytes and the step exits 1 every night, for ever" % landed[:40])

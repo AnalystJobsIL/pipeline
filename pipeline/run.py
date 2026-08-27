@@ -134,17 +134,27 @@ def _receipt_alarms(run_date, path=None, digest_path=None):
         want = str(last.get("sha256") or "")
         if want and age < 2:
             try:
+                # the writer's own fingerprint, so a CRLF checkout and an LF runner agree
+                from persist_state import digest_sha as _dsha
                 with open(digest_path, "rb") as f:
-                    got = hashlib.sha256(f.read()).hexdigest()
-            except OSError:
+                    got = _dsha(f.read())
+            except (OSError, ImportError):
                 got = ""
             if got and got != want:
                 return [f"the delivery receipt says {when} but digests/latest.md is not that "
                         f"file -- something replaced it after it was recorded"]
+        # A write made PAST the relay's last poll is not a delivery: tomorrow's run
+        # overwrites it before tomorrow's first poll. Counting it as one is what let
+        # break-glass silence the alarm that armed it, so a chronically-late pipeline could
+        # alternate defer / break-glass for ever at zero mail, quietly.
+        if last.get("past_cutoff"):
+            return [f"the last digest was WRITTEN {when} but after the relay's last poll, so it "
+                    f"was probably never mailed -- treat the mail as {age}d overdue"]
         if age < 2:                       # today's (a re-run) or yesterday's: the normal case
             return []
+        # "no email" was wrong by one noun: a failed run DOES send a `no digest` notice
         return [f"the last digest that reached the mail was {when} ({age}d ago) -- "
-                f"{age - 1} morning(s) produced no email"]
+                f"{age - 1} morning(s) produced no digest email"]
     except Exception:  # noqa: BLE001
         return []
 

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**351 filed · 254 open · 97 closed · 5 half · 28 numbers name more than one item · 28 items name no lane.**
+**352 filed · 255 open · 97 closed · 5 half · 28 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 310.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 311.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -256,7 +256,7 @@ closure convention in the header.
 - **227** `227@discovery` **The keyless guest endpoint is a coverage ceiling, and it is now the largest known gap
 - **228** `228@discovery` **The 2026-08-26 audit is 4 of 9 keywords deep**
 
-### roles — 14 open
+### roles — 15 open
 
 - **109** `109@roles` **6 of the 7 short `matched` rows carry URLs that are not job pages**
 - **124** `124@roles` **One role on two boards is classified twice in one run, and the bare copy can win** —
@@ -272,6 +272,7 @@ closure convention in the header.
 - **260** `260@roles` **`store.merge_duplicates` never carries the longest description onto the canonical** —
 - **285** `285@roles` **`seen_id` carries no tenant, so two companies on the same ATS can collide and one role
 - **309** `309@roles` **A role first seen yesterday, not emailed today, can never be emailed**
+- **310** `310@roles` **Roles are accumulated and then never emailed: 13 of 44 deliverable ones in ten days**
 
 ### company-intel — 13 open
 
@@ -4529,6 +4530,34 @@ hosts, so its worked example needs a different diagnosis).
      2026-08-27, on the branch, before the push. The fix is to select the mail by
      *unsent-ness* rather than by a moving date window, or to widen `cutoff_email` to the
      oldest unsent role; both are `roles` lane calls, neither is `infra`'s to make.
+
+310. **Roles are accumulated and then never emailed: 13 of 44 deliverable ones in ten days**
+     — lanes: `roles` (the selection block), `render` (the caps), `jd-text` (late
+     `posted_date`). Measured, reproducibly: `python tests/role_leak.py --days 10` on
+     2026-08-27 prints **31 emailed · 13 never emailed but eligible · 42 correctly excluded**.
+     Seven of the thirteen were still `last_seen 2026-08-26`, i.e. still open on their boards
+     while this was written: HoneyBook, Fetcherr (x2), Melio, Port.io, Artlist, Rounds.
+
+     The mechanism is TWO CLOCKS in one selection. `pipeline/run.py` picks the mail with
+     `get_matched_since(cutoff_email)` — filtering on **first_seen**, when WE saw the role —
+     and then tests eligibility with `_posted_in`, which uses **posted_date**, when the
+     EMPLOYER posted it. The window moves daily and a role gets exactly one pass through it.
+     So a role is lost when its `posted_date` arrives LATE: it is skipped on the day it was
+     first seen because it had no date, `jd-text` backfills the date days later, and by then
+     `get_matched_since` no longer returns the row at all. **Six of the thirteen are exactly
+     that** — `posted 2026-08-25` against `first_seen` of 08-22, 08-23 and 08-24.
+
+     The same moving window silently voids two claims the code makes in prose:
+     `run.py`'s cap comment (*"Overflow is not lost: it stays unsent and leads tomorrow"* —
+     `_cap_per_company(email_jobs, 3)` and `EMAIL_MAX_ROLES = 40`) and
+     `persist_state.build_notice` (*"those roles lead the next digest"*). Neither is true for
+     anything that ages past the window. `309@roles` is the same defect reached from the
+     deferral path; this item is the measured size of it.
+
+     Candidate fixes, none of them `infra`'s to make: select the mail by **unsent-ness**
+     rather than by a moving `first_seen` window; or re-open the window for a role whose
+     `posted_date` changed since it was last considered; or carry an explicit
+     `email_eligible_until` on the role record. Re-measure with the same command.
 
 295. **Three session records are named a day before their own H1** — lane: `docs`.
      `docs/sessions/2026-08-24-{infra,render,roles}.md` all open `# 2026-08-25`, because the

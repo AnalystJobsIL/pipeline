@@ -158,7 +158,8 @@ jobs:
           # step below a no-op), and writes cloud_state/last_delivered.json -- committed by
           # the persist step in the SAME commit as latest.md, never as a second writer.
           # ARCHITECTURE section 4. It still exits 1 when the run wrote no digest at all.
-          python persist_state.py deliver --date "$(date -u +%F)" \n            ${{ github.event.inputs.ignore_cutoff == 'true' && '--ignore-cutoff' || '' }}
+          python persist_state.py deliver --date "$(date -u +%F)" \
+            ${{ github.event.inputs.ignore_cutoff == 'true' && '--ignore-cutoff' || '' }}
 
       # The marks (sqlite `sent` + the ledger mirror) and digests/latest.md land in ONE commit
       # below, so a persist failure burns nothing; the only window left is the relay itself

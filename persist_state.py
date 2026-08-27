@@ -115,6 +115,33 @@ def _dumps(obj):
     return (json.dumps(obj, ensure_ascii=False, indent=1, sort_keys=True) + "\n").encode("utf-8")
 
 
+def _well_formed(path, data):
+    """Cheap shape check on BYTES, mirroring `run_gates`' per-extension gates.
+
+    `s_ours` yields to origin when this run did not touch the file. That is right until
+    origin's copy is BROKEN: the run then adopts the corruption, `run_gates` re-gates it
+    against origin and "restores" the same bytes, the step exits 1 -- and it repeats every
+    night for as long as the owner keeps abstaining, because nothing can clear it. The old
+    unconditional `ours` healed that by accident on the first conflict. Keep the heal."""
+    if data is None:
+        return False
+    p = path.replace("\\", "/")
+    try:
+        if p.endswith(".jsonl"):
+            for line in data.splitlines():
+                if line.strip():
+                    json.loads(line.decode("utf-8"))
+        elif p.endswith(".json"):
+            json.loads(data.decode("utf-8"))
+        elif p.endswith(".md"):
+            return data.lstrip().startswith(b"#")
+        elif p.endswith(".html"):
+            return len(data) >= 500
+    except Exception:  # noqa: BLE001 -- a shape check reports, it never raises
+        return False
+    return True
+
+
 def s_ours(base, ours, theirs):
     """Single cloud writer: the run's own bytes win -- unless the run never wrote the file.
 
@@ -125,7 +152,8 @@ def s_ours(base, ours, theirs):
     exactly these `SINGLE_WRITER` paths. An attacker reproduced it on 2026-08-27 against the
     one path where it costs a day's mail: `deliver` refuses to replace origin's fresh digest
     with a thinner one, and the persist step's conflict path then put the stale one there
-    anyway. BACKLOG 160, closed here for every `ours` path rather than one."""
+    anyway. BACKLOG 160 NAMES that suppressed warning and stays
+    open: what it asks for is a guard against a SECOND writer, which this clause is not."""
     if ours is None:
         return theirs
     if base is not None and ours == base and theirs is not None:
@@ -318,8 +346,11 @@ def _gate_sqlite(path):
 # A file and the receipt that describes it are persisted together or not at all. `run_gates`
 # restores ONE failing path from base and lets the rest of the commit push, which would leave
 # origin carrying a receipt for a digest that is not there (2026-08-27 attacker).
-PAIRED = {"digests/latest.md": "cloud_state/last_delivered.json",
-          "cloud_state/last_delivered.json": "digests/latest.md"}
+# ONE-WAY on purpose. If the DIGEST fails its gate the receipt describing it must go too,
+# or origin carries a receipt for a file it does not have. The reverse is not true: a corrupt
+# receipt is metadata, and withdrawing a good digest over it would cost the day's mail --
+# after `mark_sent` has already burned the roles, since that step runs before `persist`.
+PAIRED = {"digests/latest.md": "cloud_state/last_delivered.json"}
 
 
 def run_gates(paths, base, gate_cmd, cwd):
@@ -356,12 +387,22 @@ def run_gates(paths, base, gate_cmd, cwd):
                 _log("error", f"{p} failed its gate ({failed[-1][1]}) -- removed, NOT persisted")
     for p, _why in list(failed):
         mate = PAIRED.get(p.replace("\\", "/"))
-        if mate and mate in paths and mate not in [f[0] for f in failed] \
-                and git_show(base, mate, cwd) is not None:
+        if not mate or mate not in paths or mate in [f[0] for f in failed]:
+            continue
+        if git_show(base, mate, cwd) is not None:
             git("checkout", base, "--", mate, cwd=cwd)
             _log("error", f"{mate} restored from {base[:8]} too -- it is paired with {p}, and "
                           f"persisting one without the other leaves origin describing a file "
                           f"it does not have")
+        else:
+            # the mate is UNTRACKED at base (its first ever run). Restoring is impossible, so
+            # remove it: shipping it alone is the exact state the pairing exists to prevent,
+            # and the previous version silently did nothing here.
+            full = os.path.join(cwd, mate)
+            if os.path.exists(full):
+                os.unlink(full)
+                _log("error", f"{mate} removed -- it is paired with {p}, which failed its gate, "
+                              f"and there is no version at {base[:8]} to restore it to")
     return failed
 
 
@@ -392,8 +433,9 @@ def expand_owned(paths, cwd):
                       if x and not _is_side_file(x)]
             gone = [x for x in tracked if not os.path.exists(os.path.join(cwd, x))]
             if gone:
-                _log("warning", f"{len(gone)} tracked file(s) under {p} vanished this run -- restored from HEAD, "
-                                f"not deleted: {gone[:5]}")
+                _log("warning", f"{len(gone)} tracked file(s) under {p} vanished this run -- restored from HEAD so the "
+                                f"deletion is not pushed: {gone[:5]}. On a CONFLICT this run then counts "
+                                f"as not having touched them, so origin's version stands unless it is malformed")
                 git("checkout", "HEAD", "--", *gone, cwd=cwd)
             out.extend(x for x in listed if x)
         elif os.path.exists(full):
@@ -420,6 +462,15 @@ def merge_conflicted(owned, base, ours_rev, theirs_rev, cwd):
         strat, why = strategy_for(p)
         b, o, t = git_show(base, p, cwd), git_show(ours_rev, p, cwd), git_show(theirs_rev, p, cwd)
         if o == t:
+            continue
+        if strat is s_ours and o is not None and b is not None and o == b \
+                and not _well_formed(p, t):
+            # this run abstained, but origin's copy is broken -- adopting it would wedge the
+            # gate on every future abstaining run. Heal from the checkout instead, loudly.
+            _log("error", f"{p}: this run did not write it and origin's copy is malformed -- "
+                          f"healing from the checkout ({len(o)} bytes) rather than adopting it")
+            _write_bytes(os.path.join(cwd, p), o)
+            print(f"  merged {p}: {why} (origin was malformed; healed)", flush=True)
             continue
         if strat is s_ours and p not in SINGLE_WRITER and t is not None and o != t:
             _log("warning", f"{p}: {why} (origin's version overwritten)")
@@ -652,6 +703,24 @@ LAST_DELIVERED = "cloud_state/last_delivered.json"
 NOTICE_H1 = "# ⚠️ No digest"
 
 
+def digest_sha(body):
+    """The receipt's fingerprint for a digest: sha256 of the bytes with CRLF normalised to LF.
+
+    Normalised, and it matters. `core.autocrlf=true` is the default on Windows, so the same
+    digest is CRLF in the operator's checkout and LF in the committed blob and on every
+    Ubuntu runner. Hashing raw bytes made the receipt's sha depend on which machine wrote
+    it: a receipt written in the cloud never matched the same file read locally, and
+    `run.py::_receipt_alarms` would report `something replaced it` about a file nothing had
+    touched. Found before this ever ran in production, by hashing the seed both ways:
+    `0a3aa0fa...` in a Windows worktree against `71ef0dcb...` for the identical blob.
+
+    This is OUR fingerprint, not the relay's -- the relay computes its own `sha256sum` over
+    the raw bytes it fetches, and nothing here compares against that."""
+    if isinstance(body, str):
+        body = body.encode("utf-8")
+    return hashlib.sha256(bytes(body).replace(b"\r\n", b"\n")).hexdigest()
+
+
 def digest_delivered(head, run_date):
     """True when `head` (the first bytes of `digests/latest.md`) is a REAL digest for
     run_date. A dated failure notice is not a delivery, and neither is yesterday's file.
@@ -704,6 +773,15 @@ def _read_receipt(into, rev=None):
     if not isinstance(rec, dict):
         _log("warning", f"{LAST_DELIVERED} is not an object; treating this run as having no receipt")
         return {}
+    if "roles" in rec:
+        # `weak_digest` does int(prior). An unguarded int() here exits 1, fails the pipeline
+        # step (which is not continue-on-error) and turns the whole day into a failure
+        # notice -- the same blast radius `_env_int` was written to prevent one field over.
+        try:
+            rec["roles"] = int(rec["roles"])
+        except (TypeError, ValueError):
+            _log("warning", f"{LAST_DELIVERED} has roles={rec['roles']!r}, not a number; ignoring it")
+            rec.pop("roles", None)
     return rec
 
 
@@ -729,24 +807,33 @@ def cutoff_overshoot(now_minutes, last_poll=None, margin=None):
 def _carry_note(into, out_dir, run_date, roles):
     """How many of the deferred roles will actually reach the NEXT digest, counted -- not
     asserted. The old sentence said "these roles lead the next digest" and it is only half
-    true: `run.py` selects the mail with `get_matched_since(today - 1 day)`, so a role whose
-    `first_seen` is already yesterday falls out of that window tomorrow and stays on the
-    board without ever being emailed. Widening that window is the `roles` lane's call
-    (BACKLOG 309); saying the true number is this lane's."""
+    true: `run.py` selects the mail with `get_matched_since(today - 1 day)` AND `_posted_in`,
+    two different clocks over a window that moves daily, so a role can fall out on either.
+    The first version of this note counted only `first_seen` and reported "20 of 20 lead the
+    next digest" on a day when none of them did -- a confidently wrong operator-facing
+    number, which is worse than no number. Widening the window is the `roles` lane's call
+    (BACKLOG 309/310); printing the true count is this lane's."""
     try:
         with open(os.path.join(into, out_dir, f"digest-{run_date}.json"), encoding="utf-8") as f:
             jobs = json.load(f).get("jobs") or []
-        seen = [str(j.get("first_seen") or "") for j in jobs if isinstance(j, dict)]
+        seen = [(str(j.get("first_seen") or "")[:10], str(j.get("posted_date") or "")[:10])
+                for j in jobs if isinstance(j, dict)]
     except (OSError, ValueError, AttributeError):
-        return f", and {roles} role(s) are unmarked (first_seen unreadable: carry-over unknown)"
-    if not seen or not any(seen):
-        return f", and {roles} role(s) are unmarked (no first_seen in the payload: carry-over unknown)"
-    carried = sum(1 for s in seen if s >= run_date)
-    lost = len(seen) - carried
-    note = f", so {carried} of {len(seen)} role(s) lead the next digest"
-    if lost:
-        note += (f"; the other {lost} were first seen before today and fall outside "
-                 f"tomorrow's 48h email window -- board only, never mailed (BACKLOG 309)")
+        return f", and {roles} role(s) are unmarked (payload unreadable: carry-over unknown)"
+    if not seen:
+        return f", and {roles} role(s) are unmarked (no jobs in the payload: carry-over unknown)"
+    # Tomorrow's cutoff is TODAY, and a role has to clear BOTH tests to be mailed then:
+    # `get_matched_since` filters on first_seen, and `_posted_in` on posted_date. Counting
+    # only first_seen said "20 of 20 lead the next digest" on a day when none of them did.
+    # `_posted_in` has a third branch (an undated role at a company we have history for), and
+    # that branch depends on `seen_before`, which is not in this payload -- so those are
+    # reported as AT RISK rather than guessed either way.
+    ok = sum(1 for fs, pd in seen if fs >= run_date and len(pd) == 10 and pd >= run_date)
+    risk = len(seen) - ok
+    note = f", so {ok} of {len(seen)} role(s) still meet tomorrow's window on their own dates"
+    if risk:
+        note += (f"; the other {risk} do not, and are at risk of never being mailed at all "
+                 f"(BACKLOG 310)")
     return note
 
 
@@ -822,7 +909,21 @@ def deliver(a):
     # defer a day's mail on the strength of a file that has never existed.
     glass = stale is None or stale >= 2
 
-    verdict = None
+    verdict, weak_ok = None, True
+    # The candidate is checked FIRST and unconditionally. `weak_digest` only ever ran behind
+    # `on_origin`, which is False on a normal morning (origin carries YESTERDAY's digest) --
+    # so on the one run that actually mails, `deliver` validated nothing at all. A zero-byte
+    # file, a body-less heading, or yesterday's digest re-copied under today's name all
+    # sailed through (2026-08-27 wave-4 attacker). `digest_delivered` is the same predicate
+    # used to recognise a delivered digest on origin: it must start with `#`, carry THIS
+    # run's date, and not be a `# no digest` notice.
+    rest = [x for x in lines[1:] if x.strip()]
+    if not digest_delivered(body[:400], run_date) or not rest:
+        _log("error", f"{a.out}/digest-{run_date}.md is not a digest for {run_date} "
+                      f"(first line {first[:80]!r}, {len(rest)} further non-blank line(s), "
+                      f"{len(body)} bytes) -- refusing to publish it "
+                      f"as the mail; the run produced something the renderer should not have")
+        return 1
     if on_origin and weak_digest(first, roles, prior):
         why = (f"{roles} role(s)" + ("; render stub" if "could not be rendered" in first else "")
                + (f"; origin's receipt says {prior} were already delivered today"
@@ -830,6 +931,11 @@ def deliver(a):
         verdict = (f"{'origin already carries' if trusted else 'origin MAY already carry'} a "
                    f"digest for {run_date} and this one is weaker ({why}) -- a thinner mail "
                    f"must never replace a delivered one")
+        # NOT a benign no-op. This run produced something worse than what is already
+        # delivered, and `publish` is gated only on the pipeline step succeeding -- so an
+        # exit 0 here ships that same thin run's board to the public repo while origin keeps
+        # the fat digest. Only the cutoff DEFERRAL is a quiet exit 0.
+        weak_ok = False
     elif over > 0 and not a.ignore_cutoff and not glass:
         verdict = (f"{over} min past the relay's last poll ({RELAY_LAST_POLL} UTC less a "
                    f"{DELIVER_MARGIN_MIN} min margin) -- nothing is marked sent"
@@ -845,13 +951,23 @@ def deliver(a):
         # owned path -- `s_ours` would push this run's checkout-era bytes over origin's
         # newer digest, with the warning suppressed because the path is SINGLE_WRITER.
         # Making ours == theirs takes the `if o == t: continue` branch instead.
-        if rev is not None and cur:
+        # `cur is not None`, not `cur`: origin's file being EMPTY is exactly when leaving
+        # this run's checkout-era bytes in place is worst, because the persist step then
+        # pushes them over origin under `s_ours`.
+        if rev is not None and cur is not None:
             try:
                 _write_bytes(os.path.join(into, "digests", "latest.md"), cur)
             except OSError as e:  # noqa: BLE001 -- a refusal must not become a crash
                 _log("warning", f"could not re-sync digests/latest.md with origin: {e}")
         print(f"deliver: refused ({whence}); receipt is "
               f"{'absent' if stale is None else str(stale) + 'd old'}", flush=True)
+        if not weak_ok:
+            # A refusal we could not JUSTIFY is a different animal from one we could. When
+            # the fetch failed we refused on suspicion, and returning 0 there makes a green
+            # run that mails nothing and writes no notice -- silence, which is the whole
+            # failure class this session is about. Exit 1 so `outcome` writes the dated
+            # notice and the relay mails THAT.
+            return 1
         return 0
 
     bits = ["replaces today's own digest" if on_origin else "first delivery for the day"]
@@ -865,7 +981,13 @@ def deliver(a):
               f"origin read from {whence}", flush=True)
         return 0
     _write_bytes(os.path.join(into, "digests", "latest.md"), body)
-    receipt = {"date": run_date, "sha256": hashlib.sha256(body).hexdigest(),
+    # `past_cutoff` is what stops break-glass silencing its own alarm. A write made after
+    # the relay's last poll is very likely never mailed (tomorrow's run overwrites it before
+    # tomorrow's first poll), but it still stamps today's date on the receipt -- so the next
+    # day reads `age = 1`, goes quiet, and a chronically-late pipeline alternates
+    # defer / break-glass / defer for ever at zero mail with nothing saying so. Two
+    # attackers found the same loop independently (2026-08-27).
+    receipt = {"date": run_date, "sha256": digest_sha(body), "past_cutoff": over > 0,
                "roles": roles, "first_line": first[:200], "reason": reason,
                "run_url": os.environ.get("RUN_URL", ""),
                "written_at": now.strftime("%Y-%m-%dT%H:%M:%SZ")}
