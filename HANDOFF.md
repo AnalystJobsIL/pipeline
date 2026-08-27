@@ -182,6 +182,8 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-26 `jd-text`** — what the layer spends, what it refuses to fetch, and the text that was already ours **NOT finished:** 155's inline half ONLY, and it is a real dependency. Record: `docs/sessions/2026-08-26-jd-text.md`.
 - **2026-08-27 `registry`** — the tier that never once reached the model **NOT finished:** nothing in the rehearsal, the `no-url` false alarm (282, `check_invariants.py` -- `triage_dark.MODES` is exported and pinned, so it is one import line), the `Registry:` production line (275…. Record: `docs/sessions/2026-08-24-registry.md`.
 
+- **2026-08-27 `docs`** — the linter was green while three attackers found 46 measured contradictions in the same documents. Numbers a doc states are now registered facts, checked by class; HANDOFF is 56 KB -> 18 KB with its 14 morning checks answered (8 failed); `docs/backlog.py` gives a lane its own list. **NOT finished:** BACKLOG 291, 295-298. Record: `docs/sessions/2026-08-27-docs.md`.
+
 *The 2026-08-23 morning session (seventeen defects, A–Q) and the digest-run history that
 used to open this file are in `docs/sessions/2026-08-23.md`, which is where the long
 version already was.*
