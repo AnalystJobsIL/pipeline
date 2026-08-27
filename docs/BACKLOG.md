@@ -3869,3 +3869,30 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     held 0), and the one Israel role is real, but the endpoint is plainly under-fetching and
     the row should not be read as "Ericsson has 1 opening". Same family as the Eightfold rows
     in 246.
+
+289. **A `jd-text` unit test reads the LIVE `scraped_cache.json`, so the 00:00 scrape-refresh
+    cron turns `tests.yml` red for every lane** — lane: `jd-text`, found by `registry`
+    2026-08-27 07:10 UTC.
+
+        FAILED tests/test_units.py::test_a_role_is_filled_from_another_address_it_was_seen_at
+        E       assert (170 == 2021)
+
+    The test writes its own `scraped_cache.json` into `tmp_path` but never `chdir`s there, and
+    `enrich_matched_jd.CACHE` is the relative literal `"scraped_cache.json"` (line 48),
+    resolved against the CWD. `emj.main(["--db", db])` is called without `--cache`, so the run
+    reads the repository's real cache instead of the fixture's. It passed while that file
+    happened to carry `Zipher` -> `Data Analyst` at `zipher.ai/careers/data-analyst/`; the
+    2026-08-27 `scrape cache refresh` commit (`fc57789`, 2,017 insertions / 2,771 deletions)
+    rewrote the entry to `Senior Data Analyst` at `.../senior-data-analyst/`, the cache rung
+    stopped matching, and the description stayed at the 170-character Indeed snippet.
+
+    **Bisected, so the attribution is not a guess:** a clean `git archive` of `fc57789` — the
+    cron commit, with no registry work on top — is already red
+    (`pytest -k role_is_filled_from_another_address` exits 1), and at `486cf80`, the commit
+    before it, the test does not yet exist (exit 5, nothing collected).
+
+    Either `monkeypatch.chdir(tmp_path)` or passing `--cache` makes it hermetic; the module
+    already supports the flag and compares by `os.path.realpath`. Worth a sweep for siblings:
+    any test that drives a root script's `main()` without `chdir` inherits the live registry,
+    the live cache and the live `cloud_state/`, and will go red on whichever cron rewrites
+    them first — which is a Thursday-morning surprise for a lane that changed nothing.
