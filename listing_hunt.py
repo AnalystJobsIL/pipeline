@@ -602,6 +602,21 @@ def main():
             fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
             if any(fr and fr[0].strip().lower() == name.lower() for fr in fresh):
                 continue
+            # ...and the same discipline for the ADDRESS, which the name check cannot see.
+            # A queue name and a registry row routinely differ by a legal suffix or a Hebrew
+            # half (`Investing.com` / `Investing`, `Discount Bank <hebrew>` / `Discount
+            # Bank`), so de-duplicating by NAME alone writes a SECOND ACTIVE ROW on one
+            # board -- the `alias-of` shape section 2 calls terminal, which republishes every
+            # role under two employer names and which `check_invariants` check B cannot catch
+            # BECAUSE the names differ. Measured on the 2026-08-27 backlog apply: 2 of 44
+            # activations were twins of an existing row, and the same de-dup-by-name hole had
+            # been fixed in `auto_expand` hours earlier.
+            if keep and any(fr and len(fr) > 4 and fr[4] == "true"
+                            and (fr[3] or "").strip().lower() == keep.strip().lower()
+                            for fr in fresh):
+                print(f"  [--] q{qn}/{len(qnames)} {name}: {keep} is already read by another "
+                      f"row; not appended", flush=True)
+                continue
             if verdict == "found" and not refused:
                 row = [name, "scrape", keep, keep, "true",
                        f"listing-hunt {TODAY}: queue-hunt; verified {n_il} IL via "

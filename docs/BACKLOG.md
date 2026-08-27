@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**382 filed · 272 open · 110 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**383 filed · 273 open · 110 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 340.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 341.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -235,7 +235,7 @@ closure convention in the header.
 - **333** `333@infra` **`cloud_state/intake_rejects.json` is committed by a directory rule and declared by
 - **335** `335@infra` **`BD_MONTHLY_BUDGET` defaults to 5,000 and no workflow sets it, so credits the
 
-### discovery — 19 open
+### discovery — 20 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -256,6 +256,7 @@ closure convention in the header.
 - **321** `321@discovery` **The registry's policy on Israeli IT-services firms is implicit, unmeasured, and now
 - **336** `336@discovery` **theorg.com is the best-shaped company directory found so far and is unbuilt** —
 - **337** `337@discovery` **The secrethunter catalog's own-domain and job-title data has no honest route, and the
+- **340** `340@discovery` **`pipeline/aggregators.py` does not know the Israeli job boards, and the hunt will
 
 ### scraper — 19 open
 
@@ -5456,3 +5457,31 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     **To actually raise throughput**, `registry` needs a deadline check on the post-guess
     `resolve()` path first; then `SITE_MAX` can rise with a bounded worst case. That is the
     real item here, and it is theirs.
+
+340. **`pipeline/aggregators.py` does not know the Israeli job boards, and the hunt will
+     activate a row on one** — lane: `discovery` (with `registry`). ARCHITECTURE section 3 is
+     unambiguous: *never activate a scrape of an aggregator page -- their "similar jobs"
+     sidebars attribute other employers' roles to the target*. The rule is enforced by
+     `is_aggregator`, and its host list is Anglo. Found while hand-reviewing the 40 rows the
+     2026-08-27 intake exhaust would activate:
+
+     ```
+     is_aggregator("https://www.jobkarov.com/Search/Company/16928")  -> False
+     is_aggregator("https://www.jobsseek.info/jobs")                 -> False
+     ```
+
+     `jobkarov.com` is an Israeli job board and that URL is **Menora Mivtachim's company page
+     on it** -- activating it publishes jobkarov's listings under Menora's name. `JobsSeek` is
+     itself a job board, so its own careers page is somebody else's jobs; it is arguably a
+     `pipeline/recruiters.py` entry rather than an aggregator one.
+
+     The gate that should have caught this cannot: `identity_ok` asks whether the page NAMES
+     the company, and an aggregator's company page names it correctly. Only the host list can
+     refuse this class. Both files are `discovery`'s, which is why this is filed rather than
+     fixed. Whoever takes it: the search rung now returns Israeli results (`327@registry`
+     added `gl=il`), so this class will arrive far more often than it used to -- it was
+     effectively unreachable while `google_via_unlocker` returned `[]`.
+
+     Handled for the one-off backlog apply by hand-reviewing every would-be-active host; NOT
+     handled for the nightly queue arm, which is the part that needs this fix.
+

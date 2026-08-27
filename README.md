@@ -15,7 +15,7 @@ The point of the design: **an employer's own careers board is the source of trut
 aggregator's copy of it.** The pipeline reads ~900 companies' *own* boards every morning —
 about half through a native ATS API (Comeet, Greenhouse, Lever, SmartRecruiters, Recruitee,
 Ashby, Workday, Oracle HCM and 9 more), the rest by rendering the page — out of a registry of
-1,200–1,300 rows, filters to Israel-located analytics roles, and publishes what it can still
+1,300–1,500 rows, filters to Israel-located analytics roles, and publishes what it can still
 verify. The API/page split moves every day, because moving a row from one to the other is
 the whole job of the coverage machinery; `python registry_health.py --census` prints today's.
 Every company row carries a dated verdict explaining what we know about it — including the
