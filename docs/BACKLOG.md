@@ -4514,6 +4514,17 @@ hosts, so its worked example needs a different diagnosis).
      a PAT stored off-repo. The operator declined the dead-man's switch on 2026-08-27; recorded
      here so the decision is visible and can be revisited, not re-derived.
 
+     **Partly answered the same day.** `digest_watchdog.py` now runs on the operator's machine,
+     reads the public artefact over plain HTTPS and alerts when a morning was lost — the only
+     tripwire not on GitHub's scheduler. What it does NOT cover is a machine that is asleep,
+     which is the whole of what remains here. Two things would close it, both operator
+     decisions: an outbound ping to a dead-man's-switch service (needs one secret, no inbound
+     access, no identity exposure), or a dedicated bot GitHub account, which would also unblock
+     an external cron calling `workflow_dispatch` — today that is refused only because the run
+     page publicly names the token's owner (`CLAUDE.local.md` §3), not because it is the wrong
+     design. It is in fact the right design: a clock outside GitHub, which is exactly what
+     2026-08-27 proved is needed (9 dispatches due across both repos, 1 fired).
+
 309. **A role first seen yesterday, not emailed today, can never be emailed** — lane: `roles`
      (the email-selection block in `pipeline/run.py` is that lane's). `run.py` selects the mail
      with `cutoff_email = today - 1 day` -> `store.get_matched_since` -> `WHERE first_seen >= ?`.
@@ -4533,31 +4544,71 @@ hosts, so its worked example needs a different diagnosis).
 
 310. **Roles are accumulated and then never emailed: 13 of 44 deliverable ones in ten days**
      — lanes: `roles` (the selection block), `render` (the caps), `jd-text` (late
-     `posted_date`). Measured, reproducibly: `python tests/role_leak.py --days 10` on
-     2026-08-27 prints **31 emailed · 13 never emailed but eligible · 42 correctly excluded**.
-     Seven of the thirteen were still `last_seen 2026-08-26`, i.e. still open on their boards
-     while this was written: HoneyBook, Fetcherr (x2), Melio, Port.io, Artlist, Rounds.
+     `posted_date`). Filed by `infra`, which has the measurement and does not own the fix.
 
-     The mechanism is TWO CLOCKS in one selection. `pipeline/run.py` picks the mail with
-     `get_matched_since(cutoff_email)` — filtering on **first_seen**, when WE saw the role —
-     and then tests eligibility with `_posted_in`, which uses **posted_date**, when the
-     EMPLOYER posted it. The window moves daily and a role gets exactly one pass through it.
-     So a role is lost when its `posted_date` arrives LATE: it is skipped on the day it was
-     first seen because it had no date, `jd-text` backfills the date days later, and by then
-     `get_matched_since` no longer returns the row at all. **Six of the thirteen are exactly
-     that** — `posted 2026-08-25` against `first_seen` of 08-22, 08-23 and 08-24.
+     **Reproduce it exactly** (read-only, opens the store `mode=ro`, writes nothing):
 
-     The same moving window silently voids two claims the code makes in prose:
-     `run.py`'s cap comment (*"Overflow is not lost: it stays unsent and leads tomorrow"* —
-     `_cap_per_company(email_jobs, 3)` and `EMAIL_MAX_ROLES = 40`) and
-     `persist_state.build_notice` (*"those roles lead the next digest"*). Neither is true for
-     anything that ages past the window. `309@roles` is the same defect reached from the
-     deferral path; this item is the measured size of it.
+     ```bash
+     python tests/role_leak.py --days 10        # add --all to see the correctly-excluded rows
+     ```
 
-     Candidate fixes, none of them `infra`'s to make: select the mail by **unsent-ness**
-     rather than by a moving `first_seen` window; or re-open the window for a role whose
-     `posted_date` changed since it was last considered; or carry an explicit
-     `email_eligible_until` on the role record. Re-measure with the same command.
+     On 2026-08-27 that printed, verbatim:
+
+     ```
+     # roles accumulated in the last 10 days: 86
+     #   emailed                              : 31
+     #   NEVER emailed, and were eligible     : 13   <-- the leak
+     #   never emailed, correctly excluded    : 42   (no posted_date, or one outside the window)
+     ```
+
+     "Eligible" is defined narrowly on purpose: the EMPLOYER's `posted_date` fell inside the
+     48h window **on the day we first saw the role**. The 42 excluded really are excluded
+     correctly and must not be counted as loss. Seven of the thirteen were still
+     `last_seen 2026-08-26` — open on their boards while this was written: HoneyBook,
+     Fetcherr (x2), Melio, Port.io, Artlist, Rounds.
+
+     **The mechanism: two clocks in one selection.** `pipeline/run.py`:
+
+     ```python
+     cutoff_email = (today - dt.timedelta(days=1)).isoformat()
+     email_jobs = [j for j in st.get_matched_since(cutoff_email)      # clock 1: first_seen
+                   if _posted_in(j, cutoff_email) and _alive(j)]      # clock 2: posted_date
+     ```
+
+     `get_matched_since` filters on **first_seen** (when WE saw it); `_posted_in` tests
+     **posted_date** (when the EMPLOYER posted it). The window moves daily and a role gets
+     exactly one pass through it. So a role is lost when its `posted_date` arrives LATE: it
+     is skipped on the day it was first seen because it had no date yet, `jd-text` backfills
+     the date days later, and by then `get_matched_since` no longer returns the row at all.
+     **Six of the thirteen are exactly that** — `posted 2026-08-25` against `first_seen` of
+     08-22, 08-23 and 08-24.
+
+     **WHICH CLOCK SHOULD WIN — `infra`'s recommendation, since we have the measurement.**
+     `posted_date` should govern eligibility and `first_seen` should govern **nothing**.
+     `first_seen` is an operational accident (when a cron happened to look); `posted_date` is
+     the product's own promise ("roles from the last 48h"). Today `first_seen` is doing double
+     duty as a cheap index scan, and that is the whole bug.
+
+     Concretely: select the mail from the roles that are **alive and not yet sent**, then
+     apply `_posted_in`. `_posted_in` already falls back to `first_seen` when there is no
+     `posted_date`, which is the right place for that fallback and the only place it belongs.
+
+     **This costs nothing.** `run.py:494` already scans the whole store every run for the
+     board — `board_jobs = [j for j in st.get_matched_since("0000-01-01") if _alive(j)]` — so
+     the email can be selected from that same set with no new query. The 48h bound still
+     comes from `_posted_in`, `filter_new` still drops anything already sent, and the caps
+     still apply, so the only roles newly admitted are the ones with a fresh `posted_date`
+     that we failed to mail. That is the leak, exactly.
+
+     **Two prose claims go false with it, and should be fixed in the same change** — both
+     assert that unsent roles carry, and neither is true once the window has moved past them:
+     `run.py`'s cap comment (*"Overflow is not lost: it stays unsent and leads tomorrow"*,
+     alongside `_cap_per_company(email_jobs, 3)` and `EMAIL_MAX_ROLES = 40`) and
+     `persist_state.build_notice` (*"those roles lead the next digest"*). `infra` has already
+     stopped `deliver` making the same claim — it prints the counted split instead.
+
+     `309@roles` is the same defect reached from the deferral path. Re-measure with the same
+     command; the three bucket counts are the before/after.
 
 295. **Three session records are named a day before their own H1** — lane: `docs`.
      `docs/sessions/2026-08-24-{infra,render,roles}.md` all open `# 2026-08-25`, because the

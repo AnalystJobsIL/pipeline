@@ -1533,9 +1533,39 @@ Two things were also rejected, and the reasons are worth keeping:
   green run. The artefact is the only honest assertion, which is why the receipt below
   exists.
 
-**What is left unfixed, stated plainly:** a day on which GitHub drops every cron in both
-repositories remains **undetectable by anything in this system**. The only mechanisms that
-would fix it live outside GitHub, and none is built.
+### What notices, when GitHub's scheduler is the thing that failed
+
+Rejecting the recovery cron settled *retrying*. It did not settle *noticing*, and those are
+different questions. **2026-08-27, both repositories: 9 scheduled dispatches due, 1 fired**
+(pipeline 1 of 5 — 00:00 arrived 05:41, then 02:30 / 05:00 / 06:00 / 08:00 dropped, and
+10:00 never ran; relay **0 of 4**). Anything hosted on that scheduler fails with it, so the
+options divide cleanly by where their clock lives.
+
+| option | verdict |
+|---|---|
+| A watchdog cron in this repo | **Rejected, measured.** It is the same scheduler: on 08-27 it would have been one of the four that did not fire. |
+| The relay repo's scheduler as an independent second clock | **Rejected, measured.** It is not independent: **0 of its 4 polls fired on 08-27**, the same morning. Two repos, one outage. |
+| An external free cron → `workflow_dispatch` / `repository_dispatch` | **Rejected on the identity rule, not on merit.** It is the right shape — a clock outside GitHub — but the run page publicly shows the account whose token dispatched it, and `CLAUDE.local.md` §3 exists to keep the public repos unlinkable to the owner. It becomes available the day a dedicated bot account does; that is an operator decision, filed as `308@infra`. |
+| A scheduled task on the operator's machine that **triggers** | **Rejected, same reason** — a dispatch is a dispatch, whoever sends it. Being local does not launder the attribution. |
+| A scheduled task on the operator's machine that **only checks** | **BUILT — `digest_watchdog.py`.** |
+| Doing nothing but making the next run loud | **Built already** (`_receipt_alarms`), and **not sufficient on its own**: it can only speak from inside a run, so a second missed morning is as silent as the first. |
+
+**`python digest_watchdog.py`** is the only tripwire here that is not on GitHub's scheduler.
+It reads `cloud_state/last_delivered.json` and `digests/latest.md` from the **public** repo
+over plain HTTPS — no `gh`, no credential, nothing that can leak an identity — and writes a
+desktop alert when today's digest did not reach the mail. It threads the three constraints
+deliberately: it does **no production work** (the standing position is that production
+belongs in the cloud, and the local firmographics chain was disabled for doing work here,
+not for checking); it **cannot dispatch**, so no public run page ever names the operator;
+and it refuses to alarm when it simply could not reach GitHub, because a watchdog that
+cries wolf when the wifi drops is one that gets ignored. The install command is in its
+docstring — deliberately not automated, because registering a scheduled task is the
+operator's call.
+
+**Its limitation, stated plainly: if the machine is asleep there is no alarm.** That is the
+residue of the outbound dead-man's-switch ping being declined — the one mechanism that needs
+neither this machine nor GitHub's scheduler. `292@infra` stays open for that reason, and
+`308@infra` records the decision so it can be revisited rather than re-derived.
 
 **Concurrency:** eight of the nine scheduled workflows share the `repo-state` group, so a
 long run makes the next one queue or be superseded with no error. `daily-digest.yml` has its

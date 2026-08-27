@@ -98,22 +98,19 @@ it is still only that one.**
 
 ## Watch list for the next session
 
-0b. **The shipped `deliver` line would have broken every run.** A patch wrote it as ONE
-   physical line with a literal backslash-n instead of a continuation: bash reads the `n` as
-   an argument, `persist_state.py` exits 2, the `pipeline` step goes red, the board never
-   publishes and the mail becomes a failure notice — daily. It was **syntactically valid**,
-   so `bash -n` passed it and the guard meant to cover it only checked for a substring. Two
-   attackers found it before it ran. `test_no_workflow_run_block_fakes_a_line_continuation`
-   now scans every workflow line. **Read it before writing a patch script that emits YAML.**
+0. **RUN THIS, OR TOMORROW LOOKS EXACTLY LIKE TODAY: `python digest_watchdog.py`.**
+   2026-08-27, both repos: **9 scheduled dispatches due, 1 fired** (relay 0 of 4). The only
+   reason anyone noticed was a human looking. The watchdog is the one tripwire not on
+   GitHub's scheduler — read-only, no credential, no dispatch — but it is **not installed**:
+   registering the scheduled task is an operator action and the command is in its docstring.
+   Until it is, detection is still a human. `292@infra`/`308@infra`.
 
-0a. **~30% of deliverable roles are never emailed.** `python tests/role_leak.py --days 10`
-   on 2026-08-27: **31 emailed · 13 eligible-but-never-emailed · 42 correctly excluded**.
-   Seven were still open on their boards that morning (HoneyBook, Fetcherr x2, Melio,
-   Port.io, Artlist, Rounds). Cause: two clocks — `get_matched_since` filters `first_seen`,
-   `_posted_in` tests `posted_date`, and the window moves daily, so a role whose
-   `posted_date` is backfilled late is never reconsidered. **Six of the thirteen are that.**
-   It also voids `run.py`'s *"Overflow is not lost … leads tomorrow"*. Lanes: `roles`,
-   `render` (the 3/company and 40/email caps), `jd-text`. BACKLOG 310.
+0b. **A patch script wrote a literal backslash-n into `daily-digest.yml` where a
+   continuation was meant.** It would have broken every run: bash reads the `n` as an
+   argument, the pipeline step goes red, no board and no mail — daily. It is
+   *syntactically valid*, so `bash -n` misses it. Guard:
+   `test_no_workflow_run_block_fakes_a_line_continuation`. **Read it before writing a patch
+   script that emits YAML.**
 
 0. **250 active rows have an all-time-high job count of ZERO** — 186 of them `scrape` rows
    (where zero is often the correct answer) and **64 native-ATS rows**, which is the

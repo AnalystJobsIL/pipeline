@@ -11950,3 +11950,65 @@ def test_abstaining_never_adopts_a_broken_copy_from_origin(tmp_path):
     assert landed == good, (
         "abstention adopted origin's malformed copy (%r) -- the gate then restores the same "
         "bytes and the step exits 1 every night, for ever" % landed[:40])
+
+
+def test_the_watchdog_only_alarms_when_it_can_prove_the_mail_did_not_happen():
+    """The tripwire that does not run on GitHub. Its whole value is that it stays believed,
+    so the one thing it must never do is alarm because the wifi dropped: a watchdog that
+    cries wolf is a watchdog that gets ignored, and this one has no second chance -- it is
+    the only channel left after the operator declined an outbound dead-man's switch.
+
+    Built on 2026-08-27, when 9 scheduled dispatches were due across the two repositories
+    and 1 fired, so every GitHub-hosted watchdog (including the relay repo's clock) would
+    have produced nothing."""
+    import importlib.util as _iu4
+    sp = _iu4.spec_from_file_location("_wd", os.path.join(_REPO, "digest_watchdog.py"))
+    w = _iu4.module_from_spec(sp)
+    sp.loader.exec_module(w)
+    today, y = "2026-08-27", "2026-08-26"
+
+    def v(receipt, head, wr="ok", wd="ok"):
+        rb = None if receipt is None else _json.dumps(receipt).encode("utf-8")
+        db = None if head is None else head.encode("utf-8")
+        return w.verdict(today, rb, db, wr, wd)
+
+    ok, headline, _ = v(None, None, "offline", "offline")
+    assert ok and "could not reach" in headline, "an unreachable GitHub read as a missed digest"
+
+    ok, _, _ = v({"date": today}, "# \U0001f3af 5 new senior analytics roles — " + today)
+    assert ok, "a delivered digest alarmed"
+
+    ok, headline, _ = v({"date": y}, "# \U0001f3af 8 new senior analytics roles — " + y)
+    assert not ok and "NO digest delivered" in headline, \
+        "yesterday's digest still on origin did not alarm -- that is today's exact failure"
+
+    ok, headline, _ = v({"date": today, "past_cutoff": True}, "# x — " + today)
+    assert not ok and "AFTER the relay" in headline, \
+        "a write made past the last poll counted as a delivery"
+
+    ok, headline, _ = v({"date": today}, "# ⚠️ No digest for " + today + " — the daily run failed")
+    assert not ok and "FAILED" in headline, "a failure notice on origin did not alarm"
+
+    # a receipt that is unreadable must not be read as a delivery
+    ok, _, _ = w.verdict(today, b"{not json", b"# 5 roles for " + today.encode(), "ok", "ok")
+    assert not ok, "an unparseable receipt was treated as proof of delivery"
+
+
+def test_the_watchdog_can_neither_dispatch_nor_write_to_the_repo():
+    """Two constraints it exists inside, and both are one careless edit away from being
+    violated. `CLAUDE.local.md` section 3: triggering a workflow from the operator's machine
+    puts their account on a PUBLIC run page, which is the linkage the public repos are kept
+    clear of -- so this notices and a human decides. And the standing position is that
+    production belongs in the cloud: the local firmographics chain was disabled for doing
+    WORK here (it wrote into the shared checkout without committing), not for checking."""
+    src = open(os.path.join(_REPO, "digest_watchdog.py"), encoding="utf-8").read()
+    for forbidden in ("workflow run", "repository_dispatch", "workflow_dispatch",
+                      "subprocess", "os.system", "git "):
+        assert forbidden not in src, \
+            "digest_watchdog.py contains %r -- it must only READ and alert" % forbidden
+    assert "urllib" in src and "raw.githubusercontent.com" in src, \
+        "it stopped reading the public artefact over plain HTTPS, so it now needs a credential"
+    # the only path it may write is the alert file
+    writes = [l for l in src.splitlines() if "open(" in l and '"w"' in l]
+    assert len(writes) == 1 and "a.alert" in writes[0], \
+        "digest_watchdog.py writes somewhere other than the alert file: %r" % writes

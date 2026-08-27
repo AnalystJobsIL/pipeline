@@ -16,9 +16,9 @@ The `runs in` and `imported by` columns are **computed from the code**, not type
 |---|---|---|
 | `scheduled` | a workflow invokes it | 29 |
 | `library` | no workflow runs it; live code imports it | 9 |
-| `operator` | a human or agent runs it; nothing in CI does | 7 |
+| `operator` | a human or agent runs it; nothing in CI does | 8 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
-| | **total root modules** | **70** |
+| | **total root modules** | **71** |
 
 `pipeline/` is listed at the end. Lane ownership for all of these is in `docs/AGENT_BRIEF.md`.
 
@@ -83,6 +83,7 @@ Live and documented, and nothing in CI runs them - `docs/check_docs.py` fails if
 |---|---|
 | `bd_employees.py` | LinkedIn employee-count fill via the Web Unlocker, 1 credit/page. Hand-run only - the Windows chain that drove it is disabled and no workflow runs it |
 | `cache_new_rows.py` | superseded shim: delegates to `refresh_scrape_cache.py --only-missing` (docs/BACKLOG.md 87 retires it) |
+| `digest_watchdog.py` | the ONLY tripwire that does not run on GitHub: reads the public `cloud_state/last_delivered.json` + `digests/latest.md` over plain HTTPS (no credential, no `gh`) and writes a desktop alert when today's digest never reached the mail. Built 2026-08-27, when 9 scheduled dispatches were due across the two repos and 1 fired, so every GitHub-hosted watchdog would have produced nothing. Reads and alerts only -- it cannot dispatch, because a workflow_dispatch from the operator's machine puts their account on a public run page (CLAUDE.local.md) |
 | `fill_employees_llm.py` | re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Hand-run only - the Windows chain that drove it is disabled and no workflow runs it |
 | `firmo_health_check.py` | tripwire: is the firmographics chain actually classifying anything? |
 | `setup_brightdata.py` | one-time: store the Bright Data token + zone in secrets.env |
