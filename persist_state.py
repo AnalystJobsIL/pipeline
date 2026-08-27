@@ -637,7 +637,8 @@ def build_notice(steps, job_status, crash, stamps_line, run_url, run_date, diges
         lines.append(f"- **Digest:** built with {int(digest_new)} role(s) but not delivered"
                      + (" — those roles were already marked sent and will NOT be re-mailed"
                         if marked_sent else
-                        " — nothing was marked sent, so those roles lead the next digest"))
+                        " — nothing was marked sent, so they are re-offered to the next digest"
+                        " on their own `posted_date`"))
     else:
         lines.append("- **Digest:** none was built; nothing was marked sent")
     pub = steps.get("publish", {}).get("outcome") if isinstance(steps.get("publish"), dict) else None
@@ -806,13 +807,17 @@ def cutoff_overshoot(now_minutes, last_poll=None, margin=None):
 
 def _carry_note(into, out_dir, run_date, roles):
     """How many of the deferred roles will actually reach the NEXT digest, counted -- not
-    asserted. The old sentence said "these roles lead the next digest" and it is only half
-    true: `run.py` selects the mail with `get_matched_since(today - 1 day)` AND `_posted_in`,
-    two different clocks over a window that moves daily, so a role can fall out on either.
-    The first version of this note counted only `first_seen` and reported "20 of 20 lead the
-    next digest" on a day when none of them did -- a confidently wrong operator-facing
-    number, which is worse than no number. Widening the window is the `roles` lane's call
-    (BACKLOG 309/310); printing the true count is this lane's."""
+    asserted. The old sentence promised the deferred roles would lead the next digest, and it
+    was only half true, because `run.py` selected the mail on TWO clocks -- `get_matched_since(today - 1
+    day)` on `first_seen` and `_posted_in` on `posted_date` -- over a window that moved
+    daily, so a role could fall out on either. The first version of this note counted only
+    `first_seen` and reported "20 of 20 lead the next digest" on a day when none of them did.
+
+    **The `roles` lane made that call on 2026-08-27 (BACKLOG 309/310): `first_seen` now gates
+    nothing and the mail is selected over every live role by `posted_date` alone.** So the
+    count below drops its `first_seen` term -- keeping it would under-report every deferred
+    role first seen before today, which is most of them, and would be the same class of
+    confidently wrong number in the other direction."""
     try:
         with open(os.path.join(into, out_dir, f"digest-{run_date}.json"), encoding="utf-8") as f:
             jobs = json.load(f).get("jobs") or []
@@ -822,18 +827,21 @@ def _carry_note(into, out_dir, run_date, roles):
         return f", and {roles} role(s) are unmarked (payload unreadable: carry-over unknown)"
     if not seen:
         return f", and {roles} role(s) are unmarked (no jobs in the payload: carry-over unknown)"
-    # Tomorrow's cutoff is TODAY, and a role has to clear BOTH tests to be mailed then:
-    # `get_matched_since` filters on first_seen, and `_posted_in` on posted_date. Counting
-    # only first_seen said "20 of 20 lead the next digest" on a day when none of them did.
-    # `_posted_in` has a third branch (an undated role at a company we have history for), and
-    # that branch depends on `seen_before`, which is not in this payload -- so those are
-    # reported as AT RISK rather than guessed either way.
-    ok = sum(1 for fs, pd in seen if fs >= run_date and len(pd) == 10 and pd >= run_date)
-    risk = len(seen) - ok
+    # Tomorrow's cutoff is TODAY, and since 2026-08-27 a dated role has to clear exactly ONE
+    # test to be mailed then: `_posted_in` on its own `posted_date`. `run.py` selects from
+    # every live role, so `first_seen` no longer removes anything. `_posted_in` still has a
+    # second branch (an undated role at a company we have history for) that depends on
+    # `seen_before`, which is not in this payload -- those are reported as AT RISK rather
+    # than guessed either way.
+    ok = sum(1 for _fs, pd in seen if len(pd) == 10 and pd >= run_date)
+    stale = sum(1 for _fs, pd in seen if len(pd) == 10 and pd < run_date)
+    undated = len(seen) - ok - stale
     note = f", so {ok} of {len(seen)} role(s) still meet tomorrow's window on their own dates"
-    if risk:
-        note += (f"; the other {risk} do not, and are at risk of never being mailed at all "
-                 f"(BACKLOG 310)")
+    if stale:
+        note += f"; {stale} carry an older `posted_date` and will not"
+    if undated:
+        note += (f"; {undated} undated, which reach it only through `_posted_in`'s `first_seen`"
+                 f" fallback at a company we already have history for")
     return note
 
 

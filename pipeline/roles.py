@@ -687,7 +687,7 @@ class Ledger:
         for j in merged:
             for sid in (j.get("seen_ids") or [_store.seen_id(j)]):
                 by_id.setdefault(sid, set()).add(
-                    (_store.merge_key(j), (j.get("url") or "").strip()))
+                    (_store.merge_key(j), str(j.get("url") or "").strip()))
         hits = {sid: v for sid, v in by_id.items()
                 if len({k for k, _ in v}) > 1 and len({u for _, u in v if u}) != 1}
         if hits:
@@ -737,6 +737,19 @@ class Ledger:
         _norm_never_ours = set(never_ours or ())
         sent = self.st.load_sent()
         c = Counter()
+        # BEFORE the frozen early-return below. The run log records that the pipeline LOOKED,
+        # which is true whether or not the ledger could be read — and `upsert_matched` uses
+        # it to tell "absent across four real runs" from "there were no runs". Stamping it
+        # after the return meant a ledger freeze silently froze the log too, so a role that
+        # vanished during the freeze and came back kept a stale `first_seen` and fell out of
+        # `get_matched_since(cutoff_email)` for ever. Only a FULL run stamps: a scoped
+        # `--only` run gave no chance to any company it did not scan, and the log's whole
+        # meaning is "chances this role had to be seen".
+        if not scoped:
+            try:
+                self.st.record_run_date(run_date)
+            except Exception:                 # never let the log take the digest down
+                pass
         if self.frozen:
             open_n = sum(1 for k, r in rows.items() if k in onboard)
             line = (f"open {open_n} · ledger frozen (corrupt) · store {len(rows)}")
@@ -842,14 +855,6 @@ class Ledger:
                     c["closed_today"] += 1
                     c["closed"] += 1
                     self._touch(rec)
-        # the run log: this run LOOKED, whatever it found. `upsert_matched` counts these to
-        # tell a role that was absent from four real runs from a role that was absent from no
-        # run at all because the pipeline never fired (BACKLOG 139). Stamped here rather than
-        # in run.py so a scoped local run stamps too — it did look, at what it was given.
-        try:
-            self.st.record_run_date(run_date)
-        except Exception:                 # never let the log take the digest down
-            pass
         if self.dirty or self.text_dirty:
             self.flush(run_date)
         ledger_n, store_n = len(self.records), len(rows)

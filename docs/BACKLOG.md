@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**356 filed · 252 open · 104 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**356 filed · 250 open · 106 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -305,7 +305,7 @@ closure convention in the header.
 - **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
 - **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
 
-### roles — 9 open
+### roles — 7 open
 
 - **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
 - **143** `143@roles` **`roles.tenant_slug` is not a tenant**
@@ -313,8 +313,6 @@ closure convention in the header.
 - **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
 - **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
 - **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **309** `309@roles` **A role first seen yesterday, not emailed today, can never be emailed**
-- **310** `310@roles` **Roles are accumulated and then never emailed: 13 of 44 deliverable ones in ten days**
 - **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
 
 ### classifier — 6 open
@@ -3137,7 +3135,7 @@ Record: `docs/sessions/2026-08-24-scraper.md` (2026-08-26 section). Numbers re-d
 Record: `docs/sessions/2026-08-24-discovery.md` (2026-08-26 section). Numbers re-derived that day
 from origin `b2090f6` and run 32934864207; re-derive before acting.
 
-223. ~~**A parked row's ledger roles are still mailed**~~ — **CLOSED 2026-08-27 (`roles`)** for the class that actually shipped, with the rest split out as 306. `run.py` computes `_never_ours` over the WHOLE registry (parked rows included) as the rows whose `api_url` is an `aggregators.is_aggregator` address; `_alive` returns False for them — one predicate gating the email, the board and therefore the archive — and `Ledger._record_run` marks their records **`purged`**, not `closed`. `closed` would file them in the public archive as expired or filled under the name of a city, permanently, and section 7c reserves `purged` for a row that was never ours. Measured on the committed store: it reaches **exactly the 7 `Tel Aviv` records and nothing else** (the count in the item's text was 7; by 2026-08-27 nine open records sat at a parked row, and the other two are correctly left alone). The general parked->closed rule is deliberately NOT implemented: `active=false` conflates four facts and ~181 of the parked rows mean *we cannot read the page*, which is not a closure — see **306**. The comparison is on `store._norm_company` identity, because a raw-name test would have purged `techbiz global|data analyst`, a live role on the ACTIVE row's own board. `test_a_role_at_a_row_that_was_never_an_employer_is_purged_not_closed`, `test_the_purge_is_compared_on_normalized_identity_so_an_alias_is_never_caught`. Original text: **A parked row's ledger roles are still mailed** — lane: `roles` (+ `render`). `Tel Aviv`
+223. ~~**A parked row's ledger roles are still mailed**~~ — **CLOSED 2026-08-27 (`roles`)** for the class that actually shipped, with the rest split out as 313. `run.py` computes `_never_ours` over the WHOLE registry (parked rows included) as the rows whose `api_url` is an `aggregators.is_aggregator` address; `_alive` returns False for them — one predicate gating the email, the board and therefore the archive — and `Ledger._record_run` marks their records **`purged`**, not `closed`. `closed` would file them in the public archive as expired or filled under the name of a city, permanently, and section 7c reserves `purged` for a row that was never ours. Measured on the committed store: it reaches **exactly the 7 `Tel Aviv` records and nothing else** (the count in the item's text was 7; by 2026-08-27 nine open records sat at a parked row, and the other two are correctly left alone). The general parked->closed rule is deliberately NOT implemented: `active=false` conflates four facts and 248 of the parked rows mean *we cannot read the page*, which is not a closure — see **313**. The comparison is on `store._norm_company` identity, because a raw-name test would have purged `techbiz global|data analyst`, a live role on the ACTIVE row's own board. `test_a_role_at_a_row_that_was_never_an_employer_is_purged_not_closed`, `test_the_purge_is_compared_on_normalized_identity_so_an_alias_is_never_caught`. Original text: **A parked row's ledger roles are still mailed** — lane: `roles` (+ `render`). `Tel Aviv`
     was parked on 2026-08-25 (`active=false`, "redundant: not a company"), yet the 2026-08-26 mail
     carried three of its roles under `### Tel Aviv` with Alma's blurb and `🗓 —`: the 7 records in
     `cloud_state/roles.jsonl` are `status: open`, `last_seen 2026-08-25`, and three of them got
@@ -4290,7 +4288,7 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     scratch copy, not committed, because a tool that duplicates a check belongs where the
     check goes.
 
-285. ~~**`seen_id` carries no tenant, so two companies on the same ATS can collide and one role is then never emailed**~~ — **CLOSED 2026-08-27 (`roles`)**: `store.seen_id` is now `{platform}@{tenant}:{job_id}` for the five platforms whose id space is per tenant by construction (`bamboohr, oraclehcm, eightfold, microsoft, phenom` — `store._TENANT_SCOPED`), tenant derived from the posting's own url so no fetcher and no registry column changed. The tenant is in the PLATFORM half because both readers of the format take everything after the first colon as the identifier, and `enrich_matched_jd.sibling_urls` requires that to be a url. **No migration**: `upsert_matched` unions the old key onto the record and `run.py` upserts before `filter_new` reads the store. Proven on the committed store: 135 records in -> 135 out, 0 seen_ids dropped, 0 sent rows lost, 79 passing `filter_new` before and after, 0 newly emailed, and 0 stored seen_ids were on a scoped platform at all. The list is by the fetcher's id expression, not today's collisions — enumerated live over ~23,000 postings, only bamboohr had collided (3 of 72); comeet 0 of 2,246, greenhouse 0 of 8,088, smartrecruiters 0 of 5,958, ashby 0 of 2,076, workday 0 of 552. Kept honest by `python -m pipeline.store --audit-ids` and by `roles.Ledger.id_collisions` at run time. ARCHITECTURE 7c, 11 new guards. Original text: **`seen_id` carries no tenant, so two companies on the same ATS can collide and one role
+285. ~~**`seen_id` carries no tenant, so two companies on the same ATS can collide and one role is then never emailed**~~ — **CLOSED 2026-08-27 (`roles`)**: `store.seen_id` is now `{platform}@{tenant}:{job_id}` for the five platforms whose id space is per tenant by construction (`bamboohr, oraclehcm, eightfold, microsoft, phenom` — `store._TENANT_SCOPED`), tenant derived from the posting's own url so no fetcher and no registry column changed. The tenant is in the PLATFORM half because both readers of the format take everything after the first colon as the identifier, and `enrich_matched_jd.sibling_urls` requires that to be a url. **No migration**: `upsert_matched` unions the old key onto the record and `run.py` upserts before `filter_new` reads the store. Proven on the committed store: 135 records in -> 135 out, 0 seen_ids dropped, 0 sent rows lost, 79 passing `filter_new` before and after, 0 newly emailed, and 0 stored seen_ids were on a scoped platform at all. The list is by the fetcher's id expression, not today's collisions — enumerated live over ~23,000 postings, only bamboohr had collided (3 of 72); comeet 0 of 2,246, greenhouse 0 of 8,088, smartrecruiters 0 of 5,958, ashby 0 of 2,076, workday 0 of 552. Kept honest by `python -m pipeline.store --audit-ids` and by `roles.Ledger.id_collisions` at run time. ARCHITECTURE 7c; this session added 17 guards to the roles lane in total. Original text: **`seen_id` carries no tenant, so two companies on the same ATS can collide and one role
     is then never emailed** — lane: `roles` (`pipeline/store.py`), found by `registry`.
     `store.py:51` builds `seen_id` as `f"{ats_platform}:{job_id}"`, and BambooHR job ids are
     small per-tenant integers. Measured over the 10 active bamboohr rows on 2026-08-27:
@@ -4556,7 +4554,7 @@ hosts, so its worked example needs a different diagnosis).
      design. It is in fact the right design: a clock outside GitHub, which is exactly what
      2026-08-27 proved is needed (9 dispatches due across both repos, 1 fired).
 
-309. **A role first seen yesterday, not emailed today, can never be emailed** — lane: `roles`
+309. ~~**A role first seen yesterday, not emailed today, can never be emailed**~~ — **CLOSED 2026-08-27 (`roles`)**: `run.py` now selects the mail over EVERY live role and judges each on its own `posted_date` — `[j for j in st.get_matched_since("0000-01-01") if _posted_in(j, cutoff_email) and _alive(j)]`. `first_seen` gates nothing; its one legitimate use is the fallback inside `_posted_in` for a role with no date at all. It costs no query, because the same full scan already ran below for the board. The 48h bound still comes from `_posted_in`, `filter_new` still drops anything sent, and the caps still apply — the only roles newly admitted are ones with a fresh `posted_date` we failed to mail. The list is now sorted by `posted_date` first, so the caps drop the least-FRESH rather than the least-recently-first-seen. Guards: `test_a_role_first_seen_before_the_window_is_still_mailable_on_its_own_date`, `test_the_email_is_selected_over_every_live_role_not_a_first_seen_window`. Both prose claims this item and 310 name are gone, pinned by `test_no_document_still_claims_capped_roles_lead_the_next_digest`. Original text: **A role first seen yesterday, not emailed today, can never be emailed** — lane: `roles`
      (the email-selection block in `pipeline/run.py` is that lane's). `run.py` selects the mail
      with `cutoff_email = today - 1 day` -> `store.get_matched_since` -> `WHERE first_seen >= ?`.
      The window is exactly two date-buckets wide and it MOVES: a role with `first_seen = D-1`
@@ -4573,7 +4571,25 @@ hosts, so its worked example needs a different diagnosis).
      *unsent-ness* rather than by a moving date window, or to widen `cutoff_email` to the
      oldest unsent role; both are `roles` lane calls, neither is `infra`'s to make.
 
-310. **Roles are accumulated and then never emailed: 13 of 44 deliverable ones in ten days**
+310. ~~**Roles are accumulated and then never emailed: 13 of 44 deliverable ones in ten days**~~ — **CLOSED 2026-08-27 (`roles`)**, and the headline number was wrong in the measurement, not only in the code.
+
+     **The tool over-counted. `tests/role_leak.py` split `matched.seen_ids` on `,`; the column is joined with `+`** (`store.upsert_matched` does `"+".join(sorted(new_sids))` and `get_matched_since` splits on `+`). So `ids` was a single element — the whole joined string — which is never a key in `sent`, and **every role carrying two or more seen_ids was counted as never-emailed**. One character. Corrected, the same command on the same store reads:
+
+     ```
+     #   emailed                              : 41   (was 31)
+     #   NEVER emailed, and were eligible     :  8   (was 13)
+     #   never emailed, correctly excluded    : 37   (was 42)
+     ```
+
+     Five of the thirteen — HoneyBook, Fetcherr (Tableau), Melio, Port.io, Artlist — had their own `seen_id` in `sent`, under their own company and title. They were delivered.
+
+     **The fix.** `first_seen` gates nothing; see 309. **The residue is 8 and every one has a reason**: six are no longer live on their employers' boards (`last_seen` 2026-08-19 or 08-21 against `_alive`'s yesterday) — comblack, SolarEdge, Nogamy, Yael Korentec, Shavit Software, Parametrix — so mailing them would advertise closed roles; and two (Rounds *Senior Product Analyst*, Fetcherr *Data Scientist*) are still live but carry `posted_date 2026-08-25`, which is outside the 48h window as of 08-27. **Replayed on a copy of the real store, the new selection reaches both and the old selection reaches neither** (0 -> 2); it would have mailed them on 08-26 and cannot retroactively. `role_leak.py`'s headline is historical — it asks whether a role EVER reached a reader — so it cannot fall to 0 without a delivery. The number to watch is the next run's.
+
+     **The decision this needed, made rather than inherited: `posted_date` governs eligibility and `first_seen` governs nothing.** The consequence, stated because it changes what lands in the inbox: a `posted_date` backfilled to yesterday three WEEKS after `first_seen` now makes that role mailable. That is intended. A fresh date on a posting that is still live is exactly what "roles from the last 48h" promises; it is the same event `ARCHITECTURE.md` §7c already records as a repost; and the blast radius is bounded three ways that all still apply — `_alive` (it must still be on its board), `filter_new` (never twice) and the caps. The alternative, requiring the role to be recently first-seen as well, is the two-clock bug this item is about.
+
+     **The `jd-text` half is subsumed, with the number.** `3 of 8` were the late-backfill class (Rounds, Fetcherr *Data Scientist*, Yael Korentec). Under the new selection a backfill is picked up on the next run for as long as the role is alive and the date is inside the window, so nothing is handed over: a backfilled date that is ALREADY older than 48h is correctly not mailed, because it is not news. `jd-text` is no longer a co-owner of this item. **`render`'s half — the caps — is not a leak either**, now that the sort is by `posted_date`: what a cap drops is the least-fresh role of the day, and it is re-offered tomorrow while its date holds.
+
+     Original text: **Roles are accumulated and then never emailed: 13 of 44 deliverable ones in ten days**
      — lanes: `roles` (the selection block), `render` (the caps), `jd-text` (late
      `posted_date`). Filed by `infra`, which has the measurement and does not own the fix.
 
@@ -4791,10 +4807,12 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
     (BACKLOG 223) and deliberately stops there, because `active=false` is not one fact.
     Counts on 2026-08-27:
 
-        dark-triage / walled / unreachable   ~181   we cannot READ the page. Not a closure.
-        alias-of                               53   real roles belonging to another row -> superseded
-        aggregator                             17   never an employer -> purged   (DONE)
-        dead / no open Israel roles         the rest  genuinely -> closed
+        371 parked rows on 2026-08-27; the classes OVERLAP, which is the argument itself
+        dark-triage / walled / unreachable    248   we cannot READ the page. Not a closure.
+        alias-of                               54   real roles belonging to another row -> superseded
+        notes mention an aggregator            40   but only 2 have an aggregator api_url,
+                                                    and that predicate is what purges  (DONE: 2)
+        dead / no open Israel roles      the rest    genuinely -> closed
 
     Marking a `dark-triage` row's roles "closed" publishes a lie about an open opening.
     `Phoenix Financial` is the worked example: parked `js-shell`, but its Business Analyst

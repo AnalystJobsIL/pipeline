@@ -3346,9 +3346,14 @@ halves are then in nobody's `sent` table, which re-emails the role.
 Host alone is not enough: Oracle HCM has SHARED SaaS pods (Verint sits on
 `fa-epcb-saasfaprod1.fa.ocs.oraclecloud.com`, one host carrying many tenants) separated only
 by their `sites/CX_…` segment. It cuts the path at the first posting-marker segment (`job`,
-`jobs`, `apply`, `careers`, …), which the data dictated: without that cut, **21 of 56 scoped
-boards yielded more than one tenant token**, because the Workday path carries the office and
-the Eightfold path a per-posting id. With it, 56 of 56 yield exactly one.
+`jobs`, `apply`, `careers`, …), which the data dictated: the rule it replaced yielded MORE
+THAN ONE token on many boards, because the Workday path carries the office and the Eightfold
+path a per-posting id. With the cut, **every board yields exactly one token**. Two different
+populations sit behind that sentence and they are worth keeping apart: the design measurement
+that chose the rule covered **56 boards** — the five scoped platforms plus `workday`, included
+precisely because it is NOT scoped and its ids needed watching for another reason — while the
+shipped `--audit-ids` computes a tenant only where one is used, i.e. on the **19 active rows**
+of the five scoped platforms. Both read zero boards with two tokens.
 
 **A "job id" that is not an id.** `fetch_workday` reads `bulletFields[0]`, which is a
 *tenant-configured display list*, not a requisition number. Measured live 2026-08-27:
@@ -3436,7 +3441,8 @@ read as HiBob's own board.
 
 **3. Only an address DEEPER than the board's own may be promoted or donate the url, and ONE
 donor supplies both the link and the text.** Being on the employer's domain is not enough —
-three Meta records were promoted to `metacareers.com/jobs?offices[0]=…`, a search page this
+the two Meta records on that address were promoted to `metacareers.com/jobs?offices[0]=…`,
+a search page this
 section separately warns is shared by every Meta role, which is a worse link for the reader
 and strips the strongest evidence `Ledger._winner` has (an aggregator card url literally
 contains `-at-<company>-`). And taking the url from one member while taking the longest
@@ -3447,8 +3453,15 @@ openings under one title. Only a member at the very same address may lengthen th
 `_inherited` copies never donate: `roles.classify_grouped` writes the group's longest text
 onto them, so their description is a COPY, not something that posting carried.
 
-Measured 2026-08-27 on the committed state: the per-role instrument finds 4 url repairs and 1
-description repair, with 8 foreign or other-address members refused. The two instances BACKLOG
+Measured 2026-08-27 on the committed state: **5 canonical urls change, 4 descriptions change,
+and 8 foreign or other-address members are refused.** Three of those four descriptions get
+SHORTER — Appcharge 2,268 → 1,804, Cognyte 2,304 → 1,597, Qodo 2,848 → 1,876 — and that is
+the deliberate price of the rule above, stated here because no earlier draft did. The link and
+the text now come from the same posting: the employer's own. Before, a role could publish an
+aggregator card's longer JD under a link to a different page, and the two disagreed. An
+aggregator's copy of our own role is not foreign, but nothing in the merge can tell it from a
+competitor card on the same page (`nift|data analyst` carries five), so the coherent, shorter,
+authoritative text wins. The one gain is Questar, 0 → 6,000. The two instances BACKLOG
 260 named no longer reproduce on `origin/master` — Zipher's cached entries were retitled and
 emptied by the `scraper` work between `ae6eeae` and `c1323d5`, so that number is 2 on the
 older tree and 0 on the newer one by the cache instrument. The defect is real; its instance
@@ -3456,9 +3469,9 @@ count moves with the cache.
 
 ### One posting under two names — the wrong-company guard
 
-`job["company"]` is copied verbatim from the registry row (`pipeline/fetchers.py`, 14
-sites; `scrape_universal.py:485`), so a posting is attributed by *which row fetched it*, and
-two active rows read the same board in 13 identity groups today (`registry`, BACKLOG 133).
+`job["company"]` is copied verbatim from the registry row (`pipeline/fetchers.py`, 16
+sites; `scrape_universal.py:935`), so a posting is attributed by *which row fetched it*, and
+two active rows read the same board in a handful of identity groups (`registry`, BACKLOG 133 — whose own enumeration prints 0 today and whose same-identity half was closed 2026-08-25; the url-normalised reading finds 2, AWS/Amazon and Microsoft (Xbox/Gaming)/Microsoft Israel).
 This layer makes the product right regardless: after `merge_duplicates`,
 `Ledger.resolve_claims` groups this run's postings across companies by `roles.same_posting`
 — the titles must agree (equal, or the longer one is the shorter plus words from that
@@ -3529,8 +3542,8 @@ recruiter stripped from the scan — cannot be fetched and is dead by `_alive`, 
 closes too); on a scoped `--only` run only the scanned companies are, so a local run
 closes nothing elsewhere. A failed board closes nothing (`failed_names` is collected by
 name in the fetch loop — splitting the mail string on `" ("` used to turn
-`Microsoft (Xbox/Gaming)` into `Microsoft` for `_alive` and the ledger alike; 15 registry
-names contain `" ("`). A record absorbed for the first time is classified, never
+`Microsoft (Xbox/Gaming)` into `Microsoft` for `_alive` and the ledger alike; 22 registry
+names contain `" ("`, 12 of them active). A record absorbed for the first time is classified, never
 counted as a closure. open→closed stamps `closed_on`; closed→open appends an episode and
 counts `reopened`; a bumped `posted_date` is a repost.
 
@@ -3565,8 +3578,8 @@ overwritten on every re-sighting, so it records the days something DIED, not the
 pipeline*, and it is missing 08-18 entirely.
 
 **A row that was never an employer is `purged`, not closed.** `Tel Aviv` is a CITY that
-`listing_hunt` activated on `jobs.secrettelaviv.com`; seven of its records shipped in the
-2026-08-26 mail under `### Tel Aviv`, three of them emailed. Parking the row stopped it being
+`listing_hunt` activated on `jobs.secrettelaviv.com`; seven of its records shipped on the 2026-08-26
+board and three of those reached the mail under `### Tel Aviv`. Parking the row stopped it being
 fetched but did not stop it being alive for one more day (`last_seen` was still yesterday's),
 and `record_run`'s `judged` never named it, so its records stayed `open` forever. `run.py`
 now computes `_never_ours` — registry rows, **parked ones included**, whose `api_url` is an
@@ -3582,15 +3595,17 @@ reaches **exactly the 7 `Tel Aviv` records and nothing else**.
 `record_run`. They matched on different things at first — a raw name in one, `_norm_company`
 in the other — and that is a live hazard rather than a safeguard. `_norm_company` strips ONE
 trailing corporate suffix, so normalising can only ever ADD names, and the names it adds are
-the **active twins of a parked row**: the registry holds eleven (Nice/NICE, SolarEdge, Nova,
-Innoviz, HP, Workday, Orca AI, Akamai, Tevel, Dell, TechBiz Global) plus 53 parked `alias-of`
-duplicates. A raw-name test misses a parked `X GmbH`; a naive normalised one purges the live
+the **active twins of a parked row**. The registry holds eleven identity groups whose members
+disagree on `active` or spelling (Nice/NICE, SolarEdge, Nova, Innoviz, HP, Workday, Orca AI,
+Akamai, Tevel, Dell, TechBiz Global); **eight** of those are the dangerous shape — a parked
+name that normalises onto a LIVE row — while Akamai and Dell are two active rows and Tevel two
+parked ones. There are 54 parked `alias-of` duplicates besides. A raw-name test misses a parked `X GmbH`; a naive normalised one purges the live
 `X` beside it. So the set subtracts every identity a live row answers to, and on 2026-08-27 it
 is exactly two — `tel aviv` and `dun bradstreet israel` — with **0 live companies caught**.
 
 It reads `api_url` only. Widening it to `token` was tried and is a **NO-GO**: 40 rows carry an
-aggregator address in `token` (a fingerprint of the `url-cleared` repair passes) while
-`api_url` holds a real board, and they include Deloitte, Shufersal, Zim, JTI, Phoenix
+aggregator address in `token` (a fingerprint of the `url-cleared` repair passes) and 39 of
+them hold a real board in `api_url`, and they include Deloitte, Shufersal, Zim, JTI, Phoenix
 Financial and Akamai — real employers whose live roles would have left the product.
 
 `_alive` gates the email and the board; **the archive is excluded explicitly**, because it is
@@ -3687,10 +3702,13 @@ HEAD had, and proves the feature RAN from the tree's own board (neither loser is
   `research_firmographics.py` still counts superseded-only companies (141).
 - Tags are only as good as the text captured while the role was open (`docs/TAGGING.md`).
 - **Only the aggregator-origin class of parked row is purged.** `active=false` conflates four
-  facts, and the counts on 2026-08-27 were roughly: `dark-triage` 181 (*we cannot read the
-  page* — not evidence the job closed), `alias-of` 53 (the roles are real and belong to
-  another row: `superseded`, not `closed`), aggregator 17 (`purged`), and a `dead` /
-  `no open Israel roles` remainder that genuinely is `closed`. `Phoenix Financial` is the
+  facts. Of the **371** parked rows on 2026-08-27: **248** carry a `dark-triage` / `walled` /
+  `unreachable` note (*we cannot read the page* — not evidence the job closed), **54** are
+  `alias-of` (the roles are real and belong to another row: `superseded`, not `closed`), **40**
+  mention an aggregator in their notes while only **2** actually have an aggregator `api_url`
+  — and that predicate, not the note, is what purges — and the rest is a `dead` /
+  `no open Israel roles` remainder that genuinely is `closed`. The classes overlap, which is
+  itself the argument for an explicit `park_reason`. `Phoenix Financial` is the
   worked example of why the boolean is not enough: parked `js-shell`, but its Business Analyst
   was discovery-verified on 2026-08-26 and its registry `api_url` points at
   **arizonafinancial.org**, an American credit union — a resolution error, not a closure.
@@ -3704,7 +3722,7 @@ HEAD had, and proves the feature RAN from the tree's own board (neither loser is
   When no member is on the employer's own board the canonical's description stands — and for
   many roles an aggregator's copy is the only text we have, so deleting it to remove a
   hypothetical would cost real coverage. Older than this rule; BACKLOG 312.
-- `_same_origin`'s token arm is dead for the 62 workday rows, whose `token` contains a `/`,
+- `_same_origin`'s token arm is dead for **274 active rows** — every `token` holding a `/` (all 62 workday rows, and `Rounds`) or shorter than three characters (`Verint`), plus every row whose token is a url,
   and 16 scrape rows have an empty origin path, which makes their whole host authoritative.
   Neither is multi-employer today; both are why the gate is strict rather than clever.
 - `Ledger.id_collisions` sees one run's accepted roles, so a board whose four postings share

@@ -434,7 +434,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # derive the two windows: email = roles posted in the last ~48h, board = still open.
     # lane: roles. A seen_id that names two different roles means one of them can never be
     # emailed again; the ledger raises it on the Stages line rather than repairing it.
-    ledger.id_collisions(merged)
+    ledger._guard("id_collisions", lambda: ledger.id_collisions(merged), {})
     # `closed_keys()` is the ledger's record of what this pipeline LOOKED FOR and did not
     # find. It replaces a calendar gap, which cannot tell an absent role from an absent RUN
     # and so re-badges the whole board after an outage (BACKLOG 139). None when the ledger
@@ -469,6 +469,32 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # freezes its roles on the job board forever, and they are the ones a reader applies to.
     fail_grace = (today - dt.timedelta(days=7)).isoformat()
 
+    # A MASS PURGE IS A BROKEN REGISTRY PASS, NOT A MEASUREMENT (CLAUDE.md rule 2). 40 rows
+    # carry an aggregator address in `token` while `api_url` holds a real board — a
+    # fingerprint of the `url-cleared` repair passes — and one pass copying `token` into
+    # `api_url` would take all of them off the product in a single morning.
+    #
+    # This runs BEFORE `_alive` is defined, and that placement is the fix rather than a
+    # detail: the first version sat after the email was finalised and after the board was
+    # truncated, so a held morning restored the board and NOT the email (every role the
+    # broken purge dropped was still missing from that digest, and any that aged out of the
+    # 48h window was gone for good), handed the renderer a board that had never been through
+    # `BOARD_MAX_ROLES`, and left `stats["board_count"]` describing a page that was not the
+    # one published.
+    #
+    # The denominator is the LIVE set, not every row ever matched. Measuring the purge
+    # against `matched` — which only grows — meant the guard would eventually trip on a
+    # normal morning and disable the purge permanently.
+    _live_now = [j for j in st.get_matched_since("0000-01-01")
+                 if (j.get("last_seen") or "") >= yesterday]
+    _purge_hits = [j for j in _live_now if _ident(j["company"]) in _never_ours]
+    if len(_purge_hits) > max(10, 0.25 * max(1, len(_live_now))):
+        _line = (f"roles mass-purge held ({len(_purge_hits)} of {len(_live_now)} live roles "
+                 f"sit at rows that read as aggregators) — a broken registry pass, not a "
+                 f"measurement")
+        _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
+        _never_ours = set()
+
     def _alive(j):
         """Is this role still open? = we saw it in the latest scan of its company.
 
@@ -498,17 +524,47 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                 out.append(j)
         return out
 
-    email_jobs = [j for j in st.get_matched_since(cutoff_email)
+    # THE MAIL IS SELECTED BY `posted_date`, OVER EVERY LIVE ROLE — not by a window on
+    # `first_seen` (BACKLOG 309/310, lane: roles). It used to read
+    # `st.get_matched_since(cutoff_email)`, which filters on `first_seen`, i.e. on the day a
+    # cron happened to look, and then applied `_posted_in`, which tests the day the EMPLOYER
+    # posted. Two clocks in one selection, and the `first_seen` one is a two-date-bucket
+    # window that MOVES: a role first seen on D-1 and not mailed on D was outside it on D+1
+    # and every day after — still on the board, never marked in `sent`, and unreachable,
+    # because `filter_new` only ever re-offers what was marked. Measured by
+    # `tests/role_leak.py --days 10` on 2026-08-27: **13 of 44 deliverable roles never
+    # emailed**, nine of them live on the board, six of them because `jd-text` backfilled the
+    # `posted_date` after the window had already moved past the row.
+    #
+    # `first_seen` now governs NOTHING here. It is an operational accident, and its one
+    # legitimate use is the fallback inside `_posted_in` for a role that has no date at all.
+    # This costs no query: the same full scan already runs below for the board.
+    #
+    # Consequence, decided deliberately rather than inherited (recorded in BACKLOG 310): a
+    # `posted_date` backfilled to yesterday three WEEKS after we first saw the role now makes
+    # that role mailable. That is intended. A fresh date on a posting that is still live is
+    # exactly what "roles from the last 48h" promises, it is the same event §7c already
+    # records as a repost, and the blast radius is bounded three ways that all still apply —
+    # `_alive` (it must still be on its board), `filter_new` (never twice) and the caps.
+    email_jobs = [j for j in st.get_matched_since("0000-01-01")
                   if _posted_in(j, cutoff_email) and _alive(j)]
     email_jobs = st.filter_new(email_jobs)      # never email the same posting twice
+    # freshest posting first, so the caps below drop the least-fresh rather than the
+    # least-recently-first-seen — `get_matched_since` orders by `first_seen`, which is now
+    # the wrong axis for this list.
+    email_jobs.sort(key=lambda j: str(j.get("posted_date") or ""), reverse=True)
     email_jobs = _cap_per_company(email_jobs, 3)   # tight daily digest: <=3 per company
     # Hard ceiling on the email. Uncapped, one good day of coverage growth produces a
     # thousand-role wall of text that nobody reads — and mark_sent would then burn every
-    # one of them as "delivered". Overflow is not lost: it stays unsent and leads tomorrow.
+    # one of them as "delivered". What the cap drops is NOT carried indefinitely: it stays
+    # unsent, and tomorrow's run re-offers it only while its `posted_date` is still inside
+    # the 48h window — one more day at most. The old comment here said "it leads tomorrow"
+    # without that condition, which was half true before this change and false after it.
     stats["email_overflow"] = max(0, len(email_jobs) - EMAIL_MAX_ROLES)
     if stats["email_overflow"]:
         print(f"  email capped at {EMAIL_MAX_ROLES} roles; {stats['email_overflow']} more "
-              f"stay unsent and lead tomorrow's digest", flush=True)
+              f"stay unsent, and are re-offered tomorrow only if still inside the 48h window",
+              flush=True)
         email_jobs = email_jobs[:EMAIL_MAX_ROLES]
 
     # A company's FIRST scan: `_posted_in` rightly refuses to call its back catalogue
@@ -552,21 +608,6 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     # the role record's own verdict on the run: what closed, reopened, was re-posted; the
     # ledger flushed (or why not). Closure is judged only where this run actually looked.
-    # 40 registry rows carry an aggregator address in `token`; one repair pass copying that
-    # into `api_url` would take every one of them off the board in a single morning. That is
-    # CLAUDE.md rule 2 — a mass-zero is a broken run, not a measurement — and this predicate
-    # gates the email, the board AND the archive, so it gets the same treatment as a
-    # mass-close: the purge is abandoned for the day and the mail says so.
-    _purge_hits = [j for j in st.get_matched_since("0000-01-01")
-                   if _ident(j["company"]) in _never_ours]
-    if len(_purge_hits) > max(10, 0.25 * max(1, len(board_jobs) + len(_purge_hits))):
-        _line = (f"roles mass-purge held ({len(_purge_hits)} roles at rows that read as "
-                 f"aggregators) — a broken registry pass, not a measurement")
-        _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
-        _never_ours = set()
-        board_jobs = [j for j in st.get_matched_since("0000-01-01") if _alive(j)]
-        alive_jobs = list(board_jobs)
-
     _role_lines = ledger.record_run(
         run_date, board_jobs=alive_jobs, merged=merged,
         scanned_ok={r["company_name"] for r in rows}, failed=failed_names, paths=paths,

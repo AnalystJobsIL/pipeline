@@ -11808,22 +11808,28 @@ def test_a_malformed_receipt_field_cannot_cost_the_day(tmp_path):
 
 
 def test_the_carry_note_counts_what_tomorrow_actually_tests(tmp_path):
-    """Tomorrow's cutoff is TODAY and a role must clear BOTH `get_matched_since` (first_seen)
-    and `_posted_in` (posted_date). Counting only first_seen printed `20 of 20 role(s) lead
-    the next digest` on a day when none of them did — a confidently wrong operator-facing
-    number, which this repo rates as worse than no number."""
+    """Counting only `first_seen` printed `20 of 20 role(s) lead the next digest` on a day
+    when none of them did — a confidently wrong operator-facing number, which this repo rates
+    as worse than no number.
+
+    Updated 2026-08-27 by the `roles` lane with the selection change BACKLOG 309/310 asked
+    for: `first_seen` no longer gates the mail at all, so a role clears tomorrow's window on
+    its `posted_date` alone. The third fixture below — `first_seen` two weeks old, a fresh
+    `posted_date` — was labelled "first_seen too old" and IS the leaked role that change
+    recovers, so it now carries. Keeping the old expectation would have pinned the bug."""
     ps = _ps()
     d = str(tmp_path)
     os.makedirs(os.path.join(d, "out"))
     jobs = [{"first_seen": "2026-08-27", "posted_date": "2026-08-27"},   # carries
             {"first_seen": "2026-08-27", "posted_date": "2026-08-20"},   # posted too old
-            {"first_seen": "2026-08-22", "posted_date": "2026-08-27"},   # first_seen too old
-            {"first_seen": "2026-08-27", "posted_date": None}]           # undecidable -> at risk
+            {"first_seen": "2026-08-22", "posted_date": "2026-08-27"},   # carries: date, not first_seen
+            {"first_seen": "2026-08-27", "posted_date": None}]           # undated -> the fallback
     with open(os.path.join(d, "out", "digest-2026-08-27.json"), "w", encoding="utf-8") as f:
         _json.dump({"jobs": jobs}, f)
     note = ps._carry_note(d, "out", "2026-08-27", len(jobs))
-    assert "1 of 4" in note, "the carry count is not counting both dates: %r" % note
-    assert "3 do not" in note and "310" in note, "the at-risk roles are not reported: %r" % note
+    assert "2 of 4" in note, "posted_date alone decides tomorrow's window now: %r" % note
+    assert "1 carry an older `posted_date`" in note, "the stale role is not reported: %r" % note
+    assert "1 undated" in note, "the undated role is not reported: %r" % note
 
 
 def test_a_break_glass_write_cannot_silence_the_alarm_that_armed_it(tmp_path):
@@ -12337,3 +12343,64 @@ def test_a_seen_id_that_names_two_roles_is_an_alarm_not_a_silent_loss(tmp_path):
     assert not L2.id_collisions([p, q])
     assert not L2.alarms, L2.alarms
     st.close()
+
+
+# --- roles, 2026-08-27 (second commit): the mail is selected by posted_date --------------
+
+
+def test_a_role_first_seen_before_the_window_is_still_mailable_on_its_own_date(tmp_path):
+    """BACKLOG 309/310. `run.py` selected the mail with `get_matched_since(cutoff_email)`,
+    which filters on `first_seen` — the day a cron happened to look — and then applied
+    `_posted_in`, which tests the day the EMPLOYER posted. Two clocks, and the `first_seen`
+    one is a two-date-bucket window that MOVES: a role first seen on D-1 and not mailed on D
+    was outside it on D+1 and for ever after, still on the board, never marked in `sent`, and
+    unreachable because `filter_new` only re-offers what was marked. Measured leak on
+    2026-08-27: 8 of 49 deliverable roles in ten days."""
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    # first seen five days ago; the employer's date arrives later and is FRESH
+    j = _role("Acme", "Data Analyst", "https://acme.com/careers/da", "11",
+              posted_date="2026-08-26")
+    st.upsert_matched(j, "2026-08-22")
+    st.conn.execute("UPDATE matched SET last_seen=?, posted_date=?", ("2026-08-27", "2026-08-26"))
+    st.conn.commit()
+    cutoff = "2026-08-26"
+    windowed = {r["mkey"] for r in st.get_matched_since(cutoff)}
+    every = {r["mkey"] for r in st.get_matched_since("0000-01-01")}
+    assert "acme|data analyst" not in windowed, "the old pool drops it on first_seen"
+    assert "acme|data analyst" in every, "the pool run.py now uses still has it"
+    # and it is genuinely deliverable: alive, unsent, and posted inside the 48h window
+    assert st.filter_new(st.get_matched_since("0000-01-01")), "nothing marked it sent"
+    row = st.get_matched_since("0000-01-01")[0]
+    assert row["posted_date"] >= cutoff and row["last_seen"] >= cutoff
+    st.close()
+
+
+def test_the_email_is_selected_over_every_live_role_not_a_first_seen_window():
+    """A source guard, because the selection is four lines in `run.py` and the defect was a
+    single argument. If someone re-narrows the pool to a `first_seen` window, the leak comes
+    straight back and no unit test of `store` would notice."""
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    body = open(os.path.join(root, "pipeline", "run.py"), encoding="utf-8").read()
+    sel = body.split("email_jobs = [j for j in ")[1].split("]")[0]
+    assert 'st.get_matched_since("0000-01-01")' in sel, sel
+    code = "".join(l for l in body.splitlines(True) if not l.lstrip().startswith("#"))
+    assert "get_matched_since(cutoff_email)" not in code, "first_seen must not gate the mail"
+    assert "_posted_in(j, cutoff_email)" in sel, "the 48h bound still comes from posted_date"
+    assert "_alive(j)" in sel, "and it must still be live on its board"
+    # the cap drops the least-fresh, not the least-recently-first-seen
+    assert 'email_jobs.sort(key=lambda j: str(j.get("posted_date") or ""), reverse=True)' in body
+
+
+def test_no_document_still_claims_capped_roles_lead_the_next_digest():
+    """Two prose claims went from half-true to false the moment the selection changed, and
+    BACKLOG 310 asked for both in the same commit. A capped role is re-offered only while its
+    own `posted_date` is still inside the window — one more day at most."""
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for rel in ("pipeline/run.py", "persist_state.py"):
+        body = open(os.path.join(root, rel), encoding="utf-8").read()
+        for claim in ("Overflow is not lost", "those roles lead the next digest",
+                      "these roles lead the next digest"):
+            assert claim not in body, "%s still says %r" % (rel, claim)

@@ -163,7 +163,7 @@ def scripted(case, W):
         # would otherwise be counted here as if it were still live.
         _led, _lst, _ = roles.load(ledger_path)
         _off = {k for k, r in _led.items() if r.get("status") == "purged"} if _lst == "ok" else set()
-        board = [b for b in board if b.lower().replace("|", "|") not in _off]
+        board = [b for b in board if b.lower() not in _off]
         if case == "corrupt" and i >= 2:
             checks.append((f"{d['date']} corrupt ledger is on the Stages line", "roles ledger corrupt" in stg))
             checks.append((f"{d['date']} corrupt ledger not overwritten", open(ledger_path, encoding="utf-8").read() == wreck))

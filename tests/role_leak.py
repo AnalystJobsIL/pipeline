@@ -75,7 +75,13 @@ def classify(sent, rows, days, today=None):
     for first_seen, seen_ids, company, title, posted, status, last_seen in rows:
         if status == "superseded" or not first_seen or first_seen < floor:
             continue
-        ids = [x for x in (seen_ids or "").split(",") if x]
+        # `matched.seen_ids` is joined with "+", not "," (`store.upsert_matched` does
+        # `"+".join(sorted(new_sids))` and `get_matched_since` splits on "+"). Splitting on
+        # "," yielded ONE element -- the whole joined string -- which is never a key in
+        # `sent`, so every role carrying two or more seen_ids was counted as never-emailed.
+        # That inflated the leak and deflated the delivered count; found 2026-08-27 by the
+        # `roles` lane while trying to reach the number this tool defines.
+        ids = [x for x in (seen_ids or "").split("+") if x]
         rec = (first_seen, company, title, posted, last_seen)
         if any(i in sent for i in ids):
             delivered.append(rec)

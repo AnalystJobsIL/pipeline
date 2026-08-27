@@ -256,6 +256,13 @@ def _same_origin(url, origin):
     return tok in [seg for seg in mp.split("/") if seg]
 
 
+def _is_aggregator_url(url):
+    """True for a LinkedIn/Indeed/city-board address. Imported lazily: `aggregators` is
+    shared plumbing and this module is imported by tools that never need it."""
+    from . import aggregators
+    return bool(url) and aggregators.is_aggregator(str(url))
+
+
 def _authoritative(job, origins):
     """May this member donate its url or its description to the merged record?"""
     if not origins:
@@ -276,9 +283,16 @@ def _is_posting_page(job, origins):
     if not _authoritative(job, origins):
         return False
     origin = str(origins.get(job.get("company")) or "")
+    path = _url_parts(job.get("url"))[1]
     if not origin.lower().startswith("http"):
-        return True                      # a tenant token matched a path segment: it is deep
-    return _url_parts(job.get("url"))[1] != _url_parts(origin)[1]
+        # a tenant token names a whole path segment — but the BOARD ROOT contains that
+        # segment too (`boards.greenhouse.io/nift`, `comeet.com/jobs/brightdata`), and
+        # calling the root a posting is the very thing this predicate exists to refuse. A
+        # posting has something after the tenant.
+        segs = [x for x in path.split("/") if x]
+        tok = origin.lower()
+        return bool(segs) and tok in segs and segs.index(tok) < len(segs) - 1
+    return path != _url_parts(origin)[1]
 
 
 def merge_duplicates(jobs, origins=None):
@@ -371,6 +385,25 @@ def merge_duplicates(jobs, origins=None):
                 t = str(m.get("description") or "").strip()
                 if len(t) > len(best):
                     best = t
+        # ...and never let promoting the employer's own page COST the role its only text.
+        # Some board pages carry `description: ""` (most list endpoints do), so swapping the
+        # canonical onto one took two live roles from 169 and 152 characters to zero — a loss
+        # `upsert_matched`'s sqlite ratchet cannot undo on a role's first sighting, and one
+        # `jd-text` would then pay Bright Data to re-fetch. When the promoted posting has no
+        # text of its own, the merged record keeps the longest text the group had, which is
+        # exactly what shipped before this rule existed.
+        if not best and not str(out.get("description") or "").strip():
+            # ...but only from a member an AGGREGATOR attributed to this company, never from
+            # a stranger's own site. A first attempt fell back to the longest text in the
+            # group and re-opened the hole the origin gate exists to close: a competitor card
+            # scraped onto our careers page has no text-bearing rival when our board page is
+            # empty, so it would have won by default. `_inherited` copies are excluded for
+            # the same reason as above — their text is a copy, not something they carried.
+            cands = [m for m in members
+                     if not m.get("_inherited")
+                     and (_authoritative(m, origins) or _is_aggregator_url(m.get("url")))]
+            best = max((str(m.get("description") or "").strip() for m in cands),
+                       key=len, default="")
         # A ratchet, not a replacement, and this is the conservative choice on purpose. When
         # the canonical is NOT on the employer's board, its text is usually our own role as
         # an aggregator copied it — legitimate, and for many roles the only text we have — and
@@ -604,10 +637,17 @@ class SeenStore:
 
     def missed_runs(self, old_last, run_date):
         """How many runs happened strictly between two dates — the number of chances this
-        role had to be seen and was not. Returns None when the log is empty (a fresh or a
-        rehydrated store), and `upsert_matched` then keeps the calendar rule."""
-        n = self.conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0]
-        if not n:
+        role had to be seen and was not.
+
+        Returns None when the log CANNOT ANSWER, and `upsert_matched` then keeps the calendar
+        rule. That is not only the empty-log case: for the first days after the log is
+        introduced its earliest entry is later than most roles' `last_seen`, so it would
+        answer 0 — "no run missed it" — for every role that had in fact been absent for
+        weeks, and the calendar rule it replaced would no longer be there to catch them. So
+        the log answers only about a gap it actually spans.
+        """
+        first = self.conn.execute("SELECT MIN(run_date) FROM runs").fetchone()[0]
+        if not first or str(first) > str(old_last):
             return None
         return self.conn.execute(
             "SELECT COUNT(*) FROM runs WHERE run_date > ? AND run_date < ?",
