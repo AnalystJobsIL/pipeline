@@ -195,11 +195,10 @@ entries further down this same file.*
 One line per session, in the shape at the top of this file. The long version is the
 `Record:` each line names.
 
-- **2026-08-24 `scraper`** — error is not empty **NOT finished:** rot-parked page-empty rows never reach the hunt (`registry`, 84). Record: `docs/sessions/2026-08-24-scraper.md`.
-- **2026-08-24 `ats-fetch`** — see the record **NOT finished:** the row edits, BACKLOG 76-83. Record: `docs/sessions/2026-08-24-ats-fetch.md`.
-- **2026-08-24 `company-intel`** — one bounded cloud path **NOT finished:** chain retirement (BACKLOG 97), 29 duplicate groups (98), stage label (99, `render`). Record: `docs/sessions/2026-08-24-company-intel.md`.
-- **2026-08-24 `jd-text`** — one ladder, a reason for every failure, the layer in the mail **NOT finished:** BACKLOG 105–113. Record: `docs/sessions/2026-08-24-jd-text.md`.
-- **2026-08-24 `classifier`** — one bounded seam, a reason for every verdict, the tier in the mail — 2 Opus design attacks + 5 attacker sessions + 3 confirmers **NOT finished:** 116, 118–124, 126, 128–130. Record: `docs/sessions/2026-08-24-classifier.md`.
+- **2026-08-24, six lanes** — `ats-fetch`, `classifier`, `company-intel`, `jd-text`,
+  `registry`, `scraper`. Folded to a pointer on 2026-08-27 to keep this file inside the
+  word cap it sets: each entry named a record and the records hold the long version.
+  `docs/sessions/2026-08-24-*.md`.
 - **2026-08-25 `registry`** — today's logs, the pending backlog, §2/§3 re-verified **NOT finished:** batches 4–5 (path-tenant 33/50/22/37/198/9/51. Record: `docs/sessions/2026-08-25-registry.md`.
 - **2026-08-25 `infra`** — one delivery path, the mail says when a run broke **NOT finished:** BACKLOG 153–170 (167–169 are today's mail oddities. Record: `docs/sessions/2026-08-24-infra.md`.
 - **2026-08-25 `render`** — the split: `jdtext.py` (text->structure) -> `rolecard.py` (one card, never raises) -> `digest.py` (rendering only); the `Render:` mail line and its alarms. **NOT finished:** BACKLOG 142-146. Record: `docs/sessions/2026-08-24-render.md`.

@@ -36,7 +36,7 @@ CLASS = {
  # scheduled - a workflow invokes it
  "apply_resolved": ("scheduled", "applies out/resolved_configs.json into companies.csv after the self-heal"),
  "audit_empty_rows": ("scheduled", "weekly re-verification of every parked row; also the `verify()` helper every resolver imports"),
- "auto_expand": ("scheduled", "drains research_companies.json: deterministic tier, then the capped LLM tier"),
+ "auto_expand": ("scheduled", "READS research_companies.json (it does not drain it - nothing does: no code anywhere carries an already-resolved predicate, and the file is not in this workflow's `--own` list, so a removal here could not even be staged) and resolves each name: deterministic tier, then the capped LLM tier"),
  "bd_rescue": ("scheduled", "re-fetches unreachable rows through the Bright Data Web Unlocker"),
  "check_invariants": ("scheduled", "structural gate on companies.csv + the store; blocks the digest commit"),
  "coverage_report": ("scheduled", "Sunday summary: of everything researched, how much is scanned"),
