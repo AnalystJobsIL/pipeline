@@ -197,7 +197,7 @@ One line per session, in the shape at the top of this file. The long version is 
   `registry`, `scraper`. Folded to a pointer on 2026-08-27 to keep this file inside the
   word cap it sets: each entry named a record and the records hold the long version.
   `docs/sessions/2026-08-24-*.md`.
-- **2026-08-25 `registry`** — today's logs, the pending backlog, §2/§3 re-verified **NOT finished:** batches 4–5 (path-tenant 33/50/22/37/198/9/51. Record: `docs/sessions/2026-08-25-registry.md`.
+- **2026-08-25 `registry`** — today's logs, the pending backlog, §2/§3 re-verified **NOT finished:** batches 4–5. Record: `docs/sessions/2026-08-25-registry.md`.
 - **2026-08-25 `infra`** — one delivery path, the mail says when a run broke **NOT finished:** BACKLOG 153–170 (167–169 are today's mail oddities. Record: `docs/sessions/2026-08-24-infra.md`.
 - **2026-08-25 `render`** — the split: `jdtext.py` (text->structure) -> `rolecard.py` (one card, never raises) -> `digest.py` (rendering only); the `Render:` mail line and its alarms. **NOT finished:** BACKLOG 142-146. Record: `docs/sessions/2026-08-24-render.md`.
 - **2026-08-25 `roles`** — the role record gets an owner, a text ledger and a mail line — 1 Opus design attack + 4 attacker sessions, wave 2 confirmers **NOT finished:** BACKLOG 132–139 (retire `matched`, the 13 registry alias groups, a jsonl row-merge on the conflict path, discovery roles never close). Record: `docs/sessions/2026-08-24-roles.md`.
@@ -207,9 +207,9 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-26 `ats-fetch`** — the mail hid two of three new fetch errors **NOT finished:** 227–237. Record: `docs/sessions/2026-08-26-ats-fetch.md`.
 - **2026-08-26 `discovery`** — the coverage audit, and the dry run that changed the answer Record: `docs/sessions/2026-08-24-discovery.md`.
 - **2026-08-26 `company-intel`** — the last bare `claude -p` Record: `docs/sessions/2026-08-26-company-intel.md`.
-- **2026-08-26 `scraper`** — a reading that names roles but knows none of their addresses must not END the ladder **NOT finished:** , and each says why: 243 (harness tooling), 247 (a place list is never finished. Record: `docs/sessions/2026-08-24-scraper.md`.
+- **2026-08-26 `scraper`** — a reading that names roles but knows none of their addresses must not END the ladder **NOT finished:** 243, 247. Record: `docs/sessions/2026-08-24-scraper.md`.
 - **2026-08-26 `jd-text`** — what the layer spends, what it refuses to fetch, and the text that was already ours **NOT finished:** 155's inline half ONLY, and it is a real dependency. Record: `docs/sessions/2026-08-26-jd-text.md`.
-- **2026-08-27 `registry`** — the tier that never once reached the model **NOT finished:** nothing in the rehearsal, the `no-url` false alarm (282, `check_invariants.py` -- `triage_dark.MODES` is exported and pinned, so it is one import line), the `Registry:` production line (275…. Record: `docs/sessions/2026-08-24-registry.md`.
+- **2026-08-27 `registry`** — the tier that never once reached the model **NOT finished:** 275, 282. Record: `docs/sessions/2026-08-24-registry.md`.
 - **2026-08-27 `registry` (2)** — the intake queue was owned by nothing and the one search rung returned `[]` for every query. Fixed both; 134 names became rows, 42 active. **NOT finished:** ~350 exhausting, the classifier count, 340. Record: the session log's "Continuation state".
 
 - **2026-08-27 `infra`** — the recovery cron and the watchdog I came to build are both REJECTED: 0 isolated cron drops measured, and a watchdog writing `latest.md` can silently overwrite a delivered digest. What was broken was the unconditional `cp`; `persist_state.py deliver` replaces it. **NOT finished:** 292, 304-308. Record: `docs/sessions/2026-08-27-infra.md`.
@@ -221,3 +221,4 @@ One line per session, in the shape at the top of this file. The long version is 
 *The 2026-08-23 morning session (seventeen defects, A–Q) and the digest-run history that
 used to open this file are in `docs/sessions/2026-08-23.md`, which is where the long
 version already was.*
+- **2026-08-28 `jd-text`** - 10 of 70 open roles held text our own parser rejects, 4 of them page furniture with no JD. `is_job_url` reads a `/careers/<slug>` with the role's title, `looks_like_jd` replaces the length-only gate, a JD outranks furniture even when shorter. **67 of 70 now carry a description, was 60.** **NOT finished:** 341-344, the render bug. Record: `docs/sessions/2026-08-28-jd-text.md`.

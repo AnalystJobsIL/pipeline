@@ -258,6 +258,27 @@ def _rowval(row, c):
     return sorted(set(v or []) - {""}) if c in ("sources", "seen_ids") else (v or "")
 
 
+def better_description(a, b):
+    """Which of two stored descriptions to keep: a real JD beats one that is not, and only
+    between two JDs (or two non-JDs) does length decide.
+
+    "Longer wins" was the whole rule, and it is right between two job descriptions — but
+    between page furniture and a job description it is exactly backwards. `jd-text`'s repair on
+    2026-08-28 replaced Ballerine's, Ecoppia's and TytoCare's 3,999 characters of Webflow
+    navigation and Google Tag Manager with their real (shorter) descriptions, and `reconcile`
+    handed the furniture straight back on the next `open_sync`. Cross-lane: `jd-text` changed
+    this line, `roles` owns the file.
+
+    `looks_like_jd` is imported inside the function on purpose — `jdfill` is the enrich layer
+    and this module is read by tools that must not pay for importing it."""
+    from .jdfill import looks_like_jd
+    a, b = a or "", b or ""
+    ja, jb = looks_like_jd(a), looks_like_jd(b)
+    if ja != jb:
+        return a if ja else b
+    return a if len(a) >= len(b) else b
+
+
 def reconcile(row, rec):
     """Return the merged CORE fields. Rules, both directions: last_seen max, description
     longer non-empty wins, jd_attempted max, ISO posted_date beats non-ISO (else the newer
@@ -285,8 +306,8 @@ def reconcile(row, rec):
     out["jd_attempted"] = max(ja) if ja else ""
     for c in ("sources", "seen_ids"):
         out[c] = sorted({*(row.get(c) or []), *(rec.get(c) or [])} - {""})
-    da, db = (row.get("description") or ""), (rec.get("description") or "")
-    out["description"] = da if len(da) >= len(db) else db
+    out["description"] = better_description(row.get("description") or "",
+                                            rec.get("description") or "")
     if out["status"] not in STATUSES:
         out["status"] = "open"
     return out

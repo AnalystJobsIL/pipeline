@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**383 filed · 273 open · 110 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**387 filed · 276 open · 111 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 341.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 345.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -280,7 +280,7 @@ closure convention in the header.
 - **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
 - **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
 
-### docs — 14 open
+### docs — 15 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
 - **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
@@ -296,6 +296,7 @@ closure convention in the header.
 - **302** `302@docs` **`check_session_record_dates` inspects only line 1**
 - **303** `303@docs` **ARCHITECTURE section 8's guard-rail table describes guards that have moved**
 - **338** `338@docs` **`HANDOFF.md` is at its word cap, so two lanes finishing on the same day cannot both
+- **344** `344@docs` **Sweep for tests that drive a root script's `main()` without `chdir` or explicit paths** —
 
 ### company-intel — 13 open
 
@@ -356,10 +357,12 @@ closure convention in the header.
 - **212** `212@render` **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
 - **263** `263@render` **`digest.py` renders a `0/148` inline-fill morning as the ABSENCE of a phrase**
 
-### jd-text — 2 open
+### jd-text — 4 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
-- **289** `289@jd-text` **A `jd-text` unit test reads the LIVE `scraped_cache.json`, so the 00:00 scrape-refresh
+- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
+- **343** `343@jd-text` **Three open roles exist only at an Indeed address, and Indeed cannot be read**
 
 ### unassigned — 28 open  ← burn this down; a new item may not join it
 
@@ -4364,7 +4367,14 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     the row should not be read as "Ericsson has 1 opening". Same family as the Eightfold rows
     in 246.
 
-289. **A `jd-text` unit test reads the LIVE `scraped_cache.json`, so the 00:00 scrape-refresh
+289. ~~**A `jd-text` unit test reads the LIVE `scraped_cache.json`, so the 00:00 scrape-refresh
+    cron turns `tests.yml` red for every lane**~~ — **CLOSED 2026-08-28 (`jd-text`)**: the test
+    now passes `--cache str(tmp_path / "scraped_cache.json")`, which is what it always meant to
+    do (the module compares by `os.path.realpath`, so the stamp still lands beside the fixture
+    db). Verified both ways: pristine `origin/master` at `27a0388` is red on this one test and
+    green on everything else (the whole suite's only failure); the branch is green. **The sweep
+    for siblings the item asks for is NOT done** — filed as 344. Original text: **A `jd-text`
+    unit test reads the LIVE `scraped_cache.json`, so the 00:00 scrape-refresh
     cron turns `tests.yml` red for every lane** — lane: `jd-text`, found by `registry`
     2026-08-27 07:10 UTC.
 
@@ -5485,3 +5495,49 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
      Handled for the one-off backlog apply by hand-reviewing every would-be-active host; NOT
      handled for the nightly queue arm, which is the part that needs this fix.
 
+341. **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+    four lanes** — lane: `jd-text`, found 2026-08-28. Measured over the 15 open roles sitting
+    exactly at the cap by re-fetching each with `DESC_MAX` raised to 60,000: **13 lose nothing**
+    — their JD ends well before 6,000 and the tail is LinkedIn "similar jobs" chrome. Two do:
+
+        Nebius | Head of Analytics   true 9,475 chars, last JD marker at 9,303  -> ~3.3k lost
+        TechBiz Global GmbH | Data Analyst   see 342, a different defect
+
+    Nebius comes through the `native` greenhouse rung, so it is a genuinely long description,
+    not chrome. Raising the constant is NOT a `jd-text` decision alone: `DESC_MAX` is pinned by
+    a test to `fetchers._DESC_MAX` and `store.upsert_matched`'s `[:6000]`, and the text feeds
+    the classifier's prompt (tokens), the board and the email (size). Someone should measure
+    those three costs at 8,000/10,000 before moving it.
+
+342. **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload** — lane:
+    `jd-text`, found 2026-08-28. The row passes `looks_like_jd` (two marker families) and is
+    6,000 characters of `requirements":"&lt;p style=\"text-align: start;\"&gt;…`. The text IS
+    there, so this is a parser gap, not a fetch gap: the page is a JS shell whose data sits in a
+    JSON blob that `html_to_text` flattens verbatim. A third parser beside `extract_jd` and
+    `jsonld_jd` — find the blob, `json.loads` it, unescape the entities — would fix it. Note for
+    whoever picks it up: the text under `TechBiz Global GmbH` reads as **Modellama's** posting,
+    so `registry`/`roles` may want to look at the row's identity at the same time.
+
+343. **Three open roles exist only at an Indeed address, and Indeed cannot be read** — lane:
+    `jd-text` (with `discovery`), found 2026-08-28. After the 08-28 repair these are the only
+    open ledger rows with no job description:
+
+        Navan  | Senior Product Analyst   172 chars   il.indeed.com/viewjob?jk=736a52986835829a
+        Zipher | Data Analyst             170 chars   il.indeed.com/viewjob?jk=b081baf87df846ea
+        אסם    | CDT commercial analyst   162 chars   il.indeed.com/viewjob?jk=a7cd257b81d9ba1d
+
+    `indeed.com` is in `_UNFILLABLE` (401/403 on 22 of 22 sampled), so the discovery card's
+    snippet is the best text this layer can obtain — the sibling rung found no other address for
+    any of the three. The fix is an ADDRESS, not a fetch: each company has its own board.
+    Probed 2026-08-28: `zipher.ai/careers/data-analyst/` answers `no-markers`, and Zipher's only
+    live analyst posting is the `Senior Data Analyst` one already filled — so that row may be a
+    duplicate rather than a gap, which is a `roles` question.
+    `test_every_open_role_in_the_ledger_carries_a_job_description` skips refused hosts on
+    purpose, so these three do not turn the suite red; it goes red if a NON-refused row appears.
+
+344. **Sweep for tests that drive a root script's `main()` without `chdir` or explicit paths** —
+    lane: `docs` (or whoever runs the sweep), split out of 289 on 2026-08-28. 289 fixed the one
+    test that was red; its closing paragraph asks for the sweep, and the sweep is not done. Any
+    such test inherits the live registry, the live `scraped_cache.json` and the live
+    `cloud_state/`, and goes red on whichever cron rewrites them first — a morning surprise for
+    a lane that changed nothing.

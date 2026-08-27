@@ -62,9 +62,16 @@ _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 
 # A real JD names its sections; a JS-shell / cookie-wall / "no jobs found" page doesn't.
 # Require two distinct markers so boilerplate like "innovative benefits" can't pass alone.
+# `you should apply if` / `who you are` are section headers, not prose: Gong's greenhouse JD
+# (4,536 characters, a complete description) heads its requirements list "You should apply if
+# you have:" and reached only ONE family, so `looks_like_jd` called it furniture and the driver
+# re-fetched it every morning for ever. Measured 2026-08-28 over all 424 stored bodies (the
+# ledger's texts and every card in `scraped_cache.json`): the addition promotes exactly one
+# body — that one — and no page furniture.
 _JD_MARKERS = re.compile(
     r"(requirements?|responsibilit|qualifications?|experience|what you.?ll|"
     r"we.?re looking|about the (role|job|position)|skills|full[- ]time|"
+    r"you should apply if|who you are|"
     r"דרישות|אחריות|ניסיון|תיאור (ה)?משרה|כישורים)", re.I)
 
 
@@ -154,6 +161,23 @@ def extract_jd(html):
 def _marker_families(text):
     """Distinct section markers, singular and plural folded ("requirement"/"requirements" is one)."""
     return {m[0].rstrip("s") for m in _JD_MARKERS.findall(text.lower())}
+
+
+def looks_like_jd(text):
+    """Would `extract_jd` accept this text as a job description? The SAME two tests it applies
+    to a freshly fetched body — long enough, and carrying at least two distinct section
+    families — asked of text we have already stored.
+
+    This exists because "we have a description" was decided by `len(...) >= MIN_DESC` alone, in
+    both selectors, and a length test cannot tell a JD from page furniture. The ladder's card
+    builder (`scrape_universal._read_position_page`) keeps the page's text capped at 4,000
+    characters with no marker requirement at all, so a Webflow nav bar, a GTM snippet and a
+    cookie banner were stored as a description, cleared the 300-character gate, and made the
+    role permanently ineligible for the fetch that would have got the real text. Measured on
+    the 2026-08-28 ledger: 10 of the 70 open roles carried text this function rejects — four of
+    them (Ballerine, TytoCare, Ecoppia, Zipher) had no job description in them at all, and the
+    board showed the visitor a navigation menu where the day-to-day should be."""
+    return len(text or "") >= MIN_DESC and len(_marker_families(text)) >= 2
 
 
 def _text_or_empty(html):
@@ -483,7 +507,26 @@ _LIST_SEGMENT = {"search-results", "search", "results", "jobs", "job", "careers"
 _LIST_QUERY = re.compile(r"(^|&)(keywords?|q|query|search|offices(\[|%5[Bb])[^=]*)=", re.I)
 
 
-def is_job_url(url):
+_SLUG_WORD = re.compile(r"[a-z0-9]+")
+
+
+def slug_names_title(slug, title):
+    """Does this path segment spell out THIS role's own title? `/career/ai-fraud-data-analyst-senior`
+    under "AI Fraud Data Analyst (Senior)" does; `/careers/life-at-amdocs` under any analyst
+    title does not.
+
+    Every slug word but at most one must appear in the title (the odd `-il`, `-remote`,
+    `-tel-aviv` suffix is the one allowed miss), and at least two must hit — a one-word slug
+    is not evidence of anything."""
+    words = [w for w in _SLUG_WORD.findall((slug or "").lower()) if len(w) > 1]
+    in_title = set(_SLUG_WORD.findall((title or "").lower()))
+    if len(words) < 2 or not in_title:
+        return False
+    hit = sum(1 for w in words if w in in_title)
+    return hit >= 2 and hit >= len(words) - 1
+
+
+def is_job_url(url, title=""):
     """Could this URL identify ONE posting? A search/list page can never carry a JD, and must
     never be paid for (4 credits went to search pages on 2026-08-24, 1 more on 2026-08-26).
 
@@ -491,7 +534,19 @@ def is_job_url(url):
     (`/global/en/...`, `/us/en/...`) reaches three segments for free, which is how
     `careers.dhl.com/global/en/search-results?keywords=Israel` was charged. Measured against
     `scraped_cache.json` on 2026-08-26: **30 distinct URLs on 78 cards** passed ONLY via that
-    fallback, among them a cookies policy and a legal notice."""
+    fallback, among them a cookies policy and a legal notice.
+
+    But three segments is also too MANY for a company that publishes at `/careers/<role>`, and
+    that half of the rule was costing real text: `ballerine.com/career/ai-fraud-data-analyst-senior`,
+    `tytocare.com/careers/product-analytics-manager`, `zipher.ai/careers/senior-data-analyst`
+    and `jobs.techbiz.global/o/data-analyst` were all refused before a single byte was fetched,
+    and all four sat on the 2026-08-28 board with page furniture or nothing in place of a JD.
+    `title` settles those without a new URL vocabulary to maintain: a two-segment path is a
+    posting when its last segment NAMES THE ROLE WE ARE FETCHING IT FOR. Measured over the 141
+    ledger rows: 9 admitted, every one a real posting; the three still refused are Meta's
+    `?offices[0]=` search URL (twice) and `port.io/careers`. Handed an unrelated title the rule
+    admits nothing new — over the 987 cache URLs, "Data Analyst" admitted exactly the two that
+    ARE data-analyst postings."""
     u = urlsplit(url)
     parts = [p for p in u.path.split("/") if p]
     if "gh_jid" in u.query or re.search(r"(^|&)(jk|jobid|job_id|id|req)=[\w.-]+", u.query, re.I):
@@ -501,7 +556,9 @@ def is_job_url(url):
     last = parts[-1].lower() if parts else ""
     if last in _LIST_SEGMENT or last.endswith((".html", ".htm")) or _LIST_QUERY.search(u.query):
         return False
-    return len(parts) >= 3
+    if len(parts) >= 3:
+        return True
+    return bool(parts) and slug_names_title(parts[-1], title)
 
 
 # Host families no rung we own can read. Every entry carries its measurement, because this
@@ -564,7 +621,7 @@ def _from_body(body):
     return "", ""
 
 
-def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False):
+def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title=""):
     """native JSON -> plain HTML (+ schema.org) -> Bright Data (only when `bd` is given).
 
     The gate runs BEFORE the plain GET, not only before Bright Data. A search page and an
@@ -588,7 +645,7 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False):
             # host-agnostic, so it can apply on a refused host, and reporting `auth-walled`
             # would claim a wall we never observed
             return JD("", "none", native_why or blocked, False, native_why)
-    if not is_job_url(url):
+    if not is_job_url(url, title):
         return JD("", "none", "not-a-job-url", False, native_why)
     status, body = plain_fetch(url, timeout=timeout)
     if body:
@@ -657,6 +714,7 @@ class Item(NamedTuple):
     label: str           # "Company | Title" for the progress line
     attempted: str = ""  # raw stamp value, "" if never tried
     company: str = ""
+    title: str = ""      # the role's own title — `is_job_url` reads a `/careers/<slug>` with it
 
 
 def run_backfill(items, *, save, minutes, count_cap=0, bd=None, dry_run=False, today=None,
@@ -699,7 +757,8 @@ def run_backfill(items, *, save, minutes, count_cap=0, bd=None, dry_run=False, t
                 continue
             probed.add(blocked)
             c["probe"] += 1
-            jd = fetch_jd(item.url, bd=None, company=item.company, timeout=timeout, probe=True)
+            jd = fetch_jd(item.url, bd=None, company=item.company, timeout=timeout, probe=True,
+                          title=item.title)
             c["tried"] += 1                      # it really was fetched: `filled` needs a denominator
             if jd.text:
                 c["probe_ok"] += 1               # the refusal is WRONG -- alarm_for says so
@@ -724,7 +783,7 @@ def run_backfill(items, *, save, minutes, count_cap=0, bd=None, dry_run=False, t
             c["skipped_budget"] += 1
             continue
         c["tried"] += 1
-        jd = fetch_jd(item.url, bd=bd, company=item.company, timeout=timeout)
+        jd = fetch_jd(item.url, bd=bd, company=item.company, timeout=timeout, title=item.title)
         c[f"via:{jd.via}"] += 1
         c[f"reason:{jd.reason}"] += 1
         if jd.native:
@@ -857,7 +916,7 @@ class JDFiller:
         """Fill job['description'] in place when it is missing. Returns True if filled."""
         if not self.enabled:
             return False
-        if len(str(job.get("description") or "").strip()) >= MIN_DESC:
+        if looks_like_jd(str(job.get("description") or "").strip()):
             return False
         url = str(job.get("url") or "")
         if not url.startswith("http"):
@@ -869,7 +928,8 @@ class JDFiller:
         # a 15-second fetch every morning and were booked as failed fetches, which is how
         # `jd-fill: 110/148` hid 22 addresses nothing could ever have read (2026-08-26)
         platform = str(job.get("ats_platform") or "?")   # a list here used to kill the digest
-        why = unfillable(url) or ("" if is_job_url(url) else "not-a-job-url")
+        title = str(job.get("title") or "")
+        why = unfillable(url) or ("" if is_job_url(url, title) else "not-a-job-url")
         if why:
             self.unfillable += 1
             self.refused[(platform, why)] += 1
@@ -880,7 +940,8 @@ class JDFiller:
                 self.probed = True
                 self.probe += 1
                 self.tried += 1              # fetched like any other: `filled` needs a denominator
-                jd = fetch_jd(url, company=str(job.get("company") or ""), probe=True)
+                jd = fetch_jd(url, company=str(job.get("company") or ""), probe=True,
+                              title=title)
                 if jd.text:
                     self.probe_ok += 1
                     job["description"] = jd.text
@@ -892,7 +953,7 @@ class JDFiller:
             return False
         self.tried += 1
         _t = time.time()
-        jd = fetch_jd(url, company=job.get("company") or "")
+        jd = fetch_jd(url, company=job.get("company") or "", title=title)
         self.seconds += time.time() - _t
         self.by_platform[(platform, jd.reason + (f"/{jd.native}" if jd.native else ""))] += 1
         if jd.text:

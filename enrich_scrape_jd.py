@@ -34,6 +34,7 @@ from pipeline.atomic import write_json
 from pipeline.fetchers import clean_scraped as _clean_scraped
 from pipeline.jdfill import (DESC_MAX as _DESC_MAX, MIN_DESC as _MIN_TEXT,  # noqa: F401 - re-exports
                              RETRY_DAYS as _RETRY_DAYS, Item, MIN_DESC, Unlocker, _JD_MARKERS,
+                             looks_like_jd,
                              alarm_for, extract_jd, html_to_text, load_secrets, plain_fetch,
                              record_enrich, run_backfill, stamp_path_for, why_string)
 from pipeline.seniority import _relevance
@@ -73,9 +74,12 @@ def _todo(cache):
             if not isinstance(j, dict):
                 continue
             stats["cards"] += 1
-            # `< MIN_DESC`, not "non-empty": `enrich_matched_jd` has always used that bar, and
-            # a 25-character teaser left by the scraper used to recuse this driver forever
-            if len((j.get("description") or "").strip()) >= MIN_DESC:
+            # `looks_like_jd`, not a character count: a 25-character teaser used to recuse this
+            # driver forever, and so — until 2026-08-28 — did 4,000 characters of the careers
+            # site's own navigation, which is what this cache's own card builder stores when a
+            # page yields no JD (`scrape_universal._read_position_page`, capped at 4,000 with no
+            # marker test). The bar is now the one `extract_jd` applies to a fresh body.
+            if looks_like_jd((j.get("description") or "").strip()):
                 stats["has_desc"] += 1
                 continue
             url = j.get("url") or ""
@@ -93,7 +97,7 @@ def _todo(cache):
                 continue
             seen.add(url)
             items.append(Item(j, url, f"{comp} | {j.get('title') or ''}",
-                              j.get("_jd_attempted") or "", comp))
+                              j.get("_jd_attempted") or "", comp, str(j.get("title") or "")))
     return items, stats
 
 
@@ -147,7 +151,10 @@ def _run(args, stamp):
 
     def save(item, text, stamp_v):
         item.key["_jd_attempted"] = stamp_v
-        if text:
+        # the same rule `enrich_matched_jd._store_text` applies: a real JD beats text that is
+        # not one even when it is shorter, and only between two JDs does length decide
+        have = str(item.key.get("description") or "")
+        if text and (looks_like_jd(text) or not looks_like_jd(have)) and                 (looks_like_jd(text) != looks_like_jd(have) or len(text) > len(have)):
             item.key["description"] = text
 
     try:

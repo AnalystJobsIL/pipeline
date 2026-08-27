@@ -19,6 +19,20 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pipeline import aggregators, israel, seniority, verdicts  # noqa: E402
 
 
+def _jd_of(n):
+    """`n` characters that `jdfill.looks_like_jd` accepts: two marker families, then filler.
+
+    The fixtures below used to say "this row already has a description" with `_jd_of(400)` —
+    400 characters carrying no section marker at all. While the gate counted characters that
+    was indistinguishable from a job description. Since 2026-08-28 the gate asks whether the
+    text IS one (the same test `extract_jd` applies to a fetched body), because 4,000
+    characters of a careers site's navigation menu passed the character count on four live
+    board rows. Filler is, rightly, no longer a description."""
+    head = "Responsibilities Requirements "
+    return (head + "a" * max(0, n - len(head)))[:n]
+
+
+
 # --- module surface: a same-named file overwrote this module and deleted the function ---
 def test_aggregator_public_surface():
     assert callable(getattr(aggregators, "fetch_serpapi_google_jobs", None))
@@ -410,7 +424,7 @@ def test_the_jd_filler_only_spends_a_fetch_on_a_role_that_could_be_accepted():
     assert f.maybe_fill({"title": "Senior Backend Engineer", "url": "https://x/1",
                          "description": ""}) is False
     assert f.maybe_fill({"title": "Data Analyst", "url": "https://x/2",
-                         "description": "D" * 400}) is False
+                         "description": _jd_of(400)}) is False
     assert f.maybe_fill({"title": "Data Analyst", "url": "", "description": ""}) is False
     assert f.tried == 0
 
@@ -866,7 +880,7 @@ def test_a_role_is_never_listed_in_both_email_sections(tmp_path):
     st = store.SeenStore(str(tmp_path / "t.db"))
     run = "2026-08-23"
     base = {"location": "TLV", "seniority": "mid", "sources": ["greenhouse"],
-            "description": "D" * 500}
+            "description": _jd_of(500)}
     st.upsert_matched({**base, "company": "NewCo", "title": "Data Analyst",
                        "url": "u1", "posted_date": "2026-08-23"}, run)
     st.upsert_matched({**base, "company": "NewCo", "title": "BI Developer",
@@ -3486,7 +3500,7 @@ def test_cooldown_due_boundaries_and_the_transient_stamp():
 
 def test_run_backfill_counts_stamps_and_respects_dry_run(monkeypatch):
     from pipeline import jdfill
-    outcomes = {"https://a/1": jdfill.JD("D" * 400, "html", "ok", False),
+    outcomes = {"https://a/1": jdfill.JD(_jd_of(400), "html", "ok", False),
                 "https://a/2": jdfill.JD("", "none", "no-markers", False),
                 "https://a/3": jdfill.JD("", "bd", "bd-unavailable", True),
                 "https://a/4": jdfill.JD("B" * 400, "bd", "ok", False)}
@@ -3581,7 +3595,7 @@ def test_jd_filler_reports_per_platform_reasons_and_alarms_on_mass_failure(monke
     assert (f.tried, f.filled) == (10, 0) and f.by_platform[("workday", "shell")] == 10
     assert f.alarms() == ["inline jd-fill 0/10 — every fetch failed (workday shell 10)"]
     assert "0/10 descriptions fetched inline" in f.summary() and "workday shell 10" in f.summary()
-    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("D" * 400, "native", "ok", False))
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD(_jd_of(400), "native", "ok", False))
     g = jdfill.JDFiller(budget_min=5)
     job = {"title": "Data Analyst", "url": "https://x/jobs/1", "description": ""}
     assert g.maybe_fill(job) and len(job["description"]) == 400 and g.alarms() == []
@@ -3611,9 +3625,9 @@ def test_matched_backfill_driver_fills_stamps_and_records(tmp_path, monkeypatch)
             "sources": ["workday"]}
     st.upsert_matched({**base, "title": "Data Analyst", "url": "https://a/jobs/1", "description": ""}, "2026-08-20")
     st.upsert_matched({**base, "title": "BI Analyst", "url": "https://a/jobs/2", "description": ""}, "2026-08-20")
-    st.upsert_matched({**base, "title": "Full", "url": "https://a/jobs/3", "description": "F" * 900}, "2026-08-20")
+    st.upsert_matched({**base, "title": "Full", "url": "https://a/jobs/3", "description": _jd_of(900)}, "2026-08-20")
     st.close()
-    outcomes = {"https://a/jobs/1": jdfill.JD("D" * 500, "native", "ok", False),
+    outcomes = {"https://a/jobs/1": jdfill.JD(_jd_of(500), "native", "ok", False),
                 "https://a/jobs/2": jdfill.JD("", "none", "no-markers", False)}
     monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: outcomes[u])
     assert emj.main(["--db", db]) == 0
@@ -3628,7 +3642,7 @@ def test_matched_backfill_driver_fills_stamps_and_records(tmp_path, monkeypatch)
     assert emj.main(["--db", db]) == 0                                  # second run: all cooling
     assert stages._load()["enrich"]["matched_cooldown"] == 1
     # --limit caps ATTEMPTS: a cooling row must not consume it (the old driver filtered first)
-    outcomes["https://a/jobs/2"] = jdfill.JD("E" * 500, "html", "ok", False)
+    outcomes["https://a/jobs/2"] = jdfill.JD(_jd_of(500), "html", "ok", False)
     assert emj.main(["--db", db, "--limit", "1", "--cooldown-days", "0"]) == 0
     # 2026-08-26: a same-day re-run ADDS to the day instead of replacing it (a re-dispatch
     # after a bad morning used to overwrite the real morning's counts with the re-run's
@@ -3658,7 +3672,7 @@ def test_scrape_backfill_driver_write_is_byte_identical_and_dry_run_writes_nothi
     p = tmp_path / "cache.json"
     p.write_text(_jd_json.dumps(cache, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
     seen = []
-    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: (seen.append(u), jdfill.JD("D" * 400, "html", "ok", False))[1])
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: (seen.append(u), jdfill.JD(_jd_of(400), "html", "ok", False))[1])
     before = p.read_bytes()
     assert esj.main(["--cache", str(p), "--dry-run"]) == 0
     assert p.read_bytes() == before and not (tmp_path / "stages.json").exists()
@@ -3676,11 +3690,11 @@ def test_carry_jd_keeps_the_description_and_the_transient_stamp():
     """The nightly refresh rebuilds every card; without the carry the 7-day cooldown and the
     paid-for text vanished every night. The new ' transient' suffix must travel verbatim."""
     from refresh_scrape_cache import _carry_jd
-    old = [{"url": "https://z/1", "description": "D" * 400, "_jd_attempted": "2026-08-20"},
+    old = [{"url": "https://z/1", "description": _jd_of(400), "_jd_attempted": "2026-08-20"},
            {"url": "https://z/2", "description": "", "_jd_attempted": "2026-08-23 transient"}]
     new = _carry_jd([{"url": "https://z/1", "description": ""}, {"url": "https://z/2", "description": ""},
                      {"url": "https://z/3", "description": ""}], old)
-    assert new[0]["description"] == "D" * 400 and new[0]["_jd_attempted"] == "2026-08-20"
+    assert new[0]["description"] == _jd_of(400) and new[0]["_jd_attempted"] == "2026-08-20"
     assert new[1]["_jd_attempted"] == "2026-08-23 transient" and "_jd_attempted" not in new[2]
 
 
@@ -3791,7 +3805,7 @@ def test_unlocker_reads_the_error_header_even_with_a_body_and_needs_both_keys(mo
 
 def test_run_backfill_wall_clock_and_the_stamp_bookkeeping(monkeypatch, tmp_path):
     from pipeline import jdfill, stages
-    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("D" * 400, "html", "ok", False))
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD(_jd_of(400), "html", "ok", False))
     clock = [0.0]
     monkeypatch.setattr(jdfill.time, "time", lambda: clock[0])
     items = [jdfill.Item(i, f"https://x/jobs/{i}", f"C | {i}") for i in range(3)]
@@ -3815,7 +3829,7 @@ def test_run_backfill_wall_clock_and_the_stamp_bookkeeping(monkeypatch, tmp_path
 def test_jd_filler_env_contract_and_budget(monkeypatch):
     from pipeline import jdfill
     calls = []
-    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: (calls.append(u), jdfill.JD("D" * 400, "html", "ok", False))[1])
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: (calls.append(u), jdfill.JD(_jd_of(400), "html", "ok", False))[1])
     job = {"title": "Data Analyst", "url": "https://x/jobs/1", "description": ""}
     monkeypatch.setenv("JDFILL", "0")
     f = jdfill.JDFiller()
@@ -3854,7 +3868,7 @@ def test_scrape_backfill_keeps_fetched_text_when_the_loop_dies(tmp_path, monkeyp
     def boom(u, **k):
         if u.endswith("/2"):
             raise RuntimeError("network stack died")
-        return jdfill.JD("D" * 400, "html", "ok", False)
+        return jdfill.JD(_jd_of(400), "html", "ok", False)
     monkeypatch.setattr(jdfill, "fetch_jd", boom)
     with pytest.raises(RuntimeError):
         esj.main(["--cache", str(p)])
@@ -4612,7 +4626,7 @@ def test_one_posting_under_two_companies_is_kept_once(tmp_path):
     gh = "https://job-boards.greenhouse.io/armissecurity/jobs/6016139004"
     port = "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68"
     meta = "https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel"
-    jobs = [_role("OTORIO", "Senior Data Analyst", gh, "6016139004", desc="D" * 400),
+    jobs = [_role("OTORIO", "Senior Data Analyst", gh, "6016139004", desc=_jd_of(400)),
             _role("Armis", "Senior Data Analyst", gh, "6016139004"),
             _role("Port.io", "Senior BI Analyst Tel Aviv - Israel", port, port, src="scrape"),
             _role("Port", "Senior BI Analyst", port, "15.F68", src="comeet"),
@@ -4726,7 +4740,7 @@ def test_a_reopened_role_keeps_its_history_and_a_bumped_date_is_a_repost(tmp_pat
     re-alert) — the ledger keeps every episode instead of forgetting the first."""
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "t.db"))
-    j = _role("Acme", "Data Analyst", "u", "1", posted_date="2026-08-01", desc="D" * 500)
+    j = _role("Acme", "Data Analyst", "u", "1", posted_date="2026-08-01", desc=_jd_of(500))
     st.upsert_matched(j, "2026-08-01")
     L = roles.Ledger(st)
     L.open_sync()
@@ -5062,7 +5076,7 @@ def test_a_corrupt_descriptions_file_freezes_only_itself(tmp_path):
     other file's bad-line count."""
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "t.db"))
-    st.upsert_matched(_role("Acme", "Data Analyst", "u", "1", desc="D" * 400), "2026-08-25")
+    st.upsert_matched(_role("Acme", "Data Analyst", "u", "1", desc=_jd_of(400)), "2026-08-25")
     _, tp = roles.ledger_paths(st.path)
     open(tp, "w", encoding="utf-8").write("{wreck\n{wreck\n")
     L = roles.Ledger(st, "2026-08-25")
@@ -5322,7 +5336,7 @@ def test_a_row_is_never_superseded_by_itself(tmp_path):
 def test_orphan_text_lines_do_not_survive_a_flush(tmp_path):
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "t.db"))
-    st.upsert_matched(_role("Acme", "Data Analyst", "u", "1", desc="D" * 400), "2026-08-25")
+    st.upsert_matched(_role("Acme", "Data Analyst", "u", "1", desc=_jd_of(400)), "2026-08-25")
     _, tp = roles.ledger_paths(st.path)
     open(tp, "w", encoding="utf-8").write('{"role_id":"ghost|x","sha1":"0","len":1,"description":"x","updated":"2026-08-01"}\n')
     L = roles.Ledger(st, "2026-08-25")
@@ -9644,7 +9658,7 @@ def test_the_inline_gate_runs_before_the_counter_so_the_ratio_means_something(mo
     def fake(u, **k):
         fetched.append(u)
         # the canary really does fetch, and here the refused host really is unreadable
-        return jdfill.JD("" if "indeed" in u else "D" * 400, "none", "http-403", False)
+        return jdfill.JD("" if "indeed" in u else _jd_of(400), "none", "http-403", False)
     monkeypatch.setattr(jdfill, "fetch_jd", fake)
     monkeypatch.setenv("JDFILL", "1")
     f = jdfill.JDFiller(budget_min=10)
@@ -9683,7 +9697,7 @@ def test_the_scrape_todo_agrees_with_the_other_driver_and_never_offers_a_url_twi
     cache = {"Q": [{"title": "Data Analyst", "url": "https://q.co/jobs/1", "description": "x" * 25}],
              "E": [{"title": "Data Analyst", "url": u, "description": ""},
                    {"title": "BI Analyst", "url": u, "description": ""}],
-             "F": [{"title": "Data Analyst", "url": "https://f.co/jobs/1", "description": "y" * MIN_DESC}],
+             "F": [{"title": "Data Analyst", "url": "https://f.co/jobs/1", "description": _jd_of(MIN_DESC)}],
              "G": [{"title": "Chef", "url": "https://g.co/jobs/1", "description": ""}]}
     items, gates = esj._todo(cache)
     assert sorted(i.url for i in items) == ["https://e.co/jobs/1", "https://q.co/jobs/1"]
@@ -9769,11 +9783,14 @@ def test_a_role_is_filled_from_another_address_it_was_seen_at(tmp_path, monkeypa
     st.conn.commit(); st.close()
     (tmp_path / "scraped_cache.json").write_text(_j6_json.dumps(
         {"Zipher": [{"title": "Data Analyst", "url": "https://zipher.ai/careers/data-analyst/",
-                     "description": "R" * 2021}]}), encoding="utf-8")
+                     "description": _jd_of(2021)}]}), encoding="utf-8")
     bd = _J6BD(body=_jd_page())
     monkeypatch.setattr(jdfill, "Unlocker", lambda *a, **k: bd)
     monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "shell", False))
-    assert emj.main(["--db", db]) == 0
+    # `--cache`, not the default: this test wrote its cache into tmp_path and then never named
+    # it, so the driver read the repo's REAL scraped_cache.json and the assertion below tracked
+    # a live data file. It went red the morning Zipher's three cached cards lost their text.
+    assert emj.main(["--db", db, "--cache", str(tmp_path / "scraped_cache.json")]) == 0
     import sqlite3 as _s
     n = _s.connect(db).execute("SELECT length(description) FROM matched").fetchone()[0]
     assert n == 2021 and bd.used == 0
@@ -9806,13 +9823,17 @@ def test_emj_sibling_urls_only_returns_other_addresses():
 
 
 def test_min_desc_is_one_bar_and_a_text_of_exactly_min_desc_is_a_description(monkeypatch):
-    """MIN_DESC is this layer's whole definition of "this is a job description", and six gates
-    compare against it: `extract_jd`, `_text_or_empty`, `JDFiller.maybe_fill`,
-    `enrich_scrape_jd._todo`, the matched driver's SQL and its cache-sibling rung. Every one of
-    those `>=`/`<` survived a flip to `>`/`<=`. The flip is not cosmetic: at exactly MIN_DESC
-    the SQL would still call the row short while the fill gate called it filled, so the role is
-    fetched, stored at the same length and fetched again tomorrow -- for ever, and (in the
-    matched driver) through Bright Data."""
+    """MIN_DESC is the LENGTH half of this layer's definition of "this is a job description",
+    and six gates compare against it: `extract_jd`, `_text_or_empty`, `JDFiller.maybe_fill`,
+    `enrich_scrape_jd._todo`, the matched driver's row filter and its cache-sibling rung. Every
+    one of those `>=`/`<` survived a flip to `>`/`<=`. The flip is not cosmetic: at exactly
+    MIN_DESC one side would still call the row short while the fill gate called it filled, so
+    the role is fetched, stored at the same length and fetched again tomorrow -- for ever, and
+    (in the matched driver) through Bright Data.
+
+    The OTHER half is `looks_like_jd`'s two marker families, added 2026-08-28. Both halves are
+    pinned here together, because the failure that motivated the second one is exactly the
+    failure the first one has: five gates agreeing on a bar and one disagreeing."""
     from pipeline import jdfill
     exact = "x" * jdfill.MIN_DESC
     assert jdfill._text_or_empty(exact) == exact                       # a native payload
@@ -9824,11 +9845,22 @@ def test_min_desc_is_one_bar_and_a_text_of_exactly_min_desc_is_a_description(mon
     monkeypatch.setenv("JDFILL", "1")
     f = jdfill.JDFiller(budget_min=10)
     assert f.maybe_fill({"title": "Data Analyst", "url": "https://x/jobs/1",
-                         "description": exact}) is False and f.tried == 0
+                         "description": _jd_of(jdfill.MIN_DESC)}) is False and f.tried == 0
+    # ...and the second half: MIN_DESC characters that are not a JD do NOT recuse the fill.
+    # `exact` is 300 filler characters — what four live board rows held in 2026-08-28's ledger
+    # (Ballerine, TytoCare, Ecoppia, Zipher held 4,000 characters of a nav menu), and what the
+    # character count alone could never tell apart from a description.
+    assert not jdfill.looks_like_jd(exact) and jdfill.looks_like_jd(_jd_of(jdfill.MIN_DESC))
+    assert not jdfill.looks_like_jd(_jd_of(jdfill.MIN_DESC - 1))       # the length half holds
     import enrich_scrape_jd as esj
     items, gates = esj._todo({"Z": [{"title": "Data Analyst", "url": "https://z/jobs/1",
-                                     "description": exact}]})
+                                     "description": _jd_of(jdfill.MIN_DESC)}]})
     assert items == [] and gates["has_desc"] == 1
+    # the same card holding MIN_DESC characters that are NOT a JD is offered for a fetch —
+    # both drivers agree on both halves of the bar, which is the whole point of this test
+    items, gates = esj._todo({"Z": [{"title": "Data Analyst", "url": "https://z/jobs/1",
+                                     "description": exact}]})
+    assert [i.url for i in items] == ["https://z/jobs/1"] and gates["has_desc"] == 0
 
 
 def test_no_rung_of_the_matched_driver_re_fetches_what_another_rung_already_filled(tmp_path,
@@ -9857,7 +9889,7 @@ def test_no_rung_of_the_matched_driver_re_fetches_what_another_rung_already_fill
     for title, u, d in (("Cache Analyst", "https://a/jobs/1", ""),
                         ("Canon Analyst", "https://a/jobs/2", ""),
                         ("Foreign Analyst", "https://a/jobs/3", ""),
-                        ("Full Analyst", "https://a/jobs/4", "F" * N)):
+                        ("Full Analyst", "https://a/jobs/4", _jd_of(N))):
         st.upsert_matched({**base, "title": title, "url": u, "description": d}, today)
     foreign = "https://il.linkedin.com/jobs/view/data-analyst-at-other-corp-4389427569"
     for title, sids in (("Cache Analyst", "scrape:https://acme.com/careers/cache-analyst"),
@@ -9866,10 +9898,10 @@ def test_no_rung_of_the_matched_driver_re_fetches_what_another_rung_already_fill
     st.conn.commit(); st.close()
     (tmp_path / "scraped_cache.json").write_text(_j6_json.dumps(
         {"ACME": [{"title": "Cache Analyst", "url": "https://acme.com/careers/cache-analyst",
-                   "description": "C" * N},
-                  {"title": "Data Analyst", "url": foreign, "description": "X" * N}]}),
+                   "description": _jd_of(N)},
+                  {"title": "Data Analyst", "url": foreign, "description": _jd_of(N)}]}),
         encoding="utf-8")
-    fetched, texts = [], {"https://a/jobs/2": "B" * N}
+    fetched, texts = [], {"https://a/jobs/2": _jd_of(N)}
 
     def fake(u, **k):
         fetched.append(u)
@@ -10076,7 +10108,7 @@ def test_why_string_names_only_failures_and_the_skip_counters_stay_split(monkeyp
                      "reason:shell": 1})
     assert jdfill.why_string(c) == "timeout2+shell1"
     monkeypatch.setattr(jdfill, "fetch_jd",
-                        lambda u, **k: jdfill.JD("D" * 400, "html", "ok", False))
+                        lambda u, **k: jdfill.JD(_jd_of(400), "html", "ok", False))
     items = [jdfill.Item(i, f"https://x/jobs/{i}", f"C | {i}") for i in range(3)]
     c = jdfill.run_backfill(items, save=lambda *a: None, minutes=None, count_cap=1,
                             dry_run=True, log=lambda s: None)
@@ -14075,3 +14107,108 @@ def test_a_catalog_that_answers_but_no_longer_looks_like_itself_queues_nothing()
     # and the judgement stays OUT of the parser: queue_entries with three slugs is legal
     e5, _r5, _st5 = S.queue_entries(["ness-technologies"], set(), set(), cap=5)
     assert len(e5) == 1, "a small input must not be silently emptied by a policy check"
+
+
+def test_a_two_segment_careers_url_that_names_the_role_is_a_posting():
+    """`is_job_url` refused every `/careers/<role-slug>` address before a byte was fetched, and
+    four live board rows paid for it on 2026-08-28: Ballerine, TytoCare and Zipher shipped the
+    visitor a navigation menu (or nothing) where the day-to-day belongs, and TechBiz shipped a
+    raw JSON blob. Each was refused as `not-a-job-url` by the `>= 3 path segments` rule.
+
+    The title is what settles it, so the test is two-sided: the same URL is a posting for the
+    role it names and NOT one for a role it does not."""
+    from pipeline.jdfill import is_job_url, slug_names_title
+    for url, title in (("https://www.ballerine.com/career/ai-fraud-data-analyst-senior",
+                        "AI Fraud Data Analyst (Senior)"),
+                       ("https://www.tytocare.com/careers/product-analytics-manager/",
+                        "Product Analytics Manager"),
+                       ("https://zipher.ai/careers/senior-data-analyst/", "Senior Data Analyst"),
+                       ("https://jobs.techbiz.global/o/data-analyst", "Data Analyst")):
+        assert is_job_url(url, title), url
+        assert not is_job_url(url), url + " must still be refused with no title to check it"
+    # a careers SECTION is not a posting for any role we would ever fetch it for
+    assert not is_job_url("https://www.amdocs.com/careers/life-at-amdocs", "Data Analyst")
+    assert not is_job_url("https://www.port.io/careers", "Senior BI Analyst")
+    assert not is_job_url("https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel",
+                          "Data Scientist, Product Analytics")
+    # the slug rule itself: one allowed miss (a `-il` / `-remote` suffix), never two
+    assert slug_names_title("senior-data-analyst-il", "Senior Data Analyst")
+    assert not slug_names_title("senior-data-analyst-il-remote", "Senior Data Analyst")
+    assert not slug_names_title("careers", "Careers")            # one word is not evidence
+    # and none of this reopens the door the 3-segment tightening closed
+    assert not is_job_url("https://careers.dhl.com/global/en/search-results?keywords=Israel", "x")
+
+
+def test_page_furniture_is_not_a_description_and_never_outranks_one():
+    """`length >= MIN_DESC` was the whole test for "we already have this role's JD", in both
+    selectors and in the store's write rule. `scrape_universal._read_position_page` keeps 4,000
+    characters of a page's text with no marker test at all, so a Webflow nav bar and a Google
+    Tag Manager snippet cleared the bar, and the role was locked out of the fetch that would
+    have got the real text — for ever, since nothing ever re-examined a row that "had" one."""
+    import enrich_matched_jd as emj
+    from pipeline.jdfill import looks_like_jd
+    furniture = ("WebFont.load({ google: { families: [\"Inter:300,400\"] }}); "
+                 "Platform Products Underwriting Monitoring Onboarding Blog Guides About us "
+                 "Contact Us Schedule Demo Privacy Terms of Use LinkedIn YouTube ") * 30
+    assert len(furniture) > 4000 and not looks_like_jd(furniture)
+    real = _jd_of(1200)
+    assert looks_like_jd(real)
+
+    import sqlite3
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT, description TEXT)")
+    conn.execute("INSERT INTO matched VALUES ('k', ?)", (furniture,))
+    # the shorter REAL description replaces the longer furniture -- "never shorten" is right
+    # between two JDs and exactly wrong between furniture and a JD (Ecoppia, 3,999 -> 2,100)
+    assert emj._store_text(conn, "k", real, furniture) is True
+    assert conn.execute("SELECT description FROM matched").fetchone()[0] == real
+    # ...and it is not undone: furniture never outranks a JD, however long it is
+    assert emj._store_text(conn, "k", furniture, real) is False
+    # between two JDs, length decides again
+    assert emj._store_text(conn, "k", _jd_of(1500), real) is True
+    assert emj._store_text(conn, "k", _jd_of(900), _jd_of(1500)) is False
+
+
+def test_reconcile_does_not_hand_page_furniture_back_to_a_repaired_row():
+    """`reconcile`'s "longer description wins" is right between two JDs and backwards between
+    furniture and a JD. The 2026-08-28 repair replaced Ballerine's, Ecoppia's and TytoCare's
+    ~4,000 characters of Webflow navigation with their real (shorter) descriptions, and the
+    next `open_sync` handed the furniture straight back — sqlite included, so the second sync
+    could not tell it had ever been fixed."""
+    from pipeline.roles import better_description
+    furniture = ("WebFont.load({ google: {} }); Platform Products Underwriting Monitoring "
+                 "Onboarding Blog Guides About us Contact Us Schedule Demo Privacy Terms ") * 30
+    real = _jd_of(1662)
+    assert len(furniture) > len(real)
+    assert better_description(furniture, real) == real       # sqlite side is the repaired one
+    assert better_description(real, furniture) == real       # ...and the ledger side likewise
+    # between two JDs, and between two non-JDs, length still decides
+    assert better_description(_jd_of(900), _jd_of(1500)) == _jd_of(1500)
+    assert better_description(furniture, "short furniture") == furniture
+    assert better_description("", "") == ""
+
+
+def test_every_open_role_in_the_ledger_carries_a_job_description():
+    """The board showed a navigation menu where the day-to-day belongs (operator, 2026-08-28:
+    Hila & Co. and Modellama). This is the standing measurement of the SUBSTRATE — is the text
+    there at all — and it is deliberately not a render test.
+
+    The only roles allowed to fail it are those on a host `unfillable` names: Indeed answers
+    401/403 to every job URL, so the discovery card's snippet is the best text obtainable. If
+    this goes red with a NON-refused row, some rung stopped reading a host it used to read."""
+    import json as _j
+    from pipeline.jdfill import looks_like_jd, unfillable
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    led = os.path.join(root, "cloud_state", "roles.jsonl")
+    txt = os.path.join(root, "cloud_state", "roles_text.jsonl")
+    if not (os.path.exists(led) and os.path.exists(txt)):
+        pytest.skip("no committed ledger in this checkout")
+    with open(led, encoding="utf-8-sig") as f:
+        rows = [_j.loads(ln) for ln in f if ln.strip()]
+    with open(txt, encoding="utf-8-sig") as f:
+        texts = {d["role_id"]: d for d in (_j.loads(ln) for ln in f if ln.strip())}
+    naked = [r for r in rows if r.get("status") == "open"
+             and not looks_like_jd((texts.get(r["role_id"]) or {}).get("description") or "")
+             and not unfillable(r.get("url") or "")]
+    assert not naked, ("open roles with no job description and no refused host: "
+                       + ", ".join(f"{r['company']} | {r['title']}" for r in naked))

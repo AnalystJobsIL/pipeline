@@ -3008,6 +3008,40 @@ nothing could ever read, booked as failed fetches:
   notice, and one (`careers.dhl.com/global/en/search-results?keywords=Israel`) was charged to
   Bright Data on 08-26. It now refuses a URL with no digit in the path whose last segment is a
   listing word, or which ends `.html`, or whose query is a filter with no id.
+* ...but three segments was also too MANY, and that half cost real text until 2026-08-28. A
+  company publishing at `/careers/<role>` was refused before a byte was fetched:
+  `ballerine.com/career/ai-fraud-data-analyst-senior`, `tytocare.com/careers/product-analytics-manager`,
+  `zipher.ai/careers/senior-data-analyst`, `jobs.techbiz.global/o/data-analyst` — **all four
+  live on the board**, three of them showing the visitor a navigation menu where the day-to-day
+  belongs. `is_job_url(url, title)` settles it with no new URL vocabulary: a two-segment path is
+  a posting when its last segment **names the role we are fetching it for** (`slug_names_title`
+  — every slug word but at most one in the title, at least two hits, so `-il`/`-remote` is the
+  one allowed miss). Measured over the 141 ledger rows: **9 admitted, every one a real posting**;
+  the three still refused are Meta's `?offices[0]=` search URL (twice) and `port.io/careers`.
+  Handed an unrelated title it admits nothing — over the 987 cache URLs, "Data Analyst" admitted
+  exactly the two that ARE data-analyst postings. `Item` carries the title so both backfills
+  pass it; `JDFiller` already had it.
+
+**What counts as "we already have this role's text"** (2026-08-28). `looks_like_jd(text)` — long
+enough (`MIN_DESC`) **and** at least two distinct marker families, the same pair of tests
+`extract_jd` applies to a freshly fetched body. It replaces the bare `len(...) >= MIN_DESC` in
+all three places that asked the question (`JDFiller.maybe_fill`, `enrich_scrape_jd._todo`, the
+matched driver's row filter), because a character count cannot tell a job description from page
+furniture. `scrape_universal._read_position_page` stores a page's text capped at 4,000
+characters with **no marker test at all**, so a Webflow nav bar, a GTM snippet and a cookie
+banner cleared the 300-character bar, and the role was locked out of the fetch that would have
+got the real text — for ever, since nothing re-examined a row that "had" one. Measured on the
+2026-08-28 ledger: **10 of 70 open roles** carried text this predicate rejects; four (Ballerine,
+TytoCare, Ecoppia, Zipher) had no job description in them at all.
+
+**Which of two stored texts wins.** "Never shorten" is right between two JDs and exactly
+backwards between furniture and a JD — Ecoppia's real description is 2,100 characters against
+3,999 of Google Tag Manager. Both write paths now prefer a JD to a non-JD and fall back to
+length only when both sides are the same kind: `enrich_matched_jd._store_text` and
+`roles.better_description` (used by `roles.reconcile` — a cross-lane change; `roles` owns the
+file). The second one is load-bearing: without it `open_sync` handed the furniture back on the
+next run **and wrote it into sqlite**, so the second sync could not tell the row had ever been
+repaired.
 
 **The two parsers over one body.** `extract_jd` is the marker heuristic (two distinct section
 markers). `jsonld_jd` reads the page's own `<script type="application/ld+json">` and returns
@@ -3048,8 +3082,8 @@ a day go through that path.
 | caller | when | what it walks | Bright Data |
 |---|---|---|---|
 | `JDFiller` (`pipeline/run.py`, before `seniority.classify`) | 05:00, in the digest | every Israel-matched role whose title the classifier could accept, `JDFILL_TIME_BUDGET_MIN` (25) | never |
-| `enrich_scrape_jd.py` | 05:00, before the pipeline | description-less (`< MIN_DESC`), relevance-gated, non-chrome jobs in `scraped_cache.json`, deduped by url | `JD_ENRICH_BD_CAP` **40**, `JD_ENRICH_TIME_BUDGET_MIN` 25 |
-| `enrich_matched_jd.py` | 05:00, before the pipeline | every LIVE `matched` row under 300 chars, any age, any source | `MATCHED_JD_BD_CAP` **25**, `MATCHED_JD_TIME_BUDGET_MIN` 20 (yml) |
+| `enrich_scrape_jd.py` | 05:00, before the pipeline | cards failing `looks_like_jd`, relevance-gated, non-chrome, in `scraped_cache.json`, deduped by url | `JD_ENRICH_BD_CAP` **40**, `JD_ENRICH_TIME_BUDGET_MIN` 25 |
+| `enrich_matched_jd.py` | 05:00, before the pipeline | every LIVE `matched` row failing `looks_like_jd`, any age, any source | `MATCHED_JD_BD_CAP` **25**, `MATCHED_JD_TIME_BUDGET_MIN` 20 (yml) |
 
 The two caps were 400 and 250 until 2026-08-26 — 650 credits a day, 13 % of the monthly pool in
 one morning, against a shared allowance that stood at **118 % (5,906 / 5,000, projected

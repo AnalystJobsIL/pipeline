@@ -34,8 +34,9 @@ import sqlite3
 import sys
 
 from pipeline.jdfill import (DESC_MAX, MIN_DESC, RETRY_DAYS, Item, Unlocker, _REPO_ROOT,
-                             alarm_for, load_secrets, record_enrich, run_backfill,
-                             stamp_path_for, unfillable as _unfillable, why_string)
+                             alarm_for, load_secrets, looks_like_jd, record_enrich,
+                             run_backfill, stamp_path_for, unfillable as _unfillable,
+                             why_string)
 
 for _s in (sys.stdout, sys.stderr):        # a cp1252 pipe must not kill the report
     try:
@@ -148,6 +149,23 @@ def cache_texts(path):
     return out, "ok"
 
 
+def _store_text(conn, mkey, text, have):
+    """Write `text` unless what is already stored is a better JD.
+
+    "Never shorten" was the whole rule, and it is right between two job descriptions — but it
+    is exactly wrong between page furniture and a job description. Ecoppia's row held 3,999
+    characters of Google Tag Manager and a nav bar; the clean 2,100-character JD the fetch
+    returned is shorter, and the old UPDATE refused it. So: a real JD always beats text that is
+    not one, and only after both sides are JDs does length decide."""
+    text, have = (text or "")[:DESC_MAX], have or ""
+    if looks_like_jd(have) and not looks_like_jd(text):
+        return False
+    if looks_like_jd(have) == looks_like_jd(text) and len(text) <= len(have):
+        return False
+    conn.execute("UPDATE matched SET description=? WHERE mkey=?", (text, mkey))
+    return True
+
+
 def _ensure_column(conn):
     cols = {r[1] for r in conn.execute("PRAGMA table_info(matched)")}
     if "jd_attempted" not in cols:
@@ -183,11 +201,16 @@ def _run(args, stamp):
     # COALESCE, not a bare `!=`: insert_matched writes NULL and roles.reconcile writes '', and
     # `status != 'superseded'` is NULL for every NULL row — which would silently select
     # nothing and, before the `jd-nothing-attempted` alarm existed, say nothing about it.
-    rows = conn.execute(
-        """SELECT mkey, company, title, url, COALESCE(jd_attempted,''), COALESCE(seen_ids,'')
-           FROM matched WHERE length(COALESCE(description,'')) < ?
-             AND COALESCE(status,'') != 'superseded'
-           ORDER BY last_seen DESC, first_seen DESC""", (MIN_DESC,)).fetchall()
+    # `looks_like_jd`, not `length < MIN_DESC`: sqlite can count characters but cannot tell a
+    # job description from a navigation menu, and 4 of the 70 open roles on 2026-08-28 held
+    # 4,000 characters of Webflow furniture that cleared the length gate and locked the role
+    # out of the fetch for good. The SELECT stays cheap and wide; the JD test runs in Python.
+    rows = [r for r in conn.execute(
+        """SELECT mkey, company, title, url, COALESCE(jd_attempted,''), COALESCE(seen_ids,''),
+                  COALESCE(description,'')
+           FROM matched WHERE COALESCE(status,'') != 'superseded'
+           ORDER BY last_seen DESC, first_seen DESC""").fetchall()
+            if not looks_like_jd(r[6])]
 
     state_dir = os.path.dirname(os.path.abspath(args.db))
     dead, ledger_status = dead_role_ids(os.path.join(state_dir, "roles.jsonl"))
@@ -202,7 +225,7 @@ def _run(args, stamp):
     # There is no fetch-the-siblings pass — wave 1 measured its yield at 0 and its risk at
     # publishing another employer's job description under this company's name.
     from_cache, foreign, still = 0, 0, []
-    for mkey, comp, title, url, att, seen_ids in alive:
+    for mkey, comp, title, url, att, seen_ids, have in alive:
         best = ""
         for sib in sibling_urls(seen_ids, url):
             if not _own_address(comp, sib):
@@ -211,22 +234,19 @@ def _run(args, stamp):
             text = texts.get((str(comp).strip().lower(), sib), "")
             if len(text) > len(best):
                 best = text
-        if len(best) >= MIN_DESC:
+        if looks_like_jd(best):
             from_cache += 1
             print(f"  [OK ] {(comp + ' | ' + title)[:64]:<64} cache/own-address {len(best)}",
                   flush=True)
             if not args.dry_run:
-                conn.execute(
-                    """UPDATE matched SET description=?
-                       WHERE mkey=? AND length(?) > length(COALESCE(description,''))""",
-                    (best[:DESC_MAX], mkey, best[:DESC_MAX]))
+                _store_text(conn, mkey, best, have)
                 conn.commit()
         else:
             still.append((mkey, comp, title, url, att))
 
-    items = [Item(mkey, url, f"{comp} | {title}", att, comp)
+    items = [Item(mkey, url, f"{comp} | {title}", att, comp, title)
              for mkey, comp, title, url, att in still if str(url or "").startswith("http")]
-    print(f"{len(rows)} matched roles under {MIN_DESC} chars, {n_dead} closed or superseded "
+    print(f"{len(rows)} matched roles without a job description, {n_dead} closed or superseded "
           f"(skipped), {from_cache} filled from another of the role's own addresses, "
           f"{foreign} sibling addresses refused (they name another company), "
           f"{len(items)} to fetch"
@@ -234,14 +254,11 @@ def _run(args, stamp):
 
     bd = Unlocker(cap=int(os.environ.get("MATCHED_JD_BD_CAP", str(BD_CAP))))
 
+    have_by_key = {r[0]: r[6] for r in rows}
+
     def save(item, text, stamp_v):
-        # never shorten what is already there (the module docstring's promise, and the same
-        # rule `store.upsert_matched` enforces on the other side)
         if text:
-            conn.execute(
-                """UPDATE matched SET description=?
-                   WHERE mkey=? AND length(?) > length(COALESCE(description,''))""",
-                (text[:DESC_MAX], item.key, text[:DESC_MAX]))
+            _store_text(conn, item.key, text, have_by_key.get(item.key, ""))
         conn.execute("UPDATE matched SET jd_attempted=? WHERE mkey=?", (stamp_v, item.key))
         conn.commit()
 
@@ -250,10 +267,9 @@ def _run(args, stamp):
                      bd=bd, dry_run=args.dry_run, retry_days=args.cooldown_days,
                      count_cap=args.limit, log=lambda s: print(s, flush=True))
 
-    still_short = conn.execute(
-        """SELECT mkey, COALESCE(url,'') FROM matched
-           WHERE length(COALESCE(description,'')) < ? AND COALESCE(status,'') != 'superseded'""",
-        (MIN_DESC,)).fetchall()
+    still_short = [r[:2] for r in conn.execute(
+        """SELECT mkey, COALESCE(url,''), COALESCE(description,'') FROM matched
+           WHERE COALESCE(status,'') != 'superseded'""").fetchall() if not looks_like_jd(r[2])]
     short_left = len(still_short)
     # how many of those anything could still act on: not a closed role, not a refused host
     actionable = sum(1 for mkey, u in still_short
@@ -274,7 +290,7 @@ def _run(args, stamp):
     print(f"=== matched JD backfill: {c['filled'] + from_cache} filled "
           f"({c['bd']} via Bright Data, {from_cache} from another of the role's own addresses), "
           f"{c['fail']} unfetchable (retry in {args.cooldown_days}d), {c['cooldown']} in cooldown, "
-          f"{bd.used} Bright Data requests spent, {short_left} roles still without text "
+          f"{bd.used} Bright Data requests spent, {short_left} roles still without a JD "
           f"({actionable} of them actionable)"
           + (f" [{bd.unavailable}]" if bd.unavailable else "") + " ===")
     return 0
