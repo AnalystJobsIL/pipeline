@@ -1121,6 +1121,19 @@
     "stage_note": "Resident Home acquired by Ashley Home/Ashley Furniture Industries in March 2024 (~$900M 2023 sales); rebranded Ashley Digital, reported $1B+ net revenue in 2025",
     "sub_sector": "Direct-to-consumer online mattress and home-furnishings brands (Nectar, DreamCloud, Awara, Siena) — the e-commerce/technology arm of Ashley Furniture"
   },
+  "Astera Labs": {
+    "as_of": "2026-08-27",
+    "business_model": "Semiconductor connectivity solutions (fabless chip designer) for AI/cloud infrastructure",
+    "customer_type": "B2B",
+    "employees_global": 1200,
+    "founded": 2017,
+    "il_center": "Ramat Gan and Haifa (R&D design centers); HQ in Santa Clara, US",
+    "sector": "Semiconductors",
+    "size_band": "L",
+    "stage": "public",
+    "stage_note": "NASDAQ: ALAB, IPO March 2024",
+    "sub_sector": "Connectivity chips for AI/cloud data centers"
+  },
   "AstraZeneca": {
     "as_of": "2026-08-21",
     "business_model": "Develops, manufactures and sells patented prescription medicines to healthcare systems worldwide",
@@ -1439,6 +1452,19 @@
     "stage": "acquired-by-bigtech",
     "stage_note": "Acquired by Alcon, completed July 2024 — $81M upfront (incl. $65M cash) plus up to $385M in milestones",
     "sub_sector": "Ophthalmic laser device (Eagle) for first-line glaucoma treatment via direct selective laser trabeculoplasty (DSLT)"
+  },
+  "BeyondTrust": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B",
+    "customer_type": "Enterprise",
+    "employees_global": 1700,
+    "founded": 1985,
+    "il_center": "Tel Aviv (R&D, ex-Entitle acquisition); HQ in Atlanta, US",
+    "sector": "Cybersecurity",
+    "size_band": "L",
+    "stage": "private-enterprise",
+    "stage_note": "PE-owned (Clearlake Capital, Francisco Partners); acquired Israeli startup Entitle in 2024",
+    "sub_sector": "Privileged Access Management / Identity Security"
   },
   "BigID": {
     "as_of": "2026-08-21",
@@ -1787,6 +1813,19 @@
     "stage": "early-private",
     "stage_note": "Seed Feb 2022 (Pagaya Opportunity Fund); follow-on round Oct 2024 led by Nyca Partners, no disclosed valuation",
     "sub_sector": "AI-powered debt collection and consumer debt resolution platform"
+  },
+  "Brandlight": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B SaaS",
+    "customer_type": "Enterprise",
+    "employees_global": 30,
+    "founded": 2024,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Marketing Technology / AI",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Raised $35.7M total incl. pre-seed led by Cardumen Capital & G20 Ventures, 2025",
+    "sub_sector": "AI Engine Optimization (AEO) / Brand Visibility"
   },
   "Brenmiller Energy": {
     "as_of": "2026-08-23",
@@ -2242,6 +2281,19 @@
     "stage_note": "Series F May 2022 at $8.6B valuation (secondary-market marks since revised lower); still private",
     "sub_sector": "blockchain intelligence — crypto transaction tracing, compliance and fraud/investigation analytics"
   },
+  "Chamelio": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B SaaS",
+    "customer_type": "B2B",
+    "employees_global": 30,
+    "founded": 2024,
+    "il_center": "Tel Aviv",
+    "sector": "Legal Tech",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "$10M seed round led by Work-Bench and Emerge",
+    "sub_sector": "AI-powered contract & legal intelligence platform"
+  },
   "Chaos Labs": {
     "as_of": "2026-08-21",
     "business_model": "Sells risk-management platform subscriptions/engagements and oracle services (Edge) to DeFi protocols and trading platforms",
@@ -2358,6 +2410,19 @@
     "stage": "public",
     "stage_note": "NASDAQ: CSCO, ~86,200 employees per FY2025 annual report (July 2025)",
     "sub_sector": "Networking hardware, security and collaboration software; Israel sites build network processor ASICs, routing silicon, DPI and security tech"
+  },
+  "Citadel Cyber Security": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B services",
+    "customer_type": "enterprise",
+    "employees_global": 200,
+    "founded": 2009,
+    "il_center": "Rehovot (HQ)",
+    "sector": "Cybersecurity",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned Israeli consulting/MSSP firm, no public VC funding identified",
+    "sub_sector": "Managed Security Services / Consulting"
   },
   "Citi": {
     "as_of": "2026-08-22",
@@ -2730,6 +2795,19 @@
     "stage": "public",
     "stage_note": "Listed on XETRA as CON (Continental AG, Hanover); spun off its Automotive sector as AUMOVIO in Sept 2025 and agreed to sell ContiTech to Lone Star in 2026",
     "sub_sector": "tier-1 automotive supplier now realigning to a pure-play tire manufacturer; Israeli site focuses on connected/autonomous-vehicle and automotive cybersecurity innovation"
+  },
+  "ControlUp": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B",
+    "customer_type": "enterprise",
+    "employees_global": 260,
+    "founded": 2011,
+    "il_center": "Ra'anana (R&D); HQ in Silicon Valley, US",
+    "sector": "Enterprise Software",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Raised $100M co-led by K1 and JVP, ~$140M total raised",
+    "sub_sector": "Digital Employee Experience (DEX) / IT Monitoring"
   },
   "Coralogix": {
     "as_of": "2026-08-21",
@@ -4896,6 +4974,19 @@
     "stage_note": "Seed-stage: $6M seed (Jun 2022, At One Ventures, Doral Energy-Tech); ~$20.5M total raised per PitchBook, last round Mar 2025",
     "sub_sector": "Zero-emission iron & steel production tech (Helios Cycle) originally developed for extracting oxygen from lunar soil"
   },
+  "Hello Heart": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B2C digital health platform sold to employers/health plans",
+    "customer_type": "Enterprise employers, health plans, payers",
+    "employees_global": 613,
+    "founded": 2013,
+    "il_center": "Tel Aviv (R&D); HQ in Menlo Park, CA",
+    "sector": "Digital Health",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "$70M Series D led by Stripes, May 2022; ~$137M total raised",
+    "sub_sector": "Heart health / chronic disease management app"
+  },
   "Hewlett Packard Enterprise": {
     "as_of": "2026-08-21",
     "business_model": "sells enterprise hardware (servers, storage, networking) plus GreenLake as-a-service consumption subscriptions and support services",
@@ -5014,6 +5105,19 @@
     "stage": "growth-private",
     "stage_note": "Series E: $250M in Nov 2021 at $2.4B valuation (Tiger Global); ~$498M raised total",
     "sub_sector": "Clientflow and business management platform for independent service-based businesses (contracts, invoicing, payments, scheduling)"
+  },
+  "Honeycomb Insurance": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B/B2C - AI-driven commercial property insurance (insurtech)",
+    "customer_type": "Property owners, landlords, and businesses seeking commercial insurance",
+    "employees_global": 100,
+    "founded": 2019,
+    "il_center": "Tel Aviv (HQ/R&D); commercial ops in US",
+    "sector": "Insurtech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Raised $40M round in 2026 led by Zeev Ventures, total funding ~$95M",
+    "sub_sector": "AI-based commercial property insurance"
   },
   "Houzz": {
     "as_of": "2026-08-26",
@@ -5713,6 +5817,19 @@
     "stage_note": "NASDAQ: JAMF, IPO 2020",
     "sub_sector": "Apple device management (MDM) and endpoint security for Mac/iOS fleets"
   },
+  "Jiga": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B SaaS marketplace/platform for custom manufacturing sourcing",
+    "customer_type": "B2B",
+    "employees_global": 50,
+    "founded": 2020,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Industrial Tech / Supply Chain",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Raised $12M Series A led by Aleph (2025), total ~$19M raised",
+    "sub_sector": "Manufacturing procurement & sourcing platform"
+  },
   "Jit": {
     "as_of": "2026-08-23",
     "business_model": "SaaS subscription for its security-orchestration platform (free tier plus paid per-developer/per-org plans); now sold as part of Torq's platform",
@@ -6401,6 +6518,19 @@
     "stage": "public",
     "stage_note": "NYSE: MA; ~$500B market cap, one of the world's largest payment companies",
     "sub_sector": "global payments network — card processing, fraud prevention and payment security services"
+  },
+  "Matia": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B SaaS - DataOps platform (ETL, reverse ETL, observability, catalog)",
+    "customer_type": "Enterprises/mid-market companies needing unified data management",
+    "employees_global": 40,
+    "founded": 2023,
+    "il_center": "Israel (HQ); also US office",
+    "sector": "Data Infrastructure / DataOps",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Series A, $21M raised Oct 2024, led by Red Dot Capital Partners; total $31M raised",
+    "sub_sector": "ETL / Data Observability / Data Catalog"
   },
   "Matific": {
     "as_of": "2026-08-21",
@@ -7145,6 +7275,19 @@
     "stage_note": "~$20.6M raised; valued at NIS 572M (~$155M) per PwC valuation at end of 2025; Mastercard Move partnership",
     "sub_sector": "Cross-border payments and neobanking for migrant workers (remittances, multi-currency accounts, payout API)"
   },
+  "Ness Technologies": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B",
+    "customer_type": "Enterprise",
+    "employees_global": 2200,
+    "founded": 1999,
+    "il_center": "Ra'anana (HQ)",
+    "sector": "IT Services",
+    "size_band": "L",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Part of Hilan Group (TASE-listed) since 2014",
+    "sub_sector": "IT Consulting & Outsourcing"
+  },
   "Nestle": {
     "as_of": "2026-08-25",
     "business_model": "Manufactures and sells branded food, beverage, nutrition and pet-care products through retail and foodservice channels",
@@ -7874,6 +8017,19 @@
     "stage": "early-private",
     "stage_note": "$14.5M Series A (Jan 2023, led by ComfortDelGro and AI Alliance Fund); ~$26.5M raised total",
     "sub_sector": "AI-based teleoperation (remote assistance/control) platform for autonomous vehicles and machines"
+  },
+  "OurRitual": {
+    "as_of": "2026-08-27",
+    "business_model": "B2C subscription app connecting couples with relationship experts",
+    "customer_type": "B2C",
+    "employees_global": 140,
+    "founded": 2021,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "HealthTech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Seed round, $5.2M, July 2024; total funding $7.2M",
+    "sub_sector": "Digital Relationship/Couples Therapy"
   },
   "Outbrain": {
     "as_of": "2026-08-21",
@@ -10805,6 +10961,19 @@
     "stage_note": "Formerly NYSE/TSX: TIXT; parent TELUS Corporation bought out the minority and completed privatization on 2025-10-31 (~US$4.50/share, ~US$2.9B total transaction value); now a 100%-owned TELUS subsidiary",
     "sub_sector": "digital customer experience, AI data annotation and trust & safety outsourcing for global brands"
   },
+  "TLVTech": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B software development/consulting (custom software, AI, DevOps, staff augmentation)",
+    "customer_type": "Startups, SMBs, enterprises, and government entities",
+    "employees_global": 40,
+    "founded": 2018,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "IT Services / Software Consulting",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped Israeli software consultancy, no venture funding reported",
+    "sub_sector": "Custom Software Development & DevOps Consulting"
+  },
   "TaKaDu": {
     "as_of": "2026-08-23",
     "business_model": "SaaS subscription — water/gas utilities pay recurring licence fees per network for the Central Event Management analytics service",
@@ -11348,6 +11517,19 @@
     "stage_note": "$100M Series C (Oct 2022, Temasek-led); ~$199M total raised over 5 rounds",
     "sub_sector": "camera-based frictionless checkout and in-store analytics platform for grocery retailers"
   },
+  "Triple Whale": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B SaaS",
+    "customer_type": "B2B",
+    "employees_global": 291,
+    "founded": 2021,
+    "il_center": "Jerusalem (HQ)",
+    "sector": "Marketing Technology / E-commerce Analytics",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Series B, $55.4M total raised, backed by Shopify and VC firms",
+    "sub_sector": "E-commerce data & analytics platform"
+  },
   "TripleW": {
     "as_of": "2026-08-23",
     "business_model": "sells waste-derived lactic acid/PLA to industrial buyers and licenses/operates waste-to-chemical plants",
@@ -11778,6 +11960,19 @@
     "stage_note": "Series E $250M at $2B valuation (Nov 2021, Third Point-led); ~$550M total raised, but valuation reported down to ~$300M by 2026 (CTech)",
     "sub_sector": "AI-plus-human transcription, captioning and audio-accessibility platform for legal, media, education and corporate verticals"
   },
+  "Verifone": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B payment technology and services",
+    "customer_type": "B2B",
+    "employees_global": 6000,
+    "founded": 1981,
+    "il_center": "Rosh HaAyin; HQ in New York, US",
+    "sector": "Fintech",
+    "size_band": "XL",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by Francisco Partners (PE) for $3.4B in 2018; PE-owned, not bigtech-owned",
+    "sub_sector": "Payments / Point-of-Sale technology"
+  },
   "Verint": {
     "as_of": "2026-08-21",
     "business_model": "Subscription/SaaS licenses for CX automation, workforce engagement and analytics software sold to contact-center operations",
@@ -11816,6 +12011,19 @@
     "stage": "public",
     "stage_note": "NYSE: VZ (Verizon Communications, Dow Jones component)",
     "sub_sector": "wireless, broadband and enterprise network/communications services (US carrier)"
+  },
+  "Versatile": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B SaaS/hardware",
+    "customer_type": "General contractors and construction companies",
+    "employees_global": 150,
+    "founded": 2018,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Construction Tech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Series B $80M (2021), led by Insight Partners/Tiger Global; total raised ~$106M",
+    "sub_sector": "AI/IoT jobsite analytics (crane monitoring, CraneView)"
   },
   "Vertical Field": {
     "as_of": "2026-08-23",
@@ -12137,6 +12345,19 @@
     "stage_note": "acquired by Google for $32B, closed 2026-03-11; operates inside Google Cloud",
     "sub_sector": "cloud security (CNAPP)"
   },
+  "Wolt": {
+    "as_of": "2026-08-27",
+    "business_model": "Marketplace/on-demand delivery platform (food, retail delivery)",
+    "customer_type": "B2C",
+    "employees_global": null,
+    "founded": 2014,
+    "il_center": "Tel Aviv (local operations/office)",
+    "sector": "Consumer Internet / Delivery Tech",
+    "size_band": "L",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by DoorDash, deal completed May 2022 (~$8.1B stock deal)",
+    "sub_sector": "Food & Retail Delivery"
+  },
   "Wonderful": {
     "as_of": "2026-08-21",
     "business_model": "Sells deployment of production-grade AI agents that automate enterprise customer-support/call-center interactions (B2B SaaS/usage contracts)",
@@ -12175,6 +12396,19 @@
     "stage": "growth-private",
     "stage_note": "$40M Series C led by Lead Edge Capital (Nov 2021); ~$60M total raised",
     "sub_sector": "AI-powered scheduling, dispatch, invoicing and payments platform for home-service businesses (HVAC, plumbing, locksmith, appliance repair)"
+  },
+  "WorldQuant": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B/Proprietary quantitative investment management",
+    "customer_type": "Institutional investors (own hedge fund/asset management)",
+    "employees_global": 1100,
+    "founded": 2007,
+    "il_center": "Ramat Gan (Research Office)",
+    "sector": "Finance/FinTech",
+    "size_band": "L",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned quantitative hedge fund/asset manager, not VC-backed",
+    "sub_sector": "Quantitative asset management / algorithmic trading"
   },
   "XACT Robotics": {
     "as_of": "2026-08-22",
@@ -12910,6 +13144,19 @@
     "stage": "growth-private",
     "stage_note": "$145M round at $1.64B valuation (2026); ~$276M raised total; formerly LifeBEAM",
     "sub_sector": "Enterprise AI platform and vertical AI agents for patient/member engagement, retention and operations in healthcare, life sciences and wellness"
+  },
+  "zap group": {
+    "as_of": "2026-08-27",
+    "business_model": "Consumer internet portals: price comparison, yellow pages/directories, classifieds, digital advertising",
+    "customer_type": "B2C",
+    "employees_global": 300,
+    "founded": 1968,
+    "il_center": "Petah Tikva (HQ)",
+    "sector": "Internet / Digital Media",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Acquired by Formula Systems in April 2021, valuation ~$73-91M; majority owned by Formula Systems Group",
+    "sub_sector": "Price comparison, classifieds, and directory portals"
   },
   "אסם": {
     "as_of": "2026-08-27",
