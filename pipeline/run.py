@@ -269,6 +269,35 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         print(f"  SKIP {r['company_name']}: scrape row points at an aggregator "
               f"({r['api_url'][:60]}) — would ingest other companies' jobs", flush=True)
     rows = [r for r in rows if r not in _agg]
+    # lane: roles (ARCHITECTURE 7c). Two facts about the registry that the role record needs
+    # and `matched` cannot carry, both read here so `pipeline/roles.py` never has to open
+    # companies.csv (which would make its unit tests depend on the live registry).
+    #   `_origins`: the address each company's board was fetched FROM — the token when that
+    #     is a tenant, the api_url when the row is a scrape row. `merge_duplicates` uses it
+    #     to decide which member may donate the reader's link and the published text.
+    #   `_never_ours`: rows whose api_url is an AGGREGATOR. `_agg` above is the same test on
+    #     ACTIVE rows only, and the roles that reached subscribers under `### Tel Aviv` sit
+    #     on a row that has since been parked — so this reads the whole registry.
+    try:
+        _all_rows = load_companies(active_only=False)
+    except TypeError:      # a test or rehearsal has replaced the reader with a stub that
+        _all_rows = load_companies()   # takes no arguments: degrade to the active rows,
+                                       # which purges less rather than more
+    _origins = {r["company_name"]: ((r.get("token") or "").strip() or r.get("api_url") or "")
+                for r in _all_rows}
+    # ...as IDENTITIES, and never one that a live row also answers to. `store._norm_company`
+    # strips one trailing corporate suffix, so a raw-name set would miss a parked `X GmbH`
+    # while a naively normalised one would purge the ACTIVE `X` beside it — the registry
+    # holds eleven such twins. One set, used by BOTH `_alive` and `record_run`.
+    from .store import _norm_company as _ident
+    # `api_url` ONLY. Widening this to `token` was tried and is a NO-GO: 40 rows carry an
+    # aggregator address in `token` (a fingerprint of the `url-cleared` repair passes) while
+    # `api_url` holds a real board, and they include Deloitte, Shufersal, Zim, JTI, Phoenix
+    # Financial and Akamai — real employers whose live roles would have left the product.
+    _agg_named = {r["company_name"] for r in _all_rows if is_aggregator(r.get("api_url") or "")}
+    _live_named = {r["company_name"] for r in _all_rows
+                   if r.get("active") == "true" and r["company_name"] not in _agg_named}
+    _never_ours = {_ident(n) for n in _agg_named} - {_ident(n) for n in _live_named}
     if only:
         want = {o.strip().lower() for o in only}
         rows = [r for r in rows if r["company_name"].strip().lower() in want]
@@ -386,7 +415,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     _phase("role record")
     stats["accepted"] = len(accepted)
-    merged = store.merge_duplicates(accepted)
+    merged = store.merge_duplicates(accepted, _origins)
     # one posting fetched under two company names (two registry rows on one board) is ONE
     # role: kept under one name, the other named in the mail — never published twice
     merged, _claim_lines = ledger.resolve_claims(merged, failed=failed_names,
@@ -403,8 +432,16 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     # persist every matched role into the rolling store (first_seen kept on conflict), then
     # derive the two windows: email = roles posted in the last ~48h, board = still open.
+    # lane: roles. A seen_id that names two different roles means one of them can never be
+    # emailed again; the ledger raises it on the Stages line rather than repairing it.
+    ledger.id_collisions(merged)
+    # `closed_keys()` is the ledger's record of what this pipeline LOOKED FOR and did not
+    # find. It replaces a calendar gap, which cannot tell an absent role from an absent RUN
+    # and so re-badges the whole board after an outage (BACKLOG 139). None when the ledger
+    # is frozen, and `upsert_matched` then keeps the calendar rule.
+    _closed = ledger.closed_keys()
     for j in merged:
-        st.upsert_matched(j, run_date)
+        st.upsert_matched(j, run_date, _closed)
     today = dt.date.fromisoformat(run_date)
     cutoff_email = (today - dt.timedelta(days=1)).isoformat()    # ~48h (date granularity)
     def _posted_in(j, cutoff):
@@ -433,7 +470,16 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     fail_grace = (today - dt.timedelta(days=7)).isoformat()
 
     def _alive(j):
-        """Is this role still open? = we saw it in the latest scan of its company."""
+        """Is this role still open? = we saw it in the latest scan of its company.
+
+        lane: roles — a company whose registry row points at an aggregator was never an
+        employer, so its roles are on nobody's board. Parking such a row stops it being
+        fetched but does NOT stop it being alive for one more day (`last_seen` is still
+        yesterday's), which is how three of `Tel Aviv`'s postings — a CITY, activated on a
+        job board — reached subscribers on 2026-08-26. This one predicate gates the email,
+        the board and therefore the archive."""
+        if _ident(j.get("company")) in _never_ours:
+            return False
         last = j.get("last_seen", "")
         if last >= yesterday:
             return True
@@ -506,10 +552,25 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     # the role record's own verdict on the run: what closed, reopened, was re-posted; the
     # ledger flushed (or why not). Closure is judged only where this run actually looked.
+    # 40 registry rows carry an aggregator address in `token`; one repair pass copying that
+    # into `api_url` would take every one of them off the board in a single morning. That is
+    # CLAUDE.md rule 2 — a mass-zero is a broken run, not a measurement — and this predicate
+    # gates the email, the board AND the archive, so it gets the same treatment as a
+    # mass-close: the purge is abandoned for the day and the mail says so.
+    _purge_hits = [j for j in st.get_matched_since("0000-01-01")
+                   if _ident(j["company"]) in _never_ours]
+    if len(_purge_hits) > max(10, 0.25 * max(1, len(board_jobs) + len(_purge_hits))):
+        _line = (f"roles mass-purge held ({len(_purge_hits)} roles at rows that read as "
+                 f"aggregators) — a broken registry pass, not a measurement")
+        _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
+        _never_ours = set()
+        board_jobs = [j for j in st.get_matched_since("0000-01-01") if _alive(j)]
+        alive_jobs = list(board_jobs)
+
     _role_lines = ledger.record_run(
         run_date, board_jobs=alive_jobs, merged=merged,
         scanned_ok={r["company_name"] for r in rows}, failed=failed_names, paths=paths,
-        scoped=bool(only or limit))
+        scoped=bool(only or limit), never_ours=_never_ours)
     _role_lines = _role_lines + _claim_lines
     for _line in [a for a in ledger.alarms if a not in _stage_alarms]:
         _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
@@ -575,7 +636,12 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # archive: everything ever matched that is NOT on the current board
     onboard = {(j["company"], j["title"]) for j in board_jobs}   # = still open
     arch = [j for j in st.get_matched_since("0000-01-01")
-            if (j["company"], j["title"]) not in onboard]
+            if (j["company"], j["title"]) not in onboard
+            # a row that was never an employer is off EVERY product, not just the board.
+            # The archive is `matched` minus board and never reads the ledger, so `purged`
+            # alone left seven other employers' postings publishing under the name of a city
+            # on a page headed "no longer on the employer's careers page".
+            and _ident(j["company"]) not in _never_ours]
     # The store keeps every role forever — which is the point, it IS the archive — but the
     # PAGE renders a full detail card per role, so it would grow without bound. Newest
     # first; the database keeps the tail whether or not the page shows it.

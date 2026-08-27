@@ -3291,6 +3291,150 @@ corrupt `roles_text.jsonl` alone freezes only itself; statuses still record and 
 is read from sqlite). A BOM, CRLF, blank lines and the odd bad line are tolerated
 (skipped, counted, reported).
 
+### The across-day key — what makes two sightings the same posting
+
+`store.seen_id` is the identity `filter_new` reads: a role is emailed only when **none** of
+its `seen_ids` is in the `sent` table, so two different postings sharing one key means one of
+them is never emailed again. Two things can produce that, and they are invisible to each
+other — an audit that counts one walks straight past the other.
+
+**A key that is unique only per tenant.** `seen_id` was `{ats_platform}:{job_id}`, and
+BambooHR job ids are small per-tenant integers: on 2026-08-27 `bamboohr:39` was BOTH
+Bringoz's *Customer Success Director* and Miggo Security's *Senior Backend Engineer*
+(BACKLOG 285, found by `registry`, whose nightly conversions create these). The key is now
+`{platform}@{tenant}:{job_id}` for the platforms whose id space is per tenant by
+construction — `bamboohr, oraclehcm, eightfold, microsoft, phenom` (`store._TENANT_SCOPED`).
+
+The list is by the fetcher's id EXPRESSION, not by today's collision count. Enumerated live
+over every active board on 2026-08-27 (free public APIs, ~23,000 postings), only bamboohr had
+actually collided — greenhouse 0 of 8,088 · smartrecruiters 0 of 5,958 · oraclehcm 0 of 2,588
+· comeet 0 of 2,246 · ashby 0 of 2,076 · lever 0 of 756 · workday 0 of 552 · recruitee 0 of
+233 · workable 0 of 105 · breezy 0 of 54 · eightfold 0 of 38 · phenom 0 of 22 · microsoft 0
+of 16 · **bamboohr 3 of 72**. Comeet, greenhouse, ashby, lever, smartrecruiters, recruitee,
+breezy and workable are globally unique by construction and are NOT scoped; `scrape` and every
+`discovery-*` prefix already key on a url.
+
+*The tenant goes in the platform half, before the colon.* Exactly two readers parse this
+format and both take everything after the FIRST colon as the identifier: `roles._strong_ids`,
+and `enrich_matched_jd.sibling_urls`, which does `sid.split(":", 1)[1]` then
+`startswith("http")`. `seen_id`'s fallback branch puts a url in the id half, so a tenant after
+the colon would silently return nothing for every role and kill `jd-text`'s whole
+scrape-sibling JD rung (§7a). The tenant is also regex-constrained to exclude `+`, the
+`matched.seen_ids` column delimiter — a `+` there makes that column round-trip lossy, and both
+halves are then in nobody's `sent` table, which re-emails the role.
+
+*`_tenant_of` reads the posting's own url*, so no fetcher and no registry column changes.
+Host alone is not enough: Oracle HCM has SHARED SaaS pods (Verint sits on
+`fa-epcb-saasfaprod1.fa.ocs.oraclecloud.com`, one host carrying many tenants) separated only
+by their `sites/CX_…` segment. It cuts the path at the first posting-marker segment (`job`,
+`jobs`, `apply`, `careers`, …), which the data dictated: without that cut, **21 of 56 scoped
+boards yielded more than one tenant token**, because the Workday path carries the office and
+the Eightfold path a per-posting id. With it, 56 of 56 yield exactly one.
+
+**A "job id" that is not an id.** `fetch_workday` reads `bulletFields[0]`, which is a
+*tenant-configured display list*, not a requisition number. Measured live 2026-08-27:
+
+| board | postings | distinct `job_id` | the id |
+|---|---|---|---|
+| Thales | 17 | **2** | `Regular Employee` ×16 |
+| F5 | 4 | **1** | `0` |
+| Aristocrat (Product Madness) | 2 | **1** | `Regular` |
+
+Sixteen Thales roles shared one key, five times the bamboohr loss — and tenant-scoping fixes
+none of it, because the collision is inside one tenant. `store._is_id_shaped` refuses a value
+with whitespace or with no digit and falls through to the url branch, which is per posting:
+**Thales 2 → 17 distinct keys.** It is deliberately fail-SAFE — a false positive falls through
+to an address, which is *more* unique than the id, so the cost is one night of key churn
+(absorbed by `upsert_matched`'s seen-id union) and never a lost or duplicated role. It does
+NOT catch F5's `0`, which is shaped exactly like a real BambooHR id; that is left to the
+alarm below and to **BACKLOG 311**, which asks `ats-fetch` to fix the expression.
+`roles._strong_ids` refuses the same shapes, or those sixteen Thales roles sit in one
+`_groups` bucket with only `_titles_agree` keeping them apart.
+
+**Neither guard is trusted; both are measured.**
+
+```bash
+python -m pipeline.store --audit-ids                    # every active board, free APIs
+python -m pipeline.store --audit-ids --platform bamboohr
+```
+It asserts three things, and the third is the one this lane learned the hard way: no key is
+produced by two companies, no board yields two tenant tokens, and **no board collapses two of
+its own postings onto one key**. 2026-08-27, after the change, over all 17 native platforms
+and 22,970 postings: **1 problem** — `[one board, one key, many postings] F5: workday:0`, the
+four postings BACKLOG 311 is about and the one shape `_is_id_shaped` cannot see. Thales and
+Aristocrat are gone. Restricted to the tenant-scoped platforms it is `0 problem(s)`.
+
+At run time `Ledger.id_collisions` re-asks the same question of the run's own merged list —
+format-independent, so it survives any future change to the key — and puts
+`roles seen-id collision (…)` on the bold `Stages:` line. Postings that share an *address* are
+not a collision: that is one posting fetched by two registry rows, which is what
+`resolve_claims` below is for.
+
+**Why there was no migration.** `upsert_matched` unions a record's old `seen_ids` with the new
+ones, and `run.py` upserts *before* `filter_new` reads the store, so a role keeps its old key
+alongside its new one and nothing already emailed is re-emailed. Proven on the committed store
+before the change shipped: **135 ledger records in → 135 out, 0 `seen_ids` dropped, 0 `sent`
+rows lost, 79 roles passing `filter_new` before and after, 0 newly emailed, 0 newly
+suppressed** — and **0 stored `seen_ids` were on a tenant-scoped platform at all**, so the
+re-key exposure was exactly zero. The residual window is a `merge_key` fork (an employer edits
+a title) on an already-sent scoped role between cutover and its next sighting; that set was
+empty on the day, and it is the reason this is stated as a window rather than as "nothing can
+be re-emailed".
+
+### What the merged record publishes — the link and the text
+
+`merge_duplicates` collapses the postings that share a `merge_key` into one record. It used to
+copy ONE canonical member wholesale and rescue only `posted_date`, and that lost two different
+things at once: the canonical is elected on having an ISO date, and **scrape rows carry
+`posted_date: ""`** while discovery cards carry a real one — so an aggregator card won, and
+both its short snippet and its aggregator link shipped while the employer's own full JD was
+dropped in memory before `upsert_matched`'s longest-text rule could ever see it. BACKLOG 260,
+109 and 151 are one bug. (109's stated mechanism is false and that is why it survived: it
+says a later sighting "does not replace `url` when the merge key matches", and both branches
+of `upsert_matched` overwrite `url` unconditionally.)
+
+The merge is now field-wise, and three rules make it safe. Each of the three exists because
+the obvious version was tried first and an adversarial pass broke it with real data.
+
+**1. The canonical is elected on an identity of SOURCE.** A "demote anything on an aggregator
+url" key was written here first and is a **NO-GO**: demoting one member PROMOTES another, the
+promoted member was never tested against the registry, and a competitor card scraped off our
+own careers page then published its url **and its JD** under our name — measured, in both
+member orders, and a regression against the rule it replaced. The key that survives can only
+ever promote a member proven to be a posting on the company's own board.
+
+**2. The gate is origin identity, never name matching.** `roles.names_in_url` was the first
+proposal and is a **NO-GO**: `names_in_url("Bright Data", ".../jobs/fetcherr/…/data-analyst--
+tableau/…")` is **True**, because the company token `data` matches the JOB TITLE in the url
+slug. That predicate is tiebreak key 0 of seven among candidates already known to be the same
+posting; as an admission gate on foreign content it fails. `store._same_origin` compares the
+address against the registry row's own — its `token` when that is a tenant (comeet `26.00E`,
+greenhouse `nift`, ashby `moonactive`; 133/133, 106/106, 52/52 populated on 2026-08-27) and
+its `api_url` when the row is a `scrape` row. A tenant token must name a whole PATH segment,
+never a host label: `HiBob` is itself a registry row and `*.careers.hibob.com` is the
+multi-tenant ATS domain it sells, so matching host labels made every Bob customer's posting
+read as HiBob's own board.
+
+**3. Only an address DEEPER than the board's own may be promoted or donate the url, and ONE
+donor supplies both the link and the text.** Being on the employer's domain is not enough —
+three Meta records were promoted to `metacareers.com/jobs?offices[0]=…`, a search page this
+section separately warns is shared by every Meta role, which is a worse link for the reader
+and strips the strongest evidence `Ledger._winner` has (an aggregator card url literally
+contains `-at-<company>-`). And taking the url from one member while taking the longest
+description from another published a Tel Aviv posting's link with a Haifa posting's JD:
+`merge_key` is location-independent by design, so two members can be genuinely different
+openings under one title. Only a member at the very same address may lengthen the text.
+
+`_inherited` copies never donate: `roles.classify_grouped` writes the group's longest text
+onto them, so their description is a COPY, not something that posting carried.
+
+Measured 2026-08-27 on the committed state: the per-role instrument finds 4 url repairs and 1
+description repair, with 8 foreign or other-address members refused. The two instances BACKLOG
+260 named no longer reproduce on `origin/master` — Zipher's cached entries were retitled and
+emptied by the `scraper` work between `ae6eeae` and `c1323d5`, so that number is 2 on the
+older tree and 0 on the newer one by the cache instrument. The defect is real; its instance
+count moves with the cache.
+
 ### One posting under two names — the wrong-company guard
 
 `job["company"]` is copied verbatim from the registry row (`pipeline/fetchers.py`, 14
@@ -3369,8 +3513,80 @@ name in the fetch loop — splitting the mail string on `" ("` used to turn
 `Microsoft (Xbox/Gaming)` into `Microsoft` for `_alive` and the ledger alike; 15 registry
 names contain `" ("`). A record absorbed for the first time is classified, never
 counted as a closure. open→closed stamps `closed_on`; closed→open appends an episode and
-counts `reopened`; a bumped `posted_date` is a repost. **A mass-close is an alarm, never a
-closure:** more closures in one run than `max(10, 25 % of the open set)`
+counts `reopened`; a bumped `posted_date` is a repost.
+
+**A REOPENING resets `first_seen`, not a calendar gap.** `upsert_matched` used to treat
+`run_date - last_seen > 3` days as a new opening, which cannot tell "we looked and it was
+gone" from "there was no run" — and so fires on an OUTAGE. It nearly did: there was no digest
+at all on 2026-08-27 (GitHub dropped four of five crons, `infra`), and a resume on 08-30 would
+have given all **76 open roles** a fresh `first_seen`, badging ~70 of them "new" on the board.
+The rule now needs **two** answers, and neither alone is enough:
+`keep_first = mkey not in Ledger.closed_keys() and missed_runs <= MISSED_RUNS`.
+
+The ledger is authoritative when it *did* close the role — it closes only where the run
+actually looked, never on a failed board and never at a company a scoped run did not scan. But
+that same property is a hole: a board that raises for four runs leaves its roles neither seen
+nor closed, so the ledger alone would pin a stale `first_seen` that
+`get_matched_since(cutoff_email)` can never return, and a returning requisition would not
+merely go un-alerted — it would be **invisible to the email query**. So the store also keeps a
+**run log**, one row per date the pipeline ran, stamped by `Ledger.record_run`; `missed_runs`
+counts the runs strictly between a role's last sighting and today, which is the number of
+chances it had to be seen and was not. An outage is 0 missed runs and changes nothing; a board
+broken across four real runs is 4 and re-alerts.
+
+Both degrade to the old calendar rule rather than guessing: `closed_keys()` returns None on a
+frozen or corrupt ledger, and `missed_runs` returns None while the log is empty (a fresh or
+rehydrated store) — which is also the outage-safe direction while it fills.
+
+An explicit log is kept rather than reading the distinct `last_seen` values of `matched`, and
+that alternative was **measured to be wrong** before it was rejected: that column is
+overwritten on every re-sighting, so it records the days something DIED, not the days we ran.
+`git log cloud_state/seen.db` shows **eight commits on 2026-08-21 against one distinct
+`last_seen`**, the column holds 2026-08-16/17/19 which *precede the first run of the
+pipeline*, and it is missing 08-18 entirely.
+
+**A row that was never an employer is `purged`, not closed.** `Tel Aviv` is a CITY that
+`listing_hunt` activated on `jobs.secrettelaviv.com`; seven of its records shipped in the
+2026-08-26 mail under `### Tel Aviv`, three of them emailed. Parking the row stopped it being
+fetched but did not stop it being alive for one more day (`last_seen` was still yesterday's),
+and `record_run`'s `judged` never named it, so its records stayed `open` forever. `run.py`
+now computes `_never_ours` — registry rows, **parked ones included**, whose `api_url` is an
+`aggregators.is_aggregator` address — and `_alive` returns False for them, which is the single
+predicate gating the email, the board and therefore the archive. `record_run` marks them
+`purged`: `closed` would file them in the public archive as expired or filled, under the name
+of a city, permanently, and these were never ours. A purge is not a closure and never counts
+toward the mass-close guard, because parking is a deliberate registry action and not the
+broken fetch that guard exists to catch (BACKLOG 223). Measured on the committed store: it
+reaches **exactly the 7 `Tel Aviv` records and nothing else**.
+
+`_never_ours` is a set of **identities**, built once in `run.py` and used by BOTH `_alive` and
+`record_run`. They matched on different things at first — a raw name in one, `_norm_company`
+in the other — and that is a live hazard rather than a safeguard. `_norm_company` strips ONE
+trailing corporate suffix, so normalising can only ever ADD names, and the names it adds are
+the **active twins of a parked row**: the registry holds eleven (Nice/NICE, SolarEdge, Nova,
+Innoviz, HP, Workday, Orca AI, Akamai, Tevel, Dell, TechBiz Global) plus 53 parked `alias-of`
+duplicates. A raw-name test misses a parked `X GmbH`; a naive normalised one purges the live
+`X` beside it. So the set subtracts every identity a live row answers to, and on 2026-08-27 it
+is exactly two — `tel aviv` and `dun bradstreet israel` — with **0 live companies caught**.
+
+It reads `api_url` only. Widening it to `token` was tried and is a **NO-GO**: 40 rows carry an
+aggregator address in `token` (a fingerprint of the `url-cleared` repair passes) while
+`api_url` holds a real board, and they include Deloitte, Shufersal, Zim, JTI, Phoenix
+Financial and Akamai — real employers whose live roles would have left the product.
+
+`_alive` gates the email and the board; **the archive is excluded explicitly**, because it is
+`matched` minus board and never reads the ledger — a `purged` status alone left seven other
+employers' postings publishing under the name of a city on a page headed "no longer on the
+employer's careers page". And because this one predicate reaches every product, it carries the
+guard a mass-close has: a run where it would remove more than `max(10, 25 %)` of the board
+abandons the purge for the day and says `roles mass-purge held (…)` on the bold `Stages:`
+line. That is CLAUDE.md rule 2, and the 40 `token` rows are exactly the shape that trips it.
+
+**Only the aggregator-origin class is purged**; the general parked→closed rule is not
+implemented, because `active=false` conflates four different facts (see the limitations below
+and BACKLOG 313).
+
+**A mass-close is an alarm, never a closure:** more closures in one run than `max(10, 25 % of the open set)`
 (`MASS_CLOSE_MIN`, `MASS_CLOSE_FRAC`; 50 % let a morning where 40 % of boards answered
 `[]` close 80 roles silently) is a broken fetch, not a measurement — statuses are held
 and the bold `Stages:` line says `roles mass-close held (N of M …)`. Rehearsed:
@@ -3401,8 +3617,22 @@ print `::warning::roles …`.
 
 ### Guards
 
-`tests/test_units.py`, "lane: roles" — 42 cases, every one a defect the rehearsal or an
-attacker reproduced: the file contract (round-trip, bad-line tolerance, the corrupt
+`tests/test_units.py`, "lane: roles" — 56 cases, every one a defect the rehearsal or an
+attacker reproduced. The 2026-08-27 additions: a display word is not a job id (Thales' 16 →
+16 keys); two companies on one ATS no longer share a key, and a shared Oracle pod is separated
+by its site segment; a tenant never carries `+` or `:`; both parsers of the key still read the
+id half; a competitor card on our page donates neither its text nor its url — written to FAIL
+against the `names_in_url` gate that was rejected; the merge takes the board's url and the
+longest text; an inherited copy never donates the text copied onto it; an outage does not
+reset `first_seen` but a reopening does, and no ledger keeps the calendar rule; a role at a
+row that was never an employer is purged, not closed; the purge is compared on normalized
+identity so an alias is never caught; a key naming two roles is an alarm, while two rows
+sharing one address are not; a board root never displaces a per-job card; an ATS vendor's own
+registry row does not certify its tenants; and a role returning after a long board FAILURE
+re-alerts while the same gap with no runs in it does not. Several of those exist because an
+adversarial wave broke this lane's first design and the replacement needed pinning. The
+rehearsal gained a `purged` case, which is the only end-to-end proof of the `_alive` conjunct
+in `run.py`. The older cases: the file contract (round-trip, bad-line tolerance, the corrupt
 threshold, duplicate-id resolution, wrong-typed lines, a text-only wreck, the run date);
 every `reconcile` rule; identity (the three real double shapes kept once; Bounce/Bounce
 AI, two Meta titles and "Data Analyst, Growth" NOT merged; a listing-page id shared by six
@@ -3413,7 +3643,13 @@ closure only where the run looked, every company on a full run, never on a faile
 (names with `" ("`), on the alive set not the capped page, the mass-close hold and its
 25 %, a fresh record never a closure; episodes and reposts across a reopening;
 rehydration of rows and `sent` marks, `sent` stamped by `mark_sent`; `jd_attempted`
-declared. `tests/rehearse_roles.py --golden` is the regression proof against HEAD.
+declared. `tests/rehearse_roles.py --golden` is the regression proof against HEAD — and its board
+check is now HEAD-INDEPENDENT. It used to require `(head - tree) == {the two collapsed
+doubles}`, which only holds while HEAD *predates* the claim collapse; once the feature was on
+both sides the difference became empty and the check went red and stayed red. It failed
+identically on an origin-vs-origin run on 2026-08-27, two days after the collapse landed, and
+nothing caught it because `--golden` is hand-run. It now asserts that the tree loses nothing
+HEAD had, and proves the feature RAN from the tree's own board (neither loser is on it).
 
 ### Known limitations
 
@@ -3431,6 +3667,30 @@ declared. `tests/rehearse_roles.py --golden` is the regression proof against HEA
   trying to backfill a superseded row's empty description (BACKLOG 140, `jd-text`) and
   `research_firmographics.py` still counts superseded-only companies (141).
 - Tags are only as good as the text captured while the role was open (`docs/TAGGING.md`).
+- **Only the aggregator-origin class of parked row is purged.** `active=false` conflates four
+  facts, and the counts on 2026-08-27 were roughly: `dark-triage` 181 (*we cannot read the
+  page* — not evidence the job closed), `alias-of` 53 (the roles are real and belong to
+  another row: `superseded`, not `closed`), aggregator 17 (`purged`), and a `dead` /
+  `no open Israel roles` remainder that genuinely is `closed`. `Phoenix Financial` is the
+  worked example of why the boolean is not enough: parked `js-shell`, but its Business Analyst
+  was discovery-verified on 2026-08-26 and its registry `api_url` points at
+  **arizonafinancial.org**, an American credit union — a resolution error, not a closure.
+  The general rule needs an explicit `park_reason` from `registry` (BACKLOG 313).
+- `_is_id_shaped` cannot catch a one-character numeric id (F5's `0`, 4 postings): it is shaped
+  exactly like a real BambooHR id. Only `--audit-ids` and the run-time alarm see that class,
+  and BACKLOG 311 fixes its cause.
+- `merge_duplicates`' rescues are inert without `origins`, so a caller that does not pass the
+  registry (a test, a tool) gets the pre-2026-08-27 answer for the description and the url.
+- **The gate cannot save a group whose canonical is foreign and carries the longest text.**
+  When no member is on the employer's own board the canonical's description stands — and for
+  many roles an aggregator's copy is the only text we have, so deleting it to remove a
+  hypothetical would cost real coverage. Older than this rule; BACKLOG 312.
+- `_same_origin`'s token arm is dead for the 62 workday rows, whose `token` contains a `/`,
+  and 16 scrape rows have an empty origin path, which makes their whole host authoritative.
+  Neither is multi-employer today; both are why the gate is strict rather than clever.
+- `Ledger.id_collisions` sees one run's accepted roles, so a board whose four postings share
+  one key contributes a single row and the alarm cannot fire. That case is `--audit-ids`,
+  which reads whole boards, and BACKLOG 311, which fixes its cause.
 
 ## 7d. Render — how a role reads (jdtext → rolecard → digest)
 *lane: `render` — `pipeline/jdtext.py`, `pipeline/rolecard.py`, `pipeline/digest.py`, `pipeline/roleprofile.py`, `docs/TAGGING.md`*

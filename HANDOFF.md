@@ -45,21 +45,6 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 
 | due | lane | must be true | answered | verdict |
 |---|---|---|---|---|
-| 2026-08-26 | render | `- **Render:** board N cards` reconciles with the board's row count | 2026-08-27 | PASS — `board 76 cards`, `docs/index.html` 76 rows, `publish: board=76` |
-| 2026-08-26 | render | nothing on `Needs a look` from `render` | 2026-08-27 | FAIL — `- **Render:** title-twin Port/Port.io — one posting may be under the wrong name` |
-| 2026-08-26 | registry | `tests.yml` mutation gate green under 15 min | 2026-08-27 | FAIL — 08-26 runs 28 and 29 min, both `failure`; 40 consecutive red pushes since 08-25T16:00 |
-| 2026-08-26 | registry | 02:30 log `validated N` with those rows keeping `scanned via brightdata` | 2026-08-27 | PASS — `rescued 0 · validated 4 · still unreachable 5` |
-| 2026-08-26 | registry | 08:00 auto-expand under 10 min with `dfer (<reason>)` and `LLM-cracked N` | 2026-08-27 | PASS — 4 min; `resolved 3 (LLM-cracked 3) … deferred 247` |
-| 2026-08-26 | registry | digest census step without `rung DOWN` | 2026-08-27 | PASS — no match in the digest log |
-| 2026-08-26 | registry | mail `Registry:` line = SeeTree only | 2026-08-27 | FAIL — `re-check pool grew: probe_candidates 127 -> 224 (a predicate widened?)`; see the watch list |
-| 2026-08-25 | company-intel | `N newer than the store` is 0 after the seed | 2026-08-27 | FAIL — the 08-25 mail read `export 940 records, newest 2026-08-24, 20 newer than the store` |
-| 2026-08-26 | infra | the inbox issue at ~06:20 | 2026-08-27 | FAIL — 08-26 issue 07:10:36Z, 08-25 09:01:19Z. NOT the digest's fault: it finished 06:04:14Z, inside the 06:17 window. The relay's OWN polls ran 07:10/08:01/09:04/10:52 — same scheduler, +35..53 min |
-| 2026-08-26 | infra | `Stage order:` shows `repair: <date>`; no `workflow step` line on `Stages:` | 2026-08-27 | PASS — `repair: 2026-08-25 (1d ago)`, `Stages: collect links-unread-1` only |
-| 2026-08-26 | roles | `Roles:` says `ledger N = store N`; `roles.jsonl` in that day's state commit | 2026-08-27 | PASS — `ledger 135 = store 135`; `b2090f6` lists `cloud_state/roles.jsonl` |
-| 2026-08-26 | discovery | `[linkedin] … blocked=` appears | 2026-08-27 | PASS — `free=224 blank=58 blocked=30 paid=13` |
-| 2026-08-26 | discovery | no `### Tel Aviv` in the mail | 2026-08-27 | FAIL — `digests/latest.md` still carries `### Tel Aviv` with three secrettelaviv.com jobs |
-| 2026-08-26 | discovery | `cache: dropped ~163 agency cards` | 2026-08-27 | FAIL — it dropped **277**; the prediction was 70% low, the mechanism worked |
-| 2026-08-26 | ats-fetch | Akamai/Bright Security as `fetch-error scrape:`; `cleared:` names Fortinet/Reindeer/myInterview; Questar and Wiliot absent | 2026-08-27 | PARTIAL — Akamai `fetch-error scrape: http:403 (2 nights)`, Questar/Wiliot absent, Fortinet+Reindeer cleared; **Bright Security is `regressed-to-zero`, not `fetch-error`** |
 | 2026-08-27 | scraper | Get SAT/BlueBird/Red Access/WSC Sports in `with_jobs` or `links_unread`, never `empty` | 2026-08-27 | PASS on the artefact — no rot record for any of the four; `via` sums to `with_jobs` 201; no `llm-down` |
 | 2026-08-27 | ats-fetch | `29 regressed to zero` standing; 0 `?` in `stale.json`; `new:` grouped; no myInterview under `cleared:` | 2026-08-27 | PARTIAL — `stale.json` has 29 `regressed-to-zero` and zero `?`; the two mail-rendered clauses are unanswerable, **no 08-27 digest ran** |
 | 2026-08-27 | discovery | `recovered=N`, `cache: dropped ~18 agency cards`, no `### Jobgether` | — | N/A — **no 08-27 digest ran**. The pre-committed rule stands: `recovered=`~0 on the runner ⇒ REMOVE the re-ask, do not tune it |
@@ -70,6 +55,8 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-08-28 | infra | `firmographics.yml` fired on its 10:00 slot (BACKLOG 293). At 11:01 on 08-27 its run list was still empty, 61 min after its first real slot — inside the 180-min grace `tests/schedule_census.py` holds before calling a slot dropped | — | not yet due |
 | 2026-09-10 | infra | `python tests/schedule_census.py --days 14` — **≥ 3 isolated single-slot drops ⇒ build the recovery digest cron; otherwise it stays rejected.** It was 0 on 2026-08-27 | — | not yet due |
 | 2026-08-28 | infra | the `mutation-gate` job FINISHES rather than hitting `timeout-minutes: 45`. It already timed out once: `30bc39f` ran **45m16s, `cancelled`**. It was 44m16s on `c1323d5` before this session, and this session's guards add +19.1s to the baseline suite. A timeout names no surviving mutant — BACKLOG 195/311 | — | not yet due |
+| 2026-08-28 | infra | the `mutation-gate` job finished, rather than hitting `timeout-minutes: 45`. It measured **44 min 16 s** on `c1323d5` and 37 min 44 s on `623b2a9`, both before this session's code. A timeout names no surviving mutant, and `tests.yml` is already red for other reasons — BACKLOG 195 | — | not yet due |
+| 2026-08-28 | roles | `ledger N = store N`; `purged 7` once; `reopened` NOT ~70 | — | |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due (`audit-coverage.yml` is `0 4 * * 0`) |
 
 ## State at handoff — 2026-08-27 07:5x UTC, every number re-derived
@@ -208,6 +195,7 @@ One line per session, in the shape at the top of this file. The long version is 
 
 - **2026-08-27 `infra`** — the recovery cron and the watchdog I came to build are both REJECTED: 0 isolated cron drops measured, and a watchdog writing `latest.md` can silently overwrite a delivered digest. What was broken was the unconditional `cp`; `persist_state.py deliver` replaces it. **NOT finished:** 292, 304-308. Record: `docs/sessions/2026-08-27-infra.md`.
 - **2026-08-27 `docs`** — the linter was green while three attackers found 46 measured contradictions in these same documents. Numbers a doc states are registered facts now; HANDOFF is 56 KB -> 18 KB with all 14 morning checks answered (8 failed); `docs/backlog.py` gives a lane its own list. **NOT finished:** BACKLOG 291, 295-302. Record: `docs/sessions/2026-08-27-docs.md`.
+- **2026-08-27 `roles`** — one `seen_id` named sixteen roles, and the merge kept the best member, not the best field. Shipped: a tenant-keyed `seen_id`, an origin-gated merge, a run log. **NOT finished:** 311-313. Record: `docs/sessions/2026-08-27-roles.md`.
 
 *The 2026-08-23 morning session (seventeen defects, A–Q) and the digest-run history that
 used to open this file are in `docs/sessions/2026-08-23.md`, which is where the long

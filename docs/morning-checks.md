@@ -20,3 +20,26 @@ due, and the cheapest way to make an error go green would be to delete the check
 
 *(Nothing has aged out yet. The first rows will arrive from `HANDOFF.md` on or after
 2026-09-02, seven days after the batch answered on 2026-08-27.)*
+
+| due | lane | must be true | answered | verdict |
+|---|---|---|---|---|
+| 2026-08-26 | roles | `Roles:` says `ledger N = store N`; `roles.jsonl` in that day's state commit | 2026-08-27 | PASS — `ledger 135 = store 135`; `b2090f6` lists `cloud_state/roles.jsonl` |
+
+**Moved from `HANDOFF.md` 2026-08-27 by the `roles` lane, verbatim.** The table had sixteen rows answered the same morning and the file sat 3 words under its 3,200-word cap, so no lane could add an entry at all — the cap is meant to force this move, and the "older than a week" rule in the header could not fire because every answered row was from today. Rows due on or before 2026-08-26 and answered are here; the pending ones stayed.
+
+| due | lane | must be true | answered | verdict |
+|---|---|---|---|---|
+| 2026-08-26 | render | `- **Render:** board N cards` reconciles with the board's row count | 2026-08-27 | PASS — `board 76 cards`, `docs/index.html` 76 rows, `publish: board=76` |
+| 2026-08-26 | render | nothing on `Needs a look` from `render` | 2026-08-27 | FAIL — `- **Render:** title-twin Port/Port.io — one posting may be under the wrong name` |
+| 2026-08-26 | registry | `tests.yml` mutation gate green under 15 min | 2026-08-27 | FAIL — 08-26 runs 28 and 29 min, both `failure`; 40 consecutive red pushes since 08-25T16:00 |
+| 2026-08-26 | registry | 02:30 log `validated N` with those rows keeping `scanned via brightdata` | 2026-08-27 | PASS — `rescued 0 · validated 4 · still unreachable 5` |
+| 2026-08-26 | registry | 08:00 auto-expand under 10 min with `dfer (<reason>)` and `LLM-cracked N` | 2026-08-27 | PASS — 4 min; `resolved 3 (LLM-cracked 3) … deferred 247` |
+| 2026-08-26 | registry | digest census step without `rung DOWN` | 2026-08-27 | PASS — no match in the digest log |
+| 2026-08-26 | registry | mail `Registry:` line = SeeTree only | 2026-08-27 | FAIL — `re-check pool grew: probe_candidates 127 -> 224 (a predicate widened?)`; see the watch list |
+| 2026-08-25 | company-intel | `N newer than the store` is 0 after the seed | 2026-08-27 | FAIL — the 08-25 mail read `export 940 records, newest 2026-08-24, 20 newer than the store` |
+| 2026-08-26 | infra | the inbox issue at ~06:20 | 2026-08-27 | FAIL — 08-26 issue 07:10:36Z, 08-25 09:01:19Z. NOT the digest's fault: it finished 06:04:14Z, inside the 06:17 window. The relay's OWN polls ran 07:10/08:01/09:04/10:52 — same scheduler, +35..53 min |
+| 2026-08-26 | infra | `Stage order:` shows `repair: <date>`; no `workflow step` line on `Stages:` | 2026-08-27 | PASS — `repair: 2026-08-25 (1d ago)`, `Stages: collect links-unread-1` only |
+| 2026-08-26 | discovery | `[linkedin] … blocked=` appears | 2026-08-27 | PASS — `free=224 blank=58 blocked=30 paid=13` |
+| 2026-08-26 | discovery | no `### Tel Aviv` in the mail | 2026-08-27 | FAIL — `digests/latest.md` still carries `### Tel Aviv` with three secrettelaviv.com jobs |
+| 2026-08-26 | discovery | `cache: dropped ~163 agency cards` | 2026-08-27 | FAIL — it dropped **277**; the prediction was 70% low, the mechanism worked |
+| 2026-08-26 | ats-fetch | Akamai/Bright Security as `fetch-error scrape:`; `cleared:` names Fortinet/Reindeer/myInterview; Questar and Wiliot absent | 2026-08-27 | PARTIAL — Akamai `fetch-error scrape: http:403 (2 nights)`, Questar/Wiliot absent, Fortinet+Reindeer cleared; **Bright Security is `regressed-to-zero`, not `fetch-error`** |

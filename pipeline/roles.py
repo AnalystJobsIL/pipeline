@@ -176,12 +176,23 @@ def _titles_agree(a, b):
 def _strong_ids(job):
     """seen_ids that identify ONE posting. A scrape row's job_id is sometimes the listing
     page, '#' or a mailto: (scrape_universal.py:485) — every role on that board then shares
-    it, so such an id may only corroborate a title match, never stand alone."""
+    it, so such an id may only corroborate a title match, never stand alone.
+
+    A junk id is not always a symbol. `fetch_workday` reads `bulletFields[0]`, a
+    tenant-configured display list, so sixteen of Thales' seventeen Israel postings arrived
+    on 2026-08-27 with the id "Regular Employee" — one string naming sixteen different
+    roles, which `_titles_agree` was the only thing keeping apart. A value with whitespace
+    in it identifies nothing (`store._is_id_shaped`), so it is not strong either. The
+    non-`http` test keeps the url fallback (`{platform}:{url}`) strong: an address does
+    identify one posting."""
     out = set()
     for sid in (job.get("seen_ids") or [_store.seen_id(job)]):
         plat, _, ident = sid.partition(":")
-        if ident and ident not in ("#", "/") and not ident.startswith("mailto"):
-            out.add(sid)
+        if not ident or ident in ("#", "/") or ident.startswith("mailto"):
+            continue
+        if not ident.lower().startswith("http") and not _store._is_id_shaped(ident):
+            continue
+        out.add(sid)
     return out
 
 
@@ -586,6 +597,8 @@ class Ledger:
             reclaimed += 1
         self.reclaimed = reclaimed
         drop = set()
+        rows = {r["mkey"]: r for r in
+                self.st.get_matched_since("0000-01-01", include_superseded=True)}
         for idxs in self._groups(merged):
             win = self._winner(merged, idxs, held)
             w = merged[win]
@@ -597,9 +610,17 @@ class Ledger:
                     continue
                 lo = merged[i]
                 sids |= set(lo.get("seen_ids") or [_store.seen_id(lo)])
+                # ...and the loser's STORED ids, not only the ones this run happened to
+                # fetch. `resolve_claims` runs BEFORE `upsert_matched`, so the winner's row
+                # is built from this union alone — and on any run where the key changed
+                # shape, the id the posting was actually EMAILED under sits only on the
+                # loser's stored row. Without this line `filter_new` calls a delivered
+                # posting new and mails it a second time under the winner's name, which is
+                # exactly what the docstring above already promises does not happen.
+                lk = _store.merge_key(lo)
+                sids |= {x for x in ((rows.get(lk) or {}).get("seen_ids") or []) if x}
                 srcs |= set(lo.get("sources") or [lo.get("ats_platform") or ""])
                 losers.append(lo.get("company"))
-                lk = _store.merge_key(lo)
                 if lk in held or lk in self.records:
                     self._supersede(lk, _store.merge_key(w))
                 drop.add(i)
@@ -629,24 +650,91 @@ class Ledger:
         return n
 
     # ---- close --------------------------------------------------------------------
-    def record_run(self, run_date, *, board_jobs, merged, scanned_ok, failed, paths=None, scoped=True):
+    def closed_keys(self):
+        """Role ids the ledger records as closed — `store.upsert_matched`'s reopening test.
+
+        The ledger is the right instrument for "was this role absent?" because it closes a
+        role ONLY where the run actually looked: never on a failed board, never at a company
+        a scoped run did not scan. A calendar gap cannot tell "we looked and it was gone"
+        from "there was no run", and so fires on an outage (BACKLOG 139).
+
+        A frozen or corrupt ledger returns None, and `upsert_matched` then keeps the old
+        calendar rule rather than treating every role as never-closed."""
+        if self.frozen:
+            return None
+        return {rid for rid, rec in self.records.items() if rec.get("status") == "closed"}
+
+    def id_collisions(self, merged):
+        """seen_ids that name more than one role in THIS run — an alarm, never a repair.
+
+        Format-independent on purpose, so it survives every future change to the key: it
+        needs no idea of what a tenant is, and it catches the two shapes that are otherwise
+        invisible to each other — a cross-TENANT collision (`bamboohr:39` under Bringoz and
+        under Miggo Security) and a same-tenant one (`workday:Regular Employee` under
+        sixteen Thales roles). An audit that counts only cross-company collisions sees the
+        first and walks past the second; this sees both.
+
+        Postings that share an address are NOT a collision: that is one posting fetched by
+        two registry rows, which `resolve_claims` exists to collapse. Two roles that share a
+        key and share NO address are the worst case, not an exempt one — an earlier version
+        of this predicate required two distinct urls and therefore said nothing about it.
+
+        Its reach is one run: `merged` holds only the roles this run accepted, so a board
+        whose four postings share a key contributes ONE row and nothing here can see it.
+        That case is `python -m pipeline.store --audit-ids`, which reads whole boards, and
+        BACKLOG 311, which fixes its cause."""
+        by_id = {}
+        for j in merged:
+            for sid in (j.get("seen_ids") or [_store.seen_id(j)]):
+                by_id.setdefault(sid, set()).add(
+                    (_store.merge_key(j), (j.get("url") or "").strip()))
+        hits = {sid: v for sid, v in by_id.items()
+                if len({k for k, _ in v}) > 1 and len({u for _, u in v if u}) != 1}
+        if hits:
+            worst = max(hits.items(), key=lambda kv: len(kv[1]))
+            self.alarms.append(
+                f"roles seen-id collision ({len(hits)} id(s) name two or more roles; "
+                f"worst: {worst[0][:60]} x{len(worst[1])}) — one of them will never be emailed")
+        return hits
+
+    def record_run(self, run_date, *, board_jobs, merged, scanned_ok, failed, paths=None,
+                   scoped=True, never_ours=()):
         """Status / episodes / reposts / class / tags / attribution for this run, then flush.
         Closure is judged for companies this run looked at and whose fetch succeeded — every
         company but the failed ones on a FULL run (a role whose employer is no registry row
         at all cannot be fetched and is dead by `_alive`), only the scanned ones on a scoped
         run. `board_jobs` must be the ALIVE set, before any page-weight cap. A mass-close is
         an alarm, never a closure. Never touches `matched` — `_alive` in run.py stays the
-        liveness rule. Returns mail lines."""
+        liveness rule. Returns mail lines.
+
+        `never_ours` is the set of company names whose registry row points at an AGGREGATOR
+        (run.py computes it already, to keep such a row from being scanned at all). Their
+        records are `purged`, not closed: `Tel Aviv` is a CITY that was activated on
+        jobs.secrettelaviv.com, and its seven records are seven other employers' postings.
+        `closed` would file them in the public archive as expired or filled, under the name
+        of a city, permanently — section 7c reserves `purged` for a row that was never ours,
+        and this is that case. A purge is not a closure and never counts toward the
+        mass-close guard, because parking a row is a deliberate registry action and not the
+        broken fetch that guard exists to catch."""
         return self._guard("record_run", lambda: self._record_run(
             run_date, board_jobs=board_jobs, merged=merged, scanned_ok=scanned_ok, failed=failed,
-            paths=paths, scoped=scoped), ["roles: not recorded (see Stages)"])
+            paths=paths, scoped=scoped, never_ours=never_ours), ["roles: not recorded (see Stages)"])
 
-    def _record_run(self, run_date, *, board_jobs, merged, scanned_ok, failed, paths, scoped):
+    def _record_run(self, run_date, *, board_jobs, merged, scanned_ok, failed, paths, scoped,
+                    never_ours=()):
         rows = {r["mkey"]: r for r in self.st.get_matched_since("0000-01-01", include_superseded=True)}
         onboard = {_store.merge_key(j) for j in board_jobs}
         by_key = {_store.merge_key(j): j for j in merged}
         failed = set(failed or ())
         judged = (lambda c: c in scanned_ok and c not in failed) if scoped else (lambda c: c not in failed)
+        # `never_ours` arrives already reduced to identities by `run.py`, which uses the
+        # SAME set for `_alive`. It used to be normalised here and matched raw there, and
+        # that is a live hazard rather than a safeguard: normalising can only ADD names, and
+        # the names it adds are the ACTIVE twins of a parked row (the registry holds eleven —
+        # Nice/NICE, SolarEdge, Nova, Innoviz, HP, Workday, Orca AI, Akamai, Tevel, Dell,
+        # TechBiz Global). A role under a live company must never be purged because a parked
+        # row strips to the same identity.
+        _norm_never_ours = set(never_ours or ())
         sent = self.st.load_sent()
         c = Counter()
         if self.frozen:
@@ -715,7 +803,13 @@ class Ledger:
             # status. A record absorbed for the first time this run has no history: it is
             # classified, not closed, and never counts toward the mass-close guard.
             fresh = rec.pop("_fresh", False)
-            if rid in onboard:
+            if _norm_never_ours and _store._norm_company(rec.get("company")) in _norm_never_ours:
+                if rec.get("status") != "purged":
+                    rec["status"], rec["closed_on"] = "purged", run_date
+                    self._touch(rec)
+                    c["purged"] += 1      # a delta, like `closed today` beside it — not a
+                c["purged_total"] += 1    # running total that never decays
+            elif rid in onboard:
                 if prev_status != "open":
                     rec["status"], rec["closed_on"] = "open", None
                     self._touch(rec)
@@ -748,6 +842,14 @@ class Ledger:
                     c["closed_today"] += 1
                     c["closed"] += 1
                     self._touch(rec)
+        # the run log: this run LOOKED, whatever it found. `upsert_matched` counts these to
+        # tell a role that was absent from four real runs from a role that was absent from no
+        # run at all because the pipeline never fired (BACKLOG 139). Stamped here rather than
+        # in run.py so a scoped local run stamps too — it did look, at what it was given.
+        try:
+            self.st.record_run_date(run_date)
+        except Exception:                 # never let the log take the digest down
+            pass
         if self.dirty or self.text_dirty:
             self.flush(run_date)
         ledger_n, store_n = len(self.records), len(rows)
@@ -755,6 +857,7 @@ class Ledger:
             self.alarms.append(f"roles ledger {ledger_n} != store {store_n} after sync")
         line = (f"open {c['open']} · closed today {c['closed_today']} · reopened {c['reopened']}"
                 f" · reposted {c['reposted']}"
+                + (f" · purged {c['purged']}" if c["purged"] else "")
                 + (f" · merged-copy {paths['merged-copy']}" if paths and paths.get("merged-copy") else "")
                 + (f" · absorbed {self.report.get('absorbed')} ({c['fresh_closed']} already closed)"
                    if self.report.get("absorbed") else "")

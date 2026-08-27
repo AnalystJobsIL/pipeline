@@ -22,7 +22,8 @@ REPO = os.environ.get("REHEARSE_REPO") or os.path.abspath(os.path.join(HERE, "..
 S = os.environ.get("REHEARSE_SCRATCH") or os.path.join(REPO, "out", "rehearse")
 FIX = json.load(open(os.path.join(HERE, "fixtures", "roles", "days.json"), encoding="utf-8"))
 ap = argparse.ArgumentParser()
-ap.add_argument("--case", default="happy", choices=["happy", "clobber", "corrupt", "massclose"])
+ap.add_argument("--case", default="happy",
+                choices=["happy", "clobber", "corrupt", "massclose", "purged"])
 ap.add_argument("--real", action="store_true", help="live fetchers on a scratch copy of cloud_state (no LLM, no BD)")
 ap.add_argument("--only", default="Fiverr,Wix,Lightricks")
 ap.add_argument("--golden", action="store_true", help="run the fixture through HEAD and this tree; diff the outputs")
@@ -30,6 +31,8 @@ ap.add_argument("--tag", default="")
 a = ap.parse_args()
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, REPO)
+import datetime as dt
+EXTRA_ROWS = []   # registry rows a case adds; the shared fixture is never edited
 os.chdir(REPO)
 status0 = subprocess.run(["git", "status", "--short"], capture_output=True, text=True, cwd=REPO).stdout
 for k in ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE", "JDFILL", "SCRAPE_VIA_UNLOCKER", "AGGREGATOR_ENABLED",
@@ -55,7 +58,11 @@ def _run_day(R, W, day, fetch_map, only=None):
             raise RuntimeError("HTTP 503 (fixture)")
         return [_job(s) for s in got]
     fetchers.fetch_company = fake_fetch
-    _rm.load_companies = lambda: [dict(r) for r in FIX["companies"]]
+
+    def _companies(active_only=True):
+        return [dict(r) for r in FIX["companies"] + list(EXTRA_ROWS)
+                if not active_only or r.get("active") == "true"]
+    _rm.load_companies = _companies
     stages.PATH = os.path.join(W, "stages.json")
     return R.run(use_llm=False, only=only, run_date=day, out_dir=os.path.join(W, "out"),
                  db_path=os.path.join(W, "seen.db"))
@@ -78,8 +85,28 @@ def scripted(case, W):
     ledger_path, text_path = roles.ledger_paths(os.path.join(W, "seen.db"))
     if case == "massclose":
         roles.MASS_CLOSE_MIN = 2          # the fixture has 5 roles; the real floor is 10
+    if case == "purged":
+        # a CITY that `listing_hunt` activated on a job board — the `Tel Aviv` shape. It is
+        # PARKED, exactly as the real row is, so this also proves the run reads the whole
+        # registry and not just the active rows: `_agg` in run.py already skips an ACTIVE
+        # aggregator row, and the roles that reached subscribers sat on a parked one.
+        EXTRA_ROWS.append({"company_name": "Tel Aviv", "ats_platform": "scrape", "token": "",
+                           "api_url": "https://jobs.secrettelaviv.com/", "active": "false",
+                           "notes": "redundant: not a company"})
     days = FIX["days"]
     for i, d in enumerate(days):
+        if case == "purged" and i == 1:
+            # the role is already in the store when the row is parked, which is the real
+            # sequence: it was fetched while the row was active and never looked at again
+            con = sqlite3.connect(os.path.join(W, "seen.db"))
+            con.execute("insert or ignore into matched (mkey, company, title, location, url, "
+                        "posted_date, seniority, sources, seen_ids, description, first_seen, "
+                        "last_seen) values (?,?,?,?,?,?,?,?,?,?,?,?)",
+                        ("tel aviv|data analyst", "Tel Aviv", "Data Analyst", "Tel Aviv, IL",
+                         "https://jobs.secrettelaviv.com/job/data-analyst-312/", d["date"], "",
+                         "scrape", "scrape:312", "", d["date"], d["date"]))
+            con.commit()
+            con.close()
         fetch = dict(d["fetch"])
         if case == "massclose" and i >= 4:
             fetch = {c: [] for c in fetch}   # two empty days: `_alive` gives one day's grace
@@ -98,6 +125,23 @@ def scripted(case, W):
         s = payload["summary"]
         md = open(base + ".md", encoding="utf-8").read()
         line = next((l for l in md.splitlines() if l.startswith("- **Roles:**")), "")
+        if case == "purged" and i >= 1:
+            # the board the driver reads out of sqlite does NOT know `_alive`, so the honest
+            # proof that the role left the product is the RENDERED page and the payload
+            recs, _st, _sk = roles.load(ledger_path)
+            rec = recs.get("tel aviv|data analyst") or {}
+            page = os.path.join(W, "out", "docs-preview", "index.html")
+            html = open(page, encoding="utf-8").read() if os.path.exists(page) else ""
+            checks.append((f"{d['date']} the city's role is never in the email",
+                           not any(j.get("company") == "Tel Aviv" for j in payload["jobs"])))
+            checks.append((f"{d['date']} the city's role is not on the rendered board",
+                           bool(html) and "secrettelaviv" not in html))
+            checks.append((f"{d['date']} its record is purged, not closed "
+                           f"(status={rec.get('status')!r})", rec.get("status") == "purged"))
+            checks.append((f"{d['date']} a deliberate park is not reported as a broken fetch",
+                           "mass-close" not in md))
+            checks.append((f"{d['date']} the store still HOLDS it (nothing is ever deleted)",
+                           "tel aviv|data analyst" in recs))
         stg = next((l for l in md.splitlines() if l.startswith("- **Stages:**")), "")
         print(f"[{d['date']}] {line}")
         if stg:
@@ -113,6 +157,13 @@ def scripted(case, W):
             ((__import__('datetime').date.fromisoformat(d["date"]) - __import__('datetime').timedelta(days=1)).isoformat(),)))
         sup = sorted(c for (c,) in con.execute("select company from matched where status='superseded'")) if has_status else []
         con.close()
+        # sqlite carries exactly one status, `superseded` (ARCHITECTURE 7c); open/closed and
+        # `purged` live in the ledger. So this sqlite-derived board is only a proxy for the
+        # product, and a purged role — off the email, off the board, kept in the archive —
+        # would otherwise be counted here as if it were still live.
+        _led, _lst, _ = roles.load(ledger_path)
+        _off = {k for k, r in _led.items() if r.get("status") == "purged"} if _lst == "ok" else set()
+        board = [b for b in board if b.lower().replace("|", "|") not in _off]
         if case == "corrupt" and i >= 2:
             checks.append((f"{d['date']} corrupt ledger is on the Stages line", "roles ledger corrupt" in stg))
             checks.append((f"{d['date']} corrupt ledger not overwritten", open(ledger_path, encoding="utf-8").read() == wreck))
@@ -159,8 +210,11 @@ def scripted(case, W):
                            all(len(recs.get(k, {}).get("episodes", [])) == n for k, n in exp["episodes"].items())))
         checks.append((f"{d['date']} no description text in roles.jsonl",
                        not any("description" in r for r in recs.values())))
+        # a purged record was never in a `merged` list, so it has no class or tags — and it
+        # is off every product, so it is not what this check is about
         checks.append((f"{d['date']} every record carries tags/class/attribution",
-                       all(r.get("tags") and r.get("attribution") is not None for r in recs.values())))
+                       all(r.get("tags") and r.get("attribution") is not None
+                           for r in recs.values() if r.get("status") != "purged")))
 
 
 def real(W):
@@ -238,7 +292,22 @@ def golden(W):
                        (h - t) == expect and not (t - h)))
     hb, tb = set(got["head"][1]), set(got["tree"][1])
     print(f"board head={len(hb)} tree={len(tb)} head-only={sorted(hb - tb)} tree-only={sorted(tb - hb)}")
-    checks.append(("board differs from HEAD by exactly the two collapsed doubles", (hb - tb) == allowed and not (tb - hb)))
+    # HEAD-independent, and it has to be. This check used to require `(hb - tb) == allowed`,
+    # which only holds while HEAD PREDATES the claim collapse: once the feature was on both
+    # sides the difference became empty and the check went red and stayed red — it failed
+    # identically on an origin-vs-origin run on 2026-08-27, two days after the collapse
+    # landed, and nothing caught it because `--golden` is hand-run. The tree must never LOSE
+    # a role HEAD had, and the collapse must be proven to have RUN — but proven from the
+    # tree's own store, not from HEAD being broken.
+    checks.append(("board loses nothing HEAD had, beyond the collapsed doubles",
+                   (hb - tb) <= allowed and not (tb - hb)))
+    # ...and the positive half, from the tree alone: with the collapse disabled BOTH names
+    # reach `matched` under their own merge_key and both appear on the board, so the losers
+    # being absent is the feature running. (They are never inserted rather than inserted and
+    # superseded — `resolve_claims` collapses before the upsert; the `happy` case asserts
+    # "no loser ever entered the store" the same way.)
+    checks.append((f"the collapse RAN: neither loser is on the tree's board ({sorted(allowed)})",
+                   not (allowed & tb)))
 
 
 W = os.path.join(S, "roles_" + (a.tag or ("real" if a.real else "golden" if a.golden else a.case)))

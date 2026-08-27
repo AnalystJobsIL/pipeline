@@ -12023,3 +12023,317 @@ def test_the_watchdog_can_neither_dispatch_nor_write_to_the_repo():
     writes = [l for l in src.splitlines() if "open(" in l and '"w"' in l]
     assert len(writes) == 1 and "a.alert" in writes[0], \
         "digest_watchdog.py writes somewhere other than the alert file: %r" % writes
+
+
+# --- roles, 2026-08-27: the across-day key, the field-wise merge, the outage, the purge ---
+# Every one of these is a defect measured on the live boards or the committed store that day,
+# and three of them were found by adversarial review of this session's own first design.
+
+
+def test_a_display_word_is_not_a_job_id_so_sixteen_roles_get_sixteen_keys():
+    """`fetch_workday` reads `bulletFields[0]`, a TENANT-CONFIGURED display list, not a
+    requisition number. Measured live 2026-08-27: sixteen of Thales' seventeen Israel
+    postings arrived with job_id "Regular Employee". One seen_id for sixteen roles means
+    that the moment one is emailed, `filter_new` suppresses the other fifteen forever."""
+    from pipeline import store
+    jobs = [_role("Thales", t, "https://thales.wd3.myworkdayjobs.com/Careers/job/x/%s_R%d" % (t, i),
+                  "Regular Employee", src="workday")
+            for i, t in enumerate(["Team Leader", "Data Analyst", "Backend Dev"])]
+    ids = {store.seen_id(j) for j in jobs}
+    assert len(ids) == 3, ids
+    assert all(i.startswith("workday:https://") for i in ids), "falls through to the address"
+    # ...and the guard is on the SHAPE, so it does not disturb a real id
+    assert store.seen_id(_role("X", "T", "u", "JR-019918", src="workday")) == "workday:JR-019918"
+    assert store.seen_id(_role("X", "T", "u", "4697159006")) == "greenhouse:4697159006"
+    assert store._is_id_shaped("BC.A60") and not store._is_id_shaped("Regular Employee")
+    assert not store._is_id_shaped("Regular"), "a word with no digit identifies nothing"
+
+
+def test_two_companies_on_one_ats_no_longer_share_a_seen_id():
+    """BACKLOG 285. BambooHR job ids are small per-tenant integers: on origin's registry
+    `bamboohr:39` was BOTH Bringoz's Customer Success Director and Miggo Security's Senior
+    Backend Engineer, and `filter_new` passes a role only when NONE of its seen_ids is in
+    `sent` — so once either side is emailed the other is silently never emailed again."""
+    from pipeline import store
+    a = _role("Bringoz", "Customer Success Director", "https://bringoz.bamboohr.com/careers/39",
+              "39", src="bamboohr")
+    b = _role("Miggo Security", "Senior Backend Engineer", "https://miggo.bamboohr.com/careers/39",
+              "39", src="bamboohr")
+    assert store.seen_id(a) != store.seen_id(b)
+    assert store.seen_id(a) == "bamboohr@bringoz.bamboohr.com:39"
+    # a SHARED Oracle pod is separated by its site segment, not by its host
+    o = "https://fa-epcb-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/%s/job/7"
+    assert store.seen_id(_role("A", "T", o % "CX_2001", "7", src="oraclehcm")) != \
+           store.seen_id(_role("B", "T", o % "CX_1001", "7", src="oraclehcm"))
+    # and a platform whose ids ARE globally unique is left alone (comeet: 2,246 ids, 0
+    # collisions over 133 boards on 2026-08-27), so nothing is re-keyed for nothing
+    assert store.seen_id(_role("X", "T", "https://www.comeet.com/jobs/x/1/t/BC.A60", "BC.A60",
+                               src="comeet")) == "comeet:BC.A60"
+
+
+def test_a_tenant_never_carries_the_seen_ids_column_delimiter():
+    """`matched.seen_ids` is joined on "+" and split on "+", so a "+" inside a key makes the
+    column round-trip lossy — the two halves are in nobody's `sent` table and the role is
+    EMAILED A SECOND TIME. `:` would break the key's own parse."""
+    from pipeline import store
+    sid = store.seen_id(_role("X", "T", "https://a+b.bamboohr.com/careers/9", "9", src="bamboohr"))
+    tenant = sid.split("@", 1)[1].rsplit(":", 1)[0]
+    assert "+" not in tenant and ":" not in tenant, sid
+    assert sid.count(":") == 1
+
+
+def test_the_new_key_leaves_both_of_its_parsers_reading_the_id_half():
+    """Exactly two readers parse this format and both take everything after the FIRST colon.
+    The tenant therefore goes in the PLATFORM half. `enrich_matched_jd.sibling_urls` is the
+    one that matters: it does `sid.split(":", 1)[1]` then `startswith("http")`, and the
+    url-fallback branch of `seen_id` puts an address there — a tenant after the colon would
+    silently return nothing for every role and kill jd-text's whole sibling-JD rung."""
+    from pipeline import roles, store
+    scoped = store.seen_id(_role("X", "T", "https://x.bamboohr.com/careers/39", "39", src="bamboohr"))
+    assert scoped.partition(":")[2] == "39", "roles._strong_ids reads the id half"
+    fallback = store.seen_id(_role("X", "T", "https://x.bamboohr.com/careers/", "", src="bamboohr"))
+    assert fallback.split(":", 1)[1].startswith("http"), "sibling_urls still sees an address"
+    assert roles._strong_ids({"seen_ids": [scoped, fallback]}) == {scoped, fallback}
+    # a display word is not strong either, or sixteen Thales roles sit in one claim bucket
+    assert roles._strong_ids({"seen_ids": ["workday:Regular Employee", "comeet:BC.A60"]}) \
+        == {"comeet:BC.A60"}
+    # the shapes the original guard was written for still go
+    assert roles._strong_ids({"seen_ids": ["scrape:#", "scrape:mailto:cv@x", "scrape:"]}) == set()
+
+
+def test_a_competitor_card_on_our_page_never_donates_its_text_or_its_url():
+    """`nift|data analyst` carries five OTHER employers' postings in its `seen_ids` because a
+    scrape read competitors' cards off Nift's page. The authority gate must be an identity of
+    SOURCE. The obvious alternative was measured to be a NO-GO: `names_in_url` matches the
+    JOB TITLE in a url slug, so `names_in_url("Bright Data", ".../fetcherr/.../data-analyst
+    --tableau/...")` is True and Fetcherr's JD would ship under Bright Data's name."""
+    from pipeline import roles, store
+    fetcherr = "https://www.comeet.com/jobs/fetcherr/68.006/data-analyst--tableau/A5.D67"
+    assert roles.names_in_url("Bright Data", fetcherr), "the rejected gate really does admit it"
+    assert not store._same_origin(fetcherr, "brightdata"), "the origin gate refuses it"
+    ours = _role("Bright Data", "Data Analyst", "https://www.comeet.com/jobs/brightdata/1/t/A1.B2",
+                 "A1.B2", src="comeet")
+    theirs = _role("Bright Data", "Data Analyst", fetcherr, "A5.D67", src="comeet",
+                   desc="F" * 4000)
+    # BOTH orders, and the reversed one is the real one: `roles.classify_grouped` sorts its
+    # members by -len(description) and appends in that order, so the competitor's full card
+    # is member[0]. An earlier version of this test fixed the order and therefore proved
+    # nothing — both members sorted equal and `sorted` is stable, so it was asserting the
+    # order of two literals.
+    for members in ([ours, theirs], [theirs, ours]):
+        out = store.merge_duplicates(members, {"Bright Data": "brightdata"})
+        assert len(out) == 1
+        assert out[0]["url"] == ours["url"], "the reader's link stays on our own board"
+        assert not out[0]["description"], "another employer's JD is never published as ours"
+
+    # ...and the shape that actually shipped this defect during review: OUR posting is the
+    # aggregator card and THEIRS is on its own (non-aggregator) site. A "demote anything on
+    # an aggregator" canonical key promotes the competitor — in both orders — because
+    # demoting one member promotes another, and the promoted one is never tested.
+    nift_o = {"Nift": "https://boards-api.greenhouse.io/v1/boards/nift/jobs"}
+    mine = _role("Nift", "Data Analyst", "https://il.linkedin.com/jobs/view/data-analyst-at-nift-1",
+                 "1", src="discovery-linkedin", desc="N" * 900, posted_date="2026-08-17")
+    rival = _role("Nift", "Data Analyst", "https://www.g-stat.co.il/careers/data-analyst", "2",
+                  src="scrape", desc="G" * 300, posted_date="")
+    for members in ([mine, rival], [rival, mine]):
+        out = store.merge_duplicates(members, nift_o)[0]
+        assert out["url"] == mine["url"], out["url"]
+        assert out["description"].startswith("N"), "a competitor's JD is never ours"
+
+
+def test_a_board_root_address_never_displaces_a_per_job_card():
+    """Being on the employer's domain is not enough to take the canonical slot: three Meta
+    records were promoted to `metacareers.com/jobs?offices[0]=…`, a SEARCH page that
+    `roles.same_posting` separately warns is shared by every Meta role. It is a worse link
+    for the reader, and it strips the strongest evidence `Ledger._winner` has — an aggregator
+    card url literally contains `-at-<company>-`. Only an address DEEPER than the board's own
+    may be promoted or donate the url."""
+    from pipeline import store
+    o = {"Meta": "https://www.metacareers.com/jobs"}
+    card = _role("Meta", "Data Analyst", "https://il.linkedin.com/jobs/view/data-analyst-at-meta-1",
+                 "9", src="discovery-linkedin", posted_date="2026-08-20")
+    root = _role("Meta", "Data Analyst", "https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv",
+                 "8", src="scrape", posted_date="")
+    assert not store._is_posting_page(root, o), "the board's own address is not a posting"
+    for members in ([card, root], [root, card]):
+        assert store.merge_duplicates(members, o)[0]["url"] == card["url"]
+    # ...but a real posting page on that domain IS promoted
+    deep = _role("Meta", "Data Analyst", "https://www.metacareers.com/jobs/12345", "7",
+                 src="scrape", posted_date="")
+    assert store.merge_duplicates([card, deep], o)[0]["url"] == deep["url"]
+
+
+def test_an_ats_vendors_own_registry_row_does_not_certify_its_tenants():
+    """`HiBob` is itself an active registry row, and `*.careers.hibob.com` is the multi-tenant
+    ATS domain it sells. Matching the tenant token against HOST labels made every Bob
+    customer's posting read as "HiBob's own board" — including Quantum Source, a real row."""
+    from pipeline import store
+    assert not store._same_origin("https://qslabshr.careers.hibob.com/jobs/bf1f/apply", "HiBob")
+    assert not store._same_origin("https://anyoneelse.careers.hibob.com/jobs/9/apply", "HiBob")
+    # a token still names a whole PATH segment, which is what a tenant actually is
+    assert store._same_origin("https://www.comeet.com/jobs/Modellama/26.00E/x/E8.138", "26.00E")
+    assert not store._same_origin("https://il.linkedin.com/jobs/view/data-analyst-at-nift-1", "nift")
+
+
+def test_a_role_that_returns_after_a_long_board_failure_re_alerts(tmp_path):
+    """`record_run` closes a role only where the fetch SUCCEEDED, so a board broken for weeks
+    leaves its roles neither seen nor closed — and `keep_first` would then pin a months-old
+    `first_seen` that `get_matched_since(cutoff_email)` can never return. The role would not
+    merely go un-alerted; it would be invisible to the email query. `STALE_DAYS` is the
+    backstop, and it is far longer than any outage the ledger rule exists to survive."""
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Acme", "Data Analyst", "u", "A1")
+    for d in ("2026-08-09", "2026-08-10"):
+        st.record_run_date(d)
+    st.upsert_matched(j, "2026-08-10")
+    # four runs happen and the board raises on every one, so the role is neither seen NOR
+    # closed — `record_run` closes only where the fetch succeeded. Then a NEW requisition
+    # arrives under the same company|title.
+    for d in ("2026-08-11", "2026-08-12", "2026-08-13", "2026-08-14", "2026-08-15"):
+        st.record_run_date(d)
+    st.upsert_matched(_role("Acme", "Data Analyst", "u2", "A2"), "2026-08-15", set())
+    row = st.get_matched_since("0000-01-01")[0]
+    assert row["first_seen"] == "2026-08-15", "four missed runs is a new opening"
+    assert st.get_matched_since("2026-08-14"), "and the email query can see it again"
+    # ...while the SAME calendar gap with no runs in it is an outage and changes nothing
+    st2 = store.SeenStore(str(tmp_path / "u.db"))
+    st2.record_run_date("2026-08-10")
+    st2.upsert_matched(j, "2026-08-10")
+    st2.record_run_date("2026-08-15")
+    st2.upsert_matched(j, "2026-08-15", set())
+    assert st2.get_matched_since("0000-01-01")[0]["first_seen"] == "2026-08-10"
+    st.close(); st2.close()
+
+
+def test_the_merge_takes_the_board_url_and_the_longest_text_from_the_companys_own_board():
+    """BACKLOG 260 / 109 / 151, which are one bug. The canonical is elected on having an ISO
+    date and scrape rows carry `posted_date: ""`, so an aggregator card wins and BOTH its
+    short snippet and its aggregator link ship, while the employer's own full JD is dropped
+    in memory before `upsert_matched`'s longest-text rule can ever see it. (109's stated
+    mechanism is false: both branches of `upsert_matched` overwrite `url` unconditionally.)"""
+    from pipeline import store
+    card = _role("Zipher", "Data Analyst", "https://il.indeed.com/viewjob?jk=b081", "b081",
+                 src="discovery-indeed", desc="S" * 170, posted_date="2026-08-17")
+    board = _role("Zipher", "Data Analyst", "https://zipher.ai/careers/data-analyst/", "",
+                  src="scrape", desc="L" * 2021, posted_date="")
+    for members in ([card, board], [board, card]):      # order must not decide this
+        out = store.merge_duplicates(members, {"Zipher": "https://zipher.ai/careers/"})
+        assert len(out) == 1
+        assert out[0]["url"] == "https://zipher.ai/careers/data-analyst/"
+        assert len(out[0]["description"]) == 2021
+        assert out[0]["posted_date"] == "2026-08-17", "the card's real date is still rescued"
+        assert len(out[0]["seen_ids"]) == 2, "every contributing posting is still marked sent"
+    # Without a registry origin the rescues are inert and this is exactly the pre-2026-08-27
+    # answer. A "demote any aggregator url" key would fix this case without `origins` and was
+    # tried — it is a NO-GO, because demoting one member promotes another that nothing has
+    # vetted (see `test_a_competitor_card_on_our_page_never_donates_its_text_or_its_url`).
+    assert len(store.merge_duplicates([card, board])[0]["description"]) == 170
+    # ...and with neither signal the group is unchanged: one member, one answer
+    assert store.merge_duplicates([card])[0]["url"] == card["url"]
+
+
+def test_an_inherited_copy_never_donates_the_text_that_was_copied_onto_it():
+    """`roles.classify_grouped` copies the group's longest text onto a copy that INHERITED
+    its verdict. That text is not something the posting carried, so it must not travel back
+    out as if the employer's own board had supplied it."""
+    from pipeline import store
+    board = _role("Acme", "Data Analyst", "https://acme.com/careers/da", "", src="scrape", desc="")
+    copy = _role("Acme", "Data Analyst", "https://acme.com/careers/da2", "", src="scrape",
+                 desc="X" * 900, _inherited=True)
+    out = store.merge_duplicates([board, copy], {"Acme": "https://acme.com/careers"})
+    assert out[0]["description"] == "", out[0]["description"][:40]
+
+
+def test_an_outage_does_not_reset_first_seen_but_a_reopening_does(tmp_path):
+    """BACKLOG 139. The rule was a CALENDAR gap of >3 days, which cannot tell "we looked and
+    it was gone" from "there was no run" — with no digest on 2026-08-27 and a resume on
+    08-30, all 76 open roles would have taken a fresh `first_seen`. The ledger's own closure
+    record is the right instrument: it closes a role only where the run actually looked."""
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Acme", "Data Analyst", "u", "11")
+    st.record_run_date("2026-08-20")
+    st.upsert_matched(j, "2026-08-20")
+    # ten days pass and NO RUN HAPPENS — the run log is the only instrument that can say so.
+    # The ledger never closed it because the ledger never looked.
+    st.upsert_matched(j, "2026-08-30", set())
+    assert st.get_matched_since("0000-01-01")[0]["first_seen"] == "2026-08-20"
+    # the same gap, but the ledger recorded a closure: a genuinely new opening re-alerts
+    st.upsert_matched(j, "2026-09-09", {"acme|data analyst"})
+    assert st.get_matched_since("0000-01-01")[0]["first_seen"] == "2026-09-09"
+    # and with no ledger at all (a scratch store, a frozen or corrupt ledger) the old
+    # calendar rule is kept rather than treating every role as never-closed
+    st.upsert_matched(j, "2026-09-20")
+    assert st.get_matched_since("0000-01-01")[0]["first_seen"] == "2026-09-20"
+    st.close()
+
+
+def test_a_role_at_a_row_that_was_never_an_employer_is_purged_not_closed(tmp_path):
+    """BACKLOG 223. `Tel Aviv` is a CITY that was activated on jobs.secrettelaviv.com, and
+    its seven records are seven other employers' postings. `closed` would file them in the
+    public archive as expired or filled under the name of a city, permanently; section 7c
+    reserves `purged` for a row that was never ours. A purge is not a closure and never
+    counts toward the mass-close guard — parking is a deliberate registry action."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Tel Aviv", "Data Analyst", "https://jobs.secrettelaviv.com/job/data-analyst-312/", "312")
+    st.upsert_matched(j, "2026-08-25")
+    L = roles.Ledger(st)
+    L.open_sync()
+    board = st.get_matched_since("0000-01-01")
+    line = L.record_run("2026-08-26", board_jobs=board, merged=[j], scanned_ok={"Tel Aviv"},
+                        failed=set(), never_ours={"tel aviv"})
+    rec = L.records["tel aviv|data analyst"]
+    assert rec["status"] == "purged" and rec["closed_on"] == "2026-08-26"
+    assert "purged 1" in line[0], line[0]
+    assert "closed today 1" not in line[0], "a purge is not a closure"
+    assert not any("mass-close" in a for a in L.alarms)
+    st.close()
+
+
+def test_the_purge_is_compared_on_normalized_identity_so_an_alias_is_never_caught(tmp_path):
+    """`store._norm_company` strips ONE trailing corporate suffix, so `TechBiz Global GmbH`
+    and `TechBiz Global` are one identity — and on 2026-08-27 eight parked names normalized
+    onto an ACTIVE row (HP Inc., NICE, Nova Ltd., SolarEdge Technologies, Innoviz
+    Technologies, Orca-AI, Workday Inc, TechBiz Global GmbH) with 53 more parked as
+    `alias-of`. A raw-name test would have purged a live role on the active row's own board."""
+    from pipeline import roles, store
+    assert store._norm_company("TechBiz Global GmbH") == store._norm_company("TechBiz Global")
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("TechBiz Global GmbH", "Data Analyst", "https://jobs.techbiz.global/o/data-analyst", "1")
+    st.upsert_matched(j, "2026-08-26")
+    L = roles.Ledger(st)
+    L.open_sync()
+    L.record_run("2026-08-26", board_jobs=st.get_matched_since("0000-01-01"), merged=[j],
+                 scanned_ok={"TechBiz Global GmbH"}, failed=set(), never_ours={"tel aviv"})
+    assert L.records["techbiz global|data analyst"]["status"] == "open"
+    st.close()
+
+
+def test_a_seen_id_that_names_two_roles_is_an_alarm_not_a_silent_loss(tmp_path):
+    """The detector is format-independent on purpose, so it survives every future change to
+    the key and catches the two shapes that are invisible to each other: a cross-TENANT
+    collision and a same-tenant one. An audit that counts only cross-COMPANY collisions sees
+    the first and walks straight past the second — which is how sixteen Thales roles sharing
+    one key were missed by this session's own first audit."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    L = roles.Ledger(st)
+    a = _role("Thales", "Team Leader", "https://t.wd3.com/job/a", "X")
+    b = _role("Thales", "Data Analyst", "https://t.wd3.com/job/b", "X")
+    for j in (a, b):
+        j["seen_ids"] = ["workday:X"]
+    assert L.id_collisions([a, b])
+    assert any("seen-id collision" in x for x in L.alarms), L.alarms
+    # ...but two rows that fetched ONE posting share an address, and that is resolve_claims'
+    # job, not a collision: Armis/OTORIO must not be flagged
+    L2 = roles.Ledger(st)
+    gh = "https://job-boards.greenhouse.io/armissecurity/jobs/6016139004"
+    p = _role("Armis", "Senior Data Analyst", gh, "6016139004")
+    q = _role("OTORIO", "Senior Data Analyst", gh, "6016139004")
+    for j in (p, q):
+        j["seen_ids"] = ["greenhouse:6016139004"]
+    assert not L2.id_collisions([p, q])
+    assert not L2.alarms, L2.alarms
+    st.close()

@@ -3,7 +3,10 @@
 Two separate dedup concerns, handled with two different keys:
 
 1. Across-day "only show NEW postings" — keyed by a stable per-posting id
-   `seen_id = "{ats_platform}:{job_id}"`. Every posting ever included in a digest is
+   `seen_id = "{ats_platform}:{job_id}"`, and `"{ats_platform}@{tenant}:{job_id}"` on the
+   platforms whose ids are unique only per tenant (`_TENANT_SCOPED`). A `job_id` that is not
+   an identifier — `fetch_workday` hands over a display label — falls through to the url
+   (`_is_id_shaped`). Every posting ever included in a digest is
    recorded here; a posting is NEW iff its seen_id is absent. Because it keys on the
    platform's own job id, a genuinely new opening (new id) re-alerts, while the same
    posting never alerts twice.
@@ -48,13 +51,153 @@ def _norm_company(s):
     return _norm(_SUFFIXES.sub("", (s or "").strip()))
 
 
+# ---- the across-day key -----------------------------------------------------------------
+# Platforms whose job-id space is per TENANT rather than per platform, so two companies on
+# the same ATS can produce the same id. The criterion is the fetcher's id expression, not
+# today's collision count: measured 2026-08-27 over every active board, only bamboohr had
+# actually collided (3 of 72 ids), but oraclehcm req Ids, eightfold/microsoft `displayJobId`
+# and phenom `jobSeqNo` are all per-tenant spaces that have simply not collided yet.
+# Deliberately NOT here, each with its enumeration on that date: comeet (2,246 ids, 0
+# collisions), greenhouse (8,088, 0), smartrecruiters (5,958, 0), ashby (2,076, 0), lever
+# (756, 0), recruitee (233, 0), workable (105, 0), breezy (54, 0) — globally unique by
+# construction; `scrape` and every `discovery-*` prefix, whose ids are already urls; and
+# `workday`, whose collision is SAME-tenant (see `_is_id_shaped`) and which tenant-scoping
+# would not fix while making the record look as though it had been addressed.
+# How many RUNS a role may be absent from and still be the same opening. Runs, not days:
+# see `upsert_matched` and `SeenStore.missed_runs`.
+MISSED_RUNS = 3
+
+
+_TENANT_SCOPED = frozenset(("bamboohr", "oraclehcm", "eightfold", "microsoft", "phenom"))
+
+# A path segment meaning "the posting starts here" — everything after it varies per posting
+# (the office, the title slug, the id), so the tenant is what comes before. Chosen from the
+# data: without this cut, 21 of 56 scoped boards yielded more than one tenant token, because
+# the Workday path carries the office and the Eightfold path a per-posting id.
+_TENANT_MARK = frozenset((
+    "job", "jobs", "apply", "details", "detail", "opening", "openings", "position",
+    "positions", "career", "careers", "vacancy", "vacancies", "posting", "postings",
+    "req", "requisition",
+))
+# `+` is the matched.seen_ids column delimiter (see `upsert_matched`) and `:` is the key
+# separator, so neither may ever reach a tenant: a `+` would make that column round-trip
+# lossy and re-email the role.
+_TENANT_BAD = re.compile(r"[^a-z0-9./-]+")
+
+
+def _tenant_of(job):
+    """The board a posting came from, derived from the posting's OWN url.
+
+    Reads nothing outside the job dict, so no fetcher and no registry column has to change.
+    Host alone is not enough: Oracle HCM has SHARED SaaS pods (Verint sits on
+    `fa-epcb-saasfaprod1.fa.ocs.oraclecloud.com`, one host that can carry many tenants),
+    separated only by the `sites/CX_...` segment — a host-only rule would have re-created
+    the very bug it fixes, on a different platform.
+
+    Returns "" when no tenant can be derived, and every caller then keeps today's behaviour.
+    """
+    from urllib.parse import urlsplit
+    try:
+        parts = urlsplit(str(job.get("url") or ""))
+    except ValueError:
+        return ""
+    host = (parts.netloc or "").lower().split(":")[0]
+    host = host[4:] if host.startswith("www.") else host
+    if not host:
+        return ""
+    segs = [x for x in (parts.path or "").split("/") if x]
+    jid = str(job.get("job_id") or "").strip().lower()
+    keep = []
+    for seg in segs:
+        low = seg.lower()
+        if low in _TENANT_MARK:
+            break
+        if jid and jid in low:
+            break
+        if len(seg) > 24 or seg.count("-") > 2:      # a title or office slug, not a tenant
+            break
+        keep.append(low)
+    # ...and the one segment that is a tenant by POSITION rather than by vocabulary. Oracle
+    # HCM addresses a tenant as `sites/<site>`, and both of the rules above can eat it: a
+    # requisition id of `2001` matches the site `CX_2001` (so Fortinet's tenant changed with
+    # its own job id), and Dell's site is literally named `careers`, a _TENANT_MARK word.
+    # Either way the key degraded to the SHARED POD prefix, which is exactly the collision
+    # `_tenant_of` exists to prevent.
+    if "sites" in [x.lower() for x in segs]:
+        i = [x.lower() for x in segs].index("sites")
+        if i + 1 < len(segs) and segs[i + 1].lower() not in keep:
+            keep.append(segs[i + 1].lower())
+    return _TENANT_BAD.sub("-", "/".join([host] + keep)).strip("-")
+
+
+_WS = re.compile(r"\s")
+_DIGIT = re.compile(r"\d")
+
+
+def _is_id_shaped(jid):
+    """Is this string a posting identifier at all?
+
+    `fetch_workday` reads `bulletFields[0]`, which is a TENANT-CONFIGURED DISPLAY LIST, not
+    a requisition number. Measured 2026-08-27 against the live boards: sixteen of Thales'
+    seventeen Israel postings arrived with `job_id` "Regular Employee", F5's four with "0",
+    Aristocrat's two with "Regular". One seen_id for sixteen roles means that the moment one
+    is emailed, `filter_new` suppresses the other fifteen FOREVER — a larger loss than the
+    cross-tenant collision this key was re-shaped for, and invisible to an audit that counts
+    only cross-COMPANY collisions.
+
+    A real id carries a digit and has no whitespace. That admits every shape in the fleet
+    (`39`, `JR-019918`, `4697159006`, `BC.A60`, a uuid) and refuses "Regular Employee" and
+    "Regular". It is deliberately fail-SAFE rather than fail-tight: a false positive falls
+    through to the url, which is MORE unique than the id, so the cost is one night of key
+    churn (absorbed by `upsert_matched`'s union, ARCHITECTURE section 7c) and never a lost
+    or a duplicated role.
+
+    It does NOT catch F5's "0": a one-character numeric id is shaped exactly like a real
+    bamboohr id, and no lexical rule can separate them. That class is left to the run-scoped
+    collision alarm (`roles.Ledger.id_collisions`), which needs no lexical judgement at all
+    because it sees both postings, and to BACKLOG 311, which fixes the cause.
+
+    `pipeline/fetchers.py` is `ats-fetch`'s file, so the expression itself is BACKLOG 311;
+    this guard is the durable half, because it defends against the next tenant to configure
+    a word rather than against the three boards that already did.
+    """
+    jid = str(jid or "")
+    return bool(jid) and not _WS.search(jid) and bool(_DIGIT.search(jid))
+
+
+def _no_delim(part):
+    """`+` joins the `matched.seen_ids` column and splits it again, so a `+` anywhere in a key
+    makes that column lossy: the two halves land in nobody's `sent` table and `filter_new`
+    calls the role new again. The tenant is regex-constrained, but the URL BRANCH below is
+    not — and `_is_id_shaped` deliberately routes far more traffic onto it, so a careers link
+    with `?role=data+analyst` would have re-emailed. Percent-encode instead of dropping, so
+    the address `enrich_matched_jd.sibling_urls` reads back out is still fetchable."""
+    return str(part or "").replace("+", "%2B")
+
+
 def seen_id(job):
-    """Stable per-posting identity for across-day dedup."""
+    """Stable per-posting identity for across-day dedup.
+
+    `{platform}:{job_id}`, with the board's tenant folded into the PLATFORM half —
+    `{platform}@{tenant}:{job_id}` — for the platforms whose ids are unique only per tenant.
+
+    The tenant goes before the colon, never after it, because two readers in this repo parse
+    this string and both take everything after the FIRST colon as the identifier:
+    `roles._strong_ids`, and — the one that matters — `enrich_matched_jd.sibling_urls`,
+    which does `sid.split(":", 1)[1]` and then `startswith("http")`. The fallback branch
+    below puts a url in the id half, so a tenant after the colon would silently kill
+    `jd-text`'s whole scrape-sibling JD recovery, for every role.
+    """
+    plat = str(job.get("ats_platform", "") or "")
     jid = str(job.get("job_id") or "").strip()
-    if jid:
-        return f"{job.get('ats_platform', '')}:{jid}"
-    # Fallback when a platform gives no id: use the URL.
-    return f"{job.get('ats_platform', '')}:{job.get('url', '')}"
+    if plat in _TENANT_SCOPED:
+        tenant = _tenant_of(job)
+        if tenant:
+            plat = f"{plat}@{tenant}"
+    if _is_id_shaped(jid):
+        return _no_delim(f"{plat}:{jid}")
+    # No id, or a value that is not an identifier: the url, which is per posting.
+    return _no_delim(f"{plat}:{job.get('url', '')}")
 
 
 def merge_key(job):
@@ -62,14 +205,100 @@ def merge_key(job):
     return f"{_norm_company(job.get('company'))}|{_norm(job.get('title'))}"
 
 
-def merge_duplicates(jobs):
+def _url_parts(url):
+    """(host, path) of a url, lowercased, `www.` and a trailing slash stripped."""
+    from urllib.parse import urlsplit
+    try:
+        p = urlsplit(str(url or ""))
+    except ValueError:
+        return "", ""
+    h = (p.netloc or "").lower().split(":")[0]
+    h = h[4:] if h.startswith("www.") else h
+    return h, (p.path or "").rstrip("/").lower()
+
+
+def _same_origin(url, origin):
+    """Does this address belong to the board the registry row was fetched from?
+
+    `origin` is the registry row's `token` when that is a tenant (every native-ATS row has
+    one: comeet `26.00E`, greenhouse `nift`, ashby `moonactive` — 133/133, 106/106, 52/52 on
+    2026-08-27) and its `api_url` when the token is itself a url (a `scrape` row).
+
+    This is an identity of SOURCE, and that is the whole point. The obvious alternative —
+    "the company is named in the url", `roles.names_in_url` — is a NO-GO here and was
+    measured to be one: `names_in_url("Bright Data", ".../jobs/fetcherr/.../data-analyst--
+    tableau/...")` is True, because the company token `data` matches the JOB TITLE in the
+    url slug. That predicate was built as tiebreak key 0 of seven among candidates already
+    known to be the same posting; as an admission gate on foreign content it fails, and it
+    would have published Fetcherr's JD and apply link under Bright Data's name.
+
+    Strict on purpose: a false negative costs a repair we could have made, a false positive
+    publishes another employer's content, and only one of those is reversible.
+    """
+    from . import aggregators
+    url = str(url or "")
+    origin = str(origin or "").strip()
+    if not url or not origin or aggregators.is_aggregator(url):
+        return False
+    mh, mp = _url_parts(url)
+    if not mh:
+        return False
+    if origin.lower().startswith("http"):          # a scrape row: the board's own address
+        oh, op = _url_parts(origin)
+        return bool(oh) and mh == oh and (op == "" or mp == op or mp.startswith(op + "/"))
+    # a native-ATS tenant: it must name a whole PATH segment of the address — never a prefix
+    # of one (`nift` must not match `data-analyst-at-nift-4448328003`) and never a HOST label
+    # (`HiBob` is itself a registry row, and `*.careers.hibob.com` is its multi-tenant ATS
+    # domain, so matching host labels made every Bob customer's posting "HiBob's own board").
+    tok = origin.lower()
+    if len(tok) < 3:
+        return False
+    return tok in [seg for seg in mp.split("/") if seg]
+
+
+def _authoritative(job, origins):
+    """May this member donate its url or its description to the merged record?"""
+    if not origins:
+        return False
+    return _same_origin(job.get("url"), origins.get(job.get("company")))
+
+
+def _is_posting_page(job, origins):
+    """Authoritative AND deeper than the board's own address — a POSTING, not the listing.
+
+    Promoting a member merely because it is on the employer's domain can hand the reader the
+    board's root: three Meta records were promoted to `metacareers.com/jobs?offices[0]=…`, a
+    search page that `roles.same_posting` separately warns is shared by every Meta role. It
+    also strips the strongest name evidence `Ledger._winner` has, because an aggregator card
+    url literally contains `-at-<company>-`. So only a deeper address may take the canonical
+    slot or donate the url; when a group offers none, the election is exactly what it was.
+    """
+    if not _authoritative(job, origins):
+        return False
+    origin = str(origins.get(job.get("company")) or "")
+    if not origin.lower().startswith("http"):
+        return True                      # a tenant token matched a path segment: it is deep
+    return _url_parts(job.get("url"))[1] != _url_parts(origin)[1]
+
+
+def merge_duplicates(jobs, origins=None):
     """Collapse jobs sharing a merge_key into one canonical entry.
 
     Returns a list of merged jobs. Each merged job gains:
       - `seen_ids`: list of every contributing posting's seen_id (all marked sent)
       - `sources`: sorted list of distinct ats_platforms it appeared on
-    The canonical fields come from the first-seen contributor, preferring one that has a
-    real ISO posted_date and a url.
+
+    The merge is FIELD-wise, not member-wise. It used to copy one canonical member wholesale
+    and rescue only `posted_date`, and that lost two different things at once: a role seen on
+    an aggregator (real date, short snippet) and on its employer's own board (no date, full
+    JD) published the SNIPPET and linked to the AGGREGATOR, because the canonical is elected
+    on having an ISO date and scrape rows carry `posted_date: ""` (BACKLOG 260 / 109 / 151;
+    109's stated mechanism — that `upsert_matched` refuses to replace `url` — is false, both
+    of its branches overwrite it unconditionally).
+
+    `origins` is `{company_name: token-or-api_url}` from the registry. Without it the
+    rescues are inert and this behaves exactly as it did before: every degraded path here
+    falls back to today's answer rather than guessing.
     """
     groups = {}
     order = []
@@ -83,13 +312,22 @@ def merge_duplicates(jobs):
     merged = []
     for k in order:
         members = groups[k]
-        # canonical = prefer an entry with an ISO date, then one with a url, else first —
-        # never a copy that only INHERITED its verdict (pipeline/roles.classify_grouped): a
-        # bare discovery card's LinkedIn url and date must not become the role's record
+        # canonical = prefer a member that is a POSTING on the employer's own board, then
+        # one with an ISO date, then one with a url, else first — never a copy that only
+        # INHERITED its verdict (pipeline/roles.classify_grouped): a bare discovery card's
+        # LinkedIn url and date must not become the role's record.
+        #
+        # The second key is an identity of SOURCE and it is load-bearing. A "demote anything
+        # on an aggregator" key was tried here and is a NO-GO: demoting one member PROMOTES
+        # another, the promoted one was never tested against `origins`, and a competitor card
+        # scraped off our own careers page then published its url and its JD under our name —
+        # measured, in both member orders, and a regression against the rule it replaced.
+        # This key can only ever promote a member we have proven is on the company's board.
         canonical = sorted(
             members,
             key=lambda j: (
                 1 if j.get("_inherited") else 0,
+                0 if _is_posting_page(j, origins) else 1,
                 0 if re.match(r"^\d{4}-\d{2}-\d{2}$", str(j.get("posted_date", ""))) else 1,
                 0 if j.get("url") else 1,
             ),
@@ -102,6 +340,46 @@ def merge_duplicates(jobs):
                 if re.match(r"^\d{4}-\d{2}-\d{2}$", str(m.get("posted_date", ""))):
                     out["posted_date"] = m["posted_date"]
                     break
+        # the reader's link, and the text we publish, come from the employer's own board
+        # when any member offers one. `_inherited` copies are excluded from the description
+        # rescue because their text is a COPY of the group's longest (roles.classify_grouped
+        # writes it there), not something that posting carried.
+        # ONE donor supplies both the link and the text. Taking the url from the first
+        # authoritative member and the description from the longest one published a Tel Aviv
+        # posting's link with a Haifa posting's JD — `merge_key` is location-independent by
+        # design, so two members can be genuinely different openings with the same title.
+        own = [m for m in members if _authoritative(m, origins) and not m.get("_inherited")]
+        deep = [m for m in own if _is_posting_page(m, origins) and m.get("url")]
+        # The donor is whichever member supplies the LINK, and the text comes from the same
+        # address. Taking the url from one member and the longest description from another
+        # published a Tel Aviv posting's link with a Haifa posting's JD: `merge_key` is
+        # location-independent by design, so two members can be different openings with one
+        # title. When the canonical already IS a posting on the company's board it donates to
+        # itself, and only a member at the very same address may lengthen its text.
+        if _is_posting_page(out, origins):
+            donor_url = str(out.get("url") or "")
+        elif deep:
+            donor_url = max(deep, key=lambda m: len(str(m.get("description") or "").strip()))["url"]
+            out["url"] = donor_url
+        else:
+            donor_url = None
+        best = ""
+        if donor_url is not None:
+            for m in own:
+                if str(m.get("url") or "") != donor_url:
+                    continue
+                t = str(m.get("description") or "").strip()
+                if len(t) > len(best):
+                    best = t
+        # A ratchet, not a replacement, and this is the conservative choice on purpose. When
+        # the canonical is NOT on the employer's board, its text is usually our own role as
+        # an aggregator copied it — legitimate, and for many roles the only text we have — and
+        # nothing here can tell that from a competitor card on the same page. Replacing it
+        # would delete real coverage to remove a hypothetical; lengthening from a proven
+        # board member cannot. The foreign-text-on-a-foreign-canonical case is older than
+        # this rule and is BACKLOG 312.
+        if len(best) > len(str(out.get("description") or "").strip()):
+            out["description"] = best
         out["seen_ids"] = sorted({seen_id(m) for m in members})
         out["sources"] = sorted({m.get("ats_platform", "") for m in members})
         merged.append(out)
@@ -171,6 +449,16 @@ class SeenStore:
                 jd_attempted TEXT,
                 status      TEXT,
                 superseded_by TEXT
+            )""")
+        # One row per date the pipeline ran. It is the only honest answer to "was this role
+        # absent, or was there no run?" — a calendar gap cannot tell those apart and fires on
+        # an outage, and the distinct `last_seen` values of `matched` cannot either, because
+        # that column is overwritten on every re-sighting and so records the days something
+        # DIED (eight commits on 2026-08-21 against one distinct value; it holds dates that
+        # precede the first run; it is missing 2026-08-18).
+        self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS runs (
+                run_date    TEXT PRIMARY KEY
             )""")
         # migrations for stores created before a column existed. `jd_attempted` used to be
         # added out-of-band by enrich_matched_jd.py (its ALTER is now a no-op here);
@@ -307,13 +595,50 @@ class SeenStore:
                 (ungated, c, run_date))
         self.conn.commit()
 
+    # ---- the run log --------------------------------------------------------
+    def record_run_date(self, run_date):
+        """Stamp that the pipeline ran. Idempotent; `pipeline/roles.Ledger.record_run` is the
+        only caller, so a scoped local run stamps too — which is correct, it DID look."""
+        self.conn.execute("INSERT OR IGNORE INTO runs (run_date) VALUES (?)", (run_date,))
+        self.conn.commit()
+
+    def missed_runs(self, old_last, run_date):
+        """How many runs happened strictly between two dates — the number of chances this
+        role had to be seen and was not. Returns None when the log is empty (a fresh or a
+        rehydrated store), and `upsert_matched` then keeps the calendar rule."""
+        n = self.conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0]
+        if not n:
+            return None
+        return self.conn.execute(
+            "SELECT COUNT(*) FROM runs WHERE run_date > ? AND run_date < ?",
+            (str(old_last), str(run_date))).fetchone()[0]
+
     # ---- matched roles (rolling windows for email 48h / board 2 weeks) ------
-    def upsert_matched(self, job, run_date):
+    def upsert_matched(self, job, run_date, closed_keys=None):
         """Insert a matched role (keyed by company|title).
 
-        first_seen persists across daily re-sightings but RESETS when the role reappears
-        after >3 days of absence (a genuinely new opening re-alerts). An ISO posted_date is
-        never overwritten by a non-ISO one; sources and seen_ids are unioned.
+        `first_seen` persists across re-sightings and RESETS when the role REAPPEARS after
+        having been absent — a genuinely new opening under the same company|title has to
+        re-alert. An ISO posted_date is never overwritten by a non-ISO one; sources and
+        seen_ids are unioned.
+
+        What counts as "absent" is `closed_keys`: the role ids the ledger recorded as closed
+        (`pipeline/roles.Ledger.closed_keys`). The ledger is the right instrument because it
+        closes a role ONLY where the run actually looked — never on a failed board, never at
+        a company a scoped run did not scan — so it distinguishes "we looked and it was
+        gone" from "we did not look".
+
+        It used to be a calendar gap of >3 days, which cannot tell those apart and fires on
+        an OUTAGE: with no digest on 2026-08-27 and a resume on 08-30, all 76 open roles
+        would have taken a fresh `first_seen`, badging ~70 of them "new" on the board.
+        Counting distinct `last_seen` values instead was considered and measured to be
+        worse: that column is overwritten on every re-sighting, so it records the days
+        something DIED, not the days we ran — `git log cloud_state/seen.db` shows eight
+        commits on 2026-08-21 against one distinct `last_seen`, and the column holds
+        2026-08-16/17/19, which precede the first run of the pipeline (BACKLOG 139).
+
+        `closed_keys=None` keeps the old calendar rule, so a caller without a ledger — a
+        rehearsal, a scratch store, a frozen or corrupt ledger — behaves exactly as before.
         """
         mkey = merge_key(job)
         new_sources = set(job.get("sources") or [job.get("ats_platform", "")])
@@ -332,13 +657,25 @@ class SeenStore:
                 return len(p) == 10 and p[4:5] == "-"
             if _iso(str(old_pd or "")) and not _iso(new_pd):
                 new_pd = old_pd                       # keep the better date
-            try:
-                import datetime as _d
-                gap = (_d.date.fromisoformat(run_date)
-                       - _d.date.fromisoformat(str(old_last))).days
-            except (ValueError, TypeError):
-                gap = 0
-            keep_first = gap <= 3                     # reappeared quickly -> same opening
+            missed = self.missed_runs(old_last, run_date)
+            if closed_keys is not None and missed is not None:
+                # Two independent reasons to call this a NEW opening, and both are needed.
+                # The ledger is authoritative when it closed the role — it closes only where
+                # the run actually looked. But it closes NOTHING on a failed board, so a
+                # board broken for four runs would otherwise pin a stale `first_seen` that
+                # `get_matched_since(cutoff_email)` can never return, and the returning
+                # requisition would be silently un-emailable. The run log answers that: it
+                # counts the chances this role had to be seen, so an OUTAGE (no runs at all)
+                # keeps `first_seen` while a broken board that missed four real runs does not.
+                keep_first = mkey not in closed_keys and missed <= MISSED_RUNS
+            else:
+                try:
+                    import datetime as _d
+                    gap = (_d.date.fromisoformat(run_date)
+                           - _d.date.fromisoformat(str(old_last))).days
+                except (ValueError, TypeError):
+                    gap = 0
+                keep_first = gap <= 3                 # reappeared quickly -> same opening
         # A description is knowledge we may have paid Bright Data for, and most list
         # endpoints (workday, smartrecruiters, bamboohr, microsoft) return NONE — so a
         # daily re-sighting used to overwrite a backfilled JD with "". Never downgrade:
@@ -447,3 +784,81 @@ class SeenStore:
 
     def close(self):
         self.conn.close()
+
+
+# --------------------------------------------------------------------------------------- #
+# The audit that keeps the key honest. Run it after any change to `seen_id`, `_tenant_of` or
+# `_TENANT_SCOPED`, and after `registry` converts rows onto a scoped platform:
+#
+#     python -m pipeline.store --audit-ids            # every active board, free public APIs
+#     python -m pipeline.store --audit-ids --platform bamboohr
+#
+# It asserts three things, and the THIRD is the one this lane learned the hard way. An audit
+# that counts only cross-COMPANY collisions passes while sixteen Thales postings share one
+# key inside a single tenant.
+#
+#   1. no seen_id is produced by two different companies
+#   2. no board yields more than one tenant token  (a token that moves is not a tenant)
+#   3. no board collapses two of its own postings onto one seen_id
+# --------------------------------------------------------------------------------------- #
+
+def audit_ids(platforms=None, csv_path=None):
+    """Return (rows, problems). Network-bound: reads every active board it is asked about."""
+    import collections
+    from . import fetchers
+    from .companies import load_companies
+
+    rows = load_companies(csv_path) if csv_path else load_companies()
+    want = set(platforms or [])
+    owners, per_board, problems = collections.defaultdict(set), collections.defaultdict(set), []
+    counted = collections.Counter()
+    for r in rows:
+        plat = r.get("ats_platform", "")
+        if plat not in fetchers.FETCHERS or plat in ("scrape", "discovery"):
+            continue
+        if want and plat not in want:
+            continue
+        try:
+            jobs = fetchers.FETCHERS[plat](r) or []
+        except Exception:                    # a broken board is `ats-fetch`'s problem, not this one
+            continue
+        counted[plat] += len(jobs)
+        seen_here = collections.defaultdict(set)
+        for j in jobs:
+            sid = seen_id(j)
+            owners[sid].add(r["company_name"])
+            seen_here[sid].add((j.get("title") or "", j.get("url") or ""))
+            if plat in _TENANT_SCOPED:
+                per_board[(plat, r["company_name"])].add(_tenant_of(j))
+        for sid, postings in seen_here.items():
+            if len({u for _, u in postings if u}) > 1:
+                problems.append(("one board, one key, many postings", r["company_name"], sid,
+                                 sorted(t for t, _ in postings)[:4]))
+    for sid, who in owners.items():
+        if len(who) > 1:
+            problems.append(("two companies, one key", ", ".join(sorted(who)), sid, []))
+    for (plat, name), toks in per_board.items():
+        if len(toks) > 1:
+            problems.append(("one board, two tenant tokens", name, plat, sorted(toks)[:4]))
+    return dict(counted), problems
+
+
+def _audit_main(argv):
+    import sys
+    plats = []
+    if "--platform" in argv:
+        plats = argv[argv.index("--platform") + 1].split(",")
+    counted, problems = audit_ids(plats or None)
+    for plat, n in sorted(counted.items(), key=lambda kv: -kv[1]):
+        print(f"  {plat:16} {n:6} postings")
+    print(f"\n{len(problems)} problem(s)")
+    for kind, who, sid, extra in problems:
+        print(f"  [{kind}] {who}: {sid}" + (f" {extra}" if extra else ""))
+    return 1 if problems else 0
+
+
+if __name__ == "__main__":                   # never on import: this module is a library
+    import sys
+    if "--audit-ids" in sys.argv:
+        sys.exit(_audit_main(sys.argv))
+    print("usage: python -m pipeline.store --audit-ids [--platform a,b]")
