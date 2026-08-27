@@ -1,6 +1,4 @@
 {
- "since": "2026-08-26",
- "alarms": [
-  "re-check pool grew: probe_candidates 127 -> 224 (a predicate widened?)"
- ]
+ "since": "2026-08-27",
+ "alarms": []
 }

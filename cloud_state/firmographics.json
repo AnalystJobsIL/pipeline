@@ -561,6 +561,19 @@
     "stage_note": "No publicly disclosed funding round found; appears to be an early-stage startup onboarding first school/municipality partners for 2026-2027",
     "sub_sector": "AI-literacy learning platform for middle schools (student + educator tools)"
   },
+  "Alma Lasers": {
+    "as_of": "2026-08-27",
+    "business_model": "Manufacturer of medical and aesthetic laser/energy-based devices",
+    "customer_type": "B2B",
+    "employees_global": 1000,
+    "founded": 2003,
+    "il_center": "Caesarea (HQ)",
+    "sector": "Medical Devices",
+    "size_band": "L",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Subsidiary of Sisram Medical (HKEX-listed), acquired by Fosun Pharma-backed Sisram in 2013",
+    "sub_sector": "Aesthetic & Medical Lasers"
+  },
   "Alpha | Similarweb Partner": {
     "as_of": "2026-08-22",
     "business_model": "Tiered SaaS subscriptions to the digital-intelligence platform plus API/raw-data access and advisory services",
@@ -9005,6 +9018,19 @@
     "stage_note": "Privately held service firm (formerly Rachip), operating since 2007; no VC rounds or public listing found",
     "sub_sector": "Outsourced end-to-end chip design, embedded software, firmware and QA engineering services (R&D 360)"
   },
+  "RealPlay": {
+    "as_of": "2026-08-27",
+    "business_model": "B2C",
+    "customer_type": "Consumer",
+    "employees_global": 50,
+    "founded": 2023,
+    "il_center": "Tel Aviv (R&D); HQ in Delaware, US",
+    "sector": "Gaming",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Raised ~$2.55M seed funding",
+    "sub_sector": "Social Casino / Sweepstakes Gaming"
+  },
   "Reco": {
     "as_of": "2026-08-22",
     "business_model": "annual SaaS subscription licensing of its cloud security platform, typically priced per connected application/identity",
@@ -12884,6 +12910,19 @@
     "stage": "growth-private",
     "stage_note": "$145M round at $1.64B valuation (2026); ~$276M raised total; formerly LifeBEAM",
     "sub_sector": "Enterprise AI platform and vertical AI agents for patient/member engagement, retention and operations in healthcare, life sciences and wellness"
+  },
+  "אסם": {
+    "as_of": "2026-08-27",
+    "business_model": "B2B2C food manufacturing and trade",
+    "customer_type": "enterprise",
+    "employees_global": 3000,
+    "founded": 1942,
+    "il_center": "Kfar Saba (HQ)",
+    "sector": "Food & Beverage",
+    "size_band": "L",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Fully merged into Nestlé Group (Nestlé acquired remaining shares) in 2016",
+    "sub_sector": "Food manufacturing & trade"
   },
   "אקספריס אקדמי": {
     "as_of": "2026-08-22",

@@ -7587,12 +7587,6 @@
   "slug": "drsradatechnologies"
  },
  {
-  "name": "Jobgether",
-  "careers_url": "https://il.linkedin.com/jobs/view/azure-data-engineer-at-jobgether-4456083513",
-  "ats": "unknown",
-  "slug": "jobgether"
- },
- {
   "name": "PAPAYA",
   "careers_url": "https://il.linkedin.com/jobs/view/senior-machine-learning-engineer-at-papaya-4443783232",
   "ats": "unknown",
@@ -8053,12 +8047,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/ai-engineer-at-simplex-3d-4452235902",
   "ats": "unknown",
   "slug": "simplex3d"
- },
- {
-  "name": "Ethosia",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-machine-learning-engineer-at-ethosia-4450490848",
-  "ats": "unknown",
-  "slug": "ethosia"
  },
  {
   "name": "Alignerr",
@@ -9213,12 +9201,6 @@
   "slug": "migdal-group"
  },
  {
-  "name": "Staffin Israel",
-  "careers_url": "https://il.linkedin.com/jobs/view/business-data-analyst-at-staffin-israel-4458704927",
-  "ats": "unknown",
-  "slug": "staffin-israel"
- },
- {
   "name": "Dario",
   "careers_url": "https://il.linkedin.com/jobs/view/ai-data-engineer-early-career-at-dario-4458797443",
   "ats": "unknown",
@@ -9629,6 +9611,546 @@
  {
   "name": "withfaye",
   "careers_url": "https://secrethunter.io/jobz/320caa3ae3",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Brandlight",
+  "careers_url": "https://il.indeed.com/viewjob?jk=593daa4c193f851b",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Leverate",
+  "careers_url": "https://il.indeed.com/viewjob?jk=decf762d0f51d42c",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "אסם",
+  "careers_url": "https://il.indeed.com/viewjob?jk=a7cd257b81d9ba1d",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Computer Guard Technologies LTD",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%90%D7%A0%D7%9C%D7%99%D7%A1%D7%98-%D7%99%D7%AA-%D7%93%D7%90%D7%98%D7%94-%D7%9E%D7%AA%D7%97%D7%99%D7%9C-%D7%94-%E2%80%93-%D7%9C%D7%97%D7%91%D7%A8%D7%AA-%D7%A0%D7%99%D7%94%D7%95%D7%9C-%D7%9E%D7%95%D7%A2%D7%93%D7%95%D7%A0%D7%99-%D7%9C%D7%A7%D7%95%D7%97%D7%95%D7%AA-%D7%91%D7%96%D7%99%D7%A8%D7%94-%D7%94%D7%A7%D7%9E%D7%A2%D7%95%D7%A0%D7%90%D7%99%D7%AA-at-computer-guard-technologies-ltd-4457208203",
+  "ats": "unknown",
+  "slug": "computer-guard-technologies"
+ },
+ {
+  "name": "Koladin",
+  "careers_url": "https://il.linkedin.com/jobs/view/data-analysis-and-ai-builder-at-koladin-4457287268",
+  "ats": "unknown",
+  "slug": "koladin"
+ },
+ {
+  "name": "Intelligent Business",
+  "careers_url": "https://il.linkedin.com/jobs/view/power-bi-developer-data-and-business-analyst-at-intelligent-business-4457242349",
+  "ats": "unknown",
+  "slug": "intelligentbusiness-bi"
+ },
+ {
+  "name": "RealPlay",
+  "careers_url": "https://il.linkedin.com/jobs/view/business-strategy-analyst-at-realplay-4457699777",
+  "ats": "unknown",
+  "slug": "realplayltd"
+ },
+ {
+  "name": "Hila & Co.",
+  "careers_url": "https://il.linkedin.com/jobs/view/consumer-market-insights-cmi-manager-at-hila-co-4457744315",
+  "ats": "unknown",
+  "slug": "hila-co"
+ },
+ {
+  "name": "Ayalon Highways",
+  "careers_url": "https://il.linkedin.com/jobs/view/transportation-modeling-research-specialist-at-ayalon-highways-4459171064",
+  "ats": "unknown",
+  "slug": "ayalon-highways"
+ },
+ {
+  "name": "Alma Lasers",
+  "careers_url": "https://il.linkedin.com/jobs/view/total-rewards-people-analytics-lead-at-alma-lasers-4453688669",
+  "ats": "unknown",
+  "slug": "alma-lasers-international"
+ },
+ {
+  "name": "CloudZone",
+  "careers_url": "https://il.linkedin.com/jobs/view/cloud-finops-analyst-at-cloudzone-4459189549",
+  "ats": "unknown",
+  "slug": "cloudzone"
+ },
+ {
+  "name": "Netoplay",
+  "careers_url": "https://il.linkedin.com/jobs/view/games-operations-manager-at-netoplay-4459175459",
+  "ats": "unknown",
+  "slug": "netoplay"
+ },
+ {
+  "name": "WellyBox",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-marketing-growth-at-wellybox-4457225492",
+  "ats": "unknown",
+  "slug": "wellybox"
+ },
+ {
+  "name": "SalesFortuna",
+  "careers_url": "https://il.linkedin.com/jobs/view/amazon-ppc-at-salesfortuna-4459319044",
+  "ats": "unknown",
+  "slug": "sales-fortuna-llc"
+ },
+ {
+  "name": "Experda.com",
+  "careers_url": "https://il.linkedin.com/jobs/view/experienced-bi-consultant-data-developer-at-experda-com-4457758616",
+  "ats": "unknown",
+  "slug": "experda-com"
+ },
+ {
+  "name": "Tel Aviv Yafo Municipality",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%A8%D7%9B%D7%96-gis-%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C-%D7%99%D7%93%D7%A2-at-tel-aviv-yafo-municipality-4457752072",
+  "ats": "unknown",
+  "slug": "engineering-administration-tel-aviv-jaffa-municipality"
+ },
+ {
+  "name": "Astera Labs",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-data-science-engineer-at-astera-labs-4326748746",
+  "ats": "unknown",
+  "slug": "astera-labs"
+ },
+ {
+  "name": "SD;LC",
+  "careers_url": "https://il.linkedin.com/jobs/view/head-of-revops-at-sd-lc-4456949171",
+  "ats": "unknown",
+  "slug": "sd-lc"
+ },
+ {
+  "name": "Kuni",
+  "careers_url": "https://il.linkedin.com/jobs/view/ppc-performance-marketing-manager-at-kuni-4459335008",
+  "ats": "unknown",
+  "slug": "kuni-il"
+ },
+ {
+  "name": "SeerT - Building Your Team",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-planner-at-seert-building-your-team-4457221606",
+  "ats": "unknown",
+  "slug": "seert"
+ },
+ {
+  "name": "Airis Labs",
+  "careers_url": "https://il.linkedin.com/jobs/view/client-solutions-manager-at-airis-labs-4457754283",
+  "ats": "unknown",
+  "slug": "airislabs"
+ },
+ {
+  "name": "GENECIT",
+  "careers_url": "https://il.linkedin.com/jobs/view/lead-data-scientist-at-genecit-4455878317",
+  "ats": "unknown",
+  "slug": "genecit-com"
+ },
+ {
+  "name": "Gemified",
+  "careers_url": "https://il.linkedin.com/jobs/view/affiliate-manager-at-gemified-4459147051",
+  "ats": "unknown",
+  "slug": "gemified"
+ },
+ {
+  "name": "IDX",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-idx-4457232305",
+  "ats": "unknown",
+  "slug": "idx-il"
+ },
+ {
+  "name": "CAF (Construcciones y Auxiliar de Ferrocarriles)",
+  "careers_url": "https://il.linkedin.com/jobs/view/project-finance-concessions-specialist-at-caf-construcciones-y-auxiliar-de-ferrocarriles-4457924013",
+  "ats": "unknown",
+  "slug": "caf-mobility"
+ },
+ {
+  "name": "Rapid Medical",
+  "careers_url": "https://il.linkedin.com/jobs/view/planner-buyer-at-rapid-medical-4456867923",
+  "ats": "unknown",
+  "slug": "rapid-medical"
+ },
+ {
+  "name": "BPLinks",
+  "careers_url": "https://il.linkedin.com/jobs/view/computational-biology-computer-vision-scientist-%E2%80%94-medical-deep-tech-at-bplinks-4457785104",
+  "ats": "unknown",
+  "slug": "bplinks"
+ },
+ {
+  "name": "Ingenio",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-affiliate-manager-at-ingenio-4458378122",
+  "ats": "unknown",
+  "slug": "ingenio"
+ },
+ {
+  "name": "Mivne Group | קבוצת מבנה",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9B%D7%9C%D7%9B%D7%9C%D7%A0-%D7%99%D7%AA-%D7%9C%D7%9E%D7%97%D7%9C%D7%A7%D7%AA-%D7%AA%D7%A4%D7%A2%D7%95%D7%9C-%D7%95%D7%AA%D7%97%D7%96%D7%95%D7%A7%D7%94-%D7%9E%D7%A9%D7%A8%D7%94-%D7%94%D7%AA%D7%97%D7%9C%D7%AA%D7%99%D7%AA-%D7%94%D7%97%D7%9C%D7%A4%D7%94-%D7%9C%D7%97%D7%9C-%D7%93-%D7%A2%D7%9D-%D7%90%D7%95%D7%A4%D7%A6%D7%99%D7%94-at-mivne-group-%D7%A7%D7%91%D7%95%D7%A6%D7%AA-%D7%9E%D7%91%D7%A0%D7%94-4455073980",
+  "ats": "unknown",
+  "slug": "mivne-group"
+ },
+ {
+  "name": "DSV - Global Transport and Logistics",
+  "careers_url": "https://il.linkedin.com/jobs/view/team-lead-key-account-manager-at-dsv-global-transport-and-logistics-4457994560",
+  "ats": "unknown",
+  "slug": "dsv"
+ },
+ {
+  "name": "Comigo.io",
+  "careers_url": "https://il.linkedin.com/jobs/view/systems-implementer-%D7%9E%D7%99%D7%99%D7%A9%D7%9D-%D7%AA-%D7%9E%D7%A2%D7%A8%D7%9B%D7%95%D7%AA-at-comigo-io-4455091518",
+  "ats": "unknown",
+  "slug": "comigo-io"
+ },
+ {
+  "name": "Maslol Haham",
+  "careers_url": "https://il.linkedin.com/jobs/view/ecommerce-manager-at-maslol-haham-4457782254",
+  "ats": "unknown",
+  "slug": "maslol-haham"
+ },
+ {
+  "name": "NOVELSAT",
+  "careers_url": "https://il.linkedin.com/jobs/view/business-operations-order-management-coordinator-at-novelsat-4455073775",
+  "ats": "unknown",
+  "slug": "novelsat-ayecka"
+ },
+ {
+  "name": "West Pharmaceutical Services",
+  "careers_url": "https://il.linkedin.com/jobs/view/production-planning-manager-at-west-pharmaceutical-services-4432441773",
+  "ats": "unknown",
+  "slug": "west-pharmaceutical-services"
+ },
+ {
+  "name": "Omnisys",
+  "careers_url": "https://il.linkedin.com/jobs/view/simulation-engineer-at-omnisys-4458618235",
+  "ats": "unknown",
+  "slug": "omnisys"
+ },
+ {
+  "name": "ITC - Intelligent Traffic Control",
+  "careers_url": "https://il.linkedin.com/jobs/view/software-engineer-at-itc-intelligent-traffic-control-4456907190",
+  "ats": "unknown",
+  "slug": "itc-city"
+ },
+ {
+  "name": "ERGO NEXT Insurance",
+  "careers_url": "https://il.linkedin.com/jobs/view/backend-engineer-at-ergo-next-insurance-4457645660",
+  "ats": "unknown",
+  "slug": "ergo-next-insurance"
+ },
+ {
+  "name": "Faye",
+  "careers_url": "https://il.linkedin.com/jobs/view/fp-a-director-at-faye-4458725938",
+  "ats": "unknown",
+  "slug": "fayetravelinsurance"
+ },
+ {
+  "name": "BLeader",
+  "careers_url": "https://il.linkedin.com/jobs/view/data-engineer-at-bleader-4457748301",
+  "ats": "unknown",
+  "slug": "bileader"
+ },
+ {
+  "name": "Fullpath",
+  "careers_url": "https://il.linkedin.com/jobs/view/mid-level-backend-engineer-at-fullpath-4458614352",
+  "ats": "unknown",
+  "slug": "fullpathcdxp"
+ },
+ {
+  "name": "City and more",
+  "careers_url": "https://il.linkedin.com/jobs/view/financial-controller-with-a-consulting-background-at-city-and-more-4455874863",
+  "ats": "unknown",
+  "slug": "city-and-more"
+ },
+ {
+  "name": "PwC | NEXT Technology Solutions",
+  "careers_url": "https://il.linkedin.com/jobs/view/full-stack-developer-jb-731-at-pwc-next-technology-solutions-4452198807",
+  "ats": "unknown",
+  "slug": "pwc-digital-technology-services"
+ },
+ {
+  "name": "Onebeat",
+  "careers_url": "https://il.linkedin.com/jobs/view/director-of-finance-at-onebeat-4457006081",
+  "ats": "unknown",
+  "slug": "onebeat4retail"
+ },
+ {
+  "name": "Dot Compliance",
+  "careers_url": "https://il.linkedin.com/jobs/view/salesforce-engineer-at-dot-compliance-4457696751",
+  "ats": "unknown",
+  "slug": "dot-compliance"
+ },
+ {
+  "name": "Bagira",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-full-stack-developer-backend-oriented-at-bagira-4370318980",
+  "ats": "unknown",
+  "slug": "bagira-systems"
+ },
+ {
+  "name": "HyperGuest",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-hyperguest-4459353252",
+  "ats": "unknown",
+  "slug": "hyperguest"
+ },
+ {
+  "name": "Solitics",
+  "careers_url": "https://il.linkedin.com/jobs/view/technical-product-manager-at-solitics-4459174326",
+  "ats": "unknown",
+  "slug": "solitics"
+ },
+ {
+  "name": "Metriko",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-marketing-associate-ai-native-retail-at-metriko-4457298393",
+  "ats": "unknown",
+  "slug": "https-www.linkedin.com-company-34970857"
+ },
+ {
+  "name": "Hello Heart",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-at-hello-heart-4459362928",
+  "ats": "unknown",
+  "slug": "helloheart"
+ },
+ {
+  "name": "monday.com AI engineering",
+  "careers_url": "https://il.linkedin.com/jobs/view/customer-enablement-ai-builder-at-monday-com-ai-engineering-4459367074",
+  "ats": "unknown",
+  "slug": "monday-com-ai-engineering"
+ },
+ {
+  "name": "Conifers.ai",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-%E2%80%93-product-builder-at-conifers-ai-4453130238",
+  "ats": "unknown",
+  "slug": "conifers-ai"
+ },
+ {
+  "name": "FIBI - הבנק הבינלאומי",
+  "careers_url": "https://il.linkedin.com/jobs/view/information-technology-auditor-at-fibi-%D7%94%D7%91%D7%A0%D7%A7-%D7%94%D7%91%D7%99%D7%A0%D7%9C%D7%90%D7%95%D7%9E%D7%99-4457242841",
+  "ats": "unknown",
+  "slug": "first-international-bank-of-israel"
+ },
+ {
+  "name": "Software AG Israel",
+  "careers_url": "https://il.linkedin.com/jobs/view/infrastructure-developer-at-software-ag-israel-4457255108",
+  "ats": "unknown",
+  "slug": "spl-software-ag"
+ },
+ {
+  "name": "Samsung Semiconductor",
+  "careers_url": "https://il.linkedin.com/jobs/view/machine-learning-engineer-at-samsung-semiconductor-4434983896",
+  "ats": "unknown",
+  "slug": "samsungsemiconductor"
+ },
+ {
+  "name": "Micron Technology",
+  "careers_url": "https://il.linkedin.com/jobs/view/osint-analyst-remote-tel-aviv-at-micron-technology-4457917883",
+  "ats": "unknown",
+  "slug": "micron-technology"
+ },
+ {
+  "name": "MNS Consulting IL",
+  "careers_url": "https://il.linkedin.com/jobs/view/corporate-finance-investment-banking-analyst-at-mns-consulting-il-4457739711",
+  "ats": "unknown",
+  "slug": "mns-consulting-il"
+ },
+ {
+  "name": "Partner",
+  "careers_url": "https://il.linkedin.com/jobs/view/project-manager-2770-at-partner-4456803144",
+  "ats": "unknown",
+  "slug": "partner-israel"
+ },
+ {
+  "name": "ARMORY",
+  "careers_url": "https://il.linkedin.com/jobs/view/junior-penetration-tester-at-armory-4458002103",
+  "ats": "unknown",
+  "slug": "armorydefense"
+ },
+ {
+  "name": "Taglit Group A.S",
+  "careers_url": "https://il.linkedin.com/jobs/view/human-resources-manager-at-taglit-group-a-s-4457765342",
+  "ats": "unknown",
+  "slug": "taglit-group-as"
+ },
+ {
+  "name": "Sales Experts Executive Recruiters",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%94%D7%A0%D7%93%D7%A1-%D7%AA-%D7%AA%D7%A2%D7%95-%D7%A0-%D7%9C%D7%94%D7%95%D7%91%D7%9C%D7%AA-%D7%9E%D7%A6%D7%95%D7%99%D7%99%D7%A0%D7%95%D7%AA-%D7%AA%D7%A4%D7%A2%D7%95%D7%9C%D7%99%D7%AA-%D7%91%D7%97%D7%91%D7%A8%D7%94-%D7%AA%D7%A2%D7%A9%D7%99%D7%99%D7%AA%D7%99%D7%AA-at-sales-experts-executive-recruiters-4458380336",
+  "ats": "unknown",
+  "slug": "sales-experts-executive-recruiters"
+ },
+ {
+  "name": "PsyDin",
+  "careers_url": "https://il.linkedin.com/jobs/view/tenure-track-position-in-neuroscience-at-psydin-4458780180",
+  "ats": "unknown",
+  "slug": "psydin"
+ },
+ {
+  "name": "COM-C-TECH LTD",
+  "careers_url": "https://il.linkedin.com/jobs/view/junior-system-administrator-at-com-c-tech-ltd-4457234117",
+  "ats": "unknown",
+  "slug": "com-c-tech-ltd"
+ },
+ {
+  "name": "שדות – תכנון וייעוץ סביבתי Sadot – Environmental Planning and Consulting",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%AA%D7%9B%D7%A0-%D7%A0%D7%AA-%D7%A1%D7%91%D7%99%D7%91%D7%94-at-%D7%A9%D7%93%D7%95%D7%AA-%E2%80%93-%D7%AA%D7%9B%D7%A0%D7%95%D7%9F-%D7%95%D7%99%D7%99%D7%A2%D7%95%D7%A5-%D7%A1%D7%91%D7%99%D7%91%D7%AA%D7%99-sadot-%E2%80%93-environmental-planning-and-consulting-4457744854",
+  "ats": "unknown",
+  "slug": "sadot-environmental-projects"
+ },
+ {
+  "name": "airHaifa",
+  "careers_url": "https://il.linkedin.com/jobs/view/flight-operation-at-airhaifa-4459698274",
+  "ats": "unknown",
+  "slug": "air-haifa-ltd"
+ },
+ {
+  "name": "TECEZE",
+  "careers_url": "https://il.linkedin.com/jobs/view/information-technology-support-specialist-at-teceze-4458368249",
+  "ats": "unknown",
+  "slug": "teceze"
+ },
+ {
+  "name": "Naamat נעמת",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%A0%D7%94-%D7%97-%D7%9C%D7%9E%D7%98%D7%94-%D7%A0%D7%A2%D7%9E%D7%AA-at-naamat-%D7%A0%D7%A2%D7%9E%D7%AA-4458729234",
+  "ats": "unknown",
+  "slug": "naamatwomen"
+ },
+ {
+  "name": "ComSign - קומסיין",
+  "careers_url": "https://il.linkedin.com/jobs/view/customer-technical-support-at-comsign-%D7%A7%D7%95%D7%9E%D7%A1%D7%99%D7%99%D7%9F-4457745126",
+  "ats": "unknown",
+  "slug": "comsign"
+ },
+ {
+  "name": "ASML",
+  "careers_url": "https://il.linkedin.com/jobs/view/mps-customer-support-migdal-haemek-israel-at-asml-4458267513",
+  "ats": "unknown",
+  "slug": "asml"
+ },
+ {
+  "name": "YIT - Yedioth Tech",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-yit-yedioth-tech-4459676157",
+  "ats": "unknown",
+  "slug": "yit---yedioth-information-technology"
+ },
+ {
+  "name": "Bet Shemesh Engines Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%94%D7%A0%D7%93%D7%A1-%D7%90%D7%A0%D7%9C%D7%99%D7%96%D7%95%D7%AA-at-bet-shemesh-engines-ltd-4457958299",
+  "ats": "unknown",
+  "slug": "bet-shemesh-engines-ltd."
+ },
+ {
+  "name": "Ribbon Communications",
+  "careers_url": "https://il.linkedin.com/jobs/view/global-commercial-services-specialist-at-ribbon-communications-4457952673",
+  "ats": "unknown",
+  "slug": "ribbon-communications"
+ },
+ {
+  "name": "Alstom",
+  "careers_url": "https://il.linkedin.com/jobs/view/site-operations-coordinator-at-alstom-4447382064",
+  "ats": "unknown",
+  "slug": "alstom"
+ },
+ {
+  "name": "Elmo Motion Control",
+  "careers_url": "https://il.linkedin.com/jobs/view/sqa-engineer-at-elmo-motion-control-4458185641",
+  "ats": "unknown",
+  "slug": "elmomotioncontrol"
+ },
+ {
+  "name": "rating",
+  "careers_url": "https://il.linkedin.com/jobs/view/%F0%9F%92%A5-ceo-co-founder-equity-opportunity-round-a-ai-big-data-round-a-global-venture-%F0%9F%92%A5-at-rating-4455804106",
+  "ats": "unknown",
+  "slug": "rating"
+ },
+ {
+  "name": "Empire Media Network",
+  "careers_url": "https://il.linkedin.com/jobs/view/content-manager-at-empire-media-network-4456573775",
+  "ats": "unknown",
+  "slug": "empire-media-network"
+ },
+ {
+  "name": "Ethos",
+  "careers_url": "https://il.linkedin.com/jobs/view/expert-opportunity-venture-capital-analyst-%24100-hr-up-to-%242-000-week-at-ethos-4440397308",
+  "ats": "unknown",
+  "slug": "askethos"
+ },
+ {
+  "name": "King Solomon School",
+  "careers_url": "https://il.linkedin.com/jobs/view/teaching-assistant-at-king-solomon-school-4458779054",
+  "ats": "unknown",
+  "slug": "kingsolomonschool"
+ },
+ {
+  "name": "Ceva, Inc.",
+  "careers_url": "https://il.linkedin.com/jobs/view/embedded-software-team-leader-at-ceva-inc-4459165844",
+  "ats": "unknown",
+  "slug": "ceva"
+ },
+ {
+  "name": "Moona- A Space For Change",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%A9%D7%A8%D7%AA-%D7%94%D7%93%D7%A8%D7%9B%D7%94-%D7%98%D7%9B%D7%A0%D7%95%D7%9C%D7%95%D7%92%D7%99%D7%AA-at-moona-a-space-for-change-4455857587",
+  "ats": "unknown",
+  "slug": "moona-a-space-for-change"
+ },
+ {
+  "name": "Apester",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-apester-4457738960",
+  "ats": "unknown",
+  "slug": "apester"
+ },
+ {
+  "name": "Auth21",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-application-security-engineer-at-auth21-4459155000",
+  "ats": "unknown",
+  "slug": "auth21"
+ },
+ {
+  "name": "Edikted",
+  "careers_url": "https://il.linkedin.com/jobs/view/vp-growth-marketing-at-edikted-4459195427",
+  "ats": "unknown",
+  "slug": "edikted"
+ },
+ {
+  "name": "IDENTI Medical",
+  "careers_url": "https://il.linkedin.com/jobs/view/b2b-marketing-demand-generation-manager-at-identi-medical-4457220850",
+  "ats": "unknown",
+  "slug": "identimedical"
+ },
+ {
+  "name": "Bishvil Hazahav",
+  "careers_url": "https://il.linkedin.com/jobs/view/digital-marketing-manager-at-bishvil-hazahav-4363189740",
+  "ats": "unknown",
+  "slug": "bishvil-hazahav"
+ },
+ {
+  "name": "Indocs",
+  "careers_url": "https://il.linkedin.com/jobs/view/social-media-manager-at-indocs-4457767216",
+  "ats": "unknown",
+  "slug": "c-digital-marketing-%D7%9E%D7%99%D7%AA%D7%95%D7%92-%D7%95%D7%A9%D7%99%D7%95%D7%95%D7%A7-%D7%91%D7%A2%D7%95%D7%9C%D7%9E%D7%95%D7%AA-%D7%94%D7%A8%D7%A4%D7%95%D7%90%D7%94"
+ },
+ {
+  "name": "קבוצת צליח-רוטשילד | Saliah-Rothschild Group",
+  "careers_url": "https://il.linkedin.com/jobs/view/marketing-manager-at-%D7%A7%D7%91%D7%95%D7%A6%D7%AA-%D7%A6%D7%9C%D7%99%D7%97-%D7%A8%D7%95%D7%98%D7%A9%D7%99%D7%9C%D7%93-saliah-rothschild-group-4457751406",
+  "ats": "unknown",
+  "slug": "%D7%A7%D7%91%D7%95%D7%A6%D7%AA-%D7%A6%D7%9C%D7%99%D7%97-%D7%A8%D7%95%D7%98%D7%A9%D7%99%D7%9C%D7%93-saliah-rothschild-group"
+ },
+ {
+  "name": "Thing or Two",
+  "careers_url": "https://il.linkedin.com/jobs/view/account-manager-at-thing-or-two-4457445634",
+  "ats": "unknown",
+  "slug": "thingortwo"
+ },
+ {
+  "name": "DT",
+  "careers_url": "https://il.linkedin.com/jobs/view/publisher-account-manager-at-dt-4449142694",
+  "ats": "unknown",
+  "slug": "digital-turbine"
+ },
+ {
+  "name": "Maccabi Health care Services",
+  "careers_url": "https://secrethunter.io/jobz/d4854d0ae8",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Waterfall Security Solutions",
+  "careers_url": "https://secrethunter.io/jobz/d289ac9582",
   "ats": "unknown",
   "slug": ""
  }
