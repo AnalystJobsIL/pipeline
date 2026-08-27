@@ -38,8 +38,22 @@ import re as _re
 # `empty-but-suspect <date>` / `cross-validated` are validate_empty's own facts and its
 # token arm (the shipped configuration -- the signals arm is staged): the Sunday deep stamp
 # evicted Enzymit's and the row left the ONE pool that could re-check it (wave-1 attacker 2).
+# `probe-woken` is protected for a different reason from the rest: not because it is a
+# durable fact, but because it is TRANSIENT and has exactly one legitimate consumer. It is
+# the only route back into the hunt for a row triage stamped `page-empty`
+# (`listing_hunt._triaged_page_empty` skips such a row unless a wake at least as new as the
+# triage stamp says its signals rose), and on a saturated note it is the oldest UNPROTECTED
+# segment -- so an unrelated tool's stamp evicted it before its receiver ever ran.
+# ARCHITECTURE.md section 2 states the rule and nothing enforced the second half: "A wake
+# must clear every stamp any downstream filter excludes on, AND SURVIVE TO ITS RECEIVER".
+# The wake was made dated and consumable (`listing_hunt._consume_wake`) so it could not
+# LINGER; nothing stopped it vanishing early. `tests/rehearse_registry.py --nights 14
+# --policy worst` failed on exactly this until 2026-08-27 (`night 4: pool listing_hunt lost
+# 1 rows it should keep: ['NeoGames']`), which blocked tests.yml for every lane. Protection
+# cannot accumulate here: the hunt strips the wake the same night it acts on it, and the
+# measured cost of adding it was 0 rows (rows whose every segment is protected: 47 -> 47).
 _PROTECTED_EXTRA = _re.compile(r"unsupported ATS|dark-triage \d{4}-\d{2}-\d{2}: [a-z-]+|no open israel roles|"
-                               r"empty-but-suspect|cross-validated", _re.I)   # dated or not: older rows carry it bare
+                               r"empty-but-suspect|cross-validated|probe-woken", _re.I)   # dated or not: older rows carry it bare
 
 
 def _terminal_rx():

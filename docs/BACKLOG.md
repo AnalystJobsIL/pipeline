@@ -3474,7 +3474,35 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     `python -c "import triage_dark as T, check_invariants as C; print(sorted(set(T.MODES) - C.TRIAGE_MODES))"`
     → `['no-url']`.
 
-283. **`tests.yml` is red for every lane on the 14-night rehearsal: a wake is evicted before
+283. ~~**`tests.yml` is red for every lane on the 14-night rehearsal: a wake is evicted before
+    its receiver ever sees it**~~ — **CLOSED 2026-08-27 (`registry`), and it was two bugs, not
+    one.** The operator approved the shared-plumbing change after the measurement.
+
+    **(a) The real defect, fixed in `pipeline/notes.py` (OUT OF LANE, disclosed — every lane's
+    note writer goes through `notes.append`).** `probe-woken` joined `_PROTECTED_EXTRA`.
+    Measured cost, before and after: rows whose every segment is protected **47 → 47 (+0)**,
+    near-cap rows newly saturated **0**, rows carrying the token **1**. It is protected for a
+    different reason from its neighbours — not because it is a durable fact but because it is
+    transient with exactly one legitimate consumer, so protection cannot accumulate: the hunt
+    strips it the same night it acts. Guard:
+    `test_a_wake_survives_an_unrelated_stamp_on_a_saturated_note`, verified red without the
+    alternation.
+
+    **(b) What that revealed: the rehearsal's invariant was stricter than the system's
+    guarantee.** With the wake surviving, the failure moved from night 4 to night 5 — and
+    night 5 is the hunt actually running, consuming the wake (`_consume_wake`) and writing
+    `listing-hunt <date>: no listing found`. The row then leaves the hunt pool because it is
+    `page-empty` with no wake, which is the designed probe → hunt → probe cycle, not erosion:
+    `orphans` is 0 on every night and triage / probe / audit / deep still claim the row. So
+    the `worst`-policy per-pool check gained a **fifth** legitimate exit beside active /
+    terminal / no-http: the pool's own tool stamped that row that night. Keyed on the tool's
+    own dated marker so it stays narrow, and cumulative because `lost` is measured against
+    night 0 every night.
+
+    **Proof it was not simply loosened**: `REHEARSE_SELF_TEST=overwrite` — the harness's own
+    control, a deliberately broken writer — still exits 1
+    (`night 1: pool retry_unreachable + bd_rescue lost 4 rows it should keep`). And `worst`
+    plus `mixed` seeds 1–5 are all green, where before every one of them was red. Original text: **`tests.yml` is red for every lane on the 14-night rehearsal: a wake is evicted before
     its receiver ever sees it** — lane: `registry`, but the one-line fix is in **shared
     plumbing** (`pipeline/notes.py`) so it is filed rather than taken. `tests.yml` has no
     `continue-on-error` anywhere ("It is meant to block", line 7), and

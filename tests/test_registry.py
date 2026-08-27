@@ -5803,3 +5803,34 @@ def test_the_weekly_audit_refuses_a_board_that_nothing_can_vouch_for(tmp_path, m
         "the audit activated a board nothing could vouch for: %r" % (out["Voiceitt"],))
     assert out["Fiverr"][4] == "true", (
         "positive control regressed - the gate now refuses everything: %r" % (out["Fiverr"],))
+
+def test_a_wake_survives_an_unrelated_stamp_on_a_saturated_note():
+    """`probe-woken` must reach its receiver, not be evicted before any hunt sees it.
+
+    ARCHITECTURE.md §2 states the rule in two halves — "A wake must clear every stamp any
+    downstream filter excludes on, **and survive to its receiver**" — and only the first half
+    was enforced. The wake is the ONLY route back into the hunt for a row triage stamped
+    `page-empty` (`listing_hunt._triaged_page_empty`), and on a note at the 220-char cap it was
+    the oldest UNPROTECTED segment, so the next unrelated tool's stamp dropped it. NeoGames
+    lost its wake to the Sunday deep rung on night 4 of
+    `tests/rehearse_registry.py --nights 14 --policy worst`, which failed `tests.yml` for every
+    lane. Protecting it cost 0 rows (rows whose every segment is protected: 47 → 47).
+
+    Out of lane, disclosed: the fix is one alternation in `pipeline/notes._PROTECTED_EXTRA`,
+    which every lane's note writer goes through.
+    """
+    from pipeline.notes import CAP, append, split
+    real = ("probe-woken: re-hunt pending"
+            " | listing-hunt 2026-08-25: no IL listing; monitored candidate"
+            " | dark-triage 2026-08-26: page-empty (no jobs language and no roles"
+            " (regex only, unconfirmed))")
+    assert len(real) > CAP - 60, "the fixture stopped being a saturated note"
+    out = append(real, "deep-validated 2026-08-30: no ATS detected (rendered)")
+    assert len(out) <= CAP
+    assert any(s.lower().startswith("probe-woken") for s in split(out)), (
+        "the wake was evicted before its receiver ran: %r" % (out,))
+    # ...and the row is still the hunt's, which is the whole point of keeping it
+    import listing_hunt as LH
+    assert not LH._triaged_page_empty(out), "a woken page-empty row must stay huntable"
+    # the receiver, and only the receiver, removes it
+    assert not any(s.lower().startswith("probe-woken") for s in split(LH._consume_wake(out)))

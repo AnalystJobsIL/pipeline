@@ -276,6 +276,11 @@ def rehearse(nights=14, policy="worst", rows_cap=0, seed=1, verbose=True, trace=
         print("night  " + "  ".join(k.split(" (")[0][:12].rjust(12) for k in keys) + "  orphans")
         print("    0  " + "  ".join(str(len(pools0[k])).rjust(12) for k in keys) + f"  {len(orph0)}")
     failures = []
+    # The pool's own tool acting on a row is a legitimate exit -- see the note below.
+    _OWN_STAMP = {"listing_hunt": "listing-hunt", "crack_walled": "crack-walled",
+                  "triage_dark": "dark-triage", "deep_validate": "deep-validated",
+                  "probe_candidates": "probe-woken"}
+    acted_ever = {k: set() for k in keys}
     for n in range(1, nights + 1):
         day = day0 + _dt.timedelta(days=n)
         _set_day(day)
@@ -313,8 +318,28 @@ def rehearse(nights=14, policy="worst", rows_cap=0, seed=1, verbose=True, trace=
         # (a re-triaged mode leaves extract-gap for the hunt; a woken row leaves triage
         # for the fast path), so there only the union invariants below apply.
         if policy == "worst":
+            # A FIFTH legitimate exit, alongside active / terminal / no-http: the pool's own
+            # tool ran on the row tonight and its verdict moved the row on. The worked case
+            # is the documented probe -> hunt handoff (ARCHITECTURE.md section 2): the probe
+            # wakes a `page-empty` row, the hunt fast-paths it, and `_consume_wake` strips the
+            # wake as it writes its verdict -- after which `_triaged_page_empty` excludes the
+            # row again and the probe owns it once more. That is the cycle working, not
+            # erosion, and `orphans` stays 0 throughout because triage / probe / audit / deep
+            # still claim the row.
+            #
+            # Keying on the tool's OWN stamp dated TONIGHT is what keeps this narrow: a row
+            # that silently falls out of a pool nothing touched is still a failure, which is
+            # the whole point of the invariant. Before 2026-08-27 this fired on night 4 for a
+            # row whose wake had been EVICTED by an unrelated tool's stamp before any hunt
+            # saw it -- a real defect, fixed in `pipeline/notes.py` by protecting the wake.
+            # CUMULATIVE, because `lost` is measured against night 0 every night: a row that
+            # legitimately left on night 5 must not be re-reported on night 6.
             for k in keys:
-                lost = pools0[k] - pools[k] - active - term - no_http
+                marker = _OWN_STAMP.get(k.split(" (")[0], "")
+                if marker:
+                    acted_ever[k] |= {r[0] for r in rows if len(r) > 5
+                                      and f"{marker} {day.isoformat()}" in (r[5] or "").lower()}
+                lost = pools0[k] - pools[k] - active - term - no_http - acted_ever[k]
                 if lost:
                     failures.append(f"night {n}: pool {k} lost {len(lost)} rows it should keep: {sorted(lost)[:6]}")
         floor = [x for x in RH.pool_floor(rows, census0)

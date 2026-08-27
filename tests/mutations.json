@@ -1636,8 +1636,8 @@
   "file": "tests/rehearse_registry.py",
   "symbol": "rehearse",
   "class": "M1-gate-removal",
-  "find": "        if policy == \"worst\":\n            for k in keys:",
-  "replace": "        if policy == \"worst_\":\n            for k in keys:",
+  "find": "        if policy == \"worst\":\n",
+  "replace": "        if policy == \"worst_\":\n",
   "why": "turns off the batch's headline evidence while `rehearsal OK` still prints (attacker 2, B3).",
   "must_be_killed_by_behavioural": true,
   "killers": [
@@ -1689,8 +1689,8 @@
   "file": "pipeline/notes.py",
   "symbol": "_PROTECTED_EXTRA",
   "class": "M3-branch-narrowing",
-  "find": "r\"empty-but-suspect|cross-validated\", _re.I)   # dated or not: older rows carry it bare",
-  "replace": "r\"cross-validated\", _re.I)   # dated or not: older rows carry it bare",
+  "find": "r\"empty-but-suspect|cross-validated|probe-woken\", _re.I)   # dated or not: older rows carry it bare",
+  "replace": "r\"cross-validated|probe-woken\", _re.I)   # dated or not: older rows carry it bare",
   "why": "the Sunday deep stamp evicted Enzymit's `empty-but-suspect` and the row left the one pool that could re-check it (attacker 2, R4).",
   "must_be_killed_by_behavioural": true
  },
