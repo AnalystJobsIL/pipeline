@@ -1233,7 +1233,15 @@ Four more rules this matrix exists to enforce, each violated in production at le
   remains, and never slices anything** — protected: a terminal token (the only thing keeping
   a row out of every activating pool), `unsupported ATS` (the crack pool's fact), `dark-triage
   <date>: <mode>` (triage's and extract-gap's), `no open Israel roles` / `empty-but-suspect` /
-  `cross-validated` (validate_empty's). One rule: the oldest unprotected segment goes first,
+  `cross-validated` (validate_empty's), and **`probe-woken`** (2026-08-27). The wake is the
+  odd one out and the reason is worth keeping: everything else on that list is a durable FACT,
+  while the wake is TRANSIENT with exactly one legitimate consumer — so protecting it cannot
+  accumulate, because the hunt strips it the same night it acts (`_consume_wake`). It was
+  added because it is the only route back into the hunt for a `page-empty` row and, on a note
+  at the cap, it was the oldest unprotected segment: an unrelated tool's stamp evicted it
+  before any hunt ran. Measured cost of protecting it: rows whose every segment is protected
+  **47 → 47 (+0)**, near-cap rows newly saturated **0**. Derive the list rather than trusting
+  this sentence — `python -c "from pipeline.notes import _PROTECTED_EXTRA; print(_PROTECTED_EXTRA.pattern)"`. One rule: the oldest unprotected segment goes first,
   a protected one never goes, and when only protected segments remain the newcomer is
   dropped whole — that tool loses tonight's date on a saturated row, never a pool
   (`docs/BACKLOG.md` 205). `merge_csv_rows` honours the same rule on the conflict path. The
@@ -1244,7 +1252,20 @@ Four more rules this matrix exists to enforce, each violated in production at le
   `crack-walled` / an older `probe-woken`, stamps a DATED `probe-woken <date>`, the hunt's
   page-empty exclusion yields to a wake at least as new as the triage stamp, and the hunt
   consumes the stamp with its verdict — an undated wake nothing removed had retired 6 rows
-  from triage's schedule forever. `registry_health.pool_growth` reports a pool that grew by
+  from triage's schedule forever. **And a wake must SURVIVE TO ITS RECEIVER, which is the
+  half nothing enforced until 2026-08-27**: NeoGames' wake was evicted by the Sunday deep
+  rung before any hunt saw it, the row's only remaining classification was the protected
+  `dark-triage: page-empty` that `_triaged_page_empty` excludes, and it left the one pool that
+  could re-check it — red on `rehearse_registry --nights 14 --policy worst`, night 4, blocking
+  `tests.yml` for every lane. **A consequence worth stating separately, because it looks like
+  the same bug and is not:** once the wake survives, the row still leaves the hunt pool on the
+  night the hunt actually runs and consumes it. That is the probe → hunt → probe cycle
+  working, not erosion — `orphans` stays 0 and four other pools still claim the row — so the
+  rehearsal's `worst` per-pool check recognises a **fifth** legitimate exit beside active /
+  terminal / no-http: *the pool's own tool stamped that row that night*, keyed on that tool's
+  own dated marker and accumulated across nights. Loosening that check is the obvious way to
+  fake a green rehearsal, so the control matters: `REHEARSE_SELF_TEST=overwrite` must still
+  exit 1. `registry_health.pool_growth` reports a pool that grew by
   half since the last census (the mail line `re-check pool grew:`), because two of these pools
   activate. `tests/rehearse_registry.py --nights 14` (production's flags, DNS banned,
   `repair_dead_urls` and `wayback_rescue` on the schedule, `REHEARSE_SELF_TEST=overwrite` as

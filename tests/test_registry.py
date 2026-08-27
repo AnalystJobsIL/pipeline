@@ -5834,3 +5834,33 @@ def test_a_wake_survives_an_unrelated_stamp_on_a_saturated_note():
     assert not LH._triaged_page_empty(out), "a woken page-empty row must stay huntable"
     # the receiver, and only the receiver, removes it
     assert not any(s.lower().startswith("probe-woken") for s in split(LH._consume_wake(out)))
+
+def test_architecture_names_every_protected_note_segment():
+    """ARCHITECTURE §2 lists the protected segments by hand, and that list went stale within
+    hours of `probe-woken` being added to `pipeline/notes._PROTECTED_EXTRA` (2026-08-27).
+
+    `docs/check_docs.py` cannot catch this — it proves that a path a doc names still exists,
+    never that a sentence is still true, and the §2 list names no paths. But this particular
+    sentence is a retyped copy of a live regex, which is the one shape a test CAN check. It is
+    the same rule §2 states about pools, turned on §2 itself: derive it, or pin it.
+
+    A protected segment the doc does not mention is a rule the next agent will not know, and
+    this list is load-bearing — it decides which verdict survives a saturated note, i.e. which
+    rows keep their re-check pool.
+    """
+    from pipeline.notes import _PROTECTED_EXTRA
+    doc = open("ARCHITECTURE.md", encoding="utf-8").read()
+    # The LIST sentence, not the whole section: `probe-woken` was already mentioned elsewhere
+    # in section 2 (the wake's lifecycle paragraph) while the list itself omitted it, so a
+    # section-wide search passed on exactly the staleness this exists to catch. Checked when
+    # written: removing the token from the list alone must fail this test.
+    lo = doc.index("never evicts a protected segment")
+    section = doc[lo:doc.index("One rule:", lo)]
+    # the alternation minus the dated-mode branch, which the doc spells as `dark-triage
+    # <date>: <mode>` rather than as its regex
+    alts = [a for a in _PROTECTED_EXTRA.pattern.split("|") if "\d{4}" not in a]
+    missing = [a for a in alts if a.lower() not in section.lower()]
+    assert not missing, (
+        "ARCHITECTURE.md section 2 does not name these protected note segments, so a reader "
+        "cannot know a stamp will not evict them: " + ", ".join(missing))
+    assert "dark-triage" in section, "the dated triage-mode branch vanished from the doc"
