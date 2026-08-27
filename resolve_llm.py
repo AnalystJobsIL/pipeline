@@ -238,18 +238,17 @@ def _own_page_names_token(name, token, api_url, pages=None, platform=""):
     the own-page requirement is the whole gate there, which is exactly the
     "uids come from the company's own page" premise `_slug_matches` assumed and the ladder
     broke."""
-    from pipeline.company_identity import ATS_HOST, is_foreign
-    from urllib.parse import urlparse
     needle = str(token or "").lower()
     if not needle:
         return False
-    own = []
-    for url, html in (pages if pages is not None else _PAGES):
-        host = urlparse(url).netloc.lower()
-        if not host or ATS_HOST.search(host) or _is_aggregator(url) or is_foreign(name, url):
-            continue                                   # not the company's own page
-        own.append(url)
-        if needle in (html or "").lower():
+    # ONE filter, called -- not a second copy of it. The first version of
+    # `own_pages_in_evidence` re-typed these four lines and its own docstring claimed the
+    # opposite ("ITS filter, not a copy"), which is the drift shape `registry_health.pools`
+    # calls this repo's commonest bug, asserted as its own absence (attacker, 2026-08-27).
+    held = {u: h for u, h in (pages if pages is not None else _PAGES)}
+    own = own_pages_in_evidence(name, pages)
+    for url in own:
+        if needle in (held.get(url) or "").lower():
             return True
     if platform == "comeet":
         # Comeet loads the uid at runtime, so the company's own static HTML rarely carries
@@ -264,7 +263,9 @@ def _own_page_names_token(name, token, api_url, pages=None, platform=""):
 
 
 def own_pages_in_evidence(name, pages=None):
-    """The pages `_own_page_names_token` is willing to look at -- ITS filter, not a copy.
+    """The pages `_own_page_names_token` is willing to look at. It is the SAME filter --
+    that function calls this one, rather than repeating the four lines (it did repeat them
+    until 2026-08-27, while this docstring claimed it did not).
 
     `_verify` will not accept a proposal unless the token appears on one of these, so when
     this is EMPTY the call cannot succeed no matter what the model answers: every proposal

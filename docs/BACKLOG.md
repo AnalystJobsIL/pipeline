@@ -3712,3 +3712,92 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     exists only in four separate workflow logs and reaches nothing that a human reads. It is
     also the missing input for the production mail line in **275**: with the payloads present,
     that line is a formatting change rather than a plumbing one.
+
+## From the `registry` lane's adversarial wave, 2026-08-27
+
+284. **A Comeet uid is unfalsifiable by every gate and every invariant, and six active rows
+    are on a tenant that calls itself something else** — lane: `registry`.
+    `identity_gate.board_vouches` returns `None` for any `XX.XXX` uid by design ("a uid
+    vouches for nothing"), `_slug_matches` exempts uids, and `check_invariants` C3/C3b exempt
+    them too. So on a Comeet re-point the identity veto is *structurally unreachable*: the
+    2026-08-27 batch's "0 identity-gate refusals" over 12 Comeet rows carried **no
+    information**, and an attacker was right to say so.
+
+    The evidence to falsify a uid is free and already fetched: every posting carries
+    `url_comeet_hosted_page`, whose path is the tenant's OWN slug
+    (`comeet.com/jobs/<slug>/<uid>/…`) — the same page `human_board_url` reads. Audited all
+    135 active Comeet rows that way on 2026-08-27: **120 ok, 6 MISMATCH, 9 undecidable**
+    (0 postings, so no hosted-page url to read).
+
+    | row | tenant calls itself | verdict |
+    |---|---|---|
+    | `aspectiva` | `walmart` | **wrong** — absorbed 2018; the board is Walmart IL's, and Walmart IL has no row. Parked 2026-08-27 with its address blanked. |
+    | `Holisto` | `trivago` | acquisition (2024). The parent board is probably right, but the roles would publish under `Holisto`. Needs a `DECLARED` entry or a rename decision. |
+    | `Trax Retail` | `form` | undecided — `form.com` is a Trax company; 9 postings, 0 in Israel, so nothing publishes today. |
+    | `Compugen` | `cgen` | **false positive** — CGEN is Compugen's own ticker and slug. |
+    | `MineOS` | `saymine` | **false positive** — the company's own former name. |
+    | `Localize` | `Madlan` | **false positive** — Localize.city rebranded to Madlan. |
+
+    Half the mismatches are legitimate, which is exactly why this must be a hand-check list
+    and not an automatic veto. The 9 undecidable rows (Explorium, AI21 Labs, XM Cyber,
+    Hunters, Trullion, Frontegg, Scopio Labs, Foretellix, Argus Cyber Security) return zero
+    postings, so the check cannot run — and they are the same rows the `empty` bucket already
+    holds. **The durable fix** is a `check_invariants` rung (or a Sunday-audit rung) that, for
+    every Comeet uid row, compares the row name against the slug in its own postings and
+    warns on a mismatch: one GET, the only test that can see through a uid. That file is
+    `infra`'s; the audit script that produced the table above is 60 lines and was run from a
+    scratch copy, not committed, because a tool that duplicates a check belongs where the
+    check goes.
+
+285. **`seen_id` carries no tenant, so two companies on the same ATS can collide and one role
+    is then never emailed** — lane: `roles` (`pipeline/store.py`), found by `registry`.
+    `store.py:51` builds `seen_id` as `f"{ats_platform}:{job_id}"`, and BambooHR job ids are
+    small per-tenant integers. Measured over the 10 active bamboohr rows on 2026-08-27:
+    **3 colliding ids**, one of them created by that morning's conversion batch —
+
+        bamboohr:39 -> [('Bringoz','Customer Success Director'), ('Miggo Security','Senior Backend Engineer')]
+        bamboohr:28 -> [('BlueTree Technologies','...'), ('Kodem Security','Account Executive')]
+        bamboohr:58 -> [('Bringoz','Product Manager'), ('Castor','Senior Platform Engineer')]
+
+    `filter_new` returns a job only when NONE of its seen_ids has been sent, so once either
+    side of a colliding pair is emailed the other is silently never emailed again. No analyst
+    role is involved today, so realized loss is 0 — the mechanism is live. Comeet (135 boards,
+    2,244 ids) has no collisions because uids are globally unique; the exposure is per
+    platform, and every platform with per-tenant integer ids has it. Fix shape: put the tenant
+    in the key.
+
+286. **On a push conflict the registry merge can re-ACTIVATE a row a concurrent writer just
+    parked** — lane: `infra` (`merge_csv_rows.py`), found by `registry`. Simulated with
+    `base = 74e51e5^`, `ours = 74e51e5`, `theirs = base +` one plausible cron night in which
+    `crack_walled` parks `aspectiva` with `not this company's board`:
+
+        aspectiva
+          theirs  ('scrape','false', "... | crack-walled 2026-08-27: not this company's board")
+          ours    ('comeet','true',  "... | self-heal 2026-08-27: re-resolved to comeet")
+          MERGED  ('comeet','true',  "... | self-heal 2026-08-27: re-resolved to comeet")
+
+    Two losses in one row: `active` goes false → true because the merge applies ours' whole
+    row (and `apply_resolved` copied column 4 from a stale base), and the crack verdict is
+    evicted whole by the 220-char cap. `merge_csv_rows` has an explicit never-revert rule for
+    a `url-repaired` address and none for `active` — yet `active` is the one column that
+    decides whether a row publishes. The same simulation also **resurrected a row `theirs`
+    had deleted** (1245 merged vs 1244 theirs), which is the documented resurrection hazard of
+    ARCHITECTURE §2's "Never DELETE a row" rule, reproduced.
+
+287. **The 12 Comeet re-points cost the cheap identity rung: `board_vouches` went `True` →
+    `None` on 11 of them** — lane: `registry`. The old `api_url` was the human Comeet page and
+    carried the tenant slug, so `checkable_token` was e.g. `beewise` and the string rung
+    answered `True`. The machine endpoint's only token is the opaque uid, so the answer is now
+    `None` — "cannot tell" — which per `activation_verdict`'s documented order costs a page
+    GET per check and lands on `unverified` whenever that page cannot be read. Nothing refuses
+    today (`page_names_company` still returns True on each), but the conversion traded a free
+    correct answer for a paid uncertain one on exactly the rows it touched. Worth deciding
+    deliberately: either keep the human page in a column the gate can read, or accept the GET.
+
+288. **`Ericsson` returns one posting worldwide** — lane: `registry`.
+    `https://jobs.ericsson.com/api/pcsx/search?domain=ericsson.com` with no location scoping
+    yields `count 1` (a Rosh Haayin Cloud Integration Engineer) for a company with thousands
+    of openings; the raw API reports 530 worldwide. Coverage is still up (the scrape cache
+    held 0), and the one Israel role is real, but the endpoint is plainly under-fetching and
+    the row should not be read as "Ericsson has 1 opening". Same family as the Eightfold rows
+    in 246.

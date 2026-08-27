@@ -5670,3 +5670,70 @@ def test_no_mutation_record_goes_stale_unnoticed():
     assert not fixed, (
         "these records are no longer stale — remove them from "
         "KNOWN_STALE_ANCHORS_2026_08_27 so the list keeps shrinking: " + ", ".join(fixed))
+
+
+def test_no_two_active_rows_share_a_board():
+    """Two ACTIVE rows on the same endpoint publish every role twice under two names, and
+    `check_invariants` check B cannot see it: B counts `company_name`, and by construction
+    the names differ. That is what `alias-of` exists to park.
+
+    Found live on 2026-08-27 by an adversarial reviewer, hours old: `apply_resolved` had
+    re-pointed `Anchor` onto uid 87.00D, which `Anchor Fintech` already held — byte-identical
+    platform/token/api_url, both active, 14 colliding `seen_id`s, and `roles._winner` breaking
+    the tie on `len(identity_key(name))`, so the shorter stub name `Anchor` would have won and
+    Anchor Fintech's roles would have published under it. It was the only such pair in 1,244
+    rows, and this session created it.
+    """
+    import csv
+    from collections import Counter
+    with open("companies.csv", encoding="utf-8") as f:
+        rows = [r for r in csv.reader(f) if r and len(r) >= 6][1:]
+    live = [r for r in rows if r[4] == "true" and (r[3] or "").startswith("http")]
+    dupes = Counter(r[3] for r in live)
+    shared = {u: sorted(r[0] for r in live if r[3] == u) for u, n in dupes.items() if n > 1}
+    assert not shared, (
+        "active rows sharing one board — park all but one with `alias-of <the keeper>`: "
+        + "; ".join(f"{names} -> {u[:70]}" for u, names in shared.items()))
+
+
+def test_the_own_page_filter_is_called_not_re_typed():
+    """`_own_page_names_token` must USE `own_pages_in_evidence`, not repeat its four lines.
+
+    The first version of `own_pages_in_evidence` copied the filter and its docstring claimed
+    the opposite — "ITS filter, not a copy" — which is the drift shape `registry_health.pools`
+    calls this repo's commonest bug, asserted as its own absence. Behaviour is pinned in both
+    directions as well as the wiring, because a shared helper that is wired but wrong is worse
+    than a copy.
+    """
+    import ast
+    import resolve_llm as R
+    tree = ast.parse(open(R.__file__, encoding="utf-8").read())
+    fn = next(n for n in ast.walk(tree)
+              if isinstance(n, ast.FunctionDef) and n.name == "_own_page_names_token")
+    calls = {n.func.id for n in ast.walk(fn)
+             if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+    assert "own_pages_in_evidence" in calls, "the filter is re-typed again"
+    pages = [("https://www.growthspace.com/careers", "<html>tok-abc</html>"),
+             ("https://boards.greenhouse.io/someoneelse", "<html>tok-abc</html>"),
+             ("https://il.linkedin.com/jobs/view/1", "<html>tok-abc</html>")]
+    assert R.own_pages_in_evidence("GrowthSpace", pages) == \
+        ["https://www.growthspace.com/careers"]
+    assert R._own_page_names_token("GrowthSpace", "tok-abc", "", pages) is True
+    assert R._own_page_names_token("GrowthSpace", "tok-abc", "", pages[1:]) is False
+
+
+def test_the_hunts_llm_budget_is_per_run_not_per_process():
+    """`_LLM_USED` is a module global. Two `main()` calls in one process — the rehearsal, a
+    test, an operator looping — would otherwise share one `HUNT_LLM_CAP`, so the second run
+    silently makes no picker calls at all. The reset belongs at the top of `main`, next to
+    the other per-run setup."""
+    import ast
+    import listing_hunt as H
+    tree = ast.parse(open(H.__file__, encoding="utf-8").read())
+    fn = next(n for n in ast.walk(tree)
+              if isinstance(n, ast.FunctionDef) and n.name == "main")
+    resets = [n for n in ast.walk(fn) if isinstance(n, ast.Assign)
+              and any(isinstance(t, ast.Subscript)
+                      and isinstance(t.value, ast.Name) and t.value.id == "_LLM_USED"
+                      for t in n.targets)]
+    assert resets, "listing_hunt.main() does not reset its per-run LLM counter"

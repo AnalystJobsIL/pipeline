@@ -350,6 +350,8 @@ def stale_hunt(note):
 def main():
     from bd_rescue import _load_secrets
     _load_secrets()
+    _LLM_USED["n"] = 0        # per RUN, not per process: two main() calls in one process
+                              # (the rehearsal, a test) otherwise share one HUNT_LLM_CAP
     os.environ["SCRAPE_ASSUME_IL"] = "1"   # targets are pre-vetted Israel-relevant companies
     apply = "--apply" in sys.argv
     limit = int(os.environ.get("HUNT_LIMIT", "0"))
