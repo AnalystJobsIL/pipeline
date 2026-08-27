@@ -13,7 +13,9 @@ Usage:
 """
 from __future__ import annotations
 
+import contextlib
 import sys
+import time
 
 from pipeline import http, israel
 from pipeline.fetchers import (fetch_ashby, fetch_greenhouse, fetch_lever,
@@ -46,6 +48,61 @@ _PLATFORMS = [
     ("smartrecruiters", lambda s: f"https://api.smartrecruiters.com/v1/companies/{s}/postings", fetch_smartrecruiters),
     ("recruitee", lambda s: f"https://{s}.recruitee.com/api/offers/", fetch_recruitee),
 ]
+
+
+@contextlib.contextmanager
+def bounded_http(timeout=4, retries=1):
+    """Probe bounds, SCOPED. `pipeline/http.py` defaults to timeout=30/retries=3, which is
+    right for a board we own and absurd for a guess: 8 slugs x 6 platforms x 3 tries at 30 s
+    is a ~72-minute worst case for ONE name.
+
+    `ingest_research.py:18` solves this by patching `pipeline.http._request` at import and
+    never restoring it — process-global, inherited by everything that imports it. Restored in
+    `finally` here, because a leaked patch makes `resolve_llm._verify`'s PRODUCTION fetch run
+    at 4 s/1 try, so a slow-but-live board reads as 0 jobs and its row parks `empty`.
+    """
+    orig = http._request
+    http._request = lambda *a, **k: orig(*a, **{**k, "retries": retries, "timeout": timeout})
+    try:
+        yield
+    finally:
+        http._request = orig
+
+
+def probe_bounded(name, slugs, deadline=None, budget=18):
+    """`probe()` without stdout, with bounds, and with NORMALIZED platform names.
+
+    Returns [{plat, slug, url, jobs, il}]. `plat` is `lever`, never `lever-eu`: this function
+    exists to feed a registry row, and `lever-eu` dispatches to no fetcher while
+    `check_invariants` C2 looks it up in `PLATFORM_HOST`, gets `None`, and cannot even warn.
+
+    Early exit is at the SLUG level, never inside a slug's platform loop: one name can have
+    two real boards (`Wayve` answers on greenhouse AND ashby, 2026-08-27), and stopping at
+    the first would make `_PLATFORMS`'s file order an identity decision.
+    """
+    hits, req = [], 0
+    for slug in slugs:
+        got_il = False
+        for plat, urlfn, fetch in _PLATFORMS:
+            if req >= budget or (deadline and time.time() > deadline):
+                return hits
+            url = urlfn(slug)
+            norm = "lever" if plat.startswith("lever") else plat
+            req += 1
+            try:
+                jobs = fetch({"company_name": name, "ats_platform": norm,
+                              "token": slug, "api_url": url})
+            except Exception:  # noqa: BLE001
+                continue
+            if plat == "smartrecruiters" and not jobs:
+                continue          # SR answers 200 + [] for ANY slug, even bogus
+            il = sum(1 for j in jobs if israel.is_israel_job(j))
+            hits.append({"plat": norm, "slug": slug, "url": url, "jobs": len(jobs), "il": il})
+            if il:
+                got_il = True
+        if got_il:
+            break
+    return hits
 
 
 def probe(name, slugs):

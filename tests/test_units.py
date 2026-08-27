@@ -6471,7 +6471,13 @@ def test_the_cache_write_drops_agency_cards_including_carried_ones_and_the_junio
 
 def test_the_queue_is_pruned_even_on_a_morning_with_nothing_new(tmp_path, monkeypatch, capsys):
     """The first version pruned inside `if new_cos:` / after the telegram early return, so a
-    quiet morning left yesterday's agency in the queue for auto_expand at 08:47."""
+    quiet morning left yesterday's agency in the queue for auto_expand at 08:47.
+
+    The survivor was `Wix` until 2026-08-27, when the same prune gained the DRAIN (an entry
+    whose name the registry already holds is dropped) -- and `Wix` is in `companies.csv`, so
+    it stopped surviving. The subject of this test is the prune running on a quiet morning,
+    not that any particular name lives, so the survivor is now a name the registry does not
+    hold. `test_the_queue_drain_removes_what_the_registry_already_holds` covers the drain."""
     import json as _j
 
     import discovery_daily as dd
@@ -6481,7 +6487,7 @@ def test_the_queue_is_pruned_even_on_a_morning_with_nothing_new(tmp_path, monkey
     (tmp_path / "discovered_cache.json").write_text("[]", encoding="utf-8")
     q = [{"name": "Dialog", "careers_url": "x", "ats": "unknown", "slug": "dialog-recruiting"},
          {"name": "Tel Aviv", "careers_url": "x", "ats": "unknown", "slug": ""},
-         {"name": "Wix", "careers_url": "x", "ats": "unknown", "slug": "wix"}]
+         {"name": "Northwind Analytics", "careers_url": "x", "ats": "unknown", "slug": ""}]
     (tmp_path / "research_companies.json").write_text(_j.dumps(q), encoding="utf-8")
     from pipeline import sources as _src
     monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
@@ -6490,7 +6496,7 @@ def test_the_queue_is_pruned_even_on_a_morning_with_nothing_new(tmp_path, monkey
     monkeypatch.setattr(dt, "scan_channel", lambda chan, last: ([], 0))
     dt.main()
     names = [e["name"] for e in _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))]
-    assert names == ["Wix"], names
+    assert names == ["Northwind Analytics"], names
     assert "no new telegram posts" in capsys.readouterr().out
     # daily: every source empty, nothing to queue — an agency entry still leaves
     (tmp_path / "research_companies.json").write_text(_j.dumps(q[:1] + q[2:]), encoding="utf-8")
@@ -6505,7 +6511,7 @@ def test_the_queue_is_pruned_even_on_a_morning_with_nothing_new(tmp_path, monkey
     monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
     dd.main()
     names = [e["name"] for e in _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))]
-    assert names == ["Wix"], names
+    assert names == ["Northwind Analytics"], names
 
 
 # --- the guest walk: a replay harness, so a scripted page sequence reproduces a live log ---
@@ -12404,3 +12410,313 @@ def test_no_document_still_claims_capped_roles_lead_the_next_digest():
         for claim in ("Overflow is not lost", "those roles lead the next digest",
                       "these roles lead the next digest"):
             assert claim not in body, "%s still says %r" % (rel, claim)
+
+
+# --- the free resolution rung and the queue drain (registry, 2026-08-27) -------------------
+# Every assertion below is a defect that was measured on 2026-08-27, not a hypothetical.
+
+
+def test_a_probe_slug_never_drops_a_word_of_the_company_name():
+    """The single most dangerous input this rung can be handed.
+
+    `probe_ats.slug_variants` offers `n.split()[0]`. Measured over the queue that day, that
+    truncation produced `Trigo Retail` -> smartrecruiters/`trigo` (149 postings, every one in
+    France), `Horizon Technologies` -> lever/`horizon` ("Horizon Robotics", Cupertino) and
+    `Ashley Digital` -> recruitee/`ashley` (New York) -- and `identity_gate.activation_ok`
+    returned True for 9 of the 12 hits it was shown, six of them wrong.
+
+    The gate cannot save us here and it is worth knowing exactly why: `_name_targets`
+    pre-strips `_NAME_FILLER`, so the truncated slug near-equals a target BY CONSTRUCTION.
+    The assertions on `_tenant_near` below are the proof, and they are the reason the slug
+    policy -- not the gate -- is where this class is refused."""
+    import auto_expand as A
+    from pipeline import identity_gate as G
+
+    for name, forbidden in (("Trigo Retail", "trigo"), ("Horizon Technologies", "horizon"),
+                            ("Ashley Digital", "ashley"), ("Ness Technologies", "ness")):
+        slugs = A._lossless_slugs(name, "")
+        assert forbidden not in slugs, "%s offered the truncation %r: %r" % (name, forbidden, slugs)
+        assert any(s.replace("-", "") == "".join(ch for ch in name.lower() if ch.isalnum())
+                   for s in slugs), "%s lost its lossless form: %r" % (name, slugs)
+    # ...and the gate really would have admitted two of them, which is why the rule is here
+    assert G._tenant_near("horizon", G._name_targets("Horizon Technologies")) is True
+    assert G._tenant_near("ashley", G._name_targets("Ashley Digital")) is True
+    # while the genuine candidate is rated BELOW the impostors
+    assert G._tenant_near("trigo", G._name_targets("Trigo Retail")) is False
+    # the LinkedIn handle is not name-derived, so it earns a slot
+    assert "bondpersonalsecurity" in A._lossless_slugs("Bond", "bondpersonalsecurity")
+    # and a handle that is not a slug never reaches the network
+    assert A._lossless_slugs("\u05d4\u05e4\u05e0\u05d9\u05e7\u05e1", "") == []
+
+
+def test_a_guessed_board_with_no_israel_job_never_activates(monkeypatch):
+    """`il >= 1` is the ONLY discriminator that tracked truth in the 2026-08-27 sweep -- the
+    same rule that caught Lili -> Eli Lilly. It refused Agoda (282 Bangkok roles), Clinch
+    (Dublin), Horizon (Cupertino), ARMORY and REAL, every one of which `activation_ok` was
+    willing to admit. Inverting or deleting it re-opens the whole class."""
+    import auto_expand as A
+    import probe_ats as PA
+
+    monkeypatch.setattr(PA, "probe_bounded",
+                        lambda *a, **k: [{"plat": "greenhouse", "slug": "agoda",
+                                          "url": "u", "jobs": 282, "il": 0}])
+    hit, why = A._probe_resolve("Agoda", "agoda", set(), 1e18)
+    assert hit is None and why == "probe-no-il", (hit, why)
+    # the positive control, so this cannot be satisfied by refusing everything
+    monkeypatch.setattr(PA, "probe_bounded",
+                        lambda *a, **k: [{"plat": "ashby", "slug": "chamelio",
+                                          "url": "u", "jobs": 9, "il": 6}])
+    hit, why = A._probe_resolve("Chamelio", "chamelio", set(), 1e18)
+    assert hit == ("ashby", "chamelio", "u", 9, 6), hit
+
+
+def test_two_guessed_boards_for_one_name_defer_instead_of_guessing(monkeypatch):
+    """`Wayve` answers on greenhouse (4 IL) AND ashby (3 IL). Picking one would make
+    `probe_ats._PLATFORMS`'s file order an identity decision, which is not a decision any
+    table ordering is entitled to make."""
+    import auto_expand as A
+    import probe_ats as PA
+    monkeypatch.setattr(PA, "probe_bounded",
+                        lambda *a, **k: [{"plat": "greenhouse", "slug": "wayve", "url": "u1",
+                                          "jobs": 139, "il": 4},
+                                         {"plat": "ashby", "slug": "wayve", "url": "u2",
+                                          "jobs": 137, "il": 3}])
+    hit, why = A._probe_resolve("Wayve", "wayve", set(), 1e18)
+    assert hit is None and why == "probe-ambiguous", (hit, why)
+
+
+def test_a_probe_hit_on_a_board_the_registry_already_reads_is_refused(monkeypatch):
+    """7 of the 29 candidates on 2026-08-27 were boards we ALREADY read, under a name that
+    differs by a legal suffix -- and in all seven the platform and token were identical to
+    the existing row's: Gong.io/Gong, Playtika Ltd/Playtika, Glassbox Ltd./Glassbox, Nexar
+    Inc./Nexar, Unframe/Unframe AI, Oak/Oak - Identity Security OS, AutoDS.../autods.
+
+    `_names_now()` cannot see it, because it matches the name exactly. A second ACTIVE row on
+    one board republishes every role under two employer names -- `alias-of`, which
+    ARCHITECTURE section 2 calls terminal -- and `check_invariants` check B cannot catch it
+    precisely BECAUSE the names differ."""
+    import auto_expand as A
+    import probe_ats as PA
+    monkeypatch.setattr(PA, "probe_bounded",
+                        lambda *a, **k: [{"plat": "greenhouse", "slug": "gongio",
+                                          "url": "u", "jobs": 94, "il": 17}])
+    hit, why = A._probe_resolve("Gong.io", "gongio", {("greenhouse", "gongio")}, 1e18)
+    assert hit is None and why == "probe-dup-board", (hit, why)
+    # the key is (platform, token) -- the same token on another platform is a different board
+    hit, _ = A._probe_resolve("Gong.io", "gongio", {("ashby", "gongio")}, 1e18)
+    assert hit is not None
+
+
+def test_the_probe_bounds_are_restored_even_when_a_fetch_explodes():
+    """`ingest_research.py:18` patches `pipeline.http._request` at import and never restores
+    it. A leak here is worse than untidy: at 4s/1-try, `resolve_llm._verify`'s PRODUCTION
+    fetch reads a slow-but-live board as 0 jobs and parks its row `empty`."""
+    import probe_ats as PA
+    from pipeline import http
+    original = http._request
+    try:
+        with PA.bounded_http():
+            assert http._request is not original
+            raise RuntimeError("boom")
+    except RuntimeError:
+        pass
+    assert http._request is original, "the probe's HTTP bounds leaked into the process"
+
+
+def test_a_lever_eu_hit_is_written_as_the_lever_platform(monkeypatch):
+    """`probe_ats.probe()` appends the RAW platform, so a hit on `api.eu.lever.co` would put
+    `lever-eu` in the registry -- a platform no fetcher dispatches, and one that
+    `check_invariants` C2 looks up in `PLATFORM_HOST`, gets `None` for, and cannot warn
+    about. The row would be active and fetch nothing, forever, in silence."""
+    import probe_ats as PA
+    monkeypatch.setattr(PA, "_PLATFORMS",
+                        [("lever-eu", lambda s: "https://api.eu.lever.co/v0/postings/%s" % s,
+                          lambda row: [{"company": "x", "title": "t", "location": "Tel Aviv"}])])
+    hits = PA.probe_bounded("Mobileye", ["mobileye"], deadline=None, budget=6)
+    assert hits and hits[0]["plat"] == "lever", hits
+
+
+def test_a_refused_ats_row_on_an_aggregator_seed_defers_instead_of_parking():
+    """`_row_for_ats`'s refusal branch writes the SEED into cols 2-3. For an aggregator seed
+    that seed is the LinkedIn/secrethunter shell, so parking here puts
+    `il.linkedin.com/jobs/view/...` into `api_url` -- the 28-row shape `--clear-agg-urls`
+    exists to undo, and the address `identity_gate.is_walled` then reads as the row's own.
+
+    This was already reachable on the LLM path before the probe existed (BACKLOG 177); it was
+    rare only because resolutions are rare. The guard is on the shared branch, so it covers
+    both. Asserted against the SOURCE because driving `main()` appends to the real registry:
+    `pipeline.companies.CSV_PATH` is absolute and a chdir fixture does not redirect it."""
+    import ast
+    import inspect
+    import auto_expand as A
+    tree = ast.parse(inspect.getsource(A.main))
+    # ast.unparse normalises string literals to SINGLE quotes, so match on neither
+    guards = [n for n in ast.walk(tree)
+              if isinstance(n, ast.If) and "_is_agg_url(url)" in ast.unparse(n.test)
+              and "row[4] !=" in ast.unparse(n.test)]
+    assert guards, "the aggregator-seed refusal guard is gone from auto_expand.main()"
+    body = ast.unparse(guards[0])
+    assert "continue" in body, "the guard must DEFER (continue), not fall through to a park"
+    assert "csv.writer" not in body and "writerow" not in body
+
+
+def test_the_own_site_rung_demands_a_linkback_and_cannot_spend_a_credit(monkeypatch):
+    """Two rules in one place because they are the same rule.
+
+    The linkback ("does `<handle>.<tld>` link back to `linkedin.com/company/<handle>`?") is a
+    two-way binding neither side can fake alone. The looser name-on-page rule admits
+    `agoda.com` and `iai.co.il`, and a WRONG own-domain page is worse than none: it is
+    exactly what `resolve_llm._own_page_names_token` reads, so it would corrupt the one check
+    the paid tier has.
+
+    And the rung is only FREE because it holds a page of >= 2000 chars before it asks the
+    gate: `identity_gate.page_names_company` reaches the paid Bright Data unlocker precisely
+    when the page it holds is SHORTER than that."""
+    import auto_expand as A
+    from pipeline import identity_gate as G
+
+    body = "x" * 3000
+    calls = {"n": 0}
+
+    class _R:
+        def __init__(self, h):
+            self._h = h.encode()
+        def read(self, n=None):
+            return self._h
+        def geturl(self):
+            return "https://acme.com/"
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            return False
+
+    def _open(req, timeout=None):
+        calls["n"] += 1
+        return _R(html_now[0])
+
+    import urllib.request
+    monkeypatch.setattr(urllib.request, "urlopen", _open)
+    monkeypatch.setattr(G, "page_names_company", lambda n, u, html="": True)
+    monkeypatch.setattr(G, "is_foreign", lambda n, u: False)
+
+    html_now = [body + " see linkedin.com/company/acme for more"]
+    assert A._site_from_guess("Acme", "acme")[0] == "https://acme.com/"
+    html_now = [body]                       # names the company, but no linkback
+    assert A._site_from_guess("Acme", "acme") is None
+
+    # the credit guard: a short page must never reach the gate at all
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "set-but-must-not-be-used")
+    def _boom(*a, **k):
+        raise AssertionError("the own-site rung reached the paid unlocker")
+    monkeypatch.setattr(G, "page_names_company", _boom)
+    html_now = ["tiny"]
+    assert A._site_from_guess("Acme", "acme") is None
+
+
+def test_the_queue_drain_removes_what_the_registry_already_holds(tmp_path, monkeypatch, capsys):
+    """The queue had never once shrunk -- 1,054 on 08-21 to 1,693 on 08-27, monotonic -- not
+    because a merge forbade it but because nothing ever asked it to. Measured with
+    `persist_state.py merge-file`, the removal SURVIVES the conflict path: base 1,693, ours
+    498, theirs 1,693+5 -> merged 503 with all five concurrent additions present."""
+    import json as _j
+    import discovery_telegram as dt
+    from pipeline import companies as _co
+
+    monkeypatch.chdir(tmp_path)
+    q = [{"name": "Gong.io", "careers_url": "u", "ats": "unknown", "slug": ""},
+         {"name": "Wix", "careers_url": "u", "ats": "unknown", "slug": ""},
+         {"name": "Brand New Co", "careers_url": "u", "ats": "unknown", "slug": ""}]
+    (tmp_path / "research_companies.json").write_text(_j.dumps(q), encoding="utf-8")
+    reg = [{"company_name": "Gong.io"}, {"company_name": "wix"}]
+    reg += [{"company_name": "filler%d" % i} for i in range(1200)]
+    monkeypatch.setattr(_co, "load_companies", lambda *a, **k: reg)
+    dt._prune_queue()
+    left = [e["name"] for e in _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))]
+    assert left == ["Brand New Co"], left
+    assert "drained 2" in capsys.readouterr().out
+
+
+def test_the_queue_drain_refuses_to_run_on_a_short_registry(tmp_path, monkeypatch, capsys):
+    """`persist_state._keyed_list` has NO mass-deletion guard, unlike every `s_company_dict`
+    path: measured the same day, `ours` of 3 entries against a base of 1,693 merges to 3,
+    silently, with a success line. So a truncated companies.csv could empty the queue in one
+    run and nothing downstream would notice. The floor is the only thing standing there."""
+    import json as _j
+    import discovery_telegram as dt
+    from pipeline import companies as _co
+
+    monkeypatch.chdir(tmp_path)
+    q = [{"name": "Gong.io", "careers_url": "u", "ats": "unknown", "slug": ""},
+         {"name": "Wix", "careers_url": "u", "ats": "unknown", "slug": ""}]
+    (tmp_path / "research_companies.json").write_text(_j.dumps(q), encoding="utf-8")
+    monkeypatch.setattr(_co, "load_companies",
+                        lambda *a, **k: [{"company_name": "Gong.io"}, {"company_name": "Wix"}])
+    dt._prune_queue()
+    left = [e["name"] for e in _j.loads((tmp_path / "research_companies.json").read_text(encoding="utf-8"))]
+    assert sorted(left) == ["Gong.io", "Wix"], left
+    assert "under the" in capsys.readouterr().out
+
+
+def test_both_discovery_bridges_share_one_registry_floor():
+    """Two copies of a safety floor is the shape this repo has been bitten by often enough to
+    have a rule about it. Until one of them imports the other, a test holds them equal."""
+    import discovery_daily as dd
+    import discovery_telegram as dt
+    assert dd._REGISTRY_FLOOR == dt._REGISTRY_FLOOR == 1000
+
+
+def test_the_probe_rung_writes_a_row_end_to_end_and_defers_when_the_gate_refuses(
+        tmp_path, monkeypatch):
+    """The end-to-end control for the two AST/unit guards above.
+
+    `test_auto_expand_never_renders_or_parks_an_aggregator_seed` still holds -- an aggregator
+    seed is never RENDERED and never PARKED -- but as of 2026-08-27 it can be RESOLVED, for
+    free, without the LLM tier. That is a real change to a rule this repo states in two
+    places, so it needs a positive control: if the rung silently stopped writing rows, every
+    other guard here would still pass.
+
+    Both halves matter. The refusal half is the one that costs data: `_row_for_ats`'s refusal
+    branch writes the SEED into cols 2-3, and for an aggregator seed that is the LinkedIn
+    shell -- so a refused hit must produce NO ROW AT ALL, not a parked one."""
+    import csv as _csv
+    import json as _j
+    import shutil as _sh
+    import sys as _sys
+
+    import auto_expand as E
+    import probe_ats as PA
+
+    def _run(gate_says):
+        d = tmp_path / ("ok" if gate_says else "no")
+        (d / "cloud_state").mkdir(parents=True)
+        (d / "companies.csv").write_text(
+            "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+        (d / "research_companies.json").write_text(_j.dumps([{
+            "name": "Chamelio", "careers_url": "https://il.linkedin.com/jobs/view/123",
+            "ats": "unknown", "slug": "chamelio"}]), encoding="utf-8")
+        monkeypatch.chdir(d)
+        monkeypatch.setattr(E, "CSV_PATH", str(d / "companies.csv"))
+        monkeypatch.setattr(E, "DRY_RUN", False)
+        monkeypatch.setattr(_sys, "argv", ["auto_expand.py"])
+        monkeypatch.setenv("AUTO_EXPAND_PROBE", "1")
+        monkeypatch.setenv("AUTO_EXPAND_SITE", "0")
+        monkeypatch.setenv("LLM_RESOLVE_CAP", "0")
+        monkeypatch.setattr(_sh, "which", lambda x: None)
+        # an aggregator seed must never be rendered, before or after this change
+        monkeypatch.setattr(E, "resolve", lambda n, u: (_ for _ in ()).throw(
+            AssertionError("resolve_deep.resolve called on an aggregator seed: %s" % u)))
+        monkeypatch.setattr(PA, "probe_bounded", lambda *a, **k: [
+            {"plat": "ashby", "slug": "chamelio",
+             "url": "https://api.ashbyhq.com/posting-api/job-board/chamelio",
+             "jobs": 9, "il": 6}])
+        monkeypatch.setattr(E._gate, "activation_ok", lambda *a, **k: gate_says)
+        E.main()
+        return [r for r in _csv.reader(open(d / "companies.csv", encoding="utf-8"))][1:]
+
+    rows = _run(True)
+    assert len(rows) == 1, rows
+    assert rows[0][0] == "Chamelio" and rows[0][1] == "ashby" and rows[0][2] == "chamelio"
+    assert rows[0][4] == "true", rows[0]
+    assert "il.linkedin.com" not in rows[0][3], "the LinkedIn seed reached api_url"
+
+    assert _run(False) == [], "a gate-refused aggregator seed must leave NO row at all"

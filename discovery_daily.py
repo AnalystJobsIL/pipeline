@@ -795,6 +795,12 @@ def budget_per_day(today=None):
     return max(0, BD_MONTHLY_BUDGET - mtd) / max(1, days_left)
 
 
+# Below this many rows, companies.csv is not trusted to say what the queue may drop.
+# The registry has been 1,200-1,250 rows since 2026-08-21; a read under this is a broken
+# file, not a shrunken registry. See the drain in main() for the measurement behind it.
+_REGISTRY_FLOOR = 1000
+
+
 def plan_spend(today=None):
     """(breadth_limit, targeted_cap, explanation) for this run.
 
@@ -1193,14 +1199,57 @@ def main():
     # 2026-08-25. Pruned here, where this layer already holds the file, on EVERY run — a
     # morning with nothing new to queue must not leave yesterday's agency in place.
     if research is not None:
-        kept = [e for e in research if not _is_rec(e.get("name"), e.get("slug", ""))]
+        # THE DRAIN (2026-08-27, `registry` working in this file -- see HANDOFF). The queue
+        # had never once shrunk: 1,054 on 08-21 -> 1,693 on 08-27, ~+110/day, monotonic --
+        # not because a merge forbade it but because NOTHING EVER ASKED IT TO. `auto_expand`
+        # drains it only by side effect (a name it resolves lands in companies.csv, so the
+        # entry drops out of its `todo` next run) and `auto-expand.yml` cannot commit this
+        # file at all: it is not in that workflow's `--own` list, only daily-digest.yml's.
+        # So 1,195 settled entries were carried, sorted and re-read twice a day forever.
+        # `have` (above) is the registry's own names; an entry it already holds is settled.
+        #
+        # THE REMOVAL SURVIVES THE CONFLICT PATH, measured with `persist_state.py merge-file
+        # research_companies.json BASE OURS THEIRS OUT`: base 1,693, ours 498 (drained),
+        # theirs 1,693 + 5 concurrent additions -> merged **503**, with all 5 present.
+        # `_keyed_list`'s docstring says only "ours' additions appended"; the code it
+        # delegates to carries an explicit deletion loop (`docs/BACKLOG.md` 314).
+        #
+        # THE FLOOR IS NOT OPTIONAL. The same measurement, ours=3 against base=1,693, merged
+        # to **3**: `_keyed_list` has no mass-deletion guard of the kind every
+        # `s_company_dict` path has, so one short read of companies.csv could empty the queue
+        # in a single run, silently, with a success line. The guard therefore lives HERE, at
+        # the source, because there is nowhere downstream that would catch it.
+        settled = have if len(have) >= _REGISTRY_FLOOR else set()
+        if not settled:
+            print(f"::warning::queue: companies.csv yielded {len(have)} names, under the "
+                  f"{_REGISTRY_FLOOR} floor -- NOT draining this run (a short registry must "
+                  f"never be able to empty the queue).", flush=True)
+        agency = [e for e in research if _is_rec(e.get("name"), e.get("slug", ""))]
+        drained = [e for e in research
+                   if e not in agency and (e.get("name") or "").strip().lower() in settled]
+        kept = [e for e in research if e not in agency and e not in drained]
         pruned = len(research) - len(kept)
-        if pruned:
-            print(f"queue: dropped {pruned} agency entries: "
-                  + ", ".join((e.get("name") or "?") for e in research if e not in kept))
+        if agency:
+            print(f"queue: dropped {len(agency)} agency entries: "
+                  + ", ".join((e.get("name") or "?") for e in agency))
+        if drained:
+            # counts, then a SAMPLE: the first version of this line named every entry, which
+            # is one 1,195-name line in the step log the day the drain first runs.
+            print(f"queue: drained {len(drained)} entries the registry already holds "
+                  f"(e.g. {', '.join((e.get('name') or '?') for e in drained[:5])}); "
+                  f"{len(kept)} unresolved remain")
         research = kept
         known = {(e.get("name") or "").strip().lower() for e in research}
-        added = [v for k, v in new_cos.items() if k not in known]
+        # ...and never re-queue what the drain just took. REDUNDANT TODAY, deliberately:
+        # the card loop above already skips `c.lower() in have` before a name can reach
+        # `new_cos`, so nothing registered gets here. But that check is 80 lines away and
+        # keyed on a different local, and if it ever moves, the failure is silent and
+        # self-inflicted -- the drain removes the name, `known` loses it, `added` puts it
+        # back, and the file churns every morning with the count never falling. A drain that
+        # produces a diff and no effect is worse than no drain, because it looks like it
+        # worked. Stated here so the invariant does not depend on reading both sites.
+        added = [v for k, v in new_cos.items()
+                 if k not in known and k.strip().lower() not in settled]
         if added or pruned:
             research.extend(added)
             discovery_queue.write(research)

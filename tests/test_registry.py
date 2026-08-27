@@ -3730,6 +3730,12 @@ def _expand_env(tmp_path, monkeypatch, queue, registry_rows=(), seen=None):
     monkeypatch.setattr(sys, "argv", ["auto_expand.py"])
     for k in ("AUTO_EXPAND_LIMIT", "LLM_RESOLVE_CAP", "AUTO_EXPAND_SEARCH_CAP"):
         monkeypatch.delenv(k, raising=False)
+    # ...and the same rule for the two free rungs, which DEFAULT to on (2026-08-27): both
+    # reach the live network, so a suite that left them armed would probe real ATS hosts on
+    # every push. Disarming by `delenv` would not work -- their default IS "1". A test that
+    # wants a rung sets the env itself, exactly as it sets its own `resolve`.
+    for k in ("AUTO_EXPAND_PROBE", "AUTO_EXPAND_SITE"):
+        monkeypatch.setenv(k, "0")
     return E
 
 

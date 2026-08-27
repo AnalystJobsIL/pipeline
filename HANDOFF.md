@@ -57,6 +57,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-08-28 | infra | the `mutation-gate` job FINISHES rather than hitting `timeout-minutes: 45`. It already timed out once: `30bc39f` ran **45m16s, `cancelled`**. It was 44m16s on `c1323d5` before this session, and this session's guards add +19.1s to the baseline suite. A timeout names no surviving mutant — BACKLOG 195/311 | — | not yet due |
 | 2026-08-28 | infra | the `mutation-gate` job finished, rather than hitting `timeout-minutes: 45`. It measured **44 min 16 s** on `c1323d5` and 37 min 44 s on `623b2a9`, both before this session's code. A timeout names no surviving mutant, and `tests.yml` is already red for other reasons — BACKLOG 195 | — | not yet due |
 | 2026-08-28 | roles | `ledger N = store N`; `purged 7` once; `reopened` NOT ~70 | — | |
+| 2026-08-28 | registry | after the 05:00 digest commits, `research_companies.json` is ~500 entries, not ~1,700 — the drain survived the REAL merge, not just `merge-file`. And the 08:00 auto-expand `probe:` line shows `N resolved` with `probe-dup-board` among its refusals | — | not yet due |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due (`audit-coverage.yml` is `0 4 * * 0`) |
 
 ## State at handoff — 2026-08-27 07:5x UTC, every number re-derived
@@ -216,6 +217,7 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-27 `infra`** — the recovery cron and the watchdog I came to build are both REJECTED: 0 isolated cron drops measured, and a watchdog writing `latest.md` can silently overwrite a delivered digest. What was broken was the unconditional `cp`; `persist_state.py deliver` replaces it. **NOT finished:** 292, 304-308. Record: `docs/sessions/2026-08-27-infra.md`.
 - **2026-08-27 `docs`** — the linter was green while three attackers found 46 measured contradictions in these same documents. Numbers a doc states are registered facts now; HANDOFF is 56 KB -> 18 KB with all 14 morning checks answered (8 failed); `docs/backlog.py` gives a lane its own list. **NOT finished:** BACKLOG 291, 295-302. Record: `docs/sessions/2026-08-27-docs.md`.
 - **2026-08-27 `roles`** — one `seen_id` named sixteen roles, and the merge kept the best member, not the best field. Shipped: a tenant-keyed `seen_id`, an origin-gated merge, a run log. **NOT finished:** 311-313. Record: `docs/sessions/2026-08-27-roles.md`.
+- **2026-08-27 `registry`** — `activation_ok` admitted 9 of 12 boards guessed from a company name, 6 of them another employer's: a slug made from the name near-equals the name. Shipped a free rung gated on `il>=1` (21 clean of 498) and a queue drain (1,693 -> 498). **NOT finished:** 317-319. Record: `docs/sessions/2026-08-27-registry.md`.
 
 *The 2026-08-23 morning session (seventeen defects, A–Q) and the digest-run history that
 used to open this file are in `docs/sessions/2026-08-23.md`, which is where the long

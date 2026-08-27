@@ -953,8 +953,26 @@ mode when they are nothing of the kind (`docs/BACKLOG.md` 282, `infra`).
  listing_hunt 19:00 takes the FAST-PATH: scrape the stored URL directly; verified -> ACTIVE
 ```
 
-Every state except `defunct:` and `domain-dead` is re-checked on some cadence. **A failing
-API row keeps `active=true`** (its roles stay on the job board via the failed-company
+Every state except `defunct:` and `domain-dead` is re-checked on some cadence — **except
+one, and it is 24 active rows** (2026-08-27, `docs/BACKLOG.md` 318). An ACTIVE row whose
+fetcher is `israel_scoped` (Workday asks the board for Israel itself) and returns 0 never
+enters `stale.json`, because `health.zero_is_a_measurement()` exempts it on purpose — that
+exemption is right, and it is why 25 healthy Workday boards left the self-heal queue on
+2026-08-24. What was never written down is its cost: no `stale.json` entry means no
+`resolve_broken.candidates()` entry, and **every** parked pool below excludes the row on
+`r[4] == "false"`. `repair_dead_urls` is the one pool with no `active` filter, but it selects
+on a hostname that stops resolving, which a live Workday tenant's does not. So these rows are
+owned by nothing, which §8 names as the most common way this codebase breaks. The one real
+defect in that set was found by a human writing a note in the row (Broadcom's *"Tel Aviv
+postings confirmed live"*, correct and unread since it was written), not by any cadence.
+
+```bash
+python -c "import json,csv,io;b=json.load(io.open('cloud_state/health_baseline.json',encoding='utf-8'));\
+r={x['company_name']:x for x in csv.DictReader(io.open('companies.csv',encoding='utf-8')) if x['active']=='true'};\
+print(len([n for n,v in b.items() if int(v)==0 and n in r and r[n]['ats_platform']=='workday']))"
+```
+
+**A failing API row keeps `active=true`** (its roles stay on the job board via the failed-company
 exemption, §5a) while a rotting *scrape* row is parked, because only parked rows are visible
 to the hunt/audit machinery. **Empty is not broken:** `page-empty` rows are ACTIVE, because a
 validated working careers page with no openings today is a healthy daily source; only ERRORS
@@ -1313,7 +1331,54 @@ Four more rules this matrix exists to enforce, each violated in production at le
 
 New names enter via discovery (`research_companies.json` queue) or manual seeding. Then:
 
-**This ladder is not draining, and the top rung is why.** Measured across 2026-08-26, the
+**A free rung sits above the paid one now (2026-08-27), because the paid tier was never
+budget-bound on these names — it was evidence-bound.** 484 of the 498 drainable queue names
+arrive as an aggregator permalink; `auto_expand` did **no HTTP at all** for them
+(`if agg_seed: r, kind = None, "unreachable"`) and sent them straight to a tier capped at 10
+calls, where `resolve_llm._verify` refuses any proposal whose token does not appear on a page
+on the company's **own domain**. With no such page in the evidence that tier cannot succeed
+whatever the model answers (`docs/BACKLOG.md` 278). The last run before the change resolved
+**0 of 9 asked**. So the missing input was an ADDRESS, and two rungs now supply one for free:
+
+| rung | what it does | measured over all 498, 2026-08-27 |
+|---|---|---|
+| `_probe_resolve` | guesses the ATS tenant from **lossless** slug forms + LinkedIn's handle, over the 6 guessable platforms | 5,212 requests, 293 s, 0.59 s/name; **29** names had an Israel-positive board; **21** survived every refusal |
+| `_site_from_guess` | guesses `<linkedin-handle>.{com,co.il,ai,io}` and demands the page **link back** to `linkedin.com/company/<handle>` | 364 valid handles → 119 answered → 104 named the company → 53 linked back → **49** passed all three |
+
+**Neither rung trusts the identity gate, and that is the finding, not an oversight.** A slug
+synthesised from the company name near-equals the name by construction, so `board_vouches`
+carries zero bits — `activation_ok` returned True for **9 of 12** such boards, 6 of them
+another employer's (`docs/BACKLOG.md` 317). What separates the right answers from the wrong
+ones is `il >= 1`, the rule that caught Lili → Eli Lilly: it refused Agoda's 282 Bangkok
+roles, Clinch (Dublin), Horizon Robotics (Cupertino), ARMORY and REAL. Three more refusals
+are structural: a **truncated** slug is never proposed (`_lossless_slugs`), **two**
+Israel-positive boards for one name defer rather than choose (`Wayve` answers on greenhouse
+and ashby), and a board the registry **already reads** defers — 7 of the 29 were boards we
+had under a name differing by a legal suffix (`Gong.io`/Gong, `Playtika Ltd`/Playtika,
+`Oak`/`Oak - Identity Security OS`, …) with platform and token identical, which
+`_names_now()` cannot see and `check_invariants` check B cannot catch *because* the names
+differ. Read `probe: N resolved, refused M (...)` in the 08:00/20:00 log.
+
+**And the queue itself now drains.** It had never once shrunk — 1,054 on 08-21 to 1,693 on
+08-27, monotonic — not because the merge forbade it but because **nothing ever asked it to**:
+`auto_expand` drains it only by side effect, and `auto-expand.yml` cannot commit that file at
+all (it is not in that workflow's `--own` list; only `daily-digest.yml` owns it). The prune
+in `discovery_daily`/`discovery_telegram` — which already ran every morning for agency names
+— now also drops an entry whose name the registry already holds: **1,693 → 498**. It survives
+the conflict path, measured rather than assumed:
+
+```bash
+python persist_state.py merge-file research_companies.json BASE OURS THEIRS OUT
+# base 1,693 · ours 498 (drained) · theirs 1,693+5 concurrent  ->  merged 503, all 5 present
+```
+
+`_keyed_list`'s docstring says only "ours' additions appended"; the code it delegates to
+carries an explicit deletion loop (`docs/BACKLOG.md` 314). Two caveats from the same run: an
+entry origin **edited** comes back (3 of 3 tried), and `ours` of 3 against a base of 1,693
+merges to **3** — `_keyed_list` has no mass-deletion guard, so the prune carries a
+`_REGISTRY_FLOOR` and refuses to drain at all when `companies.csv` reads short.
+
+**The rest of this ladder is still not draining, and the top rung was why.** Measured across 2026-08-26, the
 whole nightly chain produced **two** activated rows — `repair_extract_gap` (Versatile 1 IL,
 zap group 2 IL); `listing_hunt` returned `{'found': 0, 'nolisting': 23, 'dead': 12}` over 35
 of its 210-row pool, `crack_walled` `{'skip': 4, 'nocapture': 3, 'novrfy': 2, 'notours': 1}`,

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**359 filed · 253 open · 106 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**363 filed · 257 open · 106 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 317.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 321.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -82,6 +82,78 @@ closure convention in the header.
 | 245 | `245@company-intel` **open** · `245@ats-fetch` **open** · `245@scraper` **open** |
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
+
+### registry — 69 open
+
+- **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
+- **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
+- **21** `21@registry` **`company_identity.is_foreign` returns False for EVERY ATS host, and that is
+- **26** `26@registry` **Three orphan detectors, three answers**
+- **29** `29@registry` **`tenant_is_this_company('SupPlant', 'careers.workable.com')` returns True**
+- **30** `30@registry` **`_ok_to_write` and `_page_names_company` are plumbing living in `crack_walled.py`** —
+- **35** `35@registry` **`merge_csv_rows._TOOL` does not key `url-repaired`, and its overflow trim deletes the
+- **36** `36@registry` **`_page_names_company`'s unlocker call is uncapped Bright Data spend**
+- **40** `40@registry` **`ARCHITECTURE.md` §2 is now 36% of the document for one of seven pipeline steps** —
+- **42** `42@registry` **`company_identity.ATS_HOST` omits `jobvite.com` and `taleo.net`**
+- **43** `43@registry` **`verdict() == "weak"` has no consumer anywhere in the repo**
+- **46** `46@registry` **Do not re-measure an activating tool's gate against ACTIVE rows.** Wave 9 reported the
+- **51** `51@registry` **A `_WALLED_HOST` entry can be deleted with the suite green whenever that platform has
+- **54** `54@registry` **`auto_expand._row_for_ats`'s refusal persists the REFUSED board into cols 2-3; its
+- **55** `55@registry` **The `taleo.net` half of `_ATS_NOT_IN_ATS_HOST` is untested and its registry set is
+- **58** `58@registry` **The readable-page rule's accepted cost: a pool row whose own page names only a
+- **61** `61@registry` **`embedded_board_ok`'s accepted cost: a held page cannot vouch for a board it merely
+- **62** `62@registry` **`restore_only` is exempt from the scheduled-leak check `legacy_unscheduled` gets** —
+- **63** `63@registry` **`_modules_a_workflow_runs` sees only `python <name>.py` run-lines and does not follow
+- **66** `66@registry` **`retry_unreachable`'s `ats` refusal branch may have an empty reachable set**
+- **69** `69@registry` **`_tenant_near`'s ±1 window is loose for names whose core is ≤3 chars**
+- **71** `71@registry` **A generic-adjacent parenthetical still yields a generic target: `Citrix (Cloud
+- **73** `73@registry` **A declared row is refused by a subdomain bearing its OWN name**
+- **74** `74@registry` **`cloud_state/registry_alarms.json` is written nightly and read by nothing**
+- **76** `76@registry` **Three active scrape rows have a validated native fetcher waiting**
+- **77** `77@registry` **`crack_walled` recognises `/api/pcsx` and `/widgets` hosts and still emits `scrape`
+- **78** `78@registry` **`health.ATS_HOST` does not name `eightfold.ai`**
+- **79** `79@registry` **The single `jazzhr` row (Questar Auto Technologies) is scanned daily and can never *(half closed)*
+- **84** `84@registry` **A rot-parked row that carries `dark-triage …: page-empty` never reaches the hunt** —
+- **92** `92@registry` **Mutation records for the scraper guards**
+- **133** `133@registry` **13 active registry groups read one board under two identities**
+- **156** `156@registry` **Three loaders turn a corrupt `scraped_cache.json` into `{}` and write it back** —
+- **196** `196@registry` **`resolve_llm` still asks SerpApi first**
+- **199** `199@registry` **An address-less (`url-cleared`) row pays one unlocker search on every DDG-empty
+- **201** `201@registry` **The probe's `ever` fact is set by any 200 page
+- **202** `202@registry` **17 aggregator/agency addresses, a PDF and an API search page are inside the 228-row probe
+- **203** `203@registry` **The probe cannot baseline its pool: ~130 rows/night at the 10-minute budget, 97 of 228
+- **204** `204@registry` **The rehearsal's `mixed` policy asserts only the union invariants**
+- **205** `205@registry` **A note whose protected segments fill the cell silently drops every later stamp** —
+- **206** `206@registry` **197 active ATS rows re-activate only through a human-page read now, and the 121
+- **213** `213@registry` **Resolver maps still name `applytojob`/`jazzhr` as a platform host**
+- **218** `218@registry` **`validate_bd.py` pre-slices ±40 characters around the place before calling
+- **225** `225@registry` **The names queue grows +70/day against 2–3 resolved per run, and its file order now decides
+- **230** `230@registry` **The `misconfig-scrape-on-ats` queue cannot be drained by the tool that owns it: the comeet
+- **231** `231@registry` **`resolve_broken._HTML_ATS` has no comeet / bamboohr / workable rung**
+- **232** `232@registry` **Five duplicate rows of `Amazon` and `Microsoft` are active scrape rows on ATS hosts** —
+- **234** `234@registry` **`apply_resolved.py` stamps `self-heal <date>` on a batch no self-heal produced, and a
+- **239** `239@registry` **Workiz's scrape row may be an embedded Comeet board**
+- **242** `242@registry` **`successfactors` and `jobvite` are fetchable but undiscoverable *(closed by a later bullet, original never edited)*
+- **242** `242@registry` **`SCRAPE_ASSUME_IL` is set process-wide at import by two root modules, so the whole test *(closed by a later bullet, original never edited)*
+- **246** `246@registry` **Four Eightfold/Phenom scrape rows are genuinely empty, not broken *(closed by a later bullet, original never edited)*
+- **266** `266@registry` **The Meta registry row's `api_url` IS a search page, so no Meta role can ever have a job
+- **275** `275@registry` **The `Registry:` mail line is an alarm channel with no production line behind it** —
+- **276** `276@registry` **The intake queue's `ats` and `slug` fields are stale and convert nothing**
+- **277** `277@registry` **`pipeline/llm.py` should serialise a dict `schema` instead of letting it reach argv** —
+- **278** `278@registry` **The resolver's LLM tier is measured only by whether it resolved, never by whether it
+- **279** `279@registry` **Nothing has measured `effort` on the resolver's own task**
+- **280** `280@registry` **41 parked rows point at another company's careers page, and 39 of them are in the probe
+- **281** `281@registry` **`expand` and `repair` are the only two pipeline stages whose stamp carries no counts,
+- **284** `284@registry` **A Comeet uid is unfalsifiable by every gate and every invariant, and six active rows
+- **287** `287@registry` **The 12 Comeet re-points cost the cheap identity rung: `board_vouches` went `True` →
+- **288** `288@registry` **`Ericsson` returns one posting worldwide**
+- **290** `290@registry` **The Amazon / Microsoft twins of 232, re-measured
+- **313** `313@registry` **Parking a row conflates four different facts, and only one of them means "closed"** —
+- **315** `315@registry` **`--census` rewrites its own baseline every digest run, so a pool can alarm at most
+- **316** `316@registry` **`AUTO_EXPAND_LIMIT` has three different defaults in three places**
+- **317** `317@registry` **A name-derived slug vouches for itself: `_tenant_near` and `page_names_company` share
+- **318** `318@registry` **An `israel_scoped` ACTIVE row returning zero is re-checked by nothing**
+- **320** `320@registry` **`tests.yml` has a SECOND red cause nobody has named, and it is the failure §2 warns
 
 ### infra — 66 open
 
@@ -151,75 +223,6 @@ closure convention in the header.
 - **308** `308@infra` **A day on which GitHub drops every cron in BOTH repositories is undetectable by anything in
 - **311** `311@infra` **`_needs_git` skips 11 infra guards in a git WORKTREE
 - **314** `314@infra` **`persist_state._keyed_list`'s docstring says the merge only appends, and the code
-
-### registry — 66 open
-
-- **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
-- **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
-- **21** `21@registry` **`company_identity.is_foreign` returns False for EVERY ATS host, and that is
-- **26** `26@registry` **Three orphan detectors, three answers**
-- **29** `29@registry` **`tenant_is_this_company('SupPlant', 'careers.workable.com')` returns True**
-- **30** `30@registry` **`_ok_to_write` and `_page_names_company` are plumbing living in `crack_walled.py`** —
-- **35** `35@registry` **`merge_csv_rows._TOOL` does not key `url-repaired`, and its overflow trim deletes the
-- **36** `36@registry` **`_page_names_company`'s unlocker call is uncapped Bright Data spend**
-- **40** `40@registry` **`ARCHITECTURE.md` §2 is now 36% of the document for one of seven pipeline steps** —
-- **42** `42@registry` **`company_identity.ATS_HOST` omits `jobvite.com` and `taleo.net`**
-- **43** `43@registry` **`verdict() == "weak"` has no consumer anywhere in the repo**
-- **46** `46@registry` **Do not re-measure an activating tool's gate against ACTIVE rows.** Wave 9 reported the
-- **51** `51@registry` **A `_WALLED_HOST` entry can be deleted with the suite green whenever that platform has
-- **54** `54@registry` **`auto_expand._row_for_ats`'s refusal persists the REFUSED board into cols 2-3; its
-- **55** `55@registry` **The `taleo.net` half of `_ATS_NOT_IN_ATS_HOST` is untested and its registry set is
-- **58** `58@registry` **The readable-page rule's accepted cost: a pool row whose own page names only a
-- **61** `61@registry` **`embedded_board_ok`'s accepted cost: a held page cannot vouch for a board it merely
-- **62** `62@registry` **`restore_only` is exempt from the scheduled-leak check `legacy_unscheduled` gets** —
-- **63** `63@registry` **`_modules_a_workflow_runs` sees only `python <name>.py` run-lines and does not follow
-- **66** `66@registry` **`retry_unreachable`'s `ats` refusal branch may have an empty reachable set**
-- **69** `69@registry` **`_tenant_near`'s ±1 window is loose for names whose core is ≤3 chars**
-- **71** `71@registry` **A generic-adjacent parenthetical still yields a generic target: `Citrix (Cloud
-- **73** `73@registry` **A declared row is refused by a subdomain bearing its OWN name**
-- **74** `74@registry` **`cloud_state/registry_alarms.json` is written nightly and read by nothing**
-- **76** `76@registry` **Three active scrape rows have a validated native fetcher waiting**
-- **77** `77@registry` **`crack_walled` recognises `/api/pcsx` and `/widgets` hosts and still emits `scrape`
-- **78** `78@registry` **`health.ATS_HOST` does not name `eightfold.ai`**
-- **79** `79@registry` **The single `jazzhr` row (Questar Auto Technologies) is scanned daily and can never *(half closed)*
-- **84** `84@registry` **A rot-parked row that carries `dark-triage …: page-empty` never reaches the hunt** —
-- **92** `92@registry` **Mutation records for the scraper guards**
-- **133** `133@registry` **13 active registry groups read one board under two identities**
-- **156** `156@registry` **Three loaders turn a corrupt `scraped_cache.json` into `{}` and write it back** —
-- **196** `196@registry` **`resolve_llm` still asks SerpApi first**
-- **199** `199@registry` **An address-less (`url-cleared`) row pays one unlocker search on every DDG-empty
-- **201** `201@registry` **The probe's `ever` fact is set by any 200 page
-- **202** `202@registry` **17 aggregator/agency addresses, a PDF and an API search page are inside the 228-row probe
-- **203** `203@registry` **The probe cannot baseline its pool: ~130 rows/night at the 10-minute budget, 97 of 228
-- **204** `204@registry` **The rehearsal's `mixed` policy asserts only the union invariants**
-- **205** `205@registry` **A note whose protected segments fill the cell silently drops every later stamp** —
-- **206** `206@registry` **197 active ATS rows re-activate only through a human-page read now, and the 121
-- **213** `213@registry` **Resolver maps still name `applytojob`/`jazzhr` as a platform host**
-- **218** `218@registry` **`validate_bd.py` pre-slices ±40 characters around the place before calling
-- **225** `225@registry` **The names queue grows +70/day against 2–3 resolved per run, and its file order now decides
-- **230** `230@registry` **The `misconfig-scrape-on-ats` queue cannot be drained by the tool that owns it: the comeet
-- **231** `231@registry` **`resolve_broken._HTML_ATS` has no comeet / bamboohr / workable rung**
-- **232** `232@registry` **Five duplicate rows of `Amazon` and `Microsoft` are active scrape rows on ATS hosts** —
-- **234** `234@registry` **`apply_resolved.py` stamps `self-heal <date>` on a batch no self-heal produced, and a
-- **239** `239@registry` **Workiz's scrape row may be an embedded Comeet board**
-- **242** `242@registry` **`successfactors` and `jobvite` are fetchable but undiscoverable *(closed by a later bullet, original never edited)*
-- **242** `242@registry` **`SCRAPE_ASSUME_IL` is set process-wide at import by two root modules, so the whole test *(closed by a later bullet, original never edited)*
-- **246** `246@registry` **Four Eightfold/Phenom scrape rows are genuinely empty, not broken *(closed by a later bullet, original never edited)*
-- **266** `266@registry` **The Meta registry row's `api_url` IS a search page, so no Meta role can ever have a job
-- **275** `275@registry` **The `Registry:` mail line is an alarm channel with no production line behind it** —
-- **276** `276@registry` **The intake queue's `ats` and `slug` fields are stale and convert nothing**
-- **277** `277@registry` **`pipeline/llm.py` should serialise a dict `schema` instead of letting it reach argv** —
-- **278** `278@registry` **The resolver's LLM tier is measured only by whether it resolved, never by whether it
-- **279** `279@registry` **Nothing has measured `effort` on the resolver's own task**
-- **280** `280@registry` **41 parked rows point at another company's careers page, and 39 of them are in the probe
-- **281** `281@registry` **`expand` and `repair` are the only two pipeline stages whose stamp carries no counts,
-- **284** `284@registry` **A Comeet uid is unfalsifiable by every gate and every invariant, and six active rows
-- **287** `287@registry` **The 12 Comeet re-points cost the cheap identity rung: `board_vouches` went `True` →
-- **288** `288@registry` **`Ericsson` returns one posting worldwide**
-- **290** `290@registry` **The Amazon / Microsoft twins of 232, re-measured
-- **313** `313@registry` **Parking a row conflates four different facts, and only one of them means "closed"** —
-- **315** `315@registry` **`--census` rewrites its own baseline every digest run, so a pool can alarm at most
-- **316** `316@registry` **`AUTO_EXPAND_LIMIT` has three different defaults in three places**
 
 ### scraper — 19 open
 
@@ -294,7 +297,7 @@ closure convention in the header.
 - **302** `302@docs` **`check_session_record_dates` inspects only line 1**
 - **303** `303@docs` **ARCHITECTURE section 8's guard-rail table describes guards that have moved**
 
-### ats-fetch — 11 open
+### ats-fetch — 12 open
 
 - **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
 - **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
@@ -307,6 +310,7 @@ closure convention in the header.
 - **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded** *(closed by a later bullet, original never edited)*
 - **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
 - **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
+- **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
 
 ### roles — 7 open
 
@@ -4864,3 +4868,129 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      Same shape: `_site_from_slug`'s docstring says *"399 of 1,544 queue entries carry a
      slug"*, the live file is 465 of 1,693, and `ARCHITECTURE.md` puts the
      drainable-with-slug count at 282 — three numbers for one fact.
+
+317. **A name-derived slug vouches for itself: `_tenant_near` and `page_names_company` share
+     one truncation** — lane: `registry` (shared plumbing, `pipeline/identity_gate.py`).
+     Filed, not fixed, deliberately: this gate is on the activation path of every lane, and
+     the repo has already measured that a tenant veto costs **36 legitimate acquisitions**
+     and a mandatory page read costs **358 path-tenant rows**. Measured 2026-08-27 while
+     building the free resolution rung, over 12 boards found by guessing ATS slugs from
+     company names: **`activation_ok` returned True for 9 of them, 6 wrongly** — Agoda
+     (282 postings, Bangkok), Clinch (Dublin), Horizon Technologies -> lever/`horizon`
+     ("Horizon Robotics", Cupertino), ARMORY, REAL, Ceva.
+
+     The mechanism, reproducible offline with no network:
+
+     ```bash
+     python -c "from pipeline.identity_gate import _tenant_near,_name_targets as T; \
+     print(_tenant_near('horizon',T('Horizon Technologies')), _tenant_near('ashley',T('Ashley Digital')), \
+           _tenant_near('trigo',T('Trigo Retail')))"
+     # True True False
+     ```
+
+     `_name_targets` pre-strips `_NAME_FILLER`, so `Horizon Technologies` yields the target
+     `horizon` — and a slug SYNTHESISED from the name near-equals a target by construction,
+     carrying zero bits. It is worse than uninformative: it rates the impostor ABOVE the real
+     candidate, because `Retail` is not filler so `Trigo Retail` yields only `trigoretail`.
+     And the page read is not independent evidence either — `jobs.lever.co/horizon` is titled
+     "Horizon Robotics", yet `page_names_company("Horizon Technologies", ...)` returns True,
+     because it retries with the `_NAME_STOP`-stripped core: **the same truncation that
+     produced the slug**. Two tests that look independent, one shared assumption.
+
+     What the rung does instead (`auto_expand._probe_resolve`): refuse the truncation at the
+     slug policy, before a request is spent, and gate on `il >= 1` — the rule that caught
+     Lili -> Eli Lilly. Anything that wants to trust `board_vouches` for a name-derived token
+     must read this first.
+
+318. **An `israel_scoped` ACTIVE row returning zero is re-checked by nothing** — lane:
+     `registry`. 24 rows on 2026-08-27. `health.zero_is_a_measurement()` exempts
+     `israel_scoped` fetchers from `empty-board` for a good reason it records ("25 healthy
+     Workday boards sat in the self-heal queue on 2026-08-24 for exactly this"), and the cost
+     was never written down: such a row never enters `stale.json`, therefore never enters
+     `resolve_broken.candidates()` (whose scope is *exactly* `stale.json`), and every
+     parked-row pool excludes it on `r[4] == "false"`. `repair_dead_urls` is the one pool with
+     no `active` filter, but it selects on the hostname failing to resolve, which a live
+     Workday tenant's does not. So `ARCHITECTURE.md` section 2's "every state except
+     `defunct:` and `domain-dead` is re-checked on some cadence" is **false for these rows**
+     (corrected in that section, 2026-08-27). Also `HANDOFF.md` watch-item 6.
+
+     What found the one real defect in the set was **a human writing a note in the row**
+     (Broadcom's "Tel Aviv postings confirmed live"), which is not a cadence.
+
+319. **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
+     writes its locations with the ISO-3 country code is invisible to it** — lane:
+     `ats-fetch`. Measured 2026-08-27 across all 24 Workday rows whose all-time-high is 0:
+
+     | | postings the PRODUCTION Israel filter accepts |
+     |---|---|
+     | `searchText="Israel"` (what ships) | **0** |
+     | `searchText="ISR"` | **2** |
+
+     One row moves, Broadcom, whose two postings are located `ISR-Tel Aviv University`
+     (*DFT Engineer*, *R&D Engineer Hardware*) — the word "Israel" never appears, so the
+     board's own search cannot match it, while `pipeline.israel.is_israel_job` accepts both
+     once they are fetched. **The `ats-fetch` measurement of 2026-08-24 stands for the other
+     23**; this is one hole in it, not a refutation.
+
+     **Do not take a city name as the fix.** `searchText="Tel Aviv"` looks far better and is
+     almost entirely noise: Barclays returns 12 (Madrid, Frankfurt, Dubai, London, Houston,
+     San Francisco, Singapore, Toronto, Hong Kong internships), Aman Group returns 1 (a
+     resort in Palawan, **Philippines**), Adobe/Stryker/Trend Micro return "N Locations"
+     global roles. Of 18 postings that a city sweep surfaces, **2 are in Israel**. The
+     suggested change is to add `"ISR"` as a second search term and let the existing
+     downstream filter do the deciding, which it already does correctly. Reproducer and the
+     per-row table: `docs/sessions/2026-08-27-registry.md`.
+
+     Worth stating plainly: this adds **0 analyst roles** to the board today. It is a
+     correctness fix on a row whose note has been right, and unread, since it was written.
+
+320. **`tests.yml` has a SECOND red cause nobody has named, and it is the failure §2 warns
+     about, in production** — lane: `registry`. `tests/rehearse_registry.py --nights 14
+     --policy worst` fails at **night 10**, and `.github/workflows/tests.yml:37` runs it, so
+     every lane's push is red for this as well as for `289@jd-text`. **It is not caused by
+     the 2026-08-27 registry changes** — the identical failure reproduces on a clean
+     `origin/master` worktree at `1f53eea`:
+
+     ```
+     FAIL night 10: pool retry_unreachable + bd_rescue (02:30 daily) lost 1 rows it should keep: ['Biomica']
+     ```
+
+     The diagnosis. The 02:30 pool's entire selector is the word `unreachable`
+     (`retry_unreachable._UNREACHABLE`). Biomica's note is at **exactly the 220-char cap**
+     and **all four of its segments are protected**, and the only occurrence of the token is
+     a parenthetical *inside another tool's segment*:
+
+     ```
+     [PROT] scanned; no open Israel roles now
+     [PROT] dark-triage 2026-08-26: url-dead (unreachable (dns/conn))     <- the ONLY 'unreachable'
+     [PROT] scanned via brightdata; no open Israel roles now - monitored candidate
+     [PROT] retry 2026-08-27: scanned; no open Israel roles now
+     ```
+
+     That is verbatim what `ARCHITECTURE.md` §2 forbids — *"A pool must never stand on a
+     token inside another tool's segment: `replace_own` deletes it by design"* and *"a pool
+     token must survive note erosion, or the pool must not stand on a token at all"* — and
+     the rule was written about a different pool. Measured today, **2 of the 4 rows in the
+     retry pool** are in this state:
+
+     ```bash
+     python -c "import csv,io,re,sys; sys.argv=['x']; import retry_unreachable as RU; \
+     from pipeline.notes import split; U=re.compile(r'\bunreachable\b',re.I); \
+     rows=[x for x in csv.reader(io.open('companies.csv',encoding='utf-8')) if x and len(x)>=6][1:]; \
+     p=[r for r in rows if RU.in_retry_pool(r)]; \
+     print(len(p), [r[0] for r in p if not any(s.lower().lstrip().startswith('unreachable') for s in split(r[5]))])"
+     # 4 ['Pliops', 'Biomica']
+     ```
+
+     **The candidate fix is one predicate**, and it is the answer §2 already gives for
+     `triage_dark`: select on a **protected, durable stamp** as well as the token —
+     `in_retry_pool` matching `unreachable` **OR** `dark-triage <date>: url-dead`. Not done
+     here, deliberately: `retry_unreachable` and `bd_rescue` both ACTIVATE, so widening their
+     pool needs its own `--policy worst` and `mixed` rehearsal runs and a
+     `cloud_state/registry_census.json` re-baseline in the same commit (or it trips
+     `pool_growth`, cf. `315@registry`) — and this session already ships two rungs and a
+     cross-lane drain. Doing it as a fourth unrelated change at the end of a long session is
+     how this repo gets hurt.
+
+     Whoever takes it: the control is `REHEARSE_SELF_TEST=overwrite python
+     tests/rehearse_registry.py --nights 14 --policy worst`, which **must** still exit 1.

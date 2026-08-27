@@ -69,7 +69,7 @@ CLASS = {
  "resolve_llm": ("library", "the LLM resolution tier: evidence bundle -> one `claude -p` proposal -> verified through the real fetcher"),
  "comeet_resolve": ("library", "reads `window.comeetvar` off a rendered page to recover a Comeet uid+token"),
  "ingest_research": ("library", "resolve+verify helpers for the research queue. **Not deletable**: `retry_unreachable` (02:30 daily) imports `PROBE_FAST`, `_cand_slugs` and `_try` from it"),
- "probe_ats": ("library", "guessable-slug probing. **Not deletable**: `ingest_research` imports `slug_variants`"),
+ "probe_ats": ("library", "guessable-slug probing. **Not deletable**: `auto_expand` imports `probe_bounded`/`bounded_http` for its free rung, `ingest_research` imports `slug_variants`"),
  # operator - a human or agent runs it on demand; still live
  "registry_health": ("scheduled", "read-only registry census + row-deletion guard, recomputed re-check ownership matrix, per-tool pool floors, and the unsupported-ATS build queue. `--census` and `--ladder` are the only things it writes; `alarms_state()` is what the daily mail prints; `--explain \"<name>\"` answers \"why was this row activated/refused\" offline"),
  "research_firmographics": ("scheduled", "bulk firmographics research + `--export`. Was the Windows task `IsraeliJobs-Firmographics`; that task is DISABLED and the production pass now runs in the cloud at 10:00 UTC"),

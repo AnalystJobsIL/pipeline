@@ -242,6 +242,11 @@ def _health(n_parsed):
         print(f"[source-health] skipped: {e}")
 
 
+# Kept in step with discovery_daily._REGISTRY_FLOOR -- pinned by a test, because two
+# copies of a safety floor is exactly the shape this repo has been bitten by.
+_REGISTRY_FLOOR = 1000
+
+
 def _prune_queue():
     """Drop from research_companies.json what this layer's gates now refuse (a place name,
     an agency by name or slug). auto_expand re-checks the name only; the queue is the one
@@ -255,11 +260,31 @@ def _prune_queue():
         print(f"::error::{e} — the queue was not pruned this run and was NOT rewritten.",
               flush=True)
         return
-    kept = [e for e in research
-            if not is_place_name(e.get("name")) and not is_recruiter(e.get("name"), e.get("slug", ""))]
+    # The drain: an entry whose name the registry already holds is settled -- `auto_expand`
+    # filters it out before it spends, so it is pure carry. Same predicate, same floor and
+    # the same measurement as `discovery_daily`'s (2026-08-27, `registry`); both bridges hold
+    # this one file, so a rule learned in one must not be absent from the other.
+    # The floor exists because `persist_state._keyed_list` has no mass-deletion guard:
+    # measured, ours=3 against a base of 1,693 merges to 3, silently.
+    from pipeline.companies import load_companies
+    have = {r["company_name"].strip().lower() for r in load_companies(active_only=False)}
+    settled = have if len(have) >= _REGISTRY_FLOOR else set()
+    if not settled:
+        print(f"::warning::queue: companies.csv yielded {len(have)} names, under the "
+              f"{_REGISTRY_FLOOR} floor -- NOT draining this run.", flush=True)
+    refused = [e for e in research
+               if is_place_name(e.get("name")) or is_recruiter(e.get("name"), e.get("slug", ""))]
+    drained = [e for e in research
+               if e not in refused and (e.get("name") or "").strip().lower() in settled]
+    kept = [e for e in research if e not in refused and e not in drained]
     if len(kept) < len(research):
-        print(f"queue: dropped {len(research) - len(kept)} place-named / agency entries: "
-              + ", ".join(str(e.get("name")) for e in research if e not in kept))
+        if refused:
+            print(f"queue: dropped {len(refused)} place-named / agency entries: "
+                  + ", ".join(str(e.get("name")) for e in refused))
+        if drained:
+            print(f"queue: drained {len(drained)} entries the registry already holds "
+                  f"(e.g. {', '.join(str(e.get('name')) for e in drained[:5])}); "
+                  f"{len(kept)} unresolved remain")
         discovery_queue.write(kept)
 
 

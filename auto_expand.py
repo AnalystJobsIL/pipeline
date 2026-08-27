@@ -50,6 +50,7 @@ import csv
 import json
 import os
 import re
+import time
 from urllib.parse import urlparse
 
 from pipeline.aggregators import is_aggregator as _is_agg_url
@@ -72,6 +73,102 @@ for _s in (sys.stdout, sys.stderr):
 DRY_RUN = "--dry-run" in sys.argv
 SEEN_PATH = os.path.join("cloud_state", "auto_expand_seen.json")
 
+# The free rung's bounds. Measured 2026-08-27 over all 498 drainable names: 5,212 requests,
+# 293 s, 0.59 s/name -- so 1,200 s is ~4x the whole queue and will not bind at
+# AUTO_EXPAND_LIMIT=250. It exists because the binding cost is not the 330-minute job
+# timeout, it is `concurrency: group: repo-state`, which five workflows share.
+PROBE_BUDGET_S = int(os.environ.get("AUTO_EXPAND_PROBE_BUDGET_S", "1200"))
+PROBE_NAME_S = 12          # per name; the measured per-name maximum was 7.7 s
+PROBE_NAME_REQ = 18        # 3 slugs x 6 platforms: the arithmetic ceiling of the policy
+_SLUG_OK = re.compile(r"[a-z0-9][a-z0-9-]{1,38}[a-z0-9]")
+
+
+def _lossless_slugs(name, li_slug=""):
+    """Slug candidates that DROP NO WORD of the name, plus LinkedIn's own handle.
+
+    `probe_ats.slug_variants` also offers `n.split()[0]`, `base+"inc"` and `base+"hq"`. The
+    first-word variant is a NAME TRUNCATION, and it is not offered here, because the identity
+    gate CANNOT catch what it produces. Measured 2026-08-27:
+
+        Trigo Retail          -> smartrecruiters/trigo   149 jobs, every one in France
+        Horizon Technologies  -> lever/horizon           "Horizon Robotics", Cupertino
+        Ashley Digital        -> recruitee/ashley        New York
+
+    and `activation_ok` returned True for 9 of 12 such hits. The reason is mechanical:
+    `identity_gate._name_targets` pre-strips `_NAME_FILLER`, so `Horizon Technologies` yields
+    the target `horizon` and `_tenant_near("horizon", ...)` is True -- while `Trigo Retail`
+    yields only `trigoretail`, so the tenant test rates the IMPOSTOR above the real
+    candidate. A page read does not rescue it either: `jobs.lever.co/horizon` is titled
+    "Horizon Robotics" and `page_names_company("Horizon Technologies", ...)` still returns
+    True, because it retries with the `_NAME_STOP`-stripped core -- the same truncation that
+    produced the slug. Two independent-looking tests, one shared truncation (BACKLOG 317).
+
+    The LinkedIn handle is the only identity a queue entry carries that is NOT name-derived
+    (`Bond` -> `bondpersonalsecurity`), which is why it earns a slot of its own.
+    """
+    n = (name or "").lower().strip()
+    base = n
+    for junk in (" ", ".", ",", "’", "'", "-", "&", "(", ")", "|"):
+        base = base.replace(junk, "")
+    out, seen = [], set()
+    for cand in (base, re.sub(r"[^a-z0-9]+", "-", n).strip("-"), (li_slug or "").lower().strip()):
+        if cand and cand not in seen and _SLUG_OK.fullmatch(cand):
+            seen.add(cand)
+            out.append(cand)
+    return out[:3]
+
+
+def _boards_now():
+    """Every (platform, token) the registry already reads. An exact key, not a name match.
+
+    The probe rediscovers boards we ALREADY HAVE under a different company name -- 7 of the
+    29 candidates on 2026-08-27, and in ALL SEVEN the platform and token were identical to
+    the existing row's:
+
+        Gong.io / Gong . Playtika Ltd / Playtika . Glassbox Ltd. / Glassbox . Nexar Inc. /
+        Nexar . Unframe / Unframe AI . Oak / Oak - Identity Security OS . AutoDS - Automatic
+        Dropshipping Tools / autods
+
+    `_names_now()` cannot see this: it matches the name exactly and these differ by a legal
+    suffix. A second ACTIVE row on one board republishes every role under two employer names
+    -- what `ARCHITECTURE.md` section 2 calls `alias-of` and treats as terminal -- and
+    `check_invariants` check B cannot catch it precisely BECAUSE the names differ.
+    """
+    return {((r.get("ats_platform") or "").strip().lower(),
+             (r.get("token") or "").strip().lower())
+            for r in load_companies(CSV_PATH, active_only=False)}
+
+
+def _probe_resolve(name, li_slug, boards, deadline):
+    """The free rung: an `_row_for_ats` payload, or (None, reason). Plain HTTP, no credits.
+
+    Refusals in order, each measured rather than assumed:
+      * no guessable board at all;
+      * NO ISRAEL JOB on it -- the only discriminator that tracks truth here, and the rule
+        that caught Lili -> Eli Lilly (`ARCHITECTURE.md` section 3). In the 2026-08-27 sweep
+        it refused Agoda's 282 Bangkok roles, Armory, REAL, Clinch (Dublin) and Horizon
+        (Cupertino), every one of which `activation_ok` was willing to admit;
+      * TWO il-positive boards for one name -> defer, never choose. `Wayve` answers on
+        greenhouse (4 IL) and ashby (3 IL); picking one would be picking by table order;
+      * a board the registry already reads -> defer (see `_boards_now`).
+    """
+    slugs = _lossless_slugs(name, li_slug)
+    if not slugs:
+        return None, "probe-noslug"
+    import probe_ats as _pa
+    with _pa.bounded_http():
+        hits = _pa.probe_bounded(name, slugs, deadline=deadline, budget=PROBE_NAME_REQ)
+    live = [h for h in hits if h["il"] >= 1]
+    if not live:
+        return None, ("probe-no-il" if hits else "")
+    if len({(h["plat"], h["slug"]) for h in live}) > 1:
+        return None, "probe-ambiguous"
+    h = live[0]
+    if (h["plat"], h["slug"]) in boards:
+        return None, "probe-dup-board"
+    return (h["plat"], h["slug"], h["url"], h["jobs"], h["il"]), ""
+
+
 
 def _today():
     import datetime as _dtm
@@ -93,6 +190,56 @@ def _load_seen():
 
 _LI_SITE = re.compile(r'data-tracking-control-name="about_website"[^>]+href="([^"?]+)', re.I)
 
+
+
+SITE_BUDGET_S = int(os.environ.get("AUTO_EXPAND_SITE_BUDGET_S", "600"))
+_SITE_TLDS = ("com", "co.il", "ai", "io")
+
+
+def _site_from_guess(name, handle, timeout=5):
+    """The company's own site, guessed from LinkedIn's handle and made to PROVE ITSELF.
+
+    `_site_from_slug` below asks LinkedIn for the `about_website` link and got 0 of 3
+    (BACKLOG 178), which is why it is off. This asks the INVERSE question, of the site rather
+    than of LinkedIn: LinkedIn says this employer's handle is S -- does the page at
+    `S.<tld>` link BACK to `linkedin.com/company/S`? That is a two-way binding neither side
+    can fake alone, and it costs no LinkedIn budget at all.
+
+    Measured 2026-08-27 over the 364 drainable names carrying a valid handle: 119 domains
+    answered, 104 named the company, 53 carried the linkback, and 49 satisfied ALL THREE
+    (the third being `not is_foreign`). The linkback is what makes it safe to use: the
+    looser rule (name-on-page only) admits `agoda.com` and `iai.co.il`, and a WRONG
+    own-domain page is worse than none, because it is exactly the evidence
+    `resolve_llm._own_page_names_token` reads -- it would corrupt the one check the paid
+    tier has. Evidence that can corrupt a verifier is held to the higher bar; relaxing it
+    later is a measurement, not a guess.
+
+    Returns (url, html) or None. `html` is >= 2000 chars by construction, which is also what
+    keeps this rung FREE: `identity_gate.page_names_company` reaches the paid Bright Data
+    unlocker only when the page it holds is under 2000 chars.
+    """
+    if not handle or not _SLUG_OK.fullmatch(handle):
+        return None
+    import urllib.request
+    for tld in _SITE_TLDS:
+        u = "https://%s.%s" % (handle, tld)
+        try:
+            req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                html = resp.read(400_000).decode("utf-8", "replace")
+                final = resp.geturl()
+        except Exception:  # noqa: BLE001
+            continue
+        if len(html) < 2000:
+            continue                       # under the gate's own evidence floor: not a page
+        if _gate.page_names_company(name, final or u, html=html) is not True:
+            return None                    # a domain that answers but is not theirs: stop
+        if not re.search(r"linkedin\.com/company/" + re.escape(handle) + r"\b", html, re.I):
+            return None                    # no linkback: unproven, and unproven is refused
+        if _gate.is_foreign(name, final or u):
+            return None
+        return (final or u), html
+    return None
 
 def _site_from_slug(slug, timeout=8):
     """The company's own website from its public LinkedIn company page -- the one
@@ -227,10 +374,33 @@ def main():
     search_budget = int(os.environ.get("AUTO_EXPAND_SEARCH_CAP", "40"))
     n_resolved = n_empty = n_unreach = n_llm = n_dupe = 0
     n_asked = n_hopeless = 0        # report-only: see the module docstring
+    n_probed = 0
+    probe_refused = Counter()
+    # The free rung is ON by default and needs no workflow change -- deliberately: arming it
+    # from `auto-expand.yml` would be an `infra` edit, and this rung costs nothing but HTTP.
+    # `AUTO_EXPAND_PROBE=0` disarms it. Read INSIDE main(), never at module scope like
+    # DRY_RUN, which is bound from sys.argv at import and is why it cannot be tested.
+    n_sited = 0
+    site_on = os.environ.get("AUTO_EXPAND_SITE", "1") == "1"
+    site_deadline = time.time() + SITE_BUDGET_S
+    probe_on = os.environ.get("AUTO_EXPAND_PROBE", "1") == "1"
+    probe_deadline = time.time() + PROBE_BUDGET_S
+    boards_now = _boards_now() if probe_on else set()
     deferred = Counter()
     for e in batch:
         name, url = e["name"].strip(), e["careers_url"]
         agg_seed = _is_agg_url(url)
+        # SUB-RUNG B, free: turn an aggregator seed into the company's OWN address. This is
+        # the larger of the two levers, because an own-domain page is precisely what
+        # `resolve_llm._verify` requires and cannot get from a LinkedIn permalink -- so it
+        # both lets tier-1 `resolve_deep` run at all and stops the paid tier being
+        # structurally hopeless on this name (BACKLOG 278).
+        if agg_seed and site_on and time.time() < site_deadline:
+            _site = _site_from_guess(name, (e.get("slug") or "").strip().lower())
+            if _site:
+                url, agg_seed = _site[0], False
+                n_sited += 1
+                print("  site %s: %s" % (name, url[:60]), flush=True)
         if (agg_seed and e.get("slug") and search_budget > 0
                 and os.environ.get("AUTO_EXPAND_SLUG_SEED", "0") == "1"):
             # OFF by default (2026-08-26): a guest GET of the LinkedIn company page carried
@@ -263,7 +433,31 @@ def main():
         needs_llm = (agg_seed or kind in ("empty", "unreachable")
                      or (kind == "scrape" and _is_agg_url(_scrape_url)))
         defer = ""
-        if needs_llm and llm_available:
+        # THE FREE RUNG -- before the capped tier, never after. It costs plain HTTP; the
+        # tier costs a `claude -p` call. An aggregator seed reaches here having done NO HTTP
+        # at all, and `resolve_llm._verify` cannot accept any answer for it without a page on
+        # the company's own domain -- so on these names the paid tier is not budget-bound, it
+        # is EVIDENCE-bound (BACKLOG 278). This rung is the evidence, for free.
+        if needs_llm and probe_on and time.time() < probe_deadline:
+            # Rotation: a probe IS an attempt. `todo` is ~498 against AUTO_EXPAND_LIMIT=250,
+            # and until now only LLM-tier entrants were stamped -- so without this line the
+            # run re-walks the same prefix every time and 248 names are never probed at all.
+            # Every time budget in this repo needs a rotation key in the same commit (s2).
+            seen[name] = _today()
+            hit, why = _probe_resolve(name, e.get("slug"), boards_now,
+                                      time.time() + PROBE_NAME_S)
+            if hit:
+                plat, tok, api, n_all, n_il = hit
+                # `_row_for_ats` unpacks (nm, plat, tok, api, n_all, il) -- the NAME first.
+                r, kind, needs_llm = ("ats", (name, plat, tok, api, n_all, n_il)), "ats", False
+                n_probed += 1
+                print("  probe %s: %s/%s %d jobs, %d IL" % (name, plat, tok, n_all, n_il),
+                      flush=True)
+            elif why:
+                probe_refused[why] += 1
+                if why != "probe-no-il":
+                    defer = why
+        if needs_llm and llm_available and not defer:
             if llm_budget <= 0 or search_budget <= 0:
                 defer = "cap"
             else:
@@ -283,7 +477,11 @@ def main():
                     n_llm += 1
                 elif agg_seed:
                     defer = "llm-none" if _llm.LAST["asked"] else "no-candidates"
-        elif needs_llm and agg_seed:
+        elif needs_llm and agg_seed and not defer:
+            # `not defer`: this arm runs whenever the branch above is skipped, INCLUDING
+            # when the probe already declined this name -- without the guard a Hebrew name
+            # refused as `probe-noslug` was relabelled `no-llm`, which names the wrong
+            # subsystem in the one line an operator reads to find out why.
             defer = "no-llm"
         if defer:
             deferred[defer] += 1
@@ -291,6 +489,18 @@ def main():
             continue
         if kind == "ats":
             row = _row_for_ats(r[1], url)
+            if row[4] != "true" and _is_agg_url(url):
+                # An aggregator seed is DEFERRED, never parked (module docstring; BACKLOG
+                # 177). `_row_for_ats`'s refusal branch writes the SEED into cols 2-3, and
+                # for an agg seed that seed is the LinkedIn/secrethunter shell -- so parking
+                # here puts `il.linkedin.com/jobs/view/...` in `api_url`, which is the exact
+                # 28-row shape `--clear-agg-urls` exists to undo, and which
+                # `identity_gate.is_walled` then reads as this row's address.
+                # This guard covers the LLM path too, where it was already reachable and
+                # rare only because resolutions are rare.
+                deferred["gate"] += 1
+                print("  dfer %s (gate; retried on rotation)" % name, flush=True)
+                continue
             n_resolved += 1 if row[4] == "true" else 0
             n_unreach += 0 if row[4] == "true" else 1
         elif kind == "scrape":
@@ -323,10 +533,17 @@ def main():
     n_defer = sum(deferred.values())
     remaining = len(todo) - len(batch) + n_defer
     why = ", ".join(f"{k} {v}" for k, v in sorted(deferred.items())) or "-"
-    print(f"=== resolved {n_resolved} (LLM-cracked {n_llm}), empty {n_empty}, "
+    # The rung's REFUSALS, named and counted separately from its hits. A rung that reports
+    # only what it shipped cannot be audited: `probe-dup-board` climbing means the queue is
+    # full of companies we already read under another name, `probe-no-il` is the ordinary
+    # case, and `probe-ambiguous` climbing means one name is answering on two boards.
+    probe_why = ", ".join(f"{k} {v}" for k, v in sorted(probe_refused.items())) or "-"
+    print(f"=== resolved {n_resolved} (LLM-cracked {n_llm}, probe {n_probed}), empty {n_empty}, "
           f"unreachable {n_unreach}, deferred {n_defer} ({why}), dupes {n_dupe}; "
           f"asked {n_asked} (hopeless {n_hopeless}); "
           f"~{remaining} still to scan ===", flush=True)
+    print(f"probe: {n_probed} resolved, refused {sum(probe_refused.values())} ({probe_why}); "
+          f"own-site seeds {n_sited}", flush=True)
 
 
 # Verdicts this tool writes on a parked row (its own, per pipeline.verdicts.TOKENS) --
