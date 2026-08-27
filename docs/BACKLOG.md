@@ -39,93 +39,79 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**340 filed · 293 open · 47 closed · 28 numbers name more than one item · 39 items name no lane.**
+**344 filed · 249 open · 95 closed · 28 numbers name more than one item · 28 items name no lane.**
 
-**Next free number: 299.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 303.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
 | number | claimants |
 |---|---|
-| 1 | `1` **open** · `1` **open** · `1` **open** · `1@infra` **open** · `1@docs` **open** |
-| 2 | `2` **open** · `2` **open** · `2` **open** · `2@registry` **open** · `2` **open** |
-| 3 | `3` closed · `3` **open** · `3` **open** · `3@discovery` **open** · `3@infra` **open** |
+| 1 | `1` **open** · `1` **open** · `1` **open** · `1@infra` **open** · `1@docs` closed |
+| 2 | `2` **open** · `2` **open** · `2` **open** · `2@registry` closed · `2@registry` closed |
+| 3 | `3` closed · `3` **open** · `3` **open** · `3@discovery` **open** · `3@infra` closed |
 | 4 | `4` **open** · `4` **open** · `4` **open** · `4@discovery` **open** · `4@infra` **open** |
-| 5 | `5` **open** · `5` **open** · `5` **open** · `5@discovery` **open** · `5@infra` **open** |
-| 6 | `6` **open** · `6` **open** · `6` **open** · `6@infra` **open** · `6` **open** |
+| 5 | `5` **open** · `5` **open** · `5` **open** · `5@discovery` closed · `5@infra` **open** |
+| 6 | `6` **open** · `6` **open** · `6` **open** · `6@infra` **open** · `6@registry` closed |
 | 7 | `7` **open** · `7` **open** · `7@infra` **open** · `7@infra` **open** · `7@ats-fetch` **open** |
 | 8 | `8` **open** · `8@discovery` **open** · `8@docs` closed |
-| 9 | `9` **open** · `9@ats-fetch` **open** · `9` **open** |
+| 9 | `9` **open** · `9@ats-fetch` **open** · `9@registry` **open** |
 | 10 | `10` **open** · `10@infra` **open** · `10@infra` **open** |
 | 11 | `11@company-intel` **open** · `11@infra` **open** |
 | 12 | `12@infra` **open** · `12@infra` **open** |
-| 13 | `13` **open** · `13` **open** |
+| 13 | `13` **open** · `13@registry` **open** |
 | 14 | `14@discovery` **open** · `14@docs` closed |
 | 15 | `15@discovery` closed · `15@infra` **open** |
 | 70 | `70@discovery` **open** · `70@discovery` **open** |
 | 71 | `71@discovery` **open** · `71@registry` **open** |
 | 132 | `132@classifier` closed · `132@roles` **open** |
-| 215 | `215@docs` closed · `215@scraper` **open** |
+| 215 | `215@docs` closed · `215@scraper` closed |
 | 227 | `227@discovery` **open** · `227@ats-fetch` closed |
 | 228 | `228@discovery` **open** · `228@scraper` **open** |
-| 240 | `240@docs` closed · `240@scraper` **open** |
-| 241 | `241@infra` **open** · `241@ats-fetch` **open** · `241@scraper` **open** |
+| 240 | `240@docs` closed · `240@scraper` closed |
+| 241 | `241@infra` **open** · `241@ats-fetch` **open** · `241@scraper` closed |
 | 242 | `242@company-intel` **open** · `242@registry` **open** · `242@registry` **open** |
 | 243 | `243@roles` **open** · `243@ats-fetch` **open** · `243@scraper` **open** |
 | 244 | `244@company-intel` **open** · `244@ats-fetch` **open** · `244@scraper` **open** |
 | 245 | `245@company-intel` **open** · `245@ats-fetch` **open** · `245@scraper` **open** |
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 
-### registry — 77 open
+### registry — 63 open
 
-- **2** `2@registry` **The discovery bridges can only seed an aggregator URL, and the registry keeps it.**
-- **20** `20@registry` **`audit_empty_rows`'s docstring advertises `AUDIT_BD_SEARCH_CAP`; the code reads
-- **22** `22@registry` **17 rows carrying a `listing_hunt` fast-path token have a walled-ATS `api_url` today**
+- **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
+- **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
+- **21** `21@registry` **`company_identity.is_foreign` returns False for EVERY ATS host, and that is
 - **26** `26@registry` **Three orphan detectors, three answers**
-- **33** `33@registry` **`tenant_is_this_company`'s "cannot tell" satisfies the audit's gate on 382 of 460
+- **29** `29@registry` **`tenant_is_this_company('SupPlant', 'careers.workable.com')` returns True**
+- **30** `30@registry` **`_ok_to_write` and `_page_names_company` are plumbing living in `crack_walled.py`** —
+- **35** `35@registry` **`merge_csv_rows._TOOL` does not key `url-repaired`, and its overflow trim deletes the
 - **36** `36@registry` **`_page_names_company`'s unlocker call is uncapped Bright Data spend**
-- **37** `37@registry` **When Bright Data runs out, every walled row degrades to `None` and every tool writes
-- **38** `38@registry` **`audit_empty_rows`' rotation key is in gitignored `state/`, so the Sunday budget
 - **40** `40@registry` **`ARCHITECTURE.md` §2 is now 36% of the document for one of seven pipeline steps** —
-- **41** `41@registry` **`registry_health.py` has four retyped pool mirrors and a guard that checks one** —
-- **44** `44@registry` **Three `registry_health.py` reporting defects**
-- **45** `45@registry` **`repair_extract_gap` double-counts its summary**
-- **50** `50@registry` **On PATH-tenant platforms the gate admits without ever reading the page it holds** —
+- **42** `42@registry` **`company_identity.ATS_HOST` omits `jobvite.com` and `taleo.net`**
+- **43** `43@registry` **`verdict() == "weak"` has no consumer anywhere in the repo**
+- **46** `46@registry` **Do not re-measure an activating tool's gate against ACTIVE rows.** Wave 9 reported the
 - **51** `51@registry` **A `_WALLED_HOST` entry can be deleted with the suite green whenever that platform has
-- **52** `52@registry` **The 14-night chain simulation has never actually completed**
-- **53** `53@registry` **`probe_candidates`' pool is three tokens `listing_hunt` owns and rewrites: 148 -> 4
 - **54** `54@registry` **`auto_expand._row_for_ats`'s refusal persists the REFUSED board into cols 2-3; its
 - **55** `55@registry` **The `taleo.net` half of `_ATS_NOT_IN_ATS_HOST` is untested and its registry set is
-- **56** `56@registry` **`apply_resolved`'s veto is scoped to ACTIVE rows, so a PARKED row is re-pointed with
 - **58** `58@registry` **The readable-page rule's accepted cost: a pool row whose own page names only a
 - **61** `61@registry` **`embedded_board_ok`'s accepted cost: a held page cannot vouch for a board it merely
 - **62** `62@registry` **`restore_only` is exempt from the scheduled-leak check `legacy_unscheduled` gets** —
 - **63** `63@registry` **`_modules_a_workflow_runs` sees only `python <name>.py` run-lines and does not follow
-- **65** `65@registry` **`empty-but-suspect` waits out `listing_hunt`'s 14-day cooldown, and no scheduled tool
 - **66** `66@registry` **`retry_unreachable`'s `ats` refusal branch may have an empty reachable set**
 - **69** `69@registry` **`_tenant_near`'s ±1 window is loose for names whose core is ≤3 chars**
 - **71** `71@registry` **A generic-adjacent parenthetical still yields a generic target: `Citrix (Cloud
-- **72** `72@registry` **`verdicts.TERMINAL`'s `recruiter` token matches the substring in `SmartRecruiters`** —
 - **73** `73@registry` **A declared row is refused by a subdomain bearing its OWN name**
 - **74** `74@registry` **`cloud_state/registry_alarms.json` is written nightly and read by nothing**
 - **76** `76@registry` **Three active scrape rows have a validated native fetcher waiting**
 - **77** `77@registry` **`crack_walled` recognises `/api/pcsx` and `/widgets` hosts and still emits `scrape`
 - **78** `78@registry` **`health.ATS_HOST` does not name `eightfold.ai`**
-- **79** `79@registry` **The single `jazzhr` row (Questar Auto Technologies) is scanned daily and can never
+- **79** `79@registry` **The single `jazzhr` row (Questar Auto Technologies) is scanned daily and can never *(half closed)*
 - **84** `84@registry` **A rot-parked row that carries `dark-triage …: page-empty` never reaches the hunt** —
 - **92** `92@registry` **Mutation records for the scraper guards**
-- **104** `104@registry` **Mutation records for the company-intel guards**
-- **110** `110@registry` **`bd_rescue.unlock` discards what the Unlocker reports**
 - **133** `133@registry` **13 active registry groups read one board under two identities**
 - **156** `156@registry` **Three loaders turn a corrupt `scraped_cache.json` into `{}` and write it back** —
-- **177** `177@registry` **`auto_expand` buries real employers as `scanned; no open Israel roles now` when the
-- **190** `190@registry` **The 02:30 chain is not in `registry_health.pools()`**
-- **194** `194@registry` **Four parent/subsidiary pairs still scan one board under two names**
 - **196** `196@registry` **`resolve_llm` still asks SerpApi first**
-- **197** `197@registry` **`url-cleared` costs the `scanned; no open` token its place under the 220 cap**
-- **198** `198@registry` **`Sckipio`'s "comeet 87.00C is Scopio Labs' board" lives only in a note segment** —
 - **199** `199@registry` **An address-less (`url-cleared`) row pays one unlocker search on every DDG-empty
-- **200** `200@registry` **`validate_empty` discards its own `suspect` finding on 67 of the 93 signals-arm rows**
 - **201** `201@registry` **The probe's `ever` fact is set by any 200 page
 - **202** `202@registry` **17 aggregator/agency addresses, a PDF and an API search page are inside the 228-row probe
 - **203** `203@registry` **The probe cannot baseline its pool: ~130 rows/night at the 10-minute budget, 97 of 228
@@ -156,10 +142,9 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **288** `288@registry` **`Ericsson` returns one posting worldwide**
 - **290** `290@registry` **The Amazon / Microsoft twins of 232, re-measured
 
-### infra — 67 open
+### infra — 61 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
-- **3** `3@infra` **Registry alarms in the daily mail**
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
 - **5** `5@infra` **`check_invariants.py` has no size check**
 - **6** `6@infra` **URGENT
@@ -184,7 +169,6 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **68** `68@infra` **`_merge_notes` pops the NEWEST segment while its docstring says "never the newest"**
 - **75** `75@infra` **The workflow-edit failure class, three times this session**
 - **83** `83@infra` **The fetch loop is ~7 minutes of the digest's 27, sequentially, and `pipeline/run.py`
-- **85** `85@infra` **CLOSED 2026-08-24 (scraper lane, with the operator's approval
 - **91** `91@infra` **A warning-first invariant on the `collect` stamp**
 - **105** `105@infra` **`cloud_state/pipeline_stages.json` has a lost-update window and a wholesale restore**
 - **108** `108@infra` **`merge_json_cache` merges per company; the enrichment writes per job**
@@ -192,17 +176,13 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **125** `125@infra` **Every workflow's conflict path nests `cloud_state/` instead of restoring it**
 - **135** `135@infra` **`sent` is now mirrored in the ledger (`sent{}` per role, `emailed_on`)**
 - **142** `142@infra` **`build_digest` is a dead renderer that every lane still pays for**
-- **153** `153@infra` **`pipeline/health.py` writes `stale.json` and `health_baseline.json` with no temp file**
 - **157** `157@infra` **`mark_sent.py` and `pipeline.run` default to `state/seen.db` (gitignored) while
 - **159** `159@infra` **`pipeline_stages.json` is still read-modify-written in process by two overlapping
 - **161** `161@infra` **The relay marks nothing**
-- **162** `162@infra` **`check_invariants.POOL` still differs from `pipeline.verdicts.TOKENS`**
 - **163** `163@infra` **A failed `checkout` / `setup-python` still means silence**
-- **164** `164@infra` **Every Sunday audit starts from row 1**
 - **165** `165@infra` **`persist_state.commit()` and `outcome()` grew under two attack waves**
 - **166** `166@infra` **An ops report over the last N days, and a skill that reads it**
 - **167** `167@infra` **A company named "Tel Aviv" in the mail**
-- **170** `170@infra` **The mutation gate cannot finish any more: 108 mutations × the whole suite**
 - **178** `178@infra` **`auto_expand` ignores the `slug` the LinkedIn bridge already writes**
 - **179** `179@infra` **A deliberately skipped source reads as a dead one**
 - **180** `180@infra` **Intake has no line of its own in the mail**
@@ -226,45 +206,32 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **293** `293@infra` **`firmographics.yml` has never once fired on its cron**
 - **294** `294@infra` **`cloud_state/last_run.json` is two days stale**
 
-### scraper — 31 open
+### scraper — 19 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
-- **88** `88@scraper` **Strategy 2 (rendered-DOM links) produces run-together cards, and `_loc_from_ctx` keeps
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
 - **90** `90@scraper` **Per-job strategy provenance in the cache**
-- **96** `96@scraper` **Three scraper constants no test observes**
-- **126** `126@scraper` **`scrape_universal.ISRAEL_LOC` has no word boundaries**
-- **130** `130@scraper` **`test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason` fails at HEAD on
 - **154** `154@scraper` **`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the
-- **158** `158@scraper` **`test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason` is red on origin
-- **168** `168@scraper` **A location that swallowed the title's tail**
-- **169** `169@scraper` **Location and employment type glued into a Comeet title**
 - **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
-- **215** `215@scraper` **Why can the runner open a listing but none of its position pages?**
-- **216** `216@scraper` **IP-shaped error rows are visible to no re-check pool, by design**
 - **219** `219@scraper` **Strategy 5's model, measured once**
 - **220** `220@scraper` **A `links:` carry has no ceiling**
 - **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
 - **222** `222@scraper` **`pipeline/llm.py`
 - **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
 - **235** `235@scraper` **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
-- **240** `240@scraper` **A Comeet board embedded as a WIDGET is readable by no strategy**
-- **241** `241@scraper` **`_loc_from_ctx` lets a page's office address outrank the location the role states** —
 - **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
 - **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence** *(closed by a later bullet, original never edited)*
 - **245** `245@scraper` **The synthetic worker dicts do not carry the fields the real one does** *(closed by a later bullet, original never edited)*
 - **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
 - **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
-- **249** `249@scraper` **A closed role still donates its description to a new posting with the same title and
 - **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
 - **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
 - **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
 
-### discovery — 17 open
+### discovery — 16 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
-- **5** `5@discovery` **CLOSED 2026-08-23
 - **8** `8@discovery` **`linkedin-targeted` is 87% of discovery's credit cost for ~1 new company/day.**
 - **14** `14@discovery` **`discovery_daily.py` is a 1,214-line monolith doing six jobs.** *(lane: `discovery`.)*
 - **70** `70@discovery` **The intake filters throw away company names every day and nothing records WHICH.**
@@ -280,22 +247,21 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **227** `227@discovery` **The keyless guest endpoint is a coverage ceiling, and it is now the largest known gap
 - **228** `228@discovery` **The 2026-08-26 audit is 4 of 9 keywords deep**
 
-### ats-fetch — 14 open
+### company-intel — 13 open
 
-- **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
-- **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
-- **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
-- **86** `86@ats-fetch` **`pipeline/fetchers.fetch_scrape` hard-codes `scraped_cache.json` next to the package**
-- **102** `102@ats-fetch` **`company_info` has no `''`-aware API**
-- **118** `118@ats-fetch` **Greenhouse `location.name` is a work-mode at some tenants**
-- **184** `184@ats-fetch` **`fetch_discovery` judges the display name only; the slug it has in hand says
-- **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
-- **214** `214@ats-fetch` **A row leaving `stale.json` because `ATS_HOST` shrank reads as `cleared`**
-- **229** `229@ats-fetch` **`stale.json`'s `careers_url` is a page address again, not an API endpoint**
-- **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
-- **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
-- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded** *(closed by a later bullet, original never edited)*
-- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
+- **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
+- **97** `97@company-intel` **Retire (or weekly) the Windows firmographics chain** *(closed by a later bullet, original never edited)*
+- **98** `98@company-intel` **29 identity-duplicate groups in the export** *(closed by a later bullet, original never edited)*
+- **101** `101@company-intel` **`looks_like_junk` cannot catch a bare job title** *(closed by a later bullet, original never edited)*
+- **117** `117@company-intel` **One `claude -p` seam for the repo** *(closed by a later bullet, original never edited)* *(half closed)*
+- **120** `120@company-intel` **Company intel rediscovers an outage the classifier already found** *(closed by a later bullet, original never edited)*
+- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
+- **141** `141@company-intel` **`research_firmographics.py` and `run.py` disagree on the company set** *(closed by a later bullet, original never edited)*
+- **144** `144@company-intel` **One identity group, two employers: the blurb crosses** *(closed by a later bullet, original never edited)*
+- **242** `242@company-intel` **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** — *(closed by a later bullet, original never edited)*
+- **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
+- **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
+- **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
 
 ### roles — 13 open
 
@@ -313,32 +279,33 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **260** `260@roles` **`store.merge_duplicates` never carries the longest description onto the canonical** —
 - **285** `285@roles` **`seen_id` carries no tenant, so two companies on the same ATS can collide and one role
 
-### company-intel — 12 open
+### docs — 12 open
 
-- **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
-- **97** `97@company-intel` **Retire (or weekly) the Windows firmographics chain** *(closed by a later bullet, original never edited)*
-- **98** `98@company-intel` **29 identity-duplicate groups in the export** *(closed by a later bullet, original never edited)*
-- **101** `101@company-intel` **`looks_like_junk` cannot catch a bare job title** *(closed by a later bullet, original never edited)*
-- **120** `120@company-intel` **Company intel rediscovers an outage the classifier already found** *(closed by a later bullet, original never edited)*
-- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
-- **141** `141@company-intel` **`research_firmographics.py` and `run.py` disagree on the company set** *(closed by a later bullet, original never edited)*
-- **144** `144@company-intel` **One identity group, two employers: the blurb crosses** *(closed by a later bullet, original never edited)*
-- **242** `242@company-intel` **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** — *(closed by a later bullet, original never edited)*
-- **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
-- **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
-- **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
-
-### docs — 9 open
-
-- **1** `1@docs` **One re-check pool definition**
 - **87** `87@docs` **Retire `cache_new_rows.py`**
 - **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
 - **146** `146@docs` **Tests reach into `digest`'s private names**
-- **291** `291@docs` **The closed-item split is designed, measured, and deliberately not applied**
+- **291** `291@docs` **The closed-item split: designed, measured, and its first implementation deleted** —
 - **295** `295@docs` **Three session records are named a day before their own H1**
 - **296** `296@docs` **`docs/POC_COMPANY_PROFILES.md` is a dated POC report filed among live docs**
 - **297** `297@docs` **`docs/check_docs.py`'s `§N` pattern cannot see a lettered section reference**
 - **298** `298@docs` **Nothing checks that a cited `BACKLOG <n>` exists**
+- **299** `299@docs` **The HANDOFF per-line cap can still be evaded four ways**
+- **300** `300@docs` **`parse()` truncates an item whose body contains a column-0 `## ` or numbered
+- **301** `301@docs` **`check_docs.py` uses module-global `ERRORS`/`WARNINGS`**
+- **302** `302@docs` **`check_session_record_dates` inspects only line 1**
+
+### ats-fetch — 10 open
+
+- **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
+- **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
+- **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
+- **102** `102@ats-fetch` **`company_info` has no `''`-aware API**
+- **184** `184@ats-fetch` **`fetch_discovery` judges the display name only; the slug it has in hand says
+- **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
+- **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
+- **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
+- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded** *(closed by a later bullet, original never edited)*
+- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
 
 ### classifier — 6 open
 
@@ -351,8 +318,8 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 ### render — 6 open
 
-- **119** `119@render` **`digest._LOC_CANON` and the four seniority vocabularies are copies**
-- **137** `137@render` **`render` re-derives what the ledger now records**
+- **119** `119@render` **`digest._LOC_CANON` and the four seniority vocabularies are copies** *(half closed)*
+- **137** `137@render` **`render` re-derives what the ledger now records** *(half closed)*
 - **149** `149@render` **`same_employer` and `blurb-names-other` are heuristics with a known false-positive
 - **150** `150@render` **A failed email stub replaces yesterday's `digests/latest.md`**
 - **212** `212@render` **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
@@ -360,10 +327,10 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 ### jd-text — 2 open
 
-- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for
+- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **289** `289@jd-text` **A `jd-text` unit test reads the LIVE `scraped_cache.json`, so the 00:00 scrape-refresh
 
-### unassigned — 39 open  ← burn this down; a new item may not join it
+### unassigned — 28 open  ← burn this down; a new item may not join it
 
 - **1** `1` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
 - **1** `1` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
@@ -371,7 +338,6 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **2** `2` Relative-date parsing exists in 5 places with different capabilities (none handle
 - **2** `2` **Retire `companies.csv` as a database.** 20 writers, a state machine encoded in prose
 - **2** `2` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
-- **2** `2` **One terminal-state list**
 - **3** `3` **One identity layer.** `_norm_company` existed but nothing used it for keys
 - **3** `3` **`pipeline/dates.py`**
 - **4** `4` `metrics.jsonl` (one JSON line per run) would answer "is coverage growing / did a source
@@ -383,24 +349,14 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 - **6** `6` `mark_sent` records intent, not delivery
 - **6** `6` **Consolidate root-script sprawl.** 40+ root scripts, several executing on import (no
 - **6** `6` **Company aliases**
-- **6** `6` **`audit_empty_rows` and `deep_validate` select the identical 255 rows**
 - **7** `7` **Unified quota ledger.** LLM calls are spent from four sites (role judgments, blurbs,
 - **7** `7` **Concurrency**
 - **8** `8` **One backoff/retry store.** The same gating machinery now exists twice
 - **9** `9` **Validate discovery output at the source.** Job titles leak into company names ("Sql
-- **9** `9` **`company_identity.verdict()` is the single unguarded door**
 - **10** `10` **Let company-death knowledge flow back.** Firmographics research keeps discovering
 - **13** `13` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
-- **13** `13` **The mail hook is now `alarms_state`, not `alarms`**
 - **18** `18` **Both rotations are no-ops on the FIRST cloud run**
-- **21** `21` **`company_identity.is_foreign` returns False for EVERY ATS host, and that is
-- **27** `27` **`crack_walled` retires 13 of its own 25 pool rows per all-refusing night**
-- **29** `29` **`tenant_is_this_company('SupPlant', 'careers.workable.com')` returns True**
-- **30** `30` **`_ok_to_write` and `_page_names_company` are plumbing living in `crack_walled.py`** —
-- **35** `35` **`merge_csv_rows._TOOL` does not key `url-repaired`, and its overflow trim deletes the
-- **42** `42` **`company_identity.ATS_HOST` omits `jobvite.com` and `taleo.net`**
-- **43** `43` **`verdict() == "weak"` has no consumer anywhere in the repo**
-- **46** `46` **Do not re-measure an activating tool's gate against ACTIVE rows.** Wave 9 reported the
+- **19** `19` **`crack_one` still writes `fr[3]` when the identity page is UNREADABLE** —
 - **47** `47` **Unifying the terminal-state definitions costs 10 rows of coverage, and they are the
 - **48** `48` **The re-check pool is still defined in four places**
 - **49** `49` **`activation_ok` refuses a legitimate acquisition on a subdomain-tenant machine
@@ -4409,20 +4365,35 @@ clean worktree at `ae6eeae`), **233** (the Greenhouse EU JSON API exists; `HANDO
 watch-item 0 corrected, and Outbrain is NOT rescued by it — it answers `meta.total 0` on both
 hosts, so its worked example needs a different diagnosis).
 
-291. **The closed-item split is designed, measured, and deliberately not applied** — lane:
-     `docs`. `python docs/backlog.py archive --dry-run` is built and proves itself three ways
-     (byte containment, body-hash set equality, a round-trip sha256 against `HEAD`). It is not
-     run because of what the measurement says about the predicate. A **safe** predicate —
-     strikethrough AND a closure paragraph — matches **32 items / 363 lines (10% of item
-     text)**, which is not worth a bulk move. The predicate that would matter, a closure
-     marker in the first three lines, matches **95 items / 1,131 lines (31%)** and has
-     measurable **false positives**: `2@registry`, `7@infra` and `1@docs` all carry "CLOSED"
-     near the top and are open (partial closures, or a closure of one half). Burying an open
-     item is the worst failure available here, so the real blocker is upstream: this file has
-     **30 distinct spellings of "closed"** and no convention. The header now states one; once
-     a few weeks of items use it, `archive --apply` becomes mechanical. Do not raise the
-     predicate's reach without re-running the false-positive check.
+291. **The closed-item split: designed, measured, and its first implementation deleted** —
+     lane: `docs`. Two separate findings, both from 2026-08-27, and the second is why there
+     is no code here now.
 
+     **The measurement says when to run it.** A SAFE predicate — a struck title AND a dated
+     closure paragraph — matched 32 items / 363 lines, 10% of item text: not worth a bulk
+     move. The predicate that would matter, a closure marker in the first three lines,
+     matched 95 items / 1,131 lines, 31%, and has measurable false positives: `2@registry`,
+     `7@infra` and `1@docs` all carry "CLOSED" near the top and are open. Burying an open
+     item is the worst failure available here. (The parser's own predicate has since been
+     corrected to the union of the two conventions the file actually uses, which took the
+     count from 32 closed to 95 — see the second half of this item's history.)
+
+     **The implementation was deleted, not kept.** `archive --apply` / `unarchive` shipped
+     with three advertised proofs and an adversarial pass found all three decorative:
+     both `open(..., "w")` calls ran BEFORE the first assert, so a failed proof left two
+     half-written files with no rollback; `TOMBSTONE` never matched the link the writer
+     actually emitted, so proof 2's filter removed nothing and key-set equality held
+     trivially; the `altered` body-hash list that the docstring and the generated archive
+     header both promised was computed and **never asserted** (15 real mismatches); and
+     proof 3 only printed, explaining its difference away with a reason that was false —
+     14 blank separators were dropped, not just the new tombstone lines. A destructive
+     command whose guard rail cannot fail is worse than no command, so it is gone.
+
+     **When it comes back** it needs: the writes after the proofs (temp file, rename on
+     success), `altered` asserted, an anchor built from `Item.key` rather than a second
+     spelling, and a round trip that is byte-identical rather than nearly so. And it should
+     wait for the closure convention in this file's header to be in actual use — the real
+     blocker was never the code, it was 30 distinct spellings of "closed".
 292. **A run that never starts emits nothing at all** — lane: `infra`. Every "the run broke"
      path — `stages.alarms("publish", 1)`, `persist_state.py outcome`'s dated failure notice,
      the bold `Stages:` line — fires from *inside* a later digest. On 2026-08-27 GitHub did not
@@ -4468,3 +4439,36 @@ hosts, so its worked example needs a different diagnosis).
      parses every item, so a check that every `BACKLOG \d+` in the tree resolves to at least
      one item is a dozen lines. It would have caught the `- **260**` bullet that names an
      `infra` defect filed as item 241 while item 260 is a `roles` one.
+
+## From the `docs` lane's wave-2 self-attack, 2026-08-27
+
+Two Opus attackers spent an hour on the tooling this session had just written. Twenty-five
+findings; twenty-one fixed and pinned in the same session; these four are what is left,
+and every one of them is the repo's own dominant bug class — a check that is silently a
+no-op — turned on the guard rather than on the pipeline.
+
+299. **The HANDOFF per-line cap can still be evaded four ways** — lane: `docs`. A 200-word
+     single line passes if it starts with `|`, four spaces, or a tab, and an UNCLOSED fence
+     exempts everything to EOF. Measured: control line ERRORs, all four evasions clean. The
+     3,200-word whole-file cap is the only backstop and the file sits at 2,717 with 934 of
+     those words already on exempt `|` lines. The exemptions are real — this file carries
+     multi-line `python -c` recovery commands and a 21-row table — so the fix is to narrow
+     them: a `|` line only inside a recognised table, a finite (higher) cap on indented
+     lines, and an error when `fenced` is still true at EOF. It is the same cap being gamed
+     the same way the 250-line one was, which is the whole reason the word caps exist.
+
+300. **`parse()` truncates an item whose body contains a column-0 `## ` or numbered
+     sub-list outside a fence** — lane: `docs`. Fenced blocks are now skipped, which covers
+     the reproducers, but a `## ` at column 0 in ordinary body text still ends the item and
+     a `1. ` still starts a phantom one. Zero occurrences in the file today; the danger is
+     that a truncated item is invisible until something moves it. Reproducers are in
+     `docs/sessions/2026-08-27-docs.md`.
+
+301. **`check_docs.py` uses module-global `ERRORS`/`WARNINGS`** — lane: `docs`. Two
+     `main()` calls in one process double-report. Harmless from the CLI and from the
+     subprocess the test suite uses; it would bite the first time anything imports the
+     module and calls `main()` twice.
+
+302. **`check_session_record_dates` inspects only line 1** — lane: `docs`. A session file
+     with a blank first line, YAML front-matter, or an HTML comment above its H1 is never
+     checked. 17 of 17 files are fine today.

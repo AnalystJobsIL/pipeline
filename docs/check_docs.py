@@ -37,6 +37,7 @@ import os
 import re
 import sys
 
+sys.dont_write_bytecode = True   # loading docs/backlog.py by path left a .pyc behind
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
@@ -215,9 +216,23 @@ def import_graph() -> tuple[dict[str, set[str]], dict[str, set[str]]]:
                 importers[mod].add(rel(f))
     runners: dict[str, set[str]] = collections.defaultdict(set)
     for w in sorted(glob.glob(os.path.join(ROOT, ".github", "workflows", "*.yml"))):
-        txt = read(w)
+        # Strip `#` comments first. A workflow line reading "dropped the nightly
+        # `python bd_employees.py` step; it is hand-run now" used to prove the opposite of
+        # what it says, and the linter's suggested fix made MODULES.md claim a cron runs a
+        # module nothing runs.
+        txt = re.sub(r"(?m)#.*$", "", read(w))
         for m in names:
-            if re.search(r"python3?\s+(?:-u\s+)?" + re.escape(m) + r"\.py\b", txt):
+            mod = re.escape(m)
+            # `python x.py`, `python -u x.py`, `python -X faulthandler x.py`, `./x.py`,
+            # `python -m x`. The first version matched only the first two forms, so the
+            # `operator`-a-workflow-runs arm - added specifically to catch firmographics.yml
+            # - was a NO-OP for three spellings, and `python -m` is idiomatic in this repo
+            # (daily-digest.yml runs `python -m pipeline.stages` and `python -m pipeline.run`).
+            pat = (r"(?:^|[\s;&|(])(?:python3?|py)\b(?:\s+(?!\S*\.py\b)\S+)*\s+"
+                   r"(?:[^\s;|&]*/)?" + mod + r"\.py\b"
+                   r"|(?:^|[\s;&|(])(?:python3?|py)\b(?:\s+(?!\S*\.py\b)\S+)*?"
+                   r"\s+-m\s+" + mod + r"\b")
+            if re.search(pat, txt):
                 runners[m].add(os.path.basename(w)[:-4])
     return importers, runners
 
@@ -383,24 +398,64 @@ def _active() -> list[list[str]]:
 
 
 def _fetcher_keys() -> list[str]:
-    """FETCHERS keys by AST, never by import. Importing from a linter is a side effect
-    waiting to happen - several modules in this repo execute on import."""
+    """FETCHERS keys by AST, never by import: importing from a linter is a side effect
+    waiting to happen, and several modules in this repo execute on import.
+
+    Every non-literal form RAISES, and that is the whole point of this function. The first
+    version filtered `isinstance(k, ast.Constant)` and silently returned a SHORT list for
+    `{**_WALLED, "comeet": f}` (a `**` splat yields the key `None`), for a post-hoc
+    `FETCHERS["b"] = f`, for `FETCHERS.update(...)`, for a variable key, and for a build
+    loop - five of seven realistic forms. Silent is the bad half: the linter would then
+    report the docs as wrong and the author, doing what it said, would write a false number
+    into four documents and get a green build. An exception is `facts/uncomputable`, which
+    is loud and correct."""
     tree = ast.parse(read(os.path.join(ROOT, "pipeline", "fetchers.py")))
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign) and any(
                 getattr(t, "id", None) == "FETCHERS" for t in node.targets):
-            if isinstance(node.value, ast.Dict):
-                return [k.value for k in node.value.keys if isinstance(k, ast.Constant)]
-    raise RuntimeError("pipeline/fetchers.py has no top-level FETCHERS dict literal")
+            if not isinstance(node.value, ast.Dict):
+                raise RuntimeError("FETCHERS is not a dict literal (%s)"
+                                   % type(node.value).__name__)
+            if any(k is None or not isinstance(k, ast.Constant) for k in node.value.keys):
+                raise RuntimeError("FETCHERS is not a PURE literal: it has a ** splat or a "
+                                   "computed key, so its size cannot be read statically")
+            keys = [k.value for k in node.value.keys]
+            break
+    else:
+        raise RuntimeError("pipeline/fetchers.py has no top-level FETCHERS dict literal")
+    src = read(os.path.join(ROOT, "pipeline", "fetchers.py"))
+    if re.search(r"^\s*FETCHERS\s*\[|^\s*FETCHERS\.(update|setdefault|pop)\b", src, re.M):
+        raise RuntimeError("FETCHERS is mutated after the literal, so the literal is not "
+                           "the whole map")
+    return keys
 
 
 def _real_platforms() -> int:
     return len([k for k in _fetcher_keys() if k not in ("scrape", "discovery")])
 
 
+def _has_main_guard(src: str) -> bool:
+    """A real `if __name__ == "__main__":` at module level, parsed - not the substring.
+
+    The substring test dropped `merge_research.py` (the canonical import-runs-it module,
+    named by that very sentence) out of the list the moment somebody added a COMMENT
+    warning that it has no guard. `gen_modules.py` uses the same helper, because if the two
+    disagree the fact goes permanently red."""
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return True                      # unparseable: never claim it is a trap
+    for node in tree.body:
+        if isinstance(node, ast.If):
+            d = ast.dump(node.test)
+            if "'__main__'" in d and "'__name__'" in d:
+                return True
+    return False
+
+
 def _no_main_guard() -> int:
     return sum(1 for p in sorted(glob.glob(os.path.join(ROOT, "*.py")))
-               if "__main__" not in read(p))
+               if not _has_main_guard(read(p)))
 
 
 def _unreferenced_roots() -> int:
@@ -436,7 +491,10 @@ def _firmographics() -> int:
 # and two of the five census facts measured on 2026-08-27 were within 5 of an edge
 # (registry 1,244 against `~1,200`; API rows 451 against `~500`). A range lets the author
 # state the headroom they want instead of inheriting whatever the boundary gives them.
-_CENSUS = r"(~?[\d,]+(?:[-–][\d,]+)?)"
+# The lookaround is load-bearing: without it `the 2026-08-27 company profiles pass`
+# captured `08-27` as the range 8-27, and `registry of 2026-08 rows` as a 2,000-wide
+# bracket that would pass anything.
+_CENSUS = r"(?<![\d,\-–])(~?\d[\d,]*(?:[-–]\d[\d,]*)?)(?![\d\-–])"
 
 FACTS = [
     Fact("coe_ratio", "exact", _coe_ratio, "continue-on-error of workflow steps",
@@ -448,7 +506,7 @@ FACTS = [
     Fact("fetcher_platforms", "exact", lambda: (_real_platforms(),),
          "real ATS platforms in FETCHERS",
          [("ARCHITECTURE.md", r"pipeline/fetchers\.py\s+(\d+) platforms"),
-          ("docs/AGENT_BRIEF.md", r"\((\d+) platforms[,)]"),
+          ("docs/AGENT_BRIEF.md", r"native ATS APIs\s+\((\d+) platforms\)"),
           ("docs/MODULES.md", r"the common job shape\. (\d+) platforms")],
          "an agent adding a platform must move this number in the same commit"),
 
@@ -503,7 +561,11 @@ FACTS = [
 # Regions where a number is NOT a claim: a URL, a markdown link target, an HTML comment.
 # A number inside backticks or a fenced block IS a claim - the one-screen map is fenced and
 # is the most-read diagram in the repo.
-_VETO_RE = re.compile(r"https?://\S+|\]\([^)]*\)|<!--.*?-->", re.S)
+# `<!--(?:(?!<!--).)*?-->` so a SECOND opener terminates the scan: an unterminated
+# `<!--` left by an edit, plus any well-formed comment further down, used to swallow
+# everything between them - and every claim inside went silently unchecked, including a
+# bare census number, which is otherwise always an error.
+_VETO_RE = re.compile(r"https?://\S+|\]\([^)]*\)|<!--(?:(?!<!--).)*?-->", re.S)
 
 
 def _veto_spans(text: str) -> list:
@@ -538,16 +600,25 @@ def _round_half_up(n: int, prec: int) -> int:
 
 
 def bracket_holds(true_value: int, tok: str) -> bool:
-    return _round_half_up(true_value, precision(tok)) == _int(tok)
+    """Defined in terms of census_span so the tested function IS the running one. It used to
+    be an independent implementation reached only from the test suite, and the two disagreed
+    on the form that matters: `bracket_holds(875, "875")` was True while `census_span("875")`
+    is None, which is the bare-number error."""
+    span = census_span(tok)
+    return span is not None and span[0] <= true_value <= span[1]
 
 
 def census_span(tok: str):
     """The closed interval a census token claims, or None if it claims a bare point value.
     A bare number is the one form that is always wrong here, so it gets no interval."""
     parts = re.split(r"[-–]", tok)
-    if len(parts) == 2 and parts[0] and parts[1]:
+    if len(parts) == 2 and parts[0].strip("~") and parts[1]:
         lo, hi = _int(parts[0]), _int(parts[1])
-        return (lo, hi) if lo <= hi else (hi, lo)
+        if lo > hi:
+            raise ValueError("range is written backwards: %s" % tok)
+        return (lo, hi)
+    if len(parts) > 2:
+        raise ValueError("a census range has two ends, not %d: %s" % (len(parts), tok))
     if not tok.startswith("~"):
         return None
     p, n = precision(tok), _int(tok)
@@ -583,7 +654,12 @@ def _fact_report() -> list:
                     ok = tuple(_int(t) for t in toks) == tuple(got)
                     note = "" if ok else "code says " + ", ".join(str(g) for g in got)
                 else:
-                    span = census_span(toks[0])
+                    try:
+                        span = census_span(toks[0])
+                    except ValueError as e:                       # noqa: PERF203
+                        rows.append((doc_rel, line, ", ".join(toks), False,
+                                     "unreadable: %s" % e))
+                        continue
                     if span is None:
                         ok, note = False, "bare"
                     else:
@@ -610,9 +686,16 @@ def check_derived_facts() -> None:
                 % (f.name, f.unit))
         for doc_rel, line, tok, ok, note in rows:
             if ok is None:
-                warn("facts", "%s: a site registered for %s matches nothing now (%s). If the "
-                              "sentence was rewritten for the better, drop the site."
-                     % (doc_rel, f.name, note))
+                # An ERROR, not a warning. A registered site that stops matching is a
+                # sentence that is still asserting a number and is no longer checked - and
+                # an unterminated HTML comment three paragraphs up is enough to cause it.
+                # If the sentence was rewritten for the better, deleting the site is one
+                # line, and that is the action this message asks for.
+                err("facts", "%s: a site registered for %s matches nothing now (%s). The "
+                             "sentence there is either gone or no longer says a number. "
+                             "Restore the claim, or delete the site from FACTS - do not "
+                             "leave a number asserting without a check."
+                    % (doc_rel, f.name, note))
             elif note == "bare":
                 err("facts", "%s:%d states %s (%s) as the bare number %s. This one moves "
                              "because the crons ran, not because anyone pushed, so it cannot "
@@ -626,6 +709,10 @@ def check_derived_facts() -> None:
                 err("facts", "%s:%d says %s for %s (%s); the code says %s. %s."
                     % (doc_rel, line, tok, f.name, f.unit,
                        ", ".join(str(g) for g in got), f.why))
+            elif note.startswith("unreadable"):
+                err("facts", "%s:%d states %s for %s as a token this check cannot read (%s). "
+                             "Write `~N`, or `N-M`, or the command that prints it."
+                    % (doc_rel, line, tok, f.name, note))
             elif not ok:
                 lo, hi = census_span(tok)
                 err("facts", "%s:%d writes %s for %s (%s), which claims %d-%d; today it is "
@@ -728,8 +815,15 @@ def check_handoff() -> None:
 
 # PASS may stand alone; anything else must say what happened, because "FAIL" with no
 # string is the same silence the table exists to end.
-_VERDICT_OK = re.compile(r"^(PASS\b.*|not yet due.*|(FAIL|N/A|PARTIAL)\b.*[—-]\s*\S.{4,})$")
+# One verb, then a separator, then evidence. Case-insensitive, and `:` / `,` / an em or en
+# dash all count, because the previous version accepted a bare `PASS` - the exact thing its
+# own error message argues against - while rejecting `FAIL: the inbox issue was 07:10Z` and
+# `Pass - board 76 cards`. It also used to be satisfied by the hyphen inside an ISO date.
+_VERDICT_OK = re.compile(
+    r"^(?:PASS|FAIL|N/A|PARTIAL|INCONCLUSIVE|SKIPPED)\b[^:,\u2013\u2014-]*"
+    r"[:,\u2013\u2014-]\s*\S.{9,}$|^not yet due\b.*$", re.I)
 _LOOSE_CHECK = re.compile(r"morning check\s+\d{4}-\d\d-\d\d", re.I)
+NL_SAFE = "\n"
 
 
 def check_morning_checks() -> None:
@@ -750,21 +844,36 @@ def check_morning_checks() -> None:
     if not os.path.exists(path):
         return
     text = read(path)
+    # Collect every pipe row from the table header to the next `## ` heading. Stopping at
+    # the first non-pipe line meant ONE blank line - or an HTML comment between rows -
+    # silently dropped every row below it, and the check only complained when zero rows
+    # survived. In the live table that is 20 of 21 predictions, with a green build.
     rows, in_table = [], False
     for line in text.splitlines():
         if line.startswith("| due | lane |"):
             in_table = True
             continue
         if in_table:
-            if not line.startswith("|"):
+            if line.startswith("## "):
                 in_table = False
+                continue
+            if not line.startswith("|"):
                 continue
             # split on the pipes, never strip them: an EMPTY last cell - which is exactly
             # what an unanswered check looks like - is swallowed by strip("|") and the
             # row then fails the len() test and is silently dropped. Found by break-test.
             cells = [c.strip() for c in line.strip().split("|")[1:-1]]
-            if len(cells) >= 5 and not set(cells[0]) <= set("-: "):
-                rows.append(cells)
+            if set(cells[0]) <= set("-: "):
+                continue
+            if len(cells) != 5:
+                # A `|` inside a cell shifts every column right, so the verdict is read from
+                # the wrong one and a real verdict is never validated. The `must be true`
+                # column is full of backticked shell text, so this is one `| wc -l` away.
+                err("morning-checks", "a morning-check row has %d cells, not 5 - a `|` inside "
+                                      "a cell shifts the verdict column: %s"
+                    % (len(cells), line.strip()[:80]))
+                continue
+            rows.append(cells)
     if not rows:
         warn("morning-checks", "HANDOFF.md has no `## Morning checks` table. A prediction "
                                "with nowhere to be answered is how `### Tel Aviv` shipped "
@@ -783,12 +892,19 @@ def check_morning_checks() -> None:
             if due <= today:
                 warn("morning-checks", "morning check due %s (`%s`) has no verdict: %s"
                      % (due, lane, must[:70]))
+        elif verdict.lower().startswith("not yet due") and due <= today:
+            warn("morning-checks", "morning check %s (`%s`) still says `not yet due`, and %s "
+                                   "has passed. It is a supported way to answer a check by "
+                                   "never answering it." % (due, lane, due))
         elif not _VERDICT_OK.match(verdict):
             err("morning-checks", "morning check %s (`%s`) has a verdict the reader cannot "
                                   "check: %r. Use PASS / FAIL - <what happened> / N/A - "
                                   "<why>, and quote a grep-able string, not an adjective."
                 % (due, lane, verdict[:60]))
-    body = text.split("| due | lane |")[0]
+    # Scan the WHOLE file, minus the table's own rows. The first version stopped at the
+    # table header, so a session appending a prose check BELOW the table - which is where
+    # a session appends things - was invisible to the check written to catch exactly that.
+    body = NL_SAFE.join(l for l in text.splitlines() if not l.startswith("| "))
     for m in _LOOSE_CHECK.finditer(body):
         err("morning-checks", "HANDOFF.md states a morning check in prose (%r). Fourteen of "
                               "those existed and none was ever answered - put it in the "
@@ -804,8 +920,11 @@ def _lane_names() -> set:
 
 
 def _today() -> str:
+    """UTC, not local. Every cron, every stage stamp and every digest date in this repo is
+    UTC; on an Israeli clock (+03:00) a local `today` reads a check as not-yet-due for the
+    first three hours after it actually came due."""
     import datetime
-    return datetime.date.today().isoformat()
+    return datetime.datetime.now(datetime.timezone.utc).date().isoformat()
 
 
 def check_session_record_dates() -> None:

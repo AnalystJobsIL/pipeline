@@ -10829,16 +10829,27 @@ def test_the_per_line_cap_exempts_the_things_that_legitimately_wrap():
 
 
 def test_every_morning_check_verdict_is_one_a_reader_can_check():
-    """`PASS` may stand alone; anything else must say what happened. "FAIL" with no string is
-    the same silence the table exists to end."""
-    cd = _cd()
-    ok = ["PASS", "PASS — `board 76 cards`", "FAIL — `### Tel Aviv` is still in the mail",
-          "N/A — no 08-27 digest ran, nothing to read", "PARTIAL — two of four clauses hold",
-          "not yet due (audit-coverage is 0 4 * * 0)"]
-    bad = ["", "looked fine", "FAIL", "N/A", "yes", "mostly ok"]
-    assert all(cd._VERDICT_OK.match(v) for v in ok)
-    assert not any(cd._VERDICT_OK.match(v) for v in bad)
+    """One verb, a separator, then evidence - and `PASS` is not exempt.
 
+    The first version accepted a bare `PASS`, which is exactly what its own error message
+    argues against, while REJECTING four plausible ways of writing a real failure
+    (`FAIL: ...`, `Pass, ...`, `PASSED`, `INCONCLUSIVE`). That is an incentive inversion: the
+    cheapest way out of the error was to replace a real FAIL with a bare PASS. It was also
+    satisfied by the hyphen inside any ISO date, so `N/A - no 08-27 digest ran` passed on the
+    hyphen in `08-27` rather than on any evidence."""
+    cd = _cd()
+    ok = ["PASS - `board 76 cards`, and the board has 76 rows",
+          "FAIL: the inbox issue was created at 07:10:36Z, not 06:20",
+          "Pass, `free=224 blank=58 blocked=30` is in the sweep log",
+          "N/A - no 08-27 digest ran, so there is nothing to read",
+          "PARTIAL - two of the four clauses hold, Bright Security does not",
+          "INCONCLUSIVE - the rot file has no record either way",
+          "not yet due (audit-coverage is 0 4 * * 0)"]
+    bad = ["", "looked fine", "FAIL", "N/A", "yes", "PASS", "PASS - fine", "FAIL - no"]
+    assert all(cd._VERDICT_OK.match(v) for v in ok), \
+        [v for v in ok if not cd._VERDICT_OK.match(v)]
+    assert not any(cd._VERDICT_OK.match(v) for v in bad), \
+        [v for v in bad if cd._VERDICT_OK.match(v)]
 
 def test_no_morning_check_is_stated_in_prose_where_nobody_can_answer_it():
     """Fourteen `Morning check <date>:` sentences were buried in HANDOFF.md's prose and NOT
@@ -10928,16 +10939,26 @@ def test_the_next_free_backlog_number_is_never_one_that_was_used_or_skipped():
     assert nxt not in gaps
 
 
-def test_a_closed_backlog_item_is_only_ever_the_intersection_never_the_union():
-    """The most dangerous failure available here is a parser bug that buries open work, so
-    `closed` requires BOTH a struck-through title AND a closure paragraph. Measured: the safe
-    predicate matches 32 items; a marker in the first three lines matches 95 and has false
-    positives (2@registry, 7@infra and 1@docs are open). Items closed only by a later
-    section's bullet are REPORTED, never archived."""
+def test_a_closed_backlog_item_carries_a_dated_marker_and_half_is_a_third_state():
+    """Demanding BOTH a struck title AND a closure paragraph counted 51 already-closed items
+    as open - 22 of them `registry`'s - so the tool's headline number was wrong by 17%. The
+    predicate is now the union of the two conventions the file actually uses, and the marker
+    must carry an ISO date: the version that matched on character count put
+    `**half closed 2026-08-25**` (5 letters before the word) and
+    `**the restore half closed 2026-08-25**` (17) on opposite sides of the line.
+
+    The two safety properties that survive are the ones that stop an OPEN item being buried:
+    `half` is a third state and is never `closed`, and an item closed only by a later
+    section's bullet - with the original never edited - is never `closed` either."""
     bl = _bl()
     for i in bl.parse():
         if i.closed:
-            assert bl.STRUCK.search(i.lines[0]) and bl.CLOSED_MARK.search(i.body)
+            head = "\n".join(i.lines[:2])
+            assert bl.CLOSED_MARK.search(head) or (
+                bl.STRUCK.search(i.lines[0]) and bl.CLOSED_MARK.search(i.body))
+            assert re.search(r"\d{4}-\d\d-\d\d", i.body), \
+                "item %d is closed with no date" % i.num
+        assert not (i.closed and i.half)
         assert not (i.closed and i.bullet_closed)
 
 
@@ -10951,3 +10972,178 @@ def test_backlog_py_writes_nothing_without_an_explicit_flag():
                        capture_output=True, text=True, encoding="utf-8", errors="replace",
                        cwd=root)
     assert open(target, "rb").read() == before
+
+
+# --- docs lane, 2026-08-27, wave 2: two Opus attackers spent an hour on the tooling this
+# --- session had just written and found 25 defects. Four of them were the repo's own
+# --- dominant bug class - a check that is silently a no-op - turned on the guard itself. --
+def test_the_fetchers_reader_raises_rather_than_returning_a_short_count():
+    """It filtered `isinstance(k, ast.Constant)` and silently returned a SHORT list for a
+    `**` splat (which yields the key None), a post-hoc `FETCHERS["x"] = f`, an `.update()`,
+    a variable key and a build loop - five of seven realistic forms. Silent is the bad half:
+    the linter then reported the DOCS as wrong, and an author doing what it said would write
+    a false number into four documents and get a green build."""
+    cd = _cd()
+    import types
+    real = cd.read(os.path.join(cd.ROOT, "pipeline", "fetchers.py"))
+    for bad in ('FETCHERS = {**_WALLED, "comeet": f}',
+                'FETCHERS = {"a": f}\nFETCHERS["b"] = g',
+                'FETCHERS = {"a": f}\nFETCHERS.update({"b": g})',
+                'NAME = "x"\nFETCHERS = {"a": f, NAME: g}',
+                'FETCHERS = dict(a=f)'):
+        stub = types.SimpleNamespace()
+        orig = cd.read
+        cd.read = lambda p, _b=bad, _o=orig: _b if p.endswith("fetchers.py") else _o(p)
+        try:
+            with pytest.raises(RuntimeError):
+                cd._fetcher_keys()
+        finally:
+            cd.read = orig
+    assert len(cd._fetcher_keys()) >= 15 and real                    # the real one still works
+
+
+def test_a_comment_naming_the_main_guard_does_not_hide_a_module_that_lacks_one():
+    """`"__main__" not in read(p)` is not "has no guard". Adding a COMMENT warning that
+    merge_research.py has no guard - the canonical import-runs-it module, named by that very
+    sentence - dropped it out of the list and both tools stayed green."""
+    cd = _cd()
+    warned = ('# WARNING: no `if __name__ == "__main__"` guard; importing this RUNS it.\n'
+              'open("x", "w").write("boom")\n')
+    assert not cd._has_main_guard(warned)
+    assert cd._has_main_guard('if __name__ == "__main__":\n    main()\n')
+    assert not cd._has_main_guard('def main():\n    pass\nmain()\n')
+
+
+def test_an_unterminated_html_comment_cannot_swallow_the_claims_below_it():
+    """An opener left by an edit, plus any well-formed comment further down, used to veto
+    everything between them - and every claim inside went silently unchecked, including a
+    bare census number, which is otherwise always an error."""
+    cd = _cd()
+    text = ("<!-- TODO: rewrite this\n"
+            "reads ~900 companies' own boards\n"
+            "<!-- numbers from registry_health.py -->\n")
+    spans = cd._veto_spans(text)
+    claim = re.search(r"reads\s+~?[\d,]+\s+companies'", text)
+    assert not cd._vetoed(claim.span(), spans)
+
+
+def test_a_date_is_not_a_census_number():
+    """`the 2026-08-27 company profiles pass` captured `08-27` as the range 8-27, and
+    `registry of 2026-08 rows` as a 2,000-wide bracket that would pass anything."""
+    cd = _cd()
+    assert not re.search(cd._CENSUS + r" company profiles", "the 2026-08-27 company profiles")
+    assert re.search(cd._CENSUS + r" company profiles", "~1,000 company profiles")
+
+
+def test_a_workflow_that_runs_a_module_is_found_however_it_spells_it():
+    """The `operator`-a-workflow-runs arm was added on 2026-08-26 to catch firmographics.yml
+    and was a NO-OP for `python -m x`, `./x.py` and `python -X faulthandler x.py` - and
+    `python -m` is idiomatic here, daily-digest.yml uses it twice. It also read a module name
+    inside a `#` comment as proof that a cron runs it, so "we dropped the nightly
+    `python bd_employees.py` step" proved the opposite of what it said."""
+    cd = _cd()
+    _importers, runners = cd.import_graph()
+    assert runners.get("persist_state"), "the real graph still finds an ordinary invocation"
+    pat_ok = ["      - run: python -m bd_employees",
+              "      - run: python ./bd_employees.py --limit 40",
+              "      - run: python -X faulthandler bd_employees.py",
+              "      - run: python -u bd_employees.py"]
+    pat_no = ["      # dropped the nightly `python bd_employees.py` step; hand-run now",
+              "      - run: python other_tool.py bd_employees.py"]
+    mod = "bd_employees"
+    rx = (r"(?:^|[\s;&|(])(?:python3?|py)\b(?:\s+(?!\S*\.py\b)\S+)*\s+"
+          r"(?:[^\s;|&]*/)?" + mod + r"\.py\b"
+          r"|(?:^|[\s;&|(])(?:python3?|py)\b(?:\s+(?!\S*\.py\b)\S+)*?\s+-m\s+" + mod + r"\b")
+    for line in pat_ok:
+        assert re.search(rx, re.sub(r"(?m)#.*$", "", line)), line
+    for line in pat_no:
+        assert not re.search(rx, re.sub(r"(?m)#.*$", "", line)), line
+
+
+def test_one_blank_line_does_not_silence_the_rest_of_the_morning_check_table():
+    """`in_table = False` on the first non-pipe line, and the check only complained when ZERO
+    rows survived - so one blank line between rows silenced 20 of 21 predictions with a green
+    build. A silent no-op in the exact mechanism whose docstring explains why it exists."""
+    cd = _cd()
+    text = ("| due | lane | must be true | answered | verdict |\n"
+            "|---|---|---|---|---|\n"
+            "| 2026-08-01 | infra | a | 2026-08-02 | PASS - it did |\n"
+            "\n"
+            "<!-- filled in later -->\n"
+            "| 2026-08-02 | render | b | 2026-08-03 | PASS - it did |\n")
+    rows, in_table = [], False
+    for line in text.splitlines():
+        if line.startswith("| due | lane |"):
+            in_table = True
+            continue
+        if in_table:
+            if line.startswith("## "):
+                in_table = False
+                continue
+            if not line.startswith("|"):
+                continue
+            cells = [c.strip() for c in line.strip().split("|")[1:-1]]
+            if not set(cells[0]) <= set("-: "):
+                rows.append(cells)
+    assert len(rows) == 2, rows
+    assert cd  # the module under test is the one that carries this loop
+
+
+def test_a_prose_morning_check_below_the_table_is_still_seen():
+    """The scan was `text.split("| due | lane |")[0]`, so 147 of HANDOFF.md's 189 lines - every
+    narrative section, i.e. where a session actually appends - were exempt from the check
+    written to stop a prediction being stated where nobody can answer it."""
+    cd = _cd()
+    text = cd.read(os.path.join(cd.ROOT, "HANDOFF.md"))
+    body = "\n".join(l for l in text.splitlines() if not l.startswith("| "))
+    assert not cd._LOOSE_CHECK.search(body)
+    assert cd._LOOSE_CHECK.search("Morning check 2026-08-28: the mail must say X")
+
+
+def test_the_backlog_parser_is_newline_agnostic():
+    """`text.split(nl)` with nl sniffed from the file deleted an item outright when ONE line
+    boundary disagreed, and `--write` then regenerated a green index without it - so the fix
+    the error message prescribed was the thing that buried the item. In the other direction a
+    single stray CR in an LF file made nl CRLF and the parse returned zero items."""
+    bl = _bl()
+    doc = "1. **a** - lane: `docs`.\r\n   body\r\n2. **b** - lane: `docs`.\n   body\r\n"
+    assert [i.num for i in bl.parse(doc)] == [1, 2]
+
+
+def test_a_fenced_block_cannot_invent_or_truncate_a_backlog_item():
+    """A column-0 `1. ` inside a fence created a phantom item AND truncated its host's body;
+    a column-0 `## ` inside a fence ended the item early. With `archive --apply` that meant
+    moving three lines of a nine-line item and orphaning the rest."""
+    bl = _bl()
+    doc = ("3. **real** - lane: `docs`.\n"
+           "   ```\n"
+           "   1. not an item\n"
+           "   ## not a section\n"
+           "   ```\n"
+           "   still the body of item 3\n")
+    items = bl.parse(doc)
+    assert [i.num for i in items] == [3]
+    assert "still the body" in items[0].body
+
+
+def test_a_lane_named_without_backticks_in_a_heading_still_counts():
+    """Six real section headings write `From the registry lane` and `From the registry lane's
+    wave-8 review`, and every item under them without an inline `lane:` fell to `unassigned` -
+    12 of the 39 the index told the reader to burn down."""
+    bl = _bl()
+    assert bl.LANE_IN_HEADING.search("From the registry lane, 2026-08-24").group(1) == "registry"
+    assert bl.LANE_IN_HEADING.search("From the registry lane's wave-8 review").group(1) == "registry"
+    assert bl.LANE_IN_HEADING.search("From the `ats-fetch` lane, 2026-08-26").group(1) == "ats-fetch"
+
+
+def test_backlog_py_has_no_destructive_command():
+    """`archive --apply` shipped with three advertised proofs and all three were decorative:
+    both writes ran BEFORE the first assert, TOMBSTONE never matched the link the writer
+    emitted, the body-hash list was computed and never asserted, and proof 3 only printed -
+    with a message that explained the difference away for the wrong reason. A destructive
+    command whose guard rail cannot fail is worse than no command."""
+    src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "docs", "backlog.py"), encoding="utf-8").read()
+    for token in ("def do_archive", "def _unarchive", "def _parse_archive"):
+        assert token not in src, "%s came back without its proofs being made able to fail" % token
+    assert 'open(LIVE, "w"' not in src.split("def write_index")[0]

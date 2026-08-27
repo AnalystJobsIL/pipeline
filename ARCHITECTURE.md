@@ -128,7 +128,7 @@ package modules unqualified (`jdtext.py`, `rolecard.py`, `digest.py`, `jdfill.py
 but not self-contained: `pipeline/run.py` imports `registry_health` and
 `pipeline/identity_gate.py` imports `bd_rescue`, both root scripts.
 
-### Run it locally without side effects
+### Run it locally, and what actually makes that safe
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
@@ -157,7 +157,8 @@ the `publish` stage as though the day's digest had shipped. No run of any kind e
 anyone — that is a separate workflow step. Most tools follow the same convention:
 **dry-run by default, `--apply` to write**. Useful env vars:
 `SCRAPE_LLM=1` (LLM extraction fallback — **spends the Claude subscription**, one tool-less
-`claude -p` per page that reaches strategy 5; `SCRAPE_LLM_MODEL` picks the model, §1),
+sonnet call through `pipeline/llm.py` per page that reaches strategy 5;
+`SCRAPE_LLM_MODEL` picks the model, §1),
 `SCRAPE_ASSUME_IL=1` (accept page-level Israel
 signal), `SCRAPE_VIA_UNLOCKER=1` (**spends Bright Data**: residential fetch of a page the
 plain fetch could not read, and of at most `SCRAPE_UNLOCK_PAGES` (5) position pages per

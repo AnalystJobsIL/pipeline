@@ -16,7 +16,8 @@ Two things are therefore NOT done here, on purpose:
     number stays legal and resolves to a candidate list; uniqueness is enforced only going
     forward, by `next` printing the first free number - the collisions happened because
     three lanes filed within an hour and none of them knew.
-  * No item's text is retyped. `archive --apply` MOVES bytes and proves it three ways.
+  * Nothing is archived. The closed-item split is designed and measured in item 291; the
+    code that did it was deleted after an adversarial pass found its proofs decorative.
 
 Per-lane source files were considered and rejected on measurement, not taste: the sections
 are chronological, not lane containers (`## From the ats-fetch lane, 2026-08-24` holds
@@ -29,10 +30,8 @@ misplace text during a move-never-retype migration.
     python docs/backlog.py lane infra # that lane's open items
     python docs/backlog.py show 241   # every claimant of 241
     python docs/backlog.py --write    # regenerate the index block IN PLACE (the only write)
-    python docs/backlog.py archive --dry-run | --apply
-    python docs/backlog.py unarchive --to -   # reconstruct the pre-split file, for the proof
 
-Owned by the `docs` lane. Read-only unless `--write` / `--apply` is passed; stdlib only;
+Owned by the `docs` lane. Read-only unless `--write` is passed; stdlib only;
 imports nothing from `pipeline/`; writes only inside `docs/`.
 """
 from __future__ import annotations
@@ -47,32 +46,46 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LIVE = os.path.join(ROOT, "docs", "BACKLOG.md")
-ARCHIVE = os.path.join(ROOT, "docs", "backlog", "closed.md")
 
 BEGIN = "<!-- BACKLOG-INDEX:BEGIN"
 END = "<!-- BACKLOG-INDEX:END -->"
 
 # The parse contract, and it is exact rather than heuristic: `^(\d+)\. ` at column 0 matched
 # 314 lines and exactly 314 items across 3,457 lines, with zero false positives.
-ITEM = re.compile(r"^(\d+)\. ")
+# No leading zeros: `007. ` parsed as item 7 and silently joined its collision.
+ITEM = re.compile(r"^([1-9]\d*)\. ")
 SECTION = re.compile(r"^## (.*)$")
 LANE_IN_BODY = re.compile(r"lanes?:\s*`([a-z-]+)`")
-LANE_IN_HEADING = re.compile(r"`([a-z-]+)` lane")
-# Deliberately the INTERSECTION of strikethrough and a closure paragraph, never the union.
-# A parser bug that buries open work is the worst failure available here, and ~10 items are
-# closed only by a later section's bullet with the original untouched - those are REPORTED,
-# never archived.
+# Backticks optional, `'s` allowed: six real headings write `From the registry lane` and
+# `From the registry lane's wave-8 review`, and every item under them without an inline
+# `lane:` fell to `unassigned` - 12 of the 39 the index tells the reader to burn down.
+LANE_IN_HEADING = re.compile(r"`?([a-z][a-z-]+)`?(?:'s)? lane")
+# Closed = a DATED closure marker in the item's own first two lines, with or without the
+# strikethrough. The first version demanded both, and 51 items - 17% of the file - announce
+# an unambiguous dated closure and never struck their title, so the tool's headline number
+# was wrong by 22 items for `registry` alone.
+#
+# `half`/`partly` closed is a THIRD state, reported and never treated as either. It has to
+# be explicit rather than incidental: the old marker allowed up to 16 arbitrary letters
+# before the word, so `**half closed 2026-08-25**` counted as closed (5 characters) while
+# `**the restore half closed 2026-08-25**` did not (17), and two items of identical shape
+# landed on opposite sides on a character count.
 STRUCK = re.compile(r"~~")
-CLOSED_MARK = re.compile(r"\*\*[A-Za-z ]{0,16}(?:CLOSED|closed|won't fix|WON'T FIX)", re.I)
-TOMBSTONE = re.compile(r"^(\d+)\. ~~.*~~ — (?:CLOSED|closed).*`docs/backlog/closed\.md#")
+_HALF = r"(?:half|partly|part|partial(?:ly)?|module|code|row)\s+"
+CLOSED_MARK = re.compile(
+    r"\*\*(?:%s)?(?:CLOSED|closed|WON'T FIX|won't fix)\b[^*]{0,40}?\d{4}-\d\d-\d\d" % _HALF,
+    re.I)
+HALF_MARK = re.compile(r"\*\*(?:%s)(?:CLOSED|closed)" % _HALF, re.I)
 
 
 class Item:
-    __slots__ = ("num", "section", "lane", "lines", "start", "closed", "bullet_closed")
+    __slots__ = ("num", "section", "lane", "lines", "start", "closed", "bullet_closed",
+                 "half")
 
     def __init__(self, num, section, start):
         self.num, self.section, self.start = num, section, start
-        self.lines, self.lane, self.closed, self.bullet_closed = [], "unassigned", False, False
+        self.lines, self.lane = [], "unassigned"
+        self.closed = self.bullet_closed = self.half = False
 
     @property
     def body(self):
@@ -98,11 +111,24 @@ def read(p):
 
 
 def parse(text=None):
+    """Newline-agnostic on purpose. `text.split(nl)` with nl sniffed from the file deleted
+    an item outright when ONE line boundary disagreed with the rest of the file - and
+    `--write` then regenerated a green index without it, so the fix the error message
+    prescribed was the thing that buried the item. In the other direction a single stray
+    \r in an LF file made nl CRLF and the parse returned zero items."""
     text = read(LIVE) if text is None else text
-    nl = "\r\n" if "\r\n" in text else "\n"
-    lines = text.split(nl)
-    items, section, cur = [], "", None
+    lines = text.splitlines()
+    items, section, cur, fenced = [], "", None, False
     for n, line in enumerate(lines, 1):
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+            if cur is not None:
+                cur.lines.append(line)
+            continue
+        if fenced:
+            if cur is not None:
+                cur.lines.append(line)
+            continue
         h = SECTION.match(line)
         if h:
             section = h.group(1)
@@ -120,8 +146,23 @@ def parse(text=None):
     for it in items:
         b = LANE_IN_BODY.search(it.body)
         h = LANE_IN_HEADING.search(it.section)
-        it.lane = b.group(1) if b else (h.group(1) if h else "unassigned")
-        it.closed = bool(STRUCK.search(it.lines[0])) and bool(CLOSED_MARK.search(it.body))
+        known = lane_names()
+        it.lane = "unassigned"
+        for cand in (b.group(1) if b else None, h.group(1) if h else None):
+            if cand and (not known or cand in known):
+                it.lane = cand
+                break
+        head = "\n".join(it.lines[:2])
+        body = it.body
+        it.half = bool(HALF_MARK.search(head)) or bool(HALF_MARK.search(body))
+        # The UNION of the two conventions this file actually uses. Demanding BOTH a struck
+        # title and a closure paragraph counted 51 already-closed items as open - 22 of them
+        # registry's - so the tool's headline number was wrong by 17%. Either a struck title
+        # with a dated closure anywhere in the body, or a dated closure announced in the
+        # item's own first two lines, counts.
+        it.closed = (not it.half) and (
+            (bool(STRUCK.search(it.lines[0])) and bool(CLOSED_MARK.search(body)))
+            or bool(CLOSED_MARK.search(head)))
     # closed by a LATER section's archive bullet, original untouched: report, never archive
     bullets = collections.defaultdict(list)
     for line in lines:
@@ -149,7 +190,7 @@ def collisions(items):
 
 
 def render_index(items):
-    open_items = [i for i in items if not i.closed]
+    open_items = [i for i in items if not i.closed]      # `half` counts as open
     col = collisions(items)
     used = {i.num for i in items}
     gaps = sorted(set(range(1, max(used) + 1)) - used)
@@ -189,6 +230,7 @@ def render_index(items):
         out.append("")
         for i in rows:
             flag = " *(closed by a later bullet, original never edited)*" if i.bullet_closed else ""
+            flag += " *(half closed)*" if i.half else ""
             out.append("- **%d** `%s` %s%s" % (i.num, i.key, i.title, flag))
         out.append("")
     return "\n".join(out).rstrip() + "\n"
@@ -226,151 +268,31 @@ def index_is_current():
             "docs/BACKLOG.md's index is stale — run `python docs/backlog.py --write`")
 
 
-# ------------------------------------------------------------------ the archive split
-def do_archive(apply=False):
-    text = read(LIVE)
-    nl = "\r\n" if "\r\n" in text else "\n"
-    items = parse(text)
-    movable = [i for i in items if i.closed]
-    held = [i for i in items if i.bullet_closed]
-    print("%d items, %d strictly closed (move), %d closed only by a later bullet (HELD, never "
-          "auto-archived), %d open" % (len(items), len(movable), len(held),
-                                       len(items) - len(movable)))
-    for i in held:
-        print("  HELD %s L%d — a later bullet closes it and the original was never edited"
-              % (i.key, i.start))
-    moved_lines = sum(len(i.lines) for i in movable)
-    print("would move %d lines (%.1f%% of the file)" % (moved_lines,
-                                                        100.0 * moved_lines / len(text.split(nl))))
-    if not apply:
-        print("dry run; nothing written")
-        return 0
-
-    old_bodies = {(i.key, i.sha()) for i in items}
-    out, arch, seen = [], [], set()
-    by_start = {i.start: i for i in movable}
-    lines = text.split(nl)
-    n = 1
-    while n <= len(lines):
-        it = by_start.get(n)
-        if it is None:
-            out.append(lines[n - 1])
-            n += 1
-            continue
-        anchor = "%d-%s" % (it.num, it.lane)
-        while anchor in seen:
-            anchor += "-b"
-        seen.add(anchor)
-        arch += ["", "## %s" % anchor, ""] + it.lines
-        out.append("%d. ~~%s~~ — closed, moved verbatim to "
-                   "[`docs/backlog/closed.md`](backlog/closed.md#%s)."
-                   % (it.num, it.title, anchor))
-        n += len(it.lines)
-
-    os.makedirs(os.path.dirname(ARCHIVE), exist_ok=True)
-    head = ["# Backlog — closed items, moved verbatim",
-            "",
-            "Every item here was CLOSED in `docs/BACKLOG.md` and moved here by",
-            "`python docs/backlog.py archive --apply`, which refuses unless three proofs hold:",
-            "byte containment, body-hash set equality, and a round-trip sha256 that",
-            "reconstructs the pre-split file. Nothing here was retyped, reordered or edited.",
-            "",
-            "Item numbers are unchanged, so a citation of `BACKLOG <n>` still resolves; its",
-            "tombstone in the live file links here. Headings are `<number>-<lane>` because a",
-            "bare number does not identify an item in this repo.",
-            ""]
-    open(ARCHIVE, "w", encoding="utf-8", newline="").write(nl.join(head + arch) + nl)
-    open(LIVE, "w", encoding="utf-8", newline="").write(nl.join(out))
-
-    # proof 1 — byte containment
-    a_text = read(ARCHIVE)
-    bad = [i.key for i in movable if i.body.replace("\n", nl) not in a_text]
-    assert not bad, "PROOF 1 FAILED, not contained verbatim: %s" % bad
-    # proof 2 — body-hash set equality
-    now = {(i.key, i.sha()) for i in parse(read(LIVE)) if not TOMBSTONE.match(i.lines[0])}
-    arch_items = _parse_archive()
-    now |= {(k, h) for k, h in arch_items}
-    missing = {k for k, _ in old_bodies} - {k for k, _ in now}
-    altered = [(k, h) for k, h in old_bodies if k in {x for x, _ in now}
-               and (k, h) not in now and k not in {i.key for i in movable if False}]
-    assert not missing, "PROOF 2 FAILED, item keys lost: %s" % sorted(missing)
-    print("PROOF 1 byte containment: %d/%d moved bodies found verbatim" % (len(movable), len(movable)))
-    print("PROOF 2 key set: %d before, %d after, 0 lost" % (len(old_bodies), len(now)))
-    # proof 3 — round trip
-    rebuilt = _unarchive()
-    import subprocess
-    orig = subprocess.run(["git", "show", "HEAD:docs/BACKLOG.md"], cwd=ROOT,
-                          capture_output=True).stdout.decode("utf-8")
-    h1 = hashlib.sha256(rebuilt.encode("utf-8")).hexdigest()
-    h2 = hashlib.sha256(orig.encode("utf-8")).hexdigest()
-    print("PROOF 3 round trip: rebuilt %s vs HEAD %s -> %s"
-          % (h1[:12], h2[:12], "IDENTICAL" if h1 == h2 else "DIFFERS (see below)"))
-    if h1 != h2:
-        print("  the split is still reversible from the archive; the difference is the "
-              "tombstone lines, which are new text by construction")
-    print("archived %d items, %d lines" % (len(movable), moved_lines))
-    return 0
-
-
-def _parse_archive():
-    if not os.path.exists(ARCHIVE):
-        return []
-    text = read(ARCHIVE)
-    nl = "\r\n" if "\r\n" in text else "\n"
-    out, cur, key = [], [], None
-    for line in text.split(nl):
-        m = re.match(r"^## (\d+)-([a-z-]+)(-b)?$", line)
-        if m:
-            if key:
-                out.append((key, hashlib.sha256("\n".join(cur).strip("\n").encode()).hexdigest()[:16]))
-            key = "%s@%s" % (m.group(1), m.group(2))
-            cur = []
-            continue
-        if key is not None:
-            cur.append(line)
-    if key:
-        out.append((key, hashlib.sha256("\n".join(cur).strip("\n").encode()).hexdigest()[:16]))
-    return out
-
-
-def _unarchive():
-    """Reconstruct the pre-split live file: every tombstone replaced by its archived body."""
-    text = read(LIVE)
-    nl = "\r\n" if "\r\n" in text else "\n"
-    a = read(ARCHIVE) if os.path.exists(ARCHIVE) else ""
-    bodies, key, cur = {}, None, []
-    for line in a.split(nl):
-        m = re.match(r"^## (\d+-[a-z-]+(?:-b)?)$", line)
-        if m:
-            if key:
-                bodies[key] = cur
-            key, cur = m.group(1), []
-            continue
-        if key is not None:
-            cur.append(line)
-    if key:
-        bodies[key] = cur
-    out = []
-    for line in text.split(nl):
-        m = re.match(r"^\d+\. ~~.*~~ — closed, moved verbatim to .*#([0-9a-z-]+)\)\.$", line)
-        if m and m.group(1) in bodies:
-            b = bodies[m.group(1)]
-            while b and not b[-1].strip():
-                b = b[:-1]
-            while b and not b[0].strip():
-                b = b[1:]
-            out += b
-        else:
-            out.append(line)
-    return nl.join(out)
-
+# ---------------------------------------------- the archive split, and why it is not here
+# `archive --apply` / `unarchive` were written, and are deleted. Not because the design is
+# wrong - `docs/BACKLOG.md` 291 keeps it, with the measurement that says when to run it -
+# but because an adversarial pass found its three advertised proofs to be decorative, and a
+# destructive command with a guard rail that cannot fail is worse than no command:
+#
+#   * both `open(..., "w")` calls executed BEFORE the first assert, so a failed proof left
+#     two half-written files on disk with no rollback;
+#   * `TOMBSTONE` never matched the link the writer actually emitted, so the proof-2 filter
+#     removed nothing and key-set equality held trivially;
+#   * the `altered` list - the body-hash comparison the docstring and the generated archive
+#     header both promised - was computed and never asserted. 15 real mismatches;
+#   * proof 3 only printed, and its message explained the difference away with a reason
+#     that was false (14 dropped blank separators, not just the new tombstone lines).
+#
+# When it comes back it needs the writes after the proofs (temp file, rename on success),
+# `altered` asserted, and a round trip that is byte-identical rather than nearly so.
 
 # ------------------------------------------------------------------ CLI
 def cmd_stats(items):
     col = collisions(items)
-    print("items %d | open %d | closed %d | closed-by-bullet-only %d"
-          % (len(items), sum(1 for i in items if not i.closed),
-             sum(1 for i in items if i.closed), sum(1 for i in items if i.bullet_closed)))
+    print("items %d | open %d | closed %d | half-closed %d | closed-by-bullet-only %d"
+          % (len(items), sum(1 for i in items if not i.closed and not i.half),
+             sum(1 for i in items if i.closed), sum(1 for i in items if i.half),
+             sum(1 for i in items if i.bullet_closed)))
     print("numbers used %d | colliding %d (%s)" % (len({i.num for i in items}), len(col),
                                                    ", ".join(str(n) for n in col)))
     c = collections.Counter(i.lane for i in items if not i.closed)
@@ -384,11 +306,6 @@ def main(argv):
     if argv[0] == "--write":
         write_index()
         return 0
-    if argv[0] == "archive":
-        return do_archive(apply="--apply" in argv)
-    if argv[0] == "unarchive":
-        sys.stdout.write(_unarchive())
-        return 0
     items = parse()
     if argv[0] == "stats":
         cmd_stats(items)
@@ -398,15 +315,31 @@ def main(argv):
         return 0
     if argv[0] == "lane":
         want = argv[1] if len(argv) > 1 else ""
-        for i in sorted((x for x in items if x.lane == want and not x.closed), key=lambda x: x.num):
-            print("%4d  L%-5d %s" % (i.num, i.start, i.title))
+        known = lane_names() | {"unassigned"}
+        if want not in known:
+            print("unknown lane %r. For a tool whose job is 'a lane sees its own list in "
+                  "thirty seconds', a typo and an empty list must not look the same.\n"
+                  "known: %s" % (want, ", ".join(sorted(known))))
+            return 2
+        rows = sorted((x for x in items if x.lane == want and not x.closed),
+                      key=lambda x: x.num)
+        for i in rows:
+            print("%4d  L%-5d %s%s" % (i.num, i.start, "[half] " if i.half else "", i.title))
+        if not rows:
+            print("no open items for `%s`" % want)
         return 0
     if argv[0] == "show":
+        if len(argv) < 2 or not argv[1].isdigit():
+            print("usage: backlog.py show <number>")
+            return 2
         n = int(argv[1])
-        for i in items:
-            if i.num == n:
-                print("%-22s L%-5d %-8s %s" % (i.key, i.start,
-                                               "closed" if i.closed else "OPEN", i.title))
+        hits = [i for i in items if i.num == n]
+        for i in hits:
+            state = "half" if i.half else ("closed" if i.closed else "OPEN")
+            print("%-22s L%-5d %-8s %s" % (i.key, i.start, state, i.title))
+        if not hits:
+            print("no item numbered %d" % n)
+            return 1
         return 0
     if argv[0] == "check":
         bad = 0

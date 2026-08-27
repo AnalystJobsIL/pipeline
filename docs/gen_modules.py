@@ -249,7 +249,22 @@ for f in sorted(glob.glob("pipeline/*.py")):
     if PIPELINE.get(m):
         out.append("| `pipeline/%s.py` | %s |" % (m, PIPELINE[m]))
 
-noguard = [f for f in roots if "__main__" not in open(f, encoding="utf-8").read()]
+def _has_main_guard(src):
+    """Identical to docs/check_docs.py::_has_main_guard - a real module-level guard, parsed.
+    If these two diverge the `no_main_guard` fact goes permanently red."""
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return True
+    for node in tree.body:
+        if isinstance(node, ast.If):
+            d = ast.dump(node.test)
+            if "'__main__'" in d and "'__name__'" in d:
+                return True
+    return False
+
+
+noguard = [f for f in roots if not _has_main_guard(open(f, encoding="utf-8").read())]
 out.append("\n## Modules that execute on import\n")
 out.append("""%d root modules have no `if __name__ == "__main__"` guard, so *importing* them runs them.
 `merge_research.py` rewrites `research_companies.json` on import. All %d are `legacy`, so
@@ -260,8 +275,13 @@ text = "\n".join(out) + "\n"
 if len(sys.argv) > 1:
     # This module used to write on ANY invocation and had no argparse, so `--help` would
     # overwrite the very file it was being asked about. Every flag is now a dry run.
-    old = open("docs/MODULES.md", encoding="utf-8").read() if os.path.exists("docs/MODULES.md") else ""
-    if old == text:
+    # Read raw bytes and NORMALISE the eol on both sides. Text mode hides a real content
+    # difference behind universal newlines; a raw BYTE compare reports a false STALE on any
+    # checkout with a different eol, which with core.autocrlf=true is every Windows checkout
+    raw = (open("docs/MODULES.md", "rb").read().decode("utf-8")
+           if os.path.exists("docs/MODULES.md") else "")
+    old = raw.replace("\r\n", "\n")
+    if old == text.replace("\r\n", "\n"):
         print("docs/MODULES.md is up to date")
     else:
         import difflib
