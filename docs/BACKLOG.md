@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**359 filed · 253 open · 106 closed · 5 half · 31 numbers name more than one item · 28 items name no lane.**
+**359 filed · 253 open · 106 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 314.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 317.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -81,11 +81,9 @@ closure convention in the header.
 | 244 | `244@company-intel` **open** · `244@ats-fetch` **open** · `244@scraper` **open** |
 | 245 | `245@company-intel` **open** · `245@ats-fetch` **open** · `245@scraper` **open** |
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
-| 311 | `311@infra` **open** · `311@ats-fetch` **open** · `311@roles` **open** |
-| 312 | `312@roles` **open** · `312@roles` **open** |
-| 313 | `313@registry` **open** · `313@roles` **open** |
+| 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### infra — 65 open
+### infra — 66 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -152,8 +150,9 @@ closure convention in the header.
 - **307** `307@infra` **Seven workflows already print `python -m pipeline.stages` and none of them compares it to
 - **308** `308@infra` **A day on which GitHub drops every cron in BOTH repositories is undetectable by anything in
 - **311** `311@infra` **`_needs_git` skips 11 infra guards in a git WORKTREE
+- **314** `314@infra` **`persist_state._keyed_list`'s docstring says the merge only appends, and the code
 
-### registry — 64 open
+### registry — 66 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -219,6 +218,8 @@ closure convention in the header.
 - **288** `288@registry` **`Ericsson` returns one posting worldwide**
 - **290** `290@registry` **The Amazon / Microsoft twins of 232, re-measured
 - **313** `313@registry` **Parking a row conflates four different facts, and only one of them means "closed"** —
+- **315** `315@registry` **`--census` rewrites its own baseline every digest run, so a pool can alarm at most
+- **316** `316@registry` **`AUTO_EXPAND_LIMIT` has three different defaults in three places**
 
 ### scraper — 19 open
 
@@ -307,7 +308,7 @@ closure convention in the header.
 - **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
 - **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
 
-### roles — 10 open
+### roles — 7 open
 
 - **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
 - **143** `143@roles` **`roles.tenant_slug` is not a tenant**
@@ -315,10 +316,7 @@ closure convention in the header.
 - **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
 - **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
 - **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **311** `311@roles` **s docstring says the merge only appends, and the code it
 - **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
-- **312** `312@roles` ** rewrites its own baseline every digest run, so a pool can alarm at most
-- **313** `313@roles` ** has three different defaults in three places**
 
 ### classifier — 6 open
 
@@ -4831,31 +4829,38 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
     Ltd., SolarEdge Technologies, Innoviz Technologies, Orca-AI, Workday Inc, TechBiz Global
     GmbH).
 
-311. **s docstring says the merge only appends, and the code it
-     delegates to deletes** - lane:  (+ , which repeated it). The docstring reads
-     "merged as a dict by that key, origin s order kept, ours additions appended", and the
-      lane quoted it on 2026-08-27 as proof that  was
-     structurally incapable of shrinking - which shaped a whole plan. It is false:
-      carries an explicit deletion loop
-     ()
-     added for BACKLOG 95, *"without this rule a night s deletions came back on every
-     push-conflict night"*. Caught by  reading the code instead of the docstring.
-     Two real caveats the docstring should carry instead: a removal IS resurrected if origin
-     edited that same entry, and  has no mass-deletion guard of the kind the
-      paths have.
+314. **`persist_state._keyed_list`'s docstring says the merge only appends, and the code
+     it delegates to deletes** — lane: `infra` (+ `docs`, which repeated it). The docstring
+     reads *"merged as a dict by that key, origin's order kept, ours' additions appended"*,
+     and the `docs` lane quoted it on 2026-08-27 as proof that `research_companies.json` was
+     structurally incapable of shrinking — which shaped a whole plan for the operator. It is
+     false. `merge_json_cache.merge` carries an explicit deletion loop:
 
-312. ** rewrites its own baseline every digest run, so a pool can alarm at most
-     once and a slow drift never alarms at all** - lane: . Found while settling
-     whether the probe-pool alarm was a real regression: 127 (08-25) -> 224 (08-26) -> 219
-     (08-27), the 08-26 mail compared 224 against the pre-widening 127, and
-      is now . It fired once and
-     self-cleared - so neither side of "one of the two is wrong" was wrong, and what IS wrong
-     is s claim that it alarms every morning (now corrected). A one-shot alarm on a
-     self-rewriting baseline cannot see the drift it exists to catch.
+     ```python
+     for k in base:
+         if k not in ours and k in theirs and theirs[k] == base[k]:
+             del out[k]      # we deleted it, origin left it alone: the deletion stands
+     ```
 
-313. ** has three different defaults in three places** - lane: .
-     Module default 200, workflow default 250, dispatch-input description 200. Also
-     s docstring says "399 of 1,544 queue entries carry a slug"; the live
-     file is 465 of 1,693 and  puts the drainable-with-slug count at 282 -
-     three numbers for one fact.
+     added for BACKLOG 95 — *"without this rule a night's deletions came back on every
+     push-conflict night"*. Caught by `registry` reading the code where `docs` read the
+     docstring, on the day whose whole subject was documents that are green and wrong. Two
+     real caveats the docstring should carry instead: a removal IS resurrected if origin
+     edited that same entry, and `_keyed_list` has no mass-deletion guard of the kind the
+     `s_company_dict` paths have.
 
+315. **`--census` rewrites its own baseline every digest run, so a pool can alarm at most
+     once and a slow drift never alarms at all** — lane: `registry`. Found while settling
+     whether the probe-pool alarm was a real regression: 127 (08-25) → 224 (08-26) → 219
+     (08-27); the 08-26 mail compared 224 against the pre-widening 127, and
+     `cloud_state/registry_alarms.json` now reads `{"since":"2026-08-27","alarms":[]}`. It
+     fired once and self-cleared — so neither side of "one of the two is wrong" was wrong,
+     and what WAS wrong is `HANDOFF.md`'s claim that it alarms every morning (corrected
+     2026-08-27). A one-shot alarm on a self-rewriting baseline cannot see the drift it
+     exists to catch.
+
+316. **`AUTO_EXPAND_LIMIT` has three different defaults in three places** — lane:
+     `registry`. Module default 200, workflow default 250, dispatch-input description 200.
+     Same shape: `_site_from_slug`'s docstring says *"399 of 1,544 queue entries carry a
+     slug"*, the live file is 465 of 1,693, and `ARCHITECTURE.md` puts the
+     drainable-with-slug count at 282 — three numbers for one fact.
