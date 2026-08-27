@@ -1343,12 +1343,21 @@ def test_both_hunt_write_branches_route_through_the_identity_gate():
     """
     import inspect
     import listing_hunt
+
     src = inspect.getsource(listing_hunt.main)
     assert src.count("_gate.identity_ok(name, url)") >= 2, (
         "both the `found` (activates) and `nolisting` (persists fr[3]) branches must gate "
         "on _identity_ok; found %d call(s)" % src.count("_gate.identity_ok(name, url)"))
     body = src[src.index('elif verdict == "nolisting"'):]
     assert body.index("_gate.identity_ok(name, url)") < body.index("fr[3] = url")
+    # ...and the intake-queue arm carries its OWN copy, on its own variable. Extracting the
+    # shared decision into a helper was tried on 2026-08-27 and reverted:
+    # `test_every_registry_writer_consults_an_identity_predicate` walks the AST of the
+    # function that WRITES and does not follow calls, so the helper made the row loop's own
+    # write read as ungated. The duplication is forced by a completeness check, not laziness.
+    q = src[src.index("queue arm:"):]
+    assert q.count("_gate.identity_ok(name, q_url)") >= 2, q.count("_gate.identity_ok(name, q_url)")
+    assert q.index("_gate.identity_ok(name, q_url)") < q.index('row = [name, "scrape", keep')
 
 
 def test_crack_walled_main_cannot_activate_a_board_that_does_not_name_us(

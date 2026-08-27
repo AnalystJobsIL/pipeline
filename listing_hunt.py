@@ -178,6 +178,42 @@ def in_hunt_pool(r):
             and not _triaged_page_empty(r[5] or ""))
 
 
+def queue_targets(rows, cap):
+    """Intake names with NO registry row -- the pool nothing has ever worked (BACKLOG 332).
+
+    Every re-check pool in this lane keys on a ROW: this module reads `companies.csv` and
+    nothing else, and so do `triage_dark`, `crack_walled`, `deep_validate`,
+    `audit_empty_rows` and `probe_candidates`. A name in `research_companies.json` therefore
+    has no owner at any cadence, and exactly one scheduled tool looks at that file at all --
+    `auto_expand`, whose free rung guesses ATS slugs. Measured 2026-08-27 over the whole
+    queue: **453 of 495 names have no guessable board**, so that rung had nothing left to
+    say about 92% of the intake, and those names simply accumulated.
+
+    `hunt_one` has always been able to work them -- it takes a NAME and a seed, and with an
+    empty seed it searches. It was never given them.
+
+    **The row is the rotation key.** Every name this arm hunts gets a row, so it is not a
+    queue target again and the 05:00 prune drops it; from then on it is owned by this pool's
+    own 14-day cadence like any other row. That is why no new state file is needed, and why
+    `listing-hunt.yml` needs no change to its `--own` list.
+    """
+    have = {(r[0] or "").strip().lower() for r in rows if r}
+    try:
+        with open("research_companies.json", encoding="utf-8") as f:
+            ent = json.load(f)
+    except Exception:  # noqa: BLE001
+        return []                      # no queue is not an error; it is a quiet night
+    out = []
+    for e in ent:
+        nm = (e.get("name") or "").strip()
+        if not nm or nm.lower() in have or is_recruiter(nm) or looks_like_junk(nm):
+            continue
+        out.append(nm)
+        if len(out) >= cap:
+            break
+    return out
+
+
 def _triaged_page_empty(note):
     """Triage proved this row has a LIVE page with genuinely no roles, so the hunt
     skips it and triage owns the re-check -- UNLESS the daily probe has since woken the
@@ -356,6 +392,14 @@ def main():
     apply = "--apply" in sys.argv
     limit = int(os.environ.get("HUNT_LIMIT", "0"))
     budget_min = int(os.environ.get("HUNT_TIME_BUDGET_MIN", "0"))
+    # A RESERVED slice for the intake queue, taken off the row pool's end. Without it the
+    # queue arm runs last inside one shared budget and gets zero minutes on any busy night --
+    # which is how the intake accumulated to 488 names in the first place. The row pool has a
+    # 14-day cadence and ~204 rows; the queue had NO cadence and 488 names, so the trade is
+    # deliberate and stated rather than silent. `HUNT_QUEUE_MIN=0` gives the row pool
+    # everything back.
+    queue_min = int(os.environ.get("HUNT_QUEUE_MIN", "60")) if budget_min else 0
+    rows_budget_min = max(1, budget_min - queue_min) if budget_min else 0
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     _actionable_mode, _stale_hunt = actionable_mode, stale_hunt   # module-level: importable, testable
 
@@ -391,7 +435,7 @@ def main():
     t0 = time.time()
     if True:
         for n, (i, r) in enumerate(targets, 1):
-            if budget_min and (time.time() - t0) / 60 > budget_min:
+            if rows_budget_min and (time.time() - t0) / 60 > rows_budget_min:
                 print("time budget reached — stopping cleanly", flush=True)
                 break
             name = r[0]
@@ -494,8 +538,91 @@ def main():
                             f"listing-hunt {TODAY}: "
                             + ("no listing found" if verdict == "nolisting" else detail))
                 write_csv_rows("companies.csv", fresh)
+    # ---------------- the intake queue: names that have no row at all (BACKLOG 332)
+    # Runs LAST, inside the same time budget, so it can never displace the row pool this
+    # tool exists for. Every name it touches gets a row, which is both the answer (the
+    # company becomes owned by a nightly cadence) and the rotation key (it is not a queue
+    # target again).
+    # ~60 s per name measured over 488 intake names on 2026-08-27, so 60 reserved minutes
+    # is ~60 names -- roughly the rate new names arrive (BACKLOG 225 records +70/day). This
+    # arm is sized to KEEP PACE with intake, not to drain a backlog; the 2026-08-27 backlog
+    # was drained by hand and the drain is recorded in that session's log.
+    qcap = int(os.environ.get("HUNT_QUEUE_CAP", "60"))
+    qstats = {"found": 0, "nolisting": 0, "dead": 0, "refused": 0}
+    if qcap > 0:
+        rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
+        qnames = queue_targets(rows, qcap)
+        # SCRAPE_ASSUME_IL is set to "1" at the top of main() because THOSE targets are
+        # pre-vetted registry rows. Queue names are raw employer names off LinkedIn and
+        # secrethunter; with the flag on, every card on a page counts as an Israel role and
+        # `il >= 1` -- the rule that caught Lili -> Eli Lilly -- stops discriminating at
+        # exactly the moment it matters most.
+        os.environ["SCRAPE_ASSUME_IL"] = "0"
+        print(f"\nqueue arm: {len(qnames)} intake names with no row (cap {qcap})", flush=True)
+        for qn, name in enumerate(qnames, 1):
+            if budget_min and (time.time() - t0) / 60 > budget_min:
+                print(f"  time budget {budget_min}min reached at {qn}/{len(qnames)} queue "
+                      f"names — the rest keep their place in the queue", flush=True)
+                break
+            try:
+                verdict, q_url, n_il, detail = hunt_one(name, "")
+            except Exception as e:  # noqa: BLE001
+                verdict, q_url, n_il, detail = "dead", None, 0, f"error {str(e)[:50]}"
+            url = q_url
+            # DUPLICATED FROM THE ROW LOOP ABOVE, and the duplication is forced rather
+            # than lazy: `test_every_registry_writer_consults_an_identity_predicate` walks
+            # the AST of the function that WRITES and does not follow calls, so a shared
+            # helper makes both writes read as ungated -- which is the whole point of a
+            # completeness check that finds writers instead of trusting a typed list.
+            # Extracting it was tried on 2026-08-27 and reverted for exactly that reason.
+            q_refused = ""
+            if verdict == "found" and not looks_like_a_job_listing_page(url):
+                q_refused = "not a listings page"
+            elif verdict == "found" and not _gate.identity_ok(name, q_url):
+                q_refused = "another company's board"
+            # the ADDRESS gate, separate from the ACTIVATION gate: refusing to activate while
+            # still storing the address only delays the mistake 24 hours, because this tool's
+            # fast path re-reads it the next night (QuantLR -> quantlab.com, a US trading
+            # firm; FairFly -> fireflyspace.com).
+            keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else ""
+            if q_url and not keep:
+                q_refused = q_refused or "another company's board"
+            refused = q_refused
+            _k = ("found" if verdict == "found" and not refused
+                  else ("refused" if refused else verdict))
+            qstats[_k] = qstats.get(_k, 0) + 1
+            tag = "OK" if verdict == "found" and not refused else "XX" if refused else "--"
+            print(f"  [{tag}] q{qn}/{len(qnames)} {name}: {url or detail}"
+                  f"{f' ({n_il} IL)' if n_il else ''}"
+                  f"{f' — {refused}, not activated' if refused else ''}", flush=True)
+            if not apply:
+                continue
+            # re-read immediately before the append, and match by NAME: another writer may
+            # have added this company since `rows` was read (rule 4, ARCHITECTURE section 2)
+            fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+            if any(fr and fr[0].strip().lower() == name.lower() for fr in fresh):
+                continue
+            if verdict == "found" and not refused:
+                row = [name, "scrape", keep, keep, "true",
+                       f"listing-hunt {TODAY}: queue-hunt; verified {n_il} IL via "
+                       f"{urlparse(keep).netloc or keep[:40]}"]
+            elif keep:
+                # the page is real and reachable but has no Israel role today. THIS is the
+                # row that stops us missing the job: an http, non-aggregator address puts it
+                # in `probe_candidates`' daily pool, which wakes it the day signals rise.
+                row = [name, "scrape", keep, keep, "false",
+                       f"listing-hunt {TODAY}: queue-hunt; no IL listing; monitored candidate"]
+            else:
+                # nothing reachable, or the page belongs to someone else. No address is
+                # persisted -- a wrong one is worse than none, and this pool searches by
+                # NAME when the seed is empty, so the row is still fully workable.
+                row = [name, "scrape", "", "", "false",
+                       f"listing-hunt {TODAY}: queue-hunt; no listing found"]
+            with open("companies.csv", "a", newline="", encoding="utf-8") as f:
+                csv.writer(f).writerow(row)
     print(f"\n=== listing hunt: {stats}, picker calls {_LLM_USED['n']}"
-          f"{'/CAPPED' if not _llm_budget_left() else ''} ===", flush=True)
+          f"{'/CAPPED' if not _llm_budget_left() else ''}"
+          f"; queue arm {qstats}", flush=True)
 
 
 if __name__ == "__main__":

@@ -13947,3 +13947,96 @@ def test_the_only_working_search_rung_actually_parses_a_result(monkeypatch):
     # the exit node is Bright Data's and it lands wherever it lands -- Kazakhstan on
     # 2026-08-27, whose index returns job-aggregator spam for an Israeli employer
     assert "gl=il" in asked["url"] and "hl=en" in asked["url"], asked["url"]
+
+
+def test_the_hunt_reaches_intake_names_that_have_no_registry_row(tmp_path, monkeypatch):
+    """BACKLOG 332. Every re-check pool in this lane keys on a ROW -- this module reads
+    `companies.csv` and nothing else, and so do triage_dark, crack_walled, deep_validate,
+    audit_empty_rows and probe_candidates. A name in `research_companies.json` therefore had
+    no owner at any cadence, and the ONE scheduled tool that reads that file (`auto_expand`)
+    guesses ATS slugs -- which measured 453 of 495 intake names with no guessable board on
+    2026-08-27. Those companies simply accumulated, and their jobs were never seen.
+
+    `hunt_one` could always work them: it takes a NAME, and with an empty seed it searches.
+    It was never given them."""
+    import csv as _csv
+    import json as _j
+    import sys as _sys
+
+    import listing_hunt as H
+
+    d = tmp_path / "q"
+    d.mkdir()
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Known Co,scrape,,https://known.example/careers,true,fine\n", encoding="utf-8")
+    (d / "research_companies.json").write_text(_j.dumps([
+        {"name": "Known Co", "careers_url": "https://il.linkedin.com/jobs/view/1"},
+        {"name": "Fresh Analytics", "careers_url": "https://il.linkedin.com/jobs/view/2"},
+        {"name": "Ethosia", "careers_url": "https://il.linkedin.com/jobs/view/3"},
+        {"name": "Sql developer - remote", "careers_url": "https://il.linkedin.com/jobs/view/4"},
+    ]), encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(_sys, "argv", ["listing_hunt.py"])
+    rows = list(_csv.reader(open(d / "companies.csv", encoding="utf-8")))
+    got = H.queue_targets(rows, 10)
+    assert "Fresh Analytics" in got, got
+    assert "Known Co" not in got, "a name that already has a row is not an intake target"
+    assert "Ethosia" not in got, "recruiting agencies are excluded everywhere (recruiters.py)"
+    assert "Sql developer - remote" not in got, "discovery leaks job titles in as companies"
+    # the cap is the nightly bound; the ROW is the rotation key, so a hunted name is not a
+    # target again and no new state file (and no `--own` change) is needed
+    assert len(H.queue_targets(rows, 1)) == 1
+
+
+def test_the_queue_arm_never_persists_an_address_that_is_not_the_companys(tmp_path,
+                                                                          monkeypatch,
+                                                                          capsys):
+    """Three row shapes, and the middle one is the point of the whole change: a reachable
+    careers page with no Israel role TODAY becomes a PARKED row carrying that address, which
+    is what puts the company into `probe_candidates`' daily pool -- so the day it posts an
+    Israel job, we see it. That is the mechanism against "we're missing jobs".
+
+    The third shape is the guard: when the page belongs to someone else, no address is
+    persisted at all. `listing_hunt`'s own fast-path re-reads `fr[3]` the next night, so
+    refusing to ACTIVATE while still storing the ADDRESS only delays the same mistake by 24
+    hours -- the shape wave 6 fixed in `crack_walled`."""
+    import csv as _csv
+    import json as _j
+    import sys as _sys
+
+    import listing_hunt as H
+
+    d = tmp_path / "qa"
+    d.mkdir()
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    (d / "research_companies.json").write_text(_j.dumps([
+        {"name": "Real Co", "careers_url": "https://il.linkedin.com/jobs/view/1"},
+        {"name": "Quiet Co", "careers_url": "https://il.linkedin.com/jobs/view/2"},
+        {"name": "Impostor Co", "careers_url": "https://il.linkedin.com/jobs/view/3"},
+    ]), encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(_sys, "argv", ["listing_hunt.py", "--apply"])
+    monkeypatch.setenv("HUNT_QUEUE_CAP", "5")
+    monkeypatch.setenv("SCRAPE_ASSUME_IL", "1")        # main() sets this for its ROW targets
+    answers = {"Real Co": ("found", "https://real.example/careers", 4, "ok"),
+               "Quiet Co": ("nolisting", "https://quiet.example/careers", 0, "no il"),
+               "Impostor Co": ("found", "https://someone-else.example/jobs", 3, "ok")}
+    monkeypatch.setattr(H, "hunt_one", lambda name, seed, **k: answers[name])
+    monkeypatch.setattr(H, "looks_like_a_job_listing_page", lambda u: True)
+    monkeypatch.setattr(H._gate, "identity_ok",
+                        lambda name, url: "someone-else" not in (url or ""))
+    H.main()
+    rows = {r[0]: r for r in _csv.reader(open(d / "companies.csv", encoding="utf-8"))}
+
+    assert rows["Real Co"][4] == "true" and rows["Real Co"][3] == "https://real.example/careers"
+    assert "4 IL" in rows["Real Co"][5], rows["Real Co"][5]
+    # the monitored row: parked, but WITH the address, so the daily probe owns it
+    assert rows["Quiet Co"][4] == "false"
+    assert rows["Quiet Co"][3] == "https://quiet.example/careers"
+    assert "monitored candidate" in rows["Quiet Co"][5], rows["Quiet Co"][5]
+    # the impostor: a row, so the name stops accumulating -- but NO address
+    assert rows["Impostor Co"][4] == "false" and rows["Impostor Co"][3] == ""
+    # queue names are NOT pre-vetted, so every card on a page must not count as Israel
+    assert os.environ["SCRAPE_ASSUME_IL"] == "0"

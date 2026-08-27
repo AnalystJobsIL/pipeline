@@ -1979,5 +1979,65 @@
   "killers": [
    "tests/test_registry.py::test_triage_never_writes_another_tools_pool_token_inside_its_own_segment"
   ]
+ },
+ {
+  "id": "hunt-keep-address-ungated",
+  "file": "listing_hunt.py",
+  "symbol": "main",
+  "class": "M1-gate-removal",
+  "find": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else \"\"",
+  "replace": "            keep = q_url",
+  "why": "refusing to ACTIVATE while still writing the ADDRESS only delays the mistake 24 hours -- this tool's fast path re-reads fr[3] the next night. QuantLR's best candidate was quantlab.com and FairFly's was fireflyspace.com.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "hunt-keep-address-invert",
+  "file": "listing_hunt.py",
+  "symbol": "main",
+  "class": "M2-gate-inversion",
+  "find": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else \"\"",
+  "replace": "            keep = q_url if (q_url and not _gate.identity_ok(name, q_url)) else \"\"",
+  "why": "refusing to ACTIVATE while still writing the ADDRESS only delays the mistake 24 hours -- this tool's fast path re-reads fr[3] the next night. QuantLR's best candidate was quantlab.com (a US trading firm) and FairFly's was fireflyspace.com.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "hunt-keep-address-narrow",
+  "file": "listing_hunt.py",
+  "symbol": "main",
+  "class": "M3-branch-narrowing",
+  "find": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else \"\"",
+  "replace": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url) is None) else \"\"",
+  "why": "refusing to ACTIVATE while still writing the ADDRESS only delays the mistake 24 hours -- this tool's fast path re-reads fr[3] the next night. QuantLR's best candidate was quantlab.com (a US trading firm) and FairFly's was fireflyspace.com.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "hunt-queue-identity-remove",
+  "file": "listing_hunt.py",
+  "symbol": "main",
+  "class": "M1-gate-removal",
+  "find": "            elif verdict == \"found\" and not _gate.identity_ok(name, q_url):",
+  "replace": "            elif False:",
+  "why": "the intake-queue arm ACTIVATES a row for a company that had none, off a URL a search engine returned -- the CyberArk->PANW / Lili->Eli Lilly shape. It carries its own copy of the gate because the AST completeness check does not follow calls.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "hunt-queue-identity-invert",
+  "file": "listing_hunt.py",
+  "symbol": "main",
+  "class": "M2-gate-inversion",
+  "find": "            elif verdict == \"found\" and not _gate.identity_ok(name, q_url):",
+  "replace": "            elif verdict == \"found\" and _gate.identity_ok(name, q_url) is None:",
+  "why": "the intake-queue arm ACTIVATES a row for a company that had none, off a URL a search engine returned -- the CyberArk->PANW / Lili->Eli Lilly shape. It carries its own copy of the gate because the AST completeness check does not follow calls.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "hunt-queue-identity-narrow",
+  "file": "listing_hunt.py",
+  "symbol": "main",
+  "class": "M3-branch-narrowing",
+  "find": "            elif verdict == \"found\" and not _gate.identity_ok(name, q_url):",
+  "replace": "            elif verdict == \"found-never\" and not _gate.identity_ok(name, q_url):",
+  "why": "the intake-queue arm ACTIVATES a row for a company that had none, off a URL a search engine returned -- the CyberArk->PANW / Lili->Eli Lilly shape. It carries its own copy of the gate because the AST completeness check does not follow calls.",
+  "must_be_killed_by_behavioural": true
  }
 ]
