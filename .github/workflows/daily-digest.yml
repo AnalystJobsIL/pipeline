@@ -28,7 +28,12 @@ name: Daily jobs digest (cloud)
 on:
   schedule:
     - cron: "0 5 * * *"      # 05:00 UTC ≈ 08:00 Israel (IDT). Adjust as you like.
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      ignore_cutoff:
+        description: "deliver even past the relay's last poll (an operator re-run; still marks nothing sent)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write             # to commit updated cloud_state back to the repo
@@ -153,7 +158,7 @@ jobs:
           # step below a no-op), and writes cloud_state/last_delivered.json -- committed by
           # the persist step in the SAME commit as latest.md, never as a second writer.
           # ARCHITECTURE section 4. It still exits 1 when the run wrote no digest at all.
-          python persist_state.py deliver --date "$(date -u +%F)"
+          python persist_state.py deliver --date "$(date -u +%F)" \n            ${{ github.event.inputs.ignore_cutoff == 'true' && '--ignore-cutoff' || '' }}
 
       # The marks (sqlite `sent` + the ledger mirror) and digests/latest.md land in ONE commit
       # below, so a persist failure burns nothing; the only window left is the relay itself

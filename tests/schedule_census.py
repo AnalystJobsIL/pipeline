@@ -168,7 +168,9 @@ def census(runs, slots, days, now, grace_min, since=None):
                 if due > now:
                     continue
                 born = since.get((stem, cron))
-                if born is not None and due < born:
+                if born is None:
+                    continue               # undatable: see the warning in main(). NEVER score
+                if due < born:
                     continue               # the cron did not exist yet: not a missed dispatch
                 hit = next((w for w in pool if w >= due), None)
                 # a run belongs to the LAST slot it is after, so 22:53 is auto-expand's
@@ -241,7 +243,10 @@ def main(argv=None):
     print("# a slot counts as due only from the moment its cron reached the branch")
     for (stem, cron), born in sorted(since.items()):
         if born is None:
-            print(f"# {stem} `{cron}`: git cannot date this cron; scored for the whole window")
+            print(f"::warning::schedule_census: {stem} `{cron}` is not in git history (an "
+                  f"uncommitted draft?) -- SKIPPED ENTIRELY, not scored. Scoring it would "
+                  f"count every slot since the window opened as a drop, and drops are what "
+                  f"this tool is asked to decide on.")
         elif born > now - dt.timedelta(days=a.days):
             print(f"# {stem} `{cron}` reached the branch {born:%Y-%m-%dT%H:%MZ}; "
                   f"earlier slots are not counted")

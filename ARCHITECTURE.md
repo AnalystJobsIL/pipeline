@@ -1468,24 +1468,86 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 | `0 4 * * 0` | audit-coverage | Sunday: wayback rescue, empty cross-validation, full parked-row re-audit (cheap rung, then `deep_validate`'s Chromium rung over what stayed dark — the Saturday cron until 2026-08-26), **liveness re-scan (revives domains), walled-ATS re-crack**, coverage report |
 | on push | tests | `pytest` (which runs `docs/check_docs.py`), `check_invariants.py`, `pipeline.platform_check`, the mutation gate — the only workflow with no `continue-on-error` step |
 
-**When the email actually arrives.** The 05:00 cron is queued by GitHub for ~35 minutes
-and the job runs ~30 (05:36→06:08 on 2026-08-25, run 32813499709), so the digest lands on
-`master` at ~06:08. The relay used to poll at 05:45 and 08:30: the 05:45 pass found
-yesterday's file every morning (run 32815273635 at 06:02 printed `already posted … 08-24`)
-and the mail waited for 08:30 — inbox issues at 05:59, 08:59, 06:23 on three consecutive
-days. Since 2026-08-25 the relay polls at **06:17, 07:17, 08:17 and 10:17**, deduped by the
-sha256 of `digests/latest.md`, so **expect the email at ~06:20 UTC (09:20 Israel)**; a
-slow run or a re-run is caught by the later passes. Re-derive with
-`gh issue list -R AnalystJobsIL/inbox --limit 5 --json createdAt,title`.
+**When the email actually arrives — and it is not ~06:20.** The 05:00 cron is queued by
+GitHub for ~35 min and the job runs ~30 (05:38→06:04 on 2026-08-26, run 32934864207), so the
+digest lands on `master` at ~06:08. The relay polls `17 6,7,8,10 * * *`, deduped by the
+sha256 of `digests/latest.md`. That reads as a mail at ~06:20, and **it has never been
+true**: the 08-26 issue was created **07:10:36Z** and the 08-25 one **09:01:19Z**.
+
+The cause is not this side. On 2026-08-26 the digest finished **06:04:14Z, thirteen minutes
+inside the 06:17 window**, and the relay's own four polls were dispatched at 07:10 / 08:01 /
+09:04 / 10:52 — every one 35–53 min late. **The relay's cron is subject to exactly the same
+scheduler as ours, so adding poll slots cannot fix a lagged slot.** Expect the mail
+**between ~06:50 and ~09:10 UTC**, and re-derive rather than trusting this sentence:
+
+```bash
+gh issue list -R AnalystJobsIL/inbox --limit 5 --json createdAt,title
+gh run list -R AnalystJobsIL/inbox --limit 8 --json createdAt,event    # the poll's OWN lag
+```
+
+**The relay's last poll is 10:17, and it is a poller, not a queue.** A digest committed
+after it is not mailed late; it is not mailed that day at all. That deadline is what
+`persist_state.py deliver` enforces — see *A digest is only delivered if it can still be
+mailed*, below.
+
+### Nothing here notices a cron that did not fire, and a second cron would not have
+
+**2026-08-27: GitHub dispatched 1 of the 5 crons due by 09:58** — the 00:00 refresh arrived
+at 05:41 (+341 min) and 02:30, 05:00 and 06:00 were dropped outright. All three due relay
+polls in `AnalystJobsIL/inbox` were dropped the same day. No board, no email, **and no alarm
+anywhere**, because every "the run broke" path below fires from *inside* a later digest:
+a job that never starts emits nothing, so silence reads as success (BACKLOG `292@infra`).
+
+This is upstream behaviour, not a defect here. GitHub documents that scheduled events are
+delayed under load and that *"if the load is sufficiently high enough, some queued jobs may
+be dropped"*. So the design question was never "make the cron reliable".
+
+**A second, offset digest cron was proposed on 2026-08-27 and rejected on measurement.**
+`python tests/schedule_census.py` counts **isolated single-slot drops** — a slot missed
+while its neighbours fired, which is the only shape a recovery cron can rescue. On
+2026-08-27 that count was **0**:
+
+| day | due | fired |
+|---|---|---|
+| 2026-08-22 → 08-26 | 38 | **38** |
+| 2026-08-27 (by 10:27) | 4 | **1** |
+
+Every drop belongs to one correlated event spanning eight hours and two repositories. A
+second slot in the same repo has **no measured independence from the first**, and neither a
+recovery cron nor a watchdog cron would have produced anything on 2026-08-27. The decision
+is pre-committed rather than left to the next bad morning, and the tool prints it:
+
+> **≥ 3 isolated single-slot drops in the window ⇒ build the recovery cron. Otherwise it
+> stays rejected.** Re-measured 2026-09-10 (`HANDOFF.md`, morning checks).
+
+Two things were also rejected, and the reasons are worth keeping:
+
+* **A watchdog that writes `digests/latest.md`.** That path is `SINGLE_WRITER: daily-digest`;
+  its conflict rule is `s_ours`, and `merge_conflicted` suppresses the overwrite warning for
+  exactly those paths. A watchdog deciding "no digest" at 09:43 while a late digest commits
+  at 09:44 would lose the push race and write its notice **over a delivered digest whose
+  roles are already marked sent** — turning a late day into a permanently lost one
+  (BACKLOG `160@infra`). The safe home for that check is the relay repo, which already holds
+  the notification credential and already fetches the file.
+* **A watchdog asserting *a run exists today*.** A run whose work was skipped is still a
+  green run. The artefact is the only honest assertion, which is why the receipt below
+  exists.
+
+**What is left unfixed, stated plainly:** a day on which GitHub drops every cron in both
+repositories remains **undetectable by anything in this system**. The only mechanisms that
+would fix it live outside GitHub, and none is built.
 
 **Concurrency:** eight of the nine scheduled workflows share the `repo-state` group, so a
 long run makes the next one queue or be superseded with no error. `daily-digest.yml` has its
 own group on purpose, so a digest CAN overlap an audit/hunt run; both re-read before writing,
 so verdicts survive (§2, the single-writer rule).
 
-**A third scheduler exists and is not in this table:** the Windows scheduled task
-`IsraeliJobs-Firmographics` runs `run_firmo_chain.cmd` every 6h on the owner's machine (§7).
-It is not a GitHub Action and nothing here can see whether it ran.
+**A third scheduler used to exist and is now disabled:** the Windows scheduled task
+`IsraeliJobs-Firmographics` ran `run_firmo_chain.cmd` every 6h on the owner's machine (§7).
+It is `Disabled` as of 2026-08-27 — production belongs in the cloud, and it was writing
+`cloud_state/firmographics.json` into the *shared* checkout without committing, so another
+lane's `git pull --rebase` stashed 22 researched companies. Its work is
+`.github/workflows/firmographics.yml`. `docs/AUTOMATION.md` carries the full inventory.
 
 Latency: active API rows — **same-day**; active scrape rows — **~1 day** (00:00 refresh →
 05:00 digest); monitored candidates — **~1–2 days** (probe wake → 19:00 hunt verify → next
@@ -1578,6 +1640,85 @@ nothing; the one window left is the relay itself (BACKLOG 6). A `mark_sent` cras
 `continue-on-error` (a re-emailed role beats a withheld digest) and reaches tomorrow's mail
 through `cloud_state/last_run.json`.
 
+### A digest is only delivered if it can still be mailed (2026-08-27)
+
+`digests/latest.md` **is** the email. Until 2026-08-27 the pipeline step ended in an
+unconditional `cp out/digest-$(date -u +%F).md digests/latest.md`, and that one line carried
+three failures. It is now `python persist_state.py deliver --date "$(date -u +%F)"`, still
+inside the same step — no new workflow, no new cron, no new named step.
+
+1. **A THINNER digest never replaces a fatter one.** `store.filter_new` drops roles already
+   in `sent`, so a second run the same day renders fewer — often `0 new senior analytics
+   roles`. The `cp` put that over the morning's real digest; the relay hashes the file, saw
+   new bytes, and would have mailed the thin one, whose missing roles are already marked
+   sent and never come back. `deliver` refuses a replacement that is empty, is
+   `digest.py`'s render stub, **or carries fewer roles than `cloud_state/last_delivered.json`
+   says today already delivered**. Weakness is relative, not absolute: an attacker showed a
+   stale re-run rendering 3 where the morning had 8 walking straight past a `roles <= 0`
+   test and burning five roles permanently. It also makes an operator `workflow_dispatch`
+   re-run safe, which it was not before.
+2. **Past the relay's last poll, the roles carry to tomorrow instead of burning.**
+   `mark_sent` records intent, not delivery (BACKLOG `6@infra`). `deliver` withholds both
+   `digests/latest.md` and `DIGEST_JSON`; the `mark_sent` step is already guarded on
+   `DIGEST_JSON` being non-empty, so withholding it is what leaves the roles unmarked, and
+   `build_notice` already prints the right sentence for it. The deadline is
+   `RELAY_LAST_POLL_UTC` (default `10:17`) less `DELIVER_MARGIN_MIN` (default 20, covering
+   `mark_sent` → `gate` → `census` → `persist`). **Break glass:** after two mornings with no
+   delivery it delivers anyway, because a cutoff that fires every day would defer for ever
+   and the alarm for that lives in the mail it is deferring. No receipt at all also breaks
+   the glass — never defer a day's mail on the strength of a file that has never existed, and
+   so does a receipt dated in the FUTURE, which would otherwise hold the cutoff shut for ever
+   while `_receipt_alarms` stayed silent about it. **Break-glass writes the file but never
+   marks:** past the cutoff `DIGEST_JSON` is withheld whatever the reason, because a digest
+   written after the last poll is overwritten by tomorrow's run before tomorrow's first poll,
+   and marking it would burn roles that were never mailed. A role emailed twice beats one
+   withheld. An operator can force delivery with the `ignore_cutoff` dispatch input; that too
+   marks nothing.
+
+   **What deferral does NOT do is carry every role.** `run.py` selects the mail with
+   `get_matched_since(today - 1 day)`, a two-bucket window that MOVES, so a role first seen
+   yesterday and not mailed today is outside it tomorrow and every day after — on the board,
+   unmarked, unreachable (BACKLOG `309@roles`). `deliver` therefore counts the split instead
+   of asserting the happy version: `so 5 of 8 role(s) lead the next digest; the other 3 …
+   fall outside tomorrow's 48h email window`.
+3. **It reads origin, not its own checkout — and knows when it could not.**
+   `actions/checkout` resolves `github.sha` when the RUN IS CREATED, not when the runner
+   starts, so a queued or re-dispatched job holds a tree from before the morning's own push
+   and would overwrite it believing it was first. Both `digests/latest.md` and the receipt
+   are read from `origin/<branch>`. **A failed `git fetch` is not a healthy read:** the
+   remote-tracking ref still exists (checkout left it at that same stale sha), so
+   `git show origin/…` succeeds and the log used to say `origin` — one discarded return
+   value disarmed the entire guard, reproduced by an attacker as an empty digest replacing
+   the morning's mail. A failed fetch is now an `::error::`, the source is labelled
+   `STALE origin/<branch> (fetch failed)`, and anything that cannot be proved safe is
+   refused. **A refusal also re-syncs the worktree's `latest.md` with origin**, so the
+   persist step's conflict path finds `ours == theirs` and cannot push checkout-era bytes
+   back over the real digest under `s_ours` (whose overwrite warning is suppressed for
+   `SINGLE_WRITER` paths — BACKLOG `160@infra`).
+   `tests/rehearse_infra.py --twice` replays all of it on temporary repos, with the stale
+   run rendering 3 roles against origin's 8.
+4. **`cloud_state/last_delivered.json` records what reached `digests/latest.md`** — date,
+   the sha256 of the bytes, the role count, the reason. It is written by `deliver` and
+   staged by the SAME persist step (`--own cloud_state … digests/latest.md`), so the receipt
+   and the file it describes are one commit, and `daily-digest` is the only workflow that
+   owns `cloud_state` as a directory. A failing gate restores the two **together**
+   (`persist_state.PAIRED`), so origin can never carry a receipt for a digest it does not
+   have. `run.py::_receipt_alarms` turns a gap of two days or more into a bold `Stages:`
+   line in the next mail — **and checks the receipt's `sha256` against the file**, because a
+   receipt trusted blindly would hide the very morning it lost.
+
+   **It is a write receipt, not a delivery receipt.** Whether the relay then mailed the file
+   is not observable from this repo at all (BACKLOG `161@infra`: the relay marks nothing). On
+   a day the relay's own crons are dropped — 2026-08-27 — every write still succeeds and the
+   receipt still reads healthy.
+
+**`last_run.json` is not that receipt, and mistaking it for one has already cost two backlog
+items.** `persist_state.py outcome` writes it **only when a run was unhealthy**, and
+`_last_run_alarms` returns early on a healthy record without ever reading its date. On
+2026-08-27 it read `2026-08-25` for the honest reason that no digest had FAILED since.
+BACKLOG `294@infra` and `224@infra` filed that as a degraded alarm feed; both are closed as
+wrong. The heartbeat is `last_delivered.json`.
+
 **Reading a run.** The digest log is grouped by phase (`::group::`), every failure is an
 annotation (`::error::pipeline crashed in phase 'classify …': KeyError: …`,
 `::error::invariant: …`), and the run page's summary carries the mail's alarm lines, the
@@ -1607,7 +1748,8 @@ alarm lines (2026-08-25 against `dcca442`: exactly `+ - **Stages:** repair never
 | `cloud_state/scan_seen.json` | the liveness re-scan's rotation | scan_dead_domains (digest; the Sunday audit commits it since 2026-08-25 — BACKLOG 17) |
 | `cloud_state/firmographics.json` | **the shared, git-mergeable export of the `firmographics` table.** sqlite cannot be merged, so this text file is what the local and cloud stores converge through; the digest reads sqlite ∪ this file (fresher `as_of` wins) and writes the union back | `research_firmographics.py --export`, `pipeline/run.py` — merged per company on a conflict |
 | `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest alarms in the mail when a prerequisite stage did not run today | listing-hunt (`repair`), scrape-refresh (`collect`, with its counts), auto-expand (`expand`), the digest (`enrich` via `jdfill.record_enrich`, `publish`) — **merged per stage key on a conflict** (§4; until 2026-08-25 a conflict deleted other jobs' stamps) |
-| `cloud_state/last_run.json` | the digest job's outcome when something failed: date, status, failed steps, run URL (§4) | `persist_state.py outcome`, from the digest's last step |
+| `cloud_state/last_run.json` | the digest job's outcome **when something failed**: date, status, failed steps, run URL (§4). Written ONLY on an unhealthy run, so a healthy day leaves yesterday's or last week's in place — that is correct, not stale, and `_last_run_alarms` returns early on a healthy record without reading the date. It is **not** a heartbeat; `last_delivered.json` is | `persist_state.py outcome`, from the digest's last step |
+| `cloud_state/last_delivered.json` | the receipt for what actually reached the mail: date, sha256 of the `digests/latest.md` bytes, role count, first line, and why it was allowed through (§4). Written only on a successful delivery, in the SAME commit as the file it describes; `run.py::_receipt_alarms` alarms in the next mail when it is two days or more behind | `persist_state.py deliver`, from the digest's pipeline step |
 | `cloud_state/registry_census.json`, `registry_alarms.json`, `registry_ladder.json` | the registry health census, its alarms, the resolution-ladder probe | `registry_health.py` (digest `--census`; listing-hunt `--ladder`) |
 | `cloud_state/source_health.json` | per discovery source: records returned this run, and the last day it returned any (`pipeline/sources.py`). A source that goes quiet is a workflow warning AND a line in the digest audit — Indeed returned zero for five days unnoticed | discovery_daily, discovery_telegram |
 | `digests/latest.md`, `docs/index.html`, `docs/archive.html` | the email, the board, the archive — what the relay and the board repo read | the digest (`latest.md` is also the failure notice on a lost day, §4) |
@@ -1622,7 +1764,7 @@ alarm lines (2026-08-25 against `dcca442`: exactly `+ - **Stages:** repair never
 | `scraped_cache.json`, `cloud_state/firmographics.json`, `health_baseline.json`, `stale.json`, `scan_seen.json` | per company key (`merge_json_cache.merge`); a key the run dropped and origin left alone stays dropped (BACKLOG 95) — unless the run dropped more than a quarter of the base (a broken run, not deletions: kept, with a warning); a corrupt side yields to the other, never `{}` |
 | `cloud_state/pipeline_stages.json` | per stage key; the side that did not touch a stage yields, both touched → the newer `finished_at`; a stamp is never deleted |
 | `discovered_cache.json`, `research_companies.json` | JSON lists merged by `(company, title)` / `name` (BACKLOG 10/30) |
-| everything else the job owns (`seen.db`, `roles*.jsonl`, `digests/latest.md`, `docs/*.html`, the per-workflow state files) | the run's bytes — one cloud writer each; an unlisted path is taken the same way with a `::warning::` |
+| everything else the job owns (`seen.db`, `roles*.jsonl`, `digests/latest.md`, `docs/*.html`, the per-workflow state files) | the run's bytes — one cloud writer each; an unlisted path is taken the same way with a `::warning::`. **Since 2026-08-27, a run that did not TOUCH the file (`ours == base`) yields to origin instead**: it has no opinion, and `ours` winning unconditionally meant a run that deliberately declined to write a path still pushed its checkout-era copy over a newer one — silently, because the overwrite warning is suppressed for exactly these paths (BACKLOG `160@infra`) |
 
 The writers column is the `--own` list of each workflow's persist step (`grep -n -- --own
 .github/workflows/*.yml`); `test_every_path_a_workflow_owns_has_a_persist_strategy` fails

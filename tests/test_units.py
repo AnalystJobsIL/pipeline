@@ -11317,8 +11317,12 @@ def _tree(tmp, latest=None, roles=3, date="2026-08-27", first=None, receipt=None
     return tmp
 
 
-def _deliver(ps, tmp, date="2026-08-27", extra=()):
-    rc = ps.main(["deliver", "--date", date, "--into", tmp, "--no-fetch", *extra])
+def _deliver(ps, tmp, date="2026-08-27", extra=(), fetch=False):
+    """`fetch=False` adds `--no-fetch`: most guards want no network call. A guard testing
+    the FETCH-FAILED path must pass `fetch=True`, or `trusted` never goes False and the
+    guard silently proves nothing -- which is what the first draft of it did."""
+    argv = ["deliver", "--date", date, "--into", tmp] + ([] if fetch else ["--no-fetch"])
+    rc = ps.main(argv + list(extra))
     try:
         with open(os.path.join(tmp, "digests", "latest.md"), encoding="utf-8") as f:
             landed = f.readline().strip()
@@ -11471,3 +11475,176 @@ def test_the_run_date_is_one_clock_and_it_is_utc():
     m = re.search(r"^\s*run_date = run_date or (.+)$", src, re.M)
     assert m and "timezone.utc" in m.group(1), \
         "pipeline.run's default run date is not UTC: %s" % (m.group(1) if m else "not found")
+
+
+# --- wave 3 (2026-08-27): every one of these is a defect three Opus attackers reproduced in
+# --- THIS branch before it was pushed. The guard names say what they found.
+
+def test_a_thinner_digest_never_replaces_a_fatter_one(tmp_path):
+    """Weakness is RELATIVE. The first draft tested `roles <= 0`, so a stale re-run whose
+    `seen.db` predates the morning's marks — re-emitting only the boards that still
+    answered, 3 where the morning had 8 — sailed straight through and replaced it. The
+    other five are already `sent` on origin, so `filter_new` drops them tomorrow too:
+    never mailed, ever. The receipt for the same date is what says how many there were."""
+    ps = _ps()
+    ps.RELAY_LAST_POLL = "23:59"
+    real = "# \U0001f3af 8 new senior analytics roles — 2026-08-27\n\nbody\n"
+    t = _tree(str(tmp_path), latest=real, roles=3, receipt={"date": "2026-08-27", "roles": 8})
+    assert _deliver(ps, t)[1] == real.splitlines()[0], "3 roles replaced a delivered 8"
+    assert ps.weak_digest("# x", 3, 8) and not ps.weak_digest("# x", 9, 8)
+    assert not ps.weak_digest("# x", 3, None), "weakness must stay absolute with no receipt"
+
+
+def test_a_failed_fetch_is_not_a_healthy_origin(tmp_path, monkeypatch):
+    """`actions/checkout` leaves `refs/remotes/origin/<branch>` at the run-creation sha, so
+    a failed fetch makes `git show origin/...` SUCCEED while returning exactly the stale
+    view the guard exists to distrust — and the log line still said `origin`. One discarded
+    bool disarmed the whole thing; an attacker reproduced an empty digest replacing the
+    morning's mail through it."""
+    ps = _ps()
+    ps.RELAY_LAST_POLL = "23:59"
+    monkeypatch.setattr(ps, "git_ok", lambda *a, **k: False)      # every fetch fails
+    monkeypatch.setattr(ps, "git_show", lambda *a, **k: None)     # ...and origin is unreadable
+    t = _tree(str(tmp_path), latest="# yesterday\n", roles=0)
+    rc, landed = _deliver(ps, t, fetch=True)
+    assert landed == "# yesterday", "an unprovable origin let a 0-role digest through"
+    # ...and with a WORKING fetch against a genuinely empty origin, the same run delivers
+    ps2 = _ps()
+    ps2.RELAY_LAST_POLL = "23:59"
+    monkeypatch.setattr(ps2, "git_ok", lambda *a, **k: True)
+    monkeypatch.setattr(ps2, "git_show", lambda *a, **k: b"# yesterday")
+    t2 = _tree(str(tmp_path / "ok"), latest="# yesterday", roles=4)
+    assert "2026-08-27" in _deliver(ps2, t2, fetch=True)[1], "a healthy fetch stopped delivering"
+
+
+def test_a_future_dated_receipt_cannot_deadlock_the_mail(tmp_path):
+    """Negative staleness read as `stale < 2`, so break-glass never opened; and
+    `_receipt_alarms` read it as `age < 2`, so nothing alarmed. Every run past the cutoff
+    would have deferred, indefinitely, in silence — total mail loss with a green run."""
+    ps = _ps()
+    ps.RELAY_LAST_POLL = "00:01"                                  # always past the cutoff
+    t = _tree(str(tmp_path), latest=None, roles=5, receipt={"date": "2026-09-30"})
+    assert "2026-08-27" in _deliver(ps, t)[1], "a future receipt held the cutoff shut"
+
+
+def test_past_the_cutoff_nothing_is_ever_marked_sent(tmp_path):
+    """Break-glass writes the file but must NEVER burn the roles. A digest written after
+    the last poll is overwritten by tomorrow's run before tomorrow's first poll, so marking
+    it sent burns roles that were never mailed — the exact loss deferral exists to prevent.
+    A role emailed twice beats one withheld (the `mark_sent` step's own rationale)."""
+    ps = _ps()
+    ps.RELAY_LAST_POLL = "00:01"
+    t = _tree(str(tmp_path), latest=None, roles=5, receipt={"date": "2026-08-25"})
+    ghenv = os.path.join(t, "ghenv")
+    open(ghenv, "w", encoding="utf-8").close()
+    os.environ["GITHUB_ENV"] = ghenv
+    try:
+        assert "2026-08-27" in _deliver(ps, t)[1], "break-glass did not deliver"
+        assert open(ghenv, encoding="utf-8").read().strip() == "", \
+            "break-glass exported DIGEST_JSON, so mark_sent would burn roles never mailed"
+    finally:
+        os.environ.pop("GITHUB_ENV", None)
+
+
+def test_a_refusal_leaves_latest_md_agreeing_with_origin(tmp_path, monkeypatch):
+    """The persist step still owns `digests/latest.md`, and on a push conflict
+    `merge_conflicted` rebuilds every owned path: `s_ours` would push this run's
+    checkout-era bytes over origin's newer digest, with the overwrite warning SUPPRESSED
+    because the path is `SINGLE_WRITER` (BACKLOG 160). Making ours == theirs takes the
+    `if o == t: continue` branch instead."""
+    ps = _ps()
+    ps.RELAY_LAST_POLL = "23:59"
+    real = "# \U0001f3af 8 new senior analytics roles — 2026-08-27\n\nbody\n"
+    monkeypatch.setattr(ps, "git_ok", lambda *a, **k: True)
+    monkeypatch.setattr(ps, "git_show", lambda rev, path, cwd=None:
+                        real.encode("utf-8") if path.endswith("latest.md") else None)
+    t = _tree(str(tmp_path), latest="# a stale checkout-era file\n", roles=0)
+    ps.main(["deliver", "--date", "2026-08-27", "--into", t])
+    with open(os.path.join(t, "digests", "latest.md"), encoding="utf-8") as f:
+        assert f.read() == real, "a refused run left stale bytes for the conflict path to push"
+
+
+def test_an_undatable_cron_is_skipped_not_scored():
+    """`tests/schedule_census.py` answers a pre-committed question — build the recovery cron
+    or not — so its default case must not fail toward `build it`. An uncommitted draft
+    workflow has no git history; `cron_since` returns None; and the first fix scored it for
+    the whole window, which an attacker turned into SEVEN fabricated isolated drops."""
+    import importlib.util as _iu2
+    sp = _iu2.spec_from_file_location("_census", os.path.join(_REPO, "tests", "schedule_census.py"))
+    m = _iu2.module_from_spec(sp)
+    sp.loader.exec_module(m)
+    now = dt.datetime(2026, 8, 27, 12, 0, tzinfo=dt.timezone.utc)
+    slots = {"draft": [(11 * 60, None, "0 11 * * *")]}
+    scored = m.census([], slots, 7, now, 180, since={("draft", "0 11 * * *"): None})
+    assert scored == [], "an undatable cron was scored, so a draft file can vote for itself"
+    born = dt.datetime(2026, 8, 26, 0, 0, tzinfo=dt.timezone.utc)
+    scored = m.census([], slots, 7, now, 180, since={("draft", "0 11 * * *"): born})
+    assert [r for r in scored if r[3] == "dropped"], "a datable cron stopped being scored"
+    assert m.cron_since("no-such-workflow", "0 11 * * *", root=_REPO) is None
+
+
+def test_the_delivery_env_vars_can_never_raise():
+    """`RELAY_LAST_POLL_UTC` and `DELIVER_MARGIN_MIN` are read at module scope, and this
+    module is also `commit` and `outcome`: a typo in one workflow's env used to raise at
+    IMPORT and take the whole delivery path down with it."""
+    ps = _ps()
+    assert ps._env_int("NOPE_NOT_SET", 20) == 20
+    os.environ["NOPE_BAD_INT"] = "twenty"
+    try:
+        assert ps._env_int("NOPE_BAD_INT", 20) == 20
+    finally:
+        os.environ.pop("NOPE_BAD_INT", None)
+    ps.RELAY_LAST_POLL = "not-a-clock"
+    assert ps.cutoff_overshoot(600) == 600 + ps.DELIVER_MARGIN_MIN - (10 * 60 + 17)
+
+
+def test_a_run_that_never_wrote_a_file_does_not_push_its_stale_copy(tmp_path):
+    """`s_ours` used to return `ours` unconditionally, so a run that DELIBERATELY declined
+    to write a single-writer path still pushed its checkout-era copy over origin's newer
+    one on a conflict — silently, because `merge_conflicted` suppresses the overwrite
+    warning for exactly those paths (BACKLOG 160). An attacker reproduced it against
+    `digests/latest.md`: `deliver` refuses a thinner replacement, and persist then put the
+    stale digest there anyway, so the relay re-mailed yesterday's under today's date."""
+    ps = _ps()
+    base, theirs = b"# yesterday", b"# today, delivered by the morning run"
+    assert ps.s_ours(base, base, theirs) == theirs, "a run with no opinion overwrote origin"
+    assert ps.s_ours(base, b"# mine", theirs) == b"# mine", "a run that DID write lost its bytes"
+    assert ps.s_ours(base, None, theirs) == theirs
+    assert ps.s_ours(None, b"# mine", theirs) == b"# mine"
+    assert ps.s_ours(base, base, None) == base, "nothing on origin: keep what we have"
+
+
+def test_the_digest_and_its_receipt_are_restored_together(tmp_path, monkeypatch):
+    """`run_gates` restores ONE failing path from base and lets the rest of the commit push.
+    With a receipt in the same commit that leaves origin describing a digest it does not
+    have — and `_receipt_alarms` would then trust the receipt and hide the lost morning."""
+    ps = _ps()
+    assert ps.PAIRED["digests/latest.md"] == "cloud_state/last_delivered.json"
+    assert ps.PAIRED["cloud_state/last_delivered.json"] == "digests/latest.md"
+    d = tmp_path
+    os.makedirs(os.path.join(d, "digests")); os.makedirs(os.path.join(d, "cloud_state"))
+    open(os.path.join(d, "digests", "latest.md"), "w", encoding="utf-8").write("not a heading")
+    open(os.path.join(d, "cloud_state", "last_delivered.json"), "w", encoding="utf-8").write("{}")
+    restored = []
+    monkeypatch.setattr(ps, "git_show", lambda *a, **k: b"x")
+    monkeypatch.setattr(ps, "git", lambda *a, **k: restored.append(a[-1]) or "")
+    failed = ps.run_gates(["digests/latest.md", "cloud_state/last_delivered.json"],
+                          "deadbeefcafe", "", str(d))
+    assert [f[0] for f in failed] == ["digests/latest.md"], "the .md gate stopped firing"
+    assert "cloud_state/last_delivered.json" in restored, \
+        "the receipt was persisted without the digest it describes"
+
+
+def test_a_receipt_that_disagrees_with_the_file_is_reported_not_trusted(tmp_path):
+    """A receipt is a claim ABOUT a file. A conflict merge or a failed gate can leave one
+    describing a digest that is no longer at that path, and a receipt trusted blindly then
+    hides the very morning it lost."""
+    from pipeline import run as _pr
+    rp, dp = str(tmp_path / "r.json"), str(tmp_path / "latest.md")
+    open(dp, "wb").write(b"# the real digest")
+    good = __import__("hashlib").sha256(b"# the real digest").hexdigest()
+    _json.dump({"date": "2026-08-27", "sha256": good}, open(rp, "w", encoding="utf-8"))
+    assert _pr._receipt_alarms("2026-08-27", path=rp, digest_path=dp) == []
+    _json.dump({"date": "2026-08-27", "sha256": "0" * 64}, open(rp, "w", encoding="utf-8"))
+    out = _pr._receipt_alarms("2026-08-27", path=rp, digest_path=dp)
+    assert out and "is not that file" in out[0], "a receipt describing a vanished digest passed"

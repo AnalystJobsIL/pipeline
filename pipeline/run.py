@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import re as _re
@@ -106,26 +107,42 @@ def _last_run_alarms(run_date, path=None):
         return []
 
 
-def _receipt_alarms(run_date, path=None):
+def _receipt_alarms(run_date, path=None, digest_path=None):
     """`persist_state.py deliver` writes cloud_state/last_delivered.json when a digest
-    actually reaches `digests/latest.md` -- the file the relay reads. It records ONLY
-    successful deliveries, so it is the heartbeat `last_run.json` is repeatedly mistaken
-    for (that one is written only when a run FAILED, and is silent on a healthy day).
+    actually reaches `digests/latest.md` -- the file the relay reads. It records successful
+    WRITES of that file, which is the last thing this repo can observe: whether the relay
+    then mailed it is not visible here at all (BACKLOG 161). Within that limit it is the
+    heartbeat `last_run.json` is repeatedly mistaken for -- that one is written only when a
+    run FAILED, and is silent and stale by design on a healthy day.
 
     This runs BEFORE today's own delivery, so yesterday's date is the normal, quiet case.
     Two days or more means a morning produced no mail: the run was deferred past the
     relay's last poll, or it never happened at all. A missing file is silent -- a fresh
     checkout has no receipt and must not alarm forever."""
     path = path or LAST_DELIVERED_PATH
+    digest_path = digest_path or os.path.join(REPO_ROOT, "digests", "latest.md")
     try:                                  # a reporter never raises: a malformed file is silence
         with open(path, encoding="utf-8") as f:
             last = json.load(f)
         if not isinstance(last, dict):
             return []
-        age = (dt.date.fromisoformat(run_date) - dt.date.fromisoformat(str(last.get("date")))).days
+        when = str(last.get("date"))
+        age = (dt.date.fromisoformat(run_date) - dt.date.fromisoformat(when)).days
+        # A receipt is a CLAIM about a file, so check it against the file. A conflict merge
+        # or a failed gate can leave a receipt describing a digest that is no longer at that
+        # path, and a receipt trusted blindly would then HIDE the lost morning it caused.
+        want = str(last.get("sha256") or "")
+        if want and age < 2:
+            try:
+                with open(digest_path, "rb") as f:
+                    got = hashlib.sha256(f.read()).hexdigest()
+            except OSError:
+                got = ""
+            if got and got != want:
+                return [f"the delivery receipt says {when} but digests/latest.md is not that "
+                        f"file -- something replaced it after it was recorded"]
         if age < 2:                       # today's (a re-run) or yesterday's: the normal case
             return []
-        when = str(last.get("date"))
         return [f"the last digest that reached the mail was {when} ({age}d ago) -- "
                 f"{age - 1} morning(s) produced no email"]
     except Exception:  # noqa: BLE001

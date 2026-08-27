@@ -27,6 +27,13 @@ OUT = os.path.join(ROOT, "out", "rehearse-infra")
 PERSIST = os.path.join(ROOT, "persist_state.py")
 
 
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
+
 def _g(cwd, *args):
     p = subprocess.run(["git", "-c", "core.autocrlf=false", "-c", "user.name=r", "-c", "user.email=r@x", *args],
                        cwd=cwd, capture_output=True)
@@ -264,10 +271,14 @@ def twice():
     head = open(os.path.join(late, "digests", "latest.md"), encoding="utf-8").readline().strip()
     _check(head == "# yesterday", "the late run's checkout really is stale (it reads %r)" % head)
 
-    # run #2: `filter_new` has drained `sent` on origin, so this renders zero roles
+    # Run #2 renders THREE roles, not zero. A stale checkout's `seen.db` has no marks, so
+    # `filter_new` re-emits whatever boards still answer -- exactly the case the first draft
+    # of this rehearsal named in its own docstring and then failed to test, feeding itself
+    # `{"jobs": []}`. Weakness has to be measured against origin's receipt, not against 0.
     open(os.path.join(late, "out", f"digest-{date}.md"), "w", encoding="utf-8").write(
-        f"# \U0001f3af 0 new senior analytics roles — {date}\n\n_No new matching openings today._\n")
-    json.dump({"jobs": []}, open(os.path.join(late, "out", f"digest-{date}.json"), "w", encoding="utf-8"))
+        f"# \U0001f3af 3 new senior analytics roles — {date}\n\nthree of the eight\n")
+    json.dump({"jobs": [{"n": i} for i in range(3)]},
+              open(os.path.join(late, "out", f"digest-{date}.json"), "w", encoding="utf-8"))
     ghenv = os.path.join(tmp, "ghenv")
     open(ghenv, "w", encoding="utf-8").close()
     r = subprocess.run([sys.executable, PERSIST, "deliver", "--date", date, "--into", late],
@@ -276,7 +287,9 @@ def twice():
     _check("NOT delivered" in r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace"),
            "it said why it refused")
     still = open(os.path.join(late, "digests", "latest.md"), encoding="utf-8").readline().strip()
-    _check(still == "# yesterday", "it left its own tree alone (%r)" % still)
+    _check(still == real, "on a refusal it re-syncs its own tree WITH ORIGIN -- otherwise the "
+                          "persist step's conflict path pushes these checkout-era bytes back "
+                          "over the real digest under `s_ours`, warning suppressed")
     _check(open(ghenv, encoding="utf-8").read().strip() == "",
            "DIGEST_JSON was NOT exported, so `mark_sent` is a no-op and no role is burned")
 

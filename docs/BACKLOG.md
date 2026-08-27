@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**345 filed · 250 open · 95 closed · 5 half · 28 numbers name more than one item · 28 items name no lane.**
+**351 filed · 254 open · 97 closed · 5 half · 28 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 304.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 310.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -81,6 +81,73 @@ closure convention in the header.
 | 244 | `244@company-intel` **open** · `244@ats-fetch` **open** · `244@scraper` **open** |
 | 245 | `245@company-intel` **open** · `245@ats-fetch` **open** · `245@scraper` **open** |
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
+
+### infra — 64 open
+
+- **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
+- **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
+- **5** `5@infra` **`check_invariants.py` has no size check**
+- **6** `6@infra` **URGENT
+- **7** `7@infra` **Reading it is CLOSED; the six scripts that spend it are item 6.**
+- **7** `7@infra` **`/customer/balance` is 403 for this API token
+- **10** `10@infra` **`discovered_cache.json` and `research_companies.json` are restored wholesale on the
+- **10** `10@infra` **`audit-coverage.yml` runs the new search ladder with 1 of its 3 rungs**
+- **11** `11@infra` **`listing-hunt.yml`'s budgets sum to 325 of its 330-minute timeout** *(closed by a later bullet, original never edited)*
+- **12** `12@infra` **`pipeline/run.py` has no `sys.stdout.reconfigure`** while 23 other root scripts do
+- **12** `12@infra` **Nothing runs `registry_health.py`**
+- **15** `15@infra` **The conflict-recovery merge silently defeats 47 of 153 probe wakes**
+- **16** `16@infra` **`listing-hunt.yml` overrun got worse, not better**
+- **17** `17@infra` **`audit-coverage.yml` writes `cloud_state/scan_seen.json` and never commits it**
+- **28** `28@infra` **`no-url` is a triage mode `triage_dark` writes and `listing_hunt` routes on, and it is
+- **34** `34@infra` **No pool has a per-tool floor, so a pool can fall to zero with every guard green** —
+- **39** `39@infra` **`listing-hunt.yml`'s budgets already exceed its own timeout, and no commit step in the
+- **57** `57@infra` **`check_invariants.NOTE_CAP` is declared and never used**
+- **59** `59@infra` **`validate_empty` runs with no `BRIGHTDATA_API_KEY`, so the gate's unlocker rung is
+- **60** `60@infra` **The push-conflict merge resurrects note segments a fresher run deliberately deleted,
+- **64** `64@infra` **Registry writers run inside the 05:00-08:30 UTC freeze, and three writer workflows
+- **67** `67@infra` **`merge_csv_rows._merge_notes` has no `_TOOL` key for `empty-but-suspect`, so the
+- **68** `68@infra` **`_merge_notes` pops the NEWEST segment while its docstring says "never the newest"**
+- **75** `75@infra` **The workflow-edit failure class, three times this session**
+- **83** `83@infra` **The fetch loop is ~7 minutes of the digest's 27, sequentially, and `pipeline/run.py`
+- **91** `91@infra` **A warning-first invariant on the `collect` stamp**
+- **105** `105@infra` **`cloud_state/pipeline_stages.json` has a lost-update window and a wholesale restore**
+- **108** `108@infra` **`merge_json_cache` merges per company; the enrichment writes per job**
+- **111** `111@infra` **The aggregator loop in `pipeline/run.py` has no inline fill**
+- **125** `125@infra` **Every workflow's conflict path nests `cloud_state/` instead of restoring it**
+- **135** `135@infra` **`sent` is now mirrored in the ledger (`sent{}` per role, `emailed_on`)**
+- **142** `142@infra` **`build_digest` is a dead renderer that every lane still pays for**
+- **157** `157@infra` **`mark_sent.py` and `pipeline.run` default to `state/seen.db` (gitignored) while
+- **159** `159@infra` **`pipeline_stages.json` is still read-modify-written in process by two overlapping
+- **161** `161@infra` **The relay marks nothing**
+- **163** `163@infra` **A failed `checkout` / `setup-python` still means silence**
+- **165** `165@infra` **`persist_state.commit()` and `outcome()` grew under two attack waves**
+- **166** `166@infra` **An ops report over the last N days, and a skill that reads it**
+- **167** `167@infra` **A company named "Tel Aviv" in the mail**
+- **178** `178@infra` **`auto_expand` ignores the `slug` the LinkedIn bridge already writes**
+- **179** `179@infra` **A deliberately skipped source reads as a dead one**
+- **180** `180@infra` **Intake has no line of its own in the mail**
+- **182** `182@infra` **Two mutation cells for the 2026-08-25 discovery guards**
+- **191** `191@infra` **`no-url` is a triage mode `check_invariants.TRIAGE_MODES` does not know**
+- **193** `193@infra` **`check_invariants.PLATFORM_HOST` has no `eightfold` / `phenom` entry**
+- **195** `195@infra` **`tests.yml`'s `mutation-gate` comment still says "~15 minutes" and the `guard` job
+- **210** `210@infra` **BACKLOG 83 re-sized: the fetch loop is 3.8–4.7 min of a 20-minute step, the classify
+- **217** `217@infra` **`scrape-refresh.yml` installs `@anthropic-ai/claude-code` unpinned**
+- **236** `236@infra` **The fetch loop is the largest block of the pipeline step again
+- **237** `237@infra` **`tests/rehearse_infra.py`'s golden check has a dead allow-list, and §5's baseline cell is
+- **238** `238@infra` **A merge can put an operator's re-based rows back in the queue with their baselines at 0**
+- **241** `241@infra` **`persist_state.py commit --own PATH` commits the WHOLE index, not the owned paths** —
+- **264** `264@infra` **`daily-digest.yml` never reports Bright Data spend, and this lane is its largest
+- **269** `269@infra` **`pipeline/stages.py` stamps a LOCAL date beside a UTC timestamp**
+- **270** `270@infra` **`stages._load()` returns whatever parses, and `stamp()` then assumes a dict**
+- **282** `282@infra` **`check_invariants.TRIAGE_MODES` is a hand copy that has 7 of the 8 modes, and 24 rows
+- **286** `286@infra` **On a push conflict the registry merge can re-ACTIVATE a row a concurrent writer just
+- **292** `292@infra` **A run that never starts emits nothing at all**
+- **293** `293@infra` **`firmographics.yml` missed its first real cron slot**
+- **304** `304@infra` **The relay's poll window ends at 10:17 and it marks nothing**
+- **305** `305@infra` **All nine crons sit on `:00` or `:30`, which is the window GitHub names as the one it
+- **306** `306@infra` **A unit test that reads mutable production state can be broken by a cron, and that is how
+- **307** `307@infra` **Seven workflows already print `python -m pipeline.stages` and none of them compares it to
+- **308** `308@infra` **A day on which GitHub drops every cron in BOTH repositories is undetectable by anything in
 
 ### registry — 63 open
 
@@ -148,70 +215,6 @@ closure convention in the header.
 - **288** `288@registry` **`Ericsson` returns one posting worldwide**
 - **290** `290@registry` **The Amazon / Microsoft twins of 232, re-measured
 
-### infra — 61 open
-
-- **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
-- **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
-- **5** `5@infra` **`check_invariants.py` has no size check**
-- **6** `6@infra` **URGENT
-- **7** `7@infra` **Reading it is CLOSED; the six scripts that spend it are item 6.**
-- **7** `7@infra` **`/customer/balance` is 403 for this API token
-- **10** `10@infra` **`discovered_cache.json` and `research_companies.json` are restored wholesale on the
-- **10** `10@infra` **`audit-coverage.yml` runs the new search ladder with 1 of its 3 rungs**
-- **11** `11@infra` **`listing-hunt.yml`'s budgets sum to 325 of its 330-minute timeout** *(closed by a later bullet, original never edited)*
-- **12** `12@infra` **`pipeline/run.py` has no `sys.stdout.reconfigure`** while 23 other root scripts do
-- **12** `12@infra` **Nothing runs `registry_health.py`**
-- **15** `15@infra` **The conflict-recovery merge silently defeats 47 of 153 probe wakes**
-- **16** `16@infra` **`listing-hunt.yml` overrun got worse, not better**
-- **17** `17@infra` **`audit-coverage.yml` writes `cloud_state/scan_seen.json` and never commits it**
-- **28** `28@infra` **`no-url` is a triage mode `triage_dark` writes and `listing_hunt` routes on, and it is
-- **34** `34@infra` **No pool has a per-tool floor, so a pool can fall to zero with every guard green** —
-- **39** `39@infra` **`listing-hunt.yml`'s budgets already exceed its own timeout, and no commit step in the
-- **57** `57@infra` **`check_invariants.NOTE_CAP` is declared and never used**
-- **59** `59@infra` **`validate_empty` runs with no `BRIGHTDATA_API_KEY`, so the gate's unlocker rung is
-- **60** `60@infra` **The push-conflict merge resurrects note segments a fresher run deliberately deleted,
-- **64** `64@infra` **Registry writers run inside the 05:00-08:30 UTC freeze, and three writer workflows
-- **67** `67@infra` **`merge_csv_rows._merge_notes` has no `_TOOL` key for `empty-but-suspect`, so the
-- **68** `68@infra` **`_merge_notes` pops the NEWEST segment while its docstring says "never the newest"**
-- **75** `75@infra` **The workflow-edit failure class, three times this session**
-- **83** `83@infra` **The fetch loop is ~7 minutes of the digest's 27, sequentially, and `pipeline/run.py`
-- **91** `91@infra` **A warning-first invariant on the `collect` stamp**
-- **105** `105@infra` **`cloud_state/pipeline_stages.json` has a lost-update window and a wholesale restore**
-- **108** `108@infra` **`merge_json_cache` merges per company; the enrichment writes per job**
-- **111** `111@infra` **The aggregator loop in `pipeline/run.py` has no inline fill**
-- **125** `125@infra` **Every workflow's conflict path nests `cloud_state/` instead of restoring it**
-- **135** `135@infra` **`sent` is now mirrored in the ledger (`sent{}` per role, `emailed_on`)**
-- **142** `142@infra` **`build_digest` is a dead renderer that every lane still pays for**
-- **157** `157@infra` **`mark_sent.py` and `pipeline.run` default to `state/seen.db` (gitignored) while
-- **159** `159@infra` **`pipeline_stages.json` is still read-modify-written in process by two overlapping
-- **161** `161@infra` **The relay marks nothing**
-- **163** `163@infra` **A failed `checkout` / `setup-python` still means silence**
-- **165** `165@infra` **`persist_state.commit()` and `outcome()` grew under two attack waves**
-- **166** `166@infra` **An ops report over the last N days, and a skill that reads it**
-- **167** `167@infra` **A company named "Tel Aviv" in the mail**
-- **178** `178@infra` **`auto_expand` ignores the `slug` the LinkedIn bridge already writes**
-- **179** `179@infra` **A deliberately skipped source reads as a dead one**
-- **180** `180@infra` **Intake has no line of its own in the mail**
-- **182** `182@infra` **Two mutation cells for the 2026-08-25 discovery guards**
-- **191** `191@infra` **`no-url` is a triage mode `check_invariants.TRIAGE_MODES` does not know**
-- **193** `193@infra` **`check_invariants.PLATFORM_HOST` has no `eightfold` / `phenom` entry**
-- **195** `195@infra` **`tests.yml`'s `mutation-gate` comment still says "~15 minutes" and the `guard` job
-- **210** `210@infra` **BACKLOG 83 re-sized: the fetch loop is 3.8–4.7 min of a 20-minute step, the classify
-- **217** `217@infra` **`scrape-refresh.yml` installs `@anthropic-ai/claude-code` unpinned**
-- **224** `224@infra` **`cloud_state/last_run.json` is a day stale after a green run**
-- **236** `236@infra` **The fetch loop is the largest block of the pipeline step again
-- **237** `237@infra` **`tests/rehearse_infra.py`'s golden check has a dead allow-list, and §5's baseline cell is
-- **238** `238@infra` **A merge can put an operator's re-based rows back in the queue with their baselines at 0**
-- **241** `241@infra` **`persist_state.py commit --own PATH` commits the WHOLE index, not the owned paths** —
-- **264** `264@infra` **`daily-digest.yml` never reports Bright Data spend, and this lane is its largest
-- **269** `269@infra` **`pipeline/stages.py` stamps a LOCAL date beside a UTC timestamp**
-- **270** `270@infra` **`stages._load()` returns whatever parses, and `stamp()` then assumes a dict**
-- **282** `282@infra` **`check_invariants.TRIAGE_MODES` is a hand copy that has 7 of the 8 modes, and 24 rows
-- **286** `286@infra` **On a push conflict the registry merge can re-ACTIVATE a row a concurrent writer just
-- **292** `292@infra` **A run that never starts emits nothing at all**
-- **293** `293@infra` **`firmographics.yml` missed its first real cron slot**
-- **294** `294@infra` **`cloud_state/last_run.json` is two days stale**
-
 ### scraper — 19 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
@@ -253,6 +256,23 @@ closure convention in the header.
 - **227** `227@discovery` **The keyless guest endpoint is a coverage ceiling, and it is now the largest known gap
 - **228** `228@discovery` **The 2026-08-26 audit is 4 of 9 keywords deep**
 
+### roles — 14 open
+
+- **109** `109@roles` **6 of the 7 short `matched` rows carry URLs that are not job pages**
+- **124** `124@roles` **One role on two boards is classified twice in one run, and the bare copy can win** —
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **139** `139@roles` **A pipeline outage longer than 3 days resets every role's `first_seen`**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **145** `145@roles` **`matched.seniority` is empty for every row**
+- **151** `151@roles` **39 of the 111 shipped roles keep an aggregator url as their canonical**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **223** `223@roles` **A parked row's ledger roles are still mailed**
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **260** `260@roles` **`store.merge_duplicates` never carries the longest description onto the canonical** —
+- **285** `285@roles` **`seen_id` carries no tenant, so two companies on the same ATS can collide and one role
+- **309** `309@roles` **A role first seen yesterday, not emailed today, can never be emailed**
+
 ### company-intel — 13 open
 
 - **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
@@ -284,22 +304,6 @@ closure convention in the header.
 - **301** `301@docs` **`check_docs.py` uses module-global `ERRORS`/`WARNINGS`**
 - **302** `302@docs` **`check_session_record_dates` inspects only line 1**
 - **303** `303@docs` **ARCHITECTURE section 8's guard-rail table describes guards that have moved**
-
-### roles — 13 open
-
-- **109** `109@roles` **6 of the 7 short `matched` rows carry URLs that are not job pages**
-- **124** `124@roles` **One role on two boards is classified twice in one run, and the bare copy can win** —
-- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
-- **139** `139@roles` **A pipeline outage longer than 3 days resets every role's `first_seen`**
-- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **145** `145@roles` **`matched.seniority` is empty for every row**
-- **151** `151@roles` **39 of the 111 shipped roles keep an aggregator url as their canonical**
-- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
-- **223** `223@roles` **A parked row's ledger roles are still mailed**
-- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
-- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **260** `260@roles` **`store.merge_duplicates` never carries the longest description onto the canonical** —
-- **285** `285@roles` **`seen_id` carries no tenant, so two companies on the same ATS can collide and one role
 
 ### ats-fetch — 10 open
 
@@ -3110,7 +3114,14 @@ from origin `b2090f6` and run 32934864207; re-derive before acting.
     again, so nothing closes them and the mail's "new" selection still sees them (the residue
     BACKLOG 167 left to `roles`). Rule wanted: a role whose company row is inactive is never
     selected for the mail, and parking a row closes its open records with a reason.
-224. **`cloud_state/last_run.json` is a day stale after a green run** — lane: `infra`. Origin at
+224. ~~**`cloud_state/last_run.json` is a day stale after a green run**~~ — **CLOSED 2026-08-27
+    (`infra`)**: the first branch of its own question is the answer. `persist_state.py outcome`
+    returns at `healthy = job_status == "success" and not failed_steps` **before** writing, so a
+    healthy day deliberately leaves the previous record in place, and `_last_run_alarms` returns
+    early on a healthy record without ever reading its date — the staleness is inert, not a
+    degraded feed. ARCHITECTURE §4 and §5 now say so, `tests/test_units.py::
+    test_a_stale_but_healthy_last_run_is_silent` pins it, and the heartbeat that file was being
+    mistaken for is now `cloud_state/last_delivered.json`. Original text: — lane: `infra`. Origin at
     `b2090f6` (the 2026-08-26 06:03 state commit) holds `{"date": "2026-08-25", "run_url": "",
     "status": "success"}` while that run's last step logged `persist_state: run 2026-08-26
     healthy; nothing to report`. Either the healthy path deliberately does not rewrite the file
@@ -4407,9 +4418,21 @@ hosts, so its worked example needs a different diagnosis).
      dispatch the 02:30, 05:00 or 06:00 crons at all (the 00:00 refresh fired at 05:41), so
      there was no board, no mail, and no alarm anywhere: **silence reads as success**. The
      relay's last poll is 10:17, so a digest dispatched later than that is not mailed at all
-     that day. `docs/AUTOMATION.md` has the measured lag per workflow. The cheap version is a
-     separate tiny cron that asserts "a `daily-digest` run exists for today" and opens an
-     issue if not; the expensive version is not needing GitHub's scheduler.
+     that day. `docs/AUTOMATION.md` has the measured lag per workflow.
+
+     **STILL OPEN, and both cheap versions are now rejected with reasons (2026-08-27, `infra`).**
+     (a) *"a separate tiny cron that asserts a `daily-digest` run exists for today"* — the
+     assertion is wrong (a run whose work was skipped is still a green run: assert the ARTEFACT,
+     which `cloud_state/last_delivered.json` now is) and the cron shares the failure mode it
+     watches for: `python tests/schedule_census.py` counts **0** isolated single-slot drops —
+     38 of 38 due dispatches fired 08-22..08-26, and on 08-27 four consecutive slots plus all
+     three relay polls in the other repo went together. (b) *opening an issue* — the public repo
+     holds no credential for the private notification repo and must not, and a watchdog writing
+     `digests/latest.md` instead is a second writer of a `SINGLE_WRITER` path whose `s_ours`
+     rule overwrites origin with the warning suppressed, so it can destroy a late-but-delivered
+     digest whose roles are already marked sent (`160@infra`). What DID ship is `304@infra` and
+     the delivery rules in ARCHITECTURE §4. The re-measurement is pre-committed in `HANDOFF.md`
+     for 2026-09-10: **≥ 3 isolated drops ⇒ build the recovery cron**.
 
 293. **`firmographics.yml` missed its first real cron slot** — lane: `infra` (+
      `company-intel`). Added 2026-08-26 at 19:50 UTC with `cron: "0 10 * * *"` — i.e.
@@ -4422,10 +4445,90 @@ hosts, so its worked example needs a different diagnosis).
      exactly the distinction `CLAUDE.md` rule 1 is about: a capability is proven by what it
      PRODUCED on its own schedule.
 
-294. **`cloud_state/last_run.json` is two days stale** — lane: `infra`. It reads
-     `2026-08-25` on 2026-08-27, and `pipeline/run.py::_last_run_alarms` reads it to decide
-     whether to say "yesterday's digest never completed". A stale file silently degrades one
-     of the digest's own alarm feeds.
+294. ~~**`cloud_state/last_run.json` is two days stale**~~ — **CLOSED 2026-08-27 (`infra`),
+     as WRONG on both halves.** (a) The file is written ONLY when a run was unhealthy
+     (`persist_state.py`: `if healthy: return 0`), so `2026-08-25` on 2026-08-27 means no digest
+     had FAILED since 08-25 — correct behaviour, not staleness. (b) `_last_run_alarms` is not
+     what says *"yesterday's digest never completed"*; that is `stages.alarms("publish", 1)`.
+     `_last_run_alarms` returns `[]` on a healthy record before it ever computes an age, so the
+     date could be a year old and nothing would degrade. See also `224@infra`, which asked the
+     same question more carefully and got the same answer. What was REAL here is the name: a
+     file called `last_run.json` that records only the last UNHEALTHY run is heartbeat-shaped
+     and is not a heartbeat, and it misled two backlog items and one document. The heartbeat is
+     now `cloud_state/last_delivered.json` (ARCHITECTURE §4/§5), and
+     `test_a_stale_but_healthy_last_run_is_silent` stops this being re-filed.
+
+304. **The relay's poll window ends at 10:17 and it marks nothing** — lane: `infra`, but the
+     change is in the PRIVATE `AnalystJobsIL/inbox` repo, outside this lane's file table, so it
+     is reported not done. Two lines in that repo's `digest-email.yml` there:
+     (a) widen `17 6,7,8,10 * * *` to `17 6,7,8,9,10,11,12 * * *` — a digest committed after the
+     last poll is not mailed late, it is not mailed at all, and `persist_state.py deliver` now
+     has to DEFER a day's mail to avoid burning its roles for exactly that reason; more slots
+     shorten the window it has to defer over. (b) On the last poll of the day, if
+     `head -1 latest.md` does not carry today's date, open the no-digest issue instead of
+     exiting silently — that is the watchdog `292@infra` wants, in the one repo that already
+     holds the notification credential and already fetches the file, with no second writer of
+     `digests/latest.md` and no new cron sharing the failure mode. Note (a) alone does NOT fix
+     the late mail: on 2026-08-26 the digest was on origin at 06:04:14Z and the relay's own
+     06:17 poll was dispatched at 07:10:31Z. See also `161@infra` (the relay marks nothing).
+
+305. **All nine crons sit on `:00` or `:30`, which is the window GitHub names as the one it
+     drops runs from** — lane: `infra`. GitHub's troubleshooting page: scheduled events are
+     delayed under load, "high load times include the start of every hour", and "if the load is
+     sufficiently high enough, some queued jobs may be dropped… schedule your workflow to run at
+     a different time of the hour". Every cron in this repo is `0 0`, `30 2`, `0 5`, `0 6`,
+     `0 8,20`, `0 10`, `0 18`, `0 19`, `0 4 * * 0`. Moving them a few minutes off the boundary is
+     free and reversible. NOT done on 2026-08-27 because there is no local control group — all
+     nine are on the boundary, so there is nothing to compare against, and 38 of 38 dispatches
+     fired on the four days before the outage. Whoever does it should move ONE first and leave
+     the rest, so `tests/schedule_census.py` has something to measure.
+
+306. **A unit test that reads mutable production state can be broken by a cron, and that is how
+     `tests.yml` went red on 40 consecutive pushes** — lane: `infra`. 2026-08-25T16:00 →
+     2026-08-27: 42 runs, 0 green. The failing assertion is
+     `test_a_role_is_filled_from_another_address_it_was_seen_at` (`assert 170 == 2021`), a
+     `jd-text` guard that reads the live scrape cache which the 00:00 refresh then rewrites; the
+     immediate fix is that lane's. The DEFECT CLASS is infra's: a guard in `tests/` that fails
+     when a test opens a tracked, cron-written state file would turn "flaky for two days" into
+     "rejected at authoring time". Not written on 2026-08-27 on purpose — a new failing guard on
+     top of 40 red pushes helps nobody. The second-order cost is the real one: `CLAUDE.md`'s
+     pre-push contract has been false for two days, which teaches every lane that red is normal.
+
+307. **Seven workflows already print `python -m pipeline.stages` and none of them compares it to
+     today** — lane: `infra`. `audit-coverage`, `auto-expand`, `listing-hunt`,
+     `retry-unreachable`, `scrape-refresh`, `self-heal` and `triage-dark` each carry a named
+     `Stage stamps on the run page` step, and `stages.summary()` already prints
+     `publish: <date> (Nd ago)`. Giving that step a time-aware predicate would cost ZERO new
+     named steps (so no `coe_ratio` doc churn) and add five daily chances to notice a missed
+     digest. NOT built on 2026-08-27 because its only sink is a run page nobody opens, and
+     detection whose output is a log line is the status quo, not a fix — it is worth doing only
+     alongside `304@infra`, which gives it somewhere to go.
+
+308. **A day on which GitHub drops every cron in BOTH repositories is undetectable by anything in
+     this system** — lane: `infra`. This is the residue of `292@infra` after the delivery fixes,
+     and it is stated so that it is a known gap rather than an unknown one. 2026-08-27 was that
+     day: 1 of 5 due dispatches here, 0 of 3 in `AnalystJobsIL/inbox`. Every remedy that would
+     work lives outside GitHub — an outbound dead-man's-switch ping from the digest (the only
+     one needing no inbound credential and no identity exposure), or an external trigger holding
+     a PAT stored off-repo. The operator declined the dead-man's switch on 2026-08-27; recorded
+     here so the decision is visible and can be revisited, not re-derived.
+
+309. **A role first seen yesterday, not emailed today, can never be emailed** — lane: `roles`
+     (the email-selection block in `pipeline/run.py` is that lane's). `run.py` selects the mail
+     with `cutoff_email = today - 1 day` -> `store.get_matched_since` -> `WHERE first_seen >= ?`.
+     The window is exactly two date-buckets wide and it MOVES: a role with `first_seen = D-1`
+     that is not mailed on D is outside the window on D+1 and every day after. It stays on the
+     board, unmarked in `sent`, and unreachable -- `filter_new` never re-offers it because it
+     was never marked.
+
+     Pre-existing (`build_notice` has said *"those roles lead the next digest"* since
+     2026-08-25, and it is only half true), but `persist_state.py deliver` made it routine: a
+     deferred day now hits it on purpose. Until it is fixed, `deliver` COUNTS the split and
+     says it -- `so 5 of 8 role(s) lead the next digest; the other 3 were first seen before
+     today and fall outside tomorrow's 48h email window`. Found by an Opus attacker on
+     2026-08-27, on the branch, before the push. The fix is to select the mail by
+     *unsent-ness* rather than by a moving date window, or to widen `cutoff_email` to the
+     oldest unsent role; both are `roles` lane calls, neither is `infra`'s to make.
 
 295. **Three session records are named a day before their own H1** — lane: `docs`.
      `docs/sessions/2026-08-24-{infra,render,roles}.md` all open `# 2026-08-25`, because the
