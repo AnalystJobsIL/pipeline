@@ -732,6 +732,160 @@ def check_derived_facts() -> None:
                  % (f.name, f.unit, ", ".join(str(g) for g in got)))
 
 
+def _raw(path: str) -> str:
+    """The file's bytes as text, line endings PRESERVED. `read()` uses universal newlines,
+    which is right for checking and wrong for writing: README.md is LF-only while the other
+    five root docs are CRLF, so a naive rewrite produces a whole-file diff on five of six."""
+    with open(path, encoding="utf-8", newline="") as fh:
+        return fh.read()
+
+
+# A line that draws a box or a table has a WIDTH, and a width-changing edit shears it.
+# ARCHITECTURE.md's one-screen map is 82 characters wide and every row ends in a bar.
+_RULED = re.compile(r"[─-╿]")
+# A line that computes with the number cannot be edited one number at a time:
+# ARCHITECTURE.md carries `846 rows x ~135 characters ~= 114 KB`.
+_ARITH = re.compile(r"[×≈%]|(?<![-:=])=(?!=)")
+
+
+def _line_of(text: str, pos: int):
+    a = text.rfind("\n", 0, pos) + 1
+    b = text.find("\n", pos)
+    return a, (len(text) if b < 0 else b)
+
+
+def _fmt_like(old: str, value: int) -> str:
+    return "{:,}".format(value) if "," in old else str(value)
+
+
+def fix_facts(apply: bool = False) -> int:
+    """`--fix` for EXACT facts only, and never for census ones.
+
+    A census number needs a judgement about the precision the author is willing to stand
+    behind; a script must not make that. An exact number is arithmetic, and the agent who
+    changed the code is the one standing here - which is the whole contract of the EXACT
+    class. The first real use was an `infra` session adding a workflow step, which moves the
+    continue-on-error ratio at four sites in three documents.
+
+    Six guards, every one of them written from a real hazard in this tree:
+      * bytes, not lines - line endings are preserved exactly (README.md is the only LF file)
+      * region veto - a number inside a URL, a link target or an HTML comment is not a claim
+      * width invariance - a length-changing edit inside a ruled or tabular line is REFUSED
+      * arithmetic veto - a line that multiplies or equates is REFUSED
+      * clean-tree gate - refuses to touch a file that is already dirty, so any mistake is
+        one `git checkout --` from gone
+      * verify-then-keep - the whole fact check is re-run against the result, and every file
+        is restored if it does not come back clean
+    """
+    import subprocess
+    targets, plan = set(), []
+    for f in FACTS:
+        if f.kind != "exact":
+            continue
+        try:
+            got = f.compute()
+        except Exception as e:                                    # noqa: BLE001
+            err("facts", "%s cannot be computed, so it cannot be fixed (%s)" % (f.name, e))
+            return 1
+        for doc_rel, pattern in f.sites:
+            path = os.path.join(ROOT, doc_rel)
+            if not os.path.exists(path):
+                continue
+            raw = _raw(path)
+            spans = _veto_spans(raw)
+            for m in re.finditer(pattern, raw, re.M):
+                if _vetoed(m.span(), spans):
+                    continue
+                idx = [g for g in range(1, (m.re.groups or 0) + 1) if m.group(g) is not None]
+                if len(idx) != len(got):
+                    continue
+                if tuple(_int(m.group(g)) for g in idx) == tuple(got):
+                    continue
+                plan.append((doc_rel, path, m, idx, got, f.name))
+                targets.add(doc_rel)
+    if not plan:
+        print("every EXACT fact already agrees with the code; nothing to fix")
+        return 0
+
+    if apply and targets:
+        dirty = subprocess.run(["git", "status", "--porcelain", "--"] + sorted(targets),
+                               cwd=ROOT, capture_output=True, text=True).stdout.strip()
+        if dirty:
+            # print, do not err(): --fix returns before main() reports ERRORS, so an err()
+            # here is swallowed and the caller sees an exit code with no reason.
+            print("REFUSED: --fix will not edit a file that is already modified, so any "
+                  "mistake stays one `git checkout --` away. Commit or stash first:")
+            print(dirty)
+            return 1
+
+    edits, refused = {}, 0
+    for doc_rel, path, m, idx, got, name in sorted(plan, key=lambda p: (p[0], -p[2].start())):
+        raw = edits.get(path, _raw(path))
+        chunk = m.group(0)
+        for pos, g in reversed(list(enumerate(idx))):
+            a, b = m.span(g)
+            chunk = chunk[:a - m.start()] + _fmt_like(m.group(g), got[pos]) + chunk[b - m.start():]
+        if doc_rel == "docs/MODULES.md":
+            print("REFUSED %s:%d (%s): this file is GENERATED. A hand edit is discarded by the "
+                  "next run and the number comes back. Fix it at the source and regenerate:"
+                  "  python docs/gen_modules.py"
+                  % (doc_rel, raw.count("\n", 0, m.start()) + 1, name))
+            refused += 1
+            continue
+        la, lb = _line_of(raw, m.start())
+        line = raw[la:lb]
+        tail = raw[m.end():lb]
+        if len(chunk) != len(m.group(0)) and (_RULED.search(line) or "|" in tail):
+            print("REFUSED %s:%d (%s): %r would change the width of a ruled or tabular line. "
+                  "Edit it by hand and keep the column."
+                  % (doc_rel, raw.count("\n", 0, m.start()) + 1, name, m.group(0)))
+            refused += 1
+            continue
+        if _ARITH.search(line):
+            print("REFUSED %s:%d (%s): the line computes with the number, so changing one "
+                  "number alone would make it arithmetically false: %r"
+                  % (doc_rel, raw.count("\n", 0, m.start()) + 1, name, line.strip()[:70]))
+            refused += 1
+            continue
+        print("%-24s %s:%d  %r -> %r" % (name, doc_rel,
+                                         raw.count("\n", 0, m.start()) + 1, m.group(0), chunk))
+        edits[path] = raw[:m.start()] + chunk + raw[m.end():]
+
+    if not apply:
+        print("\ndry run: %d edit(s), %d refused. Re-run with `--fix --apply` to write."
+              % (len(plan) - refused, refused))
+        return 0
+
+    del ERRORS[:]
+    del WARNINGS[:]
+    check_derived_facts()
+    was = set(ERRORS)
+    before = {p: _raw(p) for p in edits}
+    for p, text in edits.items():
+        with open(p, "w", encoding="utf-8", newline="") as fh:
+            fh.write(text)
+    del ERRORS[:]
+    del WARNINGS[:]
+    check_derived_facts()
+    now = set(ERRORS)
+    introduced = now - was
+    unfixed = [d for d, _p, m, _i, _g, _n in plan
+               if any(d in e for e in now) and d not in ("docs/MODULES.md",)]
+    if introduced or not (was - now):
+        for p, text in before.items():
+            with open(p, "w", encoding="utf-8", newline="") as fh:
+                fh.write(text)
+        print("VERIFY FAILED, every file restored.")
+        for e in sorted(introduced) or sorted(now):
+            print("  " + e)
+        return 1
+    if unfixed:
+        print("\nnote: %d site(s) still disagree because an edit was refused above." % len(unfixed))
+    print("\nwrote %d file(s); %d refused. Re-run `python docs/check_docs.py` to confirm."
+          % (len(edits), refused))
+    return 0
+
+
 def report_facts() -> int:
     """`python docs/check_docs.py --facts` - every registered number, what the code says
     today, and what each doc claims. One command instead of an archaeology dig."""
@@ -1007,6 +1161,10 @@ CHECKS = [check_entry_docs, check_paths_exist, check_links, check_section_refs,
 
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    if "--fix" in argv:
+        # EXACT facts only, and never reachable from the no-argument path the test suite
+        # invokes.  alone is a dry run;  writes.
+        return fix_facts(apply="--apply" in argv)
     if "--facts" in argv:
         # One command instead of an archaeology dig: every registered number, what the
         # code says today, and what each doc claims. Never writes; never exits non-zero

@@ -11186,3 +11186,97 @@ def test_the_continue_on_error_sentence_says_which_steps_it_counted():
         text = cd.read(os.path.join(cd.ROOT, doc))
         for m in re.finditer(r"\d+\s+of\s+(?:the\s+)?\d+\s+(named\s+)?workflow steps", text):
             assert m.group(1), "%s says 'workflow steps' where it means 'named workflow steps'" % doc
+
+
+# --- docs lane, 2026-08-27: `--fix` for EXACT facts, written when an `infra` session adding
+# --- a workflow step had to hand-edit the continue-on-error ratio at four sites in three
+# --- documents. Every guard below is a hazard that fired during its own bring-up. ---------
+def test_fix_is_a_dry_run_without_apply_and_unreachable_from_the_default_path():
+    """`tests/test_units.py::test_docs_are_consistent_with_the_code` invokes check_docs with no
+    arguments and asserts exit 0; the writing path must not be reachable from there."""
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    before = {p: open(p, "rb").read()
+              for p in (os.path.join(root, "CLAUDE.md"), os.path.join(root, "README.md"),
+                        os.path.join(root, "ARCHITECTURE.md"))}
+    proc = subprocess.run([sys.executable, os.path.join(root, "docs", "check_docs.py"), "--fix"],
+                          capture_output=True, text=True, encoding="utf-8", errors="replace",
+                          cwd=root)
+    assert proc.returncode == 0, proc.stdout
+    for p, b in before.items():
+        assert open(p, "rb").read() == b, "--fix wrote %s without --apply" % p
+    src = _cd().read(os.path.join(root, "docs", "check_docs.py"))
+    body = src.split("def main(")[1].split("\ndef ")[0]
+    assert 'if "--fix" in argv' in body and 'apply="--apply" in argv' in body
+
+
+def test_fix_never_touches_a_census_fact():
+    """A census number encodes a judgement about the precision the author is willing to stand
+    behind. A script must not make that judgement; an exact number is arithmetic."""
+    cd = _cd()
+    src = cd.read(os.path.join(cd.ROOT, "docs", "check_docs.py"))
+    body = src.split("def fix_facts(")[1].split("\ndef ")[0]
+    assert 'if f.kind != "exact":' in body and "continue" in body
+
+
+def test_fix_refuses_a_width_changing_edit_in_a_ruled_or_tabular_line():
+    """ARCHITECTURE.md's one-screen map is 82 characters wide and every row ends in a bar;
+    docs/MODULES.md's count table is a markdown table. A one-digit-to-two-digit edit there
+    shears the column, and the reader sees a broken diagram rather than a wrong number."""
+    cd = _cd()
+    box = "  │  pipeline/fetchers.py  9 platforms with a native API   live   │"
+    row = "| | **total root modules** | **9** |"
+    assert cd._RULED.search(box)
+    assert "|" in row
+
+
+def test_the_arithmetic_veto_does_not_fire_on_a_python_equality():
+    """It did. `8 root modules have no \\`if __name__ == "__main__"\\` guard` was refused as
+    "the line computes with the number", because the SECOND `=` of `==` is preceded by `=`
+    and the lookbehind only excluded `-` and `:`. The refusal then made verify-then-keep roll
+    back nine correct edits."""
+    cd = _cd()
+    assert not cd._ARITH.search('8 root modules have no `if __name__ == "__main__"` guard')
+    assert cd._ARITH.search("846 rows × ~135 characters ≈ 114 KB")
+    assert cd._ARITH.search("the failure-tolerant share is 33 %")
+
+
+def test_fix_sends_a_generated_file_to_its_generator():
+    """docs/MODULES.md is generated, so a hand edit is discarded by the next run and the
+    number comes back - which is exactly how its own how-to-regenerate sentence disappeared."""
+    cd = _cd()
+    body = cd.read(os.path.join(cd.ROOT, "docs", "check_docs.py"))
+    body = body.split("def fix_facts(")[1].split("\ndef ")[0]
+    assert 'doc_rel == "docs/MODULES.md"' in body and "gen_modules.py" in body
+
+
+def test_fix_verifies_by_comparing_error_sets_not_by_demanding_zero():
+    """The first version demanded a clean check afterwards, so one DELIBERATE refusal - whose
+    fact legitimately still disagreed - was read as its own failure and rolled back nine
+    correct edits. It must only roll back when it introduced an error, or fixed none."""
+    cd = _cd()
+    body = cd.read(os.path.join(cd.ROOT, "docs", "check_docs.py"))
+    body = body.split("def fix_facts(")[1].split("\ndef ")[0]
+    assert "introduced = now - was" in body
+    assert "if introduced or not (was - now):" in body
+
+
+def test_fix_preserves_line_endings_and_reads_bytes_not_lines():
+    """README.md is LF-only; the other five root docs are CRLF. A naive rewrite produces a
+    whole-file diff on five of six, which buries the one-digit change it was asked to make."""
+    cd = _cd()
+    body = cd.read(os.path.join(cd.ROOT, "docs", "check_docs.py"))
+    assert 'def _raw(path: str) -> str:' in body
+    assert 'newline=""' in body.split("def _raw(")[1].split("\ndef ")[0]
+    fx = body.split("def fix_facts(")[1].split("\ndef ")[0]
+    assert 'newline=""' in fx and "_raw(" in fx
+
+
+def test_fix_refuses_to_edit_a_file_that_is_already_dirty():
+    """So any mistake stays one `git checkout --` away - and the refusal PRINTS, because
+    `--fix` returns before main() reports ERRORS and an err() there is swallowed."""
+    cd = _cd()
+    body = cd.read(os.path.join(cd.ROOT, "docs", "check_docs.py"))
+    body = body.split("def fix_facts(")[1].split("\ndef ")[0]
+    assert '"git", "status", "--porcelain"' in body
+    assert 'print("REFUSED: --fix will not edit a file that is already modified' in body

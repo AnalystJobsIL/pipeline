@@ -209,7 +209,7 @@ closure convention in the header.
 - **282** `282@infra` **`check_invariants.TRIAGE_MODES` is a hand copy that has 7 of the 8 modes, and 24 rows
 - **286** `286@infra` **On a push conflict the registry merge can re-ACTIVATE a row a concurrent writer just
 - **292** `292@infra` **A run that never starts emits nothing at all**
-- **293** `293@infra` **`firmographics.yml` has never once fired on its cron**
+- **293** `293@infra` **`firmographics.yml` missed its first real cron slot**
 - **294** `294@infra` **`cloud_state/last_run.json` is two days stale**
 
 ### scraper — 19 open
@@ -4411,9 +4411,13 @@ hosts, so its worked example needs a different diagnosis).
      separate tiny cron that asserts "a `daily-digest` run exists for today" and opens an
      issue if not; the expensive version is not needing GitHub's scheduler.
 
-293. **`firmographics.yml` has never once fired on its cron** — lane: `infra` (+
-     `company-intel`). Added 2026-08-26 with `cron: "0 10 * * *"`;
-     `gh run list --workflow firmographics.yml` returns **zero rows**. The lane's record says
+293. **`firmographics.yml` missed its first real cron slot** — lane: `infra` (+
+     `company-intel`). Added 2026-08-26 at 19:50 UTC with `cron: "0 10 * * *"` — i.e.
+     *after* that day's 10:00 window, so the original wording of this item ("never fired,
+     ever") was true and meaningless. It is neither now: at **10:17 on 2026-08-27** the
+     first real slot had passed and `gh run list --workflow firmographics.yml` was still
+     **empty**, on the same morning the 02:30, 05:00, 06:00 and 08:00 crons also did not
+     fire. The lane's record says
      the bulk pass "moved to a 10:00 UTC cloud cron" and validated it *by dispatch*, which is
      exactly the distinction `CLAUDE.md` rule 1 is about: a capability is proven by what it
      PRODUCED on its own schedule.

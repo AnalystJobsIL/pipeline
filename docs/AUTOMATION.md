@@ -23,7 +23,7 @@ scheduled runs 2026-08-23 → 2026-08-27:
 | `daily-digest` | `0 5 * * *` | 05:34 · 05:42 · 05:36 · 05:38 | **never fired** (re-checked 09:00) |
 | `self-heal` | `0 6 * * *` | 06:17 · 06:29 · 06:20 · 06:22 | **never fired** |
 | `auto-expand` | `0 8,20 * * *` | 08:34/20:26 · 08:51/20:33 · 08:47/20:32 · 08:48/**22:53** | **never fired** |
-| `firmographics` | `0 10 * * *` | added 2026-08-26 **19:50 UTC**, after that day's slot | 0 runs as of 09:40; **first real slot is 10:00 today** |
+| `firmographics` | `0 10 * * *` | added 2026-08-26 **19:50 UTC**, after that day's slot | **first real slot came and went: 0 runs at 10:17** |
 | `triage-dark` | `0 18 * * *` | 18:28 · 18:39 · 18:38 · **19:46** | — |
 | `listing-hunt` | `0 19 * * *` | 19:18 · 19:24 · 19:26 · **21:34** | — |
 | `tests` | on push | — | — |
@@ -100,7 +100,9 @@ reclassified — which is exactly what happened to the three firmographics tools
 - Nothing notices a cron that did not fire (`infra`).
 - `cloud_state/last_run.json` was two days stale on 2026-08-27 (`2026-08-25`), which silently
   degrades one of the digest's own alarm feeds, `run.py::_last_run_alarms` (`infra`).
-- `firmographics.yml` had not fired on its cron as of 09:40 on 2026-08-27 — but it was
-  created at 19:50 UTC the previous day, *after* that day's 10:00 slot, so its first real
-  opportunity was 10:00 on 2026-08-27. Check that it fired before treating it as broken
-  (`infra`/`company-intel`).
+- `firmographics.yml` has now **missed its first real cron slot**. It was created at
+  19:50 UTC on 2026-08-26, *after* that day's 10:00 window — so "never fired, ever" was
+  true but meant nothing until today. At **10:17 on 2026-08-27** the 10:00 slot had passed
+  and `gh run list --workflow firmographics.yml` was still empty. That is now evidence,
+  not an artefact of when the file landed, and it matches the same morning's 02:30, 05:00,
+  06:00 and 08:00 crons not firing either (`infra`/`company-intel`).

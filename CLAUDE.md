@@ -92,7 +92,11 @@ anything relying on it silently returns nothing; the working search is
    missing from `docs/MODULES.md` (or a module a cron runs is filed as `operator`), if the
    cron table disagrees with the workflows, if `HANDOFF.md` outgrows its cap, or if a number
    a doc states disagrees with the code. `python docs/check_docs.py --facts` shows every
-   registered number, what the code says today, and which docs claim what.
+   registered number, what the code says today, and which docs claim what. If you changed
+   the CODE and a number went red, `--fix` corrects it for you: `--fix` alone is a dry run,
+   `--fix --apply` writes. It handles exact facts only, refuses a width-changing edit in a
+   ruled line, refuses a generated file (regenerate that one), refuses a dirty tree, and
+   restores every file if the result does not verify.
 3. **Update the doc your lane owns, in the same commit as the change.** Behaviour →
    `ARCHITECTURE.md` (the section is tagged with your lane). A new gap you did not fix →
    `docs/BACKLOG.md`. A new module → `docs/MODULES.md`. Always → three lines in
