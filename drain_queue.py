@@ -63,6 +63,11 @@ sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 # --------------------------------------------------------------------------------------- #
 # The four locks. These run BEFORE `pipeline.identity_gate` is imported, on purpose.
 # --------------------------------------------------------------------------------------- #
+_STASH = {}
+SEARCH_SPENT = {"n": 0}
+_SEARCH_LOCK = __import__("threading").Lock()
+
+
 def _lock_the_paid_rungs():
     """Make a Bright Data charge unreachable, four independent ways.
 
@@ -93,8 +98,15 @@ def _lock_the_paid_rungs():
     have to keep true, while they are properties of the process. `_receipt()` prints the
     counter at the end of every run so the claim is a number rather than a sentence."""
     os.environ["PAGE_UNLOCK_BUDGET"] = "0"
-    os.environ.pop("BRIGHTDATA_API_KEY", None)
-    os.environ.pop("BRIGHTDATA_ZONE", None)
+    # STASHED, not destroyed. The search rung (`--search`) is a DECLARED paid rung and needs
+    # the credential; every other paid path must still be unable to reach it. So the key
+    # leaves the ambient environment -- which is what stops eight modules' `_load_secrets`
+    # convenience imports from re-arming the gate -- and is handed back only inside
+    # `_search_urls`, for the duration of one call. Lock 1 (`_UNLOCK_BUDGET = 0`, set on the
+    # gate MODULE below) is unaffected and remains the thing that makes lock 4 unnecessary:
+    # the gate cannot unlock a page even while the key is briefly present.
+    _STASH["key"] = os.environ.pop("BRIGHTDATA_API_KEY", None)
+    _STASH["zone"] = os.environ.pop("BRIGHTDATA_ZONE", None)
 
 
 _lock_the_paid_rungs()
@@ -118,8 +130,13 @@ from pipeline.recruiters import is_recruiter          # noqa: E402
 def _receipt():
     """The Bright Data claim, as a number. `_UNLOCK_SPENT` is the gate's own counter."""
     spent = getattr(_gate, "_UNLOCK_SPENT", None)
-    print("unlock_spent=%s (budget %s)" % (spent, getattr(_gate, "_UNLOCK_BUDGET", "?")),
-          flush=True)
+    print("unlock_spent=%s (budget %s) search_spent=%d (cap %s)"
+          % (spent, getattr(_gate, "_UNLOCK_BUDGET", "?"), SEARCH_SPENT["n"],
+             os.environ.get("DRAIN_SEARCH_CAP", "0")), flush=True)
+    # The gate's counter must still be ZERO -- an ACCIDENTAL page unlock is a different thing
+    # from the declared search rung, and collapsing the two would lose exactly the property
+    # this assertion protects. The search spend is reported as a number beside it, never
+    # folded into it.
     assert spent == 0, "the drain spent %r Bright Data unlocks" % (spent,)
 
 
@@ -324,7 +341,9 @@ def walk_one(entry, exhaust, boards_now, names_now):
         if got:
             return _page_proposal(name, got[0], seed, "own-site", deadline, 0,
                                   html=got[1])
-    return None
+    # R5, the ONE paid rung, and last on purpose: every free rung has had its turn, so a
+    # credit is only ever spent on a name nothing free could answer.
+    return _ats_from_search(name, seed, deadline, boards_now)
 
 
 def _handle(entry):
@@ -342,6 +361,136 @@ def _handle(entry):
     if "linkedin.com" not in host or not slug:
         return ""
     return "" if _norm(slug) == _norm(entry.get("name")) else slug
+
+
+def _search_urls(name):
+    """The ONE paid rung, declared and counted. `deep_validate.google_via_unlocker` is the only
+    search that answers from this machine -- SerpApi has been at 0 since 2026-08-23 and DDG is
+    rate-limited off the dev box -- and it is why the free ladder tops out at 2.2% on
+    never-hunted names while a searched hunt reached 45%.
+
+    The credential is handed over for the duration of ONE call and taken back, so nothing else
+    in the process can reach a paid path even by accident. `_gate._UNLOCK_BUDGET` stays 0
+    throughout, so the identity gate still cannot unlock a page.
+    """
+    cap = int(os.environ.get("DRAIN_SEARCH_CAP", "0") or 0)
+    # the reserve-then-spend has to be ATOMIC: eight threads each reading the counter and then
+    # incrementing it overshoots the cap by up to `--threads`, and a cap that can be exceeded
+    # is not a cap. Counted BEFORE the request, like every other counter in this repo.
+    with _SEARCH_LOCK:
+        if SEARCH_SPENT["n"] >= cap or not _STASH.get("key"):
+            return []
+        SEARCH_SPENT["n"] += 1
+    os.environ["BRIGHTDATA_API_KEY"] = _STASH["key"]
+    if _STASH.get("zone"):
+        os.environ["BRIGHTDATA_ZONE"] = _STASH["zone"]
+    try:
+        import deep_validate as DV
+        return DV.google_via_unlocker(name, limit=4) or []
+    except Exception:                                        # noqa: BLE001
+        return []
+    finally:
+        os.environ.pop("BRIGHTDATA_API_KEY", None)
+        os.environ.pop("BRIGHTDATA_ZONE", None)
+
+
+def _ats_from_search(name, seed, deadline, boards_now):
+    """Search -> an ATS board -> a VERIFIED `ats` proposal, or None.
+
+    Only ATS proposals, deliberately. A careers PAGE found by search would have to be scraped
+    to know its Israel count, and a `scrape` proposal with `il_hint = 0` can never be applied
+    (`docs/BACKLOG.md` 386) -- so pages are recorded as candidates rather than emitted as
+    proposals that look like hits and are not.
+    """
+    import deep_validate as DV
+    from pipeline.fetchers import fetch_company
+    from pipeline.israel import is_israel_job
+    pages, declined = [], []
+    for u in _search_urls(name):
+        if time.time() > deadline or is_aggregator(u):
+            continue
+        # COMEET FIRST, and this rung is why. `propose_from_text` has no comeet recogniser --
+        # `probe_ats._PLATFORMS` has none either -- so a hosted `comeet.com/jobs/<slug>/<uid>`
+        # URL, which is what the search returns for an Israeli employer more often than any
+        # other board, fell through to `search-page-no-ats`. Measured on the first 8 names:
+        # 4 of the 6 searched found a Comeet board and the rung reported 0 hits.
+        cm = comeet_from_hosted_page(name, u, deadline)
+        if cm and not cm.get("api"):
+            declined.append("%s:%s" % (cm.get("why", "comeet-?"), cm.get("uid", "")))
+        if cm and cm.get("api"):
+            if ("comeet", (cm["uid"] or "").lower()) in boards_now:
+                declined.append("comeet-dup-board:%s" % cm["uid"])
+                continue
+            try:
+                jobs, il = comeet_verify(name, cm["api"])
+            except Exception as e:                # noqa: BLE001
+                jobs, il = [], []
+                declined.append("comeet-fetch-%s:%s" % (e.__class__.__name__, cm["uid"]))
+            if not il:
+                declined.append("comeet-no-il:%s(%d jobs)" % (cm["uid"], len(jobs)))
+            if il:
+                asserts = sorted({j.get("company_name") for j in jobs if j.get("company_name")})
+                held = cm["html"] if len(cm.get("html") or "") >= 2000 else ""
+                verdict = _gate.activation_verdict(name, cm["api"], len(il), html=held)
+                return {"name": name, "kind": "ats", "rung": "search-comeet",
+                        "platform": "comeet", "token": cm["uid"], "api_url": cm["api"],
+                        "proposed_active": verdict == "ok",
+                        "note_if_applied": "queue-drain %s search-comeet; %d/%d IL"
+                                           % (_today(), len(jobs), len(il)),
+                        "evidence": {"seed_url": seed, "candidate_url": u,
+                                     "hosted_slug": cm["slug"], "n_jobs": len(jobs),
+                                     "n_il": len(il),
+                                     "il_titles": [j.get("title") for j in il][:8],
+                                     "board_asserts_company": asserts,
+                                     "board_name_matches": any(_norm(x) == _norm(name)
+                                                               for x in asserts),
+                                     "gate": "activation_verdict", "gate_verdict": verdict,
+                                     "gate_html_held": bool(held),
+                                     "board_vouches": _gate.board_vouches(name, cm["uid"],
+                                                                         cm["api"]),
+                                     "is_aggregator": is_aggregator(cm["api"]),
+                                     "search_pages": pages[:4]}}
+        got = DV.propose_from_text(u)            # the URL itself is an ATS board
+        html = ""
+        if not got:
+            _final, html = AE._get_page(u, deadline)
+            if html:
+                got = DV.propose_from_text(html)  # ...or the page embeds one
+        if not got:
+            if html and len(html) >= 2000:
+                pages.append(u)
+            continue
+        plat, tok, api = got
+        if (plat, (tok or "").lower()) in boards_now:
+            continue                              # a board the registry already reads
+        try:
+            jobs = fetch_company({"company_name": name, "ats_platform": plat, "token": tok,
+                                  "api_url": api, "active": "true", "notes": ""})
+        except Exception:                         # noqa: BLE001
+            continue
+        il = [j for j in jobs if is_israel_job(j)]
+        if not il:
+            continue                              # the `il >= 1` rule that caught Lili -> Eli Lilly
+        held = html if len(html) >= 2000 else ""
+        verdict = _gate.activation_verdict(name, api, len(il), html=held)
+        return {"name": name, "kind": "ats", "rung": "search", "platform": plat,
+                "token": tok, "api_url": api,
+                "proposed_active": verdict == "ok",
+                "note_if_applied": "queue-drain %s search; %d/%d IL"
+                                   % (_today(), len(jobs), len(il)),
+                "evidence": {"seed_url": seed, "candidate_url": u, "n_jobs": len(jobs),
+                             "n_il": len(il), "il_titles": [j.get("title") for j in il][:8],
+                             "gate": "activation_verdict", "gate_verdict": verdict,
+                             "gate_html_held": bool(held),
+                             "board_vouches": _gate.board_vouches(name, tok, api),
+                             "is_aggregator": is_aggregator(api),
+                             "search_pages": pages[:4]}}
+    if pages or declined:
+        return {"name": name, "kind": "refused", "rung": "search",
+                "why": declined[0].split(":")[0] if declined else "search-page-no-ats",
+                "evidence": {"seed_url": seed, "search_pages": pages[:4],
+                             "declined": declined[:6]}}
+    return None
 
 
 def _page_proposal(name, url, seed, rung, deadline, il_hint, html=None):
@@ -388,6 +537,9 @@ def main(argv=None):
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--only", default="", help="comma-separated names (a scoping aid)")
     ap.add_argument("--run-s", type=float, default=3600.0)
+    ap.add_argument("--search", type=int, default=0,
+                    help="Bright Data searches this run (0 = the free rungs only). Sets "
+                         "DRAIN_SEARCH_CAP; every call is counted and printed by _receipt()")
     ap.add_argument("--min-replay-yield", type=float, default=MIN_REPLAY_YIELD,
                     help="abort without writing if the REPLAYABLE names yield under this")
     a = ap.parse_args(argv)
@@ -412,6 +564,10 @@ def main(argv=None):
             except Exception as e:                                # noqa: BLE001
                 print("  exhaust unreadable %s: %r" % (fn, e), flush=True)
 
+    # the search cap is the flag, and `deep_validate` reads its OWN cap too -- raise both
+    # or the rung stops at deep_validate's 150 while this one still thinks it has budget.
+    os.environ["DRAIN_SEARCH_CAP"] = str(a.search)
+    os.environ.setdefault("DEEP_BD_SEARCH_CAP", str(max(a.search, 150)))
     boards_now = AE._boards_now()
     names_now = AE._names_now()
     print("drain: queue %d, unresolved %d, exhaust records %d, threads %d"

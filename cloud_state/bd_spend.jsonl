@@ -1,3 +1,9 @@
 {"at":"2026-08-28T15:09:37Z","cap":250,"capped":false,"credits":235,"pid":2962,"tool":"bd_rescue.py"}
 {"at":"2026-08-28T17:19:15Z","cap":250,"capped":false,"credits":21,"pid":2311,"tool":"discovery_daily.py"}
 {"at":"2026-08-28T17:53:24Z","cap":250,"capped":false,"credits":46,"pid":2961,"tool":"resolve_broken.py"}
+{"at":"2026-08-28T19:52:43Z","cap":null,"capped":false,"credits":6,"pid":12096,"tool":"drain_queue.py"}
+{"at":"2026-08-28T19:53:50Z","cap":null,"capped":false,"credits":6,"pid":9384,"tool":"drain_queue.py"}
+{"at":"2026-08-28T19:54:40Z","cap":null,"capped":false,"credits":6,"pid":29888,"tool":"drain_queue.py"}
+{"at":"2026-08-28T19:56:47Z","cap":null,"capped":false,"credits":2,"pid":33196,"tool":"-c"}
+{"at":"2026-08-28T20:55:32Z","cap":null,"capped":false,"credits":2,"pid":27240,"tool":"-c"}
+{"at":"2026-08-28T21:22:26Z","cap":null,"capped":false,"credits":843,"pid":18472,"tool":"drain_queue.py"}

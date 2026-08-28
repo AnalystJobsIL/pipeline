@@ -2069,5 +2069,75 @@
   "replace": "    verdict = _gate.activation_verdict(\n        name, api, n_il, html=held) if n_il < 0 else \"ok\"",
   "why": "narrows the gate to an impossible Israel-job count, so it is consulted on no real proposal while the call site still reads as present.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "zero-park-no-token",
+  "file": "confirm_zero.py",
+  "symbol": "_write",
+  "class": "M1-gate-removal",
+  "find": "        seg = (\"%s %s: %s; needs re-resolution\" % (MARKER, stamp, v[\"verdict\"]) if parks",
+  "replace": "        seg = (\"%s %s: %s\" % (MARKER, stamp, v[\"verdict\"]) if parks",
+  "why": "a `wrong-url` park that carries no verdicts.TOKENS token lands the row in NO re-check pool -- the zero audit parking a company into silence, which is the failure it exists to refuse.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "zero-park-when-skipped",
+  "file": "confirm_zero.py",
+  "symbol": "_write",
+  "class": "M3-branch-narrowing",
+  "find": "            if parks:\n                r[4] = \"false\"\n                off += 1",
+  "replace": "        if parks:\n            r[4] = \"false\"\n            off += 1",
+  "why": "deactivating regardless of whether the note was written parks a row carrying no zero-confirm segment at all: invisible twice over, and `_assert_routed_rows_are_owned` filtered on the OTHER branch's wording so it could not see it.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "zero-cond3-drop",
+  "file": "confirm_zero.py",
+  "symbol": "verdict_from",
+  "class": "M1-gate-removal",
+  "find": "    if not ev.get(\"cond3\"):\n        return ROUTING, False\n",
+  "replace": "",
+  "why": "condition (c) unenforced: a careers LANDING page that merely links to the board is judged as the board, and a model answering `states-none` about it manufactures a zero. `_JOBLINK` was dead code for the same reason.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "zero-cadence-drop",
+  "file": "confirm_zero.py",
+  "symbol": "in_zero_confirm_pool",
+  "class": "M7-constant-drift",
+  "find": "            and (FORCE or _ledger_stale(r[0], RECHECK_DAYS))",
+  "replace": "            and True",
+  "why": "without the cadence every run re-renders and re-judges every row already answered. It must read the LEDGER, not the note: the note write is best-effort, so a note-keyed cadence excluded nothing and the same 29 rows were re-audited in four consecutive batches.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "resolved-dup-board-drop",
+  "file": "apply_resolved.py",
+  "symbol": "main",
+  "class": "M1-gate-removal",
+  "find": "                held_urls, held_boards = _boards_held(lines, name)\n                if _board_key(api) in held_urls or (\n                        plat and tok and (plat.lower(), tok.lower()) in held_boards):",
+  "replace": "                held_urls, held_boards = _boards_held(lines, name)\n                if False:",
+  "why": "the state that minted Unframe/Unframe AI on 2026-08-28: a re-resolve re-points an ACTIVE row onto a board another ACTIVE row already holds. check_invariants check B is blind (it counts NAMES, and by construction they differ) and roles._winner then publishes one row's roles under the other's name.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "resolved-dup-exact-only",
+  "file": "apply_resolved.py",
+  "symbol": "_board_key",
+  "class": "M3-branch-narrowing",
+  "find": "    q = urllib.parse.urlparse(u)\n    return q.netloc.replace(\"www.\", \"\") + q.path.rstrip(\"/\")",
+  "replace": "    return u",
+  "why": "comparing urls RAW misses the pair this check exists for: the hunt activated the row on the human page `job-boards.greenhouse.io/unframe` and the re-resolve wrote `boards-api.greenhouse.io/v1/boards/unframe/jobs`. Every url de-dup key in this lane normalises for that reason.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "applier-agg-endpoint-only",
+  "file": "apply_proposals.py",
+  "symbol": "main",
+  "class": "M3-branch-narrowing",
+  "find": "        agg = next((u for u in trail[:2] if u and is_aggregator(u)), \"\")",
+  "replace": "        agg = p.get(\"api_url\") if is_aggregator(p.get(\"api_url\") or \"\") else \"\"",
+  "why": "a search rung resolves an aggregator's PAGE to the ATS board behind it, so the final api_url is an ATS host and no aggregator test can refuse it. Menora Mivtachim on jobkarov, one indirection on.",
+  "must_be_killed_by_behavioural": true
  }
 ]

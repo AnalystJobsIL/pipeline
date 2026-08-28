@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**444 filed · 328 open · 116 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**455 filed · 336 open · 119 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 397.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 408.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -88,7 +88,7 @@ closure convention in the header.
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 92 open
+### registry — 97 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -177,13 +177,18 @@ closure convention in the header.
 - **368** `368@registry` **`hunt-queue-identity-remove` is an EQUIVALENT MUTANT, and the source-text guard that
 - **371** `371@registry` **Two employers each hold two ACTIVE rows, and each row bought its own LLM verdict for
 - **376** `376@registry` **"Agencies are excluded everywhere via `pipeline/recruiters.py`" is not true of the
-- **379** `379@registry` **A production cron evicted two tools' verdicts from one note and dropped the row out of
-- **380** `380@registry` **`origin/master` is RED: `test_two_rehearsed_nights_keep_every_pool` fails at
 - **381** `381@registry` **`python -m pytest` writes to the REAL Bright Data spend ledger whenever
 - **382** `382@registry` **`tests/test_registry.py` leaks `bd_rescue.SPENT` and `os.environ["BD_RUN_CAP"]` across
 - **386** `386@registry` **`pipeline/identity_gate._UNLOCK_SPENT` leaks across tests the way `SPENT` did**
+- **399** `399@registry` **`notes.append` can still evict an unprotected pool token at the cap, and the residue is
+- **400** `400@registry` **`drain_queue`'s highest-yield rung depends on an artefact nothing in the repo produces,
+- **401** `401@registry` **The drain's `own-site` rung emits proposals that can never be applied**
+- **402** `402@registry` **`apply_proposals --max-age` is in hours but reads a DATE, so every `scrape` proposal
+- **403** `403@registry` **The 2-night rehearsal cannot tell a legitimate pool transition from erosion, and that is
+- **404** `404@registry` **`replace_own`'s marker test is a bare prefix, so `retry` deletes `retry-resolved`** —
+- **405** `405@registry` **`confirm_zero.py`'s entry point sat above a function it calls, so every `--apply` run
 
-### infra — 80 open
+### infra — 81 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -265,6 +270,7 @@ closure convention in the header.
 - **377** `377@infra` **Two `infra` comments quote the digest H1, which changed today**
 - **383** `383@infra` **`cloud_state/bd_spend.jsonl` has a writer and no reader**
 - **388** `388@infra` **`persist_state.shrank()` cannot see the loss it was written for, on the store where it
+- **407** `407@infra` **`check_invariants` check D and `registry_health.orphans()` only range over PARKED rows,
 
 ### company-intel — 24 open
 
@@ -364,7 +370,7 @@ closure convention in the header.
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
 - **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
 
-### ats-fetch — 14 open
+### ats-fetch — 15 open
 
 - **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
 - **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
@@ -380,6 +386,18 @@ closure convention in the header.
 - **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
 - **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
 - **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
+- **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
+
+### jd-text — 8 open
+
+- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
+- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
+- **343** `343@jd-text` **Three open roles exist only at an Indeed address, and Indeed cannot be read**
+- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
+- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
+- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
+- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
 
 ### roles — 8 open
 
@@ -401,16 +419,6 @@ closure convention in the header.
 - **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
 - **373** `373@classifier` **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
 - **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
-
-### jd-text — 7 open
-
-- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
-- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
-- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
-- **343** `343@jd-text` **Three open roles exist only at an Indeed address, and Indeed cannot be read**
-- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
-- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
-- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
 
 ### render — 6 open
 
@@ -3922,7 +3930,7 @@ lane, and is listed at the end.
 
 ## Found by another lane, 2026-08-28 (evening)
 
-380. **`origin/master` is RED: `test_two_rehearsed_nights_keep_every_pool` fails at
+380. ~~**`origin/master` is RED: `test_two_rehearsed_nights_keep_every_pool` fails at
     43c68f8** — lane: `registry`. Found by `jd-text` while rebasing; verified in a clean
     worktree at `43c68f8` with nothing of mine applied, so it is not a merge artefact:
 
@@ -3939,6 +3947,17 @@ lane, and is listed at the end.
     failure is in `companies.csv` pool policy, which this lane does not write, and holding a
     green lane back does not make the red one greener — but the next `registry` session
     should treat it as the first thing to look at.
+    **CLOSED 2026-08-28 (`registry`). The test is GREEN at `759ba36`, and that is a finding
+    rather than a pass**: `Salvador Technologies` acquired a `domain-dead` token overnight, so
+    the row is terminal, so `in_probe_pool` excludes it and it is not in `pools0` at all —
+    nothing can "lose" it. **Read this as the rule: a data-driven rehearsal going green is not
+    evidence that a defect was fixed.** The transition it flagged turns out to be legitimate
+    (see **379**), so the residue is a harness gap, filed as **403**.
+
+    Master *was* red at `759ba36`, but on **three** other tests, none of them this one:
+    `test_no_two_active_rows_share_a_board` (this lane's — closed as **397**),
+    `test_native_url_is_derived_from_the_public_url_alone` (**398**) and
+    `test_every_open_role_in_the_ledger_carries_a_job_description` (`jd-text`'s, open).~~
 
 381. **`python -m pytest` writes to the REAL Bright Data spend ledger whenever
     `secrets.env` is present** — lane: `registry` (the tests) with `infra` (the ledger).
@@ -6747,7 +6766,7 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     an adjacent programme word (`campus (program|programme|hire|hiring)`). Re-derive the
     count: `python -c "import json;d=json.load(open('scraped_cache.json',encoding='utf-8'));print([j['title'] for v in d.values() for j in v if 'campus' in (j.get('title') or '').lower()])"`
 
-379. **A production cron evicted two tools' verdicts from one note and dropped the row out of
+379. ~~**A production cron evicted two tools' verdicts from one note and dropped the row out of
     the Sunday pool — `tests/test_registry.py::test_two_rehearsed_nights_keep_every_pool` is
     RED on `origin/master`** — lane: `registry` (`bd_rescue.py`'s note write). Not a code
     change: `3a5a1db` is a `[skip ci]` state commit from the 02:30 `retry-unreachable` cron,
@@ -6777,3 +6796,238 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     (it is a pool FACT, which is that list's stated criterion), or have `bd_rescue` use
     `replace_own` rather than appending a second segment. Measure the eviction rate first:
     `git log -p --since=7.days -- companies.csv | grep -c '^-.*no IL listing'`.
+    **CLOSED 2026-08-28 (`registry`) as NOT A NOTE DEFECT. Three diagnoses were wrong before
+    the right one, including two of mine, so the chain is written out.**
+
+    *(a) The item's own cause does not hold.* `validate_empty` does not key on `no IL listing`
+    — `in_validate_empty_pool:42` reads `("no open israel roles" in n or "cross-validated" in n
+    or "empty-but-suspect" in n)`, and all three are ALREADY protected. Protecting
+    `no IL listing` would have changed nothing, and `bd_rescue` already uses `replace_own`.
+
+    *(b) The cap is not involved either.* Replayed over the row's real `063d14b` cell, the note
+    is **188 characters** when the token disappears. Nothing was evicted for space.
+
+    *(c) My own next answer — that `replace_own` should keep a protected FACT its replacement
+    does not restate — was measured and REJECTED.* An adversarial pass drove 37 real writer
+    call-sites over the 537 real parked rows, deciding membership through
+    `registry_health.pools()`: over two nights of the real daily crons the rule cost **63 rows
+    a pool the old code kept** (51 `validate_empty`, 36 the 02:30 retry pool). The mechanism is
+    the cap after all — a retained segment lengthens the base, `append` then finds every
+    remaining segment protected, and its "newcomer is DROPPED whole" branch discards the tool's
+    **own fresh verdict**. `Biomica` keeps `retry 2026-08-28: scanned; no open Israel roles now`
+    and loses `retry 2026-08-29: still unreachable`, leaving the retry pool. Reverted whole.
+
+    **(d) The actual answer: the transition is LEGITIMATE and the 2-night harness cannot see
+    that.** `retry_unreachable._note` uses one marker for every branch by design, so its `empty`
+    verdict (`scanned; no open Israel roles now`) is replaced by its `still unreachable` verdict
+    — and a row that has become UNREACHABLE is no longer a row we believe is EMPTY. It leaves
+    `validate_empty` and stays owned by **six** other pools, `orphans` 0:
+
+    ```
+    BEFORE  validate_empty=True   owned by 7: audit_empty_rows, deep_validate, listing_hunt,
+                                              probe_candidates, retry+bd_rescue, triage_dark, validate_empty
+    AFTER   validate_empty=False  owned by 6: (the same, minus validate_empty)      orphans: []
+    ```
+
+    `tests/rehearse_registry.py` subtracts five legitimate exits from `lost` — active, terminal,
+    no-http, and the pool's own tool having stamped that row tonight — and none of them covers
+    *the tool that OWNS the segment carrying the pool's token retracted it*. That is a **sixth**
+    legitimate exit, and it is the same shape as the fifth, which was added for the
+    probe → hunt → probe cycle. Filed as **403**; deliberately NOT done tonight, because
+    ARCHITECTURE §2 names loosening this check as the obvious way to fake a green rehearsal, so
+    it needs its own control (`REHEARSE_SELF_TEST=overwrite` must still exit 1) and a session
+    that is not also running two batch jobs.
+
+    **What this leaves standing.** `_PROTECTED_EXTRA` and `append` are untouched and correct.
+    The `append`-side residue — real, and a different thing — is **399**.
+
+## Found by `registry`, 2026-08-28 (evening)
+
+Record: `docs/sessions/2026-08-28-registry-evening.md`. Numbers re-derived against
+`origin/master` `759ba36`; re-derive before acting.
+
+397. ~~**Two ACTIVE rows shared one greenhouse board, so every role would publish twice under
+    two company names**~~ — **CLOSED 2026-08-28 (`registry`)**, lane: `registry`. `Unframe` and
+    `Unframe AI` both pointed at `boards-api.greenhouse.io/v1/boards/unframe/jobs`, both
+    `active`, both verified 10 IL. `check_invariants` check B cannot catch this *because the
+    names differ*, and `test_no_two_active_rows_share_a_board` was red on `origin/master`.
+    `Unframe AI` arrived 2026-08-24 (`0b41823`), `Unframe` on 2026-08-28 in a bulk
+    intake-to-rows commit that predates the applier's name-overlap HOLD — which is exactly the
+    twin shape that HOLD was measured on (`_name_kin`, hit 10/10). Settled by the signal that
+    caught the Meridial agency board: the board's own `<title>` says **Unframe**, so
+    `Unframe AI` was parked `alias-of Unframe`. **0 roles were in `matched` or `sent` under
+    either name**, so nothing was re-sent and nothing was lost. Residue: the six activation
+    paths that are not `apply_proposals` still have no name-overlap HOLD.
+
+398. **A Workday row whose cxs tenant differs from its host label cannot round-trip
+    `jdfill.native_url`, and it is red on master** — lane: `jd-text` (the derivation), found by
+    `registry` 2026-08-28. `Ribbon Communications` is
+    `https://vhr-genband.wd1.myworkdayjobs.com/wday/cxs/vhr_genband/ribboncareers/jobs` — host
+    label `vhr-genband` (hyphen), cxs tenant `vhr_genband` (**underscore**). Workday allows the
+    two to differ. `native_url` derives the cxs tenant from the host label, returns
+    `vhr-genband`, and `test_native_url_is_derived_from_the_public_url_alone` fails. **The ROW
+    is right** — it verified 1/1 IL through the real fetcher and the 06:00 self-heal re-resolved
+    it at `759ba36` — so parking it to make the test green would destroy real coverage to hide a
+    derivation bug. The row was added by this lane's applier (`queue-drain 2026-08-28 exhaust`),
+    which is why the test only went red today. The fix is either a tenant the derivation can
+    read from `companies.csv`, or the test narrowing its claim, which is currently "every
+    Workday row in the registry must round trip" and is false of Workday in general.
+
+399. **`notes.append` can still evict an unprotected pool token at the cap, and the residue is
+    measured** — lane: `registry`, filed 2026-08-28 while closing 379.
+    `pipeline/notes.append` can still evict an unprotected pool token at the 220-char cap:
+    measured over the 15 commits since 2026-08-27, **68 evictions across 50 rows**, every one of
+    them unprotected — `no ATS detected` 32, `no IL listing` 24, `no listing found` 11,
+    `unreachable` 1 — and **246 rows are one 45-char stamp away** from losing one.
+
+    This was not fixed by simply widening `_PROTECTED_EXTRA` because the cost was measured and
+    it is not small. Rows where the next stamp would be **dropped whole**:
+
+    | protected set | rows all-protected | of those, within 45 chars of the cap |
+    |---|---|---|
+    | today | 67 | **3** |
+    | + `no IL listing` | 159 | **25** |
+    | + every `verdicts.TOKENS` token | 380 | **122** |
+
+    A tool that can never stamp its date is never `verdicts.stale`, so those rows are
+    re-selected **every night for ever** and eat the hunt's 200-minute budget; 122 of ~370
+    parked rows is a third of it. **The real answer is to widen `CAP`**, which is `infra`'s:
+    three copies of `220` live in `check_invariants.py:39`, `merge_csv_rows._merge_notes` and
+    `pipeline/notes.py`. The durable answer is to stop pools standing on tokens at all —
+    `validate_empty._probe_saw_signals` already does exactly that against
+    `cloud_state/candidate_probe.json` and is staged behind `VALIDATE_EMPTY_SIGNALS=1` (it moves
+    that pool 28 -> ~113 rows, and it ACTIVATES, which is why it is staged).
+
+400. **`drain_queue`'s highest-yield rung depends on an artefact nothing in the repo produces,
+    and its mass-zero abort depends on the same one** — lane: `registry`, filed 2026-08-28.
+    `--exhaust` replays `hq_s*.json` records and supplied **92 of the 132 proposals** in the
+    2026-08-28 drain (replay yield 96.8%, against 2.2% on never-hunted names). No module writes
+    those files — they were a one-off local artefact of a 488-name sweep — and they are no
+    longer on disk, so that rung cannot be re-run. Worse, `--min-replay-yield` is **vacuous
+    without them**: `replayable` empty => `r_rate = 1.0` => the abort never fires, so a run
+    where every rung is broken looks exactly like a run where the queue had no answers. Either
+    persist the records under `cloud_state/` when they are produced, or give the drain a
+    mass-zero floor that does not depend on them.
+
+401. **The drain's `own-site` rung emits proposals that can never be applied** — lane:
+    `registry`, filed 2026-08-28. `drain_queue:325` passes `il_hint = 0` for that rung, so
+    `apply_proposals` computes `n_il = 0`, `activation_verdict` returns `"empty"`
+    (`identity_gate:485`) and `_row_for` returns `None` — on any day, for every own-site
+    proposal. 3 of the 132 proposals on 2026-08-28 were this rung and all 3 are unapplicable,
+    while still counting as hits in the yield line. Either the rung counts Israel jobs on the
+    page it already holds, or it emits a `refused` record.
+
+402. **`apply_proposals --max-age` is in hours but reads a DATE, so every `scrape` proposal
+    expires at midnight** — lane: `registry`, filed 2026-08-28. `main():424` computes
+    `age_h = (today - date.fromisoformat(doc["generated"])).days * 24`, so `age_h` is `0` on the
+    day of the drain and `24` the next; with `MAX_AGE_H = 6.0` a scrape proposal is activatable
+    only on its generation date and silently becomes `n_il = 0` -> deferred afterwards. That is
+    defensible as a freshness rule, but it is not what the flag says, and it makes a drain whose
+    application slips past midnight look like a rung that found nothing. Put a timestamp in
+    `generated`, or make the flag days.
+
+403. **The 2-night rehearsal cannot tell a legitimate pool transition from erosion, and that is
+    what `379`/`380` actually were** — lane: `registry`, filed 2026-08-28.
+    `tests/rehearse_registry.py:349-356` subtracts five legitimate exits from `lost`: the row
+    went active, went terminal, lost its http address, or the pool's OWN tool stamped it that
+    night. Missing: **the tool that owns the segment carrying the pool's token retracted it.**
+    `retry_unreachable` moving a row from `scanned; no open Israel roles now` to
+    `still unreachable` takes it out of `validate_empty` — correctly, a row that is unreachable
+    is not a row we believe is empty — and it stays owned by six other pools with `orphans` 0.
+    The harness reports that as `pool validate_empty lost 1 rows it should keep`.
+
+    **Do not simply add the exit.** ARCHITECTURE §2 names loosening this check as the obvious
+    way to fake a green rehearsal, and the control that stops it (`REHEARSE_SELF_TEST=overwrite`
+    must still exit 1) has to be re-proved against the widened rule. The narrow form: the exit
+    counts only when the segment that carried the pool's token was replaced by a segment under
+    **the same marker**, i.e. by the tool that wrote the fact. Erosion — the cap, or a different
+    tool's marker — must still fail.
+
+404. **`replace_own`'s marker test is a bare prefix, so `retry` deletes `retry-resolved`** —
+    lane: `registry`, filed 2026-08-28 by an adversarial pass. `p.lower().startswith(marker)`,
+    so `retry_unreachable`'s stamp removes a `retry-resolved; 11/5 IL` segment (one real row
+    today). Pre-existing and low-harm — `retry-resolved` carries no pool token — but it is the
+    same shape as the `SmartRecruiters`/`recruiter` substring incident (`72`), which cost five
+    rows their pool. Checked and ruled out for the others: `crack-walled` does not match
+    `crack_walled`, `repair ` (trailing space) does not match `repair-gap`; `re-audit` DOES
+    match `re-audited` and is genuinely shared by `deep_validate:427` and
+    `audit_empty_rows:498`. A word boundary after the marker would settle all of them.
+
+405. **`confirm_zero.py`'s entry point sat above a function it calls, so every `--apply` run
+    crashed after spending the renders and the LLM calls** — lane: `registry`, found and fixed
+    2026-08-28. `if __name__ == "__main__": sys.exit(main())` was at line 695 and
+    `_assert_routed_rows_are_owned` was defined at 699, so running the module AS A SCRIPT called
+    `main()` before the body finished evaluating:
+    `NameError: name '_assert_routed_rows_are_owned' is not defined`, raised at the write, after
+    ~40 Playwright renders and ~35 `claude -p` calls, and after the per-row evidence had been
+    written — so `out/zero_evidence/` filled up and **nothing reached `companies.csv` or the
+    ledger**. It hid because the assertion is the last thing before the write, so a DRY RUN
+    returns before it, and because `python -c "import confirm_zero; confirm_zero.main()"` — how
+    the tool was driven on 2026-08-28 — evaluates the whole body first and works. Only the
+    documented CLI failed. Fixed by moving the entry point to the end of the file, and guarded
+    repo-wide by `test_no_root_module_defines_anything_after_its_entry_point` (AST over every
+    root module; positive control run against the unfixed file at `origin/master`).
+
+406. **18 ACTIVE rows point at an ABANDONED tenant — a board that answers perfectly and has not
+    been touched in years — and nothing in this repo could ever have found them** — lane:
+    `ats-fetch` (the verdict belongs in `pipeline/health.py`), found by `registry` 2026-08-28 on
+    the operator's tip. `HiBob` was `smartrecruiters/HiBob`: HTTP 200, valid JSON,
+    `totalFound 1`, and the one posting was *IT Assistant*, **London**, released
+    **2020-01-24**. Proven, not argued — with the row exactly as it was:
+
+    ```
+    in any re-check pool : NONE     orphans() sees it : []     in stale.json : False
+    in_zero_confirm_pool : False    check_invariants C2/C3 : both PASS
+    ```
+
+    Every escape is structural. `health.py` sees postings > 0 so the row never enters
+    `stale.json`, so the 06:00 self-heal (whose scope IS `stale.json`) never sees it.
+    `confirm_zero` needs an all-time high of exactly 0 and this returns 1 — the same escape
+    PLAYSTUDIOS used. Every pool in `pools()` requires `active == "false"`. **`orphans()` only
+    ranges over PARKED rows**, so the one invariant that exists to catch "owned by nothing" is
+    blind to the active half by construction. C2/C3 pass because the endpoint IS on
+    smartrecruiters and the tenant IS the company's name. And the note said
+    `deep-verified MANUALLY` on 2026-08-21 — **a human verdict is exactly as stale as an
+    automated one, and this is the counter-example.**
+
+    **The signal is already in every payload we fetch and is read by nothing.** `posted_date`
+    is part of the common job shape. Measured over the 471 active native rows, one free fetch
+    each (`python registry_health.py --stale-boards`):
+
+    | newest posting on the board | rows |
+    |---|---|
+    | < 3 months | 415 |
+    | 3–12 months | 4 |
+    | 12–24 months | 3 |
+    | 24–36 months | 4 |
+    | **> 36 months** | **11** |
+
+    **18 rows at ≥ 12 months**, oldest `Ness Technologies` **2014-03-18**, then `Nexar`
+    2017-02-02, `DustPhotonics` 2019-06-25, `HiBob` 2020-01-24. **14 of the 18 are
+    `smartrecruiters`** — abandoned tenants that keep answering is a platform pattern, not a
+    coincidence, and worth its own look.
+
+    **It has already shipped.** `TLVTech`'s *Data Analyst*, posted **2024-10-22**, is in
+    `matched`, was **emailed**, and is still `last_seen` today: a 22-month-old posting published
+    as a current job.
+
+    Three lanes, and only the first is `registry`'s:
+    1. `registry` — measure it and repair the rows. `registry_health.py --stale-boards` exists;
+       HiBob is repaired (`careers.hibob.com`, 17/17 IL, a Comeet-powered page — the answer was
+       in our own registry, which already reads `*.careers.hibob.com` for two other companies).
+       The other 17 are NOT repaired.
+    2. `ats-fetch` — the freshness verdict belongs in `pipeline/health.py`, beside
+       `zero_is_a_measurement()`, so it becomes a nightly signal instead of a census someone
+       remembers to run.
+    3. `roles` / `render` — a role whose `posted_date` is 22 months old should not be
+       publishable as new whatever the board says. TLVTech is the proof that bound is missing.
+
+407. **`check_invariants` check D and `registry_health.orphans()` only range over PARKED rows,
+    so "owned by nothing" is never reported for the ACTIVE half** — lane: `infra` (check D) with
+    `registry` (`orphans`), filed 2026-08-28. Both take `r[4] == "false"` as their scope, which
+    was right when every re-check pool did. It is now the reason **two** distinct classes had to
+    be found by a human: the `israel_scoped` Workday rows (`318`) and the abandoned tenants
+    (`406`), plus the region variants. An active row is re-checked only by the digest, which
+    asks "did the fetch work", never "is this still the right board". The decision this needs is
+    whether check D grows an active-row arm with its own (necessarily different) ownership
+    definition, or whether that belongs in `health.py` — not a patch to make quietly.

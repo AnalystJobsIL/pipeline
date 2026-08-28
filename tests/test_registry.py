@@ -6436,3 +6436,263 @@ def test_confirm_zero_never_leaves_a_row_unresolved():
     assert 'ROUTING = "needs-resolve"' in src
     for bad in ('% (MARKER, stamp, ROUTING', 'MARKER, stamp, "needs-resolve"'):
         assert bad not in src, "the routing state is being written to a row: %s" % bad
+
+
+def test_a_zero_confirm_park_always_lands_in_a_re_check_pool(tmp_path, monkeypatch):
+    """The zero audit's own version of the failure it exists to refuse.
+
+    `wrong-url` set `active=false` and wrote `zero-confirm <date>: wrong-url; <code>; ev <hash>`
+    -- not one token in `verdicts.TOKENS` -- so the row landed in NO re-check pool and nothing
+    would ever look at it again. And it deactivated even when the note write was SKIPPED as
+    evicting, so a row could be parked carrying no `zero-confirm` segment at all: invisible
+    twice over. `_assert_routed_rows_are_owned` could not see either, because it filtered on
+    `"board answered"`, which is the OTHER branch's wording.
+    Kills `zero-park-no-token` and `zero-park-when-skipped`."""
+    import csv
+    import confirm_zero as Z
+    import listing_hunt as L
+    from pipeline.verdicts import in_pool
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"],
+            ["Off Co", "scrape", "", "https://off.example/careers", "true", "universal-scrape"],
+            # a SATURATED note: the write must be skipped, and then the row must NOT be parked
+            ["Full Co", "scrape", "", "https://full.example/careers", "true",
+             " | ".join("dark-triage 2026-08-2%d: page-empty (x%s)" % (i, "y" * 20)
+                        for i in range(1, 4))]]
+    with open(tmp_path / "companies.csv", "w", encoding="utf-8", newline="") as fh:
+        csv.writer(fh).writerows(rows)
+    monkeypatch.setattr(Z, "CSV_PATH", str(tmp_path / "companies.csv"))
+    monkeypatch.setattr(Z, "LEDGER", str(tmp_path / "cloud_state" / "zero_confirm.json"))
+    ev = {"cond1": "rendered", "cond2": "ours", "cond3": True}
+    res = {"Off Co": {"verdict": "wrong-url", "ev": ev, "artifact": "off-co-abc123",
+                      "llm": {"employer_named": "Someone Else"}},
+           "Full Co": {"verdict": "wrong-url", "ev": ev, "artifact": "full-co-def456",
+                       "llm": {"employer_named": "Someone Else"}}}
+    Z._write(res, "2026-08-29", {})
+    out = {r[0]: r for r in csv.reader(open(tmp_path / "companies.csv", encoding="utf-8"))}
+
+    off = out["Off Co"]
+    assert off[4] == "false", "the park did not happen at all"
+    assert L.in_hunt_pool(off) and in_pool(off[5]), (
+        "a parked row landed in NO re-check pool -- parked into silence: %s" % off[5])
+
+    full = out["Full Co"]
+    # The SATURATED note is the interesting half, and the answer changed once the tool was run
+    # in anger. Skipping the note on a `wrong-url` left the worst of both: an ACTIVE row
+    # publishing another company's roles, and no record on the row saying so -- 3 real rows
+    # (Fast Simon, Veriti, Belkin Vision) sat like that for a day. A verdict the model reached
+    # by NAMING a different employer is allowed to evict; what it evicts is an older verdict
+    # about the address we are abandoning, and `notes.append` still protects every protected
+    # segment and every terminal token.
+    assert full[4] == "false", "a proven wrong-url must park even when its note is full"
+    # ...and it lands in a pool by the TOOL'S OWN predicate, which is what
+    # `_assert_routed_rows_are_owned` enforces before the write: `in_hunt_pool` OR any
+    # `verdicts` token. This fixture's note is entirely `dark-triage`, every segment of which
+    # is PROTECTED, so `append` drops the newcomer whole and the row keeps only what it had --
+    # still owned, by `triage_dark`, and correctly NOT by the hunt, which excludes a
+    # `page-empty` row on purpose. Asserting the hunt specifically was stricter than the
+    # invariant and would have forced the tool to evict a protected segment to satisfy a test.
+    assert L.in_hunt_pool(full) or in_pool(full[5]), (
+        "a parked row landed in NO re-check pool: %s" % full[5])
+
+
+def test_a_landing_page_can_never_be_confirmed():
+    """Condition (c) enforced, not merely recorded. `_JOBLINK` was dead code and the LLM gate
+    checked only cond1/cond2, so a careers page that merely LINKS to the board was judged as
+    though it were the board -- and a model answering `states-none` about it produced a zero.
+    A landing page has no openings BY CONSTRUCTION. Kills `zero-cond3-drop`."""
+    import confirm_zero as Z
+    says_none = {"is_job_board": True, "employer_named": "X", "roles_total": 0,
+                 "employer_is_the_asked_company": True,     # else `wrong-url` wins first
+                 "roles_israel": 0, "vacancy_statement": "states-none"}
+    assert Z.verdict_from(says_none, {"cond3": True, "board_why": "jsonld"}) == ("confirmed", True)
+    assert Z.verdict_from(says_none, {"cond3": False, "board_why": "no-board-signal"}) \
+        == (Z.ROUTING, False)
+    # ...and the same for a board that lists roles, none of them Israeli
+    lists = dict(says_none, roles_total=12, vacancy_statement="lists-roles")
+    assert Z.verdict_from(lists, {"cond3": True, "board_why": "ats-xhr"}) == ("confirmed", True)
+    assert Z.verdict_from(lists, {"cond3": False, "board_why": "no-board-signal"}) \
+        == (Z.ROUTING, False)
+
+
+def test_the_zero_audit_follows_a_landing_page_to_its_board():
+    """`board_link` picks the link the page names as its openings, on the SAME registrable
+    domain only -- a cross-domain `careers` link is an ATS, which condition 2 judges
+    separately. The footer's own `/careers` (the page we are on) can never be the answer."""
+    import confirm_zero as Z
+    here = "https://acme.example/careers"
+    dom = [{"url": "https://acme.example/careers", "title": "Careers"},        # ourselves
+           {"url": "https://twitter.com/acme/jobs", "title": "jobs"},          # other domain
+           {"url": "https://www.acme.example/careers/open-positions", "title": "See openings"},
+           {"url": "https://acme.example/about", "title": "About"}]
+    assert Z.board_link(dom, here) == "https://www.acme.example/careers/open-positions"
+    # nothing that scores below the floor is followed -- a bare "About" page is not a guess
+    assert Z.board_link([{"url": "https://acme.example/about", "title": "About"}], here) == ""
+    assert Z.board_link([], here) == ""
+
+
+def test_the_zero_pool_skips_a_row_it_answered_this_month(tmp_path, monkeypatch):
+    """The cadence reads the LEDGER, not the note, and that distinction is the whole point.
+
+    The note write is BEST-EFFORT -- `_write` skips it whenever it would evict another tool's
+    segment, which on this pool is most rows, because a row is in this pool precisely because it
+    has been stamped many times. A note-keyed cadence therefore excluded nothing: the first
+    version re-audited the same 29 rows in four consecutive batches, spending a Playwright
+    render and a `claude -p` call on each, every time. `cloud_state/zero_confirm.json` has no
+    cap and is written for every judged row. Kills `zero-cadence-drop`."""
+    import datetime as dt
+    import json
+    import confirm_zero as Z
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    fresh = (dt.date.today() - dt.timedelta(days=2)).isoformat()
+    old = (dt.date.today() - dt.timedelta(days=90)).isoformat()
+    (tmp_path / "cloud_state" / "zero_confirm.json").write_text(json.dumps({
+        "Fresh Co": {"date": fresh, "verdict": "confirmed"},
+        "Old Co": {"date": old, "verdict": "confirmed"}}), encoding="utf-8")
+    monkeypatch.setattr(Z, "LEDGER", str(tmp_path / "cloud_state" / "zero_confirm.json"))
+    Z._LEDGER_CACHE.clear()
+    base = {"fresh co": 0, "old co": 0, "new co": 0}
+    row = lambda n: [n, "scrape", "", "https://x.example/careers", "true", "universal-scrape"]
+    assert Z.in_zero_confirm_pool(row("New Co"), base), "a never-audited row must be selected"
+    assert Z.in_zero_confirm_pool(row("Old Co"), base), "90 days is past the 30-day cadence"
+    assert not Z.in_zero_confirm_pool(row("Fresh Co"), base), (
+        "a row answered 2 days ago was re-selected -- the pool cannot drain")
+    # ...and the NOTE is irrelevant either way, which is the bug this replaced
+    noted = row("New Co")
+    noted[5] = "zero-confirm %s: confirmed; rn+llm; ev abc" % fresh
+    assert Z.in_zero_confirm_pool(noted, base), "the cadence must not key on the note"
+    try:
+        Z.FORCE = True
+        Z._LEDGER_CACHE.clear()
+        assert Z.in_zero_confirm_pool(row("Fresh Co"), base), "--force must re-ask"
+    finally:
+        Z.FORCE = False
+        Z._LEDGER_CACHE.clear()
+
+
+def test_a_re_resolve_cannot_point_a_row_at_a_board_another_active_row_holds(tmp_path, monkeypatch):
+    """The path that minted `Unframe` / `Unframe AI` on 2026-08-28, traced commit by commit.
+
+    Every de-dup key in this lane is checked when a row is CREATED. `apply_resolved` rewrites
+    col 3 of a row that already exists, so each key had been checked against the value the row
+    USED to have: `listing_hunt` activated `Unframe` on the human page
+    `job-boards.greenhouse.io/unframe`, and the 06:00 self-heal then rewrote it to
+    `boards-api.greenhouse.io/v1/boards/unframe/jobs` -- byte-identical to `Unframe AI`'s.
+    Two active rows, one board, and `check_invariants` check B blind because it counts NAMES.
+
+    Kills `resolved-dup-board-drop` and `resolved-dup-exact-only`."""
+    import json
+    import apply_resolved as AR
+    monkeypatch.chdir(tmp_path)
+    rows = ["company_name,ats_platform,token,api_url,active,notes\n",
+            "Twin AI,greenhouse,unframe,https://boards-api.greenhouse.io/v1/boards/unframe/jobs,true,held\n",
+            "Twin,scrape,,https://job-boards.greenhouse.io/unframe,true,activated by the hunt\n",
+            "Solo,scrape,,https://solo.example/careers,true,fine\n"]
+    (tmp_path / "companies.csv").write_text("".join(rows), encoding="utf-8")
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "r.json").write_text(json.dumps({
+        # the exact re-point that created the pair...
+        "Twin": ["greenhouse", "unframe", "https://boards-api.greenhouse.io/v1/boards/unframe/jobs"],
+        # ...and a legitimate one, which must still be applied (the positive control)
+        "Solo": ["greenhouse", "solo", "https://boards-api.greenhouse.io/v1/boards/solo/jobs"],
+    }), encoding="utf-8")
+    monkeypatch.setenv("RESOLVED_OUT", "out/r.json")
+    monkeypatch.setattr(AR._gate, "is_foreign", lambda *a, **k: False)
+    monkeypatch.setattr(AR._gate, "board_vouches", lambda *a, **k: True)
+    monkeypatch.setattr(AR.sys, "argv", ["apply_resolved.py"])
+    AR.main()
+    out = {r[0]: r for r in __import__("csv").reader(
+        open(tmp_path / "companies.csv", encoding="utf-8"))}
+    assert out["Twin"][3] == "https://job-boards.greenhouse.io/unframe", (
+        "the re-resolve pointed a second ACTIVE row at a board another one already holds: %s"
+        % out["Twin"])
+    assert out["Solo"][3] == "https://boards-api.greenhouse.io/v1/boards/solo/jobs", (
+        "positive control: a legitimate re-resolve must still be applied: %s" % out["Solo"])
+    # and the same refusal on the (platform, token) key, not only the url
+    assert AR._board_key("https://WWW.Example.com/a/b/?q=1") == "example.com/a/b"
+
+
+def test_no_root_module_defines_anything_after_its_entry_point():
+    """`if __name__ == "__main__": sys.exit(main())` must be the LAST statement in the file.
+
+    `confirm_zero.py` had it four lines above `_assert_routed_rows_are_owned`, so running the
+    module AS A SCRIPT called `main()` before the rest of the body had been evaluated and every
+    `--apply` run died at the write with `NameError: name '_assert_routed_rows_are_owned' is not
+    defined` -- AFTER the Playwright renders and the LLM calls had been spent, and after the
+    per-row evidence had been written. The run therefore LOOKED like it had done the work:
+    `out/zero_evidence/` filled up and nothing reached `companies.csv` or the ledger.
+
+    It hid for two more reasons. The assertion is the last thing before the write, so a DRY RUN
+    returns before it and is unaffected; and `python -c "import m; m.main()"` evaluates the
+    whole body first and works. Only the documented CLI failed -- the one form a future session
+    copies out of the docstring.
+
+    Repo-wide because the shape is not specific to one module: any root script whose entry
+    point is not last can call a name that does not exist yet, and the failure only appears on
+    the path that reaches it. Read-only lint; no lane owns it.
+    """
+    import ast
+    import glob
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    offenders = []
+    for path in sorted(glob.glob(os.path.join(root, "*.py"))):
+        try:
+            tree = ast.parse(open(path, encoding="utf-8").read())
+        except SyntaxError:
+            continue
+        guard = None
+        for node in tree.body:
+            if (isinstance(node, ast.If) and ast.dump(node.test).find("__name__") >= 0
+                    and "__main__" in ast.dump(node.test)):
+                guard = node
+        if guard is None:
+            continue
+        after = [n for n in tree.body
+                 if getattr(n, "lineno", 0) > getattr(guard, "lineno", 0)
+                 and isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef,
+                                    ast.Assign, ast.AnnAssign))]
+        if after:
+            offenders.append("%s: %s defined after the entry point at line %d"
+                             % (os.path.basename(path),
+                                ", ".join(getattr(n, "name", "<assignment>") for n in after[:4]),
+                                guard.lineno))
+    assert not offenders, (
+        "a root module runs main() before its own body finishes evaluating, so a name defined "
+        "below can raise NameError on the path that reaches it: " + "; ".join(offenders))
+
+
+def test_the_applier_refuses_an_aggregator_anywhere_on_the_trail(tmp_path, monkeypatch):
+    """A search rung resolves an aggregator's PAGE to the ATS board behind it, and the final
+    `api_url` is then the ATS host -- which no aggregator test can refuse. The gate has to read
+    where the board was FOUND, not only where it ended.
+
+    This is `Menora Mivtachim` on `jobkarov.com` with one more indirection: the reason the
+    aggregator test runs before the identity gate is that they answer different questions, and
+    an aggregator's per-company page passes the identity one by naming the company correctly.
+    Kills `applier-agg-endpoint-only`."""
+    import csv
+    import json
+    import apply_proposals as AP
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    monkeypatch.setattr(AP, "CSV_PATH", str(tmp_path / "companies.csv"))
+    monkeypatch.setattr(AP._gate, "activation_verdict", lambda *a, **k: "ok")
+    monkeypatch.setattr(AP, "_reverify_ats", lambda p: ([{"t": 1}], [{"t": 1}]))
+    props = {"generated": __import__("datetime").date.today().isoformat(), "proposals": [
+        {"name": "Portfolio Co", "kind": "ats", "rung": "search", "platform": "comeet",
+         "token": "18.001", "api_url": "https://www.comeet.com/careers-api/2.0/company/18.001/positions",
+         "evidence": {"candidate_url": "https://jobkarov.com/Search/Company/16928",
+                      "seed_url": "https://secrethunter.io/x", "n_il": 7}},
+        {"name": "Real Co", "kind": "ats", "rung": "search", "platform": "comeet",
+         "token": "19.002", "api_url": "https://www.comeet.com/careers-api/2.0/company/19.002/positions",
+         "evidence": {"candidate_url": "https://realco.example/careers", "n_il": 3}}]}
+    (tmp_path / "p.json").write_text(json.dumps(props), encoding="utf-8")
+    AP.main(["--proposals", str(tmp_path / "p.json"), "--apply", "--batch", "10"])
+    names = {r[0] for r in csv.reader(open(tmp_path / "companies.csv", encoding="utf-8"))}
+    assert "Portfolio Co" not in names, (
+        "a board found ON an aggregator page was activated because the endpoint was an ATS host")
+    assert "Real Co" in names, "positive control: an ordinary candidate must still be written"

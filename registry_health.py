@@ -281,6 +281,186 @@ def pools(rows):
     }
 
 
+# --------------------------------------------------------------------------------------- #
+# region variants -- the PLAYSTUDIOS class
+# --------------------------------------------------------------------------------------- #
+# A REGION marker in the tenant token or the endpoint path. Word-bounded on both sides so
+# `playstudios-asia` matches and `census`, `columbus`, `nauto` do not.
+REGION_RX = re.compile(
+    r"(?:^|[-_./])(asia|apac|emea|eu|us|usa|uk|na|latam|india|japan|china|korea|"
+    r"germany|france|canada|australia|global|intl|international|amer|americas|"
+    r"external[-_]?us|en[-_]us|row)(?:$|[-_./?])", re.I)
+# ...and an explicitly Israeli marker means the row is already pointed at the right place:
+# `zoom.us/jobs/search?location=Israel` carries `us` in the HOST and is perfectly correct.
+ISRAELI_RX = re.compile(r"(?:^|[-_./])(il|isr|israel|telaviv|tel-aviv)(?:$|[-_./?])|\.co\.il",
+                        re.I)
+
+
+def region_marked(r):
+    """The region token in this row's address, or "" -- '' also when the address names Israel."""
+    if len(r) < 4:
+        return ""
+    both = (r[2] or "") + " " + (r[3] or "")
+    if ISRAELI_RX.search(both):
+        return ""
+    for field in (r[2] or "", r[3] or ""):
+        m = REGION_RX.search(field)
+        if m:
+            return m.group(1).lower()
+    return ""
+
+
+def region_variants(rows):
+    """ACTIVE rows pointing at a REGION variant of the right company's board.
+
+    **The class `confirm_zero` cannot see, by construction.** `PLAYSTUDIOS` is `breezy`
+    `playstudios-asia`: the board ANSWERS, with 4 postings, and its note says
+    `re-audit 2026-08-21: verified 4/0 IL (was false-empty)` -- true of that board and useless
+    to us, because it is the company's ASIA board. `health_baseline` is therefore 4, not 0, so
+    `confirm_zero.in_zero_confirm_pool` -- which requires a baseline of exactly 0 -- never
+    selects it, and no other pool selects an ACTIVE row at all.
+
+    It is the wrong-company class one turn harder: the tenant IS the right company, only the
+    wrong geography, so `page_names_company`, `board_vouches` and every name test AGREE. The
+    only signal that disagrees is the Israel count, which is why this keys on the address and
+    reports the count rather than the other way round.
+
+    Measured 2026-08-28 over 1,000 active rows: **32** carry a region marker (us 11, global 10,
+    en_us 6, eu 3, uk 1, asia 1); 4 are native-ATS and the counts are one free fetch each; of
+    those, exactly **1** answers with postings and zero Israel -- PLAYSTUDIOS. The other 28 are
+    `scrape` rows whose counts need the cache (16 of them are not in it at all). So the honest
+    answer to "is PLAYSTUDIOS one of twenty" is **no, it is 1 of 4 measurable** -- and the
+    finding worth keeping is not the count but that nothing was looking.
+
+    Returns [(row, marker)]. Counting the Israel postings is deliberately NOT done here: it
+    costs a fetch per row and this module is imported by `check_invariants`, which promises
+    "no network, ~1s". `python registry_health.py --regions` does the counting.
+    """
+    return [(r, m) for r in rows if len(r) > 4 and r[4] == "true"
+            for m in [region_marked(r)] if m]
+
+
+def region_report(rows, fetch=False, out=print):
+    """`region_variants` with the Israel counts filled in. `fetch=True` costs one API call per
+    native row; scrape rows are read from `scraped_cache.json`, which is free."""
+    hits = region_variants(rows)
+    out("region-marked ACTIVE rows: %d" % len(hits))
+    by = {}
+    for _r, m in hits:
+        by[m] = by.get(m, 0) + 1
+    out("  by marker: %s" % sorted(by.items(), key=lambda x: -x[1]))
+    if not fetch:
+        out("  (add --fetch for the Israel counts -- one request per native row)")
+        return hits
+    from pipeline.israel import is_israel_job
+    from pipeline.fetchers import fetch_company
+    cache = {}
+    try:
+        with open("scraped_cache.json", encoding="utf-8") as fh:
+            cache = json.load(fh)
+    except Exception:                                             # noqa: BLE001
+        pass
+    klass = []
+    for r, m in hits:
+        native = (r[1] or "").strip().lower() not in ("", "scrape", "discovery")
+        if native:
+            try:
+                jobs = fetch_company(dict(zip(
+                    ["company_name", "ats_platform", "token", "api_url", "active", "notes"], r)))
+            except Exception:                                     # noqa: BLE001
+                continue
+        else:
+            jobs = cache.get(r[0]) or cache.get(r[3] or "") or None
+            if jobs is None:
+                continue                                          # uncached: not measurable
+        il = [j for j in jobs if is_israel_job(j)]
+        if jobs and not il:
+            klass.append((r, m, len(jobs)))
+            out("  ZERO-ISRAEL  %-28s [%s] %d postings  %s"
+                % (r[0][:28], m, len(jobs), (r[3] or "")[:46]))
+    out("  the class (answers, right company, ZERO Israel): %d" % len(klass))
+    return klass
+
+
+# --------------------------------------------------------------------------------------- #
+# abandoned tenants -- the HiBob class
+# --------------------------------------------------------------------------------------- #
+STALE_BOARD_DAYS = 365
+
+
+def stale_boards(rows, days=STALE_BOARD_DAYS, out=print, workers=8):
+    """ACTIVE rows whose board answers perfectly and has not been touched in years.
+
+    **The class nothing in this repo could see.** `HiBob` was `smartrecruiters/HiBob`: HTTP
+    200, valid JSON, `totalFound 1` -- and the one posting was "IT Assistant", London,
+    released **2020-01-24**. Every predicate we own calls that healthy:
+
+      * `pipeline/health.py` sees postings > 0, so the row never enters `stale.json`, so the
+        06:00 self-heal (`resolve_broken.candidates()`, whose scope IS `stale.json`) never
+        sees it;
+      * `confirm_zero.in_zero_confirm_pool` needs an all-time high of exactly 0, and this
+        returns 1 -- the same reason PLAYSTUDIOS was invisible;
+      * every pool in `pools()` requires `r[4] == "false"`, and this row is ACTIVE;
+      * `orphans()` only ranges over PARKED rows, so the invariant that exists to catch
+        "owned by nothing" is structurally blind to it;
+      * `check_invariants` C2 and C3 both pass -- the endpoint IS on smartrecruiters and the
+        tenant `HiBob` IS the company's name;
+      * `scan_dead_domains` tests whether the host resolves, and `api.smartrecruiters.com`
+        resolves fine.
+      * and the note said `deep-verified MANUALLY` -- a HUMAN verdict, 2026-08-21. **A human
+        verdict is exactly as stale as an automated one**, and this is the counter-example.
+
+    The signal is already in every payload we fetch and is read by nothing: `posted_date` is
+    part of the common job shape. A board whose FRESHEST posting is a year old is an abandoned
+    tenant whatever its HTTP status.
+
+    Measured 2026-08-28 over the 471 active native rows (one free fetch each):
+
+        < 3 months 415 | 3-12mo 4 | 12-24mo 3 | 24-36mo 4 | > 36 months 11
+        >= 12 months: 18 rows   -- 14 of them smartrecruiters, which is a platform pattern
+        oldest: Ness Technologies 2014-03-18, Nexar 2017-02-02, DustPhotonics 2019-06-25
+
+    And it had already shipped: `TLVTech`'s *Data Analyst*, posted **2024-10-22**, is in
+    `matched`, was EMAILED, and is still seen on the board today. Publishing a 22-month-old
+    posting as a current job is the product harm this measures.
+
+    Native rows only: a scrape row's dates come from the cache and are the scraper's to judge.
+    """
+    import concurrent.futures as _cf
+    from pipeline.fetchers import fetch_company
+    cols = ["company_name", "ats_platform", "token", "api_url", "active", "notes"]
+    native = [r for r in rows if len(r) > 5 and r[4] == "true"
+              and (r[1] or "").strip().lower() not in ("", "scrape", "discovery")]
+
+    def newest(r):
+        try:
+            jobs = fetch_company(dict(zip(cols, r)))
+        except Exception:                                         # noqa: BLE001
+            return r, None, 0
+        seen = []
+        for j in jobs:
+            d = (j.get("posted_date") or "").strip()[:10]
+            if len(d) == 10 and d[4] == "-":
+                try:
+                    seen.append(dt.date.fromisoformat(d))
+                except ValueError:
+                    pass
+        return r, (max(seen) if seen else None), len(jobs)
+
+    with _cf.ThreadPoolExecutor(max_workers=workers) as pool:
+        got = list(pool.map(newest, native))
+    today = dt.date.today()
+    dated = [(r, d, n) for r, d, n in got if d and n]
+    stale = sorted([(r, d, n) for r, d, n in dated if (today - d).days >= days],
+                   key=lambda x: x[1])
+    out("active native rows %d - with a dated posting %d - ABANDONED (newest >= %dd) %d"
+        % (len(native), len(dated), days, len(stale)))
+    for r, d, n in stale:
+        out("  %-30s newest %s  %-14s %3d postings  %s"
+            % (r[0][:30], d.isoformat(), (r[1] or "")[:14], n, (r[5] or "")[:44]))
+    return stale
+
+
 def orphans(rows):
     """Parked rows owned by NO recurring job — permanently dark coverage."""
     owned = set()
@@ -726,7 +906,7 @@ def explain(name, rows=None, fetch=False, out=print):
     return 0
 
 
-_FLAGS = ("--explain", "--fetch", "--resources", "--ats", "--census", "--ladder", "--json")
+_FLAGS = ("--explain", "--fetch", "--resources", "--ats", "--census", "--ladder", "--json", "--regions", "--stale-boards")
 
 
 def main():
@@ -739,6 +919,12 @@ def main():
         return 2
     live = "--resources" in argv
     rows = read_rows()
+    if "--stale-boards" in argv:
+        stale_boards(rows)
+        return 0
+    if "--regions" in argv:
+        region_report(rows, fetch="--fetch" in argv)
+        return 0
     if "--explain" in argv:
         i = argv.index("--explain")
         who = argv[i + 1] if i + 1 < len(argv) and not argv[i + 1].startswith("--") else ""

@@ -78,6 +78,7 @@ LEDGER = os.path.join("cloud_state", "zero_confirm.json")
 EVIDENCE = os.path.join("out", "zero_evidence")
 MARKER = "zero-confirm"
 RECHECK_DAYS = 30
+FORCE = False                      # set by `--force`; the pool predicate reads it
 MAX_DEACTIVATE = 15
 
 _WALL = re.compile(r'type=["\']password|/login|onetrust|cookiebot|didomi|usercentrics'
@@ -98,6 +99,27 @@ def _baseline():
         return {}
 
 
+_LEDGER_CACHE = {}
+
+
+def _ledger_stale(name, days):
+    """True if the durable ledger has no verdict for `name` within `days`.
+
+    Cached per process: the pool predicate runs once per row and this would otherwise re-read
+    and re-parse the ledger 1,000 times.
+    """
+    if "d" not in _LEDGER_CACHE:
+        _LEDGER_CACHE["d"] = _load_ledger()
+    v = _LEDGER_CACHE["d"].get(name) or {}
+    when = (v.get("date") or "")[:10]
+    if len(when) != 10:
+        return True
+    try:
+        return (dt.date.today() - dt.date.fromisoformat(when)).days >= days
+    except ValueError:
+        return True
+
+
 def in_zero_confirm_pool(r, baseline=None):
     """This tool's OWN membership rule, and it is a FACT pool.
 
@@ -115,6 +137,17 @@ def in_zero_confirm_pool(r, baseline=None):
     """
     b = _baseline() if baseline is None else baseline
     return (len(r) >= 6 and r[4] == "true"
+            # THE CADENCE READS THE LEDGER, NOT THE NOTE, and that distinction is the whole
+            # point. The note write is BEST-EFFORT by design -- `_write` skips it whenever it
+            # would evict another tool's segment, which on this pool is most rows (the note is
+            # near the 220-char cap precisely because the row is heavily stamped). Keying the
+            # cadence on the note therefore never excluded anything: the first version of this
+            # filter re-audited the same 29 rows in four consecutive batches, spending a
+            # Playwright render and a `claude -p` call on each, every time, and the pool never
+            # drained. `cloud_state/zero_confirm.json` is the durable record -- it has no cap
+            # and it is written for every judged row -- so it is what "have we answered this
+            # row" has to mean. `--force` re-asks deliberately.
+            and (FORCE or _ledger_stale(r[0], RECHECK_DAYS))
             and int(b.get((r[0] or "").strip().lower(), -1)) == 0
             and (r[3] or "").startswith("http")
             and not is_aggregator(r[3] or "")
@@ -151,6 +184,40 @@ def _is_ours(name, html, final_url):
     if loose is False:
         return "not-ours", "names-another"
     return "unknown", "unreadable"
+
+
+def board_link(dom_links, final_url):
+    """The one SAME-REGISTRABLE-DOMAIN link most likely to BE the board, or "".
+
+    Condition (c) is "a board at all, not a landing page that LINKS to one", and the module
+    docstring has promised since it was written that the followed page becomes the page of
+    record. It never did: `_JOBLINK` was defined and referenced nowhere, so a careers landing
+    page went to the model as though it were the board, and the model was asked to count
+    openings on a page that never lists any. That is the `shows-none` reading manufactured by
+    the tool rather than observed.
+
+    One hop, same registrable domain only (a cross-domain "careers" link is an ATS, which
+    condition 2 has to judge separately), and never back to the page we are already on."""
+    here = (final_url or "").rstrip("/").lower()
+    host = registrable(urllib.parse.urlparse(final_url or "").netloc)
+    best, best_score = "", 0
+    for d in dom_links or []:
+        if not isinstance(d, dict):
+            continue
+        u = (d.get("url") or "").strip()
+        t = (d.get("title") or "")
+        if not u.startswith("http") or u.rstrip("/").lower() == here:
+            continue
+        if registrable(urllib.parse.urlparse(u).netloc) != host or not host:
+            continue
+        # the URL naming the thing beats the anchor text naming it: "careers" is the commonest
+        # word in a site footer, and the footer link is the page we are already on
+        score = (2 if _JOBLINK.search(urllib.parse.urlparse(u).path or "") else 0) + \
+                (1 if _JOBLINK.search(t) else 0) + \
+                (2 if re.search(r"/(positions?|openings?|vacanc|jobs)", u, re.I) else 0)
+        if score > best_score:
+            best, best_score = u, score
+    return best if best_score >= 2 else ""
 
 
 def _is_board(html, dom_links, req_urls, final_url):
@@ -351,6 +418,12 @@ def verdict_from(ans, ev):
     if il > 0:
         return "zero-refuted", False          # the page lists Israel roles; the fetch got 0
     vs = ans.get("vacancy_statement")
+    # Condition (c), enforced rather than merely recorded: a page that is not a board cannot
+    # produce a zero, whatever it says. A landing page has no openings BY CONSTRUCTION -- it
+    # is not where they live -- so "no Israeli roles here" is a fact about the page and not
+    # about the company. Routed instead, which is where a wrong address belongs.
+    if not ev.get("cond3"):
+        return ROUTING, False
     if tot > 0:
         return "confirmed", True              # a real board, roles listed, none in Israel
     if vs == "states-none":
@@ -494,6 +567,8 @@ def main(argv=None):
     # The two halves are audited by DIFFERENT evidence -- a native row by its board's API, a
     # scrape row by a render -- so they are separable on purpose: the native half needs no
     # Playwright and can run beside a `refresh_scrape_cache` pass without contending with it.
+    ap.add_argument("--force", action="store_true",
+                    help="re-audit rows stamped within RECHECK_DAYS (the cadence is a filter)")
     ap.add_argument("--native-only", action="store_true")
     ap.add_argument("--scrape-only", action="store_true")
     a = ap.parse_args(argv)
@@ -501,6 +576,8 @@ def main(argv=None):
     base = _baseline()
     with open(CSV_PATH, encoding="utf-8") as f:
         rows = list(csv.reader(f))
+    global FORCE
+    FORCE = bool(a.force)
     pool = [r for r in rows[1:] if in_zero_confirm_pool(r, base)]
     if a.only:
         want = {x.strip().lower() for x in a.only.split(",") if x.strip()}
@@ -553,6 +630,33 @@ def main(argv=None):
         if ev["cond1"] == "rendered":
             board, why = _is_board(html, getattr(rr, "dom", []) or [],
                                    getattr(rr, "req_urls", []) or [], final)
+            if not board:
+                # ONE hop to the board this landing page links to, and it becomes the page of
+                # record -- the module docstring has promised this since it was written and
+                # `_JOBLINK` was dead code. Only ever from a rendered page to a same-domain
+                # link, and only when the first page showed no board signal at all, so the
+                # cost is one extra render on exactly the rows that would otherwise have been
+                # judged as a board they are not.
+                nxt = board_link(getattr(rr, "dom", []) or [], final)
+                if nxt:
+                    try:
+                        rr2, html2, text2, ev2 = render_one(name, nxt)
+                    except Exception as e:                        # noqa: BLE001
+                        rr2, ev2 = None, {"cond1": "crash:%s" % e.__class__.__name__}
+                    if rr2 is not None and ev2.get("cond1") == "rendered":
+                        b2, w2 = _is_board(html2, getattr(rr2, "dom", []) or [],
+                                           getattr(rr2, "req_urls", []) or [], nxt)
+                        if b2:
+                            ev["followed_from"], ev["followed_to"] = final, nxt
+                            rr, html, text = rr2, html2, text2
+                            final = getattr(rr2, "final_url", None) or nxt
+                            ev.update(ev2)
+                            ev["final_url"], board, why = final, b2, w2 + "-followed"
+                            # condition 2 is asked again, of the page we now hold
+                            ev["cond2"], ev["cond2_how"] = _is_ours(name, html, final)
+                    if not board:
+                        why = (why or "no-board-signal") + "; follow=" + (
+                            "not-a-board" if rr2 is not None else "unreadable")
             ev["cond3"], ev["board_why"] = board, why
         else:
             ev["cond3"], ev["board_why"] = False, "not-rendered"
@@ -562,7 +666,13 @@ def main(argv=None):
         with open(os.path.join(d, "page.txt"), "w", encoding="utf-8") as f:
             f.write(text[:400000])
         ans = None
-        if a.judge and ev["cond1"] == "rendered" and ev["cond2"] in ("ours", "weak") \
+        # `not-ours` is asked TOO, and it is the case that most needs asking. The mechanical
+        # test saying "this page names a different company" is the `wrong-url` finding in
+        # its rawest form -- Fast Simon -> Simon Property Group, Veriti -> Veritiv -- and
+        # until now it was the ONE cond2 value never sent to the model: the row came back
+        # `unconfirmed`, which writes nothing to the row AND nothing to the ledger, so it
+        # was re-rendered on every run for ever. Four rows did exactly that tonight.
+        if a.judge and ev["cond1"] == "rendered" and ev["cond2"] in ("ours", "weak", "not-ours") \
                 and spent < a.llm_cap and not breaker:
             try:
                 spent += 1
@@ -647,7 +757,17 @@ def _write(results, stamp, ledger):
     wrote, skipped, off, routed = 0, [], 0, 0
     for r in rows[1:]:
         v = results.get(r[0] if r else "")
-        if not v or v["verdict"] in ("unconfirmed", "tool-error"):
+        if not v:
+            continue
+        if v["verdict"] in ("unconfirmed", "tool-error"):
+            # NOTHING is written to the row -- an attempt that could not conclude is not a
+            # verdict about the company, which is the whole rule. But it IS a fact about US and
+            # it belongs in the durable ledger: without it the cadence has nothing to read and
+            # the row is re-rendered and re-judged on every run for ever. `tool-error` is
+            # excluded on purpose -- that is OUR machine failing, and retrying it is right.
+            if v["verdict"] == "unconfirmed":
+                ledger[r[0]] = {"date": stamp, "verdict": "unconfirmed",
+                                "artifact": v.get("artifact"), "evidence": v["ev"]}
             continue
         code = "r" + ("n" if v["ev"].get("cond2") == "ours" else "") \
                    + ("b" if v["ev"].get("cond3") else "") + ("+llm" if v.get("llm") else "")
@@ -666,17 +786,49 @@ def _write(results, stamp, ledger):
             ledger[r[0]] = {"date": stamp, "verdict": "routed-to-hunt",
                             "artifact": v["artifact"], "evidence": v["ev"]}
             continue
-        seg = "%s %s: %s; %s; ev %s" % (MARKER, stamp, v["verdict"], code,
-                                        v["artifact"].rsplit("-", 1)[-1])
+        # A PARK MUST CARRY ITS POOL TOKEN. `wrong-url` used to write `zero-confirm <date>:
+        # wrong-url; <code>; ev <hash>` -- not one token in `verdicts.TOKENS` -- and then set
+        # `active=false`, so the row landed in NO re-check pool and nothing would ever look at
+        # it again. That is parking a company into silence, which is the failure this whole
+        # tool exists to refuse, committed by the tool. `wrong-url` IS the routed disposition
+        # with better evidence (we know WHOSE board it is), so it gets the routed token.
+        parks = v["verdict"] == "wrong-url" and off < MAX_DEACTIVATE
+        # SHORT on purpose, and shorter still when it parks. This segment shares a 220-char
+        # cell with every other tool's verdict, and the rows in this pool run 204-206 chars
+        # because they are heavily stamped. The code letters and the evidence hash live in
+        # `cloud_state/zero_confirm.json`, which has no cap and is keyed by the same name, so
+        # putting them in the row buys nothing and costs another tool its segment.
+        seg = ("%s %s: %s; needs re-resolution" % (MARKER, stamp, v["verdict"]) if parks
+               else "%s %s: %s; %s; ev %s" % (MARKER, stamp, v["verdict"], code,
+                                              v["artifact"].rsplit("-", 1)[-1]))
         new = _notes.replace_own(r[5], MARKER, seg)
-        if len(_notes.split(new)) < len(_notes.split(r[5])) + 1 and r[5]:
-            skipped.append(r[0])                      # it would have evicted something
+        # "would it evict SOMEONE ELSE'S segment" -- which is not "did the segment count fail
+        # to rise". `replace_own` first removes this tool's OWN previous stamp, so on a row
+        # already audited the count stays level and the old test read that as an eviction: a
+        # row could never be RE-stamped once it carried a `zero-confirm` segment, and its
+        # verdict silently stopped reaching the registry from the second run onwards.
+        own_before = sum(1 for p in _notes.split(r[5])
+                         if p.lower().startswith(MARKER.lower()))
+        evicts = len(_notes.split(new)) < len(_notes.split(r[5])) - own_before + 1 and r[5]
+        # THE ONE EXCEPTION, and it is the verdict that earns it. `wrong-url` means the model
+        # read the page and named a DIFFERENT employer -- Fast Simon on Simon Property Group's
+        # board. Skipping the note there leaves the worst of both: an ACTIVE row publishing
+        # another company's roles, and no record on the row saying so. What the append would
+        # evict is the oldest UNPROTECTED segment, which on these rows is an older verdict
+        # ABOUT THE ADDRESS WE ARE ABANDONING (`deep-validated ...: no ATS detected`). Every
+        # protected segment and every terminal token still survives -- `notes.append` decides
+        # that, not this branch.
+        if evicts and not parks:
+            skipped.append(r[0])
         else:
             r[5] = new
             wrote += 1
-        if v["verdict"] == "wrong-url" and off < MAX_DEACTIVATE:
-            r[4] = "false"                            # a park needs no identity evidence
-            off += 1
+            # ...and the row is turned off ONLY when its note was actually written. The old
+            # order deactivated regardless, so a row whose note was skipped as evicting was
+            # parked carrying no `zero-confirm` segment at all -- invisible twice over.
+            if parks:
+                r[4] = "false"
+                off += 1
         ledger[r[0]] = {"date": stamp, "verdict": v["verdict"], "artifact": v["artifact"],
                         "evidence": v["ev"], "llm": v.get("llm")}
     _assert_routed_rows_are_owned(rows[1:])       # before the write, not after
@@ -692,8 +844,6 @@ def _write(results, stamp, ledger):
     return 0
 
 
-if __name__ == "__main__":
-    sys.exit(main())
 
 
 def _assert_routed_rows_are_owned(rows):
@@ -707,10 +857,30 @@ def _assert_routed_rows_are_owned(rows):
     parking a company into silence."""
     import listing_hunt as _L
     from pipeline.verdicts import in_pool as _in_pool
+    # EVERY row this tool turned off, not only the routed ones. The filter used to be
+    # `"board answered" in r[5]`, which is the ROUTING segment's wording -- so the `wrong-url`
+    # park, the other branch that sets `active=false`, was outside the assertion that exists
+    # to catch exactly it.
     orphan = [r[0] for r in rows
-              if len(r) > 5 and "%s " % MARKER in (r[5] or "")
-              and "board answered" in r[5] and r[4] == "false"
+              if len(r) > 5 and "%s " % MARKER in (r[5] or "") and r[4] == "false"
               and not _L.in_hunt_pool(r) and not _in_pool(r[5])]
     assert not orphan, (
         "routed rows landed in NO re-check pool -- the note lost `needs re-resolution` to the "
         "220-char cap: %s" % orphan[:8])
+
+
+# The entry point BELONGS AT THE END, and this is not style. It sat above
+# `_assert_routed_rows_are_owned`, so running the module AS A SCRIPT executed `main()` before
+# the rest of the module body had been evaluated, and every `--apply` run died at the write:
+#
+#     NameError: name '_assert_routed_rows_are_owned' is not defined
+#
+# ...after the renders and the LLM calls were already spent, and after the per-row evidence had
+# been written -- so the run LOOKED like it had done the work, `out/zero_evidence/` filled up,
+# and nothing reached `companies.csv` or the ledger. Invisible for a second reason: the
+# assertion is the LAST thing before the write, so a dry run (which returns before it) is
+# unaffected, and `python -c "import confirm_zero; confirm_zero.main()"` -- how this tool was
+# driven on 2026-08-28 -- imports the whole body first and works. Only the documented CLI
+# fails, which is the one form a future session copies out of the docstring.
+if __name__ == "__main__":
+    sys.exit(main())

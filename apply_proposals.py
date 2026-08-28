@@ -449,8 +449,20 @@ def main(argv=None):
         # asks "is this a board for many employers", the gate asks "is this THIS company's
         # page", and an aggregator's company page passes the second by naming the company
         # correctly. Reversing them is how Menora Mivtachim was activated on jobkarov.com.
-        if is_aggregator(p.get("api_url") or ""):
-            why[name] = "aggregator"; stats["skipped"] += 1; continue
+        # ...and the WHOLE TRAIL, not just where it ended. A search rung resolves an
+        # aggregator's page to the ATS board behind it, and the final api_url is then
+        # `comeet.com/...`, which no aggregator test can refuse. `44 Ventures` is a VC that
+        # `pipeline/aggregators.py` already lists WITH EVIDENCE (its page served
+        # `programmaticx`'s board); its own Comeet tenant carries 7 Israel jobs that are its
+        # PORTFOLIO's, and the row would publish them under the VC's name. That is the
+        # Menora Mivtachim / jobkarov shape with one more indirection.
+        trail = [p.get("api_url") or "", (p.get("evidence") or {}).get("candidate_url") or "",
+                 (p.get("evidence") or {}).get("seed_url") or ""]
+        agg = next((u for u in trail[:2] if u and is_aggregator(u)), "")
+        if agg:
+            why[name] = "aggregator (%s)" % agg[:44]
+            stats["skipped"] += 1
+            continue
         dup = _collides(p, k)
         if dup:
             why[name] = dup; stats["skipped"] += 1; continue
@@ -479,6 +491,11 @@ def main(argv=None):
             n_all = p.get("evidence", {}).get("n_il_when_hunted") or 0
             n_il = n_all if age_h <= a.max_age else 0     # stale => park, never activate
 
+        # `html=""` ON PURPOSE, and the docstring above used to imply otherwise. The proposal
+        # file carries `evidence.page_chars`, not the page, so there is nothing to hand over;
+        # `activation_verdict` therefore does one live GET of `human_board_url(api)` per `ats`
+        # proposal. That costs no credit -- `_UNLOCK_BUDGET` is 0 -- but it is a request per
+        # row, which is worth knowing before a batch of 100.
         html = ""
         row, verdict = _row_for(p, n_all, n_il, html, today)
         if row is None:
@@ -511,10 +528,27 @@ def main(argv=None):
             m = COMEET_UID.search(row[3])
             if m:
                 batch_keys["comeet"].add(m.group(1).lower())
+        # the domain HOLD carries forward too. Every OTHER key did; this one did not, so two
+        # proposals in ONE batch on the same registrable own-domain -- the `ERGO NEXT
+        # Insurance` / `Next Insurance` shape, which is why the HOLD exists -- passed each
+        # other and only the NEXT run's fresh read would have caught them.
+        d_ = _own_domain(row[3] or "")
+        if d_:
+            batch_keys["domains"].setdefault(d_, set()).add(name)
 
     print("\n=== %s: %s ===" % ("APPLIED" if a.apply else "DRY RUN", stats))
-    for n, w in sorted(why.items(), key=lambda x: x[1])[:40]:
-        print("   skip %-34s %s" % (n[:34], w))
+    # EVERY refusal, not the first 40. This tool's whole contract is "dry-run, read the HOLDs,
+    # then apply", and `--batch` defaults to 100: a report that silently dropped 60 of them
+    # asked for a review it made impossible. Grouped by reason so the HOLDs -- the only class
+    # that wants a human -- are read together rather than sorted in among the de-dups.
+    by_reason = {}
+    for n, w in why.items():
+        by_reason.setdefault(w.split(" ")[0] if not w.startswith("HOLD") else "HOLD", []).append((n, w))
+    for reason in sorted(by_reason, key=lambda r: (r != "HOLD", r != "no", r)):
+        rows_ = sorted(by_reason[reason])
+        print("   -- %s (%d)" % (reason, len(rows_)))
+        for n, w in rows_:
+            print("   skip %-34s %s" % (n[:34], w))
     if stats["active"] and a.apply:
         print("\nNEXT, and the batch is NOT done until it has run: a `scrape` row ships "
               "nothing until it is cached.\n    python refresh_scrape_cache.py --only-missing --apply")

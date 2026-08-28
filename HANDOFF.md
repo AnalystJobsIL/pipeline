@@ -53,6 +53,9 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-08-29 | registry | `publish.scanned` **>=1,000** (was 969) and the board carries Mixtiles *VP Data*, RealPlay, lab42, Alma Lasers; and `grep -c 'needs re-resolution' companies.csv` falls below **36** — still 36 on 08-30 means the hunt owns the routed rows but does not act (`375`) | | |
 | 2026-08-29 | company-intel | `Company intel:` reads `export 1132+ records`, `registry backlog` in single digits (not 139); **no `firmo` on `Stages:`** — the new dead-cron alarm. The 08-29 run must commit `firmographics.json`, `firmo_failed.json` and `pipeline_stages.json`; absent by 13:00Z is 293's third data point | | not yet due |
 | 2026-09-27 | registry | of rows stamped `zero-confirm 2026-08-28: confirmed`, **<=5%** have `health_baseline > 0`; above that, strip that run's verdicts | | |
+| 2026-08-30 | registry | digest scans **>=1,015** (was 1,000), `collect:` under **55** min (cap 110); **>=35 of the 56** `queue-drain 2026-08-29` rows produce a posting | | |
+| 2026-08-30 | registry | `grep -c 'needs re-resolution' companies.csv` **below 75**; still 75 on 08-31 means the hunt owns the routed rows and does not act (`375`) | | |
+| 2026-09-05 | registry | `registry_health.py --stale-boards` **<=17** (was 18; only HiBob repaired) (`391`); and on 09-28, `zero-confirm 2026-08-29: confirmed` rows **<=5%** with `health_baseline > 0` | | |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due (`audit-coverage.yml` is `0 4 * * 0`) |
 | 2026-08-29 | infra | **the relay's first end-to-end proof.** (a) the 05:00 digest's `notify_relay` step logs `relay notified: <sha256>` — any other line (`not configured`, `not dated`, a `::warning::`) IS the answer and names why. (b) `gh run list -R AnalystJobsIL/inbox` shows a **`push`** run, success, seconds after that; a `schedule`-only row means the event path did not fire. (c) a NEW issue dated 2026-08-29 there. a+b+c ⇒ PASS; a+b without c ⇒ `gh issue create` under a push event is the one untested link (2026-08-28 had no delivering digest) | | not yet due |
 | 2026-09-11 | infra | re-measure the cache-shrink threshold from a fortnight of `cloud_state/persist_log.jsonl`; it is provisional on n=3 (ARCHITECTURE §5d) | | not yet due |
@@ -101,34 +104,14 @@ cron can break or fix one without anyone touching code. **Never read a red `test
    `test_no_workflow_run_block_fakes_a_line_continuation`. **Read it before writing a patch
    script that emits YAML.**
 
-0. **Active rows with an all-time-high job count of ZERO — run the command, do not read a
-   number here.** This line has now been wrong three times in one day (75, then 256, then
-   250/186/64) and every correction was overtaken within hours by a digest rewriting the
-   baseline. After the 13:04 run it is 241 / 182 scrape / 59 native-ATS, and 0 active rows
-   have no baseline entry at all (it said 5).
-
-   **And the framing was worse than the numbers.** This item called the native-ATS slice
-   "the board has moved" and told the next session it was the highest-yield recovery set.
-   Measured by `registry` on 2026-08-27: **36 of the 59 are already in `stale.json`**, i.e.
-   already owned by the 06:00 self-heal; the great majority carry their own
-   `re-audit 2026-08-21: verified 0/0 IL` note; and **exactly one row (Dell) carries
-   moved-tenant evidence.** It is not a recovery set. The defect-shaped slice inside it is
-   the Workday globals — see watch-item 6.
-
-   ```bash
-   python -c "import json,csv,io,collections;b=json.load(io.open('cloud_state/health_baseline.json',encoding='utf-8'));r={x['company_name']:x for x in csv.DictReader(io.open('companies.csv',encoding='utf-8')) if x['active']=='true'};z=[n for n,v in b.items() if int(v)==0 and n in r];print(len(z),collections.Counter(r[n]['ats_platform'] for n in z).most_common())"
-   ```
-
-   This item has been 75, then 256, then 250 in three places in this file at once, and the
-   snippet it shipped with had no `encoding=` so it crashed with a `UnicodeDecodeError` on
-   the operator's own Windows machine. Both are fixed above. `ARCHITECTURE.md` §5b carries
-   the durable version; **5 active rows still have no baseline entry at all** (it said 0).
-
-   **The Greenhouse EU JSON API does exist** — this item said it did not.
-   `boards.eu.greenhouse.io/v1/boards/<slug>/jobs` answers the same JSON as the US host
-   (Unframe `unframe`: 32 postings on both). What is NXDOMAIN is `boards-api.eu…`, the
-   `-api` form. **Outbrain is not rescued by it either** — it answers `meta.total 0` on both
-   hosts — so the worked example this item was built on needs a different diagnosis.
+0. **Active rows with an all-time-high of ZERO — this item has been wrong five times and is
+   now a COMMAND plus a record.** `python confirm_zero.py --scrape-only` audits the pool and
+   `cloud_state/zero_confirm.json` is the durable answer per row. 2026-08-29: 215 at the start,
+   ~139 answered, none recorded empty without a rendered page and an LLM read. **Two sibling
+   classes the pool cannot see by construction, because it needs a baseline of exactly 0:**
+   region variants (`registry_health.py --regions`, 32 rows, 1 real) and abandoned tenants
+   (`--stale-boards`, 18 rows whose newest posting is over a year old, one of them EMAILED).
+   `docs/sessions/2026-08-28-registry-evening.md`; `399`, `406`, `407`.
 
 1. **`merge_key` should move onto `firmographics.identity_key`.** `ARCHITECTURE.md` §7c
    counts **13** identity groups where two active rows read one board (this said ~15). It is
@@ -218,3 +201,4 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-28 `docs`** - the board and the mail advertised a `~3+ yrs` filter removed that morning; the subject line said it to the inbox at 08:29Z. **Fourteen sites true, not the six filed.** "senior" was already false: **36 of 72 board roles** had no seniority marker. Scope claims are a linted CLAIM now. **NOT finished:** 374-377. Record: `docs/sessions/2026-08-28-docs-scope.md`.
 - **2026-08-28 `classifier`** - internships are the ONE exclusion the operator kept, and a trailing `s` defeated it: `Data Analyst Intern` rejected, **`Data Analyst Interns` was ACCEPTED**, `Senior ... Interns` on the keyword path with no LLM. Class enumerated in both alphabets; **0 of 252 golden and 0 of 1,482 live titles moved**. **NOT finished:** 373, 378. Record: `docs/sessions/2026-08-28-classifier-internships.md`.
 - **2026-08-28 `jd-text` (two sessions)** - morning: `looks_like_jd` replaced the length gate. Evening: it never asked where a JD ENDS - **14 rows published 60,015 characters of LinkedIn sign-in form**, Hila and Modellama among them (text, not render). Archived roles now worked; `seen_ids` reach their own board. **135/144, 3 credits.** Record: `docs/sessions/2026-08-28-jdtext-evening.md`. **NOT finished:** 341, 374-377.
+- **2026-08-28 `registry` (evening)** - master was red on THREE tests, none the one both backlog items name; that one passes only because a row went terminal, and the transition it flagged is LEGITIMATE. My fix cost 63 rows a pool over two nights: reverted. `Unframe`/`Unframe AI` were one board. **NOT finished:** 383-390. Record: `docs/sessions/2026-08-28-registry-evening.md`.

@@ -32,6 +32,46 @@ def _fmt(fields):
     return buf.getvalue()
 
 
+def _board_key(url):
+    """host + path, lower-cased, `www.` and a trailing slash and the query dropped.
+
+    The Unframe pair differed by exactly these: `listing_hunt` activated the row on the HUMAN
+    page `job-boards.greenhouse.io/unframe`, and the re-resolve rewrote it to
+    `boards-api.greenhouse.io/v1/boards/unframe/jobs`, which another active row already held.
+    Every de-dup key in this repo that compares urls compares them normalised, for that reason.
+    """
+    import urllib.parse
+    u = (url or "").strip().lower()
+    if not u.startswith("http"):
+        return ""
+    q = urllib.parse.urlparse(u)
+    return q.netloc.replace("www.", "") + q.path.rstrip("/")
+
+
+def _boards_held(lines, skip_name):
+    """Every board an ACTIVE row other than `skip_name` already holds, two keys.
+
+    Read from the LINES THIS RUN IS EDITING, not from a separate read of the file, so a
+    collision this run would create with its own earlier write is caught too.
+    """
+    urls, boards = set(), set()
+    for ln in lines[1:]:
+        if not ln.strip():
+            continue
+        try:
+            f = _parse(ln)
+        except Exception:  # noqa: BLE001
+            continue
+        if len(f) < 5 or f[4] != "true" or f[0] == skip_name:
+            continue
+        k = _board_key(f[3] if len(f) > 3 else "")
+        if k:
+            urls.add(k)
+        if (f[1] or "").strip() and (f[2] or "").strip():
+            boards.add(((f[1] or "").lower(), (f[2] or "").lower()))
+    return urls, boards
+
+
 def main():
     src = os.environ.get("RESOLVED_OUT", "out/resolved_configs.json")
     if not os.path.exists(src):
@@ -78,6 +118,30 @@ def main():
                 if _gate.is_foreign(name, api) or _gate.board_vouches(name, tok, api) is False:
                     print(f"  [XX]  {name[:28]:29} -> resolver proposed {api[:44]}, which is "
                           f"not this company's board; row left pointing where it was")
+                    continue
+                # A RE-POINT ONTO A BOARD ANOTHER ACTIVE ROW ALREADY HOLDS IS A DUPLICATE, and
+                # this is the only place it can be caught: every de-dup key in the lane is
+                # checked when a row is CREATED, and this tool rewrites col 3 of a row that
+                # already exists -- so the check ran on the value the row used to have.
+                #
+                # Live on 2026-08-28: `Unframe` was activated by `listing_hunt` on the human
+                # page `job-boards.greenhouse.io/unframe`, then re-resolved here to
+                # `boards-api.greenhouse.io/v1/boards/unframe/jobs`, which `Unframe AI` already
+                # held. Two active rows, one board, `check_invariants` check B blind to it
+                # because it counts NAMES and by construction the names differ. `roles._winner`
+                # breaks the tie on `len(identity_key(name))`, so the shorter stub wins and the
+                # other row's roles publish under it.
+                #
+                # Refused rather than parked: this tool does not write col 4, and deciding
+                # WHICH twin keeps the board needs evidence it does not have (the board's own
+                # <title> settled Unframe). The row is left pointing where it was, which is a
+                # state some pool already owns.
+                held_urls, held_boards = _boards_held(lines, name)
+                if _board_key(api) in held_urls or (
+                        plat and tok and (plat.lower(), tok.lower()) in held_boards):
+                    print(f"  [==]  {name[:28]:29} -> resolver proposed {api[:40]}, which "
+                          f"ANOTHER ACTIVE ROW already holds; row left pointing where it was "
+                          f"(park one as `alias-of` by hand)")
                     continue
                 fields[1], fields[2], fields[3] = plat, tok, api
                 if len(fields) >= 6:

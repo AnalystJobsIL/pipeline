@@ -66,7 +66,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | module | imported by | what it does |
 |---|---|---|
 | `comeet_resolve.py` | `audit_empty_rows.py`, `resolve_llm.py` | reads `window.comeetvar` off a rendered page to recover a Comeet uid+token |
-| `deep_validate.py` | `audit_empty_rows.py`, `crack_walled.py`, `listing_hunt.py` +8 more | the Chromium rung of the Sunday audit (`validate_one` / `apply_verdict`, imported by audit_empty_rows; `--only` on demand); owns `google_via_unlocker`, the only search rung that works today |
+| `deep_validate.py` | `audit_empty_rows.py`, `crack_walled.py`, `drain_queue.py` +9 more | the Chromium rung of the Sunday audit (`validate_one` / `apply_verdict`, imported by audit_empty_rows; `--only` on demand); owns `google_via_unlocker`, the only search rung that works today |
 | `ingest_research.py` | `resolve_parallel.py`, `resolve_unknowns.py`, `retry_unreachable.py` | resolve+verify helpers for the research queue. **Not deletable**: `retry_unreachable` (02:30 daily) imports `PROBE_FAST`, `_cand_slugs` and `_try` from it |
 | `merge_csv_rows.py` | `persist_state.py`, `registry_health.py`, `tests/test_registry.py` +1 more | git-layer segment-aware merge for companies.csv; persist_state.py applies it on every push conflict |
 | `merge_json_cache.py` | `persist_state.py`, `tests/test_units.py` | three-way merge for the company-keyed JSON caches (deletions honoured since 2026-08-25); persist_state.py applies it |
