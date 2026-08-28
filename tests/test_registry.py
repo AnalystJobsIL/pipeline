@@ -6043,3 +6043,39 @@ def test_auto_expand_re_reads_the_registry_immediately_before_it_appends(tmp_pat
     body = (tmp_path / "companies.csv").read_text(encoding="utf-8")
     assert "Fiverr" not in body, (
         "appended a twin for a name the registry already had at append time: " + body)
+
+
+def test_triage_still_selects_a_row_the_daily_probe_woke(tmp_path, monkeypatch):
+    """`triage_dark.main()`'s selection must NOT exclude `probe-woken` rows.
+
+    It used to. The wake stripped the `dark-triage` segment, so the exclusion was needed to
+    stop triage and the 19:00 hunt fighting over the same row -- but nothing ever REMOVED a
+    wake, so a woken row left triage's schedule permanently while `in_triage_pool` went on
+    counting it as owned (6 rows). Since 2026-08-26 the wake keeps the triage segment, whose
+    date holds `_needs_triage` false until the TTL, and the hunt consumes the stamp; the pool
+    predicate is the whole selector and the exclusion must stay gone.
+
+    Guarded behaviourally on 2026-08-28: `tools/mutate.py` put the exclusion BACK and only a
+    source-text guard noticed (BACKLOG 367). This drives the real selection instead.
+    """
+    import datetime as dt
+    import sys
+    import triage_dark as T
+    monkeypatch.chdir(tmp_path)
+    old = (dt.date.today() - dt.timedelta(days=T.TRIAGE_TTL_DAYS + 1)).isoformat()
+    _registry(tmp_path, [
+        ["WokenCo", "", "", "https://wokenco.com/careers", "false",
+         f"dark-triage {old}: no ATS detected | probe-woken 2026-08-27"],
+        ["PlainCo", "", "", "https://plainco.com/careers", "false",
+         f"dark-triage {old}: no ATS detected"],
+    ])
+    seen = []
+    monkeypatch.setattr(T, "classify", lambda url, render=False, company="":
+                        (seen.append(company), ("no-url", "stub"))[1])
+    monkeypatch.setattr(sys, "argv", ["triage_dark.py"])
+    T.main()
+    assert "WokenCo" in seen, (
+        "a row the daily probe woke was dropped from triage's selection -- nothing removes a "
+        "wake, so it leaves this tool's schedule for good while in_triage_pool still owns it. "
+        "Selected: %r" % (seen,))
+    assert "PlainCo" in seen, "positive control: an ordinary due row must still be selected"
