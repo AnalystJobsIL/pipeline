@@ -269,10 +269,25 @@ def better_description(a, b):
     handed the furniture straight back on the next `open_sync`. Cross-lane: `jd-text` changed
     this line, `roles` owns the file.
 
-    `looks_like_jd` is imported inside the function on purpose — `jdfill` is the enrich layer
-    and this module is read by tools that must not pay for importing it."""
-    from .jdfill import looks_like_jd
-    a, b = a or "", b or ""
+    It compares — and RETURNS — `jd_body`, the posting with the page chrome cut off its tail,
+    and that is load-bearing rather than tidy. On 2026-08-28 (evening) the same trap sprang a
+    second time in a new shape: `looks_like_jd` now trims before it judges, so a row holding
+    3,546 characters of Melio job description followed by 2,454 characters of LinkedIn sign-in
+    form is a job description by that test — and so is the repaired 3,546-character row. Both
+    sides being JDs, "longer wins" chose the one with the login form, and `open_sync` wrote it
+    back into sqlite: 13 rows, 39,956 characters of furniture, restored minutes after being
+    cut out. Returning the body rather than one of the two inputs is what makes the repair
+    hold. Cross-lane: `jd-text` changed this line, `roles` owns the file.
+
+    `jdfill` is imported inside the function on purpose — it is the enrich layer and this
+    module is read by tools that must not pay for importing it."""
+    from .jdfill import jd_body, looks_like_jd
+    # Trim only when the trimmed text is STILL a job description. `jd_body` takes the
+    # earliest furniture marker, and on a Hebrew LinkedIn page the sign-in block renders
+    # BEFORE the posting -- so an unguarded trim here returns "" and `reconcile` writes that
+    # empty string into both stores, with none of `_reclean`'s floor or share ceiling in the
+    # way (wave 2). This function may prefer a cleaner text; it may not destroy one.
+    a, b = (jd_body(a or "") or (a or "")), (jd_body(b or "") or (b or ""))
     ja, jb = looks_like_jd(a), looks_like_jd(b)
     if ja != jb:
         return a if ja else b

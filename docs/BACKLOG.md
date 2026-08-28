@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**423 filed · 307 open · 116 closed · 6 half · 30 numbers name more than one item · 28 items name no lane.**
+**429 filed · 313 open · 116 closed · 7 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 380.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 382.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -83,8 +83,12 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 | 368 | `368@registry` **open** · `368@infra` **open** |
+| 374 | `374@jd-text` **open** · `374@docs` **open** |
+| 375 | `375@ats-fetch` **open** · `375@classifier` closed |
+| 376 | `376@jd-text` **open** · `376@registry` **open** |
+| 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 88 open
+### registry — 90 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -174,6 +178,8 @@ closure convention in the header.
 - **371** `371@registry` **Two employers each hold two ACTIVE rows, and each row bought its own LLM verdict for
 - **376** `376@registry` **"Agencies are excluded everywhere via `pipeline/recruiters.py`" is not true of the
 - **379** `379@registry` **A production cron evicted two tools' verdicts from one note and dropped the row out of
+- **380** `380@registry` **`origin/master` is RED: `test_two_rehearsed_nights_keep_every_pool` fails at
+- **381** `381@registry` **`python -m pytest` writes to the REAL Bright Data spend ledger whenever
 
 ### infra — 78 open
 
@@ -256,7 +262,7 @@ closure convention in the header.
 - **372** `372@infra` **The digest's stdout one-liner prints a bare `0 LLM calls`, and that cost a day** —
 - **377** `377@infra` **Two `infra` comments quote the digest H1, which changed today**
 
-### scraper — 22 open
+### scraper — 23 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -280,6 +286,7 @@ closure convention in the header.
 - **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
 - **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
 - **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
+- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
 
 ### discovery — 20 open
 
@@ -326,6 +333,23 @@ closure convention in the header.
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
 - **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
 
+### ats-fetch — 14 open
+
+- **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
+- **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
+- **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
+- **102** `102@ats-fetch` **`company_info` has no `''`-aware API**
+- **184** `184@ats-fetch` **`fetch_discovery` judges the display name only; the slug it has in hand says
+- **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
+- **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
+- **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
+- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded** *(closed by a later bullet, original never edited)*
+- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
+- **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
+- **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
+- **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
+- **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
+
 ### company-intel — 14 open
 
 - **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
@@ -343,22 +367,6 @@ closure convention in the header.
 - **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
 - **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no
 
-### ats-fetch — 13 open
-
-- **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
-- **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
-- **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
-- **102** `102@ats-fetch` **`company_info` has no `''`-aware API**
-- **184** `184@ats-fetch` **`fetch_discovery` judges the display name only; the slug it has in hand says
-- **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
-- **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
-- **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
-- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded** *(closed by a later bullet, original never edited)*
-- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
-- **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
-- **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
-- **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
-
 ### classifier — 7 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
@@ -368,6 +376,16 @@ closure convention in the header.
 - **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
 - **373** `373@classifier` **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
 - **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
+
+### jd-text — 7 open
+
+- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
+- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
+- **343** `343@jd-text` **Three open roles exist only at an Indeed address, and Indeed cannot be read**
+- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
+- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
+- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
 
 ### roles — 7 open
 
@@ -387,14 +405,6 @@ closure convention in the header.
 - **150** `150@render` **A failed email stub replaces yesterday's `digests/latest.md`**
 - **212** `212@render` **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
 - **263** `263@render` **`digest.py` renders a `0/148` inline-fill morning as the ABSENCE of a phrase**
-
-### jd-text — 5 open
-
-- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
-- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
-- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
-- **343** `343@jd-text` **Three open roles exist only at an Indeed address, and Indeed cannot be read**
-- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the
 
 ### unassigned — 28 open  ← burn this down; a new item may not join it
 
@@ -3895,6 +3905,98 @@ lane, and is listed at the end.
   and carries the reason into the mail; the generic attempts table this file's preamble item
   8 asks for is `roles`' to build.
 
+## Found by another lane, 2026-08-28 (evening)
+
+380. **`origin/master` is RED: `test_two_rehearsed_nights_keep_every_pool` fails at
+    43c68f8** — lane: `registry`. Found by `jd-text` while rebasing; verified in a clean
+    worktree at `43c68f8` with nothing of mine applied, so it is not a merge artefact:
+
+    ```
+    FAIL night 1: pool validate_empty (Sun 04:00) lost 1 rows it should keep:
+        ['Salvador Technologies']
+    rehearsal FAILED: 2 night(s), policy worst
+    ```
+
+    The 14-night rehearsal is the guard that says no pool erodes, and it is the one this
+    lane cannot read for itself. Reproduce with
+    `python -m pytest tests/test_registry.py -k two_rehearsed_nights`. Last two commits to
+    that area are 55ab400 and 063d14b. `jd-text` pushed on top of this knowingly: the
+    failure is in `companies.csv` pool policy, which this lane does not write, and holding a
+    green lane back does not make the red one greener — but the next `registry` session
+    should treat it as the first thing to look at.
+
+381. **`python -m pytest` writes to the REAL Bright Data spend ledger whenever
+    `secrets.env` is present** — lane: `registry` (the tests) with `infra` (the ledger).
+    Running the suite in a worktree that had `secrets.env` in it appended
+    `{"credits":4,"tool":"__main__.py"}` to `cloud_state/bd_spend.jsonl` — a tracked state
+    file that the discovery throttle reads to decide whether the month is over budget.
+
+    `tests/test_registry.py` already documents this exact shape and calls it out in its own
+    words — *"A guard about not spending money must not be the thing that makes the ledger
+    say money was spent"* — because `SPENT["n"] += 1` sits one line ABOVE the request, so a
+    test that dies on a missing zone still books a credit. That earlier instance was fixed
+    for its own path; this is a different one, and it books FOUR.
+
+    Two things are wrong and only one of them is cosmetic: the count is probably phantom,
+    **but nothing proves it** — a suite that can reach the paid rung when a key happens to
+    be on disk is a suite that can spend. The pre-push gate is the one command every
+    session runs, and `CLAUDE.md` tells sessions to keep `secrets.env` for local runs.
+    The fix is for the tests to lock the paid rungs the way `drain_queue._lock_the_paid_rungs`
+    already does, and for the ledger writer to refuse a write when `__main__` is pytest.
+    Found and reverted (not committed) by `jd-text` on 2026-08-28; reproduce by running
+    `python -m pytest tests/test_registry.py` with a `secrets.env` beside it and diffing
+    `cloud_state/bd_spend.jsonl`.
+
+## From the `jd-text` lane, 2026-08-28 (evening)
+
+Record: `docs/sessions/2026-08-28-jdtext-evening.md`; spec `ARCHITECTURE.md` §7a; decision
+`docs/decisions/2026-08-28-llm-judges-the-jd.md`. Closed there by code: the never-attempted
+class (the ledger filter dropped archived roles from the todo, so Mobileye two rows had sat
+at `jd_attempted = ''` since 2026-08-16), and the furniture half of **370**. Numbers
+re-derived against `origin/master` 66d9e3c; re-derive before acting.
+
+374. **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
+    still stored as a card description** — lane: `jd-text` (with `scraper` for the cause).
+    The matched driver gained `_reclean` and `_quality_pass` on 2026-08-28; the scrape driver
+    gained neither, and it is the one that feeds `scraped_cache.json`. Measured at 66d9e3c:
+    **6 companies whose long descriptions are byte-identical across postings, 22 postings, 8
+    of them passing `looks_like_jd`** (Centraleyes 4 × 6,000, TELUS Digital 2 × 6,000, Teads
+    2 × 4,833 — that last is a genuine title twin). One cache body also still carries page
+    furniture (`ServiceNow | Talent Network`, 3,551 characters past a `Similar Jobs`).
+    The root cause is upstream and is `scraper`: `scrape_universal._read_position_page` caps
+    page text at 4,000 characters with no marker requirement at all. Doing this properly is
+    `_reclean` + `_quality_pass` lifted out of `enrich_matched_jd` into the shared library,
+    which is item **112** (the two drivers are the same driver twice).
+
+375. **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
+    board** — lane: `ats-fetch`. `native_api` covers greenhouse, lever, smartrecruiters,
+    bamboohr and workday, which all publish one URL per posting. Comeet (**36 seen_ids** in
+    `matched`) and Ashby (**8**) publish only a board-level endpoint, and re-reading a whole
+    board to find one posting is this lane's work, not `jd-text`'s. It costs nothing today —
+    both platforms already ship a description in the list response — and it will cost
+    coverage the moment one of those roles arrives with a LinkedIn canonical url, which is
+    the shape 48 of 135 matched rows are already in.
+
+376. **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
+    residential Unlocker fetch** — lane: `jd-text`, and it may be nobody's. Ashley Digital ·
+    Marketing Analyst and Questar Auto Technologies · Senior Data Scientist both hold an
+    1,800-character snippet cut mid-word (`"…team of Consulta"`), from a source no code in
+    the tree writes any more. Their LinkedIn pages answer 200 with 250 KB and ~12,000
+    characters of text, and neither `extract_jd` nor `jsonld_jd` finds a posting in it: the
+    JD sits behind the guest wall. **Measured 2026-08-28: one Bright Data credit each, both
+    `bd-no-markers`** — so the residential path is not the answer and should not be bought
+    again. Either a second address turns up (`discovery`), or these two are permanently
+    snippet-only and the honest fix is to say so on the card rather than to keep retrying.
+
+377. **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
+    lane: `scraper`. `zipher.ai/careers/data-analyst/` is now reached (the role publishes an
+    Indeed address; `_address` swaps in the own-address sibling from `seen_ids`) and it is
+    admitted by `is_job_url`. A plain GET returns `no-markers`; **one Unlocker credit on
+    2026-08-28 also returned `bd-no-markers`.** The browser ladder read it once — the 08-26
+    session filled this role 170 → 2,021 characters from `scraped_cache.json` — and the cache
+    no longer holds any Zipher entry at all, so the cheapest fix is on the scrape side, not
+    by buying the page again.
+
 ## From the `jd-text` lane, 2026-08-26
 
 Record: `docs/sessions/2026-08-26-jd-text.md`; spec `ARCHITECTURE.md` §7a. Closed there by code:
@@ -6177,6 +6279,20 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     a bandage: **the first role still gets judged on the page**, and the fix is to not store
     a careers page as a posting's description. `pipeline/jdfill.py`'s `looks_like_jd` is the
     place.
+
+    **HALF CLOSED 2026-08-28 (evening), `jd-text`.** Two of the three ways a page reaches the
+    store as a description are shut, and the third is not:
+
+    * *Page chrome on the tail* is cut. `_PAGE_FURNITURE`/`jd_body` (`ARCHITECTURE.md` §7a)
+      removed **60,015 characters across 17 stored bodies**, and `looks_like_jd` now judges
+      the posting rather than the page, so a login wall no longer clears the bar on its own.
+    * *Detection of the shared-page case* exists: `jdfill.quality_suspect` flags a text that
+      is byte-identical to another posting at the same employer, and `jd_quality` asks the
+      model whether it is that role's posting at all. **In `enrich_matched_jd` only.**
+    * **STILL OPEN — the cards themselves.** `enrich_scrape_jd` has no quality tier and no
+      re-clean, so the 22 `scraped_cache.json` postings this item counted are unchanged, and
+      `scrape_universal._read_position_page` still stores 4,000 characters of page text with
+      no marker test. Filed separately as **374**; re-derive with the command above.
 
 371. **Two employers each hold two ACTIVE rows, and each row bought its own LLM verdict for
     the same role** — lane: `registry`, found 2026-08-28 by `classifier`. `Tenengroup` /

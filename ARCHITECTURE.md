@@ -3253,22 +3253,180 @@ the 08-24 text said workday 66 / bamboohr 11 and "eightfold and phenom have 0 ro
 registry lane converted Qualcomm and GE HealthCare on 08-25) — and scrape cards and discovery
 cards arrive empty as well.
 
-**Where coverage stands.** The first two rows are what the COMMITTED state holds right now
-(2026-08-26); this session does not commit `seen.db`, so the repair below lands with the
-2026-08-27 run and the "after" column is a rehearsal on copies, not a measurement — check it
-against tomorrow's `matched_short`:
+**Where coverage stands** (committed state, 2026-08-28 evening). **Count with
+`looks_like_jd`, never with a character count** — the query below used `desc_len >= 300`
+until this evening, and by that measure fourteen rows carrying LinkedIn sign-in forms were
+"covered":
 
-| | command | committed today | after the repair (rehearsed) |
-|---|---|---|---|
-| open board roles with a real JD | `python -c "import json;r=[json.loads(l) for l in open('cloud_state/roles.jsonl',encoding='utf-8')];o=[x for x in r if x.get('status')=='open'];print(len(o), sum(1 for x in o if (x.get('desc_len') or 0)>=300))"` | 74 of 76 | **75 of 76** |
-| live stored rows (superseded excluded) | `python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(c.execute(\"select count(*), sum(length(coalesce(description,''))>=300) from matched where coalesce(status,'')!='superseded'\").fetchone())"` | 128 of 132 | **129 of 132** |
-| scrape-cache todo | `enrich_scrape_jd` prints it, and it is stamped `scrape_todo` | **9 due, all cooling** | — |
+```bash
+python -c "import json,sys;sys.path.insert(0,'.');from pipeline.jdfill import looks_like_jd;\
+r=[json.loads(l) for l in open('cloud_state/roles.jsonl',encoding='utf-8-sig') if l.strip()];\
+t={d['role_id']:d.get('description') or '' for d in (json.loads(l) for l in open('cloud_state/roles_text.jsonl',encoding='utf-8-sig') if l.strip())};\
+o=[x for x in r if x.get('status')=='open'];\
+print(sum(1 for x in o if looks_like_jd(t.get(x['role_id'],''))), 'of', len(o), 'open;',\
+sum(1 for x in r if looks_like_jd(t.get(x['role_id'],''))), 'of', len(r), 'all')"
+```
 
-The one live gap is **Navan**, whose role reached us from Indeed (401 to every client we own)
-and whose own board `navan.com/careers` produced 0 cards — `docs/BACKLOG.md` 261, `scraper`.
-The three bare rows left in the store are **closed or superseded**: their postings have been
-deleted, nothing can fetch them, and they are excluded from the todo rather than paid for.
-**100 % is not reachable in this lane and should not be claimed.**
+| | 66d9e3c, judged by the rule that shipped that morning | after this evening |
+|---|---|---|
+| open roles carrying the employer own posting | 69 of 72 | **69 of 72** |
+| ALL roles, archived included | 130 of 144 | **135 of 144** |
+| characters of page furniture stored as description | 60,015 across 17 bodies | **0 in the store, 3,551 in one scrape-cache card** |
+
+The open figure did not move and that is the honest headline: **the work this evening was in
+the archive and in the text itself.** Five roles were filled, sixteen were re-cleaned, and
+two of the three open roles still without a posting had been showing a login form.
+
+The nine that carry no posting, each with its reason:
+
+| role | why | who could |
+|---|---|---|
+| Taboola · Product Analyst | `gone` — 404 on Taboola own Greenhouse board | nobody; terminal |
+| Mobileye · Experienced Data Analyst | `gone` — 404 on Mobileye own Lever board | nobody; terminal |
+| אסם, Navan · analyst roles | Indeed only, 401/403 to every client we own | `discovery` (a second address), BACKLOG 343 |
+| Zipher · Data Analyst | own careers page reached and PAID for; JS-rendered, no markers | `scraper` (the browser put it in the cache once) |
+| Ashley Digital, Questar · analyst roles | LinkedIn guest wall; plain GET and one Unlocker credit each both returned `no-markers` | nobody today |
+| Meta ×2 · Data Scientist | the row address is a SEARCH page, not a posting | `registry`, BACKLOG 266/371 |
+
+**100 % is not reachable in this lane and should not be claimed** — but "unfetchable" is now
+a state with a retry ladder behind it rather than a verdict, and only `gone` is final.
+
+**A job description has an END** (2026-08-28 evening). `looks_like_jd`, shipped that
+morning, asks whether a text CONTAINS a job description. It cannot ask where the description
+STOPS, and on an aggregator that is most of the text: fourteen ledger rows carried **53,145
+characters of LinkedIn sign-in form** as their description, twelve of them open on the board,
+and every one passed the new bar — a login wall says "experience" and "skills". Migdal Group
+row was 394 characters of Hebrew posting followed by 5,606 of "Forgot password", truncated at
+`DESC_MAX`. Both rows the operator reported that morning (Hila & Co., Modellama) were in this
+set; the morning session called them a RENDER bug on the grounds that "the text is in the
+ledger", and the text in the ledger was the form.
+
+`_PAGE_FURNITURE` is the mirror of `seniority._ROLE_START`: that one finds where the posting
+begins, this one finds where the page takes over. `jd_body(text)` is the posting with the
+chrome cut off, and **`looks_like_jd` and `extract_jd` both judge `jd_body`** — the question
+is whether the EMPLOYER words clear the bar. `enrich_matched_jd._reclean` cuts it out of
+stored text as well, for no requests and no credits, and is the only path in this lane
+allowed to shorten a description; it refuses outright above `RECLEAN_MAX_SHARE` (15 %), on
+the rule-2 principle that a mass rewrite is a broken run until proven otherwise.
+
+Every marker was chosen by measurement over all 542 stored bodies, and **three that read as
+obviously safe were rejected by that measurement**:
+
+* `skip to main content` is a HEAD marker — offset 12, 25 and 42 in fourteen bodies
+  (Weizmann, Amdocs, Simply). Cutting there deletes them whole.
+* `privacy policy` (77 bodies) and `cookie` (43) cut REAL text: C2A Security posting reaches
+  its privacy line at 916 of 4,000 characters with the job still to come.
+* the Hebrew `להצטרפות` is not a LinkedIn string at all, it is the ordinary word "to join",
+  mid-sentence in IBI real posting. It would have destroyed 1,791 characters of a genuine
+  description.
+
+The set MATCHES **17 of 542 bodies** and would remove 60,015 characters — but **a cut is only
+made when what is left is still a job description**, so four are refused and the real figure is
+**13 rows, 39,969 characters, no description damaged**.
+
+That floor is `looks_like_jd`, not a length, and wave 2 is why. The cut takes the EARLIEST
+marker, and **on a Hebrew LinkedIn page the sign-in block renders BEFORE the posting** — so the
+first version kept 367–682 characters of navigation for Migdal Group, Hila & Co. and SHILA
+Medical and threw the description away. It survived only because the fetch that followed
+happened to answer; `_reclean` commits before the fetch loop, so a rate limit or a spent budget
+would have left a navigation menu on the board with the posting unrecoverable from either
+store. Those rows now keep their full text, fail `looks_like_jd` anyway, and go to the fetch.
+
+**Cross-lane, and it sprang twice:** `roles.better_description` compares — and now RETURNS —
+`jd_body`, but only when the trimmed text is still a job description: unguarded it returned
+`""` on the wall-first shape and `reconcile` wrote that empty string into BOTH stores, with
+none of `_reclean`'s floor or share ceiling in the way (wave 2). Because `looks_like_jd` trims before it judges, a row holding 3,546 characters of
+Melio posting plus 2,454 of sign-in form is a job description by that test, and so is the
+repaired row; both being JDs, "longer wins" chose the one with the form and `open_sync` wrote
+it **back into sqlite** — 13 rows, 39,956 characters, restored minutes after being cut out.
+`roles` owns that file.
+
+**The ambiguous ones go to the model** (`jdfill.jd_quality`, operator decision 2026-08-28,
+`docs/decisions/2026-08-28-llm-judges-the-jd.md`, which REVERSES the 08-26 no-LLM decision).
+Keyword rules settle the clear cases; they cannot tell 300 characters of real prose that is a
+whole posting from 300 that are its first paragraph. `quality_suspect` picks candidates for
+nothing — a furniture marker survived the cut, the text sits exactly on `DESC_MAX`, or it is
+byte-identical to another posting at the same employer (`docs/BACKLOG.md` 370) — and only
+those are paid for: **32 ledger texts on the first run, then one to three a day**. Verdicts
+are cached on the sha1 of the text in `llm_cache` under a `jdq1|` namespace (`classifier`
+owns that table; its keys all begin `v2|`). Bounded by `JD_QUALITY_LLM_CAP` (60) **and by its
+own wall clock** `JD_QUALITY_TIME_BUDGET_MIN` (4 min): at 7.8 s a call the cap alone is 7.8
+minutes on top of the 20-minute fetch budget, against a 25-minute step. `JD_QUALITY=0`
+disables it for a local run, as `JD_BD=0` does for credits.
+
+**A verdict can only move a role between the todo and done.** No branch writes, shortens or
+blanks a description on the model word — text is only ever changed by a rung that fetched it
+— so the worst a prompt-injecting posting can achieve is to re-queue itself. An unavailable
+model returns `None`, never `False`: the keyword verdict stands, because a tier that could
+demote on an outage would empty the board every time the token expired. And a row incomplete
+only because it sits on `DESC_MAX` is reported, never re-queued: re-fetching returns the same
+6,000 characters (BACKLOG 341).
+
+**A role own address, when the published one cannot be read.** `store.seen_id()` writes
+`f"{ats_platform}:{job_id}"`, and `sibling_urls` keeps only the parts that start with `http`
+— so `greenhouse:8035268` was thrown away and nothing in the repo turned a
+`<platform>:<job_id>` pair into an endpoint, while **48 of 135 matched rows published a
+LinkedIn guest page** and several of them carried a native id. `native_from_seen_ids` builds
+it, and `_address` swaps an unreadable published url for an own-address sibling (Zipher: the
+record kept an Indeed address while `zipher.ai/careers/data-analyst/` sat in that same role
+`seen_ids`, refused before a byte was fetched).
+
+**The board is the identity gate, and that is what makes it safe.** The token comes from
+`companies.csv` joined on THIS role own company and never from a `seen_id`; the id half names
+a job and never a board. `seen_ids` is not a list of a role own addresses — `nift|data
+analyst` carries five other employers postings — so a stray id can only ever be asked for on
+our own employer board, where it is a 404. Lever region comes from the registry `api_url`
+(`api.lever.co/.../mobileye/<uuid>` answers 404, `api.eu.lever.co` answers 200), and
+`_lever_read` takes `lists` as well as `description`: reading `description` alone returns 686
+characters, exactly the useless blurb already stored — the rung would have looked like it
+worked and changed nothing. With `lists`, 2,835.
+
+Comeet (36 seen_ids) and Ashby (8) are deliberately out of scope: neither has a per-job
+endpoint, and re-reading a whole board belongs to `ats-fetch` (`docs/BACKLOG.md` 375).
+
+**"Unfetchable" is a state, not a verdict.** A definitive failure widens the wait — 7, 14,
+28, then a standing `MAX_RETRY_DAYS` 30 (`retry_days_for`, keyed on the new `matched.jd_tries`
+column) — and **no number of failures removes a role from the pool**. A transient failure
+does not widen it. Archived roles are worked too: **liveness is a BUDGET rule now, not a
+selection rule.** Dropping closed and purged rows from the todo is why the driver had never
+once looked at Mobileye two rows, which sat at `jd_attempted = ''` from 2026-08-16 with a
+free Lever endpoint one call away; they are now fetched every cycle on the rungs that cost
+nothing and reach the Unlocker only under `--archived-bd`. That keeps the 08-26 lesson (a
+closed Taboola row bought a credit at 118 % of the monthly pool) without paying for it in
+coverage.
+
+**Exactly one state is final.** `GONE_MARK` — a 404 or 410 from a per-job endpoint on the
+COMPANY OWN board — is the only stamp `due()` never brings round again: the board is the
+employer, the id is this role, and the board says no such job. Every other failure describes
+a page we could not read, which is a reason to come back.
+
+**And only from an AUTHORITATIVE board** (`_authoritative`). The `?gh_jid=` branch of
+`native_url` is host-agnostic and, when the registry has no greenhouse row for the company,
+GUESSES the slug from the company name and the host label:
+`careers.acmewidgets.com/job?gh_jid=12345` becomes `boards/acmewidgets/jobs/12345` for a
+company that may not be on Greenhouse at all. That URL 404s for every company on earth, and
+the first version of this rule would have retired a live role for ever on the strength of a
+name we made up. The candidate is still tried; only its 404 means less.
+
+**Nothing leaves the pool unaccounted for.** Every non-superseded row lands in exactly one
+counted bucket — `ok`, `todo`, `archived`, `no-address`, cooling, refused — and the driver
+ASSERTS that they sum to the row count. This layer has been caught by silent exclusion twice
+(§8): a character count that called furniture a description, and a liveness filter that
+removed archived roles. Both were invisible because nothing added up.
+
+**The budget is a scheduler, not a cliff.** The todo is ordered
+`(jd_tries, jd_attempted, last_seen DESC)` — never-attempted first, then longest-ago. It was
+`last_seen DESC`, and `run_backfill` SKIPS rather than breaks when the budget runs out, so the
+freshest rows were walked first every morning and the tail was never reached at all. At 144
+roles that is invisible; at the ~1,500 the registry is heading for it is permanent starvation
+of exactly the roles that need the work. `matched_cycle_days` in the stamp says how long one
+lap takes — counting rows WORKED and never rows parked, because counting the cooled-down
+ones made it fall as starvation grew (wave 3: a true 25-day lap reported as 3.5, reading
+greener the fuller the cooldown pool got). Measured 2026-08-28: **0.92 s per role** on the free rungs (native 0.24–1.02 s, a
+LinkedIn plain GET of a 250 KB page 0.67–0.95 s), so a 20-minute budget covers ~1,300 roles
+at that rate, ~400 at a pessimistic 3 s, and 48 if every one hits the 25 s timeout. The
+store size at which one lap exceeds a day is **~800 roles at 1.5 s** and **~400 at 3 s** —
+and past it the cycle stretches rather than the tail starving in silence.
 
 **One ladder, three callers** (`pipeline.jdfill.fetch_jd`):
 

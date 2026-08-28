@@ -4098,12 +4098,12 @@ def test_fetch_jd_ladder_order_and_reasons(monkeypatch):
     'retry tomorrow', not 'park for a week'."""
     from pipeline import jdfill
     calls = []
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": (calls.append("native"), ("JD " * 200, "ok"))[1])
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": (calls.append("native"), ("JD " * 200, "ok"))[1])
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (calls.append("html"), (200, _jd_page()))[1])
     bd = _FakeBD(body=_jd_page())
     jd = jdfill.fetch_jd("https://x/jobs/1", bd=bd)
     assert (jd.via, jd.reason, calls, bd.used) == ("native", "ok", ["native"], 0)
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     jd = jdfill.fetch_jd("https://x/jobs/1", bd=bd)
     assert (jd.via, jd.reason, bd.used) == ("html", "ok", 0)              # html hit: BD untouched
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
@@ -4154,6 +4154,11 @@ def test_unlocker_stops_on_account_errors_not_on_walled_pages(monkeypatch):
     from pipeline import jdfill
     monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
     monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    # JD_BD is the OFF switch, and `Unlocker.__init__` reads it. Without pinning it a
+    # test that supplies both keys still gets `unavailable="disabled"` whenever the
+    # session exports JD_BD=0 -- which CLAUDE.md tells every local session to do, so
+    # the pre-push gate was red for anyone following the instructions (waves 1 and 3).
+    monkeypatch.setenv("JD_BD", "1")
     sent = []
 
     def urlopen(req, timeout=0):
@@ -4443,12 +4448,12 @@ def test_jd_guards_the_mutation_sweep_found_unpinned(monkeypatch):
     # native_jd walks every candidate: a 200 that is not JSON, then a 404, then the real one
     answers = iter([(200, "<html>wrong board</html>"), (404, ""), (200, _jd_json.dumps({"content": _jd_page()}))])
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: next(answers))
-    monkeypatch.setattr(jdfill, "native_url", lambda u, c="": ("greenhouse", ["a", "b", "c"]))
+    monkeypatch.setattr(jdfill, "native_url", lambda u, c="", sids="": ("greenhouse", ["a", "b", "c"]))
     assert jdfill.native_jd("https://x/?gh_jid=1")[1] == "ok"
     monkeypatch.undo()
     # fetch_jd: shell vs no-markers, the 500 boundary, http:// urls, the BD-body-without-JD branch,
     # a JOB url whose GET 5xx'd stays transient, a BD gateway 5xx is transient
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, "<p>" + "Company intro. " * 60 + "</p>"))
     assert jdfill.fetch_jd("https://x/jobs/1").reason == "no-markers"
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (500, ""))
@@ -4462,7 +4467,15 @@ def test_jd_guards_the_mutation_sweep_found_unpinned(monkeypatch):
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
     assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(body=_jd_shell()))[:4] == ("", "bd", "bd-shell", False)
     assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(reason="bd-http-502")).transient is True
-    assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(reason="bd-capped")).transient is True
+    # 2026-08-28 (evening): `bd-capped` is transient only when the paid rung is the ONLY
+    # thing that did not run. When the plain rung READ the page and found no description,
+    # that verdict is definitive whatever the Unlocker was doing -- otherwise the backoff
+    # never starts for a live role while the cap is spent (60 plain fetches in 60 days with
+    # `jd_tries` frozen at 0, against 4 for the same page on the archived pass, which has no
+    # Unlocker at all). `.pre` carries the page verdict either way.
+    capped = jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(reason="bd-capped"))
+    assert capped.reason == "bd-capped" and capped.pre == "shell"
+    assert not capped.transient, "a page we read and found empty is not a transient failure" is True
     assert jdfill.fetch_jd("https://x/jobs/1", bd=_FakeBD(reason="bd-reject_block")).transient is False
 
 
@@ -4470,6 +4483,11 @@ def test_unlocker_reads_the_error_header_even_with_a_body_and_needs_both_keys(mo
     from pipeline import jdfill
     monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
     monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    # JD_BD is the OFF switch, and `Unlocker.__init__` reads it. Without pinning it a
+    # test that supplies both keys still gets `unavailable="disabled"` whenever the
+    # session exports JD_BD=0 -- which CLAUDE.md tells every local session to do, so
+    # the pre-push gate was red for anyone following the instructions (waves 1 and 3).
+    monkeypatch.setenv("JD_BD", "1")
     answers = []
     def urlopen(req, timeout=0):
         a = answers[0]
@@ -4496,7 +4514,7 @@ def test_unlocker_reads_the_error_header_even_with_a_body_and_needs_both_keys(mo
     monkeypatch.setenv("JD_BD", "0")
     assert jdfill.Unlocker().unavailable == "disabled"                  # the local off-switch
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, timeout=15, **k: (200, f"<p>t={timeout}</p>"))
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     seen = []
     monkeypatch.setattr(jdfill, "extract_jd", lambda h: (seen.append(h), "")[1])
     jdfill.fetch_jd("https://x/jobs/1")
@@ -10365,7 +10383,7 @@ def test_a_native_rung_always_beats_the_unfillable_set(monkeypatch):
     """The refusal is ordered AFTER the native rung so that writing a reader for a blocked
     host makes the entry dead rather than harmful."""
     from pipeline import jdfill
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("J" * 500, "ok"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("J" * 500, "ok"))
     jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=abc")
     assert (jd.via, jd.reason) == ("native", "ok")
 
@@ -10427,7 +10445,7 @@ def test_a_listing_page_is_refused_before_the_fetch_not_after(monkeypatch):
     """It used to be fetched first and only then classified, so a search page whose GET timed
     out was stamped `transient` and re-fetched every single morning, booked as `fail`."""
     from pipeline import jdfill
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     fetched = []
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (fetched.append(u), (None, ""))[1])
     jd = jdfill.fetch_jd("https://careers.dhl.com/global/en/search-results?keywords=Israel",
@@ -10471,7 +10489,7 @@ def test_a_bright_data_body_rescued_by_jsonld_still_counts_as_a_bd_fill(monkeypa
     that backwards and the credits-spent arithmetic breaks in the other direction. Two of the
     three credits this lane spent on 2026-08-26 ended in `bd-no-markers`."""
     from pipeline import jdfill
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
     bd = _J6BD(body=_j6_ld("Analyst work here. " * 40))
     jd = jdfill.fetch_jd("https://x/jobs/1", bd=bd)
@@ -10618,14 +10636,14 @@ def test_a_failed_native_rung_is_not_blamed_on_the_page(monkeypatch):
     """`fetch_jd` threw `native_jd`'s reason away, so GE HealthCare's 404ing cxs endpoint was
     reported as `shell` -- indistinguishable from "Workday pages are shells, as always"."""
     from pipeline import jdfill
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "workday-http"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "workday-http"))
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
     jd = jdfill.fetch_jd("https://x.wd5.myworkdayjobs.com/s/job/a/b")
     assert (jd.reason, jd.native) == ("shell", "workday-http")
     c = jdfill.run_backfill([jdfill.Item(1, "https://x.wd5.myworkdayjobs.com/s/job/a/b", "A | B")],
                             save=lambda *a: None, minutes=None, dry_run=True)
     assert c["native:workday-http"] == 1
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     assert jdfill.fetch_jd("https://x/jobs/1").native == ""       # no rung applied: nothing to say
 
 
@@ -10683,12 +10701,23 @@ def test_the_scrape_todo_agrees_with_the_other_driver_and_never_offers_a_url_twi
     assert gates["duplicate_url"] == 1 and gates["has_desc"] == 1 and gates["dropped_title"] == 1
 
 
-def test_the_matched_backfill_leaves_closed_and_superseded_roles_alone(tmp_path, monkeypatch):
-    """Three of the five candidate rows on 2026-08-26 were roles that no longer exist --
-    Taboola (closed nine days earlier, gone from an 84-job board), Meta, Meta Israel -- and one
-    of them spent a Bright Data credit. A NULL status must still be tried: `insert_matched`
-    writes NULL and `roles.reconcile` writes '', so a bare `status != 'superseded'` is NULL for
-    every NULL row and would select nothing at all."""
+def test_an_archived_role_is_worked_on_the_free_rungs_and_never_bought(tmp_path, monkeypatch):
+    """Was `..._leaves_closed_and_superseded_roles_alone` until 2026-08-28.
+
+    The 2026-08-26 lesson was real -- three of five candidate rows were roles that no longer
+    existed and one of them spent a Bright Data credit while the shared pool stood at 118 %%
+    of the monthly free tier -- but the fix was too broad. Dropping archived roles from the
+    todo entirely is why the driver had never once looked at Mobileye two rows, which sat at
+    `jd_attempted = ''` from 2026-08-16 with a free Lever endpoint one call away. The
+    operator bar is that an archived role carries a description too: one without it has no
+    value, and some are still live at their original source.
+
+    So liveness is a BUDGET rule now, not a selection rule. An archived role is fetched every
+    cycle on the rungs that cost nothing and reaches the Unlocker only under the operator
+    `--archived-bd` flag. A `superseded` row is still not fetched at all -- it is a duplicate,
+    not an archived role. A NULL status must still be tried: `insert_matched` writes NULL and
+    `roles.reconcile` writes '', so a bare `status != 'superseded'` is NULL for every NULL row
+    and would select nothing at all."""
     from pipeline import jdfill, stages, store
     import enrich_matched_jd as emj
     monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
@@ -10708,11 +10737,45 @@ def test_the_matched_backfill_leaves_closed_and_superseded_roles_alone(tmp_path,
         _j6_json.dumps({"role_id": "acme|closed analyst", "status": "closed"}) + "\n", encoding="utf-8")
     seen = []
     monkeypatch.setattr(jdfill, "fetch_jd",
-                        lambda u, **k: (seen.append(u), jdfill.JD("", "none", "shell", False))[1])
+                        lambda u, **k: (seen.append((u, k.get("bd"))),
+                                        jdfill.JD("", "none", "shell", False))[1])
     assert emj.main(["--db", db]) == 0
-    assert seen == ["https://a/jobs/1"]                      # only the live, non-superseded row
+    got = dict(seen)
+    assert "https://a/jobs/3" not in got                     # superseded: a duplicate, never fetched
+    assert "https://a/jobs/1" in got and "https://a/jobs/2" in got
+    assert got["https://a/jobs/2"] is None, (
+        "the CLOSED role reached a paid rung: an archived role is worked on the free rungs "
+        "only unless the operator passes --archived-bd")
+    assert got["https://a/jobs/1"] is not None               # the live role keeps the full ladder
     e = _j6_json.loads((tmp_path / "cloud_state" / "seen.db.stages.json").read_text(encoding="utf-8"))["enrich"]
-    assert e["matched_dead"] == 1 and e["matched_todo"] == 1
+    # `matched_todo` is the whole todo across BOTH passes -- the live one and the archived
+    # one -- which is what a reader of the mail wants: how much work there was.
+    assert e["matched_dead"] == 1 and e["matched_todo"] == 2 and e["matched_archived"] == 1
+
+
+def test_an_archived_role_reaches_bright_data_only_when_the_operator_says_so(tmp_path, monkeypatch):
+    """The other half of the rule above, and the reason it is a flag rather than a constant:
+    the operator asked for one uncapped catch-up pass over the archive on 2026-08-28, while
+    the cron keeps spending nothing on roles that are off the board."""
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    (tmp_path / "cloud_state").mkdir()
+    db = str(tmp_path / "cloud_state" / "seen.db")
+    st = store.SeenStore(db)
+    st.upsert_matched({"company": "ACME", "title": "Closed Analyst", "location": "TLV",
+                       "posted_date": "2026-08-20", "sources": ["workday"], "description": "",
+                       "url": "https://a/jobs/2"}, _j6_dt.date.today().isoformat())
+    st.close()
+    (tmp_path / "cloud_state" / "roles.jsonl").write_text(
+        _j6_json.dumps({"role_id": "acme|closed analyst", "status": "closed"}) + "\n",
+        encoding="utf-8")
+    seen = []
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda u, **k: (seen.append((u, k.get("bd"))),
+                                        jdfill.JD("", "none", "shell", False))[1])
+    assert emj.main(["--db", db, "--archived-bd"]) == 0
+    assert dict(seen)["https://a/jobs/2"] is not None
 
 
 def test_an_unreadable_ledger_filters_nothing_and_says_so(tmp_path, monkeypatch):
@@ -10782,7 +10845,7 @@ def test_a_sibling_fetch_never_spends_a_credit(tmp_path, monkeypatch):
     from pipeline import jdfill
     seen_bd = []
     items = [jdfill.Item(1, "https://other/jobs/9", "A | B (sibling)")]
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
     c = jdfill.run_backfill(items, save=lambda *a: None, minutes=5, bd=None, dry_run=True)
     assert c["tried"] == 1 and seen_bd == []
@@ -10965,7 +11028,7 @@ def test_the_marker_heuristic_is_read_first_and_the_fetch_keeps_its_name(monkeyp
     text, why = jdfill._from_body(_jd_page() + script)
     assert why == "ok" and "Schema copy" not in text          # the rendered page wins
     assert jdfill._from_body(_jd_shell() + script)[1] == "ok-jsonld"   # only when it can't
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell() + script))
     jd = jdfill.fetch_jd("https://x/jobs/1")
     assert (jd.via, jd.reason) == ("html", "ok-jsonld")
@@ -10981,12 +11044,12 @@ def test_a_native_rung_that_fetched_a_stub_says_so_on_every_branch(monkeypatch):
     `native_jd` spelling a short payload `not-native`, and `fetch_jd` dropping `native_why` on
     the Bright Data branch -- which is exactly the branch where the credit was spent."""
     from pipeline import jdfill
-    monkeypatch.setattr(jdfill, "native_url", lambda u, c="": ("greenhouse", ["https://api/1"]))
+    monkeypatch.setattr(jdfill, "native_url", lambda u, c="", sids="": ("greenhouse", ["https://api/1"]))
     monkeypatch.setattr(jdfill, "plain_fetch",
                         lambda u, **k: (200, _j6_json.dumps({"content": "too short"})))
     assert jdfill.native_jd("https://x/?gh_jid=1") == ("", "greenhouse-short")
     monkeypatch.undo()
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "greenhouse-short"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "greenhouse-short"))
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
     jd = jdfill.fetch_jd("https://x/jobs/1", bd=_J6BD(reason="bd-reject_block"))
     assert (jd.via, jd.native) == ("bd", "greenhouse-short")
@@ -11059,7 +11122,18 @@ def test_the_drivers_run_on_the_budgets_their_docstrings_promise(tmp_path, monke
     monkeypatch.setattr(emj, "run_backfill",
                         lambda items, **k: (seen.append(k), _j6_Counter())[1])
     assert emj.main(["--db", db]) == 0
-    assert seen[1]["minutes"] == 25.0
+    # The matched driver splits its clock when there ARE archived roles: the archived pass
+    # runs second, and second with no floor means never -- at 1,500 rows the live pass took
+    # the whole budget for twenty consecutive days and archived roles were reached zero
+    # times while the stamp reported 750 of them every morning. The two passes still sum to
+    # the documented budget.
+    assert seen[1]["minutes"] == 25.0 * (1 - emj.ARCHIVED_BUDGET_SHARE)
+    # The archived pass gets what is LEFT OF THE WHOLE budget in wall clock, not a second
+    # allowance: `left = max(0, minutes - elapsed)`. Here `run_backfill` is a stub that
+    # returns instantly, so nothing elapsed and the remainder is the full 25 -- in a real
+    # run the live pass has spent its share by then. The reservation is a FLOOR under the
+    # archived pass, never a second budget on top.
+    assert len(seen) == 3 and seen[2]["minutes"] == 25.0
 
 
 def test_the_inline_refusal_outranks_a_spent_budget(monkeypatch):
@@ -11144,7 +11218,7 @@ def test_a_morning_of_nothing_but_refused_addresses_is_healthy_and_silent(monkey
     readable ones deferred every readable row to tomorrow."""
     from pipeline import jdfill
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(12)]
     c = jdfill.run_backfill(items, save=lambda *a: None, minutes=None, dry_run=True,
                             log=lambda s: None)
@@ -11166,7 +11240,7 @@ def test_the_canary_probes_once_per_process_and_shouts_when_it_succeeds(monkeypa
     from pipeline import jdfill
     seen = []
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (seen.append(u), (200, _jd_page()))[1])
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     cell = set()          # host families already probed this process
     items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
     kw = dict(save=lambda *a: None, minutes=None, dry_run=True, probe_cell=cell,
@@ -11185,7 +11259,7 @@ def test_a_refused_address_is_never_stamped_so_the_canary_cannot_sleep_for_a_wee
     from pipeline import jdfill
     stamped = []
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
     jdfill.run_backfill(items, save=lambda it, t, s: stamped.append(it.key), minutes=None,
                         log=lambda s: None)
@@ -11402,7 +11476,7 @@ def test_a_native_failure_on_a_refused_host_keeps_its_own_reason(monkeypatch):
     apply on a refused host. When it failed, the refusal overwrote its reason with
     `auth-walled` — claiming a wall we never observed."""
     from pipeline import jdfill
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "greenhouse-http"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "greenhouse-http"))
     jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=1&gh_jid=5")
     assert jd.native == "greenhouse-http" and jd.reason == "greenhouse-http"
 
@@ -11411,7 +11485,7 @@ def test_probe_never_reaches_bright_data_even_if_a_caller_passes_one(monkeypatch
     """`probe=True` only bypassed the refusal return; the rest of the ladder, Bright Data
     included, still ran. Today the only caller guards it — the next one would have paid."""
     from pipeline import jdfill
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
     bd = _J6BD(body=_jd_page())
     jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=1", bd=bd, probe=True)
@@ -11613,7 +11687,7 @@ def test_the_canary_costs_neither_the_operators_limit_nor_the_budget(monkeypatch
     readable row to tomorrow so that a refused host could be re-tested."""
     from pipeline import jdfill
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
-    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     refused = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
     readable = [jdfill.Item(9 + i, f"https://x.co/jobs/{i}", "A | B") for i in range(3)]
     c = jdfill.run_backfill(refused + readable, save=lambda *a: None, minutes=None, count_cap=3,
@@ -16331,3 +16405,546 @@ def test_the_two_alphabets_enumerate_the_same_class():
                    ("trainee", "חני[כך]"), ("apprentice", "מתלמד")):
         assert en in src and he in src, (en, he)
     assert "צוער" not in src and "cadet" not in src
+
+
+# =====================================================================================
+# jd-text lane, 2026-08-28 (evening) — a job description has an END.
+# The morning shipped `looks_like_jd`, which asks whether a text CONTAINS a job description.
+# It cannot ask where the description STOPS, and on an aggregator that is most of the text:
+# fourteen ledger rows carried 53,145 characters of LinkedIn's login wall as their
+# description, twelve of them open on the board, and every one passed the new bar because a
+# sign-in form says "experience" and "skills". Record: docs/sessions/2026-08-28-jdtext-evening.md
+# =====================================================================================
+
+_J7_WALL = ("Forgot password? Agree & Join LinkedIn By clicking Continue to join or sign in, "
+            "you agree to LinkedIn's User Agreement. New to LinkedIn? Join now. " * 40)
+
+
+def _j7_jd(n=600):
+    """Text our own parser accepts: long enough, two distinct marker families."""
+    return ("About the role: you will own the analytics stack. "
+            "Requirements: 3 years of SQL. " + "Ownership of dashboards. " * n)[:n]
+
+
+def test_looks_like_jd_judges_the_posting_not_the_page():
+    """Migdal Group's stored row was 394 characters of Hebrew job description followed by
+    5,606 characters of LinkedIn's sign-in form, truncated at DESC_MAX -- and it passed
+    `looks_like_jd` comfortably, because the wall itself carries section words. The bar has to
+    be asked of the employer's words, which is `jd_body`."""
+    from pipeline.jdfill import looks_like_jd, jd_body, MIN_DESC
+    real = _j7_jd(2000)
+    assert looks_like_jd(real) and jd_body(real) == real
+    # a real posting with the wall stapled on: still a job description, and the wall is not
+    # part of it
+    assert looks_like_jd(real + _J7_WALL)
+    assert jd_body(real + _J7_WALL) == real.rstrip()
+    # a fragment with the wall stapled on: NOT a job description, whatever its length
+    stub = "About the role: we are hiring an analyst. Requirements: SQL."
+    assert len(stub + _J7_WALL) > MIN_DESC * 10
+    assert not looks_like_jd(stub + _J7_WALL), (
+        "6,000 characters of sign-in form read as a job description because the form says "
+        "'experience' and 'skills'")
+
+
+def test_extract_jd_stops_where_the_page_takes_over():
+    """The tail cut runs on a freshly fetched body too, and BEFORE the marker gate -- so a page
+    that is a login wall with four words of job on top yields "" and the role stays in the todo
+    rather than being declared finished with a form on its card."""
+    from pipeline.jdfill import extract_jd
+    body = "<html><body><p>%s</p><p>%s</p></body></html>" % (_j7_jd(1500), _J7_WALL)
+    out = extract_jd(body)
+    assert out and "Forgot password" not in out and "Agree & Join" not in out
+    thin = "<html><body><p>Analyst wanted. Requirements: SQL.</p><p>%s</p></body></html>" % _J7_WALL
+    assert extract_jd(thin) == ""
+
+
+def test_the_furniture_markers_never_cut_ordinary_prose():
+    """Every marker was chosen by measurement over all 542 stored bodies, and three obvious
+    candidates were rejected BY that measurement. This pins the two that would have cost real
+    text, because both read as safe and neither is:
+
+      * `skip to main content` is a HEAD marker -- it sits at offset 12, 25 and 42 in fourteen
+        bodies (Weizmann, Amdocs, Simply), so cutting at it would have deleted them whole.
+      * the Hebrew `to join` is not a LinkedIn UI string at all, it is an ordinary word, and it
+        appears mid-sentence in IBI's real posting: "looking for an FP&A [analyst] to join a
+        professional team". Cutting there destroyed 1,791 characters of a genuine description.
+    """
+    from pipeline.jdfill import jd_body
+    head = "Skip to main content " + _j7_jd(1200)
+    assert jd_body(head) == head, "a head marker must never be a cut point"
+    hebrew = ("מחפשים FP&A להצטרפות "
+              "לצוות מקצועי. ") + _j7_jd(1200)
+    assert jd_body(hebrew) == hebrew, "the ordinary Hebrew word for 'to join' is not furniture"
+    policy = _j7_jd(900) + " Privacy Policy. Cookie settings."
+    assert jd_body(policy) == policy, "a privacy line inside a posting is not the end of it"
+
+
+def test_the_reclean_is_the_only_thing_that_may_shorten_and_it_refuses_a_mass_change():
+    """Cutting furniture out of the STORE is a mass rewrite of text, and CLAUDE.md rule 2 says a
+    mass result is a broken run until proven otherwise. The honest number on 2026-08-28 was 17
+    of 542 bodies; a furniture rule that had started matching prose would show up here as a
+    quarter of the store, and the run must refuse rather than rewrite it."""
+    import enrich_matched_jd as emj
+    from pipeline.jdfill import jd_body
+    rows = [("k%d" % i, "ACME", "Analyst", "https://a/%d" % i, "", "", _j7_jd(1200) + _J7_WALL,
+             0, "2026-08-28") for i in range(10)]
+    n, cut, wrote = emj._reclean(None, rows, dry_run=True)
+    # A refusal returns a NEGATIVE count so the caller can alarm on it. It used to return 0,
+    # which is what a clean store returns -- so a store full of login walls and a store with
+    # none were the same number in the mail, and `matched_ok` went on saying every row
+    # carried the employer own posting while the board rendered sign-in forms.
+    assert n == -10 and cut > 0 and wrote == {}, (n, cut)
+    clean = [("c%d" % i, "ACME", "A", "u", "", "", _j7_jd(1200), 0, "2026-08-28")
+             for i in range(100)]
+    n2, cut2, wrote2 = emj._reclean(None, clean + rows[:5], dry_run=True)
+    assert n2 == 5 and cut2 > 0 and len(wrote2) == 5   # 5 of 105 is a backlog, and it is cut
+    assert all(jd_body(r[6]) == r[6] for r in clean)  # untouched rows stay untouched
+
+
+def test_the_board_token_never_comes_from_a_seen_id():
+    """The property that makes `native_from_seen_ids` safe. `seen_ids` is NOT a list of a role's
+    own addresses: `nift|data analyst` carried five OTHER employers' LinkedIn postings, swept
+    off one shared listing page. So the id half may name a JOB and never a BOARD -- the board
+    comes from this company's own `companies.csv` row, and a foreign id is therefore only ever
+    asked for on our own employer's board, where it is a 404."""
+    from pipeline import jdfill
+    urls = jdfill.native_from_seen_ids("greenhouse:9999999", "Nift")
+    assert urls, "Nift has a greenhouse row; the id should build ITS board url"
+    assert all("/boards/nift/" in u for _p, u in urls), urls
+    # a seen_id whose platform disagrees with the registry row builds nothing at all
+    assert jdfill.native_from_seen_ids("greenhouse:123", "Mobileye") == []
+    # and a company with no registry row cannot name a board however good the id looks
+    assert jdfill.native_from_seen_ids("greenhouse:123", "No Such Company Ltd") == []
+    # a "+" is legal in a url and the column is joined with "+": ambiguity yields NOTHING
+    assert jdfill.native_from_seen_ids("no-colon-here+greenhouse:1", "Nift") == []
+
+
+def test_the_lever_region_comes_from_the_registry_not_from_a_guess():
+    """Mobileye's board is on Lever's EU host, and the registry row already says so. Measured
+    2026-08-28: `api.lever.co/v0/postings/mobileye/<uuid>` answers 404 and `api.eu.lever.co`
+    answers 200 with the posting. Guessing the region would have found nothing and reported it
+    as a role that no longer exists."""
+    from pipeline.jdfill import native_api, native_url
+    eu = native_api("lever", "mobileye", "https://api.eu.lever.co/v0/postings/mobileye?mode=json", "u1")
+    assert eu == ["https://api.eu.lever.co/v0/postings/mobileye/u1"]
+    us = native_api("lever", "acme", "https://api.lever.co/v0/postings/acme?mode=json", "u2")
+    assert us == ["https://api.lever.co/v0/postings/acme/u2"]
+    # and the public board host carries the same region, so the canonical url alone works
+    assert native_url("https://jobs.eu.lever.co/mobileye/u3")[1] == [
+        "https://api.eu.lever.co/v0/postings/mobileye/u3"]
+    assert native_url("https://jobs.lever.co/acme/u4")[1] == [
+        "https://api.lever.co/v0/postings/acme/u4"]
+
+
+def test_the_lever_reader_takes_the_lists_not_only_the_pitch():
+    """Lever splits one posting across three fields and the two that matter are not
+    `description`. On Mobileye's Business Analyst `description` is the 1,310-character pitch,
+    `additional` is EMPTY, and `lists` carries 3,730 -- the day-to-day and the requirements.
+    Reading `description` alone returns 686 characters of text, which is exactly the useless
+    blurb the store already held: the rung would have looked like it worked and changed
+    nothing."""
+    from pipeline.jdfill import _lever_read, html_to_text
+    body = _j6_json.dumps({
+        "description": "<p>We are searching for an experienced Business analyst.</p>",
+        "additional": "",
+        "lists": [{"text": "What will your job look like", "content": "<ul><li>Own the model</li></ul>"},
+                  {"text": "All you need is", "content": "<ul><li>3 years of SQL</li></ul>"}]})
+    out = html_to_text(_lever_read(body))
+    assert "Business analyst" in out and "Own the model" in out and "3 years of SQL" in out
+    assert "What will your job look like" in out and "All you need is" in out
+
+
+def test_a_posting_gone_from_the_employers_own_board_is_the_one_terminal_state():
+    """"Unfetchable" is a state to retry, not a verdict -- with exactly one exception. A 404 or
+    410 from a per-job endpoint on the COMPANY'S OWN board says the posting has been taken down
+    at source: the board is the employer's, the id is this role's, and the board says no such
+    job. Taboola's `greenhouse:8035268` and Mobileye's second Lever uuid both answer this way.
+    Every other failure describes a page we could not read, which is a reason to come back."""
+    from pipeline import jdfill
+    calls = []
+    monkey = lambda u, timeout=10, accept="": (calls.append(u), (404, ""))[1]
+    old = jdfill.plain_fetch
+    jdfill.plain_fetch = monkey
+    try:
+        jd = jdfill.fetch_jd("https://boards.greenhouse.io/acme/jobs/1", company="ACME")
+    finally:
+        jdfill.plain_fetch = old
+    assert jd.reason == "gone" and jd.native == "greenhouse-gone"
+    assert not jdfill.due(jdfill.stamp_value(_j6_dt.date(2020, 1, 1), False, gone=True)), (
+        "a `gone` stamp is the only one that never comes due again")
+
+
+def test_only_an_authoritative_404_may_retire_a_role():
+    """`gone` is the one absorbing state this layer has, so the board that says "no such job"
+    has to be a board we KNOW is the employer's.
+
+    The `?gh_jid=` branch of `native_url` is host-agnostic and, when the registry has no
+    greenhouse row for the company, GUESSES the slug from the company name and the host label:
+    `careers.acmewidgets.com/job?gh_jid=12345` becomes `boards/acmewidgets/jobs/12345` for a
+    company that may not be on Greenhouse at all. That URL 404s for every company on earth, and
+    without this rule the first run would have stamped the role terminal for ever on the
+    strength of a name we made up."""
+    from pipeline import jdfill
+    reg = jdfill.native_candidates(
+        "https://www.taboola.com/careers/job/8035268?gh_jid=8035268", "Taboola")
+    assert reg and all(auth for _p, _a, auth in reg), "a registry token IS authoritative"
+    guess = jdfill.native_candidates(
+        "https://careers.acmewidgets.com/job?gh_jid=12345", "Acme Widgets No Such Row")
+    assert guess and not any(auth for _p, _a, auth in guess), guess
+    calls = []
+    old = jdfill.plain_fetch
+    jdfill.plain_fetch = lambda u, timeout=10, accept="": (calls.append(u), (404, ""))[1]
+    try:
+        got = jdfill.fetch_jd("https://careers.acmewidgets.com/job?gh_jid=12345",
+                              company="Acme Widgets No Such Row")
+    finally:
+        jdfill.plain_fetch = old
+    assert calls, "the guessed candidate is still TRIED -- it is only its 404 that means less"
+    assert got.reason != "gone", (
+        "a guessed board slug 404ed and the role was retired for ever: %r" % (got,))
+
+
+def test_the_backoff_widens_and_then_stands_still():
+    """A role never leaves the pool for failing. The backoff exists only so a dead address is
+    not asked every morning: 7, 14, 28, then a standing 30. A transient failure -- a timeout, a
+    5xx, an Unlocker that was down -- says nothing about the address and must not widen it, or
+    one bad morning pushes a perfectly readable role out to a month."""
+    from pipeline.jdfill import retry_days_for, MAX_RETRY_DAYS
+    assert [retry_days_for(t) for t in range(6)] == [7, 7, 14, 28, MAX_RETRY_DAYS, MAX_RETRY_DAYS]
+    assert retry_days_for(50) == MAX_RETRY_DAYS
+
+
+def test_the_cooldown_exemption_is_the_native_rungs_alone():
+    """`and not native_url(...)` waived the cooldown for the WHOLE ladder, not just the cheap
+    rung it was written for: a native-addressable url whose native rung failed fell through to
+    the plain GET and then to Bright Data every single morning with no park at all. An
+    exemption written for a one-second JSON call was quietly paying for a ninety-second one."""
+    from pipeline import jdfill
+    spent = []
+
+    class _BD:
+        used = ok = 0
+        unavailable = ""
+        capped = False
+
+        def __call__(self, u, timeout=90):
+            spent.append(u)
+            return 200, "", "bd-empty"
+
+    old_native, old_plain = jdfill.native_jd, jdfill.plain_fetch
+    jdfill.native_jd = lambda u, c="", sids="": ("", "greenhouse-http")
+    jdfill.plain_fetch = lambda u, timeout=15, accept="": (None, "")
+    try:
+        item = jdfill.Item("k", "https://boards.greenhouse.io/acme/jobs/1", "ACME | A",
+                           _j6_dt.date.today().isoformat(), "ACME", "A", "", 0)
+        c = jdfill.run_backfill([item], save=lambda *a: None, minutes=None, bd=_BD(),
+                                dry_run=True, log=lambda s: None)
+    finally:
+        jdfill.native_jd, jdfill.plain_fetch = old_native, old_plain
+    assert c["tried"] == 1, "the native rung is still tried inside the cooldown"
+    assert spent == [], "a role in cooldown reached Bright Data through the native exemption"
+
+
+def test_the_llm_tier_cannot_touch_a_single_character_of_text():
+    """The tier decides whether a role is DONE or in the todo, and nothing else. No branch
+    writes, shortens or blanks a description on the model's word: text is only ever changed by
+    a rung that fetched it. That is what makes a prompt-injecting job description harmless --
+    the worst it can achieve is to re-queue itself or declare itself finished."""
+    import enrich_matched_jd as emj
+    import ast, inspect, textwrap
+    tree = ast.parse(textwrap.dedent(inspect.getsource(emj._quality_pass)))
+    for node in ast.walk(tree):                    # drop docstrings, keep only real code
+        body = getattr(node, "body", None)
+        if not (isinstance(body, list) and body):
+            continue
+        head = body[0]
+        if (isinstance(head, ast.Expr) and isinstance(getattr(head, "value", None), ast.Constant)
+                and isinstance(head.value.value, str)):
+            del body[0]
+    code = ast.unparse(tree)
+    assert "description" not in code, (
+        "the quality tier names the description column in EXECUTED code. It may decide "
+        "whether a role is done; it may never decide what text the role carries." + code[:400])
+    assert "_store_text" not in code
+
+
+def test_an_unavailable_model_leaves_the_cheap_verdict_standing():
+    """A tier that could demote a role on an outage would empty the board every time the token
+    expired. `jd_quality` returns None -- not False -- for every infrastructure failure, and
+    None means 'no opinion'."""
+    from pipeline import jdfill, llm
+    old = llm.call_json
+
+    def boom(*a, **k):
+        raise llm.LLMUnavailable("cli-missing", kind="missing")
+
+    llm.call_json = boom
+    try:
+        ok, why = jdfill.jd_quality("text", "Analyst", "ACME")
+    finally:
+        llm.call_json = old
+    assert ok is None and why == "llm-missing"
+    llm.call_json = lambda *a, **k: {"verdict": "banana"}
+    try:
+        ok2, why2 = jdfill.jd_quality("text", "Analyst", "ACME")
+    finally:
+        llm.call_json = old
+    assert ok2 is None and why2 == "llm-no-verdict", "an unparseable verdict is not a demotion"
+
+
+def test_the_quality_schema_is_a_string_like_every_other_schema_here():
+    """`llm._invoke` passes the schema as ONE argv element to `--json-schema`. A dict there is a
+    TypeError that the seam reports as `cli-missing` -- an outage message for a bug in the
+    caller, which is exactly how it presented for twenty minutes on 2026-08-28."""
+    from pipeline.jdfill import _QUALITY_SCHEMA
+    assert isinstance(_QUALITY_SCHEMA, str) and _j6_json.loads(_QUALITY_SCHEMA)["type"] == "object"
+
+
+def test_every_row_lands_in_exactly_one_counted_bucket(tmp_path, monkeypatch):
+    """Silent exclusion is the failure class ARCHITECTURE.md section 8 is about, and this driver
+    has been caught by it twice: a character count that called furniture a description, and a
+    liveness filter that removed archived roles from the todo entirely. Both were invisible
+    because nothing added up. The buckets must sum to the row count, and the assertion is in
+    the driver itself, not only here."""
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setenv("JD_QUALITY", "0")
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    (tmp_path / "cloud_state").mkdir()
+    db = str(tmp_path / "cloud_state" / "seen.db")
+    st = store.SeenStore(db)
+    base = {"company": "ACME", "location": "TLV", "posted_date": "2026-08-20",
+            "sources": ["workday"]}
+    st.upsert_matched({**base, "title": "Has Text", "url": "https://a/1",
+                       "description": _j7_jd(1200)}, _j6_dt.date.today().isoformat())
+    st.upsert_matched({**base, "title": "Needs Text", "url": "https://a/2", "description": ""},
+                      _j6_dt.date.today().isoformat())
+    st.upsert_matched({**base, "title": "No Address", "url": "", "description": ""},
+                      _j6_dt.date.today().isoformat())
+    st.close()
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda u, **k: jdfill.JD("", "none", "shell", False))
+    assert emj.main(["--db", db]) == 0
+    e = _j6_json.loads((tmp_path / "cloud_state" / "seen.db.stages.json")
+                       .read_text(encoding="utf-8"))["enrich"]
+    assert e["matched_ok"] == 1 and e["matched_no_address"] == 1 and e["matched_todo"] == 1
+
+
+# =====================================================================================
+# jd-text lane, 2026-08-28 (evening) wave 1-3 — what three adversarial sessions found in
+# this session's own uncommitted work. Every test below pins a defect that existed in the
+# diff, and three of them were P0. Record: docs/sessions/2026-08-28-jdtext-evening.md
+# =====================================================================================
+
+
+def test_the_reclean_never_leaves_a_row_that_is_not_a_job_description():
+    """P0, wave 2. The cut takes the EARLIEST furniture marker, and on a Hebrew LinkedIn page
+    the sign-in block renders BEFORE the posting — so for three real rows the rule kept 367 to
+    682 characters of navigation and threw the description away. Migdal Group was left with
+    `… | מקומות תעסוקה ב-LinkedIn / דילוג לתוכן הראשי …` while 5,633 characters carrying
+    דרישות / אחריות / ניסיון went in the bin.
+
+    It survived only because the fetch that followed happened to answer. A rate limit, a spent
+    budget or a 500 and the board would today render a navigation menu as Migdal's job
+    description, with the posting unrecoverable from either store — `_reclean` runs and commits
+    BEFORE the fetch loop."""
+    import enrich_matched_jd as emj
+    from pipeline.jdfill import looks_like_jd
+    wall_first = ("Forgot password? Agree & Join LinkedIn. New to LinkedIn? " * 3
+                  + _j7_jd(2500))
+    rows = [("k%d" % i, "ACME", "Analyst", "https://a/%d" % i, "", "", wall_first, 0, "2026-08-28")
+            for i in range(3)]
+    clean = [("c%d" % i, "ACME", "A", "u", "", "", _j7_jd(1200), 0, "2026-08-28")
+             for i in range(100)]
+    n, cut, wrote = emj._reclean(None, clean + rows, dry_run=True)
+    assert n == 0 and wrote == {}, (
+        "the cut kept the head and deleted the posting: %r" % (wrote,))
+    # and the row is not silently declared finished either: with the wall first there is
+    # no head to keep, `looks_like_jd` is False, and the role goes to the FETCH holding
+    # its full original text. Nothing is lost if that fetch never answers.
+    assert not looks_like_jd(wall_first)
+    assert all(looks_like_jd(r[6]) for r in clean)
+
+
+def test_better_description_may_prefer_a_cleaner_text_but_never_destroy_one():
+    """P1, wave 2. `better_description` returning `jd_body(...)` made `reconcile` a second
+    shortening path with none of `_reclean`'s floor or share ceiling — and `reconcile` writes
+    BOTH stores. On the wall-first shape it returned the empty string, and `update_matched`
+    then blanked the sqlite row."""
+    from pipeline.roles import better_description
+    wall_first = "People also viewed\n" + _j7_jd(2500)
+    assert better_description(wall_first, "") == wall_first
+    assert better_description("", wall_first) == wall_first
+    assert better_description("", "") == ""
+
+
+def test_one_page_fanned_across_two_EMPLOYERS_is_seen(tmp_path, monkeypatch):
+    """P1, wave 2. The shared-text detector was keyed by `(company, text)`, so a body fanned
+    across DIFFERENT employers could never reach a count of 2 — which is docs/BACKLOG.md 370
+    in its worst form. Live at the time: `otorio|senior data analyst` carried 3,556 characters
+    opening "Armis, the cyber exposure management & security company", byte-identical to the
+    Armis row, and neither was flagged."""
+    import enrich_matched_jd as emj
+    body = _j7_jd(1500)
+    rows = [("armis|a", "Armis", "Analyst", "u", "", "", body, 0, "2026-08-28"),
+            ("otorio|a", "OTORIO", "Analyst", "u", "", "", body, 0, "2026-08-28")]
+    seen = []
+    monkeypatch.setattr(emj, "jd_quality",
+                        lambda b, t, c, **k: (seen.append(c), (False, "not-a-jd"))[1])
+
+    class _C:
+        def execute(self, *a):
+            return _Rows()
+
+        def commit(self):
+            pass
+
+    class _Rows:
+        def fetchall(self):
+            return []
+
+    incomplete, counts = emj._quality_pass(_C(), rows, dry_run=True)
+    assert sorted(seen) == ["Armis", "OTORIO"], seen
+    assert counts["candidates"] == 2
+
+
+def test_a_null_url_does_not_take_the_whole_driver_down(tmp_path, monkeypatch):
+    """P0, wave 3, and a regression this session introduced. `matched.url` is nullable —
+    `roles._valid` accepts a record without one and `store.insert_matched` writes it through —
+    and `_address` asked `unfillable(url)` before the None guard. `unfillable(None)` raises,
+    the driver died, the step is `continue-on-error: true`, and every role got nothing that day
+    behind a green workflow."""
+    from pipeline import jdfill, stages, store
+    import enrich_matched_jd as emj
+    monkeypatch.setenv("JD_QUALITY", "0")
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    (tmp_path / "cloud_state").mkdir()
+    db = str(tmp_path / "cloud_state" / "seen.db")
+    st = store.SeenStore(db)
+    st.upsert_matched({"company": "ACME", "title": "Analyst", "location": "TLV",
+                       "posted_date": "2026-08-20", "sources": ["workday"], "description": "",
+                       "url": "https://a/1"}, _j6_dt.date.today().isoformat())
+    st.conn.execute("UPDATE matched SET url=NULL")
+    st.conn.commit()
+    st.close()
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "shell", False))
+    assert emj.main(["--db", db]) == 0
+    e = _j6_json.loads((tmp_path / "cloud_state" / "seen.db.stages.json")
+                       .read_text(encoding="utf-8"))["enrich"]
+    assert "crash" not in str(e.get("alarm") or ""), e
+    assert e["matched_no_address"] == 1
+
+
+def test_the_cycle_gauge_counts_rows_worked_and_never_rows_parked():
+    """P0, wave 3. `matched_cycle_days` is the one number introduced to detect the tail
+    starving, and counting cooled-down rows as lap progress made it FALL as starvation grew: at
+    1,500 rows with a true 25-day lap it reported 3.5, and it read greener the fuller the
+    cooldown pool got. The morning check reads "at or under 1.0" as healthy."""
+    import ast, inspect, textwrap
+    import enrich_matched_jd as emj
+    src = textwrap.dedent(inspect.getsource(emj._run))
+    line = [l for l in src.splitlines() if "_worked =" in l]
+    assert line, "the cycle denominator moved; re-read it"
+    assert "cooldown" not in line[0] and "unfillable" not in line[0], line[0]
+
+
+def test_a_refused_reclean_is_the_loudest_thing_the_layer_can_say(tmp_path, monkeypatch):
+    """P0, wave 3. Above the ceiling `_reclean` returned 0 — which is what a CLEAN store
+    returns — printed a `::warning::` into the step log, and reached the mail not at all, while
+    `matched_ok` went on saying every row carried the employer's own posting. A store full of
+    login walls and a store with none were the same number in the morning mail."""
+    import enrich_matched_jd as emj
+    wall = _j7_jd(2500) + " Forgot password? Agree & Join LinkedIn. " * 40
+    rows = [("k%d" % i, "ACME", "A", "u", "", "", wall, 0, "2026-08-28") for i in range(10)]
+    n, cut, wrote = emj._reclean(None, rows, dry_run=True)
+    assert n < 0, "a refusal must be distinguishable from a clean store"
+    assert cut > 0 and wrote == {}
+
+
+def test_a_stray_seen_id_neither_retires_the_role_nor_skips_its_readable_page():
+    """P1, wave 1, and the highest-impact one they found. The safety claim — "a foreign job id
+    can only ever be asked for on our own board, where it 404s" — was true about WHERE the
+    request goes and false about what the 404 DOES. `native_jd` returned `greenhouse-gone`,
+    `fetch_jd` promoted it to `gone` and returned BEFORE the plain GET, and the role was
+    retired for ever while its page was readable all along.
+
+    Three live rows carry a seen_id-derived candidate that is not from their own URL (Nift —
+    the row the docstring itself cites as carrying five other employers' postings — Melio with
+    two greenhouse ids, and Armis)."""
+    from pipeline import jdfill
+    cands = jdfill.native_candidates("https://www.linkedin.com/jobs/view/1", "Nift",
+                                     "greenhouse:9999999")
+    assert cands and not any(auth for _p, _a, auth in cands), (
+        "an id out of the merge group is not evidence about the ROLE: %r" % (cands,))
+    fetched = []
+
+    def _plain(u, timeout=15, accept=""):
+        fetched.append(u)
+        if "boards-api" in u:
+            return 404, ""
+        return 200, "<html><body><p>%s</p></body></html>" % _j7_jd(1200)
+
+    old = jdfill.plain_fetch
+    jdfill.plain_fetch = _plain
+    try:
+        jd = jdfill.fetch_jd("https://www.linkedin.com/jobs/view/1", company="Nift",
+                             title="Data Analyst", seen_ids="greenhouse:9999999")
+    finally:
+        jdfill.plain_fetch = old
+    assert any("linkedin" in u for u in fetched), "the readable page was never fetched"
+    assert jd.text and jd.reason != "gone", jd
+
+
+def test_the_sibling_gate_asks_about_the_ROLE_and_not_only_the_employer():
+    """P0, wave 1. `_own_address` only asks `names_in_url(company, url)`, and `seen_ids` is a
+    merge group — `roles._resolve_claims` unions ids across titles — so a DIFFERENT posting at
+    the RIGHT employer passed, and the cache rung takes the LONGEST text it finds. Live:
+    `percepto|senior product analyst` carries `/careers/data-insights-operations-ff-c6f/`, and
+    2,406 characters of that other role were stored on this one."""
+    import enrich_matched_jd as emj
+    other = "https://percepto.co/careers/data-insights-operations-ff-c6f/"
+    mine = "https://percepto.co/careers/senior-product-analyst-c5-f69/"
+    assert emj._own_address("Percepto", other), "the COMPANY gate passes it - that is the point"
+    assert not emj._own_posting("Percepto", "Senior Product Analyst", other)
+    assert emj._own_posting("Percepto", "Senior Product Analyst", mine), (
+        "the correct slug carries a hash suffix and must still be accepted")
+
+
+def test_a_page_we_read_and_found_empty_is_not_a_transient_failure():
+    """P1, wave 3. `bd-unavailable`/`bd-capped` marked the outcome transient even when the
+    plain rung had definitively read the page — so `jd_tries` never incremented and the
+    7/14/28 backoff never started for a LIVE role while the cap was spent: 60 plain fetches in
+    60 days, against 4 for the same page on the archived pass, which has no Unlocker at all.
+    The ladder was inverted."""
+    from pipeline import jdfill
+
+    class _BD:
+        used = ok = 0
+        unavailable = "no-key"
+        capped = False
+
+        def __call__(self, u, timeout=90):
+            return None, "", "bd-unavailable"
+
+    old = jdfill.plain_fetch
+    jdfill.plain_fetch = lambda u, timeout=15, accept="": (200, "<html><body>hi</body></html>")
+    try:
+        jd = jdfill.fetch_jd("https://x/jobs/1", bd=_BD())
+    finally:
+        jdfill.plain_fetch = old
+    assert jd.pre == "shell" and not jd.transient, jd
+
+
+def test_the_quality_tier_survives_anything_the_seam_hands_back():
+    """P2, wave 2. The `.get` sat outside the try/except that exists so this tier can never
+    take a driver down — a list or a string out of `llm.call_json` raised AttributeError and
+    failed the whole enrich step. Unreachable only because `call_meta` happens to coerce."""
+    from pipeline import jdfill, llm
+    old = llm.call_json
+    try:
+        for bad in (["x"], "x", 3, None, {}):
+            llm.call_json = lambda *a, **k: bad
+            ok, why = jdfill.jd_quality("t", "Analyst", "ACME")
+            assert ok is None and why == "llm-no-verdict", (bad, ok, why)
+    finally:
+        llm.call_json = old
