@@ -1,371 +1,443 @@
 [
- {
-  "id": "ci-outage-continues",
-  "file": "pipeline/company_intel.py",
-  "find": "            rep[\"unavailable_kind\"] = getattr(e, \"kind\", \"\")\n            break",
-  "replace": "            rep[\"unavailable_kind\"] = getattr(e, \"kind\", \"\")\n            continue",
-  "class": "M2",
-  "symbol": "outage_continues",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-soft-outage-strikes",
-  "file": "pipeline/company_intel.py",
-  "find": "SOFT_OUTAGE_MIN_FAILS = 3",
-  "replace": "SOFT_OUTAGE_MIN_FAILS = 300",
-  "class": "M7",
-  "symbol": "soft_outage_strikes",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-budget-ignored",
-  "file": "pipeline/company_intel.py",
-  "find": "        if remaining < RESEARCH_MIN_S:",
-  "replace": "        if remaining < -1e9:",
-  "class": "M2",
-  "symbol": "budget_ignored",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-scoped-publishes",
-  "file": "pipeline/company_intel.py",
-  "find": "    if not scoped and rep[\"export_status\"] != \"corrupt\":",
-  "replace": "    if rep[\"export_status\"] != \"corrupt\":",
-  "class": "M1",
-  "symbol": "scoped_publishes",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-corrupt-overwritten",
-  "file": "pipeline/company_intel.py",
-  "find": "    if not scoped and rep[\"export_status\"] != \"corrupt\":",
-  "replace": "    if not scoped:",
-  "class": "M1",
-  "symbol": "corrupt_overwritten",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-corrupt-reads-empty-ok",
-  "file": "pipeline/firmographics.py",
-  "find": "    except Exception:  # noqa: BLE001 — bad JSON, a half-written file, permissions\n        return {}, \"corrupt\"",
-  "replace": "    except Exception:  # noqa: BLE001 — bad JSON, a half-written file, permissions\n        return {}, \"ok\"",
-  "class": "M3",
-  "symbol": "corrupt_reads_empty_ok",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-blurb-empty-respend",
-  "file": "pipeline/company_intel.py",
-  "find": "        if c in recent:\n            continue",
-  "replace": "        if False:\n            continue",
-  "class": "M3",
-  "symbol": "blurb_empty_respend",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-newer-tie-shared",
-  "file": "pipeline/firmographics.py",
-  "find": "    return b if _evidence(b) > _evidence(a) else a",
-  "replace": "    return a",
-  "class": "M2",
-  "symbol": "newer_tie_shared",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-json-greedy",
-  "file": "pipeline/firmographics.py",
-  "find": "            if set(obj) - {\"unknown\", \"known\"}:\n                return obj",
-  "replace": "            if True:\n                return obj",
-  "class": "M2",
-  "symbol": "json_greedy",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-seam-cwd-is-repo",
-  "file": "pipeline/llm.py",
-  "find": "                              cwd=cwd or tempfile.gettempdir())",
-  "replace": "                              cwd=cwd or os.path.dirname(os.path.dirname(__file__)))",
-  "class": "M2",
-  "symbol": "seam_cwd_is_repo",
-  "why": "the repo as cwd reads CLAUDE.md + CLAUDE.local.md into every call"
- },
- {
-  "id": "ci-derive-blurb-cached",
-  "file": "pipeline/company_intel.py",
-  "find": "        if text:\n            company_info[c] = text\n            rep[\"blurbs_derived\"] += 1",
-  "replace": "        if text:\n            company_info[c] = text\n            st.save_company_info({c: text}, run_date)\n            rep[\"blurbs_derived\"] += 1",
-  "class": "M1",
-  "symbol": "derive_blurb_cached",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-chip-untrimmed",
-  "file": "pipeline/company_intel.py",
-  "find": "    firmo_display = {k: chip_safe(v) for k, v in firmo_display.items()\n                     if v and not not_a_company(k)}",
-  "replace": "    firmo_display = {k: v for k, v in firmo_display.items() if v}",
-  "class": "M1",
-  "symbol": "chip_untrimmed",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-sync-not-idempotent",
-  "file": "pipeline/firmographics.py",
-  "find": "             if newer(have.get(c), rec) is rec and rec != have.get(c)}",
-  "replace": "             if newer(have.get(c), rec) is rec}",
-  "class": "M2",
-  "symbol": "sync_not_idempotent",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-export-local-only",
-  "file": "research_firmographics.py",
-  "find": "        recs = union_store(st)\n        save_shared(recs)",
-  "replace": "        recs = st.load_firmographics()\n        save_shared(recs)",
-  "class": "M1",
-  "symbol": "export_local_only",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-intel-line-md",
-  "file": "pipeline/company_intel.py",
-  "find": "    parts.append(\"seam: \" + (served + \" · \" if served else \"\") + \", \".join(bits))",
-  "replace": "    pass",
-  "class": "M1",
-  "symbol": "intel_line_md",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-intel-line-txt",
-  "file": "pipeline/digest.py",
-  "find": "    if s.get(\"company_intel\"):\n        lines.append(\"  COMPANY INTEL: \" + \"; \".join(s[\"company_intel\"]))",
-  "replace": "    if False:\n        lines.append(\"  COMPANY INTEL: \" + \"; \".join(s[\"company_intel\"]))",
-  "class": "M1",
-  "symbol": "intel_line_txt",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-profiles-unfiltered",
-  "file": "pipeline/company_intel.py",
-  "find": "            if isinstance(v, str) and len(v.strip()) >= 15 and not _JUNK_OUT.search(v)}",
-  "replace": "            if isinstance(v, str) and v.strip()}",
-  "class": "M1",
-  "symbol": "profiles_unfiltered",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-front-door-raises",
-  "file": "pipeline/company_intel.py",
-  "find": "    except Exception as e:  # noqa: BLE001\n        rep[\"error\"] = f\"{type(e).__name__}: {e}\"[:160]",
-  "replace": "    except ZeroDivisionError as e:  # noqa: BLE001\n        rep[\"error\"] = f\"{type(e).__name__}: {e}\"[:160]",
-  "class": "M1",
-  "symbol": "front_door_raises",
-  "why": "company-intel guard"
- },
- {
-  "id": "ci-research-tools-empty",
-  "file": "pipeline/firmographics.py",
-  "find": "              effort=RESEARCH_EFFORT, tools=SEARCH, timeout=timeout, meta=meta)",
-  "replace": "              effort=RESEARCH_EFFORT, tools=(), timeout=timeout, meta=meta)",
-  "class": "M1",
-  "symbol": "research_tools_empty",
-  "why": "research must carry the WebSearch grant on both axes"
- },
- {
-  "id": "ci-research-permission-dropped",
-  "file": "pipeline/llm.py",
-  "find": "    if tl:\n        cmd += [\"--allowedTools\", tl]",
-  "replace": "    if False:\n        cmd += [\"--allowedTools\", tl]",
-  "class": "M3",
-  "symbol": "research_permission_dropped",
-  "why": "--tools without --allowedTools is a SILENT no-search"
- },
- {
-  "id": "ci-model-unpinned",
-  "file": "pipeline/firmographics.py",
-  "find": "RESEARCH_MODEL = os.environ.get(\"FIRMO_RESEARCH_MODEL\", \"sonnet\")",
-  "replace": "RESEARCH_MODEL = os.environ.get(\"FIRMO_RESEARCH_MODEL\", \"\")",
-  "class": "M7",
-  "symbol": "model_unpinned",
-  "why": "an unpinned model is whatever the CLI defaults to on that machine"
- },
- {
-  "id": "ci-search-mandate-softened",
-  "file": "pipeline/firmographics.py",
-  "find": "    \"ALWAYS search the web before you answer. Call WebSearch at least once for every company, \"",
-  "replace": "    \"Use web search for current facts. \"",
-  "class": "M7",
-  "symbol": "search_mandate_softened",
-  "why": "a suggested search searched on 1 of 4; a mandated one on 4 of 4"
- },
- {
-  "id": "ci-searchless-uncounted",
-  "file": "pipeline/firmographics.py",
-  "find": "            meta[\"searchless\"] = meta.get(\"searchless\", 0) + 1",
-  "replace": "            pass",
-  "class": "M1",
-  "symbol": "searchless_uncounted",
-  "why": "a searchless research answer is a parametric guess, cached to 2027-02"
- },
- {
-  "id": "ci-searches-wrong-counter",
-  "file": "pipeline/llm.py",
-  "find": "            total += int((u or {}).get(\"webSearchRequests\") or 0)",
-  "replace": "            total += 0",
-  "class": "M2",
-  "symbol": "searches_wrong_counter",
-  "why": "server_tool_use.web_search_requests reads 0 even when WebSearch ran"
- },
- {
-  "id": "ci-served-by-input-tokens",
-  "file": "pipeline/llm.py",
-  "find": "                if pred(m, c) and out(m):\n                    return m",
-  "replace": "                if pred(m, c):\n                    return m",
-  "class": "M1",
-  "symbol": "served_by_input_tokens",
-  "why": "the haiku search side-agent outreads the answering model (BACKLOG 207)"
- },
- {
-  "id": "ci-blurbs-not-gated",
-  "file": "pipeline/company_intel.py",
-  "find": "    refused = {c for c in missing if not_a_company(c)}",
-  "replace": "    refused = set()",
-  "class": "M1",
-  "symbol": "blurbs_not_gated",
-  "why": "the blurb loop had no name gate: that is how Tel Aviv got Alma's blurb"
- },
- {
-  "id": "ci-poisoned-blurb-kept",
-  "file": "pipeline/company_intel.py",
-  "find": "    poisoned = [c for c in company_info if not_a_company(c)]",
-  "replace": "    poisoned = []",
-  "class": "M1",
-  "symbol": "poisoned_blurb_kept",
-  "why": "a blurb already cached under a non-company name still renders"
- },
- {
-  "id": "ci-title-arm-any-not-all",
-  "file": "pipeline/firmographics.py",
-  "find": "    return all(t in _TITLE_VOCAB for t in toks) and any(t in _TITLE_HEAD for t in toks)",
-  "replace": "    return any(t in _TITLE_VOCAB for t in toks)",
-  "class": "M3",
-  "symbol": "title_arm_any_not_all",
-  "why": "closure, not any(): any() would junk most real company names"
- },
- {
-  "id": "ci-place-arm-substring",
-  "file": "pipeline/firmographics.py",
-  "find": "    return bool(n) and n in _PLACES and n not in PLACE_OK",
-  "replace": "    return bool(n) and any(p in n for p in _PLACES) and n not in PLACE_OK",
-  "class": "M3",
-  "symbol": "place_arm_substring",
-  "why": "substring matching would junk Tel Aviv Stock Exchange"
- },
- {
-  "id": "ci-place-arm-in-shared-predicate",
-  "file": "pipeline/firmographics.py",
-  "find": "    return (n in CATEGORY_NAMES or bool(_JUNK_NAME.search(name or \"\"))\n            or is_bare_job_title(name))",
-  "replace": "    return (n in CATEGORY_NAMES or bool(_JUNK_NAME.search(name or \"\"))\n            or is_bare_job_title(name) or is_place_name(name))",
-  "class": "M3",
-  "symbol": "place_arm_in_shared_predicate",
-  "why": "the place gate must not reach the registry's pools"
- },
- {
-  "id": "ci-export-count-pre-write",
-  "file": "pipeline/company_intel.py",
-  "find": "        rep[\"export_records\"] = len(firmo)",
-  "replace": "        pass",
-  "class": "M2",
-  "symbol": "export_count_pre_write",
-  "why": "the mail said 942 records on a morning that wrote 946"
- },
- {
-  "id": "ci-coerce-accepts-known-false",
-  "file": "pipeline/firmographics.py",
-  "find": "    if not isinstance(rec, dict) or rec.get(\"unknown\") or not _known(rec):",
-  "replace": "    if not isinstance(rec, dict) or rec.get(\"unknown\"):",
-  "class": "M3",
-  "symbol": "coerce_accepts_known_false",
-  "why": "known:false is the schema's escape hatch and must reject"
- },
- {
-  "id": "ci-budget-back-to-fifteen",
-  "file": "pipeline/company_intel.py",
-  "find": "\"FIRMO_TIME_BUDGET_MIN\": 8,",
-  "replace": "\"FIRMO_TIME_BUDGET_MIN\": 15,",
-  "class": "M7",
-  "symbol": "budget_back_to_fifteen",
-  "why": "15m is larger than the mail relay's 13m of slack"
- },
- {
-  "id": "ci-blurbs-eat-the-clock",
-  "file": "pipeline/company_intel.py",
-  "class": "M2",
-  "symbol": "blurb_reserve",
-  "why": "blurbs on the shared clock can starve research to a 0-researched morning",
-  "find": "        if clock.remaining() - _RESEARCH_RESERVE_S < 30:",
-  "replace": "        if clock.remaining() < 30:"
- },
- {
-  "id": "ci-clamped-timeout-reads-as-outage",
-  "file": "pipeline/company_intel.py",
-  "class": "M1",
-  "symbol": "clamped_timeout",
-  "why": "our own clamp killing a call must not read as 'claude unavailable'",
-  "find": "            if getattr(e, \"kind\", \"\") == \"transient\" and \"timeout(\" in str(e) \\\n                    and remaining <= RESEARCH_TIMEOUT_S:",
-  "replace": "            if False:"
- },
- {
-  "id": "ci-facts-chips-for-a-non-company",
-  "file": "pipeline/company_intel.py",
-  "class": "M1",
-  "symbol": "display_gate",
-  "why": "refusing the blurb is not enough if the facts chips still render",
-  "find": "                     if v and not not_a_company(k)}",
-  "replace": "                     if v}"
- },
- {
-  "id": "ci-knob-raises",
-  "file": "pipeline/company_intel.py",
-  "class": "M1",
-  "symbol": "knob_raises",
-  "why": "_report() runs OUTSIDE the never-raises try; a bad env value killed the run",
-  "find": "    try:\n        return cast(os.environ.get(name, _DEFAULTS[name]))\n    except (TypeError, ValueError):\n        return cast(_DEFAULTS[name])",
-  "replace": "    return cast(os.environ.get(name, _DEFAULTS[name]))"
- },
- {
-  "id": "ci-blurb-cap-frozen-at-import",
-  "file": "pipeline/company_intel.py",
-  "class": "M7",
-  "symbol": "blurb_cap",
-  "why": "the one loop that can spend 30 calls sliced with the import-time constant",
-  "find": "    todo = todo[:rep[\"blurb_cap\"]]   # the env-read cap, not the import-time constant",
-  "replace": "    todo = todo[:BLURB_MAX_PER_RUN]"
- },
- {
-  "id": "ci-audit-name-not-ascii-folded",
-  "file": "pipeline/company_intel.py",
-  "class": "M1",
-  "symbol": "ascii_name",
-  "why": "an active registry row has a Hebrew name; run.py prints this line outside the guard",
-  "find": "        why = \"; \".join(f\"{_ascii(c, 40)}: {_ascii(r, 60)}\"",
-  "replace": "        why = \"; \".join(f\"{c}: {_ascii(r, 60)}\""
- },
- {
-  "id": "ci-result-fallback-takes-the-first",
-  "file": "pipeline/firmographics.py",
-  "class": "M1",
-  "symbol": "result_last_wins",
-  "why": "the first schema-shaped object is the company the model is reasoning ABOUT",
-  "find": "        if _schema_shaped(obj, schema) or escape:\n            best = obj\n    return best",
-  "replace": "        if (_schema_shaped(obj, schema) or escape) and best is None:\n            best = obj\n    return best"
- },
- {
-  "id": "ci-ask-translates-only-llmunavailable",
-  "file": "pipeline/firmographics.py",
-  "class": "M2",
-  "symbol": "ask_catchall",
-  "why": "five consumers only catch ResearchUnavailable; a drifted envelope killed them",
-  "find": "        raise ResearchUnavailable(f\"{type(e).__name__}: {e}\"[:200], kind=\"transient\") from e",
-  "replace": "        raise"
- }
+  {
+    "id": "ci-outage-continues",
+    "file": "pipeline/company_intel.py",
+    "find": "            rep[\"unavailable_kind\"] = getattr(e, \"kind\", \"\")\n            break",
+    "replace": "            rep[\"unavailable_kind\"] = getattr(e, \"kind\", \"\")\n            continue",
+    "class": "M2",
+    "symbol": "outage_continues",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-soft-outage-strikes",
+    "file": "pipeline/company_intel.py",
+    "find": "SOFT_OUTAGE_MIN_FAILS = 3",
+    "replace": "SOFT_OUTAGE_MIN_FAILS = 300",
+    "class": "M7",
+    "symbol": "soft_outage_strikes",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-budget-ignored",
+    "file": "pipeline/company_intel.py",
+    "find": "        if remaining < RESEARCH_MIN_S:",
+    "replace": "        if remaining < -1e9:",
+    "class": "M2",
+    "symbol": "budget_ignored",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-scoped-publishes",
+    "file": "pipeline/company_intel.py",
+    "find": "    if not scoped and rep[\"export_status\"] != \"corrupt\":",
+    "replace": "    if rep[\"export_status\"] != \"corrupt\":",
+    "class": "M1",
+    "symbol": "scoped_publishes",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-corrupt-overwritten",
+    "file": "pipeline/company_intel.py",
+    "find": "    if not scoped and rep[\"export_status\"] != \"corrupt\":",
+    "replace": "    if not scoped:",
+    "class": "M1",
+    "symbol": "corrupt_overwritten",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-corrupt-reads-empty-ok",
+    "file": "pipeline/firmographics.py",
+    "find": "    except Exception:  # noqa: BLE001 — bad JSON, a half-written file, permissions\n        return {}, \"corrupt\"",
+    "replace": "    except Exception:  # noqa: BLE001 — bad JSON, a half-written file, permissions\n        return {}, \"ok\"",
+    "class": "M3",
+    "symbol": "corrupt_reads_empty_ok",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-blurb-empty-respend",
+    "file": "pipeline/company_intel.py",
+    "find": "        if c in recent:\n            continue",
+    "replace": "        if False:\n            continue",
+    "class": "M3",
+    "symbol": "blurb_empty_respend",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-newer-tie-shared",
+    "file": "pipeline/firmographics.py",
+    "find": "    return b if _evidence(b) > _evidence(a) else a",
+    "replace": "    return a",
+    "class": "M2",
+    "symbol": "newer_tie_shared",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-json-greedy",
+    "file": "pipeline/firmographics.py",
+    "find": "            if set(obj) - {\"unknown\", \"known\"}:\n                return obj",
+    "replace": "            if True:\n                return obj",
+    "class": "M2",
+    "symbol": "json_greedy",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-seam-cwd-is-repo",
+    "file": "pipeline/llm.py",
+    "find": "                              cwd=cwd or tempfile.gettempdir())",
+    "replace": "                              cwd=cwd or os.path.dirname(os.path.dirname(__file__)))",
+    "class": "M2",
+    "symbol": "seam_cwd_is_repo",
+    "why": "the repo as cwd reads CLAUDE.md + CLAUDE.local.md into every call"
+  },
+  {
+    "id": "ci-derive-blurb-cached",
+    "file": "pipeline/company_intel.py",
+    "find": "        if text:\n            company_info[c] = text\n            rep[\"blurbs_derived\"] += 1",
+    "replace": "        if text:\n            company_info[c] = text\n            st.save_company_info({c: text}, run_date)\n            rep[\"blurbs_derived\"] += 1",
+    "class": "M1",
+    "symbol": "derive_blurb_cached",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-chip-untrimmed",
+    "file": "pipeline/company_intel.py",
+    "find": "    firmo_display = {k: chip_safe(v) for k, v in firmo_display.items()\n                     if v and not not_a_company(k)}",
+    "replace": "    firmo_display = {k: v for k, v in firmo_display.items() if v}",
+    "class": "M1",
+    "symbol": "chip_untrimmed",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-sync-not-idempotent",
+    "file": "pipeline/firmographics.py",
+    "find": "             if newer(have.get(c), rec) is rec and rec != have.get(c)}",
+    "replace": "             if newer(have.get(c), rec) is rec}",
+    "class": "M2",
+    "symbol": "sync_not_idempotent",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-export-local-only",
+    "file": "research_firmographics.py",
+    "find": "        recs = union_store(st, shared)\n",
+    "replace": "        recs = st.load_firmographics()\n",
+    "class": "M1",
+    "symbol": "export_local_only",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-intel-line-md",
+    "file": "pipeline/company_intel.py",
+    "find": "    parts.append(\"seam: \" + (served + \" · \" if served else \"\") + \", \".join(bits))",
+    "replace": "    pass",
+    "class": "M1",
+    "symbol": "intel_line_md",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-intel-line-txt",
+    "file": "pipeline/digest.py",
+    "find": "    if s.get(\"company_intel\"):\n        lines.append(\"  COMPANY INTEL: \" + \"; \".join(s[\"company_intel\"]))",
+    "replace": "    if False:\n        lines.append(\"  COMPANY INTEL: \" + \"; \".join(s[\"company_intel\"]))",
+    "class": "M1",
+    "symbol": "intel_line_txt",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-profiles-unfiltered",
+    "file": "pipeline/company_intel.py",
+    "find": "            if isinstance(v, str) and len(v.strip()) >= 15 and not _JUNK_OUT.search(v)}",
+    "replace": "            if isinstance(v, str) and v.strip()}",
+    "class": "M1",
+    "symbol": "profiles_unfiltered",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-front-door-raises",
+    "file": "pipeline/company_intel.py",
+    "find": "    except Exception as e:  # noqa: BLE001\n        rep[\"error\"] = f\"{type(e).__name__}: {e}\"[:160]",
+    "replace": "    except ZeroDivisionError as e:  # noqa: BLE001\n        rep[\"error\"] = f\"{type(e).__name__}: {e}\"[:160]",
+    "class": "M1",
+    "symbol": "front_door_raises",
+    "why": "company-intel guard"
+  },
+  {
+    "id": "ci-research-tools-empty",
+    "file": "pipeline/firmographics.py",
+    "find": "              effort=RESEARCH_EFFORT, tools=SEARCH, timeout=timeout, meta=meta)",
+    "replace": "              effort=RESEARCH_EFFORT, tools=(), timeout=timeout, meta=meta)",
+    "class": "M1",
+    "symbol": "research_tools_empty",
+    "why": "research must carry the WebSearch grant on both axes"
+  },
+  {
+    "id": "ci-research-permission-dropped",
+    "file": "pipeline/llm.py",
+    "find": "    if tl:\n        cmd += [\"--allowedTools\", tl]",
+    "replace": "    if False:\n        cmd += [\"--allowedTools\", tl]",
+    "class": "M3",
+    "symbol": "research_permission_dropped",
+    "why": "--tools without --allowedTools is a SILENT no-search"
+  },
+  {
+    "id": "ci-model-unpinned",
+    "file": "pipeline/firmographics.py",
+    "find": "RESEARCH_MODEL = os.environ.get(\"FIRMO_RESEARCH_MODEL\", \"sonnet\")",
+    "replace": "RESEARCH_MODEL = os.environ.get(\"FIRMO_RESEARCH_MODEL\", \"\")",
+    "class": "M7",
+    "symbol": "model_unpinned",
+    "why": "an unpinned model is whatever the CLI defaults to on that machine"
+  },
+  {
+    "id": "ci-search-mandate-softened",
+    "file": "pipeline/firmographics.py",
+    "find": "    \"ALWAYS search the web before you answer. Call WebSearch at least once for every company, \"",
+    "replace": "    \"Use web search for current facts. \"",
+    "class": "M7",
+    "symbol": "search_mandate_softened",
+    "why": "a suggested search searched on 1 of 4; a mandated one on 4 of 4"
+  },
+  {
+    "id": "ci-searchless-uncounted",
+    "file": "pipeline/firmographics.py",
+    "find": "            meta[\"searchless\"] = meta.get(\"searchless\", 0) + 1",
+    "replace": "            pass",
+    "class": "M1",
+    "symbol": "searchless_uncounted",
+    "why": "a searchless research answer is a parametric guess, cached to 2027-02"
+  },
+  {
+    "id": "ci-searches-wrong-counter",
+    "file": "pipeline/llm.py",
+    "find": "            total += int((u or {}).get(\"webSearchRequests\") or 0)",
+    "replace": "            total += 0",
+    "class": "M2",
+    "symbol": "searches_wrong_counter",
+    "why": "server_tool_use.web_search_requests reads 0 even when WebSearch ran"
+  },
+  {
+    "id": "ci-served-by-input-tokens",
+    "file": "pipeline/llm.py",
+    "find": "                if pred(m, c) and out(m):\n                    return m",
+    "replace": "                if pred(m, c):\n                    return m",
+    "class": "M1",
+    "symbol": "served_by_input_tokens",
+    "why": "the haiku search side-agent outreads the answering model (BACKLOG 207)"
+  },
+  {
+    "id": "ci-blurbs-not-gated",
+    "file": "pipeline/company_intel.py",
+    "find": "    refused = {c for c in missing if not_a_company(c)}",
+    "replace": "    refused = set()",
+    "class": "M1",
+    "symbol": "blurbs_not_gated",
+    "why": "the blurb loop had no name gate: that is how Tel Aviv got Alma's blurb"
+  },
+  {
+    "id": "ci-poisoned-blurb-kept",
+    "file": "pipeline/company_intel.py",
+    "find": "    poisoned = [c for c in company_info if not_a_company(c)]",
+    "replace": "    poisoned = []",
+    "class": "M1",
+    "symbol": "poisoned_blurb_kept",
+    "why": "a blurb already cached under a non-company name still renders"
+  },
+  {
+    "id": "ci-title-arm-any-not-all",
+    "file": "pipeline/firmographics.py",
+    "find": "    return all(t in _TITLE_VOCAB for t in toks) and any(t in _TITLE_HEAD for t in toks)",
+    "replace": "    return any(t in _TITLE_VOCAB for t in toks)",
+    "class": "M3",
+    "symbol": "title_arm_any_not_all",
+    "why": "closure, not any(): any() would junk most real company names"
+  },
+  {
+    "id": "ci-place-arm-substring",
+    "file": "pipeline/firmographics.py",
+    "find": "    return bool(n) and n in _PLACES and n not in PLACE_OK",
+    "replace": "    return bool(n) and any(p in n for p in _PLACES) and n not in PLACE_OK",
+    "class": "M3",
+    "symbol": "place_arm_substring",
+    "why": "substring matching would junk Tel Aviv Stock Exchange"
+  },
+  {
+    "id": "ci-place-arm-in-shared-predicate",
+    "file": "pipeline/firmographics.py",
+    "find": "    return (n in CATEGORY_NAMES or bool(_JUNK_NAME.search(name or \"\"))\n            or is_bare_job_title(name))",
+    "replace": "    return (n in CATEGORY_NAMES or bool(_JUNK_NAME.search(name or \"\"))\n            or is_bare_job_title(name) or is_place_name(name))",
+    "class": "M3",
+    "symbol": "place_arm_in_shared_predicate",
+    "why": "the place gate must not reach the registry's pools"
+  },
+  {
+    "id": "ci-export-count-pre-write",
+    "file": "pipeline/company_intel.py",
+    "find": "        rep[\"export_records\"] = len(firmo)",
+    "replace": "        pass",
+    "class": "M2",
+    "symbol": "export_count_pre_write",
+    "why": "the mail said 942 records on a morning that wrote 946"
+  },
+  {
+    "id": "ci-coerce-accepts-known-false",
+    "file": "pipeline/firmographics.py",
+    "find": "    if not isinstance(rec, dict) or rec.get(\"unknown\") or not _known(rec):",
+    "replace": "    if not isinstance(rec, dict) or rec.get(\"unknown\"):",
+    "class": "M3",
+    "symbol": "coerce_accepts_known_false",
+    "why": "known:false is the schema's escape hatch and must reject"
+  },
+  {
+    "id": "ci-budget-back-to-fifteen",
+    "file": "pipeline/company_intel.py",
+    "find": "\"FIRMO_TIME_BUDGET_MIN\": 8,",
+    "replace": "\"FIRMO_TIME_BUDGET_MIN\": 15,",
+    "class": "M7",
+    "symbol": "budget_back_to_fifteen",
+    "why": "15m is larger than the mail relay's 13m of slack"
+  },
+  {
+    "id": "ci-blurbs-eat-the-clock",
+    "file": "pipeline/company_intel.py",
+    "class": "M2",
+    "symbol": "blurb_reserve",
+    "why": "blurbs on the shared clock can starve research to a 0-researched morning",
+    "find": "        if clock.remaining() - _RESEARCH_RESERVE_S < 30:",
+    "replace": "        if clock.remaining() < 30:"
+  },
+  {
+    "id": "ci-clamped-timeout-reads-as-outage",
+    "file": "pipeline/company_intel.py",
+    "class": "M1",
+    "symbol": "clamped_timeout",
+    "why": "our own clamp killing a call must not read as 'claude unavailable'",
+    "find": "            if getattr(e, \"kind\", \"\") == \"transient\" and \"timeout(\" in str(e) \\\n                    and remaining <= RESEARCH_TIMEOUT_S:",
+    "replace": "            if False:"
+  },
+  {
+    "id": "ci-facts-chips-for-a-non-company",
+    "file": "pipeline/company_intel.py",
+    "class": "M1",
+    "symbol": "display_gate",
+    "why": "refusing the blurb is not enough if the facts chips still render",
+    "find": "                     if v and not not_a_company(k)}",
+    "replace": "                     if v}"
+  },
+  {
+    "id": "ci-knob-raises",
+    "file": "pipeline/company_intel.py",
+    "class": "M1",
+    "symbol": "knob_raises",
+    "why": "_report() runs OUTSIDE the never-raises try; a bad env value killed the run",
+    "find": "    try:\n        return cast(os.environ.get(name, _DEFAULTS[name]))\n    except (TypeError, ValueError):\n        return cast(_DEFAULTS[name])",
+    "replace": "    return cast(os.environ.get(name, _DEFAULTS[name]))"
+  },
+  {
+    "id": "ci-blurb-cap-frozen-at-import",
+    "file": "pipeline/company_intel.py",
+    "class": "M7",
+    "symbol": "blurb_cap",
+    "why": "the one loop that can spend 30 calls sliced with the import-time constant",
+    "find": "    todo = todo[:rep[\"blurb_cap\"]]   # the env-read cap, not the import-time constant",
+    "replace": "    todo = todo[:BLURB_MAX_PER_RUN]"
+  },
+  {
+    "id": "ci-audit-name-not-ascii-folded",
+    "file": "pipeline/company_intel.py",
+    "class": "M1",
+    "symbol": "ascii_name",
+    "why": "an active registry row has a Hebrew name; run.py prints this line outside the guard",
+    "find": "        why = \"; \".join(f\"{_ascii(c, 40)}: {_ascii(r, 60)}\"",
+    "replace": "        why = \"; \".join(f\"{c}: {_ascii(r, 60)}\""
+  },
+  {
+    "id": "ci-result-fallback-takes-the-first",
+    "file": "pipeline/firmographics.py",
+    "class": "M1",
+    "symbol": "result_last_wins",
+    "why": "the first schema-shaped object is the company the model is reasoning ABOUT",
+    "find": "        if _schema_shaped(obj, schema) or escape:\n            best = obj\n    return best",
+    "replace": "        if (_schema_shaped(obj, schema) or escape) and best is None:\n            best = obj\n    return best"
+  },
+  {
+    "id": "ci-ask-translates-only-llmunavailable",
+    "file": "pipeline/firmographics.py",
+    "class": "M2",
+    "symbol": "ask_catchall",
+    "why": "five consumers only catch ResearchUnavailable; a drifted envelope killed them",
+    "find": "        raise ResearchUnavailable(f\"{type(e).__name__}: {e}\"[:200], kind=\"transient\") from e",
+    "replace": "        raise"
+  },
+  {
+    "id": "ci-export-ignores-corrupt",
+    "file": "research_firmographics.py",
+    "find": "        if status == \"corrupt\":\n",
+    "replace": "        if False:\n",
+    "class": "M1",
+    "symbol": "export_ignores_corrupt",
+    "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-export-drops-records",
+    "file": "research_firmographics.py",
+    "find": "        lost = sorted(set(shared) - set(recs))\n",
+    "replace": "        lost = []\n",
+    "class": "M1",
+    "symbol": "export_drops_records",
+    "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-ledger-pre-run-union",
+    "file": "research_firmographics.py",
+    "find": "    ledger = F.merge_failures(failures, st.load_firmo_failures())\n",
+    "replace": "    ledger = F.merge_failures(failures)\n",
+    "class": "M1",
+    "symbol": "ledger_pre_run_union",
+    "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-ledger-writes-a-partial-read",
+    "file": "pipeline/firmographics.py",
+    "find": "    if status in (\"corrupt\", \"partial\"):\n        return False, status\n",
+    "replace": "    if False:\n        return False, status\n",
+    "class": "M1",
+    "symbol": "ledger_writes_a_partial_read",
+    "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-ledger-accepts-a-null-date",
+    "file": "pipeline/firmographics.py",
+    "find": "    if not _ISO_DATE.match(last):\n        return None\n",
+    "replace": "    if False:\n        return None\n",
+    "class": "M1",
+    "symbol": "ledger_accepts_a_null_date",
+    "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-merge-loses-attempts",
+    "file": "pipeline/firmographics.py",
+    "find": "            out[company] = (max(strike_attempts(att), have[0]),\n",
+    "replace": "            out[company] = (strike_attempts(att),\n",
+    "class": "M2",
+    "symbol": "merge_loses_attempts",
+    "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-digest-ignores-the-ledger",
+    "file": "pipeline/company_intel.py",
+    "find": "    failures = all_failures(st, run_date)\n",
+    "replace": "    failures = st.load_firmo_failures()\n",
+    "class": "M1",
+    "symbol": "digest_ignores_the_ledger",
+    "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-stall-alarm-never-fires",
+    "file": "pipeline/company_intel.py",
+    "find": "        if _age is not None and _age > EXPORT_STALE_DAYS and not rep.get(\"scoped\"):\n",
+    "replace": "        if False:\n",
+    "class": "M3",
+    "symbol": "stall_alarm_never_fires",
+    "why": "company-intel guard 2026-08-28"
+  }
 ]

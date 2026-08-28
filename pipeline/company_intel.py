@@ -20,9 +20,9 @@ import re
 import sys
 
 from . import firmographics as _F
-from .firmographics import (ResearchUnavailable, display_index, identity_key,  # noqa: F401
-                            load_shared_status, not_a_company, save_shared, sync_store,
-                            union_store)
+from .firmographics import (ResearchUnavailable, all_failures, display_index,  # noqa: F401
+                            identity_key, load_shared_status, not_a_company, save_shared,
+                            sync_store, union_store)
 
 
 def research_company(*a, **kw):
@@ -76,6 +76,14 @@ RESEARCH_MIN_S = 120
 _RESEARCH_RESERVE_S = RESEARCH_MIN_S
 BLURB_RETRY_DAYS = 30      # a company the blurb model could not identify is asked again monthly
 STRIKE_RETRY_DAYS = 7      # a name research failed on is retried weekly
+# How many days the whole corpus may go without a single new record before the mail says
+# so. The bulk cron at 10:00 UTC is the only thing that drains the registry backlog, and
+# when it does not run NOTHING says so: it has fired once ever (2026-08-27T20:05Z, +605
+# minutes late) and the 2026-08-28 slot did not fire at all, while `registry backlog` went
+# 74 -> 139 across that day's two digests in silence. 2 days, not 1: a single dropped slot
+# is routine here (CLAUDE.md: "GitHub dispatches a cron when it feels like it"), two in a
+# row is not.
+EXPORT_STALE_DAYS = 2
 SOFT_OUTAGE_MIN_FAILS = 3  # this many name-failures and no success in one run = not the names
 # the classifier builds this string at seniority.py:531 as `llm-unavailable(<kind>: ...)`;
 # only the kind is load-bearing. Asking `classifier` for a `Classifier.off_kind` would
@@ -92,6 +100,7 @@ def _report():
             "blurbs_skipped_budget": 0, "blurbs_derived": 0, "blurbs_waiting": 0,
             "export_status": "ok",
             "export_records": 0, "export_newest": "", "store_records": 0, "synced": 0,
+            "run_date": "",
             "published": False, "publish_error": "", "scoped": False, "error": "", "gated": 0,
             "gated_junk": 0, "blurbs_refused": 0, "blurbs_dropped": 0, "llm": {},
             "unavailable_kind": "",
@@ -288,7 +297,12 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None):
 
 
 def _research_targets(st, board_jobs, email_jobs, firmo, run_date):
-    failures = st.load_firmo_failures()
+    # sqlite UNION the committed ledger. Reading sqlite alone made the two tiers disagree
+    # about the same name: the 10:00 cron struck Sivo / ImagineArt / Chalk / Instacart on
+    # 2026-08-27 and this hook would re-buy any of them that reached a board the next
+    # morning, at up to FIRMO_MAX_PER_RUN calls, because the cron's strikes never landed in
+    # a store this side reads (`firmographics.load_failures`).
+    failures = all_failures(st, run_date)
     cutoff = (_dt.date.fromisoformat(run_date) - _dt.timedelta(days=STRIKE_RETRY_DAYS)).isoformat()
     norms = {identity_key(c) for c in firmo}
     failed_norms = {identity_key(c) for c, (_att, last) in failures.items() if last > cutoff}
@@ -407,6 +421,7 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
         rep["llm_off_upstream"] = _ascii(llm_off_reason, 80)
     rep["research_off"] = not use_llm and not rep["llm_off_upstream"]
     rep["scoped"] = bool(scoped)
+    rep["run_date"] = str(run_date or "")
     shared, rep["export_status"] = load_shared_status()
     rep["export_records"] = len(shared)
     rep["export_newest"] = max((str(r.get("as_of") or "") for r in shared.values()), default="")
@@ -500,6 +515,17 @@ def _ascii(s, n=80):
     pipe), and `pipeline/run.py` does not reconfigure stdout — so the never-raises guard
     would be undone by the act of reporting. Fold to ASCII before it leaves the report."""
     return " ".join(str(s or "").split()).encode("ascii", "replace").decode()[:n]
+
+
+def _export_age_days(newest, run_date):
+    """Days between the newest record in the export and this run, or None if either date
+    is unusable. Never raises: it feeds a warning, and a warning must not be able to take
+    down the run it is warning about (the `_knob` lesson, one function up)."""
+    try:
+        return (_dt.date.fromisoformat(str(run_date))
+                - _dt.date.fromisoformat(str(newest))).days
+    except (TypeError, ValueError):
+        return None
 
 
 def audit_lines(rep):
@@ -626,13 +652,26 @@ def _audit_lines(rep):
         # healthy morning — and a warning that is always on is a warning nobody reads.
         # ...and not when the names FAILED or the budget ran out: each already has its
         # own warning, and two warnings for one condition is how a reader learns to skim.
-        # ...and not when the names FAILED or the budget ran out: each already has its
-        # own warning, and two warnings for one condition is how a reader learns to skim.
         if (rep["candidates"] and not rep["researched"] and not rep["failed"]
                 and not rep["research_off"] and not rep["skipped_budget"]
                 and rep["unavailable_after"] is None and not rep["soft_outage"]):
             warn.append(f"{rep['candidates']} board companies needed facts and this run "
                         f"attempted none, with no outage or budget reported")
+        # NOTHING has been researched anywhere for EXPORT_STALE_DAYS days.
+        #
+        # This is the alarm for a bulk cron that stopped running, and `export_newest` is the
+        # signal rather than the backlog size. A backlog threshold is the wrong instrument
+        # twice: the registry adds 30-100 active rows a day, so any absolute bar is crossed
+        # on healthy mornings -- the same reason the clause above was rejected -- and a
+        # quiet registry lets a dead cron sit under the bar for a fortnight. "No new record
+        # anywhere for two days" is growth-independent and is a statement about the thing
+        # that is actually broken. It is `newest`, not this run's own output, so a digest
+        # that legitimately researched nothing does not trip it.
+        _age = _export_age_days(rep["export_newest"], rep.get("run_date"))
+        if _age is not None and _age > EXPORT_STALE_DAYS and not rep.get("scoped"):
+            warn.append(f"no company has been researched for {_age} days (newest record "
+                        f"{rep['export_newest']}) — the 10:00 UTC bulk cron drains the "
+                        f"registry backlog and nothing else does")
         if rep.get("publish_error") or (not rep["published"] and not rep.get("scoped")
                                         and not rep.get("error")):
             msg = "export NOT written" + (f" ({_ascii(rep.get('publish_error'), 120)})"

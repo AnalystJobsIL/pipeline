@@ -598,6 +598,138 @@ def load_shared():
     return load_shared_status()[0]
 
 
+# ---- the strike ledger ------------------------------------------------------------- #
+# `store.DEFAULT_DB` is `<repo>/state/seen.db` and `.gitignore` ignores `state/`, so on a
+# runner `SeenStore()` opens a BRAND-NEW EMPTY sqlite every run. The 10:00 cron's strike
+# write is therefore ephemeral BY CONSTRUCTION, not merely uncommitted: the 2026-08-27 run
+# struck Sivo, ImagineArt, Chalk and Instacart, and the committed `firmo_failed` table
+# holds none of the four. Consequences, both live: the bulk researcher re-buys every
+# unresearchable name on every run, and `refresh_abandoned` (4+ strikes) can never fire in
+# the cloud at all. `cloud_state/seen.db` cannot carry it — it is SINGLE_WRITER:
+# daily-digest in `persist_state.STRATEGY` — so the memory travels as its own committed
+# file, the way the profile export already does.
+SHARED_FAILURES = os.path.join(os.path.dirname(__file__), "..", "cloud_state",
+                               "firmo_failed.json")
+
+_ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def strike_attempts(v):
+    """A strike count out of a hand-editable, merge-produced JSON.
+
+    sqlite typed this column; a JSON file does not, and every consumer of it does bare
+    `int()` arithmetic OUTSIDE a try — so one `"attempts": "abc"` would kill the whole bulk
+    run before it researched anything."""
+    try:
+        return max(0, int(v))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _strike_pair(v, today=""):
+    """One ledger entry -> (attempts, date), or None if it is not usable.
+
+    Every rejected shape here has a PERMANENT consequence, which is why they are rejected
+    rather than coerced. `"last": null` stringifies to `"None"`, and `"None" > "2026-08-21"`
+    is True ('N' is 0x4E, '2' is 0x32) — so a null would win every "latest strike wins"
+    comparison AND clear the weekly-retry gate, silently gating that company for ever. A
+    date in the future does the same thing on purpose."""
+    if isinstance(v, (list, tuple)) and len(v) == 2:
+        att, last = v
+    elif isinstance(v, dict):
+        att, last = v.get("attempts"), v.get("last")
+    else:
+        return None
+    last = str(last or "")
+    if not _ISO_DATE.match(last):
+        return None
+    if today and last > today:
+        return None
+    return strike_attempts(att), last
+
+
+def load_failures(today=""):
+    """(ledger, status) for the committed strike file — status is `ok`, `missing`,
+    `corrupt` or `partial`. Never raises: a strike ledger must not be able to fail a run.
+
+    `partial` means the file parsed but some entries did not, and it matters as much as
+    `corrupt` does: a writer that read a subset and then wrote a full snapshot would DELETE
+    from origin every entry it failed to read (`persist_state.s_company_dict` honours
+    deletions, correctly — nothing else can express a cleared strike). So `save_failures`
+    refuses to write on anything but `ok`."""
+    try:
+        with open(SHARED_FAILURES, encoding="utf-8") as f:
+            raw = json.load(f)
+    except FileNotFoundError:
+        return {}, "missing"
+    except Exception:  # noqa: BLE001 — bad JSON, or a merge that left conflict markers
+        return {}, "corrupt"
+    if not isinstance(raw, dict):
+        return {}, "corrupt"
+    out, dropped = {}, 0
+    for company, v in raw.items():
+        pair = _strike_pair(v, today)
+        if pair is None or not str(company or "").strip():
+            dropped += 1
+            continue
+        out[company] = pair
+    return out, ("partial" if dropped else "ok")
+
+
+def merge_failures(*sources):
+    """Union of every failure memory, merging `attempts` and `last` INDEPENDENTLY.
+
+    Independently, because they answer different questions: `last` decides the weekly
+    retry gate and `attempts` decides the permanent refresh eviction, and taking the
+    older source's date must not throw away the higher count with it."""
+    out = {}
+    for src in sources:
+        for company, v in (src or {}).items():
+            att, last = (v if isinstance(v, tuple) else _strike_pair(v) or (0, ""))
+            have = out.get(company, (0, ""))
+            out[company] = (max(strike_attempts(att), have[0]),
+                            max(str(last or ""), have[1]))
+    return out
+
+
+def save_failures(ledger, cleared=()):
+    """Write the strike ledger, dropping `cleared` (names that have since been researched).
+
+    Read-modify-write over the committed file, never a blind snapshot, and it REFUSES on
+    any status but `ok` — see `load_failures`. Returns (written, status)."""
+    on_disk, status = load_failures()
+    if status in ("corrupt", "partial"):
+        return False, status
+    merged = merge_failures(on_disk, ledger)
+    for name in cleared:
+        merged.pop(name, None)
+    path = os.path.abspath(SHARED_FAILURES)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = f"{path}.{os.getpid()}.tmp"          # per-process: two writers, one tracked dir
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({c: [a, d] for c, (a, d) in sorted(merged.items())}, f,
+                      ensure_ascii=False, indent=2, sort_keys=True)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+    return True, status
+
+
+def all_failures(st, today=""):
+    """sqlite ∪ the committed ledger — the one view every targeting decision must use.
+
+    Both tiers gate on this. The digest hook read `st.load_firmo_failures()` alone, so a
+    name the 10:00 cron had struck was re-bought by the 05:00 digest the next morning at
+    up to FIRMO_MAX_PER_RUN calls."""
+    try:
+        local = st.load_firmo_failures()
+    except Exception:  # noqa: BLE001 — a locked or missing table is not a reason to fail
+        local = {}
+    return merge_failures(load_failures(today)[0], local)
+
+
 def _evidence(rec):
     return sum(1 for v in rec.values() if v not in ("", None))
 

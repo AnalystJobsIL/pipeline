@@ -122,7 +122,7 @@ jobs:
         continue-on-error: true
 
       - name: Commit the export
-        # ONLY cloud_state/firmographics.json. NOT cloud_state/seen.db, which is
+        # The export and the strike ledger. NOT cloud_state/seen.db, which is
         # `SINGLE_WRITER: daily-digest` in persist_state.STRATEGY -- a second writer would
         # replace the runner's matched / roles / llm_cache tables wholesale. The digest's
         # own `sync_store` seeds sqlite from this export next morning, idempotently, which
@@ -132,4 +132,4 @@ jobs:
         run: |
           python persist_state.py commit --as "firmo-bot" \
             -m "company intel: registry backlog $(date -u +%F) [skip ci]" \
-            --own cloud_state/firmographics.json
+            --own cloud_state/firmographics.json cloud_state/firmo_failed.json

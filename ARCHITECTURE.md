@@ -3045,8 +3045,9 @@ rehearsal that set them afterwards silently tested the defaults): `FIRMO_MAX_PER
 `FIRMO_TIME_BUDGET_MIN`, `BLURB_MAX_PER_RUN`.
 
 **Tier 2 — `.github/workflows/firmographics.yml`, 10:00 UTC daily, the bulk.** Runs
-`research_firmographics.py --workers 2 --refresh-days 180` on a runner and commits **only**
-`cloud_state/firmographics.json` — never `cloud_state/seen.db`, which is
+`research_firmographics.py --workers 2 --refresh-days 180` on a runner and commits
+`cloud_state/firmographics.json` and `cloud_state/firmo_failed.json` — never
+`cloud_state/seen.db`, which is
 `SINGLE_WRITER: daily-digest` in `persist_state.STRATEGY`, so a second writer would replace
 the runner's `matched` / `roles` / `llm_cache` tables wholesale; the digest's own `sync_store`
 seeds sqlite from the export next morning. It has its own job and nothing waits on it, so it
@@ -3056,10 +3057,22 @@ on 2 of 3 calls at 3. Research is one-time per company — nothing re-researches
 It reports its own spend the way the digest hook does (`seam: <model> | N calls, Ns, N
 searches[, N SEARCHLESS]`, and a `::warning::` on a searchless answer): it is the **main**
 spender now, and a job that spends the shared subscription invisibly is how the search mandate
-quietly stops holding. Its failure memory is the **union** of both stores' `firmo_failed`,
-latest strike winning — while two machines researched, each was re-buying names the other had
-already struck (the cloud saw `8 to do` against the laptop's `3 to do (5 gated)`); once the
-laptop chain is retired that union reads one store and costs nothing.
+quietly stops holding. **Its failure memory is a committed file, `cloud_state/firmo_failed.json`, because a
+strike written anywhere else does not survive its own runner.** `store.DEFAULT_DB` is
+`state/seen.db` and `.gitignore` ignores `state/`, so on a runner `SeenStore()` opens a
+brand-new EMPTY sqlite every run: the cron's strike write was ephemeral **by construction**,
+not merely uncommitted. Measured — the 2026-08-27 run struck Sivo, ImagineArt, Chalk and
+Instacart, and the committed `firmo_failed` table holds none of the four, so all three
+active ones were re-bought on every later run and `refresh_abandoned` (4+ strikes) could
+never fire in the cloud at all. The ledger is read by BOTH tiers through
+`firmographics.all_failures` (sqlite ∪ the file) and merged by `merge_failures`, which takes
+`attempts` and `last` **independently**: the hand-rolled merge it replaced kept
+`max(attempts)` inside `if last > have[1]`, so an older source's higher count was discarded
+with its date — the exact reset its own docstring promised to prevent. Dropping a key is how
+the ledger says "researched since"; `persist_state.s_company_dict` is base-aware, so a
+deliberate drop is honoured while a concurrent add by the digest is kept. It is written by
+read-modify-write and **refuses to write at all when the read was corrupt or partial**, since
+a snapshot written after a failed read deletes from origin every entry it failed to read.
 
 Two more steps run there, both read-only, both because a tool nobody runs is a tool that
 rots — `company_type_analysis.py` was hand-run only and silently kept working against a

@@ -327,6 +327,13 @@ STRATEGY = {
     "companies.csv": (s_csv_rows, "rows by name, note segments per tool (merge_csv_rows)"),
     "scraped_cache.json": (s_company_dict, "eight writers; per company key, deletions honoured"),
     "cloud_state/firmographics.json": (s_company_dict, "per company record; local chain + digest"),
+    # Written by the 10:00 firmographics cron ONLY. `daily-digest.yml` owns `cloud_state`
+    # wholesale so it also COMMITS this path, but it never writes it -- `ours == base`
+    # there, so no key of base is missing from ours and the deletion arm cannot fire.
+    # Deletion IS the right semantics: dropping a key is the only way this ledger can say
+    # "researched since, strike cleared", and the merge is base-aware, so a concurrent ADD
+    # by the other writer is kept while a deliberate drop is honoured.
+    "cloud_state/firmo_failed.json": (s_company_dict, "research strikes; written by the 10:00 cron, per company"),
     "cloud_state/health_baseline.json": (s_company_dict, "digest + self-heal; per company"),
     "cloud_state/stale.json": (s_company_dict, "digest + self-heal's Monday sweep; per company"),
     "cloud_state/scan_seen.json": (s_company_dict, "digest + Sunday audit; per company"),

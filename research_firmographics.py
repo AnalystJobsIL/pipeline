@@ -27,10 +27,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # Windows — a Hebrew company name in a print then kills the whole run (UnicodeEncodeError)
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+from pipeline import firmographics as F
 from pipeline.companies import load_companies
 from pipeline.firmographics import (ResearchUnavailable, band_for, identity_key,
-                                    not_a_company, research_company, save_shared,
-                                    sync_store, union_store)
+                                    load_shared_status, not_a_company, research_company,
+                                    save_shared, sync_store, union_store)
 from pipeline.store import SeenStore
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -70,41 +71,39 @@ def fetch_cloud_db():
         return None
 
 
-def _failure_union(st, cloud_db):
-    """Every machine's failure memory, latest strike per company.
+def _failure_union(st, cloud_db, today=""):
+    """Every failure memory this machine can see, merged by `firmographics.merge_failures`.
 
-    `firmo_failed` is per-STORE, and until 2026-08-26 two machines researched: the runner and
-    the owner's laptop. They kept separate memories, so "struck, retry in a week" meant
-    different things depending on where the call landed -- demonstrated in the cloud that
-    evening, when the runner saw `8 to do` against the laptop's `3 to do (5 gated)`, and the
-    runner then re-bought two names the laptop had already struck.
+    Three sources, and until 2026-08-28 only two of them, neither durable in the cloud:
 
-    The durable fix is one researcher, which is what the 10:00 UTC cron is for
-    (`docs/BACKLOG.md` 97): with the laptop chain retired this union reads one store and
-    costs nothing. Until then it stops the two from paying for each other's failures.
-    Latest `last` wins, and the higher attempt count with it, so a name approaching the
-    4-strike refresh eviction cannot be reset by the other machine's fresher single strike.
+    1. `st.load_firmo_failures()` — this machine's sqlite. On a RUNNER this is a brand-new
+       empty file every run, because `store.DEFAULT_DB` is the gitignored `state/seen.db`.
+    2. the committed `cloud_state/seen.db`, written only by the daily digest.
+    3. `cloud_state/firmo_failed.json` — the committed ledger THIS script writes, and the
+       only path by which a strike recorded in the cloud survives its own runner.
+
+    Merging is `merge_failures`: `attempts` and `last` taken independently, so an older
+    source's higher count is never thrown away with its date. The hand-rolled merge this
+    replaced kept `max(attempts)` INSIDE `if last > have[1]`, so ("Chalk", 3, "2026-08-20")
+    beside a fresh single strike collapsed to (1, "2026-08-27") — resetting 3 -> 1, the
+    exact reset it promised to prevent.
     """
-    out = dict(st.load_firmo_failures())
-    if not cloud_db or not os.path.exists(cloud_db):
-        return out
-    try:
-        import sqlite3
-        con = sqlite3.connect(f"file:{cloud_db}?mode=ro", uri=True)
-        rows = list(con.execute("SELECT company, attempts, last FROM firmo_failed"))
-        con.close()
-    except Exception as e:  # noqa: BLE001 — a missing table is not an error worth a run
-        print(f"  (other store's failure memory unreadable: {e!r})")
-        return out
-    added = 0
-    for company, attempts, last in rows:
-        have = out.get(company)
-        if have is None or str(last) > str(have[1]):
-            out[company] = (max(int(attempts or 0), int((have or (0,))[0] or 0)), last)
-            added += have is None
-    if added:
-        print(f"failure memory: +{added} name(s) struck on the other store "
-              f"(split-brain, BACKLOG 243)")
+    sources = [F.load_failures(today)[0], st.load_firmo_failures()]
+    rows = {}
+    if cloud_db and os.path.exists(cloud_db):
+        try:
+            import sqlite3
+            con = sqlite3.connect(f"file:{cloud_db}?mode=ro", uri=True)
+            rows = {c: (a, l) for c, a, l in
+                    con.execute("SELECT company, attempts, last FROM firmo_failed")}
+            con.close()
+        except Exception as e:  # noqa: BLE001 — a missing table is not an error worth a run
+            print(f"  (other store's failure memory unreadable: {e!r})", flush=True)
+    out = F.merge_failures(*sources, rows)
+    added = len(out) - len(sources[1])
+    if added > 0:
+        print(f"failure memory: +{added} name(s) struck elsewhere "
+              f"(ledger + committed store)", flush=True)
     return out
 
 
@@ -152,13 +151,37 @@ def main():
 
     if a.export:
         # the UNION, atomically — the local table alone overwrote the file and deleted
-        # every record the cloud digest had researched since (19 at risk on 2026-08-24)
-        recs = union_store(st)
+        # every record the cloud digest had researched since (19 at risk on 2026-08-24).
+        #
+        # Read the STATUS, not just the records. `union_store(st)` calls `load_shared()`,
+        # which drops `load_shared_status`'s verdict — so over a corrupt or half-written
+        # export the union was the sqlite table ALONE, and this line published it over the
+        # file with an encouraging `exported N records`. That is the one thing
+        # `load_shared_status`'s own docstring says must never happen ("a corrupt one must
+        # never be silently REPLACED by the smaller sqlite table"), and the digest hook is
+        # the only caller that was honouring it (`company_intel.py`, `export_status`).
+        shared, status = load_shared_status()
+        if status == "corrupt":
+            print("::error::company-intel cloud_state/firmographics.json is CORRUPT — "
+                  "refusing to publish the sqlite table over it, because the sqlite table "
+                  "is the SMALLER side. Restore the file (git checkout) and re-run --export.")
+            return 1
+        recs = union_store(st, shared)
+        # The union is a superset by construction (`merge` is field-level and drops no key).
+        # Asserted anyway, because this file has lost records twice — 19 at risk on
+        # 2026-08-24 and 22 destroyed on 2026-08-26 — and both times the write looked fine.
+        lost = sorted(set(shared) - set(recs))
+        if lost:
+            print("::error::company-intel refusing to publish: the union DROPS %d record(s) "
+                  "the export already holds (%s%s)"
+                  % (len(lost), ", ".join(lost[:5]), " ..." if len(lost) > 5 else ""))
+            return 1
         save_shared(recs)
         os.makedirs(os.path.dirname(EXPORT), exist_ok=True)
         with open(EXPORT, "w", encoding="utf-8") as f:
             json.dump(recs, f, ensure_ascii=False, indent=2, sort_keys=True)
-        print(f"exported {len(recs)} records -> {EXPORT} + {SHARED_EXPORT}")
+        print(f"exported {len(recs)} records ({len(recs) - len(shared):+d}) "
+              f"-> {EXPORT} + {SHARED_EXPORT}")
         return
 
     seeded = seed_poc(st, today)
@@ -208,7 +231,7 @@ def main():
     # (that starved real refreshes), and permanently failing refreshes (4+ strikes ~ a
     # month of weekly retries) are evicted from the refresh layer entirely so squatters
     # can never consume the whole cap once the store ages
-    failures = _failure_union(st, cloud_db)
+    failures = _failure_union(st, cloud_db, today)
     week_ago = (dt.date.today() - dt.timedelta(days=7)).isoformat()
     failed_norms = {identity_key(c) for c, (att, last) in failures.items() if last > week_ago}
     refresh_abandoned = {c for c, (att, last) in failures.items() if att >= 4}
@@ -264,6 +287,7 @@ def main():
     # re-researches before 2027-02 at --refresh-days 180.
     meta = {}
     done = failed = 0
+    done_names = set()
     infra_streak = infra_errors = 0
     failed_names = []
     with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
@@ -278,9 +302,9 @@ def main():
                 # too, so stop burning the queue and let the next chain run retry cleanly
                 infra_streak += 1
                 infra_errors += 1
-                print(f"UNAVAILABLE {name}: {e} (no failure recorded)")
+                print(f"UNAVAILABLE {name}: {e} (no failure recorded)", flush=True)
                 if infra_streak >= 3:
-                    print("3 consecutive infrastructure errors — aborting run; nothing was gated")
+                    print("3 consecutive infrastructure errors — aborting run; nothing was gated", flush=True)
                     ex.shutdown(cancel_futures=True)
                     break
                 continue
@@ -309,22 +333,43 @@ def main():
                         rec["size_band"] = band_for(rec["employees_global"])
                 st.save_firmographics({name: rec}, today)  # main thread owns sqlite
                 done += 1
-                print(f"ok   {name}: {rec['sector']} / {rec.get('stage') or '?'} / {rec.get('size_band') or '?'}")
+                done_names.add(name)
+                print(f"ok   {name}: {rec['sector']} / {rec.get('stage') or '?'} / {rec.get('size_band') or '?'}", flush=True)
             else:
                 failed += 1
                 failed_names.append(name)
-                print(f"FAIL {name} (strike pending)")
+                print(f"FAIL {name} (strike pending)", flush=True)
     # strikes are recorded only once the run proves it wasn't broken: neither an infra
     # abort nor an all-fail run (soft outage: exit-0 prose, broken WebSearch grant) is
     # evidence about company names
+    struck = []
     if infra_streak >= 3:
         print(f"infra abort: {failed} soft failures NOT recorded")
     elif failed >= 5 and done == 0:
         print(f"mass-failure guard: {failed} failures, 0 successes — no strikes recorded "
               "(suspected soft outage; names retry next run)")
     else:
-        for n in failed_names:
+        struck = list(failed_names)
+        for n in struck:
             st.record_firmo_failure(n, today)
+    # Publish the strike memory, or this run's gating knowledge dies with the runner.
+    # RE-READ the store: `failures` above is the PRE-RUN union, so serialising it would
+    # have written a ledger without the very names this run just struck -- the 2026-08-27
+    # run's Sivo / ImagineArt / Chalk / Instacart, missing all over again.
+    # `done_names` are cleared: a company that has just been researched is not a name we
+    # failed on, and absence is the only way this ledger can express that (the merge on
+    # the conflict path is base-aware, so a deliberate drop is honoured and a concurrent
+    # ADD by another writer is kept).
+    ledger = F.merge_failures(failures, st.load_firmo_failures())
+    written, status = F.save_failures(ledger, cleared=done_names)
+    if written:
+        print(f"strike ledger: {len(set(ledger) - done_names)} name(s) -> "
+              f"cloud_state/firmo_failed.json ({len(struck)} struck, "
+              f"{len(done_names & set(ledger))} cleared)", flush=True)
+    else:
+        print(f"::warning::company-intel strike ledger NOT written "
+              f"(cloud_state/firmo_failed.json is {status}) — {len(struck)} strike(s) from "
+              f"this run will not survive their runner", flush=True)
     print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store")
     if meta.get("calls"):
         models = ", ".join(
@@ -348,4 +393,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # `main` returns a non-zero code when it REFUSES to publish (a corrupt export, a union
+    # that would drop records). Without this the refusal printed an `::error::` and the
+    # workflow step still exited 0 — CLAUDE.md rule 1, from the inside.
+    sys.exit(main() or 0)

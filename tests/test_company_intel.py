@@ -1315,3 +1315,185 @@ def test_no_identity_group_merges_two_genuinely_different_companies():
     # anything about the suffix rule -- if that ever changes, this goes red
     assert F.looks_like_junk("AppSec") and not F.looks_like_junk("AppSec Labs")
     assert "AppSec" not in d
+
+
+# --- company-intel, 2026-08-28: the strike ledger, the export refusal, the stall alarm ---
+# The 2026-08-27 bulk cron struck Sivo, ImagineArt, Chalk and Instacart and the committed
+# `firmo_failed` table holds none of the four. `store.DEFAULT_DB` is the GITIGNORED
+# `state/seen.db`, so on a runner `SeenStore()` opens a brand-new empty sqlite every run:
+# the cron's strike write is ephemeral BY CONSTRUCTION, not merely uncommitted.
+
+
+@pytest.fixture
+def ledger(tmp_path, monkeypatch):
+    """A scratch strike ledger. No test may touch the committed cloud_state/ copy."""
+    p = tmp_path / "firmo_failed.json"
+    monkeypatch.setattr(F, "SHARED_FAILURES", str(p))
+    return p
+
+
+def test_the_strike_ledger_survives_the_runner_that_wrote_it(ledger, tmp_path):
+    """The cron's strikes died with its runner, so every unresearchable name was re-bought
+    every run and `refresh_abandoned` (4+ strikes) could never fire in the cloud at all.
+
+    The subtle half: the ledger must be built from a re-read of the store AFTER the strike
+    loop. `failures` in `research_firmographics.main` is the PRE-RUN union, so serialising
+    that would have written a ledger missing exactly the names the run had just struck."""
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.record_firmo_failure("Chalk", "2026-08-28")
+    st.record_firmo_failure("Instacart", "2026-08-28")
+    written, status = F.save_failures(F.merge_failures({}, st.load_firmo_failures()))
+    assert written and status == "missing"
+    back, status = F.load_failures()
+    assert status == "ok"
+    assert back == {"Chalk": (1, "2026-08-28"), "Instacart": (1, "2026-08-28")}
+
+
+def test_a_researched_company_is_cleared_from_the_ledger(ledger):
+    """Dropping the key is the only way this ledger can say "researched since". The merge on
+    the conflict path is base-aware, so a deliberate drop is honoured while a concurrent ADD
+    by the other writer is kept."""
+    F.save_failures({"Chalk": (2, "2026-08-27"), "Sivo": (1, "2026-08-27")})
+    F.save_failures({}, cleared={"Chalk"})
+    assert set(F.load_failures()[0]) == {"Sivo"}
+
+
+def test_the_ledger_merges_attempts_and_dates_independently(ledger):
+    """`_failure_union` kept `max(attempts)` INSIDE `if last > have[1]`, so an OLDER source's
+    higher count was discarded with its date: ("Chalk", 3, "2026-08-20") beside a fresh
+    single strike collapsed to (1, "2026-08-27"), resetting 3 -> 1 one run before the
+    4-strike refresh eviction. That is the exact reset `_failure_union`'s docstring promises
+    cannot happen. Latent with two sources; live with three."""
+    merged = F.merge_failures({"Chalk": (3, "2026-08-20")}, {"Chalk": (1, "2026-08-27")})
+    assert merged["Chalk"] == (3, "2026-08-27")
+
+
+@pytest.mark.parametrize("bad,why", [
+    ({"X": [1, None]}, "null date stringifies to 'None', and 'None' > '2026-08-21' is True"),
+    ({"X": [1, "2099-01-01"]}, "a future date clears the weekly gate for ever"),
+    ({"X": [1, "not-a-date"]}, "unparseable"),
+    ({"X": "nonsense"}, "not a pair"),
+    ({"": [1, "2026-08-27"]}, "no company name"),
+])
+def test_no_ledger_entry_can_gate_a_company_for_ever(ledger, bad, why):
+    """Each rejected shape has a PERMANENT consequence, which is why it is dropped rather
+    than coerced. `str(None)` is "None" and "None" > "2026-08-21" is True (N is 0x4E, 2 is
+    0x32) - so a null would win every "latest strike wins" comparison AND clear the 7-day
+    retry gate, silently gating that company for the life of the file."""
+    ledger.write_text(json.dumps(bad), encoding="utf-8")
+    recs, status = F.load_failures(today="2026-08-28")
+    assert recs == {}, why
+    assert status == "partial"
+
+
+def test_a_bad_attempt_count_cannot_kill_the_bulk_run(ledger):
+    """sqlite typed this column; a merge-produced, hand-editable JSON does not, and every
+    consumer does bare `int()` arithmetic outside a try. One "attempts": "abc" would have
+    taken the whole run down before it researched anything."""
+    ledger.write_text(json.dumps({"X": ["abc", "2026-08-27"]}), encoding="utf-8")
+    assert F.load_failures()[0] == {"X": (0, "2026-08-27")}
+    assert F.strike_attempts("4") == 4 and F.strike_attempts(None) == 0
+    assert F.strike_attempts(-3) == 0
+
+
+def test_the_ledger_is_never_written_from_a_partial_read(ledger):
+    """`persist_state.s_company_dict` honours deletions - correctly, since dropping a key is
+    how a cleared strike is expressed. So a writer that read a SUBSET and then wrote a full
+    snapshot would delete from origin every entry it failed to read. Refuse instead."""
+    ledger.write_text("{ this is not json", encoding="utf-8")
+    assert F.save_failures({"Chalk": (1, "2026-08-28")}) == (False, "corrupt")
+    assert ledger.read_text(encoding="utf-8") == "{ this is not json"
+    ledger.write_text(json.dumps({"ok": [1, "2026-08-27"], "bad": [1, None]}), encoding="utf-8")
+    assert F.save_failures({"Chalk": (1, "2026-08-28")})[0] is False
+
+
+def test_both_tiers_gate_on_the_same_failure_memory(ledger, tmp_path):
+    """The digest hook read `st.load_firmo_failures()` alone, so a name the 10:00 cron had
+    struck was re-bought by the 05:00 digest at up to FIRMO_MAX_PER_RUN calls."""
+    import inspect
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    F.save_failures({"Chalk": (1, "2026-08-27")})
+    assert F.all_failures(st, "2026-08-28")["Chalk"] == (1, "2026-08-27")
+    assert "all_failures(st" in inspect.getsource(CI._research_targets), \
+        "the digest hook stopped reading the committed ledger"
+
+
+def test_a_missing_ledger_is_not_an_error(ledger, tmp_path):
+    """A strike ledger must not be able to fail a run: it is bookkeeping about spend."""
+    assert F.load_failures() == ({}, "missing")
+    assert F.all_failures(store.SeenStore(str(tmp_path / "t.db"))) == {}
+
+
+# ---- the export refusal ------------------------------------------------------------- #
+
+def test_export_refuses_to_publish_the_smaller_table_over_a_corrupt_export():
+    """`union_store(st)` called `load_shared()`, which DROPS `load_shared_status`'s verdict -
+    so over a corrupt or half-written export the union was the sqlite table alone and
+    `--export` published it, with an encouraging `exported N records`. That is the one thing
+    `load_shared_status`'s own docstring says must never happen, and the digest hook was the
+    only caller honouring it. An ::error:: that still exits 0 is CLAUDE.md rule 1 from the
+    inside, so the refusal has to fail the step too."""
+    import inspect
+    import research_firmographics as R
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    text = open(os.path.join(repo, "research_firmographics.py"), encoding="utf-8").read()
+    assert "sys.exit(main() or 0)" in text, "a refusal that exits 0 is invisible to the workflow"
+    src = inspect.getsource(R.main)
+    assert "load_shared_status()" in src and 'status == "corrupt"' in src
+    assert "set(shared) - set(recs)" in src, "the union superset guard is gone"
+    assert "{len(recs) - len(shared):+d}" in src, "the export line stopped reporting its delta"
+
+
+# ---- the stall alarm ---------------------------------------------------------------- #
+
+def _stall_rep(**kw):
+    r = CI._report()
+    r.update({"export_status": "ok", "export_records": 900, "run_date": "2026-08-28"})
+    r.update(kw)
+    return r
+
+
+def test_the_mail_says_when_nothing_has_been_researched_for_days():
+    """The bulk cron is the only thing that drains the registry backlog and NOTHING said so
+    when it stopped: it has fired once ever (2026-08-27T20:05Z, +605 min late), the 08-28
+    slot did not fire at all, and `registry backlog` went 74 -> 139 across that day's two
+    digests in silence."""
+    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-08-25"))
+    assert any("has been researched for 3 days" in w for w in warn), warn
+
+
+def test_the_stall_alarm_is_silent_on_a_healthy_morning():
+    """The signal is `export_newest`, not the backlog size. A backlog threshold is wrong
+    twice over: the registry adds 30-100 active rows a day, so any absolute bar is crossed
+    on healthy mornings - the reason the clause beside it was rejected - and a quiet
+    registry lets a dead cron sit under that bar for a fortnight."""
+    for newest, backlog in (("2026-08-28", 139), ("2026-08-27", 139), ("2026-08-26", 0)):
+        _, warn = CI.audit_lines(_stall_rep(export_newest=newest, registry_backlog=backlog))
+        assert not any("has been researched for" in w for w in warn), (newest, backlog)
+
+
+def test_the_stall_alarm_never_raises_on_an_unusable_date():
+    """It feeds a warning, and a warning must not be able to take down the run it warns
+    about - the `_knob` lesson, in the same file."""
+    for newest in ("", "?", "2026-13-99", None):
+        CI.audit_lines(_stall_rep(export_newest=newest))
+    assert CI._export_age_days("", "2026-08-28") is None
+    assert CI._export_age_days("2026-08-25", None) is None
+    assert CI._export_age_days("2026-08-25", "2026-08-28") == 3
+
+
+def test_a_scoped_local_run_never_raises_the_stall_alarm():
+    """A scoped run reads whatever export happens to be checked out; it is not evidence
+    about whether the cloud is researching anything."""
+    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-01-01", scoped=True))
+    assert not any("has been researched for" in w for w in warn)
+
+
+def test_every_path_the_firmographics_workflow_owns_has_a_strategy():
+    """The ledger is committed by the cron and merged per company. `--own` and STRATEGY must
+    land together, or `persist_state` falls back to `ours` with a warning nobody reads."""
+    import persist_state as P
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    wf = open(os.path.join(repo, ".github/workflows/firmographics.yml"), encoding="utf-8").read()
+    assert "cloud_state/firmo_failed.json" in wf
+    assert P.STRATEGY["cloud_state/firmo_failed.json"][0] is P.s_company_dict
