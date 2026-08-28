@@ -431,10 +431,18 @@ def ask(prompt, *, system, schema, model, effort, tools=(), timeout=240, meta=No
         raise ResearchUnavailable(f"{type(e).__name__}: {e}"[:200], kind="transient") from e
     if meta is not None:
         record_call(meta, res, model)
-        if tools and not (res.get("searches") or 0):
+        if tools and not (res.get("searches") or 0) and _known(res.get("data") or {}):
             # a research answer that made no web search is a PARAMETRIC guess. Measured
             # 2026-08-26: searchless answers were staler than the records they replaced --
             # Aidoc missed its own 2026-04 Series E. Counted so the mail can say so.
+            #
+            # ...but only when the model claims to KNOW the company. A refusal
+            # (`known: false`) produces no record, so there is nothing for a guess to be
+            # wrong about, and counting it made the mail say "those records are guesses"
+            # about a record that does not exist. Observed live on 2026-08-28: two calls,
+            # one refusal (`Agency`, a slug-probe row that is not a company), and a
+            # `::warning::company-intel 1 research answer(s) made no web search` about it.
+            # A warning that fires on the gate WORKING is how a reader learns to skim.
             meta["searchless"] = meta.get("searchless", 0) + 1
     return res
 

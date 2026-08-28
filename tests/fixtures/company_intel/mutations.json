@@ -511,5 +511,14 @@
     "class": "M3",
     "symbol": "negative_limit_accepted",
     "why": "company-intel guard 2026-08-28 wave 1"
+  },
+  {
+    "id": "ci-a-refusal-counts-as-searchless",
+    "file": "pipeline/firmographics.py",
+    "find": "        if tools and not (res.get(\"searches\") or 0) and _known(res.get(\"data\") or {}):\n",
+    "replace": "        if tools and not (res.get(\"searches\") or 0):\n",
+    "class": "M3",
+    "symbol": "a_refusal_counts_as_searchless",
+    "why": "company-intel guard 2026-08-28 wave 2"
   }
 ]

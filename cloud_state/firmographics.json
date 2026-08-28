@@ -14087,6 +14087,19 @@
     "stage_note": "$125M Series C led by Norwest (Aug 2026); $185M raised total",
     "sub_sector": "AI agent security & governance — securing enterprise agentic AI (Copilot, ChatGPT Enterprise, custom agents) and low-code/no-code apps"
   },
+  "Zenyard": {
+    "as_of": "2026-08-28",
+    "business_model": "Software/AI product for cybersecurity reverse engineering",
+    "customer_type": "B2B",
+    "employees_global": 4,
+    "founded": 2025,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Cybersecurity",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Pre-seed funding closed Feb 2026, led by Mindset Ventures with TAU Ventures",
+    "sub_sector": "AI-powered reverse engineering / binary analysis"
+  },
   "Zero Networks": {
     "as_of": "2026-08-28",
     "business_model": "B2B cybersecurity SaaS/software (microsegmentation, network security)",

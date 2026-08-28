@@ -1615,3 +1615,27 @@ def test_a_negative_limit_is_refused_rather_than_silently_inverted():
                         "--dry-run"], capture_output=True, text=True,
                        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     assert r.returncode == 2 and "--limit must be >= 0" in r.stderr, (r.returncode, r.stderr[-300:])
+
+
+def test_a_refusal_is_not_counted_as_a_searchless_guess(monkeypatch):
+    """`searchless` exists to say "this record is a parametric guess". A refusal
+    (`known: false`) produces NO record, so there is nothing for a guess to be wrong about.
+
+    Observed live on 2026-08-28: a two-call run whose only searchless answer was `Agency`
+    refusing to be a company (a slug-probe row) printed `::warning::company-intel 1 research
+    answer(s) made no web search - those records are guesses`. It was warning about the money
+    gate working, and a warning that fires on success is how a reader learns to skim."""
+    from pipeline import llm
+
+    def fake_call_meta(prompt, **kw):
+        known = "Agency" not in prompt
+        return {"data": {"known": known, **(REC if known else {})}, "envelope": {},
+                "models": ["m"], "searches": 0, "seconds": 0.0}
+    monkeypatch.setattr(llm, "call_meta", fake_call_meta)
+
+    for company, expect in (("Agency", 0), ("Wix", 1)):
+        meta = {}
+        F.ask(f"Research the company {company}", system="s", schema="{}", model="sonnet",
+              effort="low", tools=("WebSearch",), meta=meta)
+        assert meta.get("searchless", 0) == expect, (company, meta)
+        assert meta["calls"] == 1, "the call is still counted either way"
