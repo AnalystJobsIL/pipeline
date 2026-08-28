@@ -92,11 +92,11 @@
   "finished_at": "2026-08-28T20:23:10+00:00"
  },
  "firmo": {
-  "date": "2026-08-28",
-  "failed": 1,
-  "finished_at": "2026-08-28T20:54:59+00:00",
-  "records": 1133,
-  "researched": 1
+  "date": "2026-08-29",
+  "failed": 3,
+  "finished_at": "2026-08-28T23:31:19+00:00",
+  "records": 1186,
+  "researched": 53
  },
  "publish": {
   "board": 85,

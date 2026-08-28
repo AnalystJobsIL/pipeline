@@ -246,16 +246,27 @@ Every input measured, none from the workflow's own prose.
 | registry growth | 862 → 1,002 active over 4.85 days = **+28.9/day**; **+68.6/day** over the last 48 h; **+65 on 08-28 alone** |
 | cost per call | 08-27 cron 334 s model / 23 calls; tonight's drain 2,844 s / 135. Taking the slower: **~10.5 s of wall per call** at `--workers 2` |
 | one run at `--limit 40` | **7.0 min** of a 120-minute job (5.8 %) |
-| slot reliability | **1 of 2** scheduled opportunities delivered, that one +605 min late |
+| slot reliability | **2 of 2** delivered — but at **+605 min** and **+662 min**, eleven hours after the slot |
+| the cap, measured | run `33210826528` (08-28, fired 21:02Z) saw `139 to do`, spent exactly **40 calls**, and **left 99 behind** |
 
-    40 x 50 %  =  20/day  -- SHORT of even the 4.85-day mean by 8.9/day
-    40 x 100 % =  40/day  -- SHORT of the recent rate by 28.6/day
-   150 x 50 %  =  75/day  -- keeps pace with both
+    40 x 100 % =  40/day  -- keeps pace with the 4.85-day mean, SHORT of the recent
+                             rate by 28.6/day
+   150 x 100 % = 150/day  -- clears any night the registry has actually produced
 
-So 40 fails at the observed reliability against the mean, and fails against the current rate
-even if every slot fires. **The cap was never protecting the clock** — 40 calls is 6 % of the
-job — so it was protecting nothing while losing ground. Raised to **150**, a ceiling and not
-a target: on a quiet day the run still stops when `todo` empties.
+**A correction I owe this section.** I first wrote it as "1 of 2 slots delivered, so
+effective throughput is 20/day". That was true when I measured it at 17:53 UTC and false by
+21:07, when the 08-28 cron fired — eleven hours late, while I was working. The reliability
+argument was wrong. **The replacement argument is stronger and is measured rather than
+modelled:** that run saw `139 to do`, spent exactly its 40 calls, and left **99 companies
+unresearched**. The cap binds, in production, on a real night. At its own measured rate
+(7.3 s of wall per call at 2 workers) clearing all 139 would have cost **18 minutes** of a
+120-minute job. **The cap was never protecting the clock** — 40 calls is 6 % of the job —
+so it was protecting nothing while losing ground. Raised to **150**, a ceiling and not a
+target: on a quiet day the run still stops when `todo` empties.
+
+The lateness is its own finding and belongs to `infra` (`293`): a 10:00 slot that lands at
+21:07 runs *after* the evening registry work instead of before the morning digest, so the
+board renders a day behind the registry no matter what the cap is.
 
 This reverses the operator's earlier "keep 40, after tonight 40 should be rare", on evidence
 they then asked for. That answer was conditional on a premise the same night falsified: +65
@@ -272,7 +283,13 @@ reported against its opening state.
 |---|---|---|
 | active registry rows | 1,000 | **1,002** |
 | export records | 997 | **1,133** |
-| `registry backlog` (the mail's gauge) | 139 | **5** |
+| `registry backlog` (the mail's gauge) | 139 | **7** |
+
+...and it moved twice more while the session ran, which is why it was re-read at the end
+rather than reported from the start. `auto-expand`'s 20:23 run added `Agency` and `Zenyard`;
+the `registry` lane's queue drain then landed **55** more at ~23:00. Both were swept: 133 +
+1 + 53 = **187 companies researched tonight**, and the 7 that remain are the 4 strike-gated
+names plus `Golan`, `Jove` and `Landacorp`, which the second sweep failed on and struck.
 
 The sweep researched `Zenyard` (Cybersecurity / early-private / S, `stage_note` naming a Feb
 2026 pre-seed and its investors) and refused `Agency` — `auto-expand slug-probe; 821/1 IL`

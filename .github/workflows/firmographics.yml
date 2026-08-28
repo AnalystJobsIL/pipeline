@@ -38,12 +38,18 @@ name: Company intel — registry backlog (cloud)
 #     --limit  40  ->   7.0 min of a 120-minute job   (5.8 %)
 #     --limit 150  ->  26.2 min                       (21.9 %)
 #
-# Slot reliability, measured: this cron has had TWO scheduled opportunities and delivered
-# ONE, ten hours late (2026-08-27T20:05Z; the 08-28 slot never fired at all). So:
+# Slot reliability, measured: TWO scheduled opportunities, TWO delivered -- but at
+# +605 min (2026-08-27T20:05Z) and +662 min (2026-08-28T21:02Z), i.e. eleven hours after
+# the slot, AFTER the evening registry work rather than before the morning digest.
 #
-#     40 x 50 %  =  20/day  -- SHORT of even the 4.85-day mean by 8.9/day
-#     40 x 100 % =  40/day  -- SHORT of the recent rate by 28.6/day
-#    150 x 50 %  =  75/day  -- keeps pace with both
+# And the cap is not theoretical: run 33210826528 on 2026-08-28 saw `139 to do`, spent
+# exactly 40 calls (38 researched, 2 failed, 582 s model, 5 min wall) and LEFT 99 BEHIND.
+# At its own rate -- 7.3 s of wall per call at 2 workers -- clearing all 139 would have
+# cost 18 minutes of a 120-minute job.
+#
+#     40 x 100 % =  40/day  -- keeps pace with the 4.85-day mean, SHORT of the recent
+#                              rate by 28.6/day, and measurably short of one real night
+#    150 x 100 % = 150/day  -- clears any night the registry has actually produced
 #
 # The cap was never protecting the clock (40 calls used 6 % of the job); it was protecting
 # nothing and losing ground. It is a CEILING, not a target: on a quiet day the run still
