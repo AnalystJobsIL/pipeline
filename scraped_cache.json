@@ -4301,6 +4301,41 @@
    "url": "https://search-careers.gm.com/en/jobs/jr-202612923/staff-principal-software-engineer/"
   }
  ],
+ "GeoEdge": [
+  {
+   "ats_platform": "scrape",
+   "company": "GeoEdge",
+   "country_code": "",
+   "description": "",
+   "job_id": "714f3b5a5ab79eca",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Business Development Associate",
+   "url": "https://www.geoedge.com/careers/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "GeoEdge",
+   "country_code": "",
+   "description": "",
+   "job_id": "a21207898f4103fe",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Product Marketing Manager",
+   "url": "https://www.geoedge.com/careers/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "GeoEdge",
+   "country_code": "",
+   "description": "",
+   "job_id": "c15f08265a94c0e6",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Mobile Team Lead",
+   "url": "https://www.geoedge.com/careers/"
+  }
+ ],
  "Get SAT": [
   {
    "ats_platform": "scrape",
@@ -6360,6 +6395,305 @@
    "posted_date": "",
    "title": "Lead Software Engineer (Backend & AI)",
    "url": "https://careers.mastercard.com/us/en/job/R-280407/Lead-Software-Engineer-Backend-AI"
+  }
+ ],
+ "MatchPointIT": [
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "7a15a148d40d1e04",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Ruby on Rails developer",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "1e43a7032f95aac9",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Front-end Developer",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "b09767d0d8ba559e",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "תוכניתן/ית IVR",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "fba837252e22851d",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "תוכניתן/ית CRM Dynamics",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "8541da5a3bef38ea",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת C++",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "cc2167afe1887cb8",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת BI",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "fe88f810cb3b503f",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת Informatica",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "3ae3cabe2ab61d65",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת COBOL",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "5da65361b33a7126",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Web Developer",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "b80ac9144c496754",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Fullstack Developer",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "7fee37e84ee352e6",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "J2EE Developer",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "a7d92aae88a116d6",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת Web בסביבת NET.",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "2e330c608d170217",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת NET.",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "ea1075ec90a5999b",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת Fullstack Java",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "9f98ebe8aaeed197",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת Java",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "a439caa9dba06d2c",
+   "location": "רעננה",
+   "posted_date": "",
+   "title": "Helpdesk",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "307b80cba8ecb99f",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Mobile QA Engineer",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "289c6b5b91ebd233",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת Android",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "ee3ac02ab091485c",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת iOS",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "e064819a87d45d33",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "ראש צוות פיתוח Android",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "ecf5a12db3928794",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "ראש צוות פיתוח iOS",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "60e3959befb96ac6",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Testing Engineer",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "bde43ec85dac30e2",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מפתח/ת בדיקות אוטומטיות",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "edf42c7adcf7397d",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "בודק/ת תוכנה BI",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "845369086f90c7a2",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "בודק/ת תוכנה Web",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "220a28a726b10bb9",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "איש/אשת תקשורת ואבטחת מידע",
+   "url": "https://matchpointit.com/jobs/"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "MatchPointIT",
+   "country_code": "",
+   "description": "",
+   "job_id": "002f84e8f2d0cf12",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "איש/אשת אבטחת מידע",
+   "url": "https://matchpointit.com/jobs/"
   }
  ],
  "MeMed": [
@@ -11009,6 +11343,19 @@
    "posted_date": "",
    "title": "Online Data Analyst - Israel",
    "url": "https://jobs.telusdigital.com/search/jobs/in/country/israel"
+  }
+ ],
+ "Tesnet Group Ltd": [
+  {
+   "ats_platform": "scrape",
+   "company": "Tesnet Group Ltd",
+   "country_code": "",
+   "description": "",
+   "job_id": "d3a3165e8c4acd38",
+   "location": "גוש דן, דרום, ירושלים, צפון, שפלה, שרון",
+   "posted_date": "",
+   "title": "בודק/ת תוכנה לארגונים מובילים ברחבי הארץ",
+   "url": "https://tesnet-group.com/job/"
   }
  ],
  "Teva Pharmaceutical": [
