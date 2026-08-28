@@ -229,6 +229,12 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # that failed (mark_sent / gate / persist / publish reach the mail only the next day).
     _stage_alarms = (stages.alarms("collect") + stages.alarms("repair", 1)
                      + stages.alarms("expand", 1)
+                     # `firmo` is the 10:00 bulk research cron. It is the only thing that
+                     # drains the registry backlog, it has fired ONCE ever (2026-08-27T20:05Z,
+                     # +605 min late), and when it does not fire nothing says so. 1 day, not
+                     # 0: this digest runs at 05:00 and that cron at 10:00, so the freshest
+                     # possible stamp on any morning is yesterday's.
+                     + stages.alarms("firmo", 1)
                      # `publish` is this run's own stage: a stamp older than yesterday means
                      # yesterday's digest never reached its stamp (a crash or a timeout)
                      + [a.replace("— the digest read stale input", "— yesterday's digest never completed")

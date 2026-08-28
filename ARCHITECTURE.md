@@ -2842,7 +2842,7 @@ One JSON object per company, validated before caching:
 `_coerce` returns None and nothing is cached. `known: false` (and the older `unknown: true`)
 also return None. `growth-private` vs `private-enterprise` is the funding model, not size or
 age (Stripe is growth-private; Bosch, EY, a bank are private-enterprise). Anything that writes
-`employees_global` re-derives `size_band` with `band_for` — **0 of 968** records contradict it:
+`employees_global` re-derives `size_band` with `band_for` — **0 of 1,132** records contradict it:
 
 ```
 python -c "import json;from pipeline.firmographics import band_for as b;d=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));print(sum(1 for r in d.values() if r.get('employees_global') and b(r['employees_global'])!=r['size_band']))"
@@ -2856,22 +2856,26 @@ cached until 2027-02, and rendered as a one-chip card while the mail said `1 res
 
 **Coverage, 2026-08-28** (re-derived after that night's backlog drain; the previous reading
 was 973 / 899 / 897 on 08-27, before the registry grew to 1,000 active rows). The export holds
-**1,132** records. Of the **1,027** companies that can render a card — active registry rows
-∪ every company ever matched, minus the `discovery` pseudo-row — **1,022 (99.5 %)** have facts
-and **5** do not: `Tel Aviv` (refused by `not_a_company`: a bare place, never researched),
-`Hila & Co.` and `Peak Innovation` (research strikes, weekly retry), and `ImagineArt` and
-`Plateful`, which the 08-28 drain failed on and struck. Count the render set, not the
-registry: a company reaches a card by having a **role**, and 28 companies with role records
-are not active rows. Count it through `identity_key`, **not** by
-name — the name-match version reports 39 false gaps, because `display_index` already answers
-for "Dell" out of "Dell Technologies":
+**1,132** records. Of the **1,026** companies that can render a card — active registry rows
+∪ every company ever matched, minus the `discovery` pseudo-row and the names
+`not_a_company` refuses — **1,022 (99.6 %)** have facts and **4** do not: `Peak Innovation`,
+`Hila & Co.`, `ImagineArt` and `Plateful`, each carrying a research strike. Count the render
+set, not the registry: a company reaches a card by having a **role**, and 28 companies with
+role records are not active rows — `Hila & Co.` is one of them, with a role last seen
+2026-08-28, so it is the only one of the four rendering a card with no facts today. **Use
+this universe, not the registry's:** the active-rows-only count was 138 on the same data,
+because it counts the `discovery` pseudo-row and misses every matched-only company.
+
+Count it through `identity_key`, **not** by name — the name-match version reports **16**
+false gaps today (20 against 4), because `display_index` already answers for "Dell" out of
+"Dell Technologies":
 
 ```
 python -c "import json,csv;from pipeline.firmographics import identity_key as k,display_index;d=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));i=display_index(d);a=[r['company_name'] for r in csv.DictReader(open('companies.csv',encoding='utf-8-sig')) if r['active'].strip().lower()=='true'];m=[n for n in a if not (d.get(n) or i.get(k(n)))];print(len(a),len(m),sorted(m))"
 ```
 
-Field gaps are small and named: `founded` null on 7, `employees_global` null on 2,
-`il_center` empty on 4. Every record has sector, sub_sector, stage, stage_note,
+Field gaps are small and named: `founded` null on 17, `employees_global` null on 24,
+`il_center` empty on 4 (7 / 2 / 4 before the 08-28 drain added 135 records). Every record has sector, sub_sector, stage, stage_note,
 business_model, customer_type and size_band.
 
 **Identity.** `firmographics.identity_key` (not `store._norm_company`, which strips one
@@ -3057,7 +3061,15 @@ seeds sqlite from the export next morning. It has its own job and nothing waits 
 needs no meaningful cap. `--workers 2`, not 3: `docs/BACKLOG.md` 97 records `529 Overloaded`
 on 2 of 3 calls at 3. Research is one-time per company — nothing re-researches before
 **2027-02** at `--refresh-days 180` — so this drains a backlog rather than running a treadmill.
-It reports its own spend the way the digest hook does (`seam: <model> | N calls, Ns, N
+**Whether this cron RAN at all is measured by `stages.stamp("firmo", ...)`, not by anything
+in the export.** `run.py` reads it back with `stages.alarms("firmo", 1)`, which puts it on the
+mail's alarm block beside `collect`, `repair` and `expand`. An earlier attempt read the
+export's newest `as_of` instead and was blind: the digest hook researches board companies too
+and `_coerce` stamps them with today's date, so that field moves on most mornings whether or
+not this job fired — on 2026-08-28, the day it did not fire, the 08:54 digest added two
+records dated 08-28 and carried `export_newest` from 08-27 to 08-28. 1 day, not 0, because the
+digest runs at 05:00 and this cron at 10:00, so the freshest possible stamp on any morning is
+yesterday's. It reports its own spend the way the digest hook does (`seam: <model> | N calls, Ns, N
 searches[, N SEARCHLESS]`, and a `::warning::` on a searchless answer): it is the **main**
 spender now, and a job that spends the shared subscription invisibly is how the search mandate
 quietly stops holding. **Its failure memory is a committed file, `cloud_state/firmo_failed.json`, because a
@@ -3067,7 +3079,11 @@ brand-new EMPTY sqlite every run: the cron's strike write was ephemeral **by con
 not merely uncommitted. Measured — the 2026-08-27 run struck Sivo, ImagineArt, Chalk and
 Instacart, and the committed `firmo_failed` table holds none of the four, so all three
 active ones were re-bought on every later run and `refresh_abandoned` (4+ strikes) could
-never fire in the cloud at all. The ledger is read by BOTH tiers through
+never fire in the cloud at all. **Persisting the strike was only half of that**: on a runner
+`record_firmo_failure` writes 1 into a brand-new empty table every run, so `merge_failures`'
+`max(ledger_n, 1)` left `attempts` pinned at 1 for ever while the date advanced. The count is
+incremented against the MERGED prior, and eight consecutive runs now reach 8. The ledger is
+read by BOTH tiers through
 `firmographics.all_failures` (sqlite ∪ the file) and merged by `merge_failures`, which takes
 `attempts` and `last` **independently**: the hand-rolled merge it replaced kept
 `max(attempts)` inside `if last > have[1]`, so an older source's higher count was discarded
@@ -3153,7 +3169,7 @@ so a Hebrew token was **invisible** to the closure test rather than out-of-vocab
 `Analyst בע"מ` read as entirely role vocabulary — the mirror image of the §1a bug where a Latin
 entry did not cover the Hebrew spelling; a name whose letters the tokenizer did not account for
 is now never judged by this rule.
-Swept over every real name in the repo (**1,690**: `companies.csv` 1,244 + the export +
+Swept over every real name in the repo (`companies.csv`, now **1,536** rows, + the export +
 `research_companies.json` + `discovered_cache.json`) it fires on exactly two — `my team`,
 already junk, and `Infrastructure Team`, live in `research_companies.json` and one
 `auto_expand` run from being a row — and on **0 active registry rows**.
@@ -3225,7 +3241,7 @@ into separate rows and halving both counts.
 
 ### Guards and how to rehearse
 
-`tests/test_company_intel.py` (**84** cases, one per shipped bug or claim above; no test
+`tests/test_company_intel.py` (**102** cases, one per shipped bug or claim above; no test
 spawns `claude` or touches `cloud_state/`). To rehearse tomorrow's digest without spending
 anything:
 
@@ -3246,7 +3262,7 @@ an argv it cannot classify writes to stderr and exits 3, which the seam reports 
 printed a plausible line and exited 0 regardless.
 `test_the_rehearsal_shim_can_classify_every_argv_the_real_seam_builds` goes red instead.
 
-`tests/fixtures/company_intel/mutations.json` holds **41** records. It used to hold 18 and
+`tests/fixtures/company_intel/mutations.json` holds **53** records. It used to hold 18 and
 **could never have run**: it keyed the class as `cls` where `tools/mutate.py` reads
 `m["class"]`, which is why four records that no longer matched any code went unnoticed. It is
 also in no CI path — `tests.yml` runs `tools/mutate.py --all`, whose default catalogue is

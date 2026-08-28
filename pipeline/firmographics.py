@@ -573,7 +573,7 @@ SHARED_EXPORT = os.path.join(os.path.dirname(__file__), "..", "cloud_state",
 
 
 def load_shared_status():
-    """(records, status) for the committed export — status is `ok`, `missing` or `corrupt`.
+    """(records, status) for the committed export — `ok`, `missing`, `corrupt` or `partial`.
 
     The local store and the cloud store are separate sqlite files that cannot be merged,
     which is why the cloud digest rendered nothing while 919 profiles sat on a laptop.
@@ -590,7 +590,14 @@ def load_shared_status():
         return {}, "corrupt"
     if not isinstance(d, dict):
         return {}, "corrupt"
-    return {k: v for k, v in d.items() if isinstance(v, dict)}, "ok"
+    out = {k: v for k, v in d.items() if isinstance(v, dict)}
+    # `partial` is not cosmetic. This filter used to be silent, so a file that PARSED but
+    # held one non-dict value came back `ok` minus that key -- and `--export`'s superset
+    # guard then compared the union against the already-filtered set and could not see the
+    # drop. Five such values in a 1,132-record export published 1,127 records and printed
+    # `(+0)`. The strike ledger beside this function got the same verdict on the same day
+    # for the same reason; the export is the file where it costs more.
+    return out, ("partial" if len(out) != len(d) else "ok")
 
 
 def load_shared():
@@ -622,8 +629,8 @@ def strike_attempts(v):
     run before it researched anything."""
     try:
         return max(0, int(v))
-    except (TypeError, ValueError):
-        return 0
+    except (TypeError, ValueError, OverflowError):
+        return 0            # OverflowError: json.loads("1e999") is inf, and int(inf) raises
 
 
 def _strike_pair(v, today=""):
@@ -641,7 +648,14 @@ def _strike_pair(v, today=""):
     else:
         return None
     last = str(last or "")
-    if not _ISO_DATE.match(last):
+    if not _ISO_DATE.fullmatch(last):
+        return None                     # fullmatch, not match: `$` accepts a trailing
+                                        # newline, and a date with one
+                                        # sorts ABOVE the same date, so it
+                                        # would win every `max`
+    try:
+        _dt.date.fromisoformat(last)    # shape is not a date: "2026-08-32" passed the regex
+    except ValueError:
         return None
     if today and last > today:
         return None
@@ -685,10 +699,17 @@ def merge_failures(*sources):
     out = {}
     for src in sources:
         for company, v in (src or {}).items():
-            att, last = (v if isinstance(v, tuple) else _strike_pair(v) or (0, ""))
+            pair = _strike_pair(list(v) if isinstance(v, tuple) else v)
+            if pair is None or not str(company or "").strip():
+                continue        # EVERY source is validated, including the sqlite ones. They
+                                # arrive as tuples and used to skip the validator, so a NULL
+                                # `last` became "" and was written -- after which
+                                # `load_failures` read the file back as `partial` and
+                                # `save_failures` refused for ever. The ledger stopped
+                                # learning and only the per-run warning said so.
+            att, last = pair
             have = out.get(company, (0, ""))
-            out[company] = (max(strike_attempts(att), have[0]),
-                            max(str(last or ""), have[1]))
+            out[company] = (max(att, have[0]), max(last, have[1]))
     return out
 
 
@@ -701,7 +722,11 @@ def save_failures(ledger, cleared=()):
     if status in ("corrupt", "partial"):
         return False, status
     merged = merge_failures(on_disk, ledger)
-    for name in cleared:
+    # by identity, not by string: every gate that READS this file keys on `identity_key`
+    # (`failed_norms` in both tiers), so an exact-name pop let "Sivo " survive its own
+    # clearing and go on gating "Sivo".
+    done = {identity_key(n) for n in cleared}
+    for name in [n for n in merged if identity_key(n) in done]:
         merged.pop(name, None)
     path = os.path.abspath(SHARED_FAILURES)
     os.makedirs(os.path.dirname(path), exist_ok=True)

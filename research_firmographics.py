@@ -28,6 +28,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from pipeline import firmographics as F
+from pipeline import stages
 from pipeline.companies import load_companies
 from pipeline.firmographics import (ResearchUnavailable, band_for, identity_key,
                                     load_shared_status, not_a_company, research_company,
@@ -158,6 +159,10 @@ def main():
     ap.add_argument("--dry-run", action="store_true", help="only report, no research")
     ap.add_argument("--export", action="store_true", help="write the union to cloud_state/firmographics.json and exit")
     a = ap.parse_args()
+    if a.limit is not None and a.limit < 0:
+        # argparse accepts `--limit -5`, and the workflow_dispatch input is free text.
+        # `todo[:-5]` then attempts 152 of 157 names while the run announces "-5 to do".
+        ap.error("--limit must be >= 0 (0 means unbounded)")
 
     st = SeenStore()
     today = dt.date.today().isoformat()
@@ -174,10 +179,11 @@ def main():
         # never be silently REPLACED by the smaller sqlite table"), and the digest hook is
         # the only caller that was honouring it (`company_intel.py`, `export_status`).
         shared, status = load_shared_status()
-        if status == "corrupt":
-            print("::error::company-intel cloud_state/firmographics.json is CORRUPT — "
-                  "refusing to publish the sqlite table over it, because the sqlite table "
-                  "is the SMALLER side. Restore the file (git checkout) and re-run --export.")
+        if status in ("corrupt", "partial"):
+            print(f"::error::company-intel cloud_state/firmographics.json is {status.upper()} "
+                  "— refusing to publish over it, because what we could read is the SMALLER "
+                  "side and this write would delete every record we could not read. Restore "
+                  "the file (git checkout) and re-run --export.")
             return 1
         recs = union_store(st, shared)
         # The union is a superset by construction (`merge` is field-level and drops no key).
@@ -189,10 +195,12 @@ def main():
                   "the export already holds (%s%s)"
                   % (len(lost), ", ".join(lost[:5]), " ..." if len(lost) > 5 else ""))
             return 1
-        save_shared(recs)
         os.makedirs(os.path.dirname(EXPORT), exist_ok=True)
         with open(EXPORT, "w", encoding="utf-8") as f:
             json.dump(recs, f, ensure_ascii=False, indent=2, sort_keys=True)
+        if not save_shared(recs):
+            print("::error::company-intel the export was NOT written (nothing to write)")
+            return 1
         print(f"exported {len(recs)} records ({len(recs) - len(shared):+d}) "
               f"-> {EXPORT} + {SHARED_EXPORT}")
         return
@@ -385,6 +393,13 @@ def main():
     # the conflict path is base-aware, so a deliberate drop is honoured and a concurrent
     # ADD by another writer is kept).
     ledger = F.merge_failures(failures, st.load_firmo_failures())
+    # The COUNT has to be incremented against the merged prior, not against sqlite. On a
+    # runner `record_firmo_failure` writes 1 into a brand-new empty table every time, and
+    # `merge_failures` takes `max(ledger_n, 1)` -- so attempts stayed pinned at 1 for ever
+    # while the date advanced, and `refresh_abandoned` (4+) still could not fire in the
+    # cloud. Persisting the strike is only half the fix; this is the other half.
+    for n in struck:
+        ledger[n] = (F.strike_attempts(failures.get(n, (0, ""))[0]) + 1, today)
     written, status = F.save_failures(ledger, cleared=done_names)
     if written:
         print(f"strike ledger: {len(set(ledger) - done_names)} name(s) -> "
@@ -394,6 +409,15 @@ def main():
         print(f"::warning::company-intel strike ledger NOT written "
               f"(cloud_state/firmo_failed.json is {status}) — {len(struck)} strike(s) from "
               f"this run will not survive their runner", flush=True)
+    # Stamp the shared stage file. This is the ONLY thing that measures "the 10:00 cron
+    # ran", and it has to be a stamp rather than a property of the export: the digest hook
+    # researches board companies too and stamps them with today's date, so the export's
+    # newest record moves on most mornings whether or not this job ever fired. Measured --
+    # on 2026-08-28, the day this cron did NOT run, the 08:54 digest added two records
+    # dated 08-28 and carried `export_newest` from 08-27 to 08-28, so an alarm reading that
+    # field would have been silent on the exact morning it was built for.
+    stages.stamp("firmo", researched=done, failed=failed, records=len(have) + done,
+                 **({"alarm": "infra-abort"} if infra_streak >= 3 else {}))
     print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store")
     if meta.get("calls"):
         models = ", ".join(

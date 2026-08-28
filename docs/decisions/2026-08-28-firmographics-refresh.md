@@ -11,14 +11,14 @@ it. Supersedes nothing; this is the first time the question was asked with numbe
 
 `ARCHITECTURE.md` §7 says stage and headcount age silently — a company profiled once is
 described as it was then. `firmographics.yml` sets `--refresh-days 180`, so nothing
-re-researches before **2027-02-17**. Is that horizon right?
+re-researches before **2027-02-18**. Is that horizon right?
 
 ## What is free to measure, and what it says
 
 **1. There is no stale tail. The oldest record is seven days old.**
 
 ```bash
-python -c "import json,io,collections;d=json.load(io.open('cloud_state/firmographics.json',encoding='utf-8'));print(sorted(collections.Counter(v['as_of'] for v in d.values()).items()))"
+git show origin/master:cloud_state/firmographics.json | python -c "import sys,json,collections;d=json.loads(sys.stdin.buffer.read().decode('utf-8'));print(sorted(collections.Counter(v['as_of'] for v in d.values()).items()))"
 ```
 
 | as_of | records |
@@ -51,7 +51,9 @@ tell those apart.
 **3. The thundering herd. This is the real finding.**
 
 Because all 997 share a birth week, at `--refresh-days 180` the **entire store turns stale
-between 2027-02-17 and 2027-02-24**, at once. `REFRESH_CAP = 20/run` then needs ~50 runs to
+between 2027-02-18 and 2027-02-25**, at once (`is_stale` is `(today - as_of).days >
+refresh_days`, so day 180 exactly is still fresh -- an attacker caught this as an off-by-one
+in the first draft). `REFRESH_CAP = 20/run` then needs ~50 runs to
 drain it — while new registry rows compete for the same queue.
 
 **4. And the refresh layer cannot currently run at all when the backlog is large.**
@@ -98,14 +100,21 @@ A rule that cannot say "no" for the right reason is not a measurement.
 **What a real measurement would cost, so the next session does not re-derive it.** It needs a
 control arm — records whose evidence is current, where any disagreement *must* be noise — and
 enough per arm to separate two rates. To separate a 10 % noise floor from a 40 % real rate at
-80 % power needs **~20–30 per arm, i.e. 40–60 calls**, not 12:
+80 % power needs **~30 per arm, i.e. ~60 calls**, not 12:
 
-| n per arm | power (10 % vs 40 %) |
-|---|---|
-| 6 | 0.36 |
-| 10 | 0.50 |
-| 20 | 0.76 |
-| 30 | 0.89 |
+| n per arm | power, Fisher exact | power, normal approx |
+|---|---|---|
+| 6 | 0.11 | 0.36 |
+| 10 | 0.29 | 0.50 |
+| 20 | 0.62 | 0.76 |
+| 30 | **0.80** | 0.89 |
+| 40 | 0.92 | 0.95 |
+
+**Method: Fisher's exact test, one-sided at a = 0.05, enumerated over both arms** -- the only
+valid test at these n. The first draft quoted the unpooled normal approximation without saying
+so, and an attacker caught it: the approximation is optimistic at every n, and the irony was
+load-bearing, because the n=12 error rates above are computed exactly while the table that
+sets the future budget was not.
 
 And it is **not runnable today at any n**, because the aged arm does not exist: a `stage_note`
 citing 2023 is a company with no recent news, not an aged record. The measurement becomes
@@ -131,7 +140,7 @@ finding, and neither is a measurement that cannot fail.
 2. **Immediately**, if the `Company intel:` line's new stall alarm ever fires on a shrunk
    export rather than a dropped cron.
 
-**Before 2027-02-17**, whoever owns this lane must decide what happens to the herd — 997
+**Before 2027-02-18**, whoever owns this lane must decide what happens to the herd — 997
 records going stale in one week against a 20/run cap and a new-name queue that outranks them.
 Two candidates, neither measured and so neither built: a per-company jitter on `is_stale` so
 the birth week spreads, or a refresh budget independent of `--limit`. Filed as

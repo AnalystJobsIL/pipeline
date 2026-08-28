@@ -1426,24 +1426,6 @@ def test_a_missing_ledger_is_not_an_error(ledger, tmp_path):
 
 # ---- the export refusal ------------------------------------------------------------- #
 
-def test_export_refuses_to_publish_the_smaller_table_over_a_corrupt_export():
-    """`union_store(st)` called `load_shared()`, which DROPS `load_shared_status`'s verdict -
-    so over a corrupt or half-written export the union was the sqlite table alone and
-    `--export` published it, with an encouraging `exported N records`. That is the one thing
-    `load_shared_status`'s own docstring says must never happen, and the digest hook was the
-    only caller honouring it. An ::error:: that still exits 0 is CLAUDE.md rule 1 from the
-    inside, so the refusal has to fail the step too."""
-    import inspect
-    import research_firmographics as R
-    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    text = open(os.path.join(repo, "research_firmographics.py"), encoding="utf-8").read()
-    assert "sys.exit(main() or 0)" in text, "a refusal that exits 0 is invisible to the workflow"
-    src = inspect.getsource(R.main)
-    assert "load_shared_status()" in src and 'status == "corrupt"' in src
-    assert "set(shared) - set(recs)" in src, "the union superset guard is gone"
-    assert "{len(recs) - len(shared):+d}" in src, "the export line stopped reporting its delta"
-
-
 # ---- the stall alarm ---------------------------------------------------------------- #
 
 def _stall_rep(**kw):
@@ -1453,49 +1435,66 @@ def _stall_rep(**kw):
     return r
 
 
-def test_the_mail_says_when_nothing_has_been_researched_for_days():
-    """The bulk cron is the only thing that drains the registry backlog and NOTHING said so
-    when it stopped: it has fired once ever (2026-08-27T20:05Z, +605 min late), the 08-28
-    slot did not fire at all, and `registry backlog` went 74 -> 139 across that day's two
-    digests in silence."""
-    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-08-25", registry_backlog=12))
-    assert any("nothing has been researched for 3 days" in w for w in warn), warn
-    assert any("12 companies still need facts" in w for w in warn), warn
+def test_the_cron_that_did_not_run_is_measured_by_its_own_stamp(tmp_path, monkeypatch):
+    """An `export_newest`-based stall alarm shipped here for one hour and was BLIND to the
+    failure it was written for. The digest hook researches board companies too and `_coerce`
+    stamps them with today's date, so the export's newest record moves on most mornings
+    whether or not the 10:00 bulk cron ever fired. Measured on the real history: on
+    2026-08-28, the day that cron did NOT run, the 08:54 digest commit added two records
+    dated 2026-08-28 and carried `export_newest` from 08-27 to 08-28 -- the alarm would have
+    printed nothing on the exact morning it was built for.
+
+    "Did the cron run" is a question about the CRON. `research_firmographics` stamps `firmo`
+    and `run.py` reads it back, which is how every other missing-stage question in this repo
+    is asked, and which puts it on the mail's alarm block rather than a run page this project
+    deletes on purpose."""
+    import inspect
+    from pipeline import stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+
+    assert "firmo" in stages.ORDER, "the stage left the ordering contract"
+    assert stages.alarms("firmo", 1) == ["firmo never ran"]
+
+    stages.stamp("firmo", researched=19, failed=4, records=995)
+    assert stages.alarms("firmo", 1) == [], "a cron that ran today must not alarm"
+    assert "firmo: " in stages.summary()
+
+    # a stamp with no research is still a cron that RAN -- a drained backlog is healthy,
+    # and `research_firmographics._stamp_ok` says so in its own words
+    stages.stamp("firmo", researched=0, failed=0, records=1132)
+    assert stages.alarms("firmo", 1) == []
+
+    # ...and an aborted run says so on the same line
+    stages.stamp("firmo", researched=0, failed=7, records=1132, alarm="infra-abort")
+    assert stages.alarms("firmo", 1) == ["firmo infra-abort"]
+
+    src = inspect.getsource(__import__("research_firmographics").main)
+    assert 'stages.stamp("firmo"' in src, "the bulk run stopped stamping its own stage"
+    run = inspect.getsource(__import__("pipeline.run", fromlist=["run"]))
+    assert 'stages.alarms("firmo", 1)' in run, "the stamp is written but nobody reads it"
 
 
-def test_the_stall_alarm_is_silent_on_a_healthy_morning():
-    """The signal is `export_newest`, not the backlog size. A backlog threshold is wrong
-    twice over: the registry adds 30-100 active rows a day, so any absolute bar is crossed
-    on healthy mornings - the reason the clause beside it was rejected - and a quiet
-    registry lets a dead cron sit under that bar for a fortnight."""
-    for newest, backlog in (("2026-08-28", 139), ("2026-08-27", 139), ("2026-08-26", 4)):
-        _, warn = CI.audit_lines(_stall_rep(export_newest=newest, registry_backlog=backlog))
-        assert not any("has been researched for" in w for w in warn), (newest, backlog)
-    # and the one that matters after tonight: a DRAINED backlog and a quiet week is not a
-    # stall. An alarm that fires on that is the always-on warning beside it in the source.
-    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-08-01", registry_backlog=0))
-    assert not any("has been researched for" in w for w in warn), warn
-    # ...nor is a backlog that could not be counted
-    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-08-01", registry_backlog=-1))
-    assert not any("has been researched for" in w for w in warn), warn
+def test_the_stall_alarm_reaches_the_mail_not_only_the_run_page():
+    """`_intel_warn` is printed as a `::warning::` and never joins `_stage_alarms`, so a
+    company-intel warning reaches the run page alone -- and `CLAUDE.local.md` section 3 has
+    this project DELETING run records on purpose. Routing the cron question through
+    `stages.alarms` puts it in the tuple `pipeline/digest.py` renders into `Needs a look`."""
+    import inspect
+    run = inspect.getsource(__import__("pipeline.run", fromlist=["run"]))
+    block = run[run.index("_stage_alarms = ("):run.index("for _line in _stage_alarms:")]
+    assert 'stages.alarms("firmo", 1)' in block
 
 
-def test_the_stall_alarm_never_raises_on_an_unusable_date():
-    """It feeds a warning, and a warning must not be able to take down the run it warns
-    about - the `_knob` lesson, in the same file."""
-    for newest in ("", "?", "2026-13-99", None):
-        CI.audit_lines(_stall_rep(export_newest=newest))
-    assert CI._export_age_days("", "2026-08-28") is None
-    assert CI._export_age_days("2026-08-25", None) is None
-    assert CI._export_age_days("2026-08-25", "2026-08-28") == 3
-
-
-def test_a_scoped_local_run_never_raises_the_stall_alarm():
-    """A scoped run reads whatever export happens to be checked out; it is not evidence
-    about whether the cloud is researching anything."""
-    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-01-01", scoped=True,
-                                        registry_backlog=50))
-    assert not any("has been researched for" in w for w in warn)
+def test_no_export_field_is_used_as_a_cron_liveness_signal():
+    """The regression guard for the hour-long mistake: any future `export_newest` (or
+    `as_of`) comparison in `audit_lines` is measuring the digest's own writes, not the
+    cron's. If one comes back, it needs the measurement above re-run first."""
+    import inspect
+    src = inspect.getsource(CI._audit_lines)
+    live = "\n".join(l for l in src.splitlines() if not l.strip().startswith("#"))
+    assert "export_newest" in live, "the export's newest record is still a FACT on the line"
+    for banned in ("_export_age_days", "EXPORT_STALE_DAYS"):
+        assert banned not in live, f"{banned} is a cron-liveness signal the digest resets"
 
 
 def test_every_path_the_firmographics_workflow_owns_has_a_strategy():
@@ -1522,3 +1521,97 @@ def test_a_run_says_how_many_refreshes_its_limit_deferred():
     assert R.plan_counts(10, 5, 40) == (15, 0), "nothing deferred when the limit is not hit"
     assert R.plan_counts(137, 20, 0) == (157, 0), "--limit 0 is unbounded, not zero"
     assert R.plan_counts(0, 20, 5) == (5, 15)
+
+
+# --- company-intel, 2026-08-28 wave 1: three attackers, three defects in this session's own
+# uncommitted work. Each of these is a reproduction they built, kept as a guard. ---
+
+
+def test_a_strike_count_accumulates_across_runners_that_each_start_empty(ledger, tmp_path):
+    """Persisting the strike was only HALF the fix, and the commit that shipped it claimed
+    the whole thing. On a runner `record_firmo_failure` writes 1 into a brand-new empty
+    table every single run, and `merge_failures` takes `max(ledger_n, 1)` — so `attempts`
+    stayed pinned at **1 for ever** while the date advanced, and `refresh_abandoned` (4+)
+    still could not fire in the cloud. Eight consecutive cron runs, each with its own store,
+    used to end at 1."""
+    from pipeline.store import SeenStore
+    for i in range(1, 9):
+        day = f"2026-09-{i:02d}"
+        st = SeenStore(str(tmp_path / f"run{i}.db"))       # a fresh runner every time
+        failures = F.merge_failures(F.load_failures(day)[0], st.load_firmo_failures())
+        st.record_firmo_failure("Sivo", day)
+        led = F.merge_failures(failures, st.load_firmo_failures())
+        led["Sivo"] = (F.strike_attempts(failures.get("Sivo", (0, ""))[0]) + 1, day)
+        F.save_failures(led)
+        assert F.load_failures()[0]["Sivo"] == (i, day), f"run {i}"
+    assert F.load_failures()[0]["Sivo"][0] >= 4, "refresh_abandoned can never fire"
+    src = __import__("inspect").getsource(__import__("research_firmographics").main)
+    assert "F.strike_attempts(failures.get(n, (0, \"\"))[0]) + 1" in src, \
+        "the count is being incremented against sqlite again, not against the merged prior"
+
+
+def test_an_export_that_parses_but_lost_a_key_is_partial_and_nobody_publishes_over_it(env):
+    """`load_shared_status` dropped every non-dict value and still returned `ok`, so
+    `--export`'s superset guard compared the union against the ALREADY-FILTERED set and was
+    structurally blind to the drop. Five bad values in a 1,132-record export published 1,127
+    records and printed `(+0)`. The strike ledger next to it got a `partial` verdict on the
+    same day for the same reason; this is the file where it costs more."""
+    _st, export, _calls, _fake = env
+    export.write_text(json.dumps({"Wix": REC, "Fiverr": "not a record"}), encoding="utf-8")
+    recs, status = F.load_shared_status()
+    assert status == "partial" and set(recs) == {"Wix"}
+    # neither writer may publish what it could only partly read
+    src = __import__("inspect").getsource(__import__("research_firmographics").main)
+    assert 'status in ("corrupt", "partial")' in src
+    assert 'rep["export_status"] not in ("corrupt", "partial")' in \
+        __import__("inspect").getsource(CI._enrich)
+
+
+def test_export_refuses_behaviourally_and_leaves_the_file_byte_identical(tmp_path, monkeypatch):
+    """The first version of this guard asserted four SUBSTRINGS of the source and would have
+    gone green against the `partial` hole above — which is the exact thing `tools/mutate.py`
+    exists to catch, applied to a record-destroying write path. It runs `main()` now."""
+    import research_firmographics as R
+    export = tmp_path / "firmographics.json"
+    monkeypatch.setattr(F, "SHARED_EXPORT", str(export))
+    monkeypatch.setattr(R, "SHARED_EXPORT", str(export))
+    monkeypatch.setattr(R, "EXPORT", str(tmp_path / "local.json"))
+    monkeypatch.setattr(R, "SeenStore", lambda *a, **k: store.SeenStore(str(tmp_path / "t.db")))
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--export"])
+    for body in ("{ not json", json.dumps({"Wix": REC, "Fiverr": "not a record"})):
+        export.write_text(body, encoding="utf-8")
+        assert R.main() == 1, f"published over {body[:12]!r}"
+        assert export.read_text(encoding="utf-8") == body, "the bad file was overwritten"
+
+
+def test_no_ledger_input_can_outlive_its_own_validator(ledger):
+    """Five shapes an attacker fed the ledger, each of which had a permanent consequence.
+
+    The sqlite sources were the hole: both arrive as TUPLES and used to skip `_strike_pair`
+    entirely, so a NULL `last` became "" and was written -- after which `load_failures` read
+    the file back as `partial` and `save_failures` refused for ever, and the ledger silently
+    stopped learning. `_ISO_DATE` was also shape-only (`2026-08-32` passed) and used `match`,
+    so a trailing newline survived and sorted ABOVE the same date, winning every `max`."""
+    assert F.strike_attempts(float("inf")) == 0, "json.loads('1e999') is inf; int(inf) raises"
+    assert F._strike_pair([1, "2026-08-32"]) is None, "a shape is not a date"
+    assert F._strike_pair([1, "2026-08-27\n"]) is None, "sorts above the same date"
+    assert F.merge_failures({"Sivo": (2, None)}) == {}, "a tuple source skipped validation"
+    assert F.merge_failures({"Sivo": (2, "2026-08-27")}) == {"Sivo": (2, "2026-08-27")}
+
+
+def test_a_cleared_name_takes_its_variants_with_it(ledger):
+    """Every gate that READS this file keys on `identity_key`, so an exact-name pop let
+    `"Sivo "` survive its own clearing and go on gating `"Sivo"`."""
+    F.save_failures({"Sivo ": (1, "2026-08-27"), "sivo": (1, "2026-08-27")})
+    F.save_failures({}, cleared={"Sivo"})
+    assert F.load_failures()[0] == {}
+
+
+def test_a_negative_limit_is_refused_rather_than_silently_inverted():
+    """`argparse` accepts `--limit -5` and the workflow_dispatch input is free text; `todo[:-5]`
+    then attempts 152 of 157 names while the run announces `-5 to do`."""
+    import subprocess
+    r = subprocess.run([sys.executable, "research_firmographics.py", "--limit", "-5",
+                        "--dry-run"], capture_output=True, text=True,
+                       cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    assert r.returncode == 2 and "--limit must be >= 0" in r.stderr, (r.returncode, r.stderr[-300:])

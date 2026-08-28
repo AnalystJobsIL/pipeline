@@ -29,8 +29,8 @@
   {
     "id": "ci-scoped-publishes",
     "file": "pipeline/company_intel.py",
-    "find": "    if not scoped and rep[\"export_status\"] != \"corrupt\":",
-    "replace": "    if rep[\"export_status\"] != \"corrupt\":",
+    "find": "    if not scoped and rep[\"export_status\"] not in (\"corrupt\", \"partial\"):",
+    "replace": "    if rep[\"export_status\"] not in (\"corrupt\", \"partial\"):",
     "class": "M1",
     "symbol": "scoped_publishes",
     "why": "company-intel guard"
@@ -38,7 +38,7 @@
   {
     "id": "ci-corrupt-overwritten",
     "file": "pipeline/company_intel.py",
-    "find": "    if not scoped and rep[\"export_status\"] != \"corrupt\":",
+    "find": "    if not scoped and rep[\"export_status\"] not in (\"corrupt\", \"partial\"):",
     "replace": "    if not scoped:",
     "class": "M1",
     "symbol": "corrupt_overwritten",
@@ -371,7 +371,7 @@
   {
     "id": "ci-export-ignores-corrupt",
     "file": "research_firmographics.py",
-    "find": "        if status == \"corrupt\":\n",
+    "find": "        if status in (\"corrupt\", \"partial\"):\n",
     "replace": "        if False:\n",
     "class": "M1",
     "symbol": "export_ignores_corrupt",
@@ -407,8 +407,8 @@
   {
     "id": "ci-ledger-accepts-a-null-date",
     "file": "pipeline/firmographics.py",
-    "find": "    if not _ISO_DATE.match(last):\n        return None\n",
-    "replace": "    if False:\n        return None\n",
+    "find": "    if not _ISO_DATE.fullmatch(last):\n",
+    "replace": "    if False:\n",
     "class": "M1",
     "symbol": "ledger_accepts_a_null_date",
     "why": "company-intel guard 2026-08-28"
@@ -416,8 +416,8 @@
   {
     "id": "ci-merge-loses-attempts",
     "file": "pipeline/firmographics.py",
-    "find": "            out[company] = (max(strike_attempts(att), have[0]),\n",
-    "replace": "            out[company] = (strike_attempts(att),\n",
+    "find": "            out[company] = (max(att, have[0]), max(last, have[1]))\n",
+    "replace": "            out[company] = (att, max(last, have[1]))\n",
     "class": "M2",
     "symbol": "merge_loses_attempts",
     "why": "company-intel guard 2026-08-28"
@@ -432,15 +432,6 @@
     "why": "company-intel guard 2026-08-28"
   },
   {
-    "id": "ci-stall-alarm-never-fires",
-    "file": "pipeline/company_intel.py",
-    "find": "        if (_age is not None and _age > EXPORT_STALE_DAYS and not rep.get(\"scoped\")\n                and isinstance(_rb, int) and _rb > 0):\n",
-    "replace": "        if False:\n",
-    "class": "M3",
-    "symbol": "stall_alarm_never_fires",
-    "why": "company-intel guard 2026-08-28"
-  },
-  {
     "id": "ci-refresh-starvation-silent",
     "file": "research_firmographics.py",
     "find": "    return attempted, min(max(0, total - attempted), n_refresh)\n",
@@ -450,12 +441,75 @@
     "why": "company-intel guard 2026-08-28"
   },
   {
-    "id": "ci-stall-alarm-ignores-a-drained-backlog",
-    "file": "pipeline/company_intel.py",
-    "find": "                and isinstance(_rb, int) and _rb > 0):\n",
-    "replace": "                and True):\n",
-    "class": "M3",
-    "symbol": "stall_alarm_ignores_a_drained_backlog",
+    "id": "ci-firmo-stage-never-stamped",
+    "file": "research_firmographics.py",
+    "find": "    stages.stamp(\"firmo\", researched=done, failed=failed, records=len(have) + done,\n",
+    "replace": "    _ = (lambda *a, **k: None)(\"firmo\", researched=done, failed=failed, records=len(have) + done,\n",
+    "class": "M1",
+    "symbol": "firmo_stage_never_stamped",
     "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-firmo-stage-never-read",
+    "file": "pipeline/run.py",
+    "find": "                     + stages.alarms(\"firmo\", 1)\n",
+    "replace": "                     + []\n",
+    "class": "M1",
+    "symbol": "firmo_stage_never_read",
+    "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-export-publishes-a-partial-read",
+    "file": "pipeline/firmographics.py",
+    "find": "    return out, (\"partial\" if len(out) != len(d) else \"ok\")\n",
+    "replace": "    return out, \"ok\"\n",
+    "class": "M1",
+    "symbol": "export_publishes_a_partial_read",
+    "why": "company-intel guard 2026-08-28 wave 1"
+  },
+  {
+    "id": "ci-strike-count-pinned-at-one",
+    "file": "research_firmographics.py",
+    "find": "        ledger[n] = (F.strike_attempts(failures.get(n, (0, \"\"))[0]) + 1, today)\n",
+    "replace": "        pass\n",
+    "class": "M1",
+    "symbol": "strike_count_pinned_at_one",
+    "why": "company-intel guard 2026-08-28 wave 1"
+  },
+  {
+    "id": "ci-ledger-date-is-shape-only",
+    "file": "pipeline/firmographics.py",
+    "find": "        _dt.date.fromisoformat(last)    # shape is not a date: \"2026-08-32\" passed the regex\n",
+    "replace": "        pass\n",
+    "class": "M2",
+    "symbol": "ledger_date_is_shape_only",
+    "why": "company-intel guard 2026-08-28 wave 1"
+  },
+  {
+    "id": "ci-sqlite-source-skips-validation",
+    "file": "pipeline/firmographics.py",
+    "find": "            pair = _strike_pair(list(v) if isinstance(v, tuple) else v)\n",
+    "replace": "            pair = (v if isinstance(v, tuple) else _strike_pair(v)) or (0, \"\")\n",
+    "class": "M1",
+    "symbol": "sqlite_source_skips_validation",
+    "why": "company-intel guard 2026-08-28 wave 1"
+  },
+  {
+    "id": "ci-cleared-is-an-exact-name-pop",
+    "file": "pipeline/firmographics.py",
+    "find": "    done = {identity_key(n) for n in cleared}\n",
+    "replace": "    done = set(cleared)\n",
+    "class": "M2",
+    "symbol": "cleared_is_an_exact_name_pop",
+    "why": "company-intel guard 2026-08-28 wave 1"
+  },
+  {
+    "id": "ci-negative-limit-accepted",
+    "file": "research_firmographics.py",
+    "find": "    if a.limit is not None and a.limit < 0:\n",
+    "replace": "    if False:\n",
+    "class": "M3",
+    "symbol": "negative_limit_accepted",
+    "why": "company-intel guard 2026-08-28 wave 1"
   }
 ]

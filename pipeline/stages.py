@@ -7,6 +7,7 @@ it. The intended sequence is:
     2  collect   00:00  refresh_scrape_cache   (needs stage 1: fixed URLs)
     2  collect   05:00  discovery_daily / discovery_telegram
     3  expand    08:00  auto_expand            (new companies -> tomorrow's stage 1)
+    4  firmo     10:00  research_firmographics (company facts for rows the registry added)
     4  enrich    05:00  enrich_scrape_jd       (JD text for every relevant role, any age)
     5  publish   05:00  pipeline.run           (classify -> email 48h -> board -> archive)
 
@@ -26,7 +27,7 @@ import os
 
 PATH = os.path.join(os.path.dirname(__file__), "..", "cloud_state", "pipeline_stages.json")
 
-ORDER = ["repair", "collect", "expand", "enrich", "publish"]
+ORDER = ["repair", "collect", "expand", "firmo", "enrich", "publish"]
 
 
 def _load() -> dict:
