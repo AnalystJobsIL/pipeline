@@ -170,7 +170,7 @@ closure convention in the header.
 - **353** `353@registry` **Three active rows are one employer, and two of them are the same board**
 - **354** `354@registry` **The nine address-refused rows are refused from a HOME address too**
 - **355** `355@registry` **The nightly embed handoff has no reader yet**
-- **368** `368@registry` **Three mutations on `listing_hunt`'s intake-queue gate are EQUIVALENT MUTANTS**
+- **368** `368@registry` **`hunt-queue-identity-remove` is an EQUIVALENT MUTANT, and the source-text guard that
 
 ### infra — 76 open
 
@@ -5969,8 +5969,9 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
 
 367. ~~**Seven mutations SURVIVE, and nobody has seen that since 2026-08-24**~~ —
     **CLOSED 2026-08-28 (`infra`)**: four were real gaps and now have behavioural guards;
-    three are EQUIVALENT MUTANTS and cannot be killed by any test, which is a different
-    finding and is handed to `registry` below.
+    ONE is an equivalent mutant that no behavioural test can kill, which is a different
+    finding and is handed to `registry` as 368. (Filed as three; the CI run on `b374ebd`
+    corrected it to one — `-invert` and `-narrow` are killed, `-remove` is not.)
 
     A full local `--all` finished in **5,119 s wall with 4 workers** (85 min; 19,754 s of
     pytest time): **204 mutations, 197 killed, 7 alive, 0 coverage gaps**. That 85 minutes is
@@ -5994,10 +5995,24 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     UNCOMMITTED guard is invisible to it: the first two guards read as SURVIVING until they
     were committed, and only then killed their mutants. Commit before you measure.
 
-368. **Three mutations on `listing_hunt`'s intake-queue gate are EQUIVALENT MUTANTS** — lane:
-    `registry`. `hunt-queue-identity-remove` / `-invert` / `-narrow` all mutate
-    `elif verdict == "found" and not _gate.identity_ok(name, q_url):`, and **no test can kill
-    them, because the code has a second gate on the same predicate seven lines later**:
+368. **`hunt-queue-identity-remove` is an EQUIVALENT MUTANT, and the source-text guard that
+    catches it is the right guard** — lane: `registry`. Filed as three mutations; the CI run
+    corrected that to one, which is recorded here rather than quietly fixed.
+
+    All three mutate `listing_hunt.main`'s intake-queue branch
+    `elif verdict == "found" and not _gate.identity_ok(name, q_url):`. Measured on
+    `b374ebd` (run `33171673953`): shard 1 killed `-invert` and `-narrow` **64 of 64**, and
+    shard 0 reports **73 of 74** with only `-remove` alive, "killed ONLY by source-text
+    guard(s)".
+
+    **Why only that one.** `-invert` and `-narrow` keep the text `_gate.identity_ok(name,
+    q_url)` in the source; `-remove` replaces the whole branch with `elif False:` and so
+    deletes the CALL. What notices is `test_every_registry_writer_consults_an_identity_
+    predicate`, which walks the AST of every function that writes `companies.csv` and does
+    not follow calls — the check the duplication in that function exists to satisfy.
+
+    **And no behavioural test can catch it**, because the code gates the same predicate again
+    seven lines later:
 
     ```python
     keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else ""
@@ -6005,21 +6020,18 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
         q_refused = q_refused or "another company's board"
     ```
 
-    So removing, inverting or narrowing the first branch changes nothing observable — the
-    address gate sets the same refusal. Proven, not inferred: `infra` added
-    `test_listing_hunt_queue_arm_cannot_activate_another_companys_board` on 2026-08-28, which
-    drives `main()`'s queue arm with a foreign board and **goes red when BOTH gates are
-    removed** (the log then reads `[OK] q1/2 Lili: https://www.lilly.com/careers`) — and stays
-    green with either one alone.
+    Proven, not inferred: `test_listing_hunt_queue_arm_cannot_activate_another_companys_board`
+    (added 2026-08-28) drives `main()`'s queue arm with a foreign board and goes **red when
+    BOTH gates are removed** — the log then reads `[OK] q1/2 Lili:
+    https://www.lilly.com/careers` — and stays green with either one alone.
 
-    **The arm is therefore guarded; the catalogue is what is wrong.** A surviving equivalent
-    mutant is not a missing test, and counting it as one trains readers to ignore the gate's
-    output — the exact failure this repo is arranged against. `registry` owns the call. The
-    recommendation is to KEEP the redundancy (the first branch gives the "found" verdict its
-    own refusal reason; the second is the address gate, and they are documented as separate)
-    and mark the three records equivalent so they stop reading as survivors. Do NOT delete the
-    second gate to make the mutants killable: it is the one that stopped
-    QuantLR -> quantlab.com and FairFly -> fireflyspace.com.
+    **So the arm is guarded twice and the invariant here is STRUCTURAL, not behavioural**: an
+    activating writer must consult an identity predicate, and an AST guard is the honest way
+    to assert that. The harness counts "killed only by source-text" as a failure, which is
+    right in general and wrong for this record. `registry` owns the call; the recommendation
+    is to mark it equivalent rather than to delete either gate — the second one is what
+    stopped QuantLR -> quantlab.com and FairFly -> fireflyspace.com — and NOT to chase it with
+    another behavioural test, because none can exist while the redundancy stands.
 
 368. **`tools/mutate.py` read its own warnings as failures, and the count grew with the
     suite** — lane: whoever owns `tools/` (registry built it); FIXED here by `docs` on
