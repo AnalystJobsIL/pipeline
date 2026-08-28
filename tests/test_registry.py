@@ -5919,3 +5919,127 @@ def test_architecture_names_every_protected_note_segment():
         "ARCHITECTURE.md section 2 does not name these protected note segments, so a reader "
         "cannot know a stamp will not evict them: " + ", ".join(missing))
     assert "dark-triage" in section, "the dated triage-mode branch vanished from the doc"
+
+
+# --- infra 2026-08-28: the intake-queue arm's identity gate had no BEHAVIOURAL guard -----
+# `tools/mutate.py --all` reported 7 survivors (BACKLOG 367), three of them one line:
+# `listing_hunt.main`'s `elif verdict == "found" and not _gate.identity_ok(name, q_url)`.
+# The sibling guard above drives the ROW pool; this one drives the QUEUE arm, which carries
+# its own copy of the gate on purpose (the AST completeness check does not follow calls).
+def test_listing_hunt_queue_arm_cannot_activate_another_companys_board(tmp_path, monkeypatch):
+    """The intake-queue arm ACTIVATES a row for a company that had none, off a URL a search
+    engine returned. That is the CyberArk -> PANW / Lili -> Eli Lilly shape, and it is the one
+    place in this lane where a wrong answer creates a row rather than merely editing one.
+
+    `CLAUDE.md` rule 5: "there are Israel jobs on this page" is not "these are THIS company's
+    jobs". Nothing drove this branch until 2026-08-28.
+    """
+    import sys
+    import listing_hunt as L
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, [["Existing Co", "", "", "https://existing.com/careers", "true", ""]])
+    (tmp_path / "research_companies.json").write_text(
+        json.dumps([{"name": "Lili"}, {"name": "GoodCo"}]), encoding="utf-8")
+    foreign, ownpage = "https://www.lilly.com/careers", "https://goodco.com/careers"
+    res = {"Lili": ("found", foreign, 9, ""), "GoodCo": ("found", ownpage, 4, "")}
+    monkeypatch.setattr(L, "hunt_one",
+                        lambda name, seed, documented=False, mode="": res[name])
+    monkeypatch.setattr(L, "looks_like_a_job_listing_page", lambda u: True)
+    # the gate's verdict is the ONLY thing that differs between the two names
+    monkeypatch.setattr(L._gate, "identity_ok", lambda name, url: name != "Lili")
+    monkeypatch.setenv("HUNT_QUEUE_CAP", "10")
+    monkeypatch.setattr(sys, "argv", ["listing_hunt.py", "--apply"])
+    L.main()
+
+    out = _read(tmp_path)
+    assert "Lili" in out, "the queue arm must still create the row -- the row is the rotation key"
+    assert out["Lili"][4] != "true", (
+        "activated Eli Lilly's board for Lili: %r" % (out["Lili"],))
+    assert "lilly.com" not in out["Lili"][3], (
+        "stored another company's address, which this tool re-reads tomorrow: %r" % (out["Lili"][3],))
+    assert out["GoodCo"][4] == "true", (
+        "a name whose own board the gate vouches for must still activate: %r" % (out["GoodCo"],))
+
+
+def test_triage_rewords_every_other_tools_pool_token_in_its_own_reason():
+    """`triage_dark._own_words` exists because a triage reason is written into the SHARED
+    `notes` cell, and another tool's POOL TOKEN sitting inside triage's own segment is
+    rewritten away on the next re-triage -- which silently drops the row out of that other
+    tool's re-check pool (`Bit`, twice). `CLAUDE.md` rule 3.
+
+    Guarded behaviourally on 2026-08-28: `tools/mutate.py` emptied the loop
+    (`for tok, safe in ():`) and the suite stayed green -- the only thing that noticed was a
+    source-text guard, which is the class this repo built the mutation gate to prosecute
+    (BACKLOG 367).
+    """
+    import triage_dark as T
+    for tok, safe in T._FOREIGN_TOKENS:
+        out = T._own_words(f"page reads: {tok} here")
+        assert tok.lower() not in out.lower(), (
+            f"{tok!r} survived into triage's own words -- the next re-triage rewrites it away "
+            f"and the owning tool loses the row: {out!r}")
+        assert safe in out, f"expected the reworded form {safe!r} in {out!r}"
+    assert T._own_words("") == "" and T._own_words(None) == ""
+    assert T._own_words("plain reason") == "plain reason", "an innocent reason is untouched"
+
+
+def test_resolve_llm_refuses_a_board_the_company_only_embeds(monkeypatch):
+    """`_verify` is the LLM tier's last gate before a board becomes a registry row. A company's
+    own page can carry a board it merely EMBEDS -- Cogniteam's page with a stale Riskified
+    widget -- and accepting it publishes another company's roles under this one's name
+    (`CLAUDE.md` rule 5).
+
+    Guarded behaviourally on 2026-08-28: dropping `embedded_board_ok` left the suite green
+    (BACKLOG 367). The own-page rung above it passes in this fixture, which is the point --
+    the two rungs answer different questions and only one of them was tested.
+    """
+    import resolve_llm as R
+    monkeypatch.setattr(R, "_own_page_names_token", lambda *a, **k: True)
+    monkeypatch.setattr(R, "_is_aggregator", lambda u: False)
+    monkeypatch.setattr(R, "fetch_company",
+                        lambda row: [{"title": "Analyst", "location": "Tel Aviv"}])
+    # `_verify` imports the gate INSIDE the function, so the module is the patch point
+    monkeypatch.setattr(IG, "board_vouches", lambda name, token, api_url: True)
+    monkeypatch.setattr(IG, "embedded_board_ok", lambda name, token, api_url: False)
+    with pytest.raises(ValueError, match="does not vouch"):
+        R._verify("Cogniteam", "greenhouse", "riskified", "https://boards.greenhouse.io/riskified")
+    monkeypatch.setattr(IG, "embedded_board_ok", lambda name, token, api_url: True)
+    assert R._verify("Cogniteam", "greenhouse", "cogniteam",
+                     "https://boards.greenhouse.io/cogniteam")[0] == 1, \
+        "a vouched board must still pass -- this gate may not become a blanket refusal"
+
+
+def test_auto_expand_re_reads_the_registry_immediately_before_it_appends(tmp_path, monkeypatch):
+    """`CLAUDE.md` rule 4. `have` was a start-of-run snapshot, so a company another writer added
+    while this run was resolving got a TWIN row -- and a duplicate `company_name` is exactly what
+    `check_invariants` check B calls "merge_csv_rows silently drops edits".
+
+    The re-read is `if name.lower() in _names_now()` immediately before the append. Guarded
+    behaviourally on 2026-08-28: `tools/mutate.py` replaced it with `if False:` and the suite
+    stayed green (BACKLOG 367).
+
+    The stub has to be STATEFUL, and that is the whole point: `_names_now()` also builds this
+    run's queue, so a name that is present from the start is simply never worked. The
+    concurrent writer has to appear BETWEEN the queue being built and the append being made,
+    which is the only window a start-of-run snapshot cannot see.
+    """
+    from pipeline import identity_gate as G
+    E = _expand_env(tmp_path, monkeypatch,
+                    [{"name": "Fiverr", "careers_url": "https://www.fiverr.com/jobs"}])
+    monkeypatch.setattr(G, "page_names_company", _names_only_fiverr)
+    monkeypatch.setattr(E, "resolve", lambda name, url, **k:
+                        ("ats", ("Fiverr", "greenhouse", "fiverr", _FIVERR, 40, 12)))
+    _llm_stub(monkeypatch, {})
+    calls = {"n": 0}
+
+    def _names_now_racing():
+        calls["n"] += 1
+        return set() if calls["n"] == 1 else {"fiverr"}   # the other writer lands mid-run
+    monkeypatch.setattr(E, "_names_now", _names_now_racing)
+    E.main()
+
+    assert calls["n"] >= 2, ("`_names_now()` was read once and never again -- that IS the "
+                             "start-of-run snapshot rule 4 exists to forbid")
+    body = (tmp_path / "companies.csv").read_text(encoding="utf-8")
+    assert "Fiverr" not in body, (
+        "appended a twin for a name the registry already had at append time: " + body)
