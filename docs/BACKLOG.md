@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**408 filed · 297 open · 111 closed · 6 half · 29 numbers name more than one item · 28 items name no lane.**
+**410 filed · 299 open · 111 closed · 6 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 366.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 368.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -83,7 +83,7 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### registry — 84 open
+### registry — 85 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -169,6 +169,7 @@ closure convention in the header.
 - **353** `353@registry` **Three active rows are one employer, and two of them are the same board**
 - **354** `354@registry` **The nine address-refused rows are refused from a HOME address too**
 - **355** `355@registry` **The nightly embed handoff has no reader yet**
+- **367** `367@registry` **Seven mutations SURVIVE, and nobody has seen that since 2026-08-24**
 
 ### infra — 75 open
 
@@ -296,7 +297,7 @@ closure convention in the header.
 - **337** `337@discovery` **The secrethunter catalog's own-domain and job-title data has no honest route, and the
 - **340** `340@discovery` **`pipeline/aggregators.py` does not know the Israeli job boards, and the hunt will
 
-### docs — 18 open
+### docs — 19 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
 - **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
@@ -316,6 +317,7 @@ closure convention in the header.
 - **360** `360@docs` **ARCHITECTURE.md states the active-row count six ways and two of them carry no date**
 - **361** `361@docs` **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
+- **366** `366@docs` **The mutation gate's BASELINE is red on the runner while `guard`'s own `pytest` is
 
 ### company-intel — 14 open
 
@@ -5932,3 +5934,40 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     per-workflow spend number existed before 2026-08-28. `bd_rescue._report_spend` now prints
     one per process; after a week of `[bd-spend]` lines, replace the 250s with real numbers.
     `scrape-refresh`'s 150 is measured (72 observed on 2026-08-28).
+
+366. **The mutation gate's BASELINE is red on the runner while `guard`'s own `pytest` is
+    green, so the gate refuses to run at all** — lane: `docs` (introduced) with `infra`
+    (the workflow). `tools/mutate.py` runs one baseline suite inside a `git archive HEAD`
+    copy to learn which tests are red at HEAD; on 2026-08-28 that baseline reports
+    **`HEAD is not a suite to mutate against (rc=0, 49 red)`** and every shard exits 1
+    without running a single mutation.
+
+    **Attribution is clean and is not the sharding.** The same message appears in run
+    `33163634071` at `4948be5` — the `docs` lane's commit, pushed **before** the infra
+    change existed — and again in `33164652415` at `428f15a`. The run before those,
+    `124d27e`, got past the baseline and into the mutant loop (it was cancelled at 45 min),
+    so the baseline was healthy at 08-27 and is not healthy now.
+
+    **It reproduces nowhere but the runner.** `git archive HEAD | tar -x` into a directory
+    with no `.git` above it and `python -m pytest` there passes **0 failed** locally
+    (2026-08-28, same commit). So it is environment-specific — the runner installs only
+    `pytest`, the archive drops anything `export-ignore`'d, and `docs/check_docs.py` grew by
+    457 lines in `4948be5` including a rung that shells out to `git show HEAD:<doc>` and is
+    documented to return `None` "outside a git checkout". Whoever picks this up should first
+    make the harness PRINT the red list rather than only its count: the message says "the
+    deselect list has no shorter form" and then names nothing, which is why this item cannot
+    say which 49.
+
+    Until it is fixed the mutation gate is **off for a second, different reason** — the first
+    was the 45-minute timeout (195@infra, closed by sharding the same day).
+
+367. **Seven mutations SURVIVE, and nobody has seen that since 2026-08-24** — lane:
+    `registry` (`tools/mutate.py` and the guards it targets). A full local `--all` run on
+    2026-08-28 finished in **5,119 s wall with 4 workers** (85 min; 19,754 s of pytest time)
+    and reported **204 mutations: 197 killed, 7 SURVIVING, 0 coverage gaps**. A surviving
+    mutation means the guard it targets does not actually guard.
+
+    This is the measured cost of an off gate: the job has been cancelled or refused on every
+    push since 2026-08-24, so these seven have been invisible for four days. The 85-minute
+    figure is also the arithmetic behind the sharding — it was never going to fit the
+    45-minute budget, and one shard of it will.
