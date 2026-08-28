@@ -1284,7 +1284,7 @@ Airwayz,scrape,,https://careerconnect.airwayz.com,false,dark-triage 2026-08-28: 
 Alignerr,scrape,https://www.alignerr.com/jobs,https://www.alignerr.com/jobs,false,"dark-triage 2026-08-28: extract-gap (LLM found 4: Audio Transcription & Alignment Specialist, Marketing Task A) | listing-hunt 2026-08-28: no IL listing; monitored candidate"
 Applied Materials - Israel,scrape,https://jobs.appliedmaterials.com/location/israel-jobs/95/294640/2,https://jobs.appliedmaterials.com/location/israel-jobs/95/294640/2,true,listing-hunt 2026-08-28: queue-hunt; verified 11 IL
 Apptor-AI,scrape,https://apptor-ai.com/career/,https://apptor-ai.com/career/,true,listing-hunt 2026-08-28: queue-hunt; verified 6 IL
-Ashley Digital,scrape,https://job-boards.greenhouse.io/residenthome,https://job-boards.greenhouse.io/residenthome,true,listing-hunt 2026-08-28: queue-hunt; verified 4 IL
+Ashley Digital,greenhouse,residenthome,https://boards-api.greenhouse.io/v1/boards/residenthome/jobs,true,listing-hunt 2026-08-28: queue-hunt; verified 4 IL | self-heal 2026-08-28: re-resolved to greenhouse
 Axon Pulse,scrape,,https://axon-pulse.com/career/,true,dark-triage 2026-08-28: extract-gap (13 role phrases after render) | listing-hunt 2026-08-28: verified 5 IL via axon-pulse.com
 BMC Software,scrape,https://jobs.bmc.com/Careers/SearchJobs/?listFilterMode=1&1274=9409&1274_format=1347&intcmp=JobsByCountry,https://jobs.bmc.com/Careers/SearchJobs/?listFilterMode=1&1274=9409&1274_format=1347&intcmp=JobsByCountry,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL
 Babysense,scrape,https://babysense.eu/?srsltid\u003dAfmBOopPbro6wBjoYbdJ4VeNkmnVIdBt3ARVm_GyYN9KfdOnZuWYLQc1,https://www.babysenseglobal.com/,false,dark-triage 2026-08-28: wrong-page (LLM: not Babysense's careers page (This is Babysense's e-commerce product s)) | listing-hunt 2026-08-28: no IL listing; monitored candidate
@@ -1361,11 +1361,11 @@ Opmed.ai,scrape,https://www.opmed.ai/careers,https://www.opmed.ai/careers,true,l
 PAPAYA,scrape,https://www.papayaglobal.com/careers/,https://www.papayaglobal.com/careers/,true,listing-hunt 2026-08-28: queue-hunt; verified 8 IL
 Paz - yellow,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: another company's board; no listing found
 Peak Innovation,scrape,https://peak-innovation.co/career/,https://peak-innovation.co/career/,true,listing-hunt 2026-08-28: queue-hunt; verified 45 IL
-Plateful,scrape,,https://apply.workable.com/plateful/,true,dark-triage 2026-08-28: js-shell (thin html + job-ish XHR — needs render+capture) | listing-hunt 2026-08-28: verified 2 IL via apply.workable.com
+Plateful,workable,plateful,https://apply.workable.com/api/v1/widget/accounts/plateful?details=true,true,dark-triage 2026-08-28: js-shell (thin html + job-ish XHR — needs render+capture) | listing-hunt 2026-08-28: verified 2 IL via apply.workable.com | self-heal 2026-08-28: re-resolved to workable
 Prologic LTD,scrape,https://www.prologic.co.il/High-tech-jobs,https://www.prologic.co.il/High-tech-jobs,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-28: page-empty (LLM confirms no open roles (Page appears to be a recruitment/j) (role phrases were bios/testimonials))
 PwC Israel,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: another company's board; no listing found
 Qlik Israel,scrape,https://careerhub.qlik.com/careers?utm_source=qlik-website,https://careerhub.qlik.com/careers?utm_source=qlik-website,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-28: page-empty (LLM confirms no open roles (This is Qlik's official careers hu) (role phrases were bios/testimonials))
-REAL DEV INC,scrape,https://apply.workable.com/real-dev-inc/?lng=en,https://apply.workable.com/real-dev-inc/?lng=en,true,listing-hunt 2026-08-28: queue-hunt; verified 6 IL
+REAL DEV INC,workable,real-dev-inc,https://apply.workable.com/api/v1/widget/accounts/real-dev-inc?details=true,true,listing-hunt 2026-08-28: queue-hunt; verified 6 IL | self-heal 2026-08-28: re-resolved to workable
 Robyn Capital,scrape,https://robyncapital.com/blog/,https://robyncapital.com/blog/,false,"dark-triage 2026-08-28: wrong-page (LLM: not Robyn Capital's careers page (This is Robyn Capital's blog page, not a)) | listing-hunt 2026-08-28: another company's board; no listing found"
 SHILA Medical Services LTD,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: another company's board; no listing found
 Schemathics,scrape,https://schemathics.com/careers/,https://schemathics.com/careers/,false,dark-triage 2026-08-28: js-shell (job XHRs seen during render) | listing-hunt 2026-08-28: no IL listing; monitored candidate
@@ -1393,7 +1393,7 @@ Tesnet Group Ltd,scrape,,https://tesnet-group.com/job/,true,"dark-triage 2026-08
 TorGroup,scrape,https://www.torgroup.co.il/ourteam,https://www.torgroup.co.il/ourteam,false,"dark-triage 2026-08-28: wrong-page (LLM: not TorGroup's careers page (This is a ""Meet the Team"" page, not a ca)) | listing-hunt 2026-08-28: another company's board; no listing found"
 Trigo Retail,scrape,https://www.trigoretail.com/career/,https://www.trigoretail.com/career/,true,listing-hunt 2026-08-28: queue-hunt; verified 3 IL
 ULTRA RED,scrape,,https://www.ultrared.ai/careers?ref=aitechsuite,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: no IL listing; monitored candidate
-Unframe,scrape,,https://job-boards.greenhouse.io/unframe,true,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: verified 10 IL via job-boards.greenhouse.io
+Unframe,greenhouse,unframe,https://boards-api.greenhouse.io/v1/boards/unframe/jobs,true,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: verified 10 IL via job-boards.greenhouse.io | self-heal 2026-08-28: re-resolved to greenhouse
 Veeva Crossix,scrape,https://careers.veeva.com/job-search-results/?search=&remote=false&teams=&regions=Asia+Pacific&office_locations=Israel,https://careers.veeva.com/job-search-results/?search=&remote=false&regions=&office_locations=Israel,false,dark-triage 2026-08-28: extract-gap (135 role phrases after render) | listing-hunt 2026-08-28: no IL listing; monitored candidate
 "Vishay Precision Group, Inc. (VPG)",scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: another company's board; no listing found
 Voidpet,scrape,,https://voidpet.com/o/join-us,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: no IL listing; monitored candidate
@@ -1437,7 +1437,7 @@ IHG Hotels & Resorts,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no list
 Tel Aviv University,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
 Whistle,scrape,https://www.whistle.ltd/careers,https://www.whistle.ltd/careers,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
 HCLTech,scrape,https://careers.hcltech.com/go/NonTPDemand/9558355/,https://careers.hcltech.com/go/NonTPDemand/9558355/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-Altera,scrape,https://altera.wd1.myworkdayjobs.com/en-US/Altera/job/Haifa-Israel/Analog-Layout-Design-Engineer_R02940,https://altera.wd1.myworkdayjobs.com/en-US/Altera/job/Haifa-Israel/Analog-Layout-Design-Engineer_R02940,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL via altera.wd1.myworkdayjobs.com
+Altera,workday,altera/Altera,https://altera.wd1.myworkdayjobs.com/wday/cxs/altera/Altera/jobs,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL via altera.wd1.myworkdayjobs.com | self-heal 2026-08-28: re-resolved to workday
 Confidential Global Company,scrape,https://confidential.careers/jobs-in-israel,https://confidential.careers/jobs-in-israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
 Cut Inside,scrape,https://cutinside.com/careers/,https://cutinside.com/careers/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
 SOURCIX,scrape,https://sourcixai.com/careers/,https://sourcixai.com/careers/,true,listing-hunt 2026-08-28: queue-hunt; verified 5 IL via sourcixai.com
@@ -1525,11 +1525,11 @@ Aiven,scrape,,https://aiven.io/careers/job,true,queue-drain 2026-08-28 exhaust; 
 Ayalon Highways,scrape,,https://www.ayalonhw.co.il/career/jobs-page,true,queue-drain 2026-08-28 exhaust; 2/2 IL
 West Pharmaceutical Services,scrape,,https://careers.westpharma.com/search/?createNewAlert=false&q=&optionsFacetsDD_country=IL&optionsFacetsDD_customfield4=&optionsFacetsDD_dept=,true,queue-drain 2026-08-28 exhaust; 5/5 IL
 Solitics,scrape,,https://solitics.com/careers/,true,queue-drain 2026-08-28 exhaust; 3/3 IL
-Conifers.ai,scrape,,https://boards.greenhouse.io/conifersaicareers,true,queue-drain 2026-08-28 exhaust; 1/1 IL
+Conifers.ai,greenhouse,conifersaicareers,https://boards-api.greenhouse.io/v1/boards/conifersaicareers/jobs,true,queue-drain 2026-08-28 exhaust; 1/1 IL | self-heal 2026-08-28: re-resolved to greenhouse
 airHaifa,scrape,,https://www.airhaifa.com/careers-he/careers,true,queue-drain 2026-08-28 exhaust; 1/1 IL
 ASML,scrape,,https://www.asml.com/en/careers/find-your-job?location=Israel,true,queue-drain 2026-08-28 exhaust; 24/24 IL
 Elmo Motion Control,scrape,,https://www.elmomc.com/careers/,true,queue-drain 2026-08-28 exhaust; 1/1 IL
-Ribbon Communications,scrape,,https://vhr-genband.wd1.myworkdayjobs.com/en-US/ribboncareers/job/Israel-Petah-Tikva/Global-Commercial-Services-Specialist_REQ-2026-3018,true,queue-drain 2026-08-28 exhaust; 1/1 IL
+Ribbon Communications,workday,vhr-genband/ribboncareers,https://vhr-genband.wd1.myworkdayjobs.com/wday/cxs/vhr_genband/ribboncareers/jobs,true,queue-drain 2026-08-28 exhaust; 1/1 IL | self-heal 2026-08-28: re-resolved to workday
 Edikted,scrape,,https://edikted.com/pages/careers?srsltid\u003dAfmBOoobtSavWjSEL6NTx6lZPZLtccce-FR4MVVqKvEScUkq_H1feZaG,true,queue-drain 2026-08-28 exhaust; 10/10 IL
 Maccabi Health care Services,scrape,,https://www.maccabi4u.co.il/careers/search-job-positions/,true,queue-drain 2026-08-28 exhaust; 5/5 IL
 KayHut,scrape,,https://kayhut.com/careers/,true,queue-drain 2026-08-28 exhaust; 1/1 IL
