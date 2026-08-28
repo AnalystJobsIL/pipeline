@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**436 filed · 320 open · 116 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**444 filed · 328 open · 116 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 389.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 397.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -266,6 +266,33 @@ closure convention in the header.
 - **383** `383@infra` **`cloud_state/bd_spend.jsonl` has a writer and no reader**
 - **388** `388@infra` **`persist_state.shrank()` cannot see the loss it was written for, on the store where it
 
+### company-intel — 24 open
+
+- **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
+- **97** `97@company-intel` **Retire (or weekly) the Windows firmographics chain** *(closed by a later bullet, original never edited)*
+- **98** `98@company-intel` **29 identity-duplicate groups in the export** *(closed by a later bullet, original never edited)*
+- **101** `101@company-intel` **`looks_like_junk` cannot catch a bare job title** *(closed by a later bullet, original never edited)*
+- **117** `117@company-intel` **One `claude -p` seam for the repo** *(closed by a later bullet, original never edited)* *(half closed)*
+- **120** `120@company-intel` **Company intel rediscovers an outage the classifier already found** *(closed by a later bullet, original never edited)*
+- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
+- **141** `141@company-intel` **`research_firmographics.py` and `run.py` disagree on the company set** *(closed by a later bullet, original never edited)*
+- **144** `144@company-intel` **One identity group, two employers: the blurb crosses** *(closed by a later bullet, original never edited)*
+- **242** `242@company-intel` **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** — *(closed by a later bullet, original never edited)*
+- **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
+- **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
+- **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
+- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
+- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
+- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
+- **389** `389@company-intel` **The strike ledger is a union, and a union cannot express a retraction**
+- **390** `390@company-intel` **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
+- **391** `391@company-intel` **A corrupt or write-locked strike ledger is invisible in the mail**
+- **392** `392@company-intel` **A refusal to publish the export discards the whole run's purchases**
+- **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
+- **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
+- **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
+- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` writes to the tracked tree**
+
 ### scraper — 23 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
@@ -336,25 +363,6 @@ closure convention in the header.
 - **361** `361@docs` **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
 - **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
-
-### company-intel — 16 open
-
-- **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
-- **97** `97@company-intel` **Retire (or weekly) the Windows firmographics chain** *(closed by a later bullet, original never edited)*
-- **98** `98@company-intel` **29 identity-duplicate groups in the export** *(closed by a later bullet, original never edited)*
-- **101** `101@company-intel` **`looks_like_junk` cannot catch a bare job title** *(closed by a later bullet, original never edited)*
-- **117** `117@company-intel` **One `claude -p` seam for the repo** *(closed by a later bullet, original never edited)* *(half closed)*
-- **120** `120@company-intel` **Company intel rediscovers an outage the classifier already found** *(closed by a later bullet, original never edited)*
-- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
-- **141** `141@company-intel` **`research_firmographics.py` and `run.py` disagree on the company set** *(closed by a later bullet, original never edited)*
-- **144** `144@company-intel` **One identity group, two employers: the blurb crosses** *(closed by a later bullet, original never edited)*
-- **242** `242@company-intel` **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** — *(closed by a later bullet, original never edited)*
-- **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
-- **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
-- **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
-- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
-- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
-- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
 
 ### ats-fetch — 14 open
 
@@ -4086,6 +4094,120 @@ here — each is another lane's file or a behaviour change this session could no
     alarm on the `Company intel:` line; the FLOOR that 359 also asks for ("as a floor rather
     than a band") belongs here, in the machinery that already measures the delta for this
     exact path every run.
+
+389. **The strike ledger is a union, and a union cannot express a retraction** — lane:
+    `company-intel`, filed 2026-08-28 by wave 1. `cloud_state/firmo_failed.json` merges by
+    `max(attempts), max(last)`, which is right for accumulating a strike and wrong for
+    taking one back. Three faces of the same gap, none live today, all latent:
+
+    - `store.revoke_firmo_failures` — the documented undo for the mass-failure guard — clears
+      a strike by pushing `last` back 8 days. Once the cron has published that strike,
+      `max(last)` prefers the ledger's un-revoked copy and the gate stands. Reproduced: five
+      employers gated for a week by a soft outage that the undo can no longer undo.
+      **It has zero callers today** (`git grep revoke_firmo_failures -- '*.py'` returns the
+      definition alone), so this is latent — but the moment anyone wires it up, or a human
+      hand-deletes a sqlite row to un-gate a company, it silently fails.
+    - `merge_json_cache`'s rescue arm (`elif k not in theirs: out[k] = v`) resurrects a
+      cleared strike whenever a PASSIVE committer conflicts: `daily-digest.yml` owns
+      `cloud_state` wholesale so it commits this path without ever writing it, `ours == base`,
+      and every key of base survives — including the ones the cron deliberately dropped.
+    - `persist_state`'s 25 %-loss guard (`len(b) >= 20 and len(gone) > 0.25 * len(b)`) is
+      inert at today's 9 entries, but a ledger whose steady state is "clear what you
+      researched" will cross it: at 24 entries, clearing 7 researched names is logged as
+      *"a broken run, not deletions"* and all seven strikes are restored.
+
+    The shape that fits is a dedicated `s_strike_ledger` in `persist_state` that honours
+    deletions unconditionally and skips the shrink heuristic, plus an explicit tombstone
+    (`[0, "revoked:<date>"]`) that survives a `max`. Both are `infra` surface, which is why
+    this is filed rather than done. Re-open with `389@company-intel`.
+
+390. **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
+    lane: `company-intel` with `roles` (who own `pipeline/store.py`), filed 2026-08-28.
+    `store.save_firmographics` does not touch `firmo_failed`, and the only `DELETE` in that
+    file is inside the callerless `revoke_firmo_failures`. So a company the DIGEST researches
+    keeps its strike for ever: it is never in the cron's `done_names` (it is already in
+    `have`, so it never enters `todo`), and only `cleared=done_names` removes a key.
+
+    Harmless for the research gate — `c in firmo` and `n in have` both win first — but it
+    feeds two things that are not harmless. The ledger grows without bound in a directory
+    committed daily; and `refresh_abandoned = {c for c, (att, last) in failures.items() if
+    att >= 4}` has **no date bound**, so once the count can accumulate (it can, since
+    2026-08-28) a company evicted from the refresh layer is evicted **permanently** and its
+    chips freeze at whatever `as_of` they had, silently. Max `attempts` in the committed file
+    is 1 today, so there is no live victim. Fix: clear the row on a successful
+    `save_firmographics` for that company, and bound `refresh_abandoned` by `last`.
+
+391. **A corrupt or write-locked strike ledger is invisible in the mail** — lane:
+    `company-intel`, filed 2026-08-28. `firmographics.all_failures` discards
+    `load_failures`'s status, `_report()` has no key for it, and `audit_lines` never mentions
+    the ledger. So a ledger that is `corrupt` or `partial` reads as `{}` in the digest, which
+    then re-buys every struck name at up to `FIRMO_MAX_PER_RUN` calls a run, and the morning
+    mail says nothing. The 10:00 cron warns (`::warning::company-intel strike ledger NOT
+    written`); the tier that sits on the spending critical path does not. Fix: carry
+    `rep["ledger_status"]` out of `_research_targets` and put it on the line beside
+    `export_status`, which already does exactly this.
+
+392. **A refusal to publish the export discards the whole run's purchases** — lane:
+    `company-intel`, filed 2026-08-28. `--export` now correctly refuses over a `corrupt` or
+    `partial` file (and exits non-zero, so the step fails). But the research call and
+    `--export` are the SAME workflow step, the researched records live in the gitignored
+    `state/seen.db`, and only `cloud_state/*` is committed — so a refusal loses ~40 sonnet
+    calls' worth of research with nothing remembering them, and the next day's cron re-buys
+    the same 40, every day, until a human restores the file. The trade is right (before this,
+    the run published destructively and at least kept them); the missing half is a rescue
+    path. Fix: on refusal write the union to a rescue file under `cloud_state/` and add
+    it to the `--own` list, or split `--export` into its own step.
+
+393. **Two Hebrew-named companies are profiled twice, under contradicting facts** — lane:
+    `company-intel`, filed 2026-08-28 by wave 1. `identity_key` keeps Hebrew letters but has
+    no Hebrew↔Latin arm, so `display_index` never groups these and both were paid for:
+
+    | | | conflict |
+    |---|---|---|
+    | `הפניקס` (TASE: PHOE) | `Phoenix Financial` (TASE: PHOE) | `size_band` **L vs XL**; `employees_global` **null vs 5,170** |
+    | `מנורה מבטחים החזקות` | `Menora Mivtachim Group` | `employees_global` **null vs 1,335** |
+
+    Two cards, two chip sets, one company each. Latent and not yet live: `identity_key`
+    strips diacritics, so `mećkano` → `me kano` while `Meckano` → `meckano` — one identity
+    split in two the moment the second spelling is researched. Fix: `ALIASES` entries mapping
+    the Hebrew forms onto the Latin identity key, the mechanism already used for
+    `AWS`→`Amazon`. Note `98@company-intel`/`242@company-intel` closed the general
+    duplicate-merge question as WON'T FIX for good reasons; these two are different, because
+    the records **contradict each other** rather than merely duplicating.
+
+394. **An `il_center` that DENIES an Israel site still renders as a location chip** — lane:
+    `company-intel` with `render`, filed 2026-08-28 by wave 1. `_coerce` applies `_REFUSAL`
+    only to `sector`, and `rolecard` appends `il_center` as a chip whenever it is a non-empty
+    string. Of the 135 records added on 2026-08-28, **4** render a chip that says the
+    opposite of what a chip on this board means — `Chalk` → "No identifiable Israel
+    presence", `Diageo` → "No identified dedicated Israel office/R&D site", `Grafana Labs` →
+    "Remote-first" — and a further **14** render the country rather than a place ("Israel
+    (HQ)", "Israel site (exact location unconfirmed)"), which is a zero-information chip on a
+    board about Israel. Fix: run a negation pattern over `il_center` in `_coerce` and null it;
+    have `rolecard` skip a chip whose whole value normalizes to "Israel".
+
+395. **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
+    lane: `company-intel`, filed 2026-08-28. `research_firmographics._stamp_ok()` writes
+    `state/firmo_last_ok.txt`; `.gitignore` ignores `state/`; the workflow commits only
+    `cloud_state/*`. This is verbatim the defect this session diagnosed for `firmo_failed` —
+    a runner writing its memory to a path that dies with it — and `firmo_health_check.py`
+    watches a file the cloud can never produce. The `stages.stamp("firmo", ...)` added on
+    2026-08-28 measures the same thing durably, so the fix is to fold the heartbeat into it
+    and delete `_stamp_ok` plus `firmo_health_check.py` (both are laptop-era; the Windows
+    task that drove them is disabled). `docs/MODULES.md` files `firmo_health_check.py` as
+    `operator`, so retiring it is a `docs` regeneration too.
+
+396. **`tests/rehearse_company_intel.py --all` writes to the tracked tree** — lane:
+    `company-intel`, filed 2026-08-28. Running it modified `cloud_state/health_baseline.json`,
+    `cloud_state/stale.json`, `docs/index.html` and `docs/archive.html` — the exact set
+    `CLAUDE.md` warns an UNSCOPED `python -m pipeline.run` overwrites. The harness copies
+    state into `out/rehearse/work_<case>` and monkeypatches `F.SHARED_EXPORT`, `stages.PATH`
+    and `R._load_secrets_env`, but evidently not the board/health/stale outputs. Its own
+    check 8 (`"git status is unchanged"`) is designed to catch this, so it may report the
+    leak and exit 1 rather than hide it — **that is unverified**: the run was stopped before
+    it finished and its verdict was never read. Reproduce with
+    `python tests/rehearse_company_intel.py --all` in a clean worktree and `git status`
+    alongside. Until this is settled, run it only in a throwaway worktree.
 
 ## From the `jd-text` lane, 2026-08-28 (evening)
 
