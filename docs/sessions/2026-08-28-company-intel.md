@@ -286,8 +286,21 @@ this lane's, and none is `379`/`374`** — the brief named those two, but `379`/
 `test_two_rehearsed_nights_keep_every_pool` is now GREEN (fixed by `registry` in `43c68f8`) and
 `374` is not a test failure at all, it is two open backlog items in `jd-text` and `docs`.
 
-After: **same three failures**, `1272 passed` — independently confirmed by the mutation gate's
-own baseline line. `check_invariants.py` and `docs/check_docs.py` green (0 errors).
+After: **same three failures**, `1,280 passed`. `check_invariants.py` and
+`docs/check_docs.py` green (0 errors). Both wave-2 confirmers measured the same three
+independently, in their own worktrees.
+
+**Mutation gate, on the final state:** `python tools/mutate.py --all --catalogue
+tests/fixtures/company_intel/mutations.json` — **57 of 57 killed, 0 surviving**, wall 2,469 s
+at 4 workers, over a baseline it independently measured as `1276 passed, 3 failed`. Every
+guard added tonight kills the mutation aimed at it, which is the only evidence that a guard
+is a guard and not a comment. (Its 18 `coverage` gaps are all `registry`'s identity-gate
+writers — `auto_expand`, `listing_hunt`, `repair_*`, `wayback_rescue` and the rest — not
+this lane's, and identical in the run before this one.)
+
+An earlier run of the same gate reported `49 of 50 killed`; the one non-kill was a catalogue
+entry made stale by the very commit under test, because `tools/mutate.py` archives **HEAD**
+and I had run it over uncommitted work. Worth knowing before trusting it.
 
 ## The design critics changed the plan before any code was written
 
