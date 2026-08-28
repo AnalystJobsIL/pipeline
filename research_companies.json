@@ -1779,7 +1779,7 @@
   "name": "Viber",
   "careers_url": "https://il.indeed.com/viewjob?jk=daf0dcdfb64d558d",
   "ats": "unknown",
-  "slug": ""
+  "slug": "viber"
  },
  {
   "name": "McCANN",
@@ -2770,5 +2770,1037 @@
   "careers_url": "https://secrethunter.io/jobz/0480b08076",
   "ats": "unknown",
   "slug": ""
+ },
+ {
+  "name": "Speechify",
+  "careers_url": "https://il.indeed.com/viewjob?jk=cf80ac0b9714bea0",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Wipro Limited",
+  "careers_url": "https://il.indeed.com/viewjob?jk=60ede7302cdeb34a",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Molex",
+  "careers_url": "https://il.linkedin.com/jobs/view/account-specialist-at-molex-4410157428",
+  "ats": "unknown",
+  "slug": "molex"
+ },
+ {
+  "name": "PMI Kids World",
+  "careers_url": "https://il.linkedin.com/jobs/view/shipping-coordinator-at-pmi-kids-world-4457086799",
+  "ats": "unknown",
+  "slug": "p-m-i-ltd"
+ },
+ {
+  "name": "Rosh Electroptics Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/pre-sales-collections-coordinator-at-rosh-electroptics-ltd-4455846496",
+  "ats": "unknown",
+  "slug": "rosh-electroptics-ltd"
+ },
+ {
+  "name": "Arbex",
+  "careers_url": "https://il.linkedin.com/jobs/view/control-center-operator-%D7%9E%D7%AA%D7%A4%D7%A2%D7%9C-%D7%AA-%D7%9E%D7%A9%D7%9C-%D7%98-at-arbex-4451350239",
+  "ats": "unknown",
+  "slug": "arbex"
+ },
+ {
+  "name": "ELAD HR",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%A0%D7%94%D7%9C-%D7%AA-%D7%A9%D7%99%D7%95%D7%95%D7%A7-%D7%95%D7%9E%D7%9B%D7%99%D7%A8%D7%95%D7%AA-%D7%A0%D7%93%D7%9C-%D7%9F-real-estate-sales-marketing-manager-at-elad-hr-4457928167",
+  "ats": "unknown",
+  "slug": "elad-hr"
+ },
+ {
+  "name": "Integra LifeSciences",
+  "careers_url": "https://il.linkedin.com/jobs/view/procurement-specialist-at-integra-lifesciences-4447200872",
+  "ats": "unknown",
+  "slug": "integra-lifesciences"
+ },
+ {
+  "name": "Chevron",
+  "careers_url": "https://il.linkedin.com/jobs/view/instrument-control-technician-at-chevron-4403822394",
+  "ats": "unknown",
+  "slug": "chevron"
+ },
+ {
+  "name": "Mornex",
+  "careers_url": "https://il.linkedin.com/jobs/view/junior-it-support-engineer-%E2%80%93-mornex-technology-support-unit-at-mornex-4457918398",
+  "ats": "unknown",
+  "slug": "mornex"
+ },
+ {
+  "name": "Snke",
+  "careers_url": "https://il.linkedin.com/jobs/view/r-d-lab-technician-at-snke-4454641167",
+  "ats": "unknown",
+  "slug": "snke"
+ },
+ {
+  "name": "OpticSolution",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-semiconductor-automation-process-engineer-at-opticsolution-4456809432",
+  "ats": "unknown",
+  "slug": "opticsolution"
+ },
+ {
+  "name": "SMARTGEN WEALTH MANAGEMENT",
+  "careers_url": "https://il.linkedin.com/jobs/view/structures-and-tax-expert-at-smartgen-israel-at-smartgen-wealth-management-4457260789",
+  "ats": "unknown",
+  "slug": "smartgenwealth"
+ },
+ {
+  "name": "Speedata.io",
+  "careers_url": "https://il.linkedin.com/jobs/view/software-engineering-manager-performance-modeling-at-speedata-io-4407833724",
+  "ats": "unknown",
+  "slug": "speedataio"
+ },
+ {
+  "name": "Rimonim Group - קבוצת רימונים",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%A8%D7%9B%D7%96-%D7%AA-%D7%A9%D7%99%D7%A8%D7%95%D7%AA-%D7%95%D7%AA%D7%99%D7%A7%D7%99-%D7%9C%D7%A7%D7%95%D7%97%D7%95%D7%AA-at-rimonim-group-%D7%A7%D7%91%D7%95%D7%A6%D7%AA-%D7%A8%D7%99%D7%9E%D7%95%D7%A0%D7%99%D7%9D-4456904006",
+  "ats": "unknown",
+  "slug": "rimonimgroup"
+ },
+ {
+  "name": "CI Systems",
+  "careers_url": "https://il.linkedin.com/jobs/view/buyer-at-ci-systems-4457764003",
+  "ats": "unknown",
+  "slug": "ci-systems"
+ },
+ {
+  "name": "Sagarmatha",
+  "careers_url": "https://il.linkedin.com/jobs/view/project-manager-at-sagarmatha-4458109064",
+  "ats": "unknown",
+  "slug": "sagarmatha"
+ },
+ {
+  "name": "Radix Engineering",
+  "careers_url": "https://il.linkedin.com/jobs/view/project-manager-at-radix-engineering-4456926290",
+  "ats": "unknown",
+  "slug": "radix-eng"
+ },
+ {
+  "name": "M.D. Mechanical Devices Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/technical-support-specialist-at-m-d-mechanical-devices-ltd-4455889056",
+  "ats": "unknown",
+  "slug": "m--d--mechanical-devices"
+ },
+ {
+  "name": "Teradyne",
+  "careers_url": "https://il.linkedin.com/jobs/view/field-application-engineer-at-teradyne-4349754560",
+  "ats": "unknown",
+  "slug": "teradyne"
+ },
+ {
+  "name": "Hunter Douglas, Inc.",
+  "careers_url": "https://il.linkedin.com/jobs/view/supply-chain-operations-manager-at-hunter-douglas-inc-4456908744",
+  "ats": "unknown",
+  "slug": "hunter-douglas-us"
+ },
+ {
+  "name": "BrancoWeiss",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%93%D7%A8%D7%95%D7%A9-%D7%94-%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%95%D7%A8-%D7%99%D7%AA-%D7%9C%D7%9E%D7%92%D7%96%D7%A8-%D7%94%D7%97%D7%A8%D7%93%D7%99-at-brancoweiss-4459052580",
+  "ats": "unknown",
+  "slug": "brancoweiss"
+ },
+ {
+  "name": "ForeseeD",
+  "careers_url": "https://il.linkedin.com/jobs/view/laboratory-technician-at-foreseed-4460185910",
+  "ats": "unknown",
+  "slug": "foreseed"
+ },
+ {
+  "name": "Lirix Consulting",
+  "careers_url": "https://secrethunter.io/companies/lirix-consulting",
+  "ats": "unknown",
+  "slug": "lirix-consulting"
+ },
+ {
+  "name": "Little Flowers Early Childhood And Development Center Inc",
+  "careers_url": "https://secrethunter.io/companies/little-flowers-early-childhood-and-development-center-inc",
+  "ats": "unknown",
+  "slug": "little-flowers-early-childhood-and-development-center-inc"
+ },
+ {
+  "name": "Lmr Finance",
+  "careers_url": "https://secrethunter.io/companies/lmr-finance",
+  "ats": "unknown",
+  "slug": "lmr-finance"
+ },
+ {
+  "name": "Logicalcommander",
+  "careers_url": "https://secrethunter.io/companies/logicalcommander",
+  "ats": "unknown",
+  "slug": "logicalcommander"
+ },
+ {
+  "name": "Long Acting Extended Release Antiretroviral Research Resource Program",
+  "careers_url": "https://secrethunter.io/companies/long-acting-extended-release-antiretroviral-research-resource-program",
+  "ats": "unknown",
+  "slug": "long-acting-extended-release-antiretroviral-research-resource-program"
+ },
+ {
+  "name": "Longevity AI",
+  "careers_url": "https://secrethunter.io/companies/longevity-ai",
+  "ats": "unknown",
+  "slug": "longevity-ai"
+ },
+ {
+  "name": "Longi Solar",
+  "careers_url": "https://secrethunter.io/companies/longi-solar",
+  "ats": "unknown",
+  "slug": "longi-solar"
+ },
+ {
+  "name": "Loreal",
+  "careers_url": "https://secrethunter.io/companies/loreal",
+  "ats": "unknown",
+  "slug": "loreal"
+ },
+ {
+  "name": "Lsports Data Ltd",
+  "careers_url": "https://secrethunter.io/companies/lsports-data-ltd-",
+  "ats": "unknown",
+  "slug": "lsports-data-ltd"
+ },
+ {
+  "name": "Lstechs",
+  "careers_url": "https://secrethunter.io/companies/lstechs",
+  "ats": "unknown",
+  "slug": "lstechs"
+ },
+ {
+  "name": "Lts Device Technologies",
+  "careers_url": "https://secrethunter.io/companies/lts-device-technologies",
+  "ats": "unknown",
+  "slug": "lts-device-technologies"
+ },
+ {
+  "name": "Lubinski Auto",
+  "careers_url": "https://secrethunter.io/companies/lubinski-auto",
+  "ats": "unknown",
+  "slug": "lubinski-auto"
+ },
+ {
+  "name": "Lubinski Group",
+  "careers_url": "https://secrethunter.io/companies/lubinski-group",
+  "ats": "unknown",
+  "slug": "lubinski-group"
+ },
+ {
+  "name": "Ludeoofficial",
+  "careers_url": "https://secrethunter.io/companies/ludeoofficial",
+  "ats": "unknown",
+  "slug": "ludeoofficial"
+ },
+ {
+  "name": "Lumana AI",
+  "careers_url": "https://secrethunter.io/companies/lumana-ai",
+  "ats": "unknown",
+  "slug": "lumana-ai"
+ },
+ {
+  "name": "Lumen",
+  "careers_url": "https://secrethunter.io/companies/lumen",
+  "ats": "unknown",
+  "slug": "lumen"
+ },
+ {
+  "name": "Lumentum",
+  "careers_url": "https://secrethunter.io/companies/lumentum",
+  "ats": "unknown",
+  "slug": "lumentum"
+ },
+ {
+  "name": "Lumissil",
+  "careers_url": "https://secrethunter.io/companies/lumissil",
+  "ats": "unknown",
+  "slug": "lumissil"
+ },
+ {
+  "name": "Lunairai",
+  "careers_url": "https://secrethunter.io/companies/lunairai",
+  "ats": "unknown",
+  "slug": "lunairai"
+ },
+ {
+  "name": "Lycee Professionnel Toulouse Lautrec",
+  "careers_url": "https://secrethunter.io/companies/lycee-professionnel-toulouse-lautrec",
+  "ats": "unknown",
+  "slug": "lycee-professionnel-toulouse-lautrec"
+ },
+ {
+  "name": "Lynxevents",
+  "careers_url": "https://secrethunter.io/companies/lynxevents",
+  "ats": "unknown",
+  "slug": "lynxevents"
+ },
+ {
+  "name": "Lynxight",
+  "careers_url": "https://secrethunter.io/companies/lynxight",
+  "ats": "unknown",
+  "slug": "lynxight"
+ },
+ {
+  "name": "Lyra Health",
+  "careers_url": "https://secrethunter.io/companies/lyra-health",
+  "ats": "unknown",
+  "slug": "lyra-health"
+ },
+ {
+  "name": "M D Mechanical Devices",
+  "careers_url": "https://secrethunter.io/companies/m--d--mechanical-devices",
+  "ats": "unknown",
+  "slug": "m-d-mechanical-devices"
+ },
+ {
+  "name": "M Hashuk",
+  "careers_url": "https://secrethunter.io/companies/m-hashuk",
+  "ats": "unknown",
+  "slug": "m-hashuk"
+ },
+ {
+  "name": "Mabat3d",
+  "careers_url": "https://secrethunter.io/companies/mabat3d",
+  "ats": "unknown",
+  "slug": "mabat3d"
+ },
+ {
+  "name": "Maccabi Health Services",
+  "careers_url": "https://secrethunter.io/companies/maccabi-health-services",
+  "ats": "unknown",
+  "slug": "maccabi-health-services"
+ },
+ {
+  "name": "Maelyscosmetics",
+  "careers_url": "https://secrethunter.io/companies/maelyscosmetics",
+  "ats": "unknown",
+  "slug": "maelyscosmetics"
+ },
+ {
+  "name": "Maersk Group",
+  "careers_url": "https://secrethunter.io/companies/maersk-group",
+  "ats": "unknown",
+  "slug": "maersk-group"
+ },
+ {
+  "name": "Magal Security Systems India Ltd",
+  "careers_url": "https://secrethunter.io/companies/magal-security-systems-india-ltd",
+  "ats": "unknown",
+  "slug": "magal-security-systems-india-ltd"
+ },
+ {
+  "name": "Magalsolutions",
+  "careers_url": "https://secrethunter.io/companies/magalsolutions",
+  "ats": "unknown",
+  "slug": "magalsolutions"
+ },
+ {
+  "name": "Magaltech Automotive Engineering",
+  "careers_url": "https://secrethunter.io/companies/magaltech-automotive-engineering",
+  "ats": "unknown",
+  "slug": "magaltech-automotive-engineering"
+ },
+ {
+  "name": "Magen Experts",
+  "careers_url": "https://secrethunter.io/companies/magen-experts",
+  "ats": "unknown",
+  "slug": "magen-experts"
+ },
+ {
+  "name": "Magentamed",
+  "careers_url": "https://secrethunter.io/companies/magentamed",
+  "ats": "unknown",
+  "slug": "magentamed"
+ },
+ {
+  "name": "Magic Software Enterprises",
+  "careers_url": "https://secrethunter.io/companies/magic-software-enterprises",
+  "ats": "unknown",
+  "slug": "magic-software-enterprises"
+ },
+ {
+  "name": "Magma Devs",
+  "careers_url": "https://secrethunter.io/companies/magma-devs",
+  "ats": "unknown",
+  "slug": "magma-devs"
+ },
+ {
+  "name": "Magnolia Silver Jewellery Group",
+  "careers_url": "https://secrethunter.io/companies/magnolia-silver-jewellery-group",
+  "ats": "unknown",
+  "slug": "magnolia-silver-jewellery-group"
+ },
+ {
+  "name": "Magnusmetal",
+  "careers_url": "https://secrethunter.io/companies/magnusmetal",
+  "ats": "unknown",
+  "slug": "magnusmetal"
+ },
+ {
+  "name": "Make Gems",
+  "careers_url": "https://secrethunter.io/companies/make-gems",
+  "ats": "unknown",
+  "slug": "make-gems"
+ },
+ {
+  "name": "Makemyday1",
+  "careers_url": "https://secrethunter.io/companies/makemyday1",
+  "ats": "unknown",
+  "slug": "makemyday1"
+ },
+ {
+  "name": "Malam",
+  "careers_url": "https://secrethunter.io/companies/malam",
+  "ats": "unknown",
+  "slug": "malam"
+ },
+ {
+  "name": "Malcam",
+  "careers_url": "https://secrethunter.io/companies/malcam",
+  "ats": "unknown",
+  "slug": "malcam"
+ },
+ {
+  "name": "Mali",
+  "careers_url": "https://secrethunter.io/companies/mali",
+  "ats": "unknown",
+  "slug": "mali"
+ },
+ {
+  "name": "Malyan Amircashflow",
+  "careers_url": "https://secrethunter.io/companies/malyan-amircashflow",
+  "ats": "unknown",
+  "slug": "malyan-amircashflow"
+ },
+ {
+  "name": "Mami Social Commerce",
+  "careers_url": "https://secrethunter.io/companies/mami-social-commerce",
+  "ats": "unknown",
+  "slug": "mami-social-commerce"
+ },
+ {
+  "name": "Mandarin Oriental Hotel Group",
+  "careers_url": "https://secrethunter.io/companies/mandarin-oriental-hotel-group",
+  "ats": "unknown",
+  "slug": "mandarin-oriental-hotel-group"
+ },
+ {
+  "name": "Mantin Plast",
+  "careers_url": "https://secrethunter.io/companies/mantin-plast",
+  "ats": "unknown",
+  "slug": "mantin-plast"
+ },
+ {
+  "name": "Manufacturers Association Of Israel",
+  "careers_url": "https://secrethunter.io/companies/manufacturers-association-of-israel",
+  "ats": "unknown",
+  "slug": "manufacturers-association-of-israel"
+ },
+ {
+  "name": "Margolin Engineering Consulting",
+  "careers_url": "https://secrethunter.io/companies/margolin-engineering-consulting",
+  "ats": "unknown",
+  "slug": "margolin-engineering-consulting"
+ },
+ {
+  "name": "Marketeam AI",
+  "careers_url": "https://secrethunter.io/companies/marketeam-ai",
+  "ats": "unknown",
+  "slug": "marketeam-ai"
+ },
+ {
+  "name": "Marketily",
+  "careers_url": "https://secrethunter.io/companies/marketily",
+  "ats": "unknown",
+  "slug": "marketily"
+ },
+ {
+  "name": "Mars Antennas And Rf Systems",
+  "careers_url": "https://secrethunter.io/companies/mars-antennas-and-rf-systems",
+  "ats": "unknown",
+  "slug": "mars-antennas-and-rf-systems"
+ },
+ {
+  "name": "Mashbir",
+  "careers_url": "https://secrethunter.io/companies/mashbir-%D7%94%D7%9E%D7%A9%D7%91%D7%99%D7%A8-%D7%9C%D7%A6%D7%A8%D7%9B%D7%9F",
+  "ats": "unknown",
+  "slug": "mashbir"
+ },
+ {
+  "name": "Mastercard Dynamic Yield",
+  "careers_url": "https://secrethunter.io/companies/mastercard-dynamic-yield",
+  "ats": "unknown",
+  "slug": "mastercard-dynamic-yield"
+ },
+ {
+  "name": "Matan Health Services",
+  "careers_url": "https://secrethunter.io/companies/matan-health-services",
+  "ats": "unknown",
+  "slug": "matan-health-services"
+ },
+ {
+  "name": "Mateh Asher Regional Council",
+  "careers_url": "https://secrethunter.io/companies/mateh-asher-regional-council",
+  "ats": "unknown",
+  "slug": "mateh-asher-regional-council"
+ },
+ {
+  "name": "Materialspaceai",
+  "careers_url": "https://secrethunter.io/companies/materialspaceai",
+  "ats": "unknown",
+  "slug": "materialspaceai"
+ },
+ {
+  "name": "Matia Data",
+  "careers_url": "https://secrethunter.io/companies/matia-data",
+  "ats": "unknown",
+  "slug": "matia-data"
+ },
+ {
+  "name": "Matnasim",
+  "careers_url": "https://secrethunter.io/companies/matnasim",
+  "ats": "unknown",
+  "slug": "matnasim"
+ },
+ {
+  "name": "Matrix Devops",
+  "careers_url": "https://secrethunter.io/companies/matrix-devops",
+  "ats": "unknown",
+  "slug": "matrix-devops"
+ },
+ {
+  "name": "Matrixdna",
+  "careers_url": "https://secrethunter.io/companies/matrixdna",
+  "ats": "unknown",
+  "slug": "matrixdna"
+ },
+ {
+  "name": "Maverick Medical AI",
+  "careers_url": "https://secrethunter.io/companies/maverick-medical-ai",
+  "ats": "unknown",
+  "slug": "maverick-medical-ai"
+ },
+ {
+  "name": "Max Security Solutions Ltd",
+  "careers_url": "https://secrethunter.io/companies/max-security-solutions-ltd-",
+  "ats": "unknown",
+  "slug": "max-security-solutions-ltd"
+ },
+ {
+  "name": "Maxfinanceil",
+  "careers_url": "https://secrethunter.io/companies/maxfinanceil",
+  "ats": "unknown",
+  "slug": "maxfinanceil"
+ },
+ {
+  "name": "Maxlinear",
+  "careers_url": "https://secrethunter.io/companies/maxlinear",
+  "ats": "unknown",
+  "slug": "maxlinear"
+ },
+ {
+  "name": "Mayanei Hayeshuah Medical Center",
+  "careers_url": "https://secrethunter.io/companies/mayanei-hayeshuah-medical-center",
+  "ats": "unknown",
+  "slug": "mayanei-hayeshuah-medical-center"
+ },
+ {
+  "name": "Mazebolt",
+  "careers_url": "https://secrethunter.io/companies/mazebolt",
+  "ats": "unknown",
+  "slug": "mazebolt"
+ },
+ {
+  "name": "Mccann Erickson Israel",
+  "careers_url": "https://secrethunter.io/companies/mccann-erickson-israel",
+  "ats": "unknown",
+  "slug": "mccann-erickson-israel"
+ },
+ {
+  "name": "Mckinsey",
+  "careers_url": "https://secrethunter.io/companies/mckinsey",
+  "ats": "unknown",
+  "slug": "mckinsey"
+ },
+ {
+  "name": "Mclfinance",
+  "careers_url": "https://secrethunter.io/companies/mclfinance",
+  "ats": "unknown",
+  "slug": "mclfinance"
+ },
+ {
+  "name": "Mdaspace",
+  "careers_url": "https://secrethunter.io/companies/mdaspace",
+  "ats": "unknown",
+  "slug": "mdaspace"
+ },
+ {
+  "name": "Meckano",
+  "careers_url": "https://secrethunter.io/companies/meckano",
+  "ats": "unknown",
+  "slug": "meckano"
+ },
+ {
+  "name": "Meco Architectural Engineering Llc",
+  "careers_url": "https://secrethunter.io/companies/meco-architectural-engineering-llc",
+  "ats": "unknown",
+  "slug": "meco-architectural-engineering-llc"
+ },
+ {
+  "name": "Medasense Biometrics Ltd",
+  "careers_url": "https://secrethunter.io/companies/medasense-biometrics-ltd-",
+  "ats": "unknown",
+  "slug": "medasense-biometrics-ltd"
+ },
+ {
+  "name": "Medexity",
+  "careers_url": "https://secrethunter.io/companies/medexity",
+  "ats": "unknown",
+  "slug": "medexity"
+ },
+ {
+  "name": "Medica Refael Hospitals",
+  "careers_url": "https://secrethunter.io/companies/medica-refael-hospitals",
+  "ats": "unknown",
+  "slug": "medica-refael-hospitals"
+ },
+ {
+  "name": "Medison",
+  "careers_url": "https://secrethunter.io/companies/medison",
+  "ats": "unknown",
+  "slug": "medison"
+ },
+ {
+  "name": "Medone",
+  "careers_url": "https://secrethunter.io/companies/medone",
+  "ats": "unknown",
+  "slug": "medone"
+ },
+ {
+  "name": "Meetcarra",
+  "careers_url": "https://secrethunter.io/companies/meetcarra",
+  "ats": "unknown",
+  "slug": "meetcarra"
+ },
+ {
+  "name": "Meganet One",
+  "careers_url": "https://secrethunter.io/companies/meganet-one",
+  "ats": "unknown",
+  "slug": "meganet-one"
+ },
+ {
+  "name": "Megapharm",
+  "careers_url": "https://secrethunter.io/companies/megapharm",
+  "ats": "unknown",
+  "slug": "megapharm"
+ },
+ {
+  "name": "Megiddo Y K",
+  "careers_url": "https://secrethunter.io/companies/megiddo-y-k",
+  "ats": "unknown",
+  "slug": "megiddo-y-k"
+ },
+ {
+  "name": "Megoafek",
+  "careers_url": "https://secrethunter.io/companies/megoafek",
+  "ats": "unknown",
+  "slug": "megoafek"
+ },
+ {
+  "name": "Meir Hospital",
+  "careers_url": "https://secrethunter.io/companies/meir-hospital",
+  "ats": "unknown",
+  "slug": "meir-hospital"
+ },
+ {
+  "name": "Meitar",
+  "careers_url": "https://secrethunter.io/companies/meitar",
+  "ats": "unknown",
+  "slug": "meitar"
+ },
+ {
+  "name": "Meitav Investment House",
+  "careers_url": "https://secrethunter.io/companies/meitav-investment-house",
+  "ats": "unknown",
+  "slug": "meitav-investment-house"
+ },
+ {
+  "name": "Meitav Trade Securities Ltd",
+  "careers_url": "https://secrethunter.io/companies/meitav-trade-securities-ltd",
+  "ats": "unknown",
+  "slug": "meitav-trade-securities-ltd"
+ },
+ {
+  "name": "Mekorot",
+  "careers_url": "https://secrethunter.io/companies/mekorot",
+  "ats": "unknown",
+  "slug": "mekorot"
+ },
+ {
+  "name": "Melabev",
+  "careers_url": "https://secrethunter.io/companies/melabev",
+  "ats": "unknown",
+  "slug": "melabev"
+ },
+ {
+  "name": "Meliopayments",
+  "careers_url": "https://secrethunter.io/companies/meliopayments",
+  "ats": "unknown",
+  "slug": "meliopayments"
+ },
+ {
+  "name": "Memed Dx",
+  "careers_url": "https://secrethunter.io/companies/memed-dx",
+  "ats": "unknown",
+  "slug": "memed-dx"
+ },
+ {
+  "name": "Mench Adv",
+  "careers_url": "https://secrethunter.io/companies/mench-adv",
+  "ats": "unknown",
+  "slug": "mench-adv"
+ },
+ {
+  "name": "Mend IO",
+  "careers_url": "https://secrethunter.io/companies/mend-io",
+  "ats": "unknown",
+  "slug": "mend-io"
+ },
+ {
+  "name": "Menora",
+  "careers_url": "https://secrethunter.io/companies/menora",
+  "ats": "unknown",
+  "slug": "menora"
+ },
+ {
+  "name": "Mentaily",
+  "careers_url": "https://secrethunter.io/companies/mentaily",
+  "ats": "unknown",
+  "slug": "mentaily"
+ },
+ {
+  "name": "Mer Group Global",
+  "careers_url": "https://secrethunter.io/companies/mer-group-global",
+  "ats": "unknown",
+  "slug": "mer-group-global"
+ },
+ {
+  "name": "Merck Life Science",
+  "careers_url": "https://secrethunter.io/companies/merck-life-science",
+  "ats": "unknown",
+  "slug": "merck-life-science"
+ },
+ {
+  "name": "Mesh Cybersecurity",
+  "careers_url": "https://secrethunter.io/companies/mesh-cybersecurity",
+  "ats": "unknown",
+  "slug": "mesh-cybersecurity"
+ },
+ {
+  "name": "Metalix Cad Cam Ltd",
+  "careers_url": "https://secrethunter.io/companies/metalix-cad-cam-ltd",
+  "ats": "unknown",
+  "slug": "metalix-cad-cam-ltd"
+ },
+ {
+  "name": "Meteorops",
+  "careers_url": "https://secrethunter.io/companies/meteorops",
+  "ats": "unknown",
+  "slug": "meteorops"
+ },
+ {
+  "name": "Methodica Effective Learning",
+  "careers_url": "https://secrethunter.io/companies/methodica-effective-learning",
+  "ats": "unknown",
+  "slug": "methodica-effective-learning"
+ },
+ {
+  "name": "Metropoline",
+  "careers_url": "https://secrethunter.io/companies/metropoline-%D7%9E%D7%98%D7%A8%D7%95%D7%A4%D7%95%D7%9C%D7%99%D7%9F",
+  "ats": "unknown",
+  "slug": "metropoline"
+ },
+ {
+  "name": "Metzer",
+  "careers_url": "https://secrethunter.io/companies/metzer",
+  "ats": "unknown",
+  "slug": "metzer"
+ },
+ {
+  "name": "Meuhedet",
+  "careers_url": "https://secrethunter.io/companies/meuhedet",
+  "ats": "unknown",
+  "slug": "meuhedet"
+ },
+ {
+  "name": "Mevakerhamedina",
+  "careers_url": "https://secrethunter.io/companies/mevakerhamedina",
+  "ats": "unknown",
+  "slug": "mevakerhamedina"
+ },
+ {
+  "name": "Mfpm",
+  "careers_url": "https://secrethunter.io/companies/mfpm",
+  "ats": "unknown",
+  "slug": "mfpm"
+ },
+ {
+  "name": "Mhg Thailand",
+  "careers_url": "https://secrethunter.io/companies/mhg-thailand",
+  "ats": "unknown",
+  "slug": "mhg-thailand"
+ },
+ {
+  "name": "Michal Sela Forum",
+  "careers_url": "https://secrethunter.io/companies/michal-sela-forum",
+  "ats": "unknown",
+  "slug": "michal-sela-forum"
+ },
+ {
+  "name": "Micro Ceramics Ltd",
+  "careers_url": "https://secrethunter.io/companies/micro-ceramics-ltd",
+  "ats": "unknown",
+  "slug": "micro-ceramics-ltd"
+ },
+ {
+  "name": "Microchip Technology",
+  "careers_url": "https://secrethunter.io/companies/microchip-technology",
+  "ats": "unknown",
+  "slug": "microchip-technology"
+ },
+ {
+  "name": "Microcon Vision",
+  "careers_url": "https://secrethunter.io/companies/microcon-vision",
+  "ats": "unknown",
+  "slug": "microcon-vision"
+ },
+ {
+  "name": "Midatech",
+  "careers_url": "https://secrethunter.io/companies/midatech",
+  "ats": "unknown",
+  "slug": "midatech"
+ },
+ {
+  "name": "Migal Galilee Research Institute",
+  "careers_url": "https://secrethunter.io/companies/migal-galilee-research-institute",
+  "ats": "unknown",
+  "slug": "migal-galilee-research-institute"
+ },
+ {
+  "name": "Mikden",
+  "careers_url": "https://secrethunter.io/companies/mikden",
+  "ats": "unknown",
+  "slug": "mikden"
+ },
+ {
+  "name": "Mikud Security",
+  "careers_url": "https://secrethunter.io/companies/mikud-security",
+  "ats": "unknown",
+  "slug": "mikud-security"
+ },
+ {
+  "name": "Milestone Systems",
+  "careers_url": "https://secrethunter.io/companies/milestone-systems",
+  "ats": "unknown",
+  "slug": "milestone-systems"
+ },
+ {
+  "name": "Milestone Technologies",
+  "careers_url": "https://secrethunter.io/companies/milestone-technologies",
+  "ats": "unknown",
+  "slug": "milestone-technologies"
+ },
+ {
+  "name": "Milestoneai",
+  "careers_url": "https://secrethunter.io/companies/milestoneai",
+  "ats": "unknown",
+  "slug": "milestoneai"
+ },
+ {
+  "name": "Milestoneofficial",
+  "careers_url": "https://secrethunter.io/companies/milestoneofficial",
+  "ats": "unknown",
+  "slug": "milestoneofficial"
+ },
+ {
+  "name": "Millennium Partners",
+  "careers_url": "https://secrethunter.io/companies/millennium-partners",
+  "ats": "unknown",
+  "slug": "millennium-partners"
+ },
+ {
+  "name": "Milliman",
+  "careers_url": "https://secrethunter.io/companies/milliman",
+  "ats": "unknown",
+  "slug": "milliman"
+ },
+ {
+  "name": "Mindsecurity",
+  "careers_url": "https://secrethunter.io/companies/mindsecurity",
+  "ats": "unknown",
+  "slug": "mindsecurity"
+ },
+ {
+  "name": "Mindteck",
+  "careers_url": "https://secrethunter.io/companies/mindteck",
+  "ats": "unknown",
+  "slug": "mindteck"
+ },
+ {
+  "name": "Minet Technologies",
+  "careers_url": "https://secrethunter.io/companies/minet-technologies",
+  "ats": "unknown",
+  "slug": "minet-technologies"
+ },
+ {
+  "name": "Mingyangsmartenergy",
+  "careers_url": "https://secrethunter.io/companies/mingyangsmartenergy",
+  "ats": "unknown",
+  "slug": "mingyangsmartenergy"
+ },
+ {
+  "name": "Minimed Diabetes",
+  "careers_url": "https://secrethunter.io/companies/minimed-diabetes",
+  "ats": "unknown",
+  "slug": "minimed-diabetes"
+ },
+ {
+  "name": "Minimus",
+  "careers_url": "https://secrethunter.io/companies/minimus",
+  "ats": "unknown",
+  "slug": "minimus"
+ },
+ {
+  "name": "Mininna",
+  "careers_url": "https://secrethunter.io/companies/mininna",
+  "ats": "unknown",
+  "slug": "mininna"
+ },
+ {
+  "name": "Ministere Des Affaires Etrangeres Francais",
+  "careers_url": "https://secrethunter.io/companies/ministere-des-affaires-etrangeres-francais",
+  "ats": "unknown",
+  "slug": "ministere-des-affaires-etrangeres-francais"
+ },
+ {
+  "name": "Mink N Vik",
+  "careers_url": "https://secrethunter.io/companies/mink-n-vik",
+  "ats": "unknown",
+  "slug": "mink-n-vik"
+ },
+ {
+  "name": "Minkovsky Media",
+  "careers_url": "https://secrethunter.io/companies/minkovsky-media",
+  "ats": "unknown",
+  "slug": "minkovsky-media"
+ },
+ {
+  "name": "Minrav Group Ltd",
+  "careers_url": "https://secrethunter.io/companies/minrav-group-ltd",
+  "ats": "unknown",
+  "slug": "minrav-group-ltd"
+ },
+ {
+  "name": "Mitiga",
+  "careers_url": "https://secrethunter.io/companies/mitiga",
+  "ats": "unknown",
+  "slug": "mitiga"
+ },
+ {
+  "name": "Mitrelli",
+  "careers_url": "https://secrethunter.io/companies/mitrelli",
+  "ats": "unknown",
+  "slug": "mitrelli"
+ },
+ {
+  "name": "Mitzlol",
+  "careers_url": "https://secrethunter.io/companies/mitzlol",
+  "ats": "unknown",
+  "slug": "mitzlol"
+ },
+ {
+  "name": "Mivne Real Estate",
+  "careers_url": "https://secrethunter.io/companies/mivne-real-estate",
+  "ats": "unknown",
+  "slug": "mivne-real-estate"
+ },
+ {
+  "name": "Mks Instruments",
+  "careers_url": "https://secrethunter.io/companies/mks-instruments",
+  "ats": "unknown",
+  "slug": "mks-instruments"
+ },
+ {
+  "name": "Mobitech IO",
+  "careers_url": "https://secrethunter.io/companies/mobitech-io",
+  "ats": "unknown",
+  "slug": "mobitech-io"
+ },
+ {
+  "name": "Mobius Protection Systems",
+  "careers_url": "https://secrethunter.io/companies/mobius-protection-systems",
+  "ats": "unknown",
+  "slug": "mobius-protection-systems"
+ },
+ {
+  "name": "Moburst",
+  "careers_url": "https://secrethunter.io/companies/moburst",
+  "ats": "unknown",
+  "slug": "moburst"
+ },
+ {
+  "name": "Modiin Energy",
+  "careers_url": "https://secrethunter.io/companies/modiin-energy",
+  "ats": "unknown",
+  "slug": "modiin-energy"
+ },
+ {
+  "name": "Mogi I O",
+  "careers_url": "https://secrethunter.io/companies/mogi-i-o",
+  "ats": "unknown",
+  "slug": "mogi-i-o"
+ },
+ {
+  "name": "Mondaydotcom",
+  "careers_url": "https://secrethunter.io/companies/mondaydotcom",
+  "ats": "unknown",
+  "slug": "mondaydotcom"
+ },
+ {
+  "name": "Monogoto",
+  "careers_url": "https://secrethunter.io/companies/monogoto",
+  "ats": "unknown",
+  "slug": "monogoto"
+ },
+ {
+  "name": "Montana Energy Corps Citizens For A Better Flathead",
+  "careers_url": "https://secrethunter.io/companies/montana-energy-corps-citizens-for-a-better-flathead",
+  "ats": "unknown",
+  "slug": "montana-energy-corps-citizens-for-a-better-flathead"
+ },
+ {
+  "name": "Monto Pay",
+  "careers_url": "https://secrethunter.io/companies/monto-pay",
+  "ats": "unknown",
+  "slug": "monto-pay"
+ },
+ {
+  "name": "Montreal Jewish Museum",
+  "careers_url": "https://secrethunter.io/companies/montreal-jewish-museum",
+  "ats": "unknown",
+  "slug": "montreal-jewish-museum"
+ },
+ {
+  "name": "Mooffers",
+  "careers_url": "https://secrethunter.io/companies/mooffers",
+  "ats": "unknown",
+  "slug": "mooffers"
+ },
+ {
+  "name": "Moonshot Marketing Ltd",
+  "careers_url": "https://secrethunter.io/companies/moonshot-marketing-ltd",
+  "ats": "unknown",
+  "slug": "moonshot-marketing-ltd"
  }
 ]

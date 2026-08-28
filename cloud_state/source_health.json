@@ -1,11 +1,11 @@
 {
  "indeed": {
-  "last_count": 63,
+  "last_count": 67,
   "last_nonzero": "2026-08-28",
   "last_run": "2026-08-28"
  },
  "linkedin": {
-  "last_count": 2175,
+  "last_count": 2304,
   "last_nonzero": "2026-08-28",
   "last_run": "2026-08-28"
  },
@@ -20,7 +20,7 @@
   "last_run": "2026-08-28"
  },
  "telegram": {
-  "last_count": 10,
+  "last_count": 0,
   "last_nonzero": "2026-08-28",
   "last_run": "2026-08-28"
  },

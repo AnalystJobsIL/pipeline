@@ -3608,6 +3608,19 @@
     "stage_note": "Series A (~$5M led by Bridges Israel, 2020); ~$10.6M total raised, latest activity a grant in 2023",
     "sub_sector": "Bio-enhancing ecological concrete admixtures and structures for marine/coastal infrastructure"
   },
+  "EPAM Systems, Inc.": {
+    "as_of": "2026-08-28",
+    "business_model": "B2B",
+    "customer_type": "Enterprise",
+    "employees_global": 64018,
+    "founded": 1993,
+    "il_center": "Herzliya; HQ in Newtown, PA, US",
+    "sector": "IT Services / Consulting",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NYSE: EPAM",
+    "sub_sector": "Digital Engineering & AI Consulting"
+  },
   "EY": {
     "as_of": "2026-08-22",
     "business_model": "Fee-for-service professional services: audit/assurance, tax, consulting and strategy/transactions engagements billed to clients",
@@ -13185,5 +13198,18 @@
     "stage": "public",
     "stage_note": "Israeli arm of Experis, the IT brand of ManpowerGroup (NYSE: MAN); local registrar entity אקספריס איי.טי.אס. בע\"מ (512869124), formerly Manpower Information Technology Ltd.",
     "sub_sector": "IT professional resourcing, outsourcing and managed services; its Experis Academy arm retrains degree-holders as developers/BI/QA/embedded engineers and places them with clients"
+  },
+  "מטריקס": {
+    "as_of": "2026-08-28",
+    "business_model": "IT services, systems integration, BI/cloud/data consulting and outsourcing",
+    "customer_type": "B2B - enterprises and government",
+    "employees_global": 12880,
+    "founded": 1989,
+    "il_center": "Herzliya (HQ), offices nationwide including Jerusalem",
+    "sector": "IT Services",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "TASE: MTRX, listed on TA-90 index",
+    "sub_sector": "Systems integration, BI, Big Data, AI & Cloud consulting"
   }
 }

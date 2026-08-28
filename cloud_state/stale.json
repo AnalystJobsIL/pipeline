@@ -14,12 +14,6 @@
   "platform": "greenhouse",
   "reason": "regressed-to-zero"
  },
- "CYE": {
-  "careers_url": "https://api.lever.co/v0/postings/CYE",
-  "platform": "lever",
-  "reason": "fetch-error",
-  "error": "HttpError: network error for https://api.lever.co/v0/postings/CYE The read operat"
- },
  "XM Cyber": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/15.005/positions",
   "platform": "comeet",
@@ -74,7 +68,7 @@
   "careers_url": "https://www.greeneye.ag/careers",
   "platform": "scrape",
   "reason": "fetch-error",
-  "error": "scrape: http:404 (2 nights)"
+  "error": "scrape: http:404 (3 nights)"
  },
  "Apple": {
   "careers_url": "https://jobs.apple.com/en-us/search",
@@ -96,6 +90,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "ParaZero": {
+  "careers_url": "https://parazero.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "REE Automotive": {
   "careers_url": "https://ree.auto/careers/",
   "platform": "scrape",
@@ -104,7 +103,8 @@
  "Dynamic Yield": {
   "careers_url": "https://www.dynamicyield.com/careers/",
   "platform": "scrape",
-  "reason": "regressed-to-zero"
+  "reason": "fetch-error",
+  "error": "scrape: render:Error (1 night)"
  },
  "Leadspace": {
   "careers_url": "https://api.lever.co/v0/postings/leadspace",
@@ -170,7 +170,7 @@
   "careers_url": "https://akamaicareers.inflightcloud.com/search",
   "platform": "scrape",
   "reason": "fetch-error",
-  "error": "scrape: http:403 (3 nights)"
+  "error": "scrape: http:403 (4 nights)"
  },
  "Deutsche Telekom": {
   "careers_url": "https://telekom-growthhub.eightfold.ai/careers",
@@ -186,6 +186,11 @@
   "careers_url": "https://api.ashbyhq.com/posting-api/job-board/Deel",
   "platform": "ashby",
   "reason": "empty-board"
+ },
+ "Workiz": {
+  "careers_url": "https://www.workiz.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Frontegg": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/77.009/positions",
@@ -212,6 +217,16 @@
   "platform": "workable",
   "reason": "empty-board"
  },
+ "Sightec": {
+  "careers_url": "https://sightec.com/career/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Massivit 3D": {
+  "careers_url": "https://www.massivit3d.com/career/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Microsoft Israel": {
   "careers_url": "https://jobs.careers.microsoft.com/global/en/search",
   "platform": "scrape",
@@ -222,6 +237,11 @@
   "platform": "comeet",
   "reason": "empty-board"
  },
+ "Edwards Lifesciences": {
+  "careers_url": "https://www.edwards.com/careers/locations/israel",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "GenCell": {
   "careers_url": "https://www.gencellprojects.com/jobs",
   "platform": "scrape",
@@ -231,6 +251,11 @@
   "careers_url": "https://jobs.ashbyhq.com/stigg",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "ASOCS": {
+  "careers_url": "https://www.careers-page.com/asocs",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Digital Turbine": {
   "careers_url": "https://www.digitalturbine.com/careers/",
@@ -252,10 +277,20 @@
   "platform": "workable",
   "reason": "empty-board"
  },
+ "Komodor": {
+  "careers_url": "https://komodor.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Run:ai": {
   "careers_url": "https://api.smartrecruiters.com/v1/companies/RunAI1/postings",
   "platform": "smartrecruiters",
   "reason": "empty-board"
+ },
+ "Sternum": {
+  "careers_url": "https://sternumiot.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "SIGA OT Solutions": {
   "careers_url": "https://siga-technologies-inc.breezy.hr/json",
@@ -266,6 +301,11 @@
   "careers_url": "https://api.lever.co/v0/postings/chaoslabs",
   "platform": "lever",
   "reason": "empty-board"
+ },
+ "Sunbit": {
+  "careers_url": "https://www.sunbit.com/careers-il/#job-feed",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Foretellix": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/84.007/positions",
@@ -298,6 +338,11 @@
   "platform": "workable",
   "reason": "empty-board"
  },
+ "Hailo": {
+  "careers_url": "https://hailo.ai/company-overview/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "BigPanda": {
   "careers_url": "https://www.bigpanda.io/careers/",
   "platform": "scrape",
@@ -327,6 +372,12 @@
   "careers_url": "https://apply.workable.com/api/v1/widget/accounts/econcrete",
   "platform": "workable",
   "reason": "empty-board"
+ },
+ "Unlimited Robotics": {
+  "careers_url": "https://api.lever.co/v0/postings/unlimit",
+  "platform": "lever",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://api.lever.co/v0/postings/unlimit The read op"
  },
  "Lam Research": {
   "careers_url": "https://careers.lamresearch.com/careers",
@@ -373,6 +424,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "IRP Systems": {
+  "careers_url": "https://www.irpsystems.com/careers/#openings",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Dell Technologies": {
   "careers_url": "https://dell.wd1.myworkdayjobs.com/wday/cxs/dell/External/jobs",
   "platform": "workday",
@@ -404,21 +460,10 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Revolut": {
-  "careers_url": "https://www.revolut.com/en-US/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Amazon Web Services (AWS)": {
   "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Dream": {
-  "careers_url": "https://api.lever.co/v0/postings/wearedream",
-  "platform": "lever",
-  "reason": "fetch-error",
-  "error": "HttpError: network error for https://api.lever.co/v0/postings/wearedream The read"
  },
  "scaleops": {
   "careers_url": "https://job-boards.eu.greenhouse.io/scaleops",
