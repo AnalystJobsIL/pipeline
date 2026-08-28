@@ -16948,3 +16948,107 @@ def test_the_quality_tier_survives_anything_the_seam_hands_back():
             assert ok is None and why == "llm-no-verdict", (bad, ok, why)
     finally:
         llm.call_json = old
+
+
+# lane: infra (2026-08-28) — the pre-push gate may not spend money. BACKLOG 374 and 381 are
+# the same defect at two amplitudes: `python -m pytest` reaches the paid rung, books a credit
+# nobody bought, and writes it to the ledger this lane built that morning to be BELIEVED by a
+# later session. With a `secrets.env` beside it, the same run reaches the live account.
+def test_the_suite_cannot_reach_the_bright_data_transport(monkeypatch):
+    """Four modules POST to `api.brightdata.com` — `bd_rescue`, `bd_employees`,
+    `pipeline/jdfill`, `setup_brightdata` — and two more trigger a `datasets/v3` job that
+    bills per RECORD. `BD_RUN_CAP` guards exactly one of them, so the guard is on the
+    TRANSPORT, in `tests/conftest.py`.
+
+    The `BaseException` half is the whole assertion. `bd_rescue.unlock_status` ends in a
+    blanket `except Exception` that returns `("", "timeout")`, and `bd_employees.unlock` in
+    one that returns `None`: an `Exception` subclass would be swallowed there and this suite
+    would stay green while the guard did nothing at all."""
+    import conftest as C, bd_rescue as B, bd_employees as E
+    assert not issubclass(C.PaidCallInTests, Exception), (
+        "an Exception is swallowed by the blanket handlers in bd_rescue/bd_employees and the "
+        "paid call reads as `timeout`/`None` — the guard must outrank them")
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "not-a-real-key")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "not-a-real-zone")
+    monkeypatch.delenv("BD_RUN_CAP", raising=False)      # the cap is NOT what stops this
+    B.SPENT.update(n=0, capped=False)
+    try:
+        for call in (lambda: B.unlock_status("https://x.example/1"),
+                     lambda: E.unlock("https://x.example/2")):
+            with pytest.raises(C.PaidCallInTests):
+                call()
+    finally:
+        B.SPENT.update(n=0, capped=False)
+
+
+def test_the_suite_holds_no_bright_data_credential():
+    """`tests/conftest.py` ran, and the day someone deletes it this is the line that says so
+    instead of the next Bright Data invoice.
+
+    **Present-and-empty, not absent.** All four `_load_secrets` copies arm the environment
+    with `os.environ.setdefault`, which fills an ABSENT name — so popping these hands the key
+    straight back from `secrets.env`, which is measurably how BACKLOG 381 reached the live
+    account. An empty string is falsy to every credential check in the repo and refuses the
+    setdefault. Asserting `not in os.environ` here would pin the broken shape."""
+    for k in ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE"):
+        assert os.environ.get(k) == "", (
+            f"{k} must be present-and-empty in the test process: absent lets every "
+            f"`_load_secrets` setdefault it back from secrets.env (tests/conftest.py)")
+
+
+def test_a_call_that_never_reached_the_wire_books_no_credit(monkeypatch):
+    """`SPENT["n"] += 1` used to sit ABOVE the two `os.environ[...]` reads, so a call that
+    died on a missing ZONE bought nothing and booked a credit anyway. That is not theory:
+    `python -m pytest tests/test_registry.py` on pristine master printed `[bd-spend] bought 3`
+    and appended `{"credits":3,"tool":"__main__.py"}` to the tracked ledger (BACKLOG 374), and
+    BACKLOG 381 recorded the identical shape as four unexplained credits.
+
+    A request that WAS issued and then failed still counts — that one was paid for — so
+    `BD_RUN_CAP` still bounds a failing retry loop exactly as it did before."""
+    import bd_rescue as B
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "not-a-real-key")
+    monkeypatch.delenv("BRIGHTDATA_ZONE", raising=False)
+    monkeypatch.delenv("BD_RUN_CAP", raising=False)
+    B.SPENT.update(n=0, capped=False)
+    try:
+        with pytest.raises(KeyError):
+            B.unlock_status("https://x.example/no-zone")
+        assert B.SPENT["n"] == 0, "a credit was booked for a call that never went out"
+    finally:
+        B.SPENT.update(n=0, capped=False)
+
+
+def test_the_suite_never_writes_the_repositorys_bright_data_ledger(tmp_path, monkeypatch):
+    """Both checkout shapes, because **in a git worktree `.git` is a FILE, not a directory**
+    (BACKLOG 4912) — an `isdir` predicate here would let every worktree write, which is the
+    checkout the `jd-text` lane was in when 381 happened.
+
+    The refusal is SCOPED, not blanket: a `tmp_path` ROOT has no `.git` and still writes,
+    which is what keeps `test_bright_data_spend_is_written_somewhere_a_later_run_can_read`
+    — the durability guard from 47719bc — meaningful rather than vacuous."""
+    import bd_rescue as B
+    for shape, make in (("worktree", lambda p: (p / ".git").write_text("gitdir: /elsewhere\n",
+                                                                      encoding="utf-8")),
+                        ("checkout", lambda p: (p / ".git").mkdir())):
+        d = tmp_path / shape
+        d.mkdir()
+        make(d)
+        monkeypatch.setattr(B, "ROOT", str(d))
+        B.SPENT.update(n=3, capped=False)
+        try:
+            B._report_spend()
+        finally:
+            B.SPENT.update(n=0, capped=False)
+        assert not (d / "cloud_state" / "bd_spend.jsonl").exists(), (
+            f"pytest wrote the real Bright Data ledger from a {shape} (BACKLOG 374/381)")
+
+
+def test_the_bright_data_ledger_never_carries_a_filesystem_path():
+    """Provenance on a spend line is worth having; the operator's username is not. This repo
+    is PUBLIC and its anonymity rests on nothing personal reaching it, so the record says
+    `ci: true|false` and never `ROOT` — which under a home directory is a real name."""
+    import inspect, bd_rescue as B
+    src = inspect.getsource(B._report_spend)
+    assert '"ci": bool(os.environ.get("GITHUB_ACTIONS"))' in src, src[-600:]
+    assert '"root"' not in src and "ROOT}" not in src, (
+        "a filesystem path in the ledger would commit a personal username to a public repo")

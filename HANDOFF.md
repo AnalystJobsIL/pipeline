@@ -73,15 +73,15 @@ in full. Commands are given so the next reader re-derives rather than trusting.
 | ledger | **135 `roles.jsonl` · 132 `roles_text.jsonl`**, reconciling with the store | `wc -l cloud_state/roles*.jsonl` |
 | firmographics export | **973** records — the sqlite table holds 946 and the 08-26 mail said 942 | `len(json.load(open('cloud_state/firmographics.json')))` |
 | last digest | **2026-08-26** — 870 scanned, 3 failed, 28 LLM calls, 96 accepted → 65 merged → **8 emailed**, board 76, archive 56 | `digests/latest.md` |
-| guards | **988 collected** across `test_units` / `test_registry` / `test_company_intel`; **1 failing** | `python -m pytest -q` |
+| guards | **1,270 collected** (968 `test_units` / 205 `test_registry` / 97 `test_company_intel`) — **1,256 passed, 3 failed, 11 skipped** in 5m17s. The `988` this row carried until 2026-08-28 was stale by 282. | `python -m pytest -q` |
 
-**`tests.yml` has been red on 40 consecutive pushes** (2026-08-25T16:00 → now), which means
-`CLAUDE.md`'s pre-push contract has been broken on every push for two days. The failure is
-one assertion: `test_a_role_is_filled_from_another_address_it_was_seen_at` (`assert 170 ==
-2021`) — a `jd-text` guard that reads the live `scraped_cache.json`, so a cron can re-break
-it without anyone touching code. Filed as `docs/BACKLOG.md` 289 by `registry`; the fix is
-`jd-text`'s. **Do not read a red `tests.yml` as "someone else's problem" without checking
-it is still only that one** — on 2026-08-27 it was not (`320@registry`, closed).
+**`tests.yml` is red, and the three failures are not the one this file named yesterday.**
+Re-measured by `infra` at `759ba36`, clean worktree, 2026-08-28 evening:
+`test_no_two_active_rows_share_a_board` (`registry`),
+`test_native_url_is_derived_from_the_public_url_alone` and
+`test_every_open_role_in_the_ledger_carries_a_job_description`. Each reads live state, so a
+cron can break or fix one without anyone touching code. **Never read a red `tests.yml` as
+"someone else's problem" without re-deriving the list** — it has changed twice in two days.
 
 ## Watch list for the next session
 
@@ -212,6 +212,7 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-28 `infra`** - the relay fires on a PUSH from the digest, not a clock GitHub is dropping; the unlocker rung is switchable, capped and visible; every commit measures the caches it pushes - 279->263 was 16/16 `why=empty`, NOT the error class (363@scraper); `mutation-gate` sharded after 105->204. **NOT finished:** 292/308, 365, 305. Record: `docs/sessions/2026-08-28-infra.md`.
 - **2026-08-28 `docs`** - a census fact that fails because the project is WORKING is a broken check: `active_rows` blew its `~900` bracket at 969 and would have skipped `Registry invariants` on the next push. Census claims are one-sided floors now. **NOT finished:** BACKLOG 357-362, 368. Record: `docs/sessions/2026-08-28-docs.md`.
 - **2026-08-28 `classifier`** - `0 LLM calls` read as a dead tier; it fired **32 times that day**, and the run measured was the third of three. **16 of the 19 dropped roles were correct rejects, 1 a real miss.** Title-gate false-negative rate **1 of 401**. The cache key digests the rules. **NOT finished:** 369-373. Record: `docs/sessions/2026-08-28-classifier.md`.
+- **2026-08-28 `infra`** - `python -m pytest` could buy Bright Data credits, and did: **4 measured, 3 phantom and 1 REAL**. `tests/conftest.py` bans the transport; the credit is counted after the request, not before; the ledger refuses a test process. **NOT finished:** 382-386, and the worktree half is rule 5, not code. Record: `docs/sessions/2026-08-28-infra-spend.md`.
 - **2026-08-28 `docs`** - the board and the mail advertised a `~3+ yrs` filter removed that morning; the subject line said it to the inbox at 08:29Z. **Fourteen sites true, not the six filed.** "senior" was already false: **36 of 72 board roles** had no seniority marker. Scope claims are a linted CLAIM now. **NOT finished:** 374-377. Record: `docs/sessions/2026-08-28-docs-scope.md`.
 - **2026-08-28 `classifier`** - internships are the ONE exclusion the operator kept, and a trailing `s` defeated it: `Data Analyst Intern` rejected, **`Data Analyst Interns` was ACCEPTED**, `Senior ... Interns` on the keyword path with no LLM. Class enumerated in both alphabets; **0 of 252 golden and 0 of 1,482 live titles moved**. **NOT finished:** 373, 378. Record: `docs/sessions/2026-08-28-classifier-internships.md`.
 - **2026-08-28 `jd-text` (two sessions)** - morning: `looks_like_jd` replaced the length gate. Evening: it never asked where a JD ENDS - **14 rows published 60,015 characters of LinkedIn sign-in form**, Hila and Modellama among them (text, not render). Archived roles now worked; `seen_ids` reach their own board. **135/144, 3 credits.** Record: `docs/sessions/2026-08-28-jdtext-evening.md`. **NOT finished:** 341, 374-377.

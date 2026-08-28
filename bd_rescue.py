@@ -127,11 +127,33 @@ def _report_spend():
     # section 3), which is how the only evidence of a `pipeline: failure` was destroyed on
     # 2026-08-28. A committed line survives that. `persist_state` owns and merges this file
     # for every workflow, so no workflow has to name it in `--own`.
+    # ...but NEVER from a test process. `python -m pytest` is the command every session runs
+    # before every push, and on pristine master it appended `{"credits":3,"tool":"__main__.py"}`
+    # to this file -- a number nobody spent, in the one artefact whose entire purpose is to be
+    # believed by a later session. `persist_state` auto-owns this path for every workflow
+    # (`persist_state.py` BD_SPEND_LOG), so a fabricated line does not stay local: it is staged
+    # and committed by design. BACKLOG 374; the same shape is BACKLOG 381's four credits.
+    #
+    # `sys.modules`, not `PYTEST_CURRENT_TEST`: this runs at interpreter exit, and pytest
+    # deletes that variable at teardown -- it is unset exactly when the damage happens, and
+    # set when the guard for this function calls `_report_spend()` directly. `exists`, not
+    # `isdir`: in a git worktree `.git` is a FILE (BACKLOG 4912), and an `isdir` test here
+    # would let every worktree write. A tmp_path ROOT has no `.git` at all and still writes,
+    # which is what keeps this scoped to a real checkout rather than a blanket refusal.
+    if "pytest" in sys.modules and os.path.exists(os.path.join(ROOT, ".git")):
+        print(f"[bd-spend] under pytest in a checkout -- NOT writing cloud_state/"
+              f"bd_spend.jsonl. The {SPENT['n']} credit(s) above are a test counter, not "
+              f"spend (BACKLOG 374/381).", flush=True)
+        return
     try:
         import datetime as _dt
         rec = {"at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                "tool": os.path.basename(sys.argv[0]) or "python", "pid": os.getpid(),
-               "credits": SPENT["n"], "capped": SPENT["capped"], "cap": cap}
+               "credits": SPENT["n"], "capped": SPENT["capped"], "cap": cap,
+               # provenance, so a stray line is self-identifying the next morning. A BOOLEAN,
+               # never the path: ROOT under the operator's home would put a personal username
+               # into a PUBLIC repo (CLAUDE.local.md).
+               "ci": bool(os.environ.get("GITHUB_ACTIONS"))}
         d = os.path.join(ROOT, "cloud_state")
         os.makedirs(d, exist_ok=True)
         with open(os.path.join(d, "bd_spend.jsonl"), "a", encoding="utf-8") as f:
@@ -154,12 +176,21 @@ def unlock_status(url, timeout=90):
                   flush=True)
         LAST.update(error="bd-capped", status=None)
         return "", "bd-capped"
-    SPENT["n"] += 1
     body = json.dumps({"zone": os.environ["BRIGHTDATA_ZONE"], "url": url,
                        "format": "raw"}).encode()
     req = urllib.request.Request("https://api.brightdata.com/request", data=body, method="POST",
                                  headers={"Authorization": f"Bearer {os.environ['BRIGHTDATA_API_KEY']}",
                                           "Content-Type": "application/json"})
+    # COUNT AFTER THE REQUEST IS BUILT, NEVER BEFORE. This line used to sit above the two
+    # `os.environ[...]` reads, so a call that died on a missing ZONE or KEY -- i.e. one that
+    # never reached the wire and bought nothing -- still booked a credit. That is not a
+    # rounding error: `python -m pytest tests/test_registry.py` on pristine master printed
+    # `[bd-spend] bought 3` and appended `{"credits":3,"tool":"__main__.py"}` to the tracked
+    # ledger, and the same shape is what BACKLOG 381 recorded as 4 unexplained credits. A
+    # counter that reports spend nobody made is worse than no counter (BACKLOG 374/381).
+    # It still counts a request that WAS issued and then failed or timed out -- that one was
+    # paid for -- so `BD_RUN_CAP` still bounds a failing retry loop exactly as before.
+    SPENT["n"] += 1
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             text = r.read(2_000_000).decode("utf-8", "replace")

@@ -56,16 +56,24 @@ There is **one** 5,000-credit monthly pool and **eight workflows hold the key**
 section used to carry described a world with one consumer and has been wrong for weeks —
 the pool was measured at **118 % (5,906/5,000)** on 2026-08-26.
 
-Month-to-date accounting and the projection live in `discovery_daily.py`
-(`BD_MONTHLY_BUDGET`, default 5000) and print as a `[bd-spend]` line in the digest log.
-That is the number to read; nothing else totals the pool.
+Month-to-date accounting and the projection live in `discovery_daily.py` and print as a
+`[bd-spend]` line in the digest log; the figure is read from the LIVE account, never from a
+counter in this repo. **The ceiling itself moved on 2026-08-28**: it is `pipeline/bd_budget.py`
+now (unlimited for the rest of August, 5,000 from 2026-09-01, both sides pinned by a guard),
+not `discovery_daily.BD_MONTHLY_BUDGET`, which no workflow ever set. That is the number to
+read; nothing else totals the pool.
+
+`cloud_state/bd_spend.jsonl` is **not** that number. It is a per-process audit line so a run's
+spend outlives its deleted run record, nothing reads it yet, and it is never written by a test
+process (BACKLOG 374).
 
 Per-consumer caps, all env vars, all re-derivable with
 `grep -rn "_BD_CAP\|BD_LIMIT\|UNLOCK_PAGES" --include=*.py --exclude-dir=.claude .`:
 
 | cap | default | who spends it |
 |---|---|---|
-| `BD_LIMIT` | 120/day in CI | `bd_rescue.py`, `bd_employees.py` |
+| `BD_RUN_CAP` | **unset = no cap**; `0` = buy nothing | every caller of `bd_rescue.unlock_status` — ten of the ~thirteen spend paths. Per PROCESS, so a pooled job's real ceiling is the cap × the workers |
+| `BD_LIMIT` | 120/day in CI (`bd_rescue`), 60 (`bd_employees`) | `bd_rescue.py`, `bd_employees.py` — a row-count bound on the main loop, not on the request |
 | `JD_ENRICH_BD_CAP` | 40 | `enrich_scrape_jd.py` |
 | `MATCHED_JD_BD_CAP` | 25 | `enrich_matched_jd.py` |
 | `DEEP_BD_SEARCH_CAP` / `LLM_BD_SEARCH_CAP` / `AUDIT_BD_SEARCH_CAP` | 5 | `deep_validate.py`, `resolve_llm.py`, the Sunday audit |
@@ -74,3 +82,9 @@ Per-consumer caps, all env vars, all re-derivable with
 
 `JD_BD` is the one to remember: it is not a cap but a switch, it defaults to on, and every
 rehearsal harness in `tests/` sets it to `0` for exactly that reason.
+
+**Two holes in the table, both known.** `bd_employees.unlock` does not go through
+`bd_rescue`, so `BD_RUN_CAP` never sees it and it writes no ledger line. And the table is a
+list of *caps*, not of *locks*: the one thing that cannot spend at all is the test suite, which
+`tests/conftest.py` holds by banning the transport rather than by any variable here — see
+`docs/decisions/2026-08-28-tests-cannot-spend.md` before adding a cap-shaped guard to it.

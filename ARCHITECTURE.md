@@ -666,7 +666,7 @@ when `BRIGHTDATA_API_KEY` is missing — that gate used to sit above the keyless
 above `sources.record()`, so a rotated secret took the free half dark and silenced the
 detector built to notice.
 
-Two mechanisms keep this honest, and both exist because the number was wrong before:
+Three mechanisms keep this honest, and all three exist because the number was wrong before:
 
 - **`report_bd_spend()`** prints the whole pool every run and projects month-end with a
   dollar figure, warning past 80%. Counting only dataset records under-reported 4,106 as
@@ -676,6 +676,19 @@ Two mechanisms keep this honest, and both exist because the number was wrong bef
 - **`plan_spend()`** pro-rates what is left over the days left in the month. Breadth is never
   throttled (per-request, usually free); the per-record backfill absorbs a tight month and is
   skipped entirely when nothing is left.
+- **`tests/conftest.py` bans the transport** (lane: infra, 2026-08-28). The pre-push gate was
+  itself a spender: `python -m pytest tests/test_registry.py` on a pristine checkout printed
+  `[bd-spend] bought 3` and appended `{"credits":3,"tool":"__main__.py"}` to the tracked
+  ledger, and with a `secrets.env` beside it one of those calls reached
+  `api.brightdata.com/request` for real. Four modules POST there — `bd_rescue`,
+  `bd_employees`, `pipeline/jdfill`, `setup_brightdata` — and two more trigger a
+  `datasets/v3` job that bills per RECORD, so `BD_RUN_CAP` covers one of six. The guard wraps
+  `urllib.request.urlopen` and refuses the host; it raises a **`BaseException`** subclass
+  because all three unlockers end in a blanket `except Exception` that would swallow anything
+  else into `("", "timeout")` and leave the suite green. The two credential names are set
+  **present-and-empty** rather than popped, because all four `_load_secrets` copies re-arm an
+  ABSENT name with `os.environ.setdefault`. See
+  `docs/decisions/2026-08-28-tests-cannot-spend.md`.
 
 **The largest uncontrolled spender is not this layer.** `DEEP_BD_SEARCH_CAP` reads like a
 daily ceiling of 150 and is per-PROCESS — six scripts import `google_via_unlocker` in
@@ -2205,7 +2218,7 @@ alarm lines (2026-08-25 against `dcca442`: exactly `+ - **Stages:** repair never
 | `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest alarms in the mail when a prerequisite stage did not run today | listing-hunt (`repair`), scrape-refresh (`collect`, with its counts), auto-expand (`expand`), the digest (`enrich` via `jdfill.record_enrich`, `publish`) — **merged per stage key on a conflict** (§4; until 2026-08-25 a conflict deleted other jobs' stamps) |
 | `cloud_state/last_run.json` | the digest job's outcome **when something failed**: date, status, failed steps, run URL (§4). Written ONLY on an unhealthy run, so a healthy day leaves yesterday's or last week's in place — that is correct, not stale, and `_last_run_alarms` returns early on a healthy record without reading the date. It is **not** a heartbeat; `last_delivered.json` is | `persist_state.py outcome`, from the digest's last step |
 | `cloud_state/last_delivered.json` | the receipt for what actually reached the mail: date, sha256 of the `digests/latest.md` bytes, role count, first line, and why it was allowed through (§4). Written only on a successful delivery, in the SAME commit as the file it describes; `run.py::_receipt_alarms` alarms in the next mail when it is two days or more behind | `persist_state.py deliver`, from the digest's pipeline step |
-| `cloud_state/bd_spend.jsonl` | **what each process bought from Bright Data**: one line per interpreter that touched the account (`bd_rescue._report_spend`, on the way out) with credits, whether the cap bit, and the cap. Added 2026-08-28 because the `[bd-spend]` line and the step summary both die with the run record -- and this repo deletes run records on purpose (`CLAUDE.local.md` §3). Note it is per PROCESS: a pooled run writes one line per worker | `bd_rescue`, from every workflow; committed by `persist_state.py commit`, which owns it without any workflow naming it |
+| `cloud_state/bd_spend.jsonl` | **what each process bought from Bright Data**: one line per interpreter that touched the account (`bd_rescue._report_spend`, on the way out) with credits, whether the cap bit, and the cap. Added 2026-08-28 because the `[bd-spend]` line and the step summary both die with the run record -- and this repo deletes run records on purpose (`CLAUDE.local.md` §3). Note it is per PROCESS: a pooled run writes one line per worker. **Never written by a test process** — `_report_spend` refuses when `pytest` is in `sys.modules` and `ROOT` holds a `.git`, because the suite used to append credits nobody bought (BACKLOG 374). Carries `ci: true|false` for provenance and deliberately **not** the path, which under a home directory would put a personal username in a public repo. **Nothing reads this file yet**: the monthly throttle reads the LIVE account via `pipeline/bd_budget.py`, not this ledger | `bd_rescue`, from every workflow; committed by `persist_state.py commit`, which owns it without any workflow naming it |
 | `cloud_state/persist_log.jsonl` | **what every commit did to the keyed caches**: one line per `persist_state.py commit`, with keys before/after, gained and lost, per path (§5d). Added 2026-08-28 because nothing anywhere could see a cache shrink — three consecutive nights lost 16, 16 and 24 boards in silence | `persist_state.py commit`, from **every** workflow: the layer adds it to its own `--own`, so no workflow names it and the record cannot drift out of step with who commits |
 | `cloud_state/registry_census.json`, `registry_alarms.json`, `registry_ladder.json` | the registry health census, its alarms, the resolution-ladder probe | `registry_health.py` (digest `--census`; listing-hunt `--ladder`) |
 | `cloud_state/source_health.json` | per discovery source: records returned this run, and the last day it returned any (`pipeline/sources.py`). A source that goes quiet is a workflow warning AND a line in the digest audit — Indeed returned zero for five days unnoticed | discovery_daily, discovery_telegram |

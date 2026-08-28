@@ -198,14 +198,25 @@ Declare these in your plan before spending them:
    runs `docs/check_docs.py`, so a doc that names a file you deleted fails the suite.
    Asking "why was company X activated or refused?" is one command, offline:
    `python registry_health.py --explain "<name>"` (add `--fetch` for the one page GET).
-5. **Commit as `ajil-bot` and push with plain `git push`.** Read `CLAUDE.local.md` first —
+5. **Never copy `secrets.env` into a worktree, and treat every local run as a spender.**
+   Bright Data is 5,000 requests/month with no rollover, ~6,798 already used, and the overage
+   is a one-time sum the operator will **not** top up — an accidental credit is permanent and
+   unrecoverable. `python -m pytest` can no longer spend (`tests/conftest.py` bans the
+   transport), but `python -m pipeline.run` still can: it arms the key inside `run()` and the
+   identity gate then buys up to `PAGE_UNLOCK_BUDGET` (default **100**) unlocks, and `JD_BD`
+   defaults to **1 = spending**. For any local run: `JD_BD=0` and `BD_RUN_CAP=0` (`0` means
+   buy nothing; UNSET means no cap). Declare what you spent when you hand back.
+6. **Commit as `ajil-bot` and push with plain `git push`.** Read `CLAUDE.local.md` first —
    the public repos must not be linkable to the owner's personal account.
-6. **Prefer letting the crons run.** If you must dispatch a workflow manually, delete the run
+7. **Prefer letting the crons run.** If you must dispatch a workflow manually, delete the run
    record afterwards (`CLAUDE.local.md` §3). If you cancel a digest run, cancel it **before**
    the `Mark digested roles as sent` step, or that run's roles are burned as delivered and
    the next run will not email them.
-7. Local runs are safe by default: `python -m pipeline.run --only "Wix,Fiverr" --no-llm
-   --db /tmp/scratch.db` never emails, never publishes, and writes `out/docs-preview/`.
+8. Local runs never email and never publish: `python -m pipeline.run --only "Wix,Fiverr"
+   --no-llm --db /tmp/scratch.db` writes `out/docs-preview/` and nothing else. **"Safe" is
+   about delivery, not about money** — this line used to say "safe by default", and it is not:
+   `--no-llm` does not turn off `JD_BD`, which defaults to **1 = spending**. Add `JD_BD=0
+   BD_RUN_CAP=0` (rule 5).
 
 ## The `docs` lane — standing brief
 

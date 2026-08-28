@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**429 filed · 313 open · 116 closed · 7 half · 34 numbers name more than one item · 28 items name no lane.**
+**434 filed · 318 open · 116 closed · 7 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 382.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 387.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -88,7 +88,7 @@ closure convention in the header.
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 90 open
+### registry — 92 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -180,8 +180,10 @@ closure convention in the header.
 - **379** `379@registry` **A production cron evicted two tools' verdicts from one note and dropped the row out of
 - **380** `380@registry` **`origin/master` is RED: `test_two_rehearsed_nights_keep_every_pool` fails at
 - **381** `381@registry` **`python -m pytest` writes to the REAL Bright Data spend ledger whenever
+- **382** `382@registry` **`tests/test_registry.py` leaks `bd_rescue.SPENT` and `os.environ["BD_RUN_CAP"]` across
+- **386** `386@registry` **`pipeline/identity_gate._UNLOCK_SPENT` leaks across tests the way `SPENT` did**
 
-### infra — 78 open
+### infra — 79 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -261,6 +263,7 @@ closure convention in the header.
 - **368** `368@infra` **`tools/mutate.py` read its own warnings as failures, and the count grew with the
 - **372** `372@infra` **The digest's stdout one-liner prints a bare `0 LLM calls`, and that cost a day** —
 - **377** `377@infra` **Two `infra` comments quote the digest H1, which changed today**
+- **383** `383@infra` **`cloud_state/bd_spend.jsonl` has a writer and no reader**
 
 ### scraper — 23 open
 
@@ -333,6 +336,24 @@ closure convention in the header.
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
 - **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
 
+### company-intel — 15 open
+
+- **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
+- **97** `97@company-intel` **Retire (or weekly) the Windows firmographics chain** *(closed by a later bullet, original never edited)*
+- **98** `98@company-intel` **29 identity-duplicate groups in the export** *(closed by a later bullet, original never edited)*
+- **101** `101@company-intel` **`looks_like_junk` cannot catch a bare job title** *(closed by a later bullet, original never edited)*
+- **117** `117@company-intel` **One `claude -p` seam for the repo** *(closed by a later bullet, original never edited)* *(half closed)*
+- **120** `120@company-intel` **Company intel rediscovers an outage the classifier already found** *(closed by a later bullet, original never edited)*
+- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
+- **141** `141@company-intel` **`research_firmographics.py` and `run.py` disagree on the company set** *(closed by a later bullet, original never edited)*
+- **144** `144@company-intel` **One identity group, two employers: the blurb crosses** *(closed by a later bullet, original never edited)*
+- **242** `242@company-intel` **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** — *(closed by a later bullet, original never edited)*
+- **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
+- **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
+- **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
+- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no
+- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
+
 ### ats-fetch — 14 open
 
 - **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
@@ -350,22 +371,16 @@ closure convention in the header.
 - **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
 - **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
 
-### company-intel — 14 open
+### roles — 8 open
 
-- **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
-- **97** `97@company-intel` **Retire (or weekly) the Windows firmographics chain** *(closed by a later bullet, original never edited)*
-- **98** `98@company-intel` **29 identity-duplicate groups in the export** *(closed by a later bullet, original never edited)*
-- **101** `101@company-intel` **`looks_like_junk` cannot catch a bare job title** *(closed by a later bullet, original never edited)*
-- **117** `117@company-intel` **One `claude -p` seam for the repo** *(closed by a later bullet, original never edited)* *(half closed)*
-- **120** `120@company-intel` **Company intel rediscovers an outage the classifier already found** *(closed by a later bullet, original never edited)*
-- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
-- **141** `141@company-intel` **`research_firmographics.py` and `run.py` disagree on the company set** *(closed by a later bullet, original never edited)*
-- **144** `144@company-intel` **One identity group, two employers: the blurb crosses** *(closed by a later bullet, original never edited)*
-- **242** `242@company-intel` **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** — *(closed by a later bullet, original never edited)*
-- **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
-- **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
-- **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
-- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **145** `145@roles` **`matched.seniority` is empty for every row**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
 
 ### classifier — 7 open
 
@@ -386,16 +401,6 @@ closure convention in the header.
 - **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
 - **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
 - **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
-
-### roles — 7 open
-
-- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
-- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **145** `145@roles` **`matched.seniority` is empty for every row**
-- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
-- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
-- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
 
 ### render — 6 open
 
@@ -3946,6 +3951,102 @@ lane, and is listed at the end.
     Found and reverted (not committed) by `jd-text` on 2026-08-28; reproduce by running
     `python -m pytest tests/test_registry.py` with a `secrets.env` beside it and diffing
     `cloud_state/bd_spend.jsonl`.
+
+    **One sentence above is FALSE, and is corrected here rather than quietly deleted, because
+    it is the sentence that made this look urgent for the wrong reason.** No throttle reads
+    `cloud_state/bd_spend.jsonl` — nothing reads it at all. Its only consumers are
+    `persist_state`'s constant, its merge strategy, and its auto-own list. The monthly figure
+    comes from the LIVE Bright Data account through `pipeline/bd_budget.py`. The ledger is
+    write-only today, which is its own item (383).
+
+    **CLOSED 2026-08-28 (`infra`), together with the `[bd-spend] bought 3` line that
+    `registry` routed here as 374 — they are one event.** Reproduced at `759ba36` in a clean
+    worktree. With no `secrets.env`, `python -m pytest tests/test_registry.py` printed
+    `[bd-spend] this step bought 3 Bright Data credit(s)` and appended
+    `{"credits":3,"tool":"__main__.py"}` to the tracked ledger. With a `secrets.env` beside
+    it: **4 credits across two tests, which is this item's number exactly** —
+
+        1  test_validate_empty_a_readable_page_decides_and_a_refusal_is_visible
+        3  test_bd_rescue_reads_the_unlockers_error_code_and_never_retries_a_policy_host
+
+    **The 3 were phantom and the 1 was real.** The second test stubs `urlopen`; the first
+    does not, and with the new guard installed it dies on `PaidCallInTests: a test reached
+    https://api.brightdata.com/request`. So "probably phantom" was right about three quarters
+    of it and wrong about the rest: one Bright Data request really was bought by
+    `python -m pytest`.
+
+    Three changes, and **not** the cap-shaped guard this item proposed. `BD_RUN_CAP=0` guards
+    one of the **six** paths that bill (`bd_rescue`, `bd_employees`, `pipeline/jdfill` and
+    `setup_brightdata` all POST to `api.brightdata.com`; `bd_discover` and `discovery_daily`
+    trigger a `datasets/v3` job that bills per RECORD), and the run-cap guard in
+    `tests/test_units.py` pops that variable from `os.environ` with no restore, so every test
+    after it would run uncapped anyway.
+
+      1. `tests/conftest.py` (new) wraps `urllib.request.urlopen` and refuses
+         `api.brightdata.com`, raising a **`BaseException`** subclass — an `Exception` is
+         swallowed by the blanket handlers in `bd_rescue`, `bd_employees` and `jdfill`, and
+         the suite would have stayed green with the guard doing nothing. It also holds both
+         credential names **present-and-empty** rather than popped, re-armed before each
+         test: all four `_load_secrets` copies `setdefault` an ABSENT name, and popping them
+         is measurably how the key got back in and the live account got reached.
+      2. `bd_rescue.unlock_status` counts the credit **after** building the request rather
+         than above the two `os.environ[...]` reads. That is the phantom, at its source.
+      3. `bd_rescue._report_spend` refuses to write the ledger when `pytest` is in
+         `sys.modules` and `ROOT` holds a `.git` (`exists`, not `isdir` — in a worktree
+         `.git` is a FILE). A `tmp_path` ROOT still writes, so the durability guard from
+         `47719bc` stays meaningful instead of vacuous.
+
+    Rejected, with the line that kills each, in
+    `docs/decisions/2026-08-28-tests-cannot-spend.md`: a worktree-conditional spend guard (a
+    false local green — the same shape as the eleven guards that never once ran locally), the
+    unexplained-delta alarm (it could not have seen this line, and the ledger is too
+    incomplete to reconcile against a fail-open account read), `PAGE_UNLOCK_BUDGET=0` (reds
+    `test_the_unlocker_rung_inside_the_page_test_still_exists`, which uses the ambient budget
+    as its positive control), and documentation alone (the documented pre-push command is
+    what spent). Guards: `test_the_suite_cannot_reach_the_bright_data_transport`,
+    `test_the_suite_holds_no_bright_data_credential`,
+    `test_a_call_that_never_reached_the_wire_books_no_credit`,
+    `test_the_suite_never_writes_the_repositorys_bright_data_ledger`,
+    `test_the_bright_data_ledger_never_carries_a_filesystem_path`.
+
+## From the `infra` lane, 2026-08-28 (evening)
+
+Record: `docs/sessions/2026-08-28-infra-spend.md`; decision
+`docs/decisions/2026-08-28-tests-cannot-spend.md`. Found while closing 374/381 and NOT fixed
+here — each is another lane's file or a behaviour change this session could not prove.
+
+382. **`tests/test_registry.py` leaks `bd_rescue.SPENT` and `os.environ["BD_RUN_CAP"]` across
+    the whole session** — lane: `registry`. `test_bd_rescue_reads_the_unlockers_error_code_
+    and_never_retries_a_policy_host` drives the real `unlock_status` three times and never
+    resets the module dict; monkeypatch cannot undo a mutation in place. Separately,
+    `test_the_shared_bright_data_run_cap_is_off_unless_a_workflow_asks_for_it` mutates
+    `os.environ["BD_RUN_CAP"]` in a loop OUTSIDE its own `try`, and its `finally` pops the
+    name rather than restoring it. `tests/conftest.py` now contains both (and names the
+    leaking test in a printed line at session end) but does not fix them.
+
+383. **`cloud_state/bd_spend.jsonl` has a writer and no reader** — lane: `infra`. Added
+    2026-08-28 so a run's spend outlives its deleted run record; nothing reads it. It is also
+    structurally incomplete: `bd_employees` and `pipeline/jdfill` buy credits without writing
+    a line, and `_report_spend` returns early at zero, so a clean run leaves no heartbeat.
+    Either give it a reader (the honest one is a live-account reconciliation, and 381 records
+    why that is not cheap) or delete the writer. **A file nothing reads is not a control.**
+
+384. **Three more `__file__`-relative `secrets.env` loaders** — lanes: `roles`/`jd-text`.
+    `bd_employees.py`, `pipeline/run.py` and `pipeline/jdfill.py` each carry their own copy of
+    `_load_secrets`, all resolving relative to the file being executed, so a worktree loads
+    the worktree's copy. The conftest sentinel neutralises all four for the test suite; a
+    deliberate local run through any of them still spends.
+
+385. **`bd_employees.unlock` is a second, uninstrumented spend path** — lane: `company-intel`.
+    It POSTs to `api.brightdata.com` with no `SPENT` counter, no `BD_RUN_CAP`, and no ledger
+    line, and its blanket `except Exception` returns `None` on any failure. `BD_LIMIT` bounds
+    the row loop, not the request. Route it through `bd_rescue.unlock_status`.
+
+386. **`pipeline/identity_gate._UNLOCK_SPENT` leaks across tests the way `SPENT` did** — lane:
+    `registry`. A leaked counter that reaches `_UNLOCK_BUDGET` makes the gate's paid rung go
+    inert, and every later guard over that rung then passes **vacuously**. Deliberately not
+    added to the conftest fixture: it changes what those guards test, and that is a change
+    that needs measuring rather than assuming.
 
 ## From the `jd-text` lane, 2026-08-28 (evening)
 
