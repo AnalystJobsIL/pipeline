@@ -6714,6 +6714,31 @@ def test_the_shared_bright_data_run_cap_is_off_unless_a_workflow_asks_for_it():
         os.environ.pop("BD_RUN_CAP", None)
 
 
+def test_bright_data_spend_is_written_somewhere_a_later_run_can_read(tmp_path, monkeypatch):
+    """The run page is not a durable channel and neither is the mail. `[bd-spend]` goes to the
+    step log and `$GITHUB_STEP_SUMMARY`, both of which vanish when the run record is deleted --
+    and this repo deletes run records on purpose (`CLAUDE.local.md` §3), which is exactly how
+    the only evidence of a `pipeline: failure` was destroyed on 2026-08-28.
+
+    So the number is also committed, one line per process, merged for every workflow by
+    `persist_state` without any workflow naming it in `--own`."""
+    import bd_rescue as B, persist_state as P
+    monkeypatch.setattr(B, "ROOT", str(tmp_path))
+    monkeypatch.setenv("BD_RUN_CAP", "2")
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    for n, capped in ((2, True), (5, False)):
+        B.SPENT.update(n=n, capped=capped)
+        B._report_spend()
+    B.SPENT.update(n=0, capped=False)
+    lines = (tmp_path / "cloud_state" / "bd_spend.jsonl").read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 2, lines
+    recs = [json.loads(x) for x in lines]           # one record per PHYSICAL line, like the gate
+    assert [r["credits"] for r in recs] == [2, 5]
+    assert recs[0]["capped"] is True and recs[0]["cap"] == 2
+    assert P.strategy_for(P.BD_SPEND_LOG)[0] is P.s_jsonl_union, \
+        "many processes append to it, so the union IS the merge"
+
+
 def test_the_cache_shrink_alarm_fires_on_every_regression_it_was_built_from():
     """The three nights that lost boards in silence: 16/279 (2026-08-28), 16/221 (08-27) and
     24/243 (08-26). Nothing saw them -- refresh_scrape_cache's abort needs >20%, s_company_dict's

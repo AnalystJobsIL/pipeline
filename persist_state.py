@@ -72,6 +72,9 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 # alarm costs attention, a bad block costs coverage, and legitimate deletions (parked rows,
 # alias merges) must keep working.
 PERSIST_LOG = "cloud_state/persist_log.jsonl"
+# What each process bought, written by `bd_rescue._report_spend`. Same shape and same
+# reason: the run page dies with the run record, and this repo deletes run records.
+BD_SPEND_LOG = "cloud_state/bd_spend.jsonl"
 PERSIST_LOG_MAX = 400                       # ~a month at 10-15 commits/day
 # PROVISIONAL, n=3. Tuned on the only three regressions ever measured -- 16/279 (5.7%),
 # 16/221 (7.2%) and 24/243 (9.9%) -- to fire on all of them while staying quiet for the
@@ -333,6 +336,7 @@ STRATEGY = {
     "discovered_cache.json": (_keyed_list(_job_key), "list keyed (company, title); two discovery writers"),
     "research_companies.json": (_keyed_list(_name_key), "list keyed name; two discovery writers"),
     PERSIST_LOG: (s_jsonl_union, "append-only audit log; the union of every workflow's lines"),
+    BD_SPEND_LOG: (s_jsonl_union, "append-only Bright Data spend, one line per process"),
 }
 SINGLE_WRITER = {   # documented `ours` paths (one cloud writer each); anything else warns
     "cloud_state/seen.db": "daily-digest", "cloud_state/roles.jsonl": "daily-digest",
@@ -658,8 +662,9 @@ def commit(a):
         report_deltas(key_deltas(owned, base, cwd), cwd, a.message, base)
     except Exception as e:  # noqa: BLE001 -- an audit line never costs the commit it describes
         _log("warning", f"cache delta report skipped: {e.__class__.__name__}: {str(e)[:120]}")
-    if PERSIST_LOG not in owned and os.path.exists(os.path.join(cwd, PERSIST_LOG)):
-        owned.append(PERSIST_LOG)
+    for audit in (PERSIST_LOG, BD_SPEND_LOG):
+        if audit not in owned and os.path.exists(os.path.join(cwd, audit)):
+            owned.append(audit)
 
     def stage():
         # a path a gate removed (untracked, failed) must not reach `git add`: one missing

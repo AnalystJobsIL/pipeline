@@ -122,6 +122,22 @@ def _report_spend():
                         f"{' — CAP REACHED' if SPENT['capped'] else ''}\n")
         except OSError:
             pass                        # a report never costs the run it reports on
+    # AND somewhere a LATER run can read it back. The log line and the step summary both die
+    # with the run record -- and this repo deletes run records on purpose (CLAUDE.local.md
+    # section 3), which is how the only evidence of a `pipeline: failure` was destroyed on
+    # 2026-08-28. A committed line survives that. `persist_state` owns and merges this file
+    # for every workflow, so no workflow has to name it in `--own`.
+    try:
+        import datetime as _dt
+        rec = {"at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+               "tool": os.path.basename(sys.argv[0]) or "python", "pid": os.getpid(),
+               "credits": SPENT["n"], "capped": SPENT["capped"], "cap": cap}
+        d = os.path.join(ROOT, "cloud_state")
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "bd_spend.jsonl"), "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, sort_keys=True, separators=(",", ":")) + "\n")
+    except OSError:
+        pass
 
 
 atexit.register(_report_spend)
