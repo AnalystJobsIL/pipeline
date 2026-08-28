@@ -268,5 +268,11 @@
   "reason": "agency",
   "first_seen": "2026-08-28",
   "last_seen": "2026-08-28"
+ },
+ "m.d. mechanical devices ltd.": {
+  "name": "M.D. Mechanical Devices Ltd.",
+  "reason": "handle-mismatch",
+  "first_seen": "2026-08-28",
+  "last_seen": "2026-08-28"
  }
 }

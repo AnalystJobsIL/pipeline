@@ -33,7 +33,7 @@
   "il": 0
  },
  "Behalf": {
-  "sig": 25,
+  "sig": 26,
   "il": 0,
   "last": "2026-08-28",
   "ever": true
@@ -45,7 +45,7 @@
   "ever": true
  },
  "Homebiogas": {
-  "sig": 1,
+  "sig": 0,
   "il": 0,
   "last": "2026-08-28",
   "ever": true
@@ -187,7 +187,7 @@
  },
  "Steadicopter": {
   "sig": 0,
-  "il": 0,
+  "il": 1,
   "last": "2026-08-28",
   "ever": true
  },
@@ -305,8 +305,8 @@
   "ever": true
  },
  "NRGene": {
-  "sig": 0,
-  "il": 0,
+  "sig": 1,
+  "il": 1,
   "last": "2026-08-28",
   "ever": true
  },
@@ -653,7 +653,7 @@
   "il": 0
  },
  "Boolzai": {
-  "sig": 0,
+  "sig": 6,
   "il": 0,
   "last": "2026-08-28",
   "ever": true
@@ -865,7 +865,7 @@
   "ever": true
  },
  "Finaro": {
-  "sig": 0,
+  "sig": 1,
   "il": 0,
   "last": "2026-08-28",
   "ever": true
@@ -1027,7 +1027,7 @@
  },
  "MetoMotion": {
   "sig": 0,
-  "il": 0,
+  "il": 1,
   "last": "2026-08-28",
   "ever": true
  },
@@ -1192,7 +1192,7 @@
  },
  "Tortech Nano Fibers": {
   "sig": 0,
-  "il": 0,
+  "il": 2,
   "last": "2026-08-28",
   "ever": true
  },
@@ -1267,7 +1267,7 @@
  },
  "Tonic Security": {
   "sig": 0,
-  "il": 0,
+  "il": 6,
   "last": "2026-08-28",
   "ever": true
  },
@@ -1279,7 +1279,7 @@
  },
  "ONE datAI": {
   "sig": 0,
-  "il": 0,
+  "il": 1,
   "last": "2026-08-28",
   "ever": true
  },
@@ -1699,7 +1699,7 @@
  },
  "Peach Content We Like Ltd": {
   "sig": 0,
-  "il": 0,
+  "il": 1,
   "last": "2026-08-28",
   "ever": true
  },
