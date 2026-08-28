@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**412 filed · 299 open · 113 closed · 6 half · 30 numbers name more than one item · 28 items name no lane.**
+**417 filed · 303 open · 114 closed · 6 half · 30 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 369.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 374.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -84,7 +84,7 @@ closure convention in the header.
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 | 368 | `368@registry` **open** · `368@infra` **open** |
 
-### registry — 85 open
+### registry — 86 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -171,8 +171,9 @@ closure convention in the header.
 - **354** `354@registry` **The nine address-refused rows are refused from a HOME address too**
 - **355** `355@registry` **The nightly embed handoff has no reader yet**
 - **368** `368@registry` **`hunt-queue-identity-remove` is an EQUIVALENT MUTANT, and the source-text guard that
+- **371** `371@registry` **Two employers each hold two ACTIVE rows, and each row bought its own LLM verdict for
 
-### infra — 76 open
+### infra — 77 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -250,6 +251,7 @@ closure convention in the header.
 - **364** `364@infra` **The pipeline is nine independent crons, not one ordered unit**
 - **365** `365@infra` **The monthly Bright Data gate is wired into one workflow of seven, and six caps are
 - **368** `368@infra` **`tools/mutate.py` read its own warnings as failures, and the count grew with the
+- **372** `372@infra` **The digest's stdout one-liner prints a bare `0 LLM calls`, and that cost a day** —
 
 ### scraper — 22 open
 
@@ -299,7 +301,7 @@ closure convention in the header.
 - **337** `337@discovery` **The secrethunter catalog's own-domain and job-title data has no honest route, and the
 - **340** `340@discovery` **`pipeline/aggregators.py` does not know the Israeli job boards, and the hunt will
 
-### docs — 18 open
+### docs — 19 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
 - **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
@@ -319,6 +321,7 @@ closure convention in the header.
 - **360** `360@docs` **ARCHITECTURE.md states the active-row count six ways and two of them carry no date**
 - **361** `361@docs` **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
+- **369** `369@docs` **The product still calls itself "experienced (≈3+ yrs)" after the experience bar was
 
 ### company-intel — 14 open
 
@@ -365,12 +368,12 @@ closure convention in the header.
 
 ### classifier — 6 open
 
-- **116** `116@classifier` **Legacy `llm_cache` rows are never purged**
+- **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **121** `121@classifier` **CLI start-up dominates the LLM tier's wall time**
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
 - **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
 - **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
-- **207** `207@classifier` **The mail attributes the classifier's verdicts to haiku**
+- **373** `373@classifier` **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
 
 ### render — 6 open
 
@@ -381,12 +384,13 @@ closure convention in the header.
 - **212** `212@render` **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
 - **263** `263@render` **`digest.py` renders a `0/148` inline-fill morning as the ABSENCE of a phrase**
 
-### jd-text — 4 open
+### jd-text — 5 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
 - **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
 - **343** `343@jd-text` **Three open roles exist only at an Indeed address, and Indeed cannot be read**
+- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the
 
 ### unassigned — 28 open  ← burn this down; a new item may not join it
 
@@ -2342,14 +2346,32 @@ Record: `docs/sessions/2026-08-24-jd-text.md`. Numbers re-derived that day; re-d
 
 Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
 
-116. **Legacy `llm_cache` rows are never purged** — lane: `classifier`. The 247 rows keyed
-    `company|title` (12 of them title-only, unreachable) are read as bare verdicts and re-keyed
-    only when a role is re-judged; they stay in `cloud_state/seen.db` until someone runs
-    `DELETE FROM llm_cache WHERE title_key NOT LIKE 'v2|%'` — **from a cloud run's own
-    commit or on a quiet day, never from a local checkout**: every `repo-state` job's conflict
-    path restores `cloud_state/` wholesale (105), so a hand-committed binary that races a
-    workflow is silently reverted. Count them: `python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(c.execute(\"select sum(title_key not like 'v2|%') from llm_cache\").fetchone())"`.
-    `updated` is only meaningful from the first v2 run (before it every row was upserted daily).
+116. **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
+    lane: `classifier`. The rows keyed `company|title` (12 of them title-only, unreachable) are
+    read as bare verdicts and re-keyed only when a role is re-judged; they stay in
+    `cloud_state/seen.db` forever. Since 2026-08-28 the key carries a CONTRACT hash
+    (`ARCHITECTURE.md` §7b), so superseded rows now accumulate beside the current ones too:
+    593 rows before the change, ~934 once the drain completes, and every later scope change
+    adds one permanent row per live role.
+
+    **The command this item used to give was `DELETE FROM llm_cache WHERE title_key NOT LIKE
+    'v2|%'`. DO NOT RUN IT.** Under the contract key it deletes exactly the wrong half — every
+    current-contract verdict, including the ones the run just paid for — and keeps the
+    superseded rows. What is safe to delete is a row that is neither the current contract nor
+    reachable as a fallback, and the current contract is not a literal anyone should type:
+
+    ```sql
+    -- current contract, printed by:  python -c "from pipeline import seniority; print(seniority.CONTRACT)"
+    DELETE FROM llm_cache WHERE title_key NOT LIKE '<CONTRACT>|%';
+    ```
+
+    …and even that is only correct once the drain has finished, because until then a
+    superseded row is what answers its posting. **From a cloud run's own commit or on a quiet
+    day, never from a local checkout**: every `repo-state` job's conflict path restores
+    `cloud_state/` wholesale (105), so a hand-committed binary that races a workflow is
+    silently reverted. Count the shapes with the one-liner in `ARCHITECTURE.md` §7b's verdict
+    cache section. `updated` is only meaningful from the first v2 run (before it every row was
+    upserted daily).
 117. ~~**One `claude -p` seam for the repo**~~ — **half closed 2026-08-25**: `pipeline/llm.py` exists (`call()`, envelope-first, tool-less) and `seniority` uses it; `firmographics._claude`, `resolve_llm.py`, `triage_dark.py`, `scrape_universal.py` still spawn their own — lane: `company-intel` / `registry` / `scraper` to migrate (a shared `llm` module under `pipeline/`, was not yet created). Two seams now
     **Scraper half CLOSED 2026-08-26:** `scrape_universal._run_claude` goes through `pipeline.llm.call_json` with its own `_LLM_SYSTEM`/`_LLM_SCHEMA` (`SCRAPE_LLM_MODEL`, default sonnet, effort low, 20k chars of page text); `LLMUnavailable` is counted on the bundle and trips a per-process breaker (auth/missing/drift); `subprocess` is no longer imported by the module. The A/B and the security argument are in ARCHITECTURE §1. `firmographics._claude` is the last bare seam (`company-intel`).
     **Registry half CLOSED 2026-08-25 (batch 5):** `triage_dark.llm_page_verdict` -- the lane's last bare `claude -p` -- goes through `pipeline.llm.call_json` with its own `_SYSTEM`/`_SCHEMA` (`TRIAGE_LLM_MODEL`, default sonnet); `LLMUnavailable` is `None` (the regex verdict stands). Records `triage-llm-schema-drop`, `triage-llm-unavailable-raise`.
@@ -3031,7 +3053,14 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
 Record: `docs/sessions/2026-08-26-ats-fetch.md`. Closed there: 7, 79 (code half), 82 (module
 half), 86, 118, 153, 154, 184. Open, with owners:
 
-207. **The mail attributes the classifier's verdicts to haiku** — lane: `classifier`. The
+207. ~~**The mail attributes the classifier's verdicts to haiku**~~ — **CLOSED 2026-08-28
+    (`classifier`)**: already fixed by `company-intel`'s `_served()` rewrite of 2026-08-26,
+    which ranks by `outputTokens` and prefers the model that was actually asked for. Verified
+    live through the real seam this session rather than by reading the diff: one
+    `--model sonnet` call returned `models: ['claude-sonnet-5']`, and
+    `tests/rehearse_classifier.py --case all_no` printed `model claude-sonnet-5 x14`. The
+    model A/B in `ARCHITECTURE.md` §7b stands. Original report follows.
+    — lane: `classifier`. The
     2026-08-25 `classify:` line reads `model claude-haiku-4-5-20251001 x237, claude-sonnet-5 x4`
     while `seniority.LLM_MODEL = "sonnet"`. `pipeline/llm.py::call` names the `modelUsage` entry
     with the most `inputTokens`; one `claude -p --model sonnet --output-format json` call on
@@ -5825,6 +5854,10 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     them is NOT the fix: a dated record is not a claim about today, and the fact registry
     says so in `_CENSUS`'s comment.
 
+    **Half done 2026-08-28 (`classifier`)**: L3416's `862 companies` now reads "on
+    2026-08-24: 862 companies that day". L2777 (`897 active companies, 968 researched`) is
+    `company-intel`'s measurement and is untouched — this item stays open for it.
+
 361. **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
     the evicting instead** — lane: `docs`, opened 2026-08-28, the durable half of 338.
     `HANDOFF.md`'s own header says answered rows older than seven days move to
@@ -6066,3 +6099,85 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     suite). Silencing them in the harness is correct for the harness; it does not make them
     right. And the 45-minute timeout is still there: this fix lets the gate START, it does
     not make it FINISH.
+
+369. **The product still calls itself "experienced (≈3+ yrs)" after the experience bar was
+    removed** — lane: `docs` (with `render`), found 2026-08-28 by `classifier`. The
+    2026-08-28 scope decision (`docs/decisions/2026-08-28-analyst-scope.md`, taken by the
+    operator) accepts analyst roles at any experience level; interns and student placements
+    stay out. The classifier and `ARCHITECTURE.md` §7b now say so. These do not, and each is
+    a sentence a visitor reads:
+
+    | file | string |
+    |---|---|
+    | `README.md` | the visitor-facing description of what the board lists |
+    | `CLAUDE.md` | "A daily pipeline that publishes a board of experienced (≈3+ yrs) …" |
+    | `ARCHITECTURE.md` §0 | the same phrase in "the whole system on one screen" |
+    | `pipeline/digest.py` | the digest H1 — "N new **senior** analytics roles" — and the
+      last-48h subtitle "experienced (≈3+ yrs) data-analysis / BI / analytics roles" |
+
+    `classifier` did not edit them: `docs` owns the first three and `render` owns
+    `digest.py`, and `docs` was live in another session the same afternoon. Grep is
+    `grep -rn "3+ yrs\|≈3+\|senior analytics roles" --include=*.md --include=*.py
+    --exclude-dir=.claude .`. **A confident document that is no longer true is the failure
+    this repo punishes hardest**, so this is worth doing before the next digest, not after.
+
+370. **One careers PAGE is stored as the description of every posting on it, and the
+    classifier judges different roles on identical text** — lane: `jd-text`, found 2026-08-28
+    by `classifier`. In `scraped_cache.json` on origin/master, **6 companies have two or more
+    long descriptions that are byte-identical**: Get SAT (10 postings sharing one 4,000-char
+    blob), Centraleyes (4 × 6,000), AudioCodes, IEC, TELUS Digital, Teads (2 × 4,833 — that
+    one is a genuine title twin). `הפניקס | אנליסט/ית טרנספורמציית AI` was rejected on
+    2026-08-28 with the model's own reason: *"The posting contains only website
+    navigation/menu text with no actual job description"* — 4,000 chars of nav, judged as if
+    it were the JD, and the NO would have been cached under that role's name.
+
+    Re-derive:
+    `python -c "import json,collections;d=json.load(open('scraped_cache.json',encoding='utf-8'));print([(k,len(s)) for k,v in d.items() for s in [ {x['description'] for x in v if len(x.get('description') or '')>=300} ] if len([x for x in v if len(x.get('description') or '')>=300])>=2 and len(s)==1])"`
+
+    `classifier` mitigated its own side on the same day — a second, differently-titled role
+    at one employer arriving with identical text is now judged BARE rather than on another
+    role's description, counted as `shared_text` and alarmed (`ARCHITECTURE.md` §7b). That is
+    a bandage: **the first role still gets judged on the page**, and the fix is to not store
+    a careers page as a posting's description. `pipeline/jdfill.py`'s `looks_like_jd` is the
+    place.
+
+371. **Two employers each hold two ACTIVE rows, and each row bought its own LLM verdict for
+    the same role** — lane: `registry`, found 2026-08-28 by `classifier`. `Tenengroup` /
+    `Tenengroup Ltd.` and `Nexar` / `Nexar Inc.` are all `active=true` in `companies.csv`.
+    The verdict cache holds `v2|tenengroup|business analyst|jd` **and**
+    `v2|tenengroup ltd.|business analyst|jd`, judged on 2026-08-25 and 2026-08-28 — the same
+    posting, paid for twice, and free to disagree. `classifier` folded legal-form suffixes
+    out of the cache key so the seam stops double-charging (12 of 969 names change, exactly
+    these 2 pairs merge, 0 false collisions), but that is the classifier defending itself:
+    the duplicate ROWS are still there, still both scanned, and still both able to publish a
+    card under a different employer spelling. Re-derive:
+    `python -c "import csv,collections;r=[x['company_name'] for x in csv.DictReader(open('companies.csv',encoding='utf-8')) if x['active']=='true'];import re;g=collections.defaultdict(list);[g[re.sub(r'[ ,]*\\b(ltd|inc|llc)\\b[.]?$','',n.lower()).strip(' ,.')].append(n) for n in r];print({k:v for k,v in g.items() if len(v)>1})"`
+
+372. **The digest's stdout one-liner prints a bare `0 LLM calls`, and that cost a day** —
+    lane: `infra`, found 2026-08-28 by `classifier`. `pipeline/run.py:583-585` prints
+    `email (last 48h): N roles · board (active): M roles (scanned C cos, F failed, L LLM
+    calls)`. On 2026-08-28 `L` was 0 and was read as a dead LLM tier; it was the **third**
+    digest run of that morning and every ambiguous role already had a cached verdict — the
+    tier had fired 32 times that day. The mail's `Decision paths:` line already carries
+    `llm_cache=` beside `llm=`, so the information exists two lines away; the one-liner is
+    what a person actually reads. One-line fix: print the cache count beside it, e.g.
+    `…, L LLM calls, K served from cache)`, taking `K` from `paths['llm_cache']`.
+    `Classifier.summary()` already explains its own zero (`0 calls: all N residue roles
+    served from cache` / `no role reached the tier`); this is the same sentence one level up.
+    `run.py` is `infra`'s file, so it is proposed here rather than smuggled.
+
+373. **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
+    with at least one of them** — lane: `classifier`, found 2026-08-28. The keyword tier
+    fast-accepts a strong analyst title carrying a senior marker, by design and documented
+    (`ARCHITECTURE.md` §7b; `129@classifier` notes STRONG titles are never ML-vetoed). The
+    2026-08-28 measurement produced the first counter-example with evidence:
+    `EPAM Systems, Inc. | Managing Principal / Senior Director, Data Analytics Consulting` is
+    on the board on the keyword shortcut, and the production seam, asked directly, answered
+    **NO** — *"a senior consulting/leadership and sales role (managing engagements, selling,
+    executive advisory) at a consulting firm, not a hands-on data analyst role"*.
+
+    One instance is not a rate. Before changing the shortcut, MEASURE it: judge every role
+    currently on the board that took the `keyword` path and count how many the seam would
+    reject. `tools/measure_title_gate.py --tier passing` is the harness; the cost is one call
+    per board role (~70 today). Only then decide, because routing every strong+senior title
+    to the tier is a real spend increase and the shortcut exists for a reason.

@@ -54,6 +54,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-08-29 | infra | **the relay's first end-to-end proof.** (a) the 05:00 digest's `notify_relay` step logs `relay notified: <sha256>` — any other line (`not configured`, `not dated`, a `::warning::`) IS the answer and names why. (b) `gh run list -R AnalystJobsIL/inbox` shows a **`push`** run, success, seconds after that; a `schedule`-only row means the event path did not fire. (c) a NEW issue dated 2026-08-29 there. a+b+c ⇒ PASS; a+b without c ⇒ `gh issue create` under a push event is the one untested link (2026-08-28 had no delivering digest) | | not yet due |
 | 2026-09-11 | infra | re-measure the cache-shrink threshold from a fortnight of `cloud_state/persist_log.jsonl`; it is provisional on n=3 (ARCHITECTURE §5d) | | not yet due |
 | 2026-08-29 | scraper | the 05:00 `collect:` line carries `uncached=` and `unvisited=`, and `Stage order:` renders both. The 70 boards cached on 08-28 are scanned: expect **~22 new title-passing roles judged, of which ~6 accept deterministically and ~16 reach the LLM tier** | | not yet due |
+| 2026-08-29 | classifier | `classify:` reports `re-judged N/cap 60` with N at the cap, and **`LLM calls this run` ≥ 60** — 0, or under 60, falsifies the contract key. Board 72 → **74-80** (+`mećkano`, +Ashley Digital, −`מטריקס` BI as agency-mediated). Detail in the session record | | not yet due |
 
 ## State at handoff — 2026-08-27 07:5x UTC, every number re-derived
 
@@ -191,11 +192,10 @@ One line per session, in the shape at the top of this file. The long version is 
   `registry`, `scraper`. Folded to a pointer on 2026-08-27 to keep this file inside the
   word cap it sets: each entry named a record and the records hold the long version.
   `docs/sessions/2026-08-24-*.md`.
-- **2026-08-25 `registry`** — today's logs, the pending backlog, §2/§3 re-verified **NOT finished:** batches 4–5. Record: `docs/sessions/2026-08-25-registry.md`.
-- **2026-08-25 `infra`** — one delivery path, the mail says when a run broke **NOT finished:** BACKLOG 153–170 (167–169 are today's mail oddities. Record: `docs/sessions/2026-08-24-infra.md`.
-- **2026-08-25 `render`** — the split: `jdtext.py` (text->structure) -> `rolecard.py` (one card, never raises) -> `digest.py` (rendering only); the `Render:` mail line and its alarms. **NOT finished:** BACKLOG 142-146. Record: `docs/sessions/2026-08-24-render.md`.
-- **2026-08-25 `roles`** — the role record gets an owner, a text ledger and a mail line — 1 Opus design attack + 4 attacker sessions, wave 2 confirmers **NOT finished:** BACKLOG 132–139 (retire `matched`, the 13 registry alias groups, a jsonl row-merge on the conflict path, discovery roles never close). Record: `docs/sessions/2026-08-24-roles.md`.
-- **2026-08-25 `discovery`** — the run audit **NOT finished:** the `Tel Aviv` row/cache/7 ledger roles (registry+roles, 167), the false `linkedin-targeted: nothing for 3d` alarm from 08-26 (179), 178–187. Record: `docs/sessions/2026-08-24-discovery.md`.
+- **2026-08-25, five lanes** — `discovery`, `infra`, `registry`, `render`, `roles`.
+  Folded to a pointer on 2026-08-28 by `classifier`, as the 2026-08-24 batch was on
+  2026-08-27 and for the same reason (`docs/BACKLOG.md` 338): no lane could fit an entry.
+  `docs/sessions/2026-08-25-*.md`.
 - **2026-08-26 `ats-fetch`** — the scraper's overnight verdict reaches board health **NOT finished:** 207–214. Record: `docs/sessions/2026-08-26-ats-fetch.md`.
 - **2026-08-26 `scraper`** — never discard what the runner cannot read **NOT finished:** 215–220 (why the runner is refused is only knowable from the 08-27 rot codes). Record: `docs/sessions/2026-08-24-scraper.md`.
 - **2026-08-26 `ats-fetch`** — the mail hid two of three new fetch errors **NOT finished:** 227–237. Record: `docs/sessions/2026-08-26-ats-fetch.md`.
@@ -219,3 +219,4 @@ version already was.*
 - **2026-08-28 `scraper`** - 287 of 496 active `scrape` rows had no cache entry, so nothing downstream saw them and nothing counted them. Cached **70 boards / 435 postings** for **0 BD credits**; `uncached`/`unvisited` now stamp on `collect`; wave 1 killed an identity leak before it shipped. **NOT finished:** 345, 348, 350, 356. Record: `docs/sessions/2026-08-28-scraper.md`.
 - **2026-08-28 `infra`** - the relay fires on a PUSH from the digest, not a clock GitHub is dropping; the unlocker rung is switchable, capped and visible; every commit measures the caches it pushes - 279->263 was 16/16 `why=empty`, NOT the error class (363@scraper); `mutation-gate` sharded after 105->204. **NOT finished:** 292/308, 365, 305. Record: `docs/sessions/2026-08-28-infra.md`.
 - **2026-08-28 `docs`** - a census fact that fails because the project is WORKING is a broken check: `active_rows` blew its `~900` bracket at 969 and would have skipped `Registry invariants` on the next push. Census claims are one-sided floors now. **NOT finished:** BACKLOG 357-362, 368. Record: `docs/sessions/2026-08-28-docs.md`.
+- **2026-08-28 `classifier`** - `0 LLM calls` read as a dead tier; it fired **32 times that day**, and the run measured was the third of three. **16 of the 19 dropped roles were correct rejects, 1 a real miss.** Title-gate false-negative rate **1 of 401**. The cache key digests the rules. **NOT finished:** 369-373. Record: `docs/sessions/2026-08-28-classifier.md`.
