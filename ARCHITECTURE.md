@@ -3532,7 +3532,7 @@ on 2026-08-24 (`test_the_latin_place_list_has_the_hebrew_lists_cities`).
 |---|---|---|
 | engineering / ML / infra / PM / finance (FP&A, actuary) / a non-data "<x> analyst" (`_HARD_EXCLUDE`, `_HARD_EXCLUDE_MISC`) — **unless a strong analyst phrase is also present**, then the LLM decides ("Business Analyst, Software Solutions") | reject | `keyword` |
 | no analytics signal at all (`_SIGNAL`, Hebrew included) | reject | `keyword` |
-| an internship / student placement / trainee programme (`_NOT_A_JOB`, Hebrew included) | reject | `keyword` |
+| an internship / student placement / apprenticeship / trainee programme (`_NOT_A_JOB`, Hebrew included). **This gate sits ABOVE the strong+senior accept**, so a title carrying both wins here — pinned by `test_the_not_a_job_gate_precedes_the_strong_senior_accept` | reject | `keyword` |
 | junior / entry-level (`_EARLY_CAREER`) — **only when `EXPERIENCE_BAR` is on, and it is OFF since 2026-08-28** (`docs/decisions/2026-08-28-analyst-scope.md`) | reject | `keyword` |
 | a strong analyst title **and** a senior marker (`_STRONG` + `_SENIOR`) — unless a systems/finance domain word sits beside it (`_BA_DOMAIN`: Salesforce BA, HRIS BA, credit …) **or the employer is a staffing/integrator house** (`_AGENCY_EMPLOYER`), then the LLM decides | accept | `keyword` |
 | anything else with an analytics signal — the residue | **the LLM tier** | `llm` `llm_cache` `llm_failed_fallback` `llm_skipped` |
@@ -3544,7 +3544,24 @@ both are one named flag rather than scattered conditionals. (1) **The experience
 gone** — `EXPERIENCE_BAR` (`CLASSIFY_EXPERIENCE_BAR`, default off) — so a junior or
 entry-level analyst qualifies and only a student placement does not; `_JUNIOR` survives as the
 union of `_NOT_A_JOB` and `_EARLY_CAREER` because `pipeline/rolecard.py` imports it for the
-card's chip, which is display and not a gate. (2) **A staffing or IT-outsourcing employer
+card's chip, which is display and not a gate.
+
+> **That makes `_NOT_A_JOB` the whole remaining boundary, and on 2026-08-28 a trailing `s`
+> defeated it.** Every stem in it closed with `\b`, so `Data Analyst Intern` rejected while
+> **`Data Analyst Interns` was ACCEPTED** — and `Senior Data Analyst Interns` and
+> `Head of Analytics Internships` were accepted on the `keyword` path with the LLM never
+> asked, because once the gate misses, the strong+senior shortcut two lines below catches
+> them. Eleven English variants were admitted this way. It is now **stems + an optional
+> `(?:s|ship|ships)` suffix**, which is also what keeps it safe: a bare `\bintern` prefix
+> matches `Head of International Sales`, `Internal Audit Manager` and `Internal Occupational
+> Physician`, all real titles in today's cache. The Hebrew arm gained `סטאז`, a **guarded**
+> `התמחות` (bare, it also means "field of specialisation" in `תחום התמחות`, and this gate
+> rejects without appeal), `מתלמד` and `חני[כך]` — spelled as a class because Hebrew final
+> forms are different codepoints, so `חניך` cannot match its own plural `חניכים`: the same
+> singular-only mistake, one alphabet over. `צוער` and `cadet` are deliberately in neither
+> arm. Measured before shipping: **0 of the 252 title-only golden rows moved, and 0 of the
+> 1,482 distinct live titles changed side** — the hole was real and nothing had walked
+> through it yet. `375@classifier`. (2) **A staffing or IT-outsourcing employer
 advertising a CLIENT's role is out**: `_AGENCY_EMPLOYER` only **demotes** `strong` → `signal`,
 exactly as `_BA_DOMAIN` does, so a wrong name in that list costs one LLM call and never a
 role, and the verdict itself comes from condition (4) of the rules, on the evidence in the

@@ -59,8 +59,9 @@ COLLAPSES through it.
 matter — a "Data Scientist" posting counts if the work is really product analytics. What a
 non-senior title costs is *evidence*, not eligibility: when the LLM tier is unavailable, a
 title that is only an analytics **signal** is accepted only if its description shows
-analytics, which is the bar a bare "Data Scientist" has always had. **Out of scope:**
-internships, student placements and trainee programmes; a staffing agency or IT-outsourcing
+analytics, which is the bar a bare "Data Scientist" has always had. **Excluded:**
+internships, student placements, apprenticeships and trainee programmes — deterministically,
+in English and Hebrew, above every accept. Also out: a staffing agency or IT-outsourcing
 house advertising a role at a client company (judged per posting, not by a name list); core
 ML, data engineering, software engineering, FP&A, security/SOC. Israel is judged per
 posting, not per company. The full product decision is

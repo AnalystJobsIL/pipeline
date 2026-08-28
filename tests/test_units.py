@@ -16163,3 +16163,164 @@ def test_every_live_scope_surface_exists_and_is_checked():
     cd.ERRORS.clear()
     cd.check_scope_claims()
     assert cd.ERRORS == [], cd.ERRORS
+
+
+# --- classifier lane, 2026-08-28 (2): internships are the ONE exclusion the operator kept
+# --- when the experience bar came off, so _NOT_A_JOB is the whole remaining boundary - and
+# --- a trailing "s" defeated it. 375@classifier. -----------------------------------------
+_NOT_A_JOB_TITLES = [
+    # the five reported, singular and plural side by side
+    "Data Analyst Intern", "Data Analyst Interns",
+    "Data Analyst Internship", "Data Analyst Internships",
+    "Student Data Analyst", "Data Analyst - Students",
+    # every other stem, with and without its nominal suffix
+    "BI Analyst Trainee", "BI Analyst Trainees", "Data Analyst Traineeship",
+    "Analytics Trainee Programme",
+    "Data Analyst Apprentice", "Data Analyst Apprentices",
+    "Data Analyst Apprenticeship", "Data Analyst Apprenticeships",
+    "Working Student - Data Analytics", "Working Students - Data Analytics",
+    "Data Analyst Co-op", "Data Analyst Coop", "Data Analyst Co-ops",
+    "Campus Data Analyst",
+    # a senior marker must NOT rescue any of them - this is the pair that shipped
+    "Senior Data Analyst Interns", "Head of Analytics Internships",
+    "Lead Data Analyst - Students", "Director of Analytics Internship Program",
+    # Hebrew: the substring arm. `סטאז`, `התמחות`, `מתלמד` and `חני[כך]` were added on
+    # 2026-08-28 so the two alphabets enumerate the same class.
+    "מתמחה אנליסט נתונים", "מתמחים לאנליטיקה", "סטודנט/ית לניתוח נתונים",
+    "סטודנטית אנליסטית", "סטודנטים לאנליטיקה", "התמחות באנליטיקה",
+    "משרת סטאז' אנליסט נתונים", "מתלמד אנליסט נתונים", "מתלמדים לאנליטיקה",
+    "חניך אנליסט נתונים", "חניכים לאנליטיקה",
+]
+
+
+@pytest.mark.parametrize("title", _NOT_A_JOB_TITLES)
+def test_every_internship_variant_is_rejected_on_the_keyword_path(title):
+    """`Data Analyst Intern` rejected and **`Data Analyst Interns` was ACCEPTED**; so were
+    ten more variants, because the old alternation closed every stem with `\b`. Worst of
+    them, `Senior Data Analyst Interns` and `Head of Analytics Internships`, were accepted
+    on the `keyword` path with the LLM never asked - a deterministic accept of an internship.
+
+    Asserts the PATH and the REASON, not just the verdict: several of these already came
+    back `reject` before the fix, but from the no-LLM fallback (`keyword_nollm`, "no
+    description"), which is an accident of having no description rather than the boundary
+    doing its job. With a description they would have gone to the tier."""
+    r = seniority.classify({"company": "Acme", "title": title,
+                            "description": _TEXT}, use_llm=False)
+    assert r["decision"] == "reject", (title, r)
+    assert r["path"] == "keyword", (title, r)
+    assert r["reason"] == "internship/student placement, not a job", (title, r)
+
+
+def test_the_not_a_job_gate_precedes_the_strong_senior_accept():
+    """The ORDER, pinned. `_NOT_A_JOB` sits above `rel == "strong" and sen == "senior"` in
+    `_classify`, so a title carrying BOTH an internship marker and a senior one wins on the
+    right rule. It already did - the singular proved it - but nothing pinned the ordering,
+    and moving the shortcut up is a one-line edit that would ship internships to the board
+    with `>=3 yrs implied` as the reason."""
+    r = seniority.classify({"company": "Acme", "title": "Senior Data Analyst Interns",
+                            "description": _TEXT}, use_llm=False)
+    assert (r["relevance"], r["seniority"]) == ("strong", "senior")   # both shortcuts armed
+    assert r["decision"] == "reject" and r["reason"].startswith("internship/student")
+    # ...and the accept it beat is genuinely reachable for the same title minus the marker
+    ok = seniority.classify({"company": "Acme", "title": "Senior Data Analyst",
+                             "description": _TEXT}, use_llm=False)
+    assert ok["decision"] == "accept" and ok["reason"].startswith("senior analyst title")
+
+
+def test_the_internship_stems_do_not_eat_a_real_role():
+    """The suffix group is what makes the stems safe. A bare `\bintern` prefix would also
+    match `Head of International Sales`, `Internal Audit Manager` and `Internal Occupational
+    Physician` - all three are real titles in `scraped_cache.json` (measured 2026-08-28 over
+    1,656 distinct titles). `_NOT_A_JOB` REJECTS deterministically, so a false positive here
+    silently loses a role and nothing anywhere says why."""
+    for title in ("International Data Analyst", "Internal Audit Data Analyst",
+                  "Data Analyst, Internal Tools", "Co-operative Bank Data Analyst",
+                  "Head of International Sales Analytics"):
+        assert not seniority._NOT_A_JOB.search(title.lower()), title
+    # and the levels that are explicitly IN scope since the bar came off
+    for title in ("Junior Data Analyst", "Graduate Data Analyst", "Entry-Level Data Analyst"):
+        assert not seniority._NOT_A_JOB.search(title.lower()), title
+        assert seniority.classify({"company": "Acme", "title": title},
+                                  use_llm=False)["decision"] == "accept", title
+
+
+def test_a_field_of_specialisation_is_not_an_internship():
+    """`התמחות` is the ordinary Hebrew noun for an internship and was added on 2026-08-28 -
+    but `תחום התמחות` means "field of specialisation", and this gate rejects without appeal.
+    The lookbehind is the whole reason the term could be added at all."""
+    assert seniority._NOT_A_JOB.search("התמחות באנליטיקה")
+    assert seniority._NOT_A_JOB.search("משרת סטאז' אנליסט")
+    assert not seniority._NOT_A_JOB.search("אנליסט/ית נתונים בתחום התמחות פיננסי")
+
+
+def test_the_junior_chip_follows_the_widened_gate():
+    """`pipeline/rolecard.py` imports `_JUNIOR` for the card's chip, and `_JUNIOR` is built
+    by COMPOSITION from `_NOT_A_JOB | _EARLY_CAREER` so the two can never drift. Widening the
+    gate must therefore also widen the chip - a card reading `Interns` is a junior card."""
+    for title in ("data analyst interns", "data analyst apprenticeships",
+                  "working students - data analytics"):
+        assert seniority._JUNIOR.search(title), title
+        assert seniority._seniority(title) == "junior", title
+    # ...and _EARLY_CAREER's half is untouched: still a chip, still not a gate
+    assert seniority._JUNIOR.search("junior data analyst")
+    assert not seniority._NOT_A_JOB.search("junior data analyst")
+
+
+def test_the_internship_gate_moved_no_role_on_the_live_corpus():
+    """Measured before shipping, and the number is the point: widening `_NOT_A_JOB` newly
+    caught **0** of the 1,482 distinct titles in `scraped_cache.json` + the role ledger, and
+    released none. The hole was real and nothing had walked through it yet, so this is a
+    boundary repair with no role lost and no card moved. If this guard ever fails, the
+    corpus has grown a title the old pattern would have admitted - which is the event worth
+    seeing, not a reason to loosen the gate."""
+    import json
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    old = re.compile(
+        r"\b(intern|internship|student|trainee|apprentice(ship)?|working student|campus)\b"
+        r"|סטודנט|סטודנטית|מתמחה|מתמח", re.I)
+    titles = set()
+    p = os.path.join(root, "scraped_cache.json")
+    if os.path.exists(p):
+        for rows in json.load(open(p, encoding="utf-8")).values():
+            titles |= {(j.get("title") or "").strip() for j in rows if j.get("title")}
+    assert len(titles) > 500, "corpus too small to mean anything"
+    released = [t for t in titles if old.search(t) and not seniority._NOT_A_JOB.search(t)]
+    assert released == [], "the widened gate RELEASED a title it used to catch: %s" % released[:5]
+
+
+def test_a_hebrew_plural_is_not_a_different_word_to_this_gate():
+    """Hebrew final forms are DIFFERENT codepoints, so a singular spelling cannot match its
+    own plural: `חניך` ends in final kaf U+05DA and `חניכים` carries a medial kaf U+05DB.
+    My first draft of this fix wrote `חניך(?!ה)` and silently admitted `חניכים` - the same
+    singular-only mistake as the English `\\b`, one alphabet over, made while fixing it.
+
+    The other stems are safe by construction (`סטודנט`, `מתמח`, `מתלמד`, `סטאז` all end in
+    non-final letters and match their plurals as prefixes), and this pins that too."""
+    assert "\u05da" in "חניך" and "\u05db" in "חניכים"      # the trap, stated
+    for plural in ("חניכים לאנליטיקה", "מתלמדים לאנליטיקה", "סטודנטים לאנליטיקה",
+                   "מתמחים לאנליטיקה"):
+        assert seniority._NOT_A_JOB.search(plural), plural
+    # The `חניכ` family, and the meaning that decides each one. This is why the term needed
+    # a lookahead before it could be added at all: two of the five are not trainees.
+    for caught, word, gloss in (
+            (True,  "חניך אנליסט נתונים",      "trainee, m.sg."),
+            (True,  "חניכים לאנליטיקה",        "trainees, pl."),
+            (True,  "חניכי מחלקת אנליטיקה",    "trainees-of, construct pl."),
+            (True,  "תוכנית חניכות באנליטיקה", "apprenticeship - the Hebrew labour-law term"),
+            (False, "אנליסט/ית חניכה",         "inauguration (also f.sg. trainee - ambiguous,"
+                                               " so left OUT: this gate rejects without appeal)"),
+            (False, "אנליסט/ית חניכת מוצר",    "inauguration-of; `(?!ה)` alone let this through"),
+    ):
+        assert bool(seniority._NOT_A_JOB.search(word)) is caught, (word, gloss)
+
+
+def test_the_two_alphabets_enumerate_the_same_class():
+    """The arm drifted because one side was extended and the other was not. `צוער` (cadet)
+    and `קדם-אקדמי` (pre-academic) are deliberately absent for the same reason: there is no
+    `cadet` stem on the English side either, and a cadet track is a career, not a placement.
+    If one is ever added, this test says the other must be."""
+    src = seniority._NOT_A_JOB.pattern
+    for en, he in (("intern", "מתמח"), ("student", "סטודנט"),
+                   ("trainee", "חני[כך]"), ("apprentice", "מתלמד")):
+        assert en in src and he in src, (en, he)
+    assert "צוער" not in src and "cadet" not in src

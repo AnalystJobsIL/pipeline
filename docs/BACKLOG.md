@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**421 filed · 306 open · 115 closed · 6 half · 30 numbers name more than one item · 28 items name no lane.**
+**422 filed · 306 open · 116 closed · 6 half · 30 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 378.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 379.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -366,7 +366,7 @@ closure convention in the header.
 - **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
 - **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
 - **373** `373@classifier` **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
-- **375** `375@classifier` **A junior analyst is in scope, but `Data Analyst Interns` is accepted and an
+- **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
 
 ### roles — 7 open
 
@@ -6218,6 +6218,23 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     per board role (~70 today). Only then decide, because routing every strong+senior title
     to the tier is a real spend increase and the shortcut exists for a reason.
 
+    **2026-08-28, sized (`classifier`, while closing 375).** Asked whether this is the same
+    fix as 375: **it is not**, and the sizing is why. **36 of the 83 classified records in
+    `cloud_state/roles.jsonl` — 43 % — took the `keyword` shortcut and were never
+    adjudicated.** Re-derive:
+    `python -c "import json,collections;c=collections.Counter(json.loads(l).get('class',{}).get('path') for l in open('cloud_state/roles.jsonl',encoding='utf-8') if l.strip());print(c)"`
+    Reading the 36: the overwhelming majority are `Senior Data Analyst` / `Senior Product
+    Analyst` / `Senior BI Analyst`, i.e. exactly what the shortcut exists for. The
+    suspicious ones are `EPAM | Managing Principal / Senior Director, Data Analytics
+    Consulting` (the known counter-example) and, arguably, `Alma Lasers | Total Rewards &
+    People Analytics Lead`. So the exposure is BROAD (43 % of verdicts) while the suspected
+    error rate is low — which is precisely the shape where changing the shortcut on one
+    counter-example is wrong, and why this stays open rather than being bundled into 375.
+
+    375 removed one class of abuse of this shortcut (an internship reaching it at all).
+    What is left is pure precision on real analyst titles, and it still needs the rate.
+    The measurement costs ~36 LLM calls on the shared subscription, not ~70.
+
 374. **`check_scope_claims` guards one claim; the next scope change will not be about the
     experience bar** — lane: `docs`, filed 2026-08-28. The new check binds the docs to
     `pipeline/seniority.py`'s `EXPERIENCE_BAR` and to four retired phrases. That is the
@@ -6229,8 +6246,10 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     already is) and generalise the check to iterate them, rather than to add a fifth regex.
     Re-derive what it covers: `python -c "import importlib.util as u;s=u.spec_from_file_location('c','docs/check_docs.py');m=u.module_from_spec(s);s.loader.exec_module(m);print(m.SCOPE_SURFACES, [l for _p,l in m._BAR_PROMISE])"`
 
-375. **A junior analyst is in scope, but `Data Analyst Interns` is accepted and an
-    internship is not** — lane: `classifier`, found 2026-08-28 by `docs` while making the
+375. ~~**A junior analyst is in scope, but `Data Analyst Interns` is accepted and an
+    internship is not**~~ — **CLOSED 2026-08-28 (`classifier`)**: the class is enumerated
+    in both alphabets and every variant is pinned; see the closing note at the end of this
+    item. — lane: `classifier`, found 2026-08-28 by `docs` while making the
     scope wording true. `_NOT_A_JOB`'s English alternation is `\b(intern|internship|student
     |trainee|apprentice(ship)?|working student|campus)\b` — **no plurals**, and the `\b`
     kills them. Measured against the shipped classifier:
@@ -6249,6 +6268,43 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     internships": the second is a guarantee the code does not keep. Fix `_NOT_A_JOB` and
     the wording can be stronger. Re-derive:
     `python -c "from pipeline import seniority as s;[print(t, s.classify({'company':'A','title':t}, use_llm=False)['decision']) for t in ['Data Analyst Intern','Data Analyst Interns','Senior Data Analyst Interns']]"`
+
+    **CLOSED 2026-08-28 (`classifier`).** `_NOT_A_JOB` is now **stems + an optional
+    `(?:s|ship|ships)` suffix** rather than a singular-only alternation, which is what the
+    trailing `\b` defeated. Eleven English variants were being admitted: interns, internships,
+    students, trainees, traineeship, apprentices, apprenticeships, co-op/coop/co-ops, working
+    students. The suffix group is also the safety: a bare `\bintern` prefix matches
+    `Head of International Sales`, `Internal Audit Manager` and `Internal Occupational
+    Physician`, all real titles in `scraped_cache.json` today.
+
+    The Hebrew arm gained four terms so the two alphabets enumerate the same class — `סטאז`,
+    a **guarded** `התמחות` (bare, it is also "field of specialisation" in `תחום התמחות`, and
+    this gate rejects without appeal), `מתלמד` and `חני[כך]`. `חני[כך]` is a character class
+    because **Hebrew final forms are different codepoints**: `חניך` ends in U+05DA and its
+    plural `חניכים` carries U+05DB, so the singular spelling cannot match the plural — the
+    same singular-only mistake as the English `\b`, one alphabet over, and the first draft of
+    this fix made it. `(?![הת])` then excludes the `חניכה`/`חניכת` (inauguration) family while
+    keeping `חניכות`, which is the labour-law word for apprenticeship. `צוער` (cadet) and
+    `קדם-אקדמי` are deliberately in NEITHER arm: there is no `cadet` stem on the English side
+    and a cadet track is a career, not a placement.
+
+    **The ORDER was already right and is now pinned.** `_NOT_A_JOB` sits above the
+    `strong`+`senior` accept in `_classify`, which is why `Data Analyst Intern` (singular)
+    always rejected with the right reason. The plural was accepted *because the gate missed*,
+    not because the shortcut ran first. `test_the_not_a_job_gate_precedes_the_strong_senior_accept`
+    now fails if the shortcut is moved up.
+
+    **Measured before shipping: 0 of the 252 title-only golden rows moved, and 0 of the 1,482
+    distinct titles in `scraped_cache.json` + the role ledger changed side** — nothing was
+    released and nothing new was caught. The hole was real and nothing had walked through it
+    yet, so this is a boundary repair that lost no role and moved no card. 31 variants are
+    parametrised in `tests/test_units.py`, each asserting the `keyword` PATH and the reason
+    (several already returned `reject` from the no-LLM fallback, which is an accident of
+    having no description, not the boundary working). Eight mutants, all killed.
+
+    **375's real done, per the operator:** the board and the mail said internships were "out
+    of scope" because `docs` refused to write a guarantee the code did not keep. They now say
+    **excluded**, in `pipeline/digest.py`, `README.md` and `CLAUDE.md`. Residue: `378@classifier`.
 
 376. **"Agencies are excluded everywhere via `pipeline/recruiters.py`" is not true of the
     classifier, and §5b sends debuggers to a name list that returns False** — lane:
@@ -6269,3 +6325,19 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     wording) — which is why `check_scope_claims` does not register those two files: they
     quote a rendered example rather than promise a reader anything. `ARCHITECTURE.md:2010`
     carried the same quotation and was corrected in the same commit, being `docs`'.
+
+
+378. **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
+    rejects without appeal** — lane: `classifier`, filed 2026-08-28 while closing 375.
+    `Campus Recruiting Data Analyst` is a real job — a data analyst working on campus
+    recruiting — and `campus` rejects it deterministically, with no LLM and no trace beyond
+    the reason string. Every other stem (`intern`, `student`, `trainee`, `apprentice`,
+    `co-op`) names the person's own status; `campus` names a place. It was already in the
+    pattern before 375 and 375 did not change it, so this is pre-existing, not a regression.
+
+    **0 of the 1,482 distinct live titles carry it**, so it is unmeasurable on today's corpus
+    in either direction — which is exactly why it was left alone rather than tuned blind. The
+    options, when someone has a corpus: drop the stem (`intern`/`student` co-occur in
+    virtually every real campus posting, so it may be carrying no weight at all), or require
+    an adjacent programme word (`campus (program|programme|hire|hiring)`). Re-derive the
+    count: `python -c "import json;d=json.load(open('scraped_cache.json',encoding='utf-8'));print([j['title'] for v in d.values() for j in v if 'campus' in (j.get('title') or '').lower()])"`

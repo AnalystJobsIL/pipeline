@@ -126,9 +126,15 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
                                                      for x in by_company[c]), reverse=True)
 
     lines = [f"# {title}", "",
+             # "excluded", not "out of scope": the docs lane wrote the weaker word on
+             # 2026-08-28 because `_NOT_A_JOB` was only enumerated in the singular and
+             # `Data Analyst Interns` was accepted. 375@classifier closed the class in both
+             # alphabets and pinned every variant, so the stronger promise is now the true
+             # one. Do not strengthen it further: a title that never says "internship" still
+             # reaches the LLM tier, which is judgement rather than exclusion.
              "Israeli high-tech scan — data / BI / analytics roles from the **last 48h**, "
              "freshest first. Any experience level; internships and student placements are "
-             "out of scope. Each role title links to apply.", ""]
+             "excluded. Each role title links to apply.", ""]
     if board_url:
         lines += [f"🔎 **[Open the full board →]({board_url})** — every role still open, "
                   "searchable & sortable.", ""]

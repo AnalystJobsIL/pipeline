@@ -268,9 +268,53 @@ _SENIOR = re.compile(
 )
 # A student position is not a JOB, whatever the experience policy says: an internship or
 # a degree-bound placement is not something this reader can take. Still deterministic.
+#
+# Since 2026-08-28 this is the ONE exclusion the operator kept when the experience bar came
+# off (docs/decisions/2026-08-28-analyst-scope.md), so it is the whole remaining boundary --
+# and a trailing "s" defeated it. The old alternation closed every stem with `\b`, so
+# `Data Analyst Intern` rejected while **`Data Analyst Interns` was ACCEPTED**, and
+# `Senior Data Analyst Interns` was accepted on the `keyword` path with the LLM never
+# asked. Eleven English variants were admitted this way: interns, internships, students,
+# trainees, traineeship, apprentices, apprenticeships, co-op/coop/co-ops, working students.
+#
+# Written as stems + an optional nominal suffix so the class cannot be half-enumerated
+# again. The suffix group is what keeps it safe: a bare `\bintern` prefix would also match
+# `Head of International Sales`, `Internal Audit Manager` and `Internal Occupational
+# Physician`, all three of which are real titles in `scraped_cache.json` today (measured
+# over 1,656 distinct titles). `intern`+`ship` reaches `internship`; `intern`+`s` does not
+# reach `internal`, because `\b` must still hold after the suffix.
+#
+# `campus` is kept as it was: 0 of those 1,656 titles carry it, so widening or narrowing it
+# is unmeasurable here -- but it is the one stem with a plausible false positive
+# (`Campus Recruiting Data Analyst` is a real job) and this rule REJECTS deterministically,
+# so it is filed rather than tuned blind (`378@classifier`).
+_NOT_A_JOB_STEMS = ("intern", "student", "trainee", "apprentice", "co-?op", "campus")
+# The Hebrew arm is a SUBSTRING match, not word-bounded, so a prefix covers its own plural:
+# `סטודנט` catches `סטודנטית`/`סטודנטים` and `מתמח` catches `מתמחה`/`מתמחים`. The old
+# alternation spelled both forms out, which is why it read as complete while the English
+# arm was not. Four terms are new, and they are the Hebrew counterparts of stems the English
+# arm already had, so the two sides now enumerate the same class:
+#   סטאז    stage/internship          (no English counterpart needed - it IS "intern")
+#   התמחות  internship, the noun      -- GUARDED: `תחום התמחות` is "field of
+#                                        specialisation" and would silently reject a real
+#                                        role, and this gate rejects without appeal
+#   מתלמד   apprentice                = `apprentice`
+#   חניך    trainee                   = `trainee`. Written `חני[כך]` because Hebrew final
+#                                        forms are DIFFERENT codepoints: `חניך` ends in a
+#                                        final kaf (U+05DA) and its plural `חניכים` has a
+#                                        medial one (U+05DB), so the singular spelling
+#                                        cannot match the plural. `(?!ה)` then excludes
+#                                        the `חניכה`/`חניכת`/`חניכות` family,
+#                                        "inauguration" - `(?!ה)` alone let `חניכת` through.
+#                                        This is the same
+#                                        singular-only mistake as the English `\b`, in the
+#                                        other alphabet - my first draft made it too.
+# Deliberately NOT added: `צוער` (cadet) and `קדם-אקדמי` (pre-academic), because there is no
+# `cadet` stem on the English side either and a cadet track is a career, not an internship.
+# Adding one language's term without the other is how this arm drifted in the first place.
 _NOT_A_JOB = re.compile(
-    r"\b(intern|internship|student|trainee|apprentice(ship)?|working student|campus)\b"
-    r"|סטודנט|סטודנטית|מתמחה|מתמח",
+    r"\b(?:%s)(?:s|ship|ships)?\b" % "|".join(_NOT_A_JOB_STEMS)
+    + r"|סטודנט|מתמח|סטאז|(?<!תחום )התמחות|מתלמד|חני[כך](?![הת])",
     re.I,
 )
 # Early-career markers. Under EXPERIENCE_BAR these rejected; since 2026-08-28 they do
