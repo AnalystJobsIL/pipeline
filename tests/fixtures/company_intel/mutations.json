@@ -434,7 +434,7 @@
   {
     "id": "ci-stall-alarm-never-fires",
     "file": "pipeline/company_intel.py",
-    "find": "        if _age is not None and _age > EXPORT_STALE_DAYS and not rep.get(\"scoped\"):\n",
+    "find": "        if (_age is not None and _age > EXPORT_STALE_DAYS and not rep.get(\"scoped\")\n                and isinstance(_rb, int) and _rb > 0):\n",
     "replace": "        if False:\n",
     "class": "M3",
     "symbol": "stall_alarm_never_fires",
@@ -447,6 +447,15 @@
     "replace": "    return attempted, 0\n",
     "class": "M3",
     "symbol": "refresh_starvation_silent",
+    "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-stall-alarm-ignores-a-drained-backlog",
+    "file": "pipeline/company_intel.py",
+    "find": "                and isinstance(_rb, int) and _rb > 0):\n",
+    "replace": "                and True):\n",
+    "class": "M3",
+    "symbol": "stall_alarm_ignores_a_drained_backlog",
     "why": "company-intel guard 2026-08-28"
   }
 ]

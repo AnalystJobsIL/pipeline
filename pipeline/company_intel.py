@@ -667,11 +667,20 @@ def _audit_lines(rep):
         # anywhere for two days" is growth-independent and is a statement about the thing
         # that is actually broken. It is `newest`, not this run's own output, so a digest
         # that legitimately researched nothing does not trip it.
+        # ...and only while there is WORK to do. With the backlog drained, "nothing was
+        # researched for three days" is a healthy quiet week, and an alarm that fires on
+        # that is the always-on warning this file already rejected once, three lines up.
+        # `_rb > 0` is what makes it a statement about the cron rather than about the
+        # weather. Known blind spot, quantified: the digest hook stamps today's date on any
+        # board company IT researches, which would reset the clock while the bulk cron stays
+        # dead -- but the digest researched 0 on all three of the 08-27/08-28 runs, because
+        # board companies are profiled same-day and stay profiled.
         _age = _export_age_days(rep["export_newest"], rep.get("run_date"))
-        if _age is not None and _age > EXPORT_STALE_DAYS and not rep.get("scoped"):
-            warn.append(f"no company has been researched for {_age} days (newest record "
-                        f"{rep['export_newest']}) — the 10:00 UTC bulk cron drains the "
-                        f"registry backlog and nothing else does")
+        if (_age is not None and _age > EXPORT_STALE_DAYS and not rep.get("scoped")
+                and isinstance(_rb, int) and _rb > 0):
+            warn.append(f"{_rb} companies still need facts and nothing has been researched "
+                        f"for {_age} days (newest record {rep['export_newest']}) — the "
+                        f"10:00 UTC bulk cron drains that backlog and nothing else does")
         if rep.get("publish_error") or (not rep["published"] and not rep.get("scoped")
                                         and not rep.get("error")):
             msg = "export NOT written" + (f" ({_ascii(rep.get('publish_error'), 120)})"

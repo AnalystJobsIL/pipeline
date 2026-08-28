@@ -1458,8 +1458,9 @@ def test_the_mail_says_when_nothing_has_been_researched_for_days():
     when it stopped: it has fired once ever (2026-08-27T20:05Z, +605 min late), the 08-28
     slot did not fire at all, and `registry backlog` went 74 -> 139 across that day's two
     digests in silence."""
-    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-08-25"))
-    assert any("has been researched for 3 days" in w for w in warn), warn
+    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-08-25", registry_backlog=12))
+    assert any("nothing has been researched for 3 days" in w for w in warn), warn
+    assert any("12 companies still need facts" in w for w in warn), warn
 
 
 def test_the_stall_alarm_is_silent_on_a_healthy_morning():
@@ -1467,9 +1468,16 @@ def test_the_stall_alarm_is_silent_on_a_healthy_morning():
     twice over: the registry adds 30-100 active rows a day, so any absolute bar is crossed
     on healthy mornings - the reason the clause beside it was rejected - and a quiet
     registry lets a dead cron sit under that bar for a fortnight."""
-    for newest, backlog in (("2026-08-28", 139), ("2026-08-27", 139), ("2026-08-26", 0)):
+    for newest, backlog in (("2026-08-28", 139), ("2026-08-27", 139), ("2026-08-26", 4)):
         _, warn = CI.audit_lines(_stall_rep(export_newest=newest, registry_backlog=backlog))
         assert not any("has been researched for" in w for w in warn), (newest, backlog)
+    # and the one that matters after tonight: a DRAINED backlog and a quiet week is not a
+    # stall. An alarm that fires on that is the always-on warning beside it in the source.
+    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-08-01", registry_backlog=0))
+    assert not any("has been researched for" in w for w in warn), warn
+    # ...nor is a backlog that could not be counted
+    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-08-01", registry_backlog=-1))
+    assert not any("has been researched for" in w for w in warn), warn
 
 
 def test_the_stall_alarm_never_raises_on_an_unusable_date():
@@ -1485,7 +1493,8 @@ def test_the_stall_alarm_never_raises_on_an_unusable_date():
 def test_a_scoped_local_run_never_raises_the_stall_alarm():
     """A scoped run reads whatever export happens to be checked out; it is not evidence
     about whether the cloud is researching anything."""
-    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-01-01", scoped=True))
+    _, warn = CI.audit_lines(_stall_rep(export_newest="2026-01-01", scoped=True,
+                                        registry_backlog=50))
     assert not any("has been researched for" in w for w in warn)
 
 

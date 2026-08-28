@@ -135,7 +135,7 @@ finding, and neither is a measurement that cannot fail.
 records going stale in one week against a 20/run cap and a new-name queue that outranks them.
 Two candidates, neither measured and so neither built: a per-company jitter on `is_stale` so
 the birth week spreads, or a refresh budget independent of `--limit`. Filed as
-`382@company-intel`. It has six months of warning and should not be spent now.
+`387@company-intel`. It has six months of warning and should not be spent now.
 
 ## What was shipped instead
 

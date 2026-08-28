@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**434 filed · 318 open · 116 closed · 7 half · 34 numbers name more than one item · 28 items name no lane.**
+**436 filed · 320 open · 116 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 387.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 389.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -183,7 +183,7 @@ closure convention in the header.
 - **382** `382@registry` **`tests/test_registry.py` leaks `bd_rescue.SPENT` and `os.environ["BD_RUN_CAP"]` across
 - **386** `386@registry` **`pipeline/identity_gate._UNLOCK_SPENT` leaks across tests the way `SPENT` did**
 
-### infra — 79 open
+### infra — 80 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -264,6 +264,7 @@ closure convention in the header.
 - **372** `372@infra` **The digest's stdout one-liner prints a bare `0 LLM calls`, and that cost a day** —
 - **377** `377@infra` **Two `infra` comments quote the digest H1, which changed today**
 - **383** `383@infra` **`cloud_state/bd_spend.jsonl` has a writer and no reader**
+- **388** `388@infra` **`persist_state.shrank()` cannot see the loss it was written for, on the store where it
 
 ### scraper — 23 open
 
@@ -336,7 +337,7 @@ closure convention in the header.
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
 - **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
 
-### company-intel — 15 open
+### company-intel — 16 open
 
 - **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
 - **97** `97@company-intel` **Retire (or weekly) the Windows firmographics chain** *(closed by a later bullet, original never edited)*
@@ -351,8 +352,9 @@ closure convention in the header.
 - **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
 - **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
 - **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
-- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no
+- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
 - **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
+- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
 
 ### ats-fetch — 14 open
 
@@ -4048,6 +4050,43 @@ here — each is another lane's file or a behaviour change this session could no
     added to the conftest fixture: it changes what those guards test, and that is a change
     that needs measuring rather than assuming.
 
+387. **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
+    store turns stale at once in 2027-02** — lane: `company-intel`, filed 2026-08-28.
+    Every `as_of` in the export written before tonight falls in 2026-08-21..28 (394 / 378 /
+    154 / 14 / 15 / 18 / 22 / 2 by day), and tonight's drain added 135 more all stamped
+    08-28. At `--refresh-days 180` the entire corpus becomes stale between **2027-02-17 and
+    2027-02-24**, against `REFRESH_CAP = 20/run` — about **50 runs** to drain, while new
+    registry rows compete for the same queue and outrank it by construction (see the
+    ordering note in `plan_counts`).
+
+    Two candidate fixes, neither measured and so neither built: a per-company jitter on
+    `is_stale` so the birth week spreads over the horizon, or a refresh budget independent
+    of `--limit`. **Do not spend on this now** — `docs/decisions/2026-08-28-firmographics-refresh.md`
+    records why the refresh horizon itself cannot be measured until records have actually
+    aged (re-measure 2026-11-19), and this has six months of warning. It is filed so that
+    whoever reads §7 in January does not discover it in February.
+
+388. **`persist_state.shrank()` cannot see the loss it was written for, on the store where it
+    matters most** — lane: `infra`, found 2026-08-28 by `company-intel`. `shrank(d)` requires
+    `lost >= SHRINK_MIN_KEYS` (10) **and** `lost * 100 >= SHRINK_MIN_PCT * before` (3 %). Both
+    bars, deliberately, "so a small cache losing two keys and a big one losing 0.5 % stay
+    quiet". But `cloud_state/firmographics.json` now holds **1,132** records, so 3 % is **34
+    keys** — and the incident this alarm exists for was **22 profiles destroyed on
+    2026-08-26** by another lane's `git pull --rebase` stashing them. `key_deltas` would have
+    printed `-22` as an ordinary line and `shrank` would have raised nothing.
+
+    Not fixed here on purpose: `SHRINK_MIN_PCT` is one threshold shared by every
+    `s_company_dict` path (`companies.csv`, `scraped_cache.json`, `health_baseline.json`,
+    `stale.json`, `scan_seen.json`, the two rotation keys and now `firmo_failed.json`), and
+    changing it on this lane's judgement would move five other lanes' noise floors. The shape
+    that fits is a **per-path absolute floor** — a big cache should alarm on an absolute count
+    the percentage bar hides. Reproduce: `python -c "import persist_state as P; print(P.shrank({'lost':22,'before':1132}))"` → `False`.
+
+    This is the other half of `359@company-intel`. The half that was closed is the staleness
+    alarm on the `Company intel:` line; the FLOOR that 359 also asks for ("as a floor rather
+    than a band") belongs here, in the machinery that already measures the delta for this
+    exact path every run.
+
 ## From the `jd-text` lane, 2026-08-28 (evening)
 
 Record: `docs/sessions/2026-08-28-jdtext-evening.md`; spec `ARCHITECTURE.md` §7a; decision
@@ -6054,6 +6093,26 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     The right home is the digest's `Company intel:` line, beside the export count it already
     prints, as a floor rather than a band — same argument as
     `docs/decisions/2026-08-28-census-facts.md`.
+
+    **HALF CLOSED 2026-08-28 (`company-intel`).** The `Company intel:` line now raises
+    `::warning::company-intel` when the export's newest record is more than
+    `EXPORT_STALE_DAYS` (2) old **and** the registry backlog is non-zero — i.e. there is work
+    the 10:00 cron should be doing and nothing has been researched anywhere for two days. It
+    is deliberately NOT a backlog threshold: the registry adds 30-100 active rows a day, so
+    any absolute bar is crossed on healthy mornings, and the clause immediately above it in
+    `audit_lines` was rejected in 2026-08-24 for exactly that ("a warning that is always on
+    is a warning nobody reads"). The `_rb > 0` half is what keeps a *drained* backlog and a
+    quiet week from firing it. Known blind spot, quantified: the digest hook stamps today's
+    date on any board company it researches, which would reset the clock while the bulk cron
+    stayed dead — but it researched 0 on all three of the 08-27/08-28 runs, because board
+    companies are profiled same-day and stay profiled.
+
+    **The FLOOR half is NOT closed and is now `388@infra`**, because the machinery that would
+    carry it already exists and is not this lane's: `persist_state.key_deltas` measures the
+    before/after key count of this exact path every run, and `shrank()` simply cannot fire
+    on it — it needs `lost >= 10` AND `lost >= 3 %`, which on a 1,132-record store is 34
+    keys, so the 22-record loss of 2026-08-26 raised nothing. Moving that threshold is one
+    number shared by seven `s_company_dict` paths and belongs to whoever owns them.
 
 360. **ARCHITECTURE.md states the active-row count six ways and two of them carry no date**
     — lane: `docs` with `company-intel` and `classifier`, found 2026-08-28. The code says

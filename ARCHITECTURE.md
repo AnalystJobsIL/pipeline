@@ -2854,12 +2854,15 @@ python -c "import json;from pipeline.firmographics import band_for as b;d=json.l
 strings: `_coerce` insists on exactly one field, so an all-empty record would be **accepted**,
 cached until 2027-02, and rendered as a one-chip card while the mail said `1 researched`.
 
-**Coverage, 2026-08-27.** The export holds **973** records. Of the **899** companies that can
-render a card — active registry rows ∪ every company ever matched, minus the `discovery`
-pseudo-row — **897 (99.8 %)** have facts and **2** do not: `Peak Innovation` and `Sivo`, both
-carrying a research strike and retried weekly. Count the render set, not the registry: a
-company reaches a card by having a **role**, and 27 companies with role records are not
-active rows. Count it through `identity_key`, **not** by
+**Coverage, 2026-08-28** (re-derived after that night's backlog drain; the previous reading
+was 973 / 899 / 897 on 08-27, before the registry grew to 1,000 active rows). The export holds
+**1,132** records. Of the **1,027** companies that can render a card — active registry rows
+∪ every company ever matched, minus the `discovery` pseudo-row — **1,022 (99.5 %)** have facts
+and **5** do not: `Tel Aviv` (refused by `not_a_company`: a bare place, never researched),
+`Hila & Co.` and `Peak Innovation` (research strikes, weekly retry), and `ImagineArt` and
+`Plateful`, which the 08-28 drain failed on and struck. Count the render set, not the
+registry: a company reaches a card by having a **role**, and 28 companies with role records
+are not active rows. Count it through `identity_key`, **not** by
 name — the name-match version reports 39 false gaps, because `display_index` already answers
 for "Dell" out of "Dell Technologies":
 
