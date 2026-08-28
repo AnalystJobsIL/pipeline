@@ -16,9 +16,9 @@ The `runs in` and `imported by` columns are **computed from the code**, not type
 |---|---|---|
 | `scheduled` | a workflow invokes it | 29 |
 | `library` | no workflow runs it; live code imports it | 9 |
-| `operator` | a human or agent runs it; nothing in CI does | 8 |
+| `operator` | a human or agent runs it; nothing in CI does | 10 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
-| | **total root modules** | **71** |
+| | **total root modules** | **73** |
 
 `pipeline/` is listed at the end. Lane ownership for all of these is in `docs/AGENT_BRIEF.md`.
 
@@ -70,7 +70,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `ingest_research.py` | `resolve_parallel.py`, `resolve_unknowns.py`, `retry_unreachable.py` | resolve+verify helpers for the research queue. **Not deletable**: `retry_unreachable` (02:30 daily) imports `PROBE_FAST`, `_cand_slugs` and `_try` from it |
 | `merge_csv_rows.py` | `persist_state.py`, `registry_health.py`, `tests/test_registry.py` +1 more | git-layer segment-aware merge for companies.csv; persist_state.py applies it on every push conflict |
 | `merge_json_cache.py` | `persist_state.py`, `tests/test_units.py` | three-way merge for the company-keyed JSON caches (deletions honoured since 2026-08-25); persist_state.py applies it |
-| `probe_ats.py` | `auto_expand.py`, `ingest_research.py`, `probe_expand.py` +1 more | guessable-slug probing. **Not deletable**: `auto_expand` imports `probe_bounded`/`bounded_http` for its free rung, `ingest_research` imports `slug_variants` |
+| `probe_ats.py` | `auto_expand.py`, `drain_queue.py`, `ingest_research.py` +2 more | guessable-slug probing. **Not deletable**: `auto_expand` imports `probe_bounded`/`bounded_http` for its free rung, `ingest_research` imports `slug_variants` |
 | `resolve_deep.py` | `auto_expand.py`, `bd_rescue.py`, `recheck_suspects.py` +6 more | deterministic resolver tier (recognizable ATS URLs, iframes) |
 | `resolve_llm.py` | `auto_expand.py`, `deep_validate.py`, `listing_hunt.py` +1 more | the LLM resolution tier: evidence bundle -> one `claude -p` proposal -> verified through the real fetcher |
 | `scrape_universal.py` | `bd_rescue.py`, `check_invariants.py`, `crack_walled.py` +10 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
@@ -81,9 +81,11 @@ Live and documented, and nothing in CI runs them - `docs/check_docs.py` fails if
 
 | module | what it does |
 |---|---|
+| `apply_proposals.py` | applies `drain_queue`'s proposals to companies.csv in reviewed batches, dry-run by default, through `activation_verdict`. Six de-dup keys lower-cased on both sides (the sixth is the Comeet uid read from BOTH url shapes -- the twin no string key sees). Idempotent by holding no run state, which is also what makes it survive a rebase that drops its append |
 | `bd_employees.py` | LinkedIn employee-count fill via the Web Unlocker, 1 credit/page. Hand-run only - the Windows chain that drove it is disabled and no workflow runs it |
 | `cache_new_rows.py` | superseded shim: delegates to `refresh_scrape_cache.py --only-missing` (docs/BACKLOG.md 87 retires it) |
 | `digest_watchdog.py` | the ONLY tripwire that does not run on GitHub: reads the public `cloud_state/last_delivered.json` + `digests/latest.md` over plain HTTPS (no credential, no `gh`) and writes a desktop alert when today's digest never reached the mail. Built 2026-08-27, when 9 scheduled dispatches were due across the two repos and 1 fired, so every GitHub-hosted watchdog would have produced nothing. Reads and alerts only -- it cannot dispatch, because a workflow_dispatch from the operator's machine puts their account on a public run page (CLAUDE.local.md) |
+| `drain_queue.py` | walks the WHOLE intake queue with the free HTTP rungs and emits a PROPOSAL FILE; it cannot write companies.csv, and that is structural rather than a flag -- no csv writer, no registry path, no `--apply`, asserted over the AST by `test_the_queue_drain_cannot_write_the_registry`. Exists because `auto_expand` clears ~50 names/day against a queue that grows ~150/day, and the cloud limit is the 330-minute job timeout rather than cost. Carries the comeet-token rung the shipped ladder has no way to reach: `probe_ats._PLATFORMS` has no comeet entry |
 | `fill_employees_llm.py` | re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Hand-run only - the Windows chain that drove it is disabled and no workflow runs it |
 | `firmo_health_check.py` | tripwire: is the firmographics chain actually classifying anything? |
 | `setup_brightdata.py` | one-time: store the Bright Data token + zone in secrets.env |

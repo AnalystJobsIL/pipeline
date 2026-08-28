@@ -132,6 +132,28 @@ HOSTS = (
     # company-data site that is not a careers page at all
     "bebee.com", "djinni.co", "craft.co", "franciscopartners.com", "himalayas.app",
     "remoteok.", "weworkremotely.", "jobgether.", "startupnationcentral.org",
+    # ISRAELI job boards and staffing firms. This list was Anglo, and the class it missed is
+    # the one the identity gate CANNOT catch: an aggregator's per-company page names the
+    # company correctly, so `identity_ok` says yes and `pipeline/run.py`'s runtime SKIP --
+    # which reads this same predicate -- is blind too. Only the host list can refuse it.
+    # Same failure and same remedy as `secrettelaviv.` above. Added by `registry` 2026-08-28
+    # (340@discovery, lane `discovery`); each was measured in the 488-name intake exhaust or
+    # read directly, and each ALREADY had a `found` record that would have activated a row:
+    #   jobkarov.com    Menora Mivtachim's company page /Search/Company/16928 (il=1) -- the
+    #                   one caught by hand on 2026-08-27, after it had been applied
+    #   maof-hr.co.il   Maof, a staffing agency's listings page (il=10); passes is_recruiter
+    #                   (Hebrew name), identity_ok (it really IS Maof's page) AND
+    #                   looks_like_a_job_listing_page -- every gate we ship says yes
+    #   jobsseek.info   "JobsSeek" (il=10) is itself a job board, proposed as an employer
+    #   44ventures.com  a VC portfolio page serving ANOTHER company's Comeet board:
+    #                   /jobs/co/programmaticx/34.F68/inside -- uid 34.F68 is programmaticx's.
+    #                   tlv.partners / insightpartners.com / seedcamp.com are already here
+    #                   for exactly this shape
+    #   jobnet.co.il    title reads "לוח דרושים" -- a job board, no employer of its own
+    #   sqlink.com      an IT staffing firm whose own description offers "לוח משרות דרושים
+    #                   בהייטק"; its listings are its clients', not its own
+    "jobkarov.com", "maof-hr.co.il", "jobsseek.info", "44ventures.com",
+    "jobnet.co.il", "sqlink.com",
 )
 
 # host-anchored: "t.me/" must not match supplant.me / supersmart.me

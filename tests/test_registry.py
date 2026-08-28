@@ -583,13 +583,20 @@ def test_the_guard_count_never_falls():
         if fn.startswith("test_") and fn.endswith(".py"):
             src = open(os.path.join(here, fn), encoding="utf-8").read()
             n += len(re.findall(r"^def (test_\w+)", src, re.M))
-    # HEAD carries 81 in test_units.py + 25 here = 106. The floor sits a little under, so
-    # ordinary churn in another lane's file does not fire it while a CLOBBER (which removes
-    # 7-22 at a time, every time it has happened) does. Raise it deliberately when guards are
+    # 2026-08-28: re-derived, and the tourniquet had stopped working. The comment here still
+    # read "HEAD carries 81 in test_units.py + 25 here = 106", the count on the day it was
+    # written; HEAD now carries 684 + 179 + 86 = 949. Against a floor of 100 the one event
+    # this guard exists for -- a stale copy of test_units.py committed over another lane's
+    # work -- removes 684 tests, lands on 265, and PASSES. The number was raised deliberately
+    # once and then never again, so the guard decayed into decoration while reading as green.
+    #
+    # The floor sits ~5% under the live count: ordinary churn across nine concurrent lanes
+    # does not fire it, a clobber of any one file does. Raise it deliberately when guards are
     # added; never lower it to make a build pass - a lower number means someone's guards are
     # gone. This test lives in tests/test_registry.py precisely so that overwriting
     # tests/test_units.py cannot delete the thing that detects overwriting test_units.py.
-    FLOOR = 100
+    # A per-FILE floor would be strictly better and is docs/BACKLOG.md's, not this session's.
+    FLOOR = 900
     assert n >= FLOOR, (
         "%d test functions collected, floor is %d. If you did not delete tests on purpose, "
         "someone committed a stale copy of tests/test_units.py over another lane's guards — "
@@ -3862,6 +3869,52 @@ def test_auto_expand_rereads_the_registry_before_every_append(tmp_path, monkeypa
     assert names.count("Fiverr") == 1, "a twin row was appended: %r" % (names,)
 
 
+def test_auto_expand_rereads_the_registry_before_appending_a_PARKED_row(tmp_path, monkeypatch):
+    """Kills `expand-dupe-guard-drop`, which SURVIVED on origin/master (2026-08-28) even
+    though the test above is named for it.
+
+    Two guards sit at that append and they are not independent. The board guard fires only
+    when the row being appended is ACTIVE:
+
+        if (row[4] == "true" and ((row[1] or "").lower(), (row[2] or "").lower())
+                in _boards_now()):
+
+    The sibling test's concurrent writer adds an ACTIVE greenhouse/fiverr row and the tool
+    then resolves the same board, so the BOARD guard catches the twin and the test passes
+    with the name guard deleted. One test, two guards, and only one of them measured -- the
+    "two tests that look independent, one shared assumption" shape this lane found in
+    `identity_gate` (317@registry) and then rebuilt twice in its own code.
+
+    A PARK is the case only the name guard can catch: `kind == "empty"` appends
+    `active=false`, so the board guard is skipped by its first conjunct whatever the token
+    says. Deleting the name guard then writes a duplicate `company_name`, which is
+    `check_invariants` check B -- BLOCKING, inside `daily-digest.yml`, so the cost is the
+    whole day's board and email rather than one bad row."""
+    E = _expand_env(tmp_path, monkeypatch,
+                    [{"name": "Fiverr", "careers_url": "https://www.fiverr.com/jobs"}])
+
+    def _resolve(name, url, **k):
+        # a concurrent writer parks the same name mid-run, on a DIFFERENT address, so no
+        # board key, no api_url and no note is shared with the row this run is about to build
+        with open(tmp_path / "companies.csv", "a", encoding="utf-8", newline="") as fh:
+            print("Fiverr,scrape,,https://careers.fiverr.example/,false,"
+                  "unreachable; could not scan", file=fh)
+        return ("empty", None)
+    monkeypatch.setattr(E, "resolve", _resolve)
+    E.main()
+
+    import csv
+    # raw csv, NOT the `_read` helper: that returns a dict keyed by name, which would
+    # collapse the very duplicate this test exists to see.
+    with open(tmp_path / "companies.csv", encoding="utf-8") as fh:
+        rows = list(csv.reader(fh))[1:]
+    names = [r[0] for r in rows if r]
+    assert names.count("Fiverr") == 1, "a parked twin was appended: %r" % (rows,)
+    # ...and say WHY it matters in the assertion itself: this is check B, which blocks.
+    dupes = [n for n in set(names) if names.count(n) > 1]
+    assert not dupes, "check_invariants check B (duplicate company_name) would block: %r" % dupes
+
+
 def test_resolve_llm_does_not_ask_claude_without_a_reachable_page(monkeypatch):
     """Kills `llm-evidence-free-asks`. With an aggregator seed and SerpApi at 0 the
     evidence was the literal `(no pages reachable)` and the model was asked anyway --
@@ -4466,7 +4519,17 @@ def test_the_resolver_refuses_a_board_not_grounded_on_the_companys_own_page(monk
     assert reads == [], "a vendor-host page must never be read as the company's own"
     # a held OWN page can still refuse a board it merely embeds (the Cogniteam/Riskified
     # shape): `similartech` passes the 5-char slug prefix AND sits on Similarweb's own page
-    # as a stale embed -- only `embedded_board_ok` refuses it
+    # as a stale embed. NOTE: `similartech` is a DECLARED `not_tenants` entry, so what
+    # refuses it here is `board_vouches` at the FIRST gate, not `embedded_board_ok` -- this
+    # comment said otherwise until 2026-08-28, and that is why `llm-embed-vouch-drop`
+    # SURVIVED with a test named for it. Both fixtures in this function are declared
+    # negatives, so `_verify` raises at line 305 and line 311 never runs. Measured:
+    #     Similarweb  similartech  vouch=False  embed=False  not_tenants=['similartech']
+    #     Cogniteam   gorgias      vouch=None   embed=False  not_tenants=['riskified']
+    # A declaration is only ever written AFTER we have been burned once, so the UNDECLARED
+    # row is the one the second gate exists for -- and there `board_vouches` returns None,
+    # which `_verify` correctly does not treat as a refusal. That case is covered
+    # behaviourally by `test_resolve_llm_refuses_a_board_the_company_only_embeds`.
     with pytest.raises(ValueError):
         L._verify("Similarweb", "greenhouse", "similartech", st,
                   pages=[("https://www.similarweb.com/careers", "<html>greenhouse.io/similartech</html>")])
@@ -6079,3 +6142,252 @@ def test_triage_still_selects_a_row_the_daily_probe_woke(tmp_path, monkeypatch):
         "wake, so it leaves this tool's schedule for good while in_triage_pool still owns it. "
         "Selected: %r" % (seen,))
     assert "PlainCo" in seen, "positive control: an ordinary due row must still be selected"
+# ---------------------------------------------------------------------------------------
+# drain_queue.py + apply_proposals.py, 2026-08-28. The offline queue drain and its applier.
+# The drain WALKS and proposes; the applier WRITES, in reviewed batches, through the gate.
+# The split is the point: the walking half is structurally unable to touch the registry, so
+# the whole 786-name sweep can be re-run at any time without a review.
+# ---------------------------------------------------------------------------------------
+def _proposal_file(tmp_path, proposals, generated=None):
+    import datetime as _dt
+    p = tmp_path / "props.json"
+    p.write_text(json.dumps({"generated": generated or _dt.date.today().isoformat(),
+                             "proposals": proposals}), encoding="utf-8")
+    return str(p)
+
+
+def _comeet_prop(name, uid, il=3):
+    api = "https://www.comeet.com/careers-api/2.0/company/%s/positions?token=DEAD" % uid
+    return {"name": name, "kind": "ats", "rung": "comeet-token", "platform": "comeet",
+            "token": uid, "api_url": api, "proposed_active": True,
+            "evidence": {"n_il": il, "candidate_url":
+                         "https://www.comeet.com/jobs/%s/%s" % (name.lower(), uid)}}
+
+
+def _apply(tmp_path, monkeypatch, props, argv, rows=(), jobs=None, gate="ok"):
+    """Drive apply_proposals.main() against a scratch registry."""
+    import sys
+    import apply_proposals as A
+    from pipeline import identity_gate as G
+    monkeypatch.chdir(tmp_path)
+    _registry(tmp_path, list(rows))
+    monkeypatch.setattr(A, "CSV_PATH", str(tmp_path / "companies.csv"))
+    monkeypatch.setattr(G, "activation_verdict",
+                        lambda name, api, n=0, html="", token="": gate)
+    monkeypatch.setattr(A, "_reverify_ats",
+                        lambda p: (jobs if jobs is not None else ([{"t": 1}] * 5,
+                                                                 [{"t": 1}] * 3)))
+    monkeypatch.setattr(sys, "argv", ["apply_proposals.py"])
+    return A.main(["--proposals", _proposal_file(tmp_path, props)] + argv)
+
+
+def test_the_queue_drain_cannot_write_the_registry():
+    """`drain_queue.py` proposes and never writes, and that is STRUCTURAL rather than a flag.
+
+    A dry-run you can turn off is a dry-run somebody turns off at 02:00, so the claim is
+    asserted over the AST with the same detector `tools/mutate.py` uses to decide which
+    modules are activating writers. If this goes red the module has grown a write path and
+    needs a `GATE_CALLERS` entry, mutation coverage and a review -- which is exactly the
+    tripwire, not an inconvenience."""
+    import ast
+    import importlib.util
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    spec = importlib.util.spec_from_file_location(
+        "mutate", os.path.join(root, "tools", "mutate.py"))
+    M = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(M)
+    assert "drain_queue.py" not in M._registry_writers(), (
+        "drain_queue.py now writes companies.csv column 3 or activates column 4")
+    src = open(os.path.join(root, "drain_queue.py"), encoding="utf-8").read()
+    tree = ast.parse(src)
+    for n in ast.walk(tree):
+        assert not M._row_write(n), "a row write appeared in drain_queue.py"
+    for banned in ("csv.writer", "write_csv_rows", "companies.csv"):
+        assert banned not in src, "drain_queue.py names %r" % banned
+    # positive control: the detector DOES see the applier, so a green result above is not
+    # simply a detector that finds nothing
+    assert "apply_proposals.py" in M._registry_writers()
+
+
+def test_the_queue_drain_cannot_spend_a_bright_data_credit(monkeypatch):
+    """Driven with `BRIGHTDATA_API_KEY` SET -- the adversarial direction, and the exact
+    mistake the previous session made.
+
+    That session put "the rung spends zero Bright Data credits" in a commit message and an
+    attacker then demonstrated 5 paid calls from 5 probe hits. Asserting the absence of a
+    key proves nothing here, because `bd_rescue._load_secrets()` reads `secrets.env` from the
+    repo root and `os.environ.setdefault`s every key in it -- and eight root modules call it,
+    so one convenience import re-arms the paid rung silently (`identity_gate` swallows the
+    exception at :549). The module therefore sets `PAGE_UNLOCK_BUDGET=0` BEFORE importing the
+    gate, which is when `_UNLOCK_BUDGET` is read."""
+    from pipeline import identity_gate as G
+    import apply_proposals                             # noqa: F401  (its locks run at import)
+    import drain_queue                                 # noqa: F401
+
+    # The key is set AFTER the imports and the unlock entry point is stubbed, deliberately.
+    # The first version of this guard set a plausible key BEFORE them and let the real
+    # `bd_rescue.unlock_status` run: `SPENT["n"] += 1` sits one line ABOVE the request, so
+    # three tests incremented the credit counter and then died on the missing
+    # `BRIGHTDATA_ZONE` -- 0 requests and 0 credits bought, but the suite printed
+    # "[bd-spend] this step bought 3 Bright Data credit(s)" and wrote it to
+    # cloud_state/bd_spend.jsonl. A guard about not spending money must not be the thing
+    # that makes the ledger say money was spent.
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "not-a-real-key")
+    import bd_rescue
+    calls = []
+    monkeypatch.setattr(bd_rescue, "unlock_status",
+                        lambda url, timeout=90: calls.append(url) or ("", "stubbed"))
+    monkeypatch.setattr(bd_rescue, "unlock", lambda url, timeout=90: calls.append(url) or "")
+
+    # This test file imports `identity_gate` at line 18, BEFORE either tool -- deliberately,
+    # because that is the adversarial order. `_UNLOCK_BUDGET` is read at the GATE's import
+    # (`identity_gate.py:80`), so an env lock set afterwards arrives too late: on this path
+    # the env form of the lock does nothing at all, which is exactly why the tools also set
+    # the attribute. If only the env lock existed this assertion would read 100.
+    assert G._UNLOCK_BUDGET == 0, (
+        "the gate's unlock budget is %r -- the env lock is order-dependent and the "
+        "attribute lock is missing" % (G._UNLOCK_BUDGET,))
+    # lock 2, exercised directly rather than by import order: calling the lock removes the
+    # key from THIS process. (It cannot be asserted from the import above any more, because
+    # the key is now set after it -- which is the whole point of the stub.)
+    drain_queue._lock_the_paid_rungs()
+    assert not os.environ.get("BRIGHTDATA_API_KEY"), "the lock did not remove the key"
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "not-a-real-key")   # put it back, adversarially
+    # the paid branch is `len(html) < 2000 and KEY and _UNLOCK_SPENT < _UNLOCK_BUDGET`; with
+    # the budget at 0 the third conjunct is false forever, so even a short page cannot spend
+    # `_UNLOCK_SPENT` is a MODULE global shared by every test in this process, so the
+    # assertion is "no NEW spend", not "zero". Asserting the absolute value passed in
+    # isolation and failed in the full suite, where an earlier test had already moved it --
+    # a guard that only holds when run alone is not a guard.
+    before = G._UNLOCK_SPENT
+    G.page_names_company("Nobody Ltd", "https://example.invalid/x", html="tiny")
+    assert G._UNLOCK_SPENT == before, "an unlock was spent on a sub-2000-char page"
+    assert calls == [], "the paid rung was entered: %r" % (calls,)
+
+
+def test_the_applier_de_dups_a_comeet_board_by_uid_in_both_url_shapes(tmp_path, monkeypatch):
+    """Kills `apply-proposals-gate-remove`, `apply-proposals-gate-invert` and
+    `apply-proposals-gate-narrow`, and covers the twin no string key can see.
+
+    The registry stores a Comeet board as `careers-api/2.0/company/<uid>/positions?token=...`
+    and a proposal carries `jobs/<slug>/<uid>`. Name, api_url and host+path all differ, so
+    five of the six de-dup keys pass it. Only the uid, pulled from BOTH url shapes, sees that
+    they are one board -- and a second ACTIVE row on one board republishes every role under
+    two employer names, the `alias-of` shape ARCHITECTURE section 2 calls terminal and
+    `check_invariants` check B cannot catch BECAUSE the names differ.
+
+    The uid is also UPPERCASE, which is how the production miss happened: `_boards_now()`
+    lower-cases what it stores and the lookup did not, so the guard was blind to exactly one
+    platform -- Comeet -- and `Imagry | Autonomous Driving` was written beside `Imagry` on
+    `comeet/B7.00F` by the 19:18 run of 2026-08-27."""
+    existing = ["Atera", "comeet", "63.00B",
+                "https://www.comeet.com/careers-api/2.0/company/63.00B/positions?token=X",
+                "true", ""]
+    _apply(tmp_path, monkeypatch, [_comeet_prop("Atera Networks", "63.00b")],
+           ["--kind", "ats", "--apply"], rows=[existing])
+    rows = _read(tmp_path)
+    assert "Atera Networks" not in rows, "a Comeet uid twin was appended: %r" % (rows,)
+    # positive control: a DIFFERENT uid is a different board and must still be written
+    _apply(tmp_path, monkeypatch, [_comeet_prop("Somebody Else", "77.00A")],
+           ["--kind", "ats", "--apply"], rows=[existing])
+    assert "Somebody Else" in _read(tmp_path), "the de-dup refuses every board"
+
+
+def test_the_applier_de_dups_within_one_batch(tmp_path, monkeypatch):
+    """Two queue NAMES can be one board, and the registry cannot object to a row this run
+    has not written yet. `Faye` and `withfaye` both resolve to Comeet `87.00A` in the live
+    proposal set, so a run that only consulted the file on disk would write both."""
+    _apply(tmp_path, monkeypatch,
+           [_comeet_prop("Faye", "87.00A"), _comeet_prop("withfaye", "87.00A")],
+           ["--kind", "ats", "--apply"])
+    rows = _read(tmp_path)
+    assert "Faye" in rows and "withfaye" not in rows, (
+        "both halves of an intra-batch board twin were written: %r" % (rows,))
+
+
+def test_the_applier_refuses_an_aggregator_page_every_other_gate_admits(tmp_path, monkeypatch):
+    """The class the identity gate cannot catch, tested at the tool that would activate it.
+
+    `maof-hr.co.il` is a staffing agency's listings page carrying 10 Israel jobs. It passes
+    `is_recruiter` (the name is Hebrew), `identity_ok` (it really is Maof's own page) and
+    `looks_like_a_job_listing_page`. The gate is stubbed to "ok" here precisely to prove the
+    refusal does not depend on it: only the host list can refuse this, which is why the hosts
+    went into `pipeline/aggregators.py` rather than a copy local to this tool."""
+    agg = {"name": "Maof", "kind": "scrape", "rung": "exhaust", "platform": "scrape",
+           "token": "", "api_url": "https://www.maof-hr.co.il/jobs",
+           "evidence": {"n_il_when_hunted": 10}}
+    ok = {"name": "Kela Technologies", "kind": "scrape", "rung": "exhaust",
+          "platform": "scrape", "token": "",
+          "api_url": "https://www.kelacyber.com/careers/",
+          "evidence": {"n_il_when_hunted": 7}}
+    _apply(tmp_path, monkeypatch, [agg, ok], ["--kind", "scrape", "--apply"])
+    rows = _read(tmp_path)
+    assert "Maof" not in rows, "an aggregator's company page was written: %r" % (rows,)
+    # positive control: an over-block that refused every scrape proposal would pass the line
+    # above and is the more likely failure of the two
+    assert "Kela Technologies" in rows, "a real careers page was refused as an aggregator"
+
+
+def test_the_applier_appends_and_never_rewrites_an_existing_row(tmp_path, monkeypatch):
+    """Idempotency, and it is the same assertion as the `git pull --rebase` proof.
+
+    `origin` moved ~30 times on 2026-08-28. If a rebase drops this tool's append, the repair
+    is to run the same command again -- which only works because the tool holds NO run state:
+    no checkpoint, no `--resume`, no offset, `--batch N` meaning "at most N still missing"
+    rather than "skip the first N", and every de-dup key recomputed from a fresh read per
+    proposal. A second run must therefore be a no-op, and no pre-existing row may change:
+    the hand-edited note below is the canary, because a whole-file rewrite would re-quote it."""
+    keep = ["Fiverr", "comeet", "60.002",
+            "https://www.comeet.com/careers-api/2.0/company/60.002/positions?token=X",
+            "true", "hand-written by a human; do not touch"]
+    props = [_comeet_prop("New Co", "11.001")]
+    _apply(tmp_path, monkeypatch, props, ["--kind", "ats", "--apply"], rows=[keep])
+    first = (tmp_path / "companies.csv").read_text(encoding="utf-8")
+    assert "New Co" in first and keep[5] in first
+    _apply(tmp_path, monkeypatch, props, ["--kind", "ats", "--apply"], rows=[keep])
+    assert (tmp_path / "companies.csv").read_text(encoding="utf-8") == first, (
+        "the second run was not a no-op -- the tool is holding state somewhere")
+
+
+def test_the_applier_claims_another_companys_board_only_when_it_is_PROVEN(tmp_path, monkeypatch):
+    """`unverified` and `not-ours` are different facts and must not share a note.
+
+    `activation_ok` collapses them into one False, and the previous applier used it and
+    stamped "another company's board" on both. That is a permanent claim written onto a row
+    whose page merely could not be read: `Enlight Renewable Energy Ltd (ENLT)` fails the
+    strict full-name test because its page says "Enlight", and it has 14 Israel jobs. This
+    tool uses the VERDICT form so the refusal can be named."""
+    p = _comeet_prop("Enlight Renewable Energy Ltd (ENLT)", "22.002")
+    _apply(tmp_path, monkeypatch, [p], ["--kind", "ats", "--apply"], gate="unverified")
+    note = _read(tmp_path)["Enlight Renewable Energy Ltd (ENLT)"][5]
+    assert "another company" not in note, "an unreadable page was called someone else's: %r" % note
+    assert "unverified" in note and "no listing found" in note, note
+    # positive control: a PROVEN foreign board does get the claim, and keeps no address
+    _apply(tmp_path, monkeypatch, [_comeet_prop("Impostor Ltd", "33.003")],
+           ["--kind", "ats", "--apply"], gate="not-ours")
+    row = _read(tmp_path)["Impostor Ltd"]
+    assert "another company's board" in row[5] and row[3] == "", row
+
+
+def test_a_new_scrape_row_ships_nothing_until_it_is_cached():
+    """Definition-of-done item 2, as an assertion rather than a sentence.
+
+    `fetchers.fetch_scrape` reads `scraped_cache.json` and NOTHING else, so an active scrape
+    row with no cache key contributes nothing to the board, nothing to the mail and nothing
+    to `stale.json` -- silently, and indistinguishably from a company with no openings. 233
+    of the 496 active scrape rows were in exactly that state on 2026-08-28, which is why the
+    previous session added 42 active companies and the store did not move by one role. Any
+    batch of new scrape rows is unfinished until `refresh_scrape_cache.py --only-missing
+    --apply` has run."""
+    from pipeline import fetchers
+    row = {"company_name": "Nobody Cached Ltd", "ats_platform": "scrape", "token": "",
+           "api_url": "https://example.invalid/careers"}
+    fetchers._SCRAPE_CACHE = {"Somebody Else": [{"title": "x"}]}
+    try:
+        assert fetchers.fetch_scrape(row) == [], "an uncached scrape row returned postings"
+        fetchers._SCRAPE_CACHE = {"Nobody Cached Ltd": [
+            {"title": "Data Analyst", "location": "Tel Aviv", "url": "https://x.example/1"}]}
+        assert len(fetchers.fetch_scrape(row)) == 1, "a cached scrape row returned nothing"
+    finally:
+        fetchers._SCRAPE_CACHE = None

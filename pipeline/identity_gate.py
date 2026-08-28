@@ -51,7 +51,8 @@ GATE_CALLERS = {
                       "wayback_rescue.py"),
     # the same gate with its refusals named (2026-08-25): callers that STAMP a refusal
     # must know `not-ours` from `unverified`
-    "activation_verdict": ("audit_empty_rows.py", "deep_validate.py", "validate_empty.py"),
+    "activation_verdict": ("apply_proposals.py", "audit_empty_rows.py",
+                           "deep_validate.py", "validate_empty.py"),
     "ok_to_write": (),
     "write_verdict": ("crack_walled.py",),
     "identity_ok": ("listing_hunt.py", "repair_extract_gap.py"),

@@ -16003,3 +16003,32 @@ def test_the_re_judge_budget_is_charged_on_delivery_not_on_intent(monkeypatch):
                       "description": _TEXT + f" R{i}."})
     assert clf.stale_rejudged == 0 and clf.failed >= 3         # nothing was bought
     assert clf.off_reason                                       # ...and the breaker noticed
+def test_the_israeli_job_boards_stay_on_the_aggregator_host_list():
+    """`pipeline/aggregators.py` is DISCOVERY's file; these six entries are `registry`'s,
+    added 2026-08-28 (340@discovery), and this pins them so they cannot be dropped silently.
+
+    The class matters because it is the one the identity gate CANNOT catch: an aggregator's
+    per-company page names the company correctly, so `identity_ok` returns True, and
+    `pipeline/run.py`'s runtime SKIP reads this same predicate and is therefore blind too.
+    Only the host list can refuse it. Each of these already had a `found` record in the
+    488-name intake exhaust that would have activated a row -- `jobkarov.com` actually did,
+    as Menora Mivtachim, and was caught by hand a day later.
+
+    A guard rather than a comment because this repo has already paid for the alternative:
+    `builtin.com` was missing from three separate hand-maintained tuples and 13 rows were
+    activated on one global listing."""
+    from pipeline.aggregators import is_aggregator
+    for host, evidence in (
+            ("jobkarov.com", "Menora Mivtachim's page /Search/Company/16928, il=1"),
+            ("maof-hr.co.il", "a staffing agency's listings page, il=10"),
+            ("jobsseek.info", "a job board proposed as an employer, il=10"),
+            ("44ventures.com", "a VC page serving programmaticx's Comeet board 34.F68"),
+            ("jobnet.co.il", "title reads a job board, no employer of its own"),
+            ("sqlink.com", "IT staffing; its listings are its clients'")):
+        assert is_aggregator("https://www.%s/jobs" % host), (
+            "%s left the aggregator host list -- %s" % (host, evidence))
+    # positive control: an over-block that refuses everything would satisfy the loop above
+    for ok in ("https://www.fiverr.com/jobs",
+               "https://www.comeet.com/jobs/birdaero/97.006",
+               "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs"):
+        assert not is_aggregator(ok), "real board refused as an aggregator: %s" % ok

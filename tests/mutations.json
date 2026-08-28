@@ -2039,5 +2039,35 @@
   "replace": "            elif verdict == \"found-never\" and not _gate.identity_ok(name, q_url):",
   "why": "the intake-queue arm ACTIVATES a row for a company that had none, off a URL a search engine returned -- the CyberArk->PANW / Lili->Eli Lilly shape. It carries its own copy of the gate because the AST completeness check does not follow calls.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "apply-proposals-gate-remove",
+  "file": "apply_proposals.py",
+  "symbol": "_row_for",
+  "class": "M1-gate-removal",
+  "find": "    verdict = _gate.activation_verdict(name, api, n_il, html=held)",
+  "replace": "    verdict = \"ok\"",
+  "why": "the applier appends NEW ACTIVE rows from a proposal file walked hours earlier; with the gate gone every proposal with an Israel count activates, including another employer's board. This is the tool that writes ~100 rows in a batch.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "apply-proposals-gate-invert",
+  "file": "apply_proposals.py",
+  "symbol": "_row_for",
+  "class": "M2-gate-inversion",
+  "find": "    verdict = _gate.activation_verdict(name, api, n_il, html=held)",
+  "replace": "    verdict = \"not-ours\" if _gate.activation_verdict(\n        name, api, n_il, html=held) != \"ok\" else \"empty\"",
+  "why": "polarity flipped with the call intact: every board the gate admits is parked as someone else's and every board it refuses is kept. A test that only counts rows written passes this.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "apply-proposals-gate-narrow",
+  "file": "apply_proposals.py",
+  "symbol": "_row_for",
+  "class": "M3-branch-narrowing",
+  "find": "    verdict = _gate.activation_verdict(name, api, n_il, html=held)",
+  "replace": "    verdict = _gate.activation_verdict(\n        name, api, n_il, html=held) if n_il < 0 else \"ok\"",
+  "why": "narrows the gate to an impossible Israel-job count, so it is consulted on no real proposal while the call site still reads as present.",
+  "must_be_killed_by_behavioural": true
  }
 ]

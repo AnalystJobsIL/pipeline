@@ -201,10 +201,22 @@ def _run(mod, argv):
 
 
 def _invariants_ok():
+    """Run the real `check_invariants.py` and return (ok, its last 400 chars).
+
+    `encoding=`/`errors=` are load-bearing, not tidiness. `check_invariants.py` reconfigures
+    its own streams to utf-8 on purpose -- a Hebrew name in a violation message used to kill
+    the run -- so the WRITER is utf-8 while `text=True` alone decodes with the platform
+    default, which is cp1252 on Windows. The night a violation named a Hebrew company,
+    `subprocess` raised UnicodeDecodeError internally, left `r.stdout` as None, and this
+    function died on `None[-400:]` -- reported as `exit 1`, i.e. indistinguishable from the
+    pool collapse this harness exists to catch. `--policy mixed --seed 4` did exactly that at
+    night 12 on clean origin/master (2026-08-28), while the same commit was green in CI,
+    because the runners are Linux/utf-8. A gate that only fails on one operating system is
+    not a gate."""
     import subprocess
     r = subprocess.run([sys.executable, os.path.join(ROOT, "check_invariants.py")],
-                       capture_output=True, text=True)
-    return r.returncode == 0, r.stdout[-400:]
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+    return r.returncode == 0, (r.stdout or "")[-400:]
 
 
 SCHEDULE = [   # (label, module name, argv, weekday filter: None = daily, 5 = Sat, 6 = Sun)
