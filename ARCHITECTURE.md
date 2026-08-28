@@ -1030,8 +1030,16 @@ single most common way this codebase breaks (§8). Taxonomy of verdicts:
 | `alias-of <name>` | false | a SECOND row for a company already scanned at the same board (eBay / eBay Israel) | nobody — **terminal**, and re-opening it republishes every role twice |
 | `chrome-verified …` | either | a human-equivalent browser check confirmed the state | as per its class |
 
-Recruiting/staffing agencies are excluded everywhere via `pipeline/recruiters.py`
-(`is_recruiter`) — rows, discovery jobs, and resolution queues all check it.
+Recruiting/staffing agencies are excluded by **two** mechanisms, and neither is sufficient
+alone. `pipeline/recruiters.py` (`is_recruiter`) matches recruitment words in a company NAME
+— rows, discovery jobs and resolution queues all check it, and it still catches `abra`,
+`malamteam`, `yael group`, `log-on software`. But a name list cannot see an agency whose name
+contains no recruitment word, and most do not: measured on 2026-08-28, `is_recruiter` returns
+False for `Peak Innovation` (it is `pickpeak.co`, advertising FIZE Medical's role), `Matrix`,
+`Logica-IT`, `MatchPointIT`, `REAL DEV INC` and `Tenengroup Ltd.` — seven for seven. So since
+`docs/decisions/2026-08-28-analyst-scope.md` the second mechanism is an **LLM condition on the
+POSTING**, judging its own evidence: the JD naming a different company as the workplace, or an
+agency contact address. The name test screens; the posting test decides.
 
 **The dark rows carry a failure MODE as well as a verdict**, written by `triage_dark` as
 `dark-triage <date>: <mode>` and consumed by the routing in that tool's last line. The eight
@@ -2535,7 +2543,14 @@ In order — each step names the file to open:
 
 1. **`companies.csv`** — is there a row? Is `active=true`? Read the `notes` verdict: it
    names the tool, date, and finding (e.g. `monitored candidate`, `domain-dead`, `defunct`).
-2. **`pipeline/recruiters.py`** — `is_recruiter(name)` true? Agencies are excluded by design.
+2. **Agency exclusion — check BOTH, because a `False` from the first proves nothing.**
+   `pipeline/recruiters.py` — `is_recruiter(name)` true? That only matches a recruitment word
+   in the NAME, and the agencies this product actually meets do not have one (`Peak
+   Innovation`, `Matrix`, `Logica-IT`, `MatchPointIT`, `Tenengroup Ltd.` are all False). The
+   deciding test is the **LLM condition on the posting** from
+   `docs/decisions/2026-08-28-analyst-scope.md`: a JD naming a different company as the
+   workplace, or an agency contact address, puts the role out of scope whatever the name says.
+   If you are chasing a missing role, read that verdict, not this predicate.
 3. **Aggregator SKIP** — the digest run prints `SKIP <company>: scrape row points at an
    aggregator`; such rows are dropped at runtime.
 4. **API row failing?** `cloud_state/stale.json` (`fetch-error` / `regressed-to-zero`) and

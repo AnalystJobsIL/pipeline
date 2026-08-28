@@ -190,6 +190,101 @@ def _collides(p, k):
 # --------------------------------------------------------------------------------------- #
 # the gate
 # --------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------------------- #
+# The board's own name for itself
+# --------------------------------------------------------------------------------------- #
+_TITLE = re.compile(r"<title[^>]*>(.*?)</title>", re.S | re.I)
+# Every shape the six path-tenant ATSes actually emit, measured over the 12 slug-probe
+# candidates of 2026-08-28: "Careers at AbbVie", "Jobs at Meridial", "Mixtiles Careers",
+# "Airwallex Jobs", "Careers at Harness: Open Positions & Job Opportunities".
+_TITLE_STRIP = (
+    re.compile(r"^\s*(?:careers|jobs|open\s+positions|current\s+openings)\s+(?:at|with)\s+",
+               re.I),
+    re.compile(r"\s*[-|:]\s*(?:careers|jobs|open\s+positions).*$", re.I),
+    re.compile(r"\s+(?:careers|jobs)\s*$", re.I),
+)
+
+
+def board_employer(html):
+    """Who does this board page say it belongs to? '' when it does not say.
+
+    The board's `<title>` is the one identity claim on the page that the TENANT wrote and we
+    did not derive. That distinction is the whole point -- see `_board_is_this_company`."""
+    m = _TITLE.search(html or "")
+    if not m:
+        return ""
+    t = re.sub(r"\s+", " ", m.group(1)).strip()
+    for rx in _TITLE_STRIP:
+        t = rx.sub("", t).strip()
+    return t
+
+
+def _board_is_this_company(name, html):
+    """(ok, employer_the_board_names). The check `activation_verdict` cannot make.
+
+    **For a slug we synthesised from the company name, the shipped gate is a no-op.** Proven
+    on 2026-08-28 against `Agency` -> greenhouse `agency`:
+
+        board_vouches("Agency", "agency", ...)            -> True
+        activation_verdict("Agency", ..., 1)              -> "ok"    (never reads the page)
+        page_names_company("Agency", <the board's page>)  -> True
+
+    ...and that board's own title is **"Jobs at Meridial"**. It is someone else's, with 821
+    postings, and every one of them would have been republished under the name "Agency".
+    `board_vouches` near-equals a name-derived token BY CONSTRUCTION -- zero bits, exactly
+    `317@registry` -- and `page_names_company` then agrees because the word "agency" appears
+    somewhere in Meridial's page text. Two tests, one shared assumption, and a one-word
+    generic name defeats both.
+
+    So this is a THIRD, independent signal, and it is independent because the tenant wrote it:
+    the board page's own title names the employer. It is the same evidence the Comeet rung
+    gets for free from the API's `company_name` field, which is why that rung needs no
+    equivalent.
+
+    Containment, not equality, and both directions -- measured over all 12 slug-probe
+    candidates of 2026-08-28. Equality alone refuses `Harnessinc` (its board says "Harness"),
+    which is a real company and a real board, so equality costs a true positive:
+
+        3D Sellers  -> "3Dsellers"     KEEP     Airwallex   -> "Airwallex"     KEEP
+        Abbvie      -> "AbbVie"        KEEP     Fund Well   -> "Fundwell"      KEEP
+        Grafana Labs-> "Grafana Labs"  KEEP     Harnessinc  -> "Harness"       KEEP (prefix)
+        Mixtiles    -> "Mixtiles"      KEEP     NielsenIQ   -> "NielsenIQ"     KEEP
+        PSI CRO     -> "PSI CRO"       KEEP     Quanthealth -> "QuantHealth"   KEEP
+        Speechify   -> "Speechify"     KEEP     Agency      -> "Meridial"      REFUSE
+    ->  11 kept, 1 refused, and the 1 is the impostor. Hit 1/1, false positives 0/11.
+
+    A minimum length of 4 on the shorter side, because containment on a 2-3 character stem
+    matches most of the alphabet -- `_UID`-shaped and initialism names are the class that
+    would otherwise sail through, and refusing them is correct here: an unread title is
+    already a refusal.
+    """
+    emp = board_employer(html)
+    if not emp:
+        return False, ""
+    a, b = _norm(name), _norm(emp)
+    if not a or not b:
+        return False, emp
+    short, long = (a, b) if len(a) <= len(b) else (b, a)
+    return (len(short) >= 4 and short in long), emp
+
+
+def _norm(s):
+    return re.sub(r"[^a-z0-9]+", "", (s or "").lower())
+
+
+def _fetch(url, timeout=20, cap=400_000):
+    """One bounded GET. `cap` and `timeout` are both real bounds: an unbounded read from an
+    arbitrary third-party host is how a previous wave got a 33-hour fetch out of a
+    `timeout=5` that was per-recv rather than total."""
+    import urllib.request
+    try:
+        rq = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(rq, timeout=timeout) as f:
+            return f.read(cap).decode("utf-8", "replace")
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def _reverify_ats(p):
     """Re-fetch through the PRODUCTION path. `il >= 1` is only a gate while it is current.
 
@@ -206,43 +301,51 @@ def _reverify_ats(p):
 
 
 def _row_for(p, n_all, n_il, html, today):
-    """Build the row and stamp it. The gate call is `activation_verdict`, not `activation_ok`.
+    """Build the row, or return (None, verdict) -- and returning None is the important half.
 
-    Two deliberate choices, each of which the previous applier got wrong:
+    THIS TOOL WRITES ONLY ROWS THAT ASSERT PRESENCE. It never writes "no IL listing", "no
+    listing found", "unreachable" or any other statement that a company has nothing, because
+    it has not earned one. Operator rule, 2026-08-28: *every company we record as having no
+    roles, or as unreachable, must be hunted AND LLM-verified.* A rung that failed to find a
+    board has measured its own reach, not the company -- and the previous applier wrote 51
+    such verdicts in one batch on exactly that evidence.
 
-    * the VERDICT form, so a refusal can be NAMED. `activation_ok` collapses `not-ours`
-      (a board PROVEN to be someone else's) and `unverified` (we could not tell) into one
-      `False`, and the previous applier stamped "another company's board" on both. That is a
-      claim, permanently, on a row that merely had an unreadable page --
-      `Enlight Renewable Energy Ltd (ENLT)` is refused by the strict full-name test because
-      its page says "Enlight", and it has 14 Israel jobs.
+    What happens to a name we cannot activate: NOTHING. No row. It stays in
+    `research_companies.json`, which since `332@registry` is itself a worked pool --
+    `listing_hunt.queue_targets()` feeds it to `hunt_one` for 60 minutes every night at
+    19:00. So refusing to write costs no coverage; it costs a row that would have carried an
+    unearned claim into four re-check pools and into the next reader's premises. The verdict
+    a `confirm_zero` pass earns can be written later, with its evidence.
+
+    Two deliberate choices about the gate call, each of which the previous applier got wrong:
+
+    * the VERDICT form, not `activation_ok`, which collapses `not-ours` (PROVEN someone
+      else's) and `unverified` (we could not tell) into one False. `Enlight Renewable Energy
+      Ltd (ENLT)` is refused by the strict full-name test because its page says "Enlight",
+      and it has 14 Israel jobs -- it is `unverified`, and calling that "another company's
+      board" is a false claim written permanently onto a live row.
     * `html=` is the page we already hold, and NO `token=`. A supplied token makes
       `board_vouches` return True and short-circuits before any page is read -- handing the
-      gate a token we synthesised from the name is handing it its own answer
-      (`docs/sessions/2026-08-27-registry.md`, correction 1). And a held page >= 2000 chars is
-      what keeps `page_names_company` from fetching, which is what keeps it from unlocking.
+      gate a token we synthesised from the name is handing it its own answer.
     """
     name, api = p["name"], p["api_url"]
     held = html if html and len(html) >= 2000 else ""
     verdict = _gate.activation_verdict(name, api, n_il, html=held)
     rung = p.get("rung") or "queue-drain"
+    # The token came from the NAME, so the gate's two tests are not independent evidence
+    # (see `_board_is_this_company`). Ask the board who it belongs to, and believe it over
+    # both. Comeet is exempt because its API states `company_name` outright, which the drain
+    # already recorded and compared.
+    if verdict == "ok" and rung == "slug-probe":
+        human = _gate.human_board_url(api) or api
+        page = _fetch(human)
+        ok, emp = _board_is_this_company(name, page)
+        if not ok:
+            return None, ("board-says-%s" % (emp or "nothing"))[:40]
     if verdict == "ok" and n_il >= 1:
         seg = "queue-drain %s %s; %d/%d IL" % (today, rung, n_all, n_il)
         return [name, p["platform"], p.get("token") or "", api, "true", seg], verdict
-    if verdict == "not-ours":
-        # PROVEN someone else's. This is the only branch that may say so, and the address is
-        # not persisted: writing it into cols 2-3 moves the mistake to the next night, where
-        # `retry_unreachable` re-fetches it with no identity test of its own.
-        seg = "queue-drain %s %s; another company's board; no listing found" % (today, rung)
-        return [name, "scrape", "", "", "false", seg], verdict
-    if verdict == "unverified":
-        seg = "queue-drain %s %s; unverified (page unreadable); no listing found" % (today, rung)
-        return [name, "scrape", "", "", "false", seg], verdict
-    # `empty` / `not-listing`: the board is real and readable, it just has no Israel role
-    # today. Keep the address -- it is what puts the row in the daily probe pool.
-    seg = "queue-drain %s %s; %d/%d IL; no IL listing; monitored candidate" % (
-        today, rung, n_all, n_il)
-    return [name, p["platform"], p.get("token") or "", api, "false", seg], verdict
+    return None, verdict
 
 
 def _read_rows():
@@ -284,7 +387,7 @@ def main(argv=None):
     today = dt.date.today().isoformat()
     age_h = (dt.date.today() - dt.date.fromisoformat(doc.get("generated", today))).days * 24
 
-    stats = {"written": 0, "active": 0, "parked": 0, "held": 0, "skipped": 0}
+    stats = {"written": 0, "active": 0, "deferred": 0, "held": 0, "skipped": 0}
     why = {}
     # intra-batch identities: two queue NAMES can be one board (`Faye`/`withfaye`), and the
     # registry cannot object to a row this run has not written yet
@@ -335,6 +438,14 @@ def main(argv=None):
 
         html = ""
         row, verdict = _row_for(p, n_all, n_il, html, today)
+        if row is None:
+            # NOT a park. The name keeps its place in the queue, where listing_hunt's
+            # 19:00 arm re-works it; writing a "no listing" row here would be a claim about
+            # the company made on the strength of a rung's reach.
+            why[name] = "no row: gate=%s il=%d (deferred to the hunt; NOT recorded empty)" % (
+                verdict, n_il)
+            stats["deferred"] += 1
+            continue
         # the note goes through pipeline/notes.py even on a fresh row, so the 220-char cap and
         # the protected-segment rule are ONE code path rather than two
         row[5] = _notes.append("", row[5])
@@ -344,7 +455,7 @@ def main(argv=None):
         if a.apply:
             _append(row)
         stats["written"] += 1
-        stats["active" if row[4] == "true" else "parked"] += 1
+        stats["active"] += 1
         for key, val in (("names", name.lower()), ("names", _norm_company(name))):
             batch_keys[key].add(val)
         if row[1] and row[2]:

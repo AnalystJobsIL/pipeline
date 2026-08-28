@@ -1333,7 +1333,7 @@ InfinityLabs R&D,scrape,https://infinitylabs.co.il/training-programs/ai-research
 Investing.com,scrape,https://www.investing-careers.com/open-positions,https://www.investing-careers.com/open-positions,false,"listing-hunt 2026-08-28: queue-hunt; verified 3 IL | alias-of Investing 2026-08-28: same board, added by the intake exhaust which de-duplicated by NAME only"
 Isracard,scrape,https://marketing.isracard.co.il/careershome/,https://marketing.isracard.co.il/careershome/,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL
 Jeen.ai,scrape,https://www.comeet.com/jobs/jeenai/DA.008,https://www.comeet.com/jobs/jeenai/DA.008,true,listing-hunt 2026-08-28: queue-hunt; verified 9 IL
-JobsSeek,scrape,,https://www.jobsseek.info/jobs,true,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: verified 10 IL via www.jobsseek.info
+JobsSeek,scrape,,https://www.jobsseek.info/jobs,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: verified 10 IL via www.jobsseek.info | queue-drain 2026-08-28: aggregator URL; many employers' postings on one page
 Johnson & Johnson MedTech,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: another company's board; no listing found
 KELA - Cyber Threat Intelligence,scrape,https://www.kelacyber.com/careers/,https://www.kelacyber.com/careers/,true,listing-hunt 2026-08-28: queue-hunt; verified 7 IL
 LAVI Light Rail Operation & Maintanence,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: another company's board; no listing found
@@ -1464,3 +1464,33 @@ OR Movement תנועת אור,scrape,,,false,listing-hunt 2026-08-28: queue-hunt
 Adnimation,scrape,https://www.adnimation.com/,https://www.adnimation.com/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.adnimation.com linkback | listing-hunt 2026-08-28: queue-hunt; no listing found
 Zero Networks,scrape,https://zeronetworks.com/careers,https://zeronetworks.com/careers,true,listing-hunt 2026-08-28: queue-hunt; verified 8 IL via zeronetworks.com
 terasky,scrape,https://www.terasky.com/careers/il,https://www.terasky.com/careers/il,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL via www.terasky.com
+orchid security,comeet,4A.001,https://www.comeet.com/careers-api/2.0/company/4A.001/positions?token=A4147C72904A41A410A41047C7A41,true,queue-drain 2026-08-28 exhaust; 5/2 IL
+lab42,comeet,58.001,https://www.comeet.com/careers-api/2.0/company/58.001/positions?token=85131E631E610A22995214485185110A24AD9,true,queue-drain 2026-08-28 exhaust; 6/6 IL
+Astelia,comeet,3B.003,https://www.comeet.com/careers-api/2.0/company/3B.003/positions?token=B334E654E6564CB64CB2CCC4E654E652CCC5998,true,queue-drain 2026-08-28 exhaust; 5/4 IL
+evoke,comeet,E2.001,https://www.comeet.com/careers-api/2.0/company/E2.001/positions?token=2E1E65019E98A3E6519E98A311461427,true,queue-drain 2026-08-28 exhaust; 19/4 IL
+Weski,comeet,F8.00C,https://www.comeet.com/careers-api/2.0/company/F8.00C/positions?token=8FC35E847E03EE423F011F811F801AF435E8,true,queue-drain 2026-08-28 exhaust; 7/7 IL
+kelasys,comeet,2A.007,https://www.comeet.com/careers-api/2.0/company/2A.007/positions?token=A2747111E755B5F0513847114711A274711,true,queue-drain 2026-08-28 exhaust; 22/22 IL
+BIRD Aerosystems,comeet,97.006,https://www.comeet.com/careers-api/2.0/company/97.006/positions?token=7962D841E5879616C2351A3CB0444625EE0,true,queue-drain 2026-08-28 exhaust; 19/19 IL
+Zemingo,comeet,80.005,https://www.comeet.com/careers-api/2.0/company/80.005/positions?token=85214850853A342810A85214,true,queue-drain 2026-08-28 exhaust; 2/2 IL
+vega,comeet,C9.009,https://www.comeet.com/careers-api/2.0/company/C9.009/positions?token=9C9447F139227241392272430ED30ED04E48,true,queue-drain 2026-08-28 exhaust; 19/10 IL
+pango,comeet,59.002,https://www.comeet.com/careers-api/2.0/company/59.002/positions?token=952413E0254895295253E295237EC53E2,true,queue-drain 2026-08-28 exhaust; 8/8 IL
+eyesAtop,comeet,FA.006,https://www.comeet.com/careers-api/2.0/company/FA.006/positions?token=AF64CBA4CBA036CE36CE2BD84CBA04CBA,true,queue-drain 2026-08-28 exhaust; 20/14 IL
+Sola Security,comeet,A9.003,https://www.comeet.com/careers-api/2.0/company/A9.003/positions?token=9A343759A343751CE91CE939D24D1813469A3,true,queue-drain 2026-08-28 exhaust; 5/5 IL
+Encore AI,comeet,0B.00C,https://www.comeet.com/careers-api/2.0/company/0B.00C/positions?token=B0C4D544D5421242124002124373C373C,true,queue-drain 2026-08-28 exhaust; 6/4 IL
+withfaye,comeet,87.00A,https://www.comeet.com/careers-api/2.0/company/87.00A/positions?token=78A2D3C1E28025B2043DA078AF14,true,queue-drain 2026-08-28 exhaust; 18/8 IL
+RealPlay,comeet,9A.003,https://www.comeet.com/careers-api/2.0/company/9A.003/positions?token=A934A0534DF3F724A0503F725F2B3F723F72,true,queue-drain 2026-08-28 exhaust; 7/7 IL
+Alma Lasers,comeet,67.006,https://www.comeet.com/careers-api/2.0/company/67.006/positions?token=7662C64163233CA1D9833CA2C6402C641632,true,queue-drain 2026-08-28 exhaust; 35/11 IL
+Rapid Medical,comeet,5A.003,https://www.comeet.com/careers-api/2.0/company/5A.003/positions?token=A534845294C339F294C01EF95CEB1EF914A6,true,queue-drain 2026-08-28 exhaust; 15/5 IL
+Fullpath,comeet,54.002,https://www.comeet.com/careers-api/2.0/company/54.002/positions?token=452159A159A8A4CF61E3E229019EC26E21148,true,queue-drain 2026-08-28 exhaust; 11/7 IL
+Onebeat,comeet,0A.000,https://www.comeet.com/careers-api/2.0/company/0A.000/positions?token=A0046001E001E005A005000460050005A000,true,queue-drain 2026-08-28 exhaust; 4/1 IL
+Seeking Alpha,comeet,46.006,https://www.comeet.com/careers-api/2.0/company/46.006/positions?token=64625A4646C8C38761918323012D2C8C1F5E,true,queue-drain 2026-08-28 exhaust; 13/3 IL
+NielsenIQ,smartrecruiters,nielseniq,https://api.smartrecruiters.com/v1/companies/nielseniq/postings,true,queue-drain 2026-08-28 slug-probe; 397/3 IL
+PSI CRO,smartrecruiters,psicro,https://api.smartrecruiters.com/v1/companies/psicro/postings,true,queue-drain 2026-08-28 slug-probe; 238/2 IL
+3D Sellers,smartrecruiters,3dsellers,https://api.smartrecruiters.com/v1/companies/3dsellers/postings,true,queue-drain 2026-08-28 slug-probe; 1/1 IL
+Mixtiles,greenhouse,mixtiles,https://boards-api.greenhouse.io/v1/boards/mixtiles/jobs,true,queue-drain 2026-08-28 slug-probe; 13/13 IL
+Quanthealth,greenhouse,quanthealth,https://boards-api.greenhouse.io/v1/boards/quanthealth/jobs,true,queue-drain 2026-08-28 slug-probe; 6/5 IL
+Abbvie,smartrecruiters,abbvie,https://api.smartrecruiters.com/v1/companies/abbvie/postings,true,queue-drain 2026-08-28 slug-probe; 1703/1 IL
+Airwallex,ashby,airwallex,https://api.ashbyhq.com/posting-api/job-board/airwallex,true,queue-drain 2026-08-28 slug-probe; 607/4 IL
+Speechify,greenhouse,speechify,https://boards-api.greenhouse.io/v1/boards/speechify/jobs,true,queue-drain 2026-08-28 slug-probe; 1316/15 IL
+Fund Well,ashby,fundwell,https://api.ashbyhq.com/posting-api/job-board/fundwell,true,queue-drain 2026-08-28 slug-probe; 7/1 IL
+Grafana Labs,greenhouse,grafanalabs,https://boards-api.greenhouse.io/v1/boards/grafanalabs/jobs,true,queue-drain 2026-08-28 slug-probe; 137/2 IL

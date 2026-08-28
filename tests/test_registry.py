@@ -6350,24 +6350,39 @@ def test_the_applier_appends_and_never_rewrites_an_existing_row(tmp_path, monkey
         "the second run was not a no-op -- the tool is holding state somewhere")
 
 
-def test_the_applier_claims_another_companys_board_only_when_it_is_PROVEN(tmp_path, monkeypatch):
-    """`unverified` and `not-ours` are different facts and must not share a note.
+def test_the_applier_never_records_a_company_as_empty_or_unreachable(tmp_path, monkeypatch):
+    """Operator rule, 2026-08-28: every company recorded as having no roles, or as
+    unreachable, must be HUNTED AND LLM-VERIFIED. This tool does neither, so it may write
+    no such verdict -- and the way it complies is to write no row at all.
 
-    `activation_ok` collapses them into one False, and the previous applier used it and
-    stamped "another company's board" on both. That is a permanent claim written onto a row
-    whose page merely could not be read: `Enlight Renewable Energy Ltd (ENLT)` fails the
-    strict full-name test because its page says "Enlight", and it has 14 Israel jobs. This
-    tool uses the VERDICT form so the refusal can be named."""
-    p = _comeet_prop("Enlight Renewable Energy Ltd (ENLT)", "22.002")
-    _apply(tmp_path, monkeypatch, [p], ["--kind", "ats", "--apply"], gate="unverified")
-    note = _read(tmp_path)["Enlight Renewable Energy Ltd (ENLT)"][5]
-    assert "another company" not in note, "an unreadable page was called someone else's: %r" % note
-    assert "unverified" in note and "no listing found" in note, note
-    # positive control: a PROVEN foreign board does get the claim, and keeps no address
-    _apply(tmp_path, monkeypatch, [_comeet_prop("Impostor Ltd", "33.003")],
-           ["--kind", "ats", "--apply"], gate="not-ours")
-    row = _read(tmp_path)["Impostor Ltd"]
-    assert "another company's board" in row[5] and row[3] == "", row
+    That is the stronger contract, and it replaces an earlier version of this guard which
+    only checked that `unverified` and `not-ours` got DIFFERENT notes. Different wording on
+    an unearned claim is still an unearned claim: a row saying "no listing found" is read by
+    every later session as a fact about the company, when all it records is that a rung with
+    a 45-second budget and three name-derived slugs did not find a board.
+
+    Nothing is lost by refusing. The name stays in `research_companies.json`, which since
+    `332@registry` is a worked pool -- `listing_hunt.queue_targets()` feeds it to `hunt_one`
+    for 60 minutes every night. A park would have moved it from a pool that hunts to a pool
+    that re-checks, and attached a claim on the way.
+
+    The two refusals below are the live cases: `Enlight Renewable Energy Ltd (ENLT)` is
+    `unverified` because the strict full-name test fails on a page that says "Enlight" -- and
+    it has 14 Israel jobs, so calling it empty would be false twice over."""
+    for gate in ("unverified", "not-ours", "empty", "not-listing"):
+        _apply(tmp_path, monkeypatch, [_comeet_prop("Enlight Renewable Energy Ltd (ENLT)", "99.006")],
+               ["--kind", "ats", "--apply"], gate=gate)
+        rows = _read(tmp_path)
+        assert "Enlight Renewable Energy Ltd (ENLT)" not in rows, (
+            "gate=%s produced a row: %r" % (gate, rows))
+    # ...and no note anywhere in the file makes an emptiness claim
+    body = (tmp_path / "companies.csv").read_text(encoding="utf-8").lower()
+    for claim in ("no listing found", "no il listing", "unreachable", "another company"):
+        assert claim not in body, "the applier wrote %r without hunting or an LLM read" % claim
+    # positive control: a gate-ok board with Israel roles IS written, and says so
+    _apply(tmp_path, monkeypatch, [_comeet_prop("Real Co", "44.004")],
+           ["--kind", "ats", "--apply"], gate="ok")
+    assert _read(tmp_path)["Real Co"][4] == "true"
 
 
 def test_a_new_scrape_row_ships_nothing_until_it_is_cached():
