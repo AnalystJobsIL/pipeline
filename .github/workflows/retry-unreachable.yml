@@ -20,6 +20,16 @@ concurrency:
   group: repo-state
   cancel-in-progress: false
 
+env:
+  # BLAST RADIUS, not a budget (lane: infra, 2026-08-28). The month's ceiling is
+  # `pipeline/bd_budget.py`; this stops ONE job's loop running away, which nothing did
+  # before -- retry-unreachable could buy 600 credits a night and crack_walled ~2,000,
+  # and neither had any limit. Enforced in `bd_rescue.unlock_status`, which every rung
+  # here reaches; per PROCESS, so each step gets its own. Unset = unlimited, so this is
+  # the only thing that changes for a workflow that does not name it. The `[bd-spend]`
+  # line each step now prints is the measurement that should replace this guess.
+  BD_RUN_CAP: "250"
+
 jobs:
   retry:
     runs-on: ubuntu-latest

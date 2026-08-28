@@ -28,6 +28,16 @@ concurrency:
   group: repo-state
   cancel-in-progress: false
 
+env:
+  # BLAST RADIUS, not a budget (lane: infra, 2026-08-28). The month's ceiling is
+  # `pipeline/bd_budget.py`; this stops ONE job's loop running away, which nothing did
+  # before -- retry-unreachable could buy 600 credits a night and crack_walled ~2,000,
+  # and neither had any limit. Enforced in `bd_rescue.unlock_status`, which every rung
+  # here reaches; per PROCESS, so each step gets its own. Unset = unlimited, so this is
+  # the only thing that changes for a workflow that does not name it. The `[bd-spend]`
+  # line each step now prints is the measurement that should replace this guess.
+  BD_RUN_CAP: "250"
+
 jobs:
   triage:
     runs-on: ubuntu-latest
@@ -54,7 +64,15 @@ jobs:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          SCRAPE_VIA_UNLOCKER: "1"   # a 403 must not be read as "page has no roles"
+          # paid rung switch: the BD_PAID_RUNGS repo VARIABLE (settings, no commit) or
+          # the dispatch input. Off is the EMPTY string, never "0" -- os.environ.get
+          # arms on any non-empty value (lane: infra, 2026-08-28).
+          # The test is `!= 'off'` and the TRUE branch is '1', which looks backwards and is
+          # not: GitHub's `a && b || c` yields c whenever b is FALSY, so `cond && '' || '1'`
+          # returns '1' for every input and the switch silently does nothing. Written that
+          # way first; an adversarial pass caught it before it shipped. The true branch of
+          # one of these must never be '' -- `test_no_workflow_expression_has_a_falsy_true_branch`.
+          SCRAPE_VIA_UNLOCKER: ${{ (github.event.inputs.unlocker || vars.BD_PAID_RUNGS || 'on') != 'off' && '1' || '' }}   # a 403 must not be read as "page has no roles"
           TRIAGE_LLM_CAP: "400"      # 200 capped below the 352-row dark pool
           TRIAGE_TIME_BUDGET_MIN: "150"
         run: |

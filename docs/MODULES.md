@@ -124,13 +124,14 @@ Kept, not run. Nothing scheduled and nothing in `pipeline/` imports any of these
 
 ## `pipeline/` - the digest-run library
 
-11 of these are **shared plumbing**: every lane imports them and no lane owns them.
+12 of these are **shared plumbing**: every lane imports them and no lane owns them.
 Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 
 | module | what it does |
 |---|---|
 | `pipeline/aggregators.py` | is this URL an aggregator? Gates activation and runtime |
 | `pipeline/atomic.py` | **shared** - atomic writes for every state file |
+| `pipeline/bd_budget.py` | **shared** - the Bright Data monthly ceiling, with a date on it: unlimited through August 2026, 5,000 from 2026-09-01 (both sides pinned by a guard). Reads the LIVE account, because every other cap here is per-process and no credit ledger exists. The per-run blast-radius bound is `BD_RUN_CAP` in `bd_rescue` |
 | `pipeline/companies.py` | **shared** - load companies.csv into row dicts |
 | `pipeline/company_identity.py` | **shared** - the identity PRIMITIVES (is_foreign, verdict, page_mentions_company, looks_like_a_job_listing_page); the gate that composes them is identity_gate |
 | `pipeline/company_info.py` | the two-sentence company blurb, and `derive_blurb` (the facts read as prose when the blurb is missing) |

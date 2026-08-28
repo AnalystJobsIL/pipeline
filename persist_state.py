@@ -62,6 +62,25 @@ for _s in (sys.stdout, sys.stderr):
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
+# ------------------------------------------------- what this run did to the keyed caches
+# Every `commit` measures the keyed caches it is about to push against the tree it started
+# from, prints the delta, and appends one line here. Nothing in this repo could see a
+# shrinking cache before 2026-08-28: the in-process abort in refresh_scrape_cache needs
+# >20%, `s_company_dict`'s guard needs >25% AND only runs on a push conflict, and
+# check_invariants never opens the cache -- so three consecutive nights lost 16, 16 and 24
+# boards in silence (docs/BACKLOG.md 356). This is the measurement, not a block: a bad
+# alarm costs attention, a bad block costs coverage, and legitimate deletions (parked rows,
+# alias merges) must keep working.
+PERSIST_LOG = "cloud_state/persist_log.jsonl"
+PERSIST_LOG_MAX = 400                       # ~a month at 10-15 commits/day
+# PROVISIONAL, n=3. Tuned on the only three regressions ever measured -- 16/279 (5.7%),
+# 16/221 (7.2%) and 24/243 (9.9%) -- to fire on all of them while staying quiet for the
+# 1-4 key deletions a parked row or an alias merge makes. The floor stops noise on a small
+# cache, the percentage stops it on a large one. RE-MEASURE once persist_log.jsonl holds a
+# fortnight (morning check 2026-09-11): a threshold nobody trusts is worse than none.
+SHRINK_MIN_KEYS = 10
+SHRINK_MIN_PCT = 3.0
+
 
 # ---------------------------------------------------------------- git plumbing
 def git(*args, cwd=None, check=True, input_bytes=None):
@@ -192,6 +211,31 @@ def _safe_loads(b):
         return None
 
 
+def s_jsonl_union(base, ours, theirs):
+    """An append-only `.jsonl` audit log written by every workflow: the union of the lines,
+    oldest first, capped. There is no conflict to resolve -- two runs appending different
+    lines both said something true -- so a union is the whole merge, and it is the reason
+    this log can have many writers without a single-writer claim. Deduped on the exact line
+    so a rebase that replays the same append twice does not double it."""
+    seen, out = set(), []
+    for side in (theirs, ours):                 # ours last: a same-key re-run wins the order
+        for line in (side or b"").splitlines():
+            line = line.strip()
+            if line and line not in seen:
+                seen.add(line)
+                out.append(line)
+    out.sort(key=_log_sort_key)
+    return b"\n".join(out[-PERSIST_LOG_MAX:]) + b"\n" if out else b""
+
+
+def _log_sort_key(line):
+    """`at` if the line is the shape we write, else the empty string -- a foreign line keeps
+    its place at the front rather than raising and losing the whole log."""
+    rec = _safe_loads(line)
+    at = rec.get("at") if isinstance(rec, dict) else None
+    return at if isinstance(at, str) else ""      # `{"at": 1}` used to raise and lose the log
+
+
 def s_stage_stamps(base, ours, theirs):
     """`cloud_state/pipeline_stages.json`: one dict of independent stage keys, stamped by
     four workflows. Per key: the side that did not touch it yields; both touched -> the
@@ -288,6 +332,7 @@ STRATEGY = {
     "cloud_state/pipeline_stages.json": (s_stage_stamps, "per stage key, newer finished_at wins, never deleted"),
     "discovered_cache.json": (_keyed_list(_job_key), "list keyed (company, title); two discovery writers"),
     "research_companies.json": (_keyed_list(_name_key), "list keyed name; two discovery writers"),
+    PERSIST_LOG: (s_jsonl_union, "append-only audit log; the union of every workflow's lines"),
 }
 SINGLE_WRITER = {   # documented `ours` paths (one cloud writer each); anything else warns
     "cloud_state/seen.db": "daily-digest", "cloud_state/roles.jsonl": "daily-digest",
@@ -503,6 +548,98 @@ def _commit(cwd, name, msg):
     git("commit", "-q", "-m", msg, cwd=cwd)
 
 
+def key_deltas(owned, base, cwd):
+    """What this run did to every keyed cache it owns, measured against `base` (the tree the
+    run checked out). One record per path: keys before, keys after, and the names it lost.
+
+    Scope comes from the STRATEGY table -- exactly the paths merged by `s_company_dict`, i.e.
+    the ones that ARE a `{key: value}` cache -- so there is no second list to keep in step.
+    A side that is absent or not a dict yields no record rather than a wrong one: the first
+    run of a new cache has nothing to compare against and must not read as a total loss."""
+    out = []
+    for p in owned:
+        if strategy_for(p)[0] is not s_company_dict:
+            continue
+        before = _safe_loads(git_show(base, p, cwd))
+        try:
+            with open(os.path.join(cwd, p), "rb") as f:
+                after = _safe_loads(f.read())
+        except OSError:
+            continue
+        if not isinstance(before, dict) or not isinstance(after, dict):
+            continue
+        lost = sorted(set(before) - set(after))
+        gained = len(set(after) - set(before))
+        if not lost and not gained:
+            continue          # an unchanged cache is not news: reporting it made EVERY run
+                              # commit (the `nothing to commit` path became unreachable) and
+                              # made this log the one hunk every workflow appends to, i.e. a
+                              # guaranteed rebase conflict. Found by an adversarial pass.
+        out.append({"path": p, "before": len(before), "after": len(after),
+                    "lost": len(lost), "gained": gained, "names": lost[:25]})
+    return out
+
+
+def shrank(d):
+    """Is this delta the shape that has been costing boards? Both bars, so a small cache
+    losing two keys and a big one losing 0.5% stay quiet."""
+    return d["lost"] >= SHRINK_MIN_KEYS and d["lost"] * 100.0 >= SHRINK_MIN_PCT * max(1, d["before"])
+
+
+def report_deltas(deltas, cwd, message="", base=""):
+    """Say it on the run page FIRST, then leave it where tomorrow can read it back.
+
+    The run page is primary on purpose: the digest's alarm line only reaches a human if the
+    mail goes out, and on 2026-08-27 and -28 it did not (docs/decisions/2026-08-28-relay-
+    trigger.md). A number that is only in an email nobody received is not a measurement."""
+    if not deltas:
+        return
+    lines = []
+    for d in deltas:
+        arrow = f"{d['path']}: {d['before']} -> {d['after']} keys (+{d['gained']} / -{d['lost']})"
+        if shrank(d):
+            pct = d["lost"] * 100.0 / max(1, d["before"])
+            names = ", ".join(" ".join(str(n).split()) for n in d["names"]) or "-"
+            _log("warning", f"{arrow} -- lost {d['lost']} of {d['before']} ({pct:.1f}%). "
+                            f"First 25: {names}")   # collapsed: a newline ends an annotation
+            lines.append(f"- **{arrow} -- {pct:.1f}% LOST**")
+        else:
+            print(f"persist_state: {arrow}", flush=True)
+            lines.append(f"- {arrow}")
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary_path:
+        try:
+            with open(summary_path, "a", encoding="utf-8") as f:
+                f.write("\n### Keyed caches this run\n" + "\n".join(lines) + "\n")
+        except OSError as e:
+            print(f"  [deltas] step summary not written: {e}", flush=True)
+    # `base` is the tree the run checked out. On the conflict path `merge_conflicted` runs
+    # AFTER this, so what finally lands can differ from what is recorded here -- stamping the
+    # base makes the record interpretable instead of merely wrong (BACKLOG 365).
+    rec = {"at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "base": (base or "")[:8],
+           "run": os.environ.get("RUN_URL", "") or os.environ.get("GITHUB_RUN_ID", ""),
+           "msg": " ".join(str(message or "").split())[:120],
+           "paths": [{k: d[k] for k in ("path", "before", "after", "lost", "gained")}
+                     for d in deltas]}
+    full = os.path.join(cwd, PERSIST_LOG)
+    try:
+        os.makedirs(os.path.dirname(full), exist_ok=True)
+        old = b""
+        if os.path.exists(full):
+            with open(full, "rb") as f:
+                old = f.read()
+        keep = [x for x in old.splitlines() if x.strip()][-(PERSIST_LOG_MAX - 1):]
+        # NOT _dumps: it indents, and an indented record is several lines, none of which is
+        # valid JSON on its own -- `run_gates` parses a .jsonl line by line and would fail
+        # the very log it is meant to keep. One record, one line.
+        line = json.dumps(rec, ensure_ascii=False, sort_keys=True,
+                          separators=(",", ":")).encode("utf-8")
+        _write_bytes(full, b"\n".join(keep + [line]) + b"\n")
+    except OSError as e:                # an audit log never costs the commit it describes
+        print(f"  [deltas] {PERSIST_LOG} not written: {e}", flush=True)
+
+
 def commit(a):
     cwd = a.cwd or ROOT
     branch = a.branch or os.environ.get("GITHUB_REF_NAME") or "master"
@@ -513,6 +650,16 @@ def commit(a):
         _log("notice", "nothing owned exists; nothing to commit")
         return 0
     failures = run_gates(owned, base, a.gate, cwd)
+    # AFTER the gates: a path a gate restored is back to base, and reporting a loss the
+    # commit is not going to make would be a false alarm. The log is owned by this layer,
+    # not by the caller -- every workflow gets the audit line without naming it in `--own`,
+    # so the record cannot drift out of step with who commits.
+    try:
+        report_deltas(key_deltas(owned, base, cwd), cwd, a.message, base)
+    except Exception as e:  # noqa: BLE001 -- an audit line never costs the commit it describes
+        _log("warning", f"cache delta report skipped: {e.__class__.__name__}: {str(e)[:120]}")
+    if PERSIST_LOG not in owned and os.path.exists(os.path.join(cwd, PERSIST_LOG)):
+        owned.append(PERSIST_LOG)
 
     def stage():
         # a path a gate removed (untracked, failed) must not reach `git add`: one missing

@@ -6565,6 +6565,215 @@ def test_company_dict_strategy_honours_deletions_and_never_writes_a_corrupt_side
     assert P.s_company_dict(base, ours, b"[]") == ours, "a corrupt origin yields to ours"
 
 
+def test_the_delivery_cutoff_follows_the_trigger_not_the_clock():
+    """`deliver` defers a digest written past the relay's last POLL, because no poller would
+    see it. That reason exists only while a poll is the relay's only reader. Once the digest
+    can hand the relay an event, the deadline must move with it -- otherwise the change ships
+    and the system keeps withholding mail it can now deliver.
+
+    The case that makes it concrete: on 2026-08-27 the 05:00 cron was dispatched at **16:18**,
+    `deliver` refused it at the 10:17 deadline, and the operator got **no mail at all that
+    day** -- `digests/latest.md` was never written. At 23:39 that same run delivers.
+
+    `daily-digest.yml` therefore sets `RELAY_LAST_POLL_UTC` from whether the deploy key exists,
+    and 23:39 is 23:59 less `DELIVER_MARGIN_MIN`, so the arithmetic stays inside the UTC day."""
+    import persist_state as P
+    late, normal, midnight = 16 * 60 + 18, 7 * 60 + 8, 23 * 60 + 20
+    assert P.cutoff_overshoot(late, last_poll="10:17") > 0, "the poll-only deadline defers 16:18"
+    assert P.cutoff_overshoot(late, last_poll="23:39") < 0, "the event deadline delivers it"
+    for poll in ("10:17", "23:39"):
+        assert P.cutoff_overshoot(normal, last_poll=poll) < 0, "the ordinary morning always ships"
+    assert P.cutoff_overshoot(midnight, last_poll="23:39") > 0, \
+        "23:39 still refuses a delivery that would spill past midnight -- it is a deadline, not a removal"
+    dd = open(os.path.join(_REPO, ".github", "workflows", "daily-digest.yml"), encoding="utf-8").read()
+    assert "RELAY_LAST_POLL_UTC: ${{ secrets.INBOX_DEPLOY_KEY != '' && '23:39' || '10:17' }}" in dd, \
+        "the deadline must be conditional on the event path existing, not hardcoded either way"
+
+
+def test_no_workflow_expression_has_a_falsy_true_branch():
+    """GitHub's `${{ cond && A || B }}` is not a ternary: `&&` yields A only when A is TRUTHY,
+    so `cond && '' || '1'` returns **'1' for every input** and whatever the expression was
+    switching silently never switches.
+
+    This shipped into four steps on 2026-08-28 as the OFF switch for a paid Bright Data rung --
+    an operator setting `BD_PAID_RUNGS=off` would have kept buying credits every night, and the
+    same commit got it right in `scrape-refresh.yml` (`&& 'off' || 'on'`), so the two forms sat
+    side by side looking alike and behaving oppositely. Caught by an adversarial pass before the
+    push. This guard is the class, not the instance: a `&&` whose true branch is an empty or
+    zero literal is always a bug."""
+    bad = []
+    for w in sorted(glob.glob(os.path.join(_REPO, ".github", "workflows", "*.yml"))):
+        for n, line in enumerate(open(w, encoding="utf-8"), 1):
+            for m in re.finditer(r"\$\{\{[^}]*?&&\s*('' |''\s*\|\||\"\"\s*\|\||'0'\s*\|\|)", line):
+                bad.append(f"{os.path.basename(w)}:{n}: {line.strip()[:110]}")
+    assert not bad, ("a GitHub expression whose `&&` branch is falsy always yields the `||` "
+                     "branch:\n  " + "\n  ".join(bad))
+
+
+def test_the_mutation_shards_partition_the_whole_catalogue():
+    """The mutation gate is sharded across a matrix, and a shard split that quietly stops
+    covering a class is the exact silent-exclusion shape this repo keeps paying for: every
+    shard would go green while nothing ran the mutations that matter.
+
+    So this does not re-implement the split -- it EXTRACTS the workflow's own script and runs
+    it, once per shard, over the real catalogue, and asserts the shards partition the class
+    set exactly once with no shard empty. Change the packing in `tests.yml` and this follows
+    it; drop a class from it and this goes red.
+
+    Context: the catalogue grew 105 -> 204 records between 2026-08-24 and 2026-08-28 while
+    `timeout-minutes: 45` stood still, and the job was CANCELLED on 40 consecutive pushes
+    (BACKLOG 195). A cancelled gate names no surviving mutant at all."""
+    import collections, subprocess, textwrap
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    wf = open(os.path.join(root, ".github", "workflows", "tests.yml"), encoding="utf-8").read()
+    n = int(re.search(r'SHARDS:\s*"(\d+)"', wf).group(1))
+    ids = re.search(r"shard:\s*\[([^\]]+)\]", wf).group(1)
+    assert sorted(int(x) for x in ids.split(",")) == list(range(n)), \
+        f"the matrix is {ids} but SHARDS says {n} -- a shard would never run"
+    script = textwrap.dedent(re.search(r"python - <<'PY'\n(.*?)\n\s*PY\n", wf, re.S).group(1))
+
+    muts = json.load(open(os.path.join(root, "tests", "mutations.json"), encoding="utf-8"))
+    every = {m["class"].split("-")[0] for m in muts}
+    seen, sizes = [], collections.Counter(m["class"].split("-")[0] for m in muts)
+    for i in range(n):
+        env = dict(os.environ, SHARDS=str(n), SHARD=str(i))
+        out = subprocess.run([sys.executable, "-c", script], cwd=root, env=env,
+                             capture_output=True, text=True)
+        assert out.returncode == 0, out.stderr
+        got = [c for c in out.stdout.strip().split(",") if c]
+        assert got, f"shard {i} of {n} drew no classes: some mutations would run nowhere"
+        seen += got
+    assert sorted(seen) == sorted(every), \
+        f"the {n} shards cover {sorted(seen)}, the catalogue has {sorted(every)}"
+    assert len(seen) == len(set(seen)), f"a class runs in two shards: {seen}"
+    assert sum(sizes[c] for c in seen) == len(muts), "every record is in exactly one shard"
+
+
+def test_the_bright_data_ceiling_changes_itself_on_2026_09_01():
+    """The operator's rule of 2026-08-28, pinned on BOTH sides of the boundary so it needs no
+    one to remember it. BACKLOG 192 said 4,500 from September and 335 quoted 5,000; the rule
+    that settled them is unlimited through August, 5,000 from 2026-09-01.
+
+    This guard is the whole reason the date may live in code: a dated constant nobody verifies
+    is exactly the confidently-wrong document this repo punishes hardest."""
+    from pipeline import bd_budget as B
+    os.environ.pop("BD_MONTHLY_BUDGET", None)
+    assert B.ceiling(dt.date(2026, 8, 31)) == 0, "unlimited on the last day of August"
+    assert B.ceiling(dt.date(2026, 9, 1)) == 5000, "the ceiling binds on 2026-09-01"
+    assert B.ceiling(dt.date(2027, 3, 4)) == 5000, "and stays bound"
+
+
+def test_an_unreadable_bright_data_balance_still_lets_the_run_spend(monkeypatch):
+    """Fail OPEN, on purpose. A silent zero from a source that used to produce is the worst
+    failure mode in this repo, and the opposite mistake costs a few dollars. The bound that
+    does not depend on the network is `bd_rescue.BD_RUN_CAP`, not this."""
+    from pipeline import bd_budget as B
+    monkeypatch.setattr(B, "spent_this_month", lambda today=None: (None, None))
+    for day in (dt.date(2026, 8, 28), dt.date(2026, 9, 15)):
+        may, line = B.verdict(day)
+        assert may, f"{day}: an unreadable balance must not throttle"
+        assert "UNREADABLE" in line or "unknown" in line, line
+    monkeypatch.setattr(B, "spent_this_month", lambda today=None: (6193, {}))
+    may, line = B.verdict(dt.date(2026, 9, 15))
+    assert not may and "CEILING" in line, line
+    assert B.verdict(dt.date(2026, 8, 28))[0], "over 5,000 still spends in August: no ceiling yet"
+
+
+def test_the_shared_bright_data_run_cap_is_off_unless_a_workflow_asks_for_it():
+    """`BD_RUN_CAP` bounds what one PROCESS spends at the chokepoint ten of the thirteen spend
+    paths share. UNSET means no cap, so a lane that does not name it sees exactly the behaviour
+    it saw before this existed -- the cap may not be a silent change to anybody else's tool.
+
+    **`0` means buy nothing, and `None` means no cap.** The first version had `0` mean UNLIMITED,
+    which is the wrong way round for the one number an operator reaches for when they want spend
+    to stop; an adversarial pass on 2026-08-28 pointed out that this very guard *codified* the
+    hazard by asserting `("junk", 0)` and `("-5", 0)`. A value that will not parse (`1,000`,
+    `1e3`) is a typo, not a licence: it warns and buys nothing rather than removing the cap it
+    was meant to set.
+
+    A capped call reports `bd-capped`, the same string jdfill.Unlocker uses -- but note
+    `unlock()` discards the reason, so only a caller reading `LAST["error"]` can tell a refusal
+    from a failure (BACKLOG 110)."""
+    import bd_rescue as B
+    for val, want in ((None, None), ("", None), ("   ", None),      # unset -> no cap
+                      ("0", 0), ("-5", 0),                          # explicit stop
+                      ("junk", 0), ("1,000", 0),                    # a typo never means unlimited
+                      ("120", 120)):
+        if val is None:
+            os.environ.pop("BD_RUN_CAP", None)
+        else:
+            os.environ["BD_RUN_CAP"] = val
+        assert B.run_cap() == want, f"BD_RUN_CAP={val!r}"
+    os.environ["BD_RUN_CAP"] = "2"
+    B.SPENT.update(n=2, capped=False)
+    try:
+        assert B.unlock_status("https://example.com/x") == ("", "bd-capped")
+        assert B.LAST["error"] == "bd-capped"
+    finally:
+        B.SPENT.update(n=0, capped=False)
+        os.environ.pop("BD_RUN_CAP", None)
+
+
+def test_the_cache_shrink_alarm_fires_on_every_regression_it_was_built_from():
+    """The three nights that lost boards in silence: 16/279 (2026-08-28), 16/221 (08-27) and
+    24/243 (08-26). Nothing saw them -- refresh_scrape_cache's abort needs >20%, s_company_dict's
+    guard needs >25% AND only runs on a conflict, check_invariants never opens the cache.
+
+    The other half of the assertion is the one that matters more: the alarm must stay QUIET for
+    the 1-4 key deletions a parked row or an alias merge makes, because an alarm that cries wolf
+    is an alarm nobody reads. Thresholds are PROVISIONAL on n=3 (docs/BACKLOG.md 356)."""
+    import persist_state as P
+    for lost, before in ((16, 279), (16, 221), (24, 243)):
+        assert P.shrank({"lost": lost, "before": before}), f"{lost}/{before} must alarm"
+    for lost, before in ((4, 243), (2, 20), (9, 100), (10, 500), (0, 279)):
+        assert not P.shrank({"lost": lost, "before": before}), f"{lost}/{before} must stay quiet"
+
+
+def test_a_cache_this_run_created_does_not_read_as_a_total_loss(tmp_path, monkeypatch):
+    """`key_deltas` compares the tree against the checkout. A cache with no version at base --
+    its first ever run, or a path only some workflows own -- has nothing to compare against, and
+    reporting `N -> 0` there would put a false 100% loss on the run page every time a new keyed
+    cache is introduced. Absent, or not a dict, yields NO record rather than a wrong one."""
+    import persist_state as P
+    (tmp_path / "scraped_cache.json").write_bytes(json.dumps({"A": [1], "B": [2]}).encode())
+    assert P.key_deltas(["scraped_cache.json"], "HEAD", str(tmp_path)) == [], "no base -> no claim"
+    monkeypatch.setattr(P, "git_show", lambda rev, path, cwd=None: b"[]")   # a list, not a cache
+    assert P.key_deltas(["scraped_cache.json"], "HEAD", str(tmp_path)) == []
+
+
+def test_the_persist_log_is_one_json_record_per_line(tmp_path):
+    """`_dumps` indents, and an indented record is several lines none of which is valid JSON on
+    its own -- `run_gates` parses a .jsonl line by line, so the first version of this failed the
+    gate on the very log it exists to keep. Found by hand on 2026-08-28, before the push."""
+    import persist_state as P
+    d = [{"path": "scraped_cache.json", "before": 279, "after": 263, "lost": 16,
+          "gained": 0, "names": []}]
+    P.report_deltas(d, str(tmp_path), "one")
+    P.report_deltas(d, str(tmp_path), "two")
+    raw = (tmp_path / "cloud_state" / "persist_log.jsonl").read_bytes()
+    lines = [x for x in raw.splitlines() if x.strip()]
+    assert len(lines) == 2, raw
+    for ln in lines:                       # exactly what _gate_json does to a .jsonl
+        assert json.loads(ln.decode("utf-8"))["paths"][0]["lost"] == 16
+
+
+def test_the_persist_log_union_keeps_every_writers_line():
+    """Many workflows append to one log, so there is no conflict to resolve -- two runs that
+    appended different lines both said something true. The union IS the merge, which is why this
+    log needs no single-writer claim. A replayed rebase must not double a line, and a foreign
+    line must not raise and lose the whole log."""
+    import persist_state as P
+    a = b'{"at":"2026-08-28T01:00:00Z","msg":"scrape"}\n'
+    b = b'{"at":"2026-08-28T02:00:00Z","msg":"hunt"}\n'
+    out = P.s_jsonl_union(b"", a, b).splitlines()
+    assert out == [a.strip(), b.strip()], "both writers, oldest first"
+    assert P.s_jsonl_union(a, a, a).splitlines() == [a.strip()], "a replayed append is not doubled"
+    assert P.s_jsonl_union(None, None, None) == b"", "nothing in, nothing out"
+    assert b"not json" in P.s_jsonl_union(b"", b"not json\n", b), "a foreign line survives"
+    many = b"\n".join(b'{"at":"%03d"}' % i for i in range(P.PERSIST_LOG_MAX + 50))
+    assert len(P.s_jsonl_union(b"", many, b"").splitlines()) == P.PERSIST_LOG_MAX, "capped"
+
+
 def test_keyed_list_strategy_merges_discovery_lists_by_company_and_title():
     import persist_state as P
     j = lambda c, t, d="": {"company": c, "title": t, "posted_date": d}  # noqa: E731
@@ -6870,8 +7079,28 @@ def test_daily_digest_steps_have_ids_no_swallows_and_an_outcome_step():
         for line in step.splitlines():
             assert not (line.strip().startswith("run:") and "|| echo" in line), f"{head}: a swallowed exit code"
     assert "WORKFLOW_STEP_OUTCOMES: ${{ toJSON(steps) }}" in dd
-    last = steps[-1]
-    assert "persist_state.py outcome --commit" in last and "if: always()" in last and "STEPS_JSON: ${{ toJSON(steps) }}" in last
+    # `outcome` is the last step that WRITES, and exactly one step may follow it: the relay
+    # notification (2026-08-28). It has to come after, because `outcome` is what replaces a
+    # lost morning's digests/latest.md with the failure notice -- and a lost morning is
+    # precisely when the mail matters most, so the notice must reach the event-driven path
+    # too and not only the cron. What follows `outcome` must therefore write no repo state
+    # and must never fail the job, or it would land after the step that records failures.
+    outcome, after = steps[-2], steps[-1]
+    assert "persist_state.py outcome --commit" in outcome and "if: always()" in outcome \
+        and "STEPS_JSON: ${{ toJSON(steps) }}" in outcome
+    assert "id: notify_relay" in after and "if: always()" in after, \
+        "only the relay notification may follow the outcome step"
+    assert "persist_state.py" not in after and "git push origin HEAD" not in after, \
+        "a step after `outcome` must not write this repo's state -- outcome would not see it"
+    # NOT `"exit 1" not in after`. That was the first version of this assertion and it was
+    # worthless: the runner's shell is `bash -e`, so a bare `git fetch`, `git clone`,
+    # `ssh-keyscan` or `python3` aborts the step non-zero with no `exit 1` anywhere -- turning
+    # a morning the mail shipped correctly into a red run, on the operator's primary signal.
+    # Two adversarial passes found it independently on 2026-08-28. Assert the PROPERTY that
+    # makes the step harmless, not the absence of a string (`tools/mutate.py`'s docstring is
+    # about exactly this class of guard).
+    assert "continue-on-error: true" in after, \
+        "a step after `outcome` must be continue-on-error: its failure is recorded nowhere"
     ms = next(s for s in steps if "id: mark_sent" in s)
     assert "continue-on-error: true" in ms and "if [" in ms and "mark_sent.py" in ms
     assert dd.index("id: pipeline") < dd.index("id: mark_sent") < dd.index("id: gate") < dd.index("id: persist") < dd.index("id: publish")

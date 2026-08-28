@@ -40,7 +40,10 @@ scheduled runs 2026-08-23 → 2026-08-27:
    `Stages:` line — fires from *inside* a later digest. If the digest is never dispatched
    there is no board, no mail, no alarm and no `::warning::`: **silence reads as success.**
    On 2026-08-27 no email was sent and nothing anywhere said so. Owner: `infra`.
-3. **The relay can miss the mail entirely.** `AnalystJobsIL/inbox` polls at
+3. **The relay can miss the mail entirely.** *(Answered 2026-08-28: the relay is now
+   triggered by a push from the digest, and the delivery deadline moves with it — see the
+   section below. The paragraph is kept because it is what the measurement said.)*
+   `AnalystJobsIL/inbox` polls at
    `17 6,7,8,10 * * *`. A digest that lands after 10:17 is not relayed that day at all. Even
    on a normal day the promise is not being kept: the 08-26 issue was created at 07:10:36Z
    and the 08-25 one at 09:01:19Z, against a documented "expect the mail at ~06:20 UTC".
@@ -56,6 +59,36 @@ recording that it was.
 gh run list --repo AnalystJobsIL/pipeline --workflow daily-digest.yml --limit 3
 gh issue list --repo AnalystJobsIL/inbox --limit 3 --state all      # did the mail go out?
 ```
+
+### 2026-08-28: a second such day, and what changed because of it
+*(appended by `infra` 2026-08-28; the table above is 08-23..08-27 and is not restated here)*
+
+| workflow | due | actual |
+|---|---|---|
+| `triage-dark` | 18:00 (08-27) | 02:02 (+8 h 02) |
+| `listing-hunt` | 19:00 (08-27) | 02:24 (+7 h 24) |
+| `auto-expand` | 08:00 | 04:05 |
+| `scrape-refresh` | 00:00 | **07:49** (+7 h 49) |
+| `retry-unreachable` | 02:30 | **never fired** |
+| `daily-digest` | 05:00 | **never fired** — dispatched by hand at 06:43 |
+| `self-heal` | 06:00 | **never fired** |
+| inbox relay | 06:17 / 07:17 / 08:17 / 10:17 | **0 of 4** — dispatched by hand at 08:28 |
+
+Point 3 above is now half-answered and point 2 is not. The relay's real trigger is a **push**
+from `daily-digest`'s last step, which carries the sha256 of what actually landed; its four
+crons remain as a backup (ARCHITECTURE §4, `docs/decisions/2026-08-28-relay-trigger.md`).
+So a digest that *happens* is now mailed without waiting on a clock. A digest that is never
+dispatched still emits nothing at all — that is 292/308@infra, and it is untouched.
+
+Worth recording because it is the part that worked: the second, hand-dispatched digest run
+that day FAILED at its `pipeline` step, and `cloud_state/last_run.json` reads
+`"delivered": true, "notice": false` — the delivery guard refused to overwrite the morning's
+good digest with a failure notice.
+
+Two more things every job now reports, both new on 2026-08-28: `[bd-spend] this step bought N
+Bright Data credit(s)` from any process that touches the account (previously only
+`scrape-refresh` counted, and only into a state file), and `path: N -> M keys (+g / -l)` for
+every keyed cache a commit pushes (ARCHITECTURE §5d).
 
 ## What each job spends, and what it writes
 

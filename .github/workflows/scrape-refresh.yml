@@ -8,7 +8,12 @@ name: Refresh scrape cache (cloud)
 on:
   schedule:
     - cron: "0 0 * * *"        # daily 00:00 UTC (was Mon/Thu — quota fossil; minutes now free)
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      unlocker:
+        description: "paid residential rung: on | off (default: the BD_PAID_RUNGS repo variable)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -37,6 +42,31 @@ jobs:
           python -m playwright install --with-deps chromium
           npm install -g @anthropic-ai/claude-code
 
+      - name: Decide whether this run may buy Bright Data credits
+        # ONE place decides, and it says so on the run page. Two things can turn the paid
+        # residential rung off: the `BD_PAID_RUNGS` repo VARIABLE (settings, no commit — a
+        # paid rung must not be switchable only by editing a workflow file) or the dispatch
+        # input, for one run. On top of that `pipeline.bd_budget` refuses when the month's
+        # ceiling is reached — unlimited through August 2026, 5,000 from 2026-09-01, and it
+        # reads the LIVE account because every cap in this repo is per-process and no
+        # credit ledger exists here. An unreadable balance SPENDS (fails open); the bound
+        # that does not need the network is BD_RUN_CAP on the step below.
+        env:
+          SWITCH: ${{ (github.event.inputs.unlocker || vars.BD_PAID_RUNGS || 'on') == 'off' && 'off' || 'on' }}
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+        run: |
+          ON=1
+          if [ "$SWITCH" = "off" ]; then
+            echo "paid rungs OFF by switch (BD_PAID_RUNGS / dispatch input)"; ON=""
+          elif ! python -m pipeline.bd_budget; then
+            echo "paid rungs OFF: the monthly ceiling is reached"; ON=""
+          fi
+          # empty, never "0" — every reader is os.environ.get(), which arms on any non-empty
+          # value, so a flag that reads 0 and means ON is the trap this control removes
+          echo "SCRAPE_VIA_UNLOCKER=$ON" >> "$GITHUB_ENV"
+          echo "paid residential rung: ${ON:+ON}${ON:-OFF}" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Refresh the scrape cache
         env:
           # strategy 5 (Claude reads the rendered page) — without it, layouts only the LLM
@@ -49,7 +79,12 @@ jobs:
           # was set in NO workflow — so it had never once fired in production.
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
-          SCRAPE_VIA_UNLOCKER: "1"
+          # SCRAPE_VIA_UNLOCKER is NOT set here: the preflight step above exports it, so the
+          # switch and the monthly ceiling are decided in one place instead of two.
+          # What ONE job may buy, enforced in bd_rescue for every rung that reaches the
+          # account. 72 credits measured on 2026-08-28 (63 returned a page, 10 won a board);
+          # 150 is headroom over that, not a target. Before this the answer was "no limit".
+          BD_RUN_CAP: "150"
           # 425 active scrape rows on 2026-08-24 (862 active rows in total), ~40 min with
           # the 4-process pool. Stop with headroom under timeout-minutes: 330 so the cache is
           # actually written and committed — a timeout discards the whole run.
@@ -61,6 +96,27 @@ jobs:
       # (scraped/with_jobs/empty/errors/alarm), and the digest prints that line in its audit.
       # A separate `stages stamp collect` step used to run here `if: always()` — it replaced
       # the counts with `{}` and reported "collect: TODAY" even when the script had crashed.
+
+      - name: What this run spent
+        # CLAUDE.md rule 1: say what it PRODUCED. Until 2026-08-28 the night's credits were
+        # in cloud_state/pipeline_stages.json and nowhere a human looked, so nobody noticed
+        # a hardcoded flag buying 72 credits for 10 boards, every night, unattended.
+        if: always()
+        run: |
+          python - >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json
+          try:
+              c = json.load(open("cloud_state/pipeline_stages.json", encoding="utf-8"))["collect"]
+          except Exception as e:
+              print(f"- collect stamp unreadable: {e}")
+          else:
+              calls, ok, won = (c.get(k, 0) for k in ("unlock_calls", "unlock_ok", "unlock_won"))
+              print(f"- Bright Data this run: **{calls} credits** -> {ok} pages -> "
+                    f"**{won} boards won**" if calls else "- Bright Data this run: 0 credits")
+              print(f"- cache: {c.get('with_jobs', '?')} of {c.get('rows', '?')} rows carry jobs; "
+                    f"{c.get('empty', '?')} empty, {c.get('errors', '?')} errored")
+          PY
+        continue-on-error: true
 
       - name: Registry invariants gate the commit
         # deliberately NOT continue-on-error: a broken registry makes the job red here,

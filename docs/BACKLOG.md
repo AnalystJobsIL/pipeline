@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**405 filed · 294 open · 111 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**408 filed · 297 open · 111 closed · 6 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 363.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 366.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -170,7 +170,7 @@ closure convention in the header.
 - **354** `354@registry` **The nine address-refused rows are refused from a HOME address too**
 - **355** `355@registry` **The nightly embed handoff has no reader yet**
 
-### infra — 73 open
+### infra — 75 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -224,7 +224,7 @@ closure convention in the header.
 - **237** `237@infra` **`tests/rehearse_infra.py`'s golden check has a dead allow-list, and §5's baseline cell is
 - **238** `238@infra` **A merge can put an operator's re-based rows back in the queue with their baselines at 0**
 - **241** `241@infra` **`persist_state.py commit --own PATH` commits the WHOLE index, not the owned paths** —
-- **264** `264@infra` **`daily-digest.yml` never reports Bright Data spend, and this lane is its largest
+- **264** `264@infra` **`daily-digest.yml` never reports Bright Data spend, and this lane is its largest *(half closed)*
 - **269** `269@infra` **`pipeline/stages.py` stamps a LOCAL date beside a UTC timestamp**
 - **270** `270@infra` **`stages._load()` returns whatever parses, and `stamp()` then assumes a dict**
 - **282** `282@infra` **`check_invariants.TRIAGE_MODES` is a hand copy that has 7 of the 8 modes, and 24 rows
@@ -245,8 +245,10 @@ closure convention in the header.
 - **350** `350@infra` **`refresh_scrape_cache` runs in exactly ONE workflow, on a 00:00 cron GitHub is
 - **357** `357@infra` **`tests.yml` runs four safety steps AFTER the docs linter in the SAME job, so any doc
 - **358** `358@infra` **Three cron slots did not fire on 2026-08-28, and only a hand-dispatched digest covered
+- **364** `364@infra` **The pipeline is nine independent crons, not one ordered unit**
+- **365** `365@infra` **The monthly Bright Data gate is wired into one workflow of seven, and six caps are
 
-### scraper — 21 open
+### scraper — 22 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -269,6 +271,7 @@ closure convention in the header.
 - **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
 - **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
 - **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
+- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
 
 ### discovery — 20 open
 
@@ -2860,6 +2863,11 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     next month must not pass 4,500 for the whole project. The registry's new paid rung is
     `LLM_BD_SEARCH_CAP=5`/run (≈300/month, 7% of 4,500) and is counted separately from
     `DEEP_BD_SEARCH_CAP` (per process, 150).
+
+    **SETTLED 2026-08-28 by the operator: unlimited through August, 5,000 from 2026-09-01** --
+    so this item's 4,500 is superseded, and the September ceiling is now in
+    `pipeline/bd_budget.ceiling()` rather than in two documents that disagree. See
+    `docs/decisions/2026-08-28-bd-ceiling.md` and 335.
 193. **`check_invariants.PLATFORM_HOST` has no `eightfold` / `phenom` entry** — lane: `infra`.
     Since 2026-08-25 two active rows are on those platforms (Qualcomm `/api/pcsx/`, GE
     HealthCare `/widgets`); check C2 cannot fire for them. Tenant hosts vary, the path does
@@ -2911,6 +2919,18 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     shard `--all` across two jobs; or have `mutate.py` order mutations so the ones most likely
     to survive run first and the job fails fast with a name. `infra` owns `tests.yml`;
     `mutate.py` and the catalogue are `registry`'s.
+
+    **CLOSED 2026-08-28 (`infra`).** Sharded, which is the option this item named. The
+    catalogue was **105** records at the last green run (`60fae33`, 2026-08-24, whole workflow
+    ~35 min) and is **204** now -- 1.94x -- while `timeout-minutes: 45` never moved, so the job
+    was CANCELLED on 40 consecutive pushes and this repo has had NO mutation protection since
+    2026-08-24. `mutation-gate` is now a 3-way matrix; the split is computed FROM THE CATALOGUE
+    at run time by least-loaded bin-packing over the `M<n>` prefixes `--class` selects on, so a
+    class added tomorrow lands in a shard by itself and there is no list here to fall out of
+    date. Today: 74 / 64 / 66 records, ~23 min each against the unchanged 45-min budget.
+    `test_the_mutation_shards_partition_the_whole_catalogue` extracts the workflow's own script
+    and runs it, so the shards are proven to cover the catalogue exactly once. The stale
+    "~15 minutes" comment is gone.
 196. **`resolve_llm` still asks SerpApi first** — lane: `registry`. When the quota resets on
     **Measure first (2026-08-26):** the `dfer … no-candidates` vs `llm-none` counts in the 08:00/20:00 logs over the week of 08-26 → 09-01 are the DDG hit rate; reorder only if DDG ≥ 60 %.
     2026-09-01 the ladder spends 250 free searches in ~6 days at 20 entries/run (two runs a
@@ -3892,6 +3912,12 @@ rule). Numbers re-derived 2026-08-26 against cloud run `32934864207`; re-derive 
     still says what the morning cost. One `if: always()` step calling `report_bd_spend` would
     put the number in the run log beside the `enrich` stamp's new `*_bd_calls`.
 
+
+    **Partly closed 2026-08-28 (`infra`).** `bd_rescue._report_spend` now prints
+    `[bd-spend] this step bought N credit(s)` to the log and to `$GITHUB_STEP_SUMMARY` on the
+    way out of every process that touches the account -- so all seven spending workflows,
+    including this one, now report. What is still missing is this item's actual ask: a single
+    `report_bd_spend` line in the digest's own summary beside the `enrich` stamp.
 265. **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
     — lane: `scraper`. At `origin/master` `_carry_jd` keys on `url`/`job_id` only, and the
     scraper lane's in-progress change adds a `T:<title>|<location>` identity whose stated
@@ -4515,6 +4541,17 @@ hosts, so its worked example needs a different diagnosis).
      the delivery rules in ARCHITECTURE §4. The re-measurement is pre-committed in `HANDOFF.md`
      for 2026-09-10: **≥ 3 isolated drops ⇒ build the recovery cron**.
 
+
+    **The relay half is closed (2026-08-28, `infra`).** Not by a second cron -- this item's
+    census argument holds and is in fact the reason: slots fail together, so redundancy inside
+    GitHub's scheduler buys nothing. `daily-digest`'s last step now pushes a receipt into the
+    private inbox repo with a WRITE DEPLOY KEY, and the relay triggers on that push; its four
+    crons stay as a backup. Proven by run `33159616979` in `AnalystJobsIL/inbox`, `event=push`.
+    This item's (b) said the public repo "must not" hold a credential for the private one; the
+    operator re-took that decision knowing the repo already holds four secrets in the same job
+    and that the residual risk is a real one -- `docs/decisions/2026-08-28-relay-trigger.md`
+    states it plainly. **What remains here is the digest's own cron**: a run that never starts
+    pushes no receipt. The 2026-09-10 re-measurement stands.
 293. **`firmographics.yml` missed its first real cron slot** — lane: `infra` (+
      `company-intel`). Added 2026-08-26 at 19:50 UTC with `cron: "0 10 * * *"` — i.e.
      *after* that day's 10:00 window, so the original wording of this item ("never fired,
@@ -4605,6 +4642,15 @@ hosts, so its worked example needs a different diagnosis).
      design. It is in fact the right design: a clock outside GitHub, which is exactly what
      2026-08-27 proved is needed (9 dispatches due across both repos, 1 fired).
 
+
+    **Narrowed by one repository, 2026-08-28 (`infra`).** The relay no longer depends on
+    GitHub's scheduler at all, so "every cron in BOTH repositories" is now "the digest's cron
+    in this one" -- see 292 and `docs/decisions/2026-08-28-relay-trigger.md`. The evidence that
+    re-opened it: 2026-08-28 was a second such day (0 of 4 relay polls; the digest cron not
+    dispatched at all), and 2026-08-27 produced **no `digests/latest.md` at any point**, so
+    that morning's mail was never sent by anything. The outbound ping stays declined and stays
+    open here, because it answers the question this item is really about -- how you notice when
+    GitHub is down AND the laptop is asleep -- which no amount of event-driven delivery answers.
 309. ~~**A role first seen yesterday, not emailed today, can never be emailed**~~ — **CLOSED 2026-08-27 (`roles`)**: `run.py` now selects the mail over EVERY live role and judges each on its own `posted_date` — `[j for j in st.get_matched_since("0000-01-01") if _posted_in(j, cutoff_email) and _alive(j)]`. `first_seen` gates nothing; its one legitimate use is the fallback inside `_posted_in` for a role with no date at all. It costs no query, because the same full scan already ran below for the board. The 48h bound still comes from `_posted_in`, `filter_new` still drops anything sent, and the caps still apply — the only roles newly admitted are ones with a fresh `posted_date` we failed to mail. The list is now sorted by `posted_date` first, so the caps drop the least-FRESH rather than the least-recently-first-seen. Guards: `test_a_role_first_seen_before_the_window_is_still_mailable_on_its_own_date`, `test_the_email_is_selected_over_every_live_role_not_a_first_seen_window`. Both prose claims this item and 310 name are gone, pinned by `test_no_document_still_claims_capped_roles_lead_the_next_digest`. Original text: **A role first seen yesterday, not emailed today, can never be emailed** — lane: `roles`
      (the email-selection block in `pipeline/run.py` is that lane's). `run.py` selects the mail
      with `cutoff_email = today - 1 day` -> `store.get_matched_since` -> `WHERE first_seen >= ?`.
@@ -5399,6 +5445,18 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     2026-08-27 instruction was "self-sufficient at 5,000 monthly" — whoever sets the env var
     should settle which number is current.
 
+
+    **CLOSED 2026-08-28 (`infra`), and the tension with 192 is settled by the operator:
+    no ceiling for the rest of August, 5,000 from 2026-09-01.** August is uncapped on purpose
+    -- the pool was already ~6,798 MTD, and a 5,000 ceiling is exactly what made
+    `budget_per_day()` return 0 while paid credits sat unused. The rule is encoded once in
+    `pipeline/bd_budget.ceiling()` with a guard pinning BOTH sides of the boundary, so it
+    changes itself on the day and is verified rather than remembered.
+    `docs/decisions/2026-08-28-bd-ceiling.md` has the mechanism: a `BD_PAID_RUNGS` repo
+    variable (a paid rung must not be switchable only by editing a workflow file), `BD_RUN_CAP`
+    at the one chokepoint ten of thirteen spend paths reach, and the spend printed to the run
+    page -- 72 credits bought 10 boards on 2026-08-28, a number that existed only in a state
+    file nobody opens.
 336. **theorg.com is the best-shaped company directory found so far and is unbuilt** —
     lane: `discovery`. Spot-checked 2026-08-27 with an HONEST UA, 7 of 7 companies (Wix,
     Fiverr, monday.com, Riskified, Similarweb, NICE, Gong): every `/org/<slug>` page serves
@@ -5800,3 +5858,77 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     Related, and the more useful half: the lane-spawn prompt should give every adversarial
     subagent **its own worktree**. Two of them shared one today; one kept finding the other's
     mutations, and the other deleted work it had not written.
+
+## From the `infra` lane, 2026-08-28
+
+363. **A zero-extraction is authoritative on the first night; an error is carried for
+    fourteen** — lane: `scraper` (`refresh_scrape_cache.py` is that lane's file; this is a
+    specification, not a patch). The unscoped nightly pass rewrites `scraped_cache.json`
+    wholesale from a dict built fresh each run, so a company only survives if something
+    explicitly writes it back. An **error** does get written back — `CARRY_MAX_DAYS = 14`
+    nights of grace. A **zero-extraction does not**: the key simply vanishes, with no log
+    line, no counter beyond `empty`, and no alarm.
+
+    **Measured, and it corrects the framing this was handed to `infra` with.** The session
+    brief called it the `error != empty` class one level up — "a board briefly unreachable is
+    dropped as though it were empty". It is not. Of the 16 boards lost between `61181c1` and
+    `4405397` on 2026-08-28, **16 of 16 carry `why=empty`, `found=0`, `http` 200/202** in
+    `cloud_state/scrape_rot.json` — not one is an error — and **14 of the 16 were on their
+    first empty night**. The real defect is the ASYMMETRY, and the fix is symmetry: make a
+    zero-extraction prove itself the way an error already does. `scrape_rot.json` already
+    counts consecutive empties in `n`, so the evidence is on disk; two consecutive empty
+    nights, or the same 14-night carry, are both defensible. **The mechanism is that lane's
+    call.**
+
+    Reproduce, and re-derive the 16 names:
+    ```bash
+    git show 61181c1:scraped_cache.json > /tmp/a.json   # 279 companies / 1,643 postings
+    git show 4405397:scraped_cache.json > /tmp/b.json   # 263 / 1,607  -- the 07:49 cron
+    python -c "import json;a=json.load(open('/tmp/a.json'));b=json.load(open('/tmp/b.json'));r=json.load(open('cloud_state/scrape_rot.json'));[print(n,len(a[n]),(r.get(n) or {}).get('why'),(r.get(n) or {}).get('n')) for n in sorted(set(a)-set(b))]"
+    ```
+    The same pass ran on the two nights before: 243 → 219 (08-26) and 221 → 205 (08-27).
+
+    **Size it correctly before anyone panics.** The cron re-scrapes all 496 rows every night,
+    so a dropped board gets another chance the next night. This is **oscillation, not
+    cumulative drain**; the user-visible cost is roles flickering on and off the public board
+    between mornings. A quality bug worth fixing, not a coverage leak.
+
+    `infra`'s half shipped 2026-08-28: `persist_state.py` now measures and reports the delta
+    on every commit and logs it to `cloud_state/persist_log.jsonl` (ARCHITECTURE §5d). It
+    deliberately does **not** block — a wrong threshold that froze the cache would cost
+    coverage, which is what that day was spent undoing.
+
+364. **The pipeline is nine independent crons, not one ordered unit** — lane: `infra`. The
+    operator wants discovery → companies complete with intel and a board → all jobs with
+    descriptions → tagging → rendering as ONE sequence, so each step can be verified and its
+    queue driven to zero. **Do not start this without a clean baseline day to measure
+    against**, and note the timeout arithmetic first (per-job med/max minutes, from the last
+    5–8 successful runs of each, queue wait excluded):
+
+    | job | med | max |
+    |---|---|---|
+    | listing-hunt | 160 | 237 |
+    | scrape-refresh | 33 | 113 |
+    | daily-digest | 26 | 31 |
+    | auto-expand | 21 | 88 |
+    | retry-unreachable | 10 | 14 |
+    | self-heal | 10 | 27 |
+    | triage-dark | 3 | 12 |
+    | firmographics | 3 | 3 |
+
+    Combined: best 110, median 266, worst observed 525 minutes against a **330** job timeout.
+    P(exceed 330) ≈ 38% independent, ≈ 40% correlated; P(exceed 360) ≈ 25% / 37%. **One unit
+    INCLUDING listing-hunt fails about two days a week.** listing-hunt alone is 60% of the
+    median total; EXCLUDING it the other seven median ~106 min and fit comfortably. So the
+    shape that works is one ordered unit of seven plus listing-hunt on its own cron — or
+    `listing-hunt` made resumable first.
+
+365. **The monthly Bright Data gate is wired into one workflow of seven, and six caps are
+    guesses** — lane: `infra`. `pipeline/bd_budget`'s preflight runs in `scrape-refresh` only;
+    the other six spenders get `BD_RUN_CAP` but not the monthly ceiling, so from 2026-09-01
+    they can spend past it. Extending it is mechanical (the same step, minus the
+    `SCRAPE_VIA_UNLOCKER` export). Separately, `BD_RUN_CAP: "250"` in six workflows is a
+    blast-radius limit chosen below the theoretical maximum, **not a measurement** — no
+    per-workflow spend number existed before 2026-08-28. `bd_rescue._report_spend` now prints
+    one per process; after a week of `[bd-spend]` lines, replace the 250s with real numbers.
+    `scrape-refresh`'s 150 is measured (72 observed on 2026-08-28).

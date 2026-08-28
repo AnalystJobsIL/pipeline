@@ -35,7 +35,7 @@ by 07:41. `gh run list --workflow daily-digest.yml` before you trust yesterday's
 Full versions in `ARCHITECTURE.md` §2 and §8. Short versions, because each of these has
 already destroyed a day of work:
 
-1. **A green workflow means nothing.** 36 of the 80 named workflow steps are
+1. **A green workflow means nothing.** 38 of the 83 named workflow steps are
    `continue-on-error: true`. Verify a capability by what it PRODUCED, and quote the number.
 2. **A mass-zero result is a broken run, not a measurement.** Strip its verdicts, diagnose,
    re-run — do not let it commit.

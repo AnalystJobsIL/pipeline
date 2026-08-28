@@ -131,6 +131,7 @@ PIPELINE = {
  "aggregators": "is this URL an aggregator? Gates activation and runtime",
  "recruiters": "recruiting-agency exclusion",
  "atomic": "**shared** - atomic writes for every state file",
+ "bd_budget": "**shared** - the Bright Data monthly ceiling, with a date on it: unlimited through August 2026, 5,000 from 2026-09-01 (both sides pinned by a guard). Reads the LIVE account, because every other cap here is per-process and no credit ledger exists. The per-run blast-radius bound is `BD_RUN_CAP` in `bd_rescue`",
  "companies": "**shared** - load companies.csv into row dicts",
  "identity_facts": "**shared** - DECLARED company identity: the one table of acquired-by tenants and brand/parent domains the gates consult before any string heuristic. To make an acquired company's board legitimate, add a row here",
  "company_identity": "**shared** - the identity PRIMITIVES (is_foreign, verdict, page_mentions_company, looks_like_a_job_listing_page); the gate that composes them is identity_gate",

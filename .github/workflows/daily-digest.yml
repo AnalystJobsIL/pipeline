@@ -42,6 +42,16 @@ concurrency:
   group: daily-digest
   cancel-in-progress: false
 
+env:
+  # BLAST RADIUS, not a budget (lane: infra, 2026-08-28). The month's ceiling is
+  # `pipeline/bd_budget.py`; this stops ONE job's loop running away, which nothing did
+  # before -- retry-unreachable could buy 600 credits a night and crack_walled ~2,000,
+  # and neither had any limit. Enforced in `bd_rescue.unlock_status`, which every rung
+  # here reaches; per PROCESS, so each step gets its own. Unset = unlimited, so this is
+  # the only thing that changes for a workflow that does not name it. The `[bd-spend]`
+  # line each step now prints is the measurement that should replace this guess.
+  BD_RUN_CAP: "250"
+
 jobs:
   digest:
     runs-on: ubuntu-latest
@@ -149,6 +159,17 @@ jobs:
           GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
           # the receipt `deliver` writes records which run put today's digest in the mail
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # THE CUTOFF IS A PROPERTY OF THE TRIGGER, NOT OF THE CLOCK (2026-08-28).
+          # `deliver` defers a digest written after the relay's last poll because no poller
+          # would ever see it. Once `notify_relay` below can hand the relay an EVENT, that
+          # reason is gone -- and leaving 10:17 in place would keep withholding mail the new
+          # path could deliver. On 2026-08-27 the digest ran at 16:18 and was refused for
+          # exactly this reason, so the operator got nothing at all that day.
+          # So: with the deploy key configured the deadline moves to 23:39 (23:59 less
+          # DELIVER_MARGIN_MIN, keeping the arithmetic inside the same UTC day); without it
+          # the old 10:17 still holds, because then the cron poll really is the only reader.
+          # Truthy true-branch on purpose -- `cond && '' || x` yields x for every input.
+          RELAY_LAST_POLL_UTC: ${{ secrets.INBOX_DEPLOY_KEY != '' && '23:39' || '10:17' }}
           # the pre-steps' outcomes: a failed one is a bold `Stages:` line in the mail
           WORKFLOW_STEP_OUTCOMES: ${{ toJSON(steps) }}
         run: |
@@ -264,6 +285,99 @@ jobs:
         # commits cloud_state/last_run.json (+ digests/latest.md when the digest was lost)
         # ALONE, from a fresh worktree of origin/master -- never this checkout's tree
         run: python persist_state.py outcome --commit
+
+      - name: Hand the relay its event (its cron is the backup, not the path)
+        id: notify_relay
+        # LAST, and `if: always()`, on purpose: the `outcome` step above can replace
+        # digests/latest.md with a dated failure notice, and a lost morning is exactly when
+        # the mail matters most, so the notice must reach the event path too.
+        #
+        # WHY THIS EXISTS. The relay in the private inbox repo had only a clock, and on
+        # 2026-08-28 GitHub fired ZERO of its four scheduled polls while this pipeline
+        # delivered correctly at 07:08 -- the mail went out only because a human dispatched
+        # it. `tests/schedule_census.py` measures 0 isolated single-slot drops: the scheduler
+        # fails as ONE thing, so redundancy inside it cannot help and only a non-schedule
+        # trigger can. docs/decisions/2026-08-28-relay-trigger.md has the alternatives.
+        #
+        # A DEPLOY KEY, not a PAT: it belongs to a REPO rather than a person, so no run page
+        # names the owner (CLAUDE.local.md section 3) and it cannot expire silently -- a dead
+        # PAT would reproduce exactly the failure this fixes, with no alarm. The repo address
+        # is a secret too, so this public file names no private repository.
+        #
+        # It pushes the digest BODY, not just its hash. Reading it back from
+        # raw.githubusercontent is what an adversarial pass killed: that CDN serves a stale
+        # copy for up to 300 s, longer than any retry budget worth having, so the relay would
+        # mail yesterday's digest -- or match yesterday's hash, dedup, and mail NOTHING, which
+        # looks identical to success. Handing over the bytes deletes the whole failure class.
+        #
+        # continue-on-error: this step must never turn a morning the mail shipped into a red
+        # run. Two adversarial passes found that `git fetch`/`clone`/`ssh-keyscan` abort under
+        # the runner's `bash -e` with no `exit 1` anywhere -- which is why the guard on this
+        # asserts continue-on-error rather than grepping the script.
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          DEPLOY_KEY: ${{ secrets.INBOX_DEPLOY_KEY }}
+          INBOX_GIT: ${{ secrets.INBOX_REPO_GIT }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          # whitespace-tolerant: a key pasted with a stray space passed `-z` and then died at
+          # `git clone`, which was a red job for a mistake this can just report
+          if [ -z "$(printf %s "$DEPLOY_KEY" | tr -d '[:space:]')" ] ||              [ -z "$(printf %s "$INBOX_GIT" | tr -d '[:space:]')" ]; then
+            echo "relay notification not configured (INBOX_DEPLOY_KEY / INBOX_REPO_GIT unset)"
+            echo "-- the relay's four cron polls remain the only path to the mail."
+            exit 0
+          fi
+          # what a reader will actually get: origin's copy, AFTER every step above pushed.
+          # Not this checkout's tree -- `outcome` commits from a worktree of its own.
+          git fetch -q origin "$BRANCH" || { echo "::warning::fetch failed; relay not notified"; exit 0; }
+          git show "origin/$BRANCH:digests/latest.md" > landed.md 2>/dev/null || {
+            echo "::warning::origin carries no digests/latest.md; nothing to relay"; exit 0; }
+          [ -s landed.md ] || { echo "::warning::origin's digest is empty; not relaying"; exit 0; }
+          # ONLY today's file. A deferred day leaves YESTERDAY's digest on origin, and
+          # announcing that re-mails it or -- worse -- deduplicates against it so the day
+          # goes quiet. Both the digest H1 and the failure notice carry the run date.
+          TODAY="$(date -u +%F)"
+          case "$(head -1 landed.md)" in
+            *"$TODAY"*) : ;;
+            *) echo "origin's digest is not dated $TODAY; nothing delivered today, not relaying"
+               exit 0;;
+          esac
+          SHA="$(sha256sum landed.md | cut -d' ' -f1)"
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/inbox_deploy_key
+          chmod 600 ~/.ssh/inbox_deploy_key
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null || true
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/inbox_deploy_key -o IdentitiesOnly=yes"
+          rm -rf /tmp/inbox
+          git clone -q --depth 1 "$INBOX_GIT" /tmp/inbox || {
+            echo "::warning::could not reach the relay repo; its cron polls remain"; exit 0; }
+          mkdir -p /tmp/inbox/receipts
+          cp landed.md /tmp/inbox/receipts/latest.md
+          # sha + first line ONLY: no timestamp, no run URL. With either of those the file
+          # changed on every run, `git commit` never no-op'd, and every run woke the relay --
+          # which is the traffic that makes two overlapping relay runs reachable.
+          printf '{"sha256":"%s"}\n' "$SHA" > /tmp/inbox/receipts/latest.json
+          cd /tmp/inbox
+          # never GUESS the branch: this repo's default is `master`, and pushing to an
+          # invented `main` puts the receipt on a ref the relay does not watch -- a
+          # silent no-mail. Verified 2026-08-28 by doing exactly that by hand.
+          if ! BR="$(git symbolic-ref --short HEAD)"; then
+            echo "::warning::cannot read the relay repo's default branch; not pushing"
+            exit 0
+          fi
+          git config user.name  "digest-bot"
+          git config user.email "digest-bot@users.noreply.github.com"
+          git add receipts/latest.md receipts/latest.json
+          git commit -q -m "digest $TODAY ${SHA:0:12}" || { echo "same digest already announced"; exit 0; }
+          for i in 1 2 3 4 5; do
+            git pull -q --rebase --autostash origin "$BR" && git push -q origin "HEAD:$BR" && {
+              echo "relay notified: $SHA"; exit 0; }
+            git rebase --abort 2>/dev/null || true; sleep $((i*10))
+          done
+          # NEVER fatal: the mail is not lost, it is merely back on the cron's schedule.
+          echo "::warning::could not notify the relay; its cron polls remain"
 
 # (workflow re-index nudge)
 

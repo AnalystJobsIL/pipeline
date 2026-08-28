@@ -10,10 +10,12 @@ Needs BRIGHTDATA_API_KEY + BRIGHTDATA_ZONE in the environment or secrets.env
 """
 from __future__ import annotations
 
+import atexit
 import csv
 import json
 import os
 import re
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -56,9 +58,87 @@ def _load_secrets():
 # function and used to see every one of those as "no HTML" (BACKLOG 110).
 LAST = {"error": "", "status": None}
 
+# THE CHOKEPOINT EVERY UNLOCKER SPENDER PASSES (lane: infra, 2026-08-28; shared plumbing, so
+# it is named in the session record for every lane that spends here). Ten of the ~thirteen
+# paths that buy a Bright Data credit reach the account through `unlock_status`:
+# scrape_universal, crack_walled, triage_dark, repair_dead_urls, resolve_broken,
+# identity_gate, deep_validate (and through it listing_hunt, resolve_llm, audit_empty_rows,
+# registry_health), plus discovery_daily's Indeed and LinkedIn sweeps. Before this,
+# scrape-refresh set SCRAPE_VIA_UNLOCKER=1 with no cap at all and spent 72 credits a night
+# unattended (BACKLOG 335).
+#
+# `BD_RUN_CAP` IS PER PROCESS, AND THAT IS NOT WHAT A READER ASSUMES. `SPENT` is module state,
+# so it resets in every interpreter -- and `refresh_scrape_cache` runs a spawn-context
+# ProcessPoolExecutor, rebuilt per chunk, so a "150" there is 150 PER WORKER and the job's real
+# ceiling is nearer 3,000. An adversarial pass measured that on 2026-08-28 before it shipped.
+# It is still strictly better than the nothing it replaces -- it bounds a runaway loop inside
+# one worker -- but it is a BLAST RADIUS, not a budget, and the honest per-job bound needs a
+# counter outside the process (BACKLOG 359). Do not quote it as a job total.
+#
+# UNSET = no cap, so a lane that does not name it sees byte-for-byte the behaviour it saw
+# before this existed; `0` means buy nothing. A capped call reports `bd-capped` -- but note
+# that `unlock()` throws the reason away and returns "", so a CALLER cannot tell a refusal
+# from a failure unless it reads `LAST["error"]`. `main()` below does; nothing else in the
+# repo does, which is why a capped pass must never be allowed to write a verdict.
+SPENT = {"n": 0, "capped": False}
+
+
+def run_cap():
+    """The cap in force, or None for no cap. UNSET means no cap; **`0` means buy nothing**.
+
+    `0` used to mean unlimited, which is the wrong way round for the one number an operator
+    reaches for when they want spend to stop -- `BD_RUN_CAP=0` read as "no limit" and the run
+    spent freely. A value that will not parse (`1,000`, `1e3`) is a typo, not a licence: it
+    warns and buys nothing rather than silently removing the cap it was meant to set."""
+    raw = os.environ.get("BD_RUN_CAP")
+    if raw is None or raw.strip() == "":
+        return None
+    try:
+        return max(0, int(raw.strip()))
+    except ValueError:
+        print(f"::warning::bd_rescue: BD_RUN_CAP={raw!r} is not a number; buying nothing this "
+              f"run rather than removing the cap it was meant to set", flush=True)
+        return 0
+
+
+def _report_spend():
+    """What THIS process bought, on the way out. Per-workflow spend was unmeasurable before
+    2026-08-28: `unlock_calls` is stamped only by refresh_scrape_cache, so the other six
+    workflows that spend here reported nothing at all and their caps could only ever be
+    guesses. One line per step makes the run page the evidence, and the next session can set
+    a cap from a measurement instead of from a theoretical maximum."""
+    if not SPENT["n"]:
+        return
+    cap = run_cap()
+    print(f"[bd-spend] this step bought {SPENT['n']} Bright Data credit(s)"
+          + (" (no cap set)" if cap is None else f" of a {cap} cap")
+          + (" -- CAP REACHED" if SPENT["capped"] else ""), flush=True)
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if path:
+        try:
+            with open(path, "a", encoding="utf-8") as f:
+                f.write(f"- `{os.path.basename(sys.argv[0]) or 'python'}` bought "
+                        f"**{SPENT['n']}** Bright Data credit(s)"
+                        f"{' — CAP REACHED' if SPENT['capped'] else ''}\n")
+        except OSError:
+            pass                        # a report never costs the run it reports on
+
+
+atexit.register(_report_spend)
+
 
 def unlock_status(url, timeout=90):
     """(html, error). `error` is "" on success; see LAST."""
+    cap = run_cap()
+    if cap is not None and SPENT["n"] >= cap:
+        if not SPENT["capped"]:
+            SPENT["capped"] = True                  # say it once, not once per refused call
+            print(f"::warning::bd_rescue: BD_RUN_CAP={cap} reached; this run buys no more "
+                  f"Bright Data credits. Later rungs report `bd-capped`, not `empty`.",
+                  flush=True)
+        LAST.update(error="bd-capped", status=None)
+        return "", "bd-capped"
+    SPENT["n"] += 1
     body = json.dumps({"zone": os.environ["BRIGHTDATA_ZONE"], "url": url,
                        "format": "raw"}).encode()
     req = urllib.request.Request("https://api.brightdata.com/request", data=body, method="POST",
@@ -116,6 +196,7 @@ def main():
         rowi, url = idx[name]
         best_html, best_url, resolved = "", url, False
         policy = ""
+        capped = False
         for alt in alt_urls(url)[:5]:              # try up to 5 candidate URLs via the unlocker
             LAST["error"] = ""                  # `unlock` is the seam fixtures stub; read LAST after it
             html = unlock(alt)
@@ -125,6 +206,16 @@ def main():
                 print(f"::warning::bd_rescue: Bright Data answered {err}; stopping the pass",
                       flush=True)
                 raise SystemExit(0)
+            if err == "bd-capped":
+                # The CAP refused this call; the page was never asked. Falling through would
+                # reach the `not best_html` branch below and stamp `bd-tried <date> xN` on a
+                # row nothing was fetched for -- a verdict that puts the row in a 7-day
+                # cooldown and, at x3, drops it from the rescue pool for good. A budget must
+                # never be able to write a fact about a company (CLAUDE.md rule 2: a
+                # mass-zero result is a broken run, not a measurement). Found by an
+                # adversarial pass on 2026-08-28, before the push.
+                capped = True
+                break
             if _policy_closed(err):
                 policy = err
                 break                            # the host is refused, not the page
@@ -173,6 +264,10 @@ def main():
             _MOD.add(name)
             print(f"  pol  {name} ({policy}: host closed to the unlocker; not retried)", flush=True)
             time.sleep(1)
+            continue
+        if capped:
+            print(f"  skip {name}: BD_RUN_CAP reached, nothing was fetched -- no verdict "
+                  f"written, the row keeps its place in tomorrow's pool", flush=True)
             continue
         if not best_html:
             still += 1
