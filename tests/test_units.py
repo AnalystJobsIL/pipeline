@@ -11405,35 +11405,320 @@ def _cd():
     return mod
 
 
-@pytest.mark.parametrize("tok,prec", [
-    ("~1,200", 100), ("~900", 100), ("~870", 10), ("~875", 1), ("~1,000", 1000), ("~400", 100),
+# --- docs lane, 2026-08-28: a census fact that fails because the project is WORKING is a
+# --- broken check. The bracket model these five guards replaced held `active_rows` to
+# --- `~900` = 850-949; the crons took it to 969 in 14 hours and turned `pytest` red, which
+# --- SKIPS `Registry invariants` and the fourteen rehearsed nights (steps below `Unit
+# --- guards` in the same tests.yml job). Census claims are one-sided floors now. -------
+@pytest.mark.parametrize("tok,form,floor", [
+    ("800+", "floor", 800), ("1,300+", "floor", 1300), ("969+", "floor", 969),
+    ("875", "bare", None),
+    ("~900", "band", None), ("850-950", "band", None),
+    ("1,200–1,300", "band", None),          # en dash too
+    ("~900+", "malformed", None),                    # a floor is exact; `~` is not
 ])
-def test_the_precision_a_number_is_written_at_is_the_tolerance_it_claims(tok, prec):
-    """The whole census tolerance model, and the one piece of it a reader might find
-    surprising. There is no tolerance constant anywhere in `check_docs.py`: `~1,200` claims
-    "round to the nearest hundred", `~870` claims "to the nearest ten", and the notation
-    English already uses is the machine-readable contract."""
-    assert _cd().precision(tok) == prec
-
-
-def test_a_census_number_rounds_half_up_not_bankers():
-    """Python's round() is banker's: round(850, -2) is 800, so `~900` would be wrong for 850
-    and right for 851. A doc contract must not hinge on that."""
+def test_the_only_legal_census_form_is_a_floor(tok, form, floor):
+    """The whole census grammar. The bracket and the range are not merely discouraged, they
+    are REFUSED: leaving them legal leaves "just widen it" available, and widening is the
+    move that deletes the alarm while looking like maintenance."""
     cd = _cd()
-    assert cd.bracket_holds(1244, "~1,200") and not cd.bracket_holds(1244, "~1,300")
-    assert cd.bracket_holds(875, "~900") and not cd.bracket_holds(875, "~870")
-    assert cd.bracket_holds(850, "~900")          # half-up, not 800
+    assert cd.census_form(tok) == form
+    assert cd.census_floor(tok) == floor
 
 
-def test_a_census_range_is_inclusive_and_a_bare_number_claims_nothing():
-    """The range form exists because a bracket's headroom depends on where in the bracket you
-    sit: on 2026-08-27 the registry was 1,244 against `~1,200`, five rows from red. A bare
-    point number gets no interval at all — it is the one form that is always wrong here."""
+def test_a_floor_absorbs_growth_and_only_a_collapse_breaks_it():
+    """The property the whole design rests on, at the level of one token."""
     cd = _cd()
-    assert cd.census_span("1,200-1,300") == (1200, 1300)
-    assert cd.census_span("1,200–1,300") == (1200, 1300)     # en dash too
-    assert cd.census_span("875") is None
-    assert cd.census_span("~900") == (850, 949)
+    assert cd.floor_holds(800, "800+") and cd.floor_holds(9999, "800+")
+    assert not cd.floor_holds(799, "800+")
+    assert not cd.floor_holds(1244, "~1,200")    # a band is not a floor, whatever it claims
+
+
+def _census_run(tmp_path, sentence, value):
+    """Run the REAL fact check over ONE synthetic census site and return its errors.
+
+    `_cd()` execs a fresh module every call, so `ROOT` and `FACTS` can be swapped without
+    leaking into any other guard — `check_docs.py`'s `ERRORS`/`WARNINGS` are module
+    globals and are never reset (BACKLOG 301). The site pattern is the live one, copied
+    from the `active_rows` fact, so a change to `_CENSUS` moves these guards too."""
+    cd = _cd()
+    (tmp_path / "README.md").write_text(sentence, encoding="utf-8")
+    cd.ROOT = str(tmp_path)
+    cd.FACTS = [cd.Fact("t_active", "census", lambda: (value,), "active companies.csv rows",
+                        [("README.md", r"reads\s+" + cd._CENSUS + r"\s+companies'")],
+                        "the headline number of the product")]
+    cd.check_derived_facts()
+    return list(cd.ERRORS), list(cd.WARNINGS)
+
+
+SENTENCE = "The pipeline reads 800+ companies' own boards every morning."
+
+
+def test_a_census_fact_that_grows_does_not_go_red(tmp_path):
+    """GROWTH MUST NOT FAIL. This is the guard the 2026-08-28 outage would have needed: the
+    doc said `~900`, the registry reached 969 because the intake queue drained, and the
+    build went red for a project that was working. 2,400 is three times the floor and it
+    stays green — and `errs == []` is asserted, not "no collapse error", because a site
+    whose pattern stopped matching also produces an error and would make this vacuous."""
+    errs, warns = _census_run(tmp_path, SENTENCE, 2400)
+    assert errs == [], errs
+
+
+def test_a_census_fact_that_collapses_goes_red(tmp_path):
+    """COLLAPSE MUST FAIL, and it is the only thing that may. Same document, same floor,
+    same pattern: only the measured value differs, so nothing but the one-sided comparison
+    can explain the difference between this guard and the one above.
+
+    969 -> 400 is a bad merge or a mass deactivation (`ARCHITECTURE.md` section 8's
+    mass-zero class). The message must name the collapse and both numbers, not the
+    matches-nothing case, or the pair of guards proves nothing."""
+    errs, warns = _census_run(tmp_path, SENTENCE, 400)
+    assert len(errs) == 1, errs
+    assert "COLLAPSED" in errs[0] and "800+" in errs[0] and "400" in errs[0], errs[0]
+    assert "matches nothing" not in errs[0], errs[0]
+
+
+@pytest.mark.parametrize("bad", [
+    "The pipeline reads 969 companies' own boards every morning.",      # bare
+    "The pipeline reads ~900 companies' own boards every morning.",     # bracket
+    "The pipeline reads 850-950 companies' own boards every morning.",  # range
+])
+def test_a_census_site_may_not_carry_a_bare_number_or_a_two_sided_band(tmp_path, bad):
+    """The anti-regression for "somebody widens the band again". Each of these is TRUE of
+    969 today and each is an error anyway, because each of them will be wrong on a morning
+    nobody pushed."""
+    errs, _warns = _census_run(tmp_path, bad, 969)
+    assert len(errs) == 1, errs
+    assert "ONE-SIDED" in errs[0], errs[0]
+
+
+def test_the_ratchet_is_advisory_and_only_ever_points_upward():
+    """A floor decays: at 2,000 active rows a floor of 800 checks almost nothing. The linter
+    WARNS when a floor has been outgrown by twice the headroom it was written with, and the
+    suggestion it prints can never be above today's value — a suggestion that went red the
+    moment it was taken would teach the next author to ignore the warning.
+
+    It is a warning and not an error on purpose, and `--fix` is still forbidden from touching
+    a census fact: the growth that caused the decay was nobody's push."""
+    cd = _cd()
+    for value in (10, 100, 400, 800, 969, 1465, 5000, 12000, 10 ** 9):
+        s = cd.suggested_floor(value)
+        assert cd.census_form(s) == "floor", (value, s)
+        assert 0 < cd.census_floor(s) <= value, (value, s)
+    # 0 and 1 can carry NO floor. The first version returned `1+` for 0 - a floor ABOVE the
+    # value, in a message asserting "15% headroom" - on exactly the morning the number has
+    # gone to zero, which is the mass-zero class this check exists for. Found by wave 1.
+    for value in (0, 1):
+        assert cd.suggested_floor(value) is None, value
+    assert cd.suggested_floor(2) is not None                # and it degrades, not crashes
+    assert not cd.floor_is_stale(969, "800+")        # today: 17% of headroom, fine
+    assert not cd.floor_is_stale(1465, "1,300+")     # today: 11%, fine
+    assert cd.floor_is_stale(2000, "800+")           # 150% behind: raise it
+    assert not cd.floor_is_stale(400, "800+")        # a RED fact is never told to ratchet
+
+
+def test_the_floor_notation_never_captures_the_three_plus_years_idiom():
+    """`+` had to go inside the census token, and `CLAUDE.md`'s first sentence says
+    "experienced (≈3+ yrs)". Patterns MUST bind a noun; this is the guard on that rule."""
+    cd = _cd()
+    site = r"reads\s+" + cd._CENSUS + r"\s+companies'"
+    assert not re.search(site, "a board of experienced (3+ yrs) analysts, and it shows")
+    assert re.search(site, "It reads 800+ companies' own boards").group(1) == "800+"
+    # a stray space breaks the SITE, not just the token: the pattern then matches nothing,
+    # which check_derived_facts reports as its own error rather than passing silently
+    assert not re.search(site, "It reads 900 + companies' own boards")
+    assert cd.census_form("900") == "bare" and cd.census_form("+900") == "bare"
+    # The denser minefield wave 1 found: this repo's own histogram idiom uses `+` as a
+    # SEPARATOR, so `via=cards56+links37+dom35+` is ten syntactically perfect floors on one
+    # line. Nothing may bind to it. `docs/AGENT_BRIEF.md`, `ARCHITECTURE.md` and `HANDOFF.md`
+    # all carry lines like it today.
+    hist = "collect: via=cards56+links37+structured36+dom35+llm34 rows=421 with_jobs=201"
+    for fact in cd.FACTS:
+        for _doc_rel, pattern in fact.sites:
+            assert not re.search(pattern, hist), (fact.name, pattern)
+    # The trailing lookahead must exclude `+` as well as digits and dashes. Drop the `+` from
+    # it and `900+100 rows` starts matching: the token backtracks to `900`, the now-permitted
+    # `+` follows, and an arithmetic expression is read as a registry claim. Nothing in the
+    # tree contains such a string today, which is why a wave-2 mutation of that lookahead
+    # survived the entire suite.
+    assert not re.findall(cd._CENSUS, "900+100")
+    assert not re.search(cd._CENSUS + r"\s+rows", "the sum 900+100 rows")
+    assert re.findall(cd._CENSUS, "900+ 100")[0] == "900+"
+
+
+@pytest.mark.parametrize("tok", ["0+", "00+", "1,30+", "1,0+", "1,2,3+", "1,,200+",
+                                 "\u0668\u0660\u0660+", "\uff18\uff10\uff10+"])
+def test_a_floor_that_is_zero_or_mis_grouped_or_not_ascii_is_not_a_floor(tok):
+    """Wave 1 walked through the first version of this grammar three ways, and every one of
+    them shipped GREEN.
+
+    `0+` at all three `active_rows` sites: `docs check: 0 error(s)`, one warning in a pile of
+    six, and warnings do not touch the exit code. `1,30+` for the registry: `_int` strips
+    commas, so ONE deleted keystroke drops the floor from 1,300 to 130 and the build stays
+    green - and the near-miss `1,,200+` was worse than green, because it produced the
+    COLLAPSED message and would have sent the reader hunting a registry incident caused by a
+    comma. `\u0668\u0660\u0660+` is Arabic-Indic 800: `\\d` is Unicode-wide, so it was TRUE and
+    unreadable at the same time."""
+    cd = _cd()
+    assert cd.census_form(tok) == "malformed", tok
+    assert cd.census_floor(tok) is None, tok
+
+
+def test_a_floor_may_only_ever_be_raised(tmp_path):
+    """The move the whole change exists to remove, still available under another name.
+
+    Lowering a floor deletes the alarm exactly as widening a band did, and `floor_is_stale`
+    cannot see it: it is a DECAY detector and cannot tell `800+`-written-in-August from
+    `0+`-written-this-morning. So the linter compares against the COMMITTED blob.
+
+    The `value >= prev` clause is what stops it deadlocking: if the number really collapsed,
+    its own error fires first and lowering the floor is then the repair."""
+    cd = _cd()
+    assert cd.floor_was_lowered("800+", "700+", 969)        # pure alarm deletion
+    assert cd.floor_was_lowered("1,300+", "1,200+", 1465)
+    assert not cd.floor_was_lowered("800+", "900+", 969)    # raising is always allowed
+    assert not cd.floor_was_lowered("800+", "800+", 969)    # unchanged
+    assert not cd.floor_was_lowered("800+", "700+", 750)    # ...and the fact is already RED
+    assert not cd.floor_was_lowered(None, "700+", 969)      # a new site has nothing to ratchet
+    assert not cd.floor_was_lowered("900-1,100", "800+", 969)   # a band is not a floor
+    # `0+` no longer parses at all, so it is caught twice over
+    assert cd.census_form("0+") == "malformed"
+
+
+def _tiny_repo(tmp_path, committed, working):
+    """A one-file git repo whose README states `committed`, with `working` in the tree.
+
+    The ratchet reads the COMMITTED blob, so a guard on it has to have one. Building a real
+    repo is the only way to exercise the wiring rather than the predicate - and testing the
+    predicate alone is precisely how `floor_holds` came to be dead code."""
+    import subprocess
+    def git(*a):
+        return subprocess.run(["git"] + list(a), cwd=str(tmp_path), capture_output=True,
+                              text=True, encoding="utf-8", errors="replace")
+    git("init", "-q")
+    git("config", "user.email", "guard@example.invalid")
+    git("config", "user.name", "guard")
+    git("config", "commit.gpgsign", "false")
+    (tmp_path / "README.md").write_text(committed, encoding="utf-8")
+    git("add", "README.md")
+    assert git("commit", "-q", "-m", "baseline").returncode == 0
+    (tmp_path / "README.md").write_text(working, encoding="utf-8")
+    return git
+
+
+def _ratchet_run(tmp_path, committed, working, value):
+    cd = _cd()
+    _tiny_repo(tmp_path, committed, working)
+    cd.ROOT = str(tmp_path)
+    cd.FACTS = [cd.Fact("t_active", "census", lambda: (value,), "active companies.csv rows",
+                        [("README.md", r"reads\s+" + cd._CENSUS + r"\s+companies'")],
+                        "the headline number of the product")]
+    cd.check_derived_facts()
+    return list(cd.ERRORS), list(cd.WARNINGS)
+
+
+SAYS = "The pipeline reads %s companies' own boards every morning.\n"
+
+
+def test_lowering_a_floor_is_refused_through_the_real_check(tmp_path):
+    """The wiring, not the predicate. `elif False and floor_was_lowered(...)` killed no test
+    when the guard was only on the pure function, which is the same defect wave 1 found in
+    `floor_holds` - a boundary pinned on a copy nothing runs."""
+    errs, _w = _ratchet_run(tmp_path, SAYS % "800+", SAYS % "400+", 969)
+    assert any("LOWERS the floor" in e for e in errs), errs
+
+
+def test_raising_a_floor_is_always_allowed(tmp_path):
+    errs, _w = _ratchet_run(tmp_path, SAYS % "800+", SAYS % "900+", 969)
+    assert errs == [], errs
+
+
+def test_a_floor_may_be_lowered_once_the_number_has_actually_collapsed(tmp_path):
+    """The clause that stops the ratchet deadlocking. If the registry really did fall through
+    the old floor, its own COLLAPSED error fires and lowering is then the repair - so the
+    ratchet must NOT also fire and leave the author with nothing legal to write."""
+    errs, _w = _ratchet_run(tmp_path, SAYS % "800+", SAYS % "400+", 500)
+    assert not any("LOWERS the floor" in e for e in errs), errs
+    assert errs == [], errs                    # 500 clears the new 400+ floor: nothing to say
+
+
+def test_the_ratchet_is_wired_into_the_check_that_runs():
+    """Belt to the integration guard's braces, in the file's own source-assert idiom."""
+    cd = _cd()
+    body = cd.read(os.path.join(cd.ROOT, "docs", "check_docs.py"))
+    body = body.split("def check_derived_facts(")[1].split("\ndef ")[0]
+    assert "floor_was_lowered(" in body and "_committed_token(" in body
+    assert "elif False" not in body
+
+
+def test_the_committed_token_reader_never_refuses_a_push_it_cannot_judge():
+    """`_committed_token` returns None outside a checkout, on a file that is not in HEAD, and
+    on a site that did not state a floor before. Every one of those means "no ratchet to
+    enforce", never "refuse". A ratchet that fires when it cannot read is a ratchet that gets
+    deleted."""
+    cd = _cd()
+    assert cd._committed_token("docs/no-such-file-here.md", r"reads (\d+\+)") is None
+    assert cd._committed_token("README.md", r"nothing here matches (\d+\+)") is None
+    real = cd._committed_token("README.md", r"reads\s+" + cd._CENSUS + r"\s+companies'")
+    assert real is None or cd.census_form(real) in ("floor", "band", "bare", "malformed")
+
+
+def test_the_comparison_that_runs_is_the_one_the_boundary_guard_pins():
+    """`floor_holds` was DEAD CODE for two commits: `_fact_report` re-implemented the
+    comparison inline, so the boundary guard above pinned a function nothing called and a
+    wave-1 adversary flipped that `>=` to `>` and watched the linter and all 23 census guards
+    stay green. That is the exact sin `bracket_holds`' old docstring described, reintroduced
+    by the commit that fixed it."""
+    cd = _cd()
+    body = cd.read(os.path.join(cd.ROOT, "docs", "check_docs.py"))
+    body = body.split("def _fact_report(")[1].split("\ndef ")[0]
+    assert "floor_holds(got[0], toks[0])" in body
+    assert "ok = got[0] >= floor" not in body
+
+
+def test_a_value_exactly_at_the_floor_is_green(tmp_path):
+    """The boundary, through the REAL path rather than through `floor_holds` alone: `969+` is
+    a legal thing to write and today's 969 clears it. This is the case the `>=` -> `>`
+    mutation flips, and until `_fact_report` called `floor_holds` nothing caught it."""
+    errs, _warns = _census_run(
+        tmp_path, "The pipeline reads 969+ companies' own boards every morning.", 969)
+    assert errs == [], errs
+
+
+def test_the_two_live_floors_cannot_imply_a_coverage_ratio_that_is_false():
+    """`active_rows` and `registry_rows` are the numerator and denominator of one sentence in
+    README.md and CLAUDE.md: "reads N companies' own boards ... out of a registry of M rows".
+    Both floors can be individually true and jointly a lie - wave 1 set the registry floor to
+    `800+` and the linter said nothing, leaving a visitor to infer 100% coverage against a
+    real 969 of 1,465 (66%). The linter checks numbers, never their relationship, so the
+    relationship is pinned here."""
+    cd = _cd()
+    floors = {}
+    for fact, got, rows in cd._fact_report():
+        if fact.kind != "census":
+            continue
+        for _doc, _line, tok, ok, _note in rows:
+            if ok and tok:
+                floors.setdefault(fact.name, cd.census_floor(tok))
+    assert "active_rows" in floors and "registry_rows" in floors, floors
+    assert floors["active_rows"] < floors["registry_rows"] * 0.9, floors
+
+
+def test_every_live_census_site_carries_a_floor_and_clears_it():
+    """Walks the REAL registry over the REAL documents. The parametrized guards above can all
+    pass while the shipped docs still carry a band; this is the one that reads what shipped."""
+    cd = _cd()
+    seen = 0
+    for fact, got, rows in cd._fact_report():
+        if fact.kind != "census":
+            continue
+        for doc_rel, _line, tok, ok, note in rows:
+            assert tok is not None, "%s: %s no longer states it" % (fact.name, doc_rel)
+            assert cd.census_form(tok) == "floor", \
+                "%s:%s writes %r, which is not a floor" % (doc_rel, fact.name, tok)
+            assert ok, "%s:%s %s" % (doc_rel, fact.name, note)
+            seen += 1
+    assert seen >= 5, seen
 
 
 def test_a_number_inside_a_url_or_a_link_target_is_never_a_claim():
@@ -11546,8 +11831,8 @@ def test_the_collected_test_count_never_falls():
     proc = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q"],
                           capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=root)
     n = sum(int(m) for m in re.findall(r"^tests[/\\][^:]+: (\d+)$", proc.stdout, re.M))
-    assert n >= 963, (
-        "%d tests collected, floor is %d - a guard was deleted" % (n, 16))
+    assert n >= 1141, (
+        "%d tests collected, floor is %d - a guard was deleted" % (n, 1141))
 
 
 # --- docs lane, 2026-08-27: HANDOFF.md's cap and the morning checks --------------------
@@ -11597,6 +11882,77 @@ def test_every_morning_check_verdict_is_one_a_reader_can_check():
         [v for v in ok if not cd._VERDICT_OK.match(v)]
     assert not any(cd._VERDICT_OK.match(v) for v in bad), \
         [v for v in bad if cd._VERDICT_OK.match(v)]
+
+HDR = ("| due | lane | must be true | answered | verdict |\n"
+       "|---|---|---|---|---|\n")
+GOOD = "| %s | docs | it says the thing | %s | PASS - `grep me`, and it really was there |\n"
+# The two rows the AGE half of the check exists for: a long-past row nobody answered, and one
+# that answers itself by saying it is not due. Both must WARN in HANDOFF and be SILENT in the
+# archive - the asymmetry is only pinned if the fixtures can actually trip it.
+UNANSWERED = "| %s | docs | the thing everyone forgot | — |  |\n"
+STALE = "| %s | docs | the thing nobody looked at | — | not yet due |\n"
+
+
+def _morning_tree(tmp_path, archive_body, handoff_body=None):
+    """A minimal ROOT with a HANDOFF and an archive, for the morning-check guards."""
+    (tmp_path / "docs").mkdir(exist_ok=True)
+    (tmp_path / "HANDOFF.md").write_text(
+        "## Morning checks\n\n" + HDR
+        + (handoff_body if handoff_body is not None else GOOD % ("2026-01-01", "2026-01-02")),
+        encoding="utf-8")
+    (tmp_path / "docs" / "morning-checks.md").write_text(archive_body, encoding="utf-8")
+    cd = _cd()
+    cd.ROOT = str(tmp_path)
+    cd.check_morning_checks()
+    return list(cd.ERRORS), list(cd.WARNINGS)
+
+
+def test_the_archive_is_checked_for_shape_but_never_for_age(tmp_path):
+    """`check_morning_checks` read HANDOFF.md and nothing else, so `docs/morning-checks.md`
+    — where every answered row ends up, and which three lanes wrote to on 2026-08-27/28
+    — was linted by nothing at all.
+
+    The split matters in both directions. SHAPE is an error in both files, because a row
+    nobody can parse is a record nobody can audit, and it is the writing session's own work.
+    AGE is checked only in HANDOFF: an archived row is history, and history that can go red
+    for being old is history somebody will quietly edit."""
+    # BOTH DIRECTIONS, and the fixtures are the ones that can actually fire. The first
+    # version of this guard archived a row with a valid `PASS` verdict, so applying the age
+    # checks to the archive would have changed nothing: a wave-2 mutation that did exactly
+    # that survived, and this was the only one of twenty guards that still passed against the
+    # pre-change linter.
+    aged = "# archive\n\n" + HDR + GOOD % ("1999-01-01", "1999-01-02") \
+        + UNANSWERED % "1999-01-01" + STALE % "1999-01-01"
+    errs, warns = _morning_tree(tmp_path, aged)
+    assert errs == [] and warns == [], (errs, warns)
+    # ...and the very same two rows in HANDOFF.md DO warn, which is what makes the silence
+    # above a decision rather than an accident.
+    errs2, warns2 = _morning_tree(
+        tmp_path, "# archive\n", UNANSWERED % "1999-01-01" + STALE % "1999-01-01")
+    assert errs2 == [], errs2
+    assert len(warns2) == 2, warns2
+    assert any("has no verdict" in w for w in warns2), warns2
+    assert any("still says `not yet due`" in w for w in warns2), warns2
+
+
+def test_a_morning_check_table_with_no_separator_row_renders_as_prose_and_is_an_error(tmp_path):
+    """docs/morning-checks.md carried a header with no `|---|` under it. Every row below it
+    still PARSED, so every check passed while a human reader saw a wall of pipes."""
+    errs, _warns = _morning_tree(
+        tmp_path,
+        "# archive\n\n| due | lane | must be true | answered | verdict |\n"
+        + GOOD % ("1999-01-01", "1999-01-02"))
+    assert any("separator" in e for e in errs), errs
+
+
+def test_an_archived_verdict_a_reader_cannot_check_is_still_an_error(tmp_path):
+    """The archive is the record of how often this project's predictions came true. A bare
+    `PASS` there is the same silence the table exists to end."""
+    errs, _warns = _morning_tree(
+        tmp_path, "# archive\n\n" + HDR
+        + "| 1999-01-01 | docs | it says the thing | 1999-01-02 | looked fine |\n")
+    assert any("archived morning check" in e for e in errs), errs
+
 
 def test_no_morning_check_is_stated_in_prose_where_nobody_can_answer_it():
     """Fourteen `Morning check <date>:` sentences were buried in HANDOFF.md's prose and NOT
@@ -11780,6 +12136,9 @@ def test_a_date_is_not_a_census_number():
     cd = _cd()
     assert not re.search(cd._CENSUS + r" company profiles", "the 2026-08-27 company profiles")
     assert re.search(cd._CENSUS + r" company profiles", "~1,000 company profiles")
+    assert not re.search(cd._CENSUS + r" company profiles", "the 2026-08-27 company profiles+")
+    assert re.search(cd._CENSUS + r" company profiles", "900+ company profiles").group(1) \
+        == "900+"
 
 
 def test_a_workflow_that_runs_a_module_is_found_however_it_spells_it():
@@ -11958,8 +12317,11 @@ def test_fix_is_a_dry_run_without_apply_and_unreachable_from_the_default_path():
 
 
 def test_fix_never_touches_a_census_fact():
-    """A census number encodes a judgement about the precision the author is willing to stand
-    behind. A script must not make that judgement; an exact number is arithmetic."""
+    """A census number encodes a judgement about the FLOOR the author is willing to stand
+    behind. A script must not make that judgement; an exact number is arithmetic. Re-argued
+    on 2026-08-28 when the census model became one-sided: raising a floor is monotone and
+    could in principle be automated, and it still is not, because the one thing `--fix` must
+    never be able to do is make a census error go away."""
     cd = _cd()
     src = cd.read(os.path.join(cd.ROOT, "docs", "check_docs.py"))
     body = src.split("def fix_facts(")[1].split("\ndef ")[0]

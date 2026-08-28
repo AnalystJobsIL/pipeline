@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**399 filed · 288 open · 111 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**405 filed · 294 open · 111 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 357.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 363.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -170,7 +170,7 @@ closure convention in the header.
 - **354** `354@registry` **The nine address-refused rows are refused from a HOME address too**
 - **355** `355@registry` **The nightly embed handoff has no reader yet**
 
-### infra — 71 open
+### infra — 73 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -243,6 +243,8 @@ closure convention in the header.
 - **335** `335@infra` **`BD_MONTHLY_BUDGET` defaults to 5,000 and no workflow sets it, so credits the
 - **349** `349@infra` **`pipeline/stages.py:stamp()` over an unreadable file silently deletes every other
 - **350** `350@infra` **`refresh_scrape_cache` runs in exactly ONE workflow, on a 00:00 cron GitHub is
+- **357** `357@infra` **`tests.yml` runs four safety steps AFTER the docs linter in the SAME job, so any doc
+- **358** `358@infra` **Three cron slots did not fire on 2026-08-28, and only a hand-dispatched digest covered
 
 ### scraper — 21 open
 
@@ -291,7 +293,7 @@ closure convention in the header.
 - **337** `337@discovery` **The secrethunter catalog's own-domain and job-title data has no honest route, and the
 - **340** `340@discovery` **`pipeline/aggregators.py` does not know the Israeli job boards, and the hunt will
 
-### docs — 15 open
+### docs — 18 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
 - **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
@@ -308,6 +310,26 @@ closure convention in the header.
 - **303** `303@docs` **ARCHITECTURE section 8's guard-rail table describes guards that have moved**
 - **338** `338@docs` **`HANDOFF.md` is at its word cap, so two lanes finishing on the same day cannot both
 - **344** `344@docs` **Sweep for tests that drive a root script's `main()` without `chdir` or explicit paths** —
+- **360** `360@docs` **ARCHITECTURE.md states the active-row count six ways and two of them carry no date**
+- **361** `361@docs` **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
+- **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
+
+### company-intel — 14 open
+
+- **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
+- **97** `97@company-intel` **Retire (or weekly) the Windows firmographics chain** *(closed by a later bullet, original never edited)*
+- **98** `98@company-intel` **29 identity-duplicate groups in the export** *(closed by a later bullet, original never edited)*
+- **101** `101@company-intel` **`looks_like_junk` cannot catch a bare job title** *(closed by a later bullet, original never edited)*
+- **117** `117@company-intel` **One `claude -p` seam for the repo** *(closed by a later bullet, original never edited)* *(half closed)*
+- **120** `120@company-intel` **Company intel rediscovers an outage the classifier already found** *(closed by a later bullet, original never edited)*
+- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
+- **141** `141@company-intel` **`research_firmographics.py` and `run.py` disagree on the company set** *(closed by a later bullet, original never edited)*
+- **144** `144@company-intel` **One identity group, two employers: the blurb crosses** *(closed by a later bullet, original never edited)*
+- **242** `242@company-intel` **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** — *(closed by a later bullet, original never edited)*
+- **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
+- **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
+- **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
+- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no
 
 ### ats-fetch — 13 open
 
@@ -324,22 +346,6 @@ closure convention in the header.
 - **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
 - **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
 - **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
-
-### company-intel — 13 open
-
-- **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
-- **97** `97@company-intel` **Retire (or weekly) the Windows firmographics chain** *(closed by a later bullet, original never edited)*
-- **98** `98@company-intel` **29 identity-duplicate groups in the export** *(closed by a later bullet, original never edited)*
-- **101** `101@company-intel` **`looks_like_junk` cannot catch a bare job title** *(closed by a later bullet, original never edited)*
-- **117** `117@company-intel` **One `claude -p` seam for the repo** *(closed by a later bullet, original never edited)* *(half closed)*
-- **120** `120@company-intel` **Company intel rediscovers an outage the classifier already found** *(closed by a later bullet, original never edited)*
-- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
-- **141** `141@company-intel` **`research_firmographics.py` and `run.py` disagree on the company set** *(closed by a later bullet, original never edited)*
-- **144** `144@company-intel` **One identity group, two employers: the blurb crosses** *(closed by a later bullet, original never edited)*
-- **242** `242@company-intel` **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** — *(closed by a later bullet, original never edited)*
-- **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
-- **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
-- **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
 
 ### roles — 7 open
 
@@ -5689,3 +5695,108 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     adversarial pass; this session used `--only` with nine explicit names instead. Either cap
     the row count under `--residential` or make it refuse `--only-missing` above some share of
     the pool.
+## From the `docs` lane, 2026-08-28
+
+357. **`tests.yml` runs four safety steps AFTER the docs linter in the SAME job, so any doc
+    error skips them** — lane: `infra`, found 2026-08-28 by `docs`. `guard` runs, in order:
+    `Compile everything`, `Unit guards` (`python -m pytest`, which shells out to
+    `docs/check_docs.py`), `Registry invariants`, `Fourteen rehearsed nights`, `Five
+    mixed-policy rehearsals`, `Platform wiring report`. There is no `needs:` anywhere in this
+    repo — `grep -rn 'needs:' .github/workflows/` returns only prose comments — so nothing
+    gates a JOB on another, and the gating here is plain step ordering: GitHub skips every
+    later step in a failed job. (`if:` does exist, 24 uses across 9 workflow files, e.g.
+    `daily-digest.yml:221` and `audit-coverage.yml:93`; `tests.yml` is the one workflow with
+    no `if:` and no `continue-on-error:` at all, by design and by its own header comment.)
+
+    Measured, not argued: runs `33115068319`, `33115297808`, `33116880121`, `33117303189`,
+    `33118081587`, `33119191959`, `33119862389` — seven consecutive pushes on 2026-08-27 —
+    each show `Registry invariants=skipped` and `Fourteen rehearsed nights=skipped`. That
+    week the cause was a jd-text unit test (`FAILED
+    tests/test_units.py::test_a_role_is_filled_from_another_address_it_was_seen_at - assert
+    (170 == 2021)`, fixed by `124d27e`), but the mechanism does not care which test failed:
+    on the morning of 2026-08-28 the failing one was the docs linter, over the number `~900`
+    in a README.
+
+    Two candidate fixes, both `infra`'s call: move `Registry invariants` and the two
+    rehearsal steps ABOVE `Unit guards`, or split `guard` into two jobs with no `needs:`
+    between them so neither can disable the other. The second is better — ordering makes
+    the registry gate run FIRST but still lets the rehearsals be skipped by it — and costs
+    one extra checkout. `docs` deliberately did not edit `.github/workflows/`.
+
+358. **Three cron slots did not fire on 2026-08-28, and only a hand-dispatched digest covered
+    it** — lane: `infra`, measured 2026-08-28 07:57Z by `docs`. `daily-digest.yml` is
+    `0 5 * * *` and its only run today is `33148916309`, event `workflow_dispatch`, started
+    06:43:44Z. `retry-unreachable.yml` is `30 2 * * *` and its last run is `33074336185`,
+    2026-08-27T12:57Z — nothing on 08-28 at all, 5h27m after the slot.
+    `auto-expand.yml` is `0 8,20` and its last run `33140809914` started 04:05:51Z, which is
+    08-27's 20:00 slot 8h06m late.
+
+    This is the measurement the 2026-09-10 morning-check row is waiting for (`python
+    tests/schedule_census.py --days 14`, **>= 3 isolated single-slot drops => build the
+    recovery digest cron**). It was 0 isolated drops on 2026-08-27; three slots on one
+    morning is a data point in the other direction, and it should be counted by the tool
+    rather than by this bullet — `docs` did not run `schedule_census.py`, which is
+    `infra`'s instrument.
+
+359. **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no
+    longer carries a number** — lane: `company-intel`, opened 2026-08-28 by `docs`. Until
+    today the profile count was a registered census fact with one site, a cell in
+    `docs/AGENT_BRIEF.md`'s flow diagram, written `~1,000`. That bracket was never a collapse
+    alarm — it fired on growth just as readily — and the cell now names the FILE, the way
+    every other cell in that diagram does. So nothing that was being checked stopped being
+    checked, but nothing checks the store either.
+
+    It is worth an alarm: 919 -> 995 profiles over 11 recorded commits, never once falling.
+    The right home is the digest's `Company intel:` line, beside the export count it already
+    prints, as a floor rather than a band — same argument as
+    `docs/decisions/2026-08-28-census-facts.md`.
+
+360. **ARCHITECTURE.md states the active-row count six ways and two of them carry no date**
+    — lane: `docs` with `company-intel` and `classifier`, found 2026-08-28. The code says
+    969 active / 1,465 rows today. `ARCHITECTURE.md` says 873 (L229), 870 (L240), 877 (L243),
+    873 (L2142), 862 (L3416), 897 (L2777), and 1,244 registry rows (L2824). Most are DATED
+    measurements or carry a re-derive command, which is the repo's stated mitigation and is
+    fine. **L2777 (`897 active companies, 968 researched`) and L3416 (`862 companies`) carry
+    neither**, so a reader has no way to know they are records rather than claims.
+
+    The fix is a date stamp, not a new number, and it must be made by the lane that took the
+    measurement — `docs` may not rewrite another lane's figure from memory. Registering
+    them is NOT the fix: a dated record is not a claim about today, and the fact registry
+    says so in `_CENSUS`'s comment.
+
+361. **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
+    the evicting instead** — lane: `docs`, opened 2026-08-28, the durable half of 338.
+    `HANDOFF.md`'s own header says answered rows older than seven days move to
+    `docs/morning-checks.md`, and nothing enforces it. What enforces it in practice is the
+    3,200-word cap going red, which is why `roles` (08-27), `discovery` (08-27) and `docs`
+    (08-28) all moved rows the same day they were answered rather than a week later — three
+    sessions performing a rule none of them was following.
+
+    Not fixed here on purpose. Making it an ERROR punishes whichever lane happens to push
+    next for a row somebody else answered, which is exactly the incentive inversion
+    `check_morning_checks`' docstring warns about, and the cheapest way out of it would be to
+    delete the row. A WARNING is what the file already gets for an unanswered row and is
+    ignored. The shape worth trying: the eviction becomes an error only for a row whose
+    ANSWERED date is more than seven days old, since by then the session that answered it has
+    long gone and no live prediction can be lost.
+
+362. **Nothing asserts that the test suite leaves the working tree clean** — lane: `docs`,
+    opened 2026-08-28. An adversarial session running the suite in this worktree found six
+    modified files it had not written, reasonably assumed its own harness had produced them,
+    and ran `git checkout -- .`. It destroyed five files of another session's uncommitted
+    work. It then had to prove the suite is not a writer the long way: `--fix` without
+    `--apply` is a dry run and `test_fix_is_a_dry_run_without_apply_and_unreachable_from_the_
+    default_path` pins it; `docs/backlog.py` writes nothing without a flag. That took an hour
+    of misdiagnosis that a single assertion would have ended.
+
+    The obvious form — a test that runs `git status --porcelain` and asserts it is empty —
+    is WRONG here and should not be written: nine lanes share one checkout, the crons commit
+    into it, and it would be red for reasons no test author caused. The shape that works is a
+    guard that snapshots the hashes of the files the suite could plausibly write (`README.md`,
+    `CLAUDE.md`, `ARCHITECTURE.md`, `HANDOFF.md`, `docs/*.md`, `companies.csv`,
+    `cloud_state/*`) at session start and asserts they are unchanged at the end — scoped to
+    tracked paths, silent about everything else.
+
+    Related, and the more useful half: the lane-spawn prompt should give every adversarial
+    subagent **its own worktree**. Two of them shared one today; one kept finding the other's
+    mutations, and the other deleted work it had not written.

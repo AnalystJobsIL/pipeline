@@ -54,7 +54,7 @@ mode this whole documentation set is arranged against.
    └────────┬───────────┘
             ▼
    ┌── 2 REGISTRY ──────┐   resolve a name to a board, repair a dead one,
-   │  lane: registry ✱  │   park what is genuinely dark   ──▶ companies.csv (900-1,100 active)
+   │  lane: registry ✱  │   park what is genuinely dark   ──▶ companies.csv  (800+ active)
    └────────┬───────────┘
             ▼
    ┌── 3 FETCH ─────────┐   ats-fetch · native ATS APIs   (17 platforms)
@@ -64,7 +64,7 @@ mode this whole documentation set is arranged against.
             ▼
    ┌── 4 ENRICH ────────┐   jd-text      · a description for every relevant role, any age
    │ lanes: jd-text     │   company-intel · sector / stage / size / founded
-   │     + company-intel│                                 ──▶ ~1,000 company profiles
+   │     + company-intel│                                 ──▶ cloud_state/firmographics.json
    └────────┬───────────┘
             ▼
    ┌── 5 CLASSIFY ──────┐   Israel filter → relevance/seniority → LLM for the ambiguous
@@ -225,7 +225,7 @@ push if:
 
 | the check | what it catches |
 |---|---|
-| **derived facts** | a number a doc states drifting from the code — 10 registered facts, 18 sites. EXACT facts (`len(FETCHERS)`, module counts, the c-o-e ratio) are held to equality; CENSUS facts (active rows, profiles) may not carry a bare point number at all, only `~900` or `850-950`, because they move when a cron runs and nobody pushes. `--facts` prints all of them |
+| **derived facts** | a number a doc states drifting from the code — 9 registered facts, 18 sites. EXACT facts (`len(FETCHERS)`, module counts, the c-o-e ratio) are held to equality, because only a push moves them. CENSUS facts (active rows, registry rows) move when a cron ran and nobody pushed, so since 2026-08-28 they are held ONE-SIDED: the site writes a FLOOR, `N+`, and only a COLLAPSE through it is an error — a bare number and a two-sided band are both refused, because widening a band is the move that deletes the alarm. A count no decision turns on carries the command instead, the way the profile count now does: `python -c "import json;print(len(json.load(open('cloud_state/firmographics.json',encoding='utf-8'))))"`. `--facts` prints all of them |
 | **the backlog index** | a stale per-lane index, or an item naming a lane that does not exist |
 | **morning checks** | a prediction stated in prose where nobody can answer it, or a verdict a reader cannot check |
 | paths exist | a doc naming a file that was renamed or deleted |

@@ -359,17 +359,11 @@ def check_schedule_table() -> None:
 #           count, the continue-on-error ratio). The person who can fix it is the person
 #           pushing, so equality is the right contract and red is the right colour.
 #
-#   CENSUS  moves because eight cron jobs ran (active rows, scrape rows, profiles). No
-#           session causes the move, so equality punishes the innocent. Measured from git,
-#           one snapshot per day, active went 530 -> 754 -> 862 -> 877 -> 870 -> 875: an
-#           equality check seeded on the day the docs were written would have been RED ON
-#           3 OF THE NEXT 3 DAYS, and a linter that cries wolf gets `# noqa`'d.
-#           A census site therefore may not carry a bare point number at all. It carries a
-#           BRACKET, and the precision the author writes IS the tolerance they are claiming:
-#           `~1,200` claims "round to the nearest hundred", `~870` claims "to the nearest
-#           ten". No tolerance number lives in this file - the notation English already uses
-#           is the machine-readable contract. Over the same six days, precision-100
-#           brackets are green on every census fact on every day, including the +108 one.
+#   CENSUS  moves because eight cron jobs ran (active rows, registry rows). No session
+#           causes the move, so equality punishes the innocent - and so does a two-sided
+#           band, which is the same mistake with a wider mouth. A census site carries a
+#           FLOOR and goes red only when the number COLLAPSES through it. The grammar and
+#           the measurements behind it are above `_CENSUS`.
 #
 # Sites are an EXPLICIT per-fact file list, never `docs()`. The old check iterated
 # DOC_GLOBS, which includes docs/sessions/ and docs/decisions/ - files this module declares
@@ -477,24 +471,42 @@ def _coe_ratio() -> tuple:
     return coe, steps
 
 
-def _firmographics() -> int:
-    import json as _json
-    return len(_json.loads(read(os.path.join(ROOT, "cloud_state", "firmographics.json"))))
-
-
-# The one shape a census claim may take. Three readings, checked differently:
-#   `875`            BARE   - always an error; it will be wrong within a day
-#   `~900`           BRACKET - true if rounding today's value to the precision the author
-#                    wrote lands on it. `~1,200` claims hundreds, `~870` claims tens.
-#   `850-950`        RANGE  - true if today's value is inside it, ends included.
-# The range exists because a bracket's headroom depends on where in the bracket you sit,
-# and two of the five census facts measured on 2026-08-27 were within 5 of an edge
-# (registry 1,244 against `~1,200`; API rows 451 against `~500`). A range lets the author
-# state the headroom they want instead of inheriting whatever the boundary gives them.
+# The one shape a census claim may take is a FLOOR. Four readings, one of them legal:
+#   `800+`            FLOOR   - true iff today is at least 800. Growth cannot break it.
+#   `875`             BARE    - an error; it will be wrong within a day.
+#   `~900`            BRACKET - an error as of 2026-08-28: a band with soft edges.
+#   `850-950`         RANGE   - an error as of 2026-08-28: a band with hard ones.
+#
+# Why one-sided, and why the two-sided forms are REFUSED rather than merely discouraged.
+# A census number moves because the crons ran. Held to a band it fails when the project is
+# WORKING, and worst exactly when growth is fastest: active rows went 873 -> 969 in the 14
+# hours to 2026-08-28T07:08Z and blew a `~900` bracket written two days earlier. It turns
+# `pytest` red - and `Registry invariants` and the fourteen rehearsed nights are steps
+# BELOW `Unit guards` in the same `tests.yml` job, so a failure there SKIPS them (verified
+# on runs 33115068319..33119862389, seven pushes on 2026-08-27, both `skipped` in each).
+# A stale number in a README can switch off the registry gate.
+#
+# Widening the band was the rejected option, and this is the argument: at +96 rows in 14
+# hours - 42 of them in 73 minutes, `0c69eaa` 20:26Z to `d76fb10` 21:39Z - any band narrow
+# enough to mean something is a scheduled false alarm, and a band
+# wide enough never to fire checks nothing. Widening is the move that deletes the alarm
+# while looking like maintenance, and leaving the two-sided forms legal leaves it available.
+#
+# The signal worth keeping is the other direction. 969 -> 400 is a bad merge or a mass
+# deactivation - section 8's mass-zero class - and a floor is exactly the check for it.
+# Measured over all 111 commits that ever touched companies.csv: the largest legitimate
+# FALL on record is 900 -> 846 on 2026-08-23, -6.0% inside ONE hour (`8644d8f` 05:44Z ->
+# `c832a2a` 06:44Z); the largest single-commit rise is +140. A floor with more headroom
+# than 6% catches the emergency and nothing that
+# has ever happened normally.
+#
 # The lookaround is load-bearing: without it `the 2026-08-27 company profiles pass`
 # captured `08-27` as the range 8-27, and `registry of 2026-08 rows` as a 2,000-wide
-# bracket that would pass anything.
-_CENSUS = r"(?<![\d,\-–])(~?\d[\d,]*(?:[-–]\d[\d,]*)?)(?![\d\-–])"
+# bracket that would pass anything. `+` is inside the token and excluded from the trailing
+# lookahead, so `800+` reads as one claim. The two-sided alternatives stay INSIDE the token
+# on purpose: it must still CAPTURE `~900` so the checker can name the form it saw, instead
+# of reporting the far more confusing "this site matches nothing any more".
+_CENSUS = r"(?<![\d,\+\-–])(~?\d[\d,]*(?:[-–]\d[\d,]*)?\+?)(?![\d\-–+])"
 
 FACTS = [
     Fact("coe_ratio", "exact", _coe_ratio, "continue-on-error of workflow steps",
@@ -552,10 +564,21 @@ FACTS = [
     # survive that, so those sites carry the COMMAND instead of a number. Registering them
     # would be registering the wrong thing.
 
-    Fact("firmographics_profiles", "census", lambda: (_firmographics(),),
-         "company profiles in cloud_state/firmographics.json",
-         [("docs/AGENT_BRIEF.md", _CENSUS + r" company profiles")],
-         "the company-intel lane's coverage - the brief said 926 while the file held 973"),
+    # firmographics_profiles was registered here until 2026-08-28 and is now DELIBERATELY
+    # not, for the same reason as api_rows above but arriving from the other side. Its one
+    # site was a cell in docs/AGENT_BRIEF.md's flow diagram, whose reader is an AGENT - who
+    # can run a command - and whose every other cell names the FILE a step produces rather
+    # than how much of it there is. So the cell now names `cloud_state/firmographics.json`
+    # and the count is one command away. Nothing that was checked stops being checked: a
+    # bracket was never a collapse alarm. A real alarm for that store belongs on the
+    # digest's `Company intel:` line, and is filed against `company-intel` in the backlog.
+
+    Fact("facts_registry", "exact",
+         lambda: (len(FACTS), sum(len(f.sites) for f in FACTS)),
+         "registered facts and the sites they are checked at",
+         [("docs/AGENT_BRIEF.md", r"(\d+) registered facts, (\d+) sites")],
+         "the brief said `10 registered facts, 18 sites` while FACTS held 9 - the paragraph "
+         "explaining the registry was the one number the registry did not check"),
 ]
 
 # Regions where a number is NOT a claim: a URL, a markdown link target, an HTML comment.
@@ -577,52 +600,133 @@ def _vetoed(span, spans) -> bool:
 
 
 def _int(tok: str) -> int:
-    return int(tok.replace(",", "").lstrip("~"))
+    return int(tok.replace(",", "").lstrip("~").rstrip("+"))
 
 
-def precision(tok: str) -> int:
-    """The tolerance the author claimed, read off the trailing zeros they wrote:
-    `~1,200` -> 100, `~870` -> 10, `~875` -> 1. That is the entire tolerance model, and it
-    lives in the notation the reader can already see rather than in a config in this file."""
-    digits = tok.replace(",", "").lstrip("~")
-    if not digits.isdigit() or not digits:
-        return 1
-    zeros = len(digits) - len(digits.rstrip("0"))
-    # A number can never claim a tolerance wider than its own leading digit: `~1,000`
-    # claims thousands, not ten-thousands.
-    return min(10 ** zeros, 10 ** (len(digits) - 1))
+# The ONLY tolerance number in this file, and it never decides whether a check passes.
+# `census_floor` is exact: today either clears the floor the author wrote or it does not.
+# This constant answers the two advisory questions - "what floor should I suggest to an
+# author who has to write one right now?" and "when has a floor fallen so far behind that
+# it has stopped checking anything?" - and it is set from measurement, not taste. Over
+# all 111 commits that ever touched companies.csv the largest legitimate fall is -6.0%
+# (900 -> 846, 2026-08-23, inside one hour). A floor 15% below today therefore has about
+# 2.5x the headroom of the worst thing that has ever normally happened.
+CENSUS_HEADROOM = 0.15
 
 
-def _round_half_up(n: int, prec: int) -> int:
-    """Explicit half-up. Python's round() is banker's - round(850, -2) is 800 - so `~900`
-    would be wrong for 850 and right for 851. A doc contract must not hinge on that."""
-    return ((n + prec // 2) // prec) * prec
+# A floor is a plain, CANONICALLY GROUPED, ASCII, non-zero number and a plus. The first
+# version accepted `\d[\d,]*\+`, and a wave-1 adversary walked straight through it: `1,30+`
+# parsed as 130 because `_int` just strips commas, so one deleted keystroke drops the
+# registry floor tenfold and the build stays green. `1,,200+` was worse than green - it
+# parsed as 1,200, passed, and the near-miss `1,,+` produced the COLLAPSED message, which
+# sends the reader hunting a registry incident caused by a comma. `0+` and `00+` are
+# refused because a floor of zero is not a claim, and non-ASCII digits are refused because
+# `\d` is Unicode-wide: `٨٠٠+` is TRUE (800) and unreadable in an English README.
+_FLOOR_BODY = re.compile(r"\d{1,3}(?:,\d{3})*|\d+")
 
 
-def bracket_holds(true_value: int, tok: str) -> bool:
-    """Defined in terms of census_span so the tested function IS the running one. It used to
-    be an independent implementation reached only from the test suite, and the two disagreed
-    on the form that matters: `bracket_holds(875, "875")` was True while `census_span("875")`
-    is None, which is the bare-number error."""
-    span = census_span(tok)
-    return span is not None and span[0] <= true_value <= span[1]
+def census_form(tok: str) -> str:
+    """What shape the author wrote: `floor`, `bare`, `band` or `malformed`.
+
+    One function decides, so the check and the error message can never disagree about what
+    they are looking at - which is the bug that made `bracket_holds(875, "875")` True while
+    the parser called a bare number an error."""
+    if tok.endswith("+"):
+        body = tok[:-1]
+        if not body.isascii() or not _FLOOR_BODY.fullmatch(body):
+            return "malformed"
+        return "floor" if int(body.replace(",", "")) > 0 else "malformed"
+    if re.search(r"[-–]", tok) or tok.startswith("~"):
+        return "band"
+    return "bare"
 
 
-def census_span(tok: str):
-    """The closed interval a census token claims, or None if it claims a bare point value.
-    A bare number is the one form that is always wrong here, so it gets no interval."""
-    parts = re.split(r"[-–]", tok)
-    if len(parts) == 2 and parts[0].strip("~") and parts[1]:
-        lo, hi = _int(parts[0]), _int(parts[1])
-        if lo > hi:
-            raise ValueError("range is written backwards: %s" % tok)
-        return (lo, hi)
-    if len(parts) > 2:
-        raise ValueError("a census range has two ends, not %d: %s" % (len(parts), tok))
-    if not tok.startswith("~"):
+def census_floor(tok: str):
+    """The floor a census token claims, or None if it does not claim one.
+
+    A floor is EXACT and one-sided: `800+` says the number is at least 800, and no rounding,
+    precision or tolerance enters. That is the whole model, and it replaced a bracket model
+    in which the trailing zeros of `~1,200` set a tolerance - correct, ingenious, and still
+    a two-sided band, which is the thing that kept going red for growing."""
+    return _int(tok) if census_form(tok) == "floor" else None
+
+
+def floor_holds(true_value: int, tok: str) -> bool:
+    """Defined in terms of census_floor so the tested function IS the running one."""
+    floor = census_floor(tok)
+    return floor is not None and true_value >= floor
+
+
+def suggested_floor(value: int):
+    """A floor to offer an author who has to write one now: today's value less
+    CENSUS_HEADROOM, rounded DOWN to two significant figures so it reads like a number a
+    person chose. 969 -> `820+`, 1,465 -> `1,200+`. Rounding down matters: a suggestion
+    that rounded up could be above today's value, and the linter would then be proposing an
+    edit that goes red the moment it is made.
+
+    None when today's value cannot carry a floor at all. The first version returned `1+` for
+    0 - a floor ABOVE the value, asserting "15% headroom" - on precisely the morning the
+    number has gone to zero, which is the mass-zero class this whole check exists for and
+    the one morning the message must not be nonsense."""
+    target = int(value * (1 - CENSUS_HEADROOM))
+    if target < 1:
         return None
-    p, n = precision(tok), _int(tok)
-    return (n - p // 2, n + (p - p // 2) - 1)
+    step = 10 ** max(0, len(str(target)) - 2)
+    floor = (target // step) * step
+    return "{:,}+".format(floor) if 0 < floor <= value else None
+
+
+def floor_was_lowered(prev_tok, tok, value: int) -> bool:
+    """True when a doc edit LOWERS a floor the number had not fallen through.
+
+    A floor may only ever be raised. Nothing could see that until 2026-08-28: a wave-1
+    adversary set all three `active_rows` sites to `0+`, and the build was GREEN with one
+    warning in a pile of six - warnings do not touch the exit code. `floor_is_stale` cannot
+    help, because it is a DECAY detector: it cannot tell `800+`-written-in-August from
+    `0+`-written-this-morning. Lowering a floor is widening a band under another name, and
+    the whole point of the change that introduced floors was to make that move unavailable.
+
+    The `value >= prev` clause is what stops this deadlocking. If the registry really did
+    collapse, the collapse error fires first and lowering the floor is then the correct
+    repair; it is only forbidden while the OLD floor still holds, which is the case where
+    lowering can be nothing but alarm-deletion."""
+    prev = census_floor(prev_tok) if prev_tok else None
+    new = census_floor(tok)
+    return prev is not None and new is not None and new < prev and value >= prev
+
+
+def _committed_token(doc_rel: str, pattern: str):
+    """The census token this site carried at HEAD, or None if it cannot be read.
+
+    Reads the committed blob, never the working tree, so an edit in progress is compared
+    against what is actually on the branch. Returns None outside a git checkout, on a new
+    file, or when the site did not state a floor before - all of which mean "no ratchet to
+    enforce", never "refuse the push"."""
+    import subprocess
+    try:
+        out = subprocess.run(["git", "show", "HEAD:" + doc_rel], cwd=ROOT,
+                             capture_output=True, text=True, encoding="utf-8",
+                             errors="replace")
+    except Exception:                                             # noqa: BLE001
+        return None
+    if out.returncode != 0 or not out.stdout:
+        return None
+    spans = _veto_spans(out.stdout)
+    for m in re.finditer(pattern, out.stdout, re.M):
+        if _vetoed(m.span(), spans):
+            continue
+        toks = [g for g in m.groups() if g is not None]
+        if toks:
+            return toks[0]
+    return None
+
+
+def floor_is_stale(value: int, tok: str) -> bool:
+    """True when a floor has been outgrown by twice the headroom it was written with, so it
+    has quietly stopped checking anything. Advisory only - it raises a WARNING, never an
+    error, because the growth that caused it was nobody's push."""
+    floor = census_floor(tok)
+    return floor is not None and value * (1 - 2 * CENSUS_HEADROOM) > floor
 
 
 def _fact_report() -> list:
@@ -654,17 +758,20 @@ def _fact_report() -> list:
                     ok = tuple(_int(t) for t in toks) == tuple(got)
                     note = "" if ok else "code says " + ", ".join(str(g) for g in got)
                 else:
-                    try:
-                        span = census_span(toks[0])
-                    except ValueError as e:                       # noqa: PERF203
-                        rows.append((doc_rel, line, ", ".join(toks), False,
-                                     "unreadable: %s" % e))
-                        continue
-                    if span is None:
-                        ok, note = False, "bare"
+                    form = census_form(toks[0])
+                    if form != "floor":
+                        ok, note = False, form
                     else:
-                        ok = span[0] <= got[0] <= span[1]
-                        note = "" if ok else "today %d, outside %d-%d" % (got[0], *span)
+                        # floor_holds, NOT an inline `>=`. It was inlined here for two
+                        # commits and `floor_holds` was therefore dead code reached only from
+                        # the test suite - so the boundary guard pinned a function nothing
+                        # called, and a wave-1 adversary flipped this `>=` to `>` and watched
+                        # the linter AND all 23 census guards stay green. That is exactly the
+                        # sin `bracket_holds`' old docstring described, reintroduced by the
+                        # commit that fixed it.
+                        floor = census_floor(toks[0])
+                        ok = floor_holds(got[0], toks[0])
+                        note = "" if ok else "today %d, below the floor %d" % (got[0], floor)
                 rows.append((doc_rel, line, ", ".join(toks), ok, note))
             if not found:
                 rows.append((doc_rel, 0, None, None, "pattern matches nothing"))
@@ -696,37 +803,66 @@ def check_derived_facts() -> None:
                              "Restore the claim, or delete the site from FACTS - do not "
                              "leave a number asserting without a check."
                     % (doc_rel, f.name, note))
-            elif note == "bare":
-                err("facts", "%s:%d states %s (%s) as the bare number %s. This one moves "
-                             "because the crons ran, not because anyone pushed, so it cannot "
-                             "be held to equality and will be wrong within a day. Write the "
-                             "range you are willing to stand behind - `%s` is true today - "
-                             "or replace it with the command that prints it."
-                    % (doc_rel, line, f.name, f.unit, tok,
-                       "{:,}-{:,}".format(_round_half_up(got[0], 100) - 50,
-                                          _round_half_up(got[0], 100) + 50)))
+            elif note in ("bare", "band", "malformed"):
+                sug = suggested_floor(got[0])
+                err("facts", "%s:%d states %s (%s) as %s, and a census claim may only be "
+                             "ONE-SIDED. This number moves because the crons ran, not "
+                             "because anyone pushed: %s %s"
+                    % (doc_rel, line, f.name, f.unit,
+                       {"bare": "the bare number %s" % tok,
+                        "band": "the two-sided claim %s" % tok,
+                        "malformed": "the token %s, which is not a floor this check "
+                                     "can read" % tok}[note],
+                       {"bare": "a point value will be wrong within a day.",
+                        "band": "a band fails when the project is WORKING - active rows "
+                                "went 873 -> 969 in 14 hours and turned the build red - "
+                                "and widening it is the move that deletes the alarm.",
+                        "malformed": "a floor is a plain, comma-grouped, ASCII, non-zero "
+                                     "number and a plus: `900+`, `1,300+`. `~900+`, `1,30+`, "
+                                     "`0+` and non-ASCII digits are all refused, because each "
+                                     "of them reads as a claim and is not one."}[note],
+                       ("Write the floor you are willing to stand behind - `%s` has %d%% "
+                        "headroom today - or replace it with the command that prints it."
+                        % (sug, int(100 * CENSUS_HEADROOM))) if sug else
+                       ("Today it is %d, which is too small to carry a floor at all. That is "
+                        "the mass-zero class, not a documentation problem: diagnose the run "
+                        "before you touch the doc." % got[0])))
             elif not ok and f.kind == "exact":
                 err("facts", "%s:%d says %s for %s (%s); the code says %s. %s."
                     % (doc_rel, line, tok, f.name, f.unit,
                        ", ".join(str(g) for g in got), f.why))
-            elif note.startswith("unreadable"):
-                err("facts", "%s:%d states %s for %s as a token this check cannot read (%s). "
-                             "Write `~N`, or `N-M`, or the command that prints it."
-                    % (doc_rel, line, tok, f.name, note))
             elif not ok:
-                lo, hi = census_span(tok)
-                err("facts", "%s:%d writes %s for %s (%s), which claims %d-%d; today it is "
-                             "%d. Widen it or move it."
-                    % (doc_rel, line, tok, f.name, f.unit, lo, hi, got[0]))
-            elif f.kind == "census":
-                lo, hi = census_span(tok)
-                edge = min(got[0] - lo, hi - got[0])
-                width = hi - lo + 1
-                if width > 1 and edge <= max(1, width // 10):
-                    warn("facts", "%s:%d writes %s for %s (holds for %d-%d); today %d, %d "
-                                  "from the edge. It will go red on its own soon - widen it "
-                                  "now, while you are here and it is still true."
-                         % (doc_rel, line, tok, f.name, lo, hi, got[0], edge))
+                err("facts", "%s:%d claims %s for %s (%s) and today it is %d - the number "
+                             "COLLAPSED through its floor. This is not a stale doc: growth "
+                             "can never trip this check, so either a merge or a mass "
+                             "deactivation dropped rows (section 8's mass-zero class), or "
+                             "the measurement itself is broken. Diagnose before you edit the "
+                             "doc; %s."
+                    % (doc_rel, line, tok, f.name, f.unit, got[0], f.why))
+            elif f.kind == "census" and floor_was_lowered(
+                    _committed_token(doc_rel, dict(f.sites).get(doc_rel, "")), tok, got[0]):
+                # An ERROR, and the one census error a doc edit alone can cause. Every other
+                # census error is the crons' doing and this file is careful not to punish the
+                # pusher for those - but LOWERING a floor is a keystroke, it is the "widen the
+                # band" move under another name, and until this existed `0+` at all three
+                # sites was a GREEN build with one warning in a pile of six.
+                err("facts", "%s:%d LOWERS the floor for %s from %s to %s, and today's %d is "
+                             "still above the old floor. A floor may only ever be RAISED. "
+                             "Lowering one deletes the alarm without failing anything, which "
+                             "is exactly what widening a band did. If the number really has "
+                             "collapsed, its own error fires first and lowering is then the "
+                             "repair - it is refused only while the old floor still holds."
+                    % (doc_rel, line, f.name,
+                       _committed_token(doc_rel, dict(f.sites).get(doc_rel, "")),
+                       tok, got[0]))
+            elif f.kind == "census" and floor_is_stale(got[0], tok):
+                sug = suggested_floor(got[0])
+                warn("facts", "%s:%d writes %s for %s; today it is %d, so the floor is more "
+                              "than %d%% behind and has stopped checking much. Raise it to "
+                              "`%s` while you are here - a floor may only ever be raised, "
+                              "and raising it can never make a true doc false."
+                     % (doc_rel, line, tok, f.name, got[0],
+                        int(200 * CENSUS_HEADROOM), sug or "a number you can stand behind"))
         if not f.sites:
             warn("facts", "%s (%s) computes to %s and no doc states it."
                  % (f.name, f.unit, ", ".join(str(g) for g in got)))
@@ -994,44 +1130,26 @@ def check_morning_checks() -> None:
     agent, and the cheapest way for that agent to go green would be to DELETE the check —
     the linter would then destroy the mechanism it exists to protect. The shape of a row IS
     an error, because that is the pushing session's own work."""
-    path = os.path.join(ROOT, "HANDOFF.md")
-    if not os.path.exists(path):
+    rows = _morning_rows("HANDOFF.md")
+    if rows is None:
         return
-    text = read(path)
-    # Collect every pipe row from the table header to the next `## ` heading. Stopping at
-    # the first non-pipe line meant ONE blank line - or an HTML comment between rows -
-    # silently dropped every row below it, and the check only complained when zero rows
-    # survived. In the live table that is 20 of 21 predictions, with a green build.
-    rows, in_table = [], False
-    for line in text.splitlines():
-        if line.startswith("| due | lane |"):
-            in_table = True
-            continue
-        if in_table:
-            if line.startswith("## "):
-                in_table = False
-                continue
-            if not line.startswith("|"):
-                continue
-            # split on the pipes, never strip them: an EMPTY last cell - which is exactly
-            # what an unanswered check looks like - is swallowed by strip("|") and the
-            # row then fails the len() test and is silently dropped. Found by break-test.
-            cells = [c.strip() for c in line.strip().split("|")[1:-1]]
-            if set(cells[0]) <= set("-: "):
-                continue
-            if len(cells) != 5:
-                # A `|` inside a cell shifts every column right, so the verdict is read from
-                # the wrong one and a real verdict is never validated. The `must be true`
-                # column is full of backticked shell text, so this is one `| wc -l` away.
-                err("morning-checks", "a morning-check row has %d cells, not 5 - a `|` inside "
-                                      "a cell shifts the verdict column: %s"
-                    % (len(cells), line.strip()[:80]))
-                continue
-            rows.append(cells)
     if not rows:
         warn("morning-checks", "HANDOFF.md has no `## Morning checks` table. A prediction "
                                "with nowhere to be answered is how `### Tel Aviv` shipped "
                                "twice against a check that said it would not.")
+    # The ARCHIVE gets the same SHAPE check and none of the age checks. Every answered row
+    # ends up in docs/morning-checks.md, and until 2026-08-28 nothing read that file at all:
+    # it had a table with a header and no separator row (so it rendered as prose, invisibly)
+    # and nobody noticed for a day. Age is deliberately NOT checked there - an archived row
+    # is history, and history that can go red for being old is history somebody will edit.
+    for cells in _morning_rows("docs/morning-checks.md") or []:
+        if not re.fullmatch(r"\d{4}-\d\d-\d\d", cells[0]):
+            err("morning-checks", "an archived morning check has no ISO due date: %r"
+                % cells[0])
+        elif cells[4] and not _VERDICT_OK.match(cells[4]):
+            err("morning-checks", "archived morning check %s (`%s`) has a verdict the reader "
+                                  "cannot check: %r" % (cells[0], cells[1], cells[4][:60]))
+    text = read(os.path.join(ROOT, "HANDOFF.md"))
     lanes = _lane_names()
     today = _today()
     for cells in rows:
@@ -1064,6 +1182,59 @@ def check_morning_checks() -> None:
                               "those existed and none was ever answered - put it in the "
                               "table, with the date you will answer it."
             % body[m.start():m.start() + 40])
+
+
+def _morning_rows(doc_rel: str):
+    """Every 5-cell morning-check row in a document, or None if the file is not there.
+
+    Split out on 2026-08-28 so the ARCHIVE can be held to the same shape as the live table
+    without being held to its deadlines. It parses; the SHAPE errors it raises are the
+    pushing session's own work, so they are errors in both files."""
+    path = os.path.join(ROOT, doc_rel)
+    if not os.path.exists(path):
+        return None
+    rows, in_table, want_rule = [], False, False
+    for line in read(path).splitlines():
+        if line.startswith("| due | lane |"):
+            in_table, want_rule = True, True
+            continue
+        if not in_table:
+            continue
+        # Collect every pipe row from the table header to the next `## ` heading. Stopping
+        # at the first non-pipe line meant ONE blank line - or an HTML comment between rows
+        # - silently dropped every row below it, and the check only complained when zero
+        # rows survived. In the live table that was 20 of 21 predictions, with a green build.
+        if line.startswith("## "):
+            in_table, want_rule = False, False
+            continue
+        if not line.startswith("|"):
+            continue
+        # split on the pipes, never strip them: an EMPTY last cell - which is exactly what
+        # an unanswered check looks like - is swallowed by strip("|") and the row then
+        # fails the len() test and is silently dropped. Found by break-test.
+        cells = [c.strip() for c in line.strip().split("|")[1:-1]]
+        if set(cells[0]) <= set("-: "):
+            want_rule = False
+            continue
+        if want_rule:
+            # A header with no `|---|` under it renders as PROSE, not a table. The rows are
+            # still there and still parse, so every check below passes while a human reader
+            # sees a wall of pipes. docs/morning-checks.md shipped exactly that on
+            # 2026-08-27 and nothing looked at it.
+            err("morning-checks", "%s has a morning-check table whose header is not followed "
+                                  "by a `|---|` separator, so it renders as prose: %s"
+                % (doc_rel, line.strip()[:70]))
+            want_rule = False
+        if len(cells) != 5:
+            # A `|` inside a cell shifts every column right, so the verdict is read from the
+            # wrong one and a real verdict is never validated. The `must be true` column is
+            # full of backticked shell text, so this is one `| wc -l` away.
+            err("morning-checks", "%s: a morning-check row has %d cells, not 5 - a `|` "
+                                  "inside a cell shifts the verdict column: %s"
+                % (doc_rel, len(cells), line.strip()[:80]))
+            continue
+        rows.append(cells)
+    return rows
 
 
 def _lane_names() -> set:

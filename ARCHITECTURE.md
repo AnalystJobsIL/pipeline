@@ -64,9 +64,13 @@ every lane imports and no lane owns — changing it is a report-it-loudly event.
 ```
 
 No count in that map is hand-typed any more: `docs/check_docs.py` registers each one and
-fails when it drifts from the code (`python docs/check_docs.py --facts` prints them all,
-with what each doc claims). The one number it deliberately does NOT carry is the API/page
-split, which moved 18 rows in an hour on 2026-08-27 — moving a row between those two
+holds it to the code (`python docs/check_docs.py --facts` prints them all, with what each
+doc claims). A count only a push can move is held to equality. A count the crons move is
+written as a one-sided FLOOR, `N+`, and is an error only when it COLLAPSES through it —
+a two-sided band on a growing census is a scheduled false alarm, and it switched the
+registry gate off in CI on 2026-08-28 (`docs/decisions/2026-08-28-census-facts.md` has the
+measurements). The one number it deliberately does NOT carry is the API/page split,
+which moved 18 rows in an hour on 2026-08-27 — moving a row between those two
 buckets is the registry lane's whole job — so that one is a command, not a number.
 
 ## 0. Start here: what the user actually receives

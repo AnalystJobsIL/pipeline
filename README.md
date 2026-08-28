@@ -12,10 +12,10 @@ Israeli high-tech companies, and a daily email of what is new.
 - **The email** — once a day, only roles posted in the last 48h, grouped by company.
 
 The point of the design: **an employer's own careers board is the source of truth, not an
-aggregator's copy of it.** The pipeline reads 900-1,100 companies' *own* boards every morning —
+aggregator's copy of it.** The pipeline reads 800+ companies' *own* boards every morning —
 about half through a native ATS API (Comeet, Greenhouse, Lever, SmartRecruiters, Recruitee,
 Ashby, Workday, Oracle HCM and 9 more), the rest by rendering the page — out of a registry of
-1,300–1,500 rows, filters to Israel-located analytics roles, and publishes what it can still
+1,300+ rows, filters to Israel-located analytics roles, and publishes what it can still
 verify. The API/page split moves every day, because moving a row from one to the other is
 the whole job of the coverage machinery; `python registry_health.py --census` prints today's.
 Every company row carries a dated verdict explaining what we know about it — including the
@@ -49,7 +49,10 @@ It runs entirely on GitHub Actions cron jobs. There is no server.
 
 No count above is hard-coded: `python registry_health.py --census` prints the registry
 split, `python check_invariants.py` prints rows and active rows, and `docs/check_docs.py`
-fails the build if a number in this file drifts from the code (see `--facts`).
+holds this file to the code (see `--facts`). A count only a code change can move must match
+exactly. A count the cron jobs move — the two in the paragraph above — is written as a
+FLOOR, `N+`, so growth is absorbed silently and the build goes red only if the number
+COLLAPSES through it.
 
 **What counts as a role:** experienced data/BI/product/marketing analytics and analytics
 leadership. The title does not matter — a "Data Scientist" posting counts if the work is

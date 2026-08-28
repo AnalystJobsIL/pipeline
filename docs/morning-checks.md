@@ -53,8 +53,33 @@ row and a session line at the same time. Record: `docs/sessions/2026-08-27-disco
 | due | lane | must be true | answered | verdict |
 |---|---|---|---|---|
 | 2026-08-27 | discovery | `recovered=N`, `cache: dropped ~18 agency cards`, no `### Jobgether` | 2026-08-27 | PASS — run 33092547374 (the 05:00 cron, 11h18m late): `recovered=5` against `blank=75`, so NOT ~0 — **the re-ask stays**; `cache: dropped 117 agency cards`; `Jobgether` refused by name at intake, so no `### Jobgether` heading |
+
+## Moved 2026-08-28 by the `docs` lane
+
+Answered on 2026-08-27 and moved here **verbatim** the next morning rather than after the
+seven days the header names, for the reason BACKLOG 338 records: `HANDOFF.md` stood at
+3,194 of its 3,200-word cap, so the 2026-08-28 answers below could not be written until
+these came out. Record: `docs/sessions/2026-08-28-docs.md`.
+
+| due | lane | must be true | answered | verdict |
+|---|---|---|---|---|
 | 2026-08-27 | scraper | Get SAT/BlueBird/Red Access/WSC Sports in `with_jobs` or `links_unread`, never `empty` | 2026-08-27 | PASS on the artefact — no rot record for any of the four; `via` sums to `with_jobs` 201; no `llm-down` |
 | 2026-08-27 | ats-fetch | `29 regressed to zero` standing; 0 `?` in `stale.json`; `new:` grouped; no myInterview under `cleared:` | 2026-08-27 | PARTIAL — `stale.json` has 29 `regressed-to-zero` and zero `?`; the two mail-rendered clauses are unanswerable, **no 08-27 digest ran** |
 | 2026-08-27 | company-intel | `Company intel:` names sonnet, `N searches`, no `SEARCHLESS`, export count matches the file | — | N/A — no 08-27 digest ran. For the record `firmographics.json` is 973 and `seen.db` 946; the 08-26 mail said 942, so whatever it prints, two of those three will disagree |
 | 2026-08-27 | jd-text | `Stage order:` carries `scrape_bd_calls=`/`matched_short=`; `jd-fill:` denominator ~121 | — | N/A — no 08-27 digest ran. 08-26 baseline: `jd-fill: 110/148 … discovery-indeed http-401 17` |
 | 2026-08-28 | registry | the drain survived the REAL merge, and the auto-expand `probe:` line shows `N resolved` with `probe-dup-board` among its refusals | 2026-08-27 | PASS, early — `599d7b8` 16:42 UTC: queue **1,693 -> 517** in one commit; the 17:00 run printed `probe: 11 resolved, refused 18 (... probe-dup-board 4 ...)` |
+
+### Answered 2026-08-28, moved the same day
+
+The three checks this morning's `docs` session could answer with a PASS. The `mutation-gate`
+row it answered FAIL stays in `HANDOFF.md`, because a failure is a live watch item and a pass
+is history. Moved the day they were answered, not after seven days, because `HANDOFF.md` was
+84 words over its cap once the `scraper` lane's session line landed in the same rebase —
+which is BACKLOG 338 happening for the third time in two days, and BACKLOG 361 is the fix.
+
+| due | lane | must be true | answered | verdict |
+|---|---|---|---|---|
+| 2026-08-28 | infra | the digest log's `deliver:` line says `delivered`, and `cloud_state/last_delivered.json` carries `2026-08-28` with a sha256 matching `digests/latest.md` | 2026-08-28 | PASS — `deliver: 2026-08-28 delivered -- 5 role(s), sha 5d4a0f8a4256, first delivery for the day`; `last_delivered.json` holds that date and sha, and it is the sha256 of the `digests/latest.md` blob at `9bbaf69` (run 33148916309) |
+| 2026-08-28 | infra | the mail's `Stages:` says `the last digest that reached the mail was 2026-08-26 (2d ago)` — once. If it says nothing, `_receipt_alarms` is not wired; if it repeats on 08-29, `deliver` is not writing the receipt | 2026-08-28 | PASS — once, in run 33148916309 and in `digests/latest.md`: `the last digest that reached the mail was 2026-08-26 (2d ago) -- 1 morning(s) produced no digest email`. `_receipt_alarms` is wired |
+| 2026-08-28 | registry | the 05:00 `classify:` judges more than yesterday. 42 intake companies went active overnight with 0 cache entries; ~0 judged ⇒ an uncached scrape row ships nothing | 2026-08-28 | PASS — `classify: 5403 judged = keyword 5055 + llm 16 (1 yes) + cache 332` (run 33148916309) against 08-27's `classify: 5263 judged` (run 33092547374) |
+
