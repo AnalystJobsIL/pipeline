@@ -1408,7 +1408,7 @@ one פתרונות טכנולוגיים,scrape,,https://www.one1.co.il/careers/,
 מנורה מבטחים החזקות,scrape,,https://www.menoramivt.co.il/job-posting/open-position,true,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: verified 4 IL via www.menoramivt.co.il
 Wayve,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
 Fujitsu,scrape,https://www.jobs.global.fujitsu.com/search?location=Israel,https://www.jobs.global.fujitsu.com/search?location=Israel,true,listing-hunt 2026-08-28: queue-hunt; verified 10 IL via www.jobs.global.fujitsu.com
-Simplex 3D,scrape,https://www.simplex3d.com/careers/,https://www.simplex3d.com/careers/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+Simplex 3D,scrape,https://www.simplex3d.com/reals/,https://www.simplex3d.com/reals/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.simplex3d.com linkback | listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
 Regulus,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
 Infotree Global Solutions,scrape,https://www.infotreeglobal.com/search-jobs/,https://www.infotreeglobal.com/search-jobs/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
 Traild,scrape,https://traildsoftware.com/careers/,https://traildsoftware.com/careers/,true,listing-hunt 2026-08-28: queue-hunt; verified 8 IL via traildsoftware.com
@@ -1454,13 +1454,13 @@ McCann Digital,scrape,https://careers.mccann.com/en_US/careersmccann/SearchJobs?
 Publicis Groupe Israel,scrape,https://careers.publicisgroupe.com/jobs?location=Israel,https://careers.publicisgroupe.com/jobs?location=Israel,true,listing-hunt 2026-08-28: queue-hunt; verified 7 IL via careers.publicisgroupe.com
 Ferrero,scrape,https://www.ferrerocareers.com/us/en/jobs?country[Israel]=Israel,https://www.ferrerocareers.com/us/en/jobs?country[Israel]=Israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
 Pareto Leads - Customer Acquisition at Scale,scrape,https://paretoleads.com/careers/,https://paretoleads.com/careers/,true,listing-hunt 2026-08-28: queue-hunt; verified 2 IL via paretoleads.com
-Peach Content We Like Ltd,scrape,https://www.peachcontent.com/jobs/,https://www.peachcontent.com/jobs/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+Peach Content We Like Ltd,scrape,https://www.peachcontent.com/,https://www.peachcontent.com/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.peachcontent.com linkback | listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
 10bis תן ביס,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
 Pacaya HR Experts,scrape,https://pacayahr.com/,https://pacayahr.com/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
 U.Estate LTD,scrape,https://www.estatejobs.com/search,https://www.estatejobs.com/search,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-i4Valley,scrape,https://i4valley.com/,https://i4valley.com/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+i4Valley,scrape,https://i4valley.com,https://i4valley.com,false,scanned; no open Israel roles now | own-site 2026-08-28: i4valley.com linkback | listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
 L'Oréal,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
 OR Movement תנועת אור,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-Adnimation,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
+Adnimation,scrape,https://www.adnimation.com/,https://www.adnimation.com/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.adnimation.com linkback | listing-hunt 2026-08-28: queue-hunt; no listing found
 Zero Networks,scrape,https://zeronetworks.com/careers,https://zeronetworks.com/careers,true,listing-hunt 2026-08-28: queue-hunt; verified 8 IL via zeronetworks.com
 terasky,scrape,https://www.terasky.com/careers/il,https://www.terasky.com/careers/il,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL via www.terasky.com
