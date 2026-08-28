@@ -766,7 +766,7 @@ def test_a_first_scan_company_is_shown_honestly_rather_than_withheld():
              "url": "https://b/2", "posted_date": "", "description": "y",
              "_new_company": True}]
     title, body = D.build_markdown(jobs, "2026-08-23", {"first_scan": 1, "new": 1})
-    assert title.startswith("🎯 1 new senior analytics role")   # counts only the 48h ones
+    assert title.startswith("🎯 1 new analytics role")          # counts only the 48h ones
     assert "Newly covered companies (1)" in body
     assert "date not published" in body
     assert body.index("Senior Data Analyst") < body.index("Newly covered companies")
@@ -11792,8 +11792,10 @@ def test_the_ratchet_is_advisory_and_only_ever_points_upward():
 
 
 def test_the_floor_notation_never_captures_the_three_plus_years_idiom():
-    """`+` had to go inside the census token, and `CLAUDE.md`'s first sentence says
-    "experienced (≈3+ yrs)". Patterns MUST bind a noun; this is the guard on that rule."""
+    """`+` had to go inside the census token, and `CLAUDE.md`'s first sentence said
+    "experienced (≈3+ yrs)" until 2026-08-28, when the scope fix removed it. The idiom is
+    what the rule is about, not that one sentence, so the samples below are literals and
+    this guard outlives the phrasing. Patterns MUST bind a noun; this is that rule's guard."""
     cd = _cd()
     site = r"reads\s+" + cd._CENSUS + r"\s+companies'"
     assert not re.search(site, "a board of experienced (3+ yrs) analysts, and it shows")
@@ -16032,3 +16034,132 @@ def test_the_israeli_job_boards_stay_on_the_aggregator_host_list():
                "https://www.comeet.com/jobs/birdaero/97.006",
                "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs"):
         assert not is_aggregator(ok), "real board refused as an aggregator: %s" % ok
+
+# --- docs lane, 2026-08-28: a prose promise about product SCOPE drifted from the code for a
+# --- whole day, in six files, with this linter green the whole time. FACTS checks numbers;
+# --- check_scope_claims is the first check of a CLAIM. These four are its guards. ---------
+def _scope_tree(tmp_path, *, bar_default="0", surfaces=None):
+    """A minimal ROOT the real check_scope_claims() can run against: the seniority module it
+    AST-reads, plus whichever surfaces the case needs."""
+    (tmp_path / "pipeline").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "pipeline" / "seniority.py").write_text(
+        'import os\nEXPERIENCE_BAR = os.environ.get("CLASSIFY_EXPERIENCE_BAR", "%s") == "1"\n'
+        % bar_default, encoding="utf-8")
+    for name, body in (surfaces or {}).items():
+        p = tmp_path / name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(body, encoding="utf-8")
+    return tmp_path
+
+
+def _scope_errors(tmp_path, **kw):
+    cd = _cd()
+    cd.ROOT = str(_scope_tree(tmp_path, **kw))
+    cd.ERRORS.clear()
+    cd.check_scope_claims()
+    return list(cd.ERRORS)
+
+
+_TRUE_SCOPE = "analytics roles at any experience level.\n"
+
+
+def test_a_scope_promise_the_code_dropped_goes_red():
+    """The shipped defect: `66d9e3c` removed the experience bar and README.md, CLAUDE.md,
+    ARCHITECTURE.md, pipeline/digest.py and pipeline/__init__.py went on advertising it -
+    including the H1 the relay turns into the mail's subject, which reached the inbox at
+    08:29Z that morning saying "4 new senior analytics roles". Replayed against origin/master
+    at 66d9e3c this check raises 19 errors; here it is pinned on a fixture.
+
+    Asserts ZERO errors on the clean tree, not merely "no bar error": a pattern that stopped
+    matching would otherwise make the whole guard vacuous and this test would not notice."""
+    import tempfile, pathlib
+    with tempfile.TemporaryDirectory() as d:
+        clean = {n: _TRUE_SCOPE for n in
+                 ("README.md", "CLAUDE.md", "ARCHITECTURE.md", "pipeline/__init__.py",
+                  "pipeline/digest.py")}
+        assert _scope_errors(pathlib.Path(d) / "a", surfaces=clean) == []
+
+        dirty = dict(clean)
+        dirty["README.md"] = "A board of experienced (~3+ yrs) roles.\n" + _TRUE_SCOPE
+        dirty["pipeline/digest.py"] = 'T = "%d new senior analytics roles"\n' + _TRUE_SCOPE
+        dirty["CLAUDE.md"] = "We list Experienced (3+ years) analysts.\n" + _TRUE_SCOPE
+        # Capital E, and hard-wrapped across the phrase. The board's own subtitle read
+        # `<div class="sub">Experienced (~3+ yrs) data / BI / analytics`, and a
+        # case-sensitive draft of this check sailed past the single most-read stale
+        # claim in the product; `ARCHITECTURE.md` wrapped "0 new senior analytics
+        # roles" through the middle, which a line-by-line matcher never sees.
+        dirty["ARCHITECTURE.md"] = ("sub: Experienced (~3+ yrs) data / BI\n"
+                                   "often `0 new senior\n   analytics roles`\n"
+                                   ) + _TRUE_SCOPE
+        errs = _scope_errors(pathlib.Path(d) / "b", surfaces=dirty)
+        assert any("README.md:1" in e for e in errs), errs
+        assert any("pipeline/digest.py:1" in e for e in errs), errs
+        assert any("ARCHITECTURE.md:1" in e for e in errs), errs   # capital E
+        assert any("ARCHITECTURE.md:2" in e for e in errs), errs   # wrapped over a newline
+        # Only the case-insensitive pattern can see this one: no tilde, so the `[≈~]3+`
+        # pattern cannot rescue it. Without this line a case-sensitive mutant SURVIVES
+        # the whole suite, which is how the board subtitle stayed stale in the first place.
+        assert any("CLAUDE.md:1" in e for e in errs), errs
+
+        # A registered surface that has gone MISSING is an error, never silence - the
+        # same contract check_derived_facts keeps for a site that stops matching.
+        gone = {k: v for k, v in clean.items() if k != "pipeline/digest.py"}
+        errs = _scope_errors(pathlib.Path(d) / "c", surfaces=gone)
+        assert any("pipeline/digest.py" in e and "does not exist" in e for e in errs), errs
+
+
+def test_deleting_the_scope_sentence_does_not_go_green():
+    """The positive control, and the reason this is not a blocklist. An adversary's cheapest
+    green is to delete the clause and tell the visitor nothing about who the board is for -
+    which is a NEW inaccuracy, not a fix. Lesson taken from the census-facts record: a guard
+    that only checks a phrase is ABSENT certifies whatever replaced it."""
+    import tempfile, pathlib
+    with tempfile.TemporaryDirectory() as d:
+        silent = {n: "A board of analytics roles.\n" for n in
+                  ("README.md", "CLAUDE.md", "ARCHITECTURE.md", "pipeline/__init__.py",
+                   "pipeline/digest.py")}
+        errs = _scope_errors(pathlib.Path(d), surfaces=silent)
+        assert [e for e in errs if "does not say what it does instead" in e], errs
+        for doc in ("README.md", "CLAUDE.md", "ARCHITECTURE.md"):
+            assert any(doc in e for e in errs), (doc, errs)
+
+
+def test_the_scope_check_reads_the_shipped_default_not_the_environment(monkeypatch):
+    """`EXPERIENCE_BAR` is `os.environ.get(...) == "1"`, so a guard reading the live global
+    would take the bar-ON branch under `CLASSIFY_EXPERIENCE_BAR=1`, assert the promise is
+    PRESENT, find it present, and go green over the entire drift - a one-word green from the
+    environment of whoever runs the suite. Found by an adversarial pass before it shipped."""
+    import tempfile, pathlib
+    monkeypatch.setenv("CLASSIFY_EXPERIENCE_BAR", "1")
+    with tempfile.TemporaryDirectory() as d:
+        stale = {n: "experienced (~3+ yrs) analytics roles\n" for n in
+                 ("README.md", "CLAUDE.md", "ARCHITECTURE.md", "pipeline/__init__.py",
+                  "pipeline/digest.py")}
+        errs = _scope_errors(pathlib.Path(d), bar_default="0", surfaces=stale)
+        assert [e for e in errs if "still promises an experience bar" in e], \
+            "the env flipped the verdict; the check must read the SHIPPED default"
+    cd = _cd()
+    assert cd.scope_bar_default() is False        # ...and on the real tree, too
+
+
+def test_every_live_scope_surface_exists_and_is_checked():
+    """Reads what actually shipped rather than a fixture, so the surface list cannot rot into
+    nothing: a registered surface that quietly stops being read is a claim that stops being
+    checked, which is the same failure `check_derived_facts` calls a decorative linter.
+    Also pins the two deliberate omissions so removing one is a decision, not a drift."""
+    cd = _cd()
+    assert len(cd.SCOPE_SURFACES) >= 5
+    for surface in cd.SCOPE_SURFACES:
+        p = os.path.join(cd.ROOT, surface)
+        assert os.path.exists(p), surface
+        assert len(cd.read(p)) > 40, surface     # not emptied to a stub
+    assert set(cd.SCOPE_MUST_STATE) <= set(cd.SCOPE_SURFACES)
+    # `persist_state.py` and the workflows QUOTE the rendered H1 in a comment; they promise
+    # a reader nothing and they are `infra`'s. `build_digest`'s "openings" strings die with
+    # BACKLOG 142. Both are argued in check_docs.py; this asserts nobody quietly added them.
+    assert "persist_state.py" not in cd.SCOPE_SURFACES
+    assert not any(re.search(p, "senior analytics openings", re.I)
+                   for p, _label in cd._BAR_PROMISE)
+    cd.ERRORS.clear()
+    cd.check_scope_claims()
+    assert cd.ERRORS == [], cd.ERRORS

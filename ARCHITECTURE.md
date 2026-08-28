@@ -101,15 +101,24 @@ employer this digest is seeing for the first time are capped at **2 each and
 because its employer has nine of them would make the board wrong. This paragraph said
 "the board **8**" until 2026-08-27; no such cap has ever existed in the code.
 
-**What qualifies as a role** (the actual product decision, implemented in
-`pipeline/seniority.py`): experienced (**~3+ years**) data-analysis work — data/BI/product/
-marketing analytics, analytics leadership. **The title does not matter**: a "Data Scientist"
-posting counts if the work is really product/business analytics. **Out**: core ML/model
-building, data engineering, software engineering, finance/FP&A, security/SOC, and
-junior/intern/entry-level. Deterministic keyword rules decide the clear cases; ambiguous
+**What qualifies as a role** — the actual product decision is
+`docs/decisions/2026-08-28-analyst-scope.md`, implemented in `pipeline/seniority.py`:
+data-analysis work — data/BI/product/marketing analytics, analytics leadership — at **any
+experience level**. **The title does not matter**: a "Data Scientist" posting counts if the
+work is really product/business analytics. The **experience bar was removed on 2026-08-28**
+by operator decision; what a non-senior title costs is *evidence*, not eligibility — when
+the LLM tier is unavailable, a `signal`-tier title is accepted only if its DESCRIPTION shows
+analytics, which is the bar a bare "Data Scientist" has always had (§7b has the 20-of-252
+measurement). **Out of scope**: internships, student placements and trainee programmes; a
+staffing agency or IT-outsourcing house advertising a role at a client company — judged per
+posting, not by a name list, so it is a demotion to the LLM tier and never a keyword reject;
+core ML/model building, data engineering, software engineering, finance/FP&A, security/SOC.
+Deterministic keyword rules decide the clear cases; ambiguous
 titles go to one bounded, tool-less sonnet call through `pipeline/llm.py` (§7b), whose
 YES/NO **role judgment** is
-cached in `cloud_state/seen.db` under `v2|company|title|jd` or `|bare` — a verdict judged
+cached in `cloud_state/seen.db` under `<contract>|company|title|jd` or `|bare`, the contract
+being a hash of the rules text and the model (`v3.<sha1>`; the bare `v2` literal is still
+read, never written) — a verdict judged
 on a bare title is re-judged once the description arrives (distinct from a row's coverage
 **verdict**, §2).
 
@@ -773,10 +782,15 @@ under both.
 
 There is deliberately **no junior/student filter on the Telegram path**, though
 `discovery_daily.py` has one (`_JUNIOR_HE`). `secretdatajobs` really does carry them ("Data
-analyst (student position)", Upstream Security, 2026-08-23) but `seniority.classify` rejects
-every one on the free keyword path — `reject / keyword / junior-intern-entry-level`, no LLM
-call — while the post still contributes its employer to the names funnel. A second filter
-here would cost coverage and buy nothing.
+analyst (student position)", Upstream Security, 2026-08-23) and `seniority.classify` rejects
+a **student placement** on the free keyword path — `reject / keyword /
+internship/student placement, not a job`, no LLM call — while the post still contributes its
+employer to the names funnel. Since 2026-08-28 a **junior or entry-level** posting is no
+longer rejected at all (`docs/decisions/2026-08-28-analyst-scope.md`), so one now reaches
+the tier like any other role. A second filter here would cost coverage and buy nothing.
+*(This paragraph said "rejects **every one**" and quoted a reason string,
+`junior-intern-entry-level`, that no longer exists in the code; corrected 2026-08-28 by
+`docs` as a fact fix, not a redesign — the layer's design is unchanged.)*
 
 ### Six rules this layer costs data to re-learn
 
@@ -2006,7 +2020,7 @@ inside the same step — no new workflow, no new cron, no new named step.
    under today's name all went straight through. A candidate that fails this is `exit 1`, so
    the run goes red and `outcome` mails the dated notice instead.
 1. **A THINNER digest never replaces a fatter one.** `store.filter_new` drops roles already
-   in `sent`, so a second run the same day renders fewer — often `0 new senior analytics
+   in `sent`, so a second run the same day renders fewer — often `0 new analytics
    roles`. The `cp` put that over the morning's real digest; the relay hashes the file, saw
    new bytes, and would have mailed the thin one, whose missing roles are already marked
    sent and never come back. `deliver` refuses a replacement that is empty, is

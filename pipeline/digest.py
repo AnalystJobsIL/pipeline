@@ -104,7 +104,13 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     new_co_jobs = [j for j in jobs if j.get("_new_company")]
     jobs = fresh_jobs
     n = len(jobs)
-    title = f"🎯 {n} new senior analytics role{'' if n == 1 else 's'} — {run_date}"
+    # No level adjective. "senior" was shorthand for the experience bar the operator removed
+    # on 2026-08-28 (docs/decisions/2026-08-28-analyst-scope.md) — and it was already false
+    # before that: 36 of the 72 roles on the board that morning carried no seniority marker
+    # in the title at all. This line is the mail's SUBJECT (the relay makes the issue title
+    # from it), so it is the one sentence that cannot afford a qualifier it has no room for;
+    # the level nuance is one line below, in the subtitle.
+    title = f"🎯 {n} new analytics role{'' if n == 1 else 's'} — {run_date}"
     if new_co_jobs and not n:
         title = (f"🎯 {len(new_co_jobs)} analytics role"
                  f"{'' if len(new_co_jobs) == 1 else 's'} at newly covered companies "
@@ -120,8 +126,9 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
                                                      for x in by_company[c]), reverse=True)
 
     lines = [f"# {title}", "",
-             "Israeli high-tech scan — experienced (≈3+ yrs) data-analysis / BI / analytics "
-             "roles from the **last 48h**, freshest first. Each role title links to apply.", ""]
+             "Israeli high-tech scan — data / BI / analytics roles from the **last 48h**, "
+             "freshest first. Any experience level; internships and student placements are "
+             "out of scope. Each role title links to apply.", ""]
     if board_url:
         lines += [f"🔎 **[Open the full board →]({board_url})** — every role still open, "
                   "searchable & sortable.", ""]
@@ -256,7 +263,14 @@ def _capped(names, n=8):
 
 
 def build_board_html(jobs, run_date, stats, company_info=None, analytics_html="", contact_url="",
-                     heading="senior analytics roles in Israel", firmographics=None, ledger=None,
+                     # `heading` is also a CONTROL FLAG: `archived = "archived" in heading`
+                     # below, and three more branches read it. A replacement must not carry
+                     # that substring. "open" lives here rather than in the shared subtitle
+                     # so the archive's own h1 supplies the contrast instead of contradicting
+                     # it, and "at Israeli companies" rather than "in Israel" because the set
+                     # is what we list, not what exists.
+                     heading="open analytics roles at Israeli companies",
+                     firmographics=None, ledger=None,
                      report=None):
     """Interactive board (GitHub Pages): an accessible, expandable, sortable TABLE.
 
@@ -734,7 +748,11 @@ var justRz=false;
             f'<title>Israeli analytics jobs — {esc(run_date)}</title>' + css
             + '</head><body><div class="wrap">')
     top = (f'<h1><span id="cnt">{n}</span> ' + esc(heading) + '</h1>'
-           '<div class="sub">Experienced (≈3+ yrs) data / BI / analytics · open roles, '
+           # ONE string, rendered on the board AND the archive. It said "open roles,
+           # refreshed daily" under the archive's own "<n> archived roles (no longer on the
+           # employer's careers page)" — false for all 61 archived rows. Every clause here
+           # must be true on both pages, which is why "open" moved up into the board's h1.
+           '<div class="sub">Data / BI / analytics · any experience level · '
            'refreshed daily · click a row to expand, a header to sort</div>'
            '<input id="q" type="search" aria-label="Filter roles" '
            'placeholder="Filter by company, role, skill, or location…">'

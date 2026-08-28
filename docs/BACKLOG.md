@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**417 filed · 303 open · 114 closed · 6 half · 30 numbers name more than one item · 28 items name no lane.**
+**421 filed · 306 open · 115 closed · 6 half · 30 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 374.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 378.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -84,7 +84,7 @@ closure convention in the header.
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 | 368 | `368@registry` **open** · `368@infra` **open** |
 
-### registry — 86 open
+### registry — 87 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -172,8 +172,9 @@ closure convention in the header.
 - **355** `355@registry` **The nightly embed handoff has no reader yet**
 - **368** `368@registry` **`hunt-queue-identity-remove` is an EQUIVALENT MUTANT, and the source-text guard that
 - **371** `371@registry` **Two employers each hold two ACTIVE rows, and each row bought its own LLM verdict for
+- **376** `376@registry` **"Agencies are excluded everywhere via `pipeline/recruiters.py`" is not true of the
 
-### infra — 77 open
+### infra — 78 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -252,6 +253,7 @@ closure convention in the header.
 - **365** `365@infra` **The monthly Bright Data gate is wired into one workflow of seven, and six caps are
 - **368** `368@infra` **`tools/mutate.py` read its own warnings as failures, and the count grew with the
 - **372** `372@infra` **The digest's stdout one-liner prints a bare `0 LLM calls`, and that cost a day** —
+- **377** `377@infra` **Two `infra` comments quote the digest H1, which changed today**
 
 ### scraper — 22 open
 
@@ -321,7 +323,7 @@ closure convention in the header.
 - **360** `360@docs` **ARCHITECTURE.md states the active-row count six ways and two of them carry no date**
 - **361** `361@docs` **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
-- **369** `369@docs` **The product still calls itself "experienced (≈3+ yrs)" after the experience bar was
+- **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
 
 ### company-intel — 14 open
 
@@ -356,6 +358,16 @@ closure convention in the header.
 - **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
 - **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
 
+### classifier — 7 open
+
+- **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
+- **121** `121@classifier` **CLI start-up dominates the LLM tier's wall time**
+- **122** `122@classifier` **The cap and the budget bite the same companies every day**
+- **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
+- **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
+- **373** `373@classifier` **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
+- **375** `375@classifier` **A junior analyst is in scope, but `Data Analyst Interns` is accepted and an
+
 ### roles — 7 open
 
 - **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
@@ -365,15 +377,6 @@ closure convention in the header.
 - **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
 - **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
 - **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
-
-### classifier — 6 open
-
-- **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
-- **121** `121@classifier` **CLI start-up dominates the LLM tier's wall time**
-- **122** `122@classifier` **The cap and the budget bite the same companies every day**
-- **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
-- **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
-- **373** `373@classifier` **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
 
 ### render — 6 open
 
@@ -2545,6 +2548,13 @@ kept; the Meta listing-url rows are superseded).
     `run.py` (keep a one-line subject), then delete the two audits; the company-intel mutation
     fixture `tests/fixtures/company_intel/mutations.json` (`ci-intel-line-md/txt`) pins their
     source text and must be updated in the same commit.
+
+    **2026-08-28 (`docs`, via 369):** both of its strings — `digest.py:845` (`subject`) and
+    `:878` (the `<h2>`) — still say `N new senior analytics openings`, a filter removed that
+    day. They were deliberately NOT corrected: polishing code scheduled for deletion makes
+    the dead code look maintained and this item harder to argue. **The false claim dies with
+    the renderer** — whoever closes this deletes them. `check_scope_claims` therefore does
+    not pattern `openings?`; if `build_digest` outlives this item, add it there.
 143. **`roles.tenant_slug` is not a tenant** — lane: `roles`. It returns the second
     non-plumbing segment of host+path (`_url_segments` already drops the host words and the
     ATS plumbing), so `job-boards.greenhouse.io/scopio/jobs/1` → `1` and
@@ -6100,8 +6110,10 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     right. And the 45-minute timeout is still there: this fix lets the gate START, it does
     not make it FINISH.
 
-369. **The product still calls itself "experienced (≈3+ yrs)" after the experience bar was
-    removed** — lane: `docs` (with `render`), found 2026-08-28 by `classifier`. The
+369. ~~**The product still calls itself "experienced (≈3+ yrs)" after the experience bar was
+    removed**~~ — **CLOSED 2026-08-28 (`docs`, with the `render` touch declared)**: all of
+    them corrected, and the class made catchable — see the closing note at the end of this
+    item. — lane: `docs` (with `render`), found 2026-08-28 by `classifier`. The
     2026-08-28 scope decision (`docs/decisions/2026-08-28-analyst-scope.md`, taken by the
     operator) accepts analyst roles at any experience level; interns and student placements
     stay out. The classifier and `ARCHITECTURE.md` §7b now say so. These do not, and each is
@@ -6120,6 +6132,30 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     `grep -rn "3+ yrs\|≈3+\|senior analytics roles" --include=*.md --include=*.py
     --exclude-dir=.claude .`. **A confident document that is no longer true is the failure
     this repo punishes hardest**, so this is worth doing before the next digest, not after.
+
+    **CLOSED 2026-08-28 (`docs`).** The table above named four files; there were **fourteen
+    sites**, and that grep finds nine of them — it misses `~3+` (the `ARCHITECTURE.md` §0
+    spelling, tilde not `≈`), `README.md:41`'s diagram line, `README.md:57`'s "experienced",
+    the `anything junior/intern/entry-level` clause, and `pipeline/__init__.py`. Corrected:
+    `README.md` (×4), `CLAUDE.md`, `ARCHITECTURE.md` §0 (which also still named the retired
+    `v2|company|title|jd` cache key) and `:2010`, `ARCHITECTURE.md` §1a's now-false "rejects
+    **every one**" (a FACT fix in `discovery`'s section, on the operator's instruction, not a
+    redesign), `pipeline/__init__.py`, and `pipeline/digest.py` `:107 :123 :259 :737`.
+    **`pipeline/digest.py` is `render`'s file and `pipeline/__init__.py` is in no lane's
+    list; both were touched on the operator's explicit instruction**, because the same
+    sentence lives in prose and in the rendered header and splitting it across two sessions
+    is how they drift.
+
+    Two things fell out. The H1 is the mail's SUBJECT (the relay builds the issue title from
+    `digests/latest.md`'s first line; the live inbox shows `[AnalystJobsIL/inbox] 🎯 4 new
+    senior analytics roles — 2026-08-28 (Issue #11)` at 08:29Z), and "senior" was **already
+    false before the bar was removed**: 36 of the 72 board roles that morning carried no
+    seniority marker in the title, and two already asked for 2 years. And `digest.py:737` is
+    ONE subtitle rendered on BOTH pages, so the archive has been claiming "open roles,
+    refreshed daily" under "61 archived roles" — false for all 61 — which the rewrite fixes.
+
+    The durable half is `check_docs.check_scope_claims` (see `374@docs`). Residue filed as
+    `375@classifier`, `376@registry`, `377@infra`, and a note on `142@infra`.
 
 370. **One careers PAGE is stored as the description of every posting on it, and the
     classifier judges different roles on identical text** — lane: `jd-text`, found 2026-08-28
@@ -6181,3 +6217,55 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     reject. `tools/measure_title_gate.py --tier passing` is the harness; the cost is one call
     per board role (~70 today). Only then decide, because routing every strong+senior title
     to the tier is a real spend increase and the shortcut exists for a reason.
+
+374. **`check_scope_claims` guards one claim; the next scope change will not be about the
+    experience bar** — lane: `docs`, filed 2026-08-28. The new check binds the docs to
+    `pipeline/seniority.py`'s `EXPERIENCE_BAR` and to four retired phrases. That is the
+    class that actually drifted, and it is deliberately narrow — but boundary 4 of
+    `docs/decisions/2026-08-28-analyst-scope.md` (agency / IT-outsourcing employers) has
+    **no** guard, because it is enforced by an LLM condition and a demoting name list, so
+    there is no shipped boolean to bind to. If a third boundary is ever added, the honest
+    move is to give `seniority.py` one named flag per boundary (the way `EXPERIENCE_BAR`
+    already is) and generalise the check to iterate them, rather than to add a fifth regex.
+    Re-derive what it covers: `python -c "import importlib.util as u;s=u.spec_from_file_location('c','docs/check_docs.py');m=u.module_from_spec(s);s.loader.exec_module(m);print(m.SCOPE_SURFACES, [l for _p,l in m._BAR_PROMISE])"`
+
+375. **A junior analyst is in scope, but `Data Analyst Interns` is accepted and an
+    internship is not** — lane: `classifier`, found 2026-08-28 by `docs` while making the
+    scope wording true. `_NOT_A_JOB`'s English alternation is `\b(intern|internship|student
+    |trainee|apprentice(ship)?|working student|campus)\b` — **no plurals**, and the `\b`
+    kills them. Measured against the shipped classifier:
+
+        Data Analyst Intern            -> reject  keyword
+        Data Analyst Interns           -> ACCEPT  keyword_nollm
+        Data Analyst - Students        -> ACCEPT  keyword_nollm
+        Senior Data Analyst Interns    -> ACCEPT  keyword        <- LLM never asked
+        Head of Analytics Internships  -> ACCEPT  keyword
+
+    The last two are deterministic accepts of an internship with no LLM in the loop: a
+    senior marker plus an English plural walks past the reject into the `strong`+`senior`
+    keyword accept. The Hebrew side is weaker still — the alternation has `סטודנט` and
+    `מתמח` but not `התמחות` (the ordinary noun for *internship*) or `סטאז'`. This is why
+    the board and the mail now say internships are **out of scope** rather than "no
+    internships": the second is a guarantee the code does not keep. Fix `_NOT_A_JOB` and
+    the wording can be stronger. Re-derive:
+    `python -c "from pipeline import seniority as s;[print(t, s.classify({'company':'A','title':t}, use_llm=False)['decision']) for t in ['Data Analyst Intern','Data Analyst Interns','Senior Data Analyst Interns']]"`
+
+376. **"Agencies are excluded everywhere via `pipeline/recruiters.py`" is not true of the
+    classifier, and §5b sends debuggers to a name list that returns False** — lane:
+    `registry`, filed 2026-08-28 by `docs`. `ARCHITECTURE.md:1033-1034` and the §5b runbook
+    step at `:2538` both say agencies are excluded by `is_recruiter`. Measured on
+    2026-08-28 (`docs/decisions/2026-08-28-analyst-scope.md`), `is_recruiter` returns
+    `False` for **all six** of the agency employers the scope decision was written about —
+    it matches recruitment words in a NAME, and `Matrix`, `Logica-IT` and `Peak Innovation`
+    have none. The real rule since 2026-08-28 is an LLM condition on the posting plus a
+    demoting list, so a role can now be dropped by a path §5b never mentions. Not fixed
+    here: a `registry` session was live in those sections. One clause each is enough.
+
+377. **Two `infra` comments quote the digest H1, which changed today** — lane: `infra`,
+    filed 2026-08-28 by `docs`. `persist_state.py:826` and
+    `.github/workflows/daily-digest.yml:180` both illustrate the thin-digest case with
+    `0 new senior analytics roles`; the renderer now produces `0 new analytics roles`.
+    Comments only — nothing parses them (`digest_delivered` checks `#` + the date, not the
+    wording) — which is why `check_scope_claims` does not register those two files: they
+    quote a rendered example rather than promise a reader anything. `ARCHITECTURE.md:2010`
+    carried the same quotation and was corrected in the same commit, being `docs`'.

@@ -196,13 +196,11 @@ One line per session, in the shape at the top of this file. The long version is 
   Folded to a pointer on 2026-08-28 by `classifier`, as the 2026-08-24 batch was on
   2026-08-27 and for the same reason (`docs/BACKLOG.md` 338): no lane could fit an entry.
   `docs/sessions/2026-08-25-*.md`.
-- **2026-08-26 `ats-fetch`** — the scraper's overnight verdict reaches board health **NOT finished:** 207–214. Record: `docs/sessions/2026-08-26-ats-fetch.md`.
-- **2026-08-26 `scraper`** — never discard what the runner cannot read **NOT finished:** 215–220 (why the runner is refused is only knowable from the 08-27 rot codes). Record: `docs/sessions/2026-08-24-scraper.md`.
-- **2026-08-26 `ats-fetch`** — the mail hid two of three new fetch errors **NOT finished:** 227–237. Record: `docs/sessions/2026-08-26-ats-fetch.md`.
-- **2026-08-26 `discovery`** — the coverage audit, and the dry run that changed the answer Record: `docs/sessions/2026-08-24-discovery.md`.
-- **2026-08-26 `company-intel`** — the last bare `claude -p` Record: `docs/sessions/2026-08-26-company-intel.md`.
-- **2026-08-26 `scraper`** — a reading that names roles but knows none of their addresses must not END the ladder **NOT finished:** 243, 247. Record: `docs/sessions/2026-08-24-scraper.md`.
-- **2026-08-26 `jd-text`** — what the layer spends, what it refuses to fetch, and the text that was already ours **NOT finished:** 155's inline half ONLY, and it is a real dependency. Record: `docs/sessions/2026-08-26-jd-text.md`.
+- **2026-08-26, five lanes** — `ats-fetch` (×2), `scraper` (×2), `discovery`,
+  `company-intel`, `jd-text`. Folded to a pointer on 2026-08-28 by `docs`, as the
+  2026-08-24 batch was on 08-27 and the 2026-08-25 batch on 08-28, and for the same
+  reason (`docs/BACKLOG.md` 338): the word cap left nine words and no lane could fit an
+  entry. `docs/sessions/2026-08-26-*.md`.
 - **2026-08-27 `registry`** — the tier that never once reached the model **NOT finished:** 275, 282. Record: `docs/sessions/2026-08-24-registry.md`.
 - **2026-08-27 `registry` (2)** — the intake queue was owned by nothing and the one search rung returned `[]` for every query. Fixed both; 134 names became rows, 42 active. **NOT finished:** ~350 exhausting, the classifier count, 340. Record: the session log's "Continuation state".
 
@@ -220,3 +218,4 @@ version already was.*
 - **2026-08-28 `infra`** - the relay fires on a PUSH from the digest, not a clock GitHub is dropping; the unlocker rung is switchable, capped and visible; every commit measures the caches it pushes - 279->263 was 16/16 `why=empty`, NOT the error class (363@scraper); `mutation-gate` sharded after 105->204. **NOT finished:** 292/308, 365, 305. Record: `docs/sessions/2026-08-28-infra.md`.
 - **2026-08-28 `docs`** - a census fact that fails because the project is WORKING is a broken check: `active_rows` blew its `~900` bracket at 969 and would have skipped `Registry invariants` on the next push. Census claims are one-sided floors now. **NOT finished:** BACKLOG 357-362, 368. Record: `docs/sessions/2026-08-28-docs.md`.
 - **2026-08-28 `classifier`** - `0 LLM calls` read as a dead tier; it fired **32 times that day**, and the run measured was the third of three. **16 of the 19 dropped roles were correct rejects, 1 a real miss.** Title-gate false-negative rate **1 of 401**. The cache key digests the rules. **NOT finished:** 369-373. Record: `docs/sessions/2026-08-28-classifier.md`.
+- **2026-08-28 `docs`** - the board and the mail advertised a `~3+ yrs` filter removed that morning; the subject line said it to the inbox at 08:29Z. **Fourteen sites true, not the six filed.** "senior" was already false: **36 of 72 board roles** had no seniority marker. Scope claims are a linted CLAIM now. **NOT finished:** 374-377. Record: `docs/sessions/2026-08-28-docs-scope.md`.

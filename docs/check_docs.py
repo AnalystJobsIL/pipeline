@@ -1075,6 +1075,126 @@ def _handoff_prose_lines(text: str):
         yield n, line
 
 
+# ------------------------------------------------- 5b. the product's SCOPE, as a claim
+# FACTS above checks NUMBERS. This checks a CLAIM, and it exists because a claim had no
+# test. On 2026-08-28 the operator removed the ~3+ years experience bar; `classifier`
+# shipped it in 66d9e3c with `docs/decisions/2026-08-28-analyst-scope.md`; and README.md,
+# CLAUDE.md, ARCHITECTURE.md §0, pipeline/__init__.py and four literals in
+# pipeline/digest.py went on advertising the filter for the rest of the day - including the
+# line the relay turns into the mail's subject, which reached the inbox at 08:29Z that
+# morning reading "4 new senior analytics roles". This linter was green the whole time,
+# because everything the docs POINT AT still existed. That is the old root SCHEDULING.md
+# failure (wrong for three days about whether the daily email existed) in a new place.
+#
+# The contract is TWO-WAY, decided by the code. A blocklist would go green the moment the
+# phrases were deleted and would say nothing about whether what replaced them is true - and
+# the cheapest way to green it would be to stop telling visitors anything, which is a new
+# inaccuracy, not a fix.
+SCOPE_SURFACES = ("README.md", "CLAUDE.md", "ARCHITECTURE.md",
+                  "pipeline/digest.py", "pipeline/__init__.py")
+
+# The three that must also state the replacement. `pipeline/digest.py` says it too today,
+# but requiring it there would freeze `render`'s wording of a rendered string; the PROMISE
+# is the docs' to make.
+SCOPE_MUST_STATE = ("README.md", "CLAUDE.md", "ARCHITECTURE.md")
+
+# Whitespace-tolerant because this prose is hard-wrapped at ~95 columns and one of the real
+# sites (`ARCHITECTURE.md`'s "0 new senior analytics\n   roles") wrapped straight through
+# the phrase. Case-insensitive because the board's subtitle said "Experienced (" with a
+# capital E and a case-sensitive first draft of this check sailed past the single most-read
+# stale claim in the product.
+_BAR_PROMISE = [
+    (r"[≈~]\s*3\+\s*(?:yrs?|years?)", "the ≈3+ yrs idiom"),
+    (r"experienced\s*\(\s*\**\s*[≈~]?\s*3\+", "\"experienced (3+ ...)\""),
+    (r"senior\s+analytics\s+roles?", "\"senior analytics roles\""),
+    (r"anything\s+junior/intern/entry-level", "the old junior/intern/entry-level clause"),
+]
+_BAR_FREE = r"any\s+experience\s+level"
+
+# `senior analytics OPENINGS` is deliberately absent. Its only two sites are in
+# `build_digest`, the dead renderer BACKLOG 142 deletes - it writes `out/digest-<date>.html`
+# and a `subject` key nothing reads. The operator declined to polish strings in code that is
+# scheduled for deletion, because doing so makes the dead code look maintained and 142
+# harder to argue. If `build_digest` outlives 142, add `openings?` to the third pattern.
+# `persist_state.py` and `.github/workflows/` are not surfaces either: they QUOTE a rendered
+# example in a comment rather than promise anything to a reader, and they are `infra`'s.
+# `docs/sessions/`, `docs/decisions/` and `docs/BACKLOG.md` quote the retired phrase on
+# purpose - they are frozen archives, and `tests/test_units.py` already forbids registering
+# one as a fact site for the same reason.
+
+
+def scope_bar_default() -> bool:
+    """`pipeline/seniority.py`'s EXPERIENCE_BAR as SHIPPED, by AST - not by importing, and
+    not by reading the live global.
+
+    Not by importing, for the reason `_fetcher_keys` gives. Not the live global, for a
+    sharper reason found by an adversary: `EXPERIENCE_BAR` is `os.environ.get(...) == "1"`,
+    so a guard that read `seniority.EXPERIENCE_BAR` would take the other branch under
+    `CLASSIFY_EXPERIENCE_BAR=1` and assert the promise is PRESENT. It is present. That is a
+    one-word green over the whole drift, from the environment of whoever runs the suite.
+
+    Every other shape RAISES, which `check_derived_facts` reports as uncomputable - loud and
+    correct, the same contract `_fetcher_keys` keeps."""
+    path = os.path.join(ROOT, "pipeline", "seniority.py")
+    tree = ast.parse(read(path))
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Assign)
+                and any(getattr(t, "id", None) == "EXPERIENCE_BAR" for t in node.targets)):
+            continue
+        v = node.value
+        if not (isinstance(v, ast.Compare) and len(v.comparators) == 1
+                and isinstance(v.left, ast.Call) and len(v.left.args) == 2
+                and all(isinstance(a, ast.Constant) for a in v.left.args)
+                and isinstance(v.comparators[0], ast.Constant)):
+            raise RuntimeError(
+                "pipeline/seniority.py's EXPERIENCE_BAR is no longer `os.environ.get(NAME, "
+                "DEFAULT) == VALUE` (%s). The scope check reads its shipped DEFAULT; teach "
+                "it the new shape rather than letting it guess." % type(v).__name__)
+        return v.left.args[1].value == v.comparators[0].value
+    raise RuntimeError("pipeline/seniority.py no longer assigns EXPERIENCE_BAR. The product "
+                       "scope is checked against it; find what replaced it.")
+
+
+def check_scope_claims() -> None:
+    bar = scope_bar_default()
+    for surface in SCOPE_SURFACES:
+        path = os.path.join(ROOT, surface)
+        if not os.path.exists(path):
+            err("scope", "%s is a registered scope surface and does not exist. Restore it, "
+                         "or drop it from SCOPE_SURFACES - a surface that silently stops "
+                         "being read is a claim that stops being checked." % surface)
+            continue
+        text = read(path)
+        spans = _veto_spans(text)
+        hits = []
+        for pattern, label in _BAR_PROMISE:
+            for m in re.finditer(pattern, text, re.I):
+                if _vetoed(m.span(), spans):
+                    continue
+                hits.append((text.count("\n", 0, m.start()) + 1, label))
+        if bar and not hits:
+            err("scope", "%s states no experience bar, but pipeline/seniority.py ships "
+                         "EXPERIENCE_BAR on. A filter the code enforces and the docs do not "
+                         "mention is the same defect as one the docs promise and the code "
+                         "dropped." % surface)
+        for lineno, label in sorted(hits):
+            if not bar:
+                err("scope", "%s:%d still promises an experience bar (%s), and "
+                             "pipeline/seniority.py ships EXPERIENCE_BAR OFF - there is no "
+                             "minimum experience. Say what the product does now; see "
+                             "docs/decisions/2026-08-28-analyst-scope.md."
+                    % (surface, lineno, label))
+    if bar:
+        return
+    for surface in SCOPE_MUST_STATE:
+        path = os.path.join(ROOT, surface)
+        if os.path.exists(path) and not re.search(_BAR_FREE, read(path), re.I):
+            err("scope", "%s no longer promises an experience bar and does not say what it "
+                         "does instead (`any experience level`). Deleting the claim is not "
+                         "the same as correcting it: a visitor is now told nothing about "
+                         "who the board is for." % surface)
+
+
 def check_handoff() -> None:
     path = os.path.join(ROOT, "HANDOFF.md")
     if not os.path.exists(path):
@@ -1325,7 +1445,7 @@ def check_entry_docs() -> None:
 
 CHECKS = [check_entry_docs, check_paths_exist, check_links, check_section_refs,
           check_module_registry,
-          check_schedule_table, check_derived_facts, check_handoff,
+          check_schedule_table, check_derived_facts, check_scope_claims, check_handoff,
           check_morning_checks, check_session_record_dates,
           check_backlog]
 

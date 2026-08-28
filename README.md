@@ -1,7 +1,7 @@
 # AnalystJobsIL pipeline
 
-A free job board of experienced (**≈3+ years**) data-analyst / BI / analytics openings at
-Israeli high-tech companies, and a daily email of what is new.
+A free job board of data-analyst / BI / analytics openings at Israeli high-tech companies,
+at **any experience level**, and a daily email of what is new.
 
 - **The board** → https://analystjobsil.github.io/board/ — every role we can still see at
   its employer, searchable, with company facts on each card. Most are read from the
@@ -38,7 +38,7 @@ It runs entirely on GitHub Actions cron jobs. There is no server.
  4 ENRICH      fetch the full job description · research the company
     │          (sector, stage, size, founded, Israel centre)
     ▼
- 5 CLASSIFY    is it in Israel? is it ≈3+ years of analytics work?
+ 5 CLASSIFY    is it in Israel? is it analytics work, at any level?
     │          deterministic keyword rules, then an LLM for the ambiguous ones
     ▼
  6 RENDER      the board, the archive, the email, every tag on a role card
@@ -54,11 +54,18 @@ exactly. A count the cron jobs move — the two in the paragraph above — is wr
 FLOOR, `N+`, so growth is absorbed silently and the build goes red only if the number
 COLLAPSES through it.
 
-**What counts as a role:** experienced data/BI/product/marketing analytics and analytics
-leadership. The title does not matter — a "Data Scientist" posting counts if the work is
-really product analytics. Out: core ML, data engineering, software engineering, FP&A,
-security/SOC, and anything junior/intern/entry-level. The full product decision, and the
-code that implements it, are in `ARCHITECTURE.md` §0.
+**What counts as a role:** data/BI/product/marketing analytics and analytics leadership, at
+**any experience level** — the experience bar was removed on 2026-08-28. The title does not
+matter — a "Data Scientist" posting counts if the work is really product analytics. What a
+non-senior title costs is *evidence*, not eligibility: when the LLM tier is unavailable, a
+title that is only an analytics **signal** is accepted only if its description shows
+analytics, which is the bar a bare "Data Scientist" has always had. **Out of scope:**
+internships, student placements and trainee programmes; a staffing agency or IT-outsourcing
+house advertising a role at a client company (judged per posting, not by a name list); core
+ML, data engineering, software engineering, FP&A, security/SOC. Israel is judged per
+posting, not per company. The full product decision is
+[`docs/decisions/2026-08-28-analyst-scope.md`](docs/decisions/2026-08-28-analyst-scope.md);
+the code that implements it is described in `ARCHITECTURE.md` §0.
 
 ## Reading this repo
 
@@ -85,7 +92,7 @@ code that implements it, are in `ARCHITECTURE.md` §0.
 | `docs/RUN_LOG.md` | every line a digest can print, and every LLM seam it may spend |
 | `docs/ATS_PLATFORMS.md` | `companies.csv` columns and the per-platform API URL patterns |
 | `docs/sessions/` | what past sessions found, in their own words |
-| `docs/decisions/` | superseded design decisions, kept for the record |
+| `docs/decisions/` | a decision and the alternatives it rejected. Some are superseded; some, like the 2026-08-28 scope record, are the live spec |
 
 ## The code
 
