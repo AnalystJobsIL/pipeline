@@ -2139,5 +2139,35 @@
   "replace": "        agg = p.get(\"api_url\") if is_aggregator(p.get(\"api_url\") or \"\") else \"\"",
   "why": "a search rung resolves an aggregator's PAGE to the ATS board behind it, so the final api_url is an ATS host and no aggregator test can refuse it. Menora Mivtachim on jobkarov, one indirection on.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "zero-cond2-drop",
+  "file": "confirm_zero.py",
+  "symbol": "verdict_from",
+  "class": "M1-gate-removal",
+  "find": "    if ev.get(\"cond2\") == \"not-ours\":\n        return \"wrong-url\", False\n",
+  "replace": "",
+  "why": "condition (b) then rests on ONE LLM boolean, and `employer_named` is legally \"\" under the schema. Dolby Laboratories was CONFIRMED with cond2=not-ours on 2026-08-29.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "zero-followed-confirms",
+  "file": "confirm_zero.py",
+  "symbol": "verdict_from",
+  "class": "M1-gate-removal",
+  "find": "    if ev.get(\"followed_to\"):\n        return ROUTING, False\n",
+  "replace": "",
+  "why": "the one-hop follow fires exactly when a page shows no postings -- which is what a correctly empty filtered board looks like -- so confirming on the followed page turns `shows-none` into a zero. It took Dolby to a Germany jobs page and Nominal to a single posting.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "zero-errors-freeze",
+  "file": "confirm_zero.py",
+  "symbol": "_ledger_stale",
+  "class": "M7-constant-drift",
+  "find": "    if str(v.get(\"verdict\") or \"\").split(\":\")[0] in _NOT_A_CADENCE:\n        return True\n",
+  "replace": "",
+  "why": "an ERROR verdict is a fact about our renderer; freezing the row for RECHECK_DAYS on it retires coverage. 34 rows were in that state when this was found.",
+  "must_be_killed_by_behavioural": true
  }
 ]

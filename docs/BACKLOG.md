@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**455 filed · 336 open · 119 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**468 filed · 349 open · 119 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 408.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 421.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -88,7 +88,7 @@ closure convention in the header.
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 97 open
+### registry — 108 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -187,6 +187,17 @@ closure convention in the header.
 - **403** `403@registry` **The 2-night rehearsal cannot tell a legitimate pool transition from erosion, and that is
 - **404** `404@registry` **`replace_own`'s marker test is a bare prefix, so `retry` deletes `retry-resolved`** —
 - **405** `405@registry` **`confirm_zero.py`'s entry point sat above a function it calls, so every `--apply` run
+- **408** `408@registry` **The board-`<title>` identity check runs only for `rung == "slug-probe"`, so the
+- **411** `411@registry` **`_walk_board` calls a walk COMPLETE on the board's own `total`, with no check against
+- **412** `412@registry` **`confirm_zero`'s LLM prompt truncates the page at 12,000 chars and nothing records that
+- **413** `413@registry` **The ROUTING branch can drop its `needs re-resolution` segment whole, and the assertion
+- **414** `414@registry` **`MAX_DEACTIVATE` caps the rare disposition and not the common one**
+- **415** `415@registry` **`_name_kin` skips exactly the pair the two normalizers disagree about**
+- **416** `416@registry` **`os.environ.pop(k, None)` is not atomic, so `drain_queue._search_urls`' `finally` can
+- **417** `417@registry` **`_lock_the_paid_rungs`' comment states lock 2's purpose backwards**
+- **418** `418@registry` **`drain_queue.note_if_applied` is dead, and one of its values is a forbidden claim** —
+- **419** `419@registry` **`--apply` without `--judge`, or one transient LLM failure, freezes the whole batch for 30
+- **420** `420@registry` **`confirm_zero` is in no workflow, no `check_invariants` check and no rehearsal**
 
 ### infra — 81 open
 
@@ -299,7 +310,7 @@ closure convention in the header.
 - **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
 - **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` writes to the tracked tree**
 
-### scraper — 23 open
+### scraper — 24 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -324,6 +335,7 @@ closure convention in the header.
 - **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
 - **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
 - **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
+- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
 
 ### discovery — 20 open
 
@@ -370,7 +382,7 @@ closure convention in the header.
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
 - **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
 
-### ats-fetch — 15 open
+### ats-fetch — 16 open
 
 - **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
 - **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
@@ -387,6 +399,7 @@ closure convention in the header.
 - **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
 - **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
+- **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 
 ### jd-text — 8 open
 
@@ -7031,3 +7044,130 @@ Record: `docs/sessions/2026-08-28-registry-evening.md`. Numbers re-derived again
     asks "did the fetch work", never "is this still the right board". The decision this needs is
     whether check D grows an active-row arm with its own (necessarily different) ownership
     definition, or whether that belongs in `health.py` — not a patch to make quietly.
+
+## Found by adversarial waves 2 and 3, 2026-08-29 (`registry`)
+
+Both waves ran against `4ed4cf8` in isolated worktrees, spending no Bright Data and dispatching
+nothing. What they found in code I had written HOURS earlier is the argument for running them:
+four of the seven `confirmed` verdicts of that evening rested on unsound evidence and have been
+stripped (`ARCHITECTURE.md` §8 — a result from a broken path is not a measurement).
+
+408. ~~**The board-`<title>` identity check runs only for `rung == "slug-probe"`, so the
+    `Agency` → Meridial impostor walks through the search rung**~~ — **the row is PARKED; the
+    gating is still open** — lane: `registry`. `apply_proposals._row_for:375` gates the third
+    identity signal on one string in a JSON file. Proved live by wave 3: the same greenhouse
+    board, `rung="slug-probe"` → `skip Agency  no row: gate=board-says-Meridial`;
+    `rung="search"` → `write Agency  true  ok  821/3 IL`.
+
+    **And it had already happened by another path.** `Agency` was ACTIVE in `companies.csv` at
+    `4ed4cf8`, written by the 20:23 `auto-expand` cron (`2c51a0f`) as `auto-expand slug-probe;
+    821/1 IL` — `auto_expand` has no title check at all. Parked here as `alias-of Meridial`
+    after re-reading the board (`board_employer` → `'Meridial'`), hours before the 05:00 digest
+    would have published 821 of another employer's postings under a one-word queue name.
+    The remaining work is to move the check above the rung test, or into the gate, so that
+    every activation path gets it.
+
+409. **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
+    signal" is a tautology on one path and empty on the other** — lane: `ats-fetch` (the
+    fetcher) with `registry`. `pipeline/fetchers.py:223` sets `"company": row["company_name"]`
+    — the name we passed IN — and discards the API's real `company_name`.
+    `drain_queue.walk_one` reads `j["company"]`, so `board_name_matches` is **True by
+    construction for every comeet-token proposal**; `_ats_from_search` reads
+    `j["company_name"]`, which does not exist, so it is **always `[]`/False** on the paid rung.
+    `comeet_from_hosted_page`'s docstring calls that field "asserted by the board itself …
+    independently", which is exactly `317@registry`'s complaint about derived signals, and it
+    is the stated justification for exempting Comeet from the title check.
+
+    **The exemption is load-bearing AND lucky.** `board_employer` on a hosted Comeet page
+    returns the ATS VENDOR's title — `'Spark Hire Recruit Jobs | Spark Hire Recruit -
+    Collaborative Recruiting'` — so the title check would refuse EVERY Comeet board. What
+    actually saves the path is undocumented: `activation_verdict` with `html=""` GETs the API
+    JSON, which contains the tenant's name many times over, so `page_names_company` does the
+    work. Real evidence; just not the evidence the code says it relies on.
+
+410. **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
+    code** — lane: `scraper` (the dataclass) with `registry`.
+    `scrape_universal.Rendered.__dataclass_fields__` has no `final_url`, so
+    `final = getattr(rr, "final_url", None) or url` is always `url`, the comparison always
+    compares a URL with itself, and `ev["cond1"] = "wrong-host"` can never be assigned. Rule
+    (a)'s redirect clause is unenforced: a careers URL that 301s to another company's ATS
+    renders, judges and confirms normally. `ev["final_url"]` in every evidence file is the
+    REQUESTED url presented as the final one, and the model is told that address.
+
+411. **`_walk_board` calls a walk COMPLETE on the board's own `total`, with no check against
+    `WALK_CAP`** — lane: `registry`. `complete = bool(total is not None and seen >= (total or 0))`
+    never asserts `seen < WALK_CAP`, so a board that reports `total` inside `(WALK_CAP-20,
+    WALK_CAP]` yields "A COMPLETE walk of the board: 1200 of 1195 postings". **`T-Mobile` was
+    `confirmed` at `api_jobs: 1200` — exactly `WALK_CAP` — while the board reports 2000.** That
+    verdict is stripped. 800 postings were never looked at.
+
+412. **`confirm_zero`'s LLM prompt truncates the page at 12,000 chars and nothing records that
+    it did** — lane: `registry`. `text[:12000]`, and 8 of the 85 rendered rows in the
+    2026-08-28/29 ledger exceeded it (Vertical Field 216,541 chars; Lasso 36,909; Sight
+    Sciences 24,229). None of those was confirmed, so no damage yet — but a 26,021-char board
+    with 20 Tel Aviv roles sends the model 12,000 chars containing **zero** occurrences of
+    "Israel", and `verdict_from` returns `confirmed`. The truncation must be in the evidence,
+    and a truncated read must not be able to confirm.
+
+413. **The ROUTING branch can drop its `needs re-resolution` segment whole, and the assertion
+    written to catch that is blind to it** — lane: `registry`. `notes.append` drops the
+    NEWCOMER whole when every remaining segment is protected; the routing branch calls
+    `replace_own` with no `evicts` check and then sets `active=false` unconditionally.
+    `_assert_routed_rows_are_owned` filters on `"zero-confirm " in r[5]` — the very segment
+    that was dropped — so it cannot see the row it exists for. **0 of 181 pool rows would drop
+    it today**, so it is latent; the guard being structurally unable to fire is not.
+
+414. **`MAX_DEACTIVATE` caps the rare disposition and not the common one** — lane: `registry`.
+    `parks = v["verdict"] == "wrong-url" and off < MAX_DEACTIVATE`, but the ROUTING branch
+    `continue`s before that line and never touches `off`. Routing was **83 of 139** ledger rows
+    — by far the commonest — and it is uncapped, so one bad run can park an unbounded number of
+    rows. And a `wrong-url` row PAST the cap keeps `active=true` with a token-less note while
+    still getting a ledger entry, so the cadence then hides it for 30 days: worse than parking.
+
+415. **`_name_kin` skips exactly the pair the two normalizers disagree about** — lane:
+    `registry`. `store._norm_company` maps non-alphanumerics to a SPACE and
+    `apply_proposals._norm` DELETES them, and `_name_kin` has `if other_norm == a: continue`.
+    So `NextInsurance` against an active `Next Insurance` returns `set()` — no HOLD — while the
+    less similar `Next Insurance Co` does hold. Wave 3 wrote the second active row and both
+    shipped guards reported clean: `check_invariants` check B counts `r[0]`, and
+    `test_no_two_active_rows_share_a_board` compares addresses, and these differ in both.
+
+416. **`os.environ.pop(k, None)` is not atomic, so `drain_queue._search_urls`' `finally` can
+    raise past its own `except`** — lane: `registry`. `pop` is a lookup then a `del`; the
+    default guards only the lookup. Measured at 7 escapes in 24,000 calls across 8 threads. The
+    exception is raised IN `finally`, so the `except Exception: return []` cannot catch it: it
+    propagates out of `walk_one` and the whole name's walk is lost as `crash:KeyError`. When it
+    lands on the first pop, the second never runs and `BRIGHTDATA_ZONE` is left set. The API key
+    itself was never left behind in 24,000 calls. Fix: `if k in os.environ: del os.environ[k]`
+    inside its own try, or a per-call env rather than the process's.
+
+417. **`_lock_the_paid_rungs`' comment states lock 2's purpose backwards** — lane: `registry`.
+    It says removing the key from the environment "is what stops eight modules' `_load_secrets`
+    convenience imports from re-arming the gate". `bd_rescue._load_secrets` is
+    `os.environ.setdefault(...)` over `secrets.env` — removing the key is precisely what makes
+    that succeed. The lock holds today only because no module in the drain's import graph calls
+    `_load_secrets()` at import time (all 18 call sites are inside function bodies); lock 1
+    (`_gate._UNLOCK_BUDGET = 0`) is doing all the work. Cosmetic today, misleading for ever.
+
+418. **`drain_queue.note_if_applied` is dead, and one of its values is a forbidden claim** —
+    lane: `registry`. Five writers, zero readers — `_row_for` builds its own segment. But
+    `_page_proposal` sets it to `"queue-drain <date> <rung>; no IL listing; monitored
+    candidate"`, on proposals whose Israel hint is nonzero. Wiring the field up would
+    immediately red `test_the_applier_never_records_a_company_as_empty_or_unreachable`. Delete
+    it, or make it the one place the segment is built.
+
+419. **`--apply` without `--judge`, or one transient LLM failure, freezes the whole batch for 30
+    days having learned nothing** — lane: `registry`. `--apply` is accepted with no `--judge`;
+    every rendered row is then `unconfirmed`; and an `unconfirmed` attempt is now written to the
+    ledger, which the cadence reads. A transient per-row LLM failure does the same and trips no
+    guard (the mass-zero arm cannot fire when nothing is confirmed). That is `CLAUDE.md` rule 2
+    — a mass-zero result is a broken run — transposed onto the cadence. `--apply` should require
+    `--judge`, and a run whose LLM answered nothing should refuse to write.
+
+420. **`confirm_zero` is in no workflow, no `check_invariants` check and no rehearsal** — lane:
+    `registry`. Wave 2 grepped `.github/workflows/`, `check_invariants.py` and
+    `tests/rehearse_registry.py` and found no reference. It writes `active` and the notes column
+    on the most consequential question this repo asks, and **none of 413, 414 or 419 would be
+    caught automatically.** Either it joins the Sunday audit's schedule and the rehearsal's
+    `SCHEDULE`, or it is documented as an operator-run tool that must never be crond.
+

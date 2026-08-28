@@ -99,6 +99,9 @@ def _baseline():
         return {}
 
 
+_NOT_A_CADENCE = {"stripped", "tool-error", "shell", "wall", "parked-domain", "wrong-host",
+                  "render-error", "api-error", "http-400", "http-401", "http-403", "http-404",
+                  "http-429", "http-500", "http-502", "http-503", "http-None"}
 _LEDGER_CACHE = {}
 
 
@@ -111,6 +114,13 @@ def _ledger_stale(name, days):
     if "d" not in _LEDGER_CACHE:
         _LEDGER_CACHE["d"] = _load_ledger()
     v = _LEDGER_CACHE["d"].get(name) or {}
+    # An ERROR verdict is a fact about OUR renderer, never about the company, so it must not
+    # buy 30 days of silence: `shell`, `wall`, `http-4xx`, `render-error:*`, `api-error:*` and
+    # a STRIPPED verdict all leave the row selectable. 34 rows were frozen on exactly these
+    # before this line existed. `unconfirmed` DOES hold the row -- we rendered it, asked, and
+    # could not tell, and repeating that daily is what the cadence exists to stop.
+    if str(v.get("verdict") or "").split(":")[0] in _NOT_A_CADENCE:
+        return True
     when = (v.get("date") or "")[:10]
     if len(when) != 10:
         return True
@@ -422,7 +432,26 @@ def verdict_from(ans, ev):
     # produce a zero, whatever it says. A landing page has no openings BY CONSTRUCTION -- it
     # is not where they live -- so "no Israeli roles here" is a fact about the page and not
     # about the company. Routed instead, which is where a wrong address belongs.
+    # CONDITION (b), enforced here and not only by the model's boolean. `verdict_from` read
+    # `cond3` and never `cond2`, so the only ownership test was
+    # `employer_named and not employer_is_the_asked_company` -- and `employer_named` may legally
+    # be "" under the schema, which skips the `wrong-url` branch entirely. That was harmless
+    # while `not-ours` never reached the model; sending it (so those rows stop spinning) made it
+    # load-bearing, and `Dolby Laboratories` was CONFIRMED tonight with `cond2: not-ours`.
+    # A page the mechanical test says belongs to someone else cannot produce a zero about US.
+    if ev.get("cond2") == "not-ours":
+        return "wrong-url", False
     if not ev.get("cond3"):
+        return ROUTING, False
+    # A PAGE WE FOLLOWED TO MAY ROUTE, NEVER CONFIRM. The follow fires exactly when the row's
+    # own page shows no postings -- which is also what a CORRECTLY empty Israel-filtered board
+    # looks like -- and then hunts the same domain for anything with three posting-shaped
+    # hrefs. Tonight it took `jobs.dolby.com/careers?location=Israel` ("No results", i.e.
+    # `shows-none`, i.e. unresolved) to `careers.dolby.com/go/Jobs-in-Germany/`, P&G to
+    # `/global/en/other-careers`, and `Nominal` from its board to a SINGLE job posting -- and
+    # all three returned `confirmed`. The follow is good evidence that the row's ADDRESS is
+    # wrong; it is not evidence about the company. So it routes.
+    if ev.get("followed_to"):
         return ROUTING, False
     if tot > 0:
         return "confirmed", True              # a real board, roles listed, none in Israel

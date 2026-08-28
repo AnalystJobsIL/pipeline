@@ -6696,3 +6696,81 @@ def test_the_applier_refuses_an_aggregator_anywhere_on_the_trail(tmp_path, monke
     assert "Portfolio Co" not in names, (
         "a board found ON an aggregator page was activated because the endpoint was an ATS host")
     assert "Real Co" in names, "positive control: an ordinary candidate must still be written"
+
+
+def test_a_page_the_mechanical_test_says_is_someone_elses_can_never_confirm():
+    """Condition (b), enforced by the MECHANICAL test and not only by one LLM boolean.
+
+    `verdict_from` read `cond3` and never `cond2`. The only ownership test was
+    `employer_named and not employer_is_the_asked_company` -- and `employer_named` is legally
+    `""` under the schema, and `pipeline/llm.call_json` validates nothing beyond "a non-empty
+    dict", so a model that omits or blanks that field skips the `wrong-url` branch entirely.
+    Harmless while `cond2 == "not-ours"` never reached the model; sending it (so those rows stop
+    re-rendering for ever) made it load-bearing, and **`Dolby Laboratories` was CONFIRMED with
+    `cond2: not-ours`** on 2026-08-29 before this existed. Found by an adversarial pass.
+    Kills `zero-cond2-drop`."""
+    import confirm_zero as Z
+    ans = {"is_job_board": True, "employer_named": "", "roles_total": 12, "roles_israel": 0,
+           "employer_is_the_asked_company": False, "vacancy_statement": "lists-roles"}
+    assert Z.verdict_from(ans, {"cond1": "rendered", "cond2": "not-ours", "cond3": True,
+                                "board_why": "ats-xhr"}) == ("wrong-url", False)
+    # ...and `weak`/`ours` still reach the ordinary verdicts (the positive control)
+    ok = dict(ans, employer_is_the_asked_company=True)
+    assert Z.verdict_from(ok, {"cond2": "ours", "cond3": True, "board_why": "ats-xhr"}) \
+        == ("confirmed", True)
+    assert Z.verdict_from(ok, {"cond2": "weak", "cond3": True, "board_why": "ats-xhr"}) \
+        == ("confirmed", True)
+
+
+def test_a_followed_page_may_route_but_never_confirm():
+    """The one-hop follow is evidence about the ADDRESS, never about the company.
+
+    It fires exactly when the row's own page shows no postings -- which is also what a correctly
+    empty Israel-filtered board looks like -- and then hunts the same domain for anything with
+    three posting-shaped hrefs. On 2026-08-29 it took `jobs.dolby.com/careers?location=Israel`
+    (which says "No results": `shows-none`, i.e. unresolved) to
+    `careers.dolby.com/go/Jobs-in-Germany/`, `Procter & Gamble` to `/global/en/other-careers`,
+    and `Nominal` from its board to a SINGLE job-posting page -- and all three returned
+    `confirmed`. Those four verdicts were stripped. Kills `zero-followed-confirms`."""
+    import confirm_zero as Z
+    ans = {"is_job_board": True, "employer_named": "X", "employer_is_the_asked_company": True,
+           "roles_total": 12, "roles_israel": 0, "vacancy_statement": "lists-roles"}
+    base = {"cond1": "rendered", "cond2": "ours", "cond3": True, "board_why": "posting-hrefs-9"}
+    assert Z.verdict_from(ans, base) == ("confirmed", True)          # not followed: unchanged
+    followed = dict(base, followed_to="https://careers.example.com/go/Jobs-in-Germany/")
+    assert Z.verdict_from(ans, followed) == (Z.ROUTING, False)
+    # ...and a followed page that lists ISRAEL roles must still refute, not route
+    assert Z.verdict_from(dict(ans, roles_israel=3), followed) == ("zero-refuted", False)
+
+
+def test_an_error_verdict_does_not_buy_thirty_days_of_silence(tmp_path, monkeypatch):
+    """An ERROR is a fact about OUR renderer, never about the company.
+
+    The ledger cadence (which exists because a note-keyed one excluded nothing) would otherwise
+    freeze a row for `RECHECK_DAYS` on `shell`, `wall`, `http-403`, `render-error:*` or
+    `api-error:*` -- 34 rows were in exactly that state when an adversarial pass found it. A
+    STRIPPED verdict must re-select too, or stripping a broken run's output would hide the rows
+    it was meant to re-open. `unconfirmed` DOES hold: we rendered it, asked, and could not tell.
+    Kills `zero-errors-freeze`."""
+    import datetime as dt
+    import json
+    import confirm_zero as Z
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    fresh = (dt.date.today() - dt.timedelta(days=1)).isoformat()
+    led = {n: {"date": fresh, "verdict": v} for n, v in (
+        ("Shell Co", "shell"), ("Wall Co", "wall"), ("Http Co", "http-403"),
+        ("Render Co", "render-error:goto:TimeoutError"), ("Api Co", "api-error:HttpError"),
+        ("Stripped Co", "stripped"), ("Unconfirmed Co", "unconfirmed"),
+        ("Confirmed Co", "confirmed"))}
+    (tmp_path / "cloud_state" / "zero_confirm.json").write_text(json.dumps(led), encoding="utf-8")
+    monkeypatch.setattr(Z, "LEDGER", str(tmp_path / "cloud_state" / "zero_confirm.json"))
+    Z._LEDGER_CACHE.clear()
+    try:
+        for n in ("Shell Co", "Wall Co", "Http Co", "Render Co", "Api Co", "Stripped Co"):
+            assert Z._ledger_stale(n, 30), "%s was frozen on a fact about our own renderer" % n
+        assert not Z._ledger_stale("Unconfirmed Co", 30), (
+            "an answered-but-undecidable row must NOT be re-rendered daily")
+        assert not Z._ledger_stale("Confirmed Co", 30)
+    finally:
+        Z._LEDGER_CACHE.clear()
