@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**422 filed · 306 open · 116 closed · 6 half · 30 numbers name more than one item · 28 items name no lane.**
+**423 filed · 307 open · 116 closed · 6 half · 30 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 379.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 380.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -84,7 +84,7 @@ closure convention in the header.
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 | 368 | `368@registry` **open** · `368@infra` **open** |
 
-### registry — 87 open
+### registry — 88 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -173,6 +173,7 @@ closure convention in the header.
 - **368** `368@registry` **`hunt-queue-identity-remove` is an EQUIVALENT MUTANT, and the source-text guard that
 - **371** `371@registry` **Two employers each hold two ACTIVE rows, and each row bought its own LLM verdict for
 - **376** `376@registry` **"Agencies are excluded everywhere via `pipeline/recruiters.py`" is not true of the
+- **379** `379@registry` **A production cron evicted two tools' verdicts from one note and dropped the row out of
 
 ### infra — 78 open
 
@@ -6341,3 +6342,34 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     virtually every real campus posting, so it may be carrying no weight at all), or require
     an adjacent programme word (`campus (program|programme|hire|hiring)`). Re-derive the
     count: `python -c "import json;d=json.load(open('scraped_cache.json',encoding='utf-8'));print([j['title'] for v in d.values() for j in v if 'campus' in (j.get('title') or '').lower()])"`
+
+379. **A production cron evicted two tools' verdicts from one note and dropped the row out of
+    the Sunday pool — `tests/test_registry.py::test_two_rehearsed_nights_keep_every_pool` is
+    RED on `origin/master`** — lane: `registry` (`bd_rescue.py`'s note write). Not a code
+    change: `3a5a1db` is a `[skip ci]` state commit from the 02:30 `retry-unreachable` cron,
+    and it rewrote `Salvador Technologies`:
+
+    ```
+    66d9e3c  deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23:
+             url-dead (http 404) | listing-hunt 2026-08-25: no IL listing; …
+    3a5a1db  dark-triage 2026-08-23: url-dead (http 404) | scanned via brightdata; roles-text
+             present but no resolvable board - monitored candidate | re…
+    ```
+
+    `deep-validated …` and `listing-hunt … no IL listing` are gone. The 220-char cap popped
+    the oldest unprotected segments to fit the new one — `CLAUDE.md` rule 3, in production —
+    and `no IL listing` was this row's membership in `validate_empty`'s Sunday pool, so the
+    2-night rehearsal now fails `night 1: pool validate_empty lost 1 rows it should keep`.
+
+    **Reproduce on a pristine checkout, which is how it was separated from this session's
+    work:** `git worktree add --detach <tmp> origin/master && cd <tmp> && python -m pytest
+    tests/test_registry.py -k two_rehearsed_nights_keep_every_pool` → the same row, the same
+    message. The 14-night `--policy worst` and `mixed` seeds 1-5 all still pass, so this is
+    the small-subset harness catching what the big one averages away.
+
+    **Why it is worth fixing rather than re-baselining.** The eviction is silent, it happens
+    nightly, and what it evicts is another tool's pool selector — the exact cost `notes.py`
+    was written to prevent. Candidates: protect `no IL listing` in `notes._PROTECTED_EXTRA`
+    (it is a pool FACT, which is that list's stated criterion), or have `bd_rescue` use
+    `replace_own` rather than appending a second segment. Measure the eviction rate first:
+    `git log -p --since=7.days -- companies.csv | grep -c '^-.*no IL listing'`.
