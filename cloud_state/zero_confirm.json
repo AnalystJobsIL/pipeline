@@ -39,6 +39,29 @@
   },
   "verdict": "routed-to-hunt"
  },
+ "AMD": {
+  "artifact": "amd-dc1b9b",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-12-followed",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 16.8,
+   "final_url": "https://careers.amd.com/jobs?categories=Engineering&page=1",
+   "followed_from": "https://careers.amd.com/careers-home/jobs?location=Israel",
+   "followed_to": "https://careers.amd.com/jobs?categories=Engineering&page=1",
+   "http_status": 200,
+   "page_chars": 937140,
+   "render_error": "",
+   "row_url": "https://careers.amd.com/careers-home/jobs?location=Israel",
+   "text_chars": 8044,
+   "url": "https://careers.amd.com/jobs?categories=Engineering&page=1"
+  },
+  "verdict": "routed-to-hunt"
+ },
  "Adcore": {
   "artifact": "adcore-8454f4",
   "date": "2026-08-29",
@@ -60,6 +83,49 @@
   },
   "verdict": "routed-to-hunt"
  },
+ "Airbnb": {
+  "artifact": "airbnb-6d7855",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-4",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 56.0,
+   "final_url": "https://careers.airbnb.com/positions/?_offices=israel",
+   "http_status": 200,
+   "page_chars": 99567,
+   "render_error": "",
+   "row_url": "https://careers.airbnb.com/positions/?_offices=israel",
+   "text_chars": 2685,
+   "url": "https://careers.airbnb.com/positions/?_offices=israel"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Akamai Technologies": {
+  "artifact": "akamai-technologies-b07cdb",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "not-rendered",
+   "comeet": false,
+   "cond1": "http-403",
+   "cond2": "skipped",
+   "cond2_how": "",
+   "cond3": false,
+   "elapsed_s": 14.0,
+   "final_url": "https://jobs.akamai.com/",
+   "http_status": 403,
+   "page_chars": 293,
+   "render_error": "",
+   "row_url": "https://jobs.akamai.com/",
+   "text_chars": 209,
+   "url": "https://jobs.akamai.com/"
+  },
+  "llm": null,
+  "verdict": "http-403"
+ },
  "AlgoSec": {
   "artifact": "algosec-6c1baf",
   "date": "2026-08-29",
@@ -80,6 +146,39 @@
    "url": "https://www.algosec.com/company/careers/find-a-job"
   },
   "verdict": "routed-to-hunt"
+ },
+ "Alison": {
+  "artifact": "alison-a1aac9",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-16",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 21.8,
+   "final_url": "https://alison.com/about/careers",
+   "http_status": 200,
+   "page_chars": 470336,
+   "render_error": "",
+   "row_url": "https://alison.com/about/careers",
+   "text_chars": 9599,
+   "url": "https://alison.com/about/careers"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Alison",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 12,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is Alison's own careers page listing 12 open positions (Financial Controller, Sales Manager, Psychometrics Sales Management, Recruitment Sales Management, Ad Operations Manager, Head Of Digital Marketing, Global Head of Public Relations, Head of Brand and Integrated Marketing, Social Media Content Creator, Chief Academic Officer, Publishing Account Manager, Global Content Partnership Manager, Project Managers for African-Based Education & Skills Initiatives) with departments/job types listed directly. No roles are specified as located in Israel; company is remote-first, HQ in Ireland."
+  },
+  "verdict": "confirmed"
  },
  "Allot": {
   "artifact": "allot-e31589",
@@ -111,6 +210,39 @@
    "roles_total": 4,
    "vacancy_statement": "lists-roles",
    "why": "The page is Allot's careers search filtered to EMEA, listing 4 open positions (SeCaaS Sales Director - Germany, SeCaaS Sales Director - UK, SeCaaS Solution Sales Manager - UK, Cyber Threat Intelligence Analyst - Spain) plus a Talent Pool entry (not counted as a role). None are located in Israel."
+  },
+  "verdict": "confirmed"
+ },
+ "Alma Labs": {
+  "artifact": "alma-labs-8dddb9",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-25",
+   "comeet": true,
+   "cond1": "rendered",
+   "cond2": "weak",
+   "cond2_how": "core-only",
+   "cond3": true,
+   "elapsed_s": 13.0,
+   "final_url": "https://almainc.com/careers/",
+   "http_status": 200,
+   "page_chars": 204262,
+   "render_error": "",
+   "row_url": "https://almainc.com/careers/",
+   "text_chars": 5679,
+   "url": "https://almainc.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Alma / Alma Lasers",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "No external ATS link visible in text; roles listed directly on page with \"More\" links",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 20,
+   "vacancy_statement": "lists-roles",
+   "why": "The page lists 20 open positions with titles, locations, and departments, all located in US/Canada. No Israel-based roles are listed."
   },
   "verdict": "confirmed"
  },
@@ -353,6 +485,39 @@
   "llm": null,
   "verdict": "shell"
  },
+ "Aquarius Spectrum": {
+  "artifact": "aquarius-spectrum-ecef47",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-14",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "not-ours",
+   "cond2_how": "names-another",
+   "cond3": true,
+   "elapsed_s": 20.8,
+   "final_url": "https://jobs.spectrum.com/search-jobs",
+   "http_status": 200,
+   "page_chars": 1881870,
+   "render_error": "",
+   "row_url": "https://jobs.spectrum.com/search-jobs",
+   "text_chars": 73032,
+   "url": "https://jobs.spectrum.com/search-jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": false,
+   "employer_named": "Charter Communications / Spectrum (cable/telecom)",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "jobs.spectrum.com (internal Spectrum career listings)",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "cannot-tell",
+   "why": "This is the careers/job search page for Charter's \"Spectrum\" telecom/cable brand (jobs.spectrum.com), listing thousands of US-based roles (Retail, Sales, Field Technician, etc.) across US states/cities. It has no connection to \"Aquarius Spectrum,\" the Israeli cybersecurity company being asked about — likely a false match due to the shared word \"Spectrum.\" No roles relate to the asked company, and no Israel-based positions are listed at all."
+  },
+  "verdict": "wrong-url"
+ },
  "Argus Cyber Security": {
   "artifact": "argus-cyber-security-d2bec7",
   "date": "2026-08-28",
@@ -371,6 +536,39 @@
    "why": "board answered with 0 postings; nothing for the model to read"
   },
   "verdict": "routed-to-hunt"
+ },
+ "Astrix Security": {
+  "artifact": "astrix-security-6f83bc",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 14.3,
+   "final_url": "https://astrix.security/careers/",
+   "http_status": 200,
+   "page_chars": 1030375,
+   "render_error": "",
+   "row_url": "https://astrix.security/careers/",
+   "text_chars": 20130,
+   "url": "https://astrix.security/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Astrix Security (now part of Cisco)",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "none",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "cannot-tell",
+   "why": "The provided page text is entirely cookie consent/privacy banner content (Cookiebot details) with no actual job listings, position titles, or careers content visible. No open positions are shown in the given text."
+  },
+  "verdict": "not-the-board"
  },
  "At-Bay": {
   "artifact": "at-bay-606b3a",
@@ -442,6 +640,78 @@
    "roles_total": 0,
    "vacancy_statement": "shows-none",
    "why": "The page is a \"careers2\" page template that contains only site navigation, blog/news post excerpts, and footer content. It does not list any actual open positions or job titles anywhere in the text."
+  },
+  "verdict": "not-the-board"
+ },
+ "Axon Pulse": {
+  "artifact": "axon-pulse-2b134a",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-3",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 26.9,
+   "final_url": "https://axon-pulse.com/career/",
+   "http_status": 200,
+   "page_chars": 85247,
+   "render_error": "",
+   "row_url": "https://axon-pulse.com/career/",
+   "text_chars": 8520,
+   "url": "https://axon-pulse.com/career/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Axon Pulse",
+   "is_job_board": true,
+   "israel_titles": [
+    "Back End Developer",
+    "Computer Vision Engineer",
+    "Infrastructure Engineer",
+    "Deep Learning Engineer",
+    "Software Engineer (Signal Processing/CUDA)"
+   ],
+   "links_out_to": "none - roles have \"Apply now\" buttons but no external link text given",
+   "lists_roles": true,
+   "roles_israel": 5,
+   "roles_total": 5,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is Axon Pulse's own careers page listing 5 open positions (Back End Developer, Computer Vision Engineer, Infrastructure Engineer, Deep Learning Engineer, Software Engineer) with full descriptions and requirements. Address is Tel Aviv, Israel, so roles are presumed Israel-based."
+  },
+  "verdict": "zero-refuted"
+ },
+ "Backslash Security": {
+  "artifact": "backslash-security-73bbea",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "ats-xhr",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 16.1,
+   "final_url": "https://www.backslash.security/careers",
+   "http_status": 200,
+   "page_chars": 102200,
+   "render_error": "",
+   "row_url": "https://www.backslash.security/careers",
+   "text_chars": 2154,
+   "url": "https://www.backslash.security/careers"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Backslash Security",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "none found in page text",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "shows-none",
+   "why": "The Careers page contains only marketing copy about the company mission and navigation links; it does not list any specific open positions or job titles, in Israel or elsewhere."
   },
   "verdict": "not-the-board"
  },
@@ -668,6 +938,27 @@
   },
   "verdict": "wrong-url"
  },
+ "BondIT": {
+  "artifact": "bondit-d1884f",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-3",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 15.8,
+   "final_url": "https://bonditglobal.com/careers/",
+   "http_status": 200,
+   "page_chars": 181944,
+   "render_error": "",
+   "row_url": "https://bonditglobal.com/careers/",
+   "text_chars": 8396,
+   "url": "https://bonditglobal.com/careers/"
+  },
+  "verdict": "routed-to-hunt"
+ },
  "Bookaway": {
   "artifact": "bookaway-919c87",
   "date": "2026-08-29",
@@ -689,6 +980,28 @@
   },
   "llm": null,
   "verdict": "shell"
+ },
+ "Booking.com": {
+  "artifact": "booking-com-ab1960",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "not-rendered",
+   "comeet": false,
+   "cond1": "http-405",
+   "cond2": "skipped",
+   "cond2_how": "",
+   "cond3": false,
+   "elapsed_s": 13.5,
+   "final_url": "https://employees-holdings-workingatbooking.icims.com/jobs/search?ss=1&searchLocation=Israel",
+   "http_status": 405,
+   "page_chars": 9523,
+   "render_error": "",
+   "row_url": "https://employees-holdings-workingatbooking.icims.com/jobs/search?ss=1&searchLocation=Israel",
+   "text_chars": 533,
+   "url": "https://employees-holdings-workingatbooking.icims.com/jobs/search?ss=1&searchLocation=Israel"
+  },
+  "llm": null,
+  "verdict": "http-405"
  },
  "Boston Scientific": {
   "artifact": "boston-scientific-2eb5d8",
@@ -722,6 +1035,28 @@
    "why": "The page is Boston Scientific's global \"View all jobs\" board showing \"Results 1 – 50 of 430\" across 9 pages, but the provided page text only contains category filter labels (in multiple languages) and navigation/cookie content — no actual individual job listings/titles are present in the extracted text, and no country/Israel filter or Israel-specific listings are shown."
   },
   "verdict": "confirmed"
+ },
+ "Brenmiller Energy": {
+  "artifact": "brenmiller-energy-109cb8",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "not-rendered",
+   "comeet": false,
+   "cond1": "shell",
+   "cond2": "skipped",
+   "cond2_how": "",
+   "cond3": false,
+   "elapsed_s": 15.3,
+   "final_url": "https://bren-energy.com/careers/",
+   "http_status": 200,
+   "page_chars": 12672,
+   "render_error": "",
+   "row_url": "https://bren-energy.com/careers/",
+   "text_chars": 1522,
+   "url": "https://bren-energy.com/careers/"
+  },
+  "llm": null,
+  "verdict": "shell"
  },
  "Bridgewise": {
   "artifact": "bridgewise-bcc7bc",
@@ -857,6 +1192,39 @@
    "url": "https://www.cardiacsense.com/en/careers/"
   },
   "verdict": "routed-to-hunt"
+ },
+ "Ceva": {
+  "artifact": "ceva-b211a0",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-6",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 16.8,
+   "final_url": "https://www.ceva-ip.com/career/",
+   "http_status": 200,
+   "page_chars": 210448,
+   "render_error": "",
+   "row_url": "https://www.ceva-ip.com/career/",
+   "text_chars": 22187,
+   "url": "https://www.ceva-ip.com/career/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Ceva",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "cannot-tell",
+   "why": "The provided page text is dominated by cookie consent policy details and product/solutions navigation menu content. No actual open position listings appear in the truncated text provided; it only shows the site header/cookie banner and top navigation for products/technology, not a jobs listing section."
+  },
+  "verdict": "not-the-board"
  },
  "Chaos Labs": {
   "artifact": "chaos-labs-6e4f51",
@@ -1032,6 +1400,41 @@
   "llm": null,
   "verdict": "http-404"
  },
+ "Cnoga Medical": {
+  "artifact": "cnoga-medical-0f172a",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 26.1,
+   "final_url": "https://www.cnogacare.co/careers/",
+   "http_status": 200,
+   "page_chars": 765326,
+   "render_error": "",
+   "row_url": "https://www.cnogacare.co/careers/",
+   "text_chars": 3833,
+   "url": "https://www.cnogacare.co/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Cnoga Medical Ltd.",
+   "is_job_board": true,
+   "israel_titles": [
+    "Product marketing"
+   ],
+   "links_out_to": "",
+   "lists_roles": true,
+   "roles_israel": 1,
+   "roles_total": 1,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is Cnoga's own careers page (company HQ in Caesarea, Israel) and lists one open position, \"Product marketing,\" with a full job description including responsibilities and requirements, indicating an actual open role at the Israel-based company."
+  },
+  "verdict": "zero-refuted"
+ },
  "Cognata": {
   "artifact": "cognata-bf290b",
   "date": "2026-08-29",
@@ -1133,6 +1536,28 @@
   "llm": null,
   "verdict": "wall"
  },
+ "Cordio Medical": {
+  "artifact": "cordio-medical-e4d9e1",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "not-rendered",
+   "comeet": false,
+   "cond1": "shell",
+   "cond2": "skipped",
+   "cond2_how": "",
+   "cond3": false,
+   "elapsed_s": 13.7,
+   "final_url": "https://www.cordio-med.com/careers/",
+   "http_status": 200,
+   "page_chars": 65210,
+   "render_error": "",
+   "row_url": "https://www.cordio-med.com/careers/",
+   "text_chars": 1074,
+   "url": "https://www.cordio-med.com/careers/"
+  },
+  "llm": null,
+  "verdict": "shell"
+ },
  "Cybellum": {
   "artifact": "cybellum-d0b4b9",
   "date": "2026-08-28",
@@ -1187,6 +1612,27 @@
   },
   "verdict": "wrong-url"
  },
+ "CyberProof": {
+  "artifact": "cyberproof-b7bab6",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 15.3,
+   "final_url": "https://www.cyberproof.com/career-opportunities/",
+   "http_status": 200,
+   "page_chars": 454873,
+   "render_error": "",
+   "row_url": "https://www.cyberproof.com/career-opportunities/",
+   "text_chars": 28482,
+   "url": "https://www.cyberproof.com/career-opportunities/"
+  },
+  "verdict": "routed-to-hunt"
+ },
  "Cyberwrite": {
   "artifact": "cyberwrite-8b7aee",
   "date": "2026-08-28",
@@ -1227,6 +1673,27 @@
    "row_url": "https://www.darrow.ai/company/careers",
    "text_chars": 4933,
    "url": "https://www.darrow.ai/company/careers"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Datos Health": {
+  "artifact": "datos-health-3dfef8",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 16.5,
+   "final_url": "https://www.datos-health.com/join-us/",
+   "http_status": 200,
+   "page_chars": 324214,
+   "render_error": "",
+   "row_url": "https://www.datos-health.com/join-us/",
+   "text_chars": 4158,
+   "url": "https://www.datos-health.com/join-us/"
   },
   "verdict": "routed-to-hunt"
  },
@@ -1386,6 +1853,27 @@
   "llm": null,
   "verdict": "wall"
  },
+ "Diageo": {
+  "artifact": "diageo-a8530a",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-59",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 17.5,
+   "final_url": "https://www.diageo.com/en/careers/search-and-apply",
+   "http_status": 200,
+   "page_chars": 597777,
+   "render_error": "",
+   "row_url": "https://www.diageo.com/en/careers/search-and-apply",
+   "text_chars": 22063,
+   "url": "https://www.diageo.com/en/careers/search-and-apply"
+  },
+  "verdict": "routed-to-hunt"
+ },
  "Diagnostic Robotics": {
   "artifact": "diagnostic-robotics-23fff1",
   "date": "2026-08-28",
@@ -1481,6 +1969,27 @@
   },
   "verdict": "routed-to-hunt"
  },
+ "Edikted": {
+  "artifact": "edikted-10ecaf",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 19.4,
+   "final_url": "https://edikted.com/pages/careers?srsltid\\u003dAfmBOoobtSavWjSEL6NTx6lZPZLtccce-FR4MVVqKvEScUkq_H1feZaG",
+   "http_status": 200,
+   "page_chars": 736909,
+   "render_error": "",
+   "row_url": "https://edikted.com/pages/careers?srsltid\\u003dAfmBOoobtSavWjSEL6NTx6lZPZLtccce-FR4MVVqKvEScUkq_H1feZaG",
+   "text_chars": 29071,
+   "url": "https://edikted.com/pages/careers?srsltid\\u003dAfmBOoobtSavWjSEL6NTx6lZPZLtccce-FR4MVVqKvEScUkq_H1feZaG"
+  },
+  "verdict": "routed-to-hunt"
+ },
  "Elbit Systems": {
   "artifact": "elbit-systems-d179ae",
   "date": "2026-08-29",
@@ -1501,6 +2010,72 @@
    "url": "https://elbitsystemscareer.com/"
   },
   "verdict": "routed-to-hunt"
+ },
+ "Electronic Arts": {
+  "artifact": "electronic-arts-8118fb",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-37",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 15.8,
+   "final_url": "https://jobs.ea.com/en_US/careers/SearchJobs?location=Israel",
+   "http_status": 200,
+   "page_chars": 225861,
+   "render_error": "",
+   "row_url": "https://jobs.ea.com/en_US/careers/SearchJobs?location=Israel",
+   "text_chars": 4862,
+   "url": "https://jobs.ea.com/en_US/careers/SearchJobs?location=Israel"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Electronic Arts",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 342,
+   "vacancy_statement": "shows-none",
+   "why": "The page is EA's careers search board, ostensibly filtered to Israel (URL has location=Israel), and lists 342 total open roles company-wide. However, of the 20 roles shown in the visible text, none are located in Israel - they are in Romania, US, Canada, India, China, and UK. No Israel-based positions or Hebrew-titled roles appear anywhere in the provided text, so despite the location filter, zero Israel vacancies are shown on this page."
+  },
+  "verdict": "confirmed"
+ },
+ "Entropy Organizational Development": {
+  "artifact": "entropy-organizational-development-5f5c70",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "not-ours",
+   "cond2_how": "names-another",
+   "cond3": false,
+   "elapsed_s": 14.0,
+   "final_url": "https://www.entropy.sa/careers",
+   "http_status": 200,
+   "page_chars": 2634423,
+   "render_error": "",
+   "row_url": "https://www.entropy.sa/careers",
+   "text_chars": 3732,
+   "url": "https://www.entropy.sa/careers"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Entropy",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "\"View all jobs at Entropy\" link (external/unspecified job listing page)",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "states-none",
+   "why": "The page explicitly states \"No positions available at the moment\" under the \"Join Our Growing Team\" section, with no actual job titles listed. It offers a link to \"View all jobs at Entropy\" but that is an external/unspecified destination, not content on this page itself."
+  },
+  "verdict": "wrong-url"
  },
  "EquityBee": {
   "artifact": "equitybee-054e9c",
@@ -1818,6 +2393,39 @@
   "llm": null,
   "verdict": "render-error:goto:TimeoutError"
  },
+ "Fordefi": {
+  "artifact": "fordefi-f75c96",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 17.9,
+   "final_url": "https://web.fordefi.com/careers",
+   "http_status": 200,
+   "page_chars": 104647,
+   "render_error": "",
+   "row_url": "https://web.fordefi.com/careers",
+   "text_chars": 8245,
+   "url": "https://web.fordefi.com/careers"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Fordefi",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "shows-none",
+   "why": "The page is Fordefi's Careers page but contains no actual listed open positions/titles. It only has generic company/culture blurbs (Team Spirit, About Fordefi) and directs candidates to \"Send us your CV to jobs@fordefi.com\" rather than listing specific roles with titles or locations (including Tel-Aviv/Israel roles)."
+  },
+  "verdict": "not-the-board"
+ },
  "Foretellix": {
   "artifact": "foretellix-462540",
   "date": "2026-08-28",
@@ -1899,6 +2507,39 @@
   },
   "llm": null,
   "verdict": "http-403"
+ },
+ "Fundbox": {
+  "artifact": "fundbox-9c7bae",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-3",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 14.5,
+   "final_url": "https://fundbox.com/careers/",
+   "http_status": 200,
+   "page_chars": 112256,
+   "render_error": "",
+   "row_url": "https://fundbox.com/careers/",
+   "text_chars": 3289,
+   "url": "https://fundbox.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Fundbox",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "Apply buttons likely link to ATS (not specified in text)",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 5,
+   "vacancy_statement": "lists-roles",
+   "why": "Page lists 5 open positions (Instructional Designer, Senior Manager Sales & Ops Strategy, Capital Markets Manager, Product Manager, Data Product Manager) with locations in Remote TX and New York City. Although Tel Aviv, Israel is listed as a filter option for location, none of the 5 listed roles are located in Tel Aviv/Israel."
+  },
+  "verdict": "confirmed"
  },
  "Genoox": {
   "artifact": "genoox-ea11ec",
@@ -2084,6 +2725,28 @@
   },
   "verdict": "confirmed"
  },
+ "High Lander": {
+  "artifact": "high-lander-6eac2d",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "not-rendered",
+   "comeet": false,
+   "cond1": "shell",
+   "cond2": "skipped",
+   "cond2_how": "",
+   "cond3": false,
+   "elapsed_s": 28.1,
+   "final_url": "https://www.highlander.io/careers",
+   "http_status": 200,
+   "page_chars": 1328183,
+   "render_error": "",
+   "row_url": "https://www.highlander.io/careers",
+   "text_chars": 777,
+   "url": "https://www.highlander.io/careers"
+  },
+  "llm": null,
+  "verdict": "shell"
+ },
  "Hudson Rock": {
   "artifact": "hudson-rock-5dccd2",
   "date": "2026-08-29",
@@ -2178,6 +2841,28 @@
   },
   "verdict": "routed-to-hunt"
  },
+ "ISCAR ISRAEL": {
+  "artifact": "iscar-israel-a2f8b2",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "not-rendered",
+   "comeet": false,
+   "cond1": "wall",
+   "cond2": "skipped",
+   "cond2_how": "",
+   "cond3": false,
+   "elapsed_s": 16.7,
+   "final_url": "https://www.iscar.com/marcom/iscar-career-job-list/",
+   "http_status": 200,
+   "page_chars": 112362,
+   "render_error": "",
+   "row_url": "https://www.iscar.com/marcom/iscar-career-job-list/",
+   "text_chars": 1127,
+   "url": "https://www.iscar.com/marcom/iscar-career-job-list/"
+  },
+  "llm": null,
+  "verdict": "wall"
+ },
  "Imagindairy": {
   "artifact": "imagindairy-56c697",
   "date": "2026-08-28",
@@ -2264,6 +2949,39 @@
    "why": "The page is Incredo's (a SaaS marketing agency based in Yerevan, Armenia) general Careers/culture page. It contains no list of open positions, only benefits, culture slides, and generic \"why join us\" content. It does not reference DouxMatok at all, and there is no evidence this is the careers page for the company in question (DouxMatok). No job titles or openings are listed anywhere on the page."
   },
   "verdict": "wrong-url"
+ },
+ "Infineon Technologies": {
+  "artifact": "infineon-technologies-c6f6f9",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-3",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 25.3,
+   "final_url": "https://www.infineon.com/careers/our-locations",
+   "http_status": 200,
+   "page_chars": 1806672,
+   "render_error": "",
+   "row_url": "https://www.infineon.com/careers/our-locations",
+   "text_chars": 63845,
+   "url": "https://www.infineon.com/careers/our-locations"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Infineon Technologies",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "none",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "shows-none",
+   "why": "The page text provided is entirely Infineon's product catalog and site navigation menu (products, applications, design resources, account/login options). It contains no job listings, position titles, or careers content despite the URL suggesting a \"locations\" careers page. No open positions, in Israel or elsewhere, are listed."
+  },
+  "verdict": "not-the-board"
  },
  "Intelligems": {
   "artifact": "intelligems-0599ed",
@@ -2359,6 +3077,28 @@
   },
   "verdict": "routed-to-hunt"
  },
+ "Jit": {
+  "artifact": "jit-e1f9a9",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "not-rendered",
+   "comeet": false,
+   "cond1": "http-404",
+   "cond2": "skipped",
+   "cond2_how": "",
+   "cond3": false,
+   "elapsed_s": 27.4,
+   "final_url": "https://www.jit.io/careers",
+   "http_status": 404,
+   "page_chars": 96310,
+   "render_error": "",
+   "row_url": "https://www.jit.io/careers",
+   "text_chars": 7104,
+   "url": "https://www.jit.io/careers"
+  },
+  "llm": null,
+  "verdict": "http-404"
+ },
  "John Deere": {
   "artifact": "john-deere-33d1e4",
   "date": "2026-08-29",
@@ -2380,6 +3120,107 @@
   },
   "llm": null,
   "verdict": "shell"
+ },
+ "K2view": {
+  "artifact": "k2view-503bfe",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 19.4,
+   "final_url": "https://www.k2view.com/careers/",
+   "http_status": 200,
+   "page_chars": 236536,
+   "render_error": "",
+   "row_url": "https://www.k2view.com/careers/",
+   "text_chars": 9960,
+   "url": "https://www.k2view.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "K2view",
+   "is_job_board": true,
+   "israel_titles": [
+    "Bookkeeper (Yokne'am, Israel)"
+   ],
+   "links_out_to": "\"Show more openings\" link (likely to a job board/ATS) for additional listings",
+   "lists_roles": true,
+   "roles_israel": 1,
+   "roles_total": 1,
+   "vacancy_statement": "lists-roles",
+   "why": "The K2view careers page includes a filterable open positions listing with location/department filters. Only one role is visible in the truncated page text: Bookkeeper, Finance/Legal, Yokne'am, Israel (posted August 17, 2026). A \"Show more openings\" link suggests more roles exist but are not shown in the given text, so only the one visible role is counted."
+  },
+  "verdict": "zero-refuted"
+ },
+ "Keshet Media Group": {
+  "artifact": "keshet-media-group-4d0af9",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 17.5,
+   "final_url": "https://www.keshetinternational.com/careers",
+   "http_status": 200,
+   "page_chars": 38229,
+   "render_error": "",
+   "row_url": "https://www.keshetinternational.com/careers",
+   "text_chars": 4173,
+   "url": "https://www.keshetinternational.com/careers"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Keshet International (KI), part of Keshet Media Group",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "See available jobs at KI (link to external/other jobs page, not shown on this page)",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "shows-none",
+   "why": "The page is a generic careers landing/marketing page for Keshet International with a \"See available jobs at KI\" link pointing elsewhere, but no actual job listings, titles, or open positions are shown in the page text itself."
+  },
+  "verdict": "not-the-board"
+ },
+ "Kimberly-Clark": {
+  "artifact": "kimberly-clark-ec53a1",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-22",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 16.9,
+   "final_url": "https://careers.kimberly-clark.com/en/job-search?location=Israel",
+   "http_status": 200,
+   "page_chars": 715887,
+   "render_error": "",
+   "row_url": "https://careers.kimberly-clark.com/en/job-search?location=Israel",
+   "text_chars": 72561,
+   "url": "https://careers.kimberly-clark.com/en/job-search?location=Israel"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Kimberly-Clark",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - native job board with application form on same site",
+   "lists_roles": true,
+   "roles_israel": 10,
+   "roles_total": 191,
+   "vacancy_statement": "cannot-tell",
+   "why": "The page is Kimberly-Clark's global careers job search board filtered/tagged for Israel, showing a facet count of \"Israel 10\" among 191 total results and location facets like \"Afula Plant\", \"Tzrifin Office\", \"Israel- Afula\", \"Alon Tavor Warehouse\". However, the actual job listings shown in the truncated text (Associate Director IPC Adult Care, Senior Marketing Manager BCC IPC) are located in Singapore, not Israel - the page text does not surface the actual titles of the 10 Israel-specific openings, only the count in the filter sidebar. So while it confirms 10 Israel roles exist per the site's own count, no specific Israel job titles are visible in the given text."
+  },
+  "verdict": "zero-refuted"
  },
  "Landa Digital Printing": {
   "artifact": "landa-digital-printing-b68e6e",
@@ -2509,6 +3350,42 @@
   },
   "verdict": "confirmed"
  },
+ "Lumus": {
+  "artifact": "lumus-ec2158",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 14.2,
+   "final_url": "https://lumus.com/careers",
+   "http_status": 200,
+   "page_chars": 117427,
+   "render_error": "",
+   "row_url": "https://lumus.com/careers",
+   "text_chars": 5416,
+   "url": "https://lumus.com/careers"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Lumus",
+   "is_job_board": true,
+   "israel_titles": [
+    "Quality Engineer",
+    "Optical Design Engineer"
+   ],
+   "links_out_to": "none observed; jobs appear listed directly on page with \"View Job\" links (likely internal ATS)",
+   "lists_roles": true,
+   "roles_israel": 2,
+   "roles_total": 2,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is Lumus's own careers page listing two open positions (Quality Engineer, Optical Design Engineer) directly with \"View Job\" links; no location specified but company is Israeli-based, treated as Israel roles."
+  },
+  "verdict": "zero-refuted"
+ },
  "Lyft": {
   "artifact": "lyft-de773d",
   "date": "2026-08-28",
@@ -2527,6 +3404,27 @@
    "row_url": "https://www.lyft.com/careers#openings",
    "text_chars": 4099,
    "url": "https://www.lyft.com/careers#openings"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Madgicx": {
+  "artifact": "madgicx-a4657c",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 14.8,
+   "final_url": "https://madgicx.com/careers",
+   "http_status": 200,
+   "page_chars": 63846,
+   "render_error": "",
+   "row_url": "https://madgicx.com/careers",
+   "text_chars": 3099,
+   "url": "https://madgicx.com/careers"
   },
   "verdict": "routed-to-hunt"
  },
@@ -2605,6 +3503,39 @@
    "url": "https://www.morphisec.com/careers/"
   },
   "verdict": "routed-to-hunt"
+ },
+ "N-Drip": {
+  "artifact": "n-drip-bd4852",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 17.3,
+   "final_url": "https://n-drip.com/careers/",
+   "http_status": 200,
+   "page_chars": 128159,
+   "render_error": "",
+   "row_url": "https://n-drip.com/careers/",
+   "text_chars": 14577,
+   "url": "https://n-drip.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "N-Drip",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "none",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "shows-none",
+   "why": "The page is N-Drip's general marketing/company homepage (product info, testimonials) with no careers section, job listings, or application links. No open positions are listed anywhere in the provided text."
+  },
+  "verdict": "not-the-board"
  },
  "Nayax": {
   "artifact": "nayax-a79b12",
@@ -2810,6 +3741,39 @@
   },
   "verdict": "routed-to-hunt"
  },
+ "Nucleix": {
+  "artifact": "nucleix-fe8648",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 17.2,
+   "final_url": "https://nucleix.com/careers/",
+   "http_status": 200,
+   "page_chars": 318056,
+   "render_error": "",
+   "row_url": "https://nucleix.com/careers/",
+   "text_chars": 66073,
+   "url": "https://nucleix.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Nucleix",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "none",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "shows-none",
+   "why": "The page is actually the \"Company\" / Leadership page of Nucleix, not a careers/job listing page. It contains executive bios (CEO, CFO, CCO, CSO, President EMEA) but no open position listings, job titles, or application links for specific roles. No vacancies are listed."
+  },
+  "verdict": "not-the-board"
+ },
  "Nurami Medical": {
   "artifact": "nurami-medical-aa438d",
   "date": "2026-08-29",
@@ -2852,6 +3816,39 @@
   },
   "llm": null,
   "verdict": "wall"
+ },
+ "Otterize": {
+  "artifact": "otterize-929838",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "not-ours",
+   "cond2_how": "names-another",
+   "cond3": false,
+   "elapsed_s": 27.3,
+   "final_url": "https://otterize.com/careers",
+   "http_status": 200,
+   "page_chars": 530789,
+   "render_error": "",
+   "row_url": "https://otterize.com/careers",
+   "text_chars": 10411,
+   "url": "https://otterize.com/careers"
+  },
+  "llm": {
+   "employer_is_the_asked_company": false,
+   "employer_named": "Cyera",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "No external job board link found; page is Cyera's marketing homepage with a \"Careers\" nav link but no listings shown",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "cannot-tell",
+   "why": "The page content retrieved for the given URL (supposedly Otterize's careers page) is actually Cyera's marketing website content, not Otterize's careers page, and it contains no job listings at all—only navigation links (including a \"Careers\" link) and marketing/product content. There is no list of open positions, so no roles can be counted for either company."
+  },
+  "verdict": "wrong-url"
  },
  "Ottopia": {
   "artifact": "ottopia-c98e32",
@@ -2982,6 +3979,39 @@
   },
   "verdict": "routed-to-hunt"
  },
+ "PayPlus": {
+  "artifact": "payplus-59f00c",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 12.9,
+   "final_url": "https://payplus.com/careers/",
+   "http_status": 200,
+   "page_chars": 207305,
+   "render_error": "",
+   "row_url": "https://payplus.com/careers/",
+   "text_chars": 2329,
+   "url": "https://payplus.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "PayPlus",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "none",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "shows-none",
+   "why": "The page only lists general categories of interest (tech support specialists, software developers, PEO veterans, communicators) and asks candidates to submit their resume speculatively via a form (\"Send Us Your Resume... if something opens up\"). There are no specific open job postings listed, no application links to actual roles, and no Israel-specific listings. This is a general talent-interest/resume submission page, not an active job board with open positions."
+  },
+  "verdict": "not-the-board"
+ },
  "Perception Point": {
   "artifact": "perception-point-435ef4",
   "date": "2026-08-29",
@@ -3055,6 +4085,39 @@
    "why": "board answered with 0 postings; nothing for the model to read"
   },
   "verdict": "routed-to-hunt"
+ },
+ "Pinterest": {
+  "artifact": "pinterest-a45a79",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-22",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 26.5,
+   "final_url": "https://www.pinterestcareers.com/jobs/",
+   "http_status": 200,
+   "page_chars": 73730,
+   "render_error": "",
+   "row_url": "https://www.pinterestcareers.com/jobs/",
+   "text_chars": 6430,
+   "url": "https://www.pinterestcareers.com/jobs/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Pinterest",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - roles listed directly on page",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 208,
+   "vacancy_statement": "shows-none",
+   "why": "This is Pinterest's official careers page listing 208 open positions across many locations (Atlanta, Berlin, London, Dublin, Toronto, etc.). Israel is not among the location filters, and no Israel-based roles appear in the visible listings."
+  },
+  "verdict": "confirmed"
  },
  "Plarium": {
   "artifact": "plarium-4b5951",
@@ -3178,6 +4241,79 @@
   },
   "verdict": "confirmed"
  },
+ "QuantLR": {
+  "artifact": "quantlr-f70407",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 14.9,
+   "final_url": "https://quantlr.com/careers/",
+   "http_status": 200,
+   "page_chars": 115972,
+   "render_error": "",
+   "row_url": "https://quantlr.com/careers/",
+   "text_chars": 6663,
+   "url": "https://quantlr.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": false,
+   "employer_named": "HEQA Security",
+   "is_job_board": true,
+   "israel_titles": [
+    "Supply Chain Manager",
+    "NPI Engineering Manager",
+    "טכנאי אינטגרציה",
+    "QA Lead",
+    "Senior SW Developer",
+    "Senior HW Engineer"
+   ],
+   "links_out_to": "jobs@heqa-sec.com (email application) and internal apply links",
+   "lists_roles": true,
+   "roles_israel": 6,
+   "roles_total": 6,
+   "vacancy_statement": "lists-roles",
+   "why": "The page at the given URL is actually the careers page for HEQA Security, a quantum encryption/cybersecurity company, not QuantLR. It lists 6 open positions (Supply Chain Manager, NPI Engineering Manager, טכנאי אינטגרציה, QA Lead, Senior SW Developer, Senior HW Engineer), all apparently in Israel given the Hebrew listing and on-site location. Since the employer named on the page (HEQA Security) does not match the asked company (QuantLR), employer_is_the_asked_company is false."
+  },
+  "verdict": "wrong-url"
+ },
+ "Qwak": {
+  "artifact": "qwak-77087f",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "not-ours",
+   "cond2_how": "names-another",
+   "cond3": false,
+   "elapsed_s": 24.7,
+   "final_url": "https://www.qwak.com/careers",
+   "http_status": 200,
+   "page_chars": 118357,
+   "render_error": "",
+   "row_url": "https://www.qwak.com/careers",
+   "text_chars": 3152,
+   "url": "https://www.qwak.com/careers"
+  },
+  "llm": {
+   "employer_is_the_asked_company": false,
+   "employer_named": "JFrog",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "JFrog careers site (page counts by location/department, no individual titles listed)",
+   "lists_roles": true,
+   "roles_israel": 18,
+   "roles_total": 57,
+   "vacancy_statement": "lists-roles",
+   "why": "The URL qwak.com/careers actually redirects to/shows JFrog's careers page (Qwak was acquired by JFrog and now redirects there). The page lists open positions by location and department for JFrog, not a standalone Qwak jobs list, and no individual job titles are shown—only aggregate counts (e.g., Israel Netanya/Tel Aviv: 18 Open Positions). Since the employer shown (JFrog) is not distinctly 'Qwak' as a separate careers board with specific titles, and only counts are given without titles, this should be flagged as not matching the asked company as an independent board."
+  },
+  "verdict": "wrong-url"
+ },
  "Ramon.Space": {
   "artifact": "ramon-space-356683",
   "date": "2026-08-28",
@@ -3199,6 +4335,27 @@
   },
   "llm": null,
   "verdict": "shell"
+ },
+ "Refine Intelligence": {
+  "artifact": "refine-intelligence-7c82f0",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-3",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 15.2,
+   "final_url": "https://www.refineintelligence.com/careers/",
+   "http_status": 200,
+   "page_chars": 207942,
+   "render_error": "",
+   "row_url": "https://www.refineintelligence.com/careers/",
+   "text_chars": 4398,
+   "url": "https://www.refineintelligence.com/careers/"
+  },
+  "verdict": "routed-to-hunt"
  },
  "Remilk": {
   "artifact": "remilk-da4080",
@@ -3274,6 +4431,60 @@
   },
   "verdict": "routed-to-hunt"
  },
+ "RightHear": {
+  "artifact": "righthear-82f280",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 14.0,
+   "final_url": "https://www.right-hear.com/jobs/",
+   "http_status": 200,
+   "page_chars": 184438,
+   "render_error": "",
+   "row_url": "https://www.right-hear.com/jobs/",
+   "text_chars": 4658,
+   "url": "https://www.right-hear.com/jobs/"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Rivery": {
+  "artifact": "rivery-e05fda",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 15.9,
+   "final_url": "https://rivery.io/careers/",
+   "http_status": 200,
+   "page_chars": 390130,
+   "render_error": "",
+   "row_url": "https://rivery.io/careers/",
+   "text_chars": 9577,
+   "url": "https://rivery.io/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Rivery",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "Boomi careers page",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "states-none",
+   "why": "The page explicitly states all of Rivery's job openings are now listed under the Boomi career page and provides a link out, rather than listing any positions itself."
+  },
+  "verdict": "not-the-board"
+ },
  "Rivulis": {
   "artifact": "rivulis-16640d",
   "date": "2026-08-29",
@@ -3306,6 +4517,43 @@
    "why": "The provided page text is entirely cookie consent/privacy policy boilerplate content; no actual job listings, position titles, or careers content appear in the extracted text, so no vacancies can be confirmed or denied from this data."
   },
   "verdict": "not-the-board"
+ },
+ "Robotican": {
+  "artifact": "robotican-5c6eae",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-3",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 17.8,
+   "final_url": "https://robotican.net/careers/",
+   "http_status": 200,
+   "page_chars": 295658,
+   "render_error": "",
+   "row_url": "https://robotican.net/careers/",
+   "text_chars": 7635,
+   "url": "https://robotican.net/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Robotican",
+   "is_job_board": true,
+   "israel_titles": [
+    "Sales & Account Manager",
+    "Drone & UAV Pilot",
+    "Robotics & Autonomy Software Engineer"
+   ],
+   "links_out_to": "none (application form embedded on page)",
+   "lists_roles": true,
+   "roles_israel": 3,
+   "roles_total": 3,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is Robotican's own careers page (robotican.net/careers/), located at Omer Industrial Park, Israel, and directly lists three open positions with full descriptions: Sales & Account Manager, Drone & UAV Pilot, and Robotics & Autonomy Software Engineer. It also has an application form referencing these same three roles, confirming they are current openings, all based in Israel."
+  },
+  "verdict": "zero-refuted"
  },
  "Rollic": {
   "artifact": "rollic-2ad529",
@@ -3480,6 +4728,28 @@
   "llm": null,
   "verdict": "parked-domain"
  },
+ "Schneider Electric": {
+  "artifact": "schneider-electric-015e97",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "not-rendered",
+   "comeet": false,
+   "cond1": "http-403",
+   "cond2": "skipped",
+   "cond2_how": "",
+   "cond3": false,
+   "elapsed_s": 12.1,
+   "final_url": "https://careers.se.com/Defaultlandingpage/?lang=en-US",
+   "http_status": 403,
+   "page_chars": 312,
+   "render_error": "",
+   "row_url": "https://careers.se.com/Defaultlandingpage/?lang=en-US",
+   "text_chars": 228,
+   "url": "https://careers.se.com/Defaultlandingpage/?lang=en-US"
+  },
+  "llm": null,
+  "verdict": "http-403"
+ },
  "Scopio Labs": {
   "artifact": "scopio-labs-0d7460",
   "date": "2026-08-28",
@@ -3498,6 +4768,143 @@
    "why": "board answered with 0 postings; nothing for the model to read"
   },
   "verdict": "routed-to-hunt"
+ },
+ "SecuriThings": {
+  "artifact": "securithings-ffdb0a",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 15.9,
+   "final_url": "https://www.securithings.com/careers/",
+   "http_status": 200,
+   "page_chars": 98520,
+   "render_error": "",
+   "row_url": "https://www.securithings.com/careers/",
+   "text_chars": 7006,
+   "url": "https://www.securithings.com/careers/"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Sepio": {
+  "artifact": "sepio-a5f139",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-8-followed",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 14.3,
+   "final_url": "https://sepiocyber.com/careers/",
+   "followed_from": "https://sepiocyber.com/careers/join-us/",
+   "followed_to": "https://sepiocyber.com/careers/",
+   "http_status": 200,
+   "page_chars": 235806,
+   "render_error": "",
+   "row_url": "https://sepiocyber.com/careers/join-us/",
+   "text_chars": 8121,
+   "url": "https://sepiocyber.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Sepio",
+   "is_job_board": true,
+   "israel_titles": [
+    "Software Architect @ Tel Aviv",
+    "Senior Software Engineer"
+   ],
+   "links_out_to": "Individual \"View Position\" links (likely ATS pages, not resolved here)",
+   "lists_roles": true,
+   "roles_israel": 2,
+   "roles_total": 2,
+   "vacancy_statement": "lists-roles",
+   "why": "The Sepio careers page lists actual open positions with titles and \"View Position\" links: Software Architect (Tel Aviv) and Senior Software Engineer (location not explicitly stated in text but likely Tel Aviv given Sensors Team context; office locations listed are Tel Aviv, Lisbon, Rockville). Two additional \"Join Us\" spontaneous application blurbs are not counted as open roles since they are generic CV solicitations, not listed positions."
+  },
+  "verdict": "zero-refuted"
+ },
+ "Seraphic Security": {
+  "artifact": "seraphic-security-4061ba",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-3",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 12.9,
+   "final_url": "https://seraphicsecurity.com/careers/",
+   "http_status": 200,
+   "page_chars": 1679807,
+   "render_error": "",
+   "row_url": "https://seraphicsecurity.com/careers/",
+   "text_chars": 21423,
+   "url": "https://seraphicsecurity.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Seraphic Security",
+   "is_job_board": false,
+   "israel_titles": [],
+   "links_out_to": "",
+   "lists_roles": false,
+   "roles_israel": 0,
+   "roles_total": 0,
+   "vacancy_statement": "shows-none",
+   "why": "The page text captured is entirely cookie consent/policy boilerplate (Cookiebot notice) with no actual job listings visible. The only substantive content is a banner noting Seraphic is now part of CrowdStrike, with no open positions listed on the page."
+  },
+  "verdict": "not-the-board"
+ },
+ "Shufersal": {
+  "artifact": "shufersal-30859d",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 26.0,
+   "final_url": "https://www.shufersal.co.il/corp/jobs",
+   "http_status": 200,
+   "page_chars": 2251351,
+   "render_error": "",
+   "row_url": "https://www.shufersal.co.il/corp/jobs",
+   "text_chars": 130452,
+   "url": "https://www.shufersal.co.il/corp/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Shufersal (שופרסל)",
+   "is_job_board": true,
+   "israel_titles": [
+    "טכנאי קירור ומיזוג - שוהם",
+    "מפתח/ת מובייל בכיר/ה",
+    "מנהל/ת פרויקטים טכנולוגיים",
+    "Data Engineer",
+    "Senior Systems Administrator",
+    "סגן/ית מנהל חדר בקרה במרכז שילוח מודיעין",
+    "מנהל/ת אגף רוקחות - בי פארם",
+    "קצין/ת בטיחות בתעבורה",
+    "מעתד/ת מלאי",
+    "כלכלן/ית בקרה ותקציב נדל\"ן קמעונאי",
+    "בוגרי הנדסה תעשייה וניהול"
+   ],
+   "links_out_to": "",
+   "lists_roles": true,
+   "roles_israel": 60,
+   "roles_total": 60,
+   "vacancy_statement": "lists-roles",
+   "why": "The page states \"יש 60 משרות פנויות בשופרסל כרגע\" (60 open positions at Shufersal currently) and lists individual open roles directly on the page with full descriptions, locations, and requirements — confirming it is Shufersal's own careers board with real listed vacancies in Israel."
+  },
+  "verdict": "zero-refuted"
  },
  "Sight Sciences": {
   "artifact": "sight-sciences-aa8060",
@@ -3682,6 +5089,44 @@
    "url": "https://sourcedefense.com/company/careers/"
   },
   "verdict": "routed-to-hunt"
+ },
+ "Stampli": {
+  "artifact": "stampli-3b7556",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-21",
+   "comeet": true,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 17.8,
+   "final_url": "https://www.stampli.com/careers/",
+   "http_status": 200,
+   "page_chars": 2019992,
+   "render_error": "",
+   "row_url": "https://www.stampli.com/careers/",
+   "text_chars": 8880,
+   "url": "https://www.stampli.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Stampli",
+   "is_job_board": true,
+   "israel_titles": [
+    "AI Backend Engineering Manager",
+    "Full Stack Team Lead",
+    "CX Manager - ERP Integration Solution",
+    "Senior Product Manager, AI-Native Finance Innovation"
+   ],
+   "links_out_to": "none - roles listed directly on page",
+   "lists_roles": true,
+   "roles_israel": 4,
+   "roles_total": 17,
+   "vacancy_statement": "lists-roles",
+   "why": "The Stampli careers page lists open positions directly organized by department (Customer Success, Design & UX, Engineering, Product Management, Sales), with distinct titles and locations (Mountain View, Austin, Nashville, Tel Aviv). Counting unique title+location combos gives 17 total roles, of which 4 are in Tel Aviv, Israel."
+  },
+  "verdict": "zero-refuted"
  },
  "Steakholder Foods": {
   "artifact": "steakholder-foods-6a88c3",
@@ -3913,6 +5358,49 @@
   "verdict": "stripped",
   "why": "unsound evidence: walk truncated at WALK_CAP 1200 of a reported 2000"
  },
+ "TCM Technologies LTD": {
+  "artifact": "tcm-technologies-ltd-469af5",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "jsonld-followed",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 13.4,
+   "final_url": "https://tcm.co.il/jobs/",
+   "followed_from": "https://en.tcm.co.il/jobs/",
+   "followed_to": "https://tcm.co.il/jobs/",
+   "http_status": 200,
+   "page_chars": 41896,
+   "render_error": "",
+   "row_url": "https://en.tcm.co.il/jobs/",
+   "text_chars": 8825,
+   "url": "https://tcm.co.il/jobs/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "TCM טכנולוגיות בע״מ (TCM Technologies LTD)",
+   "is_job_board": true,
+   "israel_titles": [
+    "מדריך/ה מטמיע/ה מערכות מידע | Azure DevOps",
+    "איש/אשת System",
+    "מנהל/ת תקשורת ותשתיות רשת",
+    "איש/אשת תשתיות ענן GCP",
+    "DBA בכיר/ה | Oracle / PostgreSQL / MongoDB",
+    "מיישם/ת הגנת סייבר",
+    "איש/אשת System | סביבת Enterprise"
+   ],
+   "links_out_to": "",
+   "lists_roles": true,
+   "roles_israel": 7,
+   "roles_total": 7,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is TCM Technologies' own careers page (משרות הייטק) listing 7 distinct open positions in Israel with full details (role description, requirements) and \"הגשת מועמדות\" (apply) buttons for each, plus a general CV submission option for unlisted roles."
+  },
+  "verdict": "zero-refuted"
+ },
  "TaKaDu": {
   "artifact": "takadu-2d770b",
   "date": "2026-08-29",
@@ -3955,6 +5443,77 @@
   },
   "verdict": "routed-to-hunt"
  },
+ "Taranis": {
+  "artifact": "taranis-9b1d40",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-8",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 14.2,
+   "final_url": "https://www.taranis.com/careers/",
+   "http_status": 200,
+   "page_chars": 147656,
+   "render_error": "",
+   "row_url": "https://www.taranis.com/careers/",
+   "text_chars": 8997,
+   "url": "https://www.taranis.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Taranis",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none apparent (roles listed directly on page)",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 5,
+   "vacancy_statement": "lists-roles",
+   "why": "Page has an \"Open Positions\" section listing 5 roles (Customer Experience Manager, Customer Success Representative, AI-Native Technical Product Manager, Regional Account Manager - IL, VP of Sales), all located in US cities (Midwest, Fargo, Illinois, Indianapolis). No Israel-based roles listed despite Taranis having an Israel office address in the footer."
+  },
+  "verdict": "confirmed"
+ },
+ "Telrad Networks": {
+  "artifact": "telrad-networks-15eb0a",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-7",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 15.7,
+   "final_url": "https://telrad.com/careers/",
+   "http_status": 200,
+   "page_chars": 220996,
+   "render_error": "",
+   "row_url": "https://telrad.com/careers/",
+   "text_chars": 12275,
+   "url": "https://telrad.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Telrad Networks",
+   "is_job_board": true,
+   "israel_titles": [
+    "Customer Care Executive (Wireless Solutions)",
+    "Networking Software Developer",
+    "System Test Engineer (Wireless Communication)",
+    "Experienced Embedded Networking/MAC SW Engineer"
+   ],
+   "links_out_to": "none - roles listed directly on page with apply via email jobs@telrad.com",
+   "lists_roles": true,
+   "roles_israel": 4,
+   "roles_total": 4,
+   "vacancy_statement": "lists-roles",
+   "why": "The Telrad Careers page directly lists 4 open positions (Customer Care Executive, Networking Software Developer, System Test Engineer, Experienced Embedded Networking/MAC SW Engineer) with descriptions and requirements, all located at Telrad Networks HQ/R&D Center (Israel, as indicated by required High level of Hebrew for one role). Applications go to jobs@telrad.com rather than an external ATS, but these are genuine listed openings, not just a generic 'send us your CV' blurb."
+  },
+  "verdict": "zero-refuted"
+ },
  "Teradata": {
   "artifact": "teradata-4874f4",
   "date": "2026-08-29",
@@ -3994,6 +5553,50 @@
    "row_url": "https://theator.io/careers/#open-positions",
    "text_chars": 2440,
    "url": "https://theator.io/careers/#open-positions"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Toyota Connected": {
+  "artifact": "toyota-connected-5ff8fa",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-4",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 14.3,
+   "final_url": "https://toyotaconnected.com/careers/",
+   "http_status": 200,
+   "page_chars": 187843,
+   "render_error": "",
+   "row_url": "https://toyotaconnected.com/careers/",
+   "text_chars": 6534,
+   "url": "https://toyotaconnected.com/careers/"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Traild": {
+  "artifact": "traild-04e636",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-3-followed",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 18.5,
+   "final_url": "https://traildsoftware.com/careers/#main",
+   "followed_from": "https://traildsoftware.com/careers/",
+   "followed_to": "https://traildsoftware.com/careers/#main",
+   "http_status": 200,
+   "page_chars": 545242,
+   "render_error": "",
+   "row_url": "https://traildsoftware.com/careers/",
+   "text_chars": 26474,
+   "url": "https://traildsoftware.com/careers/#main"
   },
   "verdict": "routed-to-hunt"
  },
@@ -4224,6 +5827,27 @@
   },
   "verdict": "wrong-url"
  },
+ "Verizon": {
+  "artifact": "verizon-17da24",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 16.4,
+   "final_url": "https://mycareer.verizon.com/career-paths/",
+   "http_status": 200,
+   "page_chars": 323810,
+   "render_error": "",
+   "row_url": "https://mycareer.verizon.com/career-paths/",
+   "text_chars": 8625,
+   "url": "https://mycareer.verizon.com/career-paths/"
+  },
+  "verdict": "routed-to-hunt"
+ },
  "Vertical Field": {
   "artifact": "vertical-field-5ebc65",
   "date": "2026-08-29",
@@ -4345,6 +5969,63 @@
   },
   "verdict": "zero-refuted"
  },
+ "Webbing": {
+  "artifact": "webbing-3d22e4",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-36",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 16.2,
+   "final_url": "https://webbingsolutions.com/careers/",
+   "http_status": 200,
+   "page_chars": 348633,
+   "render_error": "",
+   "row_url": "https://webbingsolutions.com/careers/",
+   "text_chars": 12217,
+   "url": "https://webbingsolutions.com/careers/"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Webbing",
+   "is_job_board": true,
+   "israel_titles": [
+    "Director of Product Management",
+    "Office Manager (Temp role)"
+   ],
+   "links_out_to": "Comeet ATS (embedded)",
+   "lists_roles": true,
+   "roles_israel": 2,
+   "roles_total": 30,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is Webbing's official careers page listing open positions by department and location, including two roles based in Petah-Tikva, Israel: Director of Product Management (Product) and Office Manager (Temp role) (HR). The rest are in Romania, Latvia, USA, Netherlands, Poland, Finland, Serbia, and Lithuania."
+  },
+  "verdict": "zero-refuted"
+ },
+ "Wells Fargo": {
+  "artifact": "wells-fargo-56d0c8",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-29",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 13.6,
+   "final_url": "https://www.wellsfargojobs.com/en/jobs/",
+   "http_status": 200,
+   "page_chars": 289568,
+   "render_error": "",
+   "row_url": "https://www.wellsfargojobs.com/en/jobs/",
+   "text_chars": 21825,
+   "url": "https://www.wellsfargojobs.com/en/jobs/"
+  },
+  "verdict": "routed-to-hunt"
+ },
  "XM Cyber": {
   "artifact": "xm-cyber-812820",
   "date": "2026-08-28",
@@ -4458,6 +6139,39 @@
   "llm": null,
   "verdict": "http-403"
  },
+ "Zoom": {
+  "artifact": "zoom-9b3cbe",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "posting-hrefs-33",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": true,
+   "elapsed_s": 16.4,
+   "final_url": "https://careers.zoom.us/jobs/search?location=Israel",
+   "http_status": 200,
+   "page_chars": 231644,
+   "render_error": "",
+   "row_url": "https://careers.zoom.us/jobs/search?location=Israel",
+   "text_chars": 15059,
+   "url": "https://careers.zoom.us/jobs/search?location=Israel"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Zoom",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 98,
+   "vacancy_statement": "shows-none",
+   "why": "This is Zoom's official careers search board listing 98 open roles (Zoom and Workvivo brands) across many countries (US, Australia, Germany, India, Ireland, Japan, Malaysia, Mexico, Netherlands, Saudi Arabia, Singapore, UK). Despite the URL requesting an Israel location filter, the country facet list does not include Israel at all, and none of the listed job postings are located in Israel. So the page shows zero open positions for Israel."
+  },
+  "verdict": "confirmed"
+ },
  "Zoomd": {
   "artifact": "zoomd-61a7db",
   "date": "2026-08-28",
@@ -4545,5 +6259,170 @@
   },
   "llm": null,
   "verdict": "shell"
+ },
+ "eBay": {
+  "artifact": "ebay-ac0a18",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 18.9,
+   "final_url": "https://jobs.ebayinc.com/careers?location=Israel",
+   "http_status": 200,
+   "page_chars": 1267744,
+   "render_error": "",
+   "row_url": "https://jobs.ebayinc.com/careers?location=Israel",
+   "text_chars": 3934,
+   "url": "https://jobs.ebayinc.com/careers?location=Israel"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "penlink": {
+  "artifact": "penlink-4da80c",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "ours",
+   "cond2_how": "strict",
+   "cond3": false,
+   "elapsed_s": 27.9,
+   "final_url": "https://www.penlink.com/about-penlink/careers/",
+   "http_status": 200,
+   "page_chars": 366910,
+   "render_error": "",
+   "row_url": "https://www.penlink.com/about-penlink/careers/",
+   "text_chars": 7793,
+   "url": "https://www.penlink.com/about-penlink/careers/"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "מנורה מבטחים החזקות": {
+  "artifact": "row-551cfa",
+  "date": "2026-08-29",
+  "evidence": {
+   "board_why": "no-board-signal; follow=not-a-board",
+   "comeet": false,
+   "cond1": "rendered",
+   "cond2": "not-ours",
+   "cond2_how": "names-another",
+   "cond3": false,
+   "elapsed_s": 20.7,
+   "final_url": "https://www.menoramivt.co.il/job-posting/open-position",
+   "http_status": 200,
+   "page_chars": 956941,
+   "render_error": "",
+   "row_url": "https://www.menoramivt.co.il/job-posting/open-position",
+   "text_chars": 9548,
+   "url": "https://www.menoramivt.co.il/job-posting/open-position"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "מנורה מבטחים",
+   "is_job_board": true,
+   "israel_titles": [
+    "חתם.ת עסקים",
+    "נציג.ת שירות ללא ניסיון קודם",
+    "חתם.ת פרט מחוז מרכז",
+    "כלכלנ.ית/ אנליסט.ית מתחיל.ה",
+    "מנהל.ת מחלקת ניהול פרויקטים",
+    "נציג.ת מכירות- לא חובה ניסיון!",
+    "נציג/ת מכירות ותיאום פגישות במוקד שיחות נכנסות- חיפה",
+    "מדריכ.ת מערכות אגף אלמנטרי",
+    "מנהל.ת פרויקטים באגף עסקי",
+    "משווק.ת פנסיוני.ת שטח/ טלפוני",
+    "עוזר.ת חשב- תחום דיווחים כספיים",
+    "חתם.ת פרט מחוז מרכז- זמני.ת החלפה לחל\"ד",
+    "מתכנן.ת פנסיוני טלפוני",
+    "מזכיר.ה לסוכנות מנורה ME",
+    "מיישב.ת תביעות בריאות - זמני עם אופציה",
+    "עובד.ת סוציאלית",
+    "רכז.ת שירות ותפעול מנורה מי סוכנות לביטוח פנסיוני בע\"מ",
+    "מנהל.ת דאטה אקטואריה",
+    "אחראי.ת משמרת במחלקת תיאום פגישות",
+    "רכז.ת בקרת איכות",
+    "מיישב.ת תביעות מסלול אדום החלפה לחל\"ד",
+    "מיישב.ת תביעות עסקים וסיכונים מיוחדים זמני.ת",
+    "מתכננ.ת פרישה לגיל השלישי",
+    "מנהל.ת פעילות שיווקית דיגיטל",
+    "מתמחה/קדם מתמחה - רכז.ת ליטיגציה",
+    "רכז/ת שירות מעסיקים",
+    "רפרנט.ת תביעות למחוז מרכז אלמנטרי",
+    "מומחי/ת מכירות ושיווק ביטוחי רכב",
+    "עו\"ד לצוות היעוץ המשפטי לאגף ההשקעות",
+    "מתמחים.ות פנסיונים",
+    "חתם.ת עסקים זמני.ת",
+    "כלכלן.ית בקרה ודיווח- תקציבים",
+    "חתם.ת פרט",
+    "רפרנט.ית שירות לסוכן",
+    "רכז.ת פדיונות פנסיה- החלפה לחל\"ד",
+    "חתם.ת פרט- מחוז ירושלים",
+    "רפרנט.ית בק אופיס - ללא ניסיון",
+    "רכז.ת שירות ותפעול צוות SMB",
+    "רכז.ת שירות ותפעול חווית לקוח",
+    "חתם.ת עסקים מחוז צפון",
+    "Senior System Administrator",
+    "מיישב.ת תביעות גוף חובה",
+    "HRBP לאגפי מטה",
+    "מנהל/ת מטה באגף סוכנים",
+    "מנהל.ת תיק עסקי מרחב מרכז",
+    "חתם.ת עסקים גדולים זמני.ת החלפה לחל\"ד",
+    "נציג/ת שירות ומכירה ביטוחי רכב",
+    "נציג.ת תיאום פגישות",
+    "אחראי.ת שימור ומכירה",
+    "מנהל.ת פרויקטי מטה",
+    "מנהל.ת השקעות מניות ישראל",
+    "שירות עם משמעות במוקד בריאות הבוטיקי שלנו",
+    "רואה.ת חשבון מחלקת עריכה ודוחות",
+    "רפרנט/ית הפקה",
+    "מפתח.ת לצוות ניהול זהויות וגישות",
+    "נציג/ה בכיר/ה לפעילות חיים ובריאות",
+    "מנהל.ת פרויקטים",
+    "נציג.ת ליווי לקוח מומחה",
+    "בקר.ית חקירות",
+    "חתם.ת חבויות מיוחדות",
+    "סטודנטים/יות לשיווק פנסיוני",
+    "רכז.ת ניהול זכויות עמיתים",
+    "אחמ\"ש מוקד פנסיה ר\"ג",
+    "רפרנט/ית תביעות סוכנים",
+    "רכז.ת וועדות רפואיות",
+    "רפרנט.ית שירות לסוכן",
+    "נציג.ת שירות מוקד פנסיה וגמל",
+    "רכז.ת פניות הציבור - בק אופיס",
+    "רכז.ת הצטרפויות טלפוני",
+    "נציג/ת שירות לקוחות - אגף אלמנטרי",
+    "מנתח.ת מערכות BI",
+    "שמאי.ת רכב",
+    "נציג\\ת מכירות לפעילות חידושי דירה",
+    "מנהל.ת מחלקת תביעות רכוש חבויות וסיכונים מיוחדים",
+    "נציג.ת שירות מוקד פנסיה וגמל חיפה",
+    "מנהל.ת פרויקטים עסקיים ורגולטוריים",
+    "מנהל/ת תיק לקוח בתחום בריאות וחיים",
+    "מנהל.ת מחלקת אנליזה",
+    "רכז.ת פרויקטי למידה",
+    "נציג/ת בקרת עבר ביטוחי",
+    "מנהל.ת פרסום",
+    "אנליסט.ית להשקעות הלא סחירות",
+    "חתמ.ת רפואי.ת",
+    "נציג/ת מכירות פעילות אלמנטרי - דירות",
+    "אנליסט/ית מחקר אשראי לא סחיר",
+    "רכז.ת גביה החלפה לחל\"ד",
+    "רכז.ת תפעול ובקרה",
+    "נציג.ת שיווק ומכירה לפעילות ביטוח חיים ובריאות",
+    "מנהל.ת מוצר דיגיטל"
+   ],
+   "links_out_to": "none - roles listed directly on this careers page (each with 'לפרטים' detail link on same site)",
+   "lists_roles": true,
+   "roles_israel": 90,
+   "roles_total": 90,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is the official careers/job-postings page (קריירה > משרות פתוחות) of מנורה מבטחים, listing approximately 90 distinct open positions in Hebrew across departments (חתמים, שירות לקוחות, מכירות, טכנולוגיות, מטה, תפעול, כספים והשקעות, etc.), each with a 'לפרטים' (details) link. This clearly qualifies as a job board listing actual open roles for the company itself, not a third-party board."
+  },
+  "verdict": "zero-refuted"
  }
 }

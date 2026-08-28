@@ -674,14 +674,14 @@ Sternum,scrape,,https://sternumiot.com/careers/,true,listing-hunt 2026-08-22: ve
 Sepio,scrape,https://sepiocyber.com/careers/,https://sepiocyber.com/careers/join-us/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22 | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (Sepi | activated 2026-08-23: validated page, scanned daily"
 SIGA OT Solutions,breezy,siga-technologies-inc,https://siga-technologies-inc.breezy.hr/json,false,re-audit 2026-08-21: deep-verified 0/0 IL (was dark) | zero-confirm 2026-08-28: board answered 0 postings; needs re-resolution
 LayerX Security,scrape,https://layerxsecurity.com/careers/,https://www.comeet.com/jobs/layerxsecurity/F9.00D,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-24: no IL listing; monitored candidate
-Refine Intelligence,scrape,,https://www.refineintelligence.com/careers/,true,url-repaired 2026-08-23: dead host www.refine-intelligence.com replaced | dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-24: verified 1 IL via www.refineintelligence.com
+Refine Intelligence,scrape,,https://www.refineintelligence.com/careers/,false,dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-24: verified 1 IL via www.refineintelligence.com | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Findings,lever,findigs,https://api.lever.co/v0/postings/findigs?mode=json,true,re-audit 2026-08-21: deep-verified 8/0 IL (was dark)
 DeepKeep,scrape,,https://www.deepkeep.ai/careers,true,listing-hunt 2026-08-22: verified 4 IL via https://www.deepkeep.ai/careers
-Otterize,scrape,,https://otterize.com/careers,true,listing-hunt 2026-08-22: verified 11 IL via https://otterize.com/careers
+Otterize,scrape,,https://otterize.com/careers,false,listing-hunt 2026-08-22: verified 11 IL via https://otterize.com/careers | zero-confirm 2026-08-29: wrong-url; needs re-resolution
 Allot,scrape,https://www.allot.com/careers/,https://www.allot.com/careers/search/?cr=Europe%2C+Middle+East+%26+Africa,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
 Secret Double Octopus,scrape,,https://jobs.jvpvc.com/jobs/secret-double-octopus,true,repair 2026-08-23: extract-gap fixed via LLM tier; 2 IL
-Fordefi,scrape,,https://web.fordefi.com/careers,true,listing-hunt 2026-08-22: verified 8 IL via https://web.fordefi.com/careers
-QuantLR,scrape,,https://quantlr.com/careers/,true,dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-23: verified 3 IL via quantlr.com
+Fordefi,scrape,,https://web.fordefi.com/careers,true,listing-hunt 2026-08-22: verified 8 IL via https://web.fordefi.com/careers | zero-confirm 2026-08-29: not-the-board; rn+llm; ev f75c96
+QuantLR,scrape,,https://quantlr.com/careers/,false,dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-23: verified 3 IL via quantlr.com | zero-confirm 2026-08-29: wrong-url; needs re-resolution
 Chaos Labs,lever,chaoslabs,https://api.lever.co/v0/postings/chaoslabs?mode=json,false,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | zero-confirm 2026-08-28: board answered 0 postings; needs re-resolution
 Splitit,bamboohr,splitit,https://splitit.bamboohr.com/careers/list,true,re-audit 2026-08-21: verified 3/1 IL (was false-empty)
 Sedric,scrape,https://www.sedric.ai/careers,https://careers.seddiqiholding.com/job/,false,"dark-triage 2026-08-23: wrong-page (LLM: not Sedric's careers page (page belongs to Seddiqi Holding, not Sed))"
@@ -704,7 +704,7 @@ Addionics,scrape,https://addionics.com/company#open-positions,https://addionics.
 Brenmiller Energy,scrape,https://bren-energy.com/careers/,https://bren-energy.com/careers/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: redirects to bren-x.com — verify manually (rebrand vs acquisition) be | activated 2026-08-23: validated page, scanned daily"
 UBQ Materials,recruitee,ubqmaterials,https://ubqmaterials.recruitee.com/api/offers/,true,deep-resolved; 1/0 IL
 Doral Energy,scrape,https://www.doral-energy.com/careers/,https://doral-energy.com/en/career/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
-N-Drip,scrape,,https://n-drip.com/careers/,true,listing-hunt 2026-08-22: verified 4 IL via https://n-drip.com/careers/
+N-Drip,scrape,,https://n-drip.com/careers/,true,listing-hunt 2026-08-22: verified 4 IL via https://n-drip.com/careers/ | zero-confirm 2026-08-29: not-the-board; rn+llm; ev bd4852
 Fieldin,scrape,https://www.fieldin.com/careers/,https://www.comeet.com/jobs/fieldintech/68.001,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: extract-gap (3 role phrases after render) | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Lavie Bio,scrape,https://www.laviebio.com/careers/,https://www.laviebio.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-28 (conn-dead (URLError))
 Temi (Robotemi),scrape,https://www.robotemi.com/careers/,https://www.robotemi.com/careers/,false,dark-triage 2026-08-23: url-dead (http 404) | listing-hunt 2026-08-24: no IL listing; monitored candidate | scanned via brightdata; no open Israel roles now - monitored candidate | retry 2026-08-28: still unreachable
@@ -736,13 +736,13 @@ Continuse Biometrics,scrape,https://integratedbiometrics.com/wp-content/uploads/
 ElMindA,scrape,https://elminda.com/careers,https://elminda.com/careers,false,unreachable; could not scan | bd-tried 2026-08-26 x1 | dark-triage 2026-08-26: url-dead (unreachable (dns/conn)) | listing-hunt 2026-08-28: another company's board; no listing found | retry 2026-08-28: still unreachable
 Somatix,scrape,,https://www.somatix.com/clinical-research-solutions/,false,url-cleared 2026-08-23: https://www.builtinnyc.com/company/somat is an aggregator | dark-triage 2026-08-24: js-shell (job XHRs seen during render) | listing-hunt 2026-08-25: no IL listing; monitored candidate
 KLA,workday,kla/Search,https://kla.wd1.myworkdayjobs.com/wday/cxs/kla/Search/jobs,true,deep-resolved; 40/40 IL
-AMD,scrape,,https://careers.amd.com/careers-home/jobs?location=Israel,true,listing-hunt 2026-08-22: verified 3 IL via https://careers.amd.com/careers-home/jobs?location=Israel
+AMD,scrape,,https://careers.amd.com/careers-home/jobs?location=Israel,false,listing-hunt 2026-08-22: verified 3 IL via https://careers.amd.com/careers-home/jobs?location=Israel | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Synopsys,scrape,https://sjobs.brassring.com/TGnewUI/Search/Home/Home?partnerid=25235&siteid=5359,https://synopsys.avature.net/talentcommunity,false,"listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-23: page-empty (LLM confirms no open roles (Synopsys talent community signup, )) | crack-walled 2026-08-28: host documented, 0 IL now"
 Samsung,workday,sec/Samsung_Careers,https://sec.wd3.myworkdayjobs.com/wday/cxs/sec/Samsung_Careers/jobs,true,re-audit 2026-08-21: deep-verified 5/5 IL (was dark)
 VMware (Broadcom),workday,broadcom/External_Career,https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career/jobs,false,"re-audit 2026-08-21: verified 0/0 IL (was false-empty) | alias-of Broadcom 2026-08-26: identical board URL, parent/subsidiary (BACKLOG 194)"
 Splunk (Cisco),workday,cisco/Cisco_Careers,https://cisco.wd5.myworkdayjobs.com/wday/cxs/cisco/Cisco_Careers/jobs,false,"re-audit 2026-08-21: deep-verified 32/31 IL (was dark) | alias-of Cisco 2026-08-26: identical board URL, parent/subsidiary (BACKLOG 194)"
 Pinterest,scrape,https://www.pinterestcareers.com/jobs/,https://www.pinterestcareers.com/jobs/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22 | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (Care | activated 2026-08-23: validated page, scanned daily"
-Airbnb,scrape,,https://careers.airbnb.com/positions/?_offices=israel,true,listing-hunt 2026-08-22: verified 1 IL via https://careers.airbnb.com/positions/?_offices=israel
+Airbnb,scrape,,https://careers.airbnb.com/positions/?_offices=israel,false,listing-hunt 2026-08-22: verified 1 IL via https://careers.airbnb.com/positions/?_offices=israel | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Unity,scrape,https://job-boards.greenhouse.io/unity3d,https://job-boards.greenhouse.io/unity3d?location=Israel,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: url-dead (http 404) | listing-hunt 2026-08-24: another company's board; no listing found
 Goldman Sachs,scrape,https://www.goldmansachs.com/careers/,https://higher.gs.com/roles?page=1&sort=RELEVANCE&location=Israel,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: extract-gap (17 role phrases after render) | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Stryker,workday,stryker/StrykerCareers,https://stryker.wd1.myworkdayjobs.com/wday/cxs/stryker/StrykerCareers/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev cf83bb
@@ -757,7 +757,7 @@ Deutsche Post DHL,scrape,,https://careers.dhl.com/global/en/search-results?keywo
 Proofpoint,workday,proofpoint/proofpointcareers,https://proofpoint.wd5.myworkdayjobs.com/wday/cxs/proofpoint/proofpointcareers/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev bc4f8a
 Sony (PlayStation),scrape,https://careers.playstation.com/jobs,https://careers.playstation.com/jobs,false,dark-triage 2026-08-23: url-dead (http 404) | scanned via brightdata; no open Israel roles now - monitored candidate | retry: another company's board; no listing found
 UBS,scrape,https://www.ubs.com/global/en/careers.html,https://www.ubs.com/global/en/careers/search-jobs.html,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: blocked (403/429 — needs unlocker) | listing-hunt 2026-08-24: no IL listing; monitored candidate
-Verizon,scrape,,https://mycareer.verizon.com/career-paths/,true,listing-hunt 2026-08-22: verified 8 IL via https://mycareer.verizon.com/career-paths/
+Verizon,scrape,,https://mycareer.verizon.com/career-paths/,false,listing-hunt 2026-08-22: verified 8 IL via https://mycareer.verizon.com/career-paths/ | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Skoda / Volkswagen Group,scrape,,https://jobs.volkswagen-group.com/search/?q=&locationsearch=Israel,true,listing-hunt 2026-08-23: verified 10 IL via https://jobs.volkswagen-group.com/search/?q=&locationsearch= | deep-validated 2026-08-21: unsupported ATS successfactors | crack-walled 2026-08-22: nocapture
 Talon Cyber Security,scrape,https://talon-sec.com/careers/,https://talon-sec.com/careers/,false,listing-hunt 2026-08-23: redirects to paloaltonetworks.com — verify manually (rebrand vs acquisition) before activating
 Decart,ashby,decart-ai,https://api.ashbyhq.com/posting-api/job-board/decart-ai,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark) | zero-confirm 2026-08-28: api-error:HttpError: HTTP 404 for https://api.ashb; r; ev f4e164
@@ -776,10 +776,10 @@ QEDIT,scrape,https://qed-it.com/careers,https://qed-it.com/careers/,false,url-fl
 Voiceitt,scrape,https://www.voiceitt.com/,https://www.voiceitt.com/,false,"dark-triage 2026-08-24: wrong-page (LLM: not Voiceitt's careers page (product marketing page, no careers/jobs )) | listing-hunt 2026-08-25: no IL listing; monitored candidate"
 Velox,breezy,velox,https://velox.breezy.hr/json,true,re-audit 2026-08-21: deep-verified 8/0 IL (was dark)
 Criaterra,scrape,https://www.criaterra.com/careers,https://www.criaterra.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-23: no IL listing; monitored candidate | dark-triage 2026-08-23: page-empty (LLM confirms no open roles (Page text is empty boilerplate; no))
-Telrad Networks,scrape,,https://telrad.com/careers/,true,listing-hunt 2026-08-23: verified 1 IL via https://telrad.com/careers/ | deep-validated 2026-08-21: no ATS detected (rendered)
+Telrad Networks,scrape,,https://telrad.com/careers/,true,listing-hunt 2026-08-23: verified 1 IL via https://telrad.com/careers/ | deep-validated 2026-08-21: no ATS detected (rendered) | zero-confirm 2026-08-29: zero-refuted; rnb+llm; ev 15eb0a
 Namogoo,scrape,https://www.namogoo.com/careers/,https://www.namogoo.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: blocked (403/429 — needs unlocker) | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Bigabid,scrape,https://www.bigabid.com/careers/,https://www.bigabid.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-24: no IL listing; monitored candidate
-Rivery,scrape,,https://rivery.io/careers/,true,listing-hunt 2026-08-22: verified 4 IL via https://rivery.io/careers/
+Rivery,scrape,,https://rivery.io/careers/,true,listing-hunt 2026-08-22: verified 4 IL via https://rivery.io/careers/ | zero-confirm 2026-08-29: not-the-board; rn+llm; ev e05fda
 SimilarTech,scrape,,,false,dark-triage 2026-08-23: no-url (no url on the row)
 Crazy Labs,comeet,32.00E,https://www.comeet.com/careers-api/2.0/company/32.00E/positions?token=23E8F811F0B360FB20142E8F8142E,false,re-audit 2026-08-21: deep-verified 13/0 IL (was dark) | alias-of CrazyLabs 2026-08-25: identical board URL (BACKLOG 133)
 Beach Bum,scrape,https://www.beachbumltd.com/careers,https://beachbum.com/jobs/,false,dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-24: no IL listing; monitored candidate
@@ -807,10 +807,10 @@ Backslash Security,scrape,https://www.backslash.security/careers,https://www.bac
 Rezonate,scrape,https://www.rezonate.io/jobs,https://boards.briohr.com/keyreplypteltd-j0zjhzlual,false,"dark-triage 2026-08-23: extract-gap (LLM found 2: Client Success Project Management, Client Solutions Associat)"
 Anetac,scrape,https://www.anetac.com/careers,https://www.anetac.ai/,false,url-cleared 2026-08-23: https://www.levels.fyi/companies/anetac/ aggregator | dark-triage 2026-08-23: no-url (no url on the row) | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Velotix,scrape,https://www.velotix.ai/careers/,https://www.velotix.ai/careers/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22 | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (Care | activated 2026-08-23: validated page, scanned daily"
-CyberProof,scrape,https://www.cyberproof.com/careers/,https://www.cyberproof.com/career-opportunities/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22 | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (care | activated 2026-08-23: validated page, scanned daily"
+CyberProof,scrape,https://www.cyberproof.com/careers/,https://www.cyberproof.com/career-opportunities/,false,"dark-triage 2026-08-22: page-empty (LLM confirms no open roles (care | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution"
 Cyabra,scrape,https://cyabra.com/careers/,https://cyabra.com/careers/,false,dark-triage 2026-08-23: url-dead (http 404) | listing-hunt 2026-08-24: no IL listing; monitored candidate | scanned via brightdata; no open Israel roles now - monitored candidate | retry 2026-08-28: still unreachable
 Karamba Security,scrape,https://karambasecurity.com/careers,https://karambasecurity.com/careers,false,"listing-hunt 2026-08-23: no IL listing; mo | dark-triage 2026-08-23: wrong-page (LLM: not Karamba Security's careers page (About/leadership page only, no job listi))"
-SecuriThings,scrape,,https://www.securithings.com/careers/,true,listing-hunt 2026-08-22: verified 1 IL via https://www.securithings.com/careers/
+SecuriThings,scrape,,https://www.securithings.com/careers/,false,listing-hunt 2026-08-22: verified 1 IL via https://www.securithings.com/careers/ | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 IRONSCALES,scrape,https://ironscales.com/company/careers,https://ironscales.com/careers,false,"dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution"
 Seraphic Security,scrape,https://seraphicsecurity.com/careers/,https://seraphicsecurity.com/careers/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22 | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (care | activated 2026-08-23: validated page, scanned daily"
 Trustmi,workable,trustmi,https://apply.workable.com/api/v1/widget/accounts/trustmi?details=true,false,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | zero-confirm 2026-08-28: board answered 0 postings; needs re-resolution
@@ -843,7 +843,7 @@ Otonomo,scrape,https://otonomo.io/careers/,https://otonomo.io/careers/,false,dee
 Nostromo Energy,scrape,https://nostromo.energy/,https://nostromo.energy/,false,"dark-triage 2026-08-25: wrong-page (LLM: not Nostromo Energy's careers page (product/marketing page, no careers or jo)) | listing-hunt 2026-08-26: no IL listing; monitored candidate"
 Aquarius Engines,scrape,https://aquariusengines.com/careers/,https://aquariusengines.com/careers/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
 ECOncrete,workable,econcrete,https://apply.workable.com/api/v1/widget/accounts/econcrete?details=true,false,re-audit 2026-08-21: deep-verified 0/0 IL (was dark) | zero-confirm 2026-08-28: board answered 0 postings; needs re-resolution
-Taranis,scrape,,https://www.taranis.com/careers/,true,listing-hunt 2026-08-22: verified 8 IL via https://www.taranis.com/careers/
+Taranis,scrape,,https://www.taranis.com/careers/,true,listing-hunt 2026-08-22: verified 8 IL via https://www.taranis.com/careers/ | zero-confirm 2026-08-29: confirmed; rnb+llm; ev 9b1d40
 Blue White Robotics,scrape,https://www.bluewhiterobotics.com/careers,https://www.bluewhite.ai/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Salicrop,scrape,https://www.salicrop.com/careers,https://www.salicrop.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: extract-gap (LLM found 1: Lab Employee – Seed Treatment Operations) | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Unlimited Robotics,lever,unlimit,https://api.lever.co/v0/postings/unlimit?mode=json,true,re-audit 2026-08-21: deep-verified 51/0 IL (was dark)
@@ -862,7 +862,7 @@ Siemens Israel,scrape,,https://jobs.sw.siemens.com/locations/isr/jobs/,true,list
 Nucleai,scrape,,https://nucleai.ai/careers/,true,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: wrong-page (LLM: not Nucleai's careers page (no page text supplied — cannot ve | listing-hunt 2026-08-23: verified 1 IL via nucleai.ai
 RADLogics,scrape,https://radlogics.com/,https://radlogics.com/,false,"dark-triage 2026-08-25: wrong-page (LLM: not RADLogics's careers page (no job listings on page, only company/pr)) | listing-hunt 2026-08-26: another company's board; no listing found"
 Kai.ai,scrape,https://www.kai.ai/company/careers,https://www.kai.ai/company/careers,false,dark-triage 2026-08-23: url-dead (http 404) | listing-hunt 2026-08-24: no IL listing; monitored candidate | scanned via brightdata; no open Israel roles now - monitored candidate | retry 2026-08-28: still unreachable
-Datos Health,scrape,,https://www.datos-health.com/join-us/,true,listing-hunt 2026-08-22: verified 6 IL via https://www.datos-health.com/join-us/
+Datos Health,scrape,,https://www.datos-health.com/join-us/,false,listing-hunt 2026-08-22: verified 6 IL via https://www.datos-health.com/join-us/ | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 InspireMD,scrape,https://www.inspiremd.com/careers/,https://inspiremd.com/careers/europe-israel/,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: extract-gap (LLM found 1: V&V Engineer) | listing-hunt 2026-08-24: no IL listing; monitored candidate
 NovoCure,scrape,,https://careers.novocure.com/go/Israel/8193400/,true,listing-hunt 2026-08-22: verified 5 IL via https://careers.novocure.com/go/Israel/8193400/
 Belkin Vision,workday,belkin/belkin_careers,https://belkin.wd5.myworkdayjobs.com/wday/cxs/belkin/belkin_careers/jobs,false,re-audit 2026-08-21: deep-verified 0/0 IL (was dark) | zero-confirm 2026-08-28: wrong-url (Belkin); needs re-resolution
@@ -875,14 +875,14 @@ Cnoga Medical,scrape,,https://www.cnogacare.co/careers/,true,scanned via brightd
 MedAware,scrape,https://www.medaware.com/careers,https://www.medaware.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: blocked (403/429 — needs unlocker) | listing-hunt 2026-08-24: another company's board; no listing found
 AnX Robotica,scrape,https://anxrobotica.com/careers/,https://anxrobotica.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-28 (conn-dead (URLError))
 Lam Research,scrape,,https://careers.lamresearch.com/careers?location=Israel,true,listing-hunt 2026-08-22: verified 1 IL via https://careers.lamresearch.com/careers?location=Israel
-Infineon Technologies,scrape,,https://www.infineon.com/careers/our-locations,true,listing-hunt 2026-08-22: verified 1 IL via https://www.infineon.com/careers/our-locations
+Infineon Technologies,scrape,,https://www.infineon.com/careers/our-locations,true,listing-hunt 2026-08-22: verified 1 IL via https://www.infineon.com/careers/our-locations | zero-confirm 2026-08-29: not-the-board; rnb+llm; ev c6f6f9
 Siemens EDA,scrape,,https://jobs.siemens.com/en_US/externaljobs/SearchJobs?location=Israel,false,listing-hunt 2026-08-22: verified 1 IL via https://jobs.siemens.com/en_US/externaljobs/SearchJobs?locat | alias-of Siemens 2026-08-25: identical board URL (BACKLOG 133)
 Sony (Sony Semiconductor Israel),workday,sonyglobal/SonyGlobalCareers,https://sonyglobal.wd1.myworkdayjobs.com/wday/cxs/sonyglobal/SonyGlobalCareers/jobs,true,re-audit 2026-08-23: verified 0/0 IL (was false-empty) | deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-23: no IL listing; monitored candidate
 Citrix (Cloud Software Group),workday,tibco/Cloud_Software_Group,https://tibco.wd5.myworkdayjobs.com/wday/cxs/tibco/Cloud_Software_Group/jobs,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev dc8228
 Atlassian,scrape,https://www.atlassian.com/company/careers/all-jobs,https://www.atlassian.com/company/careers/all-jobs,false,"dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution"
 X (Twitter),scrape,https://careers.x.com/en,https://careers.x.com/careers,false,dark-triage 2026-08-23: wrong-page (LLM: not X (Twitter)'s careers page (this is xAI/Grok's careers page (X.AI LL))
-eBay,scrape,https://careers.ebayinc.com/us/en/israel-jobs,https://jobs.ebayinc.com/careers?location=Israel,true,"deep-validated 2026-08-21: unsupported ATS phenom | crack-walled 2026-08-22: ho | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (eBay | activated 2026-08-23: validated page, scanned daily"
-Electronic Arts,scrape,,https://jobs.ea.com/en_US/careers/SearchJobs?location=Israel,true,listing-hunt 2026-08-22: verified 1 IL via https://jobs.ea.com/en_US/careers/SearchJobs?location=Israel
+eBay,scrape,https://careers.ebayinc.com/us/en/israel-jobs,https://jobs.ebayinc.com/careers?location=Israel,false,deep-validated 2026-08-21: unsupported ATS phenom | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (eBay | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
+Electronic Arts,scrape,,https://jobs.ea.com/en_US/careers/SearchJobs?location=Israel,true,listing-hunt 2026-08-22: verified 1 IL via https://jobs.ea.com/en_US/careers/SearchJobs?location=Israel | zero-confirm 2026-08-29: confirmed; rnb+llm; ev 8118fb
 Morgan Stanley,scrape,https://www.morganstanley.com/careers,https://www.morganstanley.com/careers/career-opportunities-search,false,deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-23: no IL listing; monitored candidate | dark-triage 2026-08-23: page-empty (LLM confirms no open roles (Morgan Stanley careers search page))
 Boston Scientific,scrape,https://bostonscientific.eightfold.ai/careers,https://jobs.bostonscientific.com/viewalljobs/,true,"deep-validated 2026-08-21: unsupported ATS successfactors | crack-walled 2026-08-22: nocapture | listing-hunt 2026-08-22: no IL listing; monitored can | activated 2026-08-23: validated page, scanned daily"
 Novartis,workday,novartis/Novartis_Careers,https://novartis.wd3.myworkdayjobs.com/wday/cxs/novartis/Novartis_Careers/jobs,true,re-audit 2026-08-21: deep-verified 7/6 IL (was dark)
@@ -891,7 +891,7 @@ Aptiv,scrape,https://www.aptiv.com/en/careers,https://www.aptiv.com/en/jobs/sear
 Schneider Electric,scrape,,https://careers.se.com/Defaultlandingpage/?lang=en-US,true,"listing-hunt 2026-08-22: verified 1 IL via https://careers.se.com/Defaultlandingpage/?lang=en-US | dark-triage 2026-08-22: wrong-page (LLM: not Schneider Electric's careers page (404 error page, no con"
 Denso,scrape,https://www.denso.com/careers/jobs,https://www.denso.com/us-ca/en/careers/locations/,true,"scanned via brightdata; no open Israel roles now | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty (L | activated 2026-08-23: validated page, scanned daily"
 Nestle,scrape,,https://www.nestlejobs.com/job-search?location=Israel,false,dark-triage 2026-08-22: js-shell (thin html + job-ish XHR — n | crack-walled 2026-08-24: successfactors via scrape; verified 2 IL | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
-Wells Fargo,scrape,https://www.wellsfargojobs.com/en/jobs/,https://www.wellsfargojobs.com/en/jobs/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22 | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (care | activated 2026-08-23: validated page, scanned daily"
+Wells Fargo,scrape,https://www.wellsfargojobs.com/en/jobs/,https://www.wellsfargojobs.com/en/jobs/,false,"dark-triage 2026-08-22: page-empty (LLM confirms no open roles (care | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution"
 Zebra Technologies,workday,zebra/Zebra_careers,https://zebra.wd501.myworkdayjobs.com/wday/cxs/zebra/Zebra_careers/jobs,true,re-audit 2026-08-21: verified 1/0 IL (was false-empty)
 Nutanix,scrape,https://nutanix.eightfold.ai/careers,https://nutanix.eightfold.ai/careers?location=Israel,false,"dark-triage 2026-08-22: url-dead (http 404) | listing-hunt 2026-08-23: no IL listing; monitored candidate | crack-wal | crack-walled 2026-08-28: host documented, 0 IL now"
 Aristocrat (Product Madness),workday,aristocrat/AristocratExternalCareersSite,https://aristocrat.wd3.myworkdayjobs.com/wday/cxs/aristocrat/AristocratExternalCareersSite/jobs,true,re-audit 2026-08-21: deep-verified 2/2 IL (was dark)
@@ -912,13 +912,13 @@ TaKaDu,scrape,https://takadu.com/careers,https://www.takadu.com/careers/,false,"
 BlueTree Technologies,bamboohr,bluetreetechnology,https://bluetreetechnology.bamboohr.com/careers/list,true,re-audit 2026-08-21: deep-verified 1/0 IL (was dark)
 RapidAPI,scrape,https://rapidapi.com/careers/,https://rapidapi.com/search/Jobs?sortBy=ByRelevance,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-24: no IL listing; monitored candidate
 Zengo,scrape,https://zengo.com/careers,https://zengo.com/careers,false,"dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution"
-RightHear,scrape,,https://www.right-hear.com/jobs/,true,listing-hunt 2026-08-22: verified 5 IL via https://www.right-hear.com/jobs/
+RightHear,scrape,,https://www.right-hear.com/jobs/,false,listing-hunt 2026-08-22: verified 5 IL via https://www.right-hear.com/jobs/ | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Castor,bamboohr,castoredc,https://castoredc.bamboohr.com/careers/list,true,re-audit 2026-08-21: deep-verified 1/0 IL (was dark)
 Tortech Nano Fibers,scrape,https://tortech.co.il/careers,https://www.tortechnano.com/,false,"dark-triage 2026-08-23: wrong-page (LLM: not Tortech Nano Fibers's careers page (corporate homepage, no careers/jobs sect)) | probe-woken 2026-08-28: re-hunt pending"
 Xsight Labs,scrape,https://xsightlabs.com/careers/,https://xsightlabs.com/careers/,false,"dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution"
 Syte,workable,syte-corporation,https://apply.workable.com/api/v1/widget/accounts/syte-corporation?details=true,false,re-audit 2026-08-21: deep-verified 0/0 IL (was dark) | zero-confirm 2026-08-28: board answered 0 postings; needs re-resolution
 Vidazoo,greenhouse,vidazoo,https://boards-api.greenhouse.io/v1/boards/vidazoo/jobs,false,re-audit 2026-08-21: deep-verified 0/0 IL (was dark) | zero-confirm 2026-08-28: board answered 0 postings; needs re-resolution
-Madgicx,scrape,https://madgicx.com/careers,https://madgicx.com/careers,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22 | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (care | activated 2026-08-23: validated page, scanned daily"
+Madgicx,scrape,https://madgicx.com/careers,https://madgicx.com/careers,false,"dark-triage 2026-08-22: page-empty (LLM confirms no open roles (care | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution"
 Plarium,scrape,https://plarium.com/en/careers/,https://company.plarium.com/en/career/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
 Overwolf,scrape,,https://careers.overwolf.com/,true,listing-hunt 2026-08-22: verified 9 IL via https://careers.overwolf.com/
 PLAYSTUDIOS,breezy,playstudios-asia,https://playstudios-asia.breezy.hr/json,false,"re-audit 2026-08-21: verified 4/0 IL (was false-empty) | region 2026-08-28: -asia board, 4/0 IL; needs re-resolution"
@@ -935,7 +935,7 @@ Verbit,scrape,,https://verbit.ai/careers/,true,listing-hunt 2026-08-22: verified
 CodeMonkey,scrape,,https://www.codemonkey.com/jobs/,true,listing-hunt 2026-08-22: verified 3 IL via https://www.codemonkey.com/jobs/
 Noogata,scrape,https://www.noogata.com/careers,https://www.yolo-japan.com/en/recruit/job,false,dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-24: another company's board; no listing found
 Deepchecks,scrape,https://www.deepchecks.com/careers/,https://www.deepchecks.com/careers/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
-Qwak,scrape,,https://www.qwak.com/careers,true,listing-hunt 2026-08-22: verified 4 IL via https://www.qwak.com/careers
+Qwak,scrape,,https://www.qwak.com/careers,false,listing-hunt 2026-08-22: verified 4 IL via https://www.qwak.com/careers | zero-confirm 2026-08-29: wrong-url; needs re-resolution
 Datorios,scrape,https://datorios.com/careers/,https://sartorius.wd3.myworkdayjobs.com/en-US/sartoriuscareers/job/Ann-Arbor-MI-United-States-of-America/Biology-Research-Intern--iPSC----Ann-Arbor--MI_R41236,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: url-dead (http 404) | listing-hunt 2026-08-24: another company's board; no listing found | crack-walled 2026-08-28: skip
 Weka,greenhouse,wekatest,https://boards-api.greenhouse.io/v1/boards/wekatest/jobs,true,re-audit 2026-08-21: deep-verified 38/7 IL (was dark)
 DriveNets,comeet,72.006,https://www.comeet.com/careers-api/2.0/company/72.006/positions?token=2769D81626762C4E762762C4EC4E1626,true,re-audit 2026-08-21: deep-verified 29/26 IL (was dark)
@@ -943,7 +943,7 @@ Jit,scrape,,https://www.jit.io/careers,true,listing-hunt 2026-08-23: verified 11
 Helios,workday,helios/External,https://helios.wd501.myworkdayjobs.com/wday/cxs/helios/External/jobs,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev 323fb3
 Checkmarx,scrape,,https://checkmarx.com/company/careers/,true,listing-hunt 2026-08-22: verified 2 IL via https://checkmarx.com/company/careers/
 Kodem Security,bamboohr,kodem,https://kodem.bamboohr.com/careers/list,true,re-audit 2026-08-21: verified 6/3 IL (was false-empty)
-Astrix Security,scrape,,https://astrix.security/careers/,true,listing-hunt 2026-08-22: verified 6 IL via https://astrix.security/careers/
+Astrix Security,scrape,,https://astrix.security/careers/,true,listing-hunt 2026-08-22: verified 6 IL via https://astrix.security/careers/ | zero-confirm 2026-08-29: not-the-board; rn+llm; ev 6f83bc
 Eureka Security,scrape,https://www.eureka.security/careers,https://www.eureka.security/careers,true,deep-scrape; 9 Israel jobs
 1touch.io,scrape,https://1touch.io/careers/,https://1touch.io/company/careers,false,"deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: extract-gap (LLM found 8: Technical Support Engineer, Senior IBM z_OS System P | listing-hunt 2026-08-24: no IL listing; monitored candidate"
 Cybersixgill,scrape,https://cybersixgill.com/company/careers,https://cybersixgill.com/company/careers,true,deep-scrape; 1 Israel jobs
@@ -961,11 +961,11 @@ Morphisec,scrape,https://www.morphisec.com/careers,https://www.morphisec.com/car
 Cyvers,scrape,https://cyvers.ai/careers/,https://apply.jobappnetwork.com/culvers#TRUE-BLUE-CREW-POSITIONS,false,dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-24: another company's board; no listing found
 GuardKnox,scrape,,,false,dark-triage 2026-08-24: no-url (no url on the row) | listing-hunt 2026-08-25: no pages reachable
 Justt,scrape,,https://justt.ai/careers/,true,listing-hunt 2026-08-22: verified 17 IL via https://justt.ai/careers/
-Fundbox,scrape,,https://fundbox.com/careers/,true,listing-hunt 2026-08-22: verified 5 IL via https://fundbox.com/careers/
+Fundbox,scrape,,https://fundbox.com/careers/,true,listing-hunt 2026-08-22: verified 5 IL via https://fundbox.com/careers/ | zero-confirm 2026-08-29: confirmed; rnb+llm; ev 9c7bae
 Finaro,scrape,https://www.finaro.com/careers/,https://finaro.ch/en/karriere,false,dark-triage 2026-08-23: blocked (403/429 — needs unlocker) | probe-woken 2026-08-28: re-hunt pending
 Plus500,scrape,,https://careers.plus500.com/,true,listing-hunt 2026-08-22: verified 15 IL via https://careers.plus500.com/
 Planck,scrape,https://planckdata.com/careers/,https://www.planckdata.com/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-23: js-shell (job XHRs seen during render) | listing-hunt 2026-08-24: no IL listing; monitored candidate
-BondIT,scrape,,https://bonditglobal.com/careers/,true,listing-hunt 2026-08-22: verified 3 IL via https://bonditglobal.com/careers/
+BondIT,scrape,,https://bonditglobal.com/careers/,false,listing-hunt 2026-08-22: verified 3 IL via https://bonditglobal.com/careers/ | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Spacemesh,scrape,https://spacemesh.io/careers,https://spacemesh.io/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-28 (dns-dead)
 Lightico,scrape,https://www.lightico.com/company/careers/,https://www.lightico.com/careers/#open-positions,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
 PayPlus,scrape,,https://payplus.com/careers/,true,listing-hunt 2026-08-23: verified 4 IL via https://payplus.com/careers/ | deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-22: url-dead (http 404)
@@ -986,11 +986,11 @@ Prospera Technologies,scrape,https://www.prospera.ag/careers,https://www.prosper
 Tevel Aerobotics,scrape,https://www.tevel-tech.com/careers,https://www.tevel-tech.com/careers,false,dark-triage 2026-08-23: url-dead (http 404) | scanned via brightdata; roles-text present but no resolvable board - monitored candidate | retry 2026-08-28: still unreachable
 SupPlant,scrape,https://supplant.me/careers/,https://jobs.workable.com/company/aoPC7BwwEPb7mMoMC3MDf1/jobs-at-the-supplant-company,false,deep-validated 2026-08-21: unsupported ATS phenom | dark-triage 2026-08-23: url-dead (http 404) | listing-hunt 2026-08-24: another company's board; no listing found | crack-walled 2026-08-28: not this company's board
 Caja Robotics,scrape,https://www.cajarobotics.com/careers/,https://www.cajarobotics.com/careers/,false,"dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution"
-Lumus,scrape,,https://lumus.com/careers,true,listing-hunt 2026-08-22: verified 1 IL via https://lumus.com/careers
+Lumus,scrape,,https://lumus.com/careers,true,listing-hunt 2026-08-22: verified 1 IL via https://lumus.com/careers | zero-confirm 2026-08-29: zero-refuted; rn+llm; ev ec2158
 WeSpace Technologies,scrape,https://www.wespace.co.il/careers,https://wespacetech.com/,false,"url-repaired 2026-08-23: dead host www.wespace.co.il replaced | dark-triage 2026-08-23: wrong-page (LLM: not WeSpace Technologies's careers page (company homepage/about content, no jobs ))"
 Sckipio,scrape,,,false,url-cleared 2026-08-25: comeet 87.00C is Scopio Labs' board (BACKLOG 133); no listing found | dark-triage 2026-08-25: no-url (no url on the row) | listing-hunt 2026-08-26: no pages reachable
 Feelit,scrape,,,false,listing-hunt 2026-08-22: verified 5 IL via https://feel-it-services.com/careers/ | dark-triage 2026-08-23: no-url (no url on the row)
-Robotican,scrape,,https://robotican.net/careers/,true,listing-hunt 2026-08-22: verified 5 IL via https://robotican.net/careers/
+Robotican,scrape,,https://robotican.net/careers/,true,listing-hunt 2026-08-22: verified 5 IL via https://robotican.net/careers/ | zero-confirm 2026-08-29: zero-refuted; rnb+llm; ev 5c6eae
 Iscar,scrape,https://www.iscar.com/careers,https://www.iscar.com/careers,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
 NVIDIA Israel,workday,nvidia/NVIDIAExternalCareerSite,https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs,false,alias-of NVIDIA 2026-08-23: identical board URL; one row per company so the board does not list every role twice | deep-resolved; 40/39 IL
 Broadcom Israel,workday,broadcom/External_Career,https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career/jobs,false,alias-of Broadcom 2026-08-23: identical board URL; one row per company so the board does not list every role twice | re-audit 2026-08-21: verified 0/0 IL (was false-empty)
@@ -1020,7 +1020,7 @@ Dell Technologies,workday,dell/External,https://dell.wd1.myworkdayjobs.com/wday/
 PTC,workday,ptc/PTC,https://ptc.wd1.myworkdayjobs.com/wday/cxs/ptc/PTC/jobs,true,re-audit 2026-08-21: deep-verified 2/2 IL (was dark)
 Zendesk,workday,zendesk/zendesk,https://zendesk.wd1.myworkdayjobs.com/wday/cxs/zendesk/zendesk/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev 5131d0
 Zoom,scrape,https://careers.zoom.us/jobs/search?location=Israel,https://careers.zoom.us/jobs/search?location=Israel,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22 | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (Zoom | activated 2026-08-23: validated page, scanned daily"
-Booking.com,scrape,,https://employees-holdings-workingatbooking.icims.com/jobs/search?ss=1&searchLocation=Israel,true,crack-walled 2026-08-22: icims via scrape; verified 1 IL
+Booking.com,scrape,,https://employees-holdings-workingatbooking.icims.com/jobs/search?ss=1&searchLocation=Israel,true,crack-walled 2026-08-22: icims via scrape; verified 1 IL | zero-confirm 2026-08-29: http-405; r; ev ab1960
 Intuit,scrape,,https://jobs.intuit.com/,true,listing-hunt 2026-08-22: verified 4 IL via https://jobs.intuit.com/
 Barclays,workday,barclays/External_Career_Site_Barclays,https://barclays.wd3.myworkdayjobs.com/wday/cxs/barclays/External_Career_Site_Barclays/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev cf2916
 GE HealthCare,phenom,,https://careers.gehealthcare.com/widgets,true,"listing-hunt | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily | converted 2026-08-25: phenom via fetch_company 23 IL (BACKLOG 76)"
@@ -1035,7 +1035,7 @@ Trend Micro,workday,trendmicro/External,https://trendmicro.wd3.myworkdayjobs.com
 Pure Storage,greenhouse,purestorage,https://boards-api.greenhouse.io/v1/boards/purestorage/jobs,true,re-audit 2026-08-21: deep-verified 300/0 IL (was dark)
 Take-Two Interactive,greenhouse,taketwo,https://boards-api.greenhouse.io/v1/boards/taketwo/jobs,true,re-audit 2026-08-21: deep-verified 32/0 IL (was dark)
 Flex (Flextronics),workday,flextronics/Careers,https://flextronics.wd1.myworkdayjobs.com/wday/cxs/flextronics/Careers/jobs,true,re-audit 2026-08-21: deep-verified 6/6 IL (was dark)
-Toyota Connected,scrape,https://www.toyotaconnected.com/careers/,https://toyotaconnected.com/careers/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22 | dark-triage 2026-08-22: page-empty (LLM confirms no open roles (cult | activated 2026-08-23: validated page, scanned daily"
+Toyota Connected,scrape,https://www.toyotaconnected.com/careers/,https://toyotaconnected.com/careers/,false,"dark-triage 2026-08-22: page-empty (LLM confirms no open roles (cult | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution"
 Eli Lilly,workday,lilly/LLY,https://lilly.wd115.myworkdayjobs.com/wday/cxs/lilly/LLY/jobs,true,re-audit 2026-08-21: verified 3/3 IL (was false-empty)
 Cellebrite,comeet,C3.00F,https://www.comeet.com/careers-api/2.0/company/C3.00F/positions?token=3CF130BF3C0B6D16DA1AA9B6D130B16DA,true,re-audit 2026-08-21: deep-verified 58/19 IL (was dark)
 Innoviz,comeet,52.004,https://www.comeet.com/careers-api/2.0/company/52.004/positions?token=25495012A0104C012A0104C6FCBA40,true,re-audit 2026-08-21: deep-verified 11/11 IL (was dark)
@@ -1047,7 +1047,7 @@ Delasport,bamboohr,delasport,https://delasport.bamboohr.com/careers/list,false,r
 Localize,comeet,33.00F,https://www.comeet.com/careers-api/2.0/company/33.00F/positions?token=33F103B33F19F81D37CFC1D3716B916B9CFC,true,re-audit 2026-08-21: verified 1/1 IL (was false-empty)
 Litigate,scrape,https://www.litigate.ai/careers,https://www.litigate.ai/careers,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-28 (conn-dead (URLError))
 SolarGik,scrape,,https://solargik.com/careers/,false,aggregator URL (builtin.com-class global listing) auto-parked 2026-08-22 — would attribute third-party jobs; needs re | dark-triage 2026-08-23: page-empty (LLM confirms no open roles (Open Positions section renders emp))
-Aquarius Spectrum,scrape,,https://jobs.spectrum.com/search-jobs,true,listing-hunt 2026-08-23: verified 7 IL via https://jobs.spectrum.com/search-jobs | deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-22: url-dead (http 404)
+Aquarius Spectrum,scrape,,https://jobs.spectrum.com/search-jobs,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-08-22: url-dead (http 404) | zero-confirm 2026-08-29: wrong-url; needs re-resolution
 Mush Foods,bamboohr,mush,https://mush.bamboohr.com/careers/list,true,re-audit 2026-08-21: deep-verified 4/0 IL (was dark)
 Kubiya,scrape,https://www.kubiya.ai/careers,https://kubiya.ai/careers,false,dark-triage 2026-08-23: js-shell (thin html + job-ish XHR — needs render+capture) | listing-hunt 2026-08-24: no IL listing; monitored candidate | domain-dead 2026-08-28 (dns-dead)
 Anonybit,scrape,,,false,dark-triage 2026-08-23: no-url (no url on the row) | listing-hunt 2026-08-24: another company's board; no listing found
@@ -1133,7 +1133,7 @@ Shufersal,scrape,https://secrethunter.io/jobz/7446ee070b,https://www.shufersal.c
 helfy,comeet,3A.008,https://www.comeet.com/careers-api/2.0/company/3A.008/positions?token=A38478828E001EA8A381EA8033183D50,true,auto-expand; 21/16 IL
 Artlist,comeet,85.003,https://www.comeet.com/careers-api/2.0/company/85.003/positions?token=5831B8F2C185832C182C181B8F319BB061089&details=true,true,re-audit 2026-08-21: deep-verified 10/8 IL (was dark)
 Sql developer - SkySoft Solutions By Commit,comeet,76.008,https://www.comeet.com/careers-api/2.0/company/76.008/positions?token=67826D067833C0CF002D48020581368,false,"alias-of CommIT 2026-08-23: a leaked job TITLE, not a company; CommIT has its own Comeet row"
-Alison,scrape,,https://alison.com/about/careers,true,listing-hunt 2026-08-23: verified 16 IL via https://alison.com/about/careers | deep-validated 2026-08-21: no ATS detected (rendered)
+Alison,scrape,,https://alison.com/about/careers,true,listing-hunt 2026-08-23: verified 16 IL via https://alison.com/about/careers | deep-validated 2026-08-21: no ATS detected (rendered) | zero-confirm 2026-08-29: confirmed; rnb+llm; ev a1aac9
 90min,scrape,https://secrethunter.io/jobz/a817bc41a4,https://90seconds.com/about/careers/positions/,false,dark-triage 2026-08-23: extract-gap (5 role phrases after render) | listing-hunt 2026-08-24: another company's board; no listing found
 PassportCard,comeet,92.00A,https://www.comeet.com/careers-api/2.0/company/92.00A/positions?token=29AA68176A176A534D02123607CE0,true,listing-hunt 2026-08-22: verified 5 IL via https://www.comeet.com/jobs/passportcard/92.00A | self-heal 2026-08-27: re-resolved to comeet
 Data researcher - Navina,scrape,,https://www.navina.ai/careers,false,"alias-of Navina 2026-08-23: a leaked job TITLE, not a company; Navina has its own Comeet row"
@@ -1285,7 +1285,7 @@ Alignerr,scrape,https://www.alignerr.com/jobs,https://www.alignerr.com/jobs,fals
 Applied Materials - Israel,scrape,https://jobs.appliedmaterials.com/location/israel-jobs/95/294640/2,https://jobs.appliedmaterials.com/location/israel-jobs/95/294640/2,true,listing-hunt 2026-08-28: queue-hunt; verified 11 IL
 Apptor-AI,scrape,https://apptor-ai.com/career/,https://apptor-ai.com/career/,true,listing-hunt 2026-08-28: queue-hunt; verified 6 IL
 Ashley Digital,greenhouse,residenthome,https://boards-api.greenhouse.io/v1/boards/residenthome/jobs,true,listing-hunt 2026-08-28: queue-hunt; verified 4 IL | self-heal 2026-08-28: re-resolved to greenhouse
-Axon Pulse,scrape,,https://axon-pulse.com/career/,true,dark-triage 2026-08-28: extract-gap (13 role phrases after render) | listing-hunt 2026-08-28: verified 5 IL via axon-pulse.com
+Axon Pulse,scrape,,https://axon-pulse.com/career/,true,dark-triage 2026-08-28: extract-gap (13 role phrases after render) | listing-hunt 2026-08-28: verified 5 IL via axon-pulse.com | zero-confirm 2026-08-29: zero-refuted; rnb+llm; ev 2b134a
 BMC Software,scrape,https://jobs.bmc.com/Careers/SearchJobs/?listFilterMode=1&1274=9409&1274_format=1347&intcmp=JobsByCountry,https://jobs.bmc.com/Careers/SearchJobs/?listFilterMode=1&1274=9409&1274_format=1347&intcmp=JobsByCountry,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL
 Babysense,scrape,https://babysense.eu/?srsltid\u003dAfmBOopPbro6wBjoYbdJ4VeNkmnVIdBt3ARVm_GyYN9KfdOnZuWYLQc1,https://www.babysenseglobal.com/,false,dark-triage 2026-08-28: wrong-page (LLM: not Babysense's careers page (This is Babysense's e-commerce product s)) | listing-hunt 2026-08-28: no IL listing; monitored candidate
 Bank Hapoalim בנק הפועלים,scrape,,https://www.bankhapoalim.co.il/he/jobs-site/lobby,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: no IL listing; monitored candidate
@@ -1300,7 +1300,7 @@ Codium,scrape,https://codiumsystems.com/careers,https://codiumsystems.com/career
 Cust2Mate - A2Z (NASDAQ: AZ),scrape,,https://cust2mate.com/careers/,true,dark-triage 2026-08-28: js-shell (job XHRs seen during render) | listing-hunt 2026-08-28: verified 1 IL via cust2mate.com
 DRS RADA Technologies,scrape,https://www.drsrada.com/careers,https://www.drsrada.com/careers,true,listing-hunt 2026-08-28: queue-hunt; verified 45 IL
 DRW,scrape,https://www.drw.com/work-at-drw/listings,https://www.drw.com/work-at-drw/listings,true,listing-hunt 2026-08-28: queue-hunt; verified 4 IL
-Diageo,scrape,https://www.diageo.com/en/careers/search-and-apply,https://www.diageo.com/en/careers/search-and-apply,true,listing-hunt 2026-08-28: queue-hunt; verified 10 IL
+Diageo,scrape,https://www.diageo.com/en/careers/search-and-apply,https://www.diageo.com/en/careers/search-and-apply,false,listing-hunt 2026-08-28: queue-hunt; verified 10 IL | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Discount Bank,scrape,https://ehsb.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/he/sites/CX_3001/requisitions,https://ehsb.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/he/sites/CX_3001/requisitions,true,listing-hunt 2026-08-28: queue-hunt; verified 4 IL
 Discount Bank בנק דיסקונט,scrape,https://ehsb.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/he/sites/CX_3001/requisitions,https://ehsb.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/he/sites/CX_3001/requisitions,false,"listing-hunt 2026-08-28: queue-hunt; verified 4 IL | alias-of Discount Bank 2026-08-28: same board, added by the intake exhaust which de-duplicated by NAME only"
 E2E Solutions IL,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: another company's board; no listing found
@@ -1326,7 +1326,7 @@ Horizon Technologies,scrape,https://horizontech.co.il/שירותים/קרייר�
 Horizon Trade,scrape,https://horizon.trade/careers,https://horizon.trade/careers,false,"dark-triage 2026-08-28: extract-gap (LLM found 3: Senior Product Manager, Product Manager) | listing-hunt 2026-08-28: no IL listing; monitored candidate"
 IAI - Israel Aerospace Industries,scrape,https://jobs.iai.co.il/jobs/,https://jobs.iai.co.il/jobs/,true,listing-hunt 2026-08-28: queue-hunt; verified 2 IL
 IBI בית השקעות,scrape,https://www.ibi.co.il/career/,https://www.ibi.co.il/career/,true,listing-hunt 2026-08-28: queue-hunt; verified 24 IL
-ISCAR ISRAEL,scrape,,https://www.iscar.com/marcom/iscar-career-job-list/,true,dark-triage 2026-08-28: js-shell (job XHRs seen during render) | listing-hunt 2026-08-28: verified 7 IL via www.iscar.com
+ISCAR ISRAEL,scrape,,https://www.iscar.com/marcom/iscar-career-job-list/,true,dark-triage 2026-08-28: js-shell (job XHRs seen during render) | listing-hunt 2026-08-28: verified 7 IL via www.iscar.com | zero-confirm 2026-08-29: wall; r; ev a2f8b2
 IgniteTech,scrape,,https://careers.ignitetech.ai/jobs#jobs,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: no IL listing; monitored candidate
 InfinityLabs R&D,scrape,https://infinitylabs.co.il/training-programs/ai-researcher/,https://infinitylabs.co.il/training-programs/ai-researcher/,false,dark-triage 2026-08-28: wrong-page (LLM: not InfinityLabs R&D's careers page (This is a training/course program page ()) | listing-hunt 2026-08-28: not a listings page; no listing found
 "Integress, Inc.",scrape,https://integressinc.com/jobs/,https://integressinc.com/jobs/,false,dark-triage 2026-08-28: extract-gap (9 role phrases after render) | listing-hunt 2026-08-28: no IL listing; monitored candidate
@@ -1405,13 +1405,13 @@ one פתרונות טכנולוגיים,scrape,,https://www.one1.co.il/careers/,
 בנק דיסקונט,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: another company's board; no listing found
 הפניקס,scrape,https://www.fnx.co.il/career/open-positions,https://www.fnx.co.il/career/open-positions,true,listing-hunt 2026-08-28: queue-hunt; verified 10 IL
 מטריקס,scrape,https://www.matrixdna.ai/career/analytics-bi/,https://www.matrixdna.ai/career/analytics-bi/,true,listing-hunt 2026-08-28: queue-hunt; verified 3 IL
-מנורה מבטחים החזקות,scrape,,https://www.menoramivt.co.il/job-posting/open-position,true,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: verified 4 IL via www.menoramivt.co.il
+מנורה מבטחים החזקות,scrape,,https://www.menoramivt.co.il/job-posting/open-position,true,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: verified 4 IL via www.menoramivt.co.il | zero-confirm 2026-08-29: zero-refuted; r+llm; ev 551cfa
 Wayve,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
 Fujitsu,scrape,https://www.jobs.global.fujitsu.com/search?location=Israel,https://www.jobs.global.fujitsu.com/search?location=Israel,true,listing-hunt 2026-08-28: queue-hunt; verified 10 IL via www.jobs.global.fujitsu.com
 Simplex 3D,scrape,https://www.simplex3d.com/reals/,https://www.simplex3d.com/reals/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.simplex3d.com linkback | listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
 Regulus,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
 Infotree Global Solutions,scrape,https://www.infotreeglobal.com/search-jobs/,https://www.infotreeglobal.com/search-jobs/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-Traild,scrape,https://traildsoftware.com/careers/,https://traildsoftware.com/careers/,true,listing-hunt 2026-08-28: queue-hunt; verified 8 IL via traildsoftware.com
+Traild,scrape,https://traildsoftware.com/careers/,https://traildsoftware.com/careers/,false,listing-hunt 2026-08-28: queue-hunt; verified 8 IL via traildsoftware.com | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Nexar Inc.,scrape,https://careers.getnexar.com/jobs,https://careers.getnexar.com/jobs,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL via careers.getnexar.com
 HR Home,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
 GNESS,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
@@ -1495,7 +1495,7 @@ Speechify,greenhouse,speechify,https://boards-api.greenhouse.io/v1/boards/speech
 Fund Well,ashby,fundwell,https://api.ashbyhq.com/posting-api/job-board/fundwell,true,queue-drain 2026-08-28 slug-probe; 7/1 IL
 Grafana Labs,greenhouse,grafanalabs,https://boards-api.greenhouse.io/v1/boards/grafanalabs/jobs,true,queue-drain 2026-08-28 slug-probe; 137/2 IL
 Profisea,scrape,,https://www.profisea.com/careers/,true,queue-drain 2026-08-28 exhaust; 6/6 IL
-K2view,scrape,,https://www.k2view.com/careers/,true,queue-drain 2026-08-28 exhaust; 11/11 IL
+K2view,scrape,,https://www.k2view.com/careers/,true,queue-drain 2026-08-28 exhaust; 11/11 IL | zero-confirm 2026-08-29: zero-refuted; rn+llm; ev 503bfe
 Rohde & Schwarz,scrape,,https://www.rohde-schwarz.com/il/career/application-process_252291.html?change_c=IL,true,queue-drain 2026-08-28 exhaust; 6/6 IL
 tailormed,scrape,,https://www.tailormed.com/careers,true,queue-drain 2026-08-28 exhaust; 15/15 IL
 sensi,scrape,,https://www.sensi.ai/careers,true,queue-drain 2026-08-28 exhaust; 1/1 IL
@@ -1503,23 +1503,23 @@ eteacher,scrape,,https://www.eteachergroup.com/careers/,true,queue-drain 2026-08
 Aeronautics,scrape,,https://career.aeronautics-sys.com/open-positions/,true,queue-drain 2026-08-28 exhaust; 10/10 IL
 Venice,scrape,,https://www.venice.io/careers,true,queue-drain 2026-08-28 exhaust; 3/3 IL
 Tensorleap,scrape,,https://www.tensorleap.ai/careers,true,queue-drain 2026-08-28 exhaust; 3/3 IL
-penlink,scrape,,https://www.penlink.com/about-penlink/careers/,true,queue-drain 2026-08-28 exhaust; 3/3 IL
+penlink,scrape,,https://www.penlink.com/about-penlink/careers/,false,queue-drain 2026-08-28 exhaust; 3/3 IL | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 rooms,scrape,,https://www.working-rooms.co.il/careers,true,queue-drain 2026-08-28 exhaust; 6/6 IL
 Dash Security,scrape,,https://dash.security/careers,true,queue-drain 2026-08-28 exhaust; 4/4 IL
 Incredibuild,scrape,,https://www.incredibuild.com/career,true,queue-drain 2026-08-28 exhaust; 5/5 IL
 Asperii,scrape,,https://www.asperii.com/careers/#open-positions,true,queue-drain 2026-08-28 exhaust; 5/5 IL
 TreeX Robotics,scrape,,https://treex.ai/careers/,true,queue-drain 2026-08-28 exhaust; 4/4 IL
-Entropy Organizational Development,scrape,,https://www.entropy.sa/careers,true,queue-drain 2026-08-28 exhaust; 4/4 IL
+Entropy Organizational Development,scrape,,https://www.entropy.sa/careers,false,queue-drain 2026-08-28 exhaust; 4/4 IL | zero-confirm 2026-08-29: wrong-url; needs re-resolution
 Twine Security,scrape,,https://www.twinesecurity.com/careers,true,queue-drain 2026-08-28 exhaust; 10/10 IL
-Webbing,scrape,,https://webbingsolutions.com/careers/,true,queue-drain 2026-08-28 exhaust; 26/26 IL
+Webbing,scrape,,https://webbingsolutions.com/careers/,true,queue-drain 2026-08-28 exhaust; 26/26 IL | zero-confirm 2026-08-29: zero-refuted; rnb+llm; ev 3d22e4
 Mizrahi-Tefahot Bank בנק מזרחי טפחות,scrape,,https://www.mizrahi-tefahot.co.il/about-mizrahi-tefahot-he/career/,true,queue-drain 2026-08-28 exhaust; 1/1 IL
-Alma Labs,scrape,,https://almainc.com/careers/,true,queue-drain 2026-08-28 exhaust; 18/18 IL
+Alma Labs,scrape,,https://almainc.com/careers/,true,queue-drain 2026-08-28 exhaust; 18/18 IL | zero-confirm 2026-08-29: confirmed; rb+llm; ev 8dddb9
 Hud,scrape,,https://www.hud.io/careers/,true,queue-drain 2026-08-28 exhaust; 5/5 IL
-Stampli,scrape,,https://www.stampli.com/careers/,true,queue-drain 2026-08-28 exhaust; 3/3 IL
+Stampli,scrape,,https://www.stampli.com/careers/,true,queue-drain 2026-08-28 exhaust; 3/3 IL | zero-confirm 2026-08-29: zero-refuted; rnb+llm; ev 3b7556
 Challenge Group,scrape,,https://career.challenge-group.com/go/Israel-Airlines-Jobs/9594055/,true,queue-drain 2026-08-28 exhaust; 8/8 IL
 Energean,scrape,,https://careers.energean.com/go/All-Jobs/8550855/,true,queue-drain 2026-08-28 exhaust; 6/6 IL
 IQVIA,scrape,,https://jobs.iqvia.com/search-jobs?query=&country=Israel,true,queue-drain 2026-08-28 exhaust; 7/7 IL
-Kimberly-Clark,scrape,,https://careers.kimberly-clark.com/en/job-search?location=Israel,true,queue-drain 2026-08-28 exhaust; 1/1 IL
+Kimberly-Clark,scrape,,https://careers.kimberly-clark.com/en/job-search?location=Israel,true,queue-drain 2026-08-28 exhaust; 1/1 IL | zero-confirm 2026-08-29: zero-refuted; rnb+llm; ev ec53a1
 Leverate,scrape,,https://leverate.com/careers/,true,queue-drain 2026-08-28 exhaust; 6/6 IL
 Aiven,scrape,,https://aiven.io/careers/job,true,queue-drain 2026-08-28 exhaust; 1/1 IL
 Ayalon Highways,scrape,,https://www.ayalonhw.co.il/career/jobs-page,true,queue-drain 2026-08-28 exhaust; 2/2 IL
@@ -1530,7 +1530,7 @@ airHaifa,scrape,,https://www.airhaifa.com/careers-he/careers,true,queue-drain 20
 ASML,scrape,,https://www.asml.com/en/careers/find-your-job?location=Israel,true,queue-drain 2026-08-28 exhaust; 24/24 IL
 Elmo Motion Control,scrape,,https://www.elmomc.com/careers/,true,queue-drain 2026-08-28 exhaust; 1/1 IL
 Ribbon Communications,workday,vhr-genband/ribboncareers,https://vhr-genband.wd1.myworkdayjobs.com/wday/cxs/vhr_genband/ribboncareers/jobs,true,queue-drain 2026-08-28 exhaust; 1/1 IL | self-heal 2026-08-28: re-resolved to workday
-Edikted,scrape,,https://edikted.com/pages/careers?srsltid\u003dAfmBOoobtSavWjSEL6NTx6lZPZLtccce-FR4MVVqKvEScUkq_H1feZaG,true,queue-drain 2026-08-28 exhaust; 10/10 IL
+Edikted,scrape,,https://edikted.com/pages/careers?srsltid\u003dAfmBOoobtSavWjSEL6NTx6lZPZLtccce-FR4MVVqKvEScUkq_H1feZaG,false,queue-drain 2026-08-28 exhaust; 10/10 IL | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Maccabi Health care Services,scrape,,https://www.maccabi4u.co.il/careers/search-job-positions/,true,queue-drain 2026-08-28 exhaust; 5/5 IL
 KayHut,scrape,,https://kayhut.com/careers/,true,queue-drain 2026-08-28 exhaust; 1/1 IL
 Dentsply Sirona,scrape,,https://careers.dentsplysirona.com/search/?q=&locationsearch=Israel,true,queue-drain 2026-08-28 exhaust; 2/2 IL

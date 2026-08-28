@@ -345,6 +345,40 @@ refuse every Comeet board — and the `company_name` the code cites as its indep
 overwritten by `fetch_comeet` with the name we passed in. What actually saves the path is
 undocumented. Thirteen findings filed, 408-420.
 
+## The zero audit, finished: 215 rows in, 7 left
+
+```
+pool at the start              215   (195 scrape / 20 native)
+pool at the end                  7
+ledger entries this session    247   evidence dirs 200 (out/zero_evidence/2026-08-2{8,9}/)
+```
+
+| verdict | n | what it means |
+|---|---|---|
+| `routed-to-hunt` | 101 | a board answering with nothing is a WRONG ADDRESS: parked `needs re-resolution` into the 19:00 hunt |
+| `not-the-board` | 27 | the page is not a board at all |
+| **`confirmed`** | **26** | a rendered page, proven ours, proven a board, and a model saying in words that it STATES it has none |
+| `zero-refuted` | 22 | **the row DOES have Israeli roles the production fetch cannot see** |
+| `wrong-url` | 19 | the model named a different employer |
+| errors (`shell` 22, `http-4xx` 18, `wall` 8, render/api/parked 3) | 51 | never a zero |
+| `stripped` | 1 | see above |
+
+**68 rows had their "empty" overturned** — 22 refuted outright, 27 not a board, 19 someone
+else's. Against 26 confirmed. That ratio is the answer to the question the operator asked this
+tool to settle: *"empty" in this registry was mostly the output of a tool, not a fact about a
+company.* And every one of the 26 is spot-checkable without re-running anything — the exact
+text the model was shown is in `out/zero_evidence/<date>/<slug>-<hex6>/page.txt` beside its
+`llm.json` and `meta.json`, indexed durably in the committed `cloud_state/zero_confirm.json`.
+
+`needs re-resolution` went 38 → **121**, and the re-check pool 421 → **511**: those rows are now
+owned by the 19:00 hunt every night instead of sitting active and producing nothing.
+
+## Registry at the end
+
+```
+1,601 rows · 976 active · 0 orphans · re-check pool 511
+```
+
 ## Cost
 
 | | |
