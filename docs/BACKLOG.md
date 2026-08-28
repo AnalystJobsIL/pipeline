@@ -307,7 +307,7 @@ closure convention in the header.
 - **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
 - **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
 - **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
-- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` writes to the tracked tree**
+- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
 
 ### scraper — 24 open
 
@@ -4229,17 +4229,34 @@ here — each is another lane's file or a behaviour change this session could no
     task that drove them is disabled). `docs/MODULES.md` files `firmo_health_check.py` as
     `operator`, so retiring it is a `docs` regeneration too.
 
-396. **`tests/rehearse_company_intel.py --all` writes to the tracked tree** — lane:
-    `company-intel`, filed 2026-08-28. Running it modified `cloud_state/health_baseline.json`,
-    `cloud_state/stale.json`, `docs/index.html` and `docs/archive.html` — the exact set
-    `CLAUDE.md` warns an UNSCOPED `python -m pipeline.run` overwrites. The harness copies
-    state into `out/rehearse/work_<case>` and monkeypatches `F.SHARED_EXPORT`, `stages.PATH`
-    and `R._load_secrets_env`, but evidently not the board/health/stale outputs. Its own
-    check 8 (`"git status is unchanged"`) is designed to catch this, so it may report the
-    leak and exit 1 rather than hide it — **that is unverified**: the run was stopped before
-    it finished and its verdict was never read. Reproduce with
-    `python tests/rehearse_company_intel.py --all` in a clean worktree and `git status`
-    alongside. Until this is settled, run it only in a throwaway worktree.
+396. **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
+    writes to the tracked tree** — lane: `company-intel`, filed 2026-08-28, run to completion
+    by a confirmer. **Exit 1: 96 checks over 7 cases, 17 failed — and none of the 17 is about
+    the code under test.**
+
+    - **It writes to the tracked tree.** After case `a`: `cloud_state/health_baseline.json`,
+      `cloud_state/stale.json`, `docs/index.html`, `docs/archive.html`. `pipeline.run.run()`
+      takes `out_dir` and `db_path`, but those four paths are module constants, so the
+      driver's scratch-only promise is false. **Its own check 8 catches this on case `a`
+      only**: `status0` is captured *inside* `run_case`, so cases 2-7 compare dirty against
+      dirty and pass. One case's worth of damage is invisible from case 2 onward.
+    - **`--all` passes no `--hole`**, and after the 08-28 drain the mail line reads `all 68
+      board companies profiled` — zero research candidates — so every check that needs a
+      research call (`['research']` calls, `researched`, `why failed:`, `SEARCHLESS`) fails
+      by construction. The driver's own docstring prescribes `--hole` for exactly this.
+    - **The shim cannot classify the classifier's argv.** The unclassified call in all 7
+      cases is the role verdict (`"verdict":{"enum":["YES","NO"]}`), which
+      `tests/fixtures/company_intel/fake_claude.py` has no rule for; it answers
+      `kind=unknown`, which opens the classifier's breaker, which is why the outage cases
+      then report `the classifier's breaker was already open` instead of their own message.
+      Cross-lane, and unchanged by this session.
+
+    **The lane's own path is green** on the documented invocation:
+    `python tests/rehearse_company_intel.py --case json --hole "Wix,Fiverr" --only "Wix,Fiverr"`
+    → **17/17 PASS, exit 0**. Fix: give `--all` a hole, capture `status0` once for the whole
+    sweep, teach the shim the classifier's argv, and route the board/health/stale writes
+    through the scratch dir. Until then, use the `--case` form, and only in a throwaway
+    worktree.
 
 ## From the `jd-text` lane, 2026-08-28 (evening)
 

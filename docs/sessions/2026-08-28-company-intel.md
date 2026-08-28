@@ -197,7 +197,7 @@ end: `stages.alarms("firmo", 1)` → `summary["stage_alarms"]` → `digest.py:22
 `- **Stages:** firmo last ran 3d ago`. 1 day, not 0, because the digest runs at 05:00 and
 the cron at 10:00, so the freshest possible stamp on any morning is yesterday's.
 
-**Two designs were discarded, and how they were wrong is the useful part.**
+**Three designs were discarded, and how each was wrong is the useful part.**
 
 1. *A `registry backlog > 40` threshold.* Rejected before it was written: the registry adds
    30–100 active rows a day, so an absolute bar is crossed on healthy mornings — the same
@@ -213,6 +213,22 @@ the cron at 10:00, so the freshest possible stamp on any morning is yesterday's.
    deletes on purpose, while my commit message claimed it reached the mail.
    `tests/test_company_intel.py` now BANS any export field being used as a cron-liveness
    signal, so the mistake cannot come back quietly.
+3. *The stamp, placed below `main()`'s early return.* **Also shipped, also wrong**, and a
+   confirmer caught it before it reached a morning. `main()` returns on
+   `if a.dry_run or not todo:` and the stamp sat underneath, so a healthy cron with an
+   empty queue never stamped and the next mail would say `firmo never ran` about a run that
+   had done its job. **It was live**: after the drain every remaining backlog name is
+   strike-gated, so the 08-29 run has `0 to do`. That is the false-alarm failure this lane
+   rejected in design 1, rebuilt in the replacement for design 2 — and the comment on the
+   very lines it sat below already made the argument, for the Desktop heartbeat. The guard
+   that missed it asserted `'stages.stamp("firmo"' in src`, which was true the whole time it
+   was broken; it is behavioural now, running the real `main()`.
+
+The tolerance is `stages.alarms("firmo", **2**)`, not 1. 0 is impossible (the digest runs at
+05:00 and the cron at 10:00, so yesterday's stamp is the freshest any morning can have), and
+1 would alarm on a single dropped slot — routine here, with `infra` having measured 4 of 5
+crons dropped on 2026-08-27. Two in a row is not routine, and is the shape that let the
+backlog go 74 → 139 in silence.
 
 The **floor** half of 359 is filed as **388@infra**, not built here:
 `persist_state.key_deltas` already measures this exact path every run, and `shrank()` cannot

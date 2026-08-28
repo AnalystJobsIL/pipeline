@@ -452,7 +452,7 @@
   {
     "id": "ci-firmo-stage-never-read",
     "file": "pipeline/run.py",
-    "find": "                     + stages.alarms(\"firmo\", 1)\n",
+    "find": "                     + stages.alarms(\"firmo\", 2)\n",
     "replace": "                     + []\n",
     "class": "M1",
     "symbol": "firmo_stage_never_read",
@@ -519,6 +519,24 @@
     "replace": "        if tools and not (res.get(\"searches\") or 0):\n",
     "class": "M3",
     "symbol": "a_refusal_counts_as_searchless",
+    "why": "company-intel guard 2026-08-28 wave 2"
+  },
+  {
+    "id": "ci-healthy-empty-run-never-stamps",
+    "file": "research_firmographics.py",
+    "find": "            stages.stamp(\"firmo\", researched=0, failed=0, records=len(have))\n",
+    "replace": "            pass\n",
+    "class": "M1",
+    "symbol": "healthy_empty_run_never_stamps",
+    "why": "company-intel guard 2026-08-28 wave 2"
+  },
+  {
+    "id": "ci-mass-failure-is-a-healthy-stage",
+    "file": "research_firmographics.py",
+    "find": "              \"mass-failure\" if mass_failure else \"\")\n",
+    "replace": "              \"\")\n",
+    "class": "M3",
+    "symbol": "mass_failure_is_a_healthy_stage",
     "why": "company-intel guard 2026-08-28 wave 2"
   }
 ]

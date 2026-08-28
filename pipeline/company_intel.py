@@ -400,8 +400,8 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
     FIRMO_TIME_BUDGET_MIN minutes on research; stops at the first infrastructure failure.
     Reads sqlite ∪ the shared export, seeds sqlite from the export, and writes the union
     back — except on a scoped run (`--only`/`--limit`), which must leave the committed
-    file alone, and except when the export is corrupt, which must not be replaced by
-    the smaller sqlite table. `audit_lines(report)` turns the report into the mail."""
+    file alone, and except when the export is corrupt or only partly readable — neither may
+    be replaced by the smaller sqlite table. `audit_lines(report)` turns the report into the mail."""
     # BACKLOG 120. The classifier reached the same CLI first and its breaker is open; both
     # tiers spend ONE subscription, so an auth/missing failure there is an auth/missing
     # failure here, and rediscovering it costs up to FIRMO_TIME_BUDGET_MIN of the morning at
@@ -660,9 +660,16 @@ def _audit_lines(rep):
             parts.append(msg)
             warn.append(msg)
     else:
+        # `partial` renders from sqlite UNION whatever could be read, so "sqlite only" was
+        # false and its own number disproved it (1,128 = 1 sqlite record + 1,127 readable
+        # export records). And the reassurance -- that the bad file was not overwritten --
+        # was withheld from exactly the reader who needs it.
         e = (f"export {rep['export_status'].upper()} at cloud_state/firmographics.json — cards "
-             f"render from sqlite only ({rep['store_records']} records)"
-             + ("; file left untouched" if rep["export_status"] == "corrupt" else ""))
+             + (f"render from sqlite only ({rep['store_records']} records)"
+                if rep["export_status"] != "partial" else
+                f"render from sqlite ∪ what could be read ({rep['store_records']} records)")
+             + ("; file left untouched"
+                if rep["export_status"] in ("corrupt", "partial") else ""))
         parts.append(e)
         warn.append(e)
     return [" · ".join(parts)], warn

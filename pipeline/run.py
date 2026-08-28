@@ -231,10 +231,15 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                      + stages.alarms("expand", 1)
                      # `firmo` is the 10:00 bulk research cron. It is the only thing that
                      # drains the registry backlog, it has fired ONCE ever (2026-08-27T20:05Z,
-                     # +605 min late), and when it does not fire nothing says so. 1 day, not
-                     # 0: this digest runs at 05:00 and that cron at 10:00, so the freshest
-                     # possible stamp on any morning is yesterday's.
-                     + stages.alarms("firmo", 1)
+                     # +605 min late), and when it does not fire nothing says so.
+                     #
+                     # 2, not 0 or 1. 0 is impossible: this digest runs at 05:00 and that
+                     # cron at 10:00, so the freshest stamp on any morning is yesterday's.
+                     # 1 would alarm on a SINGLE dropped slot, and GitHub dropping one is
+                     # routine here -- `infra` measured 4 of 5 crons dropped on 2026-08-27.
+                     # Two consecutive misses is not routine, and is the shape that let the
+                     # backlog go 74 -> 139 in silence.
+                     + stages.alarms("firmo", 2)
                      # `publish` is this run's own stage: a stamp older than yesterday means
                      # yesterday's digest never reached its stamp (a crash or a timeout)
                      + [a.replace("— the digest read stale input", "— yesterday's digest never completed")

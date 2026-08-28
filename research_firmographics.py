@@ -307,6 +307,13 @@ def main():
             _stamp_ok()  # a clean zero-todo run IS healthy: the chain ran and nothing is
             # stuck — without this, a quiet weekend fires false Desktop alerts that
             # train the user to ignore the one channel real outages depend on
+            # ...and the SAME argument applies to the cloud stamp, which was added below
+            # the early return and so was never written on exactly those healthy runs.
+            # Live: after the 08-28 drain every remaining backlog name is strike-gated, so
+            # the 08-29 cron does its job, returns here, and the 08-30 mail would have said
+            # `firmo never ran`. That is the false alarm this lane rejected two commits
+            # earlier, rebuilt in the replacement for it.
+            stages.stamp("firmo", researched=0, failed=0, records=len(have))
         return
     if a.limit:
         todo = todo[: a.limit]
@@ -374,10 +381,11 @@ def main():
     # strikes are recorded only once the run proves it wasn't broken: neither an infra
     # abort nor an all-fail run (soft outage: exit-0 prose, broken WebSearch grant) is
     # evidence about company names
-    struck = []
+    struck, mass_failure = [], False
     if infra_streak >= 3:
         print(f"infra abort: {failed} soft failures NOT recorded")
     elif failed >= 5 and done == 0:
+        mass_failure = True
         print(f"mass-failure guard: {failed} failures, 0 successes — no strikes recorded "
               "(suspected soft outage; names retry next run)")
     else:
@@ -416,8 +424,10 @@ def main():
     # on 2026-08-28, the day this cron did NOT run, the 08:54 digest added two records
     # dated 08-28 and carried `export_newest` from 08-27 to 08-28, so an alarm reading that
     # field would have been silent on the exact morning it was built for.
+    _alarm = ("infra-abort" if infra_streak >= 3 else
+              "mass-failure" if mass_failure else "")
     stages.stamp("firmo", researched=done, failed=failed, records=len(have) + done,
-                 **({"alarm": "infra-abort"} if infra_streak >= 3 else {}))
+                 **({"alarm": _alarm} if _alarm else {}))
     print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store")
     if meta.get("calls"):
         models = ", ".join(

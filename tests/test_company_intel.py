@@ -1453,25 +1453,25 @@ def test_the_cron_that_did_not_run_is_measured_by_its_own_stamp(tmp_path, monkey
     monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
 
     assert "firmo" in stages.ORDER, "the stage left the ordering contract"
-    assert stages.alarms("firmo", 1) == ["firmo never ran"]
+    assert stages.alarms("firmo", 2) == ["firmo never ran"]
 
     stages.stamp("firmo", researched=19, failed=4, records=995)
-    assert stages.alarms("firmo", 1) == [], "a cron that ran today must not alarm"
+    assert stages.alarms("firmo", 2) == [], "a cron that ran today must not alarm"
     assert "firmo: " in stages.summary()
 
     # a stamp with no research is still a cron that RAN -- a drained backlog is healthy,
     # and `research_firmographics._stamp_ok` says so in its own words
     stages.stamp("firmo", researched=0, failed=0, records=1132)
-    assert stages.alarms("firmo", 1) == []
+    assert stages.alarms("firmo", 2) == []
 
     # ...and an aborted run says so on the same line
     stages.stamp("firmo", researched=0, failed=7, records=1132, alarm="infra-abort")
-    assert stages.alarms("firmo", 1) == ["firmo infra-abort"]
+    assert stages.alarms("firmo", 2) == ["firmo infra-abort"]
 
     src = inspect.getsource(__import__("research_firmographics").main)
     assert 'stages.stamp("firmo"' in src, "the bulk run stopped stamping its own stage"
     run = inspect.getsource(__import__("pipeline.run", fromlist=["run"]))
-    assert 'stages.alarms("firmo", 1)' in run, "the stamp is written but nobody reads it"
+    assert 'stages.alarms("firmo", 2)' in run, "the stamp is written but nobody reads it"
 
 
 def test_the_stall_alarm_reaches_the_mail_not_only_the_run_page():
@@ -1482,7 +1482,7 @@ def test_the_stall_alarm_reaches_the_mail_not_only_the_run_page():
     import inspect
     run = inspect.getsource(__import__("pipeline.run", fromlist=["run"]))
     block = run[run.index("_stage_alarms = ("):run.index("for _line in _stage_alarms:")]
-    assert 'stages.alarms("firmo", 1)' in block
+    assert 'stages.alarms("firmo", 2)' in block
 
 
 def test_no_export_field_is_used_as_a_cron_liveness_signal():
@@ -1639,3 +1639,100 @@ def test_a_refusal_is_not_counted_as_a_searchless_guess(monkeypatch):
               effort="low", tools=("WebSearch",), meta=meta)
         assert meta.get("searchless", 0) == expect, (company, meta)
         assert meta["calls"] == 1, "the call is still counted either way"
+
+
+# --- company-intel, 2026-08-28 wave 2: the replacement alarm was blind the OTHER way ---
+
+
+def _stamp_env(tmp_path, monkeypatch, export_records):
+    """A real `research_firmographics.main()` against scratch everything. No network, no
+    `claude`: the point is the code path that decides whether the stage gets stamped."""
+    import research_firmographics as R
+    from pipeline import stages
+    export = tmp_path / "firmographics.json"
+    export.write_text(json.dumps(export_records), encoding="utf-8")
+    monkeypatch.setattr(F, "SHARED_EXPORT", str(export))
+    monkeypatch.setattr(R, "SHARED_EXPORT", str(export))
+    monkeypatch.setattr(R, "EXPORT", str(tmp_path / "local.json"))
+    monkeypatch.setattr(R, "POC", str(tmp_path / "nope.json"))
+    monkeypatch.setattr(F, "SHARED_FAILURES", str(tmp_path / "failed.json"))
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    monkeypatch.setattr(R, "SeenStore", lambda *a, **k: store.SeenStore(str(tmp_path / "t.db")))
+    monkeypatch.setattr(R, "fetch_cloud_db", lambda: None)
+    monkeypatch.setattr(R, "HERE", str(tmp_path))   # else the board query reads the REAL store
+    monkeypatch.setattr(R, "_stamp_ok", lambda: None)
+    monkeypatch.setattr(R, "load_companies",
+                        lambda **kw: [{"company_name": n, "ats_platform": "greenhouse"}
+                                      for n in export_records])
+    monkeypatch.setattr(R, "research_company",
+                        lambda *a, **k: pytest.fail("no run in this test should spend"))
+    return R, stages
+
+
+def test_a_healthy_cron_with_nothing_to_do_still_stamps_its_stage(tmp_path, monkeypatch):
+    """The replacement alarm was blind in the OPPOSITE direction, and it was the same
+    mistake this lane had rejected two commits earlier.
+
+    `main()` returns early on `if a.dry_run or not todo:`, and the stamp sat BELOW that
+    return — so a healthy 10:00 cron with an empty queue never stamped, and the next
+    morning's mail said `firmo never ran` about a run that had done its job. It was live:
+    after the 08-28 drain every remaining backlog name was strike-gated, so the 08-29 run
+    would have had `0 to do`. The comment on those very lines already made the argument for
+    the Desktop heartbeat ("a clean zero-todo run IS healthy") and the cloud stamp did not
+    get it.
+
+    Behavioural on purpose. The guard this replaces asserted `'stages.stamp("firmo"' in
+    src`, which was true the whole time it was broken."""
+    R, stages = _stamp_env(tmp_path, monkeypatch, {"Wix": REC})
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py"])
+    R.main()
+    assert stages.age_days("firmo") == 0, "a healthy zero-todo run did not stamp"
+    assert stages.alarms("firmo", 2) == [], "the mail would cry about a run that worked"
+
+
+def test_a_dry_run_never_stamps(tmp_path, monkeypatch):
+    """`--dry-run` reports; it does not do the work, so it must not claim the stage."""
+    R, stages = _stamp_env(tmp_path, monkeypatch, {"Wix": REC})
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--dry-run"])
+    R.main()
+    assert stages.age_days("firmo") is None, "a dry run stamped the stage"
+
+
+def test_the_cron_alarm_tolerates_one_dropped_slot_but_not_two():
+    """0 is impossible (the digest runs at 05:00, the cron at 10:00, so yesterday's stamp is
+    the freshest any morning can have). 1 would alarm on a SINGLE dropped slot, and GitHub
+    dropping one is routine here -- `infra` measured 4 of 5 crons dropped on 2026-08-27.
+    Two in a row is not routine, and is the shape that let the backlog go 74 -> 139."""
+    import inspect
+    run = inspect.getsource(__import__("pipeline.run", fromlist=["run"]))
+    block = run[run.index("_stage_alarms = ("):run.index("for _line in _stage_alarms:")]
+    assert 'stages.alarms("firmo", 2)' in block, "the cron alarm's tolerance moved"
+
+
+def test_a_run_that_fails_every_name_is_not_a_healthy_stage(tmp_path, monkeypatch):
+    """The mass-failure guard records no strikes -- correctly, it is evidence about the
+    infrastructure and not about names -- but a cron that runs daily and fails everything
+    was then indistinguishable from a cron that ran daily and had nothing to do."""
+    import inspect
+    src = inspect.getsource(__import__("research_firmographics").main)
+    assert '"mass-failure" if mass_failure else ""' in src
+    assert '"infra-abort" if infra_streak >= 3 else' in src
+    from pipeline import stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "s.json"))
+    stages.stamp("firmo", researched=0, failed=9, records=1, alarm="mass-failure")
+    assert stages.alarms("firmo", 2) == ["firmo mass-failure"]
+
+
+def test_a_partly_readable_export_is_not_described_as_sqlite_only():
+    """The `partial` line said `cards render from sqlite only (1128 records)` while 1,128 was
+    1 sqlite record PLUS the 1,127 export records that read fine -- its own number disproved
+    it. And `; file left untouched`, the reassurance the refusal exists to give, was appended
+    only for `corrupt`."""
+    r = CI._report()
+    r.update({"export_status": "partial", "store_records": 1128, "export_records": 0})
+    line = CI.audit_lines(r)[0][0]
+    assert "sqlite ∪ what could be read" in line and "sqlite only" not in line
+    assert "file left untouched" in line
+    r["export_status"] = "corrupt"
+    line = CI.audit_lines(r)[0][0]
+    assert "sqlite only" in line and "file left untouched" in line
