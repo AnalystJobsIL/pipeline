@@ -1055,6 +1055,33 @@ False for `Peak Innovation` (it is `pickpeak.co`, advertising FIZE Medical's rol
 POSTING**, judging its own evidence: the JD naming a different company as the workplace, or an
 agency contact address. The name test screens; the posting test decides.
 
+### Two rules about verdicts, added 2026-08-28 at the operator's instruction
+
+**1. No company is recorded as having no Israeli roles, or as unreachable, unless it has been
+HUNTED and an LLM has read what was found and said so in words.** "Empty" in this registry has
+been the output of a tool: 211 active `scrape` rows come back `why:"empty"` at HTTP 200 and
+**not one** of them recorded `found > 0`; Linnovate's page visibly lists roles and the scraper
+extracts none. The four conditions and the tool that enforces them are `confirm_zero.py`, and
+the one that does the work is the fourth — an LLM read caught `BlueSnap` ("now part of
+Payroc, all openings are on the Payroc careers page") on a page that names BlueSnap correctly,
+so every mechanical test said "ours". `apply_proposals` complies differently and more simply:
+it writes rows that assert PRESENCE and nothing else, and a name it cannot activate gets **no
+row at all** rather than a park saying "no listing found". Nothing is lost — the name stays in
+`research_companies.json`, which `listing_hunt.queue_targets()` works for 60 minutes nightly.
+
+**2. `unresolved` is not an end state, anywhere, including in the cloud.** A board that
+answers with ZERO postings is a row with a WRONG ADDRESS, not a company with no roles: Deel's
+ashby board returns `{"jobs":[]}`, AI21 Labs' comeet `[]`, Run:ai's smartrecruiters
+`totalFound:0`, Outbrain's greenhouse `meta.total 0` — and all four are hiring. Leaving such a
+row ACTIVE is the worst of both: it produces nothing, and **no re-check pool can reach it**,
+because every pool selector in this lane requires `r[4] == "false"`. So `confirm_zero.ROUTING`
+exists only inside a run and is never written. On the way out the row is either given a
+verdict it earned, or parked with `needs re-resolution` — a token in `verdicts.TOKENS` and in
+`listing_hunt.HUNT_POOL`, so the 19:00 cron hunts it every night until it has a real address.
+36 rows took that path on 2026-08-28 and all 36 are selected by `in_hunt_pool`; the assertion
+that they are is made **before** the write, because the pool token sits at the end of the
+segment and the 220-char cap truncates a tail.
+
 **The dark rows carry a failure MODE as well as a verdict**, written by `triage_dark` as
 `dark-triage <date>: <mode>` and consumed by the routing in that tool's last line. The eight
 modes are `triage_dark.MODES` — **that object, never a copy**. Counted 2026-08-27:
@@ -1509,6 +1536,38 @@ carried** — it said 29/21 and 49, measured against a draft that three adversar
 changed: the probe now reads the board's human page before it accepts (which is what keeps it
 free — see below), and the site rung's two identity tests were both broken and both fixed. A
 measurement of code that no longer exists is not a measurement of this rung.
+
+**Two rungs were added on 2026-08-28, and one of them the ladder could never have reached.**
+
+| rung | where | what it does | measured 2026-08-28 |
+|---|---|---|---|
+| `comeet-token` | `drain_queue.py` | reads the API token out of the hosted page `comeet.com/jobs/<slug>/<uid>` in plain HTML, so a Comeet board resolves **free and with no browser** | 24 of the 36 ATS proposals over the whole queue |
+| board-title identity | `apply_proposals.py` | asks the board page whose it is, and believes it over the gate | 11 kept, 1 refused, and the 1 was another employer's |
+
+`probe_ats._PLATFORMS` has **no comeet entry**, so the slug probe cannot find a Comeet board
+however many slugs it tries — and Comeet is the second-largest platform in the registry. The
+hosted page carries `token":"<30-40 hex>"`, verified live on `birdaero/97.006` (19 postings)
+and `xsightlabs/46.00C` (15) through the real fetcher; `comeet_resolve` needs Playwright and a
+previous session found no `comeetvar` on the JS shell at all. The API also returns
+`company_name` — an identity fact **the board itself asserts**, which is the only independent
+signal on a path where `board_vouches` returns `None` by construction.
+
+**For a slug synthesised FROM the name, the identity gate is a no-op.** Proven live on
+`Agency` → greenhouse `agency`:
+
+```
+board_vouches("Agency", "agency", …)            -> True
+activation_verdict("Agency", …, 1)              -> "ok"    (the page is never read)
+page_names_company("Agency", <the board's page>) -> True
+```
+
+…and that board's own `<title>` is **"Jobs at Meridial"** — 821 postings, someone else's.
+`docs/BACKLOG.md` 317 says near-equality on a name-derived token carries zero bits; this is
+that, plus the page test agreeing because the word "agency" appears in Meridial's text. Two
+tests, one shared assumption, and a one-word generic name defeats both. So `apply_proposals`
+reads the board page's `<title>`, which the tenant wrote and we did not derive, and requires
+it to contain (or be contained by) the company name — containment rather than equality,
+because equality refuses `Harnessinc` whose board says "Harness".
 
 **The free rung is free because it is MADE free, not because it happens to be.**
 `_row_for_ats` calls `activation_ok` with no html, so `board_vouches` returns `None`, the gate

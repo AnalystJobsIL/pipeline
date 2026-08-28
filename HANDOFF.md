@@ -50,6 +50,8 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-08-28 | roles | `ledger N = store N`; `purged 7` once; `reopened` NOT ~70 | — | |
 | 2026-08-29 | registry | the 08:00 auto-expand log ends `bound=batch`, `walked N of N`, `probe-noboard` among its refusals | — | not yet due — re-dated by `docs` at 07:57Z; `auto-expand.yml` is `0 8,20` and the 08:00 slot had not fired (33140809914 at 04:05Z is 08-27's delayed 20:00) |
 | 2026-08-29 | infra | the 02:28 `bd_rescue` pass reports ~43 NEW names, **≤215 unlock calls** (`registry` widened `in_retry_pool` 4 → 47 for `320`); too costly ⇒ narrow the paid half | — | not yet due — re-dated by `docs`: the 02:30 `retry-unreachable` slot did not fire on 08-28; its last run 33074336185 is 08-27T12:57Z, so there is no pass to read (BACKLOG 358) |
+| 2026-08-29 | registry | `publish.scanned` **>=1,000** (was 969) and the board carries Mixtiles *VP Data*, RealPlay, lab42, Alma Lasers; and `grep -c 'needs re-resolution' companies.csv` falls below **36** — still 36 on 08-30 means the hunt owns the routed rows but does not act (`375`) | | |
+| 2026-09-27 | registry | of rows stamped `zero-confirm 2026-08-28: confirmed`, **<=5%** have `health_baseline > 0`; above that, strip that run's verdicts | | |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due (`audit-coverage.yml` is `0 4 * * 0`) |
 | 2026-08-29 | infra | **the relay's first end-to-end proof.** (a) the 05:00 digest's `notify_relay` step logs `relay notified: <sha256>` — any other line (`not configured`, `not dated`, a `::warning::`) IS the answer and names why. (b) `gh run list -R AnalystJobsIL/inbox` shows a **`push`** run, success, seconds after that; a `schedule`-only row means the event path did not fire. (c) a NEW issue dated 2026-08-29 there. a+b+c ⇒ PASS; a+b without c ⇒ `gh issue create` under a push event is the one untested link (2026-08-28 had no delivering digest) | | not yet due |
 | 2026-09-11 | infra | re-measure the cache-shrink threshold from a fortnight of `cloud_state/persist_log.jsonl`; it is provisional on n=3 (ARCHITECTURE §5d) | | not yet due |
@@ -196,6 +198,7 @@ One line per session, in the shape at the top of this file. The long version is 
   Folded to a pointer on 2026-08-28 by `classifier`, as the 2026-08-24 batch was on
   2026-08-27 and for the same reason (`docs/BACKLOG.md` 338): no lane could fit an entry.
   `docs/sessions/2026-08-25-*.md`.
+- **2026-08-28 `registry`** — a name-derived slug made the identity gate a no-op; four ACTIVE rows held other companies' boards. 71 rows written, 33 cached, **5 analyst roles on the board**; 59 zero rows audited, none recorded empty without an LLM read. **NOT finished:** 188 scrape rows, 374-377. Record: `docs/sessions/2026-08-28-registry.md`.
 - **2026-08-26, five lanes** — `ats-fetch` (×2), `scraper` (×2), `discovery`,
   `company-intel`, `jd-text`. Folded to a pointer on 2026-08-28 by `docs`, as the
   2026-08-24 batch was on 08-27 and the 2026-08-25 batch on 08-28, and for the same

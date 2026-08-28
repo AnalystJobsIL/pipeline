@@ -4052,7 +4052,14 @@ def test_native_url_is_derived_from_the_public_url_alone():
         assert got and got[0] == "workday", r["company_name"]
         assert got[1][0] == f"https://{host}/wday/cxs/{tenant}/{site}/job/Israel-Tel-Aviv/Data-Analyst_JR-1"
         n += 1
-    assert n >= 60
+    # A NON-VACUITY floor -- it exists so the loop above cannot silently iterate over nothing,
+    # not as a claim about how many Workday rows the registry should hold. Lowered 60 -> 50 on
+    # 2026-08-28 by `registry`: the count fell 62 -> 57 because three ACTIVE Workday rows were
+    # proven to be OTHER COMPANIES' boards and parked -- `Fast Simon` was pointed at
+    # `simon.wd1.myworkdayjobs.com`, which is Simon Property Group, a US shopping-mall REIT --
+    # and more of that class is expected as `confirm_zero` works the pool. The registry
+    # getting smaller by shedding impostors must not read as a broken test.
+    assert n >= 50, "the Workday round-trip loop covered only %d rows" % n
     assert native_url("https://x.wd5.myworkdayjobs.com/job") is None            # no site segment
     assert native_url("https://jobs.smartrecruiters.com/Wix/744000012345-data-analyst") == \
         ("smartrecruiters", ["https://api.smartrecruiters.com/v1/companies/Wix/postings/744000012345"])

@@ -119,6 +119,41 @@ def _own_domain(u):
     return registrable(host)
 
 
+def _name_kin(name, allnames):
+    """Existing row names this one CONTAINS or is contained by. A HOLD, never a refusal.
+
+    The six exact keys all miss the commonest real twin, and the reason is structural: they
+    key on an ADDRESS, and a native-ATS row has no company domain to key on. Measured on
+    2026-08-28 over the 49 scrape candidates:
+
+        monday.com AI engineering -> monday.com/careers   vs ACTIVE `monday.com` on ashby
+        REAL                      -> real.dev/careers     vs ACTIVE `REAL DEV INC` on workable
+        COMMIT Offshore           -> comm-it.com          vs ACTIVE `CommIT` on comeet
+
+    Three second ACTIVE rows for one employer -- the `alias-of` shape section 2 calls
+    terminal, every role republished under two names -- and `check_invariants` check B cannot
+    see any of them, because it compares names for EQUALITY and these differ.
+
+    It cannot be a gate, because containment is not identity: `REAL` is also contained in the
+    unrelated `RealPlay`, and `Blink` in `Blink Ops` which may or may not be the same firm.
+    So it prints the colliding rows and stops, and `--allow-domain-collision "<name>"`
+    releases one after a human has read the pair. Twenty written and proven beats a twin.
+
+    Minimum length 4 on the shorter side: below that, containment matches most of the
+    registry (`Hud`, `AI`, `REE`), and a HOLD that fires on everything is a HOLD nobody
+    reads."""
+    a = _norm(name)
+    if len(a) < 4:
+        return set()
+    out = set()
+    for other_norm, other_raw in allnames:
+        if len(other_norm) < 4 or other_norm == a:
+            continue
+        if a in other_norm or other_norm in a:
+            out.add(other_raw)
+    return out
+
+
 def _keys(rows):
     """Every identity a row already claims. LOWER-CASED ON BOTH SIDES, everywhere.
 
@@ -138,13 +173,14 @@ def _keys(rows):
                  other). A HOLD, released per name by --allow-domain-collision.
     """
     k = {"names": set(), "boards": set(), "urls": set(), "hostpath": set(),
-         "comeet": set(), "domains": {}, "terminal": set()}
+         "comeet": set(), "domains": {}, "terminal": set(), "allnames": set()}
     for r in rows:
         if len(r) < 6:
             continue
         nm = (r[0] or "").strip()
         k["names"].add(nm.lower())
         k["names"].add(_norm_company(nm))
+        k["allnames"].add((_norm(nm), nm))
         if (r[1] or "").strip() and (r[2] or "").strip():
             k["boards"].add(((r[1] or "").strip().lower(), (r[2] or "").strip().lower()))
         for u in (r[3], r[2]):
@@ -401,7 +437,8 @@ def main(argv=None):
         if batch_keys is None:
             batch_keys = k
         else:                              # the live file plus what this run already added
-            for key in ("names", "boards", "urls", "hostpath", "comeet", "terminal"):
+            for key in ("names", "boards", "urls", "hostpath", "comeet", "terminal",
+                        "allnames"):
                 k[key] |= batch_keys[key]
             for d, ns in batch_keys["domains"].items():
                 k["domains"].setdefault(d, set()).update(ns)
@@ -419,8 +456,14 @@ def main(argv=None):
             why[name] = dup; stats["skipped"] += 1; continue
         dom = _own_domain(p.get("api_url") or "")
         clash = sorted(k["domains"].get(dom, set())) if dom else []
-        if clash and name.lower() not in allow:
-            why[name] = "HOLD domain=%s shared with %s" % (dom, ", ".join(clash[:3]))
+        kin = _name_kin(name, k["allnames"])
+        if (clash or kin) and name.lower() not in allow:
+            bits = []
+            if clash:
+                bits.append("domain=%s shared with %s" % (dom, ", ".join(clash[:3])))
+            if kin:
+                bits.append("name overlaps %s" % ", ".join(sorted(kin)[:3]))
+            why[name] = "HOLD " + "; ".join(bits)
             stats["held"] += 1
             continue
 
@@ -458,6 +501,7 @@ def main(argv=None):
         stats["active"] += 1
         for key, val in (("names", name.lower()), ("names", _norm_company(name))):
             batch_keys[key].add(val)
+        batch_keys["allnames"].add((_norm(name), name))
         if row[1] and row[2]:
             batch_keys["boards"].add((row[1].lower(), row[2].lower()))
         if (row[3] or "").startswith("http"):

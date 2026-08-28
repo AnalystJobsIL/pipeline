@@ -16,9 +16,9 @@ The `runs in` and `imported by` columns are **computed from the code**, not type
 |---|---|---|
 | `scheduled` | a workflow invokes it | 29 |
 | `library` | no workflow runs it; live code imports it | 9 |
-| `operator` | a human or agent runs it; nothing in CI does | 10 |
+| `operator` | a human or agent runs it; nothing in CI does | 11 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
-| | **total root modules** | **73** |
+| | **total root modules** | **74** |
 
 `pipeline/` is listed at the end. Lane ownership for all of these is in `docs/AGENT_BRIEF.md`.
 
@@ -73,7 +73,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `probe_ats.py` | `auto_expand.py`, `drain_queue.py`, `ingest_research.py` +2 more | guessable-slug probing. **Not deletable**: `auto_expand` imports `probe_bounded`/`bounded_http` for its free rung, `ingest_research` imports `slug_variants` |
 | `resolve_deep.py` | `auto_expand.py`, `bd_rescue.py`, `recheck_suspects.py` +6 more | deterministic resolver tier (recognizable ATS URLs, iframes) |
 | `resolve_llm.py` | `auto_expand.py`, `deep_validate.py`, `listing_hunt.py` +1 more | the LLM resolution tier: evidence bundle -> one `claude -p` proposal -> verified through the real fetcher |
-| `scrape_universal.py` | `bd_rescue.py`, `check_invariants.py`, `crack_walled.py` +10 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
+| `scrape_universal.py` | `bd_rescue.py`, `check_invariants.py`, `confirm_zero.py` +11 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
 
 ## Operator tools - a human or an agent runs these on demand
 
@@ -84,6 +84,7 @@ Live and documented, and nothing in CI runs them - `docs/check_docs.py` fails if
 | `apply_proposals.py` | applies `drain_queue`'s proposals to companies.csv in reviewed batches, dry-run by default, through `activation_verdict`. Six de-dup keys lower-cased on both sides (the sixth is the Comeet uid read from BOTH url shapes -- the twin no string key sees). Idempotent by holding no run state, which is also what makes it survive a rebase that drops its append |
 | `bd_employees.py` | LinkedIn employee-count fill via the Web Unlocker, 1 credit/page. Hand-run only - the Windows chain that drove it is disabled and no workflow runs it |
 | `cache_new_rows.py` | superseded shim: delegates to `refresh_scrape_cache.py --only-missing` (docs/BACKLOG.md 87 retires it) |
+| `confirm_zero.py` | audits every ACTIVE row whose all-time high is 0 and refuses to let "no Israeli roles" be a tool's output. A native row is judged by WALKING its board (an `israel_scoped` fetcher asks for a word, which is a question, not a census -- 24 Workday boards, 11,000+ postings, only Broadcom carries Israel roles) and a scrape row by a local Playwright render; then an LLM reads what was found and answers in words, including whether the page STATES it has no openings or merely fails to show any. Only the first can become `confirmed`. **Unresolved is not an end state**: a board answering with nothing is a wrong ADDRESS, so the row is parked `needs re-resolution` into listing_hunt's nightly pool rather than stamped. Complements validate_empty (parked rows, no browser, no LLM); never activates |
 | `digest_watchdog.py` | the ONLY tripwire that does not run on GitHub: reads the public `cloud_state/last_delivered.json` + `digests/latest.md` over plain HTTPS (no credential, no `gh`) and writes a desktop alert when today's digest never reached the mail. Built 2026-08-27, when 9 scheduled dispatches were due across the two repos and 1 fired, so every GitHub-hosted watchdog would have produced nothing. Reads and alerts only -- it cannot dispatch, because a workflow_dispatch from the operator's machine puts their account on a public run page (CLAUDE.local.md) |
 | `drain_queue.py` | walks the WHOLE intake queue with the free HTTP rungs and emits a PROPOSAL FILE; it cannot write companies.csv, and that is structural rather than a flag -- no csv writer, no registry path, no `--apply`, asserted over the AST by `test_the_queue_drain_cannot_write_the_registry`. Exists because `auto_expand` clears ~50 names/day against a queue that grows ~150/day, and the cloud limit is the 330-minute job timeout rather than cost. Carries the comeet-token rung the shipped ladder has no way to reach: `probe_ats._PLATFORMS` has no comeet entry |
 | `fill_employees_llm.py` | re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Hand-run only - the Windows chain that drove it is disabled and no workflow runs it |

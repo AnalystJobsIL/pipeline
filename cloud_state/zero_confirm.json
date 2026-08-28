@@ -1,0 +1,1170 @@
+{
+ "AI21 Labs": {
+  "artifact": "ai21-labs-728139",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "comeet",
+   "row_url": "https://www.comeet.com/careers-api/2.0/company/E6.001/positions?token=6E12946DC230276E13DE93708294637083708",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Analog Devices": {
+  "artifact": "analog-devices-ea68e4",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 942,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://analogdevices.wd1.myworkdayjobs.com/wday/cxs/analogdevices/External/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Analog Devices",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 942,
+   "vacancy_statement": "shows-none",
+   "why": "The Workday careers board for Analog Devices lists hundreds of open positions across many countries (US, Philippines, Ireland, Turkey, India, Thailand, Italy, France, UK, Germany, Spain), but none of the listed postings in the provided text are located in Israel, nor do any titles reference Israel offices."
+  },
+  "verdict": "confirmed"
+ },
+ "Any.do": {
+  "artifact": "any-do-8085a8",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "breezy",
+   "row_url": "https://any-do.breezy.hr/json",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Aporia": {
+  "artifact": "aporia-c04d3a",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/aporia?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Argus Cyber Security": {
+  "artifact": "argus-cyber-security-d2bec7",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "comeet",
+   "row_url": "https://www.comeet.com/careers-api/2.0/company/A7.004/positions?token=7A42DD81E907A444C444C403D203D200",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "At-Bay": {
+  "artifact": "at-bay-606b3a",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "greenhouse",
+   "row_url": "https://boards-api.greenhouse.io/v1/boards/atbay/jobs",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Barclays": {
+  "artifact": "barclays-cf2916",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 976,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://barclays.wd3.myworkdayjobs.com/wday/cxs/barclays/External_Career_Site_Barclays/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Barclays",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "Workday career site (self-hosted job listings, no external links needed)",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 976,
+   "vacancy_statement": "lists-roles",
+   "why": "This is Barclays' official Workday-hosted careers site listing 976 open positions worldwide with titles and locations. Scanning the visible listing (a large sample of the 976), no locations in Israel appear (locations shown include UK, US, India, Hong Kong, Czechia, France, Monaco, Mexico, Canada, etc.). No Israel-based roles were found in the provided text."
+  },
+  "verdict": "confirmed"
+ },
+ "Belkin Vision": {
+  "artifact": "belkin-vision-627b71",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 45,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://belkin.wd5.myworkdayjobs.com/wday/cxs/belkin/belkin_careers/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": false,
+   "employer_named": "Belkin (Belkin International)",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - self-hosted Workday job board",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 25,
+   "vacancy_statement": "lists-roles",
+   "why": "This Workday job board lists openings for Belkin International (consumer electronics accessories, e.g. El Segundo, Shenzhen, Hemel Hempstead locations), not \"Belkin Vision\" (an Israeli ophthalmic/medical device company). These are different companies sharing a similar name. No Israel-based roles are listed, and the employer does not match the company we're asked about."
+  },
+  "verdict": "wrong-url"
+ },
+ "Bristol Myers Squibb": {
+  "artifact": "bristol-myers-squibb-53fc15",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 699,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://bristolmyerssquibb.wd5.myworkdayjobs.com/wday/cxs/bristolmyerssquibb/BMS/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Bristol Myers Squibb",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - postings are listed directly on the Workday job board",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 699,
+   "vacancy_statement": "shows-none",
+   "why": "The page is a Workday careers board for Bristol Myers Squibb listing ~699 open positions across many countries (US, Ireland, India, China, UK, Netherlands, Japan, Poland, Colombia, Saudi Arabia, etc.). None of the visible listed postings show a location in Israel, so no Israel-based roles were found in the provided text."
+  },
+  "verdict": "confirmed"
+ },
+ "Broadcom": {
+  "artifact": "broadcom-6fa468",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 2,
+   "api_il_titles": [
+    "DFT Engineer",
+    "R&D Engineer Hardware"
+   ],
+   "api_jobs": 384,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career/jobs"
+  },
+  "llm": null,
+  "verdict": "zero-refuted"
+ },
+ "Capital One": {
+  "artifact": "capital-one-dd392b",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 1200,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://capitalone.wd12.myworkdayjobs.com/wday/cxs/capitalone/Capital_One/jobs",
+   "why": "board walk truncated at 1200 postings"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Chaos Labs": {
+  "artifact": "chaos-labs-6e4f51",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "lever",
+   "row_url": "https://api.lever.co/v0/postings/chaoslabs?mode=json",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Chargeflow": {
+  "artifact": "chargeflow-da667b",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/chargeflow-1?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Ciena": {
+  "artifact": "ciena-d0ab11",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 160,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://ciena.wd5.myworkdayjobs.com/wday/cxs/ciena/Careers/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Ciena",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - native Workday job board listing postings directly",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 140,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is Ciena's Workday careers board listing numerous open positions across many countries (Canada, US, UK, India, Thailand, Germany, etc.), but none of the listed job titles/locations reference Israel."
+  },
+  "verdict": "confirmed"
+ },
+ "Citrix (Cloud Software Group)": {
+  "artifact": "citrix-cloud-software-group-dc8228",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 73,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://tibco.wd5.myworkdayjobs.com/wday/cxs/tibco/Cloud_Software_Group/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Cloud Software Group / Citrix",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "Workday careers platform (self-hosted listing)",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 53,
+   "vacancy_statement": "lists-roles",
+   "why": "Page is a Workday job board listing open positions for Cloud Software Group/Citrix. It lists numerous roles with locations across US, UK, India, Germany, Sweden, Ireland, Japan etc., but no location or title mentions Israel or Hebrew text."
+  },
+  "verdict": "confirmed"
+ },
+ "Decart": {
+  "artifact": "decart-f4e164",
+  "date": "2026-08-28",
+  "evidence": {
+   "cond1": "api-error:HttpError: HTTP 404 for https://api.ashb",
+   "path": "api",
+   "platform": "ashby",
+   "row_url": "https://api.ashbyhq.com/posting-api/job-board/decart-ai"
+  },
+  "llm": null,
+  "verdict": "api-error:HttpError: HTTP 404 for https://api.ashb"
+ },
+ "Deel": {
+  "artifact": "deel-0f244b",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "ashby",
+   "row_url": "https://api.ashbyhq.com/posting-api/job-board/Deel",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Delasport": {
+  "artifact": "delasport-460bf3",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "bamboohr",
+   "row_url": "https://delasport.bamboohr.com/careers/list",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Dell Technologies": {
+  "artifact": "dell-technologies-fdff10",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://dell.wd1.myworkdayjobs.com/wday/cxs/dell/External/jobs",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Diagnostic Robotics": {
+  "artifact": "diagnostic-robotics-23fff1",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/diagnostic-robotics?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "ECOncrete": {
+  "artifact": "econcrete-450706",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/econcrete?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "EquityBee": {
+  "artifact": "equitybee-054e9c",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/equitybee?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Explorium": {
+  "artifact": "explorium-6c9f57",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "comeet",
+   "row_url": "https://www.comeet.com/careers-api/2.0/company/B4.00E/positions?token=4BE17B61C744BE1C7497C4BE12F817B612F8",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "EyeClick": {
+  "artifact": "eyeclick-943d68",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/eyeclick?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Fast Simon": {
+  "artifact": "fast-simon-780611",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 194,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://simon.wd1.myworkdayjobs.com/wday/cxs/simon/Simon/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": false,
+   "employer_named": "Simon Property Group (Simon)",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "simon.wd1.myworkdayjobs.com (Workday, Simon Property Group)",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 174,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is a Workday job board for Simon Property Group (mall/retail real estate company), listing ~174 US-based roles (maintenance workers, operations directors, marketing, leasing, Starbucks baristas at mall locations, etc.). It has no connection to Fast Simon (an e-commerce search/personalization tech company) and lists no Israel-based roles."
+  },
+  "verdict": "wrong-url"
+ },
+ "Foretellix": {
+  "artifact": "foretellix-462540",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "comeet",
+   "row_url": "https://www.comeet.com/careers-api/2.0/company/84.007/positions?token=48716A316A31FB101FB116A3D951FB11B2A",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Frontegg": {
+  "artifact": "frontegg-7bc2b0",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "comeet",
+   "row_url": "https://www.comeet.com/careers-api/2.0/company/77.009/positions?token=7792CD6166B3BC8344F4341166B3BC83BC83BC8",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Helios": {
+  "artifact": "helios-323fb3",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 2,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://helios.wd501.myworkdayjobs.com/wday/cxs/helios/External/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Helios",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - Workday API job listing page itself",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 2,
+   "vacancy_statement": "lists-roles",
+   "why": "The Workday API for Helios returned a complete list of 2 open postings, both US-Remote (Horizons Program - HCM and Financials). No Israel-based roles are listed on this page."
+  },
+  "verdict": "confirmed"
+ },
+ "Hunters": {
+  "artifact": "hunters-c88478",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "comeet",
+   "row_url": "https://www.comeet.co/careers-api/2.0/company/67.007/positions?token=7672C6A163533D11D9C429F33D10250333D1",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Intelligems": {
+  "artifact": "intelligems-0599ed",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/intelligems?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Leadspace": {
+  "artifact": "leadspace-1e78f1",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "lever",
+   "row_url": "https://api.lever.co/v0/postings/leadspace?mode=json",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Outbrain": {
+  "artifact": "outbrain-a13366",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "greenhouse",
+   "row_url": "https://boards-api.greenhouse.io/v1/boards/outbraininc/jobs",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Pillar Security": {
+  "artifact": "pillar-security-99443f",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "lever",
+   "row_url": "https://api.lever.co/v0/postings/pillar?mode=json",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Proofpoint": {
+  "artifact": "proofpoint-bc4f8a",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 154,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://proofpoint.wd5.myworkdayjobs.com/wday/cxs/proofpoint/proofpointcareers/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Proofpoint",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - listings are shown directly on the Workday board",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 134,
+   "vacancy_statement": "lists-roles",
+   "why": "This is Proofpoint's Workday careers board listing numerous open positions worldwide (US, Argentina, Ireland, India, UK, Canada, Germany, France, etc.). No location or title in the list references Israel, so no Israel-based roles were found among the listed postings."
+  },
+  "verdict": "confirmed"
+ },
+ "Rhino Federated Computing": {
+  "artifact": "rhino-federated-computing-26d4d5",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "greenhouse",
+   "row_url": "https://boards-api.greenhouse.io/v1/boards/RhinoFederatedComputing/jobs",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Run:ai": {
+  "artifact": "run-ai-747eb7",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "smartrecruiters",
+   "row_url": "https://api.smartrecruiters.com/v1/companies/RunAI1/postings",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "SIGA OT Solutions": {
+  "artifact": "siga-ot-solutions-5cc79b",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "breezy",
+   "row_url": "https://siga-technologies-inc.breezy.hr/json",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Scopio Labs": {
+  "artifact": "scopio-labs-0d7460",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "comeet",
+   "row_url": "https://www.comeet.com/careers-api/2.0/company/87.00C/positions?token=78C2D481E30025BC43EC025BC43EC78C",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Sightfull": {
+  "artifact": "sightfull-360b81",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/sightfull?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Sivo": {
+  "artifact": "sivo-b5542d",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/sivo-insights?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Snyk": {
+  "artifact": "snyk-a1c1ee",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "ashby",
+   "row_url": "https://api.ashbyhq.com/posting-api/job-board/snyk",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Sony (Sony Semiconductor Israel)": {
+  "artifact": "sony-sony-semiconductor-israel-137781",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 125,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://sonyglobal.wd1.myworkdayjobs.com/wday/cxs/sonyglobal/SonyGlobalCareers/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Sony (Sony Global Careers)",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 105,
+   "vacancy_statement": "shows-none",
+   "why": "The page is Sony's global Workday careers board listing ~105 open positions across many countries (US, UK, China, Hungary, Singapore, Argentina, Colombia, etc.), but none of the listed postings are located in Israel or reference Sony Semiconductor Israel specifically. No Hebrew titles or Israel-based locations appear anywhere in the list, so while the board is a genuine job board for Sony globally, it shows zero open roles for Israel."
+  },
+  "verdict": "confirmed"
+ },
+ "Stryker": {
+  "artifact": "stryker-cf83bb",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 1186,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://stryker.wd1.myworkdayjobs.com/wday/cxs/stryker/StrykerCareers/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Stryker",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - native Workday listing",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 1186,
+   "vacancy_statement": "lists-roles",
+   "why": "Stryker's Workday careers board lists 1186 open positions worldwide with locations; no Israel-based roles appear in the provided data."
+  },
+  "verdict": "confirmed"
+ },
+ "Syte": {
+  "artifact": "syte-45bf2e",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/syte-corporation?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "T-Mobile": {
+  "artifact": "t-mobile-6d5526",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 1200,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://tmobile.wd1.myworkdayjobs.com/wday/cxs/tmobile/External/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "T-Mobile",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - postings listed directly on tmobile.wd1.myworkdayjobs.com Workday board",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 1200,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is T-Mobile's Workday careers board listing 1200 US-based open positions (retail, sales, engineering, etc.). All locations shown are in the United States; no Israel-based roles or Hebrew titles appear in the visible listing."
+  },
+  "verdict": "confirmed"
+ },
+ "Trullion": {
+  "artifact": "trullion-affcd6",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "comeet",
+   "row_url": "https://www.comeet.com/careers-api/2.0/company/07.000/positions?token=7002A00E003F002A007002A0002A002A00",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Trustmi": {
+  "artifact": "trustmi-7ee9a8",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/trustmi?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Valeo": {
+  "artifact": "valeo-e1b47b",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 1079,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://valeo.wd3.myworkdayjobs.com/wday/cxs/valeo/valeo_jobs/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Valeo",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - native Workday job board listing postings directly",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 1079,
+   "vacancy_statement": "lists-roles",
+   "why": "This is Valeo's official Workday careers board (valeo.wd3.myworkdayjobs.com) listing 1079 open positions across many global locations (Mexico, France, Poland, India, Germany, etc.). No Israel-based positions or locations appear anywhere in the listed roles."
+  },
+  "verdict": "confirmed"
+ },
+ "Vayyar": {
+  "artifact": "vayyar-e58ae6",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workable",
+   "row_url": "https://apply.workable.com/api/v1/widget/accounts/vayyar?details=true",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Veriti": {
+  "artifact": "veriti-b555a0",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 172,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://veritiv.wd5.myworkdayjobs.com/wday/cxs/veritiv/VeritivCareers/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": false,
+   "employer_named": "Veritiv",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "none - self-hosted Workday board",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 172,
+   "vacancy_statement": "lists-roles",
+   "why": "The page is a Workday careers board for Veritiv (a North American packaging/logistics distribution company), not Veriti (the cybersecurity firm). It lists 172 open US-based positions (sales, warehouse, driver, corporate roles), none located in Israel or otherwise indicating this is Veriti's careers page. This is a company name mismatch - the pipeline appears to have matched the wrong employer based on similar name."
+  },
+  "verdict": "wrong-url"
+ },
+ "Vidazoo": {
+  "artifact": "vidazoo-d5f064",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "greenhouse",
+   "row_url": "https://boards-api.greenhouse.io/v1/boards/vidazoo/jobs",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "XM Cyber": {
+  "artifact": "xm-cyber-812820",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 0,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "comeet",
+   "row_url": "https://www.comeet.com/careers-api/2.0/company/15.005/positions?token=51519692393A2A1454A2A145423930F3F",
+   "why": "board answered with 0 postings; nothing for the model to read"
+  },
+  "verdict": "routed-to-hunt"
+ },
+ "Zendesk": {
+  "artifact": "zendesk-5131d0",
+  "date": "2026-08-28",
+  "evidence": {
+   "api_il": 0,
+   "api_il_titles": [],
+   "api_jobs": 107,
+   "board_why": "native-api",
+   "cond1": "api-answered",
+   "cond2": "ours",
+   "cond2_how": "the board is the row's own endpoint",
+   "cond3": true,
+   "path": "api",
+   "platform": "workday",
+   "row_url": "https://zendesk.wd1.myworkdayjobs.com/wday/cxs/zendesk/zendesk/jobs"
+  },
+  "llm": {
+   "employer_is_the_asked_company": true,
+   "employer_named": "Zendesk",
+   "is_job_board": true,
+   "israel_titles": [],
+   "links_out_to": "Workday application system (zendesk.wd1.myworkdayjobs.com)",
+   "lists_roles": true,
+   "roles_israel": 0,
+   "roles_total": 87,
+   "vacancy_statement": "shows-none",
+   "why": "The page is Zendesk's Workday careers board listing numerous open positions across many countries (US, India, Singapore, UK, France, Mexico, Japan, Australia, Portugal, Poland, Germany, Denmark, South Korea, New Zealand, Spain, etc.). No location or role mentions Israel or Israeli cities; therefore zero roles are attributable to Israel. Note the page text itself flags an inconsistency (\"107 of 87 postings\") with duplicated entries, suggesting the raw listing repeats postings, but no Israel-specific listings appear anywhere in the data provided."
+  },
+  "verdict": "confirmed"
+ }
+}

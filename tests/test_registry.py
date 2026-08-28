@@ -6406,3 +6406,33 @@ def test_a_new_scrape_row_ships_nothing_until_it_is_cached():
         assert len(fetchers.fetch_scrape(row)) == 1, "a cached scrape row returned nothing"
     finally:
         fetchers._SCRAPE_CACHE = None
+
+
+def test_confirm_zero_never_leaves_a_row_unresolved():
+    """Operator rule, 2026-08-28: *unresolved is not an end state -- the cloud cannot call
+    something unresolved and move on.*
+
+    A board that answers with zero postings is a row with a WRONG ADDRESS, not a company with
+    no roles. Verified at the raw endpoints: Deel's ashby board returns `{"jobs":[]}`, AI21
+    Labs' comeet returns `[]`, Run:ai's smartrecruiters returns `totalFound:0`, Outbrain's
+    greenhouse returns `meta.total 0` -- and all four are demonstrably hiring. Leaving such a
+    row ACTIVE is the worst of both worlds: it produces nothing, and NO re-check pool can
+    reach it, because every pool selector in this lane requires `r[4] == "false"`.
+
+    So `confirm_zero.ROUTING` exists only inside a run. On the way out the row is either
+    given a verdict it earned, or PARKED with `needs re-resolution` -- a token in
+    `verdicts.TOKENS` and in `listing_hunt.HUNT_POOL`, so the 19:00 cron hunts it every night
+    until it has a real address. This asserts the routing token can never reach a note."""
+    import confirm_zero as Z
+    from pipeline.verdicts import TOKENS
+    import listing_hunt as L
+    src = open(Z.__file__, encoding="utf-8").read()
+    # the note the routing branch writes carries the OWNED token, not the routing word
+    seg = "zero-confirm 2026-08-28: board answered 0 postings; needs re-resolution"
+    assert "needs re-resolution" in TOKENS, "the park token lost its entry in verdicts.TOKENS"
+    assert L.HUNT_POOL.search(seg), (
+        "a routed row is not selected by listing_hunt -- it would be parked and forgotten")
+    # ...and the routing token is never formatted into a note anywhere in the module
+    assert 'ROUTING = "needs-resolve"' in src
+    for bad in ('% (MARKER, stamp, ROUTING', 'MARKER, stamp, "needs-resolve"'):
+        assert bad not in src, "the routing state is being written to a row: %s" % bad
