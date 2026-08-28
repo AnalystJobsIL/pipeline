@@ -1,38 +1,14 @@
 {
- "Explorium": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/B4.00E/positions",
-  "platform": "comeet",
-  "reason": "empty-board"
- },
- "AI21 Labs": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/E6.001/positions",
-  "platform": "comeet",
-  "reason": "empty-board"
- },
  "Lightricks": {
   "careers_url": "https://boards-api.greenhouse.io/v1/boards/lightricks/jobs",
   "platform": "greenhouse",
   "reason": "regressed-to-zero"
  },
- "XM Cyber": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/15.005/positions",
-  "platform": "comeet",
-  "reason": "empty-board"
- },
- "Outbrain": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/outbraininc/jobs",
-  "platform": "greenhouse",
-  "reason": "empty-board"
- },
- "At-Bay": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/atbay/jobs",
-  "platform": "greenhouse",
-  "reason": "empty-board"
- },
- "Snyk": {
-  "careers_url": "https://api.ashbyhq.com/posting-api/job-board/snyk",
-  "platform": "ashby",
-  "reason": "empty-board"
+ "Mobileye": {
+  "careers_url": "https://api.eu.lever.co/v0/postings/mobileye",
+  "platform": "lever",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://api.eu.lever.co/v0/postings/mobileye The rea"
  },
  "Bright Security": {
   "careers_url": "https://www.brightsec.com/careers/",
@@ -90,11 +66,6 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "ParaZero": {
-  "careers_url": "https://parazero.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "REE Automotive": {
   "careers_url": "https://ree.auto/careers/",
   "platform": "scrape",
@@ -105,31 +76,6 @@
   "platform": "scrape",
   "reason": "fetch-error",
   "error": "scrape: render:Error (1 night)"
- },
- "Leadspace": {
-  "careers_url": "https://api.lever.co/v0/postings/leadspace",
-  "platform": "lever",
-  "reason": "empty-board"
- },
- "Intelligems": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/intelligems",
-  "platform": "workable",
-  "reason": "empty-board"
- },
- "Aporia": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/aporia",
-  "platform": "workable",
-  "reason": "empty-board"
- },
- "Hunters": {
-  "careers_url": "https://www.comeet.co/careers-api/2.0/company/67.007/positions",
-  "platform": "comeet",
-  "reason": "empty-board"
- },
- "Trullion": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/07.000/positions",
-  "platform": "comeet",
-  "reason": "empty-board"
  },
  "Bridgewise": {
   "careers_url": "https://www.comeet.com/jobs/bridgewise/F9.009",
@@ -151,16 +97,6 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Vayyar": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/vayyar",
-  "platform": "workable",
-  "reason": "empty-board"
- },
- "Diagnostic Robotics": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/diagnostic-robotics",
-  "platform": "workable",
-  "reason": "empty-board"
- },
  "AWS": {
   "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
   "platform": "scrape",
@@ -177,25 +113,21 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Ciena": {
+  "careers_url": "https://ciena.wd5.myworkdayjobs.com/wday/cxs/ciena/Careers/jobs",
+  "platform": "workday",
+  "reason": "fetch-error",
+  "error": "HttpError: HTTP 502 for https://ciena.wd5.myworkdayjobs.com/wday/cxs/ciena/Career"
+ },
  "Microsoft (Xbox/Gaming)": {
   "careers_url": "https://jobs.careers.microsoft.com/global/en/search",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Deel": {
-  "careers_url": "https://api.ashbyhq.com/posting-api/job-board/Deel",
-  "platform": "ashby",
-  "reason": "empty-board"
- },
  "Workiz": {
   "careers_url": "https://www.workiz.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "Frontegg": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/77.009/positions",
-  "platform": "comeet",
-  "reason": "empty-board"
  },
  "nsKnox": {
   "careers_url": "https://nsknox.net/jobs/customer-service-professional-part-time-student-position/",
@@ -212,16 +144,6 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Sivo": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/sivo-insights",
-  "platform": "workable",
-  "reason": "empty-board"
- },
- "Sightec": {
-  "careers_url": "https://sightec.com/career/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Massivit 3D": {
   "careers_url": "https://www.massivit3d.com/career/",
   "platform": "scrape",
@@ -232,15 +154,17 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Scopio Labs": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/87.00C/positions",
-  "platform": "comeet",
-  "reason": "empty-board"
+ "Qualcomm": {
+  "careers_url": "https://careers.qualcomm.com/api/pcsx/search",
+  "platform": "eightfold",
+  "reason": "fetch-error",
+  "error": "HttpError: HTTP 429 for https://careers.qualcomm.com/api/pcsx/search TOO MANY REQ"
  },
- "Edwards Lifesciences": {
-  "careers_url": "https://www.edwards.com/careers/locations/israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
+ "PICO Get Personal": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/picoquantitativetrading/jobs",
+  "platform": "greenhouse",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/picoquant"
  },
  "GenCell": {
   "careers_url": "https://www.gencellprojects.com/jobs",
@@ -262,55 +186,25 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Any.do": {
-  "careers_url": "https://any-do.breezy.hr/json",
-  "platform": "breezy",
-  "reason": "empty-board"
- },
  "Comeet": {
   "careers_url": "https://www.comeet.com/careers",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Sightfull": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/sightfull",
-  "platform": "workable",
-  "reason": "empty-board"
  },
  "Komodor": {
   "careers_url": "https://komodor.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Run:ai": {
-  "careers_url": "https://api.smartrecruiters.com/v1/companies/RunAI1/postings",
-  "platform": "smartrecruiters",
-  "reason": "empty-board"
- },
  "Sternum": {
   "careers_url": "https://sternumiot.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "SIGA OT Solutions": {
-  "careers_url": "https://siga-technologies-inc.breezy.hr/json",
-  "platform": "breezy",
-  "reason": "empty-board"
- },
- "Chaos Labs": {
-  "careers_url": "https://api.lever.co/v0/postings/chaoslabs",
-  "platform": "lever",
-  "reason": "empty-board"
- },
  "Sunbit": {
   "careers_url": "https://www.sunbit.com/careers-il/#job-feed",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "Foretellix": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/84.007/positions",
-  "platform": "comeet",
-  "reason": "empty-board"
  },
  "Airspan Networks": {
   "careers_url": "https://airspan.com/careers/airspan-careers/",
@@ -333,11 +227,6 @@
   "reason": "fetch-error",
   "error": "HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: "
  },
- "EyeClick": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/eyeclick",
-  "platform": "workable",
-  "reason": "empty-board"
- },
  "Hailo": {
   "careers_url": "https://hailo.ai/company-overview/careers/",
   "platform": "scrape",
@@ -347,16 +236,6 @@
   "careers_url": "https://www.bigpanda.io/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "Trustmi": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/trustmi",
-  "platform": "workable",
-  "reason": "empty-board"
- },
- "Pillar Security": {
-  "careers_url": "https://api.lever.co/v0/postings/pillar",
-  "platform": "lever",
-  "reason": "empty-board"
  },
  "StarkWare": {
   "careers_url": "https://starkware.co/careers/",
@@ -368,11 +247,6 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "ECOncrete": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/econcrete",
-  "platform": "workable",
-  "reason": "empty-board"
- },
  "Lam Research": {
   "careers_url": "https://careers.lamresearch.com/careers",
   "platform": "scrape",
@@ -382,21 +256,6 @@
   "careers_url": "https://navan.com/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "EquityBee": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/equitybee",
-  "platform": "workable",
-  "reason": "empty-board"
- },
- "Syte": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/syte-corporation",
-  "platform": "workable",
-  "reason": "empty-board"
- },
- "Vidazoo": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/vidazoo/jobs",
-  "platform": "greenhouse",
-  "reason": "empty-board"
  },
  "Eureka Security": {
   "careers_url": "https://www.eureka.security/careers",
@@ -408,46 +267,10 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Argus Cyber Security": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/A7.004/positions",
-  "platform": "comeet",
-  "reason": "empty-board"
- },
  "Nova": {
   "careers_url": "https://www.novami.com/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "IRP Systems": {
-  "careers_url": "https://www.irpsystems.com/careers/#openings",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Dell Technologies": {
-  "careers_url": "https://dell.wd1.myworkdayjobs.com/wday/cxs/dell/External/jobs",
-  "platform": "workday",
-  "reason": "fetch-error",
-  "error": "BoardEmpty: dell.wd1.myworkdayjobs.com/External: 0 postings worldwide — moved tena"
- },
- "Intuit": {
-  "careers_url": "https://jobs.intuit.com/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Delasport": {
-  "careers_url": "https://delasport.bamboohr.com/careers/list",
-  "platform": "bamboohr",
-  "reason": "empty-board"
- },
- "Rhino Federated Computing": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/RhinoFederatedComputing/jobs",
-  "platform": "greenhouse",
-  "reason": "empty-board"
- },
- "Chargeflow": {
-  "careers_url": "https://apply.workable.com/api/v1/widget/accounts/chargeflow-1",
-  "platform": "workable",
-  "reason": "empty-board"
  },
  "Menora Mivtachim Group": {
   "careers_url": "https://www.menoramivt.co.il/job-posting/jobs",
@@ -459,12 +282,6 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "MediaForce": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/mediaforceltd/jobs",
-  "platform": "greenhouse",
-  "reason": "fetch-error",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/mediaforc"
- },
  "scaleops": {
   "careers_url": "https://job-boards.eu.greenhouse.io/scaleops",
   "platform": "scrape",
@@ -474,6 +291,12 @@
   "careers_url": "https://www.comeet.com/jobs/walmart/35.000",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "ControlUp": {
+  "careers_url": "https://api.lever.co/v0/postings/controlup",
+  "platform": "lever",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://api.lever.co/v0/postings/controlup The read "
  },
  "4M Analytics": {
   "careers_url": "https://www.comeet.com/jobs/4manalytics/b6.00f",
@@ -542,6 +365,16 @@
  },
  "Altera": {
   "careers_url": "https://altera.wd1.myworkdayjobs.com/en-US/Altera/job/Haifa-Israel/Analog-Layout-Design-Engineer_R02940",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Conifers.ai": {
+  "careers_url": "https://boards.greenhouse.io/conifersaicareers",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Ribbon Communications": {
+  "careers_url": "https://vhr-genband.wd1.myworkdayjobs.com/en-US/ribboncareers/job/Israel-Petah-Tikva/Global-Commercial-Services-Specialist_REQ-2026-3018",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  }

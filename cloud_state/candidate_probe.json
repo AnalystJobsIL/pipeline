@@ -704,7 +704,7 @@
   "last": "2026-08-28"
  },
  "Better Juice": {
-  "sig": 1,
+  "sig": 0,
   "il": 0,
   "last": "2026-08-28",
   "ever": true
@@ -799,7 +799,10 @@
   "last": "2026-08-28"
  },
  "Sony (PlayStation)": {
-  "last": "2026-08-28"
+  "sig": 201,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": true
  },
  "UBS": {
   "last": "2026-08-28"
@@ -835,7 +838,10 @@
   "last": "2026-08-28"
  },
  "Captain's Eye": {
-  "last": "2026-08-28"
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
  },
  "Plasan": {
   "last": "2026-08-28"
@@ -894,7 +900,10 @@
   "last": "2026-08-24"
  },
  "expressvpn": {
-  "last": "2026-08-28"
+  "sig": 1,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": true
  },
  "everc": {
   "sig": 0,
@@ -1687,7 +1696,7 @@
  },
  "McCann Digital": {
   "sig": 0,
-  "il": 15,
+  "il": 13,
   "last": "2026-08-28",
   "ever": true
  },
@@ -1719,6 +1728,225 @@
   "ever": true
  },
  "Adnimation": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Explorium": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "AI21 Labs": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "XM Cyber": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Outbrain": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "At-Bay": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Snyk": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Leadspace": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Intelligems": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Aporia": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Hunters": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Trullion": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Vayyar": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Diagnostic Robotics": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Capital One": {
+  "last": "2026-08-28"
+ },
+ "Deel": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Fast Simon": {
+  "last": "2026-08-28"
+ },
+ "Frontegg": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Veriti": {
+  "last": "2026-08-28"
+ },
+ "Sivo": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Scopio Labs": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Any.do": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Sightfull": {
+  "sig": 0,
+  "il": 1,
+  "last": "2026-08-28",
+  "ever": true
+ },
+ "Run:ai": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "SIGA OT Solutions": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Chaos Labs": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Foretellix": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "EyeClick": {
+  "sig": 0,
+  "il": 1,
+  "last": "2026-08-28",
+  "ever": true
+ },
+ "Trustmi": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Pillar Security": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "ECOncrete": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Belkin Vision": {
+  "last": "2026-08-28"
+ },
+ "EquityBee": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Syte": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Vidazoo": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Argus Cyber Security": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Dell Technologies": {
+  "last": "2026-08-28"
+ },
+ "Delasport": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Rhino Federated Computing": {
+  "sig": 0,
+  "il": 0,
+  "last": "2026-08-28",
+  "ever": false
+ },
+ "Chargeflow": {
   "sig": 0,
   "il": 0,
   "last": "2026-08-28",
