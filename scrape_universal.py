@@ -177,6 +177,15 @@ _LLM_TIMEOUT_S = 120
 # cut 9 of the 27 pages that reached it on 2026-08-26 (Coralogix 24k, Ravin AI 27k) — the
 # roles below the cut were simply never listed
 _LLM_TEXT_CHARS = 20_000
+# Comeet bootstraps its widget from `window.comeetvar`; the uid and token never appear in
+# the markup, which is why an unrendered probe of Nova's own careers page finds the word
+# "comeet" and no board. The rendered page has it, and this module already holds the page.
+_COMEET_JS = ("() => { const v = window.comeetvar; "
+              "return (v && v.comeet_uid && v.comeet_token) "
+              "? {u: String(v.comeet_uid), t: String(v.comeet_token)} : null; }")
+# request URLs kept from one visit. A jobs SPA fires thousands; the board's own XHR is in
+# the first few hundred, and an unbounded list is a memory leak in a 4-way pool.
+_REQ_URLS_MAX = 400
 _UNLOCK_TIMEOUT_S = 90
 # strategy 4's third rung: how many position pages one company may send through the
 # residential unlocker in one visit (bounded Bright Data spend; counted in the stamp)
@@ -452,6 +461,10 @@ class Rendered:
     weak_read: bool = False                        # roles named, no posting's own address found
     unlock_calls: int = 0                          # residential-unlocker requests this visit
     unlock_ok: int = 0                             # ...that returned a page
+    req_urls: list = field(default_factory=list)   # request URLs (capped) - the widget's own API
+    comeet: dict = field(default_factory=dict)     # {u, t} from window.comeetvar, if any
+    embed: str = ""                                # the platform, on a handoff WIN
+    embed_seen: str = ""                           # '<plat>:<token>:<why>' - the handoff record
 
 
 @dataclass
@@ -470,6 +483,8 @@ class ScrapeResult:
     llm_skipped: int = 0       # ...and what the gate spared
     unlock_calls: int = 0
     unlock_ok: int = 0
+    embed: str = ""            # the platform whose API answered, when the handoff won
+    embed_seen: str = ""       # '<plat>:<token>:<why>' for a board found INSIDE the page
 
 
 # ---------------------------------------------------------------------------------------------
@@ -506,6 +521,11 @@ def _render(url, timeout_ms=45000, deadline=None):
                 pg = b.new_page(user_agent=_UA)
                 pg.add_init_script("Object.defineProperty(navigator,'webdriver',{get:()=>undefined})")
                 pg.on("response", on_resp)
+                # every request URL the page makes: a careers page that is a skin over a
+                # third-party board calls that board's API, and the call names the board
+                # where the markup does not (api.ashbyhq.com/..., boards-api.greenhouse...).
+                pg.on("request", lambda rq: len(r.req_urls) < _REQ_URLS_MAX
+                      and r.req_urls.append(rq.url))
             except Exception as e:  # noqa: BLE001
                 r.error = f"launch:{type(e).__name__}"
                 return r
@@ -526,6 +546,13 @@ def _render(url, timeout_ms=45000, deadline=None):
                 r.blobs = pg.evaluate(_STATE_JS)
                 r.dom = pg.evaluate(_DOM_JS)
                 r.page_html = pg.content()
+                try:
+                    # its OWN try: the overwhelming majority of pages have no `comeetvar`,
+                    # and an ordinary page must never become `render:<Exc>` -- that code is
+                    # page-shaped, so it would PARK the row after seven nights.
+                    r.comeet = pg.evaluate(_COMEET_JS) or {}
+                except Exception:  # noqa: BLE001
+                    pass
             except Exception as e:  # noqa: BLE001
                 r.error = f"render:{type(e).__name__}"
     except Exception as e:  # noqa: BLE001 — playwright missing, driver died
@@ -1545,6 +1572,121 @@ def _anchors(dom, page_html, url):
     return out
 
 
+# ---------------------------------------------------------------------------------------------
+# 6) the page is a skin over a third-party board this repo can already read
+# ---------------------------------------------------------------------------------------------
+# `resolve_deep.ATS_PATTERNS`' slug classes are `[^/?]+` / `[^/?&]+` / `[^/?#]+` and
+# `wayback_rescue.extract_ats` applies them to raw HTML, so they swallow markup: measured
+# 2026-08-28 over the uncached rows, they return `stigg"`, `unframe"`,
+# `traildsoftware" class="jw-cta` and `FORDEFIJobs.ashbyhq.com`. Two of those four build an
+# api_url that 404s, and one costs an ADMISSION -- `identity_gate._EMBED_TOKEN_WORDS` has no
+# `re.I`, so `board_vouches('Fordefi', 'FORDEFIJobs', ...)` is None where `'fordefijobs'` is
+# True. Both defects are `registry`'s (docs/BACKLOG.md); this is the defence, here, so a
+# handoff never fetches or compares a token with markup in it.
+_SLUG_BAD = re.compile(r"[^A-Za-z0-9._~-]")
+_SLUG_HOST = re.compile(r"\.(?:ashbyhq|greenhouse|lever|workable|recruitee|comeet|"
+                        r"smartrecruiters|myworkdayjobs)\.", re.I)
+_EMBED_MIN_S = 25                # do not start what the company budget cannot finish
+_EMBED_FETCH_TIMEOUT_S = 25      # pipeline/http binds its timeout at import; this is the wall
+
+
+def _embed_detect_on():
+    """Default ON. `SCRAPE_VIA_UNLOCKER` was gated behind a flag set in NO workflow and had
+    therefore never once fired in production (scrape-refresh.yml's own comment). An opt-in
+    flag needs an `infra` edit to ever run; this rung spends no shared quota, so there is
+    nothing for an opt-in to protect. `SCRAPE_EMBED_DETECT=0` is the kill switch."""
+    return os.environ.get("SCRAPE_EMBED_DETECT", "1") not in ("0", "")
+
+
+def _slug_ok(tok):
+    """A tenant token with the page's markup cut off it, segment by segment.
+
+    The `.` is KEPT: a Comeet uid is `D3.00B`. The `/` is kept as a SEPARATOR, because a
+    Workday token is the composite `tenant/site` and cutting it would build a URL for a
+    board that does not exist. An empty result means nothing checkable survived.
+    """
+    parts = []
+    for seg in str(tok or "").split("/"):
+        cut = seg
+        for rx in (_SLUG_BAD, _SLUG_HOST):
+            m = rx.search(cut)
+            cut = cut[:m.start()] if m else cut
+        trimmed = cut.strip("._-")
+        if not trimmed:
+            break
+        parts.append(trimmed)
+        if cut != seg:
+            break        # markup began INSIDE this segment: everything after it is markup
+    return "/".join(parts)
+
+
+def _detect_embedded_board(r: Rendered):
+    """(platform, token, api_url) or None, from material this visit ALREADY holds.
+
+    Network URLs first: `resolve_deep._detect_ats` reads request URLs (no markup to leak) and
+    knows both the Comeet uid+token pair and the Workday composite. Only then the HTML
+    detector, over the rendered page and the plain one. Both live in `registry`'s files and
+    are imported, never edited -- and lazily, because `resolve_deep` imports this module at
+    module level.
+    """
+    from resolve_deep import _detect_ats
+    from wayback_rescue import extract_ats
+    det = _detect_ats(list(r.req_urls), dict(r.comeet or {}))
+    if det is None:
+        for html in (r.page_html, r.plain_html):
+            det = extract_ats(html or "", "")
+            if det:
+                break
+    if not det:
+        return None
+    plat, tok, api = det
+    clean = _slug_ok(tok)
+    if not clean or not _ats_host(urllib.parse.urlsplit(api or "").netloc):
+        return None
+    if clean != tok:
+        for a, b in zip(tok.split("/"), clean.split("/")):
+            if a != b:
+                api = api.replace(a, b)
+    return plat, clean, api
+
+
+def _from_embedded_board(company, url, r: Rendered, deadline=None):
+    """6) hand a board found INSIDE this page to the fetcher that already reads that platform.
+
+    Reached ONLY from `_extract`'s tail, where `add.israeli == 0` is guaranteed by the
+    unconditional return two lines above, and it shares NO state with the ladder's adder -- so
+    it cannot change the result of any row the five strategies already read.
+
+    Identity: `identity_gate.embedded_board_ok`, the gate written for exactly this caller --
+    "a held page can REFUSE a board, never ADMIT one (Cogniteam's own page promoted
+    Riskified's board) ... 'Cannot tell' REFUSES here." A `None` from `board_vouches` is
+    RECORDED as `unverified` and handed to `registry`, never admitted here. Deliberately NOT
+    `activation_verdict`: its None branch reads a page, and `page_names_company` reaches
+    `bd_rescue.unlock` under `BRIGHTDATA_API_KEY` -- which scrape-refresh.yml SETS -- at a
+    PER-PROCESS budget of 100 in a 4-way pool, counted in no stamp. A free rung must not
+    become the largest un-metered consumer of a paid quota.
+    """
+    if not _embed_detect_on():
+        return []
+    det = _detect_embedded_board(r)
+    if det is None:
+        return []
+    plat, tok, api = det
+    from pipeline import identity_gate as gate
+    # lowercase ONLY the copy handed to the gate: ashby and greenhouse slugs are
+    # case-sensitive in the path, while every comparison inside the gate normalises anyway.
+    tok_lc = tok.lower()
+    try:
+        ok = gate.embedded_board_ok(company, tok_lc, api)
+        vouch = gate.board_vouches(company, tok_lc, api)
+    except Exception:  # noqa: BLE001 - a gate that raises must not cost the night's read
+        r.embed_seen = f"{plat}:{tok}:gate-error"
+        return []
+    why = "ok" if ok else ("not-ours" if vouch is False else "unverified")
+    r.embed_seen = f"{plat}:{tok}:{why}"
+    return []
+
+
 def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=None, visit=None):
     """Run the five strategies over a Rendered bundle. Pure apart from `fetch`/`visit`/`llm`
     (which are injectable) and the SCRAPE_* env flags. Returns (jobs, winning_strategy)."""
@@ -1617,6 +1759,11 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
     r.llm_skipped += skipped
     if add.israeli:
         return done()
+    # 6) nothing was read off the page itself. Is the page a skin over a board we can
+    #    already read? Detection and the identity verdict are free and are RECORDED here
+    #    whatever the answer -- a refused board on a row that yields zero is the handoff
+    #    `registry` has no other source for.
+    _from_embedded_board(company, url, r, deadline=deadline)
     if links.unreadable():
         # the listing lists positions and none could be opened from here, on any rung, and
         # the LLM tier read nothing off the listing either: not an empty board. `_classify`
@@ -1705,7 +1852,8 @@ def scrape_result(company, url, timeout_ms=45000, *, budget_s=None, render=None,
                             weak_read=r.weak_read,
                             llm_calls=r.llm_calls, llm_error=r.llm_error,
                             llm_skipped=r.llm_skipped,
-                            unlock_calls=r.unlock_calls, unlock_ok=r.unlock_ok)
+                            unlock_calls=r.unlock_calls, unlock_ok=r.unlock_ok,
+                            embed=r.embed, embed_seen=r.embed_seen)
     except Exception as e:  # noqa: BLE001 — belt and braces: this function must not raise
         return ScrapeResult(jobs=[], status="error", error=f"internal:{type(e).__name__}",
                             elapsed_s=time.monotonic() - t0)

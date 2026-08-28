@@ -2141,6 +2141,9 @@ def test_assume_il_cannot_turn_a_navigation_menu_into_a_board(monkeypatch):
 _TODAY = _dtm.date.today().isoformat()
 
 
+_mp = pytest.MonkeyPatch
+
+
 def _il_job(name, n=1):
     return {"company": name, "title": f"Senior Data Analyst {n}", "location": "Tel Aviv",
             "country_code": "", "url": f"https://{name.lower()}.example/jobs/{n}", "posted_date": "",
@@ -2207,6 +2210,19 @@ def _days_ago(n):
 
 def _rows_by_name(p):
     return {r["company_name"]: r for r in _csv.DictReader(open(p, encoding="utf-8"))}
+
+
+def _set_active(p, names, value="true"):
+    """Flip rows active in a sandbox registry, so one sandbox can play consecutive NIGHTS.
+    The registry grew 873 -> 969 active rows in three days; an alarm about that growth can
+    only be tested by a fixture that can reproduce it."""
+    rows = list(_csv.reader(open(p, encoding="utf-8")))
+    want = set(names)
+    for r in rows[1:]:
+        if r[0] in want:
+            r[4] = value
+    with open(p, "w", newline="", encoding="utf-8") as f:
+        _csv.writer(f).writerows(rows)
 
 
 def test_refresh_carries_jobs_forward_on_error_but_never_on_empty(tmp_path, monkeypatch):
@@ -2377,7 +2393,10 @@ def test_refresh_stamps_collect_with_counts_the_digest_renders(tmp_path, monkeyp
     assert P.R.run(["--workers", "1"]) == 0
     stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
     assert {"rows", "scraped", "with_jobs", "empty", "errors", "carried", "unprocessed",
-            "parked", "workers", "minutes"} <= set(stamp) and "alarm" not in stamp   # 1/6 errors: no alarm
+            "parked", "uncached", "unvisited", "workers", "minutes"} <= set(stamp) \
+        and "alarm" not in stamp                                    # 1/6 errors: no alarm
+    assert stamp["unvisited"] <= stamp["uncached"] <= stamp["rows"]
+    assert stamp["unvisited"] <= stamp["unprocessed"]
     for k, v in stamp.items():
         assert _re.fullmatch(r"[A-Za-z0-9_.%+:-]+", str(v)), (k, v)
     line = P.stages_mod.summary()
@@ -2390,6 +2409,277 @@ def test_refresh_stamps_collect_with_counts_the_digest_renders(tmp_path, monkeyp
     assert "with_jobs=4" in md and "with_jobs=4" in D._text_audit(stats)
     assert "with_jobs=4" in D._html_audit(stats, lambda v: _html.escape(str(v)))
 
+
+def test_refresh_counts_the_rows_the_digest_cannot_see(tmp_path, monkeypatch):
+    """287 of 496 active scrape rows had no cache entry on 2026-08-28 -- invisible to the
+    board, to `stale.json` and to the mail, because `fetch_scrape` only READS that file --
+    and NOTHING counted them. The stamp now carries the count, and `stages.summary()` puts it
+    in all three digest renderers."""
+    names = [f"Co{i:02d}" for i in range(20)]
+    old = {n: [_il_job(n)] for n in names[:12]}
+    outcomes = {names[12]: ("empty", ""), names[13]: ("empty", ""),
+                names[14]: ("error", "http:404"), names[15]: ("error", "http:500")}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], old, {}, outcomes)
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    cache = _json.loads(P.cache.read_text(encoding="utf-8"))
+    assert stamp["uncached"] == 4 == len([n for n in names if n not in cache])
+    assert stamp["unvisited"] == 0, "every scraped row lands in the cache or in the rot file"
+    assert stamp["unvisited"] <= stamp["uncached"] <= stamp["rows"]
+    assert stamp["unvisited"] <= stamp["unprocessed"]
+    assert "alarm" not in stamp, "a level, on the first night, is never an alarm"
+    line = P.stages_mod.summary()
+    assert " uncached=4" in line and " unvisited=0" in line
+    from pipeline import digest as D
+    stats = {"stages": line, "paths": {}}
+    _, md = D.build_markdown([], _TODAY, stats)
+    assert "uncached=4" in md and "uncached=4" in D._text_audit(stats)
+    assert "uncached=4" in D._html_audit(stats, lambda v: _html.escape(str(v)))
+
+
+def test_the_uncached_alarm_is_a_jump_and_never_a_level(tmp_path, monkeypatch):
+    """52% of the scrape pool was uncached on 2026-08-27 and 58% on 08-28, so ANY ratio bar
+    under ~50% fires every night -- and `alarm=` is the only thing that makes the audit's
+    `Stages:` line bold, the line that also carries `mass-failure-*`, `links-unread-N` and
+    `stale-ip-N`. A permanently-lit lamp costs that line its reader. So the level is a stamped
+    COUNT, and only a JUMP past max(25, 5% of rows) since the last stamp that measured a cache
+    is a token -- and it never repeats while the level merely stands."""
+    active = [f"Co{i:02d}" for i in range(60)]
+    dark = [f"New{i:02d}" for i in range(76)]
+    rows = [(n,) for n in active] + [
+        [n, "scrape", "", f"https://{n.lower()}.example/careers", "false", ""] for n in dark]
+    # every dark row's outcome is fixed up front: `_refresh_sandbox` rebinds a falsy
+    # `outcomes` to a fresh dict, so a reference kept here would not reach the fake scraper.
+    P = _refresh_sandbox(tmp_path, monkeypatch, rows, {n: [_il_job(n)] for n in active}, {},
+                         {n: ("empty", "") for n in dark})
+
+    def stamp():
+        return _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+
+    def activate(names):
+        _set_active(P.csv, names)
+
+    assert P.R.run(["--workers", "1"]) == 0
+    assert stamp()["uncached"] == 0 and "alarm" not in stamp()
+    activate(dark[:30])                       # the registry activates 30 rows nothing can read
+    assert P.R.run(["--workers", "1"]) == 0
+    assert stamp()["uncached"] == 30 and "uncached-up-0-to-30" in stamp()["alarm"]
+    assert P.R.run(["--workers", "1"]) == 0   # the SAME 30, one night later
+    assert stamp()["uncached"] == 30 and "uncached-up" not in stamp().get("alarm", "")
+    activate(dark[30:50])                     # +20: under the bar, silent
+    assert P.R.run(["--workers", "1"]) == 0
+    assert stamp()["uncached"] == 50 and "uncached-up" not in stamp().get("alarm", "")
+    activate(dark[50:76])                     # +26: over the bar
+    assert P.R.run(["--workers", "1"]) == 0
+    assert stamp()["uncached"] == 76 and "uncached-up-50-to-76" in stamp()["alarm"]
+    assert P.R.run(["--workers", "1"]) == 0   # 76 of 136 rows = 56%, standing: still silent
+    assert "uncached-up" not in stamp().get("alarm", ""), "a 56% level is not an alarm"
+    # the token reconciles against the key on its OWN line: no yesterday's file needed
+    assert P.R._token("uncached-up-50-to-76") == "uncached-up-50-to-76"
+
+
+def test_a_night_that_could_not_read_the_cache_is_not_a_baseline(tmp_path, monkeypatch):
+    """The cache-unreadable exit stamps `uncached = rows` -- it can see no cache at all. Taken
+    as a baseline that would make the NEXT night's real jump read as a fall, so the alarm
+    would be silent on exactly the morning after an abort."""
+    names = [f"Co{i:02d}" for i in range(40)]
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], {}, {})
+    P.cache.write_text('{"A": [', encoding="utf-8")
+    assert P.R.run(["--workers", "1"]) == 1
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["uncached"] == 40 and stamp["alarm"] == "cache-unreadable"
+    assert P.R._prev_uncached() is None, "an abort stamp is refused as a baseline"
+    P.cache.write_text("{}", encoding="utf-8")
+    P2 = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], {}, {},
+                          {n: ("empty", "") for n in names[:30]})
+    assert P2.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P2.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["uncached"] == 30 and "uncached-up" not in stamp.get("alarm", "")
+    assert P2.R._prev_uncached() == 30, "a night that MEASURED a cache is a baseline"
+
+
+def test_unvisited_is_zero_until_a_row_is_reached_by_nothing(tmp_path, monkeypatch):
+    """`unvisited` is the part of `uncached` with no rot entry either: no run has an OUTCOME
+    for it. Zero by construction on a complete night -- which is what makes any N an event,
+    and what made it the leading indicator of the 287 a day before they were 287."""
+    names = [f"Co{i:02d}" for i in range(25)]
+    # A: the budget strands rows that are in NEITHER file -- nothing has ever scraped them
+    P = _refresh_sandbox(tmp_path / "budget", monkeypatch, [(n,) for n in names], {}, {})
+    clock = _TickingClock(P, monkeypatch)
+    monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", str(20 / 60))
+    assert P.R.run(["--workers", "1"], clock=clock) == 0
+    s = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert s["unprocessed"] > 0 and s["unvisited"] == s["unprocessed"] == s["uncached"]
+    assert f"unvisited-{s['unvisited']}" in s["alarm"]
+    # B: the SAME cut with yesterday's entries present -- a carried row is not invisible
+    P2 = _refresh_sandbox(tmp_path / "carried", monkeypatch, [(n,) for n in names],
+                          {n: [_il_job(n)] for n in names}, {})
+    clock = _TickingClock(P2, monkeypatch)
+    monkeypatch.setenv("SCRAPE_REFRESH_TIME_BUDGET_MIN", str(20 / 60))
+    assert P2.R.run(["--workers", "1"], clock=clock) == 0
+    s2 = _json.loads(P2.stages.read_text(encoding="utf-8"))["collect"]
+    assert s2["unprocessed"] > 0 and s2["unvisited"] == 0 and s2["uncached"] == 0
+    # C: the park trap. `_park` pops the rot entry AFTER the stamp is built, so a parked row
+    #    counted here would read as `unvisited` -- forever. It is excluded: the registry write
+    #    that follows makes it inactive, and an inactive row is not coverage we are missing.
+    stable = [f"Ok{i}" for i in range(12)]
+    P3 = _refresh_sandbox(tmp_path / "park", monkeypatch,
+                          [("Gone",)] + [(n,) for n in stable],
+                          {n: [_il_job(n)] for n in stable}, {"Gone": _rot_entry(9)},
+                          {"Gone": ("error", "http:404")})
+    assert P3.R.run(["--workers", "1"]) == 0
+    assert _rows_by_name(P3.csv)["Gone"]["active"] == "false"
+    s3 = _json.loads(P3.stages.read_text(encoding="utf-8"))["collect"]
+    assert s3["parked"] == 1 and s3["uncached"] == 0 and s3["unvisited"] == 0
+
+
+def test_uncached_describes_the_cache_each_exit_actually_leaves(tmp_path, monkeypatch):
+    """The abort paths do not rewrite the cache, and their whole POINT is that the digest
+    still reads yesterday's file. A count taken from the run's opinion instead of from the
+    dict that is written would report a catastrophe on the night a guard prevented one."""
+    names = [f"Co{i:02d}" for i in range(25)]
+    old = {n: [_il_job(n)] for n in names}
+    P = _refresh_sandbox(tmp_path / "mass", monkeypatch, [(n,) for n in names], old, {},
+                         {n: ("error", "goto:TimeoutError") for n in names[:24]})
+    assert P.R.run(["--workers", "1"]) == 0
+    s = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert s["alarm"].startswith("mass-failure-") and s["uncached"] == 0
+    assert len(_json.loads(P.cache.read_text(encoding="utf-8"))) == 25
+    P2 = _refresh_sandbox(tmp_path / "shrink", monkeypatch, [(n,) for n in names], old, {},
+                          {n: ("empty", "") for n in names[:9]})
+    assert P2.R.run(["--workers", "1"]) == 0
+    s2 = _json.loads(P2.stages.read_text(encoding="utf-8"))["collect"]
+    assert s2["alarm"] == "shrink-abort-25-to-16" and s2["uncached"] == 0
+    P3 = _refresh_sandbox(tmp_path / "normal", monkeypatch, [(n,) for n in names], old, {},
+                          {n: ("empty", "") for n in names[:4]})     # under the shrink bar
+    assert P3.R.run(["--workers", "1"]) == 0
+    s3 = _json.loads(P3.stages.read_text(encoding="utf-8"))["collect"]
+    assert "alarm" not in s3 and s3["uncached"] == 4
+
+def _embed_rendered(html="", urls=(), comeet=None, url="https://x.example/careers"):
+    import scrape_universal as SU
+    r = SU.Rendered(url=url)
+    r.page_html = html
+    r.req_urls = list(urls)
+    r.comeet = dict(comeet or {})
+    return r
+
+
+def test_scrape_an_embedded_token_never_carries_markup(tmp_path):
+    """`resolve_deep.ATS_PATTERNS`' slug classes are `[^/?]+` and `wayback_rescue.extract_ats`
+    applies them to raw HTML, so they swallow the attribute that follows. Measured 2026-08-28
+    over the uncached rows: `stigg"`, `unframe"`, `traildsoftware" class="jw-cta`,
+    `FORDEFIJobs.ashbyhq.com`. Two of those four build an api_url that 404s. The `.` must
+    SURVIVE (a Comeet uid is `D3.00B`) and so must the `/` (a Workday token is `tenant/site`).
+    Filed for `registry`; this is the defence, and it is pinned so it cannot rot after the fix."""
+    import scrape_universal as SU
+    for dirty, clean in [('stigg"', "stigg"), ('unframe"', "unframe"),
+                         ('traildsoftware" class="jw-cta', "traildsoftware"),
+                         ("FORDEFIJobs.ashbyhq.com", "FORDEFIJobs"),
+                         ("D3.00B", "D3.00B"), ("03.009", "03.009"),
+                         ("novartis/site3", "novartis/site3"),
+                         ('bad"/tail', "bad"), ("", ""), ("---", "")]:
+        assert SU._slug_ok(dirty) == clean, dirty
+        got = SU._slug_ok(dirty)
+        assert not got or _re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._~/-]{0,79}", got), got
+
+
+def test_scrape_an_embedded_board_that_does_not_vouch_is_recorded_and_never_admitted():
+    """`identity_gate.embedded_board_ok` is the gate written for this caller: a held page can
+    REFUSE a board and never ADMIT one, because Cogniteam's own careers page carried
+    Riskified's greenhouse board. Cannot-tell (a Comeet uid) is `unverified` -- DEFERRED, and
+    handed to `registry`, which can declare the tenant -- never `not-ours`, which would tell
+    the next reader the board was proven to belong to somebody else."""
+    import scrape_universal as SU
+    from pipeline import fetchers
+    calls = []
+
+    def boom(row):
+        calls.append(row)
+        raise AssertionError("a refused board must never be fetched")
+    with _mp.context() as m:
+        m.setattr(fetchers, "fetch_company", boom)
+        r = _embed_rendered(urls=["https://boards-api.greenhouse.io/v1/boards/riskified/jobs"])
+        assert SU._from_embedded_board("Cogniteam", r.url, r) == []
+        assert r.embed_seen == "greenhouse:riskified:not-ours"
+        r2 = _embed_rendered(comeet={"u": "D3.00B", "t": "A1B2C3D4E5F60718293A"})
+        assert SU._from_embedded_board("REE Automotive", r2.url, r2) == []
+        assert r2.embed_seen == "comeet:D3.00B:unverified"
+        assert calls == []
+
+
+def test_scrape_reads_the_board_a_rendered_page_names_only_in_its_own_traffic():
+    """The two signals an unrendered probe cannot see, and which are why 15 detections over
+    287 uncached rows is a FLOOR: the widget's own XHR, and `window.comeetvar` (Comeet writes
+    the uid and token into `window`, never into the markup -- which is why Nova's page
+    contains the word `comeet` and no board)."""
+    import scrape_universal as SU
+    r = _embed_rendered(urls=["https://cdn.x.example/a.js",
+                              "https://api.ashbyhq.com/posting-api/job-board/stigg"])
+    assert SU._detect_embedded_board(r)[:2] == ("ashby", "stigg")
+    r2 = _embed_rendered(comeet={"u": "2E.001", "t": "FFEEDDCCBBAA99887766"})
+    plat, tok, api = SU._detect_embedded_board(r2)
+    assert (plat, tok) == ("comeet", "2E.001") and "2E.001" in api and "FFEEDD" in api
+    assert SU._detect_embedded_board(_embed_rendered(html="<p>no board here</p>")) is None
+    # an ATS name in prose is not a board: the detector needs a real address
+    assert SU._detect_embedded_board(_embed_rendered(html="we use comeet and greenhouse")) is None
+
+
+def test_scrape_the_embed_record_reaches_the_rot_file_and_the_stamp(tmp_path, monkeypatch):
+    """A refused board on a row that yields ZERO is the only nightly handoff `registry` has
+    for 'this row should be a comeet/ashby row'. It rides the row's existing rot entry -- a
+    file scrape-refresh.yml already commits -- so no workflow change is needed, and it is
+    counted on the `collect` line so the mail says how many there were."""
+    names = [f"Co{i:02d}" for i in range(14)]
+    outcomes = {names[0]: ("empty", ""), names[1]: ("empty", "")}
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names],
+                         {n: [_il_job(n)] for n in names[2:]}, {}, outcomes)
+    real = P.R.scrape_result
+
+    def with_embed(name, url, **kw):
+        res = real(name, url, **kw)
+        if name == names[0]:
+            res.embed_seen = "greenhouse:riskified:not-ours"
+        if name == names[1]:
+            res.embed_seen = "comeet:D3.00B:unverified"
+        return res
+    monkeypatch.setattr(P.R, "scrape_result", with_embed)
+    assert P.R.run(["--workers", "1"]) == 0
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert rot[names[0]]["embed"] == "greenhouse:riskified:not-ours"
+    assert rot[names[1]]["embed"] == "comeet:D3.00B:unverified"
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["embeds"] == 2 and stamp["embeds_won"] == 0
+    assert stamp["embeds_won"] <= stamp["embeds"] <= stamp["scraped"]
+    for k, v in stamp.items():
+        assert _re.fullmatch(r"[A-Za-z0-9_.%+:-]+", str(v)), (k, v)
+    assert " embeds=2" in P.stages_mod.summary()
+
+
+def test_the_scraper_never_reaches_a_gate_that_can_spend_bright_data():
+    """`identity_gate.page_names_company` -- reachable from `activation_verdict`,
+    `activation_ok`, `ok_to_write`, `write_verdict` and `identity_ok` -- reads a page, and a
+    short read falls through to `bd_rescue.unlock` under BRIGHTDATA_API_KEY, which
+    scrape-refresh.yml SETS. Its budget is PER PROCESS (100) in a 4-way pool recycled every
+    25 rows, and the `collect` stamp counts none of it. A free rung must not become the
+    largest un-metered consumer of the paid pool, so the scraper may reach exactly two gates:
+    `embedded_board_ok` and `board_vouches`, neither of which touches the network."""
+    import ast as _ast
+    import pathlib
+    banned = {"activation_verdict", "activation_ok", "ok_to_write", "write_verdict",
+              "identity_ok", "page_names_company", "human_board_url"}
+    for mod in ("scrape_universal.py", "refresh_scrape_cache.py", "cache_new_rows.py"):
+        tree = _ast.parse(pathlib.Path(mod).read_text(encoding="utf-8"))
+        names = {n.attr for n in _ast.walk(tree) if isinstance(n, _ast.Attribute)}
+        names |= {n.id for n in _ast.walk(tree) if isinstance(n, _ast.Name)}
+        for n in _ast.walk(tree):
+            if isinstance(n, _ast.ImportFrom):
+                names |= {a.name for a in n.names}
+        assert not (names & banned), (mod, sorted(names & banned))
+    # and the scraper is not a registry writer, so GATE_CALLERS must NOT name it
+    from pipeline import identity_gate as G
+    for who in G.GATE_CALLERS.values():
+        assert not ({"scrape_universal.py", "refresh_scrape_cache.py"} & set(who))
 
 def test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason(tmp_path, monkeypatch):
     """A run whose rebuilt cache would lose more than 20% of its companies keeps the old
@@ -6807,6 +7097,8 @@ def test_refresh_positions_unreadable_from_the_runner_keeps_the_jobs_and_says_so
     assert stamp["links_unread"] == 3 and stamp["carried"] == 2 and stamp["parked"] == 0
     assert "links-unread-3" in stamp["alarm"], stamp["alarm"]
     assert stamp["with_jobs"] + stamp["empty"] + stamp["errors"] == stamp["scraped"] == 15
+    assert stamp["unvisited"] <= stamp["uncached"] <= stamp["rows"]
+    assert stamp["unvisited"] <= stamp["unprocessed"]
     rot = _json.loads(P.rot.read_text(encoding="utf-8"))
     assert rot["Held"]["n"] == 21 and rot["Held"]["error"] == "links:unread:403"
     # the alarm reaches the mail like every other one
@@ -6861,7 +7153,10 @@ def test_refresh_refuses_an_unreadable_cache_and_survives_an_unreadable_rot_file
     stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
     assert stamp["alarm"] == "cache-unreadable" and stamp["scraped"] == 0 and stamp["rows"] == 25
     assert {"with_jobs", "empty", "errors", "carried", "no_il", "links_unread", "parked", "via",
-            "unprocessed"} <= set(stamp) and stamp["unprocessed"] == 25, "every documented key, zero-filled"
+            "unprocessed", "uncached", "unvisited"} <= set(stamp) and stamp["unprocessed"] == 25, \
+        "every documented key, zero-filled"
+    assert stamp["uncached"] == 25 and stamp["unvisited"] == 25, \
+        "a run that cannot read the cache knows nothing is covered"
     assert any("cache-unreadable" in line for line in P.stages_mod.alarms("collect"))
     # a scoped --apply never merges over an unreadable file either
     P2 = _refresh_sandbox(tmp_path / "apply", monkeypatch, [("Acme",)], {}, {})
@@ -8939,6 +9234,7 @@ def test_refresh_residential_reads_are_marked_carried_and_dropped_aloud(tmp_path
     stamp = _json.loads(p.stages.read_text(encoding="utf-8"))["collect"]
     assert stamp["carried_residential"] == 1 and stamp["empty"] == 1
     assert stamp["with_jobs"] + stamp["empty"] + stamp["errors"] == stamp["scraped"]
+    assert stamp["unvisited"] <= stamp["uncached"] <= stamp["rows"]
     # ...asked for again before it goes
     due = [dict(_il_job("Co", 1), _via="residential", _read=_days_ago(R.RESIDENTIAL_MAX_DAYS - 1))]
     p2 = _refresh_sandbox(tmp_path / "b", monkeypatch, [["Co"]], old_cache={"Co": due},

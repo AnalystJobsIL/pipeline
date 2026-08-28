@@ -104,6 +104,18 @@ STALL_S = 3 * COMPANY_BUDGET_S   # no result for this long = a worker is stuck, 
 # runner's address, a dead CDN) — below the mass-failure bar, above what a normal night shows
 # (the 17-of-440 event of 2026-08-25 is 3.9 %; wave-1 attacker B measured 5 % missing it).
 CODE_ALARM_PCT = 3
+# Rows the registry has activated that the cache cannot answer for are invisible to every
+# downstream stage -- the digest reads scraped_cache.json and nothing else -- and until
+# 2026-08-28 nothing counted them: 287 of 496 active scrape rows (58%), 216 of 421 the
+# night before. The LEVEL must never be an alarm: 196 of those 216 were `empty`, which
+# this file calls a measurement, so any ratio bar under ~50% would light the mail's
+# `Stages:` line every morning and bury the tokens that line exists to carry. A JUMP is
+# the event, and the bar is MEASURED, not chosen: `empty` moved by 3 between the 08-26 and
+# 08-27 stamps (199 -> 196), while the one extraction regression on record flipped 30 rows
+# in a night and was found by hand a day later. The percentage keeps the bar in proportion
+# as the registry grows (5% of 496 = 24, so the floor of 25 governs today).
+UNCACHED_JUMP_MIN = 25
+UNCACHED_JUMP_PCT = 5
 
 
 def _today():
@@ -191,6 +203,7 @@ class RunState:
     unread: list = field(default_factory=list)     # companies whose positions could not be opened
     stale_ip: list = field(default_factory=list)   # (name, nights, crossed_tonight) — see 216
     residential_due: list = field(default_factory=list)  # (name, nights left) to re-read here
+    embeds: list = field(default_factory=list)     # (name, '<plat>:<token>:<why>') - see _from_embedded_board
 
 
 # ---------------------------------------------------------------------------------------------
@@ -206,7 +219,7 @@ def _never_ran(name, error, seconds=0.0):
     return {"name": name, "jobs": [], "status": "error", "error": error, "http_status": None,
             "strategy": "", "rescued": False, "weak_read": False, "llm_calls": 0,
             "llm_error": "", "llm_skipped": 0, "unlock_calls": 0, "unlock_ok": 0,
-            "seconds": seconds}
+            "embed": "", "embed_seen": "", "seconds": seconds}
 
 
 def _worker(task):
@@ -225,6 +238,8 @@ def _worker(task):
                 "llm_skipped": int(getattr(res, "llm_skipped", 0) or 0),
                 "unlock_calls": int(getattr(res, "unlock_calls", 0) or 0),
                 "unlock_ok": int(getattr(res, "unlock_ok", 0) or 0),
+                "embed": str(getattr(res, "embed", "") or ""),
+                "embed_seen": str(getattr(res, "embed_seen", "") or ""),
                 "seconds": round(res.elapsed_s, 1)}
     except BaseException as e:  # noqa: BLE001
         return _never_ran(name, f"worker:{type(e).__name__}", round(time.time() - t0, 1))
@@ -465,6 +480,8 @@ def _rot_bump(rot, name, why, today, res=None):
     if res is not None:                      # what actually happened, for the offline reader
         e["error"] = res.get("error") or ""
         e["found"] = len(res.get("jobs") or [])          # jobs seen before the Israel filter
+        if res.get("embed_seen"):
+            e["embed"] = res["embed_seen"]               # the handoff, on the row it is about
         if res.get("http_status") is not None:
             e["http"] = res["http_status"]
     return (_dt.date.fromisoformat(today) - _dt.date.fromisoformat(e["since"])).days, e["n"]
@@ -539,6 +556,11 @@ def _apply_result(row, res, old, rot, today, st: RunState):
     """Fold one company's result into the run: cache, rot streaks, park/flag lists."""
     name = row["company_name"]
     st.counts["scraped"] += 1
+    if res.get("embed_seen"):
+        # a board found INSIDE this page, with the identity gate's verdict on it. Recorded
+        # whatever the verdict: a REFUSED board on a row that yields nothing is the only
+        # nightly handoff `registry` has for "this row should be a comeet/ashby row".
+        st.embeds.append((name, res["embed_seen"]))
     # what the company cost, whatever it returned (the LLM tier and the unlocker are the two
     # shared quotas this script spends; until 2026-08-26 neither call was counted anywhere)
     st.spend["llm_calls"] += int(res.get("llm_calls") or 0)
@@ -665,7 +687,57 @@ def _via(strategies):
     return "+".join(f"{_token(k or 'unknown').replace('+', '-')}{v}" for k, v in items) or "none"
 
 
-def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=False):
+def _uncached(rows, cache, parking=()):
+    """Active scrape rows this run leaves with NO entry in `cache` -- invisible to the
+    digest, to `stale.json` and to the mail. Measured over the rows this run SELECTED,
+    because only an unscoped run stamps and an unscoped run selects every active scrape row
+    (`_rotate` is a permutation). A re-read of the registry instead would annex the one
+    `ats_platform=discovery` row `_select_rows` deliberately never touches.
+
+    Rows this same exit is PARKING are not counted: the registry write that follows makes
+    them inactive, and an inactive row is not coverage this pipeline is missing. The bound
+    on that: a park the CSV write does not match (the registry renamed the row mid-run)
+    undercounts by at most `parked`, for one night -- and a park write that RAISES never
+    reaches the stamp at all, so the morning reads `collect: <yesterday> (1d ago)` instead
+    of a wrong number."""
+    gone = {n for n, _ in parking}
+    return sum(1 for r in rows
+               if r["company_name"] not in cache and r["company_name"] not in gone)
+
+
+def _unvisited(rows, cache, rot, parking=()):
+    """Of the uncached rows, the ones with no `scrape_rot.json` entry either: no run has an
+    OUTCOME for them at all. Zero on any night that scraped every selected row, BY
+    CONSTRUCTION -- `_apply_result` leaves a company in the cache (`with_jobs`, an error
+    carry, a residential carry) or in the rot file (`empty`, `error`), never in neither --
+    so `unvisited <= unprocessed`, and any non-zero value names rows the night never reached
+    that nothing has ever scraped. It is the leading indicator of the 287 uncached rows of
+    2026-08-28, one night before it is 287."""
+    gone = {n for n, _ in parking}
+    return sum(1 for r in rows
+               if r["company_name"] not in cache and r["company_name"] not in rot
+               and r["company_name"] not in gone)
+
+
+def _prev_uncached():
+    """Last night's `uncached`, read BEFORE `stages.stamp()` REPLACES the whole entry -- the
+    growth alarm's only baseline. `cloud_state/pipeline_stages.json` is committed by
+    scrape-refresh.yml and merged per stage by `persist_state`, so it survives the runner and
+    a push conflict. A night that could not READ the cache measured nothing and stamps
+    `uncached=rows`; taking that as tomorrow's baseline would hide the next real jump behind
+    an apparent fall, so it is refused. No baseline means NO token, never a guess: the first
+    night after this lands is silent by design."""
+    e = stages._load().get("collect") or {}
+    if "cache-unreadable" in str(e.get("alarm") or ""):
+        return None
+    try:
+        return int(e["uncached"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=False,
+           uncached=None, unvisited=0, prev_uncached=None, rows=0):
     """Space-free tokens: `stages.summary()` renders k=v joined by spaces and stages by ` | `."""
     c, tokens = st.counts, []
     if mass_failure:
@@ -695,6 +767,20 @@ def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=Fals
     crossed = [n for n, _, is_new in st.stale_ip if is_new]
     if crossed:
         tokens.append(f"stale-ip-{len(crossed)}")
+    # Rows the digest cannot see. The LEVEL is never a token -- `uncached=N` is in the stamp
+    # every night for that, and a permanently-lit alarm would cost the reader the whole
+    # line. A JUMP is the event: extraction that stopped extracting, or a registry
+    # activating rows nothing can read. `A-to-B` follows `shrink-abort-A-to-B`, so B
+    # reconciles against the `uncached` key on the SAME line and the reader never needs
+    # yesterday's file.
+    if uncached is not None and prev_uncached is not None:
+        jump = max(UNCACHED_JUMP_MIN, UNCACHED_JUMP_PCT * max(rows, 0) // 100)
+        if uncached - prev_uncached >= jump:
+            tokens.append(f"uncached-up-{prev_uncached}-to-{uncached}")
+    # neither a cache entry nor a rot entry: the night never reached these rows and nothing
+    # ever has. Zero on a complete night by construction, so any N is an event.
+    if unvisited:
+        tokens.append(f"unvisited-{unvisited}")
     if rot_unreadable:
         tokens.append("rot-unreadable")
     return "+".join(tokens)
@@ -846,6 +932,7 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     rows = _select_rows(o, old)
     if not o.scoped:
         rows = _rotate(rows, day)
+    prev_uncached = _prev_uncached()      # BEFORE any stamp replaces the entry
     budget = float(os.environ.get("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0"))
     grace = int(os.environ.get("SCRAPE_INFLIGHT_GRACE_S", "600"))
     st = RunState()
@@ -858,8 +945,14 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
         print(f"::error::{CACHE_PATH} is unreadable — refusing to rebuild the cache without it",
               flush=True)
         st.counts["unprocessed"] = len(rows)
-        stages.stamp("collect", rows=len(rows), **st.counts, parked=0, workers=o.workers,
-                     minutes=0, via=_via({}), alarm="cache-unreadable")
+        # `uncached = rows`: this run can read no cache AT ALL, so as far as tonight can
+        # tell nothing is covered. That is the honest value, and it is why
+        # `_prev_uncached()` refuses this stamp as tomorrow's baseline. The alarm stays the
+        # single token `cache-unreadable` -- it already says everything a second would.
+        stages.stamp("collect", rows=len(rows), **st.counts, parked=0,
+                     uncached=_uncached(rows, {}), unvisited=_unvisited(rows, {}, rot),
+                     embeds=0, embeds_won=0,
+                     workers=o.workers, minutes=0, via=_via({}), alarm="cache-unreadable")
         return 1
     if rot_state == "unreadable":
         # derivable state: a night of coverage is worth more than a streak counter. The
@@ -914,6 +1007,13 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
               f"by {len(st.stale_ip)} companies — hand-check (is it us, the site, or a moved "
               f"URL?): {[(n, a) for n, a, _ in sorted(st.stale_ip, key=lambda x: -x[1])][:12]}",
               flush=True)
+    if st.embeds:
+        refused = [(n, s) for n, s in st.embeds if not s.endswith(":ok")]
+        print(f"::warning::{len(st.embeds)} rows the ladder could not read embed a board "
+              f"this repo already fetches; {len(refused)} were REFUSED by the identity gate "
+              f"and are the `registry` handoff -- declare the tenant in "
+              f"pipeline/identity_facts.py, or convert the row's ats_platform: "
+              f"{refused[:12]}", flush=True)
     c = st.counts
     minutes = int((clock() - t0) / 60)
     mass_failure = (c["scraped"] >= MASS_FAILURE_MIN_ROWS
@@ -926,11 +1026,27 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     shrink = ((len(had), len(had) - len(lost))
               if not o.scoped and len(had) >= SHRINK_MIN_ROWS and len(lost) * 5 > len(had)
               else None)
-    alarm = _alarm(st, mass_failure=mass_failure, shrink=shrink,
-                   rot_unreadable=rot_state == "unreadable")
     parks = 0 if (mass_failure or shrink or rot_state == "unreadable") else len(st.parked)
-    detail = dict(rows=len(rows), **c, parked=parks, workers=o.workers, minutes=minutes,
-                  via=_via(st.strategies))
+    # ONE dict decides both the count and the write, so the stamp can never describe a cache
+    # that was not written: tonight's rebuild, the mass-failure keep (every old entry plus
+    # tonight's successes), or the file the shrink abort leaves untouched. A mass-failure
+    # night therefore stamps a LOW `uncached`, correctly -- the abort's whole purpose is
+    # that the digest still reads yesterday's cache.
+    written = ({**old, **st.successes} if mass_failure else old if shrink else st.cache)
+    parking = st.parked if parks else ()
+    uncached = _uncached(rows, written, parking)
+    unvisited = _unvisited(rows, written, rot, parking)
+    alarm = _alarm(st, mass_failure=mass_failure, shrink=shrink,
+                   rot_unreadable=rot_state == "unreadable",
+                   uncached=uncached, unvisited=unvisited,
+                   prev_uncached=prev_uncached, rows=len(rows))
+    # `embeds` counts rows whose page carried a third-party board the ladder had not read;
+    # `embeds_won` the ones the identity gate admitted AND whose API answered with an
+    # Israel role. The gap between them is the handoff, and it is the larger half.
+    embeds_won = sum(1 for _, s in st.embeds if s.endswith(":won"))
+    detail = dict(rows=len(rows), **c, parked=parks, uncached=uncached,
+                  unvisited=unvisited, embeds=len(st.embeds), embeds_won=embeds_won,
+                  workers=o.workers, minutes=minutes, via=_via(st.strategies))
     # the two shared quotas, only on a run that could have spent them (a local run without
     # the flags would otherwise carry five permanent zeros)
     if os.environ.get("SCRAPE_LLM"):
@@ -967,13 +1083,13 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
                   f"companies with Israel roles into {CACHE_PATH})")
         return 0
     if mass_failure:
-        # not a measurement: keep every old entry, advance no streak, park nothing
-        cache = dict(old)
-        cache.update(st.successes)
-        write_json(CACHE_PATH, cache, sort_keys=True)
+        # not a measurement: keep every old entry, advance no streak, park nothing.
+        # `written` is the SAME dict the stamp counted, built once above -- a second
+        # rebuild here is how a stamp starts describing a cache that was not written.
+        write_json(CACHE_PATH, written, sort_keys=True)
         stages.stamp("collect", **detail)
         print(f"MASS FAILURE: {c['errors']} of {c['scraped']} rows errored — cache kept "
-              f"({len(cache)} companies), rot and registry untouched")
+              f"({len(written)} companies), rot and registry untouched")
         return 0
     if shrink:
         stages.stamp("collect", **detail)
