@@ -460,14 +460,15 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
             rep["blurbs_derived"] += 1
 
     # How many ACTIVE registry rows would render with no facts at all, counted through
-    # identity_key -- the name-match version reports 39 false gaps where the truth is 29,
+    # identity_key -- the name-match version reports false gaps the index already answers
+    # (20 against 4 on 2026-08-28; it was 39 against 29 when this was written),
     # because display_index already answers for "Dell" from "Dell Technologies". This is the
     # number that makes "is every company we know about researched?" answerable each morning
     # instead of re-derived by hand.
     try:
         from .companies import load_companies
         # EVERYTHING THAT CAN RENDER, not just the active registry. A company reaches a card
-        # by having a ROLE, and 27 companies with role records are not active registry rows
+        # by having a ROLE, and 28 companies with role records are not active registry rows
         # (a parked employer whose roles are still inside the board window, a discovery-only
         # name) -- `Peak Innovation` is one, and the first version of this gauge could not
         # see it. `all_companies` is every company ever matched, which is the render set.

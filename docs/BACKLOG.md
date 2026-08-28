@@ -6216,18 +6216,24 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     prints, as a floor rather than a band — same argument as
     `docs/decisions/2026-08-28-census-facts.md`.
 
-    **HALF CLOSED 2026-08-28 (`company-intel`).** The `Company intel:` line now raises
-    `::warning::company-intel` when the export's newest record is more than
-    `EXPORT_STALE_DAYS` (2) old **and** the registry backlog is non-zero — i.e. there is work
-    the 10:00 cron should be doing and nothing has been researched anywhere for two days. It
-    is deliberately NOT a backlog threshold: the registry adds 30-100 active rows a day, so
-    any absolute bar is crossed on healthy mornings, and the clause immediately above it in
-    `audit_lines` was rejected in 2026-08-24 for exactly that ("a warning that is always on
-    is a warning nobody reads"). The `_rb > 0` half is what keeps a *drained* backlog and a
-    quiet week from firing it. Known blind spot, quantified: the digest hook stamps today's
-    date on any board company it researches, which would reset the clock while the bulk cron
-    stayed dead — but it researched 0 on all three of the 08-27/08-28 runs, because board
-    companies are profiled same-day and stay profiled.
+    **HALF CLOSED 2026-08-28 (`company-intel`).** A missed bulk run is now an alarm on the
+    mail's `Stages:` line: `research_firmographics` writes `stages.stamp("firmo", ...)` and
+    `pipeline/run.py` reads it back with `stages.alarms("firmo", 1)`, which is how every
+    other missing-stage question in this repo is asked. 1 day, not 0, because the digest
+    runs at 05:00 and that cron at 10:00, so the freshest possible stamp on any morning is
+    yesterday's.
+
+    **The first attempt was a backlog threshold and the second read the export's newest
+    `as_of`; both were wrong, and how they were wrong is the useful part.** A backlog bar is
+    crossed on healthy mornings, because the registry adds 30-100 active rows a day -- the
+    same reason the clause above it in `audit_lines` was rejected in August. And
+    `export_newest` is not a property of this cron at all: the digest publishes the union of
+    sqlite and the export every morning, so any record dated today carries that field
+    forward whether or not the bulk run ever fired. Measured -- on 2026-08-28, the day it
+    did not fire, a digest commit took the export 995 -> 997 with two records dated 08-28
+    and moved `newest` from 08-27 to 08-28. An alarm reading it would have been silent on
+    the exact morning it was built for. `tests/test_company_intel.py` now BANS any export
+    field being used as a cron-liveness signal.
 
     **The FLOOR half is NOT closed and is now `388@infra`**, because the machinery that would
     carry it already exists and is not this lane's: `persist_state.key_deltas` measures the

@@ -136,9 +136,10 @@ finding, and neither is a measurement that cannot fail.
 **Re-measure when either is true:**
 
 1. **2026-11-19** — the day the oldest record passes 90 days, the first date at which an aged
-   arm exists at all. Run the two-arm design above at ≥20 per arm (~40–60 calls).
-2. **Immediately**, if the `Company intel:` line's new stall alarm ever fires on a shrunk
-   export rather than a dropped cron.
+   arm exists at all. Run the two-arm design above at **≥30 per arm (~60 calls)** — the table above gives
+   n=20 only 0.62 power.
+2. **Immediately**, if the export ever SHRINKS — which nothing currently alarms on; see
+   `388@infra`.
 
 **Before 2027-02-18**, whoever owns this lane must decide what happens to the herd — 997
 records going stale in one week against a 20/run cap and a new-name queue that outranks them.
@@ -151,8 +152,10 @@ the birth week spreads, or a refresh budget independent of `--limit`. Filed as
 Nothing about the horizon; two things about being able to see it:
 
 - the refresh starvation is reported instead of silent (`plan_counts`, guarded)
-- the `Company intel:` line raises `::warning::company-intel` when `export_newest` is more
-  than `EXPORT_STALE_DAYS` old — the alarm for a bulk cron that stopped running, which is the
-  failure that actually happened this week
+- a missed bulk run is now an alarm on the mail's `Stages:` line
+  (`stages.stamp("firmo", ...)` in `research_firmographics`, `stages.alarms("firmo", 1)` in
+  `run.py`) — the failure that actually happened this week. Two earlier designs were
+  discarded first: a backlog threshold fires on healthy mornings, and the export's newest
+  `as_of` is carried forward by the digest whether or not the cron ran
 
 **Spent on this decision: 0 LLM calls, 0 Bright Data credits.**

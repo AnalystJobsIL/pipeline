@@ -2842,7 +2842,7 @@ One JSON object per company, validated before caching:
 `_coerce` returns None and nothing is cached. `known: false` (and the older `unknown: true`)
 also return None. `growth-private` vs `private-enterprise` is the funding model, not size or
 age (Stripe is growth-private; Bosch, EY, a bank are private-enterprise). Anything that writes
-`employees_global` re-derives `size_band` with `band_for` — **0 of 1,132** records contradict it:
+`employees_global` re-derives `size_band` with `band_for` — **0 of the 1,109** records that carry a count contradict it (the other 24 have none, so there is nothing to contradict):
 
 ```
 python -c "import json;from pipeline.firmographics import band_for as b;d=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));print(sum(1 for r in d.values() if r.get('employees_global') and b(r['employees_global'])!=r['size_band']))"
@@ -2854,17 +2854,27 @@ python -c "import json;from pipeline.firmographics import band_for as b;d=json.l
 strings: `_coerce` insists on exactly one field, so an all-empty record would be **accepted**,
 cached until 2027-02, and rendered as a one-chip card while the mail said `1 researched`.
 
-**Coverage, 2026-08-28** (re-derived after that night's backlog drain; the previous reading
-was 973 / 899 / 897 on 08-27, before the registry grew to 1,000 active rows). The export holds
-**1,132** records. Of the **1,026** companies that can render a card — active registry rows
-∪ every company ever matched, minus the `discovery` pseudo-row and the names
-`not_a_company` refuses — **1,022 (99.6 %)** have facts and **4** do not: `Peak Innovation`,
-`Hila & Co.`, `ImagineArt` and `Plateful`, each carrying a research strike. Count the render
-set, not the registry: a company reaches a card by having a **role**, and 28 companies with
-role records are not active rows — `Hila & Co.` is one of them, with a role last seen
-2026-08-28, so it is the only one of the four rendering a card with no facts today. **Use
-this universe, not the registry's:** the active-rows-only count was 138 on the same data,
-because it counts the `discovery` pseudo-row and misses every matched-only company.
+**Coverage, 2026-08-28** (after that night's backlog drain and final sweep; the previous
+reading was 973 / 899 / 897 on 08-27, before the registry grew past 1,000 active rows). The
+export holds **1,133** records. Of the **1,028** companies that can render a card — active
+registry rows ∪ every company with a role record, minus the `discovery` pseudo-row and the
+names `not_a_company` refuses — **1,023 (99.5 %)** have facts and **5** do not: `Agency`,
+`Hila & Co.`, `ImagineArt`, `Peak Innovation` and `Plateful`, each carrying a research
+strike. **Two of the five render a card with no facts today** — `Hila & Co.` and
+`Peak Innovation` both have an open role last seen 2026-08-28; the other three are registry
+rows with no role yet.
+
+```
+python -c "import json,csv,sqlite3;from pipeline.firmographics import identity_key as k,display_index,not_a_company;d=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));i=display_index(d);r=list(csv.DictReader(open('companies.csv',encoding='utf-8-sig')));a={x['company_name'] for x in r if x['active'].strip().lower()=='true'};p={x['company_name'] for x in r if (x['ats_platform'] or '').strip().lower()=='discovery'};m={x[0] for x in sqlite3.connect('cloud_state/seen.db').execute('SELECT DISTINCT company FROM matched')};s={n for n in (a|m)-p if not not_a_company(n)};g=sorted(n for n in s if not (d.get(n) or i.get(k(n))));print(len(d),len(s),len(s)-len(g),g)"
+```
+
+Count the render set, not the registry: a company reaches a card by having a **role**, and
+**28** companies with role records are not active rows. And keep the two counts apart — the
+gauge above is what the mail's `registry backlog` prints, while the active-rows-only
+identity-key count is a different universe (it includes the `discovery` pseudo-row and sees
+no matched-only company). Before the 08-28 drain they read **139** and **138**; quoting one
+number with the other's name is how a survivor list came out naming `Discovery` instead of
+`Hila & Co.`.
 
 Count it through `identity_key`, **not** by name — the name-match version reports **16**
 false gaps today (20 against 4), because `display_index` already answers for "Dell" out of
@@ -2875,7 +2885,7 @@ python -c "import json,csv;from pipeline.firmographics import identity_key as k,
 ```
 
 Field gaps are small and named: `founded` null on 17, `employees_global` null on 24,
-`il_center` empty on 4 (7 / 2 / 4 before the 08-28 drain added 135 records). Every record has sector, sub_sector, stage, stage_note,
+`il_center` empty on 4 (7 / 4 / 4 before the 08-28 drain added 136 records). Every record has sector, sub_sector, stage, stage_note,
 business_model, customer_type and size_band.
 
 **Identity.** `firmographics.identity_key` (not `store._norm_company`, which strips one
@@ -3170,9 +3180,10 @@ so a Hebrew token was **invisible** to the closure test rather than out-of-vocab
 entry did not cover the Hebrew spelling; a name whose letters the tokenizer did not account for
 is now never judged by this rule.
 Swept over every real name in the repo (`companies.csv`, now **1,536** rows, + the export +
-`research_companies.json` + `discovered_cache.json`) it fires on exactly two — `my team`,
-already junk, and `Infrastructure Team`, live in `research_companies.json` and one
-`auto_expand` run from being a row — and on **0 active registry rows**.
+`research_companies.json` + `discovered_cache.json`) it fires on **8** of 1,823 names — `my team` and `AppSec`, already junk;
+`Infrastructure Team`, live in `research_companies.json` and one `auto_expand` run from
+being a row; and five leaked job titles of the `Data analyst - Nogamy` shape, which is the
+rule doing exactly what it was written for — and on **0 active registry rows**.
 
 `not_a_company` = `looks_like_junk` **or** `is_place_name`, and only this lane uses it.
 **The place arm is deliberately NOT in `looks_like_junk`**: `discovery` decided on 2026-08-25
@@ -3241,7 +3252,7 @@ into separate rows and halving both counts.
 
 ### Guards and how to rehearse
 
-`tests/test_company_intel.py` (**102** cases, one per shipped bug or claim above; no test
+`tests/test_company_intel.py` (**106** cases, one per shipped bug or claim above; no test
 spawns `claude` or touches `cloud_state/`). To rehearse tomorrow's digest without spending
 anything:
 
@@ -3262,7 +3273,7 @@ an argv it cannot classify writes to stderr and exits 3, which the seam reports 
 printed a plausible line and exited 0 regardless.
 `test_the_rehearsal_shim_can_classify_every_argv_the_real_seam_builds` goes red instead.
 
-`tests/fixtures/company_intel/mutations.json` holds **53** records. It used to hold 18 and
+`tests/fixtures/company_intel/mutations.json` holds **58** records. It used to hold 18 and
 **could never have run**: it keyed the class as `cls` where `tools/mutate.py` reads
 `m["class"]`, which is why four records that no longer matched any code went unnoticed. It is
 also in no CI path — `tests.yml` runs `tools/mutate.py --all`, whose default catalogue is

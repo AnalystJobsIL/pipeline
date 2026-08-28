@@ -1,8 +1,10 @@
 # 2026-08-28 — `company-intel`: a strike that could not survive its own runner, and 137 companies
 
-The lane had not run a session all week. In that time the registry grew **862 → 1,000 active
-rows** and the facts corpus did not follow. The operator's goal for the weekend was "all
-companies + intel".
+The brief said the lane had not run a session all week. **It was 46 hours** — the previous
+lane commit is `f1a1d63`, 2026-08-27 00:37, and `docs/sessions/2026-08-26-company-intel.md`
+exists. Over that real gap the registry grew **875 → 1,002 active rows** and the facts corpus
+did not follow. (Over the wider 4.85-day window it is 862 → 1,002.) The operator's goal for
+the weekend was "all companies + intel".
 
 Everything below is pinned to a rev and re-derived. The shared checkout was 102 commits behind
 `origin/master`, so every read was `git show origin/master:<path>` and all work happened in
@@ -29,19 +31,29 @@ real company), the real target set was **137**.
 python -c "import json,csv;from pipeline.firmographics import identity_key as k,display_index;d=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));i=display_index(d);a=[r['company_name'] for r in csv.DictReader(open('companies.csv',encoding='utf-8-sig')) if r['active'].strip().lower()=='true'];m=[n for n in a if not (d.get(n) or i.get(k(n)))];print(len(a),len(m),sorted(m))"
 ```
 
-**Result: 133 researched, 2 failed, export 997 → 1,132.** Registry backlog **138 → 4**, and
-each survivor is named with a reason:
+**Result: 133 researched, 2 failed, export 997 → 1,132** (the store went 999 → 1,132; the
+export gained 135 because two records already in the copied-in sqlite arrived through
+`union_store`). The mail's own gauge — `registry backlog` — went **139 → 4**, and each
+survivor is named:
 
 | name | why it is still there |
 |---|---|
-| `Discovery` | the pseudo-row. Never a research target, by design |
-| `Peak Innovation` | strike since 2026-08-24, weekly retry, releases 08-31 |
+| `Peak Innovation` | strike since 2026-08-24, weekly retry, releases 08-31. **Has an open role, so it renders a card with no facts** |
+| `Hila & Co.` | strike since 2026-08-27. A matched-only company, **also rendering a card with no facts** |
 | `ImagineArt` | failed tonight — and also failed on the 08-27 cron. Struck |
 | `Plateful` | failed tonight. Struck |
 
-Render-set coverage (active rows ∪ every matched company, minus the pseudo-row) is
-**1,022 of 1,027 = 99.5 %**; the five without facts add `Tel Aviv` (refused by
-`not_a_company`) and `Hila & Co.` (strike) to the four above.
+**A correction I had to make to my own first write-up.** I originally reported this as
+"138 → 4" with `Discovery` as a survivor. 138 is the *active-rows-only* identity-key count,
+a different universe from the gauge the mail prints: it includes the `discovery` pseudo-row
+and sees no matched-only company. Under the gauge `Discovery` is not a survivor at all (0
+role records, excluded by platform) and `Hila & Co.` is — and `Hila & Co.` is the one with a
+live role. Quoting one number under the other's name is exactly how the wrong survivor got
+named, and an attacker caught it.
+
+Render-set coverage after the final sweep is **1,023 of 1,028 = 99.5 %** — the universe is
+active rows ∪ every company with a role record, minus the `discovery` pseudo-row and the
+names `not_a_company` refuses. `ARCHITECTURE.md` §7 carries the command.
 
 **Verified by output before the commit, not by exit code:** a strict superset of origin's 997
 with **0 dropped and 0 pre-existing records changed**; on all 135 new records `sector`
@@ -60,14 +72,17 @@ Two checks I had planned were **wrong** and were dropped or moved:
 
 ## 2. The cron: what one run does, against what the registry does
 
-`gh api .../workflows/firmographics.yml/runs` → `total_count: 1`. **One run, ever.**
+`gh api .../workflows/firmographics.yml/runs` → `total_count: 1`. **One SCHEDULED run
+record survives** — the workflow has also been dispatched twice (2026-08-26, producing
+`57f34a6` and `d6e12d6`), and this project deletes dispatch records on purpose
+(`CLAUDE.local.md` §3). "The cron has fired once" is exact; "one run ever" is not.
 
 | | |
 |---|---|
 | run `33111630696`, event `schedule` | created **2026-08-27T20:05:39Z**. The cron is `0 10 * * *` — **+605 minutes late** |
 | queued on `concurrency: repo-state` | ~21 min |
 | research step | **2 m 53 s** |
-| produced | **19 researched, 4 failed**, export 971 → 995 |
+| produced | **19 researched, 4 failed**, export 976 → 995 |
 | spent | `seam: claude-sonnet-5 x23 \| 23 calls, 334 s, 30 searches` — **no `SEARCHLESS`** |
 | the backlog it faced | **23**. `--limit 40` never bound |
 
@@ -140,7 +155,7 @@ Full reasoning in **`docs/decisions/2026-08-28-firmographics-refresh.md`**. In s
 **There is no stale tail.** Every one of the 997 `as_of` values fell in 2026-08-21..28
 (394/378/154/14/15/18/22/2 by day). Nothing was older than **seven days**, so §7's "a company
 profiled once in July" cannot be true — there is no July. And a refresh path **does** exist
-(`--refresh-days`, `is_stale`, `REFRESH_CAP = 20`): nothing re-researches before **2027-02-17**
+(`--refresh-days`, `is_stale`, `REFRESH_CAP = 20`): nothing re-researches before **2027-02-18**
 by design.
 
 **The planned 12-call measurement was dropped, and that is the finding.** Re-researching a
@@ -148,13 +163,14 @@ by design.
 elapsed time. And n=12 with a ≥3 threshold says "build it" **11 %** of the time at a 10 % noise
 floor and "build nothing" **56 %** of the time at a real 20 % rate. A rule that cannot say no
 for the right reason is not a measurement. A real one needs a current-evidence control arm and
-**~20–30 per arm (40–60 calls)**, and is not runnable at any n until records have actually
-aged. Re-measure **2026-11-19**.
+**~30 per arm (~60 calls)** under Fisher's exact test, and is not runnable at any n until
+records have actually aged. Re-measure **2026-11-19**.
 
 Two things that are true and were free: **548 of 997** records cite nothing newer than 2023 in
 `stage_note` (evidence recency, not record age; one cites **2027** — `Alma Labs`), and all 997
-share a birth **week**, so at 180 days the whole store turns stale between 2027-02-17 and
-2027-02-24 against a 20/run cap. Filed as **387**, with six months of warning.
+share a birth **week**, so at 180 days the whole store turns stale between 2027-02-18 and
+2027-02-25 against a 20/run cap (`is_stale` is `>`, so day 180 exactly is still fresh).
+Filed as **387**, with six months of warning.
 
 ## 6. The LLM contract: both claims hold, one document correction
 
@@ -162,7 +178,7 @@ share a birth **week**, so at 180 days the whole store turns stale between 2027-
   carries `"ALWAYS search the web before you answer… Never answer from memory alone"`, pinned
   by `test_the_research_prompt_mandates_a_web_search` over both `_RESEARCH_SYSTEM` and
   `fill_employees_llm._SYSTEM`. **Production confirms it**: the 08-27 cron made 23 calls and 30
-  searches with no `SEARCHLESS`, and tonight's drain made 137 calls and **162 searches, 0
+  searches with no `SEARCHLESS`, and tonight's drain made 135 calls and **162 searches, 0
   SEARCHLESS**.
 - **`modelUsage[m].webSearchRequests` is still the counter.** `pipeline/llm.py:184 _searches()`
   sums exactly that field, and its docstring still names
@@ -172,26 +188,84 @@ share a birth **week**, so at 180 days the whole store turns stale between 2027-
   digest at all**, so anyone checking "the 08-27 mail" for this lane's line finds nothing; the
   08-27 evidence is the workflow run log.
 
-## 7. The alarm (`359@company-intel`, half closed)
+## 7. The alarm (`359@company-intel`, half closed) — and two designs discarded first
 
-The `Company intel:` line now raises `::warning::company-intel` when the export's newest record
-is more than `EXPORT_STALE_DAYS` (2) old **and** the registry backlog is non-zero.
+**What shipped.** `research_firmographics` writes `stages.stamp("firmo", ...)` and
+`pipeline/run.py` reads it back with `stages.alarms("firmo", 1)`, so a missed bulk run
+appears on the mail's `Stages:` line beside `collect`, `repair` and `expand`. Proven end to
+end: `stages.alarms("firmo", 1)` → `summary["stage_alarms"]` → `digest.py:227` renders
+`- **Stages:** firmo last ran 3d ago`. 1 day, not 0, because the digest runs at 05:00 and
+the cron at 10:00, so the freshest possible stamp on any morning is yesterday's.
 
-Deliberately **not** a backlog threshold. The registry adds 30–100 active rows a day, so an
-absolute bar is crossed on healthy mornings — and the clause immediately above it in
-`audit_lines` was rejected in August for exactly that reason ("a warning that is always on is a
-warning nobody reads"). The `_rb > 0` half is what stops a *drained* backlog and a quiet week
-from firing it. Known blind spot, quantified: the digest stamps today's date on any board
-company **it** researches, which would reset the clock while the bulk cron stayed dead — but it
-researched 0 on all three of the 08-27/08-28 runs, because board companies are profiled
-same-day and stay profiled.
+**Two designs were discarded, and how they were wrong is the useful part.**
+
+1. *A `registry backlog > 40` threshold.* Rejected before it was written: the registry adds
+   30–100 active rows a day, so an absolute bar is crossed on healthy mornings — the same
+   reason the clause immediately above it in `audit_lines` was rejected in August, in that
+   function's own words ("a warning that is always on is a warning nobody reads").
+2. *The export's newest `as_of`.* **Shipped, and wrong for an hour.** It is not a property
+   of this cron at all: the digest publishes the union of sqlite and the export every
+   morning, so any record dated today carries the field forward whether or not the bulk run
+   fired — and whether or not the digest itself researched anything. Measured on 2026-08-28,
+   the day the cron did not fire: a digest commit took the export 995 → 997 with two records
+   dated 08-28 and moved `newest` from 08-27 to 08-28. The alarm would have been silent on
+   the exact morning it was built for. It also reached only the run page, which this project
+   deletes on purpose, while my commit message claimed it reached the mail.
+   `tests/test_company_intel.py` now BANS any export field being used as a cron-liveness
+   signal, so the mistake cannot come back quietly.
 
 The **floor** half of 359 is filed as **388@infra**, not built here:
-`persist_state.key_deltas` already measures this exact path every run, and `shrank()` simply
-cannot fire on it — it needs `lost ≥ 10` **and** `lost ≥ 3 %`, which on a 1,132-record store is
-34 keys, so the 22-record loss of 2026-08-26 raised nothing. That threshold is shared by seven
+`persist_state.key_deltas` already measures this exact path every run, and `shrank()` cannot
+fire on it — it needs `lost ≥ 10` **and** `lost ≥ 3 %`, which on a 1,133-record store is 34
+keys, so the 22-record loss of 2026-08-26 raised nothing. That threshold is shared by eight
 `s_company_dict` paths and moving it on this lane's judgement would shift five other lanes'
 noise floors.
+
+## 8. The cron cannot keep pace, and that is the more valuable finding
+
+Every input measured, none from the workflow's own prose.
+
+| | |
+|---|---|
+| registry growth | 862 → 1,002 active over 4.85 days = **+28.9/day**; **+68.6/day** over the last 48 h; **+65 on 08-28 alone** |
+| cost per call | 08-27 cron 334 s model / 23 calls; tonight's drain 2,844 s / 135. Taking the slower: **~10.5 s of wall per call** at `--workers 2` |
+| one run at `--limit 40` | **7.0 min** of a 120-minute job (5.8 %) |
+| slot reliability | **1 of 2** scheduled opportunities delivered, that one +605 min late |
+
+    40 x 50 %  =  20/day  -- SHORT of even the 4.85-day mean by 8.9/day
+    40 x 100 % =  40/day  -- SHORT of the recent rate by 28.6/day
+   150 x 50 %  =  75/day  -- keeps pace with both
+
+So 40 fails at the observed reliability against the mean, and fails against the current rate
+even if every slot fires. **The cap was never protecting the clock** — 40 calls is 6 % of the
+job — so it was protecting nothing while losing ground. Raised to **150**, a ceiling and not
+a target: on a quiet day the run still stops when `todo` empties.
+
+This reverses the operator's earlier "keep 40, after tonight 40 should be rare", on evidence
+they then asked for. That answer was conditional on a premise the same night falsified: +65
+rows on 08-28 with an 877-entry registry queue still draining. The schedule is unchanged, so
+§4's cron table is untouched. Whether the slot fires at all is `infra`'s (`293`); what this
+lane can own is that a missed one is visible the next morning.
+
+## 9. The final sweep
+
+Registry kept moving during the session, so the pool was re-read at the end rather than
+reported against its opening state.
+
+| | at session start | at session end |
+|---|---|---|
+| active registry rows | 1,000 | **1,002** |
+| export records | 997 | **1,133** |
+| `registry backlog` (the mail's gauge) | 139 | **5** |
+
+The sweep researched `Zenyard` (Cybersecurity / early-private / S, `stage_note` naming a Feb
+2026 pre-seed and its investors) and refused `Agency` — `auto-expand slug-probe; 821/1 IL`
+on greenhouse slug `agency`, the name-derived-slug shape `registry` already knows. The model
+declining to profile a category word is the money gate working, and its strike is durable.
+
+That refusal then printed `::warning::company-intel 1 research answer(s) made no web search
+— those records are guesses`. It was warning about its own success: a refusal produces no
+record. `searchless` now counts only an answer that claims to KNOW the company.
 
 ## What this spent
 
@@ -199,7 +273,7 @@ noise floors.
 |---|---|
 | **Bright Data** | **0.** `bd_employees.py` was not run. No Unlocker, no dataset. `secrets.env` was never copied into the worktree (`381@registry`: pytest books real credits when it is present) |
 | **SerpApi** | 0 — exhausted until 2026-09-01 |
-| **Claude subscription** | **137 research calls**, 2,882 s model time, **162 web searches, 0 SEARCHLESS**, sonnet at `effort=low`. The 12-call staleness measurement was **not** spent |
+| **Claude subscription** | **139 research calls, 2,926 s model time, 163 web searches**, sonnet at `effort=low` — a 2-call smoke test (38 s), the 135-call drain (2,844 s, 162 searches, 0 SEARCHLESS), and a 2-call final sweep (44 s). The 12-call staleness measurement was **not** spent |
 | Subagents | 7 Opus sessions: 2 design critics (both NO-GO on parts of the first design), 3 attackers, 2 confirmers |
 
 ## Gates
