@@ -439,5 +439,14 @@
     "class": "M3",
     "symbol": "stall_alarm_never_fires",
     "why": "company-intel guard 2026-08-28"
+  },
+  {
+    "id": "ci-refresh-starvation-silent",
+    "file": "research_firmographics.py",
+    "find": "    return attempted, min(max(0, total - attempted), n_refresh)\n",
+    "replace": "    return attempted, 0\n",
+    "class": "M3",
+    "symbol": "refresh_starvation_silent",
+    "why": "company-intel guard 2026-08-28"
   }
 ]

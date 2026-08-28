@@ -127,6 +127,19 @@ def seed_poc(st, today):
     return len(fresh)
 
 
+def plan_counts(n_new, n_refresh, limit):
+    """(attempted, refreshes_deferred) for a run with `limit`.
+
+    Refresh names are appended LAST and `--limit` truncates from the end, so whenever the
+    new-name backlog alone exceeds the limit, refresh gets ZERO slots. The ordering is
+    right -- a company with no facts renders a card with no chips, which is worse than one
+    whose chips are six months old -- but it was silent, and it bites exactly when the
+    registry is growing fast, which is when a reader would most want to know."""
+    total = n_new + n_refresh
+    attempted = min(total, limit) if limit else total
+    return attempted, min(max(0, total - attempted), n_refresh)
+
+
 def is_stale(rec, refresh_days):
     if not refresh_days:
         return False
@@ -263,11 +276,22 @@ def main():
     # stalest variant per group per pass also rotates through variant records over time.
     refresh = sorted(stale_pick.values(), key=lambda n: have[n].get("as_of", ""))[:REFRESH_CAP]
     if refresh:
-        print(f"refreshing {len(refresh)} stale records (cap {REFRESH_CAP}/run)")
+        print(f"refreshing {len(refresh)} stale records (cap {REFRESH_CAP}/run)", flush=True)
     seen_norms.update(identity_key(n) for n in refresh)
+    # Refresh goes LAST and `--limit` truncates from the end, so whenever the new-name
+    # backlog alone exceeds the limit, refresh gets ZERO slots. That ordering is right --
+    # a company with no facts renders a card with no chips, which is worse than a company
+    # whose chips are six months old -- but it was SILENT, and it bites exactly when the
+    # registry is growing fast, which is when a reader would most want to know. Say it.
+    attempt, deferred = plan_counts(len(todo), len(refresh), a.limit)
     todo.extend(refresh)
-    print(f"{len(names)} active companies, {len(have)} researched, {len(todo)} to do"
-          + (f" ({len(gated)} recent-failure names gated to weekly retry)" if gated else ""))
+    # the count a reader can reconcile against the `ok`/`FAIL` lines below: this printed the
+    # PRE-limit number, so a `--limit 40` run announced "137 to do" and attempted 40.
+    print(f"{len(names)} active companies, {len(have)} researched, {attempt} to do"
+          + (f" of {len(todo)}" if attempt != len(todo) else "")
+          + (f" ({len(gated)} recent-failure names gated to weekly retry)" if gated else "")
+          + (f" [refresh deferred: {deferred} stale record(s) had no slot under "
+             f"--limit {a.limit}]" if deferred else ""), flush=True)
     if a.dry_run or not todo:
         for n in todo:
             print("  -", n)

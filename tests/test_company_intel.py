@@ -1497,3 +1497,19 @@ def test_every_path_the_firmographics_workflow_owns_has_a_strategy():
     wf = open(os.path.join(repo, ".github/workflows/firmographics.yml"), encoding="utf-8").read()
     assert "cloud_state/firmo_failed.json" in wf
     assert P.STRATEGY["cloud_state/firmo_failed.json"][0] is P.s_company_dict
+
+
+def test_a_run_says_how_many_refreshes_its_limit_deferred():
+    """Refresh names are appended LAST and `--limit` truncates from the end, so whenever the
+    new-name backlog alone exceeds the limit, refresh gets ZERO slots -- silently, and
+    exactly when the registry is growing fast. The ordering stays (a company with no facts
+    renders a card with no chips, which is worse than one whose chips are six months old);
+    what changes is that the run says so, and that the `N to do` it prints is the number it
+    will ACTUALLY attempt -- it printed the pre-limit number, so a `--limit 40` run
+    announced "137 to do" and attempted 40."""
+    import research_firmographics as R
+    assert R.plan_counts(137, 20, 40) == (40, 20), "every refresh starved, and unreported"
+    assert R.plan_counts(30, 20, 40) == (40, 10)
+    assert R.plan_counts(10, 5, 40) == (15, 0), "nothing deferred when the limit is not hit"
+    assert R.plan_counts(137, 20, 0) == (157, 0), "--limit 0 is unbounded, not zero"
+    assert R.plan_counts(0, 20, 5) == (5, 15)
