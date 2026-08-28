@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**411 filed · 299 open · 112 closed · 6 half · 29 numbers name more than one item · 28 items name no lane.**
+**412 filed · 299 open · 113 closed · 6 half · 30 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -82,6 +82,7 @@ closure convention in the header.
 | 245 | `245@company-intel` **open** · `245@ats-fetch` **open** · `245@scraper` **open** |
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
+| 368 | `368@registry` **open** · `368@infra` **open** |
 
 ### registry — 85 open
 
@@ -169,7 +170,7 @@ closure convention in the header.
 - **353** `353@registry` **Three active rows are one employer, and two of them are the same board**
 - **354** `354@registry` **The nine address-refused rows are refused from a HOME address too**
 - **355** `355@registry` **The nightly embed handoff has no reader yet**
-- **367** `367@registry` **Seven mutations SURVIVE, and nobody has seen that since 2026-08-24**
+- **368** `368@registry` **Three mutations on `listing_hunt`'s intake-queue gate are EQUIVALENT MUTANTS**
 
 ### infra — 76 open
 
@@ -5966,16 +5967,60 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     Until it is fixed the mutation gate is **off for a second, different reason** — the first
     was the 45-minute timeout (195@infra, closed by sharding the same day).
 
-367. **Seven mutations SURVIVE, and nobody has seen that since 2026-08-24** — lane:
-    `registry` (`tools/mutate.py` and the guards it targets). A full local `--all` run on
-    2026-08-28 finished in **5,119 s wall with 4 workers** (85 min; 19,754 s of pytest time)
-    and reported **204 mutations: 197 killed, 7 SURVIVING, 0 coverage gaps**. A surviving
-    mutation means the guard it targets does not actually guard.
+367. ~~**Seven mutations SURVIVE, and nobody has seen that since 2026-08-24**~~ —
+    **CLOSED 2026-08-28 (`infra`)**: four were real gaps and now have behavioural guards;
+    three are EQUIVALENT MUTANTS and cannot be killed by any test, which is a different
+    finding and is handed to `registry` below.
 
-    This is the measured cost of an off gate: the job has been cancelled or refused on every
-    push since 2026-08-24, so these seven have been invisible for four days. The 85-minute
-    figure is also the arithmetic behind the sharding — it was never going to fit the
-    45-minute budget, and one shard of it will.
+    A full local `--all` finished in **5,119 s wall with 4 workers** (85 min; 19,754 s of
+    pytest time): **204 mutations, 197 killed, 7 alive, 0 coverage gaps**. That 85 minutes is
+    also the arithmetic behind the sharding — it was never going to fit 45.
+
+    **The four real gaps. Each guard drives the real function; each was verified to KILL its
+    mutant, not merely to pass.**
+
+    | mutation | what it removed | guard now killing it |
+    |---|---|---|
+    | `expand-dupe-guard-drop` | `auto_expand`'s rule-4 re-read before the append — a start-of-run snapshot gives a concurrent writer's company a TWIN row, which is what `check_invariants` check B calls "merge_csv_rows silently drops edits" | `test_auto_expand_re_reads_the_registry_immediately_before_it_appends` |
+    | `llm-embed-vouch-drop` | `resolve_llm._verify`'s `embedded_board_ok` rung — a company's own page can carry a board it merely EMBEDS (Cogniteam's page + a stale Riskified widget), and accepting it publishes another company's roles | `test_resolve_llm_refuses_a_board_the_company_only_embeds` |
+    | `triage-own-words-drop` | `triage_dark._own_words` — another tool's POOL TOKEN inside triage's segment is reworded away on the next re-triage, dropping the row out of that tool's re-check pool (rule 3; `Bit`, twice) | `test_triage_rewords_every_other_tools_pool_token_in_its_own_reason` |
+    | `triage-woken-exclusion-restore` | put BACK an exclusion removed on 2026-08-26 — nothing ever removes a wake, so a woken row leaves triage's schedule for good while `in_triage_pool` still owns it (6 rows) | `test_triage_still_selects_a_row_the_daily_probe_woke` |
+
+    Two of those four had been "killed ONLY by source-text guard(s)", which is precisely the
+    class `tools/mutate.py`'s own docstring exists to prosecute: *a guard that asserts HOW a
+    thing is written breaks when the thing improves and passes when the thing breaks*.
+
+    **A trap worth writing down.** The harness mutates a `git archive HEAD` copy, so an
+    UNCOMMITTED guard is invisible to it: the first two guards read as SURVIVING until they
+    were committed, and only then killed their mutants. Commit before you measure.
+
+368. **Three mutations on `listing_hunt`'s intake-queue gate are EQUIVALENT MUTANTS** — lane:
+    `registry`. `hunt-queue-identity-remove` / `-invert` / `-narrow` all mutate
+    `elif verdict == "found" and not _gate.identity_ok(name, q_url):`, and **no test can kill
+    them, because the code has a second gate on the same predicate seven lines later**:
+
+    ```python
+    keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else ""
+    if q_url and not keep:
+        q_refused = q_refused or "another company's board"
+    ```
+
+    So removing, inverting or narrowing the first branch changes nothing observable — the
+    address gate sets the same refusal. Proven, not inferred: `infra` added
+    `test_listing_hunt_queue_arm_cannot_activate_another_companys_board` on 2026-08-28, which
+    drives `main()`'s queue arm with a foreign board and **goes red when BOTH gates are
+    removed** (the log then reads `[OK] q1/2 Lili: https://www.lilly.com/careers`) — and stays
+    green with either one alone.
+
+    **The arm is therefore guarded; the catalogue is what is wrong.** A surviving equivalent
+    mutant is not a missing test, and counting it as one trains readers to ignore the gate's
+    output — the exact failure this repo is arranged against. `registry` owns the call. The
+    recommendation is to KEEP the redundancy (the first branch gives the "found" verdict its
+    own refusal reason; the second is the address gate, and they are documented as separate)
+    and mark the three records equivalent so they stop reading as survivors. Do NOT delete the
+    second gate to make the mutants killable: it is the one that stopped
+    QuantLR -> quantlab.com and FairFly -> fireflyspace.com.
+
 368. **`tools/mutate.py` read its own warnings as failures, and the count grew with the
     suite** — lane: whoever owns `tools/` (registry built it); FIXED here by `docs` on
     2026-08-28 because this session's own commit is what tipped it over, and the fix is

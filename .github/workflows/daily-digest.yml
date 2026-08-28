@@ -302,7 +302,11 @@ jobs:
         # A DEPLOY KEY, not a PAT: it belongs to a REPO rather than a person, so no run page
         # names the owner (CLAUDE.local.md section 3) and it cannot expire silently -- a dead
         # PAT would reproduce exactly the failure this fixes, with no alarm. The repo address
-        # is a secret too, so this public file names no private repository.
+        # is a secret too, so THIS FILE names no private repository -- which is a narrow
+        # claim on purpose: `AnalystJobsIL/inbox` is named in ARCHITECTURE.md, CLAUDE.md
+        # and docs/AUTOMATION.md already. That is not an identity breach (it names an ORG
+        # repo, never the personal account), and the secret is here so the address is not
+        # ALSO in the file that holds the key to it.
         #
         # It pushes the digest BODY, not just its hash. Reading it back from
         # raw.githubusercontent is what an adversarial pass killed: that CDN serves a stale

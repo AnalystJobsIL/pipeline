@@ -82,8 +82,12 @@ marginal change of degree, not of kind. **What is genuinely new, and is stated h
 glossed: a compromise of this repo's Actions secrets would now also expose the private inbox
 repo, which contains the `cc @` mention — i.e. the identity everything else is arranged to
 protect.** That is the price, the operator was shown it, and the operator chose it. Mitigations
-applied: the repo address is itself a secret, so the public workflow file names no private
-repository, and the key is write-scoped to the one repo.
+applied: the key is write-scoped to the one repo, and the repo address is itself a secret so
+the workflow file holding the key does not also name its target. **That last point is
+narrower than it first reads and was corrected on review:** `AnalystJobsIL/inbox` is
+already named in `ARCHITECTURE.md`, `CLAUDE.md` and `docs/AUTOMATION.md`. Naming an ORG
+repo is not an identity breach — the rule is about the personal account — so the secret
+buys separation between the key and its target, not secrecy of the target.
 
 ## The race this closes — and the version of it that an adversary killed
 
