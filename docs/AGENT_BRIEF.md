@@ -54,7 +54,7 @@ mode this whole documentation set is arranged against.
    └────────┬───────────┘
             ▼
    ┌── 2 REGISTRY ──────┐   resolve a name to a board, repair a dead one,
-   │  lane: registry ✱  │   park what is genuinely dark   ──▶ companies.csv  (~900 active)
+   │  lane: registry ✱  │   park what is genuinely dark   ──▶ companies.csv (900-1,100 active)
    └────────┬───────────┘
             ▼
    ┌── 3 FETCH ─────────┐   ats-fetch · native ATS APIs   (17 platforms)

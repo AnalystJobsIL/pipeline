@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**387 filed · 276 open · 111 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
+**399 filed · 288 open · 111 closed · 5 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 345.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 357.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -83,7 +83,7 @@ closure convention in the header.
 | 246 | `246@company-intel` **open** · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 
-### registry — 77 open
+### registry — 84 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -162,8 +162,15 @@ closure convention in the header.
 - **331** `331@registry` **`resolve_deep._verify` is inside `resolve`'s "TOTAL wall clock" and never sees it** —
 - **334** `334@registry` **`_site_from_guess` tries four TLDs and never varies the STEM, and the stem is worth
 - **339** `339@registry` **`AUTO_EXPAND_SITE_MAX` cannot rise until the resolve path it unlocks has a deadline**
+- **346** `346@registry` **`resolve_deep.ATS_PATTERNS` leaks page markup into tenant tokens**
+- **347** `347@registry` **`identity_gate._EMBED_TOKEN_WORDS` is compiled without `re.I`**
+- **348** `348@registry` **`embedded_board_ok`'s near-equality is prefix-containment in practice**
+- **352** `352@registry` **`resolve_deep._detect_ats` picks by ATS_PATTERNS ORDER, not by which board is the
+- **353** `353@registry` **Three active rows are one employer, and two of them are the same board**
+- **354** `354@registry` **The nine address-refused rows are refused from a HOME address too**
+- **355** `355@registry` **The nightly embed handoff has no reader yet**
 
-### infra — 69 open
+### infra — 71 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -234,6 +241,32 @@ closure convention in the header.
 - **324** `324@infra` **Deleting a dispatched run record destroys the evidence its morning check is answered
 - **333** `333@infra` **`cloud_state/intake_rejects.json` is committed by a directory rule and declared by
 - **335** `335@infra` **`BD_MONTHLY_BUDGET` defaults to 5,000 and no workflow sets it, so credits the
+- **349** `349@infra` **`pipeline/stages.py:stamp()` over an unreadable file silently deletes every other
+- **350** `350@infra` **`refresh_scrape_cache` runs in exactly ONE workflow, on a 00:00 cron GitHub is
+
+### scraper — 21 open
+
+- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
+- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
+- **90** `90@scraper` **Per-job strategy provenance in the cache**
+- **154** `154@scraper` **`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the
+- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
+- **219** `219@scraper` **Strategy 5's model, measured once**
+- **220** `220@scraper` **A `links:` carry has no ceiling**
+- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
+- **222** `222@scraper` **`pipeline/llm.py`
+- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
+- **235** `235@scraper` **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
+- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
+- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence** *(closed by a later bullet, original never edited)*
+- **245** `245@scraper` **The synthetic worker dicts do not carry the fields the real one does** *(closed by a later bullet, original never edited)*
+- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
+- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
+- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
+- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
+- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
+- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
+- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
 
 ### discovery — 20 open
 
@@ -258,28 +291,6 @@ closure convention in the header.
 - **337** `337@discovery` **The secrethunter catalog's own-domain and job-title data has no honest route, and the
 - **340** `340@discovery` **`pipeline/aggregators.py` does not know the Israeli job boards, and the hunt will
 
-### scraper — 19 open
-
-- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
-- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
-- **90** `90@scraper` **Per-job strategy provenance in the cache**
-- **154** `154@scraper` **`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the
-- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
-- **219** `219@scraper` **Strategy 5's model, measured once**
-- **220** `220@scraper` **A `links:` carry has no ceiling**
-- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
-- **222** `222@scraper` **`pipeline/llm.py`
-- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
-- **235** `235@scraper` **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
-- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
-- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence** *(closed by a later bullet, original never edited)*
-- **245** `245@scraper` **The synthetic worker dicts do not carry the fields the real one does** *(closed by a later bullet, original never edited)*
-- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
-- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
-- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
-- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
-- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
-
 ### docs — 15 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
@@ -298,6 +309,22 @@ closure convention in the header.
 - **338** `338@docs` **`HANDOFF.md` is at its word cap, so two lanes finishing on the same day cannot both
 - **344** `344@docs` **Sweep for tests that drive a root script's `main()` without `chdir` or explicit paths** —
 
+### ats-fetch — 13 open
+
+- **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
+- **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
+- **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
+- **102** `102@ats-fetch` **`company_info` has no `''`-aware API**
+- **184** `184@ats-fetch` **`fetch_discovery` judges the display name only; the slug it has in hand says
+- **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
+- **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
+- **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
+- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded** *(closed by a later bullet, original never edited)*
+- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
+- **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
+- **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
+- **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
+
 ### company-intel — 13 open
 
 - **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
@@ -313,21 +340,6 @@ closure convention in the header.
 - **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
 - **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
 - **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
-
-### ats-fetch — 12 open
-
-- **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
-- **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
-- **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
-- **102** `102@ats-fetch` **`company_info` has no `''`-aware API**
-- **184** `184@ats-fetch` **`fetch_discovery` judges the display name only; the slug it has in hand says
-- **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
-- **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
-- **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
-- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded** *(closed by a later bullet, original never edited)*
-- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
-- **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
-- **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
 
 ### roles — 7 open
 
@@ -5541,3 +5553,139 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     such test inherits the live registry, the live `scraped_cache.json` and the live
     `cloud_state/`, and goes red on whichever cron rewrites them first — a morning surprise for
     a lane that changed nothing.
+
+
+## From the `scraper` lane, 2026-08-28
+
+345. **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
+    lane: `scraper`. The biggest single bucket, and the reason "fill the cache" was the wrong
+    frame for this problem. Measured over the 2026-08-28 pass of all 287 uncached rows:
+    **70 cached · 92 real-empty (the LLM tier read the page and found nothing) · 106 AMBIGUOUS
+    · 10 dead page · 9 address-refused**. The 106 never reached strategy 5 at all:
+    `_llm_excerpt` returned `""`, i.e. no jobs signal survived the excerpt gate, so the page
+    rendered and the ladder saw nothing role-shaped. Named examples with a registry `notes`
+    count that disagrees: `Apple` (`jobs.apple.com/en-us/search?location=israel-ISR`, notes
+    claim 20 IL), `IBM` (7), `Portnox` (3), `Netafim` (a **teamtailor** board typed `scrape`),
+    `REE Automotive`, `Ludeo`, `Voom`, `Finaloop`, `Radiflow`, `ABB`. These are SPA boards
+    whose roles arrive after the scrape window, or whose markup carries no role words.
+    Reproduce one: `python scrape_universal.py "Apple" "<its api_url>"` prints
+    `jobs= israel= status= error= http= via=`. Two candidate directions, both unmeasured: wait
+    on a jobs-shaped selector rather than `networkidle`, and read the XHR bodies the page
+    answered even when no strategy claims them. **Do not treat a row in this bucket as an
+    empty board**: `empty` in `scrape_rot.json` says the page answered, not that the company
+    is not hiring, and 66 of the never-visited rows carry a `verified N IL` count from the
+    identity gate totalling 561 phrases.
+
+346. **`resolve_deep.ATS_PATTERNS` leaks page markup into tenant tokens** — lane: `registry`.
+    The slug classes are `[^/?]+` / `[^/?&]+` / `[^/?#]+`, and `wayback_rescue.extract_ats`
+    applies them to RAW HTML, so they swallow the attribute that follows. Measured over the
+    287 uncached rows: `stigg"`, `unframe"`, `traildsoftware" class="jw-cta`,
+    `FORDEFIJobs.ashbyhq.com`. Two of those four build an `api_url` that 404s. Affects
+    `wayback_rescue`, `bd_rescue`, `validate_empty` and the scraper's new handoff rung, which
+    defends itself with `scrape_universal._slug_ok` and REFUSES any token it had to repair —
+    a defence pinned by a test, so it will not rot silently after the real fix lands.
+
+347. **`identity_gate._EMBED_TOKEN_WORDS` is compiled without `re.I`** — lane: `registry`.
+    `_embed_token_forms` therefore never strips a CAPITALISED generic tail, so
+    `board_vouches('Fordefi', 'FORDEFIJobs', ...)` is `None` where `'fordefijobs'` is `True`.
+    A capitalised tail defeats the whole mechanism the wave-5 sweep added to recover 44 rows.
+    This WIDENS admission, so it is registry's call, not the scraper's.
+
+348. **`embedded_board_ok`'s near-equality is prefix-containment in practice** — lane:
+    `registry`. `_embed_token_forms` strips a 16-word tail vocabulary and `_tenant_near` then
+    strips a 13-item legal-suffix vocabulary from the candidate, so the composition admits
+    `<our name> + <any vocabulary tail>` — the opposite of the docstring's promise that
+    "`Bancor`/`bancorpbank` must fail". An adversarial pass drove six LIVE rows end to end
+    into publishing a stranger's board (`Nova` <- `novalabs`, `Zoomd` <- `zoom`, `Skai` <-
+    `kai`, `HUB Security` <- `hubinternational`, `Aqua Security` <- `aquatech`, `one ...` <-
+    `onemedical`) and measured that **492 of 496 active scrape rows admit some slug strictly
+    longer than their own core**; a cross-registry sweep found 15 admitting pairs that are
+    genuinely different companies, including `Sight Sciences` <- `sight` (item 50's own named
+    hazard) and `Darrow` <- `arrow`. Cogniteam<-riskified and Similarweb<-similartech refuse
+    only because each is a hand-written `not_tenants` row: **the gate refuses the incidents it
+    was shown, not the class.** The scraper no longer relies on it alone
+    (`scrape_universal._embed_admits` also requires a declared tenant or an EXACT normalised
+    name match, which refuses all ten demonstrated leaks and keeps all five real admissions),
+    but every registry writer still does. Related: `identity_facts.tenants` is a bare string
+    and never `(platform, tenant)`, so all 14 Workday/Eightfold-evidenced declarations also
+    admit a GREENHOUSE board of the same name (`NVIDIA` <- gh `mellanox`).
+
+349. **`pipeline/stages.py:stamp()` over an unreadable file silently deletes every other
+    stage, and is the one state writer that is not atomic** — lane: `infra`. `_load()` swallows
+    every read error into `{}` and `stamp()` writes over it, so one corrupt
+    `cloud_state/pipeline_stages.json` turns the next stamp into `{"collect": ...}` and the
+    mail then says repair/enrich/publish never ran. `refresh_scrape_cache._load` distinguishes
+    `absent` from `unreadable` for exactly this reason (BACKLOG 156) — the lesson was learned
+    in one file and not applied in the other. `stamp()` also writes a fixed `PATH + ".tmp"`
+    with no `mkstemp` and no `fsync`, unlike `pipeline.atomic`, while several workflow steps
+    can stamp concurrently. A public `stages.entry(stage)` would also let
+    `refresh_scrape_cache._uncached_base` stop reading the private `_load()`.
+
+350. **`refresh_scrape_cache` runs in exactly ONE workflow, on a 00:00 cron GitHub is
+    currently dropping** — lane: `infra`. Same class as 292@infra but for the cache rather
+    than the digest, and with the cost now measurable. Last successful run 2026-08-27T05:41
+    (5h41m late); the 2026-08-28 slot did not fire at all, and by 06:20 **287 of 496 active
+    scrape rows had no cache entry** — invisible to the board, to `stale.json` and to the
+    mail. The honest half: the digest DOES say so, and did at 06:59 on 2026-08-28
+    (`##[warning]stage collect last ran 1d ago - the digest read stale input`). What was
+    missing was the COST, which `uncached`/`unvisited` now supply. **The recommendation is NOT
+    a second cron** — 292@infra already rejected that class with `schedule_census` evidence
+    (0 isolated single-slot drops) and this is the same failure mode watching itself. It is:
+    (a) pair the existing age alarm with the new `uncached=` number, and (b) raise
+    `SCRAPE_REFRESH_TIME_BUDGET_MIN` (260) and `timeout-minutes` (330) so a single run cannot
+    leave a queue — the 2026-08-28 local pass did all 287 rows in **15 minutes with 10
+    workers**, against `SCRAPE_WORKERS` default `min(4, cpus)` in the cloud.
+
+351. **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
+    none** — lane: `ats-fetch`. Worst case is 3 retries x 30 s plus backoff, ~96 s, which
+    overruns `SCRAPE_COMPANY_BUDGET_S` (150) on its own, and monkeypatching
+    `http.DEFAULT_TIMEOUT` does nothing. The scraper's handoff bounds it with a daemon thread
+    and a 25 s join, which leaks a socket for the rest of the call on a timeout; a
+    `fetch_company(row, *, timeout=None)` resolved at call time would let it stop.
+
+352. **`resolve_deep._detect_ats` picks by ATS_PATTERNS ORDER, not by which board is the
+    company's** — lane: `registry`. A page carrying a partner's greenhouse widget beside its
+    own ashby board detects the greenhouse one; the identity gate then refuses it. That costs
+    a conversion and can never cost an admission, so it is a yield bug, not a safety one.
+    Measured in the scraper's own guard.
+
+353. **Three active rows are one employer, and two of them are the same board** — lane:
+    `registry`. `Applied Materials` (workday), `Applied Materials Israel` (scrape, 12 jobs
+    cached) and `Applied Materials - Israel` (scrape, added by listing-hunt on 2026-08-28,
+    same board) — so ~11 roles will publish twice under two names, and the honest `uncached` /
+    `unvisited` counts for 2026-08-28 are 286 / 70 rather than 287 / 71. Found by an
+    adversarial sweep for identity slippage, which otherwise measured **zero** case,
+    whitespace, NBSP or homoglyph mismatches across 1,465 CSV names, 209 cache keys and 236
+    rot keys.
+
+354. **The nine address-refused rows are refused from a HOME address too** — lane: `registry`.
+    `python refresh_scrape_cache.py --residential --only "..."` over Akamai, Akamai
+    Technologies, Bayer, Blaize, Denso, Dynamic Yield, FundGuard, Mercedes-Benz (MBRDNA) and
+    Zim on 2026-08-28: **9 of 9 still `http:403`** (Dynamic Yield `links:unread:403`). So the
+    datacenter IP is not the variable, and the residential rescue is not the remedy for these
+    rows — they are bot-walled to any non-browser client. Recorded so nobody spends the pass
+    again. They are correctly never parked (an IP-shaped code is exempt), which means only
+    `stale-ip-N` will ever raise its hand for them.
+
+355. **The nightly embed handoff has no reader yet** — lane: `registry`. From 2026-08-28 the
+    scraper records, on each zero-yield row's `cloud_state/scrape_rot.json` entry and in a
+    `::warning::` line, any third-party board embedded in the page plus the identity gate's
+    verdict: `won` / `ok:<why the fetch gave nothing>` / `not-ours` / `unverified` / `markup`.
+    The first production-shaped pass found 10 over 287 rows: `REE Automotive` comeet `D3.00B`,
+    `Autotalks` comeet `03.009`, `Caja Robotics` comeet `E3.00D`, `Traild` lever
+    `traildsoftware`, `Fairmatic` workable, `UserWay` greenhouse, `Finaloop` recruitee
+    (a false positive on a tagging host), plus `Stigg` (ashby, admitted, board genuinely
+    empty), `Digital Turbine` and `Fordefi` (admitted, the API 404s on the detected slug).
+    Each `unverified` is a Comeet uid that vouches for nothing and needs either a declared
+    tenant in `pipeline/identity_facts.py` or an `ats_platform` conversion — decisions only
+    this lane may make. **`Nova` is the one worth doing first**: its `notes` claim 81 Israel
+    roles and its own careers page embeds Comeet.
+
+356. **`--residential --only-missing` is the whole-registry command the `--residential` guard
+    was written to forbid** — lane: `scraper`. The guard rejects `--limit`/`--shard` because
+    "`--shard 0 1` IS the whole registry ... the cache would stop converging for a fortnight",
+    and then allows `--only-missing`, which on 2026-08-28 selected **287 of 496 rows (58%)**
+    and would have marked every one `_via: residential` with a 14-night expiry. Found by an
+    adversarial pass; this session used `--only` with nine explicit names instead. Either cap
+    the row count under `--residential` or make it refuse `--only-missing` above some share of
+    the pool.

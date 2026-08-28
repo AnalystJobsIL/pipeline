@@ -946,13 +946,21 @@ def _parse(argv):
     return o
 
 
-def _select_rows(o: Opts, cache):
+def _select_rows(o: Opts, cache, rot=None):
     rows = [r for r in load_companies(CSV_PATH, active_only=True)
             if r["ats_platform"].strip().lower() == "scrape"]
     if o.only:
         rows = [r for r in rows if r["company_name"].strip().lower() in o.only]
     if o.only_missing:
         rows = [r for r in rows if not cache.get(r["company_name"])]
+        # NEVER-VISITED FIRST. A scoped run is not day-rotated (`_rotate` is skipped below),
+        # and the registry appends, so the rows no run has ever seen sit at the very END of
+        # this selection: on 2026-08-28 all 71 of them were at positions 217-287 of 287, and
+        # every one of the 70 boards this pass recovered came from that tail. A time budget
+        # that binds would therefore strand exactly the rows `--only-missing` exists to
+        # reach -- and this is the command the `unvisited-N` alarm tells the operator to run.
+        # Stable within each group, so the order is still deterministic.
+        rows.sort(key=lambda r: r["company_name"] in (rot or {}))
     if o.shard:
         i, n = o.shard
         rows = rows[i::n]
@@ -1002,7 +1010,7 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     rot_at_start = dict(rot)
     day = _today()                      # read once: the cron fires AT midnight
     today = day.isoformat()
-    rows = _select_rows(o, old)
+    rows = _select_rows(o, old, rot)
     if not o.scoped:
         rows = _rotate(rows, day)
     base = _uncached_base()               # BEFORE any stamp replaces the entry

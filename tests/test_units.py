@@ -3061,6 +3061,28 @@ def test_no_posting_in_the_committed_cache_came_from_an_unadmitted_board():
         assert SU._embed_admits(name, j.get("_token", ""), j.get("_board_url", "")), \
             f"{name} carries a posting from {j['_board']} it no longer admits"
 
+def test_only_missing_reaches_the_never_visited_rows_first(tmp_path, monkeypatch):
+    """A scoped run is not day-rotated and the registry APPENDS, so rows no run has ever seen
+    sit at the very end of `--only-missing`. On 2026-08-28 all 71 of them were at positions
+    217-287 of 287 -- and every one of the 70 boards that pass recovered came from that tail,
+    because the previously-visited rows genuinely extract zero. A time budget that binds would
+    therefore strand exactly the rows the flag exists to reach, and this is the command the
+    `unvisited-N` alarm tells the operator to run. Never-visited sorts first; the order stays
+    deterministic within each group."""
+    names = [f"Co{i:02d}" for i in range(6)]
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], {},
+                         {n: _rot_entry(2, why="empty") for n in names[:4]})
+    o = P.R._parse(["--only-missing"])
+    cache, rot = {}, {n: _rot_entry(2, why="empty") for n in names[:4]}
+    picked = [r["company_name"] for r in P.R._select_rows(o, cache, rot)]
+    assert picked[:2] == [names[4], names[5]], picked
+    assert picked[2:] == names[:4], "and the visited ones keep registry order behind them"
+    assert P.R._select_rows(o, cache, rot) == P.R._select_rows(o, cache, rot)
+    # with no rot file at all nothing is reordered
+    assert [r["company_name"] for r in P.R._select_rows(o, cache, None)] == names
+
+
+
 def test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason(tmp_path, monkeypatch):
     """A run whose rebuilt cache would lose more than 20% of its companies keeps the old
     file (mass-empty is as suspicious as mass-error) — and now says so in the stamp instead

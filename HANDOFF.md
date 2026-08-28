@@ -45,21 +45,17 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 
 | due | lane | must be true | answered | verdict |
 |---|---|---|---|---|
-| 2026-08-27 | scraper | Get SAT/BlueBird/Red Access/WSC Sports in `with_jobs` or `links_unread`, never `empty` | 2026-08-27 | PASS on the artefact — no rot record for any of the four; `via` sums to `with_jobs` 201; no `llm-down` |
-| 2026-08-27 | ats-fetch | `29 regressed to zero` standing; 0 `?` in `stale.json`; `new:` grouped; no myInterview under `cleared:` | 2026-08-27 | PARTIAL — `stale.json` has 29 `regressed-to-zero` and zero `?`; the two mail-rendered clauses are unanswerable, **no 08-27 digest ran** |
-| 2026-08-27 | company-intel | `Company intel:` names sonnet, `N searches`, no `SEARCHLESS`, export count matches the file | — | N/A — no 08-27 digest ran. For the record `firmographics.json` is 973 and `seen.db` 946; the 08-26 mail said 942, so whatever it prints, two of those three will disagree |
-| 2026-08-27 | jd-text | `Stage order:` carries `scrape_bd_calls=`/`matched_short=`; `jd-fill:` denominator ~121 | — | N/A — no 08-27 digest ran. 08-26 baseline: `jd-fill: 110/148 … discovery-indeed http-401 17` |
 | 2026-08-28 | infra | the digest log's `deliver:` line says `delivered`, and `cloud_state/last_delivered.json` carries `2026-08-28` with a sha256 matching `digests/latest.md` | — | not yet due |
 | 2026-08-28 | infra | the mail's `Stages:` says `the last digest that reached the mail was 2026-08-26 (2d ago)` — once. If it says nothing, `_receipt_alarms` is not wired; if it repeats on 08-29, `deliver` is not writing the receipt | — | not yet due |
 | 2026-08-28 | infra | `firmographics.yml` fired on its 10:00 slot (BACKLOG 293). At 11:01 on 08-27 its run list was still empty, 61 min after its first real slot — inside the 180-min grace `tests/schedule_census.py` holds before calling a slot dropped | — | not yet due |
 | 2026-09-10 | infra | `python tests/schedule_census.py --days 14` — **≥ 3 isolated single-slot drops ⇒ build the recovery digest cron; otherwise it stays rejected.** It was 0 on 2026-08-27 | — | not yet due |
 | 2026-08-28 | infra | the `mutation-gate` job FINISHES rather than hitting `timeout-minutes: 45`. It already timed out once: `30bc39f` ran **45m16s, `cancelled`**. It was 44m16s on `c1323d5` before this session, and this session's guards add +19.1s to the baseline suite. A timeout names no surviving mutant — BACKLOG 195/311 | — | not yet due |
 | 2026-08-28 | roles | `ledger N = store N`; `purged 7` once; `reopened` NOT ~70 | — | |
-| 2026-08-28 | registry | the drain survived the REAL merge, and the auto-expand `probe:` line shows `N resolved` with `probe-dup-board` among its refusals | 2026-08-27 | PASS, early — `599d7b8` 16:42 UTC: queue **1,693 -> 517** in one commit; the 17:00 run printed `probe: 11 resolved, refused 18 (... probe-dup-board 4 ...)` |
 | 2026-08-28 | registry | the 05:00 `classify:` judges more than yesterday. 42 intake companies went active overnight with 0 cache entries; ~0 judged ⇒ an uncached scrape row ships nothing | — | not yet due |
 | 2026-08-28 | registry | the 08:00 auto-expand log ends `bound=batch`, `walked N of N`, `probe-noboard` among its refusals | — | not yet due |
 | 2026-08-28 | infra | the 02:28 `bd_rescue` pass reports ~43 NEW names, **≤215 unlock calls** (`registry` widened `in_retry_pool` 4 → 47 for `320`); too costly ⇒ narrow the paid half | — | not yet due |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due (`audit-coverage.yml` is `0 4 * * 0`) |
+| 2026-08-29 | scraper | the 05:00 `collect:` line carries `uncached=` and `unvisited=`, and `Stage order:` renders both. The 70 boards cached on 08-28 are scanned: expect **~22 new title-passing roles judged, of which ~6 accept deterministically and ~16 reach the LLM tier** | | not yet due |
 
 ## State at handoff — 2026-08-27 07:5x UTC, every number re-derived
 
@@ -222,3 +218,4 @@ One line per session, in the shape at the top of this file. The long version is 
 used to open this file are in `docs/sessions/2026-08-23.md`, which is where the long
 version already was.*
 - **2026-08-28 `jd-text`** - 10 of 70 open roles held text our own parser rejects, 4 of them page furniture with no JD. `is_job_url` reads a `/careers/<slug>` with the role's title, `looks_like_jd` replaces the length-only gate, a JD outranks furniture even when shorter. **67 of 70 now carry a description, was 60.** **NOT finished:** 341-344, the render bug. Record: `docs/sessions/2026-08-28-jd-text.md`.
+- **2026-08-28 `scraper`** - 287 of 496 active `scrape` rows had no cache entry, so nothing downstream saw them and nothing counted them. Cached **70 boards / 435 postings** for **0 BD credits**; `uncached`/`unvisited` now stamp on `collect`; wave 1 killed an identity leak before it shipped. **NOT finished:** 345, 348, 350, 356. Record: `docs/sessions/2026-08-28-scraper.md`.
