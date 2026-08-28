@@ -1,9 +1,10 @@
 {
- "date": "2026-08-26",
- "first_line": "# 🎯 8 new senior analytics roles — 2026-08-26",
- "reason": "seeded 2026-08-27 by the infra lane from the file origin actually carries (commit b2090f647499); sha256 is EOL-normalised (see persist_state.digest_sha); every later receipt is written by `persist_state.py deliver`",
- "roles": 8,
- "run_url": "",
- "sha256": "71ef0dcbb8b1f546e26074278ecc9976734c05822e4f969d0f20fa0c0aa8d542",
- "written_at": "2026-08-27T00:00:00Z"
+ "date": "2026-08-28",
+ "first_line": "# 🎯 4 new senior analytics roles — 2026-08-28",
+ "past_cutoff": false,
+ "reason": "first delivery for the day",
+ "roles": 5,
+ "run_url": "https://github.com/AnalystJobsIL/pipeline/actions/runs/33148916309",
+ "sha256": "5d4a0f8a4256a77fa8cb10f00bb1ce26c92a51e2d0d3ed097b0f66f735ff12bc",
+ "written_at": "2026-08-28T07:08:23Z"
 }

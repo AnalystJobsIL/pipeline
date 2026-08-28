@@ -1,68 +1,65 @@
-# 🎯 8 new senior analytics roles — 2026-08-26
+# 🎯 4 new senior analytics roles — 2026-08-28
 
 Israeli high-tech scan — experienced (≈3+ yrs) data-analysis / BI / analytics roles from the **last 48h**, freshest first. Each role title links to apply.
 
 🔎 **[Open the full board →](https://analystjobsil.github.io/board/)** — every role still open, searchable & sortable.
 
-### HoneyBook
-_HoneyBook is an AI-powered business management platform that helps independent, service-based professionals (like freelancers and small business owners) attract clients, book projects, sign contracts, and manage payments in one place. It makes money through SaaS subscriptions for its platform, supplemented by transaction fees on the payments it processes for its users._
-`SaaS / fintech` · `growth-stage private` · `~349 employees` · `founded 2013` · `Tel Aviv (R&D, founding site)`
+### Hila & Co.
 
-- **Product Data Analyst** — https://jobs.ashbyhq.com/honeybook/9d5a89da-0e05-4e47-8ddb-57a186895cc1 · 📍 Tel Aviv · 🗓 2026-08-25 · 🎓 4+ yrs
+- **Consumer & Market Insights \(CMI\) Manager** — https://il.linkedin.com/jobs/view/consumer-market-insights-cmi-manager-at-hila-co-4457744315 · 📍 Central Israel · 🗓 2026-08-27
 
-### ShipIn Systems
-_ShipIn Systems develops an AI-powered maritime monitoring platform that uses onboard cameras and computer vision to detect safety, crew-behavior, and operational risks on ships. It generates revenue by selling subscription-based access to its risk-scoring and analytics platform to shipping companies and insurance partners who use the data for underwriting and risk management._
-`maritime tech` · `growth-stage private` · `~85 employees` · `founded 2018` · `Tel Aviv (R&D); HQ in Newton, MA, US`
+### Fetcherr
+_Fetcherr develops AI-powered pricing and revenue management software, centered on its "Market Model" that forecasts demand and recommends real-time pricing decisions, initially for airlines and now for other volatile markets like hospitality and retail. It generates revenue by licensing its enterprise software platform to commercial teams at large companies, typically through B2B subscription or contract-based deals tied to the profit gains the model delivers._
+`travel tech / AI` · `growth-stage private` · `~170 employees` · `founded 2019` · `Tel Aviv (HQ); additional teams in US and Poland`
 
-- **Senior Product Analyst** — https://il.linkedin.com/jobs/view/senior-product-analyst-at-shipin-systems-4457490486 · 📍 Central Israel · 🗓 2026-08-25 · 🎓 4+ yrs
+- **Data Scientist** — https://www.comeet.com/jobs/fetcherr/68.006/data-scientist/B5.079 · 📍 Netanya · 🗓 2026-08-27 · 🎓 5+ yrs
 
-### Migdal Group
-_Migdal Group is a major Israeli insurance and financial services company, offering life, health, and general (property and casualty) insurance alongside pension and long-term savings products. It generates revenue primarily through insurance premiums, management fees on pension and provident funds, and investment income earned on the assets it manages for policyholders._
-`insurance / financial services` · `public` · `~4,435 employees` · `founded 1974` · `Petah Tikva (HQ)`
+### Rounds
+_Rounds is an Israeli ad-tech company that uses machine learning to identify, acquire, and optimize mobile app and web assets (browser extensions, apps, etc.) at scale. It makes money primarily through advertising and monetization of the mobile/web traffic and user bases it acquires and optimizes, rather than through direct SaaS subscriptions._
+`consumer mobile apps` · `growth-stage private` · `~164 employees` · `founded 2020` · `Tel Aviv (HQ)`
 
-- **Business Analyst** — https://il.linkedin.com/jobs/view/business-analyst-at-migdal-group-4458736498 · 📍 Petah Tikva · 🗓 2026-08-25
+- **Senior Product Analyst** — https://www.comeet.com/jobs/rounds/59.005/senior-product-analyst/E3.E6D · 📍 Tel Aviv · 🗓 2026-08-27 · 🎓 5+ yrs
 
-### Jobgether
-_Jobgether operates an AI-driven job-matching platform that connects candidates with remote and hybrid job openings across partner companies. It generates revenue by charging employers and recruiters for talent-sourcing and job-distribution services rather than charging job seekers._
-`HR tech / recruiting` · `early-stage private` · `~39 employees` · `founded 2020`
+### Zipher
+_Zipher builds an autonomous execution layer for cloud data and AI workloads — software that orchestrates clusters, predicts bottlenecks, scales resources in real time, and self-heals infrastructure without human intervention, and it runs in production at enterprises including Fortune 5 companies. It makes money by selling this platform on an enterprise subscription/usage basis._
+`data infrastructure` · `early-stage private` · `~20 employees` · `founded 2023` · `Tel Aviv`
 
-- **Team Lead Product Analyst** — https://il.linkedin.com/jobs/view/team-lead-product-analyst-at-jobgether-4457464817 · 📍 Israel (unspecified) · 🗓 2026-08-25
+- **Senior Data Analyst** — https://zipher.ai/careers/senior-data-analyst/ · 📍 Tel Aviv · 🗓 — · 🎓 6+ yrs
 
-### Alma Labs
-_Alma Labs is an early-stage private company in edtech: AI-literacy learning platform for middle schools (student + educator tools). It makes money through B2B2C SaaS — sells/licenses an AI-education platform to schools, municipalities, and education networks. Customers: schools, municipalities, education networks._
-`edtech` · `early-stage private` · `Tel Aviv (HQ)`
+---
 
-- **Head of Data** — https://il.linkedin.com/jobs/view/head-of-data-at-alma-labs-4456925153 · 📍 Tel Aviv · 🗓 2026-08-25 · 🎓 6+ yrs
+## Newly covered companies (1)
 
-### Tel Aviv
-_Alma, a Sisram Medical company, develops and manufactures energy-based medical-aesthetic devices along with injectables, diagnostics, and personalized skincare products for aesthetic clinics worldwide. It generates revenue primarily by selling its medical devices and related consumables/products to clinics and healthcare providers globally._
+Employers this scan reached for the **first time**, with whatever they have open now — so these are not 48h-new, they are new *to you*. Where a posting states its date it is shown; scraped cards often do not, and "we first saw it today" is not a publication date. From tomorrow these companies report like every other.
 
-- **Senior Product Analyst** — https://jobs.secrettelaviv.com/job/senior-product-analyst-52/ · 📍 Modi'in · 🗓 — · 🎓 3+ yrs
-- **Senior BI Analyst** — https://jobs.secrettelaviv.com/job/senior-bi-analyst-18/ · 📍 Modi'in · 🗓 — · 🎓 3+ yrs
-- **Marketing Ops & Analytics Manager** — https://jobs.secrettelaviv.com/job/marketing-ops-analytics-manager-2/ · 📍 Tel Aviv · 🗓 — · 🎓 3+ yrs
+### TLVTech
+_TLVTech is a technology consulting firm that builds custom software products for prominent global companies using modern development technologies. It earns revenue through client service fees for its software development and staffing projects._
+`IT Services / Software Consulting` · `private enterprise` · `~40 employees` · `founded 2018` · `Tel Aviv (HQ)`
+
+- **Data Analyst** — https://jobs.smartrecruiters.com/tlvtech/744000021957355 · 📍 Tel Aviv · 🗓 2024-10-22 · ⚠️ posted ~22mo ago · 🎓 5+ yrs
 
 ---
 **Needs a look**
 
-- **Sources not producing:** linkedin-targeted: nothing for 3d (last 2026-08-23)
-- **Registry:** re-check pool grew: probe_candidates 127 -> 224 (a predicate widened?)
-- **Stages:** collect links-unread-1
-- **Render:** title-twin Port/Port.io — one posting may be under the wrong name, check the card
+- **Sources not producing:** linkedin-targeted: nothing for 5d (last 2026-08-23)
+- **Registry:** re-check pool grew: triage_dark 234 -> 358 (a predicate widened?); re-check pool grew: listing_hunt 204 -> 318 (a predicate widened?)
+- **Stages:** collect last ran 1d ago — the digest read stale input; collect links-unread-1; the last digest that reached the mail was 2026-08-26 (2d ago) -- 1 morning(s) produced no digest email; enrich scrape:bd-spent(1 call, 0 filled: bd-no-markers1+not-a-job-url1); roles seen-id collision (1 id(s) name two or more roles; worst: discovery-linkedin:linkedin:4456923326 x2) — one of them will never be emailed
 
 ---
 <details><summary>Run audit</summary>
 
-- Companies scanned: **870** (failed: 3)
-- Jobs fetched: 24123 · Israel-matched: 5247
-- Accepted: 96 · after merge: 65 · **new: 8**
-- Decision paths: keyword=4520, llm=28, llm_cache=271, merged-copy=428
-- LLM calls this run: 28 · JDs fetched inline: 110
-- **Boards** changed today: new: Airbnb: regressed-to-zero; Akamai: fetch-error; Apollo Power: regressed-to-zero; AstraZeneca: regressed-to-zero; BlueSnap: regressed-to-zero; CyberArk: regressed-to-zero; +30 more · cleared: BlueBird Aero Systems; Fortinet; Get SAT; Red Access; Reindeer; WSC Sports; +2 more
-- **Boards** standing: 5 fetch errors (Akamai: scrape: http:403 (2 nights); Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ; Dell Technologies: BoardEmpty: dell.wd1.myworkdayjobs.com/External: 0 postings worldwide — moved tena; Greeneye Technology: scrape: http:404 (1 night); Mobileye: HttpError: network error for https://api.eu.lever.co/v0/postings/mobileye The rea) · 55 regressed to zero (ABB; ASTERRA; AU10TIX; Airbnb; Apollo Power; Apple; +49 more) · 34 empty (AI21 Labs; Any.do; Aporia; Argus Cyber Security; At-Bay; Chaos Labs; +28 more) · 25 scrape rows on an ATS host
-- **Company intel:** 4 of 60 board companies unprofiled (cap 5/run, budget 15m): 4 researched, 0 failed (2 more unprofiled: research failed, weekly retry) · blurbs: 4 asked, 3 written, 1 empty, 3 derived from facts, 2 waiting (monthly retry / same company) · export 942 records, newest 2026-08-25
-- **Roles:** open 76 · closed today 11 · reopened 0 · reposted 3 · merged-copy 428 · ledger 135 = store 135
-- **Render:** board 76 cards, title-twin Port/Port.io · archive 56 cards · email 8 cards
-- Stage order: repair: 2026-08-25 (1d ago) | collect: 2026-08-26 (TODAY) alarm=links-unread-1 carried=2 empty=199 errors=22 links_unread=1 llm_calls=128 llm_fail=0 llm_won=34 minutes=28 no_il=0 parked=0 rows=438 scraped=438 unlock_calls=48 unlock_ok=42 unprocessed=0 via=cards56+dom48+links42+structured35+llm34+structured-dom2 with_jobs=217 workers=4 | expand: 2026-08-25 (1d ago) | enrich: 2026-08-26 (TODAY) matched_bd=0 matched_bd_unavailable=0 matched_cooldown=3 matched_fail=2 matched_filled=0 matched_ran=1 matched_unfillable=0 scrape_bd=0 scrape_bd_unavailable=0 scrape_cooldown=6 scrape_fail=1 scrape_filled=6 scrape_ran=1 scrape_unfillable=4 | publish: 2026-08-26 (TODAY) board=76 email=8 scanned=870
-- Failed companies: Mobileye (HttpError: network error for https://api.eu.lever.co/v0/postings/mobileye The rea), Decart (HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ), Dell Technologies (BoardEmpty: dell.wd1.myworkdayjobs.com/External: 0 postings worldwide — moved tena)
+- Companies scanned: **969** (failed: 4)
+- Jobs fetched: 26888 · Israel-matched: 6022
+- Accepted: 99 · after merge: 70 · **new: 5**
+- Decision paths: keyword=5055, llm=16, llm_cache=332, merged-copy=619
+- LLM calls this run: 16 · JDs fetched inline: 153
+- At newly covered companies: 1
+- **Boards** changed today: new: 1 fetch error (CYE: HttpError: network error for https://api.lever.co/v0/postings/CYE The read operat) · 1 empty (At-Bay) · 16 scrape rows on an ATS host (4M Analytics; Altera; Ashley Digital; Discount Bank; ENI-ONE LTD; Exodigo; +10 more) · cleared: Orca Security
+- **Boards** standing: 6 fetch errors (Akamai: scrape: http:403 (3 nights); CYE: HttpError: network error for https://api.lever.co/v0/postings/CYE The read operat; Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ; Dell Technologies: BoardEmpty: dell.wd1.myworkdayjobs.com/External: 0 postings worldwide — moved tena; Dream: HttpError: network error for https://api.lever.co/v0/postings/wearedream The read; Greeneye Technology: scrape: http:404 (2 nights)) · 33 regressed to zero (ABB; ASTERRA; AU10TIX; Airspan Networks; Apple; BeeHero; +27 more) · 34 empty (AI21 Labs; Any.do; Aporia; Argus Cyber Security; At-Bay; Chaos Labs; +28 more) · 26 scrape rows on an ATS host
+- **Company intel:** all 60 board companies profiled (2 more: research failed, weekly retry) · blurbs: 1 asked, 1 written, 2 derived from facts, 3 waiting (monthly retry / same company), 1 cached under a non-company name, dropped · seam: sonnet-5 · 1 calls, 5s, 0 searches · export 995 records, newest 2026-08-27, 19 newer than the store, registry backlog 74
+- **Roles:** open 70 · closed today 1 · reopened 0 · reposted 3 · merged-copy 619 · ledger 142 = store 142; claim conflicts 1 (Port<-Port.io)
+- **Render:** board 70 cards · archive 61 cards · email 5 cards
+- Stage order: repair: 2026-08-28 (TODAY) | collect: 2026-08-27 (1d ago) alarm=links-unread-1 carried=4 carried_residential=0 dropped_residential=0 empty=196 errors=24 links_unread=1 llm_calls=83 llm_fail=0 llm_skipped=45 llm_won=34 minutes=28 no_il=0 parked=0 rows=421 scraped=421 unlock_calls=57 unlock_ok=49 unlock_won=5 unprocessed=0 via=cards56+links37+structured36+dom35+llm34+structured-dom2+structured-links1 with_jobs=201 workers=4 | expand: 2026-08-28 (TODAY) | enrich: 2026-08-28 (TODAY) alarm=scrape:bd-spent(1 call, 0 filled: bd-no-markers1+not-a-job-url1) matched_actionable=0 matched_bd=0 matched_bd_calls=0 matched_bd_ok=0 matched_bd_unavailable=0 matched_cooldown=0 matched_dead=7 matched_fail=1 matched_filled=0 matched_foreign_sibling=0 matched_from_cache=0 matched_probe=1 matched_ran=1 matched_short=10 matched_skipped=0 matched_todo=3 matched_unfillable=3 matched_why=auth-walled3 scrape_bd=0 scrape_bd_calls=1 scrape_bd_ok=1 scrape_bd_unavailable=0 scrape_cards=1208 scrape_cooldown=14 scrape_dropped_title=981 scrape_fail=1 scrape_filled=5 scrape_probe=0 scrape_ran=1 scrape_skipped=0 scrape_todo=21 scrape_unfillable=1 scrape_why=bd-no-markers1+not-a-job-url1 | publish: 2026-08-28 (TODAY) board=70 email=5 scanned=969
+- Failed companies: CYE (HttpError: network error for https://api.lever.co/v0/postings/CYE The read operat), Decart (HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ), Dell Technologies (BoardEmpty: dell.wd1.myworkdayjobs.com/External: 0 postings worldwide — moved tena), Dream (HttpError: network error for https://api.lever.co/v0/postings/wearedream The read)
 
 </details>

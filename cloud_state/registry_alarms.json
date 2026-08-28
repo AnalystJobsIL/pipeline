@@ -1,4 +1,7 @@
 {
- "since": "2026-08-27",
- "alarms": []
+ "since": "2026-08-28",
+ "alarms": [
+  "re-check pool grew: triage_dark 234 -> 358 (a predicate widened?)",
+  "re-check pool grew: listing_hunt 204 -> 318 (a predicate widened?)"
+ ]
 }
