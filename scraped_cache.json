@@ -18171,6 +18171,41 @@
    "url": "https://xtra-mile.co/career-single-position/?position=20.83B"
   }
  ],
+ "Zenyard": [
+  {
+   "ats_platform": "scrape",
+   "company": "Zenyard",
+   "country_code": "",
+   "description": "Frontend Engineer position at Zenyard working on AI tools for binary analysis and reverse engineering automation.",
+   "job_id": "https://www.zenyard.ai/careers/frontend-engineer",
+   "location": "Tel Aviv",
+   "posted_date": "2025-01-01",
+   "title": "Frontend Engineer",
+   "url": "https://www.zenyard.ai/careers/frontend-engineer"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Zenyard",
+   "country_code": "",
+   "description": "Backend Engineer position at Zenyard working on AI tools for binary analysis and reverse engineering automation.",
+   "job_id": "https://www.zenyard.ai/careers/backend-engineer",
+   "location": "Tel Aviv",
+   "posted_date": "2025-01-01",
+   "title": "Backend Engineer",
+   "url": "https://www.zenyard.ai/careers/backend-engineer"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Zenyard",
+   "country_code": "",
+   "description": "Security Researcher position at Zenyard working on AI tools for binary analysis and reverse engineering automation.",
+   "job_id": "https://www.zenyard.ai/careers/security-researcher",
+   "location": "Tel Aviv",
+   "posted_date": "2025-01-01",
+   "title": "Security Researcher",
+   "url": "https://www.zenyard.ai/careers/security-researcher"
+  }
+ ],
  "Zero Networks": [
   {
    "ats_platform": "scrape",

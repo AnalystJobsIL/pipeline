@@ -1535,3 +1535,12 @@ Maccabi Health care Services,scrape,,https://www.maccabi4u.co.il/careers/search-
 KayHut,scrape,,https://kayhut.com/careers/,true,queue-drain 2026-08-28 exhaust; 1/1 IL
 Dentsply Sirona,scrape,,https://careers.dentsplysirona.com/search/?q=&locationsearch=Israel,true,queue-drain 2026-08-28 exhaust; 2/2 IL
 Lemon MSS,scrape,,https://lemon-mss.com/jobs/,true,queue-drain 2026-08-28 exhaust; 5/5 IL
+Outlook Amusements,scrape,https://outlookamusements.com,https://outlookamusements.com,false,scanned; no open Israel roles now | own-site 2026-08-28: outlookamusements.com linkback
+Xinnor,scrape,https://xinnor.io,https://xinnor.io,false,scanned; no open Israel roles now | own-site 2026-08-28: xinnor.io linkback
+Yodo1,scrape,https://www.yodo1.com/,https://www.yodo1.com/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.yodo1.com linkback
+Zenyard,scrape,https://www.zenyard.ai/careers,https://www.zenyard.ai/careers,true,auto-expand scrape; 3 IL
+Zerto,scrape,https://www.zerto.com/,https://www.zerto.com/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.zerto.com linkback
+Zigit,scrape,https://www.zigit.co.il/,https://www.zigit.co.il/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.zigit.co.il linkback
+1global,scrape,https://www.1global.com/,https://www.1global.com/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.1global.com linkback
+Cylus,scrape,https://www.cylus.com/,https://www.cylus.com/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.cylus.com linkback
+Agency,greenhouse,agency,https://boards-api.greenhouse.io/v1/boards/agency/jobs,true,auto-expand slug-probe; 821/1 IL
