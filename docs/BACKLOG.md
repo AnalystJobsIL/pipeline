@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**410 filed · 299 open · 111 closed · 6 half · 29 numbers name more than one item · 28 items name no lane.**
+**411 filed · 299 open · 112 closed · 6 half · 29 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 368.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 369.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -171,7 +171,7 @@ closure convention in the header.
 - **355** `355@registry` **The nightly embed handoff has no reader yet**
 - **367** `367@registry` **Seven mutations SURVIVE, and nobody has seen that since 2026-08-24**
 
-### infra — 75 open
+### infra — 76 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -248,6 +248,7 @@ closure convention in the header.
 - **358** `358@infra` **Three cron slots did not fire on 2026-08-28, and only a hand-dispatched digest covered
 - **364** `364@infra` **The pipeline is nine independent crons, not one ordered unit**
 - **365** `365@infra` **The monthly Bright Data gate is wired into one workflow of seven, and six caps are
+- **368** `368@infra` **`tools/mutate.py` read its own warnings as failures, and the count grew with the
 
 ### scraper — 22 open
 
@@ -297,7 +298,7 @@ closure convention in the header.
 - **337** `337@discovery` **The secrethunter catalog's own-domain and job-title data has no honest route, and the
 - **340** `340@discovery` **`pipeline/aggregators.py` does not know the Israeli job boards, and the hunt will
 
-### docs — 19 open
+### docs — 18 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
 - **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
@@ -317,7 +318,6 @@ closure convention in the header.
 - **360** `360@docs` **ARCHITECTURE.md states the active-row count six ways and two of them carry no date**
 - **361** `361@docs` **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
-- **366** `366@docs` **The mutation gate's BASELINE is red on the runner while `guard`'s own `pytest` is
 
 ### company-intel — 14 open
 
@@ -5935,8 +5935,13 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     one per process; after a week of `[bd-spend]` lines, replace the 250s with real numbers.
     `scrape-refresh`'s 150 is measured (72 observed on 2026-08-28).
 
-366. **The mutation gate's BASELINE is red on the runner while `guard`'s own `pytest` is
-    green, so the gate refuses to run at all** — lane: `docs` (introduced) with `infra`
+366. ~~**The mutation gate's BASELINE is red on the runner while `guard`'s own `pytest` is
+    green, so the gate refuses to run at all**~~ — **CLOSED 2026-08-28 (`docs`)**: cause
+    and fix are item **368** — `_parse_failures` read pytest's WARNINGS SUMMARY as failed node
+    ids on a green run, and the count tracked the SIZE of the suite (31 at `21a8700`, 48 one
+    commit later) against a `> 40` refusal. `-p no:warnings` plus a summary-gated fallback;
+    verified by calling `_baseline` directly: `red_ids=frozenset(), '1127 passed, 0 failed'`.
+    Original text follows. — lane: `docs` (introduced) with `infra`
     (the workflow). `tools/mutate.py` runs one baseline suite inside a `git archive HEAD`
     copy to learn which tests are red at HEAD; on 2026-08-28 that baseline reports
     **`HEAD is not a suite to mutate against (rc=0, 49 red)`** and every shard exits 1
@@ -5971,3 +5976,36 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     push since 2026-08-24, so these seven have been invisible for four days. The 85-minute
     figure is also the arithmetic behind the sharding — it was never going to fit the
     45-minute budget, and one shard of it will.
+368. **`tools/mutate.py` read its own warnings as failures, and the count grew with the
+    suite** — lane: whoever owns `tools/` (registry built it); FIXED here by `docs` on
+    2026-08-28 because this session's own commit is what tipped it over, and the fix is
+    reviewed rather than requested.
+
+    Symptom: `mutation-gate` failed in **1m43s** on run 33163634071 with
+    `baseline: HEAD is not a suite to mutate against (rc=0, 49 red) -- fix the suite first`.
+    Note `rc=0`: pytest had **passed**.
+
+    Cause: `_parse_failures` falls back to `^<file>.py::<name>` when a run names no
+    `FAILED`/`ERROR` line — which is precisely a GREEN run — and on a green run the lines
+    with that shape are pytest's WARNINGS SUMMARY. The fallback was therefore systematically
+    wrong exactly where it fires, and the number it produced tracked the SIZE of the suite
+    rather than its health. Measured: **31** false matches at `21a8700`, **48** one commit
+    later (this session added 21 guards, every one of which calls `_cd()` and carries the
+    invalid-escape DeprecationWarnings with it), against a `len(red) > 40` refusal. The gate
+    had been hitting its 45-minute `timeout-minutes` for days (195/311), so nobody had seen
+    its baseline verdict since that threshold was written.
+
+    Fixed two ways, because either alone rots: `_pytest_argv` now passes `-p no:warnings`
+    (removing the false source at the root, for every one of the ~200 runs a sweep makes),
+    and the fallback may fire only when the summary actually says something failed — which
+    still covers what it was written for, a red run that names no `FAILED` line, because such
+    a run still prints "N failed". Guarded by
+    `test_the_mutation_gate_cannot_read_its_own_warnings_as_failures`, which feeds the parser
+    a real green-run stdout with a warnings summary in it.
+
+    **Left for the owning lane:** the DeprecationWarnings themselves are real and unfixed
+    (`<unknown>:860`, `:871`, `:3957`, `:5916`, `:11222`, `:11690` — invalid escape
+    sequences in `tests/test_units.py`, surfaced through a `compile()` somewhere in the
+    suite). Silencing them in the harness is correct for the harness; it does not make them
+    right. And the 45-minute timeout is still there: this fix lets the gate START, it does
+    not make it FINISH.

@@ -11905,6 +11905,43 @@ def test_the_ratchet_is_wired_into_the_check_that_runs():
     assert "elif False" not in body
 
 
+def test_the_mutation_gate_cannot_read_its_own_warnings_as_failures():
+    """`tools/mutate.py` refused to start on 2026-08-28: `baseline: HEAD is not a suite to
+    mutate against (rc=0, 49 red)`. Note the `rc=0` — pytest had PASSED.
+
+    `_parse_failures` falls back to `^<file>.py::<name>` when a run names no FAILED/ERROR
+    line, which is precisely a GREEN run, and on a green run the lines with that shape are
+    pytest's WARNINGS SUMMARY. So the fallback was systematically wrong exactly where it
+    fires, and the count it produced tracked the SIZE of the suite rather than its health:
+    31 matches at `21a8700`, 48 one commit later, against a `len(red) > 40` refusal. The gate
+    had been timing out at 45 minutes for days, so nobody had seen its baseline verdict since
+    that threshold was written.
+
+    Two assertions, because either alone rots: the harness passes `-p no:warnings` (the fix
+    at the root, for every one of its ~200 runs), and the parser is fed a real green-run
+    stdout with a warnings summary in it."""
+    import importlib.util
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    spec = importlib.util.spec_from_file_location(
+        "mutate_under_test", os.path.join(root, "tools", "mutate.py"))
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    argv = m._pytest_argv([])
+    assert "no:warnings" in argv, argv
+    green = ("...........                                              [100%]\n"
+             "=============================== warnings summary ==============================\n"
+             "tests/test_units.py::test_something\n"
+             "tests/test_units.py::test_other\n"
+             "  <unknown>:3957: DeprecationWarning: invalid escape sequence\n"
+             "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n"
+             "1141 passed, 11 skipped in 187.02s\n")
+    assert m._parse_failures(green) == [], m._parse_failures(green)
+    red = ("FAILED tests/test_units.py::test_a_real_one - AssertionError: nope\n"
+           "1 failed, 1140 passed\n")
+    assert m._parse_failures(red) == ["tests/test_units.py::test_a_real_one"], \
+        m._parse_failures(red)
+
+
 def test_the_committed_token_reader_never_refuses_a_push_it_cannot_judge():
     """`_committed_token` returns None outside a checkout, on a file that is not in HEAD, and
     on a site that did not state a floor before. Every one of those means "no ratchet to
@@ -12085,8 +12122,8 @@ def test_the_collected_test_count_never_falls():
     proc = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q"],
                           capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=root)
     n = sum(int(m) for m in re.findall(r"^tests[/\\][^:]+: (\d+)$", proc.stdout, re.M))
-    assert n >= 1141, (
-        "%d tests collected, floor is %d - a guard was deleted" % (n, 1141))
+    assert n >= 1153, (
+        "%d tests collected, floor is %d - a guard was deleted" % (n, 1153))
 
 
 # --- docs lane, 2026-08-27: HANDOFF.md's cap and the morning checks --------------------

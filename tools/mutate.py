@@ -387,7 +387,14 @@ def select_tests(root, mut, tests_dir=None):
 
 def _pytest_argv(node_ids, deselect=()):
     ids = list(node_ids)
-    base = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"]
+    # `no:warnings` is load-bearing, not tidiness. `_parse_failures` falls back to
+    # `^<file>.py::<name>` when a run names no FAILED/ERROR line - i.e. on a GREEN run - and
+    # on a green run the lines with that shape are the WARNINGS SUMMARY. The baseline read 49
+    # of them as red and refused to start (`HEAD is not a suite to mutate against (rc=0, 49
+    # red)`), 2026-08-28. The count tracks the size of the suite, not its health: 31 at
+    # 21a8700, 48 one commit later, against a `> 40` refusal.
+    base = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
+            "-p", "no:warnings"]
     des = [x for d in deselect for x in ("--deselect", d)]
 
     def total(cur):
@@ -430,9 +437,17 @@ def _pytest(work, node_ids, deselect=()):
 def _parse_failures(out):
     """Full node ids (with `[param]`, spaces included) of every FAILED/ERROR line in a `-q`
     run. `ERROR: not found: x` (a ghost id, rc 4) is deliberately NOT a failure."""
-    ids = re.findall(r"^(?:FAILED|ERROR) ([\w./\\-]+::.*?)(?: - .*)?$", out or "", re.M)
-    if not ids:
-        ids = re.findall(r"^([\w./\\-]+\.py::\w+)", out or "", re.M)
+    out = out or ""
+    ids = re.findall(r"^(?:FAILED|ERROR) ([\w./\\-]+::.*?)(?: - .*)?$", out, re.M)
+    if not ids and re.search(r"\b\d+ (?:failed|errors?)\b", out):
+        # The fallback reads ANY `<file>.py::<name>` line, and it fires only when no
+        # FAILED/ERROR line was found - which is precisely a GREEN run, where the lines with
+        # that shape are pytest's WARNINGS SUMMARY. It was therefore systematically wrong
+        # exactly where it fired: on 2026-08-28 the baseline read 49 warning lines as red
+        # and refused to start, with `rc=0` in its own message. So it may run only when the
+        # summary says something actually failed. It still covers what it was written for -
+        # a red run that names no FAILED line - because such a run still says "N failed".
+        ids = re.findall(r"^([\w./\\-]+\.py::\w+)", out, re.M)
     return [i.strip() for i in ids if "::" in i]
 
 
