@@ -2165,9 +2165,19 @@
   "file": "confirm_zero.py",
   "symbol": "_ledger_stale",
   "class": "M7-constant-drift",
-  "find": "    if str(v.get(\"verdict\") or \"\").split(\":\")[0] in _NOT_A_CADENCE:\n        return True\n",
+  "find": "    kind = str(v.get(\"verdict\") or \"\").split(\":\")[0]\n    if kind == \"stripped\":\n        return True\n    if kind in _NOT_A_CADENCE:\n        days = min(days, ERROR_RECHECK_DAYS)\n",
   "replace": "",
   "why": "an ERROR verdict is a fact about our renderer; freezing the row for RECHECK_DAYS on it retires coverage. 34 rows were in that state when this was found.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "zero-routing-uncapped",
+  "file": "confirm_zero.py",
+  "symbol": "_write",
+  "class": "M1-gate-removal",
+  "find": "            if off >= MAX_DEACTIVATE:\n                capped.append(r[0])\n                continue\n            off += 1\n",
+  "replace": "",
+  "why": "routing was 83 of 139 ledger rows, the commonest disposition, and it was the one arm MAX_DEACTIVATE did not bound: one broken run could turn off an unbounded number of ACTIVE rows.",
   "must_be_killed_by_behavioural": true
  }
 ]

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**468 filed · 349 open · 119 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**469 filed · 349 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 421.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 422.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -88,7 +88,7 @@ closure convention in the header.
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 108 open
+### registry — 107 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -191,7 +191,6 @@ closure convention in the header.
 - **411** `411@registry` **`_walk_board` calls a walk COMPLETE on the board's own `total`, with no check against
 - **412** `412@registry` **`confirm_zero`'s LLM prompt truncates the page at 12,000 chars and nothing records that
 - **413** `413@registry` **The ROUTING branch can drop its `needs re-resolution` segment whole, and the assertion
-- **414** `414@registry` **`MAX_DEACTIVATE` caps the rare disposition and not the common one**
 - **415** `415@registry` **`_name_kin` skips exactly the pair the two normalizers disagree about**
 - **416** `416@registry` **`os.environ.pop(k, None)` is not atomic, so `drain_queue._search_urls`' `finally` can
 - **417** `417@registry` **`_lock_the_paid_rungs`' comment states lock 2's purpose backwards**
@@ -401,7 +400,7 @@ closure convention in the header.
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 
-### jd-text — 8 open
+### jd-text — 9 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -411,6 +410,7 @@ closure convention in the header.
 - **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
 - **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
 - **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
+- **421** `421@jd-text` **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
 
 ### roles — 8 open
 
@@ -7117,12 +7117,28 @@ stripped (`ARCHITECTURE.md` §8 — a result from a broken path is not a measure
     that was dropped — so it cannot see the row it exists for. **0 of 181 pool rows would drop
     it today**, so it is latent; the guard being structurally unable to fire is not.
 
-414. **`MAX_DEACTIVATE` caps the rare disposition and not the common one** — lane: `registry`.
+414. ~~**`MAX_DEACTIVATE` caps the rare disposition and not the common one**~~ — **CLOSED
+    2026-08-29** — lane: `registry`.
     `parks = v["verdict"] == "wrong-url" and off < MAX_DEACTIVATE`, but the ROUTING branch
     `continue`s before that line and never touches `off`. Routing was **83 of 139** ledger rows
     — by far the commonest — and it is uncapped, so one bad run can park an unbounded number of
     rows. And a `wrong-url` row PAST the cap keeps `active=true` with a token-less note while
     still getting a ledger entry, so the cadence then hides it for 30 days: worse than parking.
+
+    **Fixed.** The routing arm is capped by the same `MAX_DEACTIVATE`, and a row the cap
+    refuses gets **no ledger entry**, so the next run selects it again rather than the cadence
+    hiding it — the failure the second half of this item describes.
+    `_assert_routed_rows_are_owned` was taught the difference between "capped, deliberately
+    untouched" and "routed and recorded nowhere", which is the bug it exists for, and the run
+    now prints `deactivation cap (15) reached: N row(s) left ACTIVE and re-selectable`.
+    Guard: `test_the_routing_arm_is_capped_like_the_parking_arm`, mutant
+    `zero-routing-uncapped`. The `wrong-url`-past-the-cap half is closed by the same change.
+
+    Related and also fixed while here: an ERROR verdict no longer buys the full
+    `RECHECK_DAYS` (it was freezing 34 rows on facts about our own renderer) **and** does not
+    re-render on every run either — `ERROR_RECHECK_DAYS = 3` is the middle. A `stripped`
+    verdict re-selects at once, or stripping a broken run's output would hide the rows it was
+    meant to re-open.
 
 415. **`_name_kin` skips exactly the pair the two normalizers disagree about** — lane:
     `registry`. `store._norm_company` maps non-alphanumerics to a SPACE and
@@ -7170,4 +7186,24 @@ stripped (`ARCHITECTURE.md` §8 — a result from a broken path is not a measure
     on the most consequential question this repo asks, and **none of 413, 414 or 419 would be
     caught automatically.** Either it joins the Sunday audit's schedule and the rehearsal's
     `SCHEDULE`, or it is documented as an operator-run tool that must never be crond.
+
+421. **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
+    equality against a WALL CLOCK, so it fails under load and passes in isolation** — lane:
+    `jd-text`, found by an adversarial pass 2026-08-29 and reproduced twice.
+    `enrich_matched_jd.py:571` computes `left = max(0.0, minutes - (time.time() - t0) / 60)` and
+    `tests/test_units.py:11136` asserts `seen[2]["minutes"] == 25.0`. On Windows the ~15.6 ms
+    timer tick usually rounds the elapsed term to 0.0; under the load of a full-suite run it
+    does not:
+
+    ```
+    live pass took   0.0 ms -> 25.0               == 25.0 ? True
+    live pass took   0.5 ms -> 24.999991666666666 == 25.0 ? False
+    live pass took  15.6 ms -> 24.99974           == 25.0 ? False
+    ```
+
+    Not a flake in the "sometimes the network is slow" sense — it is deterministic in the
+    elapsed time and therefore *guaranteed* to fail on a slower runner. It passed 10/10 in
+    isolation and failed in a full run twice tonight while a Playwright audit was running
+    beside it. `pytest.approx`, or asserting `<= 25.0` and `> 24.9`, settles it. Filed rather
+    than fixed because `enrich_matched_jd.py` is `jd-text`'s and this lane holds `registry`.
 

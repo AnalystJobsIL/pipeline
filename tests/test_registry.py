@@ -6767,10 +6767,53 @@ def test_an_error_verdict_does_not_buy_thirty_days_of_silence(tmp_path, monkeypa
     monkeypatch.setattr(Z, "LEDGER", str(tmp_path / "cloud_state" / "zero_confirm.json"))
     Z._LEDGER_CACHE.clear()
     try:
-        for n in ("Shell Co", "Wall Co", "Http Co", "Render Co", "Api Co", "Stripped Co"):
-            assert Z._ledger_stale(n, 30), "%s was frozen on a fact about our own renderer" % n
+        # a STRIPPED verdict re-selects at once; an ERROR gets a SHORT cooldown, not none --
+        # "always stale" would re-render those rows on every run for ever, which is the same
+        # spin one verdict class over.
+        assert Z._ledger_stale("Stripped Co", 30)
+        for n in ("Shell Co", "Wall Co", "Http Co", "Render Co", "Api Co"):
+            assert not Z._ledger_stale(n, 30), "%s must cool down for a day, not re-render" % n
+            assert Z._ledger_stale(n, 30) is False and Z.ERROR_RECHECK_DAYS < 30
+        old_led = {n: {"date": (dt.date.today() - dt.timedelta(days=Z.ERROR_RECHECK_DAYS)).isoformat(),
+                       "verdict": "shell"} for n in ("Cold Co",)}
+        Z._LEDGER_CACHE["d"].update(old_led)
+        assert Z._ledger_stale("Cold Co", 30), (
+            "an error older than ERROR_RECHECK_DAYS must be re-selected, not held for 30 days")
         assert not Z._ledger_stale("Unconfirmed Co", 30), (
             "an answered-but-undecidable row must NOT be re-rendered daily")
         assert not Z._ledger_stale("Confirmed Co", 30)
     finally:
         Z._LEDGER_CACHE.clear()
+
+
+def test_the_routing_arm_is_capped_like_the_parking_arm(tmp_path, monkeypatch):
+    """`MAX_DEACTIVATE` bounded `wrong-url` -- the RARE disposition -- and the ROUTING branch
+    `continue`d before that line and never touched `off`. Routing was **83 of the 139** ledger
+    rows on 2026-08-28/29, by far the commonest, so one broken run could turn off an unbounded
+    number of ACTIVE rows: `CLAUDE.md` rule 2 in the shape this tool can produce. Found by an
+    adversarial pass, which drove 60 deactivations in one run against a cap of 15.
+
+    A row the cap refuses gets NO ledger entry, so the next run re-selects it rather than the
+    cadence hiding it for 30 days. Kills `zero-routing-uncapped`."""
+    import csv
+    import confirm_zero as Z
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    n = Z.MAX_DEACTIVATE * 2
+    rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"]]
+    rows += [["Co%d" % i, "scrape", "", "https://c%d.example/careers" % i, "true", "seen"]
+             for i in range(n)]
+    with open(tmp_path / "companies.csv", "w", encoding="utf-8", newline="") as fh:
+        csv.writer(fh).writerows(rows)
+    monkeypatch.setattr(Z, "CSV_PATH", str(tmp_path / "companies.csv"))
+    monkeypatch.setattr(Z, "LEDGER", str(tmp_path / "cloud_state" / "zero_confirm.json"))
+    ev = {"cond1": "rendered", "cond2": "ours", "cond3": False, "api_jobs": 0}
+    ledger = {}
+    Z._write({"Co%d" % i: {"verdict": Z.ROUTING, "ev": ev, "artifact": "co%d-abc123" % i}
+              for i in range(n)}, "2026-08-29", ledger)
+    out = [r for r in csv.reader(open(tmp_path / "companies.csv", encoding="utf-8"))][1:]
+    off = sum(1 for r in out if r[4] == "false")
+    assert off == Z.MAX_DEACTIVATE, (
+        "the routing arm turned off %d rows against a cap of %d" % (off, Z.MAX_DEACTIVATE))
+    assert len(ledger) == Z.MAX_DEACTIVATE, (
+        "a row the cap refused was written to the ledger, so the cadence hides it for 30 days")

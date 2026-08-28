@@ -78,6 +78,7 @@ LEDGER = os.path.join("cloud_state", "zero_confirm.json")
 EVIDENCE = os.path.join("out", "zero_evidence")
 MARKER = "zero-confirm"
 RECHECK_DAYS = 30
+ERROR_RECHECK_DAYS = 3        # a render error is OUR failure: retry soon, not never
 FORCE = False                      # set by `--force`; the pool predicate reads it
 MAX_DEACTIVATE = 15
 
@@ -99,7 +100,7 @@ def _baseline():
         return {}
 
 
-_NOT_A_CADENCE = {"stripped", "tool-error", "shell", "wall", "parked-domain", "wrong-host",
+_NOT_A_CADENCE = {"tool-error", "shell", "wall", "parked-domain", "wrong-host",
                   "render-error", "api-error", "http-400", "http-401", "http-403", "http-404",
                   "http-429", "http-500", "http-502", "http-503", "http-None"}
 _LEDGER_CACHE = {}
@@ -119,8 +120,18 @@ def _ledger_stale(name, days):
     # a STRIPPED verdict all leave the row selectable. 34 rows were frozen on exactly these
     # before this line existed. `unconfirmed` DOES hold the row -- we rendered it, asked, and
     # could not tell, and repeating that daily is what the cadence exists to stop.
-    if str(v.get("verdict") or "").split(":")[0] in _NOT_A_CADENCE:
+    # An ERROR is a fact about OUR renderer, never about the company, so it must not buy the
+    # full 30 days -- 34 rows were frozen on `shell` / `http-403` / `render-error:*` when an
+    # adversarial pass found this. But "always stale" is the other failure: those rows would
+    # then be re-rendered on EVERY run for ever, which is the spin the cadence exists to stop,
+    # one verdict class over. A SHORT cooldown is the honest middle. A `stripped` verdict is
+    # different again and re-selects at once: stripping a broken run's output must re-open the
+    # rows, or the strip hides them.
+    kind = str(v.get("verdict") or "").split(":")[0]
+    if kind == "stripped":
         return True
+    if kind in _NOT_A_CADENCE:
+        days = min(days, ERROR_RECHECK_DAYS)
     when = (v.get("date") or "")[:10]
     if len(when) != 10:
         return True
@@ -783,7 +794,7 @@ def _write(results, stamp, ledger):
     `cloud_state/zero_confirm.json`, which has no 220-char cap, and the row is named."""
     with open(CSV_PATH, encoding="utf-8") as f:      # re-read immediately before the write
         rows = list(csv.reader(f))
-    wrote, skipped, off, routed = 0, [], 0, 0
+    wrote, skipped, off, routed, capped = 0, [], 0, 0, []
     for r in rows[1:]:
         v = results.get(r[0] if r else "")
         if not v:
@@ -806,6 +817,15 @@ def _write(results, stamp, ledger):
             # `listing_hunt.HUNT_POOL` selects, so the 19:00 cron works it every night until
             # it has a real address. That is what "not an end state" has to mean in a system
             # nobody is watching at 19:00.
+            # ROUTING IS CAPPED TOO, and it is the arm that needed it most. `MAX_DEACTIVATE`
+            # bounded `wrong-url` -- the RARE disposition -- while this branch `continue`d
+            # before that line and never touched `off`. Routing was 83 of the 139 ledger rows
+            # on 2026-08-28/29, by far the commonest, so one broken run could park an unbounded
+            # number of ACTIVE rows. `CLAUDE.md` rule 2 in the shape this tool can produce.
+            if off >= MAX_DEACTIVATE:
+                capped.append(r[0])
+                continue
+            off += 1
             r[4] = "false"
             r[5] = _notes.replace_own(
                 r[5], MARKER,
@@ -865,11 +885,18 @@ def _write(results, stamp, ledger):
     os.makedirs(os.path.dirname(LEDGER), exist_ok=True)
     with open(LEDGER, "w", encoding="utf-8") as f:
         json.dump(ledger, f, ensure_ascii=False, indent=1, sort_keys=True)
-    print("notes written %d - wrong-url parked %d - ROUTED to the 19:00 hunt %d - "
+    print("notes written %d - rows turned off %d (cap %d) - ROUTED to the 19:00 hunt %d - "
           "notes skipped (would evict) %d: %s"
-          % (wrote, off, routed, len(skipped), ", ".join(skipped[:12])))
-    left = [n for n, v in results.items() if v["verdict"] == ROUTING and n not in ledger]
+          % (wrote, off, MAX_DEACTIVATE, routed, len(skipped), ", ".join(skipped[:12])))
+    # A row the DEACTIVATION CAP refused is not "left in the routing state" -- it is a row
+    # this run declined to touch, it got no ledger entry on purpose, and the next run selects
+    # it again. Only a row that was routed and then recorded nowhere is the bug this catches.
+    left = [n for n, v in results.items()
+            if v["verdict"] == ROUTING and n not in ledger and n not in set(capped)]
     assert not left, ("rows left in the routing state: %s" % left[:8])
+    if capped:
+        print("  deactivation cap (%d) reached: %d row(s) left ACTIVE and re-selectable: %s"
+              % (MAX_DEACTIVATE, len(capped), ", ".join(capped[:8])))
     return 0
 
 
