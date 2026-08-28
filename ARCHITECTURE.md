@@ -254,8 +254,13 @@ including the claim "none".
    the loop's 4–5 min, so ~2–3 min);
    Workday's tolerance for parallel POSTs is unmeasured (one burst of 25 at 10 threads
    answered 200; one earlier burst answered 500 on 14 tenants and never reproduced).
-2. **Scrape rows** (`ats_platform=scrape`; **438 active on 2026-08-26**, re-derive with the
-   one-liner above) — `api_url` holds a LISTINGS page URL. `refresh_scrape_cache.py`
+2. **Scrape rows** (`ats_platform=scrape`; **496 active on 2026-08-28**, re-derive with the
+   one-liner above) — `api_url` holds a LISTINGS page URL. Of those 496,
+   `scraped_cache.json` held **209** (1,208 postings) that morning and the other **287**
+   were read by nothing downstream: 196 had been visited the night before and the ladder
+   extracted zero from an HTTP 200, 20 errored, and **71 had never been visited at all**
+   because the 00:00 cron did not fire. That split is stamped nightly as `uncached` /
+   `unvisited` on the `collect` line (§5a) — before 2026-08-28 nothing counted it. `refresh_scrape_cache.py`
    (00:00 UTC, `scrape-refresh.yml`, step `Refresh the scrape cache`, with `SCRAPE_LLM=1`
    and `SCRAPE_VIA_UNLOCKER=1`) renders every row with `scrape_universal.py` in a process
    pool (`SCRAPE_WORKERS`, default `min(4, cpus)`; one Playwright per process, `spawn` on
@@ -263,7 +268,8 @@ including the claim "none".
    `fetch_scrape`. `scrape_universal` is two halves: `_render(url)`, the only Playwright
    touchpoint (page state, XHR bodies, rendered links, HTML, the main document's HTTP
    status — or an error code when navigation failed), and `_extract(...)`, a pure function
-   of that bundle — testable offline — that escalates through **5 strategies, ended by a
+   of that bundle — testable offline — that escalates through **6 strategies, the first
+   five ended by a
    reading that carries the postings' OWN addresses** (`_Adder.strong`: 3 of them after the
    structured pass, 1 after the DOM and card passes; after the position-link pass any Israeli
    reading ends it, because the only tier left is the LLM, which returns titles alone and
@@ -277,7 +283,7 @@ including the claim "none".
    (`promote_only` — strategy 2's four-ancestor context invented 16 entries on Port.io,
    `docs/BACKLOG.md` 88/221). `ScrapeResult.strategy` names every stage that contributed, in
    ladder order, so `cards+links` and `structured+links` join `structured+dom` in the stamp's
-   `via=` (rendered `cards-links`, `+` being the separator between counts). The five:
+   `via=` (rendered `cards-links`, `+` being the separator between counts). The six:
    structured JSON — the XHR/fetch bodies the page ANSWERED first, then what it embedded
    (`__NEXT_DATA__`, page state, JSON-LD): a live response outranks an embedded copy of the
    same board, which is what keeps a posting on its canonical address. **A schema.org
@@ -316,7 +322,55 @@ including the claim "none".
    a bare `claude -p`: claude-fable-5 at ~5× sonnet's price, **every tool enabled, the repo
    as cwd with `secrets.env` on disk, an arbitrary website's text as the prompt** — a
    prompt-injection path, closed; what a hostile page can still do is suppress its own
-   roles, and nothing here claims otherwise). `scrape_result()` returns the jobs plus
+   roles, and nothing here claims otherwise) → **the embedded-board handoff**
+   (`SCRAPE_EMBED_DETECT` / `SCRAPE_EMBED_HANDOFF`, both default ON): the five strategies
+   read nothing, so is this page a marketing skin over a board the repo can already
+   fetch? `_render` captures the page's own request URLs and `window.comeetvar` (Comeet
+   writes its uid and token into `window`, never into the markup — which is why an
+   unrendered probe of Nova's careers page finds the word `comeet` and no board), and
+   `registry`'s own detectors (`resolve_deep._detect_ats` over the URLs,
+   `wayback_rescue.extract_ats` over the HTML) name the platform and tenant.
+   **Admission is `identity_gate.embedded_board_ok` AND a DECLARED tenant or an EXACT
+   normalised name match** (`_embed_admits`). The gate alone is necessary and not
+   sufficient, and an adversarial pass measured why: its near-equality composes two
+   vocabulary strippers — `_EMBED_TOKEN_WORDS` over the token's tail and `_tenant_near`
+   over legal suffixes — into prefix-containment in practice, so it admits `<our name> +
+   <any vocabulary tail>`. Six live registry rows were driven end to end into publishing a
+   stranger's board (`Nova` ← `novalabs`, `Zoomd` ← `zoom`, `Skai` ← `kai`, `HUB Security`
+   ← `hubinternational`, `Aqua Security` ← `aquatech`, `one …` ← `onemedical`), and **492
+   of 496 active scrape rows admit some slug strictly longer than their own core.** That
+   gate is calibrated for a REGISTRY writer, where a human reads the note it stamps; here
+   the next step is the public board and the 05:45 mail with nobody in between — CLAUDE.md
+   rule 5. Exact equality refuses all ten demonstrated leaks and keeps all five boards the
+   gate legitimately admitted on 2026-08-28, so the whole cost of the strictness is
+   conversions that become a handoff line instead of a posting. A held page may still only
+   REFUSE a board, never ADMIT one (Cogniteam's own page promoted Riskified's), and
+   cannot-tell REFUSES. A Comeet uid vouches for nothing, so it is recorded `unverified`
+   and handed to `registry`, which can declare the tenant in `pipeline/identity_facts.py`
+   or convert the row; it is never recorded `not-ours`, which asserts the board was proven
+   to be someone else's. A token this module had to cut markup out of is recorded `markup`
+   and never fetched: sanitising is monotone TOWARDS admission (`getty%20images` →
+   `getty`, which the old rule then admitted for `Gett`) and the rebuilt address can point
+   at a different board than the page named.
+   `activation_verdict` is deliberately NOT used: its cannot-tell branch reads a page,
+   and `page_names_company` falls through to `bd_rescue.unlock` under a key
+   `scrape-refresh.yml` sets, at a PER-PROCESS budget of 100 in a 4-way pool, counted in
+   no stamp — a free rung must not become the largest un-metered consumer of the paid
+   pool, and an AST guard in `tests/test_units.py` forbids this lane from reaching any
+   page-reading gate. An admitted board gets exactly ONE `fetchers.fetch_company` call on
+   a hard 25 s thread join (`pipeline.http` binds its timeout at import), and takes over
+   only if it yields an Israel role — otherwise the ladder's own list stands, so `no_il`
+   still counts what the PAGE showed. Its postings keep `ats_platform="scrape"` (the ROW
+   is a scrape row: `store.seen_id` and the card's `sources` tag are keyed on it) with the
+   real platform in `_board`, and they KEEP `country_code`, unlike a scraped card's, which
+   this module blanks because the scraper guessed — here the board states it. Measured
+   2026-08-28 over the 287 uncached rows with an unrendered probe: 15 detections, 5
+   admitted by the gate. That is a floor, not an estimate. Tokens are sanitised first
+   (`_slug_ok`): `resolve_deep.ATS_PATTERNS`' slug classes are `[^/?]+` and
+   `extract_ats` applies them to raw HTML, so they return `stigg"` and
+   `FORDEFIJobs.ashbyhq.com` — the `.` of a Comeet uid and the `/` of a Workday composite
+   survive, everything from the first markup character does not.
+   `scrape_result()` returns the jobs plus
    `status` ∈ `ok` / `empty` / `error`, the contributing stages, whether the reading was
    url-less (`weak_read`, which the refresh's shrink guard needs — after the ladder's last
    step the urls no longer say) and what the visit spent
@@ -2304,7 +2358,8 @@ its audit, keys alphabetical — the cloud run of 2026-08-25 rendered exactly:
 and from 2026-08-27 the line also carries `links_unread=N`, `via=links73+cards59+dom47+…`
 (which strategy carried how many companies — a strategy collapsing is visible the next
 morning instead of only in the step log), `carried_residential=N` and `dropped_residential=N`
-(§1 item 2 — boards only a home address could read, kept or expired tonight), and, on a run
+(§1 item 2 — boards only a home address could read, kept or expired tonight), and from 2026-08-28 `uncached=N unvisited=M`, its anchor `uncached_base=A rows_base=R`,
+and `embeds=N embeds_won=M` (below), and, on a run
 with the flags set, `llm_calls llm_won llm_fail llm_skipped` (`SCRAPE_LLM`) and
 `unlock_calls unlock_ok unlock_won`
 (`SCRAPE_VIA_UNLOCKER`) — the two shared quotas this step spends, counted nowhere until
@@ -2313,7 +2368,8 @@ then, and from 2026-08-27 attributable per company in the step log (`unlock=2/5`
 with this arithmetic, which holds on every exit: `with_jobs + empty + errors =
 scraped`, `scraped + unprocessed = rows`, `no_il ≤ empty` (roles found, none in Israel),
 `carried ≤ errors` (error rows whose cached jobs were kept), `links_unread ≤ errors`,
-`carried_residential ≤ empty`, `llm_won ≤ llm_calls`, `unlock_won ≤ unlock_ok ≤
+`carried_residential ≤ empty`, `unvisited ≤ uncached ≤ rows`, `unvisited ≤ unprocessed`,
+`embeds_won ≤ embeds ≤ scraped`, `llm_won ≤ llm_calls`, `unlock_won ≤ unlock_ok ≤
 unlock_calls`, and the `via` counts sum to `with_jobs`.
 A line that does not reconcile, or that lacks a key, is not from this code. `alarm=`
 appears only when something is wrong — `mass-failure-errors-NN%`, `errors-NN%`,
@@ -2332,7 +2388,7 @@ absent, not unreadable), `stale-ip-N` (N rows whose address has been refused for
 address, so this is the only thing that raises its hand; the row records the age it was
 announced at, so a skipped night cannot lose it and a re-run cannot repeat it) and
 `llm-calls-N` (more than `LLM_RUNAWAY_CALLS` (250) calls in one night: the signal gate broke
-open, not the fleet changed) — and a
+open, not the fleet changed), `uncached-up-A-to-B` and `unvisited-N` (both below) — and a
 line reading `collect: <yesterday> (1d ago)` means the refresh crashed before stamping (the
 workflow no longer re-stamps it blindly); the commit step is `if: always()` since
 2026-08-25 (this sentence said the opposite until 2026-08-26), so whatever the crash left
@@ -2351,6 +2407,83 @@ rotation moved its rows on some calendar days — BACKLOG 158).
 **The four unrelated "14"s** — don't conflate them: the job board's 14-day `first_seen`
 window; `CARRY_MAX_DAYS`=14 (stale scrape jobs); the 14-day deep re-hunt cadence; and
 `_stale_hunt`'s 14-day suppression of a row carrying a hunt verdict.
+
+### `uncached=N unvisited=M` — the rows the digest cannot see
+
+`uncached` is the active `scrape` rows this run leaves with **no key in
+`scraped_cache.json`**. The digest's `fetch_scrape` reads that file and nothing else, so such
+a row contributes nothing to the board, nothing to `stale.json` and nothing to the mail — and
+until 2026-08-28 **nothing counted them**: 287 of 496 active scrape rows that morning (58 %),
+216 of 421 the night before (51 %), while the store had been frozen at matched 141 / sent 59
+for three days. It is measured over the rows the run SELECTED — on an unscoped run that is
+every active scrape row (`_rotate` is a permutation, and no scoped run stamps) — and *not* by
+re-reading the registry, which would annex the one `ats_platform=discovery` row
+`_select_rows` deliberately never touches. It is measured against **the cache that exit
+actually leaves on disk**: tonight's rebuild, the mass-failure keep, or the file a shrink
+abort does not rewrite. So a mass-failure night stamps a LOW `uncached`, correctly — the
+abort exists so that the digest still reads yesterday's cache. Rows the same exit is parking
+are excluded (the registry write that follows makes them inactive); a park the CSV write does
+not match undercounts by at most `parked`, for one night, and a park write that raises never
+reaches the stamp at all.
+
+`unvisited` is the part of `uncached` with no `cloud_state/scrape_rot.json` entry either:
+**no run has an outcome for them at all.** It is 0 on any night that scraped every selected
+row, by construction — `_apply_result` leaves a company in the cache (`with_jobs`, an error
+carry, a residential carry) or in the rot file (`empty`, `error`), never in neither — which is
+what makes any non-zero value an event. It is the leading indicator of the 287: the night
+before they were 287 they were 71 `unvisited`, and nothing said so.
+
+**The level is not an alarm, and must not become one.** 196 of the 216 uncached rows of
+2026-08-27 were `why: empty` — a measurement, not a fault; a company here can post nothing
+for a month (§5a's own empty/error trichotomy). Any ratio bar under ~50 % would have fired
+every night this stamp has existed, and `alarm=` is the only thing that makes the audit's
+`- **Stages:**` line bold — the line that carries `mass-failure-*`, `links-unread-N` and
+`stale-ip-N`. A permanently-lit lamp costs that line its reader.
+
+What is an event is **coverage losing ground against an anchor, beyond what the registry
+added**: `uncached-up-A-to-B`, when
+`(uncached − uncached_base) − max(0, rows − rows_base) ≥ max(UNCACHED_JUMP_MIN (25),
+UNCACHED_JUMP_PCT (5) % of rows)`. Both correction terms are load-bearing, and an adversarial
+pass measured why a plain one-night delta is wrong in three ways at once. **The pool term**:
+every row the registry activates arrives uncached by construction, so the whole 216 → 287
+jump of 2026-08-28 was the pool moving 421 → 496 — that is triage's business, not
+extraction's, and a raw difference fires on it. **The anchor** (`uncached_base` / `rows_base`,
+stamped alongside): yesterday is both too noisy — the real night-to-night deltas are +10,
++29, +29, +4, so a 25-row one-night bar fires on two of the four nights on record and neither
+was a regression — and far too forgiving, because a leak of 24 a night is then silent
+*forever*: 168 rows, a third of the pool, in seven quiet nights. The anchor HOLDS while
+coverage worsens, so slow loss accumulates against a fixed point and fires on the second or
+third night; it RATCHETS DOWN the moment coverage improves, so a recovery re-arms it; and it
+RESETS when the alarm fires, so one loss is announced once rather than every night after.
+A same-day re-run therefore recomputes the same verdict instead of erasing it. A
+`cache-unreadable` stamp is refused as an anchor — that run measured nothing, and anchoring
+there would hide the next real jump behind an apparent fall. `A` and `B` both reconcile
+against keys on the same line, so the reader never needs yesterday's file. **`unvisited-N`**
+fires on any N ≥ 1.
+
+**What to do when either fires.** Read `rows` on the same line against yesterday's
+(`git log -p cloud_state/pipeline_stages.json`). *`rows` up by about the same amount* — the
+registry activated rows the scraper produces nothing for; `python refresh_scrape_cache.py
+--only-missing --dry-run` prints each one's code, and rows that are systematically `empty`
+belong to triage (`empty-but-suspect`), not here. *`rows` flat* — what we can EXTRACT
+changed: `git log --oneline -5 scrape_universal.py`, then re-read a dozen of the rows that
+left the cache at HEAD and at the previous revision (`--only "A,B,…" --dry-run`). *`unvisited-N`*
+— the night never reached N rows nothing has ever scraped: `python refresh_scrape_cache.py
+--only-missing --apply` merges exactly those and drops nothing, or the time budget is too
+small. If `unprocessed` sits beside it the run was cut short; if `unprocessed` is 0 the run
+aborted, and the token next to it says which way.
+
+### `embeds=N embeds_won=M` — a careers page that is a skin over a board we can already read
+
+The sixth ladder rung (§1 item 2). `embeds` counts rows where the five strategies read
+nothing and the page nevertheless carried a third-party ATS board; `embeds_won` the ones the
+identity gate admitted **and** whose API answered with an Israel role. The gap between them is
+the point: each is a named line in the run log and an `embed` field on that row's
+`scrape_rot.json` entry, carrying platform, token and the gate's verdict — the only nightly
+input `registry` has for "this row should be a `comeet`/`ashby` row, or needs a declared
+tenant in `pipeline/identity_facts.py`". A verdict is `won`, `ok:<why the fetch gave nothing>`,
+`not-ours` (a board PROVEN to be another company's) or `unverified` (cannot tell — a Comeet
+uid vouches for nothing; deferred, never refused outright).
 
 ## 5b. Diagnosing "why isn't company X in my email?"
 *lane: any — this is the runbook every lane starts from*

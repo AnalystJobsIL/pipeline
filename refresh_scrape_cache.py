@@ -104,6 +104,18 @@ STALL_S = 3 * COMPANY_BUDGET_S   # no result for this long = a worker is stuck, 
 # runner's address, a dead CDN) — below the mass-failure bar, above what a normal night shows
 # (the 17-of-440 event of 2026-08-25 is 3.9 %; wave-1 attacker B measured 5 % missing it).
 CODE_ALARM_PCT = 3
+# The alarm is a RATCHET against an ANCHOR, not a difference against yesterday, and the
+# growth is adjusted for the pool. Wave 1 measured all three reasons on the real series
+# (reconstructed from scrape_rot.json's since/last/n, which reproduces the committed
+# 08-27 stamp's empty=196 exactly): the night-to-night deltas are +10, +29, +29, +4, so a
+# 25-row one-night bar fires on 2 of the 4 nights on record and NONE was a regression;
+# the whole 216 -> 287 jump of 2026-08-28 is the pool moving 421 -> 496, i.e. entirely
+# the registry activating rows; and a leak of 24 a night is silent forever against a
+# yesterday baseline -- 168 rows, a third of the pool, in seven quiet nights.
+# So: `uncached_base`/`rows_base` anchor the comparison, the anchor RATCHETS DOWN when
+# coverage improves and holds when it worsens, and pool growth since the anchor is
+# subtracted. A leak of 24 a night now fires on the second night, benign expansion never
+# does, and a same-day re-run recomputes the same verdict instead of erasing it.
 # Rows the registry has activated that the cache cannot answer for are invisible to every
 # downstream stage -- the digest reads scraped_cache.json and nothing else -- and until
 # 2026-08-28 nothing counted them: 287 of 496 active scrape rows (58%), 216 of 421 the
@@ -445,6 +457,13 @@ def _rot_bump(rot, name, why, today, res=None):
     code = _code(res or {})
     shape = _shape(code) if why == "error" else ""
     e = rot.get(name)
+    if not isinstance(e, dict):
+        # `_load` validates only the TOP level, and this file is merged per key on a push
+        # conflict. One scalar value used to raise `AttributeError` here, in the parent
+        # loop, after 30 minutes of Chromium and before the cache was written -- no cache,
+        # no stamp, the whole night gone. Same reachability, and the same remedy, as the
+        # malformed date `_ip_age` was hardened against (wave-1 attacker A, F5).
+        e = None
     # Two clocks survive a change of shape, because the streak `n` is per shape by design:
     #   `ip_since`   how long the runner's ADDRESS has been refused. A WAF answers 403 on the
     #                listing one night and refuses the position pages the next, flipping
@@ -719,25 +738,58 @@ def _unvisited(rows, cache, rot, parking=()):
                and r["company_name"] not in gone)
 
 
-def _prev_uncached():
-    """Last night's `uncached`, read BEFORE `stages.stamp()` REPLACES the whole entry -- the
-    growth alarm's only baseline. `cloud_state/pipeline_stages.json` is committed by
-    scrape-refresh.yml and merged per stage by `persist_state`, so it survives the runner and
-    a push conflict. A night that could not READ the cache measured nothing and stamps
-    `uncached=rows`; taking that as tomorrow's baseline would hide the next real jump behind
-    an apparent fall, so it is refused. No baseline means NO token, never a guess: the first
-    night after this lands is silent by design."""
+def _uncached_grew(uncached, rows, base):
+    """Has coverage LOST ground since the anchor, beyond what the registry added?
+
+    `max(0, rows - base_rows)` is the pool's growth since the anchor: every row the
+    registry activates arrives uncached by construction, and that is triage's business,
+    not extraction's. Subtracting it is what separates the two causes the operator has to
+    tell apart -- and both numbers are already on the same stamp line, so the reader can
+    check the arithmetic without yesterday's file. A pool that SHRANK adds nothing."""
+    base_u, base_r = base
+    jump = max(UNCACHED_JUMP_MIN, UNCACHED_JUMP_PCT * max(rows, 0) // 100)
+    return (uncached - base_u) - max(0, rows - base_r) >= jump
+
+
+def _next_base(uncached, rows, base, fired):
+    """The anchor tomorrow measures from. It ratchets DOWN on any improvement, resets when
+    the alarm fires (so one loss is announced once, not every night after), and otherwise
+    HOLDS -- which is the whole point: a slow leak accumulates against a fixed point."""
+    if base is None or fired or uncached <= base[0]:
+        return uncached, rows
+    return base
+
+
+def _uncached_base():
+    """The ANCHOR the growth alarm measures from: `(uncached, rows)` of the last stamp that
+    set one, read BEFORE `stages.stamp()` replaces the whole entry.
+
+    Not "yesterday": yesterday is both too noisy (the real deltas are +10/+29/+29/+4) and
+    too forgiving (a 24-a-night leak never shows). The anchor holds while coverage worsens
+    and ratchets DOWN the moment it improves, so slow loss accumulates against a fixed
+    point and a recovery re-arms it. `rows` rides along because the pool grows: the
+    registry moved 421 -> 496 in one night and the whole apparent jump was that.
+
+    A night that could not READ the cache measured nothing and stamps `uncached=rows`;
+    anchoring there would hide the next real jump behind an apparent fall, so it is
+    refused. An older stamp that predates these keys falls back to its own `uncached`, so
+    the first night after this lands is silent and the second is armed. None means NO
+    token, never a guess. `cloud_state/pipeline_stages.json` is committed by
+    scrape-refresh.yml and merged per stage by `persist_state`, so the anchor survives the
+    runner and a push conflict."""
     e = stages._load().get("collect") or {}
     if "cache-unreadable" in str(e.get("alarm") or ""):
         return None
     try:
-        return int(e["uncached"])
+        u = int(e["uncached_base"]) if "uncached_base" in e else int(e["uncached"])
+        r = int(e.get("rows_base", e.get("rows", 0)))
     except (KeyError, TypeError, ValueError):
         return None
+    return u, r
 
 
 def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=False,
-           uncached=None, unvisited=0, prev_uncached=None, rows=0):
+           uncached=None, unvisited=0, base=None, row_count=0):
     """Space-free tokens: `stages.summary()` renders k=v joined by spaces and stages by ` | `."""
     c, tokens = st.counts, []
     if mass_failure:
@@ -773,10 +825,11 @@ def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=Fals
     # activating rows nothing can read. `A-to-B` follows `shrink-abort-A-to-B`, so B
     # reconciles against the `uncached` key on the SAME line and the reader never needs
     # yesterday's file.
-    if uncached is not None and prev_uncached is not None:
-        jump = max(UNCACHED_JUMP_MIN, UNCACHED_JUMP_PCT * max(rows, 0) // 100)
-        if uncached - prev_uncached >= jump:
-            tokens.append(f"uncached-up-{prev_uncached}-to-{uncached}")
+    # `row_count`, not the local `rows` twelve lines up (which is scraped+unprocessed):
+    # they are equal today only because the bookkeeping loop visits every selected row,
+    # and a bar that silently moves with a refactor is not a bar (wave-1 attacker A, F7).
+    if uncached is not None and base is not None and _uncached_grew(uncached, row_count, base):
+        tokens.append(f"uncached-up-{base[0]}-to-{uncached}")
     # neither a cache entry nor a rot entry: the night never reached these rows and nothing
     # ever has. Zero on a complete night by construction, so any N is an event.
     if unvisited:
@@ -848,8 +901,20 @@ def _parse(argv):
     for a in it:
         if a == "--only":
             o.only = {x.strip().lower() for x in next(it).split(",") if x.strip()}
+            if not o.only:
+                # `--only "$COMPANY"` with COMPANY unset used to parse to the empty set,
+                # which is falsy, so `scoped` was False and the run rewrote the whole
+                # cache, parked rows in companies.csv and STAMPED -- the opposite of what
+                # the flag was typed to do (wave-1 attacker A, F4). `--limit 0` is caught
+                # by the same rule below.
+                raise SystemExit("--only was given an empty list: refusing to run "
+                                 "UNSCOPED on an argument that was meant to narrow")
         elif a == "--limit":
             o.limit = int(next(it))
+            if o.limit <= 0:
+                # 0 is falsy, so `scoped` would be False and a flag typed to NARROW
+                # the run would rewrite the whole cache and stamp (wave-1 A, F4).
+                raise SystemExit("--limit must be positive")
         elif a == "--only-missing":
             o.only_missing = True
         elif a == "--shard":
@@ -927,12 +992,20 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     o = _parse(sys.argv[1:] if argv is None else argv)
     old, old_state = _load(CACHE_PATH)
     rot, rot_state = _load(ROT_PATH)
+    # the rot file as it was BEFORE tonight touched it. `_apply_result` pops a healthy
+    # company's entry and `_rot_bump` inserts a rotting one, but the two ABORT exits
+    # return without writing any of that -- so a count taken from the live dict describes
+    # a file that does not and will never exist. That cost `unvisited` its own invariant:
+    # a row scraped SUCCESSFULLY tonight, absent from yesterday's cache, read as
+    # never-visited on a shrink-abort night, and `unvisited > unprocessed` (wave-1
+    # attacker A, F1/F2). Same discipline as `written` below, one file along.
+    rot_at_start = dict(rot)
     day = _today()                      # read once: the cron fires AT midnight
     today = day.isoformat()
     rows = _select_rows(o, old)
     if not o.scoped:
         rows = _rotate(rows, day)
-    prev_uncached = _prev_uncached()      # BEFORE any stamp replaces the entry
+    base = _uncached_base()               # BEFORE any stamp replaces the entry
     budget = float(os.environ.get("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0"))
     grace = int(os.environ.get("SCRAPE_INFLIGHT_GRACE_S", "600"))
     st = RunState()
@@ -1008,9 +1081,14 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
               f"URL?): {[(n, a) for n, a, _ in sorted(st.stale_ip, key=lambda x: -x[1])][:12]}",
               flush=True)
     if st.embeds:
-        refused = [(n, s) for n, s in st.embeds if not s.endswith(":ok")]
+        # the gate's two non-admissions, named explicitly: a negation over the record
+        # vocabulary called a WIN a refusal (own guard, 2026-08-28).
+        refused = [(n, s) for n, s in st.embeds
+                   if s.endswith((":not-ours", ":unverified"))]
+        won = sum(1 for _, s in st.embeds if s.endswith(":won"))
         print(f"::warning::{len(st.embeds)} rows the ladder could not read embed a board "
-              f"this repo already fetches; {len(refused)} were REFUSED by the identity gate "
+              f"this repo already fetches; {won} were read through it and {len(refused)} "
+              f"were NOT ADMITTED by the identity gate "
               f"and are the `registry` handoff -- declare the tenant in "
               f"pipeline/identity_facts.py, or convert the row's ats_platform: "
               f"{refused[:12]}", flush=True)
@@ -1033,19 +1111,25 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     # night therefore stamps a LOW `uncached`, correctly -- the abort's whole purpose is
     # that the digest still reads yesterday's cache.
     written = ({**old, **st.successes} if mass_failure else old if shrink else st.cache)
+    # ...and the rot file this exit actually leaves on disk: the abort paths return before
+    # `write_json(ROT_PATH, rot)`, so for them it is the file as it was found.
+    rot_written = rot_at_start if (mass_failure or shrink) else rot
     parking = st.parked if parks else ()
     uncached = _uncached(rows, written, parking)
-    unvisited = _unvisited(rows, written, rot, parking)
+    unvisited = _unvisited(rows, written, rot_written, parking)
     alarm = _alarm(st, mass_failure=mass_failure, shrink=shrink,
                    rot_unreadable=rot_state == "unreadable",
                    uncached=uncached, unvisited=unvisited,
-                   prev_uncached=prev_uncached, rows=len(rows))
+                   base=base, row_count=len(rows))
+    fired = "uncached-up-" in alarm
+    base_u, base_r = _next_base(uncached, len(rows), base, fired)
     # `embeds` counts rows whose page carried a third-party board the ladder had not read;
     # `embeds_won` the ones the identity gate admitted AND whose API answered with an
     # Israel role. The gap between them is the handoff, and it is the larger half.
     embeds_won = sum(1 for _, s in st.embeds if s.endswith(":won"))
     detail = dict(rows=len(rows), **c, parked=parks, uncached=uncached,
-                  unvisited=unvisited, embeds=len(st.embeds), embeds_won=embeds_won,
+                  unvisited=unvisited, uncached_base=base_u, rows_base=base_r,
+                  embeds=len(st.embeds), embeds_won=embeds_won,
                   workers=o.workers, minutes=minutes, via=_via(st.strategies))
     # the two shared quotas, only on a run that could have spent them (a local run without
     # the flags would otherwise carry five permanent zeros)

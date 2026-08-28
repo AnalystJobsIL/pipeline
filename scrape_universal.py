@@ -156,7 +156,7 @@ _LLM_SCHEMA = json.dumps({"type": "object",
 _LLM_PROMPT = "CAREERS PAGE TEXT:\n\n"
 # the ladder in order; `_Adder.label()` names every stage that contributed a posting, so a
 # board read as titles by one and addressed by another is `cards+links`, not `cards`
-_STAGES = ("structured", "dom", "cards", "links", "llm")
+_STAGES = ("structured", "dom", "cards", "links", "llm", "embed")
 # strategy 5 must leave the LLM tier at least this much of the company budget
 _LLM_RESERVE_S = 40
 # bidi controls survive into titles and reorder the board's line (cosmetic spoofing)
@@ -1598,6 +1598,41 @@ def _embed_detect_on():
     return os.environ.get("SCRAPE_EMBED_DETECT", "1") not in ("0", "")
 
 
+def _embed_handoff_on():
+    """Default ON, kill switch `SCRAPE_EMBED_HANDOFF=0`. See `_embed_detect_on`."""
+    return os.environ.get("SCRAPE_EMBED_HANDOFF", "1") not in ("0", "")
+
+
+def _fetch_board_bounded(row, deadline=None):
+    """(jobs, error). ONE call to the platform's own fetcher, on a hard wall clock.
+
+    `pipeline.http.get_json` binds its timeout default at IMPORT and `fetchers.fetch_company`
+    takes no timeout at all, so the worst case is 3 retries x 30 s plus backoff -- about
+    96 s, which overruns `COMPANY_BUDGET_S` on its own. Until `pipeline/http` can be
+    clamped (proposed to `ats-fetch`, docs/BACKLOG.md) a daemon thread and a join is the
+    only honest bound: an abandoned socket dies with the worker, which the refresh pool
+    recycles every 25 rows.
+    """
+    import threading
+    out = {}
+
+    def call():
+        try:
+            from pipeline import fetchers
+            out["jobs"] = fetchers.fetch_company(row) or []
+        except Exception as e:  # noqa: BLE001
+            out["err"] = type(e).__name__
+
+    wall = _EMBED_FETCH_TIMEOUT_S if deadline is None else min(
+        _EMBED_FETCH_TIMEOUT_S, max(1.0, deadline.remaining()))
+    t = threading.Thread(target=call, daemon=True)
+    t.start()
+    t.join(wall)
+    if t.is_alive():
+        return [], "timeout"
+    return out.get("jobs", []), out.get("err", "")
+
+
 def _slug_ok(tok):
     """A tenant token with the page's markup cut off it, segment by segment.
 
@@ -1643,11 +1678,43 @@ def _detect_embedded_board(r: Rendered):
     clean = _slug_ok(tok)
     if not clean or not _ats_host(urllib.parse.urlsplit(api or "").netloc):
         return None
-    if clean != tok:
+    repaired = clean != tok
+    if repaired:
         for a, b in zip(tok.split("/"), clean.split("/")):
             if a != b:
                 api = api.replace(a, b)
-    return plat, clean, api
+    return plat, clean, api, repaired
+
+
+def _embed_admits(company, tok, api):
+    """May this board's postings be published under `company`'s name? Three conjuncts.
+
+    `embedded_board_ok` is necessary and NOT sufficient. Its near-equality composes two
+    vocabulary strippers -- `_EMBED_TOKEN_WORDS` over the token's tail and `_tenant_near`
+    over legal suffixes -- into prefix-containment in practice, so it admits
+    `<our name> + <any vocabulary tail>`. An adversarial pass demonstrated six live rows
+    publishing a stranger's board end to end (`Nova` <- `novalabs`, `Zoomd` <- `zoom`,
+    `Skai` <- `kai`, `HUB Security` <- `hubinternational`, `Aqua Security` <- `aquatech`,
+    `one ...` <- `onemedical`) and measured that 492 of 496 active scrape rows admit some
+    slug strictly longer than their own core. That gate is calibrated for a REGISTRY
+    writer, where a human reads the note it stamps; here the next step is the public
+    board and the 05:45 mail, with nobody in between. CLAUDE.md rule 5.
+
+    So the tenant must be the company's DECLARED one (`pipeline/identity_facts.py` --
+    which is also the escape hatch for an opaque Comeet uid, and `registry`'s to write),
+    or normalise EXACTLY to its name. Exact equality refuses all ten demonstrated leaks
+    and keeps all five boards the gate legitimately admitted on 2026-08-28, so the whole
+    cost of the strictness is conversions that become a handoff line instead.
+    """
+    from pipeline import identity_facts as facts
+    from pipeline import identity_gate as gate
+    if not gate.embedded_board_ok(company, tok.lower(), api):
+        return False
+    declared = facts.tenants(company)
+    ntok = facts.normalize(tok.lower().split("/")[0])
+    if declared:
+        return bool(ntok) and ntok in declared
+    return bool(ntok) and ntok == facts.normalize(company)
 
 
 def _from_embedded_board(company, url, r: Rendered, deadline=None):
@@ -1671,20 +1738,57 @@ def _from_embedded_board(company, url, r: Rendered, deadline=None):
     det = _detect_embedded_board(r)
     if det is None:
         return []
-    plat, tok, api = det
+    plat, tok, api, repaired = det
     from pipeline import identity_gate as gate
-    # lowercase ONLY the copy handed to the gate: ashby and greenhouse slugs are
-    # case-sensitive in the path, while every comparison inside the gate normalises anyway.
-    tok_lc = tok.lower()
     try:
-        ok = gate.embedded_board_ok(company, tok_lc, api)
-        vouch = gate.board_vouches(company, tok_lc, api)
+        ok = _embed_admits(company, tok, api) and not repaired
+        vouch = gate.board_vouches(company, tok.lower(), api)
     except Exception:  # noqa: BLE001 - a gate that raises must not cost the night's read
         r.embed_seen = f"{plat}:{tok}:gate-error"
         return []
-    why = "ok" if ok else ("not-ours" if vouch is False else "unverified")
+    # A token this module had to cut markup out of is not evidence: sanitising is monotone
+    # TOWARDS admission (`getty%20images` -> `getty`, which the old rule then admitted for
+    # `Gett`), and the rebuilt api_url can point at a different board than the page named
+    # (wave-1 attacker C, S2). Repaired tokens are RECORDED for `registry` and never
+    # fetched -- a human can read the raw string in the rot entry.
+    why = ("ok" if ok else "markup" if repaired
+           else "not-ours" if vouch is False else "unverified")
     r.embed_seen = f"{plat}:{tok}:{why}"
-    return []
+    if not ok or not _embed_handoff_on():
+        return []
+    from pipeline import fetchers
+    if fetchers.FETCHERS.get(plat) is None:
+        r.embed_seen = f"{plat}:{tok}:ok:no-fetcher"   # never fetch_company's ValueError
+        return []
+    if deadline is not None and deadline.remaining() < _EMBED_MIN_S:
+        r.embed_seen = f"{plat}:{tok}:ok:deadline"
+        return []
+    row = {"company_name": company, "ats_platform": plat, "token": tok, "api_url": api}
+    jobs, err = _fetch_board_bounded(row, deadline)
+    from pipeline import israel
+    il = [j for j in jobs if israel.is_israel_job(j)]
+    if err or not il:
+        # fall through with the ladder's own (empty or foreign) list, so `no_il` still
+        # counts what the PAGE showed. A handoff that found a foreign-only board has not
+        # discovered that this company has no Israel roles -- it has discovered nothing.
+        r.embed_seen = f"{plat}:{tok}:ok:{err or ('no-il' if jobs else 'empty')}"
+        return []
+    r.embed = plat
+    r.embed_seen = f"{plat}:{tok}:won"
+    for j in jobs:
+        # the ROW is a scrape row: `store.seen_id` and the card's `sources` tag are keyed
+        # on it, and changing that here would re-key every role this company ever had.
+        # The real platform rides in `_board`, like `_via` / `_read` / `_jd_attempted`.
+        j["ats_platform"], j["_board"] = "scrape", plat
+        # the evidence, ON the artefact: which tenant was admitted and at what address.
+        # A cache entry that cannot say why it is here cannot be re-audited after the
+        # rule changes, and this rule has already been wrong once (wave-1 attacker C).
+        j["_token"], j["_board_url"] = tok, api
+        # `country_code` is KEPT, unlike a scraped card's, which this module blanks because
+        # the SCRAPER guessed. Here the board STATES it, which is the evidence all 433
+        # native-ATS rows are trusted on -- and `israel.is_israel_job` treats a non-IL code
+        # as an authoritative negative, which drops a foreign role a card would have kept.
+    return jobs
 
 
 def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=None, visit=None):
@@ -1763,7 +1867,11 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
     #    already read? Detection and the identity verdict are free and are RECORDED here
     #    whatever the answer -- a refused board on a row that yields zero is the handoff
     #    `registry` has no other source for.
-    _from_embedded_board(company, url, r, deadline=deadline)
+    fetched = _from_embedded_board(company, url, r, deadline=deadline)
+    if fetched:
+        # a BRAND-NEW list. `jobs` is never mutated or unioned, and the adder is not
+        # touched, so this rung shares no state with the five above it.
+        return fetched, "embed"
     if links.unreadable():
         # the listing lists positions and none could be opened from here, on any rung, and
         # the LLM tier read nothing off the listing either: not an empty board. `_classify`
@@ -1846,7 +1954,12 @@ def scrape_result(company, url, timeout_ms=45000, *, budget_s=None, render=None,
         jobs, strategy = _extract(company, url, r, deadline=deadline,
                                   fetch=fetch or _fetch_url, llm=llm, visit=visit)
         status, error = _classify(r, jobs)
-        rescued = bool(jobs) and (r.error != "" or (r.http_status or 0) >= 400)
+        # NOT `rescued` when the board's own API answered. `rescued` marks jobs that
+        # landed before a FAILED render, and the refresh holds those behind the
+        # partial-read guard for two nights -- while `deadline:links` may already sit on
+        # r.error from strategy 4. An API read must not inherit either.
+        rescued = (bool(jobs) and not r.embed
+                   and (r.error != "" or (r.http_status or 0) >= 400))
         return ScrapeResult(jobs=jobs, status=status, error=error, http_status=r.http_status,
                             strategy=strategy, elapsed_s=time.monotonic() - t0, rescued=rescued,
                             weak_read=r.weak_read,

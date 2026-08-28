@@ -2437,45 +2437,98 @@ def test_refresh_counts_the_rows_the_digest_cannot_see(tmp_path, monkeypatch):
     assert "uncached=4" in D._html_audit(stats, lambda v: _html.escape(str(v)))
 
 
-def test_the_uncached_alarm_is_a_jump_and_never_a_level(tmp_path, monkeypatch):
-    """52% of the scrape pool was uncached on 2026-08-27 and 58% on 08-28, so ANY ratio bar
-    under ~50% fires every night -- and `alarm=` is the only thing that makes the audit's
-    `Stages:` line bold, the line that also carries `mass-failure-*`, `links-unread-N` and
-    `stale-ip-N`. A permanently-lit lamp costs that line its reader. So the level is a stamped
-    COUNT, and only a JUMP past max(25, 5% of rows) since the last stamp that measured a cache
-    is a token -- and it never repeats while the level merely stands."""
+def test_the_uncached_alarm_separates_a_growing_registry_from_a_breaking_extractor(
+        tmp_path, monkeypatch):
+    """The two causes of a rising `uncached` need opposite responses, and wave 1 showed a
+    one-night count delta cannot tell them apart: the whole 216 -> 287 jump of 2026-08-28 was
+    the pool moving 421 -> 496, i.e. the registry activating rows, and a naive bar fired on it.
+    Every row the registry activates arrives uncached by construction, so pool growth since
+    the anchor is SUBTRACTED. Both numbers are on the same stamp line, so the reader can check
+    the arithmetic without yesterday's file."""
     active = [f"Co{i:02d}" for i in range(60)]
-    dark = [f"New{i:02d}" for i in range(76)]
+    dark = [f"New{i:02d}" for i in range(40)]
     rows = [(n,) for n in active] + [
         [n, "scrape", "", f"https://{n.lower()}.example/careers", "false", ""] for n in dark]
-    # every dark row's outcome is fixed up front: `_refresh_sandbox` rebinds a falsy
-    # `outcomes` to a fresh dict, so a reference kept here would not reach the fake scraper.
     P = _refresh_sandbox(tmp_path, monkeypatch, rows, {n: [_il_job(n)] for n in active}, {},
                          {n: ("empty", "") for n in dark})
 
     def stamp():
         return _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
 
-    def activate(names):
-        _set_active(P.csv, names)
-
     assert P.R.run(["--workers", "1"]) == 0
     assert stamp()["uncached"] == 0 and "alarm" not in stamp()
-    activate(dark[:30])                       # the registry activates 30 rows nothing can read
+    for batch in (dark[:20], dark[20:40]):          # the registry activates 20 dark rows twice
+        _set_active(P.csv, batch)
+        assert P.R.run(["--workers", "1"]) == 0
+        assert "uncached-up" not in stamp().get("alarm", ""), \
+            "rows and uncached rose together: that is triage's business, not extraction's"
+    assert stamp()["uncached"] == 40 and stamp()["rows"] == 100
+    assert stamp()["uncached_base"] == 0 and stamp()["rows_base"] == 60, "the anchor HELD"
+
+
+def test_the_uncached_alarm_is_a_ratchet_so_a_slow_leak_cannot_hide(tmp_path, monkeypatch):
+    """Wave 1, measured over the real series: against a YESTERDAY baseline a leak of 24 rows a
+    night is silent forever -- 168 rows, a third of the pool, in seven quiet nights -- because
+    every single delta is under the bar. The anchor holds while coverage worsens, so the loss
+    accumulates against a fixed point; it ratchets DOWN the moment coverage improves, so a
+    recovery re-arms it; and it resets when the alarm fires, so one loss is announced once."""
+    # 120 rows and 10 a night: each step stays under the shrink guard (>20% of the companies
+    # that HAD jobs coming back empty aborts the run and keeps yesterday's cache), which is
+    # itself the reason a leak this size is the dangerous one -- it is small enough that every
+    # other guard in this file deliberately ignores it.
+    names = [f"Co{i:03d}" for i in range(120)]
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names],
+                         {n: [_il_job(n)] for n in names}, {})
+    real_out = P.R.scrape_result
+    broken = set()
+
+    def breaking(name, url, **kw):
+        if name in broken:
+            return _NS(jobs=[], status="empty", error="", http_status=200, strategy="",
+                       elapsed_s=0.1, rescued=False, embed="", embed_seen="")
+        return real_out(name, url, **kw)
+    monkeypatch.setattr(P.R, "scrape_result", breaking)
+
+    def stamp():
+        return _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+
+    assert P.R.run(["--workers", "1"]) == 0 and stamp()["uncached"] == 0
+    for k in range(3):                      # 10 rows stop extracting, three nights running
+        broken.update(names[10 * k:10 * (k + 1)])
+        assert P.R.run(["--workers", "1"]) == 0
+        assert stamp()["uncached"] == 10 * (k + 1) and stamp()["rows"] == 120
+    assert "uncached-up-0-to-30" in stamp()["alarm"],         "three silent nights of 10 accumulate against the anchor and fire on the third"
+    assert stamp()["uncached_base"] == 30, "the anchor resets, so one loss is announced once"
+    # a same-day re-run recomputes from the SAME anchor instead of laundering the alarm away
     assert P.R.run(["--workers", "1"]) == 0
-    assert stamp()["uncached"] == 30 and "uncached-up-0-to-30" in stamp()["alarm"]
-    assert P.R.run(["--workers", "1"]) == 0   # the SAME 30, one night later
-    assert stamp()["uncached"] == 30 and "uncached-up" not in stamp().get("alarm", "")
-    activate(dark[30:50])                     # +20: under the bar, silent
+    assert "uncached-up" not in stamp().get("alarm", ""), "announced once, then it stands"
+    assert stamp()["uncached"] == 30 and stamp()["uncached_base"] == 30
+    for k in range(3, 6):                   # and it re-arms: three more nights of 10
+        broken.update(names[10 * k:10 * (k + 1)])
+        assert P.R.run(["--workers", "1"]) == 0
+    assert "uncached-up-30-to-60" in stamp()["alarm"]
+    # recovery ratchets the anchor DOWN, so the next loss is measured from the better number
+    broken.clear()
     assert P.R.run(["--workers", "1"]) == 0
-    assert stamp()["uncached"] == 50 and "uncached-up" not in stamp().get("alarm", "")
-    activate(dark[50:76])                     # +26: over the bar
-    assert P.R.run(["--workers", "1"]) == 0
-    assert stamp()["uncached"] == 76 and "uncached-up-50-to-76" in stamp()["alarm"]
-    assert P.R.run(["--workers", "1"]) == 0   # 76 of 136 rows = 56%, standing: still silent
-    assert "uncached-up" not in stamp().get("alarm", ""), "a 56% level is not an alarm"
-    # the token reconciles against the key on its OWN line: no yesterday's file needed
-    assert P.R._token("uncached-up-50-to-76") == "uncached-up-50-to-76"
+    assert stamp()["uncached"] == 0 and stamp()["uncached_base"] == 0
+
+
+def test_the_uncached_growth_rule_is_pure_and_says_what_it_measured():
+    """The rule is a function of four numbers, three of which are on the stamp line it writes.
+    Driven directly so the thresholds are pinned without a sandbox."""
+    R = __import__("refresh_scrape_cache")
+    assert R.UNCACHED_JUMP_MIN == 25 and R.UNCACHED_JUMP_PCT == 5
+    # the one extraction regression on record: 30 rows in a night, pool flat
+    assert R._uncached_grew(246, 421, (216, 421))
+    # the reality of 2026-08-28: uncached +71 because the pool grew +75
+    assert not R._uncached_grew(287, 496, (216, 421))
+    # a pool that SHRANK cannot be used to hide a loss
+    assert R._uncached_grew(250, 400, (216, 421))
+    # the anchor: holds while worse, ratchets down when better, resets when it fires
+    assert R._next_base(240, 421, (216, 421), False) == (216, 421)
+    assert R._next_base(200, 421, (216, 421), False) == (200, 421)
+    assert R._next_base(246, 421, (216, 421), True) == (246, 421)
+    assert R._next_base(9, 9, None, False) == (9, 9)
 
 
 def test_a_night_that_could_not_read_the_cache_is_not_a_baseline(tmp_path, monkeypatch):
@@ -2488,14 +2541,14 @@ def test_a_night_that_could_not_read_the_cache_is_not_a_baseline(tmp_path, monke
     assert P.R.run(["--workers", "1"]) == 1
     stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
     assert stamp["uncached"] == 40 and stamp["alarm"] == "cache-unreadable"
-    assert P.R._prev_uncached() is None, "an abort stamp is refused as a baseline"
+    assert P.R._uncached_base() is None, "an abort stamp is refused as an anchor"
     P.cache.write_text("{}", encoding="utf-8")
     P2 = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], {}, {},
                           {n: ("empty", "") for n in names[:30]})
     assert P2.R.run(["--workers", "1"]) == 0
     stamp = _json.loads(P2.stages.read_text(encoding="utf-8"))["collect"]
     assert stamp["uncached"] == 30 and "uncached-up" not in stamp.get("alarm", "")
-    assert P2.R._prev_uncached() == 30, "a night that MEASURED a cache is a baseline"
+    assert P2.R._uncached_base() == (30, 40), "a night that MEASURED a cache is an anchor"
 
 
 def test_unvisited_is_zero_until_a_row_is_reached_by_nothing(tmp_path, monkeypatch):
@@ -2519,9 +2572,12 @@ def test_unvisited_is_zero_until_a_row_is_reached_by_nothing(tmp_path, monkeypat
     assert P2.R.run(["--workers", "1"], clock=clock) == 0
     s2 = _json.loads(P2.stages.read_text(encoding="utf-8"))["collect"]
     assert s2["unprocessed"] > 0 and s2["unvisited"] == 0 and s2["uncached"] == 0
-    # C: the park trap. `_park` pops the rot entry AFTER the stamp is built, so a parked row
-    #    counted here would read as `unvisited` -- forever. It is excluded: the registry write
-    #    that follows makes it inactive, and an inactive row is not coverage we are missing.
+    # C: the park trap. A parked row is excluded from BOTH counts -- the registry write that
+    #    follows makes it inactive, and an inactive row is not coverage we are missing. Only
+    #    the `uncached` assertion discriminates here: at count time the rot entry is still
+    #    present (the pop happens after the stamp), so `unvisited` would read 0 even if
+    #    `parking` were ignored entirely. Wave 1 caught that; the direct call below is the
+    #    assertion that actually tests the exclusion.
     stable = [f"Ok{i}" for i in range(12)]
     P3 = _refresh_sandbox(tmp_path / "park", monkeypatch,
                           [("Gone",)] + [(n,) for n in stable],
@@ -2531,6 +2587,9 @@ def test_unvisited_is_zero_until_a_row_is_reached_by_nothing(tmp_path, monkeypat
     assert _rows_by_name(P3.csv)["Gone"]["active"] == "false"
     s3 = _json.loads(P3.stages.read_text(encoding="utf-8"))["collect"]
     assert s3["parked"] == 1 and s3["uncached"] == 0 and s3["unvisited"] == 0
+    gone_rows = [{"company_name": "Gone"}]
+    assert P3.R._uncached(gone_rows, {}, [("Gone", "error 9d")]) == 0
+    assert P3.R._uncached(gone_rows, {}, []) == 1, "the exclusion is what makes it 0"
 
 
 def test_uncached_describes_the_cache_each_exit_actually_leaves(tmp_path, monkeypatch):
@@ -2618,7 +2677,7 @@ def test_scrape_reads_the_board_a_rendered_page_names_only_in_its_own_traffic():
                               "https://api.ashbyhq.com/posting-api/job-board/stigg"])
     assert SU._detect_embedded_board(r)[:2] == ("ashby", "stigg")
     r2 = _embed_rendered(comeet={"u": "2E.001", "t": "FFEEDDCCBBAA99887766"})
-    plat, tok, api = SU._detect_embedded_board(r2)
+    plat, tok, api, repaired = SU._detect_embedded_board(r2)
     assert (plat, tok) == ("comeet", "2E.001") and "2E.001" in api and "FFEEDD" in api
     assert SU._detect_embedded_board(_embed_rendered(html="<p>no board here</p>")) is None
     # an ATS name in prose is not a board: the detector needs a real address
@@ -2668,8 +2727,11 @@ def test_the_scraper_never_reaches_a_gate_that_can_spend_bright_data():
     import pathlib
     banned = {"activation_verdict", "activation_ok", "ok_to_write", "write_verdict",
               "identity_ok", "page_names_company", "human_board_url"}
+    # resolved from THIS FILE, never from cwd: a test that reads `pathlib.Path("x.py")`
+    # inherits whatever directory the runner happens to be in (docs/BACKLOG.md 344)
+    root = pathlib.Path(__file__).resolve().parent.parent
     for mod in ("scrape_universal.py", "refresh_scrape_cache.py", "cache_new_rows.py"):
-        tree = _ast.parse(pathlib.Path(mod).read_text(encoding="utf-8"))
+        tree = _ast.parse((root / mod).read_text(encoding="utf-8"))
         names = {n.attr for n in _ast.walk(tree) if isinstance(n, _ast.Attribute)}
         names |= {n.id for n in _ast.walk(tree) if isinstance(n, _ast.Name)}
         for n in _ast.walk(tree):
@@ -2680,6 +2742,324 @@ def test_the_scraper_never_reaches_a_gate_that_can_spend_bright_data():
     from pipeline import identity_gate as G
     for who in G.GATE_CALLERS.values():
         assert not ({"scrape_universal.py", "refresh_scrape_cache.py"} & set(who))
+
+def test_scrape_the_embed_rung_never_fires_when_the_ladder_read_the_board():
+    """The non-regression proof, as an assertion. The rung sits after the ladder's own
+    `if add.israeli: return done()`, so `add.israeli == 0` is guaranteed by the line above it
+    -- and it receives no adder, so it cannot promote, dedupe against, re-locate or reorder
+    anything the five strategies produced. A row that already works cannot change."""
+    import scrape_universal as SU
+    from pipeline import fetchers
+    board = "https://boards-api.greenhouse.io/v1/boards/someoneelse/jobs"
+
+    def boom(row):
+        raise AssertionError("the ladder already read this board")
+
+    ld = {"@context": "https://schema.org", "@type": "JobPosting",
+          "title": "Senior Data Analyst", "datePosted": "2026-08-20",
+          "hiringOrganization": {"name": "Acme"},
+          "jobLocation": {"address": {"addressLocality": "Tel Aviv",
+                                      "addressCountry": "IL"}},
+          "url": "https://acme.example/jobs/1"}
+    with _mp.context() as m:
+        m.setattr(fetchers, "fetch_company", boom)
+        r = SU.Rendered(url="https://acme.example/careers")
+        r.blobs = [_json.dumps(ld), _json.dumps({**ld, "title": "Senior BI Analyst",
+                                                 "url": "https://acme.example/jobs/2"}),
+                   _json.dumps({**ld, "title": "Product Analyst",
+                                "url": "https://acme.example/jobs/3"})]
+        r.req_urls = [board]
+        jobs, strategy = SU._extract("Acme", r.url, r)
+        assert jobs and strategy and "embed" not in strategy, (len(jobs), strategy)
+        assert r.embed == "" and r.embed_seen == "", "not even detected: the rung is unreached"
+
+
+def test_scrape_the_embed_handoff_is_one_bounded_call_with_a_kill_switch():
+    """A rung that spends no shared quota still spends WALL CLOCK, and `pipeline.http` binds
+    its timeout default at import while `fetch_company` takes none -- worst case 3 retries at
+    30 s, which overruns COMPANY_BUDGET_S on its own. One call, a hard join, a deadline floor,
+    and a switch that actually switches it off."""
+    import scrape_universal as SU
+    from pipeline import fetchers
+    calls = []
+
+    def counting(row):
+        calls.append(row["company_name"])
+        return [dict(_il_job("Stigg"), country_code="IL")]
+
+    def mk():
+        r = SU.Rendered(url="https://stigg.io/careers")
+        r.req_urls = ["https://api.ashbyhq.com/posting-api/job-board/stigg"]
+        return r
+    # `_detect_ats` returns ONE tuple however many boards a page names -- and it picks by
+    # ATS_PATTERNS order, not by which board is the company's, so a page carrying a partner's
+    # greenhouse widget beside its own ashby board detects the greenhouse one and the gate
+    # then refuses it. That costs a conversion; it can never cost an admission. Filed for
+    # `registry` (docs/BACKLOG.md). What matters here is that the fetch is at most ONE.
+    two = SU.Rendered(url="https://stigg.io/careers")
+    two.req_urls = ["https://api.ashbyhq.com/posting-api/job-board/stigg",
+                    "https://boards-api.greenhouse.io/v1/boards/other/jobs"]
+    det = SU._detect_embedded_board(two)
+    assert det is not None and len(det) == 4 and det[0] == "greenhouse"
+    with _mp.context() as m:
+        m.setattr(fetchers, "fetch_company", counting)
+        m.delenv("SCRAPE_EMBED_HANDOFF", raising=False)
+        m.delenv("SCRAPE_EMBED_DETECT", raising=False)
+        assert SU._from_embedded_board("Stigg", two.url, two) == [] and calls == []
+        assert two.embed_seen == "greenhouse:other:unverified", two.embed_seen
+        r = mk()
+        assert SU._from_embedded_board("Stigg", r.url, r)
+        assert calls == ["Stigg"], "one admitted board, exactly one fetch"
+        # the deadline floor: what cannot finish is not started
+        calls.clear()
+        r = mk()
+        assert SU._from_embedded_board("Stigg", r.url, r, deadline=SU.Deadline.start(1)) == []
+        assert calls == [] and r.embed_seen.endswith(":ok:deadline")
+        # the kill switches
+        calls.clear()
+        m.setenv("SCRAPE_EMBED_HANDOFF", "0")
+        r = mk()
+        assert SU._from_embedded_board("Stigg", r.url, r) == [] and calls == []
+        assert r.embed_seen == "ashby:stigg:ok", "detection and the record survive the switch"
+        m.setenv("SCRAPE_EMBED_DETECT", "0")
+        r = mk()
+        assert SU._from_embedded_board("Stigg", r.url, r) == [] and r.embed_seen == ""
+    # a fetcher that never returns is abandoned at the wall, not waited on
+    with _mp.context() as m:
+        m.setattr(SU, "_EMBED_FETCH_TIMEOUT_S", 1)
+        m.setattr(fetchers, "fetch_company", lambda row: _time.sleep(30))
+        r = mk()
+        t0 = _time.monotonic()
+        assert SU._from_embedded_board("Stigg", r.url, r) == []
+        assert _time.monotonic() - t0 < 8, "the join is a WALL, not a suggestion"
+        assert r.embed_seen.endswith(":ok:timeout")
+
+
+def test_a_handed_off_posting_is_still_a_scrape_row_and_keeps_the_boards_country_code():
+    """Two things the handoff must not quietly change. The ROW stays `scrape`: `store.seen_id`
+    and the card's `sources` tag are keyed on it, so flipping it would re-key every role this
+    company ever had. And `country_code` is KEPT, unlike a scraped card's, which this module
+    blanks because the SCRAPER guessed -- here the board STATES it, and `is_israel_job` treats
+    a non-IL code as an authoritative negative, which drops a foreign role a card would keep."""
+    import scrape_universal as SU
+    from pipeline import fetchers, israel
+    payload = [dict(_il_job("Stigg", 1), country_code="IL", ats_platform="ashby"),
+               dict(_il_job("Stigg", 2), country_code="US", location="New York",
+                    ats_platform="ashby")]
+    with _mp.context() as m:
+        m.setattr(fetchers, "fetch_company", lambda row: [dict(j) for j in payload])
+        m.delenv("SCRAPE_EMBED_HANDOFF", raising=False)
+        r = SU.Rendered(url="https://stigg.io/careers")
+        r.req_urls = ["https://api.ashbyhq.com/posting-api/job-board/stigg"]
+        jobs = SU._from_embedded_board("Stigg", r.url, r)
+    assert len(jobs) == 2 and r.embed == "ashby" and r.embed_seen == "ashby:stigg:won"
+    assert all(j["ats_platform"] == "scrape" for j in jobs), "the ROW is a scrape row"
+    assert all(j["_board"] == "ashby" for j in jobs), "the real platform rides in _board"
+    assert [j["country_code"] for j in jobs] == ["IL", "US"], "the board's own claim survives"
+    assert [israel.is_israel_job(j) for j in jobs] == [True, False], "a US code is a negative"
+
+
+def test_a_board_with_no_israel_role_is_not_a_discovery_and_does_not_take_over():
+    """A handoff that reaches a foreign-only board has not learned that this company has no
+    Israel roles -- it has learned nothing. It must fall through with the ladder's own list so
+    `no_il` still counts what the PAGE showed, and it must say which of the four ways it
+    failed: `no-il`, `empty`, a fetcher name, or `timeout`."""
+    import scrape_universal as SU
+    from pipeline import fetchers
+
+    def mk():
+        r = SU.Rendered(url="https://stigg.io/careers")
+        r.req_urls = ["https://api.ashbyhq.com/posting-api/job-board/stigg"]
+        return r
+    for payload, tail in (([dict(_il_job("Stigg"), country_code="US", location="Austin")],
+                           "ok:no-il"),
+                          ([], "ok:empty")):
+        with _mp.context() as m:
+            m.setattr(fetchers, "fetch_company", lambda row, p=payload: [dict(j) for j in p])
+            r = mk()
+            assert SU._from_embedded_board("Stigg", r.url, r) == []
+            assert r.embed == "" and r.embed_seen.endswith(tail), r.embed_seen
+    with _mp.context() as m:
+        def raiser(row):
+            raise ValueError("boom")
+        m.setattr(fetchers, "fetch_company", raiser)
+        r = mk()
+        assert SU._from_embedded_board("Stigg", r.url, r) == []
+        assert r.embed_seen == "ashby:stigg:ok:ValueError"
+
+
+def test_the_embed_stage_keeps_the_via_counts_summing_to_with_jobs(tmp_path, monkeypatch):
+    """ARCHITECTURE section 5a: `via` sums to `with_jobs` and a line that does not reconcile
+    is not from this code. A sixth ladder stage must not break that, and its label must be a
+    space-free token or `stages.summary()`'s k=v rendering comes apart."""
+    import scrape_universal as SU
+    assert SU._STAGES[-1] == "embed" and len(SU._STAGES) == 6
+    names = [f"Co{i:02d}" for i in range(14)]
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names], {}, {},
+                         {names[0]: ("empty", ""), names[1]: ("error", "http:404")})
+    real = P.R.scrape_result
+
+    def some_embed(name, url, **kw):
+        res = real(name, url, **kw)
+        if name in names[2:5]:
+            res.strategy, res.embed, res.embed_seen = "embed", "comeet", "comeet:ab.001:won"
+        return res
+    monkeypatch.setattr(P.R, "scrape_result", some_embed)
+    assert P.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["with_jobs"] + stamp["empty"] + stamp["errors"] == stamp["scraped"] == 14
+    via = dict(_re.fullmatch(r"([a-z-]+)(\d+)", part).groups()
+               for part in stamp["via"].split("+"))
+    assert sum(int(v) for v in via.values()) == stamp["with_jobs"], stamp["via"]
+    assert via.get("embed") == "3" and stamp["embeds_won"] == 3 and stamp["embeds"] == 3
+    assert _re.fullmatch(r"[A-Za-z0-9_.%+:-]+", stamp["via"])
+    assert stamp["embeds_won"] <= stamp["embeds"] <= stamp["scraped"]
+
+def test_unvisited_counts_the_rot_file_each_exit_actually_leaves(tmp_path, monkeypatch):
+    """Wave 1 falsified the invariant. `_apply_result` POPS a healthy company's rot entry and
+    INSERTS a rotting one, but the two abort exits return before `write_json(ROT_PATH, rot)`,
+    so a count taken from the live dict describes a file that will never exist. Both
+    directions were reachable with no race and no corruption:
+
+    * shrink-abort — a row scraped SUCCESSFULLY tonight and absent from yesterday's cache had
+      its entry popped in memory, so it read as never-visited, raising a false `unvisited-N`
+      on the one morning the operator is already reading that line closely. It also broke
+      `unvisited <= unprocessed`, which is the claim the whole design rests on.
+    * mass-failure — a row nothing has ever scraped, which errored tonight, had an entry
+      INSERTED in memory, so `unvisited` read 0 while the file on disk still knew nothing
+      about it: the leading indicator is silent on exactly the night that would produce it.
+    """
+    names = [f"C{i:02d}" for i in range(25)]
+    old = {n: [_il_job(n)] for n in names}
+    # A. shrink-abort: RotCo succeeds tonight, is not in yesterday's cache, and HAS a rot entry
+    P = _refresh_sandbox(tmp_path / "shrink", monkeypatch,
+                         [(n,) for n in names] + [("RotCo",)], old,
+                         {"RotCo": _rot_entry(9)},
+                         {n: ("empty", "") for n in names[:9]})
+    assert P.R.run(["--workers", "1"]) == 0
+    s = _json.loads(P.stages.read_text(encoding="utf-8"))["collect"]
+    assert s["alarm"].startswith("shrink-abort-"), s["alarm"]
+    assert "RotCo" in _json.loads(P.rot.read_text(encoding="utf-8")), "the pop never reached disk"
+    assert s["uncached"] == 1, "RotCo is genuinely not in the cache this exit left"
+    assert s["unvisited"] == 0, "...but the rot file on disk has known it for nine nights"
+    assert s["unvisited"] <= s["unprocessed"], "the invariant the design rests on"
+    assert "unvisited-" not in s.get("alarm", ""), "no false alarm on an abort night"
+    # B. mass-failure: NeverSeen is in neither file, and tonight's insert is discarded
+    P2 = _refresh_sandbox(tmp_path / "mass", monkeypatch,
+                          [(n,) for n in names] + [("NeverSeen",)], old, {},
+                          {n: ("error", "goto:TimeoutError") for n in names + ["NeverSeen"]})
+    assert P2.R.run(["--workers", "1"]) == 0
+    s2 = _json.loads(P2.stages.read_text(encoding="utf-8"))["collect"]
+    assert s2["alarm"].startswith("mass-failure-")
+    assert _json.loads(P2.rot.read_text(encoding="utf-8")) == {}, "the insert never reached disk"
+    assert s2["uncached"] == 1 and s2["unvisited"] == 1, \
+        "a row nothing has ever scraped is STILL unvisited after a night that measured nothing"
+
+
+def test_a_scope_flag_that_parses_to_nothing_is_refused_not_widened(tmp_path, monkeypatch):
+    """`--only "$COMPANY"` with COMPANY unset parsed to the empty set, which is falsy, so
+    `scoped` was False: a flag typed to NARROW the run rewrote the whole cache, parked rows in
+    companies.csv and STAMPED `collect` -- replacing the entry and resetting `date` to today.
+    `--limit 0` is the same shape (wave-1 attacker A, F4)."""
+    R = __import__("refresh_scrape_cache")
+    for argv in (["--only", ""], ["--only", ","], ["--only", " , "],
+                 ["--limit", "0"], ["--limit", "-3"]):
+        with pytest.raises(SystemExit):
+            R._parse(argv)
+    assert R._parse(["--only", "Wix,Fiverr"]).scoped
+    assert R._parse(["--limit", "5"]).scoped and R._parse(["--only-missing"]).scoped
+    assert not R._parse([]).scoped, "the cron is still unscoped"
+
+
+def test_one_scalar_in_the_rot_file_does_not_cost_the_night(tmp_path, monkeypatch):
+    """`_load` validates only the TOP level, and `scrape_rot.json` is merged per key on a push
+    conflict. A scalar value raised `AttributeError` inside `_rot_bump`, in the parent loop,
+    AFTER all the Chromium work and BEFORE the cache was written: no cache, no stamp, the
+    night gone. Exactly the reachability `_ip_age`'s own docstring was hardened against
+    (wave-1 attacker A, F5)."""
+    names = [f"Co{i:02d}" for i in range(14)]
+    P = _refresh_sandbox(tmp_path, monkeypatch, [(n,) for n in names],
+                         {n: [_il_job(n)] for n in names},
+                         {names[0]: "not-a-dict", names[1]: 7, names[2]: None},
+                         {names[0]: ("empty", ""), names[1]: ("error", "http:404")})
+    assert P.R.run(["--workers", "1"]) == 0, "the night survives a malformed rot entry"
+    rot = _json.loads(P.rot.read_text(encoding="utf-8"))
+    assert isinstance(rot[names[0]], dict) and rot[names[0]]["n"] == 1, "the entry restarts"
+    assert _json.loads(P.cache.read_text(encoding="utf-8")), "and the cache was written"
+
+def test_the_embed_handoff_refuses_a_board_that_merely_starts_like_our_name():
+    """CLAUDE.md rule 5, as the assertion the repo would most regret not having.
+
+    `identity_gate.embedded_board_ok` is calibrated for a REGISTRY writer, where a human reads
+    the note it stamps. Its near-equality composes two vocabulary strippers --
+    `_EMBED_TOKEN_WORDS` over the token's tail, `_tenant_near` over legal suffixes -- into
+    prefix-containment in practice, so it admits `<our name> + <any vocabulary tail>`. An
+    adversarial pass drove six LIVE registry rows end to end into publishing a stranger's
+    board, and measured that 492 of 496 active scrape rows admit some slug strictly longer
+    than their own core. Here the next step is the public board and the 05:45 mail, with
+    nobody in between, so the tenant must be DECLARED or normalise EXACTLY.
+
+    Every left-hand name below is a real active row and every right-hand slug is a real other
+    company's board. Exact equality refuses all of them and keeps all five boards the gate
+    legitimately admitted on 2026-08-28 -- the whole cost of the strictness is conversions
+    that become a handoff line for `registry` instead of a posting on the board.
+    """
+    import scrape_universal as SU
+
+    def gh(slug):
+        return f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs"
+
+    leaks = [("Nova", "novalabs"), ("HUB Security", "hubinternational"),
+             ("Aqua Security", "aquatech"), ("Zoomd", "zoom"), ("Skai", "kai"),
+             ("Darrow", "arrow"), ("Gett", "getty"), ("Sight Sciences", "sight"),
+             ("Bright Security", "bright"), ("TripleW", "triple"),
+             ("one \u05e4\u05ea\u05e8\u05d5\u05e0\u05d5\u05ea", "onemedical")]
+    for name, slug in leaks:
+        assert not SU._embed_admits(name, slug, gh(slug)), f"{name} <- {slug}"
+    for name, slug in [("Stigg", "stigg"), ("Digital Turbine", "digitalturbine"),
+                       ("Unframe", "unframe"), ("Plateful", "plateful"),
+                       ("REAL DEV INC", "real-dev-inc")]:
+        assert SU._embed_admits(name, slug, gh(slug)), f"{name} <- {slug} must still pass"
+    # and the incident the gate itself was written for still refuses
+    assert not SU._embed_admits("Cogniteam", "riskified", gh("riskified"))
+
+
+def test_a_token_the_scraper_had_to_repair_is_never_fetched():
+    """Sanitising is monotone TOWARDS admission -- truncating at the first markup character
+    returns a PREFIX, and prefix-containment is exactly what the old rule admitted on:
+    `getty%20images` became `getty`, which was then admitted for `Gett`. The rebuilt api_url
+    can also point at a different board than the page named (`nova/nova%20site` ->
+    `nova/nova`, a different Workday site). So a token this module had to cut markup out of is
+    RECORDED for `registry`, with the raw string, and never fetched (wave-1 attacker C, S2)."""
+    import scrape_universal as SU
+    from pipeline import fetchers
+    calls = []
+    with _mp.context() as m:
+        m.setattr(fetchers, "fetch_company", lambda row: calls.append(row) or [])
+        m.delenv("SCRAPE_EMBED_HANDOFF", raising=False)
+        r = SU.Rendered(url="https://stigg.io/careers")
+        r.page_html = '<iframe src="https://boards-api.greenhouse.io/v1/boards/stigg"></iframe>'
+        det = SU._detect_embedded_board(r)
+        assert det is not None and det[3] is True, "the markup was repaired"
+        assert SU._from_embedded_board("Stigg", r.url, r) == []
+        assert r.embed_seen.endswith(":markup") and "stigg" in r.embed_seen
+        assert calls == [], "a repaired token is evidence for a human, not for a fetcher"
+
+
+def test_no_posting_in_the_committed_cache_came_from_an_unadmitted_board():
+    """A standing check on the artefact rather than the code: every posting a handoff put in
+    `scraped_cache.json` carries `_board`, and its company must still admit that board under
+    today's rule. If `registry` later declares a tenant this passes for a new reason; if
+    someone loosens the rule, this is what goes red."""
+    import json as _j
+    import pathlib
+    import scrape_universal as SU
+    root = pathlib.Path(__file__).resolve().parent.parent
+    cache = _j.loads((root / "scraped_cache.json").read_text(encoding="utf-8"))
+    handed = [(name, j) for name, jobs in cache.items() for j in jobs if j.get("_board")]
+    for name, j in handed:
+        assert SU._embed_admits(name, j.get("_token", ""), j.get("_board_url", "")), \
+            f"{name} carries a posting from {j['_board']} it no longer admits"
 
 def test_refresh_shrink_abort_keeps_the_cache_and_stamps_its_reason(tmp_path, monkeypatch):
     """A run whose rebuilt cache would lose more than 20% of its companies keeps the old
