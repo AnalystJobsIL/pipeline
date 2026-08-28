@@ -21,8 +21,33 @@ name: Company intel — registry backlog (cloud)
 # where nothing is waiting on it.
 #
 # Research is ONE-TIME per company: records refresh at --refresh-days 180, and the oldest
-# record today is 2026-08-21, so nothing re-researches before 2027-02. Steady state is the
-# 3-16 rows/day the registry grows by; the standing backlog on 2026-08-26 was 7.
+# record today is 2026-08-21, so nothing re-researches before 2027-02.
+#
+# THE CAP IS 150, NOT 40, AND THE ARITHMETIC IS WHY (measured 2026-08-28).
+#
+# "Steady state is the 3-16 rows/day the registry grows by" was true when this file was
+# written on 2026-08-26 and is not true now. Re-derived from `git log` on companies.csv:
+# 862 active rows on 08-24 -> 1,002 on 08-28 20:23 = +28.9/day over 4.85 days, +68.6/day
+# over the last 48 h, and +65 on 08-28 alone.
+#
+# Throughput per run, from the only two real runs there have ever been: the 08-27 cron did
+# 23 calls in 334 s of model time (173 s wall at 2 workers), and a 135-call drain the same
+# night took 2,844 s of model time (~24 min wall). Take the slower of the two: ~10.5 s of
+# WALL per call at --workers 2.
+#
+#     --limit  40  ->   7.0 min of a 120-minute job   (5.8 %)
+#     --limit 150  ->  26.2 min                       (21.9 %)
+#
+# Slot reliability, measured: this cron has had TWO scheduled opportunities and delivered
+# ONE, ten hours late (2026-08-27T20:05Z; the 08-28 slot never fired at all). So:
+#
+#     40 x 50 %  =  20/day  -- SHORT of even the 4.85-day mean by 8.9/day
+#     40 x 100 % =  40/day  -- SHORT of the recent rate by 28.6/day
+#    150 x 50 %  =  75/day  -- keeps pace with both
+#
+# The cap was never protecting the clock (40 calls used 6 % of the job); it was protecting
+# nothing and losing ground. It is a CEILING, not a target: on a quiet day the run still
+# stops when `todo` empties, and the standing backlog after the 08-28 drain was 6.
 
 on:
   schedule:
@@ -35,8 +60,8 @@ on:
   workflow_dispatch:
     inputs:
       limit:
-        description: "max companies to research this run (0 = as many as the time allows)"
-        default: "40"
+        description: "max companies to research this run (0 = unbounded)"
+        default: "150"
       refresh_days:
         description: "re-research records older than this many days"
         default: "180"
@@ -72,7 +97,7 @@ jobs:
         run: |
           python research_firmographics.py \
             --workers 2 \
-            --limit "${{ github.event.inputs.limit || '40' }}" \
+            --limit "${{ github.event.inputs.limit || '150' }}" \
             --refresh-days "${{ github.event.inputs.refresh_days || '180' }}"
           python research_firmographics.py --export
 
