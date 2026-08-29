@@ -7435,4 +7435,21 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     and must be budgeted against `bd_rescue` (215 credits on 2026-08-29) and the JD tier.
 
     Reclassify the six modules `operator` -> `scheduled` in `docs/gen_modules.py` in the same
+
+    **CLOSED 2026-08-30.** `listing-hunt.yml` now runs four steps at 19:00:
+    `queue_resolve_search` (4 shards x 30 = 120 names a night, against a measured median
+    intake of 92/day), `queue_pipeline --apply-proposals` (every proposal read by
+    `pipeline/board_verify` before `apply_proposals` sees it), `queue_pipeline
+    --verify-existing --limit 60` (live addresses re-read on a 30-day cadence, and an
+    unreadable one on 7), and `queue_pipeline --stamp`. `HUNT_QUEUE_CAP=0` retires the
+    superseded arm -- it resolved 2 of 57 names where this rung resolves 56% -- and
+    `HUNT_TIME_BUDGET_MIN` drops 200 to 140 to pay for it.
+    `test_the_queue_drain_is_actually_scheduled` asserts the wiring AND that the minutes add
+    up: 140 + 95 + ~90 = 325 against a 330 cap, and over it the job dies before
+    `persist_state` commits the night's work. The six queue modules are reclassified
+    `scheduled`, and all four new state files carry a merge strategy in
+    `persist_state.STRATEGY` -- `board_verify.json`, `queue_state.json` and
+    `queue_disposition.json` merge per key (several shards write one document in a night, and
+    a whole-file write means the last one to finish discards the rest), while
+    `queue_receipt.json` is a receipt and takes `ours`.
     change, or `docs/check_docs.py` will keep reporting a fully-wired repo.
