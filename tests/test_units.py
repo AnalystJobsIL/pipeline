@@ -11190,7 +11190,13 @@ def test_the_drivers_run_on_the_budgets_their_docstrings_promise(tmp_path, monke
     # returns instantly, so nothing elapsed and the remainder is the full 25 -- in a real
     # run the live pass has spent its share by then. The reservation is a FLOOR under the
     # archived pass, never a second budget on top.
-    assert len(seen) == 3 and seen[2]["minutes"] == 25.0
+    # `== 25.0` until 2026-08-29 (BACKLOG 421): `left` is `minutes - (time.time() - t0)/60`,
+    # so the assertion held only while the elapsed term rounded to exactly zero. It did on a
+    # Windows timer tick in isolation and did NOT under a full-suite run -- CI read
+    # 24.999999876817068 and the push was red on a green tree. The CLAIM is "what is left of
+    # the whole budget", so that is what is asserted: the full budget minus a sliver, never a
+    # second allowance on top of it.
+    assert len(seen) == 3 and 24.9 <= seen[2]["minutes"] <= 25.0
 
 
 def test_the_inline_refusal_outranks_a_spent_budget(monkeypatch):

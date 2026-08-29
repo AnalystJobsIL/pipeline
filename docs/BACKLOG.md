@@ -7251,6 +7251,11 @@ stripped (`ARCHITECTURE.md` §8 — a result from a broken path is not a measure
 
 Record: `docs/sessions/2026-08-29-registry-queue.md`.
 
+
+    **CLOSED 2026-08-29 by `jd-text`, and it bit exactly as predicted**: the first push of
+    the archive pool was red on `guard` with `24.999999876817068 == 25.0` while the same
+    tree was green locally. The assertion now tests the CLAIM — what is left of the whole
+    budget — as `24.9 <= minutes <= 25.0`, rather than a wall clock landing on a float.
 422. **`resolve_llm` resolves at 7.3% on a VERIFIED own-domain and 0% on a search-found page —
     the tier was never broken, it was starved** — lane: `registry`, measured 2026-08-29.
     `278@registry` wrote the tier off at *"0 resolved from 7 asked"*; `_verify` refuses any
