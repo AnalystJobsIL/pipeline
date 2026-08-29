@@ -7523,3 +7523,32 @@ def test_the_seed_disambiguates_a_one_word_company_name(tmp_path, monkeypatch):
     assert "SEED" in BV.SYSTEM and "generic" in BV.SYSTEM, (
         "the model is given a seed but never told to use it to tell two same-named "
         "companies apart")
+
+
+def test_a_stale_verdict_does_not_freeze_a_name_for_ever(tmp_path, monkeypatch):
+    """`dispose` skipped every name that had a RECORD, and 343 names carried
+    `cannot-tell` / `overturned-no-board` from the 2026-08-29 judge -- the one that reasoned
+    from the hunt's own stored evidence and whose `no-board` verdicts were 75% wrong. Those
+    are not answers, and the current arm has evidence the old one never had (a careers-path
+    probe of the company's own domain). Only a SETTLED verdict may skip a name."""
+    import json
+    import queue_pipeline as QP
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    (tmp_path / QP.QUEUE).write_text(json.dumps(
+        [{"name": "Stale"}, {"name": "Answered"}, {"name": "Fresh"}]), encoding="utf-8")
+    (tmp_path / QP.DISPOSE_PATH).write_text(json.dumps({
+        "Stale": {"verdict": "cannot-tell", "date": "2026-08-29"},          # no raw_verdict
+        "Answered": {"verdict": "duplicate-of", "raw_verdict": "duplicate",
+                     "date": "2026-08-29", "evidence": {}}}), encoding="utf-8")
+
+    seen = []
+    monkeypatch.setattr(QP, "dispose_evidence",
+                        lambda n, c, v, read_page=True: seen.append(n) or
+                        {"search_pages": [], "page_text": "", "page_url": "", "verify": []})
+    QP.dispose(apply=False)
+    assert "Stale" in seen, "a stale non-answer must be re-judged"
+    assert "Fresh" in seen, "a name never judged must be judged"
+    assert "Answered" not in seen, "a settled verdict is not paid for twice"

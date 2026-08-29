@@ -494,7 +494,13 @@ def dispose(limit=0, apply=False, shard="", read_pages=True):
     cache, verify_state, qstate = _search_cache(), BV.load(), QS.load()
 
     todo = [(e.get("name") or "").strip() for e in queue]
-    todo = [n for n in todo if n and n.lower() not in have and n not in state]
+    # SKIP ONLY A SETTLED ANSWER. Skipping every name that has a RECORD froze 343 names:
+    # they carry `cannot-tell` or `overturned-no-board` from the 2026-08-29 judge, which
+    # reasoned from the hunt's own stored evidence and whose `no-board` verdicts were 75%
+    # wrong -- the reason they were overturned. Those are not answers, and the current arm
+    # has evidence the old one never had (a careers-path probe of the company's own domain).
+    todo = [n for n in todo if n and n.lower() not in have
+            and (state.get(n) or {}).get("raw_verdict") not in RETIRABLE]
     if shard and "/" in shard:
         i, k = (int(x) for x in shard.split("/", 1))
         todo = todo[i - 1::k]
