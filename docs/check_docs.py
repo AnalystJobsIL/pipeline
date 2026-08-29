@@ -1608,6 +1608,159 @@ def check_backlog() -> None:
                        "a session finds its own work." % len(unlaned))
 
 
+# ---------------------------------------------------------------- 6c. the tree itself
+# The docs this file certifies are the docs in the tree it runs in, and nothing said so.
+# The shared checkout on the operator's machine - the one whose CLAUDE.md is injected into
+# every session on this machine - was 146 commits behind origin/master, claiming 846
+# companies against a true 1,071 and 36 of 80 continue-on-error steps against 42 of 87,
+# while `--facts` printed `coe_ratio ... ok` for all four of its sites. It was telling the
+# truth: those numbers do match THAT tree's workflows. A green docs check on a stale tree
+# certifies the stale tree.
+CERTIFIED_DOCS = ["CLAUDE.md", "README.md", "ARCHITECTURE.md", "HANDOFF.md", "docs/"]
+TREE_STALE_HOURS = 24
+
+
+def _rebase_in_progress() -> bool:
+    for what in ("rebase-merge", "rebase-apply"):
+        p = (_git("rev-parse", "--git-path", what) or "").strip()
+        if p and os.path.exists(os.path.join(ROOT, p)):
+            return True
+    return False
+
+
+def _origin_fetch_age_hours():
+    """Hours since this repo last fetched, or None. Read from the COMMON dir, so a worktree
+    sees the fetch its parent repo did."""
+    import time
+    common = (_git("rev-parse", "--git-common-dir") or "").strip()
+    if not common:
+        return None
+    p = os.path.join(ROOT, common, "FETCH_HEAD")
+    if not os.path.isabs(p):
+        p = os.path.join(ROOT, common, "FETCH_HEAD")
+    if not os.path.exists(p):
+        return None
+    return (time.time() - os.path.getmtime(p)) / 3600.0
+
+
+def tree_state():
+    """(commits behind, the certified docs that differ, hours since the merge-base, fetch age)
+    or None when there is nothing to compare against.
+
+    Never fetches. A linter that reaches the network is one a lane learns to skip, and ten
+    concurrent sessions would contend on the ref lock; the fetch belongs to the session-start
+    hook, which is allowed to be slow and is allowed to fail."""
+    import time
+    if os.environ.get("GITHUB_ACTIONS"):
+        return None                    # CI builds the commit that was pushed, shallowly
+    if _git("rev-parse", "--is-inside-work-tree") is None or _rebase_in_progress():
+        return None
+    if _git("rev-parse", "-q", "--verify", "origin/master") is None:
+        return None
+    behind = _git("rev-list", "--count", "HEAD..origin/master")
+    if behind is None:
+        return None
+    behind = int(behind.strip() or 0)
+    base = (_git("merge-base", "HEAD", "origin/master") or "").strip()
+    age = None
+    if base:
+        when = _git("log", "-1", "--format=%ct", base)
+        if when and when.strip().isdigit():
+            age = (time.time() - int(when.strip())) / 3600.0
+    differ = []
+    for doc in CERTIFIED_DOCS:
+        if _git("diff", "--quiet", "HEAD", "origin/master", "--", doc) is None:
+            differ.append(doc)
+    return behind, differ, age, _origin_fetch_age_hours()
+
+
+def check_tree_is_current() -> None:
+    """This checkout is the thing being certified; say so when it is not master's.
+
+    ERROR is deliberately NOT "behind by one". Every lane's push touches `HANDOFF.md`, so
+    "the docs differ" alone would be red for nine sessions every time a tenth pushed, and a
+    linter that cries wolf gets skipped - this file's own header says so. What is never
+    innocent is a checkout whose merge-base is a DAY old: nobody is mid-task on a branch cut
+    yesterday, and that is the shape of the shared checkout that was 146 behind."""
+    state = tree_state()
+    if state is None:
+        return
+    behind, differ, base_age, fetch_age = state
+    if behind and differ and base_age is not None and base_age > TREE_STALE_HOURS:
+        err("tree", "this checkout is %d commit(s) behind origin/master, its merge-base is "
+                    "%.0f hours old, and the docs this check certifies differ from master's "
+                    "(%s). A green docs check on a stale tree certifies the stale tree: the "
+                    "shared checkout was 146 behind, claiming 846 companies against 1,071, "
+                    "with every registered fact `ok`. Rebase, or cut the worktree from "
+                    "origin/master." % (behind, base_age, ", ".join(differ)))
+    elif behind and differ:
+        warn("tree", "this checkout is %d commit(s) behind origin/master and %s differ(s) "
+                     "from master's. Fine mid-session; read a number off master, not off "
+                     "here." % (behind, ", ".join(differ)))
+    elif behind:
+        warn("tree", "this checkout is %d commit(s) behind origin/master (code and state "
+                     "only; the certified docs are master's)." % behind)
+    if not behind and fetch_age is not None and fetch_age > TREE_STALE_HOURS:
+        warn("tree", "origin/master was last fetched %.0f hours ago, so `0 behind` is only "
+                     "as good as that fetch. `git fetch origin master`." % fetch_age)
+
+
+
+# ---------------------------------------------------------------- 6d. unattended proof
+# "Verified by its output, not its exit code" never said WHOSE output, so a local run
+# satisfied it. `enrich_scrape_jd.py` ran 3 seconds of a 30-minute budget and filled 0 on
+# the 2026-08-29 digest - green - and every session on that lane reported done.
+RUN_ID = re.compile(r"\brun\s+(\d{9,})\b")
+WORKFLOW_FILE = re.compile(r"^\.github/workflows/[^/]+\.ya?ml$")
+
+
+def check_unattended_proof() -> None:
+    """A branch that changes a SCHEDULED workflow must name the morning its run is read.
+
+    Deliberately narrow. It fires only on a workflow file that actually carries a
+    `schedule:` trigger, and it is satisfied by either a NEW morning-check row due today or
+    later. (An earlier draft also accepted a HANDOFF line citing `run <id>`; simulation
+    showed an unrelated answered verdict satisfied it.) It is NOT extended to the modules
+    `docs/MODULES.md` classes `scheduled` - `auto_expand.py` and its neighbours change most
+    days, and a check that fires on every registry commit is one the registry lane would
+    learn to route around within a week.
+
+    Measured before shipping: of the 11 commits touching `.github/workflows/` since the
+    morning-check table existed (2026-08-27), 4 added a row in the same commit and 7 did
+    not - and one of those 7 is the 19:00 drain whose own HANDOFF entry says "the cron has
+    not run"."""
+    base = _git("merge-base", "HEAD", "origin/master")
+    if base is None or os.environ.get("GITHUB_ACTIONS"):
+        return
+    base = base.strip()
+    changed = _git("diff", "--name-only", "%s...HEAD" % base)
+    if changed is None:
+        return
+    touched = []
+    for name in changed.splitlines():
+        name = name.strip().replace("\\", "/")
+        if not WORKFLOW_FILE.match(name):
+            continue
+        path = os.path.join(ROOT, name)
+        if os.path.exists(path) and re.search(r"^\s*schedule:", read(path), re.M):
+            touched.append(name)
+    if not touched:
+        return
+    today = _today()
+    was = {_row_key(c) for c in (_rows_at(base, "HANDOFF.md") or [])}
+    for cells in (_morning_rows("HANDOFF.md") or []):
+        if _row_key(cells) not in was and cells[0] >= today:
+            return
+    err("unattended", "%s changed on this branch and HANDOFF.md gained no new "
+                      "morning-check row due on or after %s. A change to a scheduled step "
+                      "is finished when the date its UNATTENDED run will be read is written "
+                      "down - dispatching it yourself is not that, and a run that has "
+                      "already produced its number is still a row: due today, answered "
+                      "today, the id in the verdict (docs/AGENT_BRIEF.md, Definition of "
+                      "done)." % (", ".join(touched), today))
+
+
+
 # ---------------------------------------------------------------- 7. entry points exist
 def check_entry_docs() -> None:
     for name in ("CLAUDE.md", "README.md", "ARCHITECTURE.md", "HANDOFF.md",
@@ -1616,7 +1769,7 @@ def check_entry_docs() -> None:
             err("entry", "%s is missing - it is one of the seven docs every reader is sent to" % name)
 
 
-CHECKS = [check_entry_docs, check_paths_exist, check_links, check_section_refs,
+CHECKS = [check_tree_is_current, check_entry_docs, check_paths_exist, check_links, check_section_refs,
           check_module_registry,
           check_schedule_table, check_derived_facts, check_scope_claims, check_handoff,
           check_morning_checks, check_morning_rows_survive, check_session_record_dates,
@@ -1629,6 +1782,23 @@ def main(argv=None) -> int:
         # EXACT facts only, and never reachable from the no-argument path the test suite
         # invokes.  alone is a dry run;  writes.
         return fix_facts(apply="--apply" in argv)
+    if "--tree" in argv:
+        # The one path allowed to fetch, and it is never reachable from the no-argument
+        # path the test suite and the pre-push contract invoke.
+        if "--fetch" in argv:
+            _git("fetch", "-q", "--no-tags", "origin", "master")
+        state = tree_state()
+        if state is None:
+            print("tree: nothing to compare against (no origin/master, CI, or not a repo)")
+            return 0
+        behind, differ, base_age, fetch_age = state
+        print("tree: %d behind origin/master | certified docs differing: %s | merge-base "
+              "%s | fetched %s"
+              % (behind, ", ".join(differ) or "none",
+                 "%.0fh old" % base_age if base_age is not None else "unknown",
+                 "%.0fh ago" % fetch_age if fetch_age is not None else "unknown"))
+        return 0
+
     if "--facts" in argv:
         # One command instead of an archaeology dig: every registered number, what the
         # code says today, and what each doc claims. Never writes; never exits non-zero

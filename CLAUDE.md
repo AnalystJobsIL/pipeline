@@ -99,13 +99,18 @@ anything relying on it silently returns nothing; the working search is
    `--fix --apply` writes. It handles exact facts only, refuses a width-changing edit in a
    ruled line, refuses a generated file (regenerate that one), refuses a dirty tree, and
    restores every file if the result does not verify.
-3. **Update the doc your lane owns, in the same commit as the change.** Behaviour →
+3. **A change to a scheduled step is not done until an unattended run has produced a
+   number** — `event: schedule`, a `headSha` that contains your commit, and the counter
+   quoted in `HANDOFF.md`. Dispatching it yourself is not that. Until then the entry says
+   so and a `## Morning checks` row carries the date it comes due. `docs/AGENT_BRIEF.md`'s
+   "Definition of done" has the whole rule and why it exists.
+4. **Update the doc your lane owns, in the same commit as the change.** Behaviour →
    `ARCHITECTURE.md` (the section is tagged with your lane). A new gap you did not fix →
    `docs/BACKLOG.md`. A new module → `docs/MODULES.md`. Always → three lines in
    `HANDOFF.md`: what was wrong, what you changed, **what you did NOT finish**.
-4. Commit as `ajil-bot`, push with plain `git push`. **Read `CLAUDE.local.md` first** — it
+5. Commit as `ajil-bot`, push with plain `git push`. **Read `CLAUDE.local.md` first** — it
    is gitignored and holds the identity rules for the public repos.
-5. Don't dispatch or cancel workflows between 05:00 and 08:30 UTC. If you must cancel a
+6. Don't dispatch or cancel workflows between 05:00 and 08:30 UTC. If you must cancel a
    digest run, cancel **before** `Mark digested roles as sent` — after that step its roles
    are burned as delivered and the next run will not email them.
 

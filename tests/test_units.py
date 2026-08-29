@@ -12656,6 +12656,164 @@ def test_every_backlog_item_names_a_lane_that_exists():
     assert not bad, "items name lanes that are not in the brief's table: %s" % bad
 
 
+def _stale_repo(tmp_path, second_file, second_body, hours_old=0):
+    """A repo one commit behind `origin/master`, where that commit touched `second_file`.
+
+    `hours_old` backdates the MERGE-BASE, which is what the error grade turns on: being
+    behind is normal mid-session, and being behind a tree you branched from a day ago is
+    not. No network anywhere - `update-ref` is the whole of the remote."""
+    import subprocess, time
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "docs").mkdir(exist_ok=True)
+    env = dict(os.environ)
+    env.pop("GITHUB_ACTIONS", None)
+
+    def git(*a, **kw):
+        e = dict(env)
+        e.update(kw.pop("env", {}))
+        return subprocess.run(["git"] + list(a), cwd=str(tmp_path), capture_output=True,
+                              text=True, encoding="utf-8", errors="replace", env=e)
+    git("init", "-q")
+    git("config", "user.email", "guard@example.invalid")
+    git("config", "user.name", "guard")
+    git("config", "commit.gpgsign", "false")
+    (tmp_path / "CLAUDE.md").write_text("the baseline" + chr(10), encoding="utf-8")
+    git("add", "-A")
+    when = "%d -0000" % (int(time.time()) - hours_old * 3600)
+    assert git("commit", "-q", "-m", "base",
+               env={"GIT_AUTHOR_DATE": when, "GIT_COMMITTER_DATE": when}).returncode == 0
+    base = git("rev-parse", "HEAD").stdout.strip()
+    (tmp_path / second_file).write_text(second_body, encoding="utf-8")
+    git("add", "-A")
+    assert git("commit", "-q", "-m", "master moves on").returncode == 0
+    git("update-ref", "refs/remotes/origin/master", "HEAD")
+    git("checkout", "-q", base)              # one behind, detached, like a lane's worktree
+    cd = _cd()
+    cd.ROOT = str(tmp_path)
+    cd.check_tree_is_current()
+    return list(cd.ERRORS), list(cd.WARNINGS)
+
+
+def test_a_checkout_left_behind_on_the_certified_docs_is_an_error(tmp_path):
+    """The defect this check exists for, and the one it must not become.
+
+    The shared checkout on the operator's machine was 146 commits behind master with a
+    CLAUDE.md claiming 846 companies against a true 1,071 and 36 of 80 continue-on-error
+    steps against 42 of 87 - and `docs/check_docs.py --facts` printed `ok` for every site,
+    honestly, because those numbers do match THAT tree's workflows. A green docs check on a
+    stale tree certifies the stale tree."""
+    # a day-old merge-base, and the docs moved: nobody is mid-task on that
+    errs, _ = _stale_repo(tmp_path / "a", "CLAUDE.md", "master's version" + chr(10),
+                          hours_old=71)
+    assert len(errs) == 1 and "certifies the stale tree" in errs[0], errs
+    # the SAME lag, minutes old: a live session, and never an error
+    errs, warns = _stale_repo(tmp_path / "b", "CLAUDE.md", "master's version" + chr(10))
+    assert errs == [] and any("behind origin/master" in w for w in warns), (errs, warns)
+
+
+def test_a_checkout_behind_only_on_code_never_goes_red(tmp_path):
+    """Every lane's push touches HANDOFF.md, so a rule keyed on "behind at all" would be red
+    for nine sessions each time a tenth pushed - and a linter that cries wolf is one lanes
+    learn to skip, as this file's own header says."""
+    errs, warns = _stale_repo(tmp_path, "scrape_universal.py", "x = 1" + chr(10), hours_old=71)
+    assert errs == [], errs
+    assert any("code and state only" in w for w in warns), warns
+
+
+def test_the_tree_check_is_silent_in_ci_and_never_fetches(tmp_path, monkeypatch):
+    """CI builds the commit that was pushed, and `actions/checkout@v5` clones one commit
+    deep, so "is this tree current" is not a question it can answer. And the check must
+    never reach the network: ten sessions run this at once and would contend on the ref
+    lock. The fetch belongs to `--tree --fetch`, which the no-argument path cannot reach."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    cd = _cd()
+    cd.ROOT = str(tmp_path)
+    assert cd.tree_state() is None
+    cd.check_tree_is_current()
+    assert cd.ERRORS == [] and cd.WARNINGS == []
+    src = cd.read(os.path.join(cd.ROOT_REAL if hasattr(cd, "ROOT_REAL") else
+                               os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                               "docs", "check_docs.py"))
+    body = src.split("def check_tree_is_current")[1].split(chr(10) + "def ")[0]
+    assert '_git("fetch"' not in body, \
+        "the check itself must never fetch: ten sessions run it at once"
+    main = src.split("def main(")[1]
+    assert main.index('"--fetch"') > main.index('"--tree"'), \
+        "--fetch must be reachable only from the --tree branch"
+
+
+
+def test_a_scheduled_workflow_change_must_name_the_morning_its_run_is_read(tmp_path):
+    """"Verified by its output, not its exit code" never said WHOSE output, so a local run
+    satisfied it: `enrich_scrape_jd.py` ran 3 seconds of a 30-minute budget and filled 0 on
+    the 2026-08-29 digest, green, and every session on that lane reported done.
+
+    An earlier draft of the check also accepted a HANDOFF line citing `run <id>`. Simulation
+    before shipping showed that hatch open: this very session answered three morning checks
+    with run ids, any of which would have "proved" an unrelated workflow change."""
+    import subprocess
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".github" / "workflows").mkdir(parents=True)
+    (tmp_path / "docs").mkdir(exist_ok=True)
+    env = dict(os.environ)
+    env.pop("GITHUB_ACTIONS", None)
+
+    def git(*a):
+        return subprocess.run(["git"] + list(a), cwd=str(tmp_path), capture_output=True,
+                              text=True, encoding="utf-8", errors="replace", env=env)
+
+    def handoff(rows):
+        (tmp_path / "HANDOFF.md").write_text("## Morning checks" + chr(10) * 2 + HDR + rows,
+                                             encoding="utf-8")
+    wf = tmp_path / ".github" / "workflows" / "daily-digest.yml"
+    wf.write_text("on:" + chr(10) + "  schedule:" + chr(10) + "    - cron: '0 5 * * *'" + chr(10),
+                  encoding="utf-8")
+    plain = tmp_path / ".github" / "workflows" / "tests.yml"
+    plain.write_text("on:" + chr(10) + "  push:" + chr(10), encoding="utf-8")
+    handoff(GOOD % ("2026-01-01", "2026-01-02"))
+    (tmp_path / "docs" / "morning-checks.md").write_text("# archive" + chr(10), encoding="utf-8")
+    git("init", "-q")
+    git("config", "user.email", "guard@example.invalid")
+    git("config", "user.name", "guard")
+    git("config", "commit.gpgsign", "false")
+    git("add", "-A")
+    assert git("commit", "-q", "-m", "base").returncode == 0
+    git("update-ref", "refs/remotes/origin/master", "HEAD")
+
+    def run():
+        cd = _cd()
+        cd.ROOT = str(tmp_path)
+        cd._today = lambda: "2026-08-30"
+        cd.check_unattended_proof()
+        return list(cd.ERRORS)
+
+    # the workflow changes and nothing says when its run will be read
+    wf.write_text(wf.read_text(encoding="utf-8") + "# a change" + chr(10), encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-q", "-m", "touch the digest")
+    errs = run()
+    assert len(errs) == 1 and "no new morning-check row" in errs[0], errs
+    # ...a row due today or later is the whole contract
+    handoff(GOOD % ("2026-01-01", "2026-01-02")
+            + "| 2026-08-31 | infra | `matched_filled` is not 0 on the next scheduled digest "
+              "| | not yet due |" + chr(10))
+    assert run() == [], run()
+    # ...a row already PAST is not: it can never be answered by a run that has not happened
+    handoff(GOOD % ("2026-01-01", "2026-01-02")
+            + "| 2026-08-01 | infra | something that came and went | 2026-08-02 "
+              "| PASS - `matched_filled=5` |" + chr(10))
+    assert len(run()) == 1, run()
+    # a workflow with no `schedule:` trigger is not a scheduled step
+    handoff(GOOD % ("2026-01-01", "2026-01-02"))
+    plain.write_text(plain.read_text(encoding="utf-8") + "# edit" + chr(10), encoding="utf-8")
+    wf.write_text("on:" + chr(10) + "  schedule:" + chr(10) + "    - cron: '0 5 * * *'" + chr(10),
+                  encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-q", "-m", "touch tests.yml only")
+    assert run() == [], run()
+
+
+
 def test_a_closing_bullet_closes_only_the_claimant_in_its_own_section():
     """A bullet was attributed to a NUMBER, and 28 numbers name more than one item.
 

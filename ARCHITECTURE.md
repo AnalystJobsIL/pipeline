@@ -92,6 +92,21 @@ no server):
    it would be a lie about its status. On 2026-08-27, 32 of the 76 live cards were first
    seen more than two weeks earlier and one dated from January.
 
+**Both of those are produced by a run nobody watches**, and that is not a detail of the
+schedule — it is what "done" means here. The digest is a `schedule` event on a GitHub
+runner: no session is attached to it, 42 of its 87 named steps are `continue-on-error`, and
+a step that does nothing at all finishes green in three seconds. So a change to a scheduled
+step is finished when an **unattended** run has produced a number and `HANDOFF.md` quotes
+it — `gh run view <id> --json event,headSha` says `event: schedule`, and
+`git merge-base --is-ancestor <your sha> <headSha>` proves that run contained your code.
+Dispatching it yourself proves the code runs; it does not prove the schedule does, and on
+2026-08-27 four consecutive slots did not fire at all. Until that run has happened the
+entry says so and a `## Morning checks` row carries the date it comes due; a step that can
+produce **zero** makes zero visible on the `Stages:` line, because a silent zero is
+indistinguishable from a step that was never reached. `docs/AGENT_BRIEF.md`'s "Definition
+of done" is the operative version of this rule, and `docs/check_docs.py` enforces the parts
+a machine can see.
+
 **Caps that can explain a missing role** (`pipeline/run.py`, all re-read 2026-08-27):
 the email shows at most **3 per company** (`_cap_per_company(email_jobs, 3)`) and at most
 **`EMAIL_MAX_ROLES` = 40** in total, the overflow leading tomorrow's digest; roles at an

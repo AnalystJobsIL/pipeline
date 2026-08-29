@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**483 filed · 350 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
+**488 filed · 355 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 436.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 441.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -210,7 +210,7 @@ closure convention in the header.
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
-### infra — 94 open
+### infra — 98 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -306,6 +306,10 @@ closure convention in the header.
 - **407** `407@infra` **`check_invariants` check D and `registry_health.orphans()` only range over PARKED rows,
 - **433** `433@infra` **`BD_RUN_CAP=0`
 - **435** `435@infra` **The `guard` job's 10-minute timeout cannot fit the registry rehearsals, and nobody knew
+- **436** `436@infra` **Nothing in the tree records which RUN produced a state commit, so "unattended" is not
+- **438** `438@infra` **`_load_secrets` is copied into ten modules and resolves `secrets.env` against its own tree roo
+- **439** `439@infra` **`check_unattended_proof` cannot run in CI, where the push it should judge lands** —
+- **440** `440@infra` **A test fixture spells the operator's personal GitHub handle**
 
 ### scraper — 26 open
 
@@ -438,7 +442,7 @@ closure convention in the header.
 - **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
 - **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
 
-### jd-text — 10 open
+### jd-text — 11 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -450,6 +454,7 @@ closure convention in the header.
 - **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
 - **421** `421@jd-text` **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
 - **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
+- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
 
 ### classifier — 7 open
 
@@ -7614,3 +7619,47 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     gate ("buys a week, fixes nothing") and sharded instead. The five seeded rehearsals are
     independent by construction (`--seed 1..5`), so they shard trivially; or the loop moves to
     its own job. Either way the fix belongs to whoever owns the 10.
+
+## From the `docs` lane, 2026-08-30 (the production clause)
+
+436. **Nothing in the tree records which RUN produced a state commit, so "unattended" is not
+     greppable offline** — lane: `infra`. `docs/AGENT_BRIEF.md`'s definition of done now
+     requires an unattended run's number, and the only way to prove `event: schedule` today
+     is `gh run view <id> --json event,headSha` — an online call, against a run record that
+     `CLAUDE.local.md` §3 sometimes asks be DELETED. Every state commit is
+     `cloud run: state + digest for <date> [skip ci]`; `git grep GITHUB_RUN_ID GITHUB_EVENT_NAME
+     -- .github pipeline` returns nothing. Putting `${GITHUB_EVENT_NAME} ${GITHUB_RUN_ID}`
+     into the commit subject makes the proof a `git log` away, permanently, and survives the
+     run record's deletion. `docs/check_docs.py::check_unattended_proof` enforces only the
+     half a machine can see without it: that a row exists with a date on it.
+
+437. **The enrich alarm cannot fire on the failure that produced the production clause** —
+     lane: `jd-text`. `pipeline/jdfill.alarm_for` raises `bd-spent(N calls, 0 filled)` only
+     when `used` is non-zero, so a pass that did nothing at all — `matched_todo=10
+     matched_ran=1 matched_filled=0 matched_bd_calls=0`, three seconds of a thirty-minute
+     budget on run `33250362574` — is silent by construction. A zero that cost nothing is
+     exactly the zero nobody notices. The clause's clause (d) says a step that can produce
+     zero must make zero visible; this is the one step that measurably cannot.
+
+438. **`_load_secrets` is copied into ten modules and resolves `secrets.env` against its own tree root, so there
+     is no honest way to arm a paid rung from a worktree** — lane: `infra`. `bd_employees.py`,
+     `bd_rescue.py`, `pipeline/run.py` and seven more each resolve the file relative to their
+     own tree. A worktree therefore has no credentials, every paid rung is DISARMED, and a
+     disarmed rung does not error — it returns a refusal that reads as evidence (one such
+     pass wrote 57 of 57 rows `dead`). `docs/AGENT_BRIEF.md` rule 5 now names the trap, but
+     the only two ways out are copying the file (an uncapped spender, banned) or working in
+     the shared checkout. One loader honouring `AJIL_SECRETS=<path>` gives the third.
+
+439. **`check_unattended_proof` cannot run in CI, where the push it should judge lands** —
+     lane: `infra`, opened by `docs`. The check compares `merge-base HEAD origin/master` with
+     HEAD, and on a CI push build those are the same commit, so it returns silently. GitHub
+     hands the previous tip to the workflow as `github.event.before`; passing it through as an
+     env var would let the check judge the pushed range. `.github/workflows/tests.yml` is
+     `infra`'s file, so this was not done here. Local pre-push is the only enforcement point
+     until it is.
+
+440. **A test fixture spells the operator's personal GitHub handle** — lane: `infra`.
+     `tests/test_units.py` uses `shailiv` as a literal in one fixture. It is not a secret and
+     not a leak of anything the repo does not already know, but the public repo's whole
+     anonymity rests on that handle never appearing (`CLAUDE.local.md`), and any other string
+     would do the same job. Changing it touches a test this lane does not own.

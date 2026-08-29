@@ -198,14 +198,25 @@ Declare these in your plan before spending them:
    runs `docs/check_docs.py`, so a doc that names a file you deleted fails the suite.
    Asking "why was company X activated or refused?" is one command, offline:
    `python registry_health.py --explain "<name>"` (add `--fetch` for the one page GET).
-5. **Never copy `secrets.env` into a worktree, and treat every local run as a spender.**
-   Bright Data is 5,000 requests/month with no rollover, ~6,798 already used, and the overage
-   is a one-time sum the operator will **not** top up — an accidental credit is permanent and
-   unrecoverable. `python -m pytest` can no longer spend (`tests/conftest.py` bans the
-   transport), but `python -m pipeline.run` still can: it arms the key inside `run()` and the
-   identity gate then buys up to `PAGE_UNLOCK_BUDGET` (default **100**) unlocks, and `JD_BD`
-   defaults to **1 = spending**. For any local run: `JD_BD=0` and `BD_RUN_CAP=0` (`0` means
-   buy nothing; UNSET means no cap). Declare what you spent when you hand back.
+5. **Say which run mode you are in, and never copy `secrets.env` into a worktree.**
+   The ceiling is `python -m pipeline.bd_budget`, never a number written in prose: it is
+   **unlimited through 2026-08-31 and 5,000/month from 2026-09-01**, no rollover, and both
+   sides of that boundary are pinned by a guard so the rule changes itself on the day
+   (`pipeline/bd_budget.py`; this rule quoted "5,000, ~6,798 already used, permanent and
+   unrecoverable" for two days after the operator replaced it). There are two modes:
+
+   **Dry** — no `secrets.env`, `JD_BD=0 BD_RUN_CAP=0`. Every paid rung is **disarmed**, and
+   that is the trap: a disarmed rung does not error, it returns a refusal. A zero or a
+   "dead" from a dry worktree **is not evidence** — one such pass wrote 57 of 57 rows dead.
+   Never write a `dead` / `parked` / `zero-confirm` verdict from one.
+
+   **Armed** — reference the operator's file where it is, never copy it into a worktree,
+   and set `BD_RUN_CAP=<n>` explicitly: **unset means no cap**, `0` means buy nothing. A
+   copy is an uncapped spender in a tree nobody is watching, and from 2026-09-01 ten
+   concurrent sessions at `PAGE_UNLOCK_BUDGET` = **100** each is the month's pool in five
+   days. `python -m pytest` can no longer spend (`tests/conftest.py` bans the transport);
+   `python -m pipeline.run` still can — it arms the key inside `run()` and `JD_BD` defaults
+   to **1 = spending**. Declare what you spent when you hand back.
 6. **Commit as `ajil-bot` and push with plain `git push`.** Read `CLAUDE.local.md` first —
    the public repos must not be linkable to the owner's personal account.
 7. **Prefer letting the crons run.** If you must dispatch a workflow manually, delete the run
@@ -277,6 +288,23 @@ docs`.
 ## Definition of done
 
 - The change is verified by its **output**, not its exit code — quote the numbers.
+- **A change to a scheduled step is not done until a run you did not start has produced a
+  number.** The step's own lane is the last to notice it is broken: `enrich_scrape_jd.py`
+  ran **3 seconds of a 30-minute budget** and filled 0 on the 2026-08-29 digest, green,
+  and every session on that lane reported done. So:
+  **(a)** the proof is an UNATTENDED run — `gh run view <id> --json event,headSha` must say
+  `event: schedule`, and `git merge-base --is-ancestor <your sha> <headSha>` must hold, or
+  you are quoting a run that never executed your code. **Dispatching it yourself is not
+  that**, and neither is a local run.
+  **(b)** `HANDOFF.md` quotes the **exact counter or log line** (`matched_filled=`,
+  `relay notified:`) with its number and `run <id>` — not a nearby number that shares a
+  word: `JDs fetched inline: 132` is the inline enricher, not the nightly backfill.
+  **(c)** until that run has happened, the entry says **"unattended run not yet read"** and
+  a `## Morning checks` row carries the date it comes due — the first slot after your push
+  plus the 180-minute grace. The linter will hold you to that date.
+  **(d)** a step that can produce **zero** makes zero visible where a human reads daily
+  (`Stages:` / `Stage order:`); a step with no daily surface cites the state commit that
+  proves it ran (`git log -1 --format='%h %s' -- <the file it writes>`).
 - `pytest`, `check_invariants.py` and `docs/check_docs.py` green; a new guard added for any
   bug you fixed (`tests/test_units.py` is a list of shipped bugs, one assertion each).
 - **The docs your change touched are updated in the same commit** — see the table below.
