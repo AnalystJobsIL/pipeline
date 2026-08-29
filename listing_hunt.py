@@ -239,6 +239,19 @@ def queue_targets(rows, cap):
     # separate PROCESSES. `HUNT_QUEUE_SHARD=i/n` takes every n-th name, which keeps the
     # slices disjoint without a coordinator and without the cap silently giving every shard
     # the same prefix (the failure `316@registry` records for the row arm's own budget).
+    # SKIP WHAT THIS RUNG HAS ALREADY ANSWERED. Without this the arm re-walks its own prefix
+    # every run -- the exact failure `queue_state` was written for, one level up -- and a sweep
+    # that is killed at 81 of 95 (as this one was) restarts from the beginning and pays the
+    # search and the renders again. `in_queue_pool` is the cadence; `HUNT_QUEUE_DAYS=0`
+    # disables the skip for a deliberate re-hunt.
+    try:
+        import queue_state as _qs
+        _days = int(os.environ.get("HUNT_QUEUE_DAYS", "14"))
+        if _days > 0:
+            _st = _qs.load()
+            out = [n for n in out if not _qs.tried_within(_st, n, "hunt", _days)]
+    except Exception:                                             # noqa: BLE001
+        pass                                   # no state file is not an error, it is night one
     sh = os.environ.get("HUNT_QUEUE_SHARD", "")
     if sh and "/" in sh:
         i, n = (int(x) for x in sh.split("/", 1))

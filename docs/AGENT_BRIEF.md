@@ -266,7 +266,7 @@ read-only unless given an explicit write flag, both stdlib-only, and neither imp
 anything from `pipeline/`. That is the carve-out from "documentation only": this lane may
 own a tool that *reads* the code to check a document, and nothing else.
 
-**What is left in this lane, 2026-08-27.** The 31 unreferenced root modules are still
+**What is left in this lane, 2026-08-27.** The 32 unreferenced root modules are still
 classified but not relocated — moving a file is a code change. `docs/TAGGING.md`,
 `docs/BRIGHTDATA.md` and `docs/ATS_PLATFORMS.md` were re-verified line by line on
 2026-08-27 and corrected; `docs/POC_COMPANY_PROFILES.md` is a dated POC report that belongs
