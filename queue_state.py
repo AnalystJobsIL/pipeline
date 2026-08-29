@@ -50,7 +50,12 @@ QUEUE = "research_companies.json"
 
 # The rungs a name can be owed an answer by, cheapest first. The ORDER is the ladder's, and it
 # is here so `next_rung` cannot drift from what the tools actually do.
-RUNGS = ("own-site", "slug-probe", "comeet-token", "resolve-llm", "search", "hunt")
+RUNGS = ("own-site", "slug-probe", "comeet-token", "search", "resolve-llm", "hunt")
+# ...and `resolve-llm` sits AFTER `search` because that is the order they ran in: the
+# paid search supplies the candidate pages the LLM tier reasons from, so a name reaching
+# the tier has already been searched. The first draft had them the other way round and
+# `disposition()` then reported 599 names by their SEARCH verdict when 200 of them had a
+# later, more informative one.
 
 # A verdict that ENDS a name: no later rung will do better, so it stops being owed. Matched
 # EXACTLY, never as a prefix -- the first draft used `startswith` and `resolved-domain` (rung 1

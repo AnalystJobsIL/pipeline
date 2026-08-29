@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**469 filed · 349 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**471 filed · 351 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 422.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 424.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -88,7 +88,7 @@ closure convention in the header.
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 107 open
+### registry — 109 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -197,6 +197,8 @@ closure convention in the header.
 - **418** `418@registry` **`drain_queue.note_if_applied` is dead, and one of its values is a forbidden claim** —
 - **419** `419@registry` **`--apply` without `--judge`, or one transient LLM failure, freezes the whole batch for 30
 - **420** `420@registry` **`confirm_zero` is in no workflow, no `check_invariants` check and no rehearsal**
+- **422** `422@registry` **`resolve_llm` resolves at 7.3% on a VERIFIED own-domain and 0% on a search-found page —
+- **423** `423@registry` **`listing_hunt`'s queue arm is the only rung left and it cannot be run at scale under the
 
 ### infra — 81 open
 
@@ -7223,4 +7225,38 @@ stripped (`ARCHITECTURE.md` §8 — a result from a broken path is not a measure
     isolation and failed in a full run twice tonight while a Playwright audit was running
     beside it. `pytest.approx`, or asserting `<= 25.0` and `> 24.9`, settles it. Filed rather
     than fixed because `enrich_matched_jd.py` is `jd-text`'s and this lane holds `registry`.
+
+## Found by `registry`, 2026-08-29 (the queue)
+
+Record: `docs/sessions/2026-08-29-registry-queue.md`.
+
+422. **`resolve_llm` resolves at 7.3% on a VERIFIED own-domain and 0% on a search-found page —
+    the tier was never broken, it was starved** — lane: `registry`, measured 2026-08-29.
+    `278@registry` wrote the tier off at *"0 resolved from 7 asked"*; `_verify` refuses any
+    answer without a page on the company's OWN domain and those 7 had none.
+
+    | evidence given to the tier | asked | resolved |
+    |---|---|---|
+    | `_site_from_guess` own-domain (name on page + exact linkback + same registrable domain) | 55 | **4 (7.3%)** |
+    | a page the paid search returned | 131 | **0** |
+
+    So the actionable number is not the tier's hit rate, it is **the supply of verified
+    own-domains**, and rung 1 says where that is lost: over 758 names, 226 domains answered,
+    **202 named the company, and only 64 carried the linkback**. The linkback is a two-way
+    binding that cannot be faked by either side, and its docstring is right that relaxing it
+    admits `agoda.com` for `Agoda`-adjacent names — but 138 names die there and the tier is
+    starved as a direct result. The measurement that would settle it: for a sample of those
+    138, does a HUMAN judge the domain to be the company's? If the false-positive rate of
+    "named the company, no linkback" is low, the rung's supply roughly quadruples.
+
+423. **`listing_hunt`'s queue arm is the only rung left and it cannot be run at scale under the
+    operator's own rule** — lane: `registry`, filed 2026-08-29. It is the measured 45%-yield
+    rung (33 boards, 521 Israel jobs from 73 names) and it has run against **0** of the 807
+    remaining names. It cannot simply be pointed at them: `queue_targets()` gives **every name
+    it touches a row**, including a park stating the company has nothing — which is the rule
+    "nothing is recorded as having no roles without a hunt AND an LLM read" violated 807 times
+    in one night. `drain_queue` solved the same problem structurally by emitting PROPOSALS and
+    owning no csv writer. Either the hunt's queue arm grows the same split, or the rule is
+    relaxed for it deliberately and in writing. Until then the 807 have an honest disposition
+    and no owner, which is `407` again one level down.
 

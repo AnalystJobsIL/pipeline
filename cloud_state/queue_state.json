@@ -43,10 +43,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Riverside"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Meitar | Law Offices": {
   "tried": [
@@ -178,10 +184,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.energixrenewables.com/careers-"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gini Apps": {
   "tried": [
@@ -205,10 +217,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gini-apps.com/about"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Squaretalk": {
   "tried": [
@@ -372,10 +390,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://enlightenergy.com/info/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gong.io": {
   "tried": [
@@ -411,10 +435,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "dup-name"
  },
  "Asio Technologies": {
   "tried": [
@@ -438,10 +468,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://asiotech.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "DealHub.ai": {
   "tried": [
@@ -465,10 +501,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://dealhub.io/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Nebius Group": {
   "tried": [
@@ -715,10 +757,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://eujobs.co/career-guides/adama-agricultural-solutions-career-guide"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Huskeys": {
   "tried": [
@@ -829,10 +877,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.statsperform.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Recolabs": {
   "tried": [
@@ -909,10 +963,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.naukri.com/aristocrat-jobs-careers-in-noida-gid-2485476"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "COMDA": {
   "tried": [
@@ -1103,10 +1163,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.adcore.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Telit Cinterion": {
   "tried": [
@@ -1183,10 +1249,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://digistage.co.il"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Vacatures.sr | SurinameJobs.com": {
   "tried": [
@@ -1232,10 +1304,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "dup-name"
  },
  "Calculum": {
   "tried": [
@@ -1259,10 +1337,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.curriculumassociates.com/about/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "AEYE Health": {
   "tried": [
@@ -1286,10 +1370,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.aeyehealth.com/our-careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Migdal Group": {
   "tried": [
@@ -1335,10 +1425,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=3 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "ISRAEL-is": {
   "tried": [
@@ -1406,10 +1502,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.bdo.co.il/en-gb/services/strategy-growth-innovation/corporate-strategy-1/career"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Blink": {
   "tried": [
@@ -1450,10 +1552,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=unverified il=9 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Walmart Global Tech": {
   "tried": [
@@ -1526,10 +1634,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps DRS RADA Technologies, Teradata"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "SkyGini": {
   "tried": [
@@ -1639,10 +1753,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.aecapital.com.au/careers.html"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Strauss Group": {
   "tried": [
@@ -1699,10 +1819,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.comm-it.com/commit-jobs"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Chorus": {
   "tried": [
@@ -1726,10 +1852,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://company.chorus.co.nz/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Fast Corporation": {
   "tried": [
@@ -1753,10 +1885,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://fastcorporate.com/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Archimedes | ארכימדס": {
   "tried": [
@@ -1780,10 +1918,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://archimedesawards.com/career"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Maof - מעוף": {
   "tried": [
@@ -1803,10 +1947,16 @@
     "rung": "resolve-llm",
     "verdict": "no-proposal",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "aggregator",
+    "date": "2026-08-29",
+    "detail": "aggregator (https://www.maof-hr.co.il/)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "no-proposal"
+  "verdict": "aggregator"
  },
  "HiO": {
   "tried": [
@@ -1857,10 +2007,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://elbatech.co.il/careers/?company-name\\u003delipse-engineering"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Confidential Company": {
   "tried": [
@@ -1901,10 +2057,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.mycareersfuture.gov.sg/companies/gientech-singapore-199000991Z"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Sysnet Group": {
   "tried": [
@@ -1955,10 +2117,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.dariohealth.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Melisron": {
   "tried": [
@@ -2062,10 +2230,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-board",
+    "date": "2026-08-29",
+    "detail": "dup-board"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "dup-board"
  },
  "Bank Leumi בנק לאומי": {
   "tried": [
@@ -2195,10 +2369,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.exyte.net/Jobs-and-Careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "AES Embedded Solutions": {
   "tried": [
@@ -2222,10 +2402,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://careers.aes.gmbh/en/annonces"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Herzliya Medical Center - הרצליה מדיקל סנטר": {
   "tried": [
@@ -2275,10 +2461,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.naukri.com/discreet-solutions-jobs-careers-1753854"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Flex": {
   "tried": [
@@ -2319,10 +2511,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://bindsec.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "HUNTHEAD": {
   "tried": [
@@ -2346,10 +2544,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://hunthead.co.il"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "SIG SAUER, Inc.": {
   "tried": [
@@ -2501,10 +2705,16 @@
     "rung": "resolve-llm",
     "verdict": "no-proposal",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "board-empty-deferred",
+    "date": "2026-08-29",
+    "detail": "no row: gate=empty il=0 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "no-proposal"
+  "verdict": "board-empty-deferred"
  },
  "Upstep Custom Orthotics": {
   "tried": [
@@ -2685,10 +2895,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://cguard.co.il/en/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Intelligent Business": {
   "tried": [
@@ -2771,10 +2987,16 @@
     "rung": "resolve-llm",
     "verdict": "resolved",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "resolved"
+  "verdict": "dup-name"
  },
  "Netoplay": {
   "tried": [
@@ -2825,10 +3047,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.experda.com/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "SalesFortuna": {
   "tried": [
@@ -2959,10 +3187,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://genecit.com/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "IDX": {
   "tried": [
@@ -3013,10 +3247,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://jobs.caf.net"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "McKinsey & Company": {
   "tried": [
@@ -3066,10 +3306,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gem.com/company/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "ShipIn Systems": {
   "tried": [
@@ -3089,10 +3335,16 @@
     "rung": "resolve-llm",
     "verdict": "no-proposal",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "board-empty-deferred",
+    "date": "2026-08-29",
+    "detail": "no row: gate=empty il=0 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "no-proposal"
+  "verdict": "board-empty-deferred"
  },
  "Mivne Group | קבוצת מבנה": {
   "tried": [
@@ -3330,10 +3582,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.nextinsurance.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "BPLinks": {
   "tried": [
@@ -3357,10 +3615,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://join.pmicareers.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Faye": {
   "tried": [
@@ -3464,10 +3728,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://citywonders.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "FIBI - הבנק הבינלאומי": {
   "tried": [
@@ -3491,10 +3761,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.fibi.co.il/private/general/about/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Dot Compliance": {
   "tried": [
@@ -3518,10 +3794,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://recruiting.paylocity.com/recruiting/jobs/All/24b686ac-e012-4dce-a53a-1c833d67e36b/DOT-Compliance-Group-LLC"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Software AG Israel": {
   "tried": [
@@ -3589,10 +3871,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://bileader.co.il/about/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "MNS Consulting IL": {
   "tried": [
@@ -3931,10 +4219,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://empire.media/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "King Solomon School": {
   "tried": [
@@ -4104,10 +4398,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://diversityemployment.com/company/auth21/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Bishvil Hazahav": {
   "tried": [
@@ -4131,10 +4431,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.fatfish.co.il/en/node/148"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Apester": {
   "tried": [
@@ -4158,10 +4464,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://careers.appsflyer.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "WellyBox": {
   "tried": [
@@ -4212,10 +4524,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=unverified il=8 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Alicorn jobs": {
   "tried": [
@@ -4239,10 +4557,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://alicorn.ink/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "CloudZone": {
   "tried": [
@@ -4439,10 +4763,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.axioma-in.com/consultants-jobs"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Strategic Matching": {
   "tried": [
@@ -4547,10 +4877,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=5 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "KMS Lighthouse": {
   "tried": [
@@ -4666,10 +5002,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "dup-name"
  },
  "SK Pharma": {
   "tried": [
@@ -4774,10 +5116,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.danzigeronline.com/contact-us/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "EZjobs.org": {
   "tried": [
@@ -4801,10 +5149,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.ezjobs.org/registration"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Sion Medical": {
   "tried": [
@@ -4888,10 +5242,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.allpha.co.il"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Worthy Com": {
   "tried": [
@@ -4936,10 +5296,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Rakuten Viber"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Wow B2b Solutions Ltd": {
   "tried": [
@@ -5555,10 +5921,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Localize"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Youappi": {
   "tried": [
@@ -5918,10 +6290,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Port"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Zest Cyber": {
   "tried": [
@@ -6268,10 +6646,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.facebook.com/givatayim/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "10bis Co Il": {
   "tried": [
@@ -6295,10 +6679,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.10bis.co.il/next/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "2sit Furniture": {
   "tried": [
@@ -6322,10 +6712,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.2sit.co.il"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Zoho": {
   "tried": [
@@ -6376,10 +6772,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.200apps.com/career"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "8400 The Health Network": {
   "tried": [
@@ -6403,10 +6805,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.8400thn.org"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "888 Com": {
   "tried": [
@@ -6430,10 +6838,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://jobs.888.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Drive Group": {
   "tried": [
@@ -6457,10 +6871,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://drivegroupaus.com.au/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Ceragon": {
   "tried": [
@@ -6479,10 +6899,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Ceragon Networks"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Cymotive": {
   "tried": [
@@ -6506,10 +6932,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.comeet.com/jobs/cymotive/F1.008/full-stack-team-leader/7E.F59"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Imubit": {
   "tried": [
@@ -6560,10 +6992,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Ocean"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "360up": {
   "tried": [
@@ -6700,10 +7138,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "dup-name"
  },
  "A B S Altman Broadcast Services": {
   "tried": [
@@ -6727,10 +7171,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.abs.tv/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "A Cyber Security": {
   "tried": [
@@ -6754,10 +7204,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.cyberseek.org/pathway.html"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "1824app": {
   "tried": [
@@ -6781,10 +7237,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://careers.mobileye.com/jobs"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "4cast AI": {
   "tried": [
@@ -6808,10 +7270,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://4cast-ai.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Payoneer Global": {
   "tried": [
@@ -6862,10 +7330,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.abelgroup.eu/en/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Abcloudz": {
   "tried": [
@@ -6922,10 +7396,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.abra-it.com/en/career/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Acca Careers": {
   "tried": [
@@ -6949,10 +7429,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://jobs.accaglobal.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Abovesec": {
   "tried": [
@@ -6976,10 +7462,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.above.security"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aartac": {
   "tried": [
@@ -7003,10 +7495,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://careers.astrazeneca.com/location/israel-jobs/7684/294640/2"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Able Tx": {
   "tried": [
@@ -7030,10 +7528,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.veryableops.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Ace Aviation Group": {
   "tried": [
@@ -7057,10 +7561,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.aceaviationinc.com/join-our-team-2/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Achuzat Rishonim Rubinstein": {
   "tried": [
@@ -7084,10 +7594,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.myparents.co.il/en/achuzot-rubinstein-network-assisted-living/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Access Bio": {
   "tried": [
@@ -7111,10 +7627,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://accessbio.net/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Action Item Software Ltd": {
   "tried": [
@@ -7138,10 +7660,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.action-item.co.il/join"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Act Sec": {
   "tried": [
@@ -7160,10 +7688,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=3 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Zivlin": {
   "tried": [
@@ -7214,10 +7748,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://aisrael.org/open-position-at-access-israel/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Abstractly": {
   "tried": [
@@ -7241,10 +7781,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://abstract.us/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Adalya Economic Consulting": {
   "tried": [
@@ -7268,10 +7814,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.adalya.co.il/en/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Access": {
   "tried": [
@@ -7345,10 +7897,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.adcomsim.co.il/about/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Addressableio": {
   "tried": [
@@ -7367,10 +7925,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=1 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Adgentic AI": {
   "tried": [
@@ -7427,10 +7991,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://adi-il.org.il/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Adiconsultants": {
   "tried": [
@@ -7454,10 +8024,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://adiconsultants.co.za"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Adaptive6": {
   "tried": [
@@ -7482,10 +8058,16 @@
     "rung": "resolve-llm",
     "verdict": "no-proposal",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Aptiv"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "no-proposal"
+  "verdict": "held-name-twin"
  },
  "Adstorydigital": {
   "tried": [
@@ -7509,10 +8091,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.applydigital.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Adnm": {
   "tried": [
@@ -7536,10 +8124,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.adm.com/en-us/culture-and-careers/join-team-adm/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Advice Electronics": {
   "tried": [
@@ -7563,10 +8157,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://advice.co.il/en/blogs/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Adgeai": {
   "tried": [
@@ -7590,10 +8190,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://adge.ai"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Africa Israel Hotels": {
   "tried": [
@@ -7617,10 +8223,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.roxonhotels.com/jobs"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aerohandling": {
   "tried": [
@@ -7644,10 +8256,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.aerohandling.com/CAREERS/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aerospike": {
   "tried": [
@@ -7671,10 +8289,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://aerospike.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Agat Software": {
   "tried": [
@@ -7698,10 +8322,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://agatsoftware.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Afula Municipality": {
   "tried": [
@@ -7725,10 +8355,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://govextra.gov.il/moia/afula-lang/afula-en/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Ageera Energy Storage Systems": {
   "tried": [
@@ -7752,10 +8388,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.ageera.org/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Agudagivatram": {
   "tried": [
@@ -7779,10 +8421,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.egged.co.il/en/career/headquarters"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aidomeglobal": {
   "tried": [
@@ -7806,10 +8454,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.adiglobal.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aharaitech": {
   "tried": [
@@ -7833,10 +8487,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://aharai.org.il/aharaitech/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aiq Kaleidoo": {
   "tried": [
@@ -7860,10 +8520,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.enterpriseaiq.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aijobs AI": {
   "tried": [
@@ -7887,10 +8553,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.aijobs.com/jobs"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aig": {
   "tried": [
@@ -7997,10 +8669,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.aisap.ai/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Air Ev": {
   "tried": [
@@ -8024,10 +8702,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.airev.aero/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aka Food": {
   "tried": [
@@ -8051,10 +8735,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.comeet.com/jobs/aka_food/79.00D"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Akita Cyber Security Ltd": {
   "tried": [
@@ -8078,10 +8768,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.akita.co.uk/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aktglobal": {
   "tried": [
@@ -8105,10 +8801,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://he.aktglobal.com/career-management/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Air Products": {
   "tried": [
@@ -8158,10 +8860,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://adscale.tech/en/join-us/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Alexander Schneider Ltd": {
   "tried": [
@@ -8185,10 +8893,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.schneider.co.il/en/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aitechsystems": {
   "tried": [
@@ -8212,10 +8926,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://aitechsystems.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Alice Flights": {
   "tried": [
@@ -8239,10 +8959,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://alice.io/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Allspring": {
   "tried": [
@@ -8266,10 +8992,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.allspringglobal.com/corporate/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Alice IO": {
   "tried": [
@@ -8293,10 +9025,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://alice.io/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Aleh": {
   "tried": [
@@ -8320,10 +9058,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://aleh.org/jobs-aleh-moriah/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "PMI Kids World": {
   "tried": [
@@ -8401,10 +9145,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.adzz.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "ELAD HR": {
   "tried": [
@@ -8428,10 +9178,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.jobio.co.il/en/job-list/elad/human-resources/hr-manager"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Arbex": {
   "tried": [
@@ -8481,10 +9237,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=unverified il=1 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Akumina": {
   "tried": [
@@ -8694,10 +9456,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.ci-systems.com/Careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Rimonim Group - קבוצת רימונים": {
   "tried": [
@@ -8776,10 +9544,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Blue White Robotics"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Hunter Douglas, Inc.": {
   "tried": [
@@ -8883,10 +9657,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://akim.org.il/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Allstarsit": {
   "tried": [
@@ -8910,10 +9690,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.allstarsit.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Lirix Consulting": {
   "tried": [
@@ -8964,10 +9750,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.foreseepharma.com/en/career/join"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Lmr Finance": {
   "tried": [
@@ -8991,10 +9783,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-board",
+    "date": "2026-08-29",
+    "detail": "dup-board"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "dup-board"
  },
  "Allyable": {
   "tried": [
@@ -9234,10 +10032,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Ludeo"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Loreal": {
   "tried": [
@@ -9576,10 +10380,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-board",
+    "date": "2026-08-29",
+    "detail": "dup-board"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "dup-board"
  },
  "Magaltech Automotive Engineering": {
   "tried": [
@@ -9730,10 +10540,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Meta"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Magnolia Silver Jewellery Group": {
   "tried": [
@@ -9890,10 +10706,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=unverified il=40 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Malam": {
   "tried": [
@@ -10111,10 +10933,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Dynamic Yield, Mastercard"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Mars Antennas And Rf Systems": {
   "tried": [
@@ -10348,10 +11176,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps MAX Security"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Mashbir": {
   "tried": [
@@ -10402,10 +11236,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=unverified il=4 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Matnasim": {
   "tried": [
@@ -10451,10 +11291,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=12 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Mayanei Hayeshuah Medical Center": {
   "tried": [
@@ -10559,10 +11405,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-board",
+    "date": "2026-08-29",
+    "detail": "dup-board"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "dup-board"
  },
  "Mdaspace": {
   "tried": [
@@ -11056,10 +11908,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=8 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Mend IO": {
   "tried": [
@@ -11489,10 +12347,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Sela"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Mekorot": {
   "tried": [
@@ -11959,10 +12823,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=unverified il=3 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Megapharm": {
   "tried": [
@@ -12473,10 +13343,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps moonshot"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Nextravel": {
   "tried": [
@@ -12554,10 +13430,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.flosports.tv/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Monogoto": {
   "tried": [
@@ -12661,10 +13543,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://flashy.app/career/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Flexfactor": {
   "tried": [
@@ -12688,10 +13576,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://revpath.dealhub.io/companies/flexfactor-7918878"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Forcepoint": {
   "tried": [
@@ -12748,10 +13642,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://formtitan.com/signin"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Frischefilmefrischerfilm": {
   "tried": [
@@ -12775,10 +13675,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.flexfilm.com/careers.php"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Foresightauto": {
   "tried": [
@@ -12797,10 +13703,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Foresight Automotive"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Frisimos Technologies Ltd": {
   "tried": [
@@ -12824,10 +13736,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.frisimos.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "G Stat": {
   "tried": [
@@ -12851,10 +13769,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://g-stat.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Fuse Sys": {
   "tried": [
@@ -12878,10 +13802,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.fusenext.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Friends": {
   "tried": [
@@ -12905,10 +13835,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.friendscouncil.org/quaker-schools/job-openings"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "G Willi Food": {
   "tried": [
@@ -12932,10 +13868,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://mayafiles.tase.co.il/rpdf/1622001-1623000/P1622264-01.pdf"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Future Electronics": {
   "tried": [
@@ -12959,10 +13901,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.futureelectronics.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "G Y A Frames Group": {
   "tried": [
@@ -12986,10 +13934,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.framegrp.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gabay Group": {
   "tried": [
@@ -13013,10 +13967,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://theorg.com/org/gabay-group"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Funpressor": {
   "tried": [
@@ -13040,10 +14000,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://funpressor.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Forvision": {
   "tried": [
@@ -13067,10 +14033,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://forvision.in/faq"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "G1 Security Technologies": {
   "tried": [
@@ -13094,10 +14066,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.g1-group.com/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gacmev": {
   "tried": [
@@ -13121,10 +14099,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://careers.gyhc.co.il/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Galil Software Ltd": {
   "tried": [
@@ -13148,10 +14132,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://galilsoftware.com/company/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Galil Systems": {
   "tried": [
@@ -13196,10 +14186,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Medison Pharma"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Gamma Gruppe": {
   "tried": [
@@ -13223,10 +14219,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://gammagruppe.ch/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gav Systems": {
   "tried": [
@@ -13250,10 +14252,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://gav.co.il/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gamblingcareers": {
   "tried": [
@@ -13277,10 +14285,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.casinocareers.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gdalia Olitsky": {
   "tried": [
@@ -13304,10 +14318,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.golitsky.com/contact"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Mks Instruments": {
   "tried": [
@@ -13331,10 +14351,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=unverified il=22 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Galooli": {
   "tried": [
@@ -13358,10 +14384,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://galooli.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Genecit Com": {
   "tried": [
@@ -13385,10 +14417,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://genecit.com/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gdolim Mehachaim": {
   "tried": [
@@ -13412,10 +14450,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://gdolim.org.il/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gea Soluzioni": {
   "tried": [
@@ -13439,10 +14483,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gea.com/en/careers/apply-now/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gambitsecurity": {
   "tried": [
@@ -13461,10 +14511,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=2 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Galialahav": {
   "tried": [
@@ -13488,10 +14544,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.galialahav.com/pages/careers?srsltid\\u003dAfmBOooSYysz5jBo6TJDk9kJ4hZI9MuMYlrPTQ3e4iCjVITeK_e_Xach"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Genesis Premium Herbs": {
   "tried": [
@@ -13541,10 +14603,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://geneyx.com/about-us/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Genielabstech": {
   "tried": [
@@ -13568,10 +14636,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.genielabs.tech"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Geshem Lamishtaken": {
   "tried": [
@@ -13595,10 +14669,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://gl-re.co.il"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gentex Corporation": {
   "tried": [
@@ -13622,10 +14702,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gentexcorp.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Getanchor AI": {
   "tried": [
@@ -13649,10 +14735,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.getanchor.ai/about"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Get Gain": {
   "tried": [
@@ -13676,10 +14768,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://getgain.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Getactechnology": {
   "tried": [
@@ -13703,10 +14801,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.getac.com/us/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Get Healthee": {
   "tried": [
@@ -13730,10 +14834,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://healthee.com/who-we-are/about-us/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Genie": {
   "tried": [
@@ -13757,10 +14867,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.genie.co.il/en/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Geniussports": {
   "tried": [
@@ -13807,10 +14923,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.geshermi.org/jobs/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Getinnn": {
   "tried": [
@@ -13834,10 +14956,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.thisisgain.com/post/gain-careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gfiisrael": {
   "tried": [
@@ -13861,10 +14989,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://gfi.org.il/about/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gil Ad Sage Agencies Ltd": {
   "tried": [
@@ -13914,10 +15048,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://glasswing.org/opportunities/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Getplexai": {
   "tried": [
@@ -13941,10 +15081,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.plex.tv/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Getfaddom": {
   "tried": [
@@ -13968,10 +15114,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://faddom.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gevernova": {
   "tried": [
@@ -14028,10 +15180,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://givathaviva.org.il/en/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Getport": {
   "tried": [
@@ -14055,10 +15213,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.port.io/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Getsaucedelivery": {
   "tried": [
@@ -14082,10 +15246,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=1 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Givat Zeev Local Council": {
   "tried": [
@@ -14109,10 +15279,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.nbn.org.il/life-in-israel/community-and-housing/community-guide/givat-zeev/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Glasbewassing Nederland": {
   "tried": [
@@ -14136,10 +15312,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.glasbewassingnederland.nl/Vacatures/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Glassbox Solutions": {
   "tried": [
@@ -14163,10 +15345,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.glassbox.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Girlygeekdom": {
   "tried": [
@@ -14190,10 +15378,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://forum.geekdom.com/categories/jobs-who-s-hiring-"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Glassesusa Llc": {
   "tried": [
@@ -14217,10 +15411,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://jobs.glassesusa.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Global Dev Experts": {
   "tried": [
@@ -14244,10 +15444,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.globaldevexperts.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Global Maritime Hub": {
   "tried": [
@@ -14271,10 +15477,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://globalmaritime.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Global Threat Signal": {
   "tried": [
@@ -14298,10 +15510,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.careers.peraton.com/jobs/cyber-threat-briefer-global-threat-analysis-gta-arlington-virginia-170032-jobs--cyber-security--?iis\\u003dbusinessanalyst.com\\u0026iis\\u003dbusinessanalyst.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Global Tech Finance Ltd": {
   "tried": [
@@ -14325,10 +15543,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.michaelpage.co.uk/jobs/finance/industry-technology-telecoms"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Globalbit": {
   "tried": [
@@ -14385,10 +15609,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://grsco.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Giraffe Ems": {
   "tried": [
@@ -14412,10 +15642,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.giraffe.co.il/jobs"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gilaproject": {
   "tried": [
@@ -14439,10 +15675,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.facebook.com/groups/240436323556137/posts/2173856190214131/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Globus Packaging": {
   "tried": [
@@ -14466,10 +15708,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.globus-logistics.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gilat Telecom": {
   "tried": [
@@ -14519,10 +15767,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.globus-logistics.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gmt Advanced Financial Services": {
   "tried": [
@@ -14546,10 +15800,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gmtglobalinc.com/en/aboutus/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Golfisrael": {
   "tried": [
@@ -14573,10 +15833,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://careers.americangolf.co.uk"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Golan Heights Winery": {
   "tried": [
@@ -14600,10 +15866,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.golanwines.co.il/career/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Globaldots": {
   "tried": [
@@ -14627,10 +15899,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.globaldots.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Goodwork Canada": {
   "tried": [
@@ -14654,10 +15932,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.goodwork.ca/jobs"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Go Apprentice": {
   "tried": [
@@ -14681,10 +15965,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.goapprentice.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Googledeepmind": {
   "tried": [
@@ -14708,10 +15998,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://jobs.singaporeglobalnetwork.gov.sg/jobs/google-deepmind"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gooutos": {
   "tried": [
@@ -14735,10 +16031,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://gotoglobal.com/en/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gordonia Hotel": {
   "tried": [
@@ -14762,10 +16064,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://gordoniahotels.com/en/career/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gov Il": {
   "tried": [
@@ -14789,10 +16097,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://jobs.mod.gov.il/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Govan Engineering Llc": {
   "tried": [
@@ -14816,10 +16130,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://seamless.ai/b/govan-engineering-llc-154213210"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gotion High Tech Indonesia Factory": {
   "tried": [
@@ -14843,10 +16163,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://gotion.asia/career/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Grand Caf De Zwaan B V": {
   "tried": [
@@ -14870,10 +16196,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gcpaal26.be/en/contact/vacancies/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Golmat": {
   "tried": [
@@ -14923,10 +16255,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gravityforms.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Glowsecurity": {
   "tried": [
@@ -14950,10 +16288,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://glowsec.co.uk/join-our-team/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Greenvision Systems Gvs": {
   "tried": [
@@ -14977,10 +16321,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gvs.com/en/contact-us/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Grdfinance": {
   "tried": [
@@ -15030,10 +16380,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.greenbrier-europe.com/company/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Green API": {
   "tried": [
@@ -15090,10 +16446,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://recrutement.grandfrais.com"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Groh Systems Ltd": {
   "tried": [
@@ -15117,10 +16479,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://grohsystems.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gns Aviation": {
   "tried": [
@@ -15144,10 +16512,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gns.cloud/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Groundcover Com": {
   "tried": [
@@ -15166,10 +16540,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps groundcover"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Group19 Tech": {
   "tried": [
@@ -15193,10 +16573,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.group19.org.il/career"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Groupe Limagrain": {
   "tried": [
@@ -15220,10 +16606,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.limagrain.com/en/join-us"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Greif": {
   "tried": [
@@ -15306,10 +16698,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://gsi-companies.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gt Restructuring": {
   "tried": [
@@ -15333,10 +16731,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.grantthornton.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Growings Ltd": {
   "tried": [
@@ -15360,10 +16764,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://growin.ag/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Gth Software": {
   "tried": [
@@ -15387,10 +16797,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "http://gthsoftware.com/career.html"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "H Sol": {
   "tried": [
@@ -15414,10 +16830,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://sol.lt/en/for-jobseekers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Hacerem Spirits": {
   "tried": [
@@ -15521,10 +16943,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gordontravel.co.il/contact"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Habima": {
   "tried": [
@@ -15716,10 +17144,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://remedio.io/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Hamifalinc": {
   "tried": [
@@ -16234,10 +17668,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://binary-studio.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Hdr": {
   "tried": [
@@ -16315,10 +17755,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "http://www.electrotherm.com/career/current-opening"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Boston Consulting Group (BCG)": {
   "tried": [
@@ -16395,10 +17841,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=unverified il=7 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Gravity Forms": {
   "tried": [
@@ -16422,10 +17874,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.gravityforms.com/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "ReasonLabs": {
   "tried": [
@@ -17105,10 +18563,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=1 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Iss Integrated Security Solutions": {
   "tried": [
@@ -17609,10 +19073,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=2 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Jafi": {
   "tried": [
@@ -17796,10 +19266,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=not-ours il=5 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Joberacom": {
   "tried": [
@@ -18043,10 +19519,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "gate-refused",
+    "date": "2026-08-29",
+    "detail": "no row: gate=unverified il=7 (deferred to the hunt; NOT recorded empty)"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "gate-refused"
  },
  "Jurni AI": {
   "tried": [
@@ -18723,10 +20205,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps Keshet Media Group"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "JobsThatFit": {
   "tried": [
@@ -20386,10 +21874,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "weankor": {
   "tried": [
@@ -20403,10 +21897,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Ness Digital Engineering": {
   "tried": [
@@ -20525,10 +22025,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "finbounce": {
   "tried": [
@@ -20569,10 +22075,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "allbetter": {
   "tried": [
@@ -20586,10 +22098,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Landa": {
   "tried": [
@@ -20608,10 +22126,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-board",
+    "date": "2026-08-29",
+    "detail": "dup-board"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "dup-board"
  },
  "Neema - Better Than a Bank": {
   "tried": [
@@ -20657,10 +22181,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-board",
+    "date": "2026-08-29",
+    "detail": "dup-board"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "dup-board"
  },
  "Motorola Solutions": {
   "tried": [
@@ -20674,10 +22204,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "The Good Food Institute Israel": {
   "tried": [
@@ -20755,10 +22291,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.egged.co.il/en/career"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "vpgsensors": {
   "tried": [
@@ -20772,10 +22314,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Konfidas": {
   "tried": [
@@ -20816,10 +22364,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "REAL": {
   "tried": [
@@ -20850,10 +22404,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Bynet Data Communications": {
   "tried": [
@@ -21042,10 +22602,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "KPMG Israel": {
   "tried": [
@@ -21194,10 +22760,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Unilink Ltd.": {
   "tried": [
@@ -21477,10 +23049,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Bagira": {
   "tried": [
@@ -21494,10 +23072,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "HyperGuest": {
   "tried": [
@@ -21511,10 +23095,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Metriko": {
   "tried": [
@@ -21565,10 +23155,16 @@
     "rung": "comeet-token",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://bsel.co.il/careers/"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "no-proposal"
  },
  "Indocs": {
   "tried": [
@@ -21667,10 +23263,16 @@
     "rung": "slug-probe",
     "verdict": "implied-by-ladder",
     "date": "2026-08-29"
+   },
+   {
+    "rung": "apply",
+    "verdict": "held-name-twin",
+    "date": "2026-08-29",
+    "detail": "HOLD name overlaps McCann Digital, Universal McCann Israel"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "implied-by-ladder"
+  "verdict": "held-name-twin"
  },
  "Outlook Amusements": {
   "tried": [
@@ -21812,10 +23414,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Anyword": {
   "tried": [
@@ -21829,10 +23437,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Cyberillium": {
   "tried": [
@@ -21846,10 +23460,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Cylus": {
   "tried": [
@@ -21863,10 +23483,16 @@
     "verdict": "search-page-no-ats",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "resolve-llm",
+    "verdict": "no-proposal",
+    "date": "2026-08-29",
+    "evidence_url": "https://www.cylus.com/careers"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "search-page-no-ats"
+  "verdict": "no-proposal"
  },
  "Fluenttech": {
   "tried": [
@@ -21880,10 +23506,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Harmonya Technologies": {
   "tried": [
@@ -21897,10 +23529,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Landacorp": {
   "tried": [
@@ -21914,10 +23552,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Orpak": {
   "tried": [
@@ -21931,10 +23575,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Valence Security": {
   "tried": [
@@ -21948,10 +23598,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Agency": {
   "tried": [
@@ -21965,10 +23621,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "slug-probe"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "eOS (esh Group)": {
   "tried": [
@@ -22025,10 +23687,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Little Flowers Early Childhood And Development Center Inc": {
   "tried": [
@@ -22096,10 +23764,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Lumentum": {
   "tried": [
@@ -22113,10 +23787,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Maelyscosmetics": {
   "tried": [
@@ -22130,10 +23810,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Maersk Group": {
   "tried": [
@@ -22147,10 +23833,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Magalsolutions": {
   "tried": [
@@ -22164,10 +23856,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Mazebolt": {
   "tried": [
@@ -22181,10 +23879,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Megoafek": {
   "tried": [
@@ -22198,10 +23902,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Meitar": {
   "tried": [
@@ -22215,10 +23925,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Mindsecurity": {
   "tried": [
@@ -22232,10 +23948,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Minimus": {
   "tried": [
@@ -22249,10 +23971,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Ministere Des Affaires Etrangeres Francais": {
   "tried": [
@@ -22293,10 +24021,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Mitrelli": {
   "tried": [
@@ -22310,10 +24044,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Montana Energy Corps Citizens For A Better Flathead": {
   "tried": [
@@ -22354,10 +24094,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Flo Optics": {
   "tried": [
@@ -22371,10 +24117,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Fortrea": {
   "tried": [
@@ -22388,10 +24140,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Framesecurity": {
   "tried": [
@@ -22405,10 +24163,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Gartner": {
   "tried": [
@@ -22422,10 +24186,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Gilead Sciences": {
   "tried": [
@@ -22439,10 +24209,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Globalfoundries": {
   "tried": [
@@ -22456,10 +24232,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Goarc": {
   "tried": [
@@ -22473,10 +24255,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Golan": {
   "tried": [
@@ -22490,10 +24278,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Gramian Consulting": {
   "tried": [
@@ -22507,10 +24301,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Harnessinc": {
   "tried": [
@@ -22535,10 +24335,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "TransUnion": {
   "tried": [
@@ -22578,10 +24384,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "slug-probe"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Israeltechguard": {
   "tried": [
@@ -22595,10 +24407,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Jether Energy": {
   "tried": [
@@ -22612,10 +24430,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Jifiti": {
   "tried": [
@@ -22629,10 +24453,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Jove": {
   "tried": [
@@ -22646,10 +24476,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Kan Israeli Publish Broadcasting Corporation": {
   "tried": [
@@ -22717,10 +24553,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Kmslh": {
   "tried": [
@@ -22734,10 +24576,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "L Raphael": {
   "tried": [
@@ -22751,10 +24599,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Lavi Light Rail Operation Maintenance Career": {
   "tried": [
@@ -22794,10 +24648,16 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  },
  "Linxsecurity": {
   "tried": [
@@ -22811,9 +24671,15 @@
     "verdict": "proposal",
     "date": "2026-08-29",
     "rung_raw": "search-comeet"
+   },
+   {
+    "rung": "apply",
+    "verdict": "dup-name",
+    "date": "2026-08-29",
+    "detail": "dup-name"
    }
   ],
   "last": "2026-08-29",
-  "verdict": "proposal"
+  "verdict": "dup-name"
  }
 }
