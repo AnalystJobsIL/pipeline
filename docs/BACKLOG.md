@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**482 filed · 362 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**483 filed · 363 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 435.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 436.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -205,7 +205,7 @@ closure convention in the header.
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
-### infra — 82 open
+### infra — 83 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -289,6 +289,7 @@ closure convention in the header.
 - **388** `388@infra` **`persist_state.shrank()` cannot see the loss it was written for, on the store where it
 - **407** `407@infra` **`check_invariants` check D and `registry_health.orphans()` only range over PARKED rows,
 - **433** `433@infra` **`BD_RUN_CAP=0`
+- **435** `435@infra` **The `guard` job's 10-minute timeout cannot fit the registry rehearsals, and nobody knew
 
 ### scraper — 26 open
 
@@ -7576,3 +7577,28 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     the card builder to carry each posting's own href, which is where `_card_href` already
     operates. **Until it does, roughly one Israeli posting in five that we hold can never have
     a job description**, whatever this lane does.
+
+435. **The `guard` job's 10-minute timeout cannot fit the registry rehearsals, and nobody knew
+    because the suite was failing before it** — lane: `infra` (it owns `tests.yml`) with
+    `registry` (it owns `tests/rehearse_registry.py`). Found by `jd-text` 2026-08-29, from the
+    first run in which `Unit guards` passed.
+
+    Measured on run **33279280672** (`782c0dc`), the first green-pytest push in a while:
+
+    ```
+    Unit guards                        success  22:43:36 -> 22:45:38   (2m02s)
+    Registry invariants                success
+    Fourteen rehearsed nights          success  22:45:39 -> 22:47:04   (1m25s)
+    Five mixed-policy rehearsals       CANCELLED 22:47:04 -> 22:53:42  (job hit timeout-minutes: 10)
+    ```
+
+    The two runs before it (`f9085af`, `2b713a1`) failed at `Unit guards` and **skipped** every
+    later step, so the rehearsals had not actually run on CI — the timeout was hidden behind a
+    red suite. `tests.yml`'s own comment says it of the mutation gate: *"a cancelled gate is
+    worse than a slow one: a gate that fails names the surviving mutant, a gate that times out
+    names nothing."* The guard job is now in that state.
+
+    It is not enough to raise the number — BACKLOG 195 rejected exactly that for the mutation
+    gate ("buys a week, fixes nothing") and sharded instead. The five seeded rehearsals are
+    independent by construction (`--seed 1..5`), so they shard trivially; or the loop moves to
+    its own job. Either way the fix belongs to whoever owns the 10.
