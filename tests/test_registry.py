@@ -6867,3 +6867,38 @@ def test_a_queue_rung_pool_has_a_cadence_like_every_row_pool(tmp_path, monkeypat
     # ...and a settled name is owed nothing by anyone
     QS.record(st2, "Acme", "search", "resolved", day=old)
     assert not QS.in_queue_pool(e, st2, "own-site", days=14)
+
+
+def test_the_own_site_rung_refuses_a_parked_domain_before_the_name_test(monkeypatch):
+    """A domain FOR SALE names the company by construction, so the name test cannot refuse it.
+
+    A HugeDomains / GoDaddy / Spaceship sale page displays the domain it is selling, and that
+    domain IS the company's name — so `page_mentions_company(strict=True)` says yes and the
+    only thing standing between it and `resolve_llm._own_page_names_token` is the linkback.
+    Measured 2026-08-29 over the 136 re-readable `no-linkback` names: **18 (13%) are parking
+    pages**, and 5 of the 9 false positives in the linkback-relaxation test were this one class
+    (`Gong.io` → HugeDomains, `Mashbir` → ExpiredDomains, `Monogoto` → Spaceship).
+
+    It matters beyond tidiness because a wrong own-domain page is worse than none: it is
+    exactly the evidence the paid tier reads, so admitting one corrupts the only check
+    `_verify` has. Kills `ownsite-parked-admitted`."""
+    import collections
+    import auto_expand as AE
+    SALE = ("<html><body>" + "<p>gongio.com is for sale. Buy this domain. "
+            "HugeDomains.com — trusted domain seller.</p>" * 60 + "</body></html>")
+    REAL = ("<html><body>" + "<p>Gong.io — revenue intelligence for sales teams. "
+            "Careers at Gong.io. linkedin.com/company/gongio</p>" * 60 + "</body></html>")
+    monkeypatch.setattr(AE, "_SITE_TLDS", ("com",))
+    monkeypatch.setattr(AE._gate, "page_mentions_company", lambda *a, **k: True)
+    monkeypatch.setattr(AE._gate, "is_foreign", lambda *a, **k: False)
+
+    st = collections.Counter()
+    monkeypatch.setattr(AE, "_get_page", lambda u, d, timeout=5: ("https://gongio.com", SALE))
+    assert AE._site_from_guess("Gong.io", "gongio", stats=st) is None
+    assert st["parked-domain"] == 1, dict(st)
+    assert st["named"] == 0, "the name test ran on a page that is for sale: %s" % dict(st)
+
+    # positive control: the same rung still keeps a real page with a real linkback
+    st2 = collections.Counter()
+    monkeypatch.setattr(AE, "_get_page", lambda u, d, timeout=5: ("https://gongio.com", REAL))
+    assert AE._site_from_guess("Gong.io", "gongio", stats=st2) is not None, dict(st2)

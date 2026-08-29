@@ -178,6 +178,31 @@ def in_hunt_pool(r):
             and not _triaged_page_empty(r[5] or ""))
 
 
+# When this is a list, the queue arm EMITS PROPOSALS instead of writing rows (`--propose`).
+# `docs/BACKLOG.md` 423: this arm is the only rung with a VALIDATING scrape -- it activates on
+# >= 1 real Israel job -- but it wrote a row for EVERY name it touched, including two parks
+# that state a company has nothing (`no IL listing; monitored candidate`, `no listing found`).
+# That is the operator's rule "nothing is recorded as having no roles without a hunt AND an
+# LLM read" multiplied by the size of the queue, which is why the arm could never be pointed
+# at the backlog. `drain_queue` solved the same problem structurally rather than by policy:
+# emit proposals, own no csv writer, and let `apply_proposals` -- which writes rows that
+# assert PRESENCE and nothing else -- decide. This gives the arm the same split.
+PROPOSE_TO = None
+
+
+def _flush_proposals(path):
+    """Write the proposals so far. Cheap (the list is small) and idempotent."""
+    if PROPOSE_TO is None or not path:
+        return
+    import json as _json
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        _json.dump({"generated": TODAY, "proposals": PROPOSE_TO}, f,
+                   ensure_ascii=False, indent=1, sort_keys=True)
+    os.replace(tmp, path)
+
+
 def queue_targets(rows, cap):
     """Intake names with NO registry row -- the pool nothing has ever worked (BACKLOG 332).
 
@@ -209,9 +234,16 @@ def queue_targets(rows, cap):
         if not nm or nm.lower() in have or is_recruiter(nm) or looks_like_junk(nm):
             continue
         out.append(nm)
-        if len(out) >= cap:
-            break
-    return out
+    # SHARDED like the row arm, and for the same reason: `scrape_universal` uses SYNC
+    # Playwright, so two hunts cannot share a thread -- but they can share a machine as
+    # separate PROCESSES. `HUNT_QUEUE_SHARD=i/n` takes every n-th name, which keeps the
+    # slices disjoint without a coordinator and without the cap silently giving every shard
+    # the same prefix (the failure `316@registry` records for the row arm's own budget).
+    sh = os.environ.get("HUNT_QUEUE_SHARD", "")
+    if sh and "/" in sh:
+        i, n = (int(x) for x in sh.split("/", 1))
+        out = out[i - 1::n]
+    return out[:cap] if cap else out
 
 
 def _triaged_page_empty(note):
@@ -390,6 +422,13 @@ def main():
                               # (the rehearsal, a test) otherwise share one HUNT_LLM_CAP
     os.environ["SCRAPE_ASSUME_IL"] = "1"   # targets are pre-vetted Israel-relevant companies
     apply = "--apply" in sys.argv
+    global PROPOSE_TO
+    _propose_path = ""
+    if "--propose" in sys.argv:
+        _i = sys.argv.index("--propose")
+        _propose_path = (sys.argv[_i + 1] if _i + 1 < len(sys.argv)
+                         else "out/hunt_proposals.json")
+        PROPOSE_TO = []
     limit = int(os.environ.get("HUNT_LIMIT", "0"))
     budget_min = int(os.environ.get("HUNT_TIME_BUDGET_MIN", "0"))
     # A RESERVED slice for the intake queue, taken off the row pool's end. Without it the
@@ -595,6 +634,33 @@ def main():
             print(f"  [{tag}] q{qn}/{len(qnames)} {name}: {url or detail}"
                   f"{f' ({n_il} IL)' if n_il else ''}"
                   f"{f' — {refused}, not activated' if refused else ''}", flush=True)
+            if PROPOSE_TO is not None:
+                # A PROPOSAL, never a row. Only the `found`-and-not-refused case can become
+                # one, and `apply_proposals` re-verifies it; everything else is recorded with
+                # its reason and writes nothing about the company at all.
+                if verdict == "found" and not refused and keep:
+                    PROPOSE_TO.append({
+                        "name": name, "kind": "scrape", "rung": "hunt",
+                        "platform": "scrape", "token": "", "api_url": keep,
+                        "proposed_active": False,
+                        "note_if_applied": "listing-hunt %s: queue-hunt; %d IL" % (TODAY, n_il),
+                        "evidence": {"seed_url": "", "candidate_url": keep,
+                                     "n_il_when_hunted": n_il, "hunt_verdict": verdict,
+                                     "is_aggregator": is_aggregator(keep),
+                                     "gate": "identity_ok + looks_like_a_job_listing_page"}})
+                else:
+                    PROPOSE_TO.append({
+                        "name": name, "kind": "refused", "rung": "hunt",
+                        "why": refused or ("no-listing" if verdict != "found" else "no-address"),
+                        "evidence": {"hunt_verdict": verdict,
+                                     "detail": (detail or "")[:120],
+                                     "url": q_url or "", "n_il": n_il}})
+                # FLUSHED PER NAME, not at the end. A queue-arm sweep over the backlog runs
+                # for hours; writing the proposals only on the way out means a kill, a crash
+                # or a machine reboot loses every name already paid for -- and this rung pays
+                # a Bright Data search and up to two Playwright renders per name.
+                _flush_proposals(_propose_path)
+                continue
             if not apply:
                 continue
             # re-read immediately before the append, and match by NAME: another writer may
@@ -635,6 +701,15 @@ def main():
                        f"listing-hunt {TODAY}: queue-hunt; no listing found"]
             with open("companies.csv", "a", newline="", encoding="utf-8") as f:
                 csv.writer(f).writerow(row)
+    if PROPOSE_TO is not None:
+        import json as _json
+        os.makedirs(os.path.dirname(_propose_path) or ".", exist_ok=True)
+        with open(_propose_path, "w", encoding="utf-8") as _f:
+            _json.dump({"generated": TODAY, "proposals": PROPOSE_TO}, _f,
+                       ensure_ascii=False, indent=1, sort_keys=True)
+        print("wrote %s (%d proposals, %d activatable)"
+              % (_propose_path, len(PROPOSE_TO),
+                 sum(1 for p in PROPOSE_TO if p["kind"] == "scrape")), flush=True)
     print(f"\n=== listing hunt: {stats}, picker calls {_LLM_USED['n']}"
           f"{'/CAPPED' if not _llm_budget_left() else ''}"
           f"; queue arm {qstats}", flush=True)

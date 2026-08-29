@@ -421,6 +421,18 @@ def _site_from_guess(name, handle, timeout=5, stats=None):
         # PCB PIEZOTRONICS, because the core `PCB` appears on it (attacker, 2026-08-27).
         if stats is not None:
             stats["answered"] += 1
+        # A PARKED DOMAIN NAMES THE COMPANY BY CONSTRUCTION -- a HugeDomains or GoDaddy
+        # sale page displays the domain it is selling, and the domain is the company's name,
+        # so `page_mentions_company` says yes and only the linkback stops it. Measured
+        # 2026-08-29 over the 136 re-readable `no-linkback` names: **18 (13%) are parking
+        # pages**, and 5 of the 9 false positives in the linkback-relaxation test were this
+        # one class (`Gong.io` -> HugeDomains, `Mashbir` -> ExpiredDomains, `Monogoto` ->
+        # Spaceship). Refused BEFORE the name test, because a page that is for sale is not
+        # evidence about anybody. `confirm_zero._PARKED` is the shared pattern; this rung had
+        # no reason to grow its own.
+        from confirm_zero import _PARKED, _visible
+        if _PARKED.search(_visible(html)[:4000]):
+            return _no("parked-domain")
         if _gate.page_mentions_company(name, html, strict=True) is not True:
             return _no("not-named")        # a domain that answers but is not theirs: stop
         if stats is not None:

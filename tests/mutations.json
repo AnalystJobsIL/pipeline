@@ -2199,5 +2199,15 @@
   "replace": "    return str((state.get(name) or {}).get(\"verdict\") or \"\") in TERMINAL",
   "why": "the log is not chronological: backfilling the drain after stamping `already-a-row` buried 64 of 65 settled names behind a later refusal, and the census said 2 where 66 were.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "ownsite-parked-admitted",
+  "file": "auto_expand.py",
+  "symbol": "_site_from_guess",
+  "class": "M1-gate-removal",
+  "find": "        from confirm_zero import _PARKED, _visible\n        if _PARKED.search(_visible(html)[:4000]):\n            return _no(\"parked-domain\")\n",
+  "replace": "",
+  "why": "a domain FOR SALE names the company by construction, so page_mentions_company cannot refuse it; 18 of 136 no-linkback names are parking pages, and a wrong own-domain corrupts the one check resolve_llm._verify has.",
+  "must_be_killed_by_behavioural": true
  }
 ]
