@@ -66,7 +66,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | module | imported by | what it does |
 |---|---|---|
 | `comeet_resolve.py` | `audit_empty_rows.py`, `resolve_llm.py` | reads `window.comeetvar` off a rendered page to recover a Comeet uid+token |
-| `deep_validate.py` | `audit_empty_rows.py`, `crack_walled.py`, `drain_queue.py` +10 more | the Chromium rung of the Sunday audit (`validate_one` / `apply_verdict`, imported by audit_empty_rows; `--only` on demand); owns `google_via_unlocker`, the only search rung that works today |
+| `deep_validate.py` | `audit_empty_rows.py`, `crack_walled.py`, `drain_queue.py` +11 more | the Chromium rung of the Sunday audit (`validate_one` / `apply_verdict`, imported by audit_empty_rows; `--only` on demand); owns `google_via_unlocker`, the only search rung that works today |
 | `ingest_research.py` | `resolve_parallel.py`, `resolve_unknowns.py`, `retry_unreachable.py` | resolve+verify helpers for the research queue. **Not deletable**: `retry_unreachable` (02:30 daily) imports `PROBE_FAST`, `_cand_slugs` and `_try` from it |
 | `merge_csv_rows.py` | `persist_state.py`, `registry_health.py`, `tests/test_registry.py` +1 more | git-layer segment-aware merge for companies.csv; persist_state.py applies it on every push conflict |
 | `merge_json_cache.py` | `persist_state.py`, `tests/test_units.py` | three-way merge for the company-keyed JSON caches (deletions honoured since 2026-08-25); persist_state.py applies it |
@@ -139,6 +139,7 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/aggregators.py` | is this URL an aggregator? Gates activation and runtime |
 | `pipeline/atomic.py` | **shared** - atomic writes for every state file |
 | `pipeline/bd_budget.py` | **shared** - the Bright Data monthly ceiling, with a date on it: unlimited through August 2026, 5,000 from 2026-09-01 (both sides pinned by a guard). Reads the LIVE account, because every other cap here is per-process and no credit ledger exists. The per-run blast-radius bound is `BD_RUN_CAP` in `bd_rescue` |
+| `pipeline/board_verify.py` | **the one standard** - is this URL THIS company own ISRAELI board? Written after three checks disagreed on live rows: 29 rows exist despite a NOT-THEIRS verdict in an earlier run of the same tool. RENDERS the page before reading it, asks the model four questions (own board / which employer / the ISRAELI entity / what KIND of page), and re-asks when the reading disagrees with the host-and-title evidence: two different answers means UNVERIFIABLE, never ok. A monitor address is fetched DAILY and listing_hunt fast path can activate it with no model in the loop, so a wrong one is a wrong ACTIVE row on a timer |
 | `pipeline/companies.py` | **shared** - load companies.csv into row dicts |
 | `pipeline/company_identity.py` | **shared** - the identity PRIMITIVES (is_foreign, verdict, page_mentions_company, looks_like_a_job_listing_page); the gate that composes them is identity_gate |
 | `pipeline/company_info.py` | the two-sentence company blurb, and `derive_blurb` (the facts read as prose when the blurb is missing) |

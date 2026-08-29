@@ -197,18 +197,37 @@ def _score(name, url, gate, is_aggregator, looks_like_a_job_listing_page):
     if not url or not url.startswith("http") or is_aggregator(url) or host in SHORTENERS:
         return None
     page = _fetch(url)
-    if len(page) < MIN_PAGE:
-        return None                            # a 404 or a JS shell proves nothing
+    # A THIN PAGE IS NOT THE SAME AS NO PAGE. A JS-rendered board answers 200 with a shell of
+    # a few hundred characters, so rejecting on size here refuses the modern boards this rung
+    # exists to find. A shell is kept only long enough for the render to speak for it: if the
+    # scrape below returns jobs it IS a board, and if it returns nothing the shell is dropped.
+    thin = len(page) < MIN_PAGE
+    if thin and not _exists(url):
+        return None                            # a 404/410 really is nothing
     if not _is_ours(name, url, page, gate):
-        return None
+        return None                            # (a thin shell carries no title to rescue it)
     try:
         from pipeline.israel import is_israel_job
         from scrape_universal import scrape
         jobs = scrape(name, _encode(url)) or []
     except Exception:                                             # noqa: BLE001
         jobs = []
+    if thin and not jobs:
+        return None                            # a shell that renders nothing is not a board
     n_il = len([j for j in jobs if is_israel_job(j)]) if jobs else 0
     return (n_il, len(jobs), 1 if looks_like_a_job_listing_page(url) else 0)
+
+
+def _exists(url, timeout=12):
+    """Does this address answer at all? (404/410 raise; a shell still counts as a page.)"""
+    import urllib.request
+    try:
+        req = urllib.request.Request(
+            _encode(url), headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.status < 400 and len(r.read(4096)) > 0
+    except Exception:                                             # noqa: BLE001
+        return False
 
 
 def _own_domain_probe(name, urls, gate, is_aggregator, looks_like_a_job_listing_page):
@@ -235,10 +254,13 @@ def _own_domain_probe(name, urls, gate, is_aggregator, looks_like_a_job_listing_
             cand = root + path
             if is_aggregator(cand):
                 continue
-            # Only "does this address answer with a real page" here. Whether it is THIS
-            # company's and whether it is a board are decided by `_score`, which the caller
-            # runs on whatever this returns -- so the probe cannot admit anything by itself.
-            if len(_fetch(cand, timeout=12)) >= MIN_PAGE:
+            # EXISTENCE, not size. A JS-rendered careers page answers 200 with a shell of a
+            # few hundred characters, so a `MIN_PAGE` test here rejects exactly the modern
+            # boards this rung exists to find -- 93 names sat in `their page, but not a board`
+            # for that reason alone. `urllib` raises on 404/410, so a fetch that returns
+            # ANYTHING means the path is real; `_score` then RENDERS it and decides whether it
+            # is theirs and whether it carries jobs. The probe still admits nothing by itself.
+            if _exists(cand):
                 return cand
     return out
 

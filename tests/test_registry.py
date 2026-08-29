@@ -7180,3 +7180,86 @@ def test_a_covered_name_is_retired_but_a_mere_overlap_is_not(tmp_path, monkeypat
     # a different name), and the recorded reason must say exactly that
     assert rec["Youappi"]["evidence"]["row_under_this_exact_name"] is False
     assert "another name string" in rec["Youappi"]["why"]
+
+
+def _bv_stub(monkeypatch, answers, page="x" * 4000):
+    """Drive `board_verify` with scripted model answers and no network."""
+    from pipeline import board_verify as BV
+    seq = list(answers)
+    monkeypatch.setattr(BV, "fetch", lambda url, allow_paid=True: (page, "plain"))
+    monkeypatch.setattr(BV, "_ask",
+                        lambda *a, **k: seq.pop(0) if seq else None)
+    return BV
+
+
+def test_the_verifier_is_reproducible_or_says_so(monkeypatch):
+    """A verdict that does not reproduce is not a verdict.
+
+    `qa_proposals` said `Greylock Partners` -> NOT-THEIRS on one run and `ok-by-model` on the
+    next, and the admitting run wrote an ACTIVE row for a VC's portfolio-jobs page. 29 rows in
+    `companies.csv` have that shape. So when the model disagrees with the mechanical evidence
+    the question is asked AGAIN, and two different answers mean `UNVERIFIABLE` -- never `ok`,
+    and never the answer we happened to like."""
+    yes = {"is_this_companys_own_board": True, "employer_named": "Acme",
+           "is_the_israeli_entity": True, "page_kind": "board",
+           "states_no_openings": False, "why": "acme's own board"}
+    no = {"is_this_companys_own_board": False, "employer_named": "Someone Else",
+          "is_the_israeli_entity": True, "page_kind": "board",
+          "states_no_openings": False, "why": "belongs to Someone Else"}
+
+    BV = _bv_stub(monkeypatch, [yes, no])
+    monkeypatch.setattr(BV, "_mechanical_opinion", lambda n, u, p: False)   # disagrees with yes
+    rec = BV.verify("Acme", "https://acme.example/careers", state={})
+    assert rec["verdict"] == BV.UNVERIFIABLE, rec
+    assert "reproduce" in rec["why"]
+
+    # ...and agreement on both reads still passes
+    BV = _bv_stub(monkeypatch, [yes, yes])
+    monkeypatch.setattr(BV, "_mechanical_opinion", lambda n, u, p: False)
+    assert BV.verify("Acme", "https://acme.example/careers", state={})["verdict"] == BV.OK
+
+
+def test_a_namesake_abroad_is_not_the_israeli_company(monkeypatch):
+    """`Minet Technologies` -> a Kenyan job board and `Chorus` -> a New Zealand telco both
+    passed every earlier check and became rows. The queue seed says the company hires in
+    Israel, so a page that is plainly another country's company is another company."""
+    ans = {"is_this_companys_own_board": True, "employer_named": "Chorus NZ",
+           "is_the_israeli_entity": False, "page_kind": "board",
+           "states_no_openings": False, "why": "New Zealand telco"}
+    BV = _bv_stub(monkeypatch, [ans])
+    monkeypatch.setattr(BV, "_mechanical_opinion", lambda n, u, p: None)
+    rec = BV.verify("Chorus", "https://company.chorus.co.nz/careers", state={})
+    assert rec["verdict"] == BV.NOT_THEIRS and "namesake" in rec["why"]
+
+
+def test_an_about_page_is_not_a_board_and_an_aggregator_never_is(monkeypatch):
+    """A monitor address is FETCHED DAILY by `probe_candidates`, so an About page is a
+    permanent no-op and an aggregator is someone else's jobs on a timer."""
+    from pipeline import board_verify as BV
+    about = {"is_this_companys_own_board": True, "employer_named": "Acme",
+             "is_the_israeli_entity": True, "page_kind": "about",
+             "states_no_openings": False, "why": "company about page"}
+    B = _bv_stub(monkeypatch, [about])
+    monkeypatch.setattr(B, "_mechanical_opinion", lambda n, u, p: None)
+    assert B.verify("Acme", "https://acme.example/about", state={})["verdict"] == BV.NOT_A_BOARD
+
+    # the mechanical vetoes need no page and no model at all
+    st = {}
+    assert BV.verify("Acme", "https://lnkd.in/abc", state=st)["verdict"] == BV.NOT_THEIRS
+    assert BV.verify("Acme", "https://www.linkedin.com/jobs/view/1",
+                     state=st)["verdict"] == BV.NOT_THEIRS
+
+
+def test_an_unverifiable_verdict_is_never_reused_as_a_pass():
+    """`UNVERIFIABLE` means we failed to LOOK. Caching it as an answer would turn one bad
+    fetch into thirty days of silence, and `is_ok` must refuse it either way."""
+    from pipeline import board_verify as BV
+    today = __import__("datetime").date.today().isoformat()
+    st = {BV.key("Acme", "u"): {"verdict": BV.UNVERIFIABLE, "date": today},
+          BV.key("Beta", "u"): {"verdict": BV.OK, "date": today},
+          BV.key("Gamma", "u"): {"verdict": BV.OK, "date": "2020-01-01"}}
+    assert BV.cached(st, "Acme", "u") is None, "an UNVERIFIABLE must be re-asked"
+    assert not BV.is_ok(st, "Acme", "u")
+    assert BV.is_ok(st, "Beta", "u")
+    assert not BV.is_ok(st, "Gamma", "u"), "a verdict older than the cadence is re-earned"
+    assert not BV.is_ok(st, "Never Seen", "u"), "absence is a refusal, not a pass"

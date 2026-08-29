@@ -1,0 +1,233 @@
+{
+ "greylock partners|https://greylock.com/jobs/portfolio-jobs/": {
+  "date": "2026-08-29",
+  "url": "https://greylock.com/jobs/portfolio-jobs/",
+  "name": "Greylock Partners",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399910,
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator",
+  "employer_named": "Greylock Partners",
+  "page_kind": "aggregator",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator",
+   "mechanical_said": true
+  }
+ },
+ "malam|https://malam-academy.co.il/vacancies/": {
+  "date": "2026-08-29",
+  "url": "https://malam-academy.co.il/vacancies/",
+  "name": "Malam",
+  "model": "opus",
+  "route": "plain",
+  "chars": 127509,
+  "verdict": "ok",
+  "why": "Malam Academy (מלם אקדמי), part of Malam Team group, posting its own openings in Israel.",
+  "employer_named": "מלם אקדמי / מלם תים",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "aijobs ai|https://www.aijobs.com/jobs": {
+  "date": "2026-08-29",
+  "url": "https://www.aijobs.com/jobs",
+  "name": "Aijobs AI",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399978,
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator",
+  "employer_named": "aijobs.com",
+  "page_kind": "aggregator",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator",
+   "mechanical_said": true
+  }
+ },
+ "acca careers|https://jobs.accaglobal.com": {
+  "date": "2026-08-29",
+  "url": "https://jobs.accaglobal.com",
+  "name": "Acca Careers",
+  "model": "opus",
+  "route": "plain",
+  "chars": 62813,
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator",
+  "employer_named": "ACCA Careers",
+  "page_kind": "aggregator",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator",
+   "mechanical_said": true
+  }
+ },
+ "minet technologies|https://jobs.elevolt.co.ke/careers/minet": {
+  "date": "2026-08-29",
+  "url": "https://jobs.elevolt.co.ke/careers/minet",
+  "name": "Minet Technologies",
+  "model": "opus",
+  "route": "plain",
+  "chars": 26386,
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator",
+  "employer_named": "Minet",
+  "page_kind": "aggregator",
+  "states_no_openings": true,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator",
+   "mechanical_said": true
+  }
+ },
+ "kela|https://www.comeet.com/careers-api/2.0/company/2a.004/positions?token=a2446fc1e6c512028905b44512032b45b441e6c": {
+  "date": "2026-08-29",
+  "url": "https://www.comeet.com/careers-api/2.0/company/2A.004/positions?token=A2446FC1E6C512028905B44512032B45B441E6C",
+  "name": "KELA",
+  "model": "opus",
+  "route": "plain",
+  "chars": 11388,
+  "verdict": "ok",
+  "why": "Comeet ATS feed for company \"Kela\" (kelacyber.com), listing KELA Israel Tel Aviv roles — the company's own job board.",
+  "employer_named": "Kela (KELA Israel)",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "teva pharmaceutical|https://www.tevapharm.com/your-career/": {
+  "date": "2026-08-29",
+  "url": "https://www.tevapharm.com/your-career/",
+  "name": "Teva Pharmaceutical",
+  "model": "opus",
+  "route": "plain",
+  "chars": 130333,
+  "verdict": "ok",
+  "why": "Teva's own global careers landing page with search but no listed roles; no statement of no openings.",
+  "employer_named": "Teva Pharmaceutical Industries Ltd.",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "nebius|https://careers.nebius.com/": {
+  "date": "2026-08-29",
+  "url": "https://careers.nebius.com/",
+  "name": "Nebius",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399731,
+  "verdict": "ok",
+  "why": "Nebius' own careers site listing 355 open roles, including many in Israel/Tel Aviv.",
+  "employer_named": "Nebius",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "kela - cyber threat intelligence|https://www.kelacyber.com/careers/": {
+  "date": "2026-08-29",
+  "url": "https://www.kelacyber.com/careers/",
+  "name": "KELA - Cyber Threat Intelligence",
+  "model": "opus",
+  "route": "plain",
+  "chars": 141946,
+  "verdict": "ok",
+  "why": "KELA's own careers page listing 9 open roles, HQ Tel Aviv.",
+  "employer_named": "KELA Cyber Threat Intelligence",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "bdo international|https://www.bdo.in/en-gb/careers": {
+  "date": "2026-08-29",
+  "url": "https://www.bdo.in/en-gb/careers",
+  "name": "Bdo International",
+  "model": "opus",
+  "route": "plain",
+  "chars": 43578,
+  "verdict": "NOT-THEIRS",
+  "why": "a namesake abroad (BDO India Services Pvt Ltd)",
+  "employer_named": "BDO India Services Pvt Ltd",
+  "page_kind": "careers-landing",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to BDO India Services Pvt Ltd",
+   "mechanical_said": true
+  }
+ },
+ "outbrain|https://www.outbrain.com/careers/": {
+  "date": "2026-08-29",
+  "url": "https://www.outbrain.com/careers/",
+  "name": "Outbrain",
+  "model": "opus",
+  "route": "unlocker",
+  "chars": 91262,
+  "verdict": "ok",
+  "why": "outbrain.com/careers resolves to Teads' careers page — Outbrain acquired Teads and rebranded, so it's the same employer's own careers site. It describes culture and links to \"See Jobs\" but lists no po",
+  "employer_named": "Teads",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "ai21 labs|https://www.ai21.com/careers/": {
+  "date": "2026-08-29",
+  "url": "https://www.ai21.com/careers/",
+  "name": "AI21 Labs",
+  "model": "opus",
+  "route": "plain-thin",
+  "chars": 0,
+  "text_chars": 0,
+  "verdict": "UNVERIFIABLE",
+  "why": "unreadable (0 visible chars via plain-thin)"
+ },
+ "at-bay|https://www.at-bay.com/careers/": {
+  "date": "2026-08-29",
+  "url": "https://www.at-bay.com/careers/",
+  "name": "At-Bay",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399978,
+  "text_chars": 4628,
+  "verdict": "ok",
+  "why": "At-Bay's own careers page (Tel Aviv office mentioned); links to positions but none listed.",
+  "employer_named": "At-Bay",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "mckinsey & company|https://karriere.mckinsey.de/karriere/search": {
+  "date": "2026-08-29",
+  "url": "https://karriere.mckinsey.de/karriere/search",
+  "name": "McKinsey & Company",
+  "model": "opus",
+  "route": "render",
+  "chars": 491270,
+  "text_chars": 3882,
+  "verdict": "UNVERIFIABLE",
+  "why": "the page is an error or a wall",
+  "employer_named": "McKinsey & Company",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "the page is an error or a wall",
+   "mechanical_said": true
+  }
+ },
+ "chorus|https://company.chorus.co.nz/careers": {
+  "date": "2026-08-29",
+  "url": "https://company.chorus.co.nz/careers",
+  "name": "Chorus",
+  "model": "opus",
+  "route": "render",
+  "chars": 54951,
+  "text_chars": 1481,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Chorus NZ",
+  "employer_named": "Chorus NZ",
+  "page_kind": "careers-landing",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Chorus NZ",
+   "mechanical_said": true
+  }
+ }
+}

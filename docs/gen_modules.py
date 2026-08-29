@@ -142,6 +142,7 @@ PIPELINE = {
  "companies": "**shared** - load companies.csv into row dicts",
  "identity_facts": "**shared** - DECLARED company identity: the one table of acquired-by tenants and brand/parent domains the gates consult before any string heuristic. To make an acquired company's board legitimate, add a row here",
  "company_identity": "**shared** - the identity PRIMITIVES (is_foreign, verdict, page_mentions_company, looks_like_a_job_listing_page); the gate that composes them is identity_gate",
+ "board_verify": "**the one standard** - is this URL THIS company own ISRAELI board? Written after three checks disagreed on live rows: 29 rows exist despite a NOT-THEIRS verdict in an earlier run of the same tool. RENDERS the page before reading it, asks the model four questions (own board / which employer / the ISRAELI entity / what KIND of page), and re-asks when the reading disagrees with the host-and-title evidence: two different answers means UNVERIFIABLE, never ok. A monitor address is fetched DAILY and listing_hunt fast path can activate it with no model in the loop, so a wrong one is a wrong ACTIVE row on a timer",
  "identity_gate": "**shared** - the one gate every registry writer consults before it writes api_url/active; page content is the discriminator, the tenant string is not",
  "notes": "**shared** - the companies.csv notes append-log. Never hand-roll a trim",
  "verdicts": "**shared** - the single source of truth for verdict tokens and re-check pools",
