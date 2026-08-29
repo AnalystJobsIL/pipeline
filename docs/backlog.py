@@ -80,7 +80,7 @@ CLOSED_MARK = re.compile(
 HALF_MARK = re.compile(r"\*\*(?:%s)(?:CLOSED|closed)" % _HALF, re.I)
 
 # A closure bullet in an archive section: `- **244 - CLOSED.** ...`, `- **11 / 101 - CLOSED.**`
-BULLET_CLOSES = re.compile(r"^- \*\*(\d+)(?:\s*/\s*(\d+))?\s*[—-]+\s*(?:CLOSED|closed|won't fix)", re.I)
+BULLET_CLOSES = re.compile(r"^- \*\*(\d+)(?:\s*/\s*(\d+))?\s*[\u2014-]*\s*(?:CLOSED|closed|won't fix)", re.I)   # the dash is OPTIONAL: `- **505 CLOSED.**` closed nothing
 
 
 class Item:
@@ -91,6 +91,18 @@ class Item:
         self.num, self.section, self.start = num, section, start
         self.lines, self.lane = [], "unassigned"
         self.closed = self.bullet_closed = self.half = False
+
+    @property
+    def unfenced(self):
+        """The body minus fenced blocks."""
+        out, fenced = [], False
+        for line in self.lines:
+            if line.lstrip().startswith(("```", "~~~")):
+                fenced = not fenced
+                continue
+            if not fenced:
+                out.append(line)
+        return "\n".join(out)
 
     @property
     def body(self):
@@ -149,7 +161,9 @@ def parse(text=None):
         if cur is not None:
             cur.lines.append(line)
     for it in items:
-        b = LANE_IN_BODY.search(it.body)
+        # A fenced example writing `lane: `infra`` assigned a real item, and a genuine
+        # example could silently re-home another lane's work.
+        b = LANE_IN_BODY.search(it.unfenced)
         h = LANE_IN_HEADING.search(it.section)
         known = lane_names()
         it.lane = "unassigned"
@@ -185,7 +199,7 @@ def parse(text=None):
         m = BULLET_CLOSES.match(line)
         if not m:
             continue
-        lane_h = bullet_lane(section)
+        lane_h = bullet_lanes(section)
         for g in m.groups()[:2]:
             if g:
                 bullets[int(g)].append((line, lane_h))
@@ -198,7 +212,11 @@ def parse(text=None):
             if explicit:
                 if explicit.group(1) == it.lane:
                     it.bullet_closed = True
-            elif claimants[it.num] == 1 or lane == it.lane:
+            # A bullet whose section names no lane closed NOBODY, so planting a decoy
+            # item under another lane turned the error off. Unresolvable falls back to
+            # the pre-change behaviour - flag every claimant - which over-reports rather
+            # than under-reports, and that is the right direction for this check.
+            elif claimants[it.num] == 1 or not lane or it.lane in lane:
                 it.bullet_closed = True
     return items
 
@@ -208,20 +226,20 @@ def lane_names():
     return set(re.findall(r"^\| \*\*`([a-z-]+)`\*\*", read(p), re.M)) if os.path.exists(p) else set()
 
 
-def bullet_lane(section):
-    """The lane a closure-bullet section speaks for, or None.
+def bullet_lanes(section):
+    """Every lane a closure-bullet section speaks for.
 
-    `LANE_IN_HEADING` wants "<name> lane" and every closures section is written
-    "`company-intel` closures, 2026-08-27", so the first version of this resolved None for
-    every bullet in the file and attributed nothing - a check that goes green by checking
-    nothing. Any backticked KNOWN lane in the heading counts; unknown words do not, so a
-    section about `scrape_rot.json` does not become a lane."""
+    It returned the FIRST backticked lane, so renaming a heading to "`docs` and
+    `registry` closures" turned the error off in two words. `LANE_IN_HEADING` wants
+    "<name> lane" and no closures heading has it, which is why this resolver exists at
+    all: the first version resolved nothing for every bullet in the file and went green
+    by checking nothing."""
     known = lane_names()
-    for tok in re.findall(r"`([a-z][a-z-]+)`", section or ""):
-        if tok in known:
-            return tok
+    out = [t for t in re.findall(r"`([a-z][a-z-]+)`", section or "") if t in known]
     m = LANE_IN_HEADING.search(section or "")
-    return m.group(1) if m and (not known or m.group(1) in known) else None
+    if m and (not known or m.group(1) in known) and m.group(1) not in out:
+        out.append(m.group(1))
+    return out
 
 
 
@@ -236,7 +254,9 @@ def render_index(items):
     open_items = [i for i in items if not i.closed]      # `half` counts as open
     col = collisions(items)
     used = {i.num for i in items}
-    gaps = sorted(set(range(1, max(used) + 1)) - used)
+    # `max()` of an empty sequence is a ValueError, and `check_backlog` wraps `parse()`
+    # in try/except but not `index_is_current()`, which calls this.
+    gaps = sorted(set(range(1, max(used) + 1)) - used) if used else []
     out = [
         "## Index — generated, do not hand-edit",
         "",
@@ -259,7 +279,7 @@ def render_index(items):
         "241 through 246 each name three items because three lanes filed within an hour on "
         "2026-08-26 and none of them knew. Numbers %s were never used; do not reuse them, "
         "because an old citation would then resolve to new text."
-        % (max(used) + 1, ", ".join(str(g) for g in gaps) or "(none)"),
+        % ((max(used) + 1 if used else 1), ", ".join(str(g) for g in gaps) or "(none)"),
         "",
     ]
     if col:
@@ -311,9 +331,18 @@ def index_is_current():
     text = read(LIVE)
     if BEGIN not in text or END not in text:
         return False, "docs/BACKLOG.md has no BACKLOG-INDEX block"
+    if text.index(END) < text.index(BEGIN):
+        # A conflict resolution that reorders the markers made `text[a:b]` empty and
+        # the split below raise IndexError.
+        return False, "docs/BACKLOG.md's index markers are out of order - run `python docs/backlog.py --write`"
     nl = "\r\n" if "\r\n" in text else "\n"
     cur = text[text.index(BEGIN):text.index(END) + len(END)]
-    inner = cur.split("-->" + nl, 1)[1].rsplit(nl + END, 1)[0]
+    parts = cur.split("-->" + nl, 1)
+    if len(parts) < 2:
+        # A BEGIN marker with no closing `-->` line: IndexError, from a file state a
+        # merge conflict produces.
+        return False, "docs/BACKLOG.md's index block is malformed - run `python docs/backlog.py --write`"
+    inner = parts[1].rsplit(nl + END, 1)[0]
     want = nl.join(render_index(parse(text)).rstrip("\n").split("\n"))
     return (inner.strip() == want.strip(),
             "docs/BACKLOG.md's index is stale — run `python docs/backlog.py --write`")

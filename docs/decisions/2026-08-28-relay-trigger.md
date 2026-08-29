@@ -69,7 +69,7 @@ month, and the thing that still delivers if the key is revoked or never installe
 **(d) Keep the cron and extend the local watchdog only.** *Rejected as the primary fix — it does
 not deliver either.* Taken anyway as the cheap second layer, because it is nearly free and it
 covers the case where the new path itself fails. (`digest_watchdog.py` **is** tracked in this
-repo, contrary to the session brief; the copy under `C:\Users\svald\AnalystJobsIL-watchdog\` is
+repo, contrary to the session brief; the copy under `C:\<home>\AnalystJobsIL-watchdog\` is
 an installed copy the operator re-deploys.)
 
 ## What `292@infra`(b) said, and why this is not that

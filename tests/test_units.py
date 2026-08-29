@@ -12513,9 +12513,12 @@ def test_a_re_date_must_carry_the_date_it_moves_to(tmp_path):
     # ...and a date that does not move forward is not a re-date
     errs, _ = _morning_at(tmp_path, row % "not yet due - until 2026-08-20: earlier", today)
     assert any("does not move the deadline" in e for e in errs), errs
-    # a row pushed a fortnight out is a row abandoned: a warning, not an error
-    errs, warns = _morning_at(tmp_path, row % "not yet due - until 2026-10-30: later", today)
-    assert errs == [] and any("abandoned" in w for w in warns), (errs, warns)
+    # a row pushed past the cap is a row abandoned. This was a WARNING until an
+    # adversarial pass showed a cell rewritten each morning resets any token count to 1
+    # for ever, so the cap that binds is total DISPLACEMENT and it is an error.
+    errs, warns = _morning_at(tmp_path / "e", row % "not yet due - until 2026-10-30: later",
+                              today)
+    assert any("abandoned" in e for e in errs), (errs, warns)
 
 
 def test_a_verdict_that_answers_with_an_adjective_is_refused(tmp_path):
@@ -12687,6 +12690,9 @@ def _stale_repo(tmp_path, second_file, second_body, hours_old=0):
     git("add", "-A")
     assert git("commit", "-q", "-m", "master moves on").returncode == 0
     git("update-ref", "refs/remotes/origin/master", "HEAD")
+    # the ERROR needs a FRESH fetch behind it: `behind` is measured against a LOCAL
+    # ref, so without one the staler the fetch the greener this check got.
+    open(os.path.join(str(tmp_path), ".git", "FETCH_HEAD"), "w").close()
     git("checkout", "-q", base)              # one behind, detached, like a lane's worktree
     cd = _cd()
     cd.ROOT = str(tmp_path)
@@ -12743,6 +12749,142 @@ def test_the_tree_check_is_silent_in_ci_and_never_fetches(tmp_path, monkeypatch)
 
 
 
+def test_no_morning_check_input_can_make_the_linter_crash(tmp_path):
+    """Four crashes, all from an adversarial pass on the day these checks shipped. A
+    traceback is not a red build - it is how a check gets deleted from the push contract."""
+    today = "2026-08-31"
+    # an `until` date that is not a date, and string-sorts AFTER the due column
+    errs, _ = _morning_at(
+        tmp_path / "a", "| 2026-08-25 | docs | x | \u2014 | not yet due - until 2026-13-45: why |\n",
+        today)
+    assert any("is not a date" in e for e in errs), errs
+    # a line that is exactly one pipe: no cells at all
+    errs, _ = _morning_at(tmp_path / "b", "|\n" + GOOD % ("2026-01-01", "2026-01-02"), today)
+    assert not any("cells" in e for e in errs), errs
+    # an escaped pipe is a CELL, not a column boundary - the `must be true` column is full
+    # of backticked shell and `\\|` is the only legal way to write one in GFM
+    errs, _ = _morning_at(
+        tmp_path / "c",
+        "| 2026-08-25 | docs | `wc \\| grep x` is 0 | 2026-08-26 | PASS - `wc` said 0 |\n", today)
+    assert errs == [], errs
+    # a second table under the same heading is not a wall of malformed rows
+    errs, _ = _morning_at(
+        tmp_path / "d", GOOD % ("2026-01-01", "2026-01-02") + "| a | b |\n| c | d |\n", today)
+    assert errs == [], errs
+
+
+def test_a_verdict_cannot_be_evidenced_by_the_date_it_was_written(tmp_path):
+    """`_HAS_EVIDENCE` accepted any digit, so `PASS - confirmed on 2026-08-30` passed while
+    saying nothing a reader can check."""
+    row = "| 2026-08-25 | docs | the thing | 2026-08-26 | %s |\n"
+    errs, _ = _morning_at(tmp_path / "a", row % "PASS - confirmed on 2026-08-30", "2026-08-31")
+    assert any("no evidence" in e or "adjective" in e for e in errs), errs
+    errs, _ = _morning_at(tmp_path / "b", row % "PASSED - the board carried 91 cards", "2026-08-31")
+    assert errs == [], errs        # `PASSED` was refused while `Pass` was accepted
+
+
+def test_a_re_date_cannot_be_renewed_for_ever_and_the_word_until_is_not_a_re_date(tmp_path):
+    """Two opposite failures in one cell. The cap counted the WORD `until`, so an honest
+    reason ("the drain does not run until 2026-09-01 and nothing can be read until then")
+    tripped it on the first use - while a session that overwrites the cell each morning reset
+    the count to 1 for ever and was silent on every day it was measured. Cap the DISPLACEMENT
+    from the original due date, which no rewrite can reset."""
+    errs, _ = _morning_at(
+        tmp_path / "a",
+        "| 2026-08-25 | docs | x | \u2014 | not yet due - until 2026-09-02: the drain does "
+        "not run until 2026-09-01 and nothing can be read until then |\n", "2026-08-26")
+    assert errs == [], errs
+    errs, _ = _morning_at(
+        tmp_path / "b",
+        "| 2026-08-25 | docs | x | \u2014 | not yet due - until 2026-11-30: still waiting |\n",
+        "2026-08-26")
+    assert any("abandoned" in e for e in errs), errs
+
+
+def test_a_duplicate_row_key_cannot_cover_for_a_deleted_one(tmp_path):
+    """`live` was a SET, so two rows sharing a key covered for each other - and the guard's
+    own docstring says three live rows already share a due date and a lane."""
+    row = "| 2026-08-29 | infra | the relay notified the inbox | \u2014 |  |\n"
+    answered = row.replace("\u2014 |  |", "2026-08-30 | PASS - `relay notified: 8d30167` |")
+    errs, _ = _morning_repo(tmp_path, row + answered, answered)
+    assert len(errs) == 1 and "is now in neither" in errs[0], errs
+
+
+def test_a_row_archived_with_a_fabricated_verdict_is_refused(tmp_path):
+    """With deletion an error, the remaining way to retire a prediction was to archive it
+    with a well-formed lie: `PASS - nothing to report here` passed every check. Judged only
+    for rows the branch ADDS - an archived row is history, and the row that first tripped
+    this rule when it was written age-blind was a legitimate one from 2026-08-26."""
+    row = "| 2026-08-29 | infra | the relay notified the inbox | \u2014 |  |\n"
+    keep = GOOD % ("2026-01-01", "2026-01-02")
+    bad = row.replace("\u2014 |  |", "2026-08-30 | PASS - nothing to report here |")
+    errs, _ = _morning_repo(tmp_path / "a", row + keep, keep,
+                            archive_after="# archive\n\n" + HDR + bad)
+    assert any("no evidence" in e for e in errs), errs
+    good = row.replace("\u2014 |  |", "2026-08-30 | PASS - `relay notified: 8d30167` |")
+    errs, _ = _morning_repo(tmp_path / "b", row + keep, keep,
+                            archive_after="# archive\n\n" + HDR + good)
+    assert errs == [], errs
+
+
+def test_the_backlog_tools_never_crash_on_a_conflicted_or_empty_index(tmp_path):
+    """`docs/BACKLOG.md` was `UU` in this very worktree the day these checks shipped, and the
+    index block's own header tells readers a merge conflict lands INSIDE it."""
+    import shutil
+    (tmp_path / "docs").mkdir(parents=True)
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    shutil.copy(os.path.join(root, "docs", "backlog.py"), str(tmp_path / "docs" / "backlog.py"))
+    (tmp_path / "docs" / "AGENT_BRIEF.md").write_text(
+        "| **`registry`** | 2 | rows | `companies.csv` |" + chr(10), encoding="utf-8")
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "bl_tmp", str(tmp_path / "docs" / "backlog.py"))
+    for body in ("<!-- BACKLOG-INDEX:BEGIN" + chr(10) + "<!-- BACKLOG-INDEX:END -->",
+                 "<!-- BACKLOG-INDEX:END -->" + chr(10) + "<!-- BACKLOG-INDEX:BEGIN -->",
+                 "<!-- BACKLOG-INDEX:BEGIN -->" + chr(10) + "x" + chr(10)
+                 + "<!-- BACKLOG-INDEX:END -->"):
+        (tmp_path / "docs" / "BACKLOG.md").write_text(body + chr(10), encoding="utf-8")
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        ok, why = m.index_is_current()          # must REPORT, never raise
+        assert ok is False and why
+
+
+def test_a_closure_bullet_cannot_be_switched_off_by_renaming_its_heading():
+    """Three ways the closure error was turned off, all measured: naming a second lane first
+    in the heading, planting a decoy claimant under another lane so no lane resolves, and
+    dropping the dash before CLOSED."""
+    bl = _bl()
+    item = ("500. **A registry thing** - lane: `registry`. Body." + chr(10) * 2)
+    decoy = ("500. **A jd-text thing** - lane: `jd-text`. Body." + chr(10) * 2)
+
+    def held(section, bullet, extra=""):
+        text = ("## From the `registry` lane, 2026-08-26" + chr(10) * 2 + item + extra
+                + "## " + section + chr(10) * 2 + bullet + chr(10))
+        return {i.key for i in bl.parse(text) if i.bullet_closed}
+
+    # two lanes in the heading: the second one still closes its own item
+    assert any("500@registry" == k for k in
+               held("`docs` and `registry` closures, 2026-08-30", "- **500 - CLOSED.** yes"))
+    # a heading naming no lane falls back to flagging every claimant, not none
+    assert held("Closures, 2026-08-30", "- **500 - CLOSED.** yes",
+                extra="## From the `jd-text` lane, 2026-08-26" + chr(10) * 2 + decoy)
+    # the dash is optional
+    assert held("`registry` closures, 2026-08-30", "- **500 CLOSED.** yes")
+
+
+def test_a_lane_named_inside_a_code_fence_does_not_own_the_item():
+    """`parse()` skipped fenced lines for ITEM detection and then searched them for the
+    owner, so a fenced example assigned a real item - and could re-home another lane's."""
+    bl = _bl()
+    fence = chr(96) * 3
+    text = ("## A section with no lane in its name" + chr(10) * 2
+            + "500. **A thing nobody owns** - body." + chr(10) * 2
+            + "    " + fence + chr(10) + "    lane: `infra`" + chr(10) + "    " + fence + chr(10))
+    assert [i.lane for i in bl.parse(text)] == ["unassigned"]
+
+
+
 def test_a_scheduled_workflow_change_must_name_the_morning_its_run_is_read(tmp_path):
     """"Verified by its output, not its exit code" never said WHOSE output, so a local run
     satisfied it: `enrich_scrape_jd.py` ran 3 seconds of a 30-minute budget and filled 0 on
@@ -12788,7 +12930,9 @@ def test_a_scheduled_workflow_change_must_name_the_morning_its_run_is_read(tmp_p
         return list(cd.ERRORS)
 
     # the workflow changes and nothing says when its run will be read
-    wf.write_text(wf.read_text(encoding="utf-8") + "# a change" + chr(10), encoding="utf-8")
+    # a SUBSTANTIVE change: a comment-only edit deliberately costs no prediction now
+    wf.write_text(wf.read_text(encoding="utf-8") + "    - cron: '30 5 * * *'"
+                  + chr(10), encoding="utf-8")
     git("add", "-A")
     git("commit", "-q", "-m", "touch the digest")
     errs = run()
@@ -12798,10 +12942,15 @@ def test_a_scheduled_workflow_change_must_name_the_morning_its_run_is_read(tmp_p
             + "| 2026-08-31 | infra | `matched_filled` is not 0 on the next scheduled digest "
               "| | not yet due |" + chr(10))
     assert run() == [], run()
-    # ...a row already PAST is not: it can never be answered by a run that has not happened
+    # ...a row already past is not, and neither is one due beyond the window in which
+    # its run will have happened: `| 2099-01-01 | ... |` satisfied "due >= today"
+    # and never even warned.
     handoff(GOOD % ("2026-01-01", "2026-01-02")
             + "| 2026-08-01 | infra | something that came and went | 2026-08-02 "
               "| PASS - `matched_filled=5` |" + chr(10))
+    assert len(run()) == 1, run()
+    handoff(GOOD % ("2026-01-01", "2026-01-02")
+            + "| 2099-01-01 | docs | nothing at all | |  |" + chr(10))
     assert len(run()) == 1, run()
     # a workflow with no `schedule:` trigger is not a scheduled step
     handoff(GOOD % ("2026-01-01", "2026-01-02"))

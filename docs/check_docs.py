@@ -1245,7 +1245,7 @@ def check_handoff() -> None:
 # own error message argues against - while rejecting `FAIL: the inbox issue was 07:10Z` and
 # `Pass - board 76 cards`. It also used to be satisfied by the hyphen inside an ISO date.
 _VERDICT_OK = re.compile(
-    r"^(?:PASS|FAIL|N/A|PARTIAL|INCONCLUSIVE|SKIPPED)\b[^:,\u2013\u2014-]*"
+    r"^(?:PASS(?:ED)?|FAIL(?:ED|S)?|N/A|PARTIAL|INCONCLUSIVE|SKIPPED)\b[^:,\u2013\u2014-]*"
     r"[:,\u2013\u2014-]\s*\S.{9,}$|^not yet due\b.*$", re.I)
 _LOOSE_CHECK = re.compile(r"morning check\s+\d{4}-\d\d-\d\d", re.I)
 
@@ -1257,6 +1257,9 @@ _REDATE = re.compile(r"^not yet due\b[^|]*?\buntil\s+(\d{4}-\d\d-\d\d)\b", re.I)
 _REDATE_WORDS = re.compile(r"re-?dated?|postpon|deferr|push(?:ed)?\s+(?:to|out)", re.I)
 # Evidence, not an adjective: a verdict names a number or a grep-able string. Every live
 # verdict already does; `INCONCLUSIVE - could not determine` is the shape this refuses.
+# A DATE is not evidence: `PASS - confirmed on 2026-08-30` names the day it was written
+# and nothing else. A digit outside an ISO date, or a grep-able string, is.
+_ISO = re.compile(r"\d{4}-\d\d-\d\d")
 _HAS_EVIDENCE = re.compile(r"\d|`")
 # How long a row may stay unanswered past its date before it stops being a warning. One day
 # is the first morning anyone can read the mail it predicts; two means a second session
@@ -1264,6 +1267,7 @@ _HAS_EVIDENCE = re.compile(r"\d|`")
 MORNING_GRACE_DAYS = 2
 MORNING_REDATE_MAX_DAYS = 14
 MORNING_REDATE_MAX = 2
+UNATTENDED_MAX_DAYS = 14
 
 NL_SAFE = "\n"
 
@@ -1318,16 +1322,30 @@ def check_morning_checks() -> None:
         if lanes and lane not in lanes:
             err("morning-checks", "morning check %s names lane `%s`, which is not in "
                                   "docs/AGENT_BRIEF.md's table" % (due, lane))
-        eff, redates = due, verdict.lower().count("until ")
+        # Count re-DATES, not the word: an honest reason ("the drain does not run
+        # until 2026-09-01 and nothing can be read until then") tripped the cap on
+        # its FIRST use. And the cap that matters is total DISPLACEMENT, because a
+        # session that overwrites the cell each morning resets any token count to 1
+        # for ever - measured: such a row is silent on every day, permanently.
+        eff, redates = due, len(re.findall(r"\buntil\s+\d{4}-\d\d-\d\d", verdict, re.I))
         m = _REDATE.match(verdict)
         if m:
             eff = m.group(1)
+            if not _is_a_real_date(eff):
+                # `due` is fullmatch-validated; `until` was not, so `2026-13-45` -
+                # which string-sorts AFTER a real due date - reached strptime and
+                # brought the whole linter down with a ValueError.
+                err("morning-checks", "morning check %s (`%s`) re-dates itself to %r, which is not a date." % (due, lane, eff))
+                eff = due
             if eff <= due:
                 err("morning-checks", "morning check %s (`%s`) re-dates itself to %s, which "
                                       "does not move the deadline: `until` must be LATER "
                                       "than the due column." % (due, lane, eff))
                 eff = due
             elif _days_between(due, eff) > MORNING_REDATE_MAX_DAYS:
+                err("morning-checks", "morning check %s (`%s`) is pushed %d days out, to %s. Past %d days a check is not re-dated, it is abandoned: answer it, or drop the row and say why in the session record."
+                    % (due, lane, _days_between(due, eff), eff, MORNING_REDATE_MAX_DAYS))
+            elif False:
                 warn("morning-checks", "morning check %s (`%s`) is pushed %d days out, to "
                                        "%s. A check moved more than %d days is a check "
                                        "abandoned - answer it, or drop it and say why."
@@ -1366,7 +1384,7 @@ def check_morning_checks() -> None:
                                       "cannot check: %r. Use PASS / FAIL - <what happened> "
                                       "/ N/A - <why>, and quote a grep-able string, not an "
                                       "adjective." % (due, lane, verdict[:60]))
-            elif not _HAS_EVIDENCE.search(verdict):
+            elif not _HAS_EVIDENCE.search(_ISO.sub("", verdict)):
                 err("morning-checks", "morning check %s (`%s`) answers with an adjective "
                                       "and no evidence: %r. A verdict names a number or a "
                                       "grep-able string - `INCONCLUSIVE - could not "
@@ -1422,7 +1440,18 @@ def _morning_rows(doc_rel: str, text: str = None, quiet: bool = False):
         # split on the pipes, never strip them: an EMPTY last cell - which is exactly what
         # an unanswered check looks like - is swallowed by strip("|") and the row then
         # fails the len() test and is silently dropped. Found by break-test.
-        cells = [c.strip() for c in line.strip().split("|")[1:-1]]
+        # `\\|` is the ONLY legal way to write a pipe inside a GFM cell, and the
+        # `must be true` column is full of backticked shell - a naive split read
+        # `wc \\| grep` as a column boundary and reported a 6-cell row.
+        cells = [c.replace("\\|", "|").strip()
+                 for c in re.split(r"(?<!\\)\|", line.strip())[1:-1]]
+        if not cells:
+            continue          # a line that is exactly `|`: no cells, not a bad row
+        if not re.match(r"\d{4}-\d\d-\d\d$", cells[0]) and len(cells) != 5:
+            # a second table or a sub-heading under `## Morning checks` is not a
+            # malformed morning check. HANDOFF.md is the file every lane appends to,
+            # and one unrelated two-column table produced an error PER ROW.
+            continue
         if set(cells[0]) <= set("-: "):
             want_rule = False
             continue
@@ -1475,7 +1504,12 @@ def check_morning_rows_survive() -> None:
     The baseline is `origin/master` when that ref exists and differs from HEAD - the tree a
     lane is actually pushing onto - and `HEAD~1` otherwise, which is what a CI push build
     can see. Neither available means there is nothing to compare against, and this returns
-    silently rather than inventing a verdict."""
+    silently rather than inventing a verdict.
+
+    FOR A READER OF A GREEN CI RUN: this check, `check_tree_is_current` and
+    `check_unattended_proof` are LOCAL, pre-push guards. `actions/checkout@v5` clones one
+    commit deep and this repo pushes straight to master, so on CI the merge-base IS HEAD
+    and all three return silently. A green CI run is not proof that a row survived."""
     # The MERGE-BASE, never origin/master's tip. A row another lane ADDED after this branch
     # was cut has never existed here and cannot have been deleted here - the guard reported
     # exactly that on its first run, against a row `jd-text` pushed the same morning.
@@ -1501,14 +1535,31 @@ def check_morning_rows_survive() -> None:
                                       "this repo's record of how often its own predictions "
                                       "came true - answer the row, then archive it."
                     % (cells[0], cells[1]))
+            elif not _HAS_EVIDENCE.search(_ISO.sub("", cells[4])):
+                # `PASS - nothing to report here` retired a prediction outright: the
+                # archive checked the verb and the date and never the evidence. Judged
+                # only for rows this branch ADDS - the same reason the rule above is.
+                err("morning-checks", "morning check %s (`%s`) was archived with no "
+                                      "evidence: %r. A verdict names a number or a "
+                                      "grep-able string; a date is not evidence."
+                    % (cells[0], cells[1], cells[4][:60]))
+            elif not cells[3]:
+                err("morning-checks", "morning check %s (`%s`) was archived with a "
+                                      "verdict and no `answered` date."
+                    % (cells[0], cells[1]))
 
     was = _rows_at(base, "HANDOFF.md")
     if not was:
         return
-    live = {_row_key(c) for c in (_morning_rows("HANDOFF.md") or [])}
-    live |= {_row_key(c) for c in (_morning_rows("docs/morning-checks.md") or [])}
-    for cells in was:
-        if _row_key(cells) not in live:
+    # A SET let two rows sharing a key cover for each other, and the docstring above
+    # says three live rows already share a due date and a lane - a 40-character prefix
+    # collision is ordinary here, not exotic. Count them.
+    import collections as _c
+    live = _c.Counter(_row_key(c) for c in (_morning_rows("HANDOFF.md") or []))
+    live += _c.Counter(_row_key(c) for c in (_morning_rows("docs/morning-checks.md") or []))
+    for kk, n in _c.Counter(_row_key(c) for c in was).items():
+        if live[kk] < n:
+            cells = next(c for c in was if _row_key(c) == kk)
             err("morning-checks", "morning check %s (`%s`) was in HANDOFF.md at %s and is "
                                   "now in neither HANDOFF.md nor docs/morning-checks.md. "
                                   "Answer it, or move it VERBATIM to the archive: a "
@@ -1522,6 +1573,18 @@ def _lane_names() -> set:
     if not os.path.exists(path):
         return set()
     return set(re.findall(r"^\| \*\*`([a-z-]+)`\*\*", read(path), re.M))
+
+
+def _is_a_real_date(s: str) -> bool:
+    """`2026-13-45` passes a `\\d{4}-\\d\\d-\\d\\d` shape check and sorts after a real
+    date. Only the calendar knows."""
+    import datetime
+    try:
+        datetime.datetime.strptime(s, "%Y-%m-%d")
+        return True
+    except (ValueError, TypeError):
+        return False
+
 
 
 def _days_between(a: str, b: str) -> int:
@@ -1686,7 +1749,11 @@ def check_tree_is_current() -> None:
     if state is None:
         return
     behind, differ, base_age, fetch_age = state
-    if behind and differ and base_age is not None and base_age > TREE_STALE_HOURS:
+    # The ERROR needs a FRESH fetch behind it: `behind` is measured against a LOCAL ref,
+    # so the staler the fetch the greener this got - the exact shape of the failure it
+    # was written for.
+    fresh = fetch_age is not None and fetch_age <= TREE_STALE_HOURS
+    if behind and differ and fresh and base_age is not None and base_age > TREE_STALE_HOURS:
         err("tree", "this checkout is %d commit(s) behind origin/master, its merge-base is "
                     "%.0f hours old, and the docs this check certifies differ from master's "
                     "(%s). A green docs check on a stale tree certifies the stale tree: the "
@@ -1700,9 +1767,10 @@ def check_tree_is_current() -> None:
     elif behind:
         warn("tree", "this checkout is %d commit(s) behind origin/master (code and state "
                      "only; the certified docs are master's)." % behind)
-    if not behind and fetch_age is not None and fetch_age > TREE_STALE_HOURS:
-        warn("tree", "origin/master was last fetched %.0f hours ago, so `0 behind` is only "
-                     "as good as that fetch. `git fetch origin master`." % fetch_age)
+    if not behind and (fetch_age is None or fetch_age > TREE_STALE_HOURS):
+        warn("tree", "origin/master was last fetched %s, so `0 behind` is only as good "
+                     "as that fetch. `git fetch origin master`."
+             % ("%.0f hours ago" % fetch_age if fetch_age is not None else "never, here"))
 
 
 
@@ -1736,20 +1804,39 @@ def check_unattended_proof() -> None:
     changed = _git("diff", "--name-only", "%s...HEAD" % base)
     if changed is None:
         return
+
+    def _substantive(name):
+        """True when the branch changed something other than comments and blank lines.
+
+        Fixing a typo in a comment should not cost a prediction, and a check that
+        charges for one is a check the owning lane routes around."""
+        d = _git("diff", "-U0", "%s...HEAD" % base, "--", name) or ""
+        for ln in d.splitlines():
+            if ln[:1] in "+-" and not ln.startswith(("+++", "---")):
+                body = ln[1:].strip()
+                if body and not body.startswith("#"):
+                    return True
+        return False
     touched = []
     for name in changed.splitlines():
         name = name.strip().replace("\\", "/")
         if not WORKFLOW_FILE.match(name):
             continue
         path = os.path.join(ROOT, name)
-        if os.path.exists(path) and re.search(r"^\s*schedule:", read(path), re.M):
+        # A DELETED scheduled workflow needs its proof too, and has no working copy
+        # left to read - take the blob from the baseline.
+        text = read(path) if os.path.exists(path) else (_git("show", "%s:%s" % (base, name)) or "")
+        if re.search(r"^\s*schedule:", text, re.M) and _substantive(name):
             touched.append(name)
     if not touched:
         return
     today = _today()
     was = {_row_key(c) for c in (_rows_at(base, "HANDOFF.md") or [])}
     for cells in (_morning_rows("HANDOFF.md") or []):
-        if _row_key(cells) not in was and cells[0] >= today:
+        # A row due 2099 satisfied "due >= today" and never even warned. Bound it to the
+        # window in which its run will actually have happened.
+        if (_row_key(cells) not in was and cells[0] >= today
+                and _days_between(today, cells[0]) <= UNATTENDED_MAX_DAYS):
             return
     err("unattended", "%s changed on this branch and HANDOFF.md gained no new "
                       "morning-check row due on or after %s. A change to a scheduled step "
@@ -1758,6 +1845,28 @@ def check_unattended_proof() -> None:
                       "already produced its number is still a row: due today, answered "
                       "today, the id in the verdict (docs/AGENT_BRIEF.md, Definition of "
                       "done)." % (", ".join(touched), today))
+
+
+
+# ---------------------------------------------------------------- 6e. no home directories
+# The public repo's anonymity rests entirely on the owner's account never being linkable to
+# it, and four tracked docs spelled the operator's home directory - one of them beside the
+# org's own name. Archives are otherwise never edited; a privacy fix is the exception.
+HOME_PATH = re.compile(r"(?:[A-Za-z]:\\Users\\|/Users/|/home/|C--Users-)(?!<home>)[A-Za-z0-9._-]+")
+
+
+def check_no_home_paths() -> None:
+    """A tracked document may not name a real person's home directory.
+
+    Deliberately an ERROR and deliberately over ARCHIVES too - unlike every other archive
+    rule, because the cost is not staleness. `<home>` is the placeholder the four redacted
+    docs use, and the pattern lets it through."""
+    for doc in docs():
+        for m in HOME_PATH.finditer(read(doc)):
+            err("privacy", "%s names a home directory (%r). The public repo must not be "
+                           "linkable to the owner's account (CLAUDE.local.md) - write "
+                           "`C:\\<home>\\...` or `~/...` instead."
+                % (rel(doc), m.group(0)[:40]))
 
 
 
