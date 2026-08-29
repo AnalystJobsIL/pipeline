@@ -143,9 +143,9 @@ closure convention in the header.
 - **232** `232@registry` **Five duplicate rows of `Amazon` and `Microsoft` are active scrape rows on ATS hosts** —
 - **234** `234@registry` **`apply_resolved.py` stamps `self-heal <date>` on a batch no self-heal produced, and a
 - **239** `239@registry` **Workiz's scrape row may be an embedded Comeet board**
-- **242** `242@registry` **`successfactors` and `jobvite` are fetchable but undiscoverable *(closed by a later bullet, original never edited)*
-- **242** `242@registry` **`SCRAPE_ASSUME_IL` is set process-wide at import by two root modules, so the whole test *(closed by a later bullet, original never edited)*
-- **246** `246@registry` **Four Eightfold/Phenom scrape rows are genuinely empty, not broken *(closed by a later bullet, original never edited)*
+- **242** `242@registry` **`successfactors` and `jobvite` are fetchable but undiscoverable
+- **242** `242@registry` **`SCRAPE_ASSUME_IL` is set process-wide at import by two root modules, so the whole test
+- **246** `246@registry` **Four Eightfold/Phenom scrape rows are genuinely empty, not broken
 - **266** `266@registry` **The Meta registry row's `api_url` IS a search page, so no Meta role can ever have a job
 - **275** `275@registry` **The `Registry:` mail line is an alarm channel with no production line behind it** —
 - **276** `276@registry` **The intake queue's `ats` and `slug` fields are stale and convert nothing**
@@ -231,7 +231,7 @@ closure convention in the header.
 - **8** `8@infra` **One backoff/retry store.** The same gating machinery now exists twice
 - **10** `10@infra` **`discovered_cache.json` and `research_companies.json` are restored wholesale on the
 - **10** `10@infra` **`audit-coverage.yml` runs the new search ladder with 1 of its 3 rungs**
-- **11** `11@infra` **`listing-hunt.yml`'s budgets sum to 325 of its 330-minute timeout** *(closed by a later bullet, original never edited)*
+- **11** `11@infra` **`listing-hunt.yml`'s budgets sum to 325 of its 330-minute timeout**
 - **12** `12@infra` **`pipeline/run.py` has no `sys.stdout.reconfigure`** while 23 other root scripts do
 - **12** `12@infra` **Nothing runs `registry_health.py`**
 - **15** `15@infra` **The conflict-recovery merge silently defeats 47 of 153 probe wakes**
@@ -321,8 +321,8 @@ closure convention in the header.
 - **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
 - **235** `235@scraper` **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
 - **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
-- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence** *(closed by a later bullet, original never edited)*
-- **245** `245@scraper` **The synthetic worker dicts do not carry the fields the real one does** *(closed by a later bullet, original never edited)*
+- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
+- **245** `245@scraper` **The synthetic worker dicts do not carry the fields the real one does**
 - **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
 - **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
 - **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
@@ -395,8 +395,8 @@ closure convention in the header.
 - **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
 - **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
 - **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
-- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded** *(closed by a later bullet, original never edited)*
-- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** — *(closed by a later bullet, original never edited)*
+- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded**
+- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** —
 - **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
 - **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
 - **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
