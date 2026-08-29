@@ -1863,3 +1863,177 @@ Lido As,scrape,,https://www.lido.app/careers,false,queue-hunt 2026-08-29: career
 Keystoneco,scrape,,https://www.keystonecoop.com/careers/current-openings,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Kinderzentrum Wei Er Stein Marburg Wehrda Ev,scrape,,https://www.kize-weisser-stein.de/jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Kone,scrape,,https://kone.wd3.myworkdayjobs.com/en-US/Careers?locationCountry=abd8f8d144e64ad692fdcbdbb5535c93_Israel,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+אסם,scrape,,https://www.facebook.com/osem.nestle.career/?locale\u003dhe_IL,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+Advice Electronics,scrape,,https://advice.co.il/en/blogs/careers,true,queue-drain 2026-08-29 search-llm; 5/5 IL
+Aijobs AI,scrape,,https://www.aijobs.com/jobs,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+Jafi,scrape,,https://www.comeet.com/jobs/jafi/C8.008,true,queue-drain 2026-08-29 search-llm; 3/3 IL
+Bio Technology General,scrape,,https://www.btgil.com/vacancies/,true,queue-drain 2026-08-29 search-llm; 4/4 IL
+Bitsight,scrape,,https://bitsight.wd1.myworkdayjobs.com/Bitsight,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+Blackcube1,scrape,,https://www.blackcube.com/careers,true,queue-drain 2026-08-29 search-llm; 3/3 IL
+Canopy Care,scrape,,https://canopycare.us/careers,true,queue-drain 2026-08-29 search-llm; 3/3 IL
+Centrical,scrape,,https://centrical.com/company/careers/,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+Xcurrent Energy Solutions,scrape,,https://www.xcurrent.tech/careers,true,queue-drain 2026-08-29 search-llm; 4/4 IL
+Malam,scrape,,https://malam-academy.co.il/vacancies/,true,queue-drain 2026-08-29 search-llm; 4/4 IL
+Linearb,scrape,,https://linearb.applytojob.com/apply,true,queue-drain 2026-08-29 search-llm; 2/2 IL
+Beamup,scrape,,http://job-boards.greenhouse.io/beamup,true,queue-drain 2026-08-29 search-llm; 4/4 IL
+Bilton,scrape,,https://careers.bilton.tech/jobs,true,queue-drain 2026-08-29 search-llm; 3/3 IL
+Brandshield,scrape,,https://www.comeet.com/jobs/brandshield/13.002,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+Citadel Consulting,scrape,,https://www.citadel.co.il/join-us/,true,queue-drain 2026-08-29 search-llm; 3/3 IL
+Clear Gate,scrape,,https://www.clear-gate.com/careers/,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+Meteorops,scrape,,https://meteorops.com/careers,true,queue-drain 2026-08-29 search-llm; 2/2 IL
+Hackerseye,scrape,,https://hackerseye.com/careers/,true,queue-drain 2026-08-29 search-llm; 4/4 IL
+Henkel,scrape,,https://www.henkel.com/careers,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+Replai,scrape,,https://www.replaitech.ai/careers,true,queue-drain 2026-08-29 search-llm; 5/5 IL
+Kidum Rehab Projects,scrape,,https://kidum.com/career/,true,queue-drain 2026-08-29 search-llm; 6/6 IL
+Boa Ideas,scrape,,https://www.comeet.com/jobs/boaideas/EA.009,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+City Hive,scrape,,https://www.cityhive.net/careers,true,queue-drain 2026-08-29 search-llm; 2/2 IL
+Air Ev,scrape,,https://www.airev.aero/careers,true,queue-drain 2026-08-29 search-llm; 6/6 IL
+Make Gems,scrape,,https://www.makegems.com/careers,true,queue-drain 2026-08-29 search-llm; 4/4 IL
+Maverick Medical AI,scrape,,https://ai-maverick.com/careers,true,queue-drain 2026-08-29 search-llm; 4/4 IL
+Greylock Partners,scrape,,https://greylock.com/jobs/portfolio-jobs/,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+Bulls Media,scrape,,https://bulls-media.com/career/positions/,true,queue-drain 2026-08-29 search-llm; 3/3 IL
+Bylith,scrape,,https://www.bylith.com/careers,true,queue-drain 2026-08-29 search-llm; 9/9 IL
+City Of David,scrape,,http://www.cityofdavid.org.il/Jobs,true,queue-drain 2026-08-29 search-llm; 9/9 IL
+Clarivate,scrape,,https://clarivate.wd3.myworkdayjobs.com/Clarivate_Careers,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+McKinsey & Company,scrape,,https://karriere.mckinsey.de/karriere/search-jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+YouCC Technologies Ltd.,scrape,,https://youcc.co.il/careers/38,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Exyte,scrape,,https://careers.exyte.net/global/en/c/engineering-jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Shopix,scrape,,https://www.shopix.no/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+TECEZE,scrape,,https://teceze.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+rating,scrape,,https://www.fitchratings.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Drive Group,scrape,,https://drivegroupaus.com.au/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+OpticSolution,scrape,,https://jobs.workable.com/company/7rJTm3wyjmK79HZdNFCPfo/jobs-at-opticsolution,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Lyra Health,scrape,,https://jobs.lever.co/lyrahealth,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Mesh Cybersecurity,scrape,,https://www.meshsecurity.io/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Minet Technologies,scrape,,https://jobs.elevolt.co.ke/careers/minet,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Forvision,scrape,,https://www.placementindia.com/job-recruiters/forvision-handewadi-pune-1294168-ffid/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Gamma Gruppe,scrape,,https://gammagruppe.ch/jobs/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Get Gain,scrape,,https://www.thisisgain.com/post/gain-careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Girlygeekdom,scrape,,https://girlygeekdom.com/tag/career/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Go Apprentice,scrape,,https://www.goapprentice.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Herbalife,scrape,,https://careers-herbalife.icims.com/jobs/intro,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Ituran,scrape,,https://ituran-career.talent-soft.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Kai Capital,scrape,,https://kaicapital.co.il/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Kfar Tikva,scrape,,https://kfar-tikva.org.il/jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Kuehn Gmbh,scrape,,https://kuhn-gmbh.de/en/about-us/career/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Lacuna Ads,scrape,,https://lacunaautism.com/current-opportunities/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Fionics,scrape,,https://recruiterflow.com/fionics/jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Beacon Sec,scrape,,https://beacon.security/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Beit Issie Shapiro,scrape,,https://beitissie.org.il/en/job/digital-content-social-media-specialist/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Betway Africa,scrape,,https://myhcm.wd3.myworkdayjobs.com/Betway_Africa,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bigbrothers,scrape,,https://www.bigbrothersvancouver.com/about-us/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bruker Jv Israel,scrape,,https://www.bruker.com/en/careers.html,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Castro Hoodies Group,scrape,,https://castrohoodies.com/category/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Cellcom,scrape,,https://cellcom.co.il/jobs/Careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Cenevo,scrape,,https://www.cenevo.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+City Of Knoxville Iowa,scrape,,https://www.knoxvilleia.gov/jobs.aspx,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Clayton Homes,scrape,,https://claytonhomes.wd1.myworkdayjobs.com/ClaytonCareers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+UWORK,scrape,,https://uworkapp.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+AE Capital,scrape,,https://www.aecapital.com.au/careers.html,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+A.P. Moller - Maersk,scrape,,https://www.maersk.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Ethos,scrape,,https://www.ethos.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Ycon,scrape,,https://ycon.store/jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Youappi,scrape,,https://job-boards.greenhouse.io/youappi,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Aerohandling,scrape,,https://www.aerohandling.com/CAREERS/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Aikido Security,scrape,,https://www.aikido.dev/company/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Aktglobal,scrape,,https://careers.aktglobal.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Meitav Investment House,scrape,,https://www.meitav.co.il/jobs/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Meuhedet,scrape,,https://www.meuhedet.co.il/jobs/7280,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Flo Live,scrape,,https://careers.greenfield-growth.com/companies/flolive/jobs/65684485-mobile-core-network-engineer,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Gilaproject,scrape,,https://www.gilaproject.org/jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Globus Worldwide Logistics,scrape,,https://www.globus-logistics.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Israel Shipyards,scrape,,https://www.israel-shipyards.com/he/jobsuc.asp,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Ivory,scrape,,https://www.ivory.co.il/jobs.html?srsltid\u003dAfmBOoomgFX8xfaFkSJiaeyO9FWPDu8jbliMi20d84UdX0Ium-ZeM8p-,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Jerusalem Biblical Zoo,scrape,,https://www.jerusalemzoo.org.il/eng/were-hiring,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Katayama,scrape,,https://talents.vaia.com/companies/katayama-american-company-llc/production-associate-31353794/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Kibbutz Contemporary Dance Company,scrape,,https://kcdc.co.il/join-us,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+mylo AI,scrape,,https://www.mylo.dating/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Benda Magnetic,scrape,,https://www.benda.co.il/jobs/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bexhub,scrape,,https://www.bexhub.io/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Blackrock,scrape,,https://blackrock.wd1.myworkdayjobs.com/BlackRock_Professional,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bloor Homes,scrape,,https://careers.bloorhomes.com/job-search/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bottomline Payments,scrape,,https://www.bottomline.com/about/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bsre,scrape,,https://www.bsre.co.il/en/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Cameri Theatre,scrape,,https://www.cameri.co.il/company/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Capow Tech,scrape,,https://capow.energy/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+City Of Sunbury Ohio,scrape,,https://sunburyohio.org/Jobs.aspx,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Clal Insurance And Finance,scrape,,https://www.clalbit.co.il/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Vacatures.sr | SurinameJobs.com,scrape,,https://www.surinamejobs.com/jobs/new,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Chorus,scrape,,https://company.chorus.co.nz/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Anyon Systems Inc.,scrape,,https://anyonsys.com/en/careers/jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Koladin,scrape,,https://koladin.ai/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+City and more,scrape,,https://jobs.cityhome.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+King Solomon School,scrape,,https://kingsolomonacademy.org/jobs/vacancies,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Auth21,scrape,,https://diversityemployment.com/company/auth21/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+DT,scrape,,https://www.dt.com/about-us/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+"The Ritz-Carlton Hotel Company, L.L.C.",scrape,,https://careers.ritzcarltonyachtcollection.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Worthy Com,scrape,,https://www.worthy.com/about/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Unipharm Career,scrape,,https://www.unipharm.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Aerospike,scrape,,https://aerospike.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Wipro Limited,scrape,,https://careers.wipro.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Integra LifeSciences,scrape,,https://www.integralife.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Maxlinear,scrape,,https://www.maxlinear.com/company/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Mclfinance,scrape,,https://www.mclfinance.ae/apply,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Megapharm,scrape,,https://megapharm.al/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Minimed Diabetes,scrape,,https://www.minimed.com/en-us/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Gotion High Tech Indonesia Factory,scrape,,https://gotion.asia/career/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Hadia,scrape,,https://hadiainstitute.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Jones1,scrape,,https://jones1910.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Kanat Insurance,scrape,,https://www.kanat.co.il/jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Kennedys,scrape,,https://www.lawcareers.net/Solicitors/Kennedys,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Krembo Wings,scrape,,https://www.krembo.org.il/en/jobs/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+La Casa Norte,scrape,,https://www.lacasanorte.org/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+HIAS,scrape,,https://hias.org/who/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Batm,scrape,,https://www.telco.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bdo International,scrape,,https://www.bdo.in/en-gb/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Beckman Coulter,scrape,,https://www.beckmancoulter.com/about-beckman-coulter/careers-at-beckman-coulter-diagnostics,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Beonemedicines,scrape,,https://beonemedicines.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bk Management Consulting,scrape,,https://www.bk-management.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Blossom Kc,scrape,,https://www.blossom-kc.com/company/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bluethrone,scrape,,https://careers.bluethrone.io/jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bringits,scrape,,https://bringits.com/company/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Browsi,scrape,,https://browsi.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Calanit,scrape,,https://calanit.co.il/job-cv-submit/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Capsloc,scrape,,https://capslock.global/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Celcomdigi,scrape,,https://celcomdigi.jobs.hr.cloud.sap,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Cellxpert,scrape,,https://www.cellxpert.com/career/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Chimes Israel,scrape,,https://chimes.org/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Melisron,scrape,,https://avivmelisron.co.il/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Alstom,scrape,,https://jobsearch.alstom.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Yes TV,scrape,,https://yestv.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+200apps,scrape,,https://www.200apps.com/career,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Acca Careers,scrape,,https://jobs.accaglobal.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Allspring,scrape,,https://www.allspringglobal.com/corporate/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Mfpm,scrape,,https://www.fpm.org.uk/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Millennium Partners,scrape,,https://www.millenniumpartners.org/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Gesher Nehasim,scrape,,https://www.geshermi.org/jobs/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Giraffe Ems,scrape,,https://www.giraffe.co.il/jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Glasbewassing Nederland,scrape,,https://zeelenglasbewassing.nl/career,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+H Sol,scrape,,https://sol.lt/en/for-jobseekers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Hadassah,scrape,,https://www.hadassah.org/page/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Pendo.io,scrape,,https://www.pendo.io/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Iss International,scrape,,https://jobs.issworld.com/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Lawmatch,scrape,,https://www.lawmatch.co.il/jobs-lawmatch,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Levi Strauss Israel,scrape,,https://www.levistrauss.com/work-with-us/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Lighting Warehouses,scrape,,https://thelightingwarehouse.com/we-are-hiring/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+mPrest Systems,scrape,,https://mprest.com/mprest_careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Batsheva Dance Company,scrape,,https://batsheva.co.il/en/job-offers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Beit Gabriel Ors,scrape,,https://www.betgabriel.co.il/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Bimrock AI,scrape,,https://bimrock.ai/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Biscience,scrape,,https://biscience.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Cactus Communications,scrape,,https://careers.smartrecruiters.com/CactusCommunications,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Candivore,scrape,,https://www.candivore.io/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Cemex,scrape,,https://jobs.cemex.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Cheftek,scrape,,https://www.cheftek.net/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Flexfactor,scrape,,https://revpath.dealhub.io/companies/flexfactor-7918878,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+UNOPS,scrape,,https://unjobs.org/organizations/unops,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Computer Guard Technologies LTD,scrape,,https://cguard.co.il/en/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Access Israel,scrape,,https://aisrael.org/open-position-at-access-israel/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+JakoAI,scrape,,https://www.telos-global.com/israel,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+ODTRAFFIC LTD.,scrape,,https://www.odtraffic.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Dataflow Security,scrape,,https://dfsec.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Marketily,scrape,,https://www.janglo.net/item/TnE4nwF0mcX,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Growdirector,scrape,,https://www.terra.do/climate-jobs/job-board/CEA-greenhouse-head-operator-GrowDirector-8292374/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+ReasonLabs,scrape,,https://careers.viola-group.com/companies/reasonlabs/jobs/49066864-backend-team-leader,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Jcfamilies,scrape,,https://islandjobhunt.com/companies/jcfamilies-7956493,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Celeno,scrape,,https://www.dialog.co.il/new-world/work-search/tools/hitech-companies/companies-list/celeno,false,queue-hunt 2026-08-29: careers page documented; monitored candidate

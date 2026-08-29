@@ -3178,18 +3178,14 @@
  },
  "UWORK": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (upwork.com/careers) was refused by the identity check as belonging to a different company (Upwork, not UWORK), so it provides no evidence about UWORK's own careers page. Since all candidates were refused, we cannot conclude either has-board or no-board.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.upwork.com/careers/jobs/explore",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Aristocrat": {
@@ -3227,18 +3223,14 @@
  },
  "McKinsey & Company": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "Only one candidate URL was tried and it returned \"nolisting\" (no readable listings found), not a refusal indicating a different company, but the search was very limited (only 1 candidate checked, regional /il/careers page). This is too thin an evidence base to conclude the company has no readable job board at all, especially given McKinsey is a large global firm likely to have a broader global car",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://www.mckinsey.com/il/careers",
-    "why": "no-listing"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "University of Haifa": {
@@ -3260,18 +3252,14 @@
  },
  "Adcore (TSX: ADCO)": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate URL found was refused by the identity check as not a listings page, so it provides no evidence about whether Adcore has a careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "found",
-    "detail": "",
-    "url": "https://www.adcore.com/blog/chatgpt-search-engine-optimization/https://www.adcore.com/blog/chatgpt-search-engine-optimization/",
-    "why": "not a listings page"
-   }
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
   }
  },
  "Alpa Cosmetics Group": {
@@ -3292,20 +3280,15 @@
  },
  "Vacatures.sr | SurinameJobs.com": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers-page hunt directly checked SurinameJobs.com/jobs and returned a \"nolisting\" verdict, meaning the site was reachable and confirmed as belonging to this company but did not present a readable job listings page. This is direct evidence about the company's own site, not a refused/mismatched candidate, so it supports no-board rather than cannot-tell.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.surinamejobs.com/jobs",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.surinamejobs.com/jobs",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "ISRAEL-is": {
   "date": "2026-08-29",
@@ -3424,18 +3407,14 @@
  },
  "AE Capital": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to a different company, so it cannot count as evidence of \"no-board\" for AE Capital. No valid evidence of a careers page exists, and there's insufficient information to conclude either way.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://employmenthero.com/jobs/organisations/ae-capital-pty-ltd-76954/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "QTREX": {
@@ -3472,20 +3451,15 @@
  },
  "Chorus": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "Careers page hunt found a valid careers URL for Chorus (chorusview.com/careers/) but it returned nolisting, indicating the page exists but has no readable job openings, rather than being refused as belonging to a different company.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://chorusview.com/careers/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://chorusview.com/careers/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Fast Corporation": {
   "date": "2026-08-29",
@@ -3604,52 +3578,38 @@
  },
  "Anyon Systems Inc.": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers page hunt found a valid careers URL (anyoncomputing.com/careers) for the company but the verdict was 'nolisting', meaning the page exists but does not present readable job openings. This was not a refusal (identity mismatch), so it stands as evidence the company has no automatically readable job board.",
-  "company_seems_real": true,
-  "board_url_if_any": "https://www.anyoncomputing.com/careers",
-  "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.anyoncomputing.com/careers",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
- },
- "Melisron": {
-  "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "Careers-page hunt found a Comeet jobs page for Melisron but reported 'nolisting' after checking, indicating the company has a jobs platform presence but no readable/open positions listed.",
-  "company_seems_real": true,
-  "board_url_if_any": "https://www.comeet.com/jobs/oferjobs/56.00E",
-  "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.comeet.com/jobs/oferjobs/56.00E",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
- },
- "Exyte": {
-  "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check (not a listings page), so it cannot serve as evidence either for or against a careers page. No other evidence was provided.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "found",
-    "detail": "",
-    "url": "https://www.exyte.net/en/Locations/Israel",
-    "why": "not a listings page"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Melisron": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Exyte": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Tel-Hai University of Kiryat Shmona in the Galilee": {
@@ -3703,34 +3663,26 @@
  },
  "A.P. Moller - Maersk": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate found was REFUSED by identity check (flagged as belonging to another company / not a valid listings page), so it cannot count as evidence of no-board. No other reliable evidence about Maersk's careers page was found.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://maersk.wd3.myworkdayjobs.com/en-US/Maersk_Careers?locationCountry=1e4a3-6b04b5b0-Israel",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Teva Pharmaceuticals": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (careers.teva) was refused by the identity check as belonging to another company / not a valid listings page, so it provides no evidence about Teva Pharmaceuticals' actual careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://www.careers.teva)",
-    "url": "https://www.careers.teva",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
   }
  },
  "Johnson & Johnson Innovative Medicine": {
@@ -3897,18 +3849,14 @@
  },
  "Shopix": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (shopic.co/career/) was refused by the identity check as belonging to a different company (Shopic, not Shopix), so it provides no evidence about Shopix's own careers page. No other evidence was gathered.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://www.shopic.co/career/)",
-    "url": "https://www.shopic.co/career/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Market Blend": {
@@ -3929,18 +3877,14 @@
  },
  "ODTRAFFIC LTD.": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check (not a listings page), so it cannot be used as evidence of either a careers page or its absence. No other evidence was provided.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "found",
-    "detail": "",
-    "url": "https://www.odtraffic.com",
-    "why": "not a listings page"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "NATASHA DENONA IL": {
@@ -3961,51 +3905,38 @@
  },
  "אסם": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "Osem (owned by Nestlé) careers search was checked; the hunt found a Nestlé job search URL for Israel but returned no listings ('nolisting'), indicating no readable openings page was found despite the company clearly existing.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.nestle.com/jobs/search-jobs?keyword=&country=IL",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.nestle.com/jobs/search-jobs?keyword=&country=IL",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Computer Guard Technologies LTD": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to a different company (ox.security), so it provides no evidence about Computer Guard Technologies LTD's own careers page. No other evidence was gathered.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.ox.security/careers/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Koladin": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (jobs.msd.com/gb/en/israel-careers) was refused by the identity check as belonging to a different company (MSD), not Koladin. This means our search failed to find any actual evidence about Koladin's careers page, so it cannot be used to conclude no-board. There is no other evidence provided about Koladin.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://jobs.msd.com/gb/en/israel-careers)",
-    "url": "https://jobs.msd.com/gb/en/israel-careers",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Intelligent Business": {
@@ -4221,20 +4152,15 @@
  },
  "City and more": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers page URL was found (cityofdreamsmed.com.cy/en/careers) but the verdict is 'nolisting', indicating the page exists but has no readable job listings/board content, rather than being refused as belonging to a different company.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.cityofdreamsmed.com.cy/en/careers",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.cityofdreamsmed.com.cy/en/careers",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "PwC | NEXT Technology Solutions": {
   "date": "2026-08-29",
@@ -4384,18 +4310,14 @@
  },
  "TECEZE": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate found was refused by the identity check (belongs to another company), so it provides no valid evidence about Teceze's careers page. No other reliable data was found.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://join.com/companies/teceze",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "ComSign - קומסיין": {
@@ -4433,18 +4355,14 @@
  },
  "rating": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to a different company, so it provides no evidence about this company's careers page. No other evidence was gathered, making it impossible to determine if 'rating' (company) has a job board.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://career.grade.com/job-openings",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Moona- A Space For Change": {
@@ -4482,18 +4400,14 @@
  },
  "Auth21": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (ai21.com/careers) was refused by identity check as belonging to a different company (AI21, not Auth21). This is evidence about our search process, not about Auth21's actual careers page, so no legitimate conclusion can be drawn about whether Auth21 has a job board.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://www.ai21.com/careers/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Bishvil Hazahav": {
@@ -4531,18 +4445,14 @@
  },
  "DT": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to a different company, so it cannot serve as evidence about DT's careers page. No valid evidence exists to determine whether DT has a readable job board.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://careers.telekom.com/en",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Strategic Matching": {
@@ -4725,20 +4635,15 @@
  },
  "Worthy Com": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "Careers page hunt found a jobs URL (worthycareers.in/jobs) for the company but it returned no listings, indicating no readable open positions page.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.worthycareers.in/jobs",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.worthycareers.in/jobs",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Wxg Waxman Group": {
   "date": "2026-08-29",
@@ -4758,18 +4663,14 @@
  },
  "Xcurrent Energy Solutions": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate careers page found (SmartRecruiters board) was refused by the identity check as belonging to a different company (Customized Energy Solutions), not Xcurrent Energy Solutions. Since every candidate was refused, this is evidence of a failed search, not proof that Xcurrent lacks a board.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://careers.smartrecruiters.com/customizedenergysolutions",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Xenara AI Uae": {
@@ -4823,18 +4724,14 @@
  },
  "Yael Software": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to a different company, so it cannot serve as evidence for or against Yael Software having a careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://yael.win-web.co.il/jobs/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
   }
  },
  "Yedioth Ahronoth": {
@@ -4855,18 +4752,14 @@
  },
  "Yes TV": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to another company, so it cannot serve as evidence about Yes TV's careers page. No other evidence was provided.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://career.yes.co.il/jobs-lobby/)",
-    "url": "https://career.yes.co.il/jobs-lobby/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Your Cybersecurity Upgraded": {
@@ -5115,18 +5008,14 @@
  },
  "Drive Group": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by identity check as belonging to another company, so it cannot serve as evidence of no board. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://employmenthero.com/jobs/organisations/drive-group-repairs-pty-ltd-d47ca/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "10bis Co Il": {
@@ -5147,18 +5036,14 @@
  },
  "200apps": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (careers.mobileye.com) was refused by the identity check as belonging to a different company, so it provides no evidence about 200apps's careers page. No other evidence was gathered.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://careers.mobileye.com/jobs)",
-    "url": "https://careers.mobileye.com/jobs",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "2sit Furniture": {
@@ -5212,20 +5097,15 @@
  },
  "Bluewhite": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers page URL (https://www.bluewhite.ai/careers) was found and confirmed to belong to the company, but the hunt found no listings on it (verdict=nolisting), indicating the company exists but does not publish a readable openings page/job board.",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.bluewhite.ai/careers",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://www.bluewhite.ai/careers",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
  },
  "Payoneer Global": {
   "date": "2026-08-29",
@@ -5342,35 +5222,26 @@
  },
  "Acca Careers": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The hunt found a real ACCA jobs listing URL (jobs.accaglobal.com) but the verdict was 'nolisting' meaning no readable openings were found there after checking candidates, not that the candidates were refused as belonging to a different company.",
-  "company_seems_real": true,
-  "board_url_if_any": "https://jobs.accaglobal.com/jobs/middle-east/#browsing",
-  "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://jobs.accaglobal.com/jobs/middle-east/#browsing",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
- },
- "Access Israel": {
-  "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to another company / not a listings page, so it cannot count as evidence of no board. No other evidence was gathered about Access Israel's careers page.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://aisrael.org/open-position-at-access-isra)",
-    "url": "https://aisrael.org/open-position-at-access-israel/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Access Israel": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Achuzat Rishonim Rubinstein": {
@@ -5488,18 +5359,14 @@
  },
  "Aerospike": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by identity check as belonging to another company, so it provides no evidence about Aerospike's careers page. No other evidence was gathered, so we cannot determine if Aerospike has a readable job board.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://9am.careers/jobs/?loc=Israel",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Africa Israel Hotels": {
@@ -5601,18 +5468,14 @@
  },
  "Air Ev": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (careers.mobileye.com) was refused by the identity check as belonging to a different company (Mobileye), not Air Ev. This means our search failed to find genuine evidence about Air Ev's careers page, so no conclusion can be drawn about whether one exists.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://careers.mobileye.com/jobs)",
-    "url": "https://careers.mobileye.com/jobs",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Akita Cyber Security Ltd": {
@@ -5650,18 +5513,14 @@
  },
  "Allspring": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate found was refused by the identity check as belonging to another company, so it cannot count as evidence of no board. No valid evidence was gathered about Allspring's actual careers page.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://careers-allspringglobal.icims.com/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Allyable": {
@@ -5732,18 +5591,14 @@
  },
  "Integra LifeSciences": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate careers page found was refused by the identity check as belonging to another company, so it cannot serve as evidence for or against Integra LifeSciences having a board. No other evidence was provided.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "found",
-    "detail": "",
-    "url": "https://integralife.wd1.myworkdayjobs.com/en-US/Careers?locationCountry=8cc5f8d193fb42d8b8d31af1fce56dbf",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Mornex": {
@@ -6075,18 +5930,14 @@
  },
  "Make Gems": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by identity check as belonging to a different company (gem.com, not Make Gems), so it cannot count as evidence of no board. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.gem.com/company/careers",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Makemyday1": {
@@ -6187,20 +6038,15 @@
  },
  "Marketily": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "A careers page URL was found (marketily.com/careers/) and checked, but it contained no listings, indicating the company has a careers page without readable job openings.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://marketily.com/careers/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://marketily.com/careers/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Mastercard Dynamic Yield": {
   "date": "2026-08-29",
@@ -6320,20 +6166,15 @@
  },
  "Maverick Medical AI": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers page URL was found (https://maverick-ai.com/about/careers/) and checked directly rather than refused as belonging to another company, but the hunt result 'nolisting' indicates no readable job listings were present on that page.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://maverick-ai.com/about/careers/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://maverick-ai.com/about/careers/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Max Security Solutions Ltd": {
   "date": "2026-08-29",
@@ -6369,20 +6210,15 @@
  },
  "Maxlinear": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found an iCIMS job search URL for MaxLinear (careersintl-maxlinear.icims.com), a legitimate ATS platform, but the search returned no listings, indicating the company has a careers page infrastructure but no readable/current openings at this time.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://careersintl-maxlinear.icims.com/jobs/search?ss=1",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://careersintl-maxlinear.icims.com/jobs/search?ss=1",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Mayanei Hayeshuah Medical Center": {
   "date": "2026-08-29",
@@ -6435,18 +6271,14 @@
  },
  "Mclfinance": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate found was a Maersk Workday job posting mentioning \"MCL Finance Business Partner,\" which the identity check refused as belonging to a different employer (Maersk), not Mclfinance itself. Since the sole candidate was refused, there is no valid evidence about whether Mclfinance has its own careers page or job board.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://maersk.wd3.myworkdayjobs.com/Maersk_Careers/job/Thailand-Bangkok-Samutprakan-10540/MCL-Finance-Business-Partner_R194724",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Mdaspace": {
@@ -6566,20 +6398,15 @@
  },
  "Meitav Investment House": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found a dedicated jobs URL (meitav.co.il/jobs/) confirming the company exists, but the page was assessed as 'nolisting' meaning no readable/automated job listings were found there.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.meitav.co.il/jobs/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://www.meitav.co.il/jobs/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Meitav Trade Securities Ltd": {
   "date": "2026-08-29",
@@ -6664,20 +6491,15 @@
  },
  "Menora": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "Search found a dedicated job-posting page on the company's own domain (menoramivt.co.il/job-posting/jobs), confirming the company exists, but the hunt reports 'nolisting' meaning no readable/accessible job listings were found there.",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.menoramivt.co.il/job-posting/jobs",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://www.menoramivt.co.il/job-posting/jobs",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
  },
  "Mentaily": {
   "date": "2026-08-29",
@@ -6779,20 +6601,15 @@
  },
  "Meuhedet": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "Search found a careers page URL (דרושים = \"jobs\" in Hebrew) for Meuhedet, but the hunt determined it has no readable listings (verdict=nolisting), meaning the page exists but doesn't publish accessible job openings automatically.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.meuhedet.co.il/דרושים/דרושים/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.meuhedet.co.il/דרושים/דרושים/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Mevakerhamedina": {
   "date": "2026-08-29",
@@ -6812,18 +6629,14 @@
  },
  "Mfpm": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (jobs.thermofisher.com) was refused by the identity check as belonging to a different company (Thermo Fisher), not Mfpm. A refused page is evidence about the search failing, not about Mfpm's actual careers presence, so there is no valid evidence to judge whether Mfpm has a job board.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://jobs.thermofisher.com/global/en/israel-j)",
-    "url": "https://jobs.thermofisher.com/global/en/israel-jobs",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Mhg Thailand": {
@@ -6991,20 +6804,15 @@
  },
  "Minet Technologies": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found a dedicated Hebrew careers/jobs URL (דרושים = \"wanted/positions\") at minet.co.il, but the verdict was 'nolisting', meaning the page exists but does not present readable job openings. This indicates the company exists and has a careers page, but it currently publishes no automatically readable listings.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://minet.co.il/דרושים/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://minet.co.il/דרושים/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Mingyangsmartenergy": {
   "date": "2026-08-29",
@@ -7024,18 +6832,14 @@
  },
  "Minimed Diabetes": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate found (Medtronic's Workday careers page) was REFUSED by the identity check as belonging to a different company, not Minimed Diabetes specifically. Since every candidate was refused, this is not evidence that Minimed Diabetes lacks a board -- we simply failed to find/verify one.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://medtronic.wd1.myworkdayjobs.com/MedtronicCareers?locationCountry=Israel",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Mininna": {
@@ -7072,20 +6876,15 @@
  },
  "Minkovsky Media": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "A careers page was found at minkovsky-media.com/en/careers, but the hunt determined it has no listings (nolisting), indicating the company exists and has a careers page, but it does not publish readable job openings.",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
   "company_seems_real": true,
-  "board_url_if_any": "https://minkovsky-media.com/en/careers",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://minkovsky-media.com/en/careers",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
  },
  "Minrav Group Ltd": {
   "date": "2026-08-29",
@@ -7220,34 +7019,26 @@
  },
  "Flexfactor": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was REFUSED by the identity check as belonging to a different company (Flextronics, not Flexfactor), so it provides no valid evidence about Flexfactor's own careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://flextronics.wd1.myworkdayjobs.com/en-US/Careers?locationCountry=Israel",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Flo Live": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to another company/not a valid listings page, so it provides no evidence about Flo Live's actual careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://careers.greenfield-growth.com/companies/)",
-    "url": "https://careers.greenfield-growth.com/companies/flolive",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Foresightauto": {
@@ -7286,18 +7077,14 @@
  },
  "Forvision": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check (belongs to a different company, \"Forevision\" not \"Forvision\"), so it provides no evidence about Forvision itself. No valid careers page was identified.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.forevision.in/career.php",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Frischefilmefrischerfilm": {
@@ -7464,20 +7251,15 @@
  },
  "Gamma Gruppe": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found a dedicated careers/vacancies page (gammagroup.co/company/careers-vacancies/) for the company, but it verdict is 'nolisting', meaning the page exists yet does not publish readable job openings. This indicates the company exists with a careers page but no automatable job board content.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://gammagroup.co/company/careers-vacancies/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://gammagroup.co/company/careers-vacancies/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Gea Soluzioni": {
   "date": "2026-08-29",
@@ -7497,18 +7279,14 @@
  },
  "Genecit Com": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by identity check as belonging to a different company (mygenes.co.il), so it provides no evidence about Genecit Com's own careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.mygenes.co.il/en/jobs#positions",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
   }
  },
  "Geneyxgenomex": {
@@ -7579,35 +7357,26 @@
  },
  "Gesher Nehasim": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found a dedicated jobs page (geshermi.org/jobs/) but it verdict was 'nolisting', indicating the page exists but has no readable job openings currently listed, rather than being refused as belonging to a different entity.",
-  "company_seems_real": true,
-  "board_url_if_any": "https://www.geshermi.org/jobs/",
-  "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.geshermi.org/jobs/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
- },
- "Get Gain": {
-  "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate careers page found was refused by the identity check as belonging to a different company, so it provides no evidence about Get Gain's own careers page. No other evidence was found, making this too thin to judge.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://apply.workable.com/thisisgain/?lng=en",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Get Gain": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Get Healthee": {
@@ -7805,50 +7574,38 @@
  },
  "Gilaproject": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (gilat.com/career) was refused by the identity check as belonging to a different company, so it provides no evidence about Gilaproject specifically. No other evidence was found.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.gilat.com/career/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Giraffe Ems": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to a different company, so it cannot be used as evidence of no board. No other evidence was gathered about Giraffe Ems's careers page.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://hujicareer.co.il/jobs/חברת-גירף-מגייסת-י)",
-    "url": "https://hujicareer.co.il/jobs/חברת-גירף-מגייסת-יועץ-ת-סביבה-לתפקיד-ש/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Girlygeekdom": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (insider.geektime.co.il/jobs/) was refused by the identity check as belonging to a different company, so it cannot be used as evidence that Girlygeekdom lacks a careers page. No other evidence was gathered about Girlygeekdom's own site or job board.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://insider.geektime.co.il/jobs/)",
-    "url": "https://insider.geektime.co.il/jobs/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Givat Haviva": {
@@ -7885,18 +7642,14 @@
  },
  "Glasbewassing Nederland": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate found (Veolia job listing) was refused by the identity check as belonging to a different company, so it provides no evidence about Glasbewassing Nederland's own careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://jobs.veolia.com/en/job/utrecht/allround-vakman-gww/3091/19904703872",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Glassbox Solutions": {
@@ -7983,20 +7736,15 @@
  },
  "Globus Worldwide Logistics": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers-page hunt found a dedicated jobs/careers URL (Hebrew for \"positions/jobs\") on the company's own domain, but verdict=nolisting indicates it was checked and found not to contain readable job listings. This is direct evidence about the company's own page (not a refused/mismatched identity), so it supports no-board rather than cannot-tell.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://globus-intr.co.il/%d7%93%d7%a8%d7%95%d7%a9%d7%99%d7%9d/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://globus-intr.co.il/%d7%93%d7%a8%d7%95%d7%a9%d7%99%d7%9d/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Glowsecurity": {
   "date": "2026-08-29",
@@ -8032,20 +7780,15 @@
  },
  "Go Apprentice": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "A careers URL was found (goapprentice.com/careers) but the hunt determined it has no listings, indicating the company exists and has a careers page but no readable/current job openings posted there.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.goapprentice.com/careers",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://www.goapprentice.com/careers",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Golan Heights Winery": {
   "date": "2026-08-29",
@@ -8194,18 +7937,14 @@
  },
  "Growdirector": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check (not a listings page), so it provides no evidence about whether Growdirector has a careers page. No valid evidence exists either way.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "found",
-    "detail": "",
-    "url": "https://growdirector.com",
-    "why": "not a listings page"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Growings Ltd": {
@@ -8258,18 +7997,14 @@
  },
  "H Sol": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by identity check as belonging to a different company, so it provides no evidence about H Sol's careers page. No other evidence was gathered.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://hcompany.ai/careers",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Habima": {
@@ -8307,34 +8042,26 @@
  },
  "Hackerseye": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate found (xmcyber.com/job-listing/) was refused by the identity check as belonging to a different company, so it provides no evidence about Hackerseye's careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://xmcyber.com/job-listing/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Hadassah": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to a different company's board, so it provides no evidence about Hadassah's own careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=56f83f41-5ea6-479b-8798-d916f7f745c1&ccId=19000101_000001&lang=en_US",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Hadassim Travel": {
@@ -8371,18 +8098,14 @@
  },
  "Hadia": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to a different company (flex.com), so it provides no evidence about Hadia's careers page. No other evidence was gathered.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://flex.com/careers/israel-en",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Haifa Theatre": {
@@ -8484,37 +8207,27 @@
  },
  "Harel Finance Company": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found the company's tech careers site (tech.harel-group.co.il) but the verdict was 'nolisting' after checking 2 candidate pages, indicating the company exists but does not publish a readable openings/listings page there.",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
   "company_seems_real": true,
-  "board_url_if_any": "https://tech.harel-group.co.il",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://tech.harel-group.co.il",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
  },
  "Harel Insurance": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers URL was found (https://www.harel-group.co.il/careers) and was checked directly (not refused), but the hunt determined it has no readable listings/job board content, indicating the company exists but doesn't publish an automatable openings page there.",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.harel-group.co.il/careers",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://www.harel-group.co.il/careers",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
  },
  "Harmoniz The Art Of Seed Innovation": {
   "date": "2026-08-29",
@@ -8647,34 +8360,26 @@
  },
  "Henkel": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check (not a listings page), so it cannot count as evidence of no board. No valid careers page evidence was found.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "found",
-    "detail": "",
-    "url": "https://www.henkel.com/company/henkel-researchers-world",
-    "why": "not a listings page"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Pendo.io": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate careers page found (job-boards.greenhouse.io/pendo) was REFUSED by the identity check, meaning it was determined to belong to a different company or not be a valid listings page. A refused page is evidence about the search failing, not evidence that Pendo.io lacks a careers page. No other evidence was provided.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "found",
-    "detail": "",
-    "url": "https://job-boards.greenhouse.io/pendo",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Binary Spirit": {
@@ -8711,20 +8416,15 @@
  },
  "Replai": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "Search found a careers-related URL on Replai's own domain but the hunt explicitly returned 'nolisting' (no readable job openings), indicating the company exists but does not publish an automatable careers/job listings page.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.replai.io/?page_id=783",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.replai.io/?page_id=783",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Boston Consulting Group (BCG)": {
   "date": "2026-08-29",
@@ -8744,20 +8444,15 @@
  },
  "Herbalife": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found an iCIMS careers page URL for Herbalife (careers-herbalife.icims.com/jobs/intro), a legitimate applicant tracking system used by the company, but it was flagged as 'nolisting', meaning no current job listings were found/readable on it.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://careers-herbalife.icims.com/jobs/intro",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://careers-herbalife.icims.com/jobs/intro",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "PB Israel": {
   "date": "2026-08-29",
@@ -8777,18 +8472,14 @@
  },
  "ReasonLabs": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate careers page found was REFUSED by the identity check, meaning it doesn't verifiably belong to ReasonLabs. Since every candidate was refused, there is no valid evidence about whether ReasonLabs has a readable careers page, so we cannot determine the answer.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://careers.viola-group.com/companies/reasonlabs#content",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Israel Antiquities Authority": {
@@ -8955,18 +8646,14 @@
  },
  "Israel Shipyards": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to another company, so it cannot count as evidence of no-board. No other verified evidence of a careers page or job board exists for Israel Shipyards.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://israel-shipyards.talent-sys.com/Careers/default.html",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Israel Youth Hostels Association": {
@@ -9051,20 +8738,15 @@
  },
  "Iss International": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "Careers page URL was found and checked (2 candidates tried), but it did not contain a readable listings page (nolisting verdict), indicating the company exists but does not publish an automatically readable job board.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://www.iss-international.com/careers/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.iss-international.com/careers/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Istraresearch": {
   "date": "2026-08-29",
@@ -9132,18 +8814,14 @@
  },
  "Ituran": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate careers page found was refused by identity check as belonging to a different company, so it cannot count as evidence for or against Ituran having a board. No other reliable evidence was found.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://ituran-career.talent-soft.com/job/list-of-all-jobs.aspx?all=1&mode=layer#ancrecontenu",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Jackiesmith": {
@@ -9164,18 +8842,14 @@
  },
  "Jafi": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (careers.jewishagency.org) was refused as belonging to a different company (Jewish Agency, not Jafi), so it provides no evidence about Jafi's own careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://careers.jewishagency.org/)",
-    "url": "https://careers.jewishagency.org/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Jako Pionier": {
@@ -9212,20 +8886,15 @@
  },
  "Jcfamilies": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found a join-us page at jcfamilies.com but verdict was 'nolisting', meaning the company has an identified careers-related page yet it does not present readable job listings (no board found after checking 2 candidates).",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://jcfamilies.com/join-us/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://jcfamilies.com/join-us/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
  },
  "Jed Security": {
   "date": "2026-08-29",
@@ -9438,18 +9107,14 @@
  },
  "Jones1": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to a different company (Edward Jones, not \"Jones1\"), so it provides no valid evidence about Jones1's careers page. Since every candidate was refused, we cannot determine whether Jones1 has a board.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://careers.edwardjones.com/job-search-results/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Kadesh Law Firm": {
@@ -9470,18 +9135,14 @@
  },
  "Kai Capital": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to another company, so it provides no valid evidence about Kai Capital's careers page. No other evidence was found.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.kaicap.de/en/karriere.php",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Kan Israeli Publish Broadcasting Corporation": {
@@ -9502,18 +9163,14 @@
  },
  "Kanat Insurance": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (earnix.com) was refused by the identity check as belonging to a different company, so it provides no evidence about Kanat Insurance's own careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://earnix.com/our-story/careers/israel/)",
-    "url": "https://earnix.com/our-story/careers/israel/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Kaplan Medical Center": {
@@ -9582,18 +9239,14 @@
  },
  "Kennedys": {
   "date": "2026-08-29",
-  "verdict": "has-board",
-  "why": "The careers hunt found a live vacancy search/results page on careers.kennedyslaw.com, indicating an automated job board exists even though this particular query returned no listings.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
-  "board_url_if_any": "https://careers.kennedyslaw.com/jobs/vacancy/find/results/action/posbrowser_resetto/?pagestamp=215f88c7-201e-47d4-97e5-01806f209412",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://careers.kennedyslaw.com/jobs/vacancy/find/results/action/posbrowser_resetto/?pagestamp=215f88c7-201e-47d4-97e5-01806f209412",
-    "why": "no-listing"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Keshet": {
@@ -9615,18 +9268,14 @@
  },
  "Kfar Tikva": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check as belonging to a different company (a general aliyah/job-search resource, not Kfar Tikva's own board). Since it's not valid evidence about Kfar Tikva, and no other evidence was gathered, there's no basis to determine whether Kfar Tikva has a careers page.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://www.nbn.org.il/aliyahpedia/employment-israel/managing-the-job-search/find-jobs-in-israel/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Kibbutz Contemporary Dance Company": {
@@ -9647,18 +9296,14 @@
  },
  "Kidum Rehab Projects": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found (untalent.org) was refused by the identity check as belonging to a different company, so it provides no evidence about Kidum Rehab Projects' careers page. No other evidence was gathered.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "page belongs to another company (https://untalent.org/jobs/in-anything/contract-a)",
-    "url": "https://untalent.org/jobs/in-anything/contract-all/israel",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Kinderzentrum Wei Er Stein Marburg Wehrda Ev": {
@@ -9927,18 +9572,14 @@
  },
  "Kuehn Gmbh": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate found (jobs.kuehne-nagel.com) belongs to Kuehne+Nagel, a different, unrelated company from 'Kuehn Gmbh'. This is a name mismatch, not evidence about Kuehn Gmbh itself, so it can't support a no-board verdict. No valid evidence was found for the actual company in question.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://jobs.kuehne-nagel.com/global/en/search-results?ns_country=Israel",
-    "why": "no-listing"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Labosco": {
@@ -9959,36 +9600,27 @@
  },
  "Lacuna Ads": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate URL found (lacunaautism.com/current-opportunities/) appears to belong to a different entity (\"Lacuna Autism\") rather than \"Lacuna Ads,\" and the verdict was \"nolisting\" with just one candidate tried. This doesn't provide reliable evidence about Lacuna Ads specifically, so it can't support no-board.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://lacunaautism.com/current-opportunities/",
-    "why": "no-listing"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Lakefs Treeverse": {
   "date": "2026-08-29",
-  "verdict": "overturned-no-board",
-  "why": "The careers page URL was found and checked (https://lakefs.io/careers/), but it returned no listings, indicating the company has a careers page presence but no readable job openings/board at this time.",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
   "company_seems_real": true,
-  "board_url_if_any": "https://lakefs.io/careers/",
+  "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 1 candidates",
-    "url": "https://lakefs.io/careers/",
-    "why": "no-listing"
-   }
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired."
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
  },
  "Lambadapp": {
   "date": "2026-08-29",
@@ -10075,18 +9707,14 @@
  },
  "Lawmatch": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate found (herzoglaw.co.il/en/careers/) was refused by the identity check as belonging to a different company, so it provides no evidence about Lawmatch's careers page. No other evidence was gathered, so we cannot determine whether Lawmatch has a readable job board.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://herzoglaw.co.il/en/careers/",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Layavision": {
@@ -10221,18 +9849,14 @@
  },
  "Levi Strauss Israel": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate careers page found was REFUSED by the identity check as belonging to another company, so it cannot count as evidence of no board. No valid evidence exists either way for Levi Strauss Israel's careers page.",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
   "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://levistraussandco.wd5.myworkdayjobs.com/External?locations=0d4da4dc871201f0e4c9341afa015d5e",
-    "why": "another company's board"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Libra Insurance Ltd": {
@@ -10303,18 +9927,14 @@
  },
  "Lighting Warehouses": {
   "date": "2026-08-29",
-  "verdict": "cannot-tell",
-  "why": "The only candidate URL found (lightheadedlighting.com/careers/) appears to belong to a different company (\"Lightheaded Lighting\") than \"Lighting Warehouses\", and the hunt result is 'nolisting' with just 2 candidates tried. This is insufficient evidence about Lighting Warehouses specifically, and any mismatched page cannot count as evidence of no board.",
-  "company_seems_real": false,
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
   "board_url_if_any": "",
   "evidence": {
-   "search_pages": [],
-   "hunt": {
-    "verdict": "nolisting",
-    "detail": "tried 2 candidates",
-    "url": "https://lightheadedlighting.com/careers/",
-    "why": "no-listing"
-   }
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  },
  "Limorcareer Limor Malkieli": {
@@ -10391,6 +10011,1338 @@
   "board_url_if_any": "",
   "evidence": {
    "registry_row": "Keystoneco"
+  }
+ },
+ "Advice Electronics": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Aerohandling": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Aijobs AI": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Aikido Security": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Aktglobal": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Alstom": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Batm": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Batsheva Dance Company": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bdo International": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Beacon Sec": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Beamup": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Beckman Coulter": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Beit Gabriel Ors": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Beit Issie Shapiro": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Benda Magnetic": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Beonemedicines": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Betway Africa": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bexhub": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bigbrothers": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bilton": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bimrock AI": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bio Technology General": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Biscience": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bitsight": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bk Management Consulting": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Blackcube1": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Blackrock": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Blink": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Bloor Homes": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Blossom Kc": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bluethrone": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Boa Ideas": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bottomline Payments": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Brandshield": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bringits": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Browsi": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bruker Corporation": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Bruker Jv Israel": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bsre": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bulls Media": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Bylith": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Cactus Communications": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Calanit": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Cameri Theatre": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Candex": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Candivore": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Canopy Care": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Capow Tech": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Capsloc": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Castro Hoodies Group": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Celcomdigi": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Cellcom": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Cellxpert": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Cemex": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Cenevo": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Centrical": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Ceragon": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Ceva, Inc.": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Cheftek": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Chimes Israel": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Citadel Consulting": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "City Hive": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "City Of David": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "City Of Knoxville Iowa": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "City Of Sunbury Ohio": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Clal Insurance And Finance": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Clalit Careers": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Clarivate": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Clayton Homes": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Clear Gate": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Ethos": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Fionics": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Galil Software Ltd": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Gravity Forms": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Greylock Partners": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Groundcover Com": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "HIAS": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "HIAS Europe": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Ivory": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Jerusalem Biblical Zoo": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Katayama": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Kela Cyber": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Kela Technologies": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "King Solomon School": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Krembo Wings": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "La Casa Norte": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Linearb": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Lubinski Group": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Lyra Health": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Magentamed": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Malam": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Megapharm": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Mesh Cybersecurity": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Meteorops": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Millennium Partners": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Nebius Group": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Neema - Better Than a Bank": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-url",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "OpticSolution": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Plus500™": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Unipharm Career": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Wipro Limited": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Wsc Sports Technologies": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": false
+  }
+ },
+ "Ycon": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "YouCC Technologies Ltd.": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Youappi": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "mPrest Systems": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "mylo AI": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Celeno": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "Dataflow Security": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "JakoAI": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
+  }
+ },
+ "UNOPS": {
+  "date": "2026-08-29",
+  "verdict": "already-a-row",
+  "why": "a registry row under this exact name now covers it; the queue entry is spent",
+  "company_seems_real": true,
+  "board_url_if_any": "",
+  "evidence": {
+   "dedup_key": "dup-name",
+   "source": "apply_proposals dry run",
+   "row_under_this_exact_name": true
   }
  }
 }

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**474 filed · 354 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**475 filed · 355 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 427.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 428.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -88,7 +88,7 @@ closure convention in the header.
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 112 open
+### registry — 113 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -202,6 +202,7 @@ closure convention in the header.
 - **424** `424@registry` **~10% of the hunt's `another company's board` refusals are the company's OWN board, and
 - **425** `425@registry` **7 active rows embed a Comeet board the identity gate structurally cannot admit**
 - **426** `426@registry` **A git worktree has no `secrets.env`, so every paid rung silently no-ops**
+- **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 
 ### infra — 81 open
 
@@ -7353,3 +7354,85 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
         answered zero times for every name should refuse to write verdicts** — the same
         mass-zero floor `drain_queue._receipt` already carries, applied to `listing_hunt`'s queue
         arm. A silent `[]` is what turned a missing credential into 57 confident answers.
+
+427. **Discovery is wired; the path from a discovered NAME to a ROW is not** — lane: `registry`,
+    **the change is `infra`'s** (`docs/AGENT_BRIEF.md:104` gives `.github/workflows/*` to
+    `infra`), measured 2026-08-29.
+
+    `docs/check_docs.py` is honest here and that is what makes the gap easy to miss: **zero**
+    modules classified `scheduled` lack a workflow. The break is one level up, in the
+    CLASSIFICATION. Walking the chain from intake to a fetched board:
+
+    | module | classified | runs from |
+    |---|---|---|
+    | `discovery_daily` | scheduled | `daily-digest.yml` |
+    | `auto_expand` | scheduled | `auto-expand.yml` |
+    | `listing_hunt` | scheduled | `listing-hunt.yml` |
+    | `drain_queue` | **operator** | — nothing |
+    | `queue_resolve_search` | **operator** | — nothing |
+    | `qa_proposals` | **operator** | — nothing |
+    | `apply_proposals` | **operator** | — nothing |
+    | `queue_state` | **operator** | — nothing |
+    | `queue_disposition` | **operator** | — nothing |
+    | `refresh_scrape_cache` | scheduled | `scrape-refresh.yml` |
+    | `probe_candidates` | scheduled | `daily-digest.yml` |
+    | `confirm_zero` | **operator** | — nothing (`420@registry`) |
+
+    So the intake FILLS daily and the queue DRAINS by hand. The arithmetic is the finding:
+
+    | | per day | rung | measured yield |
+    |---|---|---|---|
+    | names arriving (`225@registry`) | **~+70** | — | — |
+    | `listing-hunt.yml` 19:00 queue arm | 60 | walk likely domains, follow links | **2-3%** (2 of 57) |
+    | `queue_resolve_search` | **0 — not scheduled** | search, model ORDERS, the scrape decides | **56%** (397 of 707) |
+
+    The queue grew 877 -> 1,038 during a single session BECAUSE discovery kept working. On
+    2026-08-29 a hand-run session moved 490 names into rows; unwired, the next 500 wait for the
+    next session. That is rule 1 from its other side: not "a green workflow proves nothing" but
+    **a capability nothing runs produces nothing, however green the repo is**.
+
+    **What to wire**, as one step appended to the existing 19:00 `listing-hunt.yml` (so it
+    inherits the `repo-state` concurrency group rather than adding a ninth workflow to it):
+
+    ```yaml
+    - name: Resolve intake names by search        # BACKLOG 427
+      continue-on-error: true
+      env:
+        BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+        BRIGHTDATA_ZONE:    ${{ secrets.BRIGHTDATA_ZONE }}
+        DEEP_BD_SEARCH_CAP: "200"      # the default is 150 PER PROCESS and returns [] in SILENCE
+      run: |
+        for i in 1 2; do QRS_SHARD=$i/2 python queue_resolve_search.py \
+            --propose out/qrs_$i.json --cap 40 & done; wait
+        python -c "import json,glob;p=[x for f in glob.glob('out/qrs_[0-9].json') for x in json.load(open(f,encoding='utf-8'))['proposals'] if x['kind'] in ('scrape','monitor')];json.dump({'generated':'','proposals':[dict(q,kind='scrape') for q in p]},open('out/qrs_qa_in.json','w',encoding='utf-8'))"
+        python qa_proposals.py --props out/qrs_qa_in.json --out out/qrs_qa.json
+        # ...drop every NOT-THEIRS and unreadable, then:
+        python apply_proposals.py --proposals out/qrs_apply.json --batch 200 --apply
+        python queue_state.py --ingest "out/qrs_[0-9].json"
+        python queue_disposition.py --retire-covered out/qrs_apply.json --apply
+    ```
+
+    Five constraints, each of which cost something to learn on 2026-08-29:
+
+      * **Never write a row straight from the rung.** `qa_proposals` refused **10%, 9%, 15% and
+        19%** of the four batches as another company's board — `Israel Police`, `Israel Post`,
+        `Greylock Partners`, `Kuehne+Nagel`, `Lacuna Space`. Skip it and roughly one row in
+        eight publishes someone else's jobs.
+      * **`unreadable` is not `ok`.** 63 of 64 pages that failed the QA fetch failed it again on
+        retry — they are bot-walled, not flaky. Those names keep their place in the queue; a
+        parked row holding an unverified address is what `listing_hunt`'s fast path later
+        ACTIVATES.
+      * **`queue_state.py --ingest` in the same step**, or no attempt is recorded and
+        `queue_targets` returns the same names for ever (57 names were hunted twice for exactly
+        this).
+      * **`queue_disposition --retire-covered`**, or the queue never shrinks even as rows are
+        written: 199 names were already covered by a row and still sat in the file.
+      * **Two phases, which the module enforces** — `unlock()` returns "" once Playwright has
+        run in the process, so a search after a scrape silently yields `no-search-results`.
+
+    Cost at `--cap 40` x 2: ~80 search credits + ~80 `sonnet` calls a night. Bright Data is
+    unlimited only until **2026-09-01**; after that 5,000/month, so this is ~2,400/month of it
+    and must be budgeted against `bd_rescue` (215 credits on 2026-08-29) and the JD tier.
+
+    Reclassify the six modules `operator` -> `scheduled` in `docs/gen_modules.py` in the same
+    change, or `docs/check_docs.py` will keep reporting a fully-wired repo.

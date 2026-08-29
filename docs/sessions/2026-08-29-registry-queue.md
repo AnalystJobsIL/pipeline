@@ -215,3 +215,31 @@ refusal rate is the reason that step is not optional:
   back `dead` from a credential-less run; the same 57 resolved once armed. **The operator has a
   key and expects it to be used** — read it from the checkout root, never copy it in (381).
 
+## The sweep, and where the 877 ended
+
+`queue_resolve_search` over every unresolved name: **397 of 707 produced an address (56%)**,
+against 24.7% before the six defects above were fixed. `qa_proposals` then refused **56 as
+another company's board (19%, the highest rate of the four batches)** and could not read 64
+pages at all — 63 of those failed a second time, so they are bot-walled rather than flaky and
+were NOT applied: a parked row holding an unverified address is exactly what `listing_hunt`'s
+fast path later activates.
+
+| | count |
+|---|---|
+| **ROW, ACTIVE — fetched every morning** | **153** |
+| **ROW, parked with an address — `probe_candidates` daily** | **330** |
+| covered by another row (retired, evidence kept) | 28 |
+| ROW, parked, NO address — watched by nothing | 19 |
+| **still owed an answer** | **508** |
+
+877 at the start; **1,038** by the end, because discovery kept working — which is the finding
+that matters more than the counts and is filed as `427@registry`: six of the seven queue
+modules are classified `operator`, so the path from a discovered NAME to a ROW runs only when a
+human runs it. The nightly arm that IS scheduled resolves 2-3%; the one that resolves 56% is in
+no workflow.
+
+Of the 508 owed: 212 where the search surfaced nothing of theirs, 93 whose own site carries no
+board, 120 refused or unreadable at QA, and 83 held by the applier as a name overlap
+(`Port` vs `Port.io`) — an overlap is a suspicion, and retiring on a suspicion is how a queue
+empties itself into a lie.
+

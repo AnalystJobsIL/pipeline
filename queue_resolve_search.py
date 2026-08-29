@@ -307,12 +307,16 @@ def score_one(name, found):
             best, best_url = sc, cand
         if sc[0] >= 1 and sc[2]:               # Israel roles on a board-shaped URL: done
             break
-    if best is None:
+    # The probe runs when we have NO candidate *or* when the best one is the company's site
+    # rather than its board — `QTREX` -> `q-trex.com/about/`. Skipping it in the second case
+    # was worth 24.5% of the sweep: the company was identified and its careers path never
+    # tried. A probe result only replaces the incumbent if it actually scores better.
+    if best is None or (best[1] == 0 and best[2] == 0):
         probe = _own_domain_probe(name, urls, gate, is_aggregator,
                                   looks_like_a_job_listing_page)
         if probe:
             sc = _score(name, probe, gate, is_aggregator, looks_like_a_job_listing_page)
-            if sc is not None:
+            if sc is not None and (best is None or sc > best):
                 best, best_url = sc, probe
                 why = "own-domain probe (search found the company, not its careers page)"
     if best is None:

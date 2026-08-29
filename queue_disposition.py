@@ -161,6 +161,67 @@ def _load_props(paths):
     return out
 
 
+def covered_by_a_row(proposals_path, timeout=1800):
+    """{name: dedup_key} for every proposal `apply_proposals` refuses as already covered.
+
+    Runs the applier in DRY RUN and reads its refusals rather than re-implementing six de-dup
+    keys here -- a second implementation would drift from the one that actually guards the
+    writes, and this must never retire a name the applier would still accept.
+    """
+    import re
+    import subprocess
+    out = subprocess.run([sys.executable, "apply_proposals.py", "--proposals", proposals_path,
+                          "--batch", "400"], capture_output=True, text=True,
+                         encoding="utf-8", errors="replace", timeout=timeout)
+    found = {}
+    for line in (out.stdout or "").splitlines():
+        m = re.match(r"\s+skip\s+(.+?)\s{2,}(dup-name|dup-url)\s*$", line.rstrip())
+        if m:
+            found[m.group(1).strip()] = m.group(2)
+    return found
+
+
+def retire_covered(proposals_path, apply=False):
+    """Retire queue names a registry row already covers. Returns (recorded, pruned)."""
+    import csv as _csv
+    import queue_state as QS
+    state, qstate = load(), QS.load()
+    dups = covered_by_a_row(proposals_path)
+    rows = {r[0].strip().lower() for r in _csv.reader(open("companies.csv", encoding="utf-8"))
+            if r}
+    stamp = dt.date.today().isoformat()
+    for name, key in sorted(dups.items()):
+        own = name.strip().lower() in rows
+        state[name] = {
+            "date": stamp, "verdict": "already-a-row",
+            "why": ("a registry row under this exact name now covers it; the queue entry is "
+                    "spent") if own else
+                   ("apply_proposals refused the proposal as %s: a registry row already covers "
+                    "this company under another name string" % key),
+            "company_seems_real": True, "board_url_if_any": "",
+            "evidence": {"dedup_key": key, "source": "apply_proposals dry run",
+                         "row_under_this_exact_name": own}}
+        QS.record(qstate, name, "search-llm", "already-a-row", day=stamp)
+    print("names a registry row already covers: %d" % len(dups))
+    if not apply or not dups:
+        print("(dry run: the queue file is untouched)")
+        return len(dups), 0
+    save(state)
+    QS.save(qstate)
+    with open(QUEUE, encoding="utf-8") as f:
+        queue = json.load(f)
+    for e in queue:                                    # the assertion the module exists for
+        n = (e.get("name") or "").strip()
+        if n in dups:
+            assert n in state and state[n].get("evidence"), "pruning %r with no record" % n
+    kept = [e for e in queue if (e.get("name") or "").strip() not in dups]
+    from pipeline.atomic import write_json
+    write_json(QUEUE, kept)
+    print("queue %d -> %d (%d retired, each naming the de-dup key that proved it)"
+          % (len(queue), len(kept), len(queue) - len(kept)))
+    return len(dups), len(queue) - len(kept)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--hunt", default="out/hunt_s*.json", help="the hunt arm's proposal files")
@@ -168,7 +229,13 @@ def main(argv=None):
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--judge", action="store_true", help="ask the model (else: report only)")
     ap.add_argument("--apply", action="store_true", help="prune the retired names from the queue")
+    ap.add_argument("--retire-covered", metavar="PROPOSALS",
+                    help="retire queue names a registry row already covers, per "
+                         "apply_proposals' own de-dup keys")
     a = ap.parse_args(argv)
+    if a.retire_covered:
+        retire_covered(a.retire_covered, apply=a.apply)
+        return 0
 
     import queue_state as QS
     state, qstate = load(), QS.load()

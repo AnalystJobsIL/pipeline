@@ -7144,3 +7144,39 @@ def test_a_link_shortener_can_never_be_a_board():
         url = "https://%s/abc123" % host
         assert QRS._score("Acme", url, _Gate, is_aggregator,
                           looks_like_a_job_listing_page) is None, host
+
+
+def test_a_covered_name_is_retired_but_a_mere_overlap_is_not(tmp_path, monkeypatch):
+    """`apply_proposals` refuses a proposal as `dup-name`/`dup-url` when one of its six de-dup
+    keys already matches a row — the company is covered and only the NAME STRING is new
+    (`Youappi` -> the `YouAppi` row, `Teva Pharmaceuticals` -> `Teva`). That is a lookup, so
+    it retires like `already-a-row`, with the key that fired kept as evidence.
+
+    `HOLD name overlaps X` must NOT retire: an overlap is a SUSPICION (`Port` vs `Port.io`),
+    and the applier refuses precisely because it cannot tell. Retiring on a suspicion is how a
+    queue empties itself into a lie."""
+    import json
+    import queue_disposition as QD
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "YouAppi Ltd,scrape,,https://x.example/careers,true,\n", encoding="utf-8")
+    queue = [{"name": n, "slug": n.lower()}
+             for n in ("Youappi", "Port", "Never Seen")]
+    (tmp_path / QD.QUEUE).write_text(json.dumps(queue), encoding="utf-8")
+
+    # only the applier's own de-dup verdicts reach the retirement; an overlap never does
+    monkeypatch.setattr(QD, "covered_by_a_row", lambda path, timeout=1800: {"Youappi": "dup-name"})
+    QD.retire_covered("out/whatever.json", apply=True)
+
+    left = {e["name"] for e in json.loads((tmp_path / QD.QUEUE).read_text(encoding="utf-8"))}
+    assert "Youappi" not in left, "a name a registry row already covers was not retired"
+    assert {"Port", "Never Seen"} <= left, "an overlap or an untouched name must NOT be retired"
+    rec = QD.load(str(tmp_path / QD.PATH))
+    assert rec["Youappi"]["evidence"]["dedup_key"] == "dup-name"
+    assert rec["Youappi"]["verdict"] == "already-a-row"
+    # the row is `YouAppi Ltd`, so no row carries this name STRING (case alone is not
+    # a different name), and the recorded reason must say exactly that
+    assert rec["Youappi"]["evidence"]["row_under_this_exact_name"] is False
+    assert "another name string" in rec["Youappi"]["why"]
