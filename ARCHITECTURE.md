@@ -1857,6 +1857,7 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 | cron (UTC) | workflow | effect |
 |---|---|---|
 | `0 0 * * *` | scrape-refresh | re-render all scrape rows (JD carry-forward keeps enrichment) |
+| `30 1 * * *` | jd-archive | a job description for the cards the TITLE gate drops (the corpus, not the board): `enrich_scrape_jd.py --archive-only`, 90-min budget, `repo-state` group, no `continue-on-error` |
 | `30 2 * * *` | retry-unreachable | Bright Data re-fetch of flaky endpoints |
 | `0 5 * * *` | daily-digest | discovery → telegram → liveness scan → probe candidates → JD-enrich → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** → report the run's outcome |
 | — `17 6,7,8,10 * * *` | inbox relay (private repo `AnalystJobsIL/inbox`, not this repo's crons) | **the BACKUP since 2026-08-28.** The relay's real trigger is now `on: push` to `receipts/**`, which `daily-digest`'s last step writes the moment a digest has landed — digest → email via issue+mention, content-hash dedup |
@@ -3486,6 +3487,68 @@ worked and changed nothing. With `lists`, 2,835.
 Comeet (36 seen_ids) and Ashby (8) are deliberately out of scope: neither has a per-job
 endpoint, and re-reading a whole board belongs to `ats-fetch` (`docs/BACKLOG.md` 375).
 
+### The archive pool, and the cooldown that ate the queue
+
+*Added 2026-08-29, and the headline is a measurement of this layer in production.* Across the
+four digest runs of 08-26 → 08-29 the two backfill drivers filled **6, 0, 1, 0** descriptions
+and **0 of them through Bright Data**, with the credentials present the whole time. On 08-29 the
+scrape step used **3 seconds of its 30-minute budget** and the matched step 8 of its 25. Both
+steps were green, both are `continue-on-error`, and nothing in the mail said otherwise.
+
+Three causes, and none of them was the account:
+
+1. **The cooldown parked every rung, not the expensive one.** One `_jd_attempted` date per url
+   suppressed the native GET, the plain GET and the Unlocker alike for seven days, so the todo
+   was 13 of 13 parked on 08-27, 20 of 21 on 08-28, 18 of 20 on 08-29. The free rungs cost about
+   a second; only the paid one is worth a week. `run_backfill(free_rungs_ignore_cooldown=True)`
+   now walks a cooled row on the free rungs and passes `bd=None`, counting it `paid_cooldown`.
+   The stamp becomes an **ordering** key rather than a skip — which is what makes a budgeted
+   pass resume where it stopped instead of restarting on the same prefix.
+2. **The Unlocker had never once rendered JavaScript.** `Unlocker.__call__` posted
+   `{zone, url, format: "raw"}`, and `validate_bd.py`'s docstring says "the Unlocker renders JS".
+   It does not unless asked. Measured 2026-08-29 on HiBob's job page: `raw` returns the same
+   **1,342-byte Angular shell (7 characters of text)** the free GET already had — for a credit —
+   while `"render": true` returns **63,293 bytes carrying the posting**. (`x-unblock-render` as a
+   header and `data_format: markdown` do nothing.) Every paid body this layer ever got back from
+   a JavaScript site was that shell, which is what `bd-shell` had been recording all along.
+   A page the free rung read as a shell now renders on the first paid call.
+3. **The title gate decided what to KEEP.** See below.
+
+**Two pools, one budget.** `enrich_scrape_jd._todo` returns the TITLE pool (what the classifier
+could accept) and the ARCHIVE pool (every other Israel-passing card), and every card lands in
+exactly one counted bucket — the driver asserts the sum, because silent exclusion has caught
+this layer twice. The title pool runs **first, with the whole budget**, so it cannot be starved
+by a pool forty times its size; the archive gets the remainder and walks
+`(oldest attempt, rank within company, label)`, a round robin that reaches every employer's
+first card before any employer's second. Measured on the committed cache, 2026-08-29:
+**1,718 cards → 28 title, 1,204 archive**, with 447 refused as listing pages, 27 duplicate urls,
+3 chrome and **0 dropped by the Israel filter** (that last is a canary, not a filter: it is 0
+because every scrape card carries an Israeli location, and `scrape_dropped_israel` going
+non-zero is news. A card carrying NO location passes — this driver fetches text, it does not
+judge relevance, and `pipeline/run.py` re-applies the real Israel filter afterwards).
+
+**A listing page is refused in `_todo`, not in the ladder.** `run_backfill` stamps whatever it
+walks, so a search url reaching the loop is parked for a week as though it had been read — and
+on 2026-08-26 `careers.dhl.com/search-results?keywords=Israel` bought a credit. A native rung
+outranks the url rule, so a Comeet or HiBob address is a posting whatever its path looks like.
+
+**Comeet is 287 of the empty cards and the text was never ours to begin with.** All 287 sit
+behind `ats_platform=scrape` registry rows across 34 companies, so `fetchers.fetch_comeet` — the
+one code path that asks for `details=true` and reads it — never runs on them. The per-job
+`_comeet_read` rung already matches 284 of the 287 addresses, so the archive pool reaches them
+free; the durable fix is the registry converting those rows, which is `registry`'s work and is
+filed as such.
+
+**What the archive pool must say for itself.** `scrape_archive_*` in the stamp: `todo`, `filled`,
+`fail`, `skipped`, `bd`, `cycle_days` (how many days one lap takes), `minutes`, plus
+`scrape_thin_remaining` — the count of cards still without a description after the run, which is
+the denominator tomorrow's fill is read against. Without it a `0 filled` from the cron cannot be
+told from "nothing left to do", and that is precisely how three mornings went unnoticed.
+`jd-budget-spent` is **suppressed** for this pool (a 1,204-card lap is expected to run out of
+clock every night until it closes, and an alarm that fires every morning is one that gets
+trained away); what alarms instead is `scrape:archive:zero-fill(0 of N tried, M still thin)` and
+`scrape:archive:jd-starved(one lap takes N days)` above 14.
+
 **"Unfetchable" is a state, not a verdict.** A definitive failure widens the wait — 7, 14,
 28, then a standing `MAX_RETRY_DAYS` 30 (`retry_days_for`, keyed on the new `matched.jd_tries`
 column) — and **no number of failures removes a role from the pool**. A transient failure
@@ -3645,7 +3708,8 @@ a day go through that path.
 | caller | when | what it walks | Bright Data |
 |---|---|---|---|
 | `JDFiller` (`pipeline/run.py`, before `seniority.classify`) | 05:00, in the digest | every Israel-matched role whose title the classifier could accept, `JDFILL_TIME_BUDGET_MIN` (25) | never |
-| `enrich_scrape_jd.py` | 05:00, before the pipeline | cards failing `looks_like_jd`, relevance-gated, non-chrome, in `scraped_cache.json`, deduped by url | `JD_ENRICH_BD_CAP` **40**, `JD_ENRICH_TIME_BUDGET_MIN` 25 |
+| `enrich_scrape_jd.py` — **title pool** | 05:00, before the pipeline | cards failing `looks_like_jd`, relevance-gated, non-chrome, Israel-passing, at a job address, in `scraped_cache.json`, deduped by url | `JD_ENRICH_BD_CAP` **1000**, `JD_ENRICH_TIME_BUDGET_MIN` 25 |
+| `enrich_scrape_jd.py --archive-only` — **archive pool** | `jd-archive.yml`, 01:30 (§4) | every OTHER Israel-passing card: the ones the title gate drops. Oldest attempt first, round-robin over companies | the same caps; `JD_ENRICH_TIME_BUDGET_MIN` **90** in that workflow |
 | `enrich_matched_jd.py` | 05:00, before the pipeline | every LIVE `matched` row failing `looks_like_jd`, any age, any source | `MATCHED_JD_BD_CAP` **25**, `MATCHED_JD_TIME_BUDGET_MIN` 20 (yml) |
 
 The two caps were 400 and 250 until 2026-08-26 — 650 credits a day, 13 % of the monthly pool in
@@ -3653,6 +3717,23 @@ one morning, against a shared allowance that stood at **118 % (5,906 / 5,000, pr
 7,042)**. Measured need over the three preceding days: 7, 0, 1 for the scrape driver and 4, 2, 3 for
 the matched one. They are runaway backstops, not
 an allowance.
+
+**The scrape cap went back to 1,000 on 2026-08-29, and that is not a reversal of the 08-26
+reasoning.** Bright Data is unlimited for the rest of August and the September ceiling is
+enforced in ONE place that reads the live account (`pipeline/bd_budget.py`), so a per-run count
+here is a circuit breaker and nothing else. At 40 it would have bound on the first archive
+night — 1,204 cards — and truncated the pass **while reporting success**, which is the same
+defect shape as the cooldown described below. `bd-capped` is an alarm when it bites.
+
+**What actually bounds the paid rung now is the RENDER budget, not credits.** `RENDER_CAP` = 60
+per run (`JD_ENRICH_RENDER_CAP`). Measured on the first archive pass: nineteen consecutive
+rendered calls each timed out at 90 s — 28 minutes of a 90-minute budget for nothing — before
+`Unlocker`'s failing-streak breaker opened and the remaining 98 candidates reported
+`bd-unavailable`. Past the render budget a shell is **skipped, not bought raw**: an unrendered
+credit on a JavaScript page returns exactly the shell the free rung already read. That refusal
+is `bd-render-capped`, and it is **transient** — it is this run's budget speaking, not a verdict
+about the page, and parking it for seven days would put the one class of page rendering is FOR
+out of reach.
 
 **The matched backfill knows which roles still exist.** It reads `cloud_state/roles.jsonl` (the
 `roles` lane's ledger, §7c) and skips anything `closed` or `superseded`: on 08-26 the SQL handed it four rows (superseded is excluded there) and two of them were
@@ -3687,12 +3768,21 @@ The root cause is that `merge_duplicates` never carries the longest description 
 canonical, which is `pipeline/store.py` (`docs/BACKLOG.md` 260, `roles`); this rung is the
 backstop and stays useful for any role whose canonical address cannot be read.
 
-The native rung is derived from the **public job URL alone** (host + path; the `matched`
-table has no platform column and a job dict has no `api_url`): Workday
-`/wday/cxs/{host label}/{site}/job/…` (tenant == host label on all registry rows —
-`test_native_url_is_derived_from_the_public_url_alone`; a trailing `/apply` segment is
-dropped), SmartRecruiters `api.smartrecruiters.com/v1/companies/{token}/postings/{id}`,
-BambooHR `/careers/{id}/detail`, comeet.com pages (the posting is embedded as JSON sections),
+The native rung is derived from the **public job URL, plus the company's own registry row for
+the two cases that need it** (`matched` has no platform column and a job dict has no `api_url`,
+but every caller knows the company): Workday `/wday/cxs/{tenant}/{site}/job/…`, where the tenant
+comes from the company's `api_url` when that row is a Workday board **on the same host** and
+falls back to the host label otherwise — Workday lets the two differ, and Ribbon Communications
+is `vhr-genband` with tenant `vhr_genband` (`_registry_wd_tenant`,
+`test_native_url_takes_the_workday_tenant_from_the_registry_when_it_differs_from_the_host`; a
+trailing `/apply` segment is dropped). The same-host guard is load-bearing: it is what keeps a
+Workday 404 authoritative, because an address built from some other board's tenant would 404 for
+a live role. Then SmartRecruiters `api.smartrecruiters.com/v1/companies/{token}/postings/{id}`,
+BambooHR `/careers/{id}/detail`, HiBob `{tenant}.careers.hibob.com/api/job-ad/{uuid}/application-form`
+(**the one rung that needs a header** — a same-host `Referer`, or the API answers 401; found by
+tracing the page on 2026-08-29, and deliberately **not authoritative**, since a path rename would
+404 for every posting at once and a terminal 404 never comes due again),
+comeet.com pages (the posting is embedded as JSON sections),
 Greenhouse `boards-api…/boards/{slug}/jobs/{id}` incl. `?gh_jid=` embeds (slug: the registry's
 greenhouse token for that company, then the name, then the host label). Measured live
 2026-08-24: Workday 4,616 chars, Comeet 4,334, Greenhouse 6,000, SmartRecruiters 2,799,
@@ -3719,6 +3809,12 @@ its `alarm` in the bold `- **Stages:**` line (`stages.alarms("enrich")`).
 | `*_why` | the failure histogram, `no-markers2+timeout1` — `scrape_fail=6` alone cannot tell a WAF from a 404 from a parser regression |
 | `*_skipped` · `scrape_dropped_title` | the budget cut this many; the title gate removed this many (934 of 1,240 cards on 08-26, counted nowhere before) |
 | `matched_dead` · `matched_short` · `matched_from_cache` · `matched_foreign_sibling` · `*_probe` | roles that no longer exist · roles still without text after the run · roles filled from another of their own addresses · addresses refused because they name a different company · canary fetches |
+| `*_bd_ok` vs `*_bd_shell` | **bodies the account returned**, and how many of those held no posting. On 2026-08-29 `scrape_bd_ok=2` read as two successes and both were the same Angular shell: `bd_ok - bd_shell` is what the credits bought |
+| `*_bd_rendered`, `scrape_render_capped` | paid calls that asked for JavaScript, and whether the render budget ran out |
+| `*_bd_parked` | calls refused because that host had already returned `host_breaker` (3) bodies with no posting in them this run |
+| `*_paid_cooldown` | rows the free rungs worked while the PAID rung stayed parked — the number that used to be `cooldown`, i.e. not worked at all |
+| `scrape_archive_*` | the archive pool's own counters (see above); `scrape_thin_remaining` is the denominator for tomorrow |
+| `scrape_not_job_url`, `scrape_dropped_israel` | cards refused as listing pages, and the Israel canary |
 
 Every clause that applies is printed, joined with `; ` and prefixed by the driver
 (`matched:bd-capped(…); matched:jd-budget-spent(…)`). It returned a single string until

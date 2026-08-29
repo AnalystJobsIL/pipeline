@@ -1,0 +1,106 @@
+name: JD archive backfill (cloud)
+
+# Fetches a job description for the cards the TITLE gate drops — the corpus, not the board.
+# `enrich_scrape_jd.py`'s title pool still runs inside the digest at 05:00; this walks
+# everything else in `scraped_cache.json` on its own clock, because that pool is ~1,200 cards
+# and the digest's step has 30 minutes on the mail's critical path.
+#
+# WHY IT IS SAFE TO RUN LONG: `concurrency: repo-state`. `daily-digest.yml` is alone in its own
+# group, so nothing here can delay the mail — and this job writes `scraped_cache.json`, which
+# `scrape-refresh.yml` also writes, so sharing the group is what serialises the two. The HOUR
+# is nearly irrelevant: GitHub dispatches these crons when it feels like it (scrape-refresh is
+# scheduled 00:00 and started 04:44, 07:49, 05:41, 00:39, 00:38 on its last five real runs;
+# retry-unreachable is scheduled 02:30 and started 09:14 on 2026-08-29). So this pass assumes
+# NOTHING about running before the digest, or about yesterday's run having finished: it is
+# idempotent within a day (a filled card carries a description and is skipped) and resumable
+# across days (cards are walked oldest-attempt-first, so tonight starts where last night
+# stopped and never re-walks the same prefix).
+#
+# NOT `continue-on-error`. 36 of this repo's 80 named steps are, and that is why four days of
+# zero yield went unseen. If the pass fails, this workflow is red.
+
+on:
+  schedule:
+    - cron: "30 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repo-state
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    # A circuit breaker, not the budget. The BUDGET is JD_ENRICH_TIME_BUDGET_MIN below, and it
+    # is deliberately smaller: `repo-state` already carries scrape-refresh (78 min observed),
+    # retry-unreachable (50), auto-expand twice daily, firmographics, listing-hunt, triage-dark
+    # and a 330-minute Sunday audit, all queued behind each other. Reserving 150 minutes of a
+    # serialised group on an ESTIMATE is how a queue starves.
+    timeout-minutes: 170
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Fetch descriptions for the cards the title gate drops
+        env:
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          # 90 minutes for the first week, then raise it on the MEASURED number the run
+          # prints (`U min used`, and `scrape_archive_cycle_days` in the stamp). A budget
+          # nobody has measured that silently truncates is the same defect as a binding cap.
+          JD_ENRICH_TIME_BUDGET_MIN: "90"
+          # Runaway backstops. `bd-capped` is an ALARM when either bites, never a clean stop.
+          JD_ENRICH_BD_CAP: "1000"
+          JD_ENRICH_CAP: "4000"
+        run: python enrich_scrape_jd.py --archive-only
+
+      - name: What this run produced
+        # CLAUDE.md rule 1: say what it PRODUCED, where a human sees it. The same numbers reach
+        # the morning mail through the `enrich` stamp, so a night of zero fills is visible
+        # without anyone opening a run log — which is how 08-27, 08-28 and 08-29 went unnoticed.
+        if: always()
+        run: |
+          python - >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json
+          try:
+              e = json.load(open("cloud_state/pipeline_stages.json", encoding="utf-8"))["enrich"]
+          except Exception as exc:
+              print(f"- enrich stamp unreadable: {exc}")
+          else:
+              print(f"- archive: **{e.get('scrape_archive_filled', 0)} filled** of "
+                    f"{e.get('scrape_archive_todo', '?')} due, "
+                    f"{e.get('scrape_archive_skipped', 0)} left for tomorrow, "
+                    f"one lap {e.get('scrape_archive_cycle_days', '?')} days, "
+                    f"{e.get('scrape_archive_minutes', '?')} min used")
+              print(f"- still thin: **{e.get('scrape_thin_remaining', '?')} cards** "
+                    f"(the denominator tomorrow's fill is read against)")
+              calls, shell = e.get("scrape_bd_calls", 0), e.get("scrape_bd_shell", 0)
+              print(f"- Bright Data: {calls} calls ({e.get('scrape_bd_rendered', 0)} rendered), "
+                    f"{shell} bodies with no posting in them, {e.get('scrape_archive_bd', 0)} filled"
+                    if calls else "- Bright Data: 0 calls")
+              if e.get("alarm"):
+                  print(f"- **alarm:** {e['alarm']}")
+          PY
+        continue-on-error: true
+
+      - name: Registry invariants gate the commit
+        # deliberately NOT continue-on-error, and the same policy every other workflow follows
+        # (ARCHITECTURE §4): a broken registry makes the job red here, and persist_state.py
+        # below still lands every path this job owns.
+        run: python check_invariants.py
+
+      - name: Commit the enriched cache
+        # One delivery path for every workflow (persist_state.py, lane: infra). `if: always()`
+        # so a timeout or a failed step does not discard the night's fetches — the driver also
+        # checkpoints the cache every 100 saves, because a runner SIGTERM runs no `finally`.
+        if: always()
+        timeout-minutes: 10
+        run: |
+          python persist_state.py commit --as "jd-bot" \
+            -m "jd archive: descriptions for the cards the title gate drops $(date -u +%F) [skip ci]" \
+            --own scraped_cache.json cloud_state/pipeline_stages.json

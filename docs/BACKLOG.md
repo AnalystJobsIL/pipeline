@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**475 filed · 355 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**480 filed · 360 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 428.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 433.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -88,7 +88,7 @@ closure convention in the header.
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 113 open
+### registry — 114 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -203,6 +203,7 @@ closure convention in the header.
 - **425** `425@registry` **7 active rows embed a Comeet board the identity gate structurally cannot admit**
 - **426** `426@registry` **A git worktree has no `secrets.env`, so every paid rung silently no-ops**
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
+- **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
 ### infra — 81 open
 
@@ -288,6 +289,34 @@ closure convention in the header.
 - **388** `388@infra` **`persist_state.shrank()` cannot see the loss it was written for, on the store where it
 - **407** `407@infra` **`check_invariants` check D and `registry_health.orphans()` only range over PARKED rows,
 
+### scraper — 25 open
+
+- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
+- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
+- **90** `90@scraper` **Per-job strategy provenance in the cache**
+- **154** `154@scraper` **`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the
+- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
+- **219** `219@scraper` **Strategy 5's model, measured once**
+- **220** `220@scraper` **A `links:` carry has no ceiling**
+- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
+- **222** `222@scraper` **`pipeline/llm.py`
+- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
+- **235** `235@scraper` **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
+- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
+- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence** *(closed by a later bullet, original never edited)*
+- **245** `245@scraper` **The synthetic worker dicts do not carry the fields the real one does** *(closed by a later bullet, original never edited)*
+- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
+- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
+- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
+- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
+- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
+- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
+- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
+- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
+- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
+- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
+- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
+
 ### company-intel — 24 open
 
 - **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
@@ -315,34 +344,7 @@ closure convention in the header.
 - **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
 - **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
 
-### scraper — 24 open
-
-- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
-- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
-- **90** `90@scraper` **Per-job strategy provenance in the cache**
-- **154** `154@scraper` **`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the
-- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
-- **219** `219@scraper` **Strategy 5's model, measured once**
-- **220** `220@scraper` **A `links:` carry has no ceiling**
-- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
-- **222** `222@scraper` **`pipeline/llm.py`
-- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
-- **235** `235@scraper` **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
-- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
-- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence** *(closed by a later bullet, original never edited)*
-- **245** `245@scraper` **The synthetic worker dicts do not carry the fields the real one does** *(closed by a later bullet, original never edited)*
-- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
-- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
-- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
-- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
-- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
-- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
-- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
-- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
-- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
-- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
-
-### discovery — 20 open
+### discovery — 21 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -364,6 +366,7 @@ closure convention in the header.
 - **336** `336@discovery` **theorg.com is the best-shaped company directory found so far and is unbuilt** —
 - **337** `337@discovery` **The secrethunter catalog's own-domain and job-title data has no honest route, and the
 - **340** `340@discovery` **`pipeline/aggregators.py` does not know the Israeli job boards, and the hunt will
+- **428** `428@discovery` **`discovered_cache.json` has no archive pass, and it is 1,919 thin cards of 1,950** —
 
 ### docs — 19 open
 
@@ -406,7 +409,7 @@ closure convention in the header.
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 
-### jd-text — 9 open
+### jd-text — 10 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -417,8 +420,9 @@ closure convention in the header.
 - **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
 - **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
 - **421** `421@jd-text` **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
+- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
 
-### roles — 8 open
+### roles — 9 open
 
 - **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
 - **143** `143@roles` **`roles.tenant_slug` is not a tenant**
@@ -428,6 +432,7 @@ closure convention in the header.
 - **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
 - **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
 - **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
+- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
 
 ### classifier — 7 open
 
@@ -6909,6 +6914,16 @@ Record: `docs/sessions/2026-08-28-registry-evening.md`. Numbers re-derived again
     read from `companies.csv`, or the test narrowing its claim, which is currently "every
     Workday row in the registry must round trip" and is false of Workday in general.
 
+    **CLOSED 2026-08-29 by `jd-text`, and BOTH halves were needed.** `_registry_wd_tenant`
+    reads the tenant from the company's own registry `api_url` when that row is a Workday board
+    **on the same host**, falling back to the host label; the same-host guard is what keeps a
+    Workday 404 authoritative, since an address built from another board's tenant would 404 for
+    a live role. And the test was the deeper defect: it looped over the LIVE `companies.csv`, so
+    a cron writing a legitimate row turned master red for every lane and the cheapest way to
+    green was to park a row that had verified 1/1 IL. It is now three fixture tests with
+    `_registry_rows` monkeypatched (host-label default, registry override, and an other-host
+    row that may NOT rewrite an address).
+
 399. **`notes.append` can still evict an unprotected pool token at the cap, and the residue is
     measured** — lane: `registry`, filed 2026-08-28 while closing 379.
     `pipeline/notes.append` can still evict an unprotected pool token at the 220-char cap:
@@ -7453,3 +7468,56 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     a whole-file write means the last one to finish discards the rest), while
     `queue_receipt.json` is a receipt and takes `ours`.
     change, or `docs/check_docs.py` will keep reporting a fully-wired repo.
+
+## From the jd-text lane, 2026-08-29 (the archive pool)
+
+428. **`discovered_cache.json` has no archive pass, and it is 1,919 thin cards of 1,950** —
+    lane: `discovery` (it owns that file; `jd-text` owns the driver that would do the work).
+    The scrape cache now gets one (`enrich_scrape_jd --archive-only`, `jd-archive.yml`). The
+    discovery cache does not, and its shape is different: **1,658 `il.linkedin.com`, 151
+    `secrethunter.io`, 92 `il.indeed.com`, 18 `jobs.workable.com`** — 243 of those are already
+    `_UNFILLABLE` hosts and must stay refused, leaving **~1,678 LinkedIn guest pages**. The
+    inline `JDFiller` already fills the title-passing ones during classification (105 of 132
+    inline fills on 2026-08-29 were `html`), so the open question is only the archive half:
+    whether a LinkedIn guest page is worth keeping in the corpus at all, given that 13 rows of
+    it turned out to be a sign-in form on 2026-08-28. Decide before building.
+
+429. **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+    lane: `roles`. HiBob | Senior Business Analyst on 2026-08-29: the `scraped_cache.json` card
+    carried `_jd_attempted: 2026-08-29` while `cloud_state/roles.jsonl` carried
+    `jd_attempted: ""`. `roles.py:320` takes `max()` over the row's and the record's values, but
+    the card's key is `_jd_attempted` (underscore-prefixed) and is never mapped onto the record,
+    so the ledger cannot learn that the scrape driver already tried. Effect: the matched
+    driver's oldest-attempt-first ordering (`enrich_matched_jd.py:397`) treats such a row as
+    never attempted, for ever. Found by `jd-text` while fixing the ledger census test.
+
+430. **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
+    their cards are stored with an EMPTY description** — lane: `registry`. `fetch_comeet`
+    (`pipeline/fetchers.py:212`) asks for `details=true` and reads the `details` sections, and
+    it is the only code path that does — but it never runs on these rows, because they are
+    `scrape` rows. `scrape_universal` harvests them as bare link cards. The digest already
+    warns about this class (`26 scrape rows on an ATS host`), and `drain_queue.comeet_from_hosted_page`
+    (`drain_queue.py:189-191`) already builds the api url from the hosted page for free. The
+    top ten by card count: Infinidat 30, Majestic Labs ai 28, VAST Data 20, Quantum Machines 18,
+    Exodigo 16, Gini Apps 14, Crossriver 13, DealHub.ai 13, Legit Security 13, Orbit
+    Communication Systems 13. `jd-text`'s archive pool reaches all 284 that carry a per-job
+    address, on the free rung — this item is the durable fix, which is to convert the rows so
+    the text arrives with the fetch.
+
+431. **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
+    failure COUNT, so the JD backoff cannot exist for a cache card** — lane: `scraper`.
+    `enrich_matched_jd` widens 7 → 14 → 28 → 30 days on `matched.jd_tries`; the scrape driver
+    has no equivalent, because any `_jd_tries` key it wrote would be dropped by the nightly
+    rebuild and the backoff would look live while being dead. One line in `_carry_jd`'s
+    `same_address` branch would fix it, after which `jd-text` adds `tries=` to its `Item` and
+    increments on definitive failure (the pattern is `enrich_matched_jd.py:552-554`).
+
+432. **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
+    lane: `jd-text`, and it may be nobody's. Measured on the first archive pass, 2026-08-29:
+    of ~130 paid calls, 7 returned a usable body, 12 `no-markers`, 3 `shell` and **19
+    consecutive timeouts**, after which `failing-after-20` opened the breaker and the remaining
+    98 candidates reported `bd-unavailable` — correct behaviour, but it means one slow class of
+    page can end the paid rung for a whole run. `RENDER_CAP` (60) now bounds the wall clock
+    that class can consume, and the ceiling is a guess: re-measure after a week of
+    `jd-archive.yml` runs and decide between a longer per-render timeout, a lower cap, or
+    routing rendered calls through a separate breaker.

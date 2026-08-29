@@ -376,6 +376,12 @@ def _run(args, stamp):
         return 0
     conn = sqlite3.connect(args.db)
     _ensure_columns(conn)
+    # Bound BEFORE anything can append to it. Until 2026-08-29 the first binding was below the
+    # re-clean, so the refused-re-clean clause -- "the loudest thing the layer can say" --
+    # raised UnboundLocalError, the driver died into `matched:crash:UnboundLocalError`, and
+    # the step was green (continue-on-error). The test that covered the refusal called
+    # `_reclean` directly and never walked this function.
+    alarms = []
     # COALESCE, not a bare `!=`: insert_matched writes NULL and roles.reconcile writes '', and
     # `status != 'superseded'` is NULL for every NULL row — which would silently select
     # nothing and, before the `jd-nothing-attempted` alarm existed, say nothing about it.
@@ -417,12 +423,23 @@ def _run(args, stamp):
     # calls incomplete joins the todo exactly as a row that failed `looks_like_jd` does --
     # the two verdicts differ in how they were reached, never in what happens next.
     incomplete, q = _quality_pass(conn, every, args.dry_run)
+    if q["candidates"] and q["unavailable"] and q["unavailable"] >= q["calls"]:
+        # Every call the tier made came back with no verdict: the model was down for the
+        # whole run (2026-08-29: 7 candidates, 7 calls, 7 unavailable, and the bold line said
+        # nothing -- `alarm_for` reads `run_backfill`'s counter and has never seen `q`). The
+        # cheap rule stands on every candidate, which is the documented fallback, but a
+        # fallback the mail cannot distinguish from a success is exactly the failure class
+        # ARCHITECTURE.md section 8 is about. Cached verdicts do not count against the tier.
+        why = "+".join(f"{k[4:]}{v}" for k, v in sorted(q.items()) if k.startswith("why:"))
+        alarms.append(f"matched:jd-quality-unavailable({q['unavailable']} of {q['candidates']} "
+                      f"candidates{': ' + why if why else ''})")
     rows = [r for r in every if not looks_like_jd(r[6]) or r[0] in incomplete]
     n_ok = len(every) - len(rows)
 
     state_dir = os.path.dirname(os.path.abspath(args.db))
     dead, ledger_status = dead_role_ids(os.path.join(state_dir, "roles.jsonl"))
-    alarms = [] if dead is not None else [f"matched:ledger-{ledger_status}"]
+    if dead is None:
+        alarms.append(f"matched:ledger-{ledger_status}")     # append, never rebind
     # The ledger no longer REMOVES a row from the todo. Until 2026-08-28 a closed or purged
     # role was dropped here, which is why the driver had never once looked at Mobileye two
     # rows: they carried `jd_attempted = ''` since 2026-08-16 and nothing was ever going to
@@ -613,6 +630,8 @@ def _run(args, stamp):
                       matched_foreign_sibling=foreign, matched_bd_calls=bd.used,
                       matched_bd_ok=bd.ok, matched_skipped=c["skipped_budget"],
                       matched_probe=c["probe"], matched_short=short_left,
+                      matched_bd_shell=c["bd_shell"], matched_bd_rendered=getattr(bd, "rendered", 0),
+                      matched_bd_parked=c["bd_parked"],
                       matched_ok=n_ok, matched_archived=len(items_archived),
                       matched_llm_calls=q["calls"], matched_llm_cached=q["cached"],
                       matched_llm_rejected=q["rejected"],
