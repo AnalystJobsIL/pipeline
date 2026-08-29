@@ -90,10 +90,10 @@
  },
  "firmo": {
   "date": "2026-08-29",
-  "failed": 3,
-  "finished_at": "2026-08-28T23:31:19+00:00",
-  "records": 1186,
-  "researched": 53
+  "failed": 6,
+  "finished_at": "2026-08-29T15:01:09+00:00",
+  "records": 1247,
+  "researched": 61
  },
  "publish": {
   "board": 91,
