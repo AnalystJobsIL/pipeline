@@ -47,6 +47,10 @@ import re
 
 PATH = os.path.join("cloud_state", "board_verify.json")
 BOARD_VERIFY_DAYS = 30          # a verdict older than this is re-earned, like every pool
+UNVERIFIABLE_DAYS = 7           # ...and "we could not read it" is re-tried sooner, but NOT
+                                # on every run: 111 rows were unreadable through all three
+                                # fetch routes, and a nightly `--limit 60` that re-asked them
+                                # every night would never reach a row nobody had read.
 MIN_PAGE = 2000                 # the shell floor `confirm_zero` uses; a 404 body is ~27 chars
 MODEL = os.environ.get("BOARD_VERIFY_MODEL", "opus")
 
@@ -144,16 +148,42 @@ def key(name, url):
 
 
 def cached(state, name, url, days=BOARD_VERIFY_DAYS):
-    """A fresh verdict for this exact (name, url), or None. An `UNVERIFIABLE` is NOT reused —
-    it means we failed to look, and the next run should look again."""
+    """A fresh verdict for this exact (name, url), or None.
+
+    An `UNVERIFIABLE` is never returned as an ANSWER -- it means we failed to look -- but it
+    is still a dated record, and `due()` reads it so the same unreadable page is not paid for
+    again tonight.
+    """
     rec = (state or {}).get(key(name, url))
     if not rec or rec.get("verdict") == UNVERIFIABLE:
         return None
+    if _age(rec) is None:
+        return None
+    return rec if _age(rec) <= days else None
+
+
+def _age(rec):
     try:
-        age = (dt.date.today() - dt.date.fromisoformat(rec.get("date", "1970-01-01"))).days
+        return (dt.date.today() - dt.date.fromisoformat(rec.get("date", "1970-01-01"))).days
     except Exception:                                             # noqa: BLE001
         return None
-    return rec if age <= days else None
+
+
+def due(state, name, url, days=BOARD_VERIFY_DAYS, unreadable_days=UNVERIFIABLE_DAYS):
+    """Should this address be (re-)read tonight? The SELECTOR, distinct from the answer.
+
+    Returns (due, priority) with priority 0 for an address nobody has ever read and 1 for a
+    re-read, so a bot-walled page can never crowd out a row that has no verdict at all.
+    """
+    rec = (state or {}).get(key(name, url))
+    if not rec:
+        return True, 0
+    age = _age(rec)
+    if age is None:
+        return True, 0
+    if rec.get("verdict") == UNVERIFIABLE:
+        return age >= unreadable_days, 1
+    return age > days, 1
 
 
 def is_ok(state, name, url, days=BOARD_VERIFY_DAYS):

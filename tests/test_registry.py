@@ -7374,3 +7374,110 @@ def test_the_queue_drain_is_actually_scheduled():
     for f in ("cloud_state/board_verify.json", "cloud_state/queue_state.json",
               "research_companies.json"):
         assert f in own, "%s is written by the run but never committed" % f
+
+
+def test_an_unreadable_page_cannot_consume_every_night():
+    """`UNVERIFIABLE` is re-asked on a CADENCE, not on every run.
+
+    `cached()` refuses to reuse it as an ANSWER, and that is right -- it means we failed to
+    look. But the selector then re-picked those rows on the very next run, and the cloud step
+    is `--limit 60`: with 111 rows unreadable through all three fetch routes, the nightly
+    would re-read the same 111 for ever and never reach a row nobody had read. Green step,
+    spent credits, no progress."""
+    import datetime as _dt
+    from pipeline import board_verify as BV
+    today = _dt.date.today().isoformat()
+    yesterday = (_dt.date.today() - _dt.timedelta(days=1)).isoformat()
+    old = (_dt.date.today() - _dt.timedelta(days=10)).isoformat()
+
+    st = {BV.key("Fresh", "u"): {"verdict": BV.UNVERIFIABLE, "date": today},
+          BV.key("Stale", "u"): {"verdict": BV.UNVERIFIABLE, "date": old},
+          BV.key("Passed", "u"): {"verdict": BV.OK, "date": yesterday}}
+
+    assert BV.due(st, "Fresh", "u")[0] is False, (
+        "an address we failed to read today must not be paid for again tonight")
+    assert BV.due(st, "Stale", "u")[0] is True, "...but a week later it is re-tried"
+    assert BV.due(st, "Passed", "u")[0] is False
+    assert BV.due(st, "Unseen", "u") == (True, 0), "never read = due, and FIRST"
+    assert BV.due(st, "Stale", "u")[1] == 1, "a re-read never outranks an unread address"
+
+    # and it is still never an ANSWER, whatever the cadence says
+    assert not BV.is_ok(st, "Fresh", "u") and not BV.is_ok(st, "Stale", "u")
+
+
+def test_a_settled_name_does_not_sit_in_the_queue_looking_owed(tmp_path, monkeypatch):
+    """A name a rung already answered must leave the queue file.
+
+    `queue_resolve_search` skips a settled name by design, so one left in the queue reads as
+    owed while NO cadence can reach it. The stuck alarm found exactly two -- `Infrastructure
+    Team` (`junk`) and `Residenthome` (`resolved`, then `found`) -- and both were bookkeeping,
+    not research. This is a LOOKUP: the verdict already existed, so no model and no fetch."""
+    import json
+    import queue_pipeline as QP
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    (tmp_path / QP.QUEUE).write_text(json.dumps(
+        [{"name": "Settled Co"}, {"name": "Still Owed"}]), encoding="utf-8")
+
+    import queue_state as QS
+    st = {}
+    QS.record(st, "Settled Co", "own-site", "junk", day="2026-08-29")
+    QS.save(st, str(tmp_path / "cloud_state" / "queue_state.json"))
+    monkeypatch.setattr(QS, "PATH", str(tmp_path / "cloud_state" / "queue_state.json"))
+
+    assert QP.retire_settled(apply=True) == 1
+    left = {e["name"] for e in json.loads((tmp_path / QP.QUEUE).read_text(encoding="utf-8"))}
+    assert left == {"Still Owed"}, left
+    rec = json.loads((tmp_path / QP.DISPOSE_PATH).read_text(encoding="utf-8"))
+    assert rec["Settled Co"]["evidence"]["queue_state_verdict"] == "junk", (
+        "a prune must always name the verdict it rests on")
+
+
+def test_owed_and_stuck_are_not_the_same_number(tmp_path, monkeypatch):
+    """`owed` is two states and only one is a problem.
+
+    ~45% of judged names come back `cannot-tell`: a real employer whose board we have not
+    found. That is the honest verdict, and the operator's standard says such a name is one to
+    keep hunting -- so the queue reaching zero was never the target. A name NO cadence can
+    reach is, because it never resolves itself. The stamp alarms on the second, not the first.
+    """
+    import queue_pipeline as QP
+    import queue_state as QS
+    st = {}
+    QS.record(st, "Retried Nightly", "search-llm", "no-candidate", day="2026-08-01")
+    QS.record(st, "Answered Already", "own-site", "junk", day="2026-08-01")
+    assert QP._on_a_cadence("Never Touched", st), "an untried name is picked up tonight"
+    assert QP._on_a_cadence("Retried Nightly", st), (
+        "a name whose attempt ages out is retried -- that is owned, not stuck")
+    assert not QP._on_a_cadence("Answered Already", st), (
+        "a settled name is skipped by every rung, so sitting in the queue makes it STUCK")
+
+
+def test_a_search_never_follows_a_render_in_one_process():
+    """`deep_validate.unlock` returns "" once Playwright has run in the same process, so a
+    search that FOLLOWS a scrape yields nothing -- and the caller reads that as "this company
+    has no board". Interleaving them produced 24 `no-search-results` of 25 on names including
+    `Teva`, `Gong.io` and `Taldor`: a broken run wearing the clothes of a measurement.
+
+    Every entrypoint that both searches and renders must therefore do ALL searches first. This
+    walks the source rather than the behaviour, because the failure is silent by nature."""
+    import ast
+    import io
+
+    for path, func in (("queue_pipeline.py", "addressless"),
+                       ("queue_resolve_search.py", "main")):
+        tree = ast.parse(io.open(path, encoding="utf-8").read())
+        fn = next(n for n in ast.walk(tree)
+                  if isinstance(n, ast.FunctionDef) and n.name == func)
+        # the loop that searches must not also score: find every for-loop and check that no
+        # single one calls both
+        for loop in [n for n in ast.walk(fn) if isinstance(n, (ast.For, ast.While))]:
+            called = {n.func.attr for n in ast.walk(loop)
+                      if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)}
+            called |= {n.func.id for n in ast.walk(loop)
+                       if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+            assert not ({"search_one"} & called and {"score_one"} & called), (
+                "%s.%s interleaves search and render in one loop: every later search will "
+                "silently return nothing" % (path, func))

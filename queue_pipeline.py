@@ -70,9 +70,13 @@ def from_queue(r):
 
 
 def needs_verify(r, state):
-    """Rows whose address is live and unverified: every parked monitor, and every ACTIVE row
-    this lane wrote from the queue. A row whose address a model has already passed within the
-    cadence is skipped, so a re-run is cheap and idempotent."""
+    """Is this row's address in scope AND due for a read? (see `verify_priority` for order)
+
+    Scope: every parked monitor, and every ACTIVE row this lane wrote from the queue. Due:
+    `board_verify.due` -- never read, or a verdict past its cadence, or unreadable more than
+    a week ago. A row whose address a model passed within the cadence is skipped, so a re-run
+    is cheap and a nightly run always advances.
+    """
     from pipeline import board_verify as BV
     if len(r) < 6 or not (r[3] or "").startswith("http"):
         return False
@@ -80,14 +84,20 @@ def needs_verify(r, state):
     is_queue_active = r[4] == "true" and from_queue(r)
     if not (is_monitor or is_queue_active):
         return False
-    return not BV.is_ok(state, r[0], r[3])
+    return BV.due(state, r[0], r[3])[0]
+
+
+def verify_priority(r, state):
+    """0 = nobody has ever read this address, 1 = a re-read. Never-read rows go first."""
+    from pipeline import board_verify as BV
+    return BV.due(state, r[0], r[3])[1]
 
 
 def park_unverified(name, employer, apply=False, verdict=""):
     """Park the row and CLEAR its address. Re-reads the file immediately before the write and
     matches by NAME, never by index (rule 4)."""
     from pipeline.atomic import write_csv_rows
-    from pipeline.notes import append
+    from pipeline.notes import append, replace_own
     fresh = rows()
     hit = None
     for r in fresh:
@@ -107,11 +117,20 @@ def park_unverified(name, employer, apply=False, verdict=""):
     else:
         why = ("board names %s" % employer)[:60] if employer else "not this company's board"
     seg = "wrong-url %s: %s; needs re-resolution" % (TODAY, why)
-    note = append(hit[5] if len(hit) > 5 else "", seg)
+    # `replace_own`, not `append`: this tool owns the `wrong-url` marker, so a re-park
+    # REPLACES its own previous segment instead of growing the note towards the 220-char cap.
+    note = replace_own(hit[5] if len(hit) > 5 else "", "wrong-url", seg)
     if seg not in note:
-        # the append-log refused the segment (cap/eviction). Deactivating a row whose note
-        # could not record WHY is how a row lands in no pool at all -- so do neither.
-        return False
+        # The append-log still refused it (another tool's protected segments fill the cell).
+        # The ADDRESS is the dangerous half -- `probe_candidates` fetches it daily and
+        # `listing_hunt`'s fast path can activate on it -- and the reason is not lost either
+        # way: `cloud_state/board_verify.json` holds the verdict, the employer the board
+        # really names, and the date, and it is committed. So the address is cleared and the
+        # row is routed by the token we CAN fit; refusing to act would leave a wrong board
+        # live to protect a note.
+        note = append(hit[5] if len(hit) > 5 else "", "needs re-resolution")
+        if "needs re-resolution" not in note:
+            return False                       # nothing at all fits: leave it for a human
     if not apply:
         return True
     hit[3] = ""                      # out of probe_candidates' pool: no address, no daily fetch
@@ -125,6 +144,9 @@ def verify_existing(limit=0, apply=False, allow_paid=True, shard=""):
     from pipeline import board_verify as BV
     state = BV.load()
     todo = [r for r in rows() if needs_verify(r, state)]
+    # an address nobody has read comes before one we merely failed to read, so a bot wall
+    # can never consume a `--limit 60` night on its own
+    todo.sort(key=lambda r: verify_priority(r, state))
     if shard and "/" in shard:
         i, n = (int(x) for x in shard.split("/", 1))
         todo = todo[i - 1::n]
@@ -153,6 +175,39 @@ def verify_existing(limit=0, apply=False, allow_paid=True, shard=""):
     return stats
 
 
+def _in_a_recheck_pool(r):
+    """Does any scheduled tool own this row? Asks the pools themselves, never a mirror.
+
+    A retyped copy of a pool predicate is how coverage losses got reported as owned
+    (`registry_health` records the wave-4 incident), so this imports each tool's OWN
+    membership rule.
+    """
+    try:
+        import registry_health as RH
+        pools = RH.pools([r])
+        return any(v for v in (pools or {}).values())
+    except Exception:                                             # noqa: BLE001
+        from pipeline.verdicts import TOKENS
+        return any(t in (r[5] or "") for t in TOKENS)
+
+
+def _on_a_cadence(name, qstate, days=14):
+    """Will a scheduled rung retry this name on its own?
+
+    `queue_resolve_search.targets` takes any queue name with no row, no settled verdict, and
+    no `search-llm` attempt inside `days` -- 120 a night. So a name that HAS been tried is
+    retried once its attempt ages out, and a name that has never been tried is picked up
+    immediately. The only way to fall outside is to carry a TERMINAL verdict while still
+    sitting in the queue file, which is a bookkeeping fault rather than a research one.
+    """
+    import queue_state as QS
+    e = (qstate or {}).get(name) or {}
+    tried = e.get("tried") or []
+    if not tried:
+        return True                    # never touched: the rung picks it up tonight
+    return not QS.is_settled(qstate, name, set())
+
+
 def census(stamp=False):
     """The table, from the files on disk. Reports names STILL OWED, never names with a verdict."""
     from pipeline import board_verify as BV
@@ -170,7 +225,8 @@ def census(stamp=False):
     state = BV.load()
 
     b = collections.Counter()
-    owed = []
+    owed, stuck = [], []
+    qstate = QS.load()
     for n in ever:
         r = by_name.get(n.lower())
         if r is not None:
@@ -179,13 +235,30 @@ def census(stamp=False):
             elif (r[3] or "").startswith("http"):
                 b["ROW, parked with an address (daily probe)"] += 1
             else:
-                b["ROW, parked, NO address"] += 1
+                # NO ADDRESS is two states, like `owed`. A row parked `wrong-url ... needs
+                # re-resolution` has no address ON PURPOSE -- the address was another
+                # company's and had to leave `probe_candidates`' daily pool -- and
+                # `listing_hunt.HUNT_POOL` owns it by that token. A row with no address and
+                # no token is the one nothing reaches.
+                if _in_a_recheck_pool(r):
+                    b["ROW, no address, a re-check pool owns it"] += 1
+                else:
+                    b["ROW, no address, IN NO POOL"] += 1
+                    stuck.append(r[0])
             continue
         if n in retired or (disp.get(n) or {}).get("verdict") in (
                 "no-board", "not-an-employer", "duplicate-of", "acquired-by"):
             b["retired with evidence"] += 1
             continue
-        b["STILL OWED"] += 1
+        # OWED is two states. A name a nightly rung will retry is not a problem -- the
+        # honest answer for a real company whose board we have not found yet is "keep
+        # hunting", and `queue_resolve_search` does, 120 a night on a 14-day cadence. A name
+        # NO cadence can reach is the one that never resolves itself.
+        if _on_a_cadence(n, qstate):
+            b["owed, a nightly rung retries it"] += 1
+        else:
+            b["STUCK: no cadence reaches it"] += 1
+            stuck.append(n)
         owed.append(n)
 
     unverified = sum(1 for r in rows() if needs_verify(r, state))
@@ -194,7 +267,7 @@ def census(stamp=False):
         print("  %-46s %5d" % (k, b[k]))
     print("\n  %-46s %5d" % ("rows with an UNVERIFIED live address", unverified))
     receipt = {"date": TODAY, "buckets": dict(b), "unverified_rows": unverified,
-               "owed": owed[:2000]}
+               "owed": owed[:2000], "stuck": stuck[:2000]}
     os.makedirs("cloud_state", exist_ok=True)
     from pipeline.atomic import write_json
     write_json(RECEIPT, receipt)
@@ -475,10 +548,12 @@ def stamp_queue(receipt):
     """
     from pipeline import stages
     prev = (stages._load().get("queue") or {})
-    owed = int(receipt.get("buckets", {}).get("STILL OWED", 0))
+    owed = sum(int(v) for k, v in receipt.get("buckets", {}).items()
+               if k.startswith("owed") or k.startswith("STUCK") or k == "STILL OWED")
     was = prev.get("owed")
     delta = (owed - int(was)) if was is not None else None
-    detail = {"owed": owed,
+    stuck = int(receipt.get("buckets", {}).get("STUCK: no cadence reaches it", 0))
+    detail = {"owed": owed, "stuck": stuck,
               "rows_from_queue": sum(int(v) for k, v in receipt.get("buckets", {}).items()
                                      if k.startswith("ROW")),
               "retired": int(receipt.get("buckets", {}).get("retired with evidence", 0)),
@@ -496,6 +571,10 @@ def stamp_queue(receipt):
     line += ", %d rows from the queue, %d unverified addresses" % (
         detail["rows_from_queue"], detail["unverified_rows"])
     print(line)
+    if stuck:
+        detail["stuck_alarm"] = ("%d queue names are reachable by NO cadence -- they will "
+                                 "never resolve themselves" % stuck)
+        print("::warning::%s" % detail["stuck_alarm"])
     if detail.get("alarm"):
         print("::warning::%s" % detail["alarm"])
     return detail
@@ -570,6 +649,133 @@ def apply_proposals_verified(pattern, apply=False, allow_paid=True, limit=0):
 
 
 
+def retire_settled(apply=False):
+    """Retire queue names a rung has already settled. A lookup, not a judgement.
+
+    `queue_state.is_settled` is the authority: a name carrying `resolved`, `already-a-row`,
+    `agency`, `junk` or `no-web-presence` has an answer, and `queue_resolve_search` skips it
+    by design. Leaving it in the queue file makes it read as owed while NO cadence can reach
+    it -- which is precisely what the stuck alarm exists to surface.
+    """
+    import queue_state as QS
+    from pipeline.atomic import write_json
+    try:
+        with open(DISPOSE_PATH, encoding="utf-8") as f:
+            state = json.load(f)
+    except Exception:                                             # noqa: BLE001
+        state = {}
+    with open(QUEUE, encoding="utf-8") as f:
+        queue = json.load(f)
+    qstate, have = QS.load(), {r[0].strip().lower() for r in rows()}
+
+    settled = {}
+    for e in queue:
+        n = (e.get("name") or "").strip()
+        if not n or n.lower() in have:
+            continue
+        if QS.is_settled(qstate, n, set()):
+            tried = (qstate.get(n) or {}).get("tried") or []
+            settled[n] = tried[-1].get("verdict") if tried else "settled"
+    print("queue names a rung already settled: %d" % len(settled))
+    for n, v in sorted(settled.items()):
+        print("   %-32s %s" % (n[:32], v))
+    if not settled:
+        return 0
+    if not apply:
+        print("(dry run: the queue file is untouched)")
+        return len(settled)
+
+    for n, v in settled.items():
+        state[n] = {"date": TODAY, "verdict": "settled-by-a-rung", "raw_verdict": v,
+                    "other_name": "",
+                    "why": "a rung recorded `%s` for this name; the queue entry is spent" % v,
+                    "evidence": {"queue_state_verdict": v,
+                                 "tried": [(a.get("rung"), a.get("verdict"))
+                                           for a in ((qstate.get(n) or {}).get("tried") or [])]}}
+    write_json(DISPOSE_PATH, state)
+    kept = [e for e in queue if (e.get("name") or "").strip() not in settled]
+    for n in settled:                          # the assertion every prune here carries
+        assert n in state and state[n].get("evidence"), "pruning %r with no record" % n
+    write_json(QUEUE, kept)
+    print("queue %d -> %d (%d retired on a verdict a rung had already recorded)"
+          % (len(queue), len(kept), len(queue) - len(kept)))
+    return len(settled)
+
+
+
+def addressless(apply=False, limit=0):
+    """Rows from the queue that carry no api_url. Resolve them, or route them to a pool."""
+    import subprocess
+    import queue_resolve_search as QRS
+    from pipeline import board_verify as BV
+    from pipeline.atomic import write_json
+    from pipeline.notes import append
+
+    todo = [r[0].strip() for r in rows()
+            if len(r) >= 6 and r[4] == "false" and not (r[3] or "").startswith("http")
+            and from_queue(r)]
+    if limit:
+        todo = todo[:limit]
+    print("parked rows from the queue with NO address (watched by nothing): %d" % len(todo),
+          flush=True)
+
+    # TWO PHASES, and the reason is not tidiness. `deep_validate.unlock` returns "" once
+    # Playwright has run in the same process, so a search that FOLLOWS a scrape yields
+    # nothing -- and the caller reads that as "this company has no board". Interleaving them
+    # here produced 24 `no-search-results` out of 25 on names including `Teva`, `Gong.io` and
+    # `Taldor`, which is a broken run, not a measurement (rule 2). Every search first.
+    print("phase 1 - searching %d names, no browser in this process" % len(todo), flush=True)
+    found_by = {}
+    for i, name in enumerate(todo, 1):
+        found_by[name] = QRS.search_one(name)
+        print("  s%d/%d %-32s %d urls" % (i, len(todo), name[:32],
+                                          len(found_by[name].get("urls") or [])), flush=True)
+
+    state = BV.load()
+    resolved, routed = {}, []
+    print("\nphase 2 - scoring", flush=True)
+    for i, name in enumerate(todo, 1):
+        kind, url, n_il, why = QRS.score_one(name, found_by.get(name) or {})
+        if kind != "refused" and url:
+            rec = BV.verify(name, url, state=state)
+            BV.save(state)
+            if rec.get("verdict") == BV.OK:
+                resolved[name] = ["scrape", "", url]
+                print("  [OK] %d/%d %-32s %s" % (i, len(todo), name[:32], url[:52]),
+                      flush=True)
+                continue
+            why = "%s (%s)" % (rec.get("verdict"), (rec.get("employer_named") or "")[:24])
+        routed.append(name)
+        print("  [--] %d/%d %-32s %s" % (i, len(todo), name[:32], (why or "")[:44]),
+              flush=True)
+
+    print("\nresolved %d, routed to the hunt pool %d" % (len(resolved), len(routed)))
+    if not apply:
+        print("(dry run: nothing written)")
+        return resolved, routed
+
+    if resolved:
+        write_json(os.path.join("out", "resolved_configs.json"), resolved)
+        # apply_resolved owns the re-point gates (is_foreign, board_vouches, the board
+        # collision that caught Unframe/Unframe AI). Called as a subprocess so none of them
+        # can be bypassed from here.
+        subprocess.run([sys.executable, "apply_resolved.py"], check=False)
+
+    for name in routed:
+        fresh = rows()
+        for r in fresh:
+            if r and r[0].strip().lower() == name.lower():
+                seg = "queue-search %s: no address found; needs re-resolution" % TODAY
+                note = append(r[5] if len(r) > 5 else "", seg)
+                if seg in note:                # a park nothing can explain is not a park
+                    r[5] = note
+                    from pipeline.atomic import write_csv_rows
+                    write_csv_rows(CSV, fresh)
+                break
+    return resolved, routed
+
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--verify-existing", action="store_true",
@@ -583,6 +789,10 @@ def main(argv=None):
                     help="write the queue's size AND DIRECTION into pipeline_stages.json")
     ap.add_argument("--apply-proposals", metavar="GLOB", default="",
                     help="verify every proposal in these files, then apply the survivors")
+    ap.add_argument("--retire-settled", action="store_true",
+                    help="prune queue names a rung already settled (a lookup, no model)")
+    ap.add_argument("--addressless", action="store_true",
+                    help="resolve rows that carry no api_url, or route them to a pool")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--shard", default=os.environ.get("QP_SHARD", ""))
     ap.add_argument("--no-paid", action="store_true", help="never spend a Bright Data credit")
@@ -590,12 +800,17 @@ def main(argv=None):
     a = ap.parse_args(argv)
     if a.verify_existing:
         verify_existing(limit=a.limit, apply=a.apply, allow_paid=not a.no_paid, shard=a.shard)
+    if a.retire_settled:
+        retire_settled(apply=a.apply)
+    if a.addressless:
+        addressless(apply=a.apply, limit=a.limit)
     if a.apply_proposals:
         apply_proposals_verified(a.apply_proposals, apply=a.apply,
                                  allow_paid=not a.no_paid, limit=a.limit)
     if a.dispose:
         dispose(limit=a.limit, apply=a.apply, shard=a.shard, read_pages=not a.no_page_reads)
-    if a.census or a.stamp or not (a.verify_existing or a.dispose or a.apply_proposals):
+    if a.census or a.stamp or not (a.verify_existing or a.dispose or a.apply_proposals
+                                   or a.retire_settled or a.addressless):
         census(stamp=a.stamp)
     return 0
 
