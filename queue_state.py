@@ -176,12 +176,72 @@ def census(state, queue=None, out=print):
     return by_v
 
 
+def ingest(state, paths, day=None):
+    """Fold a hunt arm's PROPOSAL FILES into the attempt log — the step that was missing.
+
+    The queue arm runs as several concurrent shards, and `queue_state.json` is one JSON
+    document: if each shard recorded its own attempts as it went, the last shard to save
+    would silently drop every other shard's names. So the shards write only their own
+    proposal file (flushed per name, so a kill costs nothing) and the attempts are folded
+    in HERE, by one process, afterwards.
+
+    Skipping this step is not cosmetic. An unrecorded attempt is an attempt that never
+    happened as far as `tried_within` is concerned, so `queue_targets` hands the same names
+    back the next night for ever — the exact re-walk this module exists to stop. On
+    2026-08-29 the fold was an ad-hoc script, was forgotten once, and 57 names were hunted
+    twice for nothing.
+
+    Idempotent: an attempt with the same (rung, verdict, date) is not appended twice, so
+    re-running over the same files is free.
+    """
+    import glob as _glob
+    day = day or dt.date.today().isoformat()
+    n_new = 0
+    for pat in paths:
+        for fn in sorted(_glob.glob(pat)):
+            try:
+                with open(fn, encoding="utf-8") as f:
+                    doc = json.load(f)
+            except Exception:                                     # noqa: BLE001
+                continue
+            stamp = (doc.get("generated") or day)[:10]
+            for p in doc.get("proposals") or []:
+                name = (p.get("name") or "").strip()
+                if not name:
+                    continue
+                rung = p.get("rung") or "hunt"
+                kind = p.get("kind")
+                if kind == "scrape":
+                    verdict = "found"
+                elif kind == "monitor":
+                    verdict = "documented"
+                else:
+                    verdict = p.get("why") or "no-listing"
+                have = [a for a in (state.get(name) or {}).get("tried") or []
+                        if a.get("rung") == rung and a.get("verdict") == verdict
+                        and a.get("date") == stamp]
+                if have:
+                    continue
+                record(state, name, rung, verdict, day=stamp,
+                       url=((p.get("evidence") or {}).get("candidate_url")
+                            or (p.get("evidence") or {}).get("url") or ""))
+                n_new += 1
+    return n_new
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--unresolved", action="store_true")
     ap.add_argument("--name", default="")
+    ap.add_argument("--ingest", nargs="+", default=None,
+                    metavar="GLOB", help="fold hunt proposal files into the log")
     a = ap.parse_args(argv)
     state = load()
+    if a.ingest:
+        n = ingest(state, a.ingest)
+        save(state)
+        print("ingested %d new attempts from %s" % (n, " ".join(a.ingest)))
+        return 0
     if a.name:
         e = state.get(a.name)
         if not e:

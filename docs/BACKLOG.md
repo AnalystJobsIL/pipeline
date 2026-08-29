@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**472 filed · 352 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**474 filed · 354 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 425.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 427.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -88,7 +88,7 @@ closure convention in the header.
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 110 open
+### registry — 112 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -200,6 +200,8 @@ closure convention in the header.
 - **422** `422@registry` **`resolve_llm` resolves at 7.3% on a VERIFIED own-domain and 0% on a search-found page —
 - **423** `423@registry` **`listing_hunt`'s queue arm is the only rung left and it cannot be run at scale under the
 - **424** `424@registry` **~10% of the hunt's `another company's board` refusals are the company's OWN board, and
+- **425** `425@registry` **7 active rows embed a Comeet board the identity gate structurally cannot admit**
+- **426** `426@registry` **A git worktree has no `secrets.env`, so every paid rung silently no-ops**
 
 ### infra — 81 open
 
@@ -7300,3 +7302,54 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     refused URL name the company? If it does for the seven above and not for the three, the
     title is the discriminator on this side too and the gate can consult it.
 
+425. **7 active rows embed a Comeet board the identity gate structurally cannot admit** — lane:
+    `registry`, measured 2026-08-29. Every `refresh_scrape_cache` run ends with a warning that
+    names them, and the warning has been printed and ignored:
+
+    ```
+    Medison Pharma comeet:67.00A   develeap comeet:B8.005   Nym comeet:46.005
+    REE Automotive comeet:D3.00B   Autotalks comeet:03.009  Alma Labs comeet:67.006
+    Fairmatic workable:company
+    ```
+
+    All 7 are `scrape` rows whose careers page EMBEDS a board. `identity_gate.embedded_board_ok`
+    ends at `_tenant_near(token, name_targets)`, and a Comeet uid (`67.00A`) can never near-equal
+    a company name — the function's own docstring says so and points here. So the rows are active,
+    are fetched daily, and yield nothing.
+
+    The fix is the declaration the gate asks for: a `tenants` entry in `pipeline/identity_facts.py`
+    per company. **The blocker is evidence, not code.** A declaration without evidence "publishes
+    one company's roles under another's name" (that file's own rule), and the uid alone proves
+    nothing. The Comeet API needs uid AND the long hex token to answer, and the token is only in
+    the page after JS runs: a plain fetch of all 7 careers pages found the uids and **no token on
+    any of them**. So the resolution needs one Playwright pass reading `window.comeetvar` (the
+    trick recorded in `comeet_resolve.py`), then the API's own `company_name` per uid becomes the
+    `why`. Roughly 7 renders — small, but it was not done tonight and must not be short-cut into
+    an assertion.
+
+426. **A git worktree has no `secrets.env`, so every paid rung silently no-ops** — lane: `registry`
+    (the warning belongs to `infra`), measured 2026-08-29. `pipeline/jdfill.py` loads the
+    gitignored `secrets.env` from `_REPO_ROOT`, which under `.claude/worktrees/<x>/` is the
+    WORKTREE, not the checkout that holds the file. `deep_validate.google_via_unlocker` returns
+    `[]` when `BRIGHTDATA_API_KEY` is unset — no error, no warning — and DuckDuckGo is rate-limited
+    from this machine, so `listing_hunt`'s candidate list is empty and every name reports
+    `no pages reachable`.
+
+    That is not a hypothetical. A sweep of the last 57 queue names returned **57 of 57 `dead`**,
+    which reads exactly like a measurement: a clean run, a plausible verdict, a residue of names
+    that had already declined four rungs. Recording it would have written 57 false claims that a
+    company has no findable board. The same 57 names, re-run with the credential passed per
+    command, resolved immediately — `Kela Cyber` to `kelacyber.com/careers` with 7 Israel roles,
+    `LinearB` to `linearb.io/careers` on the first search.
+
+    This is rule 2 in its most dangerous form, because the run is green, fast and free. Two fixes,
+    and the second is the real one:
+
+      * `docs/AGENT_BRIEF.md` should say how to arm a worktree — `eval` the two `BRIGHTDATA_*`
+        lines out of the checkout's `secrets.env`, `tr -d` the CR first (the file is CRLF, and the
+        raw value raises `KeyError: 'BRIGHTDATA_ZONE'` deep in a rung), and never copy the file in
+        (`381@registry`: a present `secrets.env` lets the test suite spend real credits).
+      * **A paid rung that cannot pay should say so once, loudly, and a sweep whose search rung
+        answered zero times for every name should refuse to write verdicts** — the same
+        mass-zero floor `drain_queue._receipt` already carries, applied to `listing_hunt`'s queue
+        arm. A silent `[]` is what turned a missing credential into 57 confident answers.

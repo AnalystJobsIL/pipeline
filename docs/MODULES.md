@@ -16,9 +16,9 @@ The `runs in` and `imported by` columns are **computed from the code**, not type
 |---|---|---|
 | `scheduled` | a workflow invokes it | 29 |
 | `library` | no workflow runs it; live code imports it | 9 |
-| `operator` | a human or agent runs it; nothing in CI does | 14 |
+| `operator` | a human or agent runs it; nothing in CI does | 15 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
-| | **total root modules** | **77** |
+| | **total root modules** | **78** |
 
 `pipeline/` is listed at the end. Lane ownership for all of these is in `docs/AGENT_BRIEF.md`.
 
@@ -66,14 +66,14 @@ If one of these stops working the pipeline degrades silently, because most of th
 | module | imported by | what it does |
 |---|---|---|
 | `comeet_resolve.py` | `audit_empty_rows.py`, `resolve_llm.py` | reads `window.comeetvar` off a rendered page to recover a Comeet uid+token |
-| `deep_validate.py` | `audit_empty_rows.py`, `crack_walled.py`, `drain_queue.py` +9 more | the Chromium rung of the Sunday audit (`validate_one` / `apply_verdict`, imported by audit_empty_rows; `--only` on demand); owns `google_via_unlocker`, the only search rung that works today |
+| `deep_validate.py` | `audit_empty_rows.py`, `crack_walled.py`, `drain_queue.py` +10 more | the Chromium rung of the Sunday audit (`validate_one` / `apply_verdict`, imported by audit_empty_rows; `--only` on demand); owns `google_via_unlocker`, the only search rung that works today |
 | `ingest_research.py` | `resolve_parallel.py`, `resolve_unknowns.py`, `retry_unreachable.py` | resolve+verify helpers for the research queue. **Not deletable**: `retry_unreachable` (02:30 daily) imports `PROBE_FAST`, `_cand_slugs` and `_try` from it |
 | `merge_csv_rows.py` | `persist_state.py`, `registry_health.py`, `tests/test_registry.py` +1 more | git-layer segment-aware merge for companies.csv; persist_state.py applies it on every push conflict |
 | `merge_json_cache.py` | `persist_state.py`, `tests/test_units.py` | three-way merge for the company-keyed JSON caches (deletions honoured since 2026-08-25); persist_state.py applies it |
 | `probe_ats.py` | `auto_expand.py`, `drain_queue.py`, `ingest_research.py` +2 more | guessable-slug probing. **Not deletable**: `auto_expand` imports `probe_bounded`/`bounded_http` for its free rung, `ingest_research` imports `slug_variants` |
 | `resolve_deep.py` | `auto_expand.py`, `bd_rescue.py`, `recheck_suspects.py` +6 more | deterministic resolver tier (recognizable ATS URLs, iframes) |
 | `resolve_llm.py` | `auto_expand.py`, `deep_validate.py`, `listing_hunt.py` +1 more | the LLM resolution tier: evidence bundle -> one `claude -p` proposal -> verified through the real fetcher |
-| `scrape_universal.py` | `bd_rescue.py`, `check_invariants.py`, `confirm_zero.py` +11 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
+| `scrape_universal.py` | `bd_rescue.py`, `check_invariants.py`, `confirm_zero.py` +12 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
 
 ## Operator tools - a human or an agent runs these on demand
 
@@ -91,6 +91,7 @@ Live and documented, and nothing in CI runs them - `docs/check_docs.py` fails if
 | `firmo_health_check.py` | tripwire: is the firmographics chain actually classifying anything? |
 | `qa_proposals.py` | a SECOND OPINION on every proposal, independent of the gates that produced it. The hunt's own gates are real and last night proved them insufficient alone --  passed  AND  and was Meridial's board with 821 of another employer's postings. So each proposal is re-checked with the board page's own <title> (which the tenant wrote and we did not derive) and an LLM read for everything the title cannot settle -- including the ATS-vendor and generic titles, since  is not . A TITLE MISS IS NOT PROOF OF THEFT: the first version refused 20 of 38 including WSC Sports, monday.com, ZOLL and a Hebrew Barzani Group. Measured 19% catch on the real sweep |
 | `queue_disposition.py` | the only honest way a NAME leaves `research_companies.json`. A name becomes a ROW when a rung finds its board; the other outcome -- "we hunted it and found nothing findable" -- is a claim about OUR reach, so the operator's rule applies: hunt, LLM read, PERSIST the evidence, and only then prune. A name with no hunt attempt is not a candidate, and a name with a hunt but nothing to READ is refused as `no-evidence-to-read` -- we never looked is not the same as nothing being there. Dry-run by default, a mass-deletion floor, and an assertion that no name is pruned without a persisted record |
+| `queue_resolve_search.py` | resolve an intake NAME by searching for it and letting a model ORDER the results, then judging the PAGE rather than the URL. Built after a 20-name QA of `queue_disposition`'s retirements disagreed with 15 of 20 (75%), finding real careers pages for names the hunt had written off -- the instrument that checked the retirements was a better rung than the one it checked. A page is a BOARD if scraping it returns jobs, which is host-agnostic, so an ATS this repo has never seen (`hunterhrms`) and a self-hosted board pass for the same reason Greenhouse does. IDENTITY stays hard: `identity_ok`, or the company's token as a WHOLE WORD in the title the tenant wrote. Two phases -- every paid search first, with no browser in the process, because `unlock` silently returns '' once Playwright has run and every later name then reads as `no-search-results`. Writes proposals, never rows |
 | `queue_state.py` | what has been TRIED for a queue NAME -- the thing `research_companies.json` cannot say. An entry carries four keys and no attempt count, no date, no reason; state was scattered across three cloud_state files and 393 of the 877 appeared in none of them, so a name tried twenty times looked exactly like one never touched. Gives a NAME what a ROW already gets: an append-log of attempts, a date per attempt, and `in_queue_pool` so each rung's outstanding work is a function. Never a claim about a company -- it records what a RUNG did, and it cannot activate or park anything |
 | `setup_brightdata.py` | one-time: store the Bright Data token + zone in secrets.env |
 | `setup_serpapi_key.py` | one-time: store the SerpApi key (quota exhausted until 2026-09-01) |

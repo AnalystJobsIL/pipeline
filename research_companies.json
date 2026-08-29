@@ -48,22 +48,10 @@
   "slug": "aristocratcorporate"
  },
  {
-  "name": "Locusview",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-at-locusview-4458196654",
-  "ats": "unknown",
-  "slug": "locusview"
- },
- {
   "name": "UNDP Careers",
   "careers_url": "https://il.linkedin.com/jobs/view/economist-open-to-all-applicants-at-undp-careers-4458280449",
   "ats": "unknown",
   "slug": "undpcareers"
- },
- {
-  "name": "KPMG Israel",
-  "careers_url": "https://il.linkedin.com/jobs/view/business-economic-consulting-manager-at-kpmg-israel-4456880512",
-  "ats": "unknown",
-  "slug": "kpmg_israel"
  },
  {
   "name": "McKinsey & Company",
@@ -82,18 +70,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/applied-ai-engineer-at-jakoai-4453858729",
   "ats": "unknown",
   "slug": "jakoai"
- },
- {
-  "name": "Digistage",
-  "careers_url": "https://il.linkedin.com/jobs/view/ppc-performance-manager-culture-field-at-digistage-4455863620",
-  "ats": "unknown",
-  "slug": "digistage"
- },
- {
-  "name": "המכללה לבלוקצ'יין ומטבעות דיגיטליים - BDCC",
-  "careers_url": "https://il.linkedin.com/jobs/view/marketing-manager-at-%D7%94%D7%9E%D7%9B%D7%9C%D7%9C%D7%94-%D7%9C%D7%91%D7%9C%D7%95%D7%A7%D7%A6-%D7%99%D7%99%D7%9F-%D7%95%D7%9E%D7%98%D7%91%D7%A2%D7%95%D7%AA-%D7%93%D7%99%D7%92%D7%99%D7%98%D7%9C%D7%99%D7%99%D7%9D-bdcc-4455860439",
-  "ats": "unknown",
-  "slug": ""
  },
  {
   "name": "Adcore (TSX: ADCO)",
@@ -120,12 +96,6 @@
   "slug": "vacaturessr"
  },
  {
-  "name": "Calculum",
-  "careers_url": "https://il.linkedin.com/jobs/view/entry-level-marketing-lead-generation-specialist-at-calculum-4458265048",
-  "ats": "unknown",
-  "slug": "calculum-inc"
- },
- {
   "name": "Plus500™",
   "careers_url": "https://il.linkedin.com/jobs/view/social-media-manager-at-plus500%E2%84%A2-4454749795",
   "ats": "unknown",
@@ -150,40 +120,10 @@
   "slug": ""
  },
  {
-  "name": "Liniad",
-  "careers_url": "https://il.indeed.com/viewjob?jk=a7e7b663a2a34532",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "ShipIn Systems",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-analyst-at-shipin-systems-4457490486",
-  "ats": "unknown",
-  "slug": "shipin"
- },
- {
-  "name": "Migdal Group",
-  "careers_url": "https://il.linkedin.com/jobs/view/business-analyst-at-migdal-group-4458736498",
-  "ats": "unknown",
-  "slug": "migdal-group"
- },
- {
-  "name": "Dario",
-  "careers_url": "https://il.linkedin.com/jobs/view/ai-data-engineer-early-career-at-dario-4458797443",
-  "ats": "unknown",
-  "slug": "dariohealth"
- },
- {
   "name": "Blink",
   "careers_url": "https://il.linkedin.com/jobs/view/customer-retention-manager-at-blink-4458720533",
   "ats": "unknown",
   "slug": "blinkinvest"
- },
- {
-  "name": "max מקס",
-  "careers_url": "https://il.linkedin.com/jobs/view/strategy-analyst-temporary-at-max-%D7%9E%D7%A7%D7%A1-4458726385",
-  "ats": "unknown",
-  "slug": "maxfinanceil"
  },
  {
   "name": "BDO Israel",
@@ -196,18 +136,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/business-analyst-corporate-banking-division-headquarters-3103-at-bank-leumi-%D7%91%D7%A0%D7%A7-%D7%9C%D7%90%D7%95%D7%9E%D7%99-4456910788",
   "ats": "unknown",
   "slug": "bank-leumi"
- },
- {
-  "name": "Unilink Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-digital-product-innovation-manager-at-unilink-ltd-4458162755",
-  "ats": "unknown",
-  "slug": "unilink-ltd."
- },
- {
-  "name": "Walmart Global Tech",
-  "careers_url": "https://il.linkedin.com/jobs/view/associate-product-manager-at-walmart-global-tech-4444433752",
-  "ats": "unknown",
-  "slug": "walmartglobaltech"
  },
  {
   "name": "Mobile Group Ltd.",
@@ -228,12 +156,6 @@
   "slug": "skygini"
  },
  {
-  "name": "Compie Technologies",
-  "careers_url": "https://il.linkedin.com/jobs/view/system-analyst-at-compie-technologies-4458731239",
-  "ats": "unknown",
-  "slug": "compie_technologies"
- },
- {
   "name": "AE Capital",
   "careers_url": "https://il.linkedin.com/jobs/view/junior-engineer-quantdev-quantanalyst-at-ae-capital-4456224726",
   "ats": "unknown",
@@ -244,12 +166,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/head-of-quantum-product-at-qtrex-4453840476",
   "ats": "unknown",
   "slug": "q-trex"
- },
- {
-  "name": "Core1",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-full-stack-engineer-at-core1-4459045682",
-  "ats": "unknown",
-  "slug": "core1-pro"
  },
  {
   "name": "Maof - מעוף",
@@ -310,12 +226,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/material-planner-at-ellipse-advanced-system-innovation-4456569546",
   "ats": "unknown",
   "slug": "ellipse-asi"
- },
- {
-  "name": "Confidential Company",
-  "careers_url": "https://il.linkedin.com/jobs/view/people-operations-project-manager-at-confidential-company-4456925235",
-  "ats": "unknown",
-  "slug": "positivitysaid"
  },
  {
   "name": "GienTech",
@@ -408,12 +318,6 @@
   "slug": "reline-services-ltd"
  },
  {
-  "name": "AES Embedded Solutions",
-  "careers_url": "https://il.linkedin.com/jobs/view/qa-engineer-at-aes-embedded-solutions-4456888037",
-  "ats": "unknown",
-  "slug": "aes-amarel-engineering-services"
- },
- {
   "name": "Herzliya Medical Center - הרצליה מדיקל סנטר",
   "careers_url": "https://il.linkedin.com/jobs/view/embryologist-at-herzliya-medical-center-%D7%94%D7%A8%D7%A6%D7%9C%D7%99%D7%94-%D7%9E%D7%93%D7%99%D7%A7%D7%9C-%D7%A1%D7%A0%D7%98%D7%A8-4418360667",
   "ats": "unknown",
@@ -442,18 +346,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/%D7%A1%D7%95%D7%A7%D7%A8-%D7%AA-%D7%A1%D7%99%D7%9B%D7%95%D7%A0%D7%99-%D7%A1%D7%99%D7%99%D7%91%D7%A8-%D7%95%D7%99%D7%95%D7%A2%D7%A5-%D7%AA-%D7%90%D7%91%D7%98%D7%97%D7%AA-%D7%9E%D7%99%D7%93%D7%A2-%D7%95%D7%AA%D7%A9%D7%AA%D7%99%D7%95%D7%AA-at-bindsec-4456510585",
   "ats": "unknown",
   "slug": "bindsec"
- },
- {
-  "name": "SIG SAUER, Inc.",
-  "careers_url": "https://il.linkedin.com/jobs/view/mechanical-engineer-ii-at-sig-sauer-inc-4437565528",
-  "ats": "unknown",
-  "slug": "sigsauer"
- },
- {
-  "name": "Strada",
-  "careers_url": "https://il.linkedin.com/jobs/view/strada-pay-implementation-consultant-turkey-at-strada-4455879894",
-  "ats": "unknown",
-  "slug": "stradaglobal"
  },
  {
   "name": "Physio-Logic Ltd.",
@@ -492,12 +384,6 @@
   "slug": "odtraffic-ltd"
  },
  {
-  "name": "Meganet",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-meta-media-buyer-at-meganet-4456935120",
-  "ats": "unknown",
-  "slug": "meganet-one"
- },
- {
   "name": "NATASHA DENONA IL",
   "careers_url": "https://il.linkedin.com/jobs/view/social-media-manager-at-natasha-denona-il-4443940188",
   "ats": "unknown",
@@ -528,22 +414,10 @@
   "slug": "intelligentbusiness-bi"
  },
  {
-  "name": "Hila & Co.",
-  "careers_url": "https://il.linkedin.com/jobs/view/consumer-market-insights-cmi-manager-at-hila-co-4457744315",
-  "ats": "unknown",
-  "slug": "hila-co"
- },
- {
   "name": "CloudZone",
   "careers_url": "https://il.linkedin.com/jobs/view/cloud-finops-analyst-at-cloudzone-4459189549",
   "ats": "unknown",
   "slug": "cloudzone"
- },
- {
-  "name": "Netoplay",
-  "careers_url": "https://il.linkedin.com/jobs/view/games-operations-manager-at-netoplay-4459175459",
-  "ats": "unknown",
-  "slug": "netoplay"
  },
  {
   "name": "WellyBox",
@@ -576,34 +450,16 @@
   "slug": "sd-lc"
  },
  {
-  "name": "Kuni",
-  "careers_url": "https://il.linkedin.com/jobs/view/ppc-performance-marketing-manager-at-kuni-4459335008",
-  "ats": "unknown",
-  "slug": "kuni-il"
- },
- {
   "name": "SeerT - Building Your Team",
   "careers_url": "https://il.linkedin.com/jobs/view/senior-planner-at-seert-building-your-team-4457221606",
   "ats": "unknown",
   "slug": "seert"
  },
  {
-  "name": "GENECIT",
-  "careers_url": "https://il.linkedin.com/jobs/view/lead-data-scientist-at-genecit-4455878317",
-  "ats": "unknown",
-  "slug": "genecit-com"
- },
- {
   "name": "Gemified",
   "careers_url": "https://il.linkedin.com/jobs/view/affiliate-manager-at-gemified-4459147051",
   "ats": "unknown",
   "slug": "gemified"
- },
- {
-  "name": "IDX",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-idx-4457232305",
-  "ats": "unknown",
-  "slug": "idx-il"
  },
  {
   "name": "CAF (Construcciones y Auxiliar de Ferrocarriles)",
@@ -642,18 +498,6 @@
   "slug": "maslol-haham"
  },
  {
-  "name": "NOVELSAT",
-  "careers_url": "https://il.linkedin.com/jobs/view/business-operations-order-management-coordinator-at-novelsat-4455073775",
-  "ats": "unknown",
-  "slug": "novelsat-ayecka"
- },
- {
-  "name": "Omnisys",
-  "careers_url": "https://il.linkedin.com/jobs/view/simulation-engineer-at-omnisys-4458618235",
-  "ats": "unknown",
-  "slug": "omnisys"
- },
- {
   "name": "ITC - Intelligent Traffic Control",
   "careers_url": "https://il.linkedin.com/jobs/view/software-engineer-at-itc-intelligent-traffic-control-4456907190",
   "ats": "unknown",
@@ -688,12 +532,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/full-stack-developer-jb-731-at-pwc-next-technology-solutions-4452198807",
   "ats": "unknown",
   "slug": "pwc-digital-technology-services"
- },
- {
-  "name": "Dot Compliance",
-  "careers_url": "https://il.linkedin.com/jobs/view/salesforce-engineer-at-dot-compliance-4457696751",
-  "ats": "unknown",
-  "slug": "dot-compliance"
  },
  {
   "name": "Metriko",
@@ -744,12 +582,6 @@
   "slug": "partner-israel"
  },
  {
-  "name": "ARMORY",
-  "careers_url": "https://il.linkedin.com/jobs/view/junior-penetration-tester-at-armory-4458002103",
-  "ats": "unknown",
-  "slug": "armorydefense"
- },
- {
   "name": "Taglit Group A.S",
   "careers_url": "https://il.linkedin.com/jobs/view/human-resources-manager-at-taglit-group-a-s-4457765342",
   "ats": "unknown",
@@ -760,12 +592,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%94%D7%A0%D7%93%D7%A1-%D7%AA-%D7%AA%D7%A2%D7%95-%D7%A0-%D7%9C%D7%94%D7%95%D7%91%D7%9C%D7%AA-%D7%9E%D7%A6%D7%95%D7%99%D7%99%D7%A0%D7%95%D7%AA-%D7%AA%D7%A4%D7%A2%D7%95%D7%9C%D7%99%D7%AA-%D7%91%D7%97%D7%91%D7%A8%D7%94-%D7%AA%D7%A2%D7%A9%D7%99%D7%99%D7%AA%D7%99%D7%AA-at-sales-experts-executive-recruiters-4458380336",
   "ats": "unknown",
   "slug": "sales-experts-executive-recruiters"
- },
- {
-  "name": "PsyDin",
-  "careers_url": "https://il.linkedin.com/jobs/view/tenure-track-position-in-neuroscience-at-psydin-4458780180",
-  "ats": "unknown",
-  "slug": "psydin"
  },
  {
   "name": "COM-C-TECH LTD",
@@ -786,12 +612,6 @@
   "slug": "teceze"
  },
  {
-  "name": "Naamat נעמת",
-  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%A0%D7%94-%D7%97-%D7%9C%D7%9E%D7%98%D7%94-%D7%A0%D7%A2%D7%9E%D7%AA-at-naamat-%D7%A0%D7%A2%D7%9E%D7%AA-4458729234",
-  "ats": "unknown",
-  "slug": "naamatwomen"
- },
- {
   "name": "ComSign - קומסיין",
   "careers_url": "https://il.linkedin.com/jobs/view/customer-technical-support-at-comsign-%D7%A7%D7%95%D7%9E%D7%A1%D7%99%D7%99%D7%9F-4457745126",
   "ats": "unknown",
@@ -804,12 +624,6 @@
   "slug": "yit---yedioth-information-technology"
  },
  {
-  "name": "Bet Shemesh Engines Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%94%D7%A0%D7%93%D7%A1-%D7%90%D7%A0%D7%9C%D7%99%D7%96%D7%95%D7%AA-at-bet-shemesh-engines-ltd-4457958299",
-  "ats": "unknown",
-  "slug": "bet-shemesh-engines-ltd."
- },
- {
   "name": "Alstom",
   "careers_url": "https://il.linkedin.com/jobs/view/site-operations-coordinator-at-alstom-4447382064",
   "ats": "unknown",
@@ -820,12 +634,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/%F0%9F%92%A5-ceo-co-founder-equity-opportunity-round-a-ai-big-data-round-a-global-venture-%F0%9F%92%A5-at-rating-4455804106",
   "ats": "unknown",
   "slug": "rating"
- },
- {
-  "name": "Empire Media Network",
-  "careers_url": "https://il.linkedin.com/jobs/view/content-manager-at-empire-media-network-4456573775",
-  "ats": "unknown",
-  "slug": "empire-media-network"
  },
  {
   "name": "Ethos",
@@ -864,22 +672,10 @@
   "slug": "auth21"
  },
  {
-  "name": "IDENTI Medical",
-  "careers_url": "https://il.linkedin.com/jobs/view/b2b-marketing-demand-generation-manager-at-identi-medical-4457220850",
-  "ats": "unknown",
-  "slug": "identimedical"
- },
- {
   "name": "Bishvil Hazahav",
   "careers_url": "https://il.linkedin.com/jobs/view/digital-marketing-manager-at-bishvil-hazahav-4363189740",
   "ats": "unknown",
   "slug": "bishvil-hazahav"
- },
- {
-  "name": "Indocs",
-  "careers_url": "https://il.linkedin.com/jobs/view/social-media-manager-at-indocs-4457767216",
-  "ats": "unknown",
-  "slug": "c-digital-marketing-%D7%9E%D7%99%D7%AA%D7%95%D7%92-%D7%95%D7%A9%D7%99%D7%95%D7%95%D7%A7-%D7%91%D7%A2%D7%95%D7%9C%D7%9E%D7%95%D7%AA-%D7%94%D7%A8%D7%A4%D7%95%D7%90%D7%94"
  },
  {
   "name": "קבוצת צליח-רוטשילד | Saliah-Rothschild Group",
@@ -910,42 +706,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/junior-bi-developer-not-data-analyst-at-alicorn-jobs-4457787718",
   "ats": "unknown",
   "slug": "alicorn-jobs-svt"
- },
- {
-  "name": "NONO - GROUP",
-  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%A0%D7%94%D7%9C-%D7%AA-%D7%93%D7%99%D7%92%D7%99%D7%98%D7%9C-%D7%95%D7%9E%D7%93%D7%99%D7%94-nono-group-at-nono-group-4457257199",
-  "ats": "unknown",
-  "slug": "nono--group"
- },
- {
-  "name": "Super Group (SGHC)",
-  "careers_url": "https://il.linkedin.com/jobs/view/digital-marketing-specialist-at-super-group-sghc-4459841267",
-  "ats": "unknown",
-  "slug": "supergroupholdingcompany"
- },
- {
-  "name": "Voyage81",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-computer-vision-engineer-at-voyage81-4458357787",
-  "ats": "unknown",
-  "slug": "voyage81"
- },
- {
-  "name": "Axioma System Engineering and Integration",
-  "careers_url": "https://il.linkedin.com/jobs/view/algorithm-developer-at-axioma-system-engineering-and-integration-4457758693",
-  "ats": "unknown",
-  "slug": "axiomasystemengineeringandintegration"
- },
- {
-  "name": "Danziger",
-  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%A0%D7%94%D7%9C-%D7%AA-%D7%90%D7%A4%D7%9C%D7%99%D7%A7%D7%A6%D7%99%D7%95%D7%AA-%D7%95%D7%9E%D7%A0%D7%AA%D7%97-%D7%AA-%D7%9E%D7%A2%D7%A8%D7%9B%D7%95%D7%AA-at-danziger-4457787230",
-  "ats": "unknown",
-  "slug": "danziger"
- },
- {
-  "name": "Israel Hayom ישראל היום",
-  "careers_url": "https://il.linkedin.com/jobs/view/infographic-designer-at-israel-hayom-%D7%99%D7%A9%D7%A8%D7%90%D7%9C-%D7%94%D7%99%D7%95%D7%9D-4459836580",
-  "ats": "unknown",
-  "slug": "israel-hayom"
  },
  {
   "name": "Strategic Matching",
@@ -1020,12 +780,6 @@
   "slug": "kav-manche-group"
  },
  {
-  "name": "Echo",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-at-echo-4460127622",
-  "ats": "unknown",
-  "slug": "echo-hq"
- },
- {
   "name": "NBN Connect",
   "careers_url": "https://il.linkedin.com/jobs/view/computer-vision-engineer-at-nbn-connect-4459848203",
   "ats": "unknown",
@@ -1050,12 +804,6 @@
   "slug": "ezjobs-org"
  },
  {
-  "name": "Sion Medical",
-  "careers_url": "https://il.linkedin.com/jobs/view/regulatory-affairs-specialist-at-sion-medical-4456905329",
-  "ats": "unknown",
-  "slug": "sion-medical"
- },
- {
   "name": "Allpha Innovation",
   "careers_url": "https://il.linkedin.com/jobs/view/international-marketing-business-development-manager-%E2%80%93-defense-industry-experience-required-at-allpha-innovation-4457455590",
   "ats": "unknown",
@@ -1068,12 +816,6 @@
   "slug": "worthy-com"
  },
  {
-  "name": "Wow B2b Solutions Ltd",
-  "careers_url": "https://secrethunter.io/companies/wow-b2b-solutions-ltd",
-  "ats": "unknown",
-  "slug": "wow-b2b-solutions-ltd"
- },
- {
   "name": "Wxg Waxman Group",
   "careers_url": "https://secrethunter.io/companies/wxg-waxman-group",
   "ats": "unknown",
@@ -1084,12 +826,6 @@
   "careers_url": "https://secrethunter.io/companies/wzv-sint-gillis-waas",
   "ats": "unknown",
   "slug": "wzv-sint-gillis-waas"
- },
- {
-  "name": "X Trodes",
-  "careers_url": "https://secrethunter.io/companies/x-trodes",
-  "ats": "unknown",
-  "slug": "x-trodes"
  },
  {
   "name": "Xcurrent Energy Solutions",
@@ -1110,12 +846,6 @@
   "slug": "xnes"
  },
  {
-  "name": "Xpend Global Marketing",
-  "careers_url": "https://secrethunter.io/companies/xpend-global-marketing",
-  "ats": "unknown",
-  "slug": "xpend-global-marketing"
- },
- {
   "name": "Xtholdings",
   "careers_url": "https://secrethunter.io/companies/xtholdings",
   "ats": "unknown",
@@ -1126,18 +856,6 @@
   "careers_url": "https://secrethunter.io/companies/xtragiftcard",
   "ats": "unknown",
   "slug": "xtragiftcard"
- },
- {
-  "name": "Y Axis Global",
-  "careers_url": "https://secrethunter.io/companies/y-axis-global",
-  "ats": "unknown",
-  "slug": "y-axis-global"
- },
- {
-  "name": "Y D Barzani",
-  "careers_url": "https://secrethunter.io/companies/y-d-barzani",
-  "ats": "unknown",
-  "slug": "y-d-barzani"
  },
  {
   "name": "Y H Dimri Construction",
@@ -1158,18 +876,6 @@
   "slug": "yael-software"
  },
  {
-  "name": "Yamo Overseas Recruiters Limited",
-  "careers_url": "https://secrethunter.io/companies/yamo-overseas-recruiters-limited",
-  "ats": "unknown",
-  "slug": "yamo-overseas-recruiters-limited"
- },
- {
-  "name": "Yaron Offir Engineers Ltd",
-  "careers_url": "https://secrethunter.io/companies/yaron-offir-engineers-ltd",
-  "ats": "unknown",
-  "slug": "yaron-offir-engineers-ltd"
- },
- {
   "name": "Ycon",
   "careers_url": "https://secrethunter.io/companies/ycon",
   "ats": "unknown",
@@ -1182,12 +888,6 @@
   "slug": "yedioth-ahronoth"
  },
  {
-  "name": "Yelloh Village Europe Plein Air Sa",
-  "careers_url": "https://secrethunter.io/companies/yelloh-village---europe-plein-air-sa",
-  "ats": "unknown",
-  "slug": "yelloh-village-europe-plein-air-sa"
- },
- {
   "name": "Yes TV",
   "careers_url": "https://secrethunter.io/companies/yes-tv",
   "ats": "unknown",
@@ -1198,12 +898,6 @@
   "careers_url": "https://secrethunter.io/companies/yit---yedioth-information-technology",
   "ats": "unknown",
   "slug": "yit-yedioth-information-technology"
- },
- {
-  "name": "Yo Mamma S Kimchi",
-  "careers_url": "https://secrethunter.io/companies/yo-mamma-s-kimchi",
-  "ats": "unknown",
-  "slug": "yo-mamma-s-kimchi"
  },
  {
   "name": "Youappi",
@@ -1230,12 +924,6 @@
   "slug": "youth-movement-agricultural-union"
  },
  {
-  "name": "Yvel Jewelry",
-  "careers_url": "https://secrethunter.io/companies/yvel-jewelry",
-  "ats": "unknown",
-  "slug": "yvel-jewelry"
- },
- {
   "name": "Zaga1",
   "careers_url": "https://secrethunter.io/companies/zaga1",
   "ats": "unknown",
@@ -1252,12 +940,6 @@
   "careers_url": "https://secrethunter.io/companies/zealotcyber",
   "ats": "unknown",
   "slug": "zealotcyber"
- },
- {
-  "name": "Zeit Fur Brot Tlv",
-  "careers_url": "https://secrethunter.io/companies/zeit-fur-brot-tlv",
-  "ats": "unknown",
-  "slug": "zeit-fur-brot-tlv"
  },
  {
   "name": "Zemingo Mobile Group",
@@ -1290,40 +972,10 @@
   "slug": "zeroshotltd"
  },
  {
-  "name": "Zest Cyber",
-  "careers_url": "https://secrethunter.io/companies/zest-cyber",
-  "ats": "unknown",
-  "slug": "zest-cyber"
- },
- {
-  "name": "Zion Today",
-  "careers_url": "https://secrethunter.io/companies/zion-today",
-  "ats": "unknown",
-  "slug": "zion-today"
- },
- {
-  "name": "Ziv Av",
-  "careers_url": "https://secrethunter.io/companies/ziv-av",
-  "ats": "unknown",
-  "slug": "ziv-av"
- },
- {
   "name": "Zivlin",
   "careers_url": "https://secrethunter.io/companies/zivlin",
   "ats": "unknown",
   "slug": "zivlin"
- },
- {
-  "name": "Zoho",
-  "careers_url": "https://secrethunter.io/companies/zoho",
-  "ats": "unknown",
-  "slug": "zoho"
- },
- {
-  "name": "Zoll Medical Corporation",
-  "careers_url": "https://secrethunter.io/companies/zoll-medical-corporation",
-  "ats": "unknown",
-  "slug": "zoll-medical-corporation"
  },
  {
   "name": "Zooghq",
@@ -1342,12 +994,6 @@
   "careers_url": "https://secrethunter.io/companies/zota-technology",
   "ats": "unknown",
   "slug": "zota-technology"
- },
- {
-  "name": "Zukman S",
-  "careers_url": "https://secrethunter.io/companies/zukman-s",
-  "ats": "unknown",
-  "slug": "zukman-s"
  },
  {
   "name": "Zutacoreinc",
@@ -1398,18 +1044,6 @@
   "slug": "2sit-furniture"
  },
  {
-  "name": "360up",
-  "careers_url": "https://secrethunter.io/companies/360up",
-  "ats": "unknown",
-  "slug": "360up"
- },
- {
-  "name": "4cast AI",
-  "careers_url": "https://secrethunter.io/companies/4cast-ai",
-  "ats": "unknown",
-  "slug": "4cast-ai"
- },
- {
   "name": "8400 The Health Network",
   "careers_url": "https://secrethunter.io/companies/8400-the-health-network",
   "ats": "unknown",
@@ -1428,12 +1062,6 @@
   "slug": "bluewhite"
  },
  {
-  "name": "Cymotive",
-  "careers_url": "https://secrethunter.io/companies/CYMOTIVE",
-  "ats": "unknown",
-  "slug": "cymotive"
- },
- {
   "name": "Ceragon",
   "careers_url": "https://secrethunter.io/companies/Ceragon",
   "ats": "unknown",
@@ -1446,12 +1074,6 @@
   "slug": "codeocean"
  },
  {
-  "name": "Imubit",
-  "careers_url": "https://secrethunter.io/companies/Imubit",
-  "ats": "unknown",
-  "slug": "imubit"
- },
- {
   "name": "Payoneer Global",
   "careers_url": "https://secrethunter.io/companies/Payoneer-Global",
   "ats": "unknown",
@@ -1462,12 +1084,6 @@
   "careers_url": "https://secrethunter.io/companies/ResidentHome",
   "ats": "unknown",
   "slug": "residenthome"
- },
- {
-  "name": "Scylladb",
-  "careers_url": "https://secrethunter.io/companies/ScyllaDB",
-  "ats": "unknown",
-  "slug": "scylladb"
  },
  {
   "name": "Wsc Sports Technologies",
@@ -1492,18 +1108,6 @@
   "careers_url": "https://secrethunter.io/companies/aartac",
   "ats": "unknown",
   "slug": "aartac"
- },
- {
-  "name": "Abcloudz",
-  "careers_url": "https://secrethunter.io/companies/abcloudz",
-  "ats": "unknown",
-  "slug": "abcloudz"
- },
- {
-  "name": "Abel Kg",
-  "careers_url": "https://secrethunter.io/companies/abel-kg",
-  "ats": "unknown",
-  "slug": "abel-kg"
  },
  {
   "name": "Able Tx",
@@ -1542,22 +1146,10 @@
   "slug": "access"
  },
  {
-  "name": "Access Bio",
-  "careers_url": "https://secrethunter.io/companies/access-bio",
-  "ats": "unknown",
-  "slug": "access-bio"
- },
- {
   "name": "Access Israel",
   "careers_url": "https://secrethunter.io/companies/access-israel",
   "ats": "unknown",
   "slug": "access-israel"
- },
- {
-  "name": "Ace Aviation Group",
-  "careers_url": "https://secrethunter.io/companies/ace-aviation-group",
-  "ats": "unknown",
-  "slug": "ace-aviation-group"
  },
  {
   "name": "Achuzat Rishonim Rubinstein",
@@ -1584,22 +1176,10 @@
   "slug": "actualsignal"
  },
  {
-  "name": "Adalya Economic Consulting",
-  "careers_url": "https://secrethunter.io/companies/adalya-economic-consulting",
-  "ats": "unknown",
-  "slug": "adalya-economic-consulting"
- },
- {
   "name": "Adaptive6",
   "careers_url": "https://secrethunter.io/companies/adaptive6",
   "ats": "unknown",
   "slug": "adaptive6"
- },
- {
-  "name": "Adcom Consulting Shmulik Keidar Ltd",
-  "careers_url": "https://secrethunter.io/companies/adcom-consulting-shmulik-keidar-ltd--",
-  "ats": "unknown",
-  "slug": "adcom-consulting-shmulik-keidar-ltd"
  },
  {
   "name": "Addressableio",
@@ -1614,18 +1194,6 @@
   "slug": "adgeai"
  },
  {
-  "name": "Adgentic AI",
-  "careers_url": "https://secrethunter.io/companies/adgentic-ai",
-  "ats": "unknown",
-  "slug": "adgentic-ai"
- },
- {
-  "name": "Adi Il",
-  "careers_url": "https://secrethunter.io/companies/adi-il",
-  "ats": "unknown",
-  "slug": "adi-il"
- },
- {
   "name": "Adiconsultants",
   "careers_url": "https://secrethunter.io/companies/adiconsultants",
   "ats": "unknown",
@@ -1638,34 +1206,16 @@
   "slug": "adnm"
  },
  {
-  "name": "Adscale",
-  "careers_url": "https://secrethunter.io/companies/adscale",
-  "ats": "unknown",
-  "slug": "adscale"
- },
- {
   "name": "Adstorydigital",
   "careers_url": "https://secrethunter.io/companies/adstorydigital",
   "ats": "unknown",
   "slug": "adstorydigital"
  },
  {
-  "name": "Adtran",
-  "careers_url": "https://secrethunter.io/companies/adtran",
-  "ats": "unknown",
-  "slug": "adtran"
- },
- {
   "name": "Advice Electronics",
   "careers_url": "https://secrethunter.io/companies/advice-electronics",
   "ats": "unknown",
   "slug": "advice-electronics"
- },
- {
-  "name": "Adzz",
-  "careers_url": "https://secrethunter.io/companies/adzz",
-  "ats": "unknown",
-  "slug": "adzz"
  },
  {
   "name": "Aerohandling",
@@ -1692,18 +1242,6 @@
   "slug": "afula-municipality"
  },
  {
-  "name": "Agat Software",
-  "careers_url": "https://secrethunter.io/companies/agat-software",
-  "ats": "unknown",
-  "slug": "agat-software"
- },
- {
-  "name": "Ageera Energy Storage Systems",
-  "careers_url": "https://secrethunter.io/companies/ageera-energy-storage-systems",
-  "ats": "unknown",
-  "slug": "ageera-energy-storage-systems"
- },
- {
   "name": "Agudagivatram",
   "careers_url": "https://secrethunter.io/companies/agudagivatram",
   "ats": "unknown",
@@ -1720,12 +1258,6 @@
   "careers_url": "https://secrethunter.io/companies/aidomeglobal",
   "ats": "unknown",
   "slug": "aidomeglobal"
- },
- {
-  "name": "Aig",
-  "careers_url": "https://secrethunter.io/companies/aig",
-  "ats": "unknown",
-  "slug": "aig"
  },
  {
   "name": "Aijobs AI",
@@ -1752,36 +1284,6 @@
   "slug": "air-ev"
  },
  {
-  "name": "Air Products",
-  "careers_url": "https://secrethunter.io/companies/air-products",
-  "ats": "unknown",
-  "slug": "air-products"
- },
- {
-  "name": "Aisap AI",
-  "careers_url": "https://secrethunter.io/companies/aisap.ai",
-  "ats": "unknown",
-  "slug": "aisap-ai"
- },
- {
-  "name": "Aitechsystems",
-  "careers_url": "https://secrethunter.io/companies/aitechsystems",
-  "ats": "unknown",
-  "slug": "aitechsystems"
- },
- {
-  "name": "Aka Food",
-  "careers_url": "https://secrethunter.io/companies/aka_food",
-  "ats": "unknown",
-  "slug": "aka-food"
- },
- {
-  "name": "Akim",
-  "careers_url": "https://secrethunter.io/companies/akim",
-  "ats": "unknown",
-  "slug": "akim"
- },
- {
   "name": "Akita Cyber Security Ltd",
   "careers_url": "https://secrethunter.io/companies/akita-cyber-security-ltd",
   "ats": "unknown",
@@ -1794,46 +1296,16 @@
   "slug": "aktglobal"
  },
  {
-  "name": "Akumina",
-  "careers_url": "https://secrethunter.io/companies/akumina",
-  "ats": "unknown",
-  "slug": "akumina"
- },
- {
-  "name": "Aleh",
-  "careers_url": "https://secrethunter.io/companies/aleh",
-  "ats": "unknown",
-  "slug": "aleh"
- },
- {
-  "name": "Alexander Schneider Ltd",
-  "careers_url": "https://secrethunter.io/companies/alexander-schneider-ltd",
-  "ats": "unknown",
-  "slug": "alexander-schneider-ltd"
- },
- {
   "name": "Alice Flights",
   "careers_url": "https://secrethunter.io/companies/alice-flights",
   "ats": "unknown",
   "slug": "alice-flights"
  },
  {
-  "name": "Alice IO",
-  "careers_url": "https://secrethunter.io/companies/alice-io",
-  "ats": "unknown",
-  "slug": "alice-io"
- },
- {
   "name": "Allspring",
   "careers_url": "https://secrethunter.io/companies/allspring",
   "ats": "unknown",
   "slug": "allspring"
- },
- {
-  "name": "Allstarsit",
-  "careers_url": "https://secrethunter.io/companies/allstarsit",
-  "ats": "unknown",
-  "slug": "allstarsit"
  },
  {
   "name": "Allyable",
@@ -1854,22 +1326,10 @@
   "slug": ""
  },
  {
-  "name": "Molex",
-  "careers_url": "https://il.linkedin.com/jobs/view/account-specialist-at-molex-4410157428",
-  "ats": "unknown",
-  "slug": "molex"
- },
- {
   "name": "PMI Kids World",
   "careers_url": "https://il.linkedin.com/jobs/view/shipping-coordinator-at-pmi-kids-world-4457086799",
   "ats": "unknown",
   "slug": "p-m-i-ltd"
- },
- {
-  "name": "Rosh Electroptics Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/pre-sales-collections-coordinator-at-rosh-electroptics-ltd-4455846496",
-  "ats": "unknown",
-  "slug": "rosh-electroptics-ltd"
  },
  {
   "name": "Arbex",
@@ -1896,12 +1356,6 @@
   "slug": "mornex"
  },
  {
-  "name": "Snke",
-  "careers_url": "https://il.linkedin.com/jobs/view/r-d-lab-technician-at-snke-4454641167",
-  "ats": "unknown",
-  "slug": "snke"
- },
- {
   "name": "OpticSolution",
   "careers_url": "https://il.linkedin.com/jobs/view/senior-semiconductor-automation-process-engineer-at-opticsolution-4456809432",
   "ats": "unknown",
@@ -1926,18 +1380,6 @@
   "slug": "rimonimgroup"
  },
  {
-  "name": "CI Systems",
-  "careers_url": "https://il.linkedin.com/jobs/view/buyer-at-ci-systems-4457764003",
-  "ats": "unknown",
-  "slug": "ci-systems"
- },
- {
-  "name": "Sagarmatha",
-  "careers_url": "https://il.linkedin.com/jobs/view/project-manager-at-sagarmatha-4458109064",
-  "ats": "unknown",
-  "slug": "sagarmatha"
- },
- {
   "name": "Radix Engineering",
   "careers_url": "https://il.linkedin.com/jobs/view/project-manager-at-radix-engineering-4456926290",
   "ats": "unknown",
@@ -1950,24 +1392,6 @@
   "slug": "m--d--mechanical-devices"
  },
  {
-  "name": "Teradyne",
-  "careers_url": "https://il.linkedin.com/jobs/view/field-application-engineer-at-teradyne-4349754560",
-  "ats": "unknown",
-  "slug": "teradyne"
- },
- {
-  "name": "Hunter Douglas, Inc.",
-  "careers_url": "https://il.linkedin.com/jobs/view/supply-chain-operations-manager-at-hunter-douglas-inc-4456908744",
-  "ats": "unknown",
-  "slug": "hunter-douglas-us"
- },
- {
-  "name": "BrancoWeiss",
-  "careers_url": "https://il.linkedin.com/jobs/view/%D7%93%D7%A8%D7%95%D7%A9-%D7%94-%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%95%D7%A8-%D7%99%D7%AA-%D7%9C%D7%9E%D7%92%D7%96%D7%A8-%D7%94%D7%97%D7%A8%D7%93%D7%99-at-brancoweiss-4459052580",
-  "ats": "unknown",
-  "slug": "brancoweiss"
- },
- {
   "name": "ForeseeD",
   "careers_url": "https://il.linkedin.com/jobs/view/laboratory-technician-at-foreseed-4460185910",
   "ats": "unknown",
@@ -1978,12 +1402,6 @@
   "careers_url": "https://secrethunter.io/companies/lirix-consulting",
   "ats": "unknown",
   "slug": "lirix-consulting"
- },
- {
-  "name": "Little Flowers Early Childhood And Development Center Inc",
-  "careers_url": "https://secrethunter.io/companies/little-flowers-early-childhood-and-development-center-inc",
-  "ats": "unknown",
-  "slug": "little-flowers-early-childhood-and-development-center-inc"
  },
  {
   "name": "Lmr Finance",
@@ -2004,18 +1422,6 @@
   "slug": "long-acting-extended-release-antiretroviral-research-resource-program"
  },
  {
-  "name": "Longevity AI",
-  "careers_url": "https://secrethunter.io/companies/longevity-ai",
-  "ats": "unknown",
-  "slug": "longevity-ai"
- },
- {
-  "name": "Longi Solar",
-  "careers_url": "https://secrethunter.io/companies/longi-solar",
-  "ats": "unknown",
-  "slug": "longi-solar"
- },
- {
   "name": "Loreal",
   "careers_url": "https://secrethunter.io/companies/loreal",
   "ats": "unknown",
@@ -2028,22 +1434,10 @@
   "slug": "lsports-data-ltd"
  },
  {
-  "name": "Lstechs",
-  "careers_url": "https://secrethunter.io/companies/lstechs",
-  "ats": "unknown",
-  "slug": "lstechs"
- },
- {
   "name": "Lts Device Technologies",
   "careers_url": "https://secrethunter.io/companies/lts-device-technologies",
   "ats": "unknown",
   "slug": "lts-device-technologies"
- },
- {
-  "name": "Lubinski Auto",
-  "careers_url": "https://secrethunter.io/companies/lubinski-auto",
-  "ats": "unknown",
-  "slug": "lubinski-auto"
  },
  {
   "name": "Lubinski Group",
@@ -2064,12 +1458,6 @@
   "slug": "lumen"
  },
  {
-  "name": "Lumissil",
-  "careers_url": "https://secrethunter.io/companies/lumissil",
-  "ats": "unknown",
-  "slug": "lumissil"
- },
- {
   "name": "Lunairai",
   "careers_url": "https://secrethunter.io/companies/lunairai",
   "ats": "unknown",
@@ -2086,12 +1474,6 @@
   "careers_url": "https://secrethunter.io/companies/lynxevents",
   "ats": "unknown",
   "slug": "lynxevents"
- },
- {
-  "name": "Lynxight",
-  "careers_url": "https://secrethunter.io/companies/lynxight",
-  "ats": "unknown",
-  "slug": "lynxight"
  },
  {
   "name": "Lyra Health",
@@ -2130,12 +1512,6 @@
   "slug": "magal-security-systems-india-ltd"
  },
  {
-  "name": "Magaltech Automotive Engineering",
-  "careers_url": "https://secrethunter.io/companies/magaltech-automotive-engineering",
-  "ats": "unknown",
-  "slug": "magaltech-automotive-engineering"
- },
- {
   "name": "Magen Experts",
   "careers_url": "https://secrethunter.io/companies/magen-experts",
   "ats": "unknown",
@@ -2152,12 +1528,6 @@
   "careers_url": "https://secrethunter.io/companies/magic-software-enterprises",
   "ats": "unknown",
   "slug": "magic-software-enterprises"
- },
- {
-  "name": "Magma Devs",
-  "careers_url": "https://secrethunter.io/companies/magma-devs",
-  "ats": "unknown",
-  "slug": "magma-devs"
  },
  {
   "name": "Magnolia Silver Jewellery Group",
@@ -2202,22 +1572,10 @@
   "slug": "mali"
  },
  {
-  "name": "Malyan Amircashflow",
-  "careers_url": "https://secrethunter.io/companies/malyan-amircashflow",
-  "ats": "unknown",
-  "slug": "malyan-amircashflow"
- },
- {
   "name": "Mami Social Commerce",
   "careers_url": "https://secrethunter.io/companies/mami-social-commerce",
   "ats": "unknown",
   "slug": "mami-social-commerce"
- },
- {
-  "name": "Mandarin Oriental Hotel Group",
-  "careers_url": "https://secrethunter.io/companies/mandarin-oriental-hotel-group",
-  "ats": "unknown",
-  "slug": "mandarin-oriental-hotel-group"
  },
  {
   "name": "Mantin Plast",
@@ -2232,46 +1590,16 @@
   "slug": "manufacturers-association-of-israel"
  },
  {
-  "name": "Margolin Engineering Consulting",
-  "careers_url": "https://secrethunter.io/companies/margolin-engineering-consulting",
-  "ats": "unknown",
-  "slug": "margolin-engineering-consulting"
- },
- {
-  "name": "Marketeam AI",
-  "careers_url": "https://secrethunter.io/companies/marketeam-ai",
-  "ats": "unknown",
-  "slug": "marketeam-ai"
- },
- {
   "name": "Marketily",
   "careers_url": "https://secrethunter.io/companies/marketily",
   "ats": "unknown",
   "slug": "marketily"
  },
  {
-  "name": "Mars Antennas And Rf Systems",
-  "careers_url": "https://secrethunter.io/companies/mars-antennas-and-rf-systems",
-  "ats": "unknown",
-  "slug": "mars-antennas-and-rf-systems"
- },
- {
-  "name": "Mashbir",
-  "careers_url": "https://secrethunter.io/companies/mashbir-%D7%94%D7%9E%D7%A9%D7%91%D7%99%D7%A8-%D7%9C%D7%A6%D7%A8%D7%9B%D7%9F",
-  "ats": "unknown",
-  "slug": "mashbir"
- },
- {
   "name": "Mastercard Dynamic Yield",
   "careers_url": "https://secrethunter.io/companies/mastercard-dynamic-yield",
   "ats": "unknown",
   "slug": "mastercard-dynamic-yield"
- },
- {
-  "name": "Matan Health Services",
-  "careers_url": "https://secrethunter.io/companies/matan-health-services",
-  "ats": "unknown",
-  "slug": "matan-health-services"
  },
  {
   "name": "Mateh Asher Regional Council",
@@ -2376,34 +1704,16 @@
   "slug": "meco-architectural-engineering-llc"
  },
  {
-  "name": "Medasense Biometrics Ltd",
-  "careers_url": "https://secrethunter.io/companies/medasense-biometrics-ltd-",
-  "ats": "unknown",
-  "slug": "medasense-biometrics-ltd"
- },
- {
   "name": "Medexity",
   "careers_url": "https://secrethunter.io/companies/medexity",
   "ats": "unknown",
   "slug": "medexity"
  },
  {
-  "name": "Medica Refael Hospitals",
-  "careers_url": "https://secrethunter.io/companies/medica-refael-hospitals",
-  "ats": "unknown",
-  "slug": "medica-refael-hospitals"
- },
- {
   "name": "Medison",
   "careers_url": "https://secrethunter.io/companies/medison",
   "ats": "unknown",
   "slug": "medison"
- },
- {
-  "name": "Medone",
-  "careers_url": "https://secrethunter.io/companies/medone",
-  "ats": "unknown",
-  "slug": "medone"
  },
  {
   "name": "Meetcarra",
@@ -2446,12 +1756,6 @@
   "careers_url": "https://secrethunter.io/companies/meitav-trade-securities-ltd",
   "ats": "unknown",
   "slug": "meitav-trade-securities-ltd"
- },
- {
-  "name": "Mekorot",
-  "careers_url": "https://secrethunter.io/companies/mekorot",
-  "ats": "unknown",
-  "slug": "mekorot"
  },
  {
   "name": "Melabev",
@@ -2532,12 +1836,6 @@
   "slug": "methodica-effective-learning"
  },
  {
-  "name": "Metropoline",
-  "careers_url": "https://secrethunter.io/companies/metropoline-%D7%9E%D7%98%D7%A8%D7%95%D7%A4%D7%95%D7%9C%D7%99%D7%9F",
-  "ats": "unknown",
-  "slug": "metropoline"
- },
- {
   "name": "Metzer",
   "careers_url": "https://secrethunter.io/companies/metzer",
   "ats": "unknown",
@@ -2598,22 +1896,10 @@
   "slug": "midatech"
  },
  {
-  "name": "Migal Galilee Research Institute",
-  "careers_url": "https://secrethunter.io/companies/migal-galilee-research-institute",
-  "ats": "unknown",
-  "slug": "migal-galilee-research-institute"
- },
- {
   "name": "Mikden",
   "careers_url": "https://secrethunter.io/companies/mikden",
   "ats": "unknown",
   "slug": "mikden"
- },
- {
-  "name": "Mikud Security",
-  "careers_url": "https://secrethunter.io/companies/mikud-security",
-  "ats": "unknown",
-  "slug": "mikud-security"
  },
  {
   "name": "Milestone Systems",
@@ -2688,12 +1974,6 @@
   "slug": "ministere-des-affaires-etrangeres-francais"
  },
  {
-  "name": "Mink N Vik",
-  "careers_url": "https://secrethunter.io/companies/mink-n-vik",
-  "ats": "unknown",
-  "slug": "mink-n-vik"
- },
- {
   "name": "Minkovsky Media",
   "careers_url": "https://secrethunter.io/companies/minkovsky-media",
   "ats": "unknown",
@@ -2724,58 +2004,16 @@
   "slug": "mks-instruments"
  },
  {
-  "name": "Mobitech IO",
-  "careers_url": "https://secrethunter.io/companies/mobitech-io",
-  "ats": "unknown",
-  "slug": "mobitech-io"
- },
- {
-  "name": "Mobius Protection Systems",
-  "careers_url": "https://secrethunter.io/companies/mobius-protection-systems",
-  "ats": "unknown",
-  "slug": "mobius-protection-systems"
- },
- {
-  "name": "Moburst",
-  "careers_url": "https://secrethunter.io/companies/moburst",
-  "ats": "unknown",
-  "slug": "moburst"
- },
- {
-  "name": "Modiin Energy",
-  "careers_url": "https://secrethunter.io/companies/modiin-energy",
-  "ats": "unknown",
-  "slug": "modiin-energy"
- },
- {
-  "name": "Mogi I O",
-  "careers_url": "https://secrethunter.io/companies/mogi-i-o",
-  "ats": "unknown",
-  "slug": "mogi-i-o"
- },
- {
   "name": "Mondaydotcom",
   "careers_url": "https://secrethunter.io/companies/mondaydotcom",
   "ats": "unknown",
   "slug": "mondaydotcom"
  },
  {
-  "name": "Monogoto",
-  "careers_url": "https://secrethunter.io/companies/monogoto",
-  "ats": "unknown",
-  "slug": "monogoto"
- },
- {
   "name": "Montana Energy Corps Citizens For A Better Flathead",
   "careers_url": "https://secrethunter.io/companies/montana-energy-corps-citizens-for-a-better-flathead",
   "ats": "unknown",
   "slug": "montana-energy-corps-citizens-for-a-better-flathead"
- },
- {
-  "name": "Monto Pay",
-  "careers_url": "https://secrethunter.io/companies/monto-pay",
-  "ats": "unknown",
-  "slug": "monto-pay"
  },
  {
   "name": "Montreal Jewish Museum",
@@ -2802,18 +2040,6 @@
   "slug": "wenrix"
  },
  {
-  "name": "Nextravel",
-  "careers_url": "https://il.linkedin.com/jobs/view/customer-support-team-lead-at-nextravel-4457243609",
-  "ats": "unknown",
-  "slug": "nextravel-global"
- },
- {
-  "name": "Flashy",
-  "careers_url": "https://secrethunter.io/companies/flashy",
-  "ats": "unknown",
-  "slug": "flashy"
- },
- {
   "name": "Flexfactor",
   "careers_url": "https://secrethunter.io/companies/flexfactor",
   "ats": "unknown",
@@ -2824,12 +2050,6 @@
   "careers_url": "https://secrethunter.io/companies/flo-live",
   "ats": "unknown",
   "slug": "flo-live"
- },
- {
-  "name": "Forcepoint",
-  "careers_url": "https://secrethunter.io/companies/forcepoint",
-  "ats": "unknown",
-  "slug": "forcepoint"
  },
  {
   "name": "Foresightauto",
@@ -2850,22 +2070,10 @@
   "slug": "forvision"
  },
  {
-  "name": "Friends",
-  "careers_url": "https://secrethunter.io/companies/friends",
-  "ats": "unknown",
-  "slug": "friends"
- },
- {
   "name": "Frischefilmefrischerfilm",
   "careers_url": "https://secrethunter.io/companies/frischefilmefrischerfilm",
   "ats": "unknown",
   "slug": "frischefilmefrischerfilm"
- },
- {
-  "name": "Frisimos Technologies Ltd",
-  "careers_url": "https://secrethunter.io/companies/frisimos-technologies-ltd-",
-  "ats": "unknown",
-  "slug": "frisimos-technologies-ltd"
  },
  {
   "name": "Funpressor",
@@ -2878,18 +2086,6 @@
   "careers_url": "https://secrethunter.io/companies/fuse-sys",
   "ats": "unknown",
   "slug": "fuse-sys"
- },
- {
-  "name": "Future Electronics",
-  "careers_url": "https://secrethunter.io/companies/future-electronics",
-  "ats": "unknown",
-  "slug": "future-electronics"
- },
- {
-  "name": "G Stat",
-  "careers_url": "https://secrethunter.io/companies/g-stat",
-  "ats": "unknown",
-  "slug": "g-stat"
  },
  {
   "name": "G Willi Food",
@@ -2922,28 +2118,10 @@
   "slug": "gacmev"
  },
  {
-  "name": "Galialahav",
-  "careers_url": "https://secrethunter.io/companies/galialahav",
-  "ats": "unknown",
-  "slug": "galialahav"
- },
- {
   "name": "Galil Software Ltd",
   "careers_url": "https://secrethunter.io/companies/galil-software-ltd-",
   "ats": "unknown",
   "slug": "galil-software-ltd"
- },
- {
-  "name": "Galil Systems",
-  "careers_url": "https://secrethunter.io/companies/galil-systems",
-  "ats": "unknown",
-  "slug": "galil-systems"
- },
- {
-  "name": "Galooli",
-  "careers_url": "https://secrethunter.io/companies/galooli",
-  "ats": "unknown",
-  "slug": "galooli"
  },
  {
   "name": "Gambitsecurity",
@@ -2964,24 +2142,6 @@
   "slug": "gamma-gruppe"
  },
  {
-  "name": "Gav Systems",
-  "careers_url": "https://secrethunter.io/companies/gav-systems",
-  "ats": "unknown",
-  "slug": "gav-systems"
- },
- {
-  "name": "Gdalia Olitsky",
-  "careers_url": "https://secrethunter.io/companies/gdalia-olitsky",
-  "ats": "unknown",
-  "slug": "gdalia-olitsky"
- },
- {
-  "name": "Gdolim Mehachaim",
-  "careers_url": "https://secrethunter.io/companies/gdolim-mehachaim",
-  "ats": "unknown",
-  "slug": "gdolim-mehachaim"
- },
- {
   "name": "Gea Soluzioni",
   "careers_url": "https://secrethunter.io/companies/gea-soluzioni",
   "ats": "unknown",
@@ -2994,22 +2154,10 @@
   "slug": "genecit-com"
  },
  {
-  "name": "Genesis Premium Herbs",
-  "careers_url": "https://secrethunter.io/companies/genesis-premium-herbs",
-  "ats": "unknown",
-  "slug": "genesis-premium-herbs"
- },
- {
   "name": "Geneyxgenomex",
   "careers_url": "https://secrethunter.io/companies/geneyxgenomex",
   "ats": "unknown",
   "slug": "geneyxgenomex"
- },
- {
-  "name": "Genie",
-  "careers_url": "https://secrethunter.io/companies/genie",
-  "ats": "unknown",
-  "slug": "genie"
  },
  {
   "name": "Genielabstech",
@@ -3028,12 +2176,6 @@
   "careers_url": "https://secrethunter.io/companies/gentex-corporation",
   "ats": "unknown",
   "slug": "gentex-corporation"
- },
- {
-  "name": "Geshem Lamishtaken",
-  "careers_url": "https://secrethunter.io/companies/geshem-lamishtaken",
-  "ats": "unknown",
-  "slug": "geshem-lamishtaken"
  },
  {
   "name": "Gesher Nehasim",
@@ -3168,18 +2310,6 @@
   "slug": "glassbox-solutions"
  },
  {
-  "name": "Glassesusa Llc",
-  "careers_url": "https://secrethunter.io/companies/glassesusa-llc",
-  "ats": "unknown",
-  "slug": "glassesusa-llc"
- },
- {
-  "name": "Global Dev Experts",
-  "careers_url": "https://secrethunter.io/companies/global-dev-experts",
-  "ats": "unknown",
-  "slug": "global-dev-experts"
- },
- {
   "name": "Global Maritime Hub",
   "careers_url": "https://secrethunter.io/companies/global-maritime-hub",
   "ats": "unknown",
@@ -3204,24 +2334,6 @@
   "slug": "global-threat-signal"
  },
  {
-  "name": "Globalbit",
-  "careers_url": "https://secrethunter.io/companies/globalbit",
-  "ats": "unknown",
-  "slug": "globalbit"
- },
- {
-  "name": "Globaldots",
-  "careers_url": "https://secrethunter.io/companies/globaldots",
-  "ats": "unknown",
-  "slug": "globaldots"
- },
- {
-  "name": "Globus Packaging",
-  "careers_url": "https://secrethunter.io/companies/globus-packaging",
-  "ats": "unknown",
-  "slug": "globus-packaging"
- },
- {
   "name": "Globus Worldwide Logistics",
   "careers_url": "https://secrethunter.io/companies/globus-worldwide-logistics",
   "ats": "unknown",
@@ -3238,12 +2350,6 @@
   "careers_url": "https://secrethunter.io/companies/gmt-advanced-financial-services",
   "ats": "unknown",
   "slug": "gmt-advanced-financial-services"
- },
- {
-  "name": "Gns Aviation",
-  "careers_url": "https://secrethunter.io/companies/gns-aviation",
-  "ats": "unknown",
-  "slug": "gns-aviation"
  },
  {
   "name": "Go Apprentice",
@@ -3264,12 +2370,6 @@
   "slug": "golfisrael"
  },
  {
-  "name": "Golmat",
-  "careers_url": "https://secrethunter.io/companies/golmat",
-  "ats": "unknown",
-  "slug": "golmat"
- },
- {
   "name": "Goodwork Canada",
   "careers_url": "https://secrethunter.io/companies/goodwork-canada",
   "ats": "unknown",
@@ -3286,18 +2386,6 @@
   "careers_url": "https://secrethunter.io/companies/gooutos",
   "ats": "unknown",
   "slug": "gooutos"
- },
- {
-  "name": "Gordon Tours",
-  "careers_url": "https://secrethunter.io/companies/gordon-tours",
-  "ats": "unknown",
-  "slug": "gordon-tours"
- },
- {
-  "name": "Gordonia Hotel",
-  "careers_url": "https://secrethunter.io/companies/gordonia-hotel",
-  "ats": "unknown",
-  "slug": "gordonia-hotel"
  },
  {
   "name": "Gotion High Tech Indonesia Factory",
@@ -3318,46 +2406,16 @@
   "slug": "govan-engineering-llc"
  },
  {
-  "name": "Grand Caf De Zwaan B V",
-  "careers_url": "https://secrethunter.io/companies/grand-caf%C3%A3%C2%A9-de-zwaan-b.v.",
-  "ats": "unknown",
-  "slug": "grand-caf-de-zwaan-b-v"
- },
- {
-  "name": "Grandfrais",
-  "careers_url": "https://secrethunter.io/companies/grandfrais",
-  "ats": "unknown",
-  "slug": "grandfrais"
- },
- {
-  "name": "Gravityforms",
-  "careers_url": "https://secrethunter.io/companies/gravityforms",
-  "ats": "unknown",
-  "slug": "gravityforms"
- },
- {
   "name": "Grdfinance",
   "careers_url": "https://secrethunter.io/companies/grdfinance",
   "ats": "unknown",
   "slug": "grdfinance"
  },
  {
-  "name": "Green API",
-  "careers_url": "https://secrethunter.io/companies/green-api",
-  "ats": "unknown",
-  "slug": "green-api"
- },
- {
   "name": "Greenvision Systems Gvs",
   "careers_url": "https://secrethunter.io/companies/greenvision-systems-gvs",
   "ats": "unknown",
   "slug": "greenvision-systems-gvs"
- },
- {
-  "name": "Greif",
-  "careers_url": "https://secrethunter.io/companies/greif",
-  "ats": "unknown",
-  "slug": "greif"
  },
  {
   "name": "Greylock Partners",
@@ -3372,22 +2430,10 @@
   "slug": "groenbereik"
  },
  {
-  "name": "Groh Systems Ltd",
-  "careers_url": "https://secrethunter.io/companies/groh-systems-ltd",
-  "ats": "unknown",
-  "slug": "groh-systems-ltd"
- },
- {
   "name": "Groundcover Com",
   "careers_url": "https://secrethunter.io/companies/groundcover-com",
   "ats": "unknown",
   "slug": "groundcover-com"
- },
- {
-  "name": "Group19 Tech",
-  "careers_url": "https://secrethunter.io/companies/group19-tech",
-  "ats": "unknown",
-  "slug": "group19-tech"
  },
  {
   "name": "Groupe Limagrain",
@@ -3408,22 +2454,10 @@
   "slug": "growings-ltd"
  },
  {
-  "name": "Gsi Technology",
-  "careers_url": "https://secrethunter.io/companies/gsi-technology",
-  "ats": "unknown",
-  "slug": "gsi-technology"
- },
- {
   "name": "Gt Restructuring",
   "careers_url": "https://secrethunter.io/companies/gt-restructuring",
   "ats": "unknown",
   "slug": "gt-restructuring"
- },
- {
-  "name": "Gth Software",
-  "careers_url": "https://secrethunter.io/companies/gth-software",
-  "ats": "unknown",
-  "slug": "gth-software"
  },
  {
   "name": "Gytpol",
@@ -3480,12 +2514,6 @@
   "slug": "hadia"
  },
  {
-  "name": "Haifa Museums",
-  "careers_url": "https://secrethunter.io/companies/haifa-museums",
-  "ats": "unknown",
-  "slug": "haifa-museums"
- },
- {
   "name": "Haifa Theatre",
   "careers_url": "https://secrethunter.io/companies/haifa-theatre",
   "ats": "unknown",
@@ -3520,12 +2548,6 @@
   "careers_url": "https://secrethunter.io/companies/hansemglobal",
   "ats": "unknown",
   "slug": "hansemglobal"
- },
- {
-  "name": "Happy Mammoth",
-  "careers_url": "https://secrethunter.io/companies/happy-mammoth",
-  "ats": "unknown",
-  "slug": "happy-mammoth"
  },
  {
   "name": "Harel Finance Company",
@@ -3588,22 +2610,10 @@
   "slug": "hct-hadarom-container-terminal"
  },
  {
-  "name": "Hdr",
-  "careers_url": "https://secrethunter.io/companies/hdr",
-  "ats": "unknown",
-  "slug": "hdr"
- },
- {
   "name": "Healthscopemagazine",
   "careers_url": "https://secrethunter.io/companies/healthscopemagazine",
   "ats": "unknown",
   "slug": "healthscopemagazine"
- },
- {
-  "name": "Hear AI",
-  "careers_url": "https://secrethunter.io/companies/hear-ai",
-  "ats": "unknown",
-  "slug": "hear-ai"
  },
  {
   "name": "Helendorongroup",
@@ -3622,12 +2632,6 @@
   "careers_url": "https://secrethunter.io/companies/henkel",
   "ats": "unknown",
   "slug": "henkel"
- },
- {
-  "name": "TransUnion",
-  "careers_url": "https://il.indeed.com/viewjob?jk=7349c47d967eb4a7",
-  "ats": "unknown",
-  "slug": ""
  },
  {
   "name": "Pendo.io",
@@ -3654,12 +2658,6 @@
   "slug": "replaiai"
  },
  {
-  "name": "Electrotherm Industry",
-  "careers_url": "https://il.linkedin.com/jobs/view/controller-at-electrotherm-industry-4458585913",
-  "ats": "unknown",
-  "slug": "electrotherm-industry"
- },
- {
   "name": "Boston Consulting Group (BCG)",
   "careers_url": "https://il.linkedin.com/jobs/view/data-scientist-principal-ai-engineer-at-boston-consulting-group-bcg-4460328719",
   "ats": "unknown",
@@ -3676,12 +2674,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/support-engineer-at-gravity-forms-4458678796",
   "ats": "unknown",
   "slug": "gravityforms"
- },
- {
-  "name": "Stanley Black & Decker, Inc.",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-stanley-black-decker-inc-4450283927",
-  "ats": "unknown",
-  "slug": "stanley-black-decker-inc"
  },
  {
   "name": "PB Israel",
@@ -3726,12 +2718,6 @@
   "slug": "israel-electric-company"
  },
  {
-  "name": "Israel Elwyn",
-  "careers_url": "https://secrethunter.io/companies/israel-elwyn",
-  "ats": "unknown",
-  "slug": "israel-elwyn"
- },
- {
   "name": "Israel Free Loan Association",
   "careers_url": "https://secrethunter.io/companies/israel-free-loan-association",
   "ats": "unknown",
@@ -3754,12 +2740,6 @@
   "careers_url": "https://secrethunter.io/companies/israel-natural-gas-lines",
   "ats": "unknown",
   "slug": "israel-natural-gas-lines"
- },
- {
-  "name": "Israel Opera",
-  "careers_url": "https://secrethunter.io/companies/israel-opera",
-  "ats": "unknown",
-  "slug": "israel-opera"
  },
  {
   "name": "Israel Philharmonic Orchestra",
@@ -3816,12 +2796,6 @@
   "slug": "isrealrailways"
  },
  {
-  "name": "Isrotel Hotel Chain",
-  "careers_url": "https://secrethunter.io/companies/isrotel-hotel-chain",
-  "ats": "unknown",
-  "slug": "isrotel-hotel-chain"
- },
- {
   "name": "Iss Integrated Security Solutions",
   "careers_url": "https://secrethunter.io/companies/iss---integrated-security-solutions",
   "ats": "unknown",
@@ -3838,12 +2812,6 @@
   "careers_url": "https://secrethunter.io/companies/istraresearch",
   "ats": "unknown",
   "slug": "istraresearch"
- },
- {
-  "name": "IT D Business Medien Gmbh",
-  "careers_url": "https://secrethunter.io/companies/it-d-business-medien-gmbh",
-  "ats": "unknown",
-  "slug": "it-d-business-medien-gmbh"
  },
  {
   "name": "Itc City",
@@ -3870,12 +2838,6 @@
   "slug": "ituran"
  },
  {
-  "name": "Ivix",
-  "careers_url": "https://secrethunter.io/companies/ivix",
-  "ats": "unknown",
-  "slug": "ivix"
- },
- {
   "name": "Ivory",
   "careers_url": "https://secrethunter.io/companies/ivory",
   "ats": "unknown",
@@ -3900,12 +2862,6 @@
   "slug": "jafi"
  },
  {
-  "name": "Jafora Tabori",
-  "careers_url": "https://secrethunter.io/companies/jafora-tabori",
-  "ats": "unknown",
-  "slug": "jafora-tabori"
- },
- {
   "name": "Jako Pionier",
   "careers_url": "https://secrethunter.io/companies/jako-pionier",
   "ats": "unknown",
@@ -3916,12 +2872,6 @@
   "careers_url": "https://secrethunter.io/companies/jazzsecurity",
   "ats": "unknown",
   "slug": "jazzsecurity"
- },
- {
-  "name": "Jb Jewelers",
-  "careers_url": "https://secrethunter.io/companies/jb-jewelers",
-  "ats": "unknown",
-  "slug": "jb-jewelers"
  },
  {
   "name": "Jcfamilies",
@@ -3972,12 +2922,6 @@
   "slug": "jiga3d"
  },
  {
-  "name": "Jmb Travel Limited",
-  "careers_url": "https://secrethunter.io/companies/jmb-travel-limited",
-  "ats": "unknown",
-  "slug": "jmb-travel-limited"
- },
- {
   "name": "Jnjinnovativemedicine",
   "careers_url": "https://secrethunter.io/companies/jnjinnovativemedicine",
   "ats": "unknown",
@@ -4008,12 +2952,6 @@
   "slug": "jobscroller-app"
  },
  {
-  "name": "John Bryce Solutions",
-  "careers_url": "https://secrethunter.io/companies/john-bryce-solutions",
-  "ats": "unknown",
-  "slug": "john-bryce-solutions"
- },
- {
   "name": "Johnson And Johnson Medtech",
   "careers_url": "https://secrethunter.io/companies/johnson-%26-johnson-medtech",
   "ats": "unknown",
@@ -4032,18 +2970,6 @@
   "slug": "jones1"
  },
  {
-  "name": "Jurni AI",
-  "careers_url": "https://secrethunter.io/companies/jurni-ai",
-  "ats": "unknown",
-  "slug": "jurni-ai"
- },
- {
-  "name": "Just Eat Takeaway Com",
-  "careers_url": "https://secrethunter.io/companies/just-eat-takeaway-com",
-  "ats": "unknown",
-  "slug": "just-eat-takeaway-com"
- },
- {
   "name": "Kadesh Law Firm",
   "careers_url": "https://secrethunter.io/companies/kadesh-law-firm",
   "ats": "unknown",
@@ -4054,12 +2980,6 @@
   "careers_url": "https://secrethunter.io/companies/kai-capital",
   "ats": "unknown",
   "slug": "kai-capital"
- },
- {
-  "name": "Kamada",
-  "careers_url": "https://secrethunter.io/companies/kamada",
-  "ats": "unknown",
-  "slug": "kamada"
  },
  {
   "name": "Kan Israeli Publish Broadcasting Corporation",
@@ -4078,12 +2998,6 @@
   "careers_url": "https://secrethunter.io/companies/kaplan-medical-center",
   "ats": "unknown",
   "slug": "kaplan-medical-center"
- },
- {
-  "name": "Kardome",
-  "careers_url": "https://secrethunter.io/companies/kardome",
-  "ats": "unknown",
-  "slug": "kardome"
  },
  {
   "name": "Kaszinokbiz",
@@ -4122,12 +3036,6 @@
   "slug": "ken-hator-construction"
  },
  {
-  "name": "Kenes Group",
-  "careers_url": "https://secrethunter.io/companies/kenes-group",
-  "ats": "unknown",
-  "slug": "kenes-group"
- },
- {
   "name": "Kennedys",
   "careers_url": "https://secrethunter.io/companies/kennedys",
   "ats": "unknown",
@@ -4138,12 +3046,6 @@
   "careers_url": "https://secrethunter.io/companies/keshet",
   "ats": "unknown",
   "slug": "keshet"
- },
- {
-  "name": "Keystoneco",
-  "careers_url": "https://secrethunter.io/companies/keystoneco",
-  "ats": "unknown",
-  "slug": "keystoneco"
  },
  {
   "name": "Kfar Tikva",
@@ -4158,12 +3060,6 @@
   "slug": "kibbutz-contemporary-dance-company"
  },
  {
-  "name": "Kibeeri",
-  "careers_url": "https://secrethunter.io/companies/kibeeri",
-  "ats": "unknown",
-  "slug": "kibeeri"
- },
- {
   "name": "Kidum Rehab Projects",
   "careers_url": "https://secrethunter.io/companies/kidum-rehab-projects",
   "ats": "unknown",
@@ -4174,12 +3070,6 @@
   "careers_url": "https://secrethunter.io/companies/kinderzentrum-wei%C3%9Fer-stein-marburg-wehrda-ev",
   "ats": "unknown",
   "slug": "kinderzentrum-wei-er-stein-marburg-wehrda-ev"
- },
- {
-  "name": "Kinneret",
-  "careers_url": "https://secrethunter.io/companies/kinneret",
-  "ats": "unknown",
-  "slug": "kinneret"
  },
  {
   "name": "Kiryat Ono Municipality",
@@ -4228,12 +3118,6 @@
   "careers_url": "https://secrethunter.io/companies/konimbo",
   "ats": "unknown",
   "slug": "konimbo"
- },
- {
-  "name": "Konsortium Ziviler Friedensdienst",
-  "careers_url": "https://secrethunter.io/companies/konsortium-ziviler-friedensdienst",
-  "ats": "unknown",
-  "slug": "konsortium-ziviler-friedensdienst"
  },
  {
   "name": "Korentec",
@@ -4290,12 +3174,6 @@
   "slug": "kuehn-gmbh"
  },
  {
-  "name": "Kyndryl",
-  "careers_url": "https://secrethunter.io/companies/kyndryl",
-  "ats": "unknown",
-  "slug": "kyndryl"
- },
- {
   "name": "L W Ac Il",
   "careers_url": "https://secrethunter.io/companies/l-w-ac-il",
   "ats": "unknown",
@@ -4338,22 +3216,10 @@
   "slug": "landa-corporation"
  },
  {
-  "name": "Laniado Hospital",
-  "careers_url": "https://secrethunter.io/companies/laniado-hospital",
-  "ats": "unknown",
-  "slug": "laniado-hospital"
- },
- {
   "name": "Lastbil Magasinet",
   "careers_url": "https://secrethunter.io/companies/lastbil-magasinet",
   "ats": "unknown",
   "slug": "lastbil-magasinet"
- },
- {
-  "name": "Latet Ngo",
-  "careers_url": "https://secrethunter.io/companies/latet-ngo",
-  "ats": "unknown",
-  "slug": "latet-ngo"
  },
  {
   "name": "Latinx In AI",
@@ -4380,22 +3246,10 @@
   "slug": "layavision"
  },
  {
-  "name": "Leadersapp Technologies",
-  "careers_url": "https://secrethunter.io/companies/leadersapp-technologies",
-  "ats": "unknown",
-  "slug": "leadersapp-technologies"
- },
- {
   "name": "Ledge Finance",
   "careers_url": "https://secrethunter.io/companies/ledge-finance",
   "ats": "unknown",
   "slug": "ledge-finance"
- },
- {
-  "name": "Ledico",
-  "careers_url": "https://secrethunter.io/companies/ledico",
-  "ats": "unknown",
-  "slug": "ledico"
  },
  {
   "name": "Legatolegal",
@@ -4416,18 +3270,6 @@
   "slug": "leiblein-gmbh"
  },
  {
-  "name": "Leket Israel",
-  "careers_url": "https://secrethunter.io/companies/leket-israel",
-  "ats": "unknown",
-  "slug": "leket-israel"
- },
- {
-  "name": "Lely Industries Nv",
-  "careers_url": "https://secrethunter.io/companies/lely-industries-nv",
-  "ats": "unknown",
-  "slug": "lely-industries-nv"
- },
- {
   "name": "Lenox Investments",
   "careers_url": "https://secrethunter.io/companies/lenox-investments",
   "ats": "unknown",
@@ -4440,22 +3282,10 @@
   "slug": "letsgooo"
  },
  {
-  "name": "Leumit Health",
-  "careers_url": "https://secrethunter.io/companies/leumit-health",
-  "ats": "unknown",
-  "slug": "leumit-health"
- },
- {
   "name": "Lev Hai Genetics",
   "careers_url": "https://secrethunter.io/companies/lev-hai-genetics",
   "ats": "unknown",
   "slug": "lev-hai-genetics"
- },
- {
-  "name": "Lev Haolam",
-  "careers_url": "https://secrethunter.io/companies/lev-haolam",
-  "ats": "unknown",
-  "slug": "lev-haolam"
  },
  {
   "name": "Levi Sterk Zilberstein",
@@ -4510,12 +3340,6 @@
   "careers_url": "https://secrethunter.io/companies/linearb",
   "ats": "unknown",
   "slug": "linearb"
- },
- {
-  "name": "Linesight",
-  "careers_url": "https://secrethunter.io/companies/linesight",
-  "ats": "unknown",
-  "slug": "linesight"
  },
  {
   "name": "Linkedin",

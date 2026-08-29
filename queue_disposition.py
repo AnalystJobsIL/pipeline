@@ -12,6 +12,12 @@ without a hunt AND an LLM read. Deleting the name silently makes that claim and 
 evidence at the same time. So retirement is: hunt, read, PERSIST, then prune — never prune
 first.
 
+**Two ways out, and only one of them needs a model.** A name that has BECOME A ROW is retired
+on the fact of the row: `already-a-row` is not a claim about our reach, it is a lookup, and
+leaving those names in the file is why the queue never shrank even as 195 rows were written from
+it on 2026-08-29. The other way out — "we hunted it and found nothing findable" — is a claim
+about OUR REACH, and it is the one the rest of this file is about.
+
 **What counts as evidence.** The name must carry a real attempt at the deepest rung available
 (`hunt`), and there must be something for the model to reason FROM: the pages the paid search
 returned for it, or the page the hunt reached. A name with no evidence at all is NOT retired —
@@ -53,7 +59,11 @@ SYSTEM = (
     "read automatically. Say `has-board` only if the evidence shows one. Say `no-board` if the "
     "evidence shows the company exists but publishes no readable openings page. Say "
     "`cannot-tell` if the evidence is too thin to judge — that is the honest answer when we "
-    "simply failed to look, and it is not the same as the company having nothing."
+    "simply failed to look, and it is not the same as the company having nothing. "
+    "IMPORTANT: a candidate page may be marked REFUSED, meaning an identity check found it "
+    "belongs to a DIFFERENT employer or is not a listings page at all. A refused page is "
+    "evidence about our search, NOT about this company — it can never support `no-board`. If "
+    "every candidate was refused, the answer is `cannot-tell`."
 )
 SCHEMA = json.dumps({
     "type": "object", "additionalProperties": False,
@@ -96,14 +106,21 @@ def evidence_for(name, hunt, drain):
     return ev
 
 
-def retirable(name, state, qstate, hunt, drain):
+def retirable(name, state, qstate, hunt, drain, have=None):
     """May this name be retired at all? Evidence first, verdict second."""
     if name in state:
         return False, "already-recorded"
+    if have is not None and name.strip().lower() in have:
+        return True, "already-a-row"       # a lookup, not a claim -- no model needed
     if name not in hunt:
         return False, "no-hunt-attempt"                 # the deepest rung never ran
     ev = evidence_for(name, hunt, drain)
-    if not ev["search_pages"] and not (ev["hunt"].get("url") or ev["hunt"].get("detail")):
+    # `detail` is deliberately NOT accepted here. On a failed hunt it reads `no pages
+    # reachable`, which is a fact about OUR REACH, not about the company -- and as the sole
+    # evidence it walks a model straight to `no-board` (measured 2026-08-29: it would have
+    # retired 71 names on our own failure message). Evidence is a page a search returned, or
+    # a page the hunt actually reached.
+    if not ev["search_pages"] and not ev["hunt"].get("url"):
         return False, "no-evidence-to-read"             # we never looked; not the same thing
     return True, ""
 
@@ -116,8 +133,12 @@ def judge(name, ev, timeout=120):
                     "\n".join("  - " + u for u in ev["search_pages"][:6]))
     h = ev.get("hunt") or {}
     if h:
-        body.append("What the careers-page hunt found: verdict=%s url=%s detail=%s"
-                    % (h.get("verdict"), h.get("url") or "(none)", h.get("detail") or ""))
+        refused = (h.get("why") or "").strip()
+        body.append("What the careers-page hunt found: verdict=%s url=%s detail=%s%s"
+                    % (h.get("verdict"), h.get("url") or "(none)", h.get("detail") or "",
+                       ("\n  REFUSED by the identity check: %s -- this page is NOT evidence "
+                        "about this company" % refused)
+                       if refused and refused not in ("no-listing", "no-address") else ""))
     return call_json("\n\n".join(body), system=SYSTEM, schema=SCHEMA,
                      model=os.environ.get("QDISP_MODEL", "sonnet"), timeout=timeout)
 
@@ -159,22 +180,39 @@ def main(argv=None):
     have = QS.registry_names()
 
     why = collections.Counter()
-    todo = []
+    todo, is_row = [], []
     for n in names:
-        if not n or n.strip().lower() in have:
-            why["already-a-row"] += 1
+        if not n:
             continue
-        ok, reason = retirable(n, state, qstate, hunt, drain)
-        (todo.append(n) if ok else why.__setitem__(reason, why[reason] + 1))
+        ok, reason = retirable(n, state, qstate, hunt, drain, have)
+        if ok and reason == "already-a-row":
+            is_row.append(n)
+        elif ok:
+            todo.append(n)
+        else:
+            why[reason] += 1
+    print("names that are now REGISTRY ROWS (retired on the fact of the row): %d" % len(is_row))
     print("queue %d - hunt attempts on file %d - candidates for retirement %d"
           % (len(names), len(hunt), len(todo)))
     for k, v in why.most_common():
         print("   not retirable: %-22s %d" % (k, v))
+    stamp0 = dt.date.today().isoformat()
+    for n in is_row:
+        state[n] = {"date": stamp0, "verdict": "already-a-row",
+                    "why": "a registry row now covers this name; the queue entry is spent",
+                    "company_seems_real": True, "board_url_if_any": "",
+                    "evidence": {"registry_row": n}}
+        QS.record(qstate, n, "hunt", "already-a-row", day=stamp0)
+    if is_row:
+        save(state)
+        QS.save(qstate)
     if a.limit:
         todo = todo[:a.limit]
     if not a.judge:
-        print("\n(report only: pass --judge to ask the model, --apply to prune)")
-        return 0
+        print("\n(no --judge: the model tier is skipped; `already-a-row` "
+              "names are still recorded, and --apply still prunes them)")
+        if not a.apply:
+            return 0
 
     stamp = dt.date.today().isoformat()
     counts = collections.Counter()
@@ -201,8 +239,10 @@ def main(argv=None):
     print("\n%s" % dict(counts))
 
     # ---- the prune, and only for names this tool has itself recorded --------------------
-    retire = [n for n in names if state.get(n, {}).get("verdict") == "no-board"]
-    print("retirable now (verdict `no-board`, evidence persisted): %d" % len(retire))
+    retire = [n for n in names
+              if state.get(n, {}).get("verdict") in ("no-board", "already-a-row")]
+    print("retirable now (`no-board` or `already-a-row`, each with a persisted record): %d"
+          % len(retire))
     if not a.apply or not retire:
         print("(dry run: the queue file is untouched)")
         return 0

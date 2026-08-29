@@ -140,3 +140,78 @@ unchanged from the 247 entries of the previous session.
 | Bright Data | **0 this session** — rung 1 is free HTTP, rung 2's search ladder found no new candidates to unlock. The 843 credits of the queue drain were the previous session's |
 | `claude -p` | **294** - 65 (rung 2a, 4 resolved) + 229 (rung 2b, 0 resolved) |
 | rows written | 2 (`RealSense`, `develeap`), both verified through the production fetcher, both through `apply_proposals`' full gate stack |
+
+## The evening: the check was better than the thing it checked
+
+`queue_disposition` retires a name only after a hunt AND an LLM read. It ran over 444
+candidates and returned **120 `no-board`, 323 `cannot-tell`, 1 `has-board`**. Retirement is the
+only act in this session that DELETES something, so 20 of the 120 were QA'd — not by re-reading
+the stored evidence, but by asking the question again from scratch: one fresh paid search per
+name, and a model shown only the name and the URLs it returned.
+
+> **An independent search disagreed with 15 of 20 — 75%.**
+> `apester.com/careers/` · `allyable.com/careers/` · `wenrix.com/careers/` ·
+> `minrav.co.il/en/careers/` · `meitav.co.il/jobs/` · a live Comeet board for `Formtitan`
+
+The cause is structural, not a bad model: `judge()` reasons from the evidence the HUNT stored,
+so on a name the hunt failed it can only re-confirm the failure. All 120 verdicts were
+overturned in `cloud_state/queue_disposition.json` and **nothing was pruned on them**. The 120
+`no-web-presence` records the same pass wrote into `queue_state` were stripped too — that
+verdict is TERMINAL, and it had frozen 111 names out of every later rung.
+
+Two things were retired honestly: **317 names that had become registry rows**, which is a
+lookup rather than a claim (`queue 877 -> 560`).
+
+## `queue_resolve_search.py` — the QA instrument, promoted to a rung
+
+Six defects were found by chasing ONE company the operator questioned (`bdo.co.il` is not
+BDO's careers page — they were right). Every one of them biased toward a false "no board":
+
+| defect | effect |
+|---|---|
+| `google_via_unlocker(name)` builds its own `f"{name} careers"`; we passed `"X careers"` | searched `"X careers careers"` |
+| `DEEP_BD_SEARCH_CAP` is **150 per process** and returns `[]` silently | a 137-name shard went blind at ~75; the rest logged `no-search-results` |
+| `unlock()` returns `""` once Playwright has run in the process | after the first scrape, EVERY later name became a false `no-search-results` |
+| `urllib` cannot request a raw-Hebrew URL | `bdo-career.hunterhrms.com/כל-המשרות/` read as a 0-char page |
+| `is_aggregator` does not know `lnkd.in` | `QTREX` "resolved" to a shortlink and scraped 32 fake Israel roles |
+| every gate judged the URL, never the page | a `/services/` page passed; an 85,761-char real board was refused |
+
+The design answer to the last one is the operator's: **stop maintaining a notion of what a
+board looks like.** A page is a board if scraping it returns jobs — host-agnostic, so an ATS
+this repo has never seen and a self-hosted board pass for the same reason Greenhouse does.
+`looks_like_a_job_listing_page` drops from a veto to a tie-breaker.
+
+IDENTITY does not relax, because that is the property that publishes one company's roles under
+another's name: `identity_ok`, or the company's token from `_name_targets` as a **whole word**
+in the title the tenant wrote. Anchored at word boundaries deliberately — substring matching is
+what put Bancor onto The Bancorp Bank's board, and `test_the_title_rescue_admits_an_unknown_ats_but_not_a_lookalike`
+pins both directions.
+
+The rung runs in two phases: every paid search first with no browser in the process, cached to
+disk per name, then fetch-and-scrape. That is not tidiness — it is the only thing that stops a
+render from poisoning the next name's search.
+
+Verified end to end: `BDO Israel` -> `bdo-career.hunterhrms.com/כל-המשרות/` · `Teva` ->
+`tevapharm.com/your-career/` · `NVIDIA AI` -> `jobs.nvidia.com/careers` (4 IL).
+
+## What was written, and what was refused
+
+`apply_proposals` wrote **205 rows** from the queue — 49 ACTIVE, 156 parked-with-an-address
+(the daily `probe_candidates` watch). Every proposal went through `qa_proposals` first, and the
+refusal rate is the reason that step is not optional:
+
+| batch | proposals | refused as another company's |
+|---|---|---|
+| recovered monitors | 257 | **26 (10%)** — `Israel Police`, `Israel Post`, `Menora`, `Melisron` |
+| activatable | 95 | **9 (9%)** — incl. `Greylock Partners`, a VC |
+| final hunt | 27 | **4 (15%)** — `Kuehne+Nagel`, `Lacuna Space`, `Lightheaded Lighting` |
+
+## What I did NOT finish
+
+* The 549-name sweep with the fixed rung was still running. Its proposals are NOT applied and
+  have NOT been QA'd; nothing it produced is in `companies.csv`.
+* **425** — 7 active rows embed a Comeet board the gate cannot admit; needs one Playwright pass.
+* **426** — a worktree has no `secrets.env`, so paid rungs no-op silently. 57 of 57 names came
+  back `dead` from a credential-less run; the same 57 resolved once armed. **The operator has a
+  key and expects it to be used** — read it from the checkout root, never copy it in (381).
+

@@ -6914,18 +6914,31 @@ def test_no_queue_name_is_retired_without_a_persisted_verdict(tmp_path, monkeypa
     candidate at all; a name with a hunt but nothing for a model to READ is refused as
     `no-evidence-to-read` (we never looked, which is not the same as nothing being there); and
     the prune asserts a persisted record for every name it removes.
+
+    UPDATED 2026-08-29: EVIDENCE IS A PAGE, NOT A SENTENCE. This test used to accept the
+    hunt's `detail` string as something a model could read. On a failed hunt that string is
+    `no pages reachable`, which is a fact about OUR REACH -- and handed to a model as the sole
+    evidence it walks straight to `no-board`. An independent search disagreed with 15 of 20
+    such verdicts (75%), finding real careers pages for `Apester`, `Allyable`, `Wenrix` and
+    `Minrav`. So a retirable name must carry a page a search returned or a page the hunt
+    actually REACHED, and `Detail Only Is Not Evidence` below pins that.
     Kills `qdisp-prune-unrecorded` and `qdisp-no-floor`."""
     import json
     import queue_disposition as QD
     monkeypatch.chdir(tmp_path)
     (tmp_path / "cloud_state").mkdir()
     queue = [{"name": n, "careers_url": "", "ats": "unknown", "slug": n.lower()}
-             for n in ("Hunted And Empty", "Hunted No Evidence", "Never Hunted")]
+             for n in ("Hunted And Empty", "Hunted No Evidence", "Never Hunted",
+                       "Detail Only Is Not Evidence")]
     (tmp_path / QD.QUEUE).write_text(json.dumps(queue), encoding="utf-8")
     (tmp_path / "out").mkdir()
     (tmp_path / "out" / "hunt_s1.json").write_text(json.dumps({"generated": "2026-08-29", "proposals": [
         {"name": "Hunted And Empty", "kind": "refused", "rung": "hunt", "why": "no-listing",
-         "evidence": {"hunt_verdict": "nolisting", "detail": "tried 2 candidates", "url": ""}},
+         "evidence": {"hunt_verdict": "nolisting", "detail": "tried 2 candidates",
+                      "url": "https://hunted-and-empty.example/careers"}},
+        {"name": "Detail Only Is Not Evidence", "kind": "refused", "rung": "hunt",
+         "why": "no-listing",
+         "evidence": {"hunt_verdict": "dead", "detail": "no pages reachable", "url": ""}},
         {"name": "Hunted No Evidence", "kind": "refused", "rung": "hunt", "why": "no-listing",
          "evidence": {"hunt_verdict": "dead", "detail": "", "url": ""}}]}), encoding="utf-8")
     (tmp_path / "out" / "queue_drain_search.json").write_text(
@@ -6941,6 +6954,9 @@ def test_no_queue_name_is_retired_without_a_persisted_verdict(tmp_path, monkeypa
     assert "Never Hunted" in left, "a name the deepest rung never touched must NOT be retired"
     assert "Hunted No Evidence" in left, (
         "a name we failed to LOOK at was retired as though nothing were there")
+    assert "Detail Only Is Not Evidence" in left, (
+        "`no pages reachable` is our own failure message; retiring a name on it records a "
+        "claim about the COMPANY that only the evidence about US supports")
     rec = QD.load(str(tmp_path / QD.PATH))
     assert rec["Hunted And Empty"]["evidence"], "retired with no evidence kept"
 
@@ -6949,7 +6965,8 @@ def test_no_queue_name_is_retired_without_a_persisted_verdict(tmp_path, monkeypa
     (tmp_path / QD.QUEUE).write_text(json.dumps(big), encoding="utf-8")
     (tmp_path / "out" / "hunt_s1.json").write_text(json.dumps({"generated": "2026-08-29", "proposals": [
         {"name": "Co%d" % i, "kind": "refused", "rung": "hunt", "why": "no-listing",
-         "evidence": {"hunt_verdict": "nolisting", "detail": "tried 2", "url": ""}}
+         "evidence": {"hunt_verdict": "nolisting", "detail": "tried 2",
+                      "url": "https://co%d.example/careers" % i}}
         for i in range(20)]}), encoding="utf-8")
     QD.save({}, str(tmp_path / QD.PATH))
     rc = QD.main(["--judge", "--apply"])
@@ -7005,3 +7022,125 @@ def test_a_documented_careers_page_keeps_its_daily_watch(tmp_path, monkeypatch):
         assert claim not in r[5].lower(), (
             "the note asserts an ABSENCE (%r), which is the rule this row exists to respect: %s"
             % (claim, r[5]))
+
+
+def test_a_hunted_queue_name_stops_being_a_hunt_target(tmp_path):
+    """The fold from proposal file to attempt log, which was an ad-hoc script and was
+    forgotten once (2026-08-29: 57 names hunted twice, because nothing recorded the first
+    pass). The shards write proposal files; `queue_state.ingest` is what makes those
+    attempts real to `tried_within`, and therefore what removes the name from
+    `listing_hunt.queue_targets` tomorrow."""
+    import json
+    import queue_state as QS
+
+    doc = {"generated": "2026-08-29", "proposals": [
+        {"name": "Alpha", "kind": "scrape", "rung": "hunt",
+         "evidence": {"candidate_url": "https://alpha.example/careers"}},
+        {"name": "Beta", "kind": "monitor", "rung": "hunt",
+         "evidence": {"candidate_url": "https://beta.example/jobs"}},
+        {"name": "Gamma", "kind": "refused", "rung": "hunt", "why": "no-listing",
+         "evidence": {"url": ""}},
+    ]}
+    fn = tmp_path / "hunt_x.json"
+    fn.write_text(json.dumps(doc), encoding="utf-8")
+
+    state = {}
+    n = QS.ingest(state, [str(fn)])
+    assert n == 3, "every proposal is an attempt, refusals included"
+    for nm, want in (("Alpha", "found"), ("Beta", "documented"), ("Gamma", "no-listing")):
+        tried = state[nm]["tried"]
+        assert [a["rung"] for a in tried] == ["hunt"]
+        assert tried[0]["verdict"] == want, nm
+        # the whole point: the name is no longer a target for the 14-day cadence
+        assert QS.tried_within(state, nm, "hunt", 14), nm
+
+    # ...and folding the same file again is free, so a re-run after a kill cannot
+    # double-count an attempt or move a name's cadence forward twice.
+    assert QS.ingest(state, [str(fn)]) == 0
+    assert sum(len(e["tried"]) for e in state.values()) == 3
+
+
+def test_our_own_failure_message_is_not_evidence_a_company_has_no_board():
+    """`queue_disposition` may only ask the model about a name it actually LOOKED at.
+
+    A failed hunt records `detail: "no pages reachable"`. Handed to a model as the only
+    evidence, that produced `no-board` verdicts about companies whose pages we simply never
+    reached (2026-08-29, 71 names). The module's own rule is that "we never managed to look"
+    is not "there is nothing to find", so a bare detail string is NOT retirable; a page a
+    search returned, or a page the hunt reached, is."""
+    import queue_disposition as QD
+
+    def ev(hunt_ev):
+        return {"Acme": {"name": "Acme", "kind": "refused", "evidence": hunt_ev}}
+
+    unreachable = ev({"hunt_verdict": "dead", "detail": "no pages reachable", "url": ""})
+    ok, why = QD.retirable("Acme", {}, {}, unreachable, {}, have=set())
+    assert not ok and why == "no-evidence-to-read", (ok, why)
+
+    reached = ev({"hunt_verdict": "nolisting", "detail": "no roles",
+                  "url": "https://acme.example/careers"})
+    ok, _ = QD.retirable("Acme", {}, {}, reached, {}, have=set())
+    assert ok, "a page we actually reached IS evidence"
+
+    # and a name that has become a row leaves on the fact of the row, with no hunt at all
+    ok, why = QD.retirable("Acme", {}, {}, {}, {}, have={"acme"})
+    assert ok and why == "already-a-row", (ok, why)
+
+
+def test_a_hebrew_careers_url_can_be_fetched_at_all():
+    """`urllib` cannot request a URL with raw non-ASCII in the path, and it raises rather
+    than 404s — which this rung read as a 0-char page and silently disqualified.
+
+    `BDO Israel`'s real board is `bdo-career.hunterhrms.com/כל-המשרות/`: the model picked it
+    correctly, the fetch returned nothing, and three BDO marketing pages scored instead. The
+    bias is systematic and points one way — Hebrew careers URLs are disproportionately the
+    Israeli employers this registry exists for."""
+    import queue_resolve_search as QRS
+
+    enc = QRS._encode("https://bdo-career.hunterhrms.com/כל-המשרות/")
+    assert enc == ("https://bdo-career.hunterhrms.com/"
+                   "%D7%9B%D7%9C-%D7%94%D7%9E%D7%A9%D7%A8%D7%95%D7%AA/"), enc
+    assert all(ord(c) < 128 for c in enc)
+    # an ASCII URL is untouched, so nothing that worked before changes
+    plain = "https://example.com/careers?x=1&y=2"
+    assert QRS._encode(plain) == plain
+
+
+def test_the_title_rescue_admits_an_unknown_ats_but_not_a_lookalike():
+    """`identity_ok` is HOST-based, so a company's own board on an ATS this repo does not
+    know can never pass it — `424@registry`. The rescue is the title the tenant wrote, and it
+    must stay narrow: substring matching is what put Bancor onto The Bancorp Bank's board."""
+    import queue_resolve_search as QRS
+
+    class _NoGate:
+        @staticmethod
+        def identity_ok(name, url):
+            return False                   # force the rescue branch, both ways
+
+    body = "x" * 3000
+    # the real shape: a Hebrew title carrying an unescaped entity, naming the company
+    ours = "<title>חיפוש משרות &#8211; BDO</title>" + body
+    assert QRS._is_ours("BDO Israel", "https://bdo-career.hunterhrms.com/x", ours, _NoGate)
+
+    # ...and the refusal the gate exists for: `bancor` is a SUBSTRING of `bancorp`, never a word
+    theirs = "<title>Careers - The Bancorp Bank</title>" + body
+    assert not QRS._is_ours("Bancor", "https://careers.thebancorp.com/x", theirs, _NoGate)
+
+
+def test_a_link_shortener_can_never_be_a_board():
+    """`pipeline.aggregators.is_aggregator` knows `linkedin.com/jobs` but not `lnkd.in`, so a
+    shortlink walked past it: `QTREX` resolved to `lnkd.in/dzvfNdZN` and scraped 32 "Israel
+    roles" off LinkedIn. A redirector proves nothing about who owns the page."""
+    import queue_resolve_search as QRS
+    from pipeline.aggregators import is_aggregator
+    from pipeline.company_identity import looks_like_a_job_listing_page
+
+    class _Gate:
+        @staticmethod
+        def identity_ok(name, url):
+            return True                    # even a maximally permissive gate must not save it
+
+    for host in ("lnkd.in", "bit.ly", "t.co"):
+        url = "https://%s/abc123" % host
+        assert QRS._score("Acme", url, _Gate, is_aggregator,
+                          looks_like_a_job_listing_page) is None, host
