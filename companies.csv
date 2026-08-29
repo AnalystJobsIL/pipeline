@@ -1656,3 +1656,7 @@ Prime Video & Amazon MGM Studios,scrape,https://www.amazon.jobs/jobs/10485497,ht
 Taldor,scrape,,,false,listing-hunt 2026-08-29: queue-hunt; no listing found
 COMDA,scrape,,,false,listing-hunt 2026-08-29: queue-hunt; no listing found
 TopGum Industries,scrape,,,false,listing-hunt 2026-08-29: queue-hunt; no listing found
+Medone,scrape,https://medone.co.il,https://medone.co.il,false,scanned; no open Israel roles now | own-site 2026-08-29: medone.co.il linkback
+Milliman,scrape,https://us.milliman.com/en/,https://us.milliman.com/en/,false,scanned; no open Israel roles now | own-site 2026-08-29: us.milliman.com linkback
+Mindteck,scrape,https://mindteck.com,https://mindteck.com,false,scanned; no open Israel roles now | own-site 2026-08-29: mindteck.com linkback
+Moburst,scrape,https://www.moburst.com/career/,https://www.moburst.com/career/,true,auto-expand scrape; 17 IL
