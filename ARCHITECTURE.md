@@ -1700,6 +1700,49 @@ believing any sentence below about how a rung performs.
 5. Manual Chrome sweep: a human/agent reads the page in a real browser; every miss becomes
    a new detection pattern in the code.
 
+### The queue could not say what had been tried (2026-08-29)
+
+A `research_companies.json` entry carries four keys — `name`, `careers_url`, `ats`, `slug` —
+and **no attempt count, no date, no reason**. The state was scattered: `auto_expand_seen` 770,
+`resolve_attempts` 194, `candidate_probe` 361, and on 2026-08-29 **484 of the 877 appeared in
+`auto_expand_seen` while 393 appeared in none of the three**. A name tried twenty times was
+indistinguishable from one never touched, so every tool re-walked the same prefix and nothing
+could retire a name that is genuinely unfindable. `docs/BACKLOG.md` 407 is this one level down:
+a ROW gets a verdict, a date and a pool; a NAME got none of the three, so it had no owner and
+no cadence.
+
+`queue_state.py` + `cloud_state/queue_state.json` give a name all three, copying the model that
+already works rather than inventing one:
+
+| | |
+|---|---|
+| an **append-log** | `pipeline/notes.py` exists because one tool overwriting another's verdict is how coverage vanishes, and `auto_expand`, `listing_hunt`'s queue arm and `drain_queue` all touch these names. Attempts are appended; nothing is rewritten. No cap, so no eviction rule is invented |
+| a **date** per attempt | `tried_within(name, rung, days)` is `verdicts.stale` asked of a name |
+| a **pool** | `in_queue_pool(entry, state, rung, days)` — each rung's own membership rule, so "which names does this rung still owe an answer to" is a function, not a guess |
+
+**A verdict here is never a claim about the COMPANY** — it records what a RUNG did
+(`no-linkback`, `no-proposal`, `search-page-no-ats`). The operator's rule about recording
+emptiness governs `companies.csv`; this file cannot activate or park anything.
+
+Two things it got wrong first, both worth keeping because both are the same mistake:
+`is_settled` matched `TERMINAL` as a PREFIX, so `resolved-domain` (rung 1 finding the company's
+own SITE, which is evidence and not a board) counted 55 names as finished that still had every
+later rung to run; and it read only the NEWEST verdict, so backfilling the drain's attempts
+after stamping `already-a-row` buried 64 of 65 settled names behind a later refusal. It now
+scans every attempt and re-derives `already-a-row` from `companies.csv` rather than trusting a
+stamp.
+
+`walk_one` runs its rungs in order and only reaches a later one when every earlier one
+declined, so a name carrying a `search` attempt is evidence — **derived, not observed**, and
+recorded as `implied-by-ladder` — that the slug probe and the comeet reader had their turn.
+Without that the census said 786 names were owed a slug probe that had already run.
+
+```bash
+python queue_state.py                 # what is left, and why
+python queue_state.py --unresolved    # names every rung has tried and none could answer
+python queue_state.py --name "Wix"    # one name's whole history
+```
+
 **Verification invariants (never bypass):** see also "The activation rule" in §2, which is
 the short version of the three gates and the code that enforces them.
 

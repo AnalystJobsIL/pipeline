@@ -16,9 +16,9 @@ The `runs in` and `imported by` columns are **computed from the code**, not type
 |---|---|---|
 | `scheduled` | a workflow invokes it | 29 |
 | `library` | no workflow runs it; live code imports it | 9 |
-| `operator` | a human or agent runs it; nothing in CI does | 11 |
+| `operator` | a human or agent runs it; nothing in CI does | 12 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
-| | **total root modules** | **74** |
+| | **total root modules** | **75** |
 
 `pipeline/` is listed at the end. Lane ownership for all of these is in `docs/AGENT_BRIEF.md`.
 
@@ -89,6 +89,7 @@ Live and documented, and nothing in CI runs them - `docs/check_docs.py` fails if
 | `drain_queue.py` | walks the WHOLE intake queue with the free HTTP rungs and emits a PROPOSAL FILE; it cannot write companies.csv, and that is structural rather than a flag -- no csv writer, no registry path, no `--apply`, asserted over the AST by `test_the_queue_drain_cannot_write_the_registry`. Exists because `auto_expand` clears ~50 names/day against a queue that grows ~150/day, and the cloud limit is the 330-minute job timeout rather than cost. Carries the comeet-token rung the shipped ladder has no way to reach: `probe_ats._PLATFORMS` has no comeet entry |
 | `fill_employees_llm.py` | re-researches employee counts the LinkedIn pass missed or got suspiciously wrong. Hand-run only - the Windows chain that drove it is disabled and no workflow runs it |
 | `firmo_health_check.py` | tripwire: is the firmographics chain actually classifying anything? |
+| `queue_state.py` | what has been TRIED for a queue NAME -- the thing `research_companies.json` cannot say. An entry carries four keys and no attempt count, no date, no reason; state was scattered across three cloud_state files and 393 of the 877 appeared in none of them, so a name tried twenty times looked exactly like one never touched. Gives a NAME what a ROW already gets: an append-log of attempts, a date per attempt, and `in_queue_pool` so each rung's outstanding work is a function. Never a claim about a company -- it records what a RUNG did, and it cannot activate or park anything |
 | `setup_brightdata.py` | one-time: store the Bright Data token + zone in secrets.env |
 | `setup_serpapi_key.py` | one-time: store the SerpApi key (quota exhausted until 2026-09-01) |
 | `verify_company.py` | live-fetch verification of one company's endpoint - the research discipline as a script |

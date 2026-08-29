@@ -1600,3 +1600,5 @@ Kmslh,comeet,97.008,https://www.comeet.com/careers-api/2.0/company/97.008/positi
 L Raphael,workable,l-dot-r-aphael,https://apply.workable.com/api/v1/widget/accounts/l-dot-r-aphael?details=true,true,queue-drain 2026-08-29 search; 6/1 IL
 Leidos,workday,leidos/External,https://leidos.wd5.myworkdayjobs.com/wday/cxs/leidos/External/jobs,true,queue-drain 2026-08-29 search; 1/1 IL
 Linxsecurity,comeet,99.00C,https://www.comeet.com/careers-api/2.0/company/99.00C/positions?token=99C434499C300C300C99C300C133839A84CE0,true,queue-drain 2026-08-29 search-comeet; 13/7 IL
+RealSense,bamboohr,realsense,https://realsense.bamboohr.com/careers/list,true,queue-drain 2026-08-29 resolve-llm; 8/6 IL
+develeap,comeet,B8.005,https://www.comeet.com/careers-api/2.0/company/B8.005/positions?token=8B5343E3CF33CF34E5D4E5D4E5D8B522D4343E,true,queue-drain 2026-08-29 resolve-llm; 1/1 IL

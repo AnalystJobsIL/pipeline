@@ -371,7 +371,7 @@ SITE_MAX = int(os.environ.get("AUTO_EXPAND_SITE_MAX", "25"))
 _SITE_TLDS = ("com", "co.il", "ai", "io")
 
 
-def _site_from_guess(name, handle, timeout=5):
+def _site_from_guess(name, handle, timeout=5, stats=None):
     """The company's own site, guessed from LinkedIn's handle and made to PROVE ITSELF.
 
     `_site_from_slug` below asks LinkedIn for the `about_website` link and got 0 of 3
@@ -392,9 +392,21 @@ def _site_from_guess(name, handle, timeout=5):
     Returns (url, html) or None. `html` is >= 2000 chars by construction, which is also what
     keeps this rung FREE: `identity_gate.page_names_company` reaches the paid Bright Data
     unlocker only when the page it holds is under 2000 chars.
+
+    `stats` is an optional Counter the rung STAMPS AS IT GOES, so a sweep can report the four
+    numbers of 2026-08-27 (answered / named / linkback / all three) without a private mirror of
+    this function's stages. Every early `return None` here is a real per-name outcome, and a
+    rung that only reports its hits cannot be compared with itself a fortnight later.
     """
-    if not handle or not _SLUG_OK.fullmatch(handle):
+    def _no(why):
+        if stats is not None:
+            stats[why] += 1
         return None
+
+    if not handle or not _SLUG_OK.fullmatch(handle):
+        return _no("bad-handle")
+    if stats is not None:
+        stats["tried"] += 1
     deadline = time.time() + 4 * timeout       # a TOTAL bound across all four TLDs
     for tld in _SITE_TLDS:
         u = "https://%s.%s" % (handle, tld)
@@ -407,8 +419,12 @@ def _site_from_guess(name, handle, timeout=5):
         # `_NAME_STOP`-stripped core, which is the same truncation `_lossless_slugs` refuses
         # -- and it fired here: `PCB Technologies Ltd.` was "named" by pcb.com, the site of
         # PCB PIEZOTRONICS, because the core `PCB` appears on it (attacker, 2026-08-27).
+        if stats is not None:
+            stats["answered"] += 1
         if _gate.page_mentions_company(name, html, strict=True) is not True:
-            return None                    # a domain that answers but is not theirs: stop
+            return _no("not-named")        # a domain that answers but is not theirs: stop
+        if stats is not None:
+            stats["named"] += 1
         # ...and the linkback must be the WHOLE handle. `\b` fires on a hyphen, so `pcb` was
         # "proved" by `linkedin.com/company/pcb-piezotronics` and `ceva` by
         # `linkedin.com/company/ceva-sante-animale`: a PREFIX match, which is exactly the
@@ -417,7 +433,7 @@ def _site_from_guess(name, handle, timeout=5):
         # gate's own (BACKLOG 317), which is the thing to remember rather than the two fixes.
         if not re.search(r"linkedin\.com/company/" + re.escape(handle) + r"(?![a-z0-9-])",
                          html, re.I):
-            return None                    # no linkback: unproven, and unproven is refused
+            return _no("no-linkback")      # no linkback: unproven, and unproven is refused
         # The address we keep is the REDIRECT TARGET, and nothing bound it to the domain we
         # guessed: an adversarial pass redirected a guess onto `comeet.com/jobs/<someone
         # else>/...` and onto `phoenixtma.com` (`company_identity`'s own example of a real
@@ -425,12 +441,16 @@ def _site_from_guess(name, handle, timeout=5):
         # on every ATS host by design, and False for a `weak` verdict. `registrable` is the
         # binding: a legitimate `x.com -> www.x.com` keeps its registrable domain, a hop onto
         # somebody else's does not.
+        if stats is not None:
+            stats["linkback"] += 1
         if registrable(urlparse(final or u).netloc) != registrable(urlparse(u).netloc):
-            return None
+            return _no("redirected-off-domain")
         if _gate.is_foreign(name, final or u):
-            return None
+            return _no("foreign")
+        if stats is not None:
+            stats["kept"] += 1
         return (final or u), html
-    return None
+    return _no("no-domain-answered")
 
 def _site_from_slug(slug, timeout=8):
     """The company's own website from its public LinkedIn company page -- the one

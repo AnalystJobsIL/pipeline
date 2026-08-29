@@ -2179,5 +2179,25 @@
   "replace": "",
   "why": "routing was 83 of 139 ledger rows, the commonest disposition, and it was the one arm MAX_DEACTIVATE did not bound: one broken run could turn off an unbounded number of ACTIVE rows.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "queue-settled-prefix",
+  "file": "queue_state.py",
+  "symbol": "is_settled",
+  "class": "M7-constant-drift",
+  "find": "    return any(str(a.get(\"verdict\") or \"\") in TERMINAL\n               for a in (state.get(name) or {}).get(\"tried\") or [])",
+  "replace": "    return any(any(str(a.get(\"verdict\") or \"\").startswith(t) for t in TERMINAL)\n               for a in (state.get(name) or {}).get(\"tried\") or [])",
+  "why": "prefix matching made `resolved-domain` -- the company's own SITE, which is evidence and not a board -- settle 55 names that still had every later rung to run.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "queue-settled-newest",
+  "file": "queue_state.py",
+  "symbol": "is_settled",
+  "class": "M1-gate-removal",
+  "find": "    return any(str(a.get(\"verdict\") or \"\") in TERMINAL\n               for a in (state.get(name) or {}).get(\"tried\") or [])",
+  "replace": "    return str((state.get(name) or {}).get(\"verdict\") or \"\") in TERMINAL",
+  "why": "the log is not chronological: backfilling the drain after stamping `already-a-row` buried 64 of 65 settled names behind a later refusal, and the census said 2 where 66 were.",
+  "must_be_killed_by_behavioural": true
  }
 ]

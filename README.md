@@ -109,7 +109,7 @@ the code that implements it is described in `ARCHITECTURE.md` §0.
   `out/digest-<date>.{html,txt,md,json}` and `out/docs-preview/`, and never emails or
   publishes. An unscoped one still never emails, but it does overwrite the published board.
 
-The 74 scripts at the repo root are the coverage machinery: resolvers, hunts, audits and
+The 75 scripts at the repo root are the coverage machinery: resolvers, hunts, audits and
 one-shot probes. `docs/MODULES.md` says which are scheduled, which are libraries, which are
 operator tools and which are dead weight — 31 of them are reachable from no workflow, no
 test and no live import.

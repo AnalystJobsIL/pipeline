@@ -6817,3 +6817,53 @@ def test_the_routing_arm_is_capped_like_the_parking_arm(tmp_path, monkeypatch):
         "the routing arm turned off %d rows against a cap of %d" % (off, Z.MAX_DEACTIVATE))
     assert len(ledger) == Z.MAX_DEACTIVATE, (
         "a row the cap refused was written to the ledger, so the cadence hides it for 30 days")
+
+
+def test_a_queue_name_is_settled_by_any_attempt_not_the_newest(tmp_path, monkeypatch):
+    """`queue_state` got this wrong twice, and both are the same mistake.
+
+    (1) `TERMINAL` was matched as a PREFIX, so `resolved-domain` — rung 1 finding the company's
+    own SITE, which is evidence and not a board — counted 55 names as finished that still had
+    every later rung to run. It is an exact set now.
+
+    (2) `is_settled` read only the NEWEST verdict. The log is not written in chronological
+    order: backfilling the 876-name drain's attempts after stamping `already-a-row` buried 64
+    of 65 settled names behind a later refusal, and the census said 2 settled where 66 were.
+    Once a name IS a row it stays one, whatever a later rung failed to find.
+
+    Kills `queue-settled-prefix` and `queue-settled-newest`."""
+    import queue_state as QS
+    st = {}
+    QS.record(st, "Twin", "own-site", "already-a-row", day="2026-08-29")
+    QS.record(st, "Twin", "search", "search-page-no-ats", day="2026-08-29")   # later, and worse
+    assert QS.is_settled(st, "Twin"), (
+        "a settled name was buried by a later attempt: the log is not chronological")
+
+    QS.record(st, "Site", "own-site", "resolved-domain", day="2026-08-29")
+    assert not QS.is_settled(st, "Site"), (
+        "finding the company's own SITE is not finding its BOARD")
+    assert QS.next_rung(st, "Site") == "slug-probe"
+
+    # the registry is the authority for `already-a-row`, not a stamp
+    assert QS.is_settled(st, "Never Stamped", have={"never stamped"})
+    assert not QS.is_settled(st, "Never Stamped", have=set())
+
+
+def test_a_queue_rung_pool_has_a_cadence_like_every_row_pool(tmp_path, monkeypatch):
+    """The point of the file: a NAME gets what a ROW already gets. `in_queue_pool` is the rung's
+    own membership rule and composes with a cadence, exactly as the `companies.csv` pools do."""
+    import datetime as dt
+    import queue_state as QS
+    st = {}
+    e = {"name": "Acme"}
+    assert QS.in_queue_pool(e, st, "own-site"), "a never-tried name must be owed every rung"
+    QS.record(st, "Acme", "own-site", "no-linkback", day=dt.date.today().isoformat())
+    assert not QS.in_queue_pool(e, st, "own-site"), "tried today, so not owed today"
+    assert QS.in_queue_pool(e, st, "resolve-llm"), "a DIFFERENT rung is still owed"
+    old = (dt.date.today() - dt.timedelta(days=20)).isoformat()
+    st2 = {}
+    QS.record(st2, "Acme", "own-site", "no-linkback", day=old)
+    assert QS.in_queue_pool(e, st2, "own-site", days=14), "past the cadence, so owed again"
+    # ...and a settled name is owed nothing by anyone
+    QS.record(st2, "Acme", "search", "resolved", day=old)
+    assert not QS.in_queue_pool(e, st2, "own-site", days=14)
