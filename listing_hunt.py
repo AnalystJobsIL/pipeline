@@ -648,6 +648,23 @@ def main():
                                      "n_il_when_hunted": n_il, "hunt_verdict": verdict,
                                      "is_aggregator": is_aggregator(keep),
                                      "gate": "identity_ok + looks_like_a_job_listing_page"}})
+                elif keep:
+                    # WE KNOW THEIR CAREERS PAGE and it has no Israel role TODAY. That is an
+                    # address we hold, not an absence we are claiming, and collapsing the two
+                    # was my error: writing no row at all drops the company out of
+                    # `probe_candidates`' DAILY pool -- the one mechanism that wakes it the day
+                    # it posts -- and leaves it to `queue_targets` at 60 names a night out of
+                    # ~700, a ~12-day cycle. So it becomes a MONITOR proposal: a parked row
+                    # carrying the address, whose note asserts the address and nothing else.
+                    PROPOSE_TO.append({
+                        "name": name, "kind": "monitor", "rung": "hunt", "platform": "scrape",
+                        "token": "", "api_url": keep, "proposed_active": False,
+                        "note_if_applied": "listing-hunt %s: queue-hunt; careers page "
+                                           "documented; monitored candidate" % TODAY,
+                        "evidence": {"candidate_url": keep, "hunt_verdict": verdict,
+                                     "n_il_when_hunted": n_il,
+                                     "is_aggregator": is_aggregator(keep),
+                                     "gate": "identity_ok"}})
                 else:
                     PROPOSE_TO.append({
                         "name": name, "kind": "refused", "rung": "hunt",

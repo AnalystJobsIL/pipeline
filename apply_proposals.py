@@ -416,7 +416,13 @@ def main(argv=None):
 
     with open(a.proposals, encoding="utf-8") as f:
         doc = json.load(f)
-    props = [p for p in doc["proposals"] if p.get("kind") in ("ats", "scrape")]
+    # `monitor` is the third kind, and it exists because writing NO row was worse. A hunt that
+    # FOUND the company's careers page and saw no Israel role today holds an ADDRESS, which is
+    # not a claim that the company has nothing -- and a parked row carrying that address is
+    # what puts it in `probe_candidates`' DAILY pool, the one mechanism that wakes it the
+    # morning it posts. Without the row it falls to `queue_targets` at 60 names a night out of
+    # ~700: a ~12-day cycle with no daily watch at all.
+    props = [p for p in doc["proposals"] if p.get("kind") in ("ats", "scrape", "monitor")]
     if a.kind:
         props = [p for p in props if p["kind"] == a.kind]
     allow = {x.strip().lower() for x in a.allow_domain_collision.split(",") if x.strip()}
@@ -479,7 +485,18 @@ def main(argv=None):
             stats["held"] += 1
             continue
 
-        if p["kind"] == "ats":
+        if p["kind"] == "monitor":
+            # NOTHING about roles is asserted. The note names the address and carries
+            # `monitored candidate` (a `verdicts.TOKENS` token, so `listing_hunt`'s pool owns
+            # it too). It must never say `no IL listing` or `no listing found` --
+            # `test_the_applier_never_records_a_company_as_empty_or_unreachable` enforces that.
+            if not (p.get("api_url") or "").startswith("http"):
+                why[name] = "monitor with no address"
+                stats["skipped"] += 1
+                continue
+            seg = "queue-hunt %s: careers page documented; monitored candidate" % today
+            row, verdict = [name, "scrape", "", p["api_url"], "false", seg], "monitor"
+        elif p["kind"] == "ats":
             try:
                 jobs, il = _reverify_ats(p)
             except Exception as e:                                # noqa: BLE001
@@ -497,7 +514,8 @@ def main(argv=None):
         # proposal. That costs no credit -- `_UNLOCK_BUDGET` is 0 -- but it is a request per
         # row, which is worth knowing before a batch of 100.
         html = ""
-        row, verdict = _row_for(p, n_all, n_il, html, today)
+        if p["kind"] != "monitor":            # a monitor row is built above and asserts no roles
+            row, verdict = _row_for(p, n_all, n_il, html, today)
         if row is None:
             # NOT a park. The name keeps its place in the queue, where listing_hunt's
             # 19:00 arm re-works it; writing a "no listing" row here would be a claim about
@@ -515,7 +533,8 @@ def main(argv=None):
         if a.apply:
             _append(row)
         stats["written"] += 1
-        stats["active"] += 1
+        stats["active"] += 1 if row[4] == "true" else 0
+        stats["monitored"] = stats.get("monitored", 0) + (1 if row[4] == "false" else 0)
         for key, val in (("names", name.lower()), ("names", _norm_company(name))):
             batch_keys[key].add(val)
         batch_keys["allnames"].add((_norm(name), name))

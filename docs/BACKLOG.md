@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**471 filed · 351 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**472 filed · 352 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 424.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 425.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -88,7 +88,7 @@ closure convention in the header.
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 109 open
+### registry — 110 open
 
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
@@ -199,6 +199,7 @@ closure convention in the header.
 - **420** `420@registry` **`confirm_zero` is in no workflow, no `check_invariants` check and no rehearsal**
 - **422** `422@registry` **`resolve_llm` resolves at 7.3% on a VERIFIED own-domain and 0% on a search-found page —
 - **423** `423@registry` **`listing_hunt`'s queue arm is the only rung left and it cannot be run at scale under the
+- **424** `424@registry` **~10% of the hunt's `another company's board` refusals are the company's OWN board, and
 
 ### infra — 81 open
 
@@ -7259,4 +7260,43 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     owning no csv writer. Either the hunt's queue arm grows the same split, or the rule is
     relaxed for it deliberately and in writing. Until then the 807 have an honest disposition
     and no owner, which is `407` again one level down.
+
+424. **~10% of the hunt's `another company's board` refusals are the company's OWN board, and
+    the shape is `317@registry` mirrored** — lane: `registry`, measured 2026-08-29 over the
+    queue sweep. Of 167 identity refusals, **32 (19%) point at a domain resembling the
+    company's own**; reading them splits that set roughly in half.
+
+    Real companies dropped — the queue name is a SUFFIXED or TRANSLITERATED variant of the
+    tenant, and `identity_ok` cannot see through it:
+
+    ```
+    Tel-Hai University of Kiryat Shmona -> telhai.ac.il/jobs-2
+    Mondaydotcom                        -> monday.com/careers
+    888 Com                             -> jobs.888.com/#career-positions
+    Max Security Solutions Ltd          -> max-security.com/careers-israel/
+    Memed Dx                            -> me-med.com/careers-2/
+    Wxg Waxman Group                    -> wxg.co.il/career/#job-openings
+    Zenitysec                           -> zenity.io/careers
+    ```
+
+    And, three rows away in the same list, the refusals the gate exists for:
+
+    ```
+    Make Gems / Gemified -> gem.com        ("gem" is a substring of "makegems")
+    Mobile Group Ltd.    -> mobileye.com   the Bancor/Bancorp shape, exactly
+    Metriko              -> metrika.co
+    ```
+
+    **That adjacency is why this must not be loosened by a rule.** `317@registry` records the
+    inverse — a slug DERIVED from the name near-equals it by construction and carries zero
+    bits; here the name is mangled and the real tenant cannot be recognised. Both are one
+    string test asked to do identity work it cannot do. The fix is the same one the applier
+    already uses for the Meridial case: a signal the tenant WROTE and we did not derive — the
+    board page's own `<title>`, or the API's `company_name`. `qa_proposals` demonstrates it
+    working at 19% catch on the other side (it refused `Team 3 Group` -> Team8 and
+    `Residenthome` -> Ashley Digital, both of which `identity_ok` passed).
+
+    Measure before changing anything: for the 32, does `apply_proposals.board_employer` on the
+    refused URL name the company? If it does for the seven above and not for the three, the
+    title is the discriminator on this side too and the gate can consult it.
 

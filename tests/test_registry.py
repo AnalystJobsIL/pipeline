@@ -6955,3 +6955,53 @@ def test_no_queue_name_is_retired_without_a_persisted_verdict(tmp_path, monkeypa
     rc = QD.main(["--judge", "--apply"])
     assert rc == 1, "a run retiring every name in the file must abort, not succeed"
     assert len(json.loads((tmp_path / QD.QUEUE).read_text(encoding="utf-8"))) == 20
+
+
+def test_a_documented_careers_page_keeps_its_daily_watch(tmp_path, monkeypatch):
+    """The regression the propose/write split introduced, and the distinction that fixes it.
+
+    A hunt that FOUND the company's careers page and saw no Israel role today holds an
+    ADDRESS. That is not a claim that the company has nothing, and collapsing the two was the
+    error: emitting no row at all drops the company out of `probe_candidates`' **daily** pool —
+    the one mechanism that wakes it the morning it posts — and leaves it to
+    `listing_hunt.queue_targets` at 60 names a night out of ~700, a ~12-day cycle.
+
+    So `kind: "monitor"` writes a PARKED row carrying the address, whose note names the address
+    and nothing else. The operator's rule bans recording that a company HAS NO ROLES; it does
+    not ban recording that we know their careers page.
+    Kills `applier-monitor-drop` and `applier-monitor-asserts-absence`."""
+    import csv
+    import datetime as dt
+    import json
+    import apply_proposals as AP
+    import probe_candidates as PC
+    import listing_hunt as L
+    from pipeline.verdicts import in_pool
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    monkeypatch.setattr(AP, "CSV_PATH", str(tmp_path / "companies.csv"))
+    (tmp_path / "p.json").write_text(json.dumps({
+        "generated": dt.date.today().isoformat(),
+        "proposals": [{"name": "Doc Co", "kind": "monitor", "rung": "hunt",
+                       "platform": "scrape", "token": "",
+                       "api_url": "https://docco.example/careers", "proposed_active": False,
+                       "evidence": {"n_il_when_hunted": 0}},
+                      {"name": "No Addr", "kind": "monitor", "rung": "hunt",
+                       "platform": "scrape", "token": "", "api_url": "",
+                       "evidence": {}}]}), encoding="utf-8")
+    AP.main(["--proposals", str(tmp_path / "p.json"), "--apply", "--batch", "5"])
+    rows = [r for r in csv.reader(open(tmp_path / "companies.csv", encoding="utf-8"))][1:]
+    got = {r[0]: r for r in rows}
+
+    assert "No Addr" not in got, "a monitor row with no address asserts nothing and must not be written"
+    r = got["Doc Co"]
+    assert r[4] == "false", "a monitor row is PARKED, never active"
+    assert r[3] == "https://docco.example/careers", "the address is the whole point of the row"
+    assert PC.in_probe_pool(r), (
+        "the row lost its DAILY watch, so the company reappears only on the ~12-day queue cycle")
+    assert L.in_hunt_pool(r) and in_pool(r[5])
+    for claim in ("no il listing", "no listing found", "unreachable", "no open"):
+        assert claim not in r[5].lower(), (
+            "the note asserts an ABSENCE (%r), which is the rule this row exists to respect: %s"
+            % (claim, r[5]))

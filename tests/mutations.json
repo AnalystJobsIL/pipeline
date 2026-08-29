@@ -2239,5 +2239,25 @@
   "replace": "",
   "why": "retiring a name the deepest rung never touched records 'nothing findable' about a company nobody looked for.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "applier-monitor-drop",
+  "file": "apply_proposals.py",
+  "symbol": "main",
+  "class": "M1-gate-removal",
+  "find": "    props = [p for p in doc[\"proposals\"] if p.get(\"kind\") in (\"ats\", \"scrape\", \"monitor\")]",
+  "replace": "    props = [p for p in doc[\"proposals\"] if p.get(\"kind\") in (\"ats\", \"scrape\")]",
+  "why": "dropping the monitor kind writes NO row for a company whose careers page we found, which removes it from probe_candidates' DAILY pool -- the only mechanism that surfaces it the morning it posts -- and leaves a ~12-day queue cycle instead.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "applier-monitor-asserts-absence",
+  "file": "apply_proposals.py",
+  "symbol": "main",
+  "class": "M3-branch-narrowing",
+  "find": "            seg = \"queue-hunt %s: careers page documented; monitored candidate\" % today",
+  "replace": "            seg = \"queue-hunt %s: no IL listing; monitored candidate\" % today",
+  "why": "the monitor row exists to record an ADDRESS, never an absence; the old queue arm's note said `no IL listing` and that is the operator's rule violated once per name.",
+  "must_be_killed_by_behavioural": true
  }
 ]
