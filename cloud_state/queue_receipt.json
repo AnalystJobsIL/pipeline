@@ -3,11 +3,11 @@
  "buckets": {
   "owed, a nightly rung retries it": 464,
   "ROW, ACTIVE": 147,
-  "ROW, parked with an address (daily probe)": 228,
-  "ROW, no address, a re-check pool owns it": 127,
+  "ROW, parked with an address (daily probe)": 216,
+  "ROW, no address, a re-check pool owns it": 139,
   "retired with evidence": 70
  },
- "unverified_rows": 43,
+ "unverified_rows": 0,
  "owed": [
   "10bis Co Il",
   "1824app",

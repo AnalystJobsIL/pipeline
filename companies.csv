@@ -1759,7 +1759,7 @@ Global Dev Experts,scrape,,,false,queue-hunt 2026-08-29: careers page documented
 Globus Packaging,scrape,,https://globus-intr.co.il/%d7%93%d7%a8%d7%95%d7%a9%d7%99%d7%9d/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Gns Aviation,scrape,,https://gns-aviation.co.il/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Golmat,scrape,,https://www.golmat.co.il/%d7%93%d7%a8%d7%95%d7%a9%d7%99%d7%9d/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-Gordon Tours,scrape,,https://www.gordontravel.co.il/contact,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Gordon Tours,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: not a job board; needs re-resolution
 Gordonia Hotel,scrape,,https://gordoniahotels.com/en/career/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Grand Caf De Zwaan B V,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Grand Café De Zwaan; needs re-resolution
 Grandfrais,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Grand Frais; needs re-resolution
@@ -1775,7 +1775,7 @@ Hdr,scrape,,https://hdr.taleo.net/careersection/hdr_mobile/jobsearch.ftl,false,q
 Hear AI,scrape,,https://www.hear.ai/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Hila & Co.,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names HILA; needs re-resolution
 "Hunter Douglas, Inc.",scrape,,https://jobs.hunterdouglas.com/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-IDENTI Medical,scrape,,https://identimedical.com/about-us/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+IDENTI Medical,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: not a job board; needs re-resolution
 IDX,scrape,,https://integraldiagnostics.wd105.myworkdayjobs.com/IDX_Careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 IT D Business Medien Gmbh,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names IT GmbH; needs re-resolution
 Imubit,scrape,,https://imubit.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
@@ -1791,7 +1791,7 @@ Jmb Travel Limited,scrape,,,false,queue-hunt 2026-08-29: careers page documented
 Kuni,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Kuni Restaurant & Catering LLC; needs re-resolution
 Laniado Hospital,scrape,,https://www.laniado.org.il/en/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Liniad,scrape,,https://www.liniad.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-Little Flowers Early Childhood And Development Center Inc,scrape,,https://littleflowersecdc.org/career-opportunities/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Little Flowers Early Childhood And Development Center Inc,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Little Flowers Early Childhood & Development Cen; needs re-resolution
 Locusview,scrape,,https://www.comeet.com/jobs/locusview/25.002,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Longevity AI,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Longevity AI; needs re-resolution
 Longi Solar,scrape,,https://www.longi.com/en/jobs/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
@@ -1823,7 +1823,7 @@ NONO - GROUP,scrape,,https://nonomimi.com/wanted/,false,queue-hunt 2026-08-29: c
 NOVELSAT,scrape,,https://novelsat.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Naamat נעמת,scrape,,https://naamat.org.il/jobs/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Netoplay,scrape,,https://netoplay.ltd/work/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-Nextravel,scrape,,https://intro.nextravel.co.il/en,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Nextravel,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: not a job board; needs re-resolution
 Omnisys,scrape,,https://www.omnisys.co.il/careers-2/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 PsyDin,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names PsyDin; needs re-resolution
 Rosh Electroptics Ltd.,scrape,,https://roshelop.co.il/career/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
@@ -1904,7 +1904,7 @@ rating,scrape,,https://www.fitchratings.com/careers,false,queue-hunt 2026-08-29:
 Drive Group,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Drive Group Australia; needs re-resolution
 OpticSolution,scrape,,https://jobs.workable.com/company/7rJTm3wyjmK79HZdNFCPfo/jobs-at-opticsolution,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Lyra Health,scrape,,https://jobs.lever.co/lyrahealth,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-Mesh Cybersecurity,scrape,,https://www.meshsecurity.io/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Mesh Cybersecurity,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Mesh Security Limited (Mesh); needs re-resolution
 Minet Technologies,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Minet; needs re-resolution
 Forvision,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Forvision Technology Pvt. Ltd; needs re-resolution
 Gamma Gruppe,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names GAMMA GRUPPE; needs re-resolution
@@ -1968,7 +1968,7 @@ Auth21,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored 
 DT,scrape,,https://www.dt.com/about-us/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 "The Ritz-Carlton Hotel Company, L.L.C.",scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names The Ritz-Carlton Yacht Collection; needs re-resolution
 Worthy Com,scrape,,https://www.worthy.com/about/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-Unipharm Career,scrape,,https://www.unipharm.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Unipharm Career,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Unipharm Wholesale Drugs Ltd.; needs re-resolution
 Aerospike,scrape,,https://aerospike.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Wipro Limited,scrape,,https://careers.wipro.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Integra LifeSciences,scrape,,https://www.integralife.com/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
@@ -2008,32 +2008,32 @@ Mfpm,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored ca
 Millennium Partners,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Millennium Partners; needs re-resolution
 Gesher Nehasim,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Gesher Human Services; needs re-resolution
 Giraffe Ems,scrape,,https://www.giraffe.co.il/jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-Glasbewassing Nederland,scrape,,https://zeelenglasbewassing.nl/career,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Glasbewassing Nederland,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Zeelen Glasbewassing; needs re-resolution
 H Sol,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names SOL; needs re-resolution
 Hadassah,scrape,,https://www.hadassah.org/page/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Pendo.io,scrape,,https://www.pendo.io/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Iss International,scrape,,https://jobs.issworld.com/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-Lawmatch,scrape,,https://www.lawmatch.co.il/jobs-lawmatch,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Lawmatch,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names LawMatch (לשכת עורכי הדין); needs re-resolution
 Levi Strauss Israel,scrape,,https://www.levistrauss.com/work-with-us/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Lighting Warehouses,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Lighting Warehouse; needs re-resolution
 mPrest Systems,scrape,,https://mprest.com/mprest_careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Batsheva Dance Company,scrape,,https://batsheva.co.il/en/job-offers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-Beit Gabriel Ors,scrape,,https://www.betgabriel.co.il/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Beit Gabriel Ors,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board page 404s; needs re-resolution
 Bimrock AI,scrape,,https://bimrock.ai/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Biscience,scrape,,https://biscience.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Cactus Communications,scrape,,https://careers.smartrecruiters.com/CactusCommunications,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Candivore,scrape,,https://www.candivore.io/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Cemex,scrape,,https://jobs.cemex.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-Cheftek,scrape,,https://www.cheftek.net/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+Cheftek,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names ChefTek LLC; needs re-resolution
 Flexfactor,scrape,,,false,"queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names FlexFactor (listed on RevPath, Powered by DealHu; needs re-resolution"
 UNOPS,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names UNjobs Association of Geneva (listing UNOPS - Un; needs re-resolution
 Computer Guard Technologies LTD,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: not a job board; needs re-resolution
 Access Israel,scrape,,https://aisrael.org/open-position-at-access-israel/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
-JakoAI,scrape,,https://www.telos-global.com/israel,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+JakoAI,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: not a job board; needs re-resolution
 ODTRAFFIC LTD.,scrape,,https://www.odtraffic.com,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Dataflow Security,scrape,,https://dfsec.com/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Marketily,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Marketily; needs re-resolution
 Growdirector,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Terra.do (job posting for GrowDirector); needs re-resolution
-ReasonLabs,scrape,,https://careers.viola-group.com/companies/reasonlabs/jobs/49066864-backend-team-leader,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
+ReasonLabs,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Viola Group (job posted for ReasonLabs); needs re-resolution
 Jcfamilies,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names JCFamilies; needs re-resolution
 Celeno,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names דיאלוג (Dialog); needs re-resolution

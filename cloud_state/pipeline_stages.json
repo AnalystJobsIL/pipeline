@@ -104,14 +104,14 @@
  },
  "queue": {
   "date": "2026-08-30",
-  "delta": -18,
+  "delta": -17,
   "direction": "falling",
-  "finished_at": "2026-08-29T21:27:42+00:00",
-  "owed": 481,
-  "retired": 53,
+  "finished_at": "2026-08-29T22:08:03+00:00",
+  "owed": 464,
+  "retired": 70,
   "rows_from_queue": 502,
   "stuck": 0,
-  "unverified_rows": 43
+  "unverified_rows": 0
  },
  "repair": {
   "date": "2026-08-29",
