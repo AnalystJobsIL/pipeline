@@ -53,3 +53,4 @@
 {"at":"2026-08-29T16:27:45Z","cap":null,"capped":false,"ci":false,"credits":44,"pid":18740,"tool":"queue_resolve_search.py"}
 {"at":"2026-08-29T16:29:36Z","cap":null,"capped":false,"ci":false,"credits":46,"pid":34660,"tool":"queue_resolve_search.py"}
 {"at":"2026-08-29T16:32:05Z","cap":null,"capped":false,"ci":false,"credits":45,"pid":9856,"tool":"queue_resolve_search.py"}
+{"at":"2026-08-29T20:39:01Z","cap":250,"capped":false,"ci":true,"credits":3,"pid":2884,"tool":"triage_dark.py"}
