@@ -186,7 +186,7 @@ Declare these in your plan before spending them:
 
 ## Rules that will bite you
 
-1. **A green workflow means nothing.** 38 of the 83 named workflow steps are `continue-on-error`.
+1. **A green workflow means nothing.** 42 of the 87 named workflow steps are `continue-on-error`.
    Read the step output; confirm a capability did work by looking at what it produced.
 2. **A mass-zero result is a broken run, not a measurement.** Strip its verdicts, diagnose,
    re-run.

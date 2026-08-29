@@ -91,12 +91,82 @@ jobs:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           HUNT_LIMIT: ${{ github.event.inputs.limit || '0' }}
-          HUNT_TIME_BUDGET_MIN: "200"   # leaves ~90 min for the re-crack step + commit
+          # 200 -> 140: the 60 minutes go to the queue drain below (BACKLOG 427). The job cap
+          # is 330 and 140 + 95 (drain) + ~90 (re-crack, ladder, invariants, commit) = 325.
+          HUNT_TIME_BUDGET_MIN: "140"
+          # This arm is SUPERSEDED, and 0 means OFF (not unlimited). It resolved 2 of 57
+          # queue names on 2026-08-29 -- 3.5% -- where `queue_resolve_search` resolves 56%,
+          # and both draw from the same research_companies.json, so leaving it on pays twice
+          # for the worse answer. Its 60 reserved minutes go back to the row pool.
+          HUNT_QUEUE_CAP: "0"
+          HUNT_QUEUE_MIN: "0"
           FAST_SCRAPE: "1"
           SCRAPE_LLM: "1"
           SCRAPE_VIA_UNLOCKER: ${{ (github.event.inputs.unlocker || vars.BD_PAID_RUNGS || 'on') != 'off' && '1' || '' }}
         run: python listing_hunt.py --apply
         continue-on-error: true
+      # ---------------------------------------------------------------- BACKLOG 427
+      # The path from a DISCOVERED NAME to a registry ROW, which ran only when a human ran it.
+      # Intake measured over the last 9 days: mean 167/day, median 92 -- against a queue arm
+      # capped at 60. This rung resolves 56% of the names it sees where that arm resolves
+      # 2-3%, so the reserved queue minutes buy this instead.
+      #
+      # Proposals only: `queue_resolve_search` writes NO row. Every proposal is verified by
+      # `pipeline/board_verify.py` (renders the page, an LLM reads it, and a reading that does
+      # not reproduce is UNVERIFIABLE, never ok) before `apply_proposals` sees it -- because
+      # the four QA passes on 2026-08-29 refused 10%, 9%, 15% and 19% of proposals as another
+      # company's board, and one that slipped through went ACTIVE on a VC's portfolio page.
+      - name: Resolve intake names by search (queue drain)
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          # the default is 150 PER PROCESS and returns [] in SILENCE when reached, which
+          # reads exactly like "this company has no board" (BACKLOG 426)
+          DEEP_BD_SEARCH_CAP: "500"
+        # 4 shards x 30 = 120 names a night at ~55 s/name/shard = ~28 min. Measured intake
+        # is a median of 92/day and a mean of 167, so this keeps pace with the median; a
+        # 258-name day leaves a residue and the queue stamp is what announces it.
+        timeout-minutes: 30
+        run: |
+          set +e
+          for i in 1 2 3 4; do
+            QRS_SHARD=$i/4 python -u queue_resolve_search.py \
+              --propose "out/qrs_$i.json" --cap 30 &
+          done
+          wait
+          python queue_state.py --ingest "out/qrs_[0-9].json" || true
+        continue-on-error: true
+
+      # Verify EVERY proposal before it can become a row, then apply only what passed.
+      - name: Verify and apply queue proposals
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+        timeout-minutes: 40
+        run: python queue_pipeline.py --apply-proposals "out/qrs_[0-9].json" --apply
+        continue-on-error: true
+
+      # Re-verify live addresses whose verdict has aged out (30-day cadence), so a monitor
+      # row cannot sit unread for ever: `listing_hunt`'s fast path ACTIVATES a parked row the
+      # moment its page shows Israel roles, with no model in the loop.
+      - name: Re-verify aged registry addresses
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+        timeout-minutes: 20
+        run: python queue_pipeline.py --verify-existing --limit 60 --apply
+        continue-on-error: true
+
+      # The queue's DIRECTION, not its size: a queue of 500 that is falling is healthy and a
+      # queue of 200 that is rising is a backlog forming. Two backlogs were found weeks late.
+      - name: Stamp the queue (size AND direction)
+        if: always()
+        run: python queue_pipeline.py --stamp
+        continue-on-error: true
+
       - name: Re-crack walled-ATS rows (daily; hosts already documented)
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -151,4 +221,6 @@ jobs:
         run: |
           python persist_state.py commit --as "audit-bot" \
             -m "listing-hunt $(date -u +%F) [skip ci]" \
-            --own companies.csv scraped_cache.json cloud_state/pipeline_stages.json cloud_state/registry_ladder.json
+            --own companies.csv scraped_cache.json cloud_state/pipeline_stages.json cloud_state/registry_ladder.json \
+            cloud_state/board_verify.json cloud_state/queue_state.json \
+            cloud_state/queue_disposition.json cloud_state/queue_receipt.json research_companies.json

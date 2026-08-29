@@ -7263,3 +7263,114 @@ def test_an_unverifiable_verdict_is_never_reused_as_a_pass():
     assert BV.is_ok(st, "Beta", "u")
     assert not BV.is_ok(st, "Gamma", "u"), "a verdict older than the cadence is re-earned"
     assert not BV.is_ok(st, "Never Seen", "u"), "absence is a refusal, not a pass"
+
+
+def test_two_shards_do_not_discard_each_others_verdicts(tmp_path):
+    """Several shards verify different rows into ONE json document. A plain write means the
+    last shard to save discards every other shard's work -- 829 rows were being verified in
+    four processes, and only one process's verdicts would have survived. Same shape as the
+    two-snapshot-writers rule for `companies.csv`, one file over."""
+    from pipeline import board_verify as BV
+    path = str(tmp_path / "bv.json")
+    a = {BV.key("Alpha", "u1"): {"verdict": BV.OK, "date": "2026-08-29"}}
+    b = {BV.key("Beta", "u2"): {"verdict": BV.NOT_THEIRS, "date": "2026-08-29"}}
+    BV.save(a, path)
+    BV.save(b, path)                       # the second shard must not erase the first
+    on_disk = BV.load(path)
+    assert set(on_disk) == {BV.key("Alpha", "u1"), BV.key("Beta", "u2")}, on_disk
+    # ...and the saving shard learns what the others recorded
+    assert BV.key("Alpha", "u1") in b
+
+    # a NEWER verdict for the same key wins; an older one never clobbers it
+    BV.save({BV.key("Alpha", "u1"): {"verdict": BV.NOT_THEIRS, "date": "2026-08-30"}}, path)
+    BV.save({BV.key("Alpha", "u1"): {"verdict": BV.OK, "date": "2026-08-01"}}, path)
+    assert BV.load(path)[BV.key("Alpha", "u1")]["verdict"] == BV.NOT_THEIRS
+
+
+def test_a_dead_address_is_evidence_but_a_wall_is_not(monkeypatch):
+    """A page that LOADS and says "Page not found" is knowledge about the ADDRESS; a timeout
+    or a bot wall is knowledge about US. `Enigmatos`, `LightSolver` and `Pluri` each render
+    1-9 KB beginning "Page not found" under a live registry row that `probe_candidates` was
+    fetching daily -- so `dead-url` must refuse (and clear the address), while
+    `UNVERIFIABLE` must change nothing at all."""
+    from pipeline import board_verify as BV
+    dead = {"is_this_companys_own_board": False, "employer_named": "Enigmatos",
+            "is_the_israeli_entity": True, "page_kind": "error",
+            "states_no_openings": False, "is_a_dead_page": True, "why": "Page not found"}
+    wall = dict(dead, is_a_dead_page=False, why="cloudflare check")
+
+    B = _bv_stub(monkeypatch, [dead])
+    monkeypatch.setattr(B, "_mechanical_opinion", lambda n, u, p: None)
+    assert B.verify("Enigmatos", "https://e.example/careers", state={})["verdict"] == BV.DEAD_URL
+
+    B = _bv_stub(monkeypatch, [wall])
+    monkeypatch.setattr(B, "_mechanical_opinion", lambda n, u, p: None)
+    assert B.verify("Enigmatos", "https://e.example/careers",
+                    state={})["verdict"] == BV.UNVERIFIABLE
+
+
+def test_a_failed_row_loses_its_address_and_lands_in_a_pool(tmp_path, monkeypatch):
+    """The park must do BOTH things. Leaving the address behind keeps the row in
+    `probe_candidates`' daily pool, where `listing_hunt`'s fast path can still activate it
+    with no model in the loop -- so a wrong address that stays is a wrong ACTIVE row on a
+    timer. And the note must carry a re-check token, or the row is parked into silence."""
+    import queue_pipeline as QP
+    from pipeline.verdicts import TOKENS
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Acme,scrape,,https://someone-else.example/careers,true,"
+        "queue-search 2026-08-29: 2 IL\n", encoding="utf-8")
+
+    assert QP.park_unverified("Acme", "Someone Else", apply=True)
+    import csv as _csv
+    row = [r for r in _csv.reader(open("companies.csv", encoding="utf-8"))][1]
+    assert row[3] == "", "the address must be CLEARED, not merely parked"
+    assert row[4] == "false"
+    assert "needs re-resolution" in row[5] and "needs re-resolution" in TOKENS
+    assert "Someone Else" in row[5], "the note must say who the board really belonged to"
+    # and the daily probe can no longer reach it
+    import probe_candidates as PC
+    assert not PC.in_probe_pool(row)
+
+
+def test_the_queue_drain_is_actually_scheduled():
+    """The drain must survive the session that built it.
+
+    Everything it does ran by hand on 2026-08-29, and the two backlogs before it were also
+    drained by hand -- so the thing worth asserting is not that the code works but that a cron
+    RUNS it. Measured intake over the nine days to 2026-08-29 was a median of 92 names/day and
+    a mean of 167, against a `listing_hunt` queue arm capped at 60: the arm could not keep
+    pace and its own docstring said it could."""
+    import io
+    import re
+    wf = io.open(".github/workflows/listing-hunt.yml", encoding="utf-8").read()
+
+    assert "queue_resolve_search.py" in wf, "the rung that resolves 56% is not scheduled"
+    assert "--apply-proposals" in wf, "proposals are resolved but never applied"
+    assert "queue_state.py --ingest" in wf, (
+        "without the ingest no attempt is recorded and queue_targets returns the same names "
+        "for ever -- 57 names were hunted twice for exactly this")
+    assert "--verify-existing" in wf, "aged addresses are never re-read"
+    assert "--stamp" in wf, "nothing would notice the queue growing"
+
+    # the superseded arm is OFF, and 0 means off (not unlimited -- the trap that made four
+    # shards no-op earlier the same day)
+    assert re.search(r'HUNT_QUEUE_CAP:\s*"0"', wf), (
+        "listing_hunt's own queue arm resolves 2-3% where this rung resolves 56%, and both "
+        "draw from the same file: leaving it on pays twice for the worse answer")
+
+    # the minutes have to add up, or the job dies before persist_state runs
+    job = wf.split("jobs:", 1)[1]
+    cap = int(re.search(r"timeout-minutes:\s*(\d+)", job).group(1))
+    hunt = int(re.search(r'HUNT_TIME_BUDGET_MIN:\s*"(\d+)"', wf).group(1))
+    steps = sum(int(m) for m in re.findall(r"timeout-minutes:\s*(\d+)", job)[1:])
+    assert hunt + steps < cap, (
+        "hunt %d + steps %d >= job cap %d: the job would be killed mid-flight, and on this "
+        "workflow that means persist_state never commits the night's work" % (hunt, steps, cap))
+
+    # every new state file must be committed, or the verdicts die with the runner
+    own = wf.split("--own", 1)[1]
+    for f in ("cloud_state/board_verify.json", "cloud_state/queue_state.json",
+              "research_companies.json"):
+        assert f in own, "%s is written by the run but never committed" % f

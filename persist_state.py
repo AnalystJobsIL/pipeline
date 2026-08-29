@@ -342,6 +342,14 @@ STRATEGY = {
     "cloud_state/pipeline_stages.json": (s_stage_stamps, "per stage key, newer finished_at wins, never deleted"),
     "discovered_cache.json": (_keyed_list(_job_key), "list keyed (company, title); two discovery writers"),
     "research_companies.json": (_keyed_list(_name_key), "list keyed name; two discovery writers"),
+    # The queue drain's three ledgers, all per-key dicts (BACKLOG 427).  is
+    # the right merge for each: a verdict is keyed and independent, several shards write
+    # different keys of the same file in one night, and a whole-file write means the last
+    # shard to finish silently discards the rest -- measured on board_verify.json before its
+    # own save() was made a merge. Deletion is honoured, which is how a stale verdict clears.
+    "cloud_state/board_verify.json": (s_company_dict, "per (name|url) verdict; the drain's shards + the nightly re-verify"),
+    "cloud_state/queue_state.json": (s_company_dict, "per queue NAME, an append-log of what each rung tried"),
+    "cloud_state/queue_disposition.json": (s_company_dict, "per retired NAME, the verdict and the evidence it rests on"),
     PERSIST_LOG: (s_jsonl_union, "append-only audit log; the union of every workflow's lines"),
     BD_SPEND_LOG: (s_jsonl_union, "append-only Bright Data spend, one line per process"),
 }
@@ -352,6 +360,9 @@ SINGLE_WRITER = {   # documented `ours` paths (one cloud writer each); anything 
     "cloud_state/candidate_probe.json": "daily-digest", "cloud_state/registry_census.json": "daily-digest",
     "cloud_state/registry_alarms.json": "daily-digest", "cloud_state/last_run.json": "daily-digest",
     "cloud_state/last_delivered.json": "daily-digest",
+    # a receipt, not a ledger: one number per night, rewritten whole, and the newest run's
+    # copy is the one that is true
+    "cloud_state/queue_receipt.json": "listing-hunt",
     "cloud_state/registry_ladder.json": "listing-hunt", "cloud_state/scrape_rot.json": "scrape-refresh",
     "cloud_state/resolve_attempts.json": "self-heal", "digests/latest.md": "daily-digest",
     "docs/index.html": "daily-digest", "docs/archive.html": "daily-digest",

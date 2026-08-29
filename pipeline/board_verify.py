@@ -53,7 +53,14 @@ MODEL = os.environ.get("BOARD_VERIFY_MODEL", "opus")
 OK = "ok"
 NOT_THEIRS = "NOT-THEIRS"
 NOT_A_BOARD = "not-a-board"
-UNVERIFIABLE = "UNVERIFIABLE"   # we could not settle it — NEVER the same as a refusal
+DEAD_URL = "dead-url"           # the page LOADS and says it does not exist
+UNVERIFIABLE = "UNVERIFIABLE"   # we could not read it at all — NEVER the same as a refusal
+
+# `dead-url` is deliberately separate from `UNVERIFIABLE`. A page that renders 9,000
+# characters beginning "Page not found – Enigmatos" is EVIDENCE ABOUT THE ADDRESS: the row
+# points somewhere that no longer exists and must be re-resolved. "We could not read it"
+# (a timeout, a bot wall the unlocker also failed) is evidence about US and must change
+# nothing. Conflating them would either hide dead rows or park live ones.
 
 # `pipeline.aggregators` knows `linkedin.com/jobs` but not the redirectors, and a shortlink
 # resolved to LinkedIn scraped 32 "Israel roles" onto QTREX on 2026-08-29.
@@ -82,12 +89,16 @@ SYSTEM = (
     "that is not about hiring; `aggregator` for a site listing many employers' jobs; `error` "
     "for a 404, a login wall, a cookie wall or an empty shell; `other` otherwise.\n"
     "5. `states_no_openings`: true only if the page SAYS IN WORDS that there are no openings. "
-    "A page that merely shows none is false — that is a failure to display, not a statement."
+    "A page that merely shows none is false — that is a failure to display, not a statement.\n"
+    "6. `is_a_dead_page`: true if the page ITSELF says the address does not exist — \"Page not "
+    "found\", \"404\", \"this position is no longer available\", a parked-domain holding page. "
+    "False for a login wall, a cookie wall, a bot check or a page that simply failed to load "
+    "its content: those mean WE could not read it, which is a different thing entirely."
 )
 SCHEMA = json.dumps({
     "type": "object", "additionalProperties": False,
     "required": ["is_this_companys_own_board", "employer_named", "is_the_israeli_entity",
-                 "page_kind", "states_no_openings", "why"],
+                 "page_kind", "states_no_openings", "is_a_dead_page", "why"],
     "properties": {
         "is_this_companys_own_board": {"type": "boolean"},
         "employer_named": {"type": "string"},
@@ -96,6 +107,7 @@ SCHEMA = json.dumps({
                       "enum": ["board", "careers-landing", "about", "aggregator", "error",
                                "other"]},
         "states_no_openings": {"type": "boolean"},
+        "is_a_dead_page": {"type": "boolean"},
         "why": {"type": "string"},
     }})
 
@@ -111,9 +123,20 @@ def load(path=PATH):
 
 
 def save(state, path=PATH):
+    """MERGE, never overwrite. Several shards verify different rows into ONE json document,
+    and a plain write means the last shard to save silently discards every other shard's
+    verdicts -- which is the same shape as the `companies.csv` two-snapshot-writers rule, one
+    file over. Re-reads what is on disk, keeps the NEWER record per key, writes the union.
+    """
     from pipeline.atomic import write_json
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    write_json(path, state)
+    merged = load(path)
+    for k, v in (state or {}).items():
+        old = merged.get(k)
+        if not old or (v.get("date", "") >= old.get("date", "")):
+            merged[k] = v
+    state.update(merged)                 # the caller's copy learns the other shards' work too
+    write_json(path, merged)
 
 
 def key(name, url):
@@ -272,8 +295,12 @@ def _judge(ans):
     kind = (ans.get("page_kind") or "").strip()
     if kind == "aggregator":
         return NOT_THEIRS, "the page is an aggregator"
-    if kind in ("error",):
-        return UNVERIFIABLE, "the page is an error or a wall"
+    if kind == "error":
+        # the model read a page and it said it does not exist -> the ADDRESS is wrong.
+        # `is_a_dead_page` separates that from a wall we merely could not get through.
+        if ans.get("is_a_dead_page"):
+            return DEAD_URL, "the page loads and says it does not exist"
+        return UNVERIFIABLE, "a wall or an empty shell we could not read"
     if not ans.get("is_this_companys_own_board"):
         return NOT_THEIRS, "belongs to %s" % (ans.get("employer_named") or "another employer")
     if not ans.get("is_the_israeli_entity"):

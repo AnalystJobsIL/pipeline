@@ -145,7 +145,7 @@ but not self-contained: `pipeline/run.py` imports `registry_health` and
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And **38 of the 83 named workflow steps carry `continue-on-error: true`** — `docs/check_docs.py`
+And **42 of the 87 named workflow steps carry `continue-on-error: true`** — `docs/check_docs.py`
 fails if this sentence and the workflows disagree, as the registered `coe_ratio` fact.
 *Named* is load-bearing and was missing until 2026-08-27: there are **108** step lines in
 all, and the other 28 are bare `uses:` actions (checkout, setup-python) that are never
@@ -1432,6 +1432,9 @@ so a given night processes fewer rows than the pool holds.
 | `triage_dark (18:00 daily)` | `triage-dark.yml` `0 18 * * *` | rows matching its own `TARGET_NOTES` minus `SKIP_NOTES` — classifies a dark row's failure mode and routes it | no |
 | `listing_hunt (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | parked rows matching `HUNT_POOL`, minus terminal, recruiters, discovery junk and `_triaged_page_empty` | **yes** |
 | `repair_extract_gap (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | `in_extract_gap_pool`: rows triage stamped `extract-gap` (`MODE`) with an `http` address, minus terminal and recruiters — the terminal exclusion arrived 2026-08-25, the day it selected a freshly parked `alias-of` twin | **yes** |
+| `queue_resolve_search (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | intake NAMES with no row and no settled verdict (`queue_state`), 4 shards x 30 = 120 a night against a measured intake of ~92/day median — searches, lets a model ORDER the candidates, and lets the SCRAPE decide what is a board | no — proposals only |
+| `queue_pipeline --apply-proposals (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | every scrape/monitor proposal from the drain; `pipeline/board_verify` reads the RENDERED page and only `ok` reaches `apply_proposals` | **yes**, via the applier's own gates |
+| `queue_pipeline --verify-existing (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | 60 live addresses a night whose verdict has aged past 30 days — a failed one is parked AND ITS ADDRESS CLEARED, so it leaves `probe_candidates`' daily pool | no — it only parks |
 | `crack_walled (19:00 daily + Sun)` | `listing-hunt.yml` `0 19 * * *`, `audit-coverage.yml` `0 4 * * 0` | rows `identity_gate.is_walled` claims — the note token OR a walled ATS host — minus terminal and recruiters | **yes** |
 | `probe_candidates (05:00 daily)` | `daily-digest.yml` `0 5 * * *` | every parked row with an http, non-aggregator address, minus junk names and `is_terminal_row` — a fact pool (`PROBE_POOL` no longer exists); wakes rather than activates (`_wake_note` strips every stale segment) | no |
 | `validate_empty (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0` | the probe's rows minus walled hosts, whose note carries an empty-class verdict — or, behind `VALIDATE_EMPTY_SIGNALS=1`, whose probe baseline saw job/Israel signals (staged: it activates) | **yes** |
@@ -2719,7 +2722,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
 - "Why isn't company X in my email?" → §5b above (ordered runbook).
 - "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
 - "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
-  **38 of the 83 named workflow steps are `continue-on-error`, so a green run can still hide a
+  **42 of the 87 named workflow steps are `continue-on-error`, so a green run can still hide a
   failed step** — read the step, not the badge.
 - Coverage snapshot:
   ```bash
