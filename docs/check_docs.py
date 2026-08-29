@@ -695,6 +695,21 @@ def floor_was_lowered(prev_tok, tok, value: int) -> bool:
     return prev is not None and new is not None and new < prev and value >= prev
 
 
+def _git(*args):
+    """`git` in ROOT, or None. Same contract as `_committed_token`: any failure - no git, no
+    repo, a ref that does not exist - is "there is nothing to compare against", never a
+    refused push. Never fetches: a linter that reaches the network is one a lane learns to
+    skip, and ten sessions running it at once would contend on the ref lock."""
+    import subprocess
+    try:
+        out = subprocess.run(("git",) + args, cwd=ROOT, capture_output=True, text=True,
+                             encoding="utf-8", errors="replace")
+    except Exception:                                             # noqa: BLE001
+        return None
+    return out.stdout if out.returncode == 0 else None
+
+
+
 def _committed_token(doc_rel: str, pattern: str):
     """The census token this site carried at HEAD, or None if it cannot be read.
 
@@ -1233,6 +1248,23 @@ _VERDICT_OK = re.compile(
     r"^(?:PASS|FAIL|N/A|PARTIAL|INCONCLUSIVE|SKIPPED)\b[^:,\u2013\u2014-]*"
     r"[:,\u2013\u2014-]\s*\S.{9,}$|^not yet due\b.*$", re.I)
 _LOOSE_CHECK = re.compile(r"morning check\s+\d{4}-\d\d-\d\d", re.I)
+
+# A re-date, and it must carry the date it moves to. Five rows said "re-dated by `docs`" in
+# the VERDICT cell with the due column untouched and no new date anywhere, which is how a
+# check is answered by never answering it: the linter asks again tomorrow, gets the same
+# sentence, and warns for ever. `until` moves the deadline; nothing else does.
+_REDATE = re.compile(r"^not yet due\b[^|]*?\buntil\s+(\d{4}-\d\d-\d\d)\b", re.I)
+_REDATE_WORDS = re.compile(r"re-?dated?|postpon|deferr|push(?:ed)?\s+(?:to|out)", re.I)
+# Evidence, not an adjective: a verdict names a number or a grep-able string. Every live
+# verdict already does; `INCONCLUSIVE - could not determine` is the shape this refuses.
+_HAS_EVIDENCE = re.compile(r"\d|`")
+# How long a row may stay unanswered past its date before it stops being a warning. One day
+# is the first morning anyone can read the mail it predicts; two means a second session
+# walked past it, and by then its author is gone.
+MORNING_GRACE_DAYS = 2
+MORNING_REDATE_MAX_DAYS = 14
+MORNING_REDATE_MAX = 2
+
 NL_SAFE = "\n"
 
 
@@ -1244,12 +1276,18 @@ def check_morning_checks() -> None:
     `### Jobgether` both shipped as employer headings in the 2026-08-26 mail against checks
     that said neither would.
 
-    An unanswered check is a WARNING, deliberately, and this is the reasoning a future
-    session should read before 'tightening' it: `discovery` writes the check on Tuesday and
-    it comes due while `jd-text` is pushing on Wednesday. An ERROR would punish the wrong
-    agent, and the cheapest way for that agent to go green would be to DELETE the check —
-    the linter would then destroy the mechanism it exists to protect. The shape of a row IS
-    an error, because that is the pushing session's own work."""
+    An unanswered check WARNS on its due date and the morning after, and is an ERROR from
+    the second day. Half of the old reasoning still holds and is why the grace exists:
+    `discovery` writes the check on Tuesday and it comes due while `jd-text` is pushing on
+    Wednesday, so an immediate error punishes the wrong agent. The other half - "the
+    cheapest way for that agent to go green would be to DELETE the check" - no longer
+    holds: `check_morning_rows_survive` makes deletion an error, so the two cheapest exits
+    left are the two the table wants, answering and re-dating in writing. Six rows sat past
+    due saying `not yet due`, five of them "re-dated" with the due column untouched and no
+    new date anywhere, under a build that was green all week.
+
+    The SHAPE of a row is an error at any age, because that is the pushing session's own
+    work."""
     rows = _morning_rows("HANDOFF.md")
     if rows is None:
         return
@@ -1280,19 +1318,65 @@ def check_morning_checks() -> None:
         if lanes and lane not in lanes:
             err("morning-checks", "morning check %s names lane `%s`, which is not in "
                                   "docs/AGENT_BRIEF.md's table" % (due, lane))
-        if verdict in ("", "—", "-"):
-            if due <= today:
-                warn("morning-checks", "morning check due %s (`%s`) has no verdict: %s"
-                     % (due, lane, must[:70]))
-        elif verdict.lower().startswith("not yet due") and due <= today:
-            warn("morning-checks", "morning check %s (`%s`) still says `not yet due`, and %s "
-                                   "has passed. It is a supported way to answer a check by "
-                                   "never answering it." % (due, lane, due))
-        elif not _VERDICT_OK.match(verdict):
-            err("morning-checks", "morning check %s (`%s`) has a verdict the reader cannot "
-                                  "check: %r. Use PASS / FAIL - <what happened> / N/A - "
-                                  "<why>, and quote a grep-able string, not an adjective."
-                % (due, lane, verdict[:60]))
+        eff, redates = due, verdict.lower().count("until ")
+        m = _REDATE.match(verdict)
+        if m:
+            eff = m.group(1)
+            if eff <= due:
+                err("morning-checks", "morning check %s (`%s`) re-dates itself to %s, which "
+                                      "does not move the deadline: `until` must be LATER "
+                                      "than the due column." % (due, lane, eff))
+                eff = due
+            elif _days_between(due, eff) > MORNING_REDATE_MAX_DAYS:
+                warn("morning-checks", "morning check %s (`%s`) is pushed %d days out, to "
+                                       "%s. A check moved more than %d days is a check "
+                                       "abandoned - answer it, or drop it and say why."
+                     % (due, lane, _days_between(due, eff), eff, MORNING_REDATE_MAX_DAYS))
+            if redates > MORNING_REDATE_MAX:
+                err("morning-checks", "morning check %s (`%s`) has been re-dated %d times. "
+                                      "Answer it: `INCONCLUSIVE - <what the log showed>` "
+                                      "with a run id IS an answer, and a %dth `until` is "
+                                      "not." % (due, lane, redates, redates))
+        elif verdict.lower().startswith("not yet due") and _REDATE_WORDS.search(verdict):
+            err("morning-checks", "morning check %s (`%s`) says it was re-dated and carries "
+                                  "no new date. Write `not yet due - until YYYY-MM-DD: "
+                                  "<why>` so the linter knows which morning to ask again; "
+                                  "five rows said this with the due column untouched, and "
+                                  "the check warned about the same day for ever."
+                % (due, lane))
+            continue    # one defect, one edit, one error: the age
+            #             rule below would say the same thing again
+        unanswered = (verdict in ("", "\u2014", "-")
+                      or verdict.lower().startswith("not yet due"))
+        late = _days_between(eff, today) if eff <= today else 0
+        if unanswered and late >= MORNING_GRACE_DAYS:
+            err("morning-checks", "morning check due %s (`%s`) is %d days past its date "
+                                  "with no verdict: %s. Answer it (PASS / FAIL - <what "
+                                  "happened> / N/A - <why>, quoting a grep-able string) or "
+                                  "re-date it as `not yet due - until YYYY-MM-DD: <why>`. "
+                                  "Deleting the row is the one move the table forbids, and "
+                                  "`check_morning_rows_survive` notices."
+                % (due, lane, late, must[:70]))
+        elif unanswered and eff <= today:
+            warn("morning-checks", "morning check due %s (`%s`) has no verdict yet: %s"
+                 % (due, lane, must[:70]))
+        elif not unanswered:
+            if not _VERDICT_OK.match(verdict):
+                err("morning-checks", "morning check %s (`%s`) has a verdict the reader "
+                                      "cannot check: %r. Use PASS / FAIL - <what happened> "
+                                      "/ N/A - <why>, and quote a grep-able string, not an "
+                                      "adjective." % (due, lane, verdict[:60]))
+            elif not _HAS_EVIDENCE.search(verdict):
+                err("morning-checks", "morning check %s (`%s`) answers with an adjective "
+                                      "and no evidence: %r. A verdict names a number or a "
+                                      "grep-able string - `INCONCLUSIVE - could not "
+                                      "determine` is the shape this refuses."
+                    % (due, lane, verdict[:60]))
+            elif not answered:
+                err("morning-checks", "morning check %s (`%s`) carries a verdict and an "
+                                      "empty `answered` column. That date is how a reader "
+                                      "tells a fresh answer from an inherited one."
+                    % (due, lane))
     # Scan the WHOLE file, minus the table's own rows. The first version stopped at the
     # table header, so a session appending a prose check BELOW the table - which is where
     # a session appends things - was invisible to the check written to catch exactly that.
@@ -1304,17 +1388,23 @@ def check_morning_checks() -> None:
             % body[m.start():m.start() + 40])
 
 
-def _morning_rows(doc_rel: str):
+def _morning_rows(doc_rel: str, text: str = None, quiet: bool = False):
     """Every 5-cell morning-check row in a document, or None if the file is not there.
 
     Split out on 2026-08-28 so the ARCHIVE can be held to the same shape as the live table
     without being held to its deadlines. It parses; the SHAPE errors it raises are the
     pushing session's own work, so they are errors in both files."""
-    path = os.path.join(ROOT, doc_rel)
-    if not os.path.exists(path):
-        return None
+    # `text` lets the deletion guard run these exact rules over a COMMITTED blob; `quiet`
+    # suppresses the SHAPE errors while doing it, because a row that was malformed at
+    # origin/master is not this session's work to fix.
+    _e = (lambda *a: None) if quiet else err
+    if text is None:
+        path = os.path.join(ROOT, doc_rel)
+        if not os.path.exists(path):
+            return None
+        text = read(path)
     rows, in_table, want_rule = [], False, False
-    for line in read(path).splitlines():
+    for line in text.splitlines():
         if line.startswith("| due | lane |"):
             in_table, want_rule = True, True
             continue
@@ -1341,7 +1431,7 @@ def _morning_rows(doc_rel: str):
             # still there and still parse, so every check below passes while a human reader
             # sees a wall of pipes. docs/morning-checks.md shipped exactly that on
             # 2026-08-27 and nothing looked at it.
-            err("morning-checks", "%s has a morning-check table whose header is not followed "
+            _e("morning-checks", "%s has a morning-check table whose header is not followed "
                                   "by a `|---|` separator, so it renders as prose: %s"
                 % (doc_rel, line.strip()[:70]))
             want_rule = False
@@ -1349,7 +1439,7 @@ def _morning_rows(doc_rel: str):
             # A `|` inside a cell shifts every column right, so the verdict is read from the
             # wrong one and a real verdict is never validated. The `must be true` column is
             # full of backticked shell text, so this is one `| wc -l` away.
-            err("morning-checks", "%s: a morning-check row has %d cells, not 5 - a `|` "
+            _e("morning-checks", "%s: a morning-check row has %d cells, not 5 - a `|` "
                                   "inside a cell shifts the verdict column: %s"
                 % (doc_rel, len(cells), line.strip()[:80]))
             continue
@@ -1357,11 +1447,88 @@ def _morning_rows(doc_rel: str):
     return rows
 
 
+def _rows_at(ref: str, doc_rel: str):
+    """The morning-check rows a document carried at `ref`, or None if it cannot be read."""
+    text = _git("show", "%s:%s" % (ref, doc_rel))
+    return None if text is None else _morning_rows(doc_rel, text=text, quiet=True)
+
+
+def _row_key(cells) -> tuple:
+    """(due, lane, the first 40 characters of the claim, punctuation and case stripped).
+
+    Three live rows share `2026-08-29` + `infra`, so the key has to reach into the claim. It
+    is a PREFIX, and stripped of backticks and asterisks, because a session that answers a
+    row often re-formats it and re-formatting is not withdrawal. Rewriting the first forty
+    characters of a prediction reads as deleting it - the error message says so, and that is
+    the price of a key stable enough to be worth having."""
+    return (cells[0], cells[1], re.sub(r"[`*_ ]", "", cells[2])[:40].lower())
+
+
+def check_morning_rows_survive() -> None:
+    """A prediction cannot be withdrawn by deleting its row.
+
+    This is the guard that makes escalating the age rules safe. Without it the cheapest way
+    out of a red build is to delete somebody else's unanswered check, and the linter would
+    destroy the mechanism it exists to protect. With it, the two cheapest exits are the two
+    honest ones: answer the row, or re-date it in writing.
+
+    The baseline is `origin/master` when that ref exists and differs from HEAD - the tree a
+    lane is actually pushing onto - and `HEAD~1` otherwise, which is what a CI push build
+    can see. Neither available means there is nothing to compare against, and this returns
+    silently rather than inventing a verdict."""
+    # The MERGE-BASE, never origin/master's tip. A row another lane ADDED after this branch
+    # was cut has never existed here and cannot have been deleted here - the guard reported
+    # exactly that on its first run, against a row `jd-text` pushed the same morning.
+    base = _git("merge-base", "HEAD", "origin/master")
+    base = base.strip() if base else None
+    if base is None and _git("rev-parse", "-q", "--verify", "HEAD~1"):
+        base = "HEAD~1"
+    if base is None:
+        return
+    # Moving an unanswered row to the archive is the one way left to retire a prediction
+    # without answering it, now that deleting it is an error. Only rows this branch ADDS are
+    # judged: everything already in the archive is history, and history that can go red is
+    # history somebody edits (`test_the_archive_is_checked_for_shape_but_never_for_age`).
+    had = _rows_at(base, "docs/morning-checks.md")
+    if had is not None:
+        before = {_row_key(c) for c in had}
+        for cells in (_morning_rows("docs/morning-checks.md") or []):
+            if _row_key(cells) in before:
+                continue
+            if not cells[4] or cells[4].lower().startswith("not yet due"):
+                err("morning-checks", "morning check %s (`%s`) was moved to "
+                                      "docs/morning-checks.md with no answer. The archive is "
+                                      "this repo's record of how often its own predictions "
+                                      "came true - answer the row, then archive it."
+                    % (cells[0], cells[1]))
+
+    was = _rows_at(base, "HANDOFF.md")
+    if not was:
+        return
+    live = {_row_key(c) for c in (_morning_rows("HANDOFF.md") or [])}
+    live |= {_row_key(c) for c in (_morning_rows("docs/morning-checks.md") or [])}
+    for cells in was:
+        if _row_key(cells) not in live:
+            err("morning-checks", "morning check %s (`%s`) was in HANDOFF.md at %s and is "
+                                  "now in neither HANDOFF.md nor docs/morning-checks.md. "
+                                  "Answer it, or move it VERBATIM to the archive: a "
+                                  "prediction is not withdrawn by deleting it - %s"
+                % (cells[0], cells[1], base, cells[2][:60]))
+
+
+
 def _lane_names() -> set:
     path = os.path.join(ROOT, "docs", "AGENT_BRIEF.md")
     if not os.path.exists(path):
         return set()
     return set(re.findall(r"^\| \*\*`([a-z-]+)`\*\*", read(path), re.M))
+
+
+def _days_between(a: str, b: str) -> int:
+    """Whole days from ISO date `a` to ISO date `b`; negative when `b` is earlier."""
+    import datetime
+    fmt = "%Y-%m-%d"
+    return (datetime.datetime.strptime(b, fmt) - datetime.datetime.strptime(a, fmt)).days
 
 
 def _today() -> str:
@@ -1428,11 +1595,17 @@ def check_backlog() -> None:
                            "does not exist is addressed to nobody." % (i.num, i.lane))
     held = [i for i in items if i.bullet_closed]
     if held:
-        warn("backlog", "%d items are closed by a later section's bullet with the ORIGINAL NEVER EDITED, so a reader going top-down still files work against them: %s"
-             % (len(held), ", ".join(i.key for i in held[:8])))
+        err("backlog", "%d items are closed only by a later section's bullet, with the "
+                       "ORIGINAL NEVER EDITED, so a reader going top-down still files work "
+                       "against them: %s. Paste the file's own marker - `**CLOSED "
+                       "<date>**` - into the item's first two lines; the bullet may stay."
+            % (len(held), ", ".join(i.key for i in held[:8])))
     unlaned = [i for i in items if not i.closed and i.lane == "unassigned"]
     if unlaned:
-        warn("backlog", "%d open items name no lane. A new item may not join them - `python docs/backlog.py next` prints the number to use." % len(unlaned))
+        err("backlog", "%d open items name no lane: an item addressed to nobody is the "
+                       "state item 243 describes. Add `lane: `x`` to the item body - the "
+                       "brief's table decides, and `python docs/backlog.py lane <x>` is how "
+                       "a session finds its own work." % len(unlaned))
 
 
 # ---------------------------------------------------------------- 7. entry points exist
@@ -1446,7 +1619,7 @@ def check_entry_docs() -> None:
 CHECKS = [check_entry_docs, check_paths_exist, check_links, check_section_refs,
           check_module_registry,
           check_schedule_table, check_derived_facts, check_scope_claims, check_handoff,
-          check_morning_checks, check_session_record_dates,
+          check_morning_checks, check_morning_rows_survive, check_session_record_dates,
           check_backlog]
 
 

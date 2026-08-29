@@ -79,6 +79,9 @@ CLOSED_MARK = re.compile(
     re.I)
 HALF_MARK = re.compile(r"\*\*(?:%s)(?:CLOSED|closed)" % _HALF, re.I)
 
+# A closure bullet in an archive section: `- **244 - CLOSED.** ...`, `- **11 / 101 - CLOSED.**`
+BULLET_CLOSES = re.compile(r"^- \*\*(\d+)(?:\s*/\s*(\d+))?\s*[—-]+\s*(?:CLOSED|closed|won't fix)", re.I)
+
 
 class Item:
     __slots__ = ("num", "section", "lane", "lines", "start", "closed", "bullet_closed",
@@ -165,23 +168,61 @@ def parse(text=None):
         it.closed = (not it.half) and (
             (bool(STRUCK.search(it.lines[0])) and bool(CLOSED_MARK.search(body)))
             or bool(CLOSED_MARK.search(head)))
-    # closed by a LATER section's archive bullet, original untouched: report, never archive
+    # Closed by a LATER section's archive bullet, original untouched: report, never archive.
+    # The bullet is attributed to a SECTION, not just to a number. 28 numbers name more than
+    # one item, so keying on the number alone made a bullet closing `company-intel`'s 244
+    # also flag `scraper`'s - 20 flags for 12 real originals, and 8 of them told a lane its
+    # open work was already done. A bullet closes a claimant when the number is unique, when
+    # the bullet spells `<n>@<lane>`, or when the claimant's lane is the one its own section
+    # heading names.
     bullets = collections.defaultdict(list)
+    section = ""
     for line in lines:
-        m = re.match(r"^- \*\*(\d+)(?:\s*/\s*(\d+))?\s*[—-]+\s*(?:CLOSED|closed|won't fix)", line)
-        if m:
-            for g in m.groups()[:2]:
-                if g:
-                    bullets[int(g)].append(line)
+        h = SECTION.match(line)
+        if h:
+            section = h.group(1)
+            continue
+        m = BULLET_CLOSES.match(line)
+        if not m:
+            continue
+        lane_h = bullet_lane(section)
+        for g in m.groups()[:2]:
+            if g:
+                bullets[int(g)].append((line, lane_h))
+    claimants = collections.Counter(it.num for it in items)
     for it in items:
-        if not it.closed and bullets.get(it.num):
-            it.bullet_closed = True
+        if it.closed:
+            continue
+        for line, lane in bullets.get(it.num, ()):
+            explicit = re.search(r"%d@([a-z-]+)" % it.num, line)
+            if explicit:
+                if explicit.group(1) == it.lane:
+                    it.bullet_closed = True
+            elif claimants[it.num] == 1 or lane == it.lane:
+                it.bullet_closed = True
     return items
 
 
 def lane_names():
     p = os.path.join(ROOT, "docs", "AGENT_BRIEF.md")
     return set(re.findall(r"^\| \*\*`([a-z-]+)`\*\*", read(p), re.M)) if os.path.exists(p) else set()
+
+
+def bullet_lane(section):
+    """The lane a closure-bullet section speaks for, or None.
+
+    `LANE_IN_HEADING` wants "<name> lane" and every closures section is written
+    "`company-intel` closures, 2026-08-27", so the first version of this resolved None for
+    every bullet in the file and attributed nothing - a check that goes green by checking
+    nothing. Any backticked KNOWN lane in the heading counts; unknown words do not, so a
+    section about `scrape_rot.json` does not become a lane."""
+    known = lane_names()
+    for tok in re.findall(r"`([a-z][a-z-]+)`", section or ""):
+        if tok in known:
+            return tok
+    m = LANE_IN_HEADING.search(section or "")
+    return m.group(1) if m and (not known or m.group(1) in known) else None
+
 
 
 def collisions(items):

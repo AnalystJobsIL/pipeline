@@ -12366,6 +12366,23 @@ UNANSWERED = "| %s | docs | the thing everyone forgot | — |  |\n"
 STALE = "| %s | docs | the thing nobody looked at | — | not yet due |\n"
 
 
+def _morning_at(tmp_path, handoff_body, today):
+    """`_morning_tree` with the clock pinned. The age rules are graded in days now, so a
+    fixture that cannot say what day it is cannot test them - and `_today()` is UTC on
+    purpose (an Israeli clock reads a check as not-yet-due for three hours after it is)."""
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "docs").mkdir(exist_ok=True)
+    (tmp_path / "HANDOFF.md").write_text("## Morning checks" + chr(10) * 2 + HDR + handoff_body,
+                                         encoding="utf-8")
+    (tmp_path / "docs" / "morning-checks.md").write_text("# archive" + chr(10), encoding="utf-8")
+    cd = _cd()
+    cd.ROOT = str(tmp_path)
+    cd._today = lambda: today
+    cd.check_morning_checks()
+    return list(cd.ERRORS), list(cd.WARNINGS)
+
+
+
 def _morning_tree(tmp_path, archive_body, handoff_body=None):
     """A minimal ROOT with a HANDOFF and an archive, for the morning-check guards."""
     (tmp_path / "docs").mkdir(exist_ok=True)
@@ -12402,10 +12419,13 @@ def test_the_archive_is_checked_for_shape_but_never_for_age(tmp_path):
     # above a decision rather than an accident.
     errs2, warns2 = _morning_tree(
         tmp_path, "# archive\n", UNANSWERED % "1999-01-01" + STALE % "1999-01-01")
-    assert errs2 == [], errs2
-    assert len(warns2) == 2, warns2
-    assert any("has no verdict" in w for w in warns2), warns2
-    assert any("still says `not yet due`" in w for w in warns2), warns2
+    # Both rows are an ERROR here since 2026-08-30, not a warning: a row 10,102 days
+    # past its date with no verdict is the state the grade exists to end. What this
+    # test pins is the ASYMMETRY - silent in the archive, loud in HANDOFF - and that is
+    # unchanged; only the severity the live table answers with has moved.
+    assert warns2 == [], warns2
+    assert len(errs2) == 2, errs2
+    assert all("past its date with no verdict" in e for e in errs2), errs2
 
 
 def test_a_morning_check_table_with_no_separator_row_renders_as_prose_and_is_an_error(tmp_path):
@@ -12449,17 +12469,151 @@ def test_an_empty_verdict_cell_is_not_swallowed_by_the_table_parser():
         ["2026-08-26", "render", "something", "", ""]
 
 
-def test_an_unanswered_morning_check_is_a_warning_and_never_an_error():
-    """Read this before 'tightening' it. `discovery` writes the check on Tuesday; it comes
-    due while `jd-text` is pushing on Wednesday. An ERROR punishes the wrong agent, and the
-    cheapest way for that agent to go green is to DELETE the check — the linter would then
-    destroy the mechanism it exists to protect. The SHAPE of a row is an error, because that
-    is the pushing session's own work."""
+def test_an_unanswered_morning_check_warns_for_two_days_and_then_errors(tmp_path):
+    """The escalation, and the half of the old reasoning it keeps.
+
+    This replaces `test_an_unanswered_morning_check_is_a_warning_and_never_an_error`, which
+    asserted on the SOURCE that no error existed. Its docstring gave two reasons. The first
+    still holds and is why the grace exists: `discovery` writes a check on Tuesday and it
+    comes due while `jd-text` is pushing on Wednesday, so an immediate error punishes the
+    wrong agent. The second - "the cheapest way for that agent to go green would be to
+    DELETE the check" - stopped being true when `check_morning_rows_survive` made deletion
+    an error, and a guard that pins a premise which no longer holds pins the wrong thing.
+
+    Six rows sat past due saying `not yet due` under a green build, five of them "re-dated"
+    with the due column untouched. That is the state this grade exists to end."""
+    today = "2026-08-31"
+    # due today: silent-ish (a warning at most), never an error
+    errs, warns = _morning_at(tmp_path, UNANSWERED % today, today)
+    assert errs == [], errs
+    # due yesterday: still the author's own morning
+    errs, warns = _morning_at(tmp_path, UNANSWERED % "2026-08-30", today)
+    assert errs == [] and len(warns) == 1, (errs, warns)
+    # two days past: an error, and it names the days
+    errs, warns = _morning_at(tmp_path, UNANSWERED % "2026-08-29", today)
+    assert len(errs) == 1 and "2 days past its date" in errs[0], errs
+    # and `not yet due` is the same state written in words
+    errs, warns = _morning_at(tmp_path, STALE % "2026-08-29", today)
+    assert len(errs) == 1 and "past its date" in errs[0], errs
+
+
+def test_a_re_date_must_carry_the_date_it_moves_to(tmp_path):
+    """Five live rows said `not yet due - re-dated by docs` with the due column untouched.
+    The linter asked again the next morning, got the same sentence, and warned for ever:
+    a supported way to answer a check by never answering it."""
+    today = "2026-08-31"
+    row = "| 2026-08-25 | docs | the thing | \u2014 | %s |\n"
+    # a re-date that carries its new date moves the deadline and goes quiet
+    errs, _ = _morning_at(tmp_path, row % "not yet due - until 2026-09-03: the slot did not fire",
+                          today)
+    assert errs == [], errs
+    # ...without one, it is an error however it is phrased
+    errs, _ = _morning_at(tmp_path, row % "not yet due - re-dated by `docs`", today)
+    assert len(errs) == 1 and "no new date" in errs[0], errs
+    # ...and a date that does not move forward is not a re-date
+    errs, _ = _morning_at(tmp_path, row % "not yet due - until 2026-08-20: earlier", today)
+    assert any("does not move the deadline" in e for e in errs), errs
+    # a row pushed a fortnight out is a row abandoned: a warning, not an error
+    errs, warns = _morning_at(tmp_path, row % "not yet due - until 2026-10-30: later", today)
+    assert errs == [] and any("abandoned" in w for w in warns), (errs, warns)
+
+
+def test_a_verdict_that_answers_with_an_adjective_is_refused(tmp_path):
+    """`_VERDICT_OK` demands a verb, a separator and ten characters, which
+    `INCONCLUSIVE - could not determine` satisfies while saying nothing a reader can check.
+    Every live verdict quotes a number or a grep-able string; this is that rule."""
+    today = "2026-08-31"
+    row = "| 2026-08-25 | docs | the thing | 2026-08-26 | %s |\n"
+    errs, _ = _morning_at(tmp_path, row % "INCONCLUSIVE - could not determine either way", today)
+    assert len(errs) == 1 and "adjective" in errs[0], errs
+    errs, _ = _morning_at(tmp_path, row % "INCONCLUSIVE - `scrape_rot.json` has no record", today)
+    assert errs == [], errs
+    errs, _ = _morning_at(tmp_path, row % "PASS - the board carried 91 cards", today)
+    assert errs == [], errs
+
+
+def test_a_verdict_with_no_answered_date_is_refused(tmp_path):
+    """Two live rows carried a verdict and an empty `answered` cell. That date is how a
+    reader tells a fresh answer from one inherited with the row."""
+    errs, _ = _morning_at(
+        tmp_path, "| 2026-08-25 | docs | the thing |  | PASS - `board 91` and it was |\n",
+        "2026-08-31")
+    assert len(errs) == 1 and "empty `answered`" in errs[0], errs
+
+
+def _morning_repo(tmp_path, before, after, archive_before="# archive\n", archive_after=None):
+    """A real one-commit repo whose HANDOFF held `before` and whose tree holds `after`.
+
+    The deletion guard reads a COMMITTED blob through `git show`, so it needs a repo, not a
+    predicate - the same reason `_tiny_repo` exists, and the same lesson: testing the
+    predicate alone is how `floor_holds` became dead code."""
+    import subprocess
+
+    def git(*a):
+        return subprocess.run(["git"] + list(a), cwd=str(tmp_path), capture_output=True,
+                              text=True, encoding="utf-8", errors="replace")
+    tmp_path.mkdir(parents=True, exist_ok=True)   # each case gets its own repo
+    (tmp_path / "docs").mkdir(exist_ok=True)
+    git("init", "-q")
+    git("config", "user.email", "guard@example.invalid")
+    git("config", "user.name", "guard")
+    git("config", "commit.gpgsign", "false")
+
+    def write(handoff, archive):
+        (tmp_path / "HANDOFF.md").write_text("## Morning checks\n\n" + HDR + handoff,
+                                             encoding="utf-8")
+        (tmp_path / "docs" / "morning-checks.md").write_text(archive, encoding="utf-8")
+    write(before, archive_before)
+    git("add", "-A")
+    assert git("commit", "-q", "-m", "baseline").returncode == 0
+    # the guard compares against `merge-base HEAD origin/master`, so the fixture has to
+    # have that ref - a lane worktree always does, and without it the guard correctly
+    # does nothing at all, which is how this test first passed while proving nothing.
+    git("update-ref", "refs/remotes/origin/master", "HEAD")
+    write(after, archive_before if archive_after is None else archive_after)
     cd = _cd()
-    src = cd.read(os.path.join(cd.ROOT, "docs", "check_docs.py"))
-    body = src.split("def check_morning_checks")[1].split("\ndef ")[0]
-    assert 'warn("morning-checks", "morning check due %s' in body
-    assert 'err("morning-checks", "morning check due' not in body
+    cd.ROOT = str(tmp_path)
+    cd.check_morning_rows_survive()
+    return list(cd.ERRORS), list(cd.WARNINGS)
+
+
+def test_deleting_a_morning_check_row_is_an_error_and_moving_it_verbatim_is_not(tmp_path):
+    """The guard that makes the escalation above safe to have.
+
+    Without it the cheapest way out of a red build is to delete somebody else's unanswered
+    check, and the linter would then destroy the mechanism it exists to protect. The row's
+    key is (due, lane, the first 40 characters of the claim) because three live rows share
+    a due date and a lane."""
+    row = "| 2026-08-29 | infra | the relay notified the inbox | \u2014 |  |\n"
+    keep = GOOD % ("2026-01-01", "2026-01-02")
+    # deleted outright
+    errs, _ = _morning_repo(tmp_path / "a", row + keep, keep)
+    assert len(errs) == 1 and "is now in neither" in errs[0], errs
+    # moved VERBATIM to the archive: the sanctioned move, and silent
+    errs, _ = _morning_repo(tmp_path / "b", row + keep, keep,
+                            archive_after="# archive\n\n" + HDR
+                            + row.replace("\u2014 |  |", "2026-08-30 | PASS - `relay notified: 8d30167` |"))
+    assert errs == [], errs
+    # commented out is deleted: the parser only sees `|` rows, so this was the cheap exit
+    errs, _ = _morning_repo(tmp_path / "c", row + keep, "<!-- " + row.strip() + " -->\n" + keep)
+    assert len(errs) == 1 and "is now in neither" in errs[0], errs
+
+
+def test_archiving_a_row_unanswered_is_refused_and_old_archive_rows_are_untouchable(tmp_path):
+    """With deletion an error, moving an unanswered row to the archive is the laundering
+    path left. Only rows this branch ADDS are judged: an archived row is history, and
+    history that can go red for being old is history somebody quietly edits - which is
+    exactly what `test_the_archive_is_checked_for_shape_but_never_for_age` protects."""
+    row = "| 2026-08-29 | infra | the relay notified the inbox | \u2014 | not yet due |\n"
+    keep = GOOD % ("2026-01-01", "2026-01-02")
+    errs, _ = _morning_repo(tmp_path / "a", row + keep, keep,
+                            archive_after="# archive\n\n" + HDR + row)
+    assert len(errs) == 1 and "with no answer" in errs[0], errs
+    # the same unanswered row, already in the archive before this branch: untouched
+    errs, _ = _morning_repo(tmp_path / "b", keep, keep,
+                            archive_before="# archive\n\n" + HDR + row)
+    assert errs == [], errs
+
 
 
 # --- docs lane, 2026-08-27: docs/BACKLOG.md was 3,457 lines with a lane's work scattered
@@ -12500,6 +12654,54 @@ def test_every_backlog_item_names_a_lane_that_exists():
     lanes = bl.lane_names() | {"unassigned"}
     bad = sorted({i.lane for i in bl.parse()} - lanes)
     assert not bad, "items name lanes that are not in the brief's table: %s" % bad
+
+
+def test_a_closing_bullet_closes_only_the_claimant_in_its_own_section():
+    """A bullet was attributed to a NUMBER, and 28 numbers name more than one item.
+
+    So `- **244 - CLOSED.**` in the `company-intel` closures section also flagged
+    `scraper`'s 244 and `ats-fetch`'s 244: 20 flags for 12 real originals, and 8 of them
+    told a lane that its open work was already done. The bullet now closes a claimant when
+    the number is unique, when the bullet spells `<n>@<lane>`, or when the claimant's lane
+    is the one its own section heading names."""
+    bl = _bl()
+    text = (
+        "## From the `company-intel` lane, 2026-08-26" + chr(10) * 2
+        + "244. **A company-intel thing** - lane: `company-intel`. Body." + chr(10) * 2
+        + "## From the `scraper` lane, 2026-08-26" + chr(10) * 2
+        + "244. **A scraper thing** - lane: `scraper`. Body." + chr(10) * 2
+        + "## `company-intel` closures, 2026-08-27" + chr(10) * 2
+        + "- **244 - CLOSED.** The company-intel one, and only that one." + chr(10))
+    by_lane = {i.lane: i for i in bl.parse(text)}
+    assert by_lane["company-intel"].bullet_closed is True
+    assert by_lane["scraper"].bullet_closed is False, \
+        "a bullet in one lane's section closed another lane's item of the same number"
+
+
+def test_an_open_backlog_item_with_no_lane_is_an_error(tmp_path):
+    """`unassigned` was a warning, and 28 items sat in it - `docs/BACKLOG.md`'s own index
+    told the reader to burn the list down, for weeks, under a green build. Item 243 states
+    the cost: an item addressed to nobody is addressed to nobody."""
+    import shutil
+    (tmp_path / "docs").mkdir()
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    shutil.copy(os.path.join(root, "docs", "backlog.py"), str(tmp_path / "docs" / "backlog.py"))
+    (tmp_path / "docs" / "AGENT_BRIEF.md").write_text(
+        "| **`registry`** | 2 | rows | `companies.csv` |" + chr(10), encoding="utf-8")
+
+    def run(item):
+        (tmp_path / "docs" / "BACKLOG.md").write_text(
+            "## A section with no lane in its name" + chr(10) * 2 + item, encoding="utf-8")
+        cd = _cd()
+        cd.ROOT = str(tmp_path)
+        cd.check_backlog()
+        return list(cd.ERRORS)
+
+    errs = run("1. **A thing nobody owns** - it just sits here." + chr(10))
+    assert any("name no lane" in e for e in errs), errs
+    errs = run("1. **A thing** - lane: `registry`. It has an owner." + chr(10))
+    assert not any("name no lane" in e for e in errs), errs
+
 
 
 def test_the_next_free_backlog_number_is_never_one_that_was_used_or_skipped():
