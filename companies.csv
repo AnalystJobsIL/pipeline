@@ -370,7 +370,7 @@ Fabric,scrape,,https://ats.rippling.com/fabric-inc/jobs,true,user-found Rippling
 Intelligems,workable,intelligems,https://apply.workable.com/api/v1/widget/accounts/intelligems?details=true,false,re-audit 2026-08-21: deep-verified 0/0 IL (was dark) | zero-confirm 2026-08-28: board answered 0 postings; needs re-resolution
 Fetcherr,comeet,68.006,https://www.comeet.com/careers-api/2.0/company/68.006/positions?token=866326432643ACA866219829FE10CC193229FE,true,re-audit 2026-08-21: deep-verified 45/18 IL (was dark)
 Aleph Farms,scrape,,https://aleph-farms.com/careers/,true,listing-hunt 2026-08-22: verified 4 IL via https://aleph-farms.com/careers/
-Imagindairy,scrape,https://www.imagindairy.com/careers,https://imagindairy.com/careers/,false,"listing-hunt 2026-08-22: no IL listing; monitored ca | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-28: board answered rendered postings; needs re-resolution"
+Imagindairy,scrape,https://www.imagindairy.com/careers,https://imagindairy.com/careers/,false,"activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-28: board answered rendered postings; needs re-resolution | dark-triage 2026-08-29: js-shell (job XHRs seen during render)"
 InnovoPro,scrape,https://innovopro.com/careers/,https://jobs.jvpvc.com/jobs/innovopro,false,dark-triage 2026-08-23: extract-gap (2 role phrases after render) | listing-hunt 2026-08-24: another company's board; no listing found
 Venn,greenhouse,venncity,https://boards-api.greenhouse.io/v1/boards/venncity/jobs,true,re-audit 2026-08-21: verified 4/1 IL (was false-empty)
 WINT Water Intelligence,scrape,,https://wint.careers.hibob.com/jobs,false,dark-triage 2026-08-23: js-shell (job XHRs s | listing-hunt 2026-08-24: another company's board; no listing found | crack-walled 2026-08-28: skip
@@ -617,7 +617,7 @@ Comcast,scrape,https://jobs.comcast.com/category/analytics-jobs/45483/8795824/1,
 Rapid7,scrape,,https://careers.rapid7.com/jobs/search?location=Israel,true,listing-hunt 2026-08-22: verified 3 IL via https://careers.rapid7.com/jobs/search?location=Israel
 Teradata,scrape,,https://careers.teradata.com/jobs?location=Israel,false,listing-hunt 2026-08-22: verified 1 IL via https://careers.teradata.com/jobs?location=Israel | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Bank of America,scrape,https://careers.bankofamerica.com/en-us/job-search?ref=search&location=Israel,https://careers.bankofamerica.com/en-us/job-search?ref=search&location=Israel,false,"deep-validated 2026-08-21: unsupported ATS avature.net | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-28: board answered rendered postings; needs re-resolution"
-Dolby Laboratories,scrape,https://dolby.wd5.myworkdayjobs.com/Careers,https://jobs.dolby.com/careers?location=Israel,false,"deep-validated 2026-08-21: unsupported ATS eightfold.ai | listing-hunt 2026-08-22: no IL listing; | activated 2026-08-23: validated page, scanned daily | zero-confirm 2026-08-29: wrong-url; needs re-resolution"
+Dolby Laboratories,scrape,https://dolby.wd5.myworkdayjobs.com/Careers,https://jobs.dolby.com/careers?location=Israel,false,deep-validated 2026-08-21: unsupported ATS eightfold.ai | zero-confirm 2026-08-29: wrong-url; needs re-resolution | dark-triage 2026-08-29: js-shell (job XHRs seen during render)
 BMW Group,scrape,https://www.bmwgroup.jobs/en.html,https://www.bmwgroup.jobs/en.html,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-08-28 (conn-dead (TimeoutError))
 Skyhawk Security,scrape,,https://skyhawk.security/join-us/,true,"dark-triage 2026-08-23: extract-gap (LLM found 4: Junior Backend Developer (GoLang\Java), Senior GoLang Backen) | repair 2026-08-23: extract-gap fixed via LLM tier; 4 IL"
 Base44,scrape,,https://careers.base44.com/,true,listing-hunt 2026-08-22: verified 14 IL via https://careers.base44.com/
@@ -995,7 +995,7 @@ Iscar,scrape,https://www.iscar.com/careers,https://www.iscar.com/careers,true,"d
 NVIDIA Israel,workday,nvidia/NVIDIAExternalCareerSite,https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs,false,alias-of NVIDIA 2026-08-23: identical board URL; one row per company so the board does not list every role twice | deep-resolved; 40/39 IL
 Broadcom Israel,workday,broadcom/External_Career,https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career/jobs,false,alias-of Broadcom 2026-08-23: identical board URL; one row per company so the board does not list every role twice | re-audit 2026-08-21: verified 0/0 IL (was false-empty)
 Dell Israel,workday,dell/External,https://dell.wd1.myworkdayjobs.com/wday/cxs/dell/External/jobs,false,alias-of Dell Technologies 2026-08-23: identical board URL; one row per company so the board does not list every role twice | re-audit 2026-08-21: verified 0/0 IL (was false-empty)
-PayPal Israel,scrape,,https://paypal.eightfold.ai/careers,false,deep-validated 2026-08-21: unsupported ATS eightfold.ai | listing-hunt 2026-08-22: no IL listing; monitored candidate | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
+PayPal Israel,scrape,,https://paypal.eightfold.ai/careers,false,deep-validated 2026-08-21: unsupported ATS eightfold.ai | dark-triage 2026-08-29: page-empty (LLM confirms no open roles (This is PayPal's general careers p) (role phrases were bios/testimonials))
 Lam Research Israel,scrape,,https://careers.lamresearch.com/careers?location=Israel,false,alias-of Lam Research 2026-08-23: identical board URL; one row per company so the board does not list every role twice | crack-walled 2026-08-22: eightfold via scrape; verified 1 IL
 General Motors Israel,scrape,,https://search-careers.gm.com/en/locations/israel/,false,alias-of General Motors 2026-08-23: identical board URL; one row per company so the board does not list every role twice | listing-hunt 2026-08-22: verified 2 IL via https://search-careers.gm.com/en/locations/israel/
 Imagene AI,comeet,D7.000,https://www.comeet.com/careers-api/2.0/company/D7.000/positions?token=7D02EE01F402710271004650177001770,true,re-audit 2026-08-21: deep-verified 3/2 IL (was dark)
@@ -1265,12 +1265,12 @@ Jiga,ashby,jiga,https://api.ashbyhq.com/posting-api/job-board/jiga,true,auto-exp
 Brandlight,ashby,brandlight,https://api.ashbyhq.com/posting-api/job-board/brandlight,true,auto-expand slug-probe; 9/6 IL
 Astera Labs,greenhouse,asteralabs,https://boards-api.greenhouse.io/v1/boards/asteralabs/jobs,true,auto-expand slug-probe; 159/31 IL
 Hello Heart,greenhouse,helloheart,https://boards-api.greenhouse.io/v1/boards/helloheart/jobs,true,auto-expand slug-probe; 13/4 IL
-NeuroBrave,scrape,https://neurobrave.com,https://neurobrave.com,false,scanned; no open Israel roles now | own-site 2026-08-27: neurobrave.com linkback | listing-hunt 2026-08-28: no IL listing; monitored candidate
-ARRISE,scrape,https://arrise.com,https://arrise.com/careers?bid=18243,false,scanned; no open Israel roles now | own-site 2026-08-27: arrise.com linkback | listing-hunt 2026-08-28: no IL listing; monitored candidate
-TAIRC,scrape,https://www.tairc.com/,https://www.tairc.com/careers,false,scanned; no open Israel roles now | own-site 2026-08-27: www.tairc.com linkback | listing-hunt 2026-08-28: no IL listing; monitored candidate
+NeuroBrave,scrape,https://neurobrave.com,https://neurobrave.com,false,"scanned; no open Israel roles now | listing-hunt 2026-08-28: no IL listing; monitored candidate | dark-triage 2026-08-29: wrong-page (LLM: not NeuroBrave's careers page (This is the company's homepage, not a ca))"
+ARRISE,scrape,https://arrise.com,https://arrise.com/careers?bid=18243,false,scanned; no open Israel roles now | listing-hunt 2026-08-28: no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (LLM found 1: GAME PRESENTER with Korean (Full relocation support to Ras A)
+TAIRC,scrape,https://www.tairc.com/,https://www.tairc.com/careers,false,"scanned; no open Israel roles now | listing-hunt 2026-08-28: no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (LLM found 6: Research Director / Chief Scientist, Director of AI Governan)"
 Surecomp,scrape,https://surecomp.com/careers/,https://surecomp.com/careers/,true,auto-expand scrape; 2 IL
-Qualitest,scrape,https://www.qualitest.com/,https://www.qualitest.com/,false,scanned; no open Israel roles now | own-site 2026-08-27: www.qualitest.com linkback | listing-hunt 2026-08-28: another company's board; no listing found
-Huuuge Games,scrape,https://huuugegames.com,https://huuuge.recruitee.com/,false,scanned; no open Israel roles now | own-site 2026-08-27: huuugegames.com linkback | listing-hunt 2026-08-28: no IL listing; monitored candidate
+Qualitest,scrape,https://www.qualitest.com/,https://www.qualitest.com/,false,scanned; no open Israel roles now | listing-hunt 2026-08-28: another company's board; no listing found | dark-triage 2026-08-29: wrong-page (LLM: not Qualitest's careers page (This page belongs to a different company))
+Huuuge Games,scrape,https://huuugegames.com,https://huuuge.recruitee.com/,false,"scanned; no open Israel roles now | listing-hunt 2026-08-28: no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (LLM found 6: Monetization Specialist, Senior Data Analyst)"
 Ingenio,greenhouse,ingenio,https://boards-api.greenhouse.io/v1/boards/ingenio/jobs,true,auto-expand slug-probe; 5/1 IL
 4M Analytics,scrape,,https://www.comeet.com/jobs/4manalytics/b6.00f,true,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: verified 5 IL via www.comeet.com
 ADM,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: another company's board; no listing found
@@ -1406,62 +1406,62 @@ one פתרונות טכנולוגיים,scrape,,https://www.one1.co.il/careers/,
 הפניקס,scrape,https://www.fnx.co.il/career/open-positions,https://www.fnx.co.il/career/open-positions,true,listing-hunt 2026-08-28: queue-hunt; verified 10 IL
 מטריקס,scrape,https://www.matrixdna.ai/career/analytics-bi/,https://www.matrixdna.ai/career/analytics-bi/,true,listing-hunt 2026-08-28: queue-hunt; verified 3 IL
 מנורה מבטחים החזקות,scrape,,https://www.menoramivt.co.il/job-posting/open-position,true,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-28: verified 4 IL via www.menoramivt.co.il | zero-confirm 2026-08-29: zero-refuted; r+llm; ev 551cfa
-Wayve,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
+Wayve,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
 Fujitsu,scrape,https://www.jobs.global.fujitsu.com/search?location=Israel,https://www.jobs.global.fujitsu.com/search?location=Israel,true,listing-hunt 2026-08-28: queue-hunt; verified 10 IL via www.jobs.global.fujitsu.com
-Simplex 3D,scrape,https://www.simplex3d.com/reals/,https://www.simplex3d.com/reals/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.simplex3d.com linkback | listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-Regulus,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-Infotree Global Solutions,scrape,https://www.infotreeglobal.com/search-jobs/,https://www.infotreeglobal.com/search-jobs/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+Simplex 3D,scrape,https://www.simplex3d.com/reals/,https://www.simplex3d.com/reals/,false,"scanned; no open Israel roles now | dark-triage 2026-08-29: wrong-page (LLM: not Simplex 3D's careers page (This is a product page for REALS, not a ))"
+Regulus,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+Infotree Global Solutions,scrape,https://www.infotreeglobal.com/search-jobs/,https://www.infotreeglobal.com/search-jobs/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: js-shell (job XHRs seen during render)
 Traild,scrape,https://traildsoftware.com/careers/,https://traildsoftware.com/careers/,false,listing-hunt 2026-08-28: queue-hunt; verified 8 IL via traildsoftware.com | zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution
 Nexar Inc.,scrape,https://careers.getnexar.com/jobs,https://careers.getnexar.com/jobs,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL via careers.getnexar.com
-HR Home,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-GNESS,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
+HR Home,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+GNESS,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
 Align Technology,scrape,https://jobs.aligntech.com/search-job?location=Israel,https://jobs.aligntech.com/search-job?location=Israel,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL via jobs.aligntech.com
-"Greenberg Traurig, LLP",scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-Tel Aviv Stock Exchange - הבורסה לניירות ערך,scrape,https://www.tase.co.il/he/jobs-page,https://www.tase.co.il/he/jobs-page,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-Talentium,scrape,https://jobs.talentium.io/talentium,https://jobs.talentium.io/talentium,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+"Greenberg Traurig, LLP",scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+Tel Aviv Stock Exchange - הבורסה לניירות ערך,scrape,https://www.tase.co.il/he/jobs-page,https://www.tase.co.il/he/jobs-page,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: js-shell (job XHRs seen during render)
+Talentium,scrape,https://jobs.talentium.io/talentium,https://jobs.talentium.io/talentium,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: js-shell (job XHRs seen during render)
 Ultra Clean Technology,scrape,https://www.uct.com/careers/israel-hebrew/default.aspx,https://www.uct.com/careers/israel-hebrew/default.aspx,true,listing-hunt 2026-08-28: queue-hunt; verified 4 IL via www.uct.com
-Logicloud,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-BGone Consultants,scrape,https://careers.bcg.com/global/en/search-results?s=1&location=Israel,https://careers.bcg.com/global/en/search-results?s=1&location=Israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+Logicloud,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+BGone Consultants,scrape,https://careers.bcg.com/global/en/search-results?s=1&location=Israel,https://careers.bcg.com/global/en/search-results?s=1&location=Israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (17 role phrases after render)
 RNR SYS,scrape,https://rnr-sys.com/jobs/,https://rnr-sys.com/jobs/,true,listing-hunt 2026-08-28: queue-hunt; verified 4 IL via rnr-sys.com
-Arrow Electronics,scrape,https://careers.arrow.com/us/en/search-results?ln=Israel,https://careers.arrow.com/us/en/search-results?ln=Israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-INGIMA,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-Latent AI,scrape,https://latentai.com/careers/#open-positions,https://latentai.com/careers/#open-positions,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-One Systems,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-Nimble,scrape,https://www.nimble.com/company/careers/,https://www.nimble.com/company/careers/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+Arrow Electronics,scrape,https://careers.arrow.com/us/en/search-results?ln=Israel,https://careers.arrow.com/us/en/search-results?ln=Israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (21 role phrases after render)
+INGIMA,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+Latent AI,scrape,https://latentai.com/careers/#open-positions,https://latentai.com/careers/#open-positions,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (5 role phrases after render)
+One Systems,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+Nimble,scrape,https://www.nimble.com/company/careers/,https://www.nimble.com/company/careers/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (LLM found 1: Social Media and Marketing Associate)
 Cyber-Hive,scrape,https://cyber-hive.io/join-us/,https://cyber-hive.io/join-us/,true,listing-hunt 2026-08-28: queue-hunt; verified 9 IL via cyber-hive.io
 mećkano,scrape,https://www.meckano.com/positions/,https://www.meckano.com/positions/,true,listing-hunt 2026-08-28: queue-hunt; verified 7 IL via www.meckano.com
-SUMIT,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-"QUANTUM GLOBAL TECHNOLOGIES, LLC",scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-Second Nature,scrape,https://www.secondnature.com/careers,https://www.secondnature.com/careers,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-IHG Hotels & Resorts,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-Tel Aviv University,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-Whistle,scrape,https://www.whistle.ltd/careers,https://www.whistle.ltd/careers,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-HCLTech,scrape,https://careers.hcltech.com/go/NonTPDemand/9558355/,https://careers.hcltech.com/go/NonTPDemand/9558355/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+SUMIT,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+"QUANTUM GLOBAL TECHNOLOGIES, LLC",scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+Second Nature,scrape,https://www.secondnature.com/careers,https://www.secondnature.com/careers,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: page-empty (LLM confirms no open roles (Page is a navigation/menu shell wi) (role phrases were bios/testimonials))
+IHG Hotels & Resorts,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+Tel Aviv University,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+Whistle,scrape,https://www.whistle.ltd/careers,https://www.whistle.ltd/careers,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (LLM found 1: Sales Development Representative)
+HCLTech,scrape,https://careers.hcltech.com/go/NonTPDemand/9558355/,https://careers.hcltech.com/go/NonTPDemand/9558355/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: page-empty (LLM confirms no open roles (Page is HCLTech's careers portal b) (role phrases were bios/testimonials))
 Altera,workday,altera/Altera,https://altera.wd1.myworkdayjobs.com/wday/cxs/altera/Altera/jobs,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL via altera.wd1.myworkdayjobs.com | self-heal 2026-08-28: re-resolved to workday
-Confidential Global Company,scrape,https://confidential.careers/jobs-in-israel,https://confidential.careers/jobs-in-israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-Cut Inside,scrape,https://cutinside.com/careers/,https://cutinside.com/careers/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+Confidential Global Company,scrape,https://confidential.careers/jobs-in-israel,https://confidential.careers/jobs-in-israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: js-shell (job XHRs seen during render)
+Cut Inside,scrape,https://cutinside.com/careers/,https://cutinside.com/careers/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (LLM found 1: SEO Specialist Position)
 SOURCIX,scrape,https://sourcixai.com/careers/,https://sourcixai.com/careers/,true,listing-hunt 2026-08-28: queue-hunt; verified 5 IL via sourcixai.com
 Xtra Mile - Lifecycle Marketing Agency,scrape,https://xtra-mile.co/careers-result-page/?nam=&dep=&loc=IL&submit=Search,https://xtra-mile.co/careers-result-page/?nam=&dep=&loc=IL&submit=Search,true,listing-hunt 2026-08-28: queue-hunt; verified 2 IL via xtra-mile.co
-Forbes Advisor,scrape,https://www.forbes.com/careers-at-forbes/,https://www.forbes.com/careers-at-forbes/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-Zoom Real Estate Investments,scrape,https://zoom-rei.com/careers/,https://zoom-rei.com/careers/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-SO Digital - Splash & OptiWise,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-IRANI CORP (FACTORY 54),scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-AutoDS - Automatic Dropshipping Tools,scrape,https://www.autods.com/jobs/,https://www.autods.com/jobs/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-ROVR,scrape,https://rovrstack.ai/jobs,https://rovrstack.ai/jobs,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-MTC Industries & Research,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-GV Cosmetics,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-McCann Digital,scrape,https://careers.mccann.com/en_US/careersmccann/SearchJobs?listFilterMode=1&location=Israel,https://careers.mccann.com/en_US/careersmccann/SearchJobs?listFilterMode=1&location=Israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+Forbes Advisor,scrape,https://www.forbes.com/careers-at-forbes/,https://www.forbes.com/careers-at-forbes/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (7 role phrases after render)
+Zoom Real Estate Investments,scrape,https://zoom-rei.com/careers/,https://zoom-rei.com/careers/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: js-shell (job XHRs seen during render)
+SO Digital - Splash & OptiWise,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+IRANI CORP (FACTORY 54),scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+AutoDS - Automatic Dropshipping Tools,scrape,https://www.autods.com/jobs/,https://www.autods.com/jobs/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: js-shell (job XHRs seen during render)
+ROVR,scrape,https://rovrstack.ai/jobs,https://rovrstack.ai/jobs,false,"listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (LLM found 4: Software Engineer (Orchestration & Multimodality), Senior Ba)"
+MTC Industries & Research,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+GV Cosmetics,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+McCann Digital,scrape,https://careers.mccann.com/en_US/careersmccann/SearchJobs?listFilterMode=1&location=Israel,https://careers.mccann.com/en_US/careersmccann/SearchJobs?listFilterMode=1&location=Israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: page-empty (LLM confirms no open roles (This is McCann's official global c) (role phrases were bios/testimonials))
 Publicis Groupe Israel,scrape,https://careers.publicisgroupe.com/jobs?location=Israel,https://careers.publicisgroupe.com/jobs?location=Israel,true,listing-hunt 2026-08-28: queue-hunt; verified 7 IL via careers.publicisgroupe.com
-Ferrero,scrape,https://www.ferrerocareers.com/us/en/jobs?country[Israel]=Israel,https://www.ferrerocareers.com/us/en/jobs?country[Israel]=Israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
+Ferrero,scrape,https://www.ferrerocareers.com/us/en/jobs?country[Israel]=Israel,https://www.ferrerocareers.com/us/en/jobs?country[Israel]=Israel,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: js-shell (job XHRs seen during render)
 Pareto Leads - Customer Acquisition at Scale,scrape,https://paretoleads.com/careers/,https://paretoleads.com/careers/,true,listing-hunt 2026-08-28: queue-hunt; verified 2 IL via paretoleads.com
 Peach Content We Like Ltd,scrape,https://www.peachcontent.com/,https://www.peachcontent.com/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.peachcontent.com linkback | probe-woken 2026-08-28: re-hunt pending
-10bis תן ביס,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-Pacaya HR Experts,scrape,https://pacayahr.com/,https://pacayahr.com/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-U.Estate LTD,scrape,https://www.estatejobs.com/search,https://www.estatejobs.com/search,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-i4Valley,scrape,https://i4valley.com,https://i4valley.com,false,scanned; no open Israel roles now | own-site 2026-08-28: i4valley.com linkback | listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate
-L'Oréal,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-OR Movement תנועת אור,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found
-Adnimation,scrape,https://www.adnimation.com/,https://www.adnimation.com/,false,scanned; no open Israel roles now | own-site 2026-08-28: www.adnimation.com linkback | listing-hunt 2026-08-28: queue-hunt; no listing found
+10bis תן ביס,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+Pacaya HR Experts,scrape,https://pacayahr.com/,https://pacayahr.com/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: wrong-page (LLM: not Pacaya HR Experts's careers page (This is Pacaya HR's own company site (ag))
+U.Estate LTD,scrape,https://www.estatejobs.com/search,https://www.estatejobs.com/search,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: wrong-page (LLM: not U.Estate LTD's careers page (This is a third-party job board (EstateJ))
+i4Valley,scrape,https://i4valley.com,https://i4valley.com,false,"scanned; no open Israel roles now | dark-triage 2026-08-29: wrong-page (LLM: not i4Valley's careers page (This is the company homepage, not a care))"
+L'Oréal,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+OR Movement תנועת אור,scrape,,,false,listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: no-url (no url on the row)
+Adnimation,scrape,https://www.adnimation.com/,https://www.adnimation.com/,false,"scanned; no open Israel roles now | listing-hunt 2026-08-28: queue-hunt; no listing found | dark-triage 2026-08-29: wrong-page (LLM: not Adnimation's careers page (This is the company's homepage, not the ))"
 Zero Networks,scrape,https://zeronetworks.com/careers,https://zeronetworks.com/careers,true,listing-hunt 2026-08-28: queue-hunt; verified 8 IL via zeronetworks.com
 terasky,scrape,https://www.terasky.com/careers/il,https://www.terasky.com/careers/il,true,listing-hunt 2026-08-28: queue-hunt; verified 1 IL via www.terasky.com
 orchid security,comeet,4A.001,https://www.comeet.com/careers-api/2.0/company/4A.001/positions?token=A4147C72904A41A410A41047C7A41,true,queue-drain 2026-08-28 exhaust; 5/2 IL

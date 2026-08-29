@@ -7,3 +7,4 @@
 {"at":"2026-08-28T19:56:47Z","cap":null,"capped":false,"credits":2,"pid":33196,"tool":"-c"}
 {"at":"2026-08-28T20:55:32Z","cap":null,"capped":false,"credits":2,"pid":27240,"tool":"-c"}
 {"at":"2026-08-28T21:22:26Z","cap":null,"capped":false,"credits":843,"pid":18472,"tool":"drain_queue.py"}
+{"at":"2026-08-29T01:33:50Z","cap":250,"capped":false,"ci":true,"credits":2,"pid":3004,"tool":"triage_dark.py"}
