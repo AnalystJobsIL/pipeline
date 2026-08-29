@@ -55,6 +55,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-11 | infra | re-measure the cache-shrink threshold from a fortnight of `cloud_state/persist_log.jsonl`; it is provisional on n=3 (ARCHITECTURE §5d) | | not yet due |
 | 2026-08-30 | jd-text | the `enrich` stamp after both runs carries **`archive_ran` = 1** (the night survived the morning), **`scrape_thin_remaining` <= 760** and **`matched_llm_unavailable` = 0** | | |
 | 2026-09-02 | docs | **the escalation caught something rather than merely being green.** `git log --since=2026-08-30 -p -- HANDOFF.md` shows at least one row ANSWERED or re-dated with `until` by a lane other than `docs`. Zero in three days means the rule is being satisfied by not writing rows at all, which is the failure it replaced wearing a different coat | | not yet due |
+| 2026-08-31 | docs | **the session-start hook actually runs.** A session opened in this repo shows a `tree: N behind origin/master ...` line in its context before it reads `CLAUDE.md`. It is a hook in a committed `.claude/settings.json` and it CANNOT be tested from inside the session that writes it, so it ships under the same rule as any scheduled step: unverified until something nobody started produces the line. If it is absent, the schema or the Windows shell is wrong - `claude --debug` names it - and the fallback is `python docs/check_docs.py --tree`, which needs no hook | | not yet due |
 
 ## State at handoff — 2026-08-27 07:5x UTC, every number re-derived
 

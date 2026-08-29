@@ -15,3 +15,9 @@ secrets.env
 
 # Claude Code local (per-machine) instructions
 CLAUDE.local.md
+
+# Claude Code: agent worktrees and per-session scratch are per-machine and must never
+# be committed (nine sessions share this checkout - `git add -A` here is the accident
+# every lane is warned about). The session-start hook itself IS tracked.
+.claude/*
+!.claude/settings.json

@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python docs/check_docs.py --tree --fetch",
+            "timeout": 120,
+            "statusMessage": "checking how stale this checkout is"
+          }
+        ]
+      }
+    ]
+  }
+}
