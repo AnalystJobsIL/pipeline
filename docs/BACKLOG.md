@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**483 filed · 363 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**483 filed · 350 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -53,19 +53,19 @@ closure convention in the header.
 
 | number | claimants |
 |---|---|
-| 1 | `1` **open** · `1` **open** · `1` **open** · `1@infra` **open** · `1@docs` closed |
-| 2 | `2` **open** · `2` **open** · `2` **open** · `2@registry` closed · `2@registry` closed |
-| 3 | `3` closed · `3` **open** · `3` **open** · `3@discovery` **open** · `3@infra` closed |
-| 4 | `4` **open** · `4` **open** · `4` **open** · `4@discovery` **open** · `4@infra` **open** |
-| 5 | `5` **open** · `5` **open** · `5` **open** · `5@discovery` closed · `5@infra` **open** |
-| 6 | `6` **open** · `6` **open** · `6` **open** · `6@infra` **open** · `6@registry` closed |
-| 7 | `7` **open** · `7` **open** · `7@infra` **open** · `7@infra` **open** · `7@ats-fetch` **open** |
-| 8 | `8` **open** · `8@discovery` **open** · `8@docs` closed |
-| 9 | `9` **open** · `9@ats-fetch` **open** · `9@registry` **open** |
-| 10 | `10` **open** · `10@infra` **open** · `10@infra` **open** |
-| 11 | `11@company-intel` **open** · `11@infra` **open** |
+| 1 | `1@ats-fetch` **open** · `1@infra` **open** · `1@ats-fetch` **open** · `1@infra` **open** · `1@docs` closed |
+| 2 | `2@roles` **open** · `2@infra` **open** · `2@registry` **open** · `2@registry` closed · `2@registry` closed |
+| 3 | `3` closed · `3@company-intel` **open** · `3@roles` **open** · `3@discovery` **open** · `3@infra` closed |
+| 4 | `4@infra` **open** · `4@infra` **open** · `4@render` **open** · `4@discovery` **open** · `4@infra` **open** |
+| 5 | `5@company-intel` **open** · `5@infra` **open** · `5@infra` **open** · `5@discovery` closed · `5@infra` **open** |
+| 6 | `6@infra` **open** · `6@infra` **open** · `6@company-intel` **open** · `6@infra` **open** · `6@registry` closed |
+| 7 | `7@infra` **open** · `7@infra` **open** · `7@infra` **open** · `7@infra` **open** · `7@ats-fetch` **open** |
+| 8 | `8@infra` **open** · `8@discovery` **open** · `8@docs` closed |
+| 9 | `9@discovery` **open** · `9@ats-fetch` **open** · `9@registry` **open** |
+| 10 | `10@company-intel` **open** · `10@infra` **open** · `10@infra` **open** |
+| 11 | `11@company-intel` closed · `11@infra` **open** |
 | 12 | `12@infra` **open** · `12@infra` **open** |
-| 13 | `13` **open** · `13@registry` **open** |
+| 13 | `13@roles` **open** · `13@registry` **open** |
 | 14 | `14@discovery` **open** · `14@docs` closed |
 | 15 | `15@discovery` closed · `15@infra` **open** |
 | 70 | `70@discovery` **open** · `70@discovery` **open** |
@@ -76,11 +76,11 @@ closure convention in the header.
 | 228 | `228@discovery` **open** · `228@scraper` **open** |
 | 240 | `240@docs` closed · `240@scraper` closed |
 | 241 | `241@infra` **open** · `241@ats-fetch` **open** · `241@scraper` closed |
-| 242 | `242@company-intel` **open** · `242@registry` **open** · `242@registry` **open** |
+| 242 | `242@company-intel` closed · `242@registry` **open** · `242@registry` **open** |
 | 243 | `243@roles` **open** · `243@ats-fetch` **open** · `243@scraper` **open** |
-| 244 | `244@company-intel` **open** · `244@ats-fetch` **open** · `244@scraper` **open** |
-| 245 | `245@company-intel` **open** · `245@ats-fetch` **open** · `245@scraper` **open** |
-| 246 | `246@company-intel` **open** · `246@registry` **open** |
+| 244 | `244@company-intel` closed · `244@ats-fetch` **open** · `244@scraper` **open** |
+| 245 | `245@company-intel` closed · `245@ats-fetch` **open** · `245@scraper` **open** |
+| 246 | `246@company-intel` closed · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 | 368 | `368@registry` **open** · `368@infra` **open** |
 | 374 | `374@jd-text` **open** · `374@docs` **open** |
@@ -88,10 +88,12 @@ closure convention in the header.
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 
-### registry — 114 open
+### registry — 119 open
 
+- **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
 - **13** `13@registry` **The mail hook is now `alarms_state`, not `alarms`**
+- **18** `18@registry` **Both rotations are no-ops on the FIRST cloud run**
 - **21** `21@registry` **`company_identity.is_foreign` returns False for EVERY ATS host, and that is
 - **26** `26@registry` **Three orphan detectors, three answers**
 - **29** `29@registry` **`tenant_is_this_company('SupPlant', 'careers.workable.com')` returns True**
@@ -102,6 +104,9 @@ closure convention in the header.
 - **42** `42@registry` **`company_identity.ATS_HOST` omits `jobvite.com` and `taleo.net`**
 - **43** `43@registry` **`verdict() == "weak"` has no consumer anywhere in the repo**
 - **46** `46@registry` **Do not re-measure an activating tool's gate against ACTIVE rows.** Wave 9 reported the
+- **47** `47@registry` **Unifying the terminal-state definitions costs 10 rows of coverage, and they are the
+- **48** `48@registry` **The re-check pool is still defined in four places**
+- **49** `49@registry` **`activation_ok` refuses a legitimate acquisition on a subdomain-tenant machine
 - **51** `51@registry` **A `_WALLED_HOST` entry can be deleted with the suite green whenever that platform has
 - **54** `54@registry` **`auto_expand._row_for_ats`'s refusal persists the REFUSED board into cols 2-3; its
 - **55** `55@registry` **The `taleo.net` half of `_ATS_NOT_IN_ATS_HOST` is untested and its registry set is
@@ -205,14 +210,25 @@ closure convention in the header.
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
-### infra — 83 open
+### infra — 94 open
 
+- **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
+- **2** `2@infra` **Retire `companies.csv` as a database.** 20 writers, a state machine encoded in prose
+- **4** `4@infra` `metrics.jsonl` (one JSON line per run) would answer "is coverage growing / did a source
+- **4** `4@infra` **A single automation inventory.** Jobs now live in three schedulers: GitHub Actions
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
+- **5** `5@infra` **Design away the Windows-automation traps instead of re-fixing them per script:** cp1252
+- **5** `5@infra` **`metrics.jsonl`**
 - **5** `5@infra` **`check_invariants.py` has no size check**
+- **6** `6@infra` `mark_sent` records intent, not delivery
+- **6** `6@infra` **Consolidate root-script sprawl.** 40+ root scripts, several executing on import (no
 - **6** `6@infra` **URGENT
+- **7** `7@infra` **Unified quota ledger.** LLM calls are spent from four sites (role judgments, blurbs,
+- **7** `7@infra` **Concurrency**
 - **7** `7@infra` **Reading it is CLOSED; the six scripts that spend it are item 6.**
 - **7** `7@infra` **`/customer/balance` is 403 for this API token
+- **8** `8@infra` **One backoff/retry store.** The same gating machinery now exists twice
 - **10** `10@infra` **`discovered_cache.json` and `research_companies.json` are restored wholesale on the
 - **10** `10@infra` **`audit-coverage.yml` runs the new search ladder with 1 of its 3 rungs**
 - **11** `11@infra` **`listing-hunt.yml`'s budgets sum to 325 of its 330-minute timeout** *(closed by a later bullet, original never edited)*
@@ -320,38 +336,12 @@ closure convention in the header.
 - **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
 - **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
 
-### company-intel — 24 open
-
-- **11** `11@company-intel` **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` — *(closed by a later bullet, original never edited)*
-- **97** `97@company-intel` **Retire (or weekly) the Windows firmographics chain** *(closed by a later bullet, original never edited)*
-- **98** `98@company-intel` **29 identity-duplicate groups in the export** *(closed by a later bullet, original never edited)*
-- **101** `101@company-intel` **`looks_like_junk` cannot catch a bare job title** *(closed by a later bullet, original never edited)*
-- **117** `117@company-intel` **One `claude -p` seam for the repo** *(closed by a later bullet, original never edited)* *(half closed)*
-- **120** `120@company-intel` **Company intel rediscovers an outage the classifier already found** *(closed by a later bullet, original never edited)*
-- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
-- **141** `141@company-intel` **`research_firmographics.py` and `run.py` disagree on the company set** *(closed by a later bullet, original never edited)*
-- **144** `144@company-intel` **One identity group, two employers: the blurb crosses** *(closed by a later bullet, original never edited)*
-- **242** `242@company-intel` **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** — *(closed by a later bullet, original never edited)*
-- **244** `244@company-intel` **Company-death knowledge still dies in `stage_note`** *(closed by a later bullet, original never edited)*
-- **245** `245@company-intel` **`is_place_name` is multi-word only, so a single-word city can still leak** *(closed by a later bullet, original never edited)*
-- **246** `246@company-intel` **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** *(closed by a later bullet, original never edited)*
-- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
-- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
-- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
-- **389** `389@company-intel` **The strike ledger is a union, and a union cannot express a retraction**
-- **390** `390@company-intel` **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
-- **391** `391@company-intel` **A corrupt or write-locked strike ledger is invisible in the mail**
-- **392** `392@company-intel` **A refusal to publish the export discards the whole run's purchases**
-- **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
-- **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
-- **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
-- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
-
-### discovery — 21 open
+### discovery — 22 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
 - **8** `8@discovery` **`linkedin-targeted` is 87% of discovery's credit cost for ~1 new company/day.**
+- **9** `9@discovery` **Validate discovery output at the source.** Job titles leak into company names ("Sql
 - **14** `14@discovery` **`discovery_daily.py` is a 1,214-line monolith doing six jobs.** *(lane: `discovery`.)*
 - **70** `70@discovery` **The intake filters throw away company names every day and nothing records WHICH.**
 - **70** `70@discovery` **The LinkedIn guest walk's worst case grew ~5x inside the digest job**
@@ -393,8 +383,10 @@ closure convention in the header.
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
 - **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
 
-### ats-fetch — 16 open
+### ats-fetch — 18 open
 
+- **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
+- **1** `1@ats-fetch` **`pipeline/ats.py` platform registry.** One frozen dataclass per platform (host regex,
 - **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
 - **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
 - **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
@@ -412,6 +404,40 @@ closure convention in the header.
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 
+### company-intel — 16 open
+
+- **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
+- **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
+- **6** `6@company-intel` **Company aliases**
+- **10** `10@company-intel` **Let company-death knowledge flow back.** Firmographics research keeps discovering
+- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
+- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
+- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
+- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
+- **389** `389@company-intel` **The strike ledger is a union, and a union cannot express a retraction**
+- **390** `390@company-intel` **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
+- **391** `391@company-intel` **A corrupt or write-locked strike ledger is invisible in the mail**
+- **392** `392@company-intel` **A refusal to publish the export discards the whole run's purchases**
+- **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
+- **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
+- **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
+- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
+
+### roles — 12 open
+
+- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
+- **3** `3@roles` **`pipeline/dates.py`**
+- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **145** `145@roles` **`matched.seniority` is empty for every row**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
+- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+
 ### jd-text — 10 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
@@ -425,18 +451,6 @@ closure convention in the header.
 - **421** `421@jd-text` **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
 - **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
 
-### roles — 9 open
-
-- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
-- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **145** `145@roles` **`matched.seniority` is empty for every row**
-- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
-- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
-- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
-- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
-- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
-
 ### classifier — 7 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
@@ -447,45 +461,15 @@ closure convention in the header.
 - **373** `373@classifier` **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
 - **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
 
-### render — 6 open
+### render — 7 open
 
+- **4** `4@render` **`pipeline/jdtext.py`**
 - **119** `119@render` **`digest._LOC_CANON` and the four seniority vocabularies are copies** *(half closed)*
 - **137** `137@render` **`render` re-derives what the ledger now records** *(half closed)*
 - **149** `149@render` **`same_employer` and `blurb-names-other` are heuristics with a known false-positive
 - **150** `150@render` **A failed email stub replaces yesterday's `digests/latest.md`**
 - **212** `212@render` **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
 - **263** `263@render` **`digest.py` renders a `0/148` inline-fill morning as the ABSENCE of a phrase**
-
-### unassigned — 28 open  ← burn this down; a new item may not join it
-
-- **1** `1` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
-- **1** `1` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
-- **1** `1` **`pipeline/ats.py` platform registry.** One frozen dataclass per platform (host regex,
-- **2** `2` Relative-date parsing exists in 5 places with different capabilities (none handle
-- **2** `2` **Retire `companies.csv` as a database.** 20 writers, a state machine encoded in prose
-- **2** `2` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
-- **3** `3` **One identity layer.** `_norm_company` existed but nothing used it for keys
-- **3** `3` **`pipeline/dates.py`**
-- **4** `4` `metrics.jsonl` (one JSON line per run) would answer "is coverage growing / did a source
-- **4** `4` **A single automation inventory.** Jobs now live in three schedulers: GitHub Actions
-- **4** `4` **`pipeline/jdtext.py`**
-- **5** `5` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
-- **5** `5` **Design away the Windows-automation traps instead of re-fixing them per script:** cp1252
-- **5** `5` **`metrics.jsonl`**
-- **6** `6` `mark_sent` records intent, not delivery
-- **6** `6` **Consolidate root-script sprawl.** 40+ root scripts, several executing on import (no
-- **6** `6` **Company aliases**
-- **7** `7` **Unified quota ledger.** LLM calls are spent from four sites (role judgments, blurbs,
-- **7** `7` **Concurrency**
-- **8** `8` **One backoff/retry store.** The same gating machinery now exists twice
-- **9** `9` **Validate discovery output at the source.** Job titles leak into company names ("Sql
-- **10** `10` **Let company-death knowledge flow back.** Firmographics research keeps discovering
-- **13** `13` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
-- **18** `18` **Both rotations are no-ops on the FIRST cloud run**
-- **19** `19` **`crack_one` still writes `fr[3]` when the identity page is UNREADABLE** —
-- **47** `47` **Unifying the terminal-state definitions costs 10 rows of coverage, and they are the
-- **48** `48` **The re-check pool is still defined in four places**
-- **49** `49` **`activation_ok` refuses a legitimate acquisition on a subdomain-tenant machine
 
 <!-- BACKLOG-INDEX:END -->
 
@@ -494,17 +478,22 @@ closure convention in the header.
 **Known and NOT fixed — the ranked backlog:**
 1. `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
    `platform_check` reports the gaps but the consolidation itself is the real fix.
+     *(lane: `ats-fetch` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 2. Relative-date parsing exists in 5 places with different capabilities (none handle
    "week"/"hour"; SerpApi dates never normalize at all).
+     *(lane: `roles` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 3. ~~`_REQ_HEADER` in `seniority.py` is dead code~~ — **closed 2026-08-24 (`classifier`)**:
    `_desc_is_ml` and the LLM's `prompt_slice` both start at the requirements header when one
    exists (375 stored JDs: `_ROLE_START` hit 183, `_REQ_HEADER` 119, and in 29 of those the
    requirements began past the 1,400-char window); 0 of the 252 asserted title-only decisions moved on the first cut; 3 changed on purpose in wave 1 and carry `"changed"`.
 4. `metrics.jsonl` (one JSON line per run) would answer "is coverage growing / did a source
    die / did the classifier stop working" — none of which is answerable today.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 5. Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
    active rows scraping the same board.
+     *(lane: `company-intel` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 6. `mark_sent` records intent, not delivery — a relay failure burns roles as sent.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 
 ## Infra inputs from the firmographics workstream
 
@@ -519,21 +508,25 @@ infrastructure itself. Complements the ten-agent audit backlog above; ordered by
    and make the *committed* artifact a text export per table (JSON/JSONL — diffable,
    row-mergeable with the `merge_csv_rows.py` pattern), or move shared state off git
    entirely. Whatever the choice, "who owns which table" should be declared in one place.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 2. **Retire `companies.csv` as a database.** 20 writers, a state machine encoded in prose
    verdict strings, six allowlist pools that must be updated in sync (the documented #1 bug
    class), plus literal duplicate rows (Datadog/MongoDB/Elastic twice) and alias rows
    (Meta/Meta Israel — audit item 5 above). A registry table with an explicit state enum +
    transition log would delete the entire "verdict-string rule" hazard category.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 3. **One identity layer.** `_norm_company` existed but nothing used it for keys — that gap
    alone produced 9 double-researched companies and 3 wasted run.py budget slots per digest.
    Normalized identity (plus an explicit alias map for the Meta/Meta-Israel class) should be
    THE key in every store, join, and dedupe — not a per-consumer patch, which is what the
    firmographics fixes are today.
+     *(lane: `company-intel` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 4. **A single automation inventory.** Jobs now live in three schedulers: GitHub Actions
    crons, the Windows scheduled task (`IsraeliJobs-Firmographics`, 6-hourly), and whatever a
    session runs by hand. Nothing lists all three; ARCHITECTURE.md section 4 covers only CI. One table
    (owner, trigger, machine, quota it spends, state it writes) is a prerequisite for making
    anything "less messy" — you can't simplify what you can't enumerate.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 5. **Design away the Windows-automation traps instead of re-fixing them per script:** cp1252
    stdout under redirection (three scripts crashed on Hebrew names before
    `sys.stdout.reconfigure`; mandate `PYTHONIOENCODING=utf-8` at every entrypoint), cmd/
@@ -541,29 +534,35 @@ infrastructure itself. Complements the ten-agent audit backlog above; ordered by
    failed silently; committed `.cmd` wrappers work), unbuffered `-u` for anything logging to
    a file, and **git + sqlite inside OneDrive** — sync races with live db writes are an
    incident waiting; consider excluding `state/` from sync or moving the repo out.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 6. **Consolidate root-script sprawl.** 40+ root scripts, several executing on import (no
    `__main__` guard), each hand-rolling its own arg parsing, secrets loading, store opening,
    and now UTF-8/retry boilerplate. A `python -m pipeline <command>` CLI with shared
    bootstrap would shrink the surface the next audit has to re-verify.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 7. **Unified quota ledger.** LLM calls are spent from four sites (role judgments, blurbs,
    firmographics research, employee fills) plus Bright Data credits and SerpApi — each with
    its own caps and none metered centrally. Extending the `metrics.jsonl` idea above with
    per-source spend counters per run would make "what does a day of this system cost" and
    "what just burned the quota" answerable.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 8. **One backoff/retry store.** The same gating machinery now exists twice
    (`cloud_state/resolve_attempts.json` for self-heal; `firmo_failed` + retry-day constants
    for firmographics) with different semantics (weekly/5-strikes vs weekly/monthly). A
    generic attempts table (key, kind, strikes, last, next-eligible) would serve both and
    whatever comes next.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 9. **Validate discovery output at the source.** Job titles leak into company names ("Sql
    developer - X", "my team", "AppSec") and then every downstream layer needs its own guard
    (`looks_like_junk` is a patch, not a fix). The discovery bridge should validate/reject
    company fields before anything enters `research_companies.json` or `matched`.
+     *(lane: `discovery` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 10. **Let company-death knowledge flow back.** Firmographics research keeps discovering
     defunct/absorbed companies (Alike Health, Syte, Sckipio, SimilarTech, NanoLock, Rewire
     R&D) but that knowledge dies in a JSON field — rows stay active and keep being fetched.
     A small review queue proposing `defunct:` parking from firmographics evidence closes
     the loop.
+     *(lane: `company-intel` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 
 ## Honest state of the infrastructure — READ BEFORE ADDING ANYTHING
 
@@ -607,27 +606,34 @@ records the importer for every legacy module rather than the adjective.
    `empty-board` exemption from it. Adding a platform becomes one literal instead of ~22
    edit sites in 14 files. `pipeline/platform_check.py` already reports the gaps — use it as
    the regression harness, and rewrite it to assert against the registry rather than grep.
+     *(lane: `ats-fetch` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 2. **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
    form a de-facto ladder (deterministic → LLM → render+sniff → listing-hunt → unlocker);
    make that explicit, with each strategy a function and the triage mode selecting which to
    run. `triage_dark.py` is the right seam — it already classifies; the resolvers should be
    its handlers.
+     *(lane: `registry` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 3. **`pipeline/dates.py`** — five relative-date parsers today, none handling "week"/"hour",
    and SerpApi dates never normalize at all.
+     *(lane: `roles` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 4. **`pipeline/jdtext.py`** — `_ROLE_START` / `_ROLE_MARKER` / `_REQ_HEADER` / `_REQ_HARD`
    are four vocabularies for "where does the role text start". `_REQ_HEADER` is dead code,
    and `_desc_is_ml`'s docstring describes behaviour it does not have. Measured: the digest
    copy finds a requirements header in 21% of JDs where the classifier copy does not, which
    is why the LLM often never sees the requirements section.
+     *(lane: `render` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 5. **`metrics.jsonl`** — one line per run (rows, active, scanned, failed, empty, paths,
    by_source). Nine counters are already computed and thrown away in `run.py`. Without it
    nobody can answer "is coverage growing" or "did a source die" — Indeed silently returned
    zero for five days and nothing noticed.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 6. **Company aliases** — `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are
    separate active rows scraping the same board.
+     *(lane: `company-intel` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 7. **Concurrency** — five workflows share `repo-state`; long jobs queue for hours and
    superseded runs are recorded as `cancelled` with zero output (happened twice today).
    Either shard the group or shorten the long jobs.
+     *(lane: `infra` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 
 
 ## From the `discovery` lane, 2026-08-23
@@ -815,7 +821,7 @@ outside the `discovery` lane and are NOT fixed.
     jobs and queue entries. Fix: a list mode in `merge_json_cache.py` keyed on
     `(company,title)`, or move both files out of the wholesale-restore loop.
 
-11. **`looks_like_junk` cannot catch a bare job title.** *(lane: `company-intel` —
+11. ~~**`looks_like_junk` cannot catch a bare job title.**~~ — **CLOSED 2026-08-27** (the `company-intel` closures section of this file carries the evidence) *(lane: `company-intel` —
     `pipeline/firmographics.py:53-72`.)* `_JUNK_NAME` requires a role word FOLLOWED BY a
     separator, so `"Senior Data Analyst"` and `"BI Developer"` are not junk, and
     `CATEGORY_NAMES` is exact-match only. Any source whose employer field is a headline feeds
@@ -836,6 +842,7 @@ outside the `discovery` lane and are NOT fixed.
     loses to a LinkedIn card with the same key, and only one `url` survives. Deliberate (it
     is what stops one role appearing three times from three sources), so this is a recorded
     trade, not a bug — but the number should be known before anyone "fixes" duplicates.
+     *(lane: `roles` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 
 14. **`discovery_daily.py` is a 1,214-line monolith doing six jobs.** *(lane: `discovery`.)*
     Four source integrations, a credit ledger, a budget planner, four normalizers, the cache
@@ -1134,14 +1141,16 @@ All three returned NO-GO on the wave-2 state and all three named the same defect
     stable sort reproduces file order exactly. Night 1 is byte-identical to the old
     behaviour; the rotation starts on night 2. Measured over three truncated nights
     afterwards: 120 of 153 distinct companies covered, against 40 before.
+     *(lane: `registry` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 
 19. ~~**`crack_one` still writes `fr[3]` when the identity page is UNREADABLE**~~ —
-    **CLOSED by commit 674cb9c, one commit after this item was written.** `_ok_to_write`
+    **CLOSED 2026-08-23 by commit 674cb9c, one commit after this item was written.** `_ok_to_write`
     requires `_page_names_company(...) is True`, so `None` is refused, and it gates the WRITE
     rather than any single `return` — both `fr[3]` assignments in `crack_walled.main()` sit
     under it. Left here struck through rather than deleted, because the item and the
     ARCHITECTURE paragraph that matched it both survived the fix and a reviewer lost time on
     a solved problem: **when you close something, grep for the places that describe it.**
+     *(lane: `registry` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 
 20. **`audit_empty_rows`'s docstring advertises `AUDIT_BD_SEARCH_CAP`; the code reads
     **CLOSED 2026-08-25 (verified):** the docstring now says there is no `AUDIT_BD_SEARCH_CAP` and why `DEEP_` is the name. The per-process counter note (no shared cap with Saturday) still holds and matters for item 6.
@@ -1644,6 +1653,7 @@ see `docs/sessions/2026-08-24-registry.md` for why nine waves did not converge w
     selector: excluding `domain-dead` would end its core function (re-testing dead domains
     so a revived one is cleared) — that is where this item's original 10-row cost lived,
     and the answer was to not unify that tool, not to pay the cost.
+     *(lane: `registry` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 
 48. **The re-check pool is still defined in four places** — lane: shared plumbing, unchanged
     **Registry half CLOSED 2026-08-25:** `listing_hunt.HUNT_POOL` + `in_hunt_pool` are module-level and imported by the mirror; `url-cleared`/`url-flagged` are in `TOKENS` (the '9 invisible rows' claim is stale). What survives is one token list spelled three times (1's residual).
@@ -1657,6 +1667,7 @@ see `docs/sessions/2026-08-24-registry.md` for why nine waves did not converge w
     `test_every_ownership_mirror_agrees_with_the_tool_it_mirrors` keeps them honest. The
     remaining two need `listing_hunt` to grow an extractable `targets(rows)`; that is the
     real fix and it is a `registry`-lane job.
+     *(lane: `registry` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 
 ## From the rebuild's wave-1 review, 2026-08-24
 
@@ -1680,6 +1691,7 @@ Three reviewers, all findings reproduced before action. Seven were fixed; these 
 
     **CLOSED 2026-08-24:** `Habana Labs (Intel)` is declared (`pipeline/identity_facts.py`);
     the data column this item named exists, as a table.
+     *(lane: `registry` — assigned 2026-08-30 by `docs`; this item predates the lane table)*
 
 50. **On PATH-tenant platforms the gate admits without ever reading the page it holds** —
     **CLOSED 2026-08-25 (`registry`, batch 4):** the no-page half. A path-platform board that cannot vouch is read on its HUMAN page (`human_board_url`), and a declared negative (`identity_facts.not_tenants`) refuses without one. Undeclared rows are still never vetoed by the tenant string (21 stands).
@@ -2276,7 +2288,7 @@ write list; each item names the lane that owns it and the command that proves it
     and measure before trusting it. Note `http.py`'s 30 s timeout × 3 retries makes a
     hung host cost ~100 s on any worker.
 
-97. **Retire (or weekly) the Windows firmographics chain** — lane: `company-intel` (+ `infra`
+97. ~~**Retire (or weekly) the Windows firmographics chain**~~ — **CLOSED 2026-08-27** (the `company-intel` closures section of this file carries the evidence) — lane: `company-intel` (+ `infra`
     for the scheduled task `IsraeliJobs-Firmographics`). Since 2026-08-24 the cloud digest is
     the writer of record and covers the board on its own (ARCHITECTURE §7); the chain spends
     the shared subscription on ~800 registry rows that never render and its output reaches the
@@ -2299,7 +2311,7 @@ write list; each item names the lane that owns it and the command that proves it
     Then delete `run_firmo_chain.cmd`, `firmo_health_check.py` and the task; `research_firmographics.py`
     stays as the by-hand bulk tool. Until then: `--workers 3` hits `529 Overloaded` (2 of 3
     calls on 2026-08-24 09:13) — drop to 2.
-98. **29 identity-duplicate groups in the export** — lane: `company-intel`. AMD / AMD Israel,
+98. ~~**29 identity-duplicate groups in the export**~~ — **won't fix 2026-08-27** (the `company-intel` closures section of this file carries the evidence) — lane: `company-intel`. AMD / AMD Israel,
     Intel / Intel Corporation / Intel Israel, Amazon / AWS / Amazon Israel … (list:
     ARCHITECTURE §7, "Identity"). `display_index` picks deterministically (fullest, then
     shortest name); merging the records (keep the winner, inherit non-empty fields per
@@ -2315,7 +2327,7 @@ write list; each item names the lane that owns it and the command that proves it
     renderer's gate should import the writer's and extend it. Since 2026-08-24
     `company_profiles.json` is filtered through `_JUNK_OUT` on load, so nothing reaches the card
     today; the drift remains.
-101. **`looks_like_junk` cannot catch a bare job title** — lane: `company-intel`. Restated from
+101. ~~**`looks_like_junk` cannot catch a bare job title**~~ — **CLOSED 2026-08-27** (the `company-intel` closures section of this file carries the evidence) — lane: `company-intel`. Restated from
     item 11: a name that is ENTIRELY role words plus seniority modifiers ("Senior Data Analyst",
     "BI Developer") is not junk. Pin: `assert looks_like_junk("Senior Data Analyst")`.
 102. **`company_info` has no `''`-aware API** — lane: shared (`pipeline/store.py`). The monthly
@@ -2436,7 +2448,7 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     silently reverted. Count the shapes with the one-liner in `ARCHITECTURE.md` §7b's verdict
     cache section. `updated` is only meaningful from the first v2 run (before it every row was
     upserted daily).
-117. ~~**One `claude -p` seam for the repo**~~ — **half closed 2026-08-25**: `pipeline/llm.py` exists (`call()`, envelope-first, tool-less) and `seniority` uses it; `firmographics._claude`, `resolve_llm.py`, `triage_dark.py`, `scrape_universal.py` still spawn their own — lane: `company-intel` / `registry` / `scraper` to migrate (a shared `llm` module under `pipeline/`, was not yet created). Two seams now
+117. ~~**One `claude -p` seam for the repo**~~ — **CLOSED 2026-08-27** (half on 2026-08-25): `pipeline/llm.py` exists (`call()`, envelope-first, tool-less) and `seniority` uses it; `firmographics._claude`, `resolve_llm.py`, `triage_dark.py`, `scrape_universal.py` still spawn their own — lane: `company-intel` / `registry` / `scraper` to migrate (a shared `llm` module under `pipeline/`, was not yet created). Two seams now
     **Scraper half CLOSED 2026-08-26:** `scrape_universal._run_claude` goes through `pipeline.llm.call_json` with its own `_LLM_SYSTEM`/`_LLM_SCHEMA` (`SCRAPE_LLM_MODEL`, default sonnet, effort low, 20k chars of page text); `LLMUnavailable` is counted on the bundle and trips a per-process breaker (auth/missing/drift); `subprocess` is no longer imported by the module. The A/B and the security argument are in ARCHITECTURE §1. `firmographics._claude` is the last bare seam (`company-intel`).
     **Registry half CLOSED 2026-08-25 (batch 5):** `triage_dark.llm_page_verdict` -- the lane's last bare `claude -p` -- goes through `pipeline.llm.call_json` with its own `_SYSTEM`/`_SCHEMA` (`TRIAGE_LLM_MODEL`, default sonnet); `LLMUnavailable` is `None` (the regex verdict stands). Records `triage-llm-schema-drop`, `triage-llm-unavailable-raise`.
     exist with the same shape and different guarantees: `seniority._claude` (tools off, schema,
@@ -2455,7 +2467,7 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     `israel.py` (the 40 names added today render un-canonicalised); `digest._SEN_INFER`,
     `digest._SEN_LEAD`, `roleprofile._LEAD` restate `seniority._SENIOR`, and `roleprofile.py:441`
     files `financial analyst` under Business Analyst while `seniority` hard-excludes it.
-120. **Company intel rediscovers an outage the classifier already found** — lane:
+120. ~~**Company intel rediscovers an outage the classifier already found**~~ — **CLOSED 2026-08-27** (the `company-intel` closures section of this file carries the evidence) — lane:
     `company-intel`. When the classifier's breaker opens (`Classifier.off_reason`), the digest
     still spends up to 15 min of `enrich_for_run` learning the same thing; one process-level
     "claude unavailable since …" flag (or reading `clf.off_reason` in `run.py`) would skip it.
@@ -2589,7 +2601,7 @@ kept; the Meta listing-url rows are superseded).
     query (`WHERE length(COALESCE(description,'')) < ?`) picks superseded rows too (2 of the
     3 today have an empty description), so it spends Bright Data on roles that can never
     appear anywhere; add `AND COALESCE(status,'') != 'superseded'` (one line).
-141. **`research_firmographics.py` and `run.py` disagree on the company set** — lane:
+141. ~~**`research_firmographics.py` and `run.py` disagree on the company set**~~ — **CLOSED 2026-08-27** (the `company-intel` closures section of this file carries the evidence) — lane:
     `company-intel`. `SELECT DISTINCT company FROM matched` (research_firmographics.py:144)
     still includes superseded-only companies (OTORIO, Meta Israel, Port.io) while
     `run.py`'s `all_companies` excludes them; read through `get_matched_since` or filter on
@@ -2624,7 +2636,7 @@ kept; the Meta listing-url rows are superseded).
     so the damage is latent. `rolecard._tenant` (host + first non-plumbing path segment on
     multi-tenant ATS hosts, the host alone elsewhere, aggregators excluded) is the rule the
     shared-board check needed; adopt it or import it.
-144. **One identity group, two employers: the blurb crosses** — lane: `company-intel`.
+144. ~~**One identity group, two employers: the blurb crosses**~~ — **CLOSED 2026-08-27** (the `company-intel` closures section of this file carries the evidence) — lane: `company-intel`.
     `identity_key("AppSec Labs") == identity_key("AppSec")` (`labs` is a stripped suffix), and
     `company_intel.py` deliberately shares a blurb across a group's name-forms — so one
     company's About text serves both cards. `rolecard.cross_check` counts a blurb that names
@@ -3591,7 +3603,7 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     commit, so the existing "nothing to commit" path needs to keep handling that. Sits beside
     **238**: both are a job's `--own` list claiming more than the step actually wrote.
 
-242. **The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`** —
+242. ~~**The 29 identity-duplicate groups cannot be merged with `reduce(merge, group)`**~~ — **won't fix 2026-08-27** (the `company-intel` closures section of this file carries the evidence) —
     lane: `company-intel`. Supersedes the implied approach in **98**. `merge` picks its winner
     with `newer()` (later `as_of`, then fullness); `display_index` ranks canonical name first,
     then non-site-form, then fullest. They **disagree**, and for 8 of the 29 groups the site
@@ -3623,7 +3635,7 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     both `firmo_failed` and `cloud_state/resolve_attempts.json`), not in a schema migration on
     a committed sqlite binary for a two-row table.
 
-244. **Company-death knowledge still dies in `stage_note`** — lane: `company-intel` produces,
+244. ~~**Company-death knowledge still dies in `stage_note`**~~ — **CLOSED 2026-08-27** (the `company-intel` closures section of this file carries the evidence) — lane: `company-intel` produces,
     `registry` writes. Restates preamble item 10 with a measurement. A shutdown/absorption
     vocabulary over `stage_note` finds **23 candidates, 15 of them active registry rows**,
     with clear true positives (Believer Meats insolvency Dec 2025, Castor court-ordered
@@ -3637,7 +3649,7 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     first failure class. The right shape is a read-only proposal list a human pastes through
     `pipeline/notes.py`.
 
-245. **`is_place_name` is multi-word only, so a single-word city can still leak** — lane:
+245. ~~**`is_place_name` is multi-word only, so a single-word city can still leak**~~ — **won't fix 2026-08-27** (the `company-intel` closures section of this file carries the evidence) — lane:
     `company-intel`. `Nesher`, `Eilat`, `Azor`, `Yakum`, `Afek` and `Lod` are single-word
     entries in `israel._IL_PLACES` that are also real Israeli company names (Nesher Israel
     Cement), so the whole-name place gate deliberately ignores them. A Telegram post whose
@@ -3647,7 +3659,7 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     not a request to widen it. `PLACE_OK` is the escape hatch if a real employer is ever
     caught; it is empty on 2026-08-26.
 
-246. **`rehearse_company_intel.py` has no assertions and exits 0 whatever happens** — lane:
+246. ~~**`rehearse_company_intel.py` has no assertions and exits 0 whatever happens**~~ — **CLOSED 2026-08-27** (the `company-intel` closures section of this file carries the evidence) — lane:
     `company-intel`. It prints a plausible line and returns success even when every research
     call failed, which is how a broken shim could have gone unnoticed (see the 2026-08-26
     shim rebuild). It needs `rehearse_classifier.py`'s shape: a `checks` list, PASS/FAIL per
