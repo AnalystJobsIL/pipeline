@@ -7493,3 +7493,33 @@ def test_the_self_check_sample_is_never_theatre():
         # a sample must be able to express the floor it is compared against
         assert k >= min(n, 1 / QP.SELF_CHECK_FLOOR), (
             "a sample of %d cannot measure a %.0f%% disagreement floor" % (k, 100 * QP.SELF_CHECK_FLOOR))
+
+
+def test_the_seed_disambiguates_a_one_word_company_name(tmp_path, monkeypatch):
+    """The intake seed names the employer, and nothing was passing it.
+
+    `board_verify.verify` has taken `seed_context` since it was written and every caller left
+    it empty, so `REAL` -- an Israeli company in the queue -- was judged against **Real
+    Brokerage**'s careers page and passed. The model's own `why` named the mismatch. On the
+    page alone that is not unreasonable: "REAL" and "Real" are the same string. What separates
+    them is `research_companies.json`'s `careers_url`, an
+    `il.linkedin.com/jobs/view/<title>-at-<company>-<id>` permalink that proves WHICH employer
+    was hiring in Israel."""
+    import json
+    import queue_pipeline as QP
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / QP.QUEUE).write_text(json.dumps([
+        {"name": "REAL", "careers_url": "https://il.linkedin.com/jobs/view/x-at-real-il-1"},
+        {"name": "No Seed Co", "careers_url": ""}]), encoding="utf-8")
+    QP._SEEDS = None                                   # the module caches; force a re-read
+
+    assert "linkedin" in QP.seed_for("REAL"), "a seed on file must be found"
+    assert QP.seed_for("real") == QP.seed_for("REAL"), "the lookup is case-insensitive"
+    assert QP.seed_for("No Seed Co") == "", "an empty careers_url is not a seed"
+    assert QP.seed_for("Never Heard Of") == "", "an unknown name has no seed"
+
+    # ...and the prompt must actually explain what the seed is for, or passing it is decoration
+    from pipeline import board_verify as BV
+    assert "SEED" in BV.SYSTEM and "generic" in BV.SYSTEM, (
+        "the model is given a seed but never told to use it to tell two same-named "
+        "companies apart")

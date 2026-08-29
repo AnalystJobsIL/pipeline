@@ -12875,5 +12875,198 @@
    "why": "the page is an aggregator",
    "mechanical_said": true
   }
+ },
+ "alma labs|https://www.comeet.com/jobs/almalasers/67.006/": {
+  "date": "2026-08-30",
+  "url": "https://www.comeet.com/jobs/almalasers/67.006/",
+  "name": "Alma Labs",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399998,
+  "text_chars": 1328,
+  "verdict": "UNVERIFIABLE",
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "almalasers (from URL; page name unrendered)",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
+ },
+ "harmonya technologies|https://www.comeet.com/jobs/harmonya/89.004/data-and-implementation-analyst/bd.768": {
+  "date": "2026-08-30",
+  "url": "https://www.comeet.com/jobs/harmonya/89.004/data-and-implementation-analyst/BD.768",
+  "name": "Harmonya Technologies",
+  "model": "opus",
+  "route": "plain",
+  "chars": 116650,
+  "text_chars": 1592,
+  "verdict": "UNVERIFIABLE",
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
+ },
+ "gong.io|https://www.gong.io/careers": {
+  "date": "2026-08-30",
+  "url": "https://www.gong.io/careers",
+  "name": "Gong.io",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399899,
+  "text_chars": 9000,
+  "verdict": "ok",
+  "why": "Gong's own careers page, mentions Israel roles; no positions listed directly.",
+  "employer_named": "Gong.io Ltd.",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "raft technologies|https://www.comeet.com/jobs/raft-technologies/97.000": {
+  "date": "2026-08-30",
+  "url": "https://www.comeet.com/jobs/raft-technologies/97.000",
+  "name": "Raft Technologies",
+  "model": "opus",
+  "route": "plain",
+  "chars": 113466,
+  "text_chars": 1592,
+  "verdict": "UNVERIFIABLE",
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
+ },
+ "ness digital engineering|https://jobs.jobvite.com/ness/jobs": {
+  "date": "2026-08-30",
+  "url": "https://jobs.jobvite.com/ness/jobs",
+  "name": "Ness Digital Engineering",
+  "model": "opus",
+  "route": "render",
+  "chars": 25099,
+  "text_chars": 2467,
+  "verdict": "ok",
+  "why": "Jobvite-hosted careers board branded Ness Digital Engineering, listing its own global openings.",
+  "employer_named": "Ness Digital Engineering",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "uvision group|https://uvisionuav.com/careers/": {
+  "date": "2026-08-30",
+  "url": "https://uvisionuav.com/careers/",
+  "name": "Uvision Group",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399980,
+  "text_chars": 9000,
+  "verdict": "ok",
+  "why": "UVision's own careers page on uvisionuav.com; nav/CSS only, no listings visible.",
+  "employer_named": "Uvision",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "enlight renewable energy ltd (enlt)|https://enlightenergy.com/info/careers/": {
+  "date": "2026-08-30",
+  "url": "https://enlightenergy.com/info/careers/",
+  "name": "Enlight Renewable Energy Ltd (ENLT)",
+  "model": "opus",
+  "route": "plain",
+  "chars": 68249,
+  "text_chars": 3153,
+  "verdict": "ok",
+  "why": "Official Enlight careers page (Rosh Ha'ayin, Israel), invites viewing open positions but none listed inline.",
+  "employer_named": "enlight Renewable Energy Ltd",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "teva pharmaceutical industries|https://www.tevapharm.com/your-career/": {
+  "date": "2026-08-30",
+  "url": "https://www.tevapharm.com/your-career/",
+  "name": "Teva Pharmaceutical Industries",
+  "model": "opus",
+  "route": "plain",
+  "chars": 130333,
+  "text_chars": 4984,
+  "verdict": "ok",
+  "why": "Teva's own global careers landing page; no job listings shown.",
+  "employer_named": "Teva Pharmaceutical Industries Ltd.",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "questrade financial group|https://www.questrade.com/about-us/careers": {
+  "date": "2026-08-30",
+  "url": "https://www.questrade.com/about-us/careers",
+  "name": "Questrade Financial Group",
+  "model": "opus",
+  "route": "plain",
+  "chars": 169255,
+  "text_chars": 9000,
+  "verdict": "ok",
+  "why": "Questrade's own careers page on questrade.com; mentions Israel office; no job listings shown.",
+  "employer_named": "Questrade Financial Group",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "real|https://onereal.wpenginepowered.com/pages/careers/": {
+  "date": "2026-08-30",
+  "url": "https://onereal.wpenginepowered.com/pages/careers/",
+  "name": "REAL",
+  "model": "opus",
+  "route": "plain",
+  "chars": 211324,
+  "text_chars": 9000,
+  "verdict": "ok",
+  "why": "Real Brokerage's own careers page (staging domain), describing benefits and linking to \"View Open Positions\"; no listings shown.",
+  "employer_named": "Real Brokerage (\"Real\")",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "recolabs|https://www.virtualvocations.com/company/remote-jobs-at-recolabs-ltd-63488.html": {
+  "date": "2026-08-30",
+  "url": "https://www.virtualvocations.com/company/remote-jobs-at-recolabs-ltd-63488.html",
+  "name": "Recolabs",
+  "model": "opus",
+  "route": "plain",
+  "chars": 43125,
+  "text_chars": 2160,
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator",
+  "employer_named": "RECOLABS LTD.",
+  "page_kind": "aggregator",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator",
+   "mechanical_said": true
+  }
+ },
+ "madlan|https://careers.celesta.vc/jobs/madlan": {
+  "date": "2026-08-30",
+  "url": "https://careers.celesta.vc/jobs/madlan",
+  "name": "Madlan",
+  "model": "opus",
+  "route": "plain",
+  "chars": 14553,
+  "text_chars": 499,
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator",
+  "employer_named": "Celesta",
+  "page_kind": "aggregator",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator",
+   "mechanical_said": true
+  }
  }
 }

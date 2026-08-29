@@ -69,6 +69,36 @@ def from_queue(r):
     return any(m in (r[5] or "") for m in QUEUE_MARKERS)
 
 
+_SEEDS = None
+
+
+def seed_for(name):
+    """The intake seed for this company: a job posting that proved it hires in ISRAEL.
+
+    `research_companies.json` carries `careers_url`, usually an
+    `il.linkedin.com/jobs/view/<title>-at-<company>-<id>` permalink. It names the employer
+    more fully than the bare queue name does, and that is exactly what a one-word name needs:
+    `REAL` was matched to `Real Brokerage`'s careers page and passed, because on the page
+    alone "REAL" and "Real" are the same string.
+    """
+    global _SEEDS
+    if _SEEDS is None:
+        _SEEDS = {}
+        for src in (QUEUE, os.path.join("cloud_state", "queue_disposition.json")):
+            try:
+                with open(src, encoding="utf-8") as f:
+                    doc = json.load(f)
+            except Exception:                                     # noqa: BLE001
+                continue
+            if isinstance(doc, list):
+                for e in doc:
+                    n = (e.get("name") or "").strip().lower()
+                    if n and (e.get("careers_url") or "").startswith("http"):
+                        _SEEDS.setdefault(n, e["careers_url"])
+    return _SEEDS.get((name or "").strip().lower(), "")
+
+
+
 def needs_verify(r, state):
     """Is this row's address in scope AND due for a read? (see `verify_priority` for order)
 
@@ -156,7 +186,8 @@ def verify_existing(limit=0, apply=False, allow_paid=True, shard=""):
           % (len(todo), " (shard %s)" % shard if shard else ""), flush=True)
     stats = collections.Counter()
     for i, r in enumerate(todo, 1):
-        rec = BV.verify(r[0], r[3], state=state, allow_paid=allow_paid)
+        rec = BV.verify(r[0], r[3], state=state, allow_paid=allow_paid,
+                        seed_context=seed_for(r[0]))
         v = rec.get("verdict")
         stats[v] += 1
         flag = ""
@@ -620,7 +651,8 @@ def apply_proposals_verified(pattern, apply=False, allow_paid=True, limit=0):
     state = BV.load()
     keep, refused = [], collections.Counter()
     for i, p in enumerate(props, 1):
-        rec = BV.verify(p["name"], p["api_url"], state=state, allow_paid=allow_paid)
+        rec = BV.verify(p["name"], p["api_url"], state=state, allow_paid=allow_paid,
+                        seed_context=seed_for(p["name"]))
         v = rec.get("verdict")
         refused[v] += 1
         if v == BV.OK:
@@ -743,7 +775,7 @@ def addressless(apply=False, limit=0):
     for i, name in enumerate(todo, 1):
         kind, url, n_il, why = QRS.score_one(name, found_by.get(name) or {})
         if kind != "refused" and url:
-            rec = BV.verify(name, url, state=state)
+            rec = BV.verify(name, url, state=state, seed_context=seed_for(name))
             BV.save(state)
             if rec.get("verdict") == BV.OK:
                 resolved[name] = ["scrape", "", url]
