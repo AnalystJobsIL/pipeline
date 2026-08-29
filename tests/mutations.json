@@ -2209,5 +2209,35 @@
   "replace": "",
   "why": "a domain FOR SALE names the company by construction, so page_mentions_company cannot refuse it; 18 of 136 no-linkback names are parking pages, and a wrong own-domain corrupts the one check resolve_llm._verify has.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "qdisp-prune-unrecorded",
+  "file": "queue_disposition.py",
+  "symbol": "main",
+  "class": "M1-gate-removal",
+  "find": "    for n in retire:                       # the assertion the whole file exists for\n        assert n in state and state[n].get(\"evidence\"), \"pruning %r with no record\" % n\n",
+  "replace": "",
+  "why": "pruning a name without a persisted verdict destroys the evidence and makes the claim 'this company has no findable board' in the same act -- the operator's rule 1 where the subject is a NAME.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "qdisp-no-floor",
+  "file": "queue_disposition.py",
+  "symbol": "main",
+  "class": "M1-gate-removal",
+  "find": "    if len(retire) > MAX_PRUNE_FRACTION * len(names):",
+  "replace": "    if False:",
+  "why": "a run that retires the whole queue is a broken run, not a measurement (CLAUDE.md rule 2). Without the floor one bad LLM day empties the file.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "qdisp-retire-unhunted",
+  "file": "queue_disposition.py",
+  "symbol": "retirable",
+  "class": "M3-branch-narrowing",
+  "find": "    if name not in hunt:\n        return False, \"no-hunt-attempt\"                 # the deepest rung never ran\n",
+  "replace": "",
+  "why": "retiring a name the deepest rung never touched records 'nothing findable' about a company nobody looked for.",
+  "must_be_killed_by_behavioural": true
  }
 ]

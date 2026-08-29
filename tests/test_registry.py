@@ -6902,3 +6902,56 @@ def test_the_own_site_rung_refuses_a_parked_domain_before_the_name_test(monkeypa
     st2 = collections.Counter()
     monkeypatch.setattr(AE, "_get_page", lambda u, d, timeout=5: ("https://gongio.com", REAL))
     assert AE._site_from_guess("Gong.io", "gongio", stats=st2) is not None, dict(st2)
+
+
+def test_no_queue_name_is_retired_without_a_persisted_verdict(tmp_path, monkeypatch):
+    """A name leaves `research_companies.json` only after a hunt AND an LLM read, with the
+    evidence kept.
+
+    Deleting a name silently makes the claim "this company has no findable board" and destroys
+    the evidence in the same act — the operator's rule 1, in the one place where the subject is
+    a NAME rather than a row. Three things enforce it: a name with no hunt attempt is not a
+    candidate at all; a name with a hunt but nothing for a model to READ is refused as
+    `no-evidence-to-read` (we never looked, which is not the same as nothing being there); and
+    the prune asserts a persisted record for every name it removes.
+    Kills `qdisp-prune-unrecorded` and `qdisp-no-floor`."""
+    import json
+    import queue_disposition as QD
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    queue = [{"name": n, "careers_url": "", "ats": "unknown", "slug": n.lower()}
+             for n in ("Hunted And Empty", "Hunted No Evidence", "Never Hunted")]
+    (tmp_path / QD.QUEUE).write_text(json.dumps(queue), encoding="utf-8")
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "hunt_s1.json").write_text(json.dumps({"generated": "2026-08-29", "proposals": [
+        {"name": "Hunted And Empty", "kind": "refused", "rung": "hunt", "why": "no-listing",
+         "evidence": {"hunt_verdict": "nolisting", "detail": "tried 2 candidates", "url": ""}},
+        {"name": "Hunted No Evidence", "kind": "refused", "rung": "hunt", "why": "no-listing",
+         "evidence": {"hunt_verdict": "dead", "detail": "", "url": ""}}]}), encoding="utf-8")
+    (tmp_path / "out" / "queue_drain_search.json").write_text(
+        json.dumps({"generated": "2026-08-29", "proposals": []}), encoding="utf-8")
+
+    monkeypatch.setattr(QD, "judge", lambda n, ev, timeout=120: {
+        "verdict": "no-board", "why": "the search returned no careers page",
+        "board_url_if_any": "", "company_seems_real": True})
+    QD.main(["--judge", "--apply"])
+
+    left = {e["name"] for e in json.loads((tmp_path / QD.QUEUE).read_text(encoding="utf-8"))}
+    assert "Hunted And Empty" not in left, "a hunted, LLM-read, evidenced name was not retired"
+    assert "Never Hunted" in left, "a name the deepest rung never touched must NOT be retired"
+    assert "Hunted No Evidence" in left, (
+        "a name we failed to LOOK at was retired as though nothing were there")
+    rec = QD.load(str(tmp_path / QD.PATH))
+    assert rec["Hunted And Empty"]["evidence"], "retired with no evidence kept"
+
+    # ...and the floor refuses a mass retirement even when every record is present
+    big = [{"name": "Co%d" % i, "slug": "co%d" % i} for i in range(20)]
+    (tmp_path / QD.QUEUE).write_text(json.dumps(big), encoding="utf-8")
+    (tmp_path / "out" / "hunt_s1.json").write_text(json.dumps({"generated": "2026-08-29", "proposals": [
+        {"name": "Co%d" % i, "kind": "refused", "rung": "hunt", "why": "no-listing",
+         "evidence": {"hunt_verdict": "nolisting", "detail": "tried 2", "url": ""}}
+        for i in range(20)]}), encoding="utf-8")
+    QD.save({}, str(tmp_path / QD.PATH))
+    rc = QD.main(["--judge", "--apply"])
+    assert rc == 1, "a run retiring every name in the file must abort, not succeed"
+    assert len(json.loads((tmp_path / QD.QUEUE).read_text(encoding="utf-8"))) == 20
