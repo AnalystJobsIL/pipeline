@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**480 filed · 360 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
+**482 filed · 362 open · 120 closed · 8 half · 34 numbers name more than one item · 28 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 433.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 435.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -205,7 +205,7 @@ closure convention in the header.
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
-### infra — 81 open
+### infra — 82 open
 
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
 - **4** `4@infra` **`merge_csv_rows` can resurrect a deliberately deleted row**
@@ -288,8 +288,9 @@ closure convention in the header.
 - **383** `383@infra` **`cloud_state/bd_spend.jsonl` has a writer and no reader**
 - **388** `388@infra` **`persist_state.shrank()` cannot see the loss it was written for, on the store where it
 - **407** `407@infra` **`check_invariants` check D and `registry_health.orphans()` only range over PARKED rows,
+- **433** `433@infra` **`BD_RUN_CAP=0`
 
-### scraper — 25 open
+### scraper — 26 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -316,6 +317,7 @@ closure convention in the header.
 - **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
 - **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
 - **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
+- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
 
 ### company-intel — 24 open
 
@@ -7521,3 +7523,51 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     that class can consume, and the ceiling is a guess: re-measure after a week of
     `jd-archive.yml` runs and decide between a longer per-render timeout, a lower cap, or
     routing rendered calls through a separate breaker.
+
+433. **`BD_RUN_CAP=0` — the export CLAUDE.md tells every local session to set — makes
+    `tests/test_registry.py` red** — lane: `infra` (it owns `bd_rescue.py`'s spend guard) with
+    `docs` (it owns the instruction). `bd_rescue.unlock_status` refuses at
+    `SPENT["n"] >= run_cap()`, and with the cap at **0** that is true on the first call, before
+    any request is built — so `unlock()` returns `""` with `LAST["error"] == "bd-capped"` and
+    `test_bd_rescue_reads_the_unlockers_error_code_and_never_retries_a_policy_host` fails.
+    Reproduced at `origin/master` (4bca457) as well as on this branch, so it is not new:
+
+    ```
+    JD_BD=0 BD_RUN_CAP=0 python -m pytest tests/test_registry.py -k bd_rescue_reads   -> 1 failed
+    JD_BD=0              python -m pytest tests/test_registry.py -k bd_rescue_reads   -> 1 passed
+    ```
+
+    The consequence is worse than one red test: a local session following the documented recipe
+    sees a failure it did not cause, and the cheapest response is to stop trusting the suite.
+    Either the test pins the cap it needs (`monkeypatch.delenv("BD_RUN_CAP", raising=False)`, and
+    the same for every sibling that calls `unlock`), or `run_cap()` distinguishes "0 = buy
+    nothing" from "unset = no cap" at a level the tests can set. Found by `jd-text` 2026-08-29
+    while clearing the suite for a push.
+
+434. **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
+    189 such urls stand for those 450 postings** — lane: `scraper` (`scrape_universal` decides
+    a card's address), found by `jd-text` 2026-08-29 while measuring what the archive pass
+    could not reach. This is now the single largest reason a posting has no description, and
+    no fetch layer can fix it: there is nothing at that address but a list.
+
+    Measured on `scraped_cache.json` after the archive pass, with the committed code:
+
+    ```
+    2,141 cards · 1,381 carry a description · 760 do not
+      of the 760: 450 have no fetchable address · 293 were fetched and failed · 17 other
+      450 addressless cards across 189 distinct urls
+    ```
+
+    The worst, one url standing for many postings: `matchpointit.com/jobs/` **27**,
+    `elbitsystemscareer.com/jobs/` **24**, `vastdata.com/careers` **17**,
+    `google.com/about/careers/applications/jobs/results/?location=Israel` **16**,
+    `careers.plus500.com/` **15**, `regulus.com/careers` **14**, `atera.com/careers/` **11**,
+    `seatpick.com/careers` **11**.
+
+    `jd-text` refuses these in `_todo` (`scrape_not_job_url`, 448 on the last run) precisely so
+    they are not fetched, stamped and re-bought for ever — `is_job_url` was reordered on
+    2026-08-29 so a digit in the path can no longer smuggle one past (BACKLOG entry above).
+    So the residue is stable and counted; it is simply not fillable from here. The fix is for
+    the card builder to carry each posting's own href, which is where `_card_href` already
+    operates. **Until it does, roughly one Israeli posting in five that we hold can never have
+    a job description**, whatever this lane does.

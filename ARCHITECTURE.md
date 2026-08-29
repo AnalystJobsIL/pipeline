@@ -1857,7 +1857,7 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 | cron (UTC) | workflow | effect |
 |---|---|---|
 | `0 0 * * *` | scrape-refresh | re-render all scrape rows (JD carry-forward keeps enrichment) |
-| `30 1 * * *` | jd-archive | a job description for the cards the TITLE gate drops (the corpus, not the board): `enrich_scrape_jd.py --archive-only`, 90-min budget, `repo-state` group, no `continue-on-error` |
+| `30 12 * * *` | jd-archive | a job description for the cards the TITLE gate drops (the corpus, not the board): `enrich_scrape_jd.py --archive-only`, 90-min budget, `repo-state` group, no `continue-on-error` |
 | `30 2 * * *` | retry-unreachable | Bright Data re-fetch of flaky endpoints |
 | `0 5 * * *` | daily-digest | discovery → telegram → liveness scan → probe candidates → JD-enrich → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** → report the run's outcome |
 | — `17 6,7,8,10 * * *` | inbox relay (private repo `AnalystJobsIL/inbox`, not this repo's crons) | **the BACKUP since 2026-08-28.** The relay's real trigger is now `on: push` to `receipts/**`, which `daily-digest`'s last step writes the moment a digest has landed — digest → email via issue+mention, content-hash dedup |
@@ -3521,11 +3521,16 @@ this layer twice. The title pool runs **first, with the whole budget**, so it ca
 by a pool forty times its size; the archive gets the remainder and walks
 `(oldest attempt, rank within company, label)`, a round robin that reaches every employer's
 first card before any employer's second. Measured on the committed cache, 2026-08-29:
-**1,718 cards → 28 title, 1,204 archive**, with 447 refused as listing pages, 27 duplicate urls,
+**2,141 cards → 432 already carrying a description, 28 title, 1,204 archive**, with 447 refused
+as listing pages, 27 duplicate urls,
 3 chrome and **0 dropped by the Israel filter** (that last is a canary, not a filter: it is 0
 because every scrape card carries an Israeli location, and `scrape_dropped_israel` going
 non-zero is news. A card carrying NO location passes — this driver fetches text, it does not
-judge relevance, and `pipeline/run.py` re-applies the real Israel filter afterwards).
+judge relevance, and `pipeline/run.py` re-applies the real Israel filter afterwards). The
+`1,718 cards / 1,393 dropped` pair in that morning's mail is the same gate measured by the
+05:00 run against a cache the nightly refresh had not yet rebuilt: both are true of their own
+moment, only the 2,141 split is re-derivable from the committed file, and mixing the two makes
+an arithmetically impossible sentence.
 
 **A listing page is refused in `_todo`, not in the ladder.** `run_backfill` stamps whatever it
 walks, so a search url reaching the loop is parked for a week as though it had been read — and
@@ -3709,7 +3714,7 @@ a day go through that path.
 |---|---|---|---|
 | `JDFiller` (`pipeline/run.py`, before `seniority.classify`) | 05:00, in the digest | every Israel-matched role whose title the classifier could accept, `JDFILL_TIME_BUDGET_MIN` (25) | never |
 | `enrich_scrape_jd.py` — **title pool** | 05:00, before the pipeline | cards failing `looks_like_jd`, relevance-gated, non-chrome, Israel-passing, at a job address, in `scraped_cache.json`, deduped by url | `JD_ENRICH_BD_CAP` **1000**, `JD_ENRICH_TIME_BUDGET_MIN` 25 |
-| `enrich_scrape_jd.py --archive-only` — **archive pool** | `jd-archive.yml`, 01:30 (§4) | every OTHER Israel-passing card: the ones the title gate drops. Oldest attempt first, round-robin over companies | the same caps; `JD_ENRICH_TIME_BUDGET_MIN` **90** in that workflow |
+| `enrich_scrape_jd.py --archive-only` — **archive pool** | `jd-archive.yml`, 12:30 (§4) | every OTHER Israel-passing card: the ones the title gate drops. Oldest attempt first, round-robin over companies | the same caps; `JD_ENRICH_TIME_BUDGET_MIN` **90** in that workflow |
 | `enrich_matched_jd.py` | 05:00, before the pipeline | every LIVE `matched` row failing `looks_like_jd`, any age, any source | `MATCHED_JD_BD_CAP` **25**, `MATCHED_JD_TIME_BUDGET_MIN` 20 (yml) |
 
 The two caps were 400 and 250 until 2026-08-26 — 650 credits a day, 13 % of the monthly pool in

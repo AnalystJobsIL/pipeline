@@ -37,6 +37,7 @@ import html as _html_mod
 import json
 import os
 import re
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -54,6 +55,7 @@ GONE_MARK = " gone"         # the posting is off the employer OWN board: never r
 MAX_RETRY_DAYS = 30         # the ceiling of the backoff. A role never stops being due for
                             # ever, it just stops being asked more often than monthly.
 MASSFAIL_MIN_TRIED = 10     # rule 2 of CLAUDE.md, applied to this layer: N tried, 0 filled
+RENDER_TIMEOUT = 45         # a JS render that has not answered by now will not (see Unlocker)
 FAILING_STREAK_FACTOR = 4   # breaker x this = a run that HAS worked but has stopped working
 # outcomes that are nobody's failure: there is nothing at this address to fetch, and no
 # rung we own could read it if there were
@@ -756,8 +758,21 @@ def native_url(url, company=""):
         parts = parts[:-1]
     if m and "job" in parts and parts.index("job") >= 1:
         i = parts.index("job")
-        tenant = _registry_wd_tenant(company, host) or m.group(1)
-        return "workday", [f"https://{host}/wday/cxs/{tenant}/{parts[i-1]}/job/" + "/".join(parts[i+1:])]
+        # BOTH tenants, registry first, and that is the difference between a fix and a new
+        # way to lose a role. `_authoritative` is True for Workday, so a 404 is TERMINAL and
+        # never comes due again -- and the registry cell is written by a cron. If a tenant is
+        # renamed while the host stays, the single registry-derived address 404s and every
+        # posting of that company is retired for ever, having never been asked for at its real
+        # address. Offering the host label as a second candidate means `gone` needs BOTH to
+        # 404, which is the evidence the terminal state is supposed to rest on (wave 2, P1-7).
+        tail = f"/{parts[i-1]}/job/" + "/".join(parts[i+1:])
+        tenants = [t for t in (_registry_wd_tenant(company, host), m.group(1)) if t]
+        seen_t, uniq = set(), []
+        for t in tenants:
+            if t not in seen_t:
+                seen_t.add(t)
+                uniq.append(t)
+        return "workday", [f"https://{host}/wday/cxs/{t}{tail}" for t in uniq]
     if _HIBOB_HOST.match(host) and len(parts) == 2 and parts[0] == "jobs" and _UUID.match(parts[1]):
         return "hibob", [f"https://{host}/api/job-ad/{parts[1].lower()}/application-form"]
     if host == "jobs.smartrecruiters.com" and len(parts) >= 2 and re.match(r"^\d{6,}", parts[1]):
@@ -776,7 +791,7 @@ def native_url(url, company=""):
     if host == "www.comeet.com" and parts[:1] == ["jobs"] and len(parts) >= 4:
         return "comeet", [url]
     jid = (parse_qs(u.query).get("gh_jid") or [""])[0]
-    if host.endswith("greenhouse.io") and "jobs" in parts and parts[-1].isdigit():
+    if _is_greenhouse_host(host) and "jobs" in parts and parts[-1].isdigit():
         jid, slugs = parts[-1], [parts[0]] if parts[0] != "embed" else []
     elif jid.isdigit():
         slugs = []
@@ -789,6 +804,13 @@ def native_url(url, company=""):
     else:
         return None
     return ("greenhouse", [f"https://boards-api.greenhouse.io/v1/boards/{s}/jobs/{jid}" for s in slugs]) if slugs else None
+
+
+def _is_greenhouse_host(host):
+    """Exact host or subdomain, never a substring — the rule `unfillable` states and this pair
+    of call sites did not follow: `notgreenhouse.io/acme/jobs/12345` was read as Greenhouse,
+    and its 404 on OUR board was AUTHORITATIVE, i.e. terminal (wave 2, P2-10)."""
+    return host == "greenhouse.io" or host.endswith(".greenhouse.io")
 
 
 def _authoritative(platform, api, url, company):
@@ -813,7 +835,7 @@ def _authoritative(platform, api, url, company):
         # week per removed posting; promote it once a real removed posting has been
         # measured to 404 there.
         return False
-    if platform != "greenhouse" or _host_of(url).endswith("greenhouse.io"):
+    if platform != "greenhouse" or _is_greenhouse_host(_host_of(url)):
         return True                        # the tenant is in the address itself
     board = _registry_board(company)
     return bool(board and board[0] == "greenhouse" and board[1]
@@ -854,9 +876,14 @@ def native_jd(url, company="", seen_ids=""):
     why = "%s-http" % candidates[0][0]
     for platform, api, authoritative in candidates:
         read = _READERS[platform]
+        # `headers=` is passed ONLY by the one platform that needs it. Handing every rung a
+        # `headers=None` it never asked for changes the call signature for all of them, and the
+        # fakes that stand in for `plain_fetch` across this suite take `(url, **kw)` shapes that
+        # do not all accept it -- three `gone`-semantics tests went red on exactly that.
         extra = _NATIVE_HEADERS.get(platform)
+        kw = {"headers": extra(api)} if extra else {}
         status, body = plain_fetch(api, timeout=10, accept="application/json, text/html;q=0.9",
-                                   headers=extra(api) if extra else None)
+                                   **kw)
         if status != 200 or not body:
             # 404/410 on the company's OWN board is not a failed fetch, it is the posting
             # having been taken down — the one piece of evidence that a role is finally
@@ -879,6 +906,20 @@ def native_jd(url, company="", seen_ids=""):
 
 
 # --------------------------------------------------------------------------- Bright Data
+def _monthly_ceiling_reached():
+    """`"monthly-ceiling"` when the project's shared allowance is spent, else `""`.
+
+    Fails OPEN, exactly as `pipeline.bd_budget` does: a ceiling we could not read must not
+    zero a night's coverage, and the per-run count cap is the bound that needs no network."""
+    if "pytest" in sys.modules:                 # the suite may never reach the account
+        return ""
+    try:
+        from . import bd_budget
+        return "" if bd_budget.verdict()[0] else "monthly-ceiling"
+    except Exception:  # noqa: BLE001 - a budget reader never costs the run it reports on
+        return ""
+
+
 class Unlocker:
     """Web Unlocker, status-aware. `/request` answers HTTP 200 even when it failed and says so
     in `x-brd-error-code` (target 403 -> `reject_block`; Workday -> `policy_20140`, the host is
@@ -892,7 +933,7 @@ class Unlocker:
         self.zone = os.environ.get("BRIGHTDATA_ZONE", "")
         self.used = self.ok = self.streak = 0
         # A host that answers a RENDERED request with no posting in it is not going to answer
-        # the next thirty either (Shopify: 31 cards on one SPA, Nebius: 46). After
+        # the next thirty either (Shopify: 33 cards on one SPA, Nebius: 46). After
         # `host_breaker` such bodies from one host in a run the host is parked for the rest
         # of the run: counted as `bd-parked`, never bought. Per run, on purpose -- the
         # cross-run memory is the per-url stamp, and a host that starts rendering tomorrow
@@ -909,6 +950,15 @@ class Unlocker:
         # that call returns the same shell the free rung already read.
         self.render_cap = render_cap
         self.render_capped = False
+        # THE MONTHLY CEILING BINDS HERE TOO. `pipeline/bd_budget.py` is documented as the one
+        # place that knows it, and it reads the LIVE account -- but only `scrape-refresh.yml`
+        # ever ran it, and this class POSTs to `api.brightdata.com` itself rather than through
+        # `bd_rescue`, so neither `BD_RUN_CAP` nor `BD_PAID_RUNGS` nor the ceiling reached this
+        # layer at all. With the caps as they now stand that is ~2,025 credits a night against
+        # a 5,000/month ceiling from 2026-09-01: four nights would empty the month, and the
+        # comment justifying the raised cap cited a gate that was not wired (wave 2, P0-2).
+        # Consulted LAZILY, on the first spend, so constructing an Unlocker costs no network.
+        self._budget_checked = False
         # A run that HAS worked is not an account problem, but it is also not getting value any
         # more — and the threshold has to sit INSIDE the day's allowance to save anything. At
         # the caps set on 2026-08-26 (25 and 40) a flat `breaker x 4` tripped at 20, i.e. after
@@ -941,10 +991,19 @@ class Unlocker:
         Four consecutive digest runs had reported "0 via Bright Data" with the key present,
         and every paid body the layer ever got back from a JS site was that shell. The
         `x-unblock-render` header and `data_format: markdown` do nothing (same measurement)."""
+        if not self._budget_checked and not self.unavailable:
+            self._budget_checked = True
+            self.unavailable = _monthly_ceiling_reached()
         if self.unavailable:
             return None, "", "bd-unavailable"
         if _host_of(url) in self.parked:
             return None, "", "bd-parked"
+        if render:
+            # A render that has not answered in RENDER_TIMEOUT is not going to: at the 90 s
+            # default, nineteen consecutive rendered timeouts cost 28 minutes of a 90-minute
+            # budget on 2026-08-29, and `RENDER_CAP` x 90 s is the whole budget, so the cap
+            # could not bound the clock it was introduced to bound (wave 1, P2-F).
+            timeout = min(timeout, RENDER_TIMEOUT)
         if render and self.rendered >= self.render_cap:
             self.render_capped = True
             return None, "", "bd-render-capped"    # spends nothing: see `render_cap`
@@ -1067,10 +1126,26 @@ def is_job_url(url, title=""):
     parts = [p for p in u.path.split("/") if p]
     if "gh_jid" in u.query or re.search(r"(^|&)(jk|jobid|job_id|id|req)=[\w.-]+", u.query, re.I):
         return True
+    # The LIST rules come first. They used to sit BELOW the digit rule, so any path segment
+    # carrying a single digit short-circuited the refusal this gate exists for:
+    # `careers.dhl.com/global/en/search-results?keywords=Israel` is refused, and the same URL
+    # with a `/v2/` in it is not. Live in the cache: Harmonic publishes
+    # `.../CandidateExperience/en/sites/CX_1/jobs`, an Oracle LISTING page, admitted on the
+    # `1` in `CX_1` -- fetched, found to be a shell, rendered for a credit and re-bought every
+    # seven days for ever (wave 2, P1-8).
+    #
+    # A segment with TWO OR MORE digits still overrides them, and that clause is measured, not
+    # taste: over all 2,119 distinct cache URLs the ordering alone would refuse 31 real
+    # postings — Siemens' 32-hex ids ending `/job/`, Shopify's `?query=&location=Israel` — and
+    # with it the change touches exactly the 8 Harmonic cards on that one listing url.
+    last = parts[-1].lower() if parts else ""
+    is_list = (last in _LIST_SEGMENT or last.endswith((".html", ".htm"))
+               or bool(_LIST_QUERY.search(u.query)))
+    if is_list and not any(len(re.findall(r"\d", p)) >= 2 for p in parts):
+        return False
     if any(re.search(r"\d", p) for p in parts):
         return True                      # a digit anywhere in the path can identify a posting
-    last = parts[-1].lower() if parts else ""
-    if last in _LIST_SEGMENT or last.endswith((".html", ".htm")) or _LIST_QUERY.search(u.query):
+    if is_list:
         return False
     if len(parts) >= 3:
         return True
@@ -1139,6 +1214,15 @@ class JD(NamedTuple):
     transient: bool  # retry tomorrow rather than in RETRY_DAYS
     native: str = "" # why the native rung failed, when one applied ("" if none did / it won)
     pre: str = ""    # what the PLAIN rung found, when the Bright Data rung never ran at all
+
+
+def _mark_shell(bd, url):
+    """Record one BOUGHT body that held no posting. `fetch_jd` can buy twice for one page (a
+    raw copy, then a rendered one), and counting pages meant `host_breaker=3` let six bodies
+    through while the stamp reported three — the mail under-reporting the waste by half
+    (wave 2, P1-6)."""
+    if hasattr(bd, "shell"):
+        bd.shell(url)
 
 
 def _renders(bd):
@@ -1226,18 +1310,30 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
     # all (403, 429, a timeout) is a bot wall, and the cheap raw copy is tried first; if
     # THAT comes back a shell, one rendered call follows. At most two credits per page.
     status, body, bd_reason = _bd_call(bd, url, render=(reason == "shell"))
-    if body and len(html_to_text(body)) < MIN_DESC and reason != "shell" and _renders(bd):
-        _s2, body2, _r2 = _bd_call(bd, url, render=True)
+    empty_bought = bool(body) and len(html_to_text(body)) < MIN_DESC
+    if empty_bought:
+        _mark_shell(bd, url)                 # every bought body counts toward the host breaker
+    capped_render = False
+    if empty_bought and reason != "shell" and _renders(bd):
+        # the raw copy of a bot-walled page came back empty: one rendered call may still open
+        # it, and that second credit is the one the breaker above is counting
+        _s2, body2, r2 = _bd_call(bd, url, render=True)
+        capped_render = r2 == "bd-render-capped"
         if body2:
             body = body2
+            if len(html_to_text(body2)) < MIN_DESC:
+                _mark_shell(bd, url)
     if body:
         jd, why = _from_body(body)          # the credit is spent either way: read it twice
         if jd:
             return JD(jd, "bd", why, False, native_why)
         empty = "shell" if len(html_to_text(body)) < MIN_DESC else "no-markers"
-        if hasattr(bd, "shell") and bd.shell(url):
+        if _host_of(url) in getattr(bd, "parked", ()):
             empty += "-parked"              # this host is closed to the paid rung for the run
-        return JD("", "bd", "bd-" + empty, False, native_why)
+        # A shell we were never ALLOWED to render is not a verdict about the page: the one rung
+        # that reads a JavaScript site did not run, and a definitive stamp would park it for
+        # seven days on evidence we declined to collect (wave 2, P2-9).
+        return JD("", "bd", "bd-" + empty, capped_render, native_why)
     # when the Unlocker is unavailable or capped it never sent a request, so `reason` is a
     # statement about the ACCOUNT and says nothing about the page. Carrying the plain rung's
     # verdict alongside it stops `scrape_fail=0` from being the whole story on an outage
@@ -1528,12 +1624,17 @@ def alarm_for(c, bd=None, driver="", operator_cap=False, report_budget=True):
         # and only a lap that stops moving is an alarm (`jd-starved`, in the driver).
         out.append(f"jd-budget-spent({c['skipped_budget']} left for tomorrow"
                    f"{', cap' if c['skipped_cap'] else ''}{', clock' if c['skipped_clock'] else ''})")
-    elif c["todo"] and not c["tried"] and not c["cooldown"] and not c["unfillable"]:
+    elif (c["todo"] and not c["tried"] and not c["cooldown"] and not c["unfillable"]
+          and not c["skipped_budget"]):
         # there was work and none of it was attempted -- but NOT when the budget explains it
         # (that says `jd-budget-spent`), NOT when everything is legitimately cooling, NOT when
         # every row was a refused address, and NOT when the todo is empty: a driver with
         # nothing to do is a healthy driver, and an alarm that fires every morning is one that
         # gets trained away.
+        # `skipped_budget` is tested EXPLICITLY, not implied by the branch above it: with
+        # `report_budget=False` the budget clause is suppressed and control falls through to
+        # here, so a pool that ran out of clock reported "nothing was attempted" -- news of the
+        # budget, wearing the costume of a broken layer (wave 3, P2-3).
         out.append(f"jd-nothing-attempted({c['todo']} due)")
     if not out:
         return ""

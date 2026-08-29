@@ -423,16 +423,25 @@ def _run(args, stamp):
     # calls incomplete joins the todo exactly as a row that failed `looks_like_jd` does --
     # the two verdicts differ in how they were reached, never in what happens next.
     incomplete, q = _quality_pass(conn, every, args.dry_run)
-    if q["candidates"] and q["unavailable"] and q["unavailable"] >= q["calls"]:
-        # Every call the tier made came back with no verdict: the model was down for the
-        # whole run (2026-08-29: 7 candidates, 7 calls, 7 unavailable, and the bold line said
-        # nothing -- `alarm_for` reads `run_backfill`'s counter and has never seen `q`). The
-        # cheap rule stands on every candidate, which is the documented fallback, but a
-        # fallback the mail cannot distinguish from a success is exactly the failure class
-        # ARCHITECTURE.md section 8 is about. Cached verdicts do not count against the tier.
+    verdicts = q["cached"] + q["complete"] + q["rejected"] + q["truncated"]
+    if q["candidates"] and not verdicts and (q["unavailable"] or q["capped"] or not q["calls"]):
+        # The tier produced NO verdict for anyone. On 2026-08-29 that was 7 candidates, 7
+        # calls, 7 unavailable -- the model down for the whole run -- and the bold line said
+        # nothing, because `alarm_for` reads `run_backfill`s counter and has never seen `q`.
+        # The cheap rule standing IS the documented fallback; a fallback the mail cannot tell
+        # from a success is the failure class ARCHITECTURE.md section 8 is about.
+        #
+        # The condition is "no verdict for anyone", not "every call failed". `calls` is
+        # incremented BEFORE the call, so `unavailable >= calls` was merely
+        # `unavailable == calls` -- true of a HEALTHY run that served nine candidates from
+        # cache and had one flaky call, which then reported "1 of 10 candidates" as though ten
+        # roles had lost their verdict. And it was silent in the two states where the tier is
+        # most thoroughly dead: `JD_QUALITY=0` (no candidates at all) and a cap of 0 (every
+        # candidate `capped`, no call made). `JD_BD=0` announces itself as `bd-unavailable`;
+        # this switch announces itself too (wave 3, P1-4).
         why = "+".join(f"{k[4:]}{v}" for k, v in sorted(q.items()) if k.startswith("why:"))
-        alarms.append(f"matched:jd-quality-unavailable({q['unavailable']} of {q['candidates']} "
-                      f"candidates{': ' + why if why else ''})")
+        alarms.append(f"matched:jd-quality-unavailable({q['candidates']} candidates, no verdict"
+                      f"{': ' + why if why else ''})")
     rows = [r for r in every if not looks_like_jd(r[6]) or r[0] in incomplete]
     n_ok = len(every) - len(rows)
 
