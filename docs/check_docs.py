@@ -1870,6 +1870,28 @@ def check_no_home_paths() -> None:
 
 
 
+# ---------------------------------------------------------------- 6f. no conflict markers
+# A `>>>>>>> <sha>` line rode inside docs/BACKLOG.md through four commits of the branch that
+# added the checks above, with pytest, check_invariants and this linter green on every one.
+# Nothing looked. The file that carries one is always the append-log every lane edits.
+CONFLICT_MARKER = re.compile(r"^(?:<{7}|>{7}) |^={7}$", re.M)
+
+
+def check_no_conflict_markers() -> None:
+    """A merge conflict marker in a committed document.
+
+    Over ARCHIVES too, and an ERROR rather than a warning: unlike staleness, this is never
+    something the passage of time did to a document - somebody's editor wrote it and
+    somebody's `git add` kept it, and both of those happened on this branch."""
+    for doc in docs():
+        for m in CONFLICT_MARKER.finditer(read(doc)):
+            line = read(doc).count("\n", 0, m.start()) + 1
+            err("conflict", "%s:%d carries a merge-conflict marker (%r). It was committed, "
+                            "not left in a dirty tree - resolve the hunk and commit again."
+                % (rel(doc), line, m.group(0)[:12]))
+
+
+
 # ---------------------------------------------------------------- 7. entry points exist
 def check_entry_docs() -> None:
     for name in ("CLAUDE.md", "README.md", "ARCHITECTURE.md", "HANDOFF.md",

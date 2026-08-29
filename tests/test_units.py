@@ -12749,6 +12749,28 @@ def test_the_tree_check_is_silent_in_ci_and_never_fetches(tmp_path, monkeypatch)
 
 
 
+def test_a_committed_conflict_marker_is_an_error(tmp_path):
+    """Measured, not imagined: a `>>>>>>> <sha>` line rode inside `docs/BACKLOG.md` through
+    four commits of the branch that added these checks, green under pytest,
+    `check_invariants.py` and this linter on every one of them. Nothing looked for one."""
+    cd = _cd()
+    (tmp_path / "docs").mkdir(parents=True)
+    (tmp_path / "README.md").write_text(
+        "fine" + chr(10) + ">>>>>>> 7ac7ff2 (a commit subject)" + chr(10), encoding="utf-8")
+    cd.ROOT = str(tmp_path)
+    cd.check_no_conflict_markers()
+    assert len(cd.ERRORS) == 1 and "conflict" in cd.ERRORS[0], cd.ERRORS
+    # a document that merely TALKS about markers, indented or inline, is not one
+    cd2 = _cd()
+    (tmp_path / "README.md").write_text(
+        "a hunk opens with `<<<<<<< HEAD` and ends with a marker line." + chr(10)
+        + "    >>>>>>> in an indented example" + chr(10), encoding="utf-8")
+    cd2.ROOT = str(tmp_path)
+    cd2.check_no_conflict_markers()
+    assert cd2.ERRORS == [], cd2.ERRORS
+
+
+
 def test_no_morning_check_input_can_make_the_linter_crash(tmp_path):
     """Four crashes, all from an adversarial pass on the day these checks shipped. A
     traceback is not a red build - it is how a check gets deleted from the push contract."""
