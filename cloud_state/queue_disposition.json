@@ -13017,5 +13017,1258 @@
    },
    "verify": []
   }
+ },
+ "AEYE Health": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "AEYE Health is a real employer and its own site has a careers page at /our-careers listing many open roles; the probe only missed it because it used non-standard paths. So \"no board\" is contradicted, and no other category (acquired, duplicate, defunct, not-an-employer) applies — the evidence doesn't",
+  "evidence": {
+   "search_pages": [
+    "https://www.aeyehealth.com/our-careers",
+    "https://digital-health-jobs.com/companies/aeye-health",
+    "https://www.aeye.ai/careers/"
+   ],
+   "read_page": "https://www.aeyehealth.com/our-careers",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Flex": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "\"Flex\" is ambiguous across at least three distinct employers in the evidence (Flex/Flextronics at flex.com with a Workday board, Flex at getflex.com, and The Flex at theflex.global). Careers pages do exist (flex.com/careers answered, plus flextronics.wd1.myworkdayjobs.com), so it is not \"no board\" —",
+  "evidence": {
+   "search_pages": [
+    "https://flex.com/careers",
+    "https://flextronics.wd1.myworkdayjobs.com/Careers",
+    "https://careers.getflex.com",
+    "https://theflex.global/careers/jobs"
+   ],
+   "read_page": "https://flex.com/careers",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs"
+    ],
+    "answered": [
+     "https://flex.com/careers",
+     "https://flex.com/careers/",
+     "https://flex.com/jobs"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Tel Aviv Yafo Municipality": {
+  "date": "2026-08-30",
+  "verdict": "no-board",
+  "raw_verdict": "real-company-no-board",
+  "other_name": "",
+  "why": "Tel Aviv-Yafo Municipality is a real employer (city government). The English \"Work in Tel Aviv\" page is general info for job seekers in the city, not its own job board, and a 12-path careers probe of tel-aviv.gov.il returned nothing machine-readable.",
+  "evidence": {
+   "search_pages": [
+    "https://www.tel-aviv.gov.il/en/WorkAndStudy/Pages/WorkInTelAviv.aspx",
+    "https://www.telfed.org.il/job-board/",
+    "https://www.jobio.co.il/en/job-list/tel-aviv-yafo"
+   ],
+   "read_page": "https://www.tel-aviv.gov.il/en/WorkAndStudy/Pages/WorkInTelAviv.aspx",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "FIBI - הבנק הבינלאומי": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "FIBI is the First International Bank of Israel, a real employer, and its site has a careers section (משרות) plus answering /careers and /jobs paths — so it is not \"no board\", not acquired, duplicate, defunct, or a non-employer. None of the listed dispositions apply.",
+  "evidence": {
+   "search_pages": [
+    "https://www.fibi.co.il/private/general/about/jobs/"
+   ],
+   "read_page": "https://www.fibi.co.il/private/general/about/jobs/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs"
+    ],
+    "answered": [
+     "https://www.fibi.co.il/careers",
+     "https://www.fibi.co.il/careers/",
+     "https://www.fibi.co.il/jobs"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Waterfall Security Solutions": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "Waterfall Security Solutions is a real, active OT-cybersecurity employer with a careers page listing open positions and a Comeet-hosted job board (comeet.com/jobs/waterfall-security). None of the problem categories apply — it is not acquired, duplicate, defunct, non-employer, and it clearly does hav",
+  "evidence": {
+   "search_pages": [
+    "https://waterfall-security.com/about-waterfall/careers/",
+    "https://www.comeet.com/jobs/waterfall-security/C7.009"
+   ],
+   "read_page": "https://waterfall-security.com/about-waterfall/careers/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://waterfall-security.com/careers",
+     "https://waterfall-security.com/careers/"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "McCANN": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "The probe found a live careers page (mccann.co.il/careers) and search surfaced a Comeet job board for \"mccann\", so it is a real employer with a readable job board — not real-company-no-board. But the bare name \"McCANN\" also matches several unrelated entities (McCann Systems, mccannonline.com) and th",
+  "evidence": {
+   "search_pages": [
+    "https://mccann.co.il/careers/",
+    "https://www.comeet.com/jobs/mccann/33.00C",
+    "https://mccannonline.com/careers/",
+    "https://mccannsystems.com/careers/"
+   ],
+   "read_page": "https://mccann.co.il/careers/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career"
+    ],
+    "answered": [
+     "https://mccann.co.il/careers",
+     "https://mccann.co.il/careers/",
+     "https://mccann.co.il/career"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Xnes": {
+  "date": "2026-08-30",
+  "verdict": "duplicate-of",
+  "raw_verdict": "duplicate",
+  "other_name": "The Phoenix Investment House (Excellence / הפניקס בית השקעות)",
+  "why": "xnes.co.il is the site of Excellence (אקסלנס), now branded הפניקס בית השקעות — The Phoenix Investment House, part of the Phoenix Group. \"Xnes\" is just the domain/brand shorthand for that company, which hires under the Phoenix Investment House name.",
+  "evidence": {
+   "search_pages": [
+    "https://www.xnes.co.il/jobs/",
+    "https://www.fnx.co.il/career/",
+    "https://eu-careers.europa.eu/en/sn-vacancies",
+    "https://earnix.com/our-story/careers/israel/"
+   ],
+   "read_page": "https://www.xnes.co.il/jobs/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://www.xnes.co.il/jobs",
+     "https://www.xnes.co.il/jobs/"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Yit Yedioth Information Technology": {
+  "date": "2026-08-30",
+  "verdict": "no-board",
+  "raw_verdict": "real-company-no-board",
+  "other_name": "",
+  "why": "YIT (Yedioth Information Technology, yit.co.il) is a real Israeli IT services employer. Its /joinus page renders only unresolved Angular template placeholders ({{job.title}}, {{job.desc}}) with no actual listings, and a probe of 12 standard careers paths on yit.co.il returned nothing, so there is no",
+  "evidence": {
+   "search_pages": [
+    "https://yit.co.il/joinus"
+   ],
+   "read_page": "https://yit.co.il/joinus",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Abra USA": {
+  "date": "2026-08-30",
+  "verdict": "duplicate-of",
+  "raw_verdict": "duplicate",
+  "other_name": "abra (Abra Information Technologies)",
+  "why": "\"Abra USA\" appears to be a regional/entity variant of the abra IT group, whose hiring runs through abra-it.com's careers page (probe confirmed https://www.abra-it.com/career/ answers with live job listings). No separate US-only employer entity or job board surfaced.",
+  "evidence": {
+   "search_pages": [
+    "https://www.abra-it.com/en/career/",
+    "https://www.comeet.com/jobs/abra_rnd/15.007/ai-solutions-developer/35.657",
+    "https://abrahealthgroup.com/careers/",
+    "https://www.abraauto.com/careers/"
+   ],
+   "read_page": "https://www.abra-it.com/en/career/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://www.abra-it.com/career",
+     "https://www.abra-it.com/career/"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "ELAD HR": {
+  "date": "2026-08-30",
+  "verdict": "duplicate-of",
+  "raw_verdict": "duplicate",
+  "other_name": "Elad Software Systems",
+  "why": "\"ELAD HR\" is the HR/recruitment arm of Elad Software Systems; its careers site is careers.eladsoft.com, listing Elad's own openings — a division/brand name rather than a separate employer.",
+  "evidence": {
+   "search_pages": [
+    "https://careers.eladsoft.com/כל-המשרות/",
+    "https://taptalent.ai/recruitment-agencies/elad-hr-recruitment-agency-profile/",
+    "https://www.jobio.co.il/en/job-list/elad/human-resources/hr-manager",
+    "https://www.facebook.com/groups/multilingual/posts/26388563954154421/"
+   ],
+   "read_page": "https://careers.eladsoft.com/כל-המשרות/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs"
+    ],
+    "answered": [
+     "https://careers.eladsoft.com/careers",
+     "https://careers.eladsoft.com/careers/",
+     "https://careers.eladsoft.com/jobs"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Lumen": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "Search results mix several unrelated employers named Lumen (Lumen Technologies at lumen.com/jobs, Lumen metabolic health by Metaflow LTD at lumen.me, lumen.ca). Nothing disambiguates which one the intake row refers to. The lumen.me careers probe did answer with a live careers page listing open posit",
+  "evidence": {
+   "search_pages": [
+    "https://www.lumen.me/careers",
+    "https://jobs.lumen.com/global/en/work-from-home-jobs",
+    "https://jobs-india.lumen.com/lumen/",
+    "https://www.lumen.ca/en/careers"
+   ],
+   "read_page": "https://www.lumen.me/careers",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://www.lumen.me/careers",
+     "https://www.lumen.me/careers/"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Meckano": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "Meckano is a real Israeli time-tracking/HR software vendor and its own domain has answering careers pages (/positions/, /careers), with an embedded, dynamically loaded listings widget. So \"no board\" is not supported; the evidence doesn't reveal which ATS/board feed backs it, and no acquisition, dupl",
+  "evidence": {
+   "search_pages": [
+    "https://www.meckano.com/positions/",
+    "https://www.meckano.co.il/positions/",
+    "https://app.meckano.co.il/login.php?l\\u003den",
+    "https://nortech-platform.com/listing/meckano-2/"
+   ],
+   "read_page": "https://www.meckano.com/positions/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://www.meckano.com/careers",
+     "https://www.meckano.com/careers/",
+     "https://www.meckano.com/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Milestone Systems": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "Milestone Systems (milestonesys.com) is a real, active video management software employer (Danish, part of Canon group but hires under its own name). Careers-path probes on its own domain answered, and the site links \"Open positions\", so it is not a no-board case; none of the disqualifying categorie",
+  "evidence": {
+   "search_pages": [
+    "http://www.milestonesys.com/company/career/working-in-milestone/?srsltid\\u003dAfmBOorOxkAyKyCnCB3d1qdSmcso8Cg1WxyLHX8m5YyVbVCo7q93ziWn",
+    "https://www.jobs.bg/en/company/milestonesystems",
+    "https://milestone.tech/careers/"
+   ],
+   "read_page": "http://www.milestonesys.com/company/career/working-in-milestone/?srsltid\\u003dAfmBOorOxkAyKyCnCB3d1qdSmcso8Cg1WxyLHX8m5YyVbVCo7q93ziWn",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs"
+    ],
+    "answered": [
+     "http://www.milestonesys.com/careers",
+     "http://www.milestonesys.com/careers/",
+     "http://www.milestonesys.com/jobs"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Grdfinance": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "Evidence is a Finploy (third-party job aggregator) listing page and a Facebook page; the careers probe was run against finploy.com, not GRD Finance's own domain, so it says nothing about this company. No own website or job board identified.",
+  "evidence": {
+   "search_pages": [
+    "https://www.finploy.com/jobs-in-grd-finance-pvt-ltd",
+    "https://www.facebook.com/GRDfinance/"
+   ],
+   "read_page": "https://www.finploy.com/jobs-in-grd-finance-pvt-ltd",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://www.finploy.com/careers",
+     "https://www.finploy.com/careers/"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Healthscopemagazine": {
+  "date": "2026-08-30",
+  "verdict": "no-board",
+  "raw_verdict": "real-company-no-board",
+  "other_name": "",
+  "why": "HealthScope is a real women's health/wellness magazine at healthscopemag.com; a 12-path careers probe of its domain found no careers page or job board. (healthscope.com.au is an unrelated Australian hospital operator.)",
+  "evidence": {
+   "search_pages": [
+    "https://healthscopemag.com",
+    "https://issuu.com/cityscopemagazine/docs/healthscope_magazine_top_doctors_2025",
+    "https://healthscope.com.au/careers/What-to-expect",
+    "https://www.pinterest.com/healthscopemag/"
+   ],
+   "read_page": "https://healthscopemag.com",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Israel Innovation Authority": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "Israel Innovation Authority (רשות החדשנות) is a real Israeli government innovation agency that does hire, and its own domain has a working careers page (innovationisrael.org.il/job/, /jobs) listing open positions with job IDs. So it is neither defunct, acquired, a duplicate, nor a non-employer, and ",
+  "evidence": {
+   "search_pages": [
+    "https://innovationisrael.org.il/job/",
+    "https://www.innovationisrael.org.il",
+    "https://www.facebook.com/IsraelInnovationAuthority/"
+   ],
+   "read_page": "https://innovationisrael.org.il/job/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://innovationisrael.org.il/jobs"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Millennium": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "\"Millennium\" resolves to Millennium Management (mlp.com), a real employer, and the careers probe found a working Eightfold-hosted job board at career.mlp.com/careers (including /open-positions). So it is not defunct, acquired, duplicate, or board-less; no disqualifying category applies, and ambiguit",
+  "evidence": {
+   "search_pages": [
+    "https://career.mlp.com/careers",
+    "https://www.mlp.com/careers/",
+    "https://www.millenniumhotels.com/en/careers/",
+    "https://www.millenniumhotelscareers.com"
+   ],
+   "read_page": "https://career.mlp.com/careers",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions"
+    ],
+    "answered": [
+     "https://career.mlp.com/careers",
+     "https://career.mlp.com/careers/",
+     "https://career.mlp.com/careers/open-positions"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Bavarianecapital": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "Bavarian Capital appears to be a real Munich advisory firm with a working careers site (careers/jobs paths answered), currently listing zero open roles. An empty listing is not the same as having no job board, so none of the disqualifying categories apply; nothing in the evidence shows acquisition, ",
+  "evidence": {
+   "search_pages": [
+    "https://bavarian-capital.now-remote.com",
+    "https://www.bavarian-cap.de",
+    "https://bayernkapital.de/en/bayern-kapital/career/",
+    "https://devsunite.com/jobs/bavarian-capital-data-analysis-internship-remote-jul2026"
+   ],
+   "read_page": "https://bavarian-capital.now-remote.com",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs"
+    ],
+    "answered": [
+     "https://bavarian-capital.now-remote.com/careers",
+     "https://bavarian-capital.now-remote.com/careers/",
+     "https://bavarian-capital.now-remote.com/jobs"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Beit Ekstein": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "Beit Ekstein is a real Israeli employer (~2500 workers, disability services, founded 1987), part of the Danel Group but operating and recruiting under its own brand (its site has a \"חיפוש משרות\" job search and a dedicated jobs Instagram). The careers-path probe DID answer (b-e.org.il/קריירה), so \"no",
+  "evidence": {
+   "search_pages": [
+    "https://b-e.org.il/english/",
+    "https://ideas.repec.org/a/sgm/pzwzuw/v14i61y2016p89-109.html",
+    "https://rocketreach.co/adi-omesi-email_500152161",
+    "https://www.instagram.com/beit.ekstein.jobs/?hl\\u003den"
+   ],
+   "read_page": "https://b-e.org.il/english/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://b-e.org.il/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Ben Gurion University": {
+  "date": "2026-08-30",
+  "verdict": "no-board",
+  "raw_verdict": "real-company-no-board",
+  "other_name": "",
+  "why": "Ben-Gurion University of the Negev is a real employer. A careers-path probe of bgu.ac.il returned nothing on 12 paths, and the one career page found renders only cookie-consent text with no readable job listings/board.",
+  "evidence": {
+   "search_pages": [
+    "http://www.bgu.ac.il/en/career/",
+    "https://bgu-academic-recruitment.my.site.com/Recruiters/",
+    "https://a4bgu.org/employment-opportunities/",
+    "https://www.facebook.com/people/Ben-Gurion-University-Jobs/61568281046996/"
+   ],
+   "read_page": "http://www.bgu.ac.il/en/career/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Beth El Industries Ltd": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "Beth El Industries (Beth-El Group, NBC filtration, beind.com) appears to be a real employer, and the careers probe actually returned answering URLs (/careers, /jobs), so \"no board\" cannot be claimed. The site text is unreadable binary and the evidence doesn't show whether those pages hold a machine-",
+  "evidence": {
+   "search_pages": [
+    "https://beind.com",
+    "https://beth-el-group.com/הצעות-עבודה/",
+    "https://www.army-technology.com/contractors/nbc/beth-el-industries/"
+   ],
+   "read_page": "https://beind.com",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs"
+    ],
+    "answered": [
+     "https://beind.com/careers",
+     "https://beind.com/careers/",
+     "https://beind.com/jobs"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Bimlabisrael": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "The intake name is \"Bimlabisrael\" (likely BIMLab Israel, bimlab.co.il), but the fetched text and the careers-path probe are for infinitylabs.co.il, a different employer. No evidence about BIMLab's own site or careers page was gathered, so nothing here settles the question.",
+  "evidence": {
+   "search_pages": [
+    "https://infinitylabs.co.il/about-us/careers/",
+    "https://bimlab.co.il/",
+    "https://www.workinbim.com/jobs/tag/country/israel",
+    "https://jobs.bimcollab.com/"
+   ],
+   "read_page": "https://infinitylabs.co.il/about-us/careers/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career"
+    ],
+    "answered": [
+     "https://infinitylabs.co.il/careers",
+     "https://infinitylabs.co.il/careers/",
+     "https://infinitylabs.co.il/career"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Blender Loans": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "BLender (blender.global / loans.blender.co.il)",
+  "why": "The name maps to BLender, an Israeli embedded-finance/lending company at blender.global. The careers probe of blender.global found nothing, but search results include https://loans.blender.co.il/job/ — a jobs page on the company's other domain that was not probed. So we cannot conclude there is no r",
+  "evidence": {
+   "search_pages": [
+    "https://blender.global",
+    "https://loans.blender.co.il/job/",
+    "https://www.blender.org/jobs/",
+    "https://blend.com/company/careers/"
+   ],
+   "read_page": "https://blender.global",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Bluegreen Water Tech": {
+  "date": "2026-08-30",
+  "verdict": "no-board",
+  "raw_verdict": "real-company-no-board",
+  "other_name": "BlueGreen Water Technologies",
+  "why": "Real employer (algal bloom water treatment). Careers-path probe on their own domain answered, but the careers page is purely culture/marketing narrative with no job listings or linked ATS/job board that could be read automatically.",
+  "evidence": {
+   "search_pages": [
+    "https://www.bluegreenwatertech.com/careers",
+    "https://www.ourcrowd.com/companies/bluegreen-water-technologies",
+    "https://connectamericas.com/company/bluegreen-water-technologies"
+   ],
+   "read_page": "https://www.bluegreenwatertech.com/careers",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://www.bluegreenwatertech.com/careers",
+     "https://www.bluegreenwatertech.com/careers/"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Bmorion Ltd": {
+  "date": "2026-08-30",
+  "verdict": "no-board",
+  "raw_verdict": "real-company-no-board",
+  "other_name": "",
+  "why": "bmorion.com is Orion Advanced Applications, a real Israeli Nordson distributor/engineering firm; 12 careers-path probes on its own domain returned nothing.",
+  "evidence": {
+   "search_pages": [
+    "https://www.bmorion.com/english",
+    "https://careers.mobileye.com/jobs"
+   ],
+   "read_page": "https://www.bmorion.com/english",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Bookbyanyone": {
+  "date": "2026-08-30",
+  "verdict": "no-board",
+  "raw_verdict": "real-company-no-board",
+  "other_name": "",
+  "why": "Real e-commerce company selling personalized AI books; careers-path probe of 12 paths on bookbyanyone.com found nothing, and site text shows no jobs section.",
+  "evidence": {
+   "search_pages": [
+    "https://www.bookbyanyone.com/us?srsltid\\u003dAfmBOorMFlf_eQLR30-vzvSdHd8BaWTGxjf_CFvLgl4oH7HRcx1PT62F",
+    "https://www.bookofthemonth.com/join-our-team",
+    "https://www.trustpilot.com/review/www.bookbyanyone.com",
+    "https://www.bookcareers.com"
+   ],
+   "read_page": "https://www.bookbyanyone.com/us?srsltid\\u003dAfmBOorMFlf_eQLR30-vzvSdHd8BaWTGxjf_CFvLgl4oH7HRcx1PT62F",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Brandformance1": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "None of the returned pages or the probed domain relate to \"Brandformance1\" — they belong to OTB (fashion group), FBIN, Version1, Comeet. The careers probe was run against otb.net, a different employer, so it says nothing about this name. No evidence identifies Brandformance1 at all.",
+  "evidence": {
+   "search_pages": [
+    "https://careers.otb.net",
+    "https://www.fbin.com/careers/search-careers/",
+    "https://www.version1.com/careers/",
+    "https://www.comeet.com/jobs/utila/D9.00F/sales-director-apac/39.565-DF.503"
+   ],
+   "read_page": "https://careers.otb.net",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs"
+    ],
+    "answered": [
+     "https://careers.otb.net/careers",
+     "https://careers.otb.net/careers/",
+     "https://careers.otb.net/jobs"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Bring IT On Games": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "None of the returned pages are about \"Bring IT On Games\" — they belong to unrelated firms (Games Global, Gaming Corps, Bring IT PS, a VC portfolio entry). Nothing identifies the company or its domain, so the careers probe can't be attributed to it with confidence.",
+  "evidence": {
+   "search_pages": [
+    "https://gamesglobal.com/Careers",
+    "https://gamingcorps.com/careers/",
+    "https://www.bringitps.com/careers/",
+    "https://www.lalotteventures.com/portfolio/bring-it-on"
+   ],
+   "read_page": "https://gamesglobal.com/Careers",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Btb Be The Bank": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "BTB (btbisrael.co.il) is a real Israeli P2P lending company and careers paths on its own domain did answer, so it cannot be called \"no board\"; but the visible careers text lists no actual openings or identifiable ATS, so whether a machine-readable job board exists is unsettled.",
+  "evidence": {
+   "search_pages": [
+    "https://www.btbisrael.co.il/en/careers-en/"
+   ],
+   "read_page": "https://www.btbisrael.co.il/en/careers-en/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career"
+    ],
+    "answered": [
+     "https://www.btbisrael.co.il/careers",
+     "https://www.btbisrael.co.il/careers/",
+     "https://www.btbisrael.co.il/career"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Bulwarx": {
+  "date": "2026-08-30",
+  "verdict": "no-board",
+  "raw_verdict": "real-company-no-board",
+  "other_name": "",
+  "why": "Bulwarx is a real Israeli cybersecurity integration company (Ra'anana). Its careers page is a static Wix page listing roles inline with \"send your resume\" links; a 12-path careers probe of bulwarx.com returned nothing machine-readable.",
+  "evidence": {
+   "search_pages": [
+    "https://www.bulwarx.com/careers",
+    "https://www.facebook.com/Bulwarx/"
+   ],
+   "read_page": "https://www.bulwarx.com/careers",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Bynet Testing Systems": {
+  "date": "2026-08-30",
+  "verdict": "duplicate-of",
+  "raw_verdict": "duplicate",
+  "other_name": "Bynet (Bynet Group / Bynet Data Communications)",
+  "why": "Bynet Testing Systems (bynet-ts.co.il) is one of several Bynet Group member companies (bynet.co.il, bynete.co.il, bynetsoft.co.il); hiring is presented under the Bynet group careers site, so this name is a division/brand variant rather than a distinct employer.",
+  "evidence": {
+   "search_pages": [
+    "https://www.bynet.co.il/en/career/",
+    "https://bynete.co.il/careers/",
+    "https://bynet-ts.co.il",
+    "https://bynetsoft.co.il/en/career/"
+   ],
+   "read_page": "https://www.bynet.co.il/en/career/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://www.bynet.co.il/career",
+     "https://www.bynet.co.il/career/"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Callapp": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "CallApp is a real Israeli caller-ID app company hiring directly; its own domain call.app/jobs and /careers answered with live open positions, so none of the disqualifying categories (acquired, duplicate, defunct, not-an-employer, or no readable board) apply.",
+  "evidence": {
+   "search_pages": [
+    "https://call.app/jobs",
+    "https://www.masaisrael.org/company/callapp-en-c/",
+    "https://callapp.com/about-callapp",
+    "https://www.naukri.com/call-app-jobs"
+   ],
+   "read_page": "https://call.app/jobs",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs"
+    ],
+    "answered": [
+     "https://call.app/careers",
+     "https://call.app/careers/",
+     "https://call.app/jobs"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Cargoseerai": {
+  "date": "2026-08-30",
+  "verdict": "acquired-by",
+  "raw_verdict": "acquired",
+  "other_name": "BigBear.ai",
+  "why": "CargoSeer's assets were acquired by BigBear.ai; hiring now occurs under BigBear.ai, whose careers page answered.",
+  "evidence": {
+   "search_pages": [
+    "https://bigbear.ai/newsroom/bigbear-ai-announces-acquisition-of-assets-of-cargoseer-an-ai-powered-inspection-and-trade-risk-management-company/",
+    "https://www.ivc-online.com/Google-Card?id\\u003d07936961-b46d-ee11-b812-00505695cd29",
+    "https://machinelearning.co.il/job/senior-backend-engineer-ai-llm-infrastructure/"
+   ],
+   "read_page": "https://bigbear.ai/newsroom/bigbear-ai-announces-acquisition-of-assets-of-cargoseer-an-ai-powered-inspection-and-trade-risk-management-company/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://bigbear.ai/careers",
+     "https://bigbear.ai/careers/"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "Center For Accessible Neuropsychology": {
+  "date": "2026-08-30",
+  "verdict": "duplicate-of",
+  "raw_verdict": "duplicate",
+  "other_name": "Tel Aviv University",
+  "why": "CAN is Dr. William Saban's research lab/center within Tel Aviv University's School of Medicine (sabcan.sites.tau.ac.il), not an independent employer; positions are TAU PhD/post-doc openings posted on TAU pages.",
+  "evidence": {
+   "search_pages": [
+    "https://international.tau.ac.il/position_saban",
+    "https://sabcan.sites.tau.ac.il",
+    "https://nanonline.org/Nanweb24/Nanweb/Jobs/Job-Bank.aspx",
+    "https://www.applykite.com/positions/phd-and-postdoctoral-positions-in-neuropsychology-machine-learning-neuroscience-and-digital-health-u7zrreyqdg"
+   ],
+   "read_page": "https://international.tau.ac.il/position_saban",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Chaikin Cohen Rubin And Co": {
+  "date": "2026-08-30",
+  "verdict": "no-board",
+  "raw_verdict": "real-company-no-board",
+  "other_name": "",
+  "why": "Chaikin Cohen Rubin & Co. is a real Israeli accounting/audit firm (ccr.co.il) posting individual job pages, but a 12-path careers probe of their domain found no machine-readable careers page or job board.",
+  "evidence": {
+   "search_pages": [
+    "https://ccr.co.il/en/job/cpa-interns-internal-audit-department/"
+   ],
+   "read_page": "https://ccr.co.il/en/job/cpa-interns-internal-audit-department/",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Chicago House Athletic Club": {
+  "date": "2026-08-30",
+  "verdict": "no-board",
+  "raw_verdict": "real-company-no-board",
+  "other_name": "",
+  "why": "Chicago House AC is a real Chicago soccer club that recruits (unpaid internships via info@chicagohouseac.com), but its site has only a static /interns page and a probe of 12 common careers paths on chicagohouseac.com returned nothing — no automatable job board.",
+  "evidence": {
+   "search_pages": [
+    "https://www.chicagohouseac.com/interns",
+    "https://jordan.tanqeeb.com/c/153635",
+    "https://www.jobs.ca/chicago-house-athletic-club",
+    "https://chicagosocial.com/about-us/employment/"
+   ],
+   "read_page": "https://www.chicagohouseac.com/interns",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
+ },
+ "Cityofdesperes": {
+  "date": "2026-08-30",
+  "verdict": "cannot-tell",
+  "raw_verdict": "cannot-tell",
+  "other_name": "",
+  "why": "City of Des Peres, MO is a real municipal employer, and the careers probe DID find a working jobs page (desperesmo.org/jobs), so \"real-company-no-board\" doesn't apply; no evidence of acquisition, duplication, or shutdown. None of the problem categories fit.",
+  "evidence": {
+   "search_pages": [
+    "https://www.desperesmo.org/325/Jobs",
+    "https://mgmhealthcare.com/job_location/the-quarters-at-des-peres/",
+    "https://careers.uspi.com/employment/des-peres-missouri-united-states-nursing-jobs/1127/1673/6252001-4398678-4407074-4383778/4",
+    "https://careers.aldi.us/location/des-peres-missouri-united-states-jobs/61/6252001-4398678-4383778/4"
+   ],
+   "read_page": "https://www.desperesmo.org/325/Jobs",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": [
+     "https://www.desperesmo.org/jobs",
+     "https://www.desperesmo.org/jobs/"
+    ]
+   },
+   "verify": []
+  }
+ },
+ "rada": {
+  "date": "2026-08-30",
+  "verdict": "acquired-by",
+  "raw_verdict": "acquired",
+  "other_name": "Leonardo DRS (DRS RADA Technologies)",
+  "why": "RADA Electronic Industries merged with Leonardo DRS and now operates/hires as DRS RADA Technologies; its careers site directs US roles to LeonardoDRS.com/careers.",
+  "evidence": {
+   "search_pages": [
+    "https://www.drsrada.com/careers",
+    "https://www.comeet.com/jobs/rada/73.009/_-/41.358",
+    "https://www.radacutlery.com/employment/",
+    "https://www.radabusiness.com/about-us/work-us/"
+   ],
+   "read_page": "https://www.drsrada.com/careers",
+   "careers_probe": {
+    "tried": [
+     "/careers",
+     "/careers/",
+     "/jobs",
+     "/jobs/",
+     "/career",
+     "/career/",
+     "/about/careers",
+     "/company/careers",
+     "/en/careers",
+     "/careers/open-positions",
+     "/join-us",
+     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    ],
+    "answered": []
+   },
+   "verify": []
+  }
  }
 }

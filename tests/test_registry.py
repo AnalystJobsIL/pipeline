@@ -7481,3 +7481,15 @@ def test_a_search_never_follows_a_render_in_one_process():
             assert not ({"search_one"} & called and {"score_one"} & called), (
                 "%s.%s interleaves search and render in one loop: every later search will "
                 "silently return nothing" % (path, func))
+
+
+def test_the_self_check_sample_is_never_theatre():
+    """5% of a small batch is one name, and `no-board` was 75% wrong the last time it was
+    trusted. A sample of one cannot measure a 10% floor, so the check has a MINIMUM."""
+    import queue_pipeline as QP
+    for n in (1, 5, 21, 100, 400):
+        k = min(n, max(QP.SELF_CHECK_MIN, int(n * QP.SELF_CHECK_FRACTION)))
+        assert k == min(n, max(10, int(n * 0.05))), (n, k)
+        # a sample must be able to express the floor it is compared against
+        assert k >= min(n, 1 / QP.SELF_CHECK_FLOOR), (
+            "a sample of %d cannot measure a %.0f%% disagreement floor" % (k, 100 * QP.SELF_CHECK_FLOOR))

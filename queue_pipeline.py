@@ -280,7 +280,11 @@ def census(stamp=False):
 # ----------------------------------------------------------------- stage 7: disposition
 DISPOSE_PATH = os.path.join("cloud_state", "queue_disposition.json")
 SELF_CHECK_FRACTION = 0.05     # of the `no-board` verdicts, re-asked from a FRESH search
-SELF_CHECK_FLOOR = 0.10        # ...and if more than this share disagree, nothing is pruned
+SELF_CHECK_MIN = 10            # ...but never fewer than this, or the check is theatre:
+                               # 5% of a 21-verdict batch is ONE name; 10 is the smallest sample that can
+                               # express the 10% floor below. This exact verdict
+                               # was 75% wrong the last time it was trusted (2026-08-29).
+SELF_CHECK_FLOOR = 0.10        # if more than this share disagree, nothing is pruned
 
 DISPOSE_SYSTEM = (
     "You are told a COMPANY NAME from a hiring-intake list and shown EVIDENCE gathered about "
@@ -512,7 +516,9 @@ def dispose(limit=0, apply=False, shard="", read_pages=True):
                if (state.get(n) or {}).get("raw_verdict") == "real-company-no-board"]
     if noboard:
         random.seed(20260829)
-        sample = random.sample(noboard, max(1, int(len(noboard) * SELF_CHECK_FRACTION)))
+        sample = random.sample(noboard, min(len(noboard),
+                                            max(SELF_CHECK_MIN,
+                                                int(len(noboard) * SELF_CHECK_FRACTION))))
         print("self-check: re-asking a FRESH search about %d of %d `no-board` verdicts"
               % (len(sample), len(noboard)), flush=True)
         bad = self_check(sample, cache)
