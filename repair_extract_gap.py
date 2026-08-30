@@ -22,6 +22,7 @@ import time
 # `from` binding is a separate module global, so patching the gate would not reach it -
 # which is how two fixtures silently started hitting the live network instead of their
 # stub. Attribute access resolves at call time, so there is exactly one place to patch.
+from audit_empty_rows import active_twin as _active_twin
 from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
@@ -135,16 +136,27 @@ def main():
             print(f"  [OK]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL", flush=True)
             if apply:
                 fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+                _tw = _active_twin(r[0], "scrape", "", r[3], fresh)
                 for fr in fresh:
-                    if fr and fr[0] == r[0] and len(fr) >= 6:
-                        fr[1], fr[2], fr[3] = "scrape", "", r[3]
-                        fr[4] = "true"
-                        # append, never overwrite: the note is a shared append-log and a
-                        # wholesale rewrite drops every other tool's verdict segment (the
-                        # documented #1 bug class here).
-                        fr[5] = _note_replace(
-                            fr[5], "repair ",
-                            f"repair {TODAY}: extract-gap fixed via LLM tier; {len(il)} IL")
+                    if not (fr and fr[0] == r[0] and len(fr) >= 6):
+                        continue
+                    if _tw:
+                        # This tool activates off the row's STORED address, which is how a
+                        # parked row lands on the board an active row already reads
+                        # (`Orca-AI` on `Orca AI`'s careers page, differing by a trailing
+                        # slash). Identity says yes to both; only this asks who else is
+                        # here. ARCHITECTURE.md section 2, clause 4.
+                        fr[5] = _note_replace(fr[5], "repair ",
+                                              f"repair {TODAY}: twin-board; not activated")
+                        continue
+                    fr[1], fr[2], fr[3] = "scrape", "", r[3]
+                    fr[4] = "true"
+                    # append, never overwrite: the note is a shared append-log and a
+                    # wholesale rewrite drops every other tool's verdict segment (the
+                    # documented #1 bug class here).
+                    fr[5] = _note_replace(
+                        fr[5], "repair ",
+                        f"repair {TODAY}: extract-gap fixed via LLM tier; {len(il)} IL")
                 write_csv_rows("companies.csv", fresh)
                 # cache immediately so the next digest sees it without waiting for a refresh
                 import json

@@ -441,20 +441,19 @@ def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail, rows=N
         #    landed as `smartrecruiters` with `https://jobs.renesas.com/` in column 3
         #    because `fetch_smartrecruiters` appends its query to whatever it is handed.
         #    The row scanned, so nothing downstream noticed either.
-        _rows = rows
-        if _rows is None:                       # never activate against a snapshot: re-read
-            _rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
-        _tw = active_twin(name, plat, tok, api, _rows)
-        if _tw:
-            fr[5] = _note_replace(fr[5], "deep-validated",
-                                  f"deep-validated {TODAY}: twin-board; not activated")
-            return
+        # ORDER MATTERS, and both orderings were wrong once. Repair FIRST, then gate and
+        # twin-check THE ADDRESS THAT WILL BE WRITTEN: a repair that runs after the gate
+        # activates on a url identity never saw (the `CyberArk -> paloaltonetworks` shape),
+        # and a twin check that runs before the repair cannot see the twin the repair
+        # itself creates. Both were live in the first draft of this change.
         _ph = _INV.PLATFORM_HOST.get((plat or "").strip().lower())
         if _ph and not re.search(_ph, api or "", re.I):
-            # Repair it to the platform's canonical endpoint if that VERIFIES -- never
-            # persist an address nothing fetched (the rule `test_the_hunt_never_stores_
-            # another_company_s_page_as_the_row_address` pins). Otherwise the row stays
-            # dark with its tokens intact and next Sunday tries again.
+            # Repair to the platform's canonical endpoint if that VERIFIES -- never persist
+            # an address nothing fetched (`test_the_hunt_never_stores_another_company_s_
+            # page_as_the_row_address`). Otherwise the row stays dark and this tool tries
+            # again after `_revalidatable` (30 days, not next Sunday). Four of the eleven
+            # PLATFORM_HOST platforms (comeet, microsoft, oraclehcm, workday) have no SIGS
+            # template, so on those a mismatch can only ever be refused, never repaired.
             cand = _canonical_endpoint(plat, tok)
             ok = False
             if cand:
@@ -463,12 +462,23 @@ def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail, rows=N
                     ok = bool(_n_all)
                 except Exception:                                  # noqa: BLE001
                     ok = False
+            # the repaired address is a DIFFERENT address, so it faces the same gate the
+            # original faced -- `_av` above was computed against the url the LLM proposed
+            if ok and _gate.activation_verdict(name, cand, _n_all, token=tok or "") != "ok":
+                ok = False
             if not ok:
                 fr[5] = _note_replace(
                     fr[5], "deep-validated",
-                    f"deep-validated {TODAY}: {plat} endpoint off-host; unverified")
+                    f"deep-validated {TODAY}: endpoint off-host; unverified")
                 return
             api, n_all, n_il = cand, _n_all, _n_il
+        _rows = rows
+        if _rows is None:                       # never activate against a snapshot: re-read
+            _rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
+        if active_twin(name, plat, tok, api, _rows):
+            fr[5] = _note_replace(fr[5], "deep-validated",
+                                  f"deep-validated {TODAY}: twin-board; not activated")
+            return
         fr[1], fr[2], fr[3] = plat, tok, api
         fr[4] = "true"
         # Append-log, not a rewrite (ARCHITECTURE.md section 2). The two

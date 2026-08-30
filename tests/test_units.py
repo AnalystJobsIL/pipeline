@@ -512,20 +512,22 @@ def test_a_board_already_read_by_an_active_row_cannot_be_activated_again():
 
 
 def test_every_activation_path_refuses_an_active_twin():
-    """Three tools flip `active` to true off a verified board, and all three could open a
-    second active row on one board. The guard has to sit ABOVE the write in each of them —
-    `crack_walled` is the one that actually did it on 2026-08-30."""
-    import inspect
-    import audit_empty_rows
-    import crack_walled
-    import deep_validate
-    for mod, fn in ((audit_empty_rows, "main"), (crack_walled, "main"),
-                    (deep_validate, "apply_verdict")):
-        src = inspect.getsource(getattr(mod, fn))
-        where = src.index('fr[4] = "true"')
-        assert "active_twin" in src[:where], (
-            f"{mod.__name__}.{fn} activates a row before asking whether another active row "
-            f"already reads that board")
+    """Every tool that flips `active` off a verified board can open a SECOND active row on
+    one board. Named as a list this said three and the tree had five: `listing_hunt` and
+    `repair_extract_gap` activate nightly, not just on Sunday, and `repair_extract_gap`
+    activates off the row's STORED address — the shape that puts `Orca-AI` on `Orca AI`'s
+    page. So this scans, exactly like its sibling twenty lines up, and a sixth activator
+    added tomorrow fails it on the day it is written."""
+    import glob
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ungated = []
+    for path in sorted(glob.glob(os.path.join(root, "*.py"))):
+        src = open(path, encoding="utf-8", errors="replace").read()
+        if 'fr[4] = "true"' in src and "active_twin" not in src:
+            ungated.append(os.path.basename(path))
+    assert not ungated, (f"these tools activate a row without asking whether another ACTIVE "
+                         f"row already reads that board: {ungated}")
 
 
 def test_the_deep_rung_cannot_activate_a_twin_row_or_an_off_host_endpoint(monkeypatch):
@@ -566,6 +568,51 @@ def test_the_deep_rung_cannot_activate_a_twin_row_or_an_off_host_endpoint(monkey
                     "RenesasElectronics", "https://jobs.renesas.com/", 905, 2, "llm", rows=[])
     assert fr3[4] == "false" and "off-host" in fr3[5], fr3
     assert "jobs.renesas.com" not in fr3[3], "an unverified address is never persisted"
+
+
+def test_a_repaired_endpoint_faces_the_gate_and_the_twin_check_that_the_proposed_one_did():
+    """Both orderings of this branch were wrong once, and an Opus wave found both.
+
+    The gate is asked about the url the MODEL proposed; the repair then writes a different
+    one. Gate-then-repair activates on an address identity never saw (the
+    `CyberArk -> paloaltonetworks` shape). Twin-then-repair cannot see the twin the repair
+    itself creates, and that is a red B2 at the persist gate — the thing this guard exists
+    to prevent."""
+    import check_invariants as INV
+    import deep_validate as D
+
+    asked = []
+
+    class _Gate:
+        @staticmethod
+        def activation_verdict(name, url, n=0, token=""):
+            asked.append(url)
+            return "ok" if "cyberark.com" in (url or "") else "not-ours"
+
+    _real_gate, _real_verify, _real_foreign = D._gate, D.verify, D.is_foreign
+    try:
+        D._gate, D.is_foreign = _Gate, (lambda *a, **k: False)
+        D.verify = lambda *a, **k: (37, 5)
+        fr = ["CyberArk", "", "", "", "false", "n"]
+        D.apply_verdict(fr, "CyberArk", "recovered", "greenhouse", "paloaltonetworks",
+                        "https://www.cyberark.com/careers/", 37, 5, "llm", rows=[])
+        assert fr[4] == "false", "activated on an address the gate never approved"
+        assert any("boards-api.greenhouse.io/v1/boards/paloaltonetworks/jobs" in u
+                   for u in asked), asked
+
+        # ...and the twin check sees the REPAIRED address, not the proposed one
+        D._gate = type("_Ok", (), {"activation_verdict": staticmethod(lambda *a, **k: "ok")})
+        D.verify = lambda *a, **k: (12, 3)
+        twin = ["Acme Ltd", "workable", "acme",
+                "https://apply.workable.com/api/v1/widget/accounts/acme?details=true",
+                "true", "n"]
+        fr2 = ["Acme", "", "", "", "false", "n"]
+        D.apply_verdict(fr2, "Acme", "recovered", "workable", "acme",
+                        "https://acme.com/careers", 12, 3, "llm", rows=[twin])
+        assert fr2[4] == "false" and "twin-board" in fr2[5], fr2
+        assert not INV.shared_boards([twin, fr2]), "the repair opened a second row on one board"
+    finally:
+        D._gate, D.verify, D.is_foreign = _real_gate, _real_verify, _real_foreign
 
 
 # --- "time.com is Time To Know" — two ways the identity check said yes to a stranger ----

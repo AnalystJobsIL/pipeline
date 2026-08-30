@@ -1457,21 +1457,30 @@ gates conclude.
    ways because one board has three spellings in this file: the `(platform, token)` pair,
    the normalised `api_url` (the `shared_boards` key MINUS its `identity_key` component —
    a twin under a *different* name is exactly the case to catch), and the ATS board a
-   `scrape` row is really reading (`auto_expand`'s own `_ATS_IN_URL`/`_RECRUITEE_IN_URL`,
-   imported so this and the probe rung's `probe-dup-board` cannot drift). It is fed the
-   **freshly re-read rows** — the same list the write is about to mutate, never a
-   start-of-run snapshot. Refusal stamps `twin-board; not activated` in the tool's own
-   segment: **not `not-ours`** (the board genuinely is the company's) and **not `alias-of`**
-   (which row survives is a human's call, and an activating tool that retires coverage on
-   its own is the larger bug). `twin-board` is in no pool or terminal vocabulary, so the row
-   keeps the tokens that route it and is re-examined normally. B2 `--strict` at the persist
-   gate remains the backstop, not the guard.
+   `scrape` row is really reading, and the Comeet uid (`apply_proposals._url_keys` and
+   `COMEET_UID`, `auto_expand._ATS_IN_URL`/`_RECRUITEE_IN_URL` — all four imported, never
+   retyped, so this and `apply_proposals._collides` cannot drift). The **write-time** check
+   is fed the freshly re-read rows, the same list the write is about to mutate; a cheap
+   pre-check on the start-of-run snapshot exists only so the log line agrees with the
+   action. Where the address is REPAIRED before writing (the canonical-endpoint rule in §3)
+   the twin check runs on the address that will actually be written, never the proposed
+   one. Refusal stamps `twin-board; not activated` in the tool's own segment: **not
+   `not-ours`** (the board genuinely is the company's) and **not `alias-of`** (which row
+   survives is a human's call, and an activating tool that retires coverage on its own is
+   the larger bug). `twin-board` matches no pool or terminal vocabulary, so it never routes
+   or retires the row by itself — but it is still a note, and a note EVICTS: measured over
+   the 583-row deep pool, 215 rows lose at least one pool token to the segment and 47 lose
+   `listing_hunt` ownership, the same erosion every stamp in this file pays. B2 `--strict`
+   at the persist gate remains the backstop, not the guard.
 
 `test_every_activation_path_checks_company_identity` walks the AST of every root script for
 `row[4] = "true"` and fails if that module never consults `company_identity`;
-`test_every_activation_path_refuses_an_active_twin` requires `active_twin` above the write in
-each of the three tools that flip `active` off a verified board (`audit_empty_rows`,
-`crack_walled`, `deep_validate`).
+`test_every_activation_path_refuses_an_active_twin` scans the same way for `active_twin`.
+**Five tools flip `active` off a verified board, not three** — `audit_empty_rows`,
+`crack_walled` and `deep_validate` (Sundays), and `listing_hunt` and `repair_extract_gap`
+**nightly**, the second of them off the row's own STORED address, which is how a parked row
+lands on the board an active row already reads (`Orca-AI` and `Orca AI`, one careers page,
+differing by a trailing slash). Count them by scanning, never from this sentence.
 
 **On a walled ATS all three clauses are inert.** The tenant lives in the SUBDOMAIN
 (`careers-bancorpbank.icims.com`) and `company_identity.verdict` only checks a tenant in the
@@ -2084,11 +2093,15 @@ the short version of the three gates and the code that enforces them.
   noticed until `check_invariants` C2 fired at the persist gate. `deep_validate.apply_verdict`
   now tests `api_url` against `check_invariants.PLATFORM_HOST` (imported, not retyped); on a
   mismatch it rebuilds the endpoint from the `SIGS` template for that platform
-  (`_canonical_endpoint`, the same table `audit_empty_rows` builds every endpoint from) and
-  **re-verifies it through `verify()`** before writing. If the canonical form does not
-  verify, or the platform has no template, the row stays dark with
-  `{plat} endpoint off-host; unverified` and its tokens intact — never an address nothing
-  fetched. C2 itself is blind to seven platforms it has no row for (`193@infra` carries the
+  (`_canonical_endpoint`, the same table `audit_empty_rows` builds every endpoint from),
+  **re-verifies it through `verify()`, and puts it back through `activation_verdict`** —
+  the repaired address is a different address, and the gate above was asked about the one
+  the model proposed. If the canonical form does not verify or does not pass the gate, or
+  the platform has no template (comeet, microsoft, oraclehcm and workday have none, so on
+  those a mismatch can only be refused), the row stays dark with
+  `endpoint off-host; unverified` and waits out `_revalidatable` — **30 days, not next
+  Sunday** — never an address nothing fetched.
+  C2 itself is blind to seven platforms it has no row for (`193@infra` carries the
   measured path-signature diff; bare hosts would strict-break five legitimate rows, because
   eightfold/phenom/successfactors serve from the tenant's own domain).
 - Slug/tenant must resemble the company name — `_slug_matches` (defined in

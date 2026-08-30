@@ -151,6 +151,10 @@ _COMEET = re.compile(r"comeet", re.I)
 _UNSUPPORTED = re.compile(r"(eightfold\.ai|avature\.net|oraclecloud\.com|jobvite\.com|phenom)", re.I)
 
 
+# Path words `_ATS_IN_URL` reads as a tenant when the real tenant is in the query string.
+_EMBED_PATH_WORDS = frozenset(("embed", "job_board", "jobs", "boards", "api", "v1", "v0"))
+
+
 def active_twin(name, plat, tok, api, rows):
     """The name of another ACTIVE row already reading this board, or "".
 
@@ -171,25 +175,49 @@ def active_twin(name, plat, tok, api, rows):
     `rows` must be the FRESHLY re-read 6-field rows -- pass the same list the write is
     about to mutate, never a start-of-run snapshot.
     """
-    import auto_expand as _ax                    # function-local: `audit_empty_rows` is
-    #                                             imported BY crack_walled/deep_validate,
-    #                                             and a module-level edge would cycle
+    # Function-local so `audit_empty_rows` stays cheap to import for the four tools that
+    # import IT. Neither module imports this one back, so a module-level edge would work;
+    # this keeps `auto_expand`'s import cost off that path.
+    import auto_expand as _ax
+    import apply_proposals as _ap
+
     def _keys(p, t, u):
         out = set()
         p, t, u = (p or "").strip().lower(), (t or "").strip().lower(), (u or "").strip()
-        if p and t:
-            out.add((p, t))
+        # A `scrape` row's token column holds a stale URL on 226 active rows, and two
+        # different boards can share one: it identifies nothing.
+        if p and t and p != "scrape" and not t.startswith("http"):
+            out.add(("plat", p, t))
         if u:
-            s = urllib.parse.urlsplit(u.lower().rstrip("/"))
-            if s.netloc:
-                out.add((s.netloc, s.path, s.query))
+            # `apply_proposals._url_keys` is the pair this repo already de-dups on --
+            # imported, not retyped, because the second key is the one that catches
+            # query-string twins (`AWS` and `Amazon Web Services (AWS)` are both active on
+            # one amazon.jobs page today, differing only in `?loc_query=`).
+            lo, hp = _ap._url_keys(u)
+            if hp[0]:
+                out.add(("url", lo))
+                # ...but NOT where the query is the board's identity rather than a filter:
+                # a greenhouse EMBED is `/embed/job_board?for=<tenant>`, so host+path alone
+                # would fuse every company using that form into one board.
+                if "for=" not in (urllib.parse.urlsplit(u.lower()).query or ""):
+                    out.add(("hostpath", hp))
         for cand in (u, t):
-            m = _ax._ATS_IN_URL.search(cand or "")
-            if m:
-                out.add((_ax._ATS_PLAT[m.group(1).lower()], m.group(2).lower()))
-            m2 = _ax._RECRUITEE_IN_URL.search(cand or "")
+            c = (cand or "").lower()          # the ATS patterns carry no re.I
+            m = _ax._ATS_IN_URL.search(c)
+            # `/embed/job_board?for=<tenant>` puts the tenant in the QUERY, and the pattern
+            # reads the path word `embed` as the tenant -- which would make every company
+            # using the embed form one board. The `for=` form has no tenant in its path.
+            if m and m.group(2) not in _EMBED_PATH_WORDS:
+                out.add(("ats", _ax._ATS_PLAT[m.group(1)], m.group(2)))
+            m2 = _ax._RECRUITEE_IN_URL.search(c)
             if m2:
-                out.add(("recruitee", m2.group(1).lower()))
+                out.add(("ats", "recruitee", m2.group(1)))
+            # Comeet is the largest ATS here (189 active rows) and its uid is the board's
+            # true name: `comeet.com/jobs/<slug>/<uid>` and the careers-api form are the
+            # same board under two spellings (`DealHub` / `DealHub.ai`, both active).
+            mc = _ap.COMEET_UID.search(cand or "")
+            if mc:
+                out.add(("comeet", mc.group(1).lower()))
         return out
 
     mine = _keys(plat, tok, api)
@@ -535,7 +563,9 @@ def main():
         # this company's?"; a twin passes all of them (`active_twin`).
         _tw = active_twin(name, plat, tok, api, rows)
         if _tw:
-            still.append((name, ""))
+            # NOT appended to `still`: `still` feeds `_deep_rung`, a Chromium render plus
+            # `DEEP_BD_SEARCH_CAP` searches, and a twin is settled without either -- the
+            # answer is on disk, not on the web.
             print(f"  [==] {name}: {plat} {tok} verified {n_il} IL but that board is already "
                   f"read by the active row {_tw!r}", flush=True)
             if apply:

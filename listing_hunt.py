@@ -37,7 +37,7 @@ import time
 import urllib.parse
 
 from deep_validate import Renderer, ddg
-from audit_empty_rows import AGG
+from audit_empty_rows import AGG, active_twin as _active_twin
 from pipeline.aggregators import is_aggregator
 from pipeline.recruiters import is_recruiter
 from urllib.parse import urlparse
@@ -528,6 +528,12 @@ def main():
                 # page" - no identity test whatsoever, on the tool whose documented
                 # fast-path re-checks rows every night.
                 refused = "another company's board"
+            elif verdict == "found" and _active_twin(name, "scrape", "", url, rows):
+                # The board can be this company's and still be one another ACTIVE row is
+                # already reading -- every identity gate above says yes to both halves of a
+                # twin. This tool runs nightly, so it reaches the class more often than the
+                # Sunday audit that first produced it (ARCHITECTURE.md section 2, clause 4).
+                refused = "twin-board"
             stats[verdict] += 1
             tag = "OK" if verdict == "found" and not refused else "XX" if refused else "--"
             print(f"  [{tag}] {n}/{len(targets)} {name}: "
@@ -537,6 +543,11 @@ def main():
                 # single-writer discipline: re-read before every write; a start-of-run
                 # snapshot silently reverts other writers' verdicts (§5 ARCHITECTURE.md)
                 fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+                if (verdict == "found" and not refused
+                        and _active_twin(name, "scrape", "", url, fresh)):
+                    # the re-read is the authority: another writer may have activated the
+                    # twin since the decision above (crack_walled runs in the same job)
+                    refused = "twin-board"
                 for fr in fresh:
                     if not fr or fr[0] != name or len(fr) < 6:
                         continue
