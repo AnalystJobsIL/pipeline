@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**500 filed · 367 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
+**503 filed · 369 open · 134 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 453.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 456.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -210,7 +210,7 @@ closure convention in the header.
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
-### infra — 103 open
+### infra — 105 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -315,6 +315,8 @@ closure convention in the header.
 - **448** `448@infra` **The inline JD filler's paid rung is armed by default and CANNOT SPEND, because the step
 - **450** `450@infra` **`firmographics.yml`: the budget is not wired, one slot a day measures the gap before
 - **451** `451@infra` **`stages.stamp` rebases on `{}` when it cannot read the file, and the digest now writes
+- **453** `453@infra` **`cloud_state/roles.csv` is committed and public by raw URL, but it is not on Pages** —
+- **455** `455@infra` **A `bd_rescue` test fails whenever another `bd_rescue` test runs first**
 
 ### scraper — 27 open
 
@@ -458,13 +460,13 @@ closure convention in the header.
 - **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
 - **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
 - **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **145** `145@roles` **`matched.seniority` is empty for every row**
 - **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
 - **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
 - **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
 - **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
 - **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
 - **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
 
 ### classifier — 9 open
 
@@ -2660,11 +2662,26 @@ kept; the Meta listing-url rows are superseded).
     another *rendered* employer and not its own (`blurb-names-other`), but the AppSec pair is
     invisible to it (same key). Needs either a declared-distinct list in `identity_facts` or a
     narrower suffix rule.
-145. **`matched.seniority` is empty for every row** — lane: `roles` / `classifier`. All 111
+145. ~~**`matched.seniority` is empty for every row**~~ — lane: `roles` / `classifier`. All 111
     rows carry `''` on 2026-08-25 (`select count(*) from matched where seniority=''`), so the
     column the store defines is written by nothing; the card derives seniority from the
     posting's own text and the title instead (`rolecard.sen_canon`). Either write the
     classifier's verdict into it or drop the column.
+
+    **CLOSED 2026-08-30 (`roles`)**: written, not dropped — the dataset needs the column and
+    the value already existed. `Classifier.classify` has always returned `seniority`
+    (`pipeline/seniority.py`, `base`); nothing assigned it to the job, so `upsert_matched`'s
+    `job.get("seniority", "")` wrote the empty string on every row of every run. Measured at
+    fd07897: **0 of 154** ledger records and **0 of 154** sqlite rows. Two halves were needed,
+    because fixing the assignment alone fills only the roles judged from that day on:
+    `classify_grouped` now puts the verdict on the job (inherited copies included), and
+    `Ledger._record_run` backfills any empty one from the title through `roles.seniority_of`,
+    which is the same `_seniority` the classifier calls — no description, no call, no spend.
+    After two scoped runs against a copy of the real store: **154 of 154** in the ledger and
+    **154 of 154** in sqlite (the first run fills the ledger, `open_sync`'s reconcile pushes it
+    down on the next). Published as `seniority_title` in `cloud_state/roles.csv`, beside
+    `years_experience`, which is a different measurement from a different source: senior 56,
+    unknown 86, junior 1 of 143 rows.
 146. **Tests reach into `digest`'s private names** — lane: `docs` (test owners). `_text_audit`,
     `_html_audit`, `_path_label`, `_firmo_facts` are imported by `tests/test_units.py`,
     `tests/test_company_intel.py` and `tests/test_registry.py`; `digest.py` re-exports
@@ -7549,6 +7566,75 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     whether a LinkedIn guest page is worth keeping in the corpus at all, given that 13 rows of
     it turned out to be a sign-in form on 2026-08-28. Decide before building.
 
+453. **`cloud_state/roles.csv` is committed and public by raw URL, but it is not on Pages** —
+    lane: `infra`. Filed by `roles` 2026-08-30; the diff below is written and tested, and the
+    file it edits is `infra`'s, so this lane did not apply it. The dataset the operator asked
+    for ("analyses that will be on git pages... I want others to have easy access to it") is
+    regenerated and committed by the daily digest with **no workflow change**, because
+    `persist_state`'s `--own cloud_state` is wholesale, and it is therefore already public at
+    `https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv`.
+    It is NOT beside the board at `analystjobsil.github.io/board/`, which is where the operator
+    asked for it. The publish step copies by name; three files need adding, following the
+    existing optional-file pattern:
+
+    ```diff
+      cp docs/index.html /tmp/board/index.html
+      cp docs/archive.html /tmp/board/archive.html 2>/dev/null || true
+    + cp cloud_state/roles.csv /tmp/board/roles.csv 2>/dev/null || true
+    + cp cloud_state/roles.csv.meta.json /tmp/board/roles.csv.meta.json 2>/dev/null || true
+    + cp cloud_state/funnel.csv /tmp/board/funnel.csv 2>/dev/null || true
+      cd /tmp/board
+      ...
+      git add index.html
+      [ -f archive.html ] && git add archive.html
+    + [ -f roles.csv ] && git add roles.csv
+    + [ -f roles.csv.meta.json ] && git add roles.csv.meta.json
+    + [ -f funnel.csv ] && git add funnel.csv
+    ```
+
+    Two things ride with it. (a) `persist_state.py` has no `SINGLE_WRITER` row for the three
+    files, so `strategy_for` falls through to `s_ours` with a `NO STRATEGY -- ours wins`
+    warning on any conflict night; they are `daily-digest`'s alone, exactly like `roles.jsonl`
+    beside them. (b) `ARCHITECTURE.md` section 5's conflict table needs the same row — and if
+    (a) lands without (b), `test_every_path_a_workflow_owns_has_a_persist_strategy` stays green
+    only because `cloud_state` is owned as a directory, which hides the gap rather than closing
+    it. Until this lands, every report must say the dataset is committed and raw-URL public but
+    NOT on Pages, and `roles.csv.meta.json` carries `"published_on_pages": false` so the file
+    never overstates where it is.
+454. **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
+    — lane: `roles`. **Blocked until the classifier lane's contract drain completes** — a schema
+    change during a full re-judge loses both. This duplicates the item the `classifier` lane is
+    filing from its side; `roles` owns it, because the table is in this lane's file. Measured at
+    fd07897: 745 rows of `(title_key, verdict, updated)` and nothing else, 131 of them YES. The
+    key is `company|title`, so a NO carries no url, no location, no date and no text — 614 of
+    them cannot be re-checked, explained to a reader, or even attributed to the posting they
+    judged. Proposed columns, to be added only after the drain:
+    `url TEXT, location TEXT, posted_date TEXT, desc_sha1 TEXT, desc_len INTEGER, model TEXT,
+    contract TEXT, reason TEXT` — all nullable, so existing rows migrate by `ALTER TABLE` alone
+    (the pattern already in `SeenStore.__init__` for `seen_ids` / `jd_attempted` / `status` /
+    `superseded_by`). `desc_sha1` is the important one: it makes a verdict re-checkable against
+    the text it was actually made on, and it is the same value `roles.csv` publishes as
+    `description_sha1`.
+455. **A `bd_rescue` test fails whenever another `bd_rescue` test runs first** — lane: `infra`.
+    Filed by `roles` 2026-08-30 with a reproduction; `bd_rescue.py` is not this lane's file.
+    `tests/test_registry.py::test_bd_rescue_reads_the_unlockers_error_code_and_never_retries_a_policy_host`
+    is not slow and not flaky, and it needs no full suite to see:
+
+    ```
+    python -m pytest tests/test_registry.py -k bd_rescue                   # 1 failed, 3 passed, 0.55s
+    python -m pytest tests/test_registry.py::test_bd_rescue_reads_the_...  # 1 passed
+    ```
+
+    The failure is `assert ('') == ...`, where the empty string is
+    `bd_rescue.unlock("https://a.example")` — module-level state an earlier `bd_rescue` test
+    leaves behind (a latched breaker or a spend counter) makes the unlocker return empty.
+    Reproduced on **clean `fd07897`** and on this lane's branch with byte-identical totals
+    (`1 failed, 1388 passed, 12 skipped`), so it is neither new nor this lane's. It is a
+    plausible cause of `tests.yml` being red on 100 consecutive runs to 2026-08-30 while every
+    lane reported the suite passing: it passes when run alone, which is how each lane checked
+    it. `tests/conftest.py` already re-arms the Bright Data sentinel per test
+    (`_no_bright_data_state_survives_a_test`) and drains `bd_rescue.SPENT`; whatever this test
+    depends on is not in that list.
 429. **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
     lane: `roles`. HiBob | Senior Business Analyst on 2026-08-29: the `scraped_cache.json` card
     carried `_jd_attempted: 2026-08-29` while `cloud_state/roles.jsonl` carried

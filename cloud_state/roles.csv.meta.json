@@ -1,0 +1,356 @@
+{
+ "dataset": "roles.csv",
+ "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
+ "published_on_pages": false,
+ "generated_at": "2026-08-30T06:38:03Z",
+ "run_date": "2026-08-30",
+ "rows": 143,
+ "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
+ "window": {
+  "days": 60,
+  "basis": "last_seen",
+  "start": "2026-07-02",
+  "end": "2026-08-30",
+  "rule": "2026-07-02 <= last_seen <= 2026-08-30, both inclusive (60 days) — the role was seen open on its employer's own careers board on some day in that range",
+  "fully_covered": false,
+  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-07-02. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
+ },
+ "store": {
+  "records": 154,
+  "by_status": {
+   "closed": 52,
+   "open": 91,
+   "purged": 7,
+   "superseded": 4
+  },
+  "earliest_first_seen": "2026-08-16",
+  "earliest_recorded_run": "2026-08-27",
+  "retention": "nothing is ever deleted; a wrong row becomes superseded or purged and keeps its line"
+ },
+ "excluded": {
+  "superseded": 4,
+  "purged": 7,
+  "purge_reason": "registry row points at an aggregator, so the postings were never this row's",
+  "outside_window": 0,
+  "undatable": 0,
+  "note": "superseded = the same posting also fetched under a second company name, kept once. purged = the registry row was never an employer."
+ },
+ "conventions": {
+  "list_separator": ";",
+  "booleans": "true / false",
+  "empty": "an empty cell means we do not hold the value, never zero and never false",
+  "dates": "ISO YYYY-MM-DD, UTC",
+  "encoding": "UTF-8, no BOM, CRLF line endings, RFC4180 quoting"
+ },
+ "description_text": {
+  "in_this_file": false,
+  "why": "the full text is up to 6,000 characters per role with embedded newlines: it breaks naive parsers, and this file is committed to git every day",
+  "file": "roles_text.jsonl",
+  "join": "role_id",
+  "columns_here": [
+   "description_len",
+   "description_truncated",
+   "description_sha1"
+  ]
+ },
+ "funnel": {
+  "file": "funnel.csv",
+  "what": "one row per full daily run: postings fetched -> Israel -> judged -> matched -> alive -> board -> emailed"
+ },
+ "columns": {
+  "role_id": {
+   "doc": "Opaque stable id for the role — a normalised slug derived from company and title (punctuation and corporate suffixes dropped), so DO NOT split it: use the company and title columns. It is the join key for roles_text.jsonl.",
+   "nulls": 0
+  },
+  "company": {
+   "doc": "Employer name as it appears on the board we read.",
+   "nulls": 0
+  },
+  "title": {
+   "doc": "Job title as posted.",
+   "nulls": 0
+  },
+  "location": {
+   "doc": "Location as posted (free text, usually an Israeli city).",
+   "nulls": 0
+  },
+  "url": {
+   "doc": "The posting's own address on the employer's careers board.",
+   "nulls": 0
+  },
+  "status": {
+   "doc": "open = still on the employer's board at last_seen; closed = it was gone when we last looked.",
+   "nulls": 0,
+   "enum": {
+    "open": "still listed on the employer's own careers board when we last looked",
+    "closed": "we looked at that board again and the posting was gone"
+   }
+  },
+  "posted_date": {
+   "doc": "The date the EMPLOYER states the role was posted. Empty when the board publishes none.",
+   "nulls": 15
+  },
+  "first_seen": {
+   "doc": "The first day this pipeline ever saw the role, across all of its spells. Not a posting date.",
+   "nulls": 0
+  },
+  "last_seen": {
+   "doc": "The last day this pipeline saw the role on its board. The window column.",
+   "nulls": 0
+  },
+  "date_estimate": {
+   "doc": "Best available 'when did this role appear': posted_date if there is one, else first_seen.",
+   "nulls": 0
+  },
+  "date_basis": {
+   "doc": "Which date date_estimate came from, and how much to trust it.",
+   "nulls": 0,
+   "enum": {
+    "posted_date": "the employer published a date and we use it",
+    "first_seen": "no published date; the day WE first saw it, which is an upper bound on how old the posting is",
+    "first_seen_oldest_for_company": "no published date, AND this is the oldest sighting we hold for this employer — so it may have arrived as part of a back catalogue when we started watching, rather than having been posted that day. Treat the date as 'not newer than this' only."
+   }
+  },
+  "days_observed": {
+   "doc": "Days from the FIRST day we ever saw this role (across all its spells) to the last, inclusive. Days we observed it, not days it was open — we only see it when a scan runs.",
+   "nulls": 0
+  },
+  "closed_on": {
+   "doc": "The day we recorded it closed. Empty while open.",
+   "nulls": 91
+  },
+  "emailed": {
+   "doc": "true if this role went out in a daily digest email.",
+   "nulls": 0
+  },
+  "emailed_on": {
+   "doc": "The date it was first emailed. Empty if never emailed.",
+   "nulls": 80
+  },
+  "episodes": {
+   "doc": "How many separate spells we have seen this role open (a reappearance after an absence starts a new one).",
+   "nulls": 0
+  },
+  "reposts": {
+   "doc": "How many times the employer bumped posted_date 3+ days past the start of the current spell.",
+   "nulls": 0
+  },
+  "repost_dates": {
+   "doc": "The posted_date values those bumps landed on, separated by ';'.",
+   "nulls": 123
+  },
+  "sources": {
+   "doc": "Which fetchers saw it (greenhouse, comeet, scrape, ...), separated by ';'.",
+   "nulls": 0
+  },
+  "host": {
+   "doc": "The hostname of url — the ATS or careers domain the posting lives on.",
+   "nulls": 0
+  },
+  "seniority_title": {
+   "doc": "Seniority read from the TITLE ALONE by keyword. Not the years figure.",
+   "nulls": 0,
+   "enum": {
+    "senior": "the title says senior/lead/principal/staff (or the Hebrew equivalent)",
+    "junior": "the title says junior/entry-level and does not also say senior",
+    "unknown": "the title carries no seniority word — most titles"
+   }
+  },
+  "years_experience": {
+   "doc": "Years of experience asked for, read from the DESCRIPTION text. Empty when the text does not say.",
+   "nulls": 24
+  },
+  "family": {
+   "doc": "Role family, from title first and the opening of the description second.",
+   "nulls": 0,
+   "enum": {
+    "Product Analyst": "role family, read from the title first and the opening of the description second",
+    "Marketing Analyst": "role family, read from the title first and the opening of the description second",
+    "BI & DWH": "role family, read from the title first and the opening of the description second",
+    "Data Engineering": "role family, read from the title first and the opening of the description second",
+    "Data Science": "role family, read from the title first and the opening of the description second",
+    "Product Manager": "role family, read from the title first and the opening of the description second",
+    "Business Analyst": "role family, read from the title first and the opening of the description second",
+    "Data Analyst": "role family, read from the title first and the opening of the description second",
+    "Other": "an analytics role that fits none of the families above"
+   }
+  },
+  "track": {
+   "doc": "IC = individual contributor, Lead = the title names a lead/manager/head.",
+   "nulls": 0,
+   "enum": {
+    "IC": "individual contributor",
+    "Lead": "the title names a lead, manager or head"
+   }
+  },
+  "degree_level": {
+   "doc": "Highest degree the posting requires or prefers.",
+   "nulls": 95,
+   "enum": {
+    "PhD": "highest degree the posting names",
+    "MSc": "highest degree the posting names",
+    "BSc": "highest degree the posting names"
+   }
+  },
+  "degree_status": {
+   "doc": "Whether that degree is required or merely preferred.",
+   "nulls": 95,
+   "enum": {
+    "required": "stated as a requirement",
+    "preferred": "stated as an advantage"
+   }
+  },
+  "degree_fields": {
+   "doc": "Fields of study named alongside it, separated by ';'.",
+   "nulls": 105,
+   "enum": {
+    "CS": "field of study named alongside the degree",
+    "Industrial Eng.": "field of study named alongside the degree",
+    "Info Systems": "field of study named alongside the degree",
+    "Statistics": "field of study named alongside the degree",
+    "Economics": "field of study named alongside the degree",
+    "Math": "field of study named alongside the degree",
+    "Engineering": "field of study named alongside the degree",
+    "Business": "field of study named alongside the degree",
+    "Finance": "field of study named alongside the degree",
+    "Life Sciences": "field of study named alongside the degree"
+   }
+  },
+  "ai": {
+   "doc": "How the posting expects AI to be used, separated by ';'. Empty when AI is not mentioned.",
+   "nulls": 99,
+   "enum": {
+    "AI for efficiency": "Expected to use AI tools (Copilot, ChatGPT, Cursor…) to work faster",
+    "AI for automation": "Using AI to automate processes and workflows",
+    "Building with AI": "Building AI/LLM-powered features, models or data products",
+    "AI (unspecified)": "AI named as a requirement without a stated purpose"
+   }
+  },
+  "skills": {
+   "doc": "Every skill found in title+description, separated by ';', in extraction order.",
+   "nulls": 10
+  },
+  "class_decision": {
+   "doc": "The classifier's verdict on the role when it was last judged.",
+   "nulls": 49,
+   "enum": {
+    "accept": "judged an analytics role in Israel",
+    "reject": "judged not one"
+   }
+  },
+  "class_path": {
+   "doc": "How that verdict was reached: keyword, llm, llm_cache, ...",
+   "nulls": 49
+  },
+  "description_len": {
+   "doc": "Characters of description text we hold. 0 when we captured none.",
+   "nulls": 0
+  },
+  "description_truncated": {
+   "doc": "true when the text sits exactly on the 6,000-character capture cap, i.e. the real posting is longer.",
+   "nulls": 0
+  },
+  "description_sha1": {
+   "doc": "sha1 of the description text; join to roles_text.jsonl to read it.",
+   "nulls": 3
+  },
+  "sector": {
+   "doc": "Company sector (firmographics).",
+   "nulls": 2
+  },
+  "sub_sector": {
+   "doc": "Narrower niche (firmographics, free text).",
+   "nulls": 2
+  },
+  "stage": {
+   "doc": "Company stage (firmographics).",
+   "nulls": 2,
+   "enum": {
+    "acquired-by-bigtech": "company stage, as researched (firmographics)",
+    "early-private": "company stage, as researched (firmographics)",
+    "growth-private": "company stage, as researched (firmographics)",
+    "private-enterprise": "company stage, as researched (firmographics)",
+    "public": "company stage, as researched (firmographics)"
+   }
+  },
+  "stage_note": {
+   "doc": "Ticker or acquisition note behind that stage.",
+   "nulls": 2
+  },
+  "size_band": {
+   "doc": "Headcount band (firmographics).",
+   "nulls": 2,
+   "enum": {
+    "S": "under 200 employees globally",
+    "M": "200-1,000",
+    "L": "1,000-5,000",
+    "XL": "over 5,000"
+   }
+  },
+  "employees_global": {
+   "doc": "Global headcount, all sites (firmographics).",
+   "nulls": 3
+  },
+  "founded": {
+   "doc": "Year founded (firmographics).",
+   "nulls": 5
+  },
+  "business_model": {
+   "doc": "How the company earns money (firmographics, free text).",
+   "nulls": 2
+  },
+  "customer_type": {
+   "doc": "Who buys from it (firmographics, free text).",
+   "nulls": 2
+  },
+  "il_center": {
+   "doc": "Its main Israeli site(s) (firmographics).",
+   "nulls": 2
+  },
+  "firmo_as_of": {
+   "doc": "The date those company facts were researched.",
+   "nulls": 2
+  },
+  "firmo_match": {
+   "doc": "How the company facts were matched to this row.",
+   "nulls": 0,
+   "enum": {
+    "exact": "company facts matched this row's company name exactly",
+    "identity": "matched after normalising the name (suffixes, aliases, 'X Israel')",
+    "none": "we hold no researched facts for this company; every firmographics column is empty"
+   }
+  },
+  "skills_bi": {
+   "doc": "Skills of category 'bi' only, separated by ';' — group by this without parsing.",
+   "nulls": 71
+  },
+  "skills_query": {
+   "doc": "Skills of category 'query' only, separated by ';' — group by this without parsing.",
+   "nulls": 36
+  },
+  "skills_de": {
+   "doc": "Skills of category 'de' only, separated by ';' — group by this without parsing.",
+   "nulls": 84
+  },
+  "skills_pa": {
+   "doc": "Skills of category 'pa' only, separated by ';' — group by this without parsing.",
+   "nulls": 124
+  },
+  "skills_prog": {
+   "doc": "Skills of category 'prog' only, separated by ';' — group by this without parsing.",
+   "nulls": 82
+  },
+  "skills_method": {
+   "doc": "Skills of category 'method' only, separated by ';' — group by this without parsing.",
+   "nulls": 40
+  },
+  "skills_cloud": {
+   "doc": "Skills of category 'cloud' only, separated by ';' — group by this without parsing.",
+   "nulls": 124
+  },
+  "skills_lang": {
+   "doc": "Skills of category 'lang' only, separated by ';' — group by this without parsing.",
+   "nulls": 103
+  }
+ }
+}

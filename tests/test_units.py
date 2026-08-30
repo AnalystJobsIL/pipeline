@@ -19165,13 +19165,16 @@ def test_the_window_is_on_last_seen_and_its_edge_is_inclusive(tmp_path):
     records carry one) rather than a claim by an employer who publishes a date on ~5% of
     company-board postings."""
     from pipeline import roles
-    recs = {"a|x": _rec("a|x", last_seen="2026-07-01", first_seen="2026-06-01"),
-            "b|y": _rec("b|y", last_seen="2026-06-30", first_seen="2026-06-01"),
-            "c|z": _rec("c|z", last_seen="2026-06-29", first_seen="2026-06-01")}
+    recs = {"a|x": _rec("a|x", last_seen="2026-07-02", first_seen="2026-06-01"),
+            "b|y": _rec("b|y", last_seen="2026-07-01", first_seen="2026-06-01"),
+            "c|z": _rec("c|z", last_seen="2026-06-30", first_seen="2026-06-01"),
+            "d|w": _rec("d|w", last_seen="2026-08-30", first_seen="2026-06-01")}
     rows, counts = roles.build_rows(recs, run_date="2026-08-29", window_days=60)
-    assert counts["window_start"] == "2026-06-30" and counts["window_end"] == "2026-08-29"
+    # 60 days means a 60-day SPAN, both edges inclusive — `days: 60` used to describe a
+    # 61-day range, and the upper edge was not enforced at all
+    assert counts["window_start"] == "2026-07-01" and counts["window_end"] == "2026-08-29"
     assert {r["role_id"] for r in rows} == {"a|x", "b|y"}, "the start day itself is IN"
-    assert counts["outside_window"] == 1
+    assert counts["outside_window"] == 2, "and a last_seen AFTER the run date is OUT"
     # a 2024 posted_date on a role still on its board belongs in the window: the operator
     # set no recency bar on INCLUSION, and the 60 days is the CSV's window, not a scope rule
     rows, _ = roles.build_rows({"a|x": _rec("a|x", posted_date="2024-10-22")},
@@ -19195,13 +19198,13 @@ def test_date_basis_names_which_date_placed_the_row_including_a_first_scan(tmp_p
     by = {r["role_id"]: r for r in rows}
     assert by["a|dated"]["date_basis"] == "posted_date"
     assert by["a|dated"]["date_estimate"] == "2026-08-25"
-    assert by["b|old"]["date_basis"] == "first_seen_backfill"
+    assert by["b|old"]["date_basis"] == "first_seen_oldest_for_company"
     assert by["b|new"]["date_basis"] == "first_seen"
     assert by["b|new"]["date_estimate"] == "2026-08-27"
     assert counts["basis:posted_date"] == 1
     # every value the column can take is documented for a reader with no context
     assert set(roles._ENUMS["date_basis"]) == {"posted_date", "first_seen",
-                                               "first_seen_backfill"}
+                                               "first_seen_oldest_for_company"}
 
 
 def test_the_dataset_flattens_tags_onto_documented_columns(tmp_path):
@@ -19214,7 +19217,8 @@ def test_the_dataset_flattens_tags_onto_documented_columns(tmp_path):
     assert r["skills_query"] == "SQL" and r["skills_bi"] == "Looker"
     assert r["skills_de"] == "" and r["skills_cloud"] == ""
     assert r["family"] == "Data Analyst" and r["track"] == "IC"
-    assert r["years_experience"] == 3 and r["seniority_title"] == ""
+    assert r["years_experience"] == "3" and r["seniority_title"] == ""
+    assert all(isinstance(v, str) for v in r.values()), "every cell is already a string"
     assert r["degree_level"] == "BSc" and r["degree_status"] == "required"
     assert r["degree_fields"] == "Statistics" and r["ai"] == "Building with AI"
     # the per-category columns must cover the vocabulary, or a skill vanishes from the file
@@ -19222,6 +19226,7 @@ def test_the_dataset_flattens_tags_onto_documented_columns(tmp_path):
     # a record with no tags at all (3 of 154 today) is a row of blanks, never a crash
     rows, _ = roles.build_rows({"a|x": _rec("a|x", tags=None)}, run_date="2026-08-30")
     assert rows[0]["skills"] == "" and rows[0]["family"] == "" and rows[0]["years_experience"] == ""
+    assert rows[0]["episodes"] == "0" and rows[0]["days_observed"] != ""
 
 
 def test_no_value_in_the_vocabulary_can_break_the_list_separator(tmp_path):
@@ -19308,7 +19313,8 @@ def test_truncated_descriptions_are_declared_rather_than_shipped_silently(tmp_pa
     by = {r["role_id"]: r for r in rows}
     assert by["a|x"]["description_truncated"] == "true"
     assert by["b|y"]["description_truncated"] == "false"
-    assert by["c|z"]["description_len"] == 0
+    assert by["c|z"]["description_len"] == "0"
+    assert by["c|z"]["description_sha1"] == "", "sha1('') is not a join key, it is a dead end"
     assert by["a|x"]["description_sha1"] == "abc", "the join key into roles_text.jsonl"
 
 
@@ -19327,7 +19333,7 @@ def test_company_facts_join_by_name_and_then_by_identity(tmp_path):
     by = {r["role_id"]: r for r in rows}
     assert by["acme|x"]["firmo_match"] == "exact" and by["acme|x"]["sector"] == "fintech"
     assert by["acme ltd|y"]["firmo_match"] == "identity"
-    assert by["acme ltd|y"]["employees_global"] == 500
+    assert by["acme ltd|y"]["employees_global"] == "500"
     assert by["nobody|z"]["firmo_match"] == "none" and by["nobody|z"]["sector"] == ""
     assert counts["firmo:exact"] == 1 and counts["firmo:identity"] == 1
     assert counts["firmo:none"] == 1
@@ -19501,3 +19507,293 @@ def test_the_run_writes_the_dataset_and_only_a_full_run_writes_the_funnel():
     assert src.index("ledger.record_run(") < i_export
     # ...and before company intel, so a company-intel failure cannot cost a day of dataset
     assert i_export < src.index("company_intel.enrich_for_run(")
+
+
+# --- roles, 2026-08-30 (wave 1): what two adversarial passes broke ------------------------
+# Every test below reproduces a defect an attacker demonstrated against the first version of
+# the dataset export, on real data or on a record shape one hand-edit away from it.
+def test_an_impossible_date_can_no_longer_freeze_the_whole_roles_lane():
+    """`_ISO` matched the SHAPE only, so `2026-08-32`, `2026-13-01` and `0000-00-00` — the
+    standard MySQL/ATS null-date sentinel, i.e. one board away — passed it and then raised
+    out of `fromisoformat` inside `_record_run`'s repost check. One bad date on one board
+    took `record_run` down, froze the ledger, and cost that run's statuses, closures and
+    episodes. Both upstream normalisers pass such a string straight through."""
+    from pipeline import roles
+    for bad in ("2026-08-32", "2026-13-01", "2026-02-30", "0000-00-00", "2026-00-10"):
+        assert roles._iso(bad) is False, bad
+    for good in ("2026-08-29", "2024-02-29", "2026-01-01"):
+        assert roles._iso(good) is True, good
+    assert roles._iso("2026-8-1") is False and roles._iso("") is False
+    # ...and the dataset survives one in the ledger rather than losing the day
+    recs = {"a|x": _rec("a|x", posted_date="2026-08-32"),
+            "a|older": _rec("a|older", first_seen="2026-08-01", posted_date=""),
+            "b|y": _rec("b|y", last_seen="2026-02-30")}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    assert len(rows) == 2 and counts["undatable"] == 1, "an impossible last_seen places nothing"
+    by = {r["role_id"]: r for r in rows}
+    assert by["a|x"]["posted_date"] == "", "an impossible posted_date is no date"
+    assert by["a|x"]["date_basis"] == "first_seen", "...so the row falls back, not crashes"
+
+
+def test_the_shrink_guard_counts_keys_because_a_count_can_be_gamed_two_ways():
+    """A count was the first version and an adversarial pass took it apart twice over: one
+    unreadable line plus one absorbed role nets to zero, and a bare substitution never moves
+    the count at all. Both lose a record with its episodes, `sent`, tags and status."""
+    from pipeline import roles
+    import tempfile, os as _os
+    d = tempfile.mkdtemp()
+    p = _os.path.join(d, "roles.jsonl")
+    roles.dump(p, _ledger(3))
+    # substitution: 3 in, 3 out, one role_id silently replaced
+    swapped = {k: v for k, v in _ledger(3).items() if k != "c0|data analyst"}
+    swapped["brand|new"] = _rec("brand|new")
+    try:
+        roles.dump(p, swapped)
+        raise AssertionError("a substitution must not pass the guard")
+    except roles.LedgerShrink as e:
+        assert "c0|data analyst" in str(e), "the alarm names what would be lost"
+    # The bad-line case, which needs a realistic file: one unreadable line among 30 is BELOW
+    # CORRUPT_FRAC, so `load` reports `ok` with 30 records and that morning's absorption
+    # hides the shortfall. The count nets to zero; the key set does not.
+    big = _ledger(30)
+    roles.dump(p, big, allow_shrink=True)
+    with open(p, "a", encoding="utf-8") as f:
+        f.write("{not json" + chr(10))
+    have, status, bad = roles.load(p)
+    assert status == "ok" and bad == 1 and len(have) == 30, "the bad line is tolerated"
+    grown = {k: v for k, v in big.items() if k != "c1|data analyst"}
+    grown["fresh|role"] = _rec("fresh|role")
+    try:
+        roles.dump(p, grown)
+        raise AssertionError("a net-zero write that drops a role must not pass")
+    except roles.LedgerShrink as e:
+        assert "c1|data analyst" in str(e)
+
+
+def test_one_orphan_description_cannot_wedge_the_text_file_for_ever(tmp_path):
+    """The guard must not cause a new outage. `flush` prunes `roles_text.jsonl` to the
+    records that still exist — that prune is the file's contract — so a single orphaned text
+    key (the wholesale restore pairing an older `roles.jsonl` with a newer text file) made
+    EVERY future write of the descriptions file refuse, with an alarm every morning and no
+    way out but a human."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-08-30")
+    lg.records = _ledger(3)
+    lg.text = {rid: {"role_id": rid, "sha1": "a", "len": 5, "description": "hello",
+                     "updated": "2026-08-29"} for rid in lg.records}
+    lg.text["ghost|role"] = {"role_id": "ghost|role", "sha1": "b", "len": 5,
+                             "description": "orphan", "updated": "2026-08-29"}
+    roles.dump(lg.text_path, lg.text)
+    lg.text_dirty = True
+    lg.dirty = True
+    assert lg.flush("2026-08-30") is True, "the deliberate prune is allowed"
+    assert lg.alarms == []
+    back, _s, _b = roles.load(lg.text_path)
+    assert set(back) == set(lg.records) and "ghost|role" not in back
+    # ...but losing the text of a role that still EXISTS is still refused
+    lg.text = {k: v for k, v in lg.text.items() if k != sorted(lg.text)[0]}
+    lg.text_dirty = True
+    assert lg.flush("2026-08-30") is False
+    assert any("SHRINK refused" in a for a in lg.alarms)
+    st.close()
+
+
+def test_the_shrink_alarm_says_which_file_and_whether_the_record_landed(tmp_path):
+    """`flush` writes the record file first and clears `dirty`. A refusal on the TEXT dump
+    then reported 'nothing was recorded either' about a run whose records had already landed
+    in that same call — an operator reading the Stages line drew the opposite conclusion."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-08-30")
+    lg.records = _ledger(3)
+    lg.dirty = True
+    lg.flush("2026-08-30")                       # records land
+    roles.dump(lg.text_path, {rid: {"role_id": rid, "sha1": "a", "len": 1,
+                                    "description": "x", "updated": "2026-08-29"}
+                              for rid in list(lg.records) + ["extra|one"]})
+    lg.text = {}                                 # a wholesale loss, not the prune
+    lg.text_dirty = True
+    lg.alarms = []
+    assert lg.flush("2026-08-30") is False
+    msg = " ".join(lg.alarms)
+    assert "roles_text.jsonl" in msg, "name the file that was refused"
+    assert "already been written" in msg and "nothing was recorded either" not in msg
+    st.close()
+
+
+def test_a_cell_can_never_be_a_spreadsheet_formula_or_carry_a_control_byte():
+    """This file is downloaded by strangers and opened in Excel and Sheets. A title or a
+    location comes from an employer's own careers board — outside the trust boundary — and
+    `fetchers._clean` only collapses whitespace. A NUL is worse than loud: pandas' C parser
+    truncates the cell at it silently while the csv module keeps the whole string."""
+    from pipeline import roles
+    for payload in ("=cmd|' /C calc'!A0", '=HYPERLINK("http://evil.tld","x")', "+1-1",
+                    "-1+1", "@SUM(1,2)"):
+        out = roles._cell(payload)
+        assert out.startswith("'"), payload
+        assert out[1:] == payload
+    assert roles._cell("-42") == "-42" and roles._cell("-3.5") == "-3.5", "numbers stay numbers"
+    assert roles._cell("Acme\x00Corp") == "AcmeCorp"
+    assert roles._cell("a\x1fb\x7fc") == "abc"
+    assert roles._cell(None) == "" and roles._cell(True) == "true"
+    rows, _c = roles.build_rows({"a|x": _rec("a|x", company="=cmd|x", title="Acme\x00Corp")},
+                                run_date="2026-08-30")
+    assert rows[0]["company"] == "'=cmd|x" and rows[0]["title"] == "AcmeCorp"
+
+
+def test_a_malformed_url_costs_a_column_and_never_the_dataset():
+    """`urlparse` RAISES on an unrendered template or an unbalanced bracket — a routine
+    scrape failure. Unguarded it cost the whole day's export, and because the poison sits in
+    the record, every day after it until a human edited the line."""
+    from pipeline import roles
+    for bad in ("https://[[HOST]]/jobs/1", "http://[::1", "//[tpl]/job",
+                "https://ex]ample.com/j"):
+        assert roles._host(bad) == "", bad
+    assert roles._host("https://boards.greenhouse.io/x/jobs/1") == "boards.greenhouse.io"
+    rows, _c = roles.build_rows({"a|x": _rec("a|x", url="https://[[HOST]]/jobs/1")},
+                                run_date="2026-08-30")
+    assert len(rows) == 1 and rows[0]["host"] == "" and rows[0]["url"]
+
+
+def test_a_half_repaired_record_is_skipped_or_blanked_but_never_raises():
+    """The module's own docstring says an export bug must never cost a day. Nine distinct
+    malformed shapes used to raise straight out of `build_rows`."""
+    from pipeline import roles
+    shapes = [{"tags": "senior"}, {"tags": {"degree": "BSc"}}, {"class": "accept"},
+              {"episodes": 3}, {"reposts": 2}, {"sources": ["scrape", None]},
+              {"sources": 5}, {"url": 12345}, {"status": "zombie"},
+              {"desc_len": "lots"}, {"sent": ["a"]}, {"tags": {"skills": "SQL"}}]
+    for i, patch in enumerate(shapes):
+        recs = {"a|x": _rec("a|x", **patch), "b|y": _rec("b|y")}
+        rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+        assert len(rows) >= 1, patch
+        assert all(isinstance(v, str) for r in rows for v in r.values()), patch
+    # a status the enum does not document is never published as one
+    rows, counts = roles.build_rows({"a|x": _rec("a|x", status="zombie")},
+                                    run_date="2026-08-30")
+    assert rows == [] and counts["unreadable"] == 1
+
+
+def test_a_scalar_where_a_list_belongs_is_not_exploded_into_characters():
+    """`_j("greenhouse")` returned `g;r;e;e;n;h;o;u;s;e` — a plausible-looking cell no reader
+    could tell from a real list, from exactly the shape a half-repaired record has."""
+    from pipeline import roles
+    assert roles._j("greenhouse") == "greenhouse"
+    assert roles._j(["a", "b"]) == "a;b"
+    assert roles._j(None) == "" and roles._j(5) == ""
+    assert roles._j([None, "x", {"d": 1}, ["y"]]) == "x", "no None token, no Python repr"
+    assert roles._j(["a;b", "c"]) == "a,b;c"
+
+
+def test_every_closed_vocabulary_the_file_emits_is_documented_in_the_meta():
+    """Six closed vocabularies shipped with no `enum` — `family`, `stage`, `size_band`,
+    `degree_level`, `degree_fields`, `ai` — while `track` (2 values) was documented, so the
+    omission was arbitrary. Documenting every enum is the meta file's one job, and these are
+    derived from their source modules so they cannot drift from what is emitted."""
+    from pipeline import roles, roleprofile, firmographics
+    v = roles._closed_vocabularies()
+    assert set(v) >= {"family", "ai", "degree_level", "degree_fields", "stage", "size_band"}
+    assert set(v["family"]) == {f for f, _rx in roleprofile._FAMILIES} | {"Other"}
+    assert set(v["degree_level"]) == {lv for lv, _rx in roleprofile._DEG_LEVELS}
+    assert set(v["degree_fields"]) == {f for f, _rx in roleprofile._DEG_FIELDS}
+    assert set(v["stage"]) == set(firmographics.STAGES)
+    assert "AI (unspecified)" in v["ai"], "the label classify_ai invents is in neither list"
+    assert all(prose.strip() for d in v.values() for prose in d.values())
+    # and they reach the meta, without displacing a hand-written one
+    recs = _ledger(2)
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
+    assert set(meta["columns"]["family"]["enum"]) == set(v["family"])
+    assert set(meta["columns"]["status"]["enum"]) == {"open", "closed"}
+    # every value actually emitted must be documented — the whole point
+    for col in ("status", "date_basis", "seniority_title", "track", "family", "firmo_match"):
+        emitted = {r[col] for r in rows if r[col]}
+        assert emitted <= set(meta["columns"][col]["enum"]), (col, emitted)
+
+
+def test_the_window_has_two_edges_and_the_rule_string_states_both():
+    """The upper edge was neither enforced nor mentioned: re-deriving the file with an older
+    `--date` published a window ending 2026-08-20 while 128 of its 143 rows had been seen
+    after that. `days` also described a 61-day span."""
+    from pipeline import roles
+    recs = {"in|a": _rec("in|a", last_seen="2026-08-20", first_seen="2026-08-20"),
+            "future|b": _rec("future|b", last_seen="2026-08-29", first_seen="2026-08-29")}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-20", window_days=60)
+    assert {r["role_id"] for r in rows} == {"in|a"}
+    assert counts["outside_window"] == 1
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-20")
+    w = meta["window"]
+    assert w["start"] in w["rule"] and w["end"] in w["rule"]
+    assert "60 days" in w["rule"]
+    span = (dt.date.fromisoformat(w["end"]) - dt.date.fromisoformat(w["start"])).days + 1
+    assert span == w["days"], "days must equal the inclusive span it describes"
+
+
+def test_a_reappearing_role_keeps_the_first_day_we_ever_saw_it():
+    """`store.upsert_matched` RESETS `first_seen` when a role reappears after an absence, and
+    the ledger keeps the earlier spells in `episodes` rather than undoing it. Reading
+    `first_seen` alone reported a role watched since 2026-08-16 as first seen on 08-25 —
+    measured on 5 companies and 14 records of the real ledger — understating `days_observed`
+    by up to 13 days and making a long-known employer read as a first sighting."""
+    from pipeline import roles
+    rec = _rec("wix|data analyst", company="Wix", first_seen="2026-08-25",
+               last_seen="2026-08-29", posted_date="",
+               episodes=[{"first_seen": "2026-08-16", "last_seen": "2026-08-20",
+                          "posted_date": ""},
+                         {"first_seen": "2026-08-25", "last_seen": "2026-08-29",
+                          "posted_date": ""}])
+    assert roles._earliest_seen(rec) == "2026-08-16"
+    other = _rec("wix|bi analyst", company="Wix", first_seen="2026-08-20",
+                 last_seen="2026-08-29", posted_date="")
+    rows, _c = roles.build_rows({"wix|data analyst": rec, "wix|bi analyst": other},
+                                run_date="2026-08-29")
+    by = {r["role_id"]: r for r in rows}
+    assert by["wix|data analyst"]["first_seen"] == "2026-08-16"
+    assert by["wix|data analyst"]["days_observed"] == "14"
+    # the oldest sighting for the company is the reappearing role's FIRST spell, so the
+    # sibling first seen on 08-20 is not the oldest and must not be flagged as one
+    assert by["wix|data analyst"]["date_basis"] == "first_seen_oldest_for_company"
+    assert by["wix|bi analyst"]["date_basis"] == "first_seen"
+    # a record whose dates invert is corrupt, not a role open for minus eight days
+    rows, _c = roles.build_rows(
+        {"a|x": _rec("a|x", first_seen="2026-08-29", last_seen="2026-08-20", episodes=[])},
+        run_date="2026-08-30")
+    assert rows[0]["days_observed"] == "1"
+
+
+def test_the_backfill_label_claims_only_what_the_ledger_can_know():
+    """The first version stamped `first_seen_backfill` and told the reader it meant "the
+    first day we ever SCANNED this employer". Checked against the registry's own notes, that
+    was false for 8 of the 13 rows it labelled — HiBob's row reads `re-audit 2026-08-21`,
+    eight days before the `first_seen` being called a first scan. The ledger holds sightings
+    of ROLES, not scans of BOARDS. The value now claims only the weaker true thing."""
+    from pipeline import roles
+    assert "first_seen_backfill" not in roles._ENUMS["date_basis"]
+    doc = roles._ENUMS["date_basis"]["first_seen_oldest_for_company"]
+    assert "scan" not in doc.lower(), "it cannot claim to know when we first scanned a board"
+    assert "oldest sighting" in doc
+
+
+def test_a_firmographics_record_that_is_empty_is_still_a_match():
+    """`match = "exact" if fm else ""` made an empty-dict profile an undocumented `""`, and
+    the mail's `firmo N of M unmatched` counter then under-reported."""
+    from pipeline import roles
+    rows, counts = roles.build_rows({"a|x": _rec("a|x", company="Acme")},
+                                    run_date="2026-08-30", firmographics={"Acme": {}})
+    assert rows[0]["firmo_match"] == "exact" and rows[0]["sector"] == ""
+    assert counts["firmo:exact"] == 1 and not counts["firmo:"]
+
+
+def test_a_column_build_rows_produces_but_columns_forgets_cannot_vanish_silently(tmp_path):
+    """`extrasaction="raise"` was dead: the row was projected onto COLUMNS before DictWriter
+    saw it, so a new column nobody registered disappeared without a word."""
+    from pipeline import roles
+    rows = [{c: "" for c in roles.COLUMNS}]
+    rows[0]["SECRET_NEW_COL"] = "x"
+    cp, mp, _f = roles.dataset_paths(str(tmp_path / "seen.db"))
+    try:
+        roles.write_dataset(cp, mp, rows, {"rows": 1})
+        raise AssertionError("an unregistered column must not be dropped in silence")
+    except ValueError as e:
+        assert "SECRET_NEW_COL" in str(e)

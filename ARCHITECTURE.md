@@ -4840,6 +4840,150 @@ N role(s) sqlite had lost`, `roles ledger write failed: …` (the sqlite side st
 `roles ledger N != store N after sync`, `roles mass-close held (…)`. Claim conflicts also
 print `::warning::roles …`.
 
+### The public dataset — `cloud_state/roles.csv`
+
+The product is a dataset as well as a board: **one row per role, a rolling 60-day window,
+joined with everything the repo already holds**, for anyone to download. Three files, written
+by `pipeline/roles.py` beside the ledger and committed by the digest's existing
+`--own cloud_state`:
+
+| file | what |
+|---|---|
+| `cloud_state/roles.csv` | one row per role, 54 columns |
+| `cloud_state/roles.csv.meta.json` | what the CSV cannot say about itself: window, exclusions, per-column null counts, every enum's values spelled out |
+| `cloud_state/funnel.csv` | one row per FULL run: postings → Israel → judged → matched → alive → board → emailed |
+
+Raw address, stable, and named in the meta file as `download_url`:
+`https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv`.
+**It is not on the Pages site yet** — the publish step copies by name and that file is
+`infra`'s, so the diff is written out in `docs/BACKLOG.md` 453 and the meta carries
+`"published_on_pages": false` rather than letting the file overstate where it is.
+
+`dataset_paths` derives from the db path exactly as `ledger_paths` does, so a
+`--db /tmp/scratch.db` or `--only` run writes its dataset next to its own store and can no
+more clobber the published CSV than it can the published ledger.
+
+**The window is on `last_seen`, and that is deliberately not a second answer to a question
+this repo already solved.** `pipeline/run.py`'s `_posted_in` dates the 48h email, and it is
+right for that: the email asks *is this NEWS*, so it leans on `posted_date` and refuses to
+call a company's first-scan back catalogue fresh. The dataset asks *was this role LIVE in the
+window*, and for that `last_seen` is the honest axis — it is an observation we made (154 of
+154 records carry one) rather than a claim by an employer who publishes a date on ~5% of
+company-board postings. `_posted_in`'s ladder is not discarded, it is **published as data**:
+
+| column | meaning |
+|---|---|
+| `posted_date` | what the employer said, empty on 15 of 143 rows |
+| `first_seen` / `last_seen` | what we observed |
+| `date_estimate` | the best available "when did this appear" |
+| `date_basis` | which of the two it came from — `posted_date` (128), `first_seen` (2), or `first_seen_oldest_for_company` (13) |
+
+The third value is the case `_posted_in` refuses, and its NAME is the second version. The
+first one said `first_seen_backfill` and told the reader it meant "the first day we ever
+SCANNED this employer" — an adversarial pass checked that against the registry's own notes
+and found it false for **8 of the 13 rows it labelled**: HiBob's row reads `re-audit
+2026-08-21`, eight days before the `first_seen` being called a first scan. The ledger holds
+sightings of ROLES, not scans of BOARDS, so a company we have watched for a week that simply
+had no matching opening until yesterday is indistinguishable here from a board we met
+yesterday. The value now claims only what the ledger can know: this is the oldest sighting we
+hold for this employer, so its date may be when a back catalogue arrived rather than when the
+role was posted. A public dataset whose date column silently means two different things is
+worse than one that admits it — and a label that overstates its own confidence is the same
+failure wearing a better coat.
+
+`first_seen` and `days_observed` read the record's `episodes` as well as its current spell,
+because `store.upsert_matched` RESETS `first_seen` when a role reappears after an absence.
+Reading the column alone reported roles we had watched since 2026-08-16 as first seen on
+08-25 (measured: 5 companies, 14 records) and understated `days_observed` by up to 13 days.
+
+The window has **two** edges and the meta's `rule` string states both. The upper one was
+neither enforced nor mentioned in the first version, so re-deriving the file with an older
+`--date` published a window ending 2026-08-20 while 128 of its 143 rows had been seen after
+it; `days` also described a 61-day span.
+
+**One row per role means one row per ROLE.** `superseded` (the same posting fetched under a
+second company name) and `purged` (a registry row that was never an employer — `Tel Aviv` is a
+CITY) are excluded, and both are **counted in the meta**, because a public file that silently
+drops rows is the thing this one exists not to be. A purge now also records `purge_reason` on
+the record itself: it was previously indistinguishable from a `closed` role except by reading
+the registry as it stood that morning, which is not recoverable later.
+
+**The window is aspirational and the file says so.** The store began accumulating on
+2026-08-16, so "the past 60 days" is really "everything we hold" until about mid-October. The
+meta carries `window.fully_covered: false` and a note naming the earliest observation, so that
+a gap before it reads as OUR blindness and not the market's. That distinction is the whole
+difference between a dataset and a misleading one, and it turns itself off: once the earliest
+observation predates the window start, the note becomes `COVERED`.
+
+**The description text is not in the CSV.** It is up to 6,000 characters per role with
+embedded newlines — it breaks naive parsers, and this file is committed to git every day,
+where history is unshrinkable. The CSV carries `description_len`, `description_sha1` (the join
+key) and `description_truncated`; the text stays in `roles_text.jsonl` beside it, keyed by
+`role_id`. `description_truncated` is `true` when a row sits exactly on the capture cap
+(`store.DESC_MAX`, 6,000 — the same number as `fetchers._DESC_MAX` and `jdfill.DESC_MAX`, all
+three pinned equal by a test): 7 of 143 rows today, one of them Amazon's, cut mid-sentence at
+"...If you have a". The true length is already gone before the store sees it, so it cannot be
+reported; that the row IS cut can be, and shipping a silently truncated public file was never
+an option.
+
+**Every cell is sanitised, and that is not decoration.** A title and a location come from an
+employer's own careers board — outside the trust boundary — and `fetchers._clean` only
+collapses whitespace. Two classes get through it and both were live in the first version: a
+leading `=`, `+`, `-` or `@` makes Excel, LibreOffice and Google Sheets execute the cell as a
+FORMULA (`=cmd|' /C calc'!A0`, `=HYPERLINK(…)`), and a NUL byte makes pandas' C parser
+truncate the cell silently while the `csv` module keeps the whole string and R refuses the
+file outright. `_cell` strips control bytes and prefixes a text quote to anything a
+spreadsheet would evaluate. `_host` never raises on a malformed href (an unrendered
+`https://[[HOST]]/…` template is a routine scrape failure and used to cost the whole day's
+export, every day, until a human edited the record), and `_j` wraps a bare string rather than
+exploding it into `g;r;e;e;n;h;o;u;s;e`.
+
+Lists — `skills`, `sources`, `ai`, `degree_fields`, `repost_dates` — are joined on `;`, and
+`skills` is ALSO exploded into eight per-category columns (`skills_query`, `skills_bi`,
+`skills_de`, `skills_pa`, `skills_prog`, `skills_method`, `skills_cloud`, `skills_lang`) so
+that an analysis can group by category without parsing anything. A test asserts no value in
+`roleprofile`'s vocabulary contains the separator, and that the eight columns cover it.
+
+`seniority_title` and `years_experience` are both in the file and they are different
+measurements: the first is read from the TITLE by keyword (`roles.seniority_of`, the same
+`_seniority` the classifier calls), the second from the DESCRIPTION text by `roleprofile`.
+
+**The funnel stops being thrown away.** Every number in `funnel.csv` was already computed and
+printed once per run — `classify: 6428 judged = keyword 6053 + llm 67 + cache 308`, then
+`email 4 · board 91 · scanned 1000` — and then dropped on the floor with the runner, so
+"is this getting better or worse" could only be answered by re-deriving it by hand. Only a
+FULL run writes a row (a scoped run's "companies scanned" is a flag on the command line, not a
+measurement), a re-run replaces its own date's row, and an empty cell means "not measured"
+while a `0` means measured-as-zero.
+
+**Retention is now load-bearing, so `dump()` refuses to shrink.** Nothing in this module ever
+deleted a record — a wrong row becomes `superseded` or `purged`, both of which keep the line —
+so a write that would drop one is a bug upstream, not a deletion anybody asked for.
+`roles.dump` raises `LedgerShrink` and keeps the file; `flush` turns that into a `Stages:`
+alarm naming the file and whether the record half had already landed, and the day still ships.
+
+It compares **key sets, not counts**. A count was the first version and an adversarial pass
+took it apart in two moves: one unreadable line plus one absorbed role nets to zero (`load`
+drops a bad line below `CORRUPT_FRAC` and still reports `ok`), and a bare substitution — one
+`role_id` out, another in — never moves the count at all. Where sqlite still holds the row it
+returns as `_fresh`, so `episodes`, `sent`, `emailed_on`, `class`, `tags` and the ledger-only
+`status` are gone while the count says nothing was lost. `flush` passes `may_drop` for the
+one deliberate removal, the prune of `roles_text.jsonl` to the records that still exist —
+without that exemption a single orphaned text key (the restore path pairing an old
+`roles.jsonl` with a newer text file) refused EVERY future write of the descriptions file,
+for ever, which is the guard causing a worse outage than the one it prevents.
+
+What it does **not** cover is the wholesale `cp -rT` restore in `daily-digest.yml`, which
+never goes through this function at all (BACKLOG 125/160).
+
+**And the artefact reports its own staleness.** `open_sync` compares the meta file's
+`run_date` against the newest date in the sqlite `runs` log; if a run completed without
+regenerating the dataset, the next morning's mail says
+`roles dataset stale (roles.csv stamped …, last run …)`, and an absent file says
+`roles dataset missing`. A scratch store has an empty run log and stays silent, which is what
+a local experiment should get. This exists because an artefact nobody re-derives is one nobody
+notices going stale, which is the failure mode this whole section is a correction for.
+
 ### Guards
 
 `tests/test_units.py`, "lane: roles" — 56 cases, every one a defect the rehearsal or an
