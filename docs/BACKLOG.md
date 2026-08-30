@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**491 filed · 358 open · 133 closed · 7 half · 35 numbers name more than one item · 0 items name no lane.**
+**493 filed · 360 open · 133 closed · 7 half · 35 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 443.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 445.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -211,7 +211,7 @@ closure convention in the header.
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
-### infra — 99 open
+### infra — 100 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -312,6 +312,7 @@ closure convention in the header.
 - **439** `439@infra` **`check_unattended_proof` cannot run in CI, where the push it should judge lands** —
 - **440** `440@infra` **A test fixture spells the operator's personal GitHub handle**
 - **442** `442@infra` **The `guard` job no longer fits its 10-minute timeout, and a cancelled gate names
+- **444** `444@infra` **Nothing anywhere reports that master's own test gate is red**
 
 ### scraper — 26 open
 
@@ -430,7 +431,7 @@ closure convention in the header.
 - **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
 - **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
 
-### jd-text — 12 open
+### jd-text — 13 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -444,6 +445,7 @@ closure convention in the header.
 - **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
 - **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
 - **438** `438@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
 
 ### roles — 12 open
 
@@ -7804,3 +7806,88 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     2026-08-29** (html 105, native 27) inside the classify step, which is the right place: it
     runs after the Israel filter and before the tier, over exactly the postings that reach it.
     The 35 it misses are LinkedIn `no-markers`, which is **376**.
+
+443. **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
+     lane: `jd-text` (with `scraper`), opened by `docs` 2026-08-30 while giving every lane the
+     queue it owns. The operator's readings — **~30 LLM-bound postings a night that fail their
+     fill (23 `discovery-linkedin` no-markers, 7 scrape shell)** for `jd-text`, and **6
+     postings a night whose url is a listing page** for `scraper` — could **not** be
+     reproduced from `origin/master`. The newest committed enrich stamp says
+     `matched_why=auth-walled3+no-markers2 scrape_why=bd-shell2` (7 postings, 2026-08-29), and
+     the caches keep `_jd_attempted` but not the REASON a fill failed, so a card that was
+     refused for `no-markers` is indistinguishable from one refused for `auth-walled` the
+     moment the run ends. Two consequences, both live: a lane cannot state its own number
+     without re-running the night, and the definition of done now asks every lane to measure
+     after the push — which these two cannot do.
+
+     The fix is small: persist the refusal reason on the card (`_jd_why`, the string
+     `alarm_for` already computes) and count it, the way `zero_confirm.json` made the
+     zero-audit answerable per row instead of per run. Until then those two cells in
+     `docs/AGENT_BRIEF.md` carry the stock they CAN measure — 223 attempted scrape cards still
+     under 200 characters, 33 cards on a shared JD page — and say the flow is unmeasured.
+
+444. **Nothing anywhere reports that master's own test gate is red** — lane: `infra`, filed by
+     `docs` 2026-08-30 as the exact diff its clause 2 requires. `tests.yml` was non-green on
+     **100 consecutive runs** and not one line of the daily mail, the run log or any state
+     file said so; every lane read its own terminal and reported a passing suite. `docs`'s
+     number is that streak, and by the standard it just wrote into the brief the lane has
+     **NOT delivered**: the workflow exists (`tests.yml`, on every push) but there is **no
+     alarm**, so the number can only be watched by a human who thinks to look.
+
+     `pipeline/run.py::_workflow_step_alarms` reports failed steps of the CURRENT digest run;
+     nothing reports another workflow's health. Two hunks, both in files this lane may not
+     write. **Until `infra` applies them, nothing about CI health is automatic.**
+
+     **Hunk 1** — `.github/workflows/daily-digest.yml`, immediately before the existing
+     `- name: Report the run's outcome` step (line ~277):
+
+     ```yaml
+           - name: Alarm when master's own test gate is red (docs lane, BACKLOG 444)
+             id: ci_health
+             if: always()
+             continue-on-error: true
+             timeout-minutes: 5
+             env:
+               GH_TOKEN: ${{ github.token }}
+             run: |
+               CONC=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow tests.yml \
+                        --branch master --limit 1 --json conclusion --jq ".[0].conclusion")
+               RED=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow tests.yml \
+                        --branch master --limit 50 --json conclusion \
+                        --jq "[.[].conclusion] | (index(\"success\") // 50)")
+               echo "tests.yml on master: ${CONC:-unknown} (${RED} consecutive non-green)"
+               if [ "$CONC" != "success" ]; then
+                 echo "::warning::master test gate ${CONC:-unknown}, ${RED} consecutive non-green"
+                 python -c "import sys;from pipeline import stages;stages.stamp('ci', alarm='tests.yml on master is %s - %s consecutive non-green runs' % (sys.argv[1] or 'unknown', sys.argv[2]))" "${CONC}" "${RED}"
+               else
+                 python -c "from pipeline import stages;stages.stamp('ci', red_streak=0)"
+               fi
+     ```
+
+     `permissions:` at line 38 already grants `contents: write`; `gh run list` needs
+     `actions: read`, so that block gains one line:
+
+     ```yaml
+     permissions:
+       contents: write             # to commit updated cloud_state back to the repo
+       actions: read               # BACKLOG 444: read tests.yml's conclusion on master
+     ```
+
+     **Hunk 2** — `pipeline/run.py` line ~242, so the stamp reaches the mail's `Stages:` line
+     rather than a run page nobody opens. The stage list there is explicit, and a stage that
+     is not in it is invisible however loudly it stamps:
+
+     ```python
+                          + stages.alarms("firmo", 2)
+     +                    + stages.alarms("ci", 1)
+     ```
+
+     `stages.alarms("ci", 1)` returns `["ci never ran"]` until hunk 1 lands, which is the
+     correct reading — nothing is watching CI — and it goes quiet by itself on the first green
+     master. `cloud_state/pipeline_stages.json` already has a merge strategy, so no
+     `persist_state.STRATEGY` change is needed.
+
+     **Cadence and proof, once applied:** the 05:00 digest, daily; proved by the first
+     `event: schedule` run whose `Stages:` line carries a `ci ...` clause (or is silent with a
+     green master). Until then `docs`'s clause 2 reads: *not delivered — still a hand-drain.*
+

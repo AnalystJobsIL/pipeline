@@ -90,19 +90,27 @@ mode this whole documentation set is arranged against.
 
 Pick ONE. The split exists so that two lanes never write the same file.
 
-| lane | step | owns | primary files |
+| lane | step | the queue it owns — **today's reading, 2026-08-30**, and how to re-derive it | primary files |
 |---|---|---|---|
-| **`discovery`** | 1 | where new roles and new employers come from | `discovery_daily.py`, `discovery_telegram.py`, `pipeline/aggregators.py`, `pipeline/recruiters.py` |
-| **`registry`** *(one at a time)* | 2 | dark rows, and the 5-rung resolution ladder (§3) over 9 re-check pools | **`registry_health.py`** (read-only: census, who re-checks what, which ATS to build, `--explain "<name>"`), `companies.csv`, `listing_hunt.py`, `triage_dark.py`, `crack_walled.py`, `deep_validate.py`, `repair_*.py`, `resolve_*.py`, `audit_empty_rows.py`, `probe_candidates.py`, `scan_dead_domains.py`, `auto_expand.py`, `apply_resolved.py` |
-| **`ats-fetch`** | 3 | how a board's API is read; adding a platform | `pipeline/fetchers.py`, `pipeline/platform_check.py`, `pipeline/health.py` |
-| **`scraper`** | 3 | the 5-strategy browser extraction for every company with no API | `scrape_universal.py`, `refresh_scrape_cache.py`, `cache_new_rows.py` |
-| **`jd-text`** | 4 | every relevant role gets its description, whatever its age | `pipeline/jdfill.py`, `enrich_scrape_jd.py`, `enrich_matched_jd.py` |
-| **`company-intel`** | 4 | sector / stage / employees / founded / Israel centre | `pipeline/firmographics.py`, `pipeline/company_info.py`, `research_firmographics.py`, `bd_employees.py`, `fill_employees_llm.py`, `company_type_analysis.py` |
-| **`classifier`** | 5 | which roles qualify, and the LLM tier that decides the ambiguous ones | `pipeline/seniority.py`, `pipeline/israel.py`, the `llm_cache` key scheme; `pipeline/llm.py` is shared |
-| **`roles`** | 6 | the role as an ENTITY: is it the same one, is it still open, was it re-posted, when does it leave the board | **`pipeline/roles.py`** (the ledger: `cloud_state/roles.jsonl` + `roles_text.jsonl`), `pipeline/store.py` (`matched`/`sent`, `merge_key`, `seen_id`, `merge_duplicates`, `filter_new`, `upsert_matched`), the role-selection block in `pipeline/run.py`, repost detection |
+| **`discovery`** | 1 | **42 names re-added after a conclusive retirement** (of 276 in the intake queue, **273** already carry a disposition; 42 of those were retired `no-board`/`duplicate-of`/`not-an-employer`/`acquired-by` and came back anyway — `441`). Nothing that writes `research_companies.json` reads `cloud_state/queue_disposition.json`, so the queue cannot stay drained. Target 0. `python -c "import json;d=json.load(open('cloud_state/queue_disposition.json',encoding='utf-8'));r=json.load(open('research_companies.json',encoding='utf-8'));print(sum(1 for x in r if (x.get('name') or '').strip().lower() in {k.strip().lower() for k,v in d.items() if (v.get('verdict') or '') in ('no-board','duplicate-of','not-an-employer','acquired-by')}))"` — *(owns: where new roles and new employers come from)* | `discovery_daily.py`, `discovery_telegram.py`, `pipeline/aggregators.py`, `pipeline/recruiters.py` |
+| **`registry`** *(one at a time)* | 2 | **259 owed of a 276-name intake queue** — names in `research_companies.json` that have no row in `companies.csv` yet (17 have landed). Target 0. `python -c "import json,csv;n={r['company_name'].strip().lower() for r in csv.DictReader(open('companies.csv',encoding='utf-8'))};print(sum(1 for x in json.load(open('research_companies.json',encoding='utf-8')) if (x.get('name') or '').strip().lower() not in n))"` — *(owns: dark rows, and the 5-rung resolution ladder (§3) over 9 re-check pools)* | **`registry_health.py`** (read-only: census, who re-checks what, which ATS to build, `--explain "<name>"`), `companies.csv`, `listing_hunt.py`, `triage_dark.py`, `crack_walled.py`, `deep_validate.py`, `repair_*.py`, `resolve_*.py`, `audit_empty_rows.py`, `probe_candidates.py`, `scan_dead_domains.py`, `auto_expand.py`, `apply_resolved.py` |
+| **`ats-fetch`** | 3 | **17 active rows whose newest posting is 12+ months old** — a board that answers and has not moved since 2024 is a row we count as covered and a company we are not covering. Target 0. `python registry_health.py --stale-boards` — *(owns: how a board's API is read; adding a platform)* | `pipeline/fetchers.py`, `pipeline/platform_check.py`, `pipeline/health.py` |
+| **`scraper`** | 3 | **33 cards whose JD page is shared, not their own** (`_jd_shared_page` in `scraped_cache.json`) — a posting whose url is a listing page cannot be read, judged on its own text, or linked to. The nightly `not-a-job-url` refusal count is the flow behind it and is **not in committed state** (`443`). Target 0. `python -c "import json;s=json.load(open('scraped_cache.json',encoding='utf-8'));print(sum(1 for v in s.values() if isinstance(v,list) for j in v if j.get('_jd_shared_page')))"` — *(owns: the 5-strategy browser extraction for every company with no API)* | `scrape_universal.py`, `refresh_scrape_cache.py`, `cache_new_rows.py` |
+| **`jd-text`** | 4 | **223 attempted scrape cards still under 200 characters** (of 1,396 attempted), and **8 of 154** matched roles under 200. Target 0 on the matched half first — those are the ones the classifier judges and the board shows. The `~30 a night that fail their fill` figure is a RUN counter, not committed state: the newest stamp reads `matched_why=auth-walled3+no-markers2 scrape_why=bd-shell2` (**7**, 2026-08-29), and the per-card reason is not stored (`443`). `python -c "import sqlite3;c=sqlite3.connect('cloud_state/seen.db');print(c.execute('select count(*) from matched where length(coalesce(description,\"\"))<200').fetchone())"` — *(owns: every relevant role gets its description, whatever its age)* | `pipeline/jdfill.py`, `enrich_scrape_jd.py`, `enrich_matched_jd.py` |
+| **`company-intel`** | 4 | **84 active rows with no sector** (was 59 two mornings ago — it is growing, because intake outruns research). Target 0. `python -c "import json,csv;f=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));s={k.strip().lower() for k,v in f.items() if (v.get('sector') or '').strip()};print(sum(1 for r in csv.DictReader(open('companies.csv',encoding='utf-8')) if r['active'].strip().lower()=='true' and r['company_name'].strip().lower() not in s))"` — *(owns: sector / stage / employees / founded / Israel centre)* | `pipeline/firmographics.py`, `pipeline/company_info.py`, `research_firmographics.py`, `bd_employees.py`, `fill_employees_llm.py`, `company_type_analysis.py` |
+| **`classifier`** | 5 | **191 roles decided by a verdict from a superseded contract**, draining at the 60/run cap — every one is a role the board may be showing or hiding on a rule that no longer applies. Target 0. `grep -o 'classify [0-9]* roles decided by a verdict from a SUPERSEDED contract' digests/latest.md` — *(owns: which roles qualify, and the LLM tier that decides the ambiguous ones)* | `pipeline/seniority.py`, `pipeline/israel.py`, the `llm_cache` key scheme; `pipeline/llm.py` is shared |
+| **`roles`** | 6 | **the public dataset does not exist**, and **seniority is empty on all 154** role records (`matched` and `cloud_state/roles.jsonl` agree). The operator's fourth goal is an organized public dataset; there is no CSV to publish and no field to sort it by. Target: a published file, seniority populated. `python -c "import sqlite3;c=sqlite3.connect('cloud_state/seen.db');print(c.execute('select count(*), sum(coalesce(trim(seniority),\"\")=\"\") from matched').fetchone())"` — *(owns: the role as an ENTITY: is it the same one, is it still open, was it re-posted, when does it leave the board)* | **`pipeline/roles.py`** (the ledger: `cloud_state/roles.jsonl` + `roles_text.jsonl`), `pipeline/store.py` (`matched`/`sent`, `merge_key`, `seen_id`, `merge_duplicates`, `filter_new`, `upsert_matched`), the role-selection block in `pipeline/run.py`, repost detection |
 | **`render`** | 6 | how a role reads; every tag on a card | `pipeline/jdtext.py` (text→structure), `pipeline/rolecard.py` (the card), `pipeline/digest.py` (rendering), `pipeline/roleprofile.py` (the lexicon), `docs/TAGGING.md` — model: `ARCHITECTURE.md` §7d |
-| **`infra`** *(one at a time)* | 8 | delivery and the machinery under all of it: merges, workflows, the relay | `persist_state.py`, `merge_*.py`, `check_invariants.py`, `.github/workflows/*`, `mark_sent.py`, `pipeline/run.py` (orchestration only), `tests/rehearse_infra.py` |
-| **`docs`** | — | making all of the above legible to the next agent and to a visitor, and keeping it honest | `README.md`, `ARCHITECTURE.md`, `HANDOFF.md`, `CLAUDE.md`, `docs/*` incl. `docs/check_docs.py` |
+| **`infra`** *(one at a time)* | 8 | **5 of 71 scheduled slots not seen in the last fortnight** (1 isolated single-slot drop). Every other lane's number is held down by a cron, so this is the number under all of them. Target 0 dropped, and every lane's cron named in its own row. `python tests/schedule_census.py --days 14` — *(owns: delivery and the machinery under all of it: merges, workflows, the relay)* | `persist_state.py`, `merge_*.py`, `check_invariants.py`, `.github/workflows/*`, `mark_sent.py`, `pipeline/run.py` (orchestration only), `tests/rehearse_infra.py` |
+| **`docs`** | — | **master's CI is red — 60 consecutive non-green `tests.yml` runs** as of 2026-08-30 05:34Z (100 when measured at 04:00Z; `Unit guards` itself went green at run 33294213125 and the job is still cancelled on its 10-minute timeout, `442`). Nobody can trust a gate that is always red, so every other lane's third clause is unenforceable until this is 0. Target 0. `gh run list -R AnalystJobsIL/pipeline --workflow tests.yml --limit 20 --json conclusion`. **Clause 2: NOT DELIVERED — still a hand-drain.** workflow `tests.yml` (every push) exists; **no alarm exists at all**, which is why 100 red runs passed unmentioned. The exact diff is filed as `444@infra`; until infra applies it, nothing about CI health is automatic — *(owns: making all of the above legible to the next agent and to a visitor, and keeping it honest)* | `README.md`, `ARCHITECTURE.md`, `HANDOFF.md`, `CLAUDE.md`, `docs/*` incl. `docs/check_docs.py` |
+
+**Every number in that column was re-derived on 2026-08-30 from a clean worktree at
+`origin/master`, not copied from a report.** Two could not be reproduced from committed state
+and say so instead of carrying a figure nobody can check: the nightly JD-fill failure count
+and the nightly `not-a-job-url` count are RUN counters that the caches do not keep
+(`docs/BACKLOG.md` 443). A made-up target is worse than an admitted gap — if your lane's
+number is stale or wrong, re-derive it with the command in its own cell and correct it in the
+same commit as the work.
 
 **Exactly one agent may hold `registry` at a time, and one `infra`.** `registry` writes the
 file every other lane reads; `infra` writes the workflows that run them all. The other nine
@@ -287,40 +295,65 @@ docs`.
 
 ## Definition of done
 
-- The change is verified by its **output**, not its exit code — quote the numbers.
-- **`pytest` green means green in CI, on the commit you pushed** — not green where you
-  ran it. They are different suites: yours has your tree's state files, your
-  environment, and your `GITHUB_ACTIONS` unset, and on 2026-08-30 three guards that
-  passed on every laptop failed on every push for exactly that reason. After you push:
-  `gh run list -R AnalystJobsIL/pipeline --workflow tests.yml --limit 1 --json
-  headSha,conclusion,databaseId` — the sha must be yours and the conclusion `success`,
-  and **the run id goes in your `HANDOFF.md` line**. A red run is yours to fix or to
-  revert, whoever made it red: `tests.yml` was red on **100 consecutive runs** to
-  2026-08-30, with every lane reporting a passing suite, because everybody read their
-  own terminal. If it was already red when you arrived, say so in your line with the
-  run id, so the next session knows what it inherited.
-- **A change to a scheduled step is not done until a run you did not start has produced a
-  number.** The step's own lane is the last to notice it is broken: `enrich_scrape_jd.py`
-  ran **3 seconds of a 30-minute budget** and filled 0 on the 2026-08-29 digest, green,
-  and every session on that lane reported done. So:
-  **(a)** the proof is an UNATTENDED run — `gh run view <id> --json event,headSha` must say
-  `event: schedule`, and `git merge-base --is-ancestor <your sha> <headSha>` must hold, or
-  you are quoting a run that never executed your code. **Dispatching it yourself is not
-  that**, and neither is a local run.
-  **(b)** `HANDOFF.md` quotes the **exact counter or log line** (`matched_filled=`,
-  `relay notified:`) with its number and `run <id>` — not a nearby number that shares a
-  word: `JDs fetched inline: 132` is the inline enricher, not the nightly backfill.
-  **(c)** until that run has happened, the entry says **"unattended run not yet read"** and
-  a `## Morning checks` row carries the date it comes due — the first slot after your push
-  plus the 180-minute grace. The linter will hold you to that date.
-  **(d)** a step that can produce **zero** makes zero visible where a human reads daily
-  (`Stages:` / `Stage order:`); a step with no daily surface cites the state commit that
-  proves it ran (`git log -1 --format='%h %s' -- <the file it writes>`).
-- `pytest`, `check_invariants.py` and `docs/check_docs.py` green; a new guard added for any
-  bug you fixed (`tests/test_units.py` is a list of shipped bugs, one assertion each).
-- **The docs your change touched are updated in the same commit** — see the table below.
-- `HANDOFF.md` updated: what was wrong, what you changed, what you did NOT finish.
-- Say explicitly what you left for someone else, and what you spent (BD credits, LLM calls).
+Everything in this section used to be process — tests green, docs updated, a line in
+`HANDOFF.md`, an item filed. Every clause was about not breaking things and none was about
+achieving anything, and a lane could satisfy all of them having drained nothing. That is what
+the finish line was rewarding: on 2026-08-30 six lanes were optimising for auditability,
+because auditability was what it asked for.
+
+The product is four empty queues: **companies resolved, intel complete, every open role
+carrying its description, and a public dataset somebody can use.** A session is done when its
+queue is shorter than it found it.
+
+### 1. The number moved
+
+**Name the queue your lane owns (the table above), state where you left it, and measure that
+AFTER the push.** A closed backlog item that does not move the number is reported as **"not
+done"** — say so plainly in your `HANDOFF.md` line. Three items closed and a green suite is
+not an outcome; `jd-text` closed three on 2026-08-29 while its own number did not move.
+
+If the number went the wrong way, say that too, with both readings. A lane that reports only
+the direction it likes is a lane nobody can plan around.
+
+### 2. It keeps moving without a session — and this is a delivery bar, not a wish
+
+The standard is not "the queue reached zero". It is **"this flows automatically in git from
+now on."** A lane whose number falls only while a session is running has **not delivered**,
+however far it fell, and must say those words — *not delivered: still a hand-drain* — rather
+than reporting the drained number as a result. A number that only moves while an agent
+watches is a demo: the queue refills the night after the session ends and the next lane
+re-derives the same work.
+
+So name three things, concretely:
+
+| | what to name | if it does not exist |
+|---|---|---|
+| **the workflow** | the `.github/workflows/*.yml` job that moves this number with nobody watching | that gap **is your remaining work** |
+| **the cadence** | its cron, and the unattended run that proved it — `event: schedule`, and a `headSha` your commit is an ancestor of (`gh run view <id> --json event,headSha`) | a workflow that has never fired unattended is a workflow you have not tested |
+| **the alarm** | what fires, **where a human reads daily**, when it stops or falls behind — a `Stages:` clause in the mail, not a line on a run page nobody opens | an unalarmed cron is a cron that will stop silently, and this repo has lost four of them that way |
+
+**All three, or the lane is not done.** Any one of them missing is the lane's real remaining
+work — not the backlog items around it, and not the number you drained by hand this evening.
+
+**If the fix needs a workflow change, that is `infra`'s file and you may not write it.** Then
+the deliverable is the **exact diff**: the file, the anchor, the lines, filed in
+`docs/BACKLOG.md` with the lane set to `infra` — and your report says plainly that **until
+`infra` applies it, nothing is automatic.** A proposal is not a cron; say which one you have.
+
+### 3. Nothing broke — the price of admission, not the achievement
+
+- `python -m pytest`, `python check_invariants.py` and `python docs/check_docs.py` green
+  **from a clean worktree at `origin/master` after the push**, and green **in CI on the
+  commit you pushed** — run id in your `HANDOFF.md` line. Green where you ran it is a
+  different suite: `tests.yml` was red on **100 consecutive runs** to 2026-08-30 while every
+  lane reported a passing one, and three guards that passed on every laptop failed on every
+  push. If it was already red when you arrived, say so with the run id, so the next session
+  knows what it inherited.
+- A new guard for any bug you fixed (`tests/test_units.py` is a list of shipped bugs, one
+  assertion each), the docs your change touched updated **in the same commit**, and what you
+  left for someone else and what you spent (BD credits, LLM calls).
+
+**Reporting this section as the outcome is the mistake the section exists to stop.**
 
 ### Where a change gets written down
 
