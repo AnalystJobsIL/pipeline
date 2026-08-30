@@ -1851,6 +1851,19 @@
     "stage_note": "Listed on Frankfurt as ETR:BAYN (ADR BAYRY); ~12,000 roles cut in the restructuring targeting ~$2.3B annual savings by 2026",
     "sub_sector": "prescription pharma, consumer health and crop science (seeds & crop protection); Israeli site is a digital/cybersecurity R&D hub plus vegetable-seed breeding"
   },
+  "Beach Bum": {
+    "as_of": "2026-08-30",
+    "business_model": "B2C mobile gaming",
+    "customer_type": "Consumer",
+    "employees_global": 150,
+    "founded": 2015,
+    "il_center": "Ra'anana (HQ)",
+    "sector": "Gaming",
+    "size_band": "S",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by Voodoo (France) in 2021, ~$300M+ deal",
+    "sub_sector": "Mobile games"
+  },
   "Beamup": {
     "as_of": "2026-08-30",
     "business_model": "B2B SaaS / AI platform for real estate facilities design",
@@ -2572,6 +2585,19 @@
     "stage": "private-enterprise",
     "stage_note": "Privately owned, founder-led, no disclosed VC funding rounds",
     "sub_sector": "Performance marketing & affiliate marketing"
+  },
+  "Bulwarx": {
+    "as_of": "2026-08-30",
+    "business_model": "Cybersecurity integration & professional services",
+    "customer_type": "B2B",
+    "employees_global": 150,
+    "founded": 2013,
+    "il_center": "Ra'anana (HQ)",
+    "sector": "Cybersecurity",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned integrator, no known VC funding rounds",
+    "sub_sector": "Cyber security integration & professional services"
   },
   "Bylith": {
     "as_of": "2026-08-30",
@@ -4427,6 +4453,19 @@
     "stage_note": "Listed on the Tel Aviv Stock Exchange as TASE:DORL (IPO 2021); reported ILS 183.75M revenue in Q2 2026",
     "sub_sector": "utility-scale solar PV, battery storage and green-hydrogen project developer and IPP (plus Doral Tech climate-tech arm)"
   },
+  "DoubleVerify": {
+    "as_of": "2026-08-30",
+    "business_model": "Ad verification, digital media measurement and fraud detection platform (B2B SaaS)",
+    "customer_type": "B2B - advertisers, agencies, publishers, platforms",
+    "employees_global": 1200,
+    "founded": 2008,
+    "il_center": "Tel Aviv (R&D)",
+    "sector": "AdTech",
+    "size_band": "L",
+    "stage": "public",
+    "stage_note": "NYSE: DV, IPO 2021",
+    "sub_sector": "Digital media measurement, ad fraud & brand safety verification"
+  },
   "Dream": {
     "as_of": "2026-08-22",
     "business_model": "Sells AI cyber-defense platform via large government/enterprise contracts and licenses",
@@ -4504,6 +4543,19 @@
     "stage": "acquired-by-bigtech",
     "stage_note": "Acquired by Credo Technology (NASDAQ: CRDO) for up to $1.3B; deal closed May 2026",
     "sub_sector": "silicon photonics chips and optical modules for data-center, AI and HPC connectivity (800G–3.2T)"
+  },
+  "Duve": {
+    "as_of": "2026-08-30",
+    "business_model": "SaaS",
+    "customer_type": "B2B (hotels, vacation rentals, hospitality operators)",
+    "employees_global": 150,
+    "founded": 2014,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Travel & Hospitality Tech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "$60M Series B led by Susquehanna Growth Equity (2025)",
+    "sub_sector": "Guest experience / hotel operations software"
   },
   "Dynamic Yield": {
     "as_of": "2026-08-21",
@@ -5085,6 +5137,19 @@
     "stage": "early-private",
     "stage_note": "Bootstrapped / angel-backed (Silicon Valley angels), no major VC rounds disclosed on Crunchbase",
     "sub_sector": "AI-powered site search, merchandising and personalization platform for online stores (formerly InstantSearch+)"
+  },
+  "Feedvisor": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS",
+    "customer_type": "Enterprise/Marketplace sellers",
+    "employees_global": 150,
+    "founded": 2011,
+    "il_center": "Tel Aviv (R&D); HQ in New York",
+    "sector": "E-commerce Technology",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Series B $20M raised 2017, venture-backed",
+    "sub_sector": "AI-powered marketplace optimization & repricing software"
   },
   "Feelit": {
     "as_of": "2026-08-22",
@@ -9873,6 +9938,19 @@
     "stage_note": "$23M Series A led by TCV (Apr 2024) with CrowdStrike Falcon Fund and Okta Ventures, after a $7M Team8 seed; $30M total, no Series B announced",
     "sub_sector": "proactive/threat exposure management — maps an org's existing security tools against relevant adversary techniques and prioritizes remediation"
   },
+  "Nanit": {
+    "as_of": "2026-08-30",
+    "business_model": "Hardware + connected app/subscription (baby monitor with AI sleep tracking)",
+    "customer_type": "B2C",
+    "employees_global": 208,
+    "founded": 2015,
+    "il_center": "Tel Aviv (R&D); HQ in New York",
+    "sector": "Consumer Tech / IoT",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Raised $125M total, Series C $25M led by GV (Google Ventures)",
+    "sub_sector": "Smart baby monitors / computer vision sleep tracking"
+  },
   "Nano Dimension": {
     "as_of": "2026-08-22",
     "business_model": "Sells industrial 3D-printing / additively-manufactured-electronics systems, materials and related software to manufacturers",
@@ -10451,6 +10529,19 @@
     "stage": "growth-private",
     "stage_note": "Taken private by Advent International in 2024 for $6.3B (formerly NASDAQ/TSX: NVEI); agreed to acquire Payoneer for $2.75B in 2026",
     "sub_sector": "global payment processing platform — card acquiring, APMs, crypto on-ramp and payouts for online merchants"
+  },
+  "Nuvoton Technology Israel Ltd": {
+    "as_of": "2026-08-30",
+    "business_model": "Semiconductor design (fabless) - microcontrollers, ICs for cloud computing, PC, IoT, automotive",
+    "customer_type": "B2B (OEMs, Tier-1 electronics/PC/cloud/automotive manufacturers)",
+    "employees_global": 3000,
+    "founded": 2005,
+    "il_center": "Herzliya (main); also Migdal HaEmek",
+    "sector": "Semiconductors",
+    "size_band": "L",
+    "stage": "public",
+    "stage_note": "Parent Nuvoton Technology Corporation listed on Taiwan Stock Exchange (TWSE: 4919)",
+    "sub_sector": "Microcontrollers & mixed-signal ICs"
   },
   "Nym": {
     "as_of": "2026-08-29",
@@ -12361,6 +12452,19 @@
     "stage_note": "Euronext Paris: RNO; French state holds ~15%",
     "sub_sector": "mass-market vehicle manufacturer (Renault, Dacia, Alpine, Mobilize) with EV, software-defined-vehicle and autonomous-driving R&D"
   },
+  "Renesas Electronics": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "enterprise",
+    "employees_global": 20175,
+    "founded": 2010,
+    "il_center": "R&D center (via Celeno acquisition); HQ in Tokyo, Japan",
+    "sector": "Semiconductors",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "TSE: 6723; acquired Celeno (Israel) in 2021",
+    "sub_sector": "Microcontrollers, analog & connectivity ICs, automotive/IoT chips"
+  },
   "Revolut": {
     "as_of": "2026-08-22",
     "business_model": "interchange and payment fees, subscription tiers, FX/trading spreads and interest income on deposits",
@@ -13332,6 +13436,19 @@
     "stage": "early-private",
     "stage_note": "$18M Series A (Sep 2022, Dell Technologies Capital, Norwest, Tiger Global); ~$24M raised total, no round since",
     "sub_sector": "Revenue analytics / RevOps platform with GenAI assistant for analyzing SaaS go-to-market and business data"
+  },
+  "Siklu": {
+    "as_of": "2026-08-30",
+    "business_model": "Hardware/wireless equipment manufacturer",
+    "customer_type": "B2B (telecom service providers, system integrators)",
+    "employees_global": 150,
+    "founded": 2008,
+    "il_center": "Petach Tikva (HQ)",
+    "sector": "Telecommunications Equipment",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Acquired by Ceragon Networks in 2023 for ~$13-15M; now a subsidiary of publicly-traded Ceragon",
+    "sub_sector": "Millimeter-wave wireless backhaul / fixed wireless access"
   },
   "Silverfort": {
     "as_of": "2026-08-21",
