@@ -4179,6 +4179,28 @@ here — each is another lane's file or a behaviour change this session could no
     added to the conftest fixture: it changes what those guards test, and that is a change
     that needs measuring rather than assuming.
 
+    **It has stopped being theoretical, and it no longer passes vacuously — it FAILS**
+    (measured 2026-08-30, and reproducible on `305ed13` as well as after it, so it is not any
+    one lane's push):
+
+    ```bash
+    python -m pytest tests/test_registry.py::test_the_unlocker_rung_inside_the_page_test_still_exists   # passes
+    python -m pytest tests/test_units.py tests/test_registry.py -p no:randomly                          # FAILS
+    # E  AssertionError: a bot-walled page must be retried through the unlocker, ...
+    #    assert None is True
+    ```
+
+    `page_names_company` returns `None` — a refusal — where the guard expects `True`, because
+    the unlocker rung never fires: exactly the inert-rung mechanism above, one step further
+    along. `-p no:randomly` still fails, so this is ordering, not seed luck: `test_units`
+    running first is enough. The full suite passes (`python -m pytest` is green, 1,484 at
+    `861050d`), which is why CI never showed it and why every lane's pre-push run reports
+    green — the two-file invocation is the one that exposes it.
+
+    Related: `382@infra` (`bd_rescue.SPENT` / `BD_RUN_CAP` leaking) and `455@infra` (a
+    `bd_rescue` test failing when another runs first) are the same family; the polluter here
+    is a `bd_rescue` test in the same file. Whoever fixes one should measure all three.
+
 387. **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
     store turns stale at once in 2027-02** — lane: `company-intel`, filed 2026-08-28.
     Every `as_of` in the export written before tonight falls in 2026-08-21..28 (394 / 378 /
