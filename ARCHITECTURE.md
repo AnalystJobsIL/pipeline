@@ -414,12 +414,15 @@ including the claim "none".
    (`"Fraud Analyst Herzliya Full-time"` → `Fraud Analyst` / `Herzliya`; a foreign place is
    kept as the location so `pipeline.israel`, not the scraper, drops the role — 86 cached
    titles carried one), and on a comeet-addressed card the posting url's SLUG settles the
-   whole tail (`_comeet_slug_cut`, 2026-08-31: 118 of 295 sluggable cached titles carried a
+   whole tail (`_comeet_slug_cut`, 2026-08-30: 118 of 295 sluggable cached titles carried a
    tail the type-word splitter could not touch — `"Solution Expert Holon, Senior"` — and
-   the slug named the clean title in all 118; the cut fires only when the title strictly
-   extends the slug, so a mis-addressed card — Legit Security carried nine neighbours'
-   urls — is never renamed, and the residue is judged as the card's own place claim,
-   `", ST"` reading as a US state code with IL excepted); `ISRAEL_LOC` is word-bounded like `israel._PLACE_PATTERNS`
+   the slug named the clean title in all 118; the cut needs the title to strictly extend
+   the slug AND the residue to be a recognised place or pure chips — a role-worded or
+   numbered residue refuses the cut, or "Data Analyst Team Lead" over a `data-analyst`
+   slug would be RENAMED and "Data Analyst 2" merged into its sibling — so a
+   mis-addressed card (Legit Security carried nine neighbours' urls) changes nothing,
+   and the residue place is the card's own claim, `", ST"` reading as a US state code
+   with IL excepted); `ISRAEL_LOC` is word-bounded like `israel._PLACE_PATTERNS`
    (BACKLOG 126; the lookarounds are case-sensitive on purpose — under `re.I` they blocked
    the run-together card text real boards serve, `HerzliyaJunior Software Developer`,
    `R&DRegularTel Aviv`). **A position page that LABELS the role's place** — `Job Location:
@@ -433,7 +436,8 @@ including the claim "none".
    is our own search input, and `_page_is_il` no longer reads the URL at all; a card nothing
    placed is refused by `_Adder._judge` and counted (`loc_unknown` on the `collect` stamp),
    the listing-url FALLBACK address is stripped of its query (`_bare` — the gate scans a
-   posting's url), a card whose own tail named a `_FOREIGN_RX` place writes
+   posting's url), a card whose own tail named a `_FOREIGN_RX` or `", ST"` place — and
+   whose title carries no Israel token — writes
    `country_code="XX"` (the gate's authoritative NO — the path echo `_bare` cannot strip),
    and every cached location carries `_loc_src` ∈ `own`/`group`/`assumed` so a bare
    "Israel" always says where it came from (`fabricated-loc-N` alarms on any that does not,
@@ -1273,8 +1277,8 @@ pointed at the right place". So the class has its own instrument, `audit_query_u
   in Tel Aviv or Haifa; Apple, Meta, Amazon, PepsiCo, Stratasys …) and left
   **19** unverifiable (client-rendered shells and boards with no visible
   postings; re-read in 3 days, never parked). Ledger: `cloud_state/query_filter.json`.
-  The root fix — the scraper reading the card's own place before stamping one — landed
-  2026-08-30 (`462@scraper`/`496@scraper`: `_page_is_il` no longer reads the URL at all,
+  The root fix — the scraper reading the card's own place before stamping one — is on the
+  2026-08-30 scraper commits (`462@scraper`/`496@scraper`: `_page_is_il` no longer reads the URL at all,
   §1 item 2); this instrument stays as the registry's belt, and the scraper's own tripwire
   is the `fabricated-loc-N` alarm on the `collect` stamp (§5a).
 * A parked query-URL row lands in the hunt's pool with `needs re-resolution`. Comcast's cell
@@ -2923,7 +2927,7 @@ and from 2026-08-27 the line also carries `links_unread=N`, `via=links73+cards59
 (which strategy carried how many companies — a strategy collapsing is visible the next
 morning instead of only in the step log), `carried_residential=N` and `dropped_residential=N`
 (§1 item 2 — boards only a home address could read, kept or expired tonight), and from 2026-08-28 `uncached=N unvisited=M`, its anchor `uncached_base=A rows_base=R`,
-and `embeds=N embeds_won=M` (below), and from 2026-08-31 `loc_unknown=N` (role-shaped
+and `embeds=N embeds_won=M` (below), and, from the first cron on the 2026-08-30 scraper commits, `loc_unknown=N` (role-shaped
 cards refused because NOTHING placed them — before the query-stamp fix, §1 item 2, these
 shipped as `location=Israel`; a rising level is a board hiding its locations) and
 `legacy_loc=N` (carried cache entries still bearing a provenance-less bare "Israel" —
@@ -2963,7 +2967,7 @@ announced at, so a skipped night cannot lose it and a re-run cannot repeat it) a
 `llm-calls-N` (more than `LLM_RUNAWAY_CALLS` (250) calls in one night: the signal gate broke
 open, not the fleet changed), `fabricated-loc-N` (N postings in TONIGHT's fresh reads carry
 the bare word "Israel" with no `_loc_src` provenance — zero by construction since
-2026-08-31, so any N means the query-stamp class re-opened, a write path bypassed
+the 2026-08-30 scraper commits, so any N means the query-stamp class re-opened, a write path bypassed
 `_Adder`, or a foreign tree fed the cache; carried entries never trip it, they are the
 `legacy_loc` level), `uncached-up-A-to-B`, `ownless-up-A-to-B` (the same anchored-jump
 event over postings with no address of their own: extraction stopped finding per-job

@@ -7923,7 +7923,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     189 such urls stand for those 450 postings** — lane: `scraper` (`scrape_universal` decides
     a card's address), found by `jd-text` 2026-08-29 while measuring what the archive pass
     could not reach.
-    **Extraction-layer fix landed 2026-08-31 (`scraper`)**: an address is taken from what
+    **Extraction-layer fix on the 2026-08-30 scraper commits**: an address is taken from what
     NAMES the role — the heading's own link (`<h3><a href>` matched NO card pattern before;
     Google Israel's 20 cards: url-less → 0 on the captured corpus), the one window anchor
     whose text or slug names the title, `resolve` matching url SLUGS when link text is
@@ -9212,7 +9212,7 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      own text, or the card's url path is read (`/job/<us-state>/`). The store holds **11**
      bare-`Israel` locations today; `500@roles` lists them.
 
-497. ~~**`&amp;` reaches the public title and the role's id**~~ — **CLOSED 2026-08-31
+497. ~~**`&amp;` reaches the public title and the role's id**~~ — **CLOSED 2026-08-30
      (`scraper`)**: `html.unescape` in `_Adder._judge`, the one filter every scrape reading
      passes — chosen over `fetchers._clean` (not this lane's file; and the unescape also
      turns two `&amp;`-noise slug disagreements into agreements for 235's cut). A
@@ -9324,7 +9324,7 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
 504. **The eightfold fetcher stamps the query's location on postings that carry none** —
      lane: `ats-fetch`. Re-filed 2026-08-30 (`scraper`) as the surviving half of `496`,
      whose scraper half closed with `462`. `fetchers.py:596` writes the search location for
-     eightfold rows the way `scrape_universal._page_is_il` did before 2026-08-31; the
+     eightfold rows the way `scrape_universal._page_is_il` did before the 2026-08-30 scraper commits; the
      `successfactors` fetcher already refuses the same inference (`fetchers.py:726`,
      `24512d6`: "`locationsearch=Israel` is a hint, not a filter" — Boston Scientific
      returns Minnesota; `israel_scoped = False` is the precedent). An honest blank beats a

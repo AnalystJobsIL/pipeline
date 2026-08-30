@@ -23478,9 +23478,12 @@ def test_scrape_a_comeet_slug_settles_the_title_tail():
                "https://www.comeet.com/jobs/dealhub/A1.234/solution-expert/C3.456")
     assert (jobs[1]["title"], jobs[1]["location"]) == ("Solution Expert", "Austin, Texas")
     assert jobs[1]["country_code"] == "XX" and not is_israel_job(jobs[1])
-    # a ", ST" tail is a state code without a city list (Seattle is in no vocabulary)
+    # a ", ST" tail is a state code without a city list (Seattle is in no vocabulary),
+    # and it writes the hard country negative too (wave-1 attacker C, F6: without XX the
+    # path echo of an /israel-jobs/ listing still passed the gate on the url text)
     assert add("Enterprise Account Manager Seattle, WA", "", U % "enterprise-account-manager")
-    assert jobs[2]["location"] == "Seattle, WA" and not is_israel_job(jobs[2])
+    assert jobs[2]["location"] == "Seattle, WA" and jobs[2]["country_code"] == "XX"
+    assert not is_israel_job(jobs[2])
     # the boundary may land inside a parenthesis the slug swallowed
     assert add("QA Engineer(Entry Level) Holon, Entry-level", "", U % "qa-engineerentry-level")
     assert (jobs[3]["title"], jobs[3]["location"]) == ("QA Engineer(Entry Level)", "Holon")
@@ -23491,9 +23494,18 @@ def test_scrape_a_comeet_slug_settles_the_title_tail():
     # (Legit Security carried nine neighbours' urls), and a url must not rename a role
     assert add("Bookkeeper", "Tel Aviv", U % "application-security-sales-engineer")
     assert jobs[5]["title"] == "Bookkeeper"
+    # ...and a ROLE-worded or numbered residue refuses the cut outright: a bare prefix
+    # test RENAMED "Data Analyst Team Lead" to "Data Analyst" and merged "Data Analyst 2"
+    # into its sibling (wave-1 attacker C, F2 — the fork bug inverted into a merge)
+    assert add("Data Analyst Team Lead", "Tel Aviv",
+               "https://www.comeet.com/jobs/dealhub/A1.234/data-analyst/D4.567")
+    assert jobs[6]["title"] == "Data Analyst Team Lead"
+    assert add("Data Analyst 2", "Haifa",
+               "https://www.comeet.com/jobs/dealhub/A1.234/data-analyst/E5.678")
+    assert jobs[7]["title"] == "Data Analyst 2"
     # 497: an entity never reaches a public title or a role id again
     assert add("Manager 2, Business Operations &amp; Analytics", "Tel Aviv", "")
-    assert jobs[6]["title"] == "Manager 2, Business Operations & Analytics"
+    assert jobs[8]["title"] == "Manager 2, Business Operations & Analytics"
 
 
 def test_scrape_a_card_takes_the_anchor_that_names_it_never_a_neighbours():

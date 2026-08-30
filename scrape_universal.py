@@ -780,7 +780,18 @@ def _comeet_slug_cut(title, url_):
                 break
     while i < len(raw) and raw[i] in ")]":
         i += 1                           # the boundary may land inside "(Entry Level)"
-    return raw[:i].rstrip(" -–—|,·"), _residue_place(raw[i:])
+    resid = raw[i:]
+    place = _residue_place(resid)
+    if not place:
+        # the residue must be a place or pure chips, or the "cut" is a RENAME: a bare
+        # prefix test would turn "Data Analyst Team Lead" over a data-analyst slug into
+        # "Data Analyst", and collapse "Data Analyst 2" into its sibling — the fork bug
+        # (235) inverted into a merge (wave-1 attacker C, F2: 38 cached postings,
+        # Exodigo's six city-distinct roles among them)
+        leftover = _norm_title(_RESIDUE_CHIPS.sub(" ", resid))
+        if leftover and not _is_decoration(leftover):
+            return title, ""
+    return raw[:i].rstrip(" -–—|,·"), place
 
 
 def _abs_url(url_, base):
@@ -1076,7 +1087,8 @@ class _Adder:
         #    evidence `_judge` lets overwrite a lent location): without it a foreign posting
         #    whose url carries an Israel token — Arm's path-scoped listing, a `_bare`d
         #    `/search-jobs/Israel` — passed the gate on the url text (2026-08-30).
-        cc = "XX" if (foreign and _FOREIGN_RX.search(loc or "")
+        cc = "XX" if (foreign and (_FOREIGN_RX.search(loc or "")
+                                   or _US_STATE_TAIL.search(loc or ""))
                       and not ISRAEL_LOC.search(title)) else ""
         self.jobs.append({"company": company, "title": title[:90], "location": loc,
                           "country_code": cc,
@@ -1233,6 +1245,10 @@ def _from_cards(page_html, url_is_il, add, promote_only=False):
         cm = re.search(r'class=["\']([^"\']+)', attrs) if "class=" in attrs else None
         groups.setdefault((tag, cm.group(1) if cm else ""), []).append((m.start(), text, href))
     for (tag, cls), items in groups.items():
+        items.sort(key=lambda it: it[0])
+        # ...because linked headings arrive from a SECOND finditer pass: unsorted, a
+        # group mixing both shapes gets a `nxt` BEFORE `pos`, an empty ctx, and a real
+        # Israeli card silently refused into `loc_unknown` (wave-1 attacker C, F3)
         if len(items) < 3:
             continue
         titles = [t for _, t, _h in items]
@@ -1380,11 +1396,16 @@ def _parse_position_page(ph, u2):
           or re.search(r'property=["\']og:title["\'][^>]*content=["\']([^"\']{3,90})', ph))
     if not mt or _NOT_A_POSITION.search(mt.group(1)):
         return None
+    # an og:title/h1 that leads with the site's own chrome ("lakeFS Careers: Director of
+    # Product Management") ships the chrome into the public card; the prefix before a
+    # "Careers:" separator is the site's, not the role's
+    mt_title = re.sub(r"(?i)^\s*\S[^:|]{0,40}\bcareers?\s*[:|]\s*", "", mt.group(1)).strip() \
+        or mt.group(1)
     # the page's own text, WITHOUT its scripts: a minified bundle is not a description, and
     # `jdfill` skips any card that already has 300 characters of one (wave-1 attacker A)
     body = re.sub(r"<(script|style|noscript|svg)[^>]*>.*?</\1>", " ", ph, flags=re.S | re.I)
     txt = re.sub(r"<[^>]+>", " ", body)
-    title = mt.group(1).strip()
+    title = mt_title
     at = txt.find(title)
     # what the page CLAIMS this role is: the heading plus the document title, which is where
     # a board that does not print the place in its markup puts it — Checkmarx's
