@@ -222,7 +222,14 @@ def ingest(state, paths, day=None):
             try:
                 with open(fn, encoding="utf-8") as f:
                     doc = json.load(f)
-            except Exception:                                     # noqa: BLE001
+            except Exception as e:                                # noqa: BLE001
+                # A shard killed mid-write used to be skipped in SILENCE, and a night whose
+                # attempts were never folded in reads exactly like a night nobody ran: the
+                # names sort first again tomorrow and buy their searches twice. The writers
+                # swap atomically now (`pipeline.atomic`), so this should be unreachable --
+                # which is the reason to say it out loud rather than to drop it (`502`).
+                print("::warning::ingest: %s unreadable (%s) -- that shard's attempts are "
+                      "NOT recorded" % (fn, e.__class__.__name__), flush=True)
                 continue
             stamp = (doc.get("generated") or day)[:10]
             for p in doc.get("proposals") or []:

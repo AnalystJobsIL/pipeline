@@ -41,6 +41,8 @@ import os
 import sys
 import time
 
+from pipeline.atomic import write_json
+
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 TODAY = dt.date.today().isoformat()
@@ -522,8 +524,10 @@ def main(argv=None):
             unsearched = todo[i - 1:]
             break
         cache[name] = search_one(name)
-        with open(cache_path, "w", encoding="utf-8") as f:        # a paid search is never
-            json.dump(cache, f, ensure_ascii=False)                # repeated after a kill
+        write_json(cache_path, cache, indent=None)                # a paid search is never
+        #                                     repeated after a kill -- and the swap is atomic,
+        #                                     so a kill mid-write cannot truncate the cache
+        #                                     and make every name in it a re-buy (`502`)
         print("  s%d/%d %-30s %d urls %s" % (i, len(todo), name[:30],
                                              len(cache[name]["urls"]),
                                              (cache[name]["picked"] or "")[:52]), flush=True)
@@ -536,8 +540,8 @@ def main(argv=None):
     names = [n for n in names if n not in skip]
     props, stats, t0 = [], collections.Counter(), time.time()
     unscored = []
-    with open(a.propose, "w", encoding="utf-8") as f:            # the file exists even if
-        json.dump({"generated": TODAY, "proposals": props}, f)   # nothing gets scored
+    write_json(a.propose, {"generated": TODAY, "proposals": props},   # the file exists even
+               indent=None)                                           # if nothing is scored
     print("\nphase 2 - scoring %d names" % len(names), flush=True)
     for i, name in enumerate(names, 1):
         if _over():
@@ -559,8 +563,7 @@ def main(argv=None):
                 "evidence": {"candidate_url": url, "n_il_when_hunted": n_il,
                              "hunt_verdict": "found", "model_why": why,
                              "gate": "identity_ok or board title + the page yields jobs"}})
-        with open(a.propose, "w", encoding="utf-8") as f:
-            json.dump({"generated": TODAY, "proposals": props}, f, ensure_ascii=False, indent=1)
+        write_json(a.propose, {"generated": TODAY, "proposals": props})
         print("  [%s] %d/%d %-30s %s" % ({"scrape": "OK", "monitor": "..", "refused": "XX"}[kind],
                                          i, len(names), name[:30], url or why), flush=True)
     left = len(unsearched) + len(unscored)
@@ -575,8 +578,7 @@ def main(argv=None):
                           "evidence": {"url": "", "n_il": 0,
                                        "searched": len((cache.get(name) or {}).get("urls") or [])}})
             stats["refused: budget hit"] += 1
-        with open(a.propose, "w", encoding="utf-8") as f:
-            json.dump({"generated": TODAY, "proposals": props}, f, ensure_ascii=False, indent=1)
+        write_json(a.propose, {"generated": TODAY, "proposals": props})
     if left:
         # said ONCE and in the shard's own words, so a night that stopped early reads as
         # "stopped early" and never as "these names have no board"

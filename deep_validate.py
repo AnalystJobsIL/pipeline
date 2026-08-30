@@ -32,7 +32,8 @@ import time
 import urllib.parse
 import urllib.request
 
-from audit_empty_rows import SIGS, _WD, _slug_matches, fetch, verify, AGG
+from audit_empty_rows import SIGS, _WD, _slug_matches, active_twin, fetch, verify, AGG
+import check_invariants as _INV      # the platform<->host table, imported not retyped
 from pipeline.aggregators import is_aggregator
 from bd_rescue import _load_secrets, unlock
 from pipeline.recruiters import is_recruiter
@@ -337,7 +338,19 @@ def _revalidatable(note, days=None):
     return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days >= days
 
 
-def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail):
+def _canonical_endpoint(plat, tok):
+    """That platform's own API endpoint for `tok`, or "" when there is no template.
+
+    `SIGS` already carries one template per guessable platform and `audit_empty_rows`
+    builds every endpoint it writes from them; this is the same table read backwards, so
+    a platform added there is canonicalised here without a second edit."""
+    for _rx, p, tmpl in SIGS:
+        if p == plat and tok:
+            return tmpl.format(tok)
+    return ""
+
+
+def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail, rows=None):
     """Fold one `validate_one` verdict into the row `fr` (in place). The gates and the
     fixed-length notes below are the whole reason this is one function: `audit_empty_rows`
     runs it as its Chromium rung on Sunday (BACKLOG 6, 2026-08-26) and `main()` runs it for
@@ -417,6 +430,45 @@ def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail):
                 "not-listing": "not a listings page",
             }.get(_av, "unverified (no readable page)"))
     elif verdict == "recovered":
+        # Two things every gate above this one leaves unasked, both of which put a row on
+        # master's red list on 2026-08-30 (`7319f85`).
+        #
+        # 1. Is another ACTIVE row already reading this board? Identity says yes to both
+        #    halves of a twin, because the board is genuinely the company's under either
+        #    spelling.
+        # 2. Is `api` actually THAT PLATFORM'S endpoint? The LLM tier proposes a platform,
+        #    a token and a url independently, and `verify()` does not object: Renesas
+        #    landed as `smartrecruiters` with `https://jobs.renesas.com/` in column 3
+        #    because `fetch_smartrecruiters` appends its query to whatever it is handed.
+        #    The row scanned, so nothing downstream noticed either.
+        _rows = rows
+        if _rows is None:                       # never activate against a snapshot: re-read
+            _rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
+        _tw = active_twin(name, plat, tok, api, _rows)
+        if _tw:
+            fr[5] = _note_replace(fr[5], "deep-validated",
+                                  f"deep-validated {TODAY}: twin-board; not activated")
+            return
+        _ph = _INV.PLATFORM_HOST.get((plat or "").strip().lower())
+        if _ph and not re.search(_ph, api or "", re.I):
+            # Repair it to the platform's canonical endpoint if that VERIFIES -- never
+            # persist an address nothing fetched (the rule `test_the_hunt_never_stores_
+            # another_company_s_page_as_the_row_address` pins). Otherwise the row stays
+            # dark with its tokens intact and next Sunday tries again.
+            cand = _canonical_endpoint(plat, tok)
+            ok = False
+            if cand:
+                try:
+                    _n_all, _n_il = verify(name, plat, tok, cand)
+                    ok = bool(_n_all)
+                except Exception:                                  # noqa: BLE001
+                    ok = False
+            if not ok:
+                fr[5] = _note_replace(
+                    fr[5], "deep-validated",
+                    f"deep-validated {TODAY}: {plat} endpoint off-host; unverified")
+                return
+            api, n_all, n_il = cand, _n_all, _n_il
         fr[1], fr[2], fr[3] = plat, tok, api
         fr[4] = "true"
         # Append-log, not a rewrite (ARCHITECTURE.md section 2). The two
@@ -443,7 +495,7 @@ def _apply_verdict_to_file(name, verdict, plat, tok, api, n_all, n_il, detail):
     fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
     for fr in fresh:
         if fr and fr[0] == name and len(fr) >= 6:
-            apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail)
+            apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail, rows=fresh)
     write_csv_rows("companies.csv", fresh)
 
 

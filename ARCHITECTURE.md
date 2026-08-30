@@ -1447,8 +1447,31 @@ gates conclude.
    `iai.co.il/solution/research-academy-space` "verified 6 IL" whose titles were "Domain
    Operations" and "Press Releases".
 
+4. **No other ACTIVE row is already reading that board** (2026-08-31). The three clauses
+   above all ask *is this board THIS COMPANY'S?*, and both halves of a twin answer yes —
+   correctly. On 2026-08-30 the Sunday audit-coverage run activated `JPMorgan Chase` on
+   `JPMorganChase`'s oraclecloud board (`7319f85`, written by `crack_walled`'s `cracked`
+   branch) and `Renesas Electronics` on an off-host endpoint; every identity gate passed,
+   `check_invariants` B2 fired at the persist gate, and master was red for two hours. The
+   predicate is **`audit_empty_rows.active_twin(name, plat, tok, api, rows)`**, keyed three
+   ways because one board has three spellings in this file: the `(platform, token)` pair,
+   the normalised `api_url` (the `shared_boards` key MINUS its `identity_key` component —
+   a twin under a *different* name is exactly the case to catch), and the ATS board a
+   `scrape` row is really reading (`auto_expand`'s own `_ATS_IN_URL`/`_RECRUITEE_IN_URL`,
+   imported so this and the probe rung's `probe-dup-board` cannot drift). It is fed the
+   **freshly re-read rows** — the same list the write is about to mutate, never a
+   start-of-run snapshot. Refusal stamps `twin-board; not activated` in the tool's own
+   segment: **not `not-ours`** (the board genuinely is the company's) and **not `alias-of`**
+   (which row survives is a human's call, and an activating tool that retires coverage on
+   its own is the larger bug). `twin-board` is in no pool or terminal vocabulary, so the row
+   keeps the tokens that route it and is re-examined normally. B2 `--strict` at the persist
+   gate remains the backstop, not the guard.
+
 `test_every_activation_path_checks_company_identity` walks the AST of every root script for
-`row[4] = "true"` and fails if that module never consults `company_identity`.
+`row[4] = "true"` and fails if that module never consults `company_identity`;
+`test_every_activation_path_refuses_an_active_twin` requires `active_twin` above the write in
+each of the three tools that flip `active` off a verified board (`audit_empty_rows`,
+`crack_walled`, `deep_validate`).
 
 **On a walled ATS all three clauses are inert.** The tenant lives in the SUBDOMAIN
 (`careers-bancorpbank.icims.com`) and `company_identity.verdict` only checks a tenant in the
@@ -2052,6 +2075,22 @@ the short version of the three gates and the code that enforces them.
   to list jobs at all (`looks_like_a_job_listing_page`). Real Israel jobs are not enough:
   `SCRAPE_ASSUME_IL` turns every card on a page into an Israel role, so a nav menu and a
   blog index both "verify".
+- **A native-platform recovery persists that platform's canonical endpoint, re-verified, or
+  it persists nothing** (2026-08-31). The LLM tier proposes `platform`, `token` and
+  `api_url` as three independent fields and the fetchers do not object to a mismatch:
+  `fetch_smartrecruiters` appends its query to whatever `api_url` holds, so
+  `Renesas Electronics` landed on 2026-08-30 as `smartrecruiters` with
+  `https://jobs.renesas.com/` in column 3 — it scanned, 905 jobs, and nothing downstream
+  noticed until `check_invariants` C2 fired at the persist gate. `deep_validate.apply_verdict`
+  now tests `api_url` against `check_invariants.PLATFORM_HOST` (imported, not retyped); on a
+  mismatch it rebuilds the endpoint from the `SIGS` template for that platform
+  (`_canonical_endpoint`, the same table `audit_empty_rows` builds every endpoint from) and
+  **re-verifies it through `verify()`** before writing. If the canonical form does not
+  verify, or the platform has no template, the row stays dark with
+  `{plat} endpoint off-host; unverified` and its tokens intact — never an address nothing
+  fetched. C2 itself is blind to seven platforms it has no row for (`193@infra` carries the
+  measured path-signature diff; bare hosts would strict-break five legitimate rows, because
+  eightfold/phenom/successfactors serve from the tenant's own domain).
 - Slug/tenant must resemble the company name — `_slug_matches` (defined in
   `audit_empty_rows.py`; five call sites, re-derived 2026-08-27 with
   `grep -n '_slug_matches' *.py`: `audit_empty_rows.py:426`, `crack_walled.py:189`,

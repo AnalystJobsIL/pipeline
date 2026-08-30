@@ -151,6 +151,58 @@ _COMEET = re.compile(r"comeet", re.I)
 _UNSUPPORTED = re.compile(r"(eightfold\.ai|avature\.net|oraclecloud\.com|jobvite\.com|phenom)", re.I)
 
 
+def active_twin(name, plat, tok, api, rows):
+    """The name of another ACTIVE row already reading this board, or "".
+
+    Every gate above an activation asks "is this board THIS COMPANY'S?" and each answers
+    yes for both halves of a twin — which is why nothing refused `JPMorgan Chase` on
+    `JPMorganChase`'s oraclecloud board on 2026-08-30 (`7319f85`): the board really is
+    JPMorgan's, under either spelling. The question no gate asked is "is some OTHER active
+    row already reading it?", and the cost of not asking is every role republished under
+    two employer names, a red `check_invariants` B2 at the persist gate, and a human
+    picking which row survives.
+
+    Keyed three ways, because one board has three spellings in this file: the (platform,
+    token) pair, the normalised api_url (the `shared_boards` key MINUS its `identity_key`
+    component -- a twin under a DIFFERENT name is exactly the case this must catch), and
+    the ATS board a `scrape` row is really reading (`auto_expand`'s own extractors, so the
+    probe rung's `probe-dup-board` and this cannot drift apart).
+
+    `rows` must be the FRESHLY re-read 6-field rows -- pass the same list the write is
+    about to mutate, never a start-of-run snapshot.
+    """
+    import auto_expand as _ax                    # function-local: `audit_empty_rows` is
+    #                                             imported BY crack_walled/deep_validate,
+    #                                             and a module-level edge would cycle
+    def _keys(p, t, u):
+        out = set()
+        p, t, u = (p or "").strip().lower(), (t or "").strip().lower(), (u or "").strip()
+        if p and t:
+            out.add((p, t))
+        if u:
+            s = urllib.parse.urlsplit(u.lower().rstrip("/"))
+            if s.netloc:
+                out.add((s.netloc, s.path, s.query))
+        for cand in (u, t):
+            m = _ax._ATS_IN_URL.search(cand or "")
+            if m:
+                out.add((_ax._ATS_PLAT[m.group(1).lower()], m.group(2).lower()))
+            m2 = _ax._RECRUITEE_IN_URL.search(cand or "")
+            if m2:
+                out.add(("recruitee", m2.group(1).lower()))
+        return out
+
+    mine = _keys(plat, tok, api)
+    if not mine:
+        return ""
+    for r in rows or []:
+        if len(r) < 6 or r[4] != "true" or (r[0] or "") == name:
+            continue
+        if mine & _keys(r[1], r[2], r[3]):
+            return r[0]
+    return ""
+
+
 def _slug_matches(name, token, api_url=""):
     """May this slug/tenant be CONSIDERED for `name`? `identity_gate.board_vouches(...) is
     not False` (2026-08-26, docs/BACKLOG.md 33/50): a declared `not_tenants` token or a
@@ -479,12 +531,31 @@ def main():
                   f"but {'the board belongs to another company' if _av == 'not-ours' else 'nothing vouches for the board (' + _av + ')'} "
                   f"({(api or '')[:44]})", flush=True)
             continue
+        # ...and is anyone ELSE already reading it? Every gate above answers "is this board
+        # this company's?"; a twin passes all of them (`active_twin`).
+        _tw = active_twin(name, plat, tok, api, rows)
+        if _tw:
+            still.append((name, ""))
+            print(f"  [==] {name}: {plat} {tok} verified {n_il} IL but that board is already "
+                  f"read by the active row {_tw!r}", flush=True)
+            if apply:
+                fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+                for fr in fresh:
+                    if fr and fr[0] == name and len(fr) >= 6:
+                        fr[5] = _note_replace(fr[5], "re-audit",
+                                              f"re-audit {TODAY}: twin-board; not activated")
+                write_csv_rows("companies.csv", fresh)
+            continue
         fixed.append((name, plat, n_all, n_il))
         print(f"  [OK] {name}: {plat} {tok} -> {n_all} jobs / {n_il} IL", flush=True)
         if apply:
             # re-read before every write (single-writer discipline) AND write incrementally
             # so a killed run never loses verified fixes
             fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+            if active_twin(name, plat, tok, api, fresh):
+                # the re-read is the authority: another writer may have activated the twin
+                # between the check above and this write
+                continue
             for fr in fresh:
                 if fr and fr[0] == name and len(fr) >= 6:
                     fr[1], fr[2], fr[3] = plat, tok, api

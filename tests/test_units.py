@@ -477,6 +477,97 @@ def test_every_activation_path_checks_company_identity():
                          f"{ungated}")
 
 
+_JPMC_URL = "https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?x=CX_1001"
+
+
+def test_a_board_already_read_by_an_active_row_cannot_be_activated_again():
+    """The Sunday audit activated `JPMorgan Chase` on `JPMorganChase`'s oraclecloud board
+    (2026-08-30, `7319f85`) and master was red for two hours. EVERY identity gate said yes,
+    correctly: the board is JPMorgan's under either spelling. The unasked question was
+    whether anyone else was already reading it."""
+    import audit_empty_rows as A
+    twin = ["JPMorganChase", "oraclehcm", "", _JPMC_URL, "true", "n"]
+    # the incident shape: no token at all, so only the URL key can catch it
+    assert A.active_twin("JPMorgan Chase", "oraclehcm", "", _JPMC_URL, [twin]) == "JPMorganChase"
+    # ...and case / trailing slash are not an escape
+    assert A.active_twin("JPMorgan Chase", "oraclehcm", "",
+                         _JPMC_URL.replace("jpmc", "JPMC") + "/", [twin]) == "JPMorganChase"
+    # the (platform, token) key, when the two rows spell the URL differently
+    gh = ["Gong", "greenhouse", "gong", "https://boards-api.greenhouse.io/v1/boards/gong/jobs",
+          "true", "n"]
+    assert A.active_twin("Gong.io", "greenhouse", "gong",
+                         "https://boards.greenhouse.io/gong", [gh]) == "Gong"
+    # a `scrape` row is really reading an ATS board: invisible to the column, caught here
+    scr = ["Stigg", "scrape", "", "https://jobs.ashbyhq.com/stigg", "true", "n"]
+    assert A.active_twin("Stigg Inc", "ashby", "stigg",
+                         "https://api.ashbyhq.com/posting-api/job-board/stigg", [scr]) == "Stigg"
+    # and the three ways it must NOT refuse
+    assert A.active_twin("JPMorganChase", "oraclehcm", "", _JPMC_URL, [twin]) == "", "itself"
+    parked = [["JPMorganChase", "oraclehcm", "", _JPMC_URL, "false", "n"]]
+    assert A.active_twin("JPMorgan Chase", "oraclehcm", "", _JPMC_URL, parked) == "", "parked"
+    other = [["Y", "greenhouse", "other",
+              "https://boards-api.greenhouse.io/v1/boards/other/jobs", "true", "n"]]
+    assert A.active_twin("Stigg", "ashby", "stigg",
+                         "https://api.ashbyhq.com/posting-api/job-board/stigg", other) == ""
+
+
+def test_every_activation_path_refuses_an_active_twin():
+    """Three tools flip `active` to true off a verified board, and all three could open a
+    second active row on one board. The guard has to sit ABOVE the write in each of them —
+    `crack_walled` is the one that actually did it on 2026-08-30."""
+    import inspect
+    import audit_empty_rows
+    import crack_walled
+    import deep_validate
+    for mod, fn in ((audit_empty_rows, "main"), (crack_walled, "main"),
+                    (deep_validate, "apply_verdict")):
+        src = inspect.getsource(getattr(mod, fn))
+        where = src.index('fr[4] = "true"')
+        assert "active_twin" in src[:where], (
+            f"{mod.__name__}.{fn} activates a row before asking whether another active row "
+            f"already reads that board")
+
+
+def test_the_deep_rung_cannot_activate_a_twin_row_or_an_off_host_endpoint(monkeypatch):
+    """The deep rung wrote BOTH of Sunday's bad rows. Renesas landed as `smartrecruiters`
+    with `https://jobs.renesas.com/` in column 3 because the LLM tier proposes platform,
+    token and url independently and `fetch_smartrecruiters` appends its query to whatever
+    it is handed — the row scanned, so nothing downstream objected."""
+    import deep_validate as D
+
+    class _OK:                       # the identity gate says yes to BOTH halves of a twin,
+        @staticmethod                # correctly -- that is the whole point of the incident
+        def activation_verdict(*a, **k):
+            return "ok"
+    monkeypatch.setattr(D, "_gate", _OK)
+    monkeypatch.setattr(D, "is_foreign", lambda *a, **k: False)
+
+    twin = ["JPMorganChase", "oraclehcm", "", _JPMC_URL, "true", "n"]
+    fr = ["JPMorgan Chase", "", "", "", "false", "dark-triage 2026-08-22: page-empty"]
+    D.apply_verdict(fr, "JPMorgan Chase", "recovered", "oraclehcm", "", _JPMC_URL,
+                    12, 3, "", rows=[twin])
+    assert fr[4] == "false" and "twin-board" in fr[5], fr
+    assert "dark-triage" in fr[5], "the mode that routed the row here must survive"
+
+    # off-host native endpoint: repaired to the canonical one when that VERIFIES...
+    monkeypatch.setattr(D, "verify", lambda *a, **k: (905, 2))
+    fr2 = ["Renesas Electronics", "", "", "", "false", "n"]
+    D.apply_verdict(fr2, "Renesas Electronics", "recovered", "smartrecruiters",
+                    "RenesasElectronics", "https://jobs.renesas.com/", 905, 2, "llm", rows=[])
+    assert fr2[3] == "https://api.smartrecruiters.com/v1/companies/RenesasElectronics/postings"
+    assert fr2[4] == "true", fr2
+
+    # ...and refused, never persisted, when it does not
+    def _boom(*a, **k):
+        raise RuntimeError("404")
+    monkeypatch.setattr(D, "verify", _boom)
+    fr3 = ["Renesas Electronics", "", "", "", "false", "n"]
+    D.apply_verdict(fr3, "Renesas Electronics", "recovered", "smartrecruiters",
+                    "RenesasElectronics", "https://jobs.renesas.com/", 905, 2, "llm", rows=[])
+    assert fr3[4] == "false" and "off-host" in fr3[5], fr3
+    assert "jobs.renesas.com" not in fr3[3], "an unverified address is never persisted"
+
+
 # --- "time.com is Time To Know" — two ways the identity check said yes to a stranger ----
 def test_a_common_word_that_is_the_whole_domain_is_not_the_company():
     """`verdict` scored time.com a clean MATCH for "Time To Know": the distinctive token
@@ -22169,6 +22260,28 @@ def test_queue_state_load_refuses_a_corrupt_log_and_tolerates_an_absent_one(tmp_
     with pytest.raises(SystemExit):
         QS.load(str(wrong))
     assert bad.read_text(encoding="utf-8").startswith("{\"A\""), "nothing was written over it"
+
+
+def test_a_half_written_proposal_file_is_reported_not_swallowed(tmp_path, capsys):
+    """A shard killed mid-write left an unparsable proposal file and `ingest` skipped it in
+    SILENCE, so that shard's paid searches were never recorded and its names sorted first
+    again the next night — the same credits bought twice, with nothing in the log to say so
+    (`502`). The writers swap atomically now, so the skip should be unreachable; when it is
+    not, it is loud."""
+    import queue_state as QS
+    good = tmp_path / "qrs_1.json"
+    good.write_text(json.dumps({"generated": "2026-08-30", "proposals": [
+        {"name": "Good Co", "kind": "scrape", "rung": "search-llm",
+         "evidence": {"candidate_url": "https://good.example/careers"}}]}), encoding="utf-8")
+    torn = tmp_path / "qrs_2.json"
+    torn.write_text('{"generated": "2026-08-30", "proposals": [{"name": "Torn',
+                    encoding="utf-8")
+    state = {}
+    n = QS.ingest(state, [str(tmp_path / "qrs_*.json")])
+    assert n == 1 and "Good Co" in state, state
+    err = capsys.readouterr().out
+    assert "::warning::ingest:" in err and "qrs_2.json" in err, err
+    assert "NOT recorded" in err, err
 
 
 # ---- the query-URL class ---------------------------------------------------------------

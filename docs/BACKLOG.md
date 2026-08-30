@@ -3092,6 +3092,34 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     Since 2026-08-25 two active rows are on those platforms (Qualcomm `/api/pcsx/`, GE
     HealthCare `/widgets`); check C2 cannot fire for them. Tenant hosts vary, the path does
     not — key the pattern on the path (BACKLOG 76's second half).
+    **The diff, measured 2026-08-31 (`registry`).** C2 is the check that would have caught
+    Renesas landing as `smartrecruiters` with `https://jobs.renesas.com/` in column 3 on
+    2026-08-30; it could not, because a platform absent from this table is unlisted rather
+    than wrong. `deep_validate` now canonicalises its own writes, but C2 is the gate every
+    OTHER writer passes through, and seven platforms are still invisible to it. Keyed on the
+    PATH, never the bare host: these platforms legitimately serve from the tenant's own host
+    (`careers.qualcomm.com/api/pcsx`, `jobs.sap.com/tile-search-results/`), so a host-only
+    pattern would strict-break five active rows the day it lands. Verified against
+    `companies.csv` at `7f17156`: **0 active rows violate any pattern below**
+    (eightfold 2, phenom 1, successfactors 2, jobvite 1, icims/taleo/avature 0).
+    ```diff
+     PLATFORM_HOST = {
+         "comeet": r"comeet\.(com|co)", "greenhouse": r"greenhouse\.io",
+    @@
+         "microsoft": r"careers\.microsoft\.com",
+    +    # Path signatures, not hosts: these platforms serve from the tenant's own domain.
+    +    "eightfold": r"eightfold\.ai|/api/pcsx",
+    +    "phenom": r"phenompeople\.com|/widgets",
+    +    "successfactors": r"successfactors|sapsf|/tile-search-results",
+    +    "icims": r"\.icims\.com",
+    +    "jobvite": r"jobvite\.com",
+    +    "taleo": r"taleo\.net",
+    +    "avature": r"avature\.net",
+         # recruitee supports custom domains, so its host is not checkable
+     }
+    ```
+    Anchor: `check_invariants.py:49`. It also tightens
+    `test_a_native_ats_row_points_at_that_ats`, which reads this table rather than its own.
 194. **Four parent/subsidiary pairs still scan one board under two names** — lane:
     **CLOSED 2026-08-26 (`registry`, operator decision):** Splunk (Cisco), HP Indigo, Habana Labs (Intel), VMware (Broadcom) parked `alias-of <parent>`; roles were never separable at the board and none of the eight rows had an open role. 865 → 861 active, orphans unchanged.
     `registry`, needs a decision per pair: Cisco / Splunk (Cisco), HP / HP Indigo,
@@ -9034,7 +9062,7 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
 
 501. **A writer can still activate a twin of an active row or a native-ATS row off its host — the commit gate now refuses the FILE, which costs the writer its night** — lane: `registry`, filed by `infra` 2026-08-30. The Sunday audit (`7319f85`, run 33304997204) activated `JPMorgan Chase` on the board `JPMorganChase` already read (via `deep_validate.apply_verdict:340` / `audit_empty_rows.py:486-500`) and `Renesas Electronics` as `smartrecruiters` pointing at `https://jobs.renesas.com/`; `crack_walled.py:381-386` has the same shape. All three re-read `companies.csv` only to find their own row, and `identity_gate` never opens the registry, so nothing asks "does an ACTIVE row already read this address?" or "is this api_url on the platform I just wrote into column 2?". Since 2026-08-30 `persist_state.py commit`'s gate runs `check_invariants.py --strict` (B2 = `check_invariants.shared_boards`, the `identity_key` + normalised-url key; C2 = `PLATFORM_HOST`), so the next such activation restores the whole night's `companies.csv` from the checkout and lands the rest — the twin never reaches master, and the cost moves from "master red for two hours" to "one writer's registry night discarded". The row-level fix belongs with the activator: before `fr[4] = "true"`, refuse (note-only, like the gate's other refusals) when `shared_boards(rows + [row])` is non-empty or `PLATFORM_HOST[plat]` does not match `api`. Put the check in ONE helper both call, not two copies. The alarm today is the writer step's `::error::` + persist's `restored from … NOT persisted` line on the run page; a `Stages:` clause for "a writer's registry file was refused" is `infra`'s and not built.
 
-502. **A shard killed mid-write leaves an unparsable proposal file, and the ingest skips it in silence** — lane: `registry`, found by `infra`'s wave B 2026-08-30. `queue_resolve_search.py:562-563` rewrites the whole proposal file per name with a plain `open(a.propose, "w")` + `json.dump`, not `pipeline.atomic`; `queue_state.ingest()` (`queue_state.py:222-226`) does `except Exception: continue` on the parse, and the step still prints `ingested N new attempts` and exits 0. The 08-30 workflow change (the ingest in its own `if: always()` step, 491 item 1) makes three of four shards' logs survive a step timeout instead of none, so this is the one level down of the same failure: the paid searches of the shard the kill landed in are re-bought the next night with no line saying so. Fix: write via `pipeline.atomic.write_json` (or `.tmp` + `os.replace`) so the file on disk is always the last complete one, and in `ingest()` replace the bare `continue` with a `::warning::ingest: <file> unreadable (<err>) -- that shard's attempts are NOT recorded`.
+502. ~~**A shard killed mid-write leaves an unparsable proposal file, and the ingest skips it in silence**~~ — **CLOSED 2026-08-31 (`registry`)**: both halves, as prescribed. `queue_resolve_search.py` writes the search cache and all three proposal-file rewrites through `pipeline.atomic.write_json`, so what is on disk is always the last complete document; `queue_state.ingest()` prints `::warning::ingest: <file> unreadable (<cls>) -- that shard's attempts are NOT recorded` instead of a bare `continue`. Guard: `test_a_half_written_proposal_file_is_reported_not_swallowed`. Landed before the 19:00 run of 2026-08-30, so that night's four shards were the first to write atomically. — lane: `registry`, found by `infra`'s wave B 2026-08-30. `queue_resolve_search.py:562-563` rewrites the whole proposal file per name with a plain `open(a.propose, "w")` + `json.dump`, not `pipeline.atomic`; `queue_state.ingest()` (`queue_state.py:222-226`) does `except Exception: continue` on the parse, and the step still prints `ingested N new attempts` and exits 0. The 08-30 workflow change (the ingest in its own `if: always()` step, 491 item 1) makes three of four shards' logs survive a step timeout instead of none, so this is the one level down of the same failure: the paid searches of the shard the kill landed in are re-bought the next night with no line saying so. Fix: write via `pipeline.atomic.write_json` (or `.tmp` + `os.replace`) so the file on disk is always the last complete one, and in `ingest()` replace the bare `continue` with a `::warning::ingest: <file> unreadable (<err>) -- that shard's attempts are NOT recorded`.
 
 ## From the `discovery` lane, 2026-08-30 (the own-domain research session)
 

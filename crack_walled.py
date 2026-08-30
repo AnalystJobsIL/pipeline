@@ -26,7 +26,8 @@ import urllib.parse
 import urllib.request
 
 from deep_validate import Renderer, ddg
-from audit_empty_rows import AGG, verify
+from audit_empty_rows import AGG, active_twin, verify
+import check_invariants as _INV      # the platform<->host table, imported not retyped
 from pipeline.aggregators import is_aggregator
 # One seam, called through the MODULE, never bound with `from ... import x as y`. A
 # `from` binding is a separate module global, so patching the gate would not reach it -
@@ -377,6 +378,17 @@ def main():
                             fr[5], "crack-walled",
                             f"crack-walled {TODAY}: " + ("not this company's board" if _wv == "not-ours"
                                                          else "unverified (page unreadable)"))
+                    elif verdict.startswith("cracked") and active_twin(name, got[0], "",
+                                                                      got[1], fresh):
+                        # The board is this company's -- and an ACTIVE row already reads it.
+                        # This is the branch that activated `JPMorgan Chase` on
+                        # `JPMorganChase`'s oraclecloud board on 2026-08-30 (`7319f85`) and
+                        # left master red for two hours: every identity gate said yes,
+                        # because under either spelling the board really is JPMorgan's.
+                        # Not `alias-of`: WHICH row survives is a human's call, and an
+                        # activating tool that retires coverage on its own is the larger bug.
+                        fr[5] = _note_replace(fr[5], "crack-walled",
+                                              f"crack-walled {TODAY}: twin-board; not activated")
                     elif verdict.startswith("cracked"):
                         plat, lu = got
                         fr[1], fr[2], fr[3] = plat, "", lu
@@ -400,10 +412,19 @@ def main():
                         # so a row could be ACTIVATED with zero verified Israel jobs and a
                         # note reading "verified 0 IL"; and `novrfy` persisted the address
                         # whenever the page was merely UNREADABLE. Both are re-checked below
-                        # by `_ok_to_write`, which no future `return` can bypass.
+                        # by `write_verdict`, which no future `return` can bypass.
                         _wv = _gate.write_verdict(name, got[1])
                         if _wv == "ok":
                             fr[3] = got[1]
+                            # A documented host that is NOT the declared native platform's
+                            # leaves the row claiming e.g. `workday` while column 3 holds a
+                            # company site: parked it is invisible (C2 ranges over ACTIVE
+                            # rows), but `listing_hunt`'s fast path keys on the `host
+                            # documented` token and can activate it tomorrow, red. The
+                            # honest column for a documented own-host page is `scrape`.
+                            _ph = _INV.PLATFORM_HOST.get((fr[1] or "").strip().lower())
+                            if _ph and not re.search(_ph, got[1] or "", re.I):
+                                fr[1], fr[2] = "scrape", ""
                             fr[5] = _note_replace(
                                 fr[5], "crack-walled",
                                 f"crack-walled {TODAY}: host documented, 0 IL now")
