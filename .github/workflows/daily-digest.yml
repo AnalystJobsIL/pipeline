@@ -240,6 +240,16 @@ jobs:
         timeout-minutes: 110
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # the inline JD filler's last rung (BACKLOG 448, jd-text): a LinkedIn guest page is a
+          # sign-in wall to a datacenter IP (1 of 14 carried a posting) and the posting to a
+          # residential one (5 of 5). Spent only after the free rungs fail. THE CAP IS 30, NOT
+          # THE DEFAULT 25: the measured nightly need is 34 minus the shell class (jd-text,
+          # 2026-08-30), so 30 leaves the cap non-binding on a normal night -- ~900/month of
+          # the 5,000 that begins 2026-09-01. `0` disables the rung. Operator-approved
+          # 2026-08-30, held until jd-text named the number.
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+          JDFILL_BD_CAP: "30"
           # NOTE: SerpApi & JSearch both verified to NOT cover Israel (google_jobs rejects
           # gl=il, location=Israel returns 0). Aggregator left OFF (AGGREGATOR_ENABLED unset).
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}

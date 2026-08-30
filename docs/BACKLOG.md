@@ -8158,6 +8158,11 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
 ## From the `company-intel` lane, 2026-08-30 (the gap's direction)
 
 
+    **CLOSED 2026-08-30 (`infra`, operator-approved):** the two key lines plus `JDFILL_BD_CAP: "30"`
+    — jd-text's number below — in the digest's `Run the pipeline` env. Proof: the first
+    scheduled digest's inline-filler line shows `bd_tried > 0` (morning check 09-01); the
+    re-buy (no cooldown) stays jd-text's/discovery's.
+
     **THE CAP: 25 IS WRONG IN BOTH DIRECTIONS, and the measurements say why** (jd-text,
     2026-08-30, for the infra session adding the env lines).
 
