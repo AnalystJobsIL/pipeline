@@ -4,8 +4,8 @@
   "retired with evidence": 310,
   "owed, a nightly rung retries it": 217,
   "ROW, ACTIVE": 175,
-  "ROW, parked with an address (daily probe)": 225,
-  "ROW, no address, a re-check pool owns it": 109,
+  "ROW, parked with an address (daily probe)": 231,
+  "ROW, no address, a re-check pool owns it": 103,
   "STUCK: no cadence reaches it": 2
  },
  "unverified_rows": 0,
