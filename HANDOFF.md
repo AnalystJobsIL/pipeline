@@ -49,8 +49,9 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-10 | infra | `python tests/schedule_census.py --days 14` — **≥ 3 isolated single-slot drops ⇒ build the recovery digest cron; otherwise it stays rejected.** It was 0 on 2026-08-27 | — | not yet due |
 | 2026-08-29 | registry | `publish.scanned` **>=1,000** (was 969) and the board carries Mixtiles *VP Data*, RealPlay, lab42, Alma Lasers; and `grep -c 'needs re-resolution' companies.csv` falls below **36** — still 36 on 08-30 means the hunt owns the routed rows but does not act (`375`) | 2026-08-29 | PARTIAL - scanned **1000** PASS (08-28 run). Board has RealPlay, Alma Lasers, withfaye; **Mixtiles and lab42 absent**. `needs re-resolution` **FAIL: 120** - the zero audit routed ~85 rows in; re-check 08-31 |
 | 2026-09-27 | registry | of rows stamped `zero-confirm 2026-08-28: confirmed`, **<=5%** have `health_baseline > 0`; above that, strip that run's verdicts | | |
-| 2026-08-30 | registry | digest scans **>=1,015** (was 1,000), `collect:` under **55** min (cap 110); **>=35 of the 56** `queue-drain 2026-08-29` rows produce a posting | | |
-| 2026-08-30 | registry | `grep -c 'needs re-resolution' companies.csv` **below 75**; still 75 on 08-31 means the hunt owns the routed rows and does not act (`375`) | | |
+| 2026-08-30 | registry | digest scans **>=1,015** (was 1,000), `collect:` under **55** min (cap 110); **>=35 of the 56** `queue-drain 2026-08-29` rows produce a posting | 2026-08-30 | PARTIAL - `minutes=35` PASS; queue-drain PASS **128 of 138**. scans N/A: no 05:00 digest by 06:28Z; run `33250362574` had `scanned=1000` |
+| 2026-08-30 | registry | `grep -c 'needs re-resolution' companies.csv` **below 75**; still 75 on 08-31 means the hunt owns the routed rows and does not act (`375`) | 2026-08-30 | FAIL - **309** rows carry `needs re-resolution` (was 120): `--verify-existing` cleared 151 wrong addresses into this token; the pool fills faster than the hunt drains it |
+| 2026-08-31 | registry | the queue converges with no session: the 19:00 `listing-hunt` run (`event: schedule`, headSha containing this commit) prints `retire-settled: queue N -> M` and `queue: N owed` **<= 210** | | |
 | 2026-09-05 | registry | `registry_health.py --stale-boards` **<=17** (was 18; only HiBob repaired) (`391`); and on 09-28, `zero-confirm 2026-08-29: confirmed` rows **<=5%** with `health_baseline > 0` | | |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due (`audit-coverage.yml` is `0 4 * * 0`) |
 | 2026-09-11 | infra | re-measure the cache-shrink threshold from a fortnight of `cloud_state/persist_log.jsonl`; it is provisional on n=3 (ARCHITECTURE §5d) | | not yet due |
@@ -62,30 +63,21 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-08-31 | company-intel | the first unattended digest after this push prints `registry backlog N (±D since 2026-08-30)` and `bulk cron: … of N to do` on `Company intel:`, and its step log has no `blurb dropped, not a company: Tel Aviv`. `(first measurement)` on 08-31 means the `intel` stamp did not survive persist (`451`); once 449 lands, any `claude unavailable` on that line names a `subtype` | | not yet due |
 | 2026-09-06 | docs | **the three checks are still meaningful SOMEWHERE.** They skip in CI by design (a depth-1 checkout has nothing to be behind), so the only place they fire is a lane's own pre-push run. Evidence they still do: `git log --since=2026-08-30 --grep='tree\|morning check\|unattended'` finds a session that hit one, or ask the orchestrator whether any lane was stopped by one. If nothing in a week, they are decoration and belong in `docs/BACKLOG.md` as such | | not yet due |
 
-## State at handoff — 2026-08-27 07:5x UTC, every number re-derived
+## State at handoff — 2026-08-30 ~09:30 UTC, every number re-derived
 
-The table this replaces was dated 2026-08-23 and **every cell in it was stale**, including
-the `docs` lane's own re-count four lines below it. Two snapshots of a four-day-old
-morning, both presented as current state, in the file the brief tells every agent to read
-in full. Commands are given so the next reader re-derives rather than trusting.
+The 2026-08-27 table that stood here said registry **1,266 rows · 893 active** (it is 2,045 ·
+1,099) and *"`tests.yml` is red ... 3 failed"* (1,469 pass, 0 fail). Every cell below carries
+the command that re-derives it, because that is the only thing that keeps this honest.
 
 | | | how |
 |---|---|---|
-| registry | **1,266 rows · 893 active · 373 parked** | `python check_invariants.py` (it prints 1,267: it counts the header) |
-| by tier | **451 native-ATS · 421 scrape · 1 discovery** | `python registry_health.py --census` — and note this moved 18 rows in the hour between `ae6eeae` and `623b2a9` |
-| store | **135 matched · 59 sent · 946 firmographics · 516 llm_cache · 112 company_info** | `sqlite3 cloud_state/seen.db` |
-| ledger | **135 `roles.jsonl` · 132 `roles_text.jsonl`**, reconciling with the store | `wc -l cloud_state/roles*.jsonl` |
-| firmographics export | **973** records — the sqlite table holds 946 and the 08-26 mail said 942 | `len(json.load(open('cloud_state/firmographics.json')))` |
-| last digest | **2026-08-26** — 870 scanned, 3 failed, 28 LLM calls, 96 accepted → 65 merged → **8 emailed**, board 76, archive 56 | `digests/latest.md` |
-| guards | **1,270 collected** (968 `test_units` / 205 `test_registry` / 97 `test_company_intel`) — **1,256 passed, 3 failed, 11 skipped** in 5m17s. The `988` this row carried until 2026-08-28 was stale by 282. | `python -m pytest -q` |
+| registry | **2,045 rows · 1,099 active · 946 parked · 0 orphans** | `python check_invariants.py` (it prints 2,046: it counts the header) |
+| by tier | **525 native-ATS · 573 scrape · 1 discovery** | `python registry_health.py` |
+| intake queue | **210 owed**, both censuses agreeing | `python queue_state.py` |
+| last digest | **2026-08-29**, `scanned=1000`, **4 emailed** (no 05:00 slot has fired at 05:00 since 08-26) | `digests/latest.md` |
+| guards | **1,469 passed · 12 skipped · 0 failed** locally at `06f07cd` | `python -m pytest` (not `-q`) |
 
-**`tests.yml` is red, and the three failures are not the one this file named yesterday.**
-Re-measured by `infra` at `759ba36`, clean worktree, 2026-08-28 evening:
-`test_no_two_active_rows_share_a_board` (`registry`),
-`test_native_url_is_derived_from_the_public_url_alone` and
-`test_every_open_role_in_the_ledger_carries_a_job_description`. Each reads live state, so a
-cron can break or fix one without anyone touching code. **Never read a red `tests.yml` as
-"someone else's problem" without re-deriving the list** — it has changed twice in two days.
+**Green here is not green in CI**, and on a commit master has moved past. Each lane's line names its run.
 
 ## Watch list for the next session
 
@@ -200,3 +192,4 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-30 `company-intel`** — the gap was a level, the cap never bound, a truncated or crashed cron night stamped like a drained one. Direction on the mail line, `todo/attempted/left` + alarms in the stamp, `--budget-min`, blurb purged once. **UNVERIFIED IN CI:** run 33296542486 in progress at push; every run since 04:55Z cancelled (`442`). **NOT finished:** 449-452. Record: `docs/sessions/2026-08-30-company-intel.md`.
 - **2026-08-30 `roles`** - `seniority` was computed and dropped (**0 of 154**), the funnel printed once and discarded, retention unguarded. Now **`cloud_state/roles.csv`, 143 rows**, 60-day window on `last_seen`; seniority **154/154**; `funnel.csv`; `dump()` refuses to shrink. **NOT on Pages** (`453@infra`). Run **33299098476** (tip `a1033c3`): `Unit guards` + `Registry invariants` PASSED. **NOT finished:** 453-455, proof due 08-31. `docs/sessions/2026-08-30-roles.md`.
 - **2026-08-30 `classifier`** - scope is QUANTITATIVE analyst work now. The stale alarm invited a cap raise that buys nothing: most of that pool no cap reaches. Condition (5) plus a demote-only hint (**0 FN of 96**); strong+senior with a JD is READ (**5 of 19 rejected**, `373`/`121` closed). **NOT finished:** 461-466, the unattended run. Record: `docs/sessions/2026-08-30-classifier.md`.
+- **2026-08-30 `registry`** - a retirement was only an ABSENCE and the merge rescues origin's deletions (`458@infra`); it is a STATE now, re-applied nightly by lookup: queue **276 -> 210**. `--reopen` reverses one. **NOT finished:** 458-462. Record: `docs/sessions/2026-08-30-registry.md`.

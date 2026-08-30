@@ -728,6 +728,10 @@
  },
  "Action Item Software Ltd": {
   "date": "2026-08-30",
+  "verdict": "overturned-no-board",
+  "raw_verdict": "",
+  "other_name": "",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -753,10 +757,38 @@
    ],
    "verify": []
   },
-  "other_name": "",
-  "raw_verdict": "real-company-no-board",
-  "verdict": "no-board",
-  "why": "Action Item Solutions (action-item.co.il) is a real Tel Aviv software company. Its /join page only lists role titles as static text with a contact form; a 12-path careers probe of its domain returned nothing, so there is no automatically readable job board."
+  "overturned_from": {
+   "date": "2026-08-30",
+   "evidence": {
+    "careers_probe": {
+     "answered": [],
+     "tried": [
+      "/careers",
+      "/careers/",
+      "/jobs",
+      "/jobs/",
+      "/career",
+      "/career/",
+      "/about/careers",
+      "/company/careers",
+      "/en/careers",
+      "/careers/open-positions",
+      "/join-us",
+      "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+     ]
+    },
+    "read_page": "https://www.action-item.co.il/join",
+    "search_pages": [
+     "https://www.action-item.co.il/join",
+     "https://jobhunt.co.il/jobs/חברת-action-item-software-מגייסת-מפתח-ת-c-5ca31a2032f09044105b7a33"
+    ],
+    "verify": []
+   },
+   "other_name": "",
+   "raw_verdict": "real-company-no-board",
+   "verdict": "no-board",
+   "why": "Action Item Solutions (action-item.co.il) is a real Tel Aviv software company. Its /join page only lists role titles as static text with a contact form; a 12-path careers probe of its domain returned nothing, so there is no automatically readable job board."
+  }
  },
  "Actualsignal": {
   "date": "2026-08-30",
@@ -1513,32 +1545,26 @@
  },
  "Alice Flights": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Alice IO",
+  "why": "a rung found this name's board and the registry row 'Alice IO' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.talaviation.com/careers",
-     "https://www.talaviation.com/careers/",
-     "https://www.talaviation.com/jobs"
+   "row": "Alice IO",
+   "matched_on": "url",
+   "tried": [
+    [
+     "hunt",
+     "another company's board",
+     "https://hellojets.com/career/"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs"
+    [
+     "search-llm",
+     "found",
+     "https://alice.io/careers"
     ]
-   },
-   "read_page": "https://www.talaviation.com/careers",
-   "search_pages": [
-    "https://www.talaviation.com/careers",
-    "https://careers.alaskaair.com",
-    "https://hellojets.com/career/",
-    "https://alice.io/careers"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "All evidence (search hits and the careers probe) belongs to other entities — TAL Aviation, Alaska Airlines, HelloJets, alice.io — none identified as \"Alice Flights\". No probe of an Alice Flights domain was run, so nothing settles what this name is."
+   ]
+  }
  },
  "Alice IO": {
   "board_url_if_any": "",
@@ -1642,6 +1668,10 @@
  },
  "Allyable": {
   "date": "2026-08-30",
+  "verdict": "overturned-no-board",
+  "raw_verdict": "",
+  "other_name": "",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [
@@ -1664,10 +1694,35 @@
    ],
    "verify": []
   },
-  "other_name": "",
-  "raw_verdict": "real-company-no-board",
-  "verdict": "no-board",
-  "why": "Allyable is a real digital-accessibility SaaS employer. Careers-path probe of allyable.com answered, but the careers page only lists an open role as inline HTML text with no ATS/job-board integration."
+  "overturned_from": {
+   "date": "2026-08-30",
+   "evidence": {
+    "careers_probe": {
+     "answered": [
+      "https://allyable.com/careers",
+      "https://allyable.com/careers/",
+      "https://allyable.com/career"
+     ],
+     "tried": [
+      "/careers",
+      "/careers/",
+      "/jobs",
+      "/jobs/",
+      "/career"
+     ]
+    },
+    "read_page": "https://allyable.com/careers/",
+    "search_pages": [
+     "https://allyable.com/careers/",
+     "https://careers.alignable.com"
+    ],
+    "verify": []
+   },
+   "other_name": "",
+   "raw_verdict": "real-company-no-board",
+   "verdict": "no-board",
+   "why": "Allyable is a real digital-accessibility SaaS employer. Careers-path probe of allyable.com answered, but the careers page only lists an open role as inline HTML text with no ATS/job-board integration."
+  }
  },
  "Almo Motion Control | אלמו הנע מבוקר בע\"מ": {
   "board_url_if_any": "",
@@ -1681,6 +1736,10 @@
  },
  "Alpa Cosmetics Group": {
   "date": "2026-08-30",
+  "verdict": "overturned-no-board",
+  "raw_verdict": "",
+  "other_name": "",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -1705,10 +1764,37 @@
    ],
    "verify": []
   },
-  "other_name": "",
-  "raw_verdict": "real-company-no-board",
-  "verdict": "no-board",
-  "why": "Alpa Cosmetics Group is a real Israeli cosmetics importer/distributor. Its site has a hand-written Hebrew \"קריירה\" page listing openings as plain text with \"apply\" links, not a structured job board; a 12-path careers probe of the domain returned nothing machine-readable."
+  "overturned_from": {
+   "date": "2026-08-30",
+   "evidence": {
+    "careers_probe": {
+     "answered": [],
+     "tried": [
+      "/careers",
+      "/careers/",
+      "/jobs",
+      "/jobs/",
+      "/career",
+      "/career/",
+      "/about/careers",
+      "/company/careers",
+      "/en/careers",
+      "/careers/open-positions",
+      "/join-us",
+      "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+     ]
+    },
+    "read_page": "https://www.alpa-cosmetics.co.il/קריירה",
+    "search_pages": [
+     "https://www.alpa-cosmetics.co.il/קריירה"
+    ],
+    "verify": []
+   },
+   "other_name": "",
+   "raw_verdict": "real-company-no-board",
+   "verdict": "no-board",
+   "why": "Alpa Cosmetics Group is a real Israeli cosmetics importer/distributor. Its site has a hand-written Hebrew \"קריירה\" page listing openings as plain text with \"apply\" links, not a structured job board; a 12-path careers probe of the domain returned nothing machine-readable."
+  }
  },
  "Alstom": {
   "board_url_if_any": "",
@@ -3076,34 +3162,21 @@
  },
  "Birdaero": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "BIRD Aerosystems",
+  "why": "a rung found this name's board and the registry row 'BIRD Aerosystems' already reads it (matched on comeet-uid, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.birdaero.com/careers",
-     "https://www.birdaero.com/careers/",
-     "https://www.birdaero.com/career"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career"
+   "row": "BIRD Aerosystems",
+   "matched_on": "comeet-uid",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.comeet.com/jobs/birdaero/97.006"
     ]
-   },
-   "read_page": "https://www.birdaero.com/careers/",
-   "search_pages": [
-    "https://www.birdaero.com/careers/",
-    "https://www.comeet.com/jobs/birdaero/97.006",
-    "https://bluebird-uav.com/career/",
-    "https://www.bluebirdair.com/About-us/Careers"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Birdaero = BIRD Aerosystems Ltd. (Herzliya, Israel), a real employer whose own careers page lists open roles and which uses a Comeet job board. None of the problem categories apply; the probe found a working careers page, so it is not \"no board\"."
+   ]
+  }
  },
  "Biscience": {
   "board_url_if_any": "",
@@ -4430,6 +4503,10 @@
  },
  "Bulwarx": {
   "date": "2026-08-30",
+  "verdict": "overturned-no-board",
+  "raw_verdict": "",
+  "other_name": "",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -4455,10 +4532,38 @@
    ],
    "verify": []
   },
-  "other_name": "",
-  "raw_verdict": "real-company-no-board",
-  "verdict": "no-board",
-  "why": "Bulwarx is a real Israeli cybersecurity integration company (Ra'anana). Its careers page is a static Wix page listing roles inline with \"send your resume\" links; a 12-path careers probe of bulwarx.com returned nothing machine-readable."
+  "overturned_from": {
+   "date": "2026-08-30",
+   "evidence": {
+    "careers_probe": {
+     "answered": [],
+     "tried": [
+      "/careers",
+      "/careers/",
+      "/jobs",
+      "/jobs/",
+      "/career",
+      "/career/",
+      "/about/careers",
+      "/company/careers",
+      "/en/careers",
+      "/careers/open-positions",
+      "/join-us",
+      "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+     ]
+    },
+    "read_page": "https://www.bulwarx.com/careers",
+    "search_pages": [
+     "https://www.bulwarx.com/careers",
+     "https://www.facebook.com/Bulwarx/"
+    ],
+    "verify": []
+   },
+   "other_name": "",
+   "raw_verdict": "real-company-no-board",
+   "verdict": "no-board",
+   "why": "Bulwarx is a real Israeli cybersecurity integration company (Ra'anana). Its careers page is a static Wix page listing roles inline with \"send your resume\" links; a 12-path careers probe of bulwarx.com returned nothing machine-readable."
+  }
  },
  "Business Book Daily": {
   "date": "2026-08-30",
@@ -4539,40 +4644,21 @@
  },
  "Bynet": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Bynet Software Systems Ltd.",
+  "why": "a rung found this name's board and the registry row 'Bynet Software Systems Ltd.' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.bynet.co.il/career",
-     "https://www.bynet.co.il/career/"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+   "row": "Bynet Software Systems Ltd.",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.bynet.co.il/en/career/"
     ]
-   },
-   "read_page": "https://www.bynet.co.il/en/career/",
-   "search_pages": [
-    "https://www.bynet.co.il/en/career/",
-    "https://bynetsoft.co.il/en/career/",
-    "https://bynete.co.il/careers/",
-    "https://bynetdcs.co.il/careers/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Bynet (bynet.co.il) is a real Israeli IT/communications employer and its own career page answered the probe, so \"no board\" does not apply. The name is however a group umbrella with several sibling entities (bynetsoft, bynete, bynetdcs), and the evidence doesn't settle whether the intake entry is a d"
+   ]
+  }
  },
  "Bynet Data Communications": {
   "board_url_if_any": "",
@@ -4946,32 +5032,19 @@
  },
  "Callapp": {
   "date": "2026-08-30",
-  "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://call.app/careers",
-     "https://call.app/careers/",
-     "https://call.app/jobs"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs"
-    ]
-   },
-   "read_page": "https://call.app/jobs",
-   "search_pages": [
-    "https://call.app/jobs",
-    "https://www.masaisrael.org/company/callapp-en-c/",
-    "https://callapp.com/about-callapp",
-    "https://www.naukri.com/call-app-jobs"
-   ],
-   "verify": []
-  },
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
   "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "CallApp is a real employer (Israeli caller-ID app company) and its own domain call.app serves a working careers/jobs page with multiple listed openings (Android dev, backend/cloud, iOS QA). So it is not defunct, acquired, a duplicate, a non-employer, or a company without a readable careers page; non"
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
  },
  "Cameri Theatre": {
   "board_url_if_any": "",
@@ -5235,37 +5308,19 @@
  },
  "Cbre": {
   "date": "2026-08-30",
-  "evidence": {
-   "careers_probe": {
-    "answered": [],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
-    ]
-   },
-   "read_page": "https://www.cbre.co.il/careers",
-   "search_pages": [
-    "https://www.cbre.co.il/careers",
-    "https://careers.cbre.com/en_US/careers/Home",
-    "https://www.cbreim.com/careers",
-    "https://cbre.dejobs.org"
-   ],
-   "verify": []
-  },
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
   "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "CBRE is a real global commercial real estate employer. The probe hit the Israeli site (cbre.co.il), which was Cloudflare rate-limited, so the negative result reflects our blocked search, not the company. Search results show careers.cbre.com and cbre.dejobs.org, suggesting a real job board exists; th"
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
  },
  "Celcomdigi": {
   "board_url_if_any": "",
@@ -6716,32 +6771,26 @@
  },
  "Experda.com": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Experda",
+  "why": "a rung found this name's board and the registry row 'Experda' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.experda.com/jobs",
-     "https://www.experda.com/jobs/",
-     "https://www.experda.com/career"
+   "row": "Experda",
+   "matched_on": "url",
+   "tried": [
+    [
+     "hunt",
+     "no-listing",
+     "https://www.experda.com/career/"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career"
+    [
+     "search-llm",
+     "documented",
+     "https://www.experda.com/jobs/"
     ]
-   },
-   "read_page": "https://www.experda.com/jobs/",
-   "search_pages": [
-    "https://www.experda.com/jobs/",
-    "https://www.facebook.com/Experda/posts/אנחנו-מגייסים-מוזמנים-להצטרף-להצלחה-קוח-למיל-jobsexperdacom-we-are-looking-for-2/3507097582718472/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Experda is a real database-services/product company (xMaster MSSQL/MySQL, DBA & BI services) and its own domain does have working careers/jobs pages with live listings, so \"no board\" does not apply. The only ambiguity is that some listings are for client companies (\"An international industrial compa"
+   ]
+  }
  },
  "Exyte": {
   "board_url_if_any": "",
@@ -6818,37 +6867,26 @@
  },
  "Faye": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "withfaye",
+  "why": "a rung found this name's board and the registry row 'withfaye' already reads it (matched on comeet-uid, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+   "row": "withfaye",
+   "matched_on": "comeet-uid",
+   "tried": [
+    [
+     "hunt",
+     "found",
+     "https://www.comeet.com/jobs/withfaye/87.00A"
+    ],
+    [
+     "search-llm",
+     "found",
+     "https://www.comeet.com/jobs/withfaye/87.00a"
     ]
-   },
-   "read_page": "https://www.withfaye.com/careers/",
-   "search_pages": [
-    "https://www.withfaye.com/careers/",
-    "https://www.comeet.com/jobs/withfaye/87.00a",
-    "https://jobs.f2vc.com/jobs/faye",
-    "https://fayedigital.com/careers/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Faye (withfaye.com) is a real travel-insurance employer with a live careers page listing open roles and a Comeet board (comeet.com/jobs/withfaye), so it does have a machine-readable job board. The probe reporting no careers paths contradicts the captured /careers/ page text (likely probed a differen"
+   ]
+  }
  },
  "Fionics": {
   "board_url_if_any": "",
@@ -6996,37 +7034,26 @@
  },
  "Foresightauto": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Foresight Automotive",
+  "why": "a rung found this name's board and the registry row 'Foresight Automotive' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+   "row": "Foresight Automotive",
+   "matched_on": "url",
+   "tried": [
+    [
+     "hunt",
+     "no-listing",
+     "https://www.foresightauto.com/careers/"
+    ],
+    [
+     "search-llm",
+     "found",
+     "https://www.comeet.com/jobs/foresightauto/13.000/foresight-automotive/DA.63B"
     ]
-   },
-   "read_page": "https://www.foresightauto.com/careers/",
-   "search_pages": [
-    "https://www.foresightauto.com/careers/",
-    "https://www.comeet.com/jobs/foresightauto/13.000/foresight-automotive/DA.63B",
-    "https://forsightrobotics.com/careers",
-    "https://foresight.group/other-information/careers/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Foresight Automotive is a real employer, but the evidence is contradictory: the probe reported no careers path answering, yet https://www.foresightauto.com/careers/ did return content (only a cookie banner captured), and a Comeet-hosted job board for \"foresightauto\" appears in search results. So a m"
+   ]
+  }
  },
  "Formtitan": {
   "date": "2026-08-30",
@@ -9044,20 +9071,48 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Gotion High Tech Indonesia Factory": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 2 candidates",
-    "url": "https://job-boards.greenhouse.io/gotion",
-    "verdict": "nolisting",
-    "why": "another company's board"
-   },
-   "search_pages": []
-  },
-  "verdict": "cannot-tell",
-  "why": "The only candidate careers page found (job-boards.greenhouse.io/gotion) was REFUSED by the identity check as belonging to a different company, so it provides no evidence about Gotion High Tech Indonesia Factory specifically. Since every candidate was refused, we cannot determine whether a readable careers/job board exists for this company."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "another company's board"
+    ],
+    [
+     "hunt",
+     "llm-cannot-tell"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
  },
  "Gov Il": {
   "date": "2026-08-29",
@@ -9479,34 +9534,26 @@
  },
  "Guideline Group": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Guideline",
+  "why": "a rung found this name's board and the registry row 'Guideline' already reads it (matched on name-normalised, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.guideline.co.il/jobs",
-     "https://www.guideline.co.il/jobs/",
-     "https://www.guideline.co.il/career"
+   "row": "Guideline",
+   "matched_on": "name-normalised",
+   "tried": [
+    [
+     "hunt",
+     "found",
+     "https://www.guideline.co.il/jobs/"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career"
+    [
+     "search-llm",
+     "found",
+     "https://www.comeet.com/jobs/guideline/89.009"
     ]
-   },
-   "read_page": "https://www.guideline.co.il/jobs/",
-   "search_pages": [
-    "https://www.guideline.co.il/jobs/",
-    "https://www.comeet.com/jobs/guideline/89.009",
-    "https://www.guideline.ai/join-our-team",
-    "https://www.facebook.com/groups/284048350858807/posts/627052106558428/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Guideline Group is a real Israeli holding group (TASE-traded, includes Hashavim H.P.S, FINBOT) and it DOES have a machine-readable careers presence: guideline.co.il/jobs and a Comeet board (comeet.com/jobs/guideline/89.009). So it is not \"real-company-no-board\", and no evidence of acquisition, dupli"
+   ]
+  }
  },
  "Gytpol": {
   "date": "2026-08-30",
@@ -9674,6 +9721,10 @@
  },
  "Hacerem Spirits": {
   "date": "2026-08-30",
+  "verdict": "overturned-no-board",
+  "raw_verdict": "",
+  "other_name": "",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -9701,10 +9752,40 @@
    ],
    "verify": []
   },
-  "other_name": "",
-  "raw_verdict": "real-company-no-board",
-  "verdict": "no-board",
-  "why": "Hacerem/Hakerem (הכרם משקאות חריפים בע\"מ) is a real Israeli spirits distributor. Its only careers page is a Hebrew /דרושים/ page listing a couple of roles as static text with an email address; a 12-path careers probe of hacarem.com found no machine-readable careers endpoint or job board."
+  "overturned_from": {
+   "date": "2026-08-30",
+   "evidence": {
+    "careers_probe": {
+     "answered": [],
+     "tried": [
+      "/careers",
+      "/careers/",
+      "/jobs",
+      "/jobs/",
+      "/career",
+      "/career/",
+      "/about/careers",
+      "/company/careers",
+      "/en/careers",
+      "/careers/open-positions",
+      "/join-us",
+      "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+     ]
+    },
+    "read_page": "https://www.hacarem.com/דרושים/",
+    "search_pages": [
+     "https://www.hacarem.com/דרושים/",
+     "https://gwspirits.co.il/career/",
+     "https://proximospirits.com/careers/",
+     "https://rocketreach.co/noa-ronen-email_67378171"
+    ],
+    "verify": []
+   },
+   "other_name": "",
+   "raw_verdict": "real-company-no-board",
+   "verdict": "no-board",
+   "why": "Hacerem/Hakerem (הכרם משקאות חריפים בע\"מ) is a real Israeli spirits distributor. Its only careers page is a Hebrew /דרושים/ page listing a couple of roles as static text with an email address; a 12-path careers probe of hacarem.com found no machine-readable careers endpoint or job board."
+  }
  },
  "Hackerseye": {
   "board_url_if_any": "",
@@ -10965,37 +11046,26 @@
  },
  "Israel Electric Company": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ",
+  "why": "a rung found this name's board and the registry row 'IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ' already reads it (matched on hostpath, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+   "row": "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "hunt",
+     "found",
+     "https://careers.iec.co.il/?referid=&freeText=&page=1"
+    ],
+    [
+     "search-llm",
+     "found",
+     "https://www.iec.co.il/content/career/lobbies/lobby"
     ]
-   },
-   "read_page": "https://careers.iec.co.il/הסכמה-למדיניות-הפרטים/",
-   "search_pages": [
-    "https://careers.iec.co.il/הסכמה-למדיניות-הפרטים/",
-    "https://ieccontent.iec.co.il/en/content/career/lobbies/lobby/",
-    "https://www.iec.co.il/content/career/lobbies/lobby",
-    "https://www.naukri.com/electric-jobs-in-israel"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Israel Electric Corporation is a real employer, and the evidence actually shows a dedicated careers site (careers.iec.co.il plus iec.co.il/content/career/lobbies/lobby). The probe only tested generic paths on the main domain and never checked the careers subdomain, so we cannot conclude there is no "
+   ]
+  }
  },
  "Israel Elwyn": {
   "board_url_if_any": "",
@@ -11756,40 +11826,43 @@
  },
  "Jacobs": {
   "date": "2026-08-30",
-  "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.jacobs.com/careers",
-     "https://www.jacobs.com/careers/"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
-    ]
-   },
-   "read_page": "https://www.jacobs.com/careers-jacobs",
-   "search_pages": [
-    "https://www.jacobs.com/careers-jacobs",
-    "https://careers.jacobs.com/en_US/careers/Home",
-    "https://jacobs.jobs",
-    "https://www.nbn.org.il/jobboard/company/Jacobs/"
-   ],
-   "verify": []
-  },
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
   "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Jacobs is a real employer with careers pages (careers.jacobs.com, jacobs.jobs) that answered, so \"no board\" doesn't apply; evidence doesn't clearly identify a machine-readable job board feed, but it's clearly a hiring employer, not acquired/duplicate/defunct."
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain"
+    ],
+    [
+     "search",
+     "walked-nothing-found"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ],
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
  },
  "Jafi": {
   "board_url_if_any": "",
@@ -12468,34 +12541,21 @@
  },
  "KMS Lighthouse": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Kmslh",
+  "why": "a rung found this name's board and the registry row 'Kmslh' already reads it (matched on comeet-uid, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://kmslh.com/careers",
-     "https://kmslh.com/careers/",
-     "https://kmslh.com/about/careers"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers"
+   "row": "Kmslh",
+   "matched_on": "comeet-uid",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.comeet.com/jobs/kmslh/97.008"
     ]
-   },
-   "read_page": "https://kmslh.com/careers/",
-   "search_pages": [
-    "https://kmslh.com/careers/",
-    "https://www.comeet.com/jobs/kmslh/97.008"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "KMS Lighthouse is a genuine knowledge-management SaaS employer; its own careers page answered and lists 8 open roles served by a Comeet board (comeet.com/jobs/kmslh). It is not acquired, duplicate, defunct, or a non-employer, and it clearly does have a machine-readable job board, so \"real-company-no"
+   ]
+  }
  },
  "KPMG Israel": {
   "board_url_if_any": "",
@@ -12901,20 +12961,44 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Kibbutz Contemporary Dance Company": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "",
-    "url": "https://kcdc.co.il/en/",
-    "verdict": "found",
-    "why": "not a listings page"
-   },
-   "search_pages": []
-  },
-  "verdict": "cannot-tell",
-  "why": "The only candidate page found was refused by the identity check (not a listings page), so it cannot be used as evidence of either a board or no board. No other evidence was gathered."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "another company's board"
+    ],
+    [
+     "hunt",
+     "llm-cannot-tell"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
  },
  "Kibeeri": {
   "board_url_if_any": "",
@@ -12939,21 +13023,36 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Kinderzentrum Wei Er Stein Marburg Wehrda Ev": {
-  "board_url_if_any": "https://www.kize-weisser-stein.de/jobs",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 1 candidates",
-    "url": "https://www.kize-weisser-stein.de/jobs",
-    "verdict": "nolisting",
-    "why": "no-listing"
-   },
-   "search_pages": []
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired.",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found a jobs URL for the company (kize-weisser-stein.de/jobs) but it was assessed as 'nolisting', meaning no readable openings/listings were present on that page, despite the company being confirmed as real."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-handle"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "documented"
+    ]
+   ]
+  }
  },
  "Kinetiqo Ltd.": {
   "board_url_if_any": "",
@@ -13228,21 +13327,40 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Kone": {
-  "board_url_if_any": "https://kone.wd3.myworkdayjobs.com/en-US/Careers?locationCountry=8bab86e0e08a4de2882ade5ff35d9be1",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 2 candidates",
-    "url": "https://kone.wd3.myworkdayjobs.com/en-US/Careers?locationCountry=8bab86e0e08a4de2882ade5ff35d9be1",
-    "verdict": "nolisting",
-    "why": "no-listing"
-   },
-   "search_pages": []
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired.",
-  "verdict": "overturned-no-board",
-  "why": "Kone is a real, well-known company (elevator manufacturer) and evidence shows a Workday careers URL was found (kone.wd3.myworkdayjobs.com/en-US/Careers), but the hunt marked it as 'nolisting' after trying candidates, indicating no readable job listings were present despite the page existing."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "documented"
+    ]
+   ]
+  }
  },
  "Konfidas": {
   "board_url_if_any": "",
@@ -13420,21 +13538,32 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Krief Group": {
-  "board_url_if_any": "https://www.krief.co.il/career/",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 2 candidates",
-    "url": "https://www.krief.co.il/career/",
-    "verdict": "nolisting",
-    "why": "no-listing"
-   },
-   "search_pages": []
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired.",
-  "verdict": "overturned-no-board",
-  "why": "A careers page was found at krief.co.il/career/ but the hunt determined it has no listings (nolisting), indicating the company exists and has a careers page, but no readable job openings are published there."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ]
+   ]
+  }
  },
  "Kristalino": {
   "date": "2026-08-30",
@@ -13471,21 +13600,32 @@
   "why": "Search results all belong to other entities (Crystal Group, Crystal Cruises, Raicol, a jobs.bg listing), none identified as Kristalino. Without evidence establishing the company's own site/identity, the failed careers-path probe can't be attributed to it."
  },
  "Kucklick Dresdner Fachanwaelte De": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 1 candidates",
-    "url": "https://www.dresdner-fachanwaelte.de/anwaelte/",
-    "verdict": "nolisting",
-    "why": "no-listing"
-   },
-   "search_pages": []
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired.",
-  "verdict": "overturned-no-board",
-  "why": "Search found the firm's site (attorneys page) but no readable job listings/careers page; only one candidate tried and it was not a listings page, indicating no accessible job board exists."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "walked-nothing-found"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ]
+   ]
+  }
  },
  "Kuehn Gmbh": {
   "board_url_if_any": "",
@@ -13679,39 +13819,21 @@
  },
  "Landa Corporation": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Landacorp",
+  "why": "a rung found this name's board and the registry row 'Landacorp' already reads it (matched on comeet-uid, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.landanano.com/careers"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+   "row": "Landacorp",
+   "matched_on": "comeet-uid",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.comeet.com/jobs/landacorp/A4.000/senior-digital-front-end-dfe-project-manager/3E.864"
     ]
-   },
-   "read_page": "https://www.landanano.com/about-us/careers",
-   "search_pages": [
-    "https://www.landanano.com/about-us/careers",
-    "https://www.comeet.com/jobs/landacorp/A4.000/senior-digital-front-end-dfe-project-manager/3E.864",
-    "https://www.landa.com/en/about-landa/careers.html",
-    "https://www.landa.app/careers"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Landa Corporation Ltd. (landanano.com) is a real employer and a careers page does exist and answered on its own domain, so \"no board\" is not supported. The page text captured is only CSS/font boilerplate, so we cannot tell whether it exposes a machine-readable job board (a Comeet listing for \"landac"
+   ]
+  }
  },
  "Landacorp": {
   "board_url_if_any": "",
@@ -13896,21 +14018,32 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Ledge Finance": {
-  "board_url_if_any": "https://www.ledge.co/careers",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 1 candidates",
-    "url": "https://www.ledge.co/careers",
-    "verdict": "nolisting",
-    "why": "no-listing"
-   },
-   "search_pages": []
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired.",
-  "verdict": "overturned-no-board",
-  "why": "The careers page was found at https://www.ledge.co/careers but the hunt found no listings there (verdict=nolisting), indicating the company has a careers page without readable job openings."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "walked-nothing-found"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ]
+   ]
+  }
  },
  "Ledico": {
   "board_url_if_any": "",
@@ -13924,6 +14057,10 @@
  },
  "Legatolegal": {
   "date": "2026-08-30",
+  "verdict": "overturned-no-board",
+  "raw_verdict": "",
+  "other_name": "",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -13951,10 +14088,40 @@
    ],
    "verify": []
   },
-  "other_name": "",
-  "raw_verdict": "real-company-no-board",
-  "verdict": "no-board",
-  "why": "Legato (legato.legal) is a real Israeli legal-services firm; its homepage lists one open role inline, but a probe of 12 careers paths on its own domain returned nothing machine-readable."
+  "overturned_from": {
+   "date": "2026-08-30",
+   "evidence": {
+    "careers_probe": {
+     "answered": [],
+     "tried": [
+      "/careers",
+      "/careers/",
+      "/jobs",
+      "/jobs/",
+      "/career",
+      "/career/",
+      "/about/careers",
+      "/company/careers",
+      "/en/careers",
+      "/careers/open-positions",
+      "/join-us",
+      "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+     ]
+    },
+    "read_page": "https://www.legato.legal",
+    "search_pages": [
+     "https://www.legato.legal",
+     "https://legora.com/careers",
+     "https://www.migal.org.il/en/careers",
+     "https://careers.legalandgeneral.com/our-careers"
+    ],
+    "verify": []
+   },
+   "other_name": "",
+   "raw_verdict": "real-company-no-board",
+   "verdict": "no-board",
+   "why": "Legato (legato.legal) is a real Israeli legal-services firm; its homepage lists one open role inline, but a probe of 12 careers paths on its own domain returned nothing machine-readable."
+  }
  },
  "Legion Security AI": {
   "date": "2026-08-30",
@@ -14055,21 +14222,32 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Lenox Investments": {
-  "board_url_if_any": "https://www.lenoxadvisors.com/about/careers/",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 1 candidates",
-    "url": "https://www.lenoxadvisors.com/about/careers/",
-    "verdict": "nolisting",
-    "why": "no-listing"
-   },
-   "search_pages": []
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired.",
-  "verdict": "overturned-no-board",
-  "why": "The careers page hunt found an actual careers URL (lenoxadvisors.com/about/careers/) confirming the company exists, but it was identified as having no listing content (verdict=nolisting), meaning no readable job openings were published there."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ]
+   ]
+  }
  },
  "Letsgooo": {
   "date": "2026-08-30",
@@ -14184,6 +14362,10 @@
  },
  "Libra Insurance Ltd": {
   "date": "2026-08-30",
+  "verdict": "overturned-no-board",
+  "raw_verdict": "",
+  "other_name": "",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -14211,10 +14393,40 @@
    ],
    "verify": []
   },
-  "other_name": "",
-  "raw_verdict": "real-company-no-board",
-  "verdict": "no-board",
-  "why": "Libra (ליברה) is a real Israeli insurance company (lbr.co.il). Its careers page lists openings but only accepts CVs by email — no ATS/job board. A 12-path careers probe of their domain returned nothing machine-readable."
+  "overturned_from": {
+   "date": "2026-08-30",
+   "evidence": {
+    "careers_probe": {
+     "answered": [],
+     "tried": [
+      "/careers",
+      "/careers/",
+      "/jobs",
+      "/jobs/",
+      "/career",
+      "/career/",
+      "/about/careers",
+      "/company/careers",
+      "/en/careers",
+      "/careers/open-positions",
+      "/join-us",
+      "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+     ]
+    },
+    "read_page": "https://www.lbr.co.il/קריירה-בליברה/",
+    "search_pages": [
+     "https://www.lbr.co.il/קריירה-בליברה/",
+     "https://www.librainsbrokers.com/career/",
+     "https://libraip.com",
+     "https://www.libra.com/people/working-at-libra/"
+    ],
+    "verify": []
+   },
+   "other_name": "",
+   "raw_verdict": "real-company-no-board",
+   "verdict": "no-board",
+   "why": "Libra (ליברה) is a real Israeli insurance company (lbr.co.il). Its careers page lists openings but only accepts CVs by email — no ATS/job board. A 12-path careers probe of their domain returned nothing machine-readable."
+  }
  },
  "Libre Solidaire Editions": {
   "date": "2026-08-30",
@@ -14251,21 +14463,32 @@
   "why": "Appears to be a real French publisher/association (libre-solidaire.fr) with listings appearing only on third-party job boards (jobs.ca, makesense, cari.co.in). A careers-path probe of its own domain tried 12 common paths and none responded, so there is no machine-readable job board on its site."
  },
  "Lido As": {
-  "board_url_if_any": "https://lido.fi/opportunities",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 2 candidates",
-    "url": "https://lido.fi/opportunities",
-    "verdict": "nolisting",
-    "why": "no-listing"
-   },
-   "search_pages": []
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired.",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found a dedicated opportunities/careers URL (lido.fi/opportunities) for the company, confirming it exists, but the verdict was 'nolisting' meaning no readable job listings were found there after checking candidates. This indicates the company does not currently publish an automatically readable openings page, rather than a failure to look (2 candidates were checked)."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ]
+   ]
+  }
  },
  "Lidwaveil": {
   "date": "2026-08-30",
@@ -14380,21 +14603,24 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Linkedin": {
-  "board_url_if_any": "https://careers.smartrecruiters.com/linkedin3?search=&location=Israel",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 2 candidates",
-    "url": "https://careers.smartrecruiters.com/linkedin3?search=&location=Israel",
-    "verdict": "nolisting",
-    "why": "no-listing"
-   },
-   "search_pages": []
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired.",
-  "verdict": "overturned-no-board",
-  "why": "The careers page hunt found a LinkedIn SmartRecruiters careers URL (careers.smartrecruiters.com/linkedin3) that was checked but returned no listings for the Israel location filter, indicating the board exists but shows no current openings matching the query."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-linkback"
+    ],
+    [
+     "slug-probe",
+     "probe-no-il"
+    ]
+   ]
+  }
  },
  "Linkedmagic": {
   "date": "2026-08-30",
@@ -14450,21 +14676,32 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Liposphere": {
-  "board_url_if_any": "https://www.lipo-sphere.com/career/",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 1 candidates",
-    "url": "https://www.lipo-sphere.com/career/",
-    "verdict": "nolisting",
-    "why": "no-listing"
-   },
-   "search_pages": []
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired.",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found a dedicated careers URL (lipo-sphere.com/career/) confirming the company exists, but the page verdict is 'nolisting', meaning it does not present any readable job openings/board."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-linkback"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ]
+   ]
+  }
  },
  "Lirix Consulting": {
   "date": "2026-08-30",
@@ -15216,31 +15453,26 @@
  },
  "Maccabi Health Services": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Maccabi Health care Services",
+  "why": "a rung found this name's board and the registry row 'Maccabi Health care Services' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.maccabi4u.co.il/careers",
-     "https://www.maccabi4u.co.il/careers/",
-     "https://www.maccabi4u.co.il/career"
+   "row": "Maccabi Health care Services",
+   "matched_on": "url",
+   "tried": [
+    [
+     "hunt",
+     "found",
+     "https://www.maccabi4u.co.il/careers/search-job-positions/"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career"
+    [
+     "search-llm",
+     "found",
+     "https://www.maccabi4u.co.il/careers/"
     ]
-   },
-   "read_page": "https://www.maccabi4u.co.il/careers/",
-   "search_pages": [
-    "https://www.maccabi4u.co.il/careers/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Maccabi (Healthcare Services), the Israeli HMO, is a real employer and the probe found a working careers page at maccabi4u.co.il/careers listing open jobs — so none of the negative categories (no board, acquired, duplicate, not-an-employer, defunct) apply."
+   ]
+  }
  },
  "Madlan": {
   "board_url_if_any": "",
@@ -16368,41 +16600,26 @@
  },
  "Meckano": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "mećkano",
+  "why": "a rung found this name's board and the registry row 'mećkano' already reads it (matched on name-normalised, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.meckano.com/careers",
-     "https://www.meckano.com/careers/",
-     "https://www.meckano.com/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+   "row": "mećkano",
+   "matched_on": "name-normalised",
+   "tried": [
+    [
+     "hunt",
+     "found",
+     "https://www.meckano.co.il/positions/"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    [
+     "search-llm",
+     "found",
+     "https://www.meckano.co.il/positions/"
     ]
-   },
-   "read_page": "https://www.meckano.com/positions/",
-   "search_pages": [
-    "https://www.meckano.com/positions/",
-    "https://www.meckano.co.il/positions/",
-    "https://app.meckano.co.il/login.php?l\\u003den",
-    "https://nortech-platform.com/listing/meckano-2/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Meckano is a real Israeli time-tracking/HR software vendor and its own domain has answering careers pages (/positions/, /careers), with an embedded, dynamically loaded listings widget. So \"no board\" is not supported; the evidence doesn't reveal which ATS/board feed backs it, and no acquisition, dupl"
+   ]
+  }
  },
  "Meco Architectural Engineering Llc": {
   "date": "2026-08-30",
@@ -16537,37 +16754,26 @@
  },
  "Meganet One": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Meganet",
+  "why": "a rung found this name's board and the registry row 'Meganet' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+   "row": "Meganet",
+   "matched_on": "url",
+   "tried": [
+    [
+     "hunt",
+     "no-listing",
+     "https://meganetems.com/careers/"
+    ],
+    [
+     "search-llm",
+     "documented",
+     "https://meganet.in/careers.php"
     ]
-   },
-   "read_page": "https://meganet.net/about",
-   "search_pages": [
-    "https://meganet.net/about",
-    "https://meganet.in/careers.php",
-    "https://meganetems.com/careers/",
-    "https://www.instahyre.com/jobs-at-meganet-technologies/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "The intake name \"Meganet One\" doesn't clearly match any evidence item: search returned several unrelated \"Meganet\" entities (Meganet Communications in New England, meganet.in, meganetems.com, Meganet Technologies in India). The only site text/careers probe is for Meganet Communications, which is a d"
+   ]
+  }
  },
  "Megapharm": {
   "board_url_if_any": "",
@@ -16583,6 +16789,10 @@
  },
  "Megiddo Y K": {
   "date": "2026-08-30",
+  "verdict": "overturned-no-board",
+  "raw_verdict": "",
+  "other_name": "",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [
@@ -16613,10 +16823,43 @@
    ],
    "verify": []
   },
-  "other_name": "",
-  "raw_verdict": "real-company-no-board",
-  "verdict": "no-board",
-  "why": "Megido (מגידו), an Israeli development/construction firm in the Aura Group, is a real employer. The careers-path probe on its own domain answered (megido.co.il/jobs), but the page is a static HTML list of openings with applications sent to an email address (megido@app.civi.co.il) — no ATS or machine"
+  "overturned_from": {
+   "date": "2026-08-30",
+   "evidence": {
+    "careers_probe": {
+     "answered": [
+      "https://www.megido.co.il/jobs",
+      "https://www.megido.co.il/jobs/"
+     ],
+     "tried": [
+      "/careers",
+      "/careers/",
+      "/jobs",
+      "/jobs/",
+      "/career",
+      "/career/",
+      "/about/careers",
+      "/company/careers",
+      "/en/careers",
+      "/careers/open-positions",
+      "/join-us",
+      "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+     ]
+    },
+    "read_page": "https://www.megido.co.il/en/jobs/",
+    "search_pages": [
+     "https://www.megido.co.il/en/jobs/",
+     "https://flex.com/careers/israel-en",
+     "https://www.bloomberg.com/quote/MGDO:IT",
+     "https://www.kla.com/careers/locations/israel"
+    ],
+    "verify": []
+   },
+   "other_name": "",
+   "raw_verdict": "real-company-no-board",
+   "verdict": "no-board",
+   "why": "Megido (מגידו), an Israeli development/construction firm in the Aura Group, is a real employer. The careers-path probe on its own domain answered (megido.co.il/jobs), but the page is a static HTML list of openings with applications sent to an email address (megido@app.civi.co.il) — no ATS or machine"
+  }
  },
  "Megoafek": {
   "board_url_if_any": "",
@@ -17686,21 +17929,40 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Mindteck": {
-  "board_url_if_any": "http://careers.mindteck.com/",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 2 candidates",
-    "url": "http://careers.mindteck.com/",
-    "verdict": "nolisting",
-    "why": "no-listing"
-   },
-   "search_pages": []
-  },
-  "overturned": "2026-08-29: an INDEPENDENT paid search found this company own careers page for 15 of a 20-name sample (75%). The verdict was judged from the hunt evidence, so it could only ever re-confirm the hunt failure. NOT retired.",
-  "verdict": "overturned-no-board",
-  "why": "The careers hunt found a dedicated careers URL (careers.mindteck.com) confirming the company exists, but the verdict was 'nolisting' after checking candidates, meaning no readable job listings/openings page was found there."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ]
+   ]
+  }
  },
  "Mine Marketing": {
   "board_url_if_any": "",
@@ -18377,6 +18639,10 @@
  },
  "Mornex": {
   "date": "2026-08-30",
+  "verdict": "overturned-no-board",
+  "raw_verdict": "",
+  "other_name": "",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [
@@ -18405,10 +18671,41 @@
    ],
    "verify": []
   },
-  "other_name": "",
-  "raw_verdict": "real-company-no-board",
-  "verdict": "no-board",
-  "why": "Mornex is a real Israeli IT/cybersecurity services company. A careers-path probe of mornex.co.il answered with a Hebrew careers page that lists openings (e.g., Junior Support Engineer) inline as page content, with no linked ATS or machine-readable job board."
+  "overturned_from": {
+   "date": "2026-08-30",
+   "evidence": {
+    "careers_probe": {
+     "answered": [
+      "https://www.mornex.co.il/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+     ],
+     "tried": [
+      "/careers",
+      "/careers/",
+      "/jobs",
+      "/jobs/",
+      "/career",
+      "/career/",
+      "/about/careers",
+      "/company/careers",
+      "/en/careers",
+      "/careers/open-positions",
+      "/join-us",
+      "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+     ]
+    },
+    "read_page": "https://www.mornex.co.il/קריירה/",
+    "search_pages": [
+     "https://www.mornex.co.il/קריירה/",
+     "https://jobhunt.co.il/jobs/חברת-mornex-הממוקמת-בחדרה-מהמובילות-בתחום-שירותי-it-ותמיכה-טכנית-69282477aeae714170d44638",
+     "https://www.facebook.com/groups/start.hightech/posts/26518095314464775/"
+    ],
+    "verify": []
+   },
+   "other_name": "",
+   "raw_verdict": "real-company-no-board",
+   "verdict": "no-board",
+   "why": "Mornex is a real Israeli IT/cybersecurity services company. A careers-path probe of mornex.co.il answered with a Hebrew careers page that lists openings (e.g., Junior Support Engineer) inline as page content, with no linked ATS or machine-readable job board."
+  }
  },
  "Motorola Solutions": {
   "board_url_if_any": "",
@@ -19660,37 +19957,21 @@
  },
  "Speedata.io": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Speedata",
+  "why": "a rung found this name's board and the registry row 'Speedata' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+   "row": "Speedata",
+   "matched_on": "url",
+   "tried": [
+    [
+     "hunt",
+     "no-listing",
+     "https://www.speedata.io/careers-1"
     ]
-   },
-   "read_page": "https://www.speedata.io/careers-1",
-   "search_pages": [
-    "https://www.speedata.io/careers-1",
-    "https://lnkd.in/g8yjfXNb",
-    "https://careers.viola-group.com/companies/speedata/jobs/56041728-field-application-engineer-performance",
-    "https://www.facebook.com/speedata.io/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Speedata is a real employer (APU semiconductor startup) and it does have a careers page at /careers-1 listing open roles, plus a Viola Group job board listing — so \"no board\" is false. The standard path probe simply missed the non-standard URL, so no negative verdict applies."
+   ]
+  }
  },
  "Squaretalk": {
   "board_url_if_any": "",
@@ -19768,33 +20049,31 @@
  },
  "Strauss Group": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Strauss Water Ltd. שטראוס מים",
+  "why": "a rung found this name's board and the registry row 'Strauss Water Ltd. שטראוס מים' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.strauss-group.co.il/careers",
-     "https://www.strauss-group.co.il/careers/",
-     "https://www.strauss-group.co.il/career"
+   "row": "Strauss Water Ltd. שטראוס מים",
+   "matched_on": "url",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain",
+     "https://www.strauss-group.com/"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career"
+    [
+     "hunt",
+     "found",
+     "https://www.strauss-group.co.il/career/jobs/"
+    ],
+    [
+     "search-llm",
+     "found",
+     "https://www.strauss-group.co.il/career/"
     ]
-   },
-   "read_page": "https://www.strauss-group.co.il/career/",
-   "search_pages": [
-    "https://www.strauss-group.co.il/career/",
-    "https://www.strauss-group.com/work-strauss/",
-    "https://www.facebook.com/groups/131646734219731/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Strauss Group is a real Israeli food/beverage employer with a working careers page (strauss-group.co.il/career) containing a job search with listings, so \"no board\" does not apply; none of the other categories (acquired, duplicate, not-an-employer, defunct) fit either."
+   ]
+  }
  },
  "Super Group (SGHC)": {
   "board_url_if_any": "",
@@ -20148,20 +20427,44 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "The Ritz-Carlton Hotel Company, L.L.C.": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
-   "hunt": {
-    "detail": "tried 2 candidates",
-    "url": "https://careers.marriott.com/brands/the-ritz-carlton/jobs",
-    "verdict": "nolisting",
-    "why": "another company's board"
-   },
-   "search_pages": []
-  },
-  "verdict": "cannot-tell",
-  "why": "The only candidate careers page found was REFUSED by identity check (belongs to another company/not a listings page), so it cannot count as evidence of no-board. No valid evidence was found either way."
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "another company's board"
+    ],
+    [
+     "hunt",
+     "llm-cannot-tell"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
  },
  "Thing or Two": {
   "date": "2026-08-30",
@@ -20375,39 +20678,31 @@
  },
  "VOOM Insurance": {
   "date": "2026-08-30",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Voom",
+  "why": "a rung found this name's board and the registry row 'Voom' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.voominsurance.com/careers",
-     "https://www.voominsurance.com/careers/"
+   "row": "Voom",
+   "matched_on": "url",
+   "tried": [
+    [
+     "hunt",
+     "no-listing",
+     "https://apply.workable.com/voom-insurance/?lng=en"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    [
+     "hunt",
+     "no-listing",
+     "https://www.voominsurance.com/careers"
+    ],
+    [
+     "search-llm",
+     "documented",
+     "https://apply.workable.com/voom-insurance/?lng=en"
     ]
-   },
-   "read_page": "https://www.voominsurance.com/careers",
-   "search_pages": [
-    "https://www.voominsurance.com/careers",
-    "https://apply.workable.com/voom-insurance/?lng\\u003den",
-    "https://jobs.f2vc.com/jobs/voom-insurance"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "VOOM Insurance is a real, active InsurTech employer with a working careers page (voominsurance.com/careers listing open roles in Tel Aviv) and a Workable job board (apply.workable.com/voom-insurance). It is not acquired, duplicate, defunct, or a non-employer, and it clearly does have a readable job "
+   ]
+  }
  },
  "Vacatures.sr | SurinameJobs.com": {
   "board_url_if_any": "",
@@ -22311,6 +22606,42 @@
     [
      "hunt",
      "found"
+    ]
+   ]
+  }
+ },
+ "Milliman": {
+  "date": "2026-08-30",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "no-listing"
     ]
    ]
   }

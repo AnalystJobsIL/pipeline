@@ -461,6 +461,102 @@ def stale_boards(rows, days=STALE_BOARD_DAYS, out=print, workers=8):
     return stale
 
 
+def active_orphans(rows):
+    """ACTIVE rows that have never produced a posting and that NO re-check owns.
+
+    `orphans()` below, `check_invariants` D and every pool in `pools()` take `r[4] == "false"`
+    as their scope, so "owned by nothing" has never once been asked about the active half of
+    the registry — `docs/BACKLOG.md` 407. That blindness is why two classes had to be found by
+    a human reading rows: the `israel_scoped` Workday rows that return 0 by design (`318`) and
+    the abandoned tenants whose newest posting is over a year old (`406`).
+
+    The question an active row needs is not the parked one. A parked row asks "will anything
+    look at me again"; an active row is fetched every morning, so it asks **"is anything
+    checking that this fetch means what we think it means"**. A row that answers 0 every day
+    for ever is indistinguishable from a covered company with nothing open, and only these
+    three ask the question:
+
+      `confirm_zero`               all-time high exactly 0, own http address (a FACT pool)
+      the 06:00 self-heal          via `stale.json`, which `health.zero_is_a_measurement`
+                                   EXEMPTS for `israel_scoped` platforms (25 healthy Workday
+                                   boards clogged the queue on 2026-08-24 — a good reason
+                                   whose cost was never written down)
+      `queue_pipeline --verify-existing`  monitors, and ACTIVE rows this lane wrote from the
+                                   queue
+
+    Imports each predicate rather than retyping it: a retyped `is_walled` under-counted a pool
+    by 7 rows and `orphans()` subtracts membership, so the mirror under-reported orphans by
+    exactly those rows (the wave-4 incident this module records).
+
+    Report only. It writes nothing and parks nothing — an active row that reads a real board
+    is not a defect, and 407 says which arm grows this is a decision, not a quiet patch.
+    """
+    import confirm_zero as _cz
+    import queue_pipeline as _qp
+    from pipeline import board_verify as _bv
+    from pipeline.health import zero_is_a_measurement
+
+    # the tool's OWN loader, because the key convention is part of the predicate: `_baseline`
+    # lower-cases every key and `in_zero_confirm_pool` looks up `name.lower()`. Handing it a
+    # raw `health_baseline.json` made every lookup miss, so the predicate returned False for
+    # the whole registry and this report claimed 134 unowned rows where 60 are confirm_zero's.
+    # A pool predicate has to be fed what it expects or it is not that predicate any more.
+    baseline = _cz._baseline()
+    try:
+        verify_state = _bv.load()
+    except Exception:                                             # noqa: BLE001
+        verify_state = {}
+
+    out = []
+    for r in rows:
+        if len(r) < 6 or r[4] != "true" or is_recruiter(r[0]):
+            continue
+        if int(baseline.get((r[0] or "").strip().lower()) or 0) > 0:
+            continue                       # it has produced a posting: the digest IS the check
+        owners = []
+        try:
+            # ASK ABOUT SCOPE, NOT ABOUT TODAY. `in_zero_confirm_pool`'s first clause is its
+            # 30-day cadence (`FORCE or _ledger_stale(...)`), and a cooldown delays a
+            # re-check without removing ownership -- the rule `pools()` states and follows.
+            # Reading the predicate raw reported 135 rows as unowned when 60 of them had been
+            # answered by that very tool the day before. `FORCE` is the tool's own cadence
+            # override, so this is still its predicate and not a retyped copy of it.
+            was, _cz.FORCE = _cz.FORCE, True
+            try:
+                if _cz.in_zero_confirm_pool(r, baseline=baseline):
+                    owners.append("confirm_zero")
+            finally:
+                _cz.FORCE = was
+        except Exception:                                         # noqa: BLE001
+            pass
+        if not zero_is_a_measurement(r[1]):
+            owners.append("self-heal")     # its zero reaches stale.json, so the 06:00 job sees it
+        try:
+            if _qp.needs_verify(r, verify_state) or _qp.from_queue(r):
+                owners.append("verify-existing")
+        except Exception:                                         # noqa: BLE001
+            pass
+        if not owners:
+            out.append(r)
+    return out
+
+
+def active_orphan_report(rows, out=print):
+    orph = active_orphans(rows)
+    out("ACTIVE rows that have NEVER produced a posting (all-time high 0, or never "
+        "measured at all) and that no re-check owns: %d" % len(orph))
+    out("  (report only -- `orphans()` and check_invariants D are parked-only; BACKLOG 407)")
+    from collections import Counter
+    by_plat = Counter((r[1] or "?").strip().lower() for r in orph)
+    for plat, n in by_plat.most_common():
+        out("  %-18s %4d" % (plat, n))
+    for r in orph[:40]:
+        out("    %-32s %-16s %s" % (r[0][:32], (r[1] or "")[:16], (r[5] or "")[:60]))
+    if len(orph) > 40:
+        out("    ... and %d more" % (len(orph) - 40))
+    return orph
+
+
 def orphans(rows):
     """Parked rows owned by NO recurring job — permanently dark coverage."""
     owned = set()
@@ -906,7 +1002,7 @@ def explain(name, rows=None, fetch=False, out=print):
     return 0
 
 
-_FLAGS = ("--explain", "--fetch", "--resources", "--ats", "--census", "--ladder", "--json", "--regions", "--stale-boards")
+_FLAGS = ("--explain", "--fetch", "--resources", "--ats", "--census", "--ladder", "--json", "--regions", "--stale-boards", "--active-orphans")
 
 
 def main():
@@ -921,6 +1017,9 @@ def main():
     rows = read_rows()
     if "--stale-boards" in argv:
         stale_boards(rows)
+        return 0
+    if "--active-orphans" in argv:
+        active_orphan_report(rows)
         return 0
     if "--regions" in argv:
         region_report(rows, fetch="--fetch" in argv)

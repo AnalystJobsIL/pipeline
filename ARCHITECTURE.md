@@ -1116,8 +1116,10 @@ modes are `triage_dark.MODES` — **that object, never a copy**. Counted 2026-08
 
 ```bash
 python -c "import csv,re;from collections import Counter;r=[x for x in csv.reader(open('companies.csv',encoding='utf-8')) if x and len(x)>5][1:];print(Counter(m.group(1) for x in r for m in re.finditer(r'dark-triage \d{4}-\d{2}-\d{2}: ([a-z-]+)', x[5] or '')).most_common())"
-# page-empty 139 · url-dead 61 · extract-gap 52 · js-shell 52 · wrong-page 44 · no-url 24
-# · blocked 8 · acquired 1   (382 rows carry a mode)
+# 2026-08-30: page-empty 171 · no-url 109 · extract-gap 93 · js-shell 89 · url-dead 68
+# · wrong-page 66 · blocked 8 · acquired 1   (605 rows carry a mode)
+# 2026-08-27: page-empty 139 · url-dead 61 · extract-gap 52 · js-shell 52 · wrong-page 44
+# · no-url 24 · blocked 8 · acquired 1   (382 rows carry a mode)
 ```
 
 Two things that census makes visible. **`wrong-page` (44 rows) can only be produced by the
@@ -1131,8 +1133,37 @@ readings. Fixed 2026-08-27; the guard is
 `test_the_triage_page_judge_reaches_the_model_through_the_real_seam`, which drives the real
 seam with only `subprocess.run` replaced — the previous guard monkeypatched `call_json`
 itself and pinned the dict, which is how this shipped. **And `check_invariants`'s check F2
-has seven of the eight modes**, so the 24 `no-url` rows are reported nightly as a truncated
-mode when they are nothing of the kind (`docs/BACKLOG.md` 282, `infra`).
+has seven of the eight modes**, so the `no-url` rows are reported nightly as a truncated
+mode when they are nothing of the kind (`docs/BACKLOG.md` 282, `infra`) — **24 when that was
+written, 109 on 2026-08-30**.
+
+#### "Owned by nothing" has two definitions and they disagree by 109
+
+This repo answers "is this row owned by anything?" in two places, and on 2026-08-30 one said
+**109** and the other said **0**. Both were right, about different questions, and the number
+a reader should act on is the second:
+
+| | asks | 2026-08-30 |
+|---|---|---|
+| `check_invariants` **F2** | does the row's triage mode SPELL like one `triage_dark` writes? It compares against a hand-copied `TRIAGE_MODES` that holds 7 of the tool's 8 | **109**, every one of them the real mode `no-url` (97 parked, 12 active). Zero are truncated |
+| `check_invariants` **D** and `registry_health.orphans()` | does any pool's own predicate SELECT this row? Both import the tools' `in_*_pool` functions | **0** — every parked `no-url` row is claimed by `triage_dark`, `listing_hunt`, `audit_empty_rows` and `deep_validate` |
+
+F2's message — *"no pool matches it"* — is the part that misleads: the mode matches pools
+fine, and `triage_dark.py`'s own comment has said so since 2026-08-27. It is a spelling check
+wearing an ownership check's words. The fix is one line in `check_invariants` (`infra`'s
+file): import `triage_dark.MODES` instead of retyping it. **Ownership is decided by the pool
+predicates, never by a note's spelling.**
+
+And both of those ownership checks scope on `r[4] == "false"`, so neither has ever asked the
+question about an ACTIVE row — `docs/BACKLOG.md` 407. `registry_health.py --active-orphans`
+now reports that half: ACTIVE rows with an all-time high of zero that no re-check owns, asked
+of each pool's own predicate with its cadence neutralised (a cooldown delays a re-check, it
+does not remove ownership). **2 on 2026-08-30**, and each is a distinct defect rather than a
+class: `Ride Vision` is refused by `confirm_zero` because a stale `domain-dead` segment makes
+`verdicts.is_terminal_row` true while a LATER segment in the same note records the repair that
+fixed it; `Checkout` has no `health_baseline` entry at all — never measured by any digest —
+and was written by `auto_expand` rather than the queue, so `--verify-existing` does not own it
+either (103 of the other 104 never-measured active rows are queue-written, and it does).
 
 ### State transitions (who moves a row, and when)
 
@@ -1760,6 +1791,81 @@ python queue_state.py                 # what is left, and why
 python queue_state.py --unresolved    # names every rung has tried and none could answer
 python queue_state.py --name "Wix"    # one name's whole history
 ```
+
+### A retirement is a STATE, not an absence (2026-08-30)
+
+Until this date a name left the queue by being **deleted** from `research_companies.json`,
+and a deletion is the one thing this repo's merge cannot keep. `persist_state.py:344` routes
+that file through `merge_json_cache.merge`, which RESCUES a key the origin deleted while we
+held an older checkout. Measured: **44 names retired between 00:28 and 00:54 were back in the
+file at 00:41**, put there by the listing-hunt cron's own state commit (checked out before the
+retirements, committed after them); 42 were still there at 05:45, each with a judged verdict
+on disk, each due to re-buy a paid search when its 14-day cadence lapsed on 2026-09-12. **Zero
+names retired ON EVIDENCE were re-added by intake in the nine days to 2026-08-30** — one cloud
+run did re-add three names (`G-STAT`, `Investing`, `Nogamy`) dropped the day before as parse
+artifacts, which is the same shape and not the same claim. `docs/BACKLOG.md` 441 filed this
+against `discovery`; the measurement says the leak is the merge (`458`, `infra`).
+
+So the queue converges by LOOKUP instead. `queue_pipeline --retire-settled` — 19:00 nightly,
+no model, no fetch, no credit — re-applies every answer already on disk, in five classes:
+
+| class | the answer it re-applies |
+|---|---|
+| `settled-by-a-rung` | `queue_state.is_settled`: `resolved`, `already-a-row`, `agency`, `junk`, `no-web-presence` |
+| `already-a-row` | the name IS a `companies.csv` row. This arm used to SKIP those names, so the largest settled class of all could never leave: 17 sat in the queue on 2026-08-30 |
+| `already-a-row (spelling)` | the same employer under `store._norm_company` or a diacritic fold — `Guideline Group`/`Guideline`, `Meckano`/`mećkano` |
+| `covered-by-row` | a rung already found this name's board and a ROW reads it — matched on the BOARD, never the name |
+| `re-retired` | a `--dispose` verdict still inside its `REOPEN_DAYS` window |
+
+**`covered-by-row` is the one worth understanding, because the name is not the identity.**
+`queue-drain` resolved the queue name `Faye` to a Comeet board and named the row after the
+board's URL slug, `withfaye`; the queue never credited `Faye`, and went on counting it as owed
+for two days while its roles published on the board. Its own attempt log said what happened
+all along — `{"rung": "hunt", "verdict": "found", "url": ".../jobs/withfaye/87.00A"}` against a
+row holding uid `87.00A`. **14 of 226 owed names on 2026-08-30 were this.** Only verdicts that
+ASSERT a page is the company's can credit (`found`, `documented`, `no-listing`,
+`resolved-domain`); `another company's board` is evidence about our SEARCH and crediting it
+would have retired `SMARTGEN WEALTH MANAGEMENT` onto Morgan Stanley's board, and three more
+like it. Name CONTAINMENT is not used at all: it proposes `Intelligent Business`→`Intel`,
+`Lumen`→`Lumenis`, `Welocalize`→`Localize` — 33 such pairs, a HOLD for a human, never a
+verdict (`apply_proposals._name_kin` records the same rule for new rows).
+
+**A wrong retirement is reversible, and `no-board` expires on its own.** `--reopen "<name>"`
+rewrites the record to `overturned-<verdict>`, keeps the original under `overturned_from`,
+re-queues the name and appends a `reopened` attempt that lets it past the drain's 14-day
+cadence exactly once (compared by POSITION in the append-log — both attempts are stamped to
+the day, so dates cannot order them). `REOPEN_DAYS` expires a `no-board` at 90 days, because
+that verdict is a statement about a MOMENT: a real employer with no board in August may have
+one in November. The other four are statements about identity and do not expire. **The expiry
+stops a name being re-retired; it does not put a PRUNED one back** — `disposition_verdict` is
+read only over entries already in the queue file, so for the names already pruned the expiry
+needs the re-add described in `461`. Said plainly, because the obvious reading is the wrong one.
+
+The verdict needed the cadence, because it was being spent on the wrong thing: **at least 13 of
+the 144 `no-board` retirements give as their own reason that the company's careers page lists
+roles as plain text, a Wix page or inline HTML "with no ATS or machine-readable job board"** —
+`Mornex` names the role it saw. Thirteen is what one phrase search found; an adversarial pass
+then named nine more (`Lambadapp`, `Yit Yedioth`, `Melabev`, `Xtragiftcard`, `Gabay Group`,
+`Hameshakem`, ...), so the class is larger than the count (`461`). That is a board by this repo's own standard, settled 2026-08-29: *a page
+is a board if scraping it returns jobs*, which is how 573 of the active rows are read. Nine
+were re-opened on 2026-08-30 and `DISPOSE_SYSTEM` now says a page naming even one role is a
+board and that the absence of an ATS is not a reason.
+
+### The row's name comes from the employer, not the URL
+
+`company_name` is the join key for three subsystems that do not share `companies.csv`:
+`cloud_state/firmographics.json` (which has an entry for `withfaye` and none for `Faye`), the
+roles ledger, and the published board. A slug-named row therefore splits one employer into two
+identities in three places at once. `queue_pipeline.row_name_for` is the policy — the queue's
+own name, then the board's own title, then the slug — and the middle rung is what the `Faye`
+case needs, because INTAKE itself supplied `withfaye` as a company name. The board's title is
+the one identity claim neither we nor the URL derived: `apply_proposals.board_employer` reads
+it from `<title>` and the Comeet API states it outright in `company_name`, which the drain
+already records as `board_asserts_company` and which nothing read until now. A slug-shaped name
+is not automatically wrong — `monday.com`, `ex.co` and `8fig` are their own slugs — so the
+policy never rewrites a name it has no better answer for. **Renaming the rows that already
+exist is a separate, sequenced job** (`459`): it must move with firmographics and the roles
+ledger or it orphans both.
 
 **Verification invariants (never bypass):** see also "The activation rule" in §2, which is
 the short version of the three gates and the code that enforces them.

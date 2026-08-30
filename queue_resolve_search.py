@@ -66,6 +66,30 @@ SCHEMA = json.dumps({
     "properties": {"url": {"type": "string"}, "why": {"type": "string"}}})
 
 
+def _reopened_since_search(state, name):
+    """Has a human re-opened this name since the last time this rung searched it?
+
+    `queue_pipeline --reopen` exists to say "that retirement is wrong, look again". A re-open
+    that then waits out this rung's 14-day cadence is not a re-open, so a `reopened` attempt
+    later than the newest `search-llm` one lets the name through — once, because the search it
+    admits is itself appended and the ordinary cadence then resumes.
+
+    Compared by POSITION in the log, not by date. Both attempts are stamped to the day, so a
+    name re-opened and re-searched on the same day compares equal on dates and would stay
+    admitted for ever — a guard caught exactly that. `queue_state` is an append-log whose
+    order is its meaning ("APPEND one attempt. Never rewrites an earlier one -- that is the
+    whole point"), so the last one appended is the last thing that happened.
+    """
+    tried = ((state or {}).get(name) or {}).get("tried") or []
+    last = {}
+    for i, a in enumerate(tried):
+        if a.get("rung") == "search-llm":
+            last["search"] = i
+        elif a.get("verdict") == "reopened":
+            last["reopen"] = i
+    return "reopen" in last and last["reopen"] > last.get("search", -1)
+
+
 def targets(cap=0, shard=""):
     """Queue names with no row and no settled verdict, newest rung first."""
     import queue_state as QS
@@ -79,7 +103,7 @@ def targets(cap=0, shard=""):
             continue
         if QS.is_settled(st, n, have):
             continue
-        if QS.tried_within(st, n, "search-llm", 14):
+        if QS.tried_within(st, n, "search-llm", 14) and not _reopened_since_search(st, n):
             continue                       # this rung's own cadence, like every other pool
         out.append(n)
     if shard and "/" in shard:

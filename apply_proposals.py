@@ -81,6 +81,7 @@ from pipeline.firmographics import looks_like_junk     # noqa: E402
 from pipeline.recruiters import is_recruiter           # noqa: E402
 from pipeline.store import _norm_company               # noqa: E402
 from pipeline.verdicts import is_terminal_row          # noqa: E402
+import queue_pipeline as _QP                           # noqa: E402  (row_name_for)
 
 CSV_PATH = "companies.csv"
 COMEET_UID = re.compile(
@@ -378,6 +379,20 @@ def _row_for(p, n_all, n_il, html, today):
         ok, emp = _board_is_this_company(name, page)
         if not ok:
             return None, ("board-says-%s" % (emp or "nothing"))[:40]
+        # The board named its employer, and that is the one identity claim on this page the
+        # TENANT wrote. Use it to NAME the row when the name we came in with is the address:
+        # `queue-drain` landed a row called `withfaye` -- the Comeet slug -- for the employer
+        # `Faye`, and `company_name` is the join key for firmographics, the roles ledger and
+        # the published board, so the slug split one employer into two identities and the
+        # queue then never credited `Faye`. `row_name_for` keeps a real queue name.
+        name = _QP.row_name_for(name, api, board_title=emp)
+    elif verdict == "ok":
+        # The same signal, free, for every other rung: the Comeet drain already recorded what
+        # the board's API says its `company_name` is (`board_asserts_company`) and nothing
+        # read it. `Faye`'s board asserts a real employer name while the URL says `withfaye`.
+        asserts = (p.get("evidence") or {}).get("board_asserts_company") or []
+        name = _QP.row_name_for(name, api,
+                                board_title=(asserts[0] if len(asserts) == 1 else ""))
     if verdict == "ok" and n_il >= 1:
         seg = "queue-drain %s %s; %d/%d IL" % (today, rung, n_all, n_il)
         return [name, p["platform"], p.get("token") or "", api, "true", seg], verdict

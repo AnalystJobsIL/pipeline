@@ -20279,3 +20279,569 @@ def test_an_enum_on_a_list_column_constrains_each_value_not_the_cell():
             vals = r[c].split(roles.SEP) if c in roles.LIST_COLUMNS else [r[c]]
             for v in vals:
                 assert v in spec["enum"], (c, v)
+# --------------------------------------------------------------------------------------- #
+# The queue's retirements have to survive a merge, and a wrong one has to be reversible.
+# registry, 2026-08-30. Every assertion below is a defect that was live on origin/master.
+# --------------------------------------------------------------------------------------- #
+import json as _r830_json
+
+
+def _r830_tree(tmp_path, monkeypatch, queue, csv_rows=(), qstate=None, disp=None):
+    """A whole registry tree in a temp dir: queue file, registry, both ledgers."""
+    import queue_state as QS
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir(exist_ok=True)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        + "".join("%s,scrape,,,true,\n" % n for n in csv_rows), encoding="utf-8")
+    (tmp_path / "research_companies.json").write_text(
+        _r830_json.dumps([{"name": n} for n in queue]), encoding="utf-8")
+    (tmp_path / "cloud_state" / "queue_state.json").write_text(
+        _r830_json.dumps(qstate or {}), encoding="utf-8")
+    (tmp_path / "cloud_state" / "queue_disposition.json").write_text(
+        _r830_json.dumps(disp or {}), encoding="utf-8")
+    monkeypatch.setattr(QS, "PATH", str(tmp_path / "cloud_state" / "queue_state.json"))
+
+
+def _r830_disp(verdict, day):
+    return {"date": day, "verdict": verdict, "raw_verdict": verdict,
+            "why": "judged", "evidence": {"careers_probe": {"tried": ["/careers"]}}}
+
+
+def test_a_retirement_survives_the_merge_that_puts_the_name_back(tmp_path, monkeypatch):
+    """A retirement represented ONLY as an absence is undone by the next cron's merge.
+
+    `persist_state.py` routes `research_companies.json` through `merge_json_cache.merge`,
+    which RESCUES a key the origin deleted while we held an older checkout. Measured: 44
+    names retired between 00:28 and 00:54 on 2026-08-30 were back in the file at 00:41, put
+    there by the listing-hunt cron's own state commit; 42 were still there at 05:45, each
+    with a verdict on disk, each due to re-buy a paid search when its 14-day cadence lapsed.
+    So the nightly cleanup must re-apply the verdict, not assume the deletion held.
+    """
+    import queue_pipeline as QP
+    _r830_tree(tmp_path, monkeypatch, queue=["Resurrected", "Genuinely Owed"],
+               disp={"Resurrected": _r830_disp("no-board", QP.TODAY)})
+    assert QP.retire_settled(apply=True) == 1
+    left = {e["name"] for e in _r830_json.loads(
+        (tmp_path / "research_companies.json").read_text(encoding="utf-8"))}
+    assert left == {"Genuinely Owed"}, left
+    rec = _r830_json.loads(
+        (tmp_path / "cloud_state" / "queue_disposition.json").read_text(encoding="utf-8"))
+    assert rec["Resurrected"]["verdict"] == "no-board", (
+        "re-applying a retirement must never overwrite the judgement it rests on")
+    assert rec["Resurrected"]["evidence"]["careers_probe"]["tried"] == ["/careers"], (
+        "...nor the evidence the judge was shown")
+
+
+def test_a_name_that_is_already_a_row_leaves_the_queue(tmp_path, monkeypatch):
+    """The largest settled class of all could never leave: `retire_settled` SKIPPED it.
+
+    `if not n or n.lower() in have: continue` meant a name that had become a `companies.csv`
+    row stayed in the queue file for ever, reading as owed while no rung would ever look at
+    it again (`queue_resolve_search.targets` skips it on the same test). 17 such names sat in
+    the 276-name queue on 2026-08-30.
+    """
+    import queue_pipeline as QP
+    _r830_tree(tmp_path, monkeypatch, queue=["Wix", "Genuinely Owed"], csv_rows=["Wix"])
+    assert QP.retire_settled(apply=True) == 1
+    left = {e["name"] for e in _r830_json.loads(
+        (tmp_path / "research_companies.json").read_text(encoding="utf-8"))}
+    assert left == {"Genuinely Owed"}, left
+
+
+def test_a_no_board_verdict_expires_and_the_other_four_do_not(tmp_path, monkeypatch):
+    """`no-board` is a statement about a MOMENT; the others are statements about identity.
+
+    A real employer with no careers page in August may have one in November, and the judge's
+    own reach is the thing being measured - an independent search disagreed with 15 of 20
+    `no-board` verdicts on 2026-08-29. So it expires and the name returns to the drain by
+    itself. `duplicate-of` / `acquired-by` / `not-an-employer` / `defunct` do not: re-asking
+    buys the same answer for ever. `docs/BACKLOG.md` 441 asked for a cadence, not a tombstone.
+    """
+    import datetime as _dt
+    import queue_pipeline as QP
+    old = (_dt.date.today() - _dt.timedelta(days=QP.REOPEN_DAYS["no-board"] + 1)).isoformat()
+    _r830_tree(tmp_path, monkeypatch,
+               queue=["Stale No Board", "Fresh No Board", "Stale Duplicate"],
+               disp={"Stale No Board": _r830_disp("no-board", old),
+                     "Fresh No Board": _r830_disp("no-board", QP.TODAY),
+                     "Stale Duplicate": _r830_disp("duplicate-of", old)})
+    assert QP.retire_settled(apply=True) == 2
+    left = {e["name"] for e in _r830_json.loads(
+        (tmp_path / "research_companies.json").read_text(encoding="utf-8"))}
+    assert left == {"Stale No Board"}, left
+
+
+def test_an_unreadable_disposition_date_expires_rather_than_retiring_for_ever(tmp_path,
+                                                                              monkeypatch):
+    """A date nobody can parse must not become an eternal tombstone."""
+    import queue_pipeline as QP
+    _r830_tree(tmp_path, monkeypatch, queue=["Bad Date"],
+               disp={"Bad Date": _r830_disp("no-board", "not-a-date")})
+    assert QP.retire_settled(apply=True) == 0
+
+
+def test_a_reopened_name_is_not_re_retired_and_keeps_its_evidence(tmp_path, monkeypatch):
+    """Re-opening a retirement has to mean something after the next night's cleanup.
+
+    Before `--reopen` there was no way back: the verdict lived in the disposition ledger,
+    `--dispose` skipped any name whose `raw_verdict` is in `RETIRABLE`, and re-adding the
+    name by hand only fed it to the next `--retire-settled`. A retirement nothing can
+    reverse is a deletion wearing a verdict.
+    """
+    import queue_pipeline as QP
+    import queue_state as QS
+    _r830_tree(tmp_path, monkeypatch, queue=[],
+               disp={"Wrongly Retired": _r830_disp("no-board", QP.TODAY)})
+    assert QP.reopen("Wrongly Retired", why="an independent search found their board",
+                     apply=True) == 1
+    rec = _r830_json.loads(
+        (tmp_path / "cloud_state" / "queue_disposition.json").read_text(encoding="utf-8"))
+    assert rec["Wrongly Retired"]["verdict"] == "overturned-no-board"
+    assert rec["Wrongly Retired"]["overturned_from"]["verdict"] == "no-board", (
+        "the judgement that was overturned is kept, not deleted")
+    queue = [e["name"] for e in _r830_json.loads(
+        (tmp_path / "research_companies.json").read_text(encoding="utf-8"))]
+    assert queue == ["Wrongly Retired"], "a re-open puts the name back in front of the rungs"
+    assert QP.retire_settled(apply=True) == 0, "and tonight's cleanup must leave it alone"
+    st = QS.load()
+    assert any(a["verdict"] == "reopened" for a in st["Wrongly Retired"]["tried"])
+
+
+def test_a_reopen_beats_the_search_cadence_exactly_once(tmp_path, monkeypatch):
+    """A re-open that waits out a 14-day cadence is not a re-open.
+
+    `targets` skips a name searched within 14 days, so a name re-opened the day after its
+    search would sit unlooked-at for a fortnight. A `reopened` attempt newer than the newest
+    `search-llm` one admits it - and because both are dated, the next search makes the search
+    the newer of the two and the ordinary cadence resumes.
+    """
+    import datetime as _dt
+    import queue_resolve_search as QRS
+    import queue_state as QS
+    # RELATIVE dates. Pinned to 2026-08-29/30 against a 14-day window, this test was green
+    # for a fortnight and then red for ever on 2026-09-12 -- a guard that fails on a date
+    # rather than on a defect blocks every lane's push and teaches the next session that
+    # this file's failures are noise.
+    yesterday = (_dt.date.today() - _dt.timedelta(days=1)).isoformat()
+    today = _dt.date.today().isoformat()
+    st = {}
+    QS.record(st, "Reopened Co", "search-llm", "no-proposal", day=yesterday)
+    QS.record(st, "Searched Co", "search-llm", "no-proposal", day=yesterday)
+    _r830_tree(tmp_path, monkeypatch, queue=["Reopened Co", "Searched Co"], qstate=st)
+    assert QRS.targets() == [], "both are inside the 14-day cadence"
+    st = QS.load()
+    QS.record(st, "Reopened Co", "hunt", "reopened", day=today)
+    QS.save(st)
+    assert QRS.targets() == ["Reopened Co"]
+    st = QS.load()
+    QS.record(st, "Reopened Co", "search-llm", "no-proposal", day=today)
+    QS.save(st)
+    assert QRS.targets() == [], "the re-open admits it once, not for ever"
+
+
+def test_the_drain_alarms_when_it_could_have_run_and_did_not(tmp_path, monkeypatch):
+    """`owed` and its direction say nothing about whether the arm that drains it RAN.
+
+    On 2026-08-29 the cloud drain selected 1 name of 259 owed and printed
+    `queue-resolve-search: 0 names` on three of four shards, every step green. A disarmed
+    key, an exhausted `DEEP_BD_SEARCH_CAP` (which returns [] in silence) and a dead shard all
+    look identical from the outside: selectable > 0, searched 0.
+    """
+    import queue_pipeline as QP
+    import queue_state as QS
+    _r830_tree(tmp_path, monkeypatch, queue=["Owed Co"])
+    live = QP._drain_liveness()
+    assert live["selectable"] == 1 and live["searched_recently"] == 0
+    assert "IDLE" in live["drain_alarm"]
+
+    st = QS.load()
+    QS.record(st, "Owed Co", "search-llm", "no-proposal", day=QP.TODAY)
+    QS.save(st)
+    live = QP._drain_liveness()
+    assert live["searched_recently"] == 1 and "drain_alarm" not in live, (
+        "a night that searched what it could select is not an alarm")
+
+
+def test_the_drain_alarms_when_its_selection_set_outruns_a_nights_capacity(tmp_path,
+                                                                          monkeypatch):
+    """A backlog forming inside the cadence is invisible in `owed`, which counts the file."""
+    import queue_pipeline as QP
+    import queue_state as QS
+    names = ["Co %d" % i for i in range(QP.DRAIN_NIGHTLY_CAP + 5)]
+    st = {}
+    QS.record(st, names[0], "search-llm", "no-proposal", day=QP.TODAY)
+    _r830_tree(tmp_path, monkeypatch, queue=names, qstate=st)
+    live = QP._drain_liveness()
+    assert live["selectable"] > QP.DRAIN_NIGHTLY_CAP
+    assert "BEHIND" in live["drain_alarm"]
+
+
+def _r830_active_tree(tmp_path, monkeypatch, rows, baseline):
+    """An ACTIVE-row registry plus the health baseline `confirm_zero` keys on."""
+    import confirm_zero as cz
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir(exist_ok=True)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        + "".join(",".join(r) + "\n" for r in rows), encoding="utf-8")
+    bp = tmp_path / "cloud_state" / "health_baseline.json"
+    bp.write_text(_r830_json.dumps(baseline), encoding="utf-8")
+    monkeypatch.setattr(cz, "BASELINE", str(bp))
+    monkeypatch.setattr(cz, "_LEDGER_CACHE", {})
+
+
+def test_the_active_half_of_owned_by_nothing_is_reported_at_all(tmp_path, monkeypatch):
+    """`orphans()` and `check_invariants` D are PARKED-only, so nobody ever asked this.
+
+    `docs/BACKLOG.md` 407: both take `r[4] == "false"` as their scope, which is why two
+    classes of dark ACTIVE row had to be found by a human reading rows - the `israel_scoped`
+    Workday rows that return 0 by design (`318`) and the abandoned tenants (`406`). This arm
+    asks the active question: the row is fetched every morning, but is anything checking that
+    its permanent zero means the company has nothing rather than that we are reading the
+    wrong page?
+    """
+    import registry_health as RH
+    _r830_active_tree(
+        tmp_path, monkeypatch,
+        rows=[["Owned Co", "scrape", "", "https://owned.example/careers", "true", "seen"],
+              ["Orphan Co", "scrape", "", "https://orphan.example/careers", "true",
+               "domain-dead 2026-08-24 (conn-dead)"]],
+        baseline={"owned co": 0, "orphan co": 0})
+    names = [r[0] for r in RH.active_orphans(RH.read_rows())]
+    # `Owned Co` is confirm_zero's: active, own http address, all-time high exactly 0.
+    # `Orphan Co` carries a TERMINAL token, which that pool refuses -- so an active row can be
+    # refused by every pool and still be fetched daily. That is the class this arm exists for.
+    assert names == ["Orphan Co"], names
+
+
+def test_the_active_orphan_arm_feeds_each_pool_the_keys_that_pool_expects(tmp_path,
+                                                                          monkeypatch):
+    """A pool predicate handed a differently-keyed dict is not that predicate any more.
+
+    `confirm_zero._baseline` lower-cases every key and `in_zero_confirm_pool` looks up
+    `name.lower()`. Handing it a raw `health_baseline.json` (original case) made every lookup
+    miss, the predicate returned False for the whole registry, and this report claimed **134**
+    active rows owned by nothing where the true answer was **2**. A mirror does not have to be
+    retyped to be wrong -- feeding the real predicate the wrong shape does it too.
+    """
+    import registry_health as RH
+    _r830_active_tree(
+        tmp_path, monkeypatch,
+        rows=[["MixedCase Co", "scrape", "", "https://mc.example/careers", "true", "seen"]],
+        baseline={"MixedCase Co": 0})      # ORIGINAL case, as the digest writes it
+    assert RH.active_orphans(RH.read_rows()) == [], (
+        "the row is confirm_zero's; a case-sensitive lookup would report it as unowned")
+
+
+def test_a_row_that_has_produced_a_posting_is_not_an_active_orphan(tmp_path, monkeypatch):
+    """The digest IS the re-check for a row that answers: nothing to report."""
+    import registry_health as RH
+    _r830_active_tree(
+        tmp_path, monkeypatch,
+        rows=[["Live Co", "scrape", "", "https://live.example/careers", "true", "seen"]],
+        baseline={"live co": 7})
+    assert RH.active_orphans(RH.read_rows()) == []
+
+
+def test_a_name_retired_by_the_cleanup_is_not_reported_as_stuck_for_ever(tmp_path,
+                                                                        monkeypatch):
+    """The stuck alarm's only two firings, ever, were bookkeeping — and permanent.
+
+    The census counted a name as `retired with evidence` for four verdicts and no others, so
+    a name `--retire-settled` had removed (verdict `settled-by-a-rung`) fell through to the
+    owed branch, where `_on_a_cadence` correctly answers "no rung will retry a settled name"
+    — and it was reported STUCK on every run afterwards. `docs/BACKLOG.md` 441 records the
+    two: `Infrastructure Team` and `Residenthome`, still firing on 2026-08-30.
+
+    An alarm that cannot be cleared by doing the right thing teaches its reader to ignore it.
+    """
+    import queue_pipeline as QP
+    _r830_tree(tmp_path, monkeypatch, queue=["Still Owed"],
+               disp={"Retired By Cleanup": {"date": "2026-08-29",
+                                            "verdict": "settled-by-a-rung",
+                                            "raw_verdict": "junk", "evidence": {"x": 1}},
+                     "Re-Opened": {"date": "2026-08-29", "verdict": "overturned-no-board",
+                                   "raw_verdict": "", "evidence": {"x": 1}}})
+    b = QP.census()["buckets"]
+    assert b.get("STUCK: no cadence reaches it", 0) == 0, b
+    assert b.get("retired with evidence") == 1, b
+    # a re-opened name is OWED again — that is what re-opening means
+    assert b.get("owed, a nightly rung retries it") == 2, b
+
+
+def test_the_judge_may_not_retire_a_company_for_lacking_an_ATS(tmp_path, monkeypatch):
+    """The verdict `real-company-no-board` was being spent on the absence of an ATS.
+
+    Measured over the 144 `no-board` retirements on origin/master: **13** give as their own
+    reason that the company's careers page lists roles as plain text / a Wix page / inline
+    HTML "with no ATS or machine-readable job board" — `Mornex` names the role it saw
+    ("Junior Support Engineer") in the sentence retiring the company. That is a board by this
+    repo's own standard, settled on 2026-08-29: *a page is a board if scraping it returns
+    jobs*, host-agnostic, which is how 573 of the registry's active rows are read.
+
+    The prompt invited it by defining the verdict as "no careers page or job board that could
+    be read automatically". This pins the corrected standard, because the failure is silent:
+    a wrong `no-board` retires a real employer with a real opening and nothing downstream
+    ever looks again.
+    """
+    import queue_pipeline as QP
+    s = QP.DISPOSE_SYSTEM
+    assert "NAMES EVEN ONE ROLE IS A BOARD" in s
+    assert "is NOT a reason to say this" in s, (
+        "the absence of an ATS must be named as a non-reason, not merely left unmentioned")
+    assert "no careers page or job board that could be read automatically" not in s, (
+        "the phrasing that produced 13 wrong retirements is back")
+
+
+def test_a_queue_name_is_credited_to_the_row_that_reads_its_board(tmp_path, monkeypatch):
+    """The name is not the identity; the BOARD is.
+
+    `queue-drain` resolved the queue name `Faye` to a Comeet board and named the row after
+    the board's URL SLUG - `withfaye` - so the queue never credited `Faye` and went on
+    counting it as owed while its roles were already publishing under the slug. Its own
+    attempt log said what happened all along: `{"rung": "hunt", "verdict": "found", "url":
+    ".../jobs/withfaye/87.00A"}` against a row holding Comeet uid `87.00A`. 14 of the 226
+    owed names on 2026-08-30 were this.
+
+    The uid is the case that needs the shared reader: the registry stores
+    `careers-api/2.0/company/<uid>/positions` and the rung records `jobs/<slug>/<uid>`, so no
+    string comparison of the two urls sees one board.
+    """
+    import queue_pipeline as QP
+    import queue_state as QS
+    st = {}
+    QS.record(st, "Faye", "hunt", "found",
+              url="https://www.comeet.com/jobs/withfaye/87.00A")
+    _r830_tree(tmp_path, monkeypatch, queue=["Faye"], qstate=st)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "withfaye,comeet,87.00A,"
+        "https://www.comeet.com/careers-api/2.0/company/87.00A/positions,true,queue-drain\n",
+        encoding="utf-8")
+    row, how = QP.covered_by_row("Faye", QS.load(), QP._board_index(QP.rows()))
+    assert (row, how) == ("withfaye", "comeet-uid")
+    assert QP.retire_settled(apply=True) == 1
+    rec = _r830_json.loads(
+        (tmp_path / "cloud_state" / "queue_disposition.json").read_text(encoding="utf-8"))
+    assert rec["Faye"]["verdict"] == "covered-by-row"
+    assert rec["Faye"]["other_name"] == "withfaye", "the credit must name the row it rests on"
+
+
+def test_a_board_a_rung_refused_as_another_companys_never_credits_the_name(tmp_path,
+                                                                           monkeypatch):
+    """`another company's board` is evidence about OUR SEARCH, never about this company.
+
+    Crediting any url an attempt happens to carry inverts the verdict's meaning. Measured on
+    the 2026-08-30 queue, six of twenty board matches were of exactly this shape:
+    `SMARTGEN WEALTH MANAGEMENT` would have been settled as covered by `Morgan Stanley`,
+    `Zaga1` and `Getsaucedelivery` by `Just Eat Takeaway`, and `Action Item Software Ltd` by
+    `Priority Software` - retiring four real employers onto other companies' boards.
+    """
+    import queue_pipeline as QP
+    import queue_state as QS
+    st = {}
+    QS.record(st, "SMARTGEN WEALTH MANAGEMENT", "hunt", "another company's board",
+              url="https://www.morganstanley.com/careers/career-opportunities")
+    _r830_tree(tmp_path, monkeypatch, queue=["SMARTGEN WEALTH MANAGEMENT"], qstate=st)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Morgan Stanley,scrape,,"
+        "https://www.morganstanley.com/careers/career-opportunities,true,x\n",
+        encoding="utf-8")
+    assert QP.covered_by_row("SMARTGEN WEALTH MANAGEMENT", QS.load(),
+                             QP._board_index(QP.rows())) == ("", "")
+    assert QP.retire_settled(apply=True) == 0
+
+
+def test_the_row_name_comes_from_the_employer_not_from_the_url(tmp_path, monkeypatch):
+    """A row named after a URL slug is a join key nothing else in the repo shares.
+
+    `withfaye` has a `cloud_state/firmographics.json` entry and `Faye` has none; the roles
+    ledger keys on `company`; the board publishes whatever `company_name` says. So a slug
+    name silently splits one employer into two identities across three subsystems - and the
+    queue then never credits the real name, which is how `Faye` stayed 'owed' while its roles
+    were live. 41 active rows carried slug-shaped names on 2026-08-30.
+
+    The queue's own name is the employer's; a board slug is an address. Prefer the name.
+    """
+    import queue_pipeline as QP
+    assert QP.row_name_for("Faye", "https://www.comeet.com/jobs/withfaye/87.00A") == "Faye"
+    # ...and a board title is preferred over a slug when the queue has no name
+    assert QP.row_name_for("", "https://www.comeet.com/jobs/withfaye/87.00A",
+                           board_title="Faye Travel Insurance") == "Faye Travel Insurance"
+    # a legitimately slug-shaped employer name is not mangled
+    assert QP.row_name_for("monday.com", "https://boards.greenhouse.io/mondaycom") == "monday.com"
+    # with nothing else to go on the slug is still better than an empty name
+    assert QP.row_name_for("", "https://www.comeet.com/jobs/withfaye/87.00A") == "withfaye"
+
+
+def test_a_reopen_survives_every_class_of_the_nightly_cleanup(tmp_path, monkeypatch):
+    """Four of the five classes wrote over `overturned_from` and pruned the name anyway.
+
+    Only the `re-retired` branch read the `overturned-` prefix; `already-a-row`,
+    `already-a-row (spelling)`, `settled-by-a-rung` and `covered-by-row` were each checked
+    AROUND it and each wrote a fresh record. Worst was `settled-by-a-rung`, which cited the
+    re-open itself as the retirement's evidence (`raw_verdict: "reopened"`) and thereby
+    cleared the `overturned-` prefix - so the name could be re-opened and re-retired again
+    every night, for ever. Found by an adversarial pass, 2026-08-30.
+    """
+    import queue_pipeline as QP
+    import queue_state as QS
+    st = {}
+    QS.record(st, "Reopened Co", "hunt", "reopened", day=QP.TODAY)
+    _r830_tree(tmp_path, monkeypatch, queue=["Reopened Co"], qstate=st,
+               disp={"Reopened Co": {"date": QP.TODAY, "verdict": "overturned-no-board",
+                                     "raw_verdict": "", "evidence": {"x": 1},
+                                     "overturned_from": {"verdict": "no-board",
+                                                         "evidence": {"probe": 1}}}})
+    # a `reopened` attempt is not TERMINAL, so `settled-by-a-rung` is not the branch that
+    # fires here; the point is that NO branch may fire.
+    assert QP.retire_settled(apply=True) == 0
+    left = {e["name"] for e in _r830_json.loads(
+        (tmp_path / "research_companies.json").read_text(encoding="utf-8"))}
+    assert left == {"Reopened Co"}
+    rec = _r830_json.loads(
+        (tmp_path / "cloud_state" / "queue_disposition.json").read_text(encoding="utf-8"))
+    assert rec["Reopened Co"]["verdict"] == "overturned-no-board"
+    assert rec["Reopened Co"]["overturned_from"]["evidence"] == {"probe": 1}, (
+        "the judge's evidence is the only copy; a cleanup must never overwrite it")
+
+
+def test_the_judge_never_re_judges_a_name_a_human_overruled(tmp_path, monkeypatch):
+    """`reopen` clears `raw_verdict`, so `--dispose`'s todo filter re-admitted the name.
+
+    The judge then writes `state[name] = {...}` wholesale and `overturned_from` is gone with
+    no warning. One hand-run `--dispose --apply` would have erased every re-open of
+    2026-08-30.
+    """
+    import queue_pipeline as QP
+    _r830_tree(tmp_path, monkeypatch, queue=["Reopened Co", "Fresh Co"],
+               disp={"Reopened Co": {"date": QP.TODAY, "verdict": "overturned-no-board",
+                                     "raw_verdict": "", "evidence": {"x": 1}}})
+    seen = []
+    monkeypatch.setattr(QP, "dispose_evidence",
+                        lambda name, *a, **k: (seen.append(name),
+                                               {"search_pages": [], "page_text": "",
+                                                "page_url": "", "verify": [], "probe": {}})[1])
+    QP.dispose(apply=False)
+    assert seen == ["Fresh Co"], seen
+
+
+def test_reopen_refuses_what_it_cannot_deliver(tmp_path, monkeypatch):
+    """It printed "re-opened" for names no rung could ever select.
+
+    Two classes. A name that IS a registry row has nothing to research, and the cleanup
+    removes it again the same night. A name carrying a TERMINAL `queue_state` verdict is
+    dropped by `queue_resolve_search.targets` on `is_settled`, which runs BEFORE the cadence
+    check - so the `reopened` attempt is unreachable. `no-web-presence` and `agency` are
+    exactly the verdicts a human is most likely to disagree with, and they were the two a
+    re-open could not touch while reporting success.
+    """
+    import queue_pipeline as QP
+    import queue_state as QS
+    st = {}
+    QS.record(st, "Dead Co", "own-site", "no-web-presence", day="2026-08-01")
+    _r830_tree(tmp_path, monkeypatch, queue=[], csv_rows=["Acme"], qstate=st,
+               disp={"Acme": _r830_disp("no-board", QP.TODAY),
+                     "Dead Co": _r830_disp("no-board", QP.TODAY)})
+    assert QP.reopen("Acme", apply=True) == 0, "a registry row cannot be re-opened"
+    assert QP.reopen("Dead Co", apply=True) == 0, "a TERMINAL rung verdict blocks the drain"
+    assert _r830_json.loads(
+        (tmp_path / "research_companies.json").read_text(encoding="utf-8")) == []
+
+
+def test_the_drain_alarm_does_not_fire_on_a_night_that_worked(tmp_path, monkeypatch):
+    """Keyed on TODAY, the alarm fired on a night the drain had done its job.
+
+    The drain and the stamp are two steps of one 330-minute job: the 19:00 attempts carry the
+    drain's date and `--stamp` runs past midnight UTC (2026-08-30's stamp finished 02:02Z
+    against 1,292 attempts all dated 2026-08-29). Measured on the real state files, the alarm
+    fired with `selectable=10, searched_today=0` on exactly such a night.
+    """
+    import datetime as _dt
+    import queue_pipeline as QP
+    import queue_state as QS
+    yesterday = (_dt.date.today() - _dt.timedelta(days=1)).isoformat()
+    st = {}
+    QS.record(st, "Searched Yesterday", "search-llm", "no-proposal", day=yesterday)
+    _r830_tree(tmp_path, monkeypatch, queue=["Owed Co"], qstate=st)
+    live = QP._drain_liveness()
+    assert live["searched_recently"] == 1
+    assert "drain_alarm" not in live, (
+        "a stamp that runs after midnight must not call last night's work idle")
+
+
+def test_the_drain_alarm_is_actually_printed(tmp_path, monkeypatch, capsys):
+    """`pipeline/stages.alarms()` surfaces only the key literally named `alarm`.
+
+    `queue` is not in `stages.ORDER` either, so a detail key nothing prints is a measurement
+    nobody reads - which is the failure this alarm exists to catch, one level up.
+    """
+    import queue_pipeline as QP
+    from pipeline import stages
+    _r830_tree(tmp_path, monkeypatch, queue=["Owed Co"])
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "cloud_state" / "stages.json"))
+    QP.stamp_queue({"buckets": {"owed, a nightly rung retries it": 1}, "unverified_rows": 0})
+    out = capsys.readouterr().out
+    assert "::warning::queue drain IDLE" in out, out
+
+
+def test_a_prune_rests_on_the_record_that_survived_the_merge(tmp_path, monkeypatch):
+    """The assert checked that SOME evidence key existed, not that the record retires.
+
+    `save_disposition` keeps the newer `date` and `TODAY` is the LOCAL date, so a record
+    written from Israel between midnight and 03:00 is dated a day ahead of the UTC runner and
+    wins the merge. An adversarial pass pruned a name whose surviving record said
+    `cannot-tell`, with the old assertion green.
+    """
+    import datetime as _dt
+    import queue_pipeline as QP
+    tomorrow = (_dt.date.today() + _dt.timedelta(days=1)).isoformat()
+    _r830_tree(tmp_path, monkeypatch, queue=["Wix"], csv_rows=["Wix"],
+               disp={"Wix": {"date": tomorrow, "verdict": "cannot-tell", "raw_verdict":
+                             "cannot-tell", "evidence": {"search_pages": ["x"]}}})
+    QP.retire_settled(apply=True)
+    left = {e["name"] for e in _r830_json.loads(
+        (tmp_path / "research_companies.json").read_text(encoding="utf-8"))}
+    assert left == {"Wix"}, "a name whose surviving record does not retire it stays"
+
+
+def test_a_name_that_contradicts_itself_about_a_row_is_not_credited(tmp_path, monkeypatch):
+    """One rung said `found`, another said the same board is another company's.
+
+    Nothing here can say which rung was right, and `covered-by-row` is permanent, so the
+    name is left for a human rather than retired on whichever attempt is read first.
+    """
+    import queue_pipeline as QP
+    import queue_state as QS
+    st = {}
+    QS.record(st, "Alice Flights", "search-llm", "found", url="https://alice.io/careers")
+    QS.record(st, "Alice Flights", "hunt", "another company's board",
+              url="https://alice.io/careers")
+    _r830_tree(tmp_path, monkeypatch, queue=["Alice Flights"], qstate=st)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Alice IO,scrape,,https://alice.io/careers,true,x\n", encoding="utf-8")
+    assert QP.covered_by_row("Alice Flights", QS.load(),
+                             QP._board_index(QP.rows())) == ("", "")
+
+
+def test_finding_a_companys_own_SITE_is_not_finding_its_board(tmp_path, monkeypatch):
+    """`resolved-domain` must never credit a row.
+
+    `queue_state.py` records what treating it as settling cost: it is rung 1 finding the
+    company's own SITE, "which is evidence and not a board", and it settled 55 names that
+    still had every later rung to run. 66 registry rows carry an empty-path `api_url`, so a
+    homepage-vs-homepage `hostpath` key is live.
+    """
+    import queue_pipeline as QP
+    import queue_state as QS
+    assert "resolved-domain" not in QP._ASSERTS_OWNERSHIP
+    st = {}
+    QS.record(st, "Acme", "own-site", "resolved-domain", url="https://acme.example/")
+    _r830_tree(tmp_path, monkeypatch, queue=["Acme"], qstate=st)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Other Co,scrape,,https://acme.example/,true,x\n", encoding="utf-8")
+    assert QP.covered_by_row("Acme", QS.load(), QP._board_index(QP.rows())) == ("", "")

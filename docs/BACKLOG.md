@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**512 filed · 375 open · 137 closed · 7 half · 36 numbers name more than one item · 0 items name no lane.**
+**517 filed · 380 open · 137 closed · 7 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 467.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 458, 459, 460 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 467.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -89,8 +89,10 @@ closure convention in the header.
 | 377 | `377@scraper` **open** · `377@infra` **open** |
 | 445 | `445@jd-text` **open** · `445@docs` **open** |
 | 446 | `446@classifier` **open** · `446@docs` closed |
+| 461 | `461@docs` **open** · `461@registry` **open** |
+| 462 | `462@scraper` **open** · `462@registry` **open** |
 
-### registry — 119 open
+### registry — 122 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -211,8 +213,11 @@ closure convention in the header.
 - **426** `426@registry` **A git worktree has no `secrets.env`, so every paid rung silently no-ops**
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
+- **459** `459@registry` **41-ish ACTIVE rows are named after a URL slug rather than an employer, and renaming
+- **461** `461@registry` **The `no-board` re-open cadence expires a verdict but nothing puts the name back, and
+- **462** `462@registry` **`--reopen` cannot reverse the two verdicts a human is most likely to disagree with** —
 
-### infra — 106 open
+### infra — 107 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -319,6 +324,7 @@ closure convention in the header.
 - **451** `451@infra` **`stages.stamp` rebases on `{}` when it cannot read the file, and the digest now writes
 - **453** `453@infra` **`cloud_state/roles.csv` is committed and public by raw URL, but it is not on Pages** —
 - **455** `455@infra` **A `bd_rescue` test fails whenever another `bd_rescue` test runs first**
+- **458** `458@infra` **`merge_json_cache.merge` resurrects a key the ORIGIN deleted, so a deletion committed
 - **463** `463@infra` **The drain's counters exist only in the mail**
 
 ### scraper — 28 open
@@ -461,7 +467,7 @@ closure convention in the header.
 - **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
 - **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
 
-### roles — 12 open
+### roles — 13 open
 
 - **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
 - **3** `3@roles` **`pipeline/dates.py`**
@@ -475,6 +481,7 @@ closure convention in the header.
 - **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
 - **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
 - **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
+- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
 
 ### classifier — 9 open
 
@@ -7894,6 +7901,13 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     lookup, no model, no fetch) but the names are re-discovered, re-added and re-removed every
     day, and the census flickers between 0 and 2 stuck depending on which ran last.
 
+    **Re-measured 2026-08-30 and the lane is WRONG: over the nine days to 2026-08-30, intake
+    re-added ZERO retired names.** Every observed resurrection -- 44 of them in one commit --
+    is `merge_json_cache.merge` rescuing a key the origin deleted, which is `458@infra`. The
+    two names below did come back the night they were retired, and that is how they came back.
+    The `discovery`-side guard described here is still worth having as a belt, but it is not
+    the cause and building it would not have stopped this.
+
     The fix belongs where the queue is WRITTEN: whatever appends to `research_companies.json`
     (`discovery_daily`, `ingest_research`, `merge_research`) should skip a name whose
     disposition verdict is in `queue_pipeline.RETIRABLE` or `queue_state.TERMINAL`, unless the
@@ -8382,3 +8396,220 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      It found the live instance on its first run, and the clause is corrected (a disclosed
      one-clause touch in section 7, which `company-intel` owns).
 
+458. **`merge_json_cache.merge` resurrects a key the ORIGIN deleted, so a deletion committed
+    by one process is undone by the next** — lane: `infra`, measured 2026-08-30 by `registry`.
+
+    `persist_state.py:344` routes `research_companies.json` through `_keyed_list(_name_key)`,
+    which merges with `merge_json_cache.merge`. The two deletion arms are not symmetric:
+
+    ```python
+    for k, v in ours.items():
+        if k not in base or base[k] != v:
+            out[k] = v            # this run touched it
+        elif k not in theirs:
+            out[k] = v            # untouched by us and absent from theirs: don't lose it  <-- HERE
+    for k in base:
+        if k not in ours and k in theirs and theirs[k] == base[k]:
+            del out[k]            # we deleted it, origin left it alone: the deletion stands
+    ```
+
+    OUR deletion is honoured; ORIGIN's is rescued (the `kept` counter, printed as "rescued").
+    So any process holding an older checkout re-adds every key the origin has retired since.
+
+    **Measured, not inferred.** 44 names retired by `1ce0db5` (42) and `a07e743` (2) between
+    00:28 and 00:54 on 2026-08-30 were back in `research_companies.json` at 00:41, put there
+    by `5ccd60e` — the listing-hunt cron's OWN state commit, checked out at `bfdff0f` before
+    those retirements. 42 were still in the file at `fd07897`, each carrying a judged
+    disposition, each due to re-buy a paid Bright Data search when its 14-day cadence lapsed
+    on 2026-09-12. Walk it with:
+    `git log --format='%h %ad' --date=iso-strict --since=2026-08-22 -- research_companies.json`
+    and diff the name sets between consecutive commits.
+
+    **This is not `441`.** That item blames intake for re-adding retired names; over the nine
+    days to 2026-08-30 discovery re-added **zero**. Every observed resurrection is this merge.
+
+    The same strategy is declared for `discovered_cache.json`, and `s_company_dict` carries
+    the identical asymmetry for eight `cloud_state/*.json` files whose comments say
+    "deletions honoured" — true only of ours.
+
+    The fix is one line plus a guard against the case the rescue arm was protecting (an
+    origin file that is empty or unreadable must not mass-delete):
+
+    ```python
+        elif k not in theirs and not theirs:   # origin is empty/unreadable: don't lose it
+            out[k] = v
+        # else: origin deleted a key we did not touch -- the deletion stands (mirror of below)
+    ```
+
+    Until this lands, `registry` converges its queue by re-applying the verdict from
+    `cloud_state/queue_disposition.json` every night (`queue_pipeline --retire-settled`,
+    class `re-retired`, 41 names on 2026-08-30) rather than by trusting the deletion — which
+    is the right belt regardless, but it is a workaround for a defect in shared plumbing and
+    the other seven files have no such belt.
+
+459. **41-ish ACTIVE rows are named after a URL slug rather than an employer, and renaming
+    them has to be sequenced across three lanes** — lane: `registry` (the verdict) with
+    `company-intel` and `roles` (the joins). Filed 2026-08-30, deliberately NOT done.
+
+    `company_name` is the join key for four things that do not share this file:
+    `cloud_state/firmographics.json`, the roles ledger (`cloud_state/roles.jsonl`, keyed
+    `company`), the `matched` table, and the published board. A rename landing only in
+    `companies.csv` orphans the intel and the role history at the same instant.
+
+    The operator's example, and the class it names: the queue held `Faye`; `queue-drain`
+    resolved it to a Comeet board and wrote the row as **`withfaye`** — the board's URL slug —
+    with `firmographics.json` holding an entry for `withfaye` and none for `Faye`. Because the
+    names differ, the queue never credited `Faye` and counted it as owed for two days while
+    its roles were live on the board.
+
+    **The evidence-backed list is the 14 `covered-by-row` credits of 2026-08-30**, each a pair
+    where an employer-shaped queue name and a registry row provably name ONE board (matched on
+    Comeet uid / url / host+path, never on the name). `row` <- `the employer name intake had`:
+
+    ```
+    withfaye            <- Faye                     Kmslh        <- KMS Lighthouse
+    Landacorp           <- Landa Corporation        Voom         <- VOOM Insurance
+    Foresight Automotive<- Foresightauto            Experda      <- Experda.com
+    Speedata            <- Speedata.io              Meganet      <- Meganet One
+    Alice IO            <- Alice Flights            BIRD Aerosystems <- Birdaero
+    Bynet Software Systems Ltd. <- Bynet            mećkano      <- Meckano
+    IEC - Israel Electric Corporation ... <- Israel Electric Company
+    Strauss Water Ltd. שטראוס מים <- Strauss Group   (the GROUP's board under a subsidiary's name)
+    ```
+
+    Not every one of those is a rename — `Voom`, `Speedata`, `Experda` and `Meganet` are the
+    better name already, and the queue's version is the noisy one. The rows worth renaming are
+    the ones whose name is an ADDRESS: `withfaye`, `Kmslh`, `Landacorp`, `Birdaero`,
+    `Foresightauto`, `mećkano`.
+
+    A general "which active rows are slug-named" audit is NOT reliable from the CSV alone:
+    a company's name usually IS its slug (`Wolt`, `Figma`, `Intel`, `monday.com`), and a
+    name-vs-own-URL comparison returns 297 rows, almost all correct. Deciding it needs the
+    board's own asserted name — `apply_proposals.board_employer` for a `<title>`, the Comeet
+    API's `company_name` — which is one cheap fetch per row and belongs in the same pass that
+    does the rename.
+
+    **Ordering, when it is sequenced:** (1) `company-intel` adds the new key to
+    `firmographics.json` as an alias or re-keys it; (2) `roles` re-keys `matched` /
+    `roles.jsonl` / `sent`, which is a migration because `merge_key` is a PRIMARY KEY
+    (`132-139`); (3) `registry` renames the row LAST, in one commit, with the old name in the
+    note so `registry_health.census_diff` does not report it as a vanished row. Doing (3)
+    first is what orphans the other two.
+
+    Creating NEW ones has stopped: `queue_pipeline.row_name_for` prefers the queue's name,
+    then the board's own title, then the slug, and `apply_proposals` calls it on both the
+    slug-probe path (using `board_employer`) and every other rung (using the Comeet
+    `board_asserts_company` the drain already recorded and nothing read).
+
+460. **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
+    different answer** — lane: `roles` (they own the purge and the join), verdicts by
+    `registry`, measured 2026-08-30.
+
+    The public per-role CSV the `roles` lane is building does not exist on `origin/master`
+    yet and nothing references it; when it ships, one row per role joined to firmographics on `company_name`, these 28 are what a
+    public download will say. `Jobgether` — a remote-job AGGREGATOR, already on
+    `aggregators.HOSTS` and in `recruiters._CONFIRMED` — has reached subscribers once as an
+    employer heading (2026-08-26), which is what makes this worth ordering rather than noting.
+
+    Store = 116 distinct companies (`select distinct company from matched` ≡
+    `cloud_state/roles.jsonl`), joined to `companies.csv` on the exact string: **88 ACTIVE,
+    20 PARKED, 8 NO ROW**.
+
+    **(iii) never an employer — purge, 10.** `pipeline/recruiters.is_recruiter` already
+    returns True for nine: `Jobgether`, `Nisha Pro`, `Shavit Software`, `Nogamy`, `Abra`,
+    `Alpha | Similarweb Partner`, `Recruitx`, `Yael Korentec Technologies`, `comblack`. Plus
+    **`Tel Aviv`** — a city name captured from a Telegram post, whose own row note says
+    `redundant: not a company`, and which carries **7 roles, the largest block of the 28**.
+    These are the ones a public CSV must not publish as employers.
+
+    **(ii) the join is broken, not the coverage — 6.** `Appcharge`→`AppCharge` (ACTIVE) and
+    `Helfy`→`helfy` (ACTIVE) differ by CASE alone; `Nogamy`→`Data analyst - Nogamy` (the row
+    is named after a job title); and three rows whose notes already say `alias-of`:
+    `Meta Israel`→`Meta`, `OTORIO`→`Armis`, `TechBiz Global GmbH`→`TechBiz Global` (the first
+    two already carry `status=superseded` on their roles). The same mismatch exists in
+    `seen.db.firmographics`, which stores `AppCharge`/`helfy` while `matched` stores
+    `Appcharge`/`Helfy` — so this is a STORE-side key problem, not a registry one, and the fix
+    is a normalised join key (casefold + `store._norm_company`), not a rename of registry rows.
+    Renaming rows to match is `459`, and it is sequenced, not free.
+
+    **(i) legitimate parked coverage, keep the history — 11.** `Chargeflow`, `Migdal Group`,
+    `Phoenix Financial`, `SHILA Medical Services LTD`, `ShipIn Systems`, `SolarEdge
+    Technologies`, `TransUnion`, `Tipuli Tech`, `Alma Labs`, `Hila & Co.`, `entrypoint` —
+    every one carries a live re-check token (`monitored candidate` / `needs re-resolution`), so
+    the company is still watched and the roles are real history. A registry row is never
+    deleted (`check_invariants` invariant D: parked, with a reason), so "no ACTIVE row" never
+    means "we decided this was not a company".
+
+    **Neither, and worth naming — 2.** `Trivago` and `Parametrix GmbH` have never been a row
+    in the file's whole history (`git log -S` finds nothing), are on no recruiter or aggregator
+    list, and each carries one role last seen 2026-08-19. They are discovery-only employers
+    that never reached the registry — an intake gap, not a retirement.
+
+    What `registry` is NOT doing: purging anything (the mechanism is `roles`'), and renaming
+    any row (`444`).
+
+461. **The `no-board` re-open cadence expires a verdict but nothing puts the name back, and
+    the ATS-gap class is bigger than the 13 that were found** — lane: `registry`, filed
+    2026-08-30 by the session that built the cadence, after an adversarial pass showed the
+    claim was half true.
+
+    **(a) The expiry does not re-add.** `queue_pipeline.REOPEN_DAYS` retires a `no-board`
+    verdict at 90 days, and `disposition_verdict` honours it — but its ONLY caller is
+    `retire_settled`, which iterates entries **already in `research_companies.json`**. So the
+    expiry stops a name that is still in the queue from being re-retired, and does nothing
+    at all for one already pruned. The only paths back into the queue file today are the
+    `merge_json_cache` rescue (`458`, which this work exists to stop relying on) and a
+    discovery source happening to re-serve the name, which does not consult the disposition
+    ledger.
+
+    ```bash
+    grep -n "disposition_verdict" *.py pipeline/*.py     # one caller
+    ```
+
+    The fix is a re-add arm in `retire_settled` — the same file, the same lookup, no model
+    and no fetch: for every disposition record whose verdict is `no-board` and whose `date` is
+    past `REOPEN_DAYS`, append the name back to the queue through
+    `pipeline.discovery_queue.write` and record a `queue_state` attempt saying why. Two things
+    to settle first, because both were found the hard way:
+
+      * `census` keys on the raw `verdict in RETIRED_VERDICTS` and never calls
+        `disposition_verdict`, so an expired record already counts as "retired with evidence"
+        while `queue_resolve_search.targets` will happily select the name and spend a Bright
+        Data credit on it. Reproduced: a `no-board` dated 100 days ago is invisible in `owed`
+        and in the GROWING alarm, and selectable. **All 135 current `no-board` records reach
+        that state on 2026-11-27**, so this is dated, not hypothetical.
+      * a re-add is a queue GROWTH, and the stamp alarms on growth. The arm must report its
+        own count so a reader can tell a re-open wave from a drain that stopped working.
+
+    **(b) The ATS-gap class was measured by a phrase search, so 13 is a floor.** Nine more
+    `no-board` records give the same reason and were left closed: **`Lambadapp`** ("hand-built
+    Wix 'Join us' page listing roles as prose" — structurally identical to `Bulwarx`, which
+    WAS re-opened), **`Yit Yedioth Information Technology`** (the page renders unresolved
+    Angular placeholders `{{job.title}}`, `{{job.desc}}` — the board exists and is broken),
+    **`Melabev`** ("jobs listed as free text on /about/drusim/"), `Xtragiftcard`,
+    `Chaikin Cohen Rubin And Co`, `Gabay Group`, `Bluran Hardware`, `Hameshakem`, `Hb Gruop`.
+
+    Only **5 of the 13** re-opened-or-considered names are among the 18 whose careers probe
+    answered, so "144 → 18 → 13" is not a nesting and must not be read as one.
+
+    The durable half already shipped: `DISPOSE_SYSTEM` now says a page naming even one role IS
+    a board and that the absence of an ATS is not a reason, with a guard pinning both
+    directions. What is left is a re-read of the records written under the old wording. The
+    honest way to size it is to re-judge every `no-board` record against the new prompt, which
+    is ~144 `claude -p` calls and no Bright Data, rather than another phrase search.
+
+462. **`--reopen` cannot reverse the two verdicts a human is most likely to disagree with** —
+    lane: `registry`, filed 2026-08-30.
+
+    `queue_resolve_search.targets` tests `is_settled` BEFORE the 14-day cadence, so for a name
+    carrying a TERMINAL `queue_state` verdict the `reopened` attempt is unreachable and no rung
+    will ever select it. `no-web-presence` and `agency` are exactly claims about OUR REACH
+    rather than about the company — the class most worth overruling — and `no-web-presence` in
+    particular was mass-written once and mass-stripped once already (2026-08-29).
+
+    `reopen` now REFUSES such a name and says what has to change first, instead of printing
+    success on a no-op. Making it actually work needs a decision that belongs with the
+    operator, not a patch: either a re-open appends a verdict that neutralises the terminal one
+    (an append-log has no delete, by design), or `is_settled` learns to read `overturned-*`
+    from the disposition ledger — which couples two files that are deliberately independent
+    today (`queue_state` records what a RUNG did; `queue_disposition` records a judgement).
