@@ -76,7 +76,7 @@ closure convention in the header.
 | 228 | `228@discovery` **open** · `228@scraper` **open** |
 | 240 | `240@docs` closed · `240@scraper` closed |
 | 241 | `241@infra` **open** · `241@ats-fetch` **open** · `241@scraper` closed |
-| 242 | `242@company-intel` closed · `242@registry` **open** · `242@registry` **open** |
+| 242 | `242@company-intel` closed · `242@registry` **open** · `242@scraper` closed |
 | 243 | `243@roles` **open** · `243@ats-fetch` **open** · `243@scraper` **open** |
 | 244 | `244@company-intel` closed · `244@ats-fetch` **open** · `244@scraper` **open** |
 | 245 | `245@company-intel` closed · `245@ats-fetch` **open** · `245@scraper` closed |
@@ -90,7 +90,7 @@ closure convention in the header.
 | 445 | `445@jd-text` **open** · `445@docs` **open** |
 | 446 | `446@classifier` **open** · `446@docs` closed |
 | 461 | `461@docs` **open** · `461@registry` **open** |
-| 462 | `462@scraper` **open** · `462@registry` **open** |
+| 462 | `462@classifier` closed · `462@registry` **open** |
 
 ### registry — 135 open
 
@@ -148,7 +148,6 @@ closure convention in the header.
 - **234** `234@registry` **`apply_resolved.py` stamps `self-heal <date>` on a batch no self-heal produced, and a
 - **239** `239@registry` **Workiz's scrape row may be an embedded Comeet board**
 - **242** `242@registry` **`successfactors` and `jobvite` are fetchable but undiscoverable
-- **242** `242@registry` **`SCRAPE_ASSUME_IL` is set process-wide at import by two root modules, so the whole test
 - **246** `246@registry` **Four Eightfold/Phenom scrape rows are genuinely empty, not broken
 - **266** `266@registry` **The Meta registry row's `api_url` IS a search page, so no Meta role can ever have a job
 - **275** `275@registry` **The `Registry:` mail line is an alarm channel with no production line behind it** —
@@ -216,7 +215,7 @@ closure convention in the header.
 - **459** `459@registry` **41-ish ACTIVE rows are named after a URL slug rather than an employer, and renaming
 - **461** `461@registry` **The `no-board` re-open cadence expires a verdict but nothing puts the name back, and
 - **462** `462@registry` **`--reopen` cannot reverse the two verdicts a human is most likely to disagree with** —
-- **468** `468@registry` **Three modules still carry their own `_load_secrets`, so a worktree session of those
+- **468** `468@registry` **Two modules still carry their own `_load_secrets`, so a worktree session of those
 - **470** `470@registry` **Two mutation records were filed with no test that reaches the mutated line, and two more
 - **472** `472@registry` **`_load_secrets` callers in seven root tools still resolve through `bd_rescue`'s copy** —
 - **477** `477@registry` **386's diagnosis is wrong in one word, and the fix is in `infra`'s file**
@@ -340,37 +339,6 @@ closure convention in the header.
 - **494** `494@infra` **`daily-digest.yml:101` still pins `SECRETHUNTER_QUEUE_CAP: "150"`, a per-RUN number that
 - **498** `498@infra` **`roles_archive.csv` and `roles_text.jsonl` are not on Pages**
 
-### scraper — 28 open
-
-- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
-- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
-- **90** `90@scraper` **Per-job strategy provenance in the cache**
-- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
-- **219** `219@scraper` **Strategy 5's model, measured once**
-- **220** `220@scraper` **A `links:` carry has no ceiling**
-- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
-- **222** `222@scraper` **`pipeline/llm.py`
-- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
-- **235** `235@scraper` **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
-- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
-- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
-- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
-- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
-- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
-- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
-- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
-- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
-- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
-- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
-- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
-- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
-- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
-- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
-- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
-- **462** `462@scraper` **A `?location=Israel` listing URL makes every card on the page an Israeli posting** —
-- **496** `496@scraper` **The scraper stamps the QUERY's location on a card that has none, and the Israel filter
-- **497** `497@scraper` **`&amp;` reaches the public title and the role's id**
-
 ### discovery — 26 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
@@ -400,6 +368,35 @@ closure convention in the header.
 - **484** `484@discovery` **Twenty agencies still walk past `is_recruiter` by name**
 - **485** `485@discovery` **`discovery_telegram.py` sends a spoofed Chrome UA and keeps only a post's first URL**
 
+### scraper — 26 open
+
+- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
+- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
+- **90** `90@scraper` **Per-job strategy provenance in the cache**
+- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
+- **219** `219@scraper` **Strategy 5's model, measured once**
+- **220** `220@scraper` **A `links:` carry has no ceiling**
+- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
+- **222** `222@scraper` **`pipeline/llm.py`
+- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
+- **235** `235@scraper` **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
+- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
+- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
+- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
+- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
+- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
+- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
+- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
+- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
+- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
+- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
+- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
+- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
+- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
+- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
+- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
+- **497** `497@scraper` **`&amp;` reaches the public title and the role's id**
+
 ### docs — 24 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
@@ -427,7 +424,7 @@ closure convention in the header.
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 
-### ats-fetch — 19 open
+### ats-fetch — 20 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
 - **1** `1@ats-fetch` **`pipeline/ats.py` platform registry.** One frozen dataclass per platform (host regex,
@@ -448,6 +445,7 @@ closure convention in the header.
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 - **503** `503@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
+- **504** `504@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
 ### company-intel — 19 open
 
@@ -3928,8 +3926,14 @@ re-derive again before acting.
     bundles before changing anything, because `_loc_from_ctx` is also imported by
     `validate_bd.py` (`registry`, see 218).
 
-242. **`SCRAPE_ASSUME_IL` is set process-wide at import by two root modules, so the whole test
-    suite runs with it on** — lane: `registry` (owns `listing_hunt.py` and `crack_walled.py`).
+242. ~~**`SCRAPE_ASSUME_IL` is set process-wide at import by two root modules, so the whole test
+    suite runs with it on**~~ — **CLOSED 2026-08-30 (`scraper`): the prescribed one-line fix is
+    already applied and the item was never struck.** All three writes sit inside functions
+    (`listing_hunt.main` :455, `crack_walled` :221 in its probe, `repair_extract_gap.main`
+    :62); measured: importing all three modules leaves both `SCRAPE_ASSUME_IL` and
+    `SCRAPE_LLM` unset. A sibling defect found while checking: the queue arm's disarm wrote
+    `"0"`, which a truthiness read took as ON — fixed at the one read site
+    (`scrape_universal._page_is_il`, same commit). Lane: `registry` (owns `listing_hunt.py` and `crack_walled.py`).
     `listing_hunt.py:334` and `crack_walled.py:221` do `os.environ["SCRAPE_ASSUME_IL"] = "1"`
     at module scope; `tests/test_registry.py` imports them, so from that moment every later
     test sees the flag — which makes every location-less card on an Israel-token page an
@@ -8417,8 +8421,15 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     to this boundary (`374@docs` predicted exactly that: "the next scope change will not be
     about the bar"). The classifier lane does not own those files and has not touched them.
 
-462. **A `?location=Israel` listing URL makes every card on the page an Israeli posting** —
-    lane: `scraper`. `Comcast` (`jobs.comcast.com/search-jobs?location=Israel`) and
+462. ~~**A `?location=Israel` listing URL makes every card on the page an Israeli posting**~~ —
+    **CLOSED 2026-08-31 (`scraper`)**: `_page_is_il` no longer reads the URL at all — query OR
+    path (`careers.arm.com/location/israel-jobs/` shipped 17 the same way; a query-stripped fix
+    would have re-shipped them) — a card nothing placed is refused by `_Adder._judge` and
+    counted (`loc_unknown`), the listing-url fallback is query-stripped (`_bare`), a foreign
+    tail writes `country_code="XX"`, and `_loc_src` provenance + the `fabricated-loc-N` alarm
+    guard the class (ARCHITECTURE §1 item 2, §5a). Cache correction is the nightly re-render:
+    of the 700 stamped rows, 255 sit on inactive rows and evaporate, 445 re-extract honestly.
+    Lane: `scraper`. `Comcast` (`jobs.comcast.com/search-jobs?location=Israel`) and
     `Hunter Douglas, Inc.` (`jobs.hunterdouglas.com/search/?...`) store `location: "Israel"`
     on cards whose own URLs read `/job/pennsylvania/`, `/job/plano/`, `/job/colorado/`,
     `/job/houston/`. `israel.is_israel_job` believes the field — correctly; it is the stored
@@ -8819,11 +8830,12 @@ the rebase (a collision is what 241–246 are).
      `guard-kill` job only (`fetch-depth: 0`, `BEFORE=${{ github.event.before }}`); the
      `guard` job is still depth 1, so the hunk above still has nothing to read there.
 
-468. **Three modules still carry their own `_load_secrets`, so a worktree session of those
-     lanes is still silently disarmed** — lanes: `registry` (`bd_rescue.py:46`; `bd_employees.py:41`
+468. **Two modules still carry their own `_load_secrets`, so a worktree session of those
+     lanes is still silently disarmed** — lanes: `registry` (`bd_employees.py:41`
      imports nobody's — treat as registry's), `jd-text` (`pipeline/jdfill.py:89`, public name
-     `load_secrets`). The exact diff for each, three lines, behaviour-preserving (`setdefault`
-     stays, so `tests/conftest.py`'s disarm still holds):
+     `load_secrets`). Was three: `bd_rescue.py`'s copy was replaced 2026-08-30 (`scraper`,
+     cross-lane debt rule — note below). The exact diff for each, three lines,
+     behaviour-preserving (`setdefault` stays, so `tests/conftest.py`'s disarm still holds):
 
      ```python
      def _load_secrets():                      # bd_rescue.py / bd_employees.py
@@ -9137,8 +9149,13 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      receipt should be a `--stamp`-only artefact; `queue_state.py` (no args) already sets the
      read-only example.
 
-496. **The scraper stamps the QUERY's location on a card that has none, and the Israel filter
-     then agrees with itself** — lane: `scraper`, **high**. Filed by `roles` 2026-08-30.
+496. ~~**The scraper stamps the QUERY's location on a card that has none, and the Israel filter
+     then agrees with itself**~~ — **CLOSED 2026-08-31 (`scraper`): the scraper half — see
+     462's closure for the mechanism (the "or the card's url path is read" alternative was
+     rejected: a placename vocabulary over url paths is 247's unfinishable list, and an
+     honest refusal needs none). The eightfold half (`fetchers.py:596`) is NOT closed — it is
+     `ats-fetch`'s file and is re-filed as `504` with the successfactors precedent.**
+     lane: `scraper`, **high**. Filed by `roles` 2026-08-30.
      `Comcast`'s registry `api_url` is `jobs.comcast.com/search-jobs?location=Israel`;
      `scrape_universal._page_is_il` (`:1011`) is True on the query string, so `_from_dom`
      (`:1005-1008`) writes the literal word `"Israel"` for every card that carries no location
@@ -9255,3 +9272,13 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      is enforced from 2026-08-30; three older entries — lakeFS, Nokia, Schneider Electric —
      violated it and self-correct on their next scraped night). Do not build the reader in
      the scraper lane.
+
+504. **The eightfold fetcher stamps the query's location on postings that carry none** —
+     lane: `ats-fetch`. Re-filed 2026-08-31 (`scraper`) as the surviving half of `496`,
+     whose scraper half closed with `462`. `fetchers.py:596` writes the search location for
+     eightfold rows the way `scrape_universal._page_is_il` did before 2026-08-31; the
+     `successfactors` fetcher already refuses the same inference (`fetchers.py:726`,
+     `24512d6`: "`locationsearch=Israel` is a hint, not a filter" — Boston Scientific
+     returns Minnesota; `israel_scoped = False` is the precedent). An honest blank beats a
+     confident wrong value: emit what the posting carries and let `israel.is_israel_job`
+     decide.

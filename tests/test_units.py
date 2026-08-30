@@ -2000,21 +2000,35 @@ def test_scrape_card_headings_need_three_siblings_and_role_titles():
     assert jobs == []
 
 
-def test_scrape_cards_without_locations_need_an_il_url_or_assume_il(monkeypatch):
-    """A card with no location is kept only when the listing itself is Israel-scoped: the URL
-    says so, or `SCRAPE_ASSUME_IL=1` AND the page carries an Israel token. The flag must
-    never widen beyond that — with no token on the page it accepts nothing."""
+def test_scrape_cards_without_locations_need_assume_il_and_a_page_token(monkeypatch):
+    """A card with no location is kept ONLY under `SCRAPE_ASSUME_IL=1` (a hunt's pre-vetted
+    target) AND an Israel token on the page itself — never because the LISTING URL is
+    Israel-scoped: the URL is our own search input, and honouring it stamped 14 Comcast US
+    postings `Israel` (496, 2026-08-30, two of them published). The flag must never widen
+    beyond the page token — with no token on the page it accepts nothing — and its refusals
+    are counted (`loc_unknown`)."""
     import scrape_universal as N
     monkeypatch.delenv("SCRAPE_ASSUME_IL", raising=False)
     plain = _cards_html(4, loc="")
     assert N._extract("Co", "https://co.example/careers", _rendered(page_html=plain), fetch=_no_fetch)[0] == []
-    jobs, _ = N._extract("Co", "https://co.example/careers?location=Israel", _rendered(page_html=plain), fetch=_no_fetch)
-    assert len(jobs) == 4 and {j["location"] for j in jobs} == {"Israel"}
+    r = _rendered(page_html=plain)
+    jobs, _ = N._extract("Co", "https://co.example/careers?location=Israel", r, fetch=_no_fetch)
+    assert jobs == [], "the query is a search input, not a location"
+    assert r.loc_unknown == 4, "the refusals are the level the stamp reports"
+    # a path-scoped listing (careers.arm.com/location/israel-jobs/…) is the same search input
+    assert N._extract("Co", "https://co.example/location/israel-jobs/", _rendered(page_html=plain), fetch=_no_fetch)[0] == []
     monkeypatch.setenv("SCRAPE_ASSUME_IL", "1")
     assert N._extract("Co", "https://co.example/careers", _rendered(page_html=plain), fetch=_no_fetch)[0] == []
     with_footer = _cards_html(4, loc="", footer="HQ: 3 Aba Eban, Herzliya")
     jobs, _ = N._extract("Co", "https://co.example/careers", _rendered(page_html=with_footer), fetch=_no_fetch)
-    assert len(jobs) == 4
+    # the footer sits inside the LAST card's byte window, so that one reads Herzliya as its
+    # own place (proximity, pre-existing); the other three are the flag's assumption
+    assert len(jobs) == 4 and sorted(j["_loc_src"] for j in jobs) == ["assumed"] * 3 + ["own"]
+    monkeypatch.setenv("SCRAPE_ASSUME_IL", "0")
+    jobs, _ = N._extract("Co", "https://co.example/careers", _rendered(page_html=with_footer), fetch=_no_fetch)
+    # '0' is OFF (the hunt's queue arm disarms with it; a truthiness read re-armed it) —
+    # only the card with its own proximity evidence survives, and nothing is assumed
+    assert [j["_loc_src"] for j in jobs] == ["own"] and jobs[0]["location"] == "Herzliya"
 
 
 def test_scrape_position_links_use_the_injected_fetcher_and_stop_at_the_deadline():
@@ -2042,7 +2056,12 @@ def test_scrape_position_links_use_the_injected_fetcher_and_stop_at_the_deadline
 
 
 def test_scrape_llm_strategy_is_off_without_the_env_and_uses_the_runner(monkeypatch):
+    """...and on a query-scoped page the call is still MADE (the scope buys the spend,
+    `_llm_gate`) while a locationless title no longer inherits the query's "Israel" — it is
+    refused like every other reading nothing placed (496). A title the model DID place
+    lands normally."""
     import scrape_universal as N
+    monkeypatch.delenv("SCRAPE_ASSUME_IL", raising=False)
     url = "https://co.example/careers?location=Israel"
     page = "<body><h2>Open positions</h2><div>Senior Data Analyst</div><div>BI Developer</div></body>"
     ran = []
@@ -2054,9 +2073,15 @@ def test_scrape_llm_strategy_is_off_without_the_env_and_uses_the_runner(monkeypa
     jobs, _ = N._extract("Co", url, _rendered(page_html=page), fetch=_no_fetch, llm=runner)
     assert jobs == [] and ran == []
     monkeypatch.setenv("SCRAPE_LLM", "1")
-    jobs, strategy = N._extract("Co", url, _rendered(page_html=page), fetch=_no_fetch, llm=runner)
-    assert strategy == "llm" and [(j["title"], j["location"]) for j in jobs] == [("Senior Data Analyst", "Israel")]
-    assert "Senior Data Analyst" in ran[0]
+    jobs, _ = N._extract("Co", url, _rendered(page_html=page), fetch=_no_fetch, llm=runner)
+    assert ran and "Senior Data Analyst" in ran[0], "the scoped page still buys the call"
+    assert jobs == [], "…but the query no longer becomes the location"
+
+    def placing(prompt, timeout_s):
+        return {"positions": [{"title": "Senior Data Analyst", "location": "Tel Aviv"}]}
+    jobs, strategy = N._extract("Co", url, _rendered(page_html=page), fetch=_no_fetch, llm=placing)
+    assert strategy == "llm" and [(j["title"], j["location"]) for j in jobs] == [("Senior Data Analyst", "Tel Aviv")]
+    assert jobs[0]["_loc_src"] == "own" and "location=Israel" not in jobs[0]["url"]
 
 
 def test_scrape_strategies_stop_at_the_first_one_that_finds_jobs():
@@ -23315,3 +23340,116 @@ def test_refresh_a_rot_entry_never_reads_empty_with_an_ip_shaped_code():
                     {**res, "name": "Aquarius Engines", "error": "goto:TimeoutError",
                      "http_status": None}, {}, rot2, "2026-08-30", st2)
     assert rot2["Aquarius Engines"]["why"] == "empty" and st2.counts["empty"] == 1
+
+
+def test_page_is_il_ignores_the_url(monkeypatch):
+    """The listing URL is our own search input — query (`?location=Israel`, Comcast: 14 US
+    postings stamped and two published) or path (`/search-jobs/Israel`, Arm: 17 more) — and
+    is never evidence about a card. Only `SCRAPE_ASSUME_IL` with an Israel token on the
+    PAGE answers yes, and the hunt's own "0" disarms it."""
+    import scrape_universal as N
+    monkeypatch.delenv("SCRAPE_ASSUME_IL", raising=False)
+    assert N._page_is_il("https://jobs.comcast.com/search-jobs?location=Israel", "") is False
+    assert N._page_is_il("https://jobs.citi.com/search-jobs/Israel", "") is False
+    assert N._page_is_il("https://careers.arm.com/location/israel-jobs/33099/", "x") is False
+    monkeypatch.setenv("SCRAPE_ASSUME_IL", "1")
+    assert N._page_is_il("https://co.example/careers", "<p>Herzliya</p>") is True
+    monkeypatch.setenv("SCRAPE_ASSUME_IL", "0")
+    assert N._page_is_il("https://co.example/careers", "<p>Herzliya</p>") is False
+    assert N._url_scoped_il("https://jobs.comcast.com/search-jobs?location=Israel") is True
+    assert N._url_scoped_il("https://co.example/careers") is False
+
+
+def test_scrape_adder_url_fallback_strips_the_query():
+    """A card with no link of its own inherits the LISTING as its address — and until
+    2026-08-30 that included `?location=Israel`, which `israel.is_israel_job` scans as the
+    posting's own url: the search term passed the gate on the posting's behalf. The
+    fallback is now the bare listing."""
+    import scrape_universal as N
+    from pipeline.israel import is_israel_job
+    add, jobs = N._make_adder("Comcast", "https://jobs.comcast.com/search-jobs?location=Israel")
+    # a foreign-tail card is kept WITH its place (the refresh counts it as no_il)
+    assert add("Account Executive New York Full-time", "", "")
+    assert jobs[0]["location"] == "New York"
+    assert jobs[0]["url"] == "https://jobs.comcast.com/search-jobs"
+    assert not is_israel_job(jobs[0]), "the query must not answer for the posting"
+
+
+def test_scrape_foreign_tail_sets_a_hard_country_negative():
+    """The path-echo door: `_bare` cannot strip `/search-jobs/Israel` from a path-scoped
+    listing, and the gate scans a posting's url — so a card whose OWN tail named a known
+    foreign place writes `country_code="XX"`, the authoritative NO israel.py checks before
+    any text scan. The same evidence `_judge` already trusts to overwrite a lent location."""
+    import scrape_universal as N
+    from pipeline.israel import is_israel_job
+    add, jobs = N._make_adder("Citi", "https://jobs.citi.com/search-jobs/Israel")
+    assert add("Account Executive New York Full-time", "", "")
+    assert jobs[0]["country_code"] == "XX" and jobs[0]["url"] == "https://jobs.citi.com/search-jobs/Israel"
+    assert not is_israel_job(jobs[0]), "the path echo must not answer for the posting"
+    # an Israeli-tail card keeps the empty code: "" forces the real text check (Wiliot rule)
+    add2, jobs2 = N._make_adder("Co", "https://co.example/careers")
+    assert add2("Data Analyst Ra'anana Full-time", "", "")
+    assert jobs2[0]["country_code"] == "" and is_israel_job(jobs2[0])
+
+
+def test_clean_loc_returns_empty_not_israel():
+    """A cleaner that fabricates a location on empty input was one of the four sources of
+    the 2026-08-30 query-stamp class: honest emptiness beats a confident wrong value."""
+    import scrape_universal as N
+    assert N._clean_loc("") == ""
+    assert N._clean_loc("Apply now \u00b7") == ""
+    assert N._clean_loc(" Tel Aviv ,") == "Tel Aviv"
+
+
+def test_scrape_board_group_verdict_still_stamps_israel_with_provenance():
+    """The Pecan/VAST group inference is EVIDENCE (opened position pages), not the query:
+    it survives the query-stamp removal, and its verdict is marked `_loc_src="group"` so a
+    bare "Israel" in the cache always says where it came from. Kills any over-fix that
+    guts `flush` along with the fabrication."""
+    import scrape_universal as N
+    pecan = ("<html><h1>%s</h1><p>Pecan was acknowledged as one of Israel's fastest "
+             "growing startups.</p></html>")
+    titles = ["Solution Engineer", "Product Manager", "Data Analyst",
+              "Account Executive", "Backend Developer", "QA Engineer"]
+    add, jobs = N._make_adder("Pecan", "https://co.example/careers")
+    board = N._Board(add)
+    for i, t in enumerate(titles):
+        assert not board.read(pecan % t, f"https://co.example/careers/{i}/")
+    assert board.flush()
+    assert len(jobs) == 6 and {j["location"] for j in jobs} == {"Israel"}
+    assert {j["_loc_src"] for j in jobs} == {"group"}
+    # ...and a board that named a foreign place still refuses its held pages (VAST shape)
+    utila = ("<html><h1>Sales Engineer, APAC</h1><p>Singapore (Remote). We are one of "
+             "Israel's leading teams.</p></html>")
+    add2, jobs2 = N._make_adder("Vast", "https://co.example/careers")
+    gb = N._Board(add2)
+    assert not gb.read(utila, "https://co.example/careers/apac/")
+    assert not gb.flush() and jobs2 == []
+
+
+def test_collect_stamp_counts_loc_unknown_and_alarms_on_fabricated(tmp_path, monkeypatch):
+    """The durability half of 496: `loc_unknown` (cards nothing placed — the level that
+    shows a board hiding its locations), `legacy_loc` (pre-fix stamps still republished by
+    carries — must ratchet to 0), and `fabricated-loc-N` (an unprovenanced bare "Israel"
+    in TONIGHT's fresh reads — a bug by construction, so any N alarms)."""
+    import refresh_scrape_cache as R
+    st = R.RunState()
+    res = {"name": "Co", "jobs": [], "status": "empty", "error": "", "http_status": 200,
+           "strategy": "", "loc_unknown": 3, "seconds": 0.1}
+    R._apply_result({"company_name": "Co"}, res, {}, {}, _TODAY, st)
+    assert st.counts["loc_unknown"] == 3
+    bare = dict(_il_job("Co"), location="Israel")
+    assert R._unprovenanced([bare]) == 1
+    assert R._unprovenanced([dict(bare, _loc_src="group")]) == 0
+    assert R._unprovenanced([_il_job("Co")]) == 0, 'a real place needs no provenance mark'
+    assert "fabricated-loc-2" in R._alarm(st, fabricated=2)
+    assert "fabricated-loc" not in R._alarm(st)
+    # end to end: a carried error night republishes an old bare-"Israel" -> legacy_loc=1,
+    # loc_unknown rides the stamp, and nothing alarms (carried is the level, not the bug)
+    p = _refresh_sandbox(tmp_path, monkeypatch, [["Old Co"]],
+                         old_cache={"Old Co": [dict(bare, company="Old Co")]},
+                         outcomes={"Old Co": ("error", "goto:TimeoutError")})
+    assert p.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(p.stages.read_text(encoding="utf-8"))["collect"]
+    assert stamp["legacy_loc"] == 1 and stamp["loc_unknown"] == 0
+    assert "fabricated-loc" not in str(stamp.get("alarm", ""))

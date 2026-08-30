@@ -203,7 +203,8 @@ class RunState:
                                                   "no_il": 0, "errors": 0, "carried": 0,
                                                   "unprocessed": 0, "links_unread": 0,
                                                   "carried_residential": 0,
-                                                  "dropped_residential": 0})
+                                                  "dropped_residential": 0,
+                                                  "loc_unknown": 0})
     spend: dict = field(default_factory=lambda: {"llm_calls": 0, "llm_won": 0, "llm_fail": 0,
                                                  "llm_skipped": 0, "unlock_calls": 0,
                                                  "unlock_ok": 0, "unlock_won": 0})
@@ -229,7 +230,8 @@ def _never_ran(name, error, seconds=0.0):
     such a night carries the company's jobs and never parks the row."""
     return {"name": name, "jobs": [], "status": "error", "error": error, "http_status": None,
             "strategy": "", "rescued": False, "weak_read": False, "llm_calls": 0,
-            "llm_error": "", "llm_skipped": 0, "unlock_calls": 0, "unlock_ok": 0,
+            "llm_error": "", "llm_skipped": 0, "loc_unknown": 0,
+            "unlock_calls": 0, "unlock_ok": 0,
             "embed": "", "embed_seen": "", "seconds": seconds}
 
 
@@ -247,6 +249,7 @@ def _worker(task):
                 "llm_calls": int(getattr(res, "llm_calls", 0) or 0),
                 "llm_error": str(getattr(res, "llm_error", "") or ""),
                 "llm_skipped": int(getattr(res, "llm_skipped", 0) or 0),
+                "loc_unknown": int(getattr(res, "loc_unknown", 0) or 0),
                 "unlock_calls": int(getattr(res, "unlock_calls", 0) or 0),
                 "unlock_ok": int(getattr(res, "unlock_ok", 0) or 0),
                 "embed": str(getattr(res, "embed", "") or ""),
@@ -589,6 +592,9 @@ def _apply_result(row, res, old, rot, today, st: RunState):
     st.spend["llm_skipped"] += int(res.get("llm_skipped") or 0)
     st.spend["unlock_calls"] += int(res.get("unlock_calls") or 0)
     st.spend["unlock_ok"] += int(res.get("unlock_ok") or 0)
+    # role-shaped cards refused because NOTHING placed them (496): the level that shows a
+    # board hiding its locations — before 2026-08-30 the query stamped these "Israel"
+    st.counts["loc_unknown"] += int(res.get("loc_unknown") or 0)
     if res["status"] == "empty" and _ip_shaped(_code(res)):
         # the belt to `_classify`'s own fix: an "empty" that carries an ip-shaped refusal
         # code is a wall that answered the plain client a decoy 200 (lakeFS, Nokia,
@@ -798,7 +804,7 @@ def _uncached_base():
 
 
 def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=False,
-           uncached=None, unvisited=0, base=None, row_count=0):
+           uncached=None, unvisited=0, base=None, row_count=0, fabricated=0):
     """Space-free tokens: `stages.summary()` renders k=v joined by spaces and stages by ` | `."""
     c, tokens = st.counts, []
     if mass_failure:
@@ -843,9 +849,23 @@ def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=Fals
     # ever has. Zero on a complete night by construction, so any N is an event.
     if unvisited:
         tokens.append(f"unvisited-{unvisited}")
+    # a bare "Israel" with no provenance in TONIGHT's fresh reads is a bug by construction:
+    # since 2026-08-30 every write path stamps `_loc_src` (own/group/assumed), so any count
+    # here means a regression re-opened the query-stamp class (496), a write path bypassed
+    # `_Adder`, or a foreign tree fed the cache. Zero is the design, which is the point.
+    if fabricated:
+        tokens.append(f"fabricated-loc-{fabricated}")
     if rot_unreadable:
         tokens.append("rot-unreadable")
     return "+".join(tokens)
+
+
+def _unprovenanced(jobs):
+    """Postings carrying the bare word "Israel" with none of the three provenance values —
+    pre-2026-08-30 stamps in carried entries (`legacy_loc`, must ratchet to 0 as boards
+    re-scrape) or, in tonight's fresh reads, a fabrication (`fabricated-loc-N` alarms)."""
+    return sum(1 for j in jobs or [] if str(j.get("location", "")).strip().lower() == "israel"
+               and j.get("_loc_src") not in ("own", "group", "assumed"))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1134,10 +1154,14 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     parking = st.parked if parks else ()
     uncached = _uncached(rows, written, parking)
     unvisited = _unvisited(rows, written, rot_written, parking)
+    # provenance over what this exit actually writes: fresh reads must never carry an
+    # unprovenanced "Israel" (alarm), carried entries may until their board re-scrapes (level)
+    fabricated = sum(_unprovenanced(v) for v in st.successes.values())
+    legacy_loc = sum(_unprovenanced(v) for k, v in written.items() if k not in st.successes)
     alarm = _alarm(st, mass_failure=mass_failure, shrink=shrink,
                    rot_unreadable=rot_state == "unreadable",
                    uncached=uncached, unvisited=unvisited,
-                   base=base, row_count=len(rows))
+                   base=base, row_count=len(rows), fabricated=fabricated)
     fired = "uncached-up-" in alarm
     base_u, base_r = _next_base(uncached, len(rows), base, fired)
     # `embeds` counts rows whose page carried a third-party board the ladder had not read;
@@ -1146,6 +1170,7 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     embeds_won = sum(1 for _, s in st.embeds if s.endswith(":won"))
     detail = dict(rows=len(rows), **c, parked=parks, uncached=uncached,
                   unvisited=unvisited, uncached_base=base_u, rows_base=base_r,
+                  legacy_loc=legacy_loc,
                   embeds=len(st.embeds), embeds_won=embeds_won,
                   workers=o.workers, minutes=minutes, via=_via(st.strategies))
     # the two shared quotas, only on a run that could have spent them (a local run without

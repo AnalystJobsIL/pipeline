@@ -420,7 +420,19 @@ including the claim "none".
    France, Grenoble` — is making that role's own claim, and it settles the question over any
    place found by proximity, including when it names nowhere in Israel: Weebit Nano prints
    its Hod Hasharon office on every page, so its USA and France roles were cached as Israeli
-   until 2026-08-26. A label whose value names no place is not a label. **A card that names
+   until 2026-08-26. A label whose value names no place is not a label. **The LISTING URL is
+   never a location** (2026-08-30): an Israel token in the query
+   (`jobs.comcast.com/search-jobs?location=Israel` — 14 US postings stamped `Israel`, two
+   published and retracted) or the path (`careers.arm.com/location/israel-jobs/` — 17 more)
+   is our own search input, and `_page_is_il` no longer reads the URL at all; a card nothing
+   placed is refused by `_Adder._judge` and counted (`loc_unknown` on the `collect` stamp),
+   the listing-url FALLBACK address is stripped of its query (`_bare` — the gate scans a
+   posting's url), a card whose own tail named a `_FOREIGN_RX` place writes
+   `country_code="XX"` (the gate's authoritative NO — the path echo `_bare` cannot strip),
+   and every cached location carries `_loc_src` ∈ `own`/`group`/`assumed` so a bare
+   "Israel" always says where it came from (`fabricated-loc-N` alarms on any that does not,
+   §5a). `SCRAPE_ASSUME_IL` (the hunts' pre-vetted flag; `"0"` is OFF) is the one surviving
+   assumption and is marked `assumed`. **A card that names
    no place of its own** is the one judgement
    call, and it belongs to the BOARD, not the page: `_parse_position_page` reports what a
    position page says (its heading, its `<title>`, whether either names a place outside
@@ -1255,8 +1267,10 @@ pointed at the right place". So the class has its own instrument, `audit_query_u
   in Tel Aviv or Haifa; Apple, Meta, Amazon, PepsiCo, Stratasys …) and left
   **19** unverifiable (client-rendered shells and boards with no visible
   postings; re-read in 3 days, never parked). Ledger: `cloud_state/query_filter.json`.
-  The root fix — the scraper reading the card's own place before stamping one — is
-  `462@scraper`; this instrument is the registry's belt until it lands.
+  The root fix — the scraper reading the card's own place before stamping one — landed
+  2026-08-30 (`462@scraper`/`496@scraper`: `_page_is_il` no longer reads the URL at all,
+  §1 item 2); this instrument stays as the registry's belt, and the scraper's own tripwire
+  is the `fabricated-loc-N` alarm on the `collect` stamp (§5a).
 * A parked query-URL row lands in the hunt's pool with `needs re-resolution`. Comcast's cell
   could not take the token (215 chars of a 220 cap, every segment PROTECTED, one of them a
   `url-dead` tombstone on a live address — a stale-tombstone class this file names under
@@ -2903,7 +2917,11 @@ and from 2026-08-27 the line also carries `links_unread=N`, `via=links73+cards59
 (which strategy carried how many companies — a strategy collapsing is visible the next
 morning instead of only in the step log), `carried_residential=N` and `dropped_residential=N`
 (§1 item 2 — boards only a home address could read, kept or expired tonight), and from 2026-08-28 `uncached=N unvisited=M`, its anchor `uncached_base=A rows_base=R`,
-and `embeds=N embeds_won=M` (below), and, on a run
+and `embeds=N embeds_won=M` (below), and from 2026-08-31 `loc_unknown=N` (role-shaped
+cards refused because NOTHING placed them — before the query-stamp fix, §1 item 2, these
+shipped as `location=Israel`; a rising level is a board hiding its locations) and
+`legacy_loc=N` (carried cache entries still bearing a provenance-less bare "Israel" —
+pre-fix stamps, which must ratchet to 0 as their boards re-scrape), and, on a run
 with the flags set, `llm_calls llm_won llm_fail llm_skipped` (`SCRAPE_LLM`) and
 `unlock_calls unlock_ok unlock_won`
 (`SCRAPE_VIA_UNLOCKER`) — the two shared quotas this step spends, counted nowhere until
@@ -2932,7 +2950,11 @@ absent, not unreadable), `stale-ip-N` (N rows whose address has been refused for
 address, so this is the only thing that raises its hand; the row records the age it was
 announced at, so a skipped night cannot lose it and a re-run cannot repeat it) and
 `llm-calls-N` (more than `LLM_RUNAWAY_CALLS` (250) calls in one night: the signal gate broke
-open, not the fleet changed), `uncached-up-A-to-B` and `unvisited-N` (both below) — and a
+open, not the fleet changed), `fabricated-loc-N` (N postings in TONIGHT's fresh reads carry
+the bare word "Israel" with no `_loc_src` provenance — zero by construction since
+2026-08-31, so any N means the query-stamp class re-opened, a write path bypassed
+`_Adder`, or a foreign tree fed the cache; carried entries never trip it, they are the
+`legacy_loc` level), `uncached-up-A-to-B` and `unvisited-N` (both below) — and a
 line reading `collect: <yesterday> (1d ago)` means the refresh crashed before stamping (the
 workflow no longer re-stamps it blindly); the commit step is `if: always()` since
 2026-08-25 (this sentence said the opposite until 2026-08-26), so whatever the crash left
@@ -5679,9 +5701,10 @@ HEAD had, and proves the feature RAN from the tree's own board (neither loser is
   intake `agency` verdicts, `recruiters.is_recruiter`), and a wrong POSTING at a real employer
   is caught by nothing but a human line in `roles_retractions.jsonl`: the Comcast class — a
   scrape row whose `api_url` says `?location=Israel`, so `scrape_universal._page_is_il`
-  stamps the literal word "Israel" on every card that carries no location of its own, and
-  `is_israel_job("Israel")` is right to accept it — is the scraper's to close at the source
-  (BACKLOG, `scraper`). `active=false` conflates four facts. Of the **371** parked rows on 2026-08-27: **248** carry a `dark-triage` / `walled` /
+  stamped the literal word "Israel" on every card that carried no location of its own, and
+  `is_israel_job("Israel")` was right to accept it — was closed at the source on 2026-08-30
+  (`496@scraper`, §1 item 2: the URL is never a location; `fabricated-loc-N` alarms on a
+  recurrence). `active=false` conflates four facts. Of the **371** parked rows on 2026-08-27: **248** carry a `dark-triage` / `walled` /
   `unreachable` note (*we cannot read the page* — not evidence the job closed), **54** are
   `alias-of` (the roles are real and belong to another row: `superseded`, not `closed`), **40**
   mention an aggregator in their notes while only **2** actually have an aggregator `api_url`

@@ -362,8 +362,11 @@ _LOC_CHROME = re.compile(
 
 
 def _clean_loc(t):
+    # "" on empty input, never a fabricated "Israel": a cleaner that invents a location was
+    # one of the four sources behind the 2026-08-30 query-stamp class (496). Every caller
+    # hands this a span that starts at an ISRAEL_LOC match, so "" only means "all chrome".
     t = _LOC_CHROME.sub(" ", t or "").replace("\xa0", " ")
-    return " ".join(t.split()).strip(" ,;|-()[]·–—") or "Israel"
+    return " ".join(t.split()).strip(" ,;|-()[]·–—")
 
 
 # what may follow a place name and still be part of the location: "-Yafo", " District",
@@ -459,6 +462,7 @@ class Rendered:
     llm_error: str = ""                            # "" | the LLMUnavailable kind/message
     llm_skipped: int = 0                           # ...calls `_llm_gate` spared
     weak_read: bool = False                        # roles named, no posting's own address found
+    loc_unknown: int = 0                           # role-shaped cards refused: NOTHING placed them
     unlock_calls: int = 0                          # residential-unlocker requests this visit
     unlock_ok: int = 0                             # ...that returned a page
     req_urls: list = field(default_factory=list)   # request URLs (capped) - the widget's own API
@@ -481,6 +485,7 @@ class ScrapeResult:
     llm_calls: int = 0         # what the visit spent — the refresh sums these into the stamp
     llm_error: str = ""
     llm_skipped: int = 0       # ...and what the gate spared
+    loc_unknown: int = 0       # role-shaped cards refused because nothing placed them (496)
     unlock_calls: int = 0
     unlock_ok: int = 0
     embed: str = ""            # the platform whose API answered, when the handoff won
@@ -721,6 +726,14 @@ def _abs_url(url_, base):
     return u if urllib.parse.urlsplit(u).scheme in ("http", "https") else ""
 
 
+def _bare(url):
+    """The listing url as a FALLBACK address for a card with no link of its own, stripped of
+    query and fragment: the query is our own search input (`?location=Israel`), and
+    `israel.is_israel_job` scans a posting's url — inheriting it verbatim let the search
+    term pass the gate on the posting's behalf (Comcast, 2026-08-30)."""
+    return (url or "").split("#", 1)[0].split("?", 1)[0]
+
+
 _POSTING_QUERY = re.compile(r"(?:^|&)(?:job|jobid|job_id|gh_jid|posting|req|reqid|id|p|pid)=", re.I)
 
 
@@ -830,6 +843,8 @@ class _Adder:
         self._weak = {}                  # normalised title -> index in `jobs`, url-less
         self.stage = ""                  # the strategy writing right now
         self.appended = {}               # stage -> jobs it appended (promotions are not new)
+        self.locless = set()             # titles refused because NOTHING placed them (496):
+                                         # role-shaped cards only the query could have located
 
     def label(self):
         """`cards+links`: every stage that contributed a posting, in ladder order. A stage
@@ -873,7 +888,10 @@ class _Adder:
         self.strong += 1
         return True
 
-    def promote_or_skip(self, title, loc, url_, date="", desc="", jid=""):
+    def promote_or_skip(self, title, loc, url_, date="", desc="", jid="", loc_src=""):
+        # `loc_src` accepted for signature parity with `__call__` (strategies alias the two
+        # as `write`) and ignored: promotion hands an ADDRESS to an existing reading and
+        # must never touch its place or its provenance.
         """The write path for a strategy reading the LISTING's own markup after another has
         already read the board: it may complete what is there and nothing more. Strategy 2's
         `ctx` has no card boundary, so on a board it has not read it invents twins and lends
@@ -930,14 +948,22 @@ class _Adder:
         # a card whose own tail names a foreign place is kept WITH that place: `pipeline.israel`
         # drops it and the refresh counts the company as `no_il`, not as an empty board
         if not foreign and not ISRAEL_LOC.search(loc or ""):
+            if not (loc or "").strip():
+                # a role-shaped card NOTHING placed: before 2026-08-30 the query stamped
+                # these "Israel"; now they are refused and counted (`loc_unknown` on the
+                # collect stamp — the level that says a board hides its locations)
+                self.locless.add(_norm_title(title))
             return None
         return title, loc, foreign
 
-    def __call__(self, title, loc, url_, date="", desc="", jid=""):
+    def __call__(self, title, loc, url_, date="", desc="", jid="", loc_src=""):
+        passed = _BIDI.sub("", loc or "")
         judged = self._judge(title, loc)
         if judged is None:
             return False
         title, loc, foreign = judged
+        if loc != passed:
+            loc_src = ""                 # the title's own tail settled the place: it is "own"
         strong = _is_strong(url_, self.url)
         if strong and not foreign:
             # the same card, read again by a later strategy that DOES know its address
@@ -959,13 +985,27 @@ class _Adder:
                 self._weak[(_norm_title(title), (loc or "").strip().lower())] = len(self.jobs)
         self.appended[self.stage] = self.appended.get(self.stage, 0) + 1
         company, url = self.company, self.url
+        # A country_code is authoritative both ways for israel.is_israel_job, so writing one
+        # is reserved for the strongest evidence in either direction and nothing else:
+        #  - never a hardcoded positive "IL" from a guess (Wiliot shipped 8 jobs in
+        #    Kyiv/Dallas/Portugal as Israeli that way) — "" forces the real check;
+        #  - a hard NEGATIVE when the card's OWN tail named a known foreign place (the same
+        #    evidence `_judge` lets overwrite a lent location): without it a foreign posting
+        #    whose url carries an Israel token — Arm's path-scoped listing, a `_bare`d
+        #    `/search-jobs/Israel` — passed the gate on the url text (2026-08-30).
+        cc = "XX" if (foreign and _FOREIGN_RX.search(loc or "")
+                      and not ISRAEL_LOC.search(title)) else ""
         self.jobs.append({"company": company, "title": title[:90], "location": loc,
-                          # NOT "IL": israel.is_israel_job treats a country_code as
-                          # authoritative and skips its text check, so hardcoding it made
-                          # the scraper rubber-stamp its own guess (Wiliot shipped 8 jobs
-                          # in Kyiv/Dallas/Portugal as Israeli). "" forces the real check.
-                          "country_code": "",
-                          "url": url_ or url, "posted_date": _norm_date(date), "ats_platform": "scrape",
+                          "country_code": cc,
+                          # the fallback for a link-less card is the LISTING, query stripped
+                          "url": url_ or _bare(url), "posted_date": _norm_date(date),
+                          "ats_platform": "scrape",
+                          # where the location came from: "own" (the card/page/feed text or
+                          # the title's own tail), "group" (`_Board.flush`), "assumed"
+                          # (`SCRAPE_ASSUME_IL`). "query" must never exist — no write path
+                          # can produce it, and the refresh alarms if a bare "Israel" ever
+                          # arrives without one of these three (`fabricated-loc-N`).
+                          "_loc_src": loc_src or "own",
                           "job_id": (jid or (url_ if url_ and url_ != url else "")
                                      or _hashlib.sha1(f"{company}|{title}|{loc}".encode("utf-8")
                                                       ).hexdigest()[:16]), "description": (desc or "")[:6000]})
@@ -1004,20 +1044,36 @@ def _from_dom(dom, add, url_is_il=False, promote_only=False):
                 and (near or ISRAEL_LOC.search(t))):
             # no date from here: `ctx` is four ancestors' text run together, so a "Posted …"
             # in it belongs to whichever card is nearest, not provably to this one
-            write(t, _loc_from_ctx(ctx, anchor=ctx.find(t)) or _loc_from_ctx(t)
-                  or ("Israel" if url_is_il else ""), u2)
+            loc = _loc_from_ctx(ctx, anchor=ctx.find(t)) or _loc_from_ctx(t)
+            write(t, loc or ("Israel" if url_is_il else ""), u2,
+                  loc_src="assumed" if not loc and url_is_il else "")
 
 
 def _page_is_il(url, page_html):
-    """Is a card with no location of its own implicitly Israeli? Yes when the LISTING URL is
-    already Israel-filtered (…?location=Israel). `SCRAPE_ASSUME_IL=1` (set by listing_hunt,
-    crack_walled, repair_extract_gap for pre-vetted Israeli companies) widens that to a
-    page-level Israel signal — which is why `pipeline.company_identity.
+    """Is a card with no location of its own implicitly Israeli? ONLY under `SCRAPE_ASSUME_IL=1`
+    (set by listing_hunt, crack_walled, repair_extract_gap for pre-vetted Israeli companies),
+    on a page-level Israel signal — which is why `pipeline.company_identity.
     looks_like_a_job_listing_page` gates activation: under that flag a nav menu with an Israeli
-    footer scores like a board. This function must never widen further."""
-    if ISRAEL_LOC.search(url):
-        return True
-    return bool(os.environ.get("SCRAPE_ASSUME_IL") and ISRAEL_LOC.search(page_html or ""))
+    footer scores like a board. This function must never widen further.
+
+    Until 2026-08-30 an Israel token in the LISTING URL also answered yes — but the URL is
+    our own search input, query (`jobs.comcast.com/search-jobs?location=Israel`: 14 US
+    postings stamped Israel, two published) or path (`careers.arm.com/location/israel-jobs/`:
+    17 San Jose/Austin postings stamped the same way), never evidence about a card. `url`
+    stays in the signature deliberately unread; `_url_scoped_il` keeps the spend signal.
+
+    "0" is OFF: `listing_hunt`'s queue arm writes `SCRAPE_ASSUME_IL = "0"` to disarm the
+    flag for raw intake names, and a bare truthiness read took the non-empty string "0" as
+    ON — re-arming the assumption at exactly the moment its own comment says it must be off
+    (found 2026-08-30; this read site is the flag's only consumer)."""
+    return bool(os.environ.get("SCRAPE_ASSUME_IL", "") not in ("", "0")
+                and ISRAEL_LOC.search(page_html or ""))
+
+
+def _url_scoped_il(url):
+    """Our own search input: an Israel token anywhere in the LISTING url. A spend signal —
+    a scoped page is still worth an LLM call (`_llm_gate`) — and never a location source."""
+    return bool(ISRAEL_LOC.search(url or ""))
 
 
 def _card_href(page_html, pos):
@@ -1068,9 +1124,13 @@ def _from_cards(page_html, url_is_il, add, promote_only=False):
             end = min(pos + 1600, nxt)          # never read the NEXT card's location
             ctx = re.sub(r"<[^>]+>", " ", page_html[pos:end])
             loc = _loc_from_ctx(ctx, anchor=0)      # the card's text starts with its title
-            if not loc and not url_is_il:
-                continue
-            write(t, loc or "Israel", _card_href(page_html, pos), date=_date_from_card(ctx[:400]))
+            # a locationless card is PASSED THROUGH, not skipped: `_Adder._judge` is the one
+            # refusal point and the one counter (496 — until 2026-08-30 `url_is_il` covered
+            # for the query here, and 14 Comcast US postings shipped as Israel), and the
+            # title's own tail can still place the card on the way
+            write(t, loc or ("Israel" if url_is_il else ""), _card_href(page_html, pos),
+                  date=_date_from_card(ctx[:400]),
+                  loc_src="assumed" if not loc and url_is_il else "")
 
 
 @dataclass
@@ -1420,8 +1480,8 @@ class _Board:
         held, self.held = self.held, []
         # NOT `any(...)`: a generator inside `any` stops at the first page that yielded, and
         # Pecan AI's six roles became one.
-        return any([self.add(p["title"], "Israel", p["url"], desc=p["desc"]) for p in held
-                    if not (self.foreign and p["page_foreign"])])
+        return any([self.add(p["title"], "Israel", p["url"], desc=p["desc"], loc_src="group")
+                    for p in held if not (self.foreign and p["page_foreign"])])
 
 
 def _open_refused_pages(failed, this, deadline, visit, r, board):
@@ -1506,19 +1566,21 @@ def _llm_gate(excerpt, url_is_il):
     return "" if url_is_il or ISRAEL_LOC.search(excerpt) else "no-il"
 
 
-def _from_llm(page_html, url, url_is_il, add, runner=None, deadline=None):
+def _from_llm(page_html, url, url_is_il, add, runner=None, deadline=None, scoped=False):
     """5) LLM extraction (`SCRAPE_LLM=1`): Elementor/Wix/arbitrary layouts where nothing above
     matches but the page clearly lists positions. Gated on jobs-signals so it never fires on
-    marketing pages, then on `_llm_gate`. Returns (calls, error, skipped): what the strategy
-    spent, why it failed — `error` is the breaker's reason when no call was made — and
-    whether the gate spared a call."""
+    marketing pages, then on `_llm_gate` — where `scoped` (an Israel token in the LISTING
+    url, `_url_scoped_il`) still buys the call: a query-scoped page is worth reading even
+    though, since 2026-08-30, the query never becomes a location. Returns (calls, error,
+    skipped): what the strategy spent, why it failed — `error` is the breaker's reason when
+    no call was made — and whether the gate spared a call."""
     global _LLM_DOWN
     if not os.environ.get("SCRAPE_LLM"):
         return 0, "", 0
     txt = _llm_excerpt(page_html)
     if not txt:
         return 0, "", 0
-    gated = _llm_gate(txt, url_is_il)
+    gated = _llm_gate(txt, url_is_il or scoped)
     if gated:
         return 0, f"gate:{gated}", 1
     if _LLM_DOWN and runner is None:
@@ -1542,6 +1604,7 @@ def _from_llm(page_html, url, url_is_il, add, runner=None, deadline=None):
         if not isinstance(o, dict):
             continue
         t, loc = str(o.get("title", "")).strip(), str(o.get("location", "")).strip()
+        assumed = False
         if loc:
             # the same gate as every other strategy — and a location that names an Israeli
             # place AND a foreign one ("Tel Aviv, Israel New York, NY") is an office sidebar
@@ -1550,10 +1613,10 @@ def _from_llm(page_html, url, url_is_il, add, runner=None, deadline=None):
             if ISRAEL_LOC.search(loc) and _FOREIGN_RX.search(loc):
                 continue
         elif url_is_il:
-            loc = "Israel"
+            loc, assumed = "Israel", True    # ASSUME_IL only, since 2026-08-30 (496)
         # no url: the tier reads TEXT. `_Adder.resolve` gives these titles the page's own
         # links where exactly one names them.
-        add(t, loc, "")
+        add(t, loc, "", loc_src="assumed" if assumed else "")
     return 1, "", 0
 
 
@@ -1804,6 +1867,7 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
         read some titles off it", and after `resolve` the urls no longer say which (wave-0
         critic: resolve would otherwise silence the guard on exactly the night it is for)."""
         r.weak_read = add.strong == 0 and add.israeli > 0
+        r.loc_unknown = len(add.locless)
         add.resolve(_anchors(r.dom, page_html, url))
         return jobs, add.label()
 
@@ -1857,12 +1921,14 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
         # call and returns titles alone, so it can only repeat what is already here
         return done()
     add.stage = "llm"
-    calls, err, skipped = _from_llm(page_html, url, url_is_il, add, runner=llm, deadline=deadline)
+    calls, err, skipped = _from_llm(page_html, url, url_is_il, add, runner=llm,
+                                    deadline=deadline, scoped=_url_scoped_il(url))
     r.llm_calls += calls
     r.llm_error = err
     r.llm_skipped += skipped
     if add.israeli:
         return done()
+    r.loc_unknown = len(add.locless)     # the two exits below skip done()
     # 6) nothing was read off the page itself. Is the page a skin over a board we can
     #    already read? Detection and the identity verdict are free and are RECORDED here
     #    whatever the answer -- a refused board on a row that yields zero is the handoff
@@ -1987,7 +2053,7 @@ def scrape_result(company, url, timeout_ms=45000, *, budget_s=None, render=None,
                             strategy=strategy, elapsed_s=time.monotonic() - t0, rescued=rescued,
                             weak_read=r.weak_read,
                             llm_calls=r.llm_calls, llm_error=r.llm_error,
-                            llm_skipped=r.llm_skipped,
+                            llm_skipped=r.llm_skipped, loc_unknown=r.loc_unknown,
                             unlock_calls=r.unlock_calls, unlock_ok=r.unlock_ok,
                             embed=r.embed, embed_seen=r.embed_seen)
     except Exception as e:  # noqa: BLE001 — belt and braces: this function must not raise
