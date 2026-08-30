@@ -2044,3 +2044,14 @@ Callapp,scrape,https://callapp.com,https://callapp.com,false,scanned; no open Is
 Cbre,scrape,https://www.cbre.com/,https://www.cbre.com/,false,scanned; no open Israel roles now | own-site 2026-08-30: www.cbre.com linkback
 Cellosite,scrape,https://cellosite.co.il,https://cellosite.co.il,false,scanned; no open Israel roles now | own-site 2026-08-30: cellosite.co.il linkback
 Checkout,scrape,https://www.checkout.com/jobs,https://www.checkout.com/jobs,true,auto-expand scrape; 2 IL
+Bulwarx,smartrecruiters,bulwarx,https://api.smartrecruiters.com/v1/companies/bulwarx/postings,true,auto-expand slug-probe; 3/3 IL
+Ecommerce Guide,scrape,https://ecommerceguide.com/jobs/,https://ecommerceguide.com/jobs/,true,auto-expand scrape; 1 IL
+Rockerbox,scrape,https://www.rockerbox.com/careers,https://www.rockerbox.com/careers,true,auto-expand scrape; 2 IL
+DoubleVerify,greenhouse,doubleverify,https://boards-api.greenhouse.io/v1/boards/doubleverify/jobs,true,auto-expand slug-probe; 33/2 IL
+Optum,scrape,https://www.optum.com/en/,https://www.optum.com/en/,false,scanned; no open Israel roles now | own-site 2026-08-30: www.optum.com linkback
+Nuvoton Technology Israel Ltd,comeet,51.00F,https://www.comeet.com/careers-api/2.0/company/51.00F/positions?token=15F57C6DB15FAF8C5757CAF841D6DB,true,auto-expand; 17/14 IL
+Publicis Re:Sources,scrape,https://publicisresources.com,https://publicisresources.com,false,scanned; no open Israel roles now | own-site 2026-08-30: publicisresources.com linkback
+Munters,scrape,https://www.munters.com/en-us/,https://www.munters.com/en-us/,false,scanned; no open Israel roles now | own-site 2026-08-30: www.munters.com linkback
+Nanit,greenhouse,nanit,https://boards-api.greenhouse.io/v1/boards/nanit/jobs,true,auto-expand slug-probe; 12/5 IL
+LTX,greenhouse,ltx,https://boards-api.greenhouse.io/v1/boards/ltx/jobs,true,auto-expand slug-probe; 7/6 IL
+Finagra,ashby,finagra,https://api.ashbyhq.com/posting-api/job-board/finagra,true,auto-expand slug-probe; 9/2 IL

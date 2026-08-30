@@ -7411,6 +7411,19 @@
    "url": "https://www.comeet.com/jobs/echo/9A.006/senior-product-manager/1A.E51"
   }
  ],
+ "Ecommerce Guide": [
+  {
+   "ats_platform": "scrape",
+   "company": "Ecommerce Guide",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://ecommerceguide.com/jobs/senior-data-scientist-personalisation-and-e-commer-at-selectika-ai-a7a13b00/",
+   "location": "Tel Aviv-Yafo",
+   "posted_date": "",
+   "title": "Senior Data Scientist – Personalisation &amp; E-commerce Intelligence",
+   "url": "https://ecommerceguide.com/jobs/senior-data-scientist-personalisation-and-e-commer-at-selectika-ai-a7a13b00/"
+  }
+ ],
  "Ecoppia": [
   {
    "ats_platform": "scrape",
@@ -22290,6 +22303,30 @@
    "posted_date": "",
    "title": "Field Service Engineer",
    "url": "https://careers.roche.com/global/en/job/202606-115086/Field-Service-Engineer"
+  }
+ ],
+ "Rockerbox": [
+  {
+   "ats_platform": "scrape",
+   "company": "Rockerbox",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/doubleverify/jobs/8059452002",
+   "location": "Tel Aviv-Israel",
+   "posted_date": "2026-08-20",
+   "title": "Sr. Software Engineer",
+   "url": "https://job-boards.greenhouse.io/doubleverify/jobs/8059452002"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Rockerbox",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/doubleverify/jobs/8479330002",
+   "location": "Tel Aviv-Israel",
+   "posted_date": "2026-07-29",
+   "title": "Manager, Data Science & Research",
+   "url": "https://job-boards.greenhouse.io/doubleverify/jobs/8479330002"
   }
  ],
  "Rohde & Schwarz": [
