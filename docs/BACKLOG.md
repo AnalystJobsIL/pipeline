@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**488 filed · 355 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
+**489 filed · 356 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 441.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 442.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -340,7 +340,7 @@ closure convention in the header.
 - **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
 - **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
 
-### discovery — 22 open
+### discovery — 23 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -364,6 +364,7 @@ closure convention in the header.
 - **337** `337@discovery` **The secrethunter catalog's own-domain and job-title data has no honest route, and the
 - **340** `340@discovery` **`pipeline/aggregators.py` does not know the Israeli job boards, and the hunt will
 - **428** `428@discovery` **`discovered_cache.json` has no archive pass, and it is 1,919 thin cards of 1,950** —
+- **441** `441@discovery` **Intake re-adds names that were retired with evidence, so the queue can never stay
 
 ### docs — 19 open
 
@@ -7663,3 +7664,31 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      not a leak of anything the repo does not already know, but the public repo's whole
      anonymity rests on that handle never appearing (`CLAUDE.local.md`), and any other string
      would do the same job. Changing it touches a test this lane does not own.
+
+441. **Intake re-adds names that were retired with evidence, so the queue can never stay
+    drained** — lane: `discovery` (found by `registry`), measured 2026-08-30.
+
+    `cloud_state/queue_disposition.json` records why every retired name left the queue: the
+    verdict, the model's words, and the evidence it was judged on. Nothing that WRITES
+    `research_companies.json` reads it. So a name retired at 21:00 is back at 01:00:
+
+    ```
+    Infrastructure Team   own-site -> `junk`         retired, re-added the same night
+    Residenthome          resolve-llm -> `resolved`  retired, re-added the same night
+    ```
+
+    Both then read as **STUCK** in the queue census -- `queue_resolve_search` skips a settled
+    name by design, so no cadence can reach them and they sit there claiming to be owed. They
+    are the only two names the stuck alarm has ever fired on, twice, for this reason.
+
+    Mitigated but not fixed: `listing-hunt.yml` now runs `queue_pipeline --retire-settled
+    --apply` nightly, which removes them again. That is a treadmill -- it costs nothing (a
+    lookup, no model, no fetch) but the names are re-discovered, re-added and re-removed every
+    day, and the census flickers between 0 and 2 stuck depending on which ran last.
+
+    The fix belongs where the queue is WRITTEN: whatever appends to `research_companies.json`
+    (`discovery_daily`, `ingest_research`, `merge_research`) should skip a name whose
+    disposition verdict is in `queue_pipeline.RETIRABLE` or `queue_state.TERMINAL`, unless the
+    record is older than some re-open window -- a company that had no board in August may have
+    one in November, so this should be a cadence, not a tombstone. `queue_disposition.load()`
+    is the reader; it is a plain dict keyed by name.

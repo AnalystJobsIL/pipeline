@@ -22266,5 +22266,53 @@
   "raw_verdict": "real-company-no-board",
   "verdict": "no-board",
   "why": "Real small Israeli environmental planning consultancy (founded 2016, Wix site); careers-path probe of sadotproj.co.il found no careers/jobs page."
+ },
+ "Infrastructure Team": {
+  "date": "2026-08-30",
+  "verdict": "settled-by-a-rung",
+  "raw_verdict": "junk",
+  "other_name": "",
+  "why": "a rung recorded `junk` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "junk",
+   "tried": [
+    [
+     "own-site",
+     "junk"
+    ]
+   ]
+  }
+ },
+ "Residenthome": {
+  "date": "2026-08-30",
+  "verdict": "settled-by-a-rung",
+  "raw_verdict": "found",
+  "other_name": "",
+  "why": "a rung recorded `found` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "found",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain"
+    ],
+    [
+     "slug-probe",
+     "probe-dup-board"
+    ],
+    [
+     "resolve-llm",
+     "resolved"
+    ],
+    [
+     "resolve-llm",
+     "dup-board"
+    ],
+    [
+     "hunt",
+     "found"
+    ]
+   ]
+  }
  }
 }

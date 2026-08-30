@@ -1,11 +1,12 @@
 {
  "date": "2026-08-30",
  "buckets": {
-  "retired with evidence": 314,
-  "owed, a nightly rung retries it": 220,
-  "ROW, ACTIVE": 147,
-  "ROW, parked with an address (daily probe)": 216,
-  "ROW, no address, a re-check pool owns it": 139
+  "retired with evidence": 310,
+  "owed, a nightly rung retries it": 217,
+  "ROW, ACTIVE": 175,
+  "ROW, parked with an address (daily probe)": 225,
+  "ROW, no address, a re-check pool owns it": 109,
+  "STUCK: no cadence reaches it": 2
  },
  "unverified_rows": 0,
  "owed": [
@@ -67,9 +68,7 @@
   "COM-C-TECH LTD",
   "Caesarstone",
   "Calialfa",
-  "Callapp",
   "Cardosystems",
-  "Cbre",
   "Central Bottling Company Group Ltd",
   "Cfo Co",
   "Chargeafter",
@@ -125,6 +124,7 @@
   "HiO",
   "ISRAEL-is",
   "Imco Industries Ltd.",
+  "Infrastructure Team",
   "Intelligent Business",
   "Israel Antiquities Authority",
   "Israel Builders Association",
@@ -133,7 +133,6 @@
   "Israel Police",
   "Israel Post",
   "Itcworldwide",
-  "Jacobs",
   "Jazzsecurity",
   "Jed Security",
   "Jerusalemcenter",
@@ -202,6 +201,7 @@
   "PB Israel",
   "PCB Technologies Ltd.",
   "Partner",
+  "Residenthome",
   "SD;LC",
   "SMARTGEN WEALTH MANAGEMENT",
   "Siemens Energy",
@@ -230,5 +230,8 @@
   "Zooghq",
   "Zoomd Com"
  ],
- "stuck": []
+ "stuck": [
+  "Infrastructure Team",
+  "Residenthome"
+ ]
 }

@@ -160,6 +160,15 @@ jobs:
         run: python queue_pipeline.py --verify-existing --limit 60 --apply
         continue-on-error: true
 
+      # A name a rung already settled must not sit in the queue looking owed: nothing can
+      # reach it, so it reads as STUCK for ever. Discovery re-adds such names nightly --
+      # `Infrastructure Team` (junk) and `Residenthome` (resolved) came back the same night
+      # they were retired -- because intake does not consult the disposition record (filed).
+      # A LOOKUP: no model, no fetch, no credit.
+      - name: Retire queue names a rung already settled
+        run: python queue_pipeline.py --retire-settled --apply
+        continue-on-error: true
+
       # The queue's DIRECTION, not its size: a queue of 500 that is falling is healthy and a
       # queue of 200 that is rising is a backlog forming. Two backlogs were found weeks late.
       - name: Stamp the queue (size AND direction)
