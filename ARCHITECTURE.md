@@ -2242,6 +2242,40 @@ Two things were also rejected, and the reasons are worth keeping:
   green run. The artefact is the only honest assertion, which is why the receipt below
   exists.
 
+### What changed on 2026-08-27 — measured, and mostly ruled out (2026-08-30)
+
+The 05:00 digest fired at +32 · +34 · +42 · +36 · +39 min on 08-22 → 08-26 and at **+678 ·
++734 · +392 · +325** on 08-27 → 08-30 (`gh run list --workflow daily-digest.yml`). A
+regression with a date, so the day was read for a cause. Ruled out, with the measurement:
+
+| candidate | why not |
+|---|---|
+| our own push load (`tests.yml` ran 43× on 08-27 vs 22 the day before) | the private relay repo `AnalystJobsIL/inbox` — no pushes at all until 08-28 — regressed **the same morning**: its polls fired at 05:59/08:58 daily through 08-26, then ONE of four at 17:39 on 08-27 and one at 18:44 on 08-28. And 08-29 (15 pushes) was still +404 |
+| the 08-27 workflow edits (`6bbaa81`, `0f4d05e`, `30bc39f`: the `deliver` step, the `ignore_cutoff` input) | landed 10:34–11:43Z; the 00:00 and 02:30 slots were already +341 and +627 late before any of them |
+| the new `firmographics.yml` cron (added 08-26 22:50Z) or the `repo-state` group | the relay repo has neither; the digest has its own group |
+| job duration | the digest ran 27–32 min all week |
+
+What DOES line up with the onset: GitHub's own incident log — *"Incident with Actions and
+Pull Requests"* (08-26 22:56Z → 08-27 00:26Z) and *"Disruption with GitHub Billing"*
+(08-26 23:37Z → 08-27 19:44Z), https://www.githubstatus.com/api/v2/incidents.json. The lag then
+decays (+734 → +392 → +325), which is what a scheduler backlog draining looks like, not a
+property of this repo. **Not determinable beyond that from this side**; the one lever that
+is ours is the minute offset (`firmographics` moved to `:17` on 08-30, morning check
+09-06). Turning the crons off would treat the symptom of an outage we did not cause.
+
+### The cloud dry-run (2026-08-30)
+
+`daily-digest.yml` takes a `dry_run` dispatch input: the same runner, credentials and
+boards, every read/fetch/classify/render step for real, and the six steps that reach
+outside the runner — `deliver`, `mark_sent`, `persist`, `publish`, `outcome --commit`, the
+relay event — print what they WOULD do (`persist_state.py commit --dry-run` runs every gate
+and lists the would-be commit; `deliver --dry-run` says whether it would deliver). It cannot
+collide with the scheduled run, which is what the 08-30 manual dispatch did. It spends
+what a real run spends (Bright Data under `BD_RUN_CAP`, the subscription token). It changes
+nothing about `CLAUDE.local.md` §3: the run page names the dispatching account, dry or
+not, so the record is still deleted afterwards. `test_the_digest_dry_run_exercises_the_run_and_writes_nothing_outward`
+pins every outward step to the flag.
+
 ### What notices, when GitHub's scheduler is the thing that failed
 
 Rejecting the recovery cron settled *retrying*. It did not settle *noticing*, and those are

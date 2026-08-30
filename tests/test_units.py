@@ -22765,3 +22765,54 @@ def test_the_invariants_triage_modes_are_the_classifiers_own_set():
     import triage_dark as T
     assert C.TRIAGE_MODES is T.MODES
     assert "no-url" in C.TRIAGE_MODES
+
+
+def test_the_digest_dry_run_exercises_the_run_and_writes_nothing_outward():
+    """The operator's ask (2026-08-30): the real cloud on demand, without side effects. The
+    manual dispatch of 2026-08-30 collided with the scheduled run (deliver refused a
+    same-date duplicate, the step exited 1, the publish step was skipped), so the way to
+    see the schedule work was the thing that broke it. `dry_run` keeps every step that
+    reads, fetches, classifies and renders, and turns the six that reach outside the runner
+    into a printed line. This pins that every outward step reads DRY_RUN and that the flag
+    is empty (never "0") on a scheduled run."""
+    dd = open(os.path.join(_REPO, ".github", "workflows", "daily-digest.yml"), encoding="utf-8").read()
+    assert re.search(r"^      dry_run:\n        description:", dd, re.M), "the dispatch input"
+    assert "DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '' }}" in dd, \
+        "the flag is '1' on a dry-run dispatch and EMPTY on the schedule"
+    steps = dd.split("      - name:")[1:]
+    by_id = {re.search(r"\n        id: (\w+)", s).group(1): s for s in steps if re.search(r"\n        id: (\w+)", s)}
+    for sid, must in (("pipeline", "deliver --date \"$(date -u +%F)\" $DRY"),
+                      ("mark_sent", "WOULD mark sent"), ("persist", "commit --as \"github-actions[bot]\" $DRY"),
+                      ("publish", "WOULD publish"), ("outcome", "persist_state.py outcome\n"),
+                      ("notify_relay", "WOULD hand the relay")):
+        assert '"$DRY_RUN" = 1' in by_id[sid], f"{sid}: does not read DRY_RUN"
+        assert must in by_id[sid], f"{sid}: the dry branch is missing ({must!r})"
+    # the dry branches of the two steps that PUSH never reach the push command
+    for sid, push in (("publish", "git push origin"), ("notify_relay", "git push -q origin")):
+        body = by_id[sid]
+        assert body.index('"$DRY_RUN" = 1') < body.index("exit 0") < body.index(push), sid
+
+
+@_needs_git
+def test_persist_dry_run_runs_the_gates_prints_the_commit_and_pushes_nothing(tmp_path):
+    """`persist_state.py commit --dry-run` (the cloud dry-run's persist step): the gates run
+    for real -- a file that fails one is reported as refused -- the would-be commit is
+    printed path by path, and origin, HEAD and the audit log are untouched."""
+    origin, a, b = _repo_pair(tmp_path, {"x.txt": "x", "cloud_state/y.json": "{}",
+                                         "cloud_state/persist_log.jsonl": ""})
+    (b / "x.txt").write_text("changed", encoding="utf-8")
+    (b / "cloud_state" / "y.json").write_text("{not json", encoding="utf-8")
+    head = _g(str(b), "rev-parse", "HEAD")
+    r = _persist(b, "x.txt", "cloud_state/y.json", extra=("--dry-run",))
+    out = r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace")
+    assert r.returncode == 1, out                     # the refused file is still a red step
+    assert "DRY RUN -- would commit 1 path(s)" in out and " M x.txt" in out, out
+    assert "refused: cloud_state/y.json" in out, out
+    assert _g(str(b), "rev-parse", "HEAD") == head, "a dry run makes no commit"
+    assert _origin(origin, "x.txt") == "x", "a dry run pushes nothing"
+    assert (b / "x.txt").read_text(encoding="utf-8") == "changed", "the run's bytes are left in place"
+    assert _g(str(b), "diff", "--cached", "--name-only").strip() == "", "nothing stays staged"
+    assert (b / "cloud_state" / "persist_log.jsonl").read_text(encoding="utf-8") == "", \
+        "no audit line for a commit that never happened"
+    assert (b / "cloud_state" / "y.json").read_text(encoding="utf-8") == "{}", \
+        "the gate's restore is real, as it would be on the true run"

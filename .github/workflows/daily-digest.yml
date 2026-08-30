@@ -34,6 +34,21 @@ on:
         description: "deliver even past the relay's last poll (an operator re-run; still marks nothing sent)"
         type: boolean
         default: false
+      # THE CLOUD DRY-RUN (operator's ask, 2026-08-30). Same runner, same credentials, same
+      # boards, the whole job -- and the six steps that reach OUTSIDE the runner (deliver,
+      # mark_sent, persist, publish, outcome --commit, the relay event) only PRINT what they
+      # would have done. Why it exists: the manual dispatch of 2026-08-30 collided with the
+      # scheduled run (deliver refused a same-date duplicate, the step exited 1, the publish
+      # step was skipped), so "run it by hand to see it work" was itself the thing that broke
+      # the run. A dry run cannot collide: it writes no repo state, marks nothing sent and
+      # publishes nothing. It DOES spend: Bright Data credits (BD_RUN_CAP), the subscription
+      # token, ~30 runner minutes -- that is the point, it exercises the real thing.
+      # It does NOT change CLAUDE.local.md section 3: a dispatched run's page names the
+      # account whose token dispatched it, dry or not; delete the run record afterwards.
+      dry_run:
+        description: "exercise the whole run on the real cloud, but deliver/mark/persist/publish/relay only print what they WOULD do"
+        type: boolean
+        default: false
 
 permissions:
   contents: write             # to commit updated cloud_state back to the repo
@@ -52,6 +67,9 @@ env:
   # the only thing that changes for a workflow that does not name it. The `[bd-spend]`
   # line each step now prints is the measurement that should replace this guess.
   BD_RUN_CAP: "250"
+  # "1" on a dry-run dispatch, EMPTY otherwise (never "0": every `[ "$DRY_RUN" = 1 ]` below
+  # reads the literal). Truthy true-branch on purpose -- `cond && '' || x` yields x always.
+  DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '' }}
 
 jobs:
   digest:
@@ -290,7 +308,9 @@ jobs:
           # step below a no-op), and writes cloud_state/last_delivered.json -- committed by
           # the persist step in the SAME commit as latest.md, never as a second writer.
           # ARCHITECTURE section 4. It still exits 1 when the run wrote no digest at all.
-          python persist_state.py deliver --date "$(date -u +%F)" \
+          DRY=""
+          if [ "$DRY_RUN" = 1 ]; then DRY="--dry-run"; echo "dry run: deliver will only say what it WOULD do"; fi
+          python persist_state.py deliver --date "$(date -u +%F)" $DRY \
             ${{ github.event.inputs.ignore_cutoff == 'true' && '--ignore-cutoff' || '' }}
 
       # The marks (sqlite `sent` + the ledger mirror) and digests/latest.md land in ONE commit
@@ -300,7 +320,9 @@ jobs:
       - name: Mark digested roles as sent
         id: mark_sent
         run: |
-          if [ -n "$DIGEST_JSON" ] && [ -s "$DIGEST_JSON" ]; then
+          if [ "$DRY_RUN" = 1 ]; then
+            echo "dry run: WOULD mark sent from '${DIGEST_JSON:-<no payload: deliver was a dry run>}' -- nothing marked"
+          elif [ -n "$DIGEST_JSON" ] && [ -s "$DIGEST_JSON" ]; then
             python mark_sent.py "$DIGEST_JSON" --db cloud_state/seen.db
           else
             echo "nothing to mark sent (no digest payload this run)"
@@ -336,7 +358,9 @@ jobs:
         if: always()
         timeout-minutes: 10
         run: |
-          python persist_state.py commit --as "github-actions[bot]" \
+          DRY=""
+          if [ "$DRY_RUN" = 1 ]; then DRY="--dry-run"; fi
+          python persist_state.py commit --as "github-actions[bot]" $DRY \
             -m "cloud run: state + digest for $(date -u +%F) [skip ci]" \
             --own cloud_state digests/latest.md discovered_cache.json scraped_cache.json \
                   research_companies.json companies.csv docs/index.html docs/archive.html
@@ -350,6 +374,11 @@ jobs:
           DEPLOY_KEY: ${{ secrets.BOARD_DEPLOY_KEY }}
           TOKEN: ${{ secrets.BOARD_DEPLOY_TOKEN }}
         run: |
+          if [ "$DRY_RUN" = 1 ]; then
+            echo "dry run: WOULD publish docs/index.html ($(wc -c < docs/index.html) bytes) to the board repo, plus:"
+            ls -l docs/archive.html cloud_state/roles.csv cloud_state/roles.csv.meta.json cloud_state/funnel.csv 2>/dev/null || true
+            exit 0
+          fi
           [ -z "$DEPLOY_KEY" ] && [ -z "$TOKEN" ] && { echo "::error::no board credentials set; board NOT published"; exit 1; }
           [ -s docs/index.html ] || { echo "::error::docs/index.html is empty; board NOT published"; exit 1; }
           if [ -n "$DEPLOY_KEY" ]; then
@@ -396,8 +425,15 @@ jobs:
           JOB_STATUS: ${{ job.status }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         # commits cloud_state/last_run.json (+ digests/latest.md when the digest was lost)
-        # ALONE, from a fresh worktree of origin/master -- never this checkout's tree
-        run: python persist_state.py outcome --commit
+        # ALONE, from a fresh worktree of origin/master -- never this checkout's tree.
+        # A dry run records the verdict into THIS checkout and prints it; nothing is pushed.
+        run: |
+          if [ "$DRY_RUN" = 1 ]; then
+            echo "dry run: the outcome below is what WOULD have been committed"
+            python persist_state.py outcome
+          else
+            python persist_state.py outcome --commit
+          fi
 
       - name: Hand the relay its event (its cron is the backup, not the path)
         id: notify_relay
@@ -439,6 +475,10 @@ jobs:
           INBOX_GIT: ${{ secrets.INBOX_REPO_GIT }}
           BRANCH: ${{ github.ref_name }}
         run: |
+          if [ "$DRY_RUN" = 1 ]; then
+            echo "dry run: WOULD hand the relay origin's digests/latest.md if dated today; not touching the inbox repo"
+            exit 0
+          fi
           # whitespace-tolerant: a key pasted with a stray space passed `-z` and then died at
           # `git clone`, which was a red job for a mistake this can just report
           if [ -z "$(printf %s "$DEPLOY_KEY" | tr -d '[:space:]')" ] ||              [ -z "$(printf %s "$INBOX_GIT" | tr -d '[:space:]')" ]; then

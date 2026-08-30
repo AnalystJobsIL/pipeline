@@ -711,6 +711,10 @@ def commit(a):
     for audit in (PERSIST_LOG, BD_SPEND_LOG):
         if audit not in owned and os.path.exists(os.path.join(cwd, audit)):
             owned.append(audit)
+    if a.dry_run:
+        # the audit line above was appended to the working copy; a dry run must not leave
+        # a record of a commit that never happened
+        git_ok("checkout", "--", PERSIST_LOG, cwd=cwd)
 
     def stage():
         # a path a gate removed (untracked, failed) must not reach `git add`: one missing
@@ -723,6 +727,20 @@ def commit(a):
 
     if not stage():
         print("persist_state: nothing to commit", flush=True)
+        return 1 if failures else 0
+    if a.dry_run:
+        # The cloud dry-run (2026-08-30): everything above ran for real -- the gates, the
+        # restores, the staging -- and this prints what the commit would have carried, then
+        # unstages. Nothing reaches origin; the audit line is not appended either (it would
+        # record a commit that never happened).
+        git("reset", "-q", "--", *owned, cwd=cwd)
+        changed = [l for l in git("status", "--porcelain", "--", *owned, cwd=cwd).splitlines() if l.strip()]
+        print("persist_state: DRY RUN -- would commit %d path(s) as %r and push to %s:"
+              % (len(changed), a.message, branch), flush=True)
+        for l in changed:
+            print("    " + l, flush=True)
+        for p_, msg in failures:
+            print("    refused: %s (%s)" % (p_, msg), flush=True)
         return 1 if failures else 0
     _commit(cwd, a.as_name, a.message)
     for i in range(1, a.retries + 1):
@@ -1327,6 +1345,8 @@ def main(argv=None):
     c.add_argument("--gate", default=f'"{sys.executable}" check_invariants.py --strict',
                    help="command run when companies.csv is owned; '' disables")
     c.add_argument("--cwd", help=argparse.SUPPRESS)
+    c.add_argument("--dry-run", action="store_true",
+                   help="run every gate and print what would be committed; push nothing")
     o = sub.add_parser("outcome", help="record the run's outcome; a failure notice reaches the mail")
     o.add_argument("--commit", action="store_true", help="commit the two files alone from a fresh worktree")
     o.add_argument("--into", default=ROOT, help="where to write when not committing")
