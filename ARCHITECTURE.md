@@ -563,7 +563,7 @@ cap 4 and zero records on 08-24, cap 0 on 08-25.
 | `indeed` | `il.indeed.com/jobs` through the Web Unlocker; parsed from the `mosaic-provider-jobcards` blob | yes | 58 raw → 46 kept |
 | `telegram` | public `t.me/s/<channel>` previews — no bot, no account, no quota | no | 6 channels, 16–18 of 20 parsed each |
 | `linkedin-targeted` | BD dataset, one input per broken-board company, scoped by the **`company` field**. Backfill, **NOT discovery** | yes | 88 companies → 67 records, 57 on-target |
-| `secrethunter` | the catalog's SITEMAP only — 2,703 `/companies/<slug>` names, one keyless GET, honest UA. A NAMES source: it yields no jobs at all. The slug is usually the LinkedIn handle, which is the one seed `auto_expand._site_from_guess` can prove into an own domain. Its company PAGES carry that domain and every open title but serve it only to named crawler UAs, so they are **deliberately not read** | no | 2,703 names → 484 already in the registry, 206 already queued, 11 refused, **2,002 new**; **150/run** day-rotated (raised from 40 by the operator to front-load the initial seeding: ~14 days rather than ~50), 0 credits. It also BACKFILLS: **71 of the 135 queue entries that had no handle at all**, including **59 of the 91** this same source had queued as `secrethunter.io/jobz/` postings before there was a catalog reader |
+| `secrethunter` | the catalog's SITEMAP only — 2,703 `/companies/<slug>` names, one keyless GET, honest UA. A NAMES source: it yields no jobs at all. The slug is usually the LinkedIn handle, which is the one seed `auto_expand._site_from_guess` can prove into an own domain. Its company PAGES carry that domain and every open title but serve it only to named crawler UAs, so they are **deliberately not read** | no | 2,703 names → 484 already in the registry, 206 already queued, 11 refused, **2,002 new**; **40 per DAY** since 2026-08-30 (`SECRETHUNTER_DAY_CAP`; the slice is cut over the catalog minus registry rows and retired names, so every run of one day offers the same names and a second run adds nothing — the per-RUN 150 the workflow still pins is bounded by it), retired names never re-offered (258 on 08-30), 0 credits. It also BACKFILLS: **71 of the 135 queue entries that had no handle at all**, including **59 of the 91** this same source had queued as `secrethunter.io/jobz/` postings before there was a catalog reader |
 
 \* the paid path is a fallback; `SOURCE_PATH` records which one served — `linkedin_free`,
 `linkedin_blank` (a 200 with no cards: a hole in the pool or a soft limit), `linkedin_blocked`
@@ -941,8 +941,17 @@ the tier like any other role. A second filter here would cost coverage and buy n
   which is the same property as resembling the domain — own-site rows the rule EXCLUDES score
   **55.6%** against the included **73.0%**, a 17.4-point gap from selection alone.
 - **The intake cap and the resolver's site-guess cap are COUPLED, and neither is a workflow
-  input.** `SECRETHUNTER_QUEUE_CAP` (150/run, `pipeline/secrethunter.py`) governs what enters
-  the queue; `AUTO_EXPAND_SITE_MAX` (25/run, `auto_expand.py:370`, twice daily) governs how
+  input.** `SECRETHUNTER_QUEUE_CAP` (150 per RUN, `pipeline/secrethunter.py`) used to govern
+  what enters the queue — and the pipeline commits up to four runs a day, so on 2026-08-28 it
+  admitted **586** names. Since 2026-08-30 the binding cap is **`SECRETHUNTER_DAY_CAP` = 40
+  per DAY**: the day's slice is cut over the catalog minus registry rows and retired names, a
+  basis that moves only when the registry gains a row, so a second run offers at most the
+  rows activated since the first (measured dry on the real catalog on 08-30: 2 — that day's region had already been consumed by the morning's runs — then 0, and 1 after one activation; steady state ≈ 40 × the fresh share of the basis, ~31/day, because a name waiting in the queue keeps its slot). The number
+  is from the flows — the registry's arms stamp ~120 rows a night, LinkedIn+Indeed intake is
+  26–178/day (median ~50) — so a median day now drains ~30 and only a LinkedIn spike grows
+  the queue. It also honours `queue_pipeline.RETIRED_VERDICTS`: a name the registry retired
+  with evidence is not re-offered when its slice comes round (BACKLOG 441 was intake after
+  all: ~100 and ~48 such re-adds in the two 08-30 cloud runs); `AUTO_EXPAND_SITE_MAX` (25/run, `auto_expand.py:370`, twice daily) governs how
   many of those handles the free rung may actually try. Both were code defaults no workflow set; **both are now workflow env** (2026-08-27), so
   either can be retuned without a commit. Raising the intake cap alone does not make anything
   resolve faster — it front-loads the queue and displaces older leads. **`AUTO_EXPAND_SITE_MAX`

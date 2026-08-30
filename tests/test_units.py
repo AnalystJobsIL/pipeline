@@ -16235,6 +16235,45 @@ def test_the_catalog_never_offers_more_than_its_cap_and_rotates_over_the_whole_p
     assert S._window(pool, 0) == [] and S._window([], 150) == []
 
 
+def test_the_catalog_offers_the_same_slice_on_every_run_of_one_day(tmp_path):
+    """Kills `catalog-window-over-fresh` and `catalog-retired-drop`. The cap was per RUN and
+    the pipeline commits up to four runs a day: the window was cut over "what is not queued
+    yet", so the second run of 2026-08-28 saw a SHIFTED list and offered the next 150 —
+    **586** catalog names first queued that day. Cut over the CATALOG, the second run of a
+    day re-selects the same slice and adds nothing. And a name the registry RETIRED with
+    evidence is not re-offered when its slice comes round again (BACKLOG 441: ~100 and ~48
+    such re-adds in the two 2026-08-30 cloud runs)."""
+    import datetime
+    import json
+    from pipeline import secrethunter as S
+    pool = ["co-%03d" % i for i in range(300)]
+    day = datetime.date(2026, 8, 30)
+    first, _r, st1 = S.queue_entries(pool, set(), set(), cap=150, day=day)
+    assert 0 < len(first) <= S.DAY_CAP <= 150 and st1["window"] == min(150, S.DAY_CAP)
+    queued = {e["name"].lower() for e in first}
+    again, _r, st2 = S.queue_entries(pool, set(), queued, cap=150, day=day)
+    assert again == [] and st2["offered"] == 0, "the second run of a day must add nothing"
+    # ...and the slice's basis moves only when the REGISTRY gains a row: one name activated
+    # between two runs shifts the slice by one, never re-cuts it
+    known = {first[0]["name"].lower()}
+    shifted, _r, _st = S.queue_entries(pool, known, set(), cap=150, day=day)
+    assert len(shifted) == len(first) and first[0]["name"] not in {e["name"] for e in shifted}
+    assert len({e["name"] for e in shifted} - {e["name"] for e in first}) == 1
+    tomorrow, _r, _st = S.queue_entries(pool, set(), queued, cap=150,
+                                        day=day + datetime.timedelta(days=1))
+    assert tomorrow and not ({e["name"] for e in tomorrow} & {e["name"] for e in first})
+    # the retirement set: read from the disposition file's shape, honoured by name
+    disp = tmp_path / "queue_disposition.json"
+    disp.write_text(json.dumps({first[1]["name"]: {"verdict": "no-board"},
+                                first[2]["name"]: {"verdict": "overturned-no-board"}}),
+                    encoding="utf-8")
+    retired = S.retired_names({"no-board", "duplicate-of"}, path=str(disp))
+    assert retired == {first[1]["name"].lower()}, "an overturned verdict is owed again"
+    kept, _r, st3 = S.queue_entries(pool, set(), set(), cap=150, day=day, retired=retired)
+    assert st3["retired"] == 1 and first[1]["name"] not in {e["name"] for e in kept}
+    assert S.retired_names({"no-board"}, path=str(tmp_path / "missing.json")) == set()
+
+
 def test_a_catalog_entry_carries_a_seed_auto_expand_will_actually_look_at():
     """`auto_expand.py:449` drops any entry with an empty `careers_url` — silently and
     forever. And `:503` reaches for `_site_from_guess(name, slug)` ONLY when the seed is an

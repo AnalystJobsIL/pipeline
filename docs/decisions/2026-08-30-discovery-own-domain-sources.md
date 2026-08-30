@@ -223,3 +223,42 @@ that is 27 % noise makes the registry's day worse, not better.
 - `484@discovery`: 20 agencies still pass `is_recruiter` and need researched `_CONFIRMED` entries.
 - `485@discovery`: `discovery_telegram.py:58` sends a spoofed Chrome UA — the opposite of the
   conduct the 08-27 record commits to; and `parse_post` keeps only the first URL of a post.
+
+## 7. Built the same evening: the per-day cap (483), at the operator's instruction
+
+*"Wire nothing, throttle the catalog" was half delivered while the throttle was a backlog
+item.* Shipped in `pipeline/secrethunter.py` + `discovery_daily.py`, no workflow change:
+
+- **The window is cut over the catalog minus registry rows and retired names**, not over
+  "what is not queued yet". That basis moves only when the registry gains a row, so every run
+  of one day selects the same slice and the second run adds nothing — no state file. Cut over
+  the raw catalog instead, a slice landing on known names offered almost nothing (the real
+  catalog is 38 % known), which the existing shape-alarm test caught.
+- **`SECRETHUNTER_DAY_CAP` = 40**, and the effective offer is `min(QUEUE_CAP, DAY_CAP)`, so
+  the workflow's per-run 150 is bounded without touching `.github/` (`494@infra` retires
+  the stale env line). 40 is from the flows: the registry's queue arms stamp ~120 rows a
+  night (79 / 422 / 57 by note date on 08-28/29/30); LinkedIn+Indeed intake is 26–178 names a
+  day, median ~50; catalog intake was 598 / 150 / 144 on its three days. At 40/day a median
+  day is ~90 in against ~120 out.
+- **Retired names are not re-offered** (`queue_pipeline.RETIRED_VERDICTS`, imported lazily;
+  an unreadable disposition file reads as "nothing retired"). This is 441, and it WAS intake:
+  the two 08-30 cloud runs re-added 149 catalog names each, ~100 and ~48 carrying a
+  retirement verdict. Dry run on the real catalog today: 2,703 slugs → 1,026 known · **258
+  retired** · 324 queued · 1,083 fresh → **2 offered** (the day's region had already been consumed by the morning's two runs), **0 on a second run, 1 after one row activation**. Steady state ≈ 40 × 1,083/1,407 ≈ **31 a day**: a name waiting in the queue keeps its slot, which is the price of an idempotent slice.
+
+**What the queue should look like after it** (question 2): intake ≈ 31 catalog + ~50
+LinkedIn/Indeed ≈ **80/day median** against the registry arms' ~120/night, so the queue
+**shrinks ~40 a median day** and grows only on a LinkedIn spike (three of the last seven
+days were 100+); the 1,407-name basis takes ~35 days to cycle and, once offered,
+are never re-offered unless the registry's verdict is overturned. On 08-28 the same arithmetic
+was 586 + 53 in against ~80 out. Guards: `test_the_catalog_offers_the_same_slice_on_every_run_of_one_day`,
+mutations `catalog-window-over-fresh`, `catalog-retired-drop`. Unattended proof due: the
+first `[secrethunter]` step line after this lands must read `day window 40` and an `offered`
+≤ 40, and the second run of the same day `offered 0`.
+
+**The 146 names with no gate — cap or filter?** (question 3): a cap. The 67 not-an-employer
+/ duplicate names are exactly what the registry's `--dispose` retires, and with dispositions
+honoured they stay out; the 79 foreign names die at the own-site rung's `is_foreign` — the
+filter already exists, at the only cost it can have (a GET per name), and the cap bounds how
+many reach it. No second filter.
+

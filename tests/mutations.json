@@ -2310,5 +2310,25 @@
   "replace": "        if False:\n            continue",
   "why": "174 names retired on evidence and re-added by intake would each buy a paid search the night their 14-day cadence lapsed (2026-09-12); the retirement is on disk and the drain must read it.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "catalog-window-over-fresh",
+  "file": "pipeline/secrethunter.py",
+  "symbol": "queue_entries",
+  "class": "M3-branch-narrowing",
+  "find": "        if slug not in today:",
+  "replace": "        if False:",
+  "why": "discovery 2026-08-30: without the catalog-slice gate the offer is the first N unqueued names, so the second run of a day sees a shifted list and queues the next N -- the 586-names-in-a-day shape the per-day cap exists to stop.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "catalog-retired-drop",
+  "file": "pipeline/secrethunter.py",
+  "symbol": "queue_entries",
+  "class": "M3-branch-narrowing",
+  "find": "        if keys & retired_keys:",
+  "replace": "        if False and keys & retired_keys:",
+  "why": "discovery 2026-08-30: dropping the retirement check re-offers every name the registry retired with evidence once per catalog rotation (BACKLOG 441: ~100 and ~48 such re-adds in the two 2026-08-30 cloud runs).",
+  "must_be_killed_by_behavioural": true
  }
 ]

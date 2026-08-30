@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**544 filed · 399 open · 145 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**546 filed · 400 open · 146 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 494.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 496.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@scraper` **open** · `462@registry` **open** |
 
-### registry — 130 open
+### registry — 131 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -224,8 +224,9 @@ closure convention in the header.
 - **479** `479@registry` **The single-writer "names I rewrote" sets grow across tests**
 - **487** `487@registry` **`Checkout` and `finbounce` are duplicate ACTIVE rows of `Checkout.com` and `Bounce AI`** —
 - **493** `493@registry` **A protected tombstone on an ACTIVE row blocks every later verdict from reaching the cell**
+- **495** `495@registry` **`queue_pipeline.py --census` WRITES `cloud_state/queue_receipt.json` for a read-only
 
-### infra — 107 open
+### infra — 108 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -334,6 +335,7 @@ closure convention in the header.
 - **490** `490@infra` **`run.py:803` prints `email (last 48h): N roles` for a count that includes the
 - **491** `491@infra` **The drain's capacity lives in `listing-hunt.yml` and is below intake; four workflow diffs**
 - **492** `492@infra` **`check_invariants` F2 fires on 109 legitimate `no-url` rows
+- **494** `494@infra` **`daily-digest.yml:101` still pins `SECRETHUNTER_QUEUE_CAP: "150"`, a per-RUN number that
 
 ### scraper — 28 open
 
@@ -366,7 +368,7 @@ closure convention in the header.
 - **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
 - **462** `462@scraper` **A `?location=Israel` listing URL makes every card on the page an Israeli posting** —
 
-### discovery — 27 open
+### discovery — 26 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -392,7 +394,6 @@ closure convention in the header.
 - **428** `428@discovery` **`discovered_cache.json` has no archive pass, and it is 1,919 thin cards of 1,950** —
 - **441** `441@discovery` **Intake re-adds names that were retired with evidence, so the queue can never stay
 - **456** `456@discovery` **The inline JD filler re-buys the same postings every night, because it has no cooldown
-- **483** `483@discovery` **The secrethunter catalog fills the queue with names the registry cannot use, and
 - **484** `484@discovery` **Twenty agencies still walk past `is_recruiter` by name**
 - **485** `485@discovery` **`discovery_telegram.py` sends a spoofed Chrome UA and keeps only a post's first URL**
 
@@ -8910,8 +8911,8 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      gets two cyber bars. Lower-case at write time in `pipeline/firmographics.py` and once
      over the stored file; re-derive with the one-liner in the record's §6.
 
-483. **The secrethunter catalog fills the queue with names the registry cannot use, and
-     the cap is still the seeding value** — lane: `discovery` (the filter) + `infra` (the env
+483. ~~**The secrethunter catalog fills the queue with names the registry cannot use, and
+     the cap is still the seeding value**~~ — **CLOSED 2026-08-30 (`discovery`)**: `SECRETHUNTER_DAY_CAP` = 40 per DAY, the slice cut over the catalog minus registry rows and retired names (idempotent within a day, no state file), and `queue_pipeline.RETIRED_VERDICTS` honoured at intake — dry on the real catalog: 2 offered (the day's region was already consumed), then 0, 1 after one activation, ~31/day at steady state; 258 retired names no longer re-offered. The stale per-run env line is `494@infra`. Unattended proof: the first `[secrethunter]` step line reading `day window 40`. Original text: lane: `discovery` (the filter) + `infra` (the env
      line). Measured 2026-08-30 over all 34 commits of `research_companies.json`, joined to
      `cloud_state/roles.csv`: **1,075 catalog names offered → 545 registry rows (246 active)
      → 12 with a matched role = 4.9 % of active catalog rows, against 8.7 % registry-wide
@@ -8999,4 +9000,20 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      Optional, same file: pass `dataset=json.load(open(roles.dataset_paths(st.path)[1]))` into
      `render_all` if a server-side dataset count is ever wanted on the board; the footer reads the
      published meta client-side instead and needs no hook (§7d, *The dataset beside the board*).
+
+494. **`daily-digest.yml:101` still pins `SECRETHUNTER_QUEUE_CAP: "150"`, a per-RUN number that
+     no longer binds** — lane: `infra`, filed by `discovery` 2026-08-30. Since 483 closed, the
+     binding cap is `SECRETHUNTER_DAY_CAP` (default 40, per DAY) and the offer is
+     `min(QUEUE_CAP, DAY_CAP)`, so the line is harmless but misleading: a reader retuning it
+     changes nothing. Exact diff: replace that line with `SECRETHUNTER_DAY_CAP: "40"` (or
+     delete it and let the module default stand). One line, no behaviour change today.
+
+495. **`queue_pipeline.py --census` WRITES `cloud_state/queue_receipt.json` for a read-only
+     census** — lane: `registry`, filed by `discovery` 2026-08-30. A session that runs the
+     census to re-derive a number dirties a tracked state file (measured: `M
+     cloud_state/queue_receipt.json` after one `--census` in a worktree); the next session to
+     `git add -A` — which nobody should, but 2026-08-27 proved someone will — commits it, and a
+     `git stash`-based check sees a phantom diff. Either `--census` should not write, or the
+     receipt should be a `--stamp`-only artefact; `queue_state.py` (no args) already sets the
+     read-only example.
 

@@ -38,6 +38,7 @@ lane's write and it goes through `identity_gate` plus its own page read.
     python -c "from pipeline import secrethunter as s; print(len(s.sitemap_slugs()))"
 """
 import datetime
+import json
 import os
 import re
 import urllib.parse
@@ -384,16 +385,60 @@ def _window(pool, cap, day=None):
     return [pool[(start + i) % len(pool)] for i in range(cap)]
 
 
-def queue_entries(slugs, have, queued, cap=None, day=None):
+def retired_names(verdicts, path=os.path.join("cloud_state", "queue_disposition.json")):
+    """Lower-cased names the registry has RETIRED with evidence — a name that must not be
+    re-offered by the catalog the next time its window comes round.
+
+    `verdicts` is the caller's retirement set (`queue_pipeline.RETIRED_VERDICTS`); it is a
+    parameter rather than an import so this module never depends on a root tool. Measured
+    2026-08-30: the two cloud runs re-added 149 catalog names each, ~100 and ~48 of which
+    already carried `no-board` / `duplicate-of` / `not-an-employer` / `acquired-by` — the
+    re-add `docs/BACKLOG.md` 441 describes, and the reason a day-window over the catalog
+    would otherwise re-offer every retired name once per rotation. An unreadable file reads
+    as "nothing retired": that costs re-adds, never names."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            state = json.load(f)
+    except (OSError, ValueError):
+        return set()
+    if not isinstance(state, dict):
+        return set()
+    return {k.strip().lower() for k, v in state.items()
+            if isinstance(v, dict) and (v.get("verdict") or "") in verdicts}
+
+
+# PER DAY, not per run. `QUEUE_CAP` above bounds one RUN, and the pipeline commits up to four
+# runs a day (four `cloud run` commits on 2026-08-28, **586** catalog names first queued that
+# day at cap 150): the window used to be cut over "what is not queued yet", so the second run
+# of a day saw a SHIFTED list and offered the next 150. The window is now cut over the CATALOG
+# itself, so every run of one day selects the same slice and the second run offers nothing
+# new -- idempotent by construction, no state file. The effective per-run offer is
+# min(QUEUE_CAP, DAY_CAP), so a workflow still pinning the old 150 is bounded here.
+#
+# 40 is chosen from the measured flows, not as a round number: the registry's queue arms
+# stamp ~120 rows a night (79 / 422 / 57 on 08-28/29/30 by note date; ~120 is its own
+# figure), LinkedIn+Indeed intake is 26-178 names a day (median ~50), and 40 leaves the
+# queue shrinking ~30/day on a median day and only growing on a LinkedIn spike. At 40 the
+# 2,703-slug catalog rotates in ~68 days and, with the retirement set honoured, a name is
+# offered at most once per rotation. `docs/decisions/2026-08-30-discovery-own-domain-sources.md` §7.
+DAY_CAP = int(os.environ.get("SECRETHUNTER_DAY_CAP", "40"))
+
+
+def queue_entries(slugs, have, queued, cap=None, day=None, retired=()):
     """(entries, rejections, stats) — queue entries for names we do not already hold.
 
-    `have`    lower-cased company names already in companies.csv
-    `queued`  lower-cased names already in research_companies.json
+    `have`     lower-cased company names already in companies.csv
+    `queued`   lower-cased names already in research_companies.json
+    `retired`  lower-cased names the registry retired with evidence (`retired_names`)
     Entries use the queue's existing four-key shape; nothing else in the repo has to change.
+    The day's slice is cut over `slugs` (the catalog, in sitemap order) BEFORE any filter,
+    so two runs on one day offer the same names and the second adds nothing.
     """
     cap = QUEUE_CAP if cap is None else cap
+    day_cap = min(cap, DAY_CAP) if cap is not None else DAY_CAP
     rejections, stats = [], {"slugs": len(slugs), "known": 0, "queued_already": 0,
-                             "refused": 0, "offered": 0, "dup_in_catalog": 0}
+                             "refused": 0, "offered": 0, "dup_in_catalog": 0, "retired": 0,
+                             "window": day_cap}
     seen_keys = set()
     have_keys = set()
     for n in have:
@@ -401,7 +446,16 @@ def queue_entries(slugs, have, queued, cap=None, day=None):
     queued_keys = set()
     for n in queued:
         queued_keys |= alias_keys(n)
-    fresh = []
+    retired_keys = set()
+    for n in retired:
+        retired_keys |= alias_keys(n)
+    # The day's slice is cut over the catalog MINUS what the registry holds or retired -- a
+    # basis that moves only when the registry gains a row, never when this function queues
+    # a name. Cut over the raw catalog, a slice landing on known names offered almost
+    # nothing (~25 % of the catalog is known); cut over "what is not queued yet", the
+    # second run of a day saw a shifted list and offered the next 150. Two runs of one day
+    # now differ by at most the rows the registry activated in between.
+    basis, parsed = [], []
     for slug in slugs:
         handle = handle_from_slug(slug)
         name = name_from_slug(slug)
@@ -409,6 +463,32 @@ def queue_entries(slugs, have, queued, cap=None, day=None):
         if keys & have_keys:
             stats["known"] += 1
             continue
+        if keys & retired_keys:
+            stats["retired"] += 1
+            continue
+        basis.append(slug)
+        parsed.append((slug, handle, name, keys))
+    # The start is anchored in the CATALOG's index space, which is the same for every run of
+    # a day, and the slice is the next `day_cap` basis names from there. `_window` over the
+    # basis would anchor at `(doy * cap) % len(basis)`, and one row activated between two
+    # runs changes that length and re-cuts the whole slice (caught by the guard test:
+    # 33 names moved for one). Walking the catalog from a fixed start, one fewer basis
+    # name shifts the slice by exactly one.
+    today = set()
+    if day_cap > 0 and basis:
+        n = len(slugs)
+        doy = (day or datetime.date.today()).timetuple().tm_yday
+        start = (doy * day_cap) % n
+        in_basis = set(basis)
+        order = list(slugs)
+        for i in range(n):
+            s = order[(start + i) % n]
+            if s in in_basis:
+                today.add(s)
+                if len(today) >= day_cap:
+                    break
+    fresh = []
+    for slug, handle, name, keys in parsed:
         if keys & queued_keys:
             stats["queued_already"] += 1
             continue
@@ -431,6 +511,12 @@ def queue_entries(slugs, have, queued, cap=None, day=None):
             stats["dup_in_catalog"] += 1
             continue
         seen_keys |= keys
+        stats.setdefault("fresh", 0)
+        stats["fresh"] += 1
+        # Only the day's slice of the CATALOG is offered. Everything above still runs over
+        # the whole catalog: the match rate the shape alarm reads, and the refusals.
+        if slug not in today:
+            continue
         fresh.append({"name": name, "careers_url": COMPANY_URL % urllib.parse.quote(slug),
                       "ats": "unknown", "slug": handle})
     # Refusals are recorded for the WHOLE catalog, not just the window: the ledger's value is
@@ -438,7 +524,7 @@ def queue_entries(slugs, have, queued, cap=None, day=None):
     # exactly as wrongly refused as one inside it.
     matched = stats["known"] + stats["queued_already"]
     stats["match_rate"] = round(matched / max(1, len(slugs)), 4)
-    entries = _window(fresh, cap, day=day)
-    stats["fresh"] = len(fresh)
+    stats.setdefault("fresh", 0)
+    entries = fresh[:day_cap]
     stats["offered"] = len(entries)
     return entries, rejections, stats

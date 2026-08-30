@@ -143,3 +143,34 @@ all"; Geektime moved below the free baseline.
 - 20 agencies still pass `is_recruiter` and need researched `_CONFIRMED` entries.
 - `queue_pipeline.py --census` writes `cloud_state/queue_receipt.json`; I ran it in a
   worktree and reverted the file — it is not in this commit.
+
+## Evening: 483 built (the operator's one instruction after verifying the record)
+
+The cap was per RUN and `_window` was cut over "what is not queued yet", so each of a day's
+up-to-four runs offered the next 150 (586 on 08-28). Now `SECRETHUNTER_DAY_CAP` = 40 and the
+slice is cut over the catalog minus registry rows and retired names — a first cut over the
+RAW catalog was caught by the existing shape-alarm test: a slice landing on the 38 % of
+known names offered nothing. Retired names (`queue_pipeline.RETIRED_VERDICTS`) are skipped:
+441 was intake after all — the 08-30 cloud runs re-added 149 catalog names each, ~100 and
+~48 with a retirement verdict (`git show ce61e13 / 8eb1340:research_companies.json` against
+`cloud_state/queue_disposition.json`).
+
+```
+dry, real catalog, 2026-08-30: slugs 2703 · known 1026 · retired 258 · queued 324 · fresh 1083
+                               window 40 -> offered 2 (region already consumed today) ; second run -> 0 ;
+                               one row activated between runs -> 1 ; steady state ~31/day ; alarm None
+intake/day first-queued:   linkedin 26-178 (median ~50) · catalog 598/150/144 · indeed 1-5
+registry queue arms/day:   79 / 422 / 57 rows stamped (08-28/29/30)
+after the cap, median day: ~80 in vs ~120 out -> queue shrinks ~40/day; spikes still grow it
+```
+
+Filed `494@infra` (the stale per-run env line) and `495@registry` (`--census` writes
+a receipt). CI for `2a57708`: `guard` success, `guard-kill` success, 5 of 6 rehearsals
+success, `rehearse (worst, seed 1)` failure (pre-existing per infra), mutation-gate shards
+read at push time of this commit.
+
+The first anchoring — `_window` over the basis — was wrong in a way the guard test caught:
+`(doy * cap) % len(basis)` re-cuts the whole slice when the basis shrinks by one (33 names
+moved for one activation). The start is now anchored in the CATALOG's index space and the
+slice is the next 40 basis names from there, so one activation shifts it by exactly one.
+

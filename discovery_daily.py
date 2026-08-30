@@ -1238,8 +1238,20 @@ def main():
             # morning and `sources.stale()` would call a healthy source dead. The only
             # failure this source HAS is the sitemap going away, and that shows up here.
             sh_slugs = _slugs
+            # A name the registry RETIRED with evidence is not re-offered (BACKLOG 441: the
+            # two 2026-08-30 cloud runs re-added ~100 and ~48 such names). The verdict set is
+            # `queue_pipeline`'s so intake and the registry agree on what "retired" means;
+            # the root tool is imported lazily and a failure reads as "nothing retired".
+            try:
+                from queue_pipeline import RETIRED_VERDICTS as _rv
+            except Exception:  # noqa: BLE001
+                _rv = frozenset({"no-board", "duplicate-of", "not-an-employer", "acquired-by",
+                                 "defunct", "already-a-row", "settled-by-a-rung",
+                                 "covered-by-row"})
+            _retired = _sh.retired_names(_rv)
             _sh_new, sh_rejects, _st = _sh.queue_entries(
-                _slugs, have, {(e.get("name") or "").strip().lower() for e in research})
+                _slugs, have, {(e.get("name") or "").strip().lower() for e in research},
+                retired=_retired)
             _alarm = _sh.shape_alarm(_st, len(have))
             if _alarm:
                 # A catalog that answers but no longer looks like the one we validated queues
@@ -1260,9 +1272,12 @@ def main():
                       f"{_st['match_rate']:.1%} match a name we already hold (floor "
                       f"{_sh.SANITY_MIN_MATCH:.0%}). Queued NOTHING this run.", flush=True)
             print(f"[secrethunter] {_st['slugs']} catalog names -> {_st['known']} already in "
-                  f"the registry, {_st['queued_already']} already queued, {_st['refused']} "
+                  f"the registry, {_st['queued_already']} already queued, "
+                  f"{_st.get('retired', 0)} retired with evidence (not re-offered), "
+                  f"day window {_st.get('window', '?')} · {_st['refused']} "
                   f"refused, {_st['fresh']} unresolved -> {_st['offered']} offered this run "
-                  f"(cap {_sh.QUEUE_CAP}, day-rotated) · 0 credits", flush=True)
+                  f"(per-DAY cap {min(_sh.QUEUE_CAP, _sh.DAY_CAP)}, the same slice on every run "
+                  f"of the day) · 0 credits", flush=True)
         except Exception as e:  # noqa: BLE001
             # Keyless and additive: a catalog that will not answer must cost this run
             # nothing. The zero is already set above, so `sources.stale()` sees it either way.
