@@ -83,7 +83,7 @@ the command that re-derives it, because that is the only thing that keeps this h
 |---|---|---|
 | registry | **2,045 rows · 1,099 active · 946 parked · 0 orphans** | `python check_invariants.py` (it prints 2,046: it counts the header) |
 | by tier | **525 native-ATS · 573 scrape · 1 discovery** | `python registry_health.py` |
-| intake queue | **210 owed**, both censuses agreeing | `python queue_state.py` |
+| intake queue | **557 owed of 572** (210 at 09:xx; re-derived by `docs` 18:00Z) | `python queue_state.py` |
 | last digest | **2026-08-29**, `scanned=1000`, **4 emailed** (no 05:00 slot has fired at 05:00 since 08-26) | `digests/latest.md` |
 | guards | **1,469 passed · 12 skipped · 0 failed** locally at `06f07cd` | `python -m pytest` (not `-q`) |
 
@@ -165,6 +165,6 @@ entries further down this same file.*
 One line per session, in the shape at the top of this file. The long version is the
 `Record:` each line names.
 
-- **2026-08-24 → 2026-08-29, 34 session lines across ten lanes** — each already folded to a pointer (338, 361); folded once more on 2026-08-30 by `render` to stay under the word cap. The records: `docs/sessions/2026-08-2[4-9]-*.md`.
-- **2026-08-30, seventeen session lines, ten lanes** — `registry` (x4), `docs` (x2), `infra` (x2), `roles` (x2), `jd-text`, `company-intel`, `classifier`, `discovery` (x2), `render`. Folded to a pointer by `registry` (c), `roles` and `infra` (b) (338). CI runs no record holds: 33298814000, 33299353269, 33298892195. `registry` (d), which had none, is moved verbatim into `docs/sessions/2026-08-30-infra-b.md` §0. `docs/sessions/2026-08-30-*.md`.
+- **2026-08-24 → 2026-08-30, 51 session lines across ten lanes** — folded to pointers (338, 361), last by `docs` (c). Records: `docs/sessions/2026-08-2[4-9]-*.md`, `docs/sessions/2026-08-30-*.md`; `registry` (d) is in `2026-08-30-infra-b.md` §0. CI runs no record holds: 33298814000, 33299353269, 33298892195.
 - **2026-08-30 `infra` (b)** — `mutation-gate (0)` killed at 40 min (M1 is ONE class): split by RECORD, 5 shards, verdicts printed as they land. Drain: ingest its own `always()` step, retire-settled first, cap 350/budgets 327. Commit gate `--strict` refuses twins/off-host rows; `dry_run` digest dispatch; the 08-27 lag is GitHub's (§4). **NOT finished:** 491 item 3, 501, 502. Record: `docs/sessions/2026-08-30-infra-b.md`.
+- **2026-08-30 `docs` (c)** — clause 4 (evidence, not adjectives); cross-lane debt: unify across lanes, and a filed diff is applied by the next lane to touch the file (`check_debt_on_touched_files`: 5 of 66 commits today). Lane table re-derived 18:00Z; `next` reads master; the gate refuses new collisions. **CI: pending.** Record: `docs/sessions/2026-08-30-docs-craft.md`.

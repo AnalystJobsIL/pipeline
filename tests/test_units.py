@@ -22816,3 +22816,132 @@ def test_persist_dry_run_runs_the_gates_prints_the_commit_and_pushes_nothing(tmp
         "no audit line for a commit that never happened"
     assert (b / "cloud_state" / "y.json").read_text(encoding="utf-8") == "{}", \
         "the gate's restore is real, as it would be on the true run"
+
+
+
+# --- docs lane, 2026-08-30 (c): a filed diff outlived five commits to its target file, and
+# --- `next` read only the local file while four numbers came to name two items each -------
+def _debt_repo(tmp_path, backlog, handoff_before, handoff_after, touch, second_commit=True):
+    """A two-commit repo: origin/master at the baseline, HEAD one commit on. The check
+    diffs COMMITTED trees (`git diff base HEAD`), so the branch's change must be a commit -
+    a working-tree edit is invisible to it by design, exactly as it is to a push."""
+    import shutil
+    import subprocess
+
+    def git(*a):
+        return subprocess.run(["git"] + list(a), cwd=str(tmp_path), capture_output=True,
+                              text=True, encoding="utf-8", errors="replace")
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    (tmp_path / "docs").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "pipeline").mkdir(exist_ok=True)
+    (tmp_path / "tests").mkdir(exist_ok=True)
+    shutil.copy(os.path.join(root, "docs", "backlog.py"), str(tmp_path / "docs" / "backlog.py"))
+    (tmp_path / "docs" / "AGENT_BRIEF.md").write_text(
+        "| **`registry`** | 2 | rows | `companies.csv` |" + chr(10), encoding="utf-8")
+    (tmp_path / "docs" / "BACKLOG.md").write_text(backlog, encoding="utf-8")
+    (tmp_path / "pipeline" / "jdfill.py").write_text("def load_secrets():" + chr(10)
+                                                     + "    pass" + chr(10), encoding="utf-8")
+    (tmp_path / "tests" / "test_units.py").write_text("# tests" + chr(10), encoding="utf-8")
+    (tmp_path / "HANDOFF.md").write_text(handoff_before, encoding="utf-8")
+    git("init", "-q")
+    git("config", "user.email", "guard@example.invalid")
+    git("config", "user.name", "guard")
+    git("config", "commit.gpgsign", "false")
+    git("add", "-A")
+    assert git("commit", "-q", "-m", "baseline").returncode == 0
+    git("update-ref", "refs/remotes/origin/master", "HEAD")
+    for rel in touch:
+        p = tmp_path / rel
+        p.write_text(p.read_text(encoding="utf-8") + "# touched" + chr(10), encoding="utf-8")
+    (tmp_path / "HANDOFF.md").write_text(handoff_after, encoding="utf-8")
+    if second_commit:
+        git("add", "-A")
+        assert git("commit", "-q", "-m", "the branch").returncode == 0
+    cd = _cd()
+    cd.ROOT = str(tmp_path)
+    with _not_ci():
+        cd.check_debt_on_touched_files()
+    return list(cd.ERRORS)
+
+
+_DEBT_ITEM = ("## From the infra lane, 2026-08-30" + chr(10) * 2
+              + "468. **Three modules still carry their own `_load_secrets`** - lane: "
+              "`registry`. `pipeline/jdfill.py:1`: " + chr(10) * 2
+              + "    ```python" + chr(10) + "    def load_secrets():" + chr(10)
+              + "        from pipeline import secretsenv" + chr(10) + "    ```" + chr(10))
+
+
+def test_a_filed_diff_is_applied_or_declined_by_the_next_lane_to_open_the_file(tmp_path):
+    """Item 468 carried the three-line replacement for `pipeline/jdfill.py`'s copy of
+    `_load_secrets` by the morning of 2026-08-30; the file took five commits that day and
+    kept its copy. Filing does not kill debt. The lane already inside the file can, and
+    this is the gate that asks it to - or to say, with the number, why not."""
+    handoff = "- **2026-08-30 `jd-text`** - filled 30." + chr(10)
+    # the file changed, the item is open, HANDOFF says nothing: refused
+    errs = _debt_repo(tmp_path / "a", _DEBT_ITEM, "", handoff, ["pipeline/jdfill.py"])
+    assert len(errs) == 1 and "468@registry" in errs[0] and "pipeline/jdfill.py" in errs[0], errs
+    # the same, with the number cited in the line this branch ADDS: allowed
+    errs = _debt_repo(tmp_path / "b", _DEBT_ITEM, "",
+                      handoff.replace("filled 30.", "filled 30; 468 not applied: the loader "
+                                      "is not on this branch yet."), ["pipeline/jdfill.py"])
+    assert errs == [], errs
+    # a citation that was ALREADY in HANDOFF before the branch does not count
+    errs = _debt_repo(tmp_path / "c", _DEBT_ITEM, "- old line citing 468" + chr(10),
+                      "- old line citing 468" + chr(10) + handoff, ["pipeline/jdfill.py"])
+    assert len(errs) == 1, errs
+    # a closed item carries no debt
+    errs = _debt_repo(tmp_path / "d", _DEBT_ITEM.replace("468. **Three", "468. **CLOSED "
+                      "2026-08-30** ~~Three"), "", handoff, ["pipeline/jdfill.py"])
+    assert errs == [], errs
+    # the file is not the one the diff is for: silent
+    errs = _debt_repo(tmp_path / "e", _DEBT_ITEM, "", handoff, ["tests/test_units.py"])
+    assert errs == [], errs
+    # a working-tree edit that was never committed is not a push: silent, by design
+    errs = _debt_repo(tmp_path / "f", _DEBT_ITEM, "", handoff, ["pipeline/jdfill.py"],
+                      second_commit=False)
+    assert errs == [], errs
+
+
+def test_a_diff_is_attributed_by_a_line_anchor_and_never_to_a_file_every_lane_appends():
+    """Measured before the rule: with a bare path mention counting, the check would have
+    refused 26 of the 66 commits of 2026-08-30 - 25 of them on items 311 and 421, which
+    name `tests/test_units.py`, the file every lane appends to. With the line anchor and
+    the every-lane list it refuses 5, each a real filed diff for a file one lane owns."""
+    cd = _cd()
+    bl = _bl()
+    cd._git = lambda *a: ("pipeline/jdfill.py" + chr(10) + "tests/test_units.py" + chr(10)
+                          + "docs/check_docs.py" + chr(10)) if a[0] == "ls-files" else None
+    text = (_DEBT_ITEM
+            + chr(10) + "469. **A gap described in prose** - lane: `registry`. "
+              "`docs/check_docs.py` is honest here:" + chr(10) * 2
+            + "    ```" + chr(10) + "    a chain, not a diff" + chr(10) + "    ```" + chr(10)
+            + chr(10) + "470. **A test that asserts a wall clock** - lane: `registry`. "
+              "`tests/test_units.py:11136`:" + chr(10) * 2
+            + "    ```python" + chr(10) + "    assert x" + chr(10) + "    ```" + chr(10))
+    owed = {it.num: files for it, files in cd._diff_bearing(bl.parse(text))}
+    assert owed == {468: ["pipeline/jdfill.py"]}, owed
+
+
+def test_next_reads_origin_master_and_the_gate_refuses_a_collision_this_branch_adds():
+    """`next` printed `max+1` of the LOCAL file, so two branches cut from the same base got
+    the same number and both landed: 445, 446, 461 and 462 each name two items since
+    2026-08-30. Reading master's file narrows the window; refusing the collision at the
+    gate closes it - and only for a claimant this branch added, so the 38 that already
+    exist stay grandfathered and cited by key."""
+    bl = _bl()
+    item = lambda n, title: "%d. **%s** - lane: `infra`." % (n, title) + chr(10)
+    head = "## s" + chr(10) * 2 + item(1, "one") + item(4, "four") + item(4, "other four") + item(5, "mine")
+    base = "## s" + chr(10) * 2 + item(1, "one") + item(4, "four") + item(4, "other four")
+    master = base + item(5, "theirs") + item(7, "and another")
+    items = bl.parse(head)
+    # next: master is ahead of this tree, and its number wins
+    bl._git_show = lambda ref, rel="docs/BACKLOG.md": master
+    assert bl.next_free(items) == 8
+    bl._git_show = lambda ref, rel="docs/BACKLOG.md": None
+    assert bl.next_free(items) == 6, "no master to read: the local answer, never a crash"
+    # the gate: 4 collides at the base too (grandfathered); 5 would collide once rebased
+    assert bl.new_collisions(items, base) == {}
+    rebased = bl.parse(master + item(5, "mine"))
+    got = bl.new_collisions(rebased, base)
+    assert list(got) == [5] and {i.title for i in got[5]} == {"**theirs**", "**mine**"}, got
+    assert bl.new_collisions(rebased, None) == {}, "no base: nothing to judge, never red"

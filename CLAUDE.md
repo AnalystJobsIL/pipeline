@@ -113,7 +113,9 @@ anything relying on it silently returns nothing; the working search is
 4. **Update the doc your lane owns, in the same commit as the change.** Behaviour →
    `ARCHITECTURE.md` (the section is tagged with your lane). A new gap you did not fix →
    `docs/BACKLOG.md`. A new module → `docs/MODULES.md`. Always → three lines in
-   `HANDOFF.md`: what was wrong, what you changed, **what you did NOT finish**.
+   `HANDOFF.md`: what was wrong, what you changed, **what you did NOT finish** — and your
+   report answers clause 4 of `docs/AGENT_BRIEF.md`'s definition of done: what you deleted,
+   which function you extended, what you rejected and on what number.
 5. Commit as `ajil-bot`, push with plain `git push`. **Read `CLAUDE.local.md` first** — it
    is gitignored and holds the identity rules for the public repos.
 6. Don't dispatch or cancel workflows between 05:00 and 08:30 UTC. If you must cancel a

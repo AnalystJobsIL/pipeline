@@ -17,7 +17,14 @@ Two things are therefore NOT done here, on purpose:
     files, including `.github/workflows/audit-coverage.yml` and `daily-digest.yml`. A bare
     number stays legal and resolves to a candidate list; uniqueness is enforced only going
     forward, by `next` printing the first free number - the collisions happened because
-    three lanes filed within an hour and none of them knew.
+    three lanes filed within an hour and none of them knew. `next` reading only the local
+    file did not stop it: on 2026-08-30 four more numbers (445, 446, 461, 462) came to name
+    two items each, because two branches cut from the same base computed the same `max+1`
+    and both landed. So `next` now reads `origin/master`'s file too (as last fetched - it
+    never fetches, for the reason `docs/check_docs.py` never does), and `check` REFUSES a
+    collision this branch introduces: run `next` after `git pull --rebase`, right before the
+    push, and a number that was taken in the meantime is yours to renumber - nothing cites
+    it yet. The 38 collisions that already exist are grandfathered and cited by key.
   * Nothing is archived. The closed-item split is designed and measured in item 291; the
     code that did it was deleted after an adversarial pass found its proofs decorative.
 
@@ -28,7 +35,7 @@ misplace text during a move-never-retype migration.
 
     python docs/backlog.py check      # parse + rules; exit 1 on a violation; writes nothing
     python docs/backlog.py stats      # the census
-    python docs/backlog.py next       # the first free item number
+    python docs/backlog.py next       # the first free number on THIS tree AND origin/master
     python docs/backlog.py lane infra # that lane's open items
     python docs/backlog.py show 241   # every claimant of 241
     python docs/backlog.py --write    # regenerate the index block IN PLACE (the only write)
@@ -250,6 +257,69 @@ def collisions(items):
     return {n: v for n, v in sorted(by.items()) if len(v) > 1}
 
 
+def _git_show(ref, rel="docs/BACKLOG.md"):
+    """The file at `ref`, or None. Never fetches, never raises: no git, no remote, a ref
+    that does not exist - all mean "nothing to compare against"."""
+    import subprocess
+    try:
+        out = subprocess.run(["git", "show", "%s:%s" % (ref, rel)], cwd=ROOT,
+                             capture_output=True, text=True, encoding="utf-8",
+                             errors="replace")
+    except Exception:                                             # noqa: BLE001
+        return None
+    return out.stdout if out.returncode == 0 else None
+
+
+def next_free(items, ref="origin/master"):
+    """max+1 over THIS tree and over `ref`'s file, whichever is higher. A branch that
+    reads only its own file cannot know what landed on master since it was cut, which is
+    exactly how 445/446/461/462 each came to name two items on 2026-08-30."""
+    high = max((i.num for i in items), default=0)
+    other = _git_show(ref)
+    if other is not None:
+        try:
+            high = max(high, max((i.num for i in parse(other)), default=0))
+        except Exception:                                         # noqa: BLE001
+            pass
+    return high + 1
+
+
+def _merge_base():
+    """The commit this branch is judged against: `AJIL_PUSH_BASE` on a runner (the tip
+    master had before the push), else the merge-base with origin/master, else None."""
+    import subprocess
+    push_base = (os.environ.get("AJIL_PUSH_BASE") or "").strip()
+    if push_base and set(push_base) != {"0"}:
+        return push_base
+    if push_base:
+        return None                                   # all-zero sha: branch creation
+    try:
+        out = subprocess.run(["git", "merge-base", "HEAD", "origin/master"], cwd=ROOT,
+                             capture_output=True, text=True, encoding="utf-8")
+    except Exception:                                             # noqa: BLE001
+        return None
+    return out.stdout.strip() if out.returncode == 0 and out.stdout.strip() else None
+
+
+def new_collisions(items, base_text):
+    """Numbers that name more than one item HERE where at least one claimant is not in
+    `base_text` (the file at the merge-base): the collisions THIS branch introduces. An
+    item is "the same" as a base item when its number and title agree, so re-wording a
+    body or closing an item never reads as a new claimant. None when there is no base."""
+    if base_text is None:
+        return {}
+    try:
+        base = {(i.num, i.title) for i in parse(base_text)}
+    except Exception:                                             # noqa: BLE001
+        return {}
+    out = {}
+    for n, claimants in collisions(items).items():
+        fresh = [i for i in claimants if (i.num, i.title) not in base]
+        if fresh:
+            out[n] = claimants
+    return out
+
+
 def render_index(items):
     open_items = [i for i in items if not i.closed]      # `half` counts as open
     col = collisions(items)
@@ -275,10 +345,13 @@ def render_index(items):
         "original untouched. The parse is exact; the state it reports is only as good as the",
         "closure convention in the header.",
         "",
-        "**Next free number: %d.** Run `python docs/backlog.py next` before you file anything — "
-        "241 through 246 each name three items because three lanes filed within an hour on "
-        "2026-08-26 and none of them knew. Numbers %s were never used; do not reuse them, "
-        "because an old citation would then resolve to new text."
+        "**Next free number: %d.** Run `python docs/backlog.py next` after `git pull --rebase`, "
+        "right before you push — it reads origin/master's file too, and `check` refuses a "
+        "collision your branch introduces. 241 through 246 each name three items because three "
+        "lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and "
+        "462 each name two because `next` read only the local file until 2026-08-30. Numbers %s "
+        "were never used; do not reuse them, because an old citation would then resolve to new "
+        "text."
         % ((max(used) + 1 if used else 1), ", ".join(str(g) for g in gaps) or "(none)"),
         "",
     ]
@@ -391,7 +464,7 @@ def main(argv):
         cmd_stats(items)
         return 0
     if argv[0] == "next":
-        print(max(i.num for i in items) + 1)
+        print(next_free(items))
         return 0
     if argv[0] == "lane":
         want = argv[1] if len(argv) > 1 else ""
@@ -437,6 +510,11 @@ def main(argv):
         if held:
             print("WARN  %d items are closed only by a later section's bullet, with the "
                   "original never edited: %s" % (len(held), ", ".join(i.key for i in held)))
+        for n, v in new_collisions(items, _git_show(_merge_base())).items():
+            print("ERROR %d names %d items and this branch added one of them (%s): renumber "
+                  "YOUR item to `next` - nothing cites it yet - and re-run --write"
+                  % (n, len(v), ", ".join(i.key for i in v)))
+            bad += 1
         cmd_stats(items)
         return 1 if bad else 0
     print("unknown command: %s" % argv[0])

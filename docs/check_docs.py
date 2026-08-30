@@ -1698,6 +1698,100 @@ def check_backlog() -> None:
                        "state item 243 describes. Add `lane: `x`` to the item body - the "
                        "brief's table decides, and `python docs/backlog.py lane <x>` is how "
                        "a session finds its own work." % len(unlaned))
+    base = _baseline_ref()
+    base_text = _git("show", "%s:docs/BACKLOG.md" % base) if base else None
+    for n, v in bl.new_collisions(items, base_text).items():
+        err("backlog", "%d names %d items and this branch added one of them (%s). `next` "
+                       "read a stale file: renumber YOUR item to `python docs/backlog.py "
+                       "next` - nothing cites it yet - and re-run `--write`."
+            % (n, len(v), ", ".join(i.key for i in v)))
+
+
+# ---------------------------------------------------------------- 6b'. debt with a diff
+_FENCE = re.compile(r"^\s*(```|~~~)", re.M)
+# Appended by every lane and owned by none (docs/AGENT_BRIEF.md, "tests/mutations.json
+# belongs to no lane"): a diff filed against one of these cannot be attributed to whichever
+# lane happens to append next. Measured before this list existed: items 311 and 421 both
+# name tests/test_units.py, and the check would have refused 25 of the 66 commits of
+# 2026-08-30 on those two alone - a linter that cries wolf is one lanes learn to skip.
+_EVERY_LANE_APPENDS = {"tests/test_units.py", "tests/mutations.json", "docs/BACKLOG.md",
+                       "HANDOFF.md"}
+
+
+def _diff_bearing(items):
+    """(item, [files]) for every OPEN item whose body carries a fenced block AND cites a
+    tracked code file BY LINE (`a/b.py:12`) outside the fence. `half` is open. The line
+    anchor is the signal: every filed diff in the backlog names its target that way, and
+    a bare mention in prose (427 names `docs/check_docs.py` while describing a gap
+    elsewhere) does not carry a diff for that file."""
+    out = []
+    tracked = set((_git("ls-files") or "").split())
+    for it in items:
+        if it.closed or not _FENCE.search(it.body):
+            continue
+        files = sorted({f for f in re.findall(r"`([\w./-]+\.(?:py|yml|yaml)):\d+`",
+                                              it.unfenced)
+                        if f in tracked and f not in _EVERY_LANE_APPENDS})
+        if files:
+            out.append((it, files))
+    return out
+
+
+def check_debt_on_touched_files() -> None:
+    """A filed diff is applied by the next lane to open that file - or declined in writing.
+
+    `468` carried the three-line replacement for each `_load_secrets` copy by the morning
+    of 2026-08-30; `pipeline/jdfill.py` took five commits that day and kept its copy. Filing
+    debt against a file does not kill it; the lane already inside the file can. So: a file
+    changed on this branch that an OPEN item names with a fenced diff is an ERROR unless a
+    line ADDED to HANDOFF.md on this branch cites the item's number - applying it is the
+    expected answer, and "not applied because ..." with the number is the other one."""
+    base = _baseline_ref()
+    if base is None:
+        return
+    changed = set((_git("diff", "--name-only", base, "HEAD") or "").split())
+    if not changed:
+        return
+    try:
+        items = _backlog().parse()
+    except Exception:                                             # noqa: BLE001
+        return                                    # check_backlog reports the parse failure
+    added = _git("diff", "--unified=0", base, "HEAD", "--", "HANDOFF.md") or ""
+    cited = " ".join(l[1:] for l in added.splitlines()
+                     if l.startswith("+") and not l.startswith("+++"))
+    for it, files in _diff_bearing(items):
+        hit = [f for f in files if f in changed]
+        if not hit:
+            continue
+        if re.search(r"(?<![\d.])%d(?![\d])" % it.num, cited):
+            continue
+        err("debt", "%s changed on this branch, and open item %s carries a diff for it. "
+                    "Apply the diff in this commit, or cite `%d` in the HANDOFF.md line you "
+                    "add and say why not (docs/AGENT_BRIEF.md, 'Debt in another lane's "
+                    "file')." % (", ".join("`%s`" % f for f in hit), it.key, it.num))
+
+
+def report_debt() -> int:
+    """`--debt`: every open diff-bearing item, its files, and how many commits touched
+    each file on this tree since the item's section was filed. That count is the `docs`
+    lane's number: debt that was filed and outlived the sessions that opened the file."""
+    try:
+        items = _backlog().parse()
+    except Exception as e:                                        # noqa: BLE001
+        print("debt: could not parse docs/BACKLOG.md (%s)" % e)
+        return 1
+    owed = 0
+    for it, files in _diff_bearing(items):
+        m = re.search(r"(20\d\d-\d\d-\d\d)", it.section)
+        since = m.group(1) if m else None
+        for f in files:
+            n = (len((_git("log", "--format=%h", "--since=%sT00:00:00" % since, "--", f)
+                      or "").split()) if since else -1)
+            owed += 1 if n > 0 else 0
+            print("%-22s %-40s %s" % (it.key, f,
+                  ("%d commit(s) since %s" % (n, since)) if n >= 0 else "section undated"))
+    print("debt: %d file(s) carry a filed diff and were committed to after it was filed" % owed)
+    return 0
 
 
 # ---------------------------------------------------------------- 6c. the tree itself
@@ -2005,7 +2099,7 @@ CHECKS = [check_tree_is_current, check_entry_docs, check_paths_exist, check_link
           check_derived_facts, check_scope_claims, check_handoff, check_morning_checks,
           check_morning_rows_survive, check_unattended_proof, check_no_home_paths,
           check_no_conflict_markers, check_workflow_command_claims,
-          check_session_record_dates, check_backlog]
+          check_session_record_dates, check_backlog, check_debt_on_touched_files]
 
 
 def main(argv=None) -> int:
@@ -2031,6 +2125,8 @@ def main(argv=None) -> int:
                  "%.0fh ago" % fetch_age if fetch_age is not None else "unknown"))
         return 0
 
+    if "--debt" in argv:
+        return report_debt()
     if "--facts" in argv:
         # One command instead of an archaeology dig: every registered number, what the
         # code says today, and what each doc claims. Never writes; never exits non-zero
