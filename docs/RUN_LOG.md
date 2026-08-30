@@ -22,7 +22,7 @@ is **omitted entirely when it has nothing to say** — so absence is normal here
 | `- **Sources not producing:**` | `run.py` ← `pipeline/sources.py` health | every intake source produced something |
 | `- **Registry:**` | `cloud_state/registry_alarms.json`, written by `registry_health.py --census` | no pool moved enough to alarm |
 | `- **Stages:**` | `stages.alarms()` + `run.py`'s own in-flight alarms | **no stage is stale and none raised** — the one line whose silence is meaningful |
-| `- **Render:**` | `rolecard.cross_check` via `digest.render_all` | no title-twin, shared-board or display collision |
+| `- **Render:**` | `rolecard.cross_check` via `digest.render_all`, and `digest._subject_vs_body` | no same-posting, title-twin, shared-board or display collision, and the subject's number is the body's bullet count |
 
 Every one of these is also printed as `::warning::<kind> <line>` by `run.py`, so it is a red
 annotation on the run page as well as a bold line in the mail. `run.py` emits the kinds

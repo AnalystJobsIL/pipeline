@@ -1023,8 +1023,8 @@
   "file": "pipeline/digest.py",
   "symbol": "build_markdown",
   "class": "M1-gate-removal",
-  "find": "    if s.get(\"roles\"):\n        lines.append(\"- **Roles:** \" + \"; \".join(_md_line(x) for x in s[\"roles\"]))",
-  "replace": "    if False:\n        lines.append(\"- **Roles:** \" + \"; \".join(_md_line(x) for x in s[\"roles\"]))",
+  "find": "    if s.get(\"roles\"):\n        audit.append(\"- **Roles:** \" + \"; \".join(_md_line(x) for x in s[\"roles\"]))",
+  "replace": "    if False:\n        audit.append(\"- **Roles:** \" + \"; \".join(_md_line(x) for x in s[\"roles\"]))",
   "why": "the whole role-record line could vanish from the daily email with the suite green: only tests/rehearse_roles.py read the markdown, and no workflow runs it. The SCHEDULING.md failure class: the mail stops saying what the run did and nothing notices. (re-aimed 2026-08-25 by registry: render commit 1458314 changed the line to _md_line(x); the record had 0 matches at HEAD.)",
   "must_be_killed_by_behavioural": true
  },

@@ -150,9 +150,9 @@ chips under the requirements column, single-word filter tokens (`ownership`, `cu
 
 ## What the mail says about rendering
 
-`- **Render:** board N cards[, M degraded (why)][, K hidden: mangled title][, shared-board A/B][, title-twin A/B…]
-· archive N cards[…] · email N cards[…]` in every run audit; degraded, hidden, shared-board, title-twin
-and FAILED cases also stand above the fold under **Needs a look** and print `::warning::render …`
+`- **Render:** board N cards[, M degraded (why)][, K hidden: mangled title][, same-posting A/B][, shared-board A/B][, title-twin A/B…]
+· archive N cards[…] · email N cards[…]` in every run audit; degraded, hidden, same-posting, shared-board,
+title-twin and FAILED cases also stand above the fold under **Needs a look** and print `::warning::render …`
 in the step log. `ARCHITECTURE.md §7d` has the grammar and what each case means.
 
 ## Where users see it

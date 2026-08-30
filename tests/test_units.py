@@ -752,32 +752,47 @@ def test_every_active_scrape_row_points_at_something_that_claims_to_list_jobs():
     assert not bad, f"active scrape rows on a page that is not a listings page: {bad}"
 
 
-def test_a_first_scan_company_is_shown_honestly_rather_than_withheld():
+def test_a_first_scan_company_is_counted_in_the_subject_not_only_shown():
     """`_posted_in` refuses to call a first-scan company's back catalogue "posted in the
     last 48h" — 336 companies were activated in one night and their whole history would
     otherwise have buried the actual news. But withholding them entirely produced a
     zero-role email on a day the pipeline had just gained 336 employers. They go in the
     email under their own heading, with "date not published" rather than a bare dash next
-    to a line that claims 48h freshness."""
+    to a line that claims 48h freshness.
+
+    2026-08-30: the predecessor of this test pinned `title.startswith("🎯 1 new analytics
+    role")  # counts only the 48h ones` — and that is exactly why the mail went out saying
+    "6 new roles" over 13 bullets on 7 of the 12 mornings to 08-30. The subject now counts
+    every role bullet the mail carries; the split is in the subtitle."""
     from pipeline import digest as D
     jobs = [{"company": "Acme", "title": "Senior Data Analyst", "location": "Tel Aviv",
              "url": "https://a/1", "posted_date": "2026-08-23", "description": "x"},
             {"company": "Newco", "title": "BI Developer", "location": "Haifa",
              "url": "https://b/2", "posted_date": "", "description": "y",
              "_new_company": True}]
-    title, body = D.build_markdown(jobs, "2026-08-23", {"first_scan": 1, "new": 1})
-    assert title.startswith("🎯 1 new analytics role")          # counts only the 48h ones
+    title, body = D.build_markdown(jobs, "2026-08-23", {"first_scan": 1, "new": 2})
+    # both sections, one number first, the split in the subject itself (an inbox shows no
+    # subtitle, and "16 new roles" over one 48h role would be the old defect inverted)
+    assert title == "🎯 2 new analytics roles (1 posted in the last 48h, 1 at newly covered companies) — 2026-08-23"
+    assert "1 of the 2 is at employers covered for the first time" in body
     assert "Newly covered companies (1)" in body
     assert "date not published" in body
     assert body.index("Senior Data Analyst") < body.index("Newly covered companies")
 
-    # ...and when there is nothing 48h-fresh, the subject says what the email IS
+    # ...and when there is nothing 48h-fresh, the subject says what the email IS — every
+    # bullet below it is one the body itself says is NOT 48h-new
     only_new = [j for j in jobs if j.get("_new_company")]
-    title2, body2 = D.build_markdown(only_new, "2026-08-23", {"first_scan": 1, "new": 0})
-    assert "newly covered companies" in title2
-    # ...and it must not say "no new openings" directly above a section listing some
-    assert "_No new matching openings today._" not in body2
-    assert "Nothing posted in the last 48h at a company we already track" in body2
+    title2, body2 = D.build_markdown(only_new, "2026-08-23", {"first_scan": 1, "new": 1})
+    assert title2 == "🎯 1 analytics role at newly covered companies — 2026-08-23"
+    # ...and it must not say "no new openings" directly above a section listing some, nor
+    # open with "roles from the last 48h" over a section that says they are not (wave 2)
+    assert "_No new matching openings today._" not in body2 and "last 48h**" not in body2
+    assert "Nothing posted in the last 48h at a company we already track; the 1 role below is at employers covered for the first time" in body2
+    # a first-scan company whose only card is a title blob produces no heading and no count
+    blob = "Data Analyst Tel Aviv Apply now " * 6
+    title3, body3 = D.build_markdown([dict(only_new[0], title=blob)], "2026-08-23", {"first_scan": 1, "new": 1})
+    assert title3 == "🎯 0 new analytics roles — 2026-08-23" and "Newly covered companies" not in body3
+    assert "_No new matching openings today._" in body3
 
 
 def test_the_blocking_gate_blocks_on_corruption_not_on_one_bad_row():
@@ -6357,11 +6372,18 @@ def test_the_ledger_supplies_only_what_render_cannot_compute():
     assert inrun["also_listed_as"] == ["Beta Games"]                    # this morning's claim, before the flush
 
 
-def test_cross_check_names_the_wrong_company_shapes_and_only_those():
+def test_cross_check_names_five_wrong_company_shapes_and_only_those():
     """Two unrelated companies on one Comeet tenant (Scopio Labs / Sckipio) is the live
-    case; an aggregator host, a blurb naming an acquirer, and X/X Israel are not."""
+    case; an aggregator host, a blurb naming an acquirer, and X/X Israel are not. The
+    fifth shape (2026-08-30): one posting url under two names is `same-posting`, a fact,
+    and the pair is then NOT also guessed at as shared-board or title-twin."""
     from pipeline import rolecard
     build = lambda **k: rolecard.build(_job(**k), "2026-08-25")
+    dup = [build(company="Checkout.com", title="Fraud Data Analyst", mkey="c|1",
+                 url="https://jobs.ashbyhq.com/checkout.com/9bf673a0-8e9e-41f2-87c2-00494b72e915"),
+           build(company="Checkout", title="Fraud Data Analyst", mkey="k|1",
+                 url="https://jobs.ashbyhq.com/checkout.com/9bf673a0-8e9e-41f2-87c2-00494b72e915/application")]
+    assert rolecard.cross_check(dup) == ["same-posting Checkout/Checkout.com"]
     cards = [build(company="Scopio Labs", url="https://www.comeet.com/jobs/scopio/87.00C/analyst/AB.1", mkey="s|1"),
              build(company="Sckipio", url="https://www.comeet.com/jobs/scopio/87.00C/bi/AB.2", mkey="k|2"),
              build(company="Meta", url="https://www.metacareers.com/jobs/1", mkey="m|1"),
@@ -6412,6 +6434,192 @@ def test_cross_check_names_the_wrong_company_shapes_and_only_those():
     assert rolecard._tenant("https://onezero.bamboohr.com/careers/45") == "onezero.bamboohr.com"
     assert rolecard._tenant("https://www.comeet.co/careers-api/2.0/company/1/positions") == ""
     assert rolecard._tenant("https://il.linkedin.com/jobs/view/1?x=greenhouse") == ""
+
+
+def test_the_mail_subject_counts_every_role_bullet_the_mail_carries():
+    """THE subject-line rule (2026-08-30). Inbox issue #14 was titled "🎯 6 new analytics
+    roles — 2026-08-30" over a body of 13 role bullets; the H1 counted the 48h list and the
+    body rendered that plus the newly-covered section. The H1 is now computed from the cards
+    the two sections EMITTED (a mangled title is dropped before either), and
+    `digest._subject_vs_body` re-derives the count from the text by the one bullet shape
+    `_render` writes — every variant of it: with a url, without one (`_safe_url` refused it),
+    a Hebrew title, `date not published`, a seniority chip."""
+    import re
+    from pipeline import digest as D
+    blob = "Data Analyst Tel Aviv Full-time Apply now " * 5
+    jobs = [{"company": "Acme", "title": "Senior Data Analyst", "location": "Tel Aviv", "url": "https://a/1",
+             "posted_date": "2026-08-30", "description": "Requirements: 5+ years of experience"},
+            {"company": "Acme", "title": "אנליסט נתונים", "location": "Tel Aviv", "url": "https://a/2",
+             "posted_date": "2026-08-30", "description": ""},
+            {"company": "Newco", "title": "BI Developer", "location": "Haifa", "url": "https://b/2",
+             "posted_date": "", "description": "y", "_new_company": True},
+            {"company": "Newco", "title": "Data Analyst", "location": "Haifa", "url": "not a url",
+             "posted_date": "", "description": "y", "_new_company": True},
+            {"company": "Blob", "title": blob, "location": "Haifa", "url": "https://c/3",
+             "posted_date": "2026-08-30", "description": "y"}]
+    title, body = D.build_markdown(jobs, "2026-08-30", {"first_scan": 2, "new": 5})
+    bullets = [l for l in body.splitlines() if l.startswith("- **") and "📍" in l]
+    assert title == "🎯 4 new analytics roles (2 posted in the last 48h, 2 at newly covered companies) — 2026-08-30", title
+    assert len(bullets) == 4 and len(D._ROLE_BULLET.findall(body)) == 4       # 5 in, 1 hidden, 4 out
+    assert re.match(r"^# 🎯 4 ", body) and "2 of the 4 are at employers covered for the first time" in body
+    # the morning check's grep IS the tripwire's shape: a foreign bold audit line carrying the
+    # glyph is not counted by either (wave 2 found the two regexes disagreeing)
+    assert D._ROLE_BULLET.pattern == r"^- \*\*[^\n]*?\*\*(?: — \S+)? · 📍 "
+    # one fresh role and fifteen at newly covered companies is not "16 new roles"
+    many = [jobs[0]] + [dict(jobs[2], title=f"Analyst {i}", url=f"https://b/{i}") for i in range(15)]
+    t16, _ = D.build_markdown(many, "2026-08-30", {"new": 16})
+    assert t16.startswith("🎯 16 new analytics roles (1 posted in the last 48h, 15 at newly covered companies)")
+    # the shape is the ROLE bullet, not any bold bullet: a foreign audit line carrying the
+    # location glyph (a scraped board name, say) is not counted, and the count runs over the
+    # whole delivered body — the same text the morning check greps
+    evil = {"new": 1, "fetch_health": ["changed today: Boom · 📍 X"], "dead_sources": ["src · 📍 Y"],
+            "roles": ["open 1 · 📍 Z"]}
+    t_e, b_e = D.build_markdown(jobs[:1], "2026-08-30", evil)
+    assert "📍 X" in b_e and "📍 Y" in b_e and D._subject_vs_body(t_e, b_e) == "" and "subject says" not in b_e
+    assert D._subject_vs_body(title, body) == ""
+    assert "1 hidden: mangled title" in body and "subject says" not in body
+    # the tripwire is a real one: two independent derivations, and it names both numbers
+    m = D._subject_vs_body("🎯 5 new analytics roles — 2026-08-30", body)
+    assert "5" in m and "4" in m and "subject" in m
+    assert D._subject_vs_body("digest 2026-08-30 — the email could not be rendered", body)
+    # ...and reaches the mail above the fold when they disagree (a future format change)
+    saved = D._ROLE_BULLET
+    D._ROLE_BULLET = re.compile(r"^- \*\*[^\n]*?\*\* · 📍 NOWHERE", re.M)
+    try:
+        title_x, body_x = D.build_markdown(jobs[:1], "2026-08-30", {"new": 1})
+    finally:
+        D._ROLE_BULLET = saved
+    assert "- **Render:** email subject says 1 roles, the body carries 0" in body_x
+    # the zero mail states zero, over a body that says so
+    t0, b0 = D.build_markdown([], "2026-08-30", {"new": 0})
+    assert t0 == "🎯 0 new analytics roles — 2026-08-30" and D._subject_vs_body(t0, b0) == ""
+    # and the H1 is line 1, dated — the relay's `head -1` contract
+    assert body.splitlines()[0] == f"# {title}" and "2026-08-30" in title
+
+
+def test_same_posting_under_two_names_is_named_as_that_not_as_a_guess():
+    """2026-08-30: `shared-board Bounce AI/finbounce — one posting may be under the wrong
+    name` and the same for Checkout/Checkout.com. The store said something stronger: ONE
+    posting url (Comeet 3E.E6D; Ashby 9bf673a0) under two registry rows. Named as
+    `same-posting`, with the lane that parks the duplicate row; the guesses stay silent
+    about that pair. Measured on the live ledger the day it shipped: exactly those two
+    pairs, zero false ones. The query is KEPT because on a company site it is the posting
+    (`?gh_jid=`, 11 rows); aggregator hosts never reach it — `_AGGREGATOR_HOST` is what keeps
+    six Indeed employers off one key, not the query. A board root (`/careers`) is nobody's
+    posting: two rows stored with a listing page as their role url are not a duplicate."""
+    from pipeline import digest, rolecard
+    build = lambda **k: rolecard.build(_job(**k), "2026-08-30")
+    cards = [build(company="Bounce AI", title="Data Analyst", mkey="ba|1",
+                   url="https://www.comeet.com/jobs/bounce/E9.00C/data-analyst/3E.E6D"),
+             build(company="finbounce", title="Data Analyst Senior", mkey="fb|1",
+                   url="https://www.comeet.com/jobs/bounce/E9.00C/data-analyst/3E.E6D"),
+             build(company="Checkout.com", title="Fraud Data Analyst", mkey="c|1",
+                   url="https://jobs.ashbyhq.com/checkout.com/9bf673a0/?src=li"),
+             build(company="Checkout", title="Fraud Data Analyst", mkey="k|1",
+                   url="https://jobs.ashbyhq.com/checkout.com/9bf673a0/application")]
+    issues = rolecard.cross_check(cards)
+    assert set(issues) == {"same-posting Bounce AI/finbounce", "same-posting Checkout/Checkout.com"}, issues
+    assert rolecard.same_employer("Checkout", "Checkout.com") and rolecard.same_employer("Investing", "Investing.com")
+    assert not rolecard.same_employer("Check", "Checkout.com")
+    # a domain folds; a bare word that happens to be a TLD does not (wave 1: `Green Net`)
+    for a, b in (("Green", "Green Net"), ("Zim", "Zim Org"), ("Team", "Team Net")):
+        assert not rolecard.same_employer(a, b), (a, b)
+    # one pair on six posting urls is one issue, not six (Siemens on scraped_cache, 08-30)
+    six = [build(company=c, url=f"https://jobs.siemens.com/careers/job/{i}", mkey=f"{c}{i}")
+           for i in range(6) for c in ("Siemens Israel", "Siemens Digital Industries Software")]
+    assert [i for i in rolecard.cross_check(six) if i.startswith("same-posting")] == \
+        ["same-posting Siemens Digital Industries Software/Siemens Israel"]
+    # the key is injective and order-free on the query
+    assert rolecard._posting_key("https://x.com/a/b?b=1&a=2") == rolecard._posting_key("https://x.com/a/b?a=2&b=1")
+    assert rolecard._posting_key("https://x.com/a/b?k=v%26z=w") != rolecard._posting_key("https://x.com/a/b?k=v&z=w")
+    # shared-board on a name triple does not depend on set order (`same_employer` is not transitive)
+    triple = [build(company=c, url=f"https://www.comeet.com/jobs/onezero/11.00C/x/{i}", mkey=c)
+              for i, c in enumerate(("ONE ZERO BANK", "ONE ZERO Digital Bank", "one zero"))]
+    assert rolecard.cross_check(triple) == rolecard.cross_check(list(reversed(triple)))
+    # the query is identity, not noise: six employers on one aggregator host are nobody's
+    # posting, and two Greenhouse-embedded postings differ only by `?gh_jid=`
+    indeed = [build(company=f"Co{i}", url=f"https://il.indeed.com/viewjob?jk={i}", mkey=str(i)) for i in range(6)]
+    assert rolecard.cross_check(indeed) == []
+    gh = [build(company="A", url="https://x.com/careers?gh_jid=1&utm_source=li", mkey="a"),
+          build(company="B", url="https://x.com/careers?gh_jid=2", mkey="b")]
+    assert not any(i.startswith("same-posting") for i in rolecard.cross_check(gh))
+    assert rolecard._posting_key("https://x.com/careers?gh_jid=1&utm_source=li") == "x.com/careers?gh_jid=1"
+    assert rolecard._posting_key("https://x.com/j?src=li&gh_jid=1") == "x.com/j?gh_jid=1"
+    assert rolecard._posting_key("https://il.linkedin.com/jobs/view/1") == ""
+    # a board root or a listing page under two names is not one posting under two names
+    for root in ("https://www.port.io/careers", "https://acme.com/careers/all-positions",
+                 "https://acme.com/", "https://boards.greenhouse.io/acme/jobs",
+                 # a listing page with a FILTER query is still a listing page (wave 2)
+                 "https://acme.com/careers?dept=data", "https://www.nestlejobs.com/job-search?location=Israel",
+                 # a Comeet tenant page is three segments; a posting is five
+                 "https://www.comeet.com/jobs/finbounce/E9.00C"):
+        assert rolecard._posting_key(root) == "", root
+        two = [build(company=c, url=root, mkey=c) for c in ("A", "B")]
+        assert not any(i.startswith("same-posting") for i in rolecard.cross_check(two)), root
+    assert rolecard._posting_key("https://boards.greenhouse.io/acme/jobs/123") == "boards.greenhouse.io/acme/jobs/123"
+    assert rolecard._posting_key("https://acme.com/careers?gh_jid=77") == "acme.com/careers?gh_jid=77"
+    assert rolecard._posting_key("https://acme.com/careers?jobId=77&dept=data") == "acme.com/careers?dept=data&jobId=77"
+    assert rolecard._posting_key("https://www.comeet.com/jobs/bounce/E9.00C/data-analyst/3E.E6D") == "www.comeet.com/jobs/bounce/e9.00c/data-analyst/3e.e6d"
+    # three names on one deep url is a listing page stored as a posting, not a duplicate
+    three = [build(company=c, url="https://acme.com/en/careers/data/analyst", mkey=c) for c in ("A", "B", "C")]
+    assert not any(i.startswith("same-posting") for i in rolecard.cross_check(three))
+    # what the reader sees: a fact and the lane, on both products, and the guesses still
+    # named for a pair that is NOT the same posting — filter first, then cap
+    r = digest.render_all([], cards, cards, "2026-08-30", {"paths": {}}, {})
+    assert ("render: same-posting Bounce AI/finbounce — one posting url under two employer names — the "
+            "same posting twice, or a listing page stored as one; two registry rows read one board "
+            "(lane: registry)") in r["warnings"]
+    assert "shared-board" not in r["md_body"] and "title-twin" not in r["md_body"]
+    assert "- **Render:** board 4 cards, same-posting Bounce AI/finbounce, same-posting Checkout/Checkout.com" in r["md_body"]
+    # the board and the archive raise the same pair once in the mail, not twice
+    assert r["md_body"].count("same-posting Bounce AI/finbounce — ") == 1
+    # one slot per shape before any shape takes a second (three same-posting pairs must not
+    # push the only shared-board off the mail), and a shape outside the three takes none
+    got = digest._wrong_name_alarms(["same-posting A/B", "same-posting C/D", "same-posting E/F",
+                                     "shared-board G/H", "title-twin I/J"])
+    assert [g.split(" — ")[0] for g in got] == ["same-posting A/B", "shared-board G/H", "title-twin I/J"]
+    assert digest._wrong_name_alarms(["display-collision X/Y"] * 3 + ["shared-board A/B"]) == [
+        "shared-board A/B — one posting may be under the wrong name, check the card"]
+
+
+def test_the_board_and_archive_link_the_dataset_and_never_claim_its_count_statically():
+    """The public dataset (`cloud_state/roles.csv`, roles lane) is published beside the board
+    by the same workflow step, and the board said nothing about it. Its population is not
+    the board's — a 60-day window on `last_seen`, closed roles included, over a store that
+    began observing on 2026-08-16 — so the page states no number of its own: the count,
+    window and coverage caveat come from `roles.csv.meta.json`, read by the page from the
+    file itself, with `textContent`, and the static sentence stays when that fails."""
+    from pipeline import digest
+    j = _job(desc=_JD)
+    r = digest.render_all([], [j], [j], "2026-08-30", {"paths": {}}, {})
+    import re
+    assert "this page lists only the open ones" in r["board_html"]
+    assert "this page lists only the closed ones" in r["archive_html"]   # the archive IS the closed ones
+    for page in (r["board_html"], r["archive_html"]):
+        assert '<a href="roles.csv" download>Dataset (CSV)</a>' in page
+        assert '<a href="roles.csv.meta.json">columns</a>' in page
+        span = page.split('id="ds"')[1].split("</span>")[0]
+        assert "one row per role, open and closed" in span
+        assert not re.search(r"\d", span)                     # the page states no number of its own
+        # the per-page clause is OUTSIDE the span, so the script cannot erase it (wave 1)
+        assert "this page lists only the" not in span and "this page lists only the" in page
+        assert "fetch('roles.csv.meta.json')" in page and "ds.textContent=" in page
+        assert "if(!r.ok)throw 0" in page and ".catch(function(){})" in page   # failure keeps the static text
+        assert "typeof d.rows!=='number'" in page               # `null >= 0` is true in JS
+        assert "innerHTML" not in page
+        assert "fully_covered" in page and "earliest_first_seen" in page     # the caveat is read, not assumed
+        assert page.count("roles.csv.meta.json") == 2
+
+
+def test_a_zero_inline_fill_morning_is_a_number_not_an_absence():
+    """BACKLOG 263: `JDs fetched inline: N` was printed only when N was truthy, so a `0/148`
+    morning — the one state a reader most needs to see — rendered identically to a run where
+    the inline filler was never switched on."""
+    from pipeline import digest as D
+    _, body = D.build_markdown([], "2026-08-30", {"jd_filled_inline": 0})
+    assert "- LLM calls this run: 0 · JDs fetched inline: 0" in body
+    _, body = D.build_markdown([], "2026-08-30", {})
+    assert "JDs fetched inline" not in body                     # the filler was never on: no counter
 
 
 def test_also_listed_as_reaches_all_three_products_escaped():

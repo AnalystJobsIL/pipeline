@@ -23,7 +23,7 @@ from __future__ import annotations
 import datetime as _dt
 import re
 from collections import Counter
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qsl, urlencode
 
 from . import jdtext, roleprofile
 from .company_info import _JUNK_OUT
@@ -315,12 +315,67 @@ def _tenant(url):
     return host
 
 
+# The query is KEPT: on a company site it is the posting — `?gh_jid=` (11 rows in the store on
+# 2026-08-30) and `?ContentID=` (1). What is dropped is a tracking key; none of these occurs on
+# any non-aggregator url in the store today, so the set is defensive. Aggregator urls (`?jk=`
+# on Indeed, `?_l=` on LinkedIn) never reach the query: `_AGGREGATOR_HOST` returns '' first,
+# and THAT — not the query — is what keeps six Indeed employers off one key.
+_TRACKING_KEYS = {"_l", "src", "source", "ref", "coref", "gh_src", "utm_source", "utm_medium",
+                  "utm_campaign", "utm_content", "utm_term"}
+_POSTING_MAX = 2        # one posting belongs to at most two rows; three names on one url is a listing page
+# a url that is a board's root, not a posting: two rows stored with `https://x.com/careers` as
+# the role url are one LISTING PAGE under two names, not one posting (wave 1) — the strongest
+# claim in the mail is not made on a url with no path beyond the tenant, or ending in one of these
+_ROOT_WORDS = {"careers", "career", "jobs", "job", "openings", "open-positions", "positions",
+               "all-positions", "vacancies", "join-us", "joinus", "work-with-us", "opportunities"}
+# on a root path only a query key that names a POSTING makes it one: `?gh_jid=` (Greenhouse
+# embedded), `?ContentID=`, `?jobId=`, `?p=` — never `?dept=` / `?location=` (listing filters)
+_ID_KEY = re.compile(r"(?:^|[_-])(?:id|jid|nr|no)$|^p$|job|position|posting|opening|vacancy|req", re.I)
+_COMEET_POSTING_SEGS = 5     # jobs/<slug>/<token>/<title>/<id>; three segments is the tenant's listing
+
+
+def _posting_key(url):
+    """The POSTING a card was read from — not the board it sits on (`_tenant`). Two cards
+    with one key under two company names are one posting published twice. Host + path,
+    lower-cased, a trailing `/application` (Ashby's apply page) and `/` dropped, the query
+    kept minus tracking keys; '' on an aggregator, whose url names nobody's posting, and ''
+    on a board root or listing page (`_ROOT_WORDS`). Misses, by design — they cost recall,
+    never a false pair: the same Greenhouse posting under `boards.` and `job-boards.` hosts,
+    Lever's `/apply` variant, `www.` vs bare host."""
+    try:
+        p = urlparse(_s(url, 2000))
+    except ValueError:
+        return ""
+    host = p.netloc.lower().split("@")[-1].split(":")[0]
+    if not host or _AGGREGATOR_HOST.search(host):
+        return ""
+    path = p.path.lower()
+    if path.endswith("/application"):
+        path = path[:-len("/application")]
+    path = path.rstrip("/")
+    q = urlencode(sorted((k, v) for k, v in parse_qsl(p.query, keep_blank_values=True)
+                         if k.lower() not in _TRACKING_KEYS))
+    segs = [x for x in path.split("/") if x]
+    rooty = len(segs) < 2 or segs[-1] in _ROOT_WORDS or segs[-1] in _EXTRA_PLUMBING
+    id_in_query = any(_ID_KEY.search(k) for k, _ in parse_qsl(p.query, keep_blank_values=True))
+    if rooty and not id_in_query:
+        return ""                                 # a board root or a listing page, nobody's posting
+    if "comeet.co" in host and len(segs) < _COMEET_POSTING_SEGS:
+        return ""                                 # `jobs/<slug>/<token>` is the tenant, not a posting
+    return f"{host}{path}?{q}" if q else f"{host}{path}"
+
+
 # a name and the same name plus one of these is one employer (Kornit / Kornit Digital, Port /
 # Port.io, Siemens / Siemens EDA, HP / HP Indigo, one zero / ONE ZERO BANK) — but not plus an
 # arbitrary word: Aleph / Aleph Farms and Papaya Gaming / Papaya Global are two companies
 _SITE_WORDS = {"digital", "eda", "io", "ai", "bank", "israel", "technologies", "technology", "tech",
                "group", "labs", "ltd", "inc", "indigo", "holdings", "international", "systems",
                "software", "solutions", "media", "web", "services", "corp", "corporation"}
+# a name written as its domain is the name: Checkout.com / Checkout, Investing.com / Investing.
+# On the RAW name, never on the key — `identity_key` has already turned the dot into a space,
+# and as key words `net`/`org` would fold `Green Net` onto `Green` (wave 1). Measured over every
+# pair of the 1,099 active names on 2026-08-30: exactly one fold, Checkout.
+_DOMAIN_TAIL = re.compile(r"\.(?:com|net|org|co|io|ai)\s*$", re.I)
 _PARENT = re.compile(r"\(([^)]{2,40})\)\s*$")
 
 
@@ -338,6 +393,9 @@ def same_employer(a, b):
         return True
     if ra.lower().replace(" ", "") == rb.lower().replace(" ", ""):
         return True
+    if _DOMAIN_TAIL.search(ra) or _DOMAIN_TAIL.search(rb):
+        if identity_key(_DOMAIN_TAIL.sub("", ra)) == identity_key(_DOMAIN_TAIL.sub("", rb)):
+            return True
     for x, y in ((ka, kb), (kb, ka)):
         if y.startswith(x + " ") and all(w in _SITE_WORDS for w in y[len(x):].split()):
             return True
@@ -364,6 +422,10 @@ def cross_check(cards):
     """Issues visible only ACROSS the cards of one product. Mutates `display_company` where
     two different employers would otherwise share a cell. Returns short strings for the mail:
 
+      same-posting A/B      one posting url under two company names (Checkout / Checkout.com
+                            on one Ashby id) — two registry rows read one board; the two guesses
+                            below stay silent about that PAIR (a third name on the same tenant
+                            is still a shared board) — look, then park the duplicate row
       shared-board A/B      two employers (not one under two spellings) whose cards were read
                             from one ATS tenant (Scopio Labs and Sckipio on one Comeet board):
                             the attribution is whatever `roles._winner` decided — look
@@ -379,6 +441,23 @@ def cross_check(cards):
     issues = []
     cards = [c for c in cards if isinstance(c, dict)]
     names = sorted({c["company"] for c in cards if c.get("company")})
+    # (0) one POSTING, two names — a fact, not a guess, so it is named first and the two
+    # guesses below stay silent about the pair (2026-08-30: Checkout / Checkout.com on one
+    # Ashby id, Bounce AI / finbounce on one Comeet id, both read as "shared-board … may be
+    # under the wrong name" when the data said "the same posting, twice"). More than
+    # `_POSTING_MAX` names on one url is a listing page stored as a posting, not a duplicate.
+    by_posting = {}
+    for c in cards:
+        k = _posting_key(c.get("url"))
+        if k and c.get("company"):
+            by_posting.setdefault(k, set()).add(c["company"])
+    same_posting = set()
+    for k, ns in by_posting.items():
+        if 1 < len(ns) <= _POSTING_MAX:
+            pair = tuple(sorted(ns))
+            if pair not in same_posting:
+                same_posting.add(pair)
+                issues.append(f"same-posting {'/'.join(pair)}")
     # (a) one tenant, two employers
     by_tenant = {}
     for c in cards:
@@ -388,10 +467,10 @@ def cross_check(cards):
     seen = set()
     for t, ns in by_tenant.items():
         distinct = []
-        for n in ns:
+        for n in sorted(ns):                       # `same_employer` is not transitive: fix the order
             if not any(same_employer(n, d) for d in distinct):
                 distinct.append(n)
-        if 1 < len(distinct) <= _PLATFORM_MAX:
+        if 1 < len(distinct) <= _PLATFORM_MAX and tuple(sorted(ns)) not in same_posting:
             key = _names(ns)
             if key not in seen:
                 seen.add(key)
@@ -404,7 +483,8 @@ def cross_check(cards):
         ns = sorted(ns)
         for i in range(len(ns)):
             for j in range(i + 1, len(ns)):
-                if same_employer(ns[i], ns[j]) and ns[i] != ns[j]:
+                if (same_employer(ns[i], ns[j]) and ns[i] != ns[j]
+                        and (ns[i], ns[j]) not in same_posting):
                     issues.append(f"title-twin {ns[i]}/{ns[j]}")
     # (b) two employers, one short name — judged on the names as written, because the
     # identity key strips exactly the suffixes the short name drops

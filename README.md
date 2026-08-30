@@ -9,6 +9,10 @@ at **any experience level**, and a daily email of what is new.
   to the post there.
 - **The archive** → https://analystjobsil.github.io/board/archive.html — roles that have
   come off their employer's page. Nothing is deleted.
+- **The dataset** → https://analystjobsil.github.io/board/roles.csv — one row per role, open
+  and closed, on a rolling 60-day window that the pipeline has only been filling since
+  2026-08-16; `roles.csv.meta.json` documents every column and says how much of the window is
+  covered (linked from the board's footer).
 - **The email** — once a day, only roles posted in the last 48h, grouped by company.
 
 The point of the design: **an employer's own careers board is the source of truth, not an

@@ -95,7 +95,12 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     firmographics = firmographics or {}
     ledger = ledger or {}
     render_issues = render_issues or {"lines": [], "alarms": []}
-    email_cards = []
+    # Two sinks, one per section, filled by `_render` with the cards it actually EMITTED (a
+    # mangled title is dropped before it reaches either). The subject is computed from these
+    # AFTER the body is rendered — never from the input lists: from 2026-08-2x to 08-30 the
+    # H1 counted `fresh_jobs` alone while the body carried both sections, and 7 of 12 mails
+    # went out saying "6 new roles" over 13 bullets (`docs/sessions/2026-08-30-render.md`).
+    fresh_cards, newco_cards = [], []
     # Roles at an employer this digest has never scanned before. `_posted_in` refuses to
     # call their back catalogue 48h-fresh — correctly, we have no idea when they were
     # posted — but they are news to the reader, so they get their own honest heading
@@ -103,18 +108,6 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     fresh_jobs = [j for j in jobs if not j.get("_new_company")]
     new_co_jobs = [j for j in jobs if j.get("_new_company")]
     jobs = fresh_jobs
-    n = len(jobs)
-    # No level adjective. "senior" was shorthand for the experience bar the operator removed
-    # on 2026-08-28 (docs/decisions/2026-08-28-analyst-scope.md) — and it was already false
-    # before that: 36 of the 72 roles on the board that morning carried no seniority marker
-    # in the title at all. This line is the mail's SUBJECT (the relay makes the issue title
-    # from it), so it is the one sentence that cannot afford a qualifier it has no room for;
-    # the level nuance is one line below, in the subtitle.
-    title = f"🎯 {n} new analytics role{'' if n == 1 else 's'} — {run_date}"
-    if new_co_jobs and not n:
-        title = (f"🎯 {len(new_co_jobs)} analytics role"
-                 f"{'' if len(new_co_jobs) == 1 else 's'} at newly covered companies "
-                 f"— {run_date}")
 
     by_company = {}
     for j in jobs:
@@ -125,58 +118,40 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     companies = sorted(by_company, key=lambda c: max(str(x.get("posted_date") or "")
                                                      for x in by_company[c]), reverse=True)
 
-    lines = [f"# {title}", "",
-             # "excluded", not "out of scope": the docs lane wrote the weaker word on
-             # 2026-08-28 because `_NOT_A_JOB` was only enumerated in the singular and
-             # `Data Analyst Interns` was accepted. 375@classifier closed the class in both
-             # alphabets and pinned every variant, so the stronger promise is now the true
-             # one. Do not strengthen it further: a title that never says "internship" still
-             # reaches the LLM tier, which is judgement rather than exclusion.
-             "Israeli high-tech scan — data / BI / analytics roles from the **last 48h**, "
-             "freshest first. Any experience level; internships and student placements are "
-             "excluded. Each role title links to apply.", ""]
-    if board_url:
-        lines += [f"🔎 **[Open the full board →]({board_url})** — every role still open, "
-                  "searchable & sortable.", ""]
-    if n == 0:
-        lines.append("_Nothing posted in the last 48h at a company we already track._"
-                     if new_co_jobs else "_No new matching openings today._")
-    over = stats.get("email_overflow") or 0
-    if over:
-        lines += [f"> {over} further new roles matched today and did not fit this email. "
-                  f"They are on the board now, and they lead tomorrow's digest — nothing "
-                  f"is dropped.", ""]
-
+    # The body's sections. The header (title, subtitle, board link, zero-copy) is built
+    # LAST, from what these sections actually carry — see `head` below.
+    lines = []
     email_hidden = [0]
 
-    def _render(company, jobs_c, dated=True):
+    def _render(company, jobs_c, out, sink, dated=True):
+        """Append one company's block to `out`; the cards it emitted go to `sink`."""
         cards = [rolecard.build(j, run_date, ledger_rec=ledger.get(j.get("mkey")),
                                 company_info=company_info, firmographics=firmographics) for j in jobs_c]
         email_hidden[0] += sum(1 for c in cards if c["mangled"])
         cards = [c for c in cards if not c["mangled"]]     # a card blob is not a role, in the mail either
         if not cards:
             return
-        email_cards.extend(cards)
+        sink.extend(cards)
         about = cards[0]["about"]
-        head = f"### {_md_esc(company)}"
+        heading = f"### {_md_esc(company)}"
         also = sorted({n for c in cards for n in c["also_listed_as"]})
         if also:
-            head += f" _(also listed as {_md_esc(', '.join(also))})_"
-        lines.append(head)
+            heading += f" _(also listed as {_md_esc(', '.join(also))})_"
+        out.append(heading)
         if about:
-            lines.append(f"_{_md_blurb(about)}_")
+            out.append(f"_{_md_blurb(about)}_")
         facts = rolecard.firmo_facts(firmographics.get(company))
         if facts:
             # inside a code span markdown takes the text literally, so escaping it only
             # prints the backslashes: `\~16,068 employees`. Strip backticks instead, which
             # are the one character that could break out of the span.
-            lines.append("`" + "` · `".join(f.replace("`", "'") for f in facts) + "`")
-        lines.append("")
+            out.append("`" + "` · `".join(f.replace("`", "'") for f in facts) + "`")
+        out.append("")
         for c in cards:
             title_txt = c["title"] + (" (Hebrew)" if c["hebrew_title"] else "")
             su = _safe_url(c["url"])
-            head = (f"**{_md_esc(title_txt)}** — {su}" if su
-                    else f"**{_md_esc(title_txt)}**")
+            bullet = (f"**{_md_esc(title_txt)}** — {su}" if su
+                      else f"**{_md_esc(title_txt)}**")
             chip = c["raw_chip"]
             posted = c["posted"]
             meta = [f"📍 {c['loc']}"]
@@ -186,25 +161,84 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
                         else ("🗓 date not published" if not dated else "🗓 —"))
             if chip:
                 meta.append(f"🎓 {chip}")
-            lines.append(f"- {head} · {' · '.join(meta)}")
-        lines.append("")
+            out.append(f"- {bullet} · {' · '.join(meta)}")        # THE role-bullet shape: `_ROLE_BULLET`
+        out.append("")
 
     for company in companies:
-        _render(company, by_company[company])
+        _render(company, by_company[company], lines, fresh_cards)
 
-    if new_co_jobs:
-        by_new = {}
-        for j in new_co_jobs:
-            by_new.setdefault(j["company"], []).append(j)
+    # The newly-covered section is rendered into its own list first, so its heading can
+    # count the companies that actually produced a bullet — not the input list.
+    newco_lines, newco_companies = [], 0
+    by_new = {}
+    for j in new_co_jobs:
+        by_new.setdefault(j["company"], []).append(j)
+    for company in sorted(by_new):
+        before = len(newco_cards)
+        _render(company, by_new[company], newco_lines, newco_cards, dated=False)
+        if len(newco_cards) > before:
+            newco_companies += 1
+    if newco_cards:
         lines += ["---", "",
-                  f"## Newly covered companies ({len(by_new)})", "",
+                  f"## Newly covered companies ({newco_companies})", "",
                   "Employers this scan reached for the **first time**, with whatever they "
                   "have open now — so these are not 48h-new, they are new *to you*. Where a "
                   "posting states its date it is shown; scraped cards often do not, and "
                   "\"we first saw it today\" is not a publication date. From tomorrow these "
-                  "companies report like every other.", ""]
-        for company in sorted(by_new):
-            _render(company, by_new[company], dated=False)
+                  "companies report like every other.", ""] + newco_lines
+
+    # THE SUBJECT. Counted from the cards the two sections emitted — F from the 48h section,
+    # C from the newly-covered one — so the number is the number of role bullets below it.
+    # No level adjective: "senior" was shorthand for the experience bar the operator removed
+    # on 2026-08-28 (docs/decisions/2026-08-28-analyst-scope.md), and it was already false
+    # before that. This line is the mail's SUBJECT (the relay makes the issue title from it),
+    # so it is the one sentence that cannot afford a qualifier; the split is in the subtitle.
+    # When nothing is 48h-fresh the wording says what the mail IS, because every bullet in
+    # it is then one the body itself says is NOT 48h-new.
+    F, C = len(fresh_cards), len(newco_cards)
+    email_cards = fresh_cards + newco_cards
+    if F and C:
+        # the split is IN the subject: "16 new roles" over one 48h role and fifteen at newly
+        # covered companies would be the old defect inverted (wave 1), and the inbox list
+        # shows no subtitle. The first number is still the number of bullets.
+        title = (f"🎯 {F + C} new analytics roles ({F} posted in the last 48h, {C} at newly "
+                 f"covered companies) — {run_date}")
+    elif F:
+        title = f"🎯 {F} new analytics role{'' if F == 1 else 's'} — {run_date}"
+    elif C:
+        title = (f"🎯 {C} analytics role{'' if C == 1 else 's'} at newly covered companies "
+                 f"— {run_date}")
+    else:
+        title = f"🎯 0 new analytics roles — {run_date}"
+    head = [f"# {title}", "",
+            # "excluded", not "out of scope": the docs lane wrote the weaker word on
+            # 2026-08-28 because `_NOT_A_JOB` was only enumerated in the singular and
+            # `Data Analyst Interns` was accepted. 375@classifier closed the class in both
+            # alphabets and pinned every variant, so the stronger promise is now the true
+            # one. Do not strengthen it further: a title that never says "internship" still
+            # reaches the LLM tier, which is judgement rather than exclusion.
+            # the sentence follows the subject's case: a morning with no 48h role must not
+            # open with "roles from the last 48h" over a section that says they are not
+            ("Israeli high-tech scan — data / BI / analytics roles. Nothing posted in the last "
+             f"48h at a company we already track; the {C} role{'' if C == 1 else 's'} below "
+             f"{'is' if C == 1 else 'are'} at employers covered for the first time"
+             if C and not F else
+             "Israeli high-tech scan — data / BI / analytics roles from the **last 48h**, "
+             "freshest first"
+             + (f" — {C} of the {F + C} {'is' if C == 1 else 'are'} at employers covered for "
+                f"the first time, in their own section below" if C else ""))
+            + ". Any experience level; internships and student placements are "
+            "excluded. Each role title links to apply.", ""]
+    if board_url:
+        head += [f"🔎 **[Open the full board →]({board_url})** — every role still open, "
+                 "searchable & sortable.", ""]
+    if not F and not C:
+        head += ["_No new matching openings today._", ""]
+    over = stats.get("email_overflow") or 0
+    if over:
+        head += [f"> {over} further new roles matched today and did not fit this email. "
+                 f"They are on the board now, and they lead tomorrow's digest — nothing "
+                 f"is dropped.", ""]
 
     # anything WRONG stands above the fold, bold, where a reader who never expands the audit
     # still sees it (docs/BACKLOG.md 127); the counts stay collapsed below
@@ -214,8 +248,7 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     _email_frag, _email_alarms = rolecard.report(email_cards, email_hidden[0])
     if _email_issues:
         _email_frag += ", " + _capped(_email_issues, 6)
-        _email_alarms += [f"{i} — one posting may be under the wrong name, check the card"
-                          for i in _email_issues[:3] if i.startswith(("shared-board", "title-twin"))]
+        _email_alarms += _wrong_name_alarms(_email_issues)
     render_issues.setdefault("lines", []).append(f"email {_email_frag}")
     # the email's own alarms join the board's, so run.py's ::warning:: lines carry them too
     render_issues.setdefault("alarms", []).extend(a for a in _email_alarms if a not in render_issues["alarms"])
@@ -225,40 +258,90 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
         alarms.append("- **Registry:** " + "; ".join(_md_line(x) for x in s["registry_alarms"]))
     if s.get("stage_alarms"):
         alarms.append("- **Stages:** " + "; ".join(_md_line(x) for x in s["stage_alarms"]))
-    _render_alarms = list(render_issues.get("alarms") or [])
-    if _render_alarms:
-        alarms.append("- **Render:** " + "; ".join(_md_alarm(a) for a in _render_alarms))
-    if alarms:
-        lines += ["---", "**Needs a look**", ""] + alarms + [""]
     # collapsed audit so the email stays clean but is still verifiable
     paths = ", ".join(f"{k}={v}" for k, v in sorted(s.get("paths", {}).items()))
-    lines += [
-        "---",
-        "<details><summary>Run audit</summary>", "",
+    audit = [
         f"- Companies scanned: **{s.get('companies_scanned',0)}** (failed: {s.get('companies_failed',0)})",
         f"- Jobs fetched: {s.get('jobs_fetched',0)} · Israel-matched: {s.get('israel_matched',0)}",
         f"- Accepted: {s.get('accepted',0)} · after merge: {s.get('after_merge',0)} · **new: {s.get('new',0)}**",
         f"- Decision paths: {_md_line(paths)}",
         f"- LLM calls this run: {s.get('llm_calls',0)}"
-        + (f" · JDs fetched inline: {s.get('jd_filled_inline', 0)}" if s.get("jd_filled_inline") else ""),
+        # printed whenever the counter EXISTS, zero included: a `0/148` morning used to render
+        # identically to a run where the inline filler was never switched on (BACKLOG 263)
+        + (f" · JDs fetched inline: {s.get('jd_filled_inline') or 0}" if "jd_filled_inline" in s else ""),
     ]
     if s.get("first_scan"):
-        lines.append(f"- At newly covered companies: {s['first_scan']}")
+        audit.append(f"- At newly covered companies: {s['first_scan']}")
     if s.get("email_overflow"):
-        lines.append(f"- Held over (email cap): {s['email_overflow']}")
+        audit.append(f"- Held over (email cap): {s['email_overflow']}")
     for _line in s.get("fetch_health") or []:
-        lines.append("- **Boards** " + _md_line(_line))
+        audit.append("- **Boards** " + _md_line(_line))
     if s.get("company_intel"):
-        lines.append("- **Company intel:** " + "; ".join(_md_line(x) for x in s["company_intel"]))
+        audit.append("- **Company intel:** " + "; ".join(_md_line(x) for x in s["company_intel"]))
     if s.get("roles"):
-        lines.append("- **Roles:** " + "; ".join(_md_line(x) for x in s["roles"]))
-    lines.append("- **Render:** " + " · ".join(_md_line(x) for x in render_issues["lines"]))
+        audit.append("- **Roles:** " + "; ".join(_md_line(x) for x in s["roles"]))
+    audit.append("- **Render:** " + " · ".join(_md_line(x) for x in render_issues["lines"]))
     if s.get("stages"):
-        lines.append(f"- Stage order: {_md_line(s['stages'])}")
+        audit.append(f"- Stage order: {_md_line(s['stages'])}")
     if s.get("failed_companies"):
-        lines.append("- Failed companies: " + _md_line(_capped(s["failed_companies"])))
-    lines += ["", "</details>"]
-    return title, "\n".join(lines)
+        audit.append("- Failed companies: " + _md_line(_capped(s["failed_companies"])))
+    # The tripwire for the subject rule: the number the subject states is re-derived from the
+    # TEXT of the whole delivered body (every role bullet has one shape, `_ROLE_BULLET`) —
+    # the same text `grep -cE` counts in the morning check — and compared. Two independent
+    # derivations: if a future edit changes the bullet shape, the counting, or lets a foreign
+    # line grow the shape, the mismatch is a bold line in this mail, not a silent wrong
+    # subject in the reader's inbox. Only the Render alarm line itself is not yet in the text.
+    _mismatch = _subject_vs_body(title, "\n".join(head + lines + alarms + audit))
+    if _mismatch:
+        render_issues["alarms"].append(_mismatch)
+    _render_alarms = list(render_issues.get("alarms") or [])
+    if _render_alarms:
+        alarms.append("- **Render:** " + "; ".join(_md_alarm(a) for a in _render_alarms))
+    if alarms:
+        lines += ["---", "**Needs a look**", ""] + alarms + [""]
+    lines += ["---", "<details><summary>Run audit</summary>", ""] + audit + ["", "</details>"]
+    return title, "\n".join(head + lines)
+
+
+# THE role-bullet shape, as `_render` writes it (`- **title** — url · 📍 loc …`, or without the
+# url when `_safe_url` refused it). `_subject_vs_body` counts these; that f-string is the only
+# place they are written. Change one, change the other — pinned together by
+# test_the_mail_subject_counts_every_role_bullet_the_mail_carries.
+_ROLE_BULLET = re.compile(r"^- \*\*[^\n]*?\*\*(?: — \S+)? · 📍 ", re.M)
+_SUBJECT_N = re.compile(r"^#?\s*🎯 (\d+) ")
+
+
+def _subject_vs_body(title, body):
+    """'' when the number the subject states is the number of role bullets `body` carries;
+    otherwise one sentence naming both, for the mail's Render alarm."""
+    m = _SUBJECT_N.match(str(title or ""))
+    if not m:
+        return f"email subject {str(title or '')[:60]!r} states no role count"
+    said, carried = int(m.group(1)), len(_ROLE_BULLET.findall(str(body or "")))
+    return "" if said == carried else f"email subject says {said} roles, the body carries {carried}"
+
+
+# The cross-check shapes that stand above the fold, and what each one means for the reader.
+# `same-posting` is a FACT (one url, two names) and says so; the other two are the guess the
+# fact replaces. Filter first, then cap at three — the email path used to slice first and
+# could push a real alarm out of the window with a shape it was about to discard.
+_WRONG_NAME = ("same-posting", "shared-board", "title-twin")
+_WRONG_NAME_TEXT = {"same-posting": "one posting url under two employer names — the same posting "
+                                    "twice, or a listing page stored as one; two registry rows read "
+                                    "one board (lane: registry)"}
+
+
+def _wrong_name_alarms(issues, cap=3):
+    """At most `cap` alarms, one per shape before any shape takes a second slot: three
+    same-posting pairs on one morning must not push the only shared-board off the mail."""
+    by_shape = {k: [x for x in issues if x.startswith(k + " ")] for k in _WRONG_NAME}
+    picked = []
+    while len(picked) < cap and any(by_shape.values()):
+        for k in _WRONG_NAME:
+            if by_shape[k] and len(picked) < cap:
+                picked.append(by_shape[k].pop(0))
+    return [f"{i} — {_WRONG_NAME_TEXT.get(i.split(' ', 1)[0], 'one posting may be under the wrong name, check the card')}"
+            for i in picked]
 
 
 def _capped(names, n=8):
@@ -301,8 +384,7 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
     frag, alarms = rolecard.report(cards, hidden)
     if issues:
         frag += ", " + _capped(issues, 6)
-        alarms += [f"{i} — one posting may be under the wrong name, check the card"
-                   for i in [x for x in issues if x.startswith(("shared-board", "title-twin"))][:3]]
+        alarms += _wrong_name_alarms(issues)
     ordered = sorted(cards, key=lambda c: str(c["posted"] or ""), reverse=True)
     n = len(ordered)
 
@@ -520,7 +602,20 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
     if "archived" not in heading:
         contact += ' · <a href="archive.html">Job archive</a>'
     else:
-        contact += ' · <a href="index.html">Back to live board</a>' 
+        contact += ' · <a href="index.html">Back to live board</a>'
+    # THE DATASET (roles lane's file, ARCHITECTURE §7c) is published beside this page by the
+    # same workflow step (`daily-digest.yml`, "Publish the 2-week board"), so a relative link
+    # is correct on Pages and nowhere else. Its population is NOT this page's: a 60-day
+    # window on `last_seen`, closed roles included, and a store that only began observing on
+    # 2026-08-16. So this string states nothing numeric; the script below fills the number,
+    # window and coverage caveat from the file's own `roles.csv.meta.json` — the artefact's
+    # truth, never a count computed here — and leaves this text when it cannot.
+    # The per-page clause sits OUTSIDE the span on purpose: the script replaces the span's
+    # text, and wave 1 found the first cut erasing the one clause the sentence exists for.
+    contact += (' · <a href="roles.csv" download>Dataset (CSV)</a>: '
+                '<span id="ds" aria-live="polite">one row per role, open and closed</span>'
+                ' — this page lists only the ' + ('closed' if archived else 'open') + ' ones'
+                ' · <a href="roles.csv.meta.json">columns</a>')
 
     css = """<style>
 :root{color-scheme:light dark;--bg:#fff;--fg:#141821;--muted:#5b6470;--body:#333a44;--card:#f6f8fa;
@@ -747,6 +842,12 @@ var justRz=false;
 [].slice.call(document.querySelectorAll('[data-skill]')).forEach(function(b){
   b.addEventListener('click',function(){q.value=b.dataset.skill;filt();
     document.querySelector('.tw').scrollIntoView({behavior:'smooth',block:'start'});});});
+var ds=document.getElementById('ds');
+if(ds&&window.fetch){fetch('roles.csv.meta.json').then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){
+  var w=d.window||{},st=d.store||{};if(typeof d.rows!=='number'||!isFinite(d.rows)||d.rows<0||!w.start||!w.end)return;
+  ds.textContent=d.rows+' roles, '+w.start+'..'+w.end+', open and closed'
+    +(w.fully_covered?'':(st.earliest_first_seen?' — observations begin '+st.earliest_first_seen:''))
+    +(d.run_date?'; regenerated '+d.run_date:'');}).catch(function(){});}
 </script>"""
 
     head = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
@@ -1025,7 +1126,7 @@ def render_all(email_jobs, board_jobs, arch_jobs, run_date, stats, company_info=
     for label, rep in (("board", rep_b), ("archive", rep_a)):
         if rep:
             issues["lines"].append(f"{label} {rep['frag']}")
-            issues["alarms"] += rep["alarms"]
+            issues["alarms"] += [a for a in rep["alarms"] if a not in issues["alarms"]]
     # a product that failed is NOT written: run.py keeps yesterday's file on disk, so the
     # public board never shows an apology page (the failure is in the mail and the log)
     out["board_ok"], out["archive_ok"] = board is not None, archive is not None

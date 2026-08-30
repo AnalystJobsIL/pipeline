@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**537 filed · 393 open · 144 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**541 filed · 396 open · 145 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 487.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 491.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@scraper` **open** · `462@registry` **open** |
 
-### registry — 128 open
+### registry — 129 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -222,8 +222,9 @@ closure convention in the header.
 - **477** `477@registry` **386's diagnosis is wrong in one word, and the fix is in `infra`'s file**
 - **478** `478@registry` **`board_verify._mechanical_opinion` disarms the gate's paid rung for every board after
 - **479** `479@registry` **The single-writer "names I rewrote" sets grow across tests**
+- **487** `487@registry` **`Checkout` and `finbounce` are duplicate ACTIVE rows of `Checkout.com` and `Bounce AI`** —
 
-### infra — 104 open
+### infra — 105 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -329,6 +330,7 @@ closure convention in the header.
 - **471** `471@infra` **`schedule_census.py` reports the isolated-drop count and then exits 0**
 - **476** `476@infra` **The fattest mutation class cannot be split, so a fourth shard buys nothing**
 - **481** `481@infra` **`guard_kill` reads a skip as NOT-RUN and cannot tell it from an uncollected test** —
+- **490** `490@infra` **`run.py:803` prints `email (last 48h): N roles` for a count that includes the
 
 ### scraper — 28 open
 
@@ -461,6 +463,25 @@ closure convention in the header.
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 
+### roles — 16 open
+
+- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
+- **3** `3@roles` **`pipeline/dates.py`**
+- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
+- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
+- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
+- **473** `473@roles` **`roles.csv.meta.json` says `published_on_pages: false` on the very page that publishes
+- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
+- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
+
 ### jd-text — 15 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
@@ -479,23 +500,6 @@ closure convention in the header.
 - **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
 - **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 
-### roles — 14 open
-
-- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
-- **3** `3@roles` **`pipeline/dates.py`**
-- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
-- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
-- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
-- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
-- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
-- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
-- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
-- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
-- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
-- **473** `473@roles` **`roles.csv.meta.json` says `published_on_pages: false` on the very page that publishes
-
 ### classifier — 9 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
@@ -508,7 +512,7 @@ closure convention in the header.
 - **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
 - **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
 
-### render — 7 open
+### render — 6 open
 
 - **4** `4@render` **`pipeline/jdtext.py`**
 - **119** `119@render` **`digest._LOC_CANON` and the four seniority vocabularies are copies** *(half closed)*
@@ -516,7 +520,6 @@ closure convention in the header.
 - **149** `149@render` **`same_employer` and `blurb-names-other` are heuristics with a known false-positive
 - **150** `150@render` **A failed email stub replaces yesterday's `digests/latest.md`**
 - **212** `212@render` **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
-- **263** `263@render` **`digest.py` renders a `0/148` inline-fill morning as the ABSENCE of a phrase**
 
 <!-- BACKLOG-INDEX:END -->
 
@@ -4480,7 +4483,7 @@ rule). Numbers re-derived 2026-08-26 against cloud run `32934864207`; re-derive 
     `scrape shell` class after 2026-08-26. The scraper lane already owns a Chromium visit and a
     position-page ladder; these five are the same shape.
 
-263. **`digest.py` renders a `0/148` inline-fill morning as the ABSENCE of a phrase** — lane:
+263. ~~**`digest.py` renders a `0/148` inline-fill morning as the ABSENCE of a phrase**~~ — **CLOSED 2026-08-30 (`render`)**: `JDs fetched inline: N` prints whenever the counter exists, zero included (`test_a_zero_inline_fill_morning_is_a_number_not_an_absence`); the two `build_digest` siblings (`_text_audit`, `_html_audit`) are left as they are — they die with 142. Was: lane:
     `render`, extends item 106. `pipeline/digest.py:230` (and `:897`, `:937`) print
     `· JDs fetched inline: N` only `if s.get("jd_filled_inline")`, so the one state a reader
     most needs to see — the inline filler produced nothing — renders identically to a run where
@@ -8907,4 +8910,45 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      analyst` entry. Each is a `claude -p` call against the 300/day cap; the fix is the
      Hebrew forms beside the English ones plus a stem for `investment analys`. Record:
      `docs/decisions/2026-08-30-discovery-own-domain-sources.md` §3–4.
+## From the `render` lane, 2026-08-30 (the subject line, and one posting under two names)
+
+487. **`Checkout` and `finbounce` are duplicate ACTIVE rows of `Checkout.com` and `Bounce AI`** —
+     lane: `registry`. `Checkout` (`scrape`, `https://www.checkout.com/jobs`, note `auto-expand
+     scrape; 2 IL`, 08-30) reads the same Ashby posting `9bf673a0-…` as `Checkout.com` (`ashby`,
+     active since 08-21); `finbounce` (`scrape`, `https://www.comeet.com/jobs/finbounce/E9.00C`,
+     `listing-hunt 2026-08-29`) reads the same Comeet tenant `E9.00C` as `Bounce AI` (`comeet`) —
+     finbounce.com IS Bounce AI (both firmographics: AI debt-recovery fintech, Pagaya seed, Nyca
+     round). Each pair published one posting twice: the 08-30 mail listed both under *Newly
+     covered companies* (Checkout.com's role had been mailed on 08-23) and `cloud_state/roles.csv`
+     carries each role twice. The mail now names the shape as `same-posting A/B` (§7d) every
+     morning until the duplicate row is parked; a third instance already sits superseded in the
+     store (`OTORIO` = `Armis`, Greenhouse `6016139004` — one the render check would NOT see,
+     because the surviving Armis record's url is a LinkedIn one), so this is a class. The fix is a
+     `duplicate-of` verdict through `pipeline/notes.py`, never a hand edit.
+488. **The claim guard does not unify one posting id under two source prefixes, or a url that
+     differs only by Ashby's `/application`** — lane: `roles`. `checkout com|fraud data analyst`
+     holds `ashby:9bf673a0-…`; `checkout|fraud data analyst` holds `scrape:9bf673a0-…` (same id,
+     url `+/application`); `bounce ai|data analyst` holds `comeet:3E.E6D`, `finbounce|data analyst
+     senior` holds `scrape:<the identical url>`. Four records are `superseded` today and these two
+     pairs are not, so the dataset counts 2 roles where there is 1, twice. `rolecard._posting_key`
+     is the render-side key that catches both; the ledger's `_winner` could compare on it.
+489. **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
+     name and facts** — lane: `roles` (the row) and `company-intel` (the lookup). The row is
+     `closed` (2026-08-25), source `discovery-linkedin-targeted`; its description is Bounce AI's
+     (fintech ×3, debt ×1, Tel Aviv; identical opening and skill list to `bounce ai|data analyst`),
+     while `firmographics["Bounce"]` is the San Francisco luggage-storage marketplace with "no
+     Israel office". Name-keyed firmographics attached another company's facts. Evidence that would settle
+     it beyond the text: the LinkedIn company page behind posting `4443290013` (not fetched — an
+     aggregator, and no budget was spent this session). Kept forever by design (§7c), so a
+     `purged`/`superseded` mark is the fix, not a deletion. (`title-twin Bounce/Bounce AI` has
+     never reached a mail — one role is closed and the other open, so no single product sees
+     the pair; only the whole-store `--cards` rehearsal reports it, since 08-25.)
+490. **`run.py:803` prints `email (last 48h): N roles` for a count that includes the
+     newly-covered roles** — lane: `infra` (wording only). `stats["new"] = len(email_jobs)` after
+     `first_scan` is appended, so "(last 48h)" is false on every morning with a newly-covered
+     section (13 on 08-30, of which 7 were not 48h-new). The mail's H1 now states the split; this
+     label should say `email: N roles (F in 48h + C newly covered)` from the same two lists.
+     Optional, same file: pass `dataset=json.load(open(roles.dataset_paths(st.path)[1]))` into
+     `render_all` if a server-side dataset count is ever wanted on the board; the footer reads the
+     published meta client-side instead and needs no hook (§7d, *The dataset beside the board*).
 

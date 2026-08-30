@@ -5412,10 +5412,39 @@ that order is what lets a board-render problem reach the mail that is written la
 
 ### What the mail says
 
+**The subject is the H1, and it counts every role bullet the mail carries.** `build_markdown`
+renders its two sections first — the 48h list at tracked employers (F cards) and *Newly covered
+companies* (C cards; a mangled title reaches neither) — and only then writes
+`🎯 {F+C} new analytics roles ({F} posted in the last 48h, {C} at newly covered companies) — {date}`
+— the split is in the subject, because an inbox list shows no subtitle and "16 new roles" over
+one 48h role would be the old defect inverted; `🎯 {F} new analytics role(s)` when C is 0;
+`🎯 {C} analytics role(s) at newly covered companies` when F is 0, because every bullet is then
+one the body itself says is not 48h-new; `🎯 0 new …` when both are. The first number is always
+the bullet count. The *Newly covered companies (N)* heading counts companies that produced a
+bullet. From `912aa66` (2026-08-23, the commit that added the
+*Newly covered companies* section) to 2026-08-30 the H1 was `len(fresh_jobs)` alone over a body
+that rendered both lists: **7 of the 17 committed digests, on 6 of the 10 mornings** that
+produced one, said fewer roles than they carried (08-30: "6" over 13; inbox issue #14). The
+subtitle follows the same case split, and the audit block's `**new: N**` is `stats["new"]` —
+the input count, like the receipt's — so on a hidden-mangled-title morning it too exceeds the
+H1 by design. The relay makes the issue
+title from this line and needs only the run date in it; `persist_state`'s receipt count and
+`run.py`'s `email (last 48h): N` are `len(payload["jobs"])` — the INPUT count — so on a morning
+with a hidden mangled title they exceed the H1 by that many, by design. Tripwire, in the mail:
+`digest._subject_vs_body` re-derives the count from the text of the whole delivered body — the
+same text the morning check counts with `grep -cE '^- \*\*[^*]*\*\*( — [^ ]+)? · 📍 '` — by the one role-bullet shape
+(`_ROLE_BULLET`: a bold title, an optional ` — url`, then ` · 📍 `; a foreign `- **Boards** …`
+line carrying the glyph is not the shape, and the grep must be that shape too — a looser
+`^- \*\*.*· 📍 ` counts every bold audit label), kept beside the f-string that writes it, and a
+disagreement is a bold
+`- **Render:** email subject says N roles, the body carries M` under *Needs a look* — two
+independent derivations, so a future change to either shape is caught the morning it ships.
+Pinned by `test_the_mail_subject_counts_every_role_bullet_the_mail_carries`.
+
 Every run audit carries one line:
 
 ```
-- **Render:** board N cards[, M degraded (card degraded M)][, K hidden: mangled title][, shared-board A/B][, title-twin A/B][, display-collision A/B][, blurb-names-other A→B] · archive N cards[…] · email N cards[…]
+- **Render:** board N cards[, M degraded (card degraded M)][, K hidden: mangled title][, same-posting A/B][, shared-board A/B][, title-twin A/B][, display-collision A/B][, blurb-names-other A→B] · archive N cards[…] · email N cards[…]
 ```
 
 (the same list, machine-readable, is `summary["render"]` in the payload JSON and the `RENDER:` /
@@ -5429,8 +5458,9 @@ blurb-names-other are counted in the audit line only:
 |---|---|---|
 | `M degraded (…)` | a card's derivation raised; the bare card rendered, the reason is in parentheses | `render` |
 | `K hidden: mangled title` | the scraped title is a run-together card blob (`jdtext._MANGLED_TITLE`, or >100 chars); the row is not rendered — before 2026-08-25 this was silent | `scraper` |
+| `same-posting A/B` | one posting url (`rolecard._posting_key`: host + path, lower-cased, Ashby's trailing `/application` and a trailing `/` dropped, the query KEPT minus tracking keys — on a company site `?gh_jid=` / `?ContentID=` IS the posting; '' on an aggregator, which is what keeps six Indeed employers off one key, and '' on a board root or listing page — fewer than two path segments, or a last segment such as `careers` / `jobs` / `positions`, unless a query key names a posting (`?gh_jid=`, `?jobId=`; a filter such as `?dept=` does not), and a Comeet path under five segments, which is the tenant's listing) under two company names, at most `_POSTING_MAX` = 2 (three names on one url is a listing page stored as a posting). A FACT, named first; the two guesses below stay silent about that pair (a third name on the tenant is still a shared board). The alarm says so and names the lane: *one posting url under two employer names — the same posting twice, or a listing page stored as one; two registry rows read one board (lane: registry)*. The three shapes share the mail's three alarm slots one per shape first, so three same-posting pairs cannot push the only shared-board off the mail. On the store on 2026-08-30: Checkout / Checkout.com (Ashby `9bf673a0`) and Bounce AI / finbounce (Comeet `3E.E6D`) — both had shipped as `shared-board … may be under the wrong name`, and neither was: same employer, one posting, twice in the public CSV | `registry` (park the duplicate row); `roles` (the claim guard did not unify one id under two source prefixes) |
 | `shared-board A/B` | two *employers* (`rolecard.same_employer`: not one name and its prefix-spelling — Kornit Digital / kornit) whose cards were read from one ATS tenant (`rolecard._tenant`: host + first non-plumbing path segment on Greenhouse/Lever/Ashby/Comeet/SmartRecruiters/Workable, the host alone elsewhere; aggregator hosts and Comeet's API url are nobody's tenant; more than 3 employers on one key is a platform host, not a board) — the Scopio Labs / Sckipio class (the registry's "13 active groups read one board", `docs/BACKLOG.md:1978`, numbered 133 — the number is duplicated, 147): the winner is whatever `roles.Ledger._winner` decided, a human should look | `registry` |
-| `title-twin A/B` | one normalised title under two names that are one employer by `rolecard.same_employer` (equal keys; equal without spaces — Spear UAV / SpearUAV; a name plus site/legal words — Port / Port.io, Kornit / Kornit Digital; a division written `X (Parent)` — Splunk (Cisco) / Cisco; never a name plus an arbitrary word — Aleph / Aleph Farms are two): the claim guard saw two postings; the reader sees one role twice. On the committed store on 2026-08-25: Port / Port.io and Bounce / Bounce AI | `roles` |
+| `title-twin A/B` | one normalised title under two names that are one employer by `rolecard.same_employer` (equal keys; equal without spaces — Spear UAV / SpearUAV; a name written as its domain — Checkout / Checkout.com, on the raw name so `Green Net` stays two; a name plus site/legal words — Port / Port.io, Kornit / Kornit Digital; a division written `X (Parent)` — Splunk (Cisco) / Cisco; never a name plus an arbitrary word — Aleph / Aleph Farms are two): the claim guard saw two postings; the reader sees one role twice. On the committed store on 2026-08-25: Port / Port.io and Bounce / Bounce AI | `roles` |
 | `display-collision A/B` | two differently named companies whose short cell names collide (judged on the names as written — the identity key strips exactly the suffixes the short name drops) — both now render their full name; informational | — |
 | `blurb-names-other A→B` | A's About text names employer B and not A — counted, never dropped (acquirers and customers are named legitimately; company-intel owns the blurb). A company whose only name token is an ordinary word (Global-e, Port, Meta, Rise) accuses nobody: it would fire on every blurb using the word | `company-intel` |
 | `<product> FAILED (…) — yesterday's file kept` | a renderer raised. Board / archive: the file was not written, yesterday's page stays published. Email: a stub that names the failure IS written to `digests/latest.md` (a reader must learn why there is no digest), and `mark_sent` is given no roles, so nothing is burned as delivered | `render` |
@@ -5450,12 +5480,14 @@ re-attribute; what it does is make the situation visible in every product:
   `_claimed_by`, before the flush) on the board card, the archive card and the email heading
   (`### Port _(also listed as Port.io)_`); the name is in the search blob so a reader looking
   for the loser's name finds the card (closes the render half of BACKLOG 137).
-- **shared-board**, **title-twin**, **display-collision**, **blurb-names-other** —
+- **same-posting**, **shared-board**, **title-twin**, **display-collision**, **blurb-names-other** —
   `rolecard.cross_check`, above, run over the board, the archive and the email cards. On the
   committed store on 2026-08-25: `--cards` → `cross-check ['title-twin Bounce/Bounce AI',
   'title-twin Port/Port.io']` — the two doubles the wave-1 attacker found on the shipped board,
-  now named in the mail; the fixture cases are pinned by
-  `test_cross_check_names_the_wrong_company_shapes_and_only_those`.
+  now named in the mail (pre-`same-posting`: on the 2026-08-30 store `--cards` reports the two
+  `same-posting` facts and `title-twin Bounce/Bounce AI` — a pair one product never sees whole,
+  because one role is closed and the other open); the fixture cases are pinned by
+  `test_cross_check_names_five_wrong_company_shapes_and_only_those`.
 - **Blurb and facts** are looked up by the raw company name (`company_intel.enrich_for_run`
   keys both maps by it), so a card cannot pick up another *name's* record; the known crossing
   is inside one identity group — `identity_key("AppSec Labs") == identity_key("AppSec")`, so
@@ -5488,11 +5520,13 @@ empty for all 111 rows and is not read (BACKLOG 145).
 
 ### Guards
 
-`tests/test_units.py`, the `# lane: render` block — 13 assertions plus the 8 wave-1 pins: a card never raises; hidden
+`tests/test_units.py`, the `# lane: render` block — 13 assertions plus the 8 wave-1 pins, plus the
+six of 2026-08-30 (the subject counts every bullet; a first-scan company is counted; five shapes;
+same-posting; the dataset footer; a zero inline-fill is a number): a card never raises; hidden
 and degraded counts reach the mail, the footer and the payload; a renderer that raises is not written and
 the other products still ship; stage labels total; the blurb gate; the EEO footer; every
 `israel.py` place resolves; the seniority vocabulary; the ledger supplies only what render
-cannot compute (closed-on archive-only, tags never); `cross_check` names the four shapes and
+cannot compute (closed-on archive-only, tags never); `cross_check` names the five shapes and
 nothing else (X / X Israel and LinkedIn hosts are not shapes); also-listed-as in all three
 products, escaped; scraped text (`<script>`, `](x)`, `@user`, `` ` ``) never reaches any product
 unescaped — including the email blurb, which went out raw before 2026-08-25, and `<`, which
@@ -5503,6 +5537,20 @@ writes into `stats` is neutralised but readable; a mangled title is hidden from 
 newlines, backslashes and stray chips cannot break the mail's structure; a failed board is
 not written; "Fluent English" is one bullet and a LinkedIn tail is none; the email blurb
 never describes an agency's client.
+
+### The dataset beside the board
+
+The footer of the board and the archive links `roles.csv` (`download`), `roles.csv.meta.json`
+(*columns*) and one sentence: *one row per role, open and closed — this page lists only the
+open/closed ones*. The number, the window and the coverage caveat are NOT written by this layer:
+the page's script reads `roles.csv.meta.json` from the same Pages origin (the publish step in
+`daily-digest.yml` copies both files beside `index.html`) and fills the sentence with `rows`,
+`window.start..end`, *observations begin `store.earliest_first_seen`* when `window.fully_covered`
+is false, and `run_date`, via `textContent`; any failure leaves the static sentence. Rejected:
+parsing the roles lane's `dataset N roles` prose line, re-deriving the 60-day window from the
+ledger records, a `run.py` hook. A scoped run's `out/docs-preview/` has no CSV beside it, so
+the link is dead there — a preview, not the product. The meta's `published_on_pages: false` is
+the roles lane's (BACKLOG 473).
 
 ### Known limitations
 
