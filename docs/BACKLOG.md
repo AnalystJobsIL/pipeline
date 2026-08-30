@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@scraper` **open** · `462@registry` **open** |
 
-### registry — 134 open
+### registry — 135 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -228,6 +228,7 @@ closure convention in the header.
 - **499** `499@registry` **`Port` and `Port.io` are two ACTIVE registry rows for one employer**
 - **501** `501@registry` **A writer can still activate a twin of an active row or a native-ATS row off its host
 - **502** `502@registry` **A shard killed mid-write leaves an unparsable proposal file, and the ingest skips it in silenc
+- **503** `503@registry` **8 verified boards name a DIFFERENT employer than their registry row
 
 ### infra — 107 open
 
@@ -448,7 +449,7 @@ closure convention in the header.
 - **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
 - **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
 - **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
-- **482** `482@company-intel` **The public `sector` enum is not normalised, and it ships in `roles.csv`**
+- **504** `504@company-intel` **OPERATOR DECISION
 
 ### ats-fetch — 18 open
 
@@ -8978,14 +8979,23 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
 
 *Record: `docs/decisions/2026-08-30-discovery-own-domain-sources.md`. Nothing new was wired.*
 
-482. **The public `sector` enum is not normalised, and it ships in `roles.csv`** — lane:
-     `company-intel`, filed by `discovery`. Active rows in `cloud_state/firmographics.json`
-     carry `cybersecurity` 135 / `Cybersecurity` 38, `fintech` 66 / `Fintech` 13,
-     `semiconductors` 20 / `Semiconductors` 5, `adtech` 8 / `AdTech` 3, `retail tech` 3 /
-     `Retail Tech` 3 (2026-08-30, joined on `companies.csv` active rows). The file is public
-     at `https://analystjobsil.github.io/board/roles.csv`, so a consumer grouping by sector
-     gets two cyber bars. Lower-case at write time in `pipeline/firmographics.py` and once
-     over the stored file; re-derive with the one-liner in the record's §6.
+482. ~~**The public `sector` enum is not normalised, and it ships in `roles.csv`**~~ —
+     **CLOSED 2026-08-31 (`company-intel`)**: `_coerce` lower-cases `sector` at write time,
+     `fold_sectors` runs in every `research_firmographics.py --export` (both cron paths),
+     and the stored file was folded in the same commit — **565** records changed, **0**
+     mixed-case sectors remain (34 case-collision groups over 567 records at the fold;
+     `python -c "import json;d=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));print([s for s in {(v.get('sector') or '') for v in d.values()} if s!=s.lower()])"`
+     must print `[]`). Case-fold ONLY — `healthtech` vs `healthtech / medical devices` are
+     two labels, and merging labels is a judgement the pass never makes. Guard:
+     `test_coerce_lowercases_sector_and_never_accepts_a_display_name_from_the_model`.
+     Original text: lane: `company-intel`, filed by `discovery`. Active rows in
+     `cloud_state/firmographics.json` carry `cybersecurity` 135 / `Cybersecurity` 38,
+     `fintech` 66 / `Fintech` 13, `semiconductors` 20 / `Semiconductors` 5, `adtech` 8 /
+     `AdTech` 3, `retail tech` 3 / `Retail Tech` 3 (2026-08-30, joined on `companies.csv`
+     active rows). The file is public at `https://analystjobsil.github.io/board/roles.csv`,
+     so a consumer grouping by sector gets two cyber bars. Lower-case at write time in
+     `pipeline/firmographics.py` and once over the stored file; re-derive with the
+     one-liner in the record's §6.
 
 483. ~~**The secrethunter catalog fills the queue with names the registry cannot use, and
      the cap is still the seeding value**~~ — **CLOSED 2026-08-30 (`discovery`)**: `SECRETHUNTER_DAY_CAP` = 40 per DAY, the slice cut over the catalog minus registry rows and retired names (idempotent within a day, no state file), and `queue_pipeline.RETIRED_VERDICTS` honoured at intake — dry on the real catalog: 2 offered (the day's region was already consumed), then 0, 1 after one activation, ~31/day at steady state; 258 retired names no longer re-offered. The stale per-run env line is `494@infra`. Unattended proof: the first `[secrethunter]` step line reading `day window 40`. Original text: lane: `discovery` (the filter) + `infra` (the env
@@ -9183,3 +9193,26 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      ("Employer name as it appears on the board we read", `pipeline/roles.py:1391`) is
      stale either way now that the board can show the brand: reword it to "registry name —
      the join key; the board may display the evidenced brand instead".
+505. **8 verified boards name a DIFFERENT employer than their registry row — rename and
+     acquisition leads, not display fixes** — lane: `registry`. Filed by `company-intel`
+     2026-08-31 out of the `display_name` divergent pile (the pass refuses to write these;
+     `python research_firmographics.py --display-report`, bucket `report`/`different-name`):
+     `Outbrain` ← page says `Teads` (merged 2025), `UserWay` ← `Level Access` (acquired),
+     `QuantLR` ← `HEQA Security` (renamed), `Zest Cyber` ← `ZEST Security`, `Kmslh` ←
+     `KMS Lighthouse`, `Fluenttech` ← `Fluent Trade Technologies`, `Mink N Vik` ←
+     `Minkovsky Media`, `vpgsensors` ← `Vishay Precision Group`. Each is the company's own
+     careers page speaking (`cloud_state/board_verify.json`, `verdict: ok`), so the row's
+     name, notes or alias likely needs a registry verdict — 459's rename sequencing applies
+     if any row is renamed rather than aliased.
+
+506. **OPERATOR DECISION — which language should an employer's name render in?** — lane:
+     `company-intel` (raiser, not decider). Two mirror classes, measured 2026-08-31: the two
+     published Hebrew-keyed rows (`אסם`, `מטריקס`) render Hebrew on an English-facing board;
+     and ~24 divergent rows hold an English registry name while the company's own page
+     self-names in Hebrew (`Discount Bank` ← `בנק דיסקונט`, `Migdal Group` ← `מגדל חברה
+     לביטוח`, `Isracard` ← `ישראכרט` … full list under `report`/`non-latin` in
+     `--display-report`). `display_name` deliberately writes NEITHER direction: the
+     registry/record name is what the employer calls itself, and a transliteration or
+     translation is a product choice. If decided, it is a separate field with its own
+     meaning (e.g. `display_name_en`), never `display_name` overwriting the original —
+     and the render fallback chain is `render`'s to extend.

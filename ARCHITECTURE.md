@@ -3225,7 +3225,8 @@ One JSON object per company, validated before caching:
  "employees_global": 3148, "founded": 2020,   // founded accepts 1600..today (Barclays=1690)
  "business_model": "SaaS per cloud workload", "customer_type": "enterprises",
  "il_center": "Tel Aviv", "as_of": "2026-08-22",
- "employees_source": "linkedin", "employees_as_of": "2026-08-22"}   // present when a fill pass touched it
+ "employees_source": "linkedin", "employees_as_of": "2026-08-22",   // present when a fill pass touched it
+ "display_name": "Faye"}           // optional: the employer's own name, evidence only (below)
 ```
 
 **Validation: reject, never repair.** No sector, an out-of-enum stage, an implausible number →
@@ -3310,6 +3311,31 @@ is not the free win it looks like** (`docs/BACKLOG.md` 98): `merge` picks its wi
 for 8 of the 29 groups the site record is newer — a naive `reduce(merge, group)` writes
 Amazon with AWS's 150,000 employees and founding year 2006 instead of 1,576,000 and 1994, and
 dates Microsoft's founding to 1989, the year its Israeli R&D centre opened.
+
+**The employer's own name — `display_name`, evidence only (2026-08-30).** Some registry keys
+are ATS slugs (`withfaye` where the employer is Faye), and the key cannot change: it joins
+this file, the roles ledger and the public CSV, so a rename orphans intel and role history at
+once (`docs/BACKLOG.md` 459). The record instead carries an optional `display_name`, and
+render (§7d) shows it over the registry name when present. It is written by exactly one
+pass — `firmographics.apply_display_names`, run by `research_firmographics.py --export` on
+both cron paths — from two evidence arms and nothing else: `cloud_state/board_verify.json`'s
+`employer_named` (an LLM's read of the company's own careers page) where
+`display_name_from_evidence` judges the page's name recognisably the *same* company
+(shared stem, containment, acronym — **104 records** on 2026-08-30), and the 4-row
+`DISPLAY_NAME_OVERRIDES` table whose slugs fail containment by construction but carry
+first-party JD/tenant evidence in the comment beside each. A page naming a *different*
+string — a parent, a product, a mis-read — is printed as `divergent: ... — not written`
+(**43** that day; `python research_firmographics.py --display-report` is the full triage),
+because a confidently wrong name is worse than a slug. Three rules the tests pin: the pass
+sets **and clears** from current evidence each run, so withdrawn evidence retracts a name
+(the retraction `merge`'s fill-forward cannot express — an unreadable verify clears
+nothing); `display_name` is in `_EVIDENCE_EXEMPT`, so a cosmetic key never flips `newer()`
+ties or which record answers for an identity group (the AWS-over-Amazon class); and the
+model can never supply it — `_coerce` drops the key, `_RESEARCH_SCHEMA` forbids it. A
+Hebrew-keyed row (`אסם`, `מטריקס`) never gets one: the key **is** the employer's name, and
+whether an English-facing board should show a transliteration is a product decision, not a
+data one. `board_verify` keys its rows by a lowercased name; the join resolves through a
+lowercase index of the records, and an ambiguous case-twin is skipped, never guessed.
 
 ### The seam — one `claude -p`, and what it costs
 
@@ -3474,8 +3500,12 @@ rehearsal that set them afterwards silently tested the defaults): `FIRMO_MAX_PER
 the runner's `matched` / `roles` / `llm_cache` tables wholesale; the digest's own `sync_store`
 seeds sqlite from the export next morning. It has its own job and nothing waits on it, so its bounds exist to keep it *inside the
 120-minute job*, not to protect a mail: `--limit 150` (a count) and, since 2026-08-30,
-`--budget-min` (a wall clock; the workflow does not pass it yet — the proposed
-`--budget-min 60` and a second `0 23 * * *` slot are `infra`'s, `docs/BACKLOG.md`).
+`--budget-min` (a wall clock). The budget IS wired now (`450`, `infra`, same day): this cron
+passes `--budget-min 60`, and the same bounded drain also runs *inside* `daily-digest.yml`
+(step `firmo_drain`, `--budget-min 20`) **before** the step that measures the gap, so the
+05:00 mail no longer measures a queue only a 15:00–21:00 cron can drain. Tell the two apart
+in the `firmo` stamp by `budget_min`: `20.0` is the in-digest drain, `60.0` is this cron. No
+second `0 23 * * *` slot: every run this cron ever had was late, not absent (450's record).
 `--workers 2`, not 3: `docs/BACKLOG.md` 97 records `529 Overloaded`
 on 2 of 3 calls at 3. Research is one-time per company — nothing re-researches before
 **2027-02** at `--refresh-days 180` — so this drains a backlog rather than running a treadmill.
