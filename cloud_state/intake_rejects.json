@@ -111,13 +111,13 @@
   "name": "Gefen Recruitment (גפן השמות)",
   "reason": "agency",
   "first_seen": "2026-08-28",
-  "last_seen": "2026-08-29"
+  "last_seen": "2026-08-30"
  },
  "manpower israel": {
   "name": "Manpower Israel",
   "reason": "agency",
   "first_seen": "2026-08-28",
-  "last_seen": "2026-08-29"
+  "last_seen": "2026-08-30"
  },
  "איחוד-הצלה": {
   "name": "איחוד-הצלה",
@@ -201,7 +201,7 @@
   "name": "Ellipse Advanced System Innovation",
   "reason": "handle-mismatch",
   "first_seen": "2026-08-28",
-  "last_seen": "2026-08-29"
+  "last_seen": "2026-08-30"
  },
  "anyon systems inc.": {
   "name": "Anyon Systems Inc.",
@@ -278,6 +278,12 @@
  "manpower tbo israel": {
   "name": "Manpower TBO Israel",
   "reason": "agency",
+  "first_seen": "2026-08-30",
+  "last_seen": "2026-08-30"
+ },
+ "doubleverify": {
+  "name": "DoubleVerify",
+  "reason": "handle-mismatch",
   "first_seen": "2026-08-30",
   "last_seen": "2026-08-30"
  }

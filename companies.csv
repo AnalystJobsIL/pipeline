@@ -1727,7 +1727,7 @@ Air Products,scrape,,https://airproducts.wd5.myworkdayjobs.com/en-US/AP0001?loca
 Aka Food,scrape,,https://www.comeet.com/jobs/aka_food/79.00D,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: no IL listing; monitored candidate
 Akim,scrape,,https://akim.org.il/jobs/,false,listing-hunt 2026-08-29: no IL listing; monitored candidate | wrong-url 2026-08-30: board names Akima; needs re-resolution | self-heal 2026-08-30: re-resolved to scrape
 Akumina,scrape,,https://www.akumina.com/about/careers,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: no IL listing; monitored candidate
-Aleh,scrape,,https://aleh.org/jobs-aleh-moriah/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: no IL listing; monitored candidate
+Aleh,scrape,,https://aleh.org/jobs-aleh-moriah/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: no IL listing; monitored candidate | domain-dead 2026-08-30 (conn-dead (TimeoutError))
 Alexander Schneider Ltd,scrape,,https://www.schneider.co.il/en/careers/,true,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: verified 4 IL via www.schneider.co.il
 Axioma System Engineering and Integration,scrape,,https://www.axioma-in.com/jobopenings,true,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: verified 3 IL via www.axioma-in.com
 Bet Shemesh Engines Ltd.,scrape,,https://bsel.co.il/careers/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: no IL listing; monitored candidate

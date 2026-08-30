@@ -3511,6 +3511,19 @@
     "stage_note": "Private since founding in 2005; no ticker; aggregators report a ~$400M private-equity deal in 2019 (unconfirmed by primary sources)",
     "sub_sector": "End-to-end software, cloud, IoT, big data and cyber development & integration services (outsourced R&D)"
   },
+  "Compie Technologies": {
+    "as_of": "2026-08-30",
+    "business_model": "IT services / software consulting",
+    "customer_type": "B2B enterprise & government (finance, government, defense, hi-tech, industry, transport)",
+    "employees_global": 150,
+    "founded": null,
+    "il_center": "Ramat Gan / Tel Aviv (HQ)",
+    "sector": "IT Services",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned IT services/consulting firm, no public venture funding identified",
+    "sub_sector": "Low-Code / Cloud Consulting & Outsourcing"
+  },
   "Compugen": {
     "as_of": "2026-08-21",
     "business_model": "Licensing and partnership deals (upfronts, milestones, royalties) on computationally discovered drug targets/antibodies, e.g. with AstraZeneca and Gilead; no marketed products yet",
@@ -6809,6 +6822,19 @@
     "stage_note": "Government-owned (~99.85% state); bonds traded on TASE, files public reports as a government company",
     "sub_sector": "State-owned electric utility — generation, transmission and distribution of electricity across Israel"
   },
+  "INGIMA": {
+    "as_of": "2026-08-30",
+    "business_model": "IT consulting / project outsourcing (AI, Big Data, RPA, Cloud)",
+    "customer_type": "B2B (financial institutions, enterprises)",
+    "employees_global": 51,
+    "founded": null,
+    "il_center": "Givatayim (HQ)",
+    "sector": "IT Services/Consulting",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned consulting firm with offices in Israel, France, Belgium; no VC funding reported",
+    "sub_sector": "Technology Consulting & Project Management"
+  },
   "IONIX": {
     "as_of": "2026-08-21",
     "business_model": "SaaS subscriptions for continuous attack-surface discovery, monitoring and exposure validation",
@@ -7204,6 +7230,19 @@
     "stage": "early-private",
     "stage_note": "$9M Series A (Frazier VC, Jul 2024); ~$15.7M total raised over 6 rounds",
     "sub_sector": "A/B testing and profit optimization platform (price, shipping, offer testing) for Shopify merchants"
+  },
+  "Intelligent Business": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B BI/analytics consulting and dashboard solutions (CFO analytics, SaaS optimization)",
+    "customer_type": "Enterprises (Finance, Operations, Marketing teams)",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Netanya (HQ)",
+    "sector": "Data & Analytics",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Small privately-owned BI consultancy based in Netanya, Israel",
+    "sub_sector": "Business Intelligence / Data Analytics Consulting"
   },
   "Intezer": {
     "as_of": "2026-08-21",
@@ -7925,6 +7964,19 @@
     "stage_note": "$53M raised over 5 rounds; $18M Series A led by Greylock (2023), latest $20M round Sep 2025",
     "sub_sector": "application security posture management (ASPM) with runtime intelligence"
   },
+  "Koladin": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "Travel industry businesses (B2B distribution)",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Israel (HQ)",
+    "sector": "Travel Tech",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Early-stage Israeli startup building B2B distribution for travel experiences; limited public funding data",
+    "sub_sector": "B2B travel experiences distribution"
+  },
   "Komodor": {
     "as_of": "2026-08-22",
     "business_model": "Annual SaaS subscription to its Kubernetes management/AI-SRE platform, priced per cluster/node with self-serve and enterprise tiers",
@@ -8019,6 +8071,19 @@
     "stage": "growth-private",
     "stage_note": "bootstrapped since 2012 with no external funding rounds or IPO on record (Crunchbase/Tracxn, 2026)",
     "sub_sector": "real-time sports data feeds and odds APIs for the sports betting industry"
+  },
+  "LTX": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "enterprise",
+    "employees_global": 526,
+    "founded": 2013,
+    "il_center": "Jerusalem (HQ)",
+    "sector": "AI / Software",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Raised $361M total; spinning off LTX video model unit as separate company, 2026",
+    "sub_sector": "Generative AI video/creative tools"
   },
   "Lam Research": {
     "as_of": "2026-08-22",
@@ -9966,6 +10031,19 @@
     "stage_note": "SIX Swiss Exchange: NESN; Osem-Nestlé is a wholly owned Israeli subsidiary",
     "sub_sector": "Packaged food, beverages, coffee, nutrition and pet care; Israel operations via Osem-Nestlé (fully owned since 2016)"
   },
+  "Nestlé": {
+    "as_of": "2026-08-30",
+    "business_model": "B2C",
+    "customer_type": "Consumer",
+    "employees_global": 275000,
+    "founded": 1866,
+    "il_center": "Osem-Nestlé Israel HQ in Shoham; plants across Israel",
+    "sector": "Food & Beverage",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "Nestlé S.A. (SIX: NESN); Osem is 100% Nestlé subsidiary since 2016",
+    "sub_sector": "Packaged Foods / FMCG"
+  },
   "NetApp": {
     "as_of": "2026-08-22",
     "business_model": "Sells storage hardware/software systems plus subscription cloud data services and support contracts",
@@ -10440,6 +10518,19 @@
     "stage": "growth-private",
     "stage_note": "Private; ~$242M raised incl. $120M (Dec 2021, $320M post-money) and $62M (2023); founded/controlled by Amnon Shashua",
     "sub_sector": "Fully digital retail bank (first new Israeli bank license in 40+ years), AI-driven private-banking-style service"
+  },
+  "ONE datAI": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "Enterprises across finance, retail, transportation, healthcare, manufacturing, public and defense sectors",
+    "employees_global": 200,
+    "founded": 2006,
+    "il_center": "Petah Tikva (HQ)",
+    "sector": "Data & AI Services",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Division/subsidiary of ONE Technologies group, non-VC backed IT services company",
+    "sub_sector": "Data engineering, BI/Analytics, AI/ML consulting"
   },
   "OPC Energy": {
     "as_of": "2026-08-28",
