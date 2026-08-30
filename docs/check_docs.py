@@ -509,10 +509,15 @@ def _coe_ratio() -> tuple:
 _CENSUS = r"(?<![\d,\+\-–])(~?\d[\d,]*(?:[-–]\d[\d,]*)?\+?)(?![\d\-–+])"
 
 FACTS = [
-    Fact("coe_ratio", "exact", _coe_ratio, "continue-on-error of workflow steps",
-         [("CLAUDE.md", r"(\d+)\s+of\s+(?:the\s+)?(\d+)\s+(?:named\s+)?workflow steps"),
-          ("ARCHITECTURE.md", r"(\d+)\s+of\s+(?:the\s+)?(\d+)\s+(?:named\s+)?workflow steps"),
-          ("docs/AGENT_BRIEF.md", r"(\d+)\s+of\s+(?:the\s+)?(\d+)\s+(?:named\s+)?workflow steps")],
+    # A FLOOR, not a pin: every lane that adds a workflow step moves this, and when it
+    # broke it took `Registry invariants` and the fourteen rehearsed nights down with it
+    # (they are steps below `Unit guards` in the same job, so a red suite SKIPS them).
+    # It fires only on a collapse - the case where the rule it supports stops being true.
+    Fact("coe_steps", "census", lambda: (_coe_ratio()[0],),
+         "workflow steps carrying continue-on-error",
+         [("CLAUDE.md", _CENSUS + r"\s+of\s+the\s+workflow steps"),
+          ("ARCHITECTURE.md", _CENSUS + r"\s+of\s+the\s+workflow steps"),
+          ("docs/AGENT_BRIEF.md", _CENSUS + r"\s+of\s+the\s+workflow steps")],
          "this is the number that tells a reader a green run proves nothing"),
 
     Fact("fetcher_platforms", "exact", lambda: (_real_platforms(),),
@@ -1706,6 +1711,25 @@ def _origin_fetch_age_hours():
     return (time.time() - os.path.getmtime(p)) / 3600.0
 
 
+def _tree_skip_reason():
+    """Why `tree_state()` cannot answer here, in words, or None when it can.
+
+    Split out so the reason is OBSERVABLE - `--tree` prints it, and a guard asserts on a
+    runner that the reason this repo documents is the reason that actually applies. The
+    documentation used to assert the CI behaviour; now CI asserts it back."""
+    if os.environ.get("GITHUB_ACTIONS"):
+        return ("CI: the runner builds the pushed commit from a depth-1 checkout, so there "
+                "is no history to be behind and nothing to compare against")
+    if _git("rev-parse", "--is-inside-work-tree") is None:
+        return "not a git checkout"
+    if _rebase_in_progress():
+        return "a rebase is in progress"
+    if _git("rev-parse", "-q", "--verify", "origin/master") is None:
+        return "there is no origin/master ref here"
+    return None
+
+
+
 def tree_state():
     """(commits behind, the certified docs that differ, hours since the merge-base, fetch age)
     or None when there is nothing to compare against.
@@ -1714,11 +1738,7 @@ def tree_state():
     concurrent sessions would contend on the ref lock; the fetch belongs to the session-start
     hook, which is allowed to be slow and is allowed to fail."""
     import time
-    if os.environ.get("GITHUB_ACTIONS"):
-        return None                    # CI builds the commit that was pushed, shallowly
-    if _git("rev-parse", "--is-inside-work-tree") is None or _rebase_in_progress():
-        return None
-    if _git("rev-parse", "-q", "--verify", "origin/master") is None:
+    if _tree_skip_reason() is not None:
         return None
     behind = _git("rev-list", "--count", "HEAD..origin/master")
     if behind is None:
@@ -1920,7 +1940,7 @@ def main(argv=None) -> int:
             _git("fetch", "-q", "--no-tags", "origin", "master")
         state = tree_state()
         if state is None:
-            print("tree: nothing to compare against (no origin/master, CI, or not a repo)")
+            print("tree: no reading here - %s" % _tree_skip_reason())
             return 0
         behind, differ, base_age, fetch_age = state
         print("tree: %d behind origin/master | certified docs differing: %s | merge-base "

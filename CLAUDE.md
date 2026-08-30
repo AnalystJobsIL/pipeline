@@ -37,8 +37,9 @@ by 07:41. `gh run list --workflow daily-digest.yml` before you trust yesterday's
 Full versions in `ARCHITECTURE.md` §2 and §8. Short versions, because each of these has
 already destroyed a day of work:
 
-1. **A green workflow means nothing.** 44 of the 93 named workflow steps are
-   `continue-on-error: true`. Verify a capability by what it PRODUCED, and quote the number.
+1. **A green workflow means nothing.** **44+ of the workflow steps** carry
+   `continue-on-error: true` — most of a run can fail silently. Verify a capability by
+   what it PRODUCED, and quote the number.
 2. **A mass-zero result is a broken run, not a measurement.** Strip its verdicts, diagnose,
    re-run — do not let it commit.
 3. **The `notes` column of `companies.csv` is an append-log.** Write it through
@@ -84,7 +85,12 @@ anything relying on it silently returns nothing; the working search is
 
 ## Before you push — the doc contract
 
-1. `python -m pytest` and `python check_invariants.py` green. Every bug you fix gets an
+1. `python -m pytest` and `python check_invariants.py` green **here, and then green in
+   CI on the commit you pushed** — `gh run list --workflow tests.yml --limit 1` after
+   the push, run id in your `HANDOFF.md` line. Green on your machine is a different
+   suite from green on a runner (`docs/AGENT_BRIEF.md`, Definition of done), and
+   `tests.yml` was red on 100 consecutive runs to 2026-08-30 while every lane reported
+   it passing. Every bug you fix gets an
    assertion in `tests/test_units.py`. **Not `-q`**: `pytest.ini` already sets it, so
    `-q -q` suppresses the `N failed, M passed` line entirely and the last thing printed
    is a `FAILED …` name — or nothing at all. An agent reading the tail of that output can

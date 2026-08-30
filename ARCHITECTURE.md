@@ -160,7 +160,7 @@ but not self-contained: `pipeline/run.py` imports `registry_health` and
 
 **Two traps:** several root scripts have no `if __name__ == "__main__"` guard, so *importing*
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
-And **44 of the 93 named workflow steps carry `continue-on-error: true`** — `docs/check_docs.py`
+And **44+ of the workflow steps carry `continue-on-error: true`** — `docs/check_docs.py`
 fails if this sentence and the workflows disagree, as the registered `coe_ratio` fact.
 *Named* is load-bearing and was missing until 2026-08-27: there are **108** step lines in
 all, and the other 28 are bare `uses:` actions (checkout, setup-python) that are never
@@ -2738,7 +2738,7 @@ active rows had no baseline entry). To settle it, run the row yourself:
 - "Why isn't company X in my email?" → §5b above (ordered runbook).
 - "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
 - "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
-  **44 of the 93 named workflow steps are `continue-on-error`, so a green run can still hide a
+  **44+ of the workflow steps are `continue-on-error`, so a green run can still hide a
   failed step** — read the step, not the badge.
 - Coverage snapshot:
   ```bash

@@ -11888,6 +11888,29 @@ def _census_run(tmp_path, sentence, value):
 SENTENCE = "The pipeline reads 800+ companies' own boards every morning."
 
 
+def test_the_continue_on_error_number_is_a_floor_and_never_a_pin_again():
+    """Read this before "tightening" it back to an exact number.
+
+    It WAS exact, at four sites, and `registry`'s 34f24b3 broke it within a day by adding a
+    workflow: three sites were updated with the change and `docs/AGENT_BRIEF.md` was missed.
+    That single stale number turned `Unit guards` red - and `Registry invariants` and the
+    fourteen rehearsed nights are steps BELOW it in the same `tests.yml` job, so both were
+    SKIPPED. A number in a brief switched off the registry gate.
+
+    The floor absorbs every step anyone adds and fires only on a COLLAPSE, which is the case
+    that actually matters: if `continue-on-error` became rare, "a green workflow means
+    nothing" would be false and a human would have to rewrite the rule that day."""
+    cd = _cd()
+    fact = [f for f in cd.FACTS if f.name == "coe_steps"]
+    assert fact, "coe_steps is gone: if the fact was renamed, move this guard with it"
+    assert fact[0].kind == "census", (
+        "coe_steps is pinned to equality again. Every lane that adds a workflow step "
+        "invalidates it, and when it breaks it skips the registry gate below it.")
+    assert cd.floor_holds(60, "44+"), "growth must never break it"
+    assert not cd.floor_holds(20, "44+"), "a collapse must break it"
+
+
+
 def test_a_census_fact_that_grows_does_not_go_red(tmp_path):
     """GROWTH MUST NOT FAIL. This is the guard the 2026-08-28 outage would have needed: the
     doc said `~900`, the registry reached 969 because the intake queue drained, and the
@@ -12230,10 +12253,19 @@ def test_no_registered_fact_site_is_an_archive_or_the_backlog():
 
 
 def test_the_continue_on_error_sentence_kept_the_words_that_make_it_land():
-    """A refactor is the classic way to lose the one sentence that makes a check matter."""
+    """A refactor is the classic way to lose the one sentence that makes a check matter.
+
+    It used to find the fact by NAME (`coe_ratio`), and on 2026-08-30 the fact was renamed
+    to `coe_steps` when it became a floor - so the guard went red for the rename rather
+    than for the loss it exists to catch. It looks for the SENTENCE now, which is the thing
+    it is actually protecting, and survives the next rename too."""
     cd = _cd()
-    coe = [f for f in cd.FACTS if f.name == "coe_ratio"]
-    assert coe and "a green run proves nothing" in coe[0].why
+    keeper = [f for f in cd.FACTS if "a green run proves nothing" in f.why]
+    assert keeper, (
+        "no registered fact still says 'a green run proves nothing'. That sentence is why "
+        "the continue-on-error number is registered at all; if the fact was renamed, keep "
+        "the why. Facts today: %s" % sorted(f.name for f in cd.FACTS))
+    assert "continue-on-error" in keeper[0].unit
 
 
 def test_a_module_a_workflow_runs_is_never_classified_operator():
@@ -12576,7 +12608,8 @@ def _morning_repo(tmp_path, before, after, archive_before="# archive\n", archive
     write(after, archive_before if archive_after is None else archive_after)
     cd = _cd()
     cd.ROOT = str(tmp_path)
-    cd.check_morning_rows_survive()
+    with _not_ci():
+        cd.check_morning_rows_survive()
     return list(cd.ERRORS), list(cd.WARNINGS)
 
 
@@ -12659,6 +12692,28 @@ def test_every_backlog_item_names_a_lane_that_exists():
     assert not bad, "items name lanes that are not in the brief's table: %s" % bad
 
 
+class _not_ci:
+    """Clear `GITHUB_ACTIONS` from the PYTEST PROCESS while a check under test runs.
+
+    Those checks skip when it is set - deliberately: a runner's checkout is depth-1, so
+    "how far behind is this tree" has no answer there. The fixtures below cleared it from
+    the git SUBPROCESS environment only, so on a runner the check returned None, the
+    assertions saw an empty error list, and three guards that pass on every laptop failed
+    on every push - `the suite I run is not the suite CI runs`, inside the tests written
+    against that shape of defect. `test_the_tree_check_is_silent_in_ci_and_never_fetches`
+    still SETS the variable and still passes: skipping in CI is the design, and asserting
+    on the skip is not the same as never exercising the check."""
+
+    def __enter__(self):
+        self.was = os.environ.pop("GITHUB_ACTIONS", None)
+        return self
+
+    def __exit__(self, *exc):
+        if self.was is not None:
+            os.environ["GITHUB_ACTIONS"] = self.was
+
+
+
 def _stale_repo(tmp_path, second_file, second_body, hours_old=0):
     """A repo one commit behind `origin/master`, where that commit touched `second_file`.
 
@@ -12696,7 +12751,8 @@ def _stale_repo(tmp_path, second_file, second_body, hours_old=0):
     git("checkout", "-q", base)              # one behind, detached, like a lane's worktree
     cd = _cd()
     cd.ROOT = str(tmp_path)
-    cd.check_tree_is_current()
+    with _not_ci():
+        cd.check_tree_is_current()
     return list(cd.ERRORS), list(cd.WARNINGS)
 
 
@@ -12724,6 +12780,43 @@ def test_a_checkout_behind_only_on_code_never_goes_red(tmp_path):
     errs, warns = _stale_repo(tmp_path, "scrape_universal.py", "x = 1" + chr(10), hours_old=71)
     assert errs == [], errs
     assert any("code and state only" in w for w in warns), warns
+
+
+def test_ci_itself_confirms_why_the_tree_check_cannot_run_there():
+    """The documented reason for skipping in CI, asserted BY CI.
+
+    `check_tree_is_current`, `check_morning_rows_survive` and `check_unattended_proof` all
+    compare this tree against `origin/master`, and all three return silently on a runner.
+    The reason given everywhere is that `actions/checkout@v5` clones one commit deep, so
+    there is no history to be behind and no ref to be behind it. That was an assumption
+    until this guard: on a runner it now checks the claim and prints what it found, and the
+    build goes red if the checkout ever stops looking the way the docs say it does.
+
+    Locally it skips - there is nothing to confirm on a laptop with a full clone."""
+    if not os.environ.get("GITHUB_ACTIONS"):
+        pytest.skip("only meaningful on a runner")
+    cd = _cd()
+    reason = cd._tree_skip_reason()
+    assert reason and reason.startswith("CI:"), reason
+    was = os.environ.pop("GITHUB_ACTIONS", None)
+    try:
+        shallow = (cd._git("rev-parse", "--is-shallow-repository") or "").strip()
+        origin = cd._git("rev-parse", "-q", "--verify", "origin/master")
+        depth = (cd._git("rev-list", "--count", "HEAD") or "").strip()
+        without_the_env_var = cd._tree_skip_reason()
+        print("CI checkout: shallow=%r origin/master=%r commits=%r reason_without_env=%r"
+              % (shallow, (origin or "").strip()[:8], depth, without_the_env_var))
+    finally:
+        if was is not None:
+            os.environ["GITHUB_ACTIONS"] = was
+    # Either the runner has no origin/master to compare against, or its history is one
+    # commit deep - either way "how far behind is this tree" has no answer here. If BOTH
+    # are false the docs are wrong and these three checks could run in CI after all.
+    assert without_the_env_var is not None or shallow == "true" or depth == "1", (
+        "the runner has a full clone AND an origin/master ref, so the reason this repo "
+        "gives for skipping in CI is no longer true: shallow=%r origin=%r commits=%r"
+        % (shallow, origin, depth))
+
 
 
 def test_the_tree_check_is_silent_in_ci_and_never_fetches(tmp_path, monkeypatch):
@@ -12948,7 +13041,8 @@ def test_a_scheduled_workflow_change_must_name_the_morning_its_run_is_read(tmp_p
         cd = _cd()
         cd.ROOT = str(tmp_path)
         cd._today = lambda: "2026-08-30"
-        cd.check_unattended_proof()
+        with _not_ci():
+            cd.check_unattended_proof()
         return list(cd.ERRORS)
 
     # the workflow changes and nothing says when its run will be read

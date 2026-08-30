@@ -186,7 +186,7 @@ Declare these in your plan before spending them:
 
 ## Rules that will bite you
 
-1. **A green workflow means nothing.** 43 of the 92 named workflow steps are `continue-on-error`.
+1. **A green workflow means nothing.** **44+ of the workflow steps** are `continue-on-error`.
    Read the step output; confirm a capability did work by looking at what it produced.
 2. **A mass-zero result is a broken run, not a measurement.** Strip its verdicts, diagnose,
    re-run.
@@ -288,6 +288,17 @@ docs`.
 ## Definition of done
 
 - The change is verified by its **output**, not its exit code — quote the numbers.
+- **`pytest` green means green in CI, on the commit you pushed** — not green where you
+  ran it. They are different suites: yours has your tree's state files, your
+  environment, and your `GITHUB_ACTIONS` unset, and on 2026-08-30 three guards that
+  passed on every laptop failed on every push for exactly that reason. After you push:
+  `gh run list -R AnalystJobsIL/pipeline --workflow tests.yml --limit 1 --json
+  headSha,conclusion,databaseId` — the sha must be yours and the conclusion `success`,
+  and **the run id goes in your `HANDOFF.md` line**. A red run is yours to fix or to
+  revert, whoever made it red: `tests.yml` was red on **100 consecutive runs** to
+  2026-08-30, with every lane reporting a passing suite, because everybody read their
+  own terminal. If it was already red when you arrived, say so in your line with the
+  run id, so the next session knows what it inherited.
 - **A change to a scheduled step is not done until a run you did not start has produced a
   number.** The step's own lane is the last to notice it is broken: `enrich_scrape_jd.py`
   ran **3 seconds of a 30-minute budget** and filled 0 on the 2026-08-29 digest, green,
