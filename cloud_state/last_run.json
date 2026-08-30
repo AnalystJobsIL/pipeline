@@ -1,10 +1,10 @@
 {
- "date": "2026-08-28",
+ "date": "2026-08-30",
  "delivered": true,
  "failed_steps": {
   "pipeline": "failure"
  },
  "notice": false,
- "run_url": "https://github.com/AnalystJobsIL/pipeline/actions/runs/33162147076",
+ "run_url": "https://github.com/AnalystJobsIL/pipeline/actions/runs/33306411751",
  "status": "failure"
 }
