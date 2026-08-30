@@ -120,6 +120,10 @@ _CARD_PATTERNS = (
     r'<(p|div|span|a)([^>]*class=["\'][^"\']*(?:job|position|role|opening)[^"\']*'
     r'(?:title|name|copy)[^"\']*["\'][^>]*)>([^<]{5,90})</\1>',
 )
+# a heading whose text IS a link: `[^<]` above breaks on the `<a>`, so this card shape —
+# the one that DECLARES its own address — matched nothing at all until 2026-08-31 (434)
+_CARD_LINKED_HEADING = (r"<(h[1-4])([^>]*)>\s*<a\s[^>]*?href=[\"']([^\"']+)[\"'][^>]*>"
+                        r"([^<]{5,90})</a>\s*</\1>")
 _CARD_SENTENCE = re.compile(r"(we|our|join|about|why|what|how|let)\b", re.I)
 # strategy 4: a link prefix that names positions
 _LINK_PREFIX = re.compile(r"(job|position|opening|vacanc|career|role)[^/]*/$", re.I)
@@ -976,6 +980,13 @@ class _Adder:
             if not self._weak or not _is_strong(u, self.url):
                 continue
             key = self._match_weak(text)
+            if key is None:
+                # the anchor's TEXT is chrome ("Apply", "לפרטים") but its url slug names the
+                # role — the ness-tech/Hebrew-board shape (434). Slug words are derived, not
+                # vocabulary; `ROLE` gates out id-shaped slugs.
+                slug = _slug_text(u)
+                if slug and ROLE.search(slug):
+                    key = self._match_weak(slug)
             if key is not None:
                 claims.setdefault(key, set()).add(_abs_url(u, self.url).rstrip("/"))
         for key, urls in claims.items():
@@ -1160,6 +1171,39 @@ def _card_href(page_html, pos):
             else after).group(1)
 
 
+def _slug_text(href):
+    """The href's last path segment as words — the strongest thing a link says about which
+    role it opens. "" for an id-shaped or word-less slug."""
+    path = urllib.parse.urlsplit(href or "").path.rstrip("/")
+    return re.sub(r"[-_+]+", " ", path.rsplit("/", 1)[-1]).strip()
+
+
+def _card_slug_names(title, href):
+    """1: the href's slug NAMES this title; -1: it names a DIFFERENT role — taking it sends
+    the reader (and `jdfill`) to another posting, worse than no address at all (Legit
+    Security shipped nine cards under a NEIGHBOUR role's comeet url, byte-nearest being the
+    interleaved layout's wrong answer); 0: it proves nothing (an id, "apply-now")."""
+    text = _slug_text(href)
+    nt, ns = _norm_title(title), _norm_title(text)
+    if not ns or not nt or not ROLE.search(text):
+        return 0
+    return 1 if (ns == nt or _title_in(ns, nt) or _title_in(nt, ns)) else -1
+
+
+def _card_anchor_for(title, window_html):
+    """The ONE anchor in this card's window whose link text or url slug names the card's
+    title — the address is taken from something that NAMES the role, with byte proximity
+    demoted to a guarded fallback. Two distinct claimants yield nothing (`resolve`'s rule:
+    a wrong address is worse than none)."""
+    nt = _norm_title(title)
+    hits = set()
+    for href, inner in _ANCHOR_RX.findall(window_html or ""):
+        text = _norm_title(_html.unescape(re.sub(r"<[^>]+>", " ", inner)))
+        if (text and (text == nt or _title_in(text, nt))) or _card_slug_names(title, href) == 1:
+            hits.add(href)
+    return hits.pop() if len(hits) == 1 else ""
+
+
 def _from_cards(page_html, url_is_il, add, promote_only=False):
     """3) repeated heading-group fallback (Radancy/Google-style server-rendered listings):
     job cards as N same-class <h2>/<h3> siblings. A card with no location is kept only when
@@ -1172,11 +1216,19 @@ def _from_cards(page_html, url_is_il, add, promote_only=False):
             tag, attrs, text = m.group(1).lower(), m.group(2), m.group(3).strip()
             cm = re.search(r'class=["\']([^"\']+)', attrs) if "class=" in attrs else None
             cls = cm.group(1) if cm else ""
-            groups.setdefault((tag, cls), []).append((m.start(), text))
+            groups.setdefault((tag, cls), []).append((m.start(), text, ""))
+    # a heading whose text IS a link (`<h3><a href>Title</a></h3>`) matched neither pattern
+    # — `[^<]` breaks on the `<a>` — and it is the one card shape that DECLARES its own
+    # address; the href rides along and needs no proximity guess at all (434)
+    for m in re.finditer(_CARD_LINKED_HEADING, page_html, re.I):
+        tag, attrs, href, text = (m.group(1).lower(), m.group(2), m.group(3),
+                                  m.group(4).strip())
+        cm = re.search(r'class=["\']([^"\']+)', attrs) if "class=" in attrs else None
+        groups.setdefault((tag, cm.group(1) if cm else ""), []).append((m.start(), text, href))
     for (tag, cls), items in groups.items():
         if len(items) < 3:
             continue
-        titles = [t for _, t in items]
+        titles = [t for _, t, _h in items]
         junk = sum(1 for t in titles if BAD_TITLE.match(t) or not re.search(r"[a-zא-ת]", t, re.I))
         rolish = sum(1 for t in titles if ROLE.search(t))
         senty = sum(1 for t in titles if _CARD_SENTENCE.match(t))
@@ -1184,17 +1236,26 @@ def _from_cards(page_html, url_is_il, add, promote_only=False):
         if junk > len(titles) // 3 or rolish < max(2, len(titles) // 3) \
                 or senty > len(titles) // 3 or oneword > len(titles) // 3:
             continue
-        positions = [p for p, _ in items]
-        for idx, (pos, t) in enumerate(items):
+        positions = [p for p, _, _h in items]
+        for idx, (pos, t, carried) in enumerate(items):
             nxt = positions[idx + 1] if idx + 1 < len(positions) else pos + 1600
             end = min(pos + 1600, nxt)          # never read the NEXT card's location
             ctx = re.sub(r"<[^>]+>", " ", page_html[pos:end])
             loc = _loc_from_ctx(ctx, anchor=0)      # the card's text starts with its title
+            # the card's address, by what NAMES the role: the heading's own link, else the
+            # one window anchor whose text or slug names this title, else the byte-nearest
+            # href — refused when its slug names a DIFFERENT role (434: byte proximity on an
+            # interleaved layout is the neighbour's link, and a wrong address is worse than
+            # none)
+            href = carried or _card_anchor_for(t, page_html[max(0, pos - 600):end])
+            if not href:
+                near = _card_href(page_html, pos)
+                href = "" if _card_slug_names(t, near) == -1 else near
             # a locationless card is PASSED THROUGH, not skipped: `_Adder._judge` is the one
             # refusal point and the one counter (496 — until 2026-08-30 `url_is_il` covered
             # for the query here, and 14 Comcast US postings shipped as Israel), and the
             # title's own tail can still place the card on the way
-            write(t, loc or ("Israel" if url_is_il else ""), _card_href(page_html, pos),
+            write(t, loc or ("Israel" if url_is_il else ""), href,
                   date=_date_from_card(ctx[:400]),
                   loc_src="assumed" if not loc and url_is_il else "")
 
@@ -1935,6 +1996,12 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
         r.weak_read = add.strong == 0 and add.israeli > 0
         r.loc_unknown = len(add.locless)
         add.resolve(_anchors(r.dom, page_html, url))
+        for idx in add._weak.values():
+            # write-time truth (434): this reading never found the posting's own address —
+            # its url IS the listing. `jdfill` refuses these without fetching; the stamp's
+            # `ownless=` counts them. (`_jd_shared_page` stays jd-text's, it means a FETCH
+            # came back shared.)
+            jobs[idx]["_own_url"] = False
         return jobs, add.label()
 
     add.stage = "structured"

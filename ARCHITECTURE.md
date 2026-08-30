@@ -2927,7 +2927,10 @@ and `embeds=N embeds_won=M` (below), and from 2026-08-31 `loc_unknown=N` (role-s
 cards refused because NOTHING placed them — before the query-stamp fix, §1 item 2, these
 shipped as `location=Israel`; a rising level is a board hiding its locations) and
 `legacy_loc=N` (carried cache entries still bearing a provenance-less bare "Israel" —
-pre-fix stamps, which must ratchet to 0 as their boards re-scrape), and, on a run
+pre-fix stamps, which must ratchet to 0 as their boards re-scrape) and `ownless=N` with its
+anchor `ownless_base=A ownless_rows_base=R` (postings whose url IS the listing they were
+found on — no fetch layer can ever read them a description, BACKLOG 434; each anchor
+carries its own rows because the two ratchet on different nights), and, on a run
 with the flags set, `llm_calls llm_won llm_fail llm_skipped` (`SCRAPE_LLM`) and
 `unlock_calls unlock_ok unlock_won`
 (`SCRAPE_VIA_UNLOCKER`) — the two shared quotas this step spends, counted nowhere until
@@ -2960,7 +2963,10 @@ open, not the fleet changed), `fabricated-loc-N` (N postings in TONIGHT's fresh 
 the bare word "Israel" with no `_loc_src` provenance — zero by construction since
 2026-08-31, so any N means the query-stamp class re-opened, a write path bypassed
 `_Adder`, or a foreign tree fed the cache; carried entries never trip it, they are the
-`legacy_loc` level), `uncached-up-A-to-B` and `unvisited-N` (both below) — and a
+`legacy_loc` level), `uncached-up-A-to-B`, `ownless-up-A-to-B` (the same anchored-jump
+event over postings with no address of their own: extraction stopped finding per-job
+links, or a big board's markup changed — the LEVEL is in `ownless=` every night and is
+deliberately not an alarm) and `unvisited-N` (both below) — and a
 line reading `collect: <yesterday> (1d ago)` means the refresh crashed before stamping (the
 workflow no longer re-stamps it blindly); the commit step is `if: always()` since
 2026-08-25 (this sentence said the opposite until 2026-08-26), so whatever the crash left

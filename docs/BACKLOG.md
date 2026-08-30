@@ -7908,7 +7908,22 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
 434. **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
     189 such urls stand for those 450 postings** — lane: `scraper` (`scrape_universal` decides
     a card's address), found by `jd-text` 2026-08-29 while measuring what the archive pass
-    could not reach. This is now the single largest reason a posting has no description, and
+    could not reach.
+    **Extraction-layer fix landed 2026-08-31 (`scraper`)**: an address is taken from what
+    NAMES the role — the heading's own link (`<h3><a href>` matched NO card pattern before;
+    Google Israel's 20 cards: url-less → 0 on the captured corpus), the one window anchor
+    whose text or slug names the title, `resolve` matching url SLUGS when link text is
+    chrome — and byte-nearest survives only as a fallback REFUSED when its slug names a
+    different role (the Legit Security wrong-neighbour class → 0 on the corpus). A reading
+    still without an address is stamped **`_own_url: false`** at write time and counted:
+    `ownless=N` on the collect stamp with its own anchored jump alarm (`ownless-up-A-to-B`).
+    Replay over the 81 captured bundles: **lost-real 0**, url-less IL postings 80 → 60,
+    the 60 on **5 genuinely link-less boards** (Elbit 23, VAST held-group 17, Plus500 15,
+    Aleph Farms 3, Magic Software 2 — pages exposing no anchor that names a role). The
+    cache-wide number re-measures after the next 00:00 cron; jd-text may now refuse
+    `_own_url: false` cards in `_todo` without a url test (their lane). Backfill is the
+    nightly re-render, deliberately — a locally-armed `--apply` claims cloud readability
+    from a home address. This is now the single largest reason a posting has no description, and
     no fetch layer can fix it: there is nothing at that address but a list.
 
     Measured on `scraped_cache.json` after the archive pass, with the committed code:

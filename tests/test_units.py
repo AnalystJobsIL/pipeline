@@ -23490,3 +23490,93 @@ def test_scrape_a_comeet_slug_settles_the_title_tail():
     # 497: an entity never reaches a public title or a role id again
     assert add("Manager 2, Business Operations &amp; Analytics", "Tel Aviv", "")
     assert jobs[6]["title"] == "Manager 2, Business Operations & Analytics"
+
+
+def test_scrape_a_card_takes_the_anchor_that_names_it_never_a_neighbours():
+    """BACKLOG 434's worse sibling: byte-nearest href on an interleaved layout is the
+    NEIGHBOUR's link — Legit Security shipped nine cards under another role's comeet url
+    (AppSec Analyst Team Lead -> …/account-executive/…), so `jdfill` described the wrong
+    job and a reader landed on another role. An address is taken from something that NAMES
+    the role; a nearest href whose slug names a DIFFERENT role is refused — a wrong address
+    is worse than none."""
+    import scrape_universal as N
+    cards = "".join(
+        f'<a href="https://www.comeet.com/jobs/co/A.1/{prev}/B.{i}">Apply</a>'
+        f'<p class="job-post-title">{t}</p><span>Tel Aviv</span>'
+        for i, (t, prev) in enumerate([
+            ("AppSec Analyst Team Lead", "account-executive"),
+            ("Application Security Analyst", "appsec-analyst-team-lead"),
+            ("Data Analyst", "application-security-analyst")]))
+    add, jobs = N._make_adder("Legit", "https://co.example/careers")
+    N._from_cards("<html>" + cards + "</html>", False, add)
+    assert len(jobs) == 3
+    for j in jobs:
+        assert N._card_slug_names(j["title"], j["url"]) != -1, \
+            (j["title"], j["url"], "a neighbour's address on a card")
+
+
+def test_scrape_a_heading_inside_an_anchor_is_a_card_with_its_own_address():
+    """`<h3><a href>Title</a></h3>` matched NO card pattern (`[^<]` breaks on the `<a>`),
+    and it is the one card shape that DECLARES its own address — Google Israel's 20 cards
+    sat url-less on the listing page for it (434's worst offender after ness-tech)."""
+    import scrape_universal as N
+    cards = "".join(
+        f'<h3 class="job"><a href="/jobs/results/1234{i}-x">Senior Data Analyst {i}</a></h3>'
+        f'<div>Tel Aviv, Israel</div>' for i in range(3))
+    add, jobs = N._make_adder("Google", "https://co.example/careers")
+    N._from_cards("<html>" + cards + "</html>", False, add)
+    assert len(jobs) == 3
+    assert all(j["url"].startswith("https://co.example/jobs/results/1234") for j in jobs)
+    assert add.strong == 3, "the heading's own link is the posting's address"
+
+
+def test_scrape_resolve_matches_an_anchor_by_its_slug_when_the_text_is_chrome():
+    """`resolve` matched link TEXT only, so a board whose anchors all say "Apply" (or
+    Hebrew chrome) while the slug names the role kept every reading url-less. Slug words
+    are derived from the href, not from any vocabulary."""
+    import scrape_universal as N
+    add, jobs = N._make_adder("Co", "https://co.example/careers")
+    add.stage = "llm"
+    assert add("Senior Data Analyst", "Tel Aviv", "")
+    add.resolve([("Apply now", "https://co.example/jobs/senior-data-analyst/")])
+    assert jobs[0]["url"] == "https://co.example/jobs/senior-data-analyst"
+
+
+def test_scrape_a_still_weak_reading_is_stamped_own_url_false_at_write_time():
+    """The honest representation of a genuinely link-less board (434): the url stays the
+    listing (the only way a reader reaches the job) and `_own_url: false` says so at WRITE
+    time, in this lane — not at fetch time in jd-text's (`_jd_shared_page` means a fetch
+    came back shared and keeps that meaning)."""
+    import scrape_universal as N
+    page = "<html>" + "".join(
+        f'<div class="card"><h3 class="job-title">Senior Data Analyst {i}</h3>'
+        f'<span>Tel Aviv, Israel</span></div>' for i in range(4)) + "</html>"
+    jobs, _ = N._extract("Co", "https://co.example/careers", _rendered(page_html=page),
+                         fetch=_no_fetch)
+    assert len(jobs) == 4 and all(j.get("_own_url") is False for j in jobs)
+    assert all(j["url"] == "https://co.example/careers" for j in jobs)
+
+
+def test_refresh_the_stamp_counts_ownless_and_alarms_only_on_a_jump(tmp_path, monkeypatch):
+    """BACKLOG 434's durability: `ownless=N` (postings whose url is the listing — no fetch
+    layer can ever read them a description) rides the collect stamp with its own anchored
+    ratchet, and only a JUMP is an event: the level is ~635 today and a lit-every-morning
+    alarm costs the reader the whole line (the `uncached` rule, reused — one anchor
+    reader, `_uncached_base(key)`, not a second copy)."""
+    import refresh_scrape_cache as R
+    from pipeline import stages as _stages
+    listing = "https://co.example/careers"
+    ownless_jobs = [dict(_il_job("Co", i), url=listing, _own_url=False) for i in range(3)]
+    assert sum(1 for j in ownless_jobs if not R._is_own_address(j, listing)) == 3
+    assert sum(1 for j in [_il_job("Co")] if not R._is_own_address(j, listing)) == 0
+    # only a JUMP is an event, against the anchor the last stamp held
+    assert "ownless-up" not in R._alarm(R.RunState(), ownless=635, own_base=(635, 573),
+                                        row_count=573), "a level, not an event"
+    assert "ownless-up-4-to-40" in R._alarm(R.RunState(), ownless=40, own_base=(4, 1),
+                                            row_count=1)
+    # the stamp carries the counter and its own anchor pair, read back by the shared reader
+    p = _refresh_sandbox(tmp_path, monkeypatch, [["Co"]])
+    assert p.R.run(["--workers", "1"]) == 0
+    stamp = _json.loads(p.stages.read_text(encoding="utf-8"))["collect"]
+    assert {"ownless", "ownless_base", "ownless_rows_base"} <= set(stamp)
+    assert R._uncached_base("ownless") == (stamp["ownless_base"], stamp["ownless_rows_base"])

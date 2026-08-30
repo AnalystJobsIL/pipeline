@@ -775,9 +775,11 @@ def _next_base(uncached, rows, base, fired):
     return base
 
 
-def _uncached_base():
-    """The ANCHOR the growth alarm measures from: `(uncached, rows)` of the last stamp that
-    set one, read BEFORE `stages.stamp()` replaces the whole entry.
+def _uncached_base(key="uncached"):
+    """The ANCHOR the growth alarm measures from: `(<key>, rows)` of the last stamp that
+    set one, read BEFORE `stages.stamp()` replaces the whole entry. One reader for both
+    anchored counters — `uncached` and, from 2026-08-31, `ownless` (postings whose url is
+    the listing, 434); `_uncached_grew`/`_next_base` are already pure and shared.
 
     Not "yesterday": yesterday is both too noisy (the real deltas are +10/+29/+29/+4) and
     too forgiving (a 24-a-night leak never shows). The anchor holds while coverage worsens
@@ -796,15 +798,19 @@ def _uncached_base():
     if "cache-unreadable" in str(e.get("alarm") or ""):
         return None
     try:
-        u = int(e["uncached_base"]) if "uncached_base" in e else int(e["uncached"])
-        r = int(e.get("rows_base", e.get("rows", 0)))
+        u = int(e[f"{key}_base"]) if f"{key}_base" in e else int(e[key])
+        # each anchor carries its OWN rows: the two ratchet on different nights, and the
+        # pool-growth subtraction must read the pool as it was on THIS anchor's night
+        rk = "rows_base" if key == "uncached" else f"{key}_rows_base"
+        r = int(e.get(rk, e.get("rows", 0)))
     except (KeyError, TypeError, ValueError):
         return None
     return u, r
 
 
 def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=False,
-           uncached=None, unvisited=0, base=None, row_count=0, fabricated=0):
+           uncached=None, unvisited=0, base=None, row_count=0, fabricated=0,
+           ownless=None, own_base=None):
     """Space-free tokens: `stages.summary()` renders k=v joined by spaces and stages by ` | `."""
     c, tokens = st.counts, []
     if mass_failure:
@@ -845,6 +851,10 @@ def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=Fals
     # and a bar that silently moves with a refactor is not a bar (wave-1 attacker A, F7).
     if uncached is not None and base is not None and _uncached_grew(uncached, row_count, base):
         tokens.append(f"uncached-up-{base[0]}-to-{uncached}")
+    # the same anchored-jump event for postings that carry no address of their own (434):
+    # extraction stopped finding per-job links, or a big board's markup changed
+    if ownless is not None and own_base is not None and _uncached_grew(ownless, row_count, own_base):
+        tokens.append(f"ownless-up-{own_base[0]}-to-{ownless}")
     # neither a cache entry nor a rot entry: the night never reached these rows and nothing
     # ever has. Zero on a complete night by construction, so any N is an event.
     if unvisited:
@@ -1043,6 +1053,7 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     if not o.scoped:
         rows = _rotate(rows, day)
     base = _uncached_base()               # BEFORE any stamp replaces the entry
+    own_base = _uncached_base("ownless")
     budget = float(os.environ.get("SCRAPE_REFRESH_TIME_BUDGET_MIN", "0"))
     grace = int(os.environ.get("SCRAPE_INFLIGHT_GRACE_S", "600"))
     st = RunState()
@@ -1158,19 +1169,28 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     # unprovenanced "Israel" (alarm), carried entries may until their board re-scrapes (level)
     fabricated = sum(_unprovenanced(v) for v in st.successes.values())
     legacy_loc = sum(_unprovenanced(v) for k, v in written.items() if k not in st.successes)
+    # postings whose url is the LISTING they were found on (434): no fetch layer can ever
+    # read them a description. A level with the same anchored-jump alarm as `uncached` —
+    # the level itself is ~large and moves with promotions, so only a JUMP is an event.
+    listings = {r["company_name"]: r.get("api_url", "") for r in rows}
+    ownless = sum(1 for name, v in written.items()
+                  for j in v or [] if not _is_own_address(j, listings.get(name, "")))
     alarm = _alarm(st, mass_failure=mass_failure, shrink=shrink,
                    rot_unreadable=rot_state == "unreadable",
                    uncached=uncached, unvisited=unvisited,
-                   base=base, row_count=len(rows), fabricated=fabricated)
+                   base=base, row_count=len(rows), fabricated=fabricated,
+                   ownless=ownless, own_base=own_base)
     fired = "uncached-up-" in alarm
     base_u, base_r = _next_base(uncached, len(rows), base, fired)
+    own_u, own_r = _next_base(ownless, len(rows), own_base, "ownless-up-" in alarm)
     # `embeds` counts rows whose page carried a third-party board the ladder had not read;
     # `embeds_won` the ones the identity gate admitted AND whose API answered with an
     # Israel role. The gap between them is the handoff, and it is the larger half.
     embeds_won = sum(1 for _, s in st.embeds if s.endswith(":won"))
     detail = dict(rows=len(rows), **c, parked=parks, uncached=uncached,
                   unvisited=unvisited, uncached_base=base_u, rows_base=base_r,
-                  legacy_loc=legacy_loc,
+                  legacy_loc=legacy_loc, ownless=ownless, ownless_base=own_u,
+                  ownless_rows_base=own_r,
                   embeds=len(st.embeds), embeds_won=embeds_won,
                   workers=o.workers, minutes=minutes, via=_via(st.strategies))
     # the two shared quotas, only on a run that could have spent them (a local run without
