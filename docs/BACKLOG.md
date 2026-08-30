@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**504 filed · 370 open · 134 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
+**510 filed · 374 open · 136 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 457.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 467.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 458, 459, 460 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -210,7 +210,7 @@ closure convention in the header.
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
-### infra — 105 open
+### infra — 106 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -317,8 +317,9 @@ closure convention in the header.
 - **451** `451@infra` **`stages.stamp` rebases on `{}` when it cannot read the file, and the digest now writes
 - **453** `453@infra` **`cloud_state/roles.csv` is committed and public by raw URL, but it is not on Pages** —
 - **455** `455@infra` **A `bd_rescue` test fails whenever another `bd_rescue` test runs first**
+- **463** `463@infra` **The drain's counters exist only in the mail**
 
-### scraper — 27 open
+### scraper — 28 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -347,6 +348,7 @@ closure convention in the header.
 - **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
 - **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
 - **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
+- **462** `462@scraper` **A `?location=Israel` listing URL makes every card on the page an Israeli posting** —
 
 ### discovery — 24 open
 
@@ -375,7 +377,7 @@ closure convention in the header.
 - **441** `441@discovery` **Intake re-adds names that were retired with evidence, so the queue can never stay
 - **456** `456@discovery` **The inline JD filler re-buys the same postings every night, because it has no cooldown
 
-### docs — 19 open
+### docs — 20 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
 - **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
@@ -396,6 +398,7 @@ closure convention in the header.
 - **361** `361@docs` **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
 - **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
+- **461** `461@docs` **No visitor-facing surface states the quantitative boundary**
 
 ### ats-fetch — 18 open
 
@@ -438,7 +441,7 @@ closure convention in the header.
 - **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
 - **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
 
-### jd-text — 13 open
+### jd-text — 14 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -453,6 +456,7 @@ closure convention in the header.
 - **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
 - **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
 - **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
 
 ### roles — 12 open
 
@@ -472,14 +476,14 @@ closure convention in the header.
 ### classifier — 9 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
-- **121** `121@classifier` **CLI start-up dominates the LLM tier's wall time**
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
 - **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
 - **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
-- **373** `373@classifier` **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
 - **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
 - **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
 - **449** `449@classifier` **`pipeline/llm.py` discards the CLI's error envelope, so two mornings said `is_error
+- **465** `465@classifier` **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
+- **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
 
 ### render — 7 open
 
@@ -2491,12 +2495,23 @@ Record: `docs/sessions/2026-08-24-classifier.md`; spec: `ARCHITECTURE.md` §7b.
     `company-intel`. When the classifier's breaker opens (`Classifier.off_reason`), the digest
     still spends up to 15 min of `enrich_for_run` learning the same thing; one process-level
     "claude unavailable since …" flag (or reading `clf.off_reason` in `run.py`) would skip it.
-121. **CLI start-up dominates the LLM tier's wall time** — lane: `classifier`. Locally a call is
+121. ~~**CLI start-up dominates the LLM tier's wall time**~~ — **CLOSED 2026-08-30**
+    (`classifier`) — lane: `classifier`. Locally a call is
     13.5 s wall for 3.2 s of API (`duration_api_ms`); 163 calls ≈ 37 min, which is why the
     minutes budget is 60. Unverified on the ubuntu runner (read tomorrow's `attempts N in M
     min`). `--bare` might trim it under token auth but breaks keychain login locally and is
     untested with `CLAUDE_CODE_OAUTH_TOKEN`; batching several postings per call was rejected
     (cross-contamination, cache shape) — revisit if the runner is as slow.
+
+    **It does not, on the runner, and two unattended runs say so.** The `classify:` line
+    carries `attempts N in M min`, which is exactly the measurement this item asked for:
+    **2026-08-29 run `33250362574`, `attempts 67 in 3.4 min` = 3.04 s/call**; 2026-08-28 run
+    `33193786610`, `attempts 83 in 4.4 min` = **3.18 s/call**. That is the API time with
+    essentially no start-up on top — the local 13.5 s is a Windows `.cmd`-shim cost that the
+    ubuntu runner does not pay. So the 60-minute budget is worth **~1,150 calls** there
+    against a `CLASSIFY_LLM_CAP` of 300: **the cap binds first, and the minutes never bite**,
+    which is the reverse of what `ARCHITECTURE.md` 7b assumed when it wrote "the minutes bind
+    first at ~14 s/call". `--bare` and batching stay rejected — there is nothing left to buy.
 122. **The cap and the budget bite the same companies every day** — lane: `classifier`.
     `run.py` walks `companies.csv` in file order, so once `CLASSIFY_LLM_CAP` /
     `CLASSIFY_TIME_BUDGET_MIN` is spent the alphabetical tail is `llm_skipped` (keyword rule,
@@ -6747,8 +6762,9 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     served from cache` / `no role reached the tier`); this is the same sentence one level up.
     `run.py` is `infra`'s file, so it is proposed here rather than smuggled.
 
-373. **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
-    with at least one of them** — lane: `classifier`, found 2026-08-28. The keyword tier
+373. ~~**A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
+    with at least one of them**~~ — **CLOSED 2026-08-30** (`classifier`, with the rate it asked
+    for) — lane: `classifier`, found 2026-08-28. The keyword tier
     fast-accepts a strong analyst title carrying a senior marker, by design and documented
     (`ARCHITECTURE.md` §7b; `129@classifier` notes STRONG titles are never ML-vetoed). The
     2026-08-28 measurement produced the first counter-example with evidence:
@@ -6779,6 +6795,22 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     375 removed one class of abuse of this shortcut (an internship reaching it at all).
     What is left is pure precision on real analyst titles, and it still needs the rate.
     The measurement costs ~36 LLM calls on the shared subscription, not ~70.
+
+    **CLOSED 2026-08-30 (`classifier`), with the rate.** Measured over the two committed
+    caches: 30 postings take the shortcut and **19 carry a description**. Judged once each
+    through the production seam (19 sonnet calls, `python tools/measure_scope_rule.py --tier
+    keyword`): **5 of 19 are rejected — 26 %**, not the "low suspected error rate" this item
+    assumed. `EPAM | Managing Principal / Senior Director, Data Analytics Consulting` (the
+    known counter-example, leadership and sales), `Ecoppia | Senior Business Intelligence
+    Developer` and `Zipher | Senior Data Analyst` (both core data engineering — ETL,
+    warehousing, Databricks/Spark), `Hunter Douglas, Inc. | Manager, Business Intelligence &
+    Analytics` (the stored text is industrial-maintenance boilerplate, a scrape defect —
+    `444`) and `Ballerine | AI Fraud Data Analyst (Senior)` (the stored text is product
+    marketing). The fix shipped with the measurement: a strong+senior title **with** a
+    description is now judged like any other, and one **without** is accepted on its title
+    exactly as before, so no title-only role is lost and a breaker-open morning is unchanged.
+    Cost ~19 calls once, ~1-3/day after. `ARCHITECTURE.md` 7b;
+    `docs/decisions/2026-08-30-quantitative-scope.md`.
 
 374. **`check_scope_claims` guards one claim; the next scope change will not be about the
     experience bar** — lane: `docs`, filed 2026-08-28. The new check binds the docs to
@@ -7636,6 +7668,18 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     it. `tests/conftest.py` already re-arms the Bright Data sentinel per test
     (`_no_bright_data_state_survives_a_test`) and drains `bd_rescue.SPENT`; whatever this test
     depends on is not in that list.
+
+    **Second reproduction, `classifier` 2026-08-30 — the same test, from a clean process.**
+    It is not only test ORDER: exporting `BD_RUN_CAP=0` before pytest fails it on a clean
+    `origin/master` checkout, because the cap short-circuits `unlock` before the error-code
+    path the test asserts (`::warning::bd_rescue: BD_RUN_CAP=0 reached` in its captured
+    stdout). That matters more than an ordering flake, because `docs/AGENT_BRIEF.md` rule 5
+    tells every session to set exactly that variable for local work — so a session that
+    follows the documented safety instruction sees a red suite it did not cause, and may read
+    the red as inherited and push onto it. `BD_RUN_CAP=0 python -m pytest
+    tests/test_registry.py -k bd_rescue_reads` → 1 failed; unset → 1 passed. Whatever fixes
+    the ordering case should neutralise the environment case too — `tests/conftest.py` already
+    bans the paid transport and is the natural place.
 429. **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
     lane: `roles`. HiBob | Senior Business Analyst on 2026-08-29: the `scraped_cache.json` card
     carried `_jd_attempted: 2026-08-29` while `cloud_state/roles.jsonl` carried
@@ -8187,3 +8231,95 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     would then need to preserve it), or give the inline rung the `_jd_attempted`/`due()`
     machinery the backfills already have, which needs somewhere to write the stamp. Until one
     lands, size the cap for a standing pool rather than for new arrivals.
+## From the `classifier` lane, 2026-08-30 (the quantitative scope)
+
+461. **No visitor-facing surface states the quantitative boundary** — lane: `docs` (with
+    `render`). `docs/decisions/2026-08-30-quantitative-scope.md` and `ARCHITECTURE.md` 7b now
+    define it, but `README.md`, `CLAUDE.md` and the board/digest header still describe the
+    product as "data-analyst / BI / analytics roles", which is true and no longer complete: a
+    market-research analyst role is now excluded and nothing tells a visitor so. This is the
+    same class as the 2026-08-28 experience-bar rewording, which `check_scope_claims` was
+    built for — and note that check reads only `EXPERIENCE_BAR`, so it is structurally blind
+    to this boundary (`374@docs` predicted exactly that: "the next scope change will not be
+    about the bar"). The classifier lane does not own those files and has not touched them.
+
+462. **A `?location=Israel` listing URL makes every card on the page an Israeli posting** —
+    lane: `scraper`. `Comcast` (`jobs.comcast.com/search-jobs?location=Israel`) and
+    `Hunter Douglas, Inc.` (`jobs.hunterdouglas.com/search/?...`) store `location: "Israel"`
+    on cards whose own URLs read `/job/pennsylvania/`, `/job/plano/`, `/job/colorado/`,
+    `/job/houston/`. `israel.is_israel_job` believes the field — correctly; it is the stored
+    value that is wrong — so 14 Comcast and 116 Hunter Douglas US postings are Israel-matched
+    and reach the classifier. One of them (`Analyst, Enterprise Data Analytics - Comcast
+    Advertising`, Pennsylvania) is a real analyst role and would be published as Israeli.
+    Re-derive: `python -c "import json,io;d=json.load(io.open('scraped_cache.json',encoding='utf-8'));print([(j['title'][:40],j['location'],j['url'][:60]) for j in d['Comcast']][:5])"`.
+    The Israel gate is `classifier`'s and is behaving correctly; the stored location is the
+    scrape row's.
+
+463. **The drain's counters exist only in the mail** — lane: `infra`, one line.
+    `Classifier.stale_served` / `stale_rejudged` / `stale_unreachable` are printed by
+    `summary()` and `alarms()` and then lost, so "is the scope change still draining?" can
+    only be answered by opening a digest. `pipeline/run.py` already stamps the `publish` stage
+    with `email`, `board` and `scanned`; adding the three counters puts the drain in
+    `cloud_state/pipeline_stages.json`, where `Stage order:` renders it daily and a lane can
+    diff it across runs. The exact diff, in `run.py`'s `stages.stamp("publish", ...)` call:
+
+    ```python
+        stages.stamp("publish", email=stats["new"], board=stats["board_count"],
+                     scanned=stats["companies_scanned"],
+                     stale=clf.stale_served, drained=clf.stale_rejudged,
+                     stale_unreachable=clf.stale_unreachable)
+    ```
+
+    `run.py` is `infra`'s file and this was proposed, not smuggled. **Until it is applied the
+    drain is visible only in the day's mail**, which is enough to see it stop but not enough
+    to see it slow.
+
+464. **175 superseded verdicts cannot be re-judged by any cap** — lane: `jd-text` (with
+    `classifier`). A `|jd` verdict is never re-judged on a bare title — the invariant the
+    bare/jd split exists for — so a superseded `|jd` row whose role has no description in
+    today's caches is served stale for ever, whatever `CLASSIFY_REJUDGE_CAP` is. Simulated
+    against the committed caches under the new contract: of the encounters a run makes, **175
+    are unreachable this way** against 82 queued NOs and 16 queued YESs. Each one becomes
+    drainable the moment `jdfill` delivers a description for that role, and not before. The
+    `classify … CANNOT be re-judged … (lane: jd-text)` alarm line names the number every
+    morning. Re-derive with the simulation in `docs/sessions/2026-08-30-classifier.md`.
+
+465. **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
+    bad text is permanent** — lane: `classifier` (the key scheme) with `roles` (the column it
+    needs). Found by an adversarial pass on 2026-08-30, and it is the cost of reading a
+    strong+senior role rather than assuming it. Of the 19 fast-accepted roles that carry text,
+    the seam rejects 5; **2 of those 5 are rejected on text that is not the role's**:
+    `Ballerine | AI Fraud Data Analyst (Senior)` (4,000 chars of product marketing — the seam
+    says "no actual job responsibilities described, making it impossible to tell") and
+    `Hunter Douglas, Inc. | Manager, Business Intelligence & Analytics` (3,763 chars of
+    industrial-maintenance duties — a different job's JD, `454`). `looks_like_jd` returns True
+    for both, so the key is `|jd`, and a `|jd` verdict is served for ever after: the lookup is
+    keyed on `(contract, company, title)` and knows nothing about WHICH text produced it, so
+    better text tomorrow changes nothing. Ballerine is on the board today.
+
+    The honest fix is a text identity in the verdict: re-judge once when the description that
+    arrives is not the one that was judged. `llm_cache` has no column for it (`457`), and the
+    table is `roles`'. The alternatives this lane can reach are worse: hashing the text into
+    the KEY would re-judge on every re-scrape and truncation, and reverting to "accept a
+    strong+senior title unread" restores `EPAM` and the other three correct rejections.
+    Sized: 2 roles of 19 on today's corpus. Reproduce:
+    `python tools/measure_scope_rule.py --tier keyword --workers 4` and read the two reasons.
+
+466. **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
+    judges** — lane: `classifier`. A 1,993-char JD whose first 1,400 characters are
+    consumer-insights narrative and whose SQL / BigQuery / Looker paragraph begins at ~1,500
+    is judged **NO** on the production slice and **YES** on the full text. It is not the new
+    rule: the pre-change four-condition prompt answers NO too. But a qualitative-flavoured
+    posting reliably puts its narrative first and its quantitative evidence last, and there is
+    often no `_REQ_HEADER` for the requirements-first rescue to anchor on — the common shape
+    for a single-blob scrape. The demotion routes exactly these titles into that window for
+    the first time.
+
+    **Deliberately not fixed here, and the reason is a rule this repo has already paid for.**
+    `CONTRACT` hashes the rules text and the model — **not `prompt_slice`, `LLM_WINDOW` or
+    `_ROLE_HEAD`**. So widening the window changes what every verdict was made from while
+    every cached verdict keeps being served as current: the exact "serving verdicts made under
+    a spec nobody is running any more" failure the contract key was built to prevent
+    (`ARCHITECTURE.md` §7b). Whoever takes this takes both halves — put the slice geometry in
+    the contract, then change it — and a head+TAIL slice for a JD with no requirements header
+    is the shape to try. Latent today: 0 live titles reach the demotion (§7b).

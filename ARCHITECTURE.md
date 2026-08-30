@@ -4128,9 +4128,94 @@ on 2026-08-24 (`test_the_latin_place_list_has_the_hebrew_lists_cities`).
 | no analytics signal at all (`_SIGNAL`, Hebrew included) | reject | `keyword` |
 | an internship / student placement / apprenticeship / trainee programme (`_NOT_A_JOB`, Hebrew included). **This gate sits ABOVE the strong+senior accept**, so a title carrying both wins here — pinned by `test_the_not_a_job_gate_precedes_the_strong_senior_accept` | reject | `keyword` |
 | junior / entry-level (`_EARLY_CAREER`) — **only when `EXPERIENCE_BAR` is on, and it is OFF since 2026-08-28** (`docs/decisions/2026-08-28-analyst-scope.md`) | reject | `keyword` |
-| a strong analyst title **and** a senior marker (`_STRONG` + `_SENIOR`) — unless a systems/finance domain word sits beside it (`_BA_DOMAIN`: Salesforce BA, HRIS BA, credit …) **or the employer is a staffing/integrator house** (`_AGENCY_EMPLOYER`), then the LLM decides | accept | `keyword` |
+| a strong analyst title **and** a senior marker (`_STRONG` + `_SENIOR`) **and no description of its own** — unless a systems/finance domain word sits beside it (`_BA_DOMAIN`: Salesforce BA, HRIS BA, credit …), **the employer is a staffing/integrator house** (`_AGENCY_EMPLOYER`), or **a qualitative-output word sits in the title** (`_QUALITATIVE_HINT`), in which cases the LLM decides. **A role that HAS a description is read** (2026-08-30, below) | accept | `keyword` |
 | anything else with an analytics signal — the residue | **the LLM tier** | `llm` `llm_cache` `llm_failed_fallback` `llm_skipped` |
 | the residue under `--no-llm` | keywords + description veto (`_sig_accept_nollm`, `_desc_is_ml`) | `keyword_nollm` |
+
+**2026-08-30 — the sixth boundary: quantitative, not qualitative.** The operator narrowed
+the product ("the insights and feel need to be quantitative and not qualitative reports"). A
+role is IN when the person's own output is analysis of MEASURED data — product / web / digital
+/ SEO / marketing / growth analytics, business metrics, experiments, dashboards, reporting on
+recorded events or transactions — and OUT when the core output is a qualitative opinion or
+research report: market research, consumer or market insights, brand / category strategy,
+industry, policy or competitive-intelligence write-ups, survey narratives, user / UX research.
+Israel-only, every seniority and every date are unchanged.
+
+It is enforced as **condition (5) of `LLM_RULES`**, not as a keyword rule, because it is a
+judgement about a role's OUTPUT and no title carries that: `Modellama | Research Analyst` is
+"3-5 years as a Data Analyst, strong SQL, large sports datasets" and is IN, while
+`Hila & Co. | Consumer & Market Insights (CMI) Manager` commissions market studies through
+research institutes and is OUT. Both words appear in both titles. A hard exclude would have
+decided them on the title, with no appeal and nothing cached to review.
+
+What the keyword layer contributes is `_QUALITATIVE_HINT`, which **only demotes** `strong` to
+`signal` — the `_BA_DOMAIN` / `_AGENCY_EMPLOYER` mechanism — so a qualitative title cannot take
+the keyword shortcut and reach the board unread. A wrong word there costs one LLM call and can
+never lose a role.
+
+The vocabulary is written as **stems with no trailing boundary**, so each covers its own
+plural and derived forms — `insight` reaches `insights`, `competit` reaches `competitive` and
+`competitors`, `economist` reaches `economists`. The first draft was singular-only and missed
+`Consumer Surveys`, `Economists Team` and `Policies`: the same half-enumerated class that let
+`Data Analyst Interns` through `_NOT_A_JOB` on 2026-08-28, one alphabet over and in the other
+direction. `market` alone keeps its word boundary, because a `market` stem swallows
+`marketing analyst`, which is IN scope. Three words were tried and **removed** for demoting
+quantitative roles: `intelligence` (matches `business intelligence developer`, 3 golden rows),
+`strateg(y|ic)` (`strategic product analyst`), `consumer` (redundant with `insight`/`market`).
+The **Hebrew arm can only fire on a mixed title** (`Data Analyst - מחקר שוק`): this line is
+read only after `_STRONG` matched and `_STRONG` has no Hebrew, so a Hebrew analytics title is
+already `signal` via `_HEBREW_SIGNAL` one tier below. It must not be read as Hebrew coverage.
+
+**A demotion must not become a rejection.** With no LLM to route the title to — `--no-llm`, or
+the breaker open — the qualitative demotion has nothing to buy, and left alone it turned an
+accept into a deterministic reject on ten titles, four of them senior, including
+`Customer Insights Analyst` — a phrase `_STRONG` names itself. (`_sig_accept_nollm` cannot
+rescue them: `_DATA_ANCHOR` deliberately does not match the word "analyst".) So the fallback
+asks "would this be strong but for the qualitative hint?". The other two demotions are **not**
+lifted, and the asymmetry is the point: a Salesforce BA and an agency posting are things we
+positively do not want accepted blind, while a qualitative title is one we merely want READ.
+Nor is a HARD-EXCLUDED title lifted — `_STRONG` rescuing `data engineer (product & customer
+insights)` to `signal` means "ask", never "assume".
+
+Movement measured before shipping: **0 of the golden fixture's 252 title-only rows, and 0 of
+the 4,266 distinct live (company, title) pairs** in `discovered_cache.json` +
+`scraped_cache.json` that pass `is_israel_job` (0 of all 4,284 pairs regardless of location) —
+the same shape as the internship fix, a hole that nothing had yet walked through. Stated
+plainly: **`_STRONG ∧ _QUALITATIVE_HINT` matches nothing in today's corpus**, so the demotion
+buys no call and protects no role *today*; it is there for the day the registry adds a
+`Customer Insights Analyst`, and the no-LLM rule above is what makes that day safe.
+
+> **Measured, 2026-08-30. 96 postings, one call each; 115 calls in all, because the 19
+> fast-accepted rows were also measured on their own first (`--tier keyword`) — and then the
+> 77-row llm-tier pass was re-run when a fact-check found the first artifact had never been
+> saved, which is why the committed one is authoritative.** The sample is every posting in the
+> two committed caches that is in Israel, passes the title gate and carries at least
+> `MIN_DESC` = 300 characters of text — the raw-length gate, deliberately the wider of the two
+> measures, so the 4 postings whose text `looks_like_jd` rejects are included. **96 postings**,
+> 77 on the LLM tier and 19 fast-accepted, each judged once under the new rules and compared
+> with the verdict deciding it today. The artifact is
+> `tests/fixtures/classifier/2026-08-30-scope.json` (96 rows: company, title, tier, prior
+> verdict and where it came from, new verdict, and the seam's own reason).
+>
+> **Three verdicts moved YES→NO, and none is a false negative of condition (5):**
+> `Percepto | Data Insights Operations` ("operational processing/labeling of visual drone
+> inspection data rather than analyzing quantitative business/product metrics");
+> `Play Perfect | Fraud Analyst` ("developing fraud models and risk detection" — a
+> condition-(2) ML/model rejection); and `מטריקס | מנתח/ת ומאייפנ/ת מערכות BI למשרד מממשלתי מוביל בירושלים - Matrix - DNA`
+> ("a staffing/consulting agency advertising a BI analyst position at a government office
+> client" — condition (4)). **Six moved NO→YES**, every one of them the **experience bar**
+> draining rather than this rule (`mećkano | Data Analyst` is the case that retired the bar).
+> **False negatives of condition (5): 0 of 96.**
+>
+> **The measurement is not bit-reproducible, and that is a fact about the seam.** Two
+> independent passes over the same 77 llm-tier postings moved 2 and 3 verdicts: `Percepto` and
+> `מטריקס` both times, `Play Perfect | Fraud Analyst` only the second. It is a genuine
+> borderline — a fraud-model role that conditions (2) and (5) both bear on — not a flapping
+> rule. Read a single pass as evidence about the cohort, never as a per-role oracle. Cache
+> keys, verbatim, so a reader can find the two stable ones:
+> `v3.a517bb77|percepto|data insights operations|jd` and
+> `v2|מטריקס|מנתח/ת ומאייפנ/ת מערכות bi למשרד מממשלתי מוביל בירושלים - matrix - dna|jd`.
+> Re-derive: `python tools/measure_scope_rule.py --tier both --workers 4`.
 
 **The scope those gates enforce is now a decision, not a phrase**:
 `docs/decisions/2026-08-28-analyst-scope.md`. Two of its five boundaries changed that day and
@@ -4208,11 +4293,11 @@ reason of every fresh verdict is printed to the step log: `[llm] company | title
 
 | bound | default | env / constant | what the mail says when it bites |
 |---|---|---|---|
-| calls per run | 300 | `CLASSIFY_LLM_CAP` — a runaway backstop; the minutes bind first at ~14 s/call | `classify llm-budget(cap 300 calls) — N roles judged on keywords alone (A accepted and emailed, R rejected until the next run), B served their cached bare verdict` |
+| calls per run | 300 | `CLASSIFY_LLM_CAP` — **the binding bound.** ~14 s/call is the local Windows `.cmd`-shim cost; the runner pays 3.0-3.2 s (`attempts 67 in 3.4 min`, run 33250362574; `83 in 4.4`, run 33193786610), so the 60-minute budget is worth ~1,150 calls there and the minutes never bite (BACKLOG 121, closed 2026-08-30) | `classify llm-budget(cap 300 calls) — N roles judged on keywords alone (A accepted and emailed, R rejected until the next run), B served their cached bare verdict` |
 | minutes per run (sum of call durations incl. timeouts, not wall-clock) | 60 | `CLASSIFY_TIME_BUDGET_MIN` | `classify llm-budget(60 min spent) — …` |
 | seconds per call | 45 | `CLASSIFY_TIMEOUT` / `LLM_TIMEOUT` | a `transient` failure |
 | model | `sonnet` | `CLASSIFY_MODEL` / `LLM_MODEL` | `classify model drift: asked sonnet, served …` when the answering model (largest `inputTokens` in `modelUsage`) is another family |
-| superseded-contract re-judgements per run | 60 | `CLASSIFY_REJUDGE_CAP` — how fast a scope change drains; spent in encounter order, and a drained role never returns | `classify N roles decided by a verdict from a SUPERSEDED contract (M re-judged this run, cap 60) — the scope changed and the cache is still draining` |
+| superseded-contract re-judgements per run | 60 NO + 150 YES | `CLASSIFY_REJUDGE_CAP` / `CLASSIFY_REJUDGE_YES_CAP` — how fast a scope change drains; spent in encounter order, and a drained role never returns. **The two cohorts are bounded separately** (2026-08-30): a superseded YES is a role on the board *right now* under a retired spec and there are only ever as many as the board is long (91 on 08-29; 16 forecast for the first run), where stale NOs number in the hundreds — capped together, the budget goes alphabetically and a retired-spec role waits behind a queue of rejections. The YES cap is deliberately generous rather than absent: unbounded, the drain spends the run in encounter order and every FRESH role behind it comes back `llm_skipped`, and a fresh role skipped today can fall out of the 48-hour email window and never be mailed at all | `classify N roles decided by a SUPERSEDED verdict that this run could have re-judged (M done against cap 60, plus Y stale YES re-judged uncapped) - about R more run(s) at this rate` |
 | quarantine floor | 30 fresh verdicts | `CLASSIFY_QUARANTINE_MIN` / `QUARANTINE_MIN_FRESH` (the rehearsal sets 10) | see below |
 
 An explicit constructor argument beats the environment (`Classifier(cap=2)` in a test is 2).
@@ -4247,8 +4332,20 @@ tomorrow, bounded by the cap; nothing escalates yet (BACKLOG 123).
 
 ### The verdict cache (`cloud_state/seen.db` → `llm_cache`, column `title_key`)
 
-Key `<contract>|<company>|<title>|jd` when the raw description is ≥ `MIN_DESC` = 300 chars
-(the same measure `jdfill.maybe_fill` gates on), else `<contract>|<company>|<title>|bare`.
+Key `<contract>|<company>|<title>|jd` when the role has a description `jdfill.looks_like_jd`
+accepts, else `<contract>|<company>|<title>|bare`.
+
+> **That measure changed on 2026-08-30, and the old one was costing a call a day per role.**
+> It was `len(raw) >= MIN_DESC` (300), described here as "the same measure `jdfill.maybe_fill`
+> gates on" — true when it was written, false since `jdfill` moved to `looks_like_jd`
+> (`jdfill.py:1774`). A nav bar and a cookie banner clear 300 characters, so the key said
+> `|jd` while `jdfill` said "there is no description here"; the verdict was judged, refused a
+> cache row for being untrustworthy, and **bought again the next morning, and every morning
+> after, with the answer thrown away each time** — 4 of the 102 title-passing postings that
+> carry text on the committed caches, `Modellama | Research Analyst` (a real 742-char JD with
+> no section headers) among them. One definition, in one place: furniture keys `|bare`, is
+> served from cache like any other bare verdict, and is re-judged the day a real description
+> arrives. A `|jd` row still means exactly what the split promises — verified text.
 
 **The contract is the point.** `CONTRACT = "v3." + sha1(LLM_RULES + "|" + model)[:8]`, so
 changing the rules text or the model marks every verdict made under the old one as superseded,
@@ -4282,10 +4379,24 @@ once and cost 7 calls.
 contract's verdict for the same job** — found by the key's suffix (`_versioned` splits a
 4-part key into `company|title|jd` and its prefix), never by the key itself, so a rules change
 cannot orphan a verdict — then the legacy `company|title` key. **The committed `company|title`
-rows are read as bare verdicts** (older title-only rows are unreachable) and, having no
-contract to be stale *against*, are served and never re-judged for one: treating them as
-superseded made the tier spend a CLI call on a row this document promises is answered without
-one. They are **never purged from a local checkout** either (BACKLOG 116). Every count here
+rows are read as bare verdicts** (older title-only rows are
+unreachable) and, since 2026-08-30, **are drained like any superseded verdict**. They were
+exempt, and the reason was sound for a prompt improvement — "there is no contract for them to
+be stale *against*" — and wrong for a SCOPE change: they were judged on 2026-08-24 against a
+spec with a 3-year bar, no agency rule and no qualitative rule, and while no description ever
+arrives the bare→jd upgrade that was meant to refresh them never fires, so they decide for
+ever. Measured 2026-08-30: **235** such rows — 233 of the plain `company|title` shape plus 2 whose
+TITLE contains a `|` — of which **193 are unreachable** (a versioned twin already wins at
+`_lookup`) and **42 reachable, 36 of them NOs**: `gett|business analyst- maternity leave
+replacement`, `oak|product analyst`, `mize|operations analyst`. (An earlier draft of this
+paragraph said 240/192/41/35, which did not add up: 240 counted the 7 `jdq1|` rows the next
+sentence excludes, and the reachable split had dropped the two piped titles. Re-derive with the
+one-liner below and note that `llm_cache`'s 254 non-contract rows are **235 legacy + 12
+title-only + 7 `jdq1|`**.) They are re-judged bare on
+bare, once each, under the same cap, and never consulted again. Purging the rows is still
+BACKLOG 116's and still must not happen from a local checkout. (Note that `llm_cache` also
+carries 7 `jdq1|<sha1>` rows: those are `enrich_matched_jd.py`'s JD-quality cache sharing the
+table, not classifier verdicts, and nothing here reads or writes them.) They are **never purged from a local checkout** either (BACKLOG 116). Every count here
 decays from the run that changes the contract — re-derive the split, and the base rate the
 quarantine uses, with
 `python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(c.execute(\"select count(*), sum(title_key like 'v3.%'), sum(title_key like 'v2|%'), sum(title_key not like 'v3.%' and title_key not like 'v2|%'), round(1.0*sum(verdict)/count(*),3) from llm_cache\").fetchone())"` → total, current-scheme, `v2`, legacy, YES-rate; `(593, 0, 346, 247, 0.157)` on 2026-08-28, the morning before the contract key landed. A bare verdict is
@@ -4320,6 +4431,9 @@ X` the attempt failures (the alarm below uses X). The classifier's alarms ride t
 | cap or minutes spent | `classify llm-budget(…) — N roles judged on keywords alone (…)` | unit test only (`test_the_cap_and_the_time_budget_skip_instead_of_failing_v2`) |
 | every fresh verdict NO / mostly YES | `classify mass-no(…) — N of this run's M verdicts NOT cached` | `all_no`, `all_yes` (the driver empties the scratch cache for these; `--fresh` does it for any mode; needs ≥ `CLASSIFY_QUARANTINE_MIN` fresh roles — 10 companies, not 4) |
 | re-judgements of this seam's verdicts flipping one way | `classify mass-flip(…) — …` | unit test only (`test_mass_flip_is_a_ratio_not_a_cliff`) |
+| a scope change still propagating | `classify N roles decided by a SUPERSEDED verdict that this run could have re-judged (M done, cap 60) - about R more run(s) at this rate` | unit test only (`test_the_stale_alarm_separates_the_queue_from_what_no_cap_can_reach`) |
+| ...and the part no cap can reach | `classify N superseded verdicts CANNOT be re-judged: the role has no description this run … (lane: jd-text)` | same |
+| the propagation has STOPPED | `classify the contract drain did NOT move this run: N roles were re-judgeable, the seam was available and the cap is 60 - the scope change has stalled` | same |
 
 Real-CLI rehearsal (15 companies, sonnet, 2026-08-24): `classify: 232 judged = keyword 213 +
 llm 19 (4 yes) + cache 0 + failed 0 + skipped 0; attempts 19 in 4.3 min, rejudged 18 (flipped
@@ -4408,10 +4522,15 @@ judged once by each model through `_claude(model=…)` (75 calls, 2026-08-24):
 sonnet–fable agree on 23/25, sonnet–haiku 18/25. The one sonnet miss is a JD whose years
 line only exists in a sibling posting. Per call, measured locally: `duration_api_ms` 3–5 s,
 wall 14–16 s — the difference is CLI start-up, not the flags (three argv variants within
-0.1 s); each call reads ≈21k cached input tokens for ≈$0.009. **Unverified as of 2026-08-24:**
-the start-up cost on the ubuntu runner (tomorrow's `classify:` line prints `attempts N in M
-min`), and whether `--bare` with the OAuth token env would trim it (`--bare` skips the
-keychain and breaks the local login; no token on this machine to test the CI shape).
+0.1 s); each call reads ≈21k cached input tokens for ≈$0.009.
+
+**Answered 2026-08-30 (BACKLOG 121, closed).** The runner does not pay that start-up: two
+unattended digests print `attempts 67 in 3.4 min` (run `33250362574`) and `attempts 83 in
+4.4 min` (run `33193786610`) — **3.04 and 3.18 s per call**, i.e. the API time and almost
+nothing else. The 14–16 s wall is a Windows `.cmd`-shim cost local to this machine. So the
+60-minute budget is worth ~1,150 calls on the runner, `CLASSIFY_LLM_CAP` = 300 is the bound
+that actually binds, and `--bare` and per-call batching have nothing left to buy — both
+stay rejected.
 
 ### The proof: the first digest run after this lands (pushed 2026-08-25, after that day's 05:00 run)
 `Decision paths` sums to `Israel-matched`; no `classify` text on the `Stages:` line;

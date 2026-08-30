@@ -4828,17 +4828,39 @@ def test_a_bare_verdict_is_rejudged_once_when_text_arrives_and_a_jd_verdict_neve
     assert len(calls) == 2
 
 
-def test_legacy_company_title_rows_are_read_as_bare_verdicts_without_a_call(monkeypatch):
-    """The 235 committed company|title rows keep serving bare postings (no purge commit that a workflow's
-    conflict path could revert); they are re-keyed only when the role is re-judged."""
+def test_legacy_company_title_rows_are_re_judged_once_under_the_current_contract(monkeypatch):
+    """A `company|title` row is now DRAINED like any superseded verdict (2026-08-30).
+
+    It used to be exempt, and the reason was good: it was made by another prompt and another
+    model, so "there is no contract for it to be stale AGAINST", and treating it as superseded
+    made the tier spend a call on a row the docs promised was answered without one. What broke
+    that argument is a SCOPE change. These 41 reachable rows were judged on 2026-08-24 against
+    a spec with a 3-year experience bar, no agency rule and no qualitative rule; 35 of them are
+    NOs, and while no description ever arrives they are served for ever -- the bare->jd upgrade
+    that was supposed to refresh them never fires. Draining them is bounded by the same cap as
+    everything else and happens once per row.
+
+    Purging the row itself is still `116@classifier`'s and still must not happen from a local
+    checkout, so the legacy key stays in the cache; it is simply never consulted again."""
     calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
     cache = {"acme|data analyst ii": 0}
-    r = seniority.Classifier(llm_cache=cache).classify(dict(_AMBIG))
-    assert r["path"] == "llm_cache" and r["decision"] == "reject" and calls == []
-    # with text the legacy NO is re-judged once
-    clf = seniority.Classifier(llm_cache=cache); r = clf.classify({**_AMBIG, "description": _TEXT}); clf.commit()
-    assert r["path"] == "llm" and r["decision"] == "accept" and clf.flipped_to_yes == 1
-    assert cache[_ck("acme", "data analyst ii", "jd")] is True and len(calls) == 1
+    clf = seniority.Classifier(llm_cache=cache)
+    r = clf.classify(dict(_AMBIG))                     # a BARE posting, and a legacy NO
+    clf.commit()
+    assert r["path"] == "llm" and r["decision"] == "accept" and len(calls) == 1
+    assert clf.stale_rejudged == 1 and clf.flipped_to_yes == 1
+    assert cache[_ck("acme", "data analyst ii", "bare")] is True   # re-keyed, bare on bare
+    assert cache["acme|data analyst ii"] == 0                      # ...the old row untouched
+    # ...and nothing consults it again: the current-contract verdict answers, with no call
+    clf2 = seniority.Classifier(llm_cache=cache)
+    r2 = clf2.classify(dict(_AMBIG))
+    assert r2["path"] == "llm_cache" and r2["decision"] == "accept" and len(calls) == 1
+    assert clf2.stale_served == 0
+    # ...and the bare->jd upgrade still fires the day a description arrives
+    clf3 = seniority.Classifier(llm_cache=cache)
+    r3 = clf3.classify({**_AMBIG, "description": _TEXT}); clf3.commit()
+    assert r3["path"] == "llm" and cache[_ck("acme", "data analyst ii", "jd")] is True
+    assert len(calls) == 2
 
 
 def test_an_auth_failure_opens_the_breaker_on_the_first_hit(monkeypatch):
@@ -16504,16 +16526,30 @@ def test_a_cross_contract_re_judgement_is_not_a_mass_flip(monkeypatch):
     assert clf.quarantine() == "" and clf.commit() == 20
 
 
-def test_a_legacy_row_never_spends_the_re_judge_budget(monkeypatch):
-    """Caught by the existing legacy guard while this was being written. A `company|title`
-    row has no contract to be stale AGAINST -- it predates the seam -- so treating it as
-    superseded made the tier spend a CLI call on a row the docs promise is answered without
-    one, and would have re-judged all 247 of them (docs/BACKLOG.md 116 owns purging them)."""
+def test_the_drain_is_bounded_by_the_cap_and_a_stale_yes_is_not(monkeypatch):
+    """The cap is what stops the drain re-biting the same alphabetical tail every morning
+    (`122@classifier`), and it still bounds every superseded NO -- including the legacy rows
+    that joined the drain on 2026-08-30, which is what keeps "re-judge all 247 of them" from
+    happening in one morning.
+
+    A superseded YES is deliberately exempt, and the asymmetry is the point: a stale YES is a
+    role ON THE BOARD RIGHT NOW under a spec the operator has retired, and there are only ever
+    as many as the board is long; a stale NO is invisible until it flips, and there are
+    hundreds. Capped together, the budget goes alphabetically and a retired-spec role sits on
+    the board behind a queue of rejections. Each YES is drained once and never returns, so the
+    exemption cannot run away -- and `cap` / `budget_min` still bound the tier as a whole."""
     calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
-    clf = seniority.Classifier(llm_cache={"acme|data analyst ii": 0})
+    # cap 0: a superseded NO is served, not re-judged, and the alarm says so
+    clf = seniority.Classifier(llm_cache={"acme|data analyst ii": 0}, rejudge_cap=0)
     r = clf.classify(dict(_AMBIG))
-    assert r["path"] == "llm_cache" and calls == []
-    assert clf.stale_rejudged == 0 and clf.stale_served == 0 and clf.alarms() == []
+    assert r["path"] == "llm_cache" and calls == [] and clf.stale_rejudged == 0
+    assert clf.stale_served == 1
+    assert any("could have re-judged" in a for a in clf.alarms())
+    assert any("drain did NOT move this run" in a for a in clf.alarms())
+    # ...the same cap 0, but the stale verdict is a YES: re-judged anyway
+    clf = seniority.Classifier(llm_cache={"acme|data analyst ii": 1}, rejudge_cap=0)
+    r = clf.classify(dict(_AMBIG))
+    assert r["path"] == "llm" and len(calls) == 1 and clf.stale_rejudged == 1
 
 
 def test_one_employer_spelled_two_ways_is_judged_once(monkeypatch):
@@ -16732,7 +16768,7 @@ def test_the_drain_never_re_judges_a_jd_backed_verdict_on_a_bare_title(monkeypat
     assert _ck("acme", "data scientist ii", "jd") in cache
 
 
-def test_a_verdict_judged_on_page_furniture_is_never_cached(monkeypatch):
+def test_a_verdict_judged_on_page_furniture_is_cached_as_bare_not_discarded(monkeypatch):
     """`has_text` is `len >= 300`; `jdfill.looks_like_jd` also wants two section families, and
     the two stopped agreeing on 2026-08-28 — 10 of the 70 open roles carry text it rejects. A
     nav bar and a cookie banner clear the length gate, and a verdict cached under `|jd` is
@@ -16748,13 +16784,23 @@ def test_a_verdict_judged_on_page_furniture_is_never_cached(monkeypatch):
                       "url": "https://b/1", "description": furniture})
     clf.commit()
     assert r["decision"] == "reject" and len(calls) == 1     # it was still judged...
-    assert cache == {}                                        # ...and not written down
-    # real JD text is cached exactly as before
+    # ...and written down as BARE, which is the 2026-08-30 correction. Refusing to cache it
+    # at all was meant as a guard and was really a leak: the same call was bought again every
+    # morning and the answer thrown away every morning, invisibly. `has_text` now asks
+    # `looks_like_jd` -- the same question `jdfill.maybe_fill` asks before it refetches -- so
+    # furniture keys `|bare`, is served from cache like any bare verdict, and is re-judged the
+    # day a real description arrives. A `|jd` row still means verified text.
+    assert list(cache) == [_ck("ballerine", "data scientist ii", "bare")]
+    clf1b = seniority.Classifier(llm_cache=cache)
+    r1b = clf1b.classify({"company": "Ballerine", "title": "Data Scientist II",
+                          "url": "https://b/1", "description": furniture})
+    assert r1b["path"] == "llm_cache" and len(calls) == 1     # not re-bought tomorrow
+    # real JD text is cached under |jd, exactly as before, and re-judges the bare verdict once
     clf2 = seniority.Classifier(llm_cache=cache)
     clf2.classify({"company": "Ballerine", "title": "Data Scientist II",
                    "url": "https://b/1", "description": _TEXT})
     clf2.commit()
-    assert list(cache) == [_ck("ballerine", "data scientist ii", "jd")]
+    assert _ck("ballerine", "data scientist ii", "jd") in cache and len(calls) == 2
 
 
 def test_a_verdict_judged_on_another_roles_text_is_never_cached(monkeypatch):
@@ -19825,3 +19871,260 @@ def test_the_inline_rung_buys_raw_and_never_renders_and_says_when_the_cap_binds(
         f.bd("https://a.co/%d" % i)
     assert f.bd.used == 2 and f.bd.capped
     assert any("the Bright Data cap bound at 2" in a for a in f.alarms())
+# --------------------------------------------------------------------------- #
+# 2026-08-30 -- the scope rule: quantitative work, not qualitative reports
+# (docs/decisions/2026-08-30-quantitative-scope.md, ARCHITECTURE.md 7b)
+# --------------------------------------------------------------------------- #
+def test_the_scope_rule_reaches_the_model_and_moves_the_contract():
+    """Condition (5) has to be BUILT in `_rules()`, not typed beside it: a rule the model is
+    not sent decides nothing, and a rule that does not move `CONTRACT` never re-judges the
+    verdicts it invalidates. Both bar branches must carry it, or flipping the experience bar
+    would silently drop the scope rule."""
+    for bar in (True, False):
+        r = seniority._rules(bar)
+        assert "QUANTITATIVE, NOT QUALITATIVE" in r, bar
+        assert "market research" in r and "measured data" in r.lower(), bar
+        assert "five conditions" in r, bar
+        assert chr(10) not in r, bar          # one line: cmd.exe truncates argv at a newline
+    # the contract is a digest of the rules, so the rule cannot ship without invalidating
+    # what the old rules decided -- `v3.a517bb77` is the contract of the morning before
+    assert seniority.CONTRACT.startswith(seniority.CONTRACT_PREFIX)
+    assert seniority.CONTRACT != "v3.a517bb77"
+
+
+def test_a_qualitative_title_never_takes_the_keyword_shortcut():
+    """`_QUALITATIVE_HINT` DEMOTES `strong` to `signal` and never rejects, exactly as
+    `_BA_DOMAIN` and `_AGENCY_EMPLOYER` do, so a wrong word costs one LLM call and never a
+    role. Without it, `Senior Market Insights Analyst` is `strong` + `senior` and would be
+    accepted onto the board with no description ever read -- the one path condition (5)
+    cannot reach."""
+    for title in ("Senior Market Insights Analyst", "Customer Insights Analyst",
+                  "Data Analyst, Market Research", "Senior Insights Analyst",
+                  "BI Analyst - Competitive Intelligence"):
+        assert seniority._relevance(title.lower(), "") == "signal", title
+    # ...never `excluded` or `none`: the demotion must not be able to drop a role
+    for title in ("Senior Market Insights Analyst", "Research Analyst",
+                  "Consumer & Market Insights (CMI) Manager"):
+        assert seniority._relevance(title.lower(), "") not in ("excluded", "none"), title
+    # three words were REMOVED after they demoted quantitative roles; pin each one back
+    for title in ("Business Intelligence Developer", "Strategic Product Analyst",
+                  "Senior BI Analyst", "Marketing Analyst", "Senior Data Analyst"):
+        assert seniority._relevance(title.lower(), "") == "strong", title
+
+
+def test_a_strong_senior_title_with_a_description_is_read_not_assumed(monkeypatch):
+    """`373@classifier`, closed with a number. The strong+senior shortcut was justified by the
+    experience bar ("a senior analyst title reliably means 3+ years"); the bar came off on
+    2026-08-28 and the justification went with it, leaving the one path no description ever
+    touched. Measured 2026-08-30 over the two committed caches: of the 19 such roles that
+    carry a description, the production seam rejects **5** -- `EPAM | Managing Principal /
+    Senior Director, Data Analytics Consulting` (a leadership/sales role), two data-engineering
+    roles, one whose stored text is industrial-maintenance boilerplate, and one whose text is
+    product marketing. So a role that HAS a description is now judged; one that has none is
+    accepted on its title exactly as before, and no title-only role is lost."""
+    calls = _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    clf = seniority.Classifier(llm_cache={})
+    bare = clf.classify({"company": "Acme", "title": "Senior Data Analyst"})
+    assert bare["path"] == "keyword" and bare["decision"] == "accept" and calls == []
+    assert bare["reason"].startswith("senior analyst title")
+    read = clf.classify({"company": "Acme", "title": "Senior Data Analyst",
+                         "description": _TEXT})
+    assert read["path"] == "llm" and read["decision"] == "reject" and len(calls) == 1
+    # ...and with the seam off it accepts on the title again: the shortcut is what keeps a
+    # breaker-open morning from dropping every senior analyst role on the board
+    off = seniority.Classifier(use_llm=False, llm_cache={}).classify(
+        {"company": "Acme", "title": "Senior Data Analyst", "description": _TEXT})
+    assert off["decision"] == "accept" and off["path"] == "keyword"
+
+
+def test_the_stale_alarm_separates_the_queue_from_what_no_cap_can_reach(monkeypatch):
+    """One line used to say "the cache is still draining" about three different facts, and on
+    2026-08-29 it read `191 roles ... (60 re-judged, cap 60)` -- which invites exactly one fix,
+    raising the cap, when the cap was not the binding constraint. Of those 191, most were
+    `|jd` verdicts for roles with no description that morning, and re-judging a JD-backed
+    verdict on a bare title is the one thing the split forbids. No cap reaches them; a
+    description does."""
+    _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    # a superseded |jd verdict, and no description this run -> unreachable, not queued
+    cache = {"v3.deadbeef|acme|data analyst ii|jd": False}
+    clf = seniority.Classifier(llm_cache=cache)
+    r = clf.classify(dict(_AMBIG))
+    assert r["path"] == "llm_cache" and clf.stale_served == 1 and clf.stale_unreachable == 1
+    alarms = " ".join(clf.alarms())
+    assert "CANNOT be re-judged" in alarms and "lane: jd-text" in alarms
+    assert "could have re-judged" not in alarms       # nothing was queued
+    assert "did NOT move this run" not in alarms      # ...so the drain has not stalled
+    assert "unreachable without a description" in clf.summary()
+
+
+def test_furniture_text_is_not_re_bought_every_morning(monkeypatch):
+    """`has_text` decided the `|jd` / `|bare` key by raw length while `jdfill.maybe_fill`
+    decided whether to refetch by `looks_like_jd`. A nav bar clears 300 chars, so the key said
+    `|jd`, the verdict was refused a cache row for being untrustworthy, and the SAME call was
+    bought again every morning with the answer thrown away -- 4 of the 102 title-passing
+    postings carrying text on the committed caches. One definition now, and it is jdfill's."""
+    from pipeline.jdfill import looks_like_jd
+    calls = _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    furniture = "Skip to content Platform Integrations Trust Careers Company About Us. " * 10
+    assert len(furniture) >= seniority.MIN_DESC and not looks_like_jd(furniture)
+    job = {"company": "Acme", "title": "Data Analyst II", "description": furniture}
+    cache = {}
+    for _ in range(3):                       # three mornings in a row
+        clf = seniority.Classifier(llm_cache=cache)
+        clf.classify(job)
+        clf.commit()
+    assert len(calls) == 1, "the same posting was re-bought"
+    assert list(cache) == [_ck("acme", "data analyst ii", "bare")]
+
+
+def test_a_legacy_re_judgement_is_a_drain_purchase_and_is_never_withheld(monkeypatch):
+    """Found while writing the legacy drain, not by a test failure. `_drain_keys` exists so a
+    deliberate spec change is not withheld by the mass-flip guard and re-bought every morning
+    (docs/BACKLOG.md 123). It was keyed on `prior[2]` -- "this seam made the old verdict" --
+    which is False for a legacy `company|title` row. So once legacy rows joined the drain,
+    their re-judgements landed in `_rejudge_keys` but not `_drain_keys`, and a mass-flip
+    tripped by any other cohort would have withheld all 41 verdicts the run had just paid for,
+    every morning, for ever. A verdict from ANY retired contract is a drain purchase."""
+    _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    cache = {"acme|data analyst ii": 0}
+    clf = seniority.Classifier(llm_cache=cache)
+    clf.classify(dict(_AMBIG))
+    assert clf.stale_rejudged == 1 and clf.drain_to_yes == 1
+    key = _ck("acme", "data analyst ii", "bare")
+    assert key in clf._drain_keys, "a legacy re-judgement must be exempt from the mass-flip"
+    # ...and a mass-flip morning cannot withhold it
+    clf._v2_rejudged, clf._v2_flips = 20, 20
+    clf.flipped_to_yes, clf.flipped_to_no = 20, 0
+    assert "mass-flip" in clf.quarantine()
+    assert key not in clf.quarantined_keys()
+    assert clf.commit() == 1 and cache[key] is True
+
+
+def test_a_qualitative_demotion_does_not_reject_when_there_is_no_llm_to_ask():
+    """Wave 1, 2026-08-30. A demotion exists to route a title to the LLM; with no LLM to route
+    it to (`--no-llm`, or the breaker open) the qualitative demotion has nothing to buy and
+    only turns an accept into a deterministic REJECT. Ten titles flipped strong/accept ->
+    signal/reject, four of them SENIOR, and `customer insights` is a phrase `_STRONG` names
+    itself. `_sig_accept_nollm` cannot rescue them: `_DATA_ANCHOR` deliberately does not match
+    the word "analyst"."""
+    for title in ("Insights Analyst", "Customer Insights Analyst",
+                  "Senior Product Analyst, Market Research",
+                  "Senior Growth Analyst, Competitive Benchmarking",
+                  "Marketing Analyst, Market Research",
+                  "Senior Business Analyst, Policy Operations"):
+        assert seniority._relevance(title.lower(), "") == "signal", title
+        r = seniority.classify({"company": "Acme", "title": title}, use_llm=False)
+        assert r["decision"] == "accept", (title, r)
+    # ...but the OTHER two demotions still refuse to accept blind, which is why they exist
+    assert seniority.classify({"company": "Acme", "title": "Business Analyst, Salesforce"},
+                              use_llm=False)["decision"] == "reject"
+    assert seniority.classify({"company": "Matrix", "title": "Data Analyst"},
+                              use_llm=False)["decision"] == "reject"
+    # ...and a HARD-EXCLUDED title that `_STRONG` merely rescued to `signal` is never lifted
+    # back to an accept: the rescue means "ask the LLM", not "assume yes" (golden fixture,
+    # `data engineer (product & customer insights)`)
+    assert seniority.classify({"company": "Torq",
+                               "title": "Data Engineer (Product & Customer Insights)"},
+                              use_llm=False)["decision"] == "reject"
+
+
+def test_the_qualitative_vocabulary_is_stems_not_singulars():
+    """The same half-enumerated class that let `Data Analyst Interns` through `_NOT_A_JOB` on
+    2026-08-28, in the other direction: `survey` missed `Surveys`, `economist` missed
+    `Economists`, `policy` missed `Policies`. Five more words the scope statement names
+    verbatim were missing entirely (brand, category, industry, qualitative, competitor)."""
+    for title in ("Senior Data Analyst, Consumer Surveys", "Senior Data Analyst, Economists Team",
+                  "Senior Business Analyst, Policies and Regulation",
+                  "Senior Marketing Analyst, Brand Strategy",
+                  "Senior Business Analyst, Category Management",
+                  "Senior Data Analyst, Industry Intelligence",
+                  "Senior Marketing Analyst, Qualitative Studies",
+                  "Senior Product Analyst, Competitor Landscape",
+                  "Senior Data Analyst, Voice of the Customer",
+                  "Senior Data Analyst, Ethnographic Programs",
+                  "Senior Data Analyst, Focus Group Operations",
+                  "UX Research Analyst"):
+        assert seniority._relevance(title.lower(), "") == "signal", title
+    # `market` keeps its word boundary: a stem would swallow `marketing analyst`
+    assert seniority._relevance("marketing analyst", "") == "strong"
+    assert seniority._relevance("senior marketing analyst", "") == "strong"
+    assert seniority._relevance("data analyst, market research", "") == "signal"
+
+
+def test_a_cached_verdict_outranks_the_keyword_shortcut_on_a_day_with_no_description(monkeypatch):
+    """Wave 2, 2026-08-30, and the worst thing this session nearly shipped. The strong+senior
+    shortcut sat ABOVE the cache lookup, so it returned before any verdict was read. Once the
+    shortcut was gated on "no description" (`373@classifier`), a role whose fill fails on
+    alternate mornings alternated between the verdict the seam was PAID for and a guess from
+    its title: reject, accept, reject, accept -- on the board and in the email on every accept
+    day. The shortcut now sits below the lookup and fires only when nothing has ever judged
+    the role."""
+    calls = _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    job = {"company": "EPAM", "title": "Senior Director, Data Analytics Consulting"}
+    assert seniority._relevance(job["title"].lower(), "") == "strong"
+    assert seniority._seniority(job["title"].lower()) == "senior"
+    cache = {}
+    clf = seniority.Classifier(llm_cache=cache)
+    day1 = clf.classify({**job, "description": _TEXT}); clf.commit()
+    assert day1["path"] == "llm" and day1["decision"] == "reject" and len(calls) == 1
+    decisions = [day1["decision"]]
+    for _ in range(3):                      # three more mornings, no description at all
+        c = seniority.Classifier(llm_cache=cache)
+        decisions.append(c.classify(dict(job))["decision"])
+    assert decisions == ["reject"] * 4, "the role flip-flopped: %r" % decisions
+    assert len(calls) == 1, "and it was not re-bought either"
+    # ...while a role NOTHING has judged still takes the shortcut, which is what it is for
+    fresh = seniority.Classifier(llm_cache={}).classify(
+        {"company": "Acme", "title": "Senior Data Analyst"})
+    assert fresh["path"] == "keyword" and fresh["decision"] == "accept"
+
+
+def test_a_mass_flip_morning_is_still_caught_when_legacy_rows_are_draining(monkeypatch):
+    """Wave 2. The guard's ratio was measured on the same-contract cohort but its
+    ONE-SIDEDNESS was measured on the GLOBAL flip counters. Once legacy rows joined the drain
+    (2026-08-30) their flips landed in those counters too, so **two** unrelated legacy rows
+    flipping the other way silenced the guard on a morning where 12 of 12 same-contract
+    verdicts flipped the same way -- and the corrupted cohort committed, for a year. A guard
+    whose two halves are measured on different populations is not a guard."""
+    _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    cache = {}
+    # 12 same-contract bare verdicts, all YES, all about to flip to NO
+    for i in range(12):
+        cache[_ck("acme", "data analyst %d" % i, "bare")] = True
+    # ...and two legacy rows that flip the OTHER way, which used to be enough to silence it
+    cache["acme|legacy analyst 0"] = False
+    cache["acme|legacy analyst 1"] = False
+    clf = seniority.Classifier(llm_cache=cache)
+    for i in range(12):
+        clf.classify({"company": "Acme", "title": "Data Analyst %d" % i, "description": _TEXT})
+    _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    for i in range(2):
+        clf.classify({"company": "Acme", "title": "Legacy Analyst %d" % i})
+    assert "mass-flip" in clf.quarantine(), clf.quarantine()
+    held = clf.quarantined_keys()
+    assert _ck("acme", "data analyst 0", "jd") in held        # the suspect cohort is withheld
+    assert _ck("acme", "legacy analyst 0", "bare") not in held  # ...the drain's own is not
+
+
+def test_the_stale_yes_drain_cannot_starve_the_fresh_roles_behind_it(monkeypatch):
+    """Wave 2. Exempting a superseded YES from `CLASSIFY_REJUDGE_CAP` is right -- it is a role
+    on the board under a retired spec -- but "there are only ever as many as the board is
+    long" is an assumption about the DATA, and the code has to enforce it. Unbounded, the
+    drain spent the whole run in encounter order and every fresh role behind it came back
+    `llm_skipped`; and a fresh role skipped today is not merely re-bought, it can fall out of
+    the 48-hour email window and never be mailed at all."""
+    _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    cache = {"v3.deadbeef|acme|stale analyst %d|bare" % i: True for i in range(200)}
+    clf = seniority.Classifier(llm_cache=cache, cap=100, rejudge_cap=60)
+    clf.rejudge_yes_cap = 40
+    for i in range(200):
+        clf.classify({"company": "Acme", "title": "Stale Analyst %d" % i})
+    assert clf.stale_rejudged_yes == 40, clf.stale_rejudged_yes
+    # ...and there is budget left for the roles behind it
+    fresh = clf.classify({"company": "Acme", "title": "Data Analyst New",
+                          "description": _TEXT})
+    assert fresh["path"] == "llm", fresh
+    # the capped cohort is charged separately, so the mail's "N done against cap 60" is true
+    # of the pool the cap actually bounds
+    assert clf.stale_rejudged - clf.stale_rejudged_yes == 0
+    assert "stale-yes/cap 40" in clf.summary()
