@@ -961,6 +961,16 @@ the tier like any other role. A second filter here would cost coverage and buy n
   shape alarm, not a quality metric; the floor sits ~5x below today's value so ordinary drift
   cannot fire it. It lives outside `queue_entries` on purpose: that function parses, this one
   judges, and a parser that silently returns nothing on a small input is a trap.
+- **What the catalog's names have PRODUCED, measured 2026-08-30** (`discovery`): of the
+  2,002 new employers, 1,075 have been offered to the queue since 08-21; **545 are
+  registry rows (246 active) and 12 of those carry a matched role — 4.9 % of active
+  catalog-seeded rows, against 8.7 % registry-wide and 25.2 % for LinkedIn-seeded rows**,
+  and the gap holds on a same-age cohort (3.3 % vs 12.2 %). The catalog is
+  also where the queue's plainly-foreign names come from (a Flemish water board, a
+  Missouri city, a French lycée: 79 of 572 on 2026-08-30), because it lists every employer
+  that ever posted an Israel-tagged job and the intake gates model none of that. The
+  costed comparison against every other candidate source, and why nothing new is wired,
+  is `docs/decisions/2026-08-30-discovery-own-domain-sources.md`; the cap and filter are `docs/BACKLOG.md` 483.
 - **A newly queued name goes to the FRONT of the resolver's batch, not the back.**
   `auto_expand.py:455` sorts `todo` by last-tried date and an unseen name sorts to `""`. So
   the catalog's 40/run are tried before older leads — and unlike a LinkedIn or Indeed card,

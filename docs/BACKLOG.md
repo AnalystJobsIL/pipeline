@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**532 filed · 388 open · 144 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**537 filed · 393 open · 144 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 482.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 487.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -361,7 +361,7 @@ closure convention in the header.
 - **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
 - **462** `462@scraper` **A `?location=Israel` listing URL makes every card on the page an Israeli posting** —
 
-### discovery — 24 open
+### discovery — 27 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -387,6 +387,9 @@ closure convention in the header.
 - **428** `428@discovery` **`discovered_cache.json` has no archive pass, and it is 1,919 thin cards of 1,950** —
 - **441** `441@discovery` **Intake re-adds names that were retired with evidence, so the queue can never stay
 - **456** `456@discovery` **The inline JD filler re-buys the same postings every night, because it has no cooldown
+- **483** `483@discovery` **The secrethunter catalog fills the queue with names the registry cannot use, and
+- **484** `484@discovery` **Twenty agencies still walk past `is_recruiter` by name**
+- **485** `485@discovery` **`discovery_telegram.py` sends a spoofed Chrome UA and keeps only a post's first URL**
 
 ### docs — 24 open
 
@@ -415,6 +418,28 @@ closure convention in the header.
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 
+### company-intel — 19 open
+
+- **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
+- **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
+- **6** `6@company-intel` **Company aliases**
+- **10** `10@company-intel` **Let company-death knowledge flow back.** Firmographics research keeps discovering
+- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
+- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
+- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
+- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
+- **389** `389@company-intel` **The strike ledger is a union, and a union cannot express a retraction**
+- **390** `390@company-intel` **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
+- **391** `391@company-intel` **A corrupt or write-locked strike ledger is invisible in the mail**
+- **392** `392@company-intel` **A refusal to publish the export discards the whole run's purchases**
+- **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
+- **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
+- **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
+- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
+- **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
+- **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
+- **482** `482@company-intel` **The public `sector` enum is not normalised, and it ships in `roles.csv`**
+
 ### ats-fetch — 18 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
@@ -435,27 +460,6 @@ closure convention in the header.
 - **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
-
-### company-intel — 18 open
-
-- **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
-- **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
-- **6** `6@company-intel` **Company aliases**
-- **10** `10@company-intel` **Let company-death knowledge flow back.** Firmographics research keeps discovering
-- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
-- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
-- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
-- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
-- **389** `389@company-intel` **The strike ledger is a union, and a union cannot express a retraction**
-- **390** `390@company-intel` **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
-- **391** `391@company-intel` **A corrupt or write-locked strike ledger is invisible in the mail**
-- **392** `392@company-intel` **A refusal to publish the export discards the whole run's purchases**
-- **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
-- **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
-- **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
-- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
-- **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
-- **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
 
 ### jd-text — 15 open
 
@@ -492,7 +496,7 @@ closure convention in the header.
 - **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
 - **473** `473@roles` **`roles.csv.meta.json` says `published_on_pages: false` on the very page that publishes
 
-### classifier — 8 open
+### classifier — 9 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -502,6 +506,7 @@ closure convention in the header.
 - **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
 - **465** `465@classifier` **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
 - **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
+- **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
 
 ### render — 7 open
 
@@ -8840,3 +8845,66 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      `test_ci_itself_confirms_why_the_tree_check_cannot_run_there` (skipped outside CI) is
      reported, not judged. `--junitxml` would name both; not done because the first
      measurement needed the tool more than the tool needed the distinction.
+
+## From the `discovery` lane, 2026-08-30 (the own-domain research session)
+
+*Record: `docs/decisions/2026-08-30-discovery-own-domain-sources.md`. Nothing new was wired.*
+
+482. **The public `sector` enum is not normalised, and it ships in `roles.csv`** — lane:
+     `company-intel`, filed by `discovery`. Active rows in `cloud_state/firmographics.json`
+     carry `cybersecurity` 135 / `Cybersecurity` 38, `fintech` 66 / `Fintech` 13,
+     `semiconductors` 20 / `Semiconductors` 5, `adtech` 8 / `AdTech` 3, `retail tech` 3 /
+     `Retail Tech` 3 (2026-08-30, joined on `companies.csv` active rows). The file is public
+     at `https://analystjobsil.github.io/board/roles.csv`, so a consumer grouping by sector
+     gets two cyber bars. Lower-case at write time in `pipeline/firmographics.py` and once
+     over the stored file; re-derive with the one-liner in the record's §6.
+
+483. **The secrethunter catalog fills the queue with names the registry cannot use, and
+     the cap is still the seeding value** — lane: `discovery` (the filter) + `infra` (the env
+     line). Measured 2026-08-30 over all 34 commits of `research_companies.json`, joined to
+     `cloud_state/roles.csv`: **1,075 catalog names offered → 545 registry rows (246 active)
+     → 12 with a matched role = 4.9 % of active catalog rows, against 8.7 % registry-wide
+     and 25.2 % for LinkedIn-seeded rows** (same-age cohort: 3.3 % vs 12.2 %). Per name it
+     is ~2× as foreign as the LinkedIn seed (15.6 % vs 7.7 %), because it lists every
+     employer that ever posted an Israel-tagged job. `SECRETHUNTER_QUEUE_CAP` is 150 per
+     RUN, and the pipeline commits up to four runs a day (586 catalog names first queued
+     on 08-28), so the env line alone bounds nothing. Proposed: a per-DAY window of **40**
+     in `pipeline/secrethunter.py` (date-keyed, so a re-run offers the same names), with
+     `daily-digest.yml`'s env line lowered to match. Be precise about what it buys: net queue growth falls
+     from the measured ~+138 to ~+28 per run and catalog names stop displacing job-backed
+     leads at the front of the resolver batch — it does NOT change the noise share, because
+     the window is day-rotated and every slug is still reached. An Israel filter at intake is
+     NOT computable without a GET per slug (`company_identity.is_foreign` is a name-vs-domain
+     check, 1 of 4 headline foreign names caught; `_site_from_guess` costs ≤4 GETs / ≤20 s per
+     name, ~50 min for 150 inside a 25-minute step), so it is a separate costed decision.
+     Re-measure the 4.9 % a fortnight after the cap lands; if it does not move, the catalog
+     is a names source and should be read at 0/run.
+
+484. **Twenty agencies still walk past `is_recruiter` by name** — lane: `discovery`. After
+     the 2026-08-30 regex fix (plural `Recruiters`, digit boundary, `hr consulting`) the queue
+     still holds `ELAD HR`, `Bridgz Outsourcing`, `Brooks Keret`, `Hameshakem`, `COMMIT
+     Offshore`, `Gil Ad Sage Agencies Ltd`, `SeerT - Building Your Team`, `Strategic Matching`,
+     `Human Capital Recruitment1`'s siblings and a dozen more that only a `_CONFIRMED` entry
+     can refuse — each needs the same research-then-list step the file's own comments
+     demand (`recruiters.py:120-140`), never a wider regex: `Outsourcing` and `HR` both name
+     product companies too.
+
+485. **`discovery_telegram.py` sends a spoofed Chrome UA and keeps only a post's first URL**
+     — lane: `discovery`. `_UA` at line 58 is a browser string, the opposite of the honest
+     `AnalystJobsIL/1.0` conduct the 08-27 record commits to for secrethunter and that this
+     session used everywhere; `t.me/s/` previews answer an honest UA (untested at scale — one
+     probe per channel before switching, the same rule as adding a channel). And `parse_post`
+     (:139-141) drops every URL after the first, which is at most the 4 `/jobz/` queue entries
+     today — low value, filed so the two conduct rules stop contradicting each other.
+
+486. **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
+     rejects into LLM calls** — lane: `classifier`, filed by `discovery`. Measured on Israel
+     Discount Bank's Oracle HCM board (64 requisitions, read with `fetch_oraclehcm`, no key):
+     5 titles reach the signal tier and 0 are in scope — `מנתח.ת מערכות …` (systems analyst)
+     and `מנהל.ת פרויקטים …` (project manager) are both on `_HARD_EXCLUDE` in English only,
+     two `אנליסט.ית אשראי` (credit analysts, out by the 08-28 scope) and a bare Data Scientist.
+     `Investment Analysis Analyst/Associate` (Econergy) also slips past the `investment
+     analyst` entry. Each is a `claude -p` call against the 300/day cap; the fix is the
+     Hebrew forms beside the English ones plus a stem for `investment analys`. Record:
+     `docs/decisions/2026-08-30-discovery-own-domain-sources.md` §3–4.
+

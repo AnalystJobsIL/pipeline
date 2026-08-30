@@ -2260,5 +2260,15 @@
   "replace": "            seg = \"queue-hunt %s: no IL listing; monitored candidate\" % today",
   "why": "the monitor row exists to record an ADDRESS, never an absence; the old queue arm's note said `no IL listing` and that is the operator's rule violated once per name.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "recruiter-plural-drop",
+  "file": "pipeline/recruiters.py",
+  "symbol": "_KEYWORD",
+  "class": "M7-constant-drift",
+  "find": "    r\"\\b(recruit(ing|ment|ers?|x)?|staffing|headhunt(ing|ers?)?|manpower|\"",
+  "replace": "    r\"\\b(recruit(ing|ment|x)?|staffing|headhunt(ing|ers?)?|manpower|\"",
+  "why": "discovery 2026-08-30: reverting `ers?` re-admits `Sales Experts Executive Recruiters` (a live queue entry) to the names funnel, one auto_expand run from a registry row.",
+  "must_be_killed_by_behavioural": true
  }
 ]

@@ -1088,6 +1088,28 @@ def test_a_hebrew_spelling_does_not_walk_past_a_latin_recruiter_entry(name, expe
     assert is_recruiter(name) is expected
 
 
+@pytest.mark.parametrize("name, expected", [
+    # discovery 2026-08-30: the plural noun and a trailing digit walked past the keyword
+    # gate. The first three are real research_companies.json entries that day, refused by
+    # nothing.
+    ("Sales Experts Executive Recruiters", True),
+    ("Human Capital Recruitment1", True),
+    ("Yarden Abramovich HR Consulting", True),
+    ("Acme Recruiters", True),
+    # ...and the neighbours that must not move: the TASE-listed employers that sit next to
+    # the agencies in the registry, and a product name with `hr` but no agency word
+    ("Bank Leumi", False),
+    ("Strauss Group", False),
+    ("HiBob HR Platform", False),
+])
+def test_the_recruiter_keyword_matches_the_plural_noun_and_a_trailing_digit(name, expected):
+    """Kills `recruiter-plural-drop`. `recruit(ing|ment|x)?\\b` refused "Acme Recruitment" and
+    admitted "Acme Recruiters"; `\\b` never fires before a digit. Measured over the whole
+    registry before widening: 0 active rows newly refused (1 parked agency newly caught)."""
+    from pipeline.recruiters import is_recruiter
+    assert is_recruiter(name) is expected
+
+
 # --- discovery lane, round 2: the breadth sweep was discovering nothing -----------------
 def test_the_breadth_sweep_is_deep_and_recency_filtered():
     """It returned 0 new companies — 29 jobs, 27 employers, 25 already registry rows and 11

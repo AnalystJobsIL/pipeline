@@ -142,8 +142,17 @@ _HEBREW_MARKERS = (
 
 # Obvious agency markers — blocks future auto-expand additions. Narrow on purpose.
 _KEYWORD = re.compile(
-    r"\b(recruit(ing|ment|x)?|staffing|headhunt(ing|ers?)?|manpower|"
-    r"placement agenc|talent acquisition|gotfriends|hr solutions)\b", re.I)
+    # `recruit(ing|ment|x)?\b` could not match the plural NOUN -- "Acme Recruitment" was
+    # refused and "Acme Recruiters" walked through -- and `\b` never fires between a letter
+    # and a digit, so "Human Capital Recruitment1" (a real queue entry, 2026-08-30) passed
+    # too. Measured before widening: 3 of 572 queue names newly refused, 0 ACTIVE registry
+    # rows, 1 parked row ("Yamo Overseas Recruiters Limited", correctly); re-checked over
+    # 2,697 distinct names across registry, queue, cache and firmographics: those 4 and no
+    # other. The closing boundary is `(?![a-z])` -- "not an ASCII letter" (re.I covers the
+    # upper case) -- so a digit, `_` or a non-Latin letter now ends the token where `\b`
+    # did not; the singular `recruiter` is caught too.
+    r"\b(recruit(ing|ment|ers?|x)?|staffing|headhunt(ing|ers?)?|manpower|"
+    r"placement agenc|talent acquisition|gotfriends|hr solutions|hr consulting)(?![a-z])", re.I)
 
 
 def is_recruiter(name, slug=""):
