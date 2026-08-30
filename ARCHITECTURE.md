@@ -3502,6 +3502,33 @@ worked and changed nothing. With `lists`, 2,835.
 Comeet (36 seen_ids) and Ashby (8) are deliberately out of scope: neither has a per-job
 endpoint, and re-reading a whole board belongs to `ats-fetch` (`docs/BACKLOG.md` 375).
 
+### Which mechanism fills what — read this before believing a cache is empty
+
+*Corrected 2026-08-30. Both the orchestrator and this lane misread it, and a session reading
+the old text would repeat the mistake.*
+
+**The inline filler has been doing the work all along.** `jdfill.JDFiller.maybe_fill`, called
+from `roles.classify_grouped` inside the digest's classify step, fetches ~130 descriptions
+every single morning and succeeds on about 79% of them:
+
+| run | inline | rungs |
+|---|---|---|
+| 08-27 `33092547374` | **128 of 146** | html 109, native 19 |
+| 08-28 `33193786610` | **132 of 164** | html 108, native 24 |
+| 08-29 `33250362574` | **132 of 167** | html 105, native 27 |
+
+It writes into the job dict, which reaches `matched` — **never back into
+`discovered_cache.json`** — which is why those caches look untouched and why both readings of
+them were wrong. **"Four green mornings that filled nothing" is false of this layer.** It was
+only ever true of the two BACKFILL drivers (`enrich_scrape_jd`, `enrich_matched_jd`), which
+filled 6/0/1/0 over those same mornings; the mechanism that serves the postings whose verdict
+the text decides was filling ~130 a night throughout.
+
+So: **the inline filler owns the postings that reach the LLM tier**, before the verdict, and it
+is the only rung that can — a role rejected on a bare title never reaches `matched` for
+`enrich_matched_jd` to find. **`enrich_matched_jd` owns roles already accepted**, at any age.
+**`enrich_scrape_jd`'s title pool** tops up `scraped_cache.json` for the board's own rendering.
+
 ### What the classifier actually reads, and why the archive pool is not it
 
 *Measured 2026-08-30, the day after the archive pool was built, by the lane that built it.*
@@ -3780,7 +3807,7 @@ a day go through that path.
 
 | caller | when | what it walks | Bright Data |
 |---|---|---|---|
-| `JDFiller` (`pipeline/run.py`, before `seniority.classify`) | 05:00, in the digest | every Israel-matched role whose title the classifier could accept, `JDFILL_TIME_BUDGET_MIN` (25) | never |
+| `JDFiller` (`pipeline/run.py`, before `seniority.classify`) | 05:00, in the digest | every Israel-matched role whose title the classifier could accept, `JDFILL_TIME_BUDGET_MIN` (25) | **`JDFILL_BD_CAP` 25**, after the free rungs fail (2026-08-30; it never bought before) |
 | `enrich_scrape_jd.py` — **title pool** | 05:00, before the pipeline | cards failing `looks_like_jd`, relevance-gated, non-chrome, Israel-passing, at a job address, in `scraped_cache.json`, deduped by url | `JD_ENRICH_BD_CAP` **1000**, `JD_ENRICH_TIME_BUDGET_MIN` 25 |
 | `enrich_scrape_jd.py --archive-only` — **archive pool** | `jd-archive.yml`, 12:30 (§4) | every OTHER Israel-passing card: the ones the title gate drops. Oldest attempt first, round-robin over companies | the same caps; `JD_ENRICH_TIME_BUDGET_MIN` **90** in that workflow |
 | `enrich_matched_jd.py` | 05:00, before the pipeline | every LIVE `matched` row failing `looks_like_jd`, any age, any source | `MATCHED_JD_BD_CAP` **25**, `MATCHED_JD_TIME_BUDGET_MIN` 20 (yml) |

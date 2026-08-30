@@ -55,6 +55,12 @@ GONE_MARK = " gone"         # the posting is off the employer OWN board: never r
 MAX_RETRY_DAYS = 30         # the ceiling of the backoff. A role never stops being due for
                             # ever, it just stops being asked more often than monthly.
 MASSFAIL_MIN_TRIED = 10     # rule 2 of CLAUDE.md, applied to this layer: N tried, 0 filled
+# What the INLINE filler may buy in one digest, on the postings whose verdict the text decides.
+# 23 of them a night are LinkedIn guest pages the free rungs cannot read; 25 covers that with
+# headroom and is ~750 credits a month against the 5,000 that begins 2026-09-01. It is a cap,
+# not a target: the measured need is the night's NEW postings, not the backlog, because a
+# description reaching `matched` is not fetched again.
+INLINE_BD_CAP = 25
 RENDER_TIMEOUT = 45         # a JS render that has not answered by now will not (see Unlocker)
 FAILING_STREAK_FACTOR = 4   # breaker x this = a run that HAS worked but has stopped working
 # outcomes that are nobody's failure: there is nothing at this address to fetch, and no
@@ -1738,8 +1744,25 @@ def alarm_for(c, bd=None, driver="", operator_cap=False, report_budget=True):
 class JDFiller:
     """Fill a role's description before it is classified. Only for jobs that could plausibly
     be accepted (the cheap title gate first — never spend a fetch on a role we would reject on
-    the title anyway), only for addresses some rung of ours can actually read, only within a
-    budget, and never through Bright Data (the backfills own that).
+    the title anyway), only for addresses some rung of ours can actually read, and only within
+    a budget.
+
+    IT MAY NOW BUY, and that reverses the rule this docstring carried until 2026-08-30
+    ("never through Bright Data — the backfills own that"). The reason is that the backfills
+    CANNOT own this: a posting whose description decides its verdict must be filled BEFORE the
+    classifier runs, and a role the classifier rejects on a bare title never reaches `matched`
+    for `enrich_matched_jd` to find. This is the only rung that runs at the right moment.
+
+    What it buys, measured 2026-08-30 over the live LLM-bound set: a plain GET of a LinkedIn
+    guest page from a datacenter IP returns a sign-in wall and a job list — a page with no
+    posting on it, 13 of 14 sampled — and the same URL through the residential Unlocker
+    returns the posting, **5 of 5, 1,022 to 5,156 characters**. `docs/BACKLOG.md` 376 said
+    otherwise ("no-markers to the plain GET *and* to a residential Unlocker fetch") and was
+    measured on two ARCHIVED postings; it is corrected there. Rendering is not the missing
+    piece and is not used here: raw filled 5 of 5, rendered 4 of 5 and costs more.
+
+    `JDFILL_BD_CAP` bounds it (default `INLINE_BD_CAP`), it is spent only after the free rungs
+    have failed, and `JD_BD=0` disarms it like every other paid rung in this module.
 
     The budget counts SECONDS SPENT FETCHING, not wall clock since construction — the shape
     `seniority.Classifier` uses one line away in `run.py`. It used to start at construction,
@@ -1747,7 +1770,7 @@ class JDFiller:
     before a single fill was attempted, and the LLM time interleaved between fills counted too.
     """
 
-    def __init__(self, budget_min=None, enabled=None):
+    def __init__(self, budget_min=None, enabled=None, bd=None):
         env_budget = os.environ.get("JDFILL_TIME_BUDGET_MIN")
         # zero has ONE meaning here, the same as `run_backfill`'s: attempt nothing. It used to
         # mean "unbounded" (`self.budget and ...` with a falsy 0.0) on the digest's critical
@@ -1763,6 +1786,18 @@ class JDFiller:
         self.by_platform = Counter()        # (platform, reason) -> n, for fetches we made
         self.refused = Counter()            # (platform, reason) -> n, for fetches we did not
         self.via = Counter()
+        # The paid rung, bounded and last. `discovery-linkedin no-markers` was 23 roles a
+        # night judged on a bare title (21 on 08-28, 2 on 08-27 when 9 more were rate-limited
+        # instead) and is the largest fixable class this layer has.
+        cap = int(os.environ.get("JDFILL_BD_CAP", str(INLINE_BD_CAP)))
+        self.bd = bd if bd is not None else (Unlocker(cap=cap) if cap > 0 else None)
+        self.bd_tried = self.bd_filled = 0
+        # work the paid rung WOULD have taken and could not. This counter exists because the
+        # step this runs in does not carry `BRIGHTDATA_API_KEY` (`daily-digest.yml`, the
+        # `Run the pipeline` step, 2026-08-30): the rung is configured, armed by default, and
+        # buys nothing, which is a convincing mass-zero of exactly the kind this repo keeps
+        # shipping. It must announce itself rather than wait to be noticed.
+        self.bd_unavailable_work = 0
 
     def spent(self):
         return self.budget <= 0 or self.seconds / 60 > self.budget
@@ -1809,6 +1844,15 @@ class JDFiller:
         self.tried += 1
         _t = time.time()
         jd = fetch_jd(url, company=job.get("company") or "", title=title)
+        # The free rungs first, always, and the paid one only on what they could not read: a
+        # page that answered with a posting has already cost nothing.
+        if not jd.text and self.bd is not None:
+            if self.bd.unavailable:
+                self.bd_unavailable_work += 1
+            else:
+                self.bd_tried += 1
+                jd = fetch_jd(url, bd=self.bd, company=job.get("company") or "", title=title)
+                self.bd_filled += bool(jd.text)
         self.seconds += time.time() - _t
         self.by_platform[(platform, jd.reason + (f"/{jd.native}" if jd.native else ""))] += 1
         if jd.text:
@@ -1838,6 +1882,13 @@ class JDFiller:
             out += f"; {self.unfillable} unfillable ({self.refusals(4)})"
         if self.skipped_budget:
             out += f", {self.skipped_budget} skipped (budget {self.budget:g}m spent)"
+        if self.bd_tried:
+            # what the paid rung bought, where the operator reads the run: `bd_ok` is bodies,
+            # so this says FILLED, which is what a credit is for
+            out += (f"; Bright Data {self.bd_filled}/{self.bd_tried} filled"
+                    f" ({getattr(self.bd, 'used', 0)} credits"
+                    + (f", {self.bd.unavailable}" if getattr(self.bd, "unavailable", "") else "")
+                    + ")")
         return out
 
     def alarms(self):
@@ -1852,6 +1903,16 @@ class JDFiller:
         # failed went from a bold alarm to complete silence (wave 1).
         if self.tried and self.filled == 0 and self.tried + self.unfillable >= MASSFAIL_MIN_TRIED:
             out.append(f"inline jd-fill {self.filled}/{self.tried} — every fetch failed ({self.failures(3)})")
+        if self.bd is not None and self.bd_unavailable_work:
+            out.append(f"inline jd-fill: the paid rung is configured and UNUSABLE "
+                       f"({self.bd.unavailable}) with {self.bd_unavailable_work} postings the "
+                       f"free rungs could not read — those roles are judged on the title alone")
+        if self.bd is not None and self.bd_tried and not self.bd_filled:
+            # credits went out on the postings whose verdict the text decides, and bought
+            # nothing: the same rule `alarm_for` applies to the backfills, at the one rung
+            # that runs before the classifier
+            out.append(f"inline jd-fill: {self.bd_tried} paid fetches filled 0 "
+                       f"({getattr(self.bd, 'used', 0)} credits)")
         if self.skipped_budget:
             out.append(f"inline jd-fill budget spent ({self.budget:g}m) — {self.skipped_budget} "
                        f"roles judged with no text")

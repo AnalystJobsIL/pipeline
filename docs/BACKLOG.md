@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**493 filed · 360 open · 133 closed · 7 half · 35 numbers name more than one item · 0 items name no lane.**
+**496 filed · 363 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 445.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 449.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -87,7 +87,6 @@ closure convention in the header.
 | 375 | `375@ats-fetch` **open** · `375@classifier` closed |
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
-| 438 | `438@infra` **open** · `438@jd-text` **open** |
 
 ### registry — 119 open
 
@@ -211,7 +210,7 @@ closure convention in the header.
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
-### infra — 100 open
+### infra — 101 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -313,8 +312,9 @@ closure convention in the header.
 - **440** `440@infra` **A test fixture spells the operator's personal GitHub handle**
 - **442** `442@infra` **The `guard` job no longer fits its 10-minute timeout, and a cancelled gate names
 - **444** `444@infra` **Nothing anywhere reports that master's own test gate is red**
+- **448** `448@infra` **The inline JD filler's paid rung is armed by default and CANNOT SPEND, because the step
 
-### scraper — 26 open
+### scraper — 27 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -342,6 +342,7 @@ closure convention in the header.
 - **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
 - **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
 - **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
+- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
 
 ### discovery — 23 open
 
@@ -444,8 +445,8 @@ closure convention in the header.
 - **421** `421@jd-text` **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
 - **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
 - **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
-- **438** `438@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
 - **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
+- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
 
 ### roles — 12 open
 
@@ -462,7 +463,7 @@ closure convention in the header.
 - **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
 - **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
 
-### classifier — 7 open
+### classifier — 8 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **121** `121@classifier` **CLI start-up dominates the LLM tier's wall time**
@@ -471,6 +472,7 @@ closure convention in the header.
 - **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
 - **373** `373@classifier` **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
 - **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
+- **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
 
 ### render — 7 open
 
@@ -4336,6 +4338,15 @@ re-derived against `origin/master` 66d9e3c; re-derive before acting.
     again. Either a second address turns up (`discovery`), or these two are permanently
     snippet-only and the honest fix is to say so on the card rather than to keep retrying.
 
+
+    **WRONG, corrected 2026-08-30 by `jd-text`, and the error mattered.** This was measured on
+    TWO ARCHIVED postings and generalised to the class. Over the LIVE LLM-bound set: a plain
+    GET from a datacenter IP returns a sign-in wall and a job list — **13 of 14 sampled pages
+    carried no posting at all** — and the same urls through the residential Unlocker returned
+    the posting **5 of 5, 1,022 to 5,156 characters**. Rendering is not the missing piece
+    (raw 5 of 5, rendered 4 of 5, and it costs more); the residential IP is. The inline filler
+    buys them now, bounded by `JDFILL_BD_CAP`. What stands from this item is the two ARCHIVED
+    postings themselves — a dead posting is dead whoever fetches it.
 377. **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
     lane: `scraper`. `zipher.ai/careers/data-analyst/` is now reached (the role publishes an
     Indeed address; `_address` swaps in the own-address sibling from `seen_ids`) and it is
@@ -7763,7 +7774,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      slow rehearsal from hiding a fast unit failure. A cancelled job is worse than a failing
      one: a failure names the test and a cancellation names nothing, which is how 40
      consecutive cancellations were read as "red" for weeks.
-438. **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+445. **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
     to relieve already covers the whole useful set** — lane: `jd-text`, measured 2026-08-30 by
     the lane that built it the day before. **Recommendation: retire it.** Not acted on: the
     operator is watching for its first unattended run and the schedule is not changed here.
@@ -7891,3 +7902,79 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      `event: schedule` run whose `Stages:` line carries a `ci ...` clause (or is silent with a
      green master). Until then `docs`'s clause 2 reads: *not delivered — still a hand-drain.*
 
+446. **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
+    rejected on it** — lane: `classifier` (it owns the gate and the LLM tier that would judge
+    the sample); `jd-text` supplies the fetch. Filed 2026-08-30 as the replacement for the
+    nightly archive pass that item **443** retires, because the capability must not go with it.
+
+    The gate's FN rate was measured **once**, at 0.25% over 401 postings, and nothing has
+    re-measured it since. "We reject 4,080 postings a night on the title and never look at one
+    of them again" is this repo's signature defect in its purest form: a check that runs green
+    and is structurally blind to the half where the problem is.
+
+    **The design.** Weekly, or on demand: draw a bounded RANDOM sample of title-REJECTED cards
+    from `scraped_cache.json` (`_relevance in (excluded, none)`), fill their descriptions with
+    the existing `enrich_scrape_jd --archive-only` machinery over just that sample, judge each
+    with the same `seniority` LLM tier the ambiguous postings get, and report
+    `gate FN: k of N, <date>` — a number with a date on it, in a state file the way
+    `cloud_state/registry_census.json` is.
+
+    **Sample size, argued.** At the measured p = 0.25%, n = 400 has an expected 1 hit and
+    cannot distinguish 0.25% from 1% (95% CI on 1/400 is roughly 0.06%-1.4%). n = 1,000 costs
+    ~1,000 free fetches and ~1,000 LLM calls a week and still only bounds p below ~0.5%. The
+    honest cheap design is therefore NOT a precise estimate but a TRIPWIRE: **n = 200 weekly,
+    reporting the raw count**, which cannot measure 0.25% but does catch a gate that has
+    broken outright (p rising to 5% shows ~10 hits in 200, and a run of zeros over eight weeks
+    bounds p under ~0.2% at 95%). Anything more precise is a research project, and the
+    operator's scope is analyst roles in Israel, not a corpus.
+
+    Cost per weekly run: ~200 fetches (free rungs first, ~0.9 s each) and at most 200 sonnet
+    calls, against 8 workflows sharing 5,000 Bright Data credits a month from 2026-09-01.
+
+447. **`Xpend Global Marketing` has six postings duplicated exactly — same title, same url,
+    same text** — lane: `scraper` (the cache builder), and a `registry` question besides.
+    Found 2026-08-30 by `jd-text` while sweeping shared descriptions: these six are the only
+    long texts still shared in `scraped_cache.json`, and they are shared legitimately in the
+    sense that they are the SAME posting six times, which `pipeline/seniority.py` already
+    treats as one (`owner[1] != here[1]` is False for a shared address, so it is not counted as
+    a careers page). They are not a description defect; they are a dedup defect one layer up.
+    Separately: Xpend is a marketing agency, which is a registry scope question rather than a
+    scraper one.
+
+448. **The inline JD filler's paid rung is armed by default and CANNOT SPEND, because the step
+    it runs in carries no Bright Data credentials — until this two-line diff is applied,
+    nothing about the LinkedIn class is automatic** — lane: `infra` (it owns
+    `.github/workflows/daily-digest.yml`). Filed 2026-08-30 by `jd-text`, which built the rung
+    and cannot wire it.
+
+    `JDFiller` now buys, bounded by `JDFILL_BD_CAP` (default 25), on the postings whose verdict
+    the description decides — measured 9 of 10 filled end to end, and the residential Unlocker
+    reads LinkedIn guest pages 5 of 5 where a plain GET reads 1 of 14. But
+    `daily-digest.yml`'s `Run the pipeline` step passes `CLAUDE_CODE_OAUTH_TOKEN`, `SERPAPI_KEY`
+    and `JDFILL*` and **not** `BRIGHTDATA_API_KEY` / `BRIGHTDATA_ZONE`, so in production the
+    Unlocker constructs with `unavailable="no-key"` and the rung is inert.
+
+    THE EXACT DIFF, `.github/workflows/daily-digest.yml`, in the `Run the pipeline` step's
+    `env:` block (the two enrich steps above it already carry these same two lines):
+
+    ```diff
+           env:
+             CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+    +        # the inline JD filler's last rung: a LinkedIn guest page is a sign-in wall to a
+    +        # datacenter IP (1 of 14 carried a posting) and the posting to a residential one
+    +        # (5 of 5). Bounded by JDFILL_BD_CAP, default 25, spent only after the free rungs
+    +        # fail. Without these two lines the rung is armed and buys nothing (BACKLOG 446).
+    +        BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+    +        BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+             SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+    ```
+
+    Cost once applied: at most `JDFILL_BD_CAP` (25) credits a digest, and the measured need is
+    the night's NEW unreadable postings — 23 on 2026-08-29 — so roughly **700 a month against
+    the 5,000 that begins 2026-09-01**, shared with eight other workflows. Lower the cap by
+    setting `JDFILL_BD_CAP` in the same block; `0` disables the rung entirely.
+
+    **Until it is applied the state is visible rather than silent**: `JDFiller.alarms()` raises
+    `inline jd-fill: the paid rung is configured and UNUSABLE (no-key) with N postings the free
+    rungs could not read` into the mail's bold `Stages:` line, so the first digest after this
+    lands will say so itself.

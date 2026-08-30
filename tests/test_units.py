@@ -4332,6 +4332,11 @@ def test_record_enrich_unions_replaces_and_fills_the_gap(tmp_path, monkeypatch):
 
 def test_jd_filler_reports_per_platform_reasons_and_alarms_on_mass_failure(monkeypatch):
     from pipeline import jdfill
+    # `JDFILL_BD_CAP=0`: this test is about the FREE rungs failing en masse, and since
+    # 2026-08-30 a configured-but-unusable paid rung raises a second, different alarm of its
+    # own (`test_a_configured_but_unusable_paid_rung_announces_itself`). Turning it off here
+    # keeps both assertions exact rather than weakening this one to a membership check.
+    monkeypatch.setenv("JDFILL_BD_CAP", "0")
     monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "shell", False))
     f = jdfill.JDFiller(budget_min=5)
     for i in range(10):
@@ -18884,3 +18889,109 @@ def test_rendered_calls_have_their_own_breaker(monkeypatch):
     used = bd.used
     assert bd("https://a.co/y", render=True) == (None, "", "bd-render-capped")
     assert bd.used == used
+
+
+# =====================================================================================
+# jd-text, 2026-08-30 — the inline filler is the rung that runs at the right moment, and
+# it is now allowed to buy. Record: docs/sessions/2026-08-30-jd-text.md.
+# =====================================================================================
+
+
+def test_the_inline_filler_buys_only_what_the_free_rungs_could_not_read(monkeypatch):
+    """`discovery-linkedin no-markers` was 23 roles a night judged on a bare title, and it is
+    the largest fixable class this layer has. A plain GET of a LinkedIn guest page from a
+    datacenter IP returns a sign-in wall and a job list — 13 of 14 sampled on 2026-08-30 had no
+    posting on the page at all — while the SAME url through the residential Unlocker returns
+    the posting, 5 of 5. The backfills cannot own this: a role the classifier rejects on a bare
+    title never reaches `matched` for `enrich_matched_jd` to find, so the description has to
+    arrive BEFORE the verdict, and this is the only rung that runs there.
+
+    The free rungs still go first and the paid one sees only what they could not read."""
+    from pipeline import jdfill
+    seen = []
+
+    def _fetch(url, **kw):
+        paid = kw.get("bd") is not None
+        seen.append((url, paid))
+        if url.endswith("/free"):
+            return jdfill.JD(_jd_of(1200), "html", "ok", False)
+        return jdfill.JD(_jd_of(1400), "bd", "ok", False) if paid else jdfill.JD("", "none", "no-markers", False)
+
+    monkeypatch.setattr(jdfill, "fetch_jd", _fetch)
+
+    class _BD:
+        used, ok, unavailable, cap = 0, 0, "", 25
+
+    f = jdfill.JDFiller(budget_min=10, enabled=True, bd=_BD())
+    free = {"title": "Data Analyst", "url": "https://il.linkedin.com/jobs/view/free",
+            "company": "A", "description": ""}
+    walled = {"title": "Data Analyst", "url": "https://il.linkedin.com/jobs/view/walled",
+              "company": "B", "description": ""}
+    assert f.maybe_fill(free) and f.maybe_fill(walled)
+    assert seen == [("https://il.linkedin.com/jobs/view/free", False),
+                    ("https://il.linkedin.com/jobs/view/walled", False),
+                    ("https://il.linkedin.com/jobs/view/walled", True)], \
+        "a page the free rungs read must never reach the paid one"
+    assert f.bd_tried == 1 and f.bd_filled == 1
+    assert "Bright Data 1/1 filled" in f.summary()
+
+
+def test_the_inline_paid_rung_is_off_when_the_cap_is_zero_and_when_JD_BD_is_zero(monkeypatch):
+    """Two switches, because this rung spends on the digest's critical path: `JDFILL_BD_CAP=0`
+    builds no Unlocker at all, and `JD_BD=0` — the line CLAUDE.md tells every local session to
+    export — disarms the one it did build, like every other paid rung in this module."""
+    from pipeline import jdfill
+    monkeypatch.setenv("JDFILL_BD_CAP", "0")
+    assert jdfill.JDFiller(budget_min=1).bd is None
+    monkeypatch.setenv("JDFILL_BD_CAP", "25")
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setenv("JD_BD", "0")
+    f = jdfill.JDFiller(budget_min=1)
+    assert f.bd is not None and f.bd.unavailable == "disabled"
+    # ...and a disarmed Unlocker is never handed to the ladder
+    calls = []
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda u, **k: (calls.append(k.get("bd") is not None),
+                                        jdfill.JD("", "none", "no-markers", False))[1])
+    f.maybe_fill({"title": "Data Analyst", "url": "https://il.linkedin.com/jobs/view/1",
+                  "company": "A", "description": ""})
+    assert calls == [False] and f.bd_tried == 0
+
+
+def test_paid_inline_fetches_that_fill_nothing_reach_the_bold_stages_line(monkeypatch):
+    """The same rule `alarm_for` applies to the backfills, at the rung that runs before the
+    classifier: credits went out on the postings whose verdict the text decides and bought
+    nothing."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "no-markers", False))
+
+    class _BD:
+        used, ok, unavailable, cap = 4, 0, "", 25
+
+    f = jdfill.JDFiller(budget_min=10, enabled=True, bd=_BD())
+    for i in range(4):
+        f.maybe_fill({"title": "Data Analyst", "company": "A", "description": "",
+                      "url": "https://il.linkedin.com/jobs/view/%d" % i})
+    assert f.bd_tried == 4 and f.bd_filled == 0
+    assert any("4 paid fetches filled 0" in a for a in f.alarms())
+
+
+def test_a_configured_but_unusable_paid_rung_announces_itself(monkeypatch):
+    """The step this rung runs in — `daily-digest.yml`'s `Run the pipeline` — does NOT carry
+    `BRIGHTDATA_API_KEY`, so on the day it shipped the rung was armed by default and could buy
+    nothing. A capability that is configured, reached, and silently inert is the convincing
+    mass-zero this repo keeps producing; it has to say so itself, because the number it would
+    have moved looks identical to a night with no work."""
+    from pipeline import jdfill
+    monkeypatch.delenv("BRIGHTDATA_API_KEY", raising=False)
+    monkeypatch.delenv("BRIGHTDATA_ZONE", raising=False)
+    monkeypatch.setenv("JDFILL_BD_CAP", "25")
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "no-markers", False))
+    f = jdfill.JDFiller(budget_min=10, enabled=True)
+    assert f.bd is not None and f.bd.unavailable == "no-key"
+    for i in range(3):
+        f.maybe_fill({"title": "Data Analyst", "company": "A", "description": "",
+                      "url": "https://il.linkedin.com/jobs/view/%d" % i})
+    assert f.bd_tried == 0 and f.bd_unavailable_work == 3
+    assert any("configured and UNUSABLE (no-key) with 3 postings" in a for a in f.alarms())
