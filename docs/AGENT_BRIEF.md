@@ -343,8 +343,16 @@ the deliverable is the **exact diff**: the file, the anchor, the lines, filed in
 ### 3. Nothing broke — the price of admission, not the achievement
 
 - `python -m pytest`, `python check_invariants.py` and `python docs/check_docs.py` green
-  **from a clean worktree at `origin/master` after the push**, and green **in CI on the
-  commit you pushed** — run id in your `HANDOFF.md` line. Green where you ran it is a
+  **from a clean worktree at `origin/master` after the push** — paste the **counts**, not the
+  word "green": `N passed`, the row/active/orphan line, `N error(s), M warning(s)`.
+- Green **in CI on the commit you pushed** — **quote the run id AND its conclusion, whatever
+  it is.** A `cancelled` run is not a soft pass and not a missing datum: **it names nothing**,
+  because the job died before it could judge anything, and it must be reported in those
+  words. When CI cannot reach a verdict — as it could not on 2026-08-30, when four
+  consecutive pushes were cancelled on the `guard` job's own 10-minute timeout (`442`) —
+  write **"UNVERIFIED IN CI"** and why, in `HANDOFF.md`. **Never write "green" for a commit
+  no runner judged**, and never quote a passing sub-step as if it were the verdict: the step
+  that concerns you passing is worth saying, and it is not the same claim. Green where you ran it is a
   different suite: `tests.yml` was red on **100 consecutive runs** to 2026-08-30 while every
   lane reported a passing one, and three guards that passed on every laptop failed on every
   push. If it was already red when you arrived, say so with the run id, so the next session
