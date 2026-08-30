@@ -100,12 +100,59 @@ its minutes to the row pool, the hunt drops 200 -> 140, and the 60 released minu
 asserts both the wiring and the arithmetic: **140 + 95 + ~90 = 325 of a 330 cap** -- over it,
 the job dies before `persist_state` commits the night's work.
 
+## The cron ran, and here is its log rather than my hope
+
+Run `33276177460`, 2026-08-29T21:28Z. All four steps green -- which proves nothing on its own,
+so what they DID:
+
+| step | wall | what it did |
+|---|---|---|
+| Resolve intake names (queue drain) | 7 s | **`queue-resolve-search: 0 names`** |
+| Verify and apply queue proposals | 0 s | nothing to apply |
+| Re-verify aged registry addresses | **11m 49s** | 60 rows: 22 PARKED (12 another company's, 14 dead-url), 11 ok, 21 unreadable |
+| Stamp the queue | <1 s | fired its alarm |
+
+```
+queue: 508 owed (+5 since 2026-08-29, GROWING), 502 rows from the queue, 428 unverified
+##[warning]queue GREW by 5 since 2026-08-29 -- the drain is not keeping pace with intake
+```
+
+**The drain finding 0 names is the cadence working, not a failure.** Every queue name had a
+`search-llm` attempt from the same evening's local sweep, so all of them were inside
+`tried_within(..., "search-llm", 14)`. It will select on the next day's intake. But it means
+the drain arm is **unproven at scale in the cloud**, and this record says so rather than
+implying the green tick settles it.
+
+**The re-verify arm IS proven**: unattended, it parked 22 wrong or dead addresses. That is the
+arm that removes live risk.
+
+**The alarm works and it corrected me.** `GROWING +5` was true of the cloud's checkout at that
+moment; my local tree had since retired 78 more. The two disagreed because the cron and I were
+writing the same files concurrently -- the merge strategies handled the files, the STAMP read
+mid-flight. That is a real limitation of a number computed at one instant, and it is the
+reason the stamp reports a direction rather than a verdict.
+
+### Does 60 a night sustain itself?
+
+    addresses in the verify scope                       650
+    re-reads at the 30-day cadence                    22/night
+    unreadable re-tries at the 7-day cadence           19/night
+    new rows                                           0/night  (verified BEFORE they become
+                                                                 rows, by --apply-proposals)
+    ------------------------------------------------------------
+    needed                                            41/night
+    the nightly step does                             60/night
+
+It sustains. The backlog it inherited is already gone: **0 rows are due a read** as of this
+record, from 829 when the verifier was written.
+
 ## What I did NOT finish
 
 * **481 names owed**, every one of them retried by a nightly rung. Not zero, and the reason is
   in "`owed` is two states" above: a real company whose board we have not found is one to keep
   hunting, not one to retire.
-* The nightly step has never RUN. The cap living in a workflow env var is not evidence -- read
-  the 2026-08-30 19:00 run's log, find the `queue arm` and `queue:` lines, and quote them.
+* The DRAIN arm has never selected a name in the cloud (it found 0, correctly, because the
+  local sweep had just touched every queue name). The re-verify and stamp arms are proven.
+  Read the next run's `queue-resolve-search: N names` line before calling the drain proven.
 * **425** (7 embedded Comeet tenants the gate cannot admit) and **426** (a worktree has no
   `secrets.env`, so paid rungs no-op in silence) are open.
