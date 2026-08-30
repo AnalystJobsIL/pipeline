@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**526 filed · 382 open · 144 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**527 filed · 383 open · 144 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 476.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 477.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -220,7 +220,7 @@ closure convention in the header.
 - **470** `470@registry` **Two mutation records were filed with no test that reaches the mutated line, and two more
 - **472** `472@registry` **`_load_secrets` callers in seven root tools still resolve through `bd_rescue`'s copy** —
 
-### infra — 102 open
+### infra — 103 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -324,6 +324,7 @@ closure convention in the header.
 - **458** `458@infra` **`merge_json_cache.merge` resurrects a key the ORIGIN deleted, so a deletion committed
 - **463** `463@infra` **The drain's counters exist only in the mail**
 - **471** `471@infra` **`schedule_census.py` reports the isolated-drop count and then exits 0**
+- **476** `476@infra` **The fattest mutation class cannot be split, so a fourth shard buys nothing**
 
 ### scraper — 28 open
 
@@ -8721,6 +8722,15 @@ the rebase (a collision is what 241–246 are).
      `shallow='true'`"), `:1516` and `tests/test_units.py:12844`. `daily-digest.yml` checks out
      with `fetch-depth: 0` since 2026-08-30 (the cron watch's `cron_since` needs `git log`);
      `tests.yml` still does not (439). Found by wave 1.
+
+476. **The fattest mutation class cannot be split, so a fourth shard buys nothing** — lane:
+     `infra`. `tests.yml` packs shards by `M<n>` class; `M1-gate-removal` is 86 of 226 records
+     and walled **32.6 and 35.7 min** on the two overlapping runs of 2026-08-30 (33300459869,
+     33300302731) against its 40-min inner budget and 45-min job — ~4 min of headroom, and the
+     registry lane files M1 records daily. The comment in `tests.yml` says "add a shard rather
+     than minutes"; that is false for M1 until the packer can split a class by record (stable:
+     sort ids, take every k-th) and `test_the_mutation_shards_partition_the_whole_catalogue`
+     asserts records rather than classes. Measured on the first green gate since 08-24.
 
 472. **`_load_secrets` callers in seven root tools still resolve through `bd_rescue`'s copy** —
      lane: `registry` (`audit_empty_rows.py:337`, `crack_walled.py:308`, `deep_validate.py:451`
