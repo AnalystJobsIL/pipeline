@@ -23313,7 +23313,11 @@ def test_scrape_a_wall_serving_a_decoy_page_is_an_error_not_an_empty_board():
     assert N._classify(r, []) == ("error", "http:403")
     honest = "<html><body>We have no open positions at this time.</body></html>" + "y" * 3000
     r2 = _rendered(http_status=403, plain_status=200, plain_html=honest)
-    assert N._classify(r2, []) == ("empty", "http:403")
+    # ...and an ACCEPTED empty drops the refusal code: `why: empty` never sits beside an
+    # ip-shaped code in the rot file (the belt in `_apply_result` enforces exactly that,
+    # and lakeFS proved the two classifiers would otherwise disagree; the 403 survives in
+    # the rot entry's `http` field)
+    assert N._classify(r2, []) == ("empty", "")
     # a non-ip refusal (a slow site, honestly empty in plain HTML) keeps the old judgement
     r3 = _rendered(http_status=None, error="goto:TimeoutError", plain_status=200,
                    plain_html=shell)
@@ -23620,3 +23624,64 @@ def test_scrape_a_registry_url_that_is_itself_a_position_page_is_read(monkeypatc
     jobs2, _ = N._extract("Co", "https://co.example/jobs/", _rendered(page_html=idx_page),
                           fetch=_no_fetch)
     assert jobs2 == []
+
+
+def test_scrape_a_two_role_board_on_its_own_site_is_still_read():
+    """The 3-link floor rejected every 1-2 role board outright: lakeFS's Director (a live
+    posting at /careers/director-of-product-management/) sat unread for weeks behind it
+    (228). A short prefix passes only on the company's OWN site with a ROLE-worded slug on
+    every link; the opened pages answer for themselves."""
+    import scrape_universal as N
+    links = ('<a href="/careers/director-of-product-management/">Read more</a>'
+             '<a href="/careers/pre-sales-solution-engineer/">Read more</a>')
+    page = f"<body><h2>Current openings</h2>{links}</body>"
+
+    def fetch(u, t):
+        if "/careers/" in u and u.rstrip("/").split("/")[-1] != "careers":
+            slug = u.rstrip("/").split("/")[-1].replace("-", " ").title()
+            return (f"<html><h1>{slug}</h1><p>Location: Tel Aviv, Israel</p>"
+                    f"<p>Join one of Israel's fastest growing data teams.</p></html>", 200)
+        return None, None
+    jobs, strategy = N._extract("lakeFS", "https://co.example/careers/",
+                                _rendered(page_html=page), fetch=fetch)
+    assert strategy == "links" and len(jobs) == 2
+    assert {j["location"] for j in jobs} == {"Tel Aviv, Israel"}
+    # ...and a short OFF-SITE or non-ROLE prefix still never opens
+    junk = '<a href="https://elsewhere.example/jobs/x-1/">a</a><a href="https://elsewhere.example/jobs/x-2/">b</a>'
+    jobs2, _ = N._extract("Co", "https://co.example/careers/",
+                          _rendered(page_html=f"<body>{junk}</body>"), fetch=fetch)
+    assert jobs2 == []
+
+
+def test_scrape_a_label_naming_israel_among_regions_is_the_roles_own_claim():
+    """The symmetric half of the label-settles rule: lakeFS's Director is labelled
+    `Location: Remote – US East Coast, Europe or Israel` with a Tel Aviv office — the
+    role's own claim of Israeli eligibility, shipped as its honest whole value. A label
+    naming ONLY foreign places still settles foreign (Weebit Nano, pinned above)."""
+    import scrape_universal as N
+    page = ("<html><h1>Director of Product Management</h1><p>Location: Remote - "
+            "US East Coast, Europe or Israel Office: New York City and Tel Aviv</p></html>")
+    p = N._parse_position_page(page, "https://co.example/careers/director/")
+    assert p and "Israel" in p["loc"] and "Office" not in p["loc"]
+    from pipeline.israel import is_israel_job
+    assert is_israel_job({"location": p["loc"], "url": p["url"], "country_code": ""})
+
+
+def test_scrape_a_decoy_plain_page_still_buys_the_unlocker(monkeypatch):
+    """The unlocker rung fired only when plain HTTP returned NOTHING — and a WAF that 403s
+    the browser answers the plain client a decoy 200, so the one rung built for walls
+    never ran on them (lakeFS: weeks of http:403 with the unlocker armed and idle). A
+    plain page `_plain_proves_empty` accepts never spends the credit."""
+    import scrape_universal as N
+    calls = []
+    monkeypatch.setenv("SCRAPE_VIA_UNLOCKER", "1")
+    monkeypatch.setattr(N, "_fetch_unlocked_html", lambda u, t, r=None: calls.append(u) or "")
+    shell = "<html><h1>Data, versioned</h1>" + "x" * 3000 + "</html>"
+    r = _rendered(http_status=403, page_html="")
+    N._extract("Co", "https://co.example/careers", r, fetch=lambda u, t: (shell, 200))
+    assert calls, "an ip-refused render with a signal-less plain 200 is unread - spend"
+    calls.clear()
+    real = "<html>Current openings: none right now." + "y" * 3000 + "</html>"
+    r2 = _rendered(http_status=403, page_html="")
+    N._extract("Co", "https://co.example/careers", r2, fetch=lambda u, t: (real, 200))
+    assert not calls, "a plain page that shows the jobs section proves itself - no spend"

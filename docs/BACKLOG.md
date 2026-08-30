@@ -3552,8 +3552,10 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     recorded as an empty page** — lane: `scraper`. **Re-derived 2026-08-31 (`scraper`), all four
     diagnosed, two mechanisms fixed, each with a guard:** the wall sub-claim is CLOSED —
     `_classify` no longer books an ip-refused render "empty" on a decoy plain-200 (live:
-    lakeFS now reads `error http:403`; its rescue needs the unlocker and is the one piece
-    left). **nsKnox** FIXED: its registry url IS the position page and no strategy read one
+    lakeFS now reads `error http:403`; its Director is RECOVERED —
+    `1 via links`, own url, the honest multi-region label "Remote - US East Coast, Europe
+    or Israel" as its location, 0 credits: the plain page had it all along, behind two
+    floors and a dropped label). **nsKnox** FIXED: its registry url IS the position page and no strategy read one
     as a listing — a gated one-`_Board` rung now does (live scoped dry-run: `1 via links`);
     cache entry lands at the next 00:00 cron. **GenCell** now READABLE (12 span-wrapped Wix
     headings matched nothing under `[^<]`; pattern fixed) but the board prints no

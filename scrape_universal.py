@@ -1331,7 +1331,8 @@ _LOC_LABEL = re.compile(r"\b(?:(?:job|office|work|position|role)\s+locations?\s*
                         r"locations?\s*[:–-])\s*(\S[^\n]{1,70})", re.I)
 # ...where the label's value ends and the next section of the page begins
 _LOC_LABEL_END = re.compile(r"\s+(?:job\s+brief|about|requirements?|responsibilities|apply|"
-                            r"description|overview|summary|role|position|department|type)\b", re.I)
+                            r"description|overview|summary|role|position|department|type|"
+                            r"office)\b", re.I)
 
 
 def _stated_place(txt):
@@ -1389,8 +1390,15 @@ def _parse_position_page(ph, u2):
     claim = f"{claim} {stated}"
     return {"title": title, "url": u2,
             # anchored at the END of the label, so `Israel, Hod HaSharon (Hybrid)` reads as
-            # the city rather than the country it is prefixed with
-            "loc": (_loc_from_ctx(stated, anchor=len(stated)) if stated else
+            # the city rather than the country it is prefixed with. A multi-region label
+            # that NAMES Israel ("Remote – US East Coast, Europe or Israel", lakeFS) is the
+            # role's own claim of Israeli eligibility — the symmetric half of the
+            # label-settles rule — and ships as its honest whole value when no single city
+            # can be cut out of it; a label naming only foreign places stays "" here and
+            # settles foreign, exactly as before (Weebit Nano).
+            "loc": ((_loc_from_ctx(stated, anchor=len(stated))
+                     or (_clean_loc(_html.unescape(stated))
+                         if ISRAEL_LOC.search(stated) else "")) if stated else
                     (_loc_from_ctx(txt, anchor=at if at >= 0 else None) or _loc_from_ctx(claim))),
             "desc": re.sub(r"\s+", " ", txt)[:4000],
             "il": bool(ISRAEL_LOC.search(txt)),
@@ -1521,7 +1529,14 @@ def _from_position_links(page_html, url, add, fetch=_fetch_url, deadline=None,
 
     worst = None                                    # the unreadable prefix, if any
     for pref, links in sorted(prefixes.items(), key=lambda kv: -len(kv[1])):
-        if len(links) < 3:
+        if len(links) < 3 and not (
+                _same_site(pref, url)
+                and all(ROLE.search(_slug_text(u)) for u in links)):
+            # the 3-link floor rejects junk prefixes, and it also rejected every 1-2 role
+            # board outright: lakeFS's one Director sat unread for weeks (228). A short
+            # prefix passes only on the company's OWN site with a ROLE-worded slug on
+            # every link — the opened pages then answer for themselves, junk pages
+            # included (`_parse_position_page` refuses non-postings).
             continue
         this = LinksOutcome()                       # judged PER PREFIX: a readable junk
         failed, found_any = [], False               # prefix must not hide a blocked real one
@@ -2025,11 +2040,19 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
         tmo = _PLAIN_TIMEOUT_S if deadline is None else min(_PLAIN_TIMEOUT_S, deadline.remaining())
         r.plain_html, r.plain_status = fetch(url, tmo)
         r.plain_html = r.plain_html or ""
-    if not r.plain_html and (deadline is None or deadline.remaining() >= 10):
+    # a decoy plain page is as unread as none: the render was ip-refused (403/429 or a
+    # wall) and the plain 200 shows no jobs section — lakeFS's shape, which skipped the
+    # unlocker for exactly as long as the decoy answered (228). A real plain page — one
+    # `_plain_proves_empty` accepts — never spends the credit.
+    decoy = (bool(r.plain_html) and not _plain_proves_empty(r)
+             and (_ip_shaped(f"http:{r.http_status}" if r.http_status else "")
+                  or bool(_blocked_by(r.page_html))))
+    if (not r.plain_html or decoy) and (deadline is None or deadline.remaining() >= 10):
         # 403/anti-bot: residential unlocker gets the HTML the LLM tier then parses
         tmo = _UNLOCK_TIMEOUT_S if deadline is None else min(_UNLOCK_TIMEOUT_S, deadline.remaining())
-        r.plain_html = _fetch_unlocked_html(url, tmo, r)
-        r.unlocker_ok = bool(r.plain_html) if os.environ.get("SCRAPE_VIA_UNLOCKER") else None
+        unlocked = _fetch_unlocked_html(url, tmo, r)
+        r.plain_html = unlocked or r.plain_html
+        r.unlocker_ok = bool(unlocked) if os.environ.get("SCRAPE_VIA_UNLOCKER") else None
     page_html = r.page_html
     if len(r.plain_html) > len(page_html or ""):
         page_html = r.plain_html if not page_html else page_html + "\n" + r.plain_html
@@ -2166,9 +2189,16 @@ def _classify(r: Rendered, jobs):
         # is reachable and (as far as plain HTML can tell) has no roles. A JS shell that needs
         # the failed browser is still possible; documented as the one judgement call — and an
         # ip-shaped refusal no longer gets it on `_readable` alone (`_plain_proves_empty`).
-        if r.plain_status == 200 and _readable(r.plain_html) and not r.unlocker_ok \
-                and (not _ip_shaped(code) or _plain_proves_empty(r)):
-            return "empty", code
+        if r.plain_status == 200 and _readable(r.plain_html) and not r.unlocker_ok:
+            if not _ip_shaped(code):
+                return "empty", code
+            if _plain_proves_empty(r):
+                # accepted as empty on the plain page's own testimony, so the refusal code
+                # is DROPPED: the rot invariant — `why: empty` never beside an ip-shaped
+                # code — is what the refresh's belt enforces, and lakeFS proved the two
+                # would otherwise disagree (the http status survives in the rot entry's
+                # `http` field).
+                return "empty", ""
         return "error", code
     wall = _blocked_by(r.page_html)
     if wall and not _plain_proves_empty(r):
