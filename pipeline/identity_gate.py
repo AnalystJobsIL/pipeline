@@ -130,6 +130,15 @@ _SUBDOMAIN_TENANT_HOST = re.compile(
     r"(icims\.com|myworkdayjobs\.com|eightfold\.ai|avature\.net|oraclecloud\.com|"
     r"hibob\.com|ultipro\.com|phenompeople\.com|jobvite\.com|taleo\.net|workable\.com|"
     r"applytojob\.com|successfactors)", re.I)
+# The same filler idea in Hebrew, for the page test below. `קבוצת` ("group of") is exactly
+# as generic as `Group`, and it occurs twice on TheMarker's careers page -- which is what
+# vouched for a newspaper as `קבוצת שיבולת`'s employer page while the distinctive half,
+# `שיבולת`, occurs zero times (`509`). A name must be recognised by the part that is ITS OWN.
+_NAME_FILLER_HE = {
+    "קבוצת", "קבוצה", "חברת", "חברה", "בעמ", "ישראל", "ישראלית", "הישראלית",
+    "אחזקות", "החזקות", "טכנולוגיות", "טכנולוגיה", "מערכות", "פתרונות", "שירותים",
+    "בינלאומי", "בינלאומית", "גלובל", "תעשיות", "משאבי", "אנוש", "דרושים", "קריירה",
+}
 # words that are in a registry name but never in a tenant slug
 _NAME_FILLER = {"israel", "israeli", "ltd", "inc", "the", "group", "technologies", "technology",
                 "labs", "systems", "solutions", "company", "companies", "corp", "corporation",
@@ -376,7 +385,16 @@ def board_vouches(name, token, api_url):
     if not ATS_HOST.search(host):
         # an ordinary host: `is_foreign` is the identity test there (a page test would
         # refuse every JS-rendered careers page -- measured at 358 rows), so the domain
-        # vouches unless it is foreign; the callers' own is_foreign clause refuses first
+        # vouches unless it is foreign; the callers' own is_foreign clause refuses first.
+        #
+        # ...but `is_foreign` can only judge a name it can spell in ASCII. A name that
+        # yields NO target at all (`קבוצת שיבולת`, `בנק לאומי`) makes it answer False for
+        # every domain on earth, and this line then vouched for every domain: that is how
+        # the drain proposed a newspaper's labour-news section as an employer with
+        # "10/10 IL", ten bylined articles counted as jobs (`509`). No bits is not a vouch.
+        # Hand it to the page, which can read the name's own script.
+        if not _name_targets(name):
+            return None
         return None if is_foreign(name, api_url) else True
     if _SUBDOMAIN_TENANT_HOST.search(host) and labels:
         declared = identity_facts.tenants(name)
@@ -559,6 +577,21 @@ def page_names_company(name, url, html=""):
     if core and core.lower() != (name or "").lower() and page_mentions_company(
             core, html, strict=True):
         return True
+    # `page_mentions_company` reads `[A-Za-z0-9]` words, so a name written in another
+    # script is invisible to it: it answered False for `הפניקס` on `הפניקס`'s OWN careers
+    # page, where the name occurs 70 times. Match the name's own script directly. Tokens of
+    # >= 3 characters, so a one-letter Hebrew article cannot vouch for a page.
+    native = [w for w in re.findall(r"[^\W\d_]{3,}", name or "", re.UNICODE)
+              if not w.isascii() and w not in _NAME_FILLER_HE]
+    if native:
+        if any(w in html for w in native):
+            return True
+        if not _name_targets(name):
+            # Nothing ASCII to check either, and the page does not carry the name in its
+            # own script. That is NOT "it names someone else" -- an Israeli company's page
+            # is often entirely in English (`מטריקס` -> matrixdna.ai, 0 occurrences). We
+            # cannot tell, and `None` is the state that says so without stamping a claim.
+            return None
     return False
 
 
@@ -607,4 +640,9 @@ def identity_ok(name, url, html=""):
         return False
     if host and ATS_HOST.search(host):
         return ok_to_write(name, url, html=html)
+    if not _name_targets(name):
+        # `is_foreign` judged nothing above: it has no ASCII form of this name to compare
+        # against the domain, so it answers False for every url and the blanket `True`
+        # below turned that into a vouch (`509`). Positive page confirmation only.
+        return page_names_company(name, url, html=html) is True
     return True

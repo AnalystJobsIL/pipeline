@@ -1473,6 +1473,27 @@ gates conclude.
    `listing_hunt` ownership, the same erosion every stamp in this file pays. B2 `--strict`
    at the persist gate remains the backstop, not the guard.
 
+**A name the gate cannot spell in ASCII used to vouch for every page on earth** (2026-08-31).
+`is_foreign` compares a name to a domain, and `_name_targets("קבוצת שיבולת")` is the empty
+set — so it answered False for *every* url, `board_vouches` turned that into `True`, and
+`identity_ok` returned its blanket `True`. The drain proposed **TheMarker's labour-news
+section** as that company's board with `10/10 IL`, ten bylined articles counted as jobs, and
+`apply_proposals` would have written it ACTIVE. Three changes, and the middle one is the
+rule: **no ASCII bits is not a vouch — it is "ask the page"**. `board_vouches` returns `None`
+for such a name, `identity_ok` requires positive page confirmation instead of defaulting
+true, and `page_names_company` now reads the name's **own script** (it answered False for
+`הפניקס` on `הפניקס`'s own careers page, where the name occurs 70 times). Hebrew filler is
+filtered exactly as `_NAME_FILLER` filters English: `קבוצת` ("group of") occurs twice on
+TheMarker's page and would otherwise have vouched, while the distinctive `שיבולת` occurs
+zero times. Where the page carries no token of the name **and** there is no ASCII to fall
+back on, the answer is `None`, never `False`: an Israeli company's careers page is often
+entirely in English (`מטריקס` → matrixdna.ai, 0 occurrences), so the gate defers as
+`unverified` rather than stamping a claim it cannot support. Measured over the five active
+rows in this class: 1 activates on its own page, 4 defer (2 English/JS-rendered, 2 bot-walled)
+— **the residue of the class is unactivatable by default, and none of it is accused**.
+`docs/BACKLOG.md` 509; `510` is the same blindness in `queue_resolve_search._is_ours`, where
+it cost 13 false refusals of 67 in one night.
+
 `test_every_activation_path_checks_company_identity` walks the AST of every root script for
 `row[4] = "true"` and fails if that module never consults `company_identity`;
 `test_every_activation_path_refuses_an_active_twin` scans the same way for `active_twin`.
@@ -2006,6 +2027,33 @@ were re-opened on 2026-08-30 and `DISPOSE_SYSTEM` now says a page naming even on
 board and that the absence of an ATS is not a reason.
 
 ### The drain reads the ledger, reaches today's intake first, and stops before the kill (2026-08-30)
+
+**"Owed" was one number over three states, and it was wrong by 3x** (2026-08-31).
+`queue_state.census` printed `STILL OWED AN ANSWER 546`, and every plan of 2026-08-30 —
+four registry sessions and the operator's own brief — was sized against that number. Only
+**172** of the 546 were owed anything. The rest were two entirely different conditions:
+
+| state | 2026-08-30 | what it means | what moves it |
+|---|---|---|---|
+| **OWED** | **172** | the drain would select it TONIGHT | the drain |
+| on cadence | 200 | a rung answered it inside its 14-day window | time |
+| answered on disk | 174 | a live retirement, or already a row | `--retire-settled`, no model, no credit |
+
+**OWED is defined as "`queue_resolve_search` would select it", and the census imports that
+selector rather than re-deriving it** — a census that can disagree with the rung it
+describes is exactly how 546 stood for a week. `queue_state.queue_states()` returns the
+triple, `census` prints it, and the `next rung` histogram is now computed over the OWED set
+only: on 2026-08-30 that turns `resolve-llm 234 · own-site 202 · (every rung tried) 84` into
+`own-site 164 · resolve-llm 6 · (every rung tried) 2`. **The honest core — names no rung can
+reach — is 2, not 84.**
+
+The same number now reaches the mail. `pipeline/stages.summary()` renders `ORDER` and
+nothing else, and `queue` was **not in it**: the stamp was written nightly and read by
+nobody, so the registry's queue was un-named in the one place a human looks daily. `queue`
+is in `ORDER`, and the line leads with the actionable count —
+`queue: 172 owed (-47 since …, falling), 200 on cadence, 174 answered on disk (546
+unsettled)`. The `GROWING` alarm now keys on OWED too, so a night that only accumulates
+answered-but-unapplied names no longer reads as a backlog forming.
 
 **The steady state, in two numbers.** The cloud drain can take **112 names a night** (4
 shards × 28: `queue_resolve_search.nightly_capacity()`, derived from the constants it runs

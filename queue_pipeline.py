@@ -732,10 +732,39 @@ def stamp_queue(receipt):
     # exhausted `DEEP_BD_SEARCH_CAP` (which returns [] in silence) and a crashed shard all
     # look like `selectable > 0, searched 0`.
     detail.update(_drain_liveness())
+    # THE NUMBER IN THE MAIL IS THE ACTIONABLE ONE. `owed` above counts every unsettled
+    # queue entry, and on 2026-08-30 that was 546 when the work actually available was 172:
+    # 200 more had been answered inside their 14-day cadence and 174 had an answer sitting
+    # on disk waiting for `--retire-settled`. Every plan that day, including the operator's,
+    # was sized against 546. A queue that reports 546 when it means 172 is worse than one
+    # that reports nothing, so the headline is now the count the drain would actually
+    # select, with the other two states beside it and the raw total last.
+    try:
+        import queue_state as QS
+        o, c, a = QS.queue_states()
+        detail.update({"owed": o, "on_cadence": c, "answered_on_disk": a,
+                       "unsettled": owed})
+        was_o = prev.get("owed")
+        if was_o is not None:
+            detail["delta"] = o - int(was_o)
+            detail["direction"] = ("GROWING" if detail["delta"] > 0
+                                   else ("falling" if detail["delta"] < 0 else "flat"))
+            detail.pop("alarm", None)
+            if detail["delta"] > 0:
+                detail["alarm"] = ("queue GREW by %d since %s -- the drain is not keeping "
+                                   "pace with intake" % (detail["delta"], prev.get("date", "?")))
+        owed = o
+    except Exception:                                             # noqa: BLE001
+        detail.setdefault("unsettled", owed)
+        o = c = a = None
     stages.stamp("queue", **detail)
     line = "queue: %d owed" % owed
-    if delta is not None:
-        line += " (%+d since %s, %s)" % (delta, prev.get("date", "?"), detail["direction"])
+    if detail.get("delta") is not None:
+        line += " (%+d since %s, %s)" % (detail["delta"], prev.get("date", "?"),
+                                         detail["direction"])
+    if o is not None:
+        line += ", %d on cadence, %d answered on disk (%d unsettled)" % (
+            c, a, detail["unsettled"])
     line += ", %d rows from the queue, %d unverified addresses" % (
         detail["rows_from_queue"], detail["unverified_rows"])
     print(line)

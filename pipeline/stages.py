@@ -27,7 +27,12 @@ import os
 
 PATH = os.path.join(os.path.dirname(__file__), "..", "cloud_state", "pipeline_stages.json")
 
-ORDER = ["repair", "collect", "expand", "firmo", "enrich", "publish", "ci", "cron"]
+# `summary()` renders ORDER and nothing else, so a stage absent from this list is stamped
+# to disk and read by nobody. `queue` was stamped nightly for days and never appeared in the
+# mail, which is how the registry's queue went un-named in the one place a human reads daily
+# (2026-08-31). The number it carries is `owed` -- the count the drain would actually select,
+# not the raw unsettled total.
+ORDER = ["repair", "collect", "expand", "firmo", "enrich", "queue", "publish", "ci", "cron"]
 
 
 def _load() -> dict:

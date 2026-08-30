@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 135 open
+### registry — 134 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -9355,8 +9355,20 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
 *Record: `docs/sessions/2026-08-30-registry-e.md`. Both were measured by an adversarial Opus
 pass over the night's own 172 proposals, not reasoned from the code.*
 
-510. **`identity_ok` is a NO-OP for a name with no ASCII targets, and it activated a
-     NEWSPAPER** — lane: `registry`. `identity_gate._name_targets("קבוצת שיבולת")` returns an empty set,
+510. ~~**`identity_ok` is a NO-OP for a name with no ASCII targets, and it activated a
+     NEWSPAPER**~~ — **CLOSED 2026-08-31 (`registry`)**: fixed, not made unactivatable.
+     `board_vouches` returns `None` when the name yields no ASCII target (no bits is not a
+     vouch — ask the page); `identity_ok` requires positive page confirmation instead of
+     its blanket `True`; and `page_names_company` reads the name's OWN script, with a
+     Hebrew filler list (`_NAME_FILLER_HE`) because `קבוצת` occurs twice on TheMarker's
+     page and would have vouched while `שיבולת` occurs zero times. Where the page carries
+     no token AND there is no ASCII fallback the answer is `None`, never `False`: an
+     Israeli company's page is often entirely in English, so the gate defers as
+     `unverified` rather than stamping a claim. Measured over the 5 active rows in this
+     class: 1 activates on its own page, 4 defer (2 English/JS-rendered, 2 bot-walled),
+     0 accused. Guard: `test_a_name_with_no_ascii_cannot_vouch_for_every_page_on_earth`.
+     The original finding follows.
+     **`identity_ok` is a NO-OP for a name with no ASCII targets** — lane: `registry`. `identity_gate._name_targets("קבוצת שיבולת")` returns an empty set,
      and callers read "no target objected" as "nothing objects", so the gate answers **True for
      any URL whatsoever**. Reproduction, no network:
      ```

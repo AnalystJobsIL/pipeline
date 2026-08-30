@@ -511,6 +511,42 @@ def test_a_board_already_read_by_an_active_row_cannot_be_activated_again():
                          "https://api.ashbyhq.com/posting-api/job-board/stigg", other) == ""
 
 
+_HEB_CO = "קבוצת שיבולת"      # "Shibolet Group"
+_HEB_GENERIC = "קבוצת"                                       # "group of"
+_HEB_OWN = "שיבולת"                                     # the distinctive half
+_PHOENIX = "הפניקס"
+
+
+def test_a_name_with_no_ascii_cannot_vouch_for_every_page_on_earth():
+    """`identity_ok` answered True for ANY url when the name had no ASCII to match on, and
+    `board_vouches` vouched outright — so on 2026-08-30 the drain proposed TheMarker's
+    labour-news section as an employer with `10/10 IL`, ten bylined articles counted as
+    jobs, and `apply_proposals` would have written it ACTIVE (`509`).
+
+    `is_foreign` cannot judge a name it has no ASCII form of: it answers False for every
+    domain on earth, and the gate read that as "nothing objects"."""
+    from pipeline import identity_gate as g
+    marker = ("<title>career</title>" + _HEB_GENERIC + " x") * 200   # generic word, not the name
+    ours = ("<title>careers</title>" + _HEB_OWN + " y") * 200        # the company's own name
+
+    # the vouch is withdrawn: no ASCII bits is not a vouch, it is "ask the page"
+    assert g.board_vouches(_HEB_CO, "", "https://www.themarker.com/career") is None
+    # ...and the page refuses, because the only token it carries is the generic half
+    assert g.identity_ok(_HEB_CO, "https://www.themarker.com/career", html=marker) is False
+    assert g.activation_verdict(_HEB_CO, "https://www.themarker.com/career", 10,
+                                html=marker) != "ok"
+    # the other direction still works — a page carrying the name in its OWN script vouches
+    assert g.page_names_company(_HEB_CO, "https://shibolet.example/careers", html=ours) is True
+    assert g.identity_ok(_HEB_CO, "https://shibolet.example/careers", html=ours) is True
+    # an Israeli company's page is often entirely in English: that is "cannot tell", never
+    # "this is someone else's board" — the gate must not stamp a claim it cannot support
+    assert g.page_names_company(_PHOENIX, "https://fnx.example/careers",
+                                html="<title>Careers</title>" + "english " * 500) is None
+    # ASCII names are untouched
+    assert g.board_vouches("Gong", "gong",
+                           "https://boards-api.greenhouse.io/v1/boards/gong/jobs") is True
+
+
 def test_the_twin_guard_does_not_disarm_the_paid_rungs(monkeypatch):
     """`active_twin` needs the board-identity keys `apply_proposals` owns — and importing
     THAT module pops `BRIGHTDATA_API_KEY` and zeroes `PAGE_UNLOCK_BUDGET`, because it locks
@@ -22337,6 +22373,42 @@ def test_queue_state_load_refuses_a_corrupt_log_and_tolerates_an_absent_one(tmp_
     with pytest.raises(SystemExit):
         QS.load(str(wrong))
     assert bad.read_text(encoding="utf-8").startswith("{\"A\""), "nothing was written over it"
+
+
+def test_the_queue_reports_what_is_owed_not_what_is_merely_unsettled(tmp_path, monkeypatch):
+    """`STILL OWED AN ANSWER` was one number over three states, and it read **546** on
+    2026-08-30 when the work actually available was **172**. The other 374 were not owed
+    anything: 200 had been answered inside their 14-day cadence, 174 had an answer already
+    on disk waiting for `--retire-settled`. Every plan written that day — including the
+    operator's own spawn prompt — was sized against 546.
+
+    OWED is defined as "the drain would select it tonight", and it is the drain's OWN
+    selector, imported: a census that can disagree with the thing it measures is how 546
+    happened."""
+    import queue_pipeline as QP
+    import queue_state as QS
+    st = {}
+    QS.record(st, "Answered Recently", "search-llm", "no-proposal", day=QP.TODAY)
+    _r830c_tree(tmp_path, monkeypatch,
+                queue=["Fresh Co", "Answered Recently", "Retired Co"],
+                qstate=st, disp={"Retired Co": _r830_disp("no-board", QP.TODAY)})
+    owed, cadence, answered = QS.queue_states()
+    assert (owed, cadence, answered) == (1, 1, 1), (owed, cadence, answered)
+
+    # the three states must partition the unsettled queue, and OWED must BE the drain's set
+    import queue_resolve_search as QRS
+    assert owed == len(QRS.targets()), "the census disagrees with the rung it describes"
+
+    # ...and the number that reaches the daily mail is the owed one, not the raw total
+    from pipeline import stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "cloud_state" / "pipeline_stages.json"))
+    detail = QP.stamp_queue({"buckets": {"owed, a nightly rung retries it": 3},
+                             "unverified_rows": 0})
+    assert detail["owed"] == 1 and detail["unsettled"] == 3, detail
+    assert detail["on_cadence"] == 1 and detail["answered_on_disk"] == 1, detail
+    assert "queue" in stages.ORDER, "a stage absent from ORDER is stamped and read by nobody"
+    line = [p for p in stages.summary().split(" | ") if p.startswith("queue")]
+    assert line and "owed=1" in line[0], line
 
 
 def test_a_half_written_proposal_file_is_reported_not_swallowed(tmp_path, capsys):

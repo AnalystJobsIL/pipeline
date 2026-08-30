@@ -188,12 +188,65 @@ def census(state, queue=None, out=print):
     for r, c in by_r.most_common():
         out("  %-34s %d" % (r, c))
     settled = [n for n in names if is_settled(state, n, have)]
-    owed = collections.Counter(next_rung(state, n) for n in names
-                               if not is_settled(state, n, have))
-    out("\nSETTLED %d - STILL OWED AN ANSWER %d" % (len(settled), len(names) - len(settled)))
-    for r, c in owed.most_common():
+    unsettled = [n for n in names if not is_settled(state, n, have)]
+
+    # "STILL OWED AN ANSWER" was ONE number over three different states, and every plan
+    # written against this census was sized against the wrong one: on 2026-08-30 it read
+    # 546 when the work actually available was 172. The other 374 were not owed anything.
+    # A name is OWED only if the rung that drains the queue would select it TODAY, so the
+    # count is the drain's own selector, imported rather than re-derived -- a census that
+    # can disagree with the thing it measures is how 546 happened.
+    owed_now, on_cadence, answered = [], [], []
+    try:
+        import queue_disposition as QD
+        import queue_resolve_search as QRS
+        disp, sel = QD.load(), set(QRS.targets())
+        for n in unsettled:
+            if n in sel:
+                owed_now.append(n)               # actionable tonight
+            elif QD.is_retired(n, disp) or n.strip().lower() in have:
+                answered.append(n)               # the answer is on disk; --retire-settled folds it out
+            else:
+                on_cadence.append(n)             # a rung answered it inside its 14-day cadence
+    except Exception as e:                                        # noqa: BLE001
+        out("\n(could not split the queue by state: %s)" % str(e)[:80])
+        owed_now = unsettled
+
+    out("\nSETTLED %d - UNSETTLED %d, and they are THREE different states:"
+        % (len(settled), len(unsettled)))
+    out("  OWED (the drain would select it tonight)      %d" % len(owed_now))
+    out("  on cadence (answered, waiting out 14 days)    %d" % len(on_cadence))
+    out("  answered on disk (--retire-settled folds out) %d" % len(answered))
+    out("\nOWED, by the cheapest rung that has not answered:")
+    for r, c in collections.Counter(next_rung(state, n) for n in owed_now).most_common():
         out("  next rung %-28s %d" % (r or "(every rung tried)", c))
     return by_v
+
+
+def queue_states(state=None, queue=None):
+    """`(owed, on_cadence, answered_on_disk)` counts -- the split `census` prints, for the
+    stamp that puts the OWED number in the daily mail."""
+    import queue_disposition as QD
+    import queue_resolve_search as QRS
+    if state is None:
+        state = load()
+    if queue is None:
+        with open(QUEUE, encoding="utf-8") as f:
+            queue = json.load(f)
+    have = registry_names()
+    names = [(e.get("name") or "").strip() for e in queue]
+    disp, sel = QD.load(), set(QRS.targets())
+    owed = cadence = answered = 0
+    for n in names:
+        if not n or is_settled(state, n, have):
+            continue
+        if n in sel:
+            owed += 1
+        elif QD.is_retired(n, disp) or n.strip().lower() in have:
+            answered += 1
+        else:
+            cadence += 1
+    return owed, cadence, answered
 
 
 def ingest(state, paths, day=None):
