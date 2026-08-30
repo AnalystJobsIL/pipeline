@@ -2037,3 +2037,10 @@ Growdirector,scrape,,,false,queue-hunt 2026-08-29: careers page documented; moni
 ReasonLabs,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names Viola Group (job posted for ReasonLabs); needs re-resolution
 Jcfamilies,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names JCFamilies; needs re-resolution
 Celeno,scrape,,,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | wrong-url 2026-08-30: board names דיאלוג (Dialog); needs re-resolution
+Jacobs,scrape,https://www.jacobs.com/,https://www.jacobs.com/,false,scanned; no open Israel roles now | own-site 2026-08-30: www.jacobs.com linkback
+Layavision,scrape,https://www.layavision.com/,https://www.layavision.com/,false,scanned; no open Israel roles now | own-site 2026-08-30: www.layavision.com linkback
+Brinks,scrape,https://us.brinks.com/,https://us.brinks.com/,false,scanned; no open Israel roles now | own-site 2026-08-30: us.brinks.com linkback
+Callapp,scrape,https://callapp.com,https://callapp.com,false,scanned; no open Israel roles now | own-site 2026-08-30: callapp.com linkback
+Cbre,scrape,https://www.cbre.com/,https://www.cbre.com/,false,scanned; no open Israel roles now | own-site 2026-08-30: www.cbre.com linkback
+Cellosite,scrape,https://cellosite.co.il,https://cellosite.co.il,false,scanned; no open Israel roles now | own-site 2026-08-30: cellosite.co.il linkback
+Checkout,scrape,https://www.checkout.com/jobs,https://www.checkout.com/jobs,true,auto-expand scrape; 2 IL

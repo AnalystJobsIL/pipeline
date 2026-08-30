@@ -4976,6 +4976,30 @@
    "url": "https://checkmarx.com/job-openings/position/52.F6F/"
   }
  ],
+ "Checkout": [
+  {
+   "ats_platform": "scrape",
+   "company": "Checkout",
+   "country_code": "",
+   "description": "",
+   "job_id": "9bf673a0-8e9e-41f2-87c2-00494b72e915",
+   "location": "Tel Aviv",
+   "posted_date": "",
+   "title": "Fraud Data Analyst",
+   "url": "https://jobs.ashbyhq.com/checkout.com/9bf673a0-8e9e-41f2-87c2-00494b72e915/application"
+  },
+  {
+   "ats_platform": "scrape",
+   "company": "Checkout",
+   "country_code": "",
+   "description": "",
+   "job_id": "c24c7a1c-22fb-4d80-8992-524feb50025f",
+   "location": "Tel Aviv",
+   "posted_date": "",
+   "title": "Fraud Data Scientist",
+   "url": "https://jobs.ashbyhq.com/checkout.com/c24c7a1c-22fb-4d80-8992-524feb50025f/application"
+  }
+ ],
  "Chunk Foods": [
   {
    "ats_platform": "scrape",
