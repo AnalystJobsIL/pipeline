@@ -1166,15 +1166,23 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     uncached = _uncached(rows, written, parking)
     unvisited = _unvisited(rows, written, rot_written, parking)
     # provenance over what this exit actually writes: fresh reads must never carry an
-    # unprovenanced "Israel" (alarm), carried entries may until their board re-scrapes (level)
+    # unprovenanced "Israel" (alarm), carried entries may until their board re-scrapes
+    # (level). On an abort exit NOTHING in `written` is tonight's read, so everything
+    # written is legacy (wave-1 attacker B, F4: a succeeded company's OLD entry was
+    # written on a shrink night and counted nowhere).
     fabricated = sum(_unprovenanced(v) for v in st.successes.values())
-    legacy_loc = sum(_unprovenanced(v) for k, v in written.items() if k not in st.successes)
+    fresh = st.successes if written is st.cache else {}
+    legacy_loc = sum(_unprovenanced(v) for k, v in written.items() if k not in fresh)
     # postings whose url is the LISTING they were found on (434): no fetch layer can ever
     # read them a description. A level with the same anchored-jump alarm as `uncached` —
     # the level itself is ~large and moves with promotions, so only a JUMP is an event.
+    # Summed over the REGISTRY's rows, like `_uncached`: a cache key the registry retired
+    # has no listing to compare against, and `_is_own_address(j, "")` is deliberately
+    # False — counting those booked 264 postings address-less and fired `ownless-up` on
+    # every abort night (wave-1 attacker B, F1).
     listings = {r["company_name"]: r.get("api_url", "") for r in rows}
-    ownless = sum(1 for name, v in written.items()
-                  for j in v or [] if not _is_own_address(j, listings.get(name, "")))
+    ownless = sum(1 for name, listing in listings.items()
+                  for j in written.get(name) or [] if not _is_own_address(j, listing))
     alarm = _alarm(st, mass_failure=mass_failure, shrink=shrink,
                    rot_unreadable=rot_state == "unreadable",
                    uncached=uncached, unvisited=unvisited,

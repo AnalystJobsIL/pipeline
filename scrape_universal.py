@@ -1041,6 +1041,10 @@ class _Adder:
         if judged is None:
             return False
         title, loc, foreign = judged
+        # a card one strategy refused for locationlessness and a later strategy PLACED is
+        # not unknown any more (wave-1 attacker A, F4: dom's bare reading poisoned the
+        # counter for a card the cards pass shipped)
+        self.locless.discard(_norm_title(title))
         if loc != passed:
             loc_src = ""                 # the title's own tail settled the place: it is "own"
         strong = _is_strong(url_, self.url)
@@ -1333,6 +1337,11 @@ _LOC_LABEL = re.compile(r"\b(?:(?:job|office|work|position|role)\s+locations?\s*
 _LOC_LABEL_END = re.compile(r"\s+(?:job\s+brief|about|requirements?|responsibilities|apply|"
                             r"description|overview|summary|role|position|department|type|"
                             r"office)\b", re.I)
+# a multi-region label takes the Israel fallback only when Israel is a LIST MEMBER at its
+# end ("US East Coast, Europe or Israel"), never a prose mention ("New York, NY — we are
+# an Israel-based company"): wave-1 attacker A shipped two foreign roles through the prose
+# reading, stamped `own`, invisible to every counter
+_LIST_ISRAEL = re.compile(r"(?:^|[,/|&]|\b(?:and|or)\b)\s*Israel\s*$", re.I)
 
 
 def _stated_place(txt):
@@ -1398,7 +1407,7 @@ def _parse_position_page(ph, u2):
             # settles foreign, exactly as before (Weebit Nano).
             "loc": ((_loc_from_ctx(stated, anchor=len(stated))
                      or (_clean_loc(_html.unescape(stated))
-                         if ISRAEL_LOC.search(stated) else "")) if stated else
+                         if _LIST_ISRAEL.search(stated) else "")) if stated else
                     (_loc_from_ctx(txt, anchor=at if at >= 0 else None) or _loc_from_ctx(claim))),
             "desc": re.sub(r"\s+", " ", txt)[:4000],
             "il": bool(ISRAEL_LOC.search(txt)),
@@ -1992,6 +2001,10 @@ def _from_embedded_board(company, url, r: Rendered, deadline=None):
         # A cache entry that cannot say why it is here cannot be re-audited after the
         # rule changes, and this rule has already been wrong once (wave-1 attacker C).
         j["_token"], j["_board_url"] = tok, api
+        # the board's API STATED the location — "own" provenance, or `fabricated-loc`
+        # false-fires on every handoff whose board says "Israel" (wave-1 attacker A, F3:
+        # embeds_won=2 on the live 08-30 stamp)
+        j["_loc_src"] = "own"
         # `country_code` is KEPT, unlike a scraped card's, which this module blanks because
         # the SCRAPER guessed. Here the board STATES it, which is the evidence all 433
         # native-ATS rows are trusted on -- and `israel.is_israel_job` treats a non-IL code
@@ -2016,9 +2029,9 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
         add.resolve(_anchors(r.dom, page_html, url))
         for idx in add._weak.values():
             # write-time truth (434): this reading never found the posting's own address —
-            # its url IS the listing. `jdfill` refuses these without fetching; the stamp's
-            # `ownless=` counts them. (`_jd_shared_page` stays jd-text's, it means a FETCH
-            # came back shared.)
+            # its url IS the listing. The stamp's `ownless=` counts them, and jd-text MAY
+            # refuse on this key instead of a url-shape test (their lane; no consumer yet).
+            # (`_jd_shared_page` stays jd-text's, it means a FETCH came back shared.)
             jobs[idx]["_own_url"] = False
         return jobs, add.label()
 

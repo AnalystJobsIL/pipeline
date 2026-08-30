@@ -23665,6 +23665,12 @@ def test_scrape_a_label_naming_israel_among_regions_is_the_roles_own_claim():
     assert p and "Israel" in p["loc"] and "Office" not in p["loc"]
     from pipeline.israel import is_israel_job
     assert is_israel_job({"location": p["loc"], "url": p["url"], "country_code": ""})
+    # ...and Israel as PROSE in a foreign label is not a list member (wave-1 attacker A
+    # shipped two foreign roles through this door before `_LIST_ISRAEL`)
+    prose = ("<html><h1>Account Executive</h1><p>Location: New York, NY (we are an "
+             "Israel-based company)</p><p>Own the enterprise sales cycle.</p></html>")
+    p2 = N._parse_position_page(prose, "https://co.example/careers/ae/")
+    assert p2 and p2["loc"] == "" and p2["foreign"]
 
 
 def test_scrape_a_decoy_plain_page_still_buys_the_unlocker(monkeypatch):

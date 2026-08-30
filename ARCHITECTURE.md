@@ -2930,7 +2930,9 @@ shipped as `location=Israel`; a rising level is a board hiding its locations) an
 pre-fix stamps, which must ratchet to 0 as their boards re-scrape) and `ownless=N` with its
 anchor `ownless_base=A ownless_rows_base=R` (postings whose url IS the listing they were
 found on — no fetch layer can ever read them a description, BACKLOG 434; each anchor
-carries its own rows because the two ratchet on different nights), and, on a run
+carries its own rows because the two ratchet on different nights; the `cache-unreadable`
+exit — which measured nothing — stamps none of the derived keys, and never did stamp the
+anchors), and, on a run
 with the flags set, `llm_calls llm_won llm_fail llm_skipped` (`SCRAPE_LLM`) and
 `unlock_calls unlock_ok unlock_won`
 (`SCRAPE_VIA_UNLOCKER`) — the two shared quotas this step spends, counted nowhere until
