@@ -1,60 +1,100 @@
-# 🎯 1 new analytics role — 2026-08-29
+# 🎯 6 new analytics roles — 2026-08-30
 
 Israeli high-tech scan — data / BI / analytics roles from the **last 48h**, freshest first. Any experience level; internships and student placements are excluded. Each role title links to apply.
 
 🔎 **[Open the full board →](https://analystjobsil.github.io/board/)** — every role still open, searchable & sortable.
 
-### Percepto
-_Percepto builds autonomous drone-in-a-box hardware and software for remote inspection and monitoring of industrial sites (oil & gas, transmission & distribution, heavy industry). It generates revenue by selling this drone-in-a-box platform as a subscription/SaaS service (hardware plus software licensing) to enterprise industrial customers rather than one-off product sales._
-`drones / robotics` · `growth-stage private` · `~130 employees` · `founded 2014` · `Modi'in (HQ & R&D)`
+### Migdal Group
+_Migdal Group is a major Israeli insurance and financial services company, offering life, health, and general (property and casualty) insurance alongside pension and long-term savings products. It generates revenue primarily through insurance premiums, management fees on pension and provident funds, and investment income earned on the assets it manages for policyholders._
+`insurance / financial services` · `public` · `~4,435 employees` · `founded 1974` · `Petah Tikva (HQ)`
 
-- **Data Insights Operations** — https://percepto.co/careers/data-insights-operations-ff-c6f/ · 📍 Israel (unspecified) · 🗓 —
+- **Data Analyst** — https://il.linkedin.com/jobs/view/data-analyst-at-migdal-group-4460873878 · 📍 Petah Tikva · 🗓 2026-08-30
+
+### Compie Technologies
+
+- **Data Analyst** — https://il.linkedin.com/jobs/view/data-analyst-at-compie-technologies-4460871922 · 📍 Tel Aviv area · 🗓 2026-08-30 · 🎓 7+ yrs
+
+### INGIMA
+
+- **Data Analytics Team Lead \(5485\)** — https://il.linkedin.com/jobs/view/data-analytics-team-lead-5485-at-ingima-4460874869 · 📍 Central Israel · 🗓 2026-08-30 · 🎓 3+ yrs
+
+### ONE datAI
+
+- **Incentive & Compensation Analyst** — https://il.linkedin.com/jobs/view/incentive-compensation-analyst-at-one-datai-4458835579 · 📍 Central Israel · 🗓 2026-08-30
+
+### helfy
+_Helfy is an Israeli digital-health company that lets customers get prescriptions, treatments, and medication delivery fully online, without visiting a clinic or pharmacy in person. It makes money from consultation and service fees plus the medications and deliveries it sells._
+`healthtech` · `early-stage private` · `~150 employees` · `founded 2021` · `Herzliya (HQ); operations across UK/EU`
+
+- **Business Analyst** — https://www.comeet.com/jobs/helfy/3A.008/business-analyst/4D.174 · 📍 Herzliya · 🗓 2026-08-30 · 🎓 Mid
+
+### RealPlay
+_RealPlay builds mobile gaming products and uses data analytics to understand player behavior and improve its games. It generates revenue through in-game purchases and advertising within its mobile games._
+`Gaming` · `early-stage private` · `~50 employees` · `founded 2023` · `Tel Aviv (R&D); HQ in Delaware, US`
+
+- **Business Strategy Analyst** — https://www.comeet.com/jobs/realplay/9A.003/business-strategy-analyst/13.174 · 📍 Tel Aviv · 🗓 2026-08-30
 
 ---
 
-## Newly covered companies (3)
+## Newly covered companies (5)
 
 Employers this scan reached for the **first time**, with whatever they have open now — so these are not 48h-new, they are new *to you*. Where a posting states its date it is shown; scraped cards often do not, and "we first saw it today" is not a publication date. From tomorrow these companies report like every other.
 
-### D\-Fend Solutions
-_D-Fend Solutions is an acquired company in defense / counter-drone: RF cyber-takeover counter-UAS systems (EnforceAir) that detect and safely take control of rogue drones. It makes money through Sells counter-drone hardware/software systems and related services to defense, homeland security, airports and public-safety agencies. Customers: militaries, homeland security and law-enforcement agencies, airports, critical infrastructure operators._
-`defense / counter-drone` · `acquired` · `~200 employees` · `founded 2016` · `Ra'anana (HQ & R&D)`
+### Bylith
+_Bylith is a privately held company in Enterprise Software: SaaS / Digital Experience & Automation. It makes money through B2B SaaS products (AnyRM, Flowto, XPRIEN). Customers: enterprises._
+`Enterprise Software` · `private enterprise` · `~150 employees` · `founded 2006` · `Netanya (HQ)`
 
-- **Market Intelligence Analyst \(Drone & Counter\-Drone Systems\)** — https://jobs.lever.co/d-fendsolutions/6a52d9de-ec0e-48f7-8c4f-ba409b0dd256 · 📍 Ra'anana · 🗓 2026-03-05 · ⚠️ posted ~5mo ago · 🎓 5+ yrs
+- **Product Analyst** — https://www.bylith.com/careers · 📍 Netanya · 🗓 date not published
 
-### Hello Flare
-_Hello Flare is a growth-stage private company in Legal Tech: Consumer legal services platform. It makes money through B2C/B2B2C SaaS platform connecting consumers with legal professionals. Customers: B2C._
-`Legal Tech` · `growth-stage private` · `~150 employees` · `founded 2020` · `Tel Aviv (R&D); HQ in San Diego, US`
+### Checkout
+_Checkout.com provides an online payment processing platform that helps businesses like eBay, Spotify, and Uber accept and manage digital payments at scale. It generates revenue by charging transaction fees on the payments processed through its platform._
+`Fintech` · `growth-stage private` · `~2,000 employees` · `founded 2012` · `Tel Aviv (R&D hub); HQ in London, UK`
 
-- **Senior Data Analyst** — https://www.comeet.com/jobs/flare/36.00F/senior-data-analyst/63.D69 · 📍 Tel Aviv · 🗓 2026-07-15 · ⚠️ posted 45d ago · 🎓 4+ yrs
+- **Fraud Data Analyst** — https://jobs.ashbyhq.com/checkout.com/9bf673a0-8e9e-41f2-87c2-00494b72e915/application · 📍 Tel Aviv · 🗓 date not published · 🎓 3+ yrs
 
-### HiBob
-_HiBob is a growth-stage private company in HR tech / SaaS: Cloud HRIS platform ('Bob') for HR, payroll, compensation and workforce management aimed at mid-sized modern companies. It makes money through B2B SaaS subscriptions per employee/month for the Bob HR platform plus payroll and compensation modules. Customers: mid-market companies (HR teams at modern multi-site businesses, 5,000+ organizations)._
-`HR tech / SaaS` · `growth-stage private` · `~1,400 employees` · `founded 2015` · `Tel Aviv (founding site, R&D)`
+### Comcast
+_Comcast is a global media and technology company that provides cable television, internet, phone services, and operates businesses like NBCUniversal and Comcast Advertising. It generates revenue through subscription fees for cable and broadband services, advertising sales, and content licensing._
+`telecom / media` · `public` · `~179,000 employees` · `founded 1963` · `Tel Aviv (R&D, ex-Levl team acquired 2022)`
 
-- **Senior Business Analyst** — https://hibob-fa0ad69d0cb34a.careers.hibob.com/jobs/41200073-394e-4c09-9856-e6acabdd5411 · 📍 Israel (unspecified) · 🗓 date not published
+- **Analyst, Enterprise Data Analytics \- Comcast Advertising** — https://jobs.comcast.com/job/pennsylvania/analyst-enterprise-data-analytics-comcast-advertising/45483/99832675200 · 📍 Israel (unspecified) · 🗓 date not published · 🎓 2+ yrs
+- **Manager 2, Business Operations &amp; Analytics** — https://jobs.comcast.com/job/houston/manager-2-business-operations-and-analytics/45483/99862967712 · 📍 Israel (unspecified) · 🗓 date not published · 🎓 7+ yrs
+
+### Kibeeri
+_Kibeeri is an early-stage private company in E-commerce Technology: Product discovery & marketplace marketing (Amazon growth optimization). It makes money through B2C/B2B e-commerce product discovery & marketplace marketing platform. Customers: Online shoppers and e-commerce brands/sellers (e.g. Amazon marketplace)._
+`E-commerce Technology` · `early-stage private` · `Beer Yaacov, Israel (HQ)`
+
+- **Marketing Analyst** — https://kibeeri.com/jobs/marketing-analyst/ · 📍 Rishon LeZion · 🗓 date not published · 🎓 1+ yrs
+- **Senior Data Analyst** — https://kibeeri.com/jobs/senior-data-analyst/ · 📍 Rishon LeZion · 🗓 date not published · 🎓 5+ yrs
+
+### finbounce
+_finbounce is a growth-stage private company in Fintech: AI-powered debt recovery/collections platform. It makes money through B2B SaaS / AI platform for debt recovery and settlement. Customers: B2B (banks, fintechs, credit unions, lenders)._
+`Fintech` · `growth-stage private` · `~100 employees` · `founded 2021` · `Tel Aviv; HQ in Rochester/New York, US`
+
+- **Data Analyst Senior** — https://www.comeet.com/jobs/bounce/E9.00C/data-analyst/3E.E6D · 📍 Tel Aviv · 🗓 date not published · 🎓 3+ yrs
 
 ---
 **Needs a look**
 
-- **Sources not producing:** linkedin-targeted: nothing for 6d (last 2026-08-23)
-- **Stages:** the 2026-08-28 run failure: pipeline (failure) — https://github.com/AnalystJobsIL/pipeline/actions/runs/33162147076; enrich scrape:bd-spent(2 calls, 0 filled: bd-shell2); classify the contract drain moved 6 of 60 re-judged verdicts and ALL of them the same way (+6/-0) - expected after a scope change, and what a mangled rules string looks like; check \`_rules()\`; classify 191 roles decided by a verdict from a SUPERSEDED contract (60 re-judged this run, cap 60) - the scope changed and the cache is still draining; classify 1 roles judged on the title alone because another role at the same employer carried byte-identical description text - the stored description is a careers page (lane: jd-text); roles seen-id collision (1 id(s) name two or more roles; worst: discovery-linkedin:linkedin:4456923326 x2) — one of them will never be emailed
+- **Sources not producing:** linkedin-targeted: nothing for 7d (last 2026-08-23)
+- **Registry:** re-check pool halved: retry_unreachable + bd_rescue 49 -> 22; re-check pool grew: listing_hunt 435 -> 697 (a predicate widened?); re-check pool grew: crack_walled 21 -> 38 (a predicate widened?); re-check pool grew: audit_empty_rows 537 -> 817 (a predicate widened?); re-check pool grew: deep_validate 537 -> 817 (a predicate widened?)
+- **Stages:** collect links-unread-1; ci tests.yml on master is failure - 1 consecutive non-green runs; cron auto-expand: 08:00 on 08-28 not seen; daily-digest: 05:00 on 08-28 arrived +734 min late; enrich matched:jd-quality-unavailable(7 candidates, no verdict: llm-auth7); classify 210 roles decided by a SUPERSEDED verdict that this run could have re-judged (60 done against cap 60, plus 53 stale YES re-judged uncapped) - about 4 more run(s) at this rate; classify 30 superseded verdicts CANNOT be re-judged: the role has no description this run, and a JD-backed verdict is never re-judged on a bare title. Raising CLASSIFY_REJUDGE_CAP does not reach them - a description does (lane: jd-text); roles seen-id collision (1 id(s) name two or more roles; worst: discovery-linkedin:linkedin:4456923326 x2) — one of them will never be emailed
+- **Render:** shared-board Bounce AI/finbounce — one posting may be under the wrong name, check the card; shared-board Checkout/Checkout.com — one posting may be under the wrong name, check the card
 
 ---
 <details><summary>Run audit</summary>
 
-- Companies scanned: **1000** (failed: 3)
-- Jobs fetched: 33344 · Israel-matched: 7173
-- Accepted: 129 · after merge: 89 · **new: 4**
-- Decision paths: keyword=6053, llm=67, llm_cache=308, merged-copy=745
-- LLM calls this run: 67 · JDs fetched inline: 132
-- At newly covered companies: 3
-- **Boards** changed today: new: 1 fetch error (Sisense: HttpError: network error for https://boards-api.greenhouse.io/v1/boards/sisense/j) · 7 regressed to zero (Dynamic Yield; IAI - Israel Aerospace Industries; Revolut; Sanofi; Strauss Water Ltd. שטראוס מים; rooms; +1 more) · 5 scrape rows on an ATS host (Abakus Center; Brenntag; DealHub.ai; Gini Apps; finbounce) · cleared: ASOCS; Altera; Ashley Digital; Conifers.ai; ControlUp; Enlight Renewable Energy; +11 more
-- **Boards** standing: 5 fetch errors (Akamai: scrape: http:403 (5 nights); Ciena: HttpError: HTTP 502 for https://ciena.wd5.myworkdayjobs.com/wday/cxs/ciena/Career; Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ; Greeneye Technology: scrape: http:404 (4 nights); Sisense: HttpError: network error for https://boards-api.greenhouse.io/v1/boards/sisense/j) · 38 regressed to zero (ABB; ASTERRA; AU10TIX; Airspan Networks; Apple; BeeHero; +32 more) · 26 scrape rows on an ATS host
-- **Company intel:** all 73 board companies profiled (2 more: research failed, weekly retry) · claude unavailable after 0 blurbs calls (is_error (api_error_status=None)) — 0 unprofiled board companies wait for the next run · blurbs: 0 asked, 0 written, 6 derived from facts, 3 waiting (monthly retry / same company), 1 cached under a non-company name, dropped · export 1186 records, newest 2026-08-29, 189 newer than the store, registry backlog 25
-- **Roles:** open 91 · closed today 1 · reopened 2 · reposted 3 · merged-copy 745 · ledger 154 = store 154; claim conflicts 1 (Port<-Port.io)
-- **Render:** board 91 cards · archive 52 cards · email 4 cards
-- Stage order: repair: 2026-08-29 (TODAY) | collect: 2026-08-29 (TODAY) carried=11 carried_residential=0 dropped_residential=0 embeds=7 embeds_won=0 empty=129 errors=35 links_unread=0 llm_calls=81 llm_fail=0 llm_skipped=26 llm_won=45 minutes=35 no_il=0 parked=0 rows=450 rows_base=450 scraped=450 uncached=153 uncached_base=153 unlock_calls=76 unlock_ok=67 unlock_won=11 unprocessed=0 unvisited=0 via=cards80+links66+dom47+llm45+structured45+structured-dom2+structured-links1 with_jobs=286 workers=4 | expand: 2026-08-28 (1d ago) | firmo: 2026-08-29 (TODAY) failed=3 records=1186 researched=53 | enrich: 2026-08-29 (TODAY) alarm=scrape:bd-spent(2 calls, 0 filled: bd-shell2) matched_actionable=6 matched_archived=4 matched_bd=0 matched_bd_calls=0 matched_bd_ok=0 matched_bd_unavailable=0 matched_cooldown=3 matched_cycle_days=5.0 matched_dead=4 matched_fail=3 matched_filled=0 matched_foreign_sibling=0 matched_from_cache=0 matched_furniture_cut=0 matched_gone=0 matched_llm_cached=0 matched_llm_calls=7 matched_llm_candidates=7 matched_llm_capped=0 matched_llm_rejected=0 matched_llm_truncated=0 matched_llm_unavailable=7 matched_no_address=0 matched_ok=135 matched_probe=1 matched_ran=1 matched_recleaned=0 matched_short=10 matched_skipped=0 matched_terminal=2 matched_todo=10 matched_unfillable=3 matched_why=auth-walled3+no-markers2 scrape_bd=0 scrape_bd_calls=2 scrape_bd_ok=2 scrape_bd_unavailable=0 scrape_cards=1718 scrape_cooldown=18 scrape_dropped_title=1393 scrape_fail=2 scrape_filled=0 scrape_probe=0 scrape_ran=1 scrape_skipped=0 scrape_todo=20 scrape_unfillable=0 scrape_why=bd-shell2 | publish: 2026-08-29 (TODAY) board=91 email=4 scanned=1000
-- Failed companies: Sisense (HttpError: network error for https://boards-api.greenhouse.io/v1/boards/sisense/j), Ciena (HttpError: HTTP 502 for https://ciena.wd5.myworkdayjobs.com/wday/cxs/ciena/Career), Decart (HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: )
+- Companies scanned: **1099** (failed: 5)
+- Jobs fetched: 34017 · Israel-matched: 7944
+- Accepted: 129 · after merge: 90 · **new: 13**
+- Decision paths: keyword=6738, llm=191, llm_cache=260, merged-copy=755
+- LLM calls this run: 191 · JDs fetched inline: 154
+- At newly covered companies: 7
+- **Boards** changed today: new: 3 fetch errors (Augury: HttpError: network error for https://boards-api.greenhouse.io/v1/boards/augury/jo; D-Fend Solutions: HttpError: network error for https://api.lever.co/v0/postings/d-fendsolutions The; Honeycomb Insurance: HttpError: network error for https://boards-api.greenhouse.io/v1/boards/honeycomb) · 5 regressed to zero (Intuit; Quantum Art; Swimm; Varonis; מנורה מבטחים החזקות) · 10 scrape rows on an ATS host (Aitechsystems; Beamup; Bitsight; Boa Ideas; Brandshield; Clarivate; +4 more) · cleared: Sanofi; Sisense; Workiz
+- **Boards** standing: 7 fetch errors (Akamai: scrape: http:403 (6 nights); Augury: HttpError: network error for https://boards-api.greenhouse.io/v1/boards/augury/jo; Ciena: HttpError: HTTP 502 for https://ciena.wd5.myworkdayjobs.com/wday/cxs/ciena/Career; D-Fend Solutions: HttpError: network error for https://api.lever.co/v0/postings/d-fendsolutions The; Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ; Greeneye Technology: scrape: http:404 (5 nights); Honeycomb Insurance: HttpError: network error for https://boards-api.greenhouse.io/v1/boards/honeycomb) · 41 regressed to zero (ABB; ASTERRA; AU10TIX; Airspan Networks; Apple; BeeHero; +35 more) · 36 scrape rows on an ATS host
+- **Company intel:** 3 of 82 board companies unprofiled (cap 5/run, budget 8m): 0 researched, 0 failed (2 more: research failed, weekly retry) · claude unavailable after 3 blurbs calls (transient: error_max_structured_output_retries: Failed to provide valid structured output a) — 3 unprofiled board companies wait for the next run · blurbs: 3 asked, 2 written, 1 empty, 9 derived from facts, 3 waiting (monthly retry / same company), 1 cached under a non-company name, dropped, 1 purged from the store (not a company) · seam: sonnet-5 x3 · 3 calls, 13s, 0 searches · export 1297 records, newest 2026-08-30, 111 newer than the store, registry backlog 21 (first measurement) · bulk cron: last ran 2026-08-30 (today), 50 researched of 55 to do, 0 left, 5 failed
+- **Roles:** open 103 · closed today 1 · reopened 1 · reposted 6 · purged 7 · merged-copy 755 · ledger 166 = store 166; claim conflicts 1 (Port<-Port.io); dataset 155 roles (2026-07-02..2026-08-30) · excluded superseded 4 · purged 7 · outside window 0 · firmo 5 of 155 unmatched
+- **Render:** board 103 cards, shared-board Bounce AI/finbounce, shared-board Checkout/Checkout.com · archive 52 cards · email 13 cards
+- Stage order: repair: 2026-08-30 (TODAY) | collect: 2026-08-30 (TODAY) alarm=links-unread-1 carried=11 carried_residential=0 dropped_residential=0 embeds=8 embeds_won=2 empty=150 errors=31 links_unread=1 llm_calls=113 llm_fail=1 llm_skipped=27 llm_won=67 minutes=43 no_il=0 parked=0 rows=573 rows_base=450 scraped=573 uncached=170 uncached_base=153 unlock_calls=84 unlock_ok=71 unlock_won=13 unprocessed=0 unvisited=0 via=cards97+links93+dom70+llm67+structured58+structured-dom3+embed2+cards-links1+structured-links1 with_jobs=392 workers=4 | expand: 2026-08-30 (TODAY) | firmo: 2026-08-30 (TODAY) attempted=55 budget_min=20.0 failed=5 gated=13 left=0 minutes=6.7 records=1297 researched=50 todo=55 unavailable=0 | enrich: 2026-08-30 (TODAY) alarm=matched:jd-quality-unavailable(7 candidates, no verdict: llm-auth7) matched_actionable=6 matched_archived=5 matched_bd=0 matched_bd_calls=0 matched_bd_ok=0 matched_bd_parked=0 matched_bd_rendered=0 matched_bd_shell=0 matched_bd_unavailable=0 matched_cooldown=5 matched_cycle_days=11.0 matched_dead=5 matched_fail=1 matched_filled=1 matched_foreign_sibling=0 matched_from_cache=0 matched_furniture_cut=0 matched_gone=0 matched_llm_cached=0 matched_llm_calls=7 matched_llm_candidates=7 matched_llm_capped=0 matched_llm_rejected=0 matched_llm_truncated=0 matched_llm_unavailable=7 matched_no_address=0 matched_ok=139 matched_probe=1 matched_ran=1 matched_recleaned=0 matched_short=10 matched_skipped=0 matched_terminal=2 matched_todo=11 matched_unfillable=3 matched_why=auth-walled3 scrape_bd=1 scrape_bd_calls=1 scrape_bd_ok=1 scrape_bd_parked=0 scrape_bd_rendered=0 scrape_bd_shell=0 scrape_bd_unavailable=0 scrape_cards=2479 scrape_cooldown=0 scrape_dropped_israel=0 scrape_dropped_title=271 scrape_fail=10 scrape_filled=3 scrape_not_job_url=674 scrape_paid_cooldown=11 scrape_probe=0 scrape_ran=1 scrape_render_capped=0 scrape_shared_page=0 scrape_skipped=0 scrape_thin_remaining=284 scrape_todo=13 scrape_unfillable=0 scrape_why=shell7+no-markers2+http-4001 | publish: 2026-08-30 (TODAY) board=103 email=13 scanned=1099 | ci: 2026-08-30 (TODAY) alarm=tests.yml on master is failure - 1 consecutive non-green runs red_streak=1 | cron: 2026-08-30 (TODAY) alarm=auto-expand: 08:00 on 08-28 not seen; daily-digest: 05:00 on 08-28 arrived +734 min late dropped=1 grace_min=720 late=1 pending=4 window_days=3 workflows=10
+- Failed companies: Augury (HttpError: network error for https://boards-api.greenhouse.io/v1/boards/augury/jo), D-Fend Solutions (HttpError: network error for https://api.lever.co/v0/postings/d-fendsolutions The), Ciena (HttpError: HTTP 502 for https://ciena.wd5.myworkdayjobs.com/wday/cxs/ciena/Career), Decart (HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ), Honeycomb Insurance (HttpError: network error for https://boards-api.greenhouse.io/v1/boards/honeycomb)
 
 </details>

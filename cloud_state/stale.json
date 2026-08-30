@@ -4,11 +4,22 @@
   "platform": "greenhouse",
   "reason": "regressed-to-zero"
  },
- "Sisense": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/sisense/jobs",
+ "Augury": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/augury/jobs",
   "platform": "greenhouse",
   "reason": "fetch-error",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/sisense/j"
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/augury/jo"
+ },
+ "D-Fend Solutions": {
+  "careers_url": "https://api.lever.co/v0/postings/d-fendsolutions",
+  "platform": "lever",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://api.lever.co/v0/postings/d-fendsolutions The"
+ },
+ "Swimm": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/56.007/positions",
+  "platform": "comeet",
+  "reason": "regressed-to-zero"
  },
  "Bright Security": {
   "careers_url": "https://www.brightsec.com/careers/",
@@ -39,7 +50,7 @@
   "careers_url": "https://www.greeneye.ag/careers",
   "platform": "scrape",
   "reason": "fetch-error",
-  "error": "scrape: http:404 (4 nights)"
+  "error": "scrape: http:404 (5 nights)"
  },
  "Apple": {
   "careers_url": "https://jobs.apple.com/en-us/search",
@@ -100,7 +111,7 @@
   "careers_url": "https://akamaicareers.inflightcloud.com/search",
   "platform": "scrape",
   "reason": "fetch-error",
-  "error": "scrape: http:403 (5 nights)"
+  "error": "scrape: http:403 (6 nights)"
  },
  "Deutsche Telekom": {
   "careers_url": "https://telekom-growthhub.eightfold.ai/careers",
@@ -118,14 +129,14 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Workiz": {
-  "careers_url": "https://www.workiz.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "nsKnox": {
   "careers_url": "https://nsknox.net/jobs/customer-service-professional-part-time-student-position/",
   "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Varonis": {
+  "careers_url": "https://jobs.jobvite.com/varonis/search",
+  "platform": "jobvite",
   "reason": "regressed-to-zero"
  },
  "HUB Security": {
@@ -172,11 +183,6 @@
   "careers_url": "https://www.amazon.jobs/en/search",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Sanofi": {
-  "careers_url": "https://jobs.sanofi.com/en/search-jobs/Israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "Siemens": {
   "careers_url": "https://jobs.siemens.com/en_US/externaljobs/SearchJobs",
@@ -234,6 +240,16 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Intuit": {
+  "careers_url": "https://jobs.intuit.com/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Quantum Art": {
+  "careers_url": "https://www.quantum-art.tech/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Menora Mivtachim Group": {
   "careers_url": "https://www.menoramivt.co.il/job-posting/jobs",
   "platform": "scrape",
@@ -258,6 +274,12 @@
   "careers_url": "https://www.comeet.com/jobs/walmart/35.000",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "Honeycomb Insurance": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/honeycombinsurance/jobs",
+  "platform": "greenhouse",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/honeycomb"
  },
  "4M Analytics": {
   "careers_url": "https://www.comeet.com/jobs/4manalytics/b6.00f",
@@ -324,6 +346,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "מנורה מבטחים החזקות": {
+  "careers_url": "https://www.menoramivt.co.il/job-posting/open-position",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "rooms": {
   "careers_url": "https://www.working-rooms.co.il/careers",
   "platform": "scrape",
@@ -346,6 +373,56 @@
  },
  "Abakus Center": {
   "careers_url": "https://apply.workable.com/abakus-center/",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Echo": {
+  "careers_url": "https://www.comeet.com/jobs/echo/9A.006",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Aitechsystems": {
+  "careers_url": "https://www.comeet.com/jobs/aitechsystems/88.004",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Lev Haolam": {
+  "careers_url": "https://jobs.ashbyhq.com/levhaolam",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Forcepoint": {
+  "careers_url": "https://forcepoint.wd1.myworkdayjobs.com/external-careers",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Jafi": {
+  "careers_url": "https://www.comeet.com/jobs/jafi/C8.008",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Bitsight": {
+  "careers_url": "https://bitsight.wd1.myworkdayjobs.com/Bitsight",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Beamup": {
+  "careers_url": "http://job-boards.greenhouse.io/beamup",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Brandshield": {
+  "careers_url": "https://www.comeet.com/jobs/brandshield/13.002",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Boa Ideas": {
+  "careers_url": "https://www.comeet.com/jobs/boaideas/EA.009",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Clarivate": {
+  "careers_url": "https://clarivate.wd3.myworkdayjobs.com/Clarivate_Careers",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  }

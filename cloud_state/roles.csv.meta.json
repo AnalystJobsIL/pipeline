@@ -2,9 +2,9 @@
  "dataset": "roles.csv",
  "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
  "published_on_pages": false,
- "generated_at": "2026-08-30T07:18:12Z",
+ "generated_at": "2026-08-30T10:06:17Z",
  "run_date": "2026-08-30",
- "rows": 143,
+ "rows": 155,
  "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
  "window": {
   "days": 60,
@@ -16,10 +16,10 @@
   "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-07-02. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
  },
  "store": {
-  "records": 154,
+  "records": 166,
   "by_status": {
    "closed": 52,
-   "open": 91,
+   "open": 103,
    "purged": 7,
    "superseded": 4
   },
@@ -104,7 +104,7 @@
   },
   "posted_date": {
    "doc": "The date the EMPLOYER states the role was posted. Empty when the board publishes none.",
-   "nulls": 15
+   "nulls": 22
   },
   "first_seen": {
    "doc": "The first day this pipeline ever saw the role, across all of its spells. Not a posting date.",
@@ -133,7 +133,7 @@
   },
   "closed_on": {
    "doc": "The day we recorded it closed. Empty while open.",
-   "nulls": 91
+   "nulls": 103
   },
   "emailed": {
    "doc": "true if this role went out in a daily digest email.",
@@ -141,7 +141,7 @@
   },
   "emailed_on": {
    "doc": "The date it was first emailed. Empty if never emailed.",
-   "nulls": 80
+   "nulls": 92
   },
   "episodes": {
    "doc": "How many separate spells we have seen this role open (a reappearance after an absence starts a new one).",
@@ -153,7 +153,7 @@
   },
   "repost_dates": {
    "doc": "The posted_date values those bumps landed on, separated by ';'.",
-   "nulls": 123
+   "nulls": 134
   },
   "sources": {
    "doc": "Which fetchers saw it (greenhouse, comeet, scrape, ...), separated by ';'.",
@@ -174,7 +174,7 @@
   },
   "years_experience": {
    "doc": "Years of experience asked for, read from the DESCRIPTION text. Empty when the text does not say.",
-   "nulls": 24
+   "nulls": 26
   },
   "family": {
    "doc": "Role family, from title first and the opening of the description second.",
@@ -201,7 +201,7 @@
   },
   "degree_level": {
    "doc": "Highest degree the posting requires or prefers.",
-   "nulls": 95,
+   "nulls": 102,
    "enum": {
     "PhD": "highest degree the posting names",
     "MSc": "highest degree the posting names",
@@ -210,7 +210,7 @@
   },
   "degree_status": {
    "doc": "Whether that degree is required or merely preferred.",
-   "nulls": 95,
+   "nulls": 102,
    "enum": {
     "required": "stated as a requirement",
     "preferred": "stated as an advantage"
@@ -218,7 +218,7 @@
   },
   "degree_fields": {
    "doc": "Fields of study named alongside it, separated by ';'.",
-   "nulls": 105,
+   "nulls": 115,
    "enum": {
     "CS": "field of study named alongside the degree",
     "Industrial Eng.": "field of study named alongside the degree",
@@ -234,7 +234,7 @@
   },
   "ai": {
    "doc": "How the posting expects AI to be used, separated by ';'. Empty when AI is not mentioned.",
-   "nulls": 99,
+   "nulls": 112,
    "enum": {
     "AI for efficiency": "Expected to use AI tools (Copilot, ChatGPT, Cursor…) to work faster",
     "AI for automation": "Using AI to automate processes and workflows",
@@ -244,11 +244,11 @@
   },
   "skills": {
    "doc": "Every skill found in title+description, separated by ';', in extraction order.",
-   "nulls": 10
+   "nulls": 11
   },
   "class_decision": {
    "doc": "The classifier's verdict on the role when it was last judged.",
-   "nulls": 49,
+   "nulls": 48,
    "enum": {
     "accept": "judged an analytics role in Israel",
     "reject": "judged not one"
@@ -256,7 +256,7 @@
   },
   "class_path": {
    "doc": "How that verdict was reached: keyword, llm, llm_cache, ...",
-   "nulls": 49
+   "nulls": 48
   },
   "description_len": {
    "doc": "Characters of description text we hold. 0 when we captured none.",
@@ -268,19 +268,19 @@
   },
   "description_sha1": {
    "doc": "sha1 of the description text; join to roles_text.jsonl to read it.",
-   "nulls": 3
+   "nulls": 2
   },
   "sector": {
    "doc": "Company sector (firmographics).",
-   "nulls": 2
+   "nulls": 5
   },
   "sub_sector": {
    "doc": "Narrower niche (firmographics, free text).",
-   "nulls": 2
+   "nulls": 5
   },
   "stage": {
    "doc": "Company stage (firmographics).",
-   "nulls": 2,
+   "nulls": 5,
    "enum": {
     "acquired-by-bigtech": "company stage, as researched (firmographics)",
     "early-private": "company stage, as researched (firmographics)",
@@ -291,11 +291,11 @@
   },
   "stage_note": {
    "doc": "Ticker or acquisition note behind that stage.",
-   "nulls": 2
+   "nulls": 5
   },
   "size_band": {
    "doc": "Headcount band (firmographics).",
-   "nulls": 2,
+   "nulls": 5,
    "enum": {
     "S": "under 200 employees globally",
     "M": "200-1,000",
@@ -305,27 +305,27 @@
   },
   "employees_global": {
    "doc": "Global headcount, all sites (firmographics).",
-   "nulls": 3
+   "nulls": 8
   },
   "founded": {
    "doc": "Year founded (firmographics).",
-   "nulls": 5
+   "nulls": 10
   },
   "business_model": {
    "doc": "How the company earns money (firmographics, free text).",
-   "nulls": 2
+   "nulls": 5
   },
   "customer_type": {
    "doc": "Who buys from it (firmographics, free text).",
-   "nulls": 2
+   "nulls": 5
   },
   "il_center": {
    "doc": "Its main Israeli site(s) (firmographics).",
-   "nulls": 2
+   "nulls": 5
   },
   "firmo_as_of": {
    "doc": "The date those company facts were researched.",
-   "nulls": 2
+   "nulls": 5
   },
   "firmo_match": {
    "doc": "How the company facts were matched to this row.",
@@ -338,35 +338,35 @@
   },
   "skills_bi": {
    "doc": "Skills of category 'bi' only, separated by ';' — group by this without parsing.",
-   "nulls": 71
+   "nulls": 77
   },
   "skills_query": {
    "doc": "Skills of category 'query' only, separated by ';' — group by this without parsing.",
-   "nulls": 36
+   "nulls": 39
   },
   "skills_de": {
    "doc": "Skills of category 'de' only, separated by ';' — group by this without parsing.",
-   "nulls": 84
+   "nulls": 94
   },
   "skills_pa": {
    "doc": "Skills of category 'pa' only, separated by ';' — group by this without parsing.",
-   "nulls": 124
+   "nulls": 132
   },
   "skills_prog": {
    "doc": "Skills of category 'prog' only, separated by ';' — group by this without parsing.",
-   "nulls": 82
+   "nulls": 92
   },
   "skills_method": {
    "doc": "Skills of category 'method' only, separated by ';' — group by this without parsing.",
-   "nulls": 40
+   "nulls": 46
   },
   "skills_cloud": {
    "doc": "Skills of category 'cloud' only, separated by ';' — group by this without parsing.",
-   "nulls": 124
+   "nulls": 136
   },
   "skills_lang": {
    "doc": "Skills of category 'lang' only, separated by ';' — group by this without parsing.",
-   "nulls": 103
+   "nulls": 114
   }
  }
 }

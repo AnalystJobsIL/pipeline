@@ -396,6 +396,19 @@
     "stage_note": "NASDAQ: ADBE, listed since 1986",
     "sub_sector": "Creative, document (PDF), and digital-experience/marketing cloud software with generative AI (Firefly)"
   },
+  "Advice Electronics": {
+    "as_of": "2026-08-30",
+    "business_model": "Distributor/manufacturer of power supplies, UPS, EV charging solutions",
+    "customer_type": "B2B",
+    "employees_global": null,
+    "founded": 1988,
+    "il_center": "Kfar Saba (HQ)",
+    "sector": "Electronics/Hardware",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Long-standing privately owned Israeli company, not VC-backed",
+    "sub_sector": "Power Supplies, UPS, EV Charging"
+  },
   "Aeronautics": {
     "as_of": "2026-08-28",
     "business_model": "Manufacturer of UAVs/drones for military and civil applications",
@@ -408,6 +421,19 @@
     "stage": "acquired-by-bigtech",
     "stage_note": "Acquired by Rafael Advanced Defense Systems (50% stake) and Stolero Aeron in 2019",
     "sub_sector": "Unmanned Aerial Vehicles (UAV/Drones)"
+  },
+  "Agat Software": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "Enterprise, government, banks, insurance companies",
+    "employees_global": 30,
+    "founded": 2000,
+    "il_center": "Jerusalem (HQ)",
+    "sector": "Cybersecurity",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped/privately held; no VC funding rounds publicly reported",
+    "sub_sector": "Unified Communications Security / PKI Authentication"
   },
   "Ageera Energy Storage Systems": {
     "as_of": "2026-08-29",
@@ -490,6 +516,19 @@
     "stage": "acquired-by-bigtech",
     "stage_note": "Acquired by Cato Networks (SASE unicorn) for ~$350M, September 2025; first Cato acquisition",
     "sub_sector": "AI/GenAI security — visibility, control and governance over enterprise AI use"
+  },
+  "Air Ev": {
+    "as_of": "2026-08-30",
+    "business_model": "Designs/manufactures eVTOL (electric vertical takeoff and landing) personal and cargo aircraft",
+    "customer_type": "Consumer (personal aircraft) and enterprise/logistics customers (cargo eVTOL)",
+    "employees_global": 70,
+    "founded": 2017,
+    "il_center": "Kfar Yona (HQ/production)",
+    "sector": "Aerospace / Advanced Air Mobility",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Venture-backed; raised $23M round, $1B in pre-orders for AIR ONE as of 2025-2026",
+    "sub_sector": "eVTOL / electric aircraft"
   },
   "Airbnb": {
     "as_of": "2026-08-22",
@@ -648,6 +687,19 @@
     "stage": "growth-private",
     "stage_note": "~$147M raised to date; 2025 down-round at ~$80-100M valuation (down ~73% from 2021 Series B), incl. $29M SAFE-conversion round",
     "sub_sector": "cultivated (lab-grown) beef — whole-cut steaks grown from non-GMO cow cells"
+  },
+  "Alexander Schneider Ltd": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B distribution, system integration and turn-key IT/OT infrastructure solutions",
+    "customer_type": "Enterprises - high-tech OEMs, telecom, medical, industrial, and data center operators",
+    "employees_global": 200,
+    "founded": 1963,
+    "il_center": "Netanya (HQ)",
+    "sector": "IT/OT Infrastructure",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Independently owned Israeli distributor/integrator since 1963, no VC funding",
+    "sub_sector": "Data center infrastructure & system integration (racks, connectivity, power)"
   },
   "AlgoSec": {
     "as_of": "2026-08-22",
@@ -1589,6 +1641,19 @@
     "stage_note": "Acquired by Qualcomm, deal closed June 2025 for ~$80-90M after a 2023 attempt collapsed on EU regulatory review",
     "sub_sector": "fabless V2X (vehicle-to-everything) communication chipsets for road safety and autonomous driving"
   },
+  "Axioma System Engineering and Integration": {
+    "as_of": "2026-08-30",
+    "business_model": "B2G/B2B systems engineering, defense & homeland security integration",
+    "customer_type": "Government defense/security agencies, organizations",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Netanya (HQ)",
+    "sector": "Defense & Security",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held, small system integration firm, no known VC funding",
+    "sub_sector": "Systems Engineering & Integration"
+  },
   "Axon Pulse": {
     "as_of": "2026-08-28",
     "business_model": "B2B",
@@ -1786,6 +1851,19 @@
     "stage_note": "Listed on Frankfurt as ETR:BAYN (ADR BAYRY); ~12,000 roles cut in the restructuring targeting ~$2.3B annual savings by 2026",
     "sub_sector": "prescription pharma, consumer health and crop science (seeds & crop protection); Israeli site is a digital/cybersecurity R&D hub plus vegetable-seed breeding"
   },
+  "Beamup": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS / AI platform for real estate facilities design",
+    "customer_type": "Enterprise (real estate developers, facility managers, construction firms)",
+    "employees_global": 36,
+    "founded": 2019,
+    "il_center": "Tel Aviv (HQ/R&D)",
+    "sector": "Real Estate Tech / PropTech",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "$15M seed round led by StageOne Ventures and Ibex Investors, March 2022",
+    "sub_sector": "AI-powered facility design & digital twins"
+  },
   "BeeHero": {
     "as_of": "2026-08-21",
     "business_model": "Pollination-as-a-service: sells data-driven pollination services and hive-monitoring subscriptions to growers and beekeepers via in-hive IoT sensors",
@@ -1882,6 +1960,19 @@
     "stage_note": "Series E — raised $190M at $1.2B valuation (Jan 2022, Advent/Insight/Sequoia), plus $15M extension from UBS and Wells Fargo",
     "sub_sector": "AI-driven event correlation and incident management for IT operations (AIOps platform)"
   },
+  "Bilton": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS",
+    "customer_type": "B2B",
+    "employees_global": 100,
+    "founded": 2018,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Construction Tech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Series B, $15M led by PSG Equity, 2025",
+    "sub_sector": "Construction site management software"
+  },
   "Binah.ai": {
     "as_of": "2026-08-23",
     "business_model": "Licenses its AI vital-signs SDK/API and Binah Connect / Binah Team apps to businesses on a subscription and per-measurement basis",
@@ -1894,6 +1985,19 @@
     "stage": "growth-private",
     "stage_note": "Venture-backed private; $13.5M Series B led by Maverick Ventures Israel (June 2020), latest round reported as Series C, ~$44M total raised (PitchBook)",
     "sub_sector": "video-based remote vital-signs monitoring — smartphone camera rPPG SDK measuring heart rate, blood pressure, oxygen saturation and stress"
+  },
+  "Bio Technology General": {
+    "as_of": "2026-08-30",
+    "business_model": "B2C/B2B pharmaceutical manufacturing",
+    "customer_type": "Pharma distributors/healthcare",
+    "employees_global": 324,
+    "founded": 1980,
+    "il_center": "Beer Tuvia (manufacturing/R&D)",
+    "sector": "Biotechnology/Pharmaceuticals",
+    "size_band": "M",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by Ferring Pharmaceuticals in 2005 (via Savient)",
+    "sub_sector": "Biopharmaceutical manufacturing"
   },
   "BioCatch": {
     "as_of": "2026-08-21",
@@ -1962,6 +2066,19 @@
     "stage_note": "Privately held; only disclosed round ~$500K (2014); received Israel's first crypto capital-markets (VASP) license in 2022",
     "sub_sector": "Israeli cryptocurrency exchange and brokerage for buying/selling Bitcoin and Ethereum in shekels; first VASP licensed in Israel"
   },
+  "Bitsight": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS - security ratings/cyber risk intelligence platform",
+    "customer_type": "enterprise",
+    "employees_global": 700,
+    "founded": 2011,
+    "il_center": "None active - former R&D office (ex-VisibleRisk) closed in 2023",
+    "sector": "Cybersecurity",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "$2.4B valuation, $200M ARR as of 2025; Moody's-led investment",
+    "sub_sector": "Security ratings / third-party cyber risk management"
+  },
   "Bizzabo": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS subscriptions to its event management platform plus event wearables/onsite services (Klik)",
@@ -1974,6 +2091,19 @@
     "stage": "growth-private",
     "stage_note": "Last round: $138M Series E led by Insight Partners (Dec 2020); ~$190-226M total raised",
     "sub_sector": "Event Experience OS — event management platform for in-person, virtual and hybrid B2B conferences (registration, event apps, wearables, analytics)"
+  },
+  "Blackcube1": {
+    "as_of": "2026-08-30",
+    "business_model": "Services (private intelligence, litigation support, risk consulting)",
+    "customer_type": "B2B",
+    "employees_global": 340,
+    "founded": 2010,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Professional Services",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned by founders, not venture-backed",
+    "sub_sector": "Private Intelligence & Investigations"
   },
   "Blaize": {
     "as_of": "2026-08-23",
@@ -2097,6 +2227,19 @@
     "stage": "growth-private",
     "stage_note": "Last equity round Series F $102.5M (Nov 2019); ~$840M total raised incl. debt lines; no IPO or acquisition",
     "sub_sector": "Digital banking and lending platform for small businesses (checking, lines of credit, invoice factoring)"
+  },
+  "Boa Ideas": {
+    "as_of": "2026-08-30",
+    "business_model": "Agency (Shopify Plus / full-stack web development services)",
+    "customer_type": "B2B",
+    "employees_global": 35,
+    "founded": 2010,
+    "il_center": "Kfar Saba (HQ); office in New Jersey, US",
+    "sector": "Web Development / Digital Agency",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped, independently owned Shopify Plus/e-commerce development agency, no VC funding found",
+    "sub_sector": "Shopify/E-commerce development agency"
   },
   "BondIT": {
     "as_of": "2026-08-22",
@@ -2229,6 +2372,19 @@
     "stage": "early-private",
     "stage_note": "Raised $35.7M total incl. pre-seed led by Cardumen Capital & G20 Ventures, 2025",
     "sub_sector": "AI Engine Optimization (AEO) / Brand Visibility"
+  },
+  "Brandshield": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS",
+    "customer_type": "enterprise",
+    "employees_global": 100,
+    "founded": 2013,
+    "il_center": "Herzliya (HQ)",
+    "sector": "Cybersecurity",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Venture-backed, ~$14.8M raised total, latest round 2023",
+    "sub_sector": "Digital Risk Protection / Brand Protection"
   },
   "Brenmiller Energy": {
     "as_of": "2026-08-23",
@@ -2404,6 +2560,32 @@
     "stage_note": "Series D $45M led by Qumra Capital, May 2025, ~$300M valuation; $166M total raised",
     "sub_sector": "AI/computer-vision construction site progress tracking and project management"
   },
+  "Bulls Media": {
+    "as_of": "2026-08-30",
+    "business_model": "Digital marketing, affiliate marketing, and performance advertising services",
+    "customer_type": "B2B",
+    "employees_global": 78,
+    "founded": 2013,
+    "il_center": "Kiryat Ono (HQ)",
+    "sector": "Digital Marketing / AdTech",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned, founder-led, no disclosed VC funding rounds",
+    "sub_sector": "Performance marketing & affiliate marketing"
+  },
+  "Bylith": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS products (AnyRM, Flowto, XPRIEN)",
+    "customer_type": "enterprises",
+    "employees_global": 150,
+    "founded": 2006,
+    "il_center": "Netanya (HQ)",
+    "sector": "Enterprise Software",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Founder-owned/bootstrapped SaaS company, no known VC funding rounds",
+    "sub_sector": "SaaS / Digital Experience & Automation"
+  },
   "C2A Security": {
     "as_of": "2026-08-22",
     "business_model": "B2B software licensing/subscriptions for its EVSec risk-driven DevSecOps platform managing vehicle cybersecurity from development to post-production",
@@ -2549,6 +2731,19 @@
     "stage_note": "Series C extended to $40M+ in Mar 2026 with HSBC (after $33M led by 9Yards Capital, Jul 2025); total raised >$120M; investors incl. Goldman Sachs, JPMorgan, American Express, NFX, Craft Ventures",
     "sub_sector": "Tail-spend / vendor management and procure-to-pay platform for onboarding and paying one-time and irregular suppliers"
   },
+  "Canopy Care": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS platform for oncology practices",
+    "customer_type": "B2B",
+    "employees_global": 100,
+    "founded": 2017,
+    "il_center": "Tel Aviv (R&D); HQ in New York, US",
+    "sector": "Digital Health",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Raised $13M Series A/B from GSR Ventures and others",
+    "sub_sector": "Oncology care platform / health tech"
+  },
   "Capital One": {
     "as_of": "2026-08-21",
     "business_model": "Earns interest and interchange fees on credit cards, consumer/commercial banking, and the Discover payments network",
@@ -2657,6 +2852,19 @@
     "stage": "early-private",
     "stage_note": "~$2.8M raised over 3 rounds (investors incl. CyLon, SixThirty, MS&AD Ventures); no growth round reported",
     "sub_sector": "AI-powered GRC (governance, risk & compliance) / cyber risk management SaaS platform"
+  },
+  "Centrical": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS - employee performance management, gamification and AI-driven coaching platform",
+    "customer_type": "Enterprise (contact centers, sales, customer service organizations)",
+    "employees_global": 100,
+    "founded": 2013,
+    "il_center": "Tel Aviv (HQ/R&D)",
+    "sector": "Enterprise Software",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Series D, $39M raised 2025, total ~$100M; led by Leeds Illuminate & Kingfisher, JVP largest shareholder",
+    "sub_sector": "Employee Performance Management / Gamification / Workforce AI"
   },
   "Ceragon Networks": {
     "as_of": "2026-08-22",
@@ -2788,6 +2996,19 @@
     "stage_note": "PE-owned: Hellman & Friedman acquired it at a $1.15B valuation in April 2020 (with TPG and Insight Partners holding minority stakes)",
     "sub_sector": "application security testing (SAST/SCA/DAST/IaC) and developer-first AppSec platform"
   },
+  "Checkout": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "Enterprise",
+    "employees_global": 2000,
+    "founded": 2012,
+    "il_center": "Tel Aviv (R&D hub); HQ in London, UK",
+    "sector": "Fintech",
+    "size_band": "L",
+    "stage": "growth-private",
+    "stage_note": "Valued at $40B in 2022 Series D round; venture/growth-equity backed",
+    "sub_sector": "Online Payments Processing"
+  },
   "Checkout.com": {
     "as_of": "2026-08-22",
     "business_model": "Per-transaction fees on e-commerce payment processing volume (merchant acquiring, gateway, FX, fraud tools)",
@@ -2866,6 +3087,19 @@
     "stage_note": "NASDAQ: CSCO, ~86,200 employees per FY2025 annual report (July 2025)",
     "sub_sector": "Networking hardware, security and collaboration software; Israel sites build network processor ASICs, routing silicon, DPI and security tech"
   },
+  "Citadel Consulting": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "Enterprise, financial institutions, government",
+    "employees_global": 200,
+    "founded": 2009,
+    "il_center": "Rehovot (HQ)",
+    "sector": "Cybersecurity",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned consulting firm, no VC funding identified",
+    "sub_sector": "Cybersecurity consulting & managed security services"
+  },
   "Citadel Cyber Security": {
     "as_of": "2026-08-27",
     "business_model": "B2B services",
@@ -2905,6 +3139,32 @@
     "stage_note": "Taken private for $16.5B by Vista Equity Partners + Elliott (Evergreen) in Sep 2022, merged with TIBCO into Cloud Software Group",
     "sub_sector": "Virtual desktop (VDI/DaaS), app delivery and secure remote-access software under Cloud Software Group (Citrix, NetScaler, TIBCO)"
   },
+  "City Hive": {
+    "as_of": "2026-08-30",
+    "business_model": "SaaS commerce & data platform",
+    "customer_type": "B2B",
+    "employees_global": 50,
+    "founded": 2014,
+    "il_center": "Tel Aviv (R&D); HQ in New York",
+    "sector": "Retail Tech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Raised $15M seed funding; backed by Blue Equity",
+    "sub_sector": "E-commerce & Digital Commerce Platform (Wine/Beer/Spirits)"
+  },
+  "City Of David": {
+    "as_of": "2026-08-30",
+    "business_model": "Nonprofit foundation operating archaeological, tourism, and educational sites",
+    "customer_type": "Tourists, visitors, donors, educational groups",
+    "employees_global": null,
+    "founded": 1986,
+    "il_center": "Jerusalem (HQ)",
+    "sector": "Nonprofit / Tourism & Heritage",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Ir David (Elad) Foundation, nonprofit, not venture-backed",
+    "sub_sector": "Archaeological site & heritage foundation"
+  },
   "Civ Robotics": {
     "as_of": "2026-08-23",
     "business_model": "sells/leases CivDot robot units to contractors plus recurring software subscription for coordinate planning and fleet management",
@@ -2934,6 +3194,19 @@
     "stage_note": "Non-profit HMO, largest of Israel's four state-mandated health funds",
     "sub_sector": "Health Maintenance Organization / Hospitals & Clinics"
   },
+  "Clarivate": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS/analytics - IP, scientific & academic information, library management software",
+    "customer_type": "Enterprise, academic institutions, libraries, law firms, patent offices",
+    "employees_global": 12149,
+    "founded": 2016,
+    "il_center": "Jerusalem (Ex Libris R&D)",
+    "sector": "Information Services / IP & Scientific Analytics",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NYSE: CLVT; Israel site via Ex Libris, acquired through ProQuest (2015), ProQuest acquired by Clarivate (2021)",
+    "sub_sector": "Library management software, patent & IP analytics, scientific research data"
+  },
   "Claroty": {
     "as_of": "2026-08-21",
     "business_model": "subscription SaaS/software licenses for asset visibility, threat detection and secure access across industrial and healthcare networks (Claroty Platform, xDome, Medigate)",
@@ -2959,6 +3232,19 @@
     "stage": "growth-private",
     "stage_note": "~$200M raised total incl. $30M round late 2025 (Entrée, Norwest, NightDragon, Hamilton Lane, AMD, Qualcomm); in SPAC/IPO talks mid-2026 at $2-5B but still private",
     "sub_sector": "quantum software — high-level platform (IDE/compiler) for designing and optimizing quantum algorithms across hardware vendors"
+  },
+  "Clear Gate": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "Enterprises and startups needing SaaS security testing",
+    "employees_global": 30,
+    "founded": 2016,
+    "il_center": "Rishon LeZion (HQ)",
+    "sector": "Cybersecurity",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped Israeli cyber security services firm, no public funding rounds identified",
+    "sub_sector": "Penetration Testing & Security Risk Assessment for SaaS"
   },
   "ClearML": {
     "as_of": "2026-08-22",
@@ -5310,6 +5596,19 @@
     "stage_note": "Nasdaq: GEHC; spun off from General Electric and began trading 2023-01-04",
     "sub_sector": "medical imaging and diagnostics — CT/SPECT nuclear medicine, ultrasound, patient monitoring, contrast agents and imaging AI software"
   },
+  "GENECIT": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B outsourcing",
+    "customer_type": "B2B",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Daliyat al-Karmel / Northern Israel (HQ)",
+    "sector": "IT Services",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held outsourcing firm, no venture funding identified",
+    "sub_sector": "Outsourced software development, testing and IT support; tech workforce inclusion"
+  },
   "GSK": {
     "as_of": "2026-08-22",
     "business_model": "Develops, manufactures and sells prescription medicines and vaccines to health systems worldwide",
@@ -5426,6 +5725,19 @@
     "stage": "acquired-by-bigtech",
     "stage_note": "acquired by SIG Sauer (announced March 2023)",
     "sub_sector": "lightweight remote weapon stations and tactical ground robots (Dogo, Pitbull) for defense and homeland security"
+  },
+  "Genie": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS - AI-powered data security for autonomous AI agents",
+    "customer_type": "Enterprises",
+    "employees_global": null,
+    "founded": 2025,
+    "il_center": "Israel (HQ)",
+    "sector": "Cybersecurity",
+    "size_band": "S",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by Cyera for ~$50M in 2026, just months after founding",
+    "sub_sector": "AI Data Security"
   },
   "Genoox": {
     "as_of": "2026-08-23",
@@ -5765,6 +6077,19 @@
     "stage_note": "~$30-41M raised total; last round Dec 2023 (investors incl. Israel Cleantech Ventures, Middleland Capital)",
     "sub_sector": "mycorrhizal fungi inoculants (Rootella) for crop nutrient uptake and soil carbon sequestration"
   },
+  "Group19 Tech": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B engineering/software services for UAV, satellite, and defense sectors",
+    "customer_type": "Defense, aerospace, and robotics companies",
+    "employees_global": 23,
+    "founded": null,
+    "il_center": "Yeruham (HQ)",
+    "sector": "Aerospace & Defense Tech",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Small privately-held engineering services firm; no public funding details found",
+    "sub_sector": "UAV/Drone Engineering & Software Services"
+  },
   "GuardKnox": {
     "as_of": "2026-08-22",
     "business_model": "Sold secure ECU hardware and software licensing/NRE deals to vehicle manufacturers and Tier-1 suppliers",
@@ -5923,6 +6248,19 @@
     "stage_note": "Acquired by Intel for ~$2B in Dec 2019; unit wound down in 2025 after Gaudi 3 missed revenue targets, staff absorbed into Intel Israel",
     "sub_sector": "AI accelerator chips (Gaudi training/inference processors) for data centers"
   },
+  "Hackerseye": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "Enterprise",
+    "employees_global": 30,
+    "founded": null,
+    "il_center": "Ramat Gan, Tel Aviv (HQ)",
+    "sector": "Cybersecurity",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped Israeli boutique cybersecurity consultancy, no public funding rounds found",
+    "sub_sector": "Offensive & Defensive Security Consulting (Red Teaming, Penetration Testing, Incident Response)"
+  },
   "Hailo": {
     "as_of": "2026-08-23",
     "business_model": "Sells edge AI accelerator chips and modules (Hailo-8/10/15 families) to device makers, plus reference boards and a free SDK/compiler that drives silicon sales",
@@ -6027,6 +6365,19 @@
     "stage_note": "$50M Series D in 2023 (Schusterman Family Investments, Aleph); ~$190-218M raised total",
     "sub_sector": "smartphone-camera-based home medical diagnostics (urinalysis for kidney disease, UTI, wound care)"
   },
+  "Hear AI": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS - conversational AI for contact centers",
+    "customer_type": "B2B",
+    "employees_global": 30,
+    "founded": 2023,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Artificial Intelligence",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Seed round $2.73M, April 2025, led by Vertex Ventures Israel",
+    "sub_sector": "Conversational/Voice AI for contact centers"
+  },
   "Helios": {
     "as_of": "2026-08-22",
     "business_model": "Develops and licenses its sodium-based zero-CO2 iron-reduction process and supplies green iron (HGI) from pilot plants to steelmakers (e.g. BlueScopeX pilot from 2026)",
@@ -6065,6 +6416,19 @@
     "stage": "growth-private",
     "stage_note": "$70M Series D led by Stripes, May 2022; ~$137M total raised",
     "sub_sector": "Heart health / chronic disease management app"
+  },
+  "Henkel": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B/B2C",
+    "customer_type": "Enterprise/Consumer",
+    "employees_global": 47000,
+    "founded": 1876,
+    "il_center": "Netanya (Henkel SOAD site); HQ in Düsseldorf, Germany",
+    "sector": "Consumer Goods / Chemicals",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "Listed on Frankfurt Stock Exchange (HEN3); German multinational founded 1876",
+    "sub_sector": "Adhesives, Beauty Care, Laundry & Home Care"
   },
   "Hewlett Packard Enterprise": {
     "as_of": "2026-08-21",
@@ -6275,6 +6639,19 @@
     "stage": "growth-private",
     "stage_note": "$15M round Dec 2025 plus acquisitions of Ubiquitous and Bambassadors; ~$32M total raised",
     "sub_sector": "AI-powered influencer/creator marketing platform (discovery, campaign management, measurement)"
+  },
+  "Hunter Douglas, Inc.": {
+    "as_of": "2026-08-30",
+    "business_model": "Manufacturer of window coverings (blinds, shades) and architectural products",
+    "customer_type": "B2B/B2C",
+    "employees_global": 23398,
+    "founded": 1919,
+    "il_center": "Afula (manufacturing/subsidiary); HQ in Rotterdam, Netherlands",
+    "sector": "Manufacturing/Consumer Products",
+    "size_band": "XL",
+    "stage": "private-enterprise",
+    "stage_note": "Majority (75%) owned by 3G Capital via Sonnenberg family Block Trade, 2022; remainder held by Sonnenberg family",
+    "sub_sector": "Window coverings & architectural products"
   },
   "Hunters": {
     "as_of": "2026-08-22",
@@ -6642,6 +7019,19 @@
     "stage_note": "$30M Series C in May 2023 co-led by dsm-firmenich Venturing and Sienna Venture Capital, with Ferrero, Pitango and BlueRed Partners; rebranded from DouxMatok to Incredo Ltd",
     "sub_sector": "sugar-reduction ingredient technology — real cane/beet sugar bound to a silica carrier for 30-50% less sugar at equal sweetness"
   },
+  "Indocs": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS - document editing/collaboration platform",
+    "customer_type": "Enterprise",
+    "employees_global": null,
+    "founded": 1999,
+    "il_center": "Herzliya/Ramat Gan (HQ)",
+    "sector": "Software",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held, founded 1999, no public venture funding rounds identified",
+    "sub_sector": "Document editing/management software"
+  },
   "Infineon Technologies": {
     "as_of": "2026-08-22",
     "business_model": "Designs and manufactures semiconductors sold to OEMs and distributors across automotive, industrial power, and IoT/security markets",
@@ -6945,6 +7335,19 @@
     "stage_note": "100% owned by the State of Israel; government approved floating a 25-30% minority stake on TASE (announced Jan 2026, targeted by end-2026) — not yet listed",
     "sub_sector": "military and civil aerospace prime — missiles and air defense (Arrow, Barak), UAVs, satellites, radars, avionics, aircraft conversion and MRO"
   },
+  "Israel Hayom ישראל היום": {
+    "as_of": "2026-08-30",
+    "business_model": "Free daily newspaper & digital news; ad-supported",
+    "customer_type": "B2C (readers) / B2B (advertisers)",
+    "employees_global": null,
+    "founded": 2007,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Media",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned by the Adelson family (Dr. Miriam Adelson)",
+    "sub_sector": "News publishing"
+  },
   "Israeltechguard": {
     "as_of": "2026-08-29",
     "business_model": "Non-profit / volunteer tech initiative providing OSINT, AI and analytics tools to military, intelligence and government users",
@@ -6957,6 +7360,19 @@
     "stage": "private-enterprise",
     "stage_note": "Volunteer-run NGO/initiative founded post-Oct 7 2023, not VC-backed; works with Israeli security agencies",
     "sub_sector": "OSINT, AI/Computer Vision, Social Network Analytics for security/defense"
+  },
+  "Isrotel Hotel Chain": {
+    "as_of": "2026-08-30",
+    "business_model": "Hotel operator (hospitality & resorts)",
+    "customer_type": "Consumer (B2C leisure/business travelers)",
+    "employees_global": 5000,
+    "founded": 1981,
+    "il_center": "Tel Aviv (HQ); hotels mainly in Eilat and across Israel",
+    "sector": "Hospitality / Tourism",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "Publicly traded on the Tel Aviv Stock Exchange (TASE: ISRO)",
+    "sub_sector": "Hotel chain / resorts"
   },
   "Itamar Medical": {
     "as_of": "2026-08-22",
@@ -7931,6 +8347,19 @@
     "stage_note": "$70M Series B led by Accel & Insight Partners (Apr 2025); ~$115M total raised",
     "sub_sector": "AI-powered production debugging and live observability platform for developers"
   },
+  "Linearb": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS",
+    "customer_type": "Enterprise software engineering teams",
+    "employees_global": 120,
+    "founded": 2018,
+    "il_center": "Or Yehuda (HQ/R&D); commercial HQ in US",
+    "sector": "Software / DevOps",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Raised $50M Series B (Tribe Capital, Salesforce Ventures); ~$84M total raised",
+    "sub_sector": "Engineering intelligence / software delivery management"
+  },
   "Linesight": {
     "as_of": "2026-08-29",
     "business_model": "B2B",
@@ -7943,6 +8372,19 @@
     "stage": "private-enterprise",
     "stage_note": "Employee/partner-owned global construction consultancy, celebrated 50th anniversary in 2024",
     "sub_sector": "Construction & Project/Cost Management Consultancy"
+  },
+  "Liniad": {
+    "as_of": "2026-08-30",
+    "business_model": "Mobile game advertising and user acquisition platform",
+    "customer_type": "B2B",
+    "employees_global": 16,
+    "founded": 2008,
+    "il_center": "Herzliya (HQ)",
+    "sector": "AdTech",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "No known VC funding rounds found; operates as an independent private ad-tech company",
+    "sub_sector": "Mobile game advertising / user acquisition"
   },
   "Linxsecurity": {
     "as_of": "2026-08-29",
@@ -8311,6 +8753,32 @@
     "stage_note": "Emerged from stealth Nov 2025 with $100M raised",
     "sub_sector": "AI server hardware / memory architecture"
   },
+  "Malam": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B IT services and solutions provider",
+    "customer_type": "enterprise",
+    "employees_global": 4965,
+    "founded": 1972,
+    "il_center": "Petah Tikva (HQ)",
+    "sector": "IT Services",
+    "size_band": "L",
+    "stage": "public",
+    "stage_note": "Traded on Tel Aviv Stock Exchange, ticker MLTM",
+    "sub_sector": "IT infrastructure, cloud, software integration, payroll/HR outsourcing"
+  },
+  "Margolin Engineering Consulting": {
+    "as_of": "2026-08-30",
+    "business_model": "Engineering, project management and construction consulting services",
+    "customer_type": "B2B / Government",
+    "employees_global": 170,
+    "founded": 1971,
+    "il_center": "Givat Shmuel (HQ); Jerusalem",
+    "sector": "Engineering & Construction",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Family-owned engineering firm, founded 1971, no VC funding",
+    "sub_sector": "Project & Construction Management Consulting"
+  },
   "Marvell": {
     "as_of": "2026-08-21",
     "business_model": "designs and sells fabless semiconductors (networking, custom compute, storage, optics) to equipment makers and hyperscalers",
@@ -8351,6 +8819,19 @@
     "stage": "public",
     "stage_note": "NYSE: MA; ~$500B market cap, one of the world's largest payment companies",
     "sub_sector": "global payments network — card processing, fraud prevention and payment security services"
+  },
+  "Matan Health Services": {
+    "as_of": "2026-08-30",
+    "business_model": "Home care, nursing, and welfare services for elderly, disabled, and families",
+    "customer_type": "B2C / B2G (government and municipal contracts)",
+    "employees_global": 4000,
+    "founded": 1987,
+    "il_center": "Israel (nationwide, ~30 branches); HQ in Israel",
+    "sector": "Healthcare Services",
+    "size_band": "L",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned Israeli long-term care company, founded 1987, not venture-backed",
+    "sub_sector": "Home care / long-term care / welfare services"
   },
   "MatchPointIT": {
     "as_of": "2026-08-28",
@@ -8483,6 +8964,19 @@
     "stage": "growth-private",
     "stage_note": "Backed by Vitruvian Partners and Knight Therapeutics; ~$73.6M raised",
     "sub_sector": "Pharma commercialization / market access services"
+  },
+  "Medone": {
+    "as_of": "2026-08-30",
+    "business_model": "Data center colocation, interconnection, and hybrid cloud infrastructure services",
+    "customer_type": "B2B enterprises, telcos, cloud providers",
+    "employees_global": null,
+    "founded": 1997,
+    "il_center": "Tel Aviv, Petah Tikva, Tirat HaCarmel (HQ/facilities)",
+    "sector": "Data Centers / Cloud Infrastructure",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Livnat family sold 49% stake to Berkshire Partners (PE) in 2022",
+    "sub_sector": "Colocation & Hybrid Cloud Data Centers"
   },
   "Medtronic": {
     "as_of": "2026-08-21",
@@ -8683,6 +9177,19 @@
     "stage_note": "NASDAQ: META, IPO 2012",
     "sub_sector": "social networks, messaging, and AI/AR platforms (Facebook, Instagram, WhatsApp, Reality Labs)"
   },
+  "Meteorops": {
+    "as_of": "2026-08-30",
+    "business_model": "DevOps consulting and managed services provider",
+    "customer_type": "B2B",
+    "employees_global": 30,
+    "founded": 2021,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "IT Services / DevOps",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped services firm, no known VC funding",
+    "sub_sector": "DevOps, Cloud Infrastructure & Managed Services"
+  },
   "MetoMotion": {
     "as_of": "2026-08-22",
     "business_model": "Sells/leases the GRoW robotic greenhouse-worker platform plus data analytics to greenhouse operators, reducing harvesting labor costs",
@@ -8695,6 +9202,19 @@
     "stage": "early-private",
     "stage_note": "Series A stage; ~$10-11M raised total, last round $5M in Sep 2021 led by Ridder and Navus Ventures",
     "sub_sector": "AI-powered robotic harvesting for greenhouse crops (GRoW robot for tomatoes)"
+  },
+  "Metropoline": {
+    "as_of": "2026-08-30",
+    "business_model": "B2C public transportation operator (bus services)",
+    "customer_type": "Consumer/Public",
+    "employees_global": 2000,
+    "founded": 2000,
+    "il_center": "Kfar Saba (HQ)",
+    "sector": "Transportation",
+    "size_band": "L",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held Israeli bus operator, second-largest in Israel, government tender-based contracts",
+    "sub_sector": "Public bus transit"
   },
   "Micron": {
     "as_of": "2026-08-22",
@@ -8787,6 +9307,19 @@
     "stage_note": "$17M Series A led by SYN Ventures (2025); ~$24.5M total raised since $7.5M seed in Apr 2024",
     "sub_sector": "application detection and response (ADR) — runtime application-layer attack detection and mitigation"
   },
+  "Mikud Security": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B/B2G security services (guarding, VIP protection, alarm monitoring)",
+    "customer_type": "Government agencies, municipalities, and private enterprises",
+    "employees_global": 4500,
+    "founded": 1984,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Security Services",
+    "size_band": "L",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held, founded 1984 by Soli Elyashar; not venture-backed",
+    "sub_sector": "Physical security, guarding & alarm monitoring"
+  },
   "Mindsecurity": {
     "as_of": "2026-08-29",
     "business_model": "B2B SaaS - data loss prevention (DLP) platform",
@@ -8838,6 +9371,19 @@
     "stage": "early-private",
     "stage_note": "Raised $51M seed (2023) from YL Ventures & Mayfield; shut down 2025/2026, returned remaining cash to investors",
     "sub_sector": "Enterprise Security"
+  },
+  "Mink N Vik": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "Enterprise brands across foodtech, real estate, medical, e-commerce, tourism",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Marketing/Advertising",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned agency, part of Minkovsky group, not VC-backed",
+    "sub_sector": "Digital Marketing & Creative Agency"
   },
   "Minute Media": {
     "as_of": "2026-08-22",
@@ -8948,6 +9494,19 @@
     "stage_note": "NASDAQ: MBLY, Intel majority-owned (~80%); 2026 revenue guidance $1.9-2.0B",
     "sub_sector": "ADAS & autonomous-driving systems-on-chip (EyeQ)"
   },
+  "Mobius Protection Systems": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "enterprise",
+    "employees_global": 23,
+    "founded": null,
+    "il_center": "Modiin-Maccabim-Reut/Holon (HQ)",
+    "sector": "Defense",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held defense manufacturer, no public VC funding identified",
+    "sub_sector": "Energy-absorbing blast protection systems for military vehicles"
+  },
   "Moburst": {
     "as_of": "2026-08-29",
     "business_model": "B2B",
@@ -9014,6 +9573,19 @@
     "stage": "growth-private",
     "stage_note": "Raised $11M round led by Team8 (2021), total funding ~$38M",
     "sub_sector": "IoT connectivity / M2M cellular connectivity platform"
+  },
+  "Monto Pay": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B SaaS",
+    "customer_type": "B2B",
+    "employees_global": 30,
+    "founded": 2022,
+    "il_center": "Tel Aviv (HQ); office in New York",
+    "sector": "Fintech",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "$9M seed round led by Scale Venture Partners, July 2024",
+    "sub_sector": "B2B payments / AP portal automation"
   },
   "Moon Active": {
     "as_of": "2026-08-21",
@@ -9209,6 +9781,19 @@
     "stage": "public",
     "stage_note": "NASDAQ: NXPI; spun off from Philips in 2006, IPO 2010",
     "sub_sector": "Chips for automotive, industrial IoT, mobile and communication infrastructure (MCUs, radar, secure connectivity)"
+  },
+  "Naamat נעמת": {
+    "as_of": "2026-08-30",
+    "business_model": "Nonprofit",
+    "customer_type": "B2C / Public",
+    "employees_global": null,
+    "founded": 1921,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Nonprofit / Social Services",
+    "size_band": "L",
+    "stage": "private-enterprise",
+    "stage_note": "Nonprofit organization affiliated with Labour Zionist Movement, founded 1921",
+    "sub_sector": "Women's rights & family services (childcare, shelters, legal aid)"
   },
   "Nagomi Security": {
     "as_of": "2026-08-24",
@@ -9961,6 +10546,19 @@
     "stage": "growth-private",
     "stage_note": "$60M Series C (Aug 2026), total $140M raised; valuation more than doubled since Jan 2025 Series B",
     "sub_sector": "runtime application & AI security — eBPF-based detection and response for apps, cloud workloads, and AI systems"
+  },
+  "Omnisys": {
+    "as_of": "2026-08-30",
+    "business_model": "Defense software - AI-powered battle resource optimization platforms",
+    "customer_type": "B2G/B2B - militaries and defense forces worldwide",
+    "employees_global": 185,
+    "founded": 2000,
+    "il_center": "Rosh Ha'ayin (HQ)",
+    "sector": "Defense Tech",
+    "size_band": "S",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by Ondas Holdings for $200M, announced 2026",
+    "sub_sector": "Battle Management & Resource Optimization Software"
   },
   "OncoHost": {
     "as_of": "2026-08-21",
@@ -12241,6 +12839,19 @@
     "stage_note": "Series C $50M (Feb 2022) led by OurCrowd/Aurum; ~$125M raised total, now Series D per Tracxn",
     "sub_sector": "AI-powered full-field digital cell morphology microscopy for hematology labs"
   },
+  "Scylladb": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B",
+    "customer_type": "Enterprise",
+    "employees_global": 233,
+    "founded": 2012,
+    "il_center": "Herzliya; HQ in Sunnyvale, CA",
+    "sector": "Data Infrastructure / Databases",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Raised ~$107M total, backed by VCs including Bessemer, Eight Roads, Magmatic Ventures",
+    "sub_sector": "NoSQL Database (Cassandra/DynamoDB-compatible, C++ based)"
+  },
   "SeatPick": {
     "as_of": "2026-08-24",
     "business_model": "Affiliate/referral commissions from ticket marketplaces (StubHub, Ticketmaster, Viagogo et al.) when users click through and buy, plus SEO-driven traffic monetization",
@@ -13773,6 +14384,19 @@
     "stage_note": "NYSE: TDC, public since 2007 spin-off from NCR",
     "sub_sector": "cloud data warehouse and lakehouse platform (VantageCloud) for large-scale enterprise analytics and AI"
   },
+  "Teradyne": {
+    "as_of": "2026-08-30",
+    "business_model": "Semiconductor and electronic test equipment (ATE), robotics (via subsidiaries like Universal Robots, MiR)",
+    "customer_type": "B2B",
+    "employees_global": 6500,
+    "founded": 1960,
+    "il_center": "Caesarea/Haifa (R&D); HQ in North Reading, MA, USA",
+    "sector": "Semiconductors &amp; Test Equipment",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NASDAQ: TER",
+    "sub_sector": "Automatic Test Equipment (ATE) / Semiconductor Test Systems"
+  },
   "Terra Security": {
     "as_of": "2026-08-29",
     "business_model": "B2B",
@@ -14850,6 +15474,19 @@
     "stage_note": "~$22M raised total; $15M Series B (2021) led by UP Partners; Tracxn notes an unconfirmed M&A offer in Apr 2025",
     "sub_sector": "Usage-based / pay-per-mile insurance for mobility niches (motorcycles, drones, e-scooters, boats)"
   },
+  "Voyage81": {
+    "as_of": "2026-08-30",
+    "business_model": "Computational imaging / computer vision software (hyperspectral imaging on smartphones)",
+    "customer_type": "B2B/Enterprise (acquired for internal use by IL MAKIAGE)",
+    "employees_global": 30,
+    "founded": 2019,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Deep Tech / Computer Vision",
+    "size_band": "S",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by IL MAKIAGE for $40M, 2021",
+    "sub_sector": "Hyperspectral imaging & AI computational imaging"
+  },
   "Voyantis": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS subscriptions for its predictive LTV / growth-optimization platform",
@@ -15217,6 +15854,19 @@
     "stage": "acquired-by-bigtech",
     "stage_note": "Acquired by Schwarz Group for $700M in Nov 2021; CrowdStrike acquired its IP in 2026 while it continues as a standalone business",
     "sub_sector": "continuous exposure management / attack-path simulation (BAS)"
+  },
+  "Xcurrent Energy Solutions": {
+    "as_of": "2026-08-30",
+    "business_model": "B2B hardware/energy infrastructure for autonomous systems",
+    "customer_type": "Defense, security, and commercial enterprises using unmanned systems",
+    "employees_global": 4,
+    "founded": null,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "Energy Tech / Robotics",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Early-stage startup, small team, no public funding data found",
+    "sub_sector": "Autonomous charging infrastructure for drones and unmanned ground vehicles"
   },
   "Xpend Global Marketing": {
     "as_of": "2026-08-29",
